@@ -7,10 +7,17 @@ from pathlib import Path
 from .data_loader import catalog
 from .engine import (
     ADEPT_TALENTS,
+    COMPLEX_FORM_TALENTS,
+    FOCUS_TALENTS,
     MAG_TALENTS,
+    RES_TALENTS,
+    SPELL_TALENTS,
+    SPIRIT_TALENTS,
+    SPRITE_TALENTS,
     compute,
     default_attributes,
     find_metatype,
+    gear_extra_options,
     is_way_quality,
     priority_value,
     resolve_talent,
@@ -85,6 +92,10 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
         current.update(updates.pop("options"))
         data["options"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
+    if "tradition_id" in updates:
+        data["tradition_id"] = updates.pop("tradition_id") or None
+    if "stream_id" in updates:
+        data["stream_id"] = updates.pop("stream_id") or None
     if "quality_ids" in updates:
         data["quality_ids"], _ = sanitize_quality_ids(list(data.get("quality_ids") or []))
     if patch.metatype or patch.metavariant is not None:
@@ -103,6 +114,18 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
             data["mentor_id"] = None
             data["mentor_choices"] = []
             data["mentor_extras"] = {}
+        if data["talent"] not in SPELL_TALENTS:
+            data["spells"] = []
+            data["tradition_id"] = None
+        if data["talent"] not in SPIRIT_TALENTS:
+            data["spirits"] = []
+        if data["talent"] not in FOCUS_TALENTS:
+            data["foci"] = []
+        if data["talent"] not in COMPLEX_FORM_TALENTS and data["talent"] not in RES_TALENTS:
+            data["complex_forms"] = []
+            data["stream_id"] = None
+        if data["talent"] not in SPRITE_TALENTS:
+            data["sprites"] = []
     state = compute(CharacterState.model_validate(data))
     _MEMORY[cid] = state
     _persist(state)
@@ -138,6 +161,9 @@ def public_catalog() -> dict:
             "bonus_tags": [n["tag"] for n in q.get("bonus") or []],
             "forbidden_qualities": list((q.get("forbidden") or {}).get("quality") or []),
             "is_way": is_way_quality(q["name"]),
+            "needs_extra": bool(q.get("needs_extra")),
+            "required_tree": q.get("required_tree") or [],
+            "forbidden_tree": q.get("forbidden_tree") or [],
         }
         for q in raw["qualities"]
         if not q.get("onlyprioritygiven")
@@ -207,12 +233,428 @@ def public_catalog() -> dict:
                 "name": s["name"],
                 "category": s.get("category"),
                 "dv": s.get("dv"),
+                "type": s.get("type"),
+                "range": s.get("range"),
+                "duration": s.get("duration"),
+                "descriptor": s.get("descriptor"),
+                "kind": s.get("kind") or "spell",
+                "useskill": s.get("useskill") or "Spellcasting",
+                "learnable": bool(s.get("learnable")),
+                "required": [
+                    name
+                    for names in (s.get("required") or {}).values()
+                    for name in names
+                ],
                 "source": s.get("source"),
                 "page": s.get("page"),
             }
             for s in raw.get("spells") or []
         ],
+        "traditions": [
+            {
+                "id": t["id"],
+                "name": t["name"],
+                "drain": t.get("drain") or "",
+                "drain_attrs": list(t.get("drain_attrs") or []),
+                "spirits": dict(t.get("spirits") or {}),
+                "source": t.get("source"),
+                "page": t.get("page"),
+            }
+            for t in raw.get("traditions") or []
+        ],
+        "spirits": [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "attributes": dict(s.get("attributes") or {}),
+                "powers": list(s.get("powers") or []),
+                "optionalpowers": list(s.get("optionalpowers") or []),
+                "skills": list(s.get("skills") or []),
+                "weaknesses": list(s.get("weaknesses") or []),
+                "source": s.get("source"),
+                "page": s.get("page"),
+            }
+            for s in raw.get("spirits") or []
+        ],
+        "complex_forms": [
+            {
+                "id": f["id"],
+                "name": f["name"],
+                "target": f.get("target") or "",
+                "duration": f.get("duration") or "",
+                "fv": f.get("fv") or "",
+                "needs_extra": bool(f.get("needs_extra")),
+                "required": [
+                    name
+                    for names in (f.get("required") or {}).values()
+                    for name in names
+                ],
+                "source": f.get("source"),
+                "page": f.get("page"),
+            }
+            for f in raw.get("complex_forms") or []
+        ],
+        "streams": [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "drain": s.get("drain") or "",
+                "drain_attrs": list(s.get("drain_attrs") or []),
+                "sprites": list(s.get("sprites") or []),
+                "source": s.get("source"),
+                "page": s.get("page"),
+            }
+            for s in raw.get("streams") or []
+        ],
+        "sprites": [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "attributes": dict(s.get("attributes") or {}),
+                "powers": list(s.get("powers") or []),
+                "skills": list(s.get("skills") or []),
+                "source": s.get("source"),
+                "page": s.get("page"),
+            }
+            for s in raw.get("sprites") or []
+        ],
+        "foci": [
+            {
+                "id": f["id"],
+                "name": f["name"],
+                "maxrating": f.get("maxrating") or 6,
+                "cost": f.get("cost") or "",
+                "effect": f.get("effect") or "",
+                "formula": (
+                    {
+                        "id": (f.get("formula") or {}).get("id"),
+                        "name": (f.get("formula") or {}).get("name"),
+                        "cost": (f.get("formula") or {}).get("cost") or "",
+                    }
+                    if f.get("formula")
+                    else None
+                ),
+                "source": f.get("source"),
+                "page": f.get("page"),
+            }
+            for f in raw.get("foci") or []
+        ],
         "qi_focus": raw.get("qi_focus"),
+        "armor": [
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "category": a.get("category") or "Armor",
+                "armor": a.get("armor") or "0",
+                "armorcapacity": a.get("armorcapacity") or "",
+                "avail": a.get("avail") or "",
+                "cost": a.get("cost") or "0",
+                "minrating": int(a.get("minrating") or 0),
+                "maxrating": int(a.get("maxrating") or 0),
+                "additive": bool(a.get("additive")),
+                "addmodcategories": list(a.get("addmodcategories") or []),
+                "source": a.get("source") or "",
+                "page": a.get("page") or "",
+            }
+            for a in raw.get("armor") or []
+        ],
+        "armor_mods": [
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "category": a.get("category") or "General",
+                "armor": a.get("armor") or "0",
+                "armorcapacity": a.get("armorcapacity") or "",
+                "avail": a.get("avail") or "",
+                "cost": a.get("cost") or "0",
+                "minrating": int(a.get("minrating") or 0),
+                "maxrating": int(a.get("maxrating") or 0),
+                "purchasable": bool(a.get("purchasable")),
+                "unique": a.get("unique") or "",
+                "required_names": list(a.get("required_names") or []),
+                "required_mods": list(a.get("required_mods") or []),
+                "source": a.get("source") or "",
+                "page": a.get("page") or "",
+            }
+            for a in raw.get("armor_mods") or []
+            if a.get("purchasable")
+        ],
+        "weapons": [
+            {
+                "id": w["id"],
+                "name": w["name"],
+                "category": w.get("category") or "",
+                "type": w.get("type") or "",
+                "accuracy": w.get("accuracy") or "",
+                "reach": w.get("reach") or "",
+                "damage": w.get("damage") or "",
+                "ap": w.get("ap") or "",
+                "mode": w.get("mode") or "",
+                "ammo": w.get("ammo") or "",
+                "conceal": w.get("conceal") or "",
+                "mounts": list(w.get("mounts") or []),
+                "avail": w.get("avail") or "",
+                "cost": w.get("cost") or "0",
+                "source": w.get("source") or "",
+                "page": w.get("page") or "",
+            }
+            for w in raw.get("weapons") or []
+        ],
+        "weapon_accessories": [
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "mounts": list(a.get("mounts") or []),
+                "avail": a.get("avail") or "",
+                "cost": a.get("cost") or "0",
+                "purchasable": bool(a.get("purchasable")),
+                "accuracy": a.get("accuracy") or "",
+                "rc": a.get("rc") or "",
+                "minrating": int(a.get("minrating") or 0),
+                "maxrating": int(a.get("maxrating") or 0),
+                "required": a.get("required") or {},
+                "forbidden": a.get("forbidden") or {},
+                "source": a.get("source") or "",
+                "page": a.get("page") or "",
+            }
+            for a in raw.get("weapon_accessories") or []
+        ],
+        "commlinks": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "devicerating": c.get("devicerating") or "0",
+                "dataprocessing": c.get("dataprocessing") or "0",
+                "firewall": c.get("firewall") or "0",
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("commlinks") or []
+        ],
+        "cyberdecks": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "Cyberdecks",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "devicerating": c.get("devicerating") or "0",
+                "attack": c.get("attack") or "0",
+                "sleaze": c.get("sleaze") or "0",
+                "dataprocessing": c.get("dataprocessing") or "0",
+                "firewall": c.get("firewall") or "0",
+                "attributearray": c.get("attributearray") or "",
+                "programs": c.get("programs") or "0",
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("cyberdecks") or []
+        ],
+        "rccs": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "Rigger Command Consoles",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "devicerating": c.get("devicerating") or "0",
+                "dataprocessing": c.get("dataprocessing") or "0",
+                "firewall": c.get("firewall") or "0",
+                "programs": c.get("programs") or "0",
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("rccs") or []
+        ],
+        "optics": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "capacity": c.get("capacity") or "",
+                "plugin": bool(c.get("plugin")),
+                "requireparent": bool(c.get("requireparent")),
+                "addoncategories": list(c.get("addoncategories") or []),
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("optics") or []
+        ],
+        "programs": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "requireparent": True,
+                "program_host": c.get("program_host") or "cyberdecks",
+                "needs_extra": bool(c.get("needs_extra")),
+                "extra_kind": c.get("extra_kind") or "",
+                "extra_options": gear_extra_options(c, raw.get("skills")),
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("programs") or []
+        ],
+        "apps": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "requireparent": True,
+                "needs_extra": bool(c.get("needs_extra")),
+                "extra_kind": c.get("extra_kind") or "",
+                "extra_options": gear_extra_options(c, raw.get("skills")),
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("apps") or []
+        ],
+        "sensors": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "capacity": c.get("capacity") or "",
+                "plugin": bool(c.get("plugin")),
+                "requireparent": bool(c.get("requireparent")),
+                "addoncategories": list(c.get("addoncategories") or []),
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("sensors") or []
+        ],
+        "gear": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "capacity": c.get("capacity") or "",
+                "plugin": bool(c.get("plugin")),
+                "requireparent": bool(c.get("requireparent")),
+                "addoncategories": list(c.get("addoncategories") or []),
+                "required_names": list(c.get("required_names") or []),
+                "required_categories": list(c.get("required_categories") or []),
+                "needs_extra": bool(c.get("needs_extra")),
+                "extra_kind": c.get("extra_kind") or "",
+                "extra_options": gear_extra_options(c, raw.get("skills")),
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("gear") or []
+        ],
+        "drones": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "handling": c.get("handling") or "",
+                "speed": c.get("speed") or "",
+                "accel": c.get("accel") or "",
+                "body": c.get("body") or "",
+                "armor": c.get("armor") or "",
+                "pilot": c.get("pilot") or "",
+                "sensor": c.get("sensor") or "",
+                "seats": c.get("seats") or "",
+                "avail": c.get("avail") or "",
+                "cost": c.get("cost") or "0",
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("drones") or []
+        ],
+        "vehicles": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "handling": c.get("handling") or "",
+                "speed": c.get("speed") or "",
+                "accel": c.get("accel") or "",
+                "body": c.get("body") or "",
+                "armor": c.get("armor") or "",
+                "pilot": c.get("pilot") or "",
+                "sensor": c.get("sensor") or "",
+                "seats": c.get("seats") or "",
+                "avail": c.get("avail") or "",
+                "cost": c.get("cost") or "0",
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("vehicles") or []
+        ],
+        "vehicle_mods": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "slots": c.get("slots") or "0",
+                "avail": c.get("avail") or "",
+                "minrating": int(c.get("minrating") or 0),
+                "maxrating": int(c.get("maxrating") or 0),
+                "purchasable": bool(c.get("purchasable")),
+                "required": c.get("required") or {},
+                "forbidden": c.get("forbidden") or {},
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("vehicle_mods") or []
+            if c.get("purchasable")
+        ],
+        "weapon_mounts": [
+            {
+                "id": c["id"],
+                "name": c["name"],
+                "category": c.get("category") or "",
+                "cost": c.get("cost") or "0",
+                "slots": c.get("slots") or "0",
+                "avail": c.get("avail") or "",
+                "required": c.get("required") or {},
+                "source": c.get("source") or "",
+                "page": c.get("page") or "",
+            }
+            for c in raw.get("weapon_mounts") or []
+        ],
+        "lifestyles": [
+            {
+                "id": ls["id"],
+                "name": ls["name"],
+                "cost": int(ls.get("cost") or 0),
+                "dice": int(ls.get("dice") or 0),
+                "increment": ls.get("increment") or "month",
+                "source": ls.get("source") or "",
+                "page": ls.get("page") or "",
+            }
+            for ls in raw.get("lifestyles") or []
+        ],
         "priority_table": table,
         "translations": raw["translations"],
     }

@@ -4,9 +4,30 @@ import math
 import re
 from typing import Any
 
-from .data_loader import PHYSICAL_ATTRS, catalog, eval_formula
+from .data_loader import MATRIX_ATTRIBUTES, PHYSICAL_ATTRS, PROGRAM_HOSTS, SPELL_CAST_CATEGORIES, SPELL_CATEGORIES, catalog, eval_formula, parse_capacity
 from .improvements import _as_int, apply_bonus_nodes, collect_effects, substitute_rating
-from .models import CharacterOptions, CharacterState, CyberwareInstall, Priorities, QiFocusInstall
+from .models import (
+    ArmorInstall,
+    ArmorModInstall,
+    CharacterOptions,
+    CharacterState,
+    CommlinkInstall,
+    ComplexFormInstall,
+    ContactInstall,
+    CyberwareInstall,
+    FocusInstall,
+    GearInstall,
+    LifestyleInstall,
+    Priorities,
+    QiFocusInstall,
+    SpellInstall,
+    SpiritInstall,
+    SpriteInstall,
+    WeaponAccessoryInstall,
+    WeaponInstall,
+    VehicleModInstall,
+    WeaponMountInstall,
+)
 
 STANDARD_GAMEPLAY = "Standard"
 
@@ -24,9 +45,37 @@ ADEPT_TALENTS = {"Adept", "Mystic Adept"}
 SKIP_TALENTS = {"A.I."}
 MYSTIC_PP_KARMA = 5
 ENHANCEMENT_KARMA = 2
+SPELL_KARMA = 5
+COMPLEX_FORM_KARMA = 4
+CONTACT_FREE_MULT = 3
+CONTACT_RATING_MIN = 1
+CONTACT_RATING_MAX = 6
+CONTACT_CHARGEN_COST_MAX = 7
+NEGATIVE_QUALITY_KARMA_CAP = 25
 MENTOR_SPIRIT_ID = "ced3fecf-2277-4b20-b1e0-894162ca9ae2"
 QI_FOCUS_NAME = "Qi Focus"
 DRAIN_MINIMUM = 2
+SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
+SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
+SPRITE_TALENTS = set(RES_TALENTS)
+COMPLEX_FORM_TALENTS = set(RES_TALENTS)
+FOCUS_TALENTS = set(MAG_TALENTS)
+DEFAULT_STREAM_NAME = "Default"
+SPRITE_MATRIX_KEYS = {
+    "CHA": "attack",
+    "INT": "sleaze",
+    "LOG": "dataprocessing",
+    "WIL": "firewall",
+}
+SPIRIT_REAGENT_YEN = 20
+FOCUS_FORCE_MULT = 5
+SPIRIT_ROLE_LABELS = {
+    "combat": "戦闘",
+    "detection": "探知",
+    "health": "健康",
+    "illusion": "幻影",
+    "manipulation": "操作",
+}
 
 
 def _ceil_div(n: float) -> int:
@@ -90,7 +139,7 @@ def talent_options(letter: str) -> list[dict[str, Any]]:
     if letter.upper() == "E" and not any(t.get("name") == "Mundane" for t in talents):
         talents.insert(
             0,
-            {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "quality": ""},
+            {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "quality": "", "spells": 0, "cfp": 0},
         )
     return talents
 
@@ -111,7 +160,7 @@ def talent_special(talent: dict[str, Any] | None) -> tuple[str | None, int]:
 def resolve_talent(letter: str, current: str | None) -> dict[str, Any]:
     options = talent_options(letter)
     if not options:
-        return {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0}
+        return {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "spells": 0, "cfp": 0}
     found = next((t for t in options if t["name"] == current), None)
     if found:
         return found
@@ -192,6 +241,2118 @@ def _spell_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
+def _spell_by_id(sid: str) -> dict[str, Any] | None:
+    for item in catalog().get("spells") or []:
+        if item["id"] == sid:
+            return item
+    return None
+
+
+def _tradition_by_id(tid: str | None) -> dict[str, Any] | None:
+    if not tid:
+        return None
+    for item in catalog().get("traditions") or []:
+        if item["id"] == tid:
+            return item
+    return None
+
+
+def _spirit_by_id(sid: str) -> dict[str, Any] | None:
+    for item in catalog().get("spirits") or []:
+        if item["id"] == sid:
+            return item
+    return None
+
+
+def _stream_by_id(sid: str | None) -> dict[str, Any] | None:
+    if not sid:
+        return None
+    for item in catalog().get("streams") or []:
+        if item["id"] == sid:
+            return item
+    return None
+
+
+def _default_stream() -> dict[str, Any] | None:
+    for item in catalog().get("streams") or []:
+        if item["name"] == DEFAULT_STREAM_NAME:
+            return item
+    streams = catalog().get("streams") or []
+    return streams[0] if streams else None
+
+
+def _complex_form_by_id(fid: str) -> dict[str, Any] | None:
+    for item in catalog().get("complex_forms") or []:
+        if item["id"] == fid:
+            return item
+    return None
+
+
+def _sprite_by_id(sid: str) -> dict[str, Any] | None:
+    for item in catalog().get("sprites") or []:
+        if item["id"] == sid:
+            return item
+    return None
+
+
+def _focus_by_id(gid: str) -> dict[str, Any] | None:
+    for item in catalog().get("foci") or []:
+        if item["id"] == gid:
+            return item
+    return None
+
+
+def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
+    for item in catalog().get(kind) or []:
+        if item["id"] == item_id:
+            return item
+    return None
+
+
+def parse_armor_value(raw: str, rating: int = 1) -> tuple[int, bool]:
+    text = (raw or "0").strip()
+    additive = text.startswith("+") or text.startswith("-")
+    if text.lower() == "rating":
+        return int(rating), False
+    try:
+        return int(float(text)), additive
+    except ValueError:
+        return int(eval_formula(text, rating, 0)), additive
+
+
+def armor_plugin_capacity(expr: str | None, rating: int) -> float:
+    raw = (expr or "").strip()
+    if not raw:
+        return 0.0
+    fixed = re.fullmatch(r"FixedValues\((.+)\)", raw, re.I)
+    if fixed:
+        parts = [p.strip() for p in fixed.group(1).split(",")]
+        idx = max(0, min(len(parts) - 1, int(rating) - 1))
+        return armor_plugin_capacity(parts[idx], rating)
+    if raw.startswith("[") and raw.endswith("]") and "/" not in raw:
+        inner = raw[1:-1]
+        if re.search(r"Capacity", inner, re.I):
+            return 0.0
+        return eval_formula(inner, rating, 0.0)
+    return eval_formula(raw, rating, 0.0)
+
+
+def armor_mod_fits(
+    spec: dict[str, Any],
+    armor: dict[str, Any],
+    installed_names: set[str] | None = None,
+) -> bool:
+    names = {str(n) for n in (installed_names or set())}
+    required_names = [str(n) for n in (spec.get("required_names") or []) if n]
+    if required_names and armor.get("name") not in required_names:
+        return False
+    required_mods = [str(n) for n in (spec.get("required_mods") or []) if n]
+    if required_mods and any(name not in names for name in required_mods):
+        return False
+    category = str(spec.get("category") or "General")
+    allowed = {str(c) for c in (armor.get("addmodcategories") or []) if c}
+    if category == "General":
+        return True
+    if category in allowed:
+        return True
+    return category == str(armor.get("category") or "")
+
+
+def _ensure_armor_mods(state: CharacterState) -> list[str]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
+    by_name = {item["name"]: item for item in specs.values()}
+    armors = {item.id: item for item in state.armor}
+    armor_specs = {item["id"]: item for item in catalog().get("armor") or []}
+    kept: list[ArmorModInstall] = []
+    for inst in list(state.armor_mods or []):
+        spec = specs.get(inst.mod_id)
+        parent = armors.get(inst.parent_id or "")
+        if not spec or not parent:
+            if spec:
+                warnings.append(f"{spec['name']} は防具に装着してください")
+            continue
+        kept.append(inst)
+    have = {(row.parent_id, (specs.get(row.mod_id) or {}).get("name")) for row in kept}
+    extra: list[ArmorModInstall] = []
+    for armor in state.armor:
+        aspec = armor_specs.get(armor.armor_id) or {}
+        for gift in aspec.get("included_mods") or []:
+            child = by_name.get(gift.get("name"))
+            if not child or (armor.id, child["name"]) in have:
+                continue
+            extra.append(
+                ArmorModInstall(
+                    mod_id=child["id"],
+                    parent_id=armor.id,
+                    included=True,
+                    rating=int(gift.get("rating") or 1),
+                )
+            )
+            have.add((armor.id, child["name"]))
+    state.armor_mods = kept + extra
+    return warnings
+
+
+def _resolve_armor_mods(
+    state: CharacterState,
+    armor_items: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+    warnings = _ensure_armor_mods(state)
+    errors: list[str] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
+    public: list[dict[str, Any]] = []
+    kept: list[ArmorModInstall] = []
+    nuyen = 0
+    children: dict[str, list[ArmorModInstall]] = {}
+    for inst in list(state.armor_mods or []):
+        children.setdefault(inst.parent_id or "", []).append(inst)
+
+    for item in armor_items:
+        used = 0.0
+        seen_names: set[str] = set()
+        seen_unique: set[str] = set()
+        item["mod_armor"] = 0
+        for inst in children.get(item["id"]) or []:
+            spec = specs.get(inst.mod_id)
+            if not spec:
+                continue
+            if inst.included:
+                rating = max(1, int(inst.rating or 1))
+            else:
+                rating = _clamp_rating(spec, inst.rating)
+            inst.rating = rating
+            if spec["name"] in seen_names or (spec.get("unique") and spec["unique"] in seen_unique):
+                warnings.append(f"{spec['name']} は {item['name']} に重複して装着できません")
+                continue
+            names_without = seen_names - {spec["name"]}
+            if not armor_mod_fits(spec, item, names_without):
+                warnings.append(f"{spec['name']} は {item['name']} に装着できません")
+                continue
+            cap_cost = 0.0 if inst.included else armor_plugin_capacity(str(spec.get("armorcapacity") or ""), rating)
+            extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
+            cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+            nuyen += cost
+            used += cap_cost
+            if extra:
+                item["mod_armor"] = int(item.get("mod_armor") or 0) + extra
+            item["nuyen"] = int(item.get("nuyen") or 0) + cost
+            seen_names.add(spec["name"])
+            if spec.get("unique"):
+                seen_unique.add(str(spec["unique"]))
+            if item.get("equipped"):
+                nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+                if nodes:
+                    bonus_sources.append((spec["name"], nodes))
+            kept.append(inst)
+            public.append(
+                {
+                    "id": inst.id,
+                    "mod_id": spec["id"],
+                    "name": spec["name"],
+                    "category": spec.get("category") or "General",
+                    "parent_id": inst.parent_id,
+                    "included": bool(inst.included),
+                    "rating": rating,
+                    "rating_max": int(spec.get("maxrating") or 0),
+                    "nuyen": cost,
+                    "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
+                    "armor": spec.get("armor") or "0",
+                    "unique": spec.get("unique") or "",
+                    "avail": spec.get("avail") or "",
+                    "source": spec.get("source") or "",
+                    "page": spec.get("page") or "",
+                }
+            )
+        cap_max = eval_formula(str(item.get("armorcapacity") or "0"), int(item.get("rating") or 1), 0)
+        item["capacity_used"] = int(used) if used == int(used) else used
+        item["capacity_max"] = int(cap_max) if cap_max == int(cap_max) else cap_max
+        item["mods"] = [row for row in public if row.get("parent_id") == item["id"]]
+        extra = int(item.get("mod_armor") or 0)
+        if extra:
+            item["armor_value"] = int(item.get("armor_value") or 0) + extra
+        if used > cap_max + 1e-9:
+            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{item['capacity_max']:g}）")
+    state.armor_mods = kept
+    return public, nuyen, warnings, errors, bonus_sources
+
+
+def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, list[str]]:
+    warnings: list[str] = []
+    base_values: list[tuple[str, int]] = []
+    add_total = 0
+    for item in armor_items:
+        if not item.get("equipped"):
+            item["contributes"] = 0
+            continue
+        value = int(item.get("armor_value") or 0)
+        if item.get("additive"):
+            add_total += value
+            item["contributes"] = value
+        else:
+            base_values.append((str(item.get("name") or ""), value))
+    worn_name = ""
+    worn_base = 0
+    if base_values:
+        worn_name, worn_base = max(base_values, key=lambda row: row[1])
+        if len(base_values) > 1:
+            warnings.append("防具本体は一番高い1着だけをアーマーに加算しています")
+    for item in armor_items:
+        if not item.get("equipped"):
+            item["contributes"] = 0
+        elif item.get("additive"):
+            item["contributes"] = int(item.get("armor_value") or 0)
+        else:
+            item["contributes"] = int(item.get("armor_value") or 0) if item.get("name") == worn_name else 0
+    return worn_base + add_total, worn_name, warnings
+
+
+
+def _clamp_rating(spec: dict[str, Any], rating: int) -> int:
+    max_rating = int(spec.get("maxrating") or 0)
+    if max_rating <= 0:
+        return 1
+    min_rating = max(1, int(spec.get("minrating") or 1))
+    return max(min_rating, min(max_rating, int(rating or min_rating)))
+
+
+MATRIX_ARRAY_KEYS = ("attack", "sleaze", "dataprocessing", "firewall")
+MATRIX_ARRAY_ALIASES = {
+    "atk": "attack",
+    "slz": "sleaze",
+    "dp": "dataprocessing",
+    "data processing": "dataprocessing",
+    "fw": "firewall",
+}
+
+
+def _normalize_array_order(raw: list[str] | None) -> list[str]:
+    seen: set[str] = set()
+    order: list[str] = []
+    for item in raw or []:
+        key = MATRIX_ARRAY_ALIASES.get(str(item).strip().lower(), str(item).strip().lower())
+        if key in MATRIX_ARRAY_KEYS and key not in seen:
+            order.append(key)
+            seen.add(key)
+    for key in MATRIX_ARRAY_KEYS:
+        if key not in seen:
+            order.append(key)
+    return order
+
+
+def _matrix_base_array(spec: dict[str, Any], rating: int) -> list[int]:
+    raw = str(spec.get("attributearray") or "").strip()
+    if raw:
+        nums: list[int] = []
+        for part in raw.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            nums.append(int(eval_formula(part, rating, 0)))
+        return nums
+    return [int(eval_formula(str(spec.get(key) or "0"), rating, 0)) for key in MATRIX_ARRAY_KEYS]
+
+
+def _matrix_stats(
+    spec: dict[str, Any],
+    rating: int,
+    array_order: list[str] | None = None,
+    *,
+    reorder: bool = False,
+) -> dict[str, Any]:
+    device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
+    programs = int(eval_formula(str(spec.get("programs") or "0"), rating, 0))
+    nums = _matrix_base_array(spec, rating)
+    can_reorder = bool(reorder and len(nums) == 4)
+    order = _normalize_array_order(array_order if can_reorder else None)
+    stats = {key: 0 for key in MATRIX_ARRAY_KEYS}
+    for key, value in zip(order, nums):
+        stats[key] = value
+    return {
+        "device_rating": device,
+        "programs": programs,
+        **stats,
+        "array": nums,
+        "array_order": order,
+        "can_reorder": can_reorder,
+    }
+
+
+def _resolve_matrix_devices(kind: str, installs: list[GearInstall]) -> tuple[list[GearInstall], list[dict[str, Any]], int]:
+    kept: list[GearInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    reorder = kind == "cyberdecks"
+    for inst in installs:
+        spec = _item_by_id(kind, inst.gear_id)
+        if not spec:
+            continue
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        stats = _matrix_stats(spec, rating, inst.array_order, reorder=reorder)
+        if stats["can_reorder"]:
+            inst.array_order = list(stats["array_order"])
+        else:
+            inst.array_order = []
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "nuyen": cost,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+                **stats,
+            }
+        )
+    return kept, public, nuyen
+
+
+def _cascade_optics(items: list[GearInstall], extra_parents: set[str] | None = None) -> list[GearInstall]:
+    ids = {item.id for item in items} | set(extra_parents or [])
+    keep = [item for item in items if not item.parent_id or item.parent_id in ids]
+    if len(keep) == len(items):
+        return keep
+    return _cascade_optics(keep, extra_parents)
+
+
+def _ensure_optics(state: CharacterState) -> list[str]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("optics") or []}
+    by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
+    items = _cascade_optics(list(state.optics or []))
+    kept: list[GearInstall] = []
+    for inst in items:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        if spec.get("requireparent") and not inst.parent_id:
+            warnings.append(f"{spec['name']} は本体に装着してください")
+            continue
+        if inst.parent_id:
+            parent = next((row for row in items if row.id == inst.parent_id), None)
+            parent_spec = specs.get(parent.gear_id) if parent else None
+            allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
+            if allowed and spec.get("category") not in allowed:
+                warnings.append(f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません")
+                continue
+        kept.append(inst)
+    have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
+    extra: list[GearInstall] = []
+    for inst in kept:
+        if inst.parent_id:
+            continue
+        spec = specs.get(inst.gear_id) or {}
+        for gift in spec.get("included") or []:
+            child = by_name.get((gift.get("name"), gift.get("category") or "")) or next(
+                (item for item in specs.values() if item["name"] == gift.get("name")),
+                None,
+            )
+            if not child or (inst.id, child["name"]) in have:
+                continue
+            override = str(gift.get("capacity") or "").strip()
+            plugin, expr = parse_capacity(override) if override else (False, "")
+            extra.append(
+                GearInstall(
+                    gear_id=child["id"],
+                    parent_id=inst.id,
+                    included=True,
+                    rating=int(gift.get("rating") or 1),
+                    capacity_override=expr if override else None,
+                )
+            )
+            have.add((inst.id, child["name"]))
+    state.optics = kept + extra
+    return warnings
+
+
+def _resolve_optics(state: CharacterState) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+    warnings = _ensure_optics(state)
+    errors: list[str] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    specs = {item["id"]: item for item in catalog().get("optics") or []}
+    public: list[dict[str, Any]] = []
+    kept: list[GearInstall] = []
+    nuyen = 0
+    for inst in state.optics:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        plugin = bool(spec.get("plugin"))
+        cap_expr = inst.capacity_override if inst.capacity_override is not None else str(spec.get("capacity") or "")
+        if inst.capacity_override is not None:
+            plugin = True
+        cap_cost = _capacity_value(cap_expr, rating) if plugin else 0.0
+        cap_max = 0.0 if plugin else _capacity_value(str(spec.get("capacity") or ""), rating)
+        nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+        if nodes:
+            bonus_sources.append((spec["name"], nodes))
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "parent_id": inst.parent_id,
+                "included": bool(inst.included),
+                "plugin": plugin,
+                "nuyen": cost,
+                "capacity_cost": cap_cost,
+                "capacity_used": 0.0,
+                "capacity_max": cap_max,
+                "addoncategories": list(spec.get("addoncategories") or []),
+                "requireparent": bool(spec.get("requireparent")),
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        if item["parent_id"]:
+            children.setdefault(item["parent_id"], []).append(item)
+    for item in public:
+        kids = children.get(item["id"]) or []
+        used = round(sum(float(kid.get("capacity_cost") or 0) for kid in kids), 4)
+        item["capacity_used"] = int(used) if used == int(used) else used
+        cap_max = float(item.get("capacity_max") or 0)
+        if cap_max == int(cap_max):
+            item["capacity_max"] = int(cap_max)
+        if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
+            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{cap_max:g}）")
+    state.optics = kept
+    return public, nuyen, warnings, errors, bonus_sources
+
+
+VEHICLE_INTERIOR_CATEGORIES = [
+    "Commlink Accessories",
+    "Electronics Accessories",
+    "Communications and Countermeasures",
+]
+
+
+def _vehicle_interior_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": spec.get("name") or "",
+        "category": "Commlinks",
+        "addoncategories": list(VEHICLE_INTERIOR_CATEGORIES),
+    }
+
+
+def _commlink_accessory_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "name": spec.get("name") or "",
+        "category": "Commlinks",
+        "addoncategories": ["Commlink Accessories"],
+    }
+
+
+def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str, Any]]]:
+    hosts: dict[str, tuple[str, dict[str, Any]]] = {}
+    for inst in list(state.commlinks or []):
+        spec = _item_by_id("commlinks", inst.gear_id)
+        if spec:
+            hosts[inst.id] = ("commlink", _commlink_accessory_parent_spec(spec))
+    for inst, spec in _iter_vehicle_hosts(state):
+        hosts[inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
+    return hosts
+
+
+def _misc_child_fits(parent_spec: dict[str, Any], child_spec: dict[str, Any]) -> bool:
+    parent_name = parent_spec.get("name") or ""
+    parent_cat = parent_spec.get("category") or ""
+    child_cat = child_spec.get("category") or ""
+    allowed = [c for c in (parent_spec.get("addoncategories") or []) if c and c != "Custom"]
+    req_names = [n for n in (child_spec.get("required_names") or []) if n]
+    req_cats = [c for c in (child_spec.get("required_categories") or []) if c and c != "Custom"]
+    if req_names or req_cats:
+        return parent_name in req_names or parent_cat in req_cats
+    if allowed:
+        return child_cat in allowed
+    if child_spec.get("requireparent"):
+        return child_cat == parent_cat
+    return False
+
+
+def _misc_slot_stats(spec: dict[str, Any], inst: GearInstall, rating: int) -> tuple[bool, float, float]:
+    if inst.capacity_override is not None:
+        return True, _capacity_value(inst.capacity_override, rating), 0.0
+    if spec.get("plugin"):
+        expr = str(spec.get("plugin_capacity") or spec.get("capacity") or "")
+        return True, _capacity_value(expr, rating), 0.0
+    plugin_expr = str(spec.get("plugin_capacity") or "")
+    host_expr = str(spec.get("host_capacity") or spec.get("capacity") or "")
+    if plugin_expr:
+        return False, 0.0, _capacity_value(host_expr, rating)
+    return False, 0.0, 0.0
+
+
+def _ensure_misc_gear(state: CharacterState) -> list[str]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("gear") or []}
+    by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
+    external = _misc_external_hosts(state)
+    items = _cascade_optics(list(state.gear or []), set(external))
+    kept: list[GearInstall] = []
+    for inst in items:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        if spec.get("requireparent") and not inst.parent_id:
+            warnings.append(f"{spec['name']} は本体に装着してください")
+            continue
+        if inst.parent_id:
+            parent = next((row for row in items if row.id == inst.parent_id), None)
+            parent_spec = specs.get(parent.gear_id) if parent else None
+            host = external.get(inst.parent_id)
+            if parent_spec:
+                fits = _misc_child_fits(parent_spec, spec)
+                label = parent_spec.get("name") or "本体"
+            elif host:
+                _kind, host_spec = host
+                fits = bool(inst.included) or _misc_child_fits(host_spec, spec)
+                label = host_spec.get("name") or "本体"
+            else:
+                fits = False
+                label = "本体"
+            if not fits:
+                warnings.append(f"{spec['name']} は {label} に装着できません")
+                continue
+        kept.append(inst)
+    have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
+    extra: list[GearInstall] = []
+    for inst in kept:
+        if inst.parent_id:
+            continue
+        spec = specs.get(inst.gear_id) or {}
+        for gift in spec.get("included") or []:
+            child = by_name.get((gift.get("name"), gift.get("category") or "")) or next(
+                (item for item in specs.values() if item["name"] == gift.get("name")),
+                None,
+            )
+            if not child or (inst.id, child["name"]) in have:
+                continue
+            override = str(gift.get("capacity") or "").strip()
+            _plugin, expr = parse_capacity(override) if override else (False, "")
+            extra.append(
+                GearInstall(
+                    gear_id=child["id"],
+                    parent_id=inst.id,
+                    included=True,
+                    rating=int(gift.get("rating") or 1),
+                    capacity_override=expr if override else None,
+                )
+            )
+            have.add((inst.id, child["name"]))
+    state.gear = kept + extra
+    return warnings
+
+
+def _resolve_misc_gear(
+    state: CharacterState,
+    vehicles: list[dict[str, Any]] | None = None,
+) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+    warnings = _ensure_misc_gear(state)
+    errors: list[str] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    specs = {item["id"]: item for item in catalog().get("gear") or []}
+    public: list[dict[str, Any]] = []
+    kept: list[GearInstall] = []
+    nuyen = 0
+    for inst in state.gear:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        extra_kind = str(spec.get("extra_kind") or "")
+        extra = (inst.extra or "").strip()
+        options = gear_extra_options(spec)
+        if extra_kind == "skill":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルを選んでください")
+        elif extra_kind == "group":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+        elif extra_kind == "text" and not extra:
+            warnings.append(f"{spec['name']} の対象を入力してください")
+        inst.extra = extra or None
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        qty = max(1, min(99, int(inst.qty or 1)))
+        inst.qty = qty
+        unit = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        cost = unit * qty
+        nuyen += cost
+        plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
+        nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+        if nodes:
+            bonus_sources.append((_program_label(spec, extra), nodes))
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "label": _program_label(spec, extra),
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "qty": qty,
+                "parent_id": inst.parent_id,
+                "included": bool(inst.included),
+                "plugin": plugin,
+                "extra": extra,
+                "needs_extra": bool(extra_kind),
+                "extra_kind": extra_kind,
+                "extra_options": options,
+                "nuyen": cost,
+                "capacity_cost": cap_cost,
+                "capacity_used": 0.0,
+                "capacity_max": cap_max,
+                "addoncategories": list(spec.get("addoncategories") or []),
+                "requireparent": bool(spec.get("requireparent")),
+                "required_names": list(spec.get("required_names") or []),
+                "required_categories": list(spec.get("required_categories") or []),
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        if item["parent_id"]:
+            children.setdefault(item["parent_id"], []).append(item)
+    for item in public:
+        kids = children.get(item["id"]) or []
+        used = round(sum(float(kid.get("capacity_cost") or 0) for kid in kids), 4)
+        item["capacity_used"] = int(used) if used == int(used) else used
+        cap_max = float(item.get("capacity_max") or 0)
+        if cap_max == int(cap_max):
+            item["capacity_max"] = int(cap_max)
+        if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
+            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{cap_max:g}）")
+    for row in vehicles or []:
+        kids = children.get(str(row.get("id") or "")) or []
+        row["gear"] = kids
+        extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
+        row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+    state.gear = kept
+    return public, nuyen, warnings, errors, bonus_sources
+
+
+def _resolve_programs(
+    state: CharacterState,
+    cyberdecks: list[dict[str, Any]],
+    rccs: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, list[str]]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("programs") or []}
+    hosts: dict[str, tuple[str, dict[str, Any]]] = {}
+    for row in cyberdecks:
+        hosts[str(row.get("id") or "")] = ("cyberdecks", row)
+    for row in rccs:
+        hosts[str(row.get("id") or "")] = ("rccs", row)
+    kept: list[GearInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    for inst in list(state.programs or []):
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        want_kind = PROGRAM_HOSTS.get(str(spec.get("category") or ""), "cyberdecks")
+        host = hosts.get(inst.parent_id or "")
+        if not inst.parent_id or not host:
+            warnings.append(f"{spec['name']} は本体に装着してください")
+            continue
+        kind, _parent = host
+        if kind != want_kind:
+            label = "サイバーデッキ" if want_kind == "cyberdecks" else "RCC"
+            warnings.append(f"{spec['name']} は{label}に装着してください")
+            continue
+        extra_kind = str(spec.get("extra_kind") or "")
+        extra = (inst.extra or "").strip()
+        options = gear_extra_options(spec)
+        if extra_kind == "skill":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルを選んでください")
+        elif extra_kind == "group":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+        elif extra_kind == "text" and not extra:
+            warnings.append(f"{spec['name']} の対象を入力してください")
+        inst.extra = extra or None
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "label": _program_label(spec, extra),
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "parent_id": inst.parent_id,
+                "extra": extra,
+                "needs_extra": bool(extra_kind),
+                "extra_kind": extra_kind,
+                "extra_options": options,
+                "nuyen": cost,
+                "program_host": spec.get("program_host") or want_kind,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    for row in list(cyberdecks) + list(rccs):
+        kids = children.get(str(row.get("id") or "")) or []
+        row["program_used"] = len(kids)
+        row["program_max"] = int(row.get("programs") or 0)
+        if row["program_max"] > 0 and len(kids) > row["program_max"]:
+            warnings.append(f"{row['name']} のプログラムが上限超過（{len(kids)}/{row['program_max']}）")
+        keys = [f"{kid['name']}|{kid.get('extra') or ''}" for kid in kids]
+        if len(keys) != len(set(keys)):
+            warnings.append(f"{row['name']} に同じプログラムが重複しています")
+    state.programs = kept
+    return public, nuyen, warnings
+
+
+def _ensure_sensors(state: CharacterState) -> list[str]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("sensors") or []}
+    by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
+    drone_ids = {row.id for row in state.drones or []}
+    vehicle_ids = {row.id for row in state.vehicles or []}
+    host_ids = drone_ids | vehicle_ids
+    items = _cascade_optics(list(state.sensors or []), host_ids)
+    kept: list[GearInstall] = []
+    for inst in items:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        if spec.get("requireparent") and not inst.parent_id:
+            warnings.append(f"{spec['name']} は本体に装着してください")
+            continue
+        if inst.parent_id:
+            parent = next((row for row in items if row.id == inst.parent_id), None)
+            if parent:
+                parent_spec = specs.get(parent.gear_id) if parent else None
+                allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
+                if allowed and spec.get("category") not in allowed:
+                    warnings.append(f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません")
+                    continue
+            elif inst.parent_id in host_ids:
+                if spec.get("category") not in {"Sensors", "Sensor Housings"}:
+                    warnings.append(f"{spec['name']} は車両に装着できません")
+                    continue
+            else:
+                warnings.append(f"{spec['name']} は本体に装着してください")
+                continue
+        kept.append(inst)
+    have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
+    extra: list[GearInstall] = []
+    for inst in kept:
+        if inst.parent_id:
+            continue
+        spec = specs.get(inst.gear_id) or {}
+        for gift in spec.get("included") or []:
+            child = by_name.get((gift.get("name"), gift.get("category") or "")) or next(
+                (item for item in specs.values() if item["name"] == gift.get("name")),
+                None,
+            )
+            if not child or (inst.id, child["name"]) in have:
+                continue
+            override = str(gift.get("capacity") or "").strip()
+            _plugin, expr = parse_capacity(override) if override else (False, "")
+            extra.append(
+                GearInstall(
+                    gear_id=child["id"],
+                    parent_id=inst.id,
+                    included=True,
+                    rating=int(gift.get("rating") or 1),
+                    capacity_override=expr if override else None,
+                )
+            )
+            have.add((inst.id, child["name"]))
+    state.sensors = kept + extra
+    return warnings
+
+
+def _plugin_capacity_expr(spec: dict[str, Any], inst: GearInstall, host_ids: set[str] | None = None) -> tuple[bool, str, float]:
+    rating = int(inst.rating or 1)
+    if inst.capacity_override is not None:
+        return True, str(inst.capacity_override), _capacity_value(inst.capacity_override, rating)
+    if inst.parent_id and inst.parent_id in (host_ids or set()):
+        expr = str(spec.get("host_capacity") or spec.get("capacity") or "")
+        return False, expr, _capacity_value(expr, rating)
+    if inst.parent_id:
+        expr = str(spec.get("plugin_capacity") or spec.get("capacity") or "")
+        return True, expr, _capacity_value(expr, rating)
+    if spec.get("plugin"):
+        expr = str(spec.get("capacity") or "")
+        return True, expr, _capacity_value(expr, rating)
+    expr = str(spec.get("host_capacity") or spec.get("capacity") or "")
+    return False, expr, _capacity_value(expr, rating)
+
+
+def _resolve_sensors(state: CharacterState) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+    warnings = _ensure_sensors(state)
+    errors: list[str] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    specs = {item["id"]: item for item in catalog().get("sensors") or []}
+    public: list[dict[str, Any]] = []
+    kept: list[GearInstall] = []
+    nuyen = 0
+    for inst in state.sensors:
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        plugin, _expr, cap_value = _plugin_capacity_expr(
+            spec,
+            inst,
+            {row.id for row in list(state.drones or []) + list(state.vehicles or [])},
+        )
+        cap_cost = cap_value if plugin else 0.0
+        cap_max = 0.0 if plugin else cap_value
+        nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+        if nodes:
+            bonus_sources.append((spec["name"], nodes))
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "parent_id": inst.parent_id,
+                "included": bool(inst.included),
+                "plugin": plugin,
+                "nuyen": cost,
+                "capacity_cost": cap_cost,
+                "capacity_used": 0.0,
+                "capacity_max": cap_max,
+                "addoncategories": list(spec.get("addoncategories") or []),
+                "requireparent": bool(spec.get("requireparent")),
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        if item["parent_id"]:
+            children.setdefault(item["parent_id"], []).append(item)
+    for item in public:
+        kids = children.get(item["id"]) or []
+        used = round(sum(float(kid.get("capacity_cost") or 0) for kid in kids), 4)
+        item["capacity_used"] = int(used) if used == int(used) else used
+        cap_max = float(item.get("capacity_max") or 0)
+        if cap_max == int(cap_max):
+            item["capacity_max"] = int(cap_max)
+        if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
+            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{cap_max:g}）")
+    state.sensors = kept
+    return public, nuyen, warnings, errors, bonus_sources
+
+
+def _has_weapon_constraints(cons: dict[str, Any] | None) -> bool:
+    if not cons:
+        return False
+    return bool(
+        cons.get("names")
+        or cons.get("categories")
+        or cons.get("types")
+        or cons.get("conceal_lte") is not None
+    )
+
+
+def _weapon_matches_or(weapon: dict[str, Any], cons: dict[str, Any] | None) -> bool:
+    if not _has_weapon_constraints(cons):
+        return False
+    cons = cons or {}
+    name = str(weapon.get("name") or "")
+    category = str(weapon.get("category") or "")
+    typ = str(weapon.get("type") or "")
+    try:
+        conceal = int(float(str(weapon.get("conceal") or "0")))
+    except ValueError:
+        conceal = 0
+    if name in (cons.get("names") or []):
+        return True
+    if category in (cons.get("categories") or []):
+        return True
+    if typ in (cons.get("types") or []):
+        return True
+    if cons.get("conceal_lte") is not None and conceal <= int(cons["conceal_lte"]):
+        return True
+    return False
+
+
+def accessory_fits_weapon(acc: dict[str, Any], weapon: dict[str, Any], installed_names: set[str]) -> bool:
+    required = acc.get("required") or {}
+    forbidden = acc.get("forbidden") or {}
+    if _has_weapon_constraints(required) and not _weapon_matches_or(weapon, required):
+        return False
+    if _weapon_matches_or(weapon, forbidden):
+        return False
+    for name in forbidden.get("accessories") or []:
+        if name in installed_names:
+            return False
+    mounts = list(acc.get("mounts") or [])
+    weapon_mounts = set(weapon.get("mounts") or [])
+    if mounts and not any(mount in weapon_mounts or mount == "Internal" for mount in mounts):
+        return False
+    return True
+
+
+def _pick_accessory_mount(weapon_mounts: list[str], used: set[str], acc_mounts: list[str]) -> str | None:
+    if not acc_mounts:
+        return ""
+    options = [mount for mount in acc_mounts if mount in weapon_mounts or mount == "Internal"]
+    if not options:
+        return None
+    for mount in options:
+        if mount not in used:
+            return mount
+    return None
+
+
+def _leading_int(raw: str | None) -> int | None:
+    match = re.match(r"^([+-]?\d+)", str(raw or "").strip())
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _add_leading_int(raw: str | None, delta: int) -> str:
+    text = str(raw or "").strip()
+    if not delta:
+        return text
+    match = re.match(r"^([+-]?\d+)(.*)$", text)
+    if not match:
+        return text
+    return f"{int(match.group(1)) + delta}{match.group(2)}"
+
+
+def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
+    by_name = {item["name"]: item for item in specs.values()}
+    weapons = {item.id: item for item in state.weapons}
+    weapon_specs = {item["id"]: item for item in catalog().get("weapons") or []}
+    kept: list[WeaponAccessoryInstall] = []
+    for inst in list(state.weapon_accessories or []):
+        spec = specs.get(inst.accessory_id)
+        parent = weapons.get(inst.parent_id or "")
+        if not spec or not parent:
+            if spec:
+                warnings.append(f"{spec['name']} は武器に装着してください")
+            continue
+        kept.append(inst)
+    have_included = {
+        (row.parent_id, (specs.get(row.accessory_id) or {}).get("name"))
+        for row in kept
+        if row.included
+    }
+    extra: list[WeaponAccessoryInstall] = []
+    for weapon in state.weapons:
+        wspec = weapon_specs.get(weapon.weapon_id) or {}
+        for gift_name in wspec.get("included") or []:
+            child = by_name.get(gift_name)
+            if not child or (weapon.id, child["name"]) in have_included:
+                continue
+            extra.append(
+                WeaponAccessoryInstall(
+                    accessory_id=child["id"],
+                    parent_id=weapon.id,
+                    included=True,
+                )
+            )
+            have_included.add((weapon.id, child["name"]))
+    preferred: dict[tuple[str, str], WeaponAccessoryInstall] = {}
+    for inst in kept + extra:
+        key = (inst.parent_id or "", inst.accessory_id)
+        prev = preferred.get(key)
+        if prev is None or (inst.included and not prev.included):
+            preferred[key] = inst
+    state.weapon_accessories = list(preferred.values())
+    return warnings
+
+
+def _resolve_weapon_accessories(
+    state: CharacterState,
+    weapons: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
+    warnings = _ensure_weapon_accessories(state)
+    errors: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
+    weapon_specs = {item["id"]: item for item in catalog().get("weapons") or []}
+    qty_by_id = {item.id: max(1, int(item.qty or 1)) for item in state.weapons}
+    public: list[dict[str, Any]] = []
+    kept: list[WeaponAccessoryInstall] = []
+    nuyen = 0
+    children: dict[str, list[WeaponAccessoryInstall]] = {}
+    for inst in list(state.weapon_accessories or []):
+        children.setdefault(inst.parent_id or "", []).append(inst)
+
+    for weapon in weapons:
+        used_mounts: set[str] = set()
+        installed_names = {
+            str((specs.get(row.accessory_id) or {}).get("name") or "")
+            for row in children.get(weapon["id"]) or []
+        }
+        for inst in children.get(weapon["id"]) or []:
+            spec = specs.get(inst.accessory_id)
+            if not spec:
+                continue
+            rating = _clamp_rating(spec, inst.rating)
+            inst.rating = rating
+            names_without = installed_names - {spec["name"]}
+            if not accessory_fits_weapon(spec, weapon, names_without):
+                warnings.append(f"{spec['name']} は {weapon['name']} に装着できません")
+                continue
+            mount = _pick_accessory_mount(list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or []))
+            if mount is None:
+                errors.append(f"{weapon['name']} のマウントが足りません（{spec['name']}）")
+                mount = ""
+            elif mount:
+                used_mounts.add(mount)
+            inst.mount = mount
+            parent_unit = int(eval_formula(str((weapon_specs.get(str(weapon.get("weapon_id") or "")) or {}).get("cost") or "0"), 1, 0))
+            cost = 0 if inst.included else int(
+                eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Weapon Cost": parent_unit})
+            )
+            cost *= int(qty_by_id.get(weapon["id"]) or 1)
+            nuyen += cost
+            acc_bonus = {
+                "accuracy": _leading_int(spec.get("accuracy")) or 0,
+                "rc": _leading_int(spec.get("rc")) or 0,
+                "conceal": _leading_int(spec.get("conceal")) or 0,
+                "damage": _leading_int(spec.get("damage")) or 0,
+                "ap": _leading_int(spec.get("ap")) or 0,
+                "reach": _leading_int(spec.get("reach")) or 0,
+            }
+            weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
+            weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
+            weapon["conceal"] = _add_leading_int(str(weapon.get("conceal") or "0") or "0", acc_bonus["conceal"])
+            weapon["damage"] = _add_leading_int(str(weapon.get("damage") or ""), acc_bonus["damage"])
+            weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), acc_bonus["ap"])
+            if acc_bonus["reach"]:
+                weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0") or "0", acc_bonus["reach"])
+            weapon["nuyen"] = int(weapon.get("nuyen") or 0) + cost
+            kept.append(inst)
+            public.append(
+                {
+                    "id": inst.id,
+                    "accessory_id": spec["id"],
+                    "name": spec["name"],
+                    "parent_id": inst.parent_id,
+                    "included": bool(inst.included),
+                    "mount": mount,
+                    "rating": rating,
+                    "rating_max": int(spec.get("maxrating") or 0),
+                    "nuyen": cost,
+                    "accuracy": spec.get("accuracy") or "",
+                    "rc": spec.get("rc") or "",
+                    "avail": spec.get("avail") or "",
+                    "source": spec.get("source") or "",
+                    "page": spec.get("page") or "",
+                }
+            )
+        weapon["accessories"] = [item for item in public if item.get("parent_id") == weapon["id"]]
+        weapon["mounts_used"] = sorted(used_mounts)
+
+    state.weapon_accessories = kept
+    return public, nuyen, warnings, errors
+
+
+def _resolve_apps(state: CharacterState, commlinks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int, list[str]]:
+    warnings: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("apps") or []}
+    hosts = {str(row.get("id") or ""): row for row in commlinks}
+    kept: list[GearInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    for inst in list(state.apps or []):
+        spec = specs.get(inst.gear_id)
+        if not spec:
+            continue
+        host = hosts.get(inst.parent_id or "")
+        if not inst.parent_id or not host:
+            warnings.append(f"{spec['name']} は通信機に装着してください")
+            continue
+        extra_kind = str(spec.get("extra_kind") or "")
+        extra = (inst.extra or "").strip()
+        options = gear_extra_options(spec)
+        if extra_kind == "skill":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルを選んでください")
+        elif extra_kind == "group":
+            if extra and extra not in options:
+                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                extra = ""
+            if not extra:
+                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+        elif extra_kind == "text" and not extra:
+            warnings.append(f"{spec['name']} の対象を入力してください")
+        inst.extra = extra or None
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "label": _program_label(spec, extra),
+                "category": spec.get("category") or "",
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "parent_id": inst.parent_id,
+                "extra": extra,
+                "needs_extra": bool(extra_kind),
+                "extra_kind": extra_kind,
+                "extra_options": options,
+                "nuyen": cost,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    for row in commlinks:
+        kids = children.get(str(row.get("id") or "")) or []
+        row["apps"] = kids
+        keys = [f"{kid['name']}|{kid.get('extra') or ''}" for kid in kids]
+        if len(keys) != len(set(keys)):
+            warnings.append(f"{row['name']} に同じアプリが重複しています")
+    state.apps = kept
+    return public, nuyen, warnings
+
+
+def _leading_vehicle_stat(raw: str | None) -> int:
+    match = re.match(r"^([+-]?\d+)", str(raw or "").strip())
+    if not match:
+        return 0
+    return int(match.group(1))
+
+
+def _format_vehicle_stat(base: str, current: int, offroad: int | None = None) -> str:
+    parts = str(base or "").split("/")
+    if len(parts) > 1 or offroad is not None:
+        off = offroad if offroad is not None else _leading_vehicle_stat(parts[1] if len(parts) > 1 else "")
+        return f"{current}/{off}"
+    return str(current)
+
+
+def _vehicle_extras(spec: dict[str, Any], stats: dict[str, int], cost: int) -> dict[str, int | float]:
+    return {
+        "Body": stats.get("body") or 0,
+        "body": stats.get("body") or 0,
+        "Armor": stats.get("armor") or 0,
+        "Handling": stats.get("handling") or 0,
+        "Speed": stats.get("speed") or 0,
+        "Acceleration": stats.get("accel") or 0,
+        "Sensor": stats.get("sensor") or 0,
+        "Pilot": stats.get("pilot") or 0,
+        "Seats": stats.get("seats") or 0,
+        "Vehicle Cost": cost,
+    }
+
+
+def vehicle_matches(vehicle: dict[str, Any], cons: dict[str, Any] | None) -> bool:
+    cons = cons or {}
+    names = list(cons.get("names") or [])
+    contains = list(cons.get("category_contains") or [])
+    equals = list(cons.get("category_equals") or [])
+    body_lte = cons.get("body_lte")
+    body_gte = cons.get("body_gte")
+    if not names and not contains and not equals and body_lte is None and body_gte is None:
+        return True
+    name = str(vehicle.get("name") or "")
+    category = str(vehicle.get("category") or "")
+    body = _leading_vehicle_stat(str(vehicle.get("body") or "0"))
+    if names and name not in names:
+        return False
+    if contains and not any(part in category for part in contains):
+        return False
+    if equals and category not in equals:
+        return False
+    if body_lte is not None and body > int(body_lte):
+        return False
+    if body_gte is not None and body < int(body_gte):
+        return False
+    return True
+
+
+def mod_fits_vehicle(mod: dict[str, Any], vehicle: dict[str, Any]) -> bool:
+    if not vehicle_matches(vehicle, mod.get("required")):
+        return False
+    forbidden = mod.get("forbidden") or {}
+    has_forbidden = bool(
+        forbidden.get("names")
+        or forbidden.get("category_contains")
+        or forbidden.get("category_equals")
+        or forbidden.get("body_lte") is not None
+        or forbidden.get("body_gte") is not None
+    )
+    if has_forbidden and vehicle_matches(vehicle, forbidden):
+        return False
+    return True
+
+
+def _apply_vehicle_bonus(stats: dict[str, int], nodes: list[dict[str, Any]], rating: int) -> None:
+    aliases = {
+        "handling": "handling",
+        "offroadhandling": "offroadhandling",
+        "speed": "speed",
+        "accel": "accel",
+        "offroadaccel": "offroadaccel",
+        "body": "body",
+        "armor": "armor",
+        "pilot": "pilot",
+        "sensor": "sensor",
+        "seats": "seats",
+    }
+    for node in substitute_rating(list(nodes or []), rating):
+        tag = str(node.get("tag") or "")
+        key = aliases.get(tag)
+        if not key:
+            continue
+        raw = str(node.get("value") or "").strip()
+        if raw.lower() == "rating":
+            stats[key] = int(rating)
+            continue
+        delta = int(eval_formula(raw, rating, 0))
+        if raw.startswith("+") or raw.startswith("-"):
+            stats[key] = int(stats.get(key) or 0) + delta
+        else:
+            stats[key] = delta
+
+
+def _clamp_vehicle_rating(spec: dict[str, Any], rating: int, extras: dict[str, int | float]) -> int:
+    max_expr = str(spec.get("maxrating_expr") or spec.get("maxrating") or "0")
+    min_expr = str(spec.get("minrating_expr") or spec.get("minrating") or "0")
+    max_rating = int(eval_formula(max_expr, rating or 1, 0, extras)) if max_expr else int(spec.get("maxrating") or 0)
+    if max_rating <= 0:
+        return 1
+    min_rating = int(eval_formula(min_expr, rating or 1, 1, extras)) if min_expr else 1
+    min_rating = max(1, min_rating)
+    return max(min_rating, min(max_rating, int(rating or min_rating)))
+
+
+def _find_mount_part(name: str, category: str, prefer_source: str = "") -> dict[str, Any] | None:
+    parts = [item for item in catalog().get("weapon_mounts") or [] if item.get("category") == category]
+    if prefer_source == "SR5":
+        tagged = next((item for item in parts if item["name"] == f"{name} [SR5]"), None)
+        if tagged:
+            return tagged
+    exact = next((item for item in parts if item["name"] == name), None)
+    if exact:
+        return exact
+    return next((item for item in parts if item["name"] == f"{name} [SR5]"), None)
+
+
+def _default_mount_parts(size: dict[str, Any]) -> dict[str, dict[str, Any] | None]:
+    parts = catalog().get("weapon_mounts") or []
+
+    def pick(category: str, names: list[str]) -> dict[str, Any] | None:
+        for name in names:
+            found = next((item for item in parts if item.get("category") == category and item["name"] == name), None)
+            if found:
+                return found
+        return None
+
+    required = size.get("required_parts") or {}
+    if any(name == "None" for name in (required.get("control") or [])):
+        return {
+            "visibility": pick("Visibility", ["None"]),
+            "flexibility": pick("Flexibility", ["None"]),
+            "control": pick("Control", ["None"]),
+        }
+    if size.get("source") == "SR5":
+        req_vis = list(required.get("visibility") or ["External [SR5]"])
+        req_flex = list(required.get("flexibility") or ["Flexible [SR5]"])
+        req_ctrl = list(required.get("control") or ["Remote [SR5]"])
+        return {
+            "visibility": pick("Visibility", req_vis),
+            "flexibility": pick("Flexibility", req_flex),
+            "control": pick("Control", req_ctrl),
+        }
+    return {
+        "visibility": pick("Visibility", ["External", "External [SR5]"]),
+        "flexibility": pick("Flexibility", ["Fixed", "Flexible [SR5]"]),
+        "control": pick("Control", ["Remote", "Remote [SR5]"]),
+    }
+
+
+R5_MOD_SLOT_CATEGORIES = (
+    "Powertrain",
+    "Protection",
+    "Weapons",
+    "Body",
+    "Electromagnetic",
+    "Cosmetic",
+)
+R5_SLOT_LABELS = {
+    "Powertrain": "パワートレイン",
+    "Protection": "防護",
+    "Weapons": "武器",
+    "Body": "ボディ",
+    "Electromagnetic": "電磁",
+    "Cosmetic": "外装",
+}
+R5_SLOT_ADD_KEYS = {
+    "Powertrain": "powertrainmodslots",
+    "Protection": "protectionmodslots",
+    "Weapons": "weaponmodslots",
+    "Body": "bodymodslots",
+    "Electromagnetic": "electromagneticmodslots",
+    "Cosmetic": "cosmeticmodslots",
+}
+
+
+def _host_is_drone(row: dict[str, Any]) -> bool:
+    return str(row.get("category") or "").startswith("Drones")
+
+
+def _add_vehicle_slot_use(parent: dict[str, Any], slots: int, category: str, included: bool) -> None:
+    if included:
+        return
+    used = max(0, int(slots))
+    if _host_is_drone(parent):
+        parent["slots_used"] = int(parent.get("slots_used") or 0) + used
+        return
+    if category not in R5_SLOT_ADD_KEYS:
+        return
+    tracks = parent.setdefault("_slot_used", {})
+    tracks[category] = int(tracks.get(category) or 0) + used
+
+
+def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    for row in hosts:
+        body = int((row.get("stats") or {}).get("body") or _leading_vehicle_stat(str(row.get("body") or "0")))
+        if _host_is_drone(row):
+            listed = row.get("modslots")
+            maximum = int(listed) if listed is not None else body
+            used = int(row.get("slots_used") or 0)
+            row["slots_max"] = maximum
+            row["slot_tracks"] = []
+            if used > maximum:
+                errors.append(f"{row['name']} の改造スロット超過（{used}/{maximum}）")
+            continue
+        used_map = row.pop("_slot_used", None) or {}
+        tracks: list[dict[str, Any]] = []
+        total_used = 0
+        for category in R5_MOD_SLOT_CATEGORIES:
+            extra = int(row.get(R5_SLOT_ADD_KEYS[category]) or 0)
+            maximum = max(0, body + extra)
+            used = int(used_map.get(category) or 0)
+            total_used += used
+            tracks.append(
+                {
+                    "category": category,
+                    "label": R5_SLOT_LABELS[category],
+                    "used": used,
+                    "max": maximum,
+                }
+            )
+            if used > maximum:
+                errors.append(
+                    f"{row['name']} の{R5_SLOT_LABELS[category]}スロット超過（{used}/{maximum}）"
+                )
+        row["slot_tracks"] = tracks
+        row["slots_used"] = total_used
+        row["slots_max"] = body
+    return errors
+
+
+def _iter_vehicle_hosts(state: CharacterState) -> list[tuple[GearInstall, dict[str, Any]]]:
+    drones = {item["id"]: item for item in catalog().get("drones") or []}
+    vehicles = {item["id"]: item for item in catalog().get("vehicles") or []}
+    out: list[tuple[GearInstall, dict[str, Any]]] = []
+    for inst in list(state.drones or []):
+        spec = drones.get(inst.gear_id)
+        if spec:
+            out.append((inst, spec))
+    for inst in list(state.vehicles or []):
+        spec = vehicles.get(inst.gear_id)
+        if spec:
+            out.append((inst, spec))
+    return out
+
+
+def _ensure_drone_equipment(state: CharacterState) -> None:
+    sensors = {item["id"]: item for item in catalog().get("sensors") or []}
+    sensors_by_name = {item["name"]: item for item in sensors.values()}
+    gear = {item["id"]: item for item in catalog().get("gear") or []}
+    gear_by_name = {item["name"]: item for item in gear.values()}
+    mods = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
+    mods_by_name = {item["name"]: item for item in mods.values()}
+    have_sensors = {(row.parent_id, (sensors.get(row.gear_id) or {}).get("name")) for row in state.sensors or []}
+    extra_sensors: list[GearInstall] = []
+    have_gear = {(row.parent_id, (gear.get(row.gear_id) or {}).get("name")) for row in state.gear or []}
+    extra_gear: list[GearInstall] = []
+    for host, spec in _iter_vehicle_hosts(state):
+        for gift in spec.get("included_gears") or []:
+            name = gift.get("name") or ""
+            child = sensors_by_name.get(name)
+            if child:
+                if (host.id, child["name"]) in have_sensors:
+                    continue
+                extra_sensors.append(
+                    GearInstall(
+                        gear_id=child["id"],
+                        parent_id=host.id,
+                        included=True,
+                        rating=int(gift.get("rating") or 1),
+                    )
+                )
+                have_sensors.add((host.id, child["name"]))
+                continue
+            child = gear_by_name.get(name)
+            if not child or (host.id, child["name"]) in have_gear:
+                continue
+            extra_gear.append(
+                GearInstall(
+                    gear_id=child["id"],
+                    parent_id=host.id,
+                    included=True,
+                    rating=int(gift.get("rating") or 1),
+                )
+            )
+            have_gear.add((host.id, child["name"]))
+    if extra_sensors:
+        state.sensors = list(state.sensors or []) + extra_sensors
+    if extra_gear:
+        state.gear = list(state.gear or []) + extra_gear
+
+    have_mods = {(row.parent_id, (mods.get(row.mod_id) or {}).get("name")) for row in state.vehicle_mods or []}
+    extra_mods: list[VehicleModInstall] = []
+    for host, spec in _iter_vehicle_hosts(state):
+        for name in spec.get("included_mods") or []:
+            child = mods_by_name.get(name)
+            if not child or (host.id, child["name"]) in have_mods:
+                continue
+            extra_mods.append(VehicleModInstall(mod_id=child["id"], parent_id=host.id, included=True))
+            have_mods.add((host.id, child["name"]))
+    if extra_mods:
+        state.vehicle_mods = list(state.vehicle_mods or []) + extra_mods
+
+    have_mounts = {
+        (row.parent_id, row.size_id, row.visibility_id, row.flexibility_id, row.control_id)
+        for row in state.weapon_mounts or []
+    }
+    extra_mounts: list[WeaponMountInstall] = []
+    for host, spec in _iter_vehicle_hosts(state):
+        source = str(spec.get("source") or "")
+        for gift in spec.get("included_weaponmounts") or []:
+            size = _find_mount_part(gift.get("size") or "", "Size", source)
+            vis = _find_mount_part(gift.get("visibility") or "", "Visibility", source)
+            flex = _find_mount_part(gift.get("flexibility") or "", "Flexibility", source)
+            ctrl = _find_mount_part(gift.get("control") or "", "Control", source)
+            if not size:
+                continue
+            key = (host.id, size["id"], vis["id"] if vis else "", flex["id"] if flex else "", ctrl["id"] if ctrl else "")
+            if key in have_mounts:
+                continue
+            extra_mounts.append(
+                WeaponMountInstall(
+                    parent_id=host.id,
+                    size_id=size["id"],
+                    visibility_id=vis["id"] if vis else "",
+                    flexibility_id=flex["id"] if flex else "",
+                    control_id=ctrl["id"] if ctrl else "",
+                    included=True,
+                    allowedweapons=gift.get("allowedweapons") or "",
+                )
+            )
+            have_mounts.add(key)
+    if extra_mounts:
+        state.weapon_mounts = list(state.weapon_mounts or []) + extra_mounts
+
+
+def _resolve_vehicle_mods(
+    state: CharacterState,
+    drones: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
+    warnings: list[str] = []
+    errors: list[str] = []
+    specs = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
+    by_drone = {str(row.get("id") or ""): row for row in drones}
+    kept: list[VehicleModInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    for inst in list(state.vehicle_mods or []):
+        spec = specs.get(inst.mod_id)
+        parent = by_drone.get(inst.parent_id or "")
+        if not spec or not parent:
+            if spec:
+                warnings.append(f"{spec['name']} は車両に装着してください")
+            continue
+        if not inst.included and not mod_fits_vehicle(spec, parent):
+            warnings.append(f"{spec['name']} は {parent['name']} に装着できません")
+            continue
+        extras = _vehicle_extras(parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or parent.get("nuyen") or 0))
+        rating = _clamp_vehicle_rating(spec, inst.rating, extras) if int(spec.get("maxrating") or 0) > 0 or spec.get("maxrating_expr") else 1
+        inst.rating = rating
+        cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras))
+        slots = int(eval_formula(str(spec.get("slots") or "0"), rating, 0, extras))
+        nuyen += cost
+        if spec.get("bonus"):
+            _apply_vehicle_bonus(parent.setdefault("stats", {}), list(spec.get("bonus") or []), rating)
+        parent["nuyen"] = int(parent.get("nuyen") or 0) + cost
+        _add_vehicle_slot_use(parent, slots, str(spec.get("category") or ""), bool(inst.included))
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "mod_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "parent_id": inst.parent_id,
+                "included": bool(inst.included),
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "slots": slots,
+                "nuyen": cost,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    for row in drones:
+        row["mods"] = children.get(str(row.get("id") or "")) or []
+    state.vehicle_mods = kept
+    return public, nuyen, warnings, errors
+
+
+def _resolve_weapon_mounts(
+    state: CharacterState,
+    drones: list[dict[str, Any]],
+    weapons: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
+    warnings: list[str] = []
+    errors: list[str] = []
+    parts = {item["id"]: item for item in catalog().get("weapon_mounts") or []}
+    by_drone = {str(row.get("id") or ""): row for row in drones}
+    weapons_by_id = {str(row.get("id") or ""): row for row in weapons}
+    kept: list[WeaponMountInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    used_weapons: set[str] = set()
+    for inst in list(state.weapon_mounts or []):
+        parent = by_drone.get(inst.parent_id or "")
+        size = parts.get(inst.size_id)
+        if not parent or not size or size.get("category") != "Size":
+            if size:
+                warnings.append(f"{size['name']} は車両に装着してください")
+            continue
+        if not inst.included and not vehicle_matches(parent, size.get("required")):
+            warnings.append(f"{size['name']} は {parent['name']} に装着できません")
+            continue
+        defaults = _default_mount_parts(size)
+        vis = parts.get(inst.visibility_id) or defaults.get("visibility")
+        flex = parts.get(inst.flexibility_id) or defaults.get("flexibility")
+        ctrl = parts.get(inst.control_id) or defaults.get("control")
+        inst.visibility_id = str((vis or {}).get("id") or "")
+        inst.flexibility_id = str((flex or {}).get("id") or "")
+        inst.control_id = str((ctrl or {}).get("id") or "")
+        bundle = [part for part in (size, vis, flex, ctrl) if part]
+        extras = _vehicle_extras(parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or 0))
+        cost = 0 if inst.included else sum(int(eval_formula(str(part.get("cost") or "0"), 1, 0, extras)) for part in bundle)
+        slots = sum(int(eval_formula(str(part.get("slots") or "0"), 1, 0, extras)) for part in bundle)
+        nuyen += cost
+        parent["nuyen"] = int(parent.get("nuyen") or 0) + cost
+        _add_vehicle_slot_use(parent, slots, "Weapons", bool(inst.included))
+        weapon = weapons_by_id.get(inst.weapon_install_id or "")
+        if inst.weapon_install_id and not weapon:
+            warnings.append(f"{parent['name']} の武器マウントに武器がありません")
+            inst.weapon_install_id = None
+        elif weapon and weapon["id"] in used_weapons:
+            warnings.append(f"{weapon['name']} は既に搭載されています")
+            weapon = None
+            inst.weapon_install_id = None
+        elif weapon:
+            allowed = (inst.allowedweapons or "").strip()
+            if allowed and weapon["name"] not in {part.strip() for part in allowed.split(",") if part.strip()}:
+                warnings.append(f"{weapon['name']} は {parent['name']} のマウントに搭載できません")
+                weapon = None
+                inst.weapon_install_id = None
+            else:
+                used_weapons.add(weapon["id"])
+                weapon["mounted_on"] = parent["id"]
+                weapon["mounted_label"] = parent["name"]
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "parent_id": inst.parent_id,
+                "size_id": inst.size_id,
+                "visibility_id": inst.visibility_id,
+                "flexibility_id": inst.flexibility_id,
+                "control_id": inst.control_id,
+                "included": bool(inst.included),
+                "name": size["name"],
+                "label": " / ".join(part["name"] for part in bundle),
+                "slots": slots,
+                "nuyen": cost,
+                "weapon_install_id": inst.weapon_install_id,
+                "weapon_name": weapon["name"] if weapon else "",
+                "allowedweapons": inst.allowedweapons or "",
+                "source": size.get("source") or "",
+                "page": size.get("page") or "",
+            }
+        )
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in public:
+        children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    for row in drones:
+        row["weapon_mounts"] = children.get(str(row.get("id") or "")) or []
+    errors.extend(_finalize_vehicle_slots(drones))
+    state.weapon_mounts = kept
+    return public, nuyen, warnings, errors
+
+
+def _resolve_drones(state: CharacterState, kind: str = "drones") -> tuple[list[dict[str, Any]], int]:
+    kept: list[GearInstall] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    for inst in list(getattr(state, kind) or []):
+        spec = _item_by_id(kind, inst.gear_id)
+        if not spec:
+            continue
+        cost = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
+        nuyen += cost
+        stats = {
+            "handling": _leading_vehicle_stat(spec.get("handling")),
+            "speed": _leading_vehicle_stat(spec.get("speed")),
+            "accel": _leading_vehicle_stat(spec.get("accel")),
+            "body": _leading_vehicle_stat(spec.get("body")),
+            "armor": _leading_vehicle_stat(spec.get("armor")),
+            "pilot": _leading_vehicle_stat(spec.get("pilot")),
+            "sensor": _leading_vehicle_stat(spec.get("sensor")),
+            "seats": _leading_vehicle_stat(spec.get("seats")),
+        }
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "handling": spec.get("handling") or "",
+                "speed": spec.get("speed") or "",
+                "accel": spec.get("accel") or "",
+                "body": spec.get("body") or "",
+                "armor": spec.get("armor") or "",
+                "pilot": spec.get("pilot") or "",
+                "sensor": spec.get("sensor") or "",
+                "seats": spec.get("seats") or "",
+                "stats": stats,
+                "base_nuyen": cost,
+                "nuyen": cost,
+                "slots_used": 0,
+                "slots_max": stats["body"],
+                "slot_tracks": [],
+                "modslots": spec.get("modslots"),
+                "powertrainmodslots": int(spec.get("powertrainmodslots") or 0),
+                "protectionmodslots": int(spec.get("protectionmodslots") or 0),
+                "weaponmodslots": int(spec.get("weaponmodslots") or 0),
+                "bodymodslots": int(spec.get("bodymodslots") or 0),
+                "electromagneticmodslots": int(spec.get("electromagneticmodslots") or 0),
+                "cosmeticmodslots": int(spec.get("cosmeticmodslots") or 0),
+                "mods": [],
+                "weapon_mounts": [],
+                "sensors": [],
+                "gear": [],
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    setattr(state, kind, kept)
+    return public, nuyen
+
+
+def _publish_drone_stats(drones: list[dict[str, Any]], sensors: list[dict[str, Any]]) -> None:
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in sensors:
+        if item.get("parent_id"):
+            children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    for row in drones:
+        stats = row.get("stats") or {}
+        row["handling"] = _format_vehicle_stat(str(row.get("handling") or ""), int(stats.get("handling") or 0))
+        row["speed"] = str(stats.get("speed") or row.get("speed") or "")
+        row["accel"] = str(stats.get("accel") or row.get("accel") or "")
+        row["body"] = str(stats.get("body") or row.get("body") or "")
+        row["armor"] = str(stats.get("armor") or row.get("armor") or "")
+        row["pilot"] = str(stats.get("pilot") or row.get("pilot") or "")
+        row["sensor"] = str(stats.get("sensor") or row.get("sensor") or "")
+        row["seats"] = str(stats.get("seats") or row.get("seats") or "")
+        row["sensors"] = children.get(str(row.get("id") or "")) or []
+        row.pop("stats", None)
+        row.pop("base_nuyen", None)
+        row.pop("modslots", None)
+        row.pop("powertrainmodslots", None)
+        row.pop("protectionmodslots", None)
+        row.pop("weaponmodslots", None)
+        row.pop("bodymodslots", None)
+        row.pop("electromagneticmodslots", None)
+        row.pop("cosmeticmodslots", None)
+
+
+def resolve_gear(state: CharacterState) -> dict[str, Any]:
+    warnings: list[str] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    nuyen = 0
+    armor_items: list[dict[str, Any]] = []
+    weapons: list[dict[str, Any]] = []
+    commlinks: list[dict[str, Any]] = []
+    cyberdecks: list[dict[str, Any]] = []
+    rccs: list[dict[str, Any]] = []
+    lifestyles: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    kept_armor: list[ArmorInstall] = []
+    for inst in state.armor:
+        spec = _item_by_id("armor", inst.armor_id)
+        if not spec:
+            continue
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        inst.equipped = bool(inst.equipped)
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
+        if inst.equipped:
+            nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+            if nodes:
+                bonus_sources.append((spec["name"], nodes))
+        kept_armor.append(inst)
+        armor_items.append(
+            {
+                "id": inst.id,
+                "armor_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "Armor",
+                "armor": spec.get("armor") or "0",
+                "armor_value": value,
+                "additive": additive,
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "equipped": inst.equipped,
+                "nuyen": cost,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+                "contributes": 0,
+                "armorcapacity": spec.get("armorcapacity") or "",
+                "addmodcategories": list(spec.get("addmodcategories") or []),
+                "mods": [],
+                "capacity_used": 0,
+                "capacity_max": 0,
+            }
+        )
+    state.armor = kept_armor
+    armor_mods, mod_nuyen, mod_warns, mod_errors, mod_bonus = _resolve_armor_mods(state, armor_items)
+    nuyen += mod_nuyen
+    warnings.extend(mod_warns)
+    errors.extend(mod_errors)
+    bonus_sources.extend(mod_bonus)
+    worn_armor, worn_name, worn_warns = _recompute_worn_armor(armor_items)
+    warnings.extend(worn_warns)
+
+    kept_weapons: list[WeaponInstall] = []
+    for inst in state.weapons:
+        spec = _item_by_id("weapons", inst.weapon_id)
+        if not spec:
+            continue
+        qty = max(1, int(inst.qty or 1))
+        inst.qty = qty
+        unit = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
+        cost = unit * qty
+        nuyen += cost
+        kept_weapons.append(inst)
+        weapons.append(
+            {
+                "id": inst.id,
+                "weapon_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "",
+                "type": spec.get("type") or "",
+                "accuracy": spec.get("accuracy") or "",
+                "reach": spec.get("reach") or "",
+                "damage": spec.get("damage") or "",
+                "ap": spec.get("ap") or "",
+                "mode": spec.get("mode") or "",
+                "rc": spec.get("rc") or "",
+                "ammo": spec.get("ammo") or "",
+                "conceal": spec.get("conceal") or "",
+                "mounts": list(spec.get("mounts") or []),
+                "qty": qty,
+                "nuyen": cost,
+                "accessories": [],
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    state.weapons = kept_weapons
+    weapon_accessories, acc_nuyen, acc_warns, acc_errors = _resolve_weapon_accessories(state, weapons)
+    nuyen += acc_nuyen
+    warnings.extend(acc_warns)
+    errors.extend(acc_errors)
+
+    kept_links: list[CommlinkInstall] = []
+    for inst in state.commlinks:
+        spec = _item_by_id("commlinks", inst.gear_id)
+        if not spec:
+            continue
+        rating = _clamp_rating(spec, inst.rating)
+        inst.rating = rating
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        nuyen += cost
+        device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
+        processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
+        firewall = int(eval_formula(str(spec.get("firewall") or "0"), rating, 0))
+        kept_links.append(inst)
+        commlinks.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "device_rating": device,
+                "dataprocessing": processing,
+                "firewall": firewall,
+                "nuyen": cost,
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    state.commlinks = kept_links
+
+    kept_decks, cyberdecks, deck_nuyen = _resolve_matrix_devices("cyberdecks", list(state.cyberdecks or []))
+    state.cyberdecks = kept_decks
+    nuyen += deck_nuyen
+    kept_rccs, rccs, rcc_nuyen = _resolve_matrix_devices("rccs", list(state.rccs or []))
+    state.rccs = kept_rccs
+    nuyen += rcc_nuyen
+    optics, optic_nuyen, optic_warns, optic_errors, optic_bonus = _resolve_optics(state)
+    nuyen += optic_nuyen
+    warnings.extend(optic_warns)
+    errors.extend(optic_errors)
+    bonus_sources.extend(optic_bonus)
+    programs, prog_nuyen, prog_warns = _resolve_programs(state, cyberdecks, rccs)
+    nuyen += prog_nuyen
+    warnings.extend(prog_warns)
+    apps, app_nuyen, app_warns = _resolve_apps(state, commlinks)
+    nuyen += app_nuyen
+    warnings.extend(app_warns)
+    drones, drone_nuyen = _resolve_drones(state, "drones")
+    nuyen += drone_nuyen
+    vehicles, vehicle_nuyen = _resolve_drones(state, "vehicles")
+    nuyen += vehicle_nuyen
+    hosts = drones + vehicles
+    _ensure_drone_equipment(state)
+    vehicle_mods, mod_nuyen, mod_warns, mod_errors = _resolve_vehicle_mods(state, hosts)
+    nuyen += mod_nuyen
+    warnings.extend(mod_warns)
+    errors.extend(mod_errors)
+    weapon_mounts, mount_nuyen, mount_warns, mount_errors = _resolve_weapon_mounts(state, hosts, weapons)
+    nuyen += mount_nuyen
+    warnings.extend(mount_warns)
+    errors.extend(mount_errors)
+    sensors, sensor_nuyen, sensor_warns, sensor_errors, sensor_bonus = _resolve_sensors(state)
+    nuyen += sensor_nuyen
+    warnings.extend(sensor_warns)
+    errors.extend(sensor_errors)
+    bonus_sources.extend(sensor_bonus)
+    _publish_drone_stats(hosts, sensors)
+    gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(state, hosts)
+    nuyen += gear_nuyen
+    warnings.extend(gear_warns)
+    errors.extend(gear_errors)
+    bonus_sources.extend(gear_bonus)
+
+    kept_lifestyles: list[LifestyleInstall] = []
+    for inst in state.lifestyles:
+        spec = _item_by_id("lifestyles", inst.lifestyle_id)
+        if not spec:
+            continue
+        months = max(1, int(inst.months or 1))
+        inst.months = months
+        cost = int(spec.get("cost") or 0) * months
+        nuyen += cost
+        kept_lifestyles.append(inst)
+        lifestyles.append(
+            {
+                "id": inst.id,
+                "lifestyle_id": spec["id"],
+                "name": spec["name"],
+                "months": months,
+                "increment": spec.get("increment") or "month",
+                "monthly": int(spec.get("cost") or 0),
+                "nuyen": cost,
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    state.lifestyles = kept_lifestyles
+
+    primary_link = max(commlinks, key=lambda row: int(row.get("device_rating") or 0)) if commlinks else None
+    primary_deck = max(cyberdecks, key=lambda row: int(row.get("device_rating") or 0)) if cyberdecks else None
+    primary_rcc = max(rccs, key=lambda row: int(row.get("device_rating") or 0)) if rccs else None
+    primary_life = lifestyles[0] if lifestyles else None
+    return {
+        "warnings": warnings,
+        "errors": errors,
+        "bonus_sources": bonus_sources,
+        "nuyen": nuyen,
+        "armor": worn_armor,
+        "worn_name": worn_name,
+        "armor_items": armor_items,
+        "armor_mods": armor_mods,
+        "weapons": weapons,
+        "weapon_accessories": weapon_accessories,
+        "commlinks": commlinks,
+        "cyberdecks": cyberdecks,
+        "rccs": rccs,
+        "optics": optics,
+        "programs": programs,
+        "apps": apps,
+        "sensors": sensors,
+        "drones": drones,
+        "vehicles": vehicles,
+        "vehicle_mods": vehicle_mods,
+        "weapon_mounts": weapon_mounts,
+        "gear": gear_items,
+        "lifestyles": lifestyles,
+        "commlink": primary_link,
+        "cyberdeck": primary_deck,
+        "rcc": primary_rcc,
+        "lifestyle": primary_life,
+    }
+
+
+def _tradition_public(tradition: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not tradition:
+        return None
+    return {
+        "id": tradition["id"],
+        "name": tradition["name"],
+        "drain": tradition.get("drain") or "",
+        "drain_attrs": list(tradition.get("drain_attrs") or []),
+        "spirits": dict(tradition.get("spirits") or {}),
+        "source": tradition.get("source"),
+        "page": tradition.get("page"),
+    }
+
+
+def spirit_attributes(spec: dict[str, Any], force: int) -> dict[str, int]:
+    extras = {"F": int(force)}
+    out: dict[str, int] = {}
+    for key, expr in (spec.get("attributes") or {}).items():
+        value = int(eval_formula(str(expr or "F"), force, force, extras))
+        out[key] = value if key == "INI" else max(1, value)
+    return out
+
+
+def sprite_attributes(spec: dict[str, Any], level: int) -> dict[str, Any]:
+    extras = {"F": int(level)}
+    raw: dict[str, int] = {}
+    for key, expr in (spec.get("attributes") or {}).items():
+        value = int(eval_formula(str(expr or "F"), level, level, extras))
+        if key == "INI":
+            raw[key] = value
+        elif key in {"BOD", "AGI", "REA", "STR"}:
+            raw[key] = value
+        else:
+            raw[key] = max(1, value)
+    matrix = {
+        "attack": int(raw.get("CHA") or 0),
+        "sleaze": int(raw.get("INT") or 0),
+        "dataprocessing": int(raw.get("LOG") or 0),
+        "firewall": int(raw.get("WIL") or 0),
+        "initiative": int(raw.get("INI") or 0),
+    }
+    return {"attributes": raw, "matrix": matrix}
+
+
+def focus_bind_karma(name: str, force: int, focus_binding: list[dict[str, Any]]) -> int:
+    bind = int(force)
+    for mod in focus_binding:
+        if (mod.get("name") or "") != name:
+            continue
+        bind += int(mod.get("val") or 0)
+    return max(0, bind)
+
+
+def tradition_resist(tradition: dict[str, Any] | None, attrs: dict[str, int]) -> tuple[int, str]:
+    extras = {
+        key: int(attrs.get(key) or 1)
+        for key in ("WIL", "LOG", "INT", "CHA", "BOD", "AGI", "REA", "STR", "RES", "MAG")
+    }
+    formula = (tradition or {}).get("drain") or "{WIL} + {INT}"
+    keys = [key.upper() for key in re.findall(r"\{([A-Za-z]+)\}", str(formula))]
+    if not keys:
+        keys = ["WIL", "INT"]
+    value = int(eval_formula(formula, 1, sum(extras.get(k, 1) for k in keys), extras))
+    return value, "+".join(keys)
+
+
 def is_way_quality(name: str) -> bool:
     return bool(re.fullmatch(r"The .+ Way", (name or "").strip()))
 
@@ -219,13 +2380,143 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
     return kept, removed
 
 
+def quality_needs_extra(spec: dict[str, Any]) -> bool:
+    return bool(spec.get("needs_extra")) or any(
+        node.get("tag") == "selecttext" for node in (spec.get("bonus") or [])
+    )
+
+
+def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
+    tag = node.get("tag") or ""
+    children = list(node.get("children") or [])
+    if tag == "oneof":
+        return any(_requirement_item_met(child, ctx) for child in children) if children else True
+    if tag in {"allof", "group"}:
+        return all(_requirement_item_met(child, ctx) for child in children) if children else True
+    name = str(node.get("name") or "")
+    if tag == "quality":
+        return name in ctx["qualities"]
+    if tag == "metatype":
+        return name in ctx["metatypes"]
+    if tag == "metatypecategory":
+        return name in ctx["metatype_categories"]
+    if tag == "magenabled":
+        return bool(ctx["magenabled"])
+    if tag == "resenabled":
+        return bool(ctx["resenabled"])
+    if tag == "power":
+        return name in ctx["powers"]
+    if tag == "cyberware":
+        return name in ctx["cyberware"]
+    if tag == "bioware":
+        return name in ctx["bioware"]
+    if tag == "spell":
+        return name in ctx["spells"]
+    if tag == "tradition":
+        return name == ctx["tradition"]
+    if tag == "skill":
+        rating = int(node.get("val") or 1)
+        pool = ctx["knowledge"] if str(node.get("type") or "").lower() == "knowledge" else ctx["skills"]
+        return int(pool.get(name) or 0) >= rating
+    if tag == "ess":
+        value = float(node.get("value") or 0)
+        if value < 0:
+            return float(ctx["ess_lost"]) + 1e-9 >= abs(value)
+        return float(ctx["essence"]) + 1e-9 >= value
+    if tag == "gameplayoption":
+        return False
+    return False
+
+
+def requirement_tree_met(tree: list[dict[str, Any]] | None, ctx: dict[str, Any]) -> bool:
+    nodes = list(tree or [])
+    if not nodes:
+        return True
+    return all(_requirement_item_met(node, ctx) for node in nodes)
+
+
+def quality_requirement_context(
+    state: CharacterState,
+    talent: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    meta: dict[str, Any],
+    ess: float,
+    ess_lost: float,
+    skill_totals: dict[str, int],
+    power_names: set[str],
+    spell_names: set[str],
+    tradition_name: str,
+    cyber_names: set[str],
+    bio_names: set[str],
+) -> dict[str, Any]:
+    special_key, _ = talent_special(talent)
+    metatypes = {state.metatype}
+    if state.metavariant:
+        metatypes.add(state.metavariant)
+    parent = meta.get("parent")
+    if parent:
+        metatypes.add(str(parent))
+    categories = {str(meta.get("category") or "")}
+    return {
+        "qualities": {item["name"] for item in qualities},
+        "metatypes": metatypes,
+        "metatype_categories": {name for name in categories if name},
+        "magenabled": special_key == "MAG",
+        "resenabled": special_key == "RES",
+        "powers": power_names,
+        "cyberware": cyber_names,
+        "bioware": bio_names,
+        "spells": spell_names,
+        "tradition": tradition_name,
+        "skills": skill_totals,
+        "knowledge": dict(state.knowledge_skills or {}),
+        "essence": ess,
+        "ess_lost": ess_lost,
+    }
+
+
+def apply_quality_rules(
+    state: CharacterState,
+    qualities: list[dict[str, Any]],
+    free_quality_ids: list[str],
+    ctx: dict[str, Any],
+    errors: list[str],
+) -> int:
+    owned = {item["id"] for item in qualities}
+    extras = {
+        key: str(value).strip()
+        for key, value in (state.quality_extras or {}).items()
+        if key in owned and str(value).strip()
+    }
+    state.quality_extras = extras
+    free_ids = set(free_quality_ids)
+    negative_gain = 0
+    for spec in qualities:
+        if spec.get("onlyprioritygiven") or spec["id"] in free_ids:
+            continue
+        if spec["karma"] < 0:
+            negative_gain += -int(spec["karma"])
+        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
+            errors.append(f"{spec['name']} の前提を満たしていません")
+        forbidden = spec.get("forbidden_tree") or []
+        if forbidden and requirement_tree_met(forbidden, ctx):
+            errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
+        if quality_needs_extra(spec) and spec["id"] not in extras:
+            errors.append(f"{spec['name']} の対象を入力してください")
+    if negative_gain > NEGATIVE_QUALITY_KARMA_CAP:
+        errors.append(
+            f"不利クオリティから得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
+        )
+    return negative_gain
+
+
 def spell_drain_value(formula: str, force: int) -> int | None:
     raw = (formula or "").strip()
     if not raw or raw.lower() == "special":
         return None
     if re.fullmatch(r"\d+", raw):
         return int(raw)
-    match = re.fullmatch(r"F\s*([+-]\s*\d+)?", raw, re.I)
+    match = re.fullmatch(r"[FL]\s*([+-]\s*\d+)?", raw, re.I)
     if not match:
         return None
     mod = int(re.sub(r"\s+", "", match.group(1))) if match.group(1) else 0
@@ -236,8 +2527,8 @@ def spell_cast_info(
     spell_name: str,
     force: int | None,
     mag: int,
-    wil: int,
-    intuition: int,
+    resist: int,
+    resist_attrs: str,
 ) -> dict[str, Any] | None:
     spec = _spell_by_name(spell_name)
     if not spec:
@@ -263,8 +2554,104 @@ def spell_cast_info(
         "drain": value,
         "drain_code": None if value is None else ("P" if physical else "S"),
         "physical": physical,
-        "resist": int(wil) + int(intuition),
-        "resist_attrs": "WIL+INT",
+        "resist": int(resist),
+        "resist_attrs": resist_attrs,
+    }
+
+
+def _skill_spec(name: str, skills_data: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    data = skills_data if skills_data is not None else catalog().get("skills") or {}
+    for item in data.get("skills") or []:
+        if item["name"] == name:
+            return item
+    return None
+
+
+def skill_dice_pool(
+    skill_name: str,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    skills_data: dict[str, Any] | None = None,
+    attr_override: str | None = None,
+) -> dict[str, Any]:
+    spec = _skill_spec(skill_name, skills_data)
+    attr_name = attr_override or (spec or {}).get("attribute") or "MAG"
+    rating = int(skill_totals.get(skill_name) or 0)
+    bonus = int(skill_bonus.get(skill_name) or 0)
+    attr_value = int(attrs.get(attr_name) or 0)
+    can_default = bool((spec or {}).get("default"))
+    if rating <= 0:
+        if can_default:
+            pool = max(0, attr_value - 1) + bonus
+            return {
+                "skill": skill_name,
+                "rating": 0,
+                "attr": attr_name,
+                "attr_value": attr_value,
+                "bonus": bonus,
+                "pool": pool,
+                "defaulted": True,
+                "missing": False,
+            }
+        return {
+            "skill": skill_name,
+            "rating": 0,
+            "attr": attr_name,
+            "attr_value": attr_value,
+            "bonus": bonus,
+            "pool": 0,
+            "defaulted": False,
+            "missing": True,
+        }
+    return {
+        "skill": skill_name,
+        "rating": rating,
+        "attr": attr_name,
+        "attr_value": attr_value,
+        "bonus": bonus,
+        "pool": rating + attr_value + bonus,
+        "defaulted": False,
+        "missing": False,
+    }
+
+
+def magic_opposed_test(
+    skill_name: str,
+    force: int,
+    vs: int,
+    mag: int,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    hits: int | None = None,
+    opposed_hits: int | None = None,
+    limit: int | None = None,
+    limit_name: str = "Force",
+    days: int | None = None,
+    skills_data: dict[str, Any] | None = None,
+    attr_override: str | None = None,
+) -> dict[str, Any]:
+    dice = skill_dice_pool(skill_name, skill_totals, skill_bonus, attrs, skills_data, attr_override=attr_override)
+    used_limit = int(limit if limit is not None else force)
+    my_hits = None if hits is None else max(0, int(hits))
+    their_hits = None if opposed_hits is None else max(0, int(opposed_hits))
+    net = None if my_hits is None or their_hits is None else my_hits - their_hits
+    drain = None if their_hits is None else max(DRAIN_MINIMUM, their_hits * 2)
+    physical = bool(mag) and int(force) > int(mag)
+    return {
+        **dice,
+        "force": int(force),
+        "limit": used_limit,
+        "limit_name": limit_name,
+        "vs": int(vs),
+        "hits": my_hits,
+        "opposed_hits": their_hits,
+        "net": net,
+        "drain": drain,
+        "drain_code": None if drain is None else ("P" if physical else "S"),
+        "physical": physical,
+        "days": days,
     }
 
 
@@ -642,6 +3029,8 @@ def _capacity_value(expr: str | None, rating: int) -> float:
     raw = (expr or "").strip()
     if not raw or raw == "*":
         return 0.0
+    if "/" in raw:
+        raw = raw.split("/", 1)[0].strip()
     return eval_formula(raw, rating, default=0.0)
 
 
@@ -792,15 +3181,159 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
 
 
 KNOWLEDGE_CATEGORIES = {"Academic", "Interest", "Language", "Professional", "Street"}
+KNOWLEDGE_DEFAULT_ATTR = {
+    "Academic": "LOG",
+    "Professional": "LOG",
+    "Street": "INT",
+    "Interest": "INT",
+    "Language": "INT",
+}
+
+
+def knowledge_pool(intuition: int, logic: int) -> int:
+    return (max(1, int(intuition)) + max(1, int(logic))) * 2
+
+
+def resolve_knowledge(
+    state: CharacterState,
+    skills_data: dict[str, Any],
+    totals: dict[str, int],
+) -> dict[str, Any]:
+    catalog_by_name = {skill["name"]: skill for skill in (skills_data.get("knowledge") or [])}
+    warnings: list[str] = []
+    ratings: dict[str, int] = {}
+    for name, rating in (state.knowledge_skills or {}).items():
+        name = str(name).strip()
+        value = max(0, min(6, int(rating or 0)))
+        if name and value > 0:
+            ratings[name] = value
+
+    natives: list[str] = []
+    seen: set[str] = set()
+    extras: list[str] = []
+    for name in state.native_languages or []:
+        name = str(name).strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        if natives:
+            extras.append(name)
+            continue
+        natives.append(name)
+        ratings.pop(name, None)
+    if extras:
+        warnings.append("母語は1つまでです（2つ目以降は通常の言語として扱います）")
+
+    extra_categories: dict[str, str] = {}
+    owned = set(ratings) | set(natives)
+    for name, category in (state.knowledge_categories or {}).items():
+        name = str(name).strip()
+        if name not in owned or name in catalog_by_name:
+            continue
+        category = str(category)
+        extra_categories[name] = category if category in KNOWLEDGE_CATEGORIES else "Street"
+    for name in natives:
+        if name not in catalog_by_name:
+            extra_categories.setdefault(name, "Language")
+
+    public: list[dict[str, Any]] = []
+    names = list(natives) + sorted(name for name in ratings if name not in natives)
+    for name in names:
+        spec = catalog_by_name.get(name) or {}
+        native = name in natives
+        category = str(spec.get("category") or extra_categories.get(name) or ("Language" if native else "Street"))
+        if category not in KNOWLEDGE_CATEGORIES:
+            category = "Street"
+        attribute = str(spec.get("attribute") or KNOWLEDGE_DEFAULT_ATTR.get(category) or "INT").upper()
+        public.append(
+            {
+                "name": name,
+                "category": category,
+                "attribute": attribute,
+                "rating": 0 if native else ratings[name],
+                "native": native,
+            }
+        )
+
+    state.knowledge_skills = ratings
+    state.native_languages = natives
+    state.knowledge_categories = extra_categories
+    return {
+        "spent": sum(ratings.values()),
+        "max": knowledge_pool(int(totals.get("INT") or 1), int(totals.get("LOG") or 1)),
+        "public": public,
+        "warnings": warnings,
+    }
+
+
+def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    kept: list[ContactInstall] = []
+    used = 0
+    free_max = max(0, int(cha or 0) * CONTACT_FREE_MULT)
+    for inst in state.contacts or []:
+        name = (inst.name or "").strip()
+        role = (inst.role or "").strip()
+        connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.connection or 1)))
+        loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.loyalty or 1)))
+        if connection + loyalty > CONTACT_CHARGEN_COST_MAX:
+            loyalty = max(CONTACT_RATING_MIN, CONTACT_CHARGEN_COST_MAX - connection)
+            warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{CONTACT_CHARGEN_COST_MAX}までです")
+        inst.name = name
+        inst.role = role or None
+        inst.connection = connection
+        inst.loyalty = loyalty
+        cost = connection + loyalty
+        if not name:
+            warnings.append("名前のないコネクトがあります")
+        kept.append(inst)
+        used += cost
+        public.append(
+            {
+                "id": inst.id,
+                "name": name,
+                "role": role,
+                "connection": connection,
+                "loyalty": loyalty,
+                "cost": cost,
+                "connection_max": min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty),
+                "loyalty_max": min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection),
+            }
+        )
+    state.contacts = kept
+    paid = max(0, used - free_max)
+    return {
+        "warnings": warnings,
+        "public": public,
+        "used": used,
+        "free": free_max,
+        "paid": paid,
+        "karma": paid,
+    }
 
 
 def resolve_skill_mods(
     skills_data: dict[str, Any],
     effects: dict[str, Any],
     knowledge_ratings: dict[str, int],
+    extra_categories: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     active = list(skills_data.get("skills") or [])
     knowledge = list(skills_data.get("knowledge") or [])
+    catalog_names = {skill["name"] for skill in knowledge}
+    for name, category in (extra_categories or {}).items():
+        if not name or name in catalog_names:
+            continue
+        category = category if category in KNOWLEDGE_CATEGORIES else "Street"
+        knowledge.append(
+            {
+                "name": name,
+                "category": category,
+                "attribute": KNOWLEDGE_DEFAULT_ATTR.get(category, "INT"),
+                "knowledge": True,
+            }
+        )
     bought_knowledge = {name for name, rating in knowledge_ratings.items() if int(rating or 0) > 0}
     skill_bonus: dict[str, int] = {}
     skill_notes: dict[str, list[str]] = {}
@@ -855,6 +3388,16 @@ def resolve_skill_mods(
     for mod in effects.get("skill_specific_mods") or []:
         add_bonus(mod.get("name") or "", int(mod.get("bonus") or 0), mod.get("condition") or "")
 
+    for mod in effects.get("skill_attribute_mods") or []:
+        attr = (mod.get("name") or "").upper()
+        bonus = int(mod.get("bonus") or 0)
+        if not attr or not bonus:
+            continue
+        for skill in active + knowledge:
+            if (skill.get("attribute") or "").upper() != attr:
+                continue
+            add_bonus(skill["name"], bonus, mod.get("condition") or "")
+
     return {
         "skill_bonus": skill_bonus,
         "skill_group_bonus": group_bonus,
@@ -875,6 +3418,7 @@ def parse_selectskill_spec(node: dict[str, Any]) -> dict[str, Any]:
         "limittoskill": attrs.get("limittoskill") or "",
         "limittoskillgroup": attrs.get("limittoskillgroup") or "",
         "limittocategory": attrs.get("limittocategory")
+        or attrs.get("skillcategory")
         or ", ".join((node.get("nested") or {}).get("skillcategories") or []),
         "excludecategory": attrs.get("excludecategory") or "",
         "knowledgeskills": knowledge,
@@ -914,6 +3458,67 @@ def selectskill_options(
             continue
         out.append(skill["name"])
     return sorted(set(out))
+
+
+def gear_extra_options(spec: dict[str, Any], skills_data: dict[str, Any] | None = None) -> list[str]:
+    data = skills_data if skills_data is not None else catalog().get("skills") or {}
+    extra_kind = str(spec.get("extra_kind") or "")
+    if extra_kind == "group" or str(spec.get("name") or "").startswith("Group Autosoft"):
+        return list(data.get("groups") or [])
+    for node in spec.get("bonus") or []:
+        tag = node.get("tag")
+        if tag == "selectskill":
+            return selectskill_options(parse_selectskill_spec(node), data, {})
+        if tag == "selecttext":
+            return selecttext_options(node.get("attrs") or {})
+        if tag == "activesoft":
+            return [s["name"] for s in data.get("skills") or []]
+        if tag == "knowsoft":
+            return [s["name"] for s in data.get("knowledge") or []]
+        if tag == "linguasoft":
+            return [s["name"] for s in data.get("knowledge") or [] if (s.get("category") or "") == "Language"]
+        if tag == "selecttradition":
+            return [t["name"] for t in catalog().get("traditions") or []]
+    return []
+
+
+def selecttext_options(attrs: dict[str, Any]) -> list[str]:
+    xml = str(attrs.get("xml") or "")
+    xpath = str(attrs.get("xpath") or "")
+    if "vehicles.xml" in xml:
+        names = list(catalog().get("vehicle_names") or [])
+        if not names:
+            names = [item["name"] for item in catalog().get("drones") or []]
+        return names
+    if "weapons.xml" in xml:
+        weapons = catalog().get("weapons") or []
+        if "Melee" in xpath:
+            return [item["name"] for item in weapons if item.get("type") == "Melee"]
+        if "Ranged" in xpath:
+            return [item["name"] for item in weapons if item.get("type") == "Ranged"]
+        return [item["name"] for item in weapons]
+    if "skills.xml" in xml:
+        skills = catalog().get("skills") or {}
+        names = [s["name"] for s in skills.get("skills") or []]
+        if "knowledge" in xpath.lower():
+            names += [s["name"] for s in skills.get("knowledge") or []]
+        return names
+    return []
+
+
+def _extra_kind(spec: dict[str, Any]) -> str:
+    return str(spec.get("extra_kind") or "")
+
+
+def _program_label(spec: dict[str, Any], extra: str | None) -> str:
+    name = str(spec.get("name") or "")
+    extra = (extra or "").strip()
+    if extra:
+        for token in ("[Model]", "[Weapon]"):
+            if token in name:
+                return f"{name.replace(token, '').strip()} ({extra})"
+        return f"{name} ({extra})"
+    return name
 
 
 def resolve_skill_picks(
@@ -1079,7 +3684,11 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
             return []
         return _field_list((node.get("fields") or {}).get("attribute"))
     if kind == "spell":
-        return [item["name"] for item in catalog().get("spells") or []]
+        return [
+            item["name"]
+            for item in catalog().get("spells") or []
+            if item.get("category") in SPELL_CAST_CATEGORIES
+        ]
     return []
 
 
@@ -1329,6 +3938,541 @@ def resolve_qi_foci(
     }
 
 
+def resolve_foci(
+    state: CharacterState,
+    talent_name: str,
+    mag: int,
+    focus_binding: list[dict[str, Any]],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    nuyen = 0
+    karma = 0
+    if talent_name not in FOCUS_TALENTS:
+        state.foci = []
+        return {
+            "warnings": warnings,
+            "public": public,
+            "bonus_sources": bonus_sources,
+            "nuyen": 0,
+            "karma": 0,
+        }
+    kept: list[FocusInstall] = []
+    max_force = max(1, int(mag or 0))
+    for inst in state.foci:
+        spec = _focus_by_id(inst.gear_id)
+        if not spec:
+            continue
+        cap = min(int(spec.get("maxrating") or 6), max_force) if mag else 0
+        if cap <= 0:
+            warnings.append(f"{spec['name']} を結合するには魔力が必要です")
+            continue
+        force = max(1, min(cap, int(inst.force or 1)))
+        inst.force = force
+        crafted = bool(inst.crafted)
+        formula_bought = bool(inst.formula_bought) if crafted else False
+        inst.crafted = crafted
+        inst.formula_bought = formula_bought
+        formula = spec.get("formula") or {}
+        if crafted:
+            reagent = force * SPIRIT_REAGENT_YEN
+            formula_cost = int(eval_formula(str(formula.get("cost") or "0"), force, 0)) if formula_bought else 0
+            if formula_bought and not formula:
+                warnings.append(f"{spec['name']} の術式データが見つからないため、術式代は0¥にしました")
+            cost = formula_cost + reagent
+        else:
+            cost = int(eval_formula(str(spec.get("cost") or "0"), force, 0))
+            formula_cost = 0
+            reagent = 0
+        bind = focus_bind_karma(spec["name"], force, focus_binding)
+        nuyen += cost
+        karma += bind
+        nodes = substitute_rating(list(spec.get("bonus") or []), force)
+        label = f"{spec['name']} F{force}"
+        bonus_sources.append((label, nodes))
+        public.append(
+            {
+                "id": inst.id,
+                "gear_id": spec["id"],
+                "name": spec["name"],
+                "force": force,
+                "force_max": cap,
+                "nuyen": cost,
+                "karma": bind,
+                "crafted": crafted,
+                "formula_bought": formula_bought,
+                "formula_nuyen": formula_cost,
+                "reagent_nuyen": reagent,
+                "retail_nuyen": int(eval_formula(str(spec.get("cost") or "0"), force, 0)),
+                "hits": inst.hits,
+                "opposed_hits": inst.opposed_hits,
+                "effect": spec.get("effect") or "",
+                "formula": (
+                    {
+                        "id": formula.get("id"),
+                        "name": formula.get("name"),
+                        "cost": formula.get("cost") or "",
+                    }
+                    if formula
+                    else None
+                ),
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+            }
+        )
+        kept.append(inst)
+    state.foci = kept
+    return {
+        "warnings": warnings,
+        "public": public,
+        "bonus_sources": bonus_sources,
+        "nuyen": nuyen,
+        "karma": karma,
+    }
+
+
+def apply_focus_limits(
+    mag: int,
+    qi_public: list[dict[str, Any]],
+    foci_public: list[dict[str, Any]],
+    errors: list[str],
+) -> dict[str, int]:
+    count = len(qi_public) + len(foci_public)
+    force = sum(int(item.get("rating") or item.get("force") or 0) for item in qi_public + foci_public)
+    count_max = max(0, int(mag or 0))
+    force_max = count_max * FOCUS_FORCE_MULT
+    if count_max and count > count_max:
+        errors.append(f"結合できるフォーカスは魔力までです（{count}/{count_max}）")
+    if force_max and force > force_max:
+        errors.append(f"結合フォーカスのForce合計が上限を超えています（{force}/{force_max}）")
+    return {"count": count, "count_max": count_max, "force": force, "force_max": force_max}
+
+
+def resolve_spirits(
+    state: CharacterState,
+    talent_name: str,
+    mag: int,
+    tradition: dict[str, Any] | None,
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    nuyen = 0
+    if talent_name not in SPIRIT_TALENTS:
+        state.spirits = []
+        return {"warnings": warnings, "public": public, "nuyen": 0}
+    allowed = {name: role for role, name in (tradition.get("spirits") or {}).items()} if tradition else {}
+    if not tradition:
+        warnings.append("精霊を召喚するには伝統を選んでください")
+    kept: list[SpiritInstall] = []
+    mag = max(0, int(mag or 0))
+    for inst in state.spirits:
+        spec = _spirit_by_id(inst.spirit_id)
+        if not spec:
+            continue
+        role = allowed.get(spec["name"])
+        if not tradition or not role:
+            warnings.append(f"{spec['name']} はこの伝統では召喚できません")
+            continue
+        if mag <= 0:
+            warnings.append(f"{spec['name']} を召喚するには魔力が必要です")
+            continue
+        bound = bool(inst.bound)
+        inst.bound = bound
+        cap = mag if bound else max(1, mag * 2)
+        force = max(1, min(cap, int(inst.force or 1)))
+        inst.force = force
+        if inst.hits is not None and inst.opposed_hits is not None:
+            services = max(0, int(inst.hits) - int(inst.opposed_hits))
+        elif bound:
+            services = max(1, min(mag, int(inst.services or 1)))
+        else:
+            services = max(0, int(inst.services or 0))
+        inst.services = services
+        cost = force * SPIRIT_REAGENT_YEN if bound else 0
+        nuyen += cost
+        if bound is False and inst.hits is not None and inst.opposed_hits is not None and services <= 0:
+            warnings.append(f"{spec['name']} の召喚に失敗しています（正味0）")
+        attrs = spirit_attributes(spec, force)
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "spirit_id": spec["id"],
+                "name": spec["name"],
+                "role": role,
+                "role_label": SPIRIT_ROLE_LABELS.get(role, role),
+                "force": force,
+                "force_max": cap,
+                "services": services,
+                "nuyen": cost,
+                "bound": bound,
+                "hits": inst.hits,
+                "opposed_hits": inst.opposed_hits,
+                "attributes": attrs,
+                "powers": list(spec.get("powers") or []),
+                "optionalpowers": list(spec.get("optionalpowers") or []),
+                "skills": [
+                    {"name": row["name"], "attribute": row.get("attribute") or "", "rating": force}
+                    for row in (spec.get("skills") or [])
+                ],
+                "weaknesses": list(spec.get("weaknesses") or []),
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+            }
+        )
+    state.spirits = kept
+    return {"warnings": warnings, "public": public, "nuyen": nuyen}
+
+
+def _required_names(spec: dict[str, Any]) -> list[str]:
+    return [name for names in (spec.get("required") or {}).values() for name in names]
+
+
+def resolve_complex_forms(
+    state: CharacterState,
+    talent_name: str,
+    res: int,
+    attrs: dict[str, int],
+    quality_names: set[str],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    stream = _stream_by_id(state.stream_id) or (_default_stream() if talent_name in COMPLEX_FORM_TALENTS else None)
+    if talent_name in COMPLEX_FORM_TALENTS and stream:
+        state.stream_id = stream["id"]
+    resist, resist_attrs = tradition_resist(stream, attrs)
+    if talent_name not in COMPLEX_FORM_TALENTS:
+        state.complex_forms = []
+        if talent_name not in RES_TALENTS:
+            state.stream_id = None
+        return {
+            "warnings": warnings,
+            "public": public,
+            "free_max": 0,
+            "used": 0,
+            "paid": 0,
+            "karma": 0,
+            "stream": None,
+            "resist": resist,
+            "resist_attrs": resist_attrs,
+        }
+    talent = resolve_talent(state.priorities.Talent, talent_name)
+    free_max = int(talent.get("cfp") or 0)
+    seen: set[str] = set()
+    kept: list[ComplexFormInstall] = []
+    res = max(0, int(res or 0))
+    for inst in state.complex_forms:
+        spec = _complex_form_by_id(inst.form_id)
+        if not spec:
+            continue
+        if spec["id"] in seen:
+            warnings.append(f"{spec['name']} は重複しているため外しました")
+            continue
+        missing = [name for name in _required_names(spec) if name not in quality_names]
+        if missing:
+            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+            continue
+        extra = (inst.extra or "").strip()
+        if spec.get("needs_extra") and extra not in MATRIX_ATTRIBUTES:
+            warnings.append(f"{spec['name']} はマトリクス属性を選んでください")
+            extra = extra if extra in MATRIX_ATTRIBUTES else ""
+            inst.extra = extra or None
+        seen.add(spec["id"])
+        level_max = max(1, res * 2) if res else 1
+        chosen = int(inst.level) if inst.level else (res or 1)
+        chosen = max(1, min(level_max, chosen))
+        inst.level = chosen
+        fade = spell_drain_value(str(spec.get("fv") or ""), chosen)
+        physical = bool(res) and chosen > res
+        free = len(kept) < free_max
+        kept.append(inst)
+        label = spec["name"]
+        if extra:
+            label = spec["name"].replace("[Matrix Attribute]", extra)
+        public.append(
+            {
+                "id": inst.id,
+                "form_id": spec["id"],
+                "name": spec["name"],
+                "label": label,
+                "target": spec.get("target") or "",
+                "duration": spec.get("duration") or "",
+                "fv": spec.get("fv") or "",
+                "extra": extra,
+                "needs_extra": bool(spec.get("needs_extra")),
+                "options": list(MATRIX_ATTRIBUTES) if spec.get("needs_extra") else [],
+                "level": chosen,
+                "level_min": 1,
+                "level_max": level_max,
+                "fade": fade,
+                "fade_code": None if fade is None else ("P" if physical else "S"),
+                "physical": physical,
+                "resist": int(resist),
+                "resist_attrs": resist_attrs,
+                "free": free,
+                "karma": 0 if free else COMPLEX_FORM_KARMA,
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+            }
+        )
+    state.complex_forms = kept
+    paid = max(0, len(public) - free_max)
+    return {
+        "warnings": warnings,
+        "public": public,
+        "free_max": free_max,
+        "used": len(public),
+        "paid": paid,
+        "karma": paid * COMPLEX_FORM_KARMA,
+        "stream": (
+            {
+                "id": stream["id"],
+                "name": stream["name"],
+                "drain": stream.get("drain") or "",
+                "drain_attrs": list(stream.get("drain_attrs") or []),
+                "sprites": list(stream.get("sprites") or []),
+                "source": stream.get("source"),
+                "page": stream.get("page"),
+            }
+            if stream
+            else None
+        ),
+        "resist": resist,
+        "resist_attrs": resist_attrs,
+    }
+
+
+def resolve_sprites(
+    state: CharacterState,
+    talent_name: str,
+    res: int,
+    stream: dict[str, Any] | None,
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    errors: list[str] = []
+    if talent_name not in SPRITE_TALENTS:
+        state.sprites = []
+        return {"warnings": warnings, "errors": errors, "public": public}
+    allowed = set(stream.get("sprites") or []) if stream else set()
+    kept: list[SpriteInstall] = []
+    res = max(0, int(res or 0))
+    registered_count = 0
+    for inst in state.sprites:
+        spec = _sprite_by_id(inst.sprite_id)
+        if not spec:
+            continue
+        if allowed and spec["name"] not in allowed:
+            warnings.append(f"{spec['name']} はこのストリームではコンパイルできません")
+            continue
+        if res <= 0:
+            warnings.append(f"{spec['name']} をコンパイルするには共振力が必要です")
+            continue
+        registered = bool(inst.registered)
+        inst.registered = registered
+        cap = res if registered else max(1, res * 2)
+        level = max(1, min(cap, int(inst.level or 1)))
+        inst.level = level
+        if inst.hits is not None and inst.opposed_hits is not None:
+            services = max(0, int(inst.hits) - int(inst.opposed_hits))
+        elif registered:
+            services = max(1, min(res, int(inst.services or 1)))
+        else:
+            services = max(0, int(inst.services or 0))
+        inst.services = services
+        if registered:
+            registered_count += 1
+        if registered is False and inst.hits is not None and inst.opposed_hits is not None and services <= 0:
+            warnings.append(f"{spec['name']} のコンパイルに失敗しています（正味0）")
+        stats = sprite_attributes(spec, level)
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "sprite_id": spec["id"],
+                "name": spec["name"],
+                "level": level,
+                "level_max": cap,
+                "services": services,
+                "registered": registered,
+                "hits": inst.hits,
+                "opposed_hits": inst.opposed_hits,
+                "attributes": stats["attributes"],
+                "matrix": stats["matrix"],
+                "powers": list(spec.get("powers") or []),
+                "skills": [
+                    {"name": row["name"], "attribute": row.get("attribute") or "", "rating": level}
+                    for row in (spec.get("skills") or [])
+                ],
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+            }
+        )
+    state.sprites = kept
+    if registered_count > res:
+        errors.append(f"登録できるスプライトは共振力までです（{registered_count}/{res}）")
+    return {"warnings": warnings, "errors": errors, "public": public}
+
+
+def attach_complex_form_tests(
+    public: list[dict[str, Any]],
+    res: int,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    skills_data: dict[str, Any],
+) -> list[str]:
+    warnings: list[str] = []
+    for item in public:
+        level = int(item.get("level") or 1)
+        dice = skill_dice_pool("Software", skill_totals, skill_bonus, attrs, skills_data, attr_override="RES")
+        item["test"] = {
+            **dice,
+            "force": level,
+            "limit": level,
+            "limit_name": "Level",
+            "vs": 0,
+            "drain": item.get("fade"),
+            "drain_code": item.get("fade_code"),
+            "physical": bool(item.get("physical")),
+        }
+        if dice.get("missing"):
+            warnings.append(f"{item['label'] or item['name']} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）")
+    return warnings
+
+
+def attach_sprite_tests(
+    public: list[dict[str, Any]],
+    res: int,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    skills_data: dict[str, Any],
+) -> list[str]:
+    warnings: list[str] = []
+    for item in public:
+        registered = bool(item.get("registered"))
+        level = int(item.get("level") or 1)
+        skill = "Registering" if registered else "Compiling"
+        test = magic_opposed_test(
+            skill,
+            level,
+            level * 2,
+            res,
+            skill_totals,
+            skill_bonus,
+            attrs,
+            item.get("hits"),
+            item.get("opposed_hits"),
+            limit_name="Level",
+            days=level if registered else None,
+            skills_data=skills_data,
+        )
+        item["test"] = test
+        if test.get("missing"):
+            warnings.append(f"{item['name']} の{('登録' if registered else 'コンパイル')}判定に{skill}が必要です（未習得・デフォルト不可）")
+    return warnings
+
+
+def living_persona(attrs: dict[str, int], res: int) -> dict[str, int]:
+    return {
+        "device_rating": int(res),
+        "attack": int(attrs.get("CHA") or 0),
+        "sleaze": int(attrs.get("INT") or 0),
+        "dataprocessing": int(attrs.get("LOG") or 0),
+        "firewall": int(attrs.get("WIL") or 0),
+    }
+
+
+def attach_spirit_tests(
+    public: list[dict[str, Any]],
+    mag: int,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    skills_data: dict[str, Any],
+) -> list[str]:
+    warnings: list[str] = []
+    for item in public:
+        bound = bool(item.get("bound"))
+        force = int(item.get("force") or 1)
+        skill = "Binding" if bound else "Summoning"
+        vs = force * 2 if bound else force
+        test = magic_opposed_test(
+            skill,
+            force,
+            vs,
+            mag,
+            skill_totals,
+            skill_bonus,
+            attrs,
+            item.get("hits"),
+            item.get("opposed_hits"),
+            skills_data=skills_data,
+        )
+        item["test"] = test
+        if test.get("missing"):
+            warnings.append(f"{item['name']} の{('結合' if bound else '召喚')}判定に{skill}が必要です（未習得・デフォルト不可）")
+    return warnings
+
+
+def attach_focus_tests(
+    public: list[dict[str, Any]],
+    mag: int,
+    skill_totals: dict[str, int],
+    skill_bonus: dict[str, int],
+    attrs: dict[str, int],
+    skills_data: dict[str, Any],
+    mental_limit: int,
+) -> list[str]:
+    warnings: list[str] = []
+    for item in public:
+        if not item.get("crafted"):
+            continue
+        force = int(item.get("force") or 1)
+        bonus = dict(skill_bonus)
+        if "MAG skills" in (item.get("effect") or ""):
+            bonus["Artificing"] = int(bonus.get("Artificing") or 0) - force
+        test = magic_opposed_test(
+            "Artificing",
+            force,
+            force * 2,
+            mag,
+            skill_totals,
+            bonus,
+            attrs,
+            item.get("hits"),
+            item.get("opposed_hits"),
+            days=force,
+            skills_data=skills_data,
+        )
+        item["test"] = test
+        if test.get("missing"):
+            warnings.append(f"{item['name']} の作成にはArtificingが必要です（未習得・デフォルト不可）")
+        if test.get("net") is not None and int(test["net"]) <= 0:
+            warnings.append(f"{item['name']} の作成に失敗しています（正味0）")
+        if item.get("formula_bought"):
+            continue
+        design = magic_opposed_test(
+            "Arcana",
+            force,
+            force * 2,
+            mag,
+            skill_totals,
+            skill_bonus,
+            attrs,
+            limit=mental_limit,
+            limit_name="Mental",
+            days=force,
+            skills_data=skills_data,
+        )
+        item["formula_test"] = design
+        if design.get("missing"):
+            warnings.append(f"{item['name']} の術式自作にはArcanaが必要です（未習得・デフォルト不可）")
+    return warnings
+
+
 def resolve_enhancements(
     state: CharacterState,
     talent_name: str,
@@ -1454,7 +4598,7 @@ def resolve_adept_powers(
             free_levels = free_by_key.get(key, 0)
         if kind and not extra:
             warnings.append(f"{spec['name']} の{select_label}を選んでください")
-        spell = spell_cast_info(extra, inst.force, mag, wil, intuition) if kind == "spell" and extra else None
+        spell = spell_cast_info(extra, inst.force, mag, wil + intuition, "WIL+INT") if kind == "spell" and extra else None
         if spell:
             inst.force = int(spell["force"])
         if kind and extra and key in seen_keys:
@@ -1614,6 +4758,102 @@ def _required_warnings(
     return warnings
 
 
+def resolve_spells(
+    state: CharacterState,
+    talent: dict[str, Any],
+    mag: int,
+    attrs: dict[str, int],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    tradition = _tradition_by_id(state.tradition_id)
+    if state.tradition_id and not tradition:
+        warnings.append("選んだ伝統が見つからないため外しました")
+        state.tradition_id = None
+    resist, resist_attrs = tradition_resist(tradition, attrs)
+    if talent["name"] not in SPELL_TALENTS:
+        state.spells = []
+        if talent["name"] not in MAG_TALENTS:
+            state.tradition_id = None
+        return {
+            "warnings": warnings,
+            "public": public,
+            "free_max": 0,
+            "used": 0,
+            "paid": 0,
+            "karma": 0,
+            "tradition": None,
+            "resist": resist,
+            "resist_attrs": resist_attrs,
+        }
+
+    if not tradition:
+        warnings.append("伝統を選んでください")
+    free_max = int(talent.get("spells") or 0)
+    seen: set[str] = set()
+    kept: list[SpellInstall] = []
+    for inst in state.spells:
+        spec = _spell_by_id(inst.spell_id)
+        if not spec:
+            continue
+        if spec.get("category") not in SPELL_CATEGORIES:
+            warnings.append(f"{spec['name']} はこの段階では扱えません")
+            continue
+        if spec["id"] in seen:
+            warnings.append(f"{spec['name']} は重複しているため外しました")
+            continue
+        seen.add(spec["id"])
+        kind = spec.get("kind") or "spell"
+        has_force = kind != "enchantment"
+        info = spell_cast_info(spec["name"], inst.force if has_force else None, mag, resist, resist_attrs)
+        if info and has_force:
+            inst.force = int(info["force"])
+        missing = [
+            name
+            for names in (spec.get("required") or {}).values()
+            for name in names
+        ]
+        if missing:
+            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+        free = len(kept) < free_max
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "spell_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category"),
+                "kind": kind,
+                "useskill": spec.get("useskill") or "Spellcasting",
+                "has_force": has_force,
+                "type": spec.get("type"),
+                "range": spec.get("range"),
+                "duration": spec.get("duration"),
+                "descriptor": spec.get("descriptor"),
+                "dv": spec.get("dv") or "",
+                "required": missing,
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+                "free": free,
+                "karma": 0 if free else SPELL_KARMA,
+                "spell": info if has_force else None,
+            }
+        )
+    state.spells = kept
+    paid = max(0, len(public) - free_max)
+    return {
+        "warnings": warnings,
+        "public": public,
+        "free_max": free_max,
+        "used": len(public),
+        "paid": paid,
+        "karma": paid * SPELL_KARMA,
+        "tradition": _tradition_public(tradition),
+        "resist": resist,
+        "resist_attrs": resist_attrs,
+    }
+
+
 def compute(state: CharacterState) -> CharacterState:
     data = catalog()
     errors = validate_priorities(state.priorities)
@@ -1707,6 +4947,21 @@ def compute(state: CharacterState) -> CharacterState:
     )
     warnings.extend(qi["warnings"])
     errors.extend(qi["errors"])
+    foci = resolve_foci(
+        state,
+        talent["name"],
+        int(ratings.get("MAG") or 0),
+        list(effects.get("focus_binding") or []),
+    )
+    warnings.extend(foci["warnings"])
+    for source, nodes in foci["bonus_sources"]:
+        apply_bonus_nodes(nodes, effects, source)
+    focus_limits = apply_focus_limits(
+        int(ratings.get("MAG") or 0),
+        list(qi.get("public") or []),
+        list(foci.get("public") or []),
+        errors,
+    )
     adept = resolve_adept_powers(
         state,
         talent["name"],
@@ -1725,6 +4980,11 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(enhancements["warnings"])
     effects["enabled_tabs"] = set(effects["enabled_tabs"])
     for source, nodes in adept["bonus_sources"] + enhancements["bonus_sources"]:
+        apply_bonus_nodes(nodes, effects, source)
+    gear = resolve_gear(state)
+    warnings.extend(gear["warnings"])
+    errors.extend(gear.get("errors") or [])
+    for source, nodes in gear["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
     if talent["name"] in ADEPT_TALENTS:
         enabled.add("adept")
@@ -1748,6 +5008,59 @@ def compute(state: CharacterState) -> CharacterState:
     if limb_replace:
         total["STR"] = int(limb_replace["str"])
         total["AGI"] = int(limb_replace["agi"])
+
+    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total)
+    warnings.extend(magic["warnings"])
+    spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}
+    for item in magic.get("public") or []:
+        bonus = int(spell_focus.get(item.get("category") or "", 0))
+        if bonus:
+            item["focus_bonus"] = bonus
+    spirits = resolve_spirits(
+        state,
+        talent["name"],
+        int(total.get("MAG") or 0),
+        _tradition_by_id(state.tradition_id),
+    )
+    warnings.extend(spirits["warnings"])
+    if talent["name"] in SPELL_TALENTS:
+        enabled.add("spells")
+    if talent["name"] in SPIRIT_TALENTS:
+        enabled.add("spirits")
+    resonance = resolve_complex_forms(
+        state,
+        talent["name"],
+        int(total.get("RES") or 0),
+        total,
+        quality_names,
+    )
+    warnings.extend(resonance["warnings"])
+    techno_sprites = resolve_sprites(
+        state,
+        talent["name"],
+        int(total.get("RES") or 0),
+        resonance.get("stream"),
+    )
+    warnings.extend(techno_sprites["warnings"])
+    errors.extend(techno_sprites["errors"])
+    if talent["name"] in COMPLEX_FORM_TALENTS:
+        enabled.add("complexforms")
+    if talent["name"] in SPRITE_TALENTS:
+        enabled.add("sprites")
+    if talent["name"] in FOCUS_TALENTS:
+        enabled.add("foci")
+    for item in adept.get("public") or []:
+        extra = item.get("extra")
+        if item.get("select") != "spell" or not extra:
+            continue
+        force = (item.get("spell") or {}).get("force")
+        item["spell"] = spell_cast_info(
+            extra,
+            force,
+            int(total.get("MAG") or 0),
+            int(magic["resist"]),
+            str(magic["resist_attrs"]),
+        )
 
     attr_row = priority_value("Attributes", state.priorities.Attributes)
     skill_row = priority_value("Skills", state.priorities.Skills)
@@ -1780,7 +5093,13 @@ def compute(state: CharacterState) -> CharacterState:
     skill_points = int(skill_row.get("skill_points") or 0)
     group_points = int(skill_row.get("skill_group_points") or 0)
     nuyen_pool = int(res_row.get("nuyen") or 0)
-    nuyen_spent = sum(int(item["nuyen"]) for item in installed) + int(qi.get("nuyen") or 0)
+    nuyen_spent = (
+        sum(int(item["nuyen"]) for item in installed)
+        + int(qi.get("nuyen") or 0)
+        + int(foci.get("nuyen") or 0)
+        + int(spirits.get("nuyen") or 0)
+        + int(gear.get("nuyen") or 0)
+    )
     nuyen = nuyen_pool - nuyen_spent
 
     skill_spent = 0
@@ -1804,8 +5123,14 @@ def compute(state: CharacterState) -> CharacterState:
         extra = max(0, rating - base)
         skill_spent += extra
         skill_totals[name] = max(base, rating)
-    know_spent = sum(max(0, min(6, int(v))) for v in state.knowledge_skills.values())
-    skill_mods = resolve_skill_mods(data["skills"], effects, state.knowledge_skills)
+    knowledge = resolve_knowledge(state, data["skills"], total)
+    warnings.extend(knowledge["warnings"])
+    know_spent = int(knowledge["spent"])
+    know_max = int(knowledge["max"])
+    bought_knowledge = dict(state.knowledge_skills)
+    for name in state.native_languages:
+        bought_knowledge[name] = max(int(bought_knowledge.get(name) or 0), 1)
+    skill_mods = resolve_skill_mods(data["skills"], effects, bought_knowledge, state.knowledge_categories)
     for name, bonus in skill_picks["skill_bonus"].items():
         skill_mods["skill_bonus"][name] = int(skill_mods["skill_bonus"].get(name, 0)) + int(bonus)
     for name, notes in skill_picks["skill_bonus_notes"].items():
@@ -1820,13 +5145,13 @@ def compute(state: CharacterState) -> CharacterState:
         if not q.get("onlyprioritygiven") and q["id"] not in free_quality_ids
     )
     mystic_karma = int(state.mystic_pp) * MYSTIC_PP_KARMA
-    extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0)
+    extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
+    spell_karma = int(magic.get("karma") or 0) + int(resonance.get("karma") or 0)
     # Priority chargen: metatypes.xml <karma> is for Karma/Sum-to-Ten, not Priority.
     # Heritage table <karma> is an extra cost for some metavariants / rare races.
     heritage_karma_cost = extra_karma
     karma_pool = 25
-    karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma
-    karma_left = karma_pool - karma_spent
+    karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma
 
     bod = total["BOD"]
     agi = total["AGI"]
@@ -1836,6 +5161,10 @@ def compute(state: CharacterState) -> CharacterState:
     logi = total["LOG"]
     intuition = total["INT"]
     cha = total["CHA"]
+    contacts = resolve_contacts(state, int(cha or 0))
+    warnings.extend(contacts["warnings"])
+    karma_spent += int(contacts.get("karma") or 0)
+    karma_left = karma_pool - karma_spent
 
     physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(effects.get("limit_physical") or 0)
     mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(effects.get("limit_mental") or 0)
@@ -1844,9 +5173,72 @@ def compute(state: CharacterState) -> CharacterState:
     cm_stun = 8 + _ceil_div(wil / 2) + effects["cm_stun"]
     initiative = rea + intuition + effects["initiative"]
     initiative_dice = 1 + int(effects.get("initiative_dice") or 0)
+    warnings.extend(
+        attach_spirit_tests(
+            list(spirits.get("public") or []),
+            int(total.get("MAG") or 0),
+            skill_totals,
+            skill_mods["skill_bonus"],
+            total,
+            data["skills"],
+        )
+    )
+    warnings.extend(
+        attach_focus_tests(
+            list(foci.get("public") or []),
+            int(total.get("MAG") or 0),
+            skill_totals,
+            skill_mods["skill_bonus"],
+            total,
+            data["skills"],
+            mental_limit,
+        )
+    )
+    warnings.extend(
+        attach_complex_form_tests(
+            list(resonance.get("public") or []),
+            int(total.get("RES") or 0),
+            skill_totals,
+            skill_mods["skill_bonus"],
+            total,
+            data["skills"],
+        )
+    )
+    warnings.extend(
+        attach_sprite_tests(
+            list(techno_sprites.get("public") or []),
+            int(total.get("RES") or 0),
+            skill_totals,
+            skill_mods["skill_bonus"],
+            total,
+            data["skills"],
+        )
+    )
 
     walk = meta.get("walk") or "2/1/0"
     run = meta.get("run") or "4/0/0"
+
+    tradition_info = magic.get("tradition") if isinstance(magic.get("tradition"), dict) else {}
+    negative_quality_karma = apply_quality_rules(
+        state,
+        qualities,
+        free_quality_ids,
+        quality_requirement_context(
+            state,
+            talent,
+            qualities,
+            meta,
+            ess,
+            ess_lost,
+            skill_totals,
+            set(adept.get("power_names") or []),
+            {str(item.get("name") or "") for item in (magic.get("public") or []) if item.get("name")},
+            str((tradition_info or {}).get("name") or ""),
+            {item["name"] for item in cyber_installed},
+            {item["name"] for item in bio_installed},
+        ),
+        errors,
+    )
 
     at_six = [n for n, r in skill_totals.items() if r >= 6]
     if len(at_six) > 1:
@@ -1859,6 +5251,8 @@ def compute(state: CharacterState) -> CharacterState:
         errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
     if group_spent > group_points:
         errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
+    if know_spent > know_max:
+        errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
     if karma_left < 0:
         errors.append(f"カルマが不足しています（残り {karma_left}）")
     if nuyen < 0:
@@ -1894,10 +5288,37 @@ def compute(state: CharacterState) -> CharacterState:
         "essence_lost": ess_lost,
         "essence_lost_cyber": ess_lost_cyber,
         "essence_lost_bio": ess_lost_bio,
-        "armor": effects["armor"],
+        "armor": int(effects["armor"]) + int(gear.get("armor") or 0),
+        "worn_armor": gear.get("worn_name") or "",
+        "armor_items": gear.get("armor_items") or [],
+        "armor_mods": gear.get("armor_mods") or [],
+        "weapons": gear.get("weapons") or [],
+        "weapon_accessories": gear.get("weapon_accessories") or [],
+        "commlinks": gear.get("commlinks") or [],
+        "cyberdecks": gear.get("cyberdecks") or [],
+        "rccs": gear.get("rccs") or [],
+        "optics": gear.get("optics") or [],
+        "programs": gear.get("programs") or [],
+        "apps": gear.get("apps") or [],
+        "sensors": gear.get("sensors") or [],
+        "drones": gear.get("drones") or [],
+        "vehicles": gear.get("vehicles") or [],
+        "vehicle_mods": gear.get("vehicle_mods") or [],
+        "weapon_mounts": gear.get("weapon_mounts") or [],
+        "gear": gear.get("gear") or [],
+        "lifestyles": gear.get("lifestyles") or [],
+        "commlink": gear.get("commlink"),
+        "cyberdeck": gear.get("cyberdeck"),
+        "rcc": gear.get("rcc"),
+        "lifestyle": gear.get("lifestyle"),
         "nuyen": nuyen,
         "nuyen_spent": nuyen_spent,
-        "karma": {"pool": karma_pool, "spent": karma_spent, "remaining": karma_left},
+        "karma": {
+            "pool": karma_pool,
+            "spent": karma_spent,
+            "remaining": karma_left,
+            "negative": {"used": negative_quality_karma, "max": NEGATIVE_QUALITY_KARMA_CAP},
+        },
         "power_points": {"used": power_spent, "max": power_pool},
         "adept_powers": adept["public"],
         "mystic_pp": state.mystic_pp,
@@ -1905,17 +5326,38 @@ def compute(state: CharacterState) -> CharacterState:
         "mentor": mentor.get("public"),
         "needs_mentor": needs_mentor,
         "qi_foci": qi.get("public") or [],
+        "foci": foci.get("public") or [],
+        "focus_limits": focus_limits,
+        "spirits": spirits.get("public") or [],
         "enhancements": enhancements.get("public") or [],
         "damage_resistance": int(effects.get("damage_resistance") or 0),
         "unarmed_dv": int(effects.get("unarmed_dv") or 0),
         "unarmed_physical": bool(effects.get("unarmed_physical")),
         "unlock_skills": list(effects.get("unlock_skills") or []),
+        "spells": magic.get("public") or [],
+        "spell_points": {"used": magic.get("used") or 0, "free": magic.get("free_max") or 0, "paid": magic.get("paid") or 0},
+        "tradition": magic.get("tradition"),
+        "drain_resist": {"pool": magic.get("resist") or 0, "attrs": magic.get("resist_attrs") or "WIL+INT"},
+        "complex_forms": resonance.get("public") or [],
+        "complex_form_points": {"used": resonance.get("used") or 0, "free": resonance.get("free_max") or 0, "paid": resonance.get("paid") or 0},
+        "sprites": techno_sprites.get("public") or [],
+        "stream": resonance.get("stream"),
+        "fade_resist": {"pool": resonance.get("resist") or 0, "attrs": resonance.get("resist_attrs") or "WIL+RES"},
+        "living_persona": living_persona(total, int(total.get("RES") or 0)) if talent["name"] in RES_TALENTS else None,
         "points": {
             "attributes": {"used": spent_physical, "max": attr_points},
             "special": {"used": spent_special, "max": special_from_meta},
             "skills": {"used": skill_spent, "max": skill_points},
             "skill_groups": {"used": group_spent, "max": group_points},
-            "knowledge": {"used": know_spent, "max": max(intuition, 1) * 2 + logi},
+            "knowledge": {"used": know_spent, "max": know_max},
+            "contacts": {"used": contacts.get("used") or 0, "max": contacts.get("free") or 0},
+        },
+        "knowledge_skills": knowledge["public"],
+        "contacts": contacts.get("public") or [],
+        "contact_points": {
+            "used": contacts.get("used") or 0,
+            "free": contacts.get("free") or 0,
+            "paid": contacts.get("paid") or 0,
         },
         "skill_totals": skill_totals,
         "skill_bonus": skill_mods["skill_bonus"],
@@ -1933,6 +5375,8 @@ def compute(state: CharacterState) -> CharacterState:
                 "karma": q["karma"],
                 "category": q["category"],
                 "source": q["source"],
+                "needs_extra": quality_needs_extra(q),
+                "extra": state.quality_extras.get(q["id"]) or "",
             }
             for q in qualities
         ],
