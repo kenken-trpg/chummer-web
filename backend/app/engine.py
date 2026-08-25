@@ -3049,6 +3049,7 @@ def quality_requirement_context(
     tradition_name: str,
     cyber_names: set[str],
     bio_names: set[str],
+    knowledge_ratings: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     special_key, _ = talent_special(talent)
     metatypes = {state.metatype}
@@ -3070,7 +3071,7 @@ def quality_requirement_context(
         "spells": spell_names,
         "tradition": tradition_name,
         "skills": skill_totals,
-        "knowledge": dict(state.knowledge_skills or {}),
+        "knowledge": dict(knowledge_ratings if knowledge_ratings is not None else state.knowledge_skills or {}),
         "essence": ess,
         "ess_lost": ess_lost,
     }
@@ -4193,15 +4194,166 @@ def gear_extra_options(spec: dict[str, Any], skills_data: dict[str, Any] | None 
             return selectskill_options(parse_selectskill_spec(node), data, {})
         if tag == "selecttext":
             return selecttext_options(node.get("attrs") or {})
-        if tag == "activesoft":
-            return [s["name"] for s in data.get("skills") or []]
-        if tag == "knowsoft":
-            return [s["name"] for s in data.get("knowledge") or []]
-        if tag == "linguasoft":
-            return [s["name"] for s in data.get("knowledge") or [] if (s.get("category") or "") == "Language"]
+        if tag in {"activesoft", "skillsoft", "knowsoft", "linguasoft"}:
+            return skillsoft_options(node, data)
         if tag == "selecttradition":
             return [t["name"] for t in catalog().get("traditions") or []]
     return []
+
+
+def _csv_names(value: Any) -> set[str]:
+    if isinstance(value, list):
+        parts = [str(item).strip() for item in value]
+    else:
+        parts = [part.strip() for part in str(value or "").split(",")]
+    return {part for part in parts if part}
+
+
+def skillsoft_options(node: dict[str, Any], skills_data: dict[str, Any]) -> list[str]:
+    kind = _skillsoft_kind(node)
+    if kind == "active":
+        return [skill["name"] for skill in skills_data.get("skills") or []]
+    knowledge = list(skills_data.get("knowledge") or [])
+    fields = node.get("fields") or {}
+    attrs = node.get("attrs") or {}
+    cats = _csv_names(fields.get("skillcategory") or attrs.get("skillcategory"))
+    exclude = _csv_names(fields.get("excludecategory") or attrs.get("excludecategory"))
+    if kind == "language":
+        cats = cats or {"Language"}
+    out: list[str] = []
+    for skill in knowledge:
+        category = str(skill.get("category") or "")
+        if cats and category not in cats:
+            continue
+        if category in exclude:
+            continue
+        out.append(skill["name"])
+    return out
+
+
+def _skillsoft_kind(node: dict[str, Any]) -> str:
+    tag = str(node.get("tag") or "")
+    fields = node.get("fields") or {}
+    attrs = node.get("attrs") or {}
+    cats = _csv_names(fields.get("skillcategory") or attrs.get("skillcategory"))
+    exclude = _csv_names(fields.get("excludecategory") or attrs.get("excludecategory"))
+    if tag == "activesoft":
+        return "active"
+    if tag == "linguasoft" or "Language" in cats:
+        return "language"
+    if tag in {"skillsoft", "knowsoft"}:
+        if "Language" in exclude:
+            return "knowledge"
+        if "Language" in cats:
+            return "language"
+        return "knowledge"
+    return ""
+
+
+def _skillsoft_value(node: dict[str, Any]) -> int:
+    fields = node.get("fields") or {}
+    return _as_int(fields.get("val") or fields.get("value") or node.get("value"))
+
+
+def _merge_skill_ratings(base: dict[str, int], extra: dict[str, int]) -> dict[str, int]:
+    out = dict(base)
+    for name, rating in extra.items():
+        name = str(name or "").strip()
+        value = int(rating or 0)
+        if not name or value <= 0:
+            continue
+        out[name] = max(int(out.get(name) or 0), value)
+    return out
+
+
+def resolve_skillsofts(
+    gear_items: list[dict[str, Any]],
+    skills_data: dict[str, Any],
+    effects: dict[str, Any],
+    warnings: list[str],
+) -> dict[str, Any]:
+    wires = int(effects.get("skillwires") or 0)
+    jack = int(effects.get("skilljack") or 0)
+    specs = {item["id"]: item for item in catalog().get("gear") or []}
+    active_names = {skill["name"] for skill in skills_data.get("skills") or []}
+    knowledge_names = {skill["name"] for skill in skills_data.get("knowledge") or []}
+    active: dict[str, int] = {}
+    knowledge: dict[str, int] = {}
+
+    def add_rating(bucket: dict[str, int], name: str, rating: int) -> None:
+        if not name or rating <= 0:
+            return
+        bucket[name] = max(int(bucket.get(name) or 0), int(rating))
+
+    for item in gear_items:
+        spec = specs.get(str(item.get("gear_id") or ""))
+        if not spec:
+            continue
+        extra = str(item.get("extra") or "").strip()
+        nodes = substitute_rating(list(spec.get("bonus") or []), int(item.get("rating") or 1))
+        for node in nodes:
+            kind = _skillsoft_kind(node)
+            if not kind:
+                continue
+            label = str(item.get("label") or spec.get("name") or "スキルソフト")
+            value = _skillsoft_value(node)
+            options = set(skillsoft_options(node, skills_data))
+            if extra and extra not in options:
+                continue
+            if not extra:
+                continue
+            if kind == "active":
+                if extra not in active_names:
+                    continue
+                if wires <= 0:
+                    warnings.append(f"{label} を使うにはスキルワイヤが必要です")
+                    continue
+                if value > wires:
+                    warnings.append(f"{label} がスキルワイヤを超えています（R{value} / スキルワイヤ R{wires}）")
+                add_rating(active, extra, min(value, wires))
+            else:
+                if extra not in knowledge_names:
+                    continue
+                if jack <= 0:
+                    warnings.append(f"{label} を使うにはスキルジャックが必要です")
+                    continue
+                if value > jack:
+                    warnings.append(f"{label} がスキルジャックを超えています（R{value} / スキルジャック R{jack}）")
+                add_rating(knowledge, extra, min(value, jack))
+    return {
+        "active": active,
+        "knowledge": knowledge,
+        "all": {**knowledge, **active},
+        "skillwires": wires,
+        "skilljack": jack,
+    }
+
+
+def _attach_skillsoft_knowledge(
+    public: list[dict[str, Any]],
+    skillsoft: dict[str, int],
+    skills_data: dict[str, Any],
+) -> None:
+    catalog_by_name = {skill["name"]: skill for skill in skills_data.get("knowledge") or []}
+    by_name = {row["name"]: row for row in public}
+    for name, rating in skillsoft.items():
+        spec = catalog_by_name.get(name)
+        if not spec:
+            continue
+        row = by_name.get(name)
+        if row:
+            row["skillsoft"] = int(rating)
+            continue
+        public.append(
+            {
+                "name": name,
+                "category": spec.get("category") or "Street",
+                "attribute": str(spec.get("attribute") or KNOWLEDGE_DEFAULT_ATTR.get(spec.get("category") or "", "INT")).upper(),
+                "rating": 0,
+                "native": False,
+                "skillsoft": int(rating),
+            }
+        )
 
 
 def selecttext_options(attrs: dict[str, Any]) -> list[str]:
@@ -5879,6 +6031,10 @@ def compute(state: CharacterState) -> CharacterState:
         for note in notes:
             if note not in existing:
                 existing.append(note)
+    skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
+    _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
+    effective_skills = _merge_skill_ratings(skill_totals, skillsofts["active"])
+    effective_knowledge = _merge_skill_ratings(dict(state.knowledge_skills or {}), skillsofts["knowledge"])
 
     karma_from_q = sum(
         q["karma"]
@@ -5918,7 +6074,7 @@ def compute(state: CharacterState) -> CharacterState:
         attach_spirit_tests(
             list(spirits.get("public") or []),
             int(total.get("MAG") or 0),
-            skill_totals,
+            effective_skills,
             skill_mods["skill_bonus"],
             total,
             data["skills"],
@@ -5928,7 +6084,7 @@ def compute(state: CharacterState) -> CharacterState:
         attach_focus_tests(
             list(foci.get("public") or []),
             int(total.get("MAG") or 0),
-            skill_totals,
+            effective_skills,
             skill_mods["skill_bonus"],
             total,
             data["skills"],
@@ -5939,7 +6095,7 @@ def compute(state: CharacterState) -> CharacterState:
         attach_complex_form_tests(
             list(resonance.get("public") or []),
             int(total.get("RES") or 0),
-            skill_totals,
+            effective_skills,
             skill_mods["skill_bonus"],
             total,
             data["skills"],
@@ -5949,7 +6105,7 @@ def compute(state: CharacterState) -> CharacterState:
         attach_sprite_tests(
             list(techno_sprites.get("public") or []),
             int(total.get("RES") or 0),
-            skill_totals,
+            effective_skills,
             skill_mods["skill_bonus"],
             total,
             data["skills"],
@@ -5971,12 +6127,13 @@ def compute(state: CharacterState) -> CharacterState:
             meta,
             ess,
             ess_lost,
-            skill_totals,
+            effective_skills,
             set(adept.get("power_names") or []),
             {str(item.get("name") or "") for item in (magic.get("public") or []) if item.get("name")},
             str((tradition_info or {}).get("name") or ""),
             {item["name"] for item in cyber_installed},
             {item["name"] for item in bio_installed},
+            effective_knowledge,
         ),
         errors,
     )
@@ -6146,6 +6303,9 @@ def compute(state: CharacterState) -> CharacterState:
             "paid": contacts.get("paid") or 0,
         },
         "skill_totals": skill_totals,
+        "skillsoft": skillsofts["all"],
+        "skillwires": skillsofts["skillwires"],
+        "skilljack": skillsofts["skilljack"],
         "skill_bonus": skill_mods["skill_bonus"],
         "skill_group_bonus": skill_mods["skill_group_bonus"],
         "skill_category_bonus": skill_mods["skill_category_bonus"],
