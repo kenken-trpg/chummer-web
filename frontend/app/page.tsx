@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import type { Catalog, Character, InstalledAdeptPower, InstalledWare, MagicTestInfo, MentorInfo, PriorityCategory, PriorityLetter, QualityReqNode, SkillPickSlot, SpecialArmor, WareCatalogItem, WareInstall } from "@/lib/types";
+import type { Catalog, Character, InstalledAdeptPower, InstalledWare, LimitModifier, MagicTestInfo, MentorInfo, PriorityCategory, PriorityLetter, QualityReqNode, SkillPickSlot, SpecialArmor, WareCatalogItem, WareInstall } from "@/lib/types";
 
 const CATS: { key: PriorityCategory; label: string }[] = [
   { key: "Heritage", label: "メタタイプ" },
@@ -333,6 +333,16 @@ function specialArmorLine(sa?: SpecialArmor | null): string {
   return specialArmorBits(sa)
     .map((row) => (row.value === "免疫" ? row.label : `${row.label} ${row.value}`))
     .join(" / ");
+}
+
+function limitModifierLine(mods?: LimitModifier[] | null): string {
+  if (!mods?.length) return "";
+  const names: Record<string, string> = { physical: "物理", mental: "精神", social: "社会" };
+  return mods.map((mod) => {
+    const sign = mod.value > 0 ? `+${mod.value}` : `${mod.value}`;
+    const base = `${names[mod.limit] || mod.limit}リミット ${sign}`;
+    return mod.condition_label ? `${base}（${mod.condition_label}）` : base;
+  }).join(" / ");
 }
 
 function deviceRatingBit(item?: { device_rating?: number } | null): string {
@@ -1784,6 +1794,7 @@ export default function Page() {
                           {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
                           {mod.capacity_cost ? ` / 容量 ${mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost}` : ""}
                           {specialArmorLine(mod.special_armor) ? ` / ${specialArmorLine(mod.special_armor)}` : ""}
+                          {limitModifierLine(mod.limit_modifiers) ? ` / ${limitModifierLine(mod.limit_modifiers)}` : ""}
                           {availBit(mod)}
                           {mod.included ? null : (
                             <>
@@ -4743,6 +4754,11 @@ export default function Page() {
           <ul className="warn">{d.warnings!.map((w) => <li key={w}>{w}</li>)}</ul>
         ) : null}
         <div className="stat"><span>物理/精神/社会リミット</span><b>{d.limits.physical}/{d.limits.mental}/{d.limits.social}</b></div>
+        {(d.limit_modifiers || []).map((mod, idx) => (
+          <div className="stat" key={`${mod.limit}-${mod.condition || ""}-${idx}`}>
+            <span>{limitModifierLine([mod])}</span>
+          </div>
+        ))}
         <div className="stat"><span>コンディション</span><b>P{d.condition_monitor.physical} / S{d.condition_monitor.stun}</b></div>
         {d.limb_quality ? <div className="stat"><span>リム本数 Quality</span><b>{d.limb_quality.count}本 / {d.limb_quality.pairs}組</b></div> : null}
         <div className="stat"><span>イニシアチブ</span><b>{d.initiative.value}+{d.initiative.dice}d6</b></div>

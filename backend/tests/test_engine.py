@@ -2083,6 +2083,7 @@ FIRE_RES = "dd246520-7306-40fb-88b4-c9cb031208fc"
 INSULATION = "497b5d6b-df0c-401d-91de-42a224b1fa87"
 NONCONDUCT = "0cfb049a-a1bd-4daa-96be-9468c37d9c3c"
 CHEM_SEAL = "1e002d2e-cd93-4cef-a666-b6c6449f4e9f"
+THERMAL_DAMPING = "ba32a6e9-4e6f-47fe-8fd7-c3194a5174d6"
 RESTRICTED_GEAR = "ce939b04-5fc6-49e9-a747-9c9d1254449e"
 SHOCK_FRILLS = "dbdaf817-9bfa-4938-a195-b53c63b53e7c"
 SOFTWEAVE = "cf8accf5-4117-4419-ab73-957489038ab9"
@@ -2257,6 +2258,58 @@ def test_chemical_seal_grants_contact_and_inhalation_immunity() -> None:
     assert immunities["pathogen_contact"] is True
     assert immunities["pathogen_inhalation"] is True
     assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["immunities"]["toxin_contact"] is True
+
+
+def test_thermal_damping_adds_sneaking_physical_limit() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    baseline = compute(_mundane("damp-base", armor=[jacket]))
+    out = compute(
+        _mundane(
+            "damp-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=THERMAL_DAMPING, parent_id=jacket.id, rating=2)],
+        )
+    )
+    row = out.derived["armor_items"][0]["mods"][0]
+    assert out.derived["armor"] == 12
+    assert out.derived["nuyen_spent"] == 2000
+    assert row["nuyen"] == 1000
+    assert row["capacity_cost"] == 2
+    assert row["limit_modifiers"] == [
+        {
+            "limit": "physical",
+            "value": 2,
+            "condition": "LimitCondition_TestSneakingThermal",
+            "condition_label": "熱視覚／熱センサーに対する潜伏",
+            "source": "",
+        }
+    ]
+    assert out.derived["limit_modifiers"] == [
+        {
+            "limit": "physical",
+            "value": 2,
+            "condition": "LimitCondition_TestSneakingThermal",
+            "condition_label": "熱視覚／熱センサーに対する潜伏",
+            "source": "Thermal Damping",
+        }
+    ]
+    assert out.derived["limits"]["physical"] == baseline.derived["limits"]["physical"]
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "limitmodifier" not in tags
+    assert out.derived["errors"] == []
+
+
+def test_unequipped_armor_drops_thermal_damping_limit() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET, equipped=False)
+    out = compute(
+        _mundane(
+            "unequip-damp",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=THERMAL_DAMPING, parent_id=jacket.id, rating=2)],
+        )
+    )
+    assert out.derived["limit_modifiers"] == []
+    assert out.derived["armor_items"][0]["mods"][0]["limit_modifiers"][0]["value"] == 2
 
 
 def test_unequipped_armor_drops_special_armor() -> None:

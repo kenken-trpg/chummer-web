@@ -25,6 +25,8 @@ from .improvements import (
     _as_int,
     apply_bonus_nodes,
     collect_effects,
+    compact_limit_modifiers,
+    limit_modifiers_from_nodes,
     special_armor_from_nodes,
     special_armor_totals,
     substitute_rating,
@@ -510,6 +512,9 @@ def _resolve_armor_mods(
             special = special_armor_from_nodes(list(spec.get("bonus") or []), rating)
             if special:
                 row["special_armor"] = special
+            limits = limit_modifiers_from_nodes(list(spec.get("bonus") or []), rating)
+            if limits:
+                row["limit_modifiers"] = limits
             public.append(row)
         cap_max = cap_max_base + cap_bonus
         item["capacity_used"] = int(used) if used == int(used) else used
@@ -6056,6 +6061,7 @@ def compute(state: CharacterState) -> CharacterState:
             "mental": mental_limit,
             "social": social_limit,
         },
+        "limit_modifiers": compact_limit_modifiers(effects),
         "condition_monitor": {"physical": cm_phys, "stun": cm_stun},
         "initiative": {"value": initiative, "dice": initiative_dice},
         "movement": {"walk": walk, "run": run, "sprint": meta.get("sprint") or "2/1/0"},

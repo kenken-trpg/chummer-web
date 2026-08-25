@@ -243,6 +243,14 @@ export interface SpecialArmor {
   };
 }
 
+export interface LimitModifier {
+  limit: "physical" | "mental" | "social" | string;
+  value: number;
+  condition?: string;
+  condition_label?: string;
+  source?: string;
+}
+
 export interface InstalledArmorMod {
   id: string;
   mod_id: string;
@@ -259,6 +267,7 @@ export interface InstalledArmorMod {
   avail?: string;
   source?: string;
   special_armor?: SpecialArmor;
+  limit_modifiers?: LimitModifier[];
 }
 
 export interface InstalledArmor {
@@ -1031,6 +1040,7 @@ export interface Character {
     warnings?: string[];
     totals: Record<string, number>;
     limits: { physical: number; mental: number; social: number };
+    limit_modifiers?: LimitModifier[];
     condition_monitor: { physical: number; stun: number };
     initiative: { value: number; dice: number };
     movement: { walk: string; run: string; sprint: string };

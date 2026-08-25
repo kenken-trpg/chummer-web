@@ -42,6 +42,7 @@ IMPLEMENTED = {
     "pathogencontactimmune",
     "pathogeninhalationimmune",
     "restrictedgear",
+    "limitmodifier",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -56,7 +57,6 @@ SILENT_TAGS = {
     "specificpower",
     "selecttradition",
     "selectrestricted",
-    "limitmodifier",
     "activesoft",
     "knowsoft",
     "linguasoft",
@@ -79,6 +79,20 @@ IMMUNE_TAGS = {
 }
 SPECIAL_ARMOR_KEYS = ("fire", "cold", "electricity", "radiation", "toxin_contact", "pathogen_contact")
 IMMUNE_KEYS = ("toxin_contact", "toxin_inhalation", "pathogen_contact", "pathogen_inhalation")
+LIMIT_KINDS = ("physical", "mental", "social")
+LIMIT_KIND_ALIASES = {
+    "physical": "physical",
+    "physicallimit": "physical",
+    "mental": "mental",
+    "mentallimit": "mental",
+    "social": "social",
+    "sociallimit": "social",
+}
+LIMIT_CONDITION_JA = {
+    "LimitCondition_TestSneakingThermal": "熱視覚／熱センサーに対する潜伏",
+    "LimitCondition_SkillsActiveSneaking": "熱視覚／熱センサーに対する潜伏",
+    "LimitCondition_Skillwires": "スキルワイヤ",
+}
 
 ATTR_ALIASES = {
     "BOD": "BOD",
@@ -134,6 +148,18 @@ def _as_text(value: Any, default: str = "") -> str:
     return str(value)
 
 
+def _limit_kind(value: Any) -> str:
+    raw = _as_text(value).strip().lower().replace(" ", "")
+    return LIMIT_KIND_ALIASES.get(raw, "")
+
+
+def limit_condition_label(condition: str) -> str:
+    key = (condition or "").strip()
+    if not key:
+        return ""
+    return LIMIT_CONDITION_JA.get(key, key)
+
+
 def _as_int(value: Any, default: int = 0) -> int:
     if value is None or value == "":
         return default
@@ -176,6 +202,7 @@ def empty_effects() -> dict[str, Any]:
         "special_armor": {key: 0 for key in SPECIAL_ARMOR_KEYS},
         "immunities": {key: False for key in IMMUNE_KEYS},
         "restricted_gear": [],
+        "limit_modifiers": [],
         "unimplemented": [],
     }
 
@@ -319,6 +346,21 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "source": source,
                 }
             )
+        elif tag == "limitmodifier":
+            kind = _limit_kind(fields.get("limit") or node.get("value"))
+            value = _as_int(fields.get("value") or node.get("value"))
+            condition = _as_text(fields.get("condition") or "").strip()
+            if not kind or value == 0:
+                continue
+            effects["limit_modifiers"].append(
+                {
+                    "limit": kind,
+                    "value": value,
+                    "condition": condition,
+                    "condition_label": limit_condition_label(condition),
+                    "source": source,
+                }
+            )
 
 
 def special_armor_totals(effects: dict[str, Any]) -> dict[str, Any]:
@@ -353,6 +395,32 @@ def special_armor_from_nodes(nodes: list[dict[str, Any]], rating: int = 1) -> di
     effects = empty_effects()
     apply_bonus_nodes(substitute_rating(nodes, rating), effects, "")
     return compact_special_armor(effects)
+
+
+def compact_limit_modifiers(effects: dict[str, Any]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in effects.get("limit_modifiers") or []:
+        kind = str(row.get("limit") or "")
+        value = int(row.get("value") or 0)
+        if kind not in LIMIT_KINDS or value == 0:
+            continue
+        condition = str(row.get("condition") or "")
+        out.append(
+            {
+                "limit": kind,
+                "value": value,
+                "condition": condition,
+                "condition_label": str(row.get("condition_label") or limit_condition_label(condition)),
+                "source": str(row.get("source") or ""),
+            }
+        )
+    return out
+
+
+def limit_modifiers_from_nodes(nodes: list[dict[str, Any]], rating: int = 1) -> list[dict[str, Any]]:
+    effects = empty_effects()
+    apply_bonus_nodes(substitute_rating(nodes, rating), effects, "")
+    return compact_limit_modifiers(effects)
 
 
 def collect_effects(sources: list[tuple[str, list[dict[str, Any]]]]) -> dict[str, Any]:
