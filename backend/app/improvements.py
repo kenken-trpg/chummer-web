@@ -43,6 +43,8 @@ IMPLEMENTED = {
     "pathogeninhalationimmune",
     "restrictedgear",
     "limitmodifier",
+    "skillwire",
+    "skillsoftaccess",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -60,6 +62,7 @@ SILENT_TAGS = {
     "activesoft",
     "knowsoft",
     "linguasoft",
+    "skillsoft",
     "weaponspecificdice",
 }
 
@@ -203,6 +206,8 @@ def empty_effects() -> dict[str, Any]:
         "immunities": {key: False for key in IMMUNE_KEYS},
         "restricted_gear": [],
         "limit_modifiers": [],
+        "skillwires": 0,
+        "skilljack": 0,
         "unimplemented": [],
     }
 
@@ -360,6 +365,16 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "condition_label": limit_condition_label(condition),
                     "source": source,
                 }
+            )
+        elif tag == "skillwire":
+            effects["skillwires"] = max(
+                int(effects.get("skillwires") or 0),
+                _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+            )
+        elif tag == "skillsoftaccess":
+            effects["skilljack"] = max(
+                int(effects.get("skilljack") or 0),
+                _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
             )
 
 
