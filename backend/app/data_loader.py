@@ -113,6 +113,8 @@ def eval_formula(
 
 
 CHARGEN_AVAIL_MAX = 12
+CHARGEN_DEVICE_RATING_MAX = 6
+CHARGEN_WARE_ATTR_BONUS_MAX = 4
 
 
 def parse_avail(
@@ -264,6 +266,7 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "selectside": el.find("selectside") is not None,
                 "limbslotcount": _text(el.find("limbslotcount")) or "1",
                 "add_weapon": _text(el.find("addweapon")),
+                "devicerating": _text(el.find("devicerating")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }

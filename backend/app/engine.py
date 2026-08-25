@@ -6,6 +6,8 @@ from typing import Any
 
 from .data_loader import (
     CHARGEN_AVAIL_MAX,
+    CHARGEN_DEVICE_RATING_MAX,
+    CHARGEN_WARE_ATTR_BONUS_MAX,
     MATRIX_ATTRIBUTES,
     PHYSICAL_ATTRS,
     PROGRAM_HOSTS,
@@ -19,6 +21,7 @@ from .data_loader import (
     sum_avail,
 )
 from .improvements import (
+    ATTR_ALIASES,
     _as_int,
     apply_bonus_nodes,
     collect_effects,
@@ -622,6 +625,18 @@ def _matrix_stats(
     }
 
 
+SENSOR_DEVICE_CATEGORIES = {"Sensors"}
+
+
+def _device_rating_of(spec: dict[str, Any] | None, rating: int) -> int:
+    raw = str((spec or {}).get("devicerating") or "").strip()
+    if raw and raw not in {"0", "-"}:
+        return max(0, int(eval_formula(raw, rating, 0)))
+    if str((spec or {}).get("category") or "") in SENSOR_DEVICE_CATEGORIES:
+        return max(0, int(rating or 0))
+    return 0
+
+
 def _resolve_matrix_devices(kind: str, installs: list[GearInstall]) -> tuple[list[GearInstall], list[dict[str, Any]], int]:
     kept: list[GearInstall] = []
     public: list[dict[str, Any]] = []
@@ -760,6 +775,7 @@ def _resolve_optics(state: CharacterState) -> tuple[list[dict[str, Any]], int, l
                 "capacity_max": cap_max,
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
+                "device_rating": _device_rating_of(spec, rating),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
@@ -1348,6 +1364,7 @@ def _resolve_misc_gear(
                 "add_weapon_id": spec.get("add_weapon_id") or "",
                 "weaponbonus": dict(spec.get("weaponbonus") or {}),
                 "loaded": False,
+                "device_rating": _device_rating_of(spec, rating),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
@@ -1598,6 +1615,7 @@ def _resolve_sensors(state: CharacterState) -> tuple[list[dict[str, Any]], int, 
                 "capacity_max": cap_max,
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
+                "device_rating": _device_rating_of(spec, rating),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
@@ -2574,6 +2592,57 @@ def _check_avail_limit(items: list[dict[str, Any]], effects: dict[str, Any], err
         if used:
             continue
         errors.append(f"{name} の入手制限超過（{shown} / 上限{limit}）")
+
+
+def _device_rating_entries(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for group in groups:
+        for item in group or []:
+            item_id = str(item.get("id") or "")
+            if item_id and item_id in seen:
+                continue
+            if item_id:
+                seen.add(item_id)
+            if item.get("from_ware") or item.get("from_gear"):
+                continue
+            if int(item.get("device_rating") or 0) <= 0:
+                continue
+            out.append(item)
+    return out
+
+
+def _check_device_rating_limit(items: list[dict[str, Any]], errors: list[str]) -> None:
+    limit = CHARGEN_DEVICE_RATING_MAX
+    for item in items:
+        value = int(item.get("device_rating") or 0)
+        if value <= limit:
+            continue
+        name = str(item.get("label") or item.get("name") or "ギア")
+        errors.append(f"{name} のデバイスレーティング超過（{value} / 上限{limit}）")
+
+
+def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
+    totals: dict[str, int] = {key: 0 for key in PHYSICAL_ATTRS}
+    for item in items:
+        for node in item.get("bonus") or []:
+            if node.get("tag") != "specificattribute":
+                continue
+            fields = node.get("fields") or {}
+            name = ATTR_ALIASES.get(str(fields.get("name") or "").upper())
+            if name not in totals:
+                continue
+            totals[name] += _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"), 0)
+    return {key: value for key, value in totals.items() if value}
+
+
+def _check_ware_attribute_cap(bonuses: dict[str, int], errors: list[str]) -> None:
+    limit = CHARGEN_WARE_ATTR_BONUS_MAX
+    for attr in PHYSICAL_ATTRS:
+        value = int(bonuses.get(attr) or 0)
+        if value <= limit:
+            continue
+        errors.append(f"{attr} のウェア強化超過（+{value} / 上限+{limit}）")
 
 
 def resolve_gear(
@@ -3776,6 +3845,7 @@ def resolve_ware(
                 "ess_to_parent": ess_base if add_to_parent else 0.0,
                 "add_weapon": ware.get("add_weapon") or "",
                 "add_weapon_id": ware.get("add_weapon_id") or "",
+                "device_rating": _device_rating_of(ware, rating),
             }
         )
     children: dict[str, list[dict[str, Any]]] = {}
@@ -3822,6 +3892,7 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         "avail": item.get("avail") or "",
         "avail_value": int(item.get("avail_value") or 0),
         "restricted_gear": bool(item.get("restricted_gear")),
+        "device_rating": int(item.get("device_rating") or 0),
         "source": item.get("source"),
     }
 
@@ -5544,6 +5615,10 @@ def compute(state: CharacterState) -> CharacterState:
         if item.get("id") in hosted_ids:
             continue
         sources.append((item["name"], item.get("bonus") or []))
+    ware_attr_bonus = _ware_attribute_bonuses(
+        [item for item in installed if item.get("id") not in hosted_ids]
+    )
+    _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
     seeker_targets = effects.get("cyberseeker") or []
     limb_quality = apply_cyberseeker(cyber_installed, seeker_targets, attrs_spec, state.options)
@@ -5957,6 +6032,19 @@ def compute(state: CharacterState) -> CharacterState:
         effects,
         errors,
     )
+    _check_device_rating_limit(
+        _device_rating_entries(
+            cyber_installed,
+            bio_installed,
+            gear.get("commlinks"),
+            gear.get("cyberdecks"),
+            gear.get("rccs"),
+            gear.get("optics"),
+            gear.get("sensors"),
+            gear.get("gear"),
+        ),
+        errors,
+    )
 
     state.attributes = ratings
     state.derived = {
@@ -6002,6 +6090,9 @@ def compute(state: CharacterState) -> CharacterState:
         "nuyen": nuyen,
         "nuyen_spent": nuyen_spent,
         "avail_limit": CHARGEN_AVAIL_MAX,
+        "device_rating_limit": CHARGEN_DEVICE_RATING_MAX,
+        "ware_attr_limit": CHARGEN_WARE_ATTR_BONUS_MAX,
+        "ware_attr_bonus": ware_attr_bonus,
         "karma": {
             "pool": karma_pool,
             "spent": karma_spent,

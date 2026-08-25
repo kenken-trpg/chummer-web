@@ -388,6 +388,7 @@ export interface InstalledOptics {
   capacity_max?: number;
   addoncategories?: string[];
   requireparent?: boolean;
+  device_rating?: number;
   avail?: string;
   source?: string;
 }
@@ -1060,6 +1061,9 @@ export interface Character {
     lifestyle?: InstalledLifestyle | null;
     nuyen: number;
     avail_limit?: number;
+    device_rating_limit?: number;
+    ware_attr_limit?: number;
+    ware_attr_bonus?: Record<string, number>;
     karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number } };
     points: Record<string, { used: number; max: number }>;
     knowledge_skills?: {
@@ -1279,6 +1283,7 @@ export interface InstalledWare {
   selectside?: boolean;
   side?: string | null;
   avail?: string;
+  device_rating?: number;
   source?: string;
 }
 

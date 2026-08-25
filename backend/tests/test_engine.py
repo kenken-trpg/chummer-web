@@ -13,6 +13,7 @@ LIMB_ARMOR = "8ea736c6-5a90-471c-9320-18432ec9aaf0"
 OCULAR_DRONE = "fde2bfc3-c7a2-435e-a220-4896f49d8ca9"
 ORTHOSKIN = "96e4809a-71e6-4b98-9740-c6c44bc33aa9"
 TONER = "69ab0255-a76b-4190-a8be-0473fed231ef"
+SUPRATHYROID = "d1a314d9-3b83-4d62-854d-90e3788eea83"
 SYNAPTIC = "4a4e1079-5872-4f3f-a450-48c30a5504f3"
 CEREBRAL = "81b40aa8-98d1-4a5d-89d6-9b6d438006da"
 MNEMONIC = "b2289ebe-4bb0-49d0-a151-38fc1261bba8"
@@ -336,6 +337,70 @@ def test_muscle_toner_raises_agility() -> None:
     out = compute(state)
     assert out.derived["totals"]["AGI"] == 3
     assert out.derived["essence"] == 5.6
+    assert out.derived["ware_attr_bonus"]["AGI"] == 2
+    assert out.derived["ware_attr_limit"] == 4
+    assert all("ウェア強化" not in err for err in out.derived["errors"])
+
+
+def test_muscle_replacement_four_is_at_ware_attr_cap() -> None:
+    out = compute(
+        _mundane(
+            "ware-cap-ok",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            cyberware=[CyberwareInstall(ware_id=MUSCLE, rating=4)],
+        )
+    )
+    assert out.derived["ware_attr_bonus"]["AGI"] == 4
+    assert out.derived["ware_attr_bonus"]["STR"] == 4
+    assert out.derived["totals"]["AGI"] == 5
+    assert all("ウェア強化" not in err for err in out.derived["errors"])
+
+
+def test_muscle_replacement_and_toner_exceed_ware_attr_cap() -> None:
+    out = compute(
+        _mundane(
+            "ware-cap-over",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            cyberware=[CyberwareInstall(ware_id=MUSCLE, rating=4)],
+            bioware=[CyberwareInstall(ware_id=TONER, rating=2)],
+        )
+    )
+    assert out.derived["ware_attr_bonus"]["AGI"] == 6
+    assert out.derived["ware_attr_bonus"]["STR"] == 4
+    assert any("AGI" in err and "ウェア強化超過" in err and "+6" in err for err in out.derived["errors"])
+    assert all("STR" not in err or "ウェア強化" not in err for err in out.derived["errors"])
+
+
+def test_toner_and_suprathyroid_exceed_ware_attr_cap() -> None:
+    out = compute(
+        _mundane(
+            "ware-cap-gland",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            bioware=[
+                CyberwareInstall(ware_id=TONER, rating=4),
+                CyberwareInstall(ware_id=SUPRATHYROID),
+            ],
+        )
+    )
+    assert out.derived["ware_attr_bonus"]["AGI"] == 5
+    assert out.derived["ware_attr_bonus"]["STR"] == 1
+    assert any("AGI" in err and "ウェア強化超過" in err and "+5" in err for err in out.derived["errors"])
+
+
+def test_cyberlimb_custom_strength_does_not_count_as_ware_attr_bonus() -> None:
+    out = compute(
+        _mundane(
+            "ware-cap-limb",
+            cyberware=[
+                CyberwareInstall(id="arm1", ware_id=ARM),
+                CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm1"),
+            ],
+        )
+    )
+    assert out.derived.get("ware_attr_bonus") in ({}, None) or "STR" not in (out.derived.get("ware_attr_bonus") or {})
+    assert all("ウェア強化" not in err for err in out.derived["errors"])
+    arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
+    assert arm["limb_str"] == 6
 
 
 def test_human_customized_strength_uses_racial_min() -> None:
@@ -2029,6 +2094,8 @@ UE_HELMET = "812a7926-3980-4c26-9935-5f1b66abacda"
 DIVING_ARMOR = "f2aab6fa-645a-4d39-a612-91d3ee9e6bce"
 META_LINK = "89a0f3c9-5ef6-41cd-981f-4ac690ee2ab3"
 CUSTOM_LINK = "d63eb841-7b15-4539-9026-b90a4924aeeb"
+FAIRLIGHT_CALIBAN = "1522dd91-99d9-42f9-ab19-b43e8e3c7322"
+TRANSYS_AVALON = "01077e2d-4f67-428a-850d-250faad2007c"
 PI_TAC_I = "b77b4cf8-8bdc-40bf-acca-f2afcca4965c"
 PI_TAC_COPILOT = "d900aa9c-5914-4e5b-baa4-b4e0c0625123"
 LOW_LIFESTYLE = "451eef87-d18e-4bee-a972-1ee165b08522"
@@ -2497,6 +2564,58 @@ def test_restricted_gear_allows_one_item_over_avail_twelve() -> None:
     assert all("入手制限" not in err for err in out.derived["errors"])
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "restrictedgear" not in tags
+
+
+def test_custom_commlink_rating_six_is_at_device_limit() -> None:
+    out = compute(_mundane("dr-custom-6", commlinks=[CommlinkInstall(gear_id=CUSTOM_LINK, rating=6)]))
+    row = out.derived["commlinks"][0]
+    assert row["device_rating"] == 6
+    assert row["avail"] == "12"
+    assert out.derived["device_rating_limit"] == 6
+    assert all("デバイスレーティング" not in err for err in out.derived["errors"])
+    assert all("入手制限" not in err for err in out.derived["errors"])
+
+
+def test_custom_commlink_rating_seven_exceeds_device_rating() -> None:
+    out = compute(_mundane("dr-custom-7", commlinks=[CommlinkInstall(gear_id=CUSTOM_LINK, rating=7)]))
+    row = out.derived["commlinks"][0]
+    assert row["device_rating"] == 7
+    assert any("デバイスレーティング超過" in err and "7" in err for err in out.derived["errors"])
+
+
+def test_fairlight_caliban_exceeds_device_rating_even_with_restricted_gear() -> None:
+    out = compute(
+        _mundane(
+            "dr-caliban",
+            quality_ids=[RESTRICTED_GEAR],
+            commlinks=[CommlinkInstall(gear_id=FAIRLIGHT_CALIBAN)],
+        )
+    )
+    row = out.derived["commlinks"][0]
+    assert row["device_rating"] == 7
+    assert row["avail"] == "14"
+    assert row.get("restricted_gear") is True
+    assert all("入手制限" not in err for err in out.derived["errors"])
+    assert any("Fairlight Caliban" in err and "デバイスレーティング超過" in err for err in out.derived["errors"])
+
+
+def test_transys_avalon_is_at_device_limit() -> None:
+    out = compute(_mundane("dr-avalon", commlinks=[CommlinkInstall(gear_id=TRANSYS_AVALON)]))
+    row = out.derived["commlinks"][0]
+    assert row["device_rating"] == 6
+    assert row["avail"] == "12"
+    assert out.derived["errors"] == []
+
+
+def test_sensor_array_rating_seven_exceeds_device_rating() -> None:
+    ok = compute(_mundane("dr-array-6", sensors=[GearInstall(gear_id=SENSOR_ARRAY, rating=6)]))
+    over = compute(_mundane("dr-array-7", sensors=[GearInstall(gear_id=SENSOR_ARRAY, rating=7)]))
+    assert ok.derived["sensors"][0]["device_rating"] == 6
+    assert all("デバイスレーティング" not in err for err in ok.derived["errors"])
+    assert over.derived["sensors"][0]["device_rating"] == 7
+    assert over.derived["sensors"][0]["avail"] == "7"
+    assert any("Sensor Array" in err and "デバイスレーティング超過" in err for err in over.derived["errors"])
+    assert all("入手制限" not in err for err in over.derived["errors"])
 
 
 def test_meta_link_costs_nuyen() -> None:

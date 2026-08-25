@@ -335,6 +335,18 @@ function specialArmorLine(sa?: SpecialArmor | null): string {
     .join(" / ");
 }
 
+function deviceRatingBit(item?: { device_rating?: number } | null): string {
+  if (!item || !(item.device_rating || 0)) return "";
+  return ` / DR ${item.device_rating}`;
+}
+
+function wareAttrLine(bonus?: Record<string, number> | null): string {
+  return ATTRS
+    .filter((key) => (bonus?.[key] || 0) !== 0)
+    .map((key) => `${key} +${bonus![key]}`)
+    .join(" / ");
+}
+
 function availBit(item?: { avail?: string; avail_value?: number } | null): string {
   if (!item) return "";
   if ((item.avail_value || 0) <= 0 && (!item.avail || item.avail === "0")) return "";
@@ -1183,6 +1195,9 @@ export default function Page() {
                   />
                   <b>
                     {d.totals[key]} <span className="muted">/{range.max}</span>
+                    {(d.ware_attr_bonus?.[key] || 0) !== 0 ? (
+                      <span className="muted"> ウェア+{d.ware_attr_bonus![key]}</span>
+                    ) : null}
                     {d.limb_replace && (key === "STR" || key === "AGI") ? (
                       <span className="muted"> 肉{key === "STR" ? d.limb_replace.meat_str : d.limb_replace.meat_agi}</span>
                     ) : null}
@@ -2687,6 +2702,7 @@ export default function Page() {
                         <b>{tr(item.name)}</b>
                         <div className="muted">
                           {item.name} / {tr(item.category)}
+                          {deviceRatingBit(item)}
                           {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
                           {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
                         </div>
@@ -4737,6 +4753,15 @@ export default function Page() {
         <div className="stat"><span>エッセンス</span><b>{d.essence}{(d.essence_lost_cyber || d.essence_lost_bio) ? `（C −${d.essence_lost_cyber ?? 0} / B −${d.essence_lost_bio ?? 0}）` : ""}</b></div>
         <div className="stat"><span>ニューエン</span><b>{d.nuyen.toLocaleString()}¥</b></div>
         <div className="stat"><span>入手制限</span><b>{d.avail_limit ?? 12}</b></div>
+        <div className="stat"><span>デバイスレーティング</span><b>{d.device_rating_limit ?? 6}</b></div>
+        <div className="stat">
+          <span>ウェア強化</span>
+          <b>
+            {wareAttrLine(d.ware_attr_bonus)
+              ? `${wareAttrLine(d.ware_attr_bonus)} / 上限+${d.ware_attr_limit ?? 4}`
+              : `+${d.ware_attr_limit ?? 4}`}
+          </b>
+        </div>
         {d.lifestyle ? <div className="stat"><span>ライフスタイル</span><b>{tr(d.lifestyle.name)} {d.lifestyle.months}{lifeIncrement(d.lifestyle.increment)}</b></div> : null}
         {d.commlink ? <div className="stat"><span>通信機</span><b>{tr(d.commlink.name)} DR{d.commlink.device_rating}</b></div> : null}
         {d.cyberdeck ? <div className="stat"><span>サイバーデッキ</span><b>{tr(d.cyberdeck.name)} DR{d.cyberdeck.device_rating} / {d.cyberdeck.attack}/{d.cyberdeck.sleaze}/{d.cyberdeck.dataprocessing}/{d.cyberdeck.firewall}{d.cyberdeck.program_max ? ` / プログラム ${d.cyberdeck.program_used ?? 0}/${d.cyberdeck.program_max}` : ""}</b></div> : null}
@@ -4791,6 +4816,9 @@ export default function Page() {
               <span>{ATTR_JA[k]}</span>
               <b>
                 {d.totals[k] ?? "-"}
+                {(d.ware_attr_bonus?.[k] || 0) !== 0 ? (
+                  <span className="muted"> ウェア+{d.ware_attr_bonus![k]}</span>
+                ) : null}
                 {d.limb_replace && (k === "STR" || k === "AGI") ? (
                   <span className="muted"> リム平均</span>
                 ) : null}
