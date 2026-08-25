@@ -2157,6 +2157,7 @@ def test_fire_resistance_adds_special_armor() -> None:
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "firearmor" not in tags
 
+
 def test_insulation_and_nonconductivity_add_special_armor() -> None:
     jacket = ArmorInstall(armor_id=ARMOR_JACKET)
     out = compute(
@@ -2173,6 +2174,7 @@ def test_insulation_and_nonconductivity_add_special_armor() -> None:
     assert out.derived["special_armor"]["cold"] == 3
     assert out.derived["special_armor"]["electricity"] == 1
 
+
 def test_chemical_seal_grants_contact_and_inhalation_immunity() -> None:
     jacket = ArmorInstall(armor_id=ARMOR_JACKET)
     out = compute(
@@ -2188,6 +2190,7 @@ def test_chemical_seal_grants_contact_and_inhalation_immunity() -> None:
     assert immunities["pathogen_contact"] is True
     assert immunities["pathogen_inhalation"] is True
     assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["immunities"]["toxin_contact"] is True
+
 
 def test_unequipped_armor_drops_special_armor() -> None:
     jacket = ArmorInstall(armor_id=ARMOR_JACKET, equipped=False)
@@ -2240,6 +2243,7 @@ def test_ynt_softweave_doubles_jacket_cost_and_capacity() -> None:
     assert out.derived["nuyen_spent"] == 2000
     assert out.derived["errors"] == []
 
+
 def test_ynt_softweave_rounds_odd_capacity_up() -> None:
     vest = ArmorInstall(armor_id=ARMOR_VEST)
     out = compute(
@@ -2255,6 +2259,7 @@ def test_ynt_softweave_rounds_odd_capacity_up() -> None:
     assert row["capacity_max"] == 14
     assert out.derived["nuyen_spent"] == 1000
     assert out.derived["errors"] == []
+
 
 def test_ynt_softweave_keeps_chem_prot_inside_expanded_capacity() -> None:
     jacket = ArmorInstall(armor_id=ARMOR_JACKET)
@@ -2407,6 +2412,7 @@ def test_parse_avail_reads_rating_suffix_and_additive() -> None:
     assert parse_avail("(Rating * 5)R", 2) == (10, "R", False)
     assert parse_avail("+Rating - MinRating + 1", 3, {"MinRating": 1}) == (3, "", True)
 
+
 def test_softweave_adds_four_to_jacket_avail() -> None:
     jacket = ArmorInstall(armor_id=ARMOR_JACKET)
     out = compute(
@@ -2426,6 +2432,7 @@ def test_softweave_adds_four_to_jacket_avail() -> None:
     assert out.derived["avail_limit"] == 12
     assert out.derived["errors"] == []
 
+
 def test_internal_smartgun_adds_restricted_avail_to_predator() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
     out = compute(
@@ -2442,6 +2449,7 @@ def test_internal_smartgun_adds_restricted_avail_to_predator() -> None:
     assert smart["avail_additive"] is True
     assert out.derived["errors"] == []
 
+
 def test_wired_reflexes_rating_three_exceeds_chargen_avail() -> None:
     out = compute(
         _mundane(
@@ -2453,6 +2461,7 @@ def test_wired_reflexes_rating_three_exceeds_chargen_avail() -> None:
     ware = out.derived["cyberware"][0]
     assert ware["avail"] == "20R"
     assert any("入手制限超過" in err and "20R" in err for err in out.derived["errors"])
+
 
 def test_betaware_adds_four_avail() -> None:
     ok = compute(
@@ -2472,6 +2481,7 @@ def test_betaware_adds_four_avail() -> None:
     assert all("入手制限" not in err for err in ok.derived["errors"])
     assert over.derived["cyberware"][0]["avail"] == "16R"
     assert any("入手制限超過" in err and "16R" in err for err in over.derived["errors"])
+
 
 def test_restricted_gear_allows_one_item_over_avail_twelve() -> None:
     out = compute(
@@ -2531,6 +2541,7 @@ def test_pi_tac_is_treated_as_commlink() -> None:
     assert out.derived["nuyen_spent"] == 115000
     assert out.derived["errors"] == []
 
+
 def test_pi_tac_hosts_apps() -> None:
     link = CommlinkInstall(gear_id=PI_TAC_I)
     out = compute(
@@ -2546,6 +2557,7 @@ def test_pi_tac_hosts_apps() -> None:
     assert app["parent_id"] == link.id
     assert out.derived["nuyen_spent"] == 115120
     assert out.derived["errors"] == []
+
 
 def test_pi_tac_programs_only_fit_pi_tac() -> None:
     tac = CommlinkInstall(gear_id=PI_TAC_I)
@@ -3028,6 +3040,7 @@ def test_predator_apds_changes_ap() -> None:
     assert out.derived["nuyen_spent"] == 845
     assert out.derived["errors"] == []
 
+
 def test_predator_apds_qty_two() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
     out = compute(
@@ -3039,6 +3052,7 @@ def test_predator_apds_qty_two() -> None:
     )
     assert out.derived["weapons"][0]["nuyen"] == 965
     assert out.derived["nuyen_spent"] == 965
+
 
 def test_predator_regular_ammo_keeps_stats() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
@@ -3054,6 +3068,7 @@ def test_predator_regular_ammo_keeps_stats() -> None:
     assert row["damage"] == "8P"
     assert row["nuyen"] == 745
 
+
 def test_predator_gel_rounds_stun() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
     out = compute(
@@ -3067,6 +3082,7 @@ def test_predator_gel_rounds_stun() -> None:
     assert row["damage"] == "8S"
     assert row["ap"] == "0"
     assert row["nuyen"] == 750
+
 
 def test_predator_spare_clip() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
@@ -3083,6 +3099,7 @@ def test_predator_spare_clip() -> None:
     assert clip["loaded"] is False
     assert row["ap"] == "-1"
     assert row["nuyen"] == 730
+
 
 def test_speed_loader_needs_cylinder() -> None:
     pistol = WeaponInstall(weapon_id=LIGHT_FIRE_70)
@@ -3106,6 +3123,7 @@ def test_speed_loader_needs_cylinder() -> None:
     assert accepted.derived["weapons"][0]["ammo_gear"][0]["name"] == "Speed Loader"
     assert accepted.derived["nuyen_spent"] == 425
 
+
 def test_apds_forbidden_on_melee() -> None:
     weapon = WeaponInstall(weapon_id=KNIFE)
     out = compute(
@@ -3118,6 +3136,7 @@ def test_apds_forbidden_on_melee() -> None:
     assert out.derived["weapons"][0]["ammo_gear"] == []
     assert out.derived["nuyen_spent"] == 10
     assert any("装着できません" in warn for warn in out.derived["warnings"])
+
 
 def test_predator_ammo_switch() -> None:
     weapon = WeaponInstall(weapon_id=PREDATOR)
@@ -3138,6 +3157,7 @@ def test_predator_ammo_switch() -> None:
     assert row["ammo_gear"][1]["loaded"] is True
     assert switched.derived["nuyen_spent"] == 870
 
+
 def test_flash_bang_becomes_weapon() -> None:
     grenade = GearInstall(gear_id=FLASH_BANG, qty=2)
     out = compute(_mundane("flash-bang", gear=[grenade]))
@@ -3154,6 +3174,7 @@ def test_flash_bang_becomes_weapon() -> None:
     assert row["ap"] == "-4"
     assert out.derived["gear"][0]["add_weapon"] == "Grenade: Flash-Bang"
 
+
 def test_throwing_knife_gear_is_weapon() -> None:
     knife = GearInstall(gear_id=THROWING_KNIFE_GEAR)
     out = compute(_mundane("throw-knife", gear=[knife]))
@@ -3162,6 +3183,7 @@ def test_throwing_knife_gear_is_weapon() -> None:
     assert row["name"] == "Throwing Knife"
     assert row["from_gear"] is True
     assert "({STR}+1)P" in row["damage"]
+
 
 def test_minigrenade_loads_into_launcher() -> None:
     launcher = WeaponInstall(weapon_id=ANTIOCH)
@@ -3649,6 +3671,202 @@ def test_gecko_tips_body_formula() -> None:
     mod = next(item for item in out.derived["vehicle_mods"] if item["mod_id"] == GECKO_TIPS)
     assert mod["nuyen"] == 5000
     assert mod["slots"] == 4
+
+
+DRONE_ARM = "af87f3e0-aca3-4459-9d40-1573c758d137"
+SYNTHETIC_DRONE_ARM = "a51d3e74-3e94-493e-b477-fd30511853b1"
+HAND_BLADE = "ba93ab8d-fd7f-4fc4-bfa3-5f987fd15d77"
+GYROMOUNT = "816fbe31-0bfb-455f-a939-fca85b968bd2"
+
+
+def test_drone_arm_hosts_hand_blade() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    arm = VehicleModInstall(id="arm1", mod_id=DRONE_ARM, parent_id=drone.id)
+    out = compute(
+        _mundane(
+            "dob-blade",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(ware_id=HAND_BLADE, parent_id=arm.id)],
+        )
+    )
+    row = next(item for item in out.derived["vehicle_mods"] if item["id"] == "arm1")
+    assert row["capacity_max"] == 15
+    assert row["capacity_used"] == 2
+    assert {item["name"] for item in row["cyberware"]} == {"Hand Blade"}
+    blade = next(item for item in out.derived["cyberware"] if item["name"] == "Hand Blade")
+    assert blade["essence"] == 0
+    assert blade["nuyen"] == 2500
+    assert out.derived["essence"] == 6
+    assert out.derived["nuyen_spent"] == 15000
+    assert out.derived["errors"] == []
+    weapon = next(item for item in out.derived["weapons"] if item["name"] == "Hand Blade")
+    assert weapon["from_ware"] is True
+    assert weapon["nuyen"] == 2500
+    assert weapon["useskill"] == "Unarmed Combat"
+    assert weapon["damage"] == "6P"
+    assert weapon["limb_str"] == 4
+
+
+def test_hand_blade_on_cyberarm_is_weapon() -> None:
+    arm = CyberwareInstall(id="arm1", ware_id=ARM)
+    blade = CyberwareInstall(id="blade1", ware_id=HAND_BLADE, parent_id=arm.id)
+    out = compute(_mundane("arm-blade", cyberware=[arm, blade]))
+    row = next(item for item in out.derived["weapons"] if item["from_ware"])
+    assert row["name"] == "Hand Blade"
+    assert row["id"] == "blade1"
+    assert row["source_ware_id"] == "blade1"
+    assert row["weapon_id"] == "5ec246dc-c129-4e61-a27a-c4d82b223bea"
+    assert row["nuyen"] == 2500
+    assert row["ap"] == "-2"
+    assert row["damage"] == "3P"
+    assert row["limb_str"] == 1
+    assert out.derived["nuyen_spent"] == 17500
+    assert out.derived["essence"] == 5.0
+    assert out.derived["errors"] == []
+
+
+def test_hand_blade_uses_customized_limb_str() -> None:
+    arm = CyberwareInstall(id="arm1", ware_id=ARM)
+    custom = CyberwareInstall(ware_id=CUSTOM_STR, rating=3, parent_id="arm1")
+    blade = CyberwareInstall(id="blade1", ware_id=HAND_BLADE, parent_id="arm1")
+    out = compute(_mundane("arm-blade-str", cyberware=[arm, custom, blade]))
+    row = next(item for item in out.derived["weapons"] if item["from_ware"])
+    assert row["damage"] == "5P"
+    assert row["limb_str"] == 3
+    arm_row = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
+    assert arm_row["limb_str"] == 3
+
+
+def test_meat_hand_blade_uses_character_str() -> None:
+    blade = CyberwareInstall(id="blade1", ware_id=HAND_BLADE)
+    out = compute(_mundane("meat-blade", cyberware=[blade]))
+    row = next(item for item in out.derived["weapons"] if item["from_ware"])
+    assert row["damage"] == "3P"
+    assert row.get("limb_str") in (None, 0)
+    assert out.derived["essence"] == 5.75
+
+
+def test_implant_weapon_is_hidden_from_catalog() -> None:
+    hidden = next(item for item in catalog()["weapons"] if item["name"] == "Hand Blade" and item.get("from_cyberware"))
+    assert hidden["hidden"] is True
+    from app.store import public_catalog
+
+    names = {item["name"] for item in public_catalog()["weapons"]}
+    assert "Hand Blade" not in names
+    ware = next(item for item in catalog()["cyberware"]["items"] if item["id"] == HAND_BLADE)
+    assert ware["add_weapon"] == "Hand Blade"
+    assert ware["add_weapon_id"] == hidden["id"]
+
+
+def test_synthetic_drone_arm_fits_hand_blade() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    arm = VehicleModInstall(id="arm1", mod_id=SYNTHETIC_DRONE_ARM, parent_id=drone.id)
+    out = compute(
+        _mundane(
+            "dob-synth",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(ware_id=HAND_BLADE, parent_id=arm.id)],
+        )
+    )
+    row = next(item for item in out.derived["vehicle_mods"] if item["id"] == "arm1")
+    assert row["nuyen"] == 10000
+    assert row["capacity_used"] == 2
+    assert out.derived["nuyen_spent"] == 17500
+    assert out.derived["errors"] == []
+
+
+def test_drone_arm_gyromount_capacity() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    arm = VehicleModInstall(id="arm1", mod_id=DRONE_ARM, parent_id=drone.id)
+    out = compute(
+        _mundane(
+            "dob-gyro",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(ware_id=GYROMOUNT, parent_id=arm.id)],
+        )
+    )
+    row = next(item for item in out.derived["vehicle_mods"] if item["id"] == "arm1")
+    assert row["capacity_used"] == 8
+    assert out.derived["nuyen_spent"] == 18500
+    stacked = compute(
+        _mundane(
+            "dob-gyro-blade",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[
+                CyberwareInstall(ware_id=GYROMOUNT, parent_id=arm.id),
+                CyberwareInstall(ware_id=HAND_BLADE, parent_id=arm.id),
+            ],
+        )
+    )
+    stacked_arm = next(item for item in stacked.derived["vehicle_mods"] if item["id"] == "arm1")
+    assert stacked_arm["capacity_used"] == 10
+    assert stacked.derived["errors"] == []
+
+
+def test_drone_arm_capacity_overflow() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    arm = VehicleModInstall(id="arm1", mod_id=DRONE_ARM, parent_id=drone.id)
+    out = compute(
+        _mundane(
+            "dob-over",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[
+                CyberwareInstall(ware_id=GYROMOUNT, parent_id=arm.id),
+                CyberwareInstall(id="gyro2", ware_id=GYROMOUNT, parent_id=arm.id),
+            ],
+        )
+    )
+    row = next(item for item in out.derived["vehicle_mods"] if item["id"] == "arm1")
+    assert row["capacity_used"] == 16
+    assert any("容量超過" in err for err in out.derived["errors"])
+
+
+def test_hand_blade_without_drone_arm_is_dropped() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "dob-bare",
+            drones=[drone],
+            cyberware=[CyberwareInstall(ware_id=HAND_BLADE, parent_id=drone.id)],
+        )
+    )
+    assert all(item["name"] != "Hand Blade" for item in out.derived["cyberware"])
+    assert out.derived["nuyen_spent"] == 5000
+    assert out.derived["essence"] == 6
+
+
+def test_hand_blade_on_commlink_is_dropped() -> None:
+    link = CommlinkInstall(gear_id=META_LINK)
+    out = compute(
+        _mundane(
+            "link-blade",
+            commlinks=[link],
+            cyberware=[CyberwareInstall(ware_id=HAND_BLADE, parent_id=link.id)],
+        )
+    )
+    assert all(item["name"] != "Hand Blade" for item in out.derived["cyberware"])
+
+
+def test_mechanical_arm_does_not_host_ware() -> None:
+    car = GearInstall(gear_id=FORD_AMERICAR)
+    arm = VehicleModInstall(id="mech1", mod_id=MECHANICAL_ARM, parent_id=car.id)
+    out = compute(
+        _mundane(
+            "car-mech",
+            vehicles=[car],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(ware_id=HAND_BLADE, parent_id=arm.id)],
+        )
+    )
+    assert all(item["name"] != "Hand Blade" for item in out.derived["cyberware"])
+    mech = next(item for item in out.derived["vehicle_mods"] if item["id"] == "mech1")
+    assert mech["cyberware"] == []
+    assert not mech.get("subsystems")
 
 
 def test_doberman_mounts_predator() -> None:
