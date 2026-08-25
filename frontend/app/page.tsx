@@ -498,6 +498,19 @@ function skillDice(rating: number, bonus?: number) {
   return `${rating} ${sign}${bonus}`;
 }
 
+function mergeRatings(base?: Record<string, number> | null, extra?: Record<string, number> | null) {
+  const out: Record<string, number> = { ...(base || {}) };
+  for (const [name, rating] of Object.entries(extra || {})) {
+    out[name] = Math.max(out[name] || 0, rating || 0);
+  }
+  return out;
+}
+
+function skillsoftBit(rating?: number) {
+  if (!rating) return null;
+  return <span className="muted"> ソフトR{rating}</span>;
+}
+
 type QualityReqCtx = {
   qualities: Set<string>;
   metatypes: Set<string>;
@@ -992,8 +1005,8 @@ export default function Page() {
     metatypes: new Set([ch.metatype, ch.metavariant || ""].filter(Boolean)),
     magenabled: d.enabled_tabs.includes("MAG"),
     resenabled: d.enabled_tabs.includes("RES"),
-    skills: d.skill_totals || {},
-    knowledge: ch.knowledge_skills || {},
+    skills: mergeRatings(d.skill_totals, d.skillsoft),
+    knowledge: mergeRatings(ch.knowledge_skills, d.skillsoft),
     powers: new Set((d.adept_powers || []).map((item) => item.name)),
     spells: new Set((d.spells || []).map((item) => item.name)),
     cyberware: new Set((d.cyberware || []).map((item) => item.name)),
@@ -1263,7 +1276,7 @@ export default function Page() {
                     patch({ skills: { ...ch.skills, [s.name]: value } });
                   }}
                 />
-                <b>{skillDice(d.skill_totals[s.name] || 0, d.skill_bonus?.[s.name])}</b>
+                <b>{skillDice(Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0), d.skill_bonus?.[s.name])}{skillsoftBit(d.skillsoft?.[s.name])}</b>
               </div>
             ))}
             <h3>知識スキル</h3>
@@ -1320,7 +1333,7 @@ export default function Page() {
                       }}
                     />
                   )}
-                  <b>{row.native ? "母語" : skillDice(row.rating, d.skill_bonus?.[row.name])}</b>
+                  <b>{row.native ? "母語" : skillDice(Math.max(row.rating, row.skillsoft || 0), d.skill_bonus?.[row.name])}{row.native ? null : skillsoftBit(row.skillsoft)}</b>
                   <span className="option-row" style={{ margin: 0, gap: 6 }}>
                     {row.category === "Language" ? (
                       <label className="native">
@@ -4770,6 +4783,8 @@ export default function Page() {
         <div className="stat"><span>ニューエン</span><b>{d.nuyen.toLocaleString()}¥</b></div>
         <div className="stat"><span>入手制限</span><b>{d.avail_limit ?? 12}</b></div>
         <div className="stat"><span>デバイスレーティング</span><b>{d.device_rating_limit ?? 6}</b></div>
+        {d.skillwires ? <div className="stat"><span>スキルワイヤ</span><b>R{d.skillwires}</b></div> : null}
+        {d.skilljack ? <div className="stat"><span>スキルジャック</span><b>R{d.skilljack}</b></div> : null}
         <div className="stat">
           <span>ウェア強化</span>
           <b>

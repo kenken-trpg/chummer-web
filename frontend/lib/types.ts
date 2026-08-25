@@ -1082,10 +1082,14 @@ export interface Character {
       attribute: string;
       rating: number;
       native: boolean;
+      skillsoft?: number;
     }[];
     contacts?: InstalledContact[];
     contact_points?: { used: number; free: number; paid: number };
     skill_totals: Record<string, number>;
+    skillsoft?: Record<string, number>;
+    skillwires?: number;
+    skilljack?: number;
     skill_bonus?: Record<string, number>;
     skill_group_bonus?: Record<string, number>;
     skill_category_bonus?: Record<string, number>;
