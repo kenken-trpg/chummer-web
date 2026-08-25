@@ -1,4 +1,4 @@
-from app.data_loader import catalog
+from app.data_loader import catalog, parse_avail
 from app.engine import compute, default_attributes, find_metatype, resolve_skill_mods, selectskill_options, spell_drain_value, tradition_resist
 from app.improvements import collect_effects
 from app.models import AdeptPowerInstall, ArmorInstall, ArmorModInstall, CharacterOptions, CharacterState, CommlinkInstall, ComplexFormInstall, ContactInstall, CyberwareInstall, FocusInstall, GearInstall, LifestyleInstall, Priorities, QiFocusInstall, SpellInstall, SpiritInstall, SpriteInstall, VehicleModInstall, WeaponAccessoryInstall, WeaponInstall, WeaponMountInstall
@@ -2018,6 +2018,7 @@ FIRE_RES = "dd246520-7306-40fb-88b4-c9cb031208fc"
 INSULATION = "497b5d6b-df0c-401d-91de-42a224b1fa87"
 NONCONDUCT = "0cfb049a-a1bd-4daa-96be-9468c37d9c3c"
 CHEM_SEAL = "1e002d2e-cd93-4cef-a666-b6c6449f4e9f"
+RESTRICTED_GEAR = "ce939b04-5fc6-49e9-a747-9c9d1254449e"
 SHOCK_FRILLS = "dbdaf817-9bfa-4938-a195-b53c63b53e7c"
 SOFTWEAVE = "cf8accf5-4117-4419-ab73-957489038ab9"
 GEL_PACKS = "ed43ded4-1b2f-410a-9322-166c39306d03"
@@ -2057,10 +2058,9 @@ def _mundane(cid: str, **kwargs: object) -> CharacterState:
     return CharacterState(
         id=cid,
         name=cid,
-        priorities=Priorities(),
         metatype="Human",
         attributes=default_attributes(find_metatype("Human", None)),
-        **kwargs,
+        **{"priorities": Priorities(), **kwargs},
     )
 
 
@@ -2382,6 +2382,98 @@ def test_duplicate_chemical_protection_is_rejected() -> None:
     assert len(out.derived["armor_items"][0]["mods"]) == 1
     assert any("重複" in warn for warn in out.derived["warnings"])
     assert out.derived["nuyen_spent"] == 1500
+
+
+def test_parse_avail_reads_rating_suffix_and_additive() -> None:
+    assert parse_avail("12R") == (12, "R", False)
+    assert parse_avail("+4") == (4, "", True)
+    assert parse_avail("+2R") == (2, "R", True)
+    assert parse_avail("FixedValues(8R,12R,20R)", 1) == (8, "R", False)
+    assert parse_avail("FixedValues(8R,12R,20R)", 2) == (12, "R", False)
+    assert parse_avail("FixedValues(8R,12R,20R)", 3) == (20, "R", False)
+    assert parse_avail("(Rating * 5)R", 2) == (10, "R", False)
+    assert parse_avail("+Rating - MinRating + 1", 3, {"MinRating": 1}) == (3, "", True)
+
+def test_softweave_adds_four_to_jacket_avail() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "avail-softweave",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=SOFTWEAVE, parent_id=jacket.id)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    weave = row["mods"][0]
+    assert row["avail"] == "6"
+    assert row["avail_value"] == 6
+    assert weave["avail"] == "4"
+    assert weave["avail_additive"] is True
+    assert weave["avail_folded"] is True
+    assert out.derived["avail_limit"] == 12
+    assert out.derived["errors"] == []
+
+def test_internal_smartgun_adds_restricted_avail_to_predator() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "avail-smartgun",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    smart = next(acc for acc in row["accessories"] if acc["name"] == "Smartgun System, Internal")
+    assert row["avail"] == "7R"
+    assert smart["avail"] == "2R"
+    assert smart["avail_additive"] is True
+    assert out.derived["errors"] == []
+
+def test_wired_reflexes_rating_three_exceeds_chargen_avail() -> None:
+    out = compute(
+        _mundane(
+            "avail-wired3",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=3)],
+        )
+    )
+    ware = out.derived["cyberware"][0]
+    assert ware["avail"] == "20R"
+    assert any("入手制限超過" in err and "20R" in err for err in out.derived["errors"])
+
+def test_betaware_adds_four_avail() -> None:
+    ok = compute(
+        _mundane(
+            "avail-beta-ok",
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=1, grade="Betaware")],
+        )
+    )
+    over = compute(
+        _mundane(
+            "avail-beta-over",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=2, grade="Betaware")],
+        )
+    )
+    assert ok.derived["cyberware"][0]["avail"] == "12R"
+    assert all("入手制限" not in err for err in ok.derived["errors"])
+    assert over.derived["cyberware"][0]["avail"] == "16R"
+    assert any("入手制限超過" in err and "16R" in err for err in over.derived["errors"])
+
+def test_restricted_gear_allows_one_item_over_avail_twelve() -> None:
+    out = compute(
+        _mundane(
+            "avail-restricted",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            quality_ids=[RESTRICTED_GEAR],
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=3)],
+        )
+    )
+    assert out.derived["cyberware"][0]["avail"] == "20R"
+    assert out.derived["cyberware"][0].get("restricted_gear") is True
+    assert all("入手制限" not in err for err in out.derived["errors"])
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "restrictedgear" not in tags
 
 
 def test_meta_link_costs_nuyen() -> None:
@@ -3259,7 +3351,7 @@ def test_doberman_signature_masking() -> None:
     assert any(mod["name"] == "Signature Masking" for mod in row["mods"])
     assert out.derived["nuyen_spent"] == 7000
     assert row["slots_used"] <= row["slots_max"]
-    assert out.derived["errors"] == []
+    assert any("Signature Masking" in err and "入手制限超過" in err for err in out.derived["errors"])
 
 
 def test_doberman_handling_enhancement_slots() -> None:
