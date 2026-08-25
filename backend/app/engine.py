@@ -4,8 +4,28 @@ import math
 import re
 from typing import Any
 
-from .data_loader import MATRIX_ATTRIBUTES, PHYSICAL_ATTRS, PROGRAM_HOSTS, SPELL_CAST_CATEGORIES, SPELL_CATEGORIES, catalog, eval_formula, parse_capacity
-from .improvements import _as_int, apply_bonus_nodes, collect_effects, substitute_rating
+from .data_loader import (
+    CHARGEN_AVAIL_MAX,
+    MATRIX_ATTRIBUTES,
+    PHYSICAL_ATTRS,
+    PROGRAM_HOSTS,
+    SPELL_CAST_CATEGORIES,
+    SPELL_CATEGORIES,
+    catalog,
+    eval_formula,
+    format_avail,
+    parse_avail,
+    parse_capacity,
+    sum_avail,
+)
+from .improvements import (
+    _as_int,
+    apply_bonus_nodes,
+    collect_effects,
+    special_armor_from_nodes,
+    special_armor_totals,
+    substitute_rating,
+)
 from .models import (
     ArmorInstall,
     ArmorModInstall,
@@ -320,7 +340,11 @@ def parse_armor_value(raw: str, rating: int = 1) -> tuple[int, bool]:
         return int(eval_formula(text, rating, 0)), additive
 
 
-def armor_plugin_capacity(expr: str | None, rating: int) -> float:
+def armor_plugin_capacity(
+    expr: str | None,
+    rating: int,
+    extras: dict[str, int | float] | None = None,
+) -> float:
     raw = (expr or "").strip()
     if not raw:
         return 0.0
@@ -328,13 +352,11 @@ def armor_plugin_capacity(expr: str | None, rating: int) -> float:
     if fixed:
         parts = [p.strip() for p in fixed.group(1).split(",")]
         idx = max(0, min(len(parts) - 1, int(rating) - 1))
-        return armor_plugin_capacity(parts[idx], rating)
+        return armor_plugin_capacity(parts[idx], rating, extras)
     if raw.startswith("[") and raw.endswith("]") and "/" not in raw:
         inner = raw[1:-1]
-        if re.search(r"Capacity", inner, re.I):
-            return 0.0
-        return eval_formula(inner, rating, 0.0)
-    return eval_formula(raw, rating, 0.0)
+        return eval_formula(inner, rating, 0.0, extras)
+    return eval_formula(raw, rating, 0.0, extras)
 
 
 def armor_mod_fits(
@@ -402,6 +424,7 @@ def _resolve_armor_mods(
     errors: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
+    armor_specs = {item["id"]: item for item in catalog().get("armor") or []}
     public: list[dict[str, Any]] = []
     kept: list[ArmorModInstall] = []
     nuyen = 0
@@ -411,9 +434,18 @@ def _resolve_armor_mods(
 
     for item in armor_items:
         used = 0.0
+        cap_bonus = 0.0
         seen_names: set[str] = set()
         seen_unique: set[str] = set()
         item["mod_armor"] = 0
+        cap_max_base = eval_formula(str(item.get("armorcapacity") or "0"), int(item.get("rating") or 1), 0)
+        parent_unit = int(
+            eval_formula(
+                str((armor_specs.get(str(item.get("armor_id") or "")) or {}).get("cost") or "0"),
+                int(item.get("rating") or 1),
+                0,
+            )
+        )
         for inst in children.get(item["id"]) or []:
             spec = specs.get(inst.mod_id)
             if not spec:
@@ -430,11 +462,20 @@ def _resolve_armor_mods(
             if not armor_mod_fits(spec, item, names_without):
                 warnings.append(f"{spec['name']} は {item['name']} に装着できません")
                 continue
-            cap_cost = 0.0 if inst.included else armor_plugin_capacity(str(spec.get("armorcapacity") or ""), rating)
+            cap_cost = 0.0 if inst.included else armor_plugin_capacity(
+                str(spec.get("armorcapacity") or ""),
+                rating,
+                extras={"Capacity": cap_max_base},
+            )
             extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
-            cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+            cost = 0 if inst.included else int(
+                eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": parent_unit})
+            )
             nuyen += cost
-            used += cap_cost
+            if cap_cost < 0:
+                cap_bonus += -cap_cost
+            else:
+                used += cap_cost
             if extra:
                 item["mod_armor"] = int(item.get("mod_armor") or 0) + extra
             item["nuyen"] = int(item.get("nuyen") or 0) + cost
@@ -446,26 +487,28 @@ def _resolve_armor_mods(
                 if nodes:
                     bonus_sources.append((spec["name"], nodes))
             kept.append(inst)
-            public.append(
-                {
-                    "id": inst.id,
-                    "mod_id": spec["id"],
-                    "name": spec["name"],
-                    "category": spec.get("category") or "General",
-                    "parent_id": inst.parent_id,
-                    "included": bool(inst.included),
-                    "rating": rating,
-                    "rating_max": int(spec.get("maxrating") or 0),
-                    "nuyen": cost,
-                    "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
-                    "armor": spec.get("armor") or "0",
-                    "unique": spec.get("unique") or "",
-                    "avail": spec.get("avail") or "",
-                    "source": spec.get("source") or "",
-                    "page": spec.get("page") or "",
-                }
-            )
-        cap_max = eval_formula(str(item.get("armorcapacity") or "0"), int(item.get("rating") or 1), 0)
+            row: dict[str, Any] = {
+                "id": inst.id,
+                "mod_id": spec["id"],
+                "name": spec["name"],
+                "category": spec.get("category") or "General",
+                "parent_id": inst.parent_id,
+                "included": bool(inst.included),
+                "rating": rating,
+                "rating_max": int(spec.get("maxrating") or 0),
+                "nuyen": cost,
+                "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
+                "armor": spec.get("armor") or "0",
+                "unique": spec.get("unique") or "",
+                "avail": spec.get("avail") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+            special = special_armor_from_nodes(list(spec.get("bonus") or []), rating)
+            if special:
+                row["special_armor"] = special
+            public.append(row)
+        cap_max = cap_max_base + cap_bonus
         item["capacity_used"] = int(used) if used == int(used) else used
         item["capacity_max"] = int(cap_max) if cap_max == int(cap_max) else cap_max
         item["mods"] = [row for row in public if row.get("parent_id") == item["id"]]
@@ -755,11 +798,360 @@ def _vehicle_interior_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def _commlink_accessory_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
+    addons = ["Commlink Accessories"]
+    if spec.get("category") == "PI-Tac":
+        addons.append("PI-Tac Programs")
     return {
         "name": spec.get("name") or "",
         "category": "Commlinks",
-        "addoncategories": ["Commlink Accessories"],
+        "addoncategories": addons,
     }
+
+
+def _weapon_details_match(weapon: dict[str, Any], expr: str) -> bool:
+    raw = (expr or "").strip()
+    if not raw:
+        return True
+    ammo = str(weapon.get("ammo") or "")
+    name = str(weapon.get("name") or "")
+
+    def _contains_ammo(match: re.Match[str]) -> str:
+        return "True" if match.group(1) in ammo else "False"
+
+    text = re.sub(r"contains\(\s*ammo\s*,\s*'([^']*)'\s*\)", _contains_ammo, raw)
+    text = re.sub(r'contains\(\s*ammo\s*,\s*"([^"]*)"\s*\)', _contains_ammo, text)
+    text = re.sub(r"name\s*!=\s*'([^']*)'", lambda m: "True" if name != m.group(1) else "False", text)
+    text = re.sub(r"name\s*=\s*'([^']*)'", lambda m: "True" if name == m.group(1) else "False", text)
+    text = re.sub(r"\band\b", "and", text)
+    text = re.sub(r"\bor\b", "or", text)
+    if not re.fullmatch(r"(?:True|False|and|or|\(|\)|\s)+", text):
+        return False
+    try:
+        return bool(eval(text, {"__builtins__": {}}, {}))
+    except Exception:
+        return False
+
+
+def ammo_fits_weapon(ammo: dict[str, Any], weapon: dict[str, Any]) -> bool:
+    if (ammo.get("category") or "") != "Ammunition":
+        return False
+    details = str(ammo.get("weapon_details") or "").strip()
+    if details:
+        return _weapon_details_match(weapon, details)
+    types = [part for part in (ammo.get("ammo_weapon_types") or []) if part]
+    if not types:
+        return False
+    weapon_type = str(weapon.get("weapon_type") or "")
+    return weapon_type in types
+
+
+def _add_signed_stat(raw: str | None, delta: int) -> str:
+    text = str(raw or "").strip()
+    if not delta:
+        return text
+    match = re.match(r"^([+-]?\d+)(.*)$", text)
+    if match:
+        return f"{int(match.group(1)) + delta}{match.group(2)}"
+    if text in {"", "-", "—"}:
+        return str(delta)
+    return text
+
+
+def _set_damage_type(damage: str, dtype: str) -> str:
+    match = re.match(r"^([+-]?\d+)(.*)$", str(damage or "").strip())
+    if not match:
+        return dtype
+    return f"{match.group(1)}{dtype}"
+
+
+def _apply_ammo_bonus(weapon: dict[str, Any], bonus: dict[str, Any] | None) -> None:
+    if not bonus:
+        return
+    if bonus.get("apreplace"):
+        weapon["ap"] = str(bonus["apreplace"])
+    elif bonus.get("ap"):
+        weapon["ap"] = _add_signed_stat(str(weapon.get("ap") or ""), _leading_int(str(bonus.get("ap"))) or 0)
+    if bonus.get("damagereplace"):
+        weapon["damage"] = str(bonus["damagereplace"])
+    elif bonus.get("damage"):
+        weapon["damage"] = _add_signed_stat(str(weapon.get("damage") or ""), _leading_int(str(bonus.get("damage"))) or 0)
+    if bonus.get("damagetype"):
+        weapon["damage"] = _set_damage_type(str(weapon.get("damage") or ""), str(bonus["damagetype"]))
+    if bonus.get("modereplace"):
+        weapon["mode"] = str(bonus["modereplace"])
+
+
+def _apply_loaded_ammo(weapon: dict[str, Any], ammo: dict[str, Any] | None) -> None:
+    if not ammo:
+        return
+    add_id = str(ammo.get("add_weapon_id") or "")
+    if add_id:
+        spec = _item_by_id("weapons", add_id)
+        if spec:
+            if spec.get("damage"):
+                weapon["damage"] = str(spec.get("damage") or "")
+            if spec.get("ap"):
+                weapon["ap"] = str(spec.get("ap") or "")
+    _apply_ammo_bonus(weapon, ammo.get("weaponbonus"))
+
+
+def _pick_loaded_ammo(kids: list[dict[str, Any]], loaded_id: str | None) -> dict[str, Any] | None:
+    loadable = [kid for kid in kids if kid.get("ammo_weapon_types")]
+    if not loadable:
+        return None
+    if loaded_id:
+        for kid in loadable:
+            if kid.get("id") == loaded_id:
+                return kid
+    return loadable[0]
+
+
+def _public_weapon(
+    spec: dict[str, Any],
+    *,
+    inst_id: str,
+    qty: int,
+    nuyen: int,
+    loaded_ammo_id: str | None = None,
+    from_gear: bool = False,
+    source_gear_id: str | None = None,
+    from_ware: bool = False,
+    source_ware_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "id": inst_id,
+        "weapon_id": spec["id"],
+        "name": spec["name"],
+        "category": spec.get("category") or "",
+        "type": spec.get("type") or "",
+        "weapon_type": spec.get("weapon_type") or "",
+        "accuracy": spec.get("accuracy") or "",
+        "reach": spec.get("reach") or "",
+        "damage": spec.get("damage") or "",
+        "ap": spec.get("ap") or "",
+        "mode": spec.get("mode") or "",
+        "rc": spec.get("rc") or "",
+        "ammo": spec.get("ammo") or "",
+        "conceal": spec.get("conceal") or "",
+        "mounts": list(spec.get("mounts") or []),
+        "qty": qty,
+        "nuyen": nuyen,
+        "accessories": [],
+        "ammo_gear": [],
+        "loaded_ammo_id": loaded_ammo_id or "",
+        "from_gear": from_gear,
+        "source_gear_id": source_gear_id or "",
+        "from_ware": from_ware,
+        "source_ware_id": source_ware_id or "",
+        "useskill": spec.get("useskill") or "",
+        "avail": spec.get("avail") or "",
+        "source": spec.get("source") or "",
+        "page": spec.get("page") or "",
+        "limb_str": None,
+        "limb_agi": None,
+    }
+
+
+def _append_gear_weapons(weapons: list[dict[str, Any]], gear_items: list[dict[str, Any]]) -> None:
+    taken = {str(row.get("id") or "") for row in weapons}
+    for item in gear_items:
+        if item.get("parent_id"):
+            continue
+        spec_id = str(item.get("add_weapon_id") or "")
+        if not spec_id:
+            continue
+        spec = _item_by_id("weapons", spec_id)
+        if not spec:
+            continue
+        gear_id = str(item.get("id") or "")
+        if not gear_id or gear_id in taken:
+            continue
+        weapons.append(
+            _public_weapon(
+                spec,
+                inst_id=gear_id,
+                qty=max(1, int(item.get("qty") or 1)),
+                nuyen=int(item.get("nuyen") or 0),
+                from_gear=True,
+                source_gear_id=gear_id,
+            )
+        )
+        taken.add(gear_id)
+
+
+_ATTR_TOKEN = re.compile(r"\{(STR|AGI)(?:Unaug|Base)?\}", re.I)
+
+
+def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
+    text = str(raw or "")
+    if "{" not in text:
+        return text
+    values = {key.upper(): int(val) for key, val in attrs.items()}
+
+    def _token(match: re.Match[str]) -> str:
+        return str(values.get(match.group(1).upper(), 0))
+
+    replaced = _ATTR_TOKEN.sub(_token, text)
+    if "{" in replaced:
+        return text
+
+    def _try_eval(expr: str) -> str | None:
+        compact = expr.replace(" ", "")
+        if not re.fullmatch(r"[0-9+\-*/().]+", compact):
+            return None
+        try:
+            return str(int(eval(compact, {"__builtins__": {}}, {})))
+        except Exception:
+            return None
+
+    out = replaced
+    while True:
+        def _inner(match: re.Match[str]) -> str:
+            value = _try_eval(match.group(1))
+            return value if value is not None else match.group(0)
+
+        nxt = re.sub(r"\(([0-9+\-*/. ]+)\)", _inner, out)
+        if nxt == out:
+            break
+        out = nxt
+    return out
+
+
+def _drone_mod_limb_attrs(
+    mod_id: str,
+    ware_by_id: dict[str, dict[str, Any]],
+    state: CharacterState,
+) -> tuple[int, int]:
+    inst = next((row for row in list(state.vehicle_mods or []) if row.id == mod_id), None)
+    if not inst:
+        return 0, 0
+    spec = _item_by_id("vehicle_mods", inst.mod_id)
+    if not spec:
+        return 0, 0
+    name = (spec.get("name") or "").lower()
+    if "arm" not in name and "leg" not in name:
+        return 0, 0
+    body = 0
+    pilot = 0
+    parent_id = inst.parent_id or ""
+    for kind in ("drones", "vehicles"):
+        host = next((row for row in list(getattr(state, kind) or []) if row.id == parent_id), None)
+        if not host:
+            continue
+        host_spec = _item_by_id(kind, host.gear_id)
+        if not host_spec:
+            continue
+        body = _leading_vehicle_stat(host_spec.get("body"))
+        pilot = _leading_vehicle_stat(host_spec.get("pilot"))
+        break
+    str_val = max(body, 0)
+    agi_val = max(pilot, 0)
+    str_bonus = 0
+    agi_bonus = 0
+    for kid in ware_by_id.values():
+        if kid.get("parent_id") != mod_id:
+            continue
+        effect = _limb_attr_effect(kid.get("name") or "")
+        if not effect:
+            continue
+        attr, mode = effect
+        rating = int(kid.get("rating") or 1)
+        if attr == "STR":
+            if mode == "set":
+                str_val = rating
+            else:
+                str_bonus = rating
+        else:
+            if mode == "set":
+                agi_val = rating
+            else:
+                agi_bonus = rating
+    return (
+        min(str_val + str_bonus, max(body * 2, 1)),
+        min(agi_val + agi_bonus, max(pilot * 2, 1)),
+    )
+
+
+def _ware_weapon_attr_values(
+    ware: dict[str, Any],
+    ware_by_id: dict[str, dict[str, Any]],
+    state: CharacterState,
+    attr_totals: dict[str, int] | None,
+) -> tuple[int, int, bool]:
+    node: dict[str, Any] | None = ware
+    seen: set[str] = set()
+    while node:
+        nid = str(node.get("id") or "")
+        if nid in seen:
+            break
+        seen.add(nid)
+        if node.get("limb_str") is not None:
+            return int(node.get("limb_str") or 0), int(node.get("limb_agi") or 0), True
+        parent_id = str(node.get("parent_id") or "")
+        if not parent_id:
+            break
+        nxt = ware_by_id.get(parent_id)
+        if nxt:
+            node = nxt
+            continue
+        str_val, agi_val = _drone_mod_limb_attrs(parent_id, ware_by_id, state)
+        if str_val or agi_val:
+            return str_val, agi_val, True
+        break
+    totals = attr_totals or {}
+    raw = state.attributes or {}
+    return (
+        int(totals.get("STR") or raw.get("STR") or 1),
+        int(totals.get("AGI") or raw.get("AGI") or 1),
+        False,
+    )
+
+
+def _apply_ware_weapon_attrs(
+    weapon: dict[str, Any],
+    ware: dict[str, Any],
+    ware_by_id: dict[str, dict[str, Any]],
+    state: CharacterState,
+    attr_totals: dict[str, int] | None,
+) -> None:
+    str_val, agi_val, from_limb = _ware_weapon_attr_values(ware, ware_by_id, state, attr_totals)
+    attrs = {"STR": str_val, "AGI": agi_val}
+    for key in ("damage", "ap", "accuracy", "reach"):
+        weapon[key] = _eval_attr_stat(str(weapon.get(key) or ""), attrs)
+    if from_limb:
+        weapon["limb_str"] = str_val
+        weapon["limb_agi"] = agi_val
+
+
+def _append_ware_weapons(
+    weapons: list[dict[str, Any]],
+    ware_items: list[dict[str, Any]],
+    state: CharacterState,
+    attr_totals: dict[str, int] | None = None,
+) -> None:
+    taken = {str(row.get("id") or "") for row in weapons}
+    ware_by_id = {str(item.get("id") or ""): item for item in ware_items if item.get("id")}
+    for item in ware_items:
+        spec_id = str(item.get("add_weapon_id") or "")
+        if not spec_id:
+            continue
+        spec = _item_by_id("weapons", spec_id)
+        if not spec:
+            continue
+        ware_id = str(item.get("id") or "")
+        if not ware_id or ware_id in taken:
+            continue
+        row = _public_weapon(
+            spec,
+            inst_id=ware_id,
+            qty=1,
+            nuyen=int(item.get("nuyen") or 0),
+            from_ware=True,
+            source_ware_id=ware_id,
+        )
+        _apply_ware_weapon_attrs(row, item, ware_by_id, state, attr_totals)
+        weapons.append(row)
+        taken.add(ware_id)
 
 
 def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str, Any]]]:
@@ -770,6 +1162,19 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
             hosts[inst.id] = ("commlink", _commlink_accessory_parent_spec(spec))
     for inst, spec in _iter_vehicle_hosts(state):
         hosts[inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
+    for inst in list(state.weapons or []):
+        spec = _item_by_id("weapons", inst.weapon_id)
+        if spec:
+            hosts[inst.id] = (
+                "weapon",
+                {
+                    "name": spec.get("name") or "",
+                    "category": spec.get("category") or "",
+                    "ammo": spec.get("ammo") or "",
+                    "weapon_type": spec.get("weapon_type") or "",
+                    "type": spec.get("type") or "",
+                },
+            )
     return hosts
 
 
@@ -824,8 +1229,11 @@ def _ensure_misc_gear(state: CharacterState) -> list[str]:
                 fits = _misc_child_fits(parent_spec, spec)
                 label = parent_spec.get("name") or "本体"
             elif host:
-                _kind, host_spec = host
-                fits = bool(inst.included) or _misc_child_fits(host_spec, spec)
+                kind, host_spec = host
+                if kind == "weapon":
+                    fits = ammo_fits_weapon(spec, host_spec)
+                else:
+                    fits = bool(inst.included) or _misc_child_fits(host_spec, spec)
                 label = host_spec.get("name") or "本体"
             else:
                 fits = False
@@ -866,6 +1274,7 @@ def _ensure_misc_gear(state: CharacterState) -> list[str]:
 def _resolve_misc_gear(
     state: CharacterState,
     vehicles: list[dict[str, Any]] | None = None,
+    weapons: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_misc_gear(state)
     errors: list[str] = []
@@ -933,6 +1342,12 @@ def _resolve_misc_gear(
                 "requireparent": bool(spec.get("requireparent")),
                 "required_names": list(spec.get("required_names") or []),
                 "required_categories": list(spec.get("required_categories") or []),
+                "ammo_weapon_types": list(spec.get("ammo_weapon_types") or []),
+                "costfor": int(spec.get("costfor") or 0),
+                "add_weapon": spec.get("add_weapon") or "",
+                "add_weapon_id": spec.get("add_weapon_id") or "",
+                "weaponbonus": dict(spec.get("weaponbonus") or {}),
+                "loaded": False,
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
@@ -956,6 +1371,18 @@ def _resolve_misc_gear(
         row["gear"] = kids
         extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
         row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+    for row in weapons or []:
+        kids = children.get(str(row.get("id") or "")) or []
+        row["ammo_gear"] = kids
+        extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
+        row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+        loaded = _pick_loaded_ammo(kids, str(row.get("loaded_ammo_id") or "") or None)
+        if loaded:
+            loaded["loaded"] = True
+            row["loaded_ammo_id"] = loaded["id"]
+            _apply_loaded_ammo(row, loaded)
+        else:
+            row["loaded_ammo_id"] = ""
     state.gear = kept
     return public, nuyen, warnings, errors, bonus_sources
 
@@ -1865,6 +2292,10 @@ def _resolve_vehicle_mods(
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
+                "capacity_max": _capacity_value(spec.get("capacity"), rating),
+                "capacity_used": 0.0,
+                "subsystems": list(spec.get("subsystems") or []),
+                "cyberware": [],
             }
         )
     children: dict[str, list[dict[str, Any]]] = {}
@@ -2051,7 +2482,105 @@ def _publish_drone_stats(drones: list[dict[str, Any]], sensors: list[dict[str, A
         row.pop("cosmeticmodslots", None)
 
 
-def resolve_gear(state: CharacterState) -> dict[str, Any]:
+def _finalize_avail_tree(
+    items: list[dict[str, Any]],
+    *,
+    grade_kind: str | None = None,
+    rating_key: str = "rating",
+) -> None:
+    for item in items:
+        rating = int(item.get(rating_key) or item.get("rating") or item.get("force") or 1)
+        extras: dict[str, int | float] = {}
+        if item.get("rating_min") is not None:
+            extras["MinRating"] = int(item.get("rating_min") or 1)
+        value, suffix, additive = parse_avail(str(item.get("avail") or ""), rating, extras or None)
+        if grade_kind and not additive:
+            grade = _grade_by_name(grade_kind, str(item.get("grade") or "Standard"))
+            gval, gsuf, _gadd = parse_avail(str(grade.get("avail") or ""), 1)
+            value, suffix = sum_avail([(value, suffix), (gval, gsuf)])
+        value = max(0, value)
+        item["avail_value"] = value
+        item["avail_suffix"] = suffix
+        item["avail_additive"] = additive
+        item["avail_folded"] = False
+        item["avail"] = format_avail(value, suffix)
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in items:
+        parent_id = str(item.get("parent_id") or "")
+        if parent_id:
+            children.setdefault(parent_id, []).append(item)
+    for item in items:
+        adds: list[tuple[int, str]] = []
+        for kid in children.get(str(item.get("id") or ""), []):
+            if not kid.get("avail_additive"):
+                continue
+            adds.append((int(kid.get("avail_value") or 0), str(kid.get("avail_suffix") or "")))
+            kid["avail_folded"] = True
+        if not adds:
+            continue
+        value, suffix = sum_avail(
+            [(int(item.get("avail_value") or 0), str(item.get("avail_suffix") or ""))] + adds
+        )
+        item["avail_value"] = value
+        item["avail_suffix"] = suffix
+        item["avail"] = format_avail(value, suffix)
+
+
+def _avail_entries(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for group in groups:
+        for item in group or []:
+            item_id = str(item.get("id") or "")
+            if item_id and item_id in seen:
+                continue
+            if item_id:
+                seen.add(item_id)
+            if item.get("avail_folded") or item.get("from_ware") or item.get("from_gear"):
+                continue
+            if int(item.get("avail_value") or 0) <= 0:
+                continue
+            out.append(item)
+    return out
+
+
+def _restricted_gear_slots(effects: dict[str, Any]) -> list[int]:
+    slots: list[int] = []
+    for row in effects.get("restricted_gear") or []:
+        cap = max(0, int(row.get("availability") or 0))
+        amount = max(1, int(row.get("amount") or 1))
+        slots.extend([cap] * amount)
+    slots.sort(reverse=True)
+    return slots
+
+
+def _check_avail_limit(items: list[dict[str, Any]], effects: dict[str, Any], errors: list[str]) -> None:
+    limit = CHARGEN_AVAIL_MAX
+    slots = _restricted_gear_slots(effects)
+    over = sorted(items, key=lambda row: int(row.get("avail_value") or 0), reverse=True)
+    for item in over:
+        value = int(item.get("avail_value") or 0)
+        shown = str(item.get("avail") or format_avail(value, str(item.get("avail_suffix") or "")))
+        name = str(item.get("label") or item.get("name") or "ギア")
+        if value <= limit:
+            continue
+        used = False
+        for idx, cap in enumerate(slots):
+            if value <= cap:
+                slots.pop(idx)
+                used = True
+                item["restricted_gear"] = True
+                break
+        if used:
+            continue
+        errors.append(f"{name} の入手制限超過（{shown} / 上限{limit}）")
+
+
+def resolve_gear(
+    state: CharacterState,
+    ware_items: list[dict[str, Any]] | None = None,
+    attr_totals: dict[str, int] | None = None,
+) -> dict[str, Any]:
     warnings: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     nuyen = 0
@@ -2124,30 +2653,16 @@ def resolve_gear(state: CharacterState) -> dict[str, Any]:
         nuyen += cost
         kept_weapons.append(inst)
         weapons.append(
-            {
-                "id": inst.id,
-                "weapon_id": spec["id"],
-                "name": spec["name"],
-                "category": spec.get("category") or "",
-                "type": spec.get("type") or "",
-                "accuracy": spec.get("accuracy") or "",
-                "reach": spec.get("reach") or "",
-                "damage": spec.get("damage") or "",
-                "ap": spec.get("ap") or "",
-                "mode": spec.get("mode") or "",
-                "rc": spec.get("rc") or "",
-                "ammo": spec.get("ammo") or "",
-                "conceal": spec.get("conceal") or "",
-                "mounts": list(spec.get("mounts") or []),
-                "qty": qty,
-                "nuyen": cost,
-                "accessories": [],
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-            }
+            _public_weapon(
+                spec,
+                inst_id=inst.id,
+                qty=qty,
+                nuyen=cost,
+                loaded_ammo_id=inst.loaded_ammo_id,
+            )
         )
     state.weapons = kept_weapons
+    _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
     weapon_accessories, acc_nuyen, acc_warns, acc_errors = _resolve_weapon_accessories(state, weapons)
     nuyen += acc_nuyen
     warnings.extend(acc_warns)
@@ -2171,6 +2686,7 @@ def resolve_gear(state: CharacterState) -> dict[str, Any]:
                 "id": inst.id,
                 "gear_id": spec["id"],
                 "name": spec["name"],
+                "category": spec.get("category") or "Commlinks",
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "device_rating": device,
@@ -2221,11 +2737,12 @@ def resolve_gear(state: CharacterState) -> dict[str, Any]:
     errors.extend(sensor_errors)
     bonus_sources.extend(sensor_bonus)
     _publish_drone_stats(hosts, sensors)
-    gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(state, hosts)
+    gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(state, hosts, weapons)
     nuyen += gear_nuyen
     warnings.extend(gear_warns)
     errors.extend(gear_errors)
     bonus_sources.extend(gear_bonus)
+    _append_gear_weapons(weapons, gear_items)
 
     kept_lifestyles: list[LifestyleInstall] = []
     for inst in state.lifestyles:
@@ -2246,6 +2763,7 @@ def resolve_gear(state: CharacterState) -> dict[str, Any]:
                 "increment": spec.get("increment") or "month",
                 "monthly": int(spec.get("cost") or 0),
                 "nuyen": cost,
+                "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
             }
@@ -2256,6 +2774,15 @@ def resolve_gear(state: CharacterState) -> dict[str, Any]:
     primary_deck = max(cyberdecks, key=lambda row: int(row.get("device_rating") or 0)) if cyberdecks else None
     primary_rcc = max(rccs, key=lambda row: int(row.get("device_rating") or 0)) if rccs else None
     primary_life = lifestyles[0] if lifestyles else None
+    _finalize_avail_tree(armor_items + armor_mods)
+    _finalize_avail_tree(weapons + weapon_accessories)
+    _finalize_avail_tree(commlinks + apps)
+    _finalize_avail_tree(cyberdecks + rccs + programs)
+    _finalize_avail_tree(optics)
+    _finalize_avail_tree(sensors)
+    _finalize_avail_tree(drones + vehicles + vehicle_mods + weapon_mounts)
+    _finalize_avail_tree(gear_items)
+    _finalize_avail_tree(lifestyles)
     return {
         "warnings": warnings,
         "errors": errors,
@@ -3034,22 +3561,135 @@ def _capacity_value(expr: str | None, rating: int) -> float:
     return eval_formula(raw, rating, default=0.0)
 
 
-def _cascade_orphans(items: list[CyberwareInstall]) -> list[CyberwareInstall]:
-    ids = {item.id for item in items}
+def _cascade_orphans(
+    items: list[CyberwareInstall],
+    extra_parent_ids: set[str] | None = None,
+) -> list[CyberwareInstall]:
+    ids = {item.id for item in items} | (extra_parent_ids or set())
     keep = [item for item in items if not item.parent_id or item.parent_id in ids]
     if len(keep) == len(items):
         return keep
-    return _cascade_orphans(keep)
+    return _cascade_orphans(keep, extra_parent_ids)
+
+
+def _vehicle_mod_hosts(state: CharacterState) -> dict[str, dict[str, Any]]:
+    specs = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
+    parents = {inst.id: spec for inst, spec in _iter_vehicle_hosts(state)}
+    hosts: dict[str, dict[str, Any]] = {}
+    for inst in state.vehicle_mods or []:
+        spec = specs.get(inst.mod_id)
+        parent = parents.get(inst.parent_id or "")
+        if not spec or not spec.get("subsystems") or not parent:
+            continue
+        if not inst.included and not mod_fits_vehicle(spec, parent):
+            continue
+        hosts[inst.id] = spec
+    return hosts
+
+
+def _ware_fits_vehicle_mod(ware: dict[str, Any], spec: dict[str, Any]) -> bool:
+    if ware.get("category") not in (spec.get("subsystems") or []):
+        return False
+    if not (ware.get("plugin") or ware.get("requireparent")):
+        return False
+    names = ware.get("required_parent_names") or []
+    if not names:
+        return True
+    parent_name = spec.get("name") or ""
+    return any(name in parent_name for name in names)
+
+
+def _drop_invalid_vehicle_ware(state: CharacterState) -> list[str]:
+    hosts = _vehicle_mod_hosts(state)
+    cyber_ids = {item.id for item in state.cyberware}
+    warnings: list[str] = []
+    kept: list[CyberwareInstall] = []
+    for inst in state.cyberware:
+        parent_id = inst.parent_id
+        if not parent_id or parent_id in cyber_ids:
+            kept.append(inst)
+            continue
+        spec = hosts.get(parent_id)
+        ware = _ware_by_id("cyberware", inst.ware_id)
+        if not spec or not ware:
+            continue
+        if not _ware_fits_vehicle_mod(ware, spec):
+            warnings.append(f"{ware['name']} は {spec['name']} に装着できません")
+            continue
+        kept.append(inst)
+    state.cyberware = _cascade_orphans(kept, set(hosts))
+    return warnings
+
+
+def _vehicle_hosted_ware_ids(resolved: list[dict[str, Any]], vehicle_hosts: set[str]) -> set[str]:
+    hosted: set[str] = set()
+    by_id = {str(item.get("id") or ""): item for item in resolved}
+
+    def is_hosted(item: dict[str, Any]) -> bool:
+        parent_id = item.get("parent_id") or ""
+        seen: set[str] = set()
+        while parent_id:
+            if parent_id in vehicle_hosts:
+                return True
+            if parent_id in seen:
+                return False
+            seen.add(parent_id)
+            parent = by_id.get(parent_id)
+            if not parent:
+                return False
+            parent_id = parent.get("parent_id") or ""
+        return False
+
+    for item in resolved:
+        if is_hosted(item):
+            hosted.add(str(item.get("id") or ""))
+    return hosted
+
+
+def _zero_vehicle_hosted_essence(resolved: list[dict[str, Any]], vehicle_hosts: set[str]) -> None:
+    hosted = _vehicle_hosted_ware_ids(resolved, vehicle_hosts)
+    for item in resolved:
+        if item.get("id") in hosted:
+            item["essence"] = 0.0
+            item["ess_to_parent"] = 0.0
+
+
+def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    by_id = {str(mod.get("id") or ""): mod for mod in mods}
+    for mod in mods:
+        mod["cyberware"] = []
+        mod["capacity_used"] = 0.0
+    for item in ware:
+        parent = by_id.get(str(item.get("parent_id") or ""))
+        if not parent:
+            continue
+        parent["cyberware"].append(_public_installed(item))
+        parent["capacity_used"] = round(
+            float(parent.get("capacity_used") or 0) + float(item.get("capacity_cost") or 0),
+            4,
+        )
+    for mod in mods:
+        cap_max = float(mod.get("capacity_max") or 0)
+        used = float(mod.get("capacity_used") or 0)
+        if cap_max > 0 and used > cap_max + 1e-9:
+            errors.append(f"{mod['name']} の容量超過（{used:g}/{cap_max:g}）")
+    return errors
 
 
 def ensure_subsystems(state: CharacterState) -> CharacterState:
-    state.cyberware = ensure_sides("cyberware", _ensure_kind_subsystems("cyberware", state.cyberware))
+    extra = set(_vehicle_mod_hosts(state))
+    state.cyberware = ensure_sides("cyberware", _ensure_kind_subsystems("cyberware", state.cyberware, extra))
     state.bioware = ensure_sides("bioware", _ensure_kind_subsystems("bioware", state.bioware))
     return state
 
 
-def _ensure_kind_subsystems(kind: str, items: list[CyberwareInstall]) -> list[CyberwareInstall]:
-    items = _cascade_orphans(list(items))
+def _ensure_kind_subsystems(
+    kind: str,
+    items: list[CyberwareInstall],
+    extra_parent_ids: set[str] | None = None,
+) -> list[CyberwareInstall]:
+    items = _cascade_orphans(list(items), extra_parent_ids)
     existing = {(item.parent_id, item.ware_id) for item in items}
     extra: list[CyberwareInstall] = []
     for inst in items:
@@ -3130,9 +3770,12 @@ def resolve_ware(
                 "limbslotcount": ware.get("limbslotcount") or "1",
                 "selectside": bool(ware.get("selectside")),
                 "side": _normalize_side(inst.side),
+                "avail": ware.get("avail") or "",
                 "source": ware.get("source"),
                 "bonus": nodes,
                 "ess_to_parent": ess_base if add_to_parent else 0.0,
+                "add_weapon": ware.get("add_weapon") or "",
+                "add_weapon_id": ware.get("add_weapon_id") or "",
             }
         )
     children: dict[str, list[dict[str, Any]]] = {}
@@ -3176,6 +3819,9 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         "limb_agi": item.get("limb_agi"),
         "selectside": bool(item.get("selectside")),
         "side": item.get("side"),
+        "avail": item.get("avail") or "",
+        "avail_value": int(item.get("avail_value") or 0),
+        "restricted_gear": bool(item.get("restricted_gear")),
         "source": item.get("source"),
     }
 
@@ -4008,6 +4654,7 @@ def resolve_foci(
                 "hits": inst.hits,
                 "opposed_hits": inst.opposed_hits,
                 "effect": spec.get("effect") or "",
+                "avail": spec.get("avail") or "",
                 "formula": (
                     {
                         "id": formula.get("id"),
@@ -4859,10 +5506,11 @@ def compute(state: CharacterState) -> CharacterState:
     errors = validate_priorities(state.priorities)
     meta = find_metatype(state.metatype, state.metavariant)
     attrs_spec = meta["attributes"]
+    warnings = _drop_invalid_vehicle_ware(state)
     ensure_subsystems(state)
     errors.extend(_side_conflicts("cyberware", state.cyberware))
     errors.extend(_side_conflicts("bioware", state.bioware))
-    warnings = _clamp_ware_grades("cyberware", state.cyberware)
+    warnings.extend(_clamp_ware_grades("cyberware", state.cyberware))
     warnings.extend(_clamp_ware_grades("bioware", state.bioware))
     installed_names = {
         "cyberware": _installed_ware_names("cyberware", state.cyberware),
@@ -4884,10 +5532,17 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(mentor["warnings"])
     errors.extend(mentor["errors"])
     sources.extend(mentor["bonus_sources"])
+    vehicle_hosts = set(_vehicle_mod_hosts(state))
     cyber_installed = resolve_ware("cyberware", state.cyberware, attrs_spec)
     bio_installed = resolve_ware("bioware", state.bioware, attrs_spec)
+    _finalize_avail_tree(cyber_installed, grade_kind="cyberware")
+    _finalize_avail_tree(bio_installed, grade_kind="bioware")
+    _zero_vehicle_hosted_essence(cyber_installed, vehicle_hosts)
     installed = cyber_installed + bio_installed
+    hosted_ids = _vehicle_hosted_ware_ids(cyber_installed, vehicle_hosts)
     for item in installed:
+        if item.get("id") in hosted_ids:
+            continue
         sources.append((item["name"], item.get("bonus") or []))
     effects = collect_effects(sources)
     seeker_targets = effects.get("cyberseeker") or []
@@ -4954,6 +5609,7 @@ def compute(state: CharacterState) -> CharacterState:
         list(effects.get("focus_binding") or []),
     )
     warnings.extend(foci["warnings"])
+    _finalize_avail_tree(list(foci.get("public") or []), rating_key="force")
     for source, nodes in foci["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
     focus_limits = apply_focus_limits(
@@ -4981,9 +5637,14 @@ def compute(state: CharacterState) -> CharacterState:
     effects["enabled_tabs"] = set(effects["enabled_tabs"])
     for source, nodes in adept["bonus_sources"] + enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
-    gear = resolve_gear(state)
+    attr_totals = {
+        key: int(ratings.get(key) or 0) + int((effects.get("attribute_bonus") or {}).get(key, 0))
+        for key in ratings
+    }
+    gear = resolve_gear(state, cyber_installed, attr_totals)
     warnings.extend(gear["warnings"])
     errors.extend(gear.get("errors") or [])
+    errors.extend(_attach_ware_to_vehicle_mods(gear.get("vehicle_mods") or [], cyber_installed))
     for source, nodes in gear["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
     if talent["name"] in ADEPT_TALENTS:
@@ -5270,6 +5931,32 @@ def compute(state: CharacterState) -> CharacterState:
     allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
     if allowed and state.metatype not in allowed:
         errors.append(f"{state.metatype} はこの優先度のメタタイプに含まれません")
+    _check_avail_limit(
+        _avail_entries(
+            cyber_installed,
+            bio_installed,
+            gear.get("armor_items"),
+            gear.get("armor_mods"),
+            gear.get("weapons"),
+            gear.get("weapon_accessories"),
+            gear.get("commlinks"),
+            gear.get("cyberdecks"),
+            gear.get("rccs"),
+            gear.get("optics"),
+            gear.get("programs"),
+            gear.get("apps"),
+            gear.get("sensors"),
+            gear.get("drones"),
+            gear.get("vehicles"),
+            gear.get("vehicle_mods"),
+            gear.get("weapon_mounts"),
+            gear.get("gear"),
+            gear.get("lifestyles"),
+            foci.get("public"),
+        ),
+        effects,
+        errors,
+    )
 
     state.attributes = ratings
     state.derived = {
@@ -5289,6 +5976,7 @@ def compute(state: CharacterState) -> CharacterState:
         "essence_lost_cyber": ess_lost_cyber,
         "essence_lost_bio": ess_lost_bio,
         "armor": int(effects["armor"]) + int(gear.get("armor") or 0),
+        "special_armor": special_armor_totals(effects),
         "worn_armor": gear.get("worn_name") or "",
         "armor_items": gear.get("armor_items") or [],
         "armor_mods": gear.get("armor_mods") or [],
@@ -5313,6 +6001,7 @@ def compute(state: CharacterState) -> CharacterState:
         "lifestyle": gear.get("lifestyle"),
         "nuyen": nuyen,
         "nuyen_spent": nuyen_spent,
+        "avail_limit": CHARGEN_AVAIL_MAX,
         "karma": {
             "pool": karma_pool,
             "spent": karma_spent,

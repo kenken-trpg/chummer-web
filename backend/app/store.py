@@ -385,6 +385,7 @@ def public_catalog() -> dict:
                 "name": w["name"],
                 "category": w.get("category") or "",
                 "type": w.get("type") or "",
+                "weapon_type": w.get("weapon_type") or "",
                 "accuracy": w.get("accuracy") or "",
                 "reach": w.get("reach") or "",
                 "damage": w.get("damage") or "",
@@ -397,8 +398,11 @@ def public_catalog() -> dict:
                 "cost": w.get("cost") or "0",
                 "source": w.get("source") or "",
                 "page": w.get("page") or "",
+                "from_gear": bool(w.get("from_gear")),
+                "add_gear_id": w.get("add_gear_id") or "",
             }
             for w in raw.get("weapons") or []
+            if not w.get("hidden")
         ],
         "weapon_accessories": [
             {
@@ -423,6 +427,7 @@ def public_catalog() -> dict:
             {
                 "id": c["id"],
                 "name": c["name"],
+                "category": c.get("category") or "Commlinks",
                 "cost": c.get("cost") or "0",
                 "avail": c.get("avail") or "",
                 "minrating": int(c.get("minrating") or 0),
@@ -562,6 +567,11 @@ def public_catalog() -> dict:
                 "addoncategories": list(c.get("addoncategories") or []),
                 "required_names": list(c.get("required_names") or []),
                 "required_categories": list(c.get("required_categories") or []),
+                "ammo_weapon_types": list(c.get("ammo_weapon_types") or []),
+                "costfor": int(c.get("costfor") or 0),
+                "weapon_details": c.get("weapon_details") or "",
+                "add_weapon": c.get("add_weapon") or "",
+                "add_weapon_id": c.get("add_weapon_id") or "",
                 "needs_extra": bool(c.get("needs_extra")),
                 "extra_kind": c.get("extra_kind") or "",
                 "extra_options": gear_extra_options(c, raw.get("skills")),
@@ -623,6 +633,8 @@ def public_catalog() -> dict:
                 "purchasable": bool(c.get("purchasable")),
                 "required": c.get("required") or {},
                 "forbidden": c.get("forbidden") or {},
+                "capacity": c.get("capacity") or "",
+                "subsystems": list(c.get("subsystems") or []),
                 "source": c.get("source") or "",
                 "page": c.get("page") or "",
             }
@@ -685,6 +697,7 @@ def _public_ware(block: dict) -> dict:
                 "has_wireless": bool(w.get("wirelessbonus")),
                 "bannedgrades": list(w.get("bannedgrades") or []),
                 "required": w.get("required") or {"bioware": [], "cyberware": [], "metatype": [], "quality": []},
+                "required_parent_names": list(w.get("required_parent_names") or []),
                 "limbslot": w.get("limbslot"),
                 "selectside": bool(w.get("selectside")),
                 "source": w.get("source"),
