@@ -64,18 +64,40 @@ def eval_formula(
     if not raw:
         return default
     env: dict[str, int | float] = {**(extras or {}), "Rating": int(rating)}
+    env.setdefault("rating", int(rating))
+    lookup = {str(key).lower(): value for key, value in env.items()}
     for key in sorted(env, key=len, reverse=True):
         raw = raw.replace("{" + str(key) + "}", str(env[key]))
     if re.search(r"[{}]", raw):
         return default
+    if raw in env:
+        return float(env[raw])
+    if raw.lower() in lookup:
+        return float(lookup[raw.lower()])
     fixed = re.fullmatch(r"FixedValues\((.+)\)", raw, re.I)
     if fixed:
         parts = [p.strip() for p in fixed.group(1).split(",")]
         idx = max(0, min(len(parts) - 1, int(rating) - 1))
         return eval_formula(parts[idx], rating, default, extras)
-    s = re.sub(r"number\(([^)]+)\)", r"int(\1)", raw, flags=re.I)
-    for key in sorted(env, key=len, reverse=True):
-        s = s.replace(str(key), str(env[key]))
+
+    def _subst_keys(text: str) -> str:
+        out = text
+        for key in sorted(env, key=len, reverse=True):
+            out = out.replace(str(key), str(env[key]))
+        return out
+
+    def _number_repl(match: re.Match[str]) -> str:
+        inner = _subst_keys(match.group(1)).replace(" ", "")
+        inner = re.sub(r"(?<![<>!=])=(?!=)", "==", inner)
+        try:
+            if re.search(r"==|!=|<=|>=|<|>", inner):
+                return "1" if bool(eval(inner, {"__builtins__": {}}, {})) else "0"
+            return str(int(float(eval(inner, {"__builtins__": {}}, {"int": int}))))
+        except Exception:
+            return "0"
+
+    raw = re.sub(r"number\(([^)]+)\)", _number_repl, raw, flags=re.I)
+    s = _subst_keys(raw)
     s = re.sub(r"[RF]$", "", s.strip())
     s = s.replace(" ", "")
     if not re.fullmatch(r"[0-9+\-*/().><=int]+", s):
@@ -91,9 +113,26 @@ def eval_formula(
 
 def parse_capacity(expr: str | None) -> tuple[bool, str]:
     raw = (expr or "").strip()
-    if raw.startswith("[") and raw.endswith("]"):
+    if raw.startswith("[") and raw.endswith("]") and "/" not in raw:
         return True, raw[1:-1]
+    if "/" in raw:
+        return False, raw.split("/", 1)[0].strip()
     return False, raw
+
+
+def split_capacity(expr: str | None) -> tuple[bool, str, str]:
+    raw = (expr or "").strip()
+    if not raw:
+        return False, "", ""
+    if "/" in raw:
+        host, rest = raw.split("/", 1)
+        rest = rest.strip()
+        if rest.startswith("[") and rest.endswith("]"):
+            rest = rest[1:-1]
+        return False, host.strip(), rest
+    if raw.startswith("[") and raw.endswith("]"):
+        return True, "", raw[1:-1]
+    return False, raw, ""
 
 
 CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
@@ -193,8 +232,56 @@ def load_bioware() -> dict[str, Any]:
     return {"grades": _load_grades(root), "items": _load_ware_items(root, "./biowares/bioware", "Basic")}
 
 
+def parse_requirement_tree(el: ET.Element | None) -> list[dict[str, Any]]:
+    if el is None:
+        return []
+    return [_parse_requirement_node(child) for child in list(el)]
+
+
+def _parse_requirement_node(el: ET.Element) -> dict[str, Any]:
+    tag = el.tag
+    if tag in {"oneof", "allof", "group"}:
+        return {"tag": tag, "children": [_parse_requirement_node(child) for child in list(el)]}
+    if tag == "skill":
+        if len(el) > 0:
+            return {
+                "tag": "skill",
+                "name": _text(el.find("name")),
+                "val": _int(el.find("val"), 1),
+                "spec": _text(el.find("spec")),
+                "type": _text(el.find("type")),
+            }
+        return {"tag": "skill", "name": _text(el), "val": 1, "spec": "", "type": ""}
+    if tag == "ess":
+        raw = _text(el) or "0"
+        try:
+            value = float(raw)
+        except ValueError:
+            value = 0.0
+        node: dict[str, Any] = {"tag": "ess", "value": value}
+        if el.attrib.get("grade"):
+            node["grade"] = el.attrib.get("grade")
+        return node
+    node = {"tag": tag, "name": _text(el)}
+    if el.attrib:
+        node["attrs"] = dict(el.attrib)
+    return node
+
+
+def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
+    return any(node.get("tag") == "selecttext" for node in (bonus or []))
+
+
 def parse_required(el: ET.Element | None) -> dict[str, list[str]]:
-    out: dict[str, list[str]] = {"bioware": [], "cyberware": [], "metatype": [], "quality": [], "power": []}
+    out: dict[str, list[str]] = {
+        "bioware": [],
+        "cyberware": [],
+        "metatype": [],
+        "quality": [],
+        "power": [],
+        "metamagicart": [],
+        "metamagic": [],
+    }
     if el is None:
         return out
     for group in list(el):
@@ -302,6 +389,7 @@ def load_skills() -> dict[str, Any]:
                 "category": _text(el.find("category")),
                 "skillgroup": _text(el.find("skillgroup")) or None,
                 "exotic": exotic,
+                "default": _text(el.find("default"), "True").lower() == "true",
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "knowledge": False,
@@ -336,6 +424,7 @@ def load_qualities() -> list[dict[str, Any]]:
         name = _text(el.find("name"))
         if not name:
             continue
+        bonus = parse_bonus(el.find("bonus"))
         items.append(
             {
                 "id": _text(el.find("id")),
@@ -344,11 +433,14 @@ def load_qualities() -> list[dict[str, Any]]:
                 "category": _text(el.find("category"), "Positive"),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
-                "bonus": parse_bonus(el.find("bonus")),
+                "bonus": bonus,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
                 "forbidden": parse_required(el.find("forbidden")),
                 "required": parse_required(el.find("required")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
+                "needs_extra": quality_needs_extra(bonus),
             }
         )
     return items
@@ -526,6 +618,27 @@ def _int_text(value: Any, default: int = 0) -> int:
         return default
 
 
+SPELL_CAST_CATEGORIES = frozenset({"Combat", "Detection", "Health", "Illusion", "Manipulation"})
+SPELL_CATEGORIES = SPELL_CAST_CATEGORIES | frozenset({"Rituals", "Enchantments"})
+CATEGORY_SKILL = {
+    "Combat": "Spellcasting",
+    "Detection": "Spellcasting",
+    "Health": "Spellcasting",
+    "Illusion": "Spellcasting",
+    "Manipulation": "Spellcasting",
+    "Rituals": "Ritual Spellcasting",
+    "Enchantments": "Artificing",
+}
+
+
+def spell_kind(category: str) -> str:
+    if category == "Rituals":
+        return "ritual"
+    if category == "Enchantments":
+        return "enchantment"
+    return "spell"
+
+
 def load_spells() -> list[dict[str, Any]]:
     path = DATA_DIR / "spells.xml"
     if not path.exists():
@@ -538,17 +651,1043 @@ def load_spells() -> list[dict[str, Any]]:
         spell_id = _text(el.find("id"))
         if not name or not spell_id:
             continue
+        category = _text(el.find("category"))
         items.append(
             {
                 "id": spell_id,
                 "name": name,
-                "category": _text(el.find("category")),
+                "category": category,
+                "kind": spell_kind(category),
+                "useskill": CATEGORY_SKILL.get(category, "Spellcasting"),
                 "descriptor": _text(el.find("descriptor")),
                 "dv": _text(el.find("dv")),
                 "range": _text(el.find("range")),
                 "duration": _text(el.find("duration")),
                 "type": _text(el.find("type")),
                 "damage": _text(el.find("damage")),
+                "learnable": category in SPELL_CATEGORIES,
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+SPIRIT_SLOTS = (
+    ("spiritcombat", "combat"),
+    ("spiritdetection", "detection"),
+    ("spirithealth", "health"),
+    ("spiritillusion", "illusion"),
+    ("spiritmanipulation", "manipulation"),
+)
+SPIRIT_ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "ini")
+
+
+def load_traditions() -> list[dict[str, Any]]:
+    path = DATA_DIR / "traditions.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./traditions/tradition"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        trad_id = _text(el.find("id"))
+        drain = _text(el.find("drain"))
+        if not name or not trad_id or not drain:
+            continue
+        attrs = re.findall(r"\{([A-Za-z]+)\}", drain)
+        spirits: dict[str, str] = {}
+        spirits_el = el.find("spirits")
+        if spirits_el is not None:
+            for tag, role in SPIRIT_SLOTS:
+                spirit_name = _text(spirits_el.find(tag))
+                if spirit_name:
+                    spirits[role] = spirit_name
+        items.append(
+            {
+                "id": trad_id,
+                "name": name,
+                "drain": drain,
+                "drain_attrs": [a.upper() for a in attrs],
+                "spirits": spirits,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_spirits() -> list[dict[str, Any]]:
+    path = DATA_DIR / "traditions.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./spirits/spirit"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        spirit_id = _text(el.find("id"))
+        if not name or not spirit_id:
+            continue
+        items.append(
+            {
+                "id": spirit_id,
+                "name": name,
+                "attributes": {key.upper(): _text(el.find(key), "F") for key in SPIRIT_ATTR_KEYS},
+                "powers": [_text(p) for p in el.findall("./powers/power") if _text(p)],
+                "optionalpowers": [_text(p) for p in el.findall("./optionalpowers/power") if _text(p)],
+                "skills": [
+                    {"name": _text(s), "attribute": (s.get("attr") or "").upper()}
+                    for s in el.findall("./skills/skill")
+                    if _text(s)
+                ],
+                "weaknesses": [_text(w) for w in el.findall("./weaknesses/weakness") if _text(w)],
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
+
+
+def load_complex_forms() -> list[dict[str, Any]]:
+    path = DATA_DIR / "complexforms.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./complexforms/complexform"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        form_id = _text(el.find("id"))
+        if not name or not form_id:
+            continue
+        items.append(
+            {
+                "id": form_id,
+                "name": name,
+                "target": _text(el.find("target")),
+                "duration": _text(el.find("duration")),
+                "fv": _text(el.find("fv")),
+                "needs_extra": "[Matrix Attribute]" in name,
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_streams() -> list[dict[str, Any]]:
+    path = DATA_DIR / "streams.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./traditions/tradition"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        stream_id = _text(el.find("id"))
+        drain = _text(el.find("drain"))
+        if not name or not stream_id or not drain:
+            continue
+        attrs = re.findall(r"\{([A-Za-z]+)\}", drain)
+        sprites = [_text(s) for s in el.findall("./spirits/spirit") if _text(s)]
+        items.append(
+            {
+                "id": stream_id,
+                "name": name,
+                "drain": drain,
+                "drain_attrs": [a.upper() for a in attrs],
+                "sprites": sprites,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_sprites() -> list[dict[str, Any]]:
+    path = DATA_DIR / "streams.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./spirits/spirit"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        sprite_id = _text(el.find("id"))
+        if not name or not sprite_id:
+            continue
+        items.append(
+            {
+                "id": sprite_id,
+                "name": name,
+                "attributes": {key.upper(): _text(el.find(key), "F") for key in SPIRIT_ATTR_KEYS},
+                "powers": [_text(p) for p in el.findall("./powers/power") if _text(p)],
+                "skills": [
+                    {"name": _text(s), "attribute": (s.get("attr") or "").upper()}
+                    for s in el.findall("./skills/skill")
+                    if _text(s)
+                ],
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def _focus_effect(nodes: list[dict[str, Any]]) -> str:
+    bits: list[str] = []
+    for node in nodes:
+        tag = node.get("tag") or ""
+        fields = node.get("fields") or {}
+        if tag == "specificskill":
+            name = str(fields.get("name") or "").strip()
+            if name:
+                bits.append(f"{name} +Rating")
+        elif tag == "skillattribute":
+            name = str(fields.get("name") or "").strip()
+            if name:
+                bits.append(f"{name} skills +Rating")
+        elif tag == "spellcategory":
+            name = str(fields.get("name") or "").strip()
+            if name:
+                bits.append(f"{name} spells +Rating")
+        elif tag == "weaponspecificdice":
+            bits.append("Weapon +Rating")
+    return " / ".join(bits)
+
+
+def load_foci() -> list[dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if _text(el.find("category")) != "Foci":
+            continue
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        gear_id = _text(el.find("id"))
+        if not name or not gear_id:
+            continue
+        if name == "Qi Focus" or "Individualized" in name or "Formula" in name:
+            continue
+        bonus = parse_bonus(el.find("bonus"))
+        items.append(
+            {
+                "id": gear_id,
+                "name": name,
+                "category": "Foci",
+                "maxrating": _int(el.find("rating"), 6),
+                "cost": _text(el.find("cost"), "Rating * 4000"),
+                "avail": _text(el.find("avail")),
+                "bonus": bonus,
+                "effect": _focus_effect(bonus),
+                "formula": None,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    formulae = load_focus_formulae()
+    for item in items:
+        formula = formulae.get(item["name"])
+        if formula:
+            item["formula"] = formula
+    return items
+
+
+def _focus_name_from_formula(name: str) -> str:
+    return name.replace(" Formula", "", 1)
+
+
+def load_focus_formulae() -> dict[str, dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return {}
+    items: dict[str, dict[str, Any]] = {}
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if _text(el.find("category")) != "Formulae":
+            continue
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        if "Focus Formula" not in name or "Individualized" in name:
+            continue
+        focus_name = _focus_name_from_formula(name)
+        items[focus_name] = {
+            "id": _text(el.find("id")),
+            "name": name,
+            "cost": _text(el.find("cost"), "Rating * 1000"),
+            "source": _text(el.find("source")),
+            "page": _text(el.find("page")),
+        }
+    return items
+
+
+SKIP_WEAPON_CATEGORIES = {
+    "Cyberweapon",
+    "Bio-Weapon",
+    "Quality",
+    "Underbarrel Weapons",
+    "Micro-Drone Weapons",
+}
+
+
+def _is_variable_cost(cost: str) -> bool:
+    return "Variable" in (cost or "")
+
+
+def _armor_included_mods(el: ET.Element) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for name_el in el.findall("./mods/name"):
+        name = _text(name_el)
+        if not name:
+            continue
+        rating = 1
+        raw = name_el.attrib.get("rating") or ""
+        if raw:
+            try:
+                rating = int(float(raw))
+            except ValueError:
+                rating = 1
+        items.append({"name": name, "rating": max(1, rating)})
+    return items
+
+
+def _armor_mod_required(el: ET.Element | None) -> dict[str, list[str]]:
+    names: list[str] = []
+    mods: list[str] = []
+    if el is None:
+        return {"names": names, "mods": mods}
+    for child in el.findall("./parentdetails/name"):
+        text = _text(child)
+        if text:
+            names.append(text)
+    for child in el.findall(".//armormod"):
+        text = _text(child)
+        if text:
+            mods.append(text)
+    return {"names": names, "mods": mods}
+
+
+def load_armor() -> list[dict[str, Any]]:
+    path = DATA_DIR / "armor.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./armors/armor"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        armor_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not armor_id or _is_variable_cost(cost):
+            continue
+        armor_raw = _text(el.find("armor"), "0")
+        rating_max = _int(el.find("rating"), 0)
+        items.append(
+            {
+                "id": armor_id,
+                "name": name,
+                "category": _text(el.find("category"), "Armor"),
+                "armor": armor_raw,
+                "armorcapacity": _text(el.find("armorcapacity")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "minrating": 1 if rating_max > 0 else 0,
+                "maxrating": rating_max,
+                "additive": armor_raw.startswith("+") or armor_raw.startswith("-"),
+                "addmodcategories": [_text(c) for c in el.findall("addmodcategory") if _text(c)],
+                "included_mods": _armor_included_mods(el),
+                "bonus": parse_bonus(el.find("bonus")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_armor_mods() -> list[dict[str, Any]]:
+    path = DATA_DIR / "armor.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./mods/mod"):
+        name = _text(el.find("name"))
+        mod_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not mod_id or name.startswith("ID ERROR"):
+            continue
+        rating_max = _int(el.find("maxrating"), 0) or _int(el.find("rating"), 0)
+        hidden = el.find("hide") is not None
+        bonus_el = el.find("bonus")
+        unique = (bonus_el.attrib.get("unique") or "") if bonus_el is not None else ""
+        required = _armor_mod_required(el.find("required"))
+        items.append(
+            {
+                "id": mod_id,
+                "name": name,
+                "category": _text(el.find("category"), "General"),
+                "armor": _text(el.find("armor"), "0"),
+                "armorcapacity": _text(el.find("armorcapacity")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "minrating": 1 if rating_max > 1 else 0,
+                "maxrating": rating_max,
+                "purchasable": (
+                    not hidden
+                    and not _is_variable_cost(cost)
+                    and "Armor Cost" not in cost
+                    and cost.strip() not in {"0", ""}
+                ),
+                "unique": unique,
+                "required_names": list(required.get("names") or []),
+                "required_mods": list(required.get("mods") or []),
+                "bonus": parse_bonus(bonus_el),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_weapons() -> list[dict[str, Any]]:
+    path = DATA_DIR / "weapons.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./weapons/weapon"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        weapon_id = _text(el.find("id"))
+        category = _text(el.find("category"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not weapon_id or category in SKIP_WEAPON_CATEGORIES or _is_variable_cost(cost):
+            continue
+        items.append(
+            {
+                "id": weapon_id,
+                "name": name,
+                "category": category,
+                "type": _text(el.find("type")),
+                "accuracy": _text(el.find("accuracy")),
+                "reach": _text(el.find("reach")),
+                "damage": _text(el.find("damage")),
+                "ap": _text(el.find("ap")),
+                "mode": _text(el.find("mode")),
+                "rc": _text(el.find("rc")),
+                "ammo": _text(el.find("ammo")),
+                "conceal": _text(el.find("conceal")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "mounts": [_text(m) for m in el.findall("./accessorymounts/mount") if _text(m)],
+                "included": [_text(a.find("name")) for a in el.findall("./accessories/accessory") if _text(a.find("name"))],
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def _weapon_constraints(el: ET.Element | None) -> dict[str, Any]:
+    names: list[str] = []
+    categories: list[str] = []
+    types: list[str] = []
+    accessories: list[str] = []
+    conceal_lte: int | None = None
+    if el is None:
+        return {
+            "names": names,
+            "categories": categories,
+            "types": types,
+            "accessories": accessories,
+            "conceal_lte": conceal_lte,
+        }
+    for child in el.iter():
+        tag = child.tag
+        text = _text(child)
+        if tag == "name" and text:
+            names.append(text)
+        elif tag in {"category", "ammocategory"} and text:
+            categories.append(text)
+        elif tag == "type" and text:
+            types.append(text)
+        elif tag == "accessory" and text:
+            accessories.append(text)
+        elif tag == "conceal" and text:
+            try:
+                value = int(float(text))
+            except ValueError:
+                continue
+            if (child.attrib.get("operation") or "") == "lessthanequals":
+                conceal_lte = value
+    return {
+        "names": names,
+        "categories": categories,
+        "types": types,
+        "accessories": accessories,
+        "conceal_lte": conceal_lte,
+    }
+
+
+def load_weapon_accessories() -> list[dict[str, Any]]:
+    path = DATA_DIR / "weapons.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./accessories/accessory"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        accessory_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not accessory_id or name.startswith("ID ERROR"):
+            continue
+        mount_raw = _text(el.find("mount"))
+        rating_max = _int(el.find("rating"), 0)
+        items.append(
+            {
+                "id": accessory_id,
+                "name": name,
+                "mounts": [part for part in mount_raw.split("/") if part],
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "purchasable": not _is_variable_cost(cost) and cost.strip() not in {"0", ""},
+                "accuracy": _text(el.find("accuracy")),
+                "rc": _text(el.find("rc")),
+                "conceal": _text(el.find("conceal")),
+                "damage": _text(el.find("damage")),
+                "ap": _text(el.find("ap")),
+                "reach": _text(el.find("reach")),
+                "minrating": 1 if rating_max > 0 else 0,
+                "maxrating": rating_max,
+                "required": _weapon_constraints(el.find("required")),
+                "forbidden": _weapon_constraints(el.find("forbidden")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_commlinks() -> list[dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if _text(el.find("category")) != "Commlinks":
+            continue
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        gear_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not gear_id or _is_variable_cost(cost):
+            continue
+        rating_max = _int(el.find("rating"), 0)
+        items.append(
+            {
+                "id": gear_id,
+                "name": name,
+                "category": "Commlinks",
+                "cost": cost,
+                "avail": _text(el.find("avail")),
+                "minrating": _int(el.find("minrating"), 1) if rating_max > 0 else 0,
+                "maxrating": rating_max,
+                "devicerating": _text(el.find("devicerating"), "0"),
+                "dataprocessing": _text(el.find("dataprocessing"), "0"),
+                "firewall": _text(el.find("firewall"), "0"),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False) -> list[dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if el.find("hide") is not None:
+            continue
+        category = _text(el.find("category"))
+        if category not in categories:
+            continue
+        name = _text(el.find("name"))
+        gear_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not gear_id or name.startswith("ID ERROR") or _is_variable_cost(cost):
+            continue
+        if name.startswith("[") and not allow_brackets:
+            continue
+        rating_max = _int(el.find("rating"), 0)
+        cap_raw = _text(el.find("capacity"))
+        plugin, cap_expr = parse_capacity(cap_raw)
+        _plugin_only, host_expr, plugin_expr = split_capacity(cap_raw)
+        included: list[dict[str, Any]] = []
+        for gift in el.findall("./gears/usegear"):
+            gift_name = _text(gift.find("name"))
+            if not gift_name:
+                continue
+            included.append(
+                {
+                    "name": gift_name,
+                    "category": _text(gift.find("category")),
+                    "rating": max(1, _int(gift.find("rating"), 1)),
+                    "capacity": _text(gift.find("capacity")),
+                }
+            )
+        items.append(
+            {
+                "id": gear_id,
+                "name": name,
+                "category": category,
+                "cost": cost,
+                "avail": _text(el.find("avail")),
+                "minrating": 1 if rating_max > 0 else 0,
+                "maxrating": rating_max,
+                "capacity": cap_expr,
+                "plugin": plugin,
+                "host_capacity": host_expr,
+                "plugin_capacity": plugin_expr,
+                "requireparent": el.find("requireparent") is not None,
+                "addoncategories": [_text(c) for c in el.findall("addoncategory") if _text(c)],
+                "required_names": [
+                    _text(n)
+                    for n in (el.findall("./required/geardetails//name") if el.find("./required/geardetails") is not None else [])
+                    if _text(n)
+                ],
+                "required_categories": [
+                    _text(n)
+                    for n in (el.findall("./required/geardetails//category") if el.find("./required/geardetails") is not None else [])
+                    if _text(n)
+                ],
+                "included": included,
+                "bonus": parse_bonus(el.find("bonus")),
+                "devicerating": _text(el.find("devicerating"), "0"),
+                "attack": _text(el.find("attack"), "0"),
+                "sleaze": _text(el.find("sleaze"), "0"),
+                "dataprocessing": _text(el.find("dataprocessing"), "0"),
+                "firewall": _text(el.find("firewall"), "0"),
+                "attributearray": _text(el.find("attributearray")),
+                "programs": _text(el.find("programs"), "0"),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_cyberdecks() -> list[dict[str, Any]]:
+    return _load_gear_categories({"Cyberdecks"})
+
+
+def load_rccs() -> list[dict[str, Any]]:
+    return _load_gear_categories({"Rigger Command Consoles"})
+
+
+def load_optics() -> list[dict[str, Any]]:
+    return _load_gear_categories(
+        {"Vision Devices", "Audio Devices", "Vision Enhancements", "Audio Enhancements"}
+    )
+
+
+PROGRAM_HOSTS = {
+    "Common Programs": "cyberdecks",
+    "Hacking Programs": "cyberdecks",
+    "Autosofts": "rccs",
+}
+
+
+def _extra_kind(bonus: list[dict[str, Any]] | None, name: str = "") -> str:
+    if str(name or "").startswith("Group Autosoft"):
+        return "group"
+    tags = {node.get("tag") for node in (bonus or [])}
+    if "selectskill" in tags or "activesoft" in tags:
+        return "skill"
+    if "selecttext" in tags or "selectrestricted" in tags or "selecttradition" in tags:
+        return "text"
+    if "knowsoft" in tags or "linguasoft" in tags:
+        return "text"
+    return ""
+
+
+GEAR_SPECIALIZED_CATEGORIES = {
+    "Commlinks",
+    "Cyberdecks",
+    "Rigger Command Consoles",
+    "Vision Devices",
+    "Audio Devices",
+    "Vision Enhancements",
+    "Audio Enhancements",
+    "Common Programs",
+    "Hacking Programs",
+    "Autosofts",
+    "Software",
+    "Sensors",
+    "Sensor Housings",
+    "Sensor Functions",
+}
+
+GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
+    "Foci",
+    "Formulae",
+    "Custom",
+    "Custom Cyberdeck Attributes",
+    "Custom Drug",
+    "Paydata",
+    "Commlink Apps",
+    "Electronic Modification",
+    "Drug Grades",
+    "Currency",
+}
+
+GEAR_RATING_CAP = 24
+
+
+def load_gear() -> list[dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return []
+    cats: set[str] = set()
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        cat = _text(el.find("category"))
+        if cat:
+            cats.add(cat)
+    items: list[dict[str, Any]] = []
+    for item in _load_gear_categories(cats - GEAR_SKIP_CATEGORIES):
+        cost = str(item.get("cost") or "").strip()
+        if "Parent Cost" in cost:
+            continue
+        if cost.lstrip().startswith("+"):
+            item["requireparent"] = True
+        if item.get("required_names") or item.get("required_categories"):
+            item["requireparent"] = True
+        if cost in {"0", ""} and not item.get("requireparent"):
+            continue
+        rating_max = int(item.get("maxrating") or 0)
+        if rating_max > GEAR_RATING_CAP:
+            item["maxrating"] = 12
+            item["minrating"] = 1
+        name = item.get("name") or ""
+        item["extra_kind"] = _extra_kind(item.get("bonus"), name)
+        item["needs_extra"] = bool(item["extra_kind"])
+        items.append(item)
+    return items
+
+
+def load_programs() -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for item in _load_gear_categories(
+        {"Common Programs", "Hacking Programs", "Autosofts"},
+        allow_brackets=True,
+    ):
+        name = item.get("name") or ""
+        if name.startswith("[") and item.get("category") != "Autosofts":
+            continue
+        if "Parent Cost" in (item.get("cost") or ""):
+            continue
+        item["requireparent"] = True
+        item["program_host"] = PROGRAM_HOSTS.get(item.get("category") or "", "cyberdecks")
+        item["extra_kind"] = _extra_kind(item.get("bonus"), name)
+        item["needs_extra"] = bool(item["extra_kind"])
+        items.append(item)
+    return items
+
+
+def load_apps() -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for item in _load_gear_categories({"Software"}):
+        if "Parent Cost" in (item.get("cost") or ""):
+            continue
+        if (item.get("cost") or "").strip() in {"0", ""}:
+            continue
+        item["requireparent"] = True
+        item["extra_kind"] = _extra_kind(item.get("bonus"), item.get("name") or "")
+        item["needs_extra"] = bool(item["extra_kind"])
+        items.append(item)
+    return items
+
+
+def load_sensors() -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for item in _load_gear_categories({"Sensors", "Sensor Housings", "Sensor Functions"}):
+        if "Parent Cost" in (item.get("cost") or ""):
+            continue
+        item["requireparent"] = item.get("category") == "Sensor Functions"
+        items.append(item)
+    return items
+
+
+def _vehicle_constraints(el: ET.Element | None) -> dict[str, Any]:
+    names: list[str] = []
+    category_contains: list[str] = []
+    category_equals: list[str] = []
+    body_lte: int | None = None
+    body_gte: int | None = None
+    if el is None:
+        return {
+            "names": names,
+            "category_contains": category_contains,
+            "category_equals": category_equals,
+            "body_lte": body_lte,
+            "body_gte": body_gte,
+        }
+    for details in el.findall("vehicledetails"):
+        for child in list(details):
+            text = _text(child)
+            if not text:
+                continue
+            op = child.attrib.get("operation") or ""
+            if child.tag == "name":
+                names.append(text)
+            elif child.tag == "category":
+                if op == "contains":
+                    category_contains.append(text)
+                else:
+                    category_equals.append(text)
+            elif child.tag == "body":
+                try:
+                    value = int(float(text))
+                except ValueError:
+                    continue
+                if op == "lessthanequals":
+                    body_lte = value
+                elif op in {"greaterthan", "greaterthanorequals"}:
+                    body_gte = value
+    return {
+        "names": names,
+        "category_contains": category_contains,
+        "category_equals": category_equals,
+        "body_lte": body_lte,
+        "body_gte": body_gte,
+    }
+
+
+def _mount_part_requirements(el: ET.Element | None) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {"control": [], "flexibility": [], "visibility": []}
+    if el is None:
+        return out
+    for details in el.findall("weaponmountdetails"):
+        for child in list(details):
+            text = _text(child)
+            if child.tag in out and text:
+                out[child.tag].append(text)
+    return out
+
+
+def load_vehicle_names() -> list[str]:
+    path = DATA_DIR / "vehicles.xml"
+    if not path.exists():
+        return []
+    names: list[str] = []
+    for el in ET.parse(path).getroot().findall("./vehicles/vehicle"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        if name and not name.startswith("ID ERROR"):
+            names.append(name)
+    return names
+
+
+def load_vehicle_mods() -> list[dict[str, Any]]:
+    path = DATA_DIR / "vehicles.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./mods/mod"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        mod_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not mod_id or name.startswith("ID ERROR"):
+            continue
+        rating_raw = _text(el.find("rating"))
+        min_raw = _text(el.find("minrating"))
+        qty_rating = rating_raw.lower() == "qty"
+        rating_max = _int(el.find("rating"), 0) if rating_raw.isdigit() else 0
+        items.append(
+            {
+                "id": mod_id,
+                "name": name,
+                "category": _text(el.find("category")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "slots": _text(el.find("slots"), "0"),
+                "rating": rating_raw,
+                "minrating": _int(el.find("minrating"), 1) if rating_max > 0 else 0,
+                "maxrating": rating_max,
+                "minrating_expr": min_raw,
+                "maxrating_expr": rating_raw if rating_raw and not rating_raw.isdigit() else "",
+                "purchasable": not _is_variable_cost(cost) and not qty_rating and cost.strip() not in {"0", ""},
+                "bonus": parse_bonus(el.find("bonus")),
+                "required": _vehicle_constraints(el.find("required")),
+                "forbidden": _vehicle_constraints(el.find("forbidden")),
+                "optionaldrone": el.find("optionaldrone") is not None,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_weapon_mounts() -> list[dict[str, Any]]:
+    path = DATA_DIR / "vehicles.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./weaponmounts/weaponmount"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        mount_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not mount_id or name.startswith("ID ERROR") or _is_variable_cost(cost):
+            continue
+        required = el.find("required")
+        forbidden = el.find("forbidden")
+        items.append(
+            {
+                "id": mount_id,
+                "name": name,
+                "category": _text(el.find("category")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "slots": _text(el.find("slots"), "0"),
+                "required": _vehicle_constraints(required),
+                "forbidden": _vehicle_constraints(forbidden),
+                "required_parts": _mount_part_requirements(required),
+                "forbidden_parts": _mount_part_requirements(forbidden),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def _drone_included_gears(el: ET.Element) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for gift in el.findall("./gears/gear"):
+        name = _text(gift.find("name")) or _text(gift)
+        if not name:
+            continue
+        items.append(
+            {
+                "name": name,
+                "category": _text(gift.find("category")),
+                "rating": max(1, _int(gift.find("rating"), 1)),
+                "maxrating": _int(gift.find("maxrating"), 0),
+            }
+        )
+    return items
+
+
+def _drone_included_mods(el: ET.Element) -> list[str]:
+    return [_text(node) for node in el.findall("./mods/name") if _text(node)]
+
+
+def _drone_included_mounts(el: ET.Element) -> list[dict[str, str]]:
+    items: list[dict[str, str]] = []
+    for node in el.findall("./weaponmounts/weaponmount"):
+        items.append(
+            {
+                "size": _text(node.find("size")),
+                "visibility": _text(node.find("visibility")),
+                "flexibility": _text(node.find("flexibility")),
+                "control": _text(node.find("control")),
+                "allowedweapons": _text(node.find("allowedweapons")),
+            }
+        )
+    return items
+
+
+def _load_vehicle_entries(*, drones: bool) -> list[dict[str, Any]]:
+    path = DATA_DIR / "vehicles.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./vehicles/vehicle"):
+        if el.find("hide") is not None:
+            continue
+        category = _text(el.find("category"))
+        if category.startswith("Drones") != drones:
+            continue
+        name = _text(el.find("name"))
+        vehicle_id = _text(el.find("id"))
+        cost = _text(el.find("cost"), "0")
+        if not name or not vehicle_id or name.startswith("ID ERROR") or _is_variable_cost(cost) or cost.strip() in {"0", ""}:
+            continue
+        items.append(
+            {
+                "id": vehicle_id,
+                "name": name,
+                "category": category,
+                "handling": _text(el.find("handling")),
+                "speed": _text(el.find("speed")),
+                "accel": _text(el.find("accel")),
+                "body": _text(el.find("body")),
+                "armor": _text(el.find("armor")),
+                "pilot": _text(el.find("pilot")),
+                "sensor": _text(el.find("sensor")),
+                "seats": _text(el.find("seats")),
+                "avail": _text(el.find("avail")),
+                "cost": cost,
+                "included_gears": _drone_included_gears(el),
+                "included_mods": _drone_included_mods(el),
+                "included_weaponmounts": _drone_included_mounts(el),
+                "modslots": _int(el.find("modslots")) if _text(el.find("modslots")) else None,
+                "powertrainmodslots": _int(el.find("powertrainmodslots")),
+                "protectionmodslots": _int(el.find("protectionmodslots")),
+                "weaponmodslots": _int(el.find("weaponmodslots")),
+                "bodymodslots": _int(el.find("bodymodslots")),
+                "electromagneticmodslots": _int(el.find("electromagneticmodslots")),
+                "cosmeticmodslots": _int(el.find("cosmeticmodslots")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_drones() -> list[dict[str, Any]]:
+    return _load_vehicle_entries(drones=True)
+
+
+def load_vehicles() -> list[dict[str, Any]]:
+    return _load_vehicle_entries(drones=False)
+
+
+def load_lifestyles() -> list[dict[str, Any]]:
+    path = DATA_DIR / "lifestyles.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./lifestyles/lifestyle"):
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        lifestyle_id = _text(el.find("id"))
+        if not name or not lifestyle_id or name.startswith("ID ERROR"):
+            continue
+        items.append(
+            {
+                "id": lifestyle_id,
+                "name": name,
+                "cost": _int(el.find("cost")),
+                "dice": _int(el.find("dice")),
+                "increment": _text(el.find("increment"), "month"),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }
@@ -632,6 +1771,8 @@ def load_priorities() -> list[dict[str, Any]]:
                         "resonance": resonance,
                         "value": magic or resonance,
                         "quality": _text(t.find("./qualities/quality")),
+                        "spells": _int(t.find("spells")),
+                        "cfp": _int(t.find("cfp")),
                     }
                 )
             row["talents"] = talents
@@ -705,7 +1846,31 @@ def catalog() -> dict[str, Any]:
         "enhancements": load_enhancements(),
         "mentors": load_mentors(),
         "spells": load_spells(),
+        "traditions": load_traditions(),
+        "spirits": load_spirits(),
+        "complex_forms": load_complex_forms(),
+        "streams": load_streams(),
+        "sprites": load_sprites(),
+        "foci": load_foci(),
         "qi_focus": load_qi_focus(),
+        "armor": load_armor(),
+        "armor_mods": load_armor_mods(),
+        "weapons": load_weapons(),
+        "weapon_accessories": load_weapon_accessories(),
+        "commlinks": load_commlinks(),
+        "cyberdecks": load_cyberdecks(),
+        "rccs": load_rccs(),
+        "optics": load_optics(),
+        "programs": load_programs(),
+        "apps": load_apps(),
+        "sensors": load_sensors(),
+        "gear": load_gear(),
+        "drones": load_drones(),
+        "vehicles": load_vehicles(),
+        "vehicle_mods": load_vehicle_mods(),
+        "weapon_mounts": load_weapon_mounts(),
+        "vehicle_names": load_vehicle_names(),
+        "lifestyles": load_lifestyles(),
         "priorities": load_priorities(),
         "translations": translations,
         "ui_strings": load_ui_strings(),

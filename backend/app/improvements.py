@@ -29,6 +29,8 @@ IMPLEMENTED = {
     "freequality",
     "selectmentorspirit",
     "focusbindingkarmacost",
+    "skillattribute",
+    "spellcategory",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -40,7 +42,23 @@ SILENT_TAGS = {
     "selectpowers",
     "selectpower",
     "specificpower",
-    "spellcategory",
+    "selecttradition",
+    "selectrestricted",
+    "limitmodifier",
+    "activesoft",
+    "knowsoft",
+    "linguasoft",
+    "weaponspecificdice",
+    "firearmor",
+    "coldarmor",
+    "electricityarmor",
+    "toxincontactresist",
+    "pathogencontactresist",
+    "toxincontactimmune",
+    "toxininhalationimmune",
+    "pathogencontactimmune",
+    "pathogeninhalationimmune",
+    "radiationresist",
 }
 
 ATTR_ALIASES = {
@@ -134,6 +152,8 @@ def empty_effects() -> dict[str, Any]:
         "free_qualities": [],
         "needs_mentor": False,
         "focus_binding": [],
+        "skill_attribute_mods": [],
+        "spell_category_mods": [],
         "unimplemented": [],
     }
 
@@ -231,6 +251,32 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             if not name or bonus == 0:
                 continue
             effects["skill_specific_mods"].append(
+                {
+                    "name": name,
+                    "bonus": bonus,
+                    "condition": (fields.get("condition") or "").strip(),
+                    "source": source,
+                }
+            )
+        elif tag == "skillattribute":
+            name = (fields.get("name") or node.get("value") or "").strip().upper()
+            bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"))
+            if not name or bonus == 0:
+                continue
+            effects["skill_attribute_mods"].append(
+                {
+                    "name": name,
+                    "bonus": bonus,
+                    "condition": (fields.get("condition") or "").strip(),
+                    "source": source,
+                }
+            )
+        elif tag == "spellcategory":
+            name = (fields.get("name") or node.get("value") or "").strip()
+            bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"))
+            if not name or bonus == 0:
+                continue
+            effects["spell_category_mods"].append(
                 {
                     "name": name,
                     "bonus": bonus,
