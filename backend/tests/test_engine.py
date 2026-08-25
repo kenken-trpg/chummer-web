@@ -2037,6 +2037,17 @@ PREDATOR = "971c711b-db32-4339-9203-865ef38f350e"
 LIGHT_FIRE_70 = "67474de7-d29b-4b31-a6ae-1e2e981fa5d2"
 KNIFE = "eb16de72-e646-4880-aa5b-21a5a0a2b342"
 INTERNAL_SMARTGUN = "d57d2c64-1f61-4f5f-a465-8ce0dfacec6a"
+APDS = "ef9c8aae-26df-4fe6-88b3-79fbb5eb77c5"
+REGULAR_AMMO = "b2a0b340-c793-4322-8422-8b03d18a6fae"
+GEL_ROUNDS = "0c8d16cb-6e96-4d95-8454-104a36091cf9"
+SPARE_CLIP = "75ccb148-e774-429c-b854-a27816439626"
+SPEED_LOADER = "f87701a0-4ea2-47db-bcac-f5b8396c369e"
+SUPER_WARHAWK = "61c59a89-3c51-46b7-880a-933b29394315"
+FLASH_BANG = "f4b92e14-fe1f-4be4-ad73-aed10e1f73b4"
+THROWING_KNIFE_GEAR = "d9bf2003-1911-4e65-b6a1-8babb761dd85"
+ANTIOCH = "504cba24-2141-4879-8062-782332e83386"
+MINI_HE = "daecdfc8-15d5-4864-9e20-13e4a0dca88e"
+MINI_FLASH = "f092fca8-46a9-4351-a06a-362846e6546a"
 ERIKA_DECK = "b6d1476d-a08c-43fc-be0e-68ca9330a43e"
 RADIO_SHACK_RCC = "9d410862-89ae-408c-8342-82f7e6c1ae8f"
 GLASSES = "b218dbd1-5706-4d9e-a6a7-ab9b658c3acd"
@@ -2994,6 +3005,183 @@ def test_predator_keeps_included_internal_smartgun() -> None:
     assert smarts[0]["nuyen"] == 0
     assert row["nuyen"] == 725
     assert row["accuracy"] == "7"
+
+
+def test_predator_apds_changes_ap() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-apds",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=APDS, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    ammo = row["ammo_gear"][0]
+    assert ammo["name"] == "Ammo: APDS"
+    assert ammo["loaded"] is True
+    assert ammo["nuyen"] == 120
+    assert ammo["costfor"] == 10
+    assert row["ap"] == "-5"
+    assert row["damage"] == "8P"
+    assert row["nuyen"] == 845
+    assert out.derived["nuyen_spent"] == 845
+    assert out.derived["errors"] == []
+
+def test_predator_apds_qty_two() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-apds-2",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=APDS, parent_id=weapon.id, qty=2)],
+        )
+    )
+    assert out.derived["weapons"][0]["nuyen"] == 965
+    assert out.derived["nuyen_spent"] == 965
+
+def test_predator_regular_ammo_keeps_stats() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-regular",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=REGULAR_AMMO, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["ap"] == "-1"
+    assert row["damage"] == "8P"
+    assert row["nuyen"] == 745
+
+def test_predator_gel_rounds_stun() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-gel",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=GEL_ROUNDS, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["damage"] == "8S"
+    assert row["ap"] == "0"
+    assert row["nuyen"] == 750
+
+def test_predator_spare_clip() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-clip",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=SPARE_CLIP, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    clip = row["ammo_gear"][0]
+    assert clip["name"] == "Spare Clip"
+    assert clip["loaded"] is False
+    assert row["ap"] == "-1"
+    assert row["nuyen"] == 730
+
+def test_speed_loader_needs_cylinder() -> None:
+    pistol = WeaponInstall(weapon_id=LIGHT_FIRE_70)
+    revolver = WeaponInstall(weapon_id=SUPER_WARHAWK)
+    rejected = compute(
+        _mundane(
+            "speed-clip",
+            weapons=[pistol],
+            gear=[GearInstall(gear_id=SPEED_LOADER, parent_id=pistol.id)],
+        )
+    )
+    assert rejected.derived["weapons"][0]["ammo_gear"] == []
+    assert any("装着できません" in warn for warn in rejected.derived["warnings"])
+    accepted = compute(
+        _mundane(
+            "speed-cy",
+            weapons=[revolver],
+            gear=[GearInstall(gear_id=SPEED_LOADER, parent_id=revolver.id)],
+        )
+    )
+    assert accepted.derived["weapons"][0]["ammo_gear"][0]["name"] == "Speed Loader"
+    assert accepted.derived["nuyen_spent"] == 425
+
+def test_apds_forbidden_on_melee() -> None:
+    weapon = WeaponInstall(weapon_id=KNIFE)
+    out = compute(
+        _mundane(
+            "knife-apds",
+            weapons=[weapon],
+            gear=[GearInstall(gear_id=APDS, parent_id=weapon.id)],
+        )
+    )
+    assert out.derived["weapons"][0]["ammo_gear"] == []
+    assert out.derived["nuyen_spent"] == 10
+    assert any("装着できません" in warn for warn in out.derived["warnings"])
+
+def test_predator_ammo_switch() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    apds = GearInstall(gear_id=APDS, parent_id=weapon.id)
+    gel = GearInstall(gear_id=GEL_ROUNDS, parent_id=weapon.id)
+    first = compute(_mundane("pred-switch", weapons=[weapon], gear=[apds, gel]))
+    row = first.derived["weapons"][0]
+    assert row["ap"] == "-5"
+    assert row["damage"] == "8P"
+    assert row["ammo_gear"][0]["loaded"] is True
+    assert row["ammo_gear"][1]["loaded"] is False
+    weapon.loaded_ammo_id = gel.id
+    switched = compute(_mundane("pred-switch-gel", weapons=[weapon], gear=[apds, gel]))
+    row = switched.derived["weapons"][0]
+    assert row["damage"] == "8S"
+    assert row["ap"] == "0"
+    assert row["ammo_gear"][0]["loaded"] is False
+    assert row["ammo_gear"][1]["loaded"] is True
+    assert switched.derived["nuyen_spent"] == 870
+
+def test_flash_bang_becomes_weapon() -> None:
+    grenade = GearInstall(gear_id=FLASH_BANG, qty=2)
+    out = compute(_mundane("flash-bang", gear=[grenade]))
+    assert out.derived["nuyen_spent"] == 200
+    assert len(out.derived["weapons"]) == 1
+    row = out.derived["weapons"][0]
+    assert row["name"] == "Grenade: Flash-Bang"
+    assert row["from_gear"] is True
+    assert row["source_gear_id"] == grenade.id
+    assert row["id"] == grenade.id
+    assert row["qty"] == 2
+    assert row["nuyen"] == 200
+    assert row["damage"].startswith("10S")
+    assert row["ap"] == "-4"
+    assert out.derived["gear"][0]["add_weapon"] == "Grenade: Flash-Bang"
+
+def test_throwing_knife_gear_is_weapon() -> None:
+    knife = GearInstall(gear_id=THROWING_KNIFE_GEAR)
+    out = compute(_mundane("throw-knife", gear=[knife]))
+    assert out.derived["nuyen_spent"] == 25
+    row = out.derived["weapons"][0]
+    assert row["name"] == "Throwing Knife"
+    assert row["from_gear"] is True
+    assert "({STR}+1)P" in row["damage"]
+
+def test_minigrenade_loads_into_launcher() -> None:
+    launcher = WeaponInstall(weapon_id=ANTIOCH)
+    he = GearInstall(gear_id=MINI_HE, parent_id=launcher.id)
+    flash = GearInstall(gear_id=MINI_FLASH, parent_id=launcher.id)
+    first = compute(_mundane("antioch-he", weapons=[launcher], gear=[he, flash]))
+    assert first.derived["nuyen_spent"] == 3400
+    assert len(first.derived["weapons"]) == 1
+    row = first.derived["weapons"][0]
+    assert row["name"] == "Ares Antioch-2"
+    assert row["damage"] == "16P (-2/m)"
+    assert row["ap"] == "-2"
+    assert row["ammo_gear"][0]["loaded"] is True
+    launcher.loaded_ammo_id = flash.id
+    switched = compute(_mundane("antioch-flash", weapons=[launcher], gear=[he, flash]))
+    row = switched.derived["weapons"][0]
+    assert row["damage"] == "10S (10m Radius)"
+    assert row["ap"] == "-4"
+    assert row["ammo_gear"][1]["loaded"] is True
+    assert switched.derived["nuyen_spent"] == 3400
 
 
 def test_barrel_accessories_conflict() -> None:
