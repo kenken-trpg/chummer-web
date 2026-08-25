@@ -2029,6 +2029,8 @@ UE_HELMET = "812a7926-3980-4c26-9935-5f1b66abacda"
 DIVING_ARMOR = "f2aab6fa-645a-4d39-a612-91d3ee9e6bce"
 META_LINK = "89a0f3c9-5ef6-41cd-981f-4ac690ee2ab3"
 CUSTOM_LINK = "d63eb841-7b15-4539-9026-b90a4924aeeb"
+PI_TAC_I = "b77b4cf8-8bdc-40bf-acca-f2afcca4965c"
+PI_TAC_COPILOT = "d900aa9c-5914-4e5b-baa4-b4e0c0625123"
 LOW_LIFESTYLE = "451eef87-d18e-4bee-a972-1ee165b08522"
 LUXURY_LIFESTYLE = "4b513ac9-9eb3-471b-931b-839a04873b84"
 PREDATOR = "971c711b-db32-4339-9203-865ef38f350e"
@@ -2491,6 +2493,74 @@ def test_custom_commlink_rating_four() -> None:
     row = out.derived["commlinks"][0]
     assert row["nuyen"] == 2500
     assert row["device_rating"] == 4
+
+
+def test_pi_tac_is_treated_as_commlink() -> None:
+    spec = next(item for item in catalog()["commlinks"] if item["id"] == PI_TAC_I)
+    assert spec["category"] == "PI-Tac"
+    assert spec["devicerating"] == "4"
+    assert spec["dataprocessing"] == "4"
+    assert spec["firewall"] == "4"
+    assert all(item["id"] != PI_TAC_I for item in catalog()["gear"])
+    out = compute(
+        _mundane(
+            "pitac",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            commlinks=[CommlinkInstall(gear_id=PI_TAC_I)],
+        )
+    )
+    row = out.derived["commlinks"][0]
+    assert row["name"].startswith("PI-Tac Level I")
+    assert row["category"] == "PI-Tac"
+    assert row["nuyen"] == 115000
+    assert row["device_rating"] == 4
+    assert row["dataprocessing"] == 4
+    assert row["firewall"] == 4
+    assert out.derived["commlink"]["gear_id"] == PI_TAC_I
+    assert out.derived["nuyen_spent"] == 115000
+    assert out.derived["errors"] == []
+
+def test_pi_tac_hosts_apps() -> None:
+    link = CommlinkInstall(gear_id=PI_TAC_I)
+    out = compute(
+        _mundane(
+            "pitac-app",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            commlinks=[link],
+            apps=[GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Security Companies")],
+        )
+    )
+    app = out.derived["apps"][0]
+    assert app["label"] == "Datasoft (Security Companies)"
+    assert app["parent_id"] == link.id
+    assert out.derived["nuyen_spent"] == 115120
+    assert out.derived["errors"] == []
+
+def test_pi_tac_programs_only_fit_pi_tac() -> None:
+    tac = CommlinkInstall(gear_id=PI_TAC_I)
+    link = CommlinkInstall(gear_id=META_LINK)
+    ok = compute(
+        _mundane(
+            "pitac-prog",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+            commlinks=[tac],
+            gear=[GearInstall(gear_id=PI_TAC_COPILOT, parent_id=tac.id)],
+        )
+    )
+    kids = [row for row in ok.derived["gear"] if row.get("parent_id") == tac.id]
+    assert kids[0]["name"] == 'Pantheon Industries "Co-Pilot" Mk I'
+    assert kids[0]["nuyen"] == 400
+    assert ok.derived["nuyen_spent"] == 115400
+    assert ok.derived["errors"] == []
+    denied = compute(
+        _mundane(
+            "pitac-prog-meta",
+            commlinks=[link],
+            gear=[GearInstall(gear_id=PI_TAC_COPILOT, parent_id=link.id)],
+        )
+    )
+    assert denied.derived["gear"] == []
+    assert any("装着できません" in warn for warn in denied.derived["warnings"])
 
 
 def test_low_lifestyle_one_month() -> None:
