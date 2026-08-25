@@ -31,10 +31,22 @@ IMPLEMENTED = {
     "focusbindingkarmacost",
     "skillattribute",
     "spellcategory",
+    "firearmor",
+    "coldarmor",
+    "electricityarmor",
+    "radiationresist",
+    "toxincontactresist",
+    "pathogencontactresist",
+    "toxincontactimmune",
+    "toxininhalationimmune",
+    "pathogencontactimmune",
+    "pathogeninhalationimmune",
+    "restrictedgear",
 }
 SILENT_TAGS = {
     "disablequality",
     "selecttext",
+    "selectweapon",
     "addgears",
     "addweapon",
     "limit",
@@ -49,17 +61,24 @@ SILENT_TAGS = {
     "knowsoft",
     "linguasoft",
     "weaponspecificdice",
-    "firearmor",
-    "coldarmor",
-    "electricityarmor",
-    "toxincontactresist",
-    "pathogencontactresist",
-    "toxincontactimmune",
-    "toxininhalationimmune",
-    "pathogencontactimmune",
-    "pathogeninhalationimmune",
-    "radiationresist",
 }
+
+SPECIAL_ARMOR_TAGS = {
+    "firearmor": "fire",
+    "coldarmor": "cold",
+    "electricityarmor": "electricity",
+    "radiationresist": "radiation",
+    "toxincontactresist": "toxin_contact",
+    "pathogencontactresist": "pathogen_contact",
+}
+IMMUNE_TAGS = {
+    "toxincontactimmune": "toxin_contact",
+    "toxininhalationimmune": "toxin_inhalation",
+    "pathogencontactimmune": "pathogen_contact",
+    "pathogeninhalationimmune": "pathogen_inhalation",
+}
+SPECIAL_ARMOR_KEYS = ("fire", "cold", "electricity", "radiation", "toxin_contact", "pathogen_contact")
+IMMUNE_KEYS = ("toxin_contact", "toxin_inhalation", "pathogen_contact", "pathogen_inhalation")
 
 ATTR_ALIASES = {
     "BOD": "BOD",
@@ -154,6 +173,9 @@ def empty_effects() -> dict[str, Any]:
         "focus_binding": [],
         "skill_attribute_mods": [],
         "spell_category_mods": [],
+        "special_armor": {key: 0 for key in SPECIAL_ARMOR_KEYS},
+        "immunities": {key: False for key in IMMUNE_KEYS},
+        "restricted_gear": [],
         "unimplemented": [],
     }
 
@@ -284,6 +306,53 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "source": source,
                 }
             )
+        elif tag in SPECIAL_ARMOR_TAGS:
+            key = SPECIAL_ARMOR_TAGS[tag]
+            effects["special_armor"][key] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag in IMMUNE_TAGS:
+            effects["immunities"][IMMUNE_TAGS[tag]] = True
+        elif tag == "restrictedgear":
+            effects["restricted_gear"].append(
+                {
+                    "availability": max(0, _as_int(fields.get("availability") or 24, 24)),
+                    "amount": max(1, _as_int(fields.get("amount") or 1, 1)),
+                    "source": source,
+                }
+            )
+
+
+def special_armor_totals(effects: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **{key: int(effects.get("special_armor", {}).get(key) or 0) for key in SPECIAL_ARMOR_KEYS},
+        "immunities": {
+            key: bool((effects.get("immunities") or {}).get(key)) for key in IMMUNE_KEYS
+        },
+    }
+
+
+def compact_special_armor(effects: dict[str, Any]) -> dict[str, Any] | None:
+    nums = {
+        key: int(effects.get("special_armor", {}).get(key) or 0)
+        for key in SPECIAL_ARMOR_KEYS
+        if int(effects.get("special_armor", {}).get(key) or 0)
+    }
+    immunities = {
+        key: True
+        for key, value in (effects.get("immunities") or {}).items()
+        if value
+    }
+    if not nums and not immunities:
+        return None
+    out: dict[str, Any] = dict(nums)
+    if immunities:
+        out["immunities"] = immunities
+    return out
+
+
+def special_armor_from_nodes(nodes: list[dict[str, Any]], rating: int = 1) -> dict[str, Any] | None:
+    effects = empty_effects()
+    apply_bonus_nodes(substitute_rating(nodes, rating), effects, "")
+    return compact_special_armor(effects)
 
 
 def collect_effects(sources: list[tuple[str, list[dict[str, Any]]]]) -> dict[str, Any]:
