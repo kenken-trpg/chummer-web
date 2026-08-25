@@ -2015,7 +2015,11 @@ ARMOR_VEST = "4ad1eeab-daf3-4495-a73d-fbb0ce89be5b"
 HELMET = "fd6e194b-89ea-4030-9203-87341442eadb"
 CHEM_PROT = "480b7c5d-758b-4833-8bfd-9487e2455f7d"
 FIRE_RES = "dd246520-7306-40fb-88b4-c9cb031208fc"
+INSULATION = "497b5d6b-df0c-401d-91de-42a224b1fa87"
+NONCONDUCT = "0cfb049a-a1bd-4daa-96be-9468c37d9c3c"
+CHEM_SEAL = "1e002d2e-cd93-4cef-a666-b6c6449f4e9f"
 SHOCK_FRILLS = "dbdaf817-9bfa-4938-a195-b53c63b53e7c"
+SOFTWEAVE = "cf8accf5-4117-4419-ab73-957489038ab9"
 GEL_PACKS = "ed43ded4-1b2f-410a-9322-166c39306d03"
 FULL_BODY = "9ee80c97-9197-4dd5-baed-f77cfd2cee17"
 FBA_HELMET = "71c20b15-de11-49eb-93fe-f4d7491283e3"
@@ -2118,7 +2122,71 @@ def test_chemical_protection_on_jacket() -> None:
     assert row["capacity_used"] == 2
     assert row["capacity_max"] == 12
     assert row["mods"][0]["nuyen"] == 500
+    assert row["mods"][0]["special_armor"]["toxin_contact"] == 2
+    assert row["mods"][0]["special_armor"]["pathogen_contact"] == 2
+    assert out.derived["special_armor"]["toxin_contact"] == 2
+    assert out.derived["special_armor"]["pathogen_contact"] == 2
     assert out.derived["errors"] == []
+
+
+def test_fire_resistance_adds_special_armor() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "fire-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=FIRE_RES, parent_id=jacket.id, rating=2)],
+        )
+    )
+    assert out.derived["armor"] == 12
+    assert out.derived["special_armor"]["fire"] == 2
+    assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["fire"] == 2
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "firearmor" not in tags
+
+def test_insulation_and_nonconductivity_add_special_armor() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "insul-jacket",
+            armor=[jacket],
+            armor_mods=[
+                ArmorModInstall(mod_id=INSULATION, parent_id=jacket.id, rating=3),
+                ArmorModInstall(mod_id=NONCONDUCT, parent_id=jacket.id, rating=1),
+            ],
+        )
+    )
+    assert out.derived["armor"] == 12
+    assert out.derived["special_armor"]["cold"] == 3
+    assert out.derived["special_armor"]["electricity"] == 1
+
+def test_chemical_seal_grants_contact_and_inhalation_immunity() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "seal-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=CHEM_SEAL, parent_id=jacket.id)],
+        )
+    )
+    immunities = out.derived["special_armor"]["immunities"]
+    assert immunities["toxin_contact"] is True
+    assert immunities["toxin_inhalation"] is True
+    assert immunities["pathogen_contact"] is True
+    assert immunities["pathogen_inhalation"] is True
+    assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["immunities"]["toxin_contact"] is True
+
+def test_unequipped_armor_drops_special_armor() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET, equipped=False)
+    out = compute(
+        _mundane(
+            "unequip-fire",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=FIRE_RES, parent_id=jacket.id, rating=2)],
+        )
+    )
+    assert out.derived["special_armor"]["fire"] == 0
+    assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["fire"] == 2
 
 
 def test_shock_frills_uses_capacity() -> None:
@@ -2133,6 +2201,64 @@ def test_shock_frills_uses_capacity() -> None:
     row = out.derived["armor_items"][0]
     assert out.derived["nuyen_spent"] == 1250
     assert row["capacity_used"] == 2
+    assert out.derived["errors"] == []
+
+
+def test_ynt_softweave_doubles_jacket_cost_and_capacity() -> None:
+    spec = next(item for item in catalog()["armor_mods"] if item["id"] == SOFTWEAVE)
+    assert spec["purchasable"] is True
+    assert spec["cost"] == "Armor Cost"
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "softweave-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=SOFTWEAVE, parent_id=jacket.id)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    weave = row["mods"][0]
+    assert weave["name"] == "YNT Softweave Armor"
+    assert weave["nuyen"] == 1000
+    assert weave["capacity_cost"] == -6
+    assert row["nuyen"] == 2000
+    assert row["capacity_used"] == 0
+    assert row["capacity_max"] == 18
+    assert out.derived["nuyen_spent"] == 2000
+    assert out.derived["errors"] == []
+
+def test_ynt_softweave_rounds_odd_capacity_up() -> None:
+    vest = ArmorInstall(armor_id=ARMOR_VEST)
+    out = compute(
+        _mundane(
+            "softweave-vest",
+            armor=[vest],
+            armor_mods=[ArmorModInstall(mod_id=SOFTWEAVE, parent_id=vest.id)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert row["nuyen"] == 1000
+    assert row["capacity_used"] == 0
+    assert row["capacity_max"] == 14
+    assert out.derived["nuyen_spent"] == 1000
+    assert out.derived["errors"] == []
+
+def test_ynt_softweave_keeps_chem_prot_inside_expanded_capacity() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "softweave-chem",
+            armor=[jacket],
+            armor_mods=[
+                ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=2),
+                ArmorModInstall(mod_id=SOFTWEAVE, parent_id=jacket.id),
+            ],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert out.derived["nuyen_spent"] == 2500
+    assert row["capacity_used"] == 2
+    assert row["capacity_max"] == 18
     assert out.derived["errors"] == []
 
 
@@ -2233,6 +2359,10 @@ def test_diving_armor_includes_chemical_protection() -> None:
     assert row["mods"][0]["included"] is True
     assert row["mods"][0]["rating"] == 4
     assert row["mods"][0]["nuyen"] == 0
+    assert row["mods"][0]["special_armor"]["toxin_contact"] == 4
+    assert row["mods"][0]["special_armor"]["pathogen_contact"] == 4
+    assert out.derived["special_armor"]["toxin_contact"] == 4
+    assert out.derived["special_armor"]["pathogen_contact"] == 4
     assert row["capacity_used"] == 0
     assert out.derived["nuyen_spent"] == 1750
 
