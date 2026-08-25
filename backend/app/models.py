@@ -104,6 +104,7 @@ class WeaponInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     weapon_id: str
     qty: int = 1
+    loaded_ammo_id: str | None = None
 
 
 class VehicleModInstall(BaseModel):
