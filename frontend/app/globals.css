@@ -77,6 +77,26 @@ td.rowhead { text-align: left; color: var(--text); }
   gap: 8px;
   margin: 6px 0;
 }
+.know-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1.5fr) 72px 1fr 88px auto;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+.know-row .native {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.know-row select {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+}
 input[type="range"] { width: 100%; }
 input[type="text"], input[type="search"] {
   width: 100%;
@@ -93,11 +113,16 @@ input[type="text"], input[type="search"] {
 .ok { color: var(--ok); }
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .quality-list { max-height: 280px; overflow: auto; }
-.quality-item { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.quality-item input[type="text"] {
+  margin-top: 6px;
+}
 .cyber-item { display: flex; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .cyber-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
 .cyber-controls input[type="number"] { width: 64px; }
 .cyber-controls select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+.matrix-array { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-top: 8px; }
+.matrix-array label { display: flex; flex-direction: column; gap: 2px; font-size: 0.72rem; color: var(--muted); }
+.matrix-array select { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; min-width: 52px; color: var(--text); }
 .cyber-toolbar { display: grid; grid-template-columns: 1fr 160px 160px; gap: 8px; margin: 14px 0 8px; }
 .cyber-item.nested { margin-left: 16px; padding-left: 12px; border-left: 2px solid var(--line); }
 .slot-picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }

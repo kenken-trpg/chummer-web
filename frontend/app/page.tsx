@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import type { Catalog, Character, InstalledAdeptPower, InstalledWare, MentorInfo, PriorityCategory, PriorityLetter, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
+import type { Catalog, Character, InstalledAdeptPower, InstalledWare, MagicTestInfo, MentorInfo, PriorityCategory, PriorityLetter, QualityReqNode, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
 
 const CATS: { key: PriorityCategory; label: string }[] = [
   { key: "Heritage", label: "メタタイプ" },
@@ -26,12 +26,283 @@ const ATTR_JA: Record<string, string> = {
   MAG: "MAG 魔力",
   RES: "RES 共振力",
 };
+const KNOW_CATS = ["Academic", "Interest", "Language", "Professional", "Street"] as const;
+const KNOW_CAT_JA: Record<string, string> = {
+  Academic: "学術",
+  Interest: "趣味",
+  Language: "言語",
+  Professional: "職業",
+  Street: "街",
+};
 
-type Tab = "priority" | "meta" | "attrs" | "skills" | "qualities" | "cyber" | "bio" | "adept";
+const CONTACT_ROLES = ["Fixer", "Street Doc", "Talismonger", "Mechanic", "Fence", "Mr. Johnson", "Bartender", "Cop", "Deckmeister"];
+const MATRIX_ATTRS = [
+  ["attack", "ATK"],
+  ["sleaze", "SLZ"],
+  ["dataprocessing", "DP"],
+  ["firewall", "FW"],
+] as const;
+const DEFAULT_ARRAY_ORDER = ["attack", "sleaze", "dataprocessing", "firewall"];
+
+function swapMatrixOrder(order: string[] | undefined, fromKey: string, toPos: number): string[] {
+  const next = [...(order && order.length === 4 ? order : DEFAULT_ARRAY_ORDER)];
+  const fromPos = next.indexOf(fromKey);
+  if (fromPos < 0 || toPos < 0 || toPos >= next.length || fromPos === toPos) return next;
+  [next[fromPos], next[toPos]] = [next[toPos], next[fromPos]];
+  return next;
+}
+
+function vehicleFits(
+  cons: {
+    names?: string[];
+    category_contains?: string[];
+    category_equals?: string[];
+    body_lte?: number | null;
+    body_gte?: number | null;
+  } | undefined,
+  vehicle: { name: string; category?: string; body?: string },
+) {
+  if (!cons) return true;
+  const names = cons.names || [];
+  const contains = cons.category_contains || [];
+  const equals = cons.category_equals || [];
+  if (!names.length && !contains.length && !equals.length && cons.body_lte == null && cons.body_gte == null) return true;
+  if (names.length && !names.includes(vehicle.name)) return false;
+  const category = vehicle.category || "";
+  if (contains.length && !contains.some((part) => category.includes(part))) return false;
+  if (equals.length && !equals.includes(category)) return false;
+  const body = Number(String(vehicle.body || "0").split("/")[0]) || 0;
+  if (cons.body_lte != null && body > cons.body_lte) return false;
+  if (cons.body_gte != null && body < cons.body_gte) return false;
+  return true;
+}
+
+function vehicleForbidden(
+  cons: {
+    names?: string[];
+    category_contains?: string[];
+    category_equals?: string[];
+    body_lte?: number | null;
+    body_gte?: number | null;
+  } | undefined,
+  vehicle: { name: string; category?: string; body?: string },
+) {
+  if (!cons) return false;
+  const has = Boolean(
+    (cons.names || []).length
+    || (cons.category_contains || []).length
+    || (cons.category_equals || []).length
+    || cons.body_lte != null
+    || cons.body_gte != null,
+  );
+  return has && vehicleFits(cons, vehicle);
+}
+
+function dropDrone(ch: {
+  drones?: { id?: string }[];
+  vehicles?: { id?: string }[];
+  vehicle_mods?: { parent_id?: string | null }[];
+  weapon_mounts?: { parent_id?: string | null; weapon_install_id?: string | null }[];
+  sensors?: { id?: string; parent_id?: string | null }[];
+  gear?: { id?: string; parent_id?: string | null }[];
+}, id: string, listKey: "drones" | "vehicles" = "drones") {
+  let sensors = ch.sensors || [];
+  const roots = sensors.filter((row) => row.parent_id === id && row.id).map((row) => row.id as string);
+  for (const sid of roots) sensors = dropTree(sensors, sid);
+  sensors = sensors.filter((row) => row.parent_id !== id);
+  return {
+    drones: listKey === "drones" ? (ch.drones || []).filter((row) => row.id !== id) : ch.drones,
+    vehicles: listKey === "vehicles" ? (ch.vehicles || []).filter((row) => row.id !== id) : ch.vehicles,
+    vehicle_mods: (ch.vehicle_mods || []).filter((row) => row.parent_id !== id),
+    weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.parent_id !== id),
+    sensors,
+    gear: dropTree(ch.gear || [], id),
+  };
+}
+
+function dropTree<T extends { id?: string; parent_id?: string | null }>(rows: T[], id: string): T[] {
+  const drop = new Set<string>([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const row of rows) {
+      if (row.parent_id && drop.has(row.parent_id) && row.id && !drop.has(row.id)) {
+        drop.add(row.id);
+        grew = true;
+      }
+    }
+  }
+  return rows.filter((row) => !row.id || !drop.has(row.id));
+}
+
+function vehicleInteriorFits(
+  mod: { category: string; required_categories?: string[] },
+) {
+  if (VEHICLE_INTERIOR_CATS.has(mod.category)) return true;
+  return (mod.required_categories || []).some((cat) => cat && cat !== "Custom" && cat === "Commlinks");
+}
+
+function miscFits(
+  parent: { name: string; category: string; addoncategories?: string[] },
+  child: { category: string; requireparent?: boolean; required_names?: string[]; required_categories?: string[] },
+) {
+  const allowed = (parent.addoncategories || []).filter((c) => c && c !== "Custom");
+  const reqNames = child.required_names || [];
+  const reqCats = (child.required_categories || []).filter((c) => c !== "Custom");
+  if (reqNames.length || reqCats.length) {
+    return reqNames.includes(parent.name) || reqCats.includes(parent.category);
+  }
+  if (allowed.length) return allowed.includes(child.category);
+  if (child.requireparent) return child.category === parent.category;
+  return false;
+}
+
+type Tab = "priority" | "meta" | "attrs" | "skills" | "qualities" | "cyber" | "bio" | "gear" | "contacts" | "adept" | "spells" | "spirits" | "foci" | "complexforms" | "sprites";
+type GearKind = "armor" | "weapon" | "commlink" | "cyberdeck" | "rcc" | "optics" | "sensor" | "drone" | "vehicle" | "misc" | "lifestyle";
+const OPTICS_DEVICE_CATS = new Set(["Vision Devices", "Audio Devices"]);
+const SENSOR_DEVICE_CATS = new Set(["Sensors", "Sensor Housings"]);
+const VEHICLE_INTERIOR_CATS = new Set([
+  "Commlink Accessories",
+  "Electronics Accessories",
+  "Communications and Countermeasures",
+]);
+const R5_SLOT_LABELS: Record<string, string> = {
+  Powertrain: "パワートレイン",
+  Protection: "防護",
+  Weapons: "武器",
+  Body: "ボディ",
+  Electromagnetic: "電磁",
+  Cosmetic: "外装",
+};
+
+const CORE_LIFESTYLES = new Set(["Street", "Squatter", "Low", "Medium", "High", "Luxury"]);
+
+const SPIRIT_ROLE_JA: Record<string, string> = {
+  combat: "戦闘",
+  detection: "探知",
+  health: "健康",
+  illusion: "幻影",
+  manipulation: "操作",
+};
 
 function formatPoints(value: number) {
   const rounded = Math.round(value * 100) / 100;
   return String(rounded);
+}
+
+function kindLabel(kind?: string) {
+  if (kind === "ritual") return "儀式";
+  if (kind === "enchantment") return "エンチャント";
+  return "呪文";
+}
+
+function optionalNumber(value: string): number | null {
+  if (value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function testLine(test?: MagicTestInfo | null, drainLabel = "ドレイン") {
+  if (!test) return "";
+  const drain = test.drain == null ? `2×相手ヒット（最低2）` : `${test.drain}${test.drain_code || ""}`;
+  const net = test.net == null ? "" : ` ・ 正味 ${test.net}`;
+  const miss = test.missing ? " ・ 技能なし" : "";
+  const days = test.days ? ` ・ ${test.days}日` : "";
+  const vs = test.vs ? ` vs ${test.vs}` : "";
+  return `${test.skill} ${test.pool} [${test.limit}]${vs} → ${drainLabel} ${drain}${net}${days}${miss}`;
+}
+
+function cfDuration(value?: string) {
+  if (value === "P") return "永続";
+  if (value === "S") return "維持";
+  if (value === "I") return "瞬間";
+  if (value === "E") return "永続";
+  return value || "";
+}
+
+function lifeIncrement(inc?: string) {
+  return inc === "day" ? "日" : "ヶ月";
+}
+
+function formatAccessoryCost(cost: string, parentWeaponCost?: string) {
+  const raw = String(cost || "0").trim();
+  const parent = Number(parentWeaponCost || 0);
+  if (raw === "Weapon Cost") {
+    return `${parent.toLocaleString()}¥`;
+  }
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric)) return `${numeric.toLocaleString()}¥`;
+  return `${raw}¥`;
+}
+
+function weaponLine(item: { type?: string; accuracy?: string; damage?: string; ap?: string; mode?: string; ammo?: string; reach?: string; rc?: string }) {
+  const bits: string[] = [];
+  if (item.type) bits.push(item.type === "Melee" ? "近接" : "遠隔");
+  if (item.accuracy && item.accuracy !== "0") bits.push(`Acc ${item.accuracy}`);
+  if (item.damage) bits.push(item.damage);
+  if (item.ap && item.ap !== "-" && item.ap !== "0") bits.push(`AP ${item.ap}`);
+  if (item.rc && item.rc !== "0") bits.push(`RC ${item.rc}`);
+  if (item.mode && item.mode !== "0") bits.push(item.mode);
+  if (item.ammo && item.ammo !== "0") bits.push(item.ammo);
+  if (item.reach && item.reach !== "0") bits.push(`Reach ${item.reach}`);
+  return bits.join(" / ");
+}
+
+function accessoryFits(
+  acc: {
+    mounts?: string[];
+    purchasable?: boolean;
+    required?: { names?: string[]; categories?: string[]; types?: string[]; conceal_lte?: number | null; accessories?: string[] };
+    forbidden?: { names?: string[]; categories?: string[]; types?: string[]; conceal_lte?: number | null; accessories?: string[] };
+  },
+  weapon: { name: string; category?: string; type?: string; conceal?: string; mounts?: string[] },
+  installedNames: string[],
+) {
+  if (acc.purchasable === false) return false;
+  const mounts = acc.mounts || [];
+  const weaponMounts = new Set(weapon.mounts || []);
+  if (mounts.length && !mounts.some((mount) => weaponMounts.has(mount) || mount === "Internal")) return false;
+  const installed = new Set(installedNames);
+  if (acc.forbidden?.accessories?.some((name) => installed.has(name))) return false;
+  const matchOr = (cons?: { names?: string[]; categories?: string[]; types?: string[]; conceal_lte?: number | null }) => {
+    if (!cons) return false;
+    const has = Boolean(cons.names?.length || cons.categories?.length || cons.types?.length || cons.conceal_lte != null);
+    if (!has) return false;
+    if (cons.names?.includes(weapon.name)) return true;
+    if (cons.categories?.includes(weapon.category || "")) return true;
+    if (cons.types?.includes(weapon.type || "")) return true;
+    const conceal = Number(weapon.conceal || 0);
+    if (cons.conceal_lte != null && Number.isFinite(conceal) && conceal <= cons.conceal_lte) return true;
+    return false;
+  };
+  const required = acc.required;
+  const hasRequired = Boolean(required && (required.names?.length || required.categories?.length || required.types?.length || required.conceal_lte != null));
+  if (hasRequired && !matchOr(required)) return false;
+  if (matchOr(acc.forbidden)) return false;
+  return true;
+}
+
+function armorModFits(
+  mod: {
+    purchasable?: boolean;
+    category?: string;
+    unique?: string;
+    required_names?: string[];
+    required_mods?: string[];
+  },
+  armor: { name: string; category?: string; addmodcategories?: string[] },
+  installedNames: string[],
+) {
+  if (mod.purchasable === false) return false;
+  const requiredNames = mod.required_names || [];
+  if (requiredNames.length && !requiredNames.includes(armor.name)) return false;
+  const requiredMods = mod.required_mods || [];
+  if (requiredMods.some((name) => !installedNames.includes(name))) return false;
+  const category = mod.category || "General";
+  const allowed = new Set(armor.addmodcategories || []);
+  if (category === "General") return true;
+  if (allowed.has(category)) return true;
+  return category === (armor.category || "");
 }
 
 function removeWareTree(items: WareInstall[], id: string): WareInstall[] {
@@ -87,6 +358,61 @@ function skillDice(rating: number, bonus?: number) {
   if (!bonus) return String(rating);
   const sign = bonus > 0 ? "+" : "";
   return `${rating} ${sign}${bonus}`;
+}
+
+type QualityReqCtx = {
+  qualities: Set<string>;
+  metatypes: Set<string>;
+  magenabled: boolean;
+  resenabled: boolean;
+  skills: Record<string, number>;
+  knowledge: Record<string, number>;
+  powers: Set<string>;
+  spells: Set<string>;
+  cyberware: Set<string>;
+  bioware: Set<string>;
+  tradition: string;
+  essence: number;
+  essLost: number;
+};
+
+function reqNodeMet(node: QualityReqNode, ctx: QualityReqCtx): boolean {
+  const tag = node.tag;
+  const children = node.children || [];
+  if (tag === "oneof") return children.length ? children.some((child) => reqNodeMet(child, ctx)) : true;
+  if (tag === "allof" || tag === "group") return children.length ? children.every((child) => reqNodeMet(child, ctx)) : true;
+  const name = node.name || "";
+  if (tag === "quality") return ctx.qualities.has(name);
+  if (tag === "metatype") return ctx.metatypes.has(name);
+  if (tag === "magenabled") return ctx.magenabled;
+  if (tag === "resenabled") return ctx.resenabled;
+  if (tag === "power") return ctx.powers.has(name);
+  if (tag === "cyberware") return ctx.cyberware.has(name);
+  if (tag === "bioware") return ctx.bioware.has(name);
+  if (tag === "spell") return ctx.spells.has(name);
+  if (tag === "tradition") return ctx.tradition === name;
+  if (tag === "skill") {
+    const rating = node.val || 1;
+    const pool = (node.type || "").toLowerCase() === "knowledge" ? ctx.knowledge : ctx.skills;
+    return (pool[name] || 0) >= rating;
+  }
+  if (tag === "ess") {
+    const value = node.value || 0;
+    return value < 0 ? ctx.essLost + 1e-9 >= Math.abs(value) : ctx.essence + 1e-9 >= value;
+  }
+  return false;
+}
+
+function qualityTreeMet(tree: QualityReqNode[] | undefined, ctx: QualityReqCtx) {
+  const nodes = tree || [];
+  if (!nodes.length) return true;
+  return nodes.every((node) => reqNodeMet(node, ctx));
+}
+
+function qualityBlockReason(item: Catalog["qualities"][number], ctx: QualityReqCtx) {
+  if ((item.required_tree || []).length && !qualityTreeMet(item.required_tree, ctx)) return "前提を満たしていません";
+  if ((item.forbidden_tree || []).length && qualityTreeMet(item.forbidden_tree, ctx)) return "現在のキャラクターでは取れません";
+  return "";
 }
 
 function dropSkillPicksForPrefix(picks: Record<string, string> | undefined, prefixes: string[]) {
@@ -377,6 +703,7 @@ export default function Page() {
   const [ch, setCh] = useState<Character | null>(null);
   const [tab, setTab] = useState<Tab>("priority");
   const [qSearch, setQSearch] = useState("");
+  const [qCat, setQCat] = useState<"all" | "Positive" | "Negative">("all");
   const [cySearch, setCySearch] = useState("");
   const [cyCat, setCyCat] = useState("all");
   const [addGrade, setAddGrade] = useState("Standard");
@@ -386,7 +713,22 @@ export default function Page() {
   const [powerSearch, setPowerSearch] = useState("");
   const [enhSearch, setEnhSearch] = useState("");
   const [qiSearch, setQiSearch] = useState("");
+  const [spellSearch, setSpellSearch] = useState("");
+  const [spellKind, setSpellKind] = useState<"all" | "spell" | "ritual" | "enchantment">("all");
+  const [knowSearch, setKnowSearch] = useState("");
+  const [knowCat, setKnowCat] = useState("all");
+  const [customKnow, setCustomKnow] = useState("");
+  const [customKnowCat, setCustomKnowCat] = useState("Street");
+  const [focusSearch, setFocusSearch] = useState("");
+  const [cfSearch, setCfSearch] = useState("");
+  const [spriteSearch, setSpriteSearch] = useState("");
+  const [gearKind, setGearKind] = useState<GearKind>("armor");
+  const [gearSearch, setGearSearch] = useState("");
+  const [gearCat, setGearCat] = useState("all");
+  const [contactName, setContactName] = useState("");
+  const [contactRole, setContactRole] = useState("");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
+  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
@@ -422,9 +764,13 @@ export default function Page() {
     if (!catalog) return [];
     const q = qSearch.trim().toLowerCase();
     return catalog.qualities
-      .filter((item) => !q || item.name.toLowerCase().includes(q) || tr(item.name).includes(qSearch))
+      .filter((item) => qCat === "all" || item.category === qCat)
+      .filter((item) => {
+        if (!q) return !item.source || item.source === "SR5";
+        return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+      })
       .slice(0, 80);
-  }, [catalog, qSearch]);
+  }, [catalog, qSearch, qCat]);
 
   const cyberCats = useMemo(() => {
     if (!catalog) return [];
@@ -464,6 +810,18 @@ export default function Page() {
       .slice(0, 80);
   }, [catalog, powerSearch]);
 
+  const filteredKnowledge = useMemo(() => {
+    if (!catalog) return [];
+    const q = knowSearch.trim().toLowerCase();
+    return (catalog.skills.knowledge || [])
+      .filter((item) => knowCat === "all" || item.category === knowCat)
+      .filter((item) => {
+        if (!q) return !item.source || item.source === "SR5";
+        return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+      })
+      .slice(0, 40);
+  }, [catalog, knowSearch, knowCat]);
+
   function download() {
     if (!ch) return;
     const blob = new Blob([JSON.stringify(ch, null, 2)], { type: "application/json" });
@@ -489,6 +847,72 @@ export default function Page() {
   const d = ch.derived;
   const spec = d.metatype_info.attributes;
   const table = catalog.priority_table;
+  const ownedKnowledge = new Set((d.knowledge_skills || []).map((row) => row.name));
+  const catalogKnowledge = new Set((catalog.skills.knowledge || []).map((item) => item.name));
+  const qualityCtx: QualityReqCtx = {
+    qualities: new Set((d.qualities || []).map((item) => item.name)),
+    metatypes: new Set([ch.metatype, ch.metavariant || ""].filter(Boolean)),
+    magenabled: d.enabled_tabs.includes("MAG"),
+    resenabled: d.enabled_tabs.includes("RES"),
+    skills: d.skill_totals || {},
+    knowledge: ch.knowledge_skills || {},
+    powers: new Set((d.adept_powers || []).map((item) => item.name)),
+    spells: new Set((d.spells || []).map((item) => item.name)),
+    cyberware: new Set((d.cyberware || []).map((item) => item.name)),
+    bioware: new Set((d.bioware || []).map((item) => item.name)),
+    tradition: d.tradition?.name || "",
+    essence: d.essence,
+    essLost: (d.essence_lost_cyber || 0) + (d.essence_lost_bio || 0),
+  };
+  const ownedQualitySpecs = (catalog.qualities || []).filter((item) => ch.quality_ids.includes(item.id));
+
+  function patchKnowledge(next: {
+    knowledge_skills?: Record<string, number>;
+    native_languages?: string[];
+    knowledge_categories?: Record<string, string>;
+  }) {
+    patch({
+      knowledge_skills: next.knowledge_skills ?? ch.knowledge_skills,
+      native_languages: next.native_languages ?? ch.native_languages ?? [],
+      knowledge_categories: next.knowledge_categories ?? ch.knowledge_categories ?? {},
+    });
+  }
+
+  function addKnowledge(name: string, category?: string) {
+    const trimmed = name.trim();
+    if (!trimmed || ownedKnowledge.has(trimmed)) return;
+    const ratings = { ...ch.knowledge_skills, [trimmed]: 1 };
+    const cats = { ...(ch.knowledge_categories || {}) };
+    const specItem = catalog.skills.knowledge.find((item) => item.name === trimmed);
+    if (!specItem && category) cats[trimmed] = category;
+    patchKnowledge({ knowledge_skills: ratings, knowledge_categories: cats });
+    setCustomKnow("");
+  }
+
+  function setKnowledgeNative(name: string, on: boolean) {
+    const ratings = { ...ch.knowledge_skills };
+    const prev = (ch.native_languages || [])[0];
+    if (on) {
+      delete ratings[name];
+      if (prev && prev !== name) ratings[prev] = ratings[prev] || 1;
+      patchKnowledge({ knowledge_skills: ratings, native_languages: [name] });
+      return;
+    }
+    ratings[name] = ratings[name] || 1;
+    patchKnowledge({ knowledge_skills: ratings, native_languages: [] });
+  }
+
+  function removeKnowledge(name: string) {
+    const ratings = { ...ch.knowledge_skills };
+    delete ratings[name];
+    const cats = { ...(ch.knowledge_categories || {}) };
+    delete cats[name];
+    patchKnowledge({
+      knowledge_skills: ratings,
+      native_languages: (ch.native_languages || []).filter((item) => item !== name),
+      knowledge_categories: cats,
+    });
+  }
 
   return (
     <div className="app">
@@ -512,7 +936,14 @@ export default function Page() {
             ["qualities", "クオリティ"],
             ["cyber", "サイバー"],
             ["bio", "バイオ"],
+            ["gear", "ギア"],
+            ["contacts", "コネクト"],
             ...(d.enabled_tabs.includes("adept") ? [["adept", "アデプト"] as const] : []),
+            ...(d.enabled_tabs.includes("spells") ? [["spells", "術式"] as const] : []),
+            ...(d.enabled_tabs.includes("spirits") ? [["spirits", "精霊"] as const] : []),
+            ...(d.enabled_tabs.includes("foci") ? [["foci", "フォーカス"] as const] : []),
+            ...(d.enabled_tabs.includes("complexforms") ? [["complexforms", "複合体"] as const] : []),
+            ...(d.enabled_tabs.includes("sprites") ? [["sprites", "スプライト"] as const] : []),
           ] as const).map(([k, label]) => (
             <button key={k} className={`tab ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>{label}</button>
           ))}
@@ -649,7 +1080,7 @@ export default function Page() {
 
         {tab === "skills" && (
           <div className="card">
-            <p className="muted">スキル {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max}</p>
+            <p className="muted">スキル {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max}</p>
             <h3>スキルグループ</h3>
             {catalog.skills.groups.map((g) => (
               <div className="skill-row" key={g}>
@@ -694,24 +1125,113 @@ export default function Page() {
                 <b>{skillDice(d.skill_totals[s.name] || 0, d.skill_bonus?.[s.name])}</b>
               </div>
             ))}
+            <h3>知識スキル</h3>
+            <p className="muted">無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。作成時のレーティングは1〜6です。</p>
             {Object.keys(d.skill_category_bonus || {}).length ? (
-              <>
-                <h3>知識スキルカテゴリ</h3>
-                <p className="muted">
-                  {Object.entries(d.skill_category_bonus || {})
-                    .filter(([, bonus]) => bonus)
-                    .map(([name, bonus]) => `${tr(name)} ${bonus > 0 ? "+" : ""}${bonus}`)
-                    .join(" ・ ")}
-                </p>
-                {Object.entries(ch.knowledge_skills || {}).filter(([, rating]) => rating > 0).map(([name, rating]) => (
-                  <div className="skill-row" key={name}>
-                    <span title={(d.skill_bonus_notes?.[name] || []).join(" / ")}>{tr(name)}</span>
-                    <span />
-                    <b>{skillDice(rating, d.skill_bonus?.[name])}</b>
-                  </div>
-                ))}
-              </>
+              <p className="muted">
+                {Object.entries(d.skill_category_bonus || {})
+                  .filter(([, bonus]) => bonus)
+                  .map(([name, bonus]) => `${KNOW_CAT_JA[name] || tr(name)} ${bonus > 0 ? "+" : ""}${bonus}`)
+                  .join(" ・ ")}
+              </p>
             ) : null}
+            {(d.knowledge_skills || []).length ? (d.knowledge_skills || []).map((row) => {
+              const custom = !catalogKnowledge.has(row.name);
+              return (
+                <div className="know-row" key={row.name}>
+                  <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.name] || [])].join(" / ")}>
+                    {tr(row.name)}
+                    {custom ? " （カスタム）" : ""}
+                  </span>
+                  {custom ? (
+                    <select
+                      value={row.category}
+                      onChange={(e) => patchKnowledge({
+                        knowledge_categories: { ...(ch.knowledge_categories || {}), [row.name]: e.target.value },
+                      })}
+                    >
+                      {KNOW_CATS.map((cat) => (
+                        <option key={cat} value={cat}>{KNOW_CAT_JA[cat]}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="muted">{KNOW_CAT_JA[row.category] || row.category}</span>
+                  )}
+                  {row.native ? (
+                    <span className="muted">無料</span>
+                  ) : (
+                    <input
+                      type="range"
+                      min={1}
+                      max={6}
+                      value={ch.knowledge_skills[row.name] || row.rating}
+                      onChange={(e) => setCh({
+                        ...ch,
+                        knowledge_skills: { ...ch.knowledge_skills, [row.name]: Number(e.target.value) },
+                      })}
+                      onMouseUp={(e) => {
+                        const value = Number((e.target as HTMLInputElement).value);
+                        patchKnowledge({ knowledge_skills: { ...ch.knowledge_skills, [row.name]: value } });
+                      }}
+                      onBlur={(e) => {
+                        const value = Number((e.target as HTMLInputElement).value);
+                        patchKnowledge({ knowledge_skills: { ...ch.knowledge_skills, [row.name]: value } });
+                      }}
+                    />
+                  )}
+                  <b>{row.native ? "母語" : skillDice(row.rating, d.skill_bonus?.[row.name])}</b>
+                  <span className="option-row" style={{ margin: 0, gap: 6 }}>
+                    {row.category === "Language" ? (
+                      <label className="native">
+                        <input
+                          type="checkbox"
+                          checked={row.native}
+                          onChange={(e) => setKnowledgeNative(row.name, e.target.checked)}
+                        />
+                        母語
+                      </label>
+                    ) : null}
+                    <button className="btn danger" onClick={() => removeKnowledge(row.name)}>削除</button>
+                  </span>
+                </div>
+              );
+            }) : (
+              <p className="muted">まだありません。カタログから追加するか、カスタム名で作れます。</p>
+            )}
+            <div className="option-row">
+              <button className={`tab ${knowCat === "all" ? "active" : ""}`} onClick={() => setKnowCat("all")}>すべて</button>
+              {KNOW_CATS.map((cat) => (
+                <button key={cat} className={`tab ${knowCat === cat ? "active" : ""}`} onClick={() => setKnowCat(cat)}>
+                  {KNOW_CAT_JA[cat]}
+                </button>
+              ))}
+            </div>
+            <input type="search" placeholder="知識スキルを検索" value={knowSearch} onChange={(e) => setKnowSearch(e.target.value)} />
+            <div className="cyber-toolbar">
+              <input
+                type="text"
+                placeholder="カスタム知識名"
+                value={customKnow}
+                onChange={(e) => setCustomKnow(e.target.value)}
+              />
+              <select value={customKnowCat} onChange={(e) => setCustomKnowCat(e.target.value)}>
+                {KNOW_CATS.map((cat) => (
+                  <option key={cat} value={cat}>{KNOW_CAT_JA[cat]}</option>
+                ))}
+              </select>
+              <button className="btn primary" onClick={() => addKnowledge(customKnow, customKnowCat)}>カスタム追加</button>
+            </div>
+            <div className="quality-list">
+              {filteredKnowledge.filter((item) => !ownedKnowledge.has(item.name)).map((item) => (
+                <div className="quality-item" key={`${item.category}:${item.name}`}>
+                  <div>
+                    <b>{tr(item.name)}</b>
+                    <div className="muted">{item.name} / {KNOW_CAT_JA[item.category] || item.category} / {item.attribute}</div>
+                  </div>
+                  <button className="btn primary" onClick={() => addKnowledge(item.name, item.category)}>追加</button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -725,6 +1245,58 @@ export default function Page() {
               tr={tr}
               onPick={(key, skill) => patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })}
             />
+            <p className="muted">
+              カルマ {d.karma.remaining} / {d.karma.pool}
+              {" ・ "}不利から得られるカルマ {d.karma.negative?.used || 0}/{d.karma.negative?.max || 25}
+            </p>
+            {ownedQualitySpecs.length ? (
+              <>
+                <h3>取得済み</h3>
+                {ownedQualitySpecs.map((q) => (
+                  <div className="quality-item" key={`owned-${q.id}`}>
+                    <div>
+                      <b>{tr(q.name)}</b>
+                      <div className="muted">{q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma}</div>
+                      {q.needs_extra ? (
+                        <input
+                          type="text"
+                          placeholder="対象（花粉、日光など）"
+                          value={ch.quality_extras?.[q.id] || ""}
+                          onChange={(e) => setCh({
+                            ...ch,
+                            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+                          })}
+                          onBlur={(e) => patch({
+                            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+                          })}
+                        />
+                      ) : null}
+                    </div>
+                    <button
+                      className="btn danger"
+                      onClick={() => {
+                        const extras = { ...(ch.quality_extras || {}) };
+                        delete extras[q.id];
+                        patch({
+                          quality_ids: ch.quality_ids.filter((id) => id !== q.id),
+                          quality_extras: extras,
+                          skill_picks: dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`]),
+                        });
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p className="muted">まだありません。有利／不利で絞り込んで追加できます。</p>
+            )}
+            <div className="option-row">
+              <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>すべて</button>
+              <button className={`tab ${qCat === "Positive" ? "active" : ""}`} onClick={() => setQCat("Positive")}>有利</button>
+              <button className={`tab ${qCat === "Negative" ? "active" : ""}`} onClick={() => setQCat("Negative")}>不利</button>
+            </div>
             <input type="search" placeholder="クオリティを検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
             <div className="quality-list">
               {filteredQualities.map((q) => {
@@ -735,22 +1307,38 @@ export default function Page() {
                     .map((item) => item.name),
                 );
                 const replaces = !added && !!q.is_way && (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
+                const blocked = added ? "" : qualityBlockReason(q, qualityCtx);
                 return (
                   <div className="quality-item" key={q.id}>
                     <div>
                       <b>{tr(q.name)}</b>
                       <div className="muted">
-                        {q.name} / {q.category} / カルマ {q.karma} / {q.source}
+                        {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma} / {q.source}
+                        {q.needs_extra ? " / 対象が必要" : ""}
                         {q.is_way ? " / 他の Way と排他" : ""}
                         {replaces ? " / 追加すると両立しないクオリティを外します" : ""}
+                        {blocked ? ` / ${blocked}` : ""}
                       </div>
                     </div>
                     <button
                       className={`btn ${added ? "danger" : "primary"}`}
-                      onClick={() => patch({
-                        quality_ids: added ? ch.quality_ids.filter((id) => id !== q.id) : [...ch.quality_ids, q.id],
-                        skill_picks: added ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`]) : (ch.skill_picks || {}),
-                      })}
+                      disabled={!added && !!blocked}
+                      onClick={() => {
+                        if (added) {
+                          const extras = { ...(ch.quality_extras || {}) };
+                          delete extras[q.id];
+                          patch({
+                            quality_ids: ch.quality_ids.filter((id) => id !== q.id),
+                            quality_extras: extras,
+                            skill_picks: dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`]),
+                          });
+                          return;
+                        }
+                        patch({
+                          quality_ids: [...ch.quality_ids, q.id],
+                          skill_picks: ch.skill_picks || {},
+                        });
+                      }}
                     >
                       {added ? "削除" : replaces ? "入れ替え" : "追加"}
                     </button>
@@ -962,6 +1550,1974 @@ export default function Page() {
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "gear" && (
+          <div className="card">
+            <p className="muted">
+              作成時の購入。防具は装備中の本体1着＋ヘルメット等の加算、ウェア装甲と合算。消費 {(d.nuyen_spent ?? 0).toLocaleString()}¥
+              {d.worn_armor ? ` ・ 装備 ${tr(d.worn_armor)}` : ""}
+              {d.lifestyle ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}` : ""}
+              {d.commlink ? ` ・ ${tr(d.commlink.name)} DR${d.commlink.device_rating}` : ""}
+              {d.cyberdeck ? ` ・ ${tr(d.cyberdeck.name)} DR${d.cyberdeck.device_rating}` : ""}
+              {d.rcc ? ` ・ ${tr(d.rcc.name)} DR${d.rcc.device_rating}` : ""}
+            </p>
+            <div className="option-row">
+              {([
+                ["armor", "防具"],
+                ["weapon", "武器"],
+                ["commlink", "通信機"],
+                ["cyberdeck", "サイバーデッキ"],
+                ["rcc", "RCC"],
+                ["optics", "視覚／聴覚"],
+                ["sensor", "センサー"],
+                ["vehicle", "車両"],
+                ["drone", "ドローン"],
+                ["misc", "ギア"],
+                ["lifestyle", "ライフスタイル"],
+              ] as const).map(([kind, label]) => (
+                <button
+                  key={kind}
+                  className={`tab ${gearKind === kind ? "active" : ""}`}
+                  onClick={() => { setGearKind(kind); setGearCat("all"); setGearSearch(""); }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {gearKind === "armor" && (
+              <>
+                {(d.armor_items || []).map((item) => {
+                  const installedNames = (item.mods || []).map((mod) => mod.name);
+                  const addons = (catalog.armor_mods || []).filter((mod) => (
+                    armorModFits(mod, item, installedNames)
+                    && !(item.mods || []).some((row) => row.mod_id === mod.id || (mod.unique && row.unique === mod.unique))
+                  ));
+                  return (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / 装甲 {item.armor_value}
+                        {item.equipped ? ` ・ 加算 ${item.contributes}` : " ・ 未装備"}
+                        {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                        {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      <div className="cyber-controls">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={item.equipped}
+                            onChange={(e) => patch({
+                              armor: (ch.armor || []).map((row) => (
+                                row.id === item.id ? { ...row, equipped: e.target.checked } : row
+                              )),
+                            })}
+                          />
+                          装備
+                        </label>
+                        {item.rating_max > 0 ? (
+                          <label>
+                            Rating
+                            <input
+                              type="number"
+                              min={1}
+                              max={item.rating_max}
+                              value={item.rating}
+                              onChange={(e) => patch({
+                                armor: (ch.armor || []).map((row) => (
+                                  row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        ) : null}
+                      </div>
+                      {(item.mods || []).map((mod) => (
+                        <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
+                          {tr(mod.name)}
+                          {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
+                          {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
+                          {mod.capacity_cost ? ` / 容量 ${mod.capacity_cost}` : ""}
+                          {mod.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                armor_mods: (ch.armor_mods || []).filter((row) => row.id !== mod.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                          {mod.rating_max > 1 && !mod.included ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={mod.rating_max}
+                                value={mod.rating}
+                                onChange={(e) => patch({
+                                  armor_mods: (ch.armor_mods || []).map((row) => (
+                                    row.id === mod.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      {addons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[item.id] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                          >
+                            <option value="">改造を追加</option>
+                            {addons
+                              .filter((mod) => gearSearch.trim() || mod.source === "SR5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[item.id]}
+                            onClick={() => {
+                              const wareId = slotPick[item.id];
+                              const spec = addons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                armor_mods: [...(ch.armor_mods || []), {
+                                  mod_id: spec.id,
+                                  parent_id: item.id,
+                                  rating: Math.max(1, spec.minrating || 1),
+                                }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      armor: (ch.armor || []).filter((row) => row.id !== item.id),
+                      armor_mods: (ch.armor_mods || []).filter((row) => row.parent_id !== item.id),
+                    })}>削除</button>
+                  </div>
+                  );
+                })}
+              </>
+            )}
+
+            {gearKind === "weapon" && (
+              <>
+                {(d.weapons || []).map((item) => {
+                  const installedNames = (item.accessories || []).map((acc) => acc.name);
+                  const parentCost = (catalog.weapons || []).find((row) => row.id === item.weapon_id)?.cost;
+                  const addons = (catalog.weapon_accessories || []).filter((mod) => (
+                    accessoryFits(mod, item, installedNames)
+                    && !(item.accessories || []).some((acc) => acc.accessory_id === mod.id)
+                  ));
+                  return (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                        {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
+                      </div>
+                      <div className="cyber-controls">
+                        <label>
+                          数量
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.qty}
+                            onChange={(e) => patch({
+                              weapons: (ch.weapons || []).map((row) => (
+                                row.id === item.id ? { ...row, qty: Number(e.target.value) } : row
+                              )),
+                            })}
+                          />
+                        </label>
+                      </div>
+                      {(item.accessories || []).map((acc) => (
+                        <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
+                          {tr(acc.name)}
+                          {acc.mount ? ` / ${acc.mount}` : ""}
+                          {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                          {acc.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.id !== acc.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                      {addons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[item.id] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                          >
+                            <option value="">アクセサリを追加</option>
+                            {addons
+                              .filter((mod) => mod.source === "SR5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAccessoryCost(mod.cost, parentCost)})</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[item.id]}
+                            onClick={() => {
+                              const wareId = slotPick[item.id];
+                              const spec = addons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                weapon_accessories: [...(ch.weapon_accessories || []), { accessory_id: spec.id, parent_id: item.id }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
+                      weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
+                    })}>削除</button>
+                  </div>
+                  );
+                })}
+              </>
+            )}
+
+            {gearKind === "commlink" && (
+              <>
+                {(d.commlinks || []).map((item) => (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.device_rating} / DP {item.dataprocessing} / FW {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      {item.rating_max > 0 ? (
+                        <div className="cyber-controls">
+                          <label>
+                            Rating
+                            <input
+                              type="number"
+                              min={1}
+                              max={item.rating_max}
+                              value={item.rating}
+                              onChange={(e) => patch({
+                                commlinks: (ch.commlinks || []).map((row) => (
+                                  row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                      {(d.apps || []).filter((app) => app.parent_id === item.id).map((app) => (
+                        <div className="muted" key={app.id} style={{ marginTop: 6 }}>
+                          {tr(app.label || app.name)}
+                          {app.nuyen ? ` / ${app.nuyen.toLocaleString()}¥` : ""}
+                          {" "}
+                          <button className="btn danger" onClick={() => patch({
+                            apps: (ch.apps || []).filter((row) => row.id !== app.id),
+                          })}>外す</button>
+                          {app.rating_max > 0 ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={app.rating_max}
+                                value={app.rating}
+                                onChange={(e) => patch({
+                                  apps: (ch.apps || []).map((row) => (
+                                    row.id === app.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                          {app.extra_kind === "skill" ? (
+                            <label>
+                              スキル
+                              <select
+                                value={app.extra || ""}
+                                onChange={(e) => patch({
+                                  apps: (ch.apps || []).map((row) => (
+                                    row.id === app.id ? { ...row, extra: e.target.value } : row
+                                  )),
+                                })}
+                              >
+                                <option value="">選択</option>
+                                {(app.extra_options || []).map((name) => (
+                                  <option key={name} value={name}>{tr(name)}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                          {app.extra_kind === "text" ? (
+                            <label>
+                              対象
+                              <input
+                                value={app.extra || ""}
+                                onChange={(e) => patch({
+                                  apps: (ch.apps || []).map((row) => (
+                                    row.id === app.id ? { ...row, extra: e.target.value } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      <div className="cyber-controls">
+                        <select
+                          value={slotPick[item.id] || ""}
+                          onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                        >
+                          <option value="">アプリを追加</option>
+                          {(catalog.apps || [])
+                            .filter((app) => app.source === "SR5")
+                            .filter((app) => app.needs_extra || !(d.apps || []).some((row) => row.parent_id === item.id && row.gear_id === app.id))
+                            .map((app) => (
+                              <option key={app.id} value={app.id}>{tr(app.name)} ({app.cost}¥)</option>
+                            ))}
+                        </select>
+                        {(() => {
+                          const spec = (catalog.apps || []).find((app) => app.id === slotPick[item.id]);
+                          if (spec?.extra_kind !== "skill") return null;
+                          return (
+                            <select
+                              value={extraPick[item.id] || ""}
+                              onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                            >
+                              <option value="">スキル</option>
+                              {(spec.extra_options || []).map((name) => (
+                                <option key={name} value={name}>{tr(name)}</option>
+                              ))}
+                            </select>
+                          );
+                        })()}
+                        <button
+                          className="btn"
+                          disabled={!slotPick[item.id]}
+                          onClick={() => {
+                            const wareId = slotPick[item.id];
+                            const spec = (catalog.apps || []).find((app) => app.id === wareId);
+                            if (!spec) return;
+                            patch({
+                              apps: [...(ch.apps || []), {
+                                gear_id: spec.id,
+                                rating: Math.max(1, spec.minrating || 1),
+                                parent_id: item.id,
+                                extra: extraPick[item.id] || undefined,
+                              }],
+                            });
+                            setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
+                          }}
+                        >
+                          装着
+                        </button>
+                      </div>
+                      {(d.gear || []).filter((acc) => acc.parent_id === item.id).map((acc) => (
+                        <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
+                          {tr(acc.label || acc.name)}
+                          {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                          {" "}
+                          <button className="btn danger" onClick={() => patch({
+                            gear: dropTree(ch.gear || [], acc.id),
+                          })}>外す</button>
+                        </div>
+                      ))}
+                      <div className="cyber-controls">
+                        <select
+                          value={slotPick[`${item.id}-acc`] || ""}
+                          onChange={(e) => setSlotPick((cur) => ({ ...cur, [`${item.id}-acc`]: e.target.value }))}
+                        >
+                          <option value="">アクセサリを追加</option>
+                          {(catalog.gear || [])
+                            .filter((mod) => (
+                              mod.category === "Commlink Accessories"
+                              || (mod.required_categories || []).includes("Commlinks")
+                            ))
+                            .filter((mod) => mod.source === "SR5")
+                            .filter((mod) => !(d.gear || []).some((row) => row.parent_id === item.id && row.gear_id === mod.id))
+                            .map((mod) => (
+                              <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                            ))}
+                        </select>
+                        <button
+                          className="btn"
+                          disabled={!slotPick[`${item.id}-acc`]}
+                          onClick={() => {
+                            const wareId = slotPick[`${item.id}-acc`];
+                            const spec = (catalog.gear || []).find((mod) => mod.id === wareId);
+                            if (!spec) return;
+                            patch({
+                              gear: [...(ch.gear || []), {
+                                gear_id: spec.id,
+                                rating: Math.max(1, spec.minrating || 1),
+                                parent_id: item.id,
+                              }],
+                            });
+                            setSlotPick((cur) => ({ ...cur, [`${item.id}-acc`]: "" }));
+                          }}
+                        >
+                          装着
+                        </button>
+                      </div>
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      commlinks: (ch.commlinks || []).filter((row) => row.id !== item.id),
+                      apps: (ch.apps || []).filter((row) => row.parent_id !== item.id),
+                      gear: dropTree(ch.gear || [], item.id),
+                    })}>削除</button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {gearKind === "cyberdeck" && (
+              <>
+                {(d.cyberdecks || []).length ? (
+                  <p className="muted">作成時に配列の4数を ATK / SLZ / DP / FW へ割り当てます。値を選ぶと、その数値を持っていた項目と入れ替わります。</p>
+                ) : null}
+                {(d.cyberdecks || []).map((item) => (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.device_rating} / ATK {item.attack} / SLZ {item.sleaze} / DP {item.dataprocessing} / FW {item.firewall} / プログラム {item.program_used ?? 0}/{item.program_max ?? item.programs ?? 0} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      {item.rating_max > 0 ? (
+                        <div className="cyber-controls">
+                          <label>
+                            Rating
+                            <input
+                              type="number"
+                              min={1}
+                              max={item.rating_max}
+                              value={item.rating}
+                              onChange={(e) => patch({
+                                cyberdecks: (ch.cyberdecks || []).map((row) => (
+                                  row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                      {item.can_reorder && (item.array || []).length === 4 ? (
+                        <div className="matrix-array">
+                          {MATRIX_ATTRS.map(([key, label]) => (
+                            <label key={key}>
+                              {label}
+                              <select
+                                value={String((item.array_order || DEFAULT_ARRAY_ORDER).indexOf(key))}
+                                onChange={(e) => patch({
+                                  cyberdecks: (ch.cyberdecks || []).map((row) => (
+                                    row.id === item.id
+                                      ? { ...row, array_order: swapMatrixOrder(item.array_order, key, Number(e.target.value)) }
+                                      : row
+                                  )),
+                                })}
+                              >
+                                {(item.array || []).map((n, i) => (
+                                  <option key={`${key}-${i}`} value={i}>{n}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ))}
+                        </div>
+                      ) : null}
+                      {(d.programs || []).filter((prog) => prog.parent_id === item.id).map((prog) => (
+                        <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+                          {tr(prog.name)}
+                          {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
+                          {` / ${prog.nuyen.toLocaleString()}¥`}
+                          {" "}
+                          <button className="btn danger" onClick={() => patch({
+                            programs: (ch.programs || []).filter((row) => row.id !== prog.id),
+                          })}>外す</button>
+                          {prog.rating_max > 0 ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={prog.rating_max}
+                                value={prog.rating}
+                                onChange={(e) => patch({
+                                  programs: (ch.programs || []).map((row) => (
+                                    row.id === prog.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      <div className="cyber-controls">
+                        <select
+                          value={slotPick[item.id] || ""}
+                          onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                        >
+                          <option value="">プログラムを追加</option>
+                          {(catalog.programs || [])
+                            .filter((prog) => prog.program_host === "cyberdecks")
+                            .filter((prog) => !(d.programs || []).some((row) => row.parent_id === item.id && row.gear_id === prog.id))
+                            .filter((prog) => prog.source === "SR5")
+                            .map((prog) => (
+                              <option key={prog.id} value={prog.id}>{tr(prog.name)} ({prog.cost}¥)</option>
+                            ))}
+                        </select>
+                        <button
+                          className="btn"
+                          disabled={!slotPick[item.id]}
+                          onClick={() => {
+                            const wareId = slotPick[item.id];
+                            const spec = (catalog.programs || []).find((prog) => prog.id === wareId);
+                            if (!spec) return;
+                            patch({
+                              programs: [...(ch.programs || []), { gear_id: spec.id, rating: Math.max(1, spec.minrating || 1), parent_id: item.id }],
+                            });
+                            setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                          }}
+                        >
+                          装着
+                        </button>
+                      </div>
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      cyberdecks: (ch.cyberdecks || []).filter((row) => row.id !== item.id),
+                      programs: (ch.programs || []).filter((row) => row.parent_id !== item.id),
+                    })}>削除</button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {gearKind === "rcc" && (
+              <>
+                {(d.rccs || []).map((item) => (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.device_rating} / DP {item.dataprocessing} / FW {item.firewall} / プログラム {item.program_used ?? 0}/{item.program_max ?? item.programs ?? 0} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      {item.rating_max > 0 ? (
+                        <div className="cyber-controls">
+                          <label>
+                            Rating
+                            <input
+                              type="number"
+                              min={1}
+                              max={item.rating_max}
+                              value={item.rating}
+                              onChange={(e) => patch({
+                                rccs: (ch.rccs || []).map((row) => (
+                                  row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        </div>
+                      ) : null}
+                      {(d.programs || []).filter((prog) => prog.parent_id === item.id).map((prog) => (
+                        <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+                          {tr(prog.label || prog.name)}
+                          {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
+                          {` / ${prog.nuyen.toLocaleString()}¥`}
+                          {" "}
+                          <button className="btn danger" onClick={() => patch({
+                            programs: (ch.programs || []).filter((row) => row.id !== prog.id),
+                          })}>外す</button>
+                          {prog.rating_max > 0 ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={prog.rating_max}
+                                value={prog.rating}
+                                onChange={(e) => patch({
+                                  programs: (ch.programs || []).map((row) => (
+                                    row.id === prog.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                          {prog.extra_kind === "skill" ? (
+                            <label>
+                              スキル
+                              <select
+                                value={prog.extra || ""}
+                                onChange={(e) => patch({
+                                  programs: (ch.programs || []).map((row) => (
+                                    row.id === prog.id ? { ...row, extra: e.target.value } : row
+                                  )),
+                                })}
+                              >
+                                <option value="">選択</option>
+                                {(prog.extra_options || []).map((name) => (
+                                  <option key={name} value={name}>{tr(name)}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                          {prog.extra_kind === "group" ? (
+                            <label>
+                              グループ
+                              <select
+                                value={prog.extra || ""}
+                                onChange={(e) => patch({
+                                  programs: (ch.programs || []).map((row) => (
+                                    row.id === prog.id ? { ...row, extra: e.target.value } : row
+                                  )),
+                                })}
+                              >
+                                <option value="">選択</option>
+                                {(prog.extra_options || []).map((name) => (
+                                  <option key={name} value={name}>{tr(name)}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                          {prog.extra_kind === "text" ? (
+                            <label>
+                              対象
+                              <input
+                                list={`prog-extra-${prog.id}`}
+                                value={prog.extra || ""}
+                                onChange={(e) => patch({
+                                  programs: (ch.programs || []).map((row) => (
+                                    row.id === prog.id ? { ...row, extra: e.target.value } : row
+                                  )),
+                                })}
+                              />
+                              <datalist id={`prog-extra-${prog.id}`}>
+                                {(prog.extra_options || []).slice(0, 80).map((name) => (
+                                  <option key={name} value={name} />
+                                ))}
+                              </datalist>
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      <div className="cyber-controls">
+                        <select
+                          value={slotPick[item.id] || ""}
+                          onChange={(e) => {
+                            setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }));
+                            setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
+                          }}
+                        >
+                          <option value="">オートソフトを追加</option>
+                          {(catalog.programs || [])
+                            .filter((prog) => prog.program_host === "rccs")
+                            .filter((prog) => prog.source === "SR5" || prog.source === "R5")
+                            .filter((prog) => prog.needs_extra || !(d.programs || []).some((row) => row.parent_id === item.id && row.gear_id === prog.id))
+                            .map((prog) => (
+                              <option key={prog.id} value={prog.id}>{tr(prog.name)} ({prog.cost}¥)</option>
+                            ))}
+                        </select>
+                        {(() => {
+                          const spec = (catalog.programs || []).find((prog) => prog.id === slotPick[item.id]);
+                          if (spec?.extra_kind === "skill" || spec?.extra_kind === "group") {
+                            return (
+                              <select
+                                value={extraPick[item.id] || ""}
+                                onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                              >
+                                <option value="">{spec.extra_kind === "group" ? "グループ" : "スキル"}</option>
+                                {(spec.extra_options || []).map((name) => (
+                                  <option key={name} value={name}>{tr(name)}</option>
+                                ))}
+                              </select>
+                            );
+                          }
+                          if (spec?.extra_kind === "text") {
+                            return (
+                              <>
+                                <input
+                                  list={`pick-extra-${item.id}`}
+                                  placeholder="対象"
+                                  value={extraPick[item.id] || ""}
+                                  onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                                />
+                                <datalist id={`pick-extra-${item.id}`}>
+                                  {(spec.extra_options || []).slice(0, 80).map((name) => (
+                                    <option key={name} value={name} />
+                                  ))}
+                                </datalist>
+                              </>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <button
+                          className="btn"
+                          disabled={!slotPick[item.id]}
+                          onClick={() => {
+                            const wareId = slotPick[item.id];
+                            const spec = (catalog.programs || []).find((prog) => prog.id === wareId);
+                            if (!spec) return;
+                            patch({
+                              programs: [...(ch.programs || []), {
+                                gear_id: spec.id,
+                                rating: Math.max(1, spec.minrating || 1),
+                                parent_id: item.id,
+                                extra: extraPick[item.id] || undefined,
+                              }],
+                            });
+                            setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
+                          }}
+                        >
+                          装着
+                        </button>
+                      </div>
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      rccs: (ch.rccs || []).filter((row) => row.id !== item.id),
+                      programs: (ch.programs || []).filter((row) => row.parent_id !== item.id),
+                    })}>削除</button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {gearKind === "optics" && (
+              <>
+                {(d.optics || []).filter((item) => !item.parent_id).map((item) => {
+                  const childrenItems = (d.optics || []).filter((child) => child.parent_id === item.id);
+                  const addons = (catalog.optics || []).filter((mod) => (
+                    (item.addoncategories || []).includes(mod.category) && Boolean(mod.requireparent)
+                  ));
+                  return (
+                    <div className="cyber-item" key={item.id}>
+                      <div>
+                        <b>{tr(item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {tr(item.category)}
+                          {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                          {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
+                        </div>
+                        {item.rating_max > 0 ? (
+                          <div className="cyber-controls">
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={item.rating_max}
+                                value={item.rating}
+                                onChange={(e) => patch({
+                                  optics: (ch.optics || []).map((row) => (
+                                    row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+                        {childrenItems.map((child) => (
+                          <div className="muted" key={child.id} style={{ marginTop: 6 }}>
+                            {tr(child.name)}
+                            {child.rating_max > 0 ? ` R${child.rating}` : ""}
+                            {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
+                            {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                            {child.included ? null : (
+                              <>
+                                {" "}
+                                <button className="btn danger" onClick={() => patch({
+                                  optics: (ch.optics || []).filter((row) => row.id !== child.id),
+                                })}>外す</button>
+                              </>
+                            )}
+                            {child.rating_max > 0 && !child.included ? (
+                              <label>
+                                Rating
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={child.rating_max}
+                                  value={child.rating}
+                                  onChange={(e) => patch({
+                                    optics: (ch.optics || []).map((row) => (
+                                      row.id === child.id ? { ...row, rating: Number(e.target.value) } : row
+                                    )),
+                                  })}
+                                />
+                              </label>
+                            ) : null}
+                          </div>
+                        ))}
+                        {addons.length ? (
+                          <div className="cyber-controls">
+                            <select
+                              value={slotPick[item.id] || ""}
+                              onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                            >
+                              <option value="">改造を追加</option>
+                              {addons
+                                .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
+                                .map((mod) => (
+                                  <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                ))}
+                            </select>
+                            <button
+                              className="btn"
+                              disabled={!slotPick[item.id]}
+                              onClick={() => {
+                                const wareId = slotPick[item.id];
+                                const spec = addons.find((mod) => mod.id === wareId);
+                                if (!spec) return;
+                                patch({
+                                  optics: [...(ch.optics || []), { gear_id: spec.id, rating: Math.max(1, spec.minrating || 1), parent_id: item.id }],
+                                });
+                                setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                              }}
+                            >
+                              装着
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <button className="btn danger" onClick={() => {
+                        const drop = new Set<string>([item.id]);
+                        let grew = true;
+                        const rows = ch.optics || [];
+                        while (grew) {
+                          grew = false;
+                          for (const row of rows) {
+                            if (row.parent_id && drop.has(row.parent_id) && row.id && !drop.has(row.id)) {
+                              drop.add(row.id);
+                              grew = true;
+                            }
+                          }
+                        }
+                        patch({ optics: rows.filter((row) => !row.id || !drop.has(row.id)) });
+                      }}>削除</button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {gearKind === "sensor" && (
+              <>
+                {(d.sensors || []).filter((item) => !item.parent_id).map((item) => {
+                  const childrenItems = (d.sensors || []).filter((child) => child.parent_id === item.id);
+                  const addons = (catalog.sensors || []).filter((mod) => (
+                    (item.addoncategories || []).includes(mod.category) && mod.category !== "Custom"
+                  ));
+                  return (
+                    <div className="cyber-item" key={item.id}>
+                      <div>
+                        <b>{tr(item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {tr(item.category)}
+                          {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                          {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
+                        </div>
+                        {item.rating_max > 0 ? (
+                          <div className="cyber-controls">
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={item.rating_max}
+                                value={item.rating}
+                                onChange={(e) => patch({
+                                  sensors: (ch.sensors || []).map((row) => (
+                                    row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+                        {childrenItems.map((child) => (
+                          <div className="muted" key={child.id} style={{ marginTop: 6 }}>
+                            {tr(child.name)}
+                            {child.rating_max > 0 ? ` R${child.rating}` : ""}
+                            {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
+                            {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                            {child.included ? null : (
+                              <>
+                                {" "}
+                                <button className="btn danger" onClick={() => patch({
+                                  sensors: dropTree(ch.sensors || [], child.id),
+                                })}>外す</button>
+                              </>
+                            )}
+                            {child.rating_max > 0 && !child.included ? (
+                              <label>
+                                Rating
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={child.rating_max}
+                                  value={child.rating}
+                                  onChange={(e) => patch({
+                                    sensors: (ch.sensors || []).map((row) => (
+                                      row.id === child.id ? { ...row, rating: Number(e.target.value) } : row
+                                    )),
+                                  })}
+                                />
+                              </label>
+                            ) : null}
+                            {(d.sensors || []).filter((grand) => grand.parent_id === child.id).map((grand) => (
+                              <div key={grand.id} style={{ marginTop: 4, marginLeft: 12 }}>
+                                {tr(grand.name)}
+                                {grand.capacity_cost ? ` / 容量 ${grand.capacity_cost}` : ""}
+                                {" "}
+                                <button className="btn danger" onClick={() => patch({
+                                  sensors: (ch.sensors || []).filter((row) => row.id !== grand.id),
+                                })}>外す</button>
+                              </div>
+                            ))}
+                            {(child.addoncategories || []).length ? (
+                              <div className="cyber-controls">
+                                <select
+                                  value={slotPick[child.id] || ""}
+                                  onChange={(e) => setSlotPick((cur) => ({ ...cur, [child.id]: e.target.value }))}
+                                >
+                                  <option value="">機能を追加</option>
+                                  {(catalog.sensors || [])
+                                    .filter((mod) => (child.addoncategories || []).includes(mod.category))
+                                    .filter((mod) => mod.category !== "Custom")
+                                    .filter((mod) => mod.source === "SR5")
+                                    .filter((mod) => !(d.sensors || []).some((row) => row.parent_id === child.id && row.gear_id === mod.id))
+                                    .map((mod) => (
+                                      <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                    ))}
+                                </select>
+                                <button
+                                  className="btn"
+                                  disabled={!slotPick[child.id]}
+                                  onClick={() => {
+                                    const wareId = slotPick[child.id];
+                                    const spec = (catalog.sensors || []).find((mod) => mod.id === wareId);
+                                    if (!spec) return;
+                                    patch({
+                                      sensors: [...(ch.sensors || []), { gear_id: spec.id, rating: Math.max(1, spec.minrating || 1), parent_id: child.id }],
+                                    });
+                                    setSlotPick((cur) => ({ ...cur, [child.id]: "" }));
+                                  }}
+                                >
+                                  装着
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                        {addons.length ? (
+                          <div className="cyber-controls">
+                            <select
+                              value={slotPick[item.id] || ""}
+                              onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                            >
+                              <option value="">機能／センサーを追加</option>
+                              {addons
+                                .filter((mod) => mod.source === "SR5")
+                                .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
+                                .map((mod) => (
+                                  <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                ))}
+                            </select>
+                            <button
+                              className="btn"
+                              disabled={!slotPick[item.id]}
+                              onClick={() => {
+                                const wareId = slotPick[item.id];
+                                const spec = addons.find((mod) => mod.id === wareId);
+                                if (!spec) return;
+                                patch({
+                                  sensors: [...(ch.sensors || []), { gear_id: spec.id, rating: Math.max(1, spec.minrating || 1), parent_id: item.id }],
+                                });
+                                setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                              }}
+                            >
+                              装着
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <button className="btn danger" onClick={() => patch({
+                        sensors: dropTree(ch.sensors || [], item.id),
+                      })}>削除</button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            { (gearKind === "drone" || gearKind === "vehicle") && (
+              <>
+                {((gearKind === "drone" ? d.drones : d.vehicles) || []).map((item) => {
+                  const addons = (catalog.vehicle_mods || []).filter((mod) => (
+                    mod.purchasable !== false
+                    && String(mod.cost || "").trim() !== "0"
+                    && vehicleFits(mod.required, item)
+                    && !vehicleForbidden(mod.forbidden, item)
+                    && !(item.mods || []).some((row) => row.mod_id === mod.id)
+                  ));
+                  const sizes = (catalog.weapon_mounts || []).filter((mod) => (
+                    mod.category === "Size"
+                    && vehicleFits(mod.required, item)
+                  ));
+                  const mountedIds = new Set((item.weapon_mounts || []).map((row) => row.weapon_install_id).filter(Boolean));
+                  const freeWeapons = (d.weapons || []).filter((weapon) => !weapon.mounted_on && !mountedIds.has(weapon.id));
+                  return (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / ACC {item.accel} / BOD {item.body} / ARM {item.armor} / PLT {item.pilot} / SNR {item.sensor}
+                        {item.seats ? ` / SEAT ${item.seats}` : ""}
+                        {(item.slot_tracks || []).length
+                          ? ` / ${(item.slot_tracks || []).map((track) => `${track.label} ${track.used}/${track.max}`).join(" · ")}`
+                          : item.slots_max ? ` / スロット ${item.slots_used ?? 0}/${item.slots_max}` : ""}
+                        {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      {(item.mods || []).map((mod) => (
+                        <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
+                          {tr(mod.name)}
+                          {mod.rating_max > 0 ? ` R${mod.rating}` : ""}
+                          {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
+                          {mod.slots ? ` / スロット ${mod.slots}` : ""}
+                          {R5_SLOT_LABELS[mod.category] ? ` / ${R5_SLOT_LABELS[mod.category]}` : null}
+                          {mod.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                vehicle_mods: (ch.vehicle_mods || []).filter((row) => row.id !== mod.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                          {mod.rating_max > 0 && !mod.included ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={mod.rating_max}
+                                value={mod.rating}
+                                onChange={(e) => patch({
+                                  vehicle_mods: (ch.vehicle_mods || []).map((row) => (
+                                    row.id === mod.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      {addons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[item.id] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                          >
+                            <option value="">改造を追加</option>
+                            {addons
+                              .filter((mod) => gearSearch.trim() || mod.source === "SR5" || mod.source === "R5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[item.id]}
+                            onClick={() => {
+                              const wareId = slotPick[item.id];
+                              const spec = addons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                vehicle_mods: [...(ch.vehicle_mods || []), {
+                                  mod_id: spec.id,
+                                  parent_id: item.id,
+                                  rating: Math.max(1, spec.minrating || 1),
+                                }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                      {(item.weapon_mounts || []).map((mount) => (
+                        <div className="muted" key={mount.id} style={{ marginTop: 6 }}>
+                          {tr(mount.label || mount.name)}
+                          {mount.included ? " / 付属" : ` / ${mount.nuyen.toLocaleString()}¥`}
+                          {mount.slots ? ` / スロット ${mount.slots}` : ""}
+                          {mount.weapon_name ? ` / ${tr(mount.weapon_name)}` : " / 未搭載"}
+                          {mount.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.id !== mount.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                          <div className="cyber-controls">
+                            <select
+                              value={mount.weapon_install_id || ""}
+                              onChange={(e) => patch({
+                                weapon_mounts: (ch.weapon_mounts || []).map((row) => (
+                                  row.id === mount.id ? { ...row, weapon_install_id: e.target.value || null } : row
+                                )),
+                              })}
+                            >
+                              <option value="">武器を搭載</option>
+                              {mount.weapon_install_id && mount.weapon_name ? (
+                                <option value={mount.weapon_install_id}>{tr(mount.weapon_name)}</option>
+                              ) : null}
+                              {freeWeapons.map((weapon) => (
+                                <option key={weapon.id} value={weapon.id}>{tr(weapon.name)}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                      {sizes.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[`${item.id}-mount`] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [`${item.id}-mount`]: e.target.value }))}
+                          >
+                            <option value="">武器マウントを追加</option>
+                            {sizes
+                              .filter((mod) => gearSearch.trim() || mod.source === "SR5" || mod.source === "R5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[`${item.id}-mount`]}
+                            onClick={() => {
+                              const wareId = slotPick[`${item.id}-mount`];
+                              const spec = sizes.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                weapon_mounts: [...(ch.weapon_mounts || []), { size_id: spec.id, parent_id: item.id }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [`${item.id}-mount`]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                      {(item.sensors || []).map((sensor) => {
+                        const functions = (d.sensors || []).filter((child) => child.parent_id === sensor.id);
+                        const sensorAddons = (catalog.sensors || []).filter((mod) => (
+                          (sensor.addoncategories || []).includes(mod.category)
+                          && mod.category !== "Custom"
+                          && !functions.some((child) => child.gear_id === mod.id)
+                        ));
+                        return (
+                          <div className="muted" key={sensor.id} style={{ marginTop: 6 }}>
+                            {tr(sensor.name)}
+                            {sensor.rating_max > 0 ? ` R${sensor.rating}` : ""}
+                            {sensor.capacity_max ? ` / 容量 ${sensor.capacity_used}/${sensor.capacity_max}` : ""}
+                            {sensor.included ? " / 付属" : ` / ${sensor.nuyen.toLocaleString()}¥`}
+                            {functions.map((child) => (
+                              <div key={child.id} style={{ marginTop: 4, marginLeft: 12 }}>
+                                {tr(child.name)}
+                                {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                                {" "}
+                                <button className="btn danger" onClick={() => patch({
+                                  sensors: (ch.sensors || []).filter((row) => row.id !== child.id),
+                                })}>外す</button>
+                              </div>
+                            ))}
+                            {sensorAddons.length ? (
+                              <div className="cyber-controls">
+                                <select
+                                  value={slotPick[sensor.id] || ""}
+                                  onChange={(e) => setSlotPick((cur) => ({ ...cur, [sensor.id]: e.target.value }))}
+                                >
+                                  <option value="">機能を追加</option>
+                                  {sensorAddons
+                                    .filter((mod) => mod.source === "SR5")
+                                    .map((mod) => (
+                                      <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                    ))}
+                                </select>
+                                <button
+                                  className="btn"
+                                  disabled={!slotPick[sensor.id]}
+                                  onClick={() => {
+                                    const wareId = slotPick[sensor.id];
+                                    const spec = sensorAddons.find((mod) => mod.id === wareId);
+                                    if (!spec) return;
+                                    patch({
+                                      sensors: [...(ch.sensors || []), { gear_id: spec.id, rating: Math.max(1, spec.minrating || 1), parent_id: sensor.id }],
+                                    });
+                                    setSlotPick((cur) => ({ ...cur, [sensor.id]: "" }));
+                                  }}
+                                >
+                                  装着
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                      {(item.gear || []).map((acc) => (
+                        <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
+                          {tr(acc.label || acc.name)}
+                          {acc.rating_max > 0 ? ` R${acc.rating}` : ""}
+                          {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                          {acc.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                gear: dropTree(ch.gear || [], acc.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                          {acc.rating_max > 0 && !acc.included ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={acc.rating_max}
+                                value={acc.rating}
+                                onChange={(e) => patch({
+                                  gear: (ch.gear || []).map((row) => (
+                                    row.id === acc.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                        </div>
+                      ))}
+                      <div className="cyber-controls">
+                        <select
+                          value={slotPick[`${item.id}-gear`] || ""}
+                          onChange={(e) => setSlotPick((cur) => ({ ...cur, [`${item.id}-gear`]: e.target.value }))}
+                        >
+                          <option value="">内装ギアを追加</option>
+                          {(catalog.gear || [])
+                            .filter((mod) => vehicleInteriorFits(mod) && String(mod.cost || "").trim() !== "0")
+                            .filter((mod) => mod.source === "SR5")
+                            .filter((mod) => !(item.gear || []).some((row) => row.gear_id === mod.id))
+                            .map((mod) => (
+                              <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                            ))}
+                        </select>
+                        <button
+                          className="btn"
+                          disabled={!slotPick[`${item.id}-gear`]}
+                          onClick={() => {
+                            const wareId = slotPick[`${item.id}-gear`];
+                            const spec = (catalog.gear || []).find((mod) => mod.id === wareId);
+                            if (!spec) return;
+                            patch({
+                              gear: [...(ch.gear || []), {
+                                gear_id: spec.id,
+                                rating: Math.max(1, spec.minrating || 1),
+                                parent_id: item.id,
+                              }],
+                            });
+                            setSlotPick((cur) => ({ ...cur, [`${item.id}-gear`]: "" }));
+                          }}
+                        >
+                          装着
+                        </button>
+                      </div>
+                    </div>
+                    <button className="btn danger" onClick={() => patch(dropDrone(ch, item.id, gearKind === "vehicle" ? "vehicles" : "drones"))}>削除</button>
+                  </div>
+                  );
+                })}
+              </>
+            )}
+
+            {gearKind === "misc" && (
+              <>
+                {(d.gear || []).filter((item) => !item.parent_id).map((item) => {
+                  const childrenItems = (d.gear || []).filter((child) => child.parent_id === item.id);
+                  const addons = (catalog.gear || []).filter((mod) => (
+                    Boolean(mod.requireparent) && miscFits(item, mod)
+                  ));
+                  const addonSpec = (catalog.gear || []).find((mod) => mod.id === (slotPick[item.id] || ""));
+                  return (
+                    <div className="cyber-item" key={item.id}>
+                      <div>
+                        <b>{tr(item.label || item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {tr(item.category)}
+                          {item.qty > 1 ? ` ×${item.qty}` : ""}
+                          {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                          {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
+                        </div>
+                        <div className="cyber-controls">
+                          <label>
+                            数量
+                            <input
+                              type="number"
+                              min={1}
+                              max={99}
+                              value={item.qty}
+                              onChange={(e) => patch({
+                                gear: (ch.gear || []).map((row) => (
+                                  row.id === item.id ? { ...row, qty: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                          {item.rating_max > 0 ? (
+                            <label>
+                              Rating
+                              <input
+                                type="number"
+                                min={1}
+                                max={item.rating_max}
+                                value={item.rating}
+                                onChange={(e) => patch({
+                                  gear: (ch.gear || []).map((row) => (
+                                    row.id === item.id ? { ...row, rating: Number(e.target.value) } : row
+                                  )),
+                                })}
+                              />
+                            </label>
+                          ) : null}
+                          {item.needs_extra && item.extra_kind === "skill" ? (
+                            <select
+                              value={item.extra || ""}
+                              onChange={(e) => patch({
+                                gear: (ch.gear || []).map((row) => (
+                                  row.id === item.id ? { ...row, extra: e.target.value || undefined } : row
+                                )),
+                              })}
+                            >
+                              <option value="">スキル</option>
+                              {(item.extra_options || []).map((name) => (
+                                <option key={name} value={name}>{tr(name)}</option>
+                              ))}
+                            </select>
+                          ) : null}
+                          {item.needs_extra && item.extra_kind === "text" ? (
+                            <>
+                              <input
+                                list={`gear-extra-${item.id}`}
+                                placeholder="対象"
+                                value={item.extra || ""}
+                                onChange={(e) => patch({
+                                  gear: (ch.gear || []).map((row) => (
+                                    row.id === item.id ? { ...row, extra: e.target.value || undefined } : row
+                                  )),
+                                })}
+                              />
+                              <datalist id={`gear-extra-${item.id}`}>
+                                {(item.extra_options || []).slice(0, 80).map((name) => (
+                                  <option key={name} value={name} />
+                                ))}
+                              </datalist>
+                            </>
+                          ) : null}
+                        </div>
+                        {childrenItems.map((child) => (
+                          <div className="muted" key={child.id} style={{ marginTop: 6 }}>
+                            {tr(child.label || child.name)}
+                            {child.rating_max > 0 ? ` R${child.rating}` : ""}
+                            {child.qty > 1 ? ` ×${child.qty}` : ""}
+                            {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
+                            {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                            {child.included ? null : (
+                              <>
+                                {" "}
+                                <button className="btn danger" onClick={() => patch({
+                                  gear: dropTree(ch.gear || [], child.id),
+                                })}>外す</button>
+                              </>
+                            )}
+                            {child.rating_max > 0 && !child.included ? (
+                              <label>
+                                Rating
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={child.rating_max}
+                                  value={child.rating}
+                                  onChange={(e) => patch({
+                                    gear: (ch.gear || []).map((row) => (
+                                      row.id === child.id ? { ...row, rating: Number(e.target.value) } : row
+                                    )),
+                                  })}
+                                />
+                              </label>
+                            ) : null}
+                          </div>
+                        ))}
+                        {addons.length ? (
+                          <div className="cyber-controls">
+                            <select
+                              value={slotPick[item.id] || ""}
+                              onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                            >
+                              <option value="">追加ギア</option>
+                              {addons
+                                .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
+                                .filter((mod) => gearSearch.trim() || mod.source === "SR5")
+                                .map((mod) => (
+                                  <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                ))}
+                            </select>
+                            {addonSpec?.extra_kind === "skill" || addonSpec?.extra_kind === "text" ? (
+                              addonSpec.extra_kind === "skill" ? (
+                                <select
+                                  value={extraPick[item.id] || ""}
+                                  onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                                >
+                                  <option value="">対象</option>
+                                  {(addonSpec.extra_options || []).map((name) => (
+                                    <option key={name} value={name}>{tr(name)}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <>
+                                  <input
+                                    list={`gear-addon-extra-${item.id}`}
+                                    placeholder="対象"
+                                    value={extraPick[item.id] || ""}
+                                    onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                                  />
+                                  <datalist id={`gear-addon-extra-${item.id}`}>
+                                    {(addonSpec.extra_options || []).slice(0, 80).map((name) => (
+                                      <option key={name} value={name} />
+                                    ))}
+                                  </datalist>
+                                </>
+                              )
+                            ) : null}
+                            <button
+                              className="btn"
+                              disabled={!slotPick[item.id]}
+                              onClick={() => {
+                                const wareId = slotPick[item.id];
+                                const spec = addons.find((mod) => mod.id === wareId);
+                                if (!spec) return;
+                                patch({
+                                  gear: [...(ch.gear || []), {
+                                    gear_id: spec.id,
+                                    rating: Math.max(1, spec.minrating || 1),
+                                    parent_id: item.id,
+                                    extra: extraPick[item.id] || undefined,
+                                  }],
+                                });
+                                setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                                setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
+                              }}
+                            >
+                              装着
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <button className="btn danger" onClick={() => patch({
+                        gear: dropTree(ch.gear || [], item.id),
+                      })}>削除</button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {gearKind === "lifestyle" && (
+              <>
+                {(d.lifestyles || []).map((item) => (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {item.monthly.toLocaleString()}¥/{lifeIncrement(item.increment)} × {item.months} = {item.nuyen.toLocaleString()}¥ / {item.source}
+                      </div>
+                      <div className="cyber-controls">
+                        <label>
+                          {lifeIncrement(item.increment)}
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.months}
+                            onChange={(e) => patch({
+                              lifestyles: (ch.lifestyles || []).map((row) => (
+                                row.id === item.id ? { ...row, months: Number(e.target.value) } : row
+                              )),
+                            })}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                    <button className="btn danger" onClick={() => patch({
+                      lifestyles: (ch.lifestyles || []).filter((row) => row.id !== item.id),
+                    })}>削除</button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            <div className="option-row">
+              <button className={`tab ${gearCat === "all" ? "active" : ""}`} onClick={() => setGearCat("all")}>すべて</button>
+              {(gearKind === "armor"
+                ? [...new Set((catalog.armor || []).map((item) => item.category))]
+                : gearKind === "weapon"
+                  ? [...new Set((catalog.weapons || []).map((item) => item.category))]
+                  : gearKind === "optics"
+                    ? [...new Set((catalog.optics || []).filter((item) => OPTICS_DEVICE_CATS.has(item.category)).map((item) => item.category))]
+                    : gearKind === "sensor"
+                      ? [...new Set((catalog.sensors || []).filter((item) => SENSOR_DEVICE_CATS.has(item.category)).map((item) => item.category))]
+                      : gearKind === "drone"
+                        ? [...new Set((catalog.drones || []).map((item) => item.category))]
+                        : gearKind === "vehicle"
+                          ? [...new Set((catalog.vehicles || []).map((item) => item.category))]
+                        : gearKind === "misc"
+                          ? [...new Set((catalog.gear || []).filter((item) => !item.requireparent && (gearSearch.trim() || item.source === "SR5")).map((item) => item.category))]
+                    : []
+              ).sort().map((cat) => (
+                <button key={cat} className={`tab ${gearCat === cat ? "active" : ""}`} onClick={() => setGearCat(cat)}>{tr(cat)}</button>
+              ))}
+            </div>
+            <input
+              type="search"
+              placeholder={
+                gearKind === "armor" ? "防具を検索" :
+                gearKind === "weapon" ? "武器を検索" :
+                gearKind === "commlink" ? "通信機を検索" :
+                gearKind === "cyberdeck" ? "サイバーデッキを検索" :
+                gearKind === "rcc" ? "RCCを検索" :
+                gearKind === "optics" ? "視覚／聴覚を検索" :
+                gearKind === "sensor" ? "センサーを検索" :
+                gearKind === "drone" ? "ドローンを検索" :
+                gearKind === "vehicle" ? "車両を検索" :
+                gearKind === "misc" ? "ギアを検索" : "ライフスタイルを検索"
+              }
+              value={gearSearch}
+              onChange={(e) => setGearSearch(e.target.value)}
+            />
+            <div className="quality-list">
+              {gearKind === "armor" && (catalog.armor || [])
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / 装甲 {item.armor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      armor: [...(ch.armor || []), { armor_id: item.id, rating: Math.max(1, item.minrating || 1), equipped: true }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "weapon" && (catalog.weapons || [])
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "commlink" && (catalog.commlinks || [])
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.devicerating} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      commlinks: [...(ch.commlinks || []), { gear_id: item.id, rating: Math.max(1, item.minrating || 1) }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "cyberdeck" && (catalog.cyberdecks || [])
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.devicerating}{item.attributearray ? ` / ${item.attributearray}` : ""} / プログラム {item.programs} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      cyberdecks: [...(ch.cyberdecks || []), { gear_id: item.id, rating: Math.max(1, item.minrating || 1) }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "rcc" && (catalog.rccs || [])
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} / プログラム {item.programs} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      rccs: [...(ch.rccs || []), { gear_id: item.id, rating: Math.max(1, item.minrating || 1) }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "optics" && (catalog.optics || [])
+                .filter((item) => OPTICS_DEVICE_CATS.has(item.category) && !item.requireparent)
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)}{item.maxrating > 0 ? ` / R${item.minrating || 1}-${item.maxrating}` : ""} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      optics: [...(ch.optics || []), { gear_id: item.id, rating: Math.max(1, item.minrating || 1) }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "sensor" && (catalog.sensors || [])
+                .filter((item) => SENSOR_DEVICE_CATS.has(item.category) && !item.requireparent)
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)}{item.maxrating > 0 ? ` / R${item.minrating || 1}-${item.maxrating}` : ""} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      sensors: [...(ch.sensors || []), { gear_id: item.id, rating: Math.max(1, item.minrating || 1) }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "drone" && (catalog.drones || [])
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / PLT {item.pilot} / SNR {item.sensor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      drones: [...(ch.drones || []), { gear_id: item.id }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "vehicle" && (catalog.vehicles || [])
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / SEAT {item.seats || "-"} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      vehicles: [...(ch.vehicles || []), { gear_id: item.id }],
+                    })}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "misc" && (catalog.gear || [])
+                .filter((item) => !item.requireparent)
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {tr(item.category)}{item.maxrating > 0 ? ` / R${item.minrating || 1}-${item.maxrating}` : ""} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      </div>
+                      {item.needs_extra ? (
+                        <div className="cyber-controls">
+                          {item.extra_kind === "skill" ? (
+                            <select
+                              value={extraPick[`buy-${item.id}`] || ""}
+                              onChange={(e) => setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: e.target.value }))}
+                            >
+                              <option value="">スキル</option>
+                              {(item.extra_options || []).map((name) => (
+                                <option key={name} value={name}>{tr(name)}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <>
+                              <input
+                                list={`buy-extra-${item.id}`}
+                                placeholder="対象"
+                                value={extraPick[`buy-${item.id}`] || ""}
+                                onChange={(e) => setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: e.target.value }))}
+                              />
+                              <datalist id={`buy-extra-${item.id}`}>
+                                {(item.extra_options || []).slice(0, 80).map((name) => (
+                                  <option key={name} value={name} />
+                                ))}
+                              </datalist>
+                            </>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                    <button className="btn primary" onClick={() => {
+                      patch({
+                        gear: [...(ch.gear || []), {
+                          gear_id: item.id,
+                          rating: Math.max(1, item.minrating || 1),
+                          extra: extraPick[`buy-${item.id}`] || undefined,
+                        }],
+                      });
+                      setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: "" }));
+                    }}>購入</button>
+                  </div>
+                ))}
+              {gearKind === "lifestyle" && (catalog.lifestyles || [])
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return CORE_LIFESTYLES.has(item.name);
+                })
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment)} / {item.source}
+                      </div>
+                    </div>
+                    <button className="btn primary" onClick={() => patch({
+                      lifestyles: [...(ch.lifestyles || []), { lifestyle_id: item.id, months: 1 }],
+                    })}>購入</button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "contacts" && (
+          <div className="card">
+            <p className="muted">
+              無料枠 CHA×3 = {d.contact_points?.used || 0}/{d.contact_points?.free || 0}
+              {(d.contact_points?.paid || 0) > 0 ? ` ・ 超過 ${d.contact_points?.paid}カルマ` : ""}
+              。Connection と Loyalty は最低1、作成時は合計7まで。超過分は1点1カルマです。
+            </p>
+            {(d.contacts || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{item.name || "（無名）"}</b>
+                  <div className="muted">
+                    {item.role ? `${item.role} / ` : ""}
+                    Connection {item.connection} / Loyalty {item.loyalty} / {item.cost}点
+                  </div>
+                  <div className="cyber-controls">
+                    <label>
+                      名前
+                      <input
+                        type="text"
+                        value={(ch.contacts || []).find((row) => row.id === item.id)?.name ?? item.name}
+                        onChange={(e) => setCh({
+                          ...ch,
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, name: e.target.value } : row
+                          )),
+                        })}
+                        onBlur={(e) => patch({
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, name: e.target.value } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      役割
+                      <input
+                        type="text"
+                        list="contact-roles"
+                        value={(ch.contacts || []).find((row) => row.id === item.id)?.role ?? item.role ?? ""}
+                        onChange={(e) => setCh({
+                          ...ch,
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, role: e.target.value } : row
+                          )),
+                        })}
+                        onBlur={(e) => patch({
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, role: e.target.value || null } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      Connection
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.connection_max}
+                        value={item.connection}
+                        onChange={(e) => patch({
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, connection: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      Loyalty
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.loyalty_max}
+                        value={item.loyalty}
+                        onChange={(e) => patch({
+                          contacts: (ch.contacts || []).map((row) => (
+                            row.id === item.id ? { ...row, loyalty: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  contacts: (ch.contacts || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <div className="cyber-toolbar">
+              <input
+                type="text"
+                placeholder="名前"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+              />
+              <input
+                type="text"
+                list="contact-roles"
+                placeholder="役割（任意）"
+                value={contactRole}
+                onChange={(e) => setContactRole(e.target.value)}
+              />
+              <datalist id="contact-roles">
+                {[...new Set(CONTACT_ROLES)].map((role) => (
+                  <option key={role} value={role} />
+                ))}
+              </datalist>
+              <button
+                className="btn primary"
+                onClick={() => {
+                  const name = contactName.trim();
+                  patch({
+                    contacts: [...(ch.contacts || []), {
+                      name,
+                      role: contactRole.trim() || null,
+                      connection: 1,
+                      loyalty: 1,
+                    }],
+                  });
+                  setContactName("");
+                  setContactRole("");
+                }}
+              >
+                追加
+              </button>
             </div>
           </div>
         )}
@@ -1224,6 +3780,598 @@ export default function Page() {
             </div>
           </div>
         )}
+
+        {tab === "spells" && d.enabled_tabs.includes("spells") && (
+          <div className="card">
+            <p className="muted">
+              無料 {(d.spell_points?.used || 0) - (d.spell_points?.paid || 0)}/{d.spell_points?.free || 0}
+              {(d.spell_points?.paid || 0) > 0 ? ` ・ 追加 ${d.spell_points?.paid}（各5カルマ）` : ""}
+              {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
+              {" ・ 呪文・儀式・エンチャントは同じ無料枠"}
+            </p>
+            <label>
+              伝統
+              <select
+                value={ch.tradition_id || ""}
+                onChange={(e) => patch({ tradition_id: e.target.value || null })}
+              >
+                <option value="">選択してください</option>
+                {(catalog.traditions || []).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {tr(item.name)}（{item.drain_attrs.join("+")}）
+                  </option>
+                ))}
+              </select>
+            </label>
+            {(d.spells || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{tr(item.name)}</b>
+                  <div className="muted">
+                    {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv}
+                    {item.spell ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}` : ""}
+                    {item.focus_bonus ? ` / 焦点+${item.focus_bonus}` : ""}
+                    {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
+                    {item.required?.length ? ` / 必要 ${item.required.map((name) => tr(name)).join("・")}` : ""}
+                    {" / "}{item.source}
+                  </div>
+                  {item.has_force && item.spell ? (
+                    <div className="cyber-controls">
+                      <label>
+                        Force
+                        <input
+                          type="number"
+                          min={item.spell.force_min}
+                          max={item.spell.force_max}
+                          value={item.spell.force}
+                          onChange={(e) => patch({
+                            spells: (ch.spells || []).map((row) => (
+                              row.id === item.id ? { ...row, force: Number(e.target.value) } : row
+                            )),
+                          })}
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  spells: (ch.spells || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <div className="tabs" style={{ marginTop: 12 }}>
+              {([
+                ["all", "すべて"],
+                ["spell", "呪文"],
+                ["ritual", "儀式"],
+                ["enchantment", "エンチャント"],
+              ] as const).map(([key, label]) => (
+                <button key={key} className={`tab ${spellKind === key ? "active" : ""}`} onClick={() => setSpellKind(key)}>{label}</button>
+              ))}
+            </div>
+            <input type="search" placeholder="術式を検索" value={spellSearch} onChange={(e) => setSpellSearch(e.target.value)} />
+            <div className="quality-list">
+              {(catalog.spells || [])
+                .filter((item) => item.learnable !== false)
+                .filter((item) => !(ch.spells || []).some((row) => row.spell_id === item.id))
+                .filter((item) => spellKind === "all" || (item.kind || "spell") === spellKind)
+                .filter((item) => {
+                  const q = spellSearch.trim().toLowerCase();
+                  if (q) {
+                    return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || (item.category || "").toLowerCase().includes(q);
+                  }
+                  if (spellKind === "enchantment") return true;
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => {
+                  const paid = (d.spell_points?.used || 0) >= (d.spell_points?.free || 0);
+                  return (
+                    <div className="quality-item" key={item.id}>
+                      <div>
+                        <b>{tr(item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv} / {item.source}
+                          {item.required?.length ? ` / 必要 ${item.required.map((name) => tr(name)).join("・")}` : ""}
+                          {paid ? " / 5カルマ" : " / 無料"}
+                        </div>
+                      </div>
+                      <button className="btn primary" onClick={() => patch({
+                        spells: [...(ch.spells || []), { spell_id: item.id }],
+                      })}>追加</button>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {tab === "spirits" && d.enabled_tabs.includes("spirits") && (
+          <div className="card">
+            <p className="muted">
+              一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と試薬 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。
+              {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
+            </p>
+            <label>
+              伝統
+              <select
+                value={ch.tradition_id || ""}
+                onChange={(e) => patch({ tradition_id: e.target.value || null })}
+              >
+                <option value="">選択してください</option>
+                {(catalog.traditions || []).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {tr(item.name)}（{item.drain_attrs.join("+")}）
+                  </option>
+                ))}
+              </select>
+            </label>
+            {(d.spirits || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{tr(item.name)}</b>
+                  <div className="muted">
+                    {item.name} / {item.role_label || item.role} / {item.bound ? "結合" : "一時召喚"} / F{item.force} / サービス {item.services}
+                    {item.bound ? ` / 試薬 ${item.nuyen.toLocaleString()}¥` : " / 日の出または日の入りまで"}
+                    {" / "}{item.source}
+                  </div>
+                  {item.test ? <div className="muted">{testLine(item.test)}</div> : null}
+                  {item.attributes ? (
+                    <div className="muted">
+                      {["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA"].map((key) => `${key} ${item.attributes?.[key] ?? "-"}`).join(" ・ ")}
+                      {item.attributes.INI != null ? ` ・ INI ${item.attributes.INI}` : ""}
+                    </div>
+                  ) : null}
+                  {item.powers?.length ? <div className="muted">能力 {item.powers.map((name) => tr(name)).join("・")}</div> : null}
+                  <div className="cyber-controls">
+                    <label>
+                      Force
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.force_max}
+                        value={item.force}
+                        onChange={(e) => patch({
+                          spirits: (ch.spirits || []).map((row) => (
+                            row.id === item.id ? { ...row, force: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      サービス
+                      <input
+                        type="number"
+                        min={0}
+                        max={item.force_max}
+                        value={item.services}
+                        onChange={(e) => patch({
+                          spirits: (ch.spirits || []).map((row) => (
+                            row.id === item.id ? { ...row, services: Number(e.target.value), hits: null, opposed_hits: null } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      {item.bound ? "結合" : "召喚"}ヒット
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.hits ?? ""}
+                        onChange={(e) => patch({
+                          spirits: (ch.spirits || []).map((row) => (
+                            row.id === item.id ? { ...row, hits: optionalNumber(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      精霊ヒット
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.opposed_hits ?? ""}
+                        onChange={(e) => patch({
+                          spirits: (ch.spirits || []).map((row) => (
+                            row.id === item.id ? { ...row, opposed_hits: optionalNumber(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      種類
+                      <select
+                        value={item.bound ? "bound" : "summoned"}
+                        onChange={(e) => patch({
+                          spirits: (ch.spirits || []).map((row) => (
+                            row.id === item.id ? { ...row, bound: e.target.value === "bound" } : row
+                          )),
+                        })}
+                      >
+                        <option value="summoned">一時召喚</option>
+                        <option value="bound">結合</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  spirits: (ch.spirits || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <div className="quality-list">
+              {Object.entries(d.tradition?.spirits || {}).map(([role, name]) => {
+                const spec = (catalog.spirits || []).find((row) => row.name === name);
+                if (!spec) return null;
+                return (
+                  <div className="quality-item" key={role}>
+                    <div>
+                      <b>{tr(spec.name)}</b>
+                      <div className="muted">
+                        {spec.name} / {SPIRIT_ROLE_JA[role] || role} / 召喚 vs Force ・ 結合 vs Force×2 / {spec.source}
+                      </div>
+                      <div className="muted">
+                        {["BOD", "AGI", "REA", "STR"].map((key) => `${key} ${spec.attributes?.[key] || "F"}`).join(" ・ ")}
+                      </div>
+                    </div>
+                    <div>
+                      <button className="btn" onClick={() => patch({
+                        spirits: [...(ch.spirits || []), { spirit_id: spec.id, force: 1, services: 1, bound: false }],
+                      })}>召喚</button>
+                      {" "}
+                      <button className="btn primary" onClick={() => patch({
+                        spirits: [...(ch.spirits || []), { spirit_id: spec.id, force: 1, services: 1, bound: true }],
+                      })}>結合</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {tab === "foci" && d.enabled_tabs.includes("foci") && (
+          <div className="card">
+            <p className="muted">
+              購入は定価。クラフトは術式＋試薬Force×20¥とアーティフィシング+MAG[Force] vs Force×2（Force日）。結合カルマは Force。同時 {d.focus_limits?.count || 0}/{d.focus_limits?.count_max || 0} ・ Force合計 {d.focus_limits?.force || 0}/{d.focus_limits?.force_max || 0}
+              {d.enabled_tabs.includes("adept") ? " ・ 気焦点はアデプトタブ（この上限に含む）" : ""}
+            </p>
+            {(d.foci || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{tr(item.name)}</b>
+                  <div className="muted">
+                    {item.name} / F{item.force} / {item.crafted ? "クラフト" : "購入"} / {item.nuyen.toLocaleString()}¥ / 結合 {item.karma}カルマ
+                    {item.crafted ? `（術式 ${item.formula_nuyen?.toLocaleString() || 0}¥ + 試薬 ${item.reagent_nuyen?.toLocaleString() || 0}¥ / 定価 ${item.retail_nuyen?.toLocaleString() || 0}¥）` : ""}
+                    {item.effect ? ` / ${item.effect.replace(/Rating/g, String(item.force))}` : ""}
+                    {" / "}{item.source}
+                  </div>
+                  {item.formula_test ? <div className="muted">術式自作 {testLine(item.formula_test)}</div> : null}
+                  {item.test ? <div className="muted">{testLine(item.test)}</div> : null}
+                  <div className="cyber-controls">
+                    <label>
+                      Force
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.force_max}
+                        value={item.force}
+                        onChange={(e) => patch({
+                          foci: (ch.foci || []).map((row) => (
+                            row.id === item.id ? { ...row, force: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    {item.crafted ? (
+                      <>
+                        <label>
+                          作成ヒット
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.hits ?? ""}
+                            onChange={(e) => patch({
+                              foci: (ch.foci || []).map((row) => (
+                                row.id === item.id ? { ...row, hits: optionalNumber(e.target.value) } : row
+                              )),
+                            })}
+                          />
+                        </label>
+                        <label>
+                          抵抗ヒット
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.opposed_hits ?? ""}
+                            onChange={(e) => patch({
+                              foci: (ch.foci || []).map((row) => (
+                                row.id === item.id ? { ...row, opposed_hits: optionalNumber(e.target.value) } : row
+                              )),
+                            })}
+                          />
+                        </label>
+                        <label>
+                          術式
+                          <select
+                            value={item.formula_bought ? "buy" : "design"}
+                            onChange={(e) => patch({
+                              foci: (ch.foci || []).map((row) => (
+                                row.id === item.id ? { ...row, formula_bought: e.target.value === "buy" } : row
+                              )),
+                            })}
+                          >
+                            <option value="buy">購入</option>
+                            <option value="design">自作（アーカナ）</option>
+                          </select>
+                        </label>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  foci: (ch.foci || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <input type="search" placeholder="フォーカスを検索" value={focusSearch} onChange={(e) => setFocusSearch(e.target.value)} />
+            <div className="quality-list">
+              {(catalog.foci || [])
+                .filter((item) => {
+                  const q = focusSearch.trim().toLowerCase();
+                  if (q) {
+                    return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || (item.effect || "").toLowerCase().includes(q);
+                  }
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / 購入 {item.cost}
+                        {item.formula ? ` / クラフト 術式 ${item.formula.cost} + 試薬 20¥×F` : ""}
+                        {" / "}{item.effect || "結合のみ"} / {item.source}
+                      </div>
+                    </div>
+                    <div>
+                      <button className="btn" onClick={() => patch({
+                        foci: [...(ch.foci || []), { gear_id: item.id, force: 1, crafted: false }],
+                      })}>購入</button>
+                      {" "}
+                      <button className="btn primary" onClick={() => patch({
+                        foci: [...(ch.foci || []), { gear_id: item.id, force: 1, crafted: true, formula_bought: true }],
+                      })}>クラフト</button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {tab === "complexforms" && d.enabled_tabs.includes("complexforms") && (
+          <div className="card">
+            <p className="muted">
+              優先度の無料枠 {d.complex_form_points?.used || 0}/{d.complex_form_points?.free || 0}
+              {(d.complex_form_points?.paid || 0) > 0 ? ` ・ 追加 ${d.complex_form_points?.paid}×4カルマ` : ""}
+              {d.fade_resist ? ` ・ フェード抵抗 ${d.fade_resist.attrs} ${d.fade_resist.pool}` : ""}
+              。スレッディングは Software+RES[Level]。Level が共振力超なら物理フェード。
+            </p>
+            {(d.complex_forms || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{tr(item.label || item.name)}</b>
+                  <div className="muted">
+                    {item.name} / {item.target} / {cfDuration(item.duration)} / {item.fv}
+                    {` @ L${item.level} → フェード ${item.fade == null ? "特殊" : `${item.fade}${item.fade_code || ""}`}`}
+                    {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
+                    {" / "}{item.source}
+                  </div>
+                  {item.test ? <div className="muted">{testLine(item.test, "フェード")}</div> : null}
+                  <div className="cyber-controls">
+                    <label>
+                      Level
+                      <input
+                        type="number"
+                        min={item.level_min}
+                        max={item.level_max}
+                        value={item.level}
+                        onChange={(e) => patch({
+                          complex_forms: (ch.complex_forms || []).map((row) => (
+                            row.id === item.id ? { ...row, level: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    {item.needs_extra ? (
+                      <label>
+                        属性
+                        <select
+                          value={item.extra || ""}
+                          onChange={(e) => patch({
+                            complex_forms: (ch.complex_forms || []).map((row) => (
+                              row.id === item.id ? { ...row, extra: e.target.value } : row
+                            )),
+                          })}
+                        >
+                          <option value="">選択してください</option>
+                          {(item.options || []).map((name) => (
+                            <option key={name} value={name}>{tr(name)}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                  </div>
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  complex_forms: (ch.complex_forms || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <input type="search" placeholder="複合体を検索" value={cfSearch} onChange={(e) => setCfSearch(e.target.value)} />
+            <div className="quality-list">
+              {(catalog.complex_forms || [])
+                .filter((item) => !(ch.complex_forms || []).some((row) => row.form_id === item.id))
+                .filter((item) => {
+                  const q = cfSearch.trim().toLowerCase();
+                  if (q) {
+                    return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || (item.target || "").toLowerCase().includes(q);
+                  }
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => {
+                  const paid = (d.complex_form_points?.used || 0) >= (d.complex_form_points?.free || 0);
+                  const blocked = (item.required || []).length ? `必要 ${item.required!.map((name) => tr(name)).join("・")}` : "";
+                  return (
+                    <div className="quality-item" key={item.id}>
+                      <div>
+                        <b>{tr(item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {item.target} / {cfDuration(item.duration)} / {item.fv} / {item.source}
+                          {item.needs_extra ? " / マトリクス属性が必要" : ""}
+                          {blocked ? ` / ${blocked}` : ""}
+                          {paid ? " / 4カルマ" : " / 無料"}
+                        </div>
+                      </div>
+                      <button className="btn primary" onClick={() => patch({
+                        complex_forms: [...(ch.complex_forms || []), { form_id: item.id }],
+                      })}>追加</button>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {tab === "sprites" && d.enabled_tabs.includes("sprites") && (
+          <div className="card">
+            <p className="muted">
+              コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェードは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。
+              {d.fade_resist ? ` ・ フェード抵抗 ${d.fade_resist.attrs} ${d.fade_resist.pool}` : ""}
+              {d.living_persona ? ` ・ リビングペルソナ DR${d.living_persona.device_rating} ATK${d.living_persona.attack} SLZ${d.living_persona.sleaze} DP${d.living_persona.dataprocessing} FW${d.living_persona.firewall}` : ""}
+            </p>
+            {(d.sprites || []).map((item) => (
+              <div className="cyber-item" key={item.id}>
+                <div>
+                  <b>{tr(item.name)}</b>
+                  <div className="muted">
+                    {item.name} / {item.registered ? "登録" : "コンパイル"} / L{item.level} / タスク {item.services}
+                    {item.registered ? "" : " / 再起動またはリブートまで"}
+                    {" / "}{item.source}
+                  </div>
+                  {item.test ? <div className="muted">{testLine(item.test, "フェード")}</div> : null}
+                  {item.matrix ? (
+                    <div className="muted">
+                      ATK {item.matrix.attack} ・ SLZ {item.matrix.sleaze} ・ DP {item.matrix.dataprocessing} ・ FW {item.matrix.firewall} ・ INI {item.matrix.initiative}
+                    </div>
+                  ) : null}
+                  {item.powers?.length ? <div className="muted">能力 {item.powers.map((name) => tr(name)).join("・")}</div> : null}
+                  <div className="cyber-controls">
+                    <label>
+                      Level
+                      <input
+                        type="number"
+                        min={1}
+                        max={item.level_max}
+                        value={item.level}
+                        onChange={(e) => patch({
+                          sprites: (ch.sprites || []).map((row) => (
+                            row.id === item.id ? { ...row, level: Number(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      タスク
+                      <input
+                        type="number"
+                        min={0}
+                        max={item.level_max}
+                        value={item.services}
+                        onChange={(e) => patch({
+                          sprites: (ch.sprites || []).map((row) => (
+                            row.id === item.id ? { ...row, services: Number(e.target.value), hits: null, opposed_hits: null } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      {item.registered ? "登録" : "コンパイル"}ヒット
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.hits ?? ""}
+                        onChange={(e) => patch({
+                          sprites: (ch.sprites || []).map((row) => (
+                            row.id === item.id ? { ...row, hits: optionalNumber(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      スプライトヒット
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.opposed_hits ?? ""}
+                        onChange={(e) => patch({
+                          sprites: (ch.sprites || []).map((row) => (
+                            row.id === item.id ? { ...row, opposed_hits: optionalNumber(e.target.value) } : row
+                          )),
+                        })}
+                      />
+                    </label>
+                    <label>
+                      種類
+                      <select
+                        value={item.registered ? "registered" : "compiled"}
+                        onChange={(e) => patch({
+                          sprites: (ch.sprites || []).map((row) => (
+                            row.id === item.id ? { ...row, registered: e.target.value === "registered" } : row
+                          )),
+                        })}
+                      >
+                        <option value="compiled">コンパイル</option>
+                        <option value="registered">登録</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <button className="btn danger" onClick={() => patch({
+                  sprites: (ch.sprites || []).filter((row) => row.id !== item.id),
+                })}>削除</button>
+              </div>
+            ))}
+            <input type="search" placeholder="スプライトを検索" value={spriteSearch} onChange={(e) => setSpriteSearch(e.target.value)} />
+            <div className="quality-list">
+              {(catalog.sprites || [])
+                .filter((item) => {
+                  const q = spriteSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">{item.name} / {item.source}</div>
+                    </div>
+                    <div>
+                      <button className="btn" onClick={() => patch({
+                        sprites: [...(ch.sprites || []), { sprite_id: item.id, level: 1, registered: false }],
+                      })}>コンパイル</button>
+                      {" "}
+                      <button className="btn primary" onClick={() => patch({
+                        sprites: [...(ch.sprites || []), { sprite_id: item.id, level: 1, registered: true }],
+                      })}>登録</button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <aside className="side">
@@ -1242,16 +4390,51 @@ export default function Page() {
         <div className="stat"><span>コンディション</span><b>P{d.condition_monitor.physical} / S{d.condition_monitor.stun}</b></div>
         {d.limb_quality ? <div className="stat"><span>リム本数 Quality</span><b>{d.limb_quality.count}本 / {d.limb_quality.pairs}組</b></div> : null}
         <div className="stat"><span>イニシアチブ</span><b>{d.initiative.value}+{d.initiative.dice}d6</b></div>
-        <div className="stat"><span>アーマー</span><b>{d.armor}</b></div>
+        <div className="stat"><span>アーマー</span><b>{d.armor}{d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}</b></div>
         <div className="stat"><span>エッセンス</span><b>{d.essence}{(d.essence_lost_cyber || d.essence_lost_bio) ? `（C −${d.essence_lost_cyber ?? 0} / B −${d.essence_lost_bio ?? 0}）` : ""}</b></div>
         <div className="stat"><span>ニューエン</span><b>{d.nuyen.toLocaleString()}¥</b></div>
+        {d.lifestyle ? <div className="stat"><span>ライフスタイル</span><b>{tr(d.lifestyle.name)} {d.lifestyle.months}{lifeIncrement(d.lifestyle.increment)}</b></div> : null}
+        {d.commlink ? <div className="stat"><span>通信機</span><b>{tr(d.commlink.name)} DR{d.commlink.device_rating}</b></div> : null}
+        {d.cyberdeck ? <div className="stat"><span>サイバーデッキ</span><b>{tr(d.cyberdeck.name)} DR{d.cyberdeck.device_rating} / {d.cyberdeck.attack}/{d.cyberdeck.sleaze}/{d.cyberdeck.dataprocessing}/{d.cyberdeck.firewall}{d.cyberdeck.program_max ? ` / プログラム ${d.cyberdeck.program_used ?? 0}/${d.cyberdeck.program_max}` : ""}</b></div> : null}
+        {d.rcc ? <div className="stat"><span>RCC</span><b>{tr(d.rcc.name)} DR{d.rcc.device_rating} / DP{d.rcc.dataprocessing} FW{d.rcc.firewall}{d.rcc.program_max ? ` / プログラム ${d.rcc.program_used ?? 0}/${d.rcc.program_max}` : ""}</b></div> : null}
+        {(d.optics || []).some((item) => !item.parent_id) ? (
+          <div className="stat"><span>視覚／聴覚</span><b>{(d.optics || []).filter((item) => !item.parent_id).length}件</b></div>
+        ) : null}
+        {(d.sensors || []).some((item) => !item.parent_id) ? (
+          <div className="stat"><span>センサー</span><b>{(d.sensors || []).filter((item) => !item.parent_id).length}件</b></div>
+        ) : null}
+        {(d.drones || []).length ? (
+          <div className="stat"><span>ドローン</span><b>{(d.drones || []).length}件</b></div>
+        ) : null}
         <div className="stat"><span>カルマ</span><b>{d.karma.remaining} / {d.karma.pool}</b></div>
+        <div className="stat"><span>不利カルマ</span><b>{d.karma.negative?.used || 0}/{d.karma.negative?.max || 25}</b></div>
         <div className="stat"><span>属性点</span><b>{d.points.attributes.used}/{d.points.attributes.max}</b></div>
         <div className="stat"><span>特殊点</span><b>{d.points.special.used}/{d.points.special.max}</b></div>
         <div className="stat"><span>スキル点</span><b>{d.points.skills.used}/{d.points.skills.max}</b></div>
+        <div className="stat"><span>知識点</span><b>{d.points.knowledge.used}/{d.points.knowledge.max}</b></div>
+        <div className="stat"><span>コネクト</span><b>{d.contact_points?.used || 0}/{d.contact_points?.free || 0}{(d.contact_points?.paid || 0) > 0 ? ` +${d.contact_points?.paid}` : ""}</b></div>
         {d.enabled_tabs.includes("adept") ? (
           <div className="stat"><span>パワー点</span><b>{formatPoints(d.power_points?.used || 0)}/{formatPoints(d.power_points?.max || 0)}</b></div>
         ) : null}
+        {d.enabled_tabs.includes("spells") ? (
+          <div className="stat"><span>術式</span><b>{d.spell_points?.used || 0}/{d.spell_points?.free || 0}{(d.spell_points?.paid || 0) > 0 ? ` +${d.spell_points?.paid}` : ""}</b></div>
+        ) : null}
+        {d.enabled_tabs.includes("spirits") ? (
+          <div className="stat"><span>精霊</span><b>{d.spirits?.length || 0}</b></div>
+        ) : null}
+        {d.enabled_tabs.includes("foci") ? (
+          <div className="stat"><span>フォーカス</span><b>{d.focus_limits?.count || 0}/{d.focus_limits?.count_max || 0}</b></div>
+        ) : null}
+        {d.enabled_tabs.includes("complexforms") ? (
+          <div className="stat"><span>複合体</span><b>{d.complex_form_points?.used || 0}/{d.complex_form_points?.free || 0}{(d.complex_form_points?.paid || 0) > 0 ? ` +${d.complex_form_points?.paid}` : ""}</b></div>
+        ) : null}
+        {d.enabled_tabs.includes("sprites") ? (
+          <div className="stat"><span>スプライト</span><b>{d.sprites?.length || 0}</b></div>
+        ) : null}
+        {d.living_persona ? (
+          <div className="stat"><span>リビングペルソナ</span><b>DR{d.living_persona.device_rating} / {d.living_persona.attack}/{d.living_persona.sleaze}/{d.living_persona.dataprocessing}/{d.living_persona.firewall}</b></div>
+        ) : null}
+        {d.tradition ? <div className="stat"><span>伝統</span><b>{tr(d.tradition.name)}</b></div> : null}
         {d.needs_mentor && d.mentor ? <div className="stat"><span>メンター</span><b>{tr(d.mentor.name)}</b></div> : null}
         {(d.damage_resistance || 0) > 0 ? <div className="stat"><span>ダメージ抵抗</span><b>+{d.damage_resistance}</b></div> : null}
         {(d.unarmed_dv || 0) > 0 ? <div className="stat"><span>非武装DV</span><b>+{d.unarmed_dv}</b></div> : null}

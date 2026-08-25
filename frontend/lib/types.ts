@@ -1,3 +1,12 @@
+export interface QualityReqNode {
+  tag: string;
+  name?: string;
+  val?: number;
+  type?: string;
+  value?: number;
+  children?: QualityReqNode[];
+}
+
 export interface SkillPickSlot {
   key: string;
   source: string;
@@ -17,6 +26,771 @@ export interface AdeptPowerInstall {
   extra?: string | null;
   discounted?: boolean;
   force?: number | null;
+}
+
+export interface SpellInstall {
+  id?: string;
+  spell_id: string;
+  force?: number | null;
+}
+
+export interface ComplexFormInstall {
+  id?: string;
+  form_id: string;
+  level?: number | null;
+  extra?: string | null;
+}
+
+export interface SpriteInstall {
+  id?: string;
+  sprite_id: string;
+  level?: number;
+  services?: number;
+  registered?: boolean;
+  hits?: number | null;
+  opposed_hits?: number | null;
+}
+
+export interface ContactInstall {
+  id?: string;
+  name: string;
+  role?: string | null;
+  connection?: number;
+  loyalty?: number;
+}
+
+export interface InstalledContact {
+  id: string;
+  name: string;
+  role?: string;
+  connection: number;
+  loyalty: number;
+  cost: number;
+  connection_max: number;
+  loyalty_max: number;
+}
+
+export interface InstalledSpell {
+  id: string;
+  spell_id: string;
+  name: string;
+  category?: string;
+  kind?: "spell" | "ritual" | "enchantment";
+  useskill?: string;
+  has_force?: boolean;
+  type?: string;
+  range?: string;
+  duration?: string;
+  descriptor?: string;
+  dv: string;
+  required?: string[];
+  source?: string;
+  page?: string;
+  free: boolean;
+  karma: number;
+  focus_bonus?: number;
+  spell?: SpellCastInfo | null;
+}
+
+export interface InstalledComplexForm {
+  id: string;
+  form_id: string;
+  name: string;
+  label?: string;
+  target: string;
+  duration: string;
+  fv: string;
+  extra?: string;
+  needs_extra?: boolean;
+  options?: string[];
+  level: number;
+  level_min: number;
+  level_max: number;
+  fade: number | null;
+  fade_code?: "S" | "P" | null;
+  physical?: boolean;
+  resist: number;
+  resist_attrs: string;
+  free: boolean;
+  karma: number;
+  test?: MagicTestInfo;
+  source?: string;
+  page?: string;
+}
+
+export interface InstalledSprite {
+  id: string;
+  sprite_id: string;
+  name: string;
+  level: number;
+  level_max: number;
+  services: number;
+  registered?: boolean;
+  hits?: number | null;
+  opposed_hits?: number | null;
+  test?: MagicTestInfo;
+  attributes?: Record<string, number>;
+  matrix?: {
+    attack: number;
+    sleaze: number;
+    dataprocessing: number;
+    firewall: number;
+    initiative: number;
+  };
+  powers?: string[];
+  skills?: { name: string; attribute?: string; rating: number }[];
+  source?: string;
+  page?: string;
+}
+
+export interface TraditionInfo {
+  id: string;
+  name: string;
+  drain: string;
+  drain_attrs: string[];
+  spirits?: Record<string, string>;
+  source?: string;
+  page?: string;
+}
+
+export interface SpiritInstall {
+  id?: string;
+  spirit_id: string;
+  force?: number;
+  services?: number;
+  bound?: boolean;
+  hits?: number | null;
+  opposed_hits?: number | null;
+}
+
+export interface FocusInstall {
+  id?: string;
+  gear_id: string;
+  force?: number;
+  crafted?: boolean;
+  formula_bought?: boolean;
+  hits?: number | null;
+  opposed_hits?: number | null;
+}
+
+export interface ArmorInstall {
+  id?: string;
+  armor_id: string;
+  rating?: number;
+  equipped?: boolean;
+}
+
+export interface ArmorModInstall {
+  id?: string;
+  mod_id: string;
+  parent_id?: string | null;
+  included?: boolean;
+  rating?: number;
+}
+
+export interface WeaponInstall {
+  id?: string;
+  weapon_id: string;
+  qty?: number;
+}
+
+export interface WeaponAccessoryInstall {
+  id?: string;
+  accessory_id: string;
+  parent_id?: string | null;
+  included?: boolean;
+  rating?: number;
+  mount?: string;
+}
+
+export interface CommlinkInstall {
+  id?: string;
+  gear_id: string;
+  rating?: number;
+}
+
+export interface GearInstall {
+  id?: string;
+  gear_id: string;
+  rating?: number;
+  qty?: number;
+  parent_id?: string | null;
+  included?: boolean;
+  capacity_override?: string | null;
+  array_order?: string[];
+  extra?: string | null;
+}
+
+export interface LifestyleInstall {
+  id?: string;
+  lifestyle_id: string;
+  months?: number;
+}
+
+export interface InstalledArmorMod {
+  id: string;
+  mod_id: string;
+  name: string;
+  category?: string;
+  parent_id?: string | null;
+  included?: boolean;
+  rating: number;
+  rating_max: number;
+  nuyen: number;
+  capacity_cost?: number;
+  armor?: string;
+  unique?: string;
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledArmor {
+  id: string;
+  armor_id: string;
+  name: string;
+  category: string;
+  armor: string;
+  armor_value: number;
+  additive: boolean;
+  rating: number;
+  rating_max: number;
+  equipped: boolean;
+  nuyen: number;
+  avail?: string;
+  source?: string;
+  contributes?: number;
+  armorcapacity?: string;
+  addmodcategories?: string[];
+  mods?: InstalledArmorMod[];
+  capacity_used?: number;
+  capacity_max?: number;
+}
+
+export interface InstalledWeapon {
+  id: string;
+  weapon_id: string;
+  name: string;
+  category: string;
+  type: string;
+  accuracy: string;
+  reach: string;
+  damage: string;
+  ap: string;
+  mode: string;
+  ammo: string;
+  rc?: string;
+  conceal?: string;
+  mounts?: string[];
+  qty: number;
+  nuyen: number;
+  accessories?: InstalledWeaponAccessory[];
+  mounted_on?: string;
+  mounted_label?: string;
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledWeaponAccessory {
+  id: string;
+  accessory_id: string;
+  name: string;
+  parent_id?: string | null;
+  included?: boolean;
+  mount?: string;
+  rating?: number;
+  rating_max?: number;
+  nuyen: number;
+  accuracy?: string;
+  rc?: string;
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledCommlink {
+  id: string;
+  gear_id: string;
+  name: string;
+  rating: number;
+  rating_max: number;
+  device_rating: number;
+  dataprocessing: number;
+  firewall: number;
+  nuyen: number;
+  apps?: InstalledProgram[];
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledMatrixDevice {
+  id: string;
+  gear_id: string;
+  name: string;
+  category?: string;
+  rating: number;
+  rating_max: number;
+  device_rating: number;
+  attack?: number;
+  sleaze?: number;
+  dataprocessing: number;
+  firewall: number;
+  programs?: number;
+  program_used?: number;
+  program_max?: number;
+  nuyen: number;
+  avail?: string;
+  source?: string;
+  array?: number[];
+  array_order?: string[];
+  can_reorder?: boolean;
+}
+
+export interface InstalledOptics {
+  id: string;
+  gear_id: string;
+  name: string;
+  category: string;
+  rating: number;
+  rating_max: number;
+  parent_id?: string | null;
+  included?: boolean;
+  plugin?: boolean;
+  nuyen: number;
+  capacity_cost?: number;
+  capacity_used?: number;
+  capacity_max?: number;
+  addoncategories?: string[];
+  requireparent?: boolean;
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledGear extends InstalledOptics {
+  label?: string;
+  qty: number;
+  extra?: string;
+  needs_extra?: boolean;
+  extra_kind?: string;
+  extra_options?: string[];
+  required_names?: string[];
+  required_categories?: string[];
+}
+
+export interface InstalledLifestyle {
+  id: string;
+  lifestyle_id: string;
+  name: string;
+  months: number;
+  increment: string;
+  monthly: number;
+  nuyen: number;
+  source?: string;
+}
+
+export interface ArmorCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  armor: string;
+  armorcapacity: string;
+  avail: string;
+  cost: string;
+  minrating: number;
+  maxrating: number;
+  additive: boolean;
+  addmodcategories?: string[];
+  source: string;
+  page: string;
+}
+
+export interface ArmorModCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  armor: string;
+  armorcapacity: string;
+  avail: string;
+  cost: string;
+  minrating: number;
+  maxrating: number;
+  purchasable?: boolean;
+  unique?: string;
+  required_names?: string[];
+  required_mods?: string[];
+  source: string;
+  page: string;
+}
+
+export interface WeaponCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  type: string;
+  accuracy: string;
+  reach: string;
+  damage: string;
+  ap: string;
+  mode: string;
+  ammo: string;
+  conceal?: string;
+  mounts?: string[];
+  avail: string;
+  cost: string;
+  source: string;
+  page: string;
+}
+
+export interface WeaponAccessoryCatalogItem {
+  id: string;
+  name: string;
+  mounts: string[];
+  avail: string;
+  cost: string;
+  purchasable?: boolean;
+  accuracy?: string;
+  rc?: string;
+  minrating: number;
+  maxrating: number;
+  required?: {
+    names?: string[];
+    categories?: string[];
+    types?: string[];
+    conceal_lte?: number | null;
+    accessories?: string[];
+  };
+  forbidden?: {
+    names?: string[];
+    categories?: string[];
+    types?: string[];
+    conceal_lte?: number | null;
+    accessories?: string[];
+  };
+  source: string;
+  page: string;
+}
+
+export interface CommlinkCatalogItem {
+  id: string;
+  name: string;
+  cost: string;
+  avail: string;
+  minrating: number;
+  maxrating: number;
+  devicerating: string;
+  dataprocessing: string;
+  firewall: string;
+  source: string;
+  page: string;
+}
+
+export interface MatrixDeviceCatalogItem extends CommlinkCatalogItem {
+  category?: string;
+  attack?: string;
+  sleaze?: string;
+  attributearray?: string;
+  programs?: string;
+}
+
+export interface InstalledProgram {
+  id: string;
+  gear_id: string;
+  name: string;
+  category: string;
+  rating: number;
+  rating_max: number;
+  parent_id?: string | null;
+  extra?: string;
+  label?: string;
+  needs_extra?: boolean;
+  extra_kind?: string;
+  extra_options?: string[];
+  nuyen: number;
+  program_host?: string;
+  avail?: string;
+  source?: string;
+}
+
+export interface ProgramCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  cost: string;
+  avail: string;
+  minrating: number;
+  maxrating: number;
+  requireparent?: boolean;
+  program_host?: "cyberdecks" | "rccs";
+  needs_extra?: boolean;
+  extra_kind?: string;
+  extra_options?: string[];
+  source: string;
+  page: string;
+}
+
+export interface OpticsCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  cost: string;
+  avail: string;
+  minrating: number;
+  maxrating: number;
+  capacity?: string;
+  plugin?: boolean;
+  requireparent?: boolean;
+  addoncategories?: string[];
+  source: string;
+  page: string;
+}
+
+export interface GearCatalogItem extends OpticsCatalogItem {
+  needs_extra?: boolean;
+  extra_kind?: string;
+  extra_options?: string[];
+  required_names?: string[];
+  required_categories?: string[];
+}
+
+export interface LifestyleCatalogItem {
+  id: string;
+  name: string;
+  cost: number;
+  dice: number;
+  increment: string;
+  source: string;
+  page: string;
+}
+
+export interface DroneCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  handling: string;
+  speed: string;
+  accel: string;
+  body: string;
+  armor: string;
+  pilot: string;
+  sensor: string;
+  seats?: string;
+  avail: string;
+  cost: string;
+  source: string;
+  page: string;
+}
+
+export interface VehicleModInstall {
+  id?: string;
+  mod_id: string;
+  parent_id?: string | null;
+  included?: boolean;
+  rating?: number;
+}
+
+export interface WeaponMountInstall {
+  id?: string;
+  parent_id?: string | null;
+  size_id: string;
+  visibility_id?: string;
+  flexibility_id?: string;
+  control_id?: string;
+  included?: boolean;
+  weapon_install_id?: string | null;
+  allowedweapons?: string;
+}
+
+export interface InstalledVehicleMod {
+  id: string;
+  mod_id: string;
+  name: string;
+  category: string;
+  parent_id?: string | null;
+  included?: boolean;
+  rating: number;
+  rating_max: number;
+  slots: number;
+  nuyen: number;
+  avail?: string;
+  source?: string;
+}
+
+export interface InstalledWeaponMount {
+  id: string;
+  parent_id?: string | null;
+  size_id: string;
+  visibility_id?: string;
+  flexibility_id?: string;
+  control_id?: string;
+  included?: boolean;
+  name: string;
+  label: string;
+  slots: number;
+  nuyen: number;
+  weapon_install_id?: string | null;
+  weapon_name?: string;
+  allowedweapons?: string;
+  source?: string;
+}
+
+export interface InstalledDrone {
+  id: string;
+  gear_id: string;
+  name: string;
+  category: string;
+  handling: string;
+  speed: string;
+  accel: string;
+  body: string;
+  armor: string;
+  pilot: string;
+  sensor: string;
+  seats?: string;
+  nuyen: number;
+  slots_used?: number;
+  slots_max?: number;
+  slot_tracks?: { category: string; label: string; used: number; max: number }[];
+  mods?: InstalledVehicleMod[];
+  weapon_mounts?: InstalledWeaponMount[];
+  sensors?: InstalledOptics[];
+  gear?: InstalledGear[];
+  avail?: string;
+  source?: string;
+}
+
+export interface VehicleModCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  cost: string;
+  slots: string;
+  avail: string;
+  minrating: number;
+  maxrating: number;
+  purchasable?: boolean;
+  required?: {
+    names?: string[];
+    category_contains?: string[];
+    category_equals?: string[];
+    body_lte?: number | null;
+    body_gte?: number | null;
+  };
+  forbidden?: {
+    names?: string[];
+    category_contains?: string[];
+    category_equals?: string[];
+    body_lte?: number | null;
+    body_gte?: number | null;
+  };
+  source: string;
+  page: string;
+}
+
+export interface WeaponMountCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  cost: string;
+  slots: string;
+  avail: string;
+  required?: {
+    names?: string[];
+    category_contains?: string[];
+    category_equals?: string[];
+    body_lte?: number | null;
+    body_gte?: number | null;
+  };
+  source: string;
+  page: string;
+}
+
+export interface MagicTestInfo {
+  skill: string;
+  rating: number;
+  attr: string;
+  attr_value: number;
+  bonus: number;
+  pool: number;
+  defaulted?: boolean;
+  missing?: boolean;
+  force: number;
+  limit: number;
+  limit_name?: string;
+  vs: number;
+  hits?: number | null;
+  opposed_hits?: number | null;
+  net?: number | null;
+  drain?: number | null;
+  drain_code?: "S" | "P" | null;
+  physical?: boolean;
+  days?: number | null;
+}
+
+export interface InstalledSpirit {
+  id: string;
+  spirit_id: string;
+  name: string;
+  role?: string;
+  role_label?: string;
+  force: number;
+  force_max: number;
+  services: number;
+  nuyen: number;
+  bound?: boolean;
+  hits?: number | null;
+  opposed_hits?: number | null;
+  test?: MagicTestInfo;
+  attributes?: Record<string, number>;
+  powers?: string[];
+  optionalpowers?: string[];
+  skills?: { name: string; attribute?: string; rating: number }[];
+  weaknesses?: string[];
+  source?: string;
+  page?: string;
+}
+
+export interface InstalledFocus {
+  id: string;
+  gear_id: string;
+  name: string;
+  force: number;
+  force_max: number;
+  nuyen: number;
+  karma: number;
+  crafted?: boolean;
+  formula_bought?: boolean;
+  formula_nuyen?: number;
+  reagent_nuyen?: number;
+  retail_nuyen?: number;
+  hits?: number | null;
+  opposed_hits?: number | null;
+  test?: MagicTestInfo;
+  formula_test?: MagicTestInfo;
+  effect?: string;
+  formula?: { id?: string; name?: string; cost?: string } | null;
+  source?: string;
+  page?: string;
+}
+
+export interface SpiritCatalogItem {
+  id: string;
+  name: string;
+  attributes?: Record<string, string>;
+  powers?: string[];
+  optionalpowers?: string[];
+  skills?: { name: string; attribute?: string }[];
+  weaknesses?: string[];
+  source?: string;
+  page?: string;
+}
+
+export interface FocusCatalogItem {
+  id: string;
+  name: string;
+  maxrating: number;
+  cost: string;
+  effect?: string;
+  formula?: { id?: string; name?: string; cost?: string } | null;
+  source?: string;
+  page?: string;
 }
 
 export interface QiFocusInstall {
@@ -160,7 +934,10 @@ export interface Character {
   skills: Record<string, number>;
   skill_groups: Record<string, number>;
   knowledge_skills: Record<string, number>;
+  native_languages?: string[];
+  knowledge_categories?: Record<string, string>;
   quality_ids: string[];
+  quality_extras?: Record<string, string>;
   skill_picks?: Record<string, string>;
   cyberware: WareInstall[];
   bioware?: WareInstall[];
@@ -171,6 +948,31 @@ export interface Character {
   mentor_extras?: Record<string, string>;
   adept_enhancements?: string[];
   qi_foci?: QiFocusInstall[];
+  spells?: SpellInstall[];
+  spirits?: SpiritInstall[];
+  complex_forms?: ComplexFormInstall[];
+  sprites?: SpriteInstall[];
+  foci?: FocusInstall[];
+  armor?: ArmorInstall[];
+  armor_mods?: ArmorModInstall[];
+  weapons?: WeaponInstall[];
+  weapon_accessories?: WeaponAccessoryInstall[];
+  commlinks?: CommlinkInstall[];
+  cyberdecks?: GearInstall[];
+  rccs?: GearInstall[];
+  optics?: GearInstall[];
+  programs?: GearInstall[];
+  apps?: GearInstall[];
+  sensors?: GearInstall[];
+  drones?: GearInstall[];
+  vehicles?: GearInstall[];
+  gear?: GearInstall[];
+  vehicle_mods?: VehicleModInstall[];
+  weapon_mounts?: WeaponMountInstall[];
+  lifestyles?: LifestyleInstall[];
+  contacts?: ContactInstall[];
+    tradition_id?: string | null;
+    stream_id?: string | null;
   options?: {
     redliner_torso: boolean;
     redliner_skull: boolean;
@@ -185,9 +987,40 @@ export interface Character {
     movement: { walk: string; run: string; sprint: string };
     essence: number;
     armor: number;
+    worn_armor?: string;
+    armor_items?: InstalledArmor[];
+    armor_mods?: InstalledArmorMod[];
+    weapons?: InstalledWeapon[];
+    weapon_accessories?: InstalledWeaponAccessory[];
+    commlinks?: InstalledCommlink[];
+    cyberdecks?: InstalledMatrixDevice[];
+    rccs?: InstalledMatrixDevice[];
+    optics?: InstalledOptics[];
+    programs?: InstalledProgram[];
+    apps?: InstalledProgram[];
+    sensors?: InstalledOptics[];
+    drones?: InstalledDrone[];
+    vehicles?: InstalledDrone[];
+    vehicle_mods?: InstalledVehicleMod[];
+    weapon_mounts?: InstalledWeaponMount[];
+    gear?: InstalledGear[];
+    lifestyles?: InstalledLifestyle[];
+    commlink?: InstalledCommlink | null;
+    cyberdeck?: InstalledMatrixDevice | null;
+    rcc?: InstalledMatrixDevice | null;
+    lifestyle?: InstalledLifestyle | null;
     nuyen: number;
-    karma: { pool: number; spent: number; remaining: number };
+    karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number } };
     points: Record<string, { used: number; max: number }>;
+    knowledge_skills?: {
+      name: string;
+      category: string;
+      attribute: string;
+      rating: number;
+      native: boolean;
+    }[];
+    contacts?: InstalledContact[];
+    contact_points?: { used: number; free: number; paid: number };
     skill_totals: Record<string, number>;
     skill_bonus?: Record<string, number>;
     skill_group_bonus?: Record<string, number>;
@@ -202,13 +1035,26 @@ export interface Character {
     mentor?: MentorInfo | null;
     needs_mentor?: boolean;
     qi_foci?: InstalledQiFocus[];
+    foci?: InstalledFocus[];
+    focus_limits?: { count: number; count_max: number; force: number; force_max: number };
+    spirits?: InstalledSpirit[];
+    complex_forms?: InstalledComplexForm[];
+    complex_form_points?: { used: number; free: number; paid: number };
+    sprites?: InstalledSprite[];
+    stream?: { id: string; name: string; drain: string; drain_attrs: string[]; sprites?: string[]; source?: string; page?: string } | null;
+    fade_resist?: { pool: number; attrs: string };
+    living_persona?: { device_rating: number; attack: number; sleaze: number; dataprocessing: number; firewall: number } | null;
     enhancements?: EnhancementInfo[];
     damage_resistance?: number;
     unarmed_dv?: number;
     unlock_skills?: string[];
+    spells?: InstalledSpell[];
+    spell_points?: { used: number; free: number; paid: number };
+    tradition?: TraditionInfo | null;
+    drain_resist?: { pool: number; attrs: string };
     enabled_tabs: string[];
     unimplemented_bonuses: { source: string; tag: string }[];
-    qualities: { id: string; name: string; karma: number; category: string; source: string }[];
+    qualities: { id: string; name: string; karma: number; category: string; source: string; needs_extra?: boolean; extra?: string }[];
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
     nuyen_spent?: number;
@@ -258,7 +1104,7 @@ export interface Catalog {
       skillgroup: string | null;
       source: string;
     }[];
-    knowledge: { name: string; category: string; attribute: string }[];
+    knowledge: { name: string; category: string; attribute: string; source?: string }[];
   };
   qualities: {
     id: string;
@@ -270,6 +1116,9 @@ export interface Catalog {
     bonus_tags: string[];
     forbidden_qualities?: string[];
     is_way?: boolean;
+    needs_extra?: boolean;
+    required_tree?: QualityReqNode[];
+    forbidden_tree?: QualityReqNode[];
   }[];
   priority_table: Record<
     PriorityCategory,
@@ -282,7 +1131,7 @@ export interface Catalog {
         skill_group_points?: number;
         nuyen?: number;
         metatypes: { name: string; special: number; variants: { name: string }[] }[];
-        talents: { name: string; label?: string; value: number }[];
+        talents: { name: string; label?: string; value: number; spells?: number }[];
       }
     >
   >;
@@ -299,8 +1148,64 @@ export interface Catalog {
     required?: { quality?: string[]; power?: string[] };
   }[];
   mentors?: { id: string; name: string; source: string; page: string; advantage: string }[];
-  spells?: { id: string; name: string; category: string; dv: string; source: string; page: string }[];
+  spells?: {
+    id: string;
+    name: string;
+    category: string;
+    dv: string;
+    type?: string;
+    range?: string;
+    duration?: string;
+    descriptor?: string;
+    kind?: "spell" | "ritual" | "enchantment";
+    useskill?: string;
+    learnable?: boolean;
+    required?: string[];
+    source: string;
+    page: string;
+  }[];
+  traditions?: TraditionInfo[];
+  spirits?: SpiritCatalogItem[];
+  complex_forms?: {
+    id: string;
+    name: string;
+    target: string;
+    duration: string;
+    fv: string;
+    needs_extra?: boolean;
+    required?: string[];
+    source: string;
+    page: string;
+  }[];
+  streams?: {
+    id: string;
+    name: string;
+    drain: string;
+    drain_attrs: string[];
+    sprites?: string[];
+    source?: string;
+    page?: string;
+  }[];
+  sprites?: SpiritCatalogItem[];
+  foci?: FocusCatalogItem[];
   qi_focus?: { id: string; name: string; maxrating: number; cost: string; source: string; page: string } | null;
+  armor?: ArmorCatalogItem[];
+  armor_mods?: ArmorModCatalogItem[];
+  weapons?: WeaponCatalogItem[];
+  commlinks?: CommlinkCatalogItem[];
+  cyberdecks?: MatrixDeviceCatalogItem[];
+  rccs?: MatrixDeviceCatalogItem[];
+  optics?: OpticsCatalogItem[];
+  programs?: ProgramCatalogItem[];
+  sensors?: OpticsCatalogItem[];
+  gear?: GearCatalogItem[];
+  drones?: DroneCatalogItem[];
+  vehicles?: DroneCatalogItem[];
+  vehicle_mods?: VehicleModCatalogItem[];
+  weapon_mounts?: WeaponMountCatalogItem[];
+  apps?: ProgramCatalogItem[];
+  weapon_accessories?: WeaponAccessoryCatalogItem[];
+  lifestyles?: LifestyleCatalogItem[];
 }
 
 export interface InstalledWare {
