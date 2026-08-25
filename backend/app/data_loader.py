@@ -1436,11 +1436,9 @@ def _extra_kind(bonus: list[dict[str, Any]] | None, name: str = "") -> str:
     if str(name or "").startswith("Group Autosoft"):
         return "group"
     tags = {node.get("tag") for node in (bonus or [])}
-    if "selectskill" in tags or "activesoft" in tags:
+    if "selectskill" in tags or "activesoft" in tags or "skillsoft" in tags or "knowsoft" in tags or "linguasoft" in tags:
         return "skill"
     if "selecttext" in tags or "selectrestricted" in tags or "selecttradition" in tags:
-        return "text"
-    if "knowsoft" in tags or "linguasoft" in tags:
         return "text"
     return ""
 
