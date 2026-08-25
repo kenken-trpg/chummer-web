@@ -1,7 +1,7 @@
 from app.data_loader import catalog
-from app.engine import compute, default_attributes, find_metatype, resolve_skill_mods, selectskill_options, spell_drain_value
+from app.engine import compute, default_attributes, find_metatype, resolve_skill_mods, selectskill_options, spell_drain_value, tradition_resist
 from app.improvements import collect_effects
-from app.models import AdeptPowerInstall, CharacterOptions, CharacterState, CyberwareInstall, Priorities, QiFocusInstall
+from app.models import AdeptPowerInstall, ArmorInstall, ArmorModInstall, CharacterOptions, CharacterState, CommlinkInstall, ComplexFormInstall, ContactInstall, CyberwareInstall, FocusInstall, GearInstall, LifestyleInstall, Priorities, QiFocusInstall, SpellInstall, SpiritInstall, SpriteInstall, VehicleModInstall, WeaponAccessoryInstall, WeaponInstall, WeaponMountInstall
 
 DATAJACK = "47c48542-48c3-417e-91f0-b5a456183f05"
 MUSCLE = "46f80a44-80ae-41d7-a7c8-a119c4cff70f"
@@ -92,6 +92,9 @@ def test_magician_a_starts_at_magic_six_without_special_cost() -> None:
     assert out.derived["totals"]["RES"] == 0
     assert out.derived["points"]["special"]["used"] == 0
     assert "MAG" in out.derived["enabled_tabs"]
+    assert "spells" in out.derived["enabled_tabs"]
+    assert out.derived["spell_points"]["free"] == 10
+    assert any("伝統" in warn for warn in out.derived["warnings"])
     assert out.derived["errors"] == []
 
 
@@ -110,6 +113,11 @@ def test_technomancer_does_not_charge_resonance_baseline() -> None:
     assert out.derived["totals"]["MAG"] == 0
     assert out.derived["points"]["special"]["used"] == 0
     assert "RES" in out.derived["enabled_tabs"]
+    assert "complexforms" in out.derived["enabled_tabs"]
+    assert "sprites" in out.derived["enabled_tabs"]
+    assert out.derived["complex_form_points"]["free"] == 3
+    assert out.derived["living_persona"]["device_rating"] == 3
+    assert out.derived["fade_resist"]["attrs"] == "WIL+RES"
 
 
 def test_datajack_costs_essence_and_nuyen() -> None:
@@ -898,6 +906,72 @@ def test_mnemonic_enhancer_adds_knowledge_category_dice() -> None:
     assert "Administration" not in out.derived["skill_bonus"]
 
 
+def test_knowledge_points_are_intuition_plus_logic_times_two() -> None:
+    out = compute(_human("know-pool"))
+    assert out.derived["points"]["knowledge"] == {"used": 0, "max": 4}
+    high_state = _human("know-pool-high")
+    high_state.attributes["INT"] = 5
+    high_state.attributes["LOG"] = 4
+    high = compute(high_state)
+    assert high.derived["points"]["knowledge"] == {"used": 0, "max": 18}
+
+
+def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:
+    state = _human(
+        "know-spend",
+        knowledge_skills={"Alcohol": 3, "English": 2},
+        native_languages=["Japanese"],
+    )
+    state.attributes["INT"] = 3
+    state.attributes["LOG"] = 3
+    out = compute(state)
+    points = out.derived["points"]["knowledge"]
+    assert points == {"used": 5, "max": 12}
+    assert out.derived["errors"] == []
+    public = {row["name"]: row for row in out.derived["knowledge_skills"]}
+    assert public["Japanese"] == {
+        "name": "Japanese",
+        "category": "Language",
+        "attribute": "INT",
+        "rating": 0,
+        "native": True,
+    }
+    assert public["Alcohol"]["category"] == "Interest"
+    assert public["Alcohol"]["rating"] == 3
+    assert public["English"]["native"] is False
+    assert "Japanese" not in out.knowledge_skills
+    assert out.native_languages == ["Japanese"]
+
+
+def test_knowledge_overspend_is_an_error() -> None:
+    out = compute(_human("know-over", knowledge_skills={"Alcohol": 6, "Biology": 6, "Chemistry": 1}))
+    assert out.derived["points"]["knowledge"]["used"] == 13
+    assert any("知識スキル点が不足しています" in err for err in out.derived["errors"])
+
+
+def test_custom_knowledge_keeps_category_and_mnemonic_bonus() -> None:
+    out = compute(
+        _human(
+            "know-custom",
+            knowledge_skills={"Seattle Gangs": 2},
+            knowledge_categories={"Seattle Gangs": "Street"},
+            bioware=[CyberwareInstall(ware_id=MNEMONIC, rating=2)],
+        )
+    )
+    row = next(item for item in out.derived["knowledge_skills"] if item["name"] == "Seattle Gangs")
+    assert row["category"] == "Street"
+    assert row["attribute"] == "INT"
+    assert out.knowledge_categories == {"Seattle Gangs": "Street"}
+    assert out.derived["skill_bonus"]["Seattle Gangs"] == 2
+
+
+def test_second_native_language_is_warned() -> None:
+    out = compute(_human("know-natives", native_languages=["Japanese", "English"]))
+    assert out.native_languages == ["Japanese"]
+    assert any("母語は1つまで" in warn for warn in out.derived["warnings"])
+    assert out.derived["points"]["knowledge"]["used"] == 0
+
+
 def test_skill_group_exclude_is_honored() -> None:
     effects = collect_effects(
         [
@@ -959,6 +1033,69 @@ def test_catlike_adds_sneaking() -> None:
     out = compute(_human("catlike", quality_ids=[CATLIKE]))
     assert out.derived["skill_bonus"]["Sneaking"] == 2
     assert out.derived["skill_pick_slots"] == []
+
+
+ALLERGY_MILD = "b7841930-0c7b-4be4-b1cf-86debc41aa95"
+ALLERGY_EXTREME = "8a40007a-9876-4998-a7c9-047248cfbc52"
+HUMAN_LOOKING = "2844e64e-f271-4ca7-bd58-0860b2db56c9"
+ASTRAL_CHAMELEON = "7d81f676-e523-4ec6-ae98-8d801f90b031"
+
+
+def test_allergy_requires_target_text() -> None:
+    missing = compute(_human("allergy-empty", quality_ids=[ALLERGY_MILD]))
+    assert any("対象を入力してください" in err for err in missing.derived["errors"])
+    filled = compute(
+        _human("allergy-sun", quality_ids=[ALLERGY_MILD], quality_extras={ALLERGY_MILD: "Sunlight"})
+    )
+    assert filled.derived["errors"] == []
+    assert filled.derived["karma"]["negative"] == {"used": 5, "max": 25}
+    assert filled.derived["karma"]["remaining"] == 30
+
+
+def test_negative_quality_karma_is_capped_at_25() -> None:
+    out = compute(
+        _human(
+            "neg-cap",
+            quality_ids=[ALLERGY_EXTREME, ALLERGY_MILD],
+            quality_extras={ALLERGY_EXTREME: "Bees", ALLERGY_MILD: "Sunlight"},
+        )
+    )
+    assert out.derived["karma"]["negative"]["used"] == 30
+    assert any("不利クオリティから得られるカルマが上限を超えています" in err for err in out.derived["errors"])
+
+
+def test_human_looking_requires_nonhuman_metatype() -> None:
+    human = compute(_human("looking-human", quality_ids=[HUMAN_LOOKING]))
+    assert any("Human-Looking の前提を満たしていません" in err for err in human.derived["errors"])
+    elf = compute(
+        CharacterState(
+            id="looking-elf",
+            name="looking-elf",
+            priorities=Priorities(),
+            metatype="Elf",
+            attributes=default_attributes(find_metatype("Elf", None)),
+            quality_ids=[HUMAN_LOOKING],
+        )
+    )
+    assert elf.derived["errors"] == []
+
+
+def test_astral_chameleon_requires_magic() -> None:
+    mundane = compute(_human("astral-mundane", quality_ids=[ASTRAL_CHAMELEON]))
+    assert any("Astral Chameleon の前提を満たしていません" in err for err in mundane.derived["errors"])
+    attrs = default_attributes(find_metatype("Human", None))
+    mage = compute(
+        CharacterState(
+            id="astral-mage",
+            name="astral-mage",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
+            metatype="Human",
+            talent="Magician",
+            attributes=attrs,
+            quality_ids=[ASTRAL_CHAMELEON],
+        )
+    )
+    assert not any("前提を満たしていません" in err for err in mage.derived["errors"])
 
 
 def test_voice_modulator_rating_adds_impersonation() -> None:
@@ -1349,3 +1486,1996 @@ def test_adept_spell_overcast_is_physical() -> None:
     assert row["spell"]["force"] == 7
     assert row["spell"]["drain"] == 4
     assert row["spell"]["drain_code"] == "P"
+
+
+HERMETIC = "19320625-bc1a-492f-8904-da6a847e5700"
+SHAMANIC = "8d185e0e-5f49-4992-babd-d1ac9c848f68"
+STUNBOLT = "47423962-6b73-4cc3-ad4e-e8d037cf9507"
+
+
+def _mage(cid: str, letter: str = "A", **kwargs: object) -> CharacterState:
+    attrs = kwargs.pop("attributes", None) or default_attributes(find_metatype("Human", None))
+    return CharacterState(
+        id=cid,
+        name=cid,
+        priorities=Priorities(
+            Heritage="C",
+            Attributes="B" if letter == "A" else "A",
+            Talent=letter,
+            Skills="D",
+            Resources="E",
+        ),
+        metatype="Human",
+        talent="Magician",
+        attributes=attrs,  # type: ignore[arg-type]
+        **kwargs,  # type: ignore[arg-type]
+    )
+
+
+def _learnable_ids(count: int) -> list[str]:
+    return [item["id"] for item in catalog()["spells"] if item.get("learnable")][:count]
+
+
+def test_tradition_resist_hermetic() -> None:
+    spec = next(item for item in catalog()["traditions"] if item["id"] == HERMETIC)
+    pool, label = tradition_resist(spec, {"WIL": 5, "LOG": 6, "INT": 2, "CHA": 1})
+    assert pool == 11
+    assert label == "WIL+LOG"
+
+
+def test_mage_stunbolt_uses_hermetic_drain() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["WIL"] = 5
+    attrs["LOG"] = 4
+    attrs["INT"] = 2
+    out = compute(
+        _mage(
+            "hermetic-drain",
+            attributes=attrs,
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT)],
+        )
+    )
+    row = out.derived["spells"][0]
+    assert row["name"] == "Stunbolt"
+    assert row["free"] is True
+    assert row["karma"] == 0
+    assert row["spell"]["dv"] == "F-3"
+    assert row["spell"]["force"] == 6
+    assert row["spell"]["drain"] == 3
+    assert row["spell"]["drain_code"] == "S"
+    assert row["spell"]["resist"] == 9
+    assert row["spell"]["resist_attrs"] == "WIL+LOG"
+    assert out.derived["tradition"]["name"] == "Hermetic"
+    assert out.derived["karma"]["spent"] == 0
+    assert not any("伝統" in warn for warn in out.derived["warnings"])
+
+
+def test_mage_overcast_is_physical() -> None:
+    out = compute(
+        _mage(
+            "mage-overcast",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT, force=7)],
+        )
+    )
+    row = out.derived["spells"][0]
+    assert row["spell"]["force"] == 7
+    assert row["spell"]["drain"] == 4
+    assert row["spell"]["drain_code"] == "P"
+
+
+def test_eleventh_spell_costs_five_karma() -> None:
+    ids = _learnable_ids(11)
+    assert len(ids) == 11
+    out = compute(
+        _mage(
+            "eleven",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=sid) for sid in ids],
+        )
+    )
+    assert out.derived["spell_points"]["used"] == 11
+    assert out.derived["spell_points"]["paid"] == 1
+    assert out.derived["spells"][-1]["free"] is False
+    assert out.derived["spells"][-1]["karma"] == 5
+    assert out.derived["karma"]["spent"] == 5
+    assert out.derived["errors"] == []
+
+
+def test_duplicate_spell_is_dropped() -> None:
+    out = compute(
+        _mage(
+            "dup",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT), SpellInstall(spell_id=STUNBOLT)],
+        )
+    )
+    assert len(out.derived["spells"]) == 1
+    assert any("重複" in warn for warn in out.derived["warnings"])
+
+
+def test_aspected_magician_buys_spells() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    out = compute(
+        CharacterState(
+            id="aspected",
+            name="aspected",
+            priorities=Priorities(Heritage="C", Attributes="A", Talent="B", Skills="D", Resources="E"),
+            metatype="Human",
+            talent="Aspected Magician",
+            attributes=attrs,
+            tradition_id=SHAMANIC,
+            spells=[SpellInstall(spell_id=STUNBOLT)],
+        )
+    )
+    assert out.derived["spell_points"]["free"] == 0
+    assert out.derived["spells"][0]["karma"] == 5
+    assert out.derived["karma"]["spent"] == 5
+    assert out.derived["spells"][0]["spell"]["resist_attrs"] == "WIL+CHA"
+
+
+def test_adept_has_no_spell_tab() -> None:
+    out = compute(_adept("no-spells"))
+    assert "spells" not in out.derived["enabled_tabs"]
+    assert out.derived["spell_points"]["free"] == 0
+
+
+def test_mystic_adept_spell_uses_tradition() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["WIL"] = 4
+    attrs["LOG"] = 5
+    out = compute(
+        CharacterState(
+            id="mystic",
+            name="mystic",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
+            metatype="Human",
+            talent="Mystic Adept",
+            attributes=attrs,
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT)],
+            adept_powers=[AdeptPowerInstall(power_id=ADEPT_SPELL, extra="Stunbolt")],
+        )
+    )
+    assert "spells" in out.derived["enabled_tabs"]
+    assert "adept" in out.derived["enabled_tabs"]
+    assert out.derived["spells"][0]["spell"]["resist_attrs"] == "WIL+LOG"
+    adept_row = next(item for item in out.derived["adept_powers"] if item["name"] == "Adept Spell")
+    assert adept_row["spell"]["resist_attrs"] == "WIL+LOG"
+    assert adept_row["spell"]["resist"] == 9
+
+
+WARD = "3cea53a2-7628-4009-9bc4-af2f141fc28d"
+RECHARGE_REAGENTS = "e45f4b5d-8969-4e03-ae55-583beee464fc"
+
+
+def test_ward_ritual_uses_free_slot() -> None:
+    out = compute(
+        _mage(
+            "ward",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=WARD)],
+        )
+    )
+    row = out.derived["spells"][0]
+    assert row["name"] == "Ward"
+    assert row["kind"] == "ritual"
+    assert row["useskill"] == "Ritual Spellcasting"
+    assert row["has_force"] is True
+    assert row["free"] is True
+    assert row["spell"]["drain"] is None
+    assert row["spell"]["dv"] == "Special"
+    assert out.derived["spell_points"]["used"] == 1
+    assert out.derived["karma"]["spent"] == 0
+
+
+def test_enchantment_warns_for_metamagic() -> None:
+    out = compute(
+        _mage(
+            "reagents",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=RECHARGE_REAGENTS)],
+        )
+    )
+    row = out.derived["spells"][0]
+    assert row["name"] == "Recharge Reagents"
+    assert row["kind"] == "enchantment"
+    assert row["useskill"] == "Artificing"
+    assert row["has_force"] is False
+    assert row["spell"] is None
+    assert row["free"] is True
+    assert any("Geomancy" in warn for warn in out.derived["warnings"])
+
+
+def test_ritual_and_spell_share_free_pool() -> None:
+    out = compute(
+        _mage(
+            "mix",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT), SpellInstall(spell_id=WARD)],
+        )
+    )
+    kinds = {item["name"]: item["kind"] for item in out.derived["spells"]}
+    assert kinds["Stunbolt"] == "spell"
+    assert kinds["Ward"] == "ritual"
+    assert out.derived["spell_points"]["used"] == 2
+    assert out.derived["karma"]["spent"] == 0
+
+
+def test_enchanter_can_buy_enchantments() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    out = compute(
+        CharacterState(
+            id="enchanter",
+            name="enchanter",
+            priorities=Priorities(Heritage="C", Attributes="A", Talent="C", Skills="B", Resources="E"),
+            metatype="Human",
+            talent="Enchanter",
+            attributes=attrs,
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=RECHARGE_REAGENTS)],
+        )
+    )
+    assert "spells" in out.derived["enabled_tabs"]
+    assert out.derived["spell_points"]["free"] == 0
+    assert out.derived["spells"][0]["karma"] == 5
+    assert out.derived["karma"]["spent"] == 5
+
+
+def test_adept_spell_rejects_ritual() -> None:
+    out = compute(
+        _adept(
+            "no-ritual",
+            adept_powers=[AdeptPowerInstall(power_id=ADEPT_SPELL, extra="Ward")],
+        )
+    )
+    row = next(item for item in out.derived["adept_powers"] if item["name"] == "Adept Spell")
+    assert row["extra"] != "Ward"
+    assert any("無効" in warn for warn in out.derived["warnings"])
+
+
+SPIRIT_FIRE = "c0178bf8-1fc5-4c56-9ce1-92a3ae1adc45"
+SPIRIT_BEASTS = "c5e35ac9-5737-4003-8c9e-eb016d2bccd2"
+POWER_FOCUS = "62bfb38d-5515-440b-83ed-289ed926d27e"
+WEAPON_FOCUS = "25b0168d-7052-4f76-b8e5-162d67b8ab6e"
+SPELLCASTING_COMBAT = "2f485376-54c1-41be-8678-79cc98e04ebc"
+
+
+def _mage_rich(cid: str, **kwargs: object) -> CharacterState:
+    attrs = kwargs.pop("attributes", None) or default_attributes(find_metatype("Human", None))
+    return CharacterState(
+        id=cid,
+        name=cid,
+        priorities=Priorities(Heritage="E", Attributes="C", Talent="A", Skills="D", Resources="B"),
+        metatype="Human",
+        talent="Magician",
+        attributes=attrs,  # type: ignore[arg-type]
+        **kwargs,  # type: ignore[arg-type]
+    )
+
+
+def test_hermetic_binds_fire_spirit() -> None:
+    out = compute(
+        _mage(
+            "bind-fire",
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=2)],
+        )
+    )
+    row = out.derived["spirits"][0]
+    assert row["name"] == "Spirit of Fire"
+    assert row["role"] == "combat"
+    assert row["force"] == 3
+    assert row["services"] == 2
+    assert row["nuyen"] == 60
+    assert row["attributes"]["BOD"] == 4
+    assert row["attributes"]["AGI"] == 5
+    assert row["attributes"]["REA"] == 6
+    assert row["attributes"]["STR"] == 1
+    assert row["attributes"]["INI"] == 9
+    assert "Elemental Attack" in row["powers"]
+    assert out.derived["nuyen_spent"] == 60
+    assert "spirits" in out.derived["enabled_tabs"]
+
+
+def test_shaman_rejects_fire_spirit() -> None:
+    out = compute(
+        _mage(
+            "wrong-spirit",
+            tradition_id=SHAMANIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=1)],
+        )
+    )
+    assert out.derived["spirits"] == []
+    assert any("召喚できません" in warn for warn in out.derived["warnings"])
+
+
+def test_spirit_force_clamps_to_magic() -> None:
+    out = compute(
+        _mage(
+            "spirit-cap",
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=12, services=9)],
+        )
+    )
+    row = out.derived["spirits"][0]
+    assert row["force"] == 6
+    assert row["services"] == 6
+    assert row["nuyen"] == 120
+
+
+def test_enchanter_cannot_bind_spirits() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    out = compute(
+        CharacterState(
+            id="no-summon",
+            name="no-summon",
+            priorities=Priorities(Heritage="C", Attributes="A", Talent="C", Skills="B", Resources="E"),
+            metatype="Human",
+            talent="Enchanter",
+            attributes=attrs,
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=2, services=1)],
+        )
+    )
+    assert out.derived["spirits"] == []
+    assert "spirits" not in out.derived["enabled_tabs"]
+    assert "foci" in out.derived["enabled_tabs"]
+
+
+def test_power_focus_costs_and_boosts_magic_skills() -> None:
+    out = compute(
+        _mage_rich(
+            "power-focus",
+            tradition_id=HERMETIC,
+            foci=[FocusInstall(gear_id=POWER_FOCUS, force=2)],
+        )
+    )
+    row = out.derived["foci"][0]
+    assert row["name"] == "Power Focus"
+    assert row["force"] == 2
+    assert row["nuyen"] == 36000
+    assert row["karma"] == 2
+    assert out.derived["nuyen_spent"] == 36000
+    assert out.derived["karma"]["spent"] == 2
+    assert out.derived["skill_bonus"]["Spellcasting"] == 2
+    assert out.derived["skill_bonus"]["Summoning"] == 2
+    assert out.derived["focus_limits"]["count"] == 1
+    assert out.derived["focus_limits"]["force"] == 2
+
+
+def test_spellcasting_focus_marks_combat_spells() -> None:
+    out = compute(
+        _mage_rich(
+            "spell-focus",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=STUNBOLT)],
+            foci=[FocusInstall(gear_id=SPELLCASTING_COMBAT, force=3)],
+        )
+    )
+    assert out.derived["foci"][0]["nuyen"] == 12000
+    assert out.derived["foci"][0]["karma"] == 3
+    assert out.derived["spells"][0]["focus_bonus"] == 3
+
+
+def test_bound_focus_count_cannot_exceed_magic() -> None:
+    out = compute(
+        _mage_rich(
+            "too-many-foci",
+            foci=[FocusInstall(gear_id=WEAPON_FOCUS, force=1) for _ in range(7)],
+        )
+    )
+    assert out.derived["focus_limits"]["count"] == 7
+    assert any("魔力まで" in err for err in out.derived["errors"])
+
+
+def test_bound_focus_force_total_cannot_exceed_magic_times_five() -> None:
+    out = compute(
+        _mage_rich(
+            "too-much-force",
+            foci=[FocusInstall(gear_id=WEAPON_FOCUS, force=6) for _ in range(6)],
+        )
+    )
+    assert out.derived["focus_limits"]["force"] == 36
+    assert any("Force合計" in err for err in out.derived["errors"])
+
+
+def test_summoned_spirit_uses_summoning_test() -> None:
+    out = compute(
+        _mage(
+            "summon-fire",
+            tradition_id=HERMETIC,
+            skills={"Summoning": 4},
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, bound=False, hits=5, opposed_hits=2)],
+        )
+    )
+    row = out.derived["spirits"][0]
+    assert row["bound"] is False
+    assert row["nuyen"] == 0
+    assert row["services"] == 3
+    assert row["force"] == 3
+    assert out.derived["nuyen_spent"] == 0
+    test = row["test"]
+    assert test["skill"] == "Summoning"
+    assert test["pool"] == 10
+    assert test["vs"] == 3
+    assert test["limit"] == 3
+    assert test["drain"] == 4
+    assert test["drain_code"] == "S"
+    assert test["net"] == 3
+    assert test["missing"] is False
+
+
+def test_summoned_overcast_is_physical() -> None:
+    out = compute(
+        _mage(
+            "summon-over",
+            tradition_id=HERMETIC,
+            skills={"Summoning": 6},
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=7, bound=False, hits=4, opposed_hits=3)],
+        )
+    )
+    row = out.derived["spirits"][0]
+    assert row["force"] == 7
+    assert row["test"]["vs"] == 7
+    assert row["test"]["physical"] is True
+    assert row["test"]["drain"] == 6
+    assert row["test"]["drain_code"] == "P"
+    assert row["services"] == 1
+
+
+def test_bound_spirit_uses_binding_test() -> None:
+    out = compute(
+        _mage(
+            "bind-test",
+            tradition_id=HERMETIC,
+            skills={"Binding": 3},
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, bound=True, hits=6, opposed_hits=2)],
+        )
+    )
+    row = out.derived["spirits"][0]
+    assert row["bound"] is True
+    assert row["nuyen"] == 60
+    assert row["services"] == 4
+    assert row["test"]["skill"] == "Binding"
+    assert row["test"]["pool"] == 9
+    assert row["test"]["vs"] == 6
+    assert row["test"]["drain"] == 4
+
+
+def test_summon_without_skill_warns() -> None:
+    out = compute(
+        _mage(
+            "no-summon-skill",
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=1, bound=False)],
+        )
+    )
+    assert out.derived["spirits"][0]["test"]["missing"] is True
+    assert any("Summoning" in warn for warn in out.derived["warnings"])
+
+
+def test_crafted_power_focus_uses_formula_and_artificing() -> None:
+    out = compute(
+        _mage_rich(
+            "craft-power",
+            skills={"Artificing": 5},
+            foci=[FocusInstall(gear_id=POWER_FOCUS, force=2, crafted=True, formula_bought=True, hits=5, opposed_hits=2)],
+        )
+    )
+    row = out.derived["foci"][0]
+    assert row["crafted"] is True
+    assert row["formula_nuyen"] == 9000
+    assert row["reagent_nuyen"] == 40
+    assert row["nuyen"] == 9040
+    assert row["retail_nuyen"] == 36000
+    assert row["karma"] == 2
+    test = row["test"]
+    assert test["skill"] == "Artificing"
+    assert test["pool"] == 11
+    assert test["vs"] == 4
+    assert test["days"] == 2
+    assert test["drain"] == 4
+    assert test["net"] == 3
+    assert test["missing"] is False
+
+
+def test_designed_formula_skips_formula_price() -> None:
+    out = compute(
+        _mage_rich(
+            "design-formula",
+            skills={"Artificing": 4, "Arcana": 3},
+            foci=[FocusInstall(gear_id=POWER_FOCUS, force=1, crafted=True, formula_bought=False)],
+        )
+    )
+    row = out.derived["foci"][0]
+    assert row["nuyen"] == 20
+    assert row["formula_nuyen"] == 0
+    assert row["formula_test"]["skill"] == "Arcana"
+    assert row["formula_test"]["vs"] == 2
+    assert row["formula_test"]["limit_name"] == "Mental"
+    assert row["formula_test"]["missing"] is False
+
+
+def test_craft_without_artificing_warns() -> None:
+    out = compute(
+        _mage_rich(
+            "no-artifice",
+            foci=[FocusInstall(gear_id=POWER_FOCUS, force=1, crafted=True, hits=1, opposed_hits=1)],
+        )
+    )
+    assert out.derived["foci"][0]["test"]["missing"] is True
+    assert any("Artificing" in warn for warn in out.derived["warnings"])
+    assert any("失敗" in warn for warn in out.derived["warnings"])
+
+
+ARMOR_JACKET = "36a4cd30-c32c-44d0-847a-0c15fb51072a"
+ARMOR_VEST = "4ad1eeab-daf3-4495-a73d-fbb0ce89be5b"
+HELMET = "fd6e194b-89ea-4030-9203-87341442eadb"
+CHEM_PROT = "480b7c5d-758b-4833-8bfd-9487e2455f7d"
+FIRE_RES = "dd246520-7306-40fb-88b4-c9cb031208fc"
+SHOCK_FRILLS = "dbdaf817-9bfa-4938-a195-b53c63b53e7c"
+GEL_PACKS = "ed43ded4-1b2f-410a-9322-166c39306d03"
+FULL_BODY = "9ee80c97-9197-4dd5-baed-f77cfd2cee17"
+FBA_HELMET = "71c20b15-de11-49eb-93fe-f4d7491283e3"
+URBAN_EXPLORER = "d8d9154d-c8d3-4593-a408-9f5b259f0363"
+UE_HELMET = "812a7926-3980-4c26-9935-5f1b66abacda"
+DIVING_ARMOR = "f2aab6fa-645a-4d39-a612-91d3ee9e6bce"
+META_LINK = "89a0f3c9-5ef6-41cd-981f-4ac690ee2ab3"
+CUSTOM_LINK = "d63eb841-7b15-4539-9026-b90a4924aeeb"
+LOW_LIFESTYLE = "451eef87-d18e-4bee-a972-1ee165b08522"
+LUXURY_LIFESTYLE = "4b513ac9-9eb3-471b-931b-839a04873b84"
+PREDATOR = "971c711b-db32-4339-9203-865ef38f350e"
+LIGHT_FIRE_70 = "67474de7-d29b-4b31-a6ae-1e2e981fa5d2"
+KNIFE = "eb16de72-e646-4880-aa5b-21a5a0a2b342"
+INTERNAL_SMARTGUN = "d57d2c64-1f61-4f5f-a465-8ce0dfacec6a"
+ERIKA_DECK = "b6d1476d-a08c-43fc-be0e-68ca9330a43e"
+RADIO_SHACK_RCC = "9d410862-89ae-408c-8342-82f7e6c1ae8f"
+GLASSES = "b218dbd1-5706-4d9e-a6a7-ab9b658c3acd"
+BINOCULARS = "1c6db3ed-a360-40b4-8118-9aca9d96001c"
+FLARE_COMP = "7fc23c2f-b41a-46b0-9ed7-9dc93986fab3"
+IMAGE_LINK = "2886d77a-1321-4a29-aec8-8040b9c5776f"
+EARBUDS = "5d69d002-c33d-4d0f-9c4d-d78db4d78e5d"
+SPATIAL = "3f086e04-8de6-4d4e-a503-a19cba8295f5"
+BROWSE = "b3c0a6bd-e086-4971-be77-dc9a9cb2e174"
+ARMOR_PROG = "a1e4b783-0751-43eb-b5bd-ee00f84b7bb3"
+EXPLOIT = "67ea7c0c-1703-412b-80d3-9c23cc6d8291"
+CLEARSIGHT = "149a8dd2-dfef-473f-94a4-1bdd77e4f855"
+SENSOR_ARRAY = "2ca81a10-d0f7-4b39-ac93-a84f2f69f9d9"
+SINGLE_SENSOR = "2d4edef2-2891-4383-83f6-81f05cfbd046"
+HANDHELD_HOUSING = "49bbc9d3-860d-47db-b4bc-8417f5b6ab65"
+ATMOSPHERE = "5c3b9966-ad7e-42e3-b0e0-f656021784cf"
+MOTION_SENSOR = "e853967a-a2b8-4d89-9a97-773034489a16"
+
+
+def _mundane(cid: str, **kwargs: object) -> CharacterState:
+    return CharacterState(
+        id=cid,
+        name=cid,
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+        **kwargs,
+    )
+
+
+def test_armor_jacket_adds_armor_and_nuyen() -> None:
+    out = compute(_mundane("jacket", armor=[ArmorInstall(armor_id=ARMOR_JACKET)]))
+    assert out.derived["armor"] == 12
+    assert out.derived["nuyen_spent"] == 1000
+    assert out.derived["worn_armor"] == "Armor Jacket"
+    assert out.derived["errors"] == []
+
+
+def test_helmet_stacks_on_jacket() -> None:
+    out = compute(
+        _mundane(
+            "helm",
+            armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=HELMET)],
+        )
+    )
+    assert out.derived["armor"] == 14
+    assert out.derived["nuyen_spent"] == 1100
+
+
+def test_two_armor_suits_use_highest() -> None:
+    out = compute(
+        _mundane(
+            "stack",
+            armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=ARMOR_VEST)],
+        )
+    )
+    assert out.derived["armor"] == 12
+    assert out.derived["nuyen_spent"] == 1500
+    assert any("一番高い" in warn for warn in out.derived["warnings"])
+
+
+def test_orthoskin_stacks_with_jacket() -> None:
+    out = compute(
+        _mundane(
+            "skin-jacket",
+            armor=[ArmorInstall(armor_id=ARMOR_JACKET)],
+            bioware=[CyberwareInstall(ware_id=ORTHOSKIN, rating=2)],
+        )
+    )
+    assert out.derived["armor"] == 14
+    assert out.derived["nuyen_spent"] == 13000
+
+
+def test_chemical_protection_on_jacket() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "chem-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=2)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert out.derived["armor"] == 12
+    assert out.derived["nuyen_spent"] == 1500
+    assert row["capacity_used"] == 2
+    assert row["capacity_max"] == 12
+    assert row["mods"][0]["nuyen"] == 500
+    assert out.derived["errors"] == []
+
+
+def test_shock_frills_uses_capacity() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "shock-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=SHOCK_FRILLS, parent_id=jacket.id)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert out.derived["nuyen_spent"] == 1250
+    assert row["capacity_used"] == 2
+    assert out.derived["errors"] == []
+
+
+def test_armor_mod_capacity_overflow() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "overflow",
+            armor=[jacket],
+            armor_mods=[
+                ArmorModInstall(mod_id=FIRE_RES, parent_id=jacket.id, rating=6),
+                ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=6),
+                ArmorModInstall(mod_id=SHOCK_FRILLS, parent_id=jacket.id),
+            ],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert row["capacity_used"] == 14
+    assert any("容量超過" in err for err in out.derived["errors"])
+
+
+def test_full_body_armor_helmet_adds_armor() -> None:
+    suit = ArmorInstall(armor_id=FULL_BODY)
+    out = compute(
+        _mundane(
+            "fba",
+            armor=[suit],
+            armor_mods=[ArmorModInstall(mod_id=FBA_HELMET, parent_id=suit.id)],
+        )
+    )
+    assert out.derived["armor"] == 18
+    assert out.derived["nuyen_spent"] == 2500
+    assert out.derived["armor_items"][0]["mods"][0]["capacity_cost"] == 0
+
+
+def test_urban_explorer_helmet_fits_only_jumpsuit() -> None:
+    suit = ArmorInstall(armor_id=URBAN_EXPLORER)
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    ok = compute(
+        _mundane(
+            "ue-helm",
+            armor=[suit],
+            armor_mods=[ArmorModInstall(mod_id=UE_HELMET, parent_id=suit.id)],
+        )
+    )
+    bad = compute(
+        _mundane(
+            "ue-on-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=UE_HELMET, parent_id=jacket.id)],
+        )
+    )
+    assert ok.derived["armor"] == 11
+    assert ok.derived["nuyen_spent"] == 750
+    assert any("装着できません" in warn for warn in bad.derived["warnings"])
+    assert bad.derived["nuyen_spent"] == 1000
+
+
+def test_fba_helmet_rejected_on_jacket() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "fba-on-jacket",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=FBA_HELMET, parent_id=jacket.id)],
+        )
+    )
+    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert out.derived["armor"] == 12
+    assert out.derived["nuyen_spent"] == 1000
+
+
+def test_armor_mod_without_parent_is_dropped() -> None:
+    out = compute(_mundane("orphan-mod", armor_mods=[ArmorModInstall(mod_id=CHEM_PROT, rating=1)]))
+    assert any("防具に装着" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 0
+
+
+def test_gel_packs_add_armor() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "gel",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=GEL_PACKS, parent_id=jacket.id)],
+        )
+    )
+    assert out.derived["armor"] == 14
+    assert out.derived["nuyen_spent"] == 2500
+    assert out.derived["armor_items"][0]["capacity_used"] == 0
+
+
+def test_diving_armor_includes_chemical_protection() -> None:
+    out = compute(_mundane("dive", armor=[ArmorInstall(armor_id=DIVING_ARMOR)]))
+    row = out.derived["armor_items"][0]
+    names = [mod["name"] for mod in row["mods"]]
+    assert "Chemical Protection" in names
+    assert row["mods"][0]["included"] is True
+    assert row["mods"][0]["rating"] == 4
+    assert row["mods"][0]["nuyen"] == 0
+    assert row["capacity_used"] == 0
+    assert out.derived["nuyen_spent"] == 1750
+
+
+def test_duplicate_chemical_protection_is_rejected() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "dup-chem",
+            armor=[jacket],
+            armor_mods=[
+                ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=2),
+                ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=3),
+            ],
+        )
+    )
+    assert len(out.derived["armor_items"][0]["mods"]) == 1
+    assert any("重複" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 1500
+
+
+def test_meta_link_costs_nuyen() -> None:
+    out = compute(_mundane("metalink", commlinks=[CommlinkInstall(gear_id=META_LINK)]))
+    row = out.derived["commlinks"][0]
+    assert row["nuyen"] == 100
+    assert row["device_rating"] == 1
+    assert row["dataprocessing"] == 1
+    assert row["firewall"] == 1
+    assert out.derived["nuyen_spent"] == 100
+
+
+def test_custom_commlink_rating_four() -> None:
+    out = compute(_mundane("custom-link", commlinks=[CommlinkInstall(gear_id=CUSTOM_LINK, rating=4)]))
+    row = out.derived["commlinks"][0]
+    assert row["nuyen"] == 2500
+    assert row["device_rating"] == 4
+
+
+def test_low_lifestyle_one_month() -> None:
+    out = compute(_mundane("low-life", lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, months=1)]))
+    assert out.derived["nuyen_spent"] == 2000
+    assert out.derived["lifestyle"]["name"] == "Low"
+    assert out.derived["errors"] == []
+
+
+def test_low_lifestyle_two_months() -> None:
+    out = compute(_mundane("low-life-2", lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, months=2)]))
+    assert out.derived["nuyen_spent"] == 4000
+
+
+def test_luxury_lifestyle_exceeds_resources() -> None:
+    out = compute(_mundane("luxury", lifestyles=[LifestyleInstall(lifestyle_id=LUXURY_LIFESTYLE, months=1)]))
+    assert out.derived["nuyen_spent"] == 100000
+    assert any("ニューエンが不足" in err for err in out.derived["errors"])
+
+
+def test_predator_purchase() -> None:
+    out = compute(_mundane("predator", weapons=[WeaponInstall(weapon_id=PREDATOR, qty=1)]))
+    row = out.derived["weapons"][0]
+    assert row["nuyen"] == 725
+    assert row["damage"] == "8P"
+    assert row["ap"] == "-1"
+    assert row["accuracy"] == "7"
+    assert any(acc["name"] == "Smartgun System, Internal" and acc["included"] for acc in row["accessories"])
+    assert out.derived["errors"] == []
+
+
+def test_erika_cyberdeck_matrix_array() -> None:
+    out = compute(_mundane("erika", cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
+    row = out.derived["cyberdecks"][0]
+    assert row["nuyen"] == 49500
+    assert row["device_rating"] == 1
+    assert row["attack"] == 4
+    assert row["sleaze"] == 3
+    assert row["dataprocessing"] == 2
+    assert row["firewall"] == 1
+    assert row["programs"] == 1
+    assert row["array"] == [4, 3, 2, 1]
+    assert row["array_order"] == ["attack", "sleaze", "dataprocessing", "firewall"]
+    assert row["can_reorder"] is True
+    assert out.derived["cyberdeck"]["name"] == "Erika MCD-1"
+    assert out.derived["nuyen_spent"] == 49500
+
+
+def test_erika_cyberdeck_array_reorder() -> None:
+    out = compute(
+        _mundane(
+            "erika-reorder",
+            cyberdecks=[
+                GearInstall(
+                    gear_id=ERIKA_DECK,
+                    array_order=["firewall", "dataprocessing", "sleaze", "attack"],
+                )
+            ],
+        )
+    )
+    row = out.derived["cyberdecks"][0]
+    assert row["attack"] == 1
+    assert row["sleaze"] == 2
+    assert row["dataprocessing"] == 3
+    assert row["firewall"] == 4
+    assert row["array"] == [4, 3, 2, 1]
+    assert row["array_order"] == ["firewall", "dataprocessing", "sleaze", "attack"]
+    assert out.derived["cyberdeck"]["attack"] == 1
+    assert out.derived["nuyen_spent"] == 49500
+
+
+def test_erika_cyberdeck_invalid_array_order_is_normalized() -> None:
+    out = compute(
+        _mundane(
+            "erika-bad-order",
+            cyberdecks=[GearInstall(gear_id=ERIKA_DECK, array_order=["attack", "attack", "nope"])],
+        )
+    )
+    row = out.derived["cyberdecks"][0]
+    assert row["array_order"] == ["attack", "sleaze", "dataprocessing", "firewall"]
+    assert row["attack"] == 4
+    assert row["sleaze"] == 3
+    assert row["dataprocessing"] == 2
+    assert row["firewall"] == 1
+
+
+def test_radio_shack_rcc() -> None:
+    out = compute(_mundane("rcc", rccs=[GearInstall(gear_id=RADIO_SHACK_RCC)]))
+    row = out.derived["rccs"][0]
+    assert row["nuyen"] == 8000
+    assert row["device_rating"] == 2
+    assert row["dataprocessing"] == 3
+    assert row["firewall"] == 3
+    assert row["programs"] == 2
+    assert row["can_reorder"] is False
+    assert out.derived["rcc"]["name"] == "Radio Shack Remote Controller"
+
+
+def test_rcc_ignores_array_order() -> None:
+    out = compute(
+        _mundane(
+            "rcc-order",
+            rccs=[
+                GearInstall(
+                    gear_id=RADIO_SHACK_RCC,
+                    array_order=["firewall", "dataprocessing", "attack", "sleaze"],
+                )
+            ],
+        )
+    )
+    row = out.derived["rccs"][0]
+    assert row["dataprocessing"] == 3
+    assert row["firewall"] == 3
+    assert row["can_reorder"] is False
+
+
+def test_glasses_with_vision_enhancements() -> None:
+    glasses = GearInstall(gear_id=GLASSES, rating=2)
+    out = compute(
+        _mundane(
+            "glasses",
+            optics=[
+                glasses,
+                GearInstall(gear_id=FLARE_COMP, parent_id=glasses.id),
+                GearInstall(gear_id=IMAGE_LINK, parent_id=glasses.id),
+            ],
+        )
+    )
+    parent = next(item for item in out.derived["optics"] if item["gear_id"] == GLASSES)
+    assert parent["nuyen"] == 200
+    assert parent["capacity_used"] == 2
+    assert parent["capacity_max"] == 2
+    assert out.derived["nuyen_spent"] == 475
+    assert out.derived["errors"] == []
+
+
+def test_glasses_capacity_overflow() -> None:
+    glasses = GearInstall(gear_id=GLASSES, rating=1)
+    out = compute(
+        _mundane(
+            "glasses-over",
+            optics=[
+                glasses,
+                GearInstall(gear_id=FLARE_COMP, parent_id=glasses.id),
+                GearInstall(gear_id=IMAGE_LINK, parent_id=glasses.id),
+            ],
+        )
+    )
+    assert any("容量超過" in err for err in out.derived["errors"])
+
+
+def test_binoculars_include_magnification() -> None:
+    out = compute(_mundane("binocs", optics=[GearInstall(gear_id=BINOCULARS, rating=1)]))
+    names = {item["name"] for item in out.derived["optics"]}
+    assert "Binoculars" in names
+    mag = next(item for item in out.derived["optics"] if item["name"] == "Vision Magnification")
+    assert mag["included"] is True
+    assert mag["nuyen"] == 0
+    parent = next(item for item in out.derived["optics"] if item["name"] == "Binoculars")
+    assert parent["capacity_used"] == 0
+    assert out.derived["nuyen_spent"] == 50
+
+
+def test_vision_mod_without_parent_is_dropped() -> None:
+    out = compute(_mundane("flare-loose", optics=[GearInstall(gear_id=FLARE_COMP)]))
+    assert out.derived["optics"] == []
+    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+
+
+def test_earbuds_spatial_recognizer() -> None:
+    buds = GearInstall(gear_id=EARBUDS, rating=2)
+    out = compute(
+        _mundane(
+            "earbuds",
+            optics=[buds, GearInstall(gear_id=SPATIAL, parent_id=buds.id)],
+        )
+    )
+    parent = next(item for item in out.derived["optics"] if item["gear_id"] == EARBUDS)
+    assert parent["nuyen"] == 100
+    assert parent["capacity_used"] == 2
+    assert parent["capacity_max"] == 2
+    assert out.derived["nuyen_spent"] == 1100
+    assert out.derived["errors"] == []
+
+
+def test_erika_can_buy_one_program() -> None:
+    deck = GearInstall(gear_id=ERIKA_DECK)
+    out = compute(
+        _mundane(
+            "erika-armor-prog",
+            cyberdecks=[deck],
+            programs=[GearInstall(gear_id=ARMOR_PROG, parent_id=deck.id)],
+        )
+    )
+    row = out.derived["cyberdecks"][0]
+    assert row["program_used"] == 1
+    assert row["program_max"] == 1
+    assert out.derived["programs"][0]["name"] == "Armor"
+    assert out.derived["nuyen_spent"] == 49750
+    assert out.derived["errors"] == []
+    assert not any("プログラムが上限超過" in warn for warn in out.derived["warnings"])
+
+
+def test_erika_program_slot_overflow_warns() -> None:
+    deck = GearInstall(gear_id=ERIKA_DECK)
+    out = compute(
+        _mundane(
+            "erika-two-progs",
+            cyberdecks=[deck],
+            programs=[
+                GearInstall(gear_id=ARMOR_PROG, parent_id=deck.id),
+                GearInstall(gear_id=BROWSE, parent_id=deck.id),
+            ],
+        )
+    )
+    assert out.derived["cyberdecks"][0]["program_used"] == 2
+    assert out.derived["nuyen_spent"] == 49830
+    assert any("プログラムが上限超過（2/1）" in warn for warn in out.derived["warnings"])
+
+
+def test_program_without_parent_is_dropped() -> None:
+    out = compute(_mundane("loose-browse", programs=[GearInstall(gear_id=BROWSE)]))
+    assert out.derived["programs"] == []
+    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 0
+
+
+def test_autosoft_on_rcc() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "rcc-soft",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=CLEARSIGHT, rating=3, parent_id=rcc.id)],
+        )
+    )
+    assert out.derived["rccs"][0]["program_used"] == 1
+    assert out.derived["rccs"][0]["program_max"] == 2
+    assert out.derived["programs"][0]["nuyen"] == 1500
+    assert out.derived["nuyen_spent"] == 9500
+    assert out.derived["errors"] == []
+
+
+def test_hacking_program_rejected_on_rcc() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "rcc-hack",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=EXPLOIT, parent_id=rcc.id)],
+        )
+    )
+    assert out.derived["programs"] == []
+    assert any("サイバーデッキに装着" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 8000
+
+
+def test_sensor_array_with_functions() -> None:
+    array = GearInstall(gear_id=SENSOR_ARRAY, rating=2)
+    out = compute(
+        _mundane(
+            "array",
+            sensors=[
+                array,
+                GearInstall(gear_id=ATMOSPHERE, parent_id=array.id),
+                GearInstall(gear_id=MOTION_SENSOR, parent_id=array.id),
+            ],
+        )
+    )
+    parent = next(item for item in out.derived["sensors"] if item["gear_id"] == SENSOR_ARRAY)
+    assert parent["nuyen"] == 2000
+    assert parent["capacity_used"] == 2
+    assert parent["capacity_max"] == 8
+    assert out.derived["nuyen_spent"] == 2000
+    assert out.derived["errors"] == []
+
+
+def test_handheld_housing_takes_single_sensor() -> None:
+    house = GearInstall(gear_id=HANDHELD_HOUSING, rating=2)
+    sensor = GearInstall(gear_id=SINGLE_SENSOR, rating=3, parent_id=house.id)
+    out = compute(_mundane("housing", sensors=[house, sensor]))
+    parent = next(item for item in out.derived["sensors"] if item["gear_id"] == HANDHELD_HOUSING)
+    child = next(item for item in out.derived["sensors"] if item["gear_id"] == SINGLE_SENSOR)
+    assert parent["nuyen"] == 200
+    assert parent["capacity_max"] == 2
+    assert parent["capacity_used"] == 1
+    assert child["nuyen"] == 300
+    assert child["capacity_cost"] == 1
+    assert out.derived["nuyen_spent"] == 500
+    assert out.derived["errors"] == []
+
+
+def test_sensor_array_does_not_fit_handheld() -> None:
+    house = GearInstall(gear_id=HANDHELD_HOUSING, rating=3)
+    array = GearInstall(gear_id=SENSOR_ARRAY, rating=2, parent_id=house.id)
+    out = compute(_mundane("array-in-hand", sensors=[house, array]))
+    parent = next(item for item in out.derived["sensors"] if item["gear_id"] == HANDHELD_HOUSING)
+    assert parent["capacity_used"] == 6
+    assert parent["capacity_max"] == 3
+    assert any("容量超過" in err for err in out.derived["errors"])
+
+
+def test_sensor_function_without_parent_is_dropped() -> None:
+    out = compute(_mundane("loose-atmo", sensors=[GearInstall(gear_id=ATMOSPHERE)]))
+    assert out.derived["sensors"] == []
+    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+
+
+SKILL_AUTOSOFT = "87d24cff-e63b-4f73-a115-7aa5e29ea467"
+DATASOFT = "1a55fbe3-b3c1-4568-882f-abe4dedb8572"
+AGENT_APP = "2d8396ff-a4a9-4382-ab69-70d198856e7f"
+LASER_SIGHT = "521f9c2e-dfb2-42a6-b707-9808ae4885de"
+GAS_VENT_2 = "b3827611-f631-461e-8660-e744593ba2d2"
+SILENCER = "0da6149e-982f-4051-825b-52c1b79c7e52"
+DOBERMAN = "9186a0a7-635f-4242-a0e8-238f48b17ca2"
+
+
+def test_skill_autosoft_needs_skill() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "skill-auto",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=SKILL_AUTOSOFT, rating=3, parent_id=rcc.id)],
+        )
+    )
+    assert out.derived["programs"][0]["nuyen"] == 1500
+    assert out.derived["nuyen_spent"] == 9500
+    assert any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert "First Aid" in out.derived["programs"][0]["extra_options"]
+
+
+def test_skill_autosoft_with_skill() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "skill-auto-pick",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=SKILL_AUTOSOFT, rating=2, parent_id=rcc.id, extra="Hardware")],
+        )
+    )
+    row = out.derived["programs"][0]
+    assert row["extra"] == "Hardware"
+    assert row["label"] == "Skill Autosoft (Hardware)"
+    assert row["nuyen"] == 1000
+    assert out.derived["nuyen_spent"] == 9000
+    assert not any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+
+
+def test_predator_laser_sight() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-laser",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=LASER_SIGHT, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["accuracy"] == "8"
+    assert row["nuyen"] == 850
+    assert out.derived["nuyen_spent"] == 850
+    names = {acc["name"] for acc in row["accessories"]}
+    assert "Laser Sight" in names
+    assert "Smartgun System, Internal" in names
+    assert out.derived["errors"] == []
+
+
+def test_internal_smartgun_retrofit_costs_weapon_price() -> None:
+    spec = next(item for item in catalog()["weapon_accessories"] if item["id"] == INTERNAL_SMARTGUN)
+    assert spec["purchasable"] is True
+    assert spec["cost"] == "Weapon Cost"
+    weapon = WeaponInstall(weapon_id=LIGHT_FIRE_70)
+    out = compute(
+        _mundane(
+            "smartgun-retrofit",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    smart = next(acc for acc in row["accessories"] if acc["name"] == "Smartgun System, Internal")
+    assert smart["included"] is False
+    assert smart["nuyen"] == 200
+    assert row["accuracy"] == "9"
+    assert row["nuyen"] == 400
+    assert out.derived["nuyen_spent"] == 400
+    assert out.derived["errors"] == []
+
+
+def test_internal_smartgun_qty_scales() -> None:
+    weapon = WeaponInstall(weapon_id=LIGHT_FIRE_70, qty=2)
+    out = compute(
+        _mundane(
+            "smartgun-qty",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    assert out.derived["weapons"][0]["nuyen"] == 800
+    assert out.derived["nuyen_spent"] == 800
+
+
+def test_internal_smartgun_forbidden_on_melee() -> None:
+    weapon = WeaponInstall(weapon_id=KNIFE)
+    out = compute(
+        _mundane(
+            "smartgun-knife",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    assert out.derived["nuyen_spent"] == 10
+    assert out.derived["weapons"][0]["accessories"] == []
+    assert any("装着できません" in warn for warn in out.derived["warnings"])
+
+
+def test_predator_keeps_included_internal_smartgun() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "pred-dup-smart",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    smarts = [acc for acc in row["accessories"] if acc["name"] == "Smartgun System, Internal"]
+    assert len(smarts) == 1
+    assert smarts[0]["included"] is True
+    assert smarts[0]["nuyen"] == 0
+    assert row["nuyen"] == 725
+    assert row["accuracy"] == "7"
+
+
+def test_barrel_accessories_conflict() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "barrel-full",
+            weapons=[weapon],
+            weapon_accessories=[
+                WeaponAccessoryInstall(accessory_id=GAS_VENT_2, parent_id=weapon.id),
+                WeaponAccessoryInstall(accessory_id=SILENCER, parent_id=weapon.id),
+            ],
+        )
+    )
+    assert any("マウントが足りません" in err for err in out.derived["errors"])
+
+
+def test_datasoft_on_commlink() -> None:
+    link = CommlinkInstall(gear_id=META_LINK)
+    out = compute(
+        _mundane(
+            "data-app",
+            commlinks=[link],
+            apps=[GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Security Companies")],
+        )
+    )
+    app = out.derived["apps"][0]
+    assert app["label"] == "Datasoft (Security Companies)"
+    assert app["nuyen"] == 120
+    assert out.derived["nuyen_spent"] == 220
+    assert out.derived["errors"] == []
+
+
+def test_agent_rating_cost() -> None:
+    link = CommlinkInstall(gear_id=META_LINK)
+    out = compute(
+        _mundane(
+            "agent-app",
+            commlinks=[link],
+            apps=[GearInstall(gear_id=AGENT_APP, rating=4, parent_id=link.id)],
+        )
+    )
+    assert out.derived["apps"][0]["nuyen"] == 8000
+    assert out.derived["nuyen_spent"] == 8100
+
+
+def test_app_without_commlink_is_dropped() -> None:
+    out = compute(_mundane("loose-app", apps=[GearInstall(gear_id=DATASOFT, extra="Maps")]))
+    assert out.derived["apps"] == []
+    assert any("通信機に装着" in warn for warn in out.derived["warnings"])
+
+
+def test_doberman_drone() -> None:
+    out = compute(_mundane("doberman", drones=[GearInstall(gear_id=DOBERMAN)]))
+    row = out.derived["drones"][0]
+    assert row["name"] == "GM-Nissan Doberman (Medium)"
+    assert row["pilot"] == "3"
+    assert row["body"] == "4"
+    assert row["nuyen"] == 5000
+    assert out.derived["nuyen_spent"] == 5000
+    assert out.derived["errors"] == []
+    assert {mod["name"] for mod in row["mods"]} == {"Rigger Interface"}
+    assert any(acc["name"] == "Sensor Array" for acc in row["sensors"])
+    assert row["weapon_mounts"]
+    assert row["slots_used"] == 0
+    assert row["slots_max"] == 4
+
+
+HONDA_SPIRIT = "79046746-a3fb-4eb2-a78a-82ebdeecdacc"
+FORD_AMERICAR = "898906ec-f2b9-43a4-98ad-6f79230b9a0c"
+DODGE_SCOOT = "c0d3e7fd-d5fd-48c4-b49d-0c7dea26895d"
+SUZUKI_MIRAGE = "86374792-b881-4d9b-915a-d0e6652bbf4d"
+RIGGER_INTERFACE = "354bd92f-dafc-42a4-979c-e3631be6cf45"
+
+
+def test_honda_spirit_costs_nuyen_and_includes_sensor() -> None:
+    out = compute(_mundane("spirit", vehicles=[GearInstall(gear_id=HONDA_SPIRIT)]))
+    row = out.derived["vehicles"][0]
+    assert row["name"] == "Honda Spirit (Subcompact)"
+    assert row["seats"] == "2"
+    assert row["body"] == "8"
+    assert row["armor"] == "6"
+    assert row["nuyen"] == 12000
+    assert row["slots_max"] == 8
+    tracks = {item["category"]: item for item in row["slot_tracks"]}
+    assert tracks["Powertrain"]["max"] == 8
+    assert tracks["Weapons"]["used"] == 0
+    assert any(acc["name"] == "Sensor Array" and acc["included"] and acc["rating"] == 2 for acc in row["sensors"])
+    assert out.derived["nuyen_spent"] == 12000
+    assert out.derived["errors"] == []
+
+
+def test_dodge_scoot_includes_improved_economy() -> None:
+    out = compute(_mundane("scoot", vehicles=[GearInstall(gear_id=DODGE_SCOOT)]))
+    row = out.derived["vehicles"][0]
+    assert row["nuyen"] == 3000
+    assert {mod["name"] for mod in row["mods"]} == {"Improved Economy"}
+    assert row["mods"][0]["included"] is True
+    assert row["mods"][0]["nuyen"] == 0
+    tracks = {item["category"]: item for item in row["slot_tracks"]}
+    assert tracks["Powertrain"]["used"] == 0
+    assert tracks["Powertrain"]["max"] == 4
+    assert row["slots_used"] == 0
+    assert out.derived["nuyen_spent"] == 3000
+
+
+def test_rigger_interface_on_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-ri",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=RIGGER_INTERFACE, parent_id=car.id)],
+        )
+    )
+    row = out.derived["vehicles"][0]
+    assert out.derived["nuyen_spent"] == 13000
+    assert any(mod["name"] == "Rigger Interface" and mod["nuyen"] == 1000 for mod in row["mods"])
+    tracks = {item["category"]: item for item in row["slot_tracks"]}
+    assert tracks["Cosmetic"]["used"] == 0
+    assert tracks["Cosmetic"]["max"] == 8
+    assert out.derived["errors"] == []
+
+
+GRIDLINK = "831a60c3-f57b-40c7-9b4d-92906897ee90"
+MECHANICAL_ARM = "3154f81c-f85c-414d-abe4-8289aa6e9766"
+HYUNDAI_SHIN = "72a204fc-e4f7-4e00-9d14-7f338fb86817"
+ROTO_DRONE = "1291ab59-2483-42ca-b7a9-503b2c354cee"
+IMPROVED_ECONOMY = "20083c34-5008-4647-9d9e-9ed230e4efe1"
+
+
+def test_gridlink_uses_electromagnetic_slots() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-grid",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=GRIDLINK, parent_id=car.id)],
+        )
+    )
+    row = out.derived["vehicles"][0]
+    tracks = {item["category"]: item for item in row["slot_tracks"]}
+    assert tracks["Electromagnetic"]["used"] == 2
+    assert tracks["Electromagnetic"]["max"] == 8
+    assert tracks["Powertrain"]["used"] == 0
+    assert out.derived["nuyen_spent"] == 12750
+    assert out.derived["errors"] == []
+
+
+def test_powertrain_slot_overflow_on_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-hnd-over",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=car.id, rating=2)],
+        )
+    )
+    tracks = {item["category"]: item for item in out.derived["vehicles"][0]["slot_tracks"]}
+    assert tracks["Powertrain"]["used"] == 10
+    assert tracks["Powertrain"]["max"] == 8
+    assert any("パワートレインスロット超過" in err for err in out.derived["errors"])
+
+
+def test_shin_hyung_extra_body_slots() -> None:
+    car = GearInstall(gear_id=HYUNDAI_SHIN)
+    out = compute(
+        _mundane(
+            "shin-arm",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=MECHANICAL_ARM, parent_id=car.id)],
+        )
+    )
+    tracks = {item["category"]: item for item in out.derived["vehicles"][0]["slot_tracks"]}
+    assert tracks["Body"]["max"] == 14
+    assert tracks["Body"]["used"] == 3
+    assert tracks["Powertrain"]["max"] == 10
+    assert out.derived["errors"] == []
+
+
+def test_roto_drone_uses_listed_modslots() -> None:
+    out = compute(_mundane("roto", drones=[GearInstall(gear_id=ROTO_DRONE)]))
+    row = out.derived["drones"][0]
+    assert row["slots_max"] == 7
+    assert row["slot_tracks"] == []
+    assert out.derived["errors"] == []
+
+
+def test_purchased_improved_economy_uses_powertrain() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-econ",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=IMPROVED_ECONOMY, parent_id=car.id)],
+        )
+    )
+    tracks = {item["category"]: item for item in out.derived["vehicles"][0]["slot_tracks"]}
+    assert tracks["Powertrain"]["used"] == 2
+    assert tracks["Powertrain"]["max"] == 8
+    assert out.derived["nuyen_spent"] == 19500
+    assert out.derived["errors"] == []
+
+
+def test_gecko_tips_rejected_on_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-gecko",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=GECKO_TIPS, parent_id=car.id)],
+        )
+    )
+    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 12000
+
+
+def test_gecko_tips_on_mirage() -> None:
+    bike = GearInstall(gear_id=SUZUKI_MIRAGE)
+    out = compute(
+        _mundane(
+            "mirage-gecko",
+            vehicles=[bike],
+            vehicle_mods=[VehicleModInstall(mod_id=GECKO_TIPS, parent_id=bike.id)],
+        )
+    )
+    row = out.derived["vehicles"][0]
+    gecko = next(mod for mod in row["mods"] if mod["mod_id"] == GECKO_TIPS)
+    assert gecko["nuyen"] == 5000
+    assert gecko["slots"] == 4
+    assert out.derived["nuyen_spent"] == 13500
+    assert out.derived["errors"] == []
+
+
+def test_vehicle_mod_without_parent_is_dropped() -> None:
+    out = compute(_mundane("orphan-vmod", vehicle_mods=[VehicleModInstall(mod_id=RIGGER_INTERFACE)]))
+    assert any("車両に装着" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 0
+
+
+def test_ford_americar_and_spirit_stack_nuyen() -> None:
+    out = compute(
+        _mundane(
+            "two-cars",
+            vehicles=[GearInstall(gear_id=HONDA_SPIRIT), GearInstall(gear_id=FORD_AMERICAR)],
+        )
+    )
+    assert out.derived["nuyen_spent"] == 28000
+    assert {row["name"] for row in out.derived["vehicles"]} == {
+        "Honda Spirit (Subcompact)",
+        "Ford Americar (Sedan)",
+    }
+
+
+SIM_MODULE = "d589142e-a71f-4cd9-b916-967168721eea"
+SIM_MODULE_HOT = "b7da0596-da6e-4122-adc3-21d7f3f9e3f1"
+TRODES = "418d5ba1-dd19-4179-add8-074be445a7b2"
+TOOL_KIT = "64fa5212-1d58-4e94-9cc1-9e3eb10773ed"
+
+
+def test_sim_module_installs_in_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-sim",
+            vehicles=[car],
+            gear=[GearInstall(gear_id=SIM_MODULE, parent_id=car.id)],
+        )
+    )
+    row = out.derived["vehicles"][0]
+    assert any(acc["name"] == "Sim Module" and acc["nuyen"] == 100 for acc in row["gear"])
+    assert row["nuyen"] == 12100
+    assert out.derived["nuyen_spent"] == 12100
+    assert out.derived["errors"] == []
+
+
+def test_sim_module_hot_and_trodes_in_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-interior",
+            vehicles=[car],
+            gear=[
+                GearInstall(gear_id=SIM_MODULE_HOT, parent_id=car.id),
+                GearInstall(gear_id=TRODES, parent_id=car.id),
+            ],
+        )
+    )
+    names = {acc["name"] for acc in out.derived["vehicles"][0]["gear"]}
+    assert names == {"Sim Module, Hot", "Trodes"}
+    assert out.derived["nuyen_spent"] == 12000 + 250 + 70
+
+
+def test_sim_module_without_parent_is_dropped() -> None:
+    out = compute(_mundane("loose-sim", gear=[GearInstall(gear_id=SIM_MODULE)]))
+    assert out.derived["gear"] == []
+    assert any("装着" in warn for warn in out.derived["warnings"])
+
+
+def test_sim_module_on_meta_link() -> None:
+    link = CommlinkInstall(gear_id=META_LINK)
+    out = compute(
+        _mundane(
+            "link-sim",
+            commlinks=[link],
+            gear=[GearInstall(gear_id=SIM_MODULE, parent_id=link.id)],
+        )
+    )
+    assert out.derived["gear"][0]["name"] == "Sim Module"
+    assert out.derived["nuyen_spent"] == 200
+    assert out.derived["errors"] == []
+
+
+def test_tool_kit_does_not_install_in_spirit() -> None:
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "spirit-kit",
+            vehicles=[car],
+            gear=[GearInstall(gear_id=TOOL_KIT, parent_id=car.id, extra="Hardware")],
+        )
+    )
+    assert out.derived["vehicles"][0]["gear"] == []
+    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert out.derived["nuyen_spent"] == 12000
+
+
+GROUP_AUTOSOFT = "25235dcf-089a-4c17-bc8f-6a1f5b2fb0b6"
+MANEUVERING = "9d81218f-ee70-4304-9a09-ac865d84b8e0"
+TARGETING = "0949997a-acb7-49d9-9905-5ae2cd35626f"
+SIGNATURE_MASKING = "a249d87f-ec07-4716-9c62-e26061e80eac"
+HANDLING_ENH = "956a20f7-64f3-4160-88a0-d6d6b29b0bd1"
+GECKO_TIPS = "06940788-ad0b-453c-bc8a-e54e6221c185"
+STANDARD_SR5_MOUNT = "079a5c61-aee6-4383-81b7-32540f7a0a0b"
+
+
+def test_group_autosoft_needs_group() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "group-auto",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=GROUP_AUTOSOFT, rating=2, parent_id=rcc.id)],
+        )
+    )
+    assert out.derived["programs"][0]["nuyen"] == 1000
+    assert "Electronics" in out.derived["programs"][0]["extra_options"]
+    assert any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+
+
+def test_group_autosoft_with_group() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "group-auto-pick",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=GROUP_AUTOSOFT, rating=2, parent_id=rcc.id, extra="Electronics")],
+        )
+    )
+    row = out.derived["programs"][0]
+    assert row["label"] == "Group Autosoft (Electronics)"
+    assert row["nuyen"] == 1000
+    assert not any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+
+
+def test_model_maneuvering_autosoft() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "model-auto",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=MANEUVERING, rating=2, parent_id=rcc.id, extra="GM-Nissan Doberman (Medium)")],
+        )
+    )
+    row = out.derived["programs"][0]
+    assert row["label"] == "Maneuvering Autosoft (GM-Nissan Doberman (Medium))"
+    assert row["nuyen"] == 1000
+    assert "GM-Nissan Doberman (Medium)" in row["extra_options"]
+    assert not any("対象を入力" in warn for warn in out.derived["warnings"])
+
+
+def test_weapon_targeting_autosoft_free_text() -> None:
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(
+        _mundane(
+            "weapon-auto",
+            rccs=[rcc],
+            programs=[GearInstall(gear_id=TARGETING, rating=1, parent_id=rcc.id, extra="Custom Rifle")],
+        )
+    )
+    row = out.derived["programs"][0]
+    assert row["label"] == "Targeting Autosoft (Custom Rifle)"
+    assert row["nuyen"] == 500
+
+
+def test_doberman_sensor_function() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    array = GearInstall(gear_id=SENSOR_ARRAY, parent_id=drone.id, included=True, rating=3)
+    out = compute(
+        _mundane(
+            "dob-atmo",
+            drones=[drone],
+            sensors=[array, GearInstall(gear_id=ATMOSPHERE, parent_id=array.id)],
+        )
+    )
+    parent = next(item for item in out.derived["sensors"] if item["name"] == "Sensor Array")
+    assert parent["included"] is True
+    assert parent["nuyen"] == 0
+    assert parent["capacity_max"] == 8
+    assert parent["capacity_used"] == 1
+    assert out.derived["nuyen_spent"] == 5000
+    assert out.derived["errors"] == []
+
+
+def test_doberman_signature_masking() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "dob-mask",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=SIGNATURE_MASKING, parent_id=drone.id, rating=1)],
+        )
+    )
+    row = out.derived["drones"][0]
+    assert any(mod["name"] == "Signature Masking" for mod in row["mods"])
+    assert out.derived["nuyen_spent"] == 7000
+    assert row["slots_used"] <= row["slots_max"]
+    assert out.derived["errors"] == []
+
+
+def test_doberman_handling_enhancement_slots() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "dob-hnd",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=drone.id, rating=1)],
+        )
+    )
+    row = out.derived["drones"][0]
+    assert row["handling"].startswith("6")
+    assert out.derived["nuyen_spent"] == 15000
+    assert row["slots_used"] == 4
+    assert row["slots_max"] == 4
+    assert out.derived["errors"] == []
+    over = compute(
+        _mundane(
+            "dob-hnd-over",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=drone.id, rating=2)],
+        )
+    )
+    assert any("改造スロット超過" in err for err in over.derived["errors"])
+
+
+def test_gecko_tips_body_formula() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "dob-gecko",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=GECKO_TIPS, parent_id=drone.id)],
+        )
+    )
+    mod = next(item for item in out.derived["vehicle_mods"] if item["mod_id"] == GECKO_TIPS)
+    assert mod["nuyen"] == 5000
+    assert mod["slots"] == 4
+
+
+def test_doberman_mounts_predator() -> None:
+    drone = GearInstall(gear_id=DOBERMAN)
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(_mundane("dob-empty", drones=[drone], weapons=[weapon]))
+    mount = out.derived["drones"][0]["weapon_mounts"][0]
+    out = compute(
+        _mundane(
+            "dob-gun",
+            drones=[drone],
+            weapons=[weapon],
+            weapon_mounts=[
+                WeaponMountInstall(
+                    id=mount["id"],
+                    parent_id=drone.id,
+                    size_id=mount["size_id"],
+                    visibility_id=mount["visibility_id"],
+                    flexibility_id=mount["flexibility_id"],
+                    control_id=mount["control_id"],
+                    included=True,
+                    weapon_install_id=weapon.id,
+                )
+            ],
+        )
+    )
+    row = out.derived["drones"][0]
+    assert row["weapon_mounts"][0]["weapon_name"] == "Ares Predator V"
+    assert out.derived["weapons"][0]["mounted_on"] == drone.id
+    assert out.derived["nuyen_spent"] == 5725
+    assert out.derived["errors"] == []
+
+
+MEDKIT = "ae9c37df-6d82-44c1-aa21-6c87e45e2dc1"
+FAKE_SIN = "0c800bca-e6ff-475b-a014-c2069f5e364c"
+FAKE_LICENSE = "8a16bbb2-8028-4c74-b22b-7aad9d001073"
+REGULAR_AMMO = "b2a0b340-c793-4322-8422-8b03d18a6fae"
+MAGLOCK = "d0cde5ea-d524-451d-9fd6-eeccd1439293"
+ANTI_TAMPER = "caa0f85d-e6f0-415a-98c7-fc4f16139964"
+
+
+def test_tool_kit_costs_five_hundred() -> None:
+    out = compute(_mundane("kit", gear=[GearInstall(gear_id=TOOL_KIT, extra="Hardware")]))
+    row = out.derived["gear"][0]
+    assert row["name"] == "Tool Kit"
+    assert row["nuyen"] == 500
+    assert row["label"] == "Tool Kit (Hardware)"
+    assert out.derived["nuyen_spent"] == 500
+    assert out.derived["errors"] == []
+
+
+def test_medkit_rating_multiplies_cost() -> None:
+    out = compute(_mundane("med", gear=[GearInstall(gear_id=MEDKIT, rating=3)]))
+    assert out.derived["gear"][0]["nuyen"] == 750
+    assert out.derived["nuyen_spent"] == 750
+
+
+def test_fake_sin_needs_name_and_holds_license() -> None:
+    sin = GearInstall(gear_id=FAKE_SIN, rating=4)
+    out = compute(_mundane("sin-empty", gear=[sin]))
+    assert any("対象" in warn for warn in out.derived["warnings"])
+    license = GearInstall(gear_id=FAKE_LICENSE, rating=4, parent_id=sin.id, extra="Drivers License")
+    sin.extra = "John Doe"
+    out = compute(_mundane("sin", gear=[sin, license]))
+    names = [row["name"] for row in out.derived["gear"]]
+    assert "Fake SIN" in names
+    assert "Fake License" in names
+    assert out.derived["nuyen_spent"] == 10000 + 800
+    assert out.derived["errors"] == []
+    lone = compute(_mundane("license-only", gear=[GearInstall(gear_id=FAKE_LICENSE, rating=2)]))
+    assert lone.derived["gear"] == []
+    assert any("装着" in warn for warn in lone.derived["warnings"])
+
+
+def test_ammo_quantity_multiplies_cost() -> None:
+    out = compute(_mundane("ammo", gear=[GearInstall(gear_id=REGULAR_AMMO, qty=10)]))
+    assert out.derived["gear"][0]["nuyen"] == 200
+    assert out.derived["nuyen_spent"] == 200
+
+
+def test_maglock_anti_tamper_attaches() -> None:
+    lock = GearInstall(gear_id=MAGLOCK, rating=3)
+    circuit = GearInstall(gear_id=ANTI_TAMPER, rating=2, parent_id=lock.id)
+    out = compute(_mundane("lock", gear=[lock, circuit]))
+    assert {row["name"] for row in out.derived["gear"]} == {"Maglock", "Anti-Tamper Circuits"}
+    assert out.derived["nuyen_spent"] == 300 + 500
+    assert out.derived["errors"] == []
+
+
+CLEANER = "373638b9-4334-4645-99f5-c3673e4f809b"
+DIFFUSION = "33e75cd6-cad7-43dd-87ac-9838c83eccb5"
+OVERDRIVE = "60b3f99f-f903-426a-ae13-ea604e77a956"
+COURIER_SPRITE = "acf0c123-0881-4f13-8a98-010516e74019"
+PULSE_STORM = "d8b11a80-eb95-409e-a53b-18c48e09342e"
+EDITOR = "6b4ed8d5-75c8-4415-9578-15afa4ac8494"
+STATIC_VEIL = "dbb1d719-c829-4c45-9a53-9ff538865c14"
+RESONANCE_SPIKE = "704abd70-c0e6-4f06-b186-53a7cb856584"
+
+
+def _techno(cid: str, letter: str = "A", **kwargs: object) -> CharacterState:
+    table = {
+        "A": Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
+        "B": Priorities(Heritage="C", Attributes="D", Talent="B", Skills="A", Resources="E"),
+        "C": Priorities(Heritage="E", Attributes="B", Talent="C", Skills="A", Resources="D"),
+    }
+    attrs = kwargs.pop("attributes", None) or default_attributes(find_metatype("Human", None))
+    return CharacterState(
+        id=cid,
+        name=cid,
+        priorities=table[letter],
+        metatype="Human",
+        talent="Technomancer",
+        attributes=attrs,  # type: ignore[arg-type]
+        **kwargs,  # type: ignore[arg-type]
+    )
+
+
+def test_complex_form_fade_formula() -> None:
+    assert spell_drain_value("L-2", 3) == 2
+    assert spell_drain_value("L+1", 3) == 4
+    assert spell_drain_value("L-3", 3) == 2
+
+
+def test_technomancer_a_gets_seven_free_complex_forms() -> None:
+    out = compute(
+        _techno(
+            "cf-free",
+            "A",
+            complex_forms=[
+                ComplexFormInstall(form_id=CLEANER),
+                ComplexFormInstall(form_id=EDITOR),
+                ComplexFormInstall(form_id=STATIC_VEIL),
+            ],
+        )
+    )
+    assert out.derived["complex_form_points"]["free"] == 7
+    assert out.derived["complex_form_points"]["used"] == 3
+    assert out.derived["complex_form_points"]["paid"] == 0
+    assert all(row["karma"] == 0 for row in out.derived["complex_forms"])
+    assert out.derived["karma"]["remaining"] == 25
+    cleaner = next(row for row in out.derived["complex_forms"] if row["name"] == "Cleaner")
+    assert cleaner["level"] == 6
+    assert cleaner["fade"] == 4
+    assert cleaner["fade_code"] == "S"
+
+
+def test_eighth_complex_form_costs_karma() -> None:
+    ids = [CLEANER, EDITOR, STATIC_VEIL, PULSE_STORM, RESONANCE_SPIKE, DIFFUSION, "cfebf27d-707e-4ea2-a376-394738a11b3c", "42cc98b0-2b3f-42a0-bbe7-fb7d2633d11a"]
+    forms = [ComplexFormInstall(form_id=fid, extra="Attack" if fid == DIFFUSION else None) for fid in ids]
+    out = compute(_techno("cf-paid", "A", complex_forms=forms))
+    assert out.derived["complex_form_points"]["used"] == 8
+    assert out.derived["complex_form_points"]["paid"] == 1
+    assert out.derived["complex_forms"][-1]["karma"] == 4
+    assert out.derived["karma"]["spent"] == 4
+
+
+def test_duplicate_complex_form_is_dropped() -> None:
+    out = compute(
+        _techno(
+            "cf-dup",
+            complex_forms=[ComplexFormInstall(form_id=CLEANER), ComplexFormInstall(form_id=CLEANER)],
+        )
+    )
+    assert len(out.derived["complex_forms"]) == 1
+    assert any("重複" in warn for warn in out.derived["warnings"])
+
+
+def test_diffusion_needs_matrix_attribute() -> None:
+    out = compute(_techno("diff-none", complex_forms=[ComplexFormInstall(form_id=DIFFUSION)]))
+    row = out.derived["complex_forms"][0]
+    assert row["needs_extra"] is True
+    assert any("マトリクス属性" in warn for warn in out.derived["warnings"])
+    out = compute(_techno("diff-atk", complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")]))
+    assert out.derived["complex_forms"][0]["extra"] == "Attack"
+    assert out.derived["complex_forms"][0]["label"] == "Diffusion of Attack"
+    assert not any("マトリクス属性" in warn for warn in out.derived["warnings"])
+
+
+def test_overdrive_requires_stream_quality() -> None:
+    out = compute(_techno("overdrive", complex_forms=[ComplexFormInstall(form_id=OVERDRIVE)]))
+    assert out.derived["complex_forms"] == []
+    assert any("Resonant Stream: Cyberadept" in warn for warn in out.derived["warnings"])
+
+
+def test_courier_sprite_matrix_stats() -> None:
+    out = compute(
+        _techno(
+            "courier",
+            "A",
+            sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=3, services=2, registered=True)],
+        )
+    )
+    row = out.derived["sprites"][0]
+    assert row["name"] == "Courier Sprite"
+    assert row["level"] == 3
+    assert row["services"] == 2
+    assert row["registered"] is True
+    assert row["matrix"]["attack"] == 3
+    assert row["matrix"]["sleaze"] == 6
+    assert row["matrix"]["dataprocessing"] == 4
+    assert row["matrix"]["firewall"] == 5
+    assert row["matrix"]["initiative"] == 7
+    assert "Cookie" in row["powers"]
+    assert out.derived["errors"] == []
+
+
+def test_registered_sprite_clamps_to_resonance() -> None:
+    out = compute(
+        _techno("sprite-cap", "C", sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=12, services=9)])
+    )
+    row = out.derived["sprites"][0]
+    assert row["level"] == 3
+    assert row["services"] == 3
+
+
+def test_compiled_sprite_can_exceed_resonance() -> None:
+    out = compute(
+        _techno(
+            "compile-over",
+            "C",
+            sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=6, registered=False, hits=4, opposed_hits=1)],
+        )
+    )
+    row = out.derived["sprites"][0]
+    assert row["level"] == 6
+    assert row["services"] == 3
+    assert row["registered"] is False
+    assert row["test"]["physical"] is True
+
+
+def test_too_many_registered_sprites() -> None:
+    sprites = [SpriteInstall(sprite_id=COURIER_SPRITE, level=1, registered=True) for _ in range(4)]
+    out = compute(_techno("too-many", "C", sprites=sprites))
+    assert any("登録できるスプライト" in err for err in out.derived["errors"])
+
+
+def test_mage_has_no_technomancer_tabs() -> None:
+    out = compute(
+        CharacterState(
+            id="mage-no-techno",
+            name="mage",
+            priorities=Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
+            metatype="Human",
+            talent="Magician",
+            attributes=default_attributes(find_metatype("Human", None)),
+        )
+    )
+    assert "complexforms" not in out.derived["enabled_tabs"]
+    assert "sprites" not in out.derived["enabled_tabs"]
+    assert out.derived["living_persona"] is None
+
+
+def test_contact_free_points_are_charisma_times_three() -> None:
+    out = compute(_human("contact-free"))
+    assert out.derived["totals"]["CHA"] == 1
+    assert out.derived["contact_points"] == {"used": 0, "free": 3, "paid": 0}
+    assert out.derived["points"]["contacts"] == {"used": 0, "max": 3}
+    high = _human("contact-cha3")
+    high.attributes["CHA"] = 3
+    high_out = compute(high)
+    assert high_out.derived["contact_points"]["free"] == 9
+    assert high_out.derived["karma"]["remaining"] == 25
+
+
+def test_contact_spends_free_points_before_karma() -> None:
+    out = compute(
+        _human(
+            "contact-free-spend",
+            contacts=[ContactInstall(name="Fixer", role="Fixer", connection=2, loyalty=1)],
+        )
+    )
+    row = out.derived["contacts"][0]
+    assert row["name"] == "Fixer"
+    assert row["role"] == "Fixer"
+    assert row["connection"] == 2
+    assert row["loyalty"] == 1
+    assert row["cost"] == 3
+    assert out.derived["contact_points"] == {"used": 3, "free": 3, "paid": 0}
+    assert out.derived["karma"]["remaining"] == 25
+    assert out.derived["errors"] == []
+
+
+def test_contact_overspend_costs_karma() -> None:
+    state = _human("contact-paid")
+    state.attributes["CHA"] = 3
+    state.contacts = [
+        ContactInstall(name="Fixer", connection=4, loyalty=3),
+        ContactInstall(name="Street Doc", connection=2, loyalty=2),
+    ]
+    out = compute(state)
+    assert out.derived["contact_points"] == {"used": 11, "free": 9, "paid": 2}
+    assert out.derived["karma"]["spent"] == 2
+    assert out.derived["karma"]["remaining"] == 23
+
+
+def test_contact_chargen_cost_is_capped_at_seven() -> None:
+    out = compute(
+        _human("contact-cap", contacts=[ContactInstall(name="Mr. Johnson", connection=6, loyalty=6)])
+    )
+    row = out.derived["contacts"][0]
+    assert row["connection"] == 6
+    assert row["loyalty"] == 1
+    assert row["cost"] == 7
+    assert any("7まで" in warn for warn in out.derived["warnings"])
+
+
+def test_unnamed_contact_is_warned() -> None:
+    out = compute(_human("contact-noname", contacts=[ContactInstall(connection=1, loyalty=1)]))
+    assert any("名前のないコネクト" in warn for warn in out.derived["warnings"])
+    assert out.derived["contact_points"]["used"] == 2
