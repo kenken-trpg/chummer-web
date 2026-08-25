@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import type { Catalog, Character, InstalledAdeptPower, InstalledWare, MagicTestInfo, MentorInfo, PriorityCategory, PriorityLetter, QualityReqNode, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
+import type { Catalog, Character, InstalledAdeptPower, InstalledWare, MagicTestInfo, MentorInfo, PriorityCategory, PriorityLetter, QualityReqNode, SkillPickSlot, SpecialArmor, WareCatalogItem, WareInstall } from "@/lib/types";
 
 const CATS: { key: PriorityCategory; label: string }[] = [
   { key: "Heritage", label: "メタタイプ" },
@@ -101,15 +101,21 @@ function vehicleForbidden(
 function dropDrone(ch: {
   drones?: { id?: string }[];
   vehicles?: { id?: string }[];
-  vehicle_mods?: { parent_id?: string | null }[];
+  vehicle_mods?: { id?: string; parent_id?: string | null }[];
   weapon_mounts?: { parent_id?: string | null; weapon_install_id?: string | null }[];
   sensors?: { id?: string; parent_id?: string | null }[];
   gear?: { id?: string; parent_id?: string | null }[];
+  cyberware?: WareInstall[];
 }, id: string, listKey: "drones" | "vehicles" = "drones") {
   let sensors = ch.sensors || [];
   const roots = sensors.filter((row) => row.parent_id === id && row.id).map((row) => row.id as string);
   for (const sid of roots) sensors = dropTree(sensors, sid);
   sensors = sensors.filter((row) => row.parent_id !== id);
+  const removedModIds = (ch.vehicle_mods || [])
+    .filter((row) => row.parent_id === id && row.id)
+    .map((row) => row.id as string);
+  let cyberware = ch.cyberware || [];
+  for (const mid of removedModIds) cyberware = removeWareTree(cyberware, mid);
   return {
     drones: listKey === "drones" ? (ch.drones || []).filter((row) => row.id !== id) : ch.drones,
     vehicles: listKey === "vehicles" ? (ch.vehicles || []).filter((row) => row.id !== id) : ch.vehicles,
@@ -117,6 +123,7 @@ function dropDrone(ch: {
     weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.parent_id !== id),
     sensors,
     gear: dropTree(ch.gear || [], id),
+    cyberware,
   };
 }
 
@@ -155,6 +162,18 @@ function miscFits(
   if (allowed.length) return allowed.includes(child.category);
   if (child.requireparent) return child.category === parent.category;
   return false;
+}
+
+function wareFitsVehicleMod(
+  ware: WareCatalogItem,
+  mod: { name: string; subsystems?: string[] },
+) {
+  const slots = mod.subsystems || [];
+  if (!slots.includes(ware.category)) return false;
+  if (!(ware.plugin || ware.requireparent)) return false;
+  const names = ware.required_parent_names || [];
+  if (!names.length) return true;
+  return names.some((name) => mod.name.includes(name));
 }
 
 type Tab = "priority" | "meta" | "attrs" | "skills" | "qualities" | "cyber" | "bio" | "gear" | "contacts" | "adept" | "spells" | "spirits" | "foci" | "complexforms" | "sprites";
@@ -224,15 +243,52 @@ function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
 }
 
-function formatAccessoryCost(cost: string, parentWeaponCost?: string) {
+function formatAccessoryCost(cost: string, parentCost?: string) {
   const raw = String(cost || "0").trim();
-  const parent = Number(parentWeaponCost || 0);
-  if (raw === "Weapon Cost") {
+  const parent = Number(parentCost || 0);
+  if (raw === "Weapon Cost" || raw === "Armor Cost") {
     return `${parent.toLocaleString()}¥`;
   }
   const numeric = Number(raw);
   if (Number.isFinite(numeric)) return `${numeric.toLocaleString()}¥`;
   return `${raw}¥`;
+}
+
+function formatAmmoCost(cost: string, costfor?: number) {
+  const numeric = Number(cost);
+  const yen = Number.isFinite(numeric) ? `${numeric.toLocaleString()}¥` : `${cost}¥`;
+  if (costfor && costfor > 1) return `${yen} / ${costfor}発`;
+  return yen;
+}
+
+function weaponDetailsMatch(
+  weapon: { name: string; ammo?: string },
+  expr: string,
+) {
+  const ammo = weapon.ammo || "";
+  const name = weapon.name || "";
+  let text = expr;
+  text = text.replace(/contains\(\s*ammo\s*,\s*'([^']*)'\s*\)/g, (_, needle: string) => (ammo.includes(needle) ? "true" : "false"));
+  text = text.replace(/contains\(\s*ammo\s*,\s*"([^"]*)"\s*\)/g, (_, needle: string) => (ammo.includes(needle) ? "true" : "false"));
+  text = text.replace(/name\s*!=\s*'([^']*)'/g, (_, value: string) => (name !== value ? "true" : "false"));
+  text = text.replace(/name\s*=\s*'([^']*)'/g, (_, value: string) => (name === value ? "true" : "false"));
+  if (!/^(true|false|and|or|\(|\)|\s)+$/i.test(text)) return false;
+  try {
+    return Function(`"use strict"; return (${text.replace(/\band\b/g, "&&").replace(/\bor\b/g, "||")});`)();
+  } catch {
+    return false;
+  }
+}
+
+function ammoFits(
+  ammo: { category?: string; ammo_weapon_types?: string[]; weapon_details?: string },
+  weapon: { name: string; ammo?: string; weapon_type?: string },
+) {
+  if (ammo.category !== "Ammunition") return false;
+  if (ammo.weapon_details) return weaponDetailsMatch(weapon, ammo.weapon_details);
+  const types = ammo.ammo_weapon_types || [];
+  if (!types.length) return false;
+  return types.includes(weapon.weapon_type || "");
 }
 
 function weaponLine(item: { type?: string; accuracy?: string; damage?: string; ap?: string; mode?: string; ammo?: string; reach?: string; rc?: string }) {
@@ -246,6 +302,66 @@ function weaponLine(item: { type?: string; accuracy?: string; damage?: string; a
   if (item.ammo && item.ammo !== "0") bits.push(item.ammo);
   if (item.reach && item.reach !== "0") bits.push(`Reach ${item.reach}`);
   return bits.join(" / ");
+}
+
+function specialArmorBits(sa?: SpecialArmor | null): { label: string; value: string }[] {
+  if (!sa) return [];
+  const rows: { label: string; value: string }[] = [];
+  if (sa.fire) rows.push({ label: "耐火", value: `+${sa.fire}` });
+  if (sa.cold) rows.push({ label: "断熱", value: `+${sa.cold}` });
+  if (sa.electricity) rows.push({ label: "絶縁", value: `+${sa.electricity}` });
+  if (sa.radiation) rows.push({ label: "放射線", value: `+${sa.radiation}` });
+  const toxin = sa.toxin_contact || 0;
+  const pathogen = sa.pathogen_contact || 0;
+  if (toxin && toxin === pathogen) rows.push({ label: "化学防護", value: `+${toxin}` });
+  else {
+    if (toxin) rows.push({ label: "毒素接触", value: `+${toxin}` });
+    if (pathogen) rows.push({ label: "病原接触", value: `+${pathogen}` });
+  }
+  const immunities = sa.immunities || {};
+  const contact = Boolean(immunities.toxin_contact && immunities.pathogen_contact);
+  const inhale = Boolean(immunities.toxin_inhalation && immunities.pathogen_inhalation);
+  if (contact && inhale) rows.push({ label: "化学密閉", value: "免疫" });
+  else {
+    if (contact) rows.push({ label: "接触免疫", value: "免疫" });
+    if (inhale) rows.push({ label: "吸入免疫", value: "免疫" });
+  }
+  return rows;
+}
+
+function specialArmorLine(sa?: SpecialArmor | null): string {
+  return specialArmorBits(sa)
+    .map((row) => (row.value === "免疫" ? row.label : `${row.label} ${row.value}`))
+    .join(" / ");
+}
+
+function availBit(item?: { avail?: string; avail_value?: number } | null): string {
+  if (!item) return "";
+  if ((item.avail_value || 0) <= 0 && (!item.avail || item.avail === "0")) return "";
+  if (!item.avail) return "";
+  return ` / 入手 ${item.avail}`;
+}
+
+function mergeSpecialArmor(mods?: { special_armor?: SpecialArmor }[]): SpecialArmor | undefined {
+  let out: SpecialArmor | undefined;
+  for (const mod of mods || []) {
+    const sa = mod.special_armor;
+    if (!sa) continue;
+    out = out || { immunities: {} };
+    out.fire = (out.fire || 0) + (sa.fire || 0);
+    out.cold = (out.cold || 0) + (sa.cold || 0);
+    out.electricity = (out.electricity || 0) + (sa.electricity || 0);
+    out.radiation = (out.radiation || 0) + (sa.radiation || 0);
+    out.toxin_contact = (out.toxin_contact || 0) + (sa.toxin_contact || 0);
+    out.pathogen_contact = (out.pathogen_contact || 0) + (sa.pathogen_contact || 0);
+    out.immunities = {
+      toxin_contact: Boolean(out.immunities?.toxin_contact || sa.immunities?.toxin_contact),
+      toxin_inhalation: Boolean(out.immunities?.toxin_inhalation || sa.immunities?.toxin_inhalation),
+      pathogen_contact: Boolean(out.immunities?.pathogen_contact || sa.immunities?.pathogen_contact),
+      pathogen_inhalation: Boolean(out.immunities?.pathogen_inhalation || sa.immunities?.pathogen_inhalation),
+    };
+  }
+  return out;
 }
 
 function accessoryFits(
@@ -506,7 +622,7 @@ function WareRow(props: {
       <div>
         <b>{tr(item.name)}{item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}{item.included ? "（同梱）" : ""}</b>
         <div className="muted">
-          {item.name} / {item.category} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥ / {item.source}
+          {item.name} / {item.category} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
           {capMax > 0 ? <span className="cap"> ・ 容量 {item.capacity_used ?? 0}/{capMax}</span> : null}
           {item.limb_str != null ? <span className="cap"> ・ 肢 STR {item.limb_str} / AGI {item.limb_agi}</span> : null}
         </div>
@@ -1410,8 +1526,14 @@ export default function Page() {
                   }),
                 })}
                 onRemove={(id) => {
+                  const keptIds = new Set(removeWareTree(ch.cyberware || [], id).map((row) => row.id));
                   const cyberware = removeWareTree(ch.cyberware || [], id);
-                  patch({ cyberware, skill_picks: dropRemovedWarePicks(ch.skill_picks, [...cyberware, ...(ch.bioware || [])]) });
+                  patch({
+                    cyberware,
+                    weapon_accessories: (ch.weapon_accessories || []).filter((row) => !row.parent_id || keptIds.has(row.parent_id)),
+                    gear: (ch.gear || []).filter((row) => !row.parent_id || keptIds.has(row.parent_id)),
+                    skill_picks: dropRemovedWarePicks(ch.skill_picks, [...cyberware, ...(ch.bioware || [])]),
+                  });
                 }}
                 onAddChild={(wareId) => {
                   const spec = catalog.cyberware.items.find((w) => w.id === wareId);
@@ -1592,10 +1714,12 @@ export default function Page() {
               <>
                 {(d.armor_items || []).map((item) => {
                   const installedNames = (item.mods || []).map((mod) => mod.name);
+                  const parentCost = (catalog.armor || []).find((row) => row.id === item.armor_id)?.cost;
                   const addons = (catalog.armor_mods || []).filter((mod) => (
                     armorModFits(mod, item, installedNames)
                     && !(item.mods || []).some((row) => row.mod_id === mod.id || (mod.unique && row.unique === mod.unique))
                   ));
+                  const specialLine = specialArmorLine(mergeSpecialArmor(item.mods));
                   return (
                   <div className="cyber-item" key={item.id}>
                     <div>
@@ -1603,6 +1727,8 @@ export default function Page() {
                       <div className="muted">
                         {item.name} / 装甲 {item.armor_value}
                         {item.equipped ? ` ・ 加算 ${item.contributes}` : " ・ 未装備"}
+                        {specialLine ? ` / ${specialLine}` : ""}
+                        {availBit(item)}
                         {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
                         {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
                       </div>
@@ -1641,7 +1767,9 @@ export default function Page() {
                           {tr(mod.name)}
                           {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
                           {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
-                          {mod.capacity_cost ? ` / 容量 ${mod.capacity_cost}` : ""}
+                          {mod.capacity_cost ? ` / 容量 ${mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost}` : ""}
+                          {specialArmorLine(mod.special_armor) ? ` / ${specialArmorLine(mod.special_armor)}` : ""}
+                          {availBit(mod)}
                           {mod.included ? null : (
                             <>
                               {" "}
@@ -1678,7 +1806,7 @@ export default function Page() {
                             {addons
                               .filter((mod) => gearSearch.trim() || mod.source === "SR5")
                               .map((mod) => (
-                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAccessoryCost(mod.cost, parentCost)})</option>
                               ))}
                           </select>
                           <button
@@ -1722,14 +1850,26 @@ export default function Page() {
                     accessoryFits(mod, item, installedNames)
                     && !(item.accessories || []).some((acc) => acc.accessory_id === mod.id)
                   ));
+                  const ammoKey = `${item.id}-ammo`;
+                  const ammoAddons = (catalog.gear || []).filter((mod) => (
+                    ammoFits(mod, item)
+                    && !(item.ammo_gear || []).some((row) => row.gear_id === mod.id)
+                  ));
+                  const fromGear = Boolean(item.from_gear && item.source_gear_id);
+                  const fromWare = Boolean(item.from_ware && item.source_ware_id);
                   return (
                   <div className="cyber-item" key={item.id}>
                     <div>
                       <b>{tr(item.name)}</b>
                       <div className="muted">
-                        {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                        {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
+                        {fromGear ? " / ギア連動" : ""}
+                        {fromWare ? " / ウェア連動" : ""}
+                        {item.limb_str != null ? ` / 肢 STR ${item.limb_str}` : ""}
+                        {item.useskill ? ` / ${item.useskill}` : ""}
                         {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
                       </div>
+                      {fromWare ? null : (
                       <div className="cyber-controls">
                         <label>
                           数量
@@ -1737,19 +1877,33 @@ export default function Page() {
                             type="number"
                             min={1}
                             value={item.qty}
-                            onChange={(e) => patch({
-                              weapons: (ch.weapons || []).map((row) => (
-                                row.id === item.id ? { ...row, qty: Number(e.target.value) } : row
-                              )),
-                            })}
+                            onChange={(e) => {
+                              const qty = Number(e.target.value);
+                              if (fromGear) {
+                                patch({
+                                  gear: (ch.gear || []).map((row) => (
+                                    row.id === item.source_gear_id ? { ...row, qty } : row
+                                  )),
+                                });
+                                return;
+                              }
+                              patch({
+                                weapons: (ch.weapons || []).map((row) => (
+                                  row.id === item.id ? { ...row, qty } : row
+                                )),
+                              });
+                            }}
                           />
                         </label>
                       </div>
+                      )}
                       {(item.accessories || []).map((acc) => (
                         <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                           {tr(acc.name)}
                           {acc.mount ? ` / ${acc.mount}` : ""}
                           {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                          {availBit(acc)}
+                          {availBit(acc)}
                           {acc.included ? null : (
                             <>
                               {" "}
@@ -1760,7 +1914,7 @@ export default function Page() {
                           )}
                         </div>
                       ))}
-                      {addons.length ? (
+                      {!fromGear && addons.length ? (
                         <div className="cyber-controls">
                           <select
                             value={slotPick[item.id] || ""}
@@ -1790,11 +1944,101 @@ export default function Page() {
                           </button>
                         </div>
                       ) : null}
+                      {(item.ammo_gear || []).map((ammo) => (
+                        <div className="muted" key={ammo.id} style={{ marginTop: 6 }}>
+                          {tr(ammo.label || ammo.name)}
+                          {ammo.loaded ? " / 装填中" : ""}
+                          {ammo.qty > 1 ? ` ×${ammo.qty}` : ""}
+                          {ammo.costfor ? ` / ${(ammo.costfor * ammo.qty).toLocaleString()}発` : ""}
+                          {` / ${ammo.nuyen.toLocaleString()}¥`}
+                          {" "}
+                          {(ammo.ammo_weapon_types || []).length > 0 && !ammo.loaded ? (
+                            <button className="btn" onClick={() => patch({
+                              weapons: (ch.weapons || []).map((row) => (
+                                row.id === item.id ? { ...row, loaded_ammo_id: ammo.id } : row
+                              )),
+                            })}>装填</button>
+                          ) : null}
+                          <button className="btn danger" onClick={() => patch({
+                            gear: dropTree(ch.gear || [], ammo.id),
+                            weapons: (ch.weapons || []).map((row) => (
+                              row.id === item.id && row.loaded_ammo_id === ammo.id
+                                ? { ...row, loaded_ammo_id: undefined }
+                                : row
+                            )),
+                          })}>外す</button>
+                          <label>
+                            数量
+                            <input
+                              type="number"
+                              min={1}
+                              max={99}
+                              value={ammo.qty}
+                              onChange={(e) => patch({
+                                gear: (ch.gear || []).map((row) => (
+                                  row.id === ammo.id ? { ...row, qty: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        </div>
+                      ))}
+                      {!fromGear && ammoAddons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[ammoKey] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [ammoKey]: e.target.value }))}
+                          >
+                            <option value="">弾薬を追加</option>
+                            {ammoAddons
+                              .filter((mod) => mod.source === "SR5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor)})</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[ammoKey]}
+                            onClick={() => {
+                              const wareId = slotPick[ammoKey];
+                              const spec = ammoAddons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                gear: [...(ch.gear || []), {
+                                  gear_id: spec.id,
+                                  rating: Math.max(1, spec.minrating || 1),
+                                  parent_id: item.id,
+                                }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [ammoKey]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
-                    <button className="btn danger" onClick={() => patch({
-                      weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
-                      weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
-                    })}>削除</button>
+                    <button className="btn danger" onClick={() => {
+                      if (fromGear) {
+                        patch({
+                          gear: dropTree(ch.gear || [], item.source_gear_id || item.id),
+                        });
+                        return;
+                      }
+                      if (fromWare) {
+                        patch({
+                          cyberware: removeWareTree(ch.cyberware || [], item.source_ware_id || item.id),
+                          weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
+                          gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                        });
+                        return;
+                      }
+                      patch({
+                        weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
+                        weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
+                        gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                      });
+                    }}>削除</button>
                   </div>
                   );
                 })}
@@ -1808,7 +2052,9 @@ export default function Page() {
                     <div>
                       <b>{tr(item.name)}</b>
                       <div className="muted">
-                        {item.name} / DR {item.device_rating} / DP {item.dataprocessing} / FW {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                        {item.name}
+                        {item.category && item.category !== "Commlinks" ? ` / ${tr(item.category)}` : ""}
+                        {" / "}DR {item.device_rating} / DP {item.dataprocessing} / FW {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
                       </div>
                       {item.rating_max > 0 ? (
                         <div className="cyber-controls">
@@ -1955,8 +2201,13 @@ export default function Page() {
                             .filter((mod) => (
                               mod.category === "Commlink Accessories"
                               || (mod.required_categories || []).includes("Commlinks")
+                              || (item.category === "PI-Tac" && mod.category === "PI-Tac Programs")
                             ))
-                            .filter((mod) => mod.source === "SR5")
+                            .filter((mod) => (
+                              gearSearch.trim()
+                              || mod.source === "SR5"
+                              || (item.category === "PI-Tac" && mod.category === "PI-Tac Programs")
+                            ))
                             .filter((mod) => !(d.gear || []).some((row) => row.parent_id === item.id && row.gear_id === mod.id))
                             .map((mod) => (
                               <option key={mod.id} value={mod.id}>{tr(mod.name)} ({mod.cost}¥)</option>
@@ -2601,18 +2852,27 @@ export default function Page() {
                           : item.slots_max ? ` / スロット ${item.slots_used ?? 0}/${item.slots_max}` : ""}
                         {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
                       </div>
-                      {(item.mods || []).map((mod) => (
+                      {(item.mods || []).map((mod) => {
+                        const hosted = (d.cyberware || []).filter((row) => row.parent_id === mod.id);
+                        const wareOptions = (mod.subsystems || []).length
+                          ? catalog.cyberware.items.filter((ware) => wareFitsVehicleMod(ware, mod))
+                          : [];
+                        const warePickKey = `${mod.id}-ware`;
+                        const chosenWare = slotPick[warePickKey] || wareOptions[0]?.id || "";
+                        return (
                         <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
                           {tr(mod.name)}
                           {mod.rating_max > 0 ? ` R${mod.rating}` : ""}
                           {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
                           {mod.slots ? ` / スロット ${mod.slots}` : ""}
+                          {mod.capacity_max ? ` / 容量 ${mod.capacity_used ?? 0}/${mod.capacity_max}` : ""}
                           {R5_SLOT_LABELS[mod.category] ? ` / ${R5_SLOT_LABELS[mod.category]}` : null}
                           {mod.included ? null : (
                             <>
                               {" "}
                               <button className="btn danger" onClick={() => patch({
                                 vehicle_mods: (ch.vehicle_mods || []).filter((row) => row.id !== mod.id),
+                                cyberware: removeWareTree(ch.cyberware || [], mod.id),
                               })}>外す</button>
                             </>
                           )}
@@ -2632,8 +2892,79 @@ export default function Page() {
                               />
                             </label>
                           ) : null}
+                          {hosted.map((child) => (
+                            <WareRow
+                              key={child.id}
+                              item={child}
+                              childrenItems={(d.cyberware || []).filter((row) => row.parent_id === child.id)}
+                              catalogItems={catalog.cyberware.items}
+                              grades={catalog.cyberware.grades}
+                              kind="cyberware"
+                              tr={tr}
+                              slotValue={slotPick[child.id] || ""}
+                              wareRanges={d.ware_ranges}
+                              nested
+                              onSlotChange={(wareId) => setSlotPick((cur) => ({ ...cur, [child.id]: wareId }))}
+                              onPatchRow={(id, next) => patch({
+                                cyberware: (ch.cyberware || []).map((row) => (
+                                  row.id === id ? { ...row, ...next } : row
+                                )),
+                              })}
+                              onRemove={(id) => patch({
+                                cyberware: removeWareTree(ch.cyberware || [], id),
+                              })}
+                              onAddChild={(wareId) => {
+                                const spec = catalog.cyberware.items.find((w) => w.id === wareId);
+                                if (!spec) return;
+                                const range = wareBounds(spec, d.ware_ranges);
+                                patch({
+                                  cyberware: [
+                                    ...(ch.cyberware || []),
+                                    { ware_id: spec.id, rating: range.min, grade: child.grade, wireless: true, parent_id: child.id },
+                                  ],
+                                });
+                              }}
+                            />
+                          ))}
+                          {wareOptions.length ? (
+                            <div className="slot-picker">
+                              <select
+                                value={chosenWare}
+                                onChange={(e) => setSlotPick((cur) => ({ ...cur, [warePickKey]: e.target.value }))}
+                              >
+                                {wareOptions.map((ware) => {
+                                  const range = wareBounds(ware, d.ware_ranges);
+                                  const showRange = range.max > range.min || range.max > 1;
+                                  return (
+                                    <option key={ware.id} value={ware.id}>
+                                      {tr(ware.name)} / {ware.capacity ? `[${ware.capacity}]` : ware.category}{showRange ? ` R${range.min}-${range.max}` : ""}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                              <button
+                                className="btn primary"
+                                disabled={!chosenWare}
+                                onClick={() => {
+                                  const spec = wareOptions.find((w) => w.id === chosenWare);
+                                  if (!spec) return;
+                                  const range = wareBounds(spec, d.ware_ranges);
+                                  patch({
+                                    cyberware: [
+                                      ...(ch.cyberware || []),
+                                      { ware_id: spec.id, rating: range.min, grade: "Standard", wireless: true, parent_id: mod.id },
+                                    ],
+                                  });
+                                  setSlotPick((cur) => ({ ...cur, [warePickKey]: "" }));
+                                }}
+                              >
+                                スロットに追加
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
-                      ))}
+                        );
+                      })}
                       {addons.length ? (
                         <div className="cyber-controls">
                           <select
@@ -2876,6 +3207,7 @@ export default function Page() {
                         <div className="muted">
                           {item.name} / {tr(item.category)}
                           {item.qty > 1 ? ` ×${item.qty}` : ""}
+                          {item.add_weapon ? " / 武器化" : ""}
                           {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
                           {" / "}{item.nuyen.toLocaleString()}¥ / {item.source}
                         </div>
@@ -3161,9 +3493,17 @@ export default function Page() {
                         {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} / {item.source}
                       </div>
                     </div>
-                    <button className="btn primary" onClick={() => patch({
-                      weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }],
-                    })}>購入</button>
+                    <button className="btn primary" onClick={() => {
+                      if (item.add_gear_id) {
+                        patch({
+                          gear: [...(ch.gear || []), { gear_id: item.add_gear_id, qty: 1 }],
+                        });
+                        return;
+                      }
+                      patch({
+                        weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }],
+                      });
+                    }}>購入</button>
                   </div>
                 ))}
               {gearKind === "commlink" && (catalog.commlinks || [])
@@ -3178,7 +3518,7 @@ export default function Page() {
                     <div>
                       <b>{tr(item.name)}</b>
                       <div className="muted">
-                        {item.name} / DR {item.devicerating} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                        {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} / {item.cost}¥ / {item.avail || "-"} / {item.source}
                       </div>
                     </div>
                     <button className="btn primary" onClick={() => patch({
@@ -4391,8 +4731,12 @@ export default function Page() {
         {d.limb_quality ? <div className="stat"><span>リム本数 Quality</span><b>{d.limb_quality.count}本 / {d.limb_quality.pairs}組</b></div> : null}
         <div className="stat"><span>イニシアチブ</span><b>{d.initiative.value}+{d.initiative.dice}d6</b></div>
         <div className="stat"><span>アーマー</span><b>{d.armor}{d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}</b></div>
+        {specialArmorBits(d.special_armor).map((row) => (
+          <div className="stat" key={row.label}><span>{row.label}</span><b>{row.value}</b></div>
+        ))}
         <div className="stat"><span>エッセンス</span><b>{d.essence}{(d.essence_lost_cyber || d.essence_lost_bio) ? `（C −${d.essence_lost_cyber ?? 0} / B −${d.essence_lost_bio ?? 0}）` : ""}</b></div>
         <div className="stat"><span>ニューエン</span><b>{d.nuyen.toLocaleString()}¥</b></div>
+        <div className="stat"><span>入手制限</span><b>{d.avail_limit ?? 12}</b></div>
         {d.lifestyle ? <div className="stat"><span>ライフスタイル</span><b>{tr(d.lifestyle.name)} {d.lifestyle.months}{lifeIncrement(d.lifestyle.increment)}</b></div> : null}
         {d.commlink ? <div className="stat"><span>通信機</span><b>{tr(d.commlink.name)} DR{d.commlink.device_rating}</b></div> : null}
         {d.cyberdeck ? <div className="stat"><span>サイバーデッキ</span><b>{tr(d.cyberdeck.name)} DR{d.cyberdeck.device_rating} / {d.cyberdeck.attack}/{d.cyberdeck.sleaze}/{d.cyberdeck.dataprocessing}/{d.cyberdeck.firewall}{d.cyberdeck.program_max ? ` / プログラム ${d.cyberdeck.program_used ?? 0}/${d.cyberdeck.program_max}` : ""}</b></div> : null}

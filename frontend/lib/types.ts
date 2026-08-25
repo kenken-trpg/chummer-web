@@ -192,6 +192,7 @@ export interface WeaponInstall {
   id?: string;
   weapon_id: string;
   qty?: number;
+  loaded_ammo_id?: string | null;
 }
 
 export interface WeaponAccessoryInstall {
@@ -227,6 +228,21 @@ export interface LifestyleInstall {
   months?: number;
 }
 
+export interface SpecialArmor {
+  fire?: number;
+  cold?: number;
+  electricity?: number;
+  radiation?: number;
+  toxin_contact?: number;
+  pathogen_contact?: number;
+  immunities?: {
+    toxin_contact?: boolean;
+    toxin_inhalation?: boolean;
+    pathogen_contact?: boolean;
+    pathogen_inhalation?: boolean;
+  };
+}
+
 export interface InstalledArmorMod {
   id: string;
   mod_id: string;
@@ -242,6 +258,7 @@ export interface InstalledArmorMod {
   unique?: string;
   avail?: string;
   source?: string;
+  special_armor?: SpecialArmor;
 }
 
 export interface InstalledArmor {
@@ -272,6 +289,7 @@ export interface InstalledWeapon {
   name: string;
   category: string;
   type: string;
+  weapon_type?: string;
   accuracy: string;
   reach: string;
   damage: string;
@@ -284,6 +302,15 @@ export interface InstalledWeapon {
   qty: number;
   nuyen: number;
   accessories?: InstalledWeaponAccessory[];
+  ammo_gear?: InstalledGear[];
+  loaded_ammo_id?: string;
+  from_gear?: boolean;
+  source_gear_id?: string;
+  from_ware?: boolean;
+  source_ware_id?: string;
+  useskill?: string;
+  limb_str?: number | null;
+  limb_agi?: number | null;
   mounted_on?: string;
   mounted_label?: string;
   avail?: string;
@@ -310,6 +337,7 @@ export interface InstalledCommlink {
   id: string;
   gear_id: string;
   name: string;
+  category?: string;
   rating: number;
   rating_max: number;
   device_rating: number;
@@ -373,6 +401,11 @@ export interface InstalledGear extends InstalledOptics {
   extra_options?: string[];
   required_names?: string[];
   required_categories?: string[];
+  ammo_weapon_types?: string[];
+  costfor?: number;
+  add_weapon?: string;
+  add_weapon_id?: string;
+  loaded?: boolean;
 }
 
 export interface InstalledLifestyle {
@@ -425,6 +458,7 @@ export interface WeaponCatalogItem {
   name: string;
   category: string;
   type: string;
+  weapon_type?: string;
   accuracy: string;
   reach: string;
   damage: string;
@@ -437,6 +471,8 @@ export interface WeaponCatalogItem {
   cost: string;
   source: string;
   page: string;
+  from_gear?: boolean;
+  add_gear_id?: string;
 }
 
 export interface WeaponAccessoryCatalogItem {
@@ -471,6 +507,7 @@ export interface WeaponAccessoryCatalogItem {
 export interface CommlinkCatalogItem {
   id: string;
   name: string;
+  category?: string;
   cost: string;
   avail: string;
   minrating: number;
@@ -548,6 +585,11 @@ export interface GearCatalogItem extends OpticsCatalogItem {
   extra_options?: string[];
   required_names?: string[];
   required_categories?: string[];
+  ammo_weapon_types?: string[];
+  costfor?: number;
+  weapon_details?: string;
+  add_weapon?: string;
+  add_weapon_id?: string;
 }
 
 export interface LifestyleCatalogItem {
@@ -611,6 +653,10 @@ export interface InstalledVehicleMod {
   nuyen: number;
   avail?: string;
   source?: string;
+  capacity_used?: number;
+  capacity_max?: number;
+  subsystems?: string[];
+  cyberware?: InstalledWare[];
 }
 
 export interface InstalledWeaponMount {
@@ -666,6 +712,8 @@ export interface VehicleModCatalogItem {
   minrating: number;
   maxrating: number;
   purchasable?: boolean;
+  capacity?: string;
+  subsystems?: string[];
   required?: {
     names?: string[];
     category_contains?: string[];
@@ -987,6 +1035,7 @@ export interface Character {
     movement: { walk: string; run: string; sprint: string };
     essence: number;
     armor: number;
+    special_armor?: SpecialArmor;
     worn_armor?: string;
     armor_items?: InstalledArmor[];
     armor_mods?: InstalledArmorMod[];
@@ -1010,6 +1059,7 @@ export interface Character {
     rcc?: InstalledMatrixDevice | null;
     lifestyle?: InstalledLifestyle | null;
     nuyen: number;
+    avail_limit?: number;
     karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number } };
     points: Record<string, { used: number; max: number }>;
     knowledge_skills?: {
@@ -1228,6 +1278,7 @@ export interface InstalledWare {
   limb_agi?: number;
   selectside?: boolean;
   side?: string | null;
+  avail?: string;
   source?: string;
 }
 
@@ -1256,6 +1307,7 @@ export interface WareCatalogItem {
     metatype?: string[];
     quality?: string[];
   };
+  required_parent_names?: string[];
   limbslot?: string | null;
   selectside?: boolean;
   source: string;
