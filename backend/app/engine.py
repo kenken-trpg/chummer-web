@@ -40,9 +40,13 @@ from .models import (
     ComplexFormInstall,
     ContactInstall,
     CyberwareInstall,
+    ExoticSkillInstall,
     FocusInstall,
     GearInstall,
     LifestyleInstall,
+    MartialArtInstall,
+    InitiationChoice,
+    SubmersionChoice,
     Priorities,
     QiFocusInstall,
     SpellInstall,
@@ -77,9 +81,30 @@ CONTACT_RATING_MIN = 1
 CONTACT_RATING_MAX = 6
 CONTACT_CHARGEN_COST_MAX = 7
 NEGATIVE_QUALITY_KARMA_CAP = 25
+MARTIAL_ART_STYLE_KARMA = 7
+MARTIAL_ART_TECHNIQUE_KARMA = 5
+MARTIAL_ART_CHARGEN_STYLE_MAX = 1
+MARTIAL_ART_CHARGEN_TECHNIQUE_MAX = 5
+INITIATION_KARMA_FLAT = 10
+INITIATION_KARMA_PER_GRADE = 3
+SUBMERSION_KARMA_FLAT = 10
+SUBMERSION_KARMA_PER_GRADE = 3
 MENTOR_SPIRIT_ID = "ced3fecf-2277-4b20-b1e0-894162ca9ae2"
 QI_FOCUS_NAME = "Qi Focus"
 DRAIN_MINIMUM = 2
+BUILD_METHOD_PRIORITY = "Priority"
+BUILD_METHOD_SUM_TO_TEN = "SumToTen"
+BUILD_METHOD_KARMA = "Karma"
+SUM_TO_TEN_BUDGET = 10
+SUM_TO_TEN_COST = {"A": 4, "B": 3, "C": 2, "D": 1, "E": 0}
+KARMA_CHARGEN_POOL = 800
+KARMA_ATTRIBUTE = 5
+KARMA_ACTIVE_SKILL = 2
+KARMA_SKILL_GROUP = 5
+KARMA_KNOWLEDGE = 1
+KARMA_SPECIALIZATION = 7
+KARMA_TO_NUYEN = 2000
+KARMA_NUYEN_MAX = 235
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
 SPRITE_TALENTS = set(RES_TALENTS)
@@ -192,18 +217,176 @@ def resolve_talent(letter: str, current: str | None) -> dict[str, Any]:
     return next((t for t in options if t["name"] != "Mundane"), options[0])
 
 
+def all_talent_options() -> list[dict[str, Any]]:
+    by_name: dict[str, dict[str, Any]] = {}
+    for letter in "ABCDE":
+        for talent in talent_options(letter):
+            name = talent.get("name") or ""
+            if not name:
+                continue
+            prev = by_name.get(name)
+            score = int(talent.get("magic") or 0) + int(talent.get("resonance") or 0)
+            prev_score = int((prev or {}).get("magic") or 0) + int((prev or {}).get("resonance") or 0)
+            if prev is None or score > prev_score:
+                by_name[name] = dict(talent)
+    out: list[dict[str, Any]] = []
+    for talent in by_name.values():
+        row = dict(talent)
+        name = row.get("name") or ""
+        if name in MAG_TALENTS or int(row.get("magic") or 0) > 0:
+            if name not in RES_TALENTS:
+                row["magic"] = 1
+                row["value"] = 1
+                row["resonance"] = 0
+                row["spells"] = 0
+                row["cfp"] = 0
+        if name in RES_TALENTS or int(row.get("resonance") or 0) > 0:
+            if name not in MAG_TALENTS:
+                row["resonance"] = 1
+                row["value"] = 1
+                row["magic"] = 0
+                row["spells"] = 0
+                row["cfp"] = 0
+        if name == "Mundane" or (not row.get("magic") and not row.get("resonance") and name not in MAG_TALENTS | RES_TALENTS):
+            row["magic"] = 0
+            row["resonance"] = 0
+            row["value"] = 0
+            row["spells"] = 0
+            row["cfp"] = 0
+        out.append(row)
+    if not any(t.get("name") == "Mundane" for t in out):
+        out.append(
+            {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "quality": "", "spells": 0, "cfp": 0}
+        )
+    return sorted(out, key=lambda item: str(item.get("name") or ""))
+
+
+def resolve_talent_for_method(letter: str, current: str | None, build_method: str | None) -> dict[str, Any]:
+    if normalize_build_method(build_method) == BUILD_METHOD_KARMA:
+        options = all_talent_options()
+        found = next((t for t in options if t["name"] == current), None)
+        if found:
+            return found
+        mundane = next((t for t in options if t["name"] == "Mundane"), None)
+        return mundane or {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "spells": 0, "cfp": 0}
+    return resolve_talent(letter, current)
+
+
+def _karma_raise_cost(from_rating: int, to_rating: int, per_rating: int) -> int:
+    low = max(0, int(from_rating))
+    high = max(0, int(to_rating))
+    if high <= low or per_rating <= 0:
+        return 0
+    return sum(level * int(per_rating) for level in range(low + 1, high + 1))
+
+
+def attribute_karma_cost(
+    ratings: dict[str, int],
+    attrs_spec: dict[str, dict[str, int | float]],
+    special_key: str | None,
+) -> int:
+    total = 0
+    for key in (*PHYSICAL_ATTRS, "EDG"):
+        spec = attrs_spec.get(key) or {}
+        racial_min = int(spec.get("min") or 1)
+        total += _karma_raise_cost(racial_min, int(ratings.get(key) or racial_min), KARMA_ATTRIBUTE)
+    if special_key == "MAG":
+        total += _karma_raise_cost(1, int(ratings.get("MAG") or 0), KARMA_ATTRIBUTE)
+    elif special_key == "RES":
+        total += _karma_raise_cost(1, int(ratings.get("RES") or 0), KARMA_ATTRIBUTE)
+    return total
+
+
+def skill_karma_cost(
+    skill_groups: dict[str, int],
+    skill_totals: dict[str, int],
+    skills_data: dict[str, Any],
+) -> int:
+    total = 0
+    group_floor: dict[str, int] = {}
+    for group, rating in (skill_groups or {}).items():
+        grade = max(0, min(6, int(rating or 0)))
+        total += _karma_raise_cost(0, grade, KARMA_SKILL_GROUP)
+        for skill in skills_data.get("skills") or []:
+            if skill.get("skillgroup") == group and not skill.get("exotic"):
+                name = skill.get("name") or ""
+                if name:
+                    group_floor[name] = max(group_floor.get(name, 0), grade)
+    for name, rating in (skill_totals or {}).items():
+        floor = int(group_floor.get(name) or 0)
+        total += _karma_raise_cost(floor, int(rating or 0), KARMA_ACTIVE_SKILL)
+    return total
+
+
+def knowledge_excess_karma(ratings: dict[str, int], free_points: int) -> int:
+    levels: list[int] = []
+    for rating in (ratings or {}).values():
+        for level in range(1, max(0, int(rating or 0)) + 1):
+            levels.append(level * KARMA_KNOWLEDGE)
+    levels.sort()
+    free = max(0, int(free_points))
+    if free >= len(levels):
+        return 0
+    return sum(levels[free:])
+
+
+def normalize_build_method(raw: str | None) -> str:
+    value = str(raw or BUILD_METHOD_PRIORITY).strip().lower().replace(" ", "").replace("_", "").replace("-", "")
+    if value in {"sumtoten", "sum10", "sumtotenpriority"}:
+        return BUILD_METHOD_SUM_TO_TEN
+    if value in {"karma", "pointbuy", "point-buy", "bp"}:
+        return BUILD_METHOD_KARMA
+    return BUILD_METHOD_PRIORITY
+
+
+def priority_letter_cost(letter: str) -> int:
+    return int(SUM_TO_TEN_COST.get(str(letter or "").upper(), -1))
+
+
+def sum_to_ten_spent(p: Priorities) -> int:
+    return sum(max(0, priority_letter_cost(letter)) for letter in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources))
+
+
+def priorities_are_unique(p: Priorities) -> bool:
+    letters = [str(x or "").upper() for x in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources)]
+    return sorted(letters) == ["A", "B", "C", "D", "E"]
+
+
+def validate_priorities(p: Priorities, build_method: str | None = None) -> list[str]:
+    method = normalize_build_method(build_method)
+    if method == BUILD_METHOD_KARMA:
+        return []
+    letters = [str(x or "").upper() for x in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources)]
+    errors: list[str] = []
+    if any(letter not in SUM_TO_TEN_COST for letter in letters):
+        errors.append("優先度は A〜E のみ割り当てできます")
+        return errors
+    if method == BUILD_METHOD_SUM_TO_TEN:
+        spent = sum(priority_letter_cost(letter) for letter in letters)
+        if spent != SUM_TO_TEN_BUDGET:
+            errors.append(f"Sum to Ten の合計が {SUM_TO_TEN_BUDGET} になるように割り当ててください（現在 {spent}）")
+        return errors
+    if sorted(letters) != ["A", "B", "C", "D", "E"]:
+        errors.append("優先度 A〜E を各カテゴリに1つずつ割り当ててください")
+    return errors
+
+
 def _effective_attr_spec(
     attrs_spec: dict[str, dict[str, int | float]],
     special_key: str | None,
     talent_start: int,
+    mag_max_bonus: int = 0,
+    res_max_bonus: int = 0,
 ) -> dict[str, dict[str, int | float]]:
     out = {key: dict(spec) for key, spec in attrs_spec.items()}
     if special_key == "MAG":
         out["MAG"]["min"] = max(talent_start, 1)
+        out["MAG"]["max"] = int(out["MAG"].get("max") or 0) + max(0, int(mag_max_bonus))
         out["RES"]["min"] = 0
         out["RES"]["max"] = 0
     elif special_key == "RES":
         out["RES"]["min"] = max(talent_start, 1)
+        out["RES"]["max"] = int(out["RES"].get("max") or 0) + max(0, int(res_max_bonus))
         out["MAG"]["min"] = 0
         out["MAG"]["max"] = 0
     else:
@@ -3007,6 +3190,10 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
         return bool(ctx["resenabled"])
     if tag == "power":
         return name in ctx["powers"]
+    if tag == "art":
+        return name in (ctx.get("arts") or set())
+    if tag == "metamagic":
+        return name in (ctx.get("metamagics") or set())
     if tag == "cyberware":
         return name in ctx["cyberware"]
     if tag == "bioware":
@@ -3018,7 +3205,7 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     if tag == "skill":
         rating = int(node.get("val") or 1)
         pool = ctx["knowledge"] if str(node.get("type") or "").lower() == "knowledge" else ctx["skills"]
-        return int(pool.get(name) or 0) >= rating
+        return _pool_rating(pool, name) >= rating
     if tag == "ess":
         value = float(node.get("value") or 0)
         if value < 0:
@@ -3027,6 +3214,15 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     if tag == "gameplayoption":
         return False
     return False
+
+
+def _pool_rating(pool: dict[str, int], name: str) -> int:
+    best = int(pool.get(name) or 0)
+    prefix = f"{name} ("
+    for key, value in pool.items():
+        if str(key).startswith(prefix):
+            best = max(best, int(value or 0))
+    return best
 
 
 def requirement_tree_met(tree: list[dict[str, Any]] | None, ctx: dict[str, Any]) -> bool:
@@ -3989,6 +4185,152 @@ def resolve_knowledge(
     }
 
 
+def resolve_specializations(
+    state: CharacterState,
+    skills_data: dict[str, Any],
+    skill_totals: dict[str, int],
+    skillsoft_active: dict[str, int],
+    skillsoft_knowledge: dict[str, int],
+) -> dict[str, Any]:
+    active_names = {skill["name"] for skill in skills_data.get("skills") or []}
+    knowledge_names = {skill["name"] for skill in skills_data.get("knowledge") or []}
+    exotic_names = {skill["name"] for skill in skills_data.get("skills") or [] if skill.get("exotic")}
+    natives = {str(name).strip() for name in (state.native_languages or []) if str(name).strip()}
+    knowledge_owned = (
+        {str(name).strip() for name in (state.knowledge_skills or {}) if str(name).strip()}
+        | natives
+        | {str(name).strip() for name in (skillsoft_knowledge or {}) if str(name).strip()}
+    )
+    cleaned: dict[str, str] = {}
+    warnings: list[str] = []
+    active_spent = 0
+    knowledge_spent = 0
+    for raw_name, raw_spec in (state.skill_specializations or {}).items():
+        name = str(raw_name).strip()
+        spec = str(raw_spec or "").strip()
+        if not name or not spec or name in exotic_names:
+            continue
+        is_knowledge = name in knowledge_names or (name not in active_names and name in knowledge_owned)
+        if is_knowledge:
+            native = name in natives
+            rating = 0 if native else int((state.knowledge_skills or {}).get(name) or 0)
+            rating = max(rating, int((skillsoft_knowledge or {}).get(name) or 0))
+            if not native and rating < 1:
+                warnings.append(f"{name} の専門化には知識スキルが必要です")
+                continue
+            knowledge_spent += 1
+        else:
+            if name not in active_names:
+                warnings.append(f"{name} の専門化は未知のスキルです")
+                continue
+            rating = max(int(skill_totals.get(name) or 0), int((skillsoft_active or {}).get(name) or 0))
+            if rating < 1:
+                warnings.append(f"{name} の専門化にはスキルが必要です")
+                continue
+            active_spent += 1
+        cleaned[name] = spec
+    state.skill_specializations = cleaned
+    return {
+        "warnings": warnings,
+        "active_spent": active_spent,
+        "knowledge_spent": knowledge_spent,
+        "specs": cleaned,
+    }
+
+
+def _attach_specializations(public: list[dict[str, Any]], specs: dict[str, str]) -> None:
+    for row in public:
+        spec = specs.get(str(row.get("name") or ""))
+        if spec:
+            row["spec"] = spec
+
+
+def exotic_skill_label(skill_name: str, extra: str) -> str:
+    extra = (extra or "").strip()
+    return f"{skill_name} ({extra})" if extra else skill_name
+
+
+def resolve_exotic_skills(
+    state: CharacterState,
+    skills_data: dict[str, Any],
+    skill_max_bonus: dict[str, int],
+) -> dict[str, Any]:
+    catalog_by_name = {
+        skill["name"]: skill for skill in skills_data.get("skills") or [] if skill.get("exotic")
+    }
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    kept: list[ExoticSkillInstall] = []
+    totals: dict[str, int] = {}
+    spent = 0
+    seen: set[tuple[str, str]] = set()
+    for inst in state.exotic_skills or []:
+        spec = catalog_by_name.get(inst.skill_name)
+        if not spec:
+            continue
+        extra = (inst.extra or "").strip()
+        cap = 6 + int(skill_max_bonus.get(inst.skill_name) or 0)
+        rating = max(1, min(cap, int(inst.rating or 1)))
+        inst.extra = extra
+        inst.rating = rating
+        key = (inst.skill_name, extra.lower())
+        if extra and key in seen:
+            warnings.append(f"{exotic_skill_label(inst.skill_name, extra)} が重複しています")
+            continue
+        if extra:
+            seen.add(key)
+        else:
+            warnings.append(f"{spec['name']} の対象を選んでください")
+        kept.append(inst)
+        spent += rating
+        label = exotic_skill_label(inst.skill_name, extra)
+        if extra:
+            totals[label] = rating
+        public.append(
+            {
+                "id": inst.id,
+                "skill_name": inst.skill_name,
+                "extra": extra,
+                "label": label,
+                "rating": rating,
+                "rating_max": cap,
+                "attribute": spec.get("attribute") or "AGI",
+                "category": spec.get("category") or "",
+                "options": list(spec.get("specs") or []),
+                "source": spec.get("source"),
+            }
+        )
+    state.exotic_skills = kept
+    return {
+        "warnings": warnings,
+        "public": public,
+        "spent": spent,
+        "totals": totals,
+    }
+
+
+def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str, Any]]) -> None:
+    bonus_map: dict[str, int] = skill_mods.setdefault("skill_bonus", {})
+    notes_map: dict[str, list[str]] = skill_mods.setdefault("skill_bonus_notes", {})
+    for row in public:
+        extra = str(row.get("extra") or "").strip()
+        if not extra:
+            continue
+        label = str(row.get("label") or "")
+        base = str(row.get("skill_name") or "")
+        if not label or not base or label == base:
+            continue
+        bonus = int(bonus_map.get(base) or 0)
+        if bonus:
+            bonus_map[label] = int(bonus_map.get(label) or 0) + bonus
+        notes = list(notes_map.get(base) or [])
+        if notes:
+            existing = notes_map.setdefault(label, [])
+            for note in notes:
+                if note not in existing:
+                    existing.append(note)
+
+
 def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -4033,6 +4375,156 @@ def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
         "free": free_max,
         "paid": paid,
         "karma": paid,
+    }
+
+
+def _martial_art_by_id(art_id: str) -> dict[str, Any] | None:
+    for item in catalog().get("martial_arts") or []:
+        if item["id"] == art_id:
+            return item
+    return None
+
+
+def _martial_technique_by_name(name: str) -> dict[str, Any] | None:
+    for item in catalog().get("martial_art_techniques") or []:
+        if item["name"] == name:
+            return item
+    return None
+
+
+def _martial_art_spec_options(bonus_nodes: list[dict[str, Any]] | None) -> list[tuple[str, str]]:
+    options: list[tuple[str, str]] = []
+    for node in bonus_nodes or []:
+        if node.get("tag") != "addskillspecializationoption":
+            continue
+        fields = node.get("fields") or {}
+        skill = str(fields.get("skill") or "").strip()
+        spec = str(fields.get("spec") or "").strip()
+        if skill and spec:
+            options.append((skill, spec))
+    return options
+
+
+def resolve_martial_arts(
+    state: CharacterState,
+    ctx: dict[str, Any],
+    errors: list[str],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    kept: list[MartialArtInstall] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    spec_extras: dict[str, list[str]] = {}
+    unarmed_reach = 0
+    karma = 0
+    technique_total = 0
+
+    for inst in state.martial_arts or []:
+        spec = _martial_art_by_id(inst.art_id)
+        if not spec:
+            warnings.append("未知の武道を外しました")
+            continue
+        if spec.get("is_quality"):
+            warnings.append(f"{spec['name']} はクオリティ経由のみです")
+            continue
+        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
+            errors.append(f"{spec['name']} の前提を満たしていません")
+            continue
+
+        allowed = set(spec.get("techniques") or [])
+        if spec.get("all_techniques"):
+            allowed = {item["name"] for item in catalog().get("martial_art_techniques") or []}
+        picked: list[str] = []
+        seen: set[str] = set()
+        for raw in inst.techniques or []:
+            name = str(raw or "").strip()
+            if not name or name in seen:
+                continue
+            if name not in allowed:
+                warnings.append(f"{spec['name']} に {name} は選べません")
+                continue
+            seen.add(name)
+            picked.append(name)
+        if not picked:
+            warnings.append(f"{spec['name']} の技を1つ選んでください")
+            continue
+
+        style_cost = int(spec.get("cost") or MARTIAL_ART_STYLE_KARMA)
+        paid_techniques = max(0, len(picked) - 1)
+        art_karma = style_cost + paid_techniques * MARTIAL_ART_TECHNIQUE_KARMA
+        karma += art_karma
+        technique_total += len(picked)
+
+        tech_public: list[dict[str, Any]] = []
+        for idx, name in enumerate(picked):
+            tech = _martial_technique_by_name(name) or {"id": "", "name": name, "bonus": [], "source": "", "page": ""}
+            free = idx == 0
+            tech_public.append(
+                {
+                    "id": tech.get("id") or "",
+                    "name": name,
+                    "free": free,
+                    "karma": 0 if free else MARTIAL_ART_TECHNIQUE_KARMA,
+                    "source": tech.get("source") or "",
+                    "page": tech.get("page") or "",
+                }
+            )
+            for node in tech.get("bonus") or []:
+                if node.get("tag") == "unarmedreach":
+                    unarmed_reach += _as_int(node.get("value") or 0)
+                else:
+                    bonus_sources.append((f"{spec['name']}:{name}", [node]))
+
+        for skill_name, spec_name in _martial_art_spec_options(spec.get("bonus") or []):
+            bucket = spec_extras.setdefault(skill_name, [])
+            if spec_name not in bucket:
+                bucket.append(spec_name)
+        # Still collect other art bonuses (none today besides addskillspecializationoption)
+        other_nodes = [
+            node
+            for node in (spec.get("bonus") or [])
+            if node.get("tag") != "addskillspecializationoption"
+        ]
+        if other_nodes:
+            bonus_sources.append((spec["name"], other_nodes))
+
+        inst.techniques = picked
+        kept.append(inst)
+        public.append(
+            {
+                "id": inst.id,
+                "art_id": spec["id"],
+                "name": spec["name"],
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+                "style_karma": style_cost,
+                "karma": art_karma,
+                "techniques": tech_public,
+                "technique_options": sorted(allowed),
+            }
+        )
+
+    state.martial_arts = kept
+    if len(kept) > MARTIAL_ART_CHARGEN_STYLE_MAX:
+        errors.append(
+            f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {len(kept)}）"
+        )
+    if technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
+        errors.append(
+            f"作成時の武道技は合計{MARTIAL_ART_CHARGEN_TECHNIQUE_MAX}つまでです（現在 {technique_total}）"
+        )
+
+    return {
+        "warnings": warnings,
+        "public": public,
+        "karma": karma,
+        "style_count": len(kept),
+        "technique_count": technique_total,
+        "style_max": MARTIAL_ART_CHARGEN_STYLE_MAX,
+        "technique_max": MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
+        "spec_extras": spec_extras,
+        "unarmed_reach": unarmed_reach,
+        "bonus_sources": bonus_sources,
     }
 
 
@@ -4848,6 +5340,14 @@ def resolve_foci(
         formula_bought = bool(inst.formula_bought) if crafted else False
         inst.crafted = crafted
         inst.formula_bought = formula_bought
+        extra = (inst.extra or "").strip()
+        needs_weapon = bool(spec.get("needs_weapon"))
+        weapon_type = str(spec.get("weapon_type") or "")
+        if needs_weapon:
+            inst.extra = extra or None
+        else:
+            inst.extra = None
+            extra = ""
         formula = spec.get("formula") or {}
         if crafted:
             reagent = force * SPIRIT_REAGENT_YEN
@@ -4862,7 +5362,11 @@ def resolve_foci(
         bind = focus_bind_karma(spec["name"], force, focus_binding)
         nuyen += cost
         karma += bind
-        nodes = substitute_rating(list(spec.get("bonus") or []), force)
+        nodes = [
+            node
+            for node in substitute_rating(list(spec.get("bonus") or []), force)
+            if node.get("tag") != "weaponspecificdice"
+        ]
         label = f"{spec['name']} F{force}"
         bonus_sources.append((label, nodes))
         public.append(
@@ -4883,6 +5387,12 @@ def resolve_foci(
                 "opposed_hits": inst.opposed_hits,
                 "effect": spec.get("effect") or "",
                 "avail": spec.get("avail") or "",
+                "needs_weapon": needs_weapon,
+                "weapon_type": weapon_type,
+                "weapon_id": extra if needs_weapon else "",
+                "weapon_name": "",
+                "weapon_dice": force if needs_weapon else 0,
+                "weapon_options": [],
                 "formula": (
                     {
                         "id": formula.get("id"),
@@ -4905,6 +5415,45 @@ def resolve_foci(
         "nuyen": nuyen,
         "karma": karma,
     }
+
+
+def attach_weapon_focus_dice(
+    state: CharacterState,
+    foci_public: list[dict[str, Any]],
+    weapons: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
+    by_id = {str(item.get("id") or ""): item for item in weapons if item.get("id")}
+    for focus in foci_public:
+        if not focus.get("needs_weapon"):
+            continue
+        weapon_type = str(focus.get("weapon_type") or "Melee")
+        options = [
+            {"id": str(item["id"]), "name": str(item.get("name") or "")}
+            for item in weapons
+            if str(item.get("type") or "") == weapon_type
+        ]
+        focus["weapon_options"] = options
+        allowed = {opt["id"] for opt in options}
+        weapon_id = str(focus.get("weapon_id") or "").strip()
+        dice = int(focus.get("weapon_dice") or 0)
+        if not weapon_id:
+            warnings.append(f"{focus.get('name') or 'Weapon Focus'} の対象武器を選んでください")
+            focus["weapon_id"] = ""
+            focus["weapon_name"] = ""
+            continue
+        if weapon_id not in allowed:
+            warnings.append(f"{focus.get('name') or 'Weapon Focus'} は{weapon_type}武器専用です")
+            focus["weapon_id"] = ""
+            focus["weapon_name"] = ""
+            for inst in state.foci or []:
+                if inst.id == focus.get("id"):
+                    inst.extra = None
+            continue
+        weapon = by_id[weapon_id]
+        focus["weapon_id"] = weapon_id
+        focus["weapon_name"] = str(weapon.get("name") or "")
+        weapon["focus_dice"] = int(weapon.get("focus_dice") or 0) + dice
 
 
 def apply_focus_limits(
@@ -5250,13 +5799,20 @@ def attach_sprite_tests(
     return warnings
 
 
-def living_persona(attrs: dict[str, int], res: int) -> dict[str, int]:
+def living_persona(
+    attrs: dict[str, int],
+    res: int,
+    persona_bonus: dict[str, int] | None = None,
+    matrix_initiative_dice: int = 0,
+) -> dict[str, int]:
+    bonus = persona_bonus or {}
     return {
         "device_rating": int(res),
-        "attack": int(attrs.get("CHA") or 0),
-        "sleaze": int(attrs.get("INT") or 0),
-        "dataprocessing": int(attrs.get("LOG") or 0),
-        "firewall": int(attrs.get("WIL") or 0),
+        "attack": int(attrs.get("CHA") or 0) + int(bonus.get("attack") or 0),
+        "sleaze": int(attrs.get("INT") or 0) + int(bonus.get("sleaze") or 0),
+        "dataprocessing": int(attrs.get("LOG") or 0) + int(bonus.get("dataprocessing") or 0),
+        "firewall": int(attrs.get("WIL") or 0) + int(bonus.get("firewall") or 0),
+        "matrix_initiative_dice": max(0, int(matrix_initiative_dice or 0)),
     }
 
 
@@ -5571,14 +6127,6 @@ def resolve_adept_powers(
     }
 
 
-def validate_priorities(p: Priorities) -> list[str]:
-    letters = [p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources]
-    errors = []
-    if sorted(x.upper() for x in letters) != ["A", "B", "C", "D", "E"]:
-        errors.append("優先度 A〜E を各カテゴリに1つずつ割り当ててください")
-    return errors
-
-
 def _clamp_ware_grades(kind: str, items: list[CyberwareInstall]) -> list[str]:
     warnings: list[str] = []
     for inst in items:
@@ -5638,9 +6186,11 @@ def resolve_spells(
     talent: dict[str, Any],
     mag: int,
     attrs: dict[str, int],
+    owned_magic_names: set[str] | None = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
+    owned = set(owned_magic_names or [])
     tradition = _tradition_by_id(state.tradition_id)
     if state.tradition_id and not tradition:
         warnings.append("選んだ伝統が見つからないため外しました")
@@ -5687,6 +6237,7 @@ def resolve_spells(
             name
             for names in (spec.get("required") or {}).values()
             for name in names
+            if name and name not in owned
         ]
         if missing:
             warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
@@ -5729,9 +6280,395 @@ def resolve_spells(
     }
 
 
+def initiation_karma_for_grade(grade: int) -> int:
+    return INITIATION_KARMA_FLAT + int(grade) * INITIATION_KARMA_PER_GRADE
+
+
+def initiation_karma_total(grade: int) -> int:
+    return sum(initiation_karma_for_grade(g) for g in range(1, max(0, int(grade)) + 1))
+
+
+def _metamagic_by_id(mid: str) -> dict[str, Any] | None:
+    for item in catalog().get("metamagics") or []:
+        if item["id"] == mid:
+            return item
+    return None
+
+
+def _magic_art_by_id(art_id: str) -> dict[str, Any] | None:
+    for item in catalog().get("magic_arts") or []:
+        if item["id"] == art_id:
+            return item
+    return None
+
+
+def resolve_initiation(
+    state: CharacterState,
+    talent_name: str,
+    mag: int,
+    quality_names: set[str],
+    errors: list[str],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    empty = {
+        "warnings": warnings,
+        "grade": 0,
+        "karma": 0,
+        "choices": [],
+        "metamagics": [],
+        "arts": [],
+        "art_names": set(),
+        "metamagic_names": set(),
+        "bonus_sources": [],
+        "mag_max_bonus": 0,
+    }
+    if talent_name not in MAG_TALENTS:
+        state.initiate_grade = 0
+        state.initiations = []
+        return empty
+
+    can_adept = talent_name in {"Adept", "Mystic Adept"}
+    can_magician = talent_name in MAG_TALENTS and talent_name != "Adept"
+    grade = max(0, int(state.initiate_grade or 0))
+    by_grade: dict[int, InitiationChoice] = {}
+    for inst in state.initiations or []:
+        g = int(inst.grade or 0)
+        if g >= 1:
+            by_grade[g] = InitiationChoice(
+                id=inst.id,
+                grade=g,
+                kind=inst.kind or "metamagic",
+                option_id=inst.option_id or "",
+            )
+
+    kept_choices: list[InitiationChoice] = []
+    for g in range(1, grade + 1):
+        choice = by_grade.get(g) or InitiationChoice(grade=g, kind="metamagic", option_id="")
+        choice.grade = g
+        kept_choices.append(choice)
+    state.initiate_grade = grade
+    state.initiations = kept_choices
+
+    art_names: set[str] = set()
+    metamagic_names: set[str] = set()
+    public_choices: list[dict[str, Any]] = []
+    public_metas: list[dict[str, Any]] = []
+    public_arts: list[dict[str, Any]] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    seen_meta: set[str] = set()
+    seen_art: set[str] = set()
+
+    for choice in kept_choices:
+        g = choice.grade
+        kind = "art" if choice.kind == "art" else "metamagic"
+        choice.kind = kind
+        option_id = (choice.option_id or "").strip()
+        row = {
+            "id": choice.id,
+            "grade": g,
+            "kind": kind,
+            "option_id": option_id,
+            "name": "",
+            "karma": initiation_karma_for_grade(g),
+            "source": "",
+            "page": "",
+        }
+        if not option_id:
+            warnings.append(f"イニシエーション等級 {g} の Art／メタマジックを選んでください")
+            public_choices.append(row)
+            continue
+
+        if kind == "art":
+            spec = _magic_art_by_id(option_id)
+            if not spec:
+                warnings.append(f"未知の Art を等級 {g} から外しました")
+                choice.option_id = ""
+                row["option_id"] = ""
+                public_choices.append(row)
+                continue
+            if spec["name"] in seen_art:
+                warnings.append(f"{spec['name']} は重複しているため外しました")
+                choice.option_id = ""
+                row["option_id"] = ""
+                public_choices.append(row)
+                continue
+            seen_art.add(spec["name"])
+            art_names.add(spec["name"])
+            public_arts.append(
+                {
+                    "id": choice.id,
+                    "art_id": spec["id"],
+                    "name": spec["name"],
+                    "grade": g,
+                    "source": spec.get("source") or "",
+                    "page": spec.get("page") or "",
+                }
+            )
+            if spec.get("bonus"):
+                bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+            row.update(
+                {
+                    "option_id": spec["id"],
+                    "name": spec["name"],
+                    "source": spec.get("source") or "",
+                    "page": spec.get("page") or "",
+                }
+            )
+            public_choices.append(row)
+            continue
+
+        spec = _metamagic_by_id(option_id)
+        if not spec:
+            warnings.append(f"未知のメタマジックを等級 {g} から外しました")
+            choice.option_id = ""
+            row["option_id"] = ""
+            public_choices.append(row)
+            continue
+        if not spec.get("repeatable") and spec["name"] in seen_meta:
+            warnings.append(f"{spec['name']} は重複しているため外しました")
+            choice.option_id = ""
+            row["option_id"] = ""
+            public_choices.append(row)
+            continue
+        if can_adept and not can_magician and not spec.get("adept"):
+            warnings.append(f"{spec['name']} はアデプト向けではありません")
+            choice.option_id = ""
+            row["option_id"] = ""
+            public_choices.append(row)
+            continue
+        if can_magician and not can_adept and not spec.get("magician"):
+            warnings.append(f"{spec['name']} は魔術師向けではありません")
+            choice.option_id = ""
+            row["option_id"] = ""
+            public_choices.append(row)
+            continue
+
+        ctx = {
+            "qualities": set(quality_names) | {talent_name},
+            "arts": set(art_names),
+            "metamagics": set(metamagic_names),
+            "powers": set(),
+            "metatypes": set(),
+            "metatype_categories": set(),
+            "magenabled": True,
+            "resenabled": False,
+            "cyberware": set(),
+            "bioware": set(),
+            "spells": set(),
+            "tradition": "",
+            "skills": {},
+            "knowledge": {},
+            "essence": 6.0,
+            "ess_lost": 0.0,
+        }
+        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
+            needed = [name for names in (spec.get("required") or {}).values() for name in names]
+            label = " / ".join(needed) if needed else "前提"
+            warnings.append(f"{spec['name']} には {label} が必要です")
+
+        seen_meta.add(spec["name"])
+        metamagic_names.add(spec["name"])
+        public_metas.append(
+            {
+                "id": choice.id,
+                "metamagic_id": spec["id"],
+                "name": spec["name"],
+                "grade": g,
+                "adept": bool(spec.get("adept")),
+                "magician": bool(spec.get("magician")),
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        if spec.get("bonus"):
+            bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+        row.update(
+            {
+                "option_id": spec["id"],
+                "name": spec["name"],
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        public_choices.append(row)
+
+    if grade > 0 and mag <= 0:
+        errors.append("イニシエーションには魔力が必要です")
+    elif grade > mag:
+        errors.append(f"イニシエーション等級は魔力以下です（等級 {grade} / MAG {mag}）")
+
+    return {
+        "warnings": warnings,
+        "grade": grade,
+        "karma": initiation_karma_total(grade),
+        "choices": public_choices,
+        "metamagics": public_metas,
+        "arts": public_arts,
+        "art_names": art_names,
+        "metamagic_names": metamagic_names,
+        "bonus_sources": bonus_sources,
+        "mag_max_bonus": grade,
+    }
+
+
+def submersion_karma_for_grade(grade: int) -> int:
+    return SUBMERSION_KARMA_FLAT + int(grade) * SUBMERSION_KARMA_PER_GRADE
+
+
+def submersion_karma_total(grade: int) -> int:
+    return sum(submersion_karma_for_grade(g) for g in range(1, max(0, int(grade)) + 1))
+
+
+def _echo_by_id(echo_id: str) -> dict[str, Any] | None:
+    for item in catalog().get("echoes") or []:
+        if item["id"] == echo_id:
+            return item
+    return None
+
+
+def resolve_submersion(
+    state: CharacterState,
+    talent_name: str,
+    res: int,
+    quality_names: set[str],
+    errors: list[str],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    empty = {
+        "warnings": warnings,
+        "grade": 0,
+        "karma": 0,
+        "choices": [],
+        "echoes": [],
+        "echo_names": [],
+        "bonus_sources": [],
+        "res_max_bonus": 0,
+    }
+    if talent_name not in RES_TALENTS:
+        state.submersion_grade = 0
+        state.submersions = []
+        return empty
+
+    grade = max(0, int(state.submersion_grade or 0))
+    by_grade: dict[int, SubmersionChoice] = {}
+    for inst in state.submersions or []:
+        g = int(inst.grade or 0)
+        if g >= 1:
+            by_grade[g] = SubmersionChoice(
+                id=inst.id,
+                grade=g,
+                echo_id=inst.echo_id or "",
+                extra=inst.extra,
+            )
+
+    kept_choices: list[SubmersionChoice] = []
+    for g in range(1, grade + 1):
+        choice = by_grade.get(g) or SubmersionChoice(grade=g, echo_id="")
+        choice.grade = g
+        kept_choices.append(choice)
+    state.submersion_grade = grade
+    state.submersions = kept_choices
+
+    public_choices: list[dict[str, Any]] = []
+    public_echoes: list[dict[str, Any]] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    taken_counts: dict[str, int] = {}
+    echo_names: list[str] = []
+
+    for choice in kept_choices:
+        g = choice.grade
+        echo_id = (choice.echo_id or "").strip()
+        extra = (choice.extra or "").strip() or None
+        choice.extra = extra
+        row = {
+            "id": choice.id,
+            "grade": g,
+            "echo_id": echo_id,
+            "name": "",
+            "extra": extra,
+            "karma": submersion_karma_for_grade(g),
+            "needs_extra": False,
+            "source": "",
+            "page": "",
+        }
+        if not echo_id:
+            warnings.append(f"サブマージョン等級 {g} のエコーを選んでください")
+            public_choices.append(row)
+            continue
+
+        spec = _echo_by_id(echo_id)
+        if not spec:
+            warnings.append(f"未知のエコーを等級 {g} から外しました")
+            choice.echo_id = ""
+            choice.extra = None
+            row["echo_id"] = ""
+            row["extra"] = None
+            public_choices.append(row)
+            continue
+
+        count = taken_counts.get(spec["id"], 0)
+        max_takes = spec.get("max_takes")
+        if max_takes is not None and count >= int(max_takes):
+            warnings.append(f"{spec['name']} は最大 {max_takes} 回までです（等級 {g} から外しました）")
+            choice.echo_id = ""
+            choice.extra = None
+            row["echo_id"] = ""
+            row["extra"] = None
+            public_choices.append(row)
+            continue
+
+        if spec.get("needs_extra") and not extra:
+            warnings.append(f"{spec['name']} の対象（プログラム名など）を入力してください")
+
+        taken_counts[spec["id"]] = count + 1
+        echo_names.append(spec["name"])
+        public_echoes.append(
+            {
+                "id": choice.id,
+                "echo_id": spec["id"],
+                "name": spec["name"],
+                "grade": g,
+                "extra": extra,
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        if spec.get("bonus"):
+            bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+        row.update(
+            {
+                "echo_id": spec["id"],
+                "name": spec["name"],
+                "extra": extra,
+                "needs_extra": bool(spec.get("needs_extra")),
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        public_choices.append(row)
+
+    if grade > 0 and res <= 0:
+        errors.append("サブマージョンにはレゾナンスが必要です")
+    elif grade > res:
+        errors.append(f"サブマージョン等級はレゾナンス以下です（等級 {grade} / RES {res}）")
+
+    return {
+        "warnings": warnings,
+        "grade": grade,
+        "karma": submersion_karma_total(grade),
+        "choices": public_choices,
+        "echoes": public_echoes,
+        "echo_names": echo_names,
+        "bonus_sources": bonus_sources,
+        "res_max_bonus": grade,
+    }
+
+
 def compute(state: CharacterState) -> CharacterState:
     data = catalog()
-    errors = validate_priorities(state.priorities)
+    state.build_method = normalize_build_method(getattr(state, "build_method", None))
+    is_karma = state.build_method == BUILD_METHOD_KARMA
+    errors = validate_priorities(state.priorities, state.build_method)
     meta = find_metatype(state.metatype, state.metavariant)
     attrs_spec = meta["attributes"]
     warnings = _drop_invalid_vehicle_ware(state)
@@ -5747,7 +6684,7 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(_required_warnings("cyberware", state.cyberware, installed_names, state.metatype, state.metavariant))
     warnings.extend(_required_warnings("bioware", state.bioware, installed_names, state.metatype, state.metavariant))
 
-    talent = resolve_talent(state.priorities.Talent, state.talent)
+    talent = resolve_talent_for_method(state.priorities.Talent, state.talent, state.build_method)
     state.talent = talent["name"]
     sources: list[tuple[str, list[dict[str, Any]]]] = [(meta["name"], meta.get("bonus") or [])]
     qualities, free_quality_ids, dropped_qualities = gather_qualities(state, talent)
@@ -5788,6 +6725,8 @@ def compute(state: CharacterState) -> CharacterState:
         effects["cm_physical"] += int(limb_quality.get("cm_physical") or 0)
 
     special_key, talent_start = talent_special(talent)
+    if is_karma and special_key:
+        talent_start = 1
     enabled = set(effects["enabled_tabs"])
     if special_key:
         enabled.add(special_key)
@@ -5799,6 +6738,8 @@ def compute(state: CharacterState) -> CharacterState:
     ess = max(0.0, round(ess_start - ess_lost, 2))
     mag_penalty = int(math.ceil(ess_lost - 1e-9)) if ess_lost > 0 else 0
 
+    initiate_grade = max(0, int(state.initiate_grade or 0)) if talent["name"] in MAG_TALENTS else 0
+    submersion_grade = max(0, int(state.submersion_grade or 0)) if talent["name"] in RES_TALENTS else 0
     ratings: dict[str, int] = {}
     for key, spec in attrs_spec.items():
         racial_min = int(spec["min"])
@@ -5807,14 +6748,16 @@ def compute(state: CharacterState) -> CharacterState:
         if key == "MAG":
             if special_key == "MAG":
                 floor = max(talent_start, 1)
-                raw = max(floor, min(racial_max, raw))
+                mag_cap = racial_max + initiate_grade
+                raw = max(floor, min(mag_cap, raw))
                 raw = max(0, raw - mag_penalty)
             else:
                 raw = 0
         elif key == "RES":
             if special_key == "RES":
                 floor = max(talent_start, 1)
-                raw = max(floor, min(racial_max, raw))
+                res_cap = racial_max + submersion_grade
+                raw = max(floor, min(res_cap, raw))
                 raw = max(0, raw - mag_penalty)
             else:
                 raw = 0
@@ -5825,6 +6768,30 @@ def compute(state: CharacterState) -> CharacterState:
         ratings[key] = raw
 
     quality_names = {q["name"] for q in qualities}
+    initiation = resolve_initiation(
+        state,
+        talent["name"],
+        int(ratings.get("MAG") or 0),
+        quality_names,
+        errors,
+    )
+    warnings.extend(initiation["warnings"])
+    for source, nodes in initiation["bonus_sources"]:
+        apply_bonus_nodes(nodes, effects, source)
+    if talent["name"] in MAG_TALENTS:
+        enabled.add("initiation")
+    submersion = resolve_submersion(
+        state,
+        talent["name"],
+        int(ratings.get("RES") or 0),
+        quality_names,
+        errors,
+    )
+    warnings.extend(submersion["warnings"])
+    for source, nodes in submersion["bonus_sources"]:
+        apply_bonus_nodes(nodes, effects, source)
+    if talent["name"] in RES_TALENTS:
+        enabled.add("submersion")
     qi = resolve_qi_foci(
         state,
         talent["name"],
@@ -5879,6 +6846,7 @@ def compute(state: CharacterState) -> CharacterState:
     errors.extend(_attach_ware_to_vehicle_mods(gear.get("vehicle_mods") or [], cyber_installed))
     for source, nodes in gear["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
+    attach_weapon_focus_dice(state, list(foci.get("public") or []), list(gear.get("weapons") or []), warnings)
     if talent["name"] in ADEPT_TALENTS:
         enabled.add("adept")
         effects["enabled_tabs"].add("adept")
@@ -5902,7 +6870,8 @@ def compute(state: CharacterState) -> CharacterState:
         total["STR"] = int(limb_replace["str"])
         total["AGI"] = int(limb_replace["agi"])
 
-    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total)
+    owned_magic_names = set(initiation.get("art_names") or set()) | set(initiation.get("metamagic_names") or set())
+    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names)
     warnings.extend(magic["warnings"])
     spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}
     for item in magic.get("public") or []:
@@ -5982,10 +6951,26 @@ def compute(state: CharacterState) -> CharacterState:
     elif special_key == "RES":
         spent_special += max(0, ratings["RES"] - talent_start)
 
-    attr_points = int(attr_row.get("attribute_points") or 0)
-    skill_points = int(skill_row.get("skill_points") or 0)
-    group_points = int(skill_row.get("skill_group_points") or 0)
-    nuyen_pool = int(res_row.get("nuyen") or 0)
+    if is_karma:
+        attr_points = 0
+        skill_points = 0
+        group_points = 0
+        special_from_meta = 0
+        state.karma_nuyen = max(0, min(KARMA_NUYEN_MAX, int(state.karma_nuyen or 0)))
+        nuyen_pool = int(state.karma_nuyen) * KARMA_TO_NUYEN
+        metatype_karma_cost = max(0, int(meta.get("karma") or 0))
+        heritage_karma_cost = 0
+    else:
+        attr_points = int(attr_row.get("attribute_points") or 0)
+        skill_points = int(skill_row.get("skill_points") or 0)
+        group_points = int(skill_row.get("skill_group_points") or 0)
+        nuyen_pool = int(res_row.get("nuyen") or 0)
+        metatype_karma_cost = 0
+        # Priority chargen: metatypes.xml <karma> is for Karma/Sum-to-Ten, not Priority.
+        # Heritage table <karma> is an extra cost for some metavariants / rare races.
+        heritage_karma_cost = extra_karma
+        state.karma_nuyen = 0
+
     nuyen_spent = (
         sum(int(item["nuyen"]) for item in installed)
         + int(qi.get("nuyen") or 0)
@@ -5998,11 +6983,14 @@ def compute(state: CharacterState) -> CharacterState:
     skill_spent = 0
     group_spent = 0
     skill_totals: dict[str, int] = {}
+    exotic_names = {s["name"] for s in data["skills"]["skills"] if s.get("exotic")}
+    if exotic_names:
+        state.skills = {name: rating for name, rating in state.skills.items() if name not in exotic_names}
     for group, rating in state.skill_groups.items():
         rating = max(0, min(6, int(rating)))
         group_spent += rating
         for s in data["skills"]["skills"]:
-            if s.get("skillgroup") == group:
+            if s.get("skillgroup") == group and not s.get("exotic"):
                 skill_totals[s["name"]] = max(skill_totals.get(s["name"], 0), rating)
     tentative = dict(skill_totals)
     for name, rating in state.skills.items():
@@ -6016,6 +7004,10 @@ def compute(state: CharacterState) -> CharacterState:
         extra = max(0, rating - base)
         skill_spent += extra
         skill_totals[name] = max(base, rating)
+    exotic = resolve_exotic_skills(state, data["skills"], skill_picks["skill_max_bonus"])
+    warnings.extend(exotic["warnings"])
+    skill_spent += int(exotic["spent"])
+    skill_totals.update(exotic["totals"])
     knowledge = resolve_knowledge(state, data["skills"], total)
     warnings.extend(knowledge["warnings"])
     know_spent = int(knowledge["spent"])
@@ -6031,8 +7023,26 @@ def compute(state: CharacterState) -> CharacterState:
         for note in notes:
             if note not in existing:
                 existing.append(note)
+    _copy_exotic_skill_bonuses(skill_mods, exotic["public"])
     skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
     _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
+    specs = resolve_specializations(
+        state,
+        data["skills"],
+        skill_totals,
+        skillsofts["active"],
+        skillsofts["knowledge"],
+    )
+    warnings.extend(specs["warnings"])
+    spec_active = int(specs["active_spent"])
+    spec_knowledge = int(specs["knowledge_spent"])
+    if is_karma:
+        spec_karma = (spec_active + spec_knowledge) * KARMA_SPECIALIZATION
+    else:
+        skill_spent += spec_active
+        know_spent += spec_knowledge
+        spec_karma = 0
+    _attach_specializations(knowledge["public"], specs["specs"])
     effective_skills = _merge_skill_ratings(skill_totals, skillsofts["active"])
     effective_knowledge = _merge_skill_ratings(dict(state.knowledge_skills or {}), skillsofts["knowledge"])
 
@@ -6044,11 +7054,31 @@ def compute(state: CharacterState) -> CharacterState:
     mystic_karma = int(state.mystic_pp) * MYSTIC_PP_KARMA
     extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
     spell_karma = int(magic.get("karma") or 0) + int(resonance.get("karma") or 0)
-    # Priority chargen: metatypes.xml <karma> is for Karma/Sum-to-Ten, not Priority.
-    # Heritage table <karma> is an extra cost for some metavariants / rare races.
-    heritage_karma_cost = extra_karma
-    karma_pool = 25
-    karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma
+    if is_karma:
+        attr_karma = attribute_karma_cost(ratings, attrs_spec, special_key)
+        skill_buy_karma = skill_karma_cost(state.skill_groups, skill_totals, data["skills"])
+        knowledge_karma = knowledge_excess_karma(dict(state.knowledge_skills or {}), know_max)
+        nuyen_karma = int(state.karma_nuyen or 0)
+        karma_pool = KARMA_CHARGEN_POOL
+        karma_spent = (
+            karma_from_q
+            + metatype_karma_cost
+            + mystic_karma
+            + extra_adept_karma
+            + spell_karma
+            + attr_karma
+            + skill_buy_karma
+            + knowledge_karma
+            + spec_karma
+            + nuyen_karma
+        )
+    else:
+        attr_karma = 0
+        skill_buy_karma = 0
+        knowledge_karma = 0
+        nuyen_karma = 0
+        karma_pool = 25
+        karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma
 
     bod = total["BOD"]
     agi = total["AGI"]
@@ -6061,6 +7091,31 @@ def compute(state: CharacterState) -> CharacterState:
     contacts = resolve_contacts(state, int(cha or 0))
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
+
+    martial_ctx = quality_requirement_context(
+        state,
+        talent,
+        qualities,
+        meta,
+        ess,
+        ess_lost,
+        effective_skills,
+        set(adept.get("power_names") or []),
+        {str(item.get("name") or "") for item in (magic.get("public") or []) if item.get("name")},
+        str(((magic.get("tradition") if isinstance(magic.get("tradition"), dict) else {}) or {}).get("name") or ""),
+        {item["name"] for item in cyber_installed},
+        {item["name"] for item in bio_installed},
+        effective_knowledge,
+    )
+    martial_ctx = {
+        **martial_ctx,
+        "qualities": set(martial_ctx.get("qualities") or []) | {talent["name"]},
+    }
+    martial = resolve_martial_arts(state, martial_ctx, errors)
+    warnings.extend(martial["warnings"])
+    karma_spent += int(martial.get("karma") or 0)
+    karma_spent += int(initiation.get("karma") or 0)
+    karma_spent += int(submersion.get("karma") or 0)
     karma_left = karma_pool - karma_spent
 
     physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(effects.get("limit_physical") or 0)
@@ -6141,16 +7196,33 @@ def compute(state: CharacterState) -> CharacterState:
     at_six = [n for n, r in skill_totals.items() if r >= 6]
     if len(at_six) > 1:
         errors.append("作成時にレーティング6のスキルは1つまでです")
-    if spent_physical > attr_points:
-        errors.append(f"属性点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
-    if spent_special > special_from_meta:
-        errors.append(f"特殊属性点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
-    if skill_spent > skill_points:
-        errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
-    if group_spent > group_points:
-        errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
-    if know_spent > know_max:
-        errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
+    if is_karma:
+        at_natural_max = []
+        for key, spec in attrs_spec.items():
+            if key in {"ESS", "MAG", "RES"} and key != special_key:
+                continue
+            if key not in ratings:
+                continue
+            racial_max = int(spec.get("max") or 0)
+            if key == "MAG" and special_key == "MAG":
+                racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
+            if key == "RES" and special_key == "RES":
+                racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
+            if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
+                at_natural_max.append(key)
+        if len(at_natural_max) > 1:
+            errors.append("作成時に自然上限の属性は1つまでです")
+    else:
+        if spent_physical > attr_points:
+            errors.append(f"属性点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
+        if spent_special > special_from_meta:
+            errors.append(f"特殊属性点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
+        if skill_spent > skill_points:
+            errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
+        if group_spent > group_points:
+            errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
+        if know_spent > know_max:
+            errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
     if karma_left < 0:
         errors.append(f"カルマが不足しています（残り {karma_left}）")
     if nuyen < 0:
@@ -6165,9 +7237,10 @@ def compute(state: CharacterState) -> CharacterState:
         if used > cap_max + 1e-9:
             errors.append(f"{item['name']} の容量超過（{used:g}/{cap_max:g}）")
 
-    allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
-    if allowed and state.metatype not in allowed:
-        errors.append(f"{state.metatype} はこの優先度のメタタイプに含まれません")
+    if not is_karma:
+        allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
+        if allowed and state.metatype not in allowed:
+            errors.append(f"{state.metatype} はこの優先度のメタタイプに含まれません")
     _check_avail_limit(
         _avail_entries(
             cyber_installed,
@@ -6209,9 +7282,31 @@ def compute(state: CharacterState) -> CharacterState:
     )
 
     state.attributes = ratings
+    sum_spent = sum_to_ten_spent(state.priorities)
     state.derived = {
         "errors": errors,
         "warnings": warnings,
+        "build_method": state.build_method,
+        "sum_to_ten": {
+            "used": sum_spent,
+            "max": SUM_TO_TEN_BUDGET,
+            "costs": dict(SUM_TO_TEN_COST),
+            "unique": priorities_are_unique(state.priorities),
+        },
+        "karma_chargen": {
+            "enabled": is_karma,
+            "pool": karma_pool if is_karma else 0,
+            "nuyen_karma": int(state.karma_nuyen or 0) if is_karma else 0,
+            "nuyen_karma_max": KARMA_NUYEN_MAX,
+            "nuyen_per_karma": KARMA_TO_NUYEN,
+            "metatype": metatype_karma_cost if is_karma else 0,
+            "attributes": attr_karma if is_karma else 0,
+            "skills": skill_buy_karma if is_karma else 0,
+            "knowledge": knowledge_karma if is_karma else 0,
+            "specializations": spec_karma if is_karma else 0,
+            "qualities": karma_from_q,
+            "other": mystic_karma + extra_adept_karma + spell_karma + int(contacts.get("karma") or 0) + int(martial.get("karma") or 0) + int(initiation.get("karma") or 0) + int(submersion.get("karma") or 0),
+        },
         "totals": total,
         "limits": {
             "physical": physical_limit,
@@ -6286,7 +7381,16 @@ def compute(state: CharacterState) -> CharacterState:
         "sprites": techno_sprites.get("public") or [],
         "stream": resonance.get("stream"),
         "fade_resist": {"pool": resonance.get("resist") or 0, "attrs": resonance.get("resist_attrs") or "WIL+RES"},
-        "living_persona": living_persona(total, int(total.get("RES") or 0)) if talent["name"] in RES_TALENTS else None,
+        "living_persona": (
+            living_persona(
+                total,
+                int(total.get("RES") or 0),
+                effects.get("living_persona") if isinstance(effects.get("living_persona"), dict) else None,
+                int(effects.get("matrix_initiative_dice") or 0),
+            )
+            if talent["name"] in RES_TALENTS
+            else None
+        ),
         "points": {
             "attributes": {"used": spent_physical, "max": attr_points},
             "special": {"used": spent_special, "max": special_from_meta},
@@ -6302,7 +7406,34 @@ def compute(state: CharacterState) -> CharacterState:
             "free": contacts.get("free") or 0,
             "paid": contacts.get("paid") or 0,
         },
+        "martial_arts": martial.get("public") or [],
+        "martial_art_points": {
+            "styles": martial.get("style_count") or 0,
+            "style_max": martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,
+            "techniques": martial.get("technique_count") or 0,
+            "technique_max": martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
+            "karma": martial.get("karma") or 0,
+        },
+        "martial_spec_options": martial.get("spec_extras") or {},
+        "unarmed_reach": int(martial.get("unarmed_reach") or 0),
+        "initiate_grade": int(initiation.get("grade") or 0),
+        "initiation": {
+            "grade": int(initiation.get("grade") or 0),
+            "karma": int(initiation.get("karma") or 0),
+            "choices": initiation.get("choices") or [],
+            "metamagics": initiation.get("metamagics") or [],
+            "arts": initiation.get("arts") or [],
+        },
+        "submersion_grade": int(submersion.get("grade") or 0),
+        "submersion": {
+            "grade": int(submersion.get("grade") or 0),
+            "karma": int(submersion.get("karma") or 0),
+            "choices": submersion.get("choices") or [],
+            "echoes": submersion.get("echoes") or [],
+        },
         "skill_totals": skill_totals,
+        "skill_specializations": specs["specs"],
+        "exotic_skills": exotic["public"],
         "skillsoft": skillsofts["all"],
         "skillwires": skillsofts["skillwires"],
         "skilljack": skillsofts["skilljack"],
@@ -6335,7 +7466,13 @@ def compute(state: CharacterState) -> CharacterState:
         "metatype_info": {
             "name": meta["name"],
             "parent": meta.get("parent"),
-            "attributes": _effective_attr_spec(attrs_spec, special_key, talent_start),
+            "attributes": _effective_attr_spec(
+                attrs_spec,
+                special_key,
+                talent_start,
+                int(initiation.get("mag_max_bonus") or 0),
+                int(submersion.get("res_max_bonus") or 0),
+            ),
             "source": meta.get("source"),
         },
         "translations": {k: data["translations"].get(k, k) for k in [state.metatype, state.metavariant or ""]},
