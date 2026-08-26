@@ -77,9 +77,30 @@ td.rowhead { text-align: left; color: var(--text); }
   gap: 8px;
   margin: 6px 0;
 }
+.skill-row.has-spec {
+  grid-template-columns: 80px 1fr minmax(108px, 168px) 108px;
+}
+.skill-row.has-spec.can-delete {
+  grid-template-columns: minmax(110px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
+}
+.spec-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.spec-pick select,
+.spec-pick input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.78rem;
+}
 .know-row {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) 72px 1fr 88px auto;
+  grid-template-columns: minmax(120px, 1.5fr) 72px 1fr minmax(108px, 168px) 88px auto;
   align-items: center;
   gap: 8px;
   margin: 6px 0;

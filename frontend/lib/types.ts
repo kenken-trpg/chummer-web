@@ -59,6 +59,66 @@ export interface ContactInstall {
   loyalty?: number;
 }
 
+export interface MartialArtInstall {
+  id?: string;
+  art_id: string;
+  techniques?: string[];
+}
+
+export interface InitiationChoice {
+  id?: string;
+  grade: number;
+  kind: "metamagic" | "art" | string;
+  option_id: string;
+}
+
+export interface SubmersionChoice {
+  id?: string;
+  grade: number;
+  echo_id: string;
+  extra?: string | null;
+}
+
+export interface InstalledMartialArtTechnique {
+  id: string;
+  name: string;
+  free: boolean;
+  karma: number;
+  source?: string;
+  page?: string;
+}
+
+export interface InstalledMartialArt {
+  id: string;
+  art_id: string;
+  name: string;
+  source?: string;
+  page?: string;
+  style_karma: number;
+  karma: number;
+  techniques: InstalledMartialArtTechnique[];
+  technique_options: string[];
+}
+
+export interface MartialArtCatalogItem {
+  id: string;
+  name: string;
+  cost: number;
+  techniques: string[];
+  source?: string;
+  page?: string;
+  is_quality?: boolean;
+  all_techniques?: boolean;
+  spec_options?: { skill: string; spec: string }[];
+}
+
+export interface ExoticSkillInstall {
+  id?: string;
+  skill_name: string;
+  extra?: string;
+  rating?: number;
+}
+
 export interface InstalledContact {
   id: string;
   name: string;
@@ -68,6 +128,19 @@ export interface InstalledContact {
   cost: number;
   connection_max: number;
   loyalty_max: number;
+}
+
+export interface InstalledExoticSkill {
+  id: string;
+  skill_name: string;
+  extra: string;
+  label: string;
+  rating: number;
+  rating_max: number;
+  attribute: string;
+  category: string;
+  options: string[];
+  source?: string;
 }
 
 export interface InstalledSpell {
@@ -171,6 +244,7 @@ export interface FocusInstall {
   formula_bought?: boolean;
   hits?: number | null;
   opposed_hits?: number | null;
+  extra?: string | null;
 }
 
 export interface ArmorInstall {
@@ -322,6 +396,7 @@ export interface InstalledWeapon {
   limb_agi?: number | null;
   mounted_on?: string;
   mounted_label?: string;
+  focus_dice?: number;
   avail?: string;
   source?: string;
 }
@@ -824,6 +899,12 @@ export interface InstalledFocus {
   formula_test?: MagicTestInfo;
   effect?: string;
   formula?: { id?: string; name?: string; cost?: string } | null;
+  needs_weapon?: boolean;
+  weapon_type?: string;
+  weapon_id?: string;
+  weapon_name?: string;
+  weapon_dice?: number;
+  weapon_options?: { id: string; name: string }[];
   source?: string;
   page?: string;
 }
@@ -846,6 +927,8 @@ export interface FocusCatalogItem {
   maxrating: number;
   cost: string;
   effect?: string;
+  needs_weapon?: boolean;
+  weapon_type?: string;
   formula?: { id?: string; name?: string; cost?: string } | null;
   source?: string;
   page?: string;
@@ -984,6 +1067,7 @@ export type PriorityCategory =
 export interface Character {
   id: string;
   name: string;
+  build_method?: "Priority" | "SumToTen" | "Karma" | string;
   priorities: Record<PriorityCategory, PriorityLetter>;
   metatype: string;
   metavariant: string | null;
@@ -991,6 +1075,8 @@ export interface Character {
   attributes: Record<string, number>;
   skills: Record<string, number>;
   skill_groups: Record<string, number>;
+  skill_specializations?: Record<string, string>;
+  exotic_skills?: ExoticSkillInstall[];
   knowledge_skills: Record<string, number>;
   native_languages?: string[];
   knowledge_categories?: Record<string, string>;
@@ -1029,7 +1115,13 @@ export interface Character {
   weapon_mounts?: WeaponMountInstall[];
   lifestyles?: LifestyleInstall[];
   contacts?: ContactInstall[];
-    tradition_id?: string | null;
+  martial_arts?: MartialArtInstall[];
+  initiate_grade?: number;
+  initiations?: InitiationChoice[];
+  submersion_grade?: number;
+  submersions?: SubmersionChoice[];
+  karma_nuyen?: number;
+  tradition_id?: string | null;
     stream_id?: string | null;
   options?: {
     redliner_torso: boolean;
@@ -1038,6 +1130,27 @@ export interface Character {
   derived: {
     errors: string[];
     warnings?: string[];
+    build_method?: string;
+    sum_to_ten?: {
+      used: number;
+      max: number;
+      costs: Record<string, number>;
+      unique?: boolean;
+    };
+    karma_chargen?: {
+      enabled: boolean;
+      pool: number;
+      nuyen_karma: number;
+      nuyen_karma_max: number;
+      nuyen_per_karma: number;
+      metatype: number;
+      attributes: number;
+      skills: number;
+      knowledge: number;
+      specializations: number;
+      qualities: number;
+      other: number;
+    };
     totals: Record<string, number>;
     limits: { physical: number; mental: number; social: number };
     limit_modifiers?: LimitModifier[];
@@ -1083,10 +1196,81 @@ export interface Character {
       rating: number;
       native: boolean;
       skillsoft?: number;
+      spec?: string;
     }[];
     contacts?: InstalledContact[];
     contact_points?: { used: number; free: number; paid: number };
+    martial_arts?: InstalledMartialArt[];
+    martial_art_points?: {
+      styles: number;
+      style_max: number;
+      techniques: number;
+      technique_max: number;
+      karma: number;
+    };
+    martial_spec_options?: Record<string, string[]>;
+    unarmed_reach?: number;
+    initiate_grade?: number;
+    initiation?: {
+      grade: number;
+      karma: number;
+      choices: {
+        id: string;
+        grade: number;
+        kind: string;
+        option_id: string;
+        name: string;
+        karma: number;
+        source?: string;
+        page?: string;
+      }[];
+      metamagics: {
+        id: string;
+        metamagic_id: string;
+        name: string;
+        grade: number;
+        adept?: boolean;
+        magician?: boolean;
+        source?: string;
+        page?: string;
+      }[];
+      arts: {
+        id: string;
+        art_id: string;
+        name: string;
+        grade: number;
+        source?: string;
+        page?: string;
+      }[];
+    };
+    submersion_grade?: number;
+    submersion?: {
+      grade: number;
+      karma: number;
+      choices: {
+        id: string;
+        grade: number;
+        echo_id: string;
+        name: string;
+        extra?: string | null;
+        karma: number;
+        needs_extra?: boolean;
+        source?: string;
+        page?: string;
+      }[];
+      echoes: {
+        id: string;
+        echo_id: string;
+        name: string;
+        grade: number;
+        extra?: string | null;
+        source?: string;
+        page?: string;
+      }[];
+    };
     skill_totals: Record<string, number>;
+    skill_specializations?: Record<string, string>;
+    exotic_skills?: InstalledExoticSkill[];
     skillsoft?: Record<string, number>;
     skillwires?: number;
     skilljack?: number;
@@ -1111,7 +1295,14 @@ export interface Character {
     sprites?: InstalledSprite[];
     stream?: { id: string; name: string; drain: string; drain_attrs: string[]; sprites?: string[]; source?: string; page?: string } | null;
     fade_resist?: { pool: number; attrs: string };
-    living_persona?: { device_rating: number; attack: number; sleaze: number; dataprocessing: number; firewall: number } | null;
+    living_persona?: {
+      device_rating: number;
+      attack: number;
+      sleaze: number;
+      dataprocessing: number;
+      firewall: number;
+      matrix_initiative_dice?: number;
+    } | null;
     enhancements?: EnhancementInfo[];
     damage_resistance?: number;
     unarmed_dv?: number;
@@ -1158,8 +1349,9 @@ export interface Catalog {
     name: string;
     id: string;
     category: string;
+    karma?: number;
     attributes: Record<string, { min: number; max: number; aug: number }>;
-    metavariants: { name: string; attributes: Record<string, { min: number; max: number; aug: number }> }[];
+    metavariants: { name: string; karma?: number; attributes: Record<string, { min: number; max: number; aug: number }> }[];
     source: string;
   }[];
   skills: {
@@ -1171,8 +1363,10 @@ export interface Catalog {
       category: string;
       skillgroup: string | null;
       source: string;
+      exotic?: boolean;
+      specs?: string[];
     }[];
-    knowledge: { name: string; category: string; attribute: string; source?: string }[];
+    knowledge: { name: string; category: string; attribute: string; source?: string; specs?: string[] }[];
   };
   qualities: {
     id: string;
@@ -1274,6 +1468,28 @@ export interface Catalog {
   apps?: ProgramCatalogItem[];
   weapon_accessories?: WeaponAccessoryCatalogItem[];
   lifestyles?: LifestyleCatalogItem[];
+  martial_arts?: MartialArtCatalogItem[];
+  martial_art_techniques?: { id: string; name: string; source?: string; page?: string }[];
+  metamagics?: {
+    id: string;
+    name: string;
+    adept: boolean;
+    magician: boolean;
+    repeatable: boolean;
+    required: string[];
+    source?: string;
+    page?: string;
+  }[];
+  magic_arts?: { id: string; name: string; source?: string; page?: string }[];
+  echoes?: {
+    id: string;
+    name: string;
+    max_takes: number | null;
+    needs_extra: boolean;
+    source?: string;
+    page?: string;
+  }[];
+  karma_talents?: { name: string; label: string; magic: number; resonance: number }[];
 }
 
 export interface InstalledWare {

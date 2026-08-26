@@ -12,6 +12,14 @@ const CATS: { key: PriorityCategory; label: string }[] = [
   { key: "Resources", label: "資金" },
 ];
 const LETTERS: PriorityLetter[] = ["A", "B", "C", "D", "E"];
+const SUM_TO_TEN_COST: Record<PriorityLetter, number> = { A: 4, B: 3, C: 2, D: 1, E: 0 };
+const DEFAULT_PRIORITIES: Record<PriorityCategory, PriorityLetter> = {
+  Heritage: "C",
+  Attributes: "A",
+  Talent: "E",
+  Skills: "B",
+  Resources: "D",
+};
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
 const ATTR_JA: Record<string, string> = {
   BOD: "BOD 体",
@@ -176,7 +184,7 @@ function wareFitsVehicleMod(
   return names.some((name) => mod.name.includes(name));
 }
 
-type Tab = "priority" | "meta" | "attrs" | "skills" | "qualities" | "cyber" | "bio" | "gear" | "contacts" | "adept" | "spells" | "spirits" | "foci" | "complexforms" | "sprites";
+type Tab = "priority" | "meta" | "attrs" | "skills" | "qualities" | "cyber" | "bio" | "gear" | "contacts" | "martial" | "initiation" | "submersion" | "adept" | "spells" | "spirits" | "foci" | "complexforms" | "sprites";
 type GearKind = "armor" | "weapon" | "commlink" | "cyberdeck" | "rcc" | "optics" | "sensor" | "drone" | "vehicle" | "misc" | "lifestyle";
 const OPTICS_DEVICE_CATS = new Set(["Vision Devices", "Audio Devices"]);
 const SENSOR_DEVICE_CATS = new Set(["Sensors", "Sensor Housings"]);
@@ -506,9 +514,78 @@ function mergeRatings(base?: Record<string, number> | null, extra?: Record<strin
   return out;
 }
 
+function poolRating(pool: Record<string, number>, name: string) {
+  let best = pool[name] || 0;
+  const prefix = `${name} (`;
+  for (const [key, value] of Object.entries(pool)) {
+    if (key.startsWith(prefix)) best = Math.max(best, value || 0);
+  }
+  return best;
+}
+
 function skillsoftBit(rating?: number) {
   if (!rating) return null;
   return <span className="muted"> ソフトR{rating}</span>;
+}
+
+function specBit(spec?: string | null, label?: string) {
+  if (!spec) return null;
+  return <span className="muted" title={label || spec}> 専門+2</span>;
+}
+
+function SpecPicker({
+  options,
+  value,
+  disabled,
+  emptyLabel = "専門なし",
+  placeholder = "専門化",
+  tr,
+  onDraft,
+  onCommit,
+}: {
+  options: string[];
+  value: string;
+  disabled?: boolean;
+  emptyLabel?: string;
+  placeholder?: string;
+  tr: (name: string) => string;
+  onDraft: (next: string) => void;
+  onCommit: (next: string) => void;
+}) {
+  const [customMode, setCustomMode] = useState(() => Boolean(value && !options.includes(value)));
+  const selectValue = !value && !customMode ? "" : customMode || (value && !options.includes(value)) ? "__custom__" : value;
+  return (
+    <span className="spec-pick">
+      <select
+        disabled={disabled}
+        value={selectValue}
+        title={value ? tr(value) : emptyLabel}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (next === "__custom__") {
+            setCustomMode(true);
+            return;
+          }
+          setCustomMode(false);
+          onCommit(next);
+        }}
+      >
+        <option value="">{emptyLabel}</option>
+        {options.map((spec) => (
+          <option key={spec} value={spec}>{tr(spec)}</option>
+        ))}
+        <option value="__custom__">自由入力</option>
+      </select>
+      {(customMode || (value && !options.includes(value))) && !disabled ? (
+        <input
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onDraft(e.target.value)}
+          onBlur={(e) => onCommit(e.target.value.trim())}
+        />
+      ) : null}
+    </span>
+  );
 }
 
 type QualityReqCtx = {
@@ -545,7 +622,7 @@ function reqNodeMet(node: QualityReqNode, ctx: QualityReqCtx): boolean {
   if (tag === "skill") {
     const rating = node.val || 1;
     const pool = (node.type || "").toLowerCase() === "knowledge" ? ctx.knowledge : ctx.skills;
-    return (pool[name] || 0) >= rating;
+    return poolRating(pool, name) >= rating;
   }
   if (tag === "ess") {
     const value = node.value || 0;
@@ -871,6 +948,7 @@ export default function Page() {
   const [customKnow, setCustomKnow] = useState("");
   const [customKnowCat, setCustomKnowCat] = useState("Street");
   const [focusSearch, setFocusSearch] = useState("");
+  const [martialSearch, setMartialSearch] = useState("");
   const [cfSearch, setCfSearch] = useState("");
   const [spriteSearch, setSpriteSearch] = useState("");
   const [gearKind, setGearKind] = useState<GearKind>("armor");
@@ -1058,10 +1136,40 @@ export default function Page() {
     delete ratings[name];
     const cats = { ...(ch.knowledge_categories || {}) };
     delete cats[name];
-    patchKnowledge({
+    const specs = { ...(ch.skill_specializations || {}) };
+    delete specs[name];
+    patch({
       knowledge_skills: ratings,
       native_languages: (ch.native_languages || []).filter((item) => item !== name),
       knowledge_categories: cats,
+      skill_specializations: specs,
+    });
+  }
+
+  function draftSpec(name: string, value: string) {
+    const next = { ...(ch.skill_specializations || {}) };
+    if (value) next[name] = value;
+    else delete next[name];
+    setCh({ ...ch, skill_specializations: next });
+  }
+
+  function commitSpec(name: string, value: string) {
+    const next = { ...(ch.skill_specializations || {}) };
+    const trimmed = value.trim();
+    if (trimmed) next[name] = trimmed;
+    else delete next[name];
+    setCh({ ...ch, skill_specializations: next });
+    patch({ skill_specializations: next });
+  }
+
+  function patchExotic(next: { id?: string; skill_name: string; extra?: string; rating?: number }[]) {
+    patch({ exotic_skills: next });
+  }
+
+  function draftExotic(id: string, next: { extra?: string; rating?: number }) {
+    setCh({
+      ...ch,
+      exotic_skills: (ch.exotic_skills || []).map((row) => (row.id === id ? { ...row, ...next } : row)),
     });
   }
 
@@ -1089,6 +1197,9 @@ export default function Page() {
             ["bio", "バイオ"],
             ["gear", "ギア"],
             ["contacts", "コネクト"],
+            ["martial", "武道"],
+            ...(d.enabled_tabs.includes("initiation") ? [["initiation", "イニシエーション"] as const] : []),
+            ...(d.enabled_tabs.includes("submersion") ? [["submersion", "サブマージョン"] as const] : []),
             ...(d.enabled_tabs.includes("adept") ? [["adept", "アデプト"] as const] : []),
             ...(d.enabled_tabs.includes("spells") ? [["spells", "術式"] as const] : []),
             ...(d.enabled_tabs.includes("spirits") ? [["spirits", "精霊"] as const] : []),
@@ -1102,11 +1213,99 @@ export default function Page() {
 
         {tab === "priority" && (
           <div className="card">
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                className={`choice ${(ch.build_method || "Priority") === "Priority" ? "selected" : ""}`}
+                onClick={() => {
+                  const letters = CATS.map((c) => ch.priorities[c.key]);
+                  const unique = [...letters].sort().join("") === "ABCDE";
+                  patch({
+                    build_method: "Priority",
+                    ...(unique
+                      ? {}
+                      : {
+                          priorities: { ...DEFAULT_PRIORITIES },
+                          talent: "Mundane",
+                        }),
+                  });
+                }}
+              >
+                Priority
+              </button>
+              <button
+                className={`choice ${(ch.build_method || "Priority") === "SumToTen" ? "selected" : ""}`}
+                onClick={() => patch({ build_method: "SumToTen" })}
+              >
+                Sum to Ten
+              </button>
+              <button
+                className={`choice ${(ch.build_method || "Priority") === "Karma" ? "selected" : ""}`}
+                onClick={() => patch({ build_method: "Karma", talent: ch.talent || "Mundane" })}
+              >
+                Karma
+              </button>
+              {(ch.build_method || "Priority") === "SumToTen" ? (
+                <span className="muted">
+                  合計 {d.sum_to_ten?.used ?? 0}/{d.sum_to_ten?.max ?? 10}
+                  {" ・ "}A4 / B3 / C2 / D1 / E0
+                </span>
+              ) : null}
+              {(ch.build_method || "Priority") === "Karma" ? (
+                <span className="muted">
+                  カルマ {d.karma.remaining} / {d.karma.pool}
+                  {" ・ "}1K={d.karma_chargen?.nuyen_per_karma ?? 2000}¥（最大 {d.karma_chargen?.nuyen_karma_max ?? 235}K）
+                </span>
+              ) : null}
+            </div>
+            {(ch.build_method || "Priority") === "Karma" ? (
+              <div style={{ display: "grid", gap: 12 }}>
+                <p className="muted">
+                  優先度表は使いません。メタタイプ／属性／スキル／術式などをカルマで購入します（開始 {d.karma.pool}）。
+                  MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の術式枠はありません。
+                </p>
+                <label>
+                  タレント
+                  <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
+                    {(catalog.karma_talents || []).map((t) => (
+                      <option key={t.name} value={t.name}>
+                        {t.label || t.name}
+                        {t.magic ? ` / MAG` : ""}
+                        {t.resonance ? ` / RES` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  カルマ→ニューエン（{ch.karma_nuyen || 0}K = {((ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)).toLocaleString()}¥）
+                  <input
+                    type="range"
+                    min={0}
+                    max={d.karma_chargen?.nuyen_karma_max ?? 235}
+                    value={ch.karma_nuyen || 0}
+                    onChange={(e) => setCh({ ...ch, karma_nuyen: Number(e.target.value) })}
+                    onMouseUp={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
+                    onTouchEnd={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
+                    onBlur={(e) => patch({ karma_nuyen: Number(e.target.value) })}
+                  />
+                </label>
+                {d.karma_chargen ? (
+                  <div className="muted" style={{ display: "grid", gap: 4 }}>
+                    <div>内訳: メタタイプ {d.karma_chargen.metatype} / 属性 {d.karma_chargen.attributes} / スキル {d.karma_chargen.skills} / 知識 {d.karma_chargen.knowledge} / 専門化 {d.karma_chargen.specializations}</div>
+                    <div>クオリティ {d.karma_chargen.qualities} / ニューエン交換 {d.karma_chargen.nuyen_karma} / その他 {d.karma_chargen.other}</div>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
             <table>
               <thead>
                 <tr>
                   <th></th>
-                  {LETTERS.map((l) => <th key={l}>{l}</th>)}
+                  {LETTERS.map((l) => (
+                    <th key={l}>
+                      {l}
+                      {(ch.build_method || "Priority") === "SumToTen" ? ` (${d.sum_to_ten?.costs?.[l] ?? SUM_TO_TEN_COST[l]})` : ""}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -1115,14 +1314,15 @@ export default function Page() {
                     <td className="rowhead">{cat.label}</td>
                     {LETTERS.map((letter) => {
                       const cell = table[cat.key][letter];
-                      const takenBy = CATS.find((c) => ch.priorities[c.key] === letter && c.key !== cat.key);
+                      const sumMode = (ch.build_method || "Priority") === "SumToTen";
+                      const takenBy = sumMode ? undefined : CATS.find((c) => ch.priorities[c.key] === letter && c.key !== cat.key);
                       return (
                         <td key={letter}>
                           <button
                             className={`choice ${ch.priorities[cat.key] === letter ? "selected" : ""}`}
                             onClick={() => {
                               const next = { ...ch.priorities };
-                              if (takenBy) next[takenBy.key] = next[cat.key];
+                              if (!sumMode && takenBy) next[takenBy.key] = next[cat.key];
                               next[cat.key] = letter;
                               const extra: Record<string, unknown> = { priorities: next };
                               if (cat.key === "Talent") {
@@ -1146,17 +1346,34 @@ export default function Page() {
                 ))}
               </tbody>
             </table>
-            <p className="muted">A〜E は各1回。クリックで入れ替えます。</p>
+            <p className="muted">
+              {(ch.build_method || "Priority") === "SumToTen"
+                ? "同じ優先度を複数カテゴリに割り当てできます。合計がちょうど 10 になるようにしてください。"
+                : "A〜E は各1回。クリックで入れ替えます。"}
+            </p>
+            )}
           </div>
         )}
 
         {tab === "meta" && (
           <div className="card">
             <div className="grid">
-              {table.Heritage[ch.priorities.Heritage].metatypes.map((m) => (
+              {((ch.build_method || "Priority") === "Karma"
+                ? catalog.metatypes.map((m) => ({
+                    name: m.name,
+                    special: 0,
+                    karma: m.karma ?? 0,
+                  }))
+                : table.Heritage[ch.priorities.Heritage].metatypes
+              ).map((m) => (
                 <button key={m.name} className={`choice ${ch.metatype === m.name ? "selected" : ""}`} onClick={() => patch({ metatype: m.name, metavariant: null })}>
                   <b>{tr(m.name)}</b>
-                  <div className="muted">{m.name} / 特殊点 {m.special}</div>
+                  <div className="muted">
+                    {m.name}
+                    {(ch.build_method || "Priority") === "Karma"
+                      ? ` / ${("karma" in m ? Number(m.karma) : 0) || 0}カルマ`
+                      : ` / 特殊点 ${m.special}`}
+                  </div>
                 </button>
               ))}
             </div>
@@ -1177,7 +1394,10 @@ export default function Page() {
             <div style={{ marginTop: 12 }}>
               <label className="muted">タレント</label>
               <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
-                {table.Talent[ch.priorities.Talent].talents.map((t) => (
+                {((ch.build_method || "Priority") === "Karma"
+                  ? (catalog.karma_talents || []).map((t) => ({ name: t.name, label: t.label || t.name }))
+                  : table.Talent[ch.priorities.Talent].talents
+                ).map((t) => (
                   <option key={t.name} value={t.name}>{t.label || t.name}</option>
                 ))}
               </select>
@@ -1234,7 +1454,7 @@ export default function Page() {
 
         {tab === "skills" && (
           <div className="card">
-            <p className="muted">スキル {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max}</p>
+            <p className="muted">スキル {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max} ・ 専門化は1点</p>
             <h3>スキルグループ</h3>
             {catalog.skills.groups.map((g) => (
               <div className="skill-row" key={g}>
@@ -1258,8 +1478,11 @@ export default function Page() {
               </div>
             ))}
             <h3>アクティブスキル</h3>
-            {catalog.skills.skills.filter((s) => s.source === "SR5" && !s.name.includes("Exotic")).map((s) => (
-              <div className="skill-row" key={s.id}>
+            {catalog.skills.skills.filter((s) => s.source === "SR5" && !s.name.includes("Exotic")).map((s) => {
+              const specValue = ch.skill_specializations?.[s.name] || "";
+              const hasSkill = (ch.skills[s.name] || 0) > 0 || (d.skill_totals[s.name] || 0) > 0 || (d.skillsoft?.[s.name] || 0) > 0;
+              return (
+              <div className="skill-row has-spec" key={s.id}>
                 <span title={[s.attribute, ...(d.skill_bonus_notes?.[s.name] || [])].join(" / ")}>{tr(s.name)}</span>
                 <input
                   type="range"
@@ -1276,11 +1499,91 @@ export default function Page() {
                     patch({ skills: { ...ch.skills, [s.name]: value } });
                   }}
                 />
-                <b>{skillDice(Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0), d.skill_bonus?.[s.name])}{skillsoftBit(d.skillsoft?.[s.name])}</b>
+                <SpecPicker
+                  options={[...(s.specs || []), ...(d.martial_spec_options?.[s.name] || [])]}
+                  value={specValue}
+                  disabled={!hasSkill}
+                  tr={tr}
+                  onDraft={(next) => draftSpec(s.name, next)}
+                  onCommit={(next) => commitSpec(s.name, next)}
+                />
+                <b>
+                  {skillDice(Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0), d.skill_bonus?.[s.name])}
+                  {skillsoftBit(d.skillsoft?.[s.name])}
+                  {specBit(specValue, tr(specValue))}
+                </b>
               </div>
-            ))}
+              );
+            })}
+            <h3>Exoticスキル</h3>
+            <p className="muted">対象の指定が技能そのものです。同じ Exotic を別対象で複数持てます。専門化の追加点は不要です。</p>
+            {(d.exotic_skills || []).length ? (d.exotic_skills || []).map((row) => {
+              const local = (ch.exotic_skills || []).find((item) => item.id === row.id);
+              const extra = local?.extra ?? row.extra ?? "";
+              const rating = local?.rating ?? row.rating;
+              const bonus = d.skill_bonus?.[row.label] || d.skill_bonus?.[row.skill_name];
+              return (
+                <div className="skill-row has-spec can-delete" key={row.id}>
+                  <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.label] || d.skill_bonus_notes?.[row.skill_name] || [])].join(" / ")}>
+                    {tr(row.skill_name)}
+                  </span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={row.rating_max}
+                    value={rating}
+                    onChange={(e) => draftExotic(row.id, { rating: Number(e.target.value) })}
+                    onMouseUp={(e) => {
+                      const value = Number((e.target as HTMLInputElement).value);
+                      patchExotic((ch.exotic_skills || []).map((item) => (
+                        item.id === row.id ? { ...item, rating: value } : item
+                      )));
+                    }}
+                    onBlur={(e) => {
+                      const value = Number((e.target as HTMLInputElement).value);
+                      patchExotic((ch.exotic_skills || []).map((item) => (
+                        item.id === row.id ? { ...item, rating: value } : item
+                      )));
+                    }}
+                  />
+                  <SpecPicker
+                    options={row.options || []}
+                    value={extra}
+                    emptyLabel="対象"
+                    placeholder="対象"
+                    tr={tr}
+                    onDraft={(next) => draftExotic(row.id, { extra: next })}
+                    onCommit={(next) => {
+                      patchExotic((ch.exotic_skills || []).map((item) => (
+                        item.id === row.id ? { ...item, extra: next } : item
+                      )));
+                    }}
+                  />
+                  <b>{skillDice(rating, bonus)}</b>
+                  <button
+                    className="btn danger"
+                    onClick={() => patchExotic((ch.exotic_skills || []).filter((item) => item.id !== row.id))}
+                  >
+                    削除
+                  </button>
+                </div>
+              );
+            }) : (
+              <p className="muted">まだありません。下のボタンから追加します。</p>
+            )}
+            <div className="option-row">
+              {catalog.skills.skills.filter((s) => s.exotic || s.name.includes("Exotic")).map((s) => (
+                <button
+                  key={s.id}
+                  className="btn"
+                  onClick={() => patchExotic([...(ch.exotic_skills || []), { skill_name: s.name, extra: "", rating: 1 }])}
+                >
+                  {tr(s.name)} を追加
+                </button>
+              ))}
+            </div>
             <h3>知識スキル</h3>
-            <p className="muted">無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。作成時のレーティングは1〜6です。</p>
+            <p className="muted">無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。作成時のレーティングは1〜6です。専門化は知識点1です。</p>
             {Object.keys(d.skill_category_bonus || {}).length ? (
               <p className="muted">
                 {Object.entries(d.skill_category_bonus || {})
@@ -1291,6 +1594,8 @@ export default function Page() {
             ) : null}
             {(d.knowledge_skills || []).length ? (d.knowledge_skills || []).map((row) => {
               const custom = !catalogKnowledge.has(row.name);
+              const specValue = ch.skill_specializations?.[row.name] || row.spec || "";
+              const knowSpec = (catalog.skills.knowledge || []).find((item) => item.name === row.name);
               return (
                 <div className="know-row" key={row.name}>
                   <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.name] || [])].join(" / ")}>
@@ -1333,7 +1638,18 @@ export default function Page() {
                       }}
                     />
                   )}
-                  <b>{row.native ? "母語" : skillDice(Math.max(row.rating, row.skillsoft || 0), d.skill_bonus?.[row.name])}{row.native ? null : skillsoftBit(row.skillsoft)}</b>
+                  <SpecPicker
+                    options={knowSpec?.specs || []}
+                    value={specValue}
+                    tr={tr}
+                    onDraft={(next) => draftSpec(row.name, next)}
+                    onCommit={(next) => commitSpec(row.name, next)}
+                  />
+                  <b>
+                    {row.native ? "母語" : skillDice(Math.max(row.rating, row.skillsoft || 0), d.skill_bonus?.[row.name])}
+                    {row.native ? null : skillsoftBit(row.skillsoft)}
+                    {specBit(specValue, tr(specValue))}
+                  </b>
                   <span className="option-row" style={{ margin: 0, gap: 6 }}>
                     {row.category === "Language" ? (
                       <label className="native">
@@ -1906,6 +2222,7 @@ export default function Page() {
                         {fromWare ? " / ウェア連動" : ""}
                         {item.limb_str != null ? ` / 肢 STR ${item.limb_str}` : ""}
                         {item.useskill ? ` / ${item.useskill}` : ""}
+                        {item.focus_dice ? ` / フォーカス+${item.focus_dice}` : ""}
                         {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
                       </div>
                       {fromWare ? null : (
@@ -3902,6 +4219,350 @@ export default function Page() {
           </div>
         )}
 
+        {tab === "martial" && (
+          <div className="card">
+            <p className="muted">
+              流派 {d.martial_art_points?.styles || 0}/{d.martial_art_points?.style_max || 1}
+              {" ・ "}技 {d.martial_art_points?.techniques || 0}/{d.martial_art_points?.technique_max || 5}
+              {" ・ "}カルマ {d.martial_art_points?.karma || 0}
+              （流派7カルマに技1つ込み、追加技は各5カルマ。作成時は流派1・技合計5まで）
+              {(d.unarmed_reach || 0) > 0 ? ` ・ 素手Reach +${d.unarmed_reach}` : ""}
+            </p>
+            {(d.martial_arts || []).map((item) => {
+              const local = (ch.martial_arts || []).find((row) => row.id === item.id);
+              const selected = new Set(local?.techniques || item.techniques.map((tech) => tech.name));
+              return (
+                <div className="cyber-item" key={item.id}>
+                  <div>
+                    <b>{tr(item.name)}</b>
+                    <div className="muted">
+                      {item.name} / {item.karma}カルマ（流派 {item.style_karma} + 追加技） / {item.source}
+                      {item.page ? ` p.${item.page}` : ""}
+                    </div>
+                    <div className="martial-techs" style={{ display: "grid", gap: 4, marginTop: 8 }}>
+                      {item.technique_options.map((name) => {
+                        const owned = selected.has(name);
+                        const techMeta = item.techniques.find((tech) => tech.name === name);
+                        return (
+                          <label key={name} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                            <input
+                              type="checkbox"
+                              checked={owned}
+                              onChange={(e) => {
+                                const next = new Set(selected);
+                                if (e.target.checked) next.add(name);
+                                else next.delete(name);
+                                const techniques = item.technique_options.filter((opt) => next.has(opt));
+                                patch({
+                                  martial_arts: (ch.martial_arts || []).map((row) => (
+                                    row.id === item.id ? { ...row, techniques } : row
+                                  )),
+                                });
+                              }}
+                            />
+                            <span>
+                              {tr(name)}
+                              {owned && techMeta?.free ? " / 込み" : owned ? ` / ${techMeta?.karma || 5}カルマ` : ""}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <button
+                    className="btn"
+                    onClick={() => patch({
+                      martial_arts: (ch.martial_arts || []).filter((row) => row.id !== item.id),
+                    })}
+                  >
+                    削除
+                  </button>
+                </div>
+              );
+            })}
+            <input
+              type="search"
+              placeholder="武道を検索"
+              value={martialSearch}
+              onChange={(e) => setMartialSearch(e.target.value)}
+            />
+            <div className="list">
+              {(catalog.martial_arts || [])
+                .filter((item) => {
+                  const q = martialSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
+                })
+                .slice(0, 40)
+                .map((item) => {
+                  const owned = (d.martial_arts || []).some((row) => row.art_id === item.id);
+                  const blocked = !owned && (d.martial_art_points?.styles || 0) >= (d.martial_art_points?.style_max || 1);
+                  return (
+                    <div className="list-row" key={item.id}>
+                      <div>
+                        <b>{tr(item.name)}</b>
+                        <div className="muted">
+                          {item.name} / {item.cost}カルマ（技1込み） / 技 {item.techniques.length}種 / {item.source}
+                          {item.spec_options?.length
+                            ? ` / 専門化候補 ${item.spec_options.map((opt) => `${opt.skill}:${opt.spec}`).join(", ")}`
+                            : ""}
+                        </div>
+                      </div>
+                      <button
+                        className="btn"
+                        disabled={owned || blocked}
+                        onClick={() => {
+                          const first = item.techniques[0];
+                          if (!first) return;
+                          patch({
+                            martial_arts: [
+                              ...(ch.martial_arts || []),
+                              { art_id: item.id, techniques: [first] },
+                            ],
+                          });
+                        }}
+                      >
+                        {owned ? "取得済" : blocked ? "上限" : "取得"}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {tab === "initiation" && d.enabled_tabs.includes("initiation") && (
+          <div className="card">
+            <p className="muted">
+              等級 {d.initiation?.grade || 0}
+              {" ・ "}カルマ {d.initiation?.karma || 0}
+              （各等級 10 + 等級×3。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）
+            </p>
+            <label>
+              イニシエーション等級
+              <input
+                type="range"
+                min={0}
+                max={Math.max(6, Number(d.totals.MAG || 0))}
+                value={ch.initiate_grade || 0}
+                onChange={(e) => {
+                  const grade = Number(e.target.value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  setCh({ ...ch, initiate_grade: grade, initiations: next });
+                }}
+                onMouseUp={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  patch({ initiate_grade: grade, initiations: next });
+                }}
+                onTouchEnd={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  patch({ initiate_grade: grade, initiations: next });
+                }}
+              />
+              <b style={{ marginLeft: 8 }}>{ch.initiate_grade || 0}</b>
+            </label>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              {(d.initiation?.choices || []).map((choice) => {
+                const local = (ch.initiations || []).find((row) => row.grade === choice.grade);
+                const kind = (local?.kind || choice.kind || "metamagic") as string;
+                const optionId = local?.option_id || choice.option_id || "";
+                const talentName = ch.talent || "";
+                const canAdept = talentName === "Adept" || talentName === "Mystic Adept";
+                const canMagician = talentName !== "Adept";
+                const metaOptions = (catalog.metamagics || []).filter((item) => {
+                  if (canAdept && !canMagician) return item.adept;
+                  if (canMagician && !canAdept) return item.magician;
+                  return item.adept || item.magician;
+                });
+                return (
+                  <div className="cyber-item" key={choice.id || choice.grade}>
+                    <div style={{ width: "100%" }}>
+                      <b>等級 {choice.grade}</b>
+                      <div className="muted">{choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}</div>
+                      <div className="grid" style={{ marginTop: 8 }}>
+                        <label>
+                          種類
+                          <select
+                            value={kind}
+                            onChange={(e) => {
+                              const nextKind = e.target.value;
+                              const initiations = (ch.initiations || []).map((row) => (
+                                row.grade === choice.grade
+                                  ? { ...row, kind: nextKind, option_id: "" }
+                                  : row
+                              ));
+                              patch({ initiations });
+                            }}
+                          >
+                            <option value="metamagic">メタマジック</option>
+                            <option value="art">Art</option>
+                          </select>
+                        </label>
+                        <label>
+                          {kind === "art" ? "Art" : "メタマジック"}
+                          <select
+                            value={optionId}
+                            onChange={(e) => {
+                              const initiations = (ch.initiations || []).map((row) => (
+                                row.grade === choice.grade
+                                  ? { ...row, kind, option_id: e.target.value }
+                                  : row
+                              ));
+                              patch({ initiations });
+                            }}
+                          >
+                            <option value="">選択してください</option>
+                            {kind === "art"
+                              ? (catalog.magic_arts || []).map((item) => (
+                                  <option key={item.id} value={item.id}>{tr(item.name)} ({item.name})</option>
+                                ))
+                              : metaOptions.map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {tr(item.name)} ({item.name})
+                                    {item.required?.length ? ` / 要 ${item.required.join(", ")}` : ""}
+                                  </option>
+                                ))}
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {tab === "submersion" && d.enabled_tabs.includes("submersion") && (
+          <div className="card">
+            <p className="muted">
+              等級 {d.submersion?.grade || 0}
+              {" ・ "}カルマ {d.submersion?.karma || 0}
+              （各等級 10 + 等級×3。RES上限 = 種族上限 + 等級。等級 ≤ RES）
+            </p>
+            <label>
+              サブマージョン等級
+              <input
+                type="range"
+                min={0}
+                max={Math.max(6, Number(d.totals.RES || 0))}
+                value={ch.submersion_grade || 0}
+                onChange={(e) => {
+                  const grade = Number(e.target.value);
+                  const existing = [...(ch.submersions || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, echo_id: "" });
+                  }
+                  setCh({ ...ch, submersion_grade: grade, submersions: next });
+                }}
+                onMouseUp={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.submersions || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, echo_id: "" });
+                  }
+                  patch({ submersion_grade: grade, submersions: next });
+                }}
+                onTouchEnd={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.submersions || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, echo_id: "" });
+                  }
+                  patch({ submersion_grade: grade, submersions: next });
+                }}
+              />
+              <b style={{ marginLeft: 8 }}>{ch.submersion_grade || 0}</b>
+            </label>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              {(d.submersion?.choices || []).map((choice) => {
+                const local = (ch.submersions || []).find((row) => row.grade === choice.grade);
+                const echoId = local?.echo_id || choice.echo_id || "";
+                const extra = local?.extra ?? choice.extra ?? "";
+                const selected = (catalog.echoes || []).find((item) => item.id === echoId);
+                return (
+                  <div className="cyber-item" key={choice.id || choice.grade}>
+                    <div style={{ width: "100%" }}>
+                      <b>等級 {choice.grade}</b>
+                      <div className="muted">{choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}</div>
+                      <div className="grid" style={{ marginTop: 8 }}>
+                        <label>
+                          エコー
+                          <select
+                            value={echoId}
+                            onChange={(e) => {
+                              const nextId = e.target.value;
+                              const nextSpec = (catalog.echoes || []).find((item) => item.id === nextId);
+                              const submersions = (ch.submersions || []).map((row) => (
+                                row.grade === choice.grade
+                                  ? { ...row, echo_id: nextId, extra: nextSpec?.needs_extra ? (row.extra || "") : null }
+                                  : row
+                              ));
+                              patch({ submersions });
+                            }}
+                          >
+                            <option value="">選択してください</option>
+                            {(catalog.echoes || []).map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {tr(item.name)} ({item.name})
+                                {item.max_takes == null ? " / 繰り返し可" : item.max_takes > 1 ? ` / 最大${item.max_takes}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        {selected?.needs_extra ? (
+                          <label>
+                            対象（プログラム名など）
+                            <input
+                              type="text"
+                              value={extra || ""}
+                              onChange={(e) => {
+                                const submersions = (ch.submersions || []).map((row) => (
+                                  row.grade === choice.grade ? { ...row, extra: e.target.value } : row
+                                ));
+                                setCh({ ...ch, submersions });
+                              }}
+                              onBlur={(e) => {
+                                const submersions = (ch.submersions || []).map((row) => (
+                                  row.grade === choice.grade ? { ...row, extra: e.target.value } : row
+                                ));
+                                patch({ submersions });
+                              }}
+                            />
+                          </label>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {tab === "adept" && d.enabled_tabs.includes("adept") && (
           <div className="card">
             <p className="muted">
@@ -4424,6 +5085,7 @@ export default function Page() {
                     {item.name} / F{item.force} / {item.crafted ? "クラフト" : "購入"} / {item.nuyen.toLocaleString()}¥ / 結合 {item.karma}カルマ
                     {item.crafted ? `（術式 ${item.formula_nuyen?.toLocaleString() || 0}¥ + 試薬 ${item.reagent_nuyen?.toLocaleString() || 0}¥ / 定価 ${item.retail_nuyen?.toLocaleString() || 0}¥）` : ""}
                     {item.effect ? ` / ${item.effect.replace(/Rating/g, String(item.force))}` : ""}
+                    {item.needs_weapon ? (item.weapon_name ? ` / 対象 ${tr(item.weapon_name)} +${item.weapon_dice || item.force}` : " / 対象武器が必要") : ""}
                     {" / "}{item.source}
                   </div>
                   {item.formula_test ? <div className="muted">術式自作 {testLine(item.formula_test)}</div> : null}
@@ -4443,6 +5105,24 @@ export default function Page() {
                         })}
                       />
                     </label>
+                    {item.needs_weapon ? (
+                      <label>
+                        対象武器
+                        <select
+                          value={item.weapon_id || ""}
+                          onChange={(e) => patch({
+                            foci: (ch.foci || []).map((row) => (
+                              row.id === item.id ? { ...row, extra: e.target.value || null } : row
+                            )),
+                          })}
+                        >
+                          <option value="">{item.weapon_type === "Melee" ? "近接武器" : "武器"}</option>
+                          {(item.weapon_options || []).map((opt) => (
+                            <option key={opt.id} value={opt.id}>{tr(opt.name)}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
                     {item.crafted ? (
                       <>
                         <label>
@@ -4512,7 +5192,9 @@ export default function Page() {
                       <div className="muted">
                         {item.name} / 購入 {item.cost}
                         {item.formula ? ` / クラフト 術式 ${item.formula.cost} + 試薬 20¥×F` : ""}
-                        {" / "}{item.effect || "結合のみ"} / {item.source}
+                        {" / "}{item.effect || "結合のみ"}
+                        {item.needs_weapon ? ` / ${item.weapon_type || "Melee"}武器指定` : ""}
+                        {" / "}{item.source}
                       </div>
                     </div>
                     <div>
@@ -4757,6 +5439,16 @@ export default function Page() {
       <aside className="side">
         <h2>{ch.name}</h2>
         <div className="muted">{tr(ch.metatype)}{ch.metavariant ? ` / ${tr(ch.metavariant)}` : ""} ・ {ch.talent}</div>
+        <div className="stat">
+          <span>作成方式</span>
+          <b>
+            {(ch.build_method || "Priority") === "Karma"
+              ? `Karma ${d.karma.remaining}/${d.karma.pool}`
+              : (ch.build_method || "Priority") === "SumToTen"
+                ? `Sum to Ten ${d.sum_to_ten?.used ?? 0}/${d.sum_to_ten?.max ?? 10}`
+                : "Priority"}
+          </b>
+        </div>
         {error ? <p className="errors">{error}</p> : null}
         {d.errors.length ? (
           <ul className="errors">{d.errors.map((e) => <li key={e}>{e}</li>)}</ul>
@@ -4813,6 +5505,13 @@ export default function Page() {
         <div className="stat"><span>スキル点</span><b>{d.points.skills.used}/{d.points.skills.max}</b></div>
         <div className="stat"><span>知識点</span><b>{d.points.knowledge.used}/{d.points.knowledge.max}</b></div>
         <div className="stat"><span>コネクト</span><b>{d.contact_points?.used || 0}/{d.contact_points?.free || 0}{(d.contact_points?.paid || 0) > 0 ? ` +${d.contact_points?.paid}` : ""}</b></div>
+        <div className="stat"><span>武道</span><b>{d.martial_art_points?.styles || 0}/{d.martial_art_points?.style_max || 1}流派 ・ {d.martial_art_points?.techniques || 0}/{d.martial_art_points?.technique_max || 5}技{(d.martial_art_points?.karma || 0) > 0 ? ` / ${d.martial_art_points?.karma}K` : ""}</b></div>
+        {d.enabled_tabs.includes("initiation") ? (
+          <div className="stat"><span>イニシエーション</span><b>等級 {d.initiation?.grade || 0}{(d.initiation?.karma || 0) > 0 ? ` / ${d.initiation?.karma}K` : ""}</b></div>
+        ) : null}
+        {d.enabled_tabs.includes("submersion") ? (
+          <div className="stat"><span>サブマージョン</span><b>等級 {d.submersion?.grade || 0}{(d.submersion?.karma || 0) > 0 ? ` / ${d.submersion?.karma}K` : ""}</b></div>
+        ) : null}
         {d.enabled_tabs.includes("adept") ? (
           <div className="stat"><span>パワー点</span><b>{formatPoints(d.power_points?.used || 0)}/{formatPoints(d.power_points?.max || 0)}</b></div>
         ) : null}
@@ -4832,7 +5531,7 @@ export default function Page() {
           <div className="stat"><span>スプライト</span><b>{d.sprites?.length || 0}</b></div>
         ) : null}
         {d.living_persona ? (
-          <div className="stat"><span>リビングペルソナ</span><b>DR{d.living_persona.device_rating} / {d.living_persona.attack}/{d.living_persona.sleaze}/{d.living_persona.dataprocessing}/{d.living_persona.firewall}</b></div>
+          <div className="stat"><span>リビングペルソナ</span><b>DR{d.living_persona.device_rating} / {d.living_persona.attack}/{d.living_persona.sleaze}/{d.living_persona.dataprocessing}/{d.living_persona.firewall}{(d.living_persona.matrix_initiative_dice || 0) > 0 ? ` / マトリクスInit+${d.living_persona.matrix_initiative_dice}d6` : ""}</b></div>
         ) : null}
         {d.tradition ? <div className="stat"><span>伝統</span><b>{tr(d.tradition.name)}</b></div> : null}
         {d.needs_mentor && d.mentor ? <div className="stat"><span>メンター</span><b>{tr(d.mentor.name)}</b></div> : null}
