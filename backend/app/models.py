@@ -83,6 +83,7 @@ class FocusInstall(BaseModel):
     formula_bought: bool = True
     hits: int | None = None
     opposed_hits: int | None = None
+    extra: str | None = None
 
 
 class ArmorInstall(BaseModel):
@@ -160,12 +161,39 @@ class LifestyleInstall(BaseModel):
     months: int = 1
 
 
+class ExoticSkillInstall(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    skill_name: str
+    extra: str = ""
+    rating: int = 1
+
+
 class ContactInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     role: str | None = None
     connection: int = 1
     loyalty: int = 1
+
+
+class MartialArtInstall(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    art_id: str
+    techniques: list[str] = Field(default_factory=list)
+
+
+class InitiationChoice(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    grade: int = 1
+    kind: str = "metamagic"  # metamagic | art
+    option_id: str = ""
+
+
+class SubmersionChoice(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    grade: int = 1
+    echo_id: str = ""
+    extra: str | None = None
 
 
 class CharacterOptions(BaseModel):
@@ -175,6 +203,7 @@ class CharacterOptions(BaseModel):
 
 class CharacterPatch(BaseModel):
     name: str | None = None
+    build_method: str | None = None
     priorities: Priorities | None = None
     metatype: str | None = None
     metavariant: str | None = None
@@ -182,6 +211,8 @@ class CharacterPatch(BaseModel):
     attributes: dict[str, int] | None = None
     skills: dict[str, int] | None = None
     skill_groups: dict[str, int] | None = None
+    skill_specializations: dict[str, str] | None = None
+    exotic_skills: list[ExoticSkillInstall] | None = None
     knowledge_skills: dict[str, int] | None = None
     native_languages: list[str] | None = None
     knowledge_categories: dict[str, str] | None = None
@@ -220,6 +251,12 @@ class CharacterPatch(BaseModel):
     weapon_mounts: list[WeaponMountInstall] | None = None
     lifestyles: list[LifestyleInstall] | None = None
     contacts: list[ContactInstall] | None = None
+    martial_arts: list[MartialArtInstall] | None = None
+    initiate_grade: int | None = None
+    initiations: list[InitiationChoice] | None = None
+    submersion_grade: int | None = None
+    submersions: list[SubmersionChoice] | None = None
+    karma_nuyen: int | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
@@ -227,6 +264,7 @@ class CharacterPatch(BaseModel):
 
 class CharacterCreate(BaseModel):
     name: str = Field(default="Runner")
+    build_method: str = "Priority"
     priorities: Priorities | None = None
     metatype: str = "Human"
 
@@ -234,6 +272,7 @@ class CharacterCreate(BaseModel):
 class CharacterState(BaseModel):
     id: str
     name: str
+    build_method: str = "Priority"
     priorities: Priorities
     metatype: str
     metavariant: str | None = None
@@ -241,6 +280,8 @@ class CharacterState(BaseModel):
     attributes: dict[str, int]
     skills: dict[str, int] = Field(default_factory=dict)
     skill_groups: dict[str, int] = Field(default_factory=dict)
+    skill_specializations: dict[str, str] = Field(default_factory=dict)
+    exotic_skills: list[ExoticSkillInstall] = Field(default_factory=list)
     knowledge_skills: dict[str, int] = Field(default_factory=dict)
     native_languages: list[str] = Field(default_factory=list)
     knowledge_categories: dict[str, str] = Field(default_factory=dict)
@@ -279,6 +320,12 @@ class CharacterState(BaseModel):
     weapon_mounts: list[WeaponMountInstall] = Field(default_factory=list)
     lifestyles: list[LifestyleInstall] = Field(default_factory=list)
     contacts: list[ContactInstall] = Field(default_factory=list)
+    martial_arts: list[MartialArtInstall] = Field(default_factory=list)
+    initiate_grade: int = 0
+    initiations: list[InitiationChoice] = Field(default_factory=list)
+    submersion_grade: int = 0
+    submersions: list[SubmersionChoice] = Field(default_factory=list)
+    karma_nuyen: int = 0
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)

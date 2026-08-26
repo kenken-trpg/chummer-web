@@ -7,6 +7,7 @@ from pathlib import Path
 from .data_loader import catalog
 from .engine import (
     ADEPT_TALENTS,
+    BUILD_METHOD_KARMA,
     COMPLEX_FORM_TALENTS,
     FOCUS_TALENTS,
     MAG_TALENTS,
@@ -14,13 +15,15 @@ from .engine import (
     SPELL_TALENTS,
     SPIRIT_TALENTS,
     SPRITE_TALENTS,
+    all_talent_options,
     compute,
     default_attributes,
     find_metatype,
     gear_extra_options,
     is_way_quality,
+    normalize_build_method,
     priority_value,
-    resolve_talent,
+    resolve_talent_for_method,
     sanitize_quality_ids,
     talent_options,
     talent_special,
@@ -41,9 +44,11 @@ def _persist(state: CharacterState) -> None:
 
 def _new_state(payload: CharacterCreate) -> CharacterState:
     meta = find_metatype(payload.metatype, None)
+    method = normalize_build_method(payload.build_method)
     state = CharacterState(
         id=str(uuid.uuid4()),
         name=payload.name,
+        build_method=method,
         priorities=payload.priorities or Priorities(),
         metatype=payload.metatype,
         attributes=default_attributes(meta),
@@ -70,9 +75,11 @@ def get_character(cid: str) -> CharacterState:
 
 
 def _apply_talent_ratings(data: dict) -> None:
-    talent = resolve_talent(data["priorities"]["Talent"], data.get("talent"))
+    talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]
     key, start = talent_special(talent)
+    if normalize_build_method(data.get("build_method")) == BUILD_METHOD_KARMA and key:
+        start = 1
     attrs = dict(data.get("attributes") or {})
     attrs["MAG"] = start if key == "MAG" else 0
     attrs["RES"] = start if key == "RES" else 0
@@ -84,6 +91,7 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
     data = state.model_dump()
     old_letter = state.priorities.Talent
     old_talent = state.talent
+    old_method = normalize_build_method(state.build_method)
     updates = patch.model_dump(exclude_unset=True)
     if "priorities" in updates and updates["priorities"] is not None:
         data["priorities"] = updates.pop("priorities")
@@ -101,9 +109,16 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
     if patch.metatype or patch.metavariant is not None:
         meta = find_metatype(data["metatype"], data.get("metavariant"))
         data["attributes"] = default_attributes(meta)
-    talent = resolve_talent(data["priorities"]["Talent"], data.get("talent"))
+    data["build_method"] = normalize_build_method(data.get("build_method"))
+    talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]
-    if old_letter != data["priorities"]["Talent"] or old_talent != data["talent"] or patch.metatype:
+    method_changed = old_method != data["build_method"]
+    if (
+        old_letter != data["priorities"]["Talent"]
+        or old_talent != data["talent"]
+        or patch.metatype
+        or method_changed
+    ):
         _apply_talent_ratings(data)
         if data["talent"] not in ADEPT_TALENTS:
             data["adept_powers"] = []
@@ -114,6 +129,8 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
             data["mentor_id"] = None
             data["mentor_choices"] = []
             data["mentor_extras"] = {}
+            data["initiate_grade"] = 0
+            data["initiations"] = []
         if data["talent"] not in SPELL_TALENTS:
             data["spells"] = []
             data["tradition_id"] = None
@@ -124,8 +141,13 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
         if data["talent"] not in COMPLEX_FORM_TALENTS and data["talent"] not in RES_TALENTS:
             data["complex_forms"] = []
             data["stream_id"] = None
+        if data["talent"] not in RES_TALENTS:
+            data["submersion_grade"] = 0
+            data["submersions"] = []
         if data["talent"] not in SPRITE_TALENTS:
             data["sprites"] = []
+    if data["build_method"] != BUILD_METHOD_KARMA:
+        data["karma_nuyen"] = 0
     state = compute(CharacterState.model_validate(data))
     _MEMORY[cid] = state
     _persist(state)
@@ -667,7 +689,84 @@ def public_catalog() -> dict:
             }
             for ls in raw.get("lifestyles") or []
         ],
+        "martial_arts": [
+            {
+                "id": art["id"],
+                "name": art["name"],
+                "cost": int(art.get("cost") or 7),
+                "techniques": list(art.get("techniques") or []),
+                "source": art.get("source") or "",
+                "page": art.get("page") or "",
+                "is_quality": bool(art.get("is_quality")),
+                "all_techniques": bool(art.get("all_techniques")),
+                "spec_options": [
+                    {"skill": skill, "spec": spec}
+                    for node in (art.get("bonus") or [])
+                    if node.get("tag") == "addskillspecializationoption"
+                    for skill in [str((node.get("fields") or {}).get("skill") or "").strip()]
+                    for spec in [str((node.get("fields") or {}).get("spec") or "").strip()]
+                    if skill and spec
+                ],
+            }
+            for art in raw.get("martial_arts") or []
+            if not art.get("is_quality")
+        ],
+        "martial_art_techniques": [
+            {
+                "id": tech["id"],
+                "name": tech["name"],
+                "source": tech.get("source") or "",
+                "page": tech.get("page") or "",
+            }
+            for tech in raw.get("martial_art_techniques") or []
+        ],
+        "metamagics": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "adept": bool(item.get("adept")),
+                "magician": bool(item.get("magician")),
+                "repeatable": bool(item.get("repeatable")),
+                "required": [
+                    name
+                    for names in (item.get("required") or {}).values()
+                    for name in names
+                ],
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("metamagics") or []
+        ],
+        "magic_arts": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("magic_arts") or []
+        ],
+        "echoes": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "max_takes": item.get("max_takes"),
+                "needs_extra": bool(item.get("needs_extra")),
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("echoes") or []
+        ],
         "priority_table": table,
+        "karma_talents": [
+            {
+                "name": t["name"],
+                "label": t.get("label") or t["name"],
+                "magic": int(t.get("magic") or 0),
+                "resonance": int(t.get("resonance") or 0),
+            }
+            for t in all_talent_options()
+        ],
         "translations": raw["translations"],
     }
 

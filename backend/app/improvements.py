@@ -45,6 +45,8 @@ IMPLEMENTED = {
     "limitmodifier",
     "skillwire",
     "skillsoftaccess",
+    "livingpersona",
+    "matrixinitiativediceadd",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -64,6 +66,8 @@ SILENT_TAGS = {
     "linguasoft",
     "skillsoft",
     "weaponspecificdice",
+    "addskillspecializationoption",
+    "unarmedreach",
 }
 
 SPECIAL_ARMOR_TAGS = {
@@ -208,6 +212,8 @@ def empty_effects() -> dict[str, Any]:
         "limit_modifiers": [],
         "skillwires": 0,
         "skilljack": 0,
+        "living_persona": {"attack": 0, "sleaze": 0, "dataprocessing": 0, "firewall": 0},
+        "matrix_initiative_dice": 0,
         "unimplemented": [],
     }
 
@@ -375,6 +381,17 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["skilljack"] = max(
                 int(effects.get("skilljack") or 0),
                 _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+            )
+        elif tag == "livingpersona":
+            persona = effects.setdefault(
+                "living_persona",
+                {"attack": 0, "sleaze": 0, "dataprocessing": 0, "firewall": 0},
+            )
+            for key in ("attack", "sleaze", "dataprocessing", "firewall"):
+                persona[key] = int(persona.get(key) or 0) + _as_int(fields.get(key))
+        elif tag == "matrixinitiativediceadd":
+            effects["matrix_initiative_dice"] = int(effects.get("matrix_initiative_dice") or 0) + _as_int(
+                node.get("value") or fields.get("bonus") or fields.get("val")
             )
 
 
