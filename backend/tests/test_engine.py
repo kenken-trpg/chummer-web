@@ -1,7 +1,7 @@
 from app.data_loader import catalog, parse_avail
 from app.engine import compute, default_attributes, find_metatype, resolve_skill_mods, selectskill_options, spell_drain_value, tradition_resist
 from app.improvements import collect_effects
-from app.models import AdeptPowerInstall, ArmorInstall, ArmorModInstall, CharacterOptions, CharacterState, CommlinkInstall, ComplexFormInstall, ContactInstall, CyberwareInstall, FocusInstall, GearInstall, LifestyleInstall, Priorities, QiFocusInstall, SpellInstall, SpiritInstall, SpriteInstall, VehicleModInstall, WeaponAccessoryInstall, WeaponInstall, WeaponMountInstall
+from app.models import AdeptPowerInstall, ArmorInstall, ArmorModInstall, CharacterOptions, CharacterState, CommlinkInstall, ComplexFormInstall, ContactInstall, CyberwareInstall, ExoticSkillInstall, FocusInstall, GearInstall, LifestyleInstall, InitiationChoice, MartialArtInstall, Priorities, QiFocusInstall, SpellInstall, SpiritInstall, SpriteInstall, SubmersionChoice, VehicleModInstall, WeaponAccessoryInstall, WeaponInstall, WeaponMountInstall
 
 DATAJACK = "47c48542-48c3-417e-91f0-b5a456183f05"
 MUSCLE = "46f80a44-80ae-41d7-a7c8-a119c4cff70f"
@@ -75,6 +75,127 @@ def test_elf_priority_does_not_charge_xml_karma() -> None:
     out = compute(state)
     assert out.derived["karma"]["remaining"] == 25
     assert out.derived["errors"] == []
+
+
+def test_priority_rejects_duplicate_letters() -> None:
+    state = CharacterState(
+        id="dup-pri",
+        name="Dup",
+        build_method="Priority",
+        priorities=Priorities(Heritage="A", Attributes="A", Talent="E", Skills="B", Resources="D"),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+    )
+    out = compute(state)
+    assert any("各カテゴリに1つずつ" in err for err in out.derived["errors"])
+
+
+def test_sum_to_ten_allows_duplicate_a() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    state = CharacterState(
+        id="sum10-aa",
+        name="Rich Mage",
+        build_method="SumToTen",
+        priorities=Priorities(Heritage="E", Attributes="C", Talent="A", Skills="E", Resources="A"),
+        metatype="Human",
+        talent="Magician",
+        attributes=attrs,
+        tradition_id="19320625-bc1a-492f-8904-da6a847e5700",
+    )
+    out = compute(state)
+    assert out.build_method == "SumToTen"
+    assert out.derived["sum_to_ten"]["used"] == 10
+    assert out.derived["totals"]["MAG"] == 6
+    assert out.derived["nuyen"] == 450_000
+    assert not any("Sum to Ten" in err for err in out.derived["errors"])
+    assert not any("各カテゴリに1つずつ" in err for err in out.derived["errors"])
+
+
+def test_sum_to_ten_requires_exact_budget() -> None:
+    state = CharacterState(
+        id="sum10-low",
+        name="Under",
+        build_method="SumToTen",
+        priorities=Priorities(Heritage="E", Attributes="E", Talent="E", Skills="E", Resources="E"),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+    )
+    out = compute(state)
+    assert out.derived["sum_to_ten"]["used"] == 0
+    assert any("Sum to Ten" in err and "0" in err for err in out.derived["errors"])
+
+
+def test_karma_chargen_human_baseline_is_800() -> None:
+    out = compute(
+        CharacterState(
+            id="karma-base",
+            name="Karma Base",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+        )
+    )
+    assert out.build_method == "Karma"
+    assert out.derived["karma"]["pool"] == 800
+    assert out.derived["karma"]["spent"] == 0
+    assert out.derived["karma_chargen"]["enabled"] is True
+    assert out.derived["points"]["attributes"]["max"] == 0
+    assert out.derived["errors"] == []
+
+
+def test_karma_chargen_attributes_and_metatype_cost() -> None:
+    attrs = default_attributes(find_metatype("Elf", None))
+    attrs["BOD"] = 3  # racial min 1 → 2*5 + 3*5 = 25
+    out = compute(
+        CharacterState(
+            id="karma-elf",
+            name="Karma Elf",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Elf",
+            attributes=attrs,
+        )
+    )
+    assert out.derived["karma_chargen"]["metatype"] == 40
+    assert out.derived["karma_chargen"]["attributes"] == 25
+    assert out.derived["karma"]["spent"] == 65
+
+
+def test_karma_chargen_nuyen_conversion() -> None:
+    out = compute(
+        CharacterState(
+            id="karma-yen",
+            name="Karma Yen",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+            karma_nuyen=10,
+        )
+    )
+    assert out.derived["nuyen"] == 20_000
+    assert out.derived["karma_chargen"]["nuyen_karma"] == 10
+    assert out.derived["karma"]["spent"] == 10
+
+
+def test_karma_chargen_magician_starts_at_magic_one_without_free_spells() -> None:
+    out = compute(
+        CharacterState(
+            id="karma-mage",
+            name="Karma Mage",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Human",
+            talent="Magician",
+            attributes=default_attributes(find_metatype("Human", None)),
+            tradition_id="19320625-bc1a-492f-8904-da6a847e5700",
+        )
+    )
+    assert out.derived["totals"]["MAG"] == 1
+    assert out.derived["spell_points"]["free"] == 0
+    assert "spells" in out.derived["enabled_tabs"]
+    assert out.attributes["MAG"] == 1
 
 
 def test_magician_a_starts_at_magic_six_without_special_cost() -> None:
@@ -1037,6 +1158,188 @@ def test_second_native_language_is_warned() -> None:
     assert out.derived["points"]["knowledge"]["used"] == 0
 
 
+def test_skill_specialization_costs_one_skill_point() -> None:
+    out = compute(_human("spec-pistols", skills={"Pistols": 4}, skill_specializations={"Pistols": "Semi-Automatics"}))
+    assert out.derived["skill_totals"]["Pistols"] == 4
+    assert out.skill_specializations["Pistols"] == "Semi-Automatics"
+    assert out.derived["skill_specializations"]["Pistols"] == "Semi-Automatics"
+    assert out.derived["points"]["skills"]["used"] == 5
+    assert out.derived["errors"] == []
+    pistols = next(item for item in catalog()["skills"]["skills"] if item["name"] == "Pistols")
+    assert "Semi-Automatics" in pistols["specs"]
+
+
+def test_skill_specialization_requires_the_skill() -> None:
+    out = compute(_human("spec-none", skill_specializations={"Pistols": "Semi-Automatics"}))
+    assert "Pistols" not in out.skill_specializations
+    assert any("Pistols の専門化にはスキルが必要です" in warn for warn in out.derived["warnings"])
+    assert out.derived["points"]["skills"]["used"] == 0
+
+
+def test_skill_specialization_works_with_skill_group() -> None:
+    out = compute(
+        _human("spec-group", skill_groups={"Firearms": 2}, skill_specializations={"Pistols": "Revolvers"})
+    )
+    assert out.derived["skill_totals"]["Pistols"] == 2
+    assert out.skill_specializations["Pistols"] == "Revolvers"
+    assert out.derived["points"]["skill_groups"]["used"] == 2
+    assert out.derived["points"]["skills"]["used"] == 1
+
+
+def test_knowledge_specialization_costs_one_knowledge_point() -> None:
+    state = _human(
+        "spec-know",
+        knowledge_skills={"Alcohol": 2},
+        skill_specializations={"Alcohol": "Wines"},
+    )
+    state.attributes["INT"] = 3
+    state.attributes["LOG"] = 3
+    out = compute(state)
+    assert out.derived["points"]["knowledge"] == {"used": 3, "max": 12}
+    row = next(item for item in out.derived["knowledge_skills"] if item["name"] == "Alcohol")
+    assert row["spec"] == "Wines"
+    assert row["rating"] == 2
+    assert out.derived["errors"] == []
+
+
+def test_native_language_specialization_costs_knowledge_point() -> None:
+    state = _human(
+        "spec-native",
+        native_languages=["Japanese"],
+        skill_specializations={"Japanese": "Speak"},
+    )
+    state.attributes["INT"] = 3
+    state.attributes["LOG"] = 3
+    out = compute(state)
+    assert out.derived["points"]["knowledge"] == {"used": 1, "max": 12}
+    row = next(item for item in out.derived["knowledge_skills"] if item["name"] == "Japanese")
+    assert row["native"] is True
+    assert row["spec"] == "Speak"
+
+
+def test_custom_knowledge_specialization_is_kept() -> None:
+    out = compute(
+        _human(
+            "spec-custom",
+            knowledge_skills={"Seattle Gangs": 1},
+            knowledge_categories={"Seattle Gangs": "Street"},
+            skill_specializations={"Seattle Gangs": "Halloweeners"},
+        )
+    )
+    row = next(item for item in out.derived["knowledge_skills"] if item["name"] == "Seattle Gangs")
+    assert row["spec"] == "Halloweeners"
+    assert out.derived["points"]["knowledge"]["used"] == 2
+
+
+SKILLWIRES = "60485c4e-042f-44f6-ad89-324003223f73"
+ACTIVESOFT = "c4da5448-0069-447c-b3e4-4147e6bf4ca7"
+
+
+def test_activesoft_can_take_a_specialization() -> None:
+    out = compute(
+        _mundane(
+            "soft-spec",
+            cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=1)],
+            gear=[GearInstall(gear_id=ACTIVESOFT, rating=1, extra="Pistols")],
+            skill_specializations={"Pistols": "Semi-Automatics"},
+        )
+    )
+    assert out.derived["skill_totals"].get("Pistols", 0) == 0
+    assert out.derived["skillsoft"]["Pistols"] == 1
+    assert out.skill_specializations["Pistols"] == "Semi-Automatics"
+    assert out.derived["points"]["skills"]["used"] == 1
+    assert out.derived["errors"] == []
+
+
+def test_exotic_ranged_costs_rating_points() -> None:
+    out = compute(
+        _human(
+            "exotic-lasers",
+            exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=4)],
+        )
+    )
+    assert out.derived["skill_totals"]["Exotic Ranged Weapon (Lasers)"] == 4
+    assert "Exotic Ranged Weapon" not in out.derived["skill_totals"]
+    assert out.derived["points"]["skills"]["used"] == 4
+    assert out.derived["errors"] == []
+    row = out.derived["exotic_skills"][0]
+    assert row["label"] == "Exotic Ranged Weapon (Lasers)"
+    assert row["rating"] == 4
+    assert "Lasers" in row["options"]
+
+
+def test_exotic_skill_requires_target() -> None:
+    out = compute(
+        _human(
+            "exotic-empty",
+            exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="", rating=2)],
+        )
+    )
+    assert any("Exotic Ranged Weapon の対象を選んでください" in warn for warn in out.derived["warnings"])
+    assert "Exotic Ranged Weapon" not in out.derived["skill_totals"]
+    assert out.derived["points"]["skills"]["used"] == 2
+
+
+def test_exotic_skill_allows_multiple_targets() -> None:
+    out = compute(
+        _human(
+            "exotic-two",
+            exotic_skills=[
+                ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=4),
+                ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Flamethrowers", rating=2),
+            ],
+        )
+    )
+    totals = out.derived["skill_totals"]
+    assert totals["Exotic Ranged Weapon (Lasers)"] == 4
+    assert totals["Exotic Ranged Weapon (Flamethrowers)"] == 2
+    assert out.derived["points"]["skills"]["used"] == 6
+    assert out.derived["errors"] == []
+
+
+def test_exotic_skill_duplicate_target_is_dropped() -> None:
+    out = compute(
+        _human(
+            "exotic-dup",
+            exotic_skills=[
+                ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=4),
+                ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=2),
+            ],
+        )
+    )
+    assert any("Exotic Ranged Weapon (Lasers) が重複しています" in warn for warn in out.derived["warnings"])
+    assert out.derived["skill_totals"]["Exotic Ranged Weapon (Lasers)"] == 4
+    assert len(out.derived["exotic_skills"]) == 1
+    assert out.derived["points"]["skills"]["used"] == 4
+
+
+def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
+    out = compute(
+        _human(
+            "exotic-six",
+            skills={"Pistols": 6},
+            exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=6)],
+        )
+    )
+    assert any("作成時にレーティング6のスキルは1つまでです" in err for err in out.derived["errors"])
+
+
+def test_exotic_does_not_charge_specialization_point() -> None:
+    out = compute(
+        _human(
+            "exotic-spec-mix",
+            skills={"Pistols": 4},
+            skill_specializations={"Pistols": "Semi-Automatics"},
+            exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=3)],
+        )
+    )
+    assert out.derived["points"]["skills"]["used"] == 8
+    assert out.derived["skill_totals"]["Pistols"] == 4
+    assert out.derived["skill_totals"]["Exotic Ranged Weapon (Lasers)"] == 3
+    assert out.skill_specializations["Pistols"] == "Semi-Automatics"
+    assert out.derived["errors"] == []
+
+
 def test_skill_group_exclude_is_honored() -> None:
     effects = collect_effects(
         [
@@ -1753,6 +2056,75 @@ def test_enchantment_warns_for_metamagic() -> None:
     assert any("Geomancy" in warn for warn in out.derived["warnings"])
 
 
+GEOMANCY_ART = "5b922bcf-4114-4c49-a4f3-0f3dcb45dd2f"
+QUICKENING_META = "4ea558ed-0fe8-4b9e-b2fa-afffb3eb2476"
+POWER_POINT_META = "406f096a-c093-4a02-b60f-002eb01a20b9"
+
+
+def test_initiation_grade_one_costs_thirteen_karma() -> None:
+    out = compute(
+        _mage(
+            "init1",
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META)],
+        )
+    )
+    assert "initiation" in out.derived["enabled_tabs"]
+    assert out.derived["initiation"]["grade"] == 1
+    assert out.derived["initiation"]["karma"] == 13
+    assert out.derived["karma"]["spent"] == 13
+    assert out.derived["initiation"]["metamagics"][0]["name"] == "Quickening"
+
+
+def test_initiation_raises_mag_max() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["MAG"] = 7
+    out = compute(
+        _mage(
+            "init-mag",
+            attributes=attrs,
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META)],
+        )
+    )
+    assert out.derived["metatype_info"]["attributes"]["MAG"]["max"] == 7
+    assert out.attributes["MAG"] == 7
+    assert out.derived["totals"]["MAG"] == 7
+
+
+def test_geomancy_art_clears_recharge_warning() -> None:
+    out = compute(
+        _mage(
+            "geomancy",
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=RECHARGE_REAGENTS)],
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="art", option_id=GEOMANCY_ART)],
+        )
+    )
+    assert out.derived["initiation"]["arts"][0]["name"] == "Geomancy"
+    assert not any("Geomancy" in warn for warn in out.derived["warnings"])
+
+
+def test_power_point_metamagic_adds_pp() -> None:
+    base = compute(_adept("pp-base"))
+    out = compute(
+        _adept(
+            "pp-meta",
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=POWER_POINT_META)],
+        )
+    )
+    assert out.derived["initiation"]["metamagics"][0]["name"] == "Power Point"
+    assert out.derived["power_points"]["max"] == float(base.derived["power_points"]["max"]) + 1
+    assert out.derived["karma"]["spent"] == 13
+
+
+def test_initiation_grade_above_mag_errors() -> None:
+    out = compute(_mage("init-over", initiate_grade=7))
+    assert any("イニシエーション等級は魔力以下" in err for err in out.derived["errors"])
+
+
 def test_ritual_and_spell_share_free_pool() -> None:
     out = compute(
         _mage(
@@ -1908,6 +2280,63 @@ def test_power_focus_costs_and_boosts_magic_skills() -> None:
     assert out.derived["skill_bonus"]["Summoning"] == 2
     assert out.derived["focus_limits"]["count"] == 1
     assert out.derived["focus_limits"]["force"] == 2
+
+
+KATANA = "8f266b4c-4035-4ba3-aa89-3289d0f42ce1"
+
+
+def test_weapon_focus_requires_target_weapon() -> None:
+    out = compute(
+        _mage_rich(
+            "wf-empty",
+            tradition_id=HERMETIC,
+            foci=[FocusInstall(gear_id=WEAPON_FOCUS, force=2)],
+        )
+    )
+    row = out.derived["foci"][0]
+    assert row["needs_weapon"] is True
+    assert row["weapon_type"] == "Melee"
+    assert row["weapon_dice"] == 2
+    assert any("対象武器を選んでください" in warn for warn in out.derived["warnings"])
+
+
+def test_weapon_focus_adds_dice_to_melee_weapon() -> None:
+    weapon = WeaponInstall(weapon_id=KATANA)
+    out = compute(
+        _mage_rich(
+            "wf-katana",
+            tradition_id=HERMETIC,
+            weapons=[weapon],
+            foci=[FocusInstall(gear_id=WEAPON_FOCUS, force=2, extra=weapon.id)],
+        )
+    )
+    focus = out.derived["foci"][0]
+    assert focus["weapon_id"] == weapon.id
+    assert focus["weapon_name"] == "Katana"
+    assert focus["weapon_dice"] == 2
+    assert any(opt["id"] == weapon.id for opt in focus["weapon_options"])
+    blade = next(item for item in out.derived["weapons"] if item["id"] == weapon.id)
+    assert blade["focus_dice"] == 2
+    assert out.derived["errors"] == []
+    assert not any("対象武器" in warn for warn in out.derived["warnings"])
+
+
+def test_weapon_focus_rejects_ranged_weapon() -> None:
+    predator_id = next(item["id"] for item in catalog()["weapons"] if item["name"] == "Ares Predator V")
+    weapon = WeaponInstall(weapon_id=predator_id)
+    out = compute(
+        _mage_rich(
+            "wf-ranged",
+            tradition_id=HERMETIC,
+            weapons=[weapon],
+            foci=[FocusInstall(gear_id=WEAPON_FOCUS, force=1, extra=weapon.id)],
+        )
+    )
+    focus = out.derived["foci"][0]
+    assert focus["weapon_id"] == ""
+    assert any("Melee武器専用" in warn for warn in out.derived["warnings"])
+    gun = next(item for item in out.derived["weapons"] if item["id"] == weapon.id)
+    assert gun.get("focus_dice", 0) == 0
 
 
 def test_spellcasting_focus_marks_combat_spells() -> None:
@@ -4349,3 +4778,155 @@ def test_unnamed_contact_is_warned() -> None:
     out = compute(_human("contact-noname", contacts=[ContactInstall(connection=1, loyalty=1)]))
     assert any("名前のないコネクト" in warn for warn in out.derived["warnings"])
     assert out.derived["contact_points"]["used"] == 2
+
+
+def _karate_id() -> str:
+    return next(item["id"] for item in catalog()["martial_arts"] if item["name"] == "Karate")
+
+
+def test_martial_art_style_includes_one_technique() -> None:
+    out = compute(
+        _human(
+            "karate-basic",
+            martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike"])],
+        )
+    )
+    row = out.derived["martial_arts"][0]
+    assert row["name"] == "Karate"
+    assert row["karma"] == 7
+    assert row["techniques"][0]["free"] is True
+    assert out.derived["martial_art_points"]["karma"] == 7
+    assert out.derived["martial_spec_options"]["Unarmed Combat"] == ["Karate"]
+    assert out.derived["karma"]["spent"] == 7
+    assert out.derived["errors"] == []
+
+
+def test_martial_art_extra_technique_and_kick_reach() -> None:
+    out = compute(
+        _human(
+            "karate-kick",
+            martial_arts=[
+                MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike", "Kick Attack"])
+            ],
+        )
+    )
+    row = out.derived["martial_arts"][0]
+    assert row["karma"] == 12
+    assert out.derived["unarmed_reach"] == 1
+    assert out.derived["martial_art_points"]["techniques"] == 2
+    assert out.derived["errors"] == []
+
+
+def test_martial_art_chargen_limits() -> None:
+    aikido = next(item["id"] for item in catalog()["martial_arts"] if item["name"] == "Aikido")
+    out = compute(
+        _human(
+            "too-many-arts",
+            martial_arts=[
+                MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike"]),
+                MartialArtInstall(art_id=aikido, techniques=["Counterstrike"]),
+            ],
+        )
+    )
+    assert any("流派は1つまで" in err for err in out.derived["errors"])
+
+    techs = [
+        "Counterstrike",
+        "Kick Attack",
+        "Kip-Up",
+        "Opposing Force (Block)",
+        "Sweep",
+        "Yielding Force (Counterstrike)",
+    ]
+    out2 = compute(
+        _human(
+            "too-many-techs",
+            martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=techs)],
+        )
+    )
+    assert any("技は合計5つまで" in err for err in out2.derived["errors"])
+
+
+ATTACK_UPGRADE = "36aa9af4-5c04-40d9-ba09-31b401cc1ff0"
+OVERCLOCKING = "61055141-71f5-400e-9e67-cef650ce4801"
+RESONANCE_PROGRAM = "d5dbe3f7-8a44-466b-8d5d-db9f0c68ee6b"
+
+
+def test_submersion_grade_one_costs_thirteen_karma() -> None:
+    out = compute(
+        _techno(
+            "sub1",
+            "A",
+            submersion_grade=1,
+            submersions=[SubmersionChoice(grade=1, echo_id=OVERCLOCKING)],
+        )
+    )
+    assert "submersion" in out.derived["enabled_tabs"]
+    assert out.derived["submersion"]["grade"] == 1
+    assert out.derived["submersion"]["karma"] == 13
+    assert out.derived["submersion"]["echoes"][0]["name"] == "Overclocking"
+    assert out.derived["karma"]["spent"] == 13
+    assert out.derived["living_persona"]["matrix_initiative_dice"] == 1
+
+
+def test_submersion_raises_res_max_and_attack_upgrade() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["RES"] = 7
+    attrs["CHA"] = 3
+    base = compute(_techno("sub-base", "A", attributes=dict(attrs)))
+    out = compute(
+        _techno(
+            "sub-res",
+            "A",
+            attributes=attrs,
+            submersion_grade=1,
+            submersions=[SubmersionChoice(grade=1, echo_id=ATTACK_UPGRADE)],
+        )
+    )
+    assert out.derived["metatype_info"]["attributes"]["RES"]["max"] == 7
+    assert out.attributes["RES"] == 7
+    assert out.derived["living_persona"]["attack"] == int(base.derived["living_persona"]["attack"]) + 1
+
+
+def test_submersion_grade_above_res_errors() -> None:
+    out = compute(_techno("sub-over", "C", submersion_grade=5))
+    assert any("サブマージョン等級はレゾナンス以下" in err for err in out.derived["errors"])
+
+
+def test_echo_max_takes_blocks_third_attack_upgrade() -> None:
+    out = compute(
+        _techno(
+            "sub-dup",
+            "A",
+            submersion_grade=3,
+            submersions=[
+                SubmersionChoice(grade=1, echo_id=ATTACK_UPGRADE),
+                SubmersionChoice(grade=2, echo_id=ATTACK_UPGRADE),
+                SubmersionChoice(grade=3, echo_id=ATTACK_UPGRADE),
+            ],
+        )
+    )
+    assert len(out.derived["submersion"]["echoes"]) == 2
+    assert any("最大 2 回" in warn for warn in out.derived["warnings"])
+
+
+def test_resonance_program_echo_needs_extra() -> None:
+    out = compute(
+        _techno(
+            "sub-prog",
+            "A",
+            submersion_grade=1,
+            submersions=[SubmersionChoice(grade=1, echo_id=RESONANCE_PROGRAM)],
+        )
+    )
+    assert any("対象" in warn for warn in out.derived["warnings"])
+    out2 = compute(
+        _techno(
+            "sub-prog2",
+            "A",
+            submersion_grade=1,
+            submersions=[SubmersionChoice(grade=1, echo_id=RESONANCE_PROGRAM, extra="Browse")],
+        )
+    )
+    assert out2.derived["submersion"]["echoes"][0]["extra"] == "Browse"
+    assert not any("対象" in warn for warn in out2.derived["warnings"])
