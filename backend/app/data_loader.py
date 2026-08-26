@@ -444,6 +444,18 @@ def load_metatypes() -> list[dict[str, Any]]:
     return items
 
 
+def _skill_specs(el: ET.Element) -> list[str]:
+    specs: list[str] = []
+    seen: set[str] = set()
+    for node in el.findall("./specs/spec"):
+        name = _text(node)
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        specs.append(name)
+    return specs
+
+
 def load_skills() -> dict[str, Any]:
     tree = ET.parse(DATA_DIR / "skills.xml")
     root = tree.getroot()
@@ -463,6 +475,7 @@ def load_skills() -> dict[str, Any]:
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "knowledge": False,
+                "specs": _skill_specs(el),
             }
         )
     knowledge = []
@@ -480,6 +493,7 @@ def load_skills() -> dict[str, Any]:
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "knowledge": True,
+                "specs": _skill_specs(el),
             }
         )
     return {"groups": groups, "skills": skills, "knowledge": knowledge}
@@ -929,8 +943,17 @@ def _focus_effect(nodes: list[dict[str, Any]]) -> str:
             if name:
                 bits.append(f"{name} spells +Rating")
         elif tag == "weaponspecificdice":
-            bits.append("Weapon +Rating")
+            kind = str((node.get("attrs") or {}).get("type") or "Melee").strip() or "Melee"
+            bits.append(f"{kind} weapon +Rating")
     return " / ".join(bits)
+
+
+def _focus_weapon_type(nodes: list[dict[str, Any]]) -> str:
+    for node in nodes:
+        if node.get("tag") != "weaponspecificdice":
+            continue
+        return str((node.get("attrs") or {}).get("type") or "Melee").strip() or "Melee"
+    return ""
 
 
 def load_foci() -> list[dict[str, Any]]:
@@ -950,6 +973,7 @@ def load_foci() -> list[dict[str, Any]]:
         if name == "Qi Focus" or "Individualized" in name or "Formula" in name:
             continue
         bonus = parse_bonus(el.find("bonus"))
+        weapon_type = _focus_weapon_type(bonus)
         items.append(
             {
                 "id": gear_id,
@@ -960,6 +984,8 @@ def load_foci() -> list[dict[str, Any]]:
                 "avail": _text(el.find("avail")),
                 "bonus": bonus,
                 "effect": _focus_effect(bonus),
+                "needs_weapon": bool(weapon_type),
+                "weapon_type": weapon_type,
                 "formula": None,
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
@@ -1826,6 +1852,152 @@ def load_lifestyles() -> list[dict[str, Any]]:
     return items
 
 
+def load_martial_art_techniques() -> list[dict[str, Any]]:
+    path = DATA_DIR / "martialarts.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./techniques/technique"):
+        name = _text(el.find("name"))
+        tech_id = _text(el.find("id"))
+        if not name or not tech_id:
+            continue
+        items.append(
+            {
+                "id": tech_id,
+                "name": name,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+                "bonus": parse_bonus(el.find("bonus")),
+            }
+        )
+    return items
+
+
+def load_martial_arts() -> list[dict[str, Any]]:
+    path = DATA_DIR / "martialarts.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./martialarts/martialart"):
+        name = _text(el.find("name"))
+        art_id = _text(el.find("id"))
+        if not name or not art_id:
+            continue
+        techniques = [
+            tech_name
+            for tech in el.findall("./techniques/technique")
+            if (tech_name := _text(tech.find("name")))
+        ]
+        cost_el = el.find("cost")
+        items.append(
+            {
+                "id": art_id,
+                "name": name,
+                "cost": _int(cost_el, 7) if cost_el is not None else 7,
+                "is_quality": _text(el.find("isquality"), "False").lower() == "true",
+                "all_techniques": el.find("alltechniques") is not None,
+                "techniques": techniques,
+                "bonus": parse_bonus(el.find("bonus")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_metamagics() -> list[dict[str, Any]]:
+    path = DATA_DIR / "metamagic.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./metamagics/metamagic"):
+        name = _text(el.find("name"))
+        mid = _text(el.find("id"))
+        if not name or not mid:
+            continue
+        items.append(
+            {
+                "id": mid,
+                "name": name,
+                "adept": _text(el.find("adept"), "False").lower() == "true",
+                "magician": _text(el.find("magician"), "False").lower() == "true",
+                "repeatable": _text(el.find("limit"), "True").lower() == "false",
+                "bonus": parse_bonus(el.find("bonus")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_magic_arts() -> list[dict[str, Any]]:
+    path = DATA_DIR / "metamagic.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./arts/art"):
+        name = _text(el.find("name"))
+        art_id = _text(el.find("id"))
+        if not name or not art_id:
+            continue
+        items.append(
+            {
+                "id": art_id,
+                "name": name,
+                "bonus": parse_bonus(el.find("bonus")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_echoes() -> list[dict[str, Any]]:
+    path = DATA_DIR / "echoes.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./echoes/echo"):
+        name = _text(el.find("name"))
+        echo_id = _text(el.find("id"))
+        if not name or not echo_id:
+            continue
+        limit_el = el.find("limit")
+        limit_raw = _text(limit_el) if limit_el is not None else ""
+        if limit_el is None:
+            max_takes = 1
+        elif limit_raw.lower() == "false":
+            max_takes = None
+        else:
+            try:
+                max_takes = max(1, int(limit_raw))
+            except ValueError:
+                max_takes = 1
+        bonus = parse_bonus(el.find("bonus"))
+        needs_extra = el.find("./bonus/selecttext") is not None or any(
+            node.get("tag") == "selecttext" for node in bonus
+        )
+        items.append(
+            {
+                "id": echo_id,
+                "name": name,
+                "max_takes": max_takes,
+                "needs_extra": needs_extra,
+                "bonus": bonus,
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
 def load_qi_focus() -> dict[str, Any] | None:
     path = DATA_DIR / "gear.xml"
     if not path.exists():
@@ -2022,6 +2194,11 @@ def catalog() -> dict[str, Any]:
         "weapon_mounts": load_weapon_mounts(),
         "vehicle_names": load_vehicle_names(),
         "lifestyles": load_lifestyles(),
+        "martial_arts": load_martial_arts(),
+        "martial_art_techniques": load_martial_art_techniques(),
+        "metamagics": load_metamagics(),
+        "magic_arts": load_magic_arts(),
+        "echoes": load_echoes(),
         "priorities": load_priorities(),
         "translations": translations,
         "ui_strings": load_ui_strings(),
