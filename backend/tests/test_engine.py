@@ -5846,6 +5846,43 @@ def test_death_dealer_combat_spell_drain_and_damage() -> None:
     assert "spellcategorydamage" not in tags
 
 
+WITNESS_MY_HATE = "f8af38e2-e79a-44f9-8e72-57aba35b7056"
+MANABALL = "d866f612-7160-41d2-8ce9-b64262327559"
+
+
+def test_witness_my_hate_direct_non_area_drain_and_damage() -> None:
+    heal_id = "c09e8bb5-4bed-44f9-a41c-bed6a4deb871"
+    out = compute(
+        _mage(
+            "wmh",
+            quality_ids=[WITNESS_MY_HATE],
+            tradition_id=HERMETIC,
+            spells=[
+                SpellInstall(spell_id=MANABOLT, force=6),
+                SpellInstall(spell_id=MANABALL, force=6),
+                SpellInstall(spell_id=heal_id, force=6),
+            ],
+        )
+    )
+    bolt = next(s for s in out.derived["spells"] if s["name"] == "Manabolt")
+    ball = next(s for s in out.derived["spells"] if s["name"] == "Manaball")
+    heal = next(s for s in out.derived["spells"] if s["name"] == "Heal")
+    # Direct,NOT(Area): Manabolt gets +2 drain / +2 damage
+    assert bolt["spell"]["drain_mod"] == 2
+    assert bolt["damage_mod"] == 2
+    # F-3 @6 = 3, with +2 = 5
+    assert bolt["spell"]["drain"] == 5
+    # Direct+Area excluded
+    assert ball["spell"]["drain_mod"] == 0
+    assert ball["damage_mod"] == 0
+    # Non-Direct unaffected
+    assert heal["spell"]["drain_mod"] == 0
+    assert heal["damage_mod"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "spelldescriptordrain" not in tags
+    assert "spelldescriptordamage" not in tags
+
+
 def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     missing = compute(
         _adept(

@@ -4633,6 +4633,40 @@ def _spell_category_mod_total(effects: dict[str, Any] | None, key: str, category
     return total
 
 
+def _spell_descriptor_tokens(descriptor: str | None) -> set[str]:
+    return {part.strip() for part in str(descriptor or "").split(",") if part.strip()}
+
+
+def _spell_descriptor_pattern_matches(pattern: str, descriptors: set[str]) -> bool:
+    """Match Chummer SpellDescriptorDrain/Damage ImprovedName (e.g. Direct,NOT(Area))."""
+    if not descriptors:
+        return False
+    allow = False
+    for part in str(pattern or "").split(","):
+        token = part.strip()
+        if not token:
+            continue
+        if token.startswith("NOT"):
+            negated = token[3:].removeprefix("(").removesuffix(")").strip()
+            if negated and negated in descriptors:
+                return False
+        else:
+            allow = token in descriptors
+    return allow
+
+
+def _spell_descriptor_mod_total(effects: dict[str, Any] | None, key: str, descriptor: str | None) -> int:
+    if not effects:
+        return 0
+    tokens = _spell_descriptor_tokens(descriptor)
+    total = 0
+    for row in effects.get(key) or []:
+        pattern = str(row.get("descriptor") or "").strip()
+        if pattern and _spell_descriptor_pattern_matches(pattern, tokens):
+            total += int(row.get("value") or 0)
+    return total
+
+
 def spell_cast_info(
     spell_name: str,
     force: int | None,
@@ -4649,8 +4683,11 @@ def spell_cast_info(
     chosen = int(force) if force else (mag or 1)
     chosen = max(1, min(force_max, chosen))
     category = str(spec.get("category") or "")
+    descriptor = str(spec.get("descriptor") or "")
     drain_mod = _spell_category_mod_total(effects, "spell_category_drain", category)
+    drain_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_drain", descriptor)
     damage_mod = _spell_category_mod_total(effects, "spell_category_damage", category)
+    damage_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_damage", descriptor)
     value = spell_drain_value(str(spec.get("dv") or ""), chosen, mod=drain_mod)
     physical = bool(mag) and chosen > mag
     damage = str(spec.get("damage") or "")

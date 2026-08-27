@@ -136,6 +136,8 @@ IMPLEMENTED = {
     "addmetamagic",
     "freespells",
     "newspellkarmacost",
+    "spelldescriptordrain",
+    "spelldescriptordamage",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -184,8 +186,6 @@ SILENT_TAGS = {
     "allowspritefettering",
     "fadingvalue",
     "drainvalue",
-    "spelldescriptordamage",
-    "spelldescriptordrain",
     "weaponcategorydice",
     "weaponskillaccuracy",
     "smartlink",
@@ -450,6 +450,8 @@ def empty_effects() -> dict[str, Any]:
         "expertise_slots": [],
         "spell_category_drain": [],
         "spell_category_damage": [],
+        "spell_descriptor_drain": [],
+        "spell_descriptor_damage": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
         "add_spirit_slots": [],
@@ -1020,6 +1022,22 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                 {
                     "source": source,
                     "category": str(fields.get("category") or node.get("value") or "").strip(),
+                    "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
+                }
+            )
+        elif tag == "spelldescriptordrain":
+            effects["spell_descriptor_drain"].append(
+                {
+                    "source": source,
+                    "descriptor": str(fields.get("descriptor") or node.get("value") or "").strip(),
+                    "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
+                }
+            )
+        elif tag == "spelldescriptordamage":
+            effects["spell_descriptor_damage"].append(
+                {
+                    "source": source,
+                    "descriptor": str(fields.get("descriptor") or node.get("value") or "").strip(),
                     "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
                 }
             )
