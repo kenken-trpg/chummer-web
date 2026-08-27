@@ -5304,16 +5304,60 @@ def test_uncouth_doubles_social_active_skill_points() -> None:
 
 def test_black_market_pipeline_discounts_weapons() -> None:
     weapon = next(w for w in catalog()["weapons"] if w.get("name") == "Ares Predator V")
+    contact = ContactInstall(name="Fence", connection=3, loyalty=2)
     base = compute(_mundane("bmp0", weapons=[WeaponInstall(weapon_id=weapon["id"])]))
     disc = compute(
         _mundane(
             "bmp1",
             quality_ids=[BLACK_MARKET_PIPELINE],
-            quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
+            quality_extras={
+                BLACK_MARKET_PIPELINE: "Weapons",
+                f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
+            },
+            contacts=[contact],
             weapons=[WeaponInstall(weapon_id=weapon["id"])],
         )
     )
     assert disc.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert disc.derived["black_market_contact_id"] == contact.id
+    assert any(c.get("black_market_pipeline") for c in disc.derived["contacts"])
+
+
+def test_black_market_pipeline_lowers_weapon_avail_by_two() -> None:
+    spear = next(w for w in catalog()["weapons"] if w.get("name") == "Cougar Collapsible Spear")
+    contact = ContactInstall(name="Arms Dealer", connection=2, loyalty=2)
+    bare = compute(_mundane("bmp-avail0", weapons=[WeaponInstall(weapon_id=spear["id"])]))
+    linked = compute(
+        _mundane(
+            "bmp-avail1",
+            quality_ids=[BLACK_MARKET_PIPELINE],
+            quality_extras={
+                BLACK_MARKET_PIPELINE: "Weapons",
+                f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
+            },
+            contacts=[contact],
+            weapons=[WeaponInstall(weapon_id=spear["id"])],
+        )
+    )
+    assert bare.derived["weapons"][0]["avail"] == "14R"
+    assert any("入手制限超過" in err for err in bare.derived["errors"])
+    assert linked.derived["weapons"][0]["avail_base"] == 14
+    assert linked.derived["weapons"][0]["avail"] == "12R"
+    assert linked.derived["weapons"][0].get("black_market_avail") is True
+    assert linked.derived["black_market_avail_bonus"] == 2
+    assert not any("入手制限超過" in err for err in linked.derived["errors"])
+
+
+def test_black_market_pipeline_warns_without_contact() -> None:
+    out = compute(
+        _mundane(
+            "bmp-nocontact",
+            quality_ids=[BLACK_MARKET_PIPELINE],
+            quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
+        )
+    )
+    assert any("コネクトを選んでください" in warn for warn in out.derived["warnings"])
+    assert out.derived["black_market_avail_bonus"] == 0
 
 
 def test_ambidextrous_flag() -> None:

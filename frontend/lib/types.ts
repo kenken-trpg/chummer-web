@@ -128,6 +128,7 @@ export interface InstalledContact {
   cost: number;
   connection_max: number;
   loyalty_max: number;
+  black_market_pipeline?: boolean;
 }
 
 export interface InstalledExoticSkill {
@@ -1214,6 +1215,9 @@ export interface Character {
     friends_in_high_places?: boolean;
     made_man?: boolean;
     black_market_discount?: boolean;
+    black_market_category?: string;
+    black_market_contact_id?: string;
+    black_market_avail_bonus?: number;
     dealer_connection_categories?: string[];
     cyberware_ess_multiplier?: number;
     bioware_ess_multiplier?: number;

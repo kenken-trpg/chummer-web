@@ -89,6 +89,7 @@ IMPLEMENTED = {
     "nuyenamt",
     "trustfund",
     "blackmarketdiscount",
+    "selectcontact",
     "dealerconnection",
     "friendsinhighplaces",
     "mademan",
@@ -158,7 +159,6 @@ SILENT_TAGS = {
     "newspellkarmacost",
     "contactkarma",
     "contactkarmaminimum",
-    "selectcontact",
     "addcontact",
     "selectexpertise",
     "selectside",
@@ -840,6 +840,9 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["trustfund"] = max(int(effects.get("trustfund") or 0), _as_int(node.get("value")))
         elif tag == "blackmarketdiscount":
             effects["black_market_discount"] = True
+        elif tag == "selectcontact":
+            # Contact id is stored in quality_extras["{quality_id}:contact"] (see engine).
+            pass
         elif tag == "dealerconnection":
             cats = fields.get("category") or node.get("value") or []
             if not isinstance(cats, list):

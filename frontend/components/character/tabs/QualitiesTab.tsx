@@ -58,22 +58,43 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
       ? q.select_options
       : catalogById.get(q.id)?.select_options || [];
     if (q.name === "Black Market Pipeline") {
+      const contactKey = `${q.id}:contact`;
       return (
-        <select
-          value={ch.quality_extras?.[q.id] || ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">商品カテゴリを選択</option>
-          {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <select
+            value={ch.quality_extras?.[q.id] || ""}
+            onChange={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          >
+            <option value="">商品カテゴリを選択</option>
+            {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          <select
+            value={ch.quality_extras?.[contactKey] || ""}
+            onChange={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [contactKey]: e.target.value },
+              })
+            }
+          >
+            <option value="">コネクトを選択</option>
+            {(d.contacts || []).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L{c.loyalty})
+              </option>
+            ))}
+          </select>
+          {d.black_market_avail_bonus ? (
+            <span className="muted">入手判定 +{d.black_market_avail_bonus}（実効 Avail −{d.black_market_avail_bonus}）</span>
+          ) : null}
+        </div>
       );
     }
     if (kind === "quality" || options.length) {
@@ -193,6 +214,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                   onClick={() => {
                     const extras = { ...(ch.quality_extras || {}) };
                     delete extras[q.id];
+                    delete extras[`${q.id}:contact`];
                     patch({
                       quality_ids: ch.quality_ids.filter((id) => id !== q.id),
                       quality_extras: extras,
@@ -250,6 +272,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                   if (added) {
                     const extras = { ...(ch.quality_extras || {}) };
                     delete extras[q.id];
+                    delete extras[`${q.id}:contact`];
                     patch({
                       quality_ids: ch.quality_ids.filter((id) => id !== q.id),
                       quality_extras: extras,

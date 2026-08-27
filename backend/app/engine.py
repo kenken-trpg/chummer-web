@@ -131,6 +131,8 @@ BLACK_MARKET_CATEGORY_HINTS = {
     "Bioware": (),
     "Drugs": ("gear",),
 }
+BLACK_MARKET_AVAIL_BONUS = 2
+QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
 CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
@@ -622,6 +624,71 @@ def _dealer_matches(category: str, dealer_cats: list[str]) -> bool:
         if cat in prefixes:
             return True
     return False
+
+
+def quality_contact_extra_key(quality_id: str) -> str:
+    return f"{quality_id}{QUALITY_CONTACT_EXTRA_SUFFIX}"
+
+
+def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
+    if key in owned:
+        return True
+    if key.endswith(QUALITY_CONTACT_EXTRA_SUFFIX):
+        return key[: -len(QUALITY_CONTACT_EXTRA_SUFFIX)] in owned
+    return False
+
+
+def _bmp_row_matches(row: dict[str, Any], category: str, *, gear_key: str = "") -> bool:
+    if not category:
+        return False
+    if category == "Cyberware":
+        return True
+    if category == "Bioware":
+        return True
+    keys = set(BLACK_MARKET_CATEGORY_HINTS.get(category) or ())
+    if gear_key and gear_key not in keys:
+        return False
+    if gear_key == "gear" and category == "Drugs":
+        return str(row.get("category") or "") in {"Drugs", "Toxins", "Chemicals"}
+    return bool(gear_key)
+
+
+def apply_black_market_avail(
+    gear: dict[str, Any],
+    cyber_installed: list[dict[str, Any]],
+    bio_installed: list[dict[str, Any]],
+    *,
+    black_market_category: str = "",
+    bonus: int = BLACK_MARKET_AVAIL_BONUS,
+) -> None:
+    """Lower effective Availability by ``bonus`` for BMP-matching gear (chargen limit / sheet)."""
+    if not black_market_category or bonus <= 0:
+        return
+
+    def _apply(row: dict[str, Any]) -> None:
+        raw = int(row.get("avail_value") or 0)
+        if raw <= 0:
+            return
+        effective = max(0, raw - int(bonus))
+        row["avail_base"] = raw
+        row["avail_value"] = effective
+        row["black_market_avail"] = True
+        row["avail"] = format_avail(effective, str(row.get("avail_suffix") or ""))
+
+    if black_market_category == "Cyberware":
+        for row in cyber_installed:
+            _apply(row)
+        return
+    if black_market_category == "Bioware":
+        for row in bio_installed:
+            _apply(row)
+        return
+
+    keys = set(BLACK_MARKET_CATEGORY_HINTS.get(black_market_category) or ())
+    for key in keys:
+        for row in gear.get(key) or []:
+            if _bmp_row_matches(row, black_market_category, gear_key=key):
+                _apply(row)
 
 
 def apply_purchase_discounts(
@@ -4027,7 +4094,7 @@ def apply_quality_rules(
     extras = {
         key: str(value).strip()
         for key, value in (state.quality_extras or {}).items()
-        if key in owned and str(value).strip()
+        if _quality_extra_key_owned(key, owned) and str(value).strip()
     }
     state.quality_extras = extras
     free_ids = set(free_quality_ids)
@@ -5092,12 +5159,20 @@ def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str
                     existing.append(note)
 
 
-def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False, friends_in_high_places: bool = False) -> dict[str, Any]:
+def resolve_contacts(
+    state: CharacterState,
+    cha: int,
+    *,
+    career: bool = False,
+    friends_in_high_places: bool = False,
+    black_market_contact_id: str = "",
+) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []
     used = 0
     free_max = max(0, int(cha or 0) * CONTACT_FREE_MULT)
+    bmp_id = str(black_market_contact_id or "").strip()
     for inst in state.contacts or []:
         name = (inst.name or "").strip()
         role = (inst.role or "").strip()
@@ -5135,6 +5210,7 @@ def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False, f
                 "cost": cost,
                 "connection_max": conn_max,
                 "loyalty_max": loy_max,
+                "black_market_pipeline": bool(bmp_id and inst.id == bmp_id),
             }
         )
     state.contacts = kept
@@ -7676,20 +7752,38 @@ def compute(state: CharacterState) -> CharacterState:
     apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
     apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
     bmp_category = ""
+    bmp_contact_id = ""
+    bmp_active = False
     if effects.get("black_market_discount"):
         for q in qualities:
-            if any(node.get("tag") == "blackmarketdiscount" for node in (q.get("bonus") or [])):
-                bmp_category = str((state.quality_extras or {}).get(q["id"]) or "").strip()
-                break
-        if not bmp_category:
-            warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
+            if not any(node.get("tag") == "blackmarketdiscount" for node in (q.get("bonus") or [])):
+                continue
+            bmp_category = str((state.quality_extras or {}).get(q["id"]) or "").strip()
+            bmp_contact_id = str((state.quality_extras or {}).get(quality_contact_extra_key(q["id"])) or "").strip()
+            contact_ids = {str(getattr(c, "id", "") or "") for c in (state.contacts or [])}
+            if not bmp_category:
+                warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
+            if not bmp_contact_id:
+                warnings.append("Black Market Pipeline のコネクトを選んでください")
+            elif bmp_contact_id not in contact_ids:
+                warnings.append("Black Market Pipeline のコネクトが見つかりません")
+                bmp_contact_id = ""
+            bmp_active = bool(bmp_category and bmp_contact_id)
+            break
     apply_purchase_discounts(
         gear,
         cyber_installed,
         bio_installed,
         effects,
-        black_market_category=bmp_category,
+        black_market_category=bmp_category if bmp_active else "",
     )
+    if bmp_active:
+        apply_black_market_avail(
+            gear,
+            cyber_installed,
+            bio_installed,
+            black_market_category=bmp_category,
+        )
     apply_overclocker(gear, bool(effects.get("overclocker")))
     trust_level = int(effects.get("trustfund") or 0)
     if trust_level:
@@ -8005,7 +8099,13 @@ def compute(state: CharacterState) -> CharacterState:
     logi = total["LOG"]
     intuition = total["INT"]
     cha = total["CHA"]
-    contacts = resolve_contacts(state, int(cha or 0), career=career, friends_in_high_places=bool(effects.get("friends_in_high_places")))
+    contacts = resolve_contacts(
+        state,
+        int(cha or 0),
+        career=career,
+        friends_in_high_places=bool(effects.get("friends_in_high_places")),
+        black_market_contact_id=bmp_contact_id if bmp_active else "",
+    )
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
 
@@ -8315,6 +8415,9 @@ def compute(state: CharacterState) -> CharacterState:
         "friends_in_high_places": bool(effects.get("friends_in_high_places")),
         "made_man": bool(effects.get("made_man")),
         "black_market_discount": bool(effects.get("black_market_discount")),
+        "black_market_category": bmp_category if bmp_active else "",
+        "black_market_contact_id": bmp_contact_id if bmp_active else "",
+        "black_market_avail_bonus": BLACK_MARKET_AVAIL_BONUS if bmp_active else 0,
         "dealer_connection_categories": list(effects.get("dealer_connection_categories") or []),
         "cyberware_ess_multiplier": int(effects.get("cyberware_ess_multiplier") or 100),
         "bioware_ess_multiplier": int(effects.get("bioware_ess_multiplier") or 100),

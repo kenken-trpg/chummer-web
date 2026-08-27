@@ -26,6 +26,7 @@ export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter
                   <div className="muted">
                     {item.role ? `${item.role} / ` : ""}
                     Connection {item.connection} / Loyalty {item.loyalty} / {item.cost}点
+                    {item.black_market_pipeline ? " / Black Market Pipeline" : ""}
                   </div>
                   <div className="cyber-controls">
                     <label>
