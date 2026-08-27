@@ -57,6 +57,13 @@ export interface ContactInstall {
   role?: string | null;
   connection?: number;
   loyalty?: number;
+  group?: boolean;
+  free?: boolean;
+  forced_loyalty?: number | null;
+  force_group?: boolean;
+  source_quality_id?: string | null;
+  free_connection?: number;
+  free_loyalty?: number;
 }
 
 export interface MartialArtInstall {
@@ -126,8 +133,15 @@ export interface InstalledContact {
   connection: number;
   loyalty: number;
   cost: number;
+  billable?: number;
   connection_max: number;
   loyalty_max: number;
+  loyalty_min?: number;
+  group?: boolean;
+  free?: boolean;
+  forced_loyalty?: number | null;
+  source_quality_id?: string | null;
+  locked?: boolean;
   black_market_pipeline?: boolean;
 }
 
@@ -1292,7 +1306,7 @@ export interface Character {
       spec?: string;
     }[];
     contacts?: InstalledContact[];
-    contact_points?: { used: number; free: number; paid: number };
+    contact_points?: { used: number; free: number; paid: number; karma?: number; karma_per_point?: number };
     martial_arts?: InstalledMartialArt[];
     martial_art_points?: {
       styles: number;

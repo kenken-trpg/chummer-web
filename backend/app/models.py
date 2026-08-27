@@ -176,6 +176,13 @@ class ContactInstall(BaseModel):
     role: str | None = None
     connection: int = 1
     loyalty: int = 1
+    group: bool = False
+    free: bool = False
+    forced_loyalty: int | None = None
+    force_group: bool = False
+    source_quality_id: str | None = None
+    free_connection: int = 0
+    free_loyalty: int = 0
 
 
 class MartialArtInstall(BaseModel):

@@ -115,6 +115,9 @@ IMPLEMENTED = {
     "prototypetranshuman",
     "burnoutsway",
     "actiondicepool",
+    "addcontact",
+    "contactkarma",
+    "contactkarmaminimum",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -159,9 +162,6 @@ SILENT_TAGS = {
     "excon",
     "erased",
     "newspellkarmacost",
-    "contactkarma",
-    "contactkarmaminimum",
-    "addcontact",
     "selectexpertise",
     "selectarmor",
     "selectsprite",
@@ -425,6 +425,9 @@ def empty_effects() -> dict[str, Any]:
         "dealer_connection_categories": [],
         "friends_in_high_places": False,
         "made_man": False,
+        "add_contacts": [],
+        "contact_karma_adj": 0,
+        "contact_karma_min": 0,
         "overclocker": False,
         "ambidextrous": False,
         "cyberware_ess_multiplier": 100,
@@ -876,6 +879,27 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["friends_in_high_places"] = True
         elif tag == "mademan":
             effects["made_man"] = True
+        elif tag == "addcontact":
+            connection = _as_int(fields.get("connection"), 1) if "connection" in fields else 1
+            loyalty = _as_int(fields.get("loyalty"), 1) if "loyalty" in fields else 1
+            forced_loyalty = _as_int(fields.get("forcedloyalty")) if "forcedloyalty" in fields else None
+            if forced_loyalty is not None:
+                loyalty = max(loyalty, forced_loyalty)
+            effects["add_contacts"].append(
+                {
+                    "source": source,
+                    "connection": connection,
+                    "loyalty": loyalty,
+                    "forced_loyalty": forced_loyalty,
+                    "free": "free" in fields,
+                    "group": "group" in fields,
+                    "force_group": "forcegroup" in fields,
+                }
+            )
+        elif tag == "contactkarma":
+            effects["contact_karma_adj"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "contactkarmaminimum":
+            effects["contact_karma_min"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "overclocker":
             effects["overclocker"] = True
         elif tag == "ambidextrous":

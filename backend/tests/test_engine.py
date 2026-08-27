@@ -4723,7 +4723,11 @@ def test_mage_has_no_technomancer_tabs() -> None:
 def test_contact_free_points_are_charisma_times_three() -> None:
     out = compute(_human("contact-free"))
     assert out.derived["totals"]["CHA"] == 1
-    assert out.derived["contact_points"] == {"used": 0, "free": 3, "paid": 0}
+    assert out.derived["contact_points"]["used"] == 0
+    assert out.derived["contact_points"]["free"] == 3
+    assert out.derived["contact_points"]["paid"] == 0
+    assert out.derived["contact_points"]["karma"] == 0
+    assert out.derived["contact_points"]["karma_per_point"] == 1
     assert out.derived["points"]["contacts"] == {"used": 0, "max": 3}
     high = _human("contact-cha3")
     high.attributes["CHA"] = 3
@@ -4745,7 +4749,9 @@ def test_contact_spends_free_points_before_karma() -> None:
     assert row["connection"] == 2
     assert row["loyalty"] == 1
     assert row["cost"] == 3
-    assert out.derived["contact_points"] == {"used": 3, "free": 3, "paid": 0}
+    assert out.derived["contact_points"]["used"] == 3
+    assert out.derived["contact_points"]["free"] == 3
+    assert out.derived["contact_points"]["paid"] == 0
     assert out.derived["karma"]["remaining"] == 25
     assert out.derived["errors"] == []
 
@@ -4758,7 +4764,10 @@ def test_contact_overspend_costs_karma() -> None:
         ContactInstall(name="Street Doc", connection=2, loyalty=2),
     ]
     out = compute(state)
-    assert out.derived["contact_points"] == {"used": 11, "free": 9, "paid": 2}
+    assert out.derived["contact_points"]["used"] == 11
+    assert out.derived["contact_points"]["free"] == 9
+    assert out.derived["contact_points"]["paid"] == 2
+    assert out.derived["contact_points"]["karma"] == 2
     assert out.derived["karma"]["spent"] == 2
     assert out.derived["karma"]["remaining"] == 23
 
@@ -5363,6 +5372,93 @@ def test_black_market_pipeline_warns_without_contact() -> None:
 def test_ambidextrous_flag() -> None:
     out = compute(_mundane("ambi", quality_ids=[AMBIDEXTROUS]))
     assert out.derived["ambidextrous"] is True
+
+
+MADE_MAN = "45be40cc-a21a-4771-b47d-a532ea60b205"
+PRIME_DATAHAVEN = "7297d8b0-8bb8-4d7a-ab10-2d4e4381e5d0"
+NETWORKER = "fc195df5-83f6-4aff-aca8-4287a56e4d4c"
+MASSIVE_NETWORK = "f8384574-ce99-4e33-8a94-b5aea7ddf4bd"
+
+
+def test_made_man_adds_free_group_contact() -> None:
+    out = compute(_mundane("made-man", quality_ids=[MADE_MAN]))
+    row = next(c for c in out.derived["contacts"] if c.get("source_quality_id") == MADE_MAN)
+    assert row["connection"] == 1
+    assert row["loyalty"] == 3
+    assert row["free"] is True
+    assert row["group"] is True
+    assert row["locked"] is True
+    assert row["billable"] == 0
+    assert out.derived["made_man"] is True
+    assert out.derived["contact_points"]["used"] == 0
+    assert "addcontact" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_prime_datahaven_adds_connection_five_contact() -> None:
+    out = compute(_mundane("datahaven", quality_ids=[PRIME_DATAHAVEN]))
+    row = next(c for c in out.derived["contacts"] if c.get("source_quality_id") == PRIME_DATAHAVEN)
+    assert row["connection"] == 5
+    assert row["loyalty"] == 3
+    assert row["free"] is True
+    assert row["group"] is True
+    assert row["billable"] == 0
+    assert row["loyalty_min"] == 3
+
+
+def test_quality_contact_removed_when_quality_dropped() -> None:
+    with_q = compute(_mundane("mm-on", quality_ids=[MADE_MAN]))
+    assert any(c.get("source_quality_id") == MADE_MAN for c in with_q.derived["contacts"])
+    # Persist quality-linked contact then drop the quality
+    state = _mundane("mm-off", contacts=list(with_q.contacts or []))
+    out = compute(state)
+    assert not any(c.get("source_quality_id") == MADE_MAN for c in out.derived["contacts"])
+
+
+def test_made_man_contact_excess_connection_costs_points() -> None:
+    base = compute(_mundane("mm-base", quality_ids=[MADE_MAN]))
+    contact = next(c for c in (base.contacts or []) if c.source_quality_id == MADE_MAN)
+    contact.connection = 4  # free baseline 1+3=4; excess 3
+    out = compute(
+        _mundane(
+            "mm-excess",
+            quality_ids=[MADE_MAN],
+            contacts=[contact],
+        )
+    )
+    row = next(c for c in out.derived["contacts"] if c.get("source_quality_id") == MADE_MAN)
+    assert row["billable"] == 3
+    assert out.derived["contact_points"]["used"] == 3
+
+
+def test_networker_zeros_excess_contact_karma() -> None:
+    state = _mundane(
+        "networker",
+        quality_ids=[NETWORKER],
+        contacts=[
+            ContactInstall(name="Fixer", connection=4, loyalty=3),
+            ContactInstall(name="Street Doc", connection=3, loyalty=3),
+        ],
+    )
+    state.attributes["CHA"] = 3  # free 9; used 13; paid points 4
+    out = compute(state)
+    assert out.derived["contact_points"]["karma_per_point"] == 0
+    assert out.derived["contact_points"]["paid"] == 4
+    assert out.derived["contact_points"]["karma"] == 0
+    # quality karma 5 only
+    assert out.derived["karma"]["spent"] == 5
+    assert "contactkarma" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_massive_network_zeros_excess_contact_karma() -> None:
+    state = _mundane(
+        "massive-net",
+        quality_ids=[MASSIVE_NETWORK],
+        contacts=[ContactInstall(name="Fixer", connection=6, loyalty=1)],
+    )
+    state.attributes["CHA"] = 1  # free 3; used 7; paid 4
+    out = compute(state)
+    assert out.derived["contact_points"]["karma_per_point"] == 0
+    assert out.derived["contact_points"]["karma"] == 0
 
 
 CODESLINGER = "41cc3e26-ae55-4e28-bd6a-b08866c21424"

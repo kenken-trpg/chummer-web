@@ -664,7 +664,11 @@ export default function CharacterSheet({
           <tbody>
             {(d.contacts || []).map((c) => (
               <tr key={c.id}>
-                <td className="left">{c.name}</td>
+                <td className="left">
+                  {c.name}
+                  {c.free ? " ★" : ""}
+                  {c.group ? " (G)" : ""}
+                </td>
                 <td className="left">{c.role || ""}</td>
                 <td>{c.connection}</td>
                 <td>{c.loyalty}</td>

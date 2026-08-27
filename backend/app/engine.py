@@ -5276,6 +5276,86 @@ def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str
                     existing.append(note)
 
 
+def sync_quality_contacts(
+    state: CharacterState,
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+) -> list[str]:
+    """Create/update free contacts granted by addcontact qualities; drop orphans."""
+    warnings: list[str] = []
+    by_name = {q["name"]: q for q in qualities}
+    specs: list[dict[str, Any]] = []
+    for entry in effects.get("add_contacts") or []:
+        q = by_name.get(str(entry.get("source") or "").strip())
+        if not q:
+            continue
+        specs.append({**entry, "quality_id": q["id"], "quality_name": q["name"]})
+    wanted = {str(s["quality_id"]) for s in specs}
+
+    remaining: list[ContactInstall] = []
+    for inst in state.contacts or []:
+        sq = str(inst.source_quality_id or "").strip()
+        if sq and sq not in wanted:
+            continue
+        remaining.append(inst)
+
+    existing = {
+        str(inst.source_quality_id): inst
+        for inst in remaining
+        if str(inst.source_quality_id or "").strip()
+    }
+    for spec in specs:
+        qid = str(spec["quality_id"])
+        connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(spec.get("connection") or 1)))
+        loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(spec.get("loyalty") or 1)))
+        forced = spec.get("forced_loyalty")
+        forced_i = int(forced) if forced is not None else None
+        if forced_i is not None:
+            loyalty = max(loyalty, max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, forced_i)))
+        is_free = bool(spec.get("free"))
+        is_group = bool(spec.get("group") or spec.get("force_group"))
+        force_group = bool(spec.get("force_group"))
+        if qid in existing:
+            inst = existing[qid]
+            if forced_i is not None:
+                inst.forced_loyalty = forced_i
+                inst.loyalty = max(int(inst.loyalty or 1), forced_i)
+            if force_group or is_group:
+                inst.group = True
+            inst.force_group = force_group or bool(inst.force_group)
+            inst.free = is_free or bool(inst.free)
+            if is_free:
+                inst.free_connection = max(int(inst.free_connection or 0), connection)
+                inst.free_loyalty = max(int(inst.free_loyalty or 0), loyalty)
+                inst.connection = max(int(inst.connection or 1), connection)
+                inst.loyalty = max(int(inst.loyalty or 1), loyalty)
+            continue
+        remaining.append(
+            ContactInstall(
+                name=str(spec.get("quality_name") or ""),
+                connection=connection,
+                loyalty=loyalty,
+                group=is_group,
+                free=is_free,
+                forced_loyalty=forced_i,
+                force_group=force_group,
+                source_quality_id=qid,
+                free_connection=connection if is_free else 0,
+                free_loyalty=loyalty if is_free else 0,
+            )
+        )
+    state.contacts = remaining
+    return warnings
+
+
+def _contact_billable_points(inst: ContactInstall, connection: int, loyalty: int) -> int:
+    total = connection + loyalty
+    if not inst.free and not int(inst.free_connection or 0) and not int(inst.free_loyalty or 0):
+        return total
+    baseline = max(0, int(inst.free_connection or 0)) + max(0, int(inst.free_loyalty or 0))
+    return max(0, total - baseline)
+
+
 def resolve_contacts(
     state: CharacterState,
     cha: int,
@@ -5283,6 +5363,8 @@ def resolve_contacts(
     career: bool = False,
     friends_in_high_places: bool = False,
     black_market_contact_id: str = "",
+    contact_karma_adj: int = 0,
+    contact_karma_min: int = 0,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -5295,20 +5377,34 @@ def resolve_contacts(
         role = (inst.role or "").strip()
         connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.connection or 1)))
         loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.loyalty or 1)))
+        forced = inst.forced_loyalty
+        if forced is not None:
+            loyalty = max(loyalty, max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced))))
+        if inst.force_group:
+            inst.group = True
         chargen_pair_max = 12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX
-        if not career and connection + loyalty > chargen_pair_max:
+        quality_granted = bool(inst.source_quality_id) or bool(inst.free)
+        if not career and not quality_granted and connection + loyalty > chargen_pair_max:
             loyalty = max(CONTACT_RATING_MIN, chargen_pair_max - connection)
+            if forced is not None and loyalty < int(forced):
+                # Prefer keeping forced loyalty; clamp connection instead.
+                loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced)))
+                connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
             warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
         inst.name = name
         inst.role = role or None
         inst.connection = connection
         inst.loyalty = loyalty
+        billable = _contact_billable_points(inst, connection, loyalty)
         cost = connection + loyalty
         if not name:
             warnings.append("名前のないコネクトがあります")
         kept.append(inst)
-        used += cost
-        if career or friends_in_high_places:
+        used += billable
+        if quality_granted:
+            conn_max = 12 if friends_in_high_places or career else CONTACT_RATING_MAX
+            loy_max = CONTACT_RATING_MAX
+        elif career or friends_in_high_places:
             conn_max = 12 if friends_in_high_places else CONTACT_RATING_MAX
             loy_max = CONTACT_RATING_MAX if career else min(CONTACT_RATING_MAX, (12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX) - connection)
             if friends_in_high_places and not career:
@@ -5317,6 +5413,10 @@ def resolve_contacts(
         else:
             conn_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty)
             loy_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection)
+        if forced is not None:
+            loy_min = max(CONTACT_RATING_MIN, int(forced))
+        else:
+            loy_min = CONTACT_RATING_MIN
         public.append(
             {
                 "id": inst.id,
@@ -5325,20 +5425,30 @@ def resolve_contacts(
                 "connection": connection,
                 "loyalty": loyalty,
                 "cost": cost,
+                "billable": billable,
                 "connection_max": conn_max,
                 "loyalty_max": loy_max,
+                "loyalty_min": loy_min,
+                "group": bool(inst.group),
+                "free": bool(inst.free),
+                "forced_loyalty": int(forced) if forced is not None else None,
+                "source_quality_id": inst.source_quality_id,
+                "locked": bool(inst.source_quality_id),
                 "black_market_pipeline": bool(bmp_id and inst.id == bmp_id),
             }
         )
     state.contacts = kept
-    paid = max(0, used - free_max)
+    paid_points = max(0, used - free_max)
+    per_point = max(int(contact_karma_min), 1 + int(contact_karma_adj))
+    karma = paid_points * max(0, per_point)
     return {
         "warnings": warnings,
         "public": public,
         "used": used,
         "free": free_max,
-        "paid": paid,
-        "karma": paid,
+        "paid": paid_points,
+        "karma": karma,
+        "karma_per_point": per_point,
     }
 
 
@@ -8218,12 +8328,15 @@ def compute(state: CharacterState) -> CharacterState:
     logi = total["LOG"]
     intuition = total["INT"]
     cha = total["CHA"]
+    warnings.extend(sync_quality_contacts(state, effects, qualities))
     contacts = resolve_contacts(
         state,
         int(cha or 0),
         career=career,
         friends_in_high_places=bool(effects.get("friends_in_high_places")),
         black_market_contact_id=bmp_contact_id if bmp_active else "",
+        contact_karma_adj=int(effects.get("contact_karma_adj") or 0),
+        contact_karma_min=int(effects.get("contact_karma_min") or 0),
     )
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
@@ -8603,6 +8716,8 @@ def compute(state: CharacterState) -> CharacterState:
             "used": contacts.get("used") or 0,
             "free": contacts.get("free") or 0,
             "paid": contacts.get("paid") or 0,
+            "karma": int(contacts.get("karma") or 0),
+            "karma_per_point": int(contacts.get("karma_per_point", 1)),
         },
         "martial_arts": martial.get("public") or [],
         "martial_art_points": {

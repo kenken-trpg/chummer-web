@@ -9,15 +9,20 @@ export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter
 
   const [contactName, setContactName] = useState("");
   const [contactRole, setContactRole] = useState("");
+  const perPoint = d.contact_points?.karma_per_point ?? 1;
+  const paidKarma = d.contact_points?.karma ?? d.contact_points?.paid ?? 0;
 
   return (
           <div className="card">
             <p className="muted">
               無料枠 CHA×3 = {d.contact_points?.used || 0}/{d.contact_points?.free || 0}
-              {(d.contact_points?.paid || 0) > 0 ? ` ・ 超過 ${d.contact_points?.paid}カルマ` : ""}
+              {(d.contact_points?.paid || 0) > 0
+                ? ` ・ 超過 ${d.contact_points?.paid}点（${paidKarma}カルマ）`
+                : ""}
               。Connection と Loyalty は最低1
               {d.career ? "。キャリアでは合計上限なし" : "、作成時は合計7まで"}
-              。超過分は1点1カルマです。
+              。超過分は1点{perPoint}カルマです
+              {perPoint === 0 ? "（Networker 等により無料）" : ""}。
             </p>
             {(d.contacts || []).map((item) => (
               <div className="cyber-item" key={item.id}>
@@ -26,6 +31,9 @@ export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter
                   <div className="muted">
                     {item.role ? `${item.role} / ` : ""}
                     Connection {item.connection} / Loyalty {item.loyalty} / {item.cost}点
+                    {item.free ? " / 無料" : ""}
+                    {item.group ? " / グループ" : ""}
+                    {item.billable != null && item.billable !== item.cost ? ` / 課金 ${item.billable}点` : ""}
                     {item.black_market_pipeline ? " / Black Market Pipeline" : ""}
                   </div>
                   <div className="cyber-controls">
@@ -84,7 +92,7 @@ export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter
                       Loyalty
                       <input
                         type="number"
-                        min={1}
+                        min={item.loyalty_min ?? 1}
                         max={item.loyalty_max}
                         value={item.loyalty}
                         onChange={(e) => patch({
@@ -96,9 +104,13 @@ export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter
                     </label>
                   </div>
                 </div>
-                <button className="btn danger" onClick={() => patch({
-                  contacts: (ch.contacts || []).filter((row) => row.id !== item.id),
-                })}>削除</button>
+                {item.locked ? (
+                  <span className="muted">品質連動</span>
+                ) : (
+                  <button className="btn danger" onClick={() => patch({
+                    contacts: (ch.contacts || []).filter((row) => row.id !== item.id),
+                  })}>削除</button>
+                )}
               </div>
             ))}
             <div className="cyber-toolbar">
