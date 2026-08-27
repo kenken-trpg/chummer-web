@@ -41,7 +41,8 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv}
-                    {item.spell ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}` : ""}
+                    {item.damage_mod ? ` ・ ダメージ+${item.damage_mod}` : ""}
+                    {item.spell ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}${item.spell.drain_mod ? `（修正${item.spell.drain_mod > 0 ? "+" : ""}${item.spell.drain_mod}）` : ""}` : ""}
                     {item.focus_bonus ? ` / 焦点+${item.focus_bonus}` : ""}
                     {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
                     {item.required?.length ? ` / 必要 ${item.required.map((name) => tr(name)).join("・")}` : ""}

@@ -198,6 +198,27 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
         </div>
       );
     }
+    if (kind === "weapon_skill") {
+      const current = ch.quality_extras?.[q.id] || "";
+      const known = options.length ? options : [];
+      return (
+        <select
+          value={current}
+          onChange={(e) =>
+            patch({
+              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+            })
+          }
+        >
+          <option value="">武器スキルを選択</option>
+          {known.map((name) => (
+            <option key={name} value={name}>
+              {tr(name)}
+            </option>
+          ))}
+        </select>
+      );
+    }
     if (kind === "spell_category" || kind === "spell_spirit_category" || kind === "spirit_category") {
       const spiritKey = `${q.id}:spiritcategory`;
       const spirits = q.spirit_options?.length

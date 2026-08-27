@@ -5799,6 +5799,77 @@ def test_hedge_witch_allows_rituals_plus_selected_category() -> None:
     assert "Conjuring" in (out.derived["disabled_skill_groups"] or [])
 
 
+def test_hedge_witch_reduces_selected_category_drain() -> None:
+    heal_id = "c09e8bb5-4bed-44f9-a41c-bed6a4deb871"
+    out = compute(
+        _mage(
+            "hedge-drain",
+            quality_ids=[HEDGE_WITCH],
+            quality_extras={HEDGE_WITCH: "Health"},
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=heal_id, force=8)],
+        )
+    )
+    heal = next(s for s in out.derived["spells"] if s["name"] == "Heal")
+    assert heal["spell"]["drain_mod"] == -2
+    # F-4 @8 = 4, with -2 = 2
+    assert heal["spell"]["drain"] == 2
+    assert "spellcategorydrain" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+DEATH_DEALER = "36e76b70-bf6a-4e66-8dac-13cd529b9274"
+DEATH_DEALER_ADEPT = "cfc637e9-0071-4313-a25b-b411793f2321"
+CRITICAL_STRIKE = "dbf16604-164c-485c-96c8-fe3136cd5caa"
+
+
+def test_death_dealer_combat_spell_drain_and_damage() -> None:
+    heal_id = "c09e8bb5-4bed-44f9-a41c-bed6a4deb871"
+    out = compute(
+        _mage(
+            "death-dealer",
+            quality_ids=[DEATH_DEALER],
+            tradition_id=HERMETIC,
+            skills={"Spellcasting": 6},
+            spells=[SpellInstall(spell_id=MANABOLT, force=6), SpellInstall(spell_id=heal_id, force=6)],
+        )
+    )
+    bolt = next(s for s in out.derived["spells"] if s["name"] == "Manabolt")
+    heal = next(s for s in out.derived["spells"] if s["name"] == "Heal")
+    assert bolt["spell"]["drain_mod"] == 1
+    assert bolt["damage_mod"] == 1
+    # F-3 @6 = 3, with +1 = 4
+    assert bolt["spell"]["drain"] == 4
+    assert heal["spell"]["drain_mod"] == 0
+    assert heal["damage_mod"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "spellcategorydrain" not in tags
+    assert "spellcategorydamage" not in tags
+
+
+def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
+    missing = compute(
+        _adept(
+            "dda-empty",
+            quality_ids=[DEATH_DEALER_ADEPT],
+            adept_powers=[AdeptPowerInstall(power_id=CRITICAL_STRIKE)],
+            weapons=[WeaponInstall(weapon_id=KATANA)],
+        )
+    )
+    assert any("武器スキル" in err for err in missing.derived["errors"])
+    out = compute(
+        _adept(
+            "dda-blades",
+            quality_ids=[DEATH_DEALER_ADEPT],
+            quality_extras={DEATH_DEALER_ADEPT: "Blades"},
+            adept_powers=[AdeptPowerInstall(power_id=CRITICAL_STRIKE)],
+            weapons=[WeaponInstall(weapon_id=KATANA)],
+        )
+    )
+    katana = next(w for w in out.derived["weapons"] if w["name"] == "Katana")
+    assert "({STR}+4)P" in katana["damage"] or katana["damage"] == "({STR}+4)P"
+    assert "weaponcategorydv" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
 INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
 JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"

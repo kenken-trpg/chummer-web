@@ -129,6 +129,9 @@ IMPLEMENTED = {
     "erased",
     "excon",
     "selectexpertise",
+    "spellcategorydrain",
+    "spellcategorydamage",
+    "weaponcategorydv",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -181,11 +184,8 @@ SILENT_TAGS = {
     "freespells",
     "fadingvalue",
     "drainvalue",
-    "spellcategorydrain",
-    "spellcategorydamage",
     "spelldescriptordamage",
     "spelldescriptordrain",
-    "weaponcategorydv",
     "weaponcategorydice",
     "weaponskillaccuracy",
     "smartlink",
@@ -448,6 +448,10 @@ def empty_effects() -> dict[str, Any]:
         "erased": False,
         "excon": False,
         "expertise_slots": [],
+        "spell_category_drain": [],
+        "spell_category_damage": [],
+        "weapon_category_dv_slots": [],
+        "weapon_category_dv": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -994,6 +998,36 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "source": source,
                     "skills": skills,
                     "limit_to_specialization": str(attrs.get("limittospecialization") or "").strip(),
+                }
+            )
+        elif tag == "spellcategorydrain":
+            effects["spell_category_drain"].append(
+                {
+                    "source": source,
+                    "category": str(fields.get("category") or node.get("value") or "").strip(),
+                    "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
+                }
+            )
+        elif tag == "spellcategorydamage":
+            effects["spell_category_damage"].append(
+                {
+                    "source": source,
+                    "category": str(fields.get("category") or node.get("value") or "").strip(),
+                    "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
+                }
+            )
+        elif tag == "weaponcategorydv":
+            select_attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
+            limit_raw = str(select_attrs.get("limittoskill") or "").strip()
+            skills = [part.strip() for part in limit_raw.split(",") if part.strip()]
+            fixed = str(fields.get("name") or "").strip()
+            effects["weapon_category_dv_slots"].append(
+                {
+                    "source": source,
+                    "skills": skills,
+                    "name": fixed,
+                    "bonus": _as_int(fields.get("bonus") or fields.get("val") or fields.get("value")),
+                    "needs_select": bool(skills) or "selectskill" in (node.get("fields") or {}),
                 }
             )
         elif tag == "skillcategorypointcostmultiplier":

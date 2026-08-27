@@ -177,6 +177,8 @@ export interface InstalledSpell {
   duration?: string;
   descriptor?: string;
   dv: string;
+  damage?: string;
+  damage_mod?: number;
   required?: string[];
   source?: string;
   page?: string;
@@ -1047,6 +1049,9 @@ export interface SpellCastInfo {
   duration?: string;
   descriptor?: string;
   dv: string;
+  damage?: string;
+  damage_mod?: number;
+  drain_mod?: number;
   force: number;
   force_min: number;
   force_max: number;

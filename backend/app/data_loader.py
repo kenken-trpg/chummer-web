@@ -389,6 +389,14 @@ def _limit_spirit_category_needs_select(node: dict[str, Any]) -> bool:
     return not str(node.get("value") or "").strip()
 
 
+def _weapon_category_dv_select_skills(node: dict[str, Any]) -> list[str]:
+    if node.get("tag") != "weaponcategorydv":
+        return []
+    attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
+    limit = str(attrs.get("limittoskill") or "").strip()
+    return [part.strip() for part in limit.split(",") if part.strip()]
+
+
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
         node.get("tag")
@@ -403,6 +411,7 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
         }
         or _limit_spell_category_needs_select(node)
         or _limit_spirit_category_needs_select(node)
+        or bool(_weapon_category_dv_select_skills(node))
         for node in (bonus or [])
     )
 
@@ -416,6 +425,12 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     expertise_skill = ""
     needs_spell_category = any(_limit_spell_category_needs_select(node) for node in (bonus or []))
     needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in (bonus or []))
+    weapon_dv_skills: list[str] = []
+    for node in bonus or []:
+        skills = _weapon_category_dv_select_skills(node)
+        if skills:
+            weapon_dv_skills = skills
+            break
     if "selectexpertise" in tags:
         kind = "expertise"
         for node in bonus or []:
@@ -427,6 +442,9 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
             if limit_spec:
                 select_options = [part.strip() for part in limit_spec.split(",") if part.strip()]
             break
+    elif weapon_dv_skills:
+        kind = "weapon_skill"
+        select_options = list(weapon_dv_skills)
     elif "selectquality" in tags:
         kind = "quality"
         for node in bonus or []:
@@ -507,10 +525,15 @@ def parse_required(el: ET.Element | None) -> dict[str, list[str]]:
     return out
 
 
-def _bonus_fields(child: ET.Element) -> tuple[dict[str, Any], dict[str, list[str]]]:
+def _bonus_fields(
+    child: ET.Element,
+) -> tuple[dict[str, Any], dict[str, list[str]], dict[str, dict[str, str]]]:
     fields: dict[str, Any] = {}
     nested: dict[str, list[str]] = {}
+    field_attrs: dict[str, dict[str, str]] = {}
     for sub in list(child):
+        if sub.attrib:
+            field_attrs[sub.tag] = dict(sub.attrib)
         if len(sub) > 0:
             nested[sub.tag] = [_text(item) for item in list(sub) if _text(item)]
             continue
@@ -522,7 +545,7 @@ def _bonus_fields(child: ET.Element) -> tuple[dict[str, Any], dict[str, list[str
             existing.append(value)
         else:
             fields[sub.tag] = [existing, value]
-    return fields, nested
+    return fields, nested, field_attrs
 
 
 def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
@@ -537,10 +560,12 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
         if len(child) == 0:
             payload["value"] = _text(child)
         else:
-            fields, nested = _bonus_fields(child)
+            fields, nested, field_attrs = _bonus_fields(child)
             payload["fields"] = fields
             if nested:
                 payload["nested"] = nested
+            if field_attrs:
+                payload["field_attrs"] = field_attrs
         nodes.append(payload)
     return nodes
 

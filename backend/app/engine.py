@@ -2641,6 +2641,47 @@ def apply_reach_bonus(weapons: list[dict[str, Any]] | None, reach: int) -> None:
         weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0"), int(reach))
 
 
+def _add_weapon_dv(raw: str | None, delta: int) -> str:
+    text = str(raw or "").strip()
+    if not delta:
+        return text
+    match = re.search(r"([+-]?\d+)(?=[^0-9]*$)", text)
+    if match:
+        start, end = match.span(1)
+        token = match.group(1)
+        new_val = int(token) + delta
+        if token.startswith("+") and new_val >= 0:
+            replacement = f"+{new_val}"
+        else:
+            replacement = str(new_val)
+        return f"{text[:start]}{replacement}{text[end:]}"
+    type_match = re.match(r"^(.*?)([PS].*)$", text)
+    if type_match:
+        sign = "+" if delta > 0 else ""
+        return f"{type_match.group(1)}{sign}{delta}{type_match.group(2)}"
+    return f"{text}+{delta}" if delta > 0 else f"{text}{delta}"
+
+
+def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: dict[str, Any] | None) -> None:
+    rows = list((effects or {}).get("weapon_category_dv") or [])
+    if not weapons or not rows:
+        return
+    for weapon in weapons:
+        category = str(weapon.get("category") or "")
+        if category == "Unarmed":
+            category = "Unarmed Combat"
+        useskill = str(weapon.get("useskill") or "").strip() or category
+        bonus = 0
+        for row in rows:
+            name = str(row.get("name") or "").strip()
+            if not name:
+                continue
+            if name == category or name == useskill:
+                bonus += int(row.get("bonus") or 0)
+        if bonus:
+            weapon["damage"] = _add_weapon_dv(str(weapon.get("damage") or ""), bonus)
+
+
 def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
     warnings: list[str] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
@@ -4064,6 +4105,12 @@ def quality_needs_extra(spec: dict[str, Any]) -> bool:
             "actiondicepool",
             "selectexpertise",
         }
+        or (
+            node.get("tag") == "weaponcategorydv"
+            and bool(
+                str(((node.get("field_attrs") or {}).get("selectskill") or {}).get("limittoskill") or "").strip()
+            )
+        )
         for node in (spec.get("bonus") or [])
     )
 
@@ -4164,6 +4211,61 @@ def bind_spell_spirit_limits(
                 spirit_limits.append(name)
     effects["limit_spell_categories"] = spell_limits
     effects["limit_spirit_categories"] = spirit_limits
+
+
+def bind_spell_category_drain_damage(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+) -> None:
+    """Fill empty spellcategorydrain/damage categories from the quality's selected spell category."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    for key in ("spell_category_drain", "spell_category_damage"):
+        for row in effects.get(key) or []:
+            if str(row.get("category") or "").strip():
+                continue
+            source = str(row.get("source") or "")
+            spec = by_name.get(source)
+            if not spec:
+                continue
+            picked = str(extras.get(spec["id"]) or "").strip()
+            if picked:
+                row["category"] = picked
+
+
+def bind_weapon_category_dv(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+) -> None:
+    """Resolve weaponcategorydv selectskill picks into concrete category/skill DV bonuses."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    resolved: list[dict[str, Any]] = []
+    for slot in effects.get("weapon_category_dv_slots") or []:
+        source = str(slot.get("source") or "")
+        bonus = int(slot.get("bonus") or 0)
+        if not bonus:
+            continue
+        skills = [str(name).strip() for name in (slot.get("skills") or []) if str(name).strip()]
+        fixed = str(slot.get("name") or "").strip()
+        if slot.get("needs_select"):
+            spec = by_name.get(source)
+            if not spec:
+                continue
+            picked = str(extras.get(spec["id"]) or "").strip()
+            if not picked:
+                warnings.append(f"{source} の武器スキルを選んでください")
+                continue
+            if skills and picked not in skills:
+                warnings.append(f"{source} に {picked} は選べません")
+                continue
+            resolved.append({"name": picked, "bonus": bonus, "source": source})
+        elif fixed:
+            resolved.append({"name": fixed, "bonus": bonus, "source": source})
+    effects["weapon_category_dv"] = resolved
 
 
 def _limit_spell_needs_from_spec(spec: dict[str, Any]) -> bool:
@@ -4327,6 +4429,8 @@ def apply_quality_rules(
                 errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
             elif _quality_needs_spirit_category(spec):
                 errors.append(f"{spec['name']} の精霊を選んでください")
+            elif str(spec.get("extra_kind") or "") == "weapon_skill":
+                errors.append(f"{spec['name']} の武器スキルを選んでください")
             else:
                 errors.append(f"{spec['name']} の対象を入力してください")
         if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
@@ -4359,17 +4463,27 @@ def apply_quality_rules(
     return negative_gain
 
 
-def spell_drain_value(formula: str, force: int) -> int | None:
+def spell_drain_value(formula: str, force: int, *, mod: int = 0) -> int | None:
     raw = (formula or "").strip()
     if not raw or raw.lower() == "special":
         return None
     if re.fullmatch(r"\d+", raw):
-        return int(raw)
+        return int(raw) + int(mod)
     match = re.fullmatch(r"[FL]\s*([+-]\s*\d+)?", raw, re.I)
     if not match:
         return None
-    mod = int(re.sub(r"\s+", "", match.group(1))) if match.group(1) else 0
-    return max(DRAIN_MINIMUM, int(force) + mod)
+    formula_mod = int(re.sub(r"\s+", "", match.group(1))) if match.group(1) else 0
+    return max(DRAIN_MINIMUM, int(force) + formula_mod + int(mod))
+
+
+def _spell_category_mod_total(effects: dict[str, Any] | None, key: str, category: str) -> int:
+    if not effects or not category:
+        return 0
+    total = 0
+    for row in effects.get(key) or []:
+        if str(row.get("category") or "").strip() == category:
+            total += int(row.get("value") or 0)
+    return total
 
 
 def spell_cast_info(
@@ -4378,6 +4492,7 @@ def spell_cast_info(
     mag: int,
     resist: int,
     resist_attrs: str,
+    effects: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     spec = _spell_by_name(spell_name)
     if not spec:
@@ -4386,8 +4501,12 @@ def spell_cast_info(
     force_max = max(1, mag * 2) if mag else 1
     chosen = int(force) if force else (mag or 1)
     chosen = max(1, min(force_max, chosen))
-    value = spell_drain_value(str(spec.get("dv") or ""), chosen)
+    category = str(spec.get("category") or "")
+    drain_mod = _spell_category_mod_total(effects, "spell_category_drain", category)
+    damage_mod = _spell_category_mod_total(effects, "spell_category_damage", category)
+    value = spell_drain_value(str(spec.get("dv") or ""), chosen, mod=drain_mod)
     physical = bool(mag) and chosen > mag
+    damage = str(spec.get("damage") or "")
     return {
         "spell_id": spec["id"],
         "name": spec["name"],
@@ -4397,6 +4516,9 @@ def spell_cast_info(
         "duration": spec.get("duration"),
         "descriptor": spec.get("descriptor"),
         "dv": spec.get("dv") or "",
+        "damage": damage,
+        "damage_mod": damage_mod,
+        "drain_mod": drain_mod,
         "force": chosen,
         "force_min": 1,
         "force_max": force_max,
@@ -7738,7 +7860,14 @@ def resolve_spells(
         seen.add(spec["id"])
         kind = spec.get("kind") or "spell"
         has_force = kind != "enchantment"
-        info = spell_cast_info(spec["name"], inst.force if has_force else None, mag, resist, resist_attrs)
+        info = spell_cast_info(
+            spec["name"],
+            inst.force if has_force else None,
+            mag,
+            resist,
+            resist_attrs,
+            effects=effects,
+        )
         if info and has_force:
             inst.force = int(info["force"])
         missing = [
@@ -7765,6 +7894,8 @@ def resolve_spells(
                 "duration": spec.get("duration"),
                 "descriptor": spec.get("descriptor"),
                 "dv": spec.get("dv") or "",
+                "damage": spec.get("damage") or "",
+                "damage_mod": int((info or {}).get("damage_mod") or 0) if has_force else 0,
                 "required": missing,
                 "source": spec.get("source"),
                 "page": spec.get("page"),
@@ -8239,6 +8370,8 @@ def compute(state: CharacterState) -> CharacterState:
     apply_excon_ware_ban(cyber_installed + bio_installed, bool(effects.get("excon")), errors)
     bind_action_dice_pools(effects, qualities, state)
     bind_spell_spirit_limits(effects, qualities, state, errors)
+    bind_spell_category_drain_damage(effects, qualities, state)
+    bind_weapon_category_dv(effects, qualities, state, warnings)
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:
@@ -8399,6 +8532,7 @@ def compute(state: CharacterState) -> CharacterState:
     apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
     apply_erased_lifestyle_cap(gear, bool(effects.get("erased")), warnings)
     apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
+    apply_weapon_category_dv(gear.get("weapons"), effects)
     bmp_category = ""
     bmp_contact_id = ""
     bmp_active = False
@@ -8522,6 +8656,7 @@ def compute(state: CharacterState) -> CharacterState:
             int(total.get("MAG") or 0),
             int(magic["resist"]),
             str(magic["resist_attrs"]),
+            effects=effects,
         )
 
     attr_row = priority_value("Attributes", state.priorities.Attributes)
