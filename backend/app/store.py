@@ -211,6 +211,7 @@ def public_catalog() -> dict:
             "extra_kind": q.get("extra_kind") or "",
             "select_options": list(q.get("select_options") or []),
             "spirit_options": list(q.get("spirit_options") or []),
+            "max_takes": q.get("max_takes"),
             "required_tree": q.get("required_tree") or [],
             "forbidden_tree": q.get("forbidden_tree") or [],
         }
@@ -467,6 +468,8 @@ def public_catalog() -> dict:
                 "maxrating": int(a.get("maxrating") or 0),
                 "required": a.get("required") or {},
                 "forbidden": a.get("forbidden") or {},
+                "specialmodification": bool(a.get("specialmodification")),
+                "special_modification_cost": int(a.get("special_modification_cost") or 0),
                 "source": a.get("source") or "",
                 "page": a.get("page") or "",
             }

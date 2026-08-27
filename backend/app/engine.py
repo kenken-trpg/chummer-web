@@ -2662,10 +2662,25 @@ def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
     return warnings
 
 
+def _apply_modify_ammo_capacity(weapon: dict[str, Any], formula: str | None) -> None:
+    raw = str(formula or "").strip()
+    if not raw:
+        return
+    ammo = str(weapon.get("ammo") or "").strip()
+    match = re.match(r"^([+-]?\d+)(.*)$", ammo)
+    if not match:
+        return
+    base = int(match.group(1))
+    expr = raw[1:].strip() if raw.startswith("+") else raw
+    delta = eval_formula(expr, 1, 0.0, extras={"Weapon": base, "weapon": base})
+    weapon["ammo"] = f"{base + int(round(delta))}{match.group(2)}"
+
+
 def _resolve_weapon_accessories(
     state: CharacterState,
     weapons: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
+    special_modification_limit: int = 0,
+) -> tuple[list[dict[str, Any]], int, list[str], list[str], int]:
     warnings = _ensure_weapon_accessories(state)
     errors: list[str] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
@@ -2674,6 +2689,8 @@ def _resolve_weapon_accessories(
     public: list[dict[str, Any]] = []
     kept: list[WeaponAccessoryInstall] = []
     nuyen = 0
+    special_used = 0
+    limit = max(0, int(special_modification_limit or 0))
     children: dict[str, list[WeaponAccessoryInstall]] = {}
     for inst in list(state.weapon_accessories or []):
         children.setdefault(inst.parent_id or "", []).append(inst)
@@ -2694,6 +2711,17 @@ def _resolve_weapon_accessories(
             if not accessory_fits_weapon(spec, weapon, names_without):
                 warnings.append(f"{spec['name']} は {weapon['name']} に装着できません")
                 continue
+            is_special = bool(spec.get("specialmodification"))
+            special_cost = int(spec.get("special_modification_cost") or 0) if is_special else 0
+            if is_special:
+                if limit <= 0:
+                    warnings.append(f"{spec['name']} には Special Modifications が必要です")
+                    continue
+                if special_used + special_cost > limit:
+                    warnings.append(
+                        f"Special Modifications の上限を超えています（{special_used + special_cost}/{limit}・{spec['name']}）"
+                    )
+                    continue
             mount = _pick_accessory_mount(list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or []))
             if mount is None:
                 errors.append(f"{weapon['name']} のマウントが足りません（{spec['name']}）")
@@ -2722,6 +2750,9 @@ def _resolve_weapon_accessories(
             weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), acc_bonus["ap"])
             if acc_bonus["reach"]:
                 weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0") or "0", acc_bonus["reach"])
+            _apply_modify_ammo_capacity(weapon, spec.get("modifyammocapacity"))
+            if is_special:
+                special_used += special_cost
             weapon["nuyen"] = int(weapon.get("nuyen") or 0) + cost
             kept.append(inst)
             public.append(
@@ -2740,13 +2771,15 @@ def _resolve_weapon_accessories(
                     "avail": spec.get("avail") or "",
                     "source": spec.get("source") or "",
                     "page": spec.get("page") or "",
+                    "specialmodification": is_special,
+                    "special_modification_cost": special_cost,
                 }
             )
         weapon["accessories"] = [item for item in public if item.get("parent_id") == weapon["id"]]
         weapon["mounts_used"] = sorted(used_mounts)
 
     state.weapon_accessories = kept
-    return public, nuyen, warnings, errors
+    return public, nuyen, warnings, errors, special_used
 
 
 def _resolve_apps(state: CharacterState, commlinks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int, list[str]]:
@@ -3549,6 +3582,7 @@ def resolve_gear(
     state: CharacterState,
     ware_items: list[dict[str, Any]] | None = None,
     attr_totals: dict[str, int] | None = None,
+    special_modification_limit: int = 0,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -3632,7 +3666,9 @@ def resolve_gear(
         )
     state.weapons = kept_weapons
     _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
-    weapon_accessories, acc_nuyen, acc_warns, acc_errors = _resolve_weapon_accessories(state, weapons)
+    weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
+        state, weapons, special_modification_limit=special_modification_limit
+    )
     nuyen += acc_nuyen
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
@@ -3865,6 +3901,7 @@ def resolve_gear(
         "armor_mods": armor_mods,
         "weapons": weapons,
         "weapon_accessories": weapon_accessories,
+        "special_modification_used": special_mod_used,
         "commlinks": commlinks,
         "cyberdecks": cyberdecks,
         "rccs": rccs,
@@ -3975,7 +4012,20 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
             next_kept.append(existing_id)
         next_kept.append(qid)
         kept = next_kept
-    return kept, removed
+    counts: dict[str, int] = {}
+    limited: list[str] = []
+    for qid in kept:
+        spec = _quality_by_id(qid)
+        if not spec:
+            continue
+        max_takes = spec.get("max_takes")
+        taken = counts.get(qid, 0)
+        if max_takes is not None and taken >= int(max_takes):
+            removed.append(spec["name"])
+            continue
+        counts[qid] = taken + 1
+        limited.append(qid)
+    return limited, removed
 
 
 def quality_needs_extra(spec: dict[str, Any]) -> bool:
@@ -6339,7 +6389,7 @@ def _choice_allowed(audience: str, talent_name: str) -> bool:
 
 def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str], list[str]]:
     qualities: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    counts: dict[str, int] = {}
     free_ids: set[str] = set()
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
@@ -6355,18 +6405,20 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
     while index < len(pending):
         qid = pending[index]
         index += 1
-        if qid in seen:
-            continue
         spec = _quality_by_id(qid)
         if not spec:
             continue
-        seen.add(qid)
+        max_takes = spec.get("max_takes")
+        taken = counts.get(qid, 0)
+        if max_takes is not None and taken >= int(max_takes):
+            continue
+        counts[qid] = taken + 1
         qualities.append(spec)
         for node in spec.get("bonus") or []:
             tag = node.get("tag")
             if tag == "freequality":
                 child_id = str(node.get("value") or "").strip()
-                if child_id and child_id not in seen:
+                if child_id and counts.get(child_id, 0) == 0:
                     free_ids.add(child_id)
                     pending.append(child_id)
             elif tag == "addqualities":
@@ -6374,7 +6426,7 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
                 names = raw if isinstance(raw, list) else [raw]
                 for name in names:
                     child = _quality_by_name(str(name).strip())
-                    if child and child["id"] not in seen:
+                    if child and counts.get(child["id"], 0) == 0:
                         free_ids.add(child["id"])
                         pending.append(child["id"])
             elif tag == "selectquality":
@@ -6383,7 +6435,7 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
                 picked = extras.get(qid, "")
                 if picked and picked in options:
                     child = _quality_by_name(picked)
-                    if child and child["id"] not in seen:
+                    if child and counts.get(child["id"], 0) == 0:
                         free_ids.add(child["id"])
                         pending.append(child["id"])
     return qualities, sorted(free_ids), dropped
@@ -8205,7 +8257,12 @@ def compute(state: CharacterState) -> CharacterState:
         key: int(ratings.get(key) or 0) + int((effects.get("attribute_bonus") or {}).get(key, 0))
         for key in ratings
     }
-    gear = resolve_gear(state, cyber_installed, attr_totals)
+    gear = resolve_gear(
+        state,
+        cyber_installed,
+        attr_totals,
+        special_modification_limit=int(effects.get("special_modification_limit") or 0),
+    )
     warnings.extend(gear["warnings"])
     errors.extend(gear.get("errors") or [])
     apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
@@ -8876,6 +8933,10 @@ def compute(state: CharacterState) -> CharacterState:
         "trustfund_label": TRUST_FUND_STIPEND.get(int(effects.get("trustfund") or 0), ""),
         "ambidextrous": bool(effects.get("ambidextrous")),
         "overclocker": bool(effects.get("overclocker")),
+        "special_modification_limit": {
+            "used": int(gear.get("special_modification_used") or 0),
+            "max": int(effects.get("special_modification_limit") or 0),
+        },
         "friends_in_high_places": bool(effects.get("friends_in_high_places")),
         "made_man": bool(effects.get("made_man")),
         "black_market_discount": bool(effects.get("black_market_discount")),

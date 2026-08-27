@@ -5854,3 +5854,85 @@ def test_career_spend_breakdown_lists_attribute_raise() -> None:
     assert out.derived["career_advancement_karma"] == 25
     assert any(row["label"].startswith("属性 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
     assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])
+
+
+SPECIAL_MODIFICATIONS = "0dd183a3-85ce-4029-9de5-9b6aa1eb539c"
+SM_IMPROVED_AP = "b741b729-106e-46f2-9143-0f745fd48789"
+SM_DAMAGE = "3c82e17b-76cd-47b9-9bda-c3131a64e0ee"
+SM_AMMO_CAP = "9084d801-c654-4eec-960e-4186a6de81d6"
+
+
+def test_special_modifications_grants_limit() -> None:
+    out = compute(_mundane("sm-limit", quality_ids=[SPECIAL_MODIFICATIONS]))
+    assert out.derived["special_modification_limit"] == {"used": 0, "max": 2}
+    assert "specialmodificationlimit" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_special_modifications_stacks_twice() -> None:
+    out = compute(_mundane("sm-x2", quality_ids=[SPECIAL_MODIFICATIONS, SPECIAL_MODIFICATIONS]))
+    assert out.derived["special_modification_limit"]["max"] == 4
+    assert len([q for q in out.derived["qualities"] if q["id"] == SPECIAL_MODIFICATIONS]) == 2
+    assert out.derived["karma"]["spent"] == 10
+
+
+def test_special_modification_improved_ap() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "sm-ap",
+            quality_ids=[SPECIAL_MODIFICATIONS],
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=SM_IMPROVED_AP, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["ap"] == "-2"
+    assert out.derived["special_modification_limit"] == {"used": 1, "max": 2}
+    assert any(acc["name"] == "Special Modification: Improved AP" for acc in row["accessories"])
+    assert out.derived["errors"] == []
+
+
+def test_special_modification_requires_quality() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "sm-noq",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=SM_IMPROVED_AP, parent_id=weapon.id)],
+        )
+    )
+    assert not any(acc["name"].startswith("Special Modification:") for acc in out.derived["weapons"][0]["accessories"])
+    assert any("Special Modifications が必要" in warn for warn in out.derived["warnings"])
+
+
+def test_special_modification_damage_costs_two() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "sm-dmg",
+            quality_ids=[SPECIAL_MODIFICATIONS],
+            weapons=[weapon],
+            weapon_accessories=[
+                WeaponAccessoryInstall(accessory_id=SM_DAMAGE, parent_id=weapon.id),
+                WeaponAccessoryInstall(accessory_id=SM_IMPROVED_AP, parent_id=weapon.id),
+            ],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["damage"] == "9P"
+    assert not any(acc["name"] == "Special Modification: Improved AP" for acc in row["accessories"])
+    assert out.derived["special_modification_limit"] == {"used": 2, "max": 2}
+    assert any("上限を超えています" in warn for warn in out.derived["warnings"])
+
+
+def test_special_modification_ammo_capacity() -> None:
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    out = compute(
+        _mundane(
+            "sm-ammo",
+            quality_ids=[SPECIAL_MODIFICATIONS],
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=SM_AMMO_CAP, parent_id=weapon.id)],
+        )
+    )
+    assert out.derived["weapons"][0]["ammo"] == "23(c)"

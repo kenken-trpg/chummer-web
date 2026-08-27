@@ -640,6 +640,17 @@ def load_qualities() -> list[dict[str, Any]]:
             continue
         bonus = parse_bonus(el.find("bonus"))
         extra_meta = quality_extra_meta(bonus)
+        limit_el = el.find("limit")
+        limit_raw = _text(limit_el) if limit_el is not None else ""
+        if limit_el is None:
+            max_takes = 1
+        elif limit_raw.lower() == "false":
+            max_takes = None
+        else:
+            try:
+                max_takes = max(1, int(limit_raw))
+            except ValueError:
+                max_takes = 1
         items.append(
             {
                 "id": _text(el.find("id")),
@@ -649,6 +660,7 @@ def load_qualities() -> list[dict[str, Any]]:
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "bonus": bonus,
+                "max_takes": max_takes,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
                 "chargenonly": el.find("chargenonly") is not None,
@@ -1413,6 +1425,17 @@ def load_weapon_accessories() -> list[dict[str, Any]]:
             continue
         mount_raw = _text(el.find("mount"))
         rating_max = _int(el.find("rating"), 0)
+        special_modification = _text(el.find("specialmodification")).lower() == "true"
+        special_modification_cost = 0
+        if special_modification:
+            special_modification_cost = 1
+            required_el = el.find("required")
+            if required_el is not None:
+                for child in required_el.iter("specialmodificationlimit"):
+                    try:
+                        special_modification_cost = max(1, int(_text(child) or "1"))
+                    except ValueError:
+                        continue
         items.append(
             {
                 "id": accessory_id,
@@ -1427,6 +1450,9 @@ def load_weapon_accessories() -> list[dict[str, Any]]:
                 "damage": _text(el.find("damage")),
                 "ap": _text(el.find("ap")),
                 "reach": _text(el.find("reach")),
+                "modifyammocapacity": _text(el.find("modifyammocapacity")),
+                "specialmodification": special_modification,
+                "special_modification_cost": special_modification_cost,
                 "minrating": 1 if rating_max > 0 else 0,
                 "maxrating": rating_max,
                 "required": _weapon_constraints(el.find("required")),

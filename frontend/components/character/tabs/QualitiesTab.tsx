@@ -300,8 +300,8 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
       {ownedFromDerived.length ? (
         <>
           <h3>取得済み</h3>
-          {ownedFromDerived.map((q) => (
-            <div className="quality-item" key={`owned-${q.id}`}>
+          {ownedFromDerived.map((q, idx) => (
+            <div className="quality-item" key={`owned-${q.id}-${idx}`}>
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
@@ -318,12 +318,24 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                   className="btn danger"
                   onClick={() => {
                     const extras = { ...(ch.quality_extras || {}) };
-                    delete extras[q.id];
-                    delete extras[`${q.id}:contact`];
+                    const remaining = ch.quality_ids.filter((id) => id === q.id).length - 1;
+                    if (remaining <= 0) {
+                      delete extras[q.id];
+                      delete extras[`${q.id}:contact`];
+                    }
+                    let removed = false;
                     patch({
-                      quality_ids: ch.quality_ids.filter((id) => id !== q.id),
+                      quality_ids: ch.quality_ids.filter((id) => {
+                        if (!removed && id === q.id) {
+                          removed = true;
+                          return false;
+                        }
+                        return true;
+                      }),
                       quality_extras: extras,
-                      skill_picks: dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`]),
+                      skill_picks: remaining <= 0
+                        ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`])
+                        : ch.skill_picks,
                     });
                   }}
                 >
@@ -350,20 +362,25 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
       <input type="search" placeholder="クオリティを検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
       <div className="quality-list">
         {filteredQualities.map((q) => {
-          const added = ch.quality_ids.includes(q.id);
+          const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
+          const maxTakes = q.max_takes == null ? null : Number(q.max_takes ?? 1);
+          const canAddMore = maxTakes == null || ownedCount < maxTakes;
+          const added = ownedCount > 0;
           const ownedWays = new Set(
             (catalog.qualities || [])
               .filter((item) => item.is_way && ch.quality_ids.includes(item.id))
               .map((item) => item.name),
           );
           const replaces = !added && !!q.is_way && (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
-          const blocked = added ? "" : qualityBlockReason(q, qualityCtx);
+          const blocked = canAddMore ? qualityBlockReason(q, qualityCtx) : "";
           return (
             <div className="quality-item" key={q.id}>
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma} / {q.source}
+                  {maxTakes == null ? " / 繰り返し可" : maxTakes > 1 ? ` / 最大${maxTakes}` : ""}
+                  {ownedCount > 0 && (maxTakes == null || maxTakes > 1) ? ` / 取得${ownedCount}` : ""}
                   {q.needs_extra ? " / 対象が必要" : ""}
                   {q.is_way ? " / 他の Way と排他" : ""}
                   {replaces ? " / 追加すると両立しないクオリティを外します" : ""}
@@ -371,10 +388,10 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                 </div>
               </div>
               <button
-                className={`btn ${added ? "danger" : "primary"}`}
-                disabled={!added && !!blocked}
+                className={`btn ${added && !canAddMore ? "danger" : "primary"}`}
+                disabled={canAddMore ? !!blocked : false}
                 onClick={() => {
-                  if (added) {
+                  if (added && !canAddMore) {
                     const extras = { ...(ch.quality_extras || {}) };
                     delete extras[q.id];
                     delete extras[`${q.id}:contact`];
@@ -385,13 +402,14 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                     });
                     return;
                   }
+                  if (!canAddMore || blocked) return;
                   patch({
                     quality_ids: [...ch.quality_ids, q.id],
                     skill_picks: ch.skill_picks || {},
                   });
                 }}
               >
-                {added ? "削除" : replaces ? "入れ替え" : "追加"}
+                {added && !canAddMore ? "削除" : replaces ? "入れ替え" : "追加"}
               </button>
             </div>
           );

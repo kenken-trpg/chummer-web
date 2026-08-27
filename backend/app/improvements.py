@@ -125,6 +125,7 @@ IMPLEMENTED = {
     "limitspiritcategory",
     "allowspellcategory",
     "blockspelldescriptor",
+    "specialmodificationlimit",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -173,7 +174,6 @@ SILENT_TAGS = {
     "selectattribute",
     "streetcredmultiplier",
     "astralreputation",
-    "specialmodificationlimit",
     "specialattburnmultiplier",
     "cyberadeptdaemon",
     "allowspellrange",
@@ -444,6 +444,7 @@ def empty_effects() -> dict[str, Any]:
         "block_spell_descriptors": [],
         "limit_spell_categories": [],
         "limit_spirit_categories": [],
+        "special_modification_limit": 0,
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -973,6 +974,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["block_spell_descriptors"]:
                 effects["block_spell_descriptors"].append(name)
+        elif tag == "specialmodificationlimit":
+            effects["special_modification_limit"] += _as_int(
+                node.get("value") or fields.get("val") or fields.get("bonus")
+            )
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

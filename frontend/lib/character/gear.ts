@@ -179,13 +179,23 @@ export function accessoryFits(
   acc: {
     mounts?: string[];
     purchasable?: boolean;
+    specialmodification?: boolean;
+    special_modification_cost?: number;
     required?: { names?: string[]; categories?: string[]; types?: string[]; conceal_lte?: number | null; accessories?: string[] };
     forbidden?: { names?: string[]; categories?: string[]; types?: string[]; conceal_lte?: number | null; accessories?: string[] };
   },
   weapon: { name: string; category?: string; type?: string; conceal?: string; mounts?: string[] },
   installedNames: string[],
+  specialMod?: { used?: number; max?: number },
 ) {
-  if (acc.purchasable === false) return false;
+  const isSpecial = Boolean(acc.specialmodification);
+  if (acc.purchasable === false && !isSpecial) return false;
+  if (isSpecial) {
+    const max = Number(specialMod?.max || 0);
+    const used = Number(specialMod?.used || 0);
+    const cost = Math.max(1, Number(acc.special_modification_cost || 1));
+    if (max <= 0 || used + cost > max) return false;
+  }
   const mounts = acc.mounts || [];
   const weaponMounts = new Set(weapon.mounts || []);
   if (mounts.length && !mounts.some((mount) => weaponMounts.has(mount) || mount === "Internal")) return false;

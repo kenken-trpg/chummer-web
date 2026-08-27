@@ -16,11 +16,17 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch, setCharacter 
   return (
     <>
               <>
+                {(d.special_modification_limit?.max || 0) > 0 ? (
+                  <p className="muted">
+                    Special Modifications {d.special_modification_limit?.used || 0} / {d.special_modification_limit?.max}
+                  </p>
+                ) : null}
                 {(d.weapons || []).map((item) => {
                   const installedNames = (item.accessories || []).map((acc) => acc.name);
                   const parentCost = (catalog.weapons || []).find((row) => row.id === item.weapon_id)?.cost;
+                  const specialMod = d.special_modification_limit;
                   const addons = (catalog.weapon_accessories || []).filter((mod) => (
-                    accessoryFits(mod, item, installedNames)
+                    accessoryFits(mod, item, installedNames, specialMod)
                     && !(item.accessories || []).some((acc) => acc.accessory_id === mod.id)
                   ));
                   const ammoKey = `${item.id}-ammo`;
@@ -75,8 +81,11 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch, setCharacter 
                         <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                           {tr(acc.name)}
                           {acc.mount ? ` / ${acc.mount}` : ""}
-                          {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
-                          {availBit(acc)}
+                          {acc.specialmodification
+                            ? ` / 改造${acc.special_modification_cost || 1}`
+                            : acc.included
+                              ? " / 付属"
+                              : ` / ${acc.nuyen.toLocaleString()}¥`}
                           {availBit(acc)}
                           {acc.included ? null : (
                             <>
@@ -96,9 +105,15 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch, setCharacter 
                           >
                             <option value="">アクセサリを追加</option>
                             {addons
-                              .filter((mod) => mod.source === "SR5")
+                              .filter((mod) => mod.specialmodification || mod.source === "SR5")
                               .map((mod) => (
-                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAccessoryCost(mod.cost, parentCost)})</option>
+                                <option key={mod.id} value={mod.id}>
+                                  {tr(mod.name)} (
+                                  {mod.specialmodification
+                                    ? `改造${mod.special_modification_cost || 1}`
+                                    : formatAccessoryCost(mod.cost, parentCost)}
+                                  )
+                                </option>
                               ))}
                           </select>
                           <button

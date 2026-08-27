@@ -474,6 +474,8 @@ export interface InstalledWeaponAccessory {
   rc?: string;
   avail?: string;
   source?: string;
+  specialmodification?: boolean;
+  special_modification_cost?: number;
 }
 
 export interface InstalledCommlink {
@@ -637,6 +639,8 @@ export interface WeaponAccessoryCatalogItem {
   rc?: string;
   minrating: number;
   maxrating: number;
+  specialmodification?: boolean;
+  special_modification_cost?: number;
   required?: {
     names?: string[];
     categories?: string[];
@@ -1232,6 +1236,7 @@ export interface Character {
     trustfund_label?: string;
     ambidextrous?: boolean;
     overclocker?: boolean;
+    special_modification_limit?: { used: number; max: number };
     friends_in_high_places?: boolean;
     made_man?: boolean;
     black_market_discount?: boolean;
@@ -1546,6 +1551,7 @@ export interface Catalog {
     extra_kind?: string | null;
     select_options?: string[];
     spirit_options?: string[];
+    max_takes?: number | null;
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];
