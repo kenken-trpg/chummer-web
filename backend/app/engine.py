@@ -134,6 +134,7 @@ BLACK_MARKET_CATEGORY_HINTS = {
 BLACK_MARKET_AVAIL_BONUS = 2
 QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
 QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX = ":spiritcategory"
+QUALITY_ADDSPIRIT_EXTRA_MARKER = ":addspirit:"
 # Ex-Con (RF): corp contacts need Loyalty 4+, law enforcement Loyalty 5+.
 EXCON_CORP_ROLE_HINTS = (
     "johnson",
@@ -179,6 +180,7 @@ SPIRIT_ROLE_LABELS = {
     "health": "健康",
     "illusion": "幻影",
     "manipulation": "操作",
+    "extra": "追加",
 }
 
 
@@ -659,6 +661,10 @@ def quality_spirit_category_extra_key(quality_id: str) -> str:
     return f"{quality_id}{QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX}"
 
 
+def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
+    return f"{quality_id}{QUALITY_ADDSPIRIT_EXTRA_MARKER}{int(index)}"
+
+
 def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
     if key in owned:
         return True
@@ -666,6 +672,8 @@ def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
         return key[: -len(QUALITY_CONTACT_EXTRA_SUFFIX)] in owned
     if key.endswith(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX):
         return key[: -len(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX)] in owned
+    if QUALITY_ADDSPIRIT_EXTRA_MARKER in key:
+        return key.split(QUALITY_ADDSPIRIT_EXTRA_MARKER, 1)[0] in owned
     return False
 
 
@@ -4268,6 +4276,141 @@ def bind_weapon_category_dv(
     effects["weapon_category_dv"] = resolved
 
 
+def _active_skill_rating_from_state(
+    state: CharacterState,
+    skill_name: str,
+    skills_data: dict[str, Any] | None = None,
+) -> int:
+    rating = int((state.skills or {}).get(skill_name) or 0)
+    data = skills_data if skills_data is not None else catalog().get("skills") or {}
+    for group, group_rating in (state.skill_groups or {}).items():
+        for skill in data.get("skills") or []:
+            if skill.get("name") == skill_name and (skill.get("skillgroup") or "") == group:
+                rating = max(rating, int(group_rating or 0))
+    return rating
+
+
+def addspirit_option_names() -> list[str]:
+    return sorted(
+        {
+            str(item.get("name") or "")
+            for item in catalog().get("spirits") or []
+            if str(item.get("name") or "") and not str(item.get("name") or "").startswith("Homunculus")
+        }
+    )
+
+
+def bind_extra_spirits(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+    skills_data: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Resolve addspirit picks into extra summonable spirit types."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    options = addspirit_option_names()
+    option_set = set(options)
+    resolved: list[str] = []
+    picks: list[dict[str, Any]] = []
+    index_by_quality: dict[str, int] = {}
+    for slot in effects.get("add_spirit_slots") or []:
+        source = str(slot.get("source") or "")
+        spec = by_name.get(source)
+        if not spec:
+            continue
+        skill = str(slot.get("skill") or "").strip()
+        if skill:
+            rating = _active_skill_rating_from_state(state, skill, skills_data)
+            count = rating // max(1, int(slot.get("rating_divisor") or 1))
+        else:
+            count = 1
+        allowed = [str(name).strip() for name in (slot.get("allowed") or []) if str(name).strip()]
+        pick_options = [name for name in options if not allowed or name in allowed]
+        for _ in range(max(0, count)):
+            idx = int(index_by_quality.get(spec["id"], 0))
+            index_by_quality[spec["id"]] = idx + 1
+            key = quality_addspirit_extra_key(spec["id"], idx)
+            picked = str(extras.get(key) or "").strip()
+            row = {
+                "quality_id": spec["id"],
+                "quality_name": spec["name"],
+                "index": idx,
+                "key": key,
+                "value": picked,
+                "options": pick_options,
+                "skill": skill,
+            }
+            picks.append(row)
+            if not picked:
+                warnings.append(f"{source} の追加精霊（{idx + 1}）を選んでください")
+                continue
+            if picked not in option_set or (allowed and picked not in allowed):
+                warnings.append(f"{source} の追加精霊が不正です（{picked}）")
+                continue
+            if picked not in resolved:
+                resolved.append(picked)
+    effects["extra_spirits"] = resolved
+    effects["add_spirit_picks"] = picks
+    return picks
+
+
+def apply_free_metamagics(
+    effects: dict[str, Any],
+    initiation: dict[str, Any],
+    talent_name: str,
+    warnings: list[str],
+) -> None:
+    """Grant forced free metamagics from addmetamagic (grade 0, no initiation karma)."""
+    can_adept = talent_name in {"Adept", "Mystic Adept"}
+    can_magician = talent_name in MAG_TALENTS and talent_name != "Adept"
+    metamagic_names: set[str] = set(initiation.get("metamagic_names") or set())
+    public_metas: list[dict[str, Any]] = list(initiation.get("metamagics") or [])
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = list(initiation.get("bonus_sources") or [])
+    seen = {str(row.get("name") or "") for row in public_metas}
+    for gift in effects.get("free_metamagics") or []:
+        name = str(gift.get("name") or "").strip()
+        source = str(gift.get("source") or "")
+        forced = bool(gift.get("forced"))
+        if not name:
+            continue
+        spec = _metamagic_by_name(name)
+        if not spec:
+            warnings.append(f"{source} のメタマジック {name} が見つかりません")
+            continue
+        if not forced:
+            if can_adept and not can_magician and not spec.get("adept"):
+                warnings.append(f"{name} はアデプト向けではありません")
+                continue
+            if can_magician and not can_adept and not spec.get("magician"):
+                warnings.append(f"{name} は魔術師向けではありません")
+                continue
+        if name in seen and not spec.get("repeatable"):
+            continue
+        seen.add(name)
+        metamagic_names.add(name)
+        public_metas.append(
+            {
+                "id": f"free-meta:{source}:{spec['id']}",
+                "metamagic_id": spec["id"],
+                "name": spec["name"],
+                "grade": 0,
+                "free": True,
+                "source_quality": source,
+                "adept": bool(spec.get("adept")),
+                "magician": bool(spec.get("magician")),
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        if spec.get("bonus"):
+            bonus_sources.append((spec["name"], list(spec.get("bonus") or [])))
+    initiation["metamagic_names"] = metamagic_names
+    initiation["metamagics"] = public_metas
+    initiation["bonus_sources"] = bonus_sources
+
+
 def _limit_spell_needs_from_spec(spec: dict[str, Any]) -> bool:
     return any(
         node.get("tag") == "limitspellcategory" and not str(node.get("value") or "").strip()
@@ -4420,7 +4563,11 @@ def apply_quality_rules(
         is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
         if not is_free and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
-        if quality_needs_extra(spec) and spec["id"] not in extras:
+        if str(spec.get("extra_kind") or "") == "add_spirit":
+            count = max(1, int(spec.get("add_spirit_count") or 1))
+            if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
+                errors.append(f"{spec['name']} の追加精霊を選んでください")
+        elif quality_needs_extra(spec) and spec["id"] not in extras:
             if _quality_has_selectside(spec):
                 errors.append(f"{spec['name']} の左右を選んでください")
             elif _quality_has_actiondicepool(spec):
@@ -7075,6 +7222,7 @@ def resolve_spirits(
     tradition: dict[str, Any] | None,
     *,
     limit_spirits: list[str] | None = None,
+    extra_spirits: list[str] | None = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -7083,6 +7231,9 @@ def resolve_spirits(
         state.spirits = []
         return {"warnings": warnings, "public": public, "nuyen": 0}
     allowed = {name: role for role, name in (tradition.get("spirits") or {}).items()} if tradition else {}
+    extra_set = {str(name).strip() for name in (extra_spirits or []) if str(name).strip()}
+    for name in extra_set:
+        allowed.setdefault(name, "extra")
     spirit_whitelist = {str(name).strip() for name in (limit_spirits or []) if str(name).strip()}
     if not tradition:
         warnings.append("精霊を召喚するには伝統を選んでください")
@@ -7096,7 +7247,7 @@ def resolve_spirits(
         if not tradition or not role:
             warnings.append(f"{spec['name']} はこの伝統では召喚できません")
             continue
-        if spirit_whitelist and spec["name"] not in spirit_whitelist:
+        if spirit_whitelist and spec["name"] not in spirit_whitelist and spec["name"] not in extra_set:
             warnings.append(f"{spec['name']} はこの制限では召喚できません")
             continue
         if mag <= 0:
@@ -7934,6 +8085,13 @@ def _metamagic_by_id(mid: str) -> dict[str, Any] | None:
     return None
 
 
+def _metamagic_by_name(name: str) -> dict[str, Any] | None:
+    for item in catalog().get("metamagics") or []:
+        if item.get("name") == name:
+            return item
+    return None
+
+
 def _magic_art_by_id(art_id: str) -> dict[str, Any] | None:
     for item in catalog().get("magic_arts") or []:
         if item["id"] == art_id:
@@ -8456,6 +8614,7 @@ def compute(state: CharacterState) -> CharacterState:
         quality_names,
         errors,
     )
+    apply_free_metamagics(effects, initiation, talent["name"], warnings)
     warnings.extend(initiation["warnings"])
     for source, nodes in initiation["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
@@ -8611,12 +8770,14 @@ def compute(state: CharacterState) -> CharacterState:
         bonus = int(spell_focus.get(item.get("category") or "", 0))
         if bonus:
             item["focus_bonus"] = bonus
+    bind_extra_spirits(effects, qualities, state, warnings, data["skills"])
     spirits = resolve_spirits(
         state,
         talent["name"],
         int(total.get("MAG") or 0),
         _tradition_by_id(state.tradition_id),
         limit_spirits=list(effects.get("limit_spirit_categories") or []),
+        extra_spirits=list(effects.get("extra_spirits") or []),
     )
     warnings.extend(spirits["warnings"])
     if talent["name"] in SPELL_TALENTS:
@@ -9347,6 +9508,8 @@ def compute(state: CharacterState) -> CharacterState:
         "limit_spirit_categories": list(effects.get("limit_spirit_categories") or []),
         "allow_spell_categories": list(effects.get("allow_spell_categories") or []),
         "block_spell_descriptors": list(effects.get("block_spell_descriptors") or []),
+        "extra_spirits": list(effects.get("extra_spirits") or []),
+        "add_spirit_picks": list(effects.get("add_spirit_picks") or []),
         "initiate_grade": int(initiation.get("grade") or 0),
         "initiation": {
             "grade": int(initiation.get("grade") or 0),
@@ -9391,6 +9554,7 @@ def compute(state: CharacterState) -> CharacterState:
                 "select_options": list(q.get("select_options") or []),
                 "spirit_options": list(q.get("spirit_options") or []),
                 "expertise_skill": q.get("expertise_skill") or "",
+                "add_spirit_count": int(q.get("add_spirit_count") or 0),
                 "selectside": _quality_has_selectside(q),
                 "side": _normalize_side(state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),

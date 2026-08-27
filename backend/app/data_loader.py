@@ -412,6 +412,10 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
         or _limit_spell_category_needs_select(node)
         or _limit_spirit_category_needs_select(node)
         or bool(_weapon_category_dv_select_skills(node))
+        or (
+            node.get("tag") == "addspirit"
+            and not str((node.get("attrs") or {}).get("skill") or "").strip()
+        )
         for node in (bonus or [])
     )
 
@@ -431,6 +435,11 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
         if skills:
             weapon_dv_skills = skills
             break
+    add_spirit_fixed = sum(
+        1
+        for node in (bonus or [])
+        if node.get("tag") == "addspirit" and not str((node.get("attrs") or {}).get("skill") or "").strip()
+    )
     if "selectexpertise" in tags:
         kind = "expertise"
         for node in bonus or []:
@@ -445,6 +454,8 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     elif weapon_dv_skills:
         kind = "weapon_skill"
         select_options = list(weapon_dv_skills)
+    elif add_spirit_fixed:
+        kind = "add_spirit"
     elif "selectquality" in tags:
         kind = "quality"
         for node in bonus or []:
@@ -489,6 +500,7 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
         "spirit_options": spirit_options,
         "spell_exclude": spell_exclude,
         "expertise_skill": expertise_skill,
+        "add_spirit_count": add_spirit_fixed,
     }
 
 
@@ -712,6 +724,7 @@ def load_qualities() -> list[dict[str, Any]]:
                 "select_options": extra_meta.get("select_options") or [],
                 "spirit_options": extra_meta.get("spirit_options") or [],
                 "expertise_skill": extra_meta.get("expertise_skill") or "",
+                "add_spirit_count": int(extra_meta.get("add_spirit_count") or 0),
             }
         )
     return items

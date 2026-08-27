@@ -15,6 +15,9 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch, setCharacter 
               {(d.limit_spirit_categories || []).length
                 ? ` ・ 許可精霊 ${(d.limit_spirit_categories || []).join("、")}`
                 : ""}
+              {(d.extra_spirits || []).length
+                ? ` ・ 追加精霊 ${(d.extra_spirits || []).join("、")}`
+                : ""}
             </p>
             <label>
               伝統
@@ -138,6 +141,30 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch, setCharacter 
                       </div>
                       <div className="muted">
                         {["BOD", "AGI", "REA", "STR"].map((key) => `${key} ${spec.attributes?.[key] || "F"}`).join(" ・ ")}
+                      </div>
+                    </div>
+                    <div>
+                      <button className="btn" onClick={() => patch({
+                        spirits: [...(ch.spirits || []), { spirit_id: spec.id, force: 1, services: 1, bound: false }],
+                      })}>召喚</button>
+                      {" "}
+                      <button className="btn primary" onClick={() => patch({
+                        spirits: [...(ch.spirits || []), { spirit_id: spec.id, force: 1, services: 1, bound: true }],
+                      })}>結合</button>
+                    </div>
+                  </div>
+                );
+              })}
+              {(d.extra_spirits || []).map((name) => {
+                if (Object.values(d.tradition?.spirits || {}).includes(name)) return null;
+                const spec = (catalog.spirits || []).find((row) => row.name === name);
+                if (!spec) return null;
+                return (
+                  <div className="quality-item" key={`extra-${name}`}>
+                    <div>
+                      <b>{tr(spec.name)}</b>
+                      <div className="muted">
+                        {spec.name} / 追加 / 召喚 vs Force ・ 結合 vs Force×2 / {spec.source}
                       </div>
                     </div>
                     <div>

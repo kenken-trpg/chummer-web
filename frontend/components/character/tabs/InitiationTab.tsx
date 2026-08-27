@@ -10,7 +10,19 @@ export function InitiationTab({ catalog, character: ch, d, tr, patch, setCharact
               等級 {d.initiation?.grade || 0}
               {" ・ "}カルマ {d.initiation?.karma || 0}
               （各等級 10 + 等級×3。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）
+              {(d.initiation?.metamagics || []).some((m) => m.free)
+                ? ` ・ 品質付与 ${(d.initiation?.metamagics || []).filter((m) => m.free).map((m) => m.name).join("、")}`
+                : ""}
             </p>
+            {(d.initiation?.metamagics || []).filter((m) => m.free).length ? (
+              <div className="muted" style={{ marginBottom: 8 }}>
+                無料メタマジック:{" "}
+                {(d.initiation?.metamagics || [])
+                  .filter((m) => m.free)
+                  .map((m) => `${tr(m.name)}${m.source_quality ? `（${tr(m.source_quality)}）` : ""}`)
+                  .join(" ・ ")}
+              </div>
+            ) : null}
             <label>
               イニシエーション等級
               <input

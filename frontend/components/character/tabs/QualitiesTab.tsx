@@ -51,6 +51,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
     select_options?: string[];
     spirit_options?: string[];
     expertise_skill?: string;
+    add_spirit_count?: number;
     selectside?: boolean;
   }) {
     const kind =
@@ -60,6 +61,45 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
     const options = q.select_options?.length
       ? q.select_options
       : catalogById.get(q.id)?.select_options || [];
+    const addSpiritPicks = (d.add_spirit_picks || []).filter((row) => row.quality_id === q.id);
+    if (kind === "add_spirit" || addSpiritPicks.length) {
+      const slots = addSpiritPicks.length
+        ? addSpiritPicks
+        : Array.from(
+            { length: Math.max(1, q.add_spirit_count || catalogById.get(q.id)?.add_spirit_count || 1) },
+            (_, index) => ({
+              quality_id: q.id,
+              index,
+              key: `${q.id}:addspirit:${index}`,
+              value: ch.quality_extras?.[`${q.id}:addspirit:${index}`] || "",
+              options: (catalog.spirits || [])
+                .map((s) => s.name)
+                .filter((name) => name && !name.startsWith("Homunculus")),
+            }),
+          );
+      return (
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          {slots.map((slot) => (
+            <select
+              key={slot.key}
+              value={ch.quality_extras?.[slot.key] || slot.value || ""}
+              onChange={(e) =>
+                patch({
+                  quality_extras: { ...(ch.quality_extras || {}), [slot.key]: e.target.value },
+                })
+              }
+            >
+              <option value="">追加精霊{slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択</option>
+              {(slot.options || []).map((name) => (
+                <option key={name} value={name}>
+                  {tr(name)}
+                </option>
+              ))}
+            </select>
+          ))}
+        </div>
+      );
+    }
     if (q.name === "Black Market Pipeline") {
       const contactKey = `${q.id}:contact`;
       return (

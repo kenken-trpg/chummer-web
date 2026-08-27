@@ -132,6 +132,8 @@ IMPLEMENTED = {
     "spellcategorydrain",
     "spellcategorydamage",
     "weaponcategorydv",
+    "addspirit",
+    "addmetamagic",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -162,8 +164,6 @@ SILENT_TAGS = {
     "physiologicaladdictionalreadyaddicted",
     "psychologicaladdictionfirsttime",
     "psychologicaladdictionalreadyaddicted",
-    "addspirit",
-    "addmetamagic",
     "addecho",
     "addspell",
     "addware",
@@ -452,6 +452,9 @@ def empty_effects() -> dict[str, Any]:
         "spell_category_damage": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
+        "add_spirit_slots": [],
+        "extra_spirits": [],
+        "free_metamagics": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -1030,6 +1033,33 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "needs_select": bool(skills) or "selectskill" in (node.get("fields") or {}),
                 }
             )
+        elif tag == "addspirit":
+            attrs = node.get("attrs") or {}
+            skill = str(attrs.get("skill") or "").strip()
+            add_to_selected = str(fields.get("addtoselected") or "True").lower() != "false"
+            effects["add_spirit_slots"].append(
+                {
+                    "source": source,
+                    "skill": skill,
+                    "rating_divisor": max(1, _as_int(attrs.get("ratingdivisor"), 1)),
+                    "add_to_selected": add_to_selected,
+                    "allowed": [
+                        str(name).strip()
+                        for name in ((node.get("nested") or {}).get("spirit") or [])
+                        if str(name).strip()
+                    ],
+                }
+            )
+        elif tag == "addmetamagic":
+            name = str(node.get("value") or "").strip()
+            if name:
+                effects["free_metamagics"].append(
+                    {
+                        "name": name,
+                        "source": source,
+                        "forced": str((node.get("attrs") or {}).get("forced") or "").lower() == "true",
+                    }
+                )
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

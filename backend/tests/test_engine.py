@@ -5870,6 +5870,96 @@ def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     assert "weaponcategorydv" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
 
 
+CHAIN_BREAKER = "8c49fcfb-54fa-43ce-b2af-51780dabf40f"
+DARK_ALLY = "39384189-d15a-4f2e-97a9-7f9a0b85ef64"
+DEDICATED_CONJURER = "2a599984-62e4-4110-9784-dc1922df395d"
+SEER = "90691f29-5b81-4a81-9ebc-21f2f5da1d55"
+NULL_WIZARD = "ecb5ab50-68c9-45ee-9fb4-c2f0b3051096"
+GUARDIAN_SPIRIT = next(s["id"] for s in catalog()["spirits"] if s["name"] == "Guardian Spirit")
+PLANT_SPIRIT = next(s["id"] for s in catalog()["spirits"] if s["name"] == "Plant Spirit")
+TASK_SPIRIT = next(s["id"] for s in catalog()["spirits"] if s["name"] == "Task Spirit")
+
+
+def test_chain_breaker_adds_extra_spirit_types() -> None:
+    from app.engine import quality_addspirit_extra_key
+
+    missing = compute(_mage("cb-empty", quality_ids=[CHAIN_BREAKER], tradition_id=HERMETIC))
+    assert any("追加精霊" in err for err in missing.derived["errors"])
+    assert "addspirit" not in [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
+    out = compute(
+        _mage(
+            "cb",
+            quality_ids=[CHAIN_BREAKER],
+            tradition_id=HERMETIC,
+            quality_extras={
+                quality_addspirit_extra_key(CHAIN_BREAKER, 0): "Guardian Spirit",
+                quality_addspirit_extra_key(CHAIN_BREAKER, 1): "Plant Spirit",
+            },
+            spirits=[
+                SpiritInstall(spirit_id=GUARDIAN_SPIRIT, force=1, services=1, bound=False),
+                SpiritInstall(spirit_id=next(s["id"] for s in catalog()["spirits"] if s["name"] == "Spirit of Fire"), force=1, services=1, bound=False),
+            ],
+        )
+    )
+    assert set(out.derived["extra_spirits"]) == {"Guardian Spirit", "Plant Spirit"}
+    names = {s["name"] for s in out.derived["spirits"]}
+    assert "Guardian Spirit" in names
+    assert "Spirit of Fire" in names
+    assert "Binding" in (out.derived["disabled_skills"] or [])
+
+
+def test_dedicated_conjurer_spirit_slots_scale_with_summoning() -> None:
+    from app.engine import quality_addspirit_extra_key
+
+    low = compute(
+        _mage(
+            "dc-low",
+            quality_ids=[DEDICATED_CONJURER],
+            tradition_id=HERMETIC,
+            skills={"Summoning": 1},
+        )
+    )
+    assert low.derived["add_spirit_picks"] == []
+    assert "Spellcasting" in (low.derived["disabled_skills"] or [])
+    mid = compute(
+        _mage(
+            "dc-mid",
+            quality_ids=[DEDICATED_CONJURER],
+            tradition_id=HERMETIC,
+            skills={"Summoning": 4},
+            quality_extras={
+                quality_addspirit_extra_key(DEDICATED_CONJURER, 0): "Guardian Spirit",
+                quality_addspirit_extra_key(DEDICATED_CONJURER, 1): "Task Spirit",
+            },
+            spirits=[SpiritInstall(spirit_id=TASK_SPIRIT, force=1, services=1, bound=False)],
+        )
+    )
+    assert len(mid.derived["add_spirit_picks"]) == 2
+    assert set(mid.derived["extra_spirits"]) == {"Guardian Spirit", "Task Spirit"}
+    assert any(s["name"] == "Task Spirit" for s in mid.derived["spirits"])
+
+
+def test_seer_and_null_wizard_grant_free_metamagics() -> None:
+    seer = compute(_mage("seer", quality_ids=[SEER], tradition_id=HERMETIC))
+    free_names = {m["name"] for m in seer.derived["initiation"]["metamagics"] if m.get("free")}
+    assert free_names == {"Psychometry", "Sensing"}
+    assert set(seer.derived["disabled_skill_groups"]) >= {"Sorcery", "Conjuring", "Enchanting"}
+    assert "addmetamagic" not in [item["tag"] for item in seer.derived["unimplemented_bonuses"]]
+
+    null = compute(_mage("null", quality_ids=[NULL_WIZARD], tradition_id=HERMETIC))
+    free_names = {m["name"] for m in null.derived["initiation"]["metamagics"] if m.get("free")}
+    assert free_names == {"Reflection"}
+    assert any(q["name"] == "Magic Resistance" and q.get("free") for q in null.derived["qualities"])
+    assert set(null.derived["disabled_skills"] or []) >= {
+        "Binding",
+        "Spellcasting",
+        "Ritual Spellcasting",
+        "Alchemy",
+        "Artificing",
+    }
+    assert null.derived["spell_resistance"] >= 1
+
+
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
 INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
 JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"

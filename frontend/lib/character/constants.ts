@@ -74,6 +74,7 @@ export const SPIRIT_ROLE_JA: Record<string, string> = {
   health: "健康",
   illusion: "幻影",
   manipulation: "操作",
+  extra: "追加",
 };
 
 export const SIDE_JA: Record<string, string> = { Left: "左", Right: "右" };

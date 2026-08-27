@@ -1365,6 +1365,16 @@ export interface Character {
     limit_spirit_categories?: string[];
     allow_spell_categories?: string[];
     block_spell_descriptors?: string[];
+    extra_spirits?: string[];
+    add_spirit_picks?: {
+      quality_id: string;
+      quality_name?: string;
+      index: number;
+      key: string;
+      value?: string;
+      options?: string[];
+      skill?: string;
+    }[];
     native_language_limit?: number;
     prototype_transhuman_ess?: number;
     burnout_way?: boolean;
@@ -1387,6 +1397,8 @@ export interface Character {
         metamagic_id: string;
         name: string;
         grade: number;
+        free?: boolean;
+        source_quality?: string;
         adept?: boolean;
         magician?: boolean;
         source?: string;
@@ -1485,6 +1497,7 @@ export interface Character {
       select_options?: string[];
       spirit_options?: string[];
       expertise_skill?: string;
+      add_spirit_count?: number;
       selectside?: boolean;
       side?: string | null;
       free?: boolean;
@@ -1561,6 +1574,7 @@ export interface Catalog {
     select_options?: string[];
     spirit_options?: string[];
     expertise_skill?: string;
+    add_spirit_count?: number;
     max_takes?: number | null;
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
