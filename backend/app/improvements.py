@@ -118,6 +118,8 @@ IMPLEMENTED = {
     "addcontact",
     "contactkarma",
     "contactkarmaminimum",
+    "disablecyberwaregrade",
+    "disablebiowaregrade",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -144,8 +146,6 @@ SILENT_TAGS = {
     "limitcritterpowercategory",
     "optionalpowers",
     "replaceattributes",
-    "disablecyberwaregrade",
-    "disablebiowaregrade",
     "physiologicaladdictionfirsttime",
     "physiologicaladdictionalreadyaddicted",
     "psychologicaladdictionfirsttime",
@@ -435,6 +435,8 @@ def empty_effects() -> dict[str, Any]:
         "cyberware_total_ess_multiplier": 100,
         "essence_max_mod": 0,
         "disable_bioware": False,
+        "disabled_cyberware_grades": [],
+        "disabled_bioware_grades": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -924,6 +926,14 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["essence_max_mod"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "disablebioware":
             effects["disable_bioware"] = True
+        elif tag == "disablecyberwaregrade":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["disabled_cyberware_grades"]:
+                effects["disabled_cyberware_grades"].append(name)
+        elif tag == "disablebiowaregrade":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["disabled_bioware_grades"]:
+                effects["disabled_bioware_grades"].append(name)
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

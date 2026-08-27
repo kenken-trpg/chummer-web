@@ -17,6 +17,13 @@ export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }:
   const cyberCats = useMemo(() => (
     [...new Set(catalog.cyberware.items.filter((w) => !hideFromWareCatalog(w, "cyberware")).map((w) => w.category))].sort()
   ), [catalog]);
+  const cyberGrades = useMemo(() => {
+    const banned = new Set(d.disabled_cyberware_grades || []);
+    return catalog.cyberware.grades.filter((g) => !banned.has(g.name));
+  }, [catalog, d.disabled_cyberware_grades]);
+  const effectiveAddGrade = cyberGrades.some((g) => g.name === addGrade)
+    ? addGrade
+    : (cyberGrades[0]?.name || "Betaware");
   const filteredCyber = useMemo(() => {
     const q = cySearch.trim().toLowerCase();
     return catalog.cyberware.items
@@ -25,10 +32,16 @@ export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }:
       .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(cySearch))
       .slice(0, 80);
   }, [catalog, cySearch, cyCat, tr]);
+  const disabledCoreGrades = (d.disabled_cyberware_grades || []).filter((g) =>
+    catalog.cyberware.grades.some((row) => row.name === g),
+  );
 
   return (
           <div className="card">
             <p className="muted">装着中 {d.cyberware?.length || 0} ・ Essence {d.essence}（サイバー −{d.essence_lost_cyber ?? 0}） ・ 消費 {((d.nuyen_spent ?? 0)).toLocaleString()}¥</p>
+            {disabledCoreGrades.length > 0 ? (
+              <p className="muted">使用不可グレード: {disabledCoreGrades.join("、")}</p>
+            ) : null}
             {d.limb_replace ? (
               <p className="muted">
                 本体 STR {d.limb_replace.str} / AGI {d.limb_replace.agi}
@@ -71,7 +84,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                 item={item}
                 childrenItems={(d.cyberware || []).filter((child) => child.parent_id === item.id)}
                 catalogItems={catalog.cyberware.items}
-                grades={catalog.cyberware.grades}
+                grades={cyberGrades}
                 kind="cyberware"
                 tr={tr}
                 slotValue={slotPick[item.id] || ""}
@@ -115,8 +128,8 @@ export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                 <option value="all">すべての分類</option>
                 {cyberCats.map((c) => <option key={c} value={c}>{tr(c)}</option>)}
               </select>
-              <select value={addGrade} onChange={(e) => setAddGrade(e.target.value)}>
-                {catalog.cyberware.grades.map((g) => (
+              <select value={effectiveAddGrade} onChange={(e) => setAddGrade(e.target.value)}>
+                {cyberGrades.map((g) => (
                   <option key={g.name} value={g.name}>追加時 {g.name}</option>
                 ))}
               </select>
@@ -136,7 +149,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                         {
                           ware_id: w.id,
                           rating: w.minrating || 1,
-                          grade: addGrade,
+                          grade: effectiveAddGrade,
                           wireless: true,
                           side: nextFreeSide(ch.cyberware || [], catalog.cyberware.items, w),
                         },

@@ -7227,8 +7227,31 @@ def resolve_adept_powers(
     }
 
 
-def _clamp_ware_grades(kind: str, items: list[CyberwareInstall]) -> list[str]:
+def _first_allowed_grade(kind: str, current: str, banned: set[str]) -> str:
+    grades = catalog().get(kind, {}).get("grades") or []
+    prefer_adapsin = "(Adapsin)" in (current or "")
+
+    def ok(name: str) -> bool:
+        return bool(name) and name != "None" and name not in banned
+
+    for grade in grades:
+        name = str(grade.get("name") or "")
+        if ok(name) and ("(Adapsin)" in name) == prefer_adapsin:
+            return name
+    for grade in grades:
+        name = str(grade.get("name") or "")
+        if ok(name):
+            return name
+    return "Standard"
+
+
+def _clamp_ware_grades(
+    kind: str,
+    items: list[CyberwareInstall],
+    disabled_grades: set[str] | None = None,
+) -> list[str]:
     warnings: list[str] = []
+    quality_banned = set(disabled_grades or ())
     for inst in items:
         ware = _ware_by_id(kind, inst.ware_id)
         if not ware:
@@ -7238,10 +7261,11 @@ def _clamp_ware_grades(kind: str, items: list[CyberwareInstall]) -> list[str]:
             inst.grade = force
             continue
         grade = inst.grade or "Standard"
-        banned = set(ware.get("bannedgrades") or [])
+        banned = set(ware.get("bannedgrades") or []) | quality_banned
         if grade in banned:
-            warnings.append(f"{ware['name']} は {grade} グレードを使えません（Standard に変更）")
-            inst.grade = "Standard"
+            fallback = _first_allowed_grade(kind, grade, banned)
+            warnings.append(f"{ware['name']} は {grade} グレードを使えません（{fallback} に変更）")
+            inst.grade = fallback
     return warnings
 
 
@@ -7784,8 +7808,6 @@ def compute(state: CharacterState) -> CharacterState:
     ensure_subsystems(state)
     errors.extend(_side_conflicts("cyberware", state.cyberware))
     errors.extend(_side_conflicts("bioware", state.bioware))
-    warnings.extend(_clamp_ware_grades("cyberware", state.cyberware))
-    warnings.extend(_clamp_ware_grades("bioware", state.bioware))
     installed_names = {
         "cyberware": _installed_ware_names("cyberware", state.cyberware),
         "bioware": _installed_ware_names("bioware", state.bioware),
@@ -7799,6 +7821,11 @@ def compute(state: CharacterState) -> CharacterState:
     qualities, free_quality_ids, dropped_qualities = gather_qualities(state, talent)
     for name in dropped_qualities:
         warnings.append(f"{name} は他のクオリティと両立しないため外しました")
+    quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in qualities])
+    disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
+    disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
+    warnings.extend(_clamp_ware_grades("cyberware", state.cyberware, disabled_cyber_grades))
+    warnings.extend(_clamp_ware_grades("bioware", state.bioware, disabled_bio_grades))
     for q in qualities:
         sources.append((q["name"], q.get("bonus") or []))
     needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in qualities)
@@ -8760,6 +8787,8 @@ def compute(state: CharacterState) -> CharacterState:
         "native_language_limit": int(knowledge.get("native_limit") or 1),
         "prototype_transhuman_ess": float(effects.get("prototype_transhuman_ess") or 0),
         "burnout_way": bool(effects.get("burnout_way")),
+        "disabled_cyberware_grades": list(effects.get("disabled_cyberware_grades") or []),
+        "disabled_bioware_grades": list(effects.get("disabled_bioware_grades") or []),
         "initiate_grade": int(initiation.get("grade") or 0),
         "initiation": {
             "grade": int(initiation.get("grade") or 0),

@@ -5374,6 +5374,47 @@ def test_ambidextrous_flag() -> None:
     assert out.derived["ambidextrous"] is True
 
 
+CYBER_SNOB = "aaac8dfd-dee6-4277-b967-9ec9089260a7"
+
+
+def test_cyber_snob_disables_low_grades() -> None:
+    out = compute(_mundane("cyber-snob", quality_ids=[CYBER_SNOB]))
+    assert "Standard" in out.derived["disabled_cyberware_grades"]
+    assert "Alphaware" in out.derived["disabled_cyberware_grades"]
+    assert "Used" in out.derived["disabled_bioware_grades"]
+    assert "Betaware" not in out.derived["disabled_cyberware_grades"]
+    assert "disablecyberwaregrade" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "disablebiowaregrade" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_cyber_snob_clamps_standard_to_betaware() -> None:
+    out = compute(
+        _mundane(
+            "snob-clamp",
+            quality_ids=[CYBER_SNOB],
+            cyberware=[CyberwareInstall(ware_id=DATAJACK, grade="Standard")],
+        )
+    )
+    row = out.derived["cyberware"][0]
+    assert row["grade"] == "Betaware"
+    assert any("Betaware に変更" in warn for warn in out.derived["warnings"])
+    # Datajack 0.1 × Betaware 0.7
+    assert out.derived["essence"] == 5.93
+    assert out.derived["nuyen_spent"] == 1500
+
+
+def test_cyber_snob_allows_betaware() -> None:
+    out = compute(
+        _mundane(
+            "snob-beta",
+            quality_ids=[CYBER_SNOB],
+            cyberware=[CyberwareInstall(ware_id=DATAJACK, grade="Betaware")],
+        )
+    )
+    assert out.derived["cyberware"][0]["grade"] == "Betaware"
+    assert not any("グレードを使えません" in warn for warn in out.derived["warnings"])
+
+
 MADE_MAN = "45be40cc-a21a-4771-b47d-a532ea60b205"
 PRIME_DATAHAVEN = "7297d8b0-8bb8-4d7a-ab10-2d4e4381e5d0"
 NETWORKER = "fc195df5-83f6-4aff-aca8-4287a56e4d4c"

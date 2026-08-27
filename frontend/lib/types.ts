@@ -1341,6 +1341,8 @@ export interface Character {
     disabled_skills?: string[];
     disabled_skill_groups?: string[];
     blocked_default_categories?: string[];
+    disabled_cyberware_grades?: string[];
+    disabled_bioware_grades?: string[];
     native_language_limit?: number;
     prototype_transhuman_ess?: number;
     burnout_way?: boolean;

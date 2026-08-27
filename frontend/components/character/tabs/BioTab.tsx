@@ -16,6 +16,13 @@ export function BioTab({ catalog, character: ch, d, tr, patch, setCharacter }: T
   const bioCats = useMemo(() => (
     [...new Set((catalog.bioware?.items || []).filter((w) => !hideFromWareCatalog(w, "bioware")).map((w) => w.category))].sort()
   ), [catalog]);
+  const bioGrades = useMemo(() => {
+    const banned = new Set(d.disabled_bioware_grades || []);
+    return (catalog.bioware?.grades || []).filter((g) => !banned.has(g.name));
+  }, [catalog, d.disabled_bioware_grades]);
+  const effectiveBioGrade = bioGrades.some((g) => g.name === bioGrade)
+    ? bioGrade
+    : (bioGrades[0]?.name || "Betaware");
   const filteredBio = useMemo(() => {
     const q = bioSearch.trim().toLowerCase();
     return (catalog.bioware?.items || [])
@@ -24,17 +31,23 @@ export function BioTab({ catalog, character: ch, d, tr, patch, setCharacter }: T
       .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(bioSearch))
       .slice(0, 80);
   }, [catalog, bioSearch, bioCat, tr]);
+  const disabledCoreGrades = (d.disabled_bioware_grades || []).filter((g) =>
+    (catalog.bioware?.grades || []).some((row) => row.name === g),
+  );
 
   return (
           <div className="card">
             <p className="muted">装着中 {d.bioware?.length || 0} ・ Essence {d.essence}（バイオ −{d.essence_lost_bio ?? 0}） ・ 消費 {((d.nuyen_spent ?? 0)).toLocaleString()}¥</p>
+            {disabledCoreGrades.length > 0 ? (
+              <p className="muted">使用不可グレード: {disabledCoreGrades.join("、")}</p>
+            ) : null}
             {(d.bioware || []).filter((item) => !item.parent_id).map((item) => (
               <WareRow
                 key={item.id}
                 item={item}
                 childrenItems={(d.bioware || []).filter((child) => child.parent_id === item.id)}
                 catalogItems={catalog.bioware.items}
-                grades={catalog.bioware.grades}
+                grades={bioGrades}
                 kind="bioware"
                 tr={tr}
                 slotValue={slotPick[item.id] || ""}
@@ -72,8 +85,8 @@ export function BioTab({ catalog, character: ch, d, tr, patch, setCharacter }: T
                 <option value="all">すべての分類</option>
                 {bioCats.map((c) => <option key={c} value={c}>{tr(c)}</option>)}
               </select>
-              <select value={bioGrade} onChange={(e) => setBioGrade(e.target.value)}>
-                {catalog.bioware.grades.map((g) => (
+              <select value={effectiveBioGrade} onChange={(e) => setBioGrade(e.target.value)}>
+                {bioGrades.map((g) => (
                   <option key={g.name} value={g.name}>追加時 {g.name}</option>
                 ))}
               </select>
@@ -95,7 +108,7 @@ export function BioTab({ catalog, character: ch, d, tr, patch, setCharacter }: T
                           {
                             ware_id: w.id,
                             rating: range.min,
-                            grade: w.forcegrade || bioGrade,
+                            grade: w.forcegrade || effectiveBioGrade,
                             wireless: true,
                             side: nextFreeSide(ch.bioware || [], catalog.bioware.items, w),
                           },

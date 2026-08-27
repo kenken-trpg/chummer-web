@@ -90,7 +90,9 @@ export function VehicleDroneGear({ catalog, character: ch, d, tr, patch, setChar
                               item={child}
                               childrenItems={(d.cyberware || []).filter((row) => row.parent_id === child.id)}
                               catalogItems={catalog.cyberware.items}
-                              grades={catalog.cyberware.grades}
+                              grades={catalog.cyberware.grades.filter(
+                                (g) => !(d.disabled_cyberware_grades || []).includes(g.name),
+                              )}
                               kind="cyberware"
                               tr={tr}
                               slotValue={slotPick[child.id] || ""}
