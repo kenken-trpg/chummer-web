@@ -5321,6 +5321,122 @@ def test_ambidextrous_flag() -> None:
     assert out.derived["ambidextrous"] is True
 
 
+PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
+INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
+JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"
+BILINGUAL = "c734e46a-d391-45a6-b022-6f18db5019f1"
+AGED = "97e9b186-8924-4885-a948-3c781244a5cb"
+UNEDUCATED = "d8362a78-54e9-4dbe-8388-6ba0a7b9df31"
+CATS_EYES = "f038260b-f2de-4a9a-9507-5602d0e64a22"
+
+
+def test_prototype_transhuman_waives_bioware_essence_and_forced_quality() -> None:
+    out = compute(
+        _mundane(
+            "proto",
+            quality_ids=[PROTOTYPE_TRANSHUMAN],
+            quality_extras={PROTOTYPE_TRANSHUMAN: "Astral Beacon"},
+            bioware=[
+                CyberwareInstall(ware_id=ORTHOSKIN, rating=2),
+                CyberwareInstall(ware_id=CATS_EYES),
+            ],
+        )
+    )
+    assert out.derived["prototype_transhuman_ess"] == 1.0
+    assert out.derived["essence_lost_bio"] == 0.0
+    assert out.derived["karma"]["spent"] == 10
+    assert out.derived["karma"]["negative"]["used"] == 0
+    free = [q for q in out.derived["qualities"] if q.get("free")]
+    assert any(q["name"] == "Astral Beacon" and q["karma"] == 0 for q in free)
+
+
+def test_prototype_transhuman_requires_forced_quality_choice() -> None:
+    out = compute(_mundane("proto-empty", quality_ids=[PROTOTYPE_TRANSHUMAN]))
+    assert any("対象を入力してください" in err for err in out.derived["errors"])
+
+
+def test_uncouth_disables_social_skill_groups() -> None:
+    out = compute(_mundane("uncouth-groups", quality_ids=[UNCOUTH], skill_groups={"Acting": 1}))
+    assert set(out.derived["disabled_skill_groups"]) >= {"Acting", "Influence"}
+    assert any("Acting" in warn for warn in out.derived["warnings"])
+
+
+def test_incompetent_disables_chosen_skill_group() -> None:
+    out = compute(
+        _mundane(
+            "incomp",
+            quality_ids=[INCOMPETENT],
+            quality_extras={INCOMPETENT: "Athletics"},
+            skill_groups={"Athletics": 2},
+        )
+    )
+    assert "Athletics" in out.derived["disabled_skill_groups"]
+    assert any("Athletics" in warn for warn in out.derived["warnings"])
+
+
+def test_jack_of_all_trades_adjusts_career_active_skill_karma() -> None:
+    from app.engine import snapshot_career_baseline
+
+    base = compute(_mundane("joat0", skills={"Pistols": 4}))
+    base.career = True
+    base.career_baseline = snapshot_career_baseline(base)
+    base.skills = {**dict(base.skills), "Pistols": 5}
+    without = compute(base)
+
+    st = compute(_mundane("joat1", quality_ids=[JACK_OF_ALL_TRADES], skills={"Pistols": 4}))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.skills = {**dict(st.skills), "Pistols": 5}
+    with_q = compute(st)
+    assert without.derived["career_advancement_karma"] == 10
+    assert with_q.derived["career_advancement_karma"] == 9
+
+    st.skills = {**dict(st.skills), "Pistols": 6}
+    high = compute(st)
+    # 4→5:9 + 5→6:14 = 23
+    assert high.derived["career_advancement_karma"] == 23
+
+
+def test_bilingual_allows_two_native_languages() -> None:
+    out = compute(
+        _mundane(
+            "bilingual",
+            quality_ids=[BILINGUAL],
+            native_languages=["Japanese", "English"],
+        )
+    )
+    assert out.native_languages == ["Japanese", "English"]
+    assert out.derived["native_language_limit"] == 2
+    assert not any("母語" in warn for warn in out.derived["warnings"])
+
+
+def test_aged_adds_knowledge_points_and_lowers_physical_max() -> None:
+    out = compute(_mundane("aged", quality_ids=[AGED]))
+    assert out.derived["points"]["knowledge"]["max"] == 9
+    assert out.derived["metatype_info"]["attributes"]["BOD"]["max"] == 5
+    assert out.derived["metatype_info"]["attributes"]["AGI"]["max"] == 5
+
+
+def test_uneducated_blocks_defaulting_and_doubles_tech_group_karma() -> None:
+    from app.engine import snapshot_career_baseline
+
+    out = compute(_mundane("uned", quality_ids=[UNEDUCATED]))
+    assert set(out.derived["blocked_default_categories"]) >= {
+        "Professional",
+        "Academic",
+        "Technical Active",
+    }
+    assert any("デフォルト不可" in warn for warn in out.derived["warnings"])
+
+    st = compute(_mundane("uned-g", quality_ids=[UNEDUCATED], skill_groups={"Electronics": 1}))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.skill_groups = {**dict(st.skill_groups), "Electronics": 2}
+    raised = compute(st)
+    # group rating 2 normally costs 10; Uneducated Technical Active groups ×2 → 20
+    assert raised.derived["career_advancement_karma"] == 20
+
+
 def test_career_street_cred_and_public_awareness() -> None:
     out = compute(
         _mundane(

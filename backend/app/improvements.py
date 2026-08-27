@@ -82,6 +82,9 @@ IMPLEMENTED = {
     "stuncmrecovery",
     "skilldisable",
     "skillgroupdisable",
+    "skillgroupcategorydisable",
+    "skillgroupdisablechoice",
+    "blockskillcategorydefaulting",
     "nuyenmaxbp",
     "nuyenamt",
     "trustfund",
@@ -99,6 +102,16 @@ IMPLEMENTED = {
     "skillcategorykarmacostmultiplier",
     "skillcategorypointcostmultiplier",
     "skillcategorykarmacost",
+    "skillcategoryspecializationkarmacostmultiplier",
+    "skillgroupcategorykarmacostmultiplier",
+    "nativelanguagelimit",
+    "knowledgeskillpoints",
+    "knowledgeskillkarmacost",
+    "knowledgeskillkarmacostmin",
+    "activeskillkarmacost",
+    "selectquality",
+    "prototypetranshuman",
+    "burnoutsway",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -127,11 +140,6 @@ SILENT_TAGS = {
     "replaceattributes",
     "disablecyberwaregrade",
     "disablebiowaregrade",
-    "skillcategoryspecializationkarmacostmultiplier",
-    "skillgroupcategorykarmacostmultiplier",
-    "skillgroupcategorydisable",
-    "skillgroupdisablechoice",
-    "blockskillcategorydefaulting",
     "physiologicaladdictionfirsttime",
     "physiologicaladdictionalreadyaddicted",
     "psychologicaladdictionfirsttime",
@@ -147,17 +155,11 @@ SILENT_TAGS = {
     "metageniclimit",
     "excon",
     "erased",
-    "nativelanguagelimit",
-    "knowledgeskillpoints",
-    "knowledgeskillkarmacost",
-    "knowledgeskillkarmacostmin",
-    "activeskillkarmacost",
     "newspellkarmacost",
     "contactkarma",
     "contactkarmaminimum",
     "selectcontact",
     "addcontact",
-    "selectquality",
     "selectexpertise",
     "selectside",
     "selectarmor",
@@ -165,8 +167,6 @@ SILENT_TAGS = {
     "selectparagon",
     "selectinherentaiprogram",
     "selectattribute",
-    "prototypetranshuman",
-    "burnoutsway",
     "streetcredmultiplier",
     "astralreputation",
     "specialmodificationlimit",
@@ -415,6 +415,8 @@ def empty_effects() -> dict[str, Any]:
         "cm_recovery_stun": 0,
         "disabled_skills": [],
         "disabled_skill_groups": [],
+        "disabled_skill_group_categories": [],
+        "blocked_default_categories": [],
         "nuyen_max_bp": 0,
         "nuyen_amt": 0,
         "trustfund": 0,
@@ -429,9 +431,20 @@ def empty_effects() -> dict[str, Any]:
         "cyberware_total_ess_multiplier": 100,
         "essence_max_mod": 0,
         "disable_bioware": False,
+        "prototype_transhuman_ess": 0.0,
+        "burnout_way": False,
+        "native_language_limit_bonus": 0,
+        "knowledge_skill_points": 0,
+        "attribute_max_mods": {},
         "skill_category_point_cost_mult": {},
         "skill_category_karma_cost_mult": [],
         "skill_category_karma_cost": [],
+        "skill_category_spec_karma_cost_mult": [],
+        "skill_group_category_karma_cost_mult": [],
+        "active_skill_karma_cost": [],
+        "knowledge_skill_karma_cost": [],
+        "knowledge_skill_karma_cost_min": [],
+        "select_quality_slots": [],
         "unimplemented": [],
     }
 
@@ -447,9 +460,13 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
         if tag == "specificattribute":
             name = ATTR_ALIASES.get((fields.get("name") or "").upper())
             if name:
-                effects["attribute_bonus"][name] = effects["attribute_bonus"].get(name, 0) + _as_int(
-                    fields.get("bonus") or fields.get("val") or fields.get("value"), 0
-                )
+                bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"), 0)
+                if bonus:
+                    effects["attribute_bonus"][name] = effects["attribute_bonus"].get(name, 0) + bonus
+                if fields.get("max") not in (None, ""):
+                    effects["attribute_max_mods"][name] = int(effects["attribute_max_mods"].get(name) or 0) + _as_int(
+                        fields.get("max")
+                    )
         elif tag == "armor":
             effects["armor"] += _as_int(node.get("value"))
         elif tag == "conditionmonitor":
@@ -732,6 +749,84 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["disabled_skill_groups"]:
                 effects["disabled_skill_groups"].append(name)
+        elif tag == "skillgroupcategorydisable":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["disabled_skill_group_categories"]:
+                effects["disabled_skill_group_categories"].append(name)
+        elif tag == "skillgroupdisablechoice":
+            # Applied in engine from quality_extras (selected skill group name).
+            pass
+        elif tag == "blockskillcategorydefaulting":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["blocked_default_categories"]:
+                effects["blocked_default_categories"].append(name)
+        elif tag == "nativelanguagelimit":
+            effects["native_language_limit_bonus"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "knowledgeskillpoints":
+            effects["knowledge_skill_points"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "prototypetranshuman":
+            effects["prototype_transhuman_ess"] = round(
+                float(effects.get("prototype_transhuman_ess") or 0)
+                + float(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"), 0)),
+                4,
+            )
+        elif tag == "burnoutsway":
+            effects["burnout_way"] = True
+        elif tag == "selectquality":
+            raw = fields.get("quality") or node.get("value") or []
+            options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+            if options:
+                effects["select_quality_slots"].append({"source": source, "options": options})
+        elif tag == "activeskillkarmacost":
+            effects["active_skill_karma_cost"].append(
+                {
+                    "name": str(fields.get("name") or "").strip(),
+                    "val": _as_int(fields.get("val")),
+                    "min": _as_int(fields.get("min")),
+                    "max": _as_int(fields.get("max")) if fields.get("max") not in (None, "") else None,
+                    "condition": str(fields.get("condition") or ""),
+                }
+            )
+        elif tag == "knowledgeskillkarmacost":
+            effects["knowledge_skill_karma_cost"].append(
+                {
+                    "name": str(fields.get("name") or "").strip(),
+                    "val": _as_int(fields.get("val")),
+                    "min": _as_int(fields.get("min")),
+                    "max": _as_int(fields.get("max")) if fields.get("max") not in (None, "") else None,
+                    "condition": str(fields.get("condition") or ""),
+                }
+            )
+        elif tag == "knowledgeskillkarmacostmin":
+            effects["knowledge_skill_karma_cost_min"].append(
+                {
+                    "name": str(fields.get("name") or "").strip(),
+                    "val": _as_int(fields.get("val"), 1),
+                    "min": _as_int(fields.get("min")),
+                    "max": _as_int(fields.get("max")) if fields.get("max") not in (None, "") else None,
+                    "condition": str(fields.get("condition") or ""),
+                }
+            )
+        elif tag == "skillcategoryspecializationkarmacostmultiplier":
+            name = str(fields.get("name") or node.get("value") or "").strip()
+            if name:
+                effects["skill_category_spec_karma_cost_mult"].append(
+                    {
+                        "name": name,
+                        "val": _as_int(fields.get("val") or fields.get("bonus"), 100),
+                        "condition": str(fields.get("condition") or ""),
+                    }
+                )
+        elif tag == "skillgroupcategorykarmacostmultiplier":
+            name = str(fields.get("name") or node.get("value") or "").strip()
+            if name:
+                effects["skill_group_category_karma_cost_mult"].append(
+                    {
+                        "name": name,
+                        "val": _as_int(fields.get("val") or fields.get("bonus"), 100),
+                        "condition": str(fields.get("condition") or ""),
+                    }
+                )
 
         elif tag == "nuyenmaxbp":
             effects["nuyen_max_bp"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))

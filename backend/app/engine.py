@@ -389,6 +389,7 @@ def career_raise_karma(
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
     total = 0
     lines: list[dict[str, Any]] = []
+    eff = effects or {}
     base_attrs = baseline.attributes or {}
     for key, rating in (state.attributes or {}).items():
         if key == "ESS":
@@ -400,11 +401,15 @@ def career_raise_karma(
             lines.append({"kind": "attribute", "label": f"属性 {key} {from_r}→{to_r}", "amount": cost})
             total += cost
 
+    group_cat_map = _skill_group_category_map(skills_data)
+    group_mults = _active_karma_mults(eff.get("skill_group_category_karma_cost_mult"), career=True)
     base_groups = baseline.skill_groups or {}
     for group, rating in (state.skill_groups or {}).items():
         from_r = int(base_groups.get(group, 0))
         to_r = int(rating or 0)
-        cost = _karma_raise_cost(from_r, to_r, KARMA_SKILL_GROUP)
+        cat = group_cat_map.get(group, "")
+        mult = int(group_mults.get(cat, 100))
+        cost = _karma_cost_with_category_mods(from_r, to_r, KARMA_SKILL_GROUP, mult_pct=mult)
         if cost:
             lines.append({"kind": "skill_group", "label": f"技能グループ {group} {from_r}→{to_r}", "amount": cost})
             total += cost
@@ -412,20 +417,33 @@ def career_raise_karma(
     base_floors = _group_floor_map(base_groups, skills_data)
     now_floors = _group_floor_map(dict(state.skill_groups or {}), skills_data)
     base_skills = baseline.skills or {}
+    skill_cat_map = _skill_category_map(skills_data)
+    karma_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
+    active_flat = _filter_karma_rules(eff.get("active_skill_karma_cost"), career=True)
     for name, rating in (skill_totals or {}).items():
         from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)))
         from_r = max(from_r, int(now_floors.get(name, 0)))
         to_r = int(rating or 0)
-        cost = _karma_raise_cost(from_r, to_r, KARMA_ACTIVE_SKILL)
+        cat = skill_cat_map.get(name, "")
+        mult = int(karma_mults.get(cat, 100))
+        cost = _karma_cost_with_category_mods(
+            from_r,
+            to_r,
+            KARMA_ACTIVE_SKILL,
+            mult_pct=mult,
+            flat_rules=_matching_karma_rules(active_flat, cat),
+        )
         if cost:
             lines.append({"kind": "skill", "label": f"技能 {name} {from_r}→{to_r}", "amount": cost})
             total += cost
 
     base_know = baseline.knowledge_skills or {}
     natives = set(state.native_languages or [])
-    eff = effects or {}
-    karma_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
-    flat_rules = list(eff.get("skill_category_karma_cost") or [])
+    know_flat = _filter_karma_rules(
+        list(eff.get("skill_category_karma_cost") or []) + list(eff.get("knowledge_skill_karma_cost") or []),
+        career=True,
+    )
+    know_min = _filter_karma_rules(eff.get("knowledge_skill_karma_cost_min"), career=True)
     know_cats = dict(state.knowledge_categories or {})
     catalog_know = {str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])}
     for name, rating in (state.knowledge_skills or {}).items():
@@ -433,15 +451,6 @@ def career_raise_karma(
             continue
         cat = str(know_cats.get(name) or catalog_know.get(name) or "Street")
         mult = int(karma_mults.get(cat, 100))
-        flat_adj = 0
-        flat_min = 0
-        for rule in flat_rules:
-            if str(rule.get("name") or "") != cat:
-                continue
-            cond = str(rule.get("condition") or "")
-            if cond and "/character/created" in cond and "= false" not in cond.replace(" ", ""):
-                flat_adj = int(rule.get("val") or 0)
-                flat_min = int(rule.get("min") or 0)
         from_r = int(base_know.get(name, 0))
         to_r = int(rating or 0)
         cost = _karma_cost_with_category_mods(
@@ -449,18 +458,22 @@ def career_raise_karma(
             to_r,
             KARMA_KNOWLEDGE,
             mult_pct=mult,
-            flat_adj=flat_adj,
-            flat_min=flat_min,
+            flat_rules=_matching_karma_rules(know_flat, cat),
+            min_rules=_matching_karma_rules(know_min, cat),
         )
         if cost:
             lines.append({"kind": "knowledge", "label": f"知識 {name} {from_r}→{to_r}", "amount": cost})
             total += cost
 
+    spec_mults = _active_karma_mults(eff.get("skill_category_spec_karma_cost_mult"), career=True)
     base_specs = set(baseline.skill_specializations or [])
     for name, spec in (state.skill_specializations or {}).items():
         if str(spec or "").strip() and name not in base_specs:
-            lines.append({"kind": "specialization", "label": f"専門化 {name}（{spec}）", "amount": KARMA_SPECIALIZATION})
-            total += KARMA_SPECIALIZATION
+            cat = skill_cat_map.get(name) or str(know_cats.get(name) or catalog_know.get(name) or "")
+            mult = int(spec_mults.get(cat, 100))
+            amount = max(1, int(math.ceil(KARMA_SPECIALIZATION * mult / 100.0)))
+            lines.append({"kind": "specialization", "label": f"専門化 {name}（{spec}）", "amount": amount})
+            total += amount
 
     base_exotic = baseline.exotic_skills or {}
     for row in state.exotic_skills or []:
@@ -469,7 +482,13 @@ def career_raise_karma(
             continue
         from_r = int(base_exotic.get(rid, 0))
         to_r = int(row.rating or 0)
-        cost = _karma_raise_cost(from_r, to_r, KARMA_ACTIVE_SKILL)
+        cost = _karma_cost_with_category_mods(
+            from_r,
+            to_r,
+            KARMA_ACTIVE_SKILL,
+            mult_pct=100,
+            flat_rules=_matching_karma_rules(active_flat, ""),
+        )
         if cost:
             label = str(getattr(row, "name", None) or getattr(row, "skill", None) or "Exotic")
             lines.append({"kind": "exotic", "label": f"特殊技能 {label} {from_r}→{to_r}", "amount": cost})
@@ -570,6 +589,19 @@ def apply_ware_essence_multipliers(
             ess = float(item.get("essence") or 0)
             if ess > 0:
                 item["essence"] = _floor_tenth(ess * bmult / 100.0)
+    free_bio = max(0.0, float(effects.get("prototype_transhuman_ess") or 0))
+    if free_bio > 0:
+        remaining = free_bio
+        # Prefer waiving smaller essence pieces first so more items can be covered.
+        ordered = sorted(bio, key=lambda row: float(row.get("essence") or 0))
+        for item in ordered:
+            ess = float(item.get("essence") or 0)
+            if ess <= 0 or remaining <= 0:
+                continue
+            take = min(ess, remaining)
+            item["essence"] = round(ess - take, 4)
+            item["prototype_transhuman"] = True
+            remaining = round(remaining - take, 4)
     cyber_lost = round(sum(float(item.get("essence") or 0) for item in cyber), 4)
     bio_lost = round(sum(float(item.get("essence") or 0) for item in bio), 4)
     if tmult != 100 and cyber_lost > 0:
@@ -710,19 +742,38 @@ def _karma_cost_with_category_mods(
     mult_pct: int = 100,
     flat_adj: int = 0,
     flat_min: int = 0,
+    flat_rules: list[dict[str, Any]] | None = None,
+    min_rules: list[dict[str, Any]] | None = None,
 ) -> int:
     low = max(0, int(from_rating))
     high = max(0, int(to_rating))
     if high <= low or per_rating <= 0:
         return 0
+    rules = list(flat_rules or [])
+    if flat_adj and not rules:
+        rules.append({"val": int(flat_adj), "min": int(flat_min or 0), "max": None})
     total = 0
     for level in range(low + 1, high + 1):
         base = level * int(per_rating)
-        if flat_adj and level >= flat_min:
-            base = max(1, base + flat_adj)
-        total += max(1, int(math.ceil(base * mult_pct / 100.0)))
+        for rule in rules:
+            rmin = int(rule.get("min") or 0)
+            rmax = rule.get("max")
+            if level < rmin:
+                continue
+            if rmax is not None and str(rmax) != "" and level > int(rmax):
+                continue
+            base += int(rule.get("val") or 0)
+        floor = 1
+        for rule in min_rules or []:
+            rmin = int(rule.get("min") or 0)
+            rmax = rule.get("max")
+            if level < rmin:
+                continue
+            if rmax is not None and str(rmax) != "" and level > int(rmax):
+                continue
+            floor = max(floor, int(rule.get("val") or 1))
+        total += max(floor, int(math.ceil(base * mult_pct / 100.0)))
     return total
-
 
 
 def _active_karma_mults(rules: list[dict[str, Any]] | None, *, career: bool) -> dict[str, int]:
@@ -732,12 +783,65 @@ def _active_karma_mults(rules: list[dict[str, Any]] | None, *, career: bool) -> 
         if not name:
             continue
         cond = str(rule.get("condition") or "").replace(" ", "")
-        if cond == "/character/created=false" and career:
+        if cond in {"/character/created=false", "/character/created=False"} and career:
             continue
         if cond == "/character/created" and not career:
             continue
         # Later rules override earlier for same category.
         out[name] = int(rule.get("val") or 100)
+    return out
+
+
+def _filter_karma_rules(rules: list[dict[str, Any]] | None, *, career: bool) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for rule in rules or []:
+        cond = str(rule.get("condition") or "").replace(" ", "")
+        if cond in {"/character/created=false", "/character/created=False"} and career:
+            continue
+        if cond == "/character/created" and not career:
+            continue
+        out.append(rule)
+    return out
+
+
+def _matching_karma_rules(rules: list[dict[str, Any]] | None, name: str) -> list[dict[str, Any]]:
+    target = str(name or "")
+    matched: list[dict[str, Any]] = []
+    for rule in rules or []:
+        rname = str(rule.get("name") or "")
+        if rname == "" or rname == target:
+            matched.append(rule)
+    return matched
+
+
+def _skill_groups_for_category(skills_data: dict[str, Any], category: str) -> list[str]:
+    """Groups whose every skill belongs to the given category."""
+    by_group: dict[str, list[str]] = {}
+    for skill in skills_data.get("skills") or []:
+        group = str(skill.get("skillgroup") or "").strip()
+        if not group:
+            continue
+        by_group.setdefault(group, []).append(str(skill.get("category") or ""))
+    out: list[str] = []
+    for group, cats in by_group.items():
+        if cats and all(cat == category for cat in cats):
+            out.append(group)
+    return out
+
+
+def _skill_group_category_map(skills_data: dict[str, Any]) -> dict[str, str]:
+    """Map skill group → category when all member skills share one category."""
+    by_group: dict[str, list[str]] = {}
+    for skill in skills_data.get("skills") or []:
+        group = str(skill.get("skillgroup") or "").strip()
+        if not group:
+            continue
+        by_group.setdefault(group, []).append(str(skill.get("category") or ""))
+    out: dict[str, str] = {}
+    for group, cats in by_group.items():
+        uniq = {cat for cat in cats if cat}
+        if len(uniq) == 1:
+            out[group] = next(iter(uniq))
     return out
 
 def knowledge_excess_karma(
@@ -3802,7 +3906,8 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
 
 def quality_needs_extra(spec: dict[str, Any]) -> bool:
     return bool(spec.get("needs_extra")) or any(
-        node.get("tag") in {"selecttext", "selectattributes"} for node in (spec.get("bonus") or [])
+        node.get("tag") in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality"}
+        for node in (spec.get("bonus") or [])
     )
 
 
@@ -3928,17 +4033,27 @@ def apply_quality_rules(
     free_ids = set(free_quality_ids)
     negative_gain = 0
     for spec in qualities:
-        if spec.get("onlyprioritygiven") or spec["id"] in free_ids:
-            continue
-        if spec["karma"] < 0:
+        is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
+        if not is_free and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
+        if quality_needs_extra(spec) and spec["id"] not in extras:
+            errors.append(f"{spec['name']} の対象を入力してください")
+        options = list(spec.get("select_options") or [])
+        if not options:
+            for node in spec.get("bonus") or []:
+                if node.get("tag") != "selectquality":
+                    continue
+                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+        if options and spec["id"] in extras and extras[spec["id"]] not in options:
+            errors.append(f"{spec['name']} の対象が不正です")
+        if is_free:
+            continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
             errors.append(f"{spec['name']} の前提を満たしていません")
         forbidden = spec.get("forbidden_tree") or []
         if forbidden and requirement_tree_met(forbidden, ctx):
             errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
-        if quality_needs_extra(spec) and spec["id"] not in extras:
-            errors.append(f"{spec['name']} の対象を入力してください")
     if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
         errors.append(
             f"不利クオリティから得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
@@ -4757,6 +4872,7 @@ def resolve_knowledge(
     totals: dict[str, int],
     *,
     rating_cap: int = 6,
+    native_limit: int = 1,
 ) -> dict[str, Any]:
     catalog_by_name = {skill["name"]: skill for skill in (skills_data.get("knowledge") or [])}
     warnings: list[str] = []
@@ -4770,18 +4886,19 @@ def resolve_knowledge(
     natives: list[str] = []
     seen: set[str] = set()
     extras: list[str] = []
+    limit = max(1, int(native_limit or 1))
     for name in state.native_languages or []:
         name = str(name).strip()
         if not name or name in seen:
             continue
         seen.add(name)
-        if natives:
+        if len(natives) >= limit:
             extras.append(name)
             continue
         natives.append(name)
         ratings.pop(name, None)
     if extras:
-        warnings.append("母語は1つまでです（2つ目以降は通常の言語として扱います）")
+        warnings.append(f"母語は{limit}つまでです（超過分は通常の言語として扱います）")
 
     extra_categories: dict[str, str] = {}
     owned = set(ratings) | set(natives)
@@ -4822,6 +4939,7 @@ def resolve_knowledge(
         "max": knowledge_pool(int(totals.get("INT") or 1), int(totals.get("LOG") or 1)),
         "public": public,
         "warnings": warnings,
+        "native_limit": limit,
     }
 
 
@@ -5734,6 +5852,11 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
+    extras = {
+        key: str(value).strip()
+        for key, value in (state.quality_extras or {}).items()
+        if str(value).strip()
+    }
     index = 0
     while index < len(pending):
         qid = pending[index]
@@ -5757,6 +5880,15 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
                 names = raw if isinstance(raw, list) else [raw]
                 for name in names:
                     child = _quality_by_name(str(name).strip())
+                    if child and child["id"] not in seen:
+                        free_ids.add(child["id"])
+                        pending.append(child["id"])
+            elif tag == "selectquality":
+                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+                picked = extras.get(qid, "")
+                if picked and picked in options:
+                    child = _quality_by_name(picked)
                     if child and child["id"] not in seen:
                         free_ids.add(child["id"])
                         pending.append(child["id"])
@@ -7389,8 +7521,25 @@ def compute(state: CharacterState) -> CharacterState:
     if not career:
         _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
+    for category in effects.get("disabled_skill_group_categories") or []:
+        for group in _skill_groups_for_category(data["skills"], str(category)):
+            if group not in effects["disabled_skill_groups"]:
+                effects["disabled_skill_groups"].append(group)
+    for q in qualities:
+        if not any(node.get("tag") == "skillgroupdisablechoice" for node in (q.get("bonus") or [])):
+            continue
+        picked = str((state.quality_extras or {}).get(q["id"]) or "").strip()
+        if picked and picked not in effects["disabled_skill_groups"]:
+            effects["disabled_skill_groups"].append(picked)
     attr_max_bonus, attr_select_warnings = resolve_attribute_selects(state, effects, qualities)
     warnings.extend(attr_select_warnings)
+    attr_max_mods = {
+        key: int(value)
+        for key, value in (effects.get("attribute_max_mods") or {}).items()
+        if int(value or 0)
+    }
+    for key, value in attr_max_mods.items():
+        attr_max_bonus[key] = int(attr_max_bonus.get(key) or 0) + int(value)
     seeker_targets = effects.get("cyberseeker") or []
     limb_quality = apply_cyberseeker(cyber_installed, seeker_targets, attrs_spec, state.options)
     warnings.extend(redliner_incompat_warnings(installed, seeker_targets))
@@ -7733,10 +7882,16 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(exotic["warnings"])
     skill_spent += int(exotic["spent"])
     skill_totals.update(exotic["totals"])
-    knowledge = resolve_knowledge(state, data["skills"], total, rating_cap=skill_rating_cap)
+    knowledge = resolve_knowledge(
+        state,
+        data["skills"],
+        total,
+        rating_cap=skill_rating_cap,
+        native_limit=1 + int(effects.get("native_language_limit_bonus") or 0),
+    )
     warnings.extend(knowledge["warnings"])
     know_spent = knowledge_points_spent(knowledge["public"], point_mults)
-    know_max = int(knowledge["max"])
+    know_max = int(knowledge["max"]) + int(effects.get("knowledge_skill_points") or 0)
     bought_knowledge = dict(state.knowledge_skills)
     for name in state.native_languages:
         bought_knowledge[name] = max(int(bought_knowledge.get(name) or 0), 1)
@@ -7755,6 +7910,11 @@ def compute(state: CharacterState) -> CharacterState:
     for group in effects.get("disabled_skill_groups") or []:
         if int(state.skill_groups.get(group) or 0) > 0:
             warnings.append(f"スキルグループ {group} は無効化されています")
+    blocked_defaults = list(effects.get("blocked_default_categories") or [])
+    if blocked_defaults:
+        warnings.append(
+            "デフォルト不可: " + "、".join(blocked_defaults)
+        )
     skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
     _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
     specs = resolve_specializations(
@@ -8258,6 +8418,10 @@ def compute(state: CharacterState) -> CharacterState:
         "attribute_max_bonus": dict(attr_max_bonus),
         "disabled_skills": list(effects.get("disabled_skills") or []),
         "disabled_skill_groups": list(effects.get("disabled_skill_groups") or []),
+        "blocked_default_categories": list(effects.get("blocked_default_categories") or []),
+        "native_language_limit": int(knowledge.get("native_limit") or 1),
+        "prototype_transhuman_ess": float(effects.get("prototype_transhuman_ess") or 0),
+        "burnout_way": bool(effects.get("burnout_way")),
         "initiate_grade": int(initiation.get("grade") or 0),
         "initiation": {
             "grade": int(initiation.get("grade") or 0),
@@ -8291,11 +8455,14 @@ def compute(state: CharacterState) -> CharacterState:
             {
                 "id": q["id"],
                 "name": q["name"],
-                "karma": q["karma"],
+                "karma": 0 if q["id"] in free_quality_ids else q["karma"],
                 "category": q["category"],
                 "source": q["source"],
                 "needs_extra": quality_needs_extra(q),
                 "extra": state.quality_extras.get(q["id"]) or "",
+                "extra_kind": q.get("extra_kind"),
+                "select_options": list(q.get("select_options") or []),
+                "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),
             }
             for q in qualities
         ],

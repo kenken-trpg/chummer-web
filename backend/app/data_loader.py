@@ -327,7 +327,33 @@ def _parse_requirement_node(el: ET.Element) -> dict[str, Any]:
 
 
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
-    return any(node.get("tag") in {"selecttext", "selectattributes"} for node in (bonus or []))
+    return any(
+        node.get("tag") in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality"}
+        for node in (bonus or [])
+    )
+
+
+def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
+    tags = {node.get("tag") for node in (bonus or [])}
+    kind = None
+    select_options: list[str] = []
+    if "selectquality" in tags:
+        kind = "quality"
+        for node in bonus or []:
+            if node.get("tag") != "selectquality":
+                continue
+            raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+            for item in raw if isinstance(raw, list) else [raw]:
+                text = str(item).strip()
+                if text and text not in select_options:
+                    select_options.append(text)
+    elif "skillgroupdisablechoice" in tags:
+        kind = "skillgroup"
+    elif "selectattributes" in tags or "selectattribute" in tags:
+        kind = "attribute"
+    elif "selecttext" in tags:
+        kind = "text"
+    return {"extra_kind": kind, "select_options": select_options}
 
 
 def _parent_name_requirements(el: ET.Element) -> list[str]:
@@ -509,6 +535,7 @@ def load_qualities() -> list[dict[str, Any]]:
         if not name:
             continue
         bonus = parse_bonus(el.find("bonus"))
+        extra_meta = quality_extra_meta(bonus)
         items.append(
             {
                 "id": _text(el.find("id")),
@@ -520,11 +547,14 @@ def load_qualities() -> list[dict[str, Any]]:
                 "bonus": bonus,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
+                "chargenonly": el.find("chargenonly") is not None,
                 "forbidden": parse_required(el.find("forbidden")),
                 "required": parse_required(el.find("required")),
                 "required_tree": parse_requirement_tree(el.find("required")),
                 "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
                 "needs_extra": quality_needs_extra(bonus),
+                "extra_kind": extra_meta.get("extra_kind"),
+                "select_options": extra_meta.get("select_options") or [],
             }
         )
     return items

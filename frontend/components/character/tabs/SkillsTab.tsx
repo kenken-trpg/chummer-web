@@ -58,15 +58,25 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
 
   function setKnowledgeNative(name: string, on: boolean) {
     const ratings = { ...ch.knowledge_skills };
-    const prev = (ch.native_languages || [])[0];
+    const natives = [...(ch.native_languages || [])];
+    const limit = Math.max(1, Number(d.native_language_limit || 1));
     if (on) {
       delete ratings[name];
-      if (prev && prev !== name) ratings[prev] = ratings[prev] || 1;
-      patchKnowledge({ knowledge_skills: ratings, native_languages: [name] });
+      if (!natives.includes(name)) {
+        if (natives.length >= limit) {
+          const dropped = natives.shift();
+          if (dropped) ratings[dropped] = ratings[dropped] || 1;
+        }
+        natives.push(name);
+      }
+      patchKnowledge({ knowledge_skills: ratings, native_languages: natives });
       return;
     }
     ratings[name] = ratings[name] || 1;
-    patchKnowledge({ knowledge_skills: ratings, native_languages: [] });
+    patchKnowledge({
+      knowledge_skills: ratings,
+      native_languages: natives.filter((item) => item !== name),
+    });
   }
 
   function removeKnowledge(name: string) {

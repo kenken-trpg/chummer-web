@@ -1321,6 +1321,10 @@ export interface Character {
     attribute_max_bonus?: Record<string, number>;
     disabled_skills?: string[];
     disabled_skill_groups?: string[];
+    blocked_default_categories?: string[];
+    native_language_limit?: number;
+    prototype_transhuman_ess?: number;
+    burnout_way?: boolean;
     initiate_grade?: number;
     initiation?: {
       grade: number;
@@ -1424,7 +1428,22 @@ export interface Character {
     drain_resist?: { pool: number; attrs: string };
     enabled_tabs: string[];
     unimplemented_bonuses: { source: string; tag: string }[];
-    qualities: { id: string; name: string; karma: number; category: string; source: string; needs_extra?: boolean; extra?: string }[];
+    qualities: {
+      id: string;
+      name: string;
+      karma: number;
+      category: string;
+      source: string;
+      needs_extra?: boolean;
+      extra?: string;
+      extra_kind?: string | null;
+      select_options?: string[];
+      free?: boolean;
+    }[];
+    native_language_limit?: number;
+    blocked_default_categories?: string[];
+    prototype_transhuman_ess?: number;
+    burnout_way?: boolean;
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
     essence_lost_cyber?: number;
@@ -1489,6 +1508,9 @@ export interface Catalog {
     forbidden_qualities?: string[];
     is_way?: boolean;
     needs_extra?: boolean;
+    extra_kind?: string | null;
+    select_options?: string[];
+    chargenonly?: boolean;
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];
   }[];
