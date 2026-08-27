@@ -5319,3 +5319,53 @@ def test_black_market_pipeline_discounts_weapons() -> None:
 def test_ambidextrous_flag() -> None:
     out = compute(_mundane("ambi", quality_ids=[AMBIDEXTROUS]))
     assert out.derived["ambidextrous"] is True
+
+
+def test_career_street_cred_and_public_awareness() -> None:
+    out = compute(
+        _mundane(
+            "rep",
+            career=True,
+            street_cred=7,
+            notoriety_bonus=2,
+            quality_ids=[BLANDNESS],
+        )
+    )
+    # quality -1 + bonus 2 = 1; PA = (7+1)//3 = 2
+    assert out.derived["street_cred"] == 7
+    assert out.derived["notoriety"] == 1
+    assert out.derived["public_awareness"] == 2
+
+
+def test_career_reward_log_sets_earned_totals() -> None:
+    from app.models import RewardEntry
+
+    out = compute(
+        _mundane(
+            "rewards",
+            career=True,
+            reward_log=[
+                RewardEntry(label="Run A", karma=6, nuyen=4000),
+                RewardEntry(label="Run B", karma=4, nuyen=1000),
+            ],
+        )
+    )
+    assert out.derived["karma_earned"] == 10
+    assert out.derived["nuyen_earned"] == 5000
+    assert out.derived["karma"]["pool"] == 35
+    assert len(out.derived["reward_log"]) == 2
+
+
+def test_career_spend_breakdown_lists_attribute_raise() -> None:
+    from app.engine import snapshot_career_baseline
+
+    st = _mundane("break")
+    st.attributes["AGI"] = 4
+    st = compute(st)
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.attributes["AGI"] = 5
+    out = compute(st)
+    assert out.derived["career_advancement_karma"] == 25
+    assert any(row["label"].startswith("属性 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
+    assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])

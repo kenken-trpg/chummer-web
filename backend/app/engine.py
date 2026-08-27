@@ -35,6 +35,7 @@ from .models import (
     ArmorInstall,
     ArmorModInstall,
     CareerBaseline,
+    RewardEntry,
     CharacterOptions,
     CharacterState,
     CommlinkInstall,
@@ -384,18 +385,29 @@ def career_raise_karma(
     skills_data: dict[str, Any],
     *,
     effects: dict[str, Any] | None = None,
-) -> int:
+) -> tuple[int, list[dict[str, Any]]]:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
     total = 0
+    lines: list[dict[str, Any]] = []
     base_attrs = baseline.attributes or {}
     for key, rating in (state.attributes or {}).items():
         if key == "ESS":
             continue
-        total += _karma_raise_cost(int(base_attrs.get(key, rating)), int(rating or 0), KARMA_ATTRIBUTE)
+        from_r = int(base_attrs.get(key, rating))
+        to_r = int(rating or 0)
+        cost = _karma_raise_cost(from_r, to_r, KARMA_ATTRIBUTE)
+        if cost:
+            lines.append({"kind": "attribute", "label": f"属性 {key} {from_r}→{to_r}", "amount": cost})
+            total += cost
 
     base_groups = baseline.skill_groups or {}
     for group, rating in (state.skill_groups or {}).items():
-        total += _karma_raise_cost(int(base_groups.get(group, 0)), int(rating or 0), KARMA_SKILL_GROUP)
+        from_r = int(base_groups.get(group, 0))
+        to_r = int(rating or 0)
+        cost = _karma_raise_cost(from_r, to_r, KARMA_SKILL_GROUP)
+        if cost:
+            lines.append({"kind": "skill_group", "label": f"技能グループ {group} {from_r}→{to_r}", "amount": cost})
+            total += cost
 
     base_floors = _group_floor_map(base_groups, skills_data)
     now_floors = _group_floor_map(dict(state.skill_groups or {}), skills_data)
@@ -403,7 +415,11 @@ def career_raise_karma(
     for name, rating in (skill_totals or {}).items():
         from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)))
         from_r = max(from_r, int(now_floors.get(name, 0)))
-        total += _karma_raise_cost(from_r, int(rating or 0), KARMA_ACTIVE_SKILL)
+        to_r = int(rating or 0)
+        cost = _karma_raise_cost(from_r, to_r, KARMA_ACTIVE_SKILL)
+        if cost:
+            lines.append({"kind": "skill", "label": f"技能 {name} {from_r}→{to_r}", "amount": cost})
+            total += cost
 
     base_know = baseline.knowledge_skills or {}
     natives = set(state.native_languages or [])
@@ -424,21 +440,26 @@ def career_raise_karma(
                 continue
             cond = str(rule.get("condition") or "")
             if cond and "/character/created" in cond and "= false" not in cond.replace(" ", ""):
-                # career-only adjustment
                 flat_adj = int(rule.get("val") or 0)
                 flat_min = int(rule.get("min") or 0)
-        total += _karma_cost_with_category_mods(
-            int(base_know.get(name, 0)),
-            int(rating or 0),
+        from_r = int(base_know.get(name, 0))
+        to_r = int(rating or 0)
+        cost = _karma_cost_with_category_mods(
+            from_r,
+            to_r,
             KARMA_KNOWLEDGE,
             mult_pct=mult,
             flat_adj=flat_adj,
             flat_min=flat_min,
         )
+        if cost:
+            lines.append({"kind": "knowledge", "label": f"知識 {name} {from_r}→{to_r}", "amount": cost})
+            total += cost
 
     base_specs = set(baseline.skill_specializations or [])
     for name, spec in (state.skill_specializations or {}).items():
         if str(spec or "").strip() and name not in base_specs:
+            lines.append({"kind": "specialization", "label": f"専門化 {name}（{spec}）", "amount": KARMA_SPECIALIZATION})
             total += KARMA_SPECIALIZATION
 
     base_exotic = baseline.exotic_skills or {}
@@ -446,8 +467,69 @@ def career_raise_karma(
         rid = str(getattr(row, "id", "") or "")
         if not rid:
             continue
-        total += _karma_raise_cost(int(base_exotic.get(rid, 0)), int(row.rating or 0), KARMA_ACTIVE_SKILL)
-    return total
+        from_r = int(base_exotic.get(rid, 0))
+        to_r = int(row.rating or 0)
+        cost = _karma_raise_cost(from_r, to_r, KARMA_ACTIVE_SKILL)
+        if cost:
+            label = str(getattr(row, "name", None) or getattr(row, "skill", None) or "Exotic")
+            lines.append({"kind": "exotic", "label": f"特殊技能 {label} {from_r}→{to_r}", "amount": cost})
+            total += cost
+    return total, lines
+
+
+def nuyen_spend_breakdown(
+    cyber: list[dict[str, Any]],
+    bio: list[dict[str, Any]],
+    gear: dict[str, Any],
+    *,
+    qi_nuyen: int = 0,
+    foci_nuyen: int = 0,
+    spirits_nuyen: int = 0,
+) -> list[dict[str, Any]]:
+    buckets: list[tuple[str, int]] = [
+        ("サイバーウェア", sum(int(item.get("nuyen") or 0) for item in cyber)),
+        ("バイオウェア", sum(int(item.get("nuyen") or 0) for item in bio)),
+        ("防具", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_items") or []))),
+        ("防具改造", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_mods") or []))),
+        ("武器", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapons") or []))),
+        ("武器アクセサリ", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapon_accessories") or []))),
+        ("通信機", sum(int(row.get("nuyen") or 0) for row in (gear.get("commlinks") or []))),
+        ("サイバーデッキ", sum(int(row.get("nuyen") or 0) for row in (gear.get("cyberdecks") or []))),
+        ("RCC", sum(int(row.get("nuyen") or 0) for row in (gear.get("rccs") or []))),
+        ("光学／音響", sum(int(row.get("nuyen") or 0) for row in (gear.get("optics") or []))),
+        ("センサー", sum(int(row.get("nuyen") or 0) for row in (gear.get("sensors") or []))),
+        ("プログラム", sum(int(row.get("nuyen") or 0) for row in (gear.get("programs") or []) + (gear.get("apps") or []))),
+        ("ドローン", sum(int(row.get("nuyen") or 0) for row in (gear.get("drones") or []))),
+        ("車両", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicles") or []))),
+        ("車両改造", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicle_mods") or []) + (gear.get("weapon_mounts") or []))),
+        ("その他ギア", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
+        ("ライフスタイル", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
+        ("気フォーカス", int(qi_nuyen or 0)),
+        ("フォーカス", int(foci_nuyen or 0)),
+        ("精霊", int(spirits_nuyen or 0)),
+    ]
+    return [{"kind": "nuyen", "label": label, "amount": amount} for label, amount in buckets if amount]
+
+
+def sync_reward_totals(state: CharacterState) -> None:
+    """Keep earned pools aligned with reward_log when the ledger has rows."""
+    log = list(getattr(state, "reward_log", None) or [])
+    cleaned: list[RewardEntry] = []
+    for raw in log:
+        if isinstance(raw, RewardEntry):
+            entry = raw
+        elif isinstance(raw, dict):
+            entry = RewardEntry.model_validate(raw)
+        else:
+            continue
+        entry.karma = max(0, int(entry.karma or 0))
+        entry.nuyen = max(0, int(entry.nuyen or 0))
+        entry.label = str(entry.label or "").strip() or "報酬"
+        cleaned.append(entry)
+    state.reward_log = cleaned
+    if cleaned:
+        state.karma_earned = sum(int(row.karma or 0) for row in cleaned)
+        state.nuyen_earned = sum(int(row.nuyen or 0) for row in cleaned)
 
 
 def _floor_tenth(value: float) -> float:
@@ -7253,6 +7335,9 @@ def compute(state: CharacterState) -> CharacterState:
     is_karma = state.build_method == BUILD_METHOD_KARMA
     career = bool(getattr(state, "career", False))
     state.career = career
+    state.street_cred = max(0, int(getattr(state, "street_cred", 0) or 0))
+    state.notoriety_bonus = int(getattr(state, "notoriety_bonus", 0) or 0)
+    sync_reward_totals(state)
     state.karma_earned = max(0, int(getattr(state, "karma_earned", 0) or 0))
     state.nuyen_earned = max(0, int(getattr(state, "nuyen_earned", 0) or 0))
     skill_rating_cap = CAREER_SKILL_MAX if career else 6
@@ -7704,6 +7789,7 @@ def compute(state: CharacterState) -> CharacterState:
     extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
     spell_karma = int(magic.get("karma") or 0) + int(resonance.get("karma") or 0)
     career_adv_karma = 0
+    career_adv_lines: list[dict[str, Any]] = []
     if is_karma:
         attr_karma = attribute_karma_cost(ratings, attrs_spec, special_key)
         skill_buy_karma = skill_karma_cost(
@@ -7746,7 +7832,9 @@ def compute(state: CharacterState) -> CharacterState:
             if baseline is None:
                 baseline = snapshot_career_baseline(state)
                 state.career_baseline = baseline
-            career_adv_karma = career_raise_karma(state, baseline, skill_totals, data["skills"], effects=effects)
+            career_adv_karma, career_adv_lines = career_raise_karma(
+                state, baseline, skill_totals, data["skills"], effects=effects
+            )
             karma_spent += career_adv_karma
 
     bod = total["BOD"]
@@ -7786,6 +7874,40 @@ def compute(state: CharacterState) -> CharacterState:
     karma_spent += int(initiation.get("karma") or 0)
     karma_spent += int(submersion.get("karma") or 0)
     karma_left = karma_pool - karma_spent
+
+    karma_spend_lines: list[dict[str, Any]] = list(career_adv_lines)
+    for label, amount in (
+        ("クオリティ", karma_from_q),
+        ("メタタイプ", metatype_karma_cost if is_karma else heritage_karma_cost),
+        ("属性（カルマ作成）", attr_karma if is_karma else 0),
+        ("技能（カルマ作成）", skill_buy_karma if is_karma else 0),
+        ("知識（カルマ作成）", knowledge_karma if is_karma else 0),
+        ("専門化", spec_karma),
+        ("ニューエン交換", int(state.karma_nuyen or 0)),
+        ("ミスティックPP", mystic_karma),
+        ("アデプト／気／フォーカス", extra_adept_karma),
+        ("術式／複合体", spell_karma),
+        ("コネクト超過", int(contacts.get("karma") or 0)),
+        ("武道", int(martial.get("karma") or 0)),
+        ("イニシエーション", int(initiation.get("karma") or 0)),
+        ("サブマージョン", int(submersion.get("karma") or 0)),
+    ):
+        if amount:
+            karma_spend_lines.append({"kind": "other", "label": label, "amount": int(amount)})
+    nuyen_spend_lines = nuyen_spend_breakdown(
+        cyber_installed,
+        bio_installed,
+        gear,
+        qi_nuyen=int(qi.get("nuyen") or 0),
+        foci_nuyen=int(foci.get("nuyen") or 0),
+        spirits_nuyen=int(spirits.get("nuyen") or 0),
+    )
+
+    quality_notoriety = int(effects.get("notoriety") or 0)
+    notoriety_total = quality_notoriety + int(state.notoriety_bonus or 0)
+    street_cred_total = int(state.street_cred or 0)
+    quality_pa = int(effects.get("public_awareness") or 0)
+    public_awareness_total = max(0, (street_cred_total + max(0, notoriety_total)) // 3 + quality_pa)
 
     physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(effects.get("limit_physical") or 0)
     mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(effects.get("limit_mental") or 0)
@@ -8023,6 +8145,7 @@ def compute(state: CharacterState) -> CharacterState:
         "karma_earned": int(state.karma_earned or 0),
         "career": career,
         "career_advancement_karma": int(career_adv_karma),
+        "career_advancement_lines": career_adv_lines,
         "nuyen_amt": int(effects.get("nuyen_amt") or 0),
         "nuyen_karma_max": int(nuyen_karma_max),
         "trustfund": int(effects.get("trustfund") or 0),
@@ -8111,9 +8234,18 @@ def compute(state: CharacterState) -> CharacterState:
         "unarmed_reach": int(martial.get("unarmed_reach") or 0) + int(effects.get("reach") or 0),
         "reach": int(effects.get("reach") or 0),
         "lifestyle_cost_mod": int(effects.get("lifestyle_cost") or 0),
-        "notoriety": int(effects.get("notoriety") or 0),
+        "street_cred": street_cred_total,
+        "notoriety": notoriety_total,
+        "notoriety_quality": quality_notoriety,
+        "notoriety_bonus": int(state.notoriety_bonus or 0),
         "fame": int(effects.get("fame") or 0),
-        "public_awareness": int(effects.get("public_awareness") or 0),
+        "public_awareness": public_awareness_total,
+        "reward_log": [
+            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
+            for row in (state.reward_log or [])
+        ],
+        "karma_spend_breakdown": karma_spend_lines,
+        "nuyen_spend_breakdown": nuyen_spend_lines,
         "fatigue_resist": int(effects.get("fatigue_resist") or 0),
         "spell_resistance": int(effects.get("spell_resistance") or 0),
         "spell_dice_pool": list(effects.get("spell_dice_pool") or []),

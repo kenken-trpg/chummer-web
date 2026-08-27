@@ -214,6 +214,15 @@ class CareerBaseline(BaseModel):
     exotic_skills: dict[str, int] = Field(default_factory=dict)
 
 
+class RewardEntry(BaseModel):
+    """Career reward ledger row (run payout, bonus, etc.)."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    label: str = ""
+    karma: int = 0
+    nuyen: int = 0
+
+
 class CharacterPatch(BaseModel):
     name: str | None = None
     build_method: str | None = None
@@ -274,6 +283,9 @@ class CharacterPatch(BaseModel):
     karma_earned: int | None = None
     nuyen_earned: int | None = None
     career_baseline: CareerBaseline | None = None
+    street_cred: int | None = None
+    notoriety_bonus: int | None = None
+    reward_log: list[RewardEntry] | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
@@ -347,6 +359,9 @@ class CharacterState(BaseModel):
     karma_earned: int = 0
     nuyen_earned: int = 0
     career_baseline: CareerBaseline | None = None
+    street_cred: int = 0
+    notoriety_bonus: int = 0
+    reward_log: list[RewardEntry] = Field(default_factory=list)
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)

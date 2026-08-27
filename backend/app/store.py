@@ -107,8 +107,25 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
         data["career"] = now_career
         if now_career and not was_career:
             data["career_baseline"] = snapshot_career_baseline(state).model_dump()
+            # Seed reward ledger from existing earned totals so history stays coherent.
+            if not (data.get("reward_log") or []) and (
+                int(data.get("karma_earned") or 0) or int(data.get("nuyen_earned") or 0)
+            ):
+                data["reward_log"] = [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "label": "キャリア開始時の報酬合計",
+                        "karma": max(0, int(data.get("karma_earned") or 0)),
+                        "nuyen": max(0, int(data.get("nuyen_earned") or 0)),
+                    }
+                ]
         elif not now_career:
             data["career_baseline"] = None
+    if "reward_log" in updates and updates["reward_log"] is not None:
+        log = list(updates["reward_log"] or [])
+        data["reward_log"] = log
+        data["karma_earned"] = sum(max(0, int(row.get("karma") or 0)) for row in log if isinstance(row, dict))
+        data["nuyen_earned"] = sum(max(0, int(row.get("nuyen") or 0)) for row in log if isinstance(row, dict))
     if "tradition_id" in updates:
         data["tradition_id"] = updates.pop("tradition_id") or None
     if "stream_id" in updates:

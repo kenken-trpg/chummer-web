@@ -1172,6 +1172,9 @@ export interface Character {
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;
+  street_cred?: number;
+  notoriety_bonus?: number;
+  reward_log?: { id?: string; label?: string; karma?: number; nuyen?: number }[];
   career_baseline?: {
     attributes?: Record<string, number>;
     skills?: Record<string, number>;
@@ -1181,7 +1184,7 @@ export interface Character {
     exotic_skills?: Record<string, number>;
   } | null;
   tradition_id?: string | null;
-    stream_id?: string | null;
+  stream_id?: string | null;
   options?: {
     redliner_torso: boolean;
     redliner_skull: boolean;
@@ -1195,6 +1198,13 @@ export interface Character {
     nuyen_earned?: number;
     nuyen_pool?: number;
     career_advancement_karma?: number;
+    career_advancement_lines?: { kind?: string; label: string; amount: number }[];
+    karma_spend_breakdown?: { kind?: string; label: string; amount: number }[];
+    nuyen_spend_breakdown?: { kind?: string; label: string; amount: number }[];
+    reward_log?: { id: string; label: string; karma: number; nuyen: number }[];
+    street_cred?: number;
+    notoriety_quality?: number;
+    notoriety_bonus?: number;
     nuyen_amt?: number;
     nuyen_karma_max?: number;
     trustfund?: number;
