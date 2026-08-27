@@ -128,6 +128,7 @@ IMPLEMENTED = {
     "specialmodificationlimit",
     "erased",
     "excon",
+    "selectexpertise",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -166,7 +167,6 @@ SILENT_TAGS = {
     "addlimb",
     "metageniclimit",
     "newspellkarmacost",
-    "selectexpertise",
     "selectarmor",
     "selectsprite",
     "selectparagon",
@@ -447,6 +447,7 @@ def empty_effects() -> dict[str, Any]:
         "special_modification_limit": 0,
         "erased": False,
         "excon": False,
+        "expertise_slots": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -984,6 +985,17 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["erased"] = True
         elif tag == "excon":
             effects["excon"] = True
+        elif tag == "selectexpertise":
+            attrs = node.get("attrs") or {}
+            limit_raw = str(attrs.get("limittoskill") or node.get("value") or "").strip()
+            skills = [part.strip() for part in limit_raw.split(",") if part.strip()]
+            effects["expertise_slots"].append(
+                {
+                    "source": source,
+                    "skills": skills,
+                    "limit_to_specialization": str(attrs.get("limittospecialization") or "").strip(),
+                }
+            )
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

@@ -399,6 +399,7 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
             "selectquality",
             "selectside",
             "actiondicepool",
+            "selectexpertise",
         }
         or _limit_spell_category_needs_select(node)
         or _limit_spirit_category_needs_select(node)
@@ -412,9 +413,21 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     select_options: list[str] = []
     spirit_options: list[str] = []
     spell_exclude: list[str] = []
+    expertise_skill = ""
     needs_spell_category = any(_limit_spell_category_needs_select(node) for node in (bonus or []))
     needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in (bonus or []))
-    if "selectquality" in tags:
+    if "selectexpertise" in tags:
+        kind = "expertise"
+        for node in bonus or []:
+            if node.get("tag") != "selectexpertise":
+                continue
+            limit = str((node.get("attrs") or {}).get("limittoskill") or node.get("value") or "").strip()
+            expertise_skill = next((part.strip() for part in limit.split(",") if part.strip()), "")
+            limit_spec = str((node.get("attrs") or {}).get("limittospecialization") or "").strip()
+            if limit_spec:
+                select_options = [part.strip() for part in limit_spec.split(",") if part.strip()]
+            break
+    elif "selectquality" in tags:
         kind = "quality"
         for node in bonus or []:
             if node.get("tag") != "selectquality":
@@ -457,6 +470,7 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
         "select_options": select_options,
         "spirit_options": spirit_options,
         "spell_exclude": spell_exclude,
+        "expertise_skill": expertise_skill,
     }
 
 
@@ -672,6 +686,7 @@ def load_qualities() -> list[dict[str, Any]]:
                 "extra_kind": extra_meta.get("extra_kind"),
                 "select_options": extra_meta.get("select_options") or [],
                 "spirit_options": extra_meta.get("spirit_options") or [],
+                "expertise_skill": extra_meta.get("expertise_skill") or "",
             }
         )
     return items
@@ -2425,11 +2440,24 @@ def catalog() -> dict[str, Any]:
         item["from_gear"] = bool(gear_id)
         item["add_gear_id"] = gear_id
     drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
+    skills = load_skills()
+    qualities = load_qualities()
+    skill_specs = {
+        str(skill.get("name") or ""): list(skill.get("specs") or [])
+        for skill in (skills.get("skills") or [])
+        if skill.get("name")
+    }
+    for quality in qualities:
+        if quality.get("extra_kind") != "expertise":
+            continue
+        skill_name = str(quality.get("expertise_skill") or "").strip()
+        if skill_name and not quality.get("select_options"):
+            quality["select_options"] = list(skill_specs.get(skill_name) or [])
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
-        "skills": load_skills(),
-        "qualities": load_qualities(),
+        "skills": skills,
+        "qualities": qualities,
         "cyberware": cyberware,
         "bioware": bioware,
         "powers": load_powers(),

@@ -156,6 +156,8 @@ EXCON_LAW_ROLE_HINTS = (
     " ke",
 )
 ERASED_LIFESTYLE_FORBIDDEN = {"High", "Luxury", "Commercial"}
+EXPERTISE_BONUS = 3
+SPECIALIZATION_BONUS = 2
 CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
@@ -4060,6 +4062,7 @@ def quality_needs_extra(spec: dict[str, Any]) -> bool:
             "selectquality",
             "selectside",
             "actiondicepool",
+            "selectexpertise",
         }
         for node in (spec.get("bonus") or [])
     )
@@ -5315,6 +5318,7 @@ def resolve_specializations(
     skill_totals: dict[str, int],
     skillsoft_active: dict[str, int],
     skillsoft_knowledge: dict[str, int],
+    free_expertise_skills: set[str] | None = None,
 ) -> dict[str, Any]:
     active_names = {skill["name"] for skill in skills_data.get("skills") or []}
     knowledge_names = {skill["name"] for skill in skills_data.get("knowledge") or []}
@@ -5325,6 +5329,7 @@ def resolve_specializations(
         | natives
         | {str(name).strip() for name in (skillsoft_knowledge or {}) if str(name).strip()}
     )
+    free_expertise = {str(name).strip() for name in (free_expertise_skills or set()) if str(name).strip()}
     cleaned: dict[str, str] = {}
     warnings: list[str] = []
     active_spent = 0
@@ -5342,7 +5347,8 @@ def resolve_specializations(
             if not native and rating < 1:
                 warnings.append(f"{name} の専門化には知識スキルが必要です")
                 continue
-            knowledge_spent += 1
+            if name not in free_expertise:
+                knowledge_spent += 1
         else:
             if name not in active_names:
                 warnings.append(f"{name} の専門化は未知のスキルです")
@@ -5351,7 +5357,8 @@ def resolve_specializations(
             if rating < 1:
                 warnings.append(f"{name} の専門化にはスキルが必要です")
                 continue
-            active_spent += 1
+            if name not in free_expertise:
+                active_spent += 1
         cleaned[name] = spec
     state.skill_specializations = cleaned
     return {
@@ -5360,6 +5367,58 @@ def resolve_specializations(
         "knowledge_spent": knowledge_spent,
         "specs": cleaned,
     }
+
+
+def apply_select_expertise(
+    state: CharacterState,
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    skill_totals: dict[str, int],
+    skillsoft_active: dict[str, int],
+    warnings: list[str],
+) -> tuple[list[dict[str, Any]], set[str]]:
+    """Grant free Expertise (+3) specializations from selectexpertise qualities."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    specs = dict(state.skill_specializations or {})
+    public: list[dict[str, Any]] = []
+    free_skills: set[str] = set()
+    for slot in effects.get("expertise_slots") or []:
+        source = str(slot.get("source") or "")
+        skills = [str(name).strip() for name in (slot.get("skills") or []) if str(name).strip()]
+        skill_name = skills[0] if skills else ""
+        spec_q = by_name.get(source)
+        if not spec_q or not skill_name:
+            continue
+        picked = str(extras.get(spec_q["id"]) or "").strip()
+        if not picked:
+            warnings.append(f"{source} の Expertise（専門化）を選んでください")
+            continue
+        rating = max(int(skill_totals.get(skill_name) or 0), int((skillsoft_active or {}).get(skill_name) or 0))
+        if rating < 1:
+            warnings.append(f"{source} には {skill_name} スキル（レーティング1以上）が必要です")
+            continue
+        limit_specs = [
+            part.strip()
+            for part in str(slot.get("limit_to_specialization") or "").split(",")
+            if part.strip()
+        ]
+        if limit_specs and picked not in limit_specs:
+            warnings.append(f"{source} の Expertise に {picked} は選べません")
+            continue
+        specs[skill_name] = picked
+        free_skills.add(skill_name)
+        public.append(
+            {
+                "skill": skill_name,
+                "spec": picked,
+                "bonus": EXPERTISE_BONUS,
+                "free": True,
+                "source": source,
+            }
+        )
+    state.skill_specializations = specs
+    return public, free_skills
 
 
 def _attach_specializations(public: list[dict[str, Any]], specs: dict[str, str]) -> None:
@@ -8601,14 +8660,30 @@ def compute(state: CharacterState) -> CharacterState:
         )
     skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
     _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
+    expertises, free_expertise_skills = apply_select_expertise(
+        state,
+        effects,
+        qualities,
+        skill_totals,
+        skillsofts["active"],
+        warnings,
+    )
     specs = resolve_specializations(
         state,
         data["skills"],
         skill_totals,
         skillsofts["active"],
         skillsofts["knowledge"],
+        free_expertise_skills=free_expertise_skills,
     )
     warnings.extend(specs["warnings"])
+    # Keep expertise picks even if resolve dropped a conflicting row.
+    for row in expertises:
+        skill_name = str(row.get("skill") or "")
+        spec_name = str(row.get("spec") or "")
+        if skill_name and spec_name:
+            specs["specs"][skill_name] = spec_name
+            state.skill_specializations[skill_name] = spec_name
     spec_active = int(specs["active_spent"])
     spec_knowledge = int(specs["knowledge_spent"])
     if is_karma:
@@ -9154,6 +9229,7 @@ def compute(state: CharacterState) -> CharacterState:
         },
         "skill_totals": skill_totals,
         "skill_specializations": specs["specs"],
+        "skill_expertises": expertises,
         "exotic_skills": exotic["public"],
         "skillsoft": skillsofts["all"],
         "skillwires": skillsofts["skillwires"],
@@ -9179,6 +9255,7 @@ def compute(state: CharacterState) -> CharacterState:
                 "extra_kind": q.get("extra_kind"),
                 "select_options": list(q.get("select_options") or []),
                 "spirit_options": list(q.get("spirit_options") or []),
+                "expertise_skill": q.get("expertise_skill") or "",
                 "selectside": _quality_has_selectside(q),
                 "side": _normalize_side(state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),

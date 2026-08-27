@@ -5179,6 +5179,42 @@ def test_ex_con_raises_corp_and_law_loyalty() -> None:
     assert law.derived["contacts"][0]["loyalty_min"] == 5
 
 
+INSPIRED_SASS = "fd9b9b6d-c969-40f1-8dc7-61f8e5d9cd4d"
+
+
+def test_inspired_grants_free_artisan_expertise() -> None:
+    out = compute(
+        _human(
+            "inspired",
+            quality_ids=[INSPIRED_SASS],
+            skills={"Artisan": 3},
+            quality_extras={INSPIRED_SASS: "Cooking"},
+        )
+    )
+    assert out.derived["skill_specializations"]["Artisan"] == "Cooking"
+    row = out.derived["skill_expertises"][0]
+    assert row["skill"] == "Artisan"
+    assert row["spec"] == "Cooking"
+    assert row["bonus"] == 3
+    assert row["free"] is True
+    assert out.derived["points"]["skills"]["used"] == 3  # rating only; expertise is free
+    assert "selectexpertise" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_inspired_requires_choice_and_skill() -> None:
+    missing = compute(_human("insp-empty", quality_ids=[INSPIRED_SASS], skills={"Artisan": 2}))
+    assert any("Expertise" in warn for warn in missing.derived["warnings"])
+    no_skill = compute(
+        _human(
+            "insp-noskill",
+            quality_ids=[INSPIRED_SASS],
+            skills={"Artisan": 0},
+            quality_extras={INSPIRED_SASS: "Cooking"},
+        )
+    )
+    assert any("Artisan スキル" in warn for warn in no_skill.derived["warnings"])
+
+
 def test_photographic_memory_and_quick_healer() -> None:
     out = compute(_human("mem-heal", quality_ids=[PHOTOGRAPHIC_MEMORY, QUICK_HEALER]))
     assert out.derived["test_mods"]["memory"] == 2

@@ -17,6 +17,15 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
   const skillMax = d.skill_rating_max ?? 6;
   const groupMax = d.skill_group_max ?? 6;
   const career = Boolean(ch.career || d.career);
+  const expertiseBySkill = useMemo(() => {
+    const map = new Map<string, { spec: string; bonus: number; source?: string }>();
+    for (const row of d.skill_expertises || []) {
+      if (row.skill && row.spec) {
+        map.set(row.skill, { spec: row.spec, bonus: row.bonus || 3, source: row.source });
+      }
+    }
+    return map;
+  }, [d.skill_expertises]);
 
   const catalogKnowledge = new Set((catalog.skills.knowledge || []).map((item) => item.name));
   const filteredKnowledge = useMemo(() => {
@@ -151,7 +160,8 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
             ))}
             <h3>アクティブスキル</h3>
             {catalog.skills.skills.filter((s) => s.source === "SR5" && !s.name.includes("Exotic")).map((s) => {
-              const specValue = ch.skill_specializations?.[s.name] || "";
+              const expertise = expertiseBySkill.get(s.name);
+              const specValue = expertise?.spec || ch.skill_specializations?.[s.name] || "";
               const hasSkill = (ch.skills[s.name] || 0) > 0 || (d.skill_totals[s.name] || 0) > 0 || (d.skillsoft?.[s.name] || 0) > 0;
               return (
               <div className="skill-row has-spec" key={s.id}>
@@ -174,7 +184,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 <SpecPicker
                   options={[...(s.specs || []), ...(d.martial_spec_options?.[s.name] || [])]}
                   value={specValue}
-                  disabled={!hasSkill}
+                  disabled={!hasSkill || Boolean(expertise)}
                   tr={tr}
                   onDraft={(next) => draftSpec(s.name, next)}
                   onCommit={(next) => commitSpec(s.name, next)}
@@ -182,7 +192,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 <b>
                   {skillDice(Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0), d.skill_bonus?.[s.name])}
                   {skillsoftBit(d.skillsoft?.[s.name])}
-                  {specBit(specValue, tr(specValue))}
+                  {specBit(specValue, tr(specValue), expertise?.bonus || 2)}
                 </b>
               </div>
               );

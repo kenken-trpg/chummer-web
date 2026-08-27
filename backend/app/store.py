@@ -211,6 +211,7 @@ def public_catalog() -> dict:
             "extra_kind": q.get("extra_kind") or "",
             "select_options": list(q.get("select_options") or []),
             "spirit_options": list(q.get("spirit_options") or []),
+            "expertise_skill": q.get("expertise_skill") or "",
             "max_takes": q.get("max_takes"),
             "required_tree": q.get("required_tree") or [],
             "forbidden_tree": q.get("forbidden_tree") or [],

@@ -50,6 +50,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
     extra_kind?: string | null;
     select_options?: string[];
     spirit_options?: string[];
+    expertise_skill?: string;
     selectside?: boolean;
   }) {
     const kind =
@@ -151,6 +152,49 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               })
             }
           />
+        </div>
+      );
+    }
+    if (kind === "expertise") {
+      const current = ch.quality_extras?.[q.id] || "";
+      const skillName = q.expertise_skill || catalogById.get(q.id)?.expertise_skill || "";
+      const known = options.length
+        ? options
+        : (catalog.skills.skills.find((s) => s.name === skillName)?.specs || []);
+      return (
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <select
+            value={known.includes(current) ? current : ""}
+            onChange={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          >
+            <option value="">{skillName ? `${skillName} の Expertise` : "Expertise"}を選択</option>
+            {known.map((name) => (
+              <option key={name} value={name}>
+                {tr(name)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="または手入力"
+            value={current}
+            onChange={(e) =>
+              setCharacter({
+                ...ch,
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+            onBlur={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          />
+          <span className="muted">専門+3（無料）</span>
         </div>
       );
     }

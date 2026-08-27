@@ -1423,6 +1423,7 @@ export interface Character {
     };
     skill_totals: Record<string, number>;
     skill_specializations?: Record<string, string>;
+    skill_expertises?: { skill: string; spec: string; bonus: number; free?: boolean; source?: string }[];
     exotic_skills?: InstalledExoticSkill[];
     skillsoft?: Record<string, number>;
     skillwires?: number;
@@ -1478,6 +1479,7 @@ export interface Character {
       extra_kind?: string | null;
       select_options?: string[];
       spirit_options?: string[];
+      expertise_skill?: string;
       selectside?: boolean;
       side?: string | null;
       free?: boolean;
@@ -1553,6 +1555,7 @@ export interface Catalog {
     extra_kind?: string | null;
     select_options?: string[];
     spirit_options?: string[];
+    expertise_skill?: string;
     max_takes?: number | null;
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
