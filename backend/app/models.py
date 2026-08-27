@@ -189,6 +189,8 @@ class MartialArtInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     art_id: str
     techniques: list[str] = Field(default_factory=list)
+    free: bool = False
+    source_quality_id: str | None = None
 
 
 class InitiationChoice(BaseModel):

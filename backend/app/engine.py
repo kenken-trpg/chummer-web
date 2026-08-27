@@ -5459,6 +5459,16 @@ def _martial_art_by_id(art_id: str) -> dict[str, Any] | None:
     return None
 
 
+def _martial_art_by_name(name: str) -> dict[str, Any] | None:
+    needle = str(name or "").strip()
+    if not needle:
+        return None
+    for item in catalog().get("martial_arts") or []:
+        if item["name"] == needle:
+            return item
+    return None
+
+
 def _martial_technique_by_name(name: str) -> dict[str, Any] | None:
     for item in catalog().get("martial_art_techniques") or []:
         if item["name"] == name:
@@ -5479,6 +5489,64 @@ def _martial_art_spec_options(bonus_nodes: list[dict[str, Any]] | None) -> list[
     return options
 
 
+def sync_quality_martial_arts(
+    state: CharacterState,
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+) -> list[str]:
+    """Ensure free martial arts granted by martialart qualities exist; drop orphans."""
+    warnings: list[str] = []
+    by_qname = {q["name"]: q for q in qualities}
+    specs: list[dict[str, Any]] = []
+    for entry in effects.get("free_martial_arts") or []:
+        art_name = str(entry.get("name") or "").strip()
+        q = by_qname.get(str(entry.get("source") or "").strip())
+        art = _martial_art_by_name(art_name)
+        if not q or not art:
+            continue
+        specs.append({"art": art, "quality_id": q["id"], "quality_name": q["name"]})
+    wanted_qids = {str(s["quality_id"]) for s in specs}
+
+    remaining: list[MartialArtInstall] = []
+    for inst in state.martial_arts or []:
+        sq = str(inst.source_quality_id or "").strip()
+        if sq and sq not in wanted_qids:
+            continue
+        remaining.append(inst)
+
+    existing_by_qid = {
+        str(inst.source_quality_id): inst
+        for inst in remaining
+        if str(inst.source_quality_id or "").strip()
+    }
+    existing_art_ids = {str(inst.art_id) for inst in remaining}
+    for spec in specs:
+        art = spec["art"]
+        qid = str(spec["quality_id"])
+        if qid in existing_by_qid:
+            inst = existing_by_qid[qid]
+            inst.art_id = art["id"]
+            inst.free = True
+            continue
+        if art["id"] in existing_art_ids:
+            for inst in remaining:
+                if str(inst.art_id) == art["id"]:
+                    inst.free = True
+                    inst.source_quality_id = qid
+                    break
+            continue
+        remaining.append(
+            MartialArtInstall(
+                art_id=art["id"],
+                techniques=[],
+                free=True,
+                source_quality_id=qid,
+            )
+        )
+    state.martial_arts = remaining
+    return warnings
+
+
 def resolve_martial_arts(
     state: CharacterState,
     ctx: dict[str, Any],
@@ -5494,13 +5562,15 @@ def resolve_martial_arts(
     unarmed_reach = 0
     karma = 0
     technique_total = 0
+    paid_style_count = 0
 
     for inst in state.martial_arts or []:
         spec = _martial_art_by_id(inst.art_id)
         if not spec:
             warnings.append("未知の武道を外しました")
             continue
-        if spec.get("is_quality"):
+        is_free = bool(inst.free or inst.source_quality_id)
+        if spec.get("is_quality") and not is_free:
             warnings.append(f"{spec['name']} はクオリティ経由のみです")
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
@@ -5521,26 +5591,33 @@ def resolve_martial_arts(
                 continue
             seen.add(name)
             picked.append(name)
+        # Quality arts (One Trick Pony) grant a single free technique.
+        if is_free and spec.get("is_quality") and len(picked) > 1:
+            warnings.append(f"{spec['name']} は技を1つまでです（余分を外しました）")
+            picked = picked[:1]
         if not picked:
             warnings.append(f"{spec['name']} の技を1つ選んでください")
-            continue
+            if not is_free:
+                continue
 
-        style_cost = int(spec.get("cost") or MARTIAL_ART_STYLE_KARMA)
-        paid_techniques = max(0, len(picked) - 1)
+        style_cost = 0 if is_free else int(spec.get("cost") or MARTIAL_ART_STYLE_KARMA)
+        paid_techniques = 0 if is_free else max(0, len(picked) - 1)
         art_karma = style_cost + paid_techniques * MARTIAL_ART_TECHNIQUE_KARMA
         karma += art_karma
         technique_total += len(picked)
+        if not is_free:
+            paid_style_count += 1
 
         tech_public: list[dict[str, Any]] = []
         for idx, name in enumerate(picked):
             tech = _martial_technique_by_name(name) or {"id": "", "name": name, "bonus": [], "source": "", "page": ""}
-            free = idx == 0
+            free_tech = is_free or idx == 0
             tech_public.append(
                 {
                     "id": tech.get("id") or "",
                     "name": name,
-                    "free": free,
-                    "karma": 0 if free else MARTIAL_ART_TECHNIQUE_KARMA,
+                    "free": free_tech,
+                    "karma": 0 if free_tech else MARTIAL_ART_TECHNIQUE_KARMA,
                     "source": tech.get("source") or "",
                     "page": tech.get("page") or "",
                 }
@@ -5555,7 +5632,6 @@ def resolve_martial_arts(
             bucket = spec_extras.setdefault(skill_name, [])
             if spec_name not in bucket:
                 bucket.append(spec_name)
-        # Still collect other art bonuses (none today besides addskillspecializationoption)
         other_nodes = [
             node
             for node in (spec.get("bonus") or [])
@@ -5565,6 +5641,7 @@ def resolve_martial_arts(
             bonus_sources.append((spec["name"], other_nodes))
 
         inst.techniques = picked
+        inst.free = is_free
         kept.append(inst)
         public.append(
             {
@@ -5575,17 +5652,21 @@ def resolve_martial_arts(
                 "page": spec.get("page") or "",
                 "style_karma": style_cost,
                 "karma": art_karma,
+                "free": is_free,
+                "locked": bool(inst.source_quality_id),
+                "source_quality_id": inst.source_quality_id,
                 "techniques": tech_public,
                 "technique_options": sorted(allowed),
+                "technique_max": 1 if (is_free and spec.get("is_quality")) else None,
             }
         )
 
     state.martial_arts = kept
     style_max = 99 if career else MARTIAL_ART_CHARGEN_STYLE_MAX
     tech_max = 99 if career else MARTIAL_ART_CHARGEN_TECHNIQUE_MAX
-    if not career and len(kept) > MARTIAL_ART_CHARGEN_STYLE_MAX:
+    if not career and paid_style_count > MARTIAL_ART_CHARGEN_STYLE_MAX:
         errors.append(
-            f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {len(kept)}）"
+            f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {paid_style_count}）"
         )
     if not career and technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
         errors.append(
@@ -5596,7 +5677,7 @@ def resolve_martial_arts(
         "warnings": warnings,
         "public": public,
         "karma": karma,
-        "style_count": len(kept),
+        "style_count": paid_style_count,
         "technique_count": technique_total,
         "style_max": style_max,
         "technique_max": tech_max,
@@ -8387,6 +8468,7 @@ def compute(state: CharacterState) -> CharacterState:
         **martial_ctx,
         "qualities": set(martial_ctx.get("qualities") or []) | {talent["name"]},
     }
+    warnings.extend(sync_quality_martial_arts(state, effects, qualities))
     martial = resolve_martial_arts(state, martial_ctx, errors, career=career)
     warnings.extend(martial["warnings"])
     karma_spent += int(martial.get("karma") or 0)

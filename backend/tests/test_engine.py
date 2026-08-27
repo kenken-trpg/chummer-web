@@ -4856,6 +4856,74 @@ def test_martial_art_chargen_limits() -> None:
     assert any("技は合計5つまで" in err for err in out2.derived["errors"])
 
 
+ONE_TRICK_PONY = "98644894-e3a4-41f2-9b7e-91feb74d0334"
+ONE_TRICK_PONY_ART = "0325b2c8-0a48-497f-92b1-2830a5ac467f"
+
+
+def test_one_trick_pony_grants_free_quality_art() -> None:
+    out = compute(_mundane("otp", quality_ids=[ONE_TRICK_PONY]))
+    row = next(a for a in out.derived["martial_arts"] if a.get("art_id") == ONE_TRICK_PONY_ART)
+    assert row["free"] is True
+    assert row["locked"] is True
+    assert row["karma"] == 0
+    assert row["style_karma"] == 0
+    assert row["technique_max"] == 1
+    assert out.derived["martial_art_points"]["styles"] == 0
+    assert out.derived["martial_art_points"]["karma"] == 0
+    assert any("技を1つ選んでください" in warn for warn in out.derived["warnings"])
+    assert "martialart" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    # quality karma only
+    assert out.derived["karma"]["spent"] == 7
+
+
+def test_one_trick_pony_technique_is_free_and_single() -> None:
+    out = compute(
+        _mundane(
+            "otp-kick",
+            quality_ids=[ONE_TRICK_PONY],
+            martial_arts=[
+                MartialArtInstall(
+                    art_id=ONE_TRICK_PONY_ART,
+                    techniques=["Kick Attack", "Counterstrike"],
+                    free=True,
+                    source_quality_id=ONE_TRICK_PONY,
+                )
+            ],
+        )
+    )
+    row = next(a for a in out.derived["martial_arts"] if a.get("art_id") == ONE_TRICK_PONY_ART)
+    assert len(row["techniques"]) == 1
+    assert row["techniques"][0]["name"] == "Kick Attack"
+    assert row["techniques"][0]["free"] is True
+    assert row["karma"] == 0
+    assert out.derived["unarmed_reach"] == 1
+    assert out.derived["martial_art_points"]["techniques"] == 1
+    assert any("技を1つまで" in warn for warn in out.derived["warnings"])
+
+
+def test_one_trick_pony_does_not_block_paid_style() -> None:
+    out = compute(
+        _mundane(
+            "otp-karate",
+            quality_ids=[ONE_TRICK_PONY],
+            martial_arts=[
+                MartialArtInstall(
+                    art_id=ONE_TRICK_PONY_ART,
+                    techniques=["Counterstrike"],
+                    free=True,
+                    source_quality_id=ONE_TRICK_PONY,
+                ),
+                MartialArtInstall(art_id=_karate_id(), techniques=["Kick Attack"]),
+            ],
+        )
+    )
+    assert out.derived["martial_art_points"]["styles"] == 1
+    assert len(out.derived["martial_arts"]) == 2
+    assert out.derived["errors"] == []
+    # quality 7 + karate style 7
+    assert out.derived["karma"]["spent"] == 14
+
+
 ATTACK_UPGRADE = "36aa9af4-5c04-40d9-ba09-31b401cc1ff0"
 OVERCLOCKING = "61055141-71f5-400e-9e67-cef650ce4801"
 RESONANCE_PROGRAM = "d5dbe3f7-8a44-466b-8d5d-db9f0c68ee6b"

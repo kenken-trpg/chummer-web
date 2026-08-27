@@ -643,9 +643,10 @@ export default function CharacterSheet({
           {(d.martial_arts || []).map((art) => (
             <li key={art.id}>
               <b>{tr(art.name)}</b>
+              {art.free ? " ★" : ""}
               {(art.techniques || []).length
                 ? ` ・ ${art.techniques.map((t) => tr(t.name)).join("、")}`
-                : ""}
+                : " ・ 技未選択"}
             </li>
           ))}
         </ul>

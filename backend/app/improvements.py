@@ -120,6 +120,7 @@ IMPLEMENTED = {
     "contactkarmaminimum",
     "disablecyberwaregrade",
     "disablebiowaregrade",
+    "martialart",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -203,7 +204,6 @@ SILENT_TAGS = {
     "addesstostuncmrecovery",
     "swapskillattribute",
     "swapskillspecattribute",
-    "martialart",
     "skillgrouplevel",
     "matrixinitiativedice",
     "devicerating",
@@ -437,6 +437,7 @@ def empty_effects() -> dict[str, Any]:
         "disable_bioware": False,
         "disabled_cyberware_grades": [],
         "disabled_bioware_grades": [],
+        "free_martial_arts": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -934,6 +935,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["disabled_bioware_grades"]:
                 effects["disabled_bioware_grades"].append(name)
+        elif tag == "martialart":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name:
+                effects["free_martial_arts"].append({"name": name, "source": source})
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

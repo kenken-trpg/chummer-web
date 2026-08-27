@@ -70,6 +70,8 @@ export interface MartialArtInstall {
   id?: string;
   art_id: string;
   techniques?: string[];
+  free?: boolean;
+  source_quality_id?: string | null;
 }
 
 export interface InitiationChoice {
@@ -103,8 +105,12 @@ export interface InstalledMartialArt {
   page?: string;
   style_karma: number;
   karma: number;
+  free?: boolean;
+  locked?: boolean;
+  source_quality_id?: string | null;
   techniques: InstalledMartialArtTechnique[];
   technique_options: string[];
+  technique_max?: number | null;
 }
 
 export interface MartialArtCatalogItem {
