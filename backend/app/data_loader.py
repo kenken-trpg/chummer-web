@@ -327,7 +327,7 @@ def _parse_requirement_node(el: ET.Element) -> dict[str, Any]:
 
 
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
-    return any(node.get("tag") == "selecttext" for node in (bonus or []))
+    return any(node.get("tag") in {"selecttext", "selectattributes"} for node in (bonus or []))
 
 
 def _parent_name_requirements(el: ET.Element) -> list[str]:
@@ -1838,15 +1838,114 @@ def load_lifestyles() -> list[dict[str, Any]]:
         lifestyle_id = _text(el.find("id"))
         if not name or not lifestyle_id or name.startswith("ID ERROR"):
             continue
+        freegrids = [
+            {
+                "name": _text(fg) or "Grid Subscription",
+                "select": fg.attrib.get("select") or "",
+            }
+            for fg in el.findall("./freegrids/freegrid")
+        ]
         items.append(
             {
                 "id": lifestyle_id,
                 "name": name,
                 "cost": _int(el.find("cost")),
                 "dice": _int(el.find("dice")),
+                "lp": _int(el.find("lp")),
+                "multiplier": _int(el.find("multiplier"), 100),
+                "cost_for_comforts": _int(el.find("costforcomforts")),
+                "cost_for_security": _int(el.find("costforsecurity")),
+                "cost_for_area": _int(el.find("costforarea")),
                 "increment": _text(el.find("increment"), "month"),
+                "freegrids": freegrids,
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_lifestyle_qualities() -> list[dict[str, Any]]:
+    path = DATA_DIR / "lifestyles.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./qualities/quality"):
+        name = _text(el.find("name"))
+        qid = _text(el.find("id"))
+        if not name or not qid:
+            continue
+        allowed_raw = _text(el.find("allowed"))
+        allowed = [part.strip() for part in allowed_raw.split(",") if part.strip()] if allowed_raw else []
+        bonus = parse_bonus(el.find("bonus"))
+        items.append(
+            {
+                "id": qid,
+                "name": name,
+                "category": _text(el.find("category")),
+                "lp": _int(el.find("lp")),
+                "cost": _int(el.find("cost")),
+                "multiplier": _int(el.find("multiplier")),
+                "allowed": allowed,
+                "allow_multiple": el.find("allowmultiple") is not None,
+                "needs_extra": quality_needs_extra(bonus),
+                "bonus": bonus,
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_drug_grades() -> list[dict[str, Any]]:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if _text(el.find("category")) != "Drug Grades":
+            continue
+        if el.find("hide") is not None:
+            continue
+        name = _text(el.find("name"))
+        gear_id = _text(el.find("id"))
+        if not name or not gear_id:
+            continue
+        items.append(
+            {
+                "id": gear_id,
+                "name": name,
+                "category": "Drug Grades",
+                "cost": _text(el.find("cost"), "0"),
+                "avail": _text(el.find("avail")),
+                "minrating": 0,
+                "maxrating": 0,
+                "capacity": "",
+                "plugin": True,
+                "host_capacity": "",
+                "plugin_capacity": "0",
+                "requireparent": True,
+                "addoncategories": [],
+                "required_names": [],
+                "required_categories": ["Drugs", "Toxins", "Chemicals"],
+                "included": [],
+                "ammo_weapon_types": [],
+                "costfor": 0,
+                "weapon_details": "",
+                "add_weapon": "",
+                "weaponbonus": {},
+                "bonus": parse_bonus(el.find("bonus")),
+                "devicerating": "0",
+                "attack": "0",
+                "sleaze": "0",
+                "dataprocessing": "0",
+                "firewall": "0",
+                "attributearray": "",
+                "programs": "0",
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+                "extra_kind": "",
+                "needs_extra": False,
             }
         )
     return items
@@ -2140,6 +2239,12 @@ def catalog() -> dict[str, Any]:
             all_by_name.setdefault(mv["name"], mv)
     weapons = load_weapons()
     gear = load_gear()
+    drug_grades = load_drug_grades()
+    gear_ids = {item["id"] for item in gear}
+    for grade in drug_grades:
+        if grade["id"] not in gear_ids:
+            gear.append(grade)
+            gear_ids.add(grade["id"])
     cyberware = load_cyberware()
     bioware = load_bioware()
     weapon_ids = {item["name"]: item["id"] for item in weapons}
@@ -2158,6 +2263,7 @@ def catalog() -> dict[str, Any]:
         gear_id = gear_for_weapon.get(item["name"]) or ""
         item["from_gear"] = bool(gear_id)
         item["add_gear_id"] = gear_id
+    drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
@@ -2188,12 +2294,15 @@ def catalog() -> dict[str, Any]:
         "apps": load_apps(),
         "sensors": load_sensors(),
         "gear": gear,
+        "drugs": drugs,
+        "drug_grades": drug_grades,
         "drones": load_drones(),
         "vehicles": load_vehicles(),
         "vehicle_mods": load_vehicle_mods(),
         "weapon_mounts": load_weapon_mounts(),
         "vehicle_names": load_vehicle_names(),
         "lifestyles": load_lifestyles(),
+        "lifestyle_qualities": load_lifestyle_qualities(),
         "martial_arts": load_martial_arts(),
         "martial_art_techniques": load_martial_art_techniques(),
         "metamagics": load_metamagics(),
