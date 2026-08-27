@@ -300,6 +300,38 @@ export interface LifestyleInstall {
   id?: string;
   lifestyle_id: string;
   months?: number;
+  quality_ids?: string[];
+  quality_extras?: Record<string, string>;
+}
+
+export interface LifestyleQualityCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  lp: number;
+  cost: number;
+  multiplier: number;
+  allowed: string[];
+  allow_multiple?: boolean;
+  needs_extra?: boolean;
+  source?: string;
+  page?: string;
+}
+
+export interface InstalledLifestyleQuality {
+  id: string;
+  quality_id: string;
+  name: string;
+  category?: string;
+  lp: number;
+  cost: number;
+  free?: boolean;
+  from_freegrid?: boolean;
+  multiplier?: number;
+  extra?: string;
+  needs_extra?: boolean;
+  source?: string;
+  page?: string;
 }
 
 export interface SpecialArmor {
@@ -308,7 +340,13 @@ export interface SpecialArmor {
   electricity?: number;
   radiation?: number;
   toxin_contact?: number;
+  toxin_ingestion?: number;
+  toxin_inhalation?: number;
+  toxin_injection?: number;
   pathogen_contact?: number;
+  pathogen_ingestion?: number;
+  pathogen_inhalation?: number;
+  pathogen_injection?: number;
   immunities?: {
     toxin_contact?: boolean;
     toxin_inhalation?: boolean;
@@ -500,7 +538,14 @@ export interface InstalledLifestyle {
   months: number;
   increment: string;
   monthly: number;
+  base_monthly?: number;
+  quality_monthly?: number;
+  multiplier_pct?: number;
   nuyen: number;
+  lp_used?: number;
+  lp_max?: number;
+  dice?: number;
+  qualities?: InstalledLifestyleQuality[];
   source?: string;
 }
 
@@ -682,7 +727,10 @@ export interface LifestyleCatalogItem {
   name: string;
   cost: number;
   dice: number;
+  lp?: number;
+  multiplier?: number;
   increment: string;
+  freegrids?: { name: string; select?: string }[];
   source: string;
   page: string;
 }
@@ -1121,6 +1169,17 @@ export interface Character {
   submersion_grade?: number;
   submersions?: SubmersionChoice[];
   karma_nuyen?: number;
+  career?: boolean;
+  karma_earned?: number;
+  nuyen_earned?: number;
+  career_baseline?: {
+    attributes?: Record<string, number>;
+    skills?: Record<string, number>;
+    skill_groups?: Record<string, number>;
+    knowledge_skills?: Record<string, number>;
+    skill_specializations?: string[];
+    exotic_skills?: Record<string, number>;
+  } | null;
   tradition_id?: string | null;
     stream_id?: string | null;
   options?: {
@@ -1131,6 +1190,16 @@ export interface Character {
     errors: string[];
     warnings?: string[];
     build_method?: string;
+    career?: boolean;
+    karma_earned?: number;
+    nuyen_earned?: number;
+    nuyen_pool?: number;
+    career_advancement_karma?: number;
+    skill_rating_max?: number;
+    skill_group_max?: number;
+    avail_limit?: number | null;
+    device_rating_limit?: number | null;
+    ware_attr_limit?: number | null;
     sum_to_ten?: {
       used: number;
       max: number;
@@ -1183,11 +1252,9 @@ export interface Character {
     rcc?: InstalledMatrixDevice | null;
     lifestyle?: InstalledLifestyle | null;
     nuyen: number;
-    avail_limit?: number;
-    device_rating_limit?: number;
-    ware_attr_limit?: number;
+    nuyen_spent?: number;
     ware_attr_bonus?: Record<string, number>;
-    karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number } };
+    karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number | null } };
     points: Record<string, { used: number; max: number }>;
     knowledge_skills?: {
       name: string;
@@ -1210,6 +1277,28 @@ export interface Character {
     };
     martial_spec_options?: Record<string, string[]>;
     unarmed_reach?: number;
+    reach?: number;
+    lifestyle_cost_mod?: number;
+    notoriety?: number;
+    fame?: number;
+    public_awareness?: number;
+    fatigue_resist?: number;
+    spell_resistance?: number;
+    spell_dice_pool?: { name: string; id?: string; bonus: number; source?: string }[];
+    test_mods?: {
+      memory?: number;
+      composure?: number;
+      judge_intentions?: number;
+      judge_intentions_defense?: number;
+      judge_intentions_offense?: number;
+      dodge?: number;
+      surprise?: number;
+    };
+    cm_recovery?: { physical: number; stun: number };
+    essence_penalty?: number;
+    attribute_max_bonus?: Record<string, number>;
+    disabled_skills?: string[];
+    disabled_skill_groups?: string[];
     initiate_grade?: number;
     initiation?: {
       grade: number;
@@ -1316,7 +1405,6 @@ export interface Character {
     qualities: { id: string; name: string; karma: number; category: string; source: string; needs_extra?: boolean; extra?: string }[];
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
-    nuyen_spent?: number;
     essence_lost_cyber?: number;
     essence_lost_bio?: number;
     ware_ranges?: Record<string, { min: number; max: number }>;
@@ -1468,6 +1556,9 @@ export interface Catalog {
   apps?: ProgramCatalogItem[];
   weapon_accessories?: WeaponAccessoryCatalogItem[];
   lifestyles?: LifestyleCatalogItem[];
+  lifestyle_qualities?: LifestyleQualityCatalogItem[];
+  drugs?: GearCatalogItem[];
+  drug_grades?: GearCatalogItem[];
   martial_arts?: MartialArtCatalogItem[];
   martial_art_techniques?: { id: string; name: string; source?: string; page?: string }[];
   metamagics?: {

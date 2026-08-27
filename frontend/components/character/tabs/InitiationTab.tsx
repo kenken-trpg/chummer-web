@@ -1,0 +1,126 @@
+"use client";
+
+import type { TabPanelProps } from "@/components/character/types";
+
+export function InitiationTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+
+  return (
+          <div className="card">
+            <p className="muted">
+              等級 {d.initiation?.grade || 0}
+              {" ・ "}カルマ {d.initiation?.karma || 0}
+              （各等級 10 + 等級×3。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）
+            </p>
+            <label>
+              イニシエーション等級
+              <input
+                type="range"
+                min={0}
+                max={Math.max(6, Number(d.totals.MAG || 0))}
+                value={ch.initiate_grade || 0}
+                onChange={(e) => {
+                  const grade = Number(e.target.value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  setCharacter({ ...ch, initiate_grade: grade, initiations: next });
+                }}
+                onMouseUp={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  patch({ initiate_grade: grade, initiations: next });
+                }}
+                onTouchEnd={(e) => {
+                  const grade = Number((e.target as HTMLInputElement).value);
+                  const existing = [...(ch.initiations || [])];
+                  const byGrade = new Map(existing.map((row) => [row.grade, row]));
+                  const next = [];
+                  for (let g = 1; g <= grade; g += 1) {
+                    next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+                  }
+                  patch({ initiate_grade: grade, initiations: next });
+                }}
+              />
+              <b style={{ marginLeft: 8 }}>{ch.initiate_grade || 0}</b>
+            </label>
+            <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+              {(d.initiation?.choices || []).map((choice) => {
+                const local = (ch.initiations || []).find((row) => row.grade === choice.grade);
+                const kind = (local?.kind || choice.kind || "metamagic") as string;
+                const optionId = local?.option_id || choice.option_id || "";
+                const talentName = ch.talent || "";
+                const canAdept = talentName === "Adept" || talentName === "Mystic Adept";
+                const canMagician = talentName !== "Adept";
+                const metaOptions = (catalog.metamagics || []).filter((item) => {
+                  if (canAdept && !canMagician) return item.adept;
+                  if (canMagician && !canAdept) return item.magician;
+                  return item.adept || item.magician;
+                });
+                return (
+                  <div className="cyber-item" key={choice.id || choice.grade}>
+                    <div style={{ width: "100%" }}>
+                      <b>等級 {choice.grade}</b>
+                      <div className="muted">{choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}</div>
+                      <div className="grid" style={{ marginTop: 8 }}>
+                        <label>
+                          種類
+                          <select
+                            value={kind}
+                            onChange={(e) => {
+                              const nextKind = e.target.value;
+                              const initiations = (ch.initiations || []).map((row) => (
+                                row.grade === choice.grade
+                                  ? { ...row, kind: nextKind, option_id: "" }
+                                  : row
+                              ));
+                              patch({ initiations });
+                            }}
+                          >
+                            <option value="metamagic">メタマジック</option>
+                            <option value="art">Art</option>
+                          </select>
+                        </label>
+                        <label>
+                          {kind === "art" ? "Art" : "メタマジック"}
+                          <select
+                            value={optionId}
+                            onChange={(e) => {
+                              const initiations = (ch.initiations || []).map((row) => (
+                                row.grade === choice.grade
+                                  ? { ...row, kind, option_id: e.target.value }
+                                  : row
+                              ));
+                              patch({ initiations });
+                            }}
+                          >
+                            <option value="">選択してください</option>
+                            {kind === "art"
+                              ? (catalog.magic_arts || []).map((item) => (
+                                  <option key={item.id} value={item.id}>{tr(item.name)} ({item.name})</option>
+                                ))
+                              : metaOptions.map((item) => (
+                                  <option key={item.id} value={item.id}>
+                                    {tr(item.name)} ({item.name})
+                                    {item.required?.length ? ` / 要 ${item.required.join(", ")}` : ""}
+                                  </option>
+                                ))}
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+  );
+}

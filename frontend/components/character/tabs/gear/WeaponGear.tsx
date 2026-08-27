@@ -1,0 +1,267 @@
+"use client";
+
+import { useState } from "react";
+import type { TabPanelProps } from "@/components/character/types";
+import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
+import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
+import { removeWareTree } from "@/lib/character/ware";
+
+export function WeaponGear({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+  const [gearSearch, setGearSearch] = useState("");
+  const [gearCat, setGearCat] = useState("all");
+  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
+  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
+
+
+  return (
+    <>
+              <>
+                {(d.weapons || []).map((item) => {
+                  const installedNames = (item.accessories || []).map((acc) => acc.name);
+                  const parentCost = (catalog.weapons || []).find((row) => row.id === item.weapon_id)?.cost;
+                  const addons = (catalog.weapon_accessories || []).filter((mod) => (
+                    accessoryFits(mod, item, installedNames)
+                    && !(item.accessories || []).some((acc) => acc.accessory_id === mod.id)
+                  ));
+                  const ammoKey = `${item.id}-ammo`;
+                  const ammoAddons = (catalog.gear || []).filter((mod) => (
+                    ammoFits(mod, item)
+                    && !(item.ammo_gear || []).some((row) => row.gear_id === mod.id)
+                  ));
+                  const fromGear = Boolean(item.from_gear && item.source_gear_id);
+                  const fromWare = Boolean(item.from_ware && item.source_ware_id);
+                  return (
+                  <div className="cyber-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
+                        {fromGear ? " / ギア連動" : ""}
+                        {fromWare ? " / ウェア連動" : ""}
+                        {item.limb_str != null ? ` / 肢 STR ${item.limb_str}` : ""}
+                        {item.useskill ? ` / ${item.useskill}` : ""}
+                        {item.focus_dice ? ` / フォーカス+${item.focus_dice}` : ""}
+                        {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
+                      </div>
+                      {fromWare ? null : (
+                      <div className="cyber-controls">
+                        <label>
+                          数量
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.qty}
+                            onChange={(e) => {
+                              const qty = Number(e.target.value);
+                              if (fromGear) {
+                                patch({
+                                  gear: (ch.gear || []).map((row) => (
+                                    row.id === item.source_gear_id ? { ...row, qty } : row
+                                  )),
+                                });
+                                return;
+                              }
+                              patch({
+                                weapons: (ch.weapons || []).map((row) => (
+                                  row.id === item.id ? { ...row, qty } : row
+                                )),
+                              });
+                            }}
+                          />
+                        </label>
+                      </div>
+                      )}
+                      {(item.accessories || []).map((acc) => (
+                        <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
+                          {tr(acc.name)}
+                          {acc.mount ? ` / ${acc.mount}` : ""}
+                          {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                          {availBit(acc)}
+                          {availBit(acc)}
+                          {acc.included ? null : (
+                            <>
+                              {" "}
+                              <button className="btn danger" onClick={() => patch({
+                                weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.id !== acc.id),
+                              })}>外す</button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                      {!fromGear && addons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[item.id] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
+                          >
+                            <option value="">アクセサリを追加</option>
+                            {addons
+                              .filter((mod) => mod.source === "SR5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAccessoryCost(mod.cost, parentCost)})</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[item.id]}
+                            onClick={() => {
+                              const wareId = slotPick[item.id];
+                              const spec = addons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                weapon_accessories: [...(ch.weapon_accessories || []), { accessory_id: spec.id, parent_id: item.id }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                      {(item.ammo_gear || []).map((ammo) => (
+                        <div className="muted" key={ammo.id} style={{ marginTop: 6 }}>
+                          {tr(ammo.label || ammo.name)}
+                          {ammo.loaded ? " / 装填中" : ""}
+                          {ammo.qty > 1 ? ` ×${ammo.qty}` : ""}
+                          {ammo.costfor ? ` / ${(ammo.costfor * ammo.qty).toLocaleString()}発` : ""}
+                          {` / ${ammo.nuyen.toLocaleString()}¥`}
+                          {" "}
+                          {(ammo.ammo_weapon_types || []).length > 0 && !ammo.loaded ? (
+                            <button className="btn" onClick={() => patch({
+                              weapons: (ch.weapons || []).map((row) => (
+                                row.id === item.id ? { ...row, loaded_ammo_id: ammo.id } : row
+                              )),
+                            })}>装填</button>
+                          ) : null}
+                          <button className="btn danger" onClick={() => patch({
+                            gear: dropTree(ch.gear || [], ammo.id),
+                            weapons: (ch.weapons || []).map((row) => (
+                              row.id === item.id && row.loaded_ammo_id === ammo.id
+                                ? { ...row, loaded_ammo_id: undefined }
+                                : row
+                            )),
+                          })}>外す</button>
+                          <label>
+                            数量
+                            <input
+                              type="number"
+                              min={1}
+                              max={99}
+                              value={ammo.qty}
+                              onChange={(e) => patch({
+                                gear: (ch.gear || []).map((row) => (
+                                  row.id === ammo.id ? { ...row, qty: Number(e.target.value) } : row
+                                )),
+                              })}
+                            />
+                          </label>
+                        </div>
+                      ))}
+                      {!fromGear && ammoAddons.length ? (
+                        <div className="cyber-controls">
+                          <select
+                            value={slotPick[ammoKey] || ""}
+                            onChange={(e) => setSlotPick((cur) => ({ ...cur, [ammoKey]: e.target.value }))}
+                          >
+                            <option value="">弾薬を追加</option>
+                            {ammoAddons
+                              .filter((mod) => mod.source === "SR5")
+                              .map((mod) => (
+                                <option key={mod.id} value={mod.id}>{tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor)})</option>
+                              ))}
+                          </select>
+                          <button
+                            className="btn"
+                            disabled={!slotPick[ammoKey]}
+                            onClick={() => {
+                              const wareId = slotPick[ammoKey];
+                              const spec = ammoAddons.find((mod) => mod.id === wareId);
+                              if (!spec) return;
+                              patch({
+                                gear: [...(ch.gear || []), {
+                                  gear_id: spec.id,
+                                  rating: Math.max(1, spec.minrating || 1),
+                                  parent_id: item.id,
+                                }],
+                              });
+                              setSlotPick((cur) => ({ ...cur, [ammoKey]: "" }));
+                            }}
+                          >
+                            装着
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <button className="btn danger" onClick={() => {
+                      if (fromGear) {
+                        patch({
+                          gear: dropTree(ch.gear || [], item.source_gear_id || item.id),
+                        });
+                        return;
+                      }
+                      if (fromWare) {
+                        patch({
+                          cyberware: removeWareTree(ch.cyberware || [], item.source_ware_id || item.id),
+                          weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
+                          gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                        });
+                        return;
+                      }
+                      patch({
+                        weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
+                        weapon_accessories: (ch.weapon_accessories || []).filter((row) => row.parent_id !== item.id),
+                        gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                      });
+                    }}>削除</button>
+                  </div>
+                  );
+                })}
+              </>
+
+      <div className="option-row">
+        <button className={`tab ${gearCat === "all" ? "active" : ""}`} onClick={() => setGearCat("all")}>すべて</button>
+        {[...new Set((catalog.weapons || []).map((item) => item.category))].sort().map((cat) => (
+          <button key={cat} className={`tab ${gearCat === cat ? "active" : ""}`} onClick={() => setGearCat(cat)}>{tr(cat)}</button>
+        ))}
+      </div>
+      <input
+        type="search"
+        placeholder="武器を検索"
+        value={gearSearch}
+        onChange={(e) => setGearSearch(e.target.value)}
+      />
+
+      <div className="quality-list">
+{(catalog.weapons || [])
+                .filter((item) => gearCat === "all" || item.category === gearCat)
+                .filter((item) => {
+                  const q = gearSearch.trim().toLowerCase();
+                  if (q) return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+                  return item.source === "SR5";
+                })
+                .slice(0, 40)
+                .map((item) => (
+                  <div className="quality-item" key={item.id}>
+                    <div>
+                      <b>{tr(item.name)}</b>
+                      <div className="muted">
+                        {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+</div>
+                    </div>
+                    <button className="btn primary" onClick={() => {
+                      if (item.add_gear_id) {
+                        patch({
+                          gear: [...(ch.gear || []), { gear_id: item.add_gear_id, qty: 1 }],
+                        });
+                        return;
+                      }
+                      patch({
+                        weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }],
+                      });
+                    }}>購入</button>
+                  </div>
+                ))}
+      </div>
+    </>
+  );
+}
