@@ -5960,6 +5960,39 @@ def test_seer_and_null_wizard_grant_free_metamagics() -> None:
     assert null.derived["spell_resistance"] >= 1
 
 
+DEDICATED_SPELLSLINGER = "bbc6879e-b50d-4862-b85c-a86c5b9e5d67"
+
+
+def test_dedicated_spellslinger_free_spells_and_karma_discount() -> None:
+    # Magician A: priority free spells + Spellcasting rating from freespells
+    base = compute(_mage("dss0", tradition_id=HERMETIC, skills={"Spellcasting": 4}))
+    priority_free = int(base.derived["spell_points"]["free"])
+    ids = _learnable_ids(priority_free + 5)
+    assert len(ids) == priority_free + 5
+    out = compute(
+        _mage(
+            "dss",
+            tradition_id=HERMETIC,
+            quality_ids=[DEDICATED_SPELLSLINGER],
+            skills={"Spellcasting": 4},
+            spells=[SpellInstall(spell_id=sid) for sid in ids],
+        )
+    )
+    assert out.derived["spell_points"]["free"] == priority_free + 4
+    assert out.derived["spell_points"]["spell_karma"] == 4
+    assert "Summoning" in (out.derived["disabled_skills"] or [])
+    assert "Binding" in (out.derived["disabled_skills"] or [])
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "freespells" not in tags
+    assert "newspellkarmacost" not in tags
+    # First priority_free+4 are free; remaining 1 paid at 4 karma
+    assert out.derived["spell_points"]["used"] == priority_free + 5
+    assert out.derived["spell_points"]["paid"] == 1
+    assert out.derived["spell_points"]["karma"] == 4
+    paid_row = next(s for s in out.derived["spells"] if not s["free"])
+    assert paid_row["karma"] == 4
+
+
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
 INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
 JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"

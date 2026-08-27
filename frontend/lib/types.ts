@@ -1479,7 +1479,7 @@ export interface Character {
     unarmed_dv?: number;
     unlock_skills?: string[];
     spells?: InstalledSpell[];
-    spell_points?: { used: number; free: number; paid: number };
+    spell_points?: { used: number; free: number; paid: number; karma?: number; spell_karma?: number };
     tradition?: TraditionInfo | null;
     drain_resist?: { pool: number; attrs: string };
     enabled_tabs: string[];

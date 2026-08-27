@@ -14,7 +14,11 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
           <div className="card">
             <p className="muted">
               無料 {(d.spell_points?.used || 0) - (d.spell_points?.paid || 0)}/{d.spell_points?.free || 0}
-              {(d.spell_points?.paid || 0) > 0 ? ` ・ 追加 ${d.spell_points?.paid}（各5カルマ）` : ""}
+              {(d.spell_points?.paid || 0) > 0
+                ? ` ・ 追加 ${d.spell_points?.paid}（各${d.spell_points?.spell_karma ?? 5}カルマ）`
+                : (d.spell_points?.spell_karma != null && d.spell_points.spell_karma !== 5)
+                  ? ` ・ 追加呪文 ${d.spell_points.spell_karma}カルマ`
+                  : ""}
               {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
               {" ・ 呪文・儀式・エンチャントは同じ無料枠"}
               {(d.limit_spell_categories || []).length || (d.allow_spell_categories || []).length

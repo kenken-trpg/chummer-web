@@ -134,6 +134,8 @@ IMPLEMENTED = {
     "weaponcategorydv",
     "addspirit",
     "addmetamagic",
+    "freespells",
+    "newspellkarmacost",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -169,7 +171,6 @@ SILENT_TAGS = {
     "addware",
     "addlimb",
     "metageniclimit",
-    "newspellkarmacost",
     "selectarmor",
     "selectsprite",
     "selectparagon",
@@ -181,7 +182,6 @@ SILENT_TAGS = {
     "cyberadeptdaemon",
     "allowspellrange",
     "allowspritefettering",
-    "freespells",
     "fadingvalue",
     "drainvalue",
     "spelldescriptordamage",
@@ -455,6 +455,10 @@ def empty_effects() -> dict[str, Any]:
         "add_spirit_slots": [],
         "extra_spirits": [],
         "free_metamagics": [],
+        "free_spells_flat": 0,
+        "free_spells_skill": [],
+        "free_spells_attribute": [],
+        "new_spell_karma_cost": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -1060,6 +1064,31 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                         "forced": str((node.get("attrs") or {}).get("forced") or "").lower() == "true",
                     }
                 )
+        elif tag == "freespells":
+            attrs = node.get("attrs") or {}
+            limit = str(attrs.get("limit") or "").strip()
+            skill = str(attrs.get("skill") or "").strip()
+            attribute = str(attrs.get("attribute") or "").strip().upper()
+            if skill:
+                effects["free_spells_skill"].append(
+                    {"skill": skill, "limit": limit, "source": source}
+                )
+            elif attribute:
+                effects["free_spells_attribute"].append(
+                    {"attribute": attribute, "limit": limit, "source": source}
+                )
+            else:
+                effects["free_spells_flat"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "newspellkarmacost":
+            attrs = node.get("attrs") or {}
+            effects["new_spell_karma_cost"].append(
+                {
+                    "type": str(attrs.get("type") or "").strip(),
+                    "value": _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+                    "condition": str(attrs.get("condition") or "").strip(),
+                    "source": source,
+                }
+            )
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

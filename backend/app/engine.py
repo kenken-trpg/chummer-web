@@ -7957,6 +7957,74 @@ def _required_warnings(
     return warnings
 
 
+def _spell_kind_karma_type(kind: str) -> str:
+    if kind == "ritual":
+        return "Rituals"
+    if kind == "enchantment":
+        return "Preparations"
+    return "Spells"
+
+
+def spell_karma_cost(kind: str | None, effects: dict[str, Any] | None = None) -> int:
+    """Base spell karma (default 5) plus newspellkarmacost improvements for the spell type."""
+    cost = SPELL_KARMA
+    category = _spell_kind_karma_type(kind or "spell")
+    for row in (effects or {}).get("new_spell_karma_cost") or []:
+        row_type = str(row.get("type") or "").strip()
+        if row_type and row_type != category:
+            continue
+        cost += int(row.get("value") or 0)
+    return max(0, cost)
+
+
+def _apply_free_spell_limit(value: int, limit: str) -> tuple[int, bool]:
+    """Return (points, touch_only) from freespells limit attrs like half,touchonly."""
+    parts = {part.strip().lower() for part in str(limit or "").split(",") if part.strip()}
+    points = int(value)
+    if "half" in parts:
+        points = (points + 1) // 2  # DivAwayFromZero for positive ints
+    return max(0, points), "touchonly" in parts
+
+
+def free_spell_bonus_points(
+    effects: dict[str, Any] | None,
+    state: CharacterState,
+    attrs: dict[str, int] | None = None,
+    skills_data: dict[str, Any] | None = None,
+) -> tuple[int, int]:
+    """Return (generic_free, touch_only_free) from freespells improvements."""
+    effects = effects or {}
+    generic = int(effects.get("free_spells_flat") or 0)
+    touch_only = 0
+    for row in effects.get("free_spells_skill") or []:
+        skill = str(row.get("skill") or "").strip()
+        if not skill:
+            continue
+        rating = _active_skill_rating_from_state(state, skill, skills_data)
+        points, is_touch = _apply_free_spell_limit(rating, str(row.get("limit") or ""))
+        if is_touch:
+            touch_only += points
+        else:
+            generic += points
+    attr_totals = attrs or {}
+    for row in effects.get("free_spells_attribute") or []:
+        attr = str(row.get("attribute") or "").strip().upper()
+        if not attr:
+            continue
+        value = int(attr_totals.get(attr) or 0)
+        points, is_touch = _apply_free_spell_limit(value, str(row.get("limit") or ""))
+        if is_touch:
+            touch_only += points
+        else:
+            generic += points
+    return max(0, generic), max(0, touch_only)
+
+
+def _spell_is_touch_range(spec: dict[str, Any]) -> bool:
+    raw = str(spec.get("range") or "").strip()
+    return raw in {"T", "T (A)"}
+
+
 def resolve_spells(
     state: CharacterState,
     talent: dict[str, Any],
@@ -7992,9 +8060,15 @@ def resolve_spells(
 
     if not tradition:
         warnings.append("伝統を選んでください")
-    free_max = int(talent.get("spells") or 0)
+    priority_free = int(talent.get("spells") or 0)
+    bonus_free, touch_free = free_spell_bonus_points(effects, state, attrs)
+    free_max = priority_free + bonus_free + touch_free
+    free_generic_left = priority_free + bonus_free
+    free_touch_left = touch_free
     seen: set[str] = set()
     kept: list[SpellInstall] = []
+    karma_total = 0
+    paid = 0
     for inst in state.spells:
         spec = _spell_by_id(inst.spell_id)
         if not spec:
@@ -8029,7 +8103,18 @@ def resolve_spells(
         ]
         if missing:
             warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
-        free = len(kept) < free_max
+        is_touch = _spell_is_touch_range(spec)
+        free = False
+        if is_touch and free_touch_left > 0:
+            free = True
+            free_touch_left -= 1
+        elif free_generic_left > 0:
+            free = True
+            free_generic_left -= 1
+        cost = 0 if free else spell_karma_cost(kind, effects)
+        if not free:
+            paid += 1
+            karma_total += cost
         kept.append(inst)
         public.append(
             {
@@ -8051,19 +8136,18 @@ def resolve_spells(
                 "source": spec.get("source"),
                 "page": spec.get("page"),
                 "free": free,
-                "karma": 0 if free else SPELL_KARMA,
+                "karma": cost,
                 "spell": info if has_force else None,
             }
         )
     state.spells = kept
-    paid = max(0, len(public) - free_max)
     return {
         "warnings": warnings,
         "public": public,
         "free_max": free_max,
         "used": len(public),
         "paid": paid,
-        "karma": paid * SPELL_KARMA,
+        "karma": karma_total,
         "tradition": _tradition_public(tradition),
         "resist": resist,
         "resist_attrs": resist_attrs,
@@ -9424,7 +9508,13 @@ def compute(state: CharacterState) -> CharacterState:
         "unarmed_physical": bool(effects.get("unarmed_physical")),
         "unlock_skills": list(effects.get("unlock_skills") or []),
         "spells": magic.get("public") or [],
-        "spell_points": {"used": magic.get("used") or 0, "free": magic.get("free_max") or 0, "paid": magic.get("paid") or 0},
+        "spell_points": {
+            "used": magic.get("used") or 0,
+            "free": magic.get("free_max") or 0,
+            "paid": magic.get("paid") or 0,
+            "karma": magic.get("karma") or 0,
+            "spell_karma": spell_karma_cost("spell", effects),
+        },
         "tradition": magic.get("tradition"),
         "drain_resist": {"pool": magic.get("resist") or 0, "attrs": magic.get("resist_attrs") or "WIL+INT"},
         "complex_forms": resonance.get("public") or [],
