@@ -203,6 +203,16 @@ class CharacterOptions(BaseModel):
     redliner_skull: bool = False
 
 
+class CareerBaseline(BaseModel):
+    """Snapshot of chargen ratings when entering career mode (Priority/SumToTen raises bill from here)."""
+
+    attributes: dict[str, int] = Field(default_factory=dict)
+    skills: dict[str, int] = Field(default_factory=dict)
+    skill_groups: dict[str, int] = Field(default_factory=dict)
+    knowledge_skills: dict[str, int] = Field(default_factory=dict)
+    skill_specializations: list[str] = Field(default_factory=list)
+    exotic_skills: dict[str, int] = Field(default_factory=dict)
+
 
 class CharacterPatch(BaseModel):
     name: str | None = None
@@ -260,6 +270,10 @@ class CharacterPatch(BaseModel):
     submersion_grade: int | None = None
     submersions: list[SubmersionChoice] | None = None
     karma_nuyen: int | None = None
+    career: bool | None = None
+    karma_earned: int | None = None
+    nuyen_earned: int | None = None
+    career_baseline: CareerBaseline | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
@@ -329,6 +343,10 @@ class CharacterState(BaseModel):
     submersion_grade: int = 0
     submersions: list[SubmersionChoice] = Field(default_factory=list)
     karma_nuyen: int = 0
+    career: bool = False
+    karma_earned: int = 0
+    nuyen_earned: int = 0
+    career_baseline: CareerBaseline | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)

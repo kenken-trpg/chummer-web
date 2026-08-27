@@ -25,6 +25,7 @@ from .engine import (
     priority_value,
     resolve_talent_for_method,
     sanitize_quality_ids,
+    snapshot_career_baseline,
     talent_options,
     talent_special,
 )
@@ -92,6 +93,7 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
     old_letter = state.priorities.Talent
     old_talent = state.talent
     old_method = normalize_build_method(state.build_method)
+    was_career = bool(state.career)
     updates = patch.model_dump(exclude_unset=True)
     if "priorities" in updates and updates["priorities"] is not None:
         data["priorities"] = updates.pop("priorities")
@@ -100,6 +102,13 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
         current.update(updates.pop("options"))
         data["options"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
+    if "career" in updates:
+        now_career = bool(updates["career"])
+        data["career"] = now_career
+        if now_career and not was_career:
+            data["career_baseline"] = snapshot_career_baseline(state).model_dump()
+        elif not now_career:
+            data["career_baseline"] = None
     if "tradition_id" in updates:
         data["tradition_id"] = updates.pop("tradition_id") or None
     if "stream_id" in updates:

@@ -5166,3 +5166,48 @@ def test_jazz_pharmaceutical_parent_cost() -> None:
     assert by_name["Pharmaceutical"]["nuyen"] == 75
     assert out.derived["nuyen_spent"] == 150
 
+
+def test_career_mode_skips_avail_limit() -> None:
+    from app.data_loader import catalog, parse_avail
+
+    high = None
+    for g in catalog()["gear"]:
+        if g.get("requireparent"):
+            continue
+        parsed = parse_avail(str(g.get("avail") or "0"))
+        value = parsed[0] if isinstance(parsed, (tuple, list)) else int(parsed or 0)
+        if value > 12:
+            high = g
+            break
+    assert high is not None
+    gear = [GearInstall(gear_id=high["id"])]
+    charged = compute(_mundane("career-avail-cg", gear=gear))
+    assert any("入手制限超過" in e for e in charged.derived["errors"])
+    career = compute(_mundane("career-avail", career=True, gear=gear, nuyen_earned=10_000_000))
+    assert not any("入手制限超過" in e for e in career.derived["errors"])
+    assert career.derived["avail_limit"] is None
+    assert career.derived["career"] is True
+    assert career.derived["nuyen"] == career.derived["nuyen_pool"] - career.derived["nuyen_spent"]
+
+
+def test_career_priority_attribute_raise_uses_new_rating_times_5() -> None:
+    from app.engine import snapshot_career_baseline
+
+    st = _mundane("career-agi")
+    st.attributes["AGI"] = 4
+    st = compute(st)
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.attributes["AGI"] = 5
+    out = compute(st)
+    assert out.derived["career_advancement_karma"] == 25
+    assert out.derived["karma"]["spent"] == 25
+    assert out.derived["karma"]["remaining"] == 0
+    assert out.derived["skill_rating_max"] == 12
+
+
+def test_career_earned_rewards_expand_pools() -> None:
+    # Priority Resources D = 50_000¥; chargen karma pool = 25
+    out = compute(_mundane("career-earn", career=True, karma_earned=40, nuyen_earned=5000))
+    assert out.derived["karma"]["pool"] == 65
+    assert out.derived["nuyen_pool"] == 55_000

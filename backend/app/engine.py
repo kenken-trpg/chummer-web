@@ -34,6 +34,7 @@ from .improvements import (
 from .models import (
     ArmorInstall,
     ArmorModInstall,
+    CareerBaseline,
     CharacterOptions,
     CharacterState,
     CommlinkInstall,
@@ -105,6 +106,8 @@ KARMA_KNOWLEDGE = 1
 KARMA_SPECIALIZATION = 7
 KARMA_TO_NUYEN = 2000
 KARMA_NUYEN_MAX = 235
+CAREER_SKILL_MAX = 12
+CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
 SPRITE_TALENTS = set(RES_TALENTS)
@@ -319,6 +322,83 @@ def skill_karma_cost(
         total += _karma_raise_cost(floor, int(rating or 0), KARMA_ACTIVE_SKILL)
     return total
 
+
+def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
+    return CareerBaseline(
+        attributes={str(k): int(v) for k, v in (state.attributes or {}).items()},
+        skills={str(k): int(v) for k, v in (state.skills or {}).items()},
+        skill_groups={str(k): int(v) for k, v in (state.skill_groups or {}).items()},
+        knowledge_skills={str(k): int(v) for k, v in (state.knowledge_skills or {}).items()},
+        skill_specializations=sorted(
+            str(name)
+            for name, spec in (state.skill_specializations or {}).items()
+            if str(spec or "").strip()
+        ),
+        exotic_skills={
+            str(row.id): int(row.rating or 0)
+            for row in (state.exotic_skills or [])
+            if getattr(row, "id", None)
+        },
+    )
+
+
+def _group_floor_map(skill_groups: dict[str, int], skills_data: dict[str, Any]) -> dict[str, int]:
+    floors: dict[str, int] = {}
+    for group, rating in (skill_groups or {}).items():
+        grade = max(0, int(rating or 0))
+        for skill in skills_data.get("skills") or []:
+            if skill.get("skillgroup") == group and not skill.get("exotic"):
+                name = str(skill.get("name") or "")
+                if name:
+                    floors[name] = max(floors.get(name, 0), grade)
+    return floors
+
+
+def career_raise_karma(
+    state: CharacterState,
+    baseline: CareerBaseline,
+    skill_totals: dict[str, int],
+    skills_data: dict[str, Any],
+) -> int:
+    """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
+    total = 0
+    base_attrs = baseline.attributes or {}
+    for key, rating in (state.attributes or {}).items():
+        if key == "ESS":
+            continue
+        total += _karma_raise_cost(int(base_attrs.get(key, rating)), int(rating or 0), KARMA_ATTRIBUTE)
+
+    base_groups = baseline.skill_groups or {}
+    for group, rating in (state.skill_groups or {}).items():
+        total += _karma_raise_cost(int(base_groups.get(group, 0)), int(rating or 0), KARMA_SKILL_GROUP)
+
+    base_floors = _group_floor_map(base_groups, skills_data)
+    now_floors = _group_floor_map(dict(state.skill_groups or {}), skills_data)
+    base_skills = baseline.skills or {}
+    for name, rating in (skill_totals or {}).items():
+        from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)))
+        from_r = max(from_r, int(now_floors.get(name, 0)))
+        total += _karma_raise_cost(from_r, int(rating or 0), KARMA_ACTIVE_SKILL)
+
+    base_know = baseline.knowledge_skills or {}
+    natives = set(state.native_languages or [])
+    for name, rating in (state.knowledge_skills or {}).items():
+        if name in natives:
+            continue
+        total += _karma_raise_cost(int(base_know.get(name, 0)), int(rating or 0), KARMA_KNOWLEDGE)
+
+    base_specs = set(baseline.skill_specializations or [])
+    for name, spec in (state.skill_specializations or {}).items():
+        if str(spec or "").strip() and name not in base_specs:
+            total += KARMA_SPECIALIZATION
+
+    base_exotic = baseline.exotic_skills or {}
+    for row in state.exotic_skills or []:
+        rid = str(getattr(row, "id", "") or "")
+        if not rid:
+            continue
+        total += _karma_raise_cost(int(base_exotic.get(rid, 0)), int(row.rating or 0), KARMA_ACTIVE_SKILL)
+    return total
 
 
 def knowledge_excess_karma(ratings: dict[str, int], free_points: int) -> int:
@@ -3486,6 +3566,8 @@ def apply_quality_rules(
     free_quality_ids: list[str],
     ctx: dict[str, Any],
     errors: list[str],
+    *,
+    career: bool = False,
 ) -> int:
     owned = {item["id"] for item in qualities}
     extras = {
@@ -3508,7 +3590,7 @@ def apply_quality_rules(
             errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
         if quality_needs_extra(spec) and spec["id"] not in extras:
             errors.append(f"{spec['name']} の対象を入力してください")
-    if negative_gain > NEGATIVE_QUALITY_KARMA_CAP:
+    if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
         errors.append(
             f"不利クオリティから得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
         )
@@ -4543,7 +4625,7 @@ def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str
                     existing.append(note)
 
 
-def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
+def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []
@@ -4554,7 +4636,7 @@ def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
         role = (inst.role or "").strip()
         connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.connection or 1)))
         loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.loyalty or 1)))
-        if connection + loyalty > CONTACT_CHARGEN_COST_MAX:
+        if not career and connection + loyalty > CONTACT_CHARGEN_COST_MAX:
             loyalty = max(CONTACT_RATING_MIN, CONTACT_CHARGEN_COST_MAX - connection)
             warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{CONTACT_CHARGEN_COST_MAX}までです")
         inst.name = name
@@ -4566,8 +4648,12 @@ def resolve_contacts(state: CharacterState, cha: int) -> dict[str, Any]:
             warnings.append("名前のないコネクトがあります")
         kept.append(inst)
         used += cost
-        conn_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty)
-        loy_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection)
+        if career:
+            conn_max = CONTACT_RATING_MAX
+            loy_max = CONTACT_RATING_MAX
+        else:
+            conn_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty)
+            loy_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection)
         public.append(
             {
                 "id": inst.id,
@@ -4623,6 +4709,8 @@ def resolve_martial_arts(
     state: CharacterState,
     ctx: dict[str, Any],
     errors: list[str],
+    *,
+    career: bool = False,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -4719,13 +4807,13 @@ def resolve_martial_arts(
         )
 
     state.martial_arts = kept
-    style_max = MARTIAL_ART_CHARGEN_STYLE_MAX
-    tech_max = MARTIAL_ART_CHARGEN_TECHNIQUE_MAX
-    if len(kept) > MARTIAL_ART_CHARGEN_STYLE_MAX:
+    style_max = 99 if career else MARTIAL_ART_CHARGEN_STYLE_MAX
+    tech_max = 99 if career else MARTIAL_ART_CHARGEN_TECHNIQUE_MAX
+    if not career and len(kept) > MARTIAL_ART_CHARGEN_STYLE_MAX:
         errors.append(
             f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {len(kept)}）"
         )
-    if technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
+    if not career and technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
         errors.append(
             f"作成時の武道技は合計{MARTIAL_ART_CHARGEN_TECHNIQUE_MAX}つまでです（現在 {technique_total}）"
         )
@@ -6892,8 +6980,12 @@ def compute(state: CharacterState) -> CharacterState:
     data = catalog()
     state.build_method = normalize_build_method(getattr(state, "build_method", None))
     is_karma = state.build_method == BUILD_METHOD_KARMA
-    skill_rating_cap = 6
-    skill_group_cap = 6
+    career = bool(getattr(state, "career", False))
+    state.career = career
+    state.karma_earned = max(0, int(getattr(state, "karma_earned", 0) or 0))
+    state.nuyen_earned = max(0, int(getattr(state, "nuyen_earned", 0) or 0))
+    skill_rating_cap = CAREER_SKILL_MAX if career else 6
+    skill_group_cap = CAREER_SKILL_GROUP_MAX if career else 6
     errors = validate_priorities(state.priorities, state.build_method)
     meta = find_metatype(state.metatype, state.metavariant)
     attrs_spec = meta["attributes"]
@@ -6938,7 +7030,8 @@ def compute(state: CharacterState) -> CharacterState:
     ware_attr_bonus = _ware_attribute_bonuses(
         [item for item in installed if item.get("id") not in hosted_ids]
     )
-    _check_ware_attribute_cap(ware_attr_bonus, errors)
+    if not career:
+        _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
     attr_max_bonus, attr_select_warnings = resolve_attribute_selects(state, effects, qualities)
     warnings.extend(attr_select_warnings)
@@ -7204,6 +7297,7 @@ def compute(state: CharacterState) -> CharacterState:
         heritage_karma_cost = extra_karma
         state.karma_nuyen = 0
 
+    nuyen_pool += int(state.nuyen_earned or 0)
     nuyen_spent = (
         sum(int(item["nuyen"]) for item in installed)
         + int(qi.get("nuyen") or 0)
@@ -7284,6 +7378,9 @@ def compute(state: CharacterState) -> CharacterState:
     spec_knowledge = int(specs["knowledge_spent"])
     if is_karma:
         spec_karma = (spec_active + spec_knowledge) * KARMA_SPECIALIZATION
+    elif career:
+        # Priority career: new specs cost karma (baseline settles chargen specs).
+        spec_karma = 0
     else:
         skill_spent += spec_active
         know_spent += spec_knowledge
@@ -7300,6 +7397,7 @@ def compute(state: CharacterState) -> CharacterState:
     mystic_karma = int(state.mystic_pp) * MYSTIC_PP_KARMA
     extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
     spell_karma = int(magic.get("karma") or 0) + int(resonance.get("karma") or 0)
+    career_adv_karma = 0
     if is_karma:
         attr_karma = attribute_karma_cost(ratings, attrs_spec, special_key)
         skill_buy_karma = skill_karma_cost(
@@ -7307,7 +7405,7 @@ def compute(state: CharacterState) -> CharacterState:
         )
         knowledge_karma = knowledge_excess_karma(dict(state.knowledge_skills or {}), know_max)
         nuyen_karma = int(state.karma_nuyen or 0)
-        karma_pool = KARMA_CHARGEN_POOL
+        karma_pool = KARMA_CHARGEN_POOL + int(state.karma_earned or 0)
         karma_spent = (
             karma_from_q
             + metatype_karma_cost
@@ -7325,8 +7423,15 @@ def compute(state: CharacterState) -> CharacterState:
         skill_buy_karma = 0
         knowledge_karma = 0
         nuyen_karma = 0
-        karma_pool = 25
+        karma_pool = 25 + int(state.karma_earned or 0)
         karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma
+        if career:
+            baseline = state.career_baseline
+            if baseline is None:
+                baseline = snapshot_career_baseline(state)
+                state.career_baseline = baseline
+            career_adv_karma = career_raise_karma(state, baseline, skill_totals, data["skills"])
+            karma_spent += career_adv_karma
 
     bod = total["BOD"]
     agi = total["AGI"]
@@ -7336,7 +7441,7 @@ def compute(state: CharacterState) -> CharacterState:
     logi = total["LOG"]
     intuition = total["INT"]
     cha = total["CHA"]
-    contacts = resolve_contacts(state, int(cha or 0))
+    contacts = resolve_contacts(state, int(cha or 0), career=career)
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
 
@@ -7359,7 +7464,7 @@ def compute(state: CharacterState) -> CharacterState:
         **martial_ctx,
         "qualities": set(martial_ctx.get("qualities") or []) | {talent["name"]},
     }
-    martial = resolve_martial_arts(state, martial_ctx, errors)
+    martial = resolve_martial_arts(state, martial_ctx, errors, career=career)
     warnings.extend(martial["warnings"])
     karma_spent += int(martial.get("karma") or 0)
     karma_spent += int(initiation.get("karma") or 0)
@@ -7438,38 +7543,40 @@ def compute(state: CharacterState) -> CharacterState:
             effective_knowledge,
         ),
         errors,
+        career=career,
     )
 
-    at_six = [n for n, r in skill_totals.items() if r >= 6]
-    if len(at_six) > 1:
-        errors.append("作成時にレーティング6のスキルは1つまでです")
-    if is_karma:
-        at_natural_max = []
-        for key, spec in attrs_spec.items():
-            if key in {"ESS", "MAG", "RES"} and key != special_key:
-                continue
-            if key not in ratings:
-                continue
-            racial_max = int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0)
-            if key == "MAG" and special_key == "MAG":
-                racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
-            if key == "RES" and special_key == "RES":
-                racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
-            if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
-                at_natural_max.append(key)
-        if len(at_natural_max) > 1:
-            errors.append("作成時に自然上限の属性は1つまでです")
-    else:
-        if spent_physical > attr_points:
-            errors.append(f"属性点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
-        if spent_special > special_from_meta:
-            errors.append(f"特殊属性点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
-        if skill_spent > skill_points:
-            errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
-        if group_spent > group_points:
-            errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
-        if know_spent > know_max:
-            errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
+    if not career:
+        at_six = [n for n, r in skill_totals.items() if r >= 6]
+        if len(at_six) > 1:
+            errors.append("作成時にレーティング6のスキルは1つまでです")
+        if is_karma:
+            at_natural_max = []
+            for key, spec in attrs_spec.items():
+                if key in {"ESS", "MAG", "RES"} and key != special_key:
+                    continue
+                if key not in ratings:
+                    continue
+                racial_max = int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0)
+                if key == "MAG" and special_key == "MAG":
+                    racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
+                if key == "RES" and special_key == "RES":
+                    racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
+                if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
+                    at_natural_max.append(key)
+            if len(at_natural_max) > 1:
+                errors.append("作成時に自然上限の属性は1つまでです")
+        else:
+            if spent_physical > attr_points:
+                errors.append(f"属性点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
+            if spent_special > special_from_meta:
+                errors.append(f"特殊属性点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
+            if skill_spent > skill_points:
+                errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
+            if group_spent > group_points:
+                errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
+            if know_spent > know_max:
+                errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
     if karma_left < 0:
         errors.append(f"カルマが不足しています（残り {karma_left}）")
     if nuyen < 0:
@@ -7488,45 +7595,46 @@ def compute(state: CharacterState) -> CharacterState:
         allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
         if allowed and state.metatype not in allowed:
             errors.append(f"{state.metatype} はこの優先度のメタタイプに含まれません")
-    _check_avail_limit(
-        _avail_entries(
-            cyber_installed,
-            bio_installed,
-            gear.get("armor_items"),
-            gear.get("armor_mods"),
-            gear.get("weapons"),
-            gear.get("weapon_accessories"),
-            gear.get("commlinks"),
-            gear.get("cyberdecks"),
-            gear.get("rccs"),
-            gear.get("optics"),
-            gear.get("programs"),
-            gear.get("apps"),
-            gear.get("sensors"),
-            gear.get("drones"),
-            gear.get("vehicles"),
-            gear.get("vehicle_mods"),
-            gear.get("weapon_mounts"),
-            gear.get("gear"),
-            gear.get("lifestyles"),
-            foci.get("public"),
-        ),
-        effects,
-        errors,
-    )
-    _check_device_rating_limit(
-        _device_rating_entries(
-            cyber_installed,
-            bio_installed,
-            gear.get("commlinks"),
-            gear.get("cyberdecks"),
-            gear.get("rccs"),
-            gear.get("optics"),
-            gear.get("sensors"),
-            gear.get("gear"),
-        ),
-        errors,
-    )
+    if not career:
+        _check_avail_limit(
+            _avail_entries(
+                cyber_installed,
+                bio_installed,
+                gear.get("armor_items"),
+                gear.get("armor_mods"),
+                gear.get("weapons"),
+                gear.get("weapon_accessories"),
+                gear.get("commlinks"),
+                gear.get("cyberdecks"),
+                gear.get("rccs"),
+                gear.get("optics"),
+                gear.get("programs"),
+                gear.get("apps"),
+                gear.get("sensors"),
+                gear.get("drones"),
+                gear.get("vehicles"),
+                gear.get("vehicle_mods"),
+                gear.get("weapon_mounts"),
+                gear.get("gear"),
+                gear.get("lifestyles"),
+                foci.get("public"),
+            ),
+            effects,
+            errors,
+        )
+        _check_device_rating_limit(
+            _device_rating_entries(
+                cyber_installed,
+                bio_installed,
+                gear.get("commlinks"),
+                gear.get("cyberdecks"),
+                gear.get("rccs"),
+                gear.get("optics"),
+                gear.get("sensors"),
+                gear.get("gear"),
+            ),
+            errors,
+        )
 
     state.attributes = ratings
     sum_spent = sum_to_ten_spent(state.priorities)
@@ -7595,11 +7703,15 @@ def compute(state: CharacterState) -> CharacterState:
         "nuyen": nuyen,
         "nuyen_spent": nuyen_spent,
         "nuyen_pool": nuyen_pool,
+        "nuyen_earned": int(state.nuyen_earned or 0),
+        "karma_earned": int(state.karma_earned or 0),
+        "career": career,
+        "career_advancement_karma": int(career_adv_karma),
         "skill_rating_max": skill_rating_cap,
         "skill_group_max": skill_group_cap,
-        "avail_limit": CHARGEN_AVAIL_MAX,
-        "device_rating_limit": CHARGEN_DEVICE_RATING_MAX,
-        "ware_attr_limit": CHARGEN_WARE_ATTR_BONUS_MAX,
+        "avail_limit": None if career else CHARGEN_AVAIL_MAX,
+        "device_rating_limit": None if career else CHARGEN_DEVICE_RATING_MAX,
+        "ware_attr_limit": None if career else CHARGEN_WARE_ATTR_BONUS_MAX,
         "ware_attr_bonus": ware_attr_bonus,
         "karma": {
             "pool": karma_pool,
@@ -7607,7 +7719,7 @@ def compute(state: CharacterState) -> CharacterState:
             "remaining": karma_left,
             "negative": {
                 "used": negative_quality_karma,
-                "max": NEGATIVE_QUALITY_KARMA_CAP,
+                "max": None if career else NEGATIVE_QUALITY_KARMA_CAP,
             },
         },
         "power_points": {"used": power_spent, "max": power_pool},
