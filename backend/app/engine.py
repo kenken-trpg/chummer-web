@@ -3973,7 +3973,8 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
 
 def quality_needs_extra(spec: dict[str, Any]) -> bool:
     return bool(spec.get("needs_extra")) or any(
-        node.get("tag") in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality"}
+        node.get("tag")
+        in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality", "selectside"}
         for node in (spec.get("bonus") or [])
     )
 
@@ -4104,7 +4105,12 @@ def apply_quality_rules(
         if not is_free and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
         if quality_needs_extra(spec) and spec["id"] not in extras:
-            errors.append(f"{spec['name']} の対象を入力してください")
+            if _quality_has_selectside(spec):
+                errors.append(f"{spec['name']} の左右を選んでください")
+            else:
+                errors.append(f"{spec['name']} の対象を入力してください")
+        elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
+            errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
         options = list(spec.get("select_options") or [])
         if not options:
             for node in spec.get("bonus") or []:
@@ -4497,6 +4503,77 @@ def _side_conflicts(kind: str, items: list[CyberwareInstall]) -> list[str]:
         slot_ja = _SLOT_JA.get(slot, slot)
         errors.append(f"{_SIDE_JA.get(side, side)}の{slot_ja}が重複しています")
     return errors
+
+
+def _quality_has_selectside(spec: dict[str, Any]) -> bool:
+    return any(node.get("tag") == "selectside" for node in (spec.get("bonus") or []))
+
+
+def _quality_limb_slot(spec: dict[str, Any]) -> str | None:
+    """Infer limb slot for quality-level selectside (e.g. Crystal Limb)."""
+    if not _quality_has_selectside(spec):
+        return None
+    name = str(spec.get("name") or "").lower()
+    if "arm" in name:
+        return "arm"
+    if "leg" in name:
+        return "leg"
+    if "hand" in name:
+        return "hand"
+    if "foot" in name:
+        return "foot"
+    return None
+
+
+def resolve_quality_sides(
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    cyber_installed: list[dict[str, Any]],
+    bio_installed: list[dict[str, Any]],
+    errors: list[str],
+) -> dict[str, str]:
+    """Validate quality selectside extras; return quality_id → Left/Right."""
+    chosen: dict[str, str] = {}
+    occupied: dict[tuple[str, str], str] = {}
+    for item in list(cyber_installed) + list(bio_installed):
+        if item.get("parent_id") or not item.get("selectside"):
+            continue
+        side = _normalize_side(str(item.get("side") or ""))
+        slot = str(item.get("limbslot") or "").lower()
+        if side and slot:
+            occupied[(slot, side)] = str(item.get("name") or "ウェア")
+
+    extras = state.quality_extras or {}
+    for spec in qualities:
+        if not _quality_has_selectside(spec):
+            continue
+        raw = str(extras.get(spec["id"]) or "").strip()
+        side = _normalize_side(raw)
+        if raw and not side:
+            errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
+            continue
+        if not side:
+            continue
+        chosen[spec["id"]] = side
+        slot = _quality_limb_slot(spec)
+        if not slot:
+            continue
+        key = (slot, side)
+        if key in occupied:
+            slot_ja = _SLOT_JA.get(slot, slot)
+            errors.append(
+                f"{spec['name']}（{_SIDE_JA.get(side, side)}）は"
+                f"{occupied[key]}と{_SIDE_JA.get(side, side)}の{slot_ja}が重複しています"
+            )
+            continue
+        occupied[key] = spec["name"]
+    # Normalize valid sides back into extras for persistence.
+    if chosen:
+        next_extras = dict(state.quality_extras or {})
+        for qid, side in chosen.items():
+            next_extras[qid] = side
+        state.quality_extras = next_extras
+    return chosen
 
 
 def limb_attribute_replace(
@@ -7582,6 +7659,7 @@ def compute(state: CharacterState) -> CharacterState:
     vehicle_hosts = set(_vehicle_mod_hosts(state))
     cyber_installed = resolve_ware("cyberware", state.cyberware, attrs_spec)
     bio_installed = resolve_ware("bioware", state.bioware, attrs_spec)
+    resolve_quality_sides(qualities, state, cyber_installed, bio_installed, errors)
     _finalize_avail_tree(cyber_installed, grade_kind="cyberware")
     _finalize_avail_tree(bio_installed, grade_kind="bioware")
     _zero_vehicle_hosted_essence(cyber_installed, vehicle_hosts)
@@ -8565,6 +8643,8 @@ def compute(state: CharacterState) -> CharacterState:
                 "extra": state.quality_extras.get(q["id"]) or "",
                 "extra_kind": q.get("extra_kind"),
                 "select_options": list(q.get("select_options") or []),
+                "selectside": _quality_has_selectside(q),
+                "side": _normalize_side(state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),
             }
             for q in qualities

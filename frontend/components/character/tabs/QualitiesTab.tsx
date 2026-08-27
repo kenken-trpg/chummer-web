@@ -49,11 +49,12 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
     needs_extra?: boolean;
     extra_kind?: string | null;
     select_options?: string[];
+    selectside?: boolean;
   }) {
     const kind =
       q.extra_kind ||
       catalogById.get(q.id)?.extra_kind ||
-      (q.name === "Exceptional Attribute" ? "attribute" : q.needs_extra ? "text" : null);
+      (q.name === "Exceptional Attribute" ? "attribute" : q.selectside ? "side" : q.needs_extra ? "text" : null);
     const options = q.select_options?.length
       ? q.select_options
       : catalogById.get(q.id)?.select_options || [];
@@ -113,6 +114,22 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               {tr(name)}
             </option>
           ))}
+        </select>
+      );
+    }
+    if (kind === "side" || q.selectside) {
+      return (
+        <select
+          value={ch.quality_extras?.[q.id] || ""}
+          onChange={(e) =>
+            patch({
+              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+            })
+          }
+        >
+          <option value="">左右を選択</option>
+          <option value="Left">左</option>
+          <option value="Right">右</option>
         </select>
       );
     }
@@ -202,6 +219,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                 <b>{tr(q.name)}</b>
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma}
+                  {q.side ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}` : ""}
                   {q.free ? " / 付帯（無料）" : ""}
                 </div>
                 {renderExtraEditor(q)}

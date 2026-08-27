@@ -111,6 +111,7 @@ IMPLEMENTED = {
     "knowledgeskillkarmacostmin",
     "activeskillkarmacost",
     "selectquality",
+    "selectside",
     "prototypetranshuman",
     "burnoutsway",
 }
@@ -161,7 +162,6 @@ SILENT_TAGS = {
     "contactkarmaminimum",
     "addcontact",
     "selectexpertise",
-    "selectside",
     "selectarmor",
     "selectsprite",
     "selectparagon",
@@ -842,6 +842,9 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["black_market_discount"] = True
         elif tag == "selectcontact":
             # Contact id is stored in quality_extras["{quality_id}:contact"] (see engine).
+            pass
+        elif tag == "selectside":
+            # Side is stored in quality_extras[quality_id] as Left/Right (see engine).
             pass
         elif tag == "dealerconnection":
             cats = fields.get("category") or node.get("value") or []

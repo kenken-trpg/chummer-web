@@ -328,7 +328,8 @@ def _parse_requirement_node(el: ET.Element) -> dict[str, Any]:
 
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
-        node.get("tag") in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality"}
+        node.get("tag")
+        in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality", "selectside"}
         for node in (bonus or [])
     )
 
@@ -349,6 +350,8 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
                     select_options.append(text)
     elif "skillgroupdisablechoice" in tags:
         kind = "skillgroup"
+    elif "selectside" in tags:
+        kind = "side"
     elif "selectattributes" in tags or "selectattribute" in tags:
         kind = "attribute"
     elif "selecttext" in tags:

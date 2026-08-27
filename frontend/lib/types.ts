@@ -1442,6 +1442,8 @@ export interface Character {
       extra?: string;
       extra_kind?: string | null;
       select_options?: string[];
+      selectside?: boolean;
+      side?: string | null;
       free?: boolean;
     }[];
     native_language_limit?: number;

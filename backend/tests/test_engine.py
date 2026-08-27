@@ -5365,6 +5365,52 @@ def test_ambidextrous_flag() -> None:
     assert out.derived["ambidextrous"] is True
 
 
+CRYSTAL_LIMB_ARM = "350844b9-db9f-4cce-83c3-e8965511e928"
+
+
+def test_crystal_limb_requires_side() -> None:
+    out = compute(_mage("crystal-empty", quality_ids=[CRYSTAL_LIMB_ARM]))
+    assert any("左右を選んでください" in err for err in out.derived["errors"])
+
+
+def test_crystal_limb_arm_selects_side() -> None:
+    out = compute(
+        _mage(
+            "crystal-left",
+            quality_ids=[CRYSTAL_LIMB_ARM],
+            quality_extras={CRYSTAL_LIMB_ARM: "Left"},
+        )
+    )
+    row = next(q for q in out.derived["qualities"] if q["id"] == CRYSTAL_LIMB_ARM)
+    assert row["selectside"] is True
+    assert row["side"] == "Left"
+    assert not any("左右" in err for err in out.derived["errors"])
+
+
+def test_crystal_limb_conflicts_with_cyberarm_same_side() -> None:
+    out = compute(
+        _mage(
+            "crystal-dup",
+            quality_ids=[CRYSTAL_LIMB_ARM],
+            quality_extras={CRYSTAL_LIMB_ARM: "Left"},
+            cyberware=[CyberwareInstall(id="arm1", ware_id=ARM, side="Left")],
+        )
+    )
+    assert any("重複" in err for err in out.derived["errors"])
+
+
+def test_crystal_limb_allows_opposite_cyberarm() -> None:
+    out = compute(
+        _mage(
+            "crystal-ok",
+            quality_ids=[CRYSTAL_LIMB_ARM],
+            quality_extras={CRYSTAL_LIMB_ARM: "Left"},
+            cyberware=[CyberwareInstall(id="arm1", ware_id=ARM, side="Right")],
+        )
+    )
+    assert not any("重複" in err for err in out.derived["errors"])
+
+
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
 INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
 JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"
