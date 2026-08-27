@@ -164,6 +164,8 @@ export function CharacterSidebar({
         {(d.cyberware_ess_multiplier || 100) !== 100 ? <div className="stat"><span>サイバーESS</span><b>×{(d.cyberware_ess_multiplier || 100) / 100}</b></div> : null}
         {(d.bioware_ess_multiplier || 100) !== 100 ? <div className="stat"><span>バイオESS</span><b>×{(d.bioware_ess_multiplier || 100) / 100}</b></div> : null}
         {d.ambidextrous ? <div className="stat"><span>利き手</span><b>両利き</b></div> : null}
+        {d.erased ? <div className="stat"><span>身元</span><b>Erased（周知度上限1）</b></div> : null}
+        {d.excon ? <div className="stat"><span>経歴</span><b>Ex-Con</b></div> : null}
         {d.overclocker ? <div className="stat"><span>オーバークロック</span><b>デッキ +1</b></div> : null}
         {(d.special_modification_limit?.max || 0) > 0 ? (
           <div className="stat">

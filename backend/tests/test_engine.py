@@ -5104,6 +5104,79 @@ def test_ex_con_adds_sinner_quality() -> None:
     assert "Ex-Con" in names
     assert "SINner (Criminal)" in names
     assert SINNER_CRIMINAL in out.quality_ids or any(q["id"] == SINNER_CRIMINAL for q in out.derived["qualities"])
+    assert out.derived["excon"] is True
+    assert "excon" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+ERASED = "07f1833e-e5e0-41e1-91de-9044b2f48367"
+FAME_LOCAL = "51e9e615-e3ba-4b25-b7b0-ffa8acf076f8"
+LIFESTYLE_HIGH = "4a37d519-c9be-4ecc-97bb-e9d78708c374"
+LIFESTYLE_MEDIUM = "9cb0222c-14c1-4bea-bf83-055513a1f33e"
+
+
+def test_erased_caps_public_awareness() -> None:
+    out = compute(
+        _human(
+            "erased-pa",
+            quality_ids=[ERASED, FAME_LOCAL],
+            street_cred=9,
+        )
+    )
+    assert out.derived["erased"] is True
+    assert out.derived["public_awareness"] == 1
+    assert "erased" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_erased_blocks_high_lifestyle() -> None:
+    out = compute(
+        _human(
+            "erased-high",
+            quality_ids=[ERASED],
+            lifestyles=[LifestyleInstall(lifestyle_id=LIFESTYLE_HIGH)],
+        )
+    )
+    assert any("Medium より高い" in warn for warn in out.derived["warnings"])
+    ok = compute(
+        _human(
+            "erased-med",
+            quality_ids=[ERASED],
+            lifestyles=[LifestyleInstall(lifestyle_id=LIFESTYLE_MEDIUM)],
+        )
+    )
+    assert not any("Medium より高い" in warn for warn in ok.derived["warnings"])
+
+
+def test_ex_con_bans_restricted_ware() -> None:
+    out = compute(
+        _human(
+            "excon-ware",
+            quality_ids=[EX_CON],
+            cyberware=[CyberwareInstall(ware_id=MUSCLE, rating=1)],
+        )
+    )
+    assert any("制限ウェア" in err for err in out.derived["errors"])
+
+
+def test_ex_con_raises_corp_and_law_loyalty() -> None:
+    corp = compute(
+        _human(
+            "excon-corp",
+            quality_ids=[EX_CON],
+            contacts=[ContactInstall(name="Boss", role="Mr. Johnson", connection=2, loyalty=2)],
+        )
+    )
+    row = corp.derived["contacts"][0]
+    assert row["loyalty"] == 4
+    assert row["loyalty_min"] == 4
+    law = compute(
+        _human(
+            "excon-law",
+            quality_ids=[EX_CON],
+            contacts=[ContactInstall(name="Buddy", role="Cop", connection=1, loyalty=2)],
+        )
+    )
+    assert law.derived["contacts"][0]["loyalty"] == 5
+    assert law.derived["contacts"][0]["loyalty_min"] == 5
 
 
 def test_photographic_memory_and_quick_healer() -> None:

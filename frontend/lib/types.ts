@@ -1235,6 +1235,8 @@ export interface Character {
     trustfund?: number;
     trustfund_label?: string;
     ambidextrous?: boolean;
+    erased?: boolean;
+    excon?: boolean;
     overclocker?: boolean;
     special_modification_limit?: { used: number; max: number };
     friends_in_high_places?: boolean;

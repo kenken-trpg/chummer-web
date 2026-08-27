@@ -134,6 +134,28 @@ BLACK_MARKET_CATEGORY_HINTS = {
 BLACK_MARKET_AVAIL_BONUS = 2
 QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
 QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX = ":spiritcategory"
+# Ex-Con (RF): corp contacts need Loyalty 4+, law enforcement Loyalty 5+.
+EXCON_CORP_ROLE_HINTS = (
+    "johnson",
+    "mr. johnson",
+    "corporate",
+    "corp ",
+    " corp",
+    "executive",
+    "manager",
+    "salaryman",
+)
+EXCON_LAW_ROLE_HINTS = (
+    "cop",
+    "police",
+    "lone star",
+    "knight errant",
+    "law enforcement",
+    "parole",
+    "ke ",
+    " ke",
+)
+ERASED_LIFESTYLE_FORBIDDEN = {"High", "Luxury", "Commercial"}
 CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
@@ -5516,6 +5538,45 @@ def _contact_billable_points(inst: ContactInstall, connection: int, loyalty: int
     return max(0, total - baseline)
 
 
+def _excon_contact_loyalty_min(role: str) -> int:
+    text = (role or "").strip().lower()
+    if not text:
+        return CONTACT_RATING_MIN
+    if any(hint in text for hint in EXCON_LAW_ROLE_HINTS):
+        return 5
+    if any(hint in text for hint in EXCON_CORP_ROLE_HINTS):
+        return 4
+    return CONTACT_RATING_MIN
+
+
+def _erased_lifestyle_too_high(name: str, cost: int, medium_cost: int) -> bool:
+    if name in ERASED_LIFESTYLE_FORBIDDEN:
+        return True
+    return int(cost or 0) > int(medium_cost)
+
+
+def apply_erased_lifestyle_cap(gear: dict[str, Any], erased: bool, warnings: list[str]) -> None:
+    if not erased:
+        return
+    medium = next((row for row in (catalog().get("lifestyles") or []) if row.get("name") == "Medium"), None)
+    medium_cost = int((medium or {}).get("cost") or 5000)
+    for row in gear.get("lifestyles") or []:
+        name = str(row.get("name") or "")
+        base = int(row.get("base_monthly") or row.get("monthly") or row.get("cost") or 0)
+        if _erased_lifestyle_too_high(name, base, medium_cost):
+            warnings.append(f"Erased は Medium より高いライフスタイルを維持できません（{name}）")
+
+
+def apply_excon_ware_ban(ware_items: list[dict[str, Any]], excon: bool, errors: list[str]) -> None:
+    if not excon:
+        return
+    for item in ware_items or []:
+        suffix = str(item.get("avail_suffix") or "").upper()
+        if suffix in {"R", "F"}:
+            label = "制限" if suffix == "R" else "禁止"
+            errors.append(f"Ex-Con は{label}ウェアを装着できません（{item.get('name') or 'ウェア'}）")
+
+
 def resolve_contacts(
     state: CharacterState,
     cha: int,
@@ -5525,6 +5586,7 @@ def resolve_contacts(
     black_market_contact_id: str = "",
     contact_karma_adj: int = 0,
     contact_karma_min: int = 0,
+    excon: bool = False,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -5551,6 +5613,14 @@ def resolve_contacts(
                 loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced)))
                 connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
             warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
+        excon_loy_min = _excon_contact_loyalty_min(role) if excon else CONTACT_RATING_MIN
+        if excon and loyalty < excon_loy_min:
+            warnings.append(
+                f"Ex-Con の {name or 'コネクト'}（{role or '役割なし'}）は Loyalty {excon_loy_min} 以上が必要です"
+            )
+            loyalty = excon_loy_min
+            if not career and not quality_granted and connection + loyalty > chargen_pair_max:
+                connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
         inst.name = name
         inst.role = role or None
         inst.connection = connection
@@ -5577,6 +5647,7 @@ def resolve_contacts(
             loy_min = max(CONTACT_RATING_MIN, int(forced))
         else:
             loy_min = CONTACT_RATING_MIN
+        loy_min = max(loy_min, excon_loy_min)
         public.append(
             {
                 "id": inst.id,
@@ -8106,6 +8177,7 @@ def compute(state: CharacterState) -> CharacterState:
     if not career:
         _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
+    apply_excon_ware_ban(cyber_installed + bio_installed, bool(effects.get("excon")), errors)
     bind_action_dice_pools(effects, qualities, state)
     bind_spell_spirit_limits(effects, qualities, state, errors)
     for category in effects.get("disabled_skill_group_categories") or []:
@@ -8266,6 +8338,7 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(gear["warnings"])
     errors.extend(gear.get("errors") or [])
     apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
+    apply_erased_lifestyle_cap(gear, bool(effects.get("erased")), warnings)
     apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
     bmp_category = ""
     bmp_contact_id = ""
@@ -8625,6 +8698,7 @@ def compute(state: CharacterState) -> CharacterState:
         black_market_contact_id=bmp_contact_id if bmp_active else "",
         contact_karma_adj=int(effects.get("contact_karma_adj") or 0),
         contact_karma_min=int(effects.get("contact_karma_min") or 0),
+        excon=bool(effects.get("excon")),
     )
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
@@ -8689,6 +8763,8 @@ def compute(state: CharacterState) -> CharacterState:
     street_cred_total = int(state.street_cred or 0)
     quality_pa = int(effects.get("public_awareness") or 0)
     public_awareness_total = max(0, (street_cred_total + max(0, notoriety_total)) // 3 + quality_pa)
+    if effects.get("erased") and public_awareness_total >= 1:
+        public_awareness_total = 1
 
     physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(effects.get("limit_physical") or 0)
     mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(effects.get("limit_mental") or 0)
@@ -9030,6 +9106,8 @@ def compute(state: CharacterState) -> CharacterState:
         "notoriety_bonus": int(state.notoriety_bonus or 0),
         "fame": int(effects.get("fame") or 0),
         "public_awareness": public_awareness_total,
+        "erased": bool(effects.get("erased")),
+        "excon": bool(effects.get("excon")),
         "reward_log": [
             {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
             for row in (state.reward_log or [])
