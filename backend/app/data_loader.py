@@ -358,6 +358,36 @@ MATRIX_ACTION_OPTIONS = [
     "Trace Icon",
 ]
 
+SPELL_SELECT_CATEGORIES = [
+    "Combat",
+    "Detection",
+    "Health",
+    "Illusion",
+    "Manipulation",
+    "Rituals",
+]
+STANDARD_SPIRIT_NAMES = [
+    "Spirit of Air",
+    "Spirit of Beasts",
+    "Spirit of Earth",
+    "Spirit of Fire",
+    "Spirit of Man",
+    "Spirit of Water",
+]
+
+
+def _limit_spell_category_needs_select(node: dict[str, Any]) -> bool:
+    return node.get("tag") == "limitspellcategory" and not str(node.get("value") or "").strip()
+
+
+def _limit_spirit_category_needs_select(node: dict[str, Any]) -> bool:
+    if node.get("tag") != "limitspiritcategory":
+        return False
+    fields = node.get("fields") or {}
+    if fields.get("spirit"):
+        return False
+    return not str(node.get("value") or "").strip()
+
 
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
@@ -370,6 +400,8 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
             "selectside",
             "actiondicepool",
         }
+        or _limit_spell_category_needs_select(node)
+        or _limit_spirit_category_needs_select(node)
         for node in (bonus or [])
     )
 
@@ -378,6 +410,10 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     tags = {node.get("tag") for node in (bonus or [])}
     kind = None
     select_options: list[str] = []
+    spirit_options: list[str] = []
+    spell_exclude: list[str] = []
+    needs_spell_category = any(_limit_spell_category_needs_select(node) for node in (bonus or []))
+    needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in (bonus or []))
     if "selectquality" in tags:
         kind = "quality"
         for node in bonus or []:
@@ -395,11 +431,33 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     elif "actiondicepool" in tags:
         kind = "matrix_action"
         select_options = list(MATRIX_ACTION_OPTIONS)
+    elif needs_spell_category and needs_spirit_category:
+        kind = "spell_spirit_category"
+    elif needs_spell_category:
+        kind = "spell_category"
+    elif needs_spirit_category:
+        kind = "spirit_category"
     elif "selectattributes" in tags or "selectattribute" in tags:
         kind = "attribute"
     elif "selecttext" in tags:
         kind = "text"
-    return {"extra_kind": kind, "select_options": select_options}
+    if needs_spell_category:
+        select_options = list(SPELL_SELECT_CATEGORIES)
+        for node in bonus or []:
+            if not _limit_spell_category_needs_select(node):
+                continue
+            exclude = str((node.get("attrs") or {}).get("exclude") or "").strip()
+            if exclude:
+                spell_exclude.append(exclude)
+                select_options = [name for name in select_options if name != exclude]
+    if needs_spirit_category:
+        spirit_options = list(STANDARD_SPIRIT_NAMES)
+    return {
+        "extra_kind": kind,
+        "select_options": select_options,
+        "spirit_options": spirit_options,
+        "spell_exclude": spell_exclude,
+    }
 
 
 def _parent_name_requirements(el: ET.Element) -> list[str]:
@@ -601,6 +659,7 @@ def load_qualities() -> list[dict[str, Any]]:
                 "needs_extra": quality_needs_extra(bonus),
                 "extra_kind": extra_meta.get("extra_kind"),
                 "select_options": extra_meta.get("select_options") or [],
+                "spirit_options": extra_meta.get("spirit_options") or [],
             }
         )
     return items

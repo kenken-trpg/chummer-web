@@ -121,6 +121,10 @@ IMPLEMENTED = {
     "disablecyberwaregrade",
     "disablebiowaregrade",
     "martialart",
+    "limitspellcategory",
+    "limitspiritcategory",
+    "allowspellcategory",
+    "blockspelldescriptor",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -151,8 +155,6 @@ SILENT_TAGS = {
     "physiologicaladdictionalreadyaddicted",
     "psychologicaladdictionfirsttime",
     "psychologicaladdictionalreadyaddicted",
-    "limitspellcategory",
-    "limitspiritcategory",
     "addspirit",
     "addmetamagic",
     "addecho",
@@ -175,9 +177,7 @@ SILENT_TAGS = {
     "specialattburnmultiplier",
     "cyberadeptdaemon",
     "allowspellrange",
-    "allowspellcategory",
     "allowspritefettering",
-    "blockspelldescriptor",
     "freespells",
     "fadingvalue",
     "drainvalue",
@@ -438,6 +438,12 @@ def empty_effects() -> dict[str, Any]:
         "disabled_cyberware_grades": [],
         "disabled_bioware_grades": [],
         "free_martial_arts": [],
+        "limit_spell_category_slots": [],
+        "limit_spirit_category_slots": [],
+        "allow_spell_categories": [],
+        "block_spell_descriptors": [],
+        "limit_spell_categories": [],
+        "limit_spirit_categories": [],
         "prototype_transhuman_ess": 0.0,
         "burnout_way": False,
         "native_language_limit_bonus": 0,
@@ -939,6 +945,34 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name:
                 effects["free_martial_arts"].append({"name": name, "source": source})
+        elif tag == "limitspellcategory":
+            attrs = node.get("attrs") or {}
+            effects["limit_spell_category_slots"].append(
+                {
+                    "source": source,
+                    "value": str(node.get("value") or fields.get("category") or "").strip(),
+                    "exclude": str(attrs.get("exclude") or "").strip(),
+                }
+            )
+        elif tag == "limitspiritcategory":
+            raw = fields.get("spirit")
+            if raw is None:
+                text = str(node.get("value") or "").strip()
+                spirits = [text] if text else []
+            elif isinstance(raw, list):
+                spirits = [str(item).strip() for item in raw if str(item).strip()]
+            else:
+                text = str(raw).strip()
+                spirits = [text] if text else []
+            effects["limit_spirit_category_slots"].append({"source": source, "spirits": spirits})
+        elif tag == "allowspellcategory":
+            name = str(node.get("value") or fields.get("category") or "").strip()
+            if name and name not in effects["allow_spell_categories"]:
+                effects["allow_spell_categories"].append(name)
+        elif tag == "blockspelldescriptor":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["block_spell_descriptors"]:
+                effects["block_spell_descriptors"].append(name)
         elif tag == "skillcategorypointcostmultiplier":
             name = str(fields.get("name") or node.get("value") or "").strip()
             if name:

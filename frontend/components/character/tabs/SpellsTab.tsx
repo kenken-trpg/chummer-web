@@ -17,6 +17,9 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
               {(d.spell_points?.paid || 0) > 0 ? ` ・ 追加 ${d.spell_points?.paid}（各5カルマ）` : ""}
               {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
               {" ・ 呪文・儀式・エンチャントは同じ無料枠"}
+              {(d.limit_spell_categories || []).length || (d.allow_spell_categories || []).length
+                ? ` ・ 許可カテゴリ ${[...(d.limit_spell_categories || []), ...(d.allow_spell_categories || [])].filter((v, i, a) => a.indexOf(v) === i).join("、")}`
+                : ""}
             </p>
             <label>
               伝統
@@ -84,6 +87,20 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 .filter((item) => item.learnable !== false)
                 .filter((item) => !(ch.spells || []).some((row) => row.spell_id === item.id))
                 .filter((item) => spellKind === "all" || (item.kind || "spell") === spellKind)
+                .filter((item) => {
+                  const limits = d.limit_spell_categories || [];
+                  const allows = d.allow_spell_categories || [];
+                  if (limits.length || allows.length) {
+                    const allowed = new Set([...limits, ...allows]);
+                    if (!allowed.has(item.category || "")) return false;
+                  }
+                  const blocked = d.block_spell_descriptors || [];
+                  for (const text of blocked) {
+                    if (text.toLowerCase() === "spell" && (item.kind || "spell") === "spell") return false;
+                    if (text && (item.descriptor || "").includes(text)) return false;
+                  }
+                  return true;
+                })
                 .filter((item) => {
                   const q = spellSearch.trim().toLowerCase();
                   if (q) {

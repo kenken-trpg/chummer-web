@@ -12,6 +12,9 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch, setCharacter 
             <p className="muted">
               一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と試薬 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。
               {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
+              {(d.limit_spirit_categories || []).length
+                ? ` ・ 許可精霊 ${(d.limit_spirit_categories || []).join("、")}`
+                : ""}
             </p>
             <label>
               伝統
@@ -124,6 +127,8 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch, setCharacter 
               {Object.entries(d.tradition?.spirits || {}).map(([role, name]) => {
                 const spec = (catalog.spirits || []).find((row) => row.name === name);
                 if (!spec) return null;
+                const limits = d.limit_spirit_categories || [];
+                if (limits.length && !limits.includes(spec.name)) return null;
                 return (
                   <div className="quality-item" key={role}>
                     <div>

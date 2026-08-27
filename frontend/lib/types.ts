@@ -1349,6 +1349,10 @@ export interface Character {
     blocked_default_categories?: string[];
     disabled_cyberware_grades?: string[];
     disabled_bioware_grades?: string[];
+    limit_spell_categories?: string[];
+    limit_spirit_categories?: string[];
+    allow_spell_categories?: string[];
+    block_spell_descriptors?: string[];
     native_language_limit?: number;
     prototype_transhuman_ess?: number;
     burnout_way?: boolean;
@@ -1463,8 +1467,10 @@ export interface Character {
       source: string;
       needs_extra?: boolean;
       extra?: string;
+      spirit_extra?: string;
       extra_kind?: string | null;
       select_options?: string[];
+      spirit_options?: string[];
       selectside?: boolean;
       side?: string | null;
       free?: boolean;
@@ -1539,6 +1545,7 @@ export interface Catalog {
     needs_extra?: boolean;
     extra_kind?: string | null;
     select_options?: string[];
+    spirit_options?: string[];
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];

@@ -133,6 +133,7 @@ BLACK_MARKET_CATEGORY_HINTS = {
 }
 BLACK_MARKET_AVAIL_BONUS = 2
 QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
+QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX = ":spiritcategory"
 CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
@@ -630,11 +631,17 @@ def quality_contact_extra_key(quality_id: str) -> str:
     return f"{quality_id}{QUALITY_CONTACT_EXTRA_SUFFIX}"
 
 
+def quality_spirit_category_extra_key(quality_id: str) -> str:
+    return f"{quality_id}{QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX}"
+
+
 def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
     if key in owned:
         return True
     if key.endswith(QUALITY_CONTACT_EXTRA_SUFFIX):
         return key[: -len(QUALITY_CONTACT_EXTRA_SUFFIX)] in owned
+    if key.endswith(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX):
+        return key[: -len(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX)] in owned
     return False
 
 
@@ -3990,6 +3997,25 @@ def _quality_has_actiondicepool(spec: dict[str, Any]) -> bool:
     return any(node.get("tag") == "actiondicepool" for node in (spec.get("bonus") or []))
 
 
+def _quality_needs_spell_category(spec: dict[str, Any]) -> bool:
+    return any(
+        node.get("tag") == "limitspellcategory" and not str(node.get("value") or "").strip()
+        for node in (spec.get("bonus") or [])
+    )
+
+
+def _quality_needs_spirit_category(spec: dict[str, Any]) -> bool:
+    for node in spec.get("bonus") or []:
+        if node.get("tag") != "limitspiritcategory":
+            continue
+        fields = node.get("fields") or {}
+        if fields.get("spirit"):
+            continue
+        if not str(node.get("value") or "").strip():
+            return True
+    return False
+
+
 def bind_action_dice_pools(
     effects: dict[str, Any],
     qualities: list[dict[str, Any]],
@@ -4014,6 +4040,82 @@ def bind_action_dice_pools(
             out.append(item)
     effects["action_dice_pools"] = out
     return out
+
+
+def bind_spell_spirit_limits(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    errors: list[str],
+) -> None:
+    """Resolve empty limitspell/spiritcategory slots from quality_extras."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    spell_limits: list[str] = []
+    for slot in effects.get("limit_spell_category_slots") or []:
+        value = str(slot.get("value") or "").strip()
+        source = str(slot.get("source") or "")
+        spec = by_name.get(source)
+        if not value and spec:
+            value = str(extras.get(spec["id"]) or "").strip()
+            if not value:
+                errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
+                continue
+            options = list(spec.get("select_options") or [])
+            if options and value not in options:
+                errors.append(f"{spec['name']} の呪文カテゴリが不正です")
+                continue
+        if value and value not in spell_limits:
+            spell_limits.append(value)
+    spirit_limits: list[str] = []
+    for slot in effects.get("limit_spirit_category_slots") or []:
+        spirits = [str(name).strip() for name in (slot.get("spirits") or []) if str(name).strip()]
+        source = str(slot.get("source") or "")
+        spec = by_name.get(source)
+        if not spirits and spec:
+            picked = str(extras.get(quality_spirit_category_extra_key(spec["id"])) or "").strip()
+            if not picked and not _limit_spell_needs_from_spec(spec):
+                picked = str(extras.get(spec["id"]) or "").strip()
+            if not picked:
+                errors.append(f"{spec['name']} の精霊を選んでください")
+                continue
+            options = list(spec.get("spirit_options") or [])
+            if options and picked not in options:
+                errors.append(f"{spec['name']} の精霊が不正です")
+                continue
+            spirits = [picked]
+        for name in spirits:
+            if name and name not in spirit_limits:
+                spirit_limits.append(name)
+    effects["limit_spell_categories"] = spell_limits
+    effects["limit_spirit_categories"] = spirit_limits
+
+
+def _limit_spell_needs_from_spec(spec: dict[str, Any]) -> bool:
+    return any(
+        node.get("tag") == "limitspellcategory" and not str(node.get("value") or "").strip()
+        for node in (spec.get("bonus") or [])
+    )
+
+
+def _spell_allowed_by_limits(spec: dict[str, Any], effects: dict[str, Any]) -> bool:
+    category = str(spec.get("category") or "")
+    limits = list(effects.get("limit_spell_categories") or [])
+    allows = list(effects.get("allow_spell_categories") or [])
+    if limits or allows:
+        allowed = set(limits) | set(allows)
+        if category not in allowed:
+            return False
+    for blocked in effects.get("block_spell_descriptors") or []:
+        text = str(blocked or "").strip()
+        if not text:
+            continue
+        if text.lower() == "spell" and (spec.get("kind") or "spell") == "spell":
+            return False
+        descriptor = str(spec.get("descriptor") or "")
+        if text and text in descriptor:
+            return False
+    return True
 
 
 def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
@@ -4146,8 +4248,16 @@ def apply_quality_rules(
                 errors.append(f"{spec['name']} の左右を選んでください")
             elif _quality_has_actiondicepool(spec):
                 errors.append(f"{spec['name']} のマトリクスアクションを選んでください")
+            elif _quality_needs_spell_category(spec):
+                errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
+            elif _quality_needs_spirit_category(spec):
+                errors.append(f"{spec['name']} の精霊を選んでください")
             else:
                 errors.append(f"{spec['name']} の対象を入力してください")
+        if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
+            spirit_key = quality_spirit_category_extra_key(spec["id"])
+            if spirit_key not in extras:
+                errors.append(f"{spec['name']} の精霊を選んでください")
         elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
             errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
         options = list(spec.get("select_options") or [])
@@ -6659,6 +6769,8 @@ def resolve_spirits(
     talent_name: str,
     mag: int,
     tradition: dict[str, Any] | None,
+    *,
+    limit_spirits: list[str] | None = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -6667,6 +6779,7 @@ def resolve_spirits(
         state.spirits = []
         return {"warnings": warnings, "public": public, "nuyen": 0}
     allowed = {name: role for role, name in (tradition.get("spirits") or {}).items()} if tradition else {}
+    spirit_whitelist = {str(name).strip() for name in (limit_spirits or []) if str(name).strip()}
     if not tradition:
         warnings.append("精霊を召喚するには伝統を選んでください")
     kept: list[SpiritInstall] = []
@@ -6678,6 +6791,9 @@ def resolve_spirits(
         role = allowed.get(spec["name"])
         if not tradition or not role:
             warnings.append(f"{spec['name']} はこの伝統では召喚できません")
+            continue
+        if spirit_whitelist and spec["name"] not in spirit_whitelist:
+            warnings.append(f"{spec['name']} はこの制限では召喚できません")
             continue
         if mag <= 0:
             warnings.append(f"{spec['name']} を召喚するには魔力が必要です")
@@ -7392,10 +7508,12 @@ def resolve_spells(
     mag: int,
     attrs: dict[str, int],
     owned_magic_names: set[str] | None = None,
+    effects: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     owned = set(owned_magic_names or [])
+    effects = effects or {}
     tradition = _tradition_by_id(state.tradition_id)
     if state.tradition_id and not tradition:
         warnings.append("選んだ伝統が見つからないため外しました")
@@ -7428,6 +7546,9 @@ def resolve_spells(
             continue
         if spec.get("category") not in SPELL_CATEGORIES:
             warnings.append(f"{spec['name']} はこの段階では扱えません")
+            continue
+        if not _spell_allowed_by_limits(spec, effects):
+            warnings.append(f"{spec['name']} はこの制限では習得できません（{spec.get('category') or '—'}）")
             continue
         if spec["id"] in seen:
             warnings.append(f"{spec['name']} は重複しているため外しました")
@@ -7934,6 +8055,7 @@ def compute(state: CharacterState) -> CharacterState:
         _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
     bind_action_dice_pools(effects, qualities, state)
+    bind_spell_spirit_limits(effects, qualities, state, errors)
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:
@@ -8159,7 +8281,7 @@ def compute(state: CharacterState) -> CharacterState:
         total["AGI"] = int(limb_replace["agi"])
 
     owned_magic_names = set(initiation.get("art_names") or set()) | set(initiation.get("metamagic_names") or set())
-    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names)
+    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names, effects)
     warnings.extend(magic["warnings"])
     spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}
     for item in magic.get("public") or []:
@@ -8171,6 +8293,7 @@ def compute(state: CharacterState) -> CharacterState:
         talent["name"],
         int(total.get("MAG") or 0),
         _tradition_by_id(state.tradition_id),
+        limit_spirits=list(effects.get("limit_spirit_categories") or []),
     )
     warnings.extend(spirits["warnings"])
     if talent["name"] in SPELL_TALENTS:
@@ -8871,6 +8994,10 @@ def compute(state: CharacterState) -> CharacterState:
         "burnout_way": bool(effects.get("burnout_way")),
         "disabled_cyberware_grades": list(effects.get("disabled_cyberware_grades") or []),
         "disabled_bioware_grades": list(effects.get("disabled_bioware_grades") or []),
+        "limit_spell_categories": list(effects.get("limit_spell_categories") or []),
+        "limit_spirit_categories": list(effects.get("limit_spirit_categories") or []),
+        "allow_spell_categories": list(effects.get("allow_spell_categories") or []),
+        "block_spell_descriptors": list(effects.get("block_spell_descriptors") or []),
         "initiate_grade": int(initiation.get("grade") or 0),
         "initiation": {
             "grade": int(initiation.get("grade") or 0),
@@ -8909,8 +9036,10 @@ def compute(state: CharacterState) -> CharacterState:
                 "source": q["source"],
                 "needs_extra": quality_needs_extra(q),
                 "extra": state.quality_extras.get(q["id"]) or "",
+                "spirit_extra": state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",
                 "extra_kind": q.get("extra_kind"),
                 "select_options": list(q.get("select_options") or []),
+                "spirit_options": list(q.get("spirit_options") or []),
                 "selectside": _quality_has_selectside(q),
                 "side": _normalize_side(state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),

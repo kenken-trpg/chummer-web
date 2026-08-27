@@ -208,6 +208,9 @@ def public_catalog() -> dict:
             "forbidden_qualities": list((q.get("forbidden") or {}).get("quality") or []),
             "is_way": is_way_quality(q["name"]),
             "needs_extra": bool(q.get("needs_extra")),
+            "extra_kind": q.get("extra_kind") or "",
+            "select_options": list(q.get("select_options") or []),
+            "spirit_options": list(q.get("spirit_options") or []),
             "required_tree": q.get("required_tree") or [],
             "forbidden_tree": q.get("forbidden_tree") or [],
         }

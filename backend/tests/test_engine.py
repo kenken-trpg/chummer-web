@@ -5640,6 +5640,56 @@ def test_crystal_limb_allows_opposite_cyberarm() -> None:
     assert not any("重複" in err for err in out.derived["errors"])
 
 
+ELEMENTALIST_AIR = "4d5e0fd2-dab3-4de0-9756-096a748bb3cc"
+HEDGE_WITCH = "d03a9696-2341-4894-8cf2-0537c4e74af2"
+MANABOLT = "85c12bae-3954-483c-a211-d8ee43a1c65e"
+HEAL = "92fe97e1-2f16-4398-b12b-b29bfa23c75d"
+SPIRIT_AIR = "380a4860-e5b7-4d07-9b8f-24951c1d656a"
+SPIRIT_FIRE = "c0178bf8-1fc5-4c56-9ce1-92a3ae1adc45"
+
+
+def test_elementalist_requires_spell_category() -> None:
+    out = compute(_mage("elem-empty", quality_ids=[ELEMENTALIST_AIR]))
+    assert any("呪文カテゴリを選んでください" in err for err in out.derived["errors"])
+    assert "limitspellcategory" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_elementalist_limits_spells_and_spirits() -> None:
+    out = compute(
+        _mage(
+            "elem-air",
+            quality_ids=[ELEMENTALIST_AIR],
+            quality_extras={ELEMENTALIST_AIR: "Combat"},
+            tradition_id=HERMETIC,
+            spells=[SpellInstall(spell_id=MANABOLT), SpellInstall(spell_id=HEAL)],
+            spirits=[
+                SpiritInstall(spirit_id=SPIRIT_AIR, force=1, services=1, bound=False),
+                SpiritInstall(spirit_id=SPIRIT_FIRE, force=1, services=1, bound=False),
+            ],
+        )
+    )
+    assert out.derived["limit_spell_categories"] == ["Combat"]
+    assert out.derived["limit_spirit_categories"] == ["Spirit of Air"]
+    assert [s["name"] for s in out.derived["spells"]] == ["Manabolt"]
+    assert any("Heal" in warn or "制限では習得" in warn for warn in out.derived["warnings"])
+    assert [s["name"] for s in out.derived["spirits"]] == ["Spirit of Air"]
+    assert any("Spirit of Fire" in warn and "制限" in warn for warn in out.derived["warnings"])
+    assert "Enchanting" in (out.derived["disabled_skill_groups"] or [])
+
+
+def test_hedge_witch_allows_rituals_plus_selected_category() -> None:
+    out = compute(
+        _mage(
+            "hedge",
+            quality_ids=[HEDGE_WITCH],
+            quality_extras={HEDGE_WITCH: "Health"},
+        )
+    )
+    assert out.derived["limit_spell_categories"] == ["Health"]
+    assert out.derived["allow_spell_categories"] == ["Rituals"]
+    assert "Conjuring" in (out.derived["disabled_skill_groups"] or [])
+
+
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"
 INCOMPETENT = "216290b9-053d-4f6d-81c9-d1fe8ae346be"
 JACK_OF_ALL_TRADES = "624fa943-c0a1-44ee-8cd8-3aef4bea3f4b"

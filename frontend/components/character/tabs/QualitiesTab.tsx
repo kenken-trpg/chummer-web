@@ -49,6 +49,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
     needs_extra?: boolean;
     extra_kind?: string | null;
     select_options?: string[];
+    spirit_options?: string[];
     selectside?: boolean;
   }) {
     const kind =
@@ -150,6 +151,53 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               })
             }
           />
+        </div>
+      );
+    }
+    if (kind === "spell_category" || kind === "spell_spirit_category" || kind === "spirit_category") {
+      const spiritKey = `${q.id}:spiritcategory`;
+      const spirits = q.spirit_options?.length
+          ? q.spirit_options
+          : catalogById.get(q.id)?.spirit_options || [];
+      return (
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          {kind !== "spirit_category" ? (
+            <select
+              value={ch.quality_extras?.[q.id] || ""}
+              onChange={(e) =>
+                patch({
+                  quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+                })
+              }
+            >
+              <option value="">呪文カテゴリを選択</option>
+              {options.map((name) => (
+                <option key={name} value={name}>
+                  {tr(name)}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          {kind !== "spell_category" ? (
+            <select
+              value={ch.quality_extras?.[kind === "spirit_category" ? q.id : spiritKey] || ""}
+              onChange={(e) =>
+                patch({
+                  quality_extras: {
+                    ...(ch.quality_extras || {}),
+                    [kind === "spirit_category" ? q.id : spiritKey]: e.target.value,
+                  },
+                })
+              }
+            >
+              <option value="">精霊を選択</option>
+              {spirits.map((name) => (
+                <option key={name} value={name}>
+                  {tr(name)}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </div>
       );
     }
