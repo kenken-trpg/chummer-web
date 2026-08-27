@@ -107,6 +107,29 @@ KARMA_SPECIALIZATION = 7
 KARMA_TO_NUYEN = 2000
 KARMA_NUYEN_MAX = 235
 CAREER_SKILL_MAX = 12
+PRIORITY_KARMA_NUYEN_BASE = 10
+TRUST_FUND_LIFESTYLE = {1: "Medium", 2: "Low", 3: "High", 4: "Medium"}
+TRUST_FUND_STIPEND = {
+    1: "Medium ライフスタイル＋毎月 500¥",
+    2: "Low ライフスタイル＋毎月 2,000+(3D6×100)¥",
+    3: "High ライフスタイル＋毎月 1,000¥",
+    4: "Medium ライフスタイル＋毎月 3,000+(6D6×100)¥",
+}
+DEALER_CONNECTION_MATCH = {
+    "Drones": ("Drones",),
+    "Groundcraft": ("Cars", "Bikes", "Trucks", "Corpsec/Police/Military", "Municipal/Construction", "Hovercraft"),
+    "Watercraft": ("Boats", "Submarines"),
+    "Aircraft": ("Rotorcraft", "Fixed-Wing Aircraft", "VTOL/VSTOL", "LTAV"),
+}
+BLACK_MARKET_CATEGORY_HINTS = {
+    "Weapons": ("weapons",),
+    "Armor": ("armor_items",),
+    "Electronics": ("commlinks", "cyberdecks", "rccs", "optics", "sensors", "programs", "apps"),
+    "Vehicles": ("vehicles", "drones"),
+    "Cyberware": (),
+    "Bioware": (),
+    "Drugs": ("gear",),
+}
 CAREER_SKILL_GROUP_MAX = 12
 SPELL_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice", "Enchanter"}
 SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
@@ -359,6 +382,8 @@ def career_raise_karma(
     baseline: CareerBaseline,
     skill_totals: dict[str, int],
     skills_data: dict[str, Any],
+    *,
+    effects: dict[str, Any] | None = None,
 ) -> int:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
     total = 0
@@ -382,10 +407,34 @@ def career_raise_karma(
 
     base_know = baseline.knowledge_skills or {}
     natives = set(state.native_languages or [])
+    eff = effects or {}
+    karma_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
+    flat_rules = list(eff.get("skill_category_karma_cost") or [])
+    know_cats = dict(state.knowledge_categories or {})
+    catalog_know = {str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])}
     for name, rating in (state.knowledge_skills or {}).items():
         if name in natives:
             continue
-        total += _karma_raise_cost(int(base_know.get(name, 0)), int(rating or 0), KARMA_KNOWLEDGE)
+        cat = str(know_cats.get(name) or catalog_know.get(name) or "Street")
+        mult = int(karma_mults.get(cat, 100))
+        flat_adj = 0
+        flat_min = 0
+        for rule in flat_rules:
+            if str(rule.get("name") or "") != cat:
+                continue
+            cond = str(rule.get("condition") or "")
+            if cond and "/character/created" in cond and "= false" not in cond.replace(" ", ""):
+                # career-only adjustment
+                flat_adj = int(rule.get("val") or 0)
+                flat_min = int(rule.get("min") or 0)
+        total += _karma_cost_with_category_mods(
+            int(base_know.get(name, 0)),
+            int(rating or 0),
+            KARMA_KNOWLEDGE,
+            mult_pct=mult,
+            flat_adj=flat_adj,
+            flat_min=flat_min,
+        )
 
     base_specs = set(baseline.skill_specializations or [])
     for name, spec in (state.skill_specializations or {}).items():
@@ -401,11 +450,229 @@ def career_raise_karma(
     return total
 
 
-def knowledge_excess_karma(ratings: dict[str, int], free_points: int) -> int:
+def _floor_tenth(value: float) -> float:
+    return math.floor(float(value) * 10.0 + 1e-9) / 10.0
+
+
+def _point_cost(rating: int, mult_pct: int) -> int:
+    rating = max(0, int(rating or 0))
+    mult = max(0, int(mult_pct if mult_pct is not None else 100))
+    if rating <= 0:
+        return 0
+    return int(math.ceil(rating * mult / 100.0))
+
+
+def _skill_category_map(skills_data: dict[str, Any]) -> dict[str, str]:
+    return {
+        str(skill.get("name") or ""): str(skill.get("category") or "")
+        for skill in (skills_data.get("skills") or [])
+        if skill.get("name")
+    }
+
+
+def apply_ware_essence_multipliers(
+    cyber: list[dict[str, Any]],
+    bio: list[dict[str, Any]],
+    effects: dict[str, Any],
+) -> tuple[float, float]:
+    cmult = int(effects.get("cyberware_ess_multiplier") or 100)
+    bmult = int(effects.get("bioware_ess_multiplier") or 100)
+    tmult = int(effects.get("cyberware_total_ess_multiplier") or 100)
+    if cmult != 100:
+        for item in cyber:
+            ess = float(item.get("essence") or 0)
+            if ess > 0:
+                item["essence"] = _floor_tenth(ess * cmult / 100.0)
+    if bmult != 100:
+        for item in bio:
+            ess = float(item.get("essence") or 0)
+            if ess > 0:
+                item["essence"] = _floor_tenth(ess * bmult / 100.0)
+    cyber_lost = round(sum(float(item.get("essence") or 0) for item in cyber), 4)
+    bio_lost = round(sum(float(item.get("essence") or 0) for item in bio), 4)
+    if tmult != 100 and cyber_lost > 0:
+        cyber_lost = round(_floor_tenth(cyber_lost * tmult / 100.0), 4)
+    return cyber_lost, bio_lost
+
+
+def _dealer_matches(category: str, dealer_cats: list[str]) -> bool:
+    cat = str(category or "")
+    for dealer in dealer_cats or []:
+        prefixes = DEALER_CONNECTION_MATCH.get(dealer)
+        if prefixes is None:
+            if dealer.lower() in cat.lower():
+                return True
+            continue
+        if dealer == "Drones" and cat.startswith("Drones"):
+            return True
+        if cat in prefixes:
+            return True
+    return False
+
+
+def apply_purchase_discounts(
+    gear: dict[str, Any],
+    cyber_installed: list[dict[str, Any]],
+    bio_installed: list[dict[str, Any]],
+    effects: dict[str, Any],
+    *,
+    black_market_category: str = "",
+) -> None:
+    """Mutate item nuyen in place; adjust gear["nuyen"] by discount savings only."""
+    dealer = list(effects.get("dealer_connection_categories") or [])
+    made = bool(effects.get("made_man"))
+    bmp = bool(effects.get("black_market_discount")) and bool(black_market_category)
+    bmp_keys = set(BLACK_MARKET_CATEGORY_HINTS.get(black_market_category) or ())
+    saved = 0
+
+    def _discount(row: dict[str, Any], pct: int) -> None:
+        nonlocal saved
+        base = int(row.get("nuyen") or 0)
+        if base <= 0 or pct <= 0:
+            return
+        new_cost = int(round(base * (100 - pct) / 100.0))
+        saved += base - new_cost
+        row["nuyen"] = new_cost
+        row["discount_pct"] = int(row.get("discount_pct") or 0) + pct
+
+    for key in ("vehicles", "drones"):
+        for row in gear.get(key) or []:
+            if _dealer_matches(str(row.get("category") or ""), dealer):
+                _discount(row, 10)
+            if bmp and key in bmp_keys:
+                _discount(row, 10)
+            if made and "R" in str(row.get("avail") or "").upper():
+                _discount(row, 10)
+
+    for key in (
+        "weapons",
+        "armor_items",
+        "armor_mods",
+        "weapon_accessories",
+        "commlinks",
+        "cyberdecks",
+        "rccs",
+        "optics",
+        "sensors",
+        "programs",
+        "apps",
+        "gear",
+        "vehicle_mods",
+        "weapon_mounts",
+    ):
+        for row in gear.get(key) or []:
+            if bmp and key in bmp_keys:
+                if key == "gear" and black_market_category == "Drugs":
+                    if str(row.get("category") or "") not in {"Drugs", "Toxins", "Chemicals"}:
+                        continue
+                _discount(row, 10)
+            if made and "R" in str(row.get("avail") or "").upper():
+                _discount(row, 10)
+
+    if bmp and black_market_category == "Cyberware":
+        for row in cyber_installed:
+            _discount(row, 10)
+    if bmp and black_market_category == "Bioware":
+        for row in bio_installed:
+            _discount(row, 10)
+
+    trust = int(effects.get("trustfund") or 0)
+    covered = TRUST_FUND_LIFESTYLE.get(trust)
+    if covered:
+        for row in gear.get("lifestyles") or []:
+            if str(row.get("name") or "") == covered:
+                base = int(row.get("nuyen") or 0)
+                if base:
+                    saved += base
+                    row["nuyen"] = 0
+                    row["trustfund"] = True
+
+    if saved:
+        gear["nuyen"] = max(0, int(gear.get("nuyen") or 0) - saved)
+
+
+def apply_overclocker(gear: dict[str, Any], enabled: bool) -> None:
+    if not enabled:
+        return
+    decks = list(gear.get("cyberdecks") or [])
+    if not decks:
+        return
+    deck = max(decks, key=lambda row: int(row.get("device_rating") or 0))
+    # Prefer Attack, else first matrix attr.
+    for key in MATRIX_ARRAY_KEYS:
+        if key in deck:
+            deck[key] = int(deck.get(key) or 0) + 1
+            deck["overclocker"] = key
+            break
+
+
+def knowledge_points_spent(
+    public: list[dict[str, Any]],
+    point_mults: dict[str, int],
+) -> int:
+    total = 0
+    for row in public or []:
+        if row.get("native"):
+            continue
+        rating = int(row.get("rating") or 0)
+        cat = str(row.get("category") or "")
+        total += _point_cost(rating, int(point_mults.get(cat, 100)))
+    return total
+
+
+def _karma_cost_with_category_mods(
+    from_rating: int,
+    to_rating: int,
+    per_rating: int,
+    *,
+    mult_pct: int = 100,
+    flat_adj: int = 0,
+    flat_min: int = 0,
+) -> int:
+    low = max(0, int(from_rating))
+    high = max(0, int(to_rating))
+    if high <= low or per_rating <= 0:
+        return 0
+    total = 0
+    for level in range(low + 1, high + 1):
+        base = level * int(per_rating)
+        if flat_adj and level >= flat_min:
+            base = max(1, base + flat_adj)
+        total += max(1, int(math.ceil(base * mult_pct / 100.0)))
+    return total
+
+
+
+def _active_karma_mults(rules: list[dict[str, Any]] | None, *, career: bool) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for rule in rules or []:
+        name = str(rule.get("name") or "").strip()
+        if not name:
+            continue
+        cond = str(rule.get("condition") or "").replace(" ", "")
+        if cond == "/character/created=false" and career:
+            continue
+        if cond == "/character/created" and not career:
+            continue
+        # Later rules override earlier for same category.
+        out[name] = int(rule.get("val") or 100)
+    return out
+
+def knowledge_excess_karma(
+    ratings: dict[str, int],
+    free_points: int,
+    *,
+    categories: dict[str, str] | None = None,
+    karma_mults: dict[str, int] | None = None,
+) -> int:
+    cats = categories or {}
+    mults = karma_mults or {}
     levels: list[int] = []
-    for rating in (ratings or {}).values():
+    for name, rating in (ratings or {}).items():
+        cat = str(cats.get(name) or "")
+        mult = int(mults.get(cat, 100))
         for level in range(1, max(0, int(rating or 0)) + 1):
-            levels.append(level * KARMA_KNOWLEDGE)
+            levels.append(max(1, int(math.ceil(level * KARMA_KNOWLEDGE * mult / 100.0))))
     levels.sort()
     free = max(0, int(free_points))
     if free >= len(levels):
@@ -4625,7 +4892,7 @@ def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str
                     existing.append(note)
 
 
-def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False) -> dict[str, Any]:
+def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False, friends_in_high_places: bool = False) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []
@@ -4636,9 +4903,10 @@ def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False) -
         role = (inst.role or "").strip()
         connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.connection or 1)))
         loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(inst.loyalty or 1)))
-        if not career and connection + loyalty > CONTACT_CHARGEN_COST_MAX:
-            loyalty = max(CONTACT_RATING_MIN, CONTACT_CHARGEN_COST_MAX - connection)
-            warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{CONTACT_CHARGEN_COST_MAX}までです")
+        chargen_pair_max = 12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX
+        if not career and connection + loyalty > chargen_pair_max:
+            loyalty = max(CONTACT_RATING_MIN, chargen_pair_max - connection)
+            warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
         inst.name = name
         inst.role = role or None
         inst.connection = connection
@@ -4648,9 +4916,12 @@ def resolve_contacts(state: CharacterState, cha: int, *, career: bool = False) -
             warnings.append("名前のないコネクトがあります")
         kept.append(inst)
         used += cost
-        if career:
-            conn_max = CONTACT_RATING_MAX
-            loy_max = CONTACT_RATING_MAX
+        if career or friends_in_high_places:
+            conn_max = 12 if friends_in_high_places else CONTACT_RATING_MAX
+            loy_max = CONTACT_RATING_MAX if career else min(CONTACT_RATING_MAX, (12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX) - connection)
+            if friends_in_high_places and not career:
+                conn_max = min(12, (12 - loyalty))
+                loy_max = min(CONTACT_RATING_MAX, 12 - connection)
         else:
             conn_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - loyalty)
             loy_max = min(CONTACT_RATING_MAX, CONTACT_CHARGEN_COST_MAX - connection)
@@ -7052,10 +7323,11 @@ def compute(state: CharacterState) -> CharacterState:
     if special_key:
         enabled.add(special_key)
 
-    ess_start = float(attrs_spec.get("ESS", {}).get("max") or 6)
-    ess_lost_cyber = round(sum(float(item["essence"]) for item in cyber_installed), 4)
-    ess_lost_bio = round(sum(float(item["essence"]) for item in bio_installed), 4)
+    ess_start = float(attrs_spec.get("ESS", {}).get("max") or 6) + float(effects.get("essence_max_mod") or 0)
+    ess_lost_cyber, ess_lost_bio = apply_ware_essence_multipliers(cyber_installed, bio_installed, effects)
     ess_lost = round(ess_lost_cyber + ess_lost_bio, 4)
+    if effects.get("disable_bioware") and bio_installed:
+        errors.append("Sensitive System などによりバイオウェアは装着できません")
     ess_penalty = float(effects.get("essence_penalty") or 0)
     ess_penalty_mag_exempt = float(effects.get("essence_penalty_mag_exempt") or 0)
     ess = max(0.0, round(ess_start - ess_lost - ess_penalty, 2))
@@ -7169,6 +7441,31 @@ def compute(state: CharacterState) -> CharacterState:
     errors.extend(gear.get("errors") or [])
     apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
     apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
+    bmp_category = ""
+    if effects.get("black_market_discount"):
+        for q in qualities:
+            if any(node.get("tag") == "blackmarketdiscount" for node in (q.get("bonus") or [])):
+                bmp_category = str((state.quality_extras or {}).get(q["id"]) or "").strip()
+                break
+        if not bmp_category:
+            warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
+    apply_purchase_discounts(
+        gear,
+        cyber_installed,
+        bio_installed,
+        effects,
+        black_market_category=bmp_category,
+    )
+    apply_overclocker(gear, bool(effects.get("overclocker")))
+    trust_level = int(effects.get("trustfund") or 0)
+    if trust_level:
+        sinner_ok = any(
+            str(q.get("name") or "").startswith("SINner (National)")
+            or str(q.get("name") or "").startswith("SINner (Corporate)")
+            for q in qualities
+        )
+        if not sinner_ok:
+            warnings.append("Trust Fund には SINner（National または Corporate）が必要です")
     errors.extend(_attach_ware_to_vehicle_mods(gear.get("vehicle_mods") or [], cyber_installed))
     for source, nodes in gear["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
@@ -7277,12 +7574,14 @@ def compute(state: CharacterState) -> CharacterState:
     elif special_key == "RES":
         spent_special += max(0, ratings["RES"] - talent_start)
 
+    nuyen_karma_max = KARMA_NUYEN_MAX
     if is_karma:
         attr_points = 0
         skill_points = 0
         group_points = 0
         special_from_meta = 0
-        state.karma_nuyen = max(0, min(KARMA_NUYEN_MAX, int(state.karma_nuyen or 0)))
+        nuyen_karma_max = KARMA_NUYEN_MAX
+        state.karma_nuyen = max(0, min(nuyen_karma_max, int(state.karma_nuyen or 0)))
         nuyen_pool = int(state.karma_nuyen) * KARMA_TO_NUYEN
         metatype_karma_cost = max(0, int(meta.get("karma") or 0))
         heritage_karma_cost = 0
@@ -7295,9 +7594,13 @@ def compute(state: CharacterState) -> CharacterState:
         # Priority chargen: metatypes.xml <karma> is for Karma/Sum-to-Ten, not Priority.
         # Heritage table <karma> is an extra cost for some metavariants / rare races.
         heritage_karma_cost = extra_karma
-        state.karma_nuyen = 0
+        # Leftover chargen karma may buy nuyen (SR5 p.94); Born Rich raises the cap.
+        nuyen_karma_max = max(0, PRIORITY_KARMA_NUYEN_BASE + int(effects.get("nuyen_max_bp") or 0))
+        state.karma_nuyen = max(0, min(nuyen_karma_max, int(state.karma_nuyen or 0)))
+        nuyen_pool += int(state.karma_nuyen) * KARMA_TO_NUYEN
 
     nuyen_pool += int(state.nuyen_earned or 0)
+    nuyen_pool += int(effects.get("nuyen_amt") or 0)
     nuyen_spent = (
         sum(int(item["nuyen"]) for item in installed)
         + int(qi.get("nuyen") or 0)
@@ -7325,13 +7628,16 @@ def compute(state: CharacterState) -> CharacterState:
         tentative[name] = max(tentative.get(name, 0), max(0, min(skill_rating_cap + 1, int(rating))))
     skill_picks = resolve_skill_picks(state, data["skills"], tentative)
     warnings.extend(skill_picks["warnings"])
+    skill_cat_map = _skill_category_map(data["skills"])
+    point_mults = dict(effects.get("skill_category_point_cost_mult") or {})
     for name, rating in state.skills.items():
         cap = skill_rating_cap + int(skill_picks["skill_max_bonus"].get(name, 0))
         rating = max(0, min(cap, int(rating)))
         state.skills[name] = rating
         base = skill_totals.get(name, 0)
         extra = max(0, rating - base)
-        skill_spent += extra
+        cat = skill_cat_map.get(name, "")
+        skill_spent += _point_cost(extra, int(point_mults.get(cat, 100)))
         skill_totals[name] = max(base, rating)
     exotic = resolve_exotic_skills(
         state,
@@ -7344,7 +7650,7 @@ def compute(state: CharacterState) -> CharacterState:
     skill_totals.update(exotic["totals"])
     knowledge = resolve_knowledge(state, data["skills"], total, rating_cap=skill_rating_cap)
     warnings.extend(knowledge["warnings"])
-    know_spent = int(knowledge["spent"])
+    know_spent = knowledge_points_spent(knowledge["public"], point_mults)
     know_max = int(knowledge["max"])
     bought_knowledge = dict(state.knowledge_skills)
     for name in state.native_languages:
@@ -7403,7 +7709,17 @@ def compute(state: CharacterState) -> CharacterState:
         skill_buy_karma = skill_karma_cost(
             state.skill_groups, skill_totals, data["skills"], group_cap=skill_group_cap
         )
-        knowledge_karma = knowledge_excess_karma(dict(state.knowledge_skills or {}), know_max)
+        know_cats = {
+            str(row.get("name") or ""): str(row.get("category") or "")
+            for row in (knowledge.get("public") or [])
+            if row.get("name")
+        }
+        knowledge_karma = knowledge_excess_karma(
+            dict(state.knowledge_skills or {}),
+            know_max,
+            categories=know_cats,
+            karma_mults=_active_karma_mults(effects.get("skill_category_karma_cost_mult"), career=False),
+        )
         nuyen_karma = int(state.karma_nuyen or 0)
         karma_pool = KARMA_CHARGEN_POOL + int(state.karma_earned or 0)
         karma_spent = (
@@ -7424,13 +7740,13 @@ def compute(state: CharacterState) -> CharacterState:
         knowledge_karma = 0
         nuyen_karma = 0
         karma_pool = 25 + int(state.karma_earned or 0)
-        karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma
+        karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma + int(state.karma_nuyen or 0)
         if career:
             baseline = state.career_baseline
             if baseline is None:
                 baseline = snapshot_career_baseline(state)
                 state.career_baseline = baseline
-            career_adv_karma = career_raise_karma(state, baseline, skill_totals, data["skills"])
+            career_adv_karma = career_raise_karma(state, baseline, skill_totals, data["skills"], effects=effects)
             karma_spent += career_adv_karma
 
     bod = total["BOD"]
@@ -7441,7 +7757,7 @@ def compute(state: CharacterState) -> CharacterState:
     logi = total["LOG"]
     intuition = total["INT"]
     cha = total["CHA"]
-    contacts = resolve_contacts(state, int(cha or 0), career=career)
+    contacts = resolve_contacts(state, int(cha or 0), career=career, friends_in_high_places=bool(effects.get("friends_in_high_places")))
     warnings.extend(contacts["warnings"])
     karma_spent += int(contacts.get("karma") or 0)
 
@@ -7651,8 +7967,8 @@ def compute(state: CharacterState) -> CharacterState:
         "karma_chargen": {
             "enabled": is_karma,
             "pool": karma_pool if is_karma else 0,
-            "nuyen_karma": int(state.karma_nuyen or 0) if is_karma else 0,
-            "nuyen_karma_max": KARMA_NUYEN_MAX,
+            "nuyen_karma": int(state.karma_nuyen or 0),
+            "nuyen_karma_max": int(nuyen_karma_max),
             "nuyen_per_karma": KARMA_TO_NUYEN,
             "metatype": metatype_karma_cost if is_karma else 0,
             "attributes": attr_karma if is_karma else 0,
@@ -7707,6 +8023,18 @@ def compute(state: CharacterState) -> CharacterState:
         "karma_earned": int(state.karma_earned or 0),
         "career": career,
         "career_advancement_karma": int(career_adv_karma),
+        "nuyen_amt": int(effects.get("nuyen_amt") or 0),
+        "nuyen_karma_max": int(nuyen_karma_max),
+        "trustfund": int(effects.get("trustfund") or 0),
+        "trustfund_label": TRUST_FUND_STIPEND.get(int(effects.get("trustfund") or 0), ""),
+        "ambidextrous": bool(effects.get("ambidextrous")),
+        "overclocker": bool(effects.get("overclocker")),
+        "friends_in_high_places": bool(effects.get("friends_in_high_places")),
+        "made_man": bool(effects.get("made_man")),
+        "black_market_discount": bool(effects.get("black_market_discount")),
+        "dealer_connection_categories": list(effects.get("dealer_connection_categories") or []),
+        "cyberware_ess_multiplier": int(effects.get("cyberware_ess_multiplier") or 100),
+        "bioware_ess_multiplier": int(effects.get("bioware_ess_multiplier") or 100),
         "skill_rating_max": skill_rating_cap,
         "skill_group_max": skill_group_cap,
         "avail_limit": None if career else CHARGEN_AVAIL_MAX,

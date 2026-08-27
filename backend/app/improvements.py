@@ -82,6 +82,23 @@ IMPLEMENTED = {
     "stuncmrecovery",
     "skilldisable",
     "skillgroupdisable",
+    "nuyenmaxbp",
+    "nuyenamt",
+    "trustfund",
+    "blackmarketdiscount",
+    "dealerconnection",
+    "friendsinhighplaces",
+    "mademan",
+    "overclocker",
+    "ambidextrous",
+    "cyberwareessmultiplier",
+    "biowareessmultiplier",
+    "cyberwaretotalessmultiplier",
+    "essencemax",
+    "disablebioware",
+    "skillcategorykarmacostmultiplier",
+    "skillcategorypointcostmultiplier",
+    "skillcategorykarmacost",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -104,18 +121,12 @@ SILENT_TAGS = {
     "weaponspecificdice",
     "addskillspecializationoption",
     "unarmedreach",
-    # Infected / critter kit — needs dedicated subsystem
     "critterpowers",
     "limitcritterpowercategory",
     "optionalpowers",
     "replaceattributes",
-    # Chargen/career flags handled elsewhere or not yet modeled
     "disablecyberwaregrade",
     "disablebiowaregrade",
-    "disablebioware",
-    "skillcategorykarmacostmultiplier",
-    "skillcategorypointcostmultiplier",
-    "skillcategorykarmacost",
     "skillcategoryspecializationkarmacostmultiplier",
     "skillgroupcategorykarmacostmultiplier",
     "skillgroupcategorydisable",
@@ -134,17 +145,8 @@ SILENT_TAGS = {
     "addware",
     "addlimb",
     "metageniclimit",
-    "nuyenmaxbp",
-    "nuyenamt",
-    "trustfund",
-    "blackmarketdiscount",
-    "dealerconnection",
-    "friendsinhighplaces",
-    "mademan",
     "excon",
     "erased",
-    "overclocker",
-    "ambidextrous",
     "nativelanguagelimit",
     "knowledgeskillpoints",
     "knowledgeskillkarmacost",
@@ -163,10 +165,6 @@ SILENT_TAGS = {
     "selectparagon",
     "selectinherentaiprogram",
     "selectattribute",
-    "cyberwareessmultiplier",
-    "biowareessmultiplier",
-    "cyberwaretotalessmultiplier",
-    "essencemax",
     "prototypetranshuman",
     "burnoutsway",
     "streetcredmultiplier",
@@ -212,7 +210,6 @@ SILENT_TAGS = {
     "quickeningmetamagic",
     "penaltyfreesustain",
     "availability",
-    # Vehicle stats applied via _apply_vehicle_bonus
     "handling",
     "offroadhandling",
     "speed",
@@ -418,6 +415,23 @@ def empty_effects() -> dict[str, Any]:
         "cm_recovery_stun": 0,
         "disabled_skills": [],
         "disabled_skill_groups": [],
+        "nuyen_max_bp": 0,
+        "nuyen_amt": 0,
+        "trustfund": 0,
+        "black_market_discount": False,
+        "dealer_connection_categories": [],
+        "friends_in_high_places": False,
+        "made_man": False,
+        "overclocker": False,
+        "ambidextrous": False,
+        "cyberware_ess_multiplier": 100,
+        "bioware_ess_multiplier": 100,
+        "cyberware_total_ess_multiplier": 100,
+        "essence_max_mod": 0,
+        "disable_bioware": False,
+        "skill_category_point_cost_mult": {},
+        "skill_category_karma_cost_mult": [],
+        "skill_category_karma_cost": [],
         "unimplemented": [],
     }
 
@@ -718,6 +732,81 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["disabled_skill_groups"]:
                 effects["disabled_skill_groups"].append(name)
+
+        elif tag == "nuyenmaxbp":
+            effects["nuyen_max_bp"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "nuyenamt":
+            # Conditional nuyen (e.g. Stolen Gear) is ignored until that subsystem exists.
+            attrs = node.get("attrs") or {}
+            if attrs.get("condition"):
+                continue
+            effects["nuyen_amt"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "trustfund":
+            effects["trustfund"] = max(int(effects.get("trustfund") or 0), _as_int(node.get("value")))
+        elif tag == "blackmarketdiscount":
+            effects["black_market_discount"] = True
+        elif tag == "dealerconnection":
+            cats = fields.get("category") or node.get("value") or []
+            if not isinstance(cats, list):
+                cats = [cats]
+            for raw in cats:
+                name = str(raw).strip()
+                if name and name not in effects["dealer_connection_categories"]:
+                    effects["dealer_connection_categories"].append(name)
+        elif tag == "friendsinhighplaces":
+            effects["friends_in_high_places"] = True
+        elif tag == "mademan":
+            effects["made_man"] = True
+        elif tag == "overclocker":
+            effects["overclocker"] = True
+        elif tag == "ambidextrous":
+            effects["ambidextrous"] = True
+        elif tag == "cyberwareessmultiplier":
+            effects["cyberware_ess_multiplier"] = int(
+                round(int(effects.get("cyberware_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
+            )
+        elif tag == "biowareessmultiplier":
+            effects["bioware_ess_multiplier"] = int(
+                round(int(effects.get("bioware_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
+            )
+        elif tag == "cyberwaretotalessmultiplier":
+            effects["cyberware_total_ess_multiplier"] = int(
+                round(
+                    int(effects.get("cyberware_total_ess_multiplier") or 100)
+                    * _as_int(node.get("value"), 100)
+                    / 100.0
+                )
+            )
+        elif tag == "essencemax":
+            effects["essence_max_mod"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "disablebioware":
+            effects["disable_bioware"] = True
+        elif tag == "skillcategorypointcostmultiplier":
+            name = str(fields.get("name") or node.get("value") or "").strip()
+            if name:
+                effects["skill_category_point_cost_mult"][name] = _as_int(fields.get("val") or fields.get("bonus"), 100)
+        elif tag == "skillcategorykarmacostmultiplier":
+            name = str(fields.get("name") or node.get("value") or "").strip()
+            if name:
+                effects["skill_category_karma_cost_mult"].append(
+                    {
+                        "name": name,
+                        "val": _as_int(fields.get("val") or fields.get("bonus"), 100),
+                        "condition": str(fields.get("condition") or ""),
+                    }
+                )
+        elif tag == "skillcategorykarmacost":
+            name = str(fields.get("name") or "").strip()
+            if name:
+                effects["skill_category_karma_cost"].append(
+                    {
+                        "name": name,
+                        "val": _as_int(fields.get("val")),
+                        "min": _as_int(fields.get("min")),
+                        "max": _as_int(fields.get("max")) if fields.get("max") not in (None, "") else None,
+                        "condition": str(fields.get("condition") or ""),
+                    }
+                )
 
 
 def special_armor_totals(effects: dict[str, Any]) -> dict[str, Any]:

@@ -1195,6 +1195,18 @@ export interface Character {
     nuyen_earned?: number;
     nuyen_pool?: number;
     career_advancement_karma?: number;
+    nuyen_amt?: number;
+    nuyen_karma_max?: number;
+    trustfund?: number;
+    trustfund_label?: string;
+    ambidextrous?: boolean;
+    overclocker?: boolean;
+    friends_in_high_places?: boolean;
+    made_man?: boolean;
+    black_market_discount?: boolean;
+    dealer_connection_categories?: string[];
+    cyberware_ess_multiplier?: number;
+    bioware_ess_multiplier?: number;
     skill_rating_max?: number;
     skill_group_max?: number;
     avail_limit?: number | null;

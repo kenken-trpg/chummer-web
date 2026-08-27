@@ -155,8 +155,6 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
             data["submersions"] = []
         if data["talent"] not in SPRITE_TALENTS:
             data["sprites"] = []
-    if data["build_method"] != BUILD_METHOD_KARMA:
-        data["karma_nuyen"] = 0
     state = compute(CharacterState.model_validate(data))
     _MEMORY[cid] = state
     _persist(state)

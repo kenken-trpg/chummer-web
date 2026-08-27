@@ -51,8 +51,27 @@ export function PriorityTab({ catalog, character: ch, d, tr, patch, setCharacter
                   カルマ {d.karma.remaining} / {d.karma.pool}
                   {" ・ "}1K={d.karma_chargen?.nuyen_per_karma ?? 2000}¥（最大 {d.karma_chargen?.nuyen_karma_max ?? 235}K）
                 </span>
-              ) : null}
+              ) : (
+                <span className="muted">
+                  残カルマ→¥ 最大 {d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}K
+                </span>
+              )}
             </div>
+            {(ch.build_method || "Priority") !== "Karma" ? (
+              <label style={{ display: "block", marginBottom: 12 }}>
+                残カルマ→ニューエン（{ch.karma_nuyen || 0}K = {((ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)).toLocaleString()}¥）
+                <input
+                  type="range"
+                  min={0}
+                  max={d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}
+                  value={ch.karma_nuyen || 0}
+                  onChange={(e) => setCharacter({ ...ch, karma_nuyen: Number(e.target.value) })}
+                  onMouseUp={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
+                  onTouchEnd={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
+                  onBlur={(e) => patch({ karma_nuyen: Number(e.target.value) })}
+                />
+              </label>
+            ) : null}
             {(ch.build_method || "Priority") === "Karma" ? (
               <div style={{ display: "grid", gap: 12 }}>
                 <p className="muted">

@@ -63,7 +63,19 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
                     <div>
                       <b>{tr(q.name)}</b>
                       <div className="muted">{q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma}</div>
-                      {q.needs_extra ? (
+                      {q.name === "Black Market Pipeline" ? (
+                        <select
+                          value={ch.quality_extras?.[q.id] || ""}
+                          onChange={(e) => patch({
+                            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+                          })}
+                        >
+                          <option value="">商品カテゴリを選択</option>
+                          {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      ) : q.needs_extra ? (
                         q.name === "Exceptional Attribute" ? (
                           <select
                             value={ch.quality_extras?.[q.id] || ""}

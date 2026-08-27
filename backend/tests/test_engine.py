@@ -5211,3 +5211,111 @@ def test_career_earned_rewards_expand_pools() -> None:
     out = compute(_mundane("career-earn", career=True, karma_earned=40, nuyen_earned=5000))
     assert out.derived["karma"]["pool"] == 65
     assert out.derived["nuyen_pool"] == 55_000
+
+
+BORN_RICH = "8f232e71-d4bf-4bea-b1b2-b88c7e652073"
+IN_DEBT = "2b4dd1b1-b806-44e3-9067-65dc39c82d13"
+TRUST_FUND_I = "2656bcd7-3fe1-4c34-a4fb-89ebebfbf016"
+SINNER_NATIONAL = "9ac85feb-ae1e-4996-8514-3570d411e1d5"
+BIOCOMPAT_CYBER = "23bfa65d-9241-4183-b7ea-0e2935e42f29"
+SENSITIVE_SYSTEM = "13fd45c3-e031-4452-8bf8-31829d2401f9"
+DEALER_CONNECTION = "ef6796eb-6559-4f22-bfa6-7e6571a3690d"
+COLLEGE_EDUCATION_RF = "604aea10-3f13-4f28-a87b-25b8bf677276"
+UNCOUTH = "f0873c37-4f09-41cd-be81-88e8df5b42ae"
+BLACK_MARKET_PIPELINE = "a68a897e-412f-4659-a637-4848f39a9c90"
+AMBIDEXTROUS = "68cfe94a-fa7e-4129-a9b9-b5d73e3ced99"
+MEDIUM_LIFESTYLE = "9cb0222c-14c1-4bea-bf83-055513a1f33e"
+
+
+def test_born_rich_raises_priority_karma_nuyen_cap() -> None:
+    out = compute(_mundane("born-rich", quality_ids=[BORN_RICH], karma_nuyen=40))
+    assert out.derived["karma_chargen"]["nuyen_karma_max"] == 40
+    assert out.derived["nuyen_pool"] == 50_000 + 80_000
+    assert out.derived["karma"]["spent"] == 5 + 40
+
+
+def test_in_debt_adds_nuyen_and_lowers_cap() -> None:
+    out = compute(_mundane("in-debt", quality_ids=[IN_DEBT]))
+    assert out.derived["nuyen_amt"] == 5000
+    assert out.derived["karma_chargen"]["nuyen_karma_max"] == 9
+    assert out.derived["nuyen_pool"] == 55_000
+
+
+def test_trust_fund_covers_medium_lifestyle() -> None:
+    out = compute(
+        _mundane(
+            "trust-fund",
+            quality_ids=[TRUST_FUND_I, SINNER_NATIONAL],
+            lifestyles=[LifestyleInstall(lifestyle_id=MEDIUM_LIFESTYLE, months=1)],
+        )
+    )
+    assert out.derived["trustfund"] == 1
+    assert out.derived["lifestyles"][0]["nuyen"] == 0
+    assert out.derived["lifestyles"][0].get("trustfund") is True
+
+
+def test_biocompatibility_and_sensitive_system_essence() -> None:
+    base = compute(_mundane("ess0", cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)]))
+    compat = compute(
+        _mundane(
+            "ess1",
+            quality_ids=[BIOCOMPAT_CYBER],
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)],
+        )
+    )
+    sens = compute(
+        _mundane(
+            "ess2",
+            quality_ids=[SENSITIVE_SYSTEM],
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)],
+        )
+    )
+    assert compat.derived["cyberware_ess_multiplier"] == 90
+    assert compat.derived["essence_lost_cyber"] == 1.8
+    assert sens.derived["essence_lost_cyber"] == 4.0
+    assert base.derived["essence_lost_cyber"] == 2.0
+
+
+def test_dealer_connection_discounts_groundcraft() -> None:
+    car = next(v for v in catalog()["vehicles"] if v.get("category") == "Cars")
+    base = compute(_mundane("dealer0", gear=[GearInstall(gear_id=car["id"])]))
+    deal = compute(
+        _mundane("dealer1", quality_ids=[DEALER_CONNECTION], gear=[GearInstall(gear_id=car["id"])])
+    )
+    assert deal.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+
+
+def test_college_education_halves_academic_knowledge_points() -> None:
+    out = compute(
+        _mundane(
+            "college",
+            quality_ids=[COLLEGE_EDUCATION_RF],
+            knowledge_skills={"History": 4},
+            knowledge_categories={"History": "Academic"},
+        )
+    )
+    assert out.derived["points"]["knowledge"]["used"] == 2
+
+
+def test_uncouth_doubles_social_active_skill_points() -> None:
+    out = compute(_mundane("uncouth", quality_ids=[UNCOUTH], skills={"Negotiation": 2}))
+    assert out.derived["points"]["skills"]["used"] == 4
+
+
+def test_black_market_pipeline_discounts_weapons() -> None:
+    weapon = next(w for w in catalog()["weapons"] if w.get("name") == "Ares Predator V")
+    base = compute(_mundane("bmp0", weapons=[WeaponInstall(weapon_id=weapon["id"])]))
+    disc = compute(
+        _mundane(
+            "bmp1",
+            quality_ids=[BLACK_MARKET_PIPELINE],
+            quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
+            weapons=[WeaponInstall(weapon_id=weapon["id"])],
+        )
+    )
+    assert disc.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+
+
+def test_ambidextrous_flag() -> None:
+    out = compute(_mundane("ambi", quality_ids=[AMBIDEXTROUS]))
+    assert out.derived["ambidextrous"] is True
