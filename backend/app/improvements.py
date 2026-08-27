@@ -12,6 +12,7 @@ IMPLEMENTED = {
     "initiative",
     "initiativepass",
     "enabletab",
+    "enableattribute",
     "cyberseeker",
     "mentallimit",
     "sociallimit",
@@ -27,16 +28,25 @@ IMPLEMENTED = {
     "unarmeddvphysical",
     "magicianswaydiscount",
     "freequality",
+    "addqualities",
     "selectmentorspirit",
     "focusbindingkarmacost",
     "skillattribute",
     "spellcategory",
+    "spelldicepool",
+    "spellresistance",
     "firearmor",
     "coldarmor",
     "electricityarmor",
     "radiationresist",
     "toxincontactresist",
+    "toxiningestionresist",
+    "toxininhalationresist",
+    "toxininjectionresist",
     "pathogencontactresist",
+    "pathogeningestionresist",
+    "pathogeninhalationresist",
+    "pathogeninjectionresist",
     "toxincontactimmune",
     "toxininhalationimmune",
     "pathogencontactimmune",
@@ -47,6 +57,31 @@ IMPLEMENTED = {
     "skillsoftaccess",
     "livingpersona",
     "matrixinitiativediceadd",
+    "reach",
+    "lifestylecost",
+    "notoriety",
+    "fame",
+    "publicawareness",
+    "essencepenalty",
+    "essencepenaltyt100",
+    "essencepenaltymagonlyt100",
+    "walkmultiplier",
+    "runmultiplier",
+    "movementreplace",
+    "sprintbonus",
+    "fatigueresist",
+    "memory",
+    "composure",
+    "judgeintentions",
+    "judgeintentionsdefense",
+    "judgeintentionsoffense",
+    "dodge",
+    "surprise",
+    "selectattributes",
+    "physicalcmrecovery",
+    "stuncmrecovery",
+    "skilldisable",
+    "skillgroupdisable",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -54,6 +89,7 @@ SILENT_TAGS = {
     "selectweapon",
     "addgears",
     "addweapon",
+    "addgear",
     "limit",
     "selectspell",
     "selectpowers",
@@ -68,6 +104,125 @@ SILENT_TAGS = {
     "weaponspecificdice",
     "addskillspecializationoption",
     "unarmedreach",
+    # Infected / critter kit — needs dedicated subsystem
+    "critterpowers",
+    "limitcritterpowercategory",
+    "optionalpowers",
+    "replaceattributes",
+    # Chargen/career flags handled elsewhere or not yet modeled
+    "disablecyberwaregrade",
+    "disablebiowaregrade",
+    "disablebioware",
+    "skillcategorykarmacostmultiplier",
+    "skillcategorypointcostmultiplier",
+    "skillcategorykarmacost",
+    "skillcategoryspecializationkarmacostmultiplier",
+    "skillgroupcategorykarmacostmultiplier",
+    "skillgroupcategorydisable",
+    "skillgroupdisablechoice",
+    "blockskillcategorydefaulting",
+    "physiologicaladdictionfirsttime",
+    "physiologicaladdictionalreadyaddicted",
+    "psychologicaladdictionfirsttime",
+    "psychologicaladdictionalreadyaddicted",
+    "limitspellcategory",
+    "limitspiritcategory",
+    "addspirit",
+    "addmetamagic",
+    "addecho",
+    "addspell",
+    "addware",
+    "addlimb",
+    "metageniclimit",
+    "nuyenmaxbp",
+    "nuyenamt",
+    "trustfund",
+    "blackmarketdiscount",
+    "dealerconnection",
+    "friendsinhighplaces",
+    "mademan",
+    "excon",
+    "erased",
+    "overclocker",
+    "ambidextrous",
+    "nativelanguagelimit",
+    "knowledgeskillpoints",
+    "knowledgeskillkarmacost",
+    "knowledgeskillkarmacostmin",
+    "activeskillkarmacost",
+    "newspellkarmacost",
+    "contactkarma",
+    "contactkarmaminimum",
+    "selectcontact",
+    "addcontact",
+    "selectquality",
+    "selectexpertise",
+    "selectside",
+    "selectarmor",
+    "selectsprite",
+    "selectparagon",
+    "selectinherentaiprogram",
+    "selectattribute",
+    "cyberwareessmultiplier",
+    "biowareessmultiplier",
+    "cyberwaretotalessmultiplier",
+    "essencemax",
+    "prototypetranshuman",
+    "burnoutsway",
+    "streetcredmultiplier",
+    "astralreputation",
+    "specialmodificationlimit",
+    "specialattburnmultiplier",
+    "cyberadeptdaemon",
+    "allowspellrange",
+    "allowspellcategory",
+    "allowspritefettering",
+    "blockspelldescriptor",
+    "freespells",
+    "fadingvalue",
+    "drainvalue",
+    "spellcategorydrain",
+    "spellcategorydamage",
+    "spelldescriptordamage",
+    "spelldescriptordrain",
+    "weaponcategorydv",
+    "weaponcategorydice",
+    "weaponskillaccuracy",
+    "smartlink",
+    "throwstr",
+    "throwrangestr",
+    "unarmedap",
+    "actiondicepool",
+    "defensetest",
+    "fadingresist",
+    "mentalmanipulationresist",
+    "manaillusionresist",
+    "physicalillusionresist",
+    "detectionspellresist",
+    "decreaselogresist",
+    "decreaseintresist",
+    "addesstophysicalcmrecovery",
+    "addesstostuncmrecovery",
+    "swapskillattribute",
+    "swapskillspecattribute",
+    "martialart",
+    "skillgrouplevel",
+    "matrixinitiativedice",
+    "devicerating",
+    "quickeningmetamagic",
+    "penaltyfreesustain",
+    "availability",
+    # Vehicle stats applied via _apply_vehicle_bonus
+    "handling",
+    "offroadhandling",
+    "speed",
+    "offroadspeed",
+    "accel",
+    "offroadaccel",
+    "body",
+    "pilot",
+    "sensor",
+    "seats",
 }
 
 SPECIAL_ARMOR_TAGS = {
@@ -76,7 +231,13 @@ SPECIAL_ARMOR_TAGS = {
     "electricityarmor": "electricity",
     "radiationresist": "radiation",
     "toxincontactresist": "toxin_contact",
+    "toxiningestionresist": "toxin_ingestion",
+    "toxininhalationresist": "toxin_inhalation",
+    "toxininjectionresist": "toxin_injection",
     "pathogencontactresist": "pathogen_contact",
+    "pathogeningestionresist": "pathogen_ingestion",
+    "pathogeninhalationresist": "pathogen_inhalation",
+    "pathogeninjectionresist": "pathogen_injection",
 }
 IMMUNE_TAGS = {
     "toxincontactimmune": "toxin_contact",
@@ -84,8 +245,30 @@ IMMUNE_TAGS = {
     "pathogencontactimmune": "pathogen_contact",
     "pathogeninhalationimmune": "pathogen_inhalation",
 }
-SPECIAL_ARMOR_KEYS = ("fire", "cold", "electricity", "radiation", "toxin_contact", "pathogen_contact")
+SPECIAL_ARMOR_KEYS = (
+    "fire",
+    "cold",
+    "electricity",
+    "radiation",
+    "toxin_contact",
+    "toxin_ingestion",
+    "toxin_inhalation",
+    "toxin_injection",
+    "pathogen_contact",
+    "pathogen_ingestion",
+    "pathogen_inhalation",
+    "pathogen_injection",
+)
 IMMUNE_KEYS = ("toxin_contact", "toxin_inhalation", "pathogen_contact", "pathogen_inhalation")
+TEST_MOD_TAGS = {
+    "memory": "memory",
+    "composure": "composure",
+    "judgeintentions": "judge_intentions",
+    "judgeintentionsdefense": "judge_intentions_defense",
+    "judgeintentionsoffense": "judge_intentions_offense",
+    "dodge": "dodge",
+    "surprise": "surprise",
+}
 LIMIT_KINDS = ("physical", "mental", "social")
 LIMIT_KIND_ALIASES = {
     "physical": "physical",
@@ -202,10 +385,13 @@ def empty_effects() -> dict[str, Any]:
         "unarmed_physical": False,
         "magicians_way": False,
         "free_qualities": [],
+        "add_qualities": [],
         "needs_mentor": False,
         "focus_binding": [],
         "skill_attribute_mods": [],
         "spell_category_mods": [],
+        "spell_dice_pool": [],
+        "spell_resistance": 0,
         "special_armor": {key: 0 for key in SPECIAL_ARMOR_KEYS},
         "immunities": {key: False for key in IMMUNE_KEYS},
         "restricted_gear": [],
@@ -214,6 +400,24 @@ def empty_effects() -> dict[str, Any]:
         "skilljack": 0,
         "living_persona": {"attack": 0, "sleaze": 0, "dataprocessing": 0, "firewall": 0},
         "matrix_initiative_dice": 0,
+        "reach": 0,
+        "lifestyle_cost": 0,
+        "notoriety": 0,
+        "fame": 0,
+        "public_awareness": 0,
+        "essence_penalty": 0.0,
+        "essence_penalty_mag_exempt": 0.0,
+        "walk_multiplier": {},
+        "run_multiplier": {},
+        "movement_replace": {},
+        "sprint_bonus": {},
+        "fatigue_resist": 0,
+        "test_mods": {key: 0 for key in TEST_MOD_TAGS.values()},
+        "attribute_selects": [],
+        "cm_recovery_physical": 0,
+        "cm_recovery_stun": 0,
+        "disabled_skills": [],
+        "disabled_skill_groups": [],
         "unimplemented": [],
     }
 
@@ -249,6 +453,15 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                 name = text.upper() if text.upper() in {"MAG", "RES"} else text.lower()
                 if name:
                     effects["enabled_tabs"].add(name)
+        elif tag == "enableattribute":
+            names = fields.get("name") or node.get("value") or ""
+            values = names if isinstance(names, list) else [names]
+            for raw in values:
+                attr = ATTR_ALIASES.get(str(raw).strip().upper())
+                if attr in {"MAG", "RES"}:
+                    effects["enabled_tabs"].add(attr)
+                elif attr:
+                    effects["enabled_tabs"].add(attr.lower())
         elif tag == "cyberseeker":
             target = (node.get("value") or fields.get("name") or "").upper()
             if target:
@@ -294,6 +507,13 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             qid = str(node.get("value") or fields.get("name") or "").strip()
             if qid and qid not in effects["free_qualities"]:
                 effects["free_qualities"].append(qid)
+        elif tag == "addqualities":
+            raw = fields.get("addquality") or node.get("value") or ""
+            names = raw if isinstance(raw, list) else [raw]
+            for name in names:
+                text = str(name).strip()
+                if text and text not in effects["add_qualities"]:
+                    effects["add_qualities"].append(text)
         elif tag == "selectmentorspirit":
             effects["needs_mentor"] = True
         elif tag == "focusbindingkarmacost":
@@ -344,6 +564,21 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "source": source,
                 }
             )
+        elif tag == "spelldicepool":
+            name = (fields.get("name") or fields.get("id") or node.get("value") or "").strip()
+            bonus = _as_int(fields.get("val") or fields.get("bonus") or fields.get("value") or node.get("value"))
+            if bonus == 0:
+                continue
+            effects["spell_dice_pool"].append(
+                {
+                    "name": name,
+                    "id": str(fields.get("id") or "").strip(),
+                    "bonus": bonus,
+                    "source": source,
+                }
+            )
+        elif tag == "spellresistance":
+            effects["spell_resistance"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag in SPECIAL_ARMOR_TAGS:
             key = SPECIAL_ARMOR_TAGS[tag]
             effects["special_armor"][key] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
@@ -393,6 +628,96 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["matrix_initiative_dice"] = int(effects.get("matrix_initiative_dice") or 0) + _as_int(
                 node.get("value") or fields.get("bonus") or fields.get("val")
             )
+        elif tag == "reach":
+            effects["reach"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "lifestylecost":
+            effects["lifestyle_cost"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "notoriety":
+            effects["notoriety"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "fame":
+            effects["fame"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "publicawareness":
+            effects["public_awareness"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "essencepenalty":
+            # Negative values mean ESS loss (e.g. -1).
+            effects["essence_penalty"] += abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus")))
+        elif tag == "essencepenaltyt100":
+            effects["essence_penalty"] += abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
+        elif tag == "essencepenaltymagonlyt100":
+            effects["essence_penalty_mag_exempt"] += abs(
+                _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+            ) / 100.0
+        elif tag == "walkmultiplier":
+            category = str(fields.get("category") or "Ground").strip() or "Ground"
+            effects["walk_multiplier"][category] = int(effects["walk_multiplier"].get(category) or 0) + _as_int(
+                fields.get("val") or fields.get("bonus") or node.get("value")
+            )
+        elif tag == "runmultiplier":
+            category = str(fields.get("category") or "Ground").strip() or "Ground"
+            effects["run_multiplier"][category] = int(effects["run_multiplier"].get(category) or 0) + _as_int(
+                fields.get("val") or fields.get("bonus") or node.get("value")
+            )
+        elif tag == "movementreplace":
+            category = str(fields.get("category") or "Ground").strip() or "Ground"
+            speed = str(fields.get("speed") or "walk").strip().lower() or "walk"
+            effects["movement_replace"][(category, speed)] = _as_int(fields.get("val") or fields.get("bonus") or node.get("value"))
+        elif tag == "sprintbonus":
+            category = str(fields.get("category") or "Ground").strip() or "Ground"
+            effects["sprint_bonus"][category] = int(effects["sprint_bonus"].get(category) or 0) + _as_int(
+                fields.get("val") or fields.get("bonus") or node.get("value")
+            )
+        elif tag == "fatigueresist":
+            effects["fatigue_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag in TEST_MOD_TAGS:
+            key = TEST_MOD_TAGS[tag]
+            effects["test_mods"][key] = int(effects["test_mods"].get(key) or 0) + _as_int(
+                node.get("value") or fields.get("val") or fields.get("bonus")
+            )
+        elif tag == "selectattributes":
+            nested = node.get("nested") or {}
+            vals = nested.get("selectattribute") or []
+            if not isinstance(vals, list):
+                vals = [vals]
+            exclude: list[str] = []
+            max_bonus = 1
+            for raw in vals:
+                text = str(raw).strip()
+                attr = ATTR_ALIASES.get(text.upper())
+                if attr:
+                    exclude.append(attr)
+                elif text:
+                    max_bonus = _as_int(text, max_bonus)
+            # Also accept structured fields if present.
+            for key in ("excludeattribute", "exclude"):
+                raw_ex = fields.get(key)
+                if not raw_ex:
+                    continue
+                items = raw_ex if isinstance(raw_ex, list) else [raw_ex]
+                for item in items:
+                    attr = ATTR_ALIASES.get(str(item).strip().upper())
+                    if attr and attr not in exclude:
+                        exclude.append(attr)
+            if fields.get("max"):
+                max_bonus = _as_int(fields.get("max"), max_bonus)
+            effects["attribute_selects"].append(
+                {
+                    "exclude": exclude,
+                    "max": max(1, max_bonus),
+                    "source": source,
+                }
+            )
+        elif tag == "physicalcmrecovery":
+            effects["cm_recovery_physical"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "stuncmrecovery":
+            effects["cm_recovery_stun"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "skilldisable":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["disabled_skills"]:
+                effects["disabled_skills"].append(name)
+        elif tag == "skillgroupdisable":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name and name not in effects["disabled_skill_groups"]:
+                effects["disabled_skill_groups"].append(name)
 
 
 def special_armor_totals(effects: dict[str, Any]) -> dict[str, Any]:
