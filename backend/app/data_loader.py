@@ -326,10 +326,50 @@ def _parse_requirement_node(el: ET.Element) -> dict[str, Any]:
     return node
 
 
+# Common SR5 Matrix actions for Codeslinger-style picks.
+MATRIX_ACTION_OPTIONS = [
+    "Brute Force",
+    "Check Overwatch Score",
+    "Control Device",
+    "Crack File",
+    "Crash Program",
+    "Data Spike",
+    "Disarm Data Bomb",
+    "Edit File",
+    "Enter/Exit Host",
+    "Erase Mark",
+    "Erase Matrix Signature",
+    "Format Device",
+    "Full Matrix Defense",
+    "Hack on the Fly",
+    "Hide",
+    "Invite Mark",
+    "Jack Out",
+    "Jam Signals",
+    "Jump Into Rigged Device",
+    "Matrix Perception",
+    "Matrix Search",
+    "Reboot Device",
+    "Send Message",
+    "Set Data Bomb",
+    "Snoop",
+    "Spoof Command",
+    "Switch Interface Mode",
+    "Trace Icon",
+]
+
+
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
         node.get("tag")
-        in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality", "selectside"}
+        in {
+            "selecttext",
+            "selectattributes",
+            "skillgroupdisablechoice",
+            "selectquality",
+            "selectside",
+            "actiondicepool",
+        }
         for node in (bonus or [])
     )
 
@@ -352,6 +392,9 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
         kind = "skillgroup"
     elif "selectside" in tags:
         kind = "side"
+    elif "actiondicepool" in tags:
+        kind = "matrix_action"
+        select_options = list(MATRIX_ACTION_OPTIONS)
     elif "selectattributes" in tags or "selectattribute" in tags:
         kind = "attribute"
     elif "selecttext" in tags:

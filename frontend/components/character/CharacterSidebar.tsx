@@ -149,6 +149,12 @@ export function CharacterSidebar({
         ) : null}
         {(d.fatigue_resist || 0) !== 0 ? <div className="stat"><span>疲労抵抗</span><b>+{d.fatigue_resist}</b></div> : null}
         {(d.spell_resistance || 0) !== 0 ? <div className="stat"><span>呪文抵抗</span><b>+{d.spell_resistance}</b></div> : null}
+        {(d.action_dice_pools || []).map((row, idx) => (
+          <div className="stat" key={`adp-${row.name}-${idx}`}>
+            <span>{row.category ? `${row.category}: ${row.name}` : row.name}</span>
+            <b>{row.bonus > 0 ? "+" : ""}{row.bonus}</b>
+          </div>
+        ))}
         {(d.test_mods?.memory || 0) !== 0 ? <div className="stat"><span>記憶</span><b>{d.test_mods!.memory! > 0 ? "+" : ""}{d.test_mods!.memory}</b></div> : null}
         {(d.test_mods?.composure || 0) !== 0 ? <div className="stat"><span>冷静</span><b>{d.test_mods!.composure! > 0 ? "+" : ""}{d.test_mods!.composure}</b></div> : null}
         {(d.test_mods?.judge_intentions || 0) !== 0 ? <div className="stat"><span>意図看破</span><b>{d.test_mods!.judge_intentions! > 0 ? "+" : ""}{d.test_mods!.judge_intentions}</b></div> : null}

@@ -360,11 +360,25 @@ export default function CharacterSheet({
             <li key={q.id}>
               <b>{tr(q.name)}</b>
               {q.extra ? `（${tr(q.extra)}）` : ""}
+              {q.side ? `（${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}）` : ""}
               <span className="sheet-dim"> {q.category === "Negative" ? "不利" : "有利"} {q.karma > 0 ? `+${q.karma}` : q.karma}K</span>
             </li>
           ))}
         </ul>
       </Section>
+
+      {(d.action_dice_pools || []).length ? (
+        <Section title="アクションDP">
+          <ul className="sheet-list">
+            {(d.action_dice_pools || []).map((row, idx) => (
+              <li key={`${row.name}-${idx}`}>
+                <b>{row.category ? `${row.category}: ${tr(row.name)}` : tr(row.name)}</b>
+                <span className="sheet-dim"> {row.bonus > 0 ? "+" : ""}{row.bonus}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
 
       <Section title="戦闘" empty={!weapons.length && !armors.length && !d.worn_armor}>
         {armors.length || d.worn_armor ? (

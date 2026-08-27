@@ -114,6 +114,7 @@ IMPLEMENTED = {
     "selectside",
     "prototypetranshuman",
     "burnoutsway",
+    "actiondicepool",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -190,7 +191,6 @@ SILENT_TAGS = {
     "throwstr",
     "throwrangestr",
     "unarmedap",
-    "actiondicepool",
     "defensetest",
     "fadingresist",
     "mentalmanipulationresist",
@@ -388,6 +388,7 @@ def empty_effects() -> dict[str, Any]:
         "skill_attribute_mods": [],
         "spell_category_mods": [],
         "spell_dice_pool": [],
+        "action_dice_pools": [],
         "spell_resistance": 0,
         "special_armor": {key: 0 for key in SPECIAL_ARMOR_KEYS},
         "immunities": {key: False for key in IMMUNE_KEYS},
@@ -606,6 +607,23 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "id": str(fields.get("id") or "").strip(),
                     "bonus": bonus,
                     "source": source,
+                }
+            )
+        elif tag == "actiondicepool":
+            attrs = node.get("attrs") or {}
+            category = str(attrs.get("category") or fields.get("category") or "").strip()
+            name = str(fields.get("name") or "").strip()
+            # Codeslinger XML has empty value; SR5 grants +2 to a chosen Matrix action.
+            bonus = _as_int(node.get("value") or fields.get("val") or fields.get("bonus") or fields.get("value"), 0)
+            if bonus == 0:
+                bonus = 2
+            effects["action_dice_pools"].append(
+                {
+                    "category": category,
+                    "name": name,
+                    "bonus": bonus,
+                    "source": source,
+                    "needs_action": not bool(name),
                 }
             )
         elif tag == "spellresistance":

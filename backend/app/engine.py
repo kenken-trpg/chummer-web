@@ -3974,9 +3974,46 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
 def quality_needs_extra(spec: dict[str, Any]) -> bool:
     return bool(spec.get("needs_extra")) or any(
         node.get("tag")
-        in {"selecttext", "selectattributes", "skillgroupdisablechoice", "selectquality", "selectside"}
+        in {
+            "selecttext",
+            "selectattributes",
+            "skillgroupdisablechoice",
+            "selectquality",
+            "selectside",
+            "actiondicepool",
+        }
         for node in (spec.get("bonus") or [])
     )
+
+
+def _quality_has_actiondicepool(spec: dict[str, Any]) -> bool:
+    return any(node.get("tag") == "actiondicepool" for node in (spec.get("bonus") or []))
+
+
+def bind_action_dice_pools(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+) -> list[dict[str, Any]]:
+    """Attach chosen Matrix action names from quality_extras onto actiondicepool rows."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    out: list[dict[str, Any]] = []
+    for row in effects.get("action_dice_pools") or []:
+        item = {
+            "category": str(row.get("category") or ""),
+            "name": str(row.get("name") or "").strip(),
+            "bonus": int(row.get("bonus") or 0),
+            "source": str(row.get("source") or ""),
+        }
+        if not item["name"] and row.get("needs_action"):
+            spec = by_name.get(item["source"])
+            if spec:
+                item["name"] = str(extras.get(spec["id"]) or "").strip()
+        if item["bonus"] and item["name"]:
+            out.append(item)
+    effects["action_dice_pools"] = out
+    return out
 
 
 def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
@@ -4107,6 +4144,8 @@ def apply_quality_rules(
         if quality_needs_extra(spec) and spec["id"] not in extras:
             if _quality_has_selectside(spec):
                 errors.append(f"{spec['name']} の左右を選んでください")
+            elif _quality_has_actiondicepool(spec):
+                errors.append(f"{spec['name']} のマトリクスアクションを選んでください")
             else:
                 errors.append(f"{spec['name']} の対象を入力してください")
         elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
@@ -4119,7 +4158,8 @@ def apply_quality_rules(
                 raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
                 options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
         if options and spec["id"] in extras and extras[spec["id"]] not in options:
-            errors.append(f"{spec['name']} の対象が不正です")
+            if not _quality_has_actiondicepool(spec):
+                errors.append(f"{spec['name']} の対象が不正です")
         if is_free:
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
@@ -7675,6 +7715,7 @@ def compute(state: CharacterState) -> CharacterState:
     if not career:
         _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
+    bind_action_dice_pools(effects, qualities, state)
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:
@@ -8590,6 +8631,7 @@ def compute(state: CharacterState) -> CharacterState:
         "fatigue_resist": int(effects.get("fatigue_resist") or 0),
         "spell_resistance": int(effects.get("spell_resistance") or 0),
         "spell_dice_pool": list(effects.get("spell_dice_pool") or []),
+        "action_dice_pools": list(effects.get("action_dice_pools") or []),
         "test_mods": dict(effects.get("test_mods") or {}),
         "cm_recovery": {
             "physical": int(effects.get("cm_recovery_physical") or 0),

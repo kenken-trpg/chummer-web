@@ -1311,6 +1311,7 @@ export interface Character {
     fatigue_resist?: number;
     spell_resistance?: number;
     spell_dice_pool?: { name: string; id?: string; bonus: number; source?: string }[];
+    action_dice_pools?: { category?: string; name: string; bonus: number; source?: string }[];
     test_mods?: {
       memory?: number;
       composure?: number;

@@ -98,7 +98,62 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
         </div>
       );
     }
-    if (kind === "quality" || options.length) {
+    if (kind === "side" || q.selectside) {
+      return (
+        <select
+          value={ch.quality_extras?.[q.id] || ""}
+          onChange={(e) =>
+            patch({
+              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+            })
+          }
+        >
+          <option value="">左右を選択</option>
+          <option value="Left">左</option>
+          <option value="Right">右</option>
+        </select>
+      );
+    }
+    if (kind === "matrix_action") {
+      const current = ch.quality_extras?.[q.id] || "";
+      const known = options.length ? options : [];
+      return (
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <select
+            value={known.includes(current) ? current : ""}
+            onChange={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          >
+            <option value="">マトリクスアクションを選択</option>
+            {known.map((name) => (
+              <option key={name} value={name}>
+                {tr(name)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="または手入力"
+            value={current}
+            onChange={(e) =>
+              setCharacter({
+                ...ch,
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+            onBlur={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          />
+        </div>
+      );
+    }
+    if (kind === "quality") {
       return (
         <select
           value={ch.quality_extras?.[q.id] || ""}
@@ -114,22 +169,6 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               {tr(name)}
             </option>
           ))}
-        </select>
-      );
-    }
-    if (kind === "side" || q.selectside) {
-      return (
-        <select
-          value={ch.quality_extras?.[q.id] || ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">左右を選択</option>
-          <option value="Left">左</option>
-          <option value="Right">右</option>
         </select>
       );
     }

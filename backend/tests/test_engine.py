@@ -5365,6 +5365,30 @@ def test_ambidextrous_flag() -> None:
     assert out.derived["ambidextrous"] is True
 
 
+CODESLINGER = "41cc3e26-ae55-4e28-bd6a-b08866c21424"
+
+
+def test_codeslinger_requires_matrix_action() -> None:
+    out = compute(_mundane("code-empty", quality_ids=[CODESLINGER]))
+    assert any("マトリクスアクションを選んでください" in err for err in out.derived["errors"])
+    assert out.derived["action_dice_pools"] == []
+
+
+def test_codeslinger_adds_action_dice_pool() -> None:
+    out = compute(
+        _mundane(
+            "code-hack",
+            quality_ids=[CODESLINGER],
+            quality_extras={CODESLINGER: "Hack on the Fly"},
+        )
+    )
+    assert out.derived["action_dice_pools"] == [
+        {"category": "Matrix", "name": "Hack on the Fly", "bonus": 2, "source": "Codeslinger"}
+    ]
+    assert "actiondicepool" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert out.derived["karma"]["spent"] == 10
+
+
 CRYSTAL_LIMB_ARM = "350844b9-db9f-4cce-83c3-e8965511e928"
 
 
