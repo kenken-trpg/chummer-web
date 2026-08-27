@@ -159,6 +159,8 @@ class LifestyleInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     lifestyle_id: str
     months: int = 1
+    quality_ids: list[str] = Field(default_factory=list)
+    quality_extras: dict[str, str] = Field(default_factory=dict)
 
 
 class ExoticSkillInstall(BaseModel):
@@ -199,6 +201,7 @@ class SubmersionChoice(BaseModel):
 class CharacterOptions(BaseModel):
     redliner_torso: bool = False
     redliner_skull: bool = False
+
 
 
 class CharacterPatch(BaseModel):

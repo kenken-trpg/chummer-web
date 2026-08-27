@@ -683,11 +683,58 @@ def public_catalog() -> dict:
                 "name": ls["name"],
                 "cost": int(ls.get("cost") or 0),
                 "dice": int(ls.get("dice") or 0),
+                "lp": int(ls.get("lp") or 0),
+                "multiplier": int(ls.get("multiplier") or 100),
                 "increment": ls.get("increment") or "month",
+                "freegrids": [
+                    {"name": str(g.get("name") or ""), "select": str(g.get("select") or "")}
+                    for g in (ls.get("freegrids") or [])
+                ],
                 "source": ls.get("source") or "",
                 "page": ls.get("page") or "",
             }
             for ls in raw.get("lifestyles") or []
+        ],
+        "lifestyle_qualities": [
+            {
+                "id": q["id"],
+                "name": q["name"],
+                "category": q.get("category") or "",
+                "lp": int(q.get("lp") or 0),
+                "cost": int(q.get("cost") or 0),
+                "multiplier": int(q.get("multiplier") or 0),
+                "allowed": list(q.get("allowed") or []),
+                "allow_multiple": bool(q.get("allow_multiple")),
+                "needs_extra": bool(q.get("needs_extra")),
+                "source": q.get("source") or "",
+                "page": q.get("page") or "",
+            }
+            for q in raw.get("lifestyle_qualities") or []
+        ],
+        "drugs": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "category": item.get("category") or "",
+                "cost": item.get("cost") or "0",
+                "avail": item.get("avail") or "",
+                "addoncategories": list(item.get("addoncategories") or []),
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("drugs") or []
+        ],
+        "drug_grades": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "cost": item.get("cost") or "0",
+                "avail": item.get("avail") or "",
+                "required_categories": list(item.get("required_categories") or []),
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("drug_grades") or []
         ],
         "martial_arts": [
             {

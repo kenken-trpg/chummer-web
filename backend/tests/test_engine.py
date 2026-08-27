@@ -4930,3 +4930,239 @@ def test_resonance_program_echo_needs_extra() -> None:
     )
     assert out2.derived["submersion"]["echoes"][0]["extra"] == "Browse"
     assert not any("対象" in warn for warn in out2.derived["warnings"])
+
+
+BLANDNESS = "9cffd452-8489-48d5-888c-ac35459d9174"
+RESIST_PATHOGENS_TOXINS = "5c022754-f7cf-479f-80b2-de8454fd76e4"
+EXCEPTIONAL_ATTRIBUTE = "2ac8a95a-a4d0-4bef-a2f2-dcde020258cf"
+EX_CON = "4fe8fa5e-e31b-4126-a880-3e719a0a5820"
+PHOTOGRAPHIC_MEMORY = "9d3be1d9-1309-45e7-8bd9-1f5a3ede3522"
+QUICK_HEALER = "291efdb6-a8b8-49ce-b2be-72f9d3f8a243"
+CELERITY = "bd2cf8ea-4eb3-458c-aa04-2de47067f3ad"
+CRYSTAL_BREATH = "c2b4f018-7b14-4e04-aab9-71c891dd0a18"
+MAGIC_RESISTANCE = "f80ef6fc-e844-441c-81e3-b1264b34a4e7"
+DEPENDENT_NUISANCE = "2b9a495d-b735-416b-a000-f648c3b4191a"
+SINNER_CRIMINAL = "d9479e5c-d44a-45b9-8fb4-d1e08a9487b2"
+
+
+def test_mage_enableattribute_not_unimplemented() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["MAG"] = 6
+    out = compute(
+        CharacterState(
+            id="mage-enable",
+            name="Mage",
+            priorities=Priorities(Heritage="E", Attributes="B", Talent="A", Skills="C", Resources="D"),
+            metatype="Human",
+            talent="Magician",
+            attributes=attrs,
+        )
+    )
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "enableattribute" not in tags
+
+
+def test_troll_reach_and_lifestyle_cost() -> None:
+    out = compute(
+        CharacterState(
+            id="troll-reach",
+            name="Troll",
+            priorities=Priorities(Heritage="A", Attributes="B", Talent="E", Skills="C", Resources="C"),
+            metatype="Troll",
+            attributes=default_attributes(find_metatype("Troll", None)),
+            lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, months=1)],
+        )
+    )
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "reach" not in tags
+    assert "lifestylecost" not in tags
+    assert out.derived["reach"] == 1
+    assert out.derived["unarmed_reach"] >= 1
+    assert out.derived["lifestyle_cost_mod"] == 100
+    assert out.derived["lifestyle"]["nuyen"] == 4000
+
+
+def test_blandness_notoriety() -> None:
+    out = compute(_human("bland", quality_ids=[BLANDNESS]))
+    assert out.derived["notoriety"] == -1
+    assert "notoriety" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_resistance_pathogens_toxins_special_armor() -> None:
+    out = compute(_human("rpt", quality_ids=[RESIST_PATHOGENS_TOXINS]))
+    sa = out.derived["special_armor"]
+    assert sa["toxin_contact"] == 1
+    assert sa["toxin_ingestion"] == 1
+    assert sa["pathogen_injection"] == 1
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "toxiningestionresist" not in tags
+    assert "pathogeninjectionresist" not in tags
+
+
+def test_exceptional_attribute_raises_max() -> None:
+    missing = compute(_human("ea-miss", quality_ids=[EXCEPTIONAL_ATTRIBUTE]))
+    assert any("属性を選んでください" in warn for warn in missing.derived["warnings"])
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["BOD"] = 6
+    out = compute(
+        CharacterState(
+            id="ea-bod",
+            name="ea-bod",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            quality_ids=[EXCEPTIONAL_ATTRIBUTE],
+            quality_extras={EXCEPTIONAL_ATTRIBUTE: "BOD"},
+        )
+    )
+    assert out.derived["attribute_max_bonus"]["BOD"] == 1
+    assert out.derived["metatype_info"]["attributes"]["BOD"]["max"] == 7
+    assert out.derived["totals"]["BOD"] == 6
+    assert "selectattributes" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_ex_con_adds_sinner_quality() -> None:
+    out = compute(_human("excon", quality_ids=[EX_CON]))
+    names = {q["name"] for q in out.derived["qualities"]}
+    assert "Ex-Con" in names
+    assert "SINner (Criminal)" in names
+    assert SINNER_CRIMINAL in out.quality_ids or any(q["id"] == SINNER_CRIMINAL for q in out.derived["qualities"])
+
+
+def test_photographic_memory_and_quick_healer() -> None:
+    out = compute(_human("mem-heal", quality_ids=[PHOTOGRAPHIC_MEMORY, QUICK_HEALER]))
+    assert out.derived["test_mods"]["memory"] == 2
+    assert out.derived["cm_recovery"]["physical"] == 2
+    assert out.derived["cm_recovery"]["stun"] == 2
+    assert any(row["name"] == "Heal" and row["bonus"] == 2 for row in out.derived["spell_dice_pool"])
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "memory" not in tags
+    assert "spelldicepool" not in tags
+    assert "physicalcmrecovery" not in tags
+
+
+def test_celerity_replaces_movement() -> None:
+    out = compute(_human("celerity", quality_ids=[CELERITY]))
+    assert out.derived["movement"]["walk"].startswith("3")
+    assert out.derived["movement"]["run"].startswith("6")
+    assert out.derived["movement"]["sprint_bonus"] == 100
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "movementreplace" not in tags
+    assert "sprintbonus" not in tags
+
+
+def test_crystal_breath_essence_penalty() -> None:
+    out = compute(_human("crystal", quality_ids=[CRYSTAL_BREATH]))
+    assert out.derived["essence_penalty"] == 1.0
+    assert out.derived["essence"] == 5.0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "essencepenaltyt100" not in tags
+    assert "fatigueresist" not in tags
+    assert out.derived["fatigue_resist"] == 1
+
+
+def test_magic_resistance_and_dependent_lifestyle() -> None:
+    out = compute(
+        _mundane(
+            "resist-dep",
+            quality_ids=[MAGIC_RESISTANCE, DEPENDENT_NUISANCE],
+            lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, months=1)],
+        )
+    )
+    assert out.derived["spell_resistance"] == 1
+    assert out.derived["lifestyle_cost_mod"] == 10
+    assert out.derived["lifestyle"]["nuyen"] == 2200
+
+
+MEDIUM_LIFESTYLE = "9cb0222c-14c1-4bea-bf83-055513a1f33e"
+LIFESTYLE_GYM = "23c785d3-e086-46a6-8491-603fa1e6963d"
+LIFESTYLE_CRAMPED = "ff0cb981-4459-46e7-ab75-d8c5bcb0c486"
+JAZZ = "929c4835-1754-4999-9215-9859e8ec5384"
+STREET_COOKED = "f22e79fa-fb04-4369-a761-a1a46e242bc8"
+PHARMACEUTICAL = "21f33089-cb7a-4bef-80ae-03d04f1c47ad"
+
+
+def test_medium_lifestyle_freegrids_and_quality() -> None:
+    out = compute(
+        _mundane(
+            "medium-gym",
+            lifestyles=[
+                LifestyleInstall(
+                    lifestyle_id=MEDIUM_LIFESTYLE,
+                    months=1,
+                    quality_ids=[LIFESTYLE_GYM],
+                )
+            ],
+        )
+    )
+    ls = out.derived["lifestyle"]
+    assert ls["name"] == "Medium"
+    assert ls["base_monthly"] == 5000
+    assert ls["monthly"] == 5000  # Gym is free on Medium via allowed
+    assert ls["lp_used"] == 4
+    assert ls["lp_max"] == 4
+    grids = [q for q in ls["qualities"] if q["name"] == "Grid Subscription"]
+    assert len(grids) == 2
+    assert {q["extra"] for q in grids} == {"Local Grid", "Public Grid"}
+    assert all(q.get("from_freegrid") for q in grids)
+    gym = next(q for q in ls["qualities"] if q["name"] == "Gym")
+    assert gym["free"] is True
+    assert gym["cost"] == 0
+    assert out.derived["nuyen_spent"] == 5000
+    assert out.derived["errors"] == []
+
+
+def test_lifestyle_quality_multiplier_cramped() -> None:
+    out = compute(
+        _mundane(
+            "cramped",
+            lifestyles=[
+                LifestyleInstall(
+                    lifestyle_id=MEDIUM_LIFESTYLE,
+                    months=1,
+                    quality_ids=[LIFESTYLE_CRAMPED],
+                )
+            ],
+        )
+    )
+    ls = out.derived["lifestyle"]
+    assert ls["multiplier_pct"] == -10
+    assert ls["monthly"] == 4500
+    assert ls["nuyen"] == 4500
+
+
+def test_lifestyle_lp_overflow_warns() -> None:
+    # Gym (2) + Cramped (1) + 2 freegrids (2) = 5 > Medium LP 4
+    out = compute(
+        _mundane(
+            "lp-over",
+            lifestyles=[
+                LifestyleInstall(
+                    lifestyle_id=MEDIUM_LIFESTYLE,
+                    months=1,
+                    quality_ids=[LIFESTYLE_GYM, LIFESTYLE_CRAMPED],
+                )
+            ],
+        )
+    )
+    assert any("ライフスタイルポイント超過" in w for w in out.derived["warnings"])
+
+
+def test_jazz_street_cooked_parent_cost() -> None:
+    jazz = GearInstall(gear_id=JAZZ, id="jazz1")
+    grade = GearInstall(gear_id=STREET_COOKED, parent_id="jazz1", id="grade1")
+    out = compute(_mundane("jazz-street", gear=[jazz, grade]))
+    by_name = {row["name"]: row for row in out.derived["gear"]}
+    assert by_name["Jazz"]["nuyen"] == 75
+    assert by_name["Street Cooked"]["nuyen"] == -37  # Parent Cost * -0.5
+    assert out.derived["nuyen_spent"] == 38
+
+
+def test_jazz_pharmaceutical_parent_cost() -> None:
+    jazz = GearInstall(gear_id=JAZZ, id="jazz2")
+    grade = GearInstall(gear_id=PHARMACEUTICAL, parent_id="jazz2", id="grade2")
+    out = compute(_mundane("jazz-pharma", gear=[jazz, grade]))
+    by_name = {row["name"]: row for row in out.derived["gear"]}
+    assert by_name["Pharmaceutical"]["nuyen"] == 75
+    assert out.derived["nuyen_spent"] == 150
+
