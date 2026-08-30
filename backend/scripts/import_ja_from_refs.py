@@ -160,6 +160,14 @@ CURATED: dict[str, str] = {
     "Weimaraner": "ワイマラナー",
 }
 
+# spell / ritual / enchantment hand translations live in their own module
+# because there are ~170 of them.
+try:
+    from scripts.ja_curated_spells import SPELLS as _SPELLS
+except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.py`
+    from ja_curated_spells import SPELLS as _SPELLS
+CURATED.update(_SPELLS)
+
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
     "Armor",  # keep vendored 防具 (category sense), not glossary 装甲 (the value)

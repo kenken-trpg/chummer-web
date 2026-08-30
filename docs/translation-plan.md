@@ -145,11 +145,21 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
     で、公式ルールブックなしに確度高く再現できない。
   - `(Alt)` / `[...]` 付きの派生名は既存訳が英語のまま放置しており、それに倣って除外。
 
+**2b. 呪文バッチ 3 ✅ (2026-08-30)**
+
+- 未訳の spell / ritual / enchantment **170 件すべて** を訳出。`backend/scripts/ja_curated_spells.py`
+  (`SPELLS` dict) に分離し、`import_ja_from_refs.py` が取り込む。
+- 既存 193 件の作法に合わせる:
+  - 呪文 = `漢語訳/カタカナ音写` (`氷槍/アイス・スピア`)
+  - 儀式・付魔 = 漢語のみ (`血の絆`, `浄化円`, `森林変容`)
+  - `[...]` プレースホルダは両表記で保持、`Extended` は `広域〜/エクステンデッド・〜`
+- テスト: 全 spell が英語フォールバックでないことを保証 (`test_all_untranslated_spells_now_covered`)。
+- overlay 合計 **433 件**、全 411 テスト green。
+
 **2b. 残 (未着手)**
 
-1. **spells** — ルールブック参照で `漢字/カタカナ` 形式に合わせて一括。
-2. **qualities / weapons / armor / cyberware / bioware / gear / mentors 残** の手動訳。
-3. **critters / critterpowers / vehicles** は分量大・露出少で後回し (critters は catalog 未ロード)。
+1. **qualities / weapons / armor / cyberware / bioware / gear / mentors 残** の手動訳。
+2. **critters / critterpowers / vehicles** は分量大・露出少で後回し (critters は catalog 未ロード)。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善
 
@@ -190,3 +200,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 2a 完了。`import_ja_from_refs.py` で curated＋chumJA SR4 を 200 件 `data.json` へ。
 - 2026-08-30: フェーズ 2b 一次分。スキルグループ 10・メタバリアント 3・その他 3 を追加 (計 215 件)。
 - 2026-08-30: フェーズ 2b バッチ 2。メンター/精霊/伝統/魔法アート/スプライト 48 件を追加 (計 263 件)。
+- 2026-08-30: フェーズ 2b バッチ 3。未訳呪文 170 件を漢語/カタカナ二重表記で訳出 (計 433 件)。
