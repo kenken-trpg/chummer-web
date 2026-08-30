@@ -196,7 +196,7 @@ export default function CharacterSheet({
             {(d.damage_resistance || 0) > 0 ? <div><span>ダメージ抵抗</span><b>+{d.damage_resistance}</b></div> : null}
             {(d.unarmed_dv || 0) > 0 ? <div><span>非武装DV</span><b>+{d.unarmed_dv}</b></div> : null}
             {(d.unarmed_reach || 0) > 0 ? <div><span>非武装リーチ</span><b>+{d.unarmed_reach}</b></div> : null}
-            {(d.unarmed_ap || 0) !== 0 ? <div><span>非武装AP</span><b>{d.unarmed_ap > 0 ? `+${d.unarmed_ap}` : d.unarmed_ap}</b></div> : null}
+            {(d.unarmed_ap ?? 0) !== 0 ? <div><span>非武装AP</span><b>{(d.unarmed_ap ?? 0) > 0 ? `+${d.unarmed_ap}` : d.unarmed_ap}</b></div> : null}
             {d.lifestyle ? (
               <div>
                 <span>ライフスタイル</span>

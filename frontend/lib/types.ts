@@ -1518,10 +1518,6 @@ export interface Character {
       side?: string | null;
       free?: boolean;
     }[];
-    native_language_limit?: number;
-    blocked_default_categories?: string[];
-    prototype_transhuman_ess?: number;
-    burnout_way?: boolean;
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
     essence_lost_cyber?: number;

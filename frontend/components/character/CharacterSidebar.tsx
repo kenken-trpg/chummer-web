@@ -162,7 +162,7 @@ export function CharacterSidebar({
             <div className="stat" key={label}>
               <span>{label}</span>
               <b>
-                {value > 0 ? "+" : ""}
+                {Number(value) > 0 ? "+" : ""}
                 {value}
               </b>
             </div>
