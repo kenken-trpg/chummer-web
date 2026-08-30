@@ -23,6 +23,7 @@ import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { TabPanelProps } from "@/components/character/types";
 import { api } from "@/lib/api";
+import { buildCocofolia } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
@@ -42,6 +43,7 @@ export default function Page() {
   });
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -79,6 +81,23 @@ export default function Page() {
     a.download = `${ch.name || "character"}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  async function copyCocofolia() {
+    if (!ch || !catalog) return;
+    const text = buildCocofolia(ch, catalog, tr);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function onImport(file: File) {
@@ -128,6 +147,9 @@ export default function Page() {
             <input value={ch.name} onChange={(e) => setCh({ ...ch, name: e.target.value })} onBlur={(e) => patch({ name: e.target.value })} />
             <button className="btn primary" onClick={download}>JSON保存</button>
             <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
+            <button className="btn" onClick={copyCocofolia} title="ココフォリア用のコマ JSON をクリップボードにコピー（BCDice: ShadowRun 5th）">
+              {copied ? "コピーしました ✓" : "ココフォリア"}
+            </button>
             <button
               className={`btn ${ch.career || d.career ? "primary" : ""}`}
               title={ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"}
