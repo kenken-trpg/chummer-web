@@ -6059,6 +6059,28 @@ def test_mentors_mask_reduces_spell_drain() -> None:
     assert "drainvalue" not in tags
 
 
+ALCHEMICAL_ARMORER = "e508350b-f61d-4878-bd6d-98f8c9e3588b"
+ALTER_BALLISTICS = "243313e6-a9af-456a-9631-6581d869aa02"
+
+
+def test_alchemical_armorer_grants_alter_ballistics() -> None:
+    out = compute(
+        _mage(
+            "aa",
+            tradition_id=HERMETIC,
+            quality_ids=[ALCHEMICAL_ARMORER],
+        )
+    )
+    spell = next(s for s in out.derived["spells"] if s["name"] == "Alter Ballistics")
+    assert spell["spell_id"] == ALTER_BALLISTICS
+    assert spell["free"] is True
+    assert spell["granted"] is True
+    assert spell["alchemical"] is True
+    assert spell["karma"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "addspell" not in tags
+
+
 DEDICATED_SPELLSLINGER = "bbc6879e-b50d-4862-b85c-a86c5b9e5d67"
 
 

@@ -4383,6 +4383,66 @@ def bind_weapon_skill_accuracy(
     effects["weapon_skill_accuracy"] = resolved
 
 
+def apply_granted_spells(
+    state: CharacterState,
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
+    """Ensure addspell quality bonuses exist on the character; drop orphans."""
+    by_name = {q["name"]: q for q in qualities}
+    grants: list[dict[str, Any]] = []
+    for row in effects.get("grant_spells") or []:
+        source = str(row.get("source") or "")
+        q = by_name.get(source)
+        if not q:
+            continue
+        spell_name = str(row.get("name") or "").strip()
+        spec = _spell_by_name(spell_name)
+        if not spec:
+            warnings.append(f"{source} の呪文 {spell_name} が見つかりません")
+            continue
+        grants.append(
+            {
+                "quality_id": q["id"],
+                "spell_id": spec["id"],
+                "alchemical": bool(row.get("alchemical")),
+            }
+        )
+    wanted_qids = {str(g["quality_id"]) for g in grants}
+
+    remaining: list[SpellInstall] = []
+    for inst in state.spells or []:
+        sq = str(inst.source_quality_id or "").strip()
+        if sq and sq not in wanted_qids:
+            continue
+        remaining.append(inst)
+
+    existing_by_qid = {
+        str(inst.source_quality_id): inst
+        for inst in remaining
+        if str(inst.source_quality_id or "").strip()
+    }
+    existing_spell_ids = {str(inst.spell_id) for inst in remaining}
+    for grant in grants:
+        qid = str(grant["quality_id"])
+        if qid in existing_by_qid:
+            inst = existing_by_qid[qid]
+            inst.spell_id = str(grant["spell_id"])
+            inst.alchemical = bool(grant["alchemical"])
+            continue
+        if str(grant["spell_id"]) in existing_spell_ids:
+            continue
+        remaining.append(
+            SpellInstall(
+                spell_id=str(grant["spell_id"]),
+                source_quality_id=qid,
+                alchemical=bool(grant["alchemical"]),
+            )
+        )
+    state.spells = remaining
+
+
 def _active_skill_rating_from_state(
     state: CharacterState,
     skill_name: str,
@@ -8255,16 +8315,19 @@ def resolve_spells(
         seen.add(spec["id"])
         kind = spec.get("kind") or "spell"
         has_force = kind != "enchantment"
+        granted = bool(inst.source_quality_id)
         is_touch = _spell_is_touch_range(spec)
         free = False
-        if is_touch and free_touch_left > 0:
+        if granted:
+            free = True
+        elif is_touch and free_touch_left > 0:
             free = True
             free_touch_left -= 1
         elif free_generic_left > 0:
             free = True
             free_generic_left -= 1
         # Pure Adept free touch spells use Barehanded Adept casting rules (Chummer)
-        barehanded = talent["name"] == "Adept" and free and is_touch
+        barehanded = talent["name"] == "Adept" and free and is_touch and not granted
         info = spell_cast_info(
             spec["name"],
             inst.force if has_force else None,
@@ -8311,6 +8374,8 @@ def resolve_spells(
                 "free": free,
                 "karma": cost,
                 "barehanded_adept": barehanded,
+                "alchemical": bool(inst.alchemical),
+                "granted": granted,
                 "spell": info if has_force else None,
             }
         )
@@ -8790,6 +8855,7 @@ def compute(state: CharacterState) -> CharacterState:
     bind_spell_category_drain_damage(effects, qualities, state)
     bind_weapon_category_dv(effects, qualities, state, warnings)
     bind_weapon_skill_accuracy(effects, qualities, state, warnings, data["skills"])
+    apply_granted_spells(state, effects, qualities, warnings)
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:

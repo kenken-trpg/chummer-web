@@ -141,6 +141,7 @@ IMPLEMENTED = {
     "allowspellrange",
     "weaponskillaccuracy",
     "drainvalue",
+    "addspell",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -172,7 +173,6 @@ SILENT_TAGS = {
     "psychologicaladdictionfirsttime",
     "psychologicaladdictionalreadyaddicted",
     "addecho",
-    "addspell",
     "addware",
     "addlimb",
     "metageniclimit",
@@ -454,6 +454,7 @@ def empty_effects() -> dict[str, Any]:
         "spell_descriptor_drain": [],
         "spell_descriptor_damage": [],
         "drain_value": 0,
+        "grant_spells": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
         "weapon_skill_accuracy_slots": [],
@@ -1051,6 +1052,19 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             )
         elif tag == "drainvalue":
             effects["drain_value"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "addspell":
+            attrs = node.get("attrs") or {}
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name:
+                effects["grant_spells"].append(
+                    {
+                        "source": source,
+                        "name": name,
+                        "alchemical": str(attrs.get("alchemical") or "").lower() == "true",
+                        "extended": str(attrs.get("extended") or "").lower() == "true",
+                        "limited": str(attrs.get("limited") or "").lower() == "true",
+                    }
+                )
         elif tag == "weaponcategorydv":
             select_attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
             limit_raw = str(select_attrs.get("limittoskill") or "").strip()

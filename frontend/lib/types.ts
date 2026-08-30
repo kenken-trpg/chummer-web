@@ -185,6 +185,8 @@ export interface InstalledSpell {
   free: boolean;
   karma: number;
   barehanded_adept?: boolean;
+  alchemical?: boolean;
+  granted?: boolean;
   focus_bonus?: number;
   spell?: SpellCastInfo | null;
 }

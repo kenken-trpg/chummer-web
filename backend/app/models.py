@@ -38,6 +38,8 @@ class SpellInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     spell_id: str
     force: int | None = None
+    source_quality_id: str | None = None
+    alchemical: bool = False
 
 
 class QiFocusInstall(BaseModel):
