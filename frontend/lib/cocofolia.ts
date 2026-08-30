@@ -1,48 +1,76 @@
 import type { Catalog, Character } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
 
+// BCDice "ShadowRun5": there is no SR5 prefix. It configures the generic
+// scattered roll `xB6` (count hits >= 5, auto glitch) and reroll `xR6`
+// (reroll 6s for Edge). Limits use `xB6@l`.
+//   NB6        -> N d6, count hits
+//   NB6@L      -> as above, capped at limit L
+//   NR6        -> Edge: N d6, reroll (and add) on 6
+
 const ATTR_ORDER = ["BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES"] as const;
 
-/**
- * Build a Cocofolia (ココフォリア) character-piece clipboard payload.
- * `commands` uses BCDice ShadowRun 5th syntax: `NSR5` rolls N d6 and counts hits.
- */
-export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+type LimitKind = "physical" | "mental" | "social" | null;
+const ATTR_LIMIT: Record<string, LimitKind> = {
+  BOD: "physical", AGI: "physical", REA: "physical", STR: "physical",
+  CHA: "social",
+  INT: "mental", LOG: "mental", WIL: "mental",
+  EDG: null, MAG: null, RES: null,
+};
+
+/** Newline-separated BCDice ShadowRun5 chat-palette commands. */
+export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
   const d = ch.derived;
-  const t = makeT(catalog);
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
+  const lim = (k: LimitKind) => (k ? d.limits?.[k] ?? 0 : 0);
 
   const skillAttr: Record<string, string> = {};
   for (const s of catalog.skills?.skills || []) skillAttr[s.name] = s.attribute;
 
   const init = d.initiative || { value: 0, dice: 1 };
   const tm = d.test_mods || {};
-  const cmds: string[] = [];
+  const tabs = d.enabled_tabs || [];
+  const out: string[] = [];
 
-  cmds.push(`${init.dice}D6+${init.value} イニシアチブ`);
+  const roll = (pool: number, label: string, l: LimitKind = null) =>
+    out.push(`${Math.max(pool, 0)}B6${l ? `@${lim(l)}` : ""} ${label}`);
+
+  out.push(`${init.dice}D6+${init.value} イニシアチブ`);
 
   const specs = ch.skill_specializations || {};
   Object.entries(d.skill_totals || {})
     .filter(([, r]) => r > 0)
     .sort((a, b) => tr(a[0]).localeCompare(tr(b[0]), "ja"))
     .forEach(([name, rating]) => {
-      const pool = rating + at(skillAttr[name] || "");
-      cmds.push(`${pool}SR5 ${tr(name)}`);
+      const attr = skillAttr[name] || "";
+      const limit = ATTR_LIMIT[attr] ?? null;
+      const pool = rating + at(attr);
+      roll(pool, tr(name), limit);
       const sp = specs[name];
-      if (sp) cmds.push(`${pool + 2}SR5 ${tr(name)}：${tr(sp)}`);
+      if (sp) roll(pool + 2, `${tr(name)}：${tr(sp)}`, limit);
     });
 
-  cmds.push(`${at("REA") + at("INT") + (tm.dodge || 0)}SR5 完全回避`);
-  cmds.push(`${at("WIL") + at("CHA") + (tm.composure || 0)}SR5 冷静`);
-  cmds.push(`${at("INT") + at("CHA") + (tm.judge_intentions || 0)}SR5 意図看破`);
-  cmds.push(`${at("LOG") + at("WIL") + (tm.memory || 0)}SR5 記憶`);
-  cmds.push(`${at("STR") + at("BOD")}SR5 運搬`);
-  const tabs = d.enabled_tabs || [];
-  if (d.drain_resist && tabs.includes("spells"))
-    cmds.push(`${d.drain_resist.pool}SR5 ドレイン抵抗（${d.drain_resist.attrs}）`);
-  if (d.fade_resist && tabs.includes("complexforms"))
-    cmds.push(`${d.fade_resist.pool}SR5 フェード抵抗（${d.fade_resist.attrs}）`);
+  roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
+  roll(at("WIL") + at("CHA") + (tm.composure || 0), "冷静", "social");
+  roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), "意図看破", "social");
+  roll(at("LOG") + at("WIL") + (tm.memory || 0), "記憶", "mental");
+  roll(at("STR") + at("BOD"), "運搬", "physical");
+  roll(at("BOD"), "ダメージ抵抗（＋装甲）");
+  if (d.drain_resist && tabs.includes("spells")) roll(d.drain_resist.pool, `ドレイン抵抗（${d.drain_resist.attrs}）`);
+  if (d.fade_resist && tabs.includes("complexforms")) roll(d.fade_resist.pool, `フェード抵抗（${d.fade_resist.attrs}）`);
+  out.push(`// エッジ振り足しは B6→R6、限界突破は @L を外す`);
+
+  return out.join("\n");
+}
+
+/** Cocofolia (ccfolia.com) character-piece clipboard payload. */
+export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+  const d = ch.derived;
+  const t = makeT(catalog);
+  const totals: Record<string, number> = d.totals || {};
+  const at = (k: string) => totals[k] || 0;
+  const init = d.initiative || { value: 0, dice: 1 };
 
   const params = ATTR_ORDER.filter((k) => (k !== "MAG" && k !== "RES") || at(k) > 0).map((k) => ({
     label: attrShort(k, t),
@@ -65,9 +93,9 @@ export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) 
     `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${ch.talent || "Mundane"}`,
     d.tradition ? `伝統: ${tr(d.tradition.name)}` : "",
     d.mentor ? `メンター: ${tr(d.mentor.name)}` : "",
-    `イニシアチブ ${init.value}+${init.dice}d6`,
-    `リミット 物${d.limits?.physical} / 精${d.limits?.mental} / 社${d.limits?.social}`,
+    `イニシアチブ ${init.value}+${init.dice}d6 ・ リミット 物${d.limits?.physical}/精${d.limits?.mental}/社${d.limits?.social}`,
     `装甲 ${d.armor} ・ エッセンス ${d.essence}`,
+    "判定は BCDice の ShadowRun5 で。",
   ]
     .filter(Boolean)
     .join("\n");
@@ -78,7 +106,7 @@ export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) 
       name: ch.name || "Runner",
       memo,
       initiative: init.value,
-      commands: cmds.join("\n"),
+      commands: buildChatPalette(ch, catalog, tr),
       status,
       params,
     },

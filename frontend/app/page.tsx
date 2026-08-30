@@ -23,7 +23,7 @@ import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { TabPanelProps } from "@/components/character/types";
 import { api } from "@/lib/api";
-import { buildCocofolia } from "@/lib/cocofolia";
+import { buildChatPalette, buildCocofolia } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
@@ -43,7 +43,7 @@ export default function Page() {
   });
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -83,9 +83,7 @@ export default function Page() {
     URL.revokeObjectURL(a.href);
   }
 
-  async function copyCocofolia() {
-    if (!ch || !catalog) return;
-    const text = buildCocofolia(ch, catalog, tr);
+  async function copyText(text: string, tag: string) {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -96,8 +94,8 @@ export default function Page() {
       document.execCommand("copy");
       ta.remove();
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopied(tag);
+    setTimeout(() => setCopied(null), 2000);
   }
 
   async function onImport(file: File) {
@@ -147,8 +145,19 @@ export default function Page() {
             <input value={ch.name} onChange={(e) => setCh({ ...ch, name: e.target.value })} onBlur={(e) => patch({ name: e.target.value })} />
             <button className="btn primary" onClick={download}>JSON保存</button>
             <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
-            <button className="btn" onClick={copyCocofolia} title="ココフォリア用のコマ JSON をクリップボードにコピー（BCDice: ShadowRun 5th）">
-              {copied ? "コピーしました ✓" : "ココフォリア"}
+            <button
+              className="btn"
+              onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
+              title="ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5"
+            >
+              {copied === "cc" ? "コピー ✓" : "ココフォリア"}
+            </button>
+            <button
+              className="btn"
+              onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr), "cp")}
+              title="チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー"
+            >
+              {copied === "cp" ? "コピー ✓" : "チャットパレット"}
             </button>
             <button
               className={`btn ${ch.career || d.career ? "primary" : ""}`}
