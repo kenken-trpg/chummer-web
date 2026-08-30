@@ -143,6 +143,8 @@ IMPLEMENTED = {
     "allowspellrange",
     "weaponskillaccuracy",
     "drainvalue",
+    "fadingvalue",
+    "fadingresist",
     "addspell",
 }
 SILENT_TAGS = {
@@ -188,14 +190,12 @@ SILENT_TAGS = {
     "specialattburnmultiplier",
     "cyberadeptdaemon",
     "allowspritefettering",
-    "fadingvalue",
     "weaponcategorydice",
     "smartlink",
     "throwstr",
     "throwrangestr",
     "unarmedap",
     "defensetest",
-    "fadingresist",
     "mentalmanipulationresist",
     "manaillusionresist",
     "physicalillusionresist",
@@ -456,6 +456,9 @@ def empty_effects() -> dict[str, Any]:
         "spell_descriptor_drain": [],
         "spell_descriptor_damage": [],
         "drain_value": 0,
+        "fading_value": 0,
+        "fading_value_specific": [],
+        "fading_resist": 0,
         "grant_spells": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
@@ -1058,6 +1061,16 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             )
         elif tag == "drainvalue":
             effects["drain_value"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "fadingvalue":
+            attrs = node.get("attrs") or {}
+            specific = str(attrs.get("specific") or "").strip()
+            value = _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+            if specific:
+                effects["fading_value_specific"].append({"specific": specific, "value": value})
+            else:
+                effects["fading_value"] += value
+        elif tag == "fadingresist":
+            effects["fading_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "addspell":
             attrs = node.get("attrs") or {}
             name = str(node.get("value") or fields.get("name") or "").strip()

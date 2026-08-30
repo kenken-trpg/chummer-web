@@ -4565,6 +4565,9 @@ PULSE_STORM = "d8b11a80-eb95-409e-a53b-18c48e09342e"
 EDITOR = "6b4ed8d5-75c8-4415-9578-15afa4ac8494"
 STATIC_VEIL = "dbb1d719-c829-4c45-9a53-9ff538865c14"
 RESONANCE_SPIKE = "704abd70-c0e6-4f06-b186-53a7cb856584"
+RESONANT_STREAM_MACHINIST = "e3d04705-b90a-4d94-90d0-4ad2c7adfa79"
+RESONANT_STREAM_SOURCEROR = "11d6c3b6-47c4-4765-a625-7a5907ba1b4a"
+OTAKU_TO_TECHNOMANCER = "d62880dd-3e28-4b0c-8c71-dc0e4b72397b"
 
 
 def _techno(cid: str, letter: str = "A", **kwargs: object) -> CharacterState:
@@ -4650,6 +4653,52 @@ def test_overdrive_requires_stream_quality() -> None:
     out = compute(_techno("overdrive", complex_forms=[ComplexFormInstall(form_id=OVERDRIVE)]))
     assert out.derived["complex_forms"] == []
     assert any("Resonant Stream: Cyberadept" in warn for warn in out.derived["warnings"])
+
+
+def test_resonant_stream_machinist_reduces_specific_complex_form_fade() -> None:
+    base = compute(
+        _techno(
+            "mach-base",
+            complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")],
+        )
+    )
+    out = compute(
+        _techno(
+            "mach",
+            quality_ids=[RESONANT_STREAM_MACHINIST],
+            complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")],
+        )
+    )
+    assert base.derived["complex_forms"][0]["fade"] == 4
+    row = out.derived["complex_forms"][0]
+    assert row["fade_mod"] == -2
+    assert row["fade"] == 2
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "fadingvalue" not in tags
+
+
+def test_resonant_stream_sourceror_reduces_all_complex_form_fade() -> None:
+    base = compute(_techno("sour-base", complex_forms=[ComplexFormInstall(form_id=CLEANER)]))
+    out = compute(
+        _techno(
+            "sour",
+            quality_ids=[RESONANT_STREAM_SOURCEROR],
+            complex_forms=[ComplexFormInstall(form_id=CLEANER)],
+        )
+    )
+    assert base.derived["complex_forms"][0]["fade"] == 4
+    row = out.derived["complex_forms"][0]
+    assert row["fade_mod"] == -2
+    assert row["fade"] == 2
+
+
+def test_otaku_to_technomancer_fading_resist() -> None:
+    base = compute(_techno("otaku-base"))
+    out = compute(_techno("otaku", quality_ids=[OTAKU_TO_TECHNOMANCER]))
+    assert base.derived["fade_resist"]["pool"] == 7
+    assert out.derived["fade_resist"]["pool"] == 9
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "fadingresist" not in tags
 
 
 def test_courier_sprite_matrix_stats() -> None:

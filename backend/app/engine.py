@@ -4817,6 +4817,26 @@ def _spell_descriptor_tokens(descriptor: str | None) -> set[str]:
     return {part.strip() for part in str(descriptor or "").split(",") if part.strip()}
 
 
+def _complex_form_fading_mod(
+    effects: dict[str, Any] | None,
+    name: str,
+    label: str,
+    extra: str,
+) -> int:
+    total = int((effects or {}).get("fading_value") or 0)
+    for row in (effects or {}).get("fading_value_specific") or []:
+        specific = str(row.get("specific") or "").strip()
+        if not specific:
+            continue
+        value = int(row.get("value") or 0)
+        if name == specific or label == specific:
+            total += value
+            continue
+        if "[Matrix Attribute]" in specific and extra and label == specific.replace("[Matrix Attribute]", extra):
+            total += value
+    return total
+
+
 def _spell_descriptor_pattern_matches(pattern: str, descriptors: set[str]) -> bool:
     """Match Chummer SpellDescriptorDrain/Damage ImprovedName (e.g. Direct,NOT(Area))."""
     if not descriptors:
@@ -7537,6 +7557,7 @@ def resolve_complex_forms(
     res: int,
     attrs: dict[str, int],
     quality_names: set[str],
+    effects: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -7544,6 +7565,7 @@ def resolve_complex_forms(
     if talent_name in COMPLEX_FORM_TALENTS and stream:
         state.stream_id = stream["id"]
     resist, resist_attrs = tradition_resist(stream, attrs)
+    resist += int((effects or {}).get("fading_resist") or 0)
     if talent_name not in COMPLEX_FORM_TALENTS:
         state.complex_forms = []
         if talent_name not in RES_TALENTS:
@@ -7585,13 +7607,14 @@ def resolve_complex_forms(
         chosen = int(inst.level) if inst.level else (res or 1)
         chosen = max(1, min(level_max, chosen))
         inst.level = chosen
-        fade = spell_drain_value(str(spec.get("fv") or ""), chosen)
-        physical = bool(res) and chosen > res
-        free = len(kept) < free_max
-        kept.append(inst)
         label = spec["name"]
         if extra:
             label = spec["name"].replace("[Matrix Attribute]", extra)
+        fade_mod = _complex_form_fading_mod(effects, spec["name"], label, extra)
+        fade = spell_drain_value(str(spec.get("fv") or ""), chosen, mod=fade_mod)
+        physical = bool(res) and chosen > res
+        free = len(kept) < free_max
+        kept.append(inst)
         public.append(
             {
                 "id": inst.id,
@@ -7601,6 +7624,7 @@ def resolve_complex_forms(
                 "target": spec.get("target") or "",
                 "duration": spec.get("duration") or "",
                 "fv": spec.get("fv") or "",
+                "fade_mod": fade_mod,
                 "extra": extra,
                 "needs_extra": bool(spec.get("needs_extra")),
                 "options": list(MATRIX_ATTRIBUTES) if spec.get("needs_extra") else [],
@@ -9117,6 +9141,7 @@ def compute(state: CharacterState) -> CharacterState:
         int(total.get("RES") or 0),
         total,
         quality_names,
+        effects,
     )
     warnings.extend(resonance["warnings"])
     techno_sprites = resolve_sprites(
