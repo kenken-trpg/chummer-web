@@ -317,7 +317,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
             })
           }
         >
-          <option value="">付帯クオリティを選択</option>
+          <option value="">付帯資質を選択</option>
           {options.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -355,7 +355,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
             })
           }
         >
-          <option value="">属性を選択</option>
+          <option value="">能力値を選択</option>
           {ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES").map((key) => (
             <option key={key} value={key}>
               {attrLabel(key, t)}
@@ -504,7 +504,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
           不利
         </button>
       </div>
-      <input type="search" placeholder="クオリティを検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
+      <input type="search" placeholder="資質を検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
       <div className="quality-list">
         {filteredQualities.map((q) => {
           const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
@@ -528,7 +528,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1) ? ` / 取得${ownedCount}` : ""}
                   {q.needs_extra ? " / 対象が必要" : ""}
                   {q.is_way ? " / 他の Way と排他" : ""}
-                  {replaces ? " / 追加すると両立しないクオリティを外します" : ""}
+                  {replaces ? " / 追加すると両立しない資質を外します" : ""}
                   {blocked ? ` / ${blocked}` : ""}
                 </div>
               </div>

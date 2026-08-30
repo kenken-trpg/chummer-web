@@ -1429,7 +1429,7 @@ def test_negative_quality_karma_is_capped_at_25() -> None:
         )
     )
     assert out.derived["karma"]["negative"]["used"] == 30
-    assert any("不利クオリティから得られるカルマが上限を超えています" in err for err in out.derived["errors"])
+    assert any("不利資質から得られるカルマが上限を超えています" in err for err in out.derived["errors"])
 
 
 def test_human_looking_requires_nonhuman_metatype() -> None:
@@ -4715,11 +4715,11 @@ def test_diffusion_needs_matrix_attribute() -> None:
     out = compute(_techno("diff-none", complex_forms=[ComplexFormInstall(form_id=DIFFUSION)]))
     row = out.derived["complex_forms"][0]
     assert row["needs_extra"] is True
-    assert any("マトリクス属性" in warn for warn in out.derived["warnings"])
+    assert any("マトリクス能力値" in warn for warn in out.derived["warnings"])
     out = compute(_techno("diff-atk", complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")]))
     assert out.derived["complex_forms"][0]["extra"] == "Attack"
     assert out.derived["complex_forms"][0]["label"] == "Diffusion of Attack"
-    assert not any("マトリクス属性" in warn for warn in out.derived["warnings"])
+    assert not any("マトリクス能力値" in warn for warn in out.derived["warnings"])
 
 
 def test_overdrive_requires_stream_quality() -> None:
@@ -5338,7 +5338,7 @@ def test_resistance_pathogens_toxins_special_armor() -> None:
 
 def test_exceptional_attribute_raises_max() -> None:
     missing = compute(_human("ea-miss", quality_ids=[EXCEPTIONAL_ATTRIBUTE]))
-    assert any("属性を選んでください" in warn for warn in missing.derived["warnings"])
+    assert any("能力値を選んでください" in warn for warn in missing.derived["warnings"])
     attrs = default_attributes(find_metatype("Human", None))
     attrs["BOD"] = 6
     out = compute(
@@ -6597,7 +6597,7 @@ def test_career_spend_breakdown_lists_attribute_raise() -> None:
     st.attributes["AGI"] = 5
     out = compute(st)
     assert out.derived["career_advancement_karma"] == 25
-    assert any(row["label"].startswith("属性 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
+    assert any(row["label"].startswith("能力値 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
     assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])
 
 

@@ -75,7 +75,7 @@ export function PriorityTab({ catalog, character: ch, d, tr, patch, setCharacter
             {(ch.build_method || "Priority") === "Karma" ? (
               <div style={{ display: "grid", gap: 12 }}>
                 <p className="muted">
-                  優先度表は使いません。メタタイプ／属性／スキル／術式などをカルマで購入します（開始 {d.karma.pool}）。
+                  優先度表は使いません。メタタイプ／能力値／スキル／術式などをカルマで購入します（開始 {d.karma.pool}）。
                   MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の術式枠はありません。
                 </p>
                 <label>
@@ -105,8 +105,8 @@ export function PriorityTab({ catalog, character: ch, d, tr, patch, setCharacter
                 </label>
                 {d.karma_chargen ? (
                   <div className="muted" style={{ display: "grid", gap: 4 }}>
-                    <div>内訳: メタタイプ {d.karma_chargen.metatype} / 属性 {d.karma_chargen.attributes} / スキル {d.karma_chargen.skills} / 知識 {d.karma_chargen.knowledge} / 専門化 {d.karma_chargen.specializations}</div>
-                    <div>クオリティ {d.karma_chargen.qualities} / ニューエン交換 {d.karma_chargen.nuyen_karma} / その他 {d.karma_chargen.other}</div>
+                    <div>内訳: メタタイプ {d.karma_chargen.metatype} / 能力値 {d.karma_chargen.attributes} / スキル {d.karma_chargen.skills} / 知識 {d.karma_chargen.knowledge} / 専門化 {d.karma_chargen.specializations}</div>
+                    <div>資質 {d.karma_chargen.qualities} / ニューエン交換 {d.karma_chargen.nuyen_karma} / その他 {d.karma_chargen.other}</div>
                   </div>
                 ) : null}
               </div>

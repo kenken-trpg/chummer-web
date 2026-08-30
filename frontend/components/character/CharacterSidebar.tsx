@@ -286,7 +286,7 @@ export function CharacterSidebar({
             {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
           </b>
         </div>
-        <div className="stat"><span>属性点</span><b>{d.points.attributes.used}/{d.points.attributes.max}</b></div>
+        <div className="stat"><span>能力値点</span><b>{d.points.attributes.used}/{d.points.attributes.max}</b></div>
         <div className="stat"><span>特殊点</span><b>{d.points.special.used}/{d.points.special.max}</b></div>
         <div className="stat"><span>スキル点</span><b>{d.points.skills.used}/{d.points.skills.max}</b></div>
         <div className="stat"><span>知識点</span><b>{d.points.knowledge.used}/{d.points.knowledge.max}</b></div>
@@ -323,7 +323,7 @@ export function CharacterSidebar({
         {d.needs_mentor && d.mentor ? <div className="stat"><span>メンター</span><b>{tr(d.mentor.name)}</b></div> : null}
         {(d.damage_resistance || 0) > 0 ? <div className="stat"><span>ダメージ抵抗</span><b>+{d.damage_resistance}</b></div> : null}
         {(d.unarmed_dv || 0) > 0 ? <div className="stat"><span>非武装DV</span><b>+{d.unarmed_dv}</b></div> : null}
-        <h3>属性</h3>
+        <h3>能力値</h3>
         {ATTRS.map((k) => {
           const hidden = (k === "MAG" && !d.enabled_tabs.includes("MAG")) || (k === "RES" && !d.enabled_tabs.includes("RES"));
           if (hidden) return null;

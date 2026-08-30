@@ -429,7 +429,7 @@ def career_raise_karma(
         to_r = int(rating or 0)
         cost = _karma_raise_cost(from_r, to_r, KARMA_ATTRIBUTE)
         if cost:
-            lines.append({"kind": "attribute", "label": f"属性 {key} {from_r}→{to_r}", "amount": cost})
+            lines.append({"kind": "attribute", "label": f"能力値 {key} {from_r}→{to_r}", "amount": cost})
             total += cost
 
     group_cat_map = _skill_group_category_map(skills_data)
@@ -2594,7 +2594,7 @@ def resolve_attribute_selects(
         exclude = {str(item) for item in (sel.get("exclude") or [])}
         max_bonus = max(1, int(sel.get("max") or 1))
         if not picked:
-            warnings.append(f"{source} の属性を選んでください")
+            warnings.append(f"{source} の能力値を選んでください")
             continue
         if picked in exclude or picked in {"ESS"}:
             warnings.append(f"{source} に {picked} は選べません")
@@ -4987,7 +4987,7 @@ def apply_quality_rules(
             errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
     if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
         errors.append(
-            f"不利クオリティから得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
+            f"不利資質から得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
         )
     return negative_gain
 
@@ -6577,7 +6577,7 @@ def resolve_martial_arts(
             continue
         is_free = bool(inst.free or inst.source_quality_id)
         if spec.get("is_quality") and not is_free:
-            warnings.append(f"{spec['name']} はクオリティ経由のみです")
+            warnings.append(f"{spec['name']} は資質経由のみです")
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
             errors.append(f"{spec['name']} の前提を満たしていません")
@@ -7820,7 +7820,7 @@ def resolve_complex_forms(
             continue
         extra = (inst.extra or "").strip()
         if spec.get("needs_extra") and extra not in MATRIX_ATTRIBUTES:
-            warnings.append(f"{spec['name']} はマトリクス属性を選んでください")
+            warnings.append(f"{spec['name']} はマトリクス能力値を選んでください")
             extra = extra if extra in MATRIX_ATTRIBUTES else ""
             inst.extra = extra or None
         seen.add(spec["id"])
@@ -8243,7 +8243,7 @@ def resolve_adept_powers(
         inst.rating = rating
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
-        select_label = {"skill": "スキル", "attribute": "属性", "spell": "呪文"}.get(kind or "", "対象")
+        select_label = {"skill": "スキル", "attribute": "能力値", "spell": "呪文"}.get(kind or "", "対象")
         if kind and extra and extra not in options:
             warnings.append(f"{spec['name']} の指定が無効です（{extra}）")
             extra = ""
@@ -9063,7 +9063,7 @@ def compute(state: CharacterState) -> CharacterState:
     sources: list[tuple[str, list[dict[str, Any]]]] = [(meta["name"], meta.get("bonus") or [])]
     qualities, free_quality_ids, dropped_qualities = gather_qualities(state, talent)
     for name in dropped_qualities:
-        warnings.append(f"{name} は他のクオリティと両立しないため外しました")
+        warnings.append(f"{name} は他の資質と両立しないため外しました")
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in qualities])
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
@@ -9704,9 +9704,9 @@ def compute(state: CharacterState) -> CharacterState:
 
     karma_spend_lines: list[dict[str, Any]] = list(career_adv_lines)
     for label, amount in (
-        ("クオリティ", karma_from_q),
+        ("資質", karma_from_q),
         ("メタタイプ", metatype_karma_cost if is_karma else heritage_karma_cost),
-        ("属性（カルマ作成）", attr_karma if is_karma else 0),
+        ("能力値（カルマ作成）", attr_karma if is_karma else 0),
         ("技能（カルマ作成）", skill_buy_karma if is_karma else 0),
         ("知識（カルマ作成）", knowledge_karma if is_karma else 0),
         ("専門化", spec_karma),
@@ -9832,12 +9832,12 @@ def compute(state: CharacterState) -> CharacterState:
                 if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
                     at_natural_max.append(key)
             if len(at_natural_max) > 1:
-                errors.append("作成時に自然上限の属性は1つまでです")
+                errors.append("作成時に自然上限の能力値は1つまでです")
         else:
             if spent_physical > attr_points:
-                errors.append(f"属性点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
+                errors.append(f"能力値点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
             if spent_special > special_from_meta:
-                errors.append(f"特殊属性点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
+                errors.append(f"特殊能力値点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
             if skill_spent > skill_points:
                 errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
             if group_spent > group_points:

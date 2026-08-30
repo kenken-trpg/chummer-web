@@ -9,3 +9,6 @@ frontend/.next/
 frontend/out/
 .DS_Store
 *.log
+
+# TS incremental build cache
+frontend/tsconfig.tsbuildinfo

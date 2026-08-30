@@ -51,7 +51,7 @@ export function AttrsTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                 </div>
               );
             })}
-            <p className="muted">属性点 {d.points.attributes.used}/{d.points.attributes.max} ・ 特殊点 {d.points.special.used}/{d.points.special.max}</p>
+            <p className="muted">能力値点 {d.points.attributes.used}/{d.points.attributes.max} ・ 特殊点 {d.points.special.used}/{d.points.special.max}</p>
           </div>
 
   );

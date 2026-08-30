@@ -239,7 +239,7 @@ export default function CharacterSheet({
           <thead>
             <tr>
               <th>スキル</th>
-              <th>属性</th>
+              <th>能力値</th>
               <th>R</th>
               <th>プール</th>
               <th>専門化</th>
@@ -344,7 +344,7 @@ export default function CharacterSheet({
         </Section>
       ) : null}
 
-      <Section title="クオリティ" empty={!qualities.length}>
+      <Section title="資質" empty={!qualities.length}>
         <ul className="sheet-list">
           {qualities.map((q) => (
             <li key={q.id}>
