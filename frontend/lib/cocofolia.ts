@@ -18,6 +18,21 @@ const ATTR_LIMIT: Record<string, LimitKind> = {
   EDG: null, MAG: null, RES: null,
 };
 
+// weapon category -> active skill (Chummer Weapon.GetSkillDictionaryKey, trimmed)
+const WEAPON_SKILL: Record<string, string> = {
+  Bows: "Archery", Crossbows: "Archery",
+  "Assault Rifles": "Automatics", Carbines: "Automatics", "Machine Pistols": "Automatics",
+  "Submachine Guns": "Automatics",
+  Blades: "Blades", Clubs: "Clubs", "Improvised Weapons": "Clubs",
+  "Assault Cannons": "Heavy Weapons", "Grenade Launchers": "Heavy Weapons",
+  "Missile Launchers": "Heavy Weapons", "Light Machine Guns": "Heavy Weapons",
+  "Medium Machine Guns": "Heavy Weapons", "Heavy Machine Guns": "Heavy Weapons",
+  Shotguns: "Longarms", "Sniper Rifles": "Longarms", "Sporting Rifles": "Longarms",
+  "Throwing Weapons": "Throwing Weapons", Unarmed: "Unarmed Combat",
+};
+const weaponSkill = (w: { useskill?: string; category?: string }) =>
+  (w.useskill || "").trim() || WEAPON_SKILL[w.category || ""] || "Pistols";
+
 /** Newline-separated BCDice ShadowRun5 chat-palette commands. */
 export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
   const d = ch.derived;
@@ -51,6 +66,30 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
       if (sp) roll(pool + 2, `${tr(name)}：${tr(sp)}`, limit);
     });
 
+  const skillPool = (name: string) => (d.skill_totals?.[name] || 0);
+
+  // --- weapons: attack test = skill + AGI, limit = weapon Accuracy ---------
+  const weapons = d.weapons || [];
+  if (weapons.length) out.push("// ── 武器 ──");
+  weapons.forEach((w) => {
+    const sk = weaponSkill(w);
+    const pool = skillPool(sk) + at("AGI");
+    const acc = String(w.accuracy || "").trim();
+    const accCap = /^\d+$/.test(acc) ? `@${acc}` : "";
+    const dmg = [w.damage && `DV${w.damage}`, w.ap && `AP${w.ap}`, w.mode].filter(Boolean).join(" ");
+    out.push(`${Math.max(pool, 0)}B6${accCap} ${tr(w.name)}攻撃${dmg ? ` ［${dmg}］` : ""}`);
+  });
+
+  // --- spells: casting test = Spellcasting + MAG (limit = Force, variable) --
+  const spells = (d.spells || []).filter((s) => (s.kind || "spell") === "spell");
+  if (spells.length) out.push("// ── 術式（リミット＝Force） ──");
+  spells.forEach((s) => {
+    const sk = s.useskill || "Spellcasting";
+    const pool = skillPool(sk) + at("MAG");
+    out.push(`${Math.max(pool, 0)}B6 ${tr(s.name)}${s.dv ? ` ［DV${s.dv}］` : ""}`);
+  });
+
+  if (weapons.length || spells.length) out.push("// ── 判定・抵抗 ──");
   roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
   roll(at("WIL") + at("CHA") + (tm.composure || 0), "冷静", "social");
   roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), "意図看破", "social");
