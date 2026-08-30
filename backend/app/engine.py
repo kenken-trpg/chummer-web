@@ -4811,6 +4811,7 @@ def spell_cast_info(
     descriptor = str(spec.get("descriptor") or "")
     drain_mod = _spell_category_mod_total(effects, "spell_category_drain", category)
     drain_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_drain", descriptor)
+    drain_mod += int((effects or {}).get("drain_value") or 0)
     damage_mod = _spell_category_mod_total(effects, "spell_category_damage", category)
     damage_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_damage", descriptor)
     value = spell_drain_value(str(spec.get("dv") or ""), chosen, mod=drain_mod)

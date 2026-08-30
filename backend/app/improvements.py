@@ -140,6 +140,7 @@ IMPLEMENTED = {
     "spelldescriptordamage",
     "allowspellrange",
     "weaponskillaccuracy",
+    "drainvalue",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -186,7 +187,6 @@ SILENT_TAGS = {
     "cyberadeptdaemon",
     "allowspritefettering",
     "fadingvalue",
-    "drainvalue",
     "weaponcategorydice",
     "smartlink",
     "throwstr",
@@ -453,6 +453,7 @@ def empty_effects() -> dict[str, Any]:
         "spell_category_damage": [],
         "spell_descriptor_drain": [],
         "spell_descriptor_damage": [],
+        "drain_value": 0,
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
         "weapon_skill_accuracy_slots": [],
@@ -1048,6 +1049,8 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "value": _as_int(fields.get("val") or fields.get("bonus") or fields.get("value")),
                 }
             )
+        elif tag == "drainvalue":
+            effects["drain_value"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "weaponcategorydv":
             select_attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
             limit_raw = str(select_attrs.get("limittoskill") or "").strip()

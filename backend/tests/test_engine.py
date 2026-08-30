@@ -6035,6 +6035,30 @@ def test_seer_and_null_wizard_grant_free_metamagics() -> None:
     assert null.derived["spell_resistance"] >= 1
 
 
+MENTORS_MASK = "bf68095e-35b9-49dc-a008-f67bbac9b83b"
+
+
+def test_mentors_mask_reduces_spell_drain() -> None:
+    base = compute(_mage("mm-base", tradition_id=HERMETIC, spells=[SpellInstall(spell_id=STUNBOLT, force=6)]))
+    out = compute(
+        _mage(
+            "mm",
+            tradition_id=HERMETIC,
+            quality_ids=[MENTORS_MASK],
+            spells=[SpellInstall(spell_id=STUNBOLT, force=6)],
+        )
+    )
+    base_row = base.derived["spells"][0]
+    row = out.derived["spells"][0]
+    assert base_row["spell"]["drain_mod"] == 0
+    assert row["spell"]["drain_mod"] == -1
+    # F-3 @6 = 3, with -1 = 2
+    assert base_row["spell"]["drain"] == 3
+    assert row["spell"]["drain"] == 2
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "drainvalue" not in tags
+
+
 DEDICATED_SPELLSLINGER = "bbc6879e-b50d-4862-b85c-a86c5b9e5d67"
 
 
