@@ -188,11 +188,20 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - **サプリ由来ギア ~2,200 件は方針として英語フォールバックのまま**。
 - overlay 合計 **503 件**。全 419 テスト green。
 
-**2b. 残 (未着手)**
+**2b. qualities (コアルールのみ) ✅ (2026-08-30)**
 
-1. **qualities 682** — 資質タブ/シートの主役面。確度ティア分けで (次の大物)。
-2. **サプリ由来ギア ~2,200** — 方針上、英語フォールバック維持。やるなら別プロジェクト級。
-3. **critters / critterpowers** は catalog 未ロードで無意味、後回し。
+- 未訳 681 件を `source` で分類 → **SR5 コアは 90/92 が訳済み (97%)**、RG も 16/16。
+  未訳の SR5 コア 2 件 (`Infected Advanced Optional Power: Mimicry` / `Psychokinesis`) は、
+  兄弟の `Infected Optional Power:` 系 40 件が upstream で全て英語 passthrough のため**同様に英語のまま**。
+- 残り 679 件は全てサプリ由来 (RF 284, FA 97, KC 58, CF 46, DT 71 …)。
+  **方針として英語フォールバック維持** → 本フェーズでの作業なし。
+
+**2b. 残 (方針上ペンディング)**
+
+- **Run Faster (RF, 291 資質)** — SURGE/Changeling・Fame・Made Man・College Education 等、卓で頻出。
+  唯一「サプリだが訳す価値あり」の候補。着手は利用者判断。
+- その他サプリ資質・ギア ~2,900 — 英語フォールバック維持。
+- **critters / critterpowers** は catalog 未ロードで無意味、後回し。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善 🚧 進行中
 
@@ -279,3 +288,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 2b 小バケツ。mentors/lifestyles/martial_arts/powers/echoes/CF を 102 件訳出 (overlay 465)。
 - 2026-08-30: 呪文 descriptor/type/range/duration の日本語表示 (`frontend/lib/spell-terms.ts`)。
 - 2026-08-30: SR5 コアギア 38 件訳出 (overlay 503)。サプリ由来 ~2,200 は英語フォールバック維持の方針。
+- 2026-08-30: qualities 調査。SR5 コアは既に 97% 訳済み。未訳 679 は全てサプリ由来 → 方針上作業なし。
