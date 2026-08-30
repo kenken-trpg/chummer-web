@@ -174,6 +174,13 @@ def test_committed_data_overlay_anchors() -> None:
     # obscure supplement coinages were rolled back to English fallback
     assert not JP_RE.search(tr.get("Krigama Carpet", "") or "")
     assert not JP_RE.search(tr.get("Pyrohemetics", "") or "")
+    # small-bucket batch (mentors / lifestyles / martial arts / powers / echoes / CF)
+    assert tr["Bolt Hole"] == "隠れ家"
+    assert tr["German Jujitsu"] == "ジャーマン柔術"
+    assert tr["Indomitable Will"] == "不屈の意志"
+    assert tr["Redundancy"] == "冗長化"
+    # parenthetical mentor variants stay on English fallback (upstream convention)
+    assert not JP_RE.search(tr.get("Wolf (Alt)", "") or "")
 
 
 # --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------

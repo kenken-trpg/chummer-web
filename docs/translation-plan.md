@@ -170,10 +170,20 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   (公式訳を検証できないため)。
 - spells 訳出率: 293/363 (upstream 193 + 採用 100)。overlay 合計 **363 件**、全 411 テスト green。
 
+**2b. 小バケツ一括 ✅ (2026-08-30)**
+
+- `backend/scripts/ja_curated_entities.py` (`ENTITIES` dict) に分離。mentors / lifestyles /
+  martial_arts / powers / echoes / complex_forms の未訳を **102 件**訳出。
+  - lifestyles・martial_arts・powers は **英語ゼロに**。
+  - mentors の `(Alt)`/`(SHB)` 派生 6、`MMRI`/`FAQ`/`LOTO` 略号は upstream 慣習で英語のまま。
+- overlay 合計 **465 件**。全 419 テスト green (アンカー＋用語 lint に ENTITIES を追加)。
+
 **2b. 残 (未着手)**
 
-1. **qualities / weapons / armor / cyberware / bioware / gear / mentors 残** の手動訳。
-2. **critters / critterpowers / vehicles** は分量大・露出少で後回し (critters は catalog 未ロード)。
+1. **qualities 682** — 資質タブ/シートの主役面。確度ティア分けで。
+2. **weapons / armor / cyberware / bioware / gear / vehicles / drugs ~2,000** — 大半が固有名カナ変換。
+   半自動 (カナ化＋レビュー) を検討。
+3. **critters / critterpowers** は catalog 未ロードで無意味、後回し。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善 🚧 進行中
 
@@ -257,3 +267,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: UI 用語統一。属性→能力値 / クオリティ→資質 / スキル→技能 / メタタイプ→メタ / コネクト→コンタクト / 魔法・レゾナンス→魔力・共振力 / 有利・不利→有利な資質・不利な資質。
 - 2026-08-30: フェーズ 4a。`test_terminology.py` で用語逆戻りを機械検出 (5 件、計 419 テスト)。
 - 2026-08-30: 参考資料調査。Foundry `shadowrun5eja` を用語集に統合 (統合 559 語、seed 候補 303 語)。
+- 2026-08-30: フェーズ 2b 小バケツ。mentors/lifestyles/martial_arts/powers/echoes/CF を 102 件訳出 (overlay 465)。

@@ -160,13 +160,15 @@ CURATED: dict[str, str] = {
     "Weimaraner": "ワイマラナー",
 }
 
-# spell / ritual / enchantment hand translations live in their own module
-# because there are ~170 of them.
+# bulk hand translations live in their own modules to keep this file lean.
 try:
     from scripts.ja_curated_spells import SPELLS as _SPELLS
+    from scripts.ja_curated_entities import ENTITIES as _ENTITIES
 except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.py`
     from ja_curated_spells import SPELLS as _SPELLS
+    from ja_curated_entities import ENTITIES as _ENTITIES
 CURATED.update(_SPELLS)
+CURATED.update(_ENTITIES)
 
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
