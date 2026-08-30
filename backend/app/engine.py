@@ -4384,6 +4384,80 @@ def bind_weapon_skill_accuracy(
     effects["weapon_skill_accuracy"] = resolved
 
 
+def _echo_by_name(name: str) -> dict[str, Any] | None:
+    target = str(name or "").strip()
+    if not target:
+        return None
+    for item in catalog().get("echoes") or []:
+        if item.get("name") == target:
+            return item
+    return None
+
+
+def _cyberadept_res_penalty_reduction(
+    submersion_grade: int,
+    ess_lost_cyber: float,
+    ess_lost_bio: float,
+) -> int:
+    if submersion_grade <= 0:
+        return 0
+    non_cyber = float(ess_lost_bio or 0)
+    cyber = float(ess_lost_cyber or 0)
+    if math.ceil(non_cyber - 1e-9) == math.floor(non_cyber + 1e-9):
+        max_bonus = int(math.ceil(cyber - 1e-9))
+    else:
+        max_bonus = int(math.floor(cyber + 1e-9))
+    bonus = sum(i // 2 for i in range(1, submersion_grade + 1))
+    return min(bonus, max_bonus)
+
+
+def apply_granted_echoes(
+    effects: dict[str, Any],
+    submersion: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    warnings: list[str],
+) -> None:
+    by_name = {q["name"]: q for q in qualities}
+    public_echoes = list(submersion.get("echoes") or [])
+    echo_names = list(submersion.get("echo_names") or [])
+    bonus_sources = list(submersion.get("bonus_sources") or [])
+    seen_echo_ids = {str(row.get("echo_id") or "") for row in public_echoes}
+
+    for row in effects.get("grant_echoes") or []:
+        source = str(row.get("source") or "")
+        q = by_name.get(source)
+        if not q:
+            continue
+        echo_name = str(row.get("name") or "").strip()
+        spec = _echo_by_name(echo_name)
+        if not spec:
+            warnings.append(f"{source} のエコー {echo_name} が見つかりません")
+            continue
+        if spec["id"] in seen_echo_ids:
+            continue
+        seen_echo_ids.add(spec["id"])
+        echo_names.append(spec["name"])
+        public_echoes.append(
+            {
+                "id": f"grant:{spec['id']}",
+                "echo_id": spec["id"],
+                "name": spec["name"],
+                "grade": 0,
+                "extra": None,
+                "granted": True,
+                "source_quality": source,
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+        if spec.get("bonus"):
+            bonus_sources.append((f"{source}: {spec['name']}", list(spec.get("bonus") or [])))
+
+    submersion["echoes"] = public_echoes
+    submersion["echo_names"] = echo_names
+    submersion["bonus_sources"] = bonus_sources
+
+
 def apply_granted_spells(
     state: CharacterState,
     effects: dict[str, Any],
@@ -8907,6 +8981,13 @@ def compute(state: CharacterState) -> CharacterState:
     ess = max(0.0, round(ess_start - ess_lost - ess_penalty, 2))
     mag_relevant_loss = ess_lost + max(0.0, ess_penalty - ess_penalty_mag_exempt)
     mag_penalty = int(math.ceil(mag_relevant_loss - 1e-9)) if mag_relevant_loss > 0 else 0
+    cyberadept_res_reduction = 0
+    if effects.get("cyberadept_daemon") and talent["name"] in RES_TALENTS:
+        cyberadept_res_reduction = _cyberadept_res_penalty_reduction(
+            max(0, int(state.submersion_grade or 0)),
+            ess_lost_cyber,
+            ess_lost_bio,
+        )
 
     initiate_grade = max(0, int(state.initiate_grade or 0)) if talent["name"] in MAG_TALENTS else 0
     submersion_grade = max(0, int(state.submersion_grade or 0)) if talent["name"] in RES_TALENTS else 0
@@ -8928,7 +9009,8 @@ def compute(state: CharacterState) -> CharacterState:
                 floor = max(talent_start, 1)
                 res_cap = racial_max + submersion_grade
                 raw = max(floor, min(res_cap, raw))
-                raw = max(0, raw - mag_penalty)
+                res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
+                raw = max(0, raw - res_penalty)
             else:
                 raw = 0
         elif key == "ESS":
@@ -8958,6 +9040,7 @@ def compute(state: CharacterState) -> CharacterState:
         quality_names,
         errors,
     )
+    apply_granted_echoes(effects, submersion, qualities, warnings)
     warnings.extend(submersion["warnings"])
     for source, nodes in submersion["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)

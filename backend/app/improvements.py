@@ -146,6 +146,8 @@ IMPLEMENTED = {
     "fadingvalue",
     "fadingresist",
     "selecttext",
+    "addecho",
+    "cyberadeptdaemon",
     "addspell",
 }
 SILENT_TAGS = {
@@ -176,7 +178,6 @@ SILENT_TAGS = {
     "physiologicaladdictionalreadyaddicted",
     "psychologicaladdictionfirsttime",
     "psychologicaladdictionalreadyaddicted",
-    "addecho",
     "addware",
     "addlimb",
     "metageniclimit",
@@ -188,7 +189,6 @@ SILENT_TAGS = {
     "streetcredmultiplier",
     "astralreputation",
     "specialattburnmultiplier",
-    "cyberadeptdaemon",
     "allowspritefettering",
     "weaponcategorydice",
     "smartlink",
@@ -459,6 +459,8 @@ def empty_effects() -> dict[str, Any]:
         "fading_value": 0,
         "fading_value_specific": [],
         "fading_resist": 0,
+        "grant_echoes": [],
+        "cyberadept_daemon": False,
         "grant_spells": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
@@ -1073,6 +1075,12 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["fading_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "selecttext":
             pass
+        elif tag == "addecho":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name:
+                effects["grant_echoes"].append({"source": source, "name": name})
+        elif tag == "cyberadeptdaemon":
+            effects["cyberadept_daemon"] = True
         elif tag == "addspell":
             attrs = node.get("attrs") or {}
             name = str(node.get("value") or fields.get("name") or "").strip()

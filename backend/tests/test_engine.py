@@ -4567,6 +4567,8 @@ STATIC_VEIL = "dbb1d719-c829-4c45-9a53-9ff538865c14"
 RESONANCE_SPIKE = "704abd70-c0e6-4f06-b186-53a7cb856584"
 RESONANT_STREAM_MACHINIST = "e3d04705-b90a-4d94-90d0-4ad2c7adfa79"
 RESONANT_STREAM_SOURCEROR = "11d6c3b6-47c4-4765-a625-7a5907ba1b4a"
+RESONANT_STREAM_CYBERADEPT = "d2873478-d265-45bb-8a9f-320b8d0d33d3"
+SOURCERER_DAEMON = "08848a07-a013-4c45-b103-f5600f1e7171"
 OTAKU_TO_TECHNOMANCER = "d62880dd-3e28-4b0c-8c71-dc0e4b72397b"
 
 
@@ -4699,6 +4701,35 @@ def test_otaku_to_technomancer_fading_resist() -> None:
     assert out.derived["fade_resist"]["pool"] == 9
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "fadingresist" not in tags
+
+
+def test_sourceror_grants_sourcerer_daemon_echo() -> None:
+    out = compute(_techno("sour-daemon", quality_ids=[RESONANT_STREAM_SOURCEROR]))
+    echo = next(row for row in out.derived["submersion"]["echoes"] if row["name"] == "Sourcerer Daemon")
+    assert echo["echo_id"] == SOURCERER_DAEMON
+    assert echo["granted"] is True
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "addecho" not in tags
+
+
+def test_cyberadept_daemon_reduces_res_essence_penalty() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["RES"] = 6
+    common = dict(
+        attributes=attrs,
+        cyberware=[CyberwareInstall(ware_id=DATAJACK)],
+        submersion_grade=2,
+        submersions=[
+            SubmersionChoice(grade=1, echo_id=OVERCLOCKING),
+            SubmersionChoice(grade=2, echo_id=OVERCLOCKING),
+        ],
+    )
+    base = compute(_techno("ca-base", "A", **common))
+    out = compute(_techno("ca", "A", quality_ids=[RESONANT_STREAM_CYBERADEPT], **common))
+    assert base.attributes["RES"] == 5
+    assert out.attributes["RES"] == 6
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "cyberadeptdaemon" not in tags
 
 
 def test_courier_sprite_matrix_stats() -> None:
