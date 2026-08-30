@@ -360,6 +360,24 @@ input[type="text"], input[type="search"] {
     border-radius: 0;
     padding: 0;
     color: #111;
+    column-count: 2;
+    column-gap: 9mm;
+    column-fill: auto;
+  }
+  /* header + first ("コア") section run full width across both columns */
+  .character-sheet > .sheet-header,
+  .character-sheet > .sheet-section:first-of-type {
+    column-span: all;
+  }
+  .character-sheet .sheet-section,
+  .character-sheet .sheet-block,
+  .character-sheet .sheet-table,
+  .character-sheet .sheet-list {
+    break-inside: avoid;
+  }
+  .character-sheet .sheet-section h3,
+  .character-sheet .sheet-section h4 {
+    break-after: avoid;
   }
   .sheet-kicker,
   .sheet-meta,

@@ -23,7 +23,7 @@ import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { TabPanelProps } from "@/components/character/types";
 import { api, type CharacterSummary } from "@/lib/api";
-import { buildChatPalette, buildCocofolia } from "@/lib/cocofolia";
+import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
@@ -101,6 +101,21 @@ export default function Page() {
     if (others[0]) await openCharacter(others[0].id);
     else await newCharacter();
     void refreshRoster();
+  }
+  async function duplicateCurrent() {
+    if (!ch) return;
+    const name = window.prompt("複製後の名前", `${ch.name || "無名"} のコピー`);
+    if (name === null) return;
+    try {
+      const { id: _id, derived: _d, ...rest } = ch;
+      void _id;
+      void _d;
+      remember(await api.import({ ...rest, name: name || `${ch.name || "無名"} のコピー` }));
+      setTab("priority");
+      void refreshRoster();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "複製に失敗しました");
+    }
   }
 
   async function patch(body: Record<string, unknown>) {
@@ -204,6 +219,7 @@ export default function Page() {
               ))}
               <option value="__new__">＋ 新規キャラ</option>
             </select>
+            <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">複製</button>
             <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">削除</button>
             <input
               value={ch.name}
@@ -233,6 +249,15 @@ export default function Page() {
             >
               {copied === "cp" ? "コピー ✓" : "チャットパレット"}
             </button>
+            {(d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered)) ? (
+              <button
+                className="btn"
+                onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr), "cs")}
+                title="束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す"
+              >
+                {copied === "cs" ? "コピー ✓" : "精霊コマ"}
+              </button>
+            ) : null}
             <button
               className={`btn ${ch.career || d.career ? "primary" : ""}`}
               title={ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"}

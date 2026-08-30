@@ -129,6 +129,11 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
 
   if (weapons.length || spells.length || persona || tabs.includes("spirits")) out.push("// ── 判定・抵抗 ──");
   roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
+  const meleeDef = Math.max(skillPool("Unarmed Combat"), skillPool("Blades"), skillPool("Clubs"));
+  roll(at("REA") + at("INT") + meleeDef + (tm.dodge || 0), "受け（ブロック／パリィ）", "physical");
+  roll(at("REA") + at("INT") + at("WIL") + (tm.dodge || 0), "フル防御");
+  out.push("2D6 グレネード散乱（投擲・m／実効ヒットで減算）");
+  out.push("4D6 グレネード散乱（発射・m／実効ヒットで減算）");
   roll(at("WIL") + at("CHA") + (tm.composure || 0), "冷静", "social");
   roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), "意図看破", "social");
   roll(at("LOG") + at("WIL") + (tm.memory || 0), "記憶", "mental");
@@ -188,4 +193,132 @@ export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) 
       params,
     },
   });
+}
+
+// --- spirits / sprites as their own Cocofolia pieces -----------------------
+// A bound spirit / registered sprite is dropped on the table as a separate
+// piece so the GM (or the summoner) can run it directly. Attributes are the
+// Force / Level-derived values the engine already resolved.
+
+const SPIRIT_ATTR_ORDER = ["BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL"] as const;
+
+type CocofoliaPiece = {
+  kind: "character";
+  data: {
+    name: string;
+    memo: string;
+    initiative: number;
+    commands: string;
+    status: { label: string; value: number; max: number }[];
+    params: { label: string; value: string }[];
+  };
+};
+
+/** One piece per bound spirit. Skill test = Force + linked attribute, limit = Force. */
+export function buildSpiritPieces(ch: Character, _catalog: Catalog, tr: (n: string) => string): CocofoliaPiece[] {
+  return (ch.derived.spirits || [])
+    .filter((s) => s.bound)
+    .map((s) => {
+      const a = s.attributes || {};
+      const force = s.force || 1;
+      const ini = a.INI ?? force * 2;
+
+      const params: { label: string; value: string }[] = SPIRIT_ATTR_ORDER.filter((k) => (a[k] || 0) > 0).map((k) => ({
+        label: k as string,
+        value: String(a[k]),
+      }));
+      params.push({ label: "INI", value: String(ini) });
+      params.push({ label: "Force", value: String(force) });
+
+      const physCM = 8 + Math.ceil((a.BOD || 0) / 2);
+      const stunCM = 8 + Math.ceil((a.WIL || 0) / 2);
+      const status = [
+        { label: "物理CM", value: physCM, max: physCM },
+        { label: "精神CM", value: stunCM, max: stunCM },
+        { label: "エッジ", value: force, max: force },
+      ];
+
+      const cmds: string[] = [];
+      cmds.push(`2D6+${ini} イニシアチブ`);
+      for (const sk of s.skills || []) {
+        const attr = sk.attribute || "";
+        const pool = (sk.rating || force) + (attr ? a[attr] || 0 : 0);
+        cmds.push(`${Math.max(pool, 0)}B6@${force} ${tr(sk.name)}`);
+      }
+      cmds.push(`${(a.REA || 0) + (a.INT || 0)}B6 完全回避`);
+      cmds.push(`${(a.BOD || 0) + force * 2}B6 ダメージ抵抗（イミュニティ）`);
+      cmds.push(`${force * 2}B6 精霊追放に対抗`);
+      const powers = [...(s.powers || []), ...(s.optionalpowers || [])].map(tr);
+      if (powers.length) cmds.push(`// パワー: ${powers.join("、")}`);
+      if (s.weaknesses?.length) cmds.push(`// 弱点: ${s.weaknesses.map(tr).join("、")}`);
+      cmds.push("// 技能のリミット＝Force。対抗判定はGM。");
+
+      const memo = [
+        `${tr(s.name)}（${s.role_label || s.role || "精霊"}） Force ${force}`,
+        `束縛済み ・ 残サービス ${s.services}`,
+        "判定は BCDice の ShadowRun5。",
+      ].join("\n");
+
+      return {
+        kind: "character" as const,
+        data: { name: `${tr(s.name)} F${force}`, memo, initiative: ini, commands: cmds.join("\n"), status, params },
+      };
+    });
+}
+
+/** One piece per registered sprite. Skill test = 2 × Level, limit = Level. */
+export function buildSpritePieces(ch: Character, _catalog: Catalog, tr: (n: string) => string): CocofoliaPiece[] {
+  return (ch.derived.sprites || [])
+    .filter((s) => s.registered)
+    .map((s) => {
+      const level = s.level || 1;
+      const m = s.matrix || { attack: 0, sleaze: 0, dataprocessing: 0, firewall: 0, initiative: 0 };
+      const ini = m.initiative || level * 2;
+
+      const params = [
+        { label: "A", value: String(m.attack) },
+        { label: "S", value: String(m.sleaze) },
+        { label: "DP", value: String(m.dataprocessing) },
+        { label: "FW", value: String(m.firewall) },
+        { label: "INI", value: String(ini) },
+        { label: "Level", value: String(level) },
+      ];
+
+      const cm = 8 + Math.ceil(level / 2);
+      const status = [
+        { label: "マトリクスCM", value: cm, max: cm },
+        { label: "エッジ", value: level, max: level },
+      ];
+
+      const cmds: string[] = [];
+      cmds.push(`${level}D6+${ini} イニシアチブ`);
+      for (const sk of s.skills || []) {
+        cmds.push(`${(sk.rating || level) + level}B6@${level} ${tr(sk.name)}`);
+      }
+      cmds.push(`${m.firewall + level}B6 マトリクス防御`);
+      cmds.push(`${level * 2}B6 消去（デレゾ）に対抗`);
+      const powers = (s.powers || []).map(tr);
+      if (powers.length) cmds.push(`// パワー: ${powers.join("、")}`);
+      cmds.push("// 技能判定は レベル×2、リミット＝レベル。");
+
+      const memo = [
+        `${tr(s.name)} レベル ${level}`,
+        `登録済み ・ 残タスク ${s.services}`,
+        "判定は BCDice の ShadowRun5。",
+      ].join("\n");
+
+      return {
+        kind: "character" as const,
+        data: { name: `${tr(s.name)} L${level}`, memo, initiative: ini, commands: cmds.join("\n"), status, params },
+      };
+    });
+}
+
+/**
+ * Cocofolia clipboard payload for every bound spirit + registered sprite,
+ * as a JSON array of pieces. Returns "" when the character has none.
+ */
+export function buildCocofoliaConjured(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+  const pieces = [...buildSpiritPieces(ch, catalog, tr), ...buildSpritePieces(ch, catalog, tr)];
+  return pieces.length ? JSON.stringify(pieces) : "";
 }
