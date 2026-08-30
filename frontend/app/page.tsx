@@ -60,6 +60,10 @@ export default function Page() {
   }
 
   const tr = (name: string) => catalog?.translations[name] || name;
+  // UI-string lookup from ja-jp.xml (+ ja_overrides/ui.json). Falls back to the
+  // given default, then the key itself.
+  const t = (key: string, fallback?: string) =>
+    catalog?.ui_strings?.[key] || fallback || key;
 
   function download() {
     if (!ch) return;
@@ -89,6 +93,7 @@ export default function Page() {
     character: ch,
     d,
     tr,
+    t,
     patch,
     setCharacter: (next) => setCh(next),
   };

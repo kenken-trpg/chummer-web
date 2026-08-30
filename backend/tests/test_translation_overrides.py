@@ -174,3 +174,41 @@ def test_committed_data_overlay_anchors() -> None:
     # obscure supplement coinages were rolled back to English fallback
     assert not JP_RE.search(tr.get("Krigama Carpet", "") or "")
     assert not JP_RE.search(tr.get("Pyrohemetics", "") or "")
+
+
+# --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------
+
+
+def _committed_ui_overlay() -> dict[str, str]:
+    return json.loads((OVERRIDE_DIR / "ui.json").read_text(encoding="utf-8"))
+
+
+def test_public_catalog_exposes_ui_strings() -> None:
+    from app.store import public_catalog
+
+    pc = public_catalog()
+    assert isinstance(pc.get("ui_strings"), dict) and pc["ui_strings"]
+    # ui.json override is reflected
+    assert pc["ui_strings"]["String_AttributeBODLong"] == "強靱力"
+
+
+def test_committed_ui_overlay_keys_exist_in_lang() -> None:
+    """Every ui.json key must be a real ja-jp.xml / en-us.xml string key."""
+    overlay = _committed_ui_overlay()
+    if not overlay:
+        return
+    en = data_loader.load_ui_strings()  # merged, but keys come from vendored
+    import xml.etree.ElementTree as ET
+
+    root = ET.parse(data_loader.LANG_DIR / "en-us.xml").getroot()
+    en_keys = {
+        s.get("key") or (s.findtext("key") or "") for s in root.findall(".//string")
+    }
+    orphans = sorted(k for k in overlay if k not in en_keys)
+    assert not orphans, f"ui.json keys not in en-us.xml: {orphans}"
+    assert all(k in en for k in overlay)
+
+
+def test_committed_ui_overlay_values_are_japanese() -> None:
+    for key, val in _committed_ui_overlay().items():
+        assert isinstance(val, str) and JP_RE.search(val), f"{key!r} -> {val!r}"

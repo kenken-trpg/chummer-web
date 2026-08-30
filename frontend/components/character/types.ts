@@ -5,6 +5,7 @@ export type TabPanelProps = {
   character: Character;
   d: Character["derived"];
   tr: (name: string) => string;
+  t: (key: string, fallback?: string) => string;
   patch: (body: Record<string, unknown>) => void | Promise<void>;
   setCharacter: (next: Character) => void;
 };

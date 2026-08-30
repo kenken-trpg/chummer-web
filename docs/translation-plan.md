@@ -162,15 +162,25 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 1. **qualities / weapons / armor / cyberware / bioware / gear / mentors 残** の手動訳。
 2. **critters / critterpowers / vehicles** は分量大・露出少で後回し (critters は catalog 未ロード)。
 
-### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善
+### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善 🚧 進行中
 
-`ja-jp.xml` を活かす価値があるか判断してから着手。やるなら:
+**3a. 配線 ✅ (2026-08-30)**
 
-1. `public_catalog()` に `ui_strings` を追加、フロントに `t(key)` ヘルパを導入。
-2. `ja-jp.xml` の英語残置 (`text == en-us` が約 1,007 件、`ja-jp` に無いキー 174 件) を、2021用語集＋chumJA `ja.xml`＋公式5版で補完。
-3. ハードコード日本語を段階的に `t(key)` へ移行 (大がかり。別タスク化可)。
+- `store.public_catalog()` が `ui_strings` (ja-jp.xml + `ja_overrides/ui.json` マージ済、2,596 件) を返す。
+- frontend: `Catalog.ui_strings` 型を追加、`page.tsx` に `t(key, fallback?)` ヘルパ
+  (`catalog.ui_strings[key] || fallback || key`) を導入し `TabPanelProps` 経由で配布。
+- `ja_overrides/ui.json` を Phase 1 不一致レポートの高確度分で seed (**34 件**):
+  - 能力値 Short 形 9 (`敏捷`/`反応`/`論理` 等) ＋ `String_AttributeBODLong` の `強靭力→強靱力`。
+  - 文脈非依存の英語残置 24 (`String_Armor`→装甲, `String_Cost`→コスト, `ColumnHeader_Notes`→備考 等)。
+  - `Grade`(階梯/等級)・`Amount`(数量/金額)・`Tradition`(様式/伝統) 等の文脈依存語は除外。
+- テスト 3 件追加 (公開・キー実在・値が日本語)。全 414 テスト green。
 
-**推奨**: フェーズ 2 完了後に要否を再検討。UI 文字列は後回しでよい。
+**3b. 残 (未着手)**
+
+1. **ハードコード日本語 → `t(key)` 移行**。frontend の UI ラベルは現状 `page.tsx` 等に直書き、
+   `ATTR_JA`/`KNOW_CAT_JA` 等の定数も独自。`t()` は導入済みだが**まだ呼び出し箇所ゼロ**。
+   段階的に置換していく大規模タスク。`ATTR_JA` の `"BOD 体"` 形式など、表示仕様の変更を伴うものは要判断。
+2. `ja-jp.xml` の英語残置 (`text == en-us` 約 1,007 件) の本格補完。
 
 ### フェーズ 4 — 品質パスと CI
 
@@ -203,3 +213,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 2b バッチ 2。メンター/精霊/伝統/魔法アート/スプライト 48 件を追加 (計 263 件)。
 - 2026-08-30: フェーズ 2b バッチ 3。未訳呪文のうち確度の高い 100 件を訳出 (計 363 件)。
   サプリメント造語 70 件は英語フォールバックへ差し戻し。
+- 2026-08-30: フェーズ 3a。`ui_strings` を public_catalog／frontend に配線、`ui.json` を 34 件 seed。
