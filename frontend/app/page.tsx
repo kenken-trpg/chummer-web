@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import CharacterSheet from "@/components/CharacterSheet";
+import CharacterSheet, { type SheetLayout } from "@/components/CharacterSheet";
 import { CharacterSidebar } from "@/components/character/CharacterSidebar";
 import { AdeptTab } from "@/components/character/tabs/AdeptTab";
 import { AttrsTab } from "@/components/character/tabs/AttrsTab";
@@ -32,6 +32,14 @@ export default function Page() {
   const [ch, setCh] = useState<Character | null>(null);
   const [tab, setTab] = useState<Tab>("priority");
   const [error, setError] = useState<string | null>(null);
+  const [sheetLayout, setSheetLayout] = useState<SheetLayout>(() => {
+    try {
+      const v = localStorage.getItem("sheetLayout");
+      return v === "compact" || v === "text" ? v : "standard";
+    } catch {
+      return "standard";
+    }
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
 
@@ -122,7 +130,29 @@ export default function Page() {
               {ch.career || d.career ? "キャリア中" : "作成完了（キャリア）"}
             </button>
             {tab === "sheet" ? (
-              <button className="btn primary" onClick={() => window.print()}>印刷</button>
+              <>
+                <select
+                  className="btn"
+                  value={sheetLayout}
+                  onChange={(e) => {
+                    const v = e.target.value as SheetLayout;
+                    setSheetLayout(v);
+                    try { localStorage.setItem("sheetLayout", v); } catch {}
+                  }}
+                  title="シートのレイアウト"
+                >
+                  <option value="standard">標準</option>
+                  <option value="compact">コンパクト</option>
+                  <option value="text">テキスト</option>
+                </select>
+                <button
+                  className="btn primary"
+                  onClick={() => window.print()}
+                  title="印刷。ダイアログで「PDF として保存」も選べます"
+                >
+                  印刷 / PDF
+                </button>
+              </>
             ) : (
               <button className="btn" onClick={() => setTab("sheet")}>シート表示</button>
             )}
@@ -156,7 +186,7 @@ export default function Page() {
           </div>
         </div>
 
-        {tab === "sheet" && <CharacterSheet character={ch} catalog={catalog} tr={tr} />}
+        {tab === "sheet" && <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />}
         {tab === "priority" && <PriorityTab {...panel} />}
         {tab === "meta" && <MetaTab {...panel} />}
         {tab === "attrs" && <AttrsTab {...panel} />}

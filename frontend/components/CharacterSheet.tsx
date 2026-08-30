@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
-import { attrShort, makeT } from "@/lib/ui-strings";
+import { attrShort, makeT, type TFn } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import { cfDuration, cfTarget } from "@/lib/character/format";
 
@@ -83,14 +83,18 @@ function Section({ title, children, empty }: { title: string; children: ReactNod
   );
 }
 
+export type SheetLayout = "standard" | "compact" | "text";
+
 export default function CharacterSheet({
   character,
   catalog,
   tr,
+  layout = "standard",
 }: {
   character: Character;
   catalog: Catalog;
   tr: (name: string) => string;
+  layout?: SheetLayout;
 }) {
   const d = character.derived;
   const t = makeT(catalog);
@@ -140,8 +144,34 @@ export default function CharacterSheet({
     (d.gear || []).filter((item) => item.parent_id === parentId);
   const specialArmor = specialArmorBits(d.special_armor);
 
+  if (layout === "text") {
+    return (
+      <pre className="sheet-text">
+        {textSheet({
+          character,
+          d,
+          tr,
+          t,
+          totals,
+          enabled,
+          activeSkills,
+          groups,
+          exotic,
+          knowledge,
+          qualities,
+          weapons,
+          armors,
+          cyber,
+          bio,
+          gearMisc,
+          drugs,
+        })}
+      </pre>
+    );
+  }
+
   return (
-    <article className="character-sheet">
+    <article className={`character-sheet${layout === "compact" ? " character-sheet--compact" : ""}`}>
       <header className="sheet-header">
         <div>
           <p className="sheet-kicker">
@@ -724,4 +754,147 @@ export default function CharacterSheet({
       </footer>
     </article>
   );
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type TextArgs = {
+  character: Character;
+  d: Character["derived"];
+  tr: (n: string) => string;
+  t: TFn;
+  totals: Record<string, number>;
+  enabled: Set<string>;
+  activeSkills: { name: string; attribute: string; rating: number; pool: number; spec?: string }[];
+  groups: { name: string; rating: number; bonus: number }[];
+  exotic: any[];
+  knowledge: any[];
+  qualities: any[];
+  weapons: any[];
+  armors: any[];
+  cyber: any[];
+  bio: any[];
+  gearMisc: any[];
+  drugs: any[];
+};
+
+/** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
+function textSheet(x: TextArgs): string {
+  const { character: ch, d, tr, t, totals, enabled } = x;
+  const L: string[] = [];
+  const line = (s = "") => L.push(s);
+  const names = (arr: any[]) => arr.map((a) => tr(a.name)).join("、");
+
+  line(ch.name || "無名のランナー");
+  line(
+    `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${ch.talent || "Mundane"}` +
+      `${d.tradition ? " ・ " + tr(d.tradition.name) : ""}${d.stream ? " ・ " + tr(d.stream.name) : ""}` +
+      `${d.mentor ? " ・ メンター " + tr(d.mentor.name) : ""}`,
+  );
+  line();
+
+  line("=== 能力値 ===");
+  line(
+    ATTRS.filter((k) => !((k === "MAG" && !enabled.has("MAG")) || (k === "RES" && !enabled.has("RES"))))
+      .map((k) => `${attrShort(k, t)} ${totals[k] ?? "-"}`)
+      .join("  "),
+  );
+  line(
+    `イニシアチブ ${d.initiative.value}+${d.initiative.dice}d6  ` +
+      `リミット 物${d.limits.physical}/精${d.limits.mental}/社${d.limits.social}  ` +
+      `CM P${d.condition_monitor.physical}/S${d.condition_monitor.stun}`,
+  );
+  line(`アーマー ${d.armor}  エッセンス ${d.essence}  移動 歩${d.movement.walk}/走${d.movement.run}`);
+  line();
+
+  if (x.activeSkills.length || x.groups.length || x.exotic.length) {
+    line("=== 技能 ===");
+    x.activeSkills.forEach((s) =>
+      line(`  ${tr(s.name)}${s.spec ? "（" + tr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} プール ${s.pool}]`),
+    );
+    x.exotic.forEach((r) =>
+      line(`  ${tr(r.label || r.skill_name)}${r.extra ? "（" + tr(r.extra) + "）" : ""} ${r.rating}`),
+    );
+    if (x.groups.length)
+      line(`  グループ: ${x.groups.map((g) => `${tr(g.name)} ${g.rating}${g.bonus ? `(+${g.bonus})` : ""}`).join(" / ")}`);
+    line();
+  }
+
+  if (x.knowledge.length) {
+    line("=== 知識技能 ===");
+    x.knowledge.forEach((k) =>
+      line(`  ${tr(k.name)}${k.native ? "（母語）" : ""} ${Math.max(k.rating || 0, k.skillsoft || 0)}${k.spec ? "（" + tr(k.spec) + "）" : ""}`),
+    );
+    line();
+  }
+
+  if (x.qualities.length) {
+    line("=== 資質 ===");
+    x.qualities.forEach((q) => line(`  ${tr(q.name)}${q.extra ? "：" + tr(q.extra) : ""}`));
+    line();
+  }
+
+  if (x.weapons.length) {
+    line("=== 武器 ===");
+    x.weapons.forEach((w) =>
+      line(
+        `  ${tr(w.name)}  DV ${w.damage || "-"} / AP ${w.ap || "-"} / ACC ${w.accuracy || "-"}` +
+          `${w.mode ? ` / ${w.mode}` : ""}${w.rc ? ` / RC ${w.rc}` : ""}` +
+          `${(w.accessories || []).length ? `  +${names(w.accessories)}` : ""}`,
+      ),
+    );
+    line();
+  }
+
+  if (x.armors.length || d.worn_armor) {
+    line("=== 防具 ===");
+    x.armors.forEach((a) => line(`  ${tr(a.name)}  ${a.armor ?? ""}${(a.mods || []).length ? `  +${names(a.mods)}` : ""}`));
+    if (!x.armors.length && d.worn_armor) line(`  ${tr(d.worn_armor)}`);
+    line();
+  }
+
+  if (x.cyber.length || x.bio.length) {
+    line("=== ウェア ===");
+    x.cyber.forEach((i) => line(`  [サイバー] ${tr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}（ESS ${i.essence}）`));
+    x.bio.forEach((i) => line(`  [バイオ] ${tr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}（ESS ${i.essence}）`));
+    line();
+  }
+
+  if (enabled.has("spells") && (d.spells || []).length) {
+    line("=== 術式 ===");
+    (d.spells || []).forEach((s: any) =>
+      line(
+        `  ${tr(s.name)}  ${tr(s.category || "")} / ${spellType(s.type)} / ${spellRange(s.range)} / ${spellDuration(s.duration)} / DV ${s.dv}` +
+          `${s.descriptor ? `（${spellDescriptors(s.descriptor)}）` : ""}`,
+      ),
+    );
+    line();
+  }
+
+  if (enabled.has("complexforms") && (d.complex_forms || []).length) {
+    line("=== 複合体 ===");
+    (d.complex_forms || []).forEach((c: any) =>
+      line(`  ${tr(c.label || c.name)}  ${cfTarget(c.target)} / ${cfDuration(c.duration)} / L${c.level} / FV ${c.fv}`),
+    );
+    line();
+  }
+
+  if ((d.contacts || []).length) {
+    line("=== コンタクト ===");
+    (d.contacts || []).forEach((c: any) =>
+      line(`  ${c.name || "（無名）"}${c.role ? ` / ${tr(c.role)}` : ""}  C${c.connection}/L${c.loyalty}`),
+    );
+    line();
+  }
+
+  const misc = [...x.gearMisc, ...x.drugs];
+  if (misc.length) {
+    line("=== ギア ===");
+    misc.forEach((g) => line(`  ${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}`));
+    line();
+  }
+
+  if (d.lifestyle)
+    line(`ライフスタイル: ${tr(d.lifestyle.name)} ${d.lifestyle.months}${d.lifestyle.increment === "day" ? "日" : "ヶ月"}`);
+  line(`ニューエン ${(d.nuyen ?? 0).toLocaleString()}¥  カルマ残 ${d.karma?.remaining ?? 0}/${d.karma?.pool ?? 0}`);
+  return L.join("\n");
 }

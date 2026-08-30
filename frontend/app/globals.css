@@ -397,3 +397,31 @@ input[type="text"], input[type="search"] {
     border-bottom-color: #ccc !important;
   }
 }
+
+/* --- compact sheet layout --- */
+.character-sheet--compact { font-size: 0.82rem; }
+.character-sheet--compact .sheet-section { margin-bottom: 10px; }
+.character-sheet--compact .sheet-section h3 { font-size: 0.92rem; margin-bottom: 4px; }
+.character-sheet--compact .sheet-section h4 { font-size: 0.82rem; }
+.character-sheet--compact .sheet-list li { padding: 2px 0; }
+.character-sheet--compact .sheet-table th,
+.character-sheet--compact .sheet-table td { padding: 2px 6px; }
+.character-sheet--compact .sheet-attr b { font-size: 1rem; }
+.character-sheet--compact .sheet-derived-grid > div,
+.character-sheet--compact .sheet-header-stats div { padding: 3px 0; }
+
+/* --- text ("Text-Only") sheet layout --- */
+.sheet-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: inherit;
+}
+
+@media print {
+  .character-sheet--compact { font-size: 8.5pt; }
+  .sheet-text { color: #111 !important; font-size: 9pt; line-height: 1.45; }
+}
