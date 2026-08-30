@@ -177,13 +177,16 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 **3b. 能力値ラベルの `t()` 移行 ✅ (2026-08-30)**
 
-- `frontend/lib/ui-strings.ts` を新設: `makeT(catalog)` ＋ `attrShort(key,t)` (`強靱`) ＋
-  `attrLabel(key,t)` (`BOD 強靱`)。いずれも `String_Attribute<KEY>Short` を引く。
+- `frontend/lib/ui-strings.ts` を新設: `makeT(catalog)` ＋
+  `attrShort(key,t)` (`強靱`, `String_Attribute<KEY>Short`) ＋
+  `attrName(key,t)` (`強靱力`, `String_Attribute<KEY>Long`) ＋
+  `attrLabel(key,t)` = `` `${key} ${attrName(key,t)}` `` (`BOD 強靱力`)。
 - 移行:
   - `CharacterSheet` の能力値欄: 英語コードのみ (`BOD`) → `attrShort` で日本語化 (`強靱`)。
   - `CharacterSidebar` / `AttrsTab` / `QualitiesTab` / `AdeptTab` / `ExtraSelect`: `ATTR_JA[key]`
-    (`BOD 体`) → `attrLabel` (`BOD 強靱`)。用語集準拠になり `RES 共振力` の不揃いも解消。
+    (`BOD 体`) → `attrLabel` (`BOD 強靱力` — 長形。`RES 共振力` の不揃いも解消)。
   - `constants.ts` の `ATTR_JA` 定数は削除。
+  - 注: `attrLabel` のラベル列は幅が狭く `強靱力` が 2 行に折り返す。気になる場合は CSS で列幅調整。
 - 全 414 backend テスト green、frontend `tsc` 既存エラーのみ (本変更起因なし)。
 
 **3b. 残 (未着手)**

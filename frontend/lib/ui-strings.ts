@@ -16,7 +16,12 @@ export function attrShort(key: string, t: TFn): string {
   return t(`String_Attribute${key}Short`, key);
 }
 
-/** Attribute label with the code prefix, e.g. "BOD 強靱". */
+/** Long attribute name, e.g. "強靱力" — from String_Attribute<KEY>Long. */
+export function attrName(key: string, t: TFn): string {
+  return t(`String_Attribute${key}Long`, key);
+}
+
+/** Attribute label with the code prefix, e.g. "BOD 強靱力". */
 export function attrLabel(key: string, t: TFn): string {
-  return `${key} ${attrShort(key, t)}`;
+  return `${key} ${attrName(key, t)}`;
 }
