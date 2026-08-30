@@ -4703,6 +4703,24 @@ def test_otaku_to_technomancer_fading_resist() -> None:
     assert "fadingresist" not in tags
 
 
+DAREADRENALINE = "6a62e21f-f291-4e93-b109-df9c56c938f9"
+
+
+def test_dareadrenaline_drain_resist() -> None:
+    base = compute(_mage("drain-base", tradition_id=HERMETIC))
+    out = compute(
+        _mage(
+            "drain",
+            tradition_id=HERMETIC,
+            bioware=[CyberwareInstall(ware_id=DAREADRENALINE)],
+        )
+    )
+    assert base.derived["drain_resist"]["pool"] == 2
+    assert out.derived["drain_resist"]["pool"] == 3
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "drainresist" not in tags
+
+
 def test_sourceror_grants_sourcerer_daemon_echo() -> None:
     out = compute(_techno("sour-daemon", quality_ids=[RESONANT_STREAM_SOURCEROR]))
     echo = next(row for row in out.derived["submersion"]["echoes"] if row["name"] == "Sourcerer Daemon")

@@ -145,6 +145,7 @@ IMPLEMENTED = {
     "drainvalue",
     "fadingvalue",
     "fadingresist",
+    "drainresist",
     "selecttext",
     "addecho",
     "cyberadeptdaemon",
@@ -459,6 +460,7 @@ def empty_effects() -> dict[str, Any]:
         "fading_value": 0,
         "fading_value_specific": [],
         "fading_resist": 0,
+        "drain_resist": 0,
         "grant_echoes": [],
         "cyberadept_daemon": False,
         "grant_spells": [],
@@ -1073,6 +1075,8 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                 effects["fading_value"] += value
         elif tag == "fadingresist":
             effects["fading_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "drainresist":
+            effects["drain_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "selecttext":
             pass
         elif tag == "addecho":

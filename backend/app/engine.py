@@ -8347,6 +8347,7 @@ def resolve_spells(
         warnings.append("選んだ伝統が見つからないため外しました")
         state.tradition_id = None
     resist, resist_attrs = tradition_resist(tradition, attrs)
+    resist += int(effects.get("drain_resist") or 0)
     allow_ranges = [str(r).strip() for r in (effects.get("allow_spell_ranges") or []) if str(r).strip()]
     range_gated = talent["name"] not in SPELL_TALENTS and bool(allow_ranges)
     can_spells = talent["name"] in SPELL_TALENTS or bool(allow_ranges)
