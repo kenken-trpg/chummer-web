@@ -1666,6 +1666,8 @@ ATHLETE_WAY = "3f536570-2f0c-40b1-a056-d310e29e983d"
 BEAST_WAY = "2e7424d3-5d11-4c9d-ba92-f0431bb86786"
 MENTOR_SPIRIT = "ced3fecf-2277-4b20-b1e0-894162ca9ae2"
 BEAR = "136a3dc5-d9c4-45ad-bc24-705f54692590"
+NORSE_BERSERKER = "52668f12-2895-48e1-8b84-2382ef0fcee0"
+BERSERKER_TEMPER = "ad6f8984-f0c2-41e9-a2d1-73a719d21a06"
 RAPID_HEALING = "4676b6f7-120d-4344-81ac-5922445a521b"
 LIGHT_BODY = "ce7df757-792e-4fac-a86e-6b587586deb2"
 AIR_WALKING = "8dc0a8e3-535a-4935-8c90-2079666e6a01"
@@ -1724,6 +1726,17 @@ def test_bear_mentor_gives_free_rapid_healing() -> None:
     assert names["Rapid Healing"]["free_levels"] == 1
     assert names["Rapid Healing"]["cost"] == 0
     assert out.derived["karma"]["spent"] == 5
+
+
+def test_norse_berserker_tradition_grants_berserker_temper() -> None:
+    out = compute(_adept("norse-berserker", tradition_id=NORSE_BERSERKER))
+    names = {item["name"]: item for item in out.derived["adept_powers"]}
+    assert names["Berserker Temper"]["power_id"] == BERSERKER_TEMPER
+    assert names["Berserker Temper"]["free_levels"] == 1
+    assert names["Berserker Temper"]["cost"] == 0
+    assert out.derived["power_points"]["used"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "specificpower" not in tags
 
 
 def test_beasts_way_grants_free_mentor_spirit() -> None:

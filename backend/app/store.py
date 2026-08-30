@@ -256,6 +256,7 @@ def public_catalog() -> dict:
                 "adeptwayrequires": list(p.get("adeptwayrequires") or []),
             }
             for p in raw.get("powers") or []
+            if not p.get("hidden")
         ],
         "enhancements": [
             {

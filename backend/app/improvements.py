@@ -166,6 +166,7 @@ IMPLEMENTED = {
     "addecho",
     "cyberadeptdaemon",
     "addspell",
+    "specificpower",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -178,7 +179,6 @@ SILENT_TAGS = {
     "selectspell",
     "selectpowers",
     "selectpower",
-    "specificpower",
     "selecttradition",
     "selectrestricted",
     "activesoft",
@@ -491,6 +491,7 @@ def empty_effects() -> dict[str, Any]:
         "grant_echoes": [],
         "cyberadept_daemon": False,
         "grant_spells": [],
+        "grant_powers": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
         "weapon_skill_accuracy_slots": [],
@@ -1126,6 +1127,17 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                         "alchemical": str(attrs.get("alchemical") or "").lower() == "true",
                         "extended": str(attrs.get("extended") or "").lower() == "true",
                         "limited": str(attrs.get("limited") or "").lower() == "true",
+                    }
+                )
+        elif tag == "specificpower":
+            name = str(node.get("value") or fields.get("name") or "").strip()
+            if name:
+                effects["grant_powers"].append(
+                    {
+                        "source": source,
+                        "name": name,
+                        "rating": max(1, _bonus_int(node, fields)),
+                        "extra": "",
                     }
                 )
         elif tag == "weaponcategorydv":

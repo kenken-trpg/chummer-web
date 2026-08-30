@@ -4484,6 +4484,30 @@ def apply_granted_echoes(
     submersion["bonus_sources"] = bonus_sources
 
 
+def free_powers_from_grants(
+    effects: dict[str, Any],
+    warnings: list[str],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in effects.get("grant_powers") or []:
+        name = str(row.get("name") or "").strip()
+        source = str(row.get("source") or "").strip()
+        spec = _power_by_name(name)
+        if not spec:
+            warnings.append(f"{source} のパワー {name} が見つかりません")
+            continue
+        out.append(
+            {
+                "power_id": spec["id"],
+                "name": spec["name"],
+                "rating": max(1, int(row.get("rating") or 1)),
+                "extra": str(row.get("extra") or "").strip(),
+                "source": source,
+            }
+        )
+    return out
+
+
 def apply_granted_spells(
     state: CharacterState,
     effects: dict[str, Any],
@@ -9098,6 +9122,8 @@ def compute(state: CharacterState) -> CharacterState:
         list(foci.get("public") or []),
         errors,
     )
+    apply_tradition_bonuses(effects, _tradition_by_id(state.tradition_id))
+    granted_powers = free_powers_from_grants(effects, warnings)
     adept = resolve_adept_powers(
         state,
         talent["name"],
@@ -9105,7 +9131,9 @@ def compute(state: CharacterState) -> CharacterState:
         data["skills"],
         quality_names,
         bool(effects.get("magicians_way")),
-        list(mentor.get("free_powers") or []) + list(qi.get("free_powers") or []),
+        list(mentor.get("free_powers") or [])
+        + list(qi.get("free_powers") or [])
+        + granted_powers,
         int(ratings.get("WIL") or 1),
         int(ratings.get("INT") or 1),
     )
@@ -9205,7 +9233,6 @@ def compute(state: CharacterState) -> CharacterState:
         total["AGI"] = int(limb_replace["agi"])
 
     owned_magic_names = set(initiation.get("art_names") or set()) | set(initiation.get("metamagic_names") or set())
-    apply_tradition_bonuses(effects, _tradition_by_id(state.tradition_id))
     magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names, effects)
     warnings.extend(magic["warnings"])
     spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}

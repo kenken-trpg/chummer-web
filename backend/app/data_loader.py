@@ -851,8 +851,7 @@ def load_powers() -> list[dict[str, Any]]:
         return []
     items: list[dict[str, Any]] = []
     for el in ET.parse(path).getroot().findall("./powers/power"):
-        if el.find("hide") is not None:
-            continue
+        hidden = el.find("hide") is not None
         name = _text(el.find("name"))
         power_id = _text(el.find("id"))
         if not name or not power_id:
@@ -875,6 +874,7 @@ def load_powers() -> list[dict[str, Any]]:
                 "adeptway": _float(el.find("adeptway")),
                 "adeptwayrequires": _way_quality_names(el.find("adeptwayrequires")),
                 "magicianswayforbids": el.find(".//magicianswayforbids") is not None,
+                "hidden": hidden,
             }
         )
     return items
