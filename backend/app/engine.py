@@ -85,6 +85,8 @@ CONTACT_RATING_MIN = 1
 CONTACT_RATING_MAX = 6
 CONTACT_CHARGEN_COST_MAX = 7
 NEGATIVE_QUALITY_KARMA_CAP = 25
+POSITIVE_QUALITY_KARMA_CAP = 25
+NUYEN_CHARGEN_KEEP_MAX = 5000
 MARTIAL_ART_STYLE_KARMA = 7
 MARTIAL_ART_TECHNIQUE_KARMA = 5
 MARTIAL_ART_CHARGEN_STYLE_MAX = 1
@@ -4941,10 +4943,13 @@ def apply_quality_rules(
     state.quality_extras = extras
     free_ids = set(free_quality_ids)
     negative_gain = 0
+    positive_spend = 0
     for spec in qualities:
         is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
         if not is_free and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
+        if not is_free and spec["karma"] > 0:
+            positive_spend += int(spec["karma"])
         if str(spec.get("extra_kind") or "") == "add_spirit":
             count = max(1, int(spec.get("add_spirit_count") or 1))
             if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
@@ -4988,6 +4993,10 @@ def apply_quality_rules(
     if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
         errors.append(
             f"不利資質から得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
+        )
+    if positive_spend > POSITIVE_QUALITY_KARMA_CAP and not career:
+        errors.append(
+            f"有利資質に費やせるカルマが上限を超えています（{positive_spend} / {POSITIVE_QUALITY_KARMA_CAP}）"
         )
     return negative_gain
 
@@ -9817,23 +9826,25 @@ def compute(state: CharacterState) -> CharacterState:
         at_six = [n for n, r in skill_totals.items() if r >= 6]
         if len(at_six) > 1:
             errors.append("作成時にレーティング6の技能は1つまでです")
-        if is_karma:
-            at_natural_max = []
-            for key, spec in attrs_spec.items():
-                if key in {"ESS", "MAG", "RES"} and key != special_key:
-                    continue
-                if key not in ratings:
-                    continue
-                racial_max = int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0)
-                if key == "MAG" and special_key == "MAG":
-                    racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
-                if key == "RES" and special_key == "RES":
-                    racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
-                if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
-                    at_natural_max.append(key)
-            if len(at_natural_max) > 1:
-                errors.append("作成時に自然上限の能力値は1つまでです")
-        else:
+        # SR5 p.65: no more than one attribute at its natural maximum at
+        # character creation (Edge / unused special attributes don't count).
+        # Applies to every build method, not just Karma.
+        at_natural_max = []
+        for key, spec in attrs_spec.items():
+            if key in {"ESS", "EDG", "MAG", "RES"} and key != special_key:
+                continue
+            if key not in ratings:
+                continue
+            racial_max = int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0)
+            if key == "MAG" and special_key == "MAG":
+                racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
+            if key == "RES" and special_key == "RES":
+                racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
+            if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
+                at_natural_max.append(key)
+        if len(at_natural_max) > 1:
+            errors.append("作成時に自然上限の能力値は1つまでです")
+        if not is_karma:
             if spent_physical > attr_points:
                 errors.append(f"能力値点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
             if spent_special > special_from_meta:
@@ -9848,6 +9859,17 @@ def compute(state: CharacterState) -> CharacterState:
         errors.append(f"カルマが不足しています（残り {karma_left}）")
     if nuyen < 0:
         errors.append(f"ニューエンが不足しています（残り {nuyen}¥）")
+    # SR5 p.98: at Standard power level only 5,000¥ of unspent resources
+    # carry over into play (Street 200¥ / Prime 20,000¥). Surface it as a
+    # chargen notice rather than silently deleting nuyen, matching Chummer.
+    if not career:
+        chargen_leftover = nuyen - int(state.nuyen_earned or 0)
+        if chargen_leftover > NUYEN_CHARGEN_KEEP_MAX:
+            lost = chargen_leftover - NUYEN_CHARGEN_KEEP_MAX
+            warnings.append(
+                f"未使用ニューエン {chargen_leftover:,}¥：Standard レベルでは "
+                f"{NUYEN_CHARGEN_KEEP_MAX:,}¥ までしか持ち越せません（超過分 {lost:,}¥ は原則失われます）"
+            )
     if ess <= 0:
         errors.append("エッセンスが0以下です")
     for item in installed:

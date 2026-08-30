@@ -1369,7 +1369,8 @@ def test_seeker_alone_does_not_warn_for_muscle() -> None:
         ],
     )
     out = compute(state)
-    assert out.derived["warnings"] == []
+    # ignore the unrelated Resources-A leftover-nuyen carryover notice
+    assert [w for w in out.derived["warnings"] if "未使用ニューエン" not in w] == []
 
 
 ENHANCED_ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
@@ -6681,3 +6682,80 @@ def test_special_modification_ammo_capacity() -> None:
         )
     )
     assert out.derived["weapons"][0]["ammo"] == "23(c)"
+
+
+# --- chargen rule-parity checks -------------------------------------------
+
+LIGHTNING_REFLEXES = "3564b678-7721-4a8d-ac79-1600cf92dc14"
+ADRENALINE_SURGE = "f446f88c-26aa-496a-aa78-ed478bf0875f"
+
+
+def test_positive_quality_karma_cap_at_chargen() -> None:
+    out = compute(
+        CharacterState(
+            id="posq-cap",
+            name="PosQCap",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+            quality_ids=[LIGHTNING_REFLEXES, ADRENALINE_SURGE],  # 20 + 12 karma
+        )
+    )
+    assert any("有利資質に費やせるカルマが上限" in e for e in out.derived["errors"])
+    # career growth is not bound by the chargen cap
+    career = compute(
+        CharacterState(
+            id="posq-cap-career",
+            name="PosQCap",
+            build_method="Karma",
+            career=True,
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+            quality_ids=[LIGHTNING_REFLEXES, ADRENALINE_SURGE],
+        )
+    )
+    assert not any("有利資質に費やせるカルマが上限" in e for e in career.derived["errors"])
+
+
+def test_only_one_attribute_at_natural_max_for_priority_build() -> None:
+    prio = Priorities(Heritage="C", Attributes="A", Talent="E", Skills="D", Resources="B")
+
+    two = default_attributes(find_metatype("Human", None))
+    two["BOD"] = 6
+    two["AGI"] = 6
+    flagged = compute(
+        CharacterState(
+            id="natmax-two",
+            name="NatMax",
+            build_method="Priority",
+            priorities=prio,
+            metatype="Human",
+            attributes=two,
+        )
+    )
+    assert any("自然上限の能力値は1つまで" in e for e in flagged.derived["errors"])
+
+    one = default_attributes(find_metatype("Human", None))
+    one["BOD"] = 6
+    ok = compute(
+        CharacterState(
+            id="natmax-one",
+            name="NatMax",
+            build_method="Priority",
+            priorities=prio,
+            metatype="Human",
+            attributes=one,
+        )
+    )
+    assert not any("自然上限の能力値は1つまで" in e for e in ok.derived["errors"])
+
+
+def test_leftover_nuyen_carryover_notice() -> None:
+    prio = Priorities(Heritage="C", Attributes="D", Talent="E", Skills="B", Resources="A")
+    chargen = compute(_mundane("carry-cg", priorities=prio))
+    assert any("持ち越せません" in w for w in chargen.derived["warnings"])
+    # the notice is a chargen-only reminder; career mode omits it
+    career = compute(_mundane("carry-career", career=True, priorities=prio))
+    assert not any("持ち越せません" in w for w in career.derived["warnings"])
