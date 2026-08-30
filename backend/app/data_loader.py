@@ -955,6 +955,25 @@ def _mentor_audience(name: str) -> str:
     return "all"
 
 
+def parse_select_power_slot(node: dict[str, Any]) -> dict[str, Any]:
+    attrs = (node.get("field_attrs") or {}).get("selectpower") or {}
+    limit_raw = str(attrs.get("limittopowers") or "").strip()
+    options = [part.strip() for part in limit_raw.split(",") if part.strip()]
+    nested_vals = (node.get("nested") or {}).get("selectpower") or []
+    rating = 1
+    for item in nested_vals:
+        try:
+            rating = max(1, int(float(item)))
+            break
+        except (TypeError, ValueError):
+            continue
+    return {
+        "options": options,
+        "rating": rating,
+        "needs_select": bool(options),
+    }
+
+
 def _specific_powers(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for node in nodes:

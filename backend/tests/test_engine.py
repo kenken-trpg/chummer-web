@@ -1668,6 +1668,9 @@ MENTOR_SPIRIT = "ced3fecf-2277-4b20-b1e0-894162ca9ae2"
 BEAR = "136a3dc5-d9c4-45ad-bc24-705f54692590"
 NORSE_BERSERKER = "52668f12-2895-48e1-8b84-2382ef0fcee0"
 BERSERKER_TEMPER = "ad6f8984-f0c2-41e9-a2d1-73a719d21a06"
+HOLY_TEXT = "2dcbe44e-3789-4cf2-b51b-0337c239ce7c"
+MYSTIC_ARMOR = "da5f9389-a5fd-48ed-8825-8852ff5c56a8"
+HOLY_TEXT_POWER_CHOICE = "Adept: Gain 1 free level of Mystic Armor or Empathic Healing (choose one)."
 RAPID_HEALING = "4676b6f7-120d-4344-81ac-5922445a521b"
 LIGHT_BODY = "ce7df757-792e-4fac-a86e-6b587586deb2"
 AIR_WALKING = "8dc0a8e3-535a-4935-8c90-2079666e6a01"
@@ -1737,6 +1740,28 @@ def test_norse_berserker_tradition_grants_berserker_temper() -> None:
     assert out.derived["power_points"]["used"] == 0
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "specificpower" not in tags
+
+
+def test_holy_text_mentor_selectpowers_grants_mystic_armor() -> None:
+    out = compute(
+        _adept(
+            "holy-text",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=HOLY_TEXT,
+            mentor_choices=[HOLY_TEXT_POWER_CHOICE],
+            mentor_extras={HOLY_TEXT_POWER_CHOICE: "Mystic Armor"},
+        )
+    )
+    assert out.derived["mentor"]["name"] == "Holy Text"
+    choice = next(row for row in out.derived["mentor"]["choices"] if row["name"] == HOLY_TEXT_POWER_CHOICE)
+    assert "Mystic Armor" in choice["extra_options"]
+    assert choice["extra"] == "Mystic Armor"
+    names = {item["name"]: item for item in out.derived["adept_powers"]}
+    assert names["Mystic Armor"]["power_id"] == MYSTIC_ARMOR
+    assert names["Mystic Armor"]["free_levels"] == 1
+    assert names["Mystic Armor"]["cost"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "selectpowers" not in tags
 
 
 def test_beasts_way_grants_free_mentor_spirit() -> None:

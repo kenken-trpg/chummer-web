@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from .data_loader import parse_select_power_slot
+
 log = logging.getLogger(__name__)
 
 SPELL_DEFENSE_RESIST_TAGS = {
@@ -167,6 +169,7 @@ IMPLEMENTED = {
     "cyberadeptdaemon",
     "addspell",
     "specificpower",
+    "selectpowers",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -177,7 +180,6 @@ SILENT_TAGS = {
     "addgear",
     "limit",
     "selectspell",
-    "selectpowers",
     "selectpower",
     "selecttradition",
     "selectrestricted",
@@ -492,6 +494,7 @@ def empty_effects() -> dict[str, Any]:
         "cyberadept_daemon": False,
         "grant_spells": [],
         "grant_powers": [],
+        "select_power_slots": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
         "weapon_skill_accuracy_slots": [],
@@ -1140,6 +1143,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                         "extra": "",
                     }
                 )
+        elif tag == "selectpowers":
+            slot = parse_select_power_slot(node)
+            if slot.get("needs_select"):
+                effects["select_power_slots"].append({"source": source, **slot})
         elif tag == "weaponcategorydv":
             select_attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
             limit_raw = str(select_attrs.get("limittoskill") or "").strip()

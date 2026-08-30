@@ -18,6 +18,7 @@ from .data_loader import (
     format_avail,
     parse_avail,
     parse_capacity,
+    parse_select_power_slot,
     selecttext_catalog_options,
     sum_avail,
 )
@@ -4484,6 +4485,48 @@ def apply_granted_echoes(
     submersion["bonus_sources"] = bonus_sources
 
 
+def bind_select_powers(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+    mentor_name: str = "",
+) -> None:
+    by_name = {q["name"]: q for q in qualities}
+    mentor_extras = state.mentor_extras or {}
+    quality_extras = state.quality_extras or {}
+    mentor_prefix = f"{mentor_name}: " if mentor_name else ""
+
+    for slot in effects.get("select_power_slots") or []:
+        source = str(slot.get("source") or "").strip()
+        options = list(slot.get("options") or [])
+        rating = max(1, int(slot.get("rating") or 1))
+        if not options:
+            continue
+        picked = ""
+        if mentor_prefix and source.startswith(mentor_prefix):
+            choice_name = source[len(mentor_prefix) :]
+            picked = str(mentor_extras.get(choice_name) or "").strip()
+        else:
+            spec = by_name.get(source)
+            if spec:
+                picked = str(quality_extras.get(spec["id"]) or "").strip()
+        if not picked:
+            warnings.append(f"{source} のパワーを選んでください")
+            continue
+        if picked not in options:
+            warnings.append(f"{source} に {picked} は選べません")
+            continue
+        effects["grant_powers"].append(
+            {
+                "source": source,
+                "name": picked,
+                "rating": rating,
+                "extra": "",
+            }
+        )
+
+
 def free_powers_from_grants(
     effects: dict[str, Any],
     warnings: list[str],
@@ -7268,11 +7311,17 @@ def resolve_mentor(
     state.mentor_choices = selected
     public_choices = []
     for choice in allowed:
-        extras = []
-        for power in choice.get("powers") or []:
-            power_spec = _power_by_name(power["name"])
-            if power_spec:
-                extras = power_select_options(power_spec, skills_data)
+        power_options: list[str] = []
+        for node in choice.get("bonus") or []:
+            if node.get("tag") == "selectpowers":
+                power_options = list(parse_select_power_slot(node).get("options") or [])
+                break
+        extras = power_options
+        if not extras:
+            for power in choice.get("powers") or []:
+                power_spec = _power_by_name(power["name"])
+                if power_spec:
+                    extras = power_select_options(power_spec, skills_data)
         public_choices.append(
             {
                 "name": choice["name"],
@@ -8986,6 +9035,13 @@ def compute(state: CharacterState) -> CharacterState:
     bind_weapon_category_dv(effects, qualities, state, warnings)
     bind_weapon_skill_accuracy(effects, qualities, state, warnings, data["skills"])
     apply_granted_spells(state, effects, qualities, warnings)
+    bind_select_powers(
+        effects,
+        qualities,
+        state,
+        warnings,
+        str((mentor.get("public") or {}).get("name") or ""),
+    )
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:
