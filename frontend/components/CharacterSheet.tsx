@@ -292,7 +292,7 @@ export default function CharacterSheet({
               return (
                 <tr key={`${row.category}-${row.name}`}>
                   <td className="left">{tr(row.name)}{row.native ? "（母語）" : ""}{(row.skillsoft || 0) > row.rating ? " *" : ""}</td>
-                  <td>{row.category}</td>
+                  <td>{tr(row.category)}</td>
                   <td>{rating}</td>
                   <td><b>{rating + attr}</b></td>
                   <td className="left">{row.spec ? tr(row.spec) : ""}</td>

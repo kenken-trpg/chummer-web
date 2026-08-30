@@ -41,7 +41,7 @@ export function WareRow(props: {
       <div>
         <b>{tr(item.name)}{item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}{item.included ? "（同梱）" : ""}</b>
         <div className="muted">
-          {item.name} / {item.category} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
+          {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
           {capMax > 0 ? <span className="cap"> ・ 容量 {item.capacity_used ?? 0}/{capMax}</span> : null}
           {item.limb_str != null ? <span className="cap"> ・ 肢 STR {item.limb_str} / AGI {item.limb_agi}</span> : null}
         </div>
@@ -123,7 +123,7 @@ export function WareRow(props: {
                 const showRange = range.max > range.min || range.max > 1;
                 return (
                   <option key={w.id} value={w.id}>
-                    {tr(w.name)} / {w.capacity ? `[${w.capacity}]` : w.category}{showRange ? ` R${range.min}-${range.max}` : ""}
+                    {tr(w.name)} / {w.capacity ? `[${w.capacity}]` : tr(w.category)}{showRange ? ` R${range.min}-${range.max}` : ""}
                   </option>
                 );
               })}
