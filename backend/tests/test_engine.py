@@ -1841,6 +1841,34 @@ def test_athlete_way_reduces_qi_binding_karma() -> None:
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
 
 
+def test_qi_focus_selectpowers_metadata_loaded() -> None:
+    from app.data_loader import catalog
+
+    cfg = catalog()["qi_focus"]
+    assert cfg is not None
+    slot = cfg["select_power"]
+    assert slot["open_select"] is True
+    assert slot["ignore_rating"] is True
+    assert slot["points_per_level"] == 0.25
+    assert slot["rating_expr"] == "Rating"
+    assert slot["limit_expr"] == "Rating"
+
+
+def test_qi_focus_selectpowers_grants_multiple_levels_from_force() -> None:
+    out = compute(
+        _adept(
+            "qi-ia",
+            qi_foci=[QiFocusInstall(power_id=IMPROVED_ABILITY, rating=4, power_rating=2, extra="Gymnastics")],
+        )
+    )
+    focus = out.derived["qi_foci"][0]
+    assert focus["rating"] == 4
+    assert focus["power_rating"] == 2
+    row = next(item for item in out.derived["adept_powers"] if item["power_id"] == IMPROVED_ABILITY)
+    assert row["free_levels"] == 2
+    assert out.derived["skill_bonus"]["Gymnastics"] == 2
+
+
 def test_later_way_replaces_earlier_way() -> None:
     out = compute(
         _adept(

@@ -655,6 +655,15 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
         else:
             fields, nested, field_attrs = _bonus_fields(child)
             payload["fields"] = fields
+            if tag == "selectpowers":
+                specs: list[dict[str, Any]] = []
+                for sp in child.findall("selectpower"):
+                    sp_fields: dict[str, Any] = {}
+                    for sub in list(sp):
+                        sp_fields[sub.tag] = _text(sub)
+                    specs.append({"attrs": dict(sp.attrib), "fields": sp_fields})
+                if specs:
+                    payload["selectpower_specs"] = specs
             if nested:
                 payload["nested"] = nested
             if field_attrs:
@@ -956,21 +965,52 @@ def _mentor_audience(name: str) -> str:
 
 
 def parse_select_power_slot(node: dict[str, Any]) -> dict[str, Any]:
-    attrs = (node.get("field_attrs") or {}).get("selectpower") or {}
+    specs = list(node.get("selectpower_specs") or [])
+    sp = specs[0] if specs else {}
+    attrs = dict(sp.get("attrs") or {})
+    if not attrs:
+        attrs = dict((node.get("field_attrs") or {}).get("selectpower") or {})
+    fields = dict(sp.get("fields") or {})
     limit_raw = str(attrs.get("limittopowers") or "").strip()
     options = [part.strip() for part in limit_raw.split(",") if part.strip()]
+    val_raw = str(fields.get("val") or "").strip()
+    limit_field = str(fields.get("limit") or "").strip()
+    ignore_rating = str(fields.get("ignorerating") or "").lower() == "true"
+    points_per_level = 0.25
+    points_raw = fields.get("pointsperlevel")
+    if points_raw not in (None, ""):
+        try:
+            points_per_level = float(points_raw)
+        except (TypeError, ValueError):
+            pass
     nested_vals = (node.get("nested") or {}).get("selectpower") or []
     rating = 1
-    for item in nested_vals:
+    rating_expr = ""
+    if val_raw.lower() == "rating":
+        rating_expr = "Rating"
+    elif val_raw:
         try:
-            rating = max(1, int(float(item)))
-            break
+            rating = max(1, int(float(val_raw)))
         except (TypeError, ValueError):
-            continue
+            pass
+    else:
+        for item in nested_vals:
+            try:
+                rating = max(1, int(float(item)))
+                break
+            except (TypeError, ValueError):
+                continue
+    limit_expr = "Rating" if limit_field.lower() == "rating" else ""
+    open_select = not options
     return {
         "options": options,
         "rating": rating,
-        "needs_select": bool(options),
+        "rating_expr": rating_expr,
+        "limit_expr": limit_expr,
+        "points_per_level": points_per_level,
+        "ignore_rating": ignore_rating,
+        "open_select": open_select,
+        "needs_select": bool(options) or open_select,
     }
 
 
@@ -2421,6 +2461,12 @@ def load_qi_focus() -> dict[str, Any] | None:
             continue
         if el.find("hide") is not None:
             continue
+        bonus = parse_bonus(el.find("bonus"))
+        select_power = None
+        for node in bonus:
+            if node.get("tag") == "selectpowers":
+                select_power = parse_select_power_slot(node)
+                break
         return {
             "id": _text(el.find("id")),
             "name": _text(el.find("name")),
@@ -2429,7 +2475,8 @@ def load_qi_focus() -> dict[str, Any] | None:
             "cost": _text(el.find("cost"), "Rating * 3000"),
             "source": _text(el.find("source")),
             "page": _text(el.find("page")),
-            "pointsperlevel": 0.25,
+            "select_power": select_power,
+            "pointsperlevel": float((select_power or {}).get("points_per_level") or 0.25),
         }
     return None
 

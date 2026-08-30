@@ -4501,12 +4501,21 @@ def bind_select_powers(
         source = str(slot.get("source") or "").strip()
         options = list(slot.get("options") or [])
         rating = max(1, int(slot.get("rating") or 1))
-        if not options:
+        open_select = bool(slot.get("open_select"))
+        if not options and not open_select:
             continue
         picked = ""
         if mentor_prefix and source.startswith(mentor_prefix):
             choice_name = source[len(mentor_prefix) :]
             picked = str(mentor_extras.get(choice_name) or "").strip()
+        elif open_select:
+            for inst in state.gear or []:
+                spec = _item_by_id("gear", inst.gear_id)
+                if not spec or str(spec.get("name") or "") != source:
+                    continue
+                picked = str(inst.extra or "").strip()
+                rating = max(1, int(inst.rating or 1))
+                break
         else:
             spec = by_name.get(source)
             if spec:
@@ -4514,8 +4523,11 @@ def bind_select_powers(
         if not picked:
             warnings.append(f"{source} のパワーを選んでください")
             continue
-        if picked not in options:
+        if options and picked not in options:
             warnings.append(f"{source} に {picked} は選べません")
+            continue
+        if open_select and not _power_by_name(picked):
+            warnings.append(f"{source} のパワー {picked} が見つかりません")
             continue
         effects["grant_powers"].append(
             {
@@ -7349,6 +7361,34 @@ def resolve_mentor(
     }
 
 
+def qi_focus_granted_power_rating(
+    spec: dict[str, Any],
+    force: int,
+    user_rating: int,
+    mag: int,
+    select_power: dict[str, Any] | None,
+) -> int:
+    cfg = select_power or {}
+    if not cfg.get("ignore_rating"):
+        cap = power_max_rating(spec, mag)
+        return max(1, min(cap, int(user_rating or 1))) if not spec.get("levels") else max(1, min(cap, int(user_rating or 1)))
+    points_per_level = float(cfg.get("points_per_level") or 0.25)
+    pp_pool = max(0.0, force * points_per_level)
+    if not spec.get("levels"):
+        cost = power_point_cost(spec, 1, False)
+        return 1 if pp_pool + 1e-9 >= cost else 0
+    unit = power_point_cost(spec, 1, False)
+    if unit <= 0:
+        return 0
+    granted = int(pp_pool / unit)
+    if cfg.get("limit_expr") == "Rating":
+        granted = min(granted, force)
+    granted = min(granted, power_max_rating(spec, mag))
+    if granted <= 0:
+        return 0
+    return min(max(1, int(user_rating or 1)), granted)
+
+
 def resolve_qi_foci(
     state: CharacterState,
     talent_name: str,
@@ -7374,13 +7414,15 @@ def resolve_qi_foci(
         }
     gear = catalog().get("qi_focus") or {"maxrating": 6, "cost": "Rating * 3000"}
     max_force = int(gear.get("maxrating") or 6)
+    select_power = gear.get("select_power") if isinstance(gear.get("select_power"), dict) else None
+    points_per_level = float((select_power or {}).get("points_per_level") or gear.get("pointsperlevel") or 0.25)
     kept: list[QiFocusInstall] = []
     for inst in state.qi_foci:
         spec = _power_by_id(inst.power_id)
         if not spec:
             continue
         cap = power_max_rating(spec, mag)
-        power_rating = 1 if not spec.get("levels") else max(1, min(cap, int(inst.power_rating or 1)))
+        requested_rating = 1 if not spec.get("levels") else max(1, min(cap, int(inst.power_rating or 1)))
         extra = (inst.extra or "").strip()
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
@@ -7390,10 +7432,18 @@ def resolve_qi_foci(
             inst.extra = None
         if kind and not extra:
             warnings.append(f"気焦点の {spec['name']} の対象を選んでください")
-        needed = max(1, _ceil_div(power_point_cost(spec, power_rating) / 0.25))
+        power_rating = qi_focus_granted_power_rating(spec, int(inst.rating or 1), requested_rating, mag, select_power)
+        if select_power and select_power.get("ignore_rating") and power_rating <= 0:
+            warnings.append(f"気焦点の Force が {spec['name']} に不足しています")
+            continue
+        needed = max(
+            1,
+            _ceil_div(power_point_cost(spec, max(1, requested_rating), False) / points_per_level),
+        )
         force = max(needed, min(max_force, int(inst.rating or needed)))
         inst.rating = force
-        inst.power_rating = power_rating
+        power_rating = qi_focus_granted_power_rating(spec, force, requested_rating, mag, select_power)
+        inst.power_rating = power_rating if power_rating > 0 else requested_rating
         label = spec["name"] + (f" ({extra})" if extra else "")
         bind = force
         for mod in focus_binding:
@@ -7411,7 +7461,7 @@ def resolve_qi_foci(
             {
                 "power_id": spec["id"],
                 "name": spec["name"],
-                "rating": power_rating,
+                "rating": max(1, power_rating) if not spec.get("levels") else power_rating,
                 "extra": extra,
                 "source": f"Qi Focus F{force}",
             }
