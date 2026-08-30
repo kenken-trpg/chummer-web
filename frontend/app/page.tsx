@@ -25,6 +25,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { api } from "@/lib/api";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
+import { makeT } from "@/lib/ui-strings";
 
 export default function Page() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -60,10 +61,7 @@ export default function Page() {
   }
 
   const tr = (name: string) => catalog?.translations[name] || name;
-  // UI-string lookup from ja-jp.xml (+ ja_overrides/ui.json). Falls back to the
-  // given default, then the key itself.
-  const t = (key: string, fallback?: string) =>
-    catalog?.ui_strings?.[key] || fallback || key;
+  const t = makeT(catalog);
 
   function download() {
     if (!ch) return;

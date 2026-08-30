@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import type { Catalog, Character } from "@/lib/types";
-import { ATTRS, ATTR_JA } from "@/lib/character/constants";
+import { ATTRS } from "@/lib/character/constants";
 import { formatPoints, lifeIncrement, limitModifierLine, specialArmorBits, wareAttrLine } from "@/lib/character/format";
+import { attrLabel, makeT } from "@/lib/ui-strings";
 
 export function CharacterSidebar({
   catalog,
@@ -20,6 +21,7 @@ export function CharacterSidebar({
   error?: string | null;
   patch?: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
+  const t = makeT(catalog);
   const career = Boolean(ch.career || d.career);
   const rewardLog = d.reward_log || ch.reward_log || [];
   const [rewardLabel, setRewardLabel] = useState("");
@@ -327,7 +329,7 @@ export function CharacterSidebar({
           if (hidden) return null;
           return (
             <div className="stat" key={k}>
-              <span>{ATTR_JA[k]}</span>
+              <span>{attrLabel(k, t)}</span>
               <b>
                 {d.totals[k] ?? "-"}
                 {(d.ware_attr_bonus?.[k] || 0) !== 0 ? (

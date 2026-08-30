@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
-import { ATTRS, ATTR_JA } from "@/lib/character/constants";
+import { ATTRS } from "@/lib/character/constants";
+import { attrLabel } from "@/lib/ui-strings";
 import { mergeRatings } from "@/lib/character/format";
 import { dropSkillPicksForPrefix, qualityBlockReason, type QualityReqCtx } from "@/lib/character/quality";
 
-export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative">("all");
   const filteredQualities = useMemo(() => {
@@ -357,7 +358,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
           <option value="">属性を選択</option>
           {ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES").map((key) => (
             <option key={key} value={key}>
-              {ATTR_JA[key] || key}
+              {attrLabel(key, t)}
             </option>
           ))}
         </select>

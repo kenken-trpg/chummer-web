@@ -1,20 +1,8 @@
 import type { ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
+import { attrShort, makeT } from "@/lib/ui-strings";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
-const ATTR_JA: Record<string, string> = {
-  BOD: "BOD",
-  AGI: "AGI",
-  REA: "REA",
-  STR: "STR",
-  WIL: "WIL",
-  LOG: "LOG",
-  INT: "INT",
-  CHA: "CHA",
-  EDG: "EDG",
-  MAG: "MAG",
-  RES: "RES",
-};
 
 function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
@@ -103,6 +91,7 @@ export default function CharacterSheet({
   tr: (name: string) => string;
 }) {
   const d = character.derived;
+  const t = makeT(catalog);
   const totals = d.totals || {};
   const enabled = new Set(d.enabled_tabs || []);
 
@@ -191,7 +180,7 @@ export default function CharacterSheet({
               const ware = d.ware_attr_bonus?.[key] || 0;
               return (
                 <div className="sheet-attr" key={key}>
-                  <span>{ATTR_JA[key]}</span>
+                  <span>{attrShort(key, t)}</span>
                   <b>{totals[key] ?? "-"}</b>
                   {ware ? <em>+{ware}</em> : null}
                 </div>

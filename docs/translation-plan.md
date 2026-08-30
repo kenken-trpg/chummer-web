@@ -175,11 +175,21 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   - `Grade`(階梯/等級)・`Amount`(数量/金額)・`Tradition`(様式/伝統) 等の文脈依存語は除外。
 - テスト 3 件追加 (公開・キー実在・値が日本語)。全 414 テスト green。
 
+**3b. 能力値ラベルの `t()` 移行 ✅ (2026-08-30)**
+
+- `frontend/lib/ui-strings.ts` を新設: `makeT(catalog)` ＋ `attrShort(key,t)` (`強靱`) ＋
+  `attrLabel(key,t)` (`BOD 強靱`)。いずれも `String_Attribute<KEY>Short` を引く。
+- 移行:
+  - `CharacterSheet` の能力値欄: 英語コードのみ (`BOD`) → `attrShort` で日本語化 (`強靱`)。
+  - `CharacterSidebar` / `AttrsTab` / `QualitiesTab` / `AdeptTab` / `ExtraSelect`: `ATTR_JA[key]`
+    (`BOD 体`) → `attrLabel` (`BOD 強靱`)。用語集準拠になり `RES 共振力` の不揃いも解消。
+  - `constants.ts` の `ATTR_JA` 定数は削除。
+- 全 414 backend テスト green、frontend `tsc` 既存エラーのみ (本変更起因なし)。
+
 **3b. 残 (未着手)**
 
-1. **ハードコード日本語 → `t(key)` 移行**。frontend の UI ラベルは現状 `page.tsx` 等に直書き、
-   `ATTR_JA`/`KNOW_CAT_JA` 等の定数も独自。`t()` は導入済みだが**まだ呼び出し箇所ゼロ**。
-   段階的に置換していく大規模タスク。`ATTR_JA` の `"BOD 体"` 形式など、表示仕様の変更を伴うものは要判断。
+1. 他のハードコード日本語 (`KNOW_CAT_JA`、セクション見出し、各種 `<span>` ラベル) の `t()` 移行。
+   多くは clean な lang キーが無く、現状の日本語で十分なため優先度低。
 2. `ja-jp.xml` の英語残置 (`text == en-us` 約 1,007 件) の本格補完。
 
 ### フェーズ 4 — 品質パスと CI
@@ -214,3 +224,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 2b バッチ 3。未訳呪文のうち確度の高い 100 件を訳出 (計 363 件)。
   サプリメント造語 70 件は英語フォールバックへ差し戻し。
 - 2026-08-30: フェーズ 3a。`ui_strings` を public_catalog／frontend に配線、`ui.json` を 34 件 seed。
+- 2026-08-30: フェーズ 3b。能力値ラベルを `ui-strings.ts` の `attrShort`/`attrLabel` 経由に移行、`ATTR_JA` 定数を削除。
