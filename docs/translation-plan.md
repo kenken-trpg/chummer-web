@@ -102,19 +102,35 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 再生成: `cd backend && .venv/bin/python scripts/build_ja_glossary.py`
 
-### フェーズ 2 — `ja-jp_data.xml` カバレッジ拡充 (ユーザー影響が最大)
+### フェーズ 2 — `ja-jp_data.xml` カバレッジ拡充 (ユーザー影響が最大) 🚧 進行中
 
-オーバーレイに追記していく。優先順位はフロントでの露出度と作業効率で決定。
+オーバーレイ (`backend/data/ja_overrides/data.json`) に追記していく。
 
-1. **機械補完 (低リスク)**: chumJA SR4 との `<name>` 完全一致 379 件＋カテゴリ 13 件をスクリプトで流し込み。
-   `qualities` は SR5 で改称/再定義されたものがあるためカテゴリと明白な固有名のみ自動、本体は手動レビュー。
-2. **カテゴリ名の全数日本語化** (`<category translate>`)。数十件で完了し、タブ見出し/フィルタが一気に和名化。
-   ※ 現状 `load_translations()` は `<category translate>` を拾わない。カテゴリを効かせるならローダー拡張が必要。
-3. **高頻度エンティティを手動で** (用語集準拠): metatypes → skills → spells → qualities → weapons → armor →
-   cyberware/bioware → gear → powers/mentors。
-4. **critters / critterpowers / vehicles** は分量が多く露出が限定的なので後回し。動物名は chumJA から大量流用可。
+**2a. 機械補完 ✅ 完了 (2026-08-30)**
 
-各バッチ: 「英語のまま `tr()` フォールバックしているキー一覧を出力 → 用語集参照で訳 → オーバーレイ追記 → スナップショットテスト更新」。
+- `backend/scripts/import_ja_from_refs.py` を新設。curated (SR5・用語集照合済) ＋ chumJA SR4 の
+  `<name>` / `<category>` 完全一致のみを、**`catalog()` が実際に使う名前・カテゴリに限定**して
+  `data.json` に流し込む。`--write` なしは dry-run。再実行可。
+- SR4 で語義がずれるものは除外: `Metahuman`→`ヒト` は `メタヒューマン` に curated 上書き、
+  `Sioux`→`スー語` (言語) は除外、`Foci` カテゴリ (`集束具`) は SR5 公式 `フォーカス` 待ちで除外、
+  `Armor` カテゴリは vendored `防具` 維持。知識カテゴリ 5 種はフロント `KNOW_CAT_JA` に合わせる。
+- 結果: **200 件追加** (chumJA name 114 / chumJA category 53 / curated 33)。内訳は
+  `docs/translation-import-report.md`。カテゴリは frontend が `tr(item.category)` を呼ぶ箇所で有効
+  (ローダー拡張は不要だった)。
+- テスト追加 (`test_translation_overrides.py`): 全値が日本語、全キーが `catalog()` に存在 (orphan 検出)、
+  代表値アンカー。全 411 件 green。
+
+再生成: `cd backend && .venv/bin/python scripts/import_ja_from_refs.py --write`
+
+**2b. 残作業 (未着手)**
+
+1. **Phase 1 不一致の反映**: `translation-glossary-mismatches.md` の A (能力値 Short/`強靱`)・C を
+   `data.json` へ。B は Phase 3 (`ui.json`) 送り。
+2. **高頻度エンティティの手動訳** (用語集準拠): skills 残 → spells 残 → qualities → weapons → armor →
+   cyberware/bioware → gear → powers/mentors。バッチごとに
+   「英語フォールバック中のキー一覧を出力 → 訳 → `data.json` 追記 → アンカーテスト更新」。
+3. **critters / critterpowers / vehicles** は分量大・露出少で後回し (そもそも critters は
+   catalog 未ロード)。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善
 
@@ -152,3 +168,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: 計画策定。
 - 2026-08-30: フェーズ 0 完了。オーバーレイ機構 (`backend/data/ja_overrides/`, `data_loader.py`) ＋テスト 8 件。
 - 2026-08-30: フェーズ 1 完了。`build_ja_glossary.py` ＋ `translation-glossary.md` / `translation-glossary-mismatches.md`。
+- 2026-08-30: フェーズ 2a 完了。`import_ja_from_refs.py` で curated＋chumJA SR4 を 200 件 `data.json` へ。

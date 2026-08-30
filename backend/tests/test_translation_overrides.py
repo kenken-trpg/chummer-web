@@ -59,6 +59,10 @@ def test_load_ja_overrides_skips_blank_and_non_string_values(tmp_path, monkeypat
 
 
 def test_load_translations_merges_overlay_over_vendored(tmp_path, monkeypatch) -> None:
+    # baseline with an empty overlay so the committed data.json can't skew counts
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", empty)
     base = load_translations()
     assert base.get("Clothing") == "衣服", "sanity: vendored entry present"
 
@@ -72,11 +76,14 @@ def test_load_translations_merges_overlay_over_vendored(tmp_path, monkeypatch) -
 
     assert merged["Clothing"] == "オーバーライド衣服"
     assert merged["Totally New Item"] == "新規アイテム"
-    # untouched vendored entries survive
-    assert len(merged) >= len(base)
+    # every untouched vendored entry survives, plus the one brand-new key
+    assert len(merged) == len(base) + 1
 
 
 def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> None:
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", empty)
     base = load_ui_strings()
     assert base.get("String_Karma") == "カルマ", "sanity: vendored entry present"
 
@@ -85,7 +92,7 @@ def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> 
     merged = load_ui_strings()
 
     assert merged["String_Karma"] == "上書きカルマ"
-    assert len(merged) >= len(base)
+    assert len(merged) == len(base)
 
 
 def test_catalog_translations_reflect_overlay(tmp_path, monkeypatch) -> None:
@@ -96,3 +103,57 @@ def test_catalog_translations_reflect_overlay(tmp_path, monkeypatch) -> None:
         assert data_loader.catalog()["translations"]["Clothing"] == "キャタログ上書き"
     finally:
         data_loader.reset_catalog()
+
+
+# --- Phase 2: the committed data.json seed --------------------------------------
+
+JP_RE = __import__("re").compile(r"[぀-ヿ㐀-鿿]")
+
+
+def _committed_data_overlay() -> dict[str, str]:
+    return json.loads((OVERRIDE_DIR / "data.json").read_text(encoding="utf-8"))
+
+
+def test_committed_data_overlay_values_are_japanese() -> None:
+    for key, val in _committed_data_overlay().items():
+        assert isinstance(val, str) and JP_RE.search(val), f"{key!r} -> {val!r}"
+
+
+def test_committed_data_overlay_keys_are_used_by_catalog() -> None:
+    """Every seeded key should be an entity name or category the app exposes,
+    otherwise it is dead weight (or a typo) and should be pruned."""
+    overlay = _committed_data_overlay()
+    if not overlay:
+        return
+    cat = data_loader.catalog()
+    known: set[str] = set()
+
+    def walk(obj: object) -> None:
+        if isinstance(obj, dict):
+            for field in ("name", "category"):
+                v = obj.get(field)
+                if isinstance(v, str) and v.strip():
+                    known.add(v.strip())
+            for v in obj.values():
+                walk(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v)
+
+    for k, v in cat.items():
+        if k not in {"translations", "ui_strings"}:
+            walk(v)
+
+    orphans = sorted(k for k in overlay if k not in known)
+    assert not orphans, f"overlay keys not present in catalog: {orphans}"
+
+
+def test_committed_data_overlay_anchors() -> None:
+    tr = data_loader.load_translations()
+    # curated, glossary-checked
+    assert tr["Human"] == "ヒューマン"
+    assert tr["Troll"] == "トロール"
+    assert tr["Metahuman"] == "メタヒューマン"
+    assert tr["Body"] == "強靱力"  # 靭 -> 靱
+    # imported from chumJA SR4 exact-name match
+    assert tr["Alter Memory"] == "記憶改変"
