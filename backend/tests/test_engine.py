@@ -5921,6 +5921,35 @@ def test_barehanded_adept_touch_spells_and_doubled_drain() -> None:
     assert "freespells" not in tags
 
 
+PRACTICE_PRACTICE_PRACTICE = "81fc0829-3456-4701-8ecc-f101d145b538"
+KRIME_CALLIOPE = "7fffffff-e125-44fb-8977-7fffffffc59c"
+
+
+def test_practice_practice_practice_weapon_skill_accuracy() -> None:
+    missing = compute(_human("ppp-empty", quality_ids=[PRACTICE_PRACTICE_PRACTICE]))
+    assert any("スキルを選んでください" in warn for warn in missing.derived["warnings"])
+    base = compute(
+        _human(
+            "ppp-base",
+            weapons=[WeaponInstall(weapon_id=KRIME_CALLIOPE)],
+        )
+    )
+    out = compute(
+        _human(
+            "ppp",
+            quality_ids=[PRACTICE_PRACTICE_PRACTICE],
+            quality_extras={PRACTICE_PRACTICE_PRACTICE: "Gunnery"},
+            weapons=[WeaponInstall(weapon_id=KRIME_CALLIOPE)],
+        )
+    )
+    base_weapon = base.derived["weapons"][0]
+    weapon = out.derived["weapons"][0]
+    assert base_weapon["accuracy"] == "4"
+    assert weapon["accuracy"] == "5"
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "weaponskillaccuracy" not in tags
+
+
 def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     missing = compute(
         _adept(
