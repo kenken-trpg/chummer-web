@@ -132,14 +132,14 @@ export default function Page() {
           <div className="tabs">
             {([
               ["priority", "優先度"],
-              ["meta", "メタタイプ"],
+              ["meta", "メタ"],
               ["attrs", "能力値"],
               ["skills", "技能"],
               ["qualities", "資質"],
               ["cyber", "サイバー"],
               ["bio", "バイオ"],
               ["gear", "ギア"],
-              ["contacts", "コネクト"],
+              ["contacts", "コンタクト"],
               ["martial", "武道"],
               ...(d.enabled_tabs.includes("initiation") ? [["initiation", "イニシエーション"] as const] : []),
               ...(d.enabled_tabs.includes("submersion") ? [["submersion", "サブマージョン"] as const] : []),

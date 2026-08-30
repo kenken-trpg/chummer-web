@@ -6388,11 +6388,11 @@ def resolve_contacts(
                 # Prefer keeping forced loyalty; clamp connection instead.
                 loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced)))
                 connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
-            warnings.append(f"{name or 'コネクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
+            warnings.append(f"{name or 'コンタクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
         excon_loy_min = _excon_contact_loyalty_min(role) if excon else CONTACT_RATING_MIN
         if excon and loyalty < excon_loy_min:
             warnings.append(
-                f"Ex-Con の {name or 'コネクト'}（{role or '役割なし'}）は Loyalty {excon_loy_min} 以上が必要です"
+                f"Ex-Con の {name or 'コンタクト'}（{role or '役割なし'}）は Loyalty {excon_loy_min} 以上が必要です"
             )
             loyalty = excon_loy_min
             if not career and not quality_granted and connection + loyalty > chargen_pair_max:
@@ -6404,7 +6404,7 @@ def resolve_contacts(
         billable = _contact_billable_points(inst, connection, loyalty)
         cost = connection + loyalty
         if not name:
-            warnings.append("名前のないコネクトがあります")
+            warnings.append("名前のないコンタクトがあります")
         kept.append(inst)
         used += billable
         if quality_granted:
@@ -9298,9 +9298,9 @@ def compute(state: CharacterState) -> CharacterState:
             if not bmp_category:
                 warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
             if not bmp_contact_id:
-                warnings.append("Black Market Pipeline のコネクトを選んでください")
+                warnings.append("Black Market Pipeline のコンタクトを選んでください")
             elif bmp_contact_id not in contact_ids:
-                warnings.append("Black Market Pipeline のコネクトが見つかりません")
+                warnings.append("Black Market Pipeline のコンタクトが見つかりません")
                 bmp_contact_id = ""
             bmp_active = bool(bmp_category and bmp_contact_id)
             break
@@ -9705,7 +9705,7 @@ def compute(state: CharacterState) -> CharacterState:
     karma_spend_lines: list[dict[str, Any]] = list(career_adv_lines)
     for label, amount in (
         ("資質", karma_from_q),
-        ("メタタイプ", metatype_karma_cost if is_karma else heritage_karma_cost),
+        ("メタ", metatype_karma_cost if is_karma else heritage_karma_cost),
         ("能力値（カルマ作成）", attr_karma if is_karma else 0),
         ("技能（カルマ作成）", skill_buy_karma if is_karma else 0),
         ("知識（カルマ作成）", knowledge_karma if is_karma else 0),
@@ -9714,7 +9714,7 @@ def compute(state: CharacterState) -> CharacterState:
         ("ミスティックPP", mystic_karma),
         ("アデプト／気／フォーカス", extra_adept_karma),
         ("術式／複合体", spell_karma),
-        ("コネクト超過", int(contacts.get("karma") or 0)),
+        ("コンタクト超過", int(contacts.get("karma") or 0)),
         ("武道", int(martial.get("karma") or 0)),
         ("イニシエーション", int(initiation.get("karma") or 0)),
         ("サブマージョン", int(submersion.get("karma") or 0)),
@@ -9861,7 +9861,7 @@ def compute(state: CharacterState) -> CharacterState:
     if not is_karma:
         allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
         if allowed and state.metatype not in allowed:
-            errors.append(f"{state.metatype} はこの優先度のメタタイプに含まれません")
+            errors.append(f"{state.metatype} はこの優先度のメタに含まれません")
     if not career:
         _check_avail_limit(
             _avail_entries(

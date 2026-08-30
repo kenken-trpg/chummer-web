@@ -642,7 +642,7 @@ export default function CharacterSheet({
         </ul>
       </Section>
 
-      <Section title="コネクト" empty={!(d.contacts || []).length}>
+      <Section title="コンタクト" empty={!(d.contacts || []).length}>
         <table className="sheet-table">
           <thead>
             <tr>

@@ -128,7 +128,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
               })
             }
           >
-            <option value="">コネクトを選択</option>
+            <option value="">コンタクトを選択</option>
             {(d.contacts || []).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L{c.loyalty})

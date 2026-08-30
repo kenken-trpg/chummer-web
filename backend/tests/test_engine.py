@@ -5014,7 +5014,7 @@ def test_contact_chargen_cost_is_capped_at_seven() -> None:
 
 def test_unnamed_contact_is_warned() -> None:
     out = compute(_human("contact-noname", contacts=[ContactInstall(connection=1, loyalty=1)]))
-    assert any("名前のないコネクト" in warn for warn in out.derived["warnings"])
+    assert any("名前のないコンタクト" in warn for warn in out.derived["warnings"])
     assert out.derived["contact_points"]["used"] == 2
 
 
@@ -5834,7 +5834,7 @@ def test_black_market_pipeline_warns_without_contact() -> None:
             quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
         )
     )
-    assert any("コネクトを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("コンタクトを選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["black_market_avail_bonus"] == 0
 
 

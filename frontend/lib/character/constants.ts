@@ -1,7 +1,7 @@
 import type { PriorityCategory, PriorityLetter } from "@/lib/types";
 
 export const CATS: { key: PriorityCategory; label: string }[] = [
-  { key: "Heritage", label: "メタタイプ" },
+  { key: "Heritage", label: "メタ" },
   { key: "Attributes", label: "能力値" },
   { key: "Talent", label: "魔力/共振力" },
   { key: "Skills", label: "技能" },
