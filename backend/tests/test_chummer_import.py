@@ -114,6 +114,14 @@ def test_decompress_reads_legacy_lzma() -> None:
     assert decompress_chum5lz(payload).lstrip().startswith(b"<?xml")
 
 
+def test_decompress_reads_chummer_chum5lz_layout() -> None:
+    """Chummer LzmaHelper writes 5-byte props + 8-byte size (0xFF*8 with the
+    end marker it always uses) + raw LZMA1 — verify that exact byte layout."""
+    alone = bytearray(lzma.compress(SAMPLE, format=lzma.FORMAT_ALONE))
+    alone[5:13] = b"\xff" * 8  # size field as Chummer writes it (eos = true)
+    assert decompress_chum5lz(bytes(alone)) == SAMPLE
+
+
 def test_decompress_reads_xz() -> None:
     assert decompress_chum5lz(lzma.compress(SAMPLE)).lstrip().startswith(b"<?xml")
 

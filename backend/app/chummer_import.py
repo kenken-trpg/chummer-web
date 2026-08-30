@@ -32,8 +32,11 @@ _BUILD_METHODS = {
 def decompress_chum5lz(raw: bytes | str) -> bytes:
     """Return the inner XML bytes from a ``.chum5`` / ``.chum5lz`` payload.
 
-    Plain XML is returned as-is. ``.chum5lz`` is LZMA — Chummer has used a few
-    encodings over the years, so try the common ones.
+    Plain XML is returned as-is. Chummer5a's ``.chum5lz`` (LzmaHelper.cs
+    ``CompressToLzmaFile``) is the legacy ``.lzma`` "alone" container: a 5-byte
+    LZMA property header, an 8-byte little-endian uncompressed size (``0xFF``*8
+    when written with an end marker), then a raw LZMA1 stream — i.e. Python's
+    ``lzma.FORMAT_ALONE``. xz / zlib / gzip are also tried as a courtesy.
     """
     if isinstance(raw, str):
         raw = raw.encode("utf-8")
@@ -42,9 +45,9 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
         return raw
     errors: list[str] = []
     for attempt in (
-        lambda: lzma.decompress(raw),  # xz / auto
-        lambda: lzma.decompress(raw, format=lzma.FORMAT_ALONE),  # legacy .lzma
+        lambda: lzma.decompress(raw, format=lzma.FORMAT_ALONE),  # Chummer's format
         lambda: lzma.LZMADecompressor(format=lzma.FORMAT_ALONE).decompress(raw),
+        lambda: lzma.decompress(raw),  # xz / auto
         lambda: zlib.decompress(raw),
         lambda: zlib.decompress(raw, -zlib.MAX_WBITS),
         lambda: zlib.decompress(raw, zlib.MAX_WBITS | 16),  # gzip

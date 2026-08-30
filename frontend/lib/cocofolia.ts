@@ -100,7 +100,34 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
     out.push(`${Math.max(pool, 0)}B6 ${tr(s.name)}${s.dv ? ` ［DV${s.dv}］` : ""}`);
   });
 
-  if (weapons.length || spells.length) out.push("// ── 判定・抵抗 ──");
+  // --- conjuring: skill + MAG (limit = Force, variable) --------------------
+  if (tabs.includes("spirits")) {
+    const conj: [string, string][] = [
+      ["Summoning", "精霊召喚"],
+      ["Binding", "精霊束縛"],
+      ["Banishing", "精霊追放"],
+    ];
+    const have = conj.filter(([s]) => skillPool(s) > 0);
+    if (have.length) out.push("// ── 召喚（リミット＝Force、対抗＝精霊のForce） ──");
+    have.forEach(([s, label]) => out.push(`${skillPool(s) + at("MAG")}B6 ${label}`));
+  }
+
+  // --- matrix basic actions (limit = the relevant Matrix attribute) --------
+  const persona = d.cyberdeck || d.living_persona;
+  if (persona) {
+    const A = persona.attack ?? 0;
+    const S = persona.sleaze ?? 0;
+    const DP = persona.dataprocessing ?? 0;
+    const FW = persona.firewall ?? 0;
+    out.push("// ── マトリクス ──");
+    out.push(`${skillPool("Hacking") + at("LOG")}B6@${S} 素早いハッキング`);
+    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} 強行アクセス`);
+    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} データスパイク`);
+    out.push(`${skillPool("Computer") + at("INT")}B6@${DP} マトリクス知覚`);
+    out.push(`${at("WIL") + FW}B6 マトリクス防御（フルは +${at("INT")}）`);
+  }
+
+  if (weapons.length || spells.length || persona || tabs.includes("spirits")) out.push("// ── 判定・抵抗 ──");
   roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
   roll(at("WIL") + at("CHA") + (tm.composure || 0), "冷静", "social");
   roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), "意図看破", "social");
