@@ -75,6 +75,37 @@ def get_character(cid: str) -> CharacterState:
     raise KeyError(cid)
 
 
+def list_characters(limit: int = 60) -> list[dict]:
+    """Roster: recently-saved characters, newest first."""
+    SAVE_DIR.mkdir(parents=True, exist_ok=True)
+    rows: list[dict] = []
+    for path in SAVE_DIR.glob("*.json"):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        rows.append(
+            {
+                "id": data.get("id") or path.stem,
+                "name": data.get("name") or "(無名)",
+                "metatype": data.get("metatype") or "",
+                "metavariant": data.get("metavariant") or "",
+                "talent": data.get("talent") or "",
+                "career": bool(data.get("career")),
+                "updated": path.stat().st_mtime,
+            }
+        )
+    rows.sort(key=lambda r: r["updated"], reverse=True)
+    return rows[:limit]
+
+
+def delete_character(cid: str) -> None:
+    _MEMORY.pop(cid, None)
+    path = SAVE_DIR / f"{cid}.json"
+    if path.exists():
+        path.unlink()
+
+
 def _apply_talent_ratings(data: dict) -> None:
     talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]

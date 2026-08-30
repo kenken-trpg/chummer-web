@@ -5,7 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .chummer_import import chum5_to_state
 from .models import CharacterCreate, CharacterPatch
-from .store import create_character, export_character, get_character, import_character, public_catalog, update_character
+from .store import (
+    create_character,
+    delete_character,
+    export_character,
+    get_character,
+    import_character,
+    list_characters,
+    public_catalog,
+    update_character,
+)
 
 app = FastAPI(
     title="Chummer Web",
@@ -37,6 +46,17 @@ def catalog_endpoint() -> dict:
 @app.post("/api/characters")
 def create(payload: CharacterCreate | None = None) -> dict:
     return create_character(payload).model_dump()
+
+
+@app.get("/api/characters")
+def roster() -> list[dict]:
+    return list_characters()
+
+
+@app.delete("/api/characters/{cid}")
+def delete(cid: str) -> dict:
+    delete_character(cid)
+    return {"ok": True}
 
 
 @app.get("/api/characters/{cid}")

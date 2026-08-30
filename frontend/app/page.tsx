@@ -22,7 +22,7 @@ import { SpiritsTab } from "@/components/character/tabs/SpiritsTab";
 import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { TabPanelProps } from "@/components/character/types";
-import { api } from "@/lib/api";
+import { api, type CharacterSummary } from "@/lib/api";
 import { buildChatPalette, buildCocofolia } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
@@ -44,18 +44,64 @@ export default function Page() {
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [roster, setRoster] = useState<CharacterSummary[]>([]);
+
+  function remember(c: Character) {
+    setCh(c);
+    try { localStorage.setItem("lastCharacterId", c.id); } catch {}
+  }
+  async function refreshRoster() {
+    setRoster(await api.list().catch(() => []));
+  }
 
   useEffect(() => {
     (async () => {
       try {
-        const [cat, created] = await Promise.all([api.catalog(), api.create("Runner")]);
+        const [cat, list] = await Promise.all([api.catalog(), api.list().catch(() => [])]);
         setCatalog(cat);
-        setCh(created);
+        setRoster(list);
+        let last: string | null = null;
+        try { last = localStorage.getItem("lastCharacterId"); } catch {}
+        let opened: Character | null = null;
+        if (last && list.some((r) => r.id === last)) {
+          opened = await api.get(last).catch(() => null);
+        }
+        if (opened) {
+          remember(opened);
+        } else {
+          remember(await api.create("Runner"));
+          void refreshRoster();
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "起動に失敗しました");
       }
     })();
   }, []);
+
+  async function openCharacter(id: string) {
+    if (!id || id === ch?.id) return;
+    try {
+      remember(await api.get(id));
+      setTab("priority");
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "読込に失敗しました");
+    }
+  }
+  async function newCharacter() {
+    remember(await api.create("Runner"));
+    setTab("priority");
+    void refreshRoster();
+  }
+  async function deleteCurrent() {
+    if (!ch) return;
+    if (!window.confirm(`「${ch.name || "無名"}」を削除しますか？`)) return;
+    const others = roster.filter((r) => r.id !== ch.id);
+    await api.remove(ch.id).catch(() => {});
+    if (others[0]) await openCharacter(others[0].id);
+    else await newCharacter();
+    void refreshRoster();
+  }
 
   async function patch(body: Record<string, unknown>) {
     if (!ch || busy.current) return;
@@ -103,14 +149,16 @@ export default function Page() {
     try {
       if (/\.chum5(lz)?$/i.test(file.name)) {
         const { character, warnings } = await api.importChummer(await file.arrayBuffer());
-        setCh(character);
+        remember(character);
         setTab("priority");
         if (warnings.length) {
           setError(`取り込み時の未対応 ${warnings.length}件 — ` + warnings.slice(0, 15).join(" / "));
         }
       } else {
-        setCh(await api.import(JSON.parse(await file.text())));
+        remember(await api.import(JSON.parse(await file.text())));
+        setTab("priority");
       }
+      void refreshRoster();
     } catch (e) {
       setError(e instanceof Error ? e.message : "読込に失敗しました");
     }
@@ -142,7 +190,26 @@ export default function Page() {
           <p className="sub">非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。</p>
 
           <div className="toolbar">
-            <input value={ch.name} onChange={(e) => setCh({ ...ch, name: e.target.value })} onBlur={(e) => patch({ name: e.target.value })} />
+            <select
+              className="btn"
+              value={ch.id}
+              onChange={(e) => (e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value))}
+              title="保存済みキャラクター"
+            >
+              {!roster.some((r) => r.id === ch.id) ? <option value={ch.id}>{ch.name || "無名"}（未保存）</option> : null}
+              {roster.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name || "無名"} ・ {tr(r.metatype)}{r.career ? "（キャリア）" : ""}
+                </option>
+              ))}
+              <option value="__new__">＋ 新規キャラ</option>
+            </select>
+            <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">削除</button>
+            <input
+              value={ch.name}
+              onChange={(e) => setCh({ ...ch, name: e.target.value })}
+              onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
+            />
             <button className="btn primary" onClick={download}>JSON保存</button>
             <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
             <button
