@@ -82,8 +82,21 @@ export default function Page() {
   }
 
   async function onImport(file: File) {
-    const payload = JSON.parse(await file.text());
-    setCh(await api.import(payload));
+    setError(null);
+    try {
+      if (/\.chum5(lz)?$/i.test(file.name)) {
+        const { character, warnings } = await api.importChummer(await file.arrayBuffer());
+        setCh(character);
+        setTab("priority");
+        if (warnings.length) {
+          setError(`取り込み時の未対応 ${warnings.length}件 — ` + warnings.slice(0, 15).join(" / "));
+        }
+      } else {
+        setCh(await api.import(JSON.parse(await file.text())));
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "読込に失敗しました");
+    }
   }
 
   if (error && !ch) {
@@ -114,7 +127,7 @@ export default function Page() {
           <div className="toolbar">
             <input value={ch.name} onChange={(e) => setCh({ ...ch, name: e.target.value })} onBlur={(e) => patch({ name: e.target.value })} />
             <button className="btn primary" onClick={download}>JSON保存</button>
-            <button className="btn" onClick={() => fileRef.current?.click()}>JSON読込</button>
+            <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
             <button
               className={`btn ${ch.career || d.career ? "primary" : ""}`}
               title={ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"}
@@ -156,7 +169,7 @@ export default function Page() {
             ) : (
               <button className="btn" onClick={() => setTab("sheet")}>シート表示</button>
             )}
-            <input ref={fileRef} type="file" accept="application/json" hidden onChange={(e) => e.target.files && onImport(e.target.files[0])} />
+            <input ref={fileRef} type="file" accept="application/json,.chum5,.chum5lz" hidden onChange={(e) => e.target.files && onImport(e.target.files[0])} />
           </div>
 
           <div className="tabs">

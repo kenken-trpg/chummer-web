@@ -6,6 +6,10 @@
 
 第1段階: Priority、メタタイプ、属性、スキル、Quality、派生値、JSON 保存/読込。
 
+Chummer5a の `.chum5` / `.chum5lz` セーブを取り込めます（best-effort。カタログで解決
+できないアイテムはスキップし、読込時に一覧表示）。`.chum5lz` が展開できない場合は
+Chummer で非圧縮 `.chum5` に保存し直してください。
+
 ## 起動
 
 ```bash

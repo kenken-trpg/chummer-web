@@ -18,4 +18,10 @@ export const api = {
   patch: (id: string, body: Record<string, unknown>) =>
     req<Character>(`/api/characters/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   import: (payload: unknown) => req<Character>("/api/characters/import", { method: "POST", body: JSON.stringify(payload) }),
+  importChummer: (bytes: ArrayBuffer) =>
+    req<{ character: Character; warnings: string[] }>("/api/characters/import-chummer", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: bytes,
+    }),
 };

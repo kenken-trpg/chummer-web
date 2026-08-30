@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .chummer_import import chum5_to_state
 from .models import CharacterCreate, CharacterPatch
 from .store import create_character, export_character, get_character, import_character, public_catalog, update_character
 
@@ -70,3 +71,18 @@ def import_json(payload: dict) -> dict:
         return import_character(payload).model_dump()
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/characters/import-chummer")
+def import_chummer(body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
+    """Import a Chummer5a .chum5 / .chum5lz save. Returns the character plus a
+    list of things that could not be mapped."""
+    try:
+        state, warnings = chum5_to_state(body)
+        state.pop("_warnings", None)
+        char = import_character(state)
+        return {"character": char.model_dump(), "warnings": warnings}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"取り込みに失敗しました: {exc}") from exc
