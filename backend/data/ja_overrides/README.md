@@ -9,10 +9,24 @@
 
 ## ファイル
 
-| ファイル | 対応する vendored | キー | 値 |
-|---|---|---|---|
-| `data.json` | `ja-jp_data.xml` | データエンティティの英語名 (`<name>`) | 日本語訳 (`<translate>` 相当) |
-| `ui.json`   | `ja-jp.xml`      | UI 文字列キー (`<string key>`)          | 日本語訳 (`<text>` 相当) |
+| ファイル | 対応する vendored | キー | 値 | 管理 |
+|---|---|---|---|---|
+| `data.json` | `ja-jp_data.xml` | データエンティティの英語名 (`<name>`) | 日本語訳 (`<translate>` 相当) | **生成物** |
+| `ui.json`   | `ja-jp.xml`      | UI 文字列キー (`<string key>`)          | 日本語訳 (`<text>` 相当) | 手編集 |
+
+### `data.json` は生成物
+
+全エントリは curated モジュール
+(`scripts/import_ja_from_refs.py` の `CURATED`、`scripts/ja_curated_spells.py`、
+`scripts/ja_curated_entities.py`) ＋ `~/Downloads/` の参考資料 (chumJA SR4) の
+完全一致から生成される。**訳を足す/直すときはこれらのモジュールを編集**し、
+
+```
+backend/scripts/regen_ja.sh
+```
+
+で `data.json` と `docs/translation-*.md` を再生成する (`--no-reset` / `--no-test` あり)。
+`data.json` を直接編集しても次の再生成で消える。`ui.json` は手編集で可。
 
 ## フォーマット
 

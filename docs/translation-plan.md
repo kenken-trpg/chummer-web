@@ -113,7 +113,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   新設 **D**: sr5eja にあり `ui.json` 未収録の用語 **303 件** (descriptor・ルール語の seed 候補)。
 - sr5eja は LICENSE 記載なし → 用語の**参照**に留める。verbatim 大量取り込みは避ける。
 
-再生成: `cd backend && .venv/bin/python scripts/build_ja_glossary.py`
+再生成: `backend/scripts/regen_ja.sh` (全成果物をまとめて再生成)
 
 ### フェーズ 2 — `ja-jp_data.xml` カバレッジ拡充 (ユーザー影響が最大) 🚧 進行中
 
@@ -133,7 +133,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - テスト追加 (`test_translation_overrides.py`): 全値が日本語、全キーが `catalog()` に存在 (orphan 検出)、
   代表値アンカー。全 411 件 green。
 
-再生成: `cd backend && .venv/bin/python scripts/import_ja_from_refs.py --write`
+再生成: `backend/scripts/regen_ja.sh`
 
 **2b. 手動訳バッチ 🚧 進行中 (2026-08-30 一次分)**
 
@@ -289,3 +289,6 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: 呪文 descriptor/type/range/duration の日本語表示 (`frontend/lib/spell-terms.ts`)。
 - 2026-08-30: SR5 コアギア 38 件訳出 (overlay 503)。サプリ由来 ~2,200 は英語フォールバック維持の方針。
 - 2026-08-30: qualities 調査。SR5 コアは既に 97% 訳済み。未訳 679 は全てサプリ由来 → 方針上作業なし。
+- 2026-08-30: 既存 frontend tsc エラー 10 件を修正。複合体 target / 残存カテゴリを日本語化。
+- 2026-08-30: `regen_ja.sh` 新設。`data.json` ＋ glossary ＋ import-report をまとめて決定的に再生成。
+  import-report を「全エントリを出典別」に変更 (`--no-reset` でも同一出力)。

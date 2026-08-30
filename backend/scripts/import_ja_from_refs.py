@@ -291,14 +291,27 @@ def main(argv: list[str] | None = None) -> int:
     merged_overlay.update(additions)
     ordered = {k: merged_overlay[k] for k in sorted(merged_overlay)}
 
+    # provenance for the *whole* overlay (not just this run's additions), so the
+    # report is meaningful even on an additive --no-reset run.
+    def provenance_of(key: str) -> str:
+        if key in prov:
+            return prov[key]
+        if key in CURATED:
+            return "curated"
+        if key in cj_names:
+            return "chumJA(SR4) name"
+        if key in cj_cats:
+            return "chumJA(SR4) category"
+        return "manual / prior"
+
     by_src: dict[str, list[tuple[str, str]]] = {}
-    for k, v in sorted(additions.items()):
-        by_src.setdefault(prov[k], []).append((k, v))
+    for k, v in ordered.items():
+        by_src.setdefault(provenance_of(k), []).append((k, v))
 
     print(f"app entity names: {len(app_names)}  categories: {len(app_cats)}")
     print(f"existing overlay entries: {len(existing)}")
-    print(f"new additions: {len(additions)}")
-    for src, rows in by_src.items():
+    print(f"new additions: {len(additions)}  |  overlay total: {len(ordered)}")
+    for src, rows in sorted(by_src.items()):
         print(f"  {src}: {len(rows)}")
 
     if args.write:
@@ -306,21 +319,21 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps(ordered, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
         lines = [
-            "# 翻訳インポートレポート (フェーズ2)",
+            "# 翻訳インポートレポート",
             "",
-            "**自動生成** — `backend/scripts/import_ja_from_refs.py --write`。",
-            "curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。",
-            "アプリの catalog() が実際に使う名前／カテゴリに限定。",
+            "**自動生成** — `backend/scripts/regen_ja.sh` (= `import_ja_from_refs.py --write`)。",
+            "`data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と",
+            "chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。",
             "",
-            f"- 追加: **{len(additions)} 件** / オーバーレイ合計: **{len(ordered)} 件**",
+            f"- オーバーレイ合計: **{len(ordered)} 件**",
             "",
         ]
-        for src, rows in by_src.items():
+        for src, rows in sorted(by_src.items()):
             lines.append(f"## {src} ({len(rows)})")
             lines.append("")
             lines.append("| English | 日本語 |")
             lines.append("|---|---|")
-            lines += [f"| {k} | {v} |" for k, v in rows]
+            lines += [f"| {k} | {v} |" for k, v in sorted(rows)]
             lines.append("")
         args.report.write_text("\n".join(lines) + "\n", encoding="utf-8")
         print(f"wrote {OVERLAY.relative_to(ROOT.parent)}")
