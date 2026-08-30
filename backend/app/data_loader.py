@@ -397,6 +397,44 @@ def _weapon_category_dv_select_skills(node: dict[str, Any]) -> list[str]:
     return [part.strip() for part in limit.split(",") if part.strip()]
 
 
+def _weaponskillaccuracy_needs_select(node: dict[str, Any]) -> bool:
+    if node.get("tag") != "weaponskillaccuracy":
+        return False
+    if str((node.get("fields") or {}).get("name") or "").strip():
+        return False
+    fields = node.get("fields") or {}
+    attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
+    return "selectskill" in fields or bool(attrs)
+
+
+def _weaponskillaccuracy_select_attrs(node: dict[str, Any]) -> dict[str, str]:
+    if not _weaponskillaccuracy_needs_select(node):
+        return {}
+    return {str(k): str(v) for k, v in ((node.get("field_attrs") or {}).get("selectskill") or {}).items()}
+
+
+def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, str]) -> list[str]:
+    names = {part.strip() for part in str(attrs.get("limittoskill") or "").split(",") if part.strip()}
+    cats = {part.strip() for part in str(attrs.get("limittocategory") or attrs.get("skillcategory") or "").split(",") if part.strip()}
+    exclude_cats = {part.strip() for part in str(attrs.get("excludecategory") or "").split(",") if part.strip()}
+    out: list[str] = []
+    for skill in skills:
+        if skill.get("exotic"):
+            continue
+        name = str(skill.get("name") or "")
+        if not name:
+            continue
+        if names and name not in names:
+            continue
+        category = str(skill.get("category") or "")
+        if cats and category not in cats:
+            continue
+        if exclude_cats and category in exclude_cats:
+            continue
+        out.append(name)
+    return sorted(set(out))
+
+
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
         node.get("tag")
@@ -412,6 +450,7 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
         or _limit_spell_category_needs_select(node)
         or _limit_spirit_category_needs_select(node)
         or bool(_weapon_category_dv_select_skills(node))
+        or _weaponskillaccuracy_needs_select(node)
         or (
             node.get("tag") == "addspirit"
             and not str((node.get("attrs") or {}).get("skill") or "").strip()
@@ -430,10 +469,15 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     needs_spell_category = any(_limit_spell_category_needs_select(node) for node in (bonus or []))
     needs_spirit_category = any(_limit_spirit_category_needs_select(node) for node in (bonus or []))
     weapon_dv_skills: list[str] = []
+    weapon_acc_attrs: dict[str, str] = {}
     for node in bonus or []:
         skills = _weapon_category_dv_select_skills(node)
         if skills:
             weapon_dv_skills = skills
+            break
+    for node in bonus or []:
+        if _weaponskillaccuracy_needs_select(node):
+            weapon_acc_attrs = _weaponskillaccuracy_select_attrs(node)
             break
     add_spirit_fixed = sum(
         1
@@ -454,6 +498,9 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
     elif weapon_dv_skills:
         kind = "weapon_skill"
         select_options = list(weapon_dv_skills)
+    elif weapon_acc_attrs or any(_weaponskillaccuracy_needs_select(node) for node in (bonus or [])):
+        kind = "weapon_skill"
+        # Options filled later in catalog() once skills.xml is loaded.
     elif add_spirit_fixed:
         kind = "add_spirit"
     elif "selectquality" in tags:
@@ -2491,6 +2538,17 @@ def catalog() -> dict[str, Any]:
         skill_name = str(quality.get("expertise_skill") or "").strip()
         if skill_name and not quality.get("select_options"):
             quality["select_options"] = list(skill_specs.get(skill_name) or [])
+    active_skills = list(skills.get("skills") or [])
+    for quality in qualities:
+        if quality.get("extra_kind") != "weapon_skill" or quality.get("select_options"):
+            continue
+        for node in quality.get("bonus") or []:
+            if not _weaponskillaccuracy_needs_select(node):
+                continue
+            quality["select_options"] = _filter_active_skill_names(
+                active_skills, _weaponskillaccuracy_select_attrs(node)
+            )
+            break
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,

@@ -250,7 +250,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
             })
           }
         >
-          <option value="">武器スキルを選択</option>
+          <option value="">スキルを選択</option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
