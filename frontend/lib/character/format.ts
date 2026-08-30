@@ -36,6 +36,21 @@ export function cfDuration(value?: string) {
   return value || "";
 }
 
+const CF_TARGET: Record<string, string> = {
+  Persona: "ペルソナ",
+  Device: "デバイス",
+  Host: "ホスト",
+  File: "ファイル",
+  Icon: "アイコン",
+  Self: "自身",
+  Sprite: "スプライト",
+  Cyberware: "サイバーウェア",
+};
+
+export function cfTarget(value?: string) {
+  return (value && CF_TARGET[value]) || value || "";
+}
+
 export function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
 }

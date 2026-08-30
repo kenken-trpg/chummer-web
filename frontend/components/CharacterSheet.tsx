@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
+import { cfDuration, cfTarget } from "@/lib/character/format";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
 
@@ -598,7 +599,7 @@ export default function CharacterSheet({
               {(d.complex_forms || []).map((item) => (
                 <li key={item.id}>
                   <b>{tr(item.label || item.name)}</b>
-                  {" ・ "}L{item.level} / FV {item.fv}
+                  {" ・ "}{cfTarget(item.target)} / {cfDuration(item.duration)} / L{item.level} / FV {item.fv}
                   {item.fade != null ? ` ・ フェード ${item.fade}${item.fade_code || ""}` : ""}
                 </li>
               ))}

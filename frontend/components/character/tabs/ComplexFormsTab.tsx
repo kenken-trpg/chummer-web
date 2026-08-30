@@ -3,7 +3,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 
 import { useState } from "react";
-import { cfDuration, testLine } from "@/lib/character/format";
+import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
 
@@ -22,7 +22,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch, setChara
                 <div>
                   <b>{tr(item.label || item.name)}</b>
                   <div className="muted">
-                    {item.name} / {item.target} / {cfDuration(item.duration)} / {item.fv}
+                    {item.name} / {cfTarget(item.target)} / {cfDuration(item.duration)} / {item.fv}
                     {` @ L${item.level} → フェード ${item.fade == null ? "特殊" : `${item.fade}${item.fade_code || ""}`}`}
                     {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
                     {" / "}{item.source}
@@ -88,7 +88,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch, setChara
                       <div>
                         <b>{tr(item.name)}</b>
                         <div className="muted">
-                          {item.name} / {item.target} / {cfDuration(item.duration)} / {item.fv} / {item.source}
+                          {item.name} / {cfTarget(item.target)} / {cfDuration(item.duration)} / {item.fv} / {item.source}
                           {item.needs_extra ? " / マトリクス能力値が必要" : ""}
                           {blocked ? ` / ${blocked}` : ""}
                           {paid ? " / 4カルマ" : " / 無料"}
