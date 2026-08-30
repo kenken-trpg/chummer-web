@@ -83,14 +83,24 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 成果物: 「翻訳を足すと消えない」状態。以降のフェーズはこのオーバーレイに書く。
 
-### フェーズ 1 — 用語集 (グロッサリ) の確定
+### フェーズ 1 — 用語集 (グロッサリ) の確定 ✅ 完了 (2026-08-30)
 
-- 2021 `xz.language.xslt` の 379 変数を抽出し、正規用語表 (`docs/translation-glossary.md` 等) を作成。
-- 既存 2 ファイルの値と突き合わせ、不一致リストを生成 (`強靭力`↔`強靱力` 等)。
-- 公式5版和訳・既存リポジトリ訳・2021用語集で三者照合し、各語の採用形を 1 つ決定。
-  競合時: Downloads 内は新しい方、リポジトリ既存訳と違う場合は「公式5版表記＝2021用語集」を採用。
+- `backend/scripts/build_ja_glossary.py` を新設。2021 `xz.language.xslt` から 377 変数を抽出し、
+  2020 版との差分・vendored 2 ファイルとの不一致を突き合わせて 2 つの doc を再生成する。
+  参考資料 (`~/Downloads/`) はリポジトリ非同梱のため、スクリプトを typed 引数化し**生成物を commit** する。
+- 成果物:
+  - `docs/translation-glossary.md` — 確定用語表。和訳あり 200 件 / コード・略号 177 件。
+    2020 版で英語のままだった 75 件が 2021 版で和訳済み → 2020 版は参照不要。
+  - `docs/translation-glossary-mismatches.md` — Phase 2 の作業リスト。
+    - A: コア能力値 12×(長/短)＋エッセンスの明示比較 → **不一致 9 件**。
+      最重要は `強靭力`↔`強靱力` (公式5版は `靱`)、および能力値 Short キーが Long 形の和訳を使っている点
+      (例 `String_AttributeAGIShort` = `敏捷力` → 用語集は `敏捷`)。
+    - B: `ja-jp.xml` の英語原文が用語集見出しと一致するキーのうち訳が違うもの (英語残置・文脈依存差を含む)。
+    - C: `ja-jp_data.xml` の name/category が用語集見出しと一致するもの (`防具`↔`装甲` 等)。
+- **採用方針**: 用語集 (2021) を正とする。ただし文脈依存 (`Grade` = 階梯/等級、`Amount` = 数量/金額、
+  操作呪文サブラベルの `精神`/`物理` 等) と固有名は Phase 2 で個別判断。
 
-成果物: 英語→確定日本語の用語表 (出典付き)。以降の全作業の参照基準。
+再生成: `cd backend && .venv/bin/python scripts/build_ja_glossary.py`
 
 ### フェーズ 2 — `ja-jp_data.xml` カバレッジ拡充 (ユーザー影響が最大)
 
@@ -141,3 +151,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 - 2026-08-30: 計画策定。
 - 2026-08-30: フェーズ 0 完了。オーバーレイ機構 (`backend/data/ja_overrides/`, `data_loader.py`) ＋テスト 8 件。
+- 2026-08-30: フェーズ 1 完了。`build_ja_glossary.py` ＋ `translation-glossary.md` / `translation-glossary-mismatches.md`。
