@@ -64,10 +64,12 @@ def test_maps_core_identity_and_priorities() -> None:
     }
 
 
-def test_attributes_fold_in_karma_and_drop_essence() -> None:
+def test_attributes_fold_in_min_base_karma_and_drop_essence() -> None:
     st, _ = chum5_to_state(SAMPLE)
-    assert st["attributes"]["LOG"] == 5  # base 4 + karma 1
-    assert st["attributes"]["MAG"] == 5
+    # Chummer <base> is spend above the metatype minimum: min 1 + base 4 + karma 1
+    assert st["attributes"]["LOG"] == 6
+    assert st["attributes"]["MAG"] == 6  # min 1 + base 5
+    assert st["attributes"]["BOD"] == 3  # min 1 + base 2
     assert "ESS" not in st["attributes"] and "ESSENCE" not in st["attributes"]
 
 

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from fastapi import Body, FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
 from .models import CharacterCreate, CharacterPatch
 from .store import (
@@ -83,6 +84,22 @@ def export_json(cid: str) -> dict:
         return export_character(cid)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="character not found") from exc
+
+
+@app.get("/api/characters/{cid}/chummer")
+def export_chummer(cid: str) -> Response:
+    """Download a Chummer5a-compatible .chum5 (plain XML)."""
+    try:
+        state = get_character(cid)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="character not found") from exc
+    xml = state_to_chum5(state)
+    fname = (state.name or "character").replace('"', "") + ".chum5"
+    return Response(
+        content=xml,
+        media_type="application/xml",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
 
 
 @app.post("/api/characters/import")

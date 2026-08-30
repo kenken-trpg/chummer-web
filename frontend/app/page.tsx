@@ -211,6 +211,13 @@ export default function Page() {
               onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
             />
             <button className="btn primary" onClick={download}>JSON保存</button>
+            <button
+              className="btn"
+              onClick={() => { window.location.href = `/api/characters/${ch.id}/chummer`; }}
+              title="Chummer5a で開ける .chum5（XML）で書き出す"
+            >
+              .chum5書出
+            </button>
             <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
             <button
               className="btn"

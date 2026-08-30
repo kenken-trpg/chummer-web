@@ -3,9 +3,10 @@ into this app's ``CharacterState``.
 
 Best-effort: identity / priorities / attributes / skills / qualities / spells /
 adept powers / complex forms / martial arts / contacts / lifestyles / tradition /
-mentor / initiation, plus id-resolved ware / armor / weapons / gear. Anything the
-catalog can't resolve is skipped and named in the returned warning list rather
-than failing the import.
+mentor / initiation, plus id-resolved ware (nested), armor + mods, weapons +
+accessories, gear (nested, routed to commlink/deck/sensor/program/… buckets),
+vehicles + drones + vehicle mods. Anything the catalog can't resolve is skipped
+and named in the returned warning list rather than failing the import.
 """
 
 from __future__ import annotations
@@ -28,12 +29,14 @@ _BUILD_METHODS = {
 }
 
 
-def decompress_chum5lz(raw: bytes) -> bytes:
+def decompress_chum5lz(raw: bytes | str) -> bytes:
     """Return the inner XML bytes from a ``.chum5`` / ``.chum5lz`` payload.
 
     Plain XML is returned as-is. ``.chum5lz`` is LZMA — Chummer has used a few
     encodings over the years, so try the common ones.
     """
+    if isinstance(raw, str):
+        raw = raw.encode("utf-8")
     head = raw.lstrip()[:64].lstrip(b"\xef\xbb\xbf").lstrip()
     if head.startswith(b"<"):  # already plain XML
         return raw
@@ -145,9 +148,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         name = _text(a.find("name")).upper()
         if name in ("ESS", "ESSENCE") or not name:
             continue
-        val = _int(a.find("base")) + _int(a.find("karma"))
+        # Chummer <base> is points spent above the metatype minimum.
         lo = _int(a.find("metatypemin"), 1)
-        attrs[name] = max(val, lo)
+        attrs[name] = max(lo + _int(a.find("base")) + _int(a.find("karma")), lo)
     st["attributes"] = attrs or {"BOD": 1, "AGI": 1, "REA": 1, "STR": 1, "CHA": 1, "INT": 1, "LOG": 1, "WIL": 1}
 
     # --- skills ---------------------------------------------------------
@@ -312,40 +315,145 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), "バイオウェア"
     )
 
-    # --- armor / weapons / gear (flat, id-resolved) ----------------
+    # --- armor + mods -------------------------------------------------
     armor_r = _Resolver(cat["armor"])
-    st["armor"] = [
-        {"id": str(uuid.uuid4()), "armor_id": aid, "rating": max(1, _int(a.find("rating"), 1)),
-         "equipped": _text(a.find("equipped")).lower() != "false"}
-        for a in root.findall("./armors/armor")
-        if (aid := armor_r.resolve(a, warn, "防具"))
-    ]
+    amod_r = _Resolver(cat["armor_mods"])
+    st_armor: list[dict[str, Any]] = []
+    st_amods: list[dict[str, Any]] = []
     for a in root.findall("./armors/armor"):
-        if a.find("./armormods/armormod") is not None:
-            warn.append(f"防具「{_text(a.find('name'))}」の改造は取り込めませんでした")
-
-    weap_r = _Resolver(cat["weapons"])
-    st["weapons"] = [
-        {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _int(w.find("qty"), 1))}
-        for w in root.findall("./weapons/weapon")
-        if _text(w.find("cyberware")).lower() != "true" and (wid := weap_r.resolve(w, warn, "武器"))
-    ]
-    if any(w.find("./accessories/accessory") is not None for w in root.findall("./weapons/weapon")):
-        warn.append("武器アクセサリは取り込めませんでした（手動で付け直してください）")
-
-    gear_r = _Resolver(cat["gear"])
-    gears: list[dict[str, Any]] = []
-    for g in root.findall("./gears/gear"):
-        gid = gear_r.resolve(g, warn, "ギア")
-        if not gid:
+        aid = armor_r.resolve(a, warn, "防具")
+        if not aid:
             continue
-        gears.append(
-            {"id": str(uuid.uuid4()), "gear_id": gid, "rating": max(1, _int(g.find("rating"), 1)),
-             "qty": max(1, _int(g.find("qty"), 1))}
-        )
-        if g.find("./children/gear") is not None:
-            warn.append(f"ギア「{_text(g.find('name'))}」の子アイテムは取り込めませんでした")
-    st["gear"] = gears
+        row = {
+            "id": str(uuid.uuid4()),
+            "armor_id": aid,
+            "rating": max(1, _int(a.find("rating"), 1)),
+            "equipped": _text(a.find("equipped")).lower() != "false",
+        }
+        st_armor.append(row)
+        for m in a.findall("./armormods/armormod"):
+            mid = amod_r.resolve(m, warn, "防具改造")
+            if mid:
+                st_amods.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "mod_id": mid,
+                        "parent_id": row["id"],
+                        "rating": max(1, _int(m.find("rating"), 1)),
+                        "included": _text(m.find("included")).lower() == "true",
+                    }
+                )
+    st["armor"] = st_armor
+    st["armor_mods"] = st_amods
+
+    # --- weapons + accessories -------------------------------------
+    weap_r = _Resolver(cat["weapons"])
+    wacc_r = _Resolver(cat["weapon_accessories"])
+    st_weap: list[dict[str, Any]] = []
+    st_wacc: list[dict[str, Any]] = []
+    for w in root.findall("./weapons/weapon"):
+        if _text(w.find("cyberware")).lower() == "true":
+            continue
+        wid = weap_r.resolve(w, warn, "武器")
+        if not wid:
+            continue
+        row = {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _int(w.find("qty"), 1))}
+        st_weap.append(row)
+        for acc in w.findall("./accessories/accessory"):
+            acid = wacc_r.resolve(acc, warn, "武器アクセサリ")
+            if acid:
+                st_wacc.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "accessory_id": acid,
+                        "parent_id": row["id"],
+                        "mount": _text(acc.find("mount")),
+                        "rating": max(1, _int(acc.find("rating"), 1)),
+                        "included": _text(acc.find("included")).lower() == "true",
+                    }
+                )
+    st["weapons"] = st_weap
+    st["weapon_accessories"] = st_wacc
+
+    # --- gear (nested, routed to the matching catalog bucket) -----
+    BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
+    gear_res = {b: _Resolver(cat[b]) for b in ("gear", *BUCKETS)}
+    routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
+
+    def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:
+        sid = _text(g.find("sourceid")) or _text(g.find("guid"))
+        name = _text(g.find("name"))
+        bucket = "gear"
+        gid: str | None = None
+        # a child stays with its parent's bucket if it resolves there
+        order = ([parent_bucket] if parent_bucket else []) + list(BUCKETS) + ["gear"]
+        for b in order:
+            if not b:
+                continue
+            r = gear_res[b]
+            cand = sid if sid in r.ids else r.by_name.get(name.lower())
+            if cand:
+                gid, bucket = cand, b
+                break
+        if not gid:
+            if name:
+                warn.append(f"ギア「{name}」はカタログに無いためスキップしました")
+            return
+        row: dict[str, Any] = {
+            "id": str(uuid.uuid4()),
+            "gear_id": gid,
+            "rating": max(1, _int(g.find("rating"), 1)),
+        }
+        if bucket == "commlinks":
+            row.pop("rating", None)
+            row["rating"] = max(1, _int(g.find("rating"), 1))
+        else:
+            row["qty"] = max(1, _int(g.find("qty"), 1))
+            if parent_id:
+                row["parent_id"] = parent_id
+                row["included"] = _text(g.find("included")).lower() == "true"
+        routed[bucket].append(row)
+        for child in g.findall("./children/gear"):
+            route_gear(child, row["id"], bucket)
+
+    for g in root.findall("./gears/gear"):
+        route_gear(g, None, None)
+    for b, rows in routed.items():
+        st[b] = rows
+
+    # --- vehicles + drones + vehicle mods ------------------------
+    veh_r = _Resolver(cat["vehicles"])
+    drone_r = _Resolver(cat["drones"])
+    vmod_r = _Resolver(cat["vehicle_mods"])
+    st_veh: list[dict[str, Any]] = list(st.get("drones") or [])
+    st_veh_only: list[dict[str, Any]] = []
+    st_vmods: list[dict[str, Any]] = []
+    for v in root.findall("./vehicles/vehicle"):
+        is_drone = veh_r.resolve(v, [], "") is None
+        vid = drone_r.resolve(v, [], "") if is_drone else veh_r.resolve(v, warn, "ヴィークル")
+        if not vid:
+            vid = veh_r.resolve(v, [], "") or drone_r.resolve(v, warn, "ヴィークル")
+        if not vid:
+            continue
+        row = {"id": str(uuid.uuid4()), "gear_id": vid, "rating": 1, "qty": 1}
+        (st_veh if is_drone else st_veh_only).append(row)
+        for m in v.findall("./mods/mod") + v.findall("./vehiclemods/vehiclemod"):
+            mid = vmod_r.resolve(m, warn, "ヴィークル改造")
+            if mid:
+                st_vmods.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "mod_id": mid,
+                        "parent_id": row["id"],
+                        "rating": max(1, _int(m.find("rating"), 1)),
+                        "included": _text(m.find("included")).lower() == "true",
+                    }
+                )
+        if v.find("./weapons/weapon") is not None or v.find("./gears/gear") is not None:
+            warn.append(f"ヴィークル「{_text(v.find('name'))}」搭載の武器/ギアは取り込めませんでした")
+    st["drones"] = st_veh
+    st["vehicles"] = st_veh_only
+    st["vehicle_mods"] = st_vmods
 
     # --- lifestyles / contacts / martial arts --------------------
     ls_r = _Resolver(cat["lifestyles"])
