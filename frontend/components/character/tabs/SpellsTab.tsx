@@ -24,6 +24,9 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
               {(d.limit_spell_categories || []).length || (d.allow_spell_categories || []).length
                 ? ` ・ 許可カテゴリ ${[...(d.limit_spell_categories || []), ...(d.allow_spell_categories || [])].filter((v, i, a) => a.indexOf(v) === i).join("、")}`
                 : ""}
+              {(d.allow_spell_ranges || []).length
+                ? ` ・ 許可射程 ${(d.allow_spell_ranges || []).join("、")}`
+                : ""}
             </p>
             <label>
               伝統
@@ -46,6 +49,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                   <div className="muted">
                     {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv}
                     {item.damage_mod ? ` ・ ダメージ+${item.damage_mod}` : ""}
+                    {item.barehanded_adept ? " ・ 素手アデプト（ドレイン×2）" : ""}
                     {item.spell ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}${item.spell.drain_mod ? `（修正${item.spell.drain_mod > 0 ? "+" : ""}${item.spell.drain_mod}）` : ""}` : ""}
                     {item.focus_bonus ? ` / 焦点+${item.focus_bonus}` : ""}
                     {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
@@ -103,6 +107,10 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                   for (const text of blocked) {
                     if (text.toLowerCase() === "spell" && (item.kind || "spell") === "spell") return false;
                     if (text && (item.descriptor || "").includes(text)) return false;
+                  }
+                  const ranges = d.allow_spell_ranges || [];
+                  if (d.spell_range_gated && ranges.length) {
+                    if (!ranges.includes(item.range || "")) return false;
                   }
                   return true;
                 })

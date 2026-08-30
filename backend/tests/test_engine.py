@@ -5883,6 +5883,44 @@ def test_witness_my_hate_direct_non_area_drain_and_damage() -> None:
     assert "spelldescriptordamage" not in tags
 
 
+BAREHANDED_ADEPT = "742caf46-a10b-4aa1-a6bc-a53feb99748c"
+DEATH_TOUCH = "9baed162-5e84-4f19-9b94-d543a560c067"
+BUDDHISM = "a283220f-2197-4526-b15a-331b9185b326"
+
+
+def test_barehanded_adept_touch_spells_and_doubled_drain() -> None:
+    out = compute(
+        _adept(
+            "bha",
+            quality_ids=[BAREHANDED_ADEPT],
+            tradition_id=BUDDHISM,
+            skills={"Unarmed Combat": 6},
+            spells=[
+                SpellInstall(spell_id=DEATH_TOUCH, force=6),
+                SpellInstall(spell_id=MANABOLT, force=6),
+            ],
+        )
+    )
+    assert "spells" in out.derived["enabled_tabs"]
+    assert set(out.derived["allow_spell_ranges"] or []) >= {"T", "T (A)"}
+    assert out.derived["spell_range_gated"] is True
+    # MAG 6 → half touch-only free spells = 3
+    assert out.derived["spell_points"]["free"] == 3
+    assert [s["name"] for s in out.derived["spells"]] == ["Death Touch"]
+    assert any("Manabolt" in warn or "制限では習得" in warn for warn in out.derived["warnings"])
+    touch = out.derived["spells"][0]
+    assert touch["free"] is True
+    assert touch["barehanded_adept"] is True
+    assert touch["useskill"] == "Unarmed Combat"
+    assert touch["spell"]["force_max"] == 2  # MAG/3 rounded up
+    assert touch["spell"]["force"] == 2
+    # F-6 @2 → base 2, ×2 → 4
+    assert touch["spell"]["drain"] == 4
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "allowspellrange" not in tags
+    assert "freespells" not in tags
+
+
 def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
     missing = compute(
         _adept(

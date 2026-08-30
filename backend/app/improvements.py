@@ -138,6 +138,8 @@ IMPLEMENTED = {
     "newspellkarmacost",
     "spelldescriptordrain",
     "spelldescriptordamage",
+    "allowspellrange",
+    "weaponskillaccuracy",
 }
 SILENT_TAGS = {
     "disablequality",
@@ -182,12 +184,10 @@ SILENT_TAGS = {
     "astralreputation",
     "specialattburnmultiplier",
     "cyberadeptdaemon",
-    "allowspellrange",
     "allowspritefettering",
     "fadingvalue",
     "drainvalue",
     "weaponcategorydice",
-    "weaponskillaccuracy",
     "smartlink",
     "throwstr",
     "throwrangestr",
@@ -441,6 +441,7 @@ def empty_effects() -> dict[str, Any]:
         "limit_spell_category_slots": [],
         "limit_spirit_category_slots": [],
         "allow_spell_categories": [],
+        "allow_spell_ranges": [],
         "block_spell_descriptors": [],
         "limit_spell_categories": [],
         "limit_spirit_categories": [],
@@ -454,6 +455,8 @@ def empty_effects() -> dict[str, Any]:
         "spell_descriptor_damage": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
+        "weapon_skill_accuracy_slots": [],
+        "weapon_skill_accuracy": [],
         "add_spirit_slots": [],
         "extra_spirits": [],
         "free_metamagics": [],
@@ -986,6 +989,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             name = str(node.get("value") or fields.get("category") or "").strip()
             if name and name not in effects["allow_spell_categories"]:
                 effects["allow_spell_categories"].append(name)
+        elif tag == "allowspellrange":
+            name = str(node.get("value") or fields.get("range") or "").strip()
+            if name and name not in effects["allow_spell_ranges"]:
+                effects["allow_spell_ranges"].append(name)
         elif tag == "blockspelldescriptor":
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["block_spell_descriptors"]:
@@ -1053,6 +1060,20 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "name": fixed,
                     "bonus": _as_int(fields.get("bonus") or fields.get("val") or fields.get("value")),
                     "needs_select": bool(skills) or "selectskill" in (node.get("fields") or {}),
+                }
+            )
+        elif tag == "weaponskillaccuracy":
+            select_attrs = dict((node.get("field_attrs") or {}).get("selectskill") or {})
+            fixed = str(fields.get("name") or "").strip()
+            effects["weapon_skill_accuracy_slots"].append(
+                {
+                    "source": source,
+                    "name": fixed,
+                    "bonus": _as_int(fields.get("value") or fields.get("val") or fields.get("bonus")),
+                    "select_attrs": select_attrs,
+                    "needs_select": bool(select_attrs)
+                    or "selectskill" in (node.get("fields") or {})
+                    or not fixed,
                 }
             )
         elif tag == "addspirit":

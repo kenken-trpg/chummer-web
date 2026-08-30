@@ -184,6 +184,7 @@ export interface InstalledSpell {
   page?: string;
   free: boolean;
   karma: number;
+  barehanded_adept?: boolean;
   focus_bonus?: number;
   spell?: SpellCastInfo | null;
 }
@@ -1060,6 +1061,7 @@ export interface SpellCastInfo {
   physical: boolean;
   resist: number;
   resist_attrs: string;
+  barehanded_adept?: boolean;
 }
 
 export interface InstalledQiFocus {
@@ -1364,6 +1366,8 @@ export interface Character {
     limit_spell_categories?: string[];
     limit_spirit_categories?: string[];
     allow_spell_categories?: string[];
+    allow_spell_ranges?: string[];
+    spell_range_gated?: boolean;
     block_spell_descriptors?: string[];
     extra_spirits?: string[];
     add_spirit_picks?: {

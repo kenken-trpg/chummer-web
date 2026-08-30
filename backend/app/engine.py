@@ -2690,6 +2690,57 @@ def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: dict
             weapon["damage"] = _add_weapon_dv(str(weapon.get("damage") or ""), bonus)
 
 
+def weapon_skill_dictionary_key(weapon: dict[str, Any]) -> str:
+    """Map a weapon to its active skill name (Chummer Weapon.GetSkillDictionaryKey)."""
+    useskill = str(weapon.get("useskill") or "").strip()
+    if useskill:
+        return useskill
+    category = str(weapon.get("category") or "").strip()
+    if category == "Special Weapons":
+        category = str(weapon.get("range") or category).strip()
+    mapping = {
+        "Bows": "Archery",
+        "Crossbows": "Archery",
+        "Assault Rifles": "Automatics",
+        "Carbines": "Automatics",
+        "Machine Pistols": "Automatics",
+        "Submachine Guns": "Automatics",
+        "Blades": "Blades",
+        "Clubs": "Clubs",
+        "Improvised Weapons": "Clubs",
+        "Assault Cannons": "Heavy Weapons",
+        "Grenade Launchers": "Heavy Weapons",
+        "Missile Launchers": "Heavy Weapons",
+        "Light Machine Guns": "Heavy Weapons",
+        "Medium Machine Guns": "Heavy Weapons",
+        "Heavy Machine Guns": "Heavy Weapons",
+        "Shotguns": "Longarms",
+        "Sniper Rifles": "Longarms",
+        "Sporting Rifles": "Longarms",
+        "Throwing Weapons": "Throwing Weapons",
+        "Unarmed": "Unarmed Combat",
+    }
+    return mapping.get(category, "Pistols")
+
+
+def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: dict[str, Any] | None) -> None:
+    rows = list((effects or {}).get("weapon_skill_accuracy") or [])
+    if not weapons or not rows:
+        return
+    for weapon in weapons:
+        skill = weapon_skill_dictionary_key(weapon)
+        name = str(weapon.get("name") or "")
+        bonus = 0
+        for row in rows:
+            target = str(row.get("name") or "").strip()
+            if not target:
+                continue
+            if target == skill or target == name:
+                bonus += int(row.get("bonus") or 0)
+        if bonus:
+            weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), bonus)
+
+
 def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
     warnings: list[str] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
@@ -4119,6 +4170,14 @@ def quality_needs_extra(spec: dict[str, Any]) -> bool:
                 str(((node.get("field_attrs") or {}).get("selectskill") or {}).get("limittoskill") or "").strip()
             )
         )
+        or (
+            node.get("tag") == "weaponskillaccuracy"
+            and (
+                "selectskill" in (node.get("fields") or {})
+                or bool((node.get("field_attrs") or {}).get("selectskill"))
+            )
+            and not str((node.get("fields") or {}).get("name") or "").strip()
+        )
         for node in (spec.get("bonus") or [])
     )
 
@@ -4276,6 +4335,54 @@ def bind_weapon_category_dv(
     effects["weapon_category_dv"] = resolved
 
 
+def bind_weapon_skill_accuracy(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+    skills_data: dict[str, Any] | None = None,
+) -> None:
+    """Resolve weaponskillaccuracy selectskill picks into skill accuracy bonuses."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    data = skills_data if skills_data is not None else catalog().get("skills") or {}
+    resolved: list[dict[str, Any]] = []
+    for slot in effects.get("weapon_skill_accuracy_slots") or []:
+        source = str(slot.get("source") or "")
+        bonus = int(slot.get("bonus") or 0)
+        if not bonus:
+            continue
+        fixed = str(slot.get("name") or "").strip()
+        if slot.get("needs_select"):
+            spec = by_name.get(source)
+            if not spec:
+                continue
+            picked = str(extras.get(spec["id"]) or "").strip()
+            if not picked:
+                warnings.append(f"{source} のスキルを選んでください")
+                continue
+            attrs = dict(slot.get("select_attrs") or {})
+            options = list(spec.get("select_options") or [])
+            if not options and attrs:
+                options = selectskill_options(
+                    {
+                        "limittoskill": attrs.get("limittoskill") or "",
+                        "limittocategory": attrs.get("limittocategory") or attrs.get("skillcategory") or "",
+                        "excludecategory": attrs.get("excludecategory") or "",
+                        "knowledgeskills": str(attrs.get("knowledgeskills") or "").lower() == "true",
+                    },
+                    data,
+                    {},
+                )
+            if options and picked not in options:
+                warnings.append(f"{source} に {picked} は選べません")
+                continue
+            resolved.append({"name": picked, "bonus": bonus, "source": source})
+        elif fixed:
+            resolved.append({"name": fixed, "bonus": bonus, "source": source})
+    effects["weapon_skill_accuracy"] = resolved
+
+
 def _active_skill_rating_from_state(
     state: CharacterState,
     skill_name: str,
@@ -4418,14 +4525,17 @@ def _limit_spell_needs_from_spec(spec: dict[str, Any]) -> bool:
     )
 
 
-def _spell_allowed_by_limits(spec: dict[str, Any], effects: dict[str, Any]) -> bool:
-    category = str(spec.get("category") or "")
-    limits = list(effects.get("limit_spell_categories") or [])
-    allows = list(effects.get("allow_spell_categories") or [])
-    if limits or allows:
-        allowed = set(limits) | set(allows)
-        if category not in allowed:
-            return False
+def _spell_allowed_by_limits(
+    spec: dict[str, Any],
+    effects: dict[str, Any],
+    *,
+    range_gated: bool = False,
+) -> bool:
+    range_ = str(spec.get("range") or "").strip()
+    allowed_ranges = [str(r).strip() for r in (effects.get("allow_spell_ranges") or []) if str(r).strip()]
+    # Chummer SelectSpell: AllowSpellRange bypasses descriptor/category limits
+    if allowed_ranges and range_ in allowed_ranges:
+        return True
     for blocked in effects.get("block_spell_descriptors") or []:
         text = str(blocked or "").strip()
         if not text:
@@ -4434,6 +4544,16 @@ def _spell_allowed_by_limits(spec: dict[str, Any], effects: dict[str, Any]) -> b
             return False
         descriptor = str(spec.get("descriptor") or "")
         if text and text in descriptor:
+            return False
+    # Pure Adept (etc.): only ranges granted by allowspellrange
+    if range_gated:
+        return False
+    category = str(spec.get("category") or "")
+    limits = list(effects.get("limit_spell_categories") or [])
+    allows = list(effects.get("allow_spell_categories") or [])
+    if limits or allows:
+        allowed = set(limits) | set(allows)
+        if category not in allowed:
             return False
     return True
 
@@ -4674,12 +4794,17 @@ def spell_cast_info(
     resist: int,
     resist_attrs: str,
     effects: dict[str, Any] | None = None,
+    *,
+    barehanded: bool = False,
 ) -> dict[str, Any] | None:
     spec = _spell_by_name(spell_name)
     if not spec:
         return None
     mag = max(0, int(mag))
-    force_max = max(1, mag * 2) if mag else 1
+    if barehanded:
+        force_max = max(1, (mag + 2) // 3) if mag else 1  # MAG/3 rounded up
+    else:
+        force_max = max(1, mag * 2) if mag else 1
     chosen = int(force) if force else (mag or 1)
     chosen = max(1, min(force_max, chosen))
     category = str(spec.get("category") or "")
@@ -4689,6 +4814,8 @@ def spell_cast_info(
     damage_mod = _spell_category_mod_total(effects, "spell_category_damage", category)
     damage_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_damage", descriptor)
     value = spell_drain_value(str(spec.get("dv") or ""), chosen, mod=drain_mod)
+    if barehanded and value is not None:
+        value = max(4, int(value) * 2)
     physical = bool(mag) and chosen > mag
     damage = str(spec.get("damage") or "")
     return {
@@ -4711,6 +4838,7 @@ def spell_cast_info(
         "physical": physical,
         "resist": int(resist),
         "resist_attrs": resist_attrs,
+        "barehanded_adept": barehanded,
     }
 
 
@@ -8079,7 +8207,10 @@ def resolve_spells(
         warnings.append("選んだ伝統が見つからないため外しました")
         state.tradition_id = None
     resist, resist_attrs = tradition_resist(tradition, attrs)
-    if talent["name"] not in SPELL_TALENTS:
+    allow_ranges = [str(r).strip() for r in (effects.get("allow_spell_ranges") or []) if str(r).strip()]
+    range_gated = talent["name"] not in SPELL_TALENTS and bool(allow_ranges)
+    can_spells = talent["name"] in SPELL_TALENTS or bool(allow_ranges)
+    if not can_spells:
         state.spells = []
         if talent["name"] not in MAG_TALENTS:
             state.tradition_id = None
@@ -8093,11 +8224,12 @@ def resolve_spells(
             "tradition": None,
             "resist": resist,
             "resist_attrs": resist_attrs,
+            "range_gated": False,
         }
 
     if not tradition:
         warnings.append("伝統を選んでください")
-    priority_free = int(talent.get("spells") or 0)
+    priority_free = int(talent.get("spells") or 0) if talent["name"] in SPELL_TALENTS else 0
     bonus_free, touch_free = free_spell_bonus_points(effects, state, attrs)
     free_max = priority_free + bonus_free + touch_free
     free_generic_left = priority_free + bonus_free
@@ -8113,7 +8245,7 @@ def resolve_spells(
         if spec.get("category") not in SPELL_CATEGORIES:
             warnings.append(f"{spec['name']} はこの段階では扱えません")
             continue
-        if not _spell_allowed_by_limits(spec, effects):
+        if not _spell_allowed_by_limits(spec, effects, range_gated=range_gated):
             warnings.append(f"{spec['name']} はこの制限では習得できません（{spec.get('category') or '—'}）")
             continue
         if spec["id"] in seen:
@@ -8122,6 +8254,16 @@ def resolve_spells(
         seen.add(spec["id"])
         kind = spec.get("kind") or "spell"
         has_force = kind != "enchantment"
+        is_touch = _spell_is_touch_range(spec)
+        free = False
+        if is_touch and free_touch_left > 0:
+            free = True
+            free_touch_left -= 1
+        elif free_generic_left > 0:
+            free = True
+            free_generic_left -= 1
+        # Pure Adept free touch spells use Barehanded Adept casting rules (Chummer)
+        barehanded = talent["name"] == "Adept" and free and is_touch
         info = spell_cast_info(
             spec["name"],
             inst.force if has_force else None,
@@ -8129,6 +8271,7 @@ def resolve_spells(
             resist,
             resist_attrs,
             effects=effects,
+            barehanded=barehanded,
         )
         if info and has_force:
             inst.force = int(info["force"])
@@ -8140,14 +8283,6 @@ def resolve_spells(
         ]
         if missing:
             warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
-        is_touch = _spell_is_touch_range(spec)
-        free = False
-        if is_touch and free_touch_left > 0:
-            free = True
-            free_touch_left -= 1
-        elif free_generic_left > 0:
-            free = True
-            free_generic_left -= 1
         cost = 0 if free else spell_karma_cost(kind, effects)
         if not free:
             paid += 1
@@ -8160,7 +8295,7 @@ def resolve_spells(
                 "name": spec["name"],
                 "category": spec.get("category"),
                 "kind": kind,
-                "useskill": spec.get("useskill") or "Spellcasting",
+                "useskill": "Unarmed Combat" if barehanded else (spec.get("useskill") or "Spellcasting"),
                 "has_force": has_force,
                 "type": spec.get("type"),
                 "range": spec.get("range"),
@@ -8174,6 +8309,7 @@ def resolve_spells(
                 "page": spec.get("page"),
                 "free": free,
                 "karma": cost,
+                "barehanded_adept": barehanded,
                 "spell": info if has_force else None,
             }
         )
@@ -8188,6 +8324,7 @@ def resolve_spells(
         "tradition": _tradition_public(tradition),
         "resist": resist,
         "resist_attrs": resist_attrs,
+        "range_gated": range_gated,
     }
 
 
@@ -8651,6 +8788,7 @@ def compute(state: CharacterState) -> CharacterState:
     bind_spell_spirit_limits(effects, qualities, state, errors)
     bind_spell_category_drain_damage(effects, qualities, state)
     bind_weapon_category_dv(effects, qualities, state, warnings)
+    bind_weapon_skill_accuracy(effects, qualities, state, warnings, data["skills"])
     for category in effects.get("disabled_skill_group_categories") or []:
         for group in _skill_groups_for_category(data["skills"], str(category)):
             if group not in effects["disabled_skill_groups"]:
@@ -8813,6 +8951,7 @@ def compute(state: CharacterState) -> CharacterState:
     apply_erased_lifestyle_cap(gear, bool(effects.get("erased")), warnings)
     apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
     apply_weapon_category_dv(gear.get("weapons"), effects)
+    apply_weapon_skill_accuracy(gear.get("weapons"), effects)
     bmp_category = ""
     bmp_contact_id = ""
     bmp_active = False
@@ -8901,7 +9040,7 @@ def compute(state: CharacterState) -> CharacterState:
         extra_spirits=list(effects.get("extra_spirits") or []),
     )
     warnings.extend(spirits["warnings"])
-    if talent["name"] in SPELL_TALENTS:
+    if talent["name"] in SPELL_TALENTS or (effects.get("allow_spell_ranges") or []):
         enabled.add("spells")
     if talent["name"] in SPIRIT_TALENTS:
         enabled.add("spirits")
@@ -9634,6 +9773,8 @@ def compute(state: CharacterState) -> CharacterState:
         "limit_spell_categories": list(effects.get("limit_spell_categories") or []),
         "limit_spirit_categories": list(effects.get("limit_spirit_categories") or []),
         "allow_spell_categories": list(effects.get("allow_spell_categories") or []),
+        "allow_spell_ranges": list(effects.get("allow_spell_ranges") or []),
+        "spell_range_gated": bool(magic.get("range_gated")),
         "block_spell_descriptors": list(effects.get("block_spell_descriptors") or []),
         "extra_spirits": list(effects.get("extra_spirits") or []),
         "add_spirit_picks": list(effects.get("add_spirit_picks") or []),
