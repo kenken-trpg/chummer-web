@@ -251,7 +251,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
             })
           }
         >
-          <option value="">スキルを選択</option>
+          <option value="">技能を選択</option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -450,7 +450,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma}
                   {q.side ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}` : ""}
                   {q.free ? " / 付帯（無料）" : ""}
                 </div>
@@ -523,7 +523,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma} / {q.source}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma} / {q.source}
                   {maxTakes == null ? " / 繰り返し可" : maxTakes > 1 ? ` / 最大${maxTakes}` : ""}
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1) ? ` / 取得${ownedCount}` : ""}
                   {q.needs_extra ? " / 対象が必要" : ""}

@@ -67,7 +67,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch, setCharacter }: 
                           ) : null}
                           {prog.extra_kind === "skill" ? (
                             <label>
-                              スキル
+                              技能
                               <select
                                 value={prog.extra || ""}
                                 onChange={(e) => patch({
@@ -147,7 +147,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch, setCharacter }: 
                                 value={extraPick[item.id] || ""}
                                 onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
                               >
-                                <option value="">{spec.extra_kind === "group" ? "グループ" : "スキル"}</option>
+                                <option value="">{spec.extra_kind === "group" ? "グループ" : "技能"}</option>
                                 {(spec.extra_options || []).map((name) => (
                                   <option key={name} value={name}>{tr(name)}</option>
                                 ))}

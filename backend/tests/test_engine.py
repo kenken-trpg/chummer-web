@@ -1132,7 +1132,7 @@ def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:
 def test_knowledge_overspend_is_an_error() -> None:
     out = compute(_human("know-over", knowledge_skills={"Alcohol": 6, "Biology": 6, "Chemistry": 1}))
     assert out.derived["points"]["knowledge"]["used"] == 13
-    assert any("知識スキル点が不足しています" in err for err in out.derived["errors"])
+    assert any("知識技能点が不足しています" in err for err in out.derived["errors"])
 
 
 def test_custom_knowledge_keeps_category_and_mnemonic_bonus() -> None:
@@ -1172,7 +1172,7 @@ def test_skill_specialization_costs_one_skill_point() -> None:
 def test_skill_specialization_requires_the_skill() -> None:
     out = compute(_human("spec-none", skill_specializations={"Pistols": "Semi-Automatics"}))
     assert "Pistols" not in out.skill_specializations
-    assert any("Pistols の専門化にはスキルが必要です" in warn for warn in out.derived["warnings"])
+    assert any("Pistols の専門化には技能が必要です" in warn for warn in out.derived["warnings"])
     assert out.derived["points"]["skills"]["used"] == 0
 
 
@@ -1321,7 +1321,7 @@ def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
             exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=6)],
         )
     )
-    assert any("作成時にレーティング6のスキルは1つまでです" in err for err in out.derived["errors"])
+    assert any("作成時にレーティング6の技能は1つまでです" in err for err in out.derived["errors"])
 
 
 def test_exotic_does_not_charge_specialization_point() -> None:
@@ -1473,7 +1473,7 @@ def test_voice_modulator_rating_adds_impersonation() -> None:
 
 def test_reflex_recorder_warns_until_skill_picked() -> None:
     out = compute(_human("recorder-empty", bioware=[CyberwareInstall(id="rec1", ware_id=REFLEX_RECORDER)]))
-    assert any("Reflex Recorder のスキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("Reflex Recorder の技能を選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_bonus"].get("Gymnastics", 0) == 0
     slots = out.derived["skill_pick_slots"]
     assert len(slots) == 1
@@ -1491,7 +1491,7 @@ def test_reflex_recorder_adds_picked_skill() -> None:
         )
     )
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
-    assert not any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_pick_slots"][0]["picked"] == "Gymnastics"
 
 
@@ -1503,7 +1503,7 @@ def test_reflex_recorder_rejects_invalid_pick() -> None:
             skill_picks={"ware:rec1:0": "Software"},
         )
     )
-    assert any("スキル指定が無効" in warn for warn in out.derived["warnings"])
+    assert any("技能指定が無効" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_bonus"].get("Software", 0) == 0
 
 
@@ -1539,7 +1539,7 @@ def test_loss_of_confidence_requires_rating_four() -> None:
             skill_picks={"quality:c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1:0": "Gymnastics"},
         )
     )
-    assert any("スキル指定が無効" in warn for warn in blocked.derived["warnings"])
+    assert any("技能指定が無効" in warn for warn in blocked.derived["warnings"])
 
 
 def test_selectskill_options_limit_to_physical_attributes() -> None:
@@ -3584,7 +3584,7 @@ def test_skill_autosoft_needs_skill() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1500
     assert out.derived["nuyen_spent"] == 9500
-    assert any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("技能を選んでください" in warn for warn in out.derived["warnings"])
     assert "First Aid" in out.derived["programs"][0]["extra_options"]
 
 
@@ -3602,7 +3602,7 @@ def test_skill_autosoft_with_skill() -> None:
     assert row["label"] == "Skill Autosoft (Hardware)"
     assert row["nuyen"] == 1000
     assert out.derived["nuyen_spent"] == 9000
-    assert not any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_predator_laser_sight() -> None:
@@ -4223,7 +4223,7 @@ def test_group_autosoft_needs_group() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1000
     assert "Electronics" in out.derived["programs"][0]["extra_options"]
-    assert any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_group_autosoft_with_group() -> None:
@@ -4238,7 +4238,7 @@ def test_group_autosoft_with_group() -> None:
     row = out.derived["programs"][0]
     assert row["label"] == "Group Autosoft (Electronics)"
     assert row["nuyen"] == 1000
-    assert not any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_model_maneuvering_autosoft() -> None:
@@ -5224,7 +5224,7 @@ def test_submersion_raises_res_max_and_attack_upgrade() -> None:
 
 def test_submersion_grade_above_res_errors() -> None:
     out = compute(_techno("sub-over", "C", submersion_grade=5))
-    assert any("サブマージョン等級はレゾナンス以下" in err for err in out.derived["errors"])
+    assert any("サブマージョン等級は共振力以下" in err for err in out.derived["errors"])
 
 
 def test_echo_max_takes_blocks_third_attack_upgrade() -> None:
@@ -5472,7 +5472,7 @@ def test_inspired_requires_choice_and_skill() -> None:
             quality_extras={INSPIRED_SASS: "Cooking"},
         )
     )
-    assert any("Artisan スキル" in warn for warn in no_skill.derived["warnings"])
+    assert any("Artisan 技能" in warn for warn in no_skill.derived["warnings"])
 
 
 def test_photographic_memory_and_quick_healer() -> None:
@@ -6219,7 +6219,7 @@ KRIME_CALLIOPE = "7fffffff-e125-44fb-8977-7fffffffc59c"
 
 def test_practice_practice_practice_weapon_skill_accuracy() -> None:
     missing = compute(_human("ppp-empty", quality_ids=[PRACTICE_PRACTICE_PRACTICE]))
-    assert any("スキルを選んでください" in warn for warn in missing.derived["warnings"])
+    assert any("技能を選んでください" in warn for warn in missing.derived["warnings"])
     base = compute(
         _human(
             "ppp-base",
@@ -6251,7 +6251,7 @@ def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
             weapons=[WeaponInstall(weapon_id=KATANA)],
         )
     )
-    assert any("武器スキル" in err for err in missing.derived["errors"])
+    assert any("武器技能" in err for err in missing.derived["errors"])
     out = compute(
         _adept(
             "dda-blades",

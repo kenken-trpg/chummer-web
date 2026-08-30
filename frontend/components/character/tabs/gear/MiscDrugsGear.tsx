@@ -74,7 +74,7 @@ export function MiscDrugsGear({ catalog, character: ch, d, tr, patch, setCharact
                                 )),
                               })}
                             >
-                              <option value="">スキル</option>
+                              <option value="">技能</option>
                               {(item.extra_options || []).map((name) => (
                                 <option key={name} value={name}>{tr(name)}</option>
                               ))}
@@ -254,7 +254,7 @@ export function MiscDrugsGear({ catalog, character: ch, d, tr, patch, setCharact
                               value={extraPick[`buy-${item.id}`] || ""}
                               onChange={(e) => setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: e.target.value }))}
                             >
-                              <option value="">スキル</option>
+                              <option value="">技能</option>
                               {(item.extra_options || []).map((name) => (
                                 <option key={name} value={name}>{tr(name)}</option>
                               ))}

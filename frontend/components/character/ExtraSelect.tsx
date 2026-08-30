@@ -4,7 +4,7 @@ import type { InstalledAdeptPower } from "@/lib/types";
 import { attrLabel, type TFn } from "@/lib/ui-strings";
 
 export function selectLabel(kind?: string | null) {
-  if (kind === "skill") return "スキル";
+  if (kind === "skill") return "技能";
   if (kind === "attribute") return "能力値";
   if (kind === "spell") return "呪文";
   return "対象";

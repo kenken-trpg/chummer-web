@@ -228,7 +228,7 @@ export default function CharacterSheet({
         </div>
       </Section>
 
-      <Section title="スキル" empty={!activeSkills.length && !groups.length && !exotic.length}>
+      <Section title="技能" empty={!activeSkills.length && !groups.length && !exotic.length}>
         {groups.length ? (
           <p className="sheet-note">
             グループ:{" "}
@@ -238,7 +238,7 @@ export default function CharacterSheet({
         <table className="sheet-table">
           <thead>
             <tr>
-              <th>スキル</th>
+              <th>技能</th>
               <th>能力値</th>
               <th>R</th>
               <th>プール</th>
@@ -272,7 +272,7 @@ export default function CharacterSheet({
         {activeSkills.some((row) => row.soft) ? <p className="sheet-note">* スキルソフト</p> : null}
       </Section>
 
-      <Section title="知識スキル" empty={!knowledge.length}>
+      <Section title="知識技能" empty={!knowledge.length}>
         <table className="sheet-table">
           <thead>
             <tr>
@@ -351,7 +351,7 @@ export default function CharacterSheet({
               <b>{tr(q.name)}</b>
               {q.extra ? `（${tr(q.extra)}）` : ""}
               {q.side ? `（${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}）` : ""}
-              <span className="sheet-dim"> {q.category === "Negative" ? "不利" : "有利"} {q.karma > 0 ? `+${q.karma}` : q.karma}K</span>
+              <span className="sheet-dim"> {q.category === "Negative" ? "不利な資質" : "有利な資質"} {q.karma > 0 ? `+${q.karma}` : q.karma}K</span>
             </li>
           ))}
         </ul>

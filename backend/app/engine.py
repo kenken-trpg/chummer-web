@@ -2144,16 +2144,16 @@ def _resolve_misc_gear(
         options = gear_extra_options(spec)
         if extra_kind == "skill":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルを選んでください")
+                warnings.append(f"{spec['name']} の技能を選んでください")
         elif extra_kind == "group":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能グループ指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+                warnings.append(f"{spec['name']} の技能グループを選んでください")
         elif extra_kind == "text" and not extra:
             warnings.append(f"{spec['name']} の対象を入力してください")
         inst.extra = extra or None
@@ -2289,16 +2289,16 @@ def _resolve_programs(
         options = gear_extra_options(spec)
         if extra_kind == "skill":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルを選んでください")
+                warnings.append(f"{spec['name']} の技能を選んでください")
         elif extra_kind == "group":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能グループ指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+                warnings.append(f"{spec['name']} の技能グループを選んでください")
         elif extra_kind == "text" and not extra:
             warnings.append(f"{spec['name']} の対象を入力してください")
         inst.extra = extra or None
@@ -2950,16 +2950,16 @@ def _resolve_apps(state: CharacterState, commlinks: list[dict[str, Any]]) -> tup
         options = gear_extra_options(spec)
         if extra_kind == "skill":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキル指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルを選んでください")
+                warnings.append(f"{spec['name']} の技能を選んでください")
         elif extra_kind == "group":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} のスキルグループ指定が無効です（{extra}）")
+                warnings.append(f"{spec['name']} の技能グループ指定が無効です（{extra}）")
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} のスキルグループを選んでください")
+                warnings.append(f"{spec['name']} の技能グループを選んでください")
         elif extra_kind == "text" and not extra:
             warnings.append(f"{spec['name']} の対象を入力してください")
         inst.extra = extra or None
@@ -4374,7 +4374,7 @@ def bind_weapon_category_dv(
                 continue
             picked = str(extras.get(spec["id"]) or "").strip()
             if not picked:
-                warnings.append(f"{source} の武器スキルを選んでください")
+                warnings.append(f"{source} の武器技能を選んでください")
                 continue
             if skills and picked not in skills:
                 warnings.append(f"{source} に {picked} は選べません")
@@ -4409,7 +4409,7 @@ def bind_weapon_skill_accuracy(
                 continue
             picked = str(extras.get(spec["id"]) or "").strip()
             if not picked:
-                warnings.append(f"{source} のスキルを選んでください")
+                warnings.append(f"{source} の技能を選んでください")
                 continue
             attrs = dict(slot.get("select_attrs") or {})
             options = list(spec.get("select_options") or [])
@@ -4959,7 +4959,7 @@ def apply_quality_rules(
             elif _quality_needs_spirit_category(spec):
                 errors.append(f"{spec['name']} の精霊を選んでください")
             elif str(spec.get("extra_kind") or "") == "weapon_skill":
-                errors.append(f"{spec['name']} の武器スキルを選んでください")
+                errors.append(f"{spec['name']} の武器技能を選んでください")
             else:
                 errors.append(f"{spec['name']} の対象を入力してください")
         if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
@@ -6062,17 +6062,17 @@ def resolve_specializations(
             rating = 0 if native else int((state.knowledge_skills or {}).get(name) or 0)
             rating = max(rating, int((skillsoft_knowledge or {}).get(name) or 0))
             if not native and rating < 1:
-                warnings.append(f"{name} の専門化には知識スキルが必要です")
+                warnings.append(f"{name} の専門化には知識技能が必要です")
                 continue
             if name not in free_expertise:
                 knowledge_spent += 1
         else:
             if name not in active_names:
-                warnings.append(f"{name} の専門化は未知のスキルです")
+                warnings.append(f"{name} の専門化は未知の技能です")
                 continue
             rating = max(int(skill_totals.get(name) or 0), int((skillsoft_active or {}).get(name) or 0))
             if rating < 1:
-                warnings.append(f"{name} の専門化にはスキルが必要です")
+                warnings.append(f"{name} の専門化には技能が必要です")
                 continue
             if name not in free_expertise:
                 active_spent += 1
@@ -6113,7 +6113,7 @@ def apply_select_expertise(
             continue
         rating = max(int(skill_totals.get(skill_name) or 0), int((skillsoft_active or {}).get(skill_name) or 0))
         if rating < 1:
-            warnings.append(f"{source} には {skill_name} スキル（レーティング1以上）が必要です")
+            warnings.append(f"{source} には {skill_name} 技能（レーティング1以上）が必要です")
             continue
         limit_specs = [
             part.strip()
@@ -7045,10 +7045,10 @@ def resolve_skill_picks(
         options = selectskill_options(spec, skills_data, skill_totals)
         picked = picks.get(key) or ""
         if picked and picked not in options:
-            warnings.append(f"{source} のスキル指定が無効です（{picked}）")
+            warnings.append(f"{source} の技能指定が無効です（{picked}）")
             picked = ""
         if not picked:
-            warnings.append(f"{source} のスキルを選んでください")
+            warnings.append(f"{source} の技能を選んでください")
         elif spec.get("bonus"):
             pick_bonus[picked] = int(pick_bonus.get(picked, 0)) + int(spec["bonus"])
             note = spec.get("condition") or ""
@@ -8243,7 +8243,7 @@ def resolve_adept_powers(
         inst.rating = rating
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
-        select_label = {"skill": "スキル", "attribute": "能力値", "spell": "呪文"}.get(kind or "", "対象")
+        select_label = {"skill": "技能", "attribute": "能力値", "spell": "呪文"}.get(kind or "", "対象")
         if kind and extra and extra not in options:
             warnings.append(f"{spec['name']} の指定が無効です（{extra}）")
             extra = ""
@@ -9015,9 +9015,9 @@ def resolve_submersion(
         public_choices.append(row)
 
     if grade > 0 and res <= 0:
-        errors.append("サブマージョンにはレゾナンスが必要です")
+        errors.append("サブマージョンには共振力が必要です")
     elif grade > res:
-        errors.append(f"サブマージョン等級はレゾナンス以下です（等級 {grade} / RES {res}）")
+        errors.append(f"サブマージョン等級は共振力以下です（等級 {grade} / RES {res}）")
 
     return {
         "warnings": warnings,
@@ -9539,10 +9539,10 @@ def compute(state: CharacterState) -> CharacterState:
     _copy_exotic_skill_bonuses(skill_mods, exotic["public"])
     for name in effects.get("disabled_skills") or []:
         if int(skill_totals.get(name) or 0) > 0 or int(state.skills.get(name) or 0) > 0:
-            warnings.append(f"{name} は無効化されているスキルです")
+            warnings.append(f"{name} は無効化されている技能です")
     for group in effects.get("disabled_skill_groups") or []:
         if int(state.skill_groups.get(group) or 0) > 0:
-            warnings.append(f"スキルグループ {group} は無効化されています")
+            warnings.append(f"技能グループ {group} は無効化されています")
     blocked_defaults = list(effects.get("blocked_default_categories") or [])
     if blocked_defaults:
         warnings.append(
@@ -9816,7 +9816,7 @@ def compute(state: CharacterState) -> CharacterState:
     if not career:
         at_six = [n for n, r in skill_totals.items() if r >= 6]
         if len(at_six) > 1:
-            errors.append("作成時にレーティング6のスキルは1つまでです")
+            errors.append("作成時にレーティング6の技能は1つまでです")
         if is_karma:
             at_natural_max = []
             for key, spec in attrs_spec.items():
@@ -9839,11 +9839,11 @@ def compute(state: CharacterState) -> CharacterState:
             if spent_special > special_from_meta:
                 errors.append(f"特殊能力値点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
             if skill_spent > skill_points:
-                errors.append(f"スキル点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
+                errors.append(f"技能点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
             if group_spent > group_points:
-                errors.append(f"スキルグループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
+                errors.append(f"技能グループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
             if know_spent > know_max:
-                errors.append(f"知識スキル点が不足しています（使用 {know_spent} / 上限 {know_max}）")
+                errors.append(f"知識技能点が不足しています（使用 {know_spent} / 上限 {know_max}）")
     if karma_left < 0:
         errors.append(f"カルマが不足しています（残り {karma_left}）")
     if nuyen < 0:

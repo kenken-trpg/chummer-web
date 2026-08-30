@@ -134,7 +134,7 @@ export default function Page() {
               ["priority", "優先度"],
               ["meta", "メタタイプ"],
               ["attrs", "能力値"],
-              ["skills", "スキル"],
+              ["skills", "技能"],
               ["qualities", "資質"],
               ["cyber", "サイバー"],
               ["bio", "バイオ"],

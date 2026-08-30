@@ -12,7 +12,7 @@ export function SkillPickSelects(props: {
     <div className="skill-picks">
       {props.slots.map((slot) => (
         <label key={slot.key}>
-          {props.tr(slot.source)} のスキル
+          {props.tr(slot.source)} の技能
           {slot.bonus ? ` ${slot.bonus > 0 ? "+" : ""}${slot.bonus}` : ""}
           {slot.max ? ` 上限+${slot.max}` : ""}
           <select value={slot.picked} onChange={(e) => props.onPick(slot.key, e.target.value)}>
