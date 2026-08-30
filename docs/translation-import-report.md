@@ -4,7 +4,7 @@
 curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 アプリの catalog() が実際に使う名前／カテゴリに限定。
 
-- 追加: **200 件** / オーバーレイ合計: **200 件**
+- 追加: **215 件** / オーバーレイ合計: **215 件**
 
 ## chumJA(SR4) name (114)
 
@@ -125,23 +125,34 @@ curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (33)
+## curated (49)
 
 | English | 日本語 |
 |---|---|
 | Academic | 学術 |
+| Acceleration | 加速値 |
+| Acting | 演技 |
+| Athletics | 運動 |
 | Attributes | 能力値 |
+| Biotech | 医療 |
 | Body | 強靱力 |
+| Close Combat | 近接戦闘 |
 | Combat | 戦闘 |
+| Conjuring | 召喚 |
+| Cracking | クラッキング |
 | Cyclops | キュクロプス |
 | Detection | 探知 |
 | Dryad | ドリアード |
 | Dwarf | ドワーフ |
+| Electronics | エレクトロニクス |
 | Elf | エルフ |
+| Enchanting | 付術 |
+| Fomorian | フォモリアン |
 | Giant | ジャイアント |
 | Gnome | ノーム |
 | Hanuman | ハヌマーン |
 | Health | 身体 |
+| Hobgoblin | ホブゴブリン |
 | Human | ヒューマン |
 | Illusion | 幻影 |
 | Interest | 趣味 |
@@ -154,16 +165,21 @@ curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 | Minotaur | ミノタウロス |
 | Nartaki | ナルタキ |
 | Nocturna | ノクターナ |
+| Ogre | オーガ |
 | Oni | オニ |
 | Ork | オーク |
+| Outdoors | 野外 |
 | Professional | 職業 |
 | Satyr | サテュロス |
+| Services | 助力 |
+| Sorcery | 魔術 |
 | Street | 街 |
+| Tasking | タスキング |
 | Troll | トロール |
 | Wakyambi | ワキャンビ |
 | Xapiri Thëpë | シャピリ・テペ |
 
-## chumJA(SR4) category (53)
+## chumJA(SR4) category (52)
 
 | English | 日本語 |
 |---|---|
@@ -173,7 +189,6 @@ curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 | Autosofts | オートソフト |
 | Basic | 標準 |
 | Bikes | バイク |
-| Biotech | 医療用具 |
 | Bodyware | ボディウェア |
 | Cars | 自動車 |
 | Chemicals | 化学薬品 |

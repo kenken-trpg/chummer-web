@@ -122,14 +122,25 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 再生成: `cd backend && .venv/bin/python scripts/import_ja_from_refs.py --write`
 
-**2b. 残作業 (未着手)**
+**2b. 手動訳バッチ 🚧 進行中 (2026-08-30 一次分)**
 
-1. **Phase 1 不一致の反映**: `translation-glossary-mismatches.md` の A (能力値 Short/`強靱`)・C を
-   `data.json` へ。B は Phase 3 (`ui.json`) 送り。
-2. **高頻度エンティティの手動訳** (用語集準拠): skills 残 → spells 残 → qualities → weapons → armor →
+- `import_ja_from_refs.py` の CURATED に「Phase 2b: hand translations」節を追加 (glossary 照合済)。
+  一次分 **16 件**:
+  - スキルグループ 10 種 (`Acting`→演技, `Close Combat`→近接戦闘, `Conjuring`→召喚, `Sorcery`→魔術,
+    `Enchanting`→付術, `Tasking`→タスキング 等)。`Biotech` はギアカテゴリと名前衝突するため
+    スキルグループの語義 (`医療`) を優先。
+  - 残りのプレイアブル・メタバリアント 3 種 (`Hobgoblin`/`Ogre`/`Fomorian`)。
+  - `Acceleration`→加速値、カテゴリ `Services`→助力 (Phase 1 Section C)。
+- Phase 1 mismatch レポートの **A / B は Phase 3 送り**。理由: `String_Attribute*` は frontend が
+  `ATTR_JA` 定数 (constants.ts) を使っており lang XML を見ていない。`ui.json` を今埋めても無効。
+- overlay 合計 **215 件**。全 411 テスト green (orphan 検出テストにスキルグループも追加)。
+
+**2b. 残 (未着手)**
+
+1. **高頻度エンティティの手動訳** (用語集準拠): spells 残 179 → qualities → weapons → armor →
    cyberware/bioware → gear → powers/mentors。バッチごとに
-   「英語フォールバック中のキー一覧を出力 → 訳 → `data.json` 追記 → アンカーテスト更新」。
-3. **critters / critterpowers / vehicles** は分量大・露出少で後回し (そもそも critters は
+   「英語フォールバック中のキー一覧を出力 → 訳 → CURATED 追記 → `--write` → アンカーテスト更新」。
+2. **critters / critterpowers / vehicles** は分量大・露出少で後回し (そもそも critters は
    catalog 未ロード)。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善
@@ -169,3 +180,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 0 完了。オーバーレイ機構 (`backend/data/ja_overrides/`, `data_loader.py`) ＋テスト 8 件。
 - 2026-08-30: フェーズ 1 完了。`build_ja_glossary.py` ＋ `translation-glossary.md` / `translation-glossary-mismatches.md`。
 - 2026-08-30: フェーズ 2a 完了。`import_ja_from_refs.py` で curated＋chumJA SR4 を 200 件 `data.json` へ。
+- 2026-08-30: フェーズ 2b 一次分。スキルグループ 10・メタバリアント 3・その他 3 を追加 (計 215 件)。

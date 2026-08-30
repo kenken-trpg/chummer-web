@@ -80,6 +80,27 @@ CURATED: dict[str, str] = {
     "Language": "言語",
     "Professional": "職業",
     "Street": "街",
+    # --- Phase 2b: hand translations, glossary-checked -----------------------
+    # skill groups still on English fallback (SR5 official JP).
+    # "Biotech" collides with a gear category; the skill-group sense wins.
+    "Acting": "演技",
+    "Athletics": "運動",
+    "Biotech": "医療",
+    "Close Combat": "近接戦闘",
+    "Conjuring": "召喚",
+    "Cracking": "クラッキング",
+    "Electronics": "エレクトロニクス",
+    "Enchanting": "付術",
+    "Outdoors": "野外",
+    "Sorcery": "魔術",
+    "Tasking": "タスキング",
+    # remaining playable metavariants
+    "Hobgoblin": "ホブゴブリン",
+    "Ogre": "オーガ",
+    "Fomorian": "フォモリアン",
+    # derived-value pseudo-entity + a category shown via tr() (glossary lang.*)
+    "Acceleration": "加速値",
+    "Services": "助力",
 }
 
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
@@ -136,6 +157,10 @@ def catalog_names_and_categories() -> tuple[set[str], set[str]]:
         if key in {"translations", "ui_strings"}:
             continue
         walk(value)
+    # skill groups are a plain list of strings, not dict rows
+    for grp in (cat.get("skills") or {}).get("groups") or []:
+        if isinstance(grp, str) and grp.strip():
+            names.add(grp.strip())
     return names, cats
 
 

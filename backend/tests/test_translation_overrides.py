@@ -143,6 +143,10 @@ def test_committed_data_overlay_keys_are_used_by_catalog() -> None:
     for k, v in cat.items():
         if k not in {"translations", "ui_strings"}:
             walk(v)
+    # skill groups are a plain list of strings, not dict rows
+    known.update(
+        g for g in (cat.get("skills") or {}).get("groups") or [] if isinstance(g, str)
+    )
 
     orphans = sorted(k for k in overlay if k not in known)
     assert not orphans, f"overlay keys not present in catalog: {orphans}"
@@ -157,3 +161,7 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Body"] == "強靱力"  # 靭 -> 靱
     # imported from chumJA SR4 exact-name match
     assert tr["Alter Memory"] == "記憶改変"
+    # Phase 2b hand translations
+    assert tr["Close Combat"] == "近接戦闘"  # skill group
+    assert tr["Biotech"] == "医療"  # group sense wins over the gear-category collision
+    assert tr["Hobgoblin"] == "ホブゴブリン"  # metavariant
