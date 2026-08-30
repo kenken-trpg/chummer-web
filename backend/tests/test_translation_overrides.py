@@ -168,17 +168,9 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Fire Elemental"] == "火のエレメンタル"  # spirit
     assert tr["Necromancy"] == "死霊術"  # magic art
     assert tr["Buddhism"] == "仏教"  # tradition
-    # spells — 漢語/カタカナ dual format (batch 3)
+    # spells — 漢語/カタカナ dual format (batch 3, confident subset only)
     assert tr["Ice Spear"] == "氷槍/アイス・スピア"
     assert tr["Mindnet Extended"] == "広域精神網/エクステンデッド・マインドネット"
-
-
-def test_all_untranslated_spells_now_covered() -> None:
-    """The Phase 2b spell pass should leave no spell on English fallback."""
-    tr = data_loader.load_translations()
-    english_only = [
-        s["name"]
-        for s in data_loader.catalog()["spells"]
-        if not JP_RE.search(tr.get(s["name"], "") or "")
-    ]
-    assert english_only == [], english_only
+    # obscure supplement coinages were rolled back to English fallback
+    assert not JP_RE.search(tr.get("Krigama Carpet", "") or "")
+    assert not JP_RE.search(tr.get("Pyrohemetics", "") or "")
