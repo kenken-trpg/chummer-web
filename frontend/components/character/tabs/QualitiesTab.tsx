@@ -4,11 +4,12 @@ import { useMemo, useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
-import { ATTRS, ATTR_JA } from "@/lib/character/constants";
+import { ATTRS } from "@/lib/character/constants";
+import { attrLabel } from "@/lib/ui-strings";
 import { mergeRatings } from "@/lib/character/format";
 import { dropSkillPicksForPrefix, qualityBlockReason, type QualityReqCtx } from "@/lib/character/quality";
 
-export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative">("all");
   const filteredQualities = useMemo(() => {
@@ -127,7 +128,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               })
             }
           >
-            <option value="">コネクトを選択</option>
+            <option value="">コンタクトを選択</option>
             {(d.contacts || []).map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L{c.loyalty})
@@ -250,7 +251,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
             })
           }
         >
-          <option value="">スキルを選択</option>
+          <option value="">技能を選択</option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -316,7 +317,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
             })
           }
         >
-          <option value="">付帯クオリティを選択</option>
+          <option value="">付帯資質を選択</option>
           {options.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -354,10 +355,10 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
             })
           }
         >
-          <option value="">属性を選択</option>
+          <option value="">能力値を選択</option>
           {ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES").map((key) => (
             <option key={key} value={key}>
-              {ATTR_JA[key] || key}
+              {attrLabel(key, t)}
             </option>
           ))}
         </select>
@@ -449,7 +450,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma}
                   {q.side ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}` : ""}
                   {q.free ? " / 付帯（無料）" : ""}
                 </div>
@@ -503,7 +504,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
           不利
         </button>
       </div>
-      <input type="search" placeholder="クオリティを検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
+      <input type="search" placeholder="資質を検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
       <div className="quality-list">
         {filteredQualities.map((q) => {
           const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
@@ -522,12 +523,12 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利" : "有利"} / カルマ {q.karma} / {q.source}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma} / {q.source}
                   {maxTakes == null ? " / 繰り返し可" : maxTakes > 1 ? ` / 最大${maxTakes}` : ""}
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1) ? ` / 取得${ownedCount}` : ""}
                   {q.needs_extra ? " / 対象が必要" : ""}
                   {q.is_way ? " / 他の Way と排他" : ""}
-                  {replaces ? " / 追加すると両立しないクオリティを外します" : ""}
+                  {replaces ? " / 追加すると両立しない資質を外します" : ""}
                   {blocked ? ` / ${blocked}` : ""}
                 </div>
               </div>

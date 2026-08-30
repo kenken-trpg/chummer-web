@@ -847,6 +847,7 @@ def public_catalog() -> dict:
             for t in all_talent_options()
         ],
         "translations": raw["translations"],
+        "ui_strings": raw["ui_strings"],
     }
 
 

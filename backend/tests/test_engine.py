@@ -1132,7 +1132,7 @@ def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:
 def test_knowledge_overspend_is_an_error() -> None:
     out = compute(_human("know-over", knowledge_skills={"Alcohol": 6, "Biology": 6, "Chemistry": 1}))
     assert out.derived["points"]["knowledge"]["used"] == 13
-    assert any("知識スキル点が不足しています" in err for err in out.derived["errors"])
+    assert any("知識技能点が不足しています" in err for err in out.derived["errors"])
 
 
 def test_custom_knowledge_keeps_category_and_mnemonic_bonus() -> None:
@@ -1172,7 +1172,7 @@ def test_skill_specialization_costs_one_skill_point() -> None:
 def test_skill_specialization_requires_the_skill() -> None:
     out = compute(_human("spec-none", skill_specializations={"Pistols": "Semi-Automatics"}))
     assert "Pistols" not in out.skill_specializations
-    assert any("Pistols の専門化にはスキルが必要です" in warn for warn in out.derived["warnings"])
+    assert any("Pistols の専門化には技能が必要です" in warn for warn in out.derived["warnings"])
     assert out.derived["points"]["skills"]["used"] == 0
 
 
@@ -1321,7 +1321,7 @@ def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
             exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=6)],
         )
     )
-    assert any("作成時にレーティング6のスキルは1つまでです" in err for err in out.derived["errors"])
+    assert any("作成時にレーティング6の技能は1つまでです" in err for err in out.derived["errors"])
 
 
 def test_exotic_does_not_charge_specialization_point() -> None:
@@ -1429,7 +1429,7 @@ def test_negative_quality_karma_is_capped_at_25() -> None:
         )
     )
     assert out.derived["karma"]["negative"]["used"] == 30
-    assert any("不利クオリティから得られるカルマが上限を超えています" in err for err in out.derived["errors"])
+    assert any("不利資質から得られるカルマが上限を超えています" in err for err in out.derived["errors"])
 
 
 def test_human_looking_requires_nonhuman_metatype() -> None:
@@ -1473,7 +1473,7 @@ def test_voice_modulator_rating_adds_impersonation() -> None:
 
 def test_reflex_recorder_warns_until_skill_picked() -> None:
     out = compute(_human("recorder-empty", bioware=[CyberwareInstall(id="rec1", ware_id=REFLEX_RECORDER)]))
-    assert any("Reflex Recorder のスキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("Reflex Recorder の技能を選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_bonus"].get("Gymnastics", 0) == 0
     slots = out.derived["skill_pick_slots"]
     assert len(slots) == 1
@@ -1491,7 +1491,7 @@ def test_reflex_recorder_adds_picked_skill() -> None:
         )
     )
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
-    assert not any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_pick_slots"][0]["picked"] == "Gymnastics"
 
 
@@ -1503,7 +1503,7 @@ def test_reflex_recorder_rejects_invalid_pick() -> None:
             skill_picks={"ware:rec1:0": "Software"},
         )
     )
-    assert any("スキル指定が無効" in warn for warn in out.derived["warnings"])
+    assert any("技能指定が無効" in warn for warn in out.derived["warnings"])
     assert out.derived["skill_bonus"].get("Software", 0) == 0
 
 
@@ -1539,7 +1539,7 @@ def test_loss_of_confidence_requires_rating_four() -> None:
             skill_picks={"quality:c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1:0": "Gymnastics"},
         )
     )
-    assert any("スキル指定が無効" in warn for warn in blocked.derived["warnings"])
+    assert any("技能指定が無効" in warn for warn in blocked.derived["warnings"])
 
 
 def test_selectskill_options_limit_to_physical_attributes() -> None:
@@ -3584,7 +3584,7 @@ def test_skill_autosoft_needs_skill() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1500
     assert out.derived["nuyen_spent"] == 9500
-    assert any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("技能を選んでください" in warn for warn in out.derived["warnings"])
     assert "First Aid" in out.derived["programs"][0]["extra_options"]
 
 
@@ -3602,7 +3602,7 @@ def test_skill_autosoft_with_skill() -> None:
     assert row["label"] == "Skill Autosoft (Hardware)"
     assert row["nuyen"] == 1000
     assert out.derived["nuyen_spent"] == 9000
-    assert not any("スキルを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_predator_laser_sight() -> None:
@@ -4223,7 +4223,7 @@ def test_group_autosoft_needs_group() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1000
     assert "Electronics" in out.derived["programs"][0]["extra_options"]
-    assert any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_group_autosoft_with_group() -> None:
@@ -4238,7 +4238,7 @@ def test_group_autosoft_with_group() -> None:
     row = out.derived["programs"][0]
     assert row["label"] == "Group Autosoft (Electronics)"
     assert row["nuyen"] == 1000
-    assert not any("スキルグループを選んでください" in warn for warn in out.derived["warnings"])
+    assert not any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
 
 
 def test_model_maneuvering_autosoft() -> None:
@@ -4715,11 +4715,11 @@ def test_diffusion_needs_matrix_attribute() -> None:
     out = compute(_techno("diff-none", complex_forms=[ComplexFormInstall(form_id=DIFFUSION)]))
     row = out.derived["complex_forms"][0]
     assert row["needs_extra"] is True
-    assert any("マトリクス属性" in warn for warn in out.derived["warnings"])
+    assert any("マトリクス能力値" in warn for warn in out.derived["warnings"])
     out = compute(_techno("diff-atk", complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")]))
     assert out.derived["complex_forms"][0]["extra"] == "Attack"
     assert out.derived["complex_forms"][0]["label"] == "Diffusion of Attack"
-    assert not any("マトリクス属性" in warn for warn in out.derived["warnings"])
+    assert not any("マトリクス能力値" in warn for warn in out.derived["warnings"])
 
 
 def test_overdrive_requires_stream_quality() -> None:
@@ -5014,7 +5014,7 @@ def test_contact_chargen_cost_is_capped_at_seven() -> None:
 
 def test_unnamed_contact_is_warned() -> None:
     out = compute(_human("contact-noname", contacts=[ContactInstall(connection=1, loyalty=1)]))
-    assert any("名前のないコネクト" in warn for warn in out.derived["warnings"])
+    assert any("名前のないコンタクト" in warn for warn in out.derived["warnings"])
     assert out.derived["contact_points"]["used"] == 2
 
 
@@ -5224,7 +5224,7 @@ def test_submersion_raises_res_max_and_attack_upgrade() -> None:
 
 def test_submersion_grade_above_res_errors() -> None:
     out = compute(_techno("sub-over", "C", submersion_grade=5))
-    assert any("サブマージョン等級はレゾナンス以下" in err for err in out.derived["errors"])
+    assert any("サブマージョン等級は共振力以下" in err for err in out.derived["errors"])
 
 
 def test_echo_max_takes_blocks_third_attack_upgrade() -> None:
@@ -5338,7 +5338,7 @@ def test_resistance_pathogens_toxins_special_armor() -> None:
 
 def test_exceptional_attribute_raises_max() -> None:
     missing = compute(_human("ea-miss", quality_ids=[EXCEPTIONAL_ATTRIBUTE]))
-    assert any("属性を選んでください" in warn for warn in missing.derived["warnings"])
+    assert any("能力値を選んでください" in warn for warn in missing.derived["warnings"])
     attrs = default_attributes(find_metatype("Human", None))
     attrs["BOD"] = 6
     out = compute(
@@ -5472,7 +5472,7 @@ def test_inspired_requires_choice_and_skill() -> None:
             quality_extras={INSPIRED_SASS: "Cooking"},
         )
     )
-    assert any("Artisan スキル" in warn for warn in no_skill.derived["warnings"])
+    assert any("Artisan 技能" in warn for warn in no_skill.derived["warnings"])
 
 
 def test_photographic_memory_and_quick_healer() -> None:
@@ -5834,7 +5834,7 @@ def test_black_market_pipeline_warns_without_contact() -> None:
             quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
         )
     )
-    assert any("コネクトを選んでください" in warn for warn in out.derived["warnings"])
+    assert any("コンタクトを選んでください" in warn for warn in out.derived["warnings"])
     assert out.derived["black_market_avail_bonus"] == 0
 
 
@@ -6219,7 +6219,7 @@ KRIME_CALLIOPE = "7fffffff-e125-44fb-8977-7fffffffc59c"
 
 def test_practice_practice_practice_weapon_skill_accuracy() -> None:
     missing = compute(_human("ppp-empty", quality_ids=[PRACTICE_PRACTICE_PRACTICE]))
-    assert any("スキルを選んでください" in warn for warn in missing.derived["warnings"])
+    assert any("技能を選んでください" in warn for warn in missing.derived["warnings"])
     base = compute(
         _human(
             "ppp-base",
@@ -6251,7 +6251,7 @@ def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
             weapons=[WeaponInstall(weapon_id=KATANA)],
         )
     )
-    assert any("武器スキル" in err for err in missing.derived["errors"])
+    assert any("武器技能" in err for err in missing.derived["errors"])
     out = compute(
         _adept(
             "dda-blades",
@@ -6597,7 +6597,7 @@ def test_career_spend_breakdown_lists_attribute_raise() -> None:
     st.attributes["AGI"] = 5
     out = compute(st)
     assert out.derived["career_advancement_karma"] == 25
-    assert any(row["label"].startswith("属性 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
+    assert any(row["label"].startswith("能力値 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
     assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])
 
 

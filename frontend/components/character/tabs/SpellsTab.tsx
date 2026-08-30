@@ -4,6 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 
 import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
+import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
 
 export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
 
@@ -48,6 +49,8 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv}
+                    {item.range || item.duration ? ` / ${[spellRange(item.range), spellDuration(item.duration)].filter(Boolean).join("・")}` : ""}
+                    {item.descriptor ? ` / ${spellDescriptors(item.descriptor)}` : ""}
                     {item.damage_mod ? ` ・ ダメージ+${item.damage_mod}` : ""}
                     {item.barehanded_adept ? " ・ 素手アデプト（ドレイン×2）" : ""}
                     {item.spell ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}${item.spell.drain_mod ? `（修正${item.spell.drain_mod > 0 ? "+" : ""}${item.spell.drain_mod}）` : ""}` : ""}

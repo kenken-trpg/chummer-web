@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import type { Catalog, Character } from "@/lib/types";
-import { ATTRS, ATTR_JA } from "@/lib/character/constants";
+import { ATTRS } from "@/lib/character/constants";
 import { formatPoints, lifeIncrement, limitModifierLine, specialArmorBits, wareAttrLine } from "@/lib/character/format";
+import { attrLabel, makeT } from "@/lib/ui-strings";
 
 export function CharacterSidebar({
   catalog,
@@ -20,6 +21,7 @@ export function CharacterSidebar({
   error?: string | null;
   patch?: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
+  const t = makeT(catalog);
   const career = Boolean(ch.career || d.career);
   const rewardLog = d.reward_log || ch.reward_log || [];
   const [rewardLabel, setRewardLabel] = useState("");
@@ -190,7 +192,7 @@ export function CharacterSidebar({
             <b>{d.special_modification_limit?.used || 0} / {d.special_modification_limit?.max}</b>
           </div>
         ) : null}
-        {d.friends_in_high_places ? <div className="stat"><span>コネクト</span><b>FiHP</b></div> : null}
+        {d.friends_in_high_places ? <div className="stat"><span>コンタクト</span><b>FiHP</b></div> : null}
         {d.made_man ? <div className="stat"><span>組織</span><b>Made Man</b></div> : null}
         {(d.trustfund || 0) > 0 ? <div className="stat"><span>信託</span><b>TF{d.trustfund}{d.trustfund_label ? `（${d.trustfund_label}）` : ""}</b></div> : null}
         {(d.dealer_connection_categories || []).length ? <div className="stat"><span>ディーラー</span><b>{(d.dealer_connection_categories || []).join(", ")} −10%</b></div> : null}
@@ -284,11 +286,11 @@ export function CharacterSidebar({
             {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
           </b>
         </div>
-        <div className="stat"><span>属性点</span><b>{d.points.attributes.used}/{d.points.attributes.max}</b></div>
+        <div className="stat"><span>能力値点</span><b>{d.points.attributes.used}/{d.points.attributes.max}</b></div>
         <div className="stat"><span>特殊点</span><b>{d.points.special.used}/{d.points.special.max}</b></div>
-        <div className="stat"><span>スキル点</span><b>{d.points.skills.used}/{d.points.skills.max}</b></div>
+        <div className="stat"><span>技能点</span><b>{d.points.skills.used}/{d.points.skills.max}</b></div>
         <div className="stat"><span>知識点</span><b>{d.points.knowledge.used}/{d.points.knowledge.max}</b></div>
-        <div className="stat"><span>コネクト</span><b>{d.contact_points?.used || 0}/{d.contact_points?.free || 0}{(d.contact_points?.paid || 0) > 0 ? ` +${d.contact_points?.paid}` : ""}</b></div>
+        <div className="stat"><span>コンタクト</span><b>{d.contact_points?.used || 0}/{d.contact_points?.free || 0}{(d.contact_points?.paid || 0) > 0 ? ` +${d.contact_points?.paid}` : ""}</b></div>
         <div className="stat"><span>武道</span><b>{d.martial_art_points?.styles || 0}/{d.martial_art_points?.style_max || 1}流派 ・ {d.martial_art_points?.techniques || 0}/{d.martial_art_points?.technique_max || 5}技{(d.martial_art_points?.karma || 0) > 0 ? ` / ${d.martial_art_points?.karma}K` : ""}</b></div>
         {d.enabled_tabs.includes("initiation") ? (
           <div className="stat"><span>イニシエーション</span><b>等級 {d.initiation?.grade || 0}{(d.initiation?.karma || 0) > 0 ? ` / ${d.initiation?.karma}K` : ""}</b></div>
@@ -321,13 +323,13 @@ export function CharacterSidebar({
         {d.needs_mentor && d.mentor ? <div className="stat"><span>メンター</span><b>{tr(d.mentor.name)}</b></div> : null}
         {(d.damage_resistance || 0) > 0 ? <div className="stat"><span>ダメージ抵抗</span><b>+{d.damage_resistance}</b></div> : null}
         {(d.unarmed_dv || 0) > 0 ? <div className="stat"><span>非武装DV</span><b>+{d.unarmed_dv}</b></div> : null}
-        <h3>属性</h3>
+        <h3>能力値</h3>
         {ATTRS.map((k) => {
           const hidden = (k === "MAG" && !d.enabled_tabs.includes("MAG")) || (k === "RES" && !d.enabled_tabs.includes("RES"));
           if (hidden) return null;
           return (
             <div className="stat" key={k}>
-              <span>{ATTR_JA[k]}</span>
+              <span>{attrLabel(k, t)}</span>
               <b>
                 {d.totals[k] ?? "-"}
                 {(d.ware_attr_bonus?.[k] || 0) !== 0 ? (

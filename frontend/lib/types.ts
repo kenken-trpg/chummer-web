@@ -1612,6 +1612,7 @@ export interface Catalog {
     >
   >;
   translations: Record<string, string>;
+  ui_strings: Record<string, string>;
   cyberware: WareCatalog;
   bioware: WareCatalog;
   powers?: PowerCatalogItem[];

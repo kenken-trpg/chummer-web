@@ -45,7 +45,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch, setChara
                     </label>
                     {item.needs_extra ? (
                       <label>
-                        属性
+                        能力値
                         <select
                           value={item.extra || ""}
                           onChange={(e) => patch({
@@ -89,7 +89,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch, setChara
                         <b>{tr(item.name)}</b>
                         <div className="muted">
                           {item.name} / {item.target} / {cfDuration(item.duration)} / {item.fv} / {item.source}
-                          {item.needs_extra ? " / マトリクス属性が必要" : ""}
+                          {item.needs_extra ? " / マトリクス能力値が必要" : ""}
                           {blocked ? ` / ${blocked}` : ""}
                           {paid ? " / 4カルマ" : " / 無料"}
                         </div>

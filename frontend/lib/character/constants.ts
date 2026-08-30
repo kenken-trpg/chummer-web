@@ -1,10 +1,10 @@
 import type { PriorityCategory, PriorityLetter } from "@/lib/types";
 
 export const CATS: { key: PriorityCategory; label: string }[] = [
-  { key: "Heritage", label: "メタタイプ" },
-  { key: "Attributes", label: "属性" },
-  { key: "Talent", label: "魔法/レゾナンス" },
-  { key: "Skills", label: "スキル" },
+  { key: "Heritage", label: "メタ" },
+  { key: "Attributes", label: "能力値" },
+  { key: "Talent", label: "魔力/共振力" },
+  { key: "Skills", label: "技能" },
   { key: "Resources", label: "資金" },
 ];
 export const LETTERS: PriorityLetter[] = ["A", "B", "C", "D", "E"];
@@ -17,19 +17,8 @@ export const DEFAULT_PRIORITIES: Record<PriorityCategory, PriorityLetter> = {
   Resources: "D",
 };
 export const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
-export const ATTR_JA: Record<string, string> = {
-  BOD: "BOD 体",
-  AGI: "AGI 敏",
-  REA: "REA 反",
-  STR: "STR 力",
-  WIL: "WIL 意",
-  LOG: "LOG 論",
-  INT: "INT 直",
-  CHA: "CHA 魅",
-  EDG: "EDG 縁",
-  MAG: "MAG 魔力",
-  RES: "RES 共振力",
-};
+// Attribute labels now come from the lang file via attrLabel()/attrShort()
+// in @/lib/ui-strings (backed by ja-jp.xml + ja_overrides/ui.json).
 export const KNOW_CATS = ["Academic", "Interest", "Language", "Professional", "Street"] as const;
 export const KNOW_CAT_JA: Record<string, string> = {
   Academic: "学術",

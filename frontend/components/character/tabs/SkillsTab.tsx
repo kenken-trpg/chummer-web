@@ -133,10 +133,10 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
   return (
           <div className="card">
             <p className="muted">
-              スキル {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max}
+              技能 {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/{d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max}
               {career ? " ・ キャリアはカルマで成長（上限 R" + skillMax + "）" : " ・ 専門化は1点"}
             </p>
-            <h3>スキルグループ</h3>
+            <h3>技能グループ</h3>
             {catalog.skills.groups.map((g) => (
               <div className="skill-row" key={g}>
                 <span>{tr(g)}</span>
@@ -158,7 +158,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 <b>{skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}</b>
               </div>
             ))}
-            <h3>アクティブスキル</h3>
+            <h3>アクティブ技能</h3>
             {catalog.skills.skills.filter((s) => s.source === "SR5" && !s.name.includes("Exotic")).map((s) => {
               const expertise = expertiseBySkill.get(s.name);
               const specValue = expertise?.spec || ch.skill_specializations?.[s.name] || "";
@@ -197,7 +197,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
               </div>
               );
             })}
-            <h3>Exoticスキル</h3>
+            <h3>Exotic技能</h3>
             <p className="muted">対象の指定が技能そのものです。同じ Exotic を別対象で複数持てます。専門化の追加点は不要です。</p>
             {(d.exotic_skills || []).length ? (d.exotic_skills || []).map((row) => {
               const local = (ch.exotic_skills || []).find((item) => item.id === row.id);
@@ -264,7 +264,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 </button>
               ))}
             </div>
-            <h3>知識スキル</h3>
+            <h3>知識技能</h3>
             <p className="muted">無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。{career ? `キャリアのレーティングは1〜${skillMax}` : "作成時のレーティングは1〜6"}です。{career ? "追加はカルマ" : "専門化は知識点1"}です。</p>
             {Object.keys(d.skill_category_bonus || {}).length ? (
               <p className="muted">
@@ -358,7 +358,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 </button>
               ))}
             </div>
-            <input type="search" placeholder="知識スキルを検索" value={knowSearch} onChange={(e) => setKnowSearch(e.target.value)} />
+            <input type="search" placeholder="知識技能を検索" value={knowSearch} onChange={(e) => setKnowSearch(e.target.value)} />
             <div className="cyber-toolbar">
               <input
                 type="text"

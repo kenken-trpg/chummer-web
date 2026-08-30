@@ -25,6 +25,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { api } from "@/lib/api";
 import type { Tab } from "@/lib/character/constants";
 import type { Catalog, Character } from "@/lib/types";
+import { makeT } from "@/lib/ui-strings";
 
 export default function Page() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -60,6 +61,7 @@ export default function Page() {
   }
 
   const tr = (name: string) => catalog?.translations[name] || name;
+  const t = makeT(catalog);
 
   function download() {
     if (!ch) return;
@@ -89,6 +91,7 @@ export default function Page() {
     character: ch,
     d,
     tr,
+    t,
     patch,
     setCharacter: (next) => setCh(next),
   };
@@ -129,14 +132,14 @@ export default function Page() {
           <div className="tabs">
             {([
               ["priority", "優先度"],
-              ["meta", "メタタイプ"],
-              ["attrs", "属性"],
-              ["skills", "スキル"],
-              ["qualities", "クオリティ"],
+              ["meta", "メタ"],
+              ["attrs", "能力値"],
+              ["skills", "技能"],
+              ["qualities", "資質"],
               ["cyber", "サイバー"],
               ["bio", "バイオ"],
               ["gear", "ギア"],
-              ["contacts", "コネクト"],
+              ["contacts", "コンタクト"],
               ["martial", "武道"],
               ...(d.enabled_tabs.includes("initiation") ? [["initiation", "イニシエーション"] as const] : []),
               ...(d.enabled_tabs.includes("submersion") ? [["submersion", "サブマージョン"] as const] : []),

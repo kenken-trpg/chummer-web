@@ -5,10 +5,10 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { ExtraSelect, selectLabel } from "@/components/character/ExtraSelect";
 import { MentorPicker } from "@/components/character/MentorPicker";
-import { ATTR_JA } from "@/lib/character/constants";
+import { attrLabel } from "@/lib/ui-strings";
 import { formatPoints } from "@/lib/character/format";
 
-export function AdeptTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
 
   const [powerSearch, setPowerSearch] = useState("");
   const [enhSearch, setEnhSearch] = useState("");
@@ -52,7 +52,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name}
-                    {item.extra ? `（${item.select === "attribute" ? (ATTR_JA[item.extra] || item.extra) : tr(item.extra)}）` : ""}
+                    {item.extra ? `（${item.select === "attribute" ? attrLabel(item.extra, t) : tr(item.extra)}）` : ""}
                     {" / "}{formatPoints(item.cost)} PP
                     {item.discounted && item.full_cost != null ? `（割引前 ${formatPoints(item.full_cost)}）` : ""}
                     {item.free_levels ? ` / 無料Lv ${item.free_levels}` : ""}
@@ -82,6 +82,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                       <ExtraSelect
                         item={item}
                         tr={tr}
+                        t={t}
                         onChange={(extra) => patch({
                           adept_powers: (ch.adept_powers || []).map((row) => (
                             row.id === item.id ? { ...row, extra } : row
@@ -246,7 +247,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                         >
                           <option value="">選択してください</option>
                           {item.options.map((name) => (
-                            <option key={name} value={name}>{item.select === "attribute" ? (ATTR_JA[name] || name) : tr(name)}</option>
+                            <option key={name} value={name}>{item.select === "attribute" ? attrLabel(name, t) : tr(name)}</option>
                           ))}
                         </select>
                       </label>

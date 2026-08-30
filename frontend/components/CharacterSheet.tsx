@@ -1,20 +1,9 @@
 import type { ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
+import { attrShort, makeT } from "@/lib/ui-strings";
+import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
-const ATTR_JA: Record<string, string> = {
-  BOD: "BOD",
-  AGI: "AGI",
-  REA: "REA",
-  STR: "STR",
-  WIL: "WIL",
-  LOG: "LOG",
-  INT: "INT",
-  CHA: "CHA",
-  EDG: "EDG",
-  MAG: "MAG",
-  RES: "RES",
-};
 
 function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
@@ -103,6 +92,7 @@ export default function CharacterSheet({
   tr: (name: string) => string;
 }) {
   const d = character.derived;
+  const t = makeT(catalog);
   const totals = d.totals || {};
   const enabled = new Set(d.enabled_tabs || []);
 
@@ -191,7 +181,7 @@ export default function CharacterSheet({
               const ware = d.ware_attr_bonus?.[key] || 0;
               return (
                 <div className="sheet-attr" key={key}>
-                  <span>{ATTR_JA[key]}</span>
+                  <span>{attrShort(key, t)}</span>
                   <b>{totals[key] ?? "-"}</b>
                   {ware ? <em>+{ware}</em> : null}
                 </div>
@@ -239,7 +229,7 @@ export default function CharacterSheet({
         </div>
       </Section>
 
-      <Section title="スキル" empty={!activeSkills.length && !groups.length && !exotic.length}>
+      <Section title="技能" empty={!activeSkills.length && !groups.length && !exotic.length}>
         {groups.length ? (
           <p className="sheet-note">
             グループ:{" "}
@@ -249,8 +239,8 @@ export default function CharacterSheet({
         <table className="sheet-table">
           <thead>
             <tr>
-              <th>スキル</th>
-              <th>属性</th>
+              <th>技能</th>
+              <th>能力値</th>
               <th>R</th>
               <th>プール</th>
               <th>専門化</th>
@@ -283,7 +273,7 @@ export default function CharacterSheet({
         {activeSkills.some((row) => row.soft) ? <p className="sheet-note">* スキルソフト</p> : null}
       </Section>
 
-      <Section title="知識スキル" empty={!knowledge.length}>
+      <Section title="知識技能" empty={!knowledge.length}>
         <table className="sheet-table">
           <thead>
             <tr>
@@ -355,14 +345,14 @@ export default function CharacterSheet({
         </Section>
       ) : null}
 
-      <Section title="クオリティ" empty={!qualities.length}>
+      <Section title="資質" empty={!qualities.length}>
         <ul className="sheet-list">
           {qualities.map((q) => (
             <li key={q.id}>
               <b>{tr(q.name)}</b>
               {q.extra ? `（${tr(q.extra)}）` : ""}
               {q.side ? `（${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}）` : ""}
-              <span className="sheet-dim"> {q.category === "Negative" ? "不利" : "有利"} {q.karma > 0 ? `+${q.karma}` : q.karma}K</span>
+              <span className="sheet-dim"> {q.category === "Negative" ? "不利な資質" : "有利な資質"} {q.karma > 0 ? `+${q.karma}` : q.karma}K</span>
             </li>
           ))}
         </ul>
@@ -530,7 +520,14 @@ export default function CharacterSheet({
                 <li key={item.id}>
                   <b>{tr(item.name)}</b>
                   {" ・ "}
-                  {[item.category, item.type, item.range, item.duration, `DV ${item.dv}`].filter(Boolean).join(" / ")}
+                  {[
+                    tr(item.category || ""),
+                    spellType(item.type),
+                    spellRange(item.range),
+                    spellDuration(item.duration),
+                    `DV ${item.dv}`,
+                  ].filter(Boolean).join(" / ")}
+                  {item.descriptor ? `（${spellDescriptors(item.descriptor)}）` : ""}
                 </li>
               ))}
             </ul>
@@ -653,7 +650,7 @@ export default function CharacterSheet({
         </ul>
       </Section>
 
-      <Section title="コネクト" empty={!(d.contacts || []).length}>
+      <Section title="コンタクト" empty={!(d.contacts || []).length}>
         <table className="sheet-table">
           <thead>
             <tr>

@@ -2,9 +2,10 @@
 
 import type { TabPanelProps } from "@/components/character/types";
 
-import { ATTRS, ATTR_JA } from "@/lib/character/constants";
+import { ATTRS } from "@/lib/character/constants";
+import { attrLabel } from "@/lib/ui-strings";
 
-export function AttrsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function AttrsTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
 
   return (
@@ -15,7 +16,7 @@ export function AttrsTab({ catalog, character: ch, d, tr, patch, setCharacter }:
               const range = spec[key] || { min: 1, max: 6, aug: 6 };
               return (
                 <div className="attr-row" key={key}>
-                  <span>{ATTR_JA[key]}</span>
+                  <span>{attrLabel(key, t)}</span>
                   <input
                     type="range"
                     min={range.min}
@@ -50,7 +51,7 @@ export function AttrsTab({ catalog, character: ch, d, tr, patch, setCharacter }:
                 </div>
               );
             })}
-            <p className="muted">属性点 {d.points.attributes.used}/{d.points.attributes.max} ・ 特殊点 {d.points.special.used}/{d.points.special.max}</p>
+            <p className="muted">能力値点 {d.points.attributes.used}/{d.points.attributes.max} ・ 特殊点 {d.points.special.used}/{d.points.special.max}</p>
           </div>
 
   );

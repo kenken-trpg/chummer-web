@@ -68,7 +68,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch, setCharacte
                           ) : null}
                           {app.extra_kind === "skill" ? (
                             <label>
-                              スキル
+                              技能
                               <select
                                 value={app.extra || ""}
                                 onChange={(e) => patch({
@@ -120,7 +120,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch, setCharacte
                               value={extraPick[item.id] || ""}
                               onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
                             >
-                              <option value="">スキル</option>
+                              <option value="">技能</option>
                               {(spec.extra_options || []).map((name) => (
                                 <option key={name} value={name}>{tr(name)}</option>
                               ))}
