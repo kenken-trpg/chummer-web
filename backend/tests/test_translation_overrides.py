@@ -181,6 +181,9 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Redundancy"] == "冗長化"
     # parenthetical mentor variants stay on English fallback (upstream convention)
     assert not JP_RE.search(tr.get("Wolf (Alt)", "") or "")
+    # SR5 core gear translated; supplement gear stays English by policy
+    assert tr["Fire Resistance"] == "耐火"
+    assert tr["Liner - Insulation (3)"] == "ライナー - 断熱 (3)"
 
 
 # --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------
