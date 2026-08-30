@@ -1077,6 +1077,7 @@ def load_traditions() -> list[dict[str, Any]]:
                 "drain": drain,
                 "drain_attrs": [a.upper() for a in attrs],
                 "spirits": spirits,
+                "bonus": parse_bonus(el.find("bonus")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }

@@ -4113,6 +4113,15 @@ def tradition_resist(tradition: dict[str, Any] | None, attrs: dict[str, int]) ->
     return value, "+".join(keys)
 
 
+def apply_tradition_bonuses(effects: dict[str, Any], tradition: dict[str, Any] | None) -> None:
+    if not tradition:
+        return
+    nodes = list(tradition.get("bonus") or [])
+    if not nodes:
+        return
+    apply_bonus_nodes(nodes, effects, str(tradition.get("name") or "Tradition"))
+
+
 def spell_defense_pools(effects: dict[str, Any] | None) -> dict[str, Any]:
     general = int((effects or {}).get("spell_resistance") or 0)
     specific = (effects or {}).get("spell_defense_resist") or {}
@@ -9196,6 +9205,7 @@ def compute(state: CharacterState) -> CharacterState:
         total["AGI"] = int(limb_replace["agi"])
 
     owned_magic_names = set(initiation.get("art_names") or set()) | set(initiation.get("metamagic_names") or set())
+    apply_tradition_bonuses(effects, _tradition_by_id(state.tradition_id))
     magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names, effects)
     warnings.extend(magic["warnings"])
     spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}

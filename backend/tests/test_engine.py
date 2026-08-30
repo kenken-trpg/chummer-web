@@ -1857,6 +1857,8 @@ def test_adept_spell_overcast_is_physical() -> None:
 
 
 HERMETIC = "19320625-bc1a-492f-8904-da6a847e5700"
+ELDER_GOD = "4bbe470b-51a7-494b-8ccf-5c638e141049"
+AGONY = "46b12a6a-9d9d-4176-bfd6-80e8e21cb0e4"
 SHAMANIC = "8d185e0e-5f49-4992-babd-d1ac9c848f68"
 STUNBOLT = "47423962-6b73-4cc3-ad4e-e8d037cf9507"
 
@@ -4720,6 +4722,22 @@ def test_dareadrenaline_drain_resist() -> None:
     assert out.derived["drain_resist"]["pool"] == 3
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "drainresist" not in tags
+
+
+def test_elder_god_tradition_bonus() -> None:
+    base = compute(_mage("elder-base", tradition_id=HERMETIC))
+    out = compute(
+        _mage(
+            "elder",
+            tradition_id=ELDER_GOD,
+            spells=[SpellInstall(spell_id=AGONY, force=6)],
+        )
+    )
+    assert base.derived["drain_resist"]["pool"] == 2
+    assert out.derived["drain_resist"]["pool"] == 0
+    assert out.derived["drain_resist"]["attrs"] == "WIL+INT"
+    row = next(spell for spell in out.derived["spells"] if spell["name"] == "Agony")
+    assert row["focus_bonus"] == 3
 
 
 def test_dareadrenaline_spell_defense_resists() -> None:
