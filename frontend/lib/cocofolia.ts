@@ -68,6 +68,17 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
 
   const skillPool = (name: string) => (d.skill_totals?.[name] || 0);
 
+  // --- unarmed (adepts: Killing Hands / Critical Strike / Penetrating Strike) --
+  const unarmedSkill = skillPool("Unarmed Combat");
+  const unarmedMods = (d.unarmed_dv || 0) + (d.unarmed_ap || 0) + (d.unarmed_reach || 0);
+  if (unarmedSkill > 0 || unarmedMods !== 0) {
+    const dv = Math.ceil(at("STR") / 2) + (d.unarmed_dv || 0);
+    const ap = d.unarmed_ap || 0;
+    const reach = d.unarmed_reach || 0;
+    const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? `リーチ+${reach}` : ""].filter(Boolean).join(" ");
+    roll(unarmedSkill + at("AGI"), `非武装攻撃 ［${info}］`, "physical");
+  }
+
   // --- weapons: attack test = skill + AGI, limit = weapon Accuracy ---------
   const weapons = d.weapons || [];
   if (weapons.length) out.push("// ── 武器 ──");
