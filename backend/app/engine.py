@@ -18,6 +18,7 @@ from .data_loader import (
     format_avail,
     parse_avail,
     parse_capacity,
+    selecttext_catalog_options,
     sum_avail,
 )
 from .improvements import (
@@ -6813,27 +6814,7 @@ def _attach_skillsoft_knowledge(
 
 
 def selecttext_options(attrs: dict[str, Any]) -> list[str]:
-    xml = str(attrs.get("xml") or "")
-    xpath = str(attrs.get("xpath") or "")
-    if "vehicles.xml" in xml:
-        names = list(catalog().get("vehicle_names") or [])
-        if not names:
-            names = [item["name"] for item in catalog().get("drones") or []]
-        return names
-    if "weapons.xml" in xml:
-        weapons = catalog().get("weapons") or []
-        if "Melee" in xpath:
-            return [item["name"] for item in weapons if item.get("type") == "Melee"]
-        if "Ranged" in xpath:
-            return [item["name"] for item in weapons if item.get("type") == "Ranged"]
-        return [item["name"] for item in weapons]
-    if "skills.xml" in xml:
-        skills = catalog().get("skills") or {}
-        names = [s["name"] for s in skills.get("skills") or []]
-        if "knowledge" in xpath.lower():
-            names += [s["name"] for s in skills.get("knowledge") or []]
-        return names
-    return []
+    return selecttext_catalog_options(attrs, catalog())
 
 
 def _extra_kind(spec: dict[str, Any]) -> str:

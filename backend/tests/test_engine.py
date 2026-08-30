@@ -5065,6 +5065,8 @@ EX_CON = "4fe8fa5e-e31b-4126-a880-3e719a0a5820"
 PHOTOGRAPHIC_MEMORY = "9d3be1d9-1309-45e7-8bd9-1f5a3ede3522"
 QUICK_HEALER = "291efdb6-a8b8-49ce-b2be-72f9d3f8a243"
 UNCANNY_HEALER = "0ebdfce5-c613-4fd9-9763-cae2d21c2153"
+HOME_GROUND = "823eb204-c155-45a9-bb9a-98dcbe17a707"
+SPIRIT_AFFINITY = "c067baa6-0dfa-4783-a0c8-0873564f0308"
 CELERITY = "bd2cf8ea-4eb3-458c-aa04-2de47067f3ad"
 CRYSTAL_BREATH = "c2b4f018-7b14-4e04-aab9-71c891dd0a18"
 MAGIC_RESISTANCE = "f80ef6fc-e844-441c-81e3-b1264b34a4e7"
@@ -5285,6 +5287,28 @@ def test_uncanny_healer_cm_recovery() -> None:
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "addesstophysicalcmrecovery" not in tags
     assert "addesstostuncmrecovery" not in tags
+
+
+def test_home_ground_selecttext() -> None:
+    missing = compute(_human("hg-missing", quality_ids=[HOME_GROUND]))
+    tags = [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
+    assert "selecttext" not in tags
+    assert any("対象を入力" in err for err in missing.derived["errors"])
+    out = compute(
+        _human("hg", quality_ids=[HOME_GROUND], quality_extras={HOME_GROUND: "Barrens"})
+    )
+    row = next(item for item in out.derived["qualities"] if item["id"] == HOME_GROUND)
+    assert row["extra"] == "Barrens"
+    assert not any("対象を入力" in err for err in out.derived["errors"])
+
+
+def test_selecttext_quality_populates_catalog_options() -> None:
+    from app.data_loader import catalog
+
+    spirit_affinity = next(q for q in catalog()["qualities"] if q["id"] == SPIRIT_AFFINITY)
+    assert spirit_affinity["extra_kind"] == "text"
+    assert spirit_affinity["select_options"]
+    assert "Spirit of Man" in spirit_affinity["select_options"]
 
 
 def test_celerity_replaces_movement() -> None:

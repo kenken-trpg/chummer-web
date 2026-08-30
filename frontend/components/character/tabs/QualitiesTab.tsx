@@ -364,23 +364,62 @@ export function QualitiesTab({ catalog, character: ch, d, tr, patch, setCharacte
       );
     }
     if (kind === "text" || q.needs_extra) {
+      const current = ch.quality_extras?.[q.id] || "";
+      const known = options.length ? options : [];
+      if (!known.length) {
+        return (
+          <input
+            type="text"
+            placeholder="対象（花粉、日光など）"
+            value={current}
+            onChange={(e) =>
+              setCharacter({
+                ...ch,
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+            onBlur={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          />
+        );
+      }
       return (
-        <input
-          type="text"
-          placeholder="対象（花粉、日光など）"
-          value={ch.quality_extras?.[q.id] || ""}
-          onChange={(e) =>
-            setCharacter({
-              ...ch,
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-          onBlur={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        />
+        <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+          <select
+            value={known.includes(current) ? current : ""}
+            onChange={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          >
+            <option value="">対象を選択</option>
+            {known.map((name) => (
+              <option key={name} value={name}>
+                {tr(name)}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            placeholder="または手入力"
+            value={current}
+            onChange={(e) =>
+              setCharacter({
+                ...ch,
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+            onBlur={(e) =>
+              patch({
+                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
+              })
+            }
+          />
+        </div>
       );
     }
     return null;

@@ -435,6 +435,40 @@ def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, st
     return sorted(set(out))
 
 
+def selecttext_catalog_options(attrs: dict[str, Any], catalog_data: dict[str, Any]) -> list[str]:
+    xml = str(attrs.get("xml") or "")
+    xpath = str(attrs.get("xpath") or "")
+    if "vehicles.xml" in xml:
+        names = list(catalog_data.get("vehicle_names") or [])
+        if not names:
+            names = [item["name"] for item in catalog_data.get("drones") or []]
+        return names
+    if "weapons.xml" in xml:
+        weapons = catalog_data.get("weapons") or []
+        if "Melee" in xpath:
+            return [item["name"] for item in weapons if item.get("type") == "Melee"]
+        if "Ranged" in xpath:
+            return [item["name"] for item in weapons if item.get("type") == "Ranged"]
+        return [item["name"] for item in weapons]
+    if "skills.xml" in xml:
+        skills = catalog_data.get("skills") or {}
+        names = [s["name"] for s in skills.get("skills") or []]
+        if "knowledge" in xpath.lower():
+            names += [s["name"] for s in skills.get("knowledge") or []]
+        return names
+    if "traditions.xml" in xml:
+        spirits = catalog_data.get("spirits") or []
+        names = [str(item.get("name") or "") for item in spirits if item.get("name")]
+        if "Watcher" in xpath or "Homunculus" in xpath:
+            names = [name for name in names if "Watcher" not in name and "Homunculus" not in name]
+        return names
+    if "strings.xml" in xml and "matrixattributes" in xpath.lower():
+        return list(MATRIX_ATTRIBUTES)
+    if "programs.xml" in xml:
+        return [str(item.get("name") or "") for item in catalog_data.get("programs") or [] if item.get("name")]
+    return []
+
+
 def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
     return any(
         node.get("tag")
@@ -2549,6 +2583,28 @@ def catalog() -> dict[str, Any]:
                 active_skills, _weaponskillaccuracy_select_attrs(node)
             )
             break
+    spirits = load_spirits()
+    programs = load_programs()
+    selecttext_data = {
+        "vehicle_names": load_vehicle_names(),
+        "drones": load_drones(),
+        "weapons": weapons,
+        "skills": skills,
+        "spirits": spirits,
+        "programs": programs,
+    }
+    for quality in qualities:
+        if quality.get("extra_kind") != "text" or quality.get("select_options"):
+            continue
+        options: list[str] = []
+        for node in quality.get("bonus") or []:
+            if node.get("tag") != "selecttext":
+                continue
+            for name in selecttext_catalog_options(node.get("attrs") or {}, selecttext_data):
+                if name and name not in options:
+                    options.append(name)
+        if options:
+            quality["select_options"] = options
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
@@ -2561,7 +2617,7 @@ def catalog() -> dict[str, Any]:
         "mentors": load_mentors(),
         "spells": load_spells(),
         "traditions": load_traditions(),
-        "spirits": load_spirits(),
+        "spirits": spirits,
         "complex_forms": load_complex_forms(),
         "streams": load_streams(),
         "sprites": load_sprites(),
@@ -2575,7 +2631,7 @@ def catalog() -> dict[str, Any]:
         "cyberdecks": load_cyberdecks(),
         "rccs": load_rccs(),
         "optics": load_optics(),
-        "programs": load_programs(),
+        "programs": programs,
         "apps": load_apps(),
         "sensors": load_sensors(),
         "gear": gear,

@@ -145,11 +145,11 @@ IMPLEMENTED = {
     "drainvalue",
     "fadingvalue",
     "fadingresist",
+    "selecttext",
     "addspell",
 }
 SILENT_TAGS = {
     "disablequality",
-    "selecttext",
     "selectweapon",
     "addgears",
     "addweapon",
@@ -1071,6 +1071,8 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                 effects["fading_value"] += value
         elif tag == "fadingresist":
             effects["fading_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "selecttext":
+            pass
         elif tag == "addspell":
             attrs = node.get("attrs") or {}
             name = str(node.get("value") or fields.get("name") or "").strip()
