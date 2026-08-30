@@ -101,6 +101,63 @@ CURATED: dict[str, str] = {
     # derived-value pseudo-entity + a category shown via tr() (glossary lang.*)
     "Acceleration": "加速値",
     "Services": "助力",
+    # --- Phase 2b batch 2: high-visibility sheet entities ------------------
+    # Only entries with an established / unambiguous JP form. Spells are left
+    # for a rulebook pass (they use a 漢字/カタカナ dual format).
+    #
+    # sprites (house style: "X・スプライト", cf. Courier/Data Sprite)
+    "Companion Sprite": "コンパニオン・スプライト",
+    "Generalist Sprite": "ジェネラリスト・スプライト",
+    # elemental spirits — hermetic aliases of the already-translated Spirit of X
+    "Air Elemental": "大気のエレメンタル",
+    "Earth Elemental": "大地のエレメンタル",
+    "Fire Elemental": "火のエレメンタル",
+    "Water Elemental": "水のエレメンタル",
+    # magic arts (house style: technique arts take a 術 suffix, cf. 浄化術/擬態術)
+    "Necromancy": "死霊術",
+    "Divination": "占術",
+    "Exorcism": "祓魔術",
+    "Advanced Alchemy": "上級錬金術",
+    "Advanced Spellcasting": "上級呪文行使",
+    "Advanced Ritual Casting": "上級儀式行使",
+    "Blood Magic": "血の魔術",
+    # traditions — plain religion/culture names (bracketed variants left as-is)
+    "Buddhism": "仏教",
+    "Hinduism": "ヒンドゥー教",
+    "Islam": "イスラム教",
+    "Zoroastrianism": "ゾロアスター教",
+    "Druid": "ドルイド",
+    "Vodou": "ヴォドゥン",
+    # mentor spirits — plain animals (kanji, cf. 熊/狼/蛇) and archetypes
+    "Monkey": "猿",
+    "Whale": "鯨",
+    "Dove": "鳩",
+    "Stag": "牡鹿",
+    "Squirrel": "リス",
+    "Badger": "アナグマ",
+    "Groundhog": "ウッドチャック",
+    "Eurasian Jay": "カケス",
+    "Death": "死",
+    "War": "戦争",
+    "Moon": "月",
+    "Tide": "潮",
+    "Green Man": "グリーンマン",
+    "Wild Hunt": "ワイルドハント",
+    "Berserker": "バーサーカー",
+    "Peacemaker": "ピースメーカー",
+    "Oracle": "オラクル",
+    "Artist": "芸術家",
+    "Smith": "鍛冶師",
+    "Gambler": "賭博師",
+    "Goddess": "女神",
+    "Architect": "建築家",
+    "Treasure Hunter": "トレジャーハンター",
+    "Brother in Arms": "戦友",
+    "Little Red Riding Hood": "赤ずきん",
+    "Guanyin": "観音",
+    "German Shepherd": "ジャーマン・シェパード",
+    "Doberman": "ドーベルマン",
+    "Weimaraner": "ワイマラナー",
 }
 
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.

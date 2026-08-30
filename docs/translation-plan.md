@@ -135,13 +135,21 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   `ATTR_JA` 定数 (constants.ts) を使っており lang XML を見ていない。`ui.json` を今埋めても無効。
 - overlay 合計 **215 件**。全 411 テスト green (orphan 検出テストにスキルグループも追加)。
 
+**2b. 手動訳バッチ 2 ✅ (2026-08-30)**
+
+- 高視認・高確度のシート表示エンティティのみ **48 件** を CURATED に追加 (overlay 合計 **263 件**):
+  - スプライト 2、エレメンタル精霊 4 (`大気のエレメンタル` 等)、魔法アート 7 (`死霊術`/`占術`/`祓魔術`/
+    `上級呪文行使` 等)、伝統の宗教名 6 (`仏教`/`ヒンドゥー教`/`ゾロアスター教` 等)、
+    メンター精霊 29 (`猿`/`鯨`/`鳩`/`死`/`戦争`/`ジャーマン・シェパード`/`赤ずきん`/`観音` 等)。
+  - **spells (残 170) は見送り**: 既存訳が `漢字/カタカナ` の二重表記 (`酸噴射/アシッド・ストリーム`)
+    で、公式ルールブックなしに確度高く再現できない。
+  - `(Alt)` / `[...]` 付きの派生名は既存訳が英語のまま放置しており、それに倣って除外。
+
 **2b. 残 (未着手)**
 
-1. **高頻度エンティティの手動訳** (用語集準拠): spells 残 179 → qualities → weapons → armor →
-   cyberware/bioware → gear → powers/mentors。バッチごとに
-   「英語フォールバック中のキー一覧を出力 → 訳 → CURATED 追記 → `--write` → アンカーテスト更新」。
-2. **critters / critterpowers / vehicles** は分量大・露出少で後回し (そもそも critters は
-   catalog 未ロード)。
+1. **spells** — ルールブック参照で `漢字/カタカナ` 形式に合わせて一括。
+2. **qualities / weapons / armor / cyberware / bioware / gear / mentors 残** の手動訳。
+3. **critters / critterpowers / vehicles** は分量大・露出少で後回し (critters は catalog 未ロード)。
 
 ### フェーズ 3 — `ja-jp.xml` (UI 文字列) の配線と改善
 
@@ -181,3 +189,4 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - 2026-08-30: フェーズ 1 完了。`build_ja_glossary.py` ＋ `translation-glossary.md` / `translation-glossary-mismatches.md`。
 - 2026-08-30: フェーズ 2a 完了。`import_ja_from_refs.py` で curated＋chumJA SR4 を 200 件 `data.json` へ。
 - 2026-08-30: フェーズ 2b 一次分。スキルグループ 10・メタバリアント 3・その他 3 を追加 (計 215 件)。
+- 2026-08-30: フェーズ 2b バッチ 2。メンター/精霊/伝統/魔法アート/スプライト 48 件を追加 (計 263 件)。

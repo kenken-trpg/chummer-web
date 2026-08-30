@@ -4,7 +4,7 @@
 curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 アプリの catalog() が実際に使う名前／カテゴリに限定。
 
-- 追加: **215 件** / オーバーレイ合計: **215 件**
+- 追加: **263 件** / オーバーレイ合計: **263 件**
 
 ## chumJA(SR4) name (114)
 
@@ -125,59 +125,107 @@ curated (SR5・用語集照合済) と chumJA SR4 の完全一致のみ。
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (49)
+## curated (97)
 
 | English | 日本語 |
 |---|---|
 | Academic | 学術 |
 | Acceleration | 加速値 |
 | Acting | 演技 |
+| Advanced Alchemy | 上級錬金術 |
+| Advanced Ritual Casting | 上級儀式行使 |
+| Advanced Spellcasting | 上級呪文行使 |
+| Air Elemental | 大気のエレメンタル |
+| Architect | 建築家 |
+| Artist | 芸術家 |
 | Athletics | 運動 |
 | Attributes | 能力値 |
+| Badger | アナグマ |
+| Berserker | バーサーカー |
 | Biotech | 医療 |
+| Blood Magic | 血の魔術 |
 | Body | 強靱力 |
+| Brother in Arms | 戦友 |
+| Buddhism | 仏教 |
 | Close Combat | 近接戦闘 |
 | Combat | 戦闘 |
+| Companion Sprite | コンパニオン・スプライト |
 | Conjuring | 召喚 |
 | Cracking | クラッキング |
 | Cyclops | キュクロプス |
+| Death | 死 |
 | Detection | 探知 |
+| Divination | 占術 |
+| Doberman | ドーベルマン |
+| Dove | 鳩 |
+| Druid | ドルイド |
 | Dryad | ドリアード |
 | Dwarf | ドワーフ |
+| Earth Elemental | 大地のエレメンタル |
 | Electronics | エレクトロニクス |
 | Elf | エルフ |
 | Enchanting | 付術 |
+| Eurasian Jay | カケス |
+| Exorcism | 祓魔術 |
+| Fire Elemental | 火のエレメンタル |
 | Fomorian | フォモリアン |
+| Gambler | 賭博師 |
+| Generalist Sprite | ジェネラリスト・スプライト |
+| German Shepherd | ジャーマン・シェパード |
 | Giant | ジャイアント |
 | Gnome | ノーム |
+| Goddess | 女神 |
+| Green Man | グリーンマン |
+| Groundhog | ウッドチャック |
+| Guanyin | 観音 |
 | Hanuman | ハヌマーン |
 | Health | 身体 |
+| Hinduism | ヒンドゥー教 |
 | Hobgoblin | ホブゴブリン |
 | Human | ヒューマン |
 | Illusion | 幻影 |
 | Interest | 趣味 |
+| Islam | イスラム教 |
 | Koborokuru | コボロクル |
 | Language | 言語 |
+| Little Red Riding Hood | 赤ずきん |
 | Manipulation | 操作 |
 | Menehune | メネフネ |
 | Metahuman | メタヒューマン |
 | Metavariant | メタバリアント |
 | Minotaur | ミノタウロス |
+| Monkey | 猿 |
+| Moon | 月 |
 | Nartaki | ナルタキ |
+| Necromancy | 死霊術 |
 | Nocturna | ノクターナ |
 | Ogre | オーガ |
 | Oni | オニ |
+| Oracle | オラクル |
 | Ork | オーク |
 | Outdoors | 野外 |
+| Peacemaker | ピースメーカー |
 | Professional | 職業 |
 | Satyr | サテュロス |
 | Services | 助力 |
+| Smith | 鍛冶師 |
 | Sorcery | 魔術 |
+| Squirrel | リス |
+| Stag | 牡鹿 |
 | Street | 街 |
 | Tasking | タスキング |
+| Tide | 潮 |
+| Treasure Hunter | トレジャーハンター |
 | Troll | トロール |
+| Vodou | ヴォドゥン |
 | Wakyambi | ワキャンビ |
+| War | 戦争 |
+| Water Elemental | 水のエレメンタル |
+| Weimaraner | ワイマラナー |
+| Whale | 鯨 |
+| Wild Hunt | ワイルドハント |
 | Xapiri Thëpë | シャピリ・テペ |
+| Zoroastrianism | ゾロアスター教 |
 
 ## chumJA(SR4) category (52)
 

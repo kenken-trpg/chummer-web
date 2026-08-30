@@ -165,3 +165,6 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Close Combat"] == "近接戦闘"  # skill group
     assert tr["Biotech"] == "医療"  # group sense wins over the gear-category collision
     assert tr["Hobgoblin"] == "ホブゴブリン"  # metavariant
+    assert tr["Fire Elemental"] == "火のエレメンタル"  # spirit
+    assert tr["Necromancy"] == "死霊術"  # magic art
+    assert tr["Buddhism"] == "仏教"  # tradition
