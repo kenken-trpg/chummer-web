@@ -329,6 +329,20 @@ export default function Page() {
           </div>
         </div>
 
+        {tab === "sheet" && (
+          <div className="no-print sheet-notes-edit">
+            <label>メモ</label>
+            <textarea
+              rows={3}
+              defaultValue={ch.notes || ""}
+              key={ch.id}
+              placeholder="背景・装備の運用メモ・GM 用メモなど。シートと .chum5 書き出しに反映されます。"
+              onBlur={(e) => {
+                if ((e.target.value || "") !== (ch.notes || "")) patch({ notes: e.target.value });
+              }}
+            />
+          </div>
+        )}
         {tab === "sheet" && <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />}
         {tab === "priority" && <PriorityTab {...panel} />}
         {tab === "meta" && <MetaTab {...panel} />}

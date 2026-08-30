@@ -31,6 +31,7 @@ def _rich_state() -> CharacterState:
     return CharacterState(
         id="rt",
         name="RoundTrip",
+        notes="街の顔役に借り 2 件。義体は次のランで更新予定。",
         priorities=Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
         metatype="Elf",
         talent="Magician",
@@ -90,6 +91,7 @@ def test_round_trip_preserves_the_core() -> None:
     assert [g["gear_id"] for g in st["gear"]] == [src.gear[0].gear_id]
     assert st["commlinks"] and st["commlinks"][0]["gear_id"] == src.commlinks[0].gear_id
     assert st["contacts"][0]["name"] == "Sam"
+    assert st["notes"] == src.notes
 
 
 def test_round_tripped_state_still_validates() -> None:

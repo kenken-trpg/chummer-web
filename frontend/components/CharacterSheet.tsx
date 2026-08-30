@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
 import { attrShort, makeT, type TFn } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
@@ -6,30 +6,47 @@ import { cfDuration, cfTarget } from "@/lib/character/format";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
 
+// SR5 core p.181 — fixed range bands (metres, max of each band) by firearm
+// category. Modifiers: 至近 ±0 / 近 −1 / 中 −3 / 遠 −6. Strength-scaled
+// categories (bows, thrown) are deliberately omitted rather than guessed.
+const WEAPON_RANGES: Record<string, [number, number, number, number]> = {
+  Tasers: [5, 10, 15, 20],
+  Holdouts: [5, 15, 30, 50],
+  "Light Pistols": [5, 15, 30, 50],
+  "Heavy Pistols": [5, 20, 40, 60],
+  "Machine Pistols": [5, 15, 30, 50],
+  "Submachine Guns": [10, 40, 80, 150],
+  "Assault Rifles": [25, 150, 350, 550],
+  Carbines: [25, 150, 350, 550],
+  Shotguns: [10, 40, 80, 150],
+  "Sniper Rifles": [50, 350, 800, 1500],
+  "Sporting Rifles": [50, 250, 500, 750],
+  "Light Machine Guns": [25, 200, 400, 800],
+  "Medium Machine Guns": [40, 250, 750, 1200],
+  "Heavy Machine Guns": [40, 250, 750, 1200],
+  "Assault Cannons": [50, 300, 750, 1500],
+  "Grenade Launchers": [50, 100, 150, 500],
+  "Missile Launchers": [70, 150, 450, 1500],
+};
+
 function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
 }
 
-function weaponLine(item: {
-  type?: string;
-  accuracy?: string;
-  damage?: string;
-  ap?: string;
-  mode?: string;
-  ammo?: string;
-  reach?: string;
-  rc?: string;
-}) {
-  const bits: string[] = [];
-  if (item.type) bits.push(item.type === "Melee" ? "近接" : "遠隔");
-  if (item.accuracy && item.accuracy !== "0") bits.push(`Acc ${item.accuracy}`);
-  if (item.damage) bits.push(item.damage);
-  if (item.ap && item.ap !== "-" && item.ap !== "0") bits.push(`AP ${item.ap}`);
-  if (item.rc && item.rc !== "0") bits.push(`RC ${item.rc}`);
-  if (item.mode && item.mode !== "0") bits.push(item.mode);
-  if (item.ammo && item.ammo !== "0") bits.push(item.ammo);
-  if (item.reach && item.reach !== "0") bits.push(`Reach ${item.reach}`);
-  return bits.join(" / ");
+/** Leading (possibly negative) integer of a stat string like "12" or "H4/3". */
+function leadInt(v?: string | number | null) {
+  const m = String(v ?? "").match(/-?\d+/);
+  return m ? parseInt(m[0], 10) : 0;
+}
+
+/** Matrix condition monitor: 8 + ⌈Device Rating ÷ 2⌉ (SR5 p.229). */
+function matrixCM(deviceRating?: number) {
+  return 8 + Math.ceil((deviceRating || 0) / 2);
+}
+
+/** Vehicle/drone physical condition monitor: 12 + ⌈Body ÷ 2⌉ (SR5 p.199). */
+function vehicleCM(body?: string | number) {
+  return 12 + Math.ceil(leadInt(body) / 2);
 }
 
 function specialArmorBits(sa?: SpecialArmor | null): { label: string; value: string }[] {
@@ -80,6 +97,71 @@ function Section({ title, children, empty }: { title: string; children: ReactNod
       <h3>{title}</h3>
       {children}
     </section>
+  );
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function GradeList({ items, tr }: { items: any[]; tr: (n: string) => string }) {
+  const grades = Array.from(new Set(items.map((i) => Number(i.grade) || 0))).sort((a, b) => a - b);
+  return (
+    <ul className="sheet-list">
+      {grades.map((g) => (
+        <li key={g}>
+          <b>等級 {g}</b>
+          <span className="sheet-dim">
+            {" "}
+            {items
+              .filter((i) => (Number(i.grade) || 0) === g)
+              .map((i) => `${tr(i.name)}${i.extra ? `（${tr(i.extra)}）` : ""}${i.kind === "art" ? "〔術〕" : ""}`)
+              .join("、")}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function VehicleBlock({ v, tr }: { v: any; tr: (n: string) => string }) {
+  const mods = (v.mods || []).filter((m: any) => !m.parent_id);
+  const mounts = v.weapon_mounts || [];
+  const sensors = v.sensors || [];
+  const gear = (v.gear || []).filter((g: any) => !g.parent_id);
+  const tracks = v.slot_tracks || [];
+  return (
+    <div className="sheet-block">
+      <h4>{tr(v.name)}{v.seats ? `（座席 ${v.seats}）` : ""}</h4>
+      <div className="sheet-derived-grid sheet-vehicle-stats">
+        <div><span>機動</span><b>{v.handling || "-"}</b></div>
+        <div><span>速度</span><b>{v.speed || "-"}</b></div>
+        <div><span>加速</span><b>{v.accel || "-"}</b></div>
+        <div><span>車体</span><b>{v.body || "-"}</b></div>
+        <div><span>装甲</span><b>{v.armor || "-"}</b></div>
+        <div><span>パイロット</span><b>{v.pilot || "-"}</b></div>
+        <div><span>センサー</span><b>{v.sensor || "-"}</b></div>
+        <div><span>物理CM</span><b>{vehicleCM(v.body)}</b></div>
+      </div>
+      {mods.length ? (
+        <p className="sheet-note">
+          改造: {mods.map((m: any) => `${tr(m.name)}${(m.rating || 0) > 1 ? ` R${m.rating}` : ""}`).join("、")}
+        </p>
+      ) : null}
+      {mounts.length ? (
+        <p className="sheet-note">
+          ウェポンマウント: {mounts.map((m: any) => `${tr(m.label || m.name)}${m.weapon_name ? `＝${tr(m.weapon_name)}` : "（空）"}`).join("、")}
+        </p>
+      ) : null}
+      {sensors.length ? (
+        <p className="sheet-note">センサー機器: {sensors.map((s: any) => tr(s.name)).join("、")}</p>
+      ) : null}
+      {gear.length ? (
+        <p className="sheet-note">搭載ギア: {gear.map((g: any) => tr(g.name)).join("、")}</p>
+      ) : null}
+      {tracks.length ? (
+        <p className="sheet-note">
+          スロット: {tracks.map((s: any) => `${s.label} ${s.used}/${s.max}`).join(" ・ ")}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -138,10 +220,13 @@ export default function CharacterSheet({
   const bio = (d.bioware || []).filter((item) => !item.parent_id);
   const isDrug = (item: { category?: string }) =>
     item.category === "Drugs" || item.category === "Toxins" || item.category === "Chemicals";
-  const gearMisc = (d.gear || []).filter((item) => !item.parent_id && !isDrug(item));
+  const isSin = (item: { category?: string }) => item.category === "ID/Credsticks";
+  const gearMisc = (d.gear || []).filter((item) => !item.parent_id && !isDrug(item) && !isSin(item));
   const drugs = (d.gear || []).filter((item) => !item.parent_id && isDrug(item));
-  const drugChildren = (parentId: string) =>
+  const sins = (d.gear || []).filter((item) => !item.parent_id && isSin(item));
+  const gearChildren = (parentId: string) =>
     (d.gear || []).filter((item) => item.parent_id === parentId);
+  const drugChildren = gearChildren;
   const specialArmor = specialArmorBits(d.special_armor);
 
   if (layout === "text") {
@@ -165,6 +250,7 @@ export default function CharacterSheet({
           bio,
           gearMisc,
           drugs,
+          sins,
         })}
       </pre>
     );
@@ -425,20 +511,91 @@ export default function CharacterSheet({
         {weapons.length ? (
           <div className="sheet-block">
             <h4>武器</h4>
-            <ul className="sheet-list">
-              {weapons.map((item) => (
-                <li key={item.id}>
-                  <b>{tr(item.name)}</b>
-                  {item.qty > 1 ? ` ×${item.qty}` : ""}
-                  {" ・ "}
-                  {weaponLine(item)}
-                  {(item.focus_dice || 0) > 0 ? ` ・ Focus +${item.focus_dice}d` : ""}
-                  {(item.accessories || []).length
-                    ? ` ・ ${(item.accessories || []).map((a) => tr(a.name)).join("、")}`
-                    : ""}
-                </li>
-              ))}
-            </ul>
+            <table className="sheet-table sheet-table--weapon">
+              <thead>
+                <tr>
+                  <th>武器</th>
+                  <th>Acc</th>
+                  <th>DV</th>
+                  <th>AP</th>
+                  <th>モード</th>
+                  <th>RC</th>
+                  <th>弾数</th>
+                  <th>リーチ</th>
+                  <th>携帯</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weapons.map((item) => {
+                  const dash = (v?: string) => (v && v !== "0" && v !== "-" ? v : "–");
+                  const sub = [
+                    (item.accessories || []).map((a) => tr(a.name)).join("、"),
+                    (item.focus_dice || 0) > 0 ? `武器フォーカス +${item.focus_dice}d` : "",
+                    item.mounted_label ? `搭載: ${tr(item.mounted_label)}` : "",
+                  ].filter(Boolean).join(" ・ ");
+                  return (
+                    <Fragment key={item.id}>
+                      <tr>
+                        <td className="left">
+                          {tr(item.name)}
+                          {item.qty > 1 ? ` ×${item.qty}` : ""}
+                        </td>
+                        <td>{dash(item.accuracy)}</td>
+                        <td>{dash(item.damage)}</td>
+                        <td>{item.ap && item.ap !== "0" ? item.ap : "–"}</td>
+                        <td>{dash(item.mode)}</td>
+                        <td>{dash(item.rc)}</td>
+                        <td>{dash(item.ammo)}</td>
+                        <td>{dash(item.reach)}</td>
+                        <td>{dash(item.conceal)}</td>
+                      </tr>
+                      {sub ? (
+                        <tr className="sheet-subrow">
+                          <td className="left" colSpan={9}>{sub}</td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+            {(() => {
+              const cats = Array.from(
+                new Set(
+                  weapons
+                    .filter((w) => (w.type || "") !== "Melee" && WEAPON_RANGES[w.category || ""])
+                    .map((w) => w.category as string),
+                ),
+              );
+              if (!cats.length) return null;
+              return (
+                <table className="sheet-table sheet-table--range">
+                  <thead>
+                    <tr>
+                      <th>レンジ (m)</th>
+                      <th>至近 ±0</th>
+                      <th>近 −1</th>
+                      <th>中 −3</th>
+                      <th>遠 −6</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cats.map((cat) => {
+                      const r = WEAPON_RANGES[cat];
+                      return (
+                        <tr key={cat}>
+                          <td className="left">{tr(cat)}</td>
+                          <td>0–{r[0]}</td>
+                          <td>{r[0] + 1}–{r[1]}</td>
+                          <td>{r[1] + 1}–{r[2]}</td>
+                          <td>{r[2] + 1}–{r[3]}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              );
+            })()}
           </div>
         ) : null}
       </Section>
@@ -477,43 +634,60 @@ export default function CharacterSheet({
         ) : null}
       </Section>
 
-      <Section title="マトリクス" empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona && !(d.drones || []).length}>
-        <ul className="sheet-list">
-          {d.commlink ? (
-            <li>
-              <b>通信機 {tr(d.commlink.name)}</b>
-              {" ・ "}DR {d.commlink.device_rating} / DP {d.commlink.dataprocessing} / FW {d.commlink.firewall}
-            </li>
-          ) : null}
-          {d.cyberdeck ? (
-            <li>
-              <b>デッキ {tr(d.cyberdeck.name)}</b>
-              {" ・ "}DR {d.cyberdeck.device_rating} / {d.cyberdeck.attack}/{d.cyberdeck.sleaze}/{d.cyberdeck.dataprocessing}/{d.cyberdeck.firewall}
-              {d.cyberdeck.program_max != null ? ` ・ プログラム ${d.cyberdeck.program_used ?? 0}/${d.cyberdeck.program_max}` : ""}
-            </li>
-          ) : null}
-          {d.rcc ? (
-            <li>
-              <b>RCC {tr(d.rcc.name)}</b>
-              {" ・ "}DR {d.rcc.device_rating} / DP {d.rcc.dataprocessing} / FW {d.rcc.firewall}
-            </li>
-          ) : null}
-          {d.living_persona ? (
-            <li>
-              <b>リビングペルソナ</b>
-              {" ・ "}DR {d.living_persona.device_rating} / {d.living_persona.attack}/{d.living_persona.sleaze}/{d.living_persona.dataprocessing}/{d.living_persona.firewall}
-              {(d.living_persona.matrix_initiative_dice || 0) > 0
-                ? ` ・ マトリクスInit +${d.living_persona.matrix_initiative_dice}d6`
-                : ""}
-            </li>
-          ) : null}
-          {(d.drones || []).map((drone) => (
-            <li key={drone.id}>
-              <b>ドローン {tr(drone.name)}</b>
-              {" ・ "}H{drone.handling} Sp{drone.speed} Ac{drone.accel} B{drone.body} A{drone.armor} P{drone.pilot} Se{drone.sensor}
-            </li>
-          ))}
-        </ul>
+      <Section title="マトリクス" empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona}>
+        {(() => {
+          const rows: { key: string; label: string; dr: number; a?: number; s?: number; dp: number; fw: number; prog?: string; init?: string; order?: string }[] = [];
+          if (d.commlink) rows.push({ key: "cl", label: `通信機 ${tr(d.commlink.name)}`, dr: d.commlink.device_rating, dp: d.commlink.dataprocessing, fw: d.commlink.firewall });
+          if (d.cyberdeck) {
+            const ck = d.cyberdeck;
+            rows.push({
+              key: "cd", label: `デッキ ${tr(ck.name)}`, dr: ck.device_rating,
+              a: ck.attack, s: ck.sleaze, dp: ck.dataprocessing, fw: ck.firewall,
+              prog: ck.program_max != null ? `${ck.program_used ?? 0}/${ck.program_max}` : undefined,
+              order: ck.can_reorder && ck.array_order ? ck.array_order.join(" ▸ ") : undefined,
+            });
+          }
+          if (d.rcc) rows.push({ key: "rcc", label: `RCC ${tr(d.rcc.name)}`, dr: d.rcc.device_rating, dp: d.rcc.dataprocessing, fw: d.rcc.firewall });
+          if (d.living_persona) {
+            const lp = d.living_persona;
+            rows.push({
+              key: "lp", label: "リビングペルソナ", dr: lp.device_rating,
+              a: lp.attack, s: lp.sleaze, dp: lp.dataprocessing, fw: lp.firewall,
+              init: (lp.matrix_initiative_dice || 0) > 0 ? `+${lp.matrix_initiative_dice}d6` : undefined,
+            });
+          }
+          return (
+            <>
+              <table className="sheet-table sheet-table--matrix">
+                <thead>
+                  <tr>
+                    <th>機器</th><th>DR</th><th>A</th><th>S</th><th>DP</th><th>FW</th><th>Prog</th><th>M.CM</th><th>M.Init</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r) => (
+                    <tr key={r.key}>
+                      <td className="left">{r.label}</td>
+                      <td>{r.dr}</td>
+                      <td>{r.a ?? "–"}</td>
+                      <td>{r.s ?? "–"}</td>
+                      <td>{r.dp}</td>
+                      <td>{r.fw}</td>
+                      <td>{r.prog ?? "–"}</td>
+                      <td>{matrixCM(r.dr)}</td>
+                      <td>{r.init ?? "–"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rows.some((r) => r.order) ? (
+                <p className="sheet-note">
+                  {rows.filter((r) => r.order).map((r) => `${r.label}: ${r.order}`).join(" ／ ")}
+                </p>
+              ) : null}
+            </>
+          );
+        })()}
       </Section>
 
       <Section
@@ -550,15 +724,18 @@ export default function CharacterSheet({
               {(d.spells || []).map((item) => (
                 <li key={item.id}>
                   <b>{tr(item.name)}</b>
+                  {item.kind && item.kind !== "spell" ? `〔${item.kind === "ritual" ? "儀式" : "付与"}〕` : ""}
                   {" ・ "}
                   {[
                     tr(item.category || ""),
                     spellType(item.type),
                     spellRange(item.range),
                     spellDuration(item.duration),
-                    `DV ${item.dv}`,
+                    item.damage ? `ダメージ ${item.damage}` : "",
+                    `ドレイン ${item.dv}`,
                   ].filter(Boolean).join(" / ")}
                   {item.descriptor ? `（${spellDescriptors(item.descriptor)}）` : ""}
+                  {item.page ? <span className="sheet-dim"> {item.source || ""} p.{item.page}</span> : null}
                 </li>
               ))}
             </ul>
@@ -603,14 +780,11 @@ export default function CharacterSheet({
         {enabled.has("initiation") && (d.initiation?.grade || 0) > 0 ? (
           <div className="sheet-block">
             <h4>イニシエーション 等級 {d.initiation?.grade}</h4>
-            <ul className="sheet-list">
-              {(d.initiation?.choices || []).map((item) => (
-                <li key={item.id}>
-                  <b>{tr(item.name)}</b>
-                  <span className="sheet-dim"> {item.kind === "art" ? "術" : "メタマジック"} G{item.grade}</span>
-                </li>
-              ))}
-            </ul>
+            {(d.initiation?.choices || []).length ? (
+              <GradeList items={d.initiation?.choices || []} tr={tr} />
+            ) : (
+              <p className="sheet-note">メタマジック未選択</p>
+            )}
           </div>
         ) : null}
       </Section>
@@ -629,8 +803,10 @@ export default function CharacterSheet({
               {(d.complex_forms || []).map((item) => (
                 <li key={item.id}>
                   <b>{tr(item.label || item.name)}</b>
-                  {" ・ "}{cfTarget(item.target)} / {cfDuration(item.duration)} / L{item.level} / FV {item.fv}
+                  {" ・ "}対象 {cfTarget(item.target)} / {cfDuration(item.duration)} / レベル {item.level} / FV {item.fv}
                   {item.fade != null ? ` ・ フェード ${item.fade}${item.fade_code || ""}` : ""}
+                  {item.physical ? "（物理）" : ""}
+                  {item.extra ? `（${tr(item.extra)}）` : ""}
                 </li>
               ))}
             </ul>
@@ -654,15 +830,11 @@ export default function CharacterSheet({
         {enabled.has("submersion") && (d.submersion?.grade || 0) > 0 ? (
           <div className="sheet-block">
             <h4>サブマージョン 等級 {d.submersion?.grade}</h4>
-            <ul className="sheet-list">
-              {(d.submersion?.echoes || []).map((item) => (
-                <li key={item.id}>
-                  <b>{tr(item.name)}</b>
-                  {item.extra ? `（${tr(item.extra)}）` : ""}
-                  <span className="sheet-dim"> G{item.grade}</span>
-                </li>
-              ))}
-            </ul>
+            {(d.submersion?.echoes || []).length ? (
+              <GradeList items={d.submersion?.echoes || []} tr={tr} />
+            ) : (
+              <p className="sheet-note">エコー未選択</p>
+            )}
           </div>
         ) : null}
       </Section>
@@ -708,16 +880,13 @@ export default function CharacterSheet({
         </table>
       </Section>
 
-      <Section title="車両" empty={!(d.vehicles || []).length}>
-        <ul className="sheet-list">
-          {(d.vehicles || []).map((v) => (
-            <li key={v.id}>
-              <b>{tr(v.name)}</b>
-              {" ・ "}H{v.handling} Sp{v.speed} Ac{v.accel} B{v.body} A{v.armor} P{v.pilot} Se{v.sensor}
-              {v.seats ? ` ・ 座席 ${v.seats}` : ""}
-            </li>
-          ))}
-        </ul>
+      <Section title="車両・ドローン" empty={!(d.vehicles || []).length && !(d.drones || []).length}>
+        {(d.vehicles || []).map((v) => (
+          <VehicleBlock key={v.id} v={v} tr={tr} />
+        ))}
+        {(d.drones || []).map((v) => (
+          <VehicleBlock key={v.id} v={v} tr={tr} />
+        ))}
       </Section>
 
       <Section title="ドラッグ／毒物" empty={!drugs.length}>
@@ -737,6 +906,29 @@ export default function CharacterSheet({
         </ul>
       </Section>
 
+      <Section title="SIN／ライセンス" empty={!sins.length}>
+        <ul className="sheet-list">
+          {sins.map((sin) => {
+            const licenses = gearChildren(sin.id);
+            return (
+              <li key={sin.id}>
+                <b>{tr(sin.name)}</b>
+                {sin.rating > 0 ? ` R${sin.rating}` : ""}
+                {sin.extra ? `（${tr(sin.extra)}）` : ""}
+                {licenses.length ? (
+                  <span className="sheet-dim">
+                    {" ・ "}
+                    {licenses
+                      .map((l) => `${tr(l.name)}${l.rating > 0 ? ` R${l.rating}` : ""}${l.extra ? `:${tr(l.extra)}` : ""}`)
+                      .join("、")}
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
+
       <Section title="その他ギア" empty={!gearMisc.length}>
         <ul className="sheet-list sheet-list-compact">
           {gearMisc.map((item) => (
@@ -749,6 +941,10 @@ export default function CharacterSheet({
         </ul>
       </Section>
 
+      <Section title="メモ" empty={!(character.notes || "").trim()}>
+        <p className="sheet-notes">{character.notes}</p>
+      </Section>
+
       <footer className="sheet-footer">
         Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷
       </footer>
@@ -756,7 +952,6 @@ export default function CharacterSheet({
   );
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type TextArgs = {
   character: Character;
   d: Character["derived"];
@@ -775,6 +970,7 @@ type TextArgs = {
   bio: any[];
   gearMisc: any[];
   drugs: any[];
+  sins: any[];
 };
 
 /** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
@@ -878,6 +1074,31 @@ function textSheet(x: TextArgs): string {
     line();
   }
 
+  const vehAll = [...(d.vehicles || []), ...(d.drones || [])];
+  if (vehAll.length) {
+    line("=== 車両・ドローン ===");
+    vehAll.forEach((v: any) =>
+      line(
+        `  ${tr(v.name)}  機動${v.handling} 速${v.speed} 加${v.accel} 車体${v.body} 装甲${v.armor} ` +
+          `操縦${v.pilot} センサー${v.sensor} CM${vehicleCM(v.body)}` +
+          `${(v.mods || []).filter((m: any) => !m.parent_id).length ? `  改造: ${names((v.mods || []).filter((m: any) => !m.parent_id))}` : ""}`,
+      ),
+    );
+    line();
+  }
+
+  if (x.sins.length) {
+    line("=== SIN／ライセンス ===");
+    x.sins.forEach((s: any) => {
+      const lic = (d.gear || []).filter((g: any) => g.parent_id === s.id);
+      line(
+        `  ${tr(s.name)}${s.rating > 0 ? ` R${s.rating}` : ""}` +
+          `${lic.length ? `  ライセンス: ${lic.map((l: any) => `${tr(l.name)}${l.rating > 0 ? ` R${l.rating}` : ""}`).join("、")}` : ""}`,
+      );
+    });
+    line();
+  }
+
   if ((d.contacts || []).length) {
     line("=== コンタクト ===");
     (d.contacts || []).forEach((c: any) =>
@@ -896,5 +1117,11 @@ function textSheet(x: TextArgs): string {
   if (d.lifestyle)
     line(`ライフスタイル: ${tr(d.lifestyle.name)} ${d.lifestyle.months}${d.lifestyle.increment === "day" ? "日" : "ヶ月"}`);
   line(`ニューエン ${(d.nuyen ?? 0).toLocaleString()}¥  カルマ残 ${d.karma?.remaining ?? 0}/${d.karma?.pool ?? 0}`);
+
+  if ((ch.notes || "").trim()) {
+    line();
+    line("=== メモ ===");
+    (ch.notes || "").split("\n").forEach((n) => line(`  ${n}`));
+  }
   return L.join("\n");
 }

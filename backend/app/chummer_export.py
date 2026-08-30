@@ -65,6 +65,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _sub(root, "metavariant", state.metavariant or "")
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
     _sub(root, "created", "True" if state.career else "False")
+    if state.notes:
+        _sub(root, "notes", state.notes)
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
 

@@ -129,6 +129,7 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["build_method"] = _BUILD_METHODS.get(_text(root.find("buildmethod")).lower(), "Priority")
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
+    st["notes"] = _text(root.find("notes"))
 
     def prio(tag: str) -> str:
         v = _text(root.find(f"./priorities/{tag}")) or _text(root.find(tag))

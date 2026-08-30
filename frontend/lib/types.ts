@@ -1203,6 +1203,7 @@ export interface Character {
   submersion_grade?: number;
   submersions?: SubmersionChoice[];
   karma_nuyen?: number;
+  notes?: string;
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;

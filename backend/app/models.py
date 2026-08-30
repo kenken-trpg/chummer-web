@@ -290,6 +290,7 @@ class CharacterPatch(BaseModel):
     submersion_grade: int | None = None
     submersions: list[SubmersionChoice] | None = None
     karma_nuyen: int | None = None
+    notes: str | None = None
     career: bool | None = None
     karma_earned: int | None = None
     nuyen_earned: int | None = None
@@ -366,6 +367,7 @@ class CharacterState(BaseModel):
     submersion_grade: int = 0
     submersions: list[SubmersionChoice] = Field(default_factory=list)
     karma_nuyen: int = 0
+    notes: str = ""
     career: bool = False
     karma_earned: int = 0
     nuyen_earned: int = 0
