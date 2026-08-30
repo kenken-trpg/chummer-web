@@ -2651,6 +2651,28 @@ def apply_reach_bonus(weapons: list[dict[str, Any]] | None, reach: int) -> None:
         weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0"), int(reach))
 
 
+def _is_unarmed_weapon(weapon: dict[str, Any]) -> bool:
+    category = str(weapon.get("category") or "")
+    skill = str(weapon.get("useskill") or weapon.get("skill") or "")
+    return category == "Unarmed" or skill == "Unarmed Combat"
+
+
+def apply_unarmed_bonuses(
+    weapons: list[dict[str, Any]] | None,
+    unarmed_reach: int,
+    unarmed_ap: int,
+) -> None:
+    if not unarmed_reach and not unarmed_ap:
+        return
+    for weapon in weapons or []:
+        if not _is_unarmed_weapon(weapon):
+            continue
+        if unarmed_reach:
+            weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0"), int(unarmed_reach))
+        if unarmed_ap:
+            weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), int(unarmed_ap))
+
+
 def _add_weapon_dv(raw: str | None, delta: int) -> str:
     text = str(raw or "").strip()
     if not delta:
@@ -6544,7 +6566,6 @@ def resolve_martial_arts(
     kept: list[MartialArtInstall] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     spec_extras: dict[str, list[str]] = {}
-    unarmed_reach = 0
     karma = 0
     technique_total = 0
     paid_style_count = 0
@@ -6608,10 +6629,7 @@ def resolve_martial_arts(
                 }
             )
             for node in tech.get("bonus") or []:
-                if node.get("tag") == "unarmedreach":
-                    unarmed_reach += _as_int(node.get("value") or 0)
-                else:
-                    bonus_sources.append((f"{spec['name']}:{name}", [node]))
+                bonus_sources.append((f"{spec['name']}:{name}", [node]))
 
         for skill_name, spec_name in _martial_art_spec_options(spec.get("bonus") or []):
             bucket = spec_extras.setdefault(skill_name, [])
@@ -6667,7 +6685,6 @@ def resolve_martial_arts(
         "style_max": style_max,
         "technique_max": tech_max,
         "spec_extras": spec_extras,
-        "unarmed_reach": unarmed_reach,
         "bonus_sources": bonus_sources,
     }
 
@@ -9673,6 +9690,13 @@ def compute(state: CharacterState) -> CharacterState:
     warnings.extend(sync_quality_martial_arts(state, effects, qualities))
     martial = resolve_martial_arts(state, martial_ctx, errors, career=career)
     warnings.extend(martial["warnings"])
+    for source, nodes in martial.get("bonus_sources") or []:
+        apply_bonus_nodes(nodes, effects, source)
+    apply_unarmed_bonuses(
+        gear.get("weapons"),
+        int(effects.get("unarmed_reach") or 0),
+        int(effects.get("unarmed_ap") or 0),
+    )
     karma_spent += int(martial.get("karma") or 0)
     karma_spent += int(initiation.get("karma") or 0)
     karma_spent += int(submersion.get("karma") or 0)
@@ -10051,7 +10075,8 @@ def compute(state: CharacterState) -> CharacterState:
             "karma": martial.get("karma") or 0,
         },
         "martial_spec_options": martial.get("spec_extras") or {},
-        "unarmed_reach": int(martial.get("unarmed_reach") or 0) + int(effects.get("reach") or 0),
+        "unarmed_reach": int(effects.get("unarmed_reach") or 0) + int(effects.get("reach") or 0),
+        "unarmed_ap": int(effects.get("unarmed_ap") or 0),
         "reach": int(effects.get("reach") or 0),
         "lifestyle_cost_mod": int(effects.get("lifestyle_cost") or 0),
         "street_cred": street_cred_total,

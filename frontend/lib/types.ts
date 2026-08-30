@@ -1339,6 +1339,7 @@ export interface Character {
     };
     martial_spec_options?: Record<string, string[]>;
     unarmed_reach?: number;
+    unarmed_ap?: number;
     reach?: number;
     lifestyle_cost_mod?: number;
     notoriety?: number;

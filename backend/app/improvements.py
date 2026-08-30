@@ -170,6 +170,8 @@ IMPLEMENTED = {
     "addspell",
     "specificpower",
     "selectpowers",
+    "unarmedreach",
+    "unarmedap",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -189,7 +191,6 @@ SILENT_TAGS = {
     "skillsoft",
     "weaponspecificdice",
     "addskillspecializationoption",
-    "unarmedreach",
     "critterpowers",
     "limitcritterpowercategory",
     "optionalpowers",
@@ -214,7 +215,6 @@ SILENT_TAGS = {
     "smartlink",
     "throwstr",
     "throwrangestr",
-    "unarmedap",
     "defensetest",
     "swapskillattribute",
     "swapskillspecattribute",
@@ -409,6 +409,8 @@ def empty_effects() -> dict[str, Any]:
         "damage_resistance": 0,
         "unarmed_dv": 0,
         "unarmed_physical": False,
+        "unarmed_reach": 0,
+        "unarmed_ap": 0,
         "magicians_way": False,
         "free_qualities": [],
         "add_qualities": [],
@@ -607,6 +609,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["unarmed_dv"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "unarmeddvphysical":
             effects["unarmed_physical"] = True
+        elif tag == "unarmedreach":
+            effects["unarmed_reach"] += _bonus_int(node, fields)
+        elif tag == "unarmedap":
+            effects["unarmed_ap"] += _bonus_int(node, fields)
         elif tag == "magicianswaydiscount":
             effects["magicians_way"] = True
         elif tag == "freequality":

@@ -1675,6 +1675,9 @@ RAPID_HEALING = "4676b6f7-120d-4344-81ac-5922445a521b"
 LIGHT_BODY = "ce7df757-792e-4fac-a86e-6b587586deb2"
 AIR_WALKING = "8dc0a8e3-535a-4935-8c90-2079666e6a01"
 ADEPT_SPELL = "87f0f97d-cbcf-4427-9259-baf376c9f55a"
+PENETRATING_STRIKE = "70311f5c-a019-47b9-be21-e9a8d270e32e"
+ORTHOSKIN = "96e4809a-71e6-4b98-9740-c6c44bc33aa9"
+SHARKSKIN = "f84dc64d-a158-45bd-b81c-0a8c98f77415"
 
 
 def test_warrior_way_discounts_combat_sense() -> None:
@@ -5050,6 +5053,34 @@ def test_martial_art_extra_technique_and_kick_reach() -> None:
     assert out.derived["unarmed_reach"] == 1
     assert out.derived["martial_art_points"]["techniques"] == 2
     assert out.derived["errors"] == []
+
+
+def test_penetrating_strike_unarmed_ap() -> None:
+    out = compute(
+        _adept(
+            "penetrating",
+            adept_powers=[AdeptPowerInstall(power_id=PENETRATING_STRIKE, rating=2)],
+        )
+    )
+    assert out.derived["unarmed_ap"] == -2
+    assert out.derived["power_points"]["used"] == 0.5
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "unarmedap" not in tags
+
+
+def test_sharkskin_unarmed_reach() -> None:
+    out = compute(
+        _human(
+            "sharkskin",
+            bioware=[
+                CyberwareInstall(ware_id=ORTHOSKIN),
+                CyberwareInstall(ware_id=SHARKSKIN),
+            ],
+        )
+    )
+    assert out.derived["unarmed_reach"] == 1
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "unarmedreach" not in tags
 
 
 def test_martial_art_chargen_limits() -> None:
