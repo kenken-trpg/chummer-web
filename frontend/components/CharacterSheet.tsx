@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Catalog, Character, SpecialArmor } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
+import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
 
@@ -519,7 +520,14 @@ export default function CharacterSheet({
                 <li key={item.id}>
                   <b>{tr(item.name)}</b>
                   {" ・ "}
-                  {[item.category, item.type, item.range, item.duration, `DV ${item.dv}`].filter(Boolean).join(" / ")}
+                  {[
+                    tr(item.category || ""),
+                    spellType(item.type),
+                    spellRange(item.range),
+                    spellDuration(item.duration),
+                    `DV ${item.dv}`,
+                  ].filter(Boolean).join(" / ")}
+                  {item.descriptor ? `（${spellDescriptors(item.descriptor)}）` : ""}
                 </li>
               ))}
             </ul>
