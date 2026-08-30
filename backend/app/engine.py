@@ -4113,6 +4113,23 @@ def tradition_resist(tradition: dict[str, Any] | None, attrs: dict[str, int]) ->
     return value, "+".join(keys)
 
 
+def spell_defense_pools(effects: dict[str, Any] | None) -> dict[str, Any]:
+    general = int((effects or {}).get("spell_resistance") or 0)
+    specific = (effects or {}).get("spell_defense_resist") or {}
+    decrease_attrs = ("BOD", "AGI", "REA", "STR", "CHA", "LOG", "INT", "WIL")
+    return {
+        "general": general,
+        "direct_mana": general + int(specific.get("direct_mana") or 0),
+        "detection": general + int(specific.get("detection") or 0),
+        "mental_manipulation": general + int(specific.get("mental_manipulation") or 0),
+        "mana_illusion": general + int(specific.get("mana_illusion") or 0),
+        "physical_illusion": general + int(specific.get("physical_illusion") or 0),
+        "decrease": {
+            attr: general + int(specific.get(f"decrease_{attr.lower()}") or 0) for attr in decrease_attrs
+        },
+    }
+
+
 def is_way_quality(name: str) -> bool:
     return bool(re.fullmatch(r"The .+ Way", (name or "").strip()))
 
@@ -9910,6 +9927,7 @@ def compute(state: CharacterState) -> CharacterState:
         "nuyen_spend_breakdown": nuyen_spend_lines,
         "fatigue_resist": int(effects.get("fatigue_resist") or 0),
         "spell_resistance": int(effects.get("spell_resistance") or 0),
+        "spell_defense": spell_defense_pools(effects),
         "spell_dice_pool": list(effects.get("spell_dice_pool") or []),
         "action_dice_pools": list(effects.get("action_dice_pools") or []),
         "test_mods": dict(effects.get("test_mods") or {}),

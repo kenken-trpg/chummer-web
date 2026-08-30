@@ -4704,6 +4704,7 @@ def test_otaku_to_technomancer_fading_resist() -> None:
 
 
 DAREADRENALINE = "6a62e21f-f291-4e93-b109-df9c56c938f9"
+DIMMER_BULB = "7706ce23-77c2-470f-bb7e-6a4e56fa78fe"
 
 
 def test_dareadrenaline_drain_resist() -> None:
@@ -4719,6 +4720,49 @@ def test_dareadrenaline_drain_resist() -> None:
     assert out.derived["drain_resist"]["pool"] == 3
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "drainresist" not in tags
+
+
+def test_dareadrenaline_spell_defense_resists() -> None:
+    out = compute(_human("dd", bioware=[CyberwareInstall(ware_id=DAREADRENALINE)]))
+    sd = out.derived["spell_defense"]
+    assert sd["general"] == 0
+    assert sd["direct_mana"] == 1
+    assert sd["detection"] == 1
+    assert sd["mental_manipulation"] == 1
+    assert sd["mana_illusion"] == 1
+    assert sd["decrease"]["BOD"] == 1
+    assert sd["decrease"]["WIL"] == 1
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    for tag in (
+        "directmanaspellresist",
+        "detectionspellresist",
+        "mentalmanipulationresist",
+        "manaillusionresist",
+        "decreasebodresist",
+        "decreasewilresist",
+    ):
+        assert tag not in tags
+
+
+def test_magic_resistance_stacks_with_spell_defense() -> None:
+    out = compute(_mundane("mr", quality_ids=[MAGIC_RESISTANCE]))
+    assert out.derived["spell_defense"]["general"] == 1
+    assert out.derived["spell_defense"]["detection"] == 1
+    out2 = compute(
+        _human("mr-dd", quality_ids=[MAGIC_RESISTANCE], bioware=[CyberwareInstall(ware_id=DAREADRENALINE)])
+    )
+    assert out2.derived["spell_defense"]["detection"] == 2
+    assert out2.derived["spell_defense"]["mental_manipulation"] == 2
+
+
+def test_dimmer_bulb_spell_defense_penalty() -> None:
+    out = compute(_human("dim", quality_ids=[DIMMER_BULB]))
+    sd = out.derived["spell_defense"]
+    assert sd["mana_illusion"] == -1
+    assert sd["detection"] == -1
+    assert sd["decrease"]["LOG"] == -1
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "manaillusionresist" not in tags
 
 
 def test_sourceror_grants_sourcerer_daemon_echo() -> None:

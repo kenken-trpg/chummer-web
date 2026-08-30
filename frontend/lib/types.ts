@@ -1346,6 +1346,15 @@ export interface Character {
     public_awareness?: number;
     fatigue_resist?: number;
     spell_resistance?: number;
+    spell_defense?: {
+      general: number;
+      direct_mana: number;
+      detection: number;
+      mental_manipulation: number;
+      mana_illusion: number;
+      physical_illusion: number;
+      decrease: Record<string, number>;
+    };
     spell_dice_pool?: { name: string; id?: string; bonus: number; source?: string }[];
     action_dice_pools?: { category?: string; name: string; bonus: number; source?: string }[];
     test_mods?: {

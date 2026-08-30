@@ -5,6 +5,22 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
+SPELL_DEFENSE_RESIST_TAGS = {
+    "directmanaspellresist": "direct_mana",
+    "detectionspellresist": "detection",
+    "mentalmanipulationresist": "mental_manipulation",
+    "manaillusionresist": "mana_illusion",
+    "physicalillusionresist": "physical_illusion",
+    "decreasebodresist": "decrease_bod",
+    "decreaseagiresist": "decrease_agi",
+    "decreaserearesist": "decrease_rea",
+    "decreasestrresist": "decrease_str",
+    "decreasecharesist": "decrease_cha",
+    "decreaselogresist": "decrease_log",
+    "decreaseintresist": "decrease_int",
+    "decreasewilresist": "decrease_wil",
+}
+
 IMPLEMENTED = {
     "specificattribute",
     "armor",
@@ -150,6 +166,7 @@ IMPLEMENTED = {
     "addecho",
     "cyberadeptdaemon",
     "addspell",
+    *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
     "disablequality",
@@ -197,12 +214,6 @@ SILENT_TAGS = {
     "throwrangestr",
     "unarmedap",
     "defensetest",
-    "mentalmanipulationresist",
-    "manaillusionresist",
-    "physicalillusionresist",
-    "detectionspellresist",
-    "decreaselogresist",
-    "decreaseintresist",
     "swapskillattribute",
     "swapskillspecattribute",
     "skillgrouplevel",
@@ -243,6 +254,7 @@ IMMUNE_TAGS = {
     "pathogencontactimmune": "pathogen_contact",
     "pathogeninhalationimmune": "pathogen_inhalation",
 }
+
 SPECIAL_ARMOR_KEYS = (
     "fire",
     "cold",
@@ -360,6 +372,20 @@ def _as_int(value: Any, default: int = 0) -> int:
         return default
 
 
+def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, rating: int = 1) -> int:
+    fields = fields or {}
+    raw = node.get("value")
+    if raw is None or raw == "":
+        raw = fields.get("val")
+    if raw is None or raw == "":
+        raw = fields.get("bonus")
+    if raw is None or raw == "":
+        raw = fields.get("value")
+    if isinstance(raw, str) and "Rating" in raw:
+        raw = _replace_rating(raw, rating)
+    return _as_int(raw)
+
+
 def empty_effects() -> dict[str, Any]:
     return {
         "attribute_bonus": {k: 0 for k in ATTR_ALIASES.values() if len(k) <= 3},
@@ -391,6 +417,7 @@ def empty_effects() -> dict[str, Any]:
         "spell_dice_pool": [],
         "action_dice_pools": [],
         "spell_resistance": 0,
+        "spell_defense_resist": {key: 0 for key in SPELL_DEFENSE_RESIST_TAGS.values()},
         "special_armor": {key: 0 for key in SPECIAL_ARMOR_KEYS},
         "immunities": {key: False for key in IMMUNE_KEYS},
         "restricted_gear": [],
@@ -670,7 +697,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                 }
             )
         elif tag == "spellresistance":
-            effects["spell_resistance"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+            effects["spell_resistance"] += _bonus_int(node, fields)
+        elif tag in SPELL_DEFENSE_RESIST_TAGS:
+            key = SPELL_DEFENSE_RESIST_TAGS[tag]
+            effects["spell_defense_resist"][key] += _bonus_int(node, fields)
         elif tag in SPECIAL_ARMOR_TAGS:
             key = SPECIAL_ARMOR_TAGS[tag]
             effects["special_armor"][key] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
