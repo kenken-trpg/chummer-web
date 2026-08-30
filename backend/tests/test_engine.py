@@ -5015,6 +5015,7 @@ EXCEPTIONAL_ATTRIBUTE = "2ac8a95a-a4d0-4bef-a2f2-dcde020258cf"
 EX_CON = "4fe8fa5e-e31b-4126-a880-3e719a0a5820"
 PHOTOGRAPHIC_MEMORY = "9d3be1d9-1309-45e7-8bd9-1f5a3ede3522"
 QUICK_HEALER = "291efdb6-a8b8-49ce-b2be-72f9d3f8a243"
+UNCANNY_HEALER = "0ebdfce5-c613-4fd9-9763-cae2d21c2153"
 CELERITY = "bd2cf8ea-4eb3-458c-aa04-2de47067f3ad"
 CRYSTAL_BREATH = "c2b4f018-7b14-4e04-aab9-71c891dd0a18"
 MAGIC_RESISTANCE = "f80ef6fc-e844-441c-81e3-b1264b34a4e7"
@@ -5225,6 +5226,16 @@ def test_photographic_memory_and_quick_healer() -> None:
     assert "memory" not in tags
     assert "spelldicepool" not in tags
     assert "physicalcmrecovery" not in tags
+
+
+def test_uncanny_healer_cm_recovery() -> None:
+    out = compute(_human("uncanny", quality_ids=[UNCANNY_HEALER]))
+    assert out.derived["essence"] == 6.0
+    assert out.derived["cm_recovery"]["physical"] == 6
+    assert out.derived["cm_recovery"]["stun"] == 6
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "addesstophysicalcmrecovery" not in tags
+    assert "addesstostuncmrecovery" not in tags
 
 
 def test_celerity_replaces_movement() -> None:

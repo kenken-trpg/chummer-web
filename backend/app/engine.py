@@ -9824,8 +9824,10 @@ def compute(state: CharacterState) -> CharacterState:
         "action_dice_pools": list(effects.get("action_dice_pools") or []),
         "test_mods": dict(effects.get("test_mods") or {}),
         "cm_recovery": {
-            "physical": int(effects.get("cm_recovery_physical") or 0),
-            "stun": int(effects.get("cm_recovery_stun") or 0),
+            "physical": int(effects.get("cm_recovery_physical") or 0)
+            + (int(ess) if effects.get("cm_recovery_physical_add_ess") else 0),
+            "stun": int(effects.get("cm_recovery_stun") or 0)
+            + (int(ess) if effects.get("cm_recovery_stun_add_ess") else 0),
         },
         "essence_penalty": round(float(effects.get("essence_penalty") or 0), 4),
         "attribute_max_bonus": dict(attr_max_bonus),

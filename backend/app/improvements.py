@@ -80,6 +80,8 @@ IMPLEMENTED = {
     "selectattributes",
     "physicalcmrecovery",
     "stuncmrecovery",
+    "addesstophysicalcmrecovery",
+    "addesstostuncmrecovery",
     "skilldisable",
     "skillgroupdisable",
     "skillgroupcategorydisable",
@@ -200,8 +202,6 @@ SILENT_TAGS = {
     "detectionspellresist",
     "decreaselogresist",
     "decreaseintresist",
-    "addesstophysicalcmrecovery",
-    "addesstostuncmrecovery",
     "swapskillattribute",
     "swapskillspecattribute",
     "skillgrouplevel",
@@ -414,6 +414,8 @@ def empty_effects() -> dict[str, Any]:
         "attribute_selects": [],
         "cm_recovery_physical": 0,
         "cm_recovery_stun": 0,
+        "cm_recovery_physical_add_ess": False,
+        "cm_recovery_stun_add_ess": False,
         "disabled_skills": [],
         "disabled_skill_groups": [],
         "disabled_skill_group_categories": [],
@@ -793,6 +795,10 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             effects["cm_recovery_physical"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "stuncmrecovery":
             effects["cm_recovery_stun"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "addesstophysicalcmrecovery":
+            effects["cm_recovery_physical_add_ess"] = True
+        elif tag == "addesstostuncmrecovery":
+            effects["cm_recovery_stun_add_ess"] = True
         elif tag == "skilldisable":
             name = str(node.get("value") or fields.get("name") or "").strip()
             if name and name not in effects["disabled_skills"]:
