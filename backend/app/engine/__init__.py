@@ -475,11 +475,14 @@ def default_attributes(meta: dict[str, Any]) -> dict[str, int]:
 
 # Catalog single-row accessors live in engine/lookups.py.
 from .lookups import (  # noqa: E402  (kept here to mark where these were defined)
+    _grade_by_name,
     _item_by_id,
     _power_by_name,
     _quality_by_id,
     _quality_by_name,
     _tradition_by_id,
+    _ware_by_id,
+    _ware_by_name,
 )
 
 
@@ -1392,32 +1395,6 @@ def _enhancement_by_id(eid: str) -> dict[str, Any] | None:
         if item["id"] == eid:
             return item
     return None
-
-
-def _ware_by_id(kind: str, wid: str) -> dict[str, Any] | None:
-    for item in catalog().get(kind, {}).get("items") or []:
-        if item["id"] == wid:
-            return item
-    return None
-
-
-def _ware_by_name(kind: str, name: str) -> dict[str, Any] | None:
-    for item in catalog().get(kind, {}).get("items") or []:
-        if item["name"] == name:
-            return item
-    return None
-
-
-def _grade_by_name(kind: str, name: str) -> dict[str, Any]:
-    grades = catalog().get(kind, {}).get("grades") or []
-    for g in grades:
-        if g["name"] == name:
-            return g
-    other = "bioware" if kind == "cyberware" else "cyberware"
-    for g in catalog().get(other, {}).get("grades") or []:
-        if g["name"] == name:
-            return g
-    return next((g for g in grades if g["name"] == "Standard"), {"name": "Standard", "ess": 1.0, "cost": 1.0})
 
 
 def racial_formula_extras(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, int]:

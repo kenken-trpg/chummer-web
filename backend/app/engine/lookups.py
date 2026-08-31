@@ -155,6 +155,32 @@ def _echo_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
+def _ware_by_id(kind: str, wid: str) -> dict[str, Any] | None:
+    for item in catalog().get(kind, {}).get("items") or []:
+        if item["id"] == wid:
+            return item
+    return None
+
+
+def _ware_by_name(kind: str, name: str) -> dict[str, Any] | None:
+    for item in catalog().get(kind, {}).get("items") or []:
+        if item["name"] == name:
+            return item
+    return None
+
+
+def _grade_by_name(kind: str, name: str) -> dict[str, Any]:
+    grades = catalog().get(kind, {}).get("grades") or []
+    for g in grades:
+        if g["name"] == name:
+            return g
+    other = "bioware" if kind == "cyberware" else "cyberware"
+    for g in catalog().get(other, {}).get("grades") or []:
+        if g["name"] == name:
+            return g
+    return next((g for g in grades if g["name"] == "Standard"), {"name": "Standard", "ess": 1.0, "cost": 1.0})
+
+
 def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
     for item in catalog().get(kind) or []:
         if item["id"] == item_id:
