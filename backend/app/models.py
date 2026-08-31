@@ -157,6 +157,7 @@ class GearInstall(BaseModel):
     capacity_override: str | None = None
     array_order: list[str] = Field(default_factory=list)
     extra: str | None = None
+    active: bool = False  # drugs/toxins: effect currently applied
 
 
 class LifestyleInstall(BaseModel):

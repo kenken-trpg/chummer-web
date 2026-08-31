@@ -328,6 +328,7 @@ export interface GearInstall {
   capacity_override?: string | null;
   array_order?: string[];
   extra?: string | null;
+  active?: boolean;
 }
 
 export interface LifestyleInstall {
@@ -572,6 +573,12 @@ export interface InstalledGear extends InstalledOptics {
   add_weapon?: string;
   add_weapon_id?: string;
   loaded?: boolean;
+  is_drug?: boolean;
+  active?: boolean;
+  drug_speed?: string;
+  drug_vectors?: string[];
+  drug_duration?: string;
+  drug_effect?: string;
 }
 
 export interface InstalledLifestyle {
@@ -778,6 +785,19 @@ export interface GearCatalogItem extends OpticsCatalogItem {
   weapon_details?: string;
   add_weapon?: string;
   add_weapon_id?: string;
+  speed?: string;
+  vectors?: string[];
+  duration?: string;
+  effect?: string;
+}
+
+export interface ActiveDrug {
+  name: string;
+  category: string;
+  speed?: string;
+  vectors?: string[];
+  duration?: string;
+  effect?: string;
 }
 
 export interface LifestyleCatalogItem {
@@ -1337,6 +1357,7 @@ export interface Character {
     weapons?: InstalledWeapon[];
     weapon_accessories?: InstalledWeaponAccessory[];
     recoil?: { str: number; str_rc: number; free: number };
+    active_drugs?: ActiveDrug[];
     commlinks?: InstalledCommlink[];
     cyberdecks?: InstalledMatrixDevice[];
     rccs?: InstalledMatrixDevice[];

@@ -963,17 +963,34 @@ export default function CharacterSheet({
         ))}
       </Section>
 
-      <Section title="ドラッグ／毒物" empty={!drugs.length}>
+      <Section title="ドラッグ／毒物" empty={!drugs.length && !(d.active_drugs || []).length}>
+        {(d.active_drugs || []).length ? (
+          <div className="sheet-block">
+            <h4>使用中（能力値・判定に反映済み）</h4>
+            <ul className="sheet-list sheet-list-compact">
+              {(d.active_drugs || []).map((drug, i) => (
+                <li key={`${drug.name}-${i}`}>
+                  <b>{tr(drug.name)}</b>
+                  {drug.effect ? ` ・ ${drug.effect}` : ""}
+                  {drug.duration ? ` ・ 持続 ${drug.duration}` : ""}
+                  {drug.vectors?.length ? ` ・ 経路 ${drug.vectors.join("・")}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <ul className="sheet-list sheet-list-compact">
           {drugs.map((item) => {
             const grades = drugChildren(item.id);
             return (
               <li key={item.id}>
+                {item.active ? "▶ " : ""}
                 {tr(item.name)}
                 {(item.qty || 1) > 1 ? ` ×${item.qty}` : ""}
                 {grades.length
                   ? `（${grades.map((g) => tr(g.name)).join("、")}）`
                   : ""}
+                {item.drug_effect ? <span className="sheet-dim">{` ・ ${item.drug_effect}`}</span> : ""}
               </li>
             );
           })}
@@ -1216,7 +1233,14 @@ function textSheet(x: TextArgs): string {
   const misc = [...x.gearMisc, ...x.drugs];
   if (misc.length) {
     line("=== ギア ===");
-    misc.forEach((g) => line(`  ${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}`));
+    misc.forEach((g) => line(`  ${g.active ? "▶ " : ""}${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}${g.drug_effect ? ` — ${g.drug_effect}` : ""}`));
+    line();
+  }
+  if ((d.active_drugs || []).length) {
+    line("=== 使用中のドラッグ（反映済み） ===");
+    (d.active_drugs || []).forEach((drug) =>
+      line(`  ${tr(drug.name)}${drug.effect ? ` — ${drug.effect}` : ""}${drug.duration ? ` / 持続 ${drug.duration}` : ""}`),
+    );
     line();
   }
 

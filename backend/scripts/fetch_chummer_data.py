@@ -21,6 +21,7 @@ FILES = [
     "Chummer/data/bioware.xml",
     "Chummer/data/powers.xml",
     "Chummer/data/gear.xml",
+    "Chummer/data/drugcomponents.xml",
     "Chummer/data/armor.xml",
     "Chummer/data/weapons.xml",
     "Chummer/data/ranges.xml",

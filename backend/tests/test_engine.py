@@ -6894,3 +6894,33 @@ def test_leftover_nuyen_carryover_notice() -> None:
     # the notice is a chargen-only reminder; career mode omits it
     career = compute(_mundane("carry-career", career=True, priorities=prio))
     assert not any("持ち越せません" in w for w in career.derived["warnings"])
+
+
+JAZZ = "929c4835-1754-4999-9215-9859e8ec5384"
+
+
+def _drug_state(active: bool) -> CharacterState:
+    return CharacterState(
+        id="drug",
+        name="Drug",
+        priorities=Priorities(Heritage="C", Attributes="A", Talent="E", Skills="B", Resources="D"),
+        metatype="Human",
+        attributes={
+            "BOD": 3, "AGI": 3, "REA": 4, "STR": 3, "WIL": 3, "LOG": 3,
+            "INT": 3, "CHA": 3, "EDG": 3, "MAG": 0, "RES": 0, "ESS": 6,
+        },
+        gear=[GearInstall(gear_id=JAZZ, active=active)],
+    )
+
+
+def test_active_drug_folds_bonus_into_totals() -> None:
+    base = compute(_drug_state(False))
+    dosed = compute(_drug_state(True))
+
+    assert base.derived["totals"]["REA"] == 4
+    assert dosed.derived["totals"]["REA"] == 5  # Jazz: +1 REA
+    assert dosed.derived["initiative"]["dice"] == base.derived["initiative"]["dice"] + 2
+    assert base.derived["active_drugs"] == []
+    assert [d["name"] for d in dosed.derived["active_drugs"]] == ["Jazz"]
+    row = dosed.derived["active_drugs"][0]
+    assert "REA +1" in row["effect"] and row["vectors"] == ["Inhalation"]

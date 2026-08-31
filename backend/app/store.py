@@ -4,7 +4,7 @@ import json
 import uuid
 from pathlib import Path
 
-from .data_loader import catalog
+from .data_loader import catalog, drug_effect_summary
 from .engine import (
     ADEPT_TALENTS,
     BUILD_METHOD_KARMA,
@@ -786,6 +786,10 @@ def public_catalog() -> dict:
                 "cost": item.get("cost") or "0",
                 "avail": item.get("avail") or "",
                 "addoncategories": list(item.get("addoncategories") or []),
+                "speed": item.get("drug_speed") or "",
+                "vectors": list(item.get("drug_vectors") or []),
+                "duration": item.get("drug_duration") or "",
+                "effect": drug_effect_summary(item.get("drug_bonus") or []),
                 "source": item.get("source") or "",
                 "page": item.get("page") or "",
             }

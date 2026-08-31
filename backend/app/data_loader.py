@@ -2284,6 +2284,77 @@ def load_lifestyle_qualities() -> list[dict[str, Any]]:
     return items
 
 
+_DRUG_LIMIT_LABEL = {"physical": "肉体上限", "mental": "精神上限", "social": "社会上限"}
+
+
+def drug_node_value(node: dict[str, Any]) -> str:
+    fields = node.get("fields") or {}
+    return str(
+        fields.get("value")
+        or fields.get("val")
+        or fields.get("bonus")
+        or node.get("value")
+        or ""
+    ).strip()
+
+
+def drug_effect_summary(nodes: list[dict[str, Any]]) -> str:
+    """Human-readable one-liner for a drug's ``<bonus>`` nodes."""
+    parts: list[str] = []
+    for node in nodes or []:
+        tag = node.get("tag")
+        fields = node.get("fields") or {}
+        val = drug_node_value(node)
+        signed = val if val.startswith(("-", "+")) else (f"+{val}" if val else "")
+        if tag == "attribute" and val:
+            parts.append(f"{str(fields.get('name') or '').upper()} {signed}")
+        elif tag == "limit" and val:
+            label = _DRUG_LIMIT_LABEL.get(
+                str(fields.get("name") or "").strip().lower(), str(fields.get("name") or "")
+            )
+            parts.append(f"{label} {signed}")
+        elif tag in ("initiativedice", "initiativepass") and val:
+            parts.append(f"イニシアチブ +{val}D6")
+        elif tag == "initiative" and val:
+            parts.append(f"イニシアチブ {signed}")
+        elif tag == "specificskill" and val:
+            parts.append(f"{str(fields.get('name') or '')} {signed}")
+        elif tag == "quality":
+            rating = (node.get("attrs") or {}).get("rating")
+            name = str(node.get("value") or "")
+            parts.append(f"資質 {name}" + (f"({rating})" if rating else ""))
+    return " / ".join(p for p in parts if p.strip())
+
+
+def load_drug_components() -> dict[str, dict[str, Any]]:
+    """Mechanical data for premade drugs, keyed by the shared drug/gear id.
+
+    ``drugcomponents.xml`` carries the ``<bonus>`` (attribute / limit /
+    initiativedice / quality / specificskill), the ``<duration>`` formula
+    (seconds, may use ``{BOD}`` / ``{D6}``), ``<speed>`` and ``<vectors>`` that
+    the flat ``gear.xml`` ``Drugs`` entries omit.
+    """
+    path = DATA_DIR / "drugcomponents.xml"
+    if not path.exists():
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for el in ET.parse(path).getroot().findall("./drugs/drug"):
+        drug_id = _text(el.find("id"))
+        bonus = parse_bonus(el.find("bonus"))
+        duration = _text(el.find("duration"))
+        speed = _text(el.find("speed"))
+        vectors = _text(el.find("vectors"))
+        if not drug_id or not (bonus or duration or speed or vectors):
+            continue
+        out[drug_id] = {
+            "drug_bonus": bonus,
+            "drug_duration": duration,
+            "drug_speed": speed,
+            "drug_vectors": [v.strip() for v in vectors.split(",") if v.strip()],
+        }
+    return out
+
+
 def load_drug_grades() -> list[dict[str, Any]]:
     path = DATA_DIR / "gear.xml"
     if not path.exists():
@@ -2684,6 +2755,11 @@ def catalog() -> dict[str, Any]:
         gear_id = gear_for_weapon.get(item["name"]) or ""
         item["from_gear"] = bool(gear_id)
         item["add_gear_id"] = gear_id
+    drug_effects = load_drug_components()
+    for item in gear:
+        eff = drug_effects.get(item["id"])
+        if eff:
+            item.update(eff)
     drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
     skills = load_skills()
     qualities = load_qualities()
