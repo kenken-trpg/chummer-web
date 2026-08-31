@@ -125,10 +125,6 @@ from .constants import (
 )
 
 
-def _ceil_div(n: float) -> int:
-    return int(math.ceil(n))
-
-
 def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
     data = catalog()
     by_name = data["all_metatypes"]
@@ -146,6 +142,17 @@ def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
     raise KeyError(f"Unknown metatype: {name}/{variant}")
 
 
+from .formulas import (  # noqa: E402  (stat-expression helpers)
+    _add_leading_int,
+    _add_signed_stat,
+    _add_weapon_dv,
+    _ceil_div,
+    _eval_attr_stat,
+    _leading_int,
+    _replace_leading_int,
+    _set_damage_type,
+    parse_armor_value,
+)
 from .priority import (  # noqa: E402, F401  (re-exported for store.py)
     all_talent_options,
     heritage_options,
@@ -870,17 +877,6 @@ from .lookups import (  # noqa: E402  (kept here to mark where these were define
 )
 
 
-def parse_armor_value(raw: str, rating: int = 1) -> tuple[int, bool]:
-    text = (raw or "0").strip()
-    additive = text.startswith("+") or text.startswith("-")
-    if text.lower() == "rating":
-        return int(rating), False
-    try:
-        return int(float(text)), additive
-    except ValueError:
-        return int(eval_formula(text, rating, 0)), additive
-
-
 def armor_plugin_capacity(
     expr: str | None,
     rating: int,
@@ -1421,25 +1417,6 @@ def ammo_fits_weapon(ammo: dict[str, Any], weapon: dict[str, Any]) -> bool:
     return weapon_type in types
 
 
-def _add_signed_stat(raw: str | None, delta: int) -> str:
-    text = str(raw or "").strip()
-    if not delta:
-        return text
-    match = re.match(r"^([+-]?\d+)(.*)$", text)
-    if match:
-        return f"{int(match.group(1)) + delta}{match.group(2)}"
-    if text in {"", "-", "—"}:
-        return str(delta)
-    return text
-
-
-def _set_damage_type(damage: str, dtype: str) -> str:
-    match = re.match(r"^([+-]?\d+)(.*)$", str(damage or "").strip())
-    if not match:
-        return dtype
-    return f"{match.group(1)}{dtype}"
-
-
 def _apply_ammo_bonus(weapon: dict[str, Any], bonus: dict[str, Any] | None) -> None:
     if not bonus:
         return
@@ -1557,45 +1534,6 @@ def _append_gear_weapons(weapons: list[dict[str, Any]], gear_items: list[dict[st
             )
         )
         taken.add(gear_id)
-
-
-_ATTR_TOKEN = re.compile(r"\{(STR|AGI)(?:Unaug|Base)?\}", re.I)
-
-
-def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
-    text = str(raw or "")
-    if "{" not in text:
-        return text
-    values = {key.upper(): int(val) for key, val in attrs.items()}
-
-    def _token(match: re.Match[str]) -> str:
-        return str(values.get(match.group(1).upper(), 0))
-
-    replaced = _ATTR_TOKEN.sub(_token, text)
-    if "{" in replaced:
-        return text
-
-    def _try_eval(expr: str) -> str | None:
-        compact = expr.replace(" ", "")
-        if not re.fullmatch(r"[0-9+\-*/().]+", compact):
-            return None
-        try:
-            return str(int(eval(compact, {"__builtins__": {}}, {})))
-        except Exception:
-            return None
-
-    out = replaced
-    while True:
-
-        def _inner(match: re.Match[str]) -> str:
-            value = _try_eval(match.group(1))
-            return value if value is not None else match.group(0)
-
-        nxt = re.sub(r"\(([0-9+\-*/. ]+)\)", _inner, out)
-        if nxt == out:
-            break
-        out = nxt
-    return out
 
 
 def _drone_mod_limb_attrs(
@@ -2377,31 +2315,6 @@ def _pick_accessory_mount(weapon_mounts: list[str], used: set[str], acc_mounts: 
     return None
 
 
-def _leading_int(raw: str | None) -> int | None:
-    match = re.match(r"^([+-]?\d+)", str(raw or "").strip())
-    if not match:
-        return None
-    return int(match.group(1))
-
-
-def _add_leading_int(raw: str | None, delta: int) -> str:
-    text = str(raw or "").strip()
-    if not delta:
-        return text
-    match = re.match(r"^([+-]?\d+)(.*)$", text)
-    if not match:
-        return text
-    return f"{int(match.group(1)) + delta}{match.group(2)}"
-
-
-def _replace_leading_int(raw: str | None, value: int) -> str:
-    text = str(raw or "").strip()
-    match = re.match(r"^([+-]?\d+)(.*)$", text)
-    if not match:
-        return str(value)
-    return f"{int(value)}{match.group(2)}"
-
-
 def resolve_attribute_selects(
     state: CharacterState,
     effects: dict[str, Any],
@@ -2497,27 +2410,6 @@ def apply_unarmed_bonuses(
             weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0"), int(unarmed_reach))
         if unarmed_ap:
             weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), int(unarmed_ap))
-
-
-def _add_weapon_dv(raw: str | None, delta: int) -> str:
-    text = str(raw or "").strip()
-    if not delta:
-        return text
-    match = re.search(r"([+-]?\d+)(?=[^0-9]*$)", text)
-    if match:
-        start, end = match.span(1)
-        token = match.group(1)
-        new_val = int(token) + delta
-        if token.startswith("+") and new_val >= 0:
-            replacement = f"+{new_val}"
-        else:
-            replacement = str(new_val)
-        return f"{text[:start]}{replacement}{text[end:]}"
-    type_match = re.match(r"^(.*?)([PS].*)$", text)
-    if type_match:
-        sign = "+" if delta > 0 else ""
-        return f"{type_match.group(1)}{sign}{delta}{type_match.group(2)}"
-    return f"{text}+{delta}" if delta > 0 else f"{text}{delta}"
 
 
 def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: dict[str, Any] | None) -> None:
