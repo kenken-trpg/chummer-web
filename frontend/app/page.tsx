@@ -331,16 +331,38 @@ export default function Page() {
 
         {tab === "sheet" && (
           <div className="no-print sheet-notes-edit">
-            <label>メモ</label>
-            <textarea
-              rows={3}
-              defaultValue={ch.notes || ""}
-              key={ch.id}
-              placeholder="背景・装備の運用メモ・GM 用メモなど。シートと .chum5 書き出しに反映されます。"
-              onBlur={(e) => {
-                if ((e.target.value || "") !== (ch.notes || "")) patch({ notes: e.target.value });
-              }}
-            />
+            <label>記述</label>
+            <div className="sheet-desc-grid">
+              {([
+                ["age", "年齢"], ["sex", "性別"], ["height", "身長"], ["weight", "体重"],
+                ["eyes", "目"], ["hair", "髪"], ["skin", "肌"], ["concept", "コンセプト"],
+              ] as const).map(([field, label]) => (
+                <label key={field}>
+                  {label}
+                  <input
+                    defaultValue={(ch[field] as string) || ""}
+                    key={`${ch.id}-${field}`}
+                    onBlur={(e) => {
+                      if ((e.target.value || "") !== ((ch[field] as string) || "")) patch({ [field]: e.target.value });
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            {([["appearance", "容姿"], ["background", "背景"], ["notes", "メモ"]] as const).map(([field, label]) => (
+              <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>
+                <label>{label}</label>
+                <textarea
+                  rows={field === "notes" ? 3 : 2}
+                  defaultValue={(ch[field] as string) || ""}
+                  key={`${ch.id}-${field}`}
+                  placeholder={field === "notes" ? "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。" : ""}
+                  onBlur={(e) => {
+                    if ((e.target.value || "") !== ((ch[field] as string) || "")) patch({ [field]: e.target.value });
+                  }}
+                />
+              </div>
+            ))}
           </div>
         )}
         {tab === "sheet" && <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />}

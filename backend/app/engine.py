@@ -8703,12 +8703,34 @@ def resolve_spells(
     }
 
 
-def initiation_karma_for_grade(grade: int) -> int:
-    return INITIATION_KARMA_FLAT + int(grade) * INITIATION_KARMA_PER_GRADE
+INITIATION_DISCOUNT_STEP = 0.1  # −10% Karma per group / ordeal / schooling (SR5 p.325)
 
 
-def initiation_karma_total(grade: int) -> int:
-    return sum(initiation_karma_for_grade(g) for g in range(1, max(0, int(grade)) + 1))
+def _magic_grade_discount(*, group: bool = False, ordeal: bool = False, schooling: bool = False) -> float:
+    """Multiplier for a single initiation/submersion grade: discounts subtract."""
+    steps = int(bool(group)) + int(bool(ordeal)) + int(bool(schooling))
+    return max(0.0, 1.0 - INITIATION_DISCOUNT_STEP * steps)
+
+
+def initiation_karma_for_grade(
+    grade: int, *, group: bool = False, ordeal: bool = False, schooling: bool = False
+) -> int:
+    base = INITIATION_KARMA_FLAT + int(grade) * INITIATION_KARMA_PER_GRADE
+    return math.floor(base * _magic_grade_discount(group=group, ordeal=ordeal, schooling=schooling) + 0.5)
+
+
+def initiation_karma_total(grade: int, choices: list[InitiationChoice] | None = None) -> int:
+    flags = {int(c.grade): c for c in (choices or [])}
+    total = 0
+    for g in range(1, max(0, int(grade)) + 1):
+        c = flags.get(g)
+        total += initiation_karma_for_grade(
+            g,
+            group=bool(c and c.group),
+            ordeal=bool(c and c.ordeal),
+            schooling=bool(c and c.schooling),
+        )
+    return total
 
 
 def _metamagic_by_id(mid: str) -> dict[str, Any] | None:
@@ -8769,6 +8791,9 @@ def resolve_initiation(
                 grade=g,
                 kind=inst.kind or "metamagic",
                 option_id=inst.option_id or "",
+                group=bool(inst.group),
+                ordeal=bool(inst.ordeal),
+                schooling=bool(inst.schooling),
             )
 
     kept_choices: list[InitiationChoice] = []
@@ -8799,7 +8824,12 @@ def resolve_initiation(
             "kind": kind,
             "option_id": option_id,
             "name": "",
-            "karma": initiation_karma_for_grade(g),
+            "karma": initiation_karma_for_grade(
+                g, group=choice.group, ordeal=choice.ordeal, schooling=choice.schooling
+            ),
+            "group": bool(choice.group),
+            "ordeal": bool(choice.ordeal),
+            "schooling": bool(choice.schooling),
             "source": "",
             "page": "",
         }
@@ -8930,7 +8960,7 @@ def resolve_initiation(
     return {
         "warnings": warnings,
         "grade": grade,
-        "karma": initiation_karma_total(grade),
+        "karma": initiation_karma_total(grade, kept_choices),
         "choices": public_choices,
         "metamagics": public_metas,
         "arts": public_arts,
@@ -8941,12 +8971,25 @@ def resolve_initiation(
     }
 
 
-def submersion_karma_for_grade(grade: int) -> int:
-    return SUBMERSION_KARMA_FLAT + int(grade) * SUBMERSION_KARMA_PER_GRADE
+def submersion_karma_for_grade(
+    grade: int, *, group: bool = False, ordeal: bool = False, schooling: bool = False
+) -> int:
+    base = SUBMERSION_KARMA_FLAT + int(grade) * SUBMERSION_KARMA_PER_GRADE
+    return math.floor(base * _magic_grade_discount(group=group, ordeal=ordeal, schooling=schooling) + 0.5)
 
 
-def submersion_karma_total(grade: int) -> int:
-    return sum(submersion_karma_for_grade(g) for g in range(1, max(0, int(grade)) + 1))
+def submersion_karma_total(grade: int, choices: list[SubmersionChoice] | None = None) -> int:
+    flags = {int(c.grade): c for c in (choices or [])}
+    total = 0
+    for g in range(1, max(0, int(grade)) + 1):
+        c = flags.get(g)
+        total += submersion_karma_for_grade(
+            g,
+            group=bool(c and c.group),
+            ordeal=bool(c and c.ordeal),
+            schooling=bool(c and c.schooling),
+        )
+    return total
 
 
 def _echo_by_id(echo_id: str) -> dict[str, Any] | None:
@@ -8989,6 +9032,9 @@ def resolve_submersion(
                 grade=g,
                 echo_id=inst.echo_id or "",
                 extra=inst.extra,
+                group=bool(inst.group),
+                ordeal=bool(inst.ordeal),
+                schooling=bool(inst.schooling),
             )
 
     kept_choices: list[SubmersionChoice] = []
@@ -9016,7 +9062,12 @@ def resolve_submersion(
             "echo_id": echo_id,
             "name": "",
             "extra": extra,
-            "karma": submersion_karma_for_grade(g),
+            "karma": submersion_karma_for_grade(
+                g, group=choice.group, ordeal=choice.ordeal, schooling=choice.schooling
+            ),
+            "group": bool(choice.group),
+            "ordeal": bool(choice.ordeal),
+            "schooling": bool(choice.schooling),
             "needs_extra": False,
             "source": "",
             "page": "",
@@ -9085,7 +9136,7 @@ def resolve_submersion(
     return {
         "warnings": warnings,
         "grade": grade,
-        "karma": submersion_karma_total(grade),
+        "karma": submersion_karma_total(grade, kept_choices),
         "choices": public_choices,
         "echoes": public_echoes,
         "echo_names": echo_names,

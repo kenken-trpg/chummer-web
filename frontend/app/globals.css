@@ -380,6 +380,23 @@ input[type="text"], input[type="search"] {
   padding: 6px 8px;
   border-radius: 6px;
 }
+.sheet-desc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px 10px;
+}
+.sheet-desc-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.sheet-desc-grid input {
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: 5px;
+}
 .sheet-footer {
   margin-top: 20px;
   padding-top: 10px;

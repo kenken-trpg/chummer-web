@@ -9,7 +9,7 @@ export function InitiationTab({ catalog, character: ch, d, tr, patch, setCharact
             <p className="muted">
               等級 {d.initiation?.grade || 0}
               {" ・ "}カルマ {d.initiation?.karma || 0}
-              （各等級 10 + 等級×3。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）
+              （各等級 10 + 等級×3。集団／試練／教習は各 −10%（累積で減算）。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）
               {(d.initiation?.metamagics || []).some((m) => m.free)
                 ? ` ・ 品質付与 ${(d.initiation?.metamagics || []).filter((m) => m.free).map((m) => m.name).join("、")}`
                 : ""}
@@ -80,7 +80,29 @@ export function InitiationTab({ catalog, character: ch, d, tr, patch, setCharact
                   <div className="cyber-item" key={choice.id || choice.grade}>
                     <div style={{ width: "100%" }}>
                       <b>等級 {choice.grade}</b>
-                      <div className="muted">{choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}</div>
+                      <div className="muted">
+                        {choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}
+                        {(choice.group || choice.ordeal || choice.schooling)
+                          ? `（${[choice.group && "集団", choice.ordeal && "試練", choice.schooling && "教習"].filter(Boolean).join("・")} 割引）`
+                          : ""}
+                      </div>
+                      <div className="cyber-controls" style={{ marginTop: 6 }}>
+                        {([["group", "集団加入"], ["ordeal", "試練"], ["schooling", "教習"]] as const).map(([key, label]) => (
+                          <label key={key} title="各 −10%（累積で減算）">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(local?.[key] ?? choice[key])}
+                              onChange={(e) => {
+                                const initiations = (ch.initiations || []).map((row) => (
+                                  row.grade === choice.grade ? { ...row, [key]: e.target.checked } : row
+                                ));
+                                patch({ initiations });
+                              }}
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
                       <div className="grid" style={{ marginTop: 8 }}>
                         <label>
                           種類

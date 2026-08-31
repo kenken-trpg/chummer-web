@@ -67,6 +67,14 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _sub(root, "created", "True" if state.career else "False")
     if state.notes:
         _sub(root, "notes", state.notes)
+    for field, tag in (
+        ("age", "age"), ("sex", "sex"), ("height", "height"), ("weight", "weight"),
+        ("eyes", "eyes"), ("hair", "hair"), ("skin", "skin"),
+        ("appearance", "description"), ("background", "background"), ("concept", "concept"),
+    ):
+        value = getattr(state, field, "")
+        if value:
+            _sub(root, tag, value)
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
 
@@ -279,14 +287,21 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(me, "name", names["mentor"].get(state.mentor_id, ""))
 
     grades = _sub(root, "initiationgrades")
+    init_by_grade = {int(c.grade): c for c in state.initiations}
+    sub_by_grade = {int(c.grade): c for c in state.submersions}
+
+    def _emit_grade(i: int, res: bool, choice: object) -> None:
+        g = _sub(grades, "initiationgrade")
+        _sub(g, "grade", i)
+        _sub(g, "res", "True" if res else "False")
+        _sub(g, "group", "True" if getattr(choice, "group", False) else "False")
+        _sub(g, "ordeal", "True" if getattr(choice, "ordeal", False) else "False")
+        _sub(g, "schooling", "True" if getattr(choice, "schooling", False) else "False")
+
     for i in range(1, state.initiate_grade + 1):
-        g = _sub(grades, "initiationgrade")
-        _sub(g, "grade", i)
-        _sub(g, "res", "False")
+        _emit_grade(i, False, init_by_grade.get(i))
     for i in range(1, state.submersion_grade + 1):
-        g = _sub(grades, "initiationgrade")
-        _sub(g, "grade", i)
-        _sub(g, "res", "True")
+        _emit_grade(i, True, sub_by_grade.get(i))
     mms = _sub(root, "metamagics")
     for ic in state.initiations:
         el = _sub(mms, "metamagic")

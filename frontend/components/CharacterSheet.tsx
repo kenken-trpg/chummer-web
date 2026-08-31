@@ -1015,9 +1015,33 @@ export default function CharacterSheet({
         </ul>
       </Section>
 
-      <Section title="メモ" empty={!(character.notes || "").trim()}>
-        <p className="sheet-notes">{character.notes}</p>
-      </Section>
+      {(() => {
+        const stats: [string, string][] = ([
+          ["年齢", character.age], ["性別", character.sex], ["身長", character.height], ["体重", character.weight],
+          ["目", character.eyes], ["髪", character.hair], ["肌", character.skin], ["コンセプト", character.concept],
+        ] as [string, string | undefined][]).filter((r): r is [string, string] => Boolean((r[1] || "").trim()));
+        const blocks: [string, string][] = ([
+          ["容姿", character.appearance], ["背景", character.background], ["メモ", character.notes],
+        ] as [string, string | undefined][]).filter((r): r is [string, string] => Boolean((r[1] || "").trim()));
+        if (!stats.length && !blocks.length) return null;
+        return (
+          <Section title="記述">
+            {stats.length ? (
+              <div className="sheet-derived-grid sheet-vehicle-stats">
+                {stats.map(([label, value]) => (
+                  <div key={label}><span>{label}</span><b>{value}</b></div>
+                ))}
+              </div>
+            ) : null}
+            {blocks.map(([label, value]) => (
+              <div key={label} className="sheet-block">
+                <h4>{label}</h4>
+                <p className="sheet-notes">{value}</p>
+              </div>
+            ))}
+          </Section>
+        );
+      })()}
 
       <footer className="sheet-footer">
         Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷

@@ -130,6 +130,14 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
     st["notes"] = _text(root.find("notes"))
+    for field, tag in (
+        ("age", "age"), ("sex", "sex"), ("height", "height"), ("weight", "weight"),
+        ("eyes", "eyes"), ("hair", "hair"), ("skin", "skin"),
+        ("appearance", "description"), ("background", "background"), ("concept", "concept"),
+    ):
+        val = _text(root.find(tag))
+        if val:
+            st[field] = val
 
     def prio(tag: str) -> str:
         v = _text(root.find(f"./priorities/{tag}")) or _text(root.find(tag))
@@ -270,21 +278,43 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     mm_r = _Resolver(cat["metamagics"])
     art_r = _Resolver(cat.get("magic_arts") or [])
     init_grade = sub_grade = 0
-    inits: list[dict[str, Any]] = []
+    init_flags: dict[int, dict[str, bool]] = {}
+    sub_flags: dict[int, dict[str, bool]] = {}
     for g in root.findall("./initiationgrades/initiationgrade"):
         gnum = _int(g.find("grade"))
         is_sub = _text(g.find("res")).lower() == "true"
+        flags = {
+            "group": _text(g.find("group")).lower() == "true",
+            "ordeal": _text(g.find("ordeal")).lower() == "true",
+            "schooling": _text(g.find("schooling")).lower() == "true",
+        }
         if is_sub:
             sub_grade = max(sub_grade, gnum)
+            sub_flags[gnum] = flags
         else:
             init_grade = max(init_grade, gnum)
-    for m in root.findall("./metamagics/metamagic"):
-        oid = mm_r.resolve(m, [], "メタマジック") or art_r.resolve(m, [], "術")
-        if oid:
-            inits.append({"id": str(uuid.uuid4()), "grade": 1, "kind": "metamagic", "option_id": oid})
+            init_flags[gnum] = flags
+    picks = [
+        oid
+        for m in root.findall("./metamagics/metamagic")
+        for oid in [mm_r.resolve(m, [], "メタマジック") or art_r.resolve(m, [], "術")]
+        if oid
+    ]
+    inits: list[dict[str, Any]] = []
+    for grade in range(1, init_grade + 1):
+        row: dict[str, Any] = {"id": str(uuid.uuid4()), "grade": grade, "kind": "metamagic", "option_id": ""}
+        if grade <= len(picks):
+            row["option_id"] = picks[grade - 1]
+        row.update(init_flags.get(grade, {}))
+        inits.append(row)
+    subs = [
+        {"id": str(uuid.uuid4()), "grade": grade, "echo_id": "", **sub_flags.get(grade, {})}
+        for grade in range(1, sub_grade + 1)
+    ]
     st["initiate_grade"] = init_grade
     st["submersion_grade"] = sub_grade
     st["initiations"] = inits
+    st["submersions"] = subs
 
     # --- ware ---------------------------------------------------------
     ware_rows = (cat.get("cyberware") or {}).get("items") or []

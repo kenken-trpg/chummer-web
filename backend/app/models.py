@@ -202,6 +202,9 @@ class InitiationChoice(BaseModel):
     grade: int = 1
     kind: str = "metamagic"  # metamagic | art
     option_id: str = ""
+    group: bool = False       # member of an initiatory group (−10% Karma)
+    ordeal: bool = False      # underwent an ordeal (−10% Karma)
+    schooling: bool = False   # formal schooling (−10% Karma, costs nuyen/time)
 
 
 class SubmersionChoice(BaseModel):
@@ -209,6 +212,9 @@ class SubmersionChoice(BaseModel):
     grade: int = 1
     echo_id: str = ""
     extra: str | None = None
+    group: bool = False       # member of a network (−10% Karma)
+    ordeal: bool = False      # completed a submersion task (−10% Karma)
+    schooling: bool = False   # formal schooling (−10% Karma)
 
 
 class CharacterOptions(BaseModel):
@@ -293,6 +299,16 @@ class CharacterPatch(BaseModel):
     submersions: list[SubmersionChoice] | None = None
     karma_nuyen: int | None = None
     notes: str | None = None
+    age: str | None = None
+    sex: str | None = None
+    height: str | None = None
+    weight: str | None = None
+    eyes: str | None = None
+    hair: str | None = None
+    skin: str | None = None
+    appearance: str | None = None
+    background: str | None = None
+    concept: str | None = None
     career: bool | None = None
     karma_earned: int | None = None
     nuyen_earned: int | None = None
@@ -370,6 +386,16 @@ class CharacterState(BaseModel):
     submersions: list[SubmersionChoice] = Field(default_factory=list)
     karma_nuyen: int = 0
     notes: str = ""
+    age: str = ""
+    sex: str = ""
+    height: str = ""
+    weight: str = ""
+    eyes: str = ""
+    hair: str = ""
+    skin: str = ""
+    appearance: str = ""
+    background: str = ""
+    concept: str = ""
     career: bool = False
     karma_earned: int = 0
     nuyen_earned: int = 0

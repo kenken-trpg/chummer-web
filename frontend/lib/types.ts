@@ -79,6 +79,9 @@ export interface InitiationChoice {
   grade: number;
   kind: "metamagic" | "art" | string;
   option_id: string;
+  group?: boolean;
+  ordeal?: boolean;
+  schooling?: boolean;
 }
 
 export interface SubmersionChoice {
@@ -86,6 +89,9 @@ export interface SubmersionChoice {
   grade: number;
   echo_id: string;
   extra?: string | null;
+  group?: boolean;
+  ordeal?: boolean;
+  schooling?: boolean;
 }
 
 export interface InstalledMartialArtTechnique {
@@ -1226,6 +1232,16 @@ export interface Character {
   submersions?: SubmersionChoice[];
   karma_nuyen?: number;
   notes?: string;
+  age?: string;
+  sex?: string;
+  height?: string;
+  weight?: string;
+  eyes?: string;
+  hair?: string;
+  skin?: string;
+  appearance?: string;
+  background?: string;
+  concept?: string;
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;
@@ -1429,6 +1445,9 @@ export interface Character {
         option_id: string;
         name: string;
         karma: number;
+        group?: boolean;
+        ordeal?: boolean;
+        schooling?: boolean;
         source?: string;
         page?: string;
       }[];
@@ -1464,6 +1483,9 @@ export interface Character {
         name: string;
         extra?: string | null;
         karma: number;
+        group?: boolean;
+        ordeal?: boolean;
+        schooling?: boolean;
         needs_extra?: boolean;
         source?: string;
         page?: string;

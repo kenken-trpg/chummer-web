@@ -2188,6 +2188,35 @@ def test_initiation_grade_one_costs_thirteen_karma() -> None:
     assert out.derived["initiation"]["metamagics"][0]["name"] == "Quickening"
 
 
+def test_initiation_ordeal_and_group_discount_karma() -> None:
+    ordeal = compute(
+        _mage(
+            "init-ordeal",
+            initiate_grade=1,
+            initiations=[
+                InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META, ordeal=True)
+            ],
+        )
+    )
+    # grade 1 base 13 × 0.9 = 11.7 → 12
+    assert ordeal.derived["initiation"]["karma"] == 12
+    assert ordeal.derived["initiation"]["choices"][0]["ordeal"] is True
+
+    both = compute(
+        _mage(
+            "init-both",
+            initiate_grade=1,
+            initiations=[
+                InitiationChoice(
+                    grade=1, kind="metamagic", option_id=QUICKENING_META, group=True, ordeal=True
+                )
+            ],
+        )
+    )
+    # 13 × 0.8 = 10.4 → 10
+    assert both.derived["initiation"]["karma"] == 10
+
+
 def test_initiation_raises_mag_max() -> None:
     attrs = default_attributes(find_metatype("Human", None))
     attrs["MAG"] = 7
