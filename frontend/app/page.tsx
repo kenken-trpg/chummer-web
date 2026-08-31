@@ -25,6 +25,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { api, type CharacterSummary } from "@/lib/api";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
+import { useCharacterHistory } from "@/lib/character/history";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
 
@@ -45,9 +46,13 @@ export default function Page() {
   const busy = useRef(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
+  const history = useCharacterHistory();
+  const lastCommitted = useRef<Character | null>(null);
 
   function remember(c: Character) {
     setCh(c);
+    lastCommitted.current = c;
+    history.reset();
     try { localStorage.setItem("lastCharacterId", c.id); } catch {}
   }
   async function refreshRoster() {
@@ -121,8 +126,12 @@ export default function Page() {
   async function patch(body: Record<string, unknown>) {
     if (!ch || busy.current) return;
     busy.current = true;
+    const base = lastCommitted.current ?? ch;
     try {
-      setCh(await api.patch(ch.id, body));
+      const next = await api.patch(ch.id, body);
+      history.record(base);
+      setCh(next);
+      lastCommitted.current = next;
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "更新に失敗しました");
@@ -130,6 +139,54 @@ export default function Page() {
       busy.current = false;
     }
   }
+
+  async function restoreSnapshot(snap: Character) {
+    if (busy.current) return;
+    busy.current = true;
+    try {
+      const { id: _id, derived: _d, ...body } = snap;
+      void _id;
+      void _d;
+      const next = await api.patch(snap.id, body as Record<string, unknown>);
+      setCh(next);
+      lastCommitted.current = next;
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "取り消しに失敗しました");
+    } finally {
+      busy.current = false;
+    }
+  }
+
+  async function undo() {
+    if (!ch || busy.current) return;
+    const snap = history.stepBack(lastCommitted.current ?? ch);
+    if (snap) await restoreSnapshot(snap);
+  }
+  async function redo() {
+    if (!ch || busy.current) return;
+    const snap = history.stepForward(lastCommitted.current ?? ch);
+    if (snap) await restoreSnapshot(snap);
+  }
+  const undoRef = useRef(undo);
+  const redoRef = useRef(redo);
+  undoRef.current = undo;
+  redoRef.current = redo;
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key !== "z" && key !== "y") return;
+      const el = document.activeElement;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
+      e.preventDefault();
+      if (key === "y" || e.shiftKey) redoRef.current();
+      else undoRef.current();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const tr = (name: string) => catalog?.translations[name] || name;
   const t = makeT(catalog);
@@ -221,6 +278,22 @@ export default function Page() {
             </select>
             <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">複製</button>
             <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">削除</button>
+            <button
+              className="btn"
+              onClick={() => void undo()}
+              disabled={!history.counts.undo}
+              title="元に戻す (Ctrl/⌘+Z)"
+            >
+              ↶ 元に戻す{history.counts.undo ? `（${history.counts.undo}）` : ""}
+            </button>
+            <button
+              className="btn"
+              onClick={() => void redo()}
+              disabled={!history.counts.redo}
+              title="やり直し (Ctrl/⌘+Shift+Z)"
+            >
+              ↷ やり直し{history.counts.redo ? `（${history.counts.redo}）` : ""}
+            </button>
             <input
               value={ch.name}
               onChange={(e) => setCh({ ...ch, name: e.target.value })}
