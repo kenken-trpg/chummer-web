@@ -28,11 +28,13 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B011"]
-# engine.py has loop-local closures (lifestyle-quality helper) that trip B023.
-# They are safe today (defined and called within one iteration); the warning
-# goes away once engine.py is split into modules and the helpers move to module
-# scope. See docs/architecture.md → "Planned refactors".
-"app/engine.py" = ["B023"]
+# B023: the engine's lifestyle-quality helper is a loop-local closure (safe
+#   today — defined and called within one iteration; the warning goes away
+#   when that block moves to module scope).
+# E402: __init__.py keeps a few re-export imports below the top of the file to
+#   mark where extracted definitions used to live.
+# See docs/architecture.md → "Planned refactors".
+"app/engine/__init__.py" = ["B023", "E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

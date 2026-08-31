@@ -171,7 +171,6 @@ SPIRIT_TALENTS = {"Magician", "Mystic Adept", "Aspected Magician", "Apprentice"}
 SPRITE_TALENTS = set(RES_TALENTS)
 COMPLEX_FORM_TALENTS = set(RES_TALENTS)
 FOCUS_TALENTS = set(MAG_TALENTS)
-DEFAULT_STREAM_NAME = "Default"
 SPRITE_MATRIX_KEYS = {
     "CHA": "attack",
     "INT": "sleaze",
@@ -1085,114 +1084,24 @@ def default_attributes(meta: dict[str, Any]) -> dict[str, int]:
     return out
 
 
-def _quality_by_id(qid: str) -> dict[str, Any] | None:
-    for q in catalog()["qualities"]:
-        if q["id"] == qid:
-            return q
-    return None
-
-
-def _quality_by_name(name: str) -> dict[str, Any] | None:
-    for q in catalog()["qualities"]:
-        if q["name"] == name:
-            return q
-    return None
-
-
-def _power_by_id(pid: str) -> dict[str, Any] | None:
-    for item in catalog().get("powers") or []:
-        if item["id"] == pid:
-            return item
-    return None
-
-
-def _power_by_name(name: str) -> dict[str, Any] | None:
-    for item in catalog().get("powers") or []:
-        if item["name"] == name:
-            return item
-    return None
-
-
-def _mentor_by_id(mid: str) -> dict[str, Any] | None:
-    for item in catalog().get("mentors") or []:
-        if item["id"] == mid:
-            return item
-    return None
-
-
-def _spell_by_name(name: str) -> dict[str, Any] | None:
-    for item in catalog().get("spells") or []:
-        if item["name"] == name:
-            return item
-    return None
-
-
-def _spell_by_id(sid: str) -> dict[str, Any] | None:
-    for item in catalog().get("spells") or []:
-        if item["id"] == sid:
-            return item
-    return None
-
-
-def _tradition_by_id(tid: str | None) -> dict[str, Any] | None:
-    if not tid:
-        return None
-    for item in catalog().get("traditions") or []:
-        if item["id"] == tid:
-            return item
-    return None
-
-
-def _spirit_by_id(sid: str) -> dict[str, Any] | None:
-    for item in catalog().get("spirits") or []:
-        if item["id"] == sid:
-            return item
-    return None
-
-
-def _stream_by_id(sid: str | None) -> dict[str, Any] | None:
-    if not sid:
-        return None
-    for item in catalog().get("streams") or []:
-        if item["id"] == sid:
-            return item
-    return None
-
-
-def _default_stream() -> dict[str, Any] | None:
-    for item in catalog().get("streams") or []:
-        if item["name"] == DEFAULT_STREAM_NAME:
-            return item
-    streams = catalog().get("streams") or []
-    return streams[0] if streams else None
-
-
-def _complex_form_by_id(fid: str) -> dict[str, Any] | None:
-    for item in catalog().get("complex_forms") or []:
-        if item["id"] == fid:
-            return item
-    return None
-
-
-def _sprite_by_id(sid: str) -> dict[str, Any] | None:
-    for item in catalog().get("sprites") or []:
-        if item["id"] == sid:
-            return item
-    return None
-
-
-def _focus_by_id(gid: str) -> dict[str, Any] | None:
-    for item in catalog().get("foci") or []:
-        if item["id"] == gid:
-            return item
-    return None
-
-
-def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
-    for item in catalog().get(kind) or []:
-        if item["id"] == item_id:
-            return item
-    return None
+# Catalog single-row accessors live in engine/lookups.py.
+from .lookups import (  # noqa: E402  (kept here to mark where these were defined)
+    _complex_form_by_id,
+    _default_stream,
+    _focus_by_id,
+    _item_by_id,
+    _mentor_by_id,
+    _power_by_id,
+    _power_by_name,
+    _quality_by_id,
+    _quality_by_name,
+    _spell_by_id,
+    _spell_by_name,
+    _spirit_by_id,
+    _sprite_by_id,
+    _stream_by_id,
+    _tradition_by_id,
+)
 
 
 def parse_armor_value(raw: str, rating: int = 1) -> tuple[int, bool]:
