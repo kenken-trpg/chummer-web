@@ -64,6 +64,7 @@ from .spirits import (
     resolve_spirits,
     spirit_attributes,
 )
+from .submersion import resolve_submersion, submersion_karma_for_grade, submersion_karma_total
 
 __all__ = [
     "_active_skill_rating_from_state",
@@ -99,11 +100,14 @@ __all__ = [
     "resolve_qi_foci",
     "resolve_spells",
     "resolve_spirits",
+    "resolve_submersion",
     "spell_cast_info",
     "spell_defense_pools",
     "spell_drain_value",
     "spell_karma_cost",
     "spirit_attributes",
+    "submersion_karma_for_grade",
+    "submersion_karma_total",
     "tradition_resist",
     "way_discount_cap",
     "way_discount_eligible",
