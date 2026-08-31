@@ -92,13 +92,18 @@ Welcome as PRs. Keep every commit individually green (`make check`).
 1. **Split the engine** (`app/engine/__init__.py`) by concern.
    - *Done:* it's now a package. `engine/lookups.py` (catalog accessors),
      `engine/constants.py` (talent groupings, karma prices, lookup tables),
-     `engine/priority.py` (priority table + talent selection + build-method
-     validation), `engine/formulas.py` (stat-expression string/number
-     helpers). `__init__.py` is ~10.1k lines, down from ~10.5k.
+     `engine/priority.py` (priority table + talent + build-method validation),
+     `engine/formulas.py` (stat-expression helpers), `engine/karma.py`
+     (attribute / skill / knowledge cost maths + `<karmacost>` rule helpers),
+     `engine/pricing.py` (post-resolve essence-multiplier / Black-Market /
+     discount / Overclocker adjustments). `__init__.py` is ~9.7k lines, down
+     from ~10.5k.
    - *Next, in dependency order (each = one green commit):*
-     `karma.py` (attribute/skill/career cost fns) →
-     `gear/` (armor, weapons, matrix, drugs, misc — these are the bulk) →
+     `gear/` (armor, weapons, matrix, drugs, misc — the bulk) →
      `magic/` (spells, adept, spirits, foci, initiation, submersion).
+     These `resolve_*` functions are bigger and lean on more shared helpers;
+     move a `resolve_*` plus its private helpers together, keep `compute()` in
+     `__init__.py`, and re-import the public name.
      `compute()` stays in `__init__.py` as the orchestrator and imports the
      rest. `__init__.py` keeps re-exporting every name `store.py` /
      `chummer_export.py` / tests import today. Pattern: move a cohesive
