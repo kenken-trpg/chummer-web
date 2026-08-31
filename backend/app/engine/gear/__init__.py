@@ -30,6 +30,7 @@ from .drugs import (
 )
 from .matrix import _matrix_stats, _normalize_array_order, _resolve_matrix_devices
 from .optics import _resolve_optics
+from .sensors import _resolve_sensors
 
 __all__ = [
     "_DRUG_CATEGORIES",
@@ -45,6 +46,7 @@ __all__ = [
     "_resolve_armor_mods",
     "_resolve_matrix_devices",
     "_resolve_optics",
+    "_resolve_sensors",
     "apply_active_drugs",
     "armor_mod_fits",
     "armor_plugin_capacity",
