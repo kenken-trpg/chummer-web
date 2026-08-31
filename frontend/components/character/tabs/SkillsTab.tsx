@@ -1,12 +1,10 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useMemo, useState } from "react";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { KNOW_CATS, KNOW_CAT_JA } from "@/lib/character/constants";
 import { skillsoftBit, specBit } from "@/lib/character/bits";
-import { mergeRatings, skillDice } from "@/lib/character/format";
+import { skillDice } from "@/lib/character/format";
 
 export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
   const [knowSearch, setKnowSearch] = useState("");

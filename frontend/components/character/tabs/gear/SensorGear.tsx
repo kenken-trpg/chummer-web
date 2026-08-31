@@ -1,16 +1,14 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 import { deviceRatingBit } from "@/lib/character/format";
 
-export function SensorGear({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [gearSearch, setGearSearch] = useState("");
   const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
 
   return (
     <>

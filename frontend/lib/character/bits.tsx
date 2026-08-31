@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 export function skillsoftBit(rating?: number) {
   if (!rating) return null;
   return <span className="muted"> ソフトR{rating}</span>;

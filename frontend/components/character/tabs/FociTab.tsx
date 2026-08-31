@@ -1,11 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
-export function FociTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function FociTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [focusSearch, setFocusSearch] = useState("");
 
   return (

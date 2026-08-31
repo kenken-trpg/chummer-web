@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree, miscFits } from "@/lib/character/gear";
@@ -10,7 +9,6 @@ export function MiscDrugsGear({
   d,
   tr,
   patch,
-  setCharacter,
   mode,
 }: TabPanelProps & { mode: "misc" | "drugs" }) {
   const [gearSearch, setGearSearch] = useState("");

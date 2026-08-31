@@ -1,20 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
-import { dropTree, miscFits } from "@/lib/character/gear";
-import { availBit, deviceRatingBit } from "@/lib/character/format";
+import { dropTree } from "@/lib/character/gear";
 
-export function CommlinkGear({
-  catalog,
-  character: ch,
-  d,
-  tr,
-  patch,
-  setCharacter,
-}: TabPanelProps) {
+export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [gearSearch, setGearSearch] = useState("");
-  const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
   const [extraPick, setExtraPick] = useState<Record<string, string>>({});
 

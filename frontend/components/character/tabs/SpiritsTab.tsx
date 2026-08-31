@@ -1,11 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { SPIRIT_ROLE_JA } from "@/lib/character/constants";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
-export function SpiritsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   return (
     <div className="card">
       <p className="muted">

@@ -1,7 +1,5 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
@@ -12,7 +10,7 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function BioTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [bioSearch, setBioSearch] = useState("");
   const [bioCat, setBioCat] = useState("all");
   const [bioGrade, setBioGrade] = useState("Standard");

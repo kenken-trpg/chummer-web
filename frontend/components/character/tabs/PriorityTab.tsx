@@ -1,10 +1,8 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { CATS, DEFAULT_PRIORITIES, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
 
-export function PriorityTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: TabPanelProps) {
   const table = catalog.priority_table;
 
   return (

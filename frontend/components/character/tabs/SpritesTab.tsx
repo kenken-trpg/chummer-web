@@ -1,11 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
-export function SpritesTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
 
   return (

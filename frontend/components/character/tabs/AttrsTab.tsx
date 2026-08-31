@@ -1,11 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 
-export function AttrsTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
+export function AttrsTab({ character: ch, d, t, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
 
   return (

@@ -1,8 +1,7 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
 
-export function MetaTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function MetaTab({ catalog, character: ch, tr, patch }: TabPanelProps) {
   const table = catalog.priority_table;
 
   return (

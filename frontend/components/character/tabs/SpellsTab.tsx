@@ -1,12 +1,10 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
 
-export function SpellsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
   const [spellKind, setSpellKind] = useState<"all" | "spell" | "ritual" | "enchantment">("all");
 

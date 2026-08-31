@@ -1,18 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
 
-export function ComplexFormsTab({
-  catalog,
-  character: ch,
-  d,
-  tr,
-  patch,
-  setCharacter,
-}: TabPanelProps) {
+export function ComplexFormsTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [cfSearch, setCfSearch] = useState("");
 
   return (

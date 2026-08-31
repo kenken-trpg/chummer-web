@@ -1,10 +1,8 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 
-export function MartialTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [martialSearch, setMartialSearch] = useState("");
 
   return (

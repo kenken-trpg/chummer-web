@@ -1,18 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement } from "@/lib/character/format";
 
-export function LifestyleGear({
-  catalog,
-  character: ch,
-  d,
-  tr,
-  patch,
-  setCharacter,
-}: TabPanelProps) {
+export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [gearSearch, setGearSearch] = useState("");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
   const [extraPick, setExtraPick] = useState<Record<string, string>>({});

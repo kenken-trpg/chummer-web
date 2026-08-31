@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { WareRow } from "@/components/character/WareRow";
@@ -20,13 +19,11 @@ export function VehicleDroneGear({
   d,
   tr,
   patch,
-  setCharacter,
   mode,
 }: TabPanelProps & { mode: "drone" | "vehicle" }) {
   const [gearSearch, setGearSearch] = useState("");
   const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
 
   return (
     <>

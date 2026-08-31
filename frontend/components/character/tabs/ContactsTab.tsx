@@ -1,11 +1,9 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useState } from "react";
 import { CONTACT_ROLES } from "@/lib/character/constants";
 
-export function ContactsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
   const [contactRole, setContactRole] = useState("");
   const perPoint = d.contact_points?.karma_per_point ?? 1;

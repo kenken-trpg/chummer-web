@@ -1,13 +1,9 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
-import { dropTree } from "@/lib/character/gear";
-import { deviceRatingBit } from "@/lib/character/format";
 
-export function RccGear({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [gearSearch, setGearSearch] = useState("");
-  const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
   const [extraPick, setExtraPick] = useState<Record<string, string>>({});
 

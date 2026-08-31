@@ -1,7 +1,5 @@
 "use client";
-
 import type { TabPanelProps } from "@/components/character/types";
-
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
 import { limbQualityLine } from "@/lib/character/format";
@@ -13,7 +11,7 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function CyberTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [cySearch, setCySearch] = useState("");
   const [cyCat, setCyCat] = useState("all");
   const [addGrade, setAddGrade] = useState("Standard");

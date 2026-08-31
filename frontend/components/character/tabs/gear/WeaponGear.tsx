@@ -1,16 +1,14 @@
 "use client";
-
 import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
-export function WeaponGear({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
   const [gearSearch, setGearSearch] = useState("");
   const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
 
   return (
     <>
