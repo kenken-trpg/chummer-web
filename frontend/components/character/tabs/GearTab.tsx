@@ -37,12 +37,14 @@ export function GearTab(props: TabPanelProps) {
   return (
     <div className="card">
       <p className="muted">
-        {(d.career || false) ? "キャリアの買い物" : "作成時の購入"}
-        。防具は装備中の本体1着＋ヘルメット等の加算、ウェア装甲と合算。消費 {(d.nuyen_spent ?? 0).toLocaleString()}¥
-        {" ・ "}残 {d.nuyen.toLocaleString()}¥
+        {d.career || false ? "キャリアの買い物" : "作成時の購入"}
+        。防具は装備中の本体1着＋ヘルメット等の加算、ウェア装甲と合算。消費{" "}
+        {(d.nuyen_spent ?? 0).toLocaleString()}¥{" ・ "}残 {d.nuyen.toLocaleString()}¥
         {d.avail_limit == null ? " ・ 入手制限なし" : ` ・ 入手≤${d.avail_limit}`}
         {d.worn_armor ? ` ・ 装備 ${tr(d.worn_armor)}` : ""}
-        {d.lifestyle ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}` : ""}
+        {d.lifestyle
+          ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}`
+          : ""}
         {d.commlink ? ` ・ ${tr(d.commlink.name)} DR${d.commlink.device_rating}` : ""}
         {d.cyberdeck ? ` ・ ${tr(d.cyberdeck.name)} DR${d.cyberdeck.device_rating}` : ""}
         {d.rcc ? ` ・ ${tr(d.rcc.name)} DR${d.rcc.device_rating}` : ""}

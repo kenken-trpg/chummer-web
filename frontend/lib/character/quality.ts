@@ -20,8 +20,10 @@ export type QualityReqCtx = {
 export function reqNodeMet(node: QualityReqNode, ctx: QualityReqCtx): boolean {
   const tag = node.tag;
   const children = node.children || [];
-  if (tag === "oneof") return children.length ? children.some((child) => reqNodeMet(child, ctx)) : true;
-  if (tag === "allof" || tag === "group") return children.length ? children.every((child) => reqNodeMet(child, ctx)) : true;
+  if (tag === "oneof")
+    return children.length ? children.some((child) => reqNodeMet(child, ctx)) : true;
+  if (tag === "allof" || tag === "group")
+    return children.length ? children.every((child) => reqNodeMet(child, ctx)) : true;
   const name = node.name || "";
   if (tag === "quality") return ctx.qualities.has(name);
   if (tag === "metatype") return ctx.metatypes.has(name);
@@ -51,12 +53,17 @@ export function qualityTreeMet(tree: QualityReqNode[] | undefined, ctx: QualityR
 }
 
 export function qualityBlockReason(item: Catalog["qualities"][number], ctx: QualityReqCtx) {
-  if ((item.required_tree || []).length && !qualityTreeMet(item.required_tree, ctx)) return "前提を満たしていません";
-  if ((item.forbidden_tree || []).length && qualityTreeMet(item.forbidden_tree, ctx)) return "現在のキャラクターでは取れません";
+  if ((item.required_tree || []).length && !qualityTreeMet(item.required_tree, ctx))
+    return "前提を満たしていません";
+  if ((item.forbidden_tree || []).length && qualityTreeMet(item.forbidden_tree, ctx))
+    return "現在のキャラクターでは取れません";
   return "";
 }
 
-export function dropSkillPicksForPrefix(picks: Record<string, string> | undefined, prefixes: string[]) {
+export function dropSkillPicksForPrefix(
+  picks: Record<string, string> | undefined,
+  prefixes: string[],
+) {
   const next = { ...(picks || {}) };
   for (const key of Object.keys(next)) {
     if (prefixes.some((prefix) => key.startsWith(prefix))) delete next[key];
@@ -64,7 +71,10 @@ export function dropSkillPicksForPrefix(picks: Record<string, string> | undefine
   return next;
 }
 
-export function dropRemovedWarePicks(picks: Record<string, string> | undefined, remaining: WareInstall[]) {
+export function dropRemovedWarePicks(
+  picks: Record<string, string> | undefined,
+  remaining: WareInstall[],
+) {
   const keep = new Set(remaining.map((row) => row.id));
   const next = { ...(picks || {}) };
   for (const key of Object.keys(next)) {

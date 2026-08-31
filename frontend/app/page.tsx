@@ -53,7 +53,9 @@ export default function Page() {
     setCh(c);
     lastCommitted.current = c;
     history.reset();
-    try { localStorage.setItem("lastCharacterId", c.id); } catch {}
+    try {
+      localStorage.setItem("lastCharacterId", c.id);
+    } catch {}
   }
   async function refreshRoster() {
     setRoster(await api.list().catch(() => []));
@@ -66,7 +68,9 @@ export default function Page() {
         setCatalog(cat);
         setRoster(list);
         let last: string | null = null;
-        try { last = localStorage.getItem("lastCharacterId"); } catch {}
+        try {
+          last = localStorage.getItem("lastCharacterId");
+        } catch {}
         let opened: Character | null = null;
         if (last && list.some((r) => r.id === last)) {
           opened = await api.get(last).catch(() => null);
@@ -227,7 +231,9 @@ export default function Page() {
         remember(character);
         setTab("priority");
         if (warnings.length) {
-          setError(`取り込み時の未対応 ${warnings.length}件 — ` + warnings.slice(0, 15).join(" / "));
+          setError(
+            `取り込み時の未対応 ${warnings.length}件 — ` + warnings.slice(0, 15).join(" / "),
+          );
         }
       } else {
         remember(await api.import(JSON.parse(await file.text())));
@@ -241,8 +247,14 @@ export default function Page() {
 
   async function onPortraitFile(file: File) {
     if (!ch) return;
-    if (!/^image\//.test(file.type)) { setError("画像ファイルを選んでください"); return; }
-    if (file.size > 3_000_000) { setError("画像が大きすぎます（3MB まで）"); return; }
+    if (!/^image\//.test(file.type)) {
+      setError("画像ファイルを選んでください");
+      return;
+    }
+    if (file.size > 3_000_000) {
+      setError("画像が大きすぎます（3MB まで）");
+      return;
+    }
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const r = new FileReader();
@@ -257,7 +269,11 @@ export default function Page() {
   }
 
   if (error && !ch) {
-    return <div className="main"><p className="errors">{error}</p></div>;
+    return (
+      <div className="main">
+        <p className="errors">{error}</p>
+      </div>
+    );
   }
   if (!catalog || !ch) {
     return <div className="main">読み込み中…</div>;
@@ -279,25 +295,37 @@ export default function Page() {
       <div className="main">
         <div className="no-print">
           <h1>CHUMMER WEB</h1>
-          <p className="sub">非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。</p>
+          <p className="sub">
+            非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a
+            (GPL-3.0)。
+          </p>
 
           <div className="toolbar">
             <select
               className="btn"
               value={ch.id}
-              onChange={(e) => (e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value))}
+              onChange={(e) =>
+                e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value)
+              }
               title="保存済みキャラクター"
             >
-              {!roster.some((r) => r.id === ch.id) ? <option value={ch.id}>{ch.name || "無名"}（未保存）</option> : null}
+              {!roster.some((r) => r.id === ch.id) ? (
+                <option value={ch.id}>{ch.name || "無名"}（未保存）</option>
+              ) : null}
               {roster.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.name || "無名"} ・ {tr(r.metatype)}{r.career ? "（キャリア）" : ""}
+                  {r.name || "無名"} ・ {tr(r.metatype)}
+                  {r.career ? "（キャリア）" : ""}
                 </option>
               ))}
               <option value="__new__">＋ 新規キャラ</option>
             </select>
-            <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">複製</button>
-            <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">削除</button>
+            <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">
+              複製
+            </button>
+            <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">
+              削除
+            </button>
             <button
               className="btn"
               onClick={() => void undo()}
@@ -319,15 +347,21 @@ export default function Page() {
               onChange={(e) => setCh({ ...ch, name: e.target.value })}
               onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
             />
-            <button className="btn primary" onClick={download}>JSON保存</button>
+            <button className="btn primary" onClick={download}>
+              JSON保存
+            </button>
             <button
               className="btn"
-              onClick={() => { window.location.href = `/api/characters/${ch.id}/chummer`; }}
+              onClick={() => {
+                window.location.href = `/api/characters/${ch.id}/chummer`;
+              }}
               title="Chummer5a で開ける .chum5（XML）で書き出す"
             >
               .chum5書出
             </button>
-            <button className="btn" onClick={() => fileRef.current?.click()}>読込 (JSON/.chum5)</button>
+            <button className="btn" onClick={() => fileRef.current?.click()}>
+              読込 (JSON/.chum5)
+            </button>
             <button
               className="btn"
               onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
@@ -342,7 +376,7 @@ export default function Page() {
             >
               {copied === "cp" ? "コピー ✓" : "チャットパレット"}
             </button>
-            {(d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered)) ? (
+            {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
               <button
                 className="btn"
                 onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr), "cs")}
@@ -353,11 +387,15 @@ export default function Page() {
             ) : null}
             <button
               className={`btn ${ch.career || d.career ? "primary" : ""}`}
-              title={ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"}
+              title={
+                ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"
+              }
               onClick={() => {
                 const next = !(ch.career || d.career);
                 if (next && (d.errors || []).length) {
-                  const ok = window.confirm("作成エラーが残っています。このままキャリアに進みますか？");
+                  const ok = window.confirm(
+                    "作成エラーが残っています。このままキャリアに進みますか？",
+                  );
                   if (!ok) return;
                 }
                 patch({ career: next });
@@ -373,7 +411,9 @@ export default function Page() {
                   onChange={(e) => {
                     const v = e.target.value as SheetLayout;
                     setSheetLayout(v);
-                    try { localStorage.setItem("sheetLayout", v); } catch {}
+                    try {
+                      localStorage.setItem("sheetLayout", v);
+                    } catch {}
                   }}
                   title="シートのレイアウト"
                 >
@@ -390,34 +430,56 @@ export default function Page() {
                 </button>
               </>
             ) : (
-              <button className="btn" onClick={() => setTab("sheet")}>シート表示</button>
+              <button className="btn" onClick={() => setTab("sheet")}>
+                シート表示
+              </button>
             )}
-            <input ref={fileRef} type="file" accept="application/json,.chum5,.chum5lz" hidden onChange={(e) => e.target.files && onImport(e.target.files[0])} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.chum5,.chum5lz"
+              hidden
+              onChange={(e) => e.target.files && onImport(e.target.files[0])}
+            />
           </div>
 
           <div className="tabs">
-            {([
-              ["priority", "優先度"],
-              ["meta", "メタ"],
-              ["attrs", "能力値"],
-              ["skills", "技能"],
-              ["qualities", "資質"],
-              ["cyber", "サイバー"],
-              ["bio", "バイオ"],
-              ["gear", "ギア"],
-              ["contacts", "コンタクト"],
-              ["martial", "武道"],
-              ...(d.enabled_tabs.includes("initiation") ? [["initiation", "イニシエーション"] as const] : []),
-              ...(d.enabled_tabs.includes("submersion") ? [["submersion", "サブマージョン"] as const] : []),
-              ...(d.enabled_tabs.includes("adept") ? [["adept", "アデプト"] as const] : []),
-              ...(d.enabled_tabs.includes("spells") ? [["spells", "術式"] as const] : []),
-              ...(d.enabled_tabs.includes("spirits") ? [["spirits", "精霊"] as const] : []),
-              ...(d.enabled_tabs.includes("foci") ? [["foci", "フォーカス"] as const] : []),
-              ...(d.enabled_tabs.includes("complexforms") ? [["complexforms", "複合体"] as const] : []),
-              ...(d.enabled_tabs.includes("sprites") ? [["sprites", "スプライト"] as const] : []),
-              ["sheet", "シート"],
-            ] as const).map(([k, label]) => (
-              <button key={k} className={`tab ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>{label}</button>
+            {(
+              [
+                ["priority", "優先度"],
+                ["meta", "メタ"],
+                ["attrs", "能力値"],
+                ["skills", "技能"],
+                ["qualities", "資質"],
+                ["cyber", "サイバー"],
+                ["bio", "バイオ"],
+                ["gear", "ギア"],
+                ["contacts", "コンタクト"],
+                ["martial", "武道"],
+                ...(d.enabled_tabs.includes("initiation")
+                  ? [["initiation", "イニシエーション"] as const]
+                  : []),
+                ...(d.enabled_tabs.includes("submersion")
+                  ? [["submersion", "サブマージョン"] as const]
+                  : []),
+                ...(d.enabled_tabs.includes("adept") ? [["adept", "アデプト"] as const] : []),
+                ...(d.enabled_tabs.includes("spells") ? [["spells", "術式"] as const] : []),
+                ...(d.enabled_tabs.includes("spirits") ? [["spirits", "精霊"] as const] : []),
+                ...(d.enabled_tabs.includes("foci") ? [["foci", "フォーカス"] as const] : []),
+                ...(d.enabled_tabs.includes("complexforms")
+                  ? [["complexforms", "複合体"] as const]
+                  : []),
+                ...(d.enabled_tabs.includes("sprites") ? [["sprites", "スプライト"] as const] : []),
+                ["sheet", "シート"],
+              ] as const
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                className={`tab ${tab === k ? "active" : ""}`}
+                onClick={() => setTab(k)}
+              >
+                {label}
+              </button>
             ))}
           </div>
         </div>
@@ -426,9 +488,11 @@ export default function Page() {
           <div className="no-print sheet-notes-edit">
             <label>記述</label>
             <div className="portrait-edit">
-              {ch.portrait
-                ? <img className="portrait-thumb" src={ch.portrait} alt="ポートレート" />
-                : <div className="portrait-thumb portrait-empty">画像なし</div>}
+              {ch.portrait ? (
+                <img className="portrait-thumb" src={ch.portrait} alt="ポートレート" />
+              ) : (
+                <div className="portrait-thumb portrait-empty">画像なし</div>
+              )}
               <div className="portrait-edit-controls">
                 <input
                   type="file"
@@ -439,46 +503,74 @@ export default function Page() {
                     e.target.value = "";
                   }}
                 />
-                {ch.portrait
-                  ? <button className="btn" type="button" onClick={() => void patch({ portrait: "" })}>画像を削除</button>
-                  : null}
+                {ch.portrait ? (
+                  <button
+                    className="btn"
+                    type="button"
+                    onClick={() => void patch({ portrait: "" })}
+                  >
+                    画像を削除
+                  </button>
+                ) : null}
                 <span className="muted">.chum5 の mugshot と相互変換。3MB まで。</span>
               </div>
             </div>
             <div className="sheet-desc-grid">
-              {([
-                ["age", "年齢"], ["sex", "性別"], ["height", "身長"], ["weight", "体重"],
-                ["eyes", "目"], ["hair", "髪"], ["skin", "肌"], ["concept", "コンセプト"],
-              ] as const).map(([field, label]) => (
+              {(
+                [
+                  ["age", "年齢"],
+                  ["sex", "性別"],
+                  ["height", "身長"],
+                  ["weight", "体重"],
+                  ["eyes", "目"],
+                  ["hair", "髪"],
+                  ["skin", "肌"],
+                  ["concept", "コンセプト"],
+                ] as const
+              ).map(([field, label]) => (
                 <label key={field}>
                   {label}
                   <input
                     defaultValue={(ch[field] as string) || ""}
                     key={`${ch.id}-${field}`}
                     onBlur={(e) => {
-                      if ((e.target.value || "") !== ((ch[field] as string) || "")) patch({ [field]: e.target.value });
+                      if ((e.target.value || "") !== ((ch[field] as string) || ""))
+                        patch({ [field]: e.target.value });
                     }}
                   />
                 </label>
               ))}
             </div>
-            {([["appearance", "容姿"], ["background", "背景"], ["notes", "メモ"]] as const).map(([field, label]) => (
+            {(
+              [
+                ["appearance", "容姿"],
+                ["background", "背景"],
+                ["notes", "メモ"],
+              ] as const
+            ).map(([field, label]) => (
               <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>
                 <label>{label}</label>
                 <textarea
                   rows={field === "notes" ? 3 : 2}
                   defaultValue={(ch[field] as string) || ""}
                   key={`${ch.id}-${field}`}
-                  placeholder={field === "notes" ? "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。" : ""}
+                  placeholder={
+                    field === "notes"
+                      ? "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。"
+                      : ""
+                  }
                   onBlur={(e) => {
-                    if ((e.target.value || "") !== ((ch[field] as string) || "")) patch({ [field]: e.target.value });
+                    if ((e.target.value || "") !== ((ch[field] as string) || ""))
+                      patch({ [field]: e.target.value });
                   }}
                 />
               </div>
             ))}
           </div>
         )}
-        {tab === "sheet" && <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />}
+        {tab === "sheet" && (
+          <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />
+        )}
         {tab === "priority" && <PriorityTab {...panel} />}
         {tab === "meta" && <MetaTab {...panel} />}
         {tab === "attrs" && <AttrsTab {...panel} />}
@@ -489,17 +581,30 @@ export default function Page() {
         {tab === "gear" && <GearTab {...panel} />}
         {tab === "contacts" && <ContactsTab {...panel} />}
         {tab === "martial" && <MartialTab {...panel} />}
-        {tab === "initiation" && d.enabled_tabs.includes("initiation") && <InitiationTab {...panel} />}
-        {tab === "submersion" && d.enabled_tabs.includes("submersion") && <SubmersionTab {...panel} />}
+        {tab === "initiation" && d.enabled_tabs.includes("initiation") && (
+          <InitiationTab {...panel} />
+        )}
+        {tab === "submersion" && d.enabled_tabs.includes("submersion") && (
+          <SubmersionTab {...panel} />
+        )}
         {tab === "adept" && d.enabled_tabs.includes("adept") && <AdeptTab {...panel} />}
         {tab === "spells" && d.enabled_tabs.includes("spells") && <SpellsTab {...panel} />}
         {tab === "spirits" && d.enabled_tabs.includes("spirits") && <SpiritsTab {...panel} />}
         {tab === "foci" && d.enabled_tabs.includes("foci") && <FociTab {...panel} />}
-        {tab === "complexforms" && d.enabled_tabs.includes("complexforms") && <ComplexFormsTab {...panel} />}
+        {tab === "complexforms" && d.enabled_tabs.includes("complexforms") && (
+          <ComplexFormsTab {...panel} />
+        )}
         {tab === "sprites" && d.enabled_tabs.includes("sprites") && <SpritesTab {...panel} />}
       </div>
 
-      <CharacterSidebar catalog={catalog} character={ch} d={d} tr={tr} error={error} patch={patch} />
+      <CharacterSidebar
+        catalog={catalog}
+        character={ch}
+        d={d}
+        tr={tr}
+        error={error}
+        patch={patch}
+      />
     </div>
   );
 }

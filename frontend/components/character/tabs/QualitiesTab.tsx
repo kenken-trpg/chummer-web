@@ -7,9 +7,21 @@ import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 import { mergeRatings } from "@/lib/character/format";
-import { dropSkillPicksForPrefix, qualityBlockReason, type QualityReqCtx } from "@/lib/character/quality";
+import {
+  dropSkillPicksForPrefix,
+  qualityBlockReason,
+  type QualityReqCtx,
+} from "@/lib/character/quality";
 
-export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
+export function QualitiesTab({
+  catalog,
+  character: ch,
+  d,
+  tr,
+  t,
+  patch,
+  setCharacter,
+}: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
   const filteredQualities = useMemo(() => {
@@ -59,7 +71,13 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
     const kind =
       q.extra_kind ||
       catalogById.get(q.id)?.extra_kind ||
-      (q.name === "Exceptional Attribute" ? "attribute" : q.selectside ? "side" : q.needs_extra ? "text" : null);
+      (q.name === "Exceptional Attribute"
+        ? "attribute"
+        : q.selectside
+          ? "side"
+          : q.needs_extra
+            ? "text"
+            : null);
     const options = q.select_options?.length
       ? q.select_options
       : catalogById.get(q.id)?.select_options || [];
@@ -68,7 +86,12 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
       const slots = addSpiritPicks.length
         ? addSpiritPicks
         : Array.from(
-            { length: Math.max(1, q.add_spirit_count || catalogById.get(q.id)?.add_spirit_count || 1) },
+            {
+              length: Math.max(
+                1,
+                q.add_spirit_count || catalogById.get(q.id)?.add_spirit_count || 1,
+              ),
+            },
             (_, index) => ({
               quality_id: q.id,
               index,
@@ -91,7 +114,9 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
                 })
               }
             >
-              <option value="">追加精霊{slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択</option>
+              <option value="">
+                追加精霊{slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択
+              </option>
               {(slot.options || []).map((name) => (
                 <option key={name} value={name}>
                   {tr(name)}
@@ -115,11 +140,13 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
             }
           >
             <option value="">商品カテゴリを選択</option>
-            {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
+            {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map(
+              (cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ),
+            )}
           </select>
           <select
             value={ch.quality_extras?.[contactKey] || ""}
@@ -132,12 +159,15 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
             <option value="">コンタクトを選択</option>
             {(d.contacts || []).map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L{c.loyalty})
+                {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L
+                {c.loyalty})
               </option>
             ))}
           </select>
           {d.black_market_avail_bonus ? (
-            <span className="muted">入手判定 +{d.black_market_avail_bonus}（実効 Avail −{d.black_market_avail_bonus}）</span>
+            <span className="muted">
+              入手判定 +{d.black_market_avail_bonus}（実効 Avail −{d.black_market_avail_bonus}）
+            </span>
           ) : null}
         </div>
       );
@@ -202,7 +232,7 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
       const skillName = q.expertise_skill || catalogById.get(q.id)?.expertise_skill || "";
       const known = options.length
         ? options
-        : (catalog.skills.skills.find((s) => s.name === skillName)?.specs || []);
+        : catalog.skills.skills.find((s) => s.name === skillName)?.specs || [];
       return (
         <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
           <select
@@ -261,11 +291,15 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
         </select>
       );
     }
-    if (kind === "spell_category" || kind === "spell_spirit_category" || kind === "spirit_category") {
+    if (
+      kind === "spell_category" ||
+      kind === "spell_spirit_category" ||
+      kind === "spirit_category"
+    ) {
       const spiritKey = `${q.id}:spiritcategory`;
       const spirits = q.spirit_options?.length
-          ? q.spirit_options
-          : catalogById.get(q.id)?.spirit_options || [];
+        ? q.spirit_options
+        : catalogById.get(q.id)?.spirit_options || [];
       return (
         <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
           {kind !== "spirit_category" ? (
@@ -443,7 +477,8 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
         {d.career ? " ・ キャリア" : ""}
       </p>
-      {d.metagenic && (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
+      {d.metagenic &&
+      (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
         <p className={`muted${d.metagenic.balanced ? "" : " errors"}`}>
           メタジェネティック資質: 有利 {d.metagenic.positive} ／ 不利 {d.metagenic.negative}
           {d.metagenic.limit > 0 ? ` ／ 上限 ${d.metagenic.limit}` : "（Changeling 未取得）"}
@@ -458,8 +493,11 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma}
-                  {q.side ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}` : ""}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ{" "}
+                  {q.karma}
+                  {q.side
+                    ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}`
+                    : ""}
                   {q.free ? " / 付帯（無料）" : ""}
                 </div>
                 {renderExtraEditor(q)}
@@ -486,9 +524,10 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
                         return true;
                       }),
                       quality_extras: extras,
-                      skill_picks: remaining <= 0
-                        ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`])
-                        : ch.skill_picks,
+                      skill_picks:
+                        remaining <= 0
+                          ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`])
+                          : ch.skill_picks,
                     });
                   }}
                 >
@@ -505,17 +544,31 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
         <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>
           すべて
         </button>
-        <button className={`tab ${qCat === "Positive" ? "active" : ""}`} onClick={() => setQCat("Positive")}>
+        <button
+          className={`tab ${qCat === "Positive" ? "active" : ""}`}
+          onClick={() => setQCat("Positive")}
+        >
           有利
         </button>
-        <button className={`tab ${qCat === "Negative" ? "active" : ""}`} onClick={() => setQCat("Negative")}>
+        <button
+          className={`tab ${qCat === "Negative" ? "active" : ""}`}
+          onClick={() => setQCat("Negative")}
+        >
           不利
         </button>
-        <button className={`tab ${qCat === "Metagenic" ? "active" : ""}`} onClick={() => setQCat("Metagenic")}>
+        <button
+          className={`tab ${qCat === "Metagenic" ? "active" : ""}`}
+          onClick={() => setQCat("Metagenic")}
+        >
           メタジェネ
         </button>
       </div>
-      <input type="search" placeholder="資質を検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />
+      <input
+        type="search"
+        placeholder="資質を検索"
+        value={qSearch}
+        onChange={(e) => setQSearch(e.target.value)}
+      />
       <div className="quality-list">
         {filteredQualities.map((q) => {
           const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
@@ -527,16 +580,22 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
               .filter((item) => item.is_way && ch.quality_ids.includes(item.id))
               .map((item) => item.name),
           );
-          const replaces = !added && !!q.is_way && (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
+          const replaces =
+            !added &&
+            !!q.is_way &&
+            (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
           const blocked = canAddMore ? qualityBlockReason(q, qualityCtx) : "";
           return (
             <div className="quality-item" key={q.id}>
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ {q.karma} / {q.source}
+                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ{" "}
+                  {q.karma} / {q.source}
                   {maxTakes == null ? " / 繰り返し可" : maxTakes > 1 ? ` / 最大${maxTakes}` : ""}
-                  {ownedCount > 0 && (maxTakes == null || maxTakes > 1) ? ` / 取得${ownedCount}` : ""}
+                  {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
+                    ? ` / 取得${ownedCount}`
+                    : ""}
                   {q.needs_extra ? " / 対象が必要" : ""}
                   {q.is_way ? " / 他の Way と排他" : ""}
                   {replaces ? " / 追加すると両立しない資質を外します" : ""}

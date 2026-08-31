@@ -23,7 +23,23 @@ export function WareRow(props: {
   onSkillPick?: (key: string, skill: string) => void;
   nested?: boolean;
 }) {
-  const { item, childrenItems, catalogItems, grades, kind, tr, slotValue, wareRanges, onSlotChange, onPatchRow, onRemove, onAddChild, pickSlots, onSkillPick, nested } = props;
+  const {
+    item,
+    childrenItems,
+    catalogItems,
+    grades,
+    kind,
+    tr,
+    slotValue,
+    wareRanges,
+    onSlotChange,
+    onPatchRow,
+    onRemove,
+    onAddChild,
+    pickSlots,
+    onSkillPick,
+    nested,
+  } = props;
   const spec = catalogItems.find((w) => w.id === item.ware_id);
   const slots = (spec?.allow_subsystems || []).filter(Boolean);
   const slotOptions = catalogItems.filter((w) => {
@@ -39,13 +55,26 @@ export function WareRow(props: {
   return (
     <div className={`cyber-item${nested ? " nested" : ""}`}>
       <div>
-        <b>{tr(item.name)}{item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}{item.included ? "（同梱）" : ""}</b>
+        <b>
+          {tr(item.name)}
+          {item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}
+          {item.included ? "（同梱）" : ""}
+        </b>
         <div className="muted">
-          {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
-          {capMax > 0 ? <span className="cap"> ・ 容量 {item.capacity_used ?? 0}/{capMax}</span> : null}
+          {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
+          {availBit(item)} / {item.source}
+          {capMax > 0 ? (
+            <span className="cap">
+              {" "}
+              ・ 容量 {item.capacity_used ?? 0}/{capMax}
+            </span>
+          ) : null}
           {item.limb_str != null ? (
             <span className="cap">
-              {" ・ 肢 STR "}{item.limb_str}{" / AGI "}{item.limb_agi}
+              {" ・ 肢 STR "}
+              {item.limb_str}
+              {" / AGI "}
+              {item.limb_agi}
               {(item.limb_armor ?? 0) > 0 ? ` / 装甲 ${item.limb_armor}` : ""}
             </span>
           ) : null}
@@ -54,7 +83,10 @@ export function WareRow(props: {
           {spec?.selectside && !item.parent_id && !item.included ? (
             <label>
               左右
-              <select value={item.side || "Left"} onChange={(e) => onPatchRow(item.id, { side: e.target.value })}>
+              <select
+                value={item.side || "Left"}
+                onChange={(e) => onPatchRow(item.id, { side: e.target.value })}
+              >
                 <option value="Left">左</option>
                 <option value="Right">右</option>
               </select>
@@ -75,9 +107,14 @@ export function WareRow(props: {
           {!item.included && !spec?.forcegrade ? (
             <label>
               グレード
-              <select value={item.grade} onChange={(e) => onPatchRow(item.id, { grade: e.target.value })}>
+              <select
+                value={item.grade}
+                onChange={(e) => onPatchRow(item.id, { grade: e.target.value })}
+              >
                 {rowGrades.map((g) => (
-                  <option key={g.name} value={g.name}>{g.name} (ESS×{g.ess} / ¥×{g.cost})</option>
+                  <option key={g.name} value={g.name}>
+                    {g.name} (ESS×{g.ess} / ¥×{g.cost})
+                  </option>
                 ))}
               </select>
             </label>
@@ -128,16 +165,29 @@ export function WareRow(props: {
                 const showRange = range.max > range.min || range.max > 1;
                 return (
                   <option key={w.id} value={w.id}>
-                    {tr(w.name)} / {w.capacity ? `[${w.capacity}]` : tr(w.category)}{showRange ? ` R${range.min}-${range.max}` : ""}
+                    {tr(w.name)} / {w.capacity ? `[${w.capacity}]` : tr(w.category)}
+                    {showRange ? ` R${range.min}-${range.max}` : ""}
                   </option>
                 );
               })}
             </select>
-            <button className="btn primary" disabled={!chosen} onClick={() => chosen && onAddChild(chosen)}>スロットに追加</button>
+            <button
+              className="btn primary"
+              disabled={!chosen}
+              onClick={() => chosen && onAddChild(chosen)}
+            >
+              スロットに追加
+            </button>
           </div>
         ) : null}
       </div>
-      {item.included ? <span className="muted">同梱</span> : <button className="btn danger" onClick={() => onRemove(item.id)}>削除</button>}
+      {item.included ? (
+        <span className="muted">同梱</span>
+      ) : (
+        <button className="btn danger" onClick={() => onRemove(item.id)}>
+          削除
+        </button>
+      )}
     </div>
   );
 }

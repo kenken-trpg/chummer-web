@@ -1187,12 +1187,7 @@ export interface WareInstall {
 
 export type PriorityLetter = "A" | "B" | "C" | "D" | "E";
 
-export type PriorityCategory =
-  | "Heritage"
-  | "Attributes"
-  | "Talent"
-  | "Skills"
-  | "Resources";
+export type PriorityCategory = "Heritage" | "Attributes" | "Talent" | "Skills" | "Resources";
 
 export interface Character {
   id: string;
@@ -1378,7 +1373,12 @@ export interface Character {
     nuyen: number;
     nuyen_spent?: number;
     ware_attr_bonus?: Record<string, number>;
-    karma: { pool: number; spent: number; remaining: number; negative?: { used: number; max: number | null } };
+    karma: {
+      pool: number;
+      spent: number;
+      remaining: number;
+      negative?: { used: number; max: number | null };
+    };
     points: Record<string, { used: number; max: number }>;
     knowledge_skills?: {
       name: string;
@@ -1390,7 +1390,13 @@ export interface Character {
       spec?: string;
     }[];
     contacts?: InstalledContact[];
-    contact_points?: { used: number; free: number; paid: number; karma?: number; karma_per_point?: number };
+    contact_points?: {
+      used: number;
+      free: number;
+      paid: number;
+      karma?: number;
+      karma_per_point?: number;
+    };
     martial_arts?: InstalledMartialArt[];
     martial_art_points?: {
       styles: number;
@@ -1524,7 +1530,13 @@ export interface Character {
     };
     skill_totals: Record<string, number>;
     skill_specializations?: Record<string, string>;
-    skill_expertises?: { skill: string; spec: string; bonus: number; free?: boolean; source?: string }[];
+    skill_expertises?: {
+      skill: string;
+      spec: string;
+      bonus: number;
+      free?: boolean;
+      source?: string;
+    }[];
     exotic_skills?: InstalledExoticSkill[];
     skillsoft?: Record<string, number>;
     skillwires?: number;
@@ -1536,7 +1548,13 @@ export interface Character {
     skill_max_bonus?: Record<string, number>;
     skill_pick_slots?: SkillPickSlot[];
     power_points?: { used: number; max: number };
-    metagenic?: { limit: number; positive: number; negative: number; balanced: boolean; count: number } | null;
+    metagenic?: {
+      limit: number;
+      positive: number;
+      negative: number;
+      balanced: boolean;
+      count: number;
+    } | null;
     adept_powers?: InstalledAdeptPower[];
     mystic_pp?: number;
     way_discount?: { used: number; max: number };
@@ -1549,7 +1567,15 @@ export interface Character {
     complex_forms?: InstalledComplexForm[];
     complex_form_points?: { used: number; free: number; paid: number };
     sprites?: InstalledSprite[];
-    stream?: { id: string; name: string; drain: string; drain_attrs: string[]; sprites?: string[]; source?: string; page?: string } | null;
+    stream?: {
+      id: string;
+      name: string;
+      drain: string;
+      drain_attrs: string[];
+      sprites?: string[];
+      source?: string;
+      page?: string;
+    } | null;
     fade_resist?: { pool: number; attrs: string };
     living_persona?: {
       device_rating: number;
@@ -1564,7 +1590,13 @@ export interface Character {
     unarmed_dv?: number;
     unlock_skills?: string[];
     spells?: InstalledSpell[];
-    spell_points?: { used: number; free: number; paid: number; karma?: number; spell_karma?: number };
+    spell_points?: {
+      used: number;
+      free: number;
+      paid: number;
+      karma?: number;
+      spell_karma?: number;
+    };
     tradition?: TraditionInfo | null;
     drain_resist?: { pool: number; attrs: string };
     enabled_tabs: string[];
@@ -1623,7 +1655,11 @@ export interface Catalog {
     category: string;
     karma?: number;
     attributes: Record<string, { min: number; max: number; aug: number }>;
-    metavariants: { name: string; karma?: number; attributes: Record<string, { min: number; max: number; aug: number }> }[];
+    metavariants: {
+      name: string;
+      karma?: number;
+      attributes: Record<string, { min: number; max: number; aug: number }>;
+    }[];
     source: string;
   }[];
   skills: {
@@ -1638,7 +1674,13 @@ export interface Catalog {
       exotic?: boolean;
       specs?: string[];
     }[];
-    knowledge: { name: string; category: string; attribute: string; source?: string; specs?: string[] }[];
+    knowledge: {
+      name: string;
+      category: string;
+      attribute: string;
+      source?: string;
+      specs?: string[];
+    }[];
   };
   qualities: {
     id: string;
@@ -1731,7 +1773,14 @@ export interface Catalog {
   }[];
   sprites?: SpiritCatalogItem[];
   foci?: FocusCatalogItem[];
-  qi_focus?: { id: string; name: string; maxrating: number; cost: string; source: string; page: string } | null;
+  qi_focus?: {
+    id: string;
+    name: string;
+    maxrating: number;
+    cost: string;
+    source: string;
+    page: string;
+  } | null;
   armor?: ArmorCatalogItem[];
   armor_mods?: ArmorModCatalogItem[];
   weapons?: WeaponCatalogItem[];

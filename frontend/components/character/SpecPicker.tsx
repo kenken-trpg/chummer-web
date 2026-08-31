@@ -22,7 +22,12 @@ export function SpecPicker({
   onCommit: (next: string) => void;
 }) {
   const [customMode, setCustomMode] = useState(() => Boolean(value && !options.includes(value)));
-  const selectValue = !value && !customMode ? "" : customMode || (value && !options.includes(value)) ? "__custom__" : value;
+  const selectValue =
+    !value && !customMode
+      ? ""
+      : customMode || (value && !options.includes(value))
+        ? "__custom__"
+        : value;
   return (
     <span className="spec-pick">
       <select
@@ -41,7 +46,9 @@ export function SpecPicker({
       >
         <option value="">{emptyLabel}</option>
         {options.map((spec) => (
-          <option key={spec} value={spec}>{tr(spec)}</option>
+          <option key={spec} value={spec}>
+            {tr(spec)}
+          </option>
         ))}
         <option value="__custom__">自由入力</option>
       </select>

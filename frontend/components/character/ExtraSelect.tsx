@@ -28,7 +28,9 @@ export function ExtraSelect({
       <select value={item.extra || ""} onChange={(e) => onChange(e.target.value)}>
         <option value="">選択してください</option>
         {item.options.map((name) => (
-          <option key={name} value={name}>{item.select === "attribute" ? attrLabel(name, t) : tr(name)}</option>
+          <option key={name} value={name}>
+            {item.select === "attribute" ? attrLabel(name, t) : tr(name)}
+          </option>
         ))}
       </select>
     </label>

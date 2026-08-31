@@ -15,7 +15,10 @@ export function removeWareTree(items: WareInstall[], id: string): WareInstall[] 
   return items.filter((row) => !drop.has(row.id));
 }
 
-export function wareBounds(item: WareCatalogItem, ranges?: Record<string, { min: number; max: number }>) {
+export function wareBounds(
+  item: WareCatalogItem,
+  ranges?: Record<string, { min: number; max: number }>,
+) {
   return ranges?.[item.id] || { min: item.minrating, max: item.maxrating };
 }
 
@@ -30,7 +33,11 @@ export function sideSlotKey(item: WareCatalogItem) {
   return (item.limbslot || item.id || "").toLowerCase();
 }
 
-export function nextFreeSide(items: WareInstall[], catalogItems: WareCatalogItem[], ware: WareCatalogItem) {
+export function nextFreeSide(
+  items: WareInstall[],
+  catalogItems: WareCatalogItem[],
+  ware: WareCatalogItem,
+) {
   if (!ware.selectside) return undefined;
   const slot = sideSlotKey(ware);
   const used = new Set(

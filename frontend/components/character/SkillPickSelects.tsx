@@ -18,7 +18,9 @@ export function SkillPickSelects(props: {
           <select value={slot.picked} onChange={(e) => props.onPick(slot.key, e.target.value)}>
             <option value="">選択してください</option>
             {slot.options.map((name) => (
-              <option key={name} value={name}>{props.tr(name)}</option>
+              <option key={name} value={name}>
+                {props.tr(name)}
+              </option>
             ))}
           </select>
         </label>

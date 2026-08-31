@@ -20,7 +20,8 @@ export function optionalNumber(value: string): number | null {
 
 export function testLine(test?: MagicTestInfo | null, drainLabel = "ドレイン") {
   if (!test) return "";
-  const drain = test.drain == null ? `2×相手ヒット（最低2）` : `${test.drain}${test.drain_code || ""}`;
+  const drain =
+    test.drain == null ? `2×相手ヒット（最低2）` : `${test.drain}${test.drain_code || ""}`;
   const net = test.net == null ? "" : ` ・ 正味 ${test.net}`;
   const miss = test.missing ? " ・ 技能なし" : "";
   const days = test.days ? ` ・ ${test.days}日` : "";
@@ -87,22 +88,26 @@ export function specialArmorBits(sa?: SpecialArmor | null): { label: string; val
   const pathogenIngest = sa.pathogen_ingestion || 0;
   const pathogenInhale = sa.pathogen_inhalation || 0;
   const pathogenInject = sa.pathogen_injection || 0;
-  if (toxinContact && toxinContact === pathogenContact) rows.push({ label: "化学防護(接触)", value: `+${toxinContact}` });
+  if (toxinContact && toxinContact === pathogenContact)
+    rows.push({ label: "化学防護(接触)", value: `+${toxinContact}` });
   else {
     if (toxinContact) rows.push({ label: "毒素接触", value: `+${toxinContact}` });
     if (pathogenContact) rows.push({ label: "病原接触", value: `+${pathogenContact}` });
   }
-  if (toxinInhale && toxinInhale === pathogenInhale) rows.push({ label: "化学防護(吸入)", value: `+${toxinInhale}` });
+  if (toxinInhale && toxinInhale === pathogenInhale)
+    rows.push({ label: "化学防護(吸入)", value: `+${toxinInhale}` });
   else {
     if (toxinInhale) rows.push({ label: "毒素吸入", value: `+${toxinInhale}` });
     if (pathogenInhale) rows.push({ label: "病原吸入", value: `+${pathogenInhale}` });
   }
-  if (toxinIngest && toxinIngest === pathogenIngest) rows.push({ label: "化学防護(摂取)", value: `+${toxinIngest}` });
+  if (toxinIngest && toxinIngest === pathogenIngest)
+    rows.push({ label: "化学防護(摂取)", value: `+${toxinIngest}` });
   else {
     if (toxinIngest) rows.push({ label: "毒素摂取", value: `+${toxinIngest}` });
     if (pathogenIngest) rows.push({ label: "病原摂取", value: `+${pathogenIngest}` });
   }
-  if (toxinInject && toxinInject === pathogenInject) rows.push({ label: "化学防護(注射)", value: `+${toxinInject}` });
+  if (toxinInject && toxinInject === pathogenInject)
+    rows.push({ label: "化学防護(注射)", value: `+${toxinInject}` });
   else {
     if (toxinInject) rows.push({ label: "毒素注射", value: `+${toxinInject}` });
     if (pathogenInject) rows.push({ label: "病原注射", value: `+${pathogenInject}` });
@@ -127,11 +132,13 @@ export function specialArmorLine(sa?: SpecialArmor | null): string {
 export function limitModifierLine(mods?: LimitModifier[] | null): string {
   if (!mods?.length) return "";
   const names: Record<string, string> = { physical: "物理", mental: "精神", social: "社会" };
-  return mods.map((mod) => {
-    const sign = mod.value > 0 ? `+${mod.value}` : `${mod.value}`;
-    const base = `${names[mod.limit] || mod.limit}リミット ${sign}`;
-    return mod.condition_label ? `${base}（${mod.condition_label}）` : base;
-  }).join(" / ");
+  return mods
+    .map((mod) => {
+      const sign = mod.value > 0 ? `+${mod.value}` : `${mod.value}`;
+      const base = `${names[mod.limit] || mod.limit}リミット ${sign}`;
+      return mod.condition_label ? `${base}（${mod.condition_label}）` : base;
+    })
+    .join(" / ");
 }
 
 export function deviceRatingBit(item?: { device_rating?: number } | null): string {
@@ -140,8 +147,7 @@ export function deviceRatingBit(item?: { device_rating?: number } | null): strin
 }
 
 export function wareAttrLine(bonus?: Record<string, number> | null): string {
-  return ATTRS
-    .filter((key) => (bonus?.[key] || 0) !== 0)
+  return ATTRS.filter((key) => (bonus?.[key] || 0) !== 0)
     .map((key) => `${key} +${bonus![key]}`)
     .join(" / ");
 }
@@ -153,7 +159,9 @@ export function availBit(item?: { avail?: string; avail_value?: number } | null)
   return ` / 入手 ${item.avail}`;
 }
 
-export function mergeSpecialArmor(mods?: { special_armor?: SpecialArmor }[]): SpecialArmor | undefined {
+export function mergeSpecialArmor(
+  mods?: { special_armor?: SpecialArmor }[],
+): SpecialArmor | undefined {
   let out: SpecialArmor | undefined;
   for (const mod of mods || []) {
     const sa = mod.special_armor;
@@ -167,9 +175,15 @@ export function mergeSpecialArmor(mods?: { special_armor?: SpecialArmor }[]): Sp
     out.pathogen_contact = (out.pathogen_contact || 0) + (sa.pathogen_contact || 0);
     out.immunities = {
       toxin_contact: Boolean(out.immunities?.toxin_contact || sa.immunities?.toxin_contact),
-      toxin_inhalation: Boolean(out.immunities?.toxin_inhalation || sa.immunities?.toxin_inhalation),
-      pathogen_contact: Boolean(out.immunities?.pathogen_contact || sa.immunities?.pathogen_contact),
-      pathogen_inhalation: Boolean(out.immunities?.pathogen_inhalation || sa.immunities?.pathogen_inhalation),
+      toxin_inhalation: Boolean(
+        out.immunities?.toxin_inhalation || sa.immunities?.toxin_inhalation,
+      ),
+      pathogen_contact: Boolean(
+        out.immunities?.pathogen_contact || sa.immunities?.pathogen_contact,
+      ),
+      pathogen_inhalation: Boolean(
+        out.immunities?.pathogen_inhalation || sa.immunities?.pathogen_inhalation,
+      ),
     };
   }
   return out;
@@ -180,7 +194,10 @@ export function skillDice(rating: number, bonus?: number) {
   return `${rating} ${sign}${bonus}`;
 }
 
-export function mergeRatings(base?: Record<string, number> | null, extra?: Record<string, number> | null) {
+export function mergeRatings(
+  base?: Record<string, number> | null,
+  extra?: Record<string, number> | null,
+) {
   const out: Record<string, number> = { ...(base || {}) };
   for (const [name, rating] of Object.entries(extra || {})) {
     out[name] = Math.max(out[name] || 0, rating || 0);
@@ -206,6 +223,8 @@ export function limbQualityLine(q: NonNullable<Character["derived"]["limb_qualit
   }
   if (q.cm_physical) bits.push(`物理CM ${q.cm_physical}`);
   const effect = bits.length ? bits.join(" ・ ") : "ボーナスなし";
-  const parts = (q.include || ["arm", "leg"]).map((slot) => REDLINER_SLOT_JA[slot] || slot).join("・");
+  const parts = (q.include || ["arm", "leg"])
+    .map((slot) => REDLINER_SLOT_JA[slot] || slot)
+    .join("・");
   return `リム本数 Quality ${q.count}本（${q.pairs}組 / ${parts}） ・ ${effect}`;
 }

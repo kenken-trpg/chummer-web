@@ -7,5 +7,10 @@ export function skillsoftBit(rating?: number) {
 
 export function specBit(spec?: string | null, label?: string, bonus: number = 2) {
   if (!spec) return null;
-  return <span className="muted" title={label || spec}> 専門+{bonus}</span>;
+  return (
+    <span className="muted" title={label || spec}>
+      {" "}
+      専門+{bonus}
+    </span>
+  );
 }

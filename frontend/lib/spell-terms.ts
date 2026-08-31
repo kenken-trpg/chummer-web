@@ -59,8 +59,7 @@ const SPELL_DESCRIPTOR: Record<string, string> = {
 
 export const spellType = (v?: string | null): string => (v && SPELL_TYPE[v]) || v || "";
 export const spellRange = (v?: string | null): string => (v && SPELL_RANGE[v]) || v || "";
-export const spellDuration = (v?: string | null): string =>
-  (v && SPELL_DURATION[v]) || v || "";
+export const spellDuration = (v?: string | null): string => (v && SPELL_DURATION[v]) || v || "";
 
 /** "Indirect, Elemental, Area" → "間接・元素・効果範囲" */
 export const spellDescriptors = (v?: string | null): string =>

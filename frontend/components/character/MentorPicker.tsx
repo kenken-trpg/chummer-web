@@ -23,10 +23,17 @@ export function MentorPicker({
         <div className="cyber-controls">
           <label>
             メンター
-            <select value={ch.mentor_id || ""} onChange={(e) => onPatch({ mentor_id: e.target.value, mentor_choices: [], mentor_extras: {} })}>
+            <select
+              value={ch.mentor_id || ""}
+              onChange={(e) =>
+                onPatch({ mentor_id: e.target.value, mentor_choices: [], mentor_extras: {} })
+              }
+            >
               <option value="">選択してください</option>
               {(catalog.mentors || []).map((item) => (
-                <option key={item.id} value={item.id}>{tr(item.name)}</option>
+                <option key={item.id} value={item.id}>
+                  {tr(item.name)}
+                </option>
               ))}
             </select>
           </label>
@@ -38,11 +45,16 @@ export function MentorPicker({
               type="checkbox"
               checked={choice.selected}
               onChange={() => {
-                const current = new Set(ch.mentor_choices || mentor!.choices.filter((row) => row.selected).map((row) => row.name));
+                const current = new Set(
+                  ch.mentor_choices ||
+                    mentor!.choices.filter((row) => row.selected).map((row) => row.name),
+                );
                 if (choice.selected) current.delete(choice.name);
                 else {
                   if (choice.set) {
-                    mentor!.choices.filter((row) => row.set === choice.set).forEach((row) => current.delete(row.name));
+                    mentor!.choices
+                      .filter((row) => row.set === choice.set)
+                      .forEach((row) => current.delete(row.name));
                   }
                   current.add(choice.name);
                 }
@@ -53,11 +65,17 @@ export function MentorPicker({
             {choice.extra_options.length ? (
               <select
                 value={choice.extra || ""}
-                onChange={(e) => onPatch({ mentor_extras: { ...(ch.mentor_extras || {}), [choice.name]: e.target.value } })}
+                onChange={(e) =>
+                  onPatch({
+                    mentor_extras: { ...(ch.mentor_extras || {}), [choice.name]: e.target.value },
+                  })
+                }
               >
                 <option value="">対象を選択</option>
                 {choice.extra_options.map((name) => (
-                  <option key={name} value={name}>{tr(name)}</option>
+                  <option key={name} value={name}>
+                    {tr(name)}
+                  </option>
                 ))}
               </select>
             ) : null}

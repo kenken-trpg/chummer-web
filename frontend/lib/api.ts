@@ -27,10 +27,12 @@ export const api = {
   list: () => req<CharacterSummary[]>("/api/characters"),
   get: (id: string) => req<Character>(`/api/characters/${id}`),
   remove: (id: string) => req<{ ok: boolean }>(`/api/characters/${id}`, { method: "DELETE" }),
-  create: (name = "Runner") => req<Character>("/api/characters", { method: "POST", body: JSON.stringify({ name }) }),
+  create: (name = "Runner") =>
+    req<Character>("/api/characters", { method: "POST", body: JSON.stringify({ name }) }),
   patch: (id: string, body: Record<string, unknown>) =>
     req<Character>(`/api/characters/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
-  import: (payload: unknown) => req<Character>("/api/characters/import", { method: "POST", body: JSON.stringify(payload) }),
+  import: (payload: unknown) =>
+    req<Character>("/api/characters/import", { method: "POST", body: JSON.stringify(payload) }),
   importChummer: (bytes: ArrayBuffer) =>
     req<{ character: Character; warnings: string[] }>("/api/characters/import-chummer", {
       method: "POST",

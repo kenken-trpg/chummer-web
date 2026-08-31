@@ -8,37 +8,71 @@ import { attrShort, makeT } from "@/lib/ui-strings";
 //   NB6@L      -> as above, capped at limit L
 //   NR6        -> Edge: N d6, reroll (and add) on 6
 
-const ATTR_ORDER = ["BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES"] as const;
+const ATTR_ORDER = [
+  "BOD",
+  "AGI",
+  "REA",
+  "STR",
+  "CHA",
+  "INT",
+  "LOG",
+  "WIL",
+  "EDG",
+  "MAG",
+  "RES",
+] as const;
 
 type LimitKind = "physical" | "mental" | "social" | null;
 const ATTR_LIMIT: Record<string, LimitKind> = {
-  BOD: "physical", AGI: "physical", REA: "physical", STR: "physical",
+  BOD: "physical",
+  AGI: "physical",
+  REA: "physical",
+  STR: "physical",
   CHA: "social",
-  INT: "mental", LOG: "mental", WIL: "mental",
-  EDG: null, MAG: null, RES: null,
+  INT: "mental",
+  LOG: "mental",
+  WIL: "mental",
+  EDG: null,
+  MAG: null,
+  RES: null,
 };
 
 // weapon category -> active skill (Chummer Weapon.GetSkillDictionaryKey, trimmed)
 const WEAPON_SKILL: Record<string, string> = {
-  Bows: "Archery", Crossbows: "Archery",
-  "Assault Rifles": "Automatics", Carbines: "Automatics", "Machine Pistols": "Automatics",
+  Bows: "Archery",
+  Crossbows: "Archery",
+  "Assault Rifles": "Automatics",
+  Carbines: "Automatics",
+  "Machine Pistols": "Automatics",
   "Submachine Guns": "Automatics",
-  Blades: "Blades", Clubs: "Clubs", "Improvised Weapons": "Clubs",
-  "Assault Cannons": "Heavy Weapons", "Grenade Launchers": "Heavy Weapons",
-  "Missile Launchers": "Heavy Weapons", "Light Machine Guns": "Heavy Weapons",
-  "Medium Machine Guns": "Heavy Weapons", "Heavy Machine Guns": "Heavy Weapons",
-  Shotguns: "Longarms", "Sniper Rifles": "Longarms", "Sporting Rifles": "Longarms",
-  "Throwing Weapons": "Throwing Weapons", Unarmed: "Unarmed Combat",
+  Blades: "Blades",
+  Clubs: "Clubs",
+  "Improvised Weapons": "Clubs",
+  "Assault Cannons": "Heavy Weapons",
+  "Grenade Launchers": "Heavy Weapons",
+  "Missile Launchers": "Heavy Weapons",
+  "Light Machine Guns": "Heavy Weapons",
+  "Medium Machine Guns": "Heavy Weapons",
+  "Heavy Machine Guns": "Heavy Weapons",
+  Shotguns: "Longarms",
+  "Sniper Rifles": "Longarms",
+  "Sporting Rifles": "Longarms",
+  "Throwing Weapons": "Throwing Weapons",
+  Unarmed: "Unarmed Combat",
 };
 const weaponSkill = (w: { useskill?: string; category?: string }) =>
   (w.useskill || "").trim() || WEAPON_SKILL[w.category || ""] || "Pistols";
 
 /** Newline-separated BCDice ShadowRun5 chat-palette commands. */
-export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+export function buildChatPalette(
+  ch: Character,
+  catalog: Catalog,
+  tr: (n: string) => string,
+): string {
   const d = ch.derived;
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
-  const lim = (k: LimitKind) => (k ? d.limits?.[k] ?? 0 : 0);
+  const lim = (k: LimitKind) => (k ? (d.limits?.[k] ?? 0) : 0);
 
   const skillAttr: Record<string, string> = {};
   for (const s of catalog.skills?.skills || []) skillAttr[s.name] = s.attribute;
@@ -66,7 +100,7 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
       if (sp) roll(pool + 2, `${tr(name)}：${tr(sp)}`, limit);
     });
 
-  const skillPool = (name: string) => (d.skill_totals?.[name] || 0);
+  const skillPool = (name: string) => d.skill_totals?.[name] || 0;
 
   // --- unarmed (adepts: Killing Hands / Critical Strike / Penetrating Strike) --
   const unarmedSkill = skillPool("Unarmed Combat");
@@ -75,7 +109,9 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
     const dv = Math.ceil(at("STR") / 2) + (d.unarmed_dv || 0);
     const ap = d.unarmed_ap || 0;
     const reach = d.unarmed_reach || 0;
-    const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? `リーチ+${reach}` : ""].filter(Boolean).join(" ");
+    const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? `リーチ+${reach}` : ""]
+      .filter(Boolean)
+      .join(" ");
     roll(unarmedSkill + at("AGI"), `非武装攻撃 ［${info}］`, "physical");
   }
 
@@ -87,7 +123,9 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
     const pool = skillPool(sk) + at("AGI");
     const acc = String(w.accuracy || "").trim();
     const accCap = /^\d+$/.test(acc) ? `@${acc}` : "";
-    const dmg = [w.damage && `DV${w.damage}`, w.ap && `AP${w.ap}`, w.mode].filter(Boolean).join(" ");
+    const dmg = [w.damage && `DV${w.damage}`, w.ap && `AP${w.ap}`, w.mode]
+      .filter(Boolean)
+      .join(" ");
     out.push(`${Math.max(pool, 0)}B6${accCap} ${tr(w.name)}攻撃${dmg ? ` ［${dmg}］` : ""}`);
   });
 
@@ -127,7 +165,8 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
     out.push(`${at("WIL") + FW}B6 マトリクス防御（フルは +${at("INT")}）`);
   }
 
-  if (weapons.length || spells.length || persona || tabs.includes("spirits")) out.push("// ── 判定・抵抗 ──");
+  if (weapons.length || spells.length || persona || tabs.includes("spirits"))
+    out.push("// ── 判定・抵抗 ──");
   roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
   const meleeDef = Math.max(skillPool("Unarmed Combat"), skillPool("Blades"), skillPool("Clubs"));
   roll(at("REA") + at("INT") + meleeDef + (tm.dodge || 0), "受け（ブロック／パリィ）", "physical");
@@ -139,8 +178,10 @@ export function buildChatPalette(ch: Character, catalog: Catalog, tr: (n: string
   roll(at("LOG") + at("WIL") + (tm.memory || 0), "記憶", "mental");
   roll(at("STR") + at("BOD"), "運搬", "physical");
   roll(at("BOD"), "ダメージ抵抗（＋装甲）");
-  if (d.drain_resist && tabs.includes("spells")) roll(d.drain_resist.pool, `ドレイン抵抗（${d.drain_resist.attrs}）`);
-  if (d.fade_resist && tabs.includes("complexforms")) roll(d.fade_resist.pool, `フェード抵抗（${d.fade_resist.attrs}）`);
+  if (d.drain_resist && tabs.includes("spells"))
+    roll(d.drain_resist.pool, `ドレイン抵抗（${d.drain_resist.attrs}）`);
+  if (d.fade_resist && tabs.includes("complexforms"))
+    roll(d.fade_resist.pool, `フェード抵抗（${d.fade_resist.attrs}）`);
   out.push(`// エッジ振り足しは B6→R6、限界突破は @L を外す`);
 
   return out.join("\n");
@@ -215,7 +256,11 @@ type CocofoliaPiece = {
 };
 
 /** One piece per bound spirit. Skill test = Force + linked attribute, limit = Force. */
-export function buildSpiritPieces(ch: Character, _catalog: Catalog, tr: (n: string) => string): CocofoliaPiece[] {
+export function buildSpiritPieces(
+  ch: Character,
+  _catalog: Catalog,
+  tr: (n: string) => string,
+): CocofoliaPiece[] {
   return (ch.derived.spirits || [])
     .filter((s) => s.bound)
     .map((s) => {
@@ -223,7 +268,9 @@ export function buildSpiritPieces(ch: Character, _catalog: Catalog, tr: (n: stri
       const force = s.force || 1;
       const ini = a.INI ?? force * 2;
 
-      const params: { label: string; value: string }[] = SPIRIT_ATTR_ORDER.filter((k) => (a[k] || 0) > 0).map((k) => ({
+      const params: { label: string; value: string }[] = SPIRIT_ATTR_ORDER.filter(
+        (k) => (a[k] || 0) > 0,
+      ).map((k) => ({
         label: k as string,
         value: String(a[k]),
       }));
@@ -261,13 +308,24 @@ export function buildSpiritPieces(ch: Character, _catalog: Catalog, tr: (n: stri
 
       return {
         kind: "character" as const,
-        data: { name: `${tr(s.name)} F${force}`, memo, initiative: ini, commands: cmds.join("\n"), status, params },
+        data: {
+          name: `${tr(s.name)} F${force}`,
+          memo,
+          initiative: ini,
+          commands: cmds.join("\n"),
+          status,
+          params,
+        },
       };
     });
 }
 
 /** One piece per registered sprite. Skill test = 2 × Level, limit = Level. */
-export function buildSpritePieces(ch: Character, _catalog: Catalog, tr: (n: string) => string): CocofoliaPiece[] {
+export function buildSpritePieces(
+  ch: Character,
+  _catalog: Catalog,
+  tr: (n: string) => string,
+): CocofoliaPiece[] {
   return (ch.derived.sprites || [])
     .filter((s) => s.registered)
     .map((s) => {
@@ -309,7 +367,14 @@ export function buildSpritePieces(ch: Character, _catalog: Catalog, tr: (n: stri
 
       return {
         kind: "character" as const,
-        data: { name: `${tr(s.name)} L${level}`, memo, initiative: ini, commands: cmds.join("\n"), status, params },
+        data: {
+          name: `${tr(s.name)} L${level}`,
+          memo,
+          initiative: ini,
+          commands: cmds.join("\n"),
+          status,
+          params,
+        },
       };
     });
 }
@@ -318,7 +383,11 @@ export function buildSpritePieces(ch: Character, _catalog: Catalog, tr: (n: stri
  * Cocofolia clipboard payload for every bound spirit + registered sprite,
  * as a JSON array of pieces. Returns "" when the character has none.
  */
-export function buildCocofoliaConjured(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+export function buildCocofoliaConjured(
+  ch: Character,
+  catalog: Catalog,
+  tr: (n: string) => string,
+): string {
   const pieces = [...buildSpiritPieces(ch, catalog, tr), ...buildSpritePieces(ch, catalog, tr)];
   return pieces.length ? JSON.stringify(pieces) : "";
 }
