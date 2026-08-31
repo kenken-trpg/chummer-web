@@ -31,6 +31,12 @@ from .foci import (
     resolve_foci,
     resolve_qi_foci,
 )
+from .initiation import (
+    apply_free_metamagics,
+    initiation_karma_for_grade,
+    initiation_karma_total,
+    resolve_initiation,
+)
 from .mentor import resolve_mentor
 from .powers import (
     bind_power_bonus,
@@ -68,6 +74,7 @@ __all__ = [
     "_spell_descriptor_tokens",
     "addspirit_option_names",
     "apply_focus_limits",
+    "apply_free_metamagics",
     "apply_granted_spells",
     "apply_tradition_bonuses",
     "attach_focus_tests",
@@ -79,12 +86,15 @@ __all__ = [
     "bind_spell_spirit_limits",
     "focus_bind_karma",
     "free_spell_bonus_points",
+    "initiation_karma_for_grade",
+    "initiation_karma_total",
     "power_max_rating",
     "power_point_cost",
     "power_select_options",
     "qi_focus_granted_power_rating",
     "resolve_adept_powers",
     "resolve_foci",
+    "resolve_initiation",
     "resolve_mentor",
     "resolve_qi_foci",
     "resolve_spells",
