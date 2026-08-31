@@ -93,9 +93,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    - *Done:* it's now a package. `engine/lookups.py` (catalog accessors),
      `engine/constants.py` (talent groupings, karma prices, lookup tables),
      `engine/priority.py` (priority table + talent selection + build-method
-     validation). `__init__.py` is ~10.2k lines, down from ~10.5k.
+     validation), `engine/formulas.py` (stat-expression string/number
+     helpers). `__init__.py` is ~10.1k lines, down from ~10.5k.
    - *Next, in dependency order (each = one green commit):*
-     `formulas.py` (`parse_armor_value`, `_leading_int`, small math) →
      `karma.py` (attribute/skill/career cost fns) →
      `gear/` (armor, weapons, matrix, drugs, misc — these are the bulk) →
      `magic/` (spells, adept, spirits, foci, initiation, submersion).
@@ -117,9 +117,8 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `lib/character/format.ts`.
    - *Next:* pull each `<Section>` in the big `return (…)` into its own
      component under `components/character/sheet/`, passing `d` / `tr` / `t`.
-3. **Split `lib/types.ts`** (~1.9k lines) into `lib/types/{installs,catalog,
-   derived,character}.ts` with an `index.ts` barrel (so `@/lib/types`
-   keeps resolving). Lowest-risk of the three — `tsc` verifies every move.
+3. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
+   character}.ts` + an `index.ts` barrel; `@/lib/types` still resolves.
 4. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
    remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
    internal `location.href`, and one `any` in a sheet helper.
