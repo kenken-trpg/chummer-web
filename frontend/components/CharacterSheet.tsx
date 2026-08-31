@@ -484,6 +484,12 @@ export default function CharacterSheet({
             </li>
           ))}
         </ul>
+        {d.metagenic && (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
+          <p className="sheet-dim">
+            メタジェネティック: 有利 {d.metagenic.positive} ／ 不利 {d.metagenic.negative}
+            {d.metagenic.limit > 0 ? ` ／ 上限 ${d.metagenic.limit}` : ""}
+          </p>
+        ) : null}
       </Section>
 
       {(d.action_dice_pools || []).length ? (

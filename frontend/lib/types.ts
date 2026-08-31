@@ -1536,6 +1536,7 @@ export interface Character {
     skill_max_bonus?: Record<string, number>;
     skill_pick_slots?: SkillPickSlot[];
     power_points?: { used: number; max: number };
+    metagenic?: { limit: number; positive: number; negative: number; balanced: boolean; count: number } | null;
     adept_powers?: InstalledAdeptPower[];
     mystic_pp?: number;
     way_discount?: { used: number; max: number };
@@ -1649,6 +1650,7 @@ export interface Catalog {
     bonus_tags: string[];
     forbidden_qualities?: string[];
     is_way?: boolean;
+    metagenic?: boolean;
     needs_extra?: boolean;
     extra_kind?: string | null;
     select_options?: string[];

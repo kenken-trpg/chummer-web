@@ -6924,3 +6924,25 @@ def test_active_drug_folds_bonus_into_totals() -> None:
     assert [d["name"] for d in dosed.derived["active_drugs"]] == ["Jazz"]
     row = dosed.derived["active_drugs"][0]
     assert "REA +1" in row["effect"] and row["vectors"] == ["Inhalation"]
+
+
+CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"
+THERMO_SURGE = "fd346177-3791-44c0-af8c-7cf176fc9aa3"  # +3 positive metagenic
+FEATHERS = "35279341-3611-439a-9550-8227b306198f"  # -3 negative metagenic
+
+
+def test_metagenic_requires_changeling() -> None:
+    out = compute(_mundane("mg-nochangeling", quality_ids=[THERMO_SURGE, FEATHERS]))
+    assert any("Changeling" in e for e in out.derived["errors"])
+
+
+def test_metagenic_karma_must_balance() -> None:
+    unbalanced = compute(_mundane("mg-unbalanced", quality_ids=[CHANGELING_I, THERMO_SURGE]))
+    assert any("不均衡" in e for e in unbalanced.derived["errors"])
+    mg = unbalanced.derived["metagenic"]
+    assert mg["limit"] == 30 and mg["positive"] == 3 and mg["negative"] == 0
+
+    balanced = compute(_mundane("mg-balanced", quality_ids=[CHANGELING_I, THERMO_SURGE, FEATHERS]))
+    assert not any("不均衡" in e for e in balanced.derived["errors"])
+    assert not any("Changeling" in e for e in balanced.derived["errors"])
+    assert balanced.derived["metagenic"]["balanced"] is True

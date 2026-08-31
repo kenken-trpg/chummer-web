@@ -811,6 +811,8 @@ def load_qualities() -> list[dict[str, Any]]:
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
                 "chargenonly": el.find("chargenonly") is not None,
+                "metagenic": el.find("metagenic") is not None,
+                "contributes_to_metagenic_limit": _text(el.find("contributetolimit"), "True").lower() != "false",
                 "forbidden": parse_required(el.find("forbidden")),
                 "required": parse_required(el.find("required")),
                 "required_tree": parse_requirement_tree(el.find("required")),

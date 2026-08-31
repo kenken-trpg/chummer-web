@@ -238,6 +238,7 @@ def public_catalog() -> dict:
             "bonus_tags": [n["tag"] for n in q.get("bonus") or []],
             "forbidden_qualities": list((q.get("forbidden") or {}).get("quality") or []),
             "is_way": is_way_quality(q["name"]),
+            "metagenic": bool(q.get("metagenic")),
             "needs_extra": bool(q.get("needs_extra")),
             "extra_kind": q.get("extra_kind") or "",
             "select_options": list(q.get("select_options") or []),

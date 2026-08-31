@@ -11,13 +11,14 @@ import { dropSkillPicksForPrefix, qualityBlockReason, type QualityReqCtx } from 
 
 export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
-  const [qCat, setQCat] = useState<"all" | "Positive" | "Negative">("all");
+  const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
   const filteredQualities = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
+    const metaOnly = qCat === "Metagenic";
     return catalog.qualities
-      .filter((item) => qCat === "all" || item.category === qCat)
+      .filter((item) => (metaOnly ? item.metagenic : qCat === "all" || item.category === qCat))
       .filter((item) => {
-        if (!q) return !item.source || item.source === "SR5";
+        if (!q) return metaOnly || !item.source || item.source === "SR5";
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
       })
       .slice(0, 80);
@@ -442,6 +443,13 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
         {d.career ? " ・ キャリア" : ""}
       </p>
+      {d.metagenic && (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
+        <p className={`muted${d.metagenic.balanced ? "" : " errors"}`}>
+          メタジェネティック資質: 有利 {d.metagenic.positive} ／ 不利 {d.metagenic.negative}
+          {d.metagenic.limit > 0 ? ` ／ 上限 ${d.metagenic.limit}` : "（Changeling 未取得）"}
+          {d.metagenic.balanced ? "" : " ・ 収支が不均衡（不利＝有利 か 有利−1）"}
+        </p>
+      ) : null}
       {ownedFromDerived.length ? (
         <>
           <h3>取得済み</h3>
@@ -502,6 +510,9 @@ export function QualitiesTab({ catalog, character: ch, d, tr, t, patch, setChara
         </button>
         <button className={`tab ${qCat === "Negative" ? "active" : ""}`} onClick={() => setQCat("Negative")}>
           不利
+        </button>
+        <button className={`tab ${qCat === "Metagenic" ? "active" : ""}`} onClick={() => setQCat("Metagenic")}>
+          メタジェネ
         </button>
       </div>
       <input type="search" placeholder="資質を検索" value={qSearch} onChange={(e) => setQSearch(e.target.value)} />

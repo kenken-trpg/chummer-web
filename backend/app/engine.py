@@ -5067,6 +5067,7 @@ def apply_quality_rules(
     errors: list[str],
     *,
     career: bool = False,
+    report: dict[str, Any] | None = None,
 ) -> int:
     owned = {item["id"] for item in qualities}
     extras = {
@@ -5132,6 +5133,49 @@ def apply_quality_rules(
         errors.append(
             f"有利資質に費やせるカルマが上限を超えています（{positive_spend} / {POSITIVE_QUALITY_KARMA_CAP}）"
         )
+
+    # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
+    metagenic_limit = 0
+    for spec in qualities:
+        for node in spec.get("bonus") or []:
+            if node.get("tag") == "metageniclimit":
+                metagenic_limit = max(
+                    metagenic_limit,
+                    _as_int(node.get("value") or (node.get("fields") or {}).get("value")),
+                )
+    mg_specs = [
+        spec
+        for spec in qualities
+        if spec.get("metagenic") and spec.get("contributes_to_metagenic_limit")
+    ]
+    mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
+    mg_neg = sum(-int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) < 0)
+    mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
+    if not career:
+        if (mg_pos or mg_neg) and metagenic_limit <= 0:
+            errors.append("メタジェネティック資質には Changeling（Class I／II／III SURGE）が必要です")
+        elif metagenic_limit > 0:
+            if mg_neg > metagenic_limit:
+                errors.append(
+                    f"不利メタジェネティック資質のカルマが上限を超えています（{mg_neg} / {metagenic_limit}）"
+                )
+            if mg_pos > metagenic_limit:
+                errors.append(
+                    f"有利メタジェネティック資質のカルマが上限を超えています（{mg_pos} / {metagenic_limit}）"
+                )
+            if mg_pos and not mg_balanced:
+                errors.append(
+                    "メタジェネティック資質のカルマ収支が不均衡です"
+                    f"（不利 {mg_neg}、必要 {max(0, mg_pos - 1)}〜{mg_pos}）"
+                )
+    if report is not None:
+        report["metagenic"] = {
+            "limit": metagenic_limit,
+            "positive": mg_pos,
+            "negative": mg_neg,
+            "balanced": bool(mg_balanced),
+            "count": len(mg_specs),
+        }
     return negative_gain
 
 
@@ -9999,6 +10043,7 @@ def compute(state: CharacterState) -> CharacterState:
     movement = resolve_movement(meta, effects)
 
     tradition_info = magic.get("tradition") if isinstance(magic.get("tradition"), dict) else {}
+    quality_report: dict[str, Any] = {}
     negative_quality_karma = apply_quality_rules(
         state,
         qualities,
@@ -10020,6 +10065,7 @@ def compute(state: CharacterState) -> CharacterState:
         ),
         errors,
         career=career,
+        report=quality_report,
     )
 
     if not career:
@@ -10234,6 +10280,7 @@ def compute(state: CharacterState) -> CharacterState:
             },
         },
         "power_points": {"used": power_spent, "max": power_pool},
+        "metagenic": quality_report.get("metagenic"),
         "adept_powers": adept["public"],
         "mystic_pp": state.mystic_pp,
         "way_discount": {"used": adept.get("discount_used") or 0, "max": adept.get("discount_max") or 0},
