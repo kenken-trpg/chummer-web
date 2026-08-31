@@ -43,7 +43,12 @@ export function WareRow(props: {
         <div className="muted">
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥{availBit(item)} / {item.source}
           {capMax > 0 ? <span className="cap"> ・ 容量 {item.capacity_used ?? 0}/{capMax}</span> : null}
-          {item.limb_str != null ? <span className="cap"> ・ 肢 STR {item.limb_str} / AGI {item.limb_agi}</span> : null}
+          {item.limb_str != null ? (
+            <span className="cap">
+              {" ・ 肢 STR "}{item.limb_str}{" / AGI "}{item.limb_agi}
+              {(item.limb_armor ?? 0) > 0 ? ` / 装甲 ${item.limb_armor}` : ""}
+            </span>
+          ) : null}
         </div>
         <div className="cyber-controls">
           {spec?.selectside && !item.parent_id && !item.included ? (

@@ -544,7 +544,7 @@ def test_human_customized_strength_uses_racial_min() -> None:
     assert custom["nuyen"] == 10000
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
     assert arm["limb_str"] == 3
-    assert arm["limb_agi"] == 1
+    assert arm["limb_agi"] == 3  # empty cyberlimb attribute base is 3 (SR5 p.456)
     assert out.derived["nuyen_spent"] == 25000
     assert out.derived["ware_ranges"][CUSTOM_STR] == {"min": 2, "max": 6}
 
@@ -569,7 +569,7 @@ def test_troll_customized_strength_starts_at_six() -> None:
     assert custom["nuyen"] == 5000
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
     assert arm["limb_str"] == 6
-    assert arm["limb_agi"] == 1
+    assert arm["limb_agi"] == 3
 
 
 def test_customized_and_enhanced_stack_on_limb() -> None:
@@ -589,9 +589,49 @@ def test_customized_and_enhanced_stack_on_limb() -> None:
     custom = next(item for item in out.derived["cyberware"] if item["ware_id"] == CUSTOM_AGI)
     assert custom["nuyen"] == 15000
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
-    assert arm["limb_str"] == 3
-    assert arm["limb_agi"] == 4
+    assert arm["limb_str"] == 5  # base 3 + Enhanced Strength 2
+    assert arm["limb_agi"] == 4  # Customized Agility sets the base
     assert arm["capacity_used"] == 2
+
+
+ENHANCED_AGI = "2c50d5c1-f2ff-4c7b-bf5e-46925e808648"
+CYBERLIMB_ARMOR = "8ea736c6-5a90-471c-9320-18432ec9aaf0"
+
+
+def test_empty_cyberlimb_has_attribute_base_three() -> None:
+    out = compute(
+        _mundane(
+            "bare-limb",
+            cyberware=[CyberwareInstall(id="arm1", ware_id=ARM, side="Left")],
+        )
+    )
+    arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
+    assert arm["limb_str"] == 3 and arm["limb_agi"] == 3
+    assert arm["limb_armor"] == 0
+
+
+def test_cyberlimb_attribute_capped_at_augmented_maximum() -> None:
+    # Customized 6 + Enhanced 3 = 9, which is exactly the Human AGI aug max
+    state = CharacterState(
+        id="limb-cap",
+        name="LimbCap",
+        career=True,
+        nuyen_earned=10_000_000,
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+        cyberware=[
+            CyberwareInstall(id="arm1", ware_id=ARM, side="Left"),
+            CyberwareInstall(ware_id=CUSTOM_AGI, rating=6, parent_id="arm1"),
+            CyberwareInstall(ware_id=ENHANCED_AGI, rating=3, parent_id="arm1"),
+            CyberwareInstall(ware_id=CYBERLIMB_ARMOR, rating=3, parent_id="arm1"),
+        ],
+    )
+    out = compute(state)
+    arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
+    assert arm["limb_agi"] == 9
+    assert arm["limb_armor"] == 3
+    assert out.derived["armor"] == 3  # cyberlimb Armor mod adds to the armor rating
 
 
 def test_one_customized_arm_pulls_body_strength() -> None:
@@ -776,8 +816,8 @@ def test_redliner_four_limbs_is_plus_two() -> None:
     assert out.derived["limb_quality"]["pairs"] == 2
     assert out.derived["limb_quality"]["cm_physical"] == -2
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
-    assert arm["limb_str"] == 3
-    assert arm["limb_agi"] == 3
+    assert arm["limb_str"] == 5  # base 3 + Redliner +2
+    assert arm["limb_agi"] == 5
 
 
 def test_cyber_singularity_seeker_adds_willpower() -> None:
@@ -4458,8 +4498,8 @@ def test_hand_blade_on_cyberarm_is_weapon() -> None:
     assert row["weapon_id"] == "5ec246dc-c129-4e61-a27a-c4d82b223bea"
     assert row["nuyen"] == 2500
     assert row["ap"] == "-2"
-    assert row["damage"] == "3P"
-    assert row["limb_str"] == 1
+    assert row["damage"] == "5P"  # empty cyberarm STR base is 3
+    assert row["limb_str"] == 3
     assert out.derived["nuyen_spent"] == 17500
     assert out.derived["essence"] == 5.0
     assert out.derived["errors"] == []

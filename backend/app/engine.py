@@ -5342,16 +5342,27 @@ def _limb_attr_effect(name: str) -> tuple[str, str] | None:
 
 
 def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str, dict[str, int | float]]) -> None:
+    """Resolve each cyberlimb's Strength/Agility/Armor from its enhancement mods.
+
+    SR5 p.456: an empty cyberlimb has Strength 3 and Agility 3. "Customized"
+    mods set the base, "Enhanced" mods add on top, and the per-limb total is
+    capped at the character's augmented maximum for that attribute.
+    """
     children: dict[str, list[dict[str, Any]]] = {}
     for item in resolved:
         if item.get("parent_id"):
             children.setdefault(item["parent_id"], []).append(item)
+    str_aug = int(attrs_spec.get("STR", {}).get("aug") or 9)
+    agi_aug = int(attrs_spec.get("AGI", {}).get("aug") or 9)
     for item in resolved:
         if item.get("category") != "Cyberlimb":
             continue
-        str_val = int(attrs_spec.get("STR", {}).get("min") or 1)
-        agi_val = int(attrs_spec.get("AGI", {}).get("min") or 1)
+        str_val = agi_val = CYBERLIMB_BASE_ATTR
+        limb_armor = 0
         for kid in children.get(item["id"]) or []:
+            if (kid.get("name") or "") == "Armor":
+                limb_armor += int(kid.get("rating") or 0)
+                continue
             effect = _limb_attr_effect(kid.get("name") or "")
             if not effect:
                 continue
@@ -5360,12 +5371,14 @@ def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str,
                 str_val = kid["rating"] if mode == "set" else str_val + int(kid["rating"])
             else:
                 agi_val = kid["rating"] if mode == "set" else agi_val + int(kid["rating"])
-        item["limb_str"] = str_val
-        item["limb_agi"] = agi_val
+        item["limb_str"] = min(str_aug, str_val)
+        item["limb_agi"] = min(agi_aug, agi_val)
+        item["limb_armor"] = limb_armor
 
 
 LIMB_BODY_SLOTS = {"arm": 2, "leg": 2, "torso": 1}
 LIMB_BODY_PARTS = 5
+CYBERLIMB_BASE_ATTR = 3  # SR5 p.456: an empty cyberlimb has STR 3 / AGI 3
 REDLINER_BASE_SLOTS = {"arm": 2, "leg": 2}
 SIDES = ("Left", "Right")
 _PARTIAL_LIMB = re.compile(r"\b(hand|foot|lower|modular connector)\b", re.I)
@@ -5977,6 +5990,7 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         "rating_max": item.get("rating_max") or 1,
         "limb_str": item.get("limb_str"),
         "limb_agi": item.get("limb_agi"),
+        "limb_armor": item.get("limb_armor"),
         "selectside": bool(item.get("selectside")),
         "side": item.get("side"),
         "avail": item.get("avail") or "",

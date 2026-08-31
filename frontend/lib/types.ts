@@ -1749,6 +1749,7 @@ export interface InstalledWare {
   rating_max?: number;
   limb_str?: number;
   limb_agi?: number;
+  limb_armor?: number;
   selectside?: boolean;
   side?: string | null;
   avail?: string;
