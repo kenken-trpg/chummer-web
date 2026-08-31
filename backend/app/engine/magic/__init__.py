@@ -22,6 +22,15 @@ from ._common import (
     spell_drain_value,
     tradition_resist,
 )
+from .powers import (
+    bind_power_bonus,
+    power_max_rating,
+    power_point_cost,
+    power_select_options,
+    resolve_adept_powers,
+    way_discount_cap,
+    way_discount_eligible,
+)
 
 __all__ = [
     "_active_skill_rating_from_state",
@@ -30,7 +39,14 @@ __all__ = [
     "_spell_descriptor_mod_total",
     "_spell_descriptor_pattern_matches",
     "_spell_descriptor_tokens",
+    "bind_power_bonus",
+    "power_max_rating",
+    "power_point_cost",
+    "power_select_options",
+    "resolve_adept_powers",
     "spell_cast_info",
     "spell_drain_value",
     "tradition_resist",
+    "way_discount_cap",
+    "way_discount_eligible",
 ]
