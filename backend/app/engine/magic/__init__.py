@@ -41,6 +41,13 @@ from .powers import (
     way_discount_cap,
     way_discount_eligible,
 )
+from .spirits import (
+    addspirit_option_names,
+    attach_spirit_tests,
+    bind_extra_spirits,
+    resolve_spirits,
+    spirit_attributes,
+)
 
 __all__ = [
     "_active_skill_rating_from_state",
@@ -49,9 +56,12 @@ __all__ = [
     "_spell_descriptor_mod_total",
     "_spell_descriptor_pattern_matches",
     "_spell_descriptor_tokens",
+    "addspirit_option_names",
     "apply_focus_limits",
     "attach_focus_tests",
+    "attach_spirit_tests",
     "attach_weapon_focus_dice",
+    "bind_extra_spirits",
     "bind_power_bonus",
     "focus_bind_karma",
     "power_max_rating",
@@ -62,7 +72,9 @@ __all__ = [
     "resolve_foci",
     "resolve_mentor",
     "resolve_qi_foci",
+    "resolve_spirits",
     "spell_cast_info",
+    "spirit_attributes",
     "spell_drain_value",
     "tradition_resist",
     "way_discount_cap",
