@@ -309,6 +309,7 @@ class CharacterPatch(BaseModel):
     appearance: str | None = None
     background: str | None = None
     concept: str | None = None
+    portrait: str | None = None  # data: URI (base64 image) or ""
     career: bool | None = None
     karma_earned: int | None = None
     nuyen_earned: int | None = None
@@ -396,6 +397,7 @@ class CharacterState(BaseModel):
     appearance: str = ""
     background: str = ""
     concept: str = ""
+    portrait: str = ""  # data: URI (base64 image) or ""
     career: bool = False
     karma_earned: int = 0
     nuyen_earned: int = 0

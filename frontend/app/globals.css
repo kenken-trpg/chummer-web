@@ -397,6 +397,47 @@ input[type="text"], input[type="search"] {
   padding: 4px 6px;
   border-radius: 5px;
 }
+.portrait-edit {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 4px 0 10px;
+}
+.portrait-edit-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.portrait-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+.portrait-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  background: var(--panel, rgba(127, 127, 127, 0.08));
+}
+.sheet-portrait-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.sheet-portrait-row .sheet-derived-grid { flex: 1; }
+.sheet-portrait {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  break-inside: avoid;
+}
 .sheet-footer {
   margin-top: 20px;
   padding-top: 10px;

@@ -75,6 +75,10 @@ def state_to_chum5(state: CharacterState) -> bytes:
         value = getattr(state, field, "")
         if value:
             _sub(root, tag, value)
+    if state.portrait:
+        b64 = state.portrait.split(",", 1)[-1] if state.portrait.startswith("data:") else state.portrait
+        _sub(root, "mainmugshotindex", "0")
+        _sub(_sub(root, "mugshots"), "mugshot", b64)
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
 

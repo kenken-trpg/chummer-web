@@ -236,6 +236,23 @@ export default function Page() {
     }
   }
 
+  async function onPortraitFile(file: File) {
+    if (!ch) return;
+    if (!/^image\//.test(file.type)) { setError("画像ファイルを選んでください"); return; }
+    if (file.size > 3_000_000) { setError("画像が大きすぎます（3MB まで）"); return; }
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ""));
+        r.onerror = () => reject(r.error ?? new Error("読込に失敗しました"));
+        r.readAsDataURL(file);
+      });
+      await patch({ portrait: dataUrl });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "画像の読込に失敗しました");
+    }
+  }
+
   if (error && !ch) {
     return <div className="main"><p className="errors">{error}</p></div>;
   }
@@ -405,6 +422,26 @@ export default function Page() {
         {tab === "sheet" && (
           <div className="no-print sheet-notes-edit">
             <label>記述</label>
+            <div className="portrait-edit">
+              {ch.portrait
+                ? <img className="portrait-thumb" src={ch.portrait} alt="ポートレート" />
+                : <div className="portrait-thumb portrait-empty">画像なし</div>}
+              <div className="portrait-edit-controls">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void onPortraitFile(f);
+                    e.target.value = "";
+                  }}
+                />
+                {ch.portrait
+                  ? <button className="btn" type="button" onClick={() => void patch({ portrait: "" })}>画像を削除</button>
+                  : null}
+                <span className="muted">.chum5 の mugshot と相互変換。3MB まで。</span>
+              </div>
+            </div>
             <div className="sheet-desc-grid">
               {([
                 ["age", "年齢"], ["sex", "性別"], ["height", "身長"], ["weight", "体重"],

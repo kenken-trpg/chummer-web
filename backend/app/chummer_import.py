@@ -76,6 +76,27 @@ def _int(el: ET.Element | None, default: int = 0) -> int:
         return default
 
 
+def _read_mugshot(root: ET.Element) -> str:
+    """Chummer stores portraits as base64 either in ``<mugshots><mugshot>`` (with
+    ``<mainmugshotindex>`` picking one) or a legacy flat ``<mugshot>``. Return a
+    ``data:`` URI ready for an ``<img>`` ``src``, or ``""``."""
+    shots = [_text(m) for m in root.findall("./mugshots/mugshot") if _text(m)]
+    raw = ""
+    if shots:
+        try:
+            i = int(_text(root.find("mainmugshotindex")) or "0")
+        except ValueError:
+            i = 0
+        raw = shots[i] if 0 <= i < len(shots) else shots[0]
+    raw = (raw or _text(root.find("mugshot"))).strip()
+    if not raw:
+        return ""
+    if raw.startswith("data:"):
+        return raw
+    mime = "image/jpeg" if raw.startswith("/9j/") else "image/png"
+    return f"data:{mime};base64,{raw}"
+
+
 def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     out: dict[str, str] = {}
     for r in rows:
@@ -138,6 +159,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         val = _text(root.find(tag))
         if val:
             st[field] = val
+    mug = _read_mugshot(root)
+    if mug:
+        st["portrait"] = mug
 
     def prio(tag: str) -> str:
         v = _text(root.find(f"./priorities/{tag}")) or _text(root.find(tag))

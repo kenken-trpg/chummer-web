@@ -37,6 +37,10 @@ def _rich_state() -> CharacterState:
         eyes="サイバー（銀）",
         concept="元企業ウェットワーク",
         background="かつてはアレス社の内勤。今はフリー。",
+        portrait=(
+            "data:image/png;base64,"
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+        ),
         priorities=Priorities(Heritage="C", Attributes="B", Talent="A", Skills="D", Resources="E"),
         metatype="Elf",
         talent="Magician",
@@ -99,6 +103,7 @@ def test_round_trip_preserves_the_core() -> None:
     assert st["notes"] == src.notes
     assert st["age"] == "27" and st["sex"] == "女" and st["concept"] == "元企業ウェットワーク"
     assert st["background"] == src.background
+    assert st["portrait"] == src.portrait
 
 
 def test_round_tripped_state_still_validates() -> None:

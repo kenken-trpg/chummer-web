@@ -1242,6 +1242,7 @@ export interface Character {
   appearance?: string;
   background?: string;
   concept?: string;
+  portrait?: string;
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;

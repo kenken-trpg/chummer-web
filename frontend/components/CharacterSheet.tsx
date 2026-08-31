@@ -1023,14 +1023,21 @@ export default function CharacterSheet({
         const blocks: [string, string][] = ([
           ["容姿", character.appearance], ["背景", character.background], ["メモ", character.notes],
         ] as [string, string | undefined][]).filter((r): r is [string, string] => Boolean((r[1] || "").trim()));
-        if (!stats.length && !blocks.length) return null;
+        if (!stats.length && !blocks.length && !character.portrait) return null;
         return (
           <Section title="記述">
-            {stats.length ? (
-              <div className="sheet-derived-grid sheet-vehicle-stats">
-                {stats.map(([label, value]) => (
-                  <div key={label}><span>{label}</span><b>{value}</b></div>
-                ))}
+            {(character.portrait || stats.length) ? (
+              <div className="sheet-portrait-row">
+                {character.portrait ? (
+                  <img className="sheet-portrait" src={character.portrait} alt="ポートレート" />
+                ) : null}
+                {stats.length ? (
+                  <div className="sheet-derived-grid sheet-vehicle-stats">
+                    {stats.map(([label, value]) => (
+                      <div key={label}><span>{label}</span><b>{value}</b></div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {blocks.map(([label, value]) => (
