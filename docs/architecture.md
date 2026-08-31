@@ -87,14 +87,31 @@ is consumed. See `docs/adding-rules.md`.
 
 ## Planned refactors
 
-These are known and welcome as PRs:
+Welcome as PRs. Keep every commit individually green (`make check`).
 
-1. **Split `engine.py`** (~10k lines) into an `app/engine/` package by concern
-   (priority, attributes, gear/*, magic/*, karma, compute). `__init__.py`
-   re-exports the current public names so imports don't churn. Doing this in
-   small, individually-green commits is the whole trick. (This also removes the
-   `B023` ruff ignore — the loop-local lifestyle-quality helper moves to module
-   scope.)
-2. **Split `CharacterSheet.tsx`** into per-section components.
-3. **Split `lib/types.ts`** to mirror the backend module boundaries.
-4. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`).
+1. **Split the engine** (`app/engine/__init__.py`, ~10k lines) by concern.
+   - *Done:* it's now a package; `engine/lookups.py` holds the catalog
+     accessors.
+   - *Next, in dependency order (each = one green commit):*
+     `constants.py` (the `*_TALENTS` sets, karma/limb caps, key maps) →
+     `formulas.py` (`parse_armor_value`, `_leading_int`, small math) →
+     `priority.py` (`priority_value`, `*_options`, `resolve_talent*`,
+     `validate_priorities`) → `karma.py` (attribute/skill/career cost fns) →
+     `gear/` (armor, weapons, matrix, drugs, misc — these are the bulk) →
+     `magic/` (spells, adept, spirits, foci, initiation, submersion).
+     `compute()` stays in `__init__.py` as the orchestrator and imports the
+     rest. `__init__.py` keeps re-exporting every name `store.py` /
+     `chummer_export.py` / tests import today.
+   - The mid-file `from .lookups import (...)` block and the
+     `["B023", "E402"]` ignore in `pyproject.toml` both go away once the
+     lifestyle-quality helper lands in a module and imports move to the top.
+2. **Split `CharacterSheet.tsx`** (~1.3k lines) into per-section components
+   under `components/character/sheet/`.
+   - *Done:* the plain-text sheet is now `lib/character/text-sheet.ts`;
+     shared formatters consolidated in `lib/character/format.ts`.
+3. **Split `lib/types.ts`** (~1.9k lines) into `lib/types/{installs,catalog,
+   derived,character}.ts` with an `index.ts` barrel (so `@/lib/types`
+   keeps resolving).
+4. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
+   remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
+   internal `location.href`, and one `any` in a sheet helper.
