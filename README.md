@@ -31,10 +31,32 @@ npm run dev
 
 ブラウザで http://localhost:3000 を開きます。
 
-## テスト
+## テスト / チェック
 
 ```bash
-cd backend
-source .venv/bin/activate
-python -m pytest
+cd backend && source .venv/bin/activate && python -m pytest
 ```
+
+`make` があれば一括で:
+
+```bash
+make setup     # venv + npm install
+make data      # Chummer ゲームデータ取得（backend/vendor/、git 管理外）
+make check     # CI と同じ: ruff / pytest / tsc / eslint / prettier / build
+```
+
+## 構成 / 開発ドキュメント
+
+```
+backend/    FastAPI + ルールエンジン（app/engine.py の compute() が中心）
+frontend/   Next.js 15 App Router + React 19
+docs/       アーキテクチャ・データパイプライン・ルール追加手順
+```
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — セットアップ、コーディング規約、PR の作法
+- [`docs/architecture.md`](docs/architecture.md) — データフロー、`<bonus>` ノードと `effects` の仕組み、API 一覧
+- [`docs/adding-rules.md`](docs/adding-rules.md) — 新しい modifier / アイテム項目 / タブ / 検証の追加レシピ
+- [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → 翻訳オーバーレイ
+
+コントリビュート歓迎です。ゲームルールの変更は SR5（またはサプリ）のページ番号を添え、
+書籍が曖昧な箇所は Chummer5a の挙動に合わせてください。
