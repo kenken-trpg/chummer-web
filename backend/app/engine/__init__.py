@@ -148,7 +148,10 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     _capacity_value,
     _cascade_optics,
     _clamp_rating,
+    _default_mount_parts,
     _device_rating_of,
+    _find_mount_part,
+    _pick_accessory_mount,
     _pick_loaded_ammo,
     _program_label,
     _recompute_worn_armor,
@@ -158,6 +161,7 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     _resolve_optics,
     _resolve_programs,
     _resolve_sensors,
+    accessory_fits_weapon,
     ammo_fits_weapon,
     apply_active_drugs,
 )
@@ -984,63 +988,6 @@ def _resolve_misc_gear(
     return public, nuyen, warnings, errors, bonus_sources
 
 
-def _has_weapon_constraints(cons: dict[str, Any] | None) -> bool:
-    if not cons:
-        return False
-    return bool(cons.get("names") or cons.get("categories") or cons.get("types") or cons.get("conceal_lte") is not None)
-
-
-def _weapon_matches_or(weapon: dict[str, Any], cons: dict[str, Any] | None) -> bool:
-    if not _has_weapon_constraints(cons):
-        return False
-    cons = cons or {}
-    name = str(weapon.get("name") or "")
-    category = str(weapon.get("category") or "")
-    typ = str(weapon.get("type") or "")
-    try:
-        conceal = int(float(str(weapon.get("conceal") or "0")))
-    except ValueError:
-        conceal = 0
-    if name in (cons.get("names") or []):
-        return True
-    if category in (cons.get("categories") or []):
-        return True
-    if typ in (cons.get("types") or []):
-        return True
-    if cons.get("conceal_lte") is not None and conceal <= int(cons["conceal_lte"]):
-        return True
-    return False
-
-
-def accessory_fits_weapon(acc: dict[str, Any], weapon: dict[str, Any], installed_names: set[str]) -> bool:
-    required = acc.get("required") or {}
-    forbidden = acc.get("forbidden") or {}
-    if _has_weapon_constraints(required) and not _weapon_matches_or(weapon, required):
-        return False
-    if _weapon_matches_or(weapon, forbidden):
-        return False
-    for name in forbidden.get("accessories") or []:
-        if name in installed_names:
-            return False
-    mounts = list(acc.get("mounts") or [])
-    weapon_mounts = set(weapon.get("mounts") or [])
-    if mounts and not any(mount in weapon_mounts or mount == "Internal" for mount in mounts):
-        return False
-    return True
-
-
-def _pick_accessory_mount(weapon_mounts: list[str], used: set[str], acc_mounts: list[str]) -> str | None:
-    if not acc_mounts:
-        return ""
-    options = [mount for mount in acc_mounts if mount in weapon_mounts or mount == "Internal"]
-    if not options:
-        return None
-    for mount in options:
-        if mount not in used:
-            return mount
-    return None
-
-
 def resolve_attribute_selects(
     state: CharacterState,
     effects: dict[str, Any],
@@ -1504,51 +1451,6 @@ def _clamp_vehicle_rating(spec: dict[str, Any], rating: int, extras: dict[str, i
     min_rating = int(eval_formula(min_expr, rating or 1, 1, extras)) if min_expr else 1
     min_rating = max(1, min_rating)
     return max(min_rating, min(max_rating, int(rating or min_rating)))
-
-
-def _find_mount_part(name: str, category: str, prefer_source: str = "") -> dict[str, Any] | None:
-    parts = [item for item in catalog().get("weapon_mounts") or [] if item.get("category") == category]
-    if prefer_source == "SR5":
-        tagged = next((item for item in parts if item["name"] == f"{name} [SR5]"), None)
-        if tagged:
-            return tagged
-    exact = next((item for item in parts if item["name"] == name), None)
-    if exact:
-        return exact
-    return next((item for item in parts if item["name"] == f"{name} [SR5]"), None)
-
-
-def _default_mount_parts(size: dict[str, Any]) -> dict[str, dict[str, Any] | None]:
-    parts = catalog().get("weapon_mounts") or []
-
-    def pick(category: str, names: list[str]) -> dict[str, Any] | None:
-        for name in names:
-            found = next((item for item in parts if item.get("category") == category and item["name"] == name), None)
-            if found:
-                return found
-        return None
-
-    required = size.get("required_parts") or {}
-    if any(name == "None" for name in (required.get("control") or [])):
-        return {
-            "visibility": pick("Visibility", ["None"]),
-            "flexibility": pick("Flexibility", ["None"]),
-            "control": pick("Control", ["None"]),
-        }
-    if size.get("source") == "SR5":
-        req_vis = list(required.get("visibility") or ["External [SR5]"])
-        req_flex = list(required.get("flexibility") or ["Flexible [SR5]"])
-        req_ctrl = list(required.get("control") or ["Remote [SR5]"])
-        return {
-            "visibility": pick("Visibility", req_vis),
-            "flexibility": pick("Flexibility", req_flex),
-            "control": pick("Control", req_ctrl),
-        }
-    return {
-        "visibility": pick("Visibility", ["External", "External [SR5]"]),
-        "flexibility": pick("Flexibility", ["Fixed", "Flexible [SR5]"]),
-        "control": pick("Control", ["Remote", "Remote [SR5]"]),
-    }
 
 
 R5_MOD_SLOT_CATEGORIES = (
