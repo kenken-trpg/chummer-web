@@ -465,9 +465,14 @@ def default_attributes(meta: dict[str, Any]) -> dict[str, int]:
 from .lookups import (  # noqa: E402  (kept here to mark where these were defined)
     _complex_form_by_id,
     _default_stream,
+    _echo_by_id,
+    _echo_by_name,
     _focus_by_id,
     _item_by_id,
+    _magic_art_by_id,
     _mentor_by_id,
+    _metamagic_by_id,
+    _metamagic_by_name,
     _power_by_id,
     _power_by_name,
     _quality_by_id,
@@ -1311,16 +1316,6 @@ def bind_spell_category_drain_damage(
             picked = str(extras.get(spec["id"]) or "").strip()
             if picked:
                 row["category"] = picked
-
-
-def _echo_by_name(name: str) -> dict[str, Any] | None:
-    target = str(name or "").strip()
-    if not target:
-        return None
-    for item in catalog().get("echoes") or []:
-        if item.get("name") == target:
-            return item
-    return None
 
 
 def _cyberadept_res_penalty_reduction(
@@ -5441,27 +5436,6 @@ def initiation_karma_total(grade: int, choices: list[InitiationChoice] | None = 
     return total
 
 
-def _metamagic_by_id(mid: str) -> dict[str, Any] | None:
-    for item in catalog().get("metamagics") or []:
-        if item["id"] == mid:
-            return item
-    return None
-
-
-def _metamagic_by_name(name: str) -> dict[str, Any] | None:
-    for item in catalog().get("metamagics") or []:
-        if item.get("name") == name:
-            return item
-    return None
-
-
-def _magic_art_by_id(art_id: str) -> dict[str, Any] | None:
-    for item in catalog().get("magic_arts") or []:
-        if item["id"] == art_id:
-            return item
-    return None
-
-
 def resolve_initiation(
     state: CharacterState,
     talent_name: str,
@@ -5698,13 +5672,6 @@ def submersion_karma_total(grade: int, choices: list[SubmersionChoice] | None = 
             schooling=bool(c and c.schooling),
         )
     return total
-
-
-def _echo_by_id(echo_id: str) -> dict[str, Any] | None:
-    for item in catalog().get("echoes") or []:
-        if item["id"] == echo_id:
-            return item
-    return None
 
 
 def resolve_submersion(

@@ -117,6 +117,44 @@ def _focus_by_id(gid: str) -> dict[str, Any] | None:
     return None
 
 
+def _metamagic_by_id(mid: str) -> dict[str, Any] | None:
+    for item in catalog().get("metamagics") or []:
+        if item["id"] == mid:
+            return item
+    return None
+
+
+def _metamagic_by_name(name: str) -> dict[str, Any] | None:
+    for item in catalog().get("metamagics") or []:
+        if item.get("name") == name:
+            return item
+    return None
+
+
+def _magic_art_by_id(art_id: str) -> dict[str, Any] | None:
+    for item in catalog().get("magic_arts") or []:
+        if item["id"] == art_id:
+            return item
+    return None
+
+
+def _echo_by_id(echo_id: str) -> dict[str, Any] | None:
+    for item in catalog().get("echoes") or []:
+        if item["id"] == echo_id:
+            return item
+    return None
+
+
+def _echo_by_name(name: str) -> dict[str, Any] | None:
+    target = str(name or "").strip()
+    if not target:
+        return None
+    for item in catalog().get("echoes") or []:
+        if item.get("name") == target:
+            return item
+    return None
+
+
 def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
     for item in catalog().get(kind) or []:
         if item["id"] == item_id:
