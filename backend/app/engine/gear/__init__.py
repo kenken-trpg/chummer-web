@@ -40,6 +40,7 @@ from .drugs import (
     apply_active_drugs,
 )
 from .matrix import _matrix_stats, _normalize_array_order, _resolve_matrix_devices
+from .misc import _resolve_misc_gear
 from .optics import _resolve_optics
 from .programs import _resolve_programs
 from .sensors import _resolve_sensors
@@ -109,6 +110,7 @@ __all__ = [
     "_resolve_armor_mods",
     "_resolve_drones",
     "_resolve_matrix_devices",
+    "_resolve_misc_gear",
     "_resolve_optics",
     "_resolve_programs",
     "_resolve_sensors",
