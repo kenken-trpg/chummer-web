@@ -243,10 +243,16 @@ Snapshot (`tests/test_snapshot.py`, 6 fixtures incl. hermetic mage / adept /
 technomancer) byte-identical before and after every move; `468 passed`
 throughout.
 
-Still in `__init__.py` for a future `engine/resonance/` split: `sprite_attributes`,
-`resolve_complex_forms`, `resolve_sprites`, `attach_complex_form_tests`,
-`attach_sprite_tests`, `living_persona`, `_echo_by_name`, `apply_granted_echoes`,
-`_cyberadept_res_penalty_reduction`.
+## Step 5b — `engine/resonance.py` — **done**
+
+The technomancer mirror, one green commit. `__init__.py`: 4,878 → 4,497
+lines. Single-file module (378 lines — in line with `karma.py` / `pricing.py`,
+no package needed): `resolve_complex_forms` (+ `_complex_form_fading_mod`,
+`_required_names`), `resolve_sprites` (+ `sprite_attributes`),
+`attach_complex_form_tests`, `attach_sprite_tests`, `living_persona`,
+`apply_granted_echoes`, `_cyberadept_res_penalty_reduction`. Every function
+is compute()-only; all deps already extracted. `resonance` → `magic`
+(`tradition_resist` / `spell_drain_value`) is a clean one-way edge.
 
 ## Step 6 — mid-file import cleanup (not done)
 

@@ -120,17 +120,18 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      services + summoning tests + addspirit), `magic/spells.py` (spell list +
      free-spell allowances + tradition/quality binders + drain summary),
      `magic/initiation.py` (metamagic / art grades + free metamagics),
-     `magic/submersion.py` (echo grades). `resolve_gear()` and `compute()`
-     stay in `__init__.py` as orchestrators. `__init__.py` is ~4.9k lines,
-     down from ~10.5k.
+     `magic/submersion.py` (echo grades); and `engine/resonance.py` — the
+     technomancer mirror (complex forms + fading, sprites, living persona,
+     addecho grants). `resolve_gear()` and `compute()` stay in `__init__.py`
+     as orchestrators. `__init__.py` is ~4.5k lines, down from ~10.5k.
    - The mid-file `from .priority import (...)` / `from .lookups import (...)`
      blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
      the lifestyle-quality helper lands in a module and imports move to the top.
-   - *Next (own session):* `engine/ware/` (the cyberware / bioware / vehicle-
-     hosted-ware pipeline) and `engine/resonance/` (complex forms, sprites,
-     living persona, echo grants) — `engine/dice.py` is already shared, and the
-     `sprite_attributes` / `_echo_by_name` / `apply_granted_echoes` helpers left
-     in `__init__.py` are theirs to claim.
+   - *Next (own session):* `engine/ware/` (the cyberware / bioware / cyberlimb
+     / vehicle-hosted-ware pipeline — `resolve_ware` + the redliner/limb-side
+     logic). Smaller self-contained clusters still in `__init__.py`:
+     martial arts, contacts, the skill resolvers, and the avail /
+     device-rating / ware-attribute-cap chargen checks.
 2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/
