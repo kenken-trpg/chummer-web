@@ -2,11 +2,13 @@
 
 Kept tiny and dependency-light (``eval_formula`` + the ``GearInstall`` model)
 so every ``gear/`` submodule and ``app.engine`` itself can import them without a
-cycle.
+cycle. A couple of leaf helpers the ware pipeline also reaches for
+(``_limb_attr_effect``) live here for the same reason.
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ...data_loader import catalog, eval_formula
@@ -164,3 +166,23 @@ def _default_mount_parts(size: dict[str, Any]) -> dict[str, dict[str, Any] | Non
         "flexibility": pick("Flexibility", ["Fixed", "Flexible [SR5]"]),
         "control": pick("Control", ["Remote", "Remote [SR5]"]),
     }
+
+
+def _leading_vehicle_stat(raw: str | None) -> int:
+    match = re.match(r"^([+-]?\d+)", str(raw or "").strip())
+    if not match:
+        return 0
+    return int(match.group(1))
+
+
+def _limb_attr_effect(name: str) -> tuple[str, str] | None:
+    lower = name.lower()
+    if "customized strength" in lower or "customization, strength" in lower:
+        return "STR", "set"
+    if "customized agility" in lower or "customization, agility" in lower:
+        return "AGI", "set"
+    if "enhanced strength" in lower or "augmentation, strength" in lower:
+        return "STR", "add"
+    if "enhanced agility" in lower or "augmentation, agility" in lower:
+        return "AGI", "add"
+    return None
