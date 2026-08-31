@@ -5925,9 +5925,115 @@ def test_biocompatibility_and_sensitive_system_essence() -> None:
 
 def test_dealer_connection_discounts_groundcraft() -> None:
     car = next(v for v in catalog()["vehicles"] if v.get("category") == "Cars")
-    base = compute(_mundane("dealer0", gear=[GearInstall(gear_id=car["id"])]))
-    deal = compute(_mundane("dealer1", quality_ids=[DEALER_CONNECTION], gear=[GearInstall(gear_id=car["id"])]))
+    base = compute(_mundane("dealer0", vehicles=[GearInstall(gear_id=car["id"])]))
+    deal = compute(_mundane("dealer1", quality_ids=[DEALER_CONNECTION], vehicles=[GearInstall(gear_id=car["id"])]))
+    assert base.derived["nuyen_spent"] > 0
     assert deal.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert deal.derived["vehicles"][0]["discount_pct"] == 10
+
+
+def test_dealer_connection_matches_drone_and_watercraft_categories() -> None:
+    drone = next(d for d in catalog()["drones"] if str(d.get("category") or "").startswith("Drones"))
+    boat = next(v for v in catalog()["vehicles"] if v.get("category") == "Boats")
+    d_base = compute(_mundane("dc-drone0", drones=[GearInstall(gear_id=drone["id"])]))
+    d_deal = compute(_mundane("dc-drone1", quality_ids=[DEALER_CONNECTION], drones=[GearInstall(gear_id=drone["id"])]))
+    b_base = compute(_mundane("dc-boat0", vehicles=[GearInstall(gear_id=boat["id"])]))
+    b_deal = compute(_mundane("dc-boat1", quality_ids=[DEALER_CONNECTION], vehicles=[GearInstall(gear_id=boat["id"])]))
+    # "Drones: …" is matched by prefix; "Boats" is matched via the Watercraft prefix list.
+    assert d_deal.derived["nuyen_spent"] == int(round(d_base.derived["nuyen_spent"] * 0.9))
+    assert b_deal.derived["nuyen_spent"] == int(round(b_base.derived["nuyen_spent"] * 0.9))
+
+
+BIOCOMPAT_BIO = "dcecd7e5-8cf1-4f83-89fa-177e28cfba03"
+OVERCLOCKER = "554ca59c-22e6-46ef-9b05-250ec8abd728"
+
+
+def test_biocompatibility_bioware_scales_bioware_essence() -> None:
+    base = compute(_mundane("bio-ess0", bioware=[CyberwareInstall(ware_id=TONER, rating=2)]))
+    compat = compute(
+        _mundane(
+            "bio-ess1",
+            quality_ids=[BIOCOMPAT_BIO],
+            bioware=[CyberwareInstall(ware_id=TONER, rating=2)],
+        )
+    )
+    assert compat.derived["bioware_ess_multiplier"] == 90
+    assert base.derived["essence_lost_bio"] == 0.4
+    assert compat.derived["essence_lost_bio"] == 0.3  # 0.4 * 0.9, floored to the tenth
+
+
+def test_made_man_discounts_restricted_gear_by_ten_percent() -> None:
+    weapon = next(w for w in catalog()["weapons"] if w.get("name") == "Ares Predator V")  # 5R
+    base = compute(_mundane("mm-disc0", weapons=[WeaponInstall(weapon_id=weapon["id"])]))
+    made = compute(_mundane("mm-disc1", quality_ids=[MADE_MAN], weapons=[WeaponInstall(weapon_id=weapon["id"])]))
+    assert made.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert made.derived["weapons"][0]["discount_pct"] == 10
+
+
+def test_overclocker_raises_top_cyberdeck_attack_attribute() -> None:
+    base = compute(_mundane("oc-0", cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
+    oc = compute(_mundane("oc-1", quality_ids=[OVERCLOCKER], cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
+    assert base.derived["cyberdecks"][0]["attack"] == 4
+    assert oc.derived["cyberdecks"][0]["attack"] == 5
+    assert oc.derived["cyberdecks"][0]["overclocker"] == "attack"
+
+
+def test_overclocker_without_a_cyberdeck_is_a_noop() -> None:
+    out = compute(_mundane("oc-nodeck", quality_ids=[OVERCLOCKER]))
+    assert out.derived["cyberdecks"] == []
+    assert out.derived["errors"] == []
+
+
+def test_made_man_discounts_restricted_vehicle() -> None:
+    restricted = next(
+        v for v in catalog()["vehicles"] if "R" in str(v.get("avail") or "").upper() and int(v.get("cost") or 0) > 0
+    )
+    base = compute(_mundane("mm-veh0", vehicles=[GearInstall(gear_id=restricted["id"])]))
+    made = compute(_mundane("mm-veh1", quality_ids=[MADE_MAN], vehicles=[GearInstall(gear_id=restricted["id"])]))
+    assert made.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert made.derived["vehicles"][0]["discount_pct"] == 10
+
+
+def test_black_market_pipeline_discounts_and_lowers_cyberware_avail() -> None:
+    contact = ContactInstall(name="Street Doc", connection=4, loyalty=2)
+    base = compute(_mundane("bmp-cw0", cyberware=[CyberwareInstall(ware_id=WIRED, rating=2)]))
+    bmp = compute(
+        _mundane(
+            "bmp-cw1",
+            quality_ids=[BLACK_MARKET_PIPELINE],
+            quality_extras={
+                BLACK_MARKET_PIPELINE: "Cyberware",
+                f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
+            },
+            contacts=[contact],
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=2)],
+        )
+    )
+    assert bmp.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert bmp.derived["cyberware"][0]["nuyen"] == int(round(base.derived["cyberware"][0]["nuyen"] * 0.9))
+    assert base.derived["cyberware"][0]["avail"] == "12R"
+    assert bmp.derived["cyberware"][0]["avail"] == "10R"  # -2 from BMP
+
+
+def test_black_market_pipeline_discounts_and_lowers_bioware_avail() -> None:
+    contact = ContactInstall(name="Bio Fixer", connection=4, loyalty=2)
+    base = compute(_mundane("bmp-bw0", bioware=[CyberwareInstall(ware_id=SUPRATHYROID)]))
+    bmp = compute(
+        _mundane(
+            "bmp-bw1",
+            quality_ids=[BLACK_MARKET_PIPELINE],
+            quality_extras={
+                BLACK_MARKET_PIPELINE: "Bioware",
+                f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
+            },
+            contacts=[contact],
+            bioware=[CyberwareInstall(ware_id=SUPRATHYROID)],
+        )
+    )
+    assert bmp.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
+    assert bmp.derived["bioware"][0]["nuyen"] == int(round(base.derived["bioware"][0]["nuyen"] * 0.9))
+    base_avail = int(base.derived["bioware"][0]["avail_value"])
+    assert int(bmp.derived["bioware"][0]["avail_value"]) == max(0, base_avail - 2)
 
 
 def test_college_education_halves_academic_knowledge_points() -> None:
