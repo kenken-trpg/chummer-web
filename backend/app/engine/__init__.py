@@ -96,7 +96,6 @@ from .constants import (
     MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
     MARTIAL_ART_STYLE_KARMA,
     MARTIAL_ART_TECHNIQUE_KARMA,
-    MATRIX_ARRAY_KEYS,
     MENTOR_SPIRIT_ID,
     MYSTIC_PP_KARMA,
     NEGATIVE_QUALITY_KARMA_CAP,
@@ -152,6 +151,9 @@ from .formulas import (  # noqa: E402  (stat-expression helpers)
 )
 from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     _DRUG_CATEGORIES,
+    _clamp_rating,
+    _device_rating_of,
+    _resolve_matrix_devices,
     apply_active_drugs,
 )
 from .karma import (  # noqa: E402  (cost maths)
@@ -697,126 +699,6 @@ def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, 
         else:
             item["contributes"] = int(item.get("armor_value") or 0) if item.get("name") == worn_name else 0
     return worn_base + add_total, worn_name, warnings
-
-
-def _clamp_rating(spec: dict[str, Any], rating: int) -> int:
-    max_rating = int(spec.get("maxrating") or 0)
-    if max_rating <= 0:
-        return 1
-    min_rating = max(1, int(spec.get("minrating") or 1))
-    return max(min_rating, min(max_rating, int(rating or min_rating)))
-
-
-MATRIX_ARRAY_ALIASES = {
-    "atk": "attack",
-    "slz": "sleaze",
-    "dp": "dataprocessing",
-    "data processing": "dataprocessing",
-    "fw": "firewall",
-}
-
-
-def _normalize_array_order(raw: list[str] | None) -> list[str]:
-    seen: set[str] = set()
-    order: list[str] = []
-    for item in raw or []:
-        key = MATRIX_ARRAY_ALIASES.get(str(item).strip().lower(), str(item).strip().lower())
-        if key in MATRIX_ARRAY_KEYS and key not in seen:
-            order.append(key)
-            seen.add(key)
-    for key in MATRIX_ARRAY_KEYS:
-        if key not in seen:
-            order.append(key)
-    return order
-
-
-def _matrix_base_array(spec: dict[str, Any], rating: int) -> list[int]:
-    raw = str(spec.get("attributearray") or "").strip()
-    if raw:
-        nums: list[int] = []
-        for part in raw.split(","):
-            part = part.strip()
-            if not part:
-                continue
-            nums.append(int(eval_formula(part, rating, 0)))
-        return nums
-    return [int(eval_formula(str(spec.get(key) or "0"), rating, 0)) for key in MATRIX_ARRAY_KEYS]
-
-
-def _matrix_stats(
-    spec: dict[str, Any],
-    rating: int,
-    array_order: list[str] | None = None,
-    *,
-    reorder: bool = False,
-) -> dict[str, Any]:
-    device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
-    programs = int(eval_formula(str(spec.get("programs") or "0"), rating, 0))
-    nums = _matrix_base_array(spec, rating)
-    can_reorder = bool(reorder and len(nums) == 4)
-    order = _normalize_array_order(array_order if can_reorder else None)
-    stats = dict.fromkeys(MATRIX_ARRAY_KEYS, 0)
-    for key, value in zip(order, nums, strict=False):
-        stats[key] = value
-    return {
-        "device_rating": device,
-        "programs": programs,
-        **stats,
-        "array": nums,
-        "array_order": order,
-        "can_reorder": can_reorder,
-    }
-
-
-SENSOR_DEVICE_CATEGORIES = {"Sensors"}
-
-
-def _device_rating_of(spec: dict[str, Any] | None, rating: int) -> int:
-    raw = str((spec or {}).get("devicerating") or "").strip()
-    if raw and raw not in {"0", "-"}:
-        return max(0, int(eval_formula(raw, rating, 0)))
-    if str((spec or {}).get("category") or "") in SENSOR_DEVICE_CATEGORIES:
-        return max(0, int(rating or 0))
-    return 0
-
-
-def _resolve_matrix_devices(
-    kind: str, installs: list[GearInstall]
-) -> tuple[list[GearInstall], list[dict[str, Any]], int]:
-    kept: list[GearInstall] = []
-    public: list[dict[str, Any]] = []
-    nuyen = 0
-    reorder = kind == "cyberdecks"
-    for inst in installs:
-        spec = _item_by_id(kind, inst.gear_id)
-        if not spec:
-            continue
-        rating = _clamp_rating(spec, inst.rating)
-        inst.rating = rating
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
-        nuyen += cost
-        stats = _matrix_stats(spec, rating, inst.array_order, reorder=reorder)
-        if stats["can_reorder"]:
-            inst.array_order = list(stats["array_order"])
-        else:
-            inst.array_order = []
-        kept.append(inst)
-        public.append(
-            {
-                "id": inst.id,
-                "gear_id": spec["id"],
-                "name": spec["name"],
-                "category": spec.get("category") or "",
-                "rating": rating,
-                "rating_max": int(spec.get("maxrating") or 0),
-                "nuyen": cost,
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-                **stats,
-            }
-        )
-    return kept, public, nuyen
 
 
 def _cascade_optics(items: list[GearInstall], extra_parents: set[str] | None = None) -> list[GearInstall]:
@@ -4576,7 +4458,7 @@ def ware_rating_bounds(
     return lo, hi
 
 
-def _clamp_rating(ware: dict[str, Any], rating: int, extras: dict[str, int | float] | None = None) -> int:
+def _clamp_ware_rating(ware: dict[str, Any], rating: int, extras: dict[str, int | float] | None = None) -> int:
     lo, hi = ware_rating_bounds(ware, extras)
     return max(lo, min(hi, int(rating or lo)))
 
@@ -5130,7 +5012,7 @@ def _ensure_kind_subsystems(
             extra.append(
                 CyberwareInstall(
                     ware_id=sub["id"],
-                    rating=_clamp_rating(sub, int(sub.get("minrating") or 1)),
+                    rating=_clamp_ware_rating(sub, int(sub.get("minrating") or 1)),
                     grade=ware.get("forcegrade") or inst.grade or "Standard",
                     wireless=inst.wireless,
                     parent_id=inst.id,
