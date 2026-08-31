@@ -17,6 +17,7 @@ from ._common import (
     _device_rating_of,
     _program_label,
 )
+from .ammo import _apply_loaded_ammo, _pick_loaded_ammo, ammo_fits_weapon
 from .apps import _resolve_apps
 from .armor import (
     _recompute_worn_armor,
@@ -37,12 +38,14 @@ from .sensors import _resolve_sensors
 
 __all__ = [
     "_DRUG_CATEGORIES",
+    "_apply_loaded_ammo",
     "_capacity_value",
     "_cascade_optics",
     "_clamp_rating",
     "_device_rating_of",
     "_drug_effect_nodes",
     "_format_drug_duration",
+    "_pick_loaded_ammo",
     "_matrix_stats",
     "_normalize_array_order",
     "_program_label",
@@ -53,6 +56,7 @@ __all__ = [
     "_resolve_optics",
     "_resolve_programs",
     "_resolve_sensors",
+    "ammo_fits_weapon",
     "apply_active_drugs",
     "armor_mod_fits",
     "armor_plugin_capacity",
