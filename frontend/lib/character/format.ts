@@ -6,6 +6,22 @@ export function formatPoints(value: number) {
   return String(rounded);
 }
 
+/** Leading (possibly negative) integer of a stat string like "12" or "H4/3". */
+export function leadInt(v?: string | number | null) {
+  const m = String(v ?? "").match(/-?\d+/);
+  return m ? parseInt(m[0], 10) : 0;
+}
+
+/** Matrix condition monitor: 8 + ⌈Device Rating ÷ 2⌉ (SR5 p.229). */
+export function matrixCM(deviceRating?: number) {
+  return 8 + Math.ceil((deviceRating || 0) / 2);
+}
+
+/** Vehicle/drone physical condition monitor: 12 + ⌈Body ÷ 2⌉ (SR5 p.199). */
+export function vehicleCM(body?: string | number) {
+  return 12 + Math.ceil(leadInt(body) / 2);
+}
+
 export function kindLabel(kind?: string) {
   if (kind === "ritual") return "儀式";
   if (kind === "enchantment") return "エンチャント";
