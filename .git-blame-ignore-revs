@@ -1,0 +1,5 @@
+# Commits to exclude from `git blame` (bulk formatting, no logic changes).
+# Enable locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style(backend): apply ruff format
+2fe529088a4b1564a0d5c1c90873cbf5463e37f3
