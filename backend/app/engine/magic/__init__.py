@@ -22,6 +22,7 @@ from ._common import (
     spell_drain_value,
     tradition_resist,
 )
+from .mentor import resolve_mentor
 from .powers import (
     bind_power_bonus,
     power_max_rating,
@@ -44,6 +45,7 @@ __all__ = [
     "power_point_cost",
     "power_select_options",
     "resolve_adept_powers",
+    "resolve_mentor",
     "spell_cast_info",
     "spell_drain_value",
     "tradition_resist",
