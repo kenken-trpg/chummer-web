@@ -43,6 +43,17 @@ from .matrix import _matrix_stats, _normalize_array_order, _resolve_matrix_devic
 from .optics import _resolve_optics
 from .programs import _resolve_programs
 from .sensors import _resolve_sensors
+from .vehicles import (
+    _add_vehicle_slot_use,
+    _apply_vehicle_bonus,
+    _clamp_vehicle_rating,
+    _finalize_vehicle_slots,
+    _format_vehicle_stat,
+    _iter_vehicle_hosts,
+    _vehicle_extras,
+    mod_fits_vehicle,
+    vehicle_matches,
+)
 from .weapons import (
     _append_gear_weapons,
     _append_ware_weapons,
@@ -67,11 +78,17 @@ __all__ = [
     "_cascade_optics",
     "_clamp_rating",
     "_default_mount_parts",
+    "_add_vehicle_slot_use",
+    "_apply_vehicle_bonus",
+    "_clamp_vehicle_rating",
     "_device_rating_of",
     "_drug_effect_nodes",
+    "_finalize_vehicle_slots",
     "_find_mount_part",
     "_format_drug_duration",
+    "_format_vehicle_stat",
     "_has_weapon_constraints",
+    "_iter_vehicle_hosts",
     "_leading_vehicle_stat",
     "_limb_attr_effect",
     "_pick_accessory_mount",
@@ -88,6 +105,7 @@ __all__ = [
     "_resolve_programs",
     "_resolve_sensors",
     "_resolve_weapon_accessories",
+    "_vehicle_extras",
     "_weapon_matches_or",
     "accessory_fits_weapon",
     "ammo_fits_weapon",
@@ -100,4 +118,6 @@ __all__ = [
     "armor_plugin_capacity",
     "bind_weapon_category_dv",
     "bind_weapon_skill_accuracy",
+    "mod_fits_vehicle",
+    "vehicle_matches",
 ]
