@@ -54,6 +54,7 @@ KARMA_TO_NUYEN = 2000
 KARMA_NUYEN_MAX = 235
 CAREER_SKILL_MAX = 12
 PRIORITY_KARMA_NUYEN_BASE = 10
+MATRIX_ARRAY_KEYS = ("attack", "sleaze", "dataprocessing", "firewall")
 TRUST_FUND_LIFESTYLE = {1: "Medium", 2: "Low", 3: "High", 4: "Medium"}
 TRUST_FUND_STIPEND = {
     1: "Medium ライフスタイル＋毎月 500¥",
