@@ -4,7 +4,7 @@ import math
 import re
 from typing import Any
 
-from .data_loader import (
+from ..data_loader import (
     CHARGEN_AVAIL_MAX,
     CHARGEN_DEVICE_RATING_MAX,
     CHARGEN_WARE_ATTR_BONUS_MAX,
@@ -24,7 +24,7 @@ from .data_loader import (
     selecttext_catalog_options,
     sum_avail,
 )
-from .improvements import (
+from ..improvements import (
     ATTR_ALIASES,
     _as_int,
     apply_bonus_nodes,
@@ -35,7 +35,7 @@ from .improvements import (
     special_armor_totals,
     substitute_rating,
 )
-from .models import (
+from ..models import (
     ArmorInstall,
     ArmorModInstall,
     CareerBaseline,
