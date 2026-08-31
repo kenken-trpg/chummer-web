@@ -444,6 +444,7 @@ export interface InstalledWeapon {
   mode: string;
   ammo: string;
   rc?: string;
+  rc_total?: number;
   conceal?: string;
   range?: string;
   alt_range?: string;
@@ -1310,6 +1311,7 @@ export interface Character {
     armor_mods?: InstalledArmorMod[];
     weapons?: InstalledWeapon[];
     weapon_accessories?: InstalledWeaponAccessory[];
+    recoil?: { str: number; str_rc: number; free: number };
     commlinks?: InstalledCommlink[];
     cyberdecks?: InstalledMatrixDevice[];
     rccs?: InstalledMatrixDevice[];

@@ -609,6 +609,54 @@ export default function CharacterSheet({
                 </table>
               );
             })()}
+            {(() => {
+              const rc = d.recoil;
+              const ranged = weapons.filter((w) => (w.type || "") !== "Melee" && (w.mode || "").trim());
+              if (!rc || !ranged.length) return null;
+              // net dice penalty for firing `rounds` bullets in one phase, after RC
+              const pen = (rounds: number, rcTotal: number) => Math.max(0, rounds - 1 - rcTotal);
+              const modeCols: [string, number, RegExp][] = [
+                ["SA×2", 2, /SA/],
+                ["BF", 3, /BF/],
+                ["FA(6)", 6, /FA/],
+                ["全弾(10)", 10, /FA/],
+              ];
+              return (
+                <>
+                  <table className="sheet-table sheet-table--range">
+                    <thead>
+                      <tr>
+                        <th>反動（RC適用後）</th>
+                        <th>合計RC</th>
+                        {modeCols.map(([label]) => (
+                          <th key={label}>{label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ranged.map((w) => {
+                        const rcTotal = w.rc_total ?? 0;
+                        return (
+                          <tr key={w.id}>
+                            <td className="left">{tr(w.name)}</td>
+                            <td>{rcTotal}</td>
+                            {modeCols.map(([label, rounds, re]) => (
+                              <td key={label}>
+                                {re.test(w.mode || "") ? (pen(rounds, rcTotal) ? `−${pen(rounds, rcTotal)}` : "±0") : "–"}
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <p className="sheet-note">
+                    合計RC ＝ 銃のRC ＋ ⌈筋力 {rc.str}／3⌉ ({rc.str_rc}) ＋ 1。
+                    反動は戦闘ターン中に累積し、射撃しないアクションでリセット。
+                  </p>
+                </>
+              );
+            })()}
           </div>
         ) : null}
       </Section>
@@ -1047,7 +1095,8 @@ function textSheet(x: TextArgs): string {
     x.weapons.forEach((w) =>
       line(
         `  ${tr(w.name)}  DV ${w.damage || "-"} / AP ${w.ap || "-"} / ACC ${w.accuracy || "-"}` +
-          `${w.mode ? ` / ${w.mode}` : ""}${w.rc ? ` / RC ${w.rc}` : ""}` +
+          `${w.mode ? ` / ${w.mode}` : ""}` +
+          `${(w.type || "") !== "Melee" && w.rc_total != null ? ` / 合計RC ${w.rc_total}` : w.rc ? ` / RC ${w.rc}` : ""}` +
           `${(w.accessories || []).length ? `  +${names(w.accessories)}` : ""}`,
       ),
     );

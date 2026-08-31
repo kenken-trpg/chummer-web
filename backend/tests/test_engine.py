@@ -3878,6 +3878,31 @@ def test_weapon_rows_carry_range_name() -> None:
     assert row["category"] in catalog()["weapon_ranges"]
 
 
+def test_total_recoil_compensation_folds_in_strength_and_free_point() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["STR"] = 5  # ceil(5 / 3) = 2
+    out = compute(
+        CharacterState(
+            id="rc",
+            name="RC",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            weapons=[WeaponInstall(weapon_id=PREDATOR)],  # gun RC 0
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["rc"] in ("0", "")            # the gun's own RC is untouched
+    assert row["rc_total"] == 3              # 0 + ⌈5/3⌉ (2) + 1 free
+    assert out.derived["recoil"] == {"str": 5, "str_rc": 2, "free": 1}
+
+
+def test_melee_weapon_has_no_recoil_total() -> None:
+    combat_axe = next(w["id"] for w in catalog()["weapons"] if w["name"] == "Combat Axe")
+    out = compute(_mundane("rc-melee", weapons=[WeaponInstall(weapon_id=combat_axe)]))
+    assert out.derived["weapons"][0]["rc_total"] == 0
+
+
 def test_minigrenade_loads_into_launcher() -> None:
     launcher = WeaponInstall(weapon_id=ANTIOCH)
     he = GearInstall(gear_id=MINI_HE, parent_id=launcher.id)

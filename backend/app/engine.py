@@ -2828,6 +2828,28 @@ def _apply_modify_ammo_capacity(weapon: dict[str, Any], formula: str | None) -> 
     weapon["ammo"] = f"{base + int(round(delta))}{match.group(2)}"
 
 
+_THROW_RECOIL_CATEGORIES = {"Throwing Weapons"}
+
+
+def _apply_recoil_totals(weapons: list[dict[str, Any]], attrs: dict[str, int]) -> dict[str, int]:
+    """Fill weapon['rc_total'] the way Chummer does (SR5 p.175):
+
+        total RC = (weapon base RC + fitted accessory RC) + ⌈STR ÷ 3⌉ + 1
+
+    ``weapon['rc']`` already carries the base + accessory sum; here we add the
+    universal free point and the Strength contribution. Melee weapons get 0.
+    """
+    str_val = max(0, int(attrs.get("STR") or 0))
+    str_rc = -(-str_val // 3)  # ceil division
+    for weapon in weapons:
+        if (weapon.get("type") or "") == "Melee":
+            weapon["rc_total"] = 0
+            continue
+        gun_rc = _leading_int(weapon.get("rc")) or 0
+        weapon["rc_total"] = gun_rc + str_rc + 1
+    return {"str": str_val, "str_rc": str_rc, "free": 1}
+
+
 def _resolve_weapon_accessories(
     state: CharacterState,
     weapons: list[dict[str, Any]],
@@ -3821,6 +3843,7 @@ def resolve_gear(
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
         state, weapons, special_modification_limit=special_modification_limit
     )
+    recoil_info = _apply_recoil_totals(weapons, attr_totals)
     nuyen += acc_nuyen
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
@@ -4053,6 +4076,7 @@ def resolve_gear(
         "armor_mods": armor_mods,
         "weapons": weapons,
         "weapon_accessories": weapon_accessories,
+        "recoil": recoil_info,
         "special_modification_used": special_mod_used,
         "commlinks": commlinks,
         "cyberdecks": cyberdecks,
@@ -9974,6 +9998,7 @@ def compute(state: CharacterState) -> CharacterState:
         "armor_mods": gear.get("armor_mods") or [],
         "weapons": gear.get("weapons") or [],
         "weapon_accessories": gear.get("weapon_accessories") or [],
+        "recoil": gear.get("recoil") or {"str": 0, "str_rc": 0, "free": 1},
         "commlinks": gear.get("commlinks") or [],
         "cyberdecks": gear.get("cyberdecks") or [],
         "rccs": gear.get("rccs") or [],
