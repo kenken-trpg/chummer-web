@@ -3,3 +3,6 @@
 
 # style(backend): apply ruff format
 2fe529088a4b1564a0d5c1c90873cbf5463e37f3
+
+# style(frontend): apply Prettier
+6cecae1bf757b7a64317b2d745d18af5f7110432
