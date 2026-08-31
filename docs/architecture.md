@@ -97,7 +97,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      (attribute / skill / knowledge cost maths + `<karmacost>` rule helpers),
      `engine/pricing.py` (post-resolve essence-multiplier / Black-Market /
      discount / Overclocker adjustments), `engine/selects.py` (enumerate the
-     picks behind a `<select*>` / `*soft` bonus node), and the `engine/gear/`
+     picks behind a `<select*>` / `*soft` bonus node), `engine/requirements.py`
+     (`<required>` / `<forbidden>` tree evaluation), `engine/dice.py`
+     (`skill_dice_pool` / `magic_opposed_test`), the `engine/gear/`
      package: `gear/_common.py` (`_clamp_rating` / `_device_rating_of` /
      `_capacity_value` / `_cascade_optics` / `_program_label`, plus the
      weapon/vehicle constraint & mount primitives and `_leading_vehicle_stat` /
@@ -109,28 +111,26 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      pipeline + DV/accuracy binders), `gear/vehicles.py` (stat formatting +
      vehicle/mod constraints + R5 mod-slot accounting + drone/mod/mount
      resolvers), `gear/misc.py` (`_misc_external_hosts` + the catch-all
-     `_resolve_misc_gear`). `resolve_gear()` and `compute()` stay in
-     `__init__.py` as orchestrators. `__init__.py` is ~7.1k lines, down from
-     ~10.5k.
-   - *Next, in dependency order (each = one green commit):* `magic/` (spells,
-     adept, spirits, foci, initiation, submersion).
-     These `resolve_*` functions are bigger and lean on more shared helpers;
-     move a `resolve_*` plus its private helpers together, put anything two
-     resolvers share in a `_common.py`, keep `compute()` / `resolve_gear()`
-     in `__init__.py`, and re-import the public name. `tests/test_snapshot.py`
-     freezes the full `derived` output for five characters — run it before and
-     after each move; a byte-identical snapshot is the code-motion safety net
-     the leaf extractions didn't have.
-     `compute()` stays in `__init__.py` as the orchestrator and imports the
-     rest. `__init__.py` keeps re-exporting every name `store.py` /
-     `chummer_export.py` / tests import today. Pattern: move a cohesive
-     cluster to a module that imports only `catalog`, `constants`,
-     already-extracted modules and models; drop back-into-`__init__` imports;
-     re-import the public names in `__init__.py` (add `# noqa: F401` if the
-     name is only re-exported for another module).
+     `_resolve_misc_gear`), and the `engine/magic/` package: `magic/_common.py`
+     (`spell_drain_value` / `tradition_resist` / `spell_cast_info` /
+     `_magic_grade_discount` / `_active_skill_rating_from_state`),
+     `magic/powers.py` (adept powers + `power_*` helpers + Way discounts),
+     `magic/mentor.py`, `magic/foci.py` (bonded + Qi foci + weapon-focus
+     bridge + Artificing/Arcana tests), `magic/spirits.py` (summonable types +
+     services + summoning tests + addspirit), `magic/spells.py` (spell list +
+     free-spell allowances + tradition/quality binders + drain summary),
+     `magic/initiation.py` (metamagic / art grades + free metamagics),
+     `magic/submersion.py` (echo grades). `resolve_gear()` and `compute()`
+     stay in `__init__.py` as orchestrators. `__init__.py` is ~4.9k lines,
+     down from ~10.5k.
    - The mid-file `from .priority import (...)` / `from .lookups import (...)`
      blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
      the lifestyle-quality helper lands in a module and imports move to the top.
+   - *Next (own session):* `engine/ware/` (the cyberware / bioware / vehicle-
+     hosted-ware pipeline) and `engine/resonance/` (complex forms, sprites,
+     living persona, echo grants) — `engine/dice.py` is already shared, and the
+     `sprite_attributes` / `_echo_by_name` / `apply_granted_echoes` helpers left
+     in `__init__.py` are theirs to claim.
 2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/

@@ -1,21 +1,24 @@
-# Plan: finish the `engine/gear/` split (weapons → vehicles → orchestrator), then `magic/`
+# Plan: split `engine/gear/` (weapons → vehicles → orchestrator), then `engine/magic/`
 
 Working doc for a dedicated session. Companion to `docs/architecture.md` §"Planned
-refactors" item 1. Not committed unless you want it to be.
+refactors" item 1.
 
 ## Where we are
 
-`app/engine/__init__.py` is **8,588 lines** (from ~10,475 at the start of the
-split). Already extracted:
+`app/engine/__init__.py` is **4,878 lines** (from ~10,475 at the start of the
+split). Extracted:
 
 - `engine/lookups.py`, `constants.py`, `priority.py`, `formulas.py`, `karma.py`,
-  `pricing.py`, `selects.py`
+  `pricing.py`, `selects.py`, `requirements.py`, `dice.py`
 - `engine/gear/`: `_common.py`, `drugs.py`, `matrix.py`, `armor.py`, `optics.py`,
-  `sensors.py`, `programs.py`, `apps.py`, `ammo.py`
+  `sensors.py`, `programs.py`, `apps.py`, `ammo.py`, `weapons.py`, `vehicles.py`,
+  `misc.py`
+- `engine/magic/`: `_common.py`, `powers.py`, `mentor.py`, `foci.py`,
+  `spirits.py`, `spells.py`, `initiation.py`, `submersion.py`
 
-Remaining gear clusters, in dependency order: **weapons**, then
-**vehicles/drones**, then **`_resolve_misc_gear`**, with `resolve_gear()` and
-`compute()` staying in `__init__.py` as orchestrators. Then `magic/`.
+`resolve_gear()` and `compute()` stay in `__init__.py` as orchestrators.
+Steps 1–4 (gear) and Step 5 (magic) are **done**; Step 6 (mid-file import
+cleanup) is not.
 
 ## Ground rules (unchanged)
 
@@ -207,13 +210,52 @@ Commit: `refactor(engine): extract misc-gear resolution to gear/misc.py`.
 
 ---
 
-## Step 5 — `magic/` (next split, own session)
+## Step 5 — `magic/` — **done**
 
-Clusters: spells, adept powers, spirits, foci, initiation, submersion. Same
-pattern. `magic/_common.py` for anything ≥2 resolvers share (drain/force maths,
-`attach_weapon_focus_dice` at `__init__.py:5932` bridges magic↔weapons — decide
-its home then). Snapshot fixtures already cover a hermetic mage, an adept, and a
-technomancer, so the gate is in place.
+`app/engine/__init__.py`: 7,060 → 4,878 lines. Thirteen green commits:
+
+1. `quality_*_extra_key` → `engine/constants.py`
+2. `_metamagic_by_*` / `_magic_art_by_id` / `_echo_by_*` → `engine/lookups.py`
+3. `requirement_tree_met` (+ `_requirement_item_met` / `_pool_rating`) →
+   new `engine/requirements.py` (shared with qualities + martial arts)
+4. `_skill_spec` / `skill_dice_pool` / `magic_opposed_test` → new
+   `engine/dice.py` (shared with the technomancer test-attachers)
+5. `engine/magic/_common.py` — `spell_drain_value`, `tradition_resist`,
+   `_active_skill_rating_from_state`, `spell_cast_info` (+ its
+   `_spell_category`/`_spell_descriptor` mod helpers), `_magic_grade_discount`
+6. `magic/powers.py` — `resolve_adept_powers` + `power_*` + Way discounts
+7. `magic/mentor.py` — `resolve_mentor` + `_choice_allowed`
+8. `magic/foci.py` — `resolve_foci` / `resolve_qi_foci` /
+   `attach_weapon_focus_dice` (landed here — mutates the weapon rows compute()
+   passes, pulls in nothing weapon-specific) / `apply_focus_limits` /
+   `attach_focus_tests`
+9. `magic/spirits.py` — `resolve_spirits` / `bind_extra_spirits` /
+   `attach_spirit_tests` / `spirit_attributes` (`sprite_attributes` stays —
+   technomancer)
+10. `magic/spells.py` — `resolve_spells` + the `bind_spell_*` /
+    `apply_granted_spells` / `apply_tradition_bonuses` / `spell_defense_pools` /
+    `free_spell_bonus_points` / `spell_karma_cost` cluster
+11. `magic/initiation.py` — `resolve_initiation` / `apply_free_metamagics` +
+    grade-karma helpers
+12. `magic/submersion.py` — `resolve_submersion` + grade-karma helpers
+
+Snapshot (`tests/test_snapshot.py`, 6 fixtures incl. hermetic mage / adept /
+technomancer) byte-identical before and after every move; `468 passed`
+throughout.
+
+Still in `__init__.py` for a future `engine/resonance/` split: `sprite_attributes`,
+`resolve_complex_forms`, `resolve_sprites`, `attach_complex_form_tests`,
+`attach_sprite_tests`, `living_persona`, `_echo_by_name`, `apply_granted_echoes`,
+`_cyberadept_res_penalty_reduction`.
+
+## Step 6 — mid-file import cleanup (not done)
+
+`apply_lifestyle_cost_mod` (a loop-local closure → the `B023` ignore) and
+`find_metatype` still sit above the mid-file `from .xxx import (...)` blocks, so
+the `["B023", "E402"]` per-file ignore in `pyproject.toml` and the `# noqa: E402`
+blocks stay. To finish: move `apply_lifestyle_cost_mod` (lifestyle/quality
+helper) to its own module and hoist `find_metatype` (or accept it below the
+imports), then delete the ignore and lift every `from .xxx import` to the top.
 
 ---
 
