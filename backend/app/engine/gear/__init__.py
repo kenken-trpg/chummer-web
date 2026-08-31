@@ -15,7 +15,9 @@ from ._common import (
     _cascade_optics,
     _clamp_rating,
     _device_rating_of,
+    _program_label,
 )
+from .apps import _resolve_apps
 from .armor import (
     _recompute_worn_armor,
     _resolve_armor_mods,
@@ -30,6 +32,7 @@ from .drugs import (
 )
 from .matrix import _matrix_stats, _normalize_array_order, _resolve_matrix_devices
 from .optics import _resolve_optics
+from .programs import _resolve_programs
 from .sensors import _resolve_sensors
 
 __all__ = [
@@ -42,10 +45,13 @@ __all__ = [
     "_format_drug_duration",
     "_matrix_stats",
     "_normalize_array_order",
+    "_program_label",
     "_recompute_worn_armor",
+    "_resolve_apps",
     "_resolve_armor_mods",
     "_resolve_matrix_devices",
     "_resolve_optics",
+    "_resolve_programs",
     "_resolve_sensors",
     "apply_active_drugs",
     "armor_mod_fits",

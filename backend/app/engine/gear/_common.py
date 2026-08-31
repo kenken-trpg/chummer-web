@@ -34,6 +34,19 @@ def _cascade_optics(items: list[GearInstall], extra_parents: set[str] | None = N
     return _cascade_optics(keep, extra_parents)
 
 
+def _program_label(spec: dict[str, Any], extra: str | None) -> str:
+    """Display name for a program / app / autosoft, folding the chosen ``extra``
+    into any ``[Model]`` / ``[Weapon]`` placeholder in the catalog name."""
+    name = str(spec.get("name") or "")
+    extra = (extra or "").strip()
+    if extra:
+        for token in ("[Model]", "[Weapon]"):
+            if token in name:
+                return f"{name.replace(token, '').strip()} ({extra})"
+        return f"{name} ({extra})"
+    return name
+
+
 def _clamp_rating(spec: dict[str, Any], rating: int) -> int:
     max_rating = int(spec.get("maxrating") or 0)
     if max_rating <= 0:
