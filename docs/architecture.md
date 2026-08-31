@@ -89,29 +89,37 @@ is consumed. See `docs/adding-rules.md`.
 
 Welcome as PRs. Keep every commit individually green (`make check`).
 
-1. **Split the engine** (`app/engine/__init__.py`, ~10k lines) by concern.
-   - *Done:* it's now a package; `engine/lookups.py` holds the catalog
-     accessors.
+1. **Split the engine** (`app/engine/__init__.py`) by concern.
+   - *Done:* it's now a package. `engine/lookups.py` (catalog accessors),
+     `engine/constants.py` (talent groupings, karma prices, lookup tables),
+     `engine/priority.py` (priority table + talent selection + build-method
+     validation). `__init__.py` is ~10.2k lines, down from ~10.5k.
    - *Next, in dependency order (each = one green commit):*
-     `constants.py` (the `*_TALENTS` sets, karma/limb caps, key maps) →
      `formulas.py` (`parse_armor_value`, `_leading_int`, small math) →
-     `priority.py` (`priority_value`, `*_options`, `resolve_talent*`,
-     `validate_priorities`) → `karma.py` (attribute/skill/career cost fns) →
+     `karma.py` (attribute/skill/career cost fns) →
      `gear/` (armor, weapons, matrix, drugs, misc — these are the bulk) →
      `magic/` (spells, adept, spirits, foci, initiation, submersion).
      `compute()` stays in `__init__.py` as the orchestrator and imports the
      rest. `__init__.py` keeps re-exporting every name `store.py` /
-     `chummer_export.py` / tests import today.
-   - The mid-file `from .lookups import (...)` block and the
-     `["B023", "E402"]` ignore in `pyproject.toml` both go away once the
-     lifestyle-quality helper lands in a module and imports move to the top.
-2. **Split `CharacterSheet.tsx`** (~1.3k lines) into per-section components
-   under `components/character/sheet/`.
-   - *Done:* the plain-text sheet is now `lib/character/text-sheet.ts`;
-     shared formatters consolidated in `lib/character/format.ts`.
+     `chummer_export.py` / tests import today. Pattern: move a cohesive
+     cluster to a module that imports only `catalog`, `constants`,
+     already-extracted modules and models; drop back-into-`__init__` imports;
+     re-import the public names in `__init__.py` (add `# noqa: F401` if the
+     name is only re-exported for another module).
+   - The mid-file `from .priority import (...)` / `from .lookups import (...)`
+     blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
+     the lifestyle-quality helper lands in a module and imports move to the top.
+2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
+   - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
+     `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/
+     blocks.tsx`; range-band + special-armor formatting →
+     `lib/character/sheet-format.ts`; formatters consolidated in
+     `lib/character/format.ts`.
+   - *Next:* pull each `<Section>` in the big `return (…)` into its own
+     component under `components/character/sheet/`, passing `d` / `tr` / `t`.
 3. **Split `lib/types.ts`** (~1.9k lines) into `lib/types/{installs,catalog,
    derived,character}.ts` with an `index.ts` barrel (so `@/lib/types`
-   keeps resolving).
+   keeps resolving). Lowest-risk of the three — `tsc` verifies every move.
 4. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
    remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
    internal `location.href`, and one `any` in a sheet helper.
