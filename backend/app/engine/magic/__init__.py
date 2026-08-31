@@ -22,6 +22,15 @@ from ._common import (
     spell_drain_value,
     tradition_resist,
 )
+from .foci import (
+    apply_focus_limits,
+    attach_focus_tests,
+    attach_weapon_focus_dice,
+    focus_bind_karma,
+    qi_focus_granted_power_rating,
+    resolve_foci,
+    resolve_qi_foci,
+)
 from .mentor import resolve_mentor
 from .powers import (
     bind_power_bonus,
@@ -40,12 +49,19 @@ __all__ = [
     "_spell_descriptor_mod_total",
     "_spell_descriptor_pattern_matches",
     "_spell_descriptor_tokens",
+    "apply_focus_limits",
+    "attach_focus_tests",
+    "attach_weapon_focus_dice",
     "bind_power_bonus",
+    "focus_bind_karma",
     "power_max_rating",
     "power_point_cost",
     "power_select_options",
+    "qi_focus_granted_power_rating",
     "resolve_adept_powers",
+    "resolve_foci",
     "resolve_mentor",
+    "resolve_qi_foci",
     "spell_cast_info",
     "spell_drain_value",
     "tradition_resist",
