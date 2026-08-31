@@ -1,7 +1,41 @@
 from app.data_loader import catalog, parse_avail
-from app.engine import compute, default_attributes, find_metatype, resolve_skill_mods, selectskill_options, spell_drain_value, tradition_resist
+from app.engine import (
+    compute,
+    default_attributes,
+    find_metatype,
+    resolve_skill_mods,
+    selectskill_options,
+    spell_drain_value,
+    tradition_resist,
+)
 from app.improvements import collect_effects
-from app.models import AdeptPowerInstall, ArmorInstall, ArmorModInstall, CharacterOptions, CharacterState, CommlinkInstall, ComplexFormInstall, ContactInstall, CyberwareInstall, ExoticSkillInstall, FocusInstall, GearInstall, LifestyleInstall, InitiationChoice, MartialArtInstall, Priorities, QiFocusInstall, SpellInstall, SpiritInstall, SpriteInstall, SubmersionChoice, VehicleModInstall, WeaponAccessoryInstall, WeaponInstall, WeaponMountInstall
+from app.models import (
+    AdeptPowerInstall,
+    ArmorInstall,
+    ArmorModInstall,
+    CharacterOptions,
+    CharacterState,
+    CommlinkInstall,
+    ComplexFormInstall,
+    ContactInstall,
+    CyberwareInstall,
+    ExoticSkillInstall,
+    FocusInstall,
+    GearInstall,
+    InitiationChoice,
+    LifestyleInstall,
+    MartialArtInstall,
+    Priorities,
+    QiFocusInstall,
+    SpellInstall,
+    SpiritInstall,
+    SpriteInstall,
+    SubmersionChoice,
+    VehicleModInstall,
+    WeaponAccessoryInstall,
+    WeaponInstall,
+    WeaponMountInstall,
+)
 
 DATAJACK = "47c48542-48c3-417e-91f0-b5a456183f05"
 MUSCLE = "46f80a44-80ae-41d7-a7c8-a119c4cff70f"
@@ -5000,15 +5034,15 @@ def test_sourceror_grants_sourcerer_daemon_echo() -> None:
 def test_cyberadept_daemon_reduces_res_essence_penalty() -> None:
     attrs = default_attributes(find_metatype("Human", None))
     attrs["RES"] = 6
-    common = dict(
-        attributes=attrs,
-        cyberware=[CyberwareInstall(ware_id=DATAJACK)],
-        submersion_grade=2,
-        submersions=[
+    common = {
+        "attributes": attrs,
+        "cyberware": [CyberwareInstall(ware_id=DATAJACK)],
+        "submersion_grade": 2,
+        "submersions": [
             SubmersionChoice(grade=1, echo_id=OVERCLOCKING),
             SubmersionChoice(grade=2, echo_id=OVERCLOCKING),
         ],
-    )
+    }
     base = compute(_techno("ca-base", "A", **common))
     out = compute(_techno("ca", "A", quality_ids=[RESONANT_STREAM_CYBERADEPT], **common))
     assert base.attributes["RES"] == 5

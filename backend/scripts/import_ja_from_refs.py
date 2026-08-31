@@ -162,11 +162,11 @@ CURATED: dict[str, str] = {
 
 # bulk hand translations live in their own modules to keep this file lean.
 try:
-    from scripts.ja_curated_spells import SPELLS as _SPELLS
     from scripts.ja_curated_entities import ENTITIES as _ENTITIES
+    from scripts.ja_curated_spells import SPELLS as _SPELLS
 except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.py`
-    from ja_curated_spells import SPELLS as _SPELLS
     from ja_curated_entities import ENTITIES as _ENTITIES
+    from ja_curated_spells import SPELLS as _SPELLS
 CURATED.update(_SPELLS)
 CURATED.update(_ENTITIES)
 

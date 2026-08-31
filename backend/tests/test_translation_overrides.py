@@ -6,8 +6,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import pytest
-
 from app import data_loader
 from app.data_loader import (
     OVERRIDE_DIR,

@@ -196,7 +196,7 @@ def build_glossary_doc(
     old_rows: list[tuple[str, str]],
     sr5eja: dict[str, tuple[str, str]],
 ) -> str:
-    old_map = {v: val for v, val in old_rows}
+    old_map = dict(old_rows)
     xslt_jp: dict[str, tuple[str, str, str]] = {}  # eng_lower -> (eng, ja, var)
     code_rows = []
     for var, value in rows:

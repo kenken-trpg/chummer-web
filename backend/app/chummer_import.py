@@ -12,7 +12,6 @@ and named in the returned warning list rather than failing the import.
 from __future__ import annotations
 
 import lzma
-import re
 import uuid
 import xml.etree.ElementTree as ET
 import zlib

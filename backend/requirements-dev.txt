@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# Linting / formatting / type-checking. Keep versions loose; CI pins via the
+# lockfile-free `pip install` and tolerates minor drift.
+ruff>=0.16
+mypy>=1.13

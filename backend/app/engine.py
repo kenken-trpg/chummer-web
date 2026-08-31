@@ -39,7 +39,6 @@ from .models import (
     ArmorInstall,
     ArmorModInstall,
     CareerBaseline,
-    RewardEntry,
     CharacterOptions,
     CharacterState,
     CommlinkInstall,
@@ -49,18 +48,19 @@ from .models import (
     ExoticSkillInstall,
     FocusInstall,
     GearInstall,
+    InitiationChoice,
     LifestyleInstall,
     MartialArtInstall,
-    InitiationChoice,
-    SubmersionChoice,
     Priorities,
     QiFocusInstall,
+    RewardEntry,
     SpellInstall,
     SpiritInstall,
     SpriteInstall,
+    SubmersionChoice,
+    VehicleModInstall,
     WeaponAccessoryInstall,
     WeaponInstall,
-    VehicleModInstall,
     WeaponMountInstall,
 )
 
@@ -1456,8 +1456,8 @@ def _matrix_stats(
     nums = _matrix_base_array(spec, rating)
     can_reorder = bool(reorder and len(nums) == 4)
     order = _normalize_array_order(array_order if can_reorder else None)
-    stats = {key: 0 for key in MATRIX_ARRAY_KEYS}
-    for key, value in zip(order, nums):
+    stats = dict.fromkeys(MATRIX_ARRAY_KEYS, 0)
+    for key, value in zip(order, nums, strict=False):
         stats[key] = value
     return {
         "device_rating": device,
@@ -3832,7 +3832,7 @@ def _check_device_rating_limit(items: list[dict[str, Any]], errors: list[str]) -
 
 
 def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
-    totals: dict[str, int] = {key: 0 for key in PHYSICAL_ATTRS}
+    totals: dict[str, int] = dict.fromkeys(PHYSICAL_ATTRS, 0)
     for item in items:
         for node in item.get("bonus") or []:
             if node.get("tag") != "specificattribute":
@@ -5724,7 +5724,7 @@ def limb_attribute_replace(
     meat_agi: int,
     attrs_spec: dict[str, dict[str, int | float]],
 ) -> dict[str, Any] | None:
-    used = {slot: 0 for slot in LIMB_BODY_SLOTS}
+    used = dict.fromkeys(LIMB_BODY_SLOTS, 0)
     taken: set[tuple[str, str]] = set()
     limb_str: list[int] = []
     limb_agi: list[int] = []
@@ -5769,7 +5769,7 @@ def count_redliner_limbs(resolved: list[dict[str, Any]], slots: dict[str, int] |
     slots = slots or redliner_slot_caps()
     taken: set[tuple[str, str]] = set()
     total = 0
-    used = {slot: 0 for slot in slots}
+    used = dict.fromkeys(slots, 0)
     for item in resolved:
         if not _is_redliner_limb(item, slots):
             continue
@@ -5799,7 +5799,7 @@ def apply_cyberseeker(
     slots = redliner_slot_caps(options)
     count = count_redliner_limbs(resolved, slots)
     pairs = count // 2
-    attr_bonus = {k: 0 for k in ("STR", "AGI", "WIL", "BOD", "REA", "CHA", "INT", "LOG")}
+    attr_bonus = dict.fromkeys(("STR", "AGI", "WIL", "BOD", "REA", "CHA", "INT", "LOG"), 0)
     cm_physical = 0
     limb_bonus = 0
     for target in targets:
@@ -6396,7 +6396,6 @@ def resolve_exotic_skills(
                 "extra": extra,
                 "label": label,
                 "rating": rating,
-                "rating_max": cap,
                 "rating_max": cap,
                 "attribute": spec.get("attribute") or "AGI",
                 "category": spec.get("category") or "",
@@ -7511,7 +7510,7 @@ def resolve_mentor(
         groups.setdefault(key, []).append(choice)
     selected: list[str] = []
     wanted = {name for name in (state.mentor_choices or []) if name}
-    for key, choices in groups.items():
+    for _key, choices in groups.items():
         names = [choice["name"] for choice in choices]
         picked = next((name for name in names if name in wanted), "")
         if not picked:
@@ -8424,7 +8423,7 @@ def resolve_adept_powers(
         spec = _power_by_id(inst.power_id)
         if spec:
             installed_names.add(spec["name"])
-    for key, rating in free_by_key.items():
+    for key, _rating in free_by_key.items():
         spec = _power_by_id(key[0])
         if spec:
             installed_names.add(spec["name"])

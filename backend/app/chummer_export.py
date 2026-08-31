@@ -237,7 +237,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
 
     def emit_gear(parent_el: ET.Element, rows: list[Any]) -> None:
         for g in rows:
-            gid = getattr(g, "gear_id")
+            gid = g.gear_id
             el = _sub(parent_el, "gear")
             _sub(el, "sourceid", gid)
             _sub(el, "name", names["gear"].get(gid, ""))
