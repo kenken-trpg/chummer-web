@@ -99,20 +99,24 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      discount / Overclocker adjustments), `engine/selects.py` (enumerate the
      picks behind a `<select*>` / `*soft` bonus node), and the `engine/gear/`
      package: `gear/_common.py` (`_clamp_rating` / `_device_rating_of` /
-     `_capacity_value` / `_cascade_optics` / `_program_label`), `gear/drugs.py`,
-     `gear/matrix.py` (cyberdecks / RCCs), `gear/armor.py` (armor mods +
-     worn-armor total), `gear/optics.py`, `gear/sensors.py`, `gear/programs.py`,
-     `gear/apps.py`, `gear/ammo.py`. `__init__.py` is ~8.6k lines, down from
+     `_capacity_value` / `_cascade_optics` / `_program_label`, plus the
+     weapon/vehicle constraint & mount primitives and `_leading_vehicle_stat` /
+     `_limb_attr_effect`), `gear/drugs.py`, `gear/matrix.py` (cyberdecks /
+     RCCs), `gear/armor.py` (armor mods + worn-armor total), `gear/optics.py`,
+     `gear/sensors.py`, `gear/programs.py`, `gear/apps.py`, `gear/ammo.py`,
+     `gear/weapons.py` (public weapon row + gear/ware-weapons + ware-limb attrs
+     + reach/unarmed/category-DV/skill-accuracy appliers + accessory & recoil
+     pipeline + DV/accuracy binders), `gear/vehicles.py` (stat formatting +
+     vehicle/mod constraints + R5 mod-slot accounting + drone/mod/mount
+     resolvers), `gear/misc.py` (`_misc_external_hosts` + the catch-all
+     `_resolve_misc_gear`). `resolve_gear()` and `compute()` stay in
+     `__init__.py` as orchestrators. `__init__.py` is ~7.1k lines, down from
      ~10.5k.
-   - *Next, in dependency order (each = one green commit):* the rest of
-     `gear/` — weapons (`_public_weapon` + accessories + mounts + recoil +
-     category-DV / skill-accuracy + gear-weapons + ware-weapons), then
-     vehicles/drones (the biggest cluster; shares mount logic with weapons),
-     then the `_resolve_misc_gear` + `resolve_gear` orchestrator — then
-     `magic/` (spells, adept, spirits, foci, initiation, submersion).
+   - *Next, in dependency order (each = one green commit):* `magic/` (spells,
+     adept, spirits, foci, initiation, submersion).
      These `resolve_*` functions are bigger and lean on more shared helpers;
      move a `resolve_*` plus its private helpers together, put anything two
-     resolvers share in `gear/_common.py`, keep `compute()` / `resolve_gear()`
+     resolvers share in a `_common.py`, keep `compute()` / `resolve_gear()`
      in `__init__.py`, and re-import the public name. `tests/test_snapshot.py`
      freezes the full `derived` output for five characters — run it before and
      after each move; a byte-identical snapshot is the code-motion safety net
