@@ -103,7 +103,10 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `magic/` (spells, adept, spirits, foci, initiation, submersion).
      These `resolve_*` functions are bigger and lean on more shared helpers;
      move a `resolve_*` plus its private helpers together, keep `compute()` in
-     `__init__.py`, and re-import the public name.
+     `__init__.py`, and re-import the public name. `tests/test_snapshot.py`
+     freezes the full `derived` output for five characters — run it before and
+     after each move; a byte-identical snapshot is the code-motion safety net
+     the leaf extractions didn't have.
      `compute()` stays in `__init__.py` as the orchestrator and imports the
      rest. `__init__.py` keeps re-exporting every name `store.py` /
      `chummer_export.py` / tests import today. Pattern: move a cohesive

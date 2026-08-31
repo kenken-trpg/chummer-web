@@ -56,6 +56,21 @@ cd backend && ruff check . && ruff format . && python -m pytest -q
 The ruleset is deliberately modest — grow it in a focused PR rather than
 turning everything on at once.
 
+The backend tests come in two layers:
+
+- **`tests/test_engine.py`** — hundreds of targeted assertions, one rule each.
+  Copy the nearest existing test when you add or change a rule.
+- **`tests/test_snapshot.py`** — golden snapshots of the whole `derived` blob
+  for five representative characters (samurai / mage / adept / technomancer /
+  rigger). They catch a refactor that silently drops, renames, or reorders part
+  of the payload where no targeted test looks. Instance UUIDs are scrubbed to
+  `#N` tokens so runs are deterministic. After an **intentional** change to the
+  engine output, regenerate and eyeball the diff:
+
+  ```bash
+  cd backend && UPDATE_SNAPSHOTS=1 python -m pytest -q tests/test_snapshot.py
+  ```
+
 **Frontend** — `eslint` (flat config) + `prettier` + `tsc`:
 
 ```bash

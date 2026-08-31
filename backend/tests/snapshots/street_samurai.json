@@ -1,0 +1,667 @@
+{
+  "action_dice_pools": [],
+  "active_drugs": [],
+  "add_spirit_picks": [],
+  "adept_powers": [],
+  "allow_spell_categories": [],
+  "allow_spell_ranges": [],
+  "ambidextrous": false,
+  "apps": [],
+  "armor": 12,
+  "armor_items": [
+    {
+      "additive": false,
+      "addmodcategories": [],
+      "armor": "12",
+      "armor_id": "36a4cd30-c32c-44d0-847a-0c15fb51072a",
+      "armor_value": 12,
+      "armorcapacity": "12",
+      "avail": "2",
+      "avail_additive": false,
+      "avail_folded": false,
+      "avail_suffix": "",
+      "avail_value": 2,
+      "capacity_max": 12,
+      "capacity_used": 0,
+      "category": "Armor",
+      "contributes": 12,
+      "equipped": true,
+      "has_wireless": false,
+      "id": "#1",
+      "mod_armor": 0,
+      "mods": [],
+      "name": "Armor Jacket",
+      "nuyen": 1000,
+      "page": "437",
+      "rating": 1,
+      "rating_max": 0,
+      "source": "SR5",
+      "wireless": true
+    }
+  ],
+  "armor_mods": [],
+  "attribute_max_bonus": {},
+  "avail_limit": 12,
+  "bioware": [],
+  "bioware_ess_multiplier": 100,
+  "black_market_avail_bonus": 0,
+  "black_market_category": "",
+  "black_market_contact_id": "",
+  "black_market_discount": false,
+  "block_spell_descriptors": [],
+  "blocked_default_categories": [],
+  "build_method": "Priority",
+  "burnout_way": false,
+  "career": false,
+  "career_advancement_karma": 0,
+  "career_advancement_lines": [],
+  "cm_recovery": {
+    "physical": 0,
+    "stun": 0
+  },
+  "commlink": null,
+  "commlinks": [],
+  "complex_form_points": {
+    "free": 0,
+    "paid": 0,
+    "used": 0
+  },
+  "complex_forms": [],
+  "condition_monitor": {
+    "physical": 9,
+    "stun": 9
+  },
+  "contact_points": {
+    "free": 3,
+    "karma": 0,
+    "karma_per_point": 1,
+    "paid": 0,
+    "used": 0
+  },
+  "contacts": [],
+  "cyberdeck": null,
+  "cyberdecks": [],
+  "cyberware": [
+    {
+      "avail": "12R",
+      "avail_value": 12,
+      "capacity_max": 0,
+      "capacity_used": 0,
+      "category": "Bodyware",
+      "device_rating": 0,
+      "essence": 3.0,
+      "grade": "Standard",
+      "id": "#2",
+      "included": false,
+      "limb_agi": null,
+      "limb_armor": null,
+      "limb_str": null,
+      "name": "Wired Reflexes",
+      "nuyen": 149000,
+      "parent_id": null,
+      "rating": 2,
+      "rating_max": 3,
+      "rating_min": 1,
+      "restricted_gear": false,
+      "selectside": false,
+      "side": null,
+      "source": "SR5",
+      "ware_id": "bea0ded3-821f-449c-9507-815088f68b86",
+      "wireless": true
+    },
+    {
+      "avail": "2",
+      "avail_value": 2,
+      "capacity_max": 0,
+      "capacity_used": 0,
+      "category": "Headware",
+      "device_rating": 0,
+      "essence": 0.1,
+      "grade": "Standard",
+      "id": "#3",
+      "included": false,
+      "limb_agi": null,
+      "limb_armor": null,
+      "limb_str": null,
+      "name": "Datajack",
+      "nuyen": 1000,
+      "parent_id": null,
+      "rating": 1,
+      "rating_max": 1,
+      "rating_min": 1,
+      "restricted_gear": false,
+      "selectside": false,
+      "side": null,
+      "source": "SR5",
+      "ware_id": "47c48542-48c3-417e-91f0-b5a456183f05",
+      "wireless": true
+    }
+  ],
+  "cyberware_ess_multiplier": 100,
+  "damage_resistance": 0,
+  "dealer_connection_categories": [],
+  "device_rating_limit": 6,
+  "disabled_bioware_grades": [],
+  "disabled_cyberware_grades": [],
+  "disabled_skill_groups": [],
+  "disabled_skills": [],
+  "drain_resist": {
+    "attrs": "WIL+INT",
+    "pool": 2
+  },
+  "drones": [],
+  "enabled_tabs": [],
+  "enhancements": [],
+  "erased": false,
+  "errors": [],
+  "essence": 2.9,
+  "essence_lost": 3.1,
+  "essence_lost_bio": 0,
+  "essence_lost_cyber": 3.1,
+  "essence_penalty": 0.0,
+  "excon": false,
+  "exotic_skills": [],
+  "extra_spirits": [],
+  "fade_resist": {
+    "attrs": "WIL+INT",
+    "pool": 2
+  },
+  "fame": 0,
+  "fatigue_resist": 0,
+  "foci": [],
+  "focus_limits": {
+    "count": 0,
+    "count_max": 0,
+    "force": 0,
+    "force_max": 0
+  },
+  "friends_in_high_places": false,
+  "gear": [],
+  "initiate_grade": 0,
+  "initiation": {
+    "arts": [],
+    "choices": [],
+    "grade": 0,
+    "karma": 0,
+    "metamagics": []
+  },
+  "initiative": {
+    "dice": 3,
+    "value": 4
+  },
+  "karma": {
+    "negative": {
+      "max": 25,
+      "used": 0
+    },
+    "pool": 25,
+    "remaining": 25,
+    "spent": 0
+  },
+  "karma_chargen": {
+    "attributes": 0,
+    "enabled": false,
+    "knowledge": 0,
+    "metatype": 0,
+    "nuyen_karma": 0,
+    "nuyen_karma_max": 10,
+    "nuyen_per_karma": 2000,
+    "other": 0,
+    "pool": 0,
+    "qualities": 0,
+    "skills": 0,
+    "specializations": 0
+  },
+  "karma_earned": 0,
+  "karma_spend_breakdown": [],
+  "knowledge_skills": [],
+  "lifestyle": null,
+  "lifestyle_cost_mod": 0,
+  "lifestyles": [],
+  "limb_quality": null,
+  "limb_replace": null,
+  "limit_modifiers": [],
+  "limit_spell_categories": [],
+  "limit_spirit_categories": [],
+  "limits": {
+    "mental": 2,
+    "physical": 3,
+    "social": 2
+  },
+  "living_persona": null,
+  "made_man": false,
+  "martial_art_points": {
+    "karma": 0,
+    "style_max": 1,
+    "styles": 0,
+    "technique_max": 5,
+    "techniques": 0
+  },
+  "martial_arts": [],
+  "martial_spec_options": {},
+  "mentor": null,
+  "metagenic": {
+    "balanced": true,
+    "count": 0,
+    "limit": 0,
+    "negative": 0,
+    "positive": 0
+  },
+  "metatype_info": {
+    "attributes": {
+      "AGI": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "BOD": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "CHA": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "EDG": {
+        "aug": 7,
+        "max": 7,
+        "min": 2
+      },
+      "ESS": {
+        "aug": 6,
+        "max": 6,
+        "min": 0
+      },
+      "INT": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "LOG": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "MAG": {
+        "aug": 6,
+        "max": 0,
+        "min": 0
+      },
+      "REA": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "RES": {
+        "aug": 6,
+        "max": 0,
+        "min": 0
+      },
+      "STR": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      },
+      "WIL": {
+        "aug": 10,
+        "max": 6,
+        "min": 1
+      }
+    },
+    "name": "Human",
+    "parent": null,
+    "source": "SR5"
+  },
+  "movement": {
+    "run": "4/0/0",
+    "sprint": "2/1/0",
+    "sprint_bonus": 0,
+    "walk": "2/1/0"
+  },
+  "mystic_pp": 0,
+  "native_language_limit": 1,
+  "needs_mentor": false,
+  "notoriety": 0,
+  "notoriety_bonus": 0,
+  "notoriety_quality": 0,
+  "nuyen": 298275,
+  "nuyen_amt": 0,
+  "nuyen_earned": 0,
+  "nuyen_karma_max": 10,
+  "nuyen_pool": 450000,
+  "nuyen_spend_breakdown": [
+    {
+      "amount": 150000,
+      "kind": "nuyen",
+      "label": "サイバーウェア"
+    },
+    {
+      "amount": 1000,
+      "kind": "nuyen",
+      "label": "防具"
+    },
+    {
+      "amount": 725,
+      "kind": "nuyen",
+      "label": "武器"
+    }
+  ],
+  "nuyen_spent": 151725,
+  "optics": [],
+  "overclocker": false,
+  "points": {
+    "attributes": {
+      "max": 20,
+      "used": 0
+    },
+    "contacts": {
+      "max": 3,
+      "used": 0
+    },
+    "knowledge": {
+      "max": 4,
+      "used": 0
+    },
+    "skill_groups": {
+      "max": 0,
+      "used": 0
+    },
+    "skills": {
+      "max": 22,
+      "used": 15
+    },
+    "special": {
+      "max": 5,
+      "used": 0
+    }
+  },
+  "power_points": {
+    "max": 0.0,
+    "used": 0.0
+  },
+  "programs": [],
+  "prototype_transhuman_ess": 0.0,
+  "public_awareness": 0,
+  "qi_foci": [],
+  "qualities": [],
+  "rcc": null,
+  "rccs": [],
+  "reach": 0,
+  "recoil": {
+    "free": 1,
+    "str": 1,
+    "str_rc": 1
+  },
+  "reward_log": [],
+  "sensors": [],
+  "skill_bonus": {},
+  "skill_bonus_notes": {},
+  "skill_category_bonus": {},
+  "skill_expertises": [],
+  "skill_group_bonus": {},
+  "skill_group_max": 6,
+  "skill_max_bonus": {},
+  "skill_pick_slots": [],
+  "skill_rating_max": 6,
+  "skill_specializations": {},
+  "skill_totals": {
+    "Automatics": 6,
+    "Perception": 3,
+    "Sneaking": 4,
+    "Unarmed Combat": 2
+  },
+  "skilljack": 0,
+  "skillsoft": {},
+  "skillwires": 0,
+  "special_armor": {
+    "cold": 0,
+    "electricity": 0,
+    "fire": 0,
+    "immunities": {
+      "pathogen_contact": false,
+      "pathogen_inhalation": false,
+      "toxin_contact": false,
+      "toxin_inhalation": false
+    },
+    "pathogen_contact": 0,
+    "pathogen_ingestion": 0,
+    "pathogen_inhalation": 0,
+    "pathogen_injection": 0,
+    "radiation": 0,
+    "toxin_contact": 0,
+    "toxin_ingestion": 0,
+    "toxin_inhalation": 0,
+    "toxin_injection": 0
+  },
+  "special_modification_limit": {
+    "max": 0,
+    "used": 0
+  },
+  "spell_defense": {
+    "decrease": {
+      "AGI": 0,
+      "BOD": 0,
+      "CHA": 0,
+      "INT": 0,
+      "LOG": 0,
+      "REA": 0,
+      "STR": 0,
+      "WIL": 0
+    },
+    "detection": 0,
+    "direct_mana": 0,
+    "general": 0,
+    "mana_illusion": 0,
+    "mental_manipulation": 0,
+    "physical_illusion": 0
+  },
+  "spell_dice_pool": [],
+  "spell_points": {
+    "free": 0,
+    "karma": 0,
+    "paid": 0,
+    "spell_karma": 5,
+    "used": 0
+  },
+  "spell_range_gated": false,
+  "spell_resistance": 0,
+  "spells": [],
+  "spirits": [],
+  "sprites": [],
+  "stream": null,
+  "street_cred": 0,
+  "submersion": {
+    "choices": [],
+    "echoes": [],
+    "grade": 0,
+    "karma": 0
+  },
+  "submersion_grade": 0,
+  "sum_to_ten": {
+    "costs": {
+      "A": 4,
+      "B": 3,
+      "C": 2,
+      "D": 1,
+      "E": 0
+    },
+    "max": 10,
+    "unique": true,
+    "used": 10
+  },
+  "talent": {
+    "cfp": 0,
+    "label": "Mundane",
+    "magic": 0,
+    "name": "Mundane",
+    "quality": "",
+    "resonance": 0,
+    "spells": 0,
+    "value": 0
+  },
+  "test_mods": {
+    "composure": 0,
+    "dodge": 0,
+    "judge_intentions": 0,
+    "judge_intentions_defense": 0,
+    "judge_intentions_offense": 0,
+    "memory": 0,
+    "surprise": 0
+  },
+  "totals": {
+    "AGI": 1,
+    "BOD": 1,
+    "CHA": 1,
+    "EDG": 2,
+    "ESS": 2.9,
+    "INT": 1,
+    "LOG": 1,
+    "MAG": 0,
+    "REA": 3,
+    "RES": 0,
+    "STR": 1,
+    "WIL": 1
+  },
+  "tradition": null,
+  "translations": {
+    "": "",
+    "Human": "ヒューマン"
+  },
+  "trustfund": 0,
+  "trustfund_label": "",
+  "unarmed_ap": 0,
+  "unarmed_dv": 0,
+  "unarmed_physical": false,
+  "unarmed_reach": 0,
+  "unimplemented_bonuses": [],
+  "unlock_skills": [],
+  "vehicle_mods": [],
+  "vehicles": [],
+  "ware_attr_bonus": {
+    "REA": 2
+  },
+  "ware_attr_limit": 4,
+  "ware_ranges": {
+    "4415180f-c3a0-4bb9-8580-3ed689ab6863": {
+      "max": 6,
+      "min": 2
+    },
+    "7afb23c7-435f-450c-9d1c-f7a0e7e631a6": {
+      "max": 6,
+      "min": 2
+    },
+    "7d61f860-0637-4214-914d-c68022361d24": {
+      "max": 6,
+      "min": 2
+    },
+    "c6abcc8b-78fb-44a4-a105-450c1b60a57b": {
+      "max": 6,
+      "min": 2
+    }
+  },
+  "warnings": [
+    "未使用ニューエン 298,275¥：Standard レベルでは 5,000¥ までしか持ち越せません（超過分 293,275¥ は原則失われます）"
+  ],
+  "way_discount": {
+    "max": 0,
+    "used": 0
+  },
+  "weapon_accessories": [
+    {
+      "accessory_id": "d57d2c64-1f61-4f5f-a465-8ce0dfacec6a",
+      "accuracy": "2",
+      "avail": "2R",
+      "avail_additive": true,
+      "avail_folded": true,
+      "avail_suffix": "R",
+      "avail_value": 2,
+      "id": "#4",
+      "included": true,
+      "mount": "",
+      "name": "Smartgun System, Internal",
+      "nuyen": 0,
+      "page": "433",
+      "parent_id": "#5",
+      "rating": 1,
+      "rating_max": 0,
+      "rc": "",
+      "source": "SR5",
+      "special_modification_cost": 0,
+      "specialmodification": false
+    }
+  ],
+  "weapon_mounts": [],
+  "weapons": [
+    {
+      "accessories": [
+        {
+          "accessory_id": "d57d2c64-1f61-4f5f-a465-8ce0dfacec6a",
+          "accuracy": "2",
+          "avail": "2R",
+          "avail_additive": true,
+          "avail_folded": true,
+          "avail_suffix": "R",
+          "avail_value": 2,
+          "id": "#4",
+          "included": true,
+          "mount": "",
+          "name": "Smartgun System, Internal",
+          "nuyen": 0,
+          "page": "433",
+          "parent_id": "#5",
+          "rating": 1,
+          "rating_max": 0,
+          "rc": "",
+          "source": "SR5",
+          "special_modification_cost": 0,
+          "specialmodification": false
+        }
+      ],
+      "accuracy": "7",
+      "alt_range": "",
+      "ammo": "15(c)",
+      "ammo_gear": [],
+      "ap": "-1",
+      "avail": "7R",
+      "avail_additive": false,
+      "avail_folded": false,
+      "avail_suffix": "R",
+      "avail_value": 7,
+      "category": "Heavy Pistols",
+      "conceal": "0",
+      "damage": "8P",
+      "from_gear": false,
+      "from_ware": false,
+      "id": "#5",
+      "limb_agi": null,
+      "limb_str": null,
+      "loaded_ammo_id": "",
+      "mode": "SA",
+      "mounts": [
+        "Barrel",
+        "Top",
+        "Stock",
+        "Side"
+      ],
+      "mounts_used": [],
+      "name": "Ares Predator V",
+      "nuyen": 725,
+      "page": "426",
+      "qty": 1,
+      "range": "",
+      "rc": "0",
+      "rc_total": 2,
+      "reach": "0",
+      "source": "SR5",
+      "source_gear_id": "",
+      "source_ware_id": "",
+      "type": "Ranged",
+      "useskill": "",
+      "weapon_id": "971c711b-db32-4339-9203-865ef38f350e",
+      "weapon_type": "gun"
+    }
+  ],
+  "worn_armor": "Armor Jacket"
+}
