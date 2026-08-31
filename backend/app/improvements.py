@@ -774,11 +774,13 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             # Negative values mean ESS loss (e.g. -1).
             effects["essence_penalty"] += abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus")))
         elif tag == "essencepenaltyt100":
-            effects["essence_penalty"] += abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
+            effects["essence_penalty"] += (
+                abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
+            )
         elif tag == "essencepenaltymagonlyt100":
-            effects["essence_penalty_mag_exempt"] += abs(
-                _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
-            ) / 100.0
+            effects["essence_penalty_mag_exempt"] += (
+                abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
+            )
         elif tag == "walkmultiplier":
             category = str(fields.get("category") or "Ground").strip() or "Ground"
             effects["walk_multiplier"][category] = int(effects["walk_multiplier"].get(category) or 0) + _as_int(
@@ -792,7 +794,9 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
         elif tag == "movementreplace":
             category = str(fields.get("category") or "Ground").strip() or "Ground"
             speed = str(fields.get("speed") or "walk").strip().lower() or "walk"
-            effects["movement_replace"][(category, speed)] = _as_int(fields.get("val") or fields.get("bonus") or node.get("value"))
+            effects["movement_replace"][(category, speed)] = _as_int(
+                fields.get("val") or fields.get("bonus") or node.get("value")
+            )
         elif tag == "sprintbonus":
             category = str(fields.get("category") or "Ground").strip() or "Ground"
             effects["sprint_bonus"][category] = int(effects["sprint_bonus"].get(category) or 0) + _as_int(
@@ -866,7 +870,9 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             if name and name not in effects["blocked_default_categories"]:
                 effects["blocked_default_categories"].append(name)
         elif tag == "nativelanguagelimit":
-            effects["native_language_limit_bonus"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+            effects["native_language_limit_bonus"] += _as_int(
+                node.get("value") or fields.get("val") or fields.get("bonus")
+            )
         elif tag == "knowledgeskillpoints":
             effects["knowledge_skill_points"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "prototypetranshuman":
@@ -999,9 +1005,7 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
         elif tag == "cyberwaretotalessmultiplier":
             effects["cyberware_total_ess_multiplier"] = int(
                 round(
-                    int(effects.get("cyberware_total_ess_multiplier") or 100)
-                    * _as_int(node.get("value"), 100)
-                    / 100.0
+                    int(effects.get("cyberware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0
                 )
             )
         elif tag == "essencemax":
@@ -1176,9 +1180,7 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
                     "name": fixed,
                     "bonus": _as_int(fields.get("value") or fields.get("val") or fields.get("bonus")),
                     "select_attrs": select_attrs,
-                    "needs_select": bool(select_attrs)
-                    or "selectskill" in (node.get("fields") or {})
-                    or not fixed,
+                    "needs_select": bool(select_attrs) or "selectskill" in (node.get("fields") or {}) or not fixed,
                 }
             )
         elif tag == "addspirit":
@@ -1214,13 +1216,9 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
             skill = str(attrs.get("skill") or "").strip()
             attribute = str(attrs.get("attribute") or "").strip().upper()
             if skill:
-                effects["free_spells_skill"].append(
-                    {"skill": skill, "limit": limit, "source": source}
-                )
+                effects["free_spells_skill"].append({"skill": skill, "limit": limit, "source": source})
             elif attribute:
-                effects["free_spells_attribute"].append(
-                    {"attribute": attribute, "limit": limit, "source": source}
-                )
+                effects["free_spells_attribute"].append({"attribute": attribute, "limit": limit, "source": source})
             else:
                 effects["free_spells_flat"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag == "newspellkarmacost":
@@ -1264,9 +1262,7 @@ def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], sour
 def special_armor_totals(effects: dict[str, Any]) -> dict[str, Any]:
     return {
         **{key: int(effects.get("special_armor", {}).get(key) or 0) for key in SPECIAL_ARMOR_KEYS},
-        "immunities": {
-            key: bool((effects.get("immunities") or {}).get(key)) for key in IMMUNE_KEYS
-        },
+        "immunities": {key: bool((effects.get("immunities") or {}).get(key)) for key in IMMUNE_KEYS},
     }
 
 
@@ -1276,11 +1272,7 @@ def compact_special_armor(effects: dict[str, Any]) -> dict[str, Any] | None:
         for key in SPECIAL_ARMOR_KEYS
         if int(effects.get("special_armor", {}).get(key) or 0)
     }
-    immunities = {
-        key: True
-        for key, value in (effects.get("immunities") or {}).items()
-        if value
-    }
+    immunities = {key: True for key, value in (effects.get("immunities") or {}).items() if value}
     if not nums and not immunities:
         return None
     out: dict[str, Any] = dict(nums)

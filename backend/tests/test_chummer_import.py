@@ -60,7 +60,11 @@ def test_maps_core_identity_and_priorities() -> None:
     assert st["build_method"] == "Priority"
     assert st["career"] is False
     assert st["priorities"] == {
-        "Heritage": "D", "Attributes": "B", "Talent": "A", "Skills": "C", "Resources": "E",
+        "Heritage": "D",
+        "Attributes": "B",
+        "Talent": "A",
+        "Skills": "C",
+        "Resources": "E",
     }
 
 

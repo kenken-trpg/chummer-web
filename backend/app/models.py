@@ -203,9 +203,9 @@ class InitiationChoice(BaseModel):
     grade: int = 1
     kind: str = "metamagic"  # metamagic | art
     option_id: str = ""
-    group: bool = False       # member of an initiatory group (−10% Karma)
-    ordeal: bool = False      # underwent an ordeal (−10% Karma)
-    schooling: bool = False   # formal schooling (−10% Karma, costs nuyen/time)
+    group: bool = False  # member of an initiatory group (−10% Karma)
+    ordeal: bool = False  # underwent an ordeal (−10% Karma)
+    schooling: bool = False  # formal schooling (−10% Karma, costs nuyen/time)
 
 
 class SubmersionChoice(BaseModel):
@@ -213,9 +213,9 @@ class SubmersionChoice(BaseModel):
     grade: int = 1
     echo_id: str = ""
     extra: str | None = None
-    group: bool = False       # member of a network (−10% Karma)
-    ordeal: bool = False      # completed a submersion task (−10% Karma)
-    schooling: bool = False   # formal schooling (−10% Karma)
+    group: bool = False  # member of a network (−10% Karma)
+    ordeal: bool = False  # completed a submersion task (−10% Karma)
+    schooling: bool = False  # formal schooling (−10% Karma)
 
 
 class CharacterOptions(BaseModel):

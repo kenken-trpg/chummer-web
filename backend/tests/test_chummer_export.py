@@ -54,7 +54,9 @@ def _rich_state() -> CharacterState:
         spells=[SpellInstall(spell_id=gid("spells", "Acid Stream"))],
         weapons=[WeaponInstall(id="w1", weapon_id=gid("weapons", "Ares Predator V"))],
         weapon_accessories=[
-            WeaponAccessoryInstall(accessory_id=gid("weapon_accessories", "Silencer/Suppressor"), parent_id="w1", mount="Barrel")
+            WeaponAccessoryInstall(
+                accessory_id=gid("weapon_accessories", "Silencer/Suppressor"), parent_id="w1", mount="Barrel"
+            )
         ],
         armor=[ArmorInstall(id="a1", armor_id=gid("armor", "Armor Jacket"))],
         armor_mods=[ArmorModInstall(mod_id=gid("armor_mods", "Fire Resistance"), parent_id="a1", rating=3)],
@@ -81,7 +83,11 @@ def test_round_trip_preserves_the_core() -> None:
     assert st["metatype"] == "Elf"
     assert st["talent"] == "Magician"
     assert st["priorities"] == {
-        "Heritage": "C", "Attributes": "B", "Talent": "A", "Skills": "D", "Resources": "E",
+        "Heritage": "C",
+        "Attributes": "B",
+        "Talent": "A",
+        "Skills": "D",
+        "Resources": "E",
     }
     assert st["attributes"]["AGI"] == 4  # survives min/base encoding
     assert st["attributes"]["MAG"] == 5

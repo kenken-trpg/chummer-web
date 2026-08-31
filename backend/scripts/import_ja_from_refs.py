@@ -68,7 +68,7 @@ CURATED: dict[str, str] = {
     "Illusion": "幻影",
     "Manipulation": "操作",
     # skill groups / common category corrections vs glossary
-    "Body": "強靱力",          # attribute category kanji fix (靭 -> 靱)
+    "Body": "強靱力",  # attribute category kanji fix (靭 -> 靱)
     "Attributes": "能力値",
     "Resonance": "共振力",
     # metatype categories — chumJA's SR4 "ヒト" is wrong for SR5
@@ -173,7 +173,7 @@ CURATED.update(_ENTITIES)
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
     "Armor",  # keep vendored 防具 (category sense), not glossary 装甲 (the value)
-    "Foci",   # SR5 official is フォーカス, not chumJA's 集束具 — needs a manual pass
+    "Foci",  # SR5 official is フォーカス, not chumJA's 集束具 — needs a manual pass
 }
 
 # chumJA <name> matches to skip (wrong sense in SR4 -> SR5).
@@ -315,9 +315,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {src}: {len(rows)}")
 
     if args.write:
-        OVERLAY.write_text(
-            json.dumps(ordered, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        OVERLAY.write_text(json.dumps(ordered, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         lines = [
             "# 翻訳インポートレポート",
             "",

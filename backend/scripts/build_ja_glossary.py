@@ -45,57 +45,106 @@ DEFAULT_OVERLAY = ROOT / "data" / "ja_overrides"
 DEFAULT_DOCS = ROOT.parent / "docs"
 
 JP_RE = re.compile(r"[぀-ヿ㐀-鿿]")
-VAR_RE = re.compile(
-    r'name="lang\.([^"]+)"\s+select="(?:string\()?\'((?:[^\']|\\\')*)\'\)?"'
-)
+VAR_RE = re.compile(r'name="lang\.([^"]+)"\s+select="(?:string\()?\'((?:[^\']|\\\')*)\'\)?"')
 
 # var name -> English term where de-camelCasing the var name is wrong / ambiguous.
 ENGLISH_OVERRIDES = {
-    "AGI": "AGI", "BOD": "BOD", "REA": "REA", "STR": "STR", "WIL": "WIL",
-    "LOG": "LOG", "INT": "INT", "CHA": "CHA", "EDG": "EDG", "MAG": "MAG",
-    "RES": "RES", "DEP": "DEP", "ESS": "ESS", "ASDF": "A/S/D/F",
-    "Mugshot": "Portrait", "Data": "Date (data label)", "OVR": "OVR",
+    "AGI": "AGI",
+    "BOD": "BOD",
+    "REA": "REA",
+    "STR": "STR",
+    "WIL": "WIL",
+    "LOG": "LOG",
+    "INT": "INT",
+    "CHA": "CHA",
+    "EDG": "EDG",
+    "MAG": "MAG",
+    "RES": "RES",
+    "DEP": "DEP",
+    "ESS": "ESS",
+    "ASDF": "A/S/D/F",
+    "Mugshot": "Portrait",
+    "Data": "Date (data label)",
+    "OVR": "OVR",
     "AIandAdvanced": "AI Programs and Advanced Programs",
     "Nothing2Show4Devices": "No Devices to list",
     "Nothing2Show4Notes": "No Notes to list",
     "Nothing2Show4SpiritsSprites": "No Spirits/Sprites to list",
     "Nothing2Show4Vehicles": "No Vehicles to list",
-    "tstDamage1": "P", "tstDamage2": "S",
-    "tstDuration1": "I", "tstDuration2": "P", "tstDuration3": "S",
-    "NuyenSymbol": "¥ (nuyen symbol)", "marks": ". , (decimal / grouping)",
+    "tstDamage1": "P",
+    "tstDamage2": "S",
+    "tstDuration1": "I",
+    "tstDuration2": "P",
+    "tstDuration3": "S",
+    "NuyenSymbol": "¥ (nuyen symbol)",
+    "marks": ". , (decimal / grouping)",
 }
 
 # Hand-fixed adopted forms (win over both references). Keyed by English (lower).
 # The user fixed the 靱/靭 kanji variant and prefers 直観 over 直感.
 ADOPTED_OVERRIDES = {
-    "body": "強靱力", "bod": "強靱",
-    "intuition": "直観力", "int": "直観",
+    "body": "強靱力",
+    "bod": "強靱",
+    "intuition": "直観力",
+    "int": "直観",
     "contact": "コンタクト",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.
 CORE_KEY_MAP: dict[str, list[str]] = {
-    "Body": ["String_AttributeBODLong"], "BOD": ["String_AttributeBODShort"],
-    "Agility": ["String_AttributeAGILong"], "AGI": ["String_AttributeAGIShort"],
-    "Reaction": ["String_AttributeREALong"], "REA": ["String_AttributeREAShort"],
-    "Strength": ["String_AttributeSTRLong"], "STR": ["String_AttributeSTRShort"],
-    "Willpower": ["String_AttributeWILLong"], "WIL": ["String_AttributeWILShort"],
-    "Logic": ["String_AttributeLOGLong"], "LOG": ["String_AttributeLOGShort"],
-    "Intuition": ["String_AttributeINTLong"], "INT": ["String_AttributeINTShort"],
-    "Charisma": ["String_AttributeCHALong"], "CHA": ["String_AttributeCHAShort"],
-    "Edge": ["String_AttributeEDGLong"], "EDG": ["String_AttributeEDGShort"],
-    "Magic": ["String_AttributeMAGLong"], "MAG": ["String_AttributeMAGShort"],
-    "Resonance": ["String_AttributeRESLong"], "RES": ["String_AttributeRESShort"],
-    "Depth": ["String_AttributeDEPLong"], "DEP": ["String_AttributeDEPShort"],
+    "Body": ["String_AttributeBODLong"],
+    "BOD": ["String_AttributeBODShort"],
+    "Agility": ["String_AttributeAGILong"],
+    "AGI": ["String_AttributeAGIShort"],
+    "Reaction": ["String_AttributeREALong"],
+    "REA": ["String_AttributeREAShort"],
+    "Strength": ["String_AttributeSTRLong"],
+    "STR": ["String_AttributeSTRShort"],
+    "Willpower": ["String_AttributeWILLong"],
+    "WIL": ["String_AttributeWILShort"],
+    "Logic": ["String_AttributeLOGLong"],
+    "LOG": ["String_AttributeLOGShort"],
+    "Intuition": ["String_AttributeINTLong"],
+    "INT": ["String_AttributeINTShort"],
+    "Charisma": ["String_AttributeCHALong"],
+    "CHA": ["String_AttributeCHAShort"],
+    "Edge": ["String_AttributeEDGLong"],
+    "EDG": ["String_AttributeEDGShort"],
+    "Magic": ["String_AttributeMAGLong"],
+    "MAG": ["String_AttributeMAGShort"],
+    "Resonance": ["String_AttributeRESLong"],
+    "RES": ["String_AttributeRESShort"],
+    "Depth": ["String_AttributeDEPLong"],
+    "DEP": ["String_AttributeDEPShort"],
     "Essence": ["String_AttributeESSLong", "String_AttributeESSShort"],
 }
 
 NON_TERM_VARS = {
-    "L", "M", "E", "S", "W", "H", "ASDF",
-    "tstDamage1", "tstDamage2", "tstDuration1", "tstDuration2", "tstDuration3",
-    "tstRange1", "tstRange2", "tstRange3", "tstRange4", "tstRange5",
-    "tstRange6", "tstRange7", "tstRange8", "tstRange9", "tstRange10",
-    "NuyenSymbol", "marks", "OVR",
+    "L",
+    "M",
+    "E",
+    "S",
+    "W",
+    "H",
+    "ASDF",
+    "tstDamage1",
+    "tstDamage2",
+    "tstDuration1",
+    "tstDuration2",
+    "tstDuration3",
+    "tstRange1",
+    "tstRange2",
+    "tstRange3",
+    "tstRange4",
+    "tstRange5",
+    "tstRange6",
+    "tstRange7",
+    "tstRange8",
+    "tstRange9",
+    "tstRange10",
+    "NuyenSymbol",
+    "marks",
+    "OVR",
 }
 
 
@@ -183,12 +232,7 @@ def load_data_translations(path: Path) -> tuple[dict[str, str], dict[str, str]]:
 
 def adopted(english: str, xslt_ja: str | None, sr5eja_ja: str | None) -> str:
     """Hand fix > 2021 xslt > sr5eja (sr5eja only fills gaps)."""
-    return (
-        ADOPTED_OVERRIDES.get(english.lower())
-        or xslt_ja
-        or sr5eja_ja
-        or ""
-    )
+    return ADOPTED_OVERRIDES.get(english.lower()) or xslt_ja or sr5eja_ja or ""
 
 
 def build_glossary_doc(
@@ -228,9 +272,7 @@ def build_glossary_doc(
         merged.append((eng, pick, xja or "", sja or "", " / ".join(note)))
 
     was_en_in_2020 = sum(
-        1
-        for _, _v, var in xslt_jp.values()
-        if old_map.get(var) is not None and not JP_RE.search(old_map[var])
+        1 for _, _v, var in xslt_jp.values() if old_map.get(var) is not None and not JP_RE.search(old_map[var])
     )
 
     lines = [
@@ -244,8 +286,7 @@ def build_glossary_doc(
         "Chummer 系の作法。本アプリの正典。",
         "2. `~/Downloads/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, "
         "github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。",
-        "3. 2020 版 xslt — 上位互換のため参照不要 "
-        f"(2020→2021 で和訳された語 {was_en_in_2020} 件)。",
+        f"3. 2020 版 xslt — 上位互換のため参照不要 (2020→2021 で和訳された語 {was_en_in_2020} 件)。",
         "",
         "- 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。",
         "- 2 資料が食い違う語は **採用=2021版** のまま `差異` を立てる (下表の備考)。人が判断する。",
@@ -357,8 +398,7 @@ def build_mismatch_doc(
     d_lines = [
         "## D. sr5eja 由来で ui.json 未収録の用語 (seed 候補)",
         "",
-        "Foundry SR5e 日本語化にあり、当方の `ui.json` に無い用語。descriptor・ルール語の"
-        "参照や `ui.json` 追加の材料。",
+        "Foundry SR5e 日本語化にあり、当方の `ui.json` に無い用語。descriptor・ルール語の参照や `ui.json` 追加の材料。",
         "",
         "| English | sr5eja | 2021版 |",
         "|---|---|---|",
@@ -405,23 +445,14 @@ def main(argv: list[str] | None = None) -> int:
     ui_ja = load_lang_strings(args.lang_dir / "ja-jp.xml")
     data_names, data_cats = load_data_translations(args.lang_dir / "ja-jp_data.xml")
     ui_overlay_path = args.overlay_dir / "ui.json"
-    ui_overlay = (
-        json.loads(ui_overlay_path.read_text(encoding="utf-8"))
-        if ui_overlay_path.exists()
-        else {}
-    )
+    ui_overlay = json.loads(ui_overlay_path.read_text(encoding="utf-8")) if ui_overlay_path.exists() else {}
 
     args.docs_dir.mkdir(parents=True, exist_ok=True)
     gloss_path = args.docs_dir / "translation-glossary.md"
     mism_path = args.docs_dir / "translation-glossary-mismatches.md"
-    gloss_path.write_text(
-        build_glossary_doc(rows, old_rows, sr5eja) + "\n", encoding="utf-8"
-    )
+    gloss_path.write_text(build_glossary_doc(rows, old_rows, sr5eja) + "\n", encoding="utf-8")
     mism_path.write_text(
-        build_mismatch_doc(
-            rows, sr5eja, ui_en, ui_ja, ui_overlay, data_names, data_cats
-        )
-        + "\n",
+        build_mismatch_doc(rows, sr5eja, ui_en, ui_ja, ui_overlay, data_names, data_cats) + "\n",
         encoding="utf-8",
     )
 

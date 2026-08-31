@@ -142,9 +142,7 @@ def test_committed_data_overlay_keys_are_used_by_catalog() -> None:
         if k not in {"translations", "ui_strings"}:
             walk(v)
     # skill groups are a plain list of strings, not dict rows
-    known.update(
-        g for g in (cat.get("skills") or {}).get("groups") or [] if isinstance(g, str)
-    )
+    known.update(g for g in (cat.get("skills") or {}).get("groups") or [] if isinstance(g, str))
 
     orphans = sorted(k for k in overlay if k not in known)
     assert not orphans, f"overlay keys not present in catalog: {orphans}"
@@ -209,9 +207,7 @@ def test_committed_ui_overlay_keys_exist_in_lang() -> None:
     import xml.etree.ElementTree as ET
 
     root = ET.parse(data_loader.LANG_DIR / "en-us.xml").getroot()
-    en_keys = {
-        s.get("key") or (s.findtext("key") or "") for s in root.findall(".//string")
-    }
+    en_keys = {s.get("key") or (s.findtext("key") or "") for s in root.findall(".//string")}
     orphans = sorted(k for k in overlay if k not in en_keys)
     assert not orphans, f"ui.json keys not in en-us.xml: {orphans}"
     assert all(k in en for k in overlay)

@@ -47,18 +47,12 @@ def _frontend_sources() -> list[Path]:
     for sub in ("app", "components", "lib"):
         d = FRONTEND / sub
         if d.is_dir():
-            out += [
-                p
-                for p in d.rglob("*.ts*")
-                if "node_modules" not in p.parts and ".next" not in p.parts
-            ]
+            out += [p for p in d.rglob("*.ts*") if "node_modules" not in p.parts and ".next" not in p.parts]
     return sorted(out)
 
 
 def _fmt(problems: dict[str, list[str]]) -> str:
-    return "\n" + "\n".join(
-        f"  {f}\n    " + "\n    ".join(hits) for f, hits in sorted(problems.items())
-    )
+    return "\n" + "\n".join(f"  {f}\n    " + "\n    ".join(hits) for f, hits in sorted(problems.items()))
 
 
 def test_frontend_uses_unified_terminology() -> None:

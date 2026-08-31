@@ -1251,9 +1251,7 @@ def test_skill_specialization_requires_the_skill() -> None:
 
 
 def test_skill_specialization_works_with_skill_group() -> None:
-    out = compute(
-        _human("spec-group", skill_groups={"Firearms": 2}, skill_specializations={"Pistols": "Revolvers"})
-    )
+    out = compute(_human("spec-group", skill_groups={"Firearms": 2}, skill_specializations={"Pistols": "Revolvers"}))
     assert out.derived["skill_totals"]["Pistols"] == 2
     assert out.skill_specializations["Pistols"] == "Revolvers"
     assert out.derived["points"]["skill_groups"]["used"] == 2
@@ -1487,9 +1485,7 @@ ASTRAL_CHAMELEON = "7d81f676-e523-4ec6-ae98-8d801f90b031"
 def test_allergy_requires_target_text() -> None:
     missing = compute(_human("allergy-empty", quality_ids=[ALLERGY_MILD]))
     assert any("対象を入力してください" in err for err in missing.derived["errors"])
-    filled = compute(
-        _human("allergy-sun", quality_ids=[ALLERGY_MILD], quality_extras={ALLERGY_MILD: "Sunlight"})
-    )
+    filled = compute(_human("allergy-sun", quality_ids=[ALLERGY_MILD], quality_extras={ALLERGY_MILD: "Sunlight"}))
     assert filled.derived["errors"] == []
     assert filled.derived["karma"]["negative"] == {"used": 5, "max": 25}
     assert filled.derived["karma"]["remaining"] == 30
@@ -2227,9 +2223,7 @@ def test_initiation_ordeal_and_group_discount_karma() -> None:
         _mage(
             "init-ordeal",
             initiate_grade=1,
-            initiations=[
-                InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META, ordeal=True)
-            ],
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META, ordeal=True)],
         )
     )
     # grade 1 base 13 × 0.9 = 11.7 → 12
@@ -2241,9 +2235,7 @@ def test_initiation_ordeal_and_group_discount_karma() -> None:
             "init-both",
             initiate_grade=1,
             initiations=[
-                InitiationChoice(
-                    grade=1, kind="metamagic", option_id=QUICKENING_META, group=True, ordeal=True
-                )
+                InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META, group=True, ordeal=True)
             ],
         )
     )
@@ -2630,7 +2622,9 @@ def test_crafted_power_focus_uses_formula_and_artificing() -> None:
         _mage_rich(
             "craft-power",
             skills={"Artificing": 5},
-            foci=[FocusInstall(gear_id=POWER_FOCUS, force=2, crafted=True, formula_bought=True, hits=5, opposed_hits=2)],
+            foci=[
+                FocusInstall(gear_id=POWER_FOCUS, force=2, crafted=True, formula_bought=True, hits=5, opposed_hits=2)
+            ],
         )
     )
     row = out.derived["foci"][0]
@@ -3986,7 +3980,11 @@ def test_weapon_range_table_loads_from_ranges_xml() -> None:
     table = catalog()["weapon_ranges"]
     # firearm bands are literal integers …
     assert table["Heavy Pistols"] == {
-        "min": "0", "short": "5", "medium": "20", "long": "40", "extreme": "60",
+        "min": "0",
+        "short": "5",
+        "medium": "20",
+        "long": "40",
+        "extreme": "60",
     }
     # … Strength-scaled bands keep the {STR} formula for the client to resolve
     assert table["Bows"]["long"] == "{STR}*30"
@@ -4016,8 +4014,8 @@ def test_total_recoil_compensation_folds_in_strength_and_free_point() -> None:
         )
     )
     row = out.derived["weapons"][0]
-    assert row["rc"] in ("0", "")            # the gun's own RC is untouched
-    assert row["rc_total"] == 3              # 0 + ⌈5/3⌉ (2) + 1 free
+    assert row["rc"] in ("0", "")  # the gun's own RC is untouched
+    assert row["rc_total"] == 3  # 0 + ⌈5/3⌉ (2) + 1 free
     assert out.derived["recoil"] == {"str": 5, "str_rc": 2, "free": 1}
 
 
@@ -4417,7 +4415,9 @@ def test_model_maneuvering_autosoft() -> None:
         _mundane(
             "model-auto",
             rccs=[rcc],
-            programs=[GearInstall(gear_id=MANEUVERING, rating=2, parent_id=rcc.id, extra="GM-Nissan Doberman (Medium)")],
+            programs=[
+                GearInstall(gear_id=MANEUVERING, rating=2, parent_id=rcc.id, extra="GM-Nissan Doberman (Medium)")
+            ],
         )
     )
     row = out.derived["programs"][0]
@@ -4861,7 +4861,16 @@ def test_technomancer_a_gets_seven_free_complex_forms() -> None:
 
 
 def test_eighth_complex_form_costs_karma() -> None:
-    ids = [CLEANER, EDITOR, STATIC_VEIL, PULSE_STORM, RESONANCE_SPIKE, DIFFUSION, "cfebf27d-707e-4ea2-a376-394738a11b3c", "42cc98b0-2b3f-42a0-bbe7-fb7d2633d11a"]
+    ids = [
+        CLEANER,
+        EDITOR,
+        STATIC_VEIL,
+        PULSE_STORM,
+        RESONANCE_SPIKE,
+        DIFFUSION,
+        "cfebf27d-707e-4ea2-a376-394738a11b3c",
+        "42cc98b0-2b3f-42a0-bbe7-fb7d2633d11a",
+    ]
     forms = [ComplexFormInstall(form_id=fid, extra="Attack" if fid == DIFFUSION else None) for fid in ids]
     out = compute(_techno("cf-paid", "A", complex_forms=forms))
     assert out.derived["complex_form_points"]["used"] == 8
@@ -5005,9 +5014,7 @@ def test_magic_resistance_stacks_with_spell_defense() -> None:
     out = compute(_mundane("mr", quality_ids=[MAGIC_RESISTANCE]))
     assert out.derived["spell_defense"]["general"] == 1
     assert out.derived["spell_defense"]["detection"] == 1
-    out2 = compute(
-        _human("mr-dd", quality_ids=[MAGIC_RESISTANCE], bioware=[CyberwareInstall(ware_id=DAREADRENALINE)])
-    )
+    out2 = compute(_human("mr-dd", quality_ids=[MAGIC_RESISTANCE], bioware=[CyberwareInstall(ware_id=DAREADRENALINE)]))
     assert out2.derived["spell_defense"]["detection"] == 2
     assert out2.derived["spell_defense"]["mental_manipulation"] == 2
 
@@ -5074,9 +5081,7 @@ def test_courier_sprite_matrix_stats() -> None:
 
 
 def test_registered_sprite_clamps_to_resonance() -> None:
-    out = compute(
-        _techno("sprite-cap", "C", sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=12, services=9)])
-    )
+    out = compute(_techno("sprite-cap", "C", sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=12, services=9)]))
     row = out.derived["sprites"][0]
     assert row["level"] == 3
     assert row["services"] == 3
@@ -5172,9 +5177,7 @@ def test_contact_overspend_costs_karma() -> None:
 
 
 def test_contact_chargen_cost_is_capped_at_seven() -> None:
-    out = compute(
-        _human("contact-cap", contacts=[ContactInstall(name="Mr. Johnson", connection=6, loyalty=6)])
-    )
+    out = compute(_human("contact-cap", contacts=[ContactInstall(name="Mr. Johnson", connection=6, loyalty=6)]))
     row = out.derived["contacts"][0]
     assert row["connection"] == 6
     assert row["loyalty"] == 1
@@ -5213,9 +5216,7 @@ def test_martial_art_extra_technique_and_kick_reach() -> None:
     out = compute(
         _human(
             "karate-kick",
-            martial_arts=[
-                MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike", "Kick Attack"])
-            ],
+            martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike", "Kick Attack"])],
         )
     )
     row = out.derived["martial_arts"][0]
@@ -5672,9 +5673,7 @@ def test_home_ground_selecttext() -> None:
     tags = [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
     assert "selecttext" not in tags
     assert any("対象を入力" in err for err in missing.derived["errors"])
-    out = compute(
-        _human("hg", quality_ids=[HOME_GROUND], quality_extras={HOME_GROUND: "Barrens"})
-    )
+    out = compute(_human("hg", quality_ids=[HOME_GROUND], quality_extras={HOME_GROUND: "Barrens"}))
     row = next(item for item in out.derived["qualities"] if item["id"] == HOME_GROUND)
     assert row["extra"] == "Barrens"
     assert not any("対象を入力" in err for err in out.derived["errors"])
@@ -5927,9 +5926,7 @@ def test_biocompatibility_and_sensitive_system_essence() -> None:
 def test_dealer_connection_discounts_groundcraft() -> None:
     car = next(v for v in catalog()["vehicles"] if v.get("category") == "Cars")
     base = compute(_mundane("dealer0", gear=[GearInstall(gear_id=car["id"])]))
-    deal = compute(
-        _mundane("dealer1", quality_ids=[DEALER_CONNECTION], gear=[GearInstall(gear_id=car["id"])])
-    )
+    deal = compute(_mundane("dealer1", quality_ids=[DEALER_CONNECTION], gear=[GearInstall(gear_id=car["id"])]))
     assert deal.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
 
 
@@ -6463,7 +6460,12 @@ def test_chain_breaker_adds_extra_spirit_types() -> None:
             },
             spirits=[
                 SpiritInstall(spirit_id=GUARDIAN_SPIRIT, force=1, services=1, bound=False),
-                SpiritInstall(spirit_id=next(s["id"] for s in catalog()["spirits"] if s["name"] == "Spirit of Fire"), force=1, services=1, bound=False),
+                SpiritInstall(
+                    spirit_id=next(s["id"] for s in catalog()["spirits"] if s["name"] == "Spirit of Fire"),
+                    force=1,
+                    services=1,
+                    bound=False,
+                ),
             ],
         )
     )
@@ -6767,7 +6769,9 @@ def test_career_spend_breakdown_lists_attribute_raise() -> None:
     st.attributes["AGI"] = 5
     out = compute(st)
     assert out.derived["career_advancement_karma"] == 25
-    assert any(row["label"].startswith("能力値 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"])
+    assert any(
+        row["label"].startswith("能力値 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"]
+    )
     assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])
 
 
@@ -6940,8 +6944,18 @@ def _drug_state(active: bool) -> CharacterState:
         priorities=Priorities(Heritage="C", Attributes="A", Talent="E", Skills="B", Resources="D"),
         metatype="Human",
         attributes={
-            "BOD": 3, "AGI": 3, "REA": 4, "STR": 3, "WIL": 3, "LOG": 3,
-            "INT": 3, "CHA": 3, "EDG": 3, "MAG": 0, "RES": 0, "ESS": 6,
+            "BOD": 3,
+            "AGI": 3,
+            "REA": 4,
+            "STR": 3,
+            "WIL": 3,
+            "LOG": 3,
+            "INT": 3,
+            "CHA": 3,
+            "EDG": 3,
+            "MAG": 0,
+            "RES": 0,
+            "ESS": 6,
         },
         gear=[GearInstall(gear_id=JAZZ, active=active)],
     )

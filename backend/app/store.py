@@ -170,12 +170,7 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
     talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]
     method_changed = old_method != data["build_method"]
-    if (
-        old_letter != data["priorities"]["Talent"]
-        or old_talent != data["talent"]
-        or patch.metatype
-        or method_changed
-    ):
+    if old_letter != data["priorities"]["Talent"] or old_talent != data["talent"] or patch.metatype or method_changed:
         _apply_talent_ratings(data)
         if data["talent"] not in ADEPT_TALENTS:
             data["adept_powers"] = []
@@ -324,11 +319,7 @@ def public_catalog() -> dict:
                 "kind": s.get("kind") or "spell",
                 "useskill": s.get("useskill") or "Spellcasting",
                 "learnable": bool(s.get("learnable")),
-                "required": [
-                    name
-                    for names in (s.get("required") or {}).values()
-                    for name in names
-                ],
+                "required": [name for names in (s.get("required") or {}).values() for name in names],
                 "source": s.get("source"),
                 "page": s.get("page"),
             }
@@ -368,11 +359,7 @@ def public_catalog() -> dict:
                 "duration": f.get("duration") or "",
                 "fv": f.get("fv") or "",
                 "needs_extra": bool(f.get("needs_extra")),
-                "required": [
-                    name
-                    for names in (f.get("required") or {}).values()
-                    for name in names
-                ],
+                "required": [name for names in (f.get("required") or {}).values() for name in names],
                 "source": f.get("source"),
                 "page": f.get("page"),
             }
@@ -846,11 +833,7 @@ def public_catalog() -> dict:
                 "adept": bool(item.get("adept")),
                 "magician": bool(item.get("magician")),
                 "repeatable": bool(item.get("repeatable")),
-                "required": [
-                    name
-                    for names in (item.get("required") or {}).values()
-                    for name in names
-                ],
+                "required": [name for names in (item.get("required") or {}).values() for name in names],
                 "source": item.get("source") or "",
                 "page": item.get("page") or "",
             }

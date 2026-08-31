@@ -151,9 +151,16 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["career"] = created
     st["notes"] = _text(root.find("notes"))
     for field, tag in (
-        ("age", "age"), ("sex", "sex"), ("height", "height"), ("weight", "weight"),
-        ("eyes", "eyes"), ("hair", "hair"), ("skin", "skin"),
-        ("appearance", "description"), ("background", "background"), ("concept", "concept"),
+        ("age", "age"),
+        ("sex", "sex"),
+        ("height", "height"),
+        ("weight", "weight"),
+        ("eyes", "eyes"),
+        ("hair", "hair"),
+        ("skin", "skin"),
+        ("appearance", "description"),
+        ("background", "background"),
+        ("concept", "concept"),
     ):
         val = _text(root.find(tag))
         if val:
@@ -279,7 +286,12 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
 
     cf_r = _Resolver(cat["complex_forms"])
     st["complex_forms"] = [
-        {"id": str(uuid.uuid4()), "form_id": fid, "level": _int(c.find("rating"), 1) or None, "extra": _text(c.find("extra")) or None}
+        {
+            "id": str(uuid.uuid4()),
+            "form_id": fid,
+            "level": _int(c.find("rating"), 1) or None,
+            "extra": _text(c.find("extra")) or None,
+        }
         for c in root.findall("./complexforms/complexform")
         if (fid := cf_r.resolve(c, warn, "複合体"))
     ]
@@ -368,9 +380,7 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         return out
 
     st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), "サイバーウェア")
-    st["bioware"] = load_ware(
-        root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), "バイオウェア"
-    )
+    st["bioware"] = load_ware(root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), "バイオウェア")
 
     # --- armor + mods -------------------------------------------------
     armor_r = _Resolver(cat["armor"])
@@ -519,7 +529,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         base = _text(ls.find("baselifestyle")) or _text(ls.find("name"))
         lid = ls_r.by_name.get(base.lower())
         if lid:
-            lifestyles.append({"id": str(uuid.uuid4()), "lifestyle_id": lid, "months": max(1, _int(ls.find("months"), 1))})
+            lifestyles.append(
+                {"id": str(uuid.uuid4()), "lifestyle_id": lid, "months": max(1, _int(ls.find("months"), 1))}
+            )
         elif base:
             warn.append(f"ライフスタイル「{base}」はカタログに無いためスキップしました")
     st["lifestyles"] = lifestyles

@@ -212,11 +212,7 @@ def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
 
 
 def _priority_rows(category: str) -> list[dict[str, Any]]:
-    rows = [
-        r
-        for r in catalog()["priorities"]
-        if r["category"] == category and _is_standard(r)
-    ]
+    rows = [r for r in catalog()["priorities"] if r["category"] == category and _is_standard(r)]
     return rows
 
 
@@ -229,11 +225,7 @@ def priority_value(category: str, letter: str) -> dict[str, Any]:
     letter = letter.upper()
     matches = [r for r in _priority_rows(category) if r["value"] == letter]
     if not matches:
-        matches = [
-            r
-            for r in catalog()["priorities"]
-            if r["category"] == category and r["value"] == letter
-        ]
+        matches = [r for r in catalog()["priorities"] if r["category"] == category and r["value"] == letter]
     if not matches:
         return {}
     # Prefer the shortest / core-looking row when duplicates exist.
@@ -251,7 +243,16 @@ def talent_options(letter: str) -> list[dict[str, Any]]:
     if letter.upper() == "E" and not any(t.get("name") == "Mundane" for t in talents):
         talents.insert(
             0,
-            {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "quality": "", "spells": 0, "cfp": 0},
+            {
+                "name": "Mundane",
+                "label": "Mundane",
+                "value": 0,
+                "magic": 0,
+                "resonance": 0,
+                "quality": "",
+                "spells": 0,
+                "cfp": 0,
+            },
         )
     return talents
 
@@ -309,7 +310,9 @@ def all_talent_options() -> list[dict[str, Any]]:
                 row["magic"] = 0
                 row["spells"] = 0
                 row["cfp"] = 0
-        if name == "Mundane" or (not row.get("magic") and not row.get("resonance") and name not in MAG_TALENTS | RES_TALENTS):
+        if name == "Mundane" or (
+            not row.get("magic") and not row.get("resonance") and name not in MAG_TALENTS | RES_TALENTS
+        ):
             row["magic"] = 0
             row["resonance"] = 0
             row["value"] = 0
@@ -318,7 +321,16 @@ def all_talent_options() -> list[dict[str, Any]]:
         out.append(row)
     if not any(t.get("name") == "Mundane" for t in out):
         out.append(
-            {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "quality": "", "spells": 0, "cfp": 0}
+            {
+                "name": "Mundane",
+                "label": "Mundane",
+                "value": 0,
+                "magic": 0,
+                "resonance": 0,
+                "quality": "",
+                "spells": 0,
+                "cfp": 0,
+            }
         )
     return sorted(out, key=lambda item: str(item.get("name") or ""))
 
@@ -330,7 +342,15 @@ def resolve_talent_for_method(letter: str, current: str | None, build_method: st
         if found:
             return found
         mundane = next((t for t in options if t["name"] == "Mundane"), None)
-        return mundane or {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "spells": 0, "cfp": 0}
+        return mundane or {
+            "name": "Mundane",
+            "label": "Mundane",
+            "value": 0,
+            "magic": 0,
+            "resonance": 0,
+            "spells": 0,
+            "cfp": 0,
+        }
     return resolve_talent(letter, current)
 
 
@@ -389,14 +409,10 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
         skill_groups={str(k): int(v) for k, v in (state.skill_groups or {}).items()},
         knowledge_skills={str(k): int(v) for k, v in (state.knowledge_skills or {}).items()},
         skill_specializations=sorted(
-            str(name)
-            for name, spec in (state.skill_specializations or {}).items()
-            if str(spec or "").strip()
+            str(name) for name, spec in (state.skill_specializations or {}).items() if str(spec or "").strip()
         ),
         exotic_skills={
-            str(row.id): int(row.rating or 0)
-            for row in (state.exotic_skills or [])
-            if getattr(row, "id", None)
+            str(row.id): int(row.rating or 0) for row in (state.exotic_skills or []) if getattr(row, "id", None)
         },
     )
 
@@ -480,7 +496,9 @@ def career_raise_karma(
     )
     know_min = _filter_karma_rules(eff.get("knowledge_skill_karma_cost_min"), career=True)
     know_cats = dict(state.knowledge_categories or {})
-    catalog_know = {str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])}
+    catalog_know = {
+        str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])
+    }
     for name, rating in (state.knowledge_skills or {}).items():
         if name in natives:
             continue
@@ -552,10 +570,19 @@ def nuyen_spend_breakdown(
         ("RCC", sum(int(row.get("nuyen") or 0) for row in (gear.get("rccs") or []))),
         ("光学／音響", sum(int(row.get("nuyen") or 0) for row in (gear.get("optics") or []))),
         ("センサー", sum(int(row.get("nuyen") or 0) for row in (gear.get("sensors") or []))),
-        ("プログラム", sum(int(row.get("nuyen") or 0) for row in (gear.get("programs") or []) + (gear.get("apps") or []))),
+        (
+            "プログラム",
+            sum(int(row.get("nuyen") or 0) for row in (gear.get("programs") or []) + (gear.get("apps") or [])),
+        ),
         ("ドローン", sum(int(row.get("nuyen") or 0) for row in (gear.get("drones") or []))),
         ("車両", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicles") or []))),
-        ("車両改造", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicle_mods") or []) + (gear.get("weapon_mounts") or []))),
+        (
+            "車両改造",
+            sum(
+                int(row.get("nuyen") or 0)
+                for row in (gear.get("vehicle_mods") or []) + (gear.get("weapon_mounts") or [])
+            ),
+        ),
         ("その他ギア", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
         ("ライフスタイル", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
         ("気フォーカス", int(qi_nuyen or 0)),
@@ -956,6 +983,7 @@ def _skill_group_category_map(skills_data: dict[str, Any]) -> dict[str, str]:
             out[group] = next(iter(uniq))
     return out
 
+
 def knowledge_excess_karma(
     ratings: dict[str, int],
     free_points: int,
@@ -992,7 +1020,9 @@ def priority_letter_cost(letter: str) -> int:
 
 
 def sum_to_ten_spent(p: Priorities) -> int:
-    return sum(max(0, priority_letter_cost(letter)) for letter in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources))
+    return sum(
+        max(0, priority_letter_cost(letter)) for letter in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources)
+    )
 
 
 def priorities_are_unique(p: Priorities) -> bool:
@@ -1298,14 +1328,20 @@ def _resolve_armor_mods(
             if not armor_mod_fits(spec, item, names_without):
                 warnings.append(f"{spec['name']} は {item['name']} に装着できません")
                 continue
-            cap_cost = 0.0 if inst.included else armor_plugin_capacity(
-                str(spec.get("armorcapacity") or ""),
-                rating,
-                extras={"Capacity": cap_max_base},
+            cap_cost = (
+                0.0
+                if inst.included
+                else armor_plugin_capacity(
+                    str(spec.get("armorcapacity") or ""),
+                    rating,
+                    extras={"Capacity": cap_max_base},
+                )
             )
             extra, _additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
-            cost = 0 if inst.included else int(
-                eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": parent_unit})
+            cost = (
+                0
+                if inst.included
+                else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Armor Cost": parent_unit}))
             )
             nuyen += cost
             if cap_cost < 0:
@@ -1398,7 +1434,6 @@ def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, 
     return worn_base + add_total, worn_name, warnings
 
 
-
 def _clamp_rating(spec: dict[str, Any], rating: int) -> int:
     max_rating = int(spec.get("maxrating") or 0)
     if max_rating <= 0:
@@ -1481,7 +1516,9 @@ def _device_rating_of(spec: dict[str, Any] | None, rating: int) -> int:
     return 0
 
 
-def _resolve_matrix_devices(kind: str, installs: list[GearInstall]) -> tuple[list[GearInstall], list[dict[str, Any]], int]:
+def _resolve_matrix_devices(
+    kind: str, installs: list[GearInstall]
+) -> tuple[list[GearInstall], list[dict[str, Any]], int]:
     kept: list[GearInstall] = []
     public: list[dict[str, Any]] = []
     nuyen = 0
@@ -1544,7 +1581,9 @@ def _ensure_optics(state: CharacterState) -> list[str]:
             parent_spec = specs.get(parent.gear_id) if parent else None
             allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
             if allowed and spec.get("category") not in allowed:
-                warnings.append(f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません")
+                warnings.append(
+                    f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません"
+                )
                 continue
         kept.append(inst)
     have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
@@ -1576,7 +1615,9 @@ def _ensure_optics(state: CharacterState) -> list[str]:
     return warnings
 
 
-def _resolve_optics(state: CharacterState) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+def _resolve_optics(
+    state: CharacterState,
+) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_optics(state)
     errors: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -1734,7 +1775,9 @@ def _apply_ammo_bonus(weapon: dict[str, Any], bonus: dict[str, Any] | None) -> N
     if bonus.get("damagereplace"):
         weapon["damage"] = str(bonus["damagereplace"])
     elif bonus.get("damage"):
-        weapon["damage"] = _add_signed_stat(str(weapon.get("damage") or ""), _leading_int(str(bonus.get("damage"))) or 0)
+        weapon["damage"] = _add_signed_stat(
+            str(weapon.get("damage") or ""), _leading_int(str(bonus.get("damage"))) or 0
+        )
     if bonus.get("damagetype"):
         weapon["damage"] = _set_damage_type(str(weapon.get("damage") or ""), str(bonus["damagetype"]))
     if bonus.get("modereplace"):
@@ -1868,6 +1911,7 @@ def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
 
     out = replaced
     while True:
+
         def _inner(match: re.Match[str]) -> str:
             value = _try_eval(match.group(1))
             return value if value is not None else match.group(0)
@@ -2472,7 +2516,9 @@ def _ensure_sensors(state: CharacterState) -> list[str]:
                 parent_spec = specs.get(parent.gear_id) if parent else None
                 allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
                 if allowed and spec.get("category") not in allowed:
-                    warnings.append(f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません")
+                    warnings.append(
+                        f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません"
+                    )
                     continue
             elif inst.parent_id in host_ids:
                 if spec.get("category") not in {"Sensors", "Sensor Housings"}:
@@ -2511,7 +2557,9 @@ def _ensure_sensors(state: CharacterState) -> list[str]:
     return warnings
 
 
-def _plugin_capacity_expr(spec: dict[str, Any], inst: GearInstall, host_ids: set[str] | None = None) -> tuple[bool, str, float]:
+def _plugin_capacity_expr(
+    spec: dict[str, Any], inst: GearInstall, host_ids: set[str] | None = None
+) -> tuple[bool, str, float]:
     rating = int(inst.rating or 1)
     if inst.capacity_override is not None:
         return True, str(inst.capacity_override), _capacity_value(inst.capacity_override, rating)
@@ -2528,7 +2576,9 @@ def _plugin_capacity_expr(spec: dict[str, Any], inst: GearInstall, host_ids: set
     return False, expr, _capacity_value(expr, rating)
 
 
-def _resolve_sensors(state: CharacterState) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+def _resolve_sensors(
+    state: CharacterState,
+) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_sensors(state)
     errors: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -2598,12 +2648,7 @@ def _resolve_sensors(state: CharacterState) -> tuple[list[dict[str, Any]], int, 
 def _has_weapon_constraints(cons: dict[str, Any] | None) -> bool:
     if not cons:
         return False
-    return bool(
-        cons.get("names")
-        or cons.get("categories")
-        or cons.get("types")
-        or cons.get("conceal_lte") is not None
-    )
+    return bool(cons.get("names") or cons.get("categories") or cons.get("types") or cons.get("conceal_lte") is not None)
 
 
 def _weapon_matches_or(weapon: dict[str, Any], cons: dict[str, Any] | None) -> bool:
@@ -2886,11 +2931,7 @@ def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
                 warnings.append(f"{spec['name']} は武器に装着してください")
             continue
         kept.append(inst)
-    have_included = {
-        (row.parent_id, (specs.get(row.accessory_id) or {}).get("name"))
-        for row in kept
-        if row.included
-    }
+    have_included = {(row.parent_id, (specs.get(row.accessory_id) or {}).get("name")) for row in kept if row.included}
     extra: list[WeaponAccessoryInstall] = []
     for weapon in state.weapons:
         wspec = weapon_specs.get(weapon.weapon_id) or {}
@@ -2974,8 +3015,7 @@ def _resolve_weapon_accessories(
     for weapon in weapons:
         used_mounts: set[str] = set()
         installed_names = {
-            str((specs.get(row.accessory_id) or {}).get("name") or "")
-            for row in children.get(weapon["id"]) or []
+            str((specs.get(row.accessory_id) or {}).get("name") or "") for row in children.get(weapon["id"]) or []
         }
         for inst in children.get(weapon["id"]) or []:
             spec = specs.get(inst.accessory_id)
@@ -3005,9 +3045,13 @@ def _resolve_weapon_accessories(
             elif mount:
                 used_mounts.add(mount)
             inst.mount = mount
-            parent_unit = int(eval_formula(str((weapon_specs.get(str(weapon.get("weapon_id") or "")) or {}).get("cost") or "0"), 1, 0))
-            cost = 0 if inst.included else int(
-                eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Weapon Cost": parent_unit})
+            parent_unit = int(
+                eval_formula(str((weapon_specs.get(str(weapon.get("weapon_id") or "")) or {}).get("cost") or "0"), 1, 0)
+            )
+            cost = (
+                0
+                if inst.included
+                else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras={"Weapon Cost": parent_unit}))
             )
             cost *= int(qty_by_id.get(weapon["id"]) or 1)
             nuyen += cost
@@ -3058,7 +3102,9 @@ def _resolve_weapon_accessories(
     return public, nuyen, warnings, errors, special_used
 
 
-def _resolve_apps(state: CharacterState, commlinks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int, list[str]]:
+def _resolve_apps(
+    state: CharacterState, commlinks: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], int, list[str]]:
     warnings: list[str] = []
     specs = {item["id"]: item for item in catalog().get("apps") or []}
     hosts = {str(row.get("id") or ""): row for row in commlinks}
@@ -3358,9 +3404,7 @@ def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[str]:
                 }
             )
             if used > maximum:
-                errors.append(
-                    f"{row['name']} の{R5_SLOT_LABELS[category]}スロット超過（{used}/{maximum}）"
-                )
+                errors.append(f"{row['name']} の{R5_SLOT_LABELS[category]}スロット超過（{used}/{maximum}）")
         row["slot_tracks"] = tracks
         row["slots_used"] = total_used
         row["slots_max"] = body
@@ -3453,7 +3497,13 @@ def _ensure_drone_equipment(state: CharacterState) -> None:
             ctrl = _find_mount_part(gift.get("control") or "", "Control", source)
             if not size:
                 continue
-            key = (host.id, size["id"], vis["id"] if vis else "", flex["id"] if flex else "", ctrl["id"] if ctrl else "")
+            key = (
+                host.id,
+                size["id"],
+                vis["id"] if vis else "",
+                flex["id"] if flex else "",
+                ctrl["id"] if ctrl else "",
+            )
             if key in have_mounts:
                 continue
             extra_mounts.append(
@@ -3493,8 +3543,14 @@ def _resolve_vehicle_mods(
         if not inst.included and not mod_fits_vehicle(spec, parent):
             warnings.append(f"{spec['name']} は {parent['name']} に装着できません")
             continue
-        extras = _vehicle_extras(parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or parent.get("nuyen") or 0))
-        rating = _clamp_vehicle_rating(spec, inst.rating, extras) if int(spec.get("maxrating") or 0) > 0 or spec.get("maxrating_expr") else 1
+        extras = _vehicle_extras(
+            parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or parent.get("nuyen") or 0)
+        )
+        rating = (
+            _clamp_vehicle_rating(spec, inst.rating, extras)
+            if int(spec.get("maxrating") or 0) > 0 or spec.get("maxrating_expr")
+            else 1
+        )
         inst.rating = rating
         cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras))
         slots = int(eval_formula(str(spec.get("slots") or "0"), rating, 0, extras))
@@ -3567,7 +3623,11 @@ def _resolve_weapon_mounts(
         inst.control_id = str((ctrl or {}).get("id") or "")
         bundle = [part for part in (size, vis, flex, ctrl) if part]
         extras = _vehicle_extras(parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or 0))
-        cost = 0 if inst.included else sum(int(eval_formula(str(part.get("cost") or "0"), 1, 0, extras)) for part in bundle)
+        cost = (
+            0
+            if inst.included
+            else sum(int(eval_formula(str(part.get("cost") or "0"), 1, 0, extras)) for part in bundle)
+        )
         slots = sum(int(eval_formula(str(part.get("slots") or "0"), 1, 0, extras)) for part in bundle)
         nuyen += cost
         parent["nuyen"] = int(parent.get("nuyen") or 0) + cost
@@ -3745,9 +3805,7 @@ def _finalize_avail_tree(
             kid["avail_folded"] = True
         if not adds:
             continue
-        value, suffix = sum_avail(
-            [(int(item.get("avail_value") or 0), str(item.get("avail_suffix") or ""))] + adds
-        )
+        value, suffix = sum_avail([(int(item.get("avail_value") or 0), str(item.get("avail_suffix") or ""))] + adds)
         item["avail_value"] = value
         item["avail_suffix"] = suffix
         item["avail"] = format_avail(value, suffix)
@@ -4120,17 +4178,13 @@ def resolve_gear(
             _append_lifestyle_quality(qid)
 
         if lp_max > 0 and lp_used > lp_max:
-            warnings.append(
-                f"{lifestyle_name} のライフスタイルポイント超過（使用 {lp_used} / 上限 {lp_max}）"
-            )
+            warnings.append(f"{lifestyle_name} のライフスタイルポイント超過（使用 {lp_used} / 上限 {lp_max}）")
 
         monthly = int(round(base_monthly * (100 + multiplier_pct) / 100.0)) + quality_monthly
         cost = monthly * months
         nuyen += cost
         # Persist user picks only; freegrids are re-derived each compute.
-        inst.quality_ids = [
-            row["quality_id"] for row in kept_qualities if not row.get("from_freegrid")
-        ]
+        inst.quality_ids = [row["quality_id"] for row in kept_qualities if not row.get("from_freegrid")]
         inst.quality_extras = {
             row["quality_id"]: row["extra"]
             for row in kept_qualities
@@ -4261,8 +4315,7 @@ def focus_bind_karma(name: str, force: int, focus_binding: list[dict[str, Any]])
 
 def tradition_resist(tradition: dict[str, Any] | None, attrs: dict[str, int]) -> tuple[int, str]:
     extras = {
-        key: int(attrs.get(key) or 1)
-        for key in ("WIL", "LOG", "INT", "CHA", "BOD", "AGI", "REA", "STR", "RES", "MAG")
+        key: int(attrs.get(key) or 1) for key in ("WIL", "LOG", "INT", "CHA", "BOD", "AGI", "REA", "STR", "RES", "MAG")
     }
     formula = (tradition or {}).get("drain") or "{WIL} + {INT}"
     keys = [key.upper() for key in re.findall(r"\{([A-Za-z]+)\}", str(formula))]
@@ -4292,9 +4345,7 @@ def spell_defense_pools(effects: dict[str, Any] | None) -> dict[str, Any]:
         "mental_manipulation": general + int(specific.get("mental_manipulation") or 0),
         "mana_illusion": general + int(specific.get("mana_illusion") or 0),
         "physical_illusion": general + int(specific.get("physical_illusion") or 0),
-        "decrease": {
-            attr: general + int(specific.get(f"decrease_{attr.lower()}") or 0) for attr in decrease_attrs
-        },
+        "decrease": {attr: general + int(specific.get(f"decrease_{attr.lower()}") or 0) for attr in decrease_attrs},
     }
 
 
@@ -4352,15 +4403,12 @@ def quality_needs_extra(spec: dict[str, Any]) -> bool:
         }
         or (
             node.get("tag") == "weaponcategorydv"
-            and bool(
-                str(((node.get("field_attrs") or {}).get("selectskill") or {}).get("limittoskill") or "").strip()
-            )
+            and bool(str(((node.get("field_attrs") or {}).get("selectskill") or {}).get("limittoskill") or "").strip())
         )
         or (
             node.get("tag") == "weaponskillaccuracy"
             and (
-                "selectskill" in (node.get("fields") or {})
-                or bool((node.get("field_attrs") or {}).get("selectskill"))
+                "selectskill" in (node.get("fields") or {}) or bool((node.get("field_attrs") or {}).get("selectskill"))
             )
             and not str((node.get("fields") or {}).get("name") or "").strip()
         )
@@ -4757,9 +4805,7 @@ def apply_granted_spells(
         remaining.append(inst)
 
     existing_by_qid = {
-        str(inst.source_quality_id): inst
-        for inst in remaining
-        if str(inst.source_quality_id or "").strip()
+        str(inst.source_quality_id): inst for inst in remaining if str(inst.source_quality_id or "").strip()
     }
     existing_spell_ids = {str(inst.spell_id) for inst in remaining}
     for grant in grants:
@@ -5143,11 +5189,7 @@ def apply_quality_rules(
                     metagenic_limit,
                     _as_int(node.get("value") or (node.get("fields") or {}).get("value")),
                 )
-    mg_specs = [
-        spec
-        for spec in qualities
-        if spec.get("metagenic") and spec.get("contributes_to_metagenic_limit")
-    ]
+    mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_metagenic_limit")]
     mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
     mg_neg = sum(-int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) < 0)
     mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
@@ -5156,13 +5198,9 @@ def apply_quality_rules(
             errors.append("メタジェネティック資質には Changeling（Class I／II／III SURGE）が必要です")
         elif metagenic_limit > 0:
             if mg_neg > metagenic_limit:
-                errors.append(
-                    f"不利メタジェネティック資質のカルマが上限を超えています（{mg_neg} / {metagenic_limit}）"
-                )
+                errors.append(f"不利メタジェネティック資質のカルマが上限を超えています（{mg_neg} / {metagenic_limit}）")
             if mg_pos > metagenic_limit:
-                errors.append(
-                    f"有利メタジェネティック資質のカルマが上限を超えています（{mg_pos} / {metagenic_limit}）"
-                )
+                errors.append(f"有利メタジェネティック資質のカルマが上限を超えています（{mg_pos} / {metagenic_limit}）")
             if mg_pos and not mg_balanced:
                 errors.append(
                     "メタジェネティック資質のカルマ収支が不均衡です"
@@ -6046,12 +6084,14 @@ def resolve_ware(
         plugin = bool(ware.get("plugin"))
         add_to_parent = bool(ware.get("addtoparentess")) and slotted and not included
         formula_extras = {**extras, "MinRating": lo}
-        ess_base = round(
-            eval_formula(ware.get("ess"), rating, extras=formula_extras) * float(grade.get("ess") or 1), 4
-        )
+        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * float(grade.get("ess") or 1), 4)
         ess = 0.0 if included or (slotted and (plugin or add_to_parent)) else ess_base
-        cost = 0 if included else int(
-            round(eval_formula(ware.get("cost"), rating, extras=formula_extras) * float(grade.get("cost") or 1))
+        cost = (
+            0
+            if included
+            else int(
+                round(eval_formula(ware.get("cost"), rating, extras=formula_extras) * float(grade.get("cost") or 1))
+            )
         )
         nodes = substitute_rating(ware.get("bonus") or [], rating)
         if inst.wireless:
@@ -6317,9 +6357,7 @@ def apply_select_expertise(
             warnings.append(f"{source} には {skill_name} 技能（レーティング1以上）が必要です")
             continue
         limit_specs = [
-            part.strip()
-            for part in str(slot.get("limit_to_specialization") or "").split(",")
-            if part.strip()
+            part.strip() for part in str(slot.get("limit_to_specialization") or "").split(",") if part.strip()
         ]
         if limit_specs and picked not in limit_specs:
             warnings.append(f"{source} の Expertise に {picked} は選べません")
@@ -6358,9 +6396,7 @@ def resolve_exotic_skills(
     *,
     rating_cap: int = 6,
 ) -> dict[str, Any]:
-    catalog_by_name = {
-        skill["name"]: skill for skill in skills_data.get("skills") or [] if skill.get("exotic")
-    }
+    catalog_by_name = {skill["name"]: skill for skill in skills_data.get("skills") or [] if skill.get("exotic")}
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[ExoticSkillInstall] = []
@@ -6457,11 +6493,7 @@ def sync_quality_contacts(
             continue
         remaining.append(inst)
 
-    existing = {
-        str(inst.source_quality_id): inst
-        for inst in remaining
-        if str(inst.source_quality_id or "").strip()
-    }
+    existing = {str(inst.source_quality_id): inst for inst in remaining if str(inst.source_quality_id or "").strip()}
     for spec in specs:
         qid = str(spec["quality_id"])
         connection = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(spec.get("connection") or 1)))
@@ -6612,7 +6644,11 @@ def resolve_contacts(
             loy_max = CONTACT_RATING_MAX
         elif career or friends_in_high_places:
             conn_max = 12 if friends_in_high_places else CONTACT_RATING_MAX
-            loy_max = CONTACT_RATING_MAX if career else min(CONTACT_RATING_MAX, (12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX) - connection)
+            loy_max = (
+                CONTACT_RATING_MAX
+                if career
+                else min(CONTACT_RATING_MAX, (12 if friends_in_high_places else CONTACT_CHARGEN_COST_MAX) - connection)
+            )
             if friends_in_high_places and not career:
                 conn_max = min(12, (12 - loyalty))
                 loy_max = min(CONTACT_RATING_MAX, 12 - connection)
@@ -6722,9 +6758,7 @@ def sync_quality_martial_arts(
         remaining.append(inst)
 
     existing_by_qid = {
-        str(inst.source_quality_id): inst
-        for inst in remaining
-        if str(inst.source_quality_id or "").strip()
+        str(inst.source_quality_id): inst for inst in remaining if str(inst.source_quality_id or "").strip()
     }
     existing_art_ids = {str(inst.art_id) for inst in remaining}
     for spec in specs:
@@ -6835,11 +6869,7 @@ def resolve_martial_arts(
             bucket = spec_extras.setdefault(skill_name, [])
             if spec_name not in bucket:
                 bucket.append(spec_name)
-        other_nodes = [
-            node
-            for node in (spec.get("bonus") or [])
-            if node.get("tag") != "addskillspecializationoption"
-        ]
+        other_nodes = [node for node in (spec.get("bonus") or []) if node.get("tag") != "addskillspecializationoption"]
         if other_nodes:
             bonus_sources.append((spec["name"], other_nodes))
 
@@ -6868,13 +6898,9 @@ def resolve_martial_arts(
     style_max = 99 if career else MARTIAL_ART_CHARGEN_STYLE_MAX
     tech_max = 99 if career else MARTIAL_ART_CHARGEN_TECHNIQUE_MAX
     if not career and paid_style_count > MARTIAL_ART_CHARGEN_STYLE_MAX:
-        errors.append(
-            f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {paid_style_count}）"
-        )
+        errors.append(f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {paid_style_count}）")
     if not career and technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
-        errors.append(
-            f"作成時の武道技は合計{MARTIAL_ART_CHARGEN_TECHNIQUE_MAX}つまでです（現在 {technique_total}）"
-        )
+        errors.append(f"作成時の武道技は合計{MARTIAL_ART_CHARGEN_TECHNIQUE_MAX}つまでです（現在 {technique_total}）")
 
     return {
         "warnings": warnings,
@@ -7201,7 +7227,9 @@ def _attach_skillsoft_knowledge(
             {
                 "name": name,
                 "category": spec.get("category") or "Street",
-                "attribute": str(spec.get("attribute") or KNOWLEDGE_DEFAULT_ATTR.get(spec.get("category") or "", "INT")).upper(),
+                "attribute": str(
+                    spec.get("attribute") or KNOWLEDGE_DEFAULT_ATTR.get(spec.get("category") or "", "INT")
+                ).upper(),
                 "rating": 0,
                 "native": False,
                 "skillsoft": int(rating),
@@ -7391,11 +7419,7 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
             return []
         return _field_list((node.get("fields") or {}).get("attribute"))
     if kind == "spell":
-        return [
-            item["name"]
-            for item in catalog().get("spells") or []
-            if item.get("category") in SPELL_CAST_CATEGORIES
-        ]
+        return [item["name"] for item in catalog().get("spells") or [] if item.get("category") in SPELL_CAST_CATEGORIES]
     return []
 
 
@@ -7409,7 +7433,9 @@ def _choice_allowed(audience: str, talent_name: str) -> bool:
     return False
 
 
-def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[list[dict[str, Any]], list[str], list[str]]:
+def gather_qualities(
+    state: CharacterState, talent: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[str], list[str]]:
     qualities: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
     free_ids: set[str] = set()
@@ -7418,11 +7444,7 @@ def gather_qualities(state: CharacterState, talent: dict[str, Any]) -> tuple[lis
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
-    extras = {
-        key: str(value).strip()
-        for key, value in (state.quality_extras or {}).items()
-        if str(value).strip()
-    }
+    extras = {key: str(value).strip() for key, value in (state.quality_extras or {}).items() if str(value).strip()}
     index = 0
     while index < len(pending):
         qid = pending[index]
@@ -7496,7 +7518,9 @@ def resolve_mentor(
             "public": None,
         }
     bonus_sources.append((spec["name"], spec.get("bonus") or []))
-    allowed = [choice for choice in spec.get("choices") or [] if _choice_allowed(choice.get("audience") or "all", talent_name)]
+    allowed = [
+        choice for choice in spec.get("choices") or [] if _choice_allowed(choice.get("audience") or "all", talent_name)
+    ]
     groups: dict[str, list[dict[str, Any]]] = {}
     for choice in allowed:
         audience = choice.get("audience") or "all"
@@ -7588,7 +7612,11 @@ def qi_focus_granted_power_rating(
     cfg = select_power or {}
     if not cfg.get("ignore_rating"):
         cap = power_max_rating(spec, mag)
-        return max(1, min(cap, int(user_rating or 1))) if not spec.get("levels") else max(1, min(cap, int(user_rating or 1)))
+        return (
+            max(1, min(cap, int(user_rating or 1)))
+            if not spec.get("levels")
+            else max(1, min(cap, int(user_rating or 1)))
+        )
     points_per_level = float(cfg.get("points_per_level") or 0.25)
     pp_pool = max(0.0, force * points_per_level)
     if not spec.get("levels"):
@@ -8185,7 +8213,9 @@ def attach_complex_form_tests(
             "physical": bool(item.get("physical")),
         }
         if dice.get("missing"):
-            warnings.append(f"{item['label'] or item['name']} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）")
+            warnings.append(
+                f"{item['label'] or item['name']} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）"
+            )
     return warnings
 
 
@@ -8218,7 +8248,9 @@ def attach_sprite_tests(
         )
         item["test"] = test
         if test.get("missing"):
-            warnings.append(f"{item['name']} の{('登録' if registered else 'コンパイル')}判定に{skill}が必要です（未習得・デフォルト不可）")
+            warnings.append(
+                f"{item['name']} の{('登録' if registered else 'コンパイル')}判定に{skill}が必要です（未習得・デフォルト不可）"
+            )
     return warnings
 
 
@@ -8267,7 +8299,9 @@ def attach_spirit_tests(
         )
         item["test"] = test
         if test.get("missing"):
-            warnings.append(f"{item['name']} の{('結合' if bound else '召喚')}判定に{skill}が必要です（未習得・デフォルト不可）")
+            warnings.append(
+                f"{item['name']} の{('結合' if bound else '召喚')}判定に{skill}が必要です（未習得・デフォルト不可）"
+            )
     return warnings
 
 
@@ -8452,7 +8486,9 @@ def resolve_adept_powers(
             free_levels = free_by_key.get(key, 0)
         if kind and not extra:
             warnings.append(f"{spec['name']} の{select_label}を選んでください")
-        spell = spell_cast_info(extra, inst.force, mag, wil + intuition, "WIL+INT") if kind == "spell" and extra else None
+        spell = (
+            spell_cast_info(extra, inst.force, mag, wil + intuition, "WIL+INT") if kind == "spell" and extra else None
+        )
         if spell:
             inst.force = int(spell["force"])
         if kind and extra and key in seen_keys:
@@ -8786,10 +8822,7 @@ def resolve_spells(
         if info and has_force:
             inst.force = int(info["force"])
         missing = [
-            name
-            for names in (spec.get("required") or {}).values()
-            for name in names
-            if name and name not in owned
+            name for names in (spec.get("required") or {}).values() for name in names if name and name not in owned
         ]
         if missing:
             warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
@@ -9306,7 +9339,9 @@ def compute(state: CharacterState) -> CharacterState:
         "cyberware": _installed_ware_names("cyberware", state.cyberware),
         "bioware": _installed_ware_names("bioware", state.bioware),
     }
-    warnings.extend(_required_warnings("cyberware", state.cyberware, installed_names, state.metatype, state.metavariant))
+    warnings.extend(
+        _required_warnings("cyberware", state.cyberware, installed_names, state.metatype, state.metavariant)
+    )
     warnings.extend(_required_warnings("bioware", state.bioware, installed_names, state.metatype, state.metavariant))
 
     talent = resolve_talent_for_method(state.priorities.Talent, state.talent, state.build_method)
@@ -9340,9 +9375,7 @@ def compute(state: CharacterState) -> CharacterState:
         if item.get("id") in hosted_ids:
             continue
         sources.append((item["name"], item.get("bonus") or []))
-    ware_attr_bonus = _ware_attribute_bonuses(
-        [item for item in installed if item.get("id") not in hosted_ids]
-    )
+    ware_attr_bonus = _ware_attribute_bonuses([item for item in installed if item.get("id") not in hosted_ids])
     if not career:
         _check_ware_attribute_cap(ware_attr_bonus, errors)
     effects = collect_effects(sources)
@@ -9373,9 +9406,7 @@ def compute(state: CharacterState) -> CharacterState:
     attr_max_bonus, attr_select_warnings = resolve_attribute_selects(state, effects, qualities)
     warnings.extend(attr_select_warnings)
     attr_max_mods = {
-        key: int(value)
-        for key, value in (effects.get("attribute_max_mods") or {}).items()
-        if int(value or 0)
+        key: int(value) for key, value in (effects.get("attribute_max_mods") or {}).items() if int(value or 0)
     }
     for key, value in attr_max_mods.items():
         attr_max_bonus[key] = int(attr_max_bonus.get(key) or 0) + int(value)
@@ -9505,9 +9536,7 @@ def compute(state: CharacterState) -> CharacterState:
         data["skills"],
         quality_names,
         bool(effects.get("magicians_way")),
-        list(mentor.get("free_powers") or [])
-        + list(qi.get("free_powers") or [])
-        + granted_powers,
+        list(mentor.get("free_powers") or []) + list(qi.get("free_powers") or []) + granted_powers,
         int(ratings.get("WIL") or 1),
         int(ratings.get("INT") or 1),
     )
@@ -9520,8 +9549,7 @@ def compute(state: CharacterState) -> CharacterState:
     for source, nodes in adept["bonus_sources"] + enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, effects, source)
     attr_totals = {
-        key: int(ratings.get(key) or 0) + int((effects.get("attribute_bonus") or {}).get(key, 0))
-        for key in ratings
+        key: int(ratings.get(key) or 0) + int((effects.get("attribute_bonus") or {}).get(key, 0)) for key in ratings
     }
     gear = resolve_gear(
         state,
@@ -9797,9 +9825,7 @@ def compute(state: CharacterState) -> CharacterState:
             warnings.append(f"技能グループ {group} は無効化されています")
     blocked_defaults = list(effects.get("blocked_default_categories") or [])
     if blocked_defaults:
-        warnings.append(
-            "デフォルト不可: " + "、".join(blocked_defaults)
-        )
+        warnings.append("デフォルト不可: " + "、".join(blocked_defaults))
     skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
     _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
     expertises, free_expertise_skills = apply_select_expertise(
@@ -9842,9 +9868,7 @@ def compute(state: CharacterState) -> CharacterState:
     effective_knowledge = _merge_skill_ratings(dict(state.knowledge_skills or {}), skillsofts["knowledge"])
 
     karma_from_q = sum(
-        q["karma"]
-        for q in qualities
-        if not q.get("onlyprioritygiven") and q["id"] not in free_quality_ids
+        q["karma"] for q in qualities if not q.get("onlyprioritygiven") and q["id"] not in free_quality_ids
     )
     mystic_karma = int(state.mystic_pp) * MYSTIC_PP_KARMA
     extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
@@ -9853,9 +9877,7 @@ def compute(state: CharacterState) -> CharacterState:
     career_adv_lines: list[dict[str, Any]] = []
     if is_karma:
         attr_karma = attribute_karma_cost(ratings, attrs_spec, special_key)
-        skill_buy_karma = skill_karma_cost(
-            state.skill_groups, skill_totals, data["skills"], group_cap=skill_group_cap
-        )
+        skill_buy_karma = skill_karma_cost(state.skill_groups, skill_totals, data["skills"], group_cap=skill_group_cap)
         know_cats = {
             str(row.get("name") or ""): str(row.get("category") or "")
             for row in (knowledge.get("public") or [])
@@ -9887,7 +9909,14 @@ def compute(state: CharacterState) -> CharacterState:
         knowledge_karma = 0
         nuyen_karma = 0
         karma_pool = 25 + int(state.karma_earned or 0)
-        karma_spent = karma_from_q + heritage_karma_cost + mystic_karma + extra_adept_karma + spell_karma + int(state.karma_nuyen or 0)
+        karma_spent = (
+            karma_from_q
+            + heritage_karma_cost
+            + mystic_karma
+            + extra_adept_karma
+            + spell_karma
+            + int(state.karma_nuyen or 0)
+        )
         if career:
             baseline = state.career_baseline
             if baseline is None:
@@ -10194,7 +10223,13 @@ def compute(state: CharacterState) -> CharacterState:
             "knowledge": knowledge_karma if is_karma else 0,
             "specializations": spec_karma if is_karma else 0,
             "qualities": karma_from_q,
-            "other": mystic_karma + extra_adept_karma + spell_karma + int(contacts.get("karma") or 0) + int(martial.get("karma") or 0) + int(initiation.get("karma") or 0) + int(submersion.get("karma") or 0),
+            "other": mystic_karma
+            + extra_adept_karma
+            + spell_karma
+            + int(contacts.get("karma") or 0)
+            + int(martial.get("karma") or 0)
+            + int(initiation.get("karma") or 0)
+            + int(submersion.get("karma") or 0),
         },
         "totals": total,
         "limits": {
@@ -10305,7 +10340,11 @@ def compute(state: CharacterState) -> CharacterState:
         "tradition": magic.get("tradition"),
         "drain_resist": {"pool": magic.get("resist") or 0, "attrs": magic.get("resist_attrs") or "WIL+INT"},
         "complex_forms": resonance.get("public") or [],
-        "complex_form_points": {"used": resonance.get("used") or 0, "free": resonance.get("free_max") or 0, "paid": resonance.get("paid") or 0},
+        "complex_form_points": {
+            "used": resonance.get("used") or 0,
+            "free": resonance.get("free_max") or 0,
+            "paid": resonance.get("paid") or 0,
+        },
         "sprites": techno_sprites.get("public") or [],
         "stream": resonance.get("stream"),
         "fade_resist": {"pool": resonance.get("resist") or 0, "attrs": resonance.get("resist_attrs") or "WIL+RES"},

@@ -48,7 +48,11 @@ def state_to_chum5(state: CharacterState) -> bytes:
         "weapon": _id_name(cat["weapons"]),
         "wacc": _id_name(cat["weapon_accessories"]),
         "gear": _id_name(cat["gear"])
-        | {k: v for b in ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones", "vehicles") for k, v in _id_name(cat[b]).items()},
+        | {
+            k: v
+            for b in ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones", "vehicles")
+            for k, v in _id_name(cat[b]).items()
+        },
         "vmod": _id_name(cat["vehicle_mods"]),
         "lifestyle": _id_name(cat["lifestyles"]),
         "tradition": _id_name(cat["traditions"]),
@@ -68,9 +72,16 @@ def state_to_chum5(state: CharacterState) -> bytes:
     if state.notes:
         _sub(root, "notes", state.notes)
     for field, tag in (
-        ("age", "age"), ("sex", "sex"), ("height", "height"), ("weight", "weight"),
-        ("eyes", "eyes"), ("hair", "hair"), ("skin", "skin"),
-        ("appearance", "description"), ("background", "background"), ("concept", "concept"),
+        ("age", "age"),
+        ("sex", "sex"),
+        ("height", "height"),
+        ("weight", "weight"),
+        ("eyes", "eyes"),
+        ("hair", "hair"),
+        ("skin", "skin"),
+        ("appearance", "description"),
+        ("background", "background"),
+        ("concept", "concept"),
     ):
         value = getattr(state, field, "")
         if value:
@@ -156,10 +167,17 @@ def state_to_chum5(state: CharacterState) -> bytes:
         return parent
 
     _named_list("spells", "spell", state.spells, "spell_id", "spell")
-    _named_list("powers", "power", state.adept_powers, "power_id", "power",
-                {"rating": lambda r: r.rating, "extra": lambda r: r.extra or ""})
-    _named_list("complexforms", "complexform", state.complex_forms, "form_id", "complexform",
-                {"rating": lambda r: r.level or 1})
+    _named_list(
+        "powers",
+        "power",
+        state.adept_powers,
+        "power_id",
+        "power",
+        {"rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
+    )
+    _named_list(
+        "complexforms", "complexform", state.complex_forms, "form_id", "complexform", {"rating": lambda r: r.level or 1}
+    )
 
     marts = _sub(root, "martialarts")
     for row in state.martial_arts:
@@ -228,8 +246,14 @@ def state_to_chum5(state: CharacterState) -> bytes:
 
     gears = _sub(root, "gears")
     gear_rows = [
-        *state.gear, *state.commlinks, *state.cyberdecks, *state.rccs,
-        *state.sensors, *state.optics, *state.programs, *state.apps,
+        *state.gear,
+        *state.commlinks,
+        *state.cyberdecks,
+        *state.rccs,
+        *state.sensors,
+        *state.optics,
+        *state.programs,
+        *state.apps,
     ]
     by_parent_g: dict[str | None, list[Any]] = {}
     for g in gear_rows:

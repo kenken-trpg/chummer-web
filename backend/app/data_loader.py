@@ -239,9 +239,7 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
         maxrating_expr = rating_raw or str(max_rating)
         subs_el = el.find("subsystems")
         subsystems = [
-            _text(sub.find("name"))
-            for sub in list(subs_el if subs_el is not None else [])
-            if _text(sub.find("name"))
+            _text(sub.find("name")) for sub in list(subs_el if subs_el is not None else []) if _text(sub.find("name"))
         ]
         items.append(
             {
@@ -421,7 +419,11 @@ def _weaponskillaccuracy_select_attrs(node: dict[str, Any]) -> dict[str, str]:
 
 def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, str]) -> list[str]:
     names = {part.strip() for part in str(attrs.get("limittoskill") or "").split(",") if part.strip()}
-    cats = {part.strip() for part in str(attrs.get("limittocategory") or attrs.get("skillcategory") or "").split(",") if part.strip()}
+    cats = {
+        part.strip()
+        for part in str(attrs.get("limittocategory") or attrs.get("skillcategory") or "").split(",")
+        if part.strip()
+    }
     exclude_cats = {part.strip() for part in str(attrs.get("excludecategory") or "").split(",") if part.strip()}
     out: list[str] = []
     for skill in skills:
@@ -491,10 +493,7 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
         or _limit_spirit_category_needs_select(node)
         or bool(_weapon_category_dv_select_skills(node))
         or _weaponskillaccuracy_needs_select(node)
-        or (
-            node.get("tag") == "addspirit"
-            and not str((node.get("attrs") or {}).get("skill") or "").strip()
-        )
+        or (node.get("tag") == "addspirit" and not str((node.get("attrs") or {}).get("skill") or "").strip())
         for node in (bonus or [])
     )
 
@@ -761,9 +760,7 @@ def load_skills() -> dict[str, Any]:
             {
                 "id": _text(el.find("id")),
                 "name": _text(el.find("name")),
-                "attribute": (
-                    _text(el.find("attribute")) or _text(el.find("defaultattribute")) or "INT"
-                ).upper(),
+                "attribute": (_text(el.find("attribute")) or _text(el.find("defaultattribute")) or "INT").upper(),
                 "category": _text(el.find("category"), "Street"),
                 "skillgroup": None,
                 "exotic": False,
@@ -1487,11 +1484,7 @@ def load_armor_mods() -> list[dict[str, Any]]:
                 "cost": cost,
                 "minrating": 1 if rating_max > 1 else 0,
                 "maxrating": rating_max,
-                "purchasable": (
-                    not hidden
-                    and not _is_variable_cost(cost)
-                    and cost.strip() not in {"0", ""}
-                ),
+                "purchasable": (not hidden and not _is_variable_cost(cost) and cost.strip() not in {"0", ""}),
                 "unique": unique,
                 "required_names": list(required.get("names") or []),
                 "required_mods": list(required.get("mods") or []),
@@ -1564,7 +1557,9 @@ def load_weapons() -> list[dict[str, Any]]:
                 "range": _text(el.find("range")) or None,
                 "alt_range": _text(el.find("alternaterange")) or None,
                 "mounts": [_text(m) for m in el.findall("./accessorymounts/mount") if _text(m)],
-                "included": [_text(a.find("name")) for a in el.findall("./accessories/accessory") if _text(a.find("name"))],
+                "included": [
+                    _text(a.find("name")) for a in el.findall("./accessories/accessory") if _text(a.find("name"))
+                ],
                 "hidden": hidden,
                 "from_cyberware": from_cyberware,
                 "useskill": _text(el.find("useskill")),
@@ -1797,12 +1792,20 @@ def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False)
                 "addoncategories": [_text(c) for c in el.findall("addoncategory") if _text(c)],
                 "required_names": [
                     _text(n)
-                    for n in (el.findall("./required/geardetails//name") if el.find("./required/geardetails") is not None else [])
+                    for n in (
+                        el.findall("./required/geardetails//name")
+                        if el.find("./required/geardetails") is not None
+                        else []
+                    )
                     if _text(n)
                 ],
                 "required_categories": [
                     _text(n)
-                    for n in (el.findall("./required/geardetails//category") if el.find("./required/geardetails") is not None else [])
+                    for n in (
+                        el.findall("./required/geardetails//category")
+                        if el.find("./required/geardetails") is not None
+                        else []
+                    )
                     if _text(n)
                 ],
                 "included": included,
@@ -1835,9 +1838,7 @@ def load_rccs() -> list[dict[str, Any]]:
 
 
 def load_optics() -> list[dict[str, Any]]:
-    return _load_gear_categories(
-        {"Vision Devices", "Audio Devices", "Vision Enhancements", "Audio Enhancements"}
-    )
+    return _load_gear_categories({"Vision Devices", "Audio Devices", "Vision Enhancements", "Audio Enhancements"})
 
 
 PROGRAM_HOSTS = {
@@ -1851,7 +1852,13 @@ def _extra_kind(bonus: list[dict[str, Any]] | None, name: str = "") -> str:
     if str(name or "").startswith("Group Autosoft"):
         return "group"
     tags = {node.get("tag") for node in (bonus or [])}
-    if "selectskill" in tags or "activesoft" in tags or "skillsoft" in tags or "knowsoft" in tags or "linguasoft" in tags:
+    if (
+        "selectskill" in tags
+        or "activesoft" in tags
+        or "skillsoft" in tags
+        or "knowsoft" in tags
+        or "linguasoft" in tags
+    ):
         return "skill"
     if "selecttext" in tags or "selectrestricted" in tags or "selecttradition" in tags:
         return "text"
@@ -2173,7 +2180,13 @@ def _load_vehicle_entries(*, drones: bool) -> list[dict[str, Any]]:
         name = _text(el.find("name"))
         vehicle_id = _text(el.find("id"))
         cost = _text(el.find("cost"), "0")
-        if not name or not vehicle_id or name.startswith("ID ERROR") or _is_variable_cost(cost) or cost.strip() in {"0", ""}:
+        if (
+            not name
+            or not vehicle_id
+            or name.startswith("ID ERROR")
+            or _is_variable_cost(cost)
+            or cost.strip() in {"0", ""}
+        ):
             continue
         items.append(
             {
@@ -2291,13 +2304,7 @@ _DRUG_LIMIT_LABEL = {"physical": "肉体上限", "mental": "精神上限", "soci
 
 def drug_node_value(node: dict[str, Any]) -> str:
     fields = node.get("fields") or {}
-    return str(
-        fields.get("value")
-        or fields.get("val")
-        or fields.get("bonus")
-        or node.get("value")
-        or ""
-    ).strip()
+    return str(fields.get("value") or fields.get("val") or fields.get("bonus") or node.get("value") or "").strip()
 
 
 def drug_effect_summary(nodes: list[dict[str, Any]]) -> str:
@@ -2311,9 +2318,7 @@ def drug_effect_summary(nodes: list[dict[str, Any]]) -> str:
         if tag == "attribute" and val:
             parts.append(f"{str(fields.get('name') or '').upper()} {signed}")
         elif tag == "limit" and val:
-            label = _DRUG_LIMIT_LABEL.get(
-                str(fields.get("name") or "").strip().lower(), str(fields.get("name") or "")
-            )
+            label = _DRUG_LIMIT_LABEL.get(str(fields.get("name") or "").strip().lower(), str(fields.get("name") or ""))
             parts.append(f"{label} {signed}")
         elif tag in ("initiativedice", "initiativepass") and val:
             parts.append(f"イニシアチブ +{val}D6")
@@ -2444,9 +2449,7 @@ def load_martial_arts() -> list[dict[str, Any]]:
         if not name or not art_id:
             continue
         techniques = [
-            tech_name
-            for tech in el.findall("./techniques/technique")
-            if (tech_name := _text(tech.find("name")))
+            tech_name for tech in el.findall("./techniques/technique") if (tech_name := _text(tech.find("name")))
         ]
         cost_el = el.find("cost")
         items.append(
@@ -2715,15 +2718,12 @@ def load_ui_strings() -> dict[str, str]:
 @lru_cache(maxsize=1)
 def catalog() -> dict[str, Any]:
     if not (DATA_DIR / "metatypes.xml").exists():
-        raise FileNotFoundError(
-            f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py"
-        )
+        raise FileNotFoundError(f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py")
     metatypes = load_metatypes()
     playable = [
         m
         for m in metatypes
-        if m["category"] in {"Metahuman", "Metavariant"}
-        and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"}
+        if m["category"] in {"Metahuman", "Metavariant"} and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"}
     ]
     translations = load_translations()
     all_by_name: dict[str, dict[str, Any]] = {}
