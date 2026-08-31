@@ -64,6 +64,20 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch, setCharacter }
                             />
                           </label>
                         ) : null}
+                        {item.has_wireless ? (
+                          <label title="ワイヤレス機能を有効化してボーナスを反映">
+                            <input
+                              type="checkbox"
+                              checked={item.wireless ?? true}
+                              onChange={(e) => patch({
+                                armor: (ch.armor || []).map((row) => (
+                                  row.id === item.id ? { ...row, wireless: e.target.checked } : row
+                                )),
+                              })}
+                            />
+                            ワイヤレス
+                          </label>
+                        ) : null}
                       </div>
                       {(item.mods || []).map((mod) => (
                         <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
@@ -96,6 +110,21 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch, setCharacter }
                                   )),
                                 })}
                               />
+                            </label>
+                          ) : null}
+                          {mod.has_wireless ? (
+                            <label title="ワイヤレス機能を有効化してボーナスを反映">
+                              {" "}
+                              <input
+                                type="checkbox"
+                                checked={mod.wireless ?? true}
+                                onChange={(e) => patch({
+                                  armor_mods: (ch.armor_mods || []).map((row) => (
+                                    row.id === mod.id ? { ...row, wireless: e.target.checked } : row
+                                  )),
+                                })}
+                              />
+                              WL
                             </label>
                           ) : null}
                         </div>

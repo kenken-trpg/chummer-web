@@ -278,6 +278,7 @@ export interface ArmorInstall {
   armor_id: string;
   rating?: number;
   equipped?: boolean;
+  wireless?: boolean;
 }
 
 export interface ArmorModInstall {
@@ -286,6 +287,7 @@ export interface ArmorModInstall {
   parent_id?: string | null;
   included?: boolean;
   rating?: number;
+  wireless?: boolean;
 }
 
 export interface WeaponInstall {
@@ -402,6 +404,8 @@ export interface InstalledArmorMod {
   capacity_cost?: number;
   armor?: string;
   unique?: string;
+  wireless?: boolean;
+  has_wireless?: boolean;
   avail?: string;
   source?: string;
   special_armor?: SpecialArmor;
@@ -419,6 +423,8 @@ export interface InstalledArmor {
   rating: number;
   rating_max: number;
   equipped: boolean;
+  wireless?: boolean;
+  has_wireless?: boolean;
   nuyen: number;
   avail?: string;
   source?: string;
@@ -592,6 +598,7 @@ export interface ArmorCatalogItem {
   maxrating: number;
   additive: boolean;
   addmodcategories?: string[];
+  has_wireless?: boolean;
   source: string;
   page: string;
 }
@@ -610,6 +617,7 @@ export interface ArmorModCatalogItem {
   unique?: string;
   required_names?: string[];
   required_mods?: string[];
+  has_wireless?: boolean;
   source: string;
   page: string;
 }

@@ -1450,6 +1450,7 @@ def load_armor() -> list[dict[str, Any]]:
                 "addmodcategories": [_text(c) for c in el.findall("addmodcategory") if _text(c)],
                 "included_mods": _armor_included_mods(el),
                 "bonus": parse_bonus(el.find("bonus")),
+                "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }
@@ -1493,6 +1494,7 @@ def load_armor_mods() -> list[dict[str, Any]]:
                 "required_names": list(required.get("names") or []),
                 "required_mods": list(required.get("mods") or []),
                 "bonus": parse_bonus(bonus_el),
+                "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }

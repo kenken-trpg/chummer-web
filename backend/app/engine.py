@@ -1316,8 +1316,14 @@ def _resolve_armor_mods(
             seen_names.add(spec["name"])
             if spec.get("unique"):
                 seen_unique.add(str(spec["unique"]))
+            inst.wireless = bool(inst.wireless)
+            mod_has_wireless = bool(spec.get("wirelessbonus"))
+            wireless_on = mod_has_wireless and inst.wireless
+            display_nodes = list(spec.get("bonus") or [])
+            if wireless_on:
+                display_nodes = display_nodes + list(spec.get("wirelessbonus") or [])
             if item.get("equipped"):
-                nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+                nodes = substitute_rating(display_nodes, rating)
                 if nodes:
                     bonus_sources.append((spec["name"], nodes))
             kept.append(inst)
@@ -1334,14 +1340,16 @@ def _resolve_armor_mods(
                 "capacity_cost": int(cap_cost) if cap_cost == int(cap_cost) else cap_cost,
                 "armor": spec.get("armor") or "0",
                 "unique": spec.get("unique") or "",
+                "wireless": inst.wireless,
+                "has_wireless": mod_has_wireless,
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
             }
-            special = special_armor_from_nodes(list(spec.get("bonus") or []), rating)
+            special = special_armor_from_nodes(display_nodes, rating)
             if special:
                 row["special_armor"] = special
-            limits = limit_modifiers_from_nodes(list(spec.get("bonus") or []), rating)
+            limits = limit_modifiers_from_nodes(display_nodes, rating)
             if limits:
                 row["limit_modifiers"] = limits
             public.append(row)
@@ -3777,11 +3785,15 @@ def resolve_gear(
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
         inst.equipped = bool(inst.equipped)
+        inst.wireless = bool(inst.wireless)
+        has_wireless = bool(spec.get("wirelessbonus"))
         cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
         if inst.equipped:
             nodes = substitute_rating(list(spec.get("bonus") or []), rating)
+            if has_wireless and inst.wireless:
+                nodes = nodes + substitute_rating(list(spec.get("wirelessbonus") or []), rating)
             if nodes:
                 bonus_sources.append((spec["name"], nodes))
         kept_armor.append(inst)
@@ -3797,6 +3809,8 @@ def resolve_gear(
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "equipped": inst.equipped,
+                "wireless": inst.wireless,
+                "has_wireless": has_wireless,
                 "nuyen": cost,
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",

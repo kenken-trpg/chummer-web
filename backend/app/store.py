@@ -436,6 +436,7 @@ def public_catalog() -> dict:
                 "maxrating": int(a.get("maxrating") or 0),
                 "additive": bool(a.get("additive")),
                 "addmodcategories": list(a.get("addmodcategories") or []),
+                "has_wireless": bool(a.get("wirelessbonus")),
                 "source": a.get("source") or "",
                 "page": a.get("page") or "",
             }
@@ -456,6 +457,7 @@ def public_catalog() -> dict:
                 "unique": a.get("unique") or "",
                 "required_names": list(a.get("required_names") or []),
                 "required_mods": list(a.get("required_mods") or []),
+                "has_wireless": bool(a.get("wirelessbonus")),
                 "source": a.get("source") or "",
                 "page": a.get("page") or "",
             }

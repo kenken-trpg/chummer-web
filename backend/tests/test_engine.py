@@ -2654,6 +2654,27 @@ def test_armor_jacket_adds_armor_and_nuyen() -> None:
     assert out.derived["errors"] == []
 
 
+def test_armor_wireless_bonus_toggles_effect() -> None:
+    spec = next(a for a in catalog()["armor"] if a.get("wirelessbonus"))  # e.g. Armanté Suit
+    base = _mundane("wl-armor", skills={"Con": 3})
+
+    def social_pool(wireless: bool) -> int:
+        st = base.model_copy(deep=True)
+        st.armor = [ArmorInstall(armor_id=spec["id"], wireless=wireless)]
+        out = compute(st)
+        row = out.derived["armor_items"][0]
+        assert row["has_wireless"] is True and row["wireless"] is wireless
+        return out.derived["skill_bonus"].get("Con", 0)
+
+    assert social_pool(True) == social_pool(False) + 1  # Social Active +1 while wireless
+
+
+def test_armor_wireless_defaults_on() -> None:
+    spec = next(a for a in catalog()["armor"] if a.get("wirelessbonus"))
+    out = compute(_mundane("wl-default", armor=[ArmorInstall(armor_id=spec["id"])]))
+    assert out.derived["armor_items"][0]["wireless"] is True
+
+
 def test_helmet_stacks_on_jacket() -> None:
     out = compute(
         _mundane(

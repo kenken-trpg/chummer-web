@@ -510,8 +510,9 @@ export default function CharacterSheet({
                   {" ・ "}
                   {item.armor_value}
                   {item.equipped ? " ・ 装備中" : ""}
+                  {item.has_wireless && item.wireless === false ? " ・ WL切" : ""}
                   {(item.mods || []).length
-                    ? ` ・ ${(item.mods || []).map((m) => tr(m.name)).join("、")}`
+                    ? ` ・ ${(item.mods || []).map((m) => `${tr(m.name)}${m.has_wireless && m.wireless === false ? "(WL切)" : ""}`).join("、")}`
                     : ""}
                 </li>
               ))}

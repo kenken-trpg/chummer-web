@@ -93,6 +93,7 @@ class ArmorInstall(BaseModel):
     armor_id: str
     rating: int = 1
     equipped: bool = True
+    wireless: bool = True
 
 
 class ArmorModInstall(BaseModel):
@@ -101,6 +102,7 @@ class ArmorModInstall(BaseModel):
     parent_id: str | None = None
     included: bool = False
     rating: int = 1
+    wireless: bool = True
 
 
 class WeaponInstall(BaseModel):
