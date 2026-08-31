@@ -53,6 +53,8 @@ from .weapons import (
     apply_unarmed_bonuses,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
+    bind_weapon_category_dv,
+    bind_weapon_skill_accuracy,
 )
 
 __all__ = [
@@ -96,4 +98,6 @@ __all__ = [
     "apply_weapon_skill_accuracy",
     "armor_mod_fits",
     "armor_plugin_capacity",
+    "bind_weapon_category_dv",
+    "bind_weapon_skill_accuracy",
 ]

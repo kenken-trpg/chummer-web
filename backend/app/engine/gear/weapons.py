@@ -16,6 +16,7 @@ from ...data_loader import catalog, eval_formula
 from ...models import CharacterState, WeaponAccessoryInstall
 from ..formulas import _add_leading_int, _add_weapon_dv, _eval_attr_stat, _leading_int
 from ..lookups import _item_by_id
+from ..selects import selectskill_options
 from ._common import (
     _clamp_rating,
     _leading_vehicle_stat,
@@ -522,3 +523,85 @@ def _resolve_weapon_accessories(
 
     state.weapon_accessories = kept
     return public, nuyen, warnings, errors, special_used
+
+
+def bind_weapon_category_dv(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+) -> None:
+    """Resolve weaponcategorydv selectskill picks into concrete category/skill DV bonuses."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    resolved: list[dict[str, Any]] = []
+    for slot in effects.get("weapon_category_dv_slots") or []:
+        source = str(slot.get("source") or "")
+        bonus = int(slot.get("bonus") or 0)
+        if not bonus:
+            continue
+        skills = [str(name).strip() for name in (slot.get("skills") or []) if str(name).strip()]
+        fixed = str(slot.get("name") or "").strip()
+        if slot.get("needs_select"):
+            spec = by_name.get(source)
+            if not spec:
+                continue
+            picked = str(extras.get(spec["id"]) or "").strip()
+            if not picked:
+                warnings.append(f"{source} の武器技能を選んでください")
+                continue
+            if skills and picked not in skills:
+                warnings.append(f"{source} に {picked} は選べません")
+                continue
+            resolved.append({"name": picked, "bonus": bonus, "source": source})
+        elif fixed:
+            resolved.append({"name": fixed, "bonus": bonus, "source": source})
+    effects["weapon_category_dv"] = resolved
+
+
+def bind_weapon_skill_accuracy(
+    effects: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    state: CharacterState,
+    warnings: list[str],
+    skills_data: dict[str, Any] | None = None,
+) -> None:
+    """Resolve weaponskillaccuracy selectskill picks into skill accuracy bonuses."""
+    by_name = {q["name"]: q for q in qualities}
+    extras = state.quality_extras or {}
+    data = skills_data if skills_data is not None else catalog().get("skills") or {}
+    resolved: list[dict[str, Any]] = []
+    for slot in effects.get("weapon_skill_accuracy_slots") or []:
+        source = str(slot.get("source") or "")
+        bonus = int(slot.get("bonus") or 0)
+        if not bonus:
+            continue
+        fixed = str(slot.get("name") or "").strip()
+        if slot.get("needs_select"):
+            spec = by_name.get(source)
+            if not spec:
+                continue
+            picked = str(extras.get(spec["id"]) or "").strip()
+            if not picked:
+                warnings.append(f"{source} の技能を選んでください")
+                continue
+            attrs = dict(slot.get("select_attrs") or {})
+            options = list(spec.get("select_options") or [])
+            if not options and attrs:
+                options = selectskill_options(
+                    {
+                        "limittoskill": attrs.get("limittoskill") or "",
+                        "limittocategory": attrs.get("limittocategory") or attrs.get("skillcategory") or "",
+                        "excludecategory": attrs.get("excludecategory") or "",
+                        "knowledgeskills": str(attrs.get("knowledgeskills") or "").lower() == "true",
+                    },
+                    data,
+                    {},
+                )
+            if options and picked not in options:
+                warnings.append(f"{source} に {picked} は選べません")
+                continue
+            resolved.append({"name": picked, "bonus": bonus, "source": source})
+        elif fixed:
+            resolved.append({"name": fixed, "bonus": bonus, "source": source})
+    effects["weapon_skill_accuracy"] = resolved

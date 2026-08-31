@@ -169,6 +169,8 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     apply_unarmed_bonuses,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
+    bind_weapon_category_dv,
+    bind_weapon_skill_accuracy,
 )
 from .karma import (  # noqa: E402  (cost maths)
     _active_karma_mults,
@@ -2153,88 +2155,6 @@ def bind_spell_category_drain_damage(
             picked = str(extras.get(spec["id"]) or "").strip()
             if picked:
                 row["category"] = picked
-
-
-def bind_weapon_category_dv(
-    effects: dict[str, Any],
-    qualities: list[dict[str, Any]],
-    state: CharacterState,
-    warnings: list[str],
-) -> None:
-    """Resolve weaponcategorydv selectskill picks into concrete category/skill DV bonuses."""
-    by_name = {q["name"]: q for q in qualities}
-    extras = state.quality_extras or {}
-    resolved: list[dict[str, Any]] = []
-    for slot in effects.get("weapon_category_dv_slots") or []:
-        source = str(slot.get("source") or "")
-        bonus = int(slot.get("bonus") or 0)
-        if not bonus:
-            continue
-        skills = [str(name).strip() for name in (slot.get("skills") or []) if str(name).strip()]
-        fixed = str(slot.get("name") or "").strip()
-        if slot.get("needs_select"):
-            spec = by_name.get(source)
-            if not spec:
-                continue
-            picked = str(extras.get(spec["id"]) or "").strip()
-            if not picked:
-                warnings.append(f"{source} の武器技能を選んでください")
-                continue
-            if skills and picked not in skills:
-                warnings.append(f"{source} に {picked} は選べません")
-                continue
-            resolved.append({"name": picked, "bonus": bonus, "source": source})
-        elif fixed:
-            resolved.append({"name": fixed, "bonus": bonus, "source": source})
-    effects["weapon_category_dv"] = resolved
-
-
-def bind_weapon_skill_accuracy(
-    effects: dict[str, Any],
-    qualities: list[dict[str, Any]],
-    state: CharacterState,
-    warnings: list[str],
-    skills_data: dict[str, Any] | None = None,
-) -> None:
-    """Resolve weaponskillaccuracy selectskill picks into skill accuracy bonuses."""
-    by_name = {q["name"]: q for q in qualities}
-    extras = state.quality_extras or {}
-    data = skills_data if skills_data is not None else catalog().get("skills") or {}
-    resolved: list[dict[str, Any]] = []
-    for slot in effects.get("weapon_skill_accuracy_slots") or []:
-        source = str(slot.get("source") or "")
-        bonus = int(slot.get("bonus") or 0)
-        if not bonus:
-            continue
-        fixed = str(slot.get("name") or "").strip()
-        if slot.get("needs_select"):
-            spec = by_name.get(source)
-            if not spec:
-                continue
-            picked = str(extras.get(spec["id"]) or "").strip()
-            if not picked:
-                warnings.append(f"{source} の技能を選んでください")
-                continue
-            attrs = dict(slot.get("select_attrs") or {})
-            options = list(spec.get("select_options") or [])
-            if not options and attrs:
-                options = selectskill_options(
-                    {
-                        "limittoskill": attrs.get("limittoskill") or "",
-                        "limittocategory": attrs.get("limittocategory") or attrs.get("skillcategory") or "",
-                        "excludecategory": attrs.get("excludecategory") or "",
-                        "knowledgeskills": str(attrs.get("knowledgeskills") or "").lower() == "true",
-                    },
-                    data,
-                    {},
-                )
-            if options and picked not in options:
-                warnings.append(f"{source} に {picked} は選べません")
-                continue
-            resolved.append({"name": picked, "bonus": bonus, "source": source})
-        elif fixed:
-            resolved.append({"name": fixed, "bonus": bonus, "source": source})
-    effects["weapon_skill_accuracy"] = resolved
 
 
 def _echo_by_name(name: str) -> dict[str, Any] | None:
