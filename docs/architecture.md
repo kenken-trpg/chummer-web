@@ -96,16 +96,20 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `engine/formulas.py` (stat-expression helpers), `engine/karma.py`
      (attribute / skill / knowledge cost maths + `<karmacost>` rule helpers),
      `engine/pricing.py` (post-resolve essence-multiplier / Black-Market /
-     discount / Overclocker adjustments), and the `engine/gear/` package has
-     begun: `gear/_common.py` (`_clamp_rating` / `_device_rating_of`),
-     `gear/drugs.py`, `gear/matrix.py` (cyberdecks / RCCs), `gear/armor.py`
-     (armor mods + worn-armor total). `__init__.py` is ~9.2k lines, down
-     from ~10.5k.
+     discount / Overclocker adjustments), `engine/selects.py` (enumerate the
+     picks behind a `<select*>` / `*soft` bonus node), and the `engine/gear/`
+     package: `gear/_common.py` (`_clamp_rating` / `_device_rating_of` /
+     `_capacity_value` / `_cascade_optics` / `_program_label`), `gear/drugs.py`,
+     `gear/matrix.py` (cyberdecks / RCCs), `gear/armor.py` (armor mods +
+     worn-armor total), `gear/optics.py`, `gear/sensors.py`, `gear/programs.py`,
+     `gear/apps.py`, `gear/ammo.py`. `__init__.py` is ~8.6k lines, down from
+     ~10.5k.
    - *Next, in dependency order (each = one green commit):* the rest of
-     `gear/` — optics/sensors/programs/apps, then weapons (+ accessories /
-     mounts), then vehicles/drones (the biggest cluster), then the
-     `_resolve_misc_gear` + `resolve_gear` orchestrator — then `magic/`
-     (spells, adept, spirits, foci, initiation, submersion).
+     `gear/` — weapons (`_public_weapon` + accessories + mounts + recoil +
+     category-DV / skill-accuracy + gear-weapons + ware-weapons), then
+     vehicles/drones (the biggest cluster; shares mount logic with weapons),
+     then the `_resolve_misc_gear` + `resolve_gear` orchestrator — then
+     `magic/` (spells, adept, spirits, foci, initiation, submersion).
      These `resolve_*` functions are bigger and lean on more shared helpers;
      move a `resolve_*` plus its private helpers together, put anything two
      resolvers share in `gear/_common.py`, keep `compute()` / `resolve_gear()`
