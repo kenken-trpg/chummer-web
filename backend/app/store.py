@@ -476,6 +476,8 @@ def public_catalog() -> dict:
                 "mode": w.get("mode") or "",
                 "ammo": w.get("ammo") or "",
                 "conceal": w.get("conceal") or "",
+                "range": w.get("range") or "",
+                "alt_range": w.get("alt_range") or "",
                 "mounts": list(w.get("mounts") or []),
                 "avail": w.get("avail") or "",
                 "cost": w.get("cost") or "0",
@@ -877,6 +879,7 @@ def public_catalog() -> dict:
             }
             for t in all_talent_options()
         ],
+        "weapon_ranges": raw.get("weapon_ranges") or {},
         "translations": raw["translations"],
         "ui_strings": raw["ui_strings"],
     }

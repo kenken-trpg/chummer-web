@@ -23,6 +23,7 @@ FILES = [
     "Chummer/data/gear.xml",
     "Chummer/data/armor.xml",
     "Chummer/data/weapons.xml",
+    "Chummer/data/ranges.xml",
     "Chummer/data/vehicles.xml",
     "Chummer/data/lifestyles.xml",
     "Chummer/data/mentors.xml",

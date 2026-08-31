@@ -1783,6 +1783,8 @@ def _public_weapon(
         "rc": spec.get("rc") or "",
         "ammo": spec.get("ammo") or "",
         "conceal": spec.get("conceal") or "",
+        "range": spec.get("range") or "",
+        "alt_range": spec.get("alt_range") or "",
         "mounts": list(spec.get("mounts") or []),
         "qty": qty,
         "nuyen": nuyen,

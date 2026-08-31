@@ -445,6 +445,8 @@ export interface InstalledWeapon {
   ammo: string;
   rc?: string;
   conceal?: string;
+  range?: string;
+  alt_range?: string;
   mounts?: string[];
   qty: number;
   nuyen: number;
@@ -624,6 +626,8 @@ export interface WeaponCatalogItem {
   mode: string;
   ammo: string;
   conceal?: string;
+  range?: string;
+  alt_range?: string;
   mounts?: string[];
   avail: string;
   cost: string;
@@ -631,6 +635,15 @@ export interface WeaponCatalogItem {
   page: string;
   from_gear?: boolean;
   add_gear_id?: string;
+}
+
+/** ranges.xml band formulas — literal integers or `{STR}`-scaled strings. */
+export interface WeaponRangeBands {
+  min: string;
+  short: string;
+  medium: string;
+  long: string;
+  extreme: string;
 }
 
 export interface WeaponAccessoryCatalogItem {
@@ -1679,6 +1692,7 @@ export interface Catalog {
   weapon_mounts?: WeaponMountCatalogItem[];
   apps?: ProgramCatalogItem[];
   weapon_accessories?: WeaponAccessoryCatalogItem[];
+  weapon_ranges?: Record<string, WeaponRangeBands>;
   lifestyles?: LifestyleCatalogItem[];
   lifestyle_qualities?: LifestyleQualityCatalogItem[];
   drugs?: GearCatalogItem[];

@@ -1557,6 +1557,8 @@ def load_weapons() -> list[dict[str, Any]]:
                 "conceal": _text(el.find("conceal")),
                 "avail": _text(el.find("avail")),
                 "cost": cost,
+                "range": _text(el.find("range")) or None,
+                "alt_range": _text(el.find("alternaterange")) or None,
                 "mounts": [_text(m) for m in el.findall("./accessorymounts/mount") if _text(m)],
                 "included": [_text(a.find("name")) for a in el.findall("./accessories/accessory") if _text(a.find("name"))],
                 "hidden": hidden,
@@ -1567,6 +1569,28 @@ def load_weapons() -> list[dict[str, Any]]:
             }
         )
     return items
+
+
+_RANGE_BANDS = ("min", "short", "medium", "long", "extreme")
+
+
+def load_weapon_ranges() -> dict[str, dict[str, str]]:
+    """ranges.xml → {range name: {min/short/medium/long/extreme: formula}}.
+
+    Formulas are kept as raw strings; firearm bands are literal integers,
+    Strength-scaled bands (bows, thrown) use ``{STR}`` (e.g. ``{STR}*10``).
+    """
+    path = DATA_DIR / "ranges.xml"
+    if not path.exists():
+        return {}
+    root = ET.parse(path).getroot()
+    out: dict[str, dict[str, str]] = {}
+    for el in root.findall("./ranges/range"):
+        name = _text(el.find("name"))
+        if not name:
+            continue
+        out[name] = {band: _text(el.find(band), "0") for band in _RANGE_BANDS}
+    return out
 
 
 def _weapon_constraints(el: ET.Element | None) -> dict[str, Any]:
@@ -2726,6 +2750,7 @@ def catalog() -> dict[str, Any]:
         "armor": load_armor(),
         "armor_mods": load_armor_mods(),
         "weapons": weapons,
+        "weapon_ranges": load_weapon_ranges(),
         "weapon_accessories": load_weapon_accessories(),
         "commlinks": load_commlinks(),
         "cyberdecks": load_cyberdecks(),

@@ -3858,6 +3858,26 @@ def test_throwing_knife_gear_is_weapon() -> None:
     assert "({STR}+1)P" in row["damage"]
 
 
+def test_weapon_range_table_loads_from_ranges_xml() -> None:
+    table = catalog()["weapon_ranges"]
+    # firearm bands are literal integers …
+    assert table["Heavy Pistols"] == {
+        "min": "0", "short": "5", "medium": "20", "long": "40", "extreme": "60",
+    }
+    # … Strength-scaled bands keep the {STR} formula for the client to resolve
+    assert table["Bows"]["long"] == "{STR}*30"
+    assert table["Standard Grenade"]["short"] == "{STR}*2"
+
+
+def test_weapon_rows_carry_range_name() -> None:
+    out = compute(_mundane("range-name", weapons=[WeaponInstall(weapon_id=PREDATOR)]))
+    row = out.derived["weapons"][0]
+    # no explicit <range> on the Predator — the sheet falls back to category
+    assert row["range"] == "" and row["alt_range"] == ""
+    assert row["category"] == "Heavy Pistols"
+    assert row["category"] in catalog()["weapon_ranges"]
+
+
 def test_minigrenade_loads_into_launcher() -> None:
     launcher = WeaponInstall(weapon_id=ANTIOCH)
     he = GearInstall(gear_id=MINI_HE, parent_id=launcher.id)

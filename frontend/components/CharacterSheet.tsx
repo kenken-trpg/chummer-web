@@ -1,33 +1,44 @@
 import { Fragment, type ReactNode } from "react";
-import type { Catalog, Character, SpecialArmor } from "@/lib/types";
+import type { Catalog, Character, SpecialArmor, WeaponRangeBands } from "@/lib/types";
 import { attrShort, makeT, type TFn } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import { cfDuration, cfTarget } from "@/lib/character/format";
 
 const ATTRS = ["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA", "EDG", "MAG", "RES"] as const;
 
-// SR5 core p.181 — fixed range bands (metres, max of each band) by firearm
-// category. Modifiers: 至近 ±0 / 近 −1 / 中 −3 / 遠 −6. Strength-scaled
-// categories (bows, thrown) are deliberately omitted rather than guessed.
-const WEAPON_RANGES: Record<string, [number, number, number, number]> = {
-  Tasers: [5, 10, 15, 20],
-  Holdouts: [5, 15, 30, 50],
-  "Light Pistols": [5, 15, 30, 50],
-  "Heavy Pistols": [5, 20, 40, 60],
-  "Machine Pistols": [5, 15, 30, 50],
-  "Submachine Guns": [10, 40, 80, 150],
-  "Assault Rifles": [25, 150, 350, 550],
-  Carbines: [25, 150, 350, 550],
-  Shotguns: [10, 40, 80, 150],
-  "Sniper Rifles": [50, 350, 800, 1500],
-  "Sporting Rifles": [50, 250, 500, 750],
-  "Light Machine Guns": [25, 200, 400, 800],
-  "Medium Machine Guns": [40, 250, 750, 1200],
-  "Heavy Machine Guns": [40, 250, 750, 1200],
-  "Assault Cannons": [50, 300, 750, 1500],
-  "Grenade Launchers": [50, 100, 150, 500],
-  "Missile Launchers": [70, 150, 450, 1500],
+// Weapon categories in weapons.xml with no direct entry in ranges.xml.
+const RANGE_CAT_ALIAS: Record<string, string> = {
+  "Heavy Machine Guns": "Medium/Heavy Machinegun",
+  "Medium Machine Guns": "Medium/Heavy Machinegun",
 };
+
+/** ranges.xml range name for a weapon: explicit <range>, else category. */
+function rangeNameFor(w: { range?: string; category?: string }) {
+  return (w.range || "").trim() || RANGE_CAT_ALIAS[w.category || ""] || (w.category || "");
+}
+
+/** Evaluate a ranges.xml band formula ("5", "{STR}*10", "{STR}/2", "-1"). */
+function evalRangeBand(formula: string | undefined, str: number): number | null {
+  const f = (formula || "").trim();
+  if (!f || f === "-1") return null;
+  const m = f.replace(/\{STR\}/gi, String(str)).match(/^(\d+(?:\.\d+)?)(?:\s*([*/])\s*(\d+(?:\.\d+)?))?$/);
+  if (!m) return null;
+  let v = parseFloat(m[1]);
+  if (m[2] === "*") v *= parseFloat(m[3]);
+  else if (m[2] === "/") v /= parseFloat(m[3]);
+  return Math.floor(v);
+}
+
+/** The four "min–max metre" band strings for a resolved range table entry. */
+function rangeRow(bands: WeaponRangeBands, str: number): string[] {
+  const nums = [bands.short, bands.medium, bands.long, bands.extreme].map((b) => evalRangeBand(b, str));
+  const lows = [evalRangeBand(bands.min, str) ?? 0, nums[0], nums[1], nums[2]];
+  return nums.map((hi, i) => {
+    if (hi == null) return "–";
+    const lo = (lows[i] ?? 0) + (i === 0 ? 0 : 1);
+    return `${lo}–${hi}`;
+  });
+}
 
 function lifeIncrement(inc?: string) {
   return inc === "day" ? "日" : "ヶ月";
@@ -560,19 +571,22 @@ export default function CharacterSheet({
               </tbody>
             </table>
             {(() => {
-              const cats = Array.from(
-                new Set(
-                  weapons
-                    .filter((w) => (w.type || "") !== "Melee" && WEAPON_RANGES[w.category || ""])
-                    .map((w) => w.category as string),
-                ),
-              );
-              if (!cats.length) return null;
+              const table = catalog.weapon_ranges || {};
+              const str = totals.STR || 0;
+              const names: string[] = [];
+              for (const w of weapons) {
+                if ((w.type || "") === "Melee") continue;
+                for (const n of [rangeNameFor(w), (w.alt_range || "").trim()]) {
+                  if (n && table[n] && !names.includes(n)) names.push(n);
+                }
+              }
+              if (!names.length) return null;
+              const strScaled = names.some((n) => /\{STR\}/i.test(JSON.stringify(table[n])));
               return (
                 <table className="sheet-table sheet-table--range">
                   <thead>
                     <tr>
-                      <th>レンジ (m)</th>
+                      <th>レンジ (m){strScaled ? `・筋力 ${str}` : ""}</th>
                       <th>至近 ±0</th>
                       <th>近 −1</th>
                       <th>中 −3</th>
@@ -580,15 +594,14 @@ export default function CharacterSheet({
                     </tr>
                   </thead>
                   <tbody>
-                    {cats.map((cat) => {
-                      const r = WEAPON_RANGES[cat];
+                    {names.map((name) => {
+                      const cells = rangeRow(table[name], str);
                       return (
-                        <tr key={cat}>
-                          <td className="left">{tr(cat)}</td>
-                          <td>0–{r[0]}</td>
-                          <td>{r[0] + 1}–{r[1]}</td>
-                          <td>{r[1] + 1}–{r[2]}</td>
-                          <td>{r[2] + 1}–{r[3]}</td>
+                        <tr key={name}>
+                          <td className="left">{tr(name)}</td>
+                          {cells.map((c, i) => (
+                            <td key={i}>{c}</td>
+                          ))}
                         </tr>
                       );
                     })}
