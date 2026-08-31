@@ -11,6 +11,12 @@ never back into ``app.engine`` itself — so the import graph stays a DAG.
 from __future__ import annotations
 
 from ._common import _clamp_rating, _device_rating_of
+from .armor import (
+    _recompute_worn_armor,
+    _resolve_armor_mods,
+    armor_mod_fits,
+    armor_plugin_capacity,
+)
 from .drugs import (
     _DRUG_CATEGORIES,
     _drug_effect_nodes,
@@ -27,6 +33,10 @@ __all__ = [
     "_format_drug_duration",
     "_matrix_stats",
     "_normalize_array_order",
+    "_recompute_worn_armor",
+    "_resolve_armor_mods",
     "_resolve_matrix_devices",
     "apply_active_drugs",
+    "armor_mod_fits",
+    "armor_plugin_capacity",
 ]
