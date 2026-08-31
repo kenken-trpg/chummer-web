@@ -170,8 +170,11 @@ export default function Page() {
   }
   const undoRef = useRef(undo);
   const redoRef = useRef(redo);
-  undoRef.current = undo;
-  redoRef.current = redo;
+  // Keep the "latest" refs current without touching them during render.
+  useEffect(() => {
+    undoRef.current = undo;
+    redoRef.current = redo;
+  });
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
