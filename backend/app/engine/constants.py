@@ -127,3 +127,17 @@ SPIRIT_ROLE_LABELS = {
     "manipulation": "操作",
     "extra": "追加",
 }
+
+
+# quality_extras dict keys for quality bonuses that need a player pick beyond the
+# quality id itself (a contact, a spirit category, an indexed addspirit slot).
+def quality_contact_extra_key(quality_id: str) -> str:
+    return f"{quality_id}{QUALITY_CONTACT_EXTRA_SUFFIX}"
+
+
+def quality_spirit_category_extra_key(quality_id: str) -> str:
+    return f"{quality_id}{QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX}"
+
+
+def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
+    return f"{quality_id}{QUALITY_ADDSPIRIT_EXTRA_MARKER}{int(index)}"

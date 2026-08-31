@@ -107,6 +107,9 @@ from .constants import (
     SUM_TO_TEN_BUDGET,
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
+    quality_addspirit_extra_key,
+    quality_contact_extra_key,
+    quality_spirit_category_extra_key,
 )
 
 
@@ -408,18 +411,6 @@ def sync_reward_totals(state: CharacterState) -> None:
     if cleaned:
         state.karma_earned = sum(int(row.karma or 0) for row in cleaned)
         state.nuyen_earned = sum(int(row.nuyen or 0) for row in cleaned)
-
-
-def quality_contact_extra_key(quality_id: str) -> str:
-    return f"{quality_id}{QUALITY_CONTACT_EXTRA_SUFFIX}"
-
-
-def quality_spirit_category_extra_key(quality_id: str) -> str:
-    return f"{quality_id}{QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX}"
-
-
-def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
-    return f"{quality_id}{QUALITY_ADDSPIRIT_EXTRA_MARKER}{int(index)}"
 
 
 def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
