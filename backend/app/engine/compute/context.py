@@ -13,6 +13,22 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ...models import CharacterState
+from ..bundle_types import (
+    ContactsBundle,
+    InitiationBundle,
+    MartialBundle,
+    MovementBundle,
+    SkillMods,
+    SkillPicks,
+    SubmersionBundle,
+    empty_contacts,
+    empty_initiation,
+    empty_martial,
+    empty_movement,
+    empty_skill_mods,
+    empty_skill_picks,
+    empty_submersion,
+)
 
 
 @dataclass
@@ -61,8 +77,8 @@ class Ctx:
     ratings: dict[str, int] = field(default_factory=dict)
 
     # --- magic (initiation / submersion / foci / adept) --------------------
-    initiation: dict[str, Any] = field(default_factory=dict)
-    submersion: dict[str, Any] = field(default_factory=dict)
+    initiation: InitiationBundle = field(default_factory=empty_initiation)
+    submersion: SubmersionBundle = field(default_factory=empty_submersion)
     qi: dict[str, Any] = field(default_factory=dict)
     foci: dict[str, Any] = field(default_factory=dict)
     focus_limits: dict[str, Any] = field(default_factory=dict)
@@ -107,12 +123,12 @@ class Ctx:
     # --- skills ---------------------------------------------------------
     skill_spent: int = 0
     skill_totals: dict[str, int] = field(default_factory=dict)
-    skill_picks: dict[str, Any] = field(default_factory=dict)
+    skill_picks: SkillPicks = field(default_factory=empty_skill_picks)
     exotic: dict[str, Any] = field(default_factory=dict)
     knowledge: dict[str, Any] = field(default_factory=dict)
     know_spent: int = 0
     know_max: int = 0
-    skill_mods: dict[str, Any] = field(default_factory=dict)
+    skill_mods: SkillMods = field(default_factory=empty_skill_mods)
     skillsofts: dict[str, Any] = field(default_factory=dict)
     expertises: list[dict[str, Any]] = field(default_factory=list)
     specs: dict[str, Any] = field(default_factory=dict)
@@ -135,8 +151,8 @@ class Ctx:
     karma_left: int = 0
 
     # --- social ----------------------------------------------------------
-    contacts: dict[str, Any] = field(default_factory=dict)
-    martial: dict[str, Any] = field(default_factory=dict)
+    contacts: ContactsBundle = field(default_factory=empty_contacts)
+    martial: MartialBundle = field(default_factory=empty_martial)
     karma_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     nuyen_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     quality_notoriety: int = 0
@@ -152,7 +168,7 @@ class Ctx:
     cm_stun: int = 0
     initiative: int = 0
     initiative_dice: int = 0
-    movement: dict[str, Any] = field(default_factory=dict)
+    movement: MovementBundle = field(default_factory=empty_movement)
 
     # --- quality rules ----------------------------------------------------
     quality_report: dict[str, Any] = field(default_factory=dict)

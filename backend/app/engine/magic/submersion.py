@@ -14,6 +14,7 @@ import math
 from typing import Any
 
 from ...models import CharacterState, SubmersionChoice
+from ..bundle_types import SubmersionBundle
 from ..constants import RES_TALENTS, SUBMERSION_KARMA_FLAT, SUBMERSION_KARMA_PER_GRADE
 from ..lookups import _echo_by_id
 from ._common import _magic_grade_discount
@@ -46,9 +47,9 @@ def resolve_submersion(
     res: int,
     quality_names: set[str],
     errors: list[str],
-) -> dict[str, Any]:
+) -> SubmersionBundle:
     warnings: list[str] = []
-    empty = {
+    empty: SubmersionBundle = {
         "warnings": warnings,
         "grade": 0,
         "karma": 0,

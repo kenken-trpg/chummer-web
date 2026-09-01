@@ -15,6 +15,7 @@ from typing import Any
 
 from ..data_loader import catalog
 from ..models import CharacterState, MartialArtInstall
+from .bundle_types import MartialBundle
 from .constants import (
     MARTIAL_ART_CHARGEN_STYLE_MAX,
     MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
@@ -123,7 +124,7 @@ def resolve_martial_arts(
     errors: list[str],
     *,
     career: bool = False,
-) -> dict[str, Any]:
+) -> MartialBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[MartialArtInstall] = []

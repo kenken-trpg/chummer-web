@@ -15,6 +15,7 @@ import math
 from typing import Any
 
 from ...models import CharacterState, InitiationChoice
+from ..bundle_types import InitiationBundle
 from ..constants import INITIATION_KARMA_FLAT, INITIATION_KARMA_PER_GRADE, MAG_TALENTS
 from ..lookups import _magic_art_by_id, _metamagic_by_id, _metamagic_by_name
 from ..requirements import requirement_tree_met
@@ -23,7 +24,7 @@ from ._common import _magic_grade_discount
 
 def apply_free_metamagics(
     effects: dict[str, Any],
-    initiation: dict[str, Any],
+    initiation: InitiationBundle,
     talent_name: str,
     warnings: list[str],
 ) -> None:
@@ -103,9 +104,9 @@ def resolve_initiation(
     mag: int,
     quality_names: set[str],
     errors: list[str],
-) -> dict[str, Any]:
+) -> InitiationBundle:
     warnings: list[str] = []
-    empty = {
+    empty: InitiationBundle = {
         "warnings": warnings,
         "grade": 0,
         "karma": 0,

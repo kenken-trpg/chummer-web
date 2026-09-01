@@ -17,6 +17,7 @@ from typing import Any
 
 from ..data_loader import catalog
 from ..models import CharacterState, ContactInstall
+from .bundle_types import ContactsBundle
 from .constants import (
     CONTACT_CHARGEN_COST_MAX,
     CONTACT_FREE_MULT,
@@ -153,7 +154,7 @@ def resolve_contacts(
     contact_karma_adj: int = 0,
     contact_karma_min: int = 0,
     excon: bool = False,
-) -> dict[str, Any]:
+) -> ContactsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []

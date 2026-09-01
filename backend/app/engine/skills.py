@@ -13,6 +13,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..improvements import _as_int, substitute_rating
 from ..models import CharacterState, ExoticSkillInstall
+from .bundle_types import SkillMods, SkillPicks
 from .constants import EXPERTISE_BONUS
 from .lookups import _quality_by_id, _ware_by_id
 from .selects import _skillsoft_kind, parse_selectskill_spec, selectskill_options, skillsoft_options
@@ -286,7 +287,7 @@ def resolve_exotic_skills(
     }
 
 
-def _copy_exotic_skill_bonuses(skill_mods: dict[str, Any], public: list[dict[str, Any]]) -> None:
+def _copy_exotic_skill_bonuses(skill_mods: SkillMods, public: list[dict[str, Any]]) -> None:
     bonus_map: dict[str, int] = skill_mods.setdefault("skill_bonus", {})
     notes_map: dict[str, list[str]] = skill_mods.setdefault("skill_bonus_notes", {})
     for row in public:
@@ -313,7 +314,7 @@ def resolve_skill_mods(
     effects: dict[str, Any],
     knowledge_ratings: dict[str, int],
     extra_categories: dict[str, str] | None = None,
-) -> dict[str, Any]:
+) -> SkillMods:
     active = list(skills_data.get("skills") or [])
     knowledge = list(skills_data.get("knowledge") or [])
     catalog_names = {skill["name"] for skill in knowledge}
@@ -517,7 +518,7 @@ def resolve_skill_picks(
     state: CharacterState,
     skills_data: dict[str, Any],
     skill_totals: dict[str, int],
-) -> dict[str, Any]:
+) -> SkillPicks:
     slots: list[dict[str, Any]] = []
     warnings: list[str] = []
     skill_max: dict[str, int] = {}

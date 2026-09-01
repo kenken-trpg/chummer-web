@@ -16,6 +16,7 @@ from typing import Any
 
 from ..data_loader import MATRIX_ATTRIBUTES, eval_formula
 from ..models import CharacterState, ComplexFormInstall, SpriteInstall
+from .bundle_types import SubmersionBundle
 from .constants import COMPLEX_FORM_KARMA, COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
 from .dice import magic_opposed_test, skill_dice_pool
 from .lookups import _complex_form_by_id, _default_stream, _echo_by_name, _sprite_by_id, _stream_by_id
@@ -63,7 +64,7 @@ def _cyberadept_res_penalty_reduction(
 
 def apply_granted_echoes(
     effects: dict[str, Any],
-    submersion: dict[str, Any],
+    submersion: SubmersionBundle,
     qualities: list[dict[str, Any]],
     warnings: list[str],
 ) -> None:
