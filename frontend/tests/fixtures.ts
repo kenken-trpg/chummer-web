@@ -21,6 +21,7 @@ function makeDerived(overrides: Partial<Derived> = {}): Derived {
       attributes: { used: 0, max: 0 },
       special: { used: 0, max: 0 },
       skills: { used: 0, max: 0 },
+      skill_groups: { used: 0, max: 0 },
       knowledge: { used: 0, max: 0 },
     },
     skill_totals: {},
