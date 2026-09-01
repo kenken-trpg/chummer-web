@@ -544,28 +544,28 @@ def resolve_gear(
     errors: list[str] = []
 
     kept_armor: list[ArmorInstall] = []
-    for inst in state.armor:
-        spec = _item_by_id("armor", inst.armor_id)
+    for armor_inst in state.armor:
+        spec = _item_by_id("armor", armor_inst.armor_id)
         if not spec:
             continue
-        rating = _clamp_rating(spec, inst.rating)
-        inst.rating = rating
-        inst.equipped = bool(inst.equipped)
-        inst.wireless = bool(inst.wireless)
+        rating = _clamp_rating(spec, armor_inst.rating)
+        armor_inst.rating = rating
+        armor_inst.equipped = bool(armor_inst.equipped)
+        armor_inst.wireless = bool(armor_inst.wireless)
         has_wireless = bool(spec.get("wirelessbonus"))
         cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
-        if inst.equipped:
+        if armor_inst.equipped:
             nodes = substitute_rating(list(spec.get("bonus") or []), rating)
-            if has_wireless and inst.wireless:
+            if has_wireless and armor_inst.wireless:
                 nodes = nodes + substitute_rating(list(spec.get("wirelessbonus") or []), rating)
             if nodes:
                 bonus_sources.append((spec["name"], nodes))
-        kept_armor.append(inst)
+        kept_armor.append(armor_inst)
         armor_items.append(
             {
-                "id": inst.id,
+                "id": armor_inst.id,
                 "armor_id": spec["id"],
                 "name": spec["name"],
                 "category": spec.get("category") or "Armor",
@@ -574,8 +574,8 @@ def resolve_gear(
                 "additive": additive,
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
-                "equipped": inst.equipped,
-                "wireless": inst.wireless,
+                "equipped": armor_inst.equipped,
+                "wireless": armor_inst.wireless,
                 "has_wireless": has_wireless,
                 "nuyen": cost,
                 "avail": spec.get("avail") or "",
@@ -599,23 +599,23 @@ def resolve_gear(
     warnings.extend(worn_warns)
 
     kept_weapons: list[WeaponInstall] = []
-    for inst in state.weapons:
-        spec = _item_by_id("weapons", inst.weapon_id)
+    for weapon_inst in state.weapons:
+        spec = _item_by_id("weapons", weapon_inst.weapon_id)
         if not spec:
             continue
-        qty = max(1, int(inst.qty or 1))
-        inst.qty = qty
+        qty = max(1, int(weapon_inst.qty or 1))
+        weapon_inst.qty = qty
         unit = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
         cost = unit * qty
         nuyen += cost
-        kept_weapons.append(inst)
+        kept_weapons.append(weapon_inst)
         weapons.append(
             _public_weapon(
                 spec,
-                inst_id=inst.id,
+                inst_id=weapon_inst.id,
                 qty=qty,
                 nuyen=cost,
-                loaded_ammo_id=inst.loaded_ammo_id,
+                loaded_ammo_id=weapon_inst.loaded_ammo_id,
             )
         )
     state.weapons = kept_weapons
@@ -623,27 +623,27 @@ def resolve_gear(
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
         state, weapons, special_modification_limit=special_modification_limit
     )
-    recoil_info = _apply_recoil_totals(weapons, attr_totals)
+    recoil_info = _apply_recoil_totals(weapons, attr_totals or {})
     nuyen += acc_nuyen
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
 
     kept_links: list[CommlinkInstall] = []
-    for inst in state.commlinks:
-        spec = _item_by_id("commlinks", inst.gear_id)
+    for link_inst in state.commlinks:
+        spec = _item_by_id("commlinks", link_inst.gear_id)
         if not spec:
             continue
-        rating = _clamp_rating(spec, inst.rating)
-        inst.rating = rating
+        rating = _clamp_rating(spec, link_inst.rating)
+        link_inst.rating = rating
         cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
         processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
         firewall = int(eval_formula(str(spec.get("firewall") or "0"), rating, 0))
-        kept_links.append(inst)
+        kept_links.append(link_inst)
         commlinks.append(
             {
-                "id": inst.id,
+                "id": link_inst.id,
                 "gear_id": spec["id"],
                 "name": spec["name"],
                 "category": spec.get("category") or "Commlinks",
@@ -1069,7 +1069,9 @@ def compute(state: CharacterState) -> CharacterState:
 
     bonus = effects["attribute_bonus"]
     total = {k: ratings[k] + int(bonus.get(k, 0)) for k in ratings}
-    total["ESS"] = ess
+    # ESS is fractional; the attribute-total consumers only ever read integer
+    # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
+    total["ESS"] = ess  # type: ignore[assignment]
     limb_replace = limb_attribute_replace(cyber_installed, int(total["STR"]), int(total["AGI"]), attrs_spec)
     if limb_replace:
         total["STR"] = int(limb_replace["str"])
