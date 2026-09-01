@@ -81,3 +81,22 @@ float-in-`dict[str,int]` tension was resolved with one targeted
 
 Every fix is a rename or a signature widen — no runtime behaviour change,
 snapshot byte-identical throughout.
+
+### Tightening since (module-by-module strict override)
+
+The base ruleset stays lenient; a per-module `[[tool.mypy.overrides]]`
+(`check_untyped_defs` / `disallow_untyped_defs` / `disallow_incomplete_defs`
+/ `warn_return_any`) grows as modules reach that bar:
+
+- `app.engine.compute.*` + `app.engine.bundle_types` — the phased `compute()`
+  package (landed with the phase split / Ctx-bundle typing).
+- `app.improvements` + `app.improvements.*` — the `<bonus>` → `effects`
+  pipeline, after `effects` became `EffectsDict` and its rows got
+  `effect_rows.py` TypedDicts.
+- engine leaf modules `constants` / `formulas` / `karma` / `priority` /
+  `selects` / `skills` / `contacts` / `limits` / `martial_arts` / `dice` /
+  `requirements` — self-contained, already clean bar three trivial
+  `no-any-return`s in the catalog-scan helpers (fixed in the same batch).
+
+Next candidate: `engine/lookups.py` (~28 `no-any-return`s, same
+`for row in catalog()[...]: return row` shape).

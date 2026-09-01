@@ -282,10 +282,14 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `disallow_untyped_defs`, `disallow_incomplete_defs` and
      `warn_return_any`. Members: `app.engine.compute.*` +
      `app.engine.bundle_types` (the phased `compute()` package is fully
-     annotated — `phase(ctx: Ctx) -> None`, `TypedDict` bundles), and
+     annotated — `phase(ctx: Ctx) -> None`, `TypedDict` bundles),
      `app.improvements.*` (the `<bonus>` → `effects` pipeline, joined once
-     `effects` became `EffectsDict`). Grow the list as other modules are
-     cleaned to that bar.
+     `effects` became `EffectsDict`), and the self-contained engine leaf
+     modules `constants` / `formulas` / `karma` / `priority` / `selects` /
+     `skills` / `contacts` / `limits` / `martial_arts` / `dice` /
+     `requirements`. Grow the list as other modules are cleaned to that bar
+     (`engine/lookups.py` is the next candidate — ~28 `no-any-return`s in
+     its catalog scans).
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`
