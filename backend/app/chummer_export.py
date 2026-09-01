@@ -203,6 +203,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
                 _sub(w, "rating", r.rating)
                 if r.side:
                     _sub(w, "location", r.side)
+                if getattr(r, "included", False):
+                    _sub(w, "included", "True")
                 kids = by_parent.get(r.id)
                 if kids:
                     emit(_sub(w, "children"), kids)
@@ -227,6 +229,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(mm, "sourceid", mrow.mod_id)
             _sub(mm, "name", names["armormod"].get(mrow.mod_id, ""))
             _sub(mm, "rating", mrow.rating)
+            _sub(mm, "included", "True" if mrow.included else "False")
 
     weapons = _sub(root, "weapons")
     wacc_by_parent: dict[str | None, list[Any]] = {}
@@ -243,6 +246,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(ac, "sourceid", arow.accessory_id)
             _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
             _sub(ac, "mount", arow.mount)
+            _sub(ac, "included", "True" if arow.included else "False")
 
     gears = _sub(root, "gears")
     gear_rows = [
@@ -267,6 +271,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(el, "name", names["gear"].get(gid, ""))
             _sub(el, "rating", getattr(g, "rating", 1))
             _sub(el, "qty", getattr(g, "qty", 1))
+            if getattr(g, "parent_id", None):
+                _sub(el, "included", "True" if getattr(g, "included", False) else "False")
             kids = by_parent_g.get(g.id)
             if kids:
                 emit_gear(_sub(el, "children"), kids)
@@ -287,6 +293,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(mm, "sourceid", vrow.mod_id)
             _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
             _sub(mm, "rating", vrow.rating)
+            _sub(mm, "included", "True" if vrow.included else "False")
 
     ls = _sub(root, "lifestyles")
     for lrow in state.lifestyles:
