@@ -269,6 +269,7 @@ export interface InstalledWeapon {
   mounted_on?: string;
   mounted_label?: string;
   focus_dice?: number;
+  category_dice?: number;
   avail?: string;
   source?: string;
 }

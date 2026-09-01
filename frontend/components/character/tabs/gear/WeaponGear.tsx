@@ -47,6 +47,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                   {item.limb_str != null ? ` / 肢 STR ${item.limb_str}` : ""}
                   {item.useskill ? ` / ${item.useskill}` : ""}
                   {item.focus_dice ? ` / フォーカス+${item.focus_dice}` : ""}
+                  {item.category_dice ? ` / カテゴリ+${item.category_dice}` : ""}
                   {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
                 </div>
                 {fromWare ? null : (

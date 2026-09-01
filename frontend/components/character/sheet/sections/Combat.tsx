@@ -58,6 +58,7 @@ export function CombatSection(s: SheetData) {
                 const sub = [
                   (item.accessories || []).map((a) => tr(a.name)).join("、"),
                   (item.focus_dice || 0) > 0 ? `武器フォーカス +${item.focus_dice}d` : "",
+                  (item.category_dice || 0) > 0 ? `カテゴリ +${item.category_dice}d` : "",
                   item.mounted_label ? `搭載: ${tr(item.mounted_label)}` : "",
                 ]
                   .filter(Boolean)
