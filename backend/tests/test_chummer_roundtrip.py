@@ -434,3 +434,53 @@ def test_samurai_roundtrip_is_a_fixed_point() -> None:
     assert ch1.derived["essence"] < 6
     assert len(ch1.derived["weapons"]) >= 2
     assert ch1.derived["totals"]["AGI"] >= 6
+
+
+# --------------------------------------------------------------------------- #
+# Scenario B — full mage: spells / tradition / mentor / initiation             #
+# --------------------------------------------------------------------------- #
+
+_MAGE_XML = build_chum5(
+    name="Sable",
+    metatype="Elf",
+    talent="Magician",
+    priorities=("C", "B", "A", "D", "E"),
+    attributes={"BOD": 2, "AGI": 3, "REA": 3, "STR": 2, "CHA": 4, "INT": 4, "LOG": 5, "WIL": 5, "MAG": 6},
+    skills={"Spellcasting": 6, "Counterspelling": 4, "Summoning": 3},
+    skill_specs={"Spellcasting": "Combat"},
+    knowledge=[{"name": "Sperethiel", "type": "Language", "native": True}],
+    qualities=["Focused Concentration"],
+    spells=["Manabolt", "Heal", "Increase Reflexes"],
+    tradition="Hermetic",
+    mentor="Bear",
+    initiation=[
+        {"grade": 1, "ordeal": True, "metamagic": "Centering"},
+        {"grade": 2, "group": True, "metamagic": "Masking"},
+    ],
+    lifestyles=[{"name": "Low", "months": 4}],
+)
+
+
+def test_mage_magic_sections_import() -> None:
+    s1, ch1, _ = _loop(_MAGE_XML)
+    assert s1["talent"] == "Magician"
+    assert s1["attributes"]["MAG"] == 6
+    assert len(s1["spells"]) == 3
+    assert s1["tradition_id"] and s1["mentor_id"]
+    assert s1["initiate_grade"] == 2
+    assert len(s1["initiations"]) == 2
+    assert [row["option_id"] for row in s1["initiations"]] == [
+        s1["initiations"][0]["option_id"],
+        s1["initiations"][1]["option_id"],
+    ]
+    assert all(row["option_id"] for row in s1["initiations"])  # both metamagics resolved
+    assert s1["initiations"][0]["ordeal"] is True
+    assert s1["initiations"][1]["group"] is True
+    assert "magic" in ch1.derived["enabled_tabs"] or ch1.derived["initiate_grade"] == 2
+
+
+def test_mage_roundtrip_is_a_fixed_point() -> None:
+    _, ch1, ch2 = _loop(_MAGE_XML)
+    assert ch1.derived["initiate_grade"] == ch2.derived["initiate_grade"] == 2
+    assert len(ch1.derived["spells"]) == 3
+    assert ch1.derived["tradition"] == ch2.derived["tradition"]

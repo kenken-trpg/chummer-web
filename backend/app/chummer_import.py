@@ -132,7 +132,8 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     except ET.ParseError as exc:
         raise ValueError(f"XML を解析できませんでした: {exc}") from exc
     if root.tag != "character":
-        root = root.find("character") or root
+        nested = root.find("character")
+        root = nested if nested is not None else root
     if root.tag != "character":
         raise ValueError("Chummer のキャラクターファイルではないようです（<character> が見つかりません）")
 
@@ -303,7 +304,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         if tid:
             st["tradition_id"] = tid
 
-    men = root.find("mentorspirit") or root.find("./mentorspirits/mentorspirit")
+    men = root.find("mentorspirit")
+    if men is None:
+        men = root.find("./mentorspirits/mentorspirit")
     if men is not None:
         mid = _Resolver(cat["mentors"]).resolve(men, warn, "メンター")
         if mid:
