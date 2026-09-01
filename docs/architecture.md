@@ -208,7 +208,11 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      carries `resolve_movement`), `assemble.py` (the ~195-key `state.derived`
      dict literal, carries `_effective_attr_spec`). `compute/__init__.py` is
      ~60 lines: build one `Ctx`, run the phases, return `ctx.state`. No
-     behaviour change — `tests/test_snapshot.py` guards byte-identical output.
+     behaviour change — `tests/test_snapshot.py` guards byte-identical output
+     and `tests/test_compute_phases.py` pins the *seams*: it drives the same
+     phase sequence by hand, asserts the `ctx` slice each phase owns after it
+     runs, and holds `PHASES` in lock-step with `compute()` (order guard +
+     manual-run-equals-`compute()` guard + no-orphan-`Ctx`-field guard).
      `store.py` / tests still `from app.engine import compute,
      snapshot_career_baseline, default_attributes` unchanged.
 2. **Split `app/improvements.py`** (the `<bonus>` → `effects` pipeline) —
