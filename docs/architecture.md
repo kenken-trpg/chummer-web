@@ -276,16 +276,16 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    `make check` / CI (`ci.yml` dropped `continue-on-error`).
    - *Tightening, module by module:* the base ruleset stays lenient
      (`check_untyped_defs = false`); stricter bars go in per-module
-     `[[tool.mypy.overrides]]`. First entry: `app.engine.compute.*` +
-     `app.engine.bundle_types` run with `check_untyped_defs`,
+     `[[tool.mypy.overrides]]`, run with `check_untyped_defs`,
      `disallow_untyped_defs`, `disallow_incomplete_defs` and
-     `warn_return_any` — the phased `compute()` package is fully annotated
-     (`phase(ctx: Ctx) -> None`, `TypedDict` bundles), so it holds the line
-     for free. Grow the list as other modules are cleaned to that bar.
+     `warn_return_any`. Members: `app.engine.compute.*` +
+     `app.engine.bundle_types` (the phased `compute()` package is fully
+     annotated — `phase(ctx: Ctx) -> None`, `TypedDict` bundles), and
+     `app.improvements.*` (the `<bonus>` → `effects` pipeline, joined once
+     `effects` became `EffectsDict`). Grow the list as other modules are
+     cleaned to that bar.
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`
      accumulator, as `improvements.EffectsDict` (next to `empty_effects()`).
      A mistyped key or wrong value type at a phase seam is a `mypy` error.
-     `app.improvements.*` is a candidate for the strict override now the
-     package is clean to that bar.

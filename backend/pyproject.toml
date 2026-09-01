@@ -52,10 +52,18 @@ warn_redundant_casts = true
 # app/engine/compute/ is the phased compute() package: every phase is
 # `phase(ctx: Ctx) -> None`, the Ctx bundles are TypedDicts and
 # tests/test_compute_phases.py pins the seams — so it holds a stricter bar
-# than the rest of the (still-lenient) engine. Grow this list module by
-# module as each one is tightened.
+# than the rest of the (still-lenient) engine. app/improvements/ (the
+# <bonus> -> effects pipeline) joined once `effects` became EffectsDict and
+# the package was clean to this bar. Grow this list module by module as each
+# one is tightened.
 [[tool.mypy.overrides]]
-module = ["app.engine.compute", "app.engine.compute.*", "app.engine.bundle_types"]
+module = [
+    "app.engine.compute",
+    "app.engine.compute.*",
+    "app.engine.bundle_types",
+    "app.improvements",
+    "app.improvements.*",
+]
 check_untyped_defs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

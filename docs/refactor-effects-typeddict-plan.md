@@ -113,8 +113,10 @@ the other bundles). `Ctx.effects: EffectsDict = field(default_factory=empty_effe
   catch.
 - If a genuine bug surfaces (a real key typo, a wrong-typed default), fix it
   in its own commit with a note, don't fold it into the mechanical sweep.
-- Consider adding `app.improvements.*` to the strict `mypy` override once
-  this lands and the package is clean to that bar.
+- ~~Consider adding `app.improvements.*` to the strict `mypy` override once
+  this lands and the package is clean to that bar.~~ Done — the package was
+  already clean to the bar; it's in the override next to
+  `app.engine.compute.*`.
 
 ## Verification per commit
 
@@ -159,3 +161,8 @@ cd backend && ./.venv/bin/python -m pytest -q && ./.venv/bin/ruff check . \
 
 No behaviour change — 549 backend tests green, `tests/snapshots/*.json`
 byte-identical, `ruff` + `mypy` clean.
+
+Follow-up: `app.improvements` / `app.improvements.*` added to the strict
+`[[tool.mypy.overrides]]` (`check_untyped_defs`, `disallow_untyped_defs`,
+`disallow_incomplete_defs`, `warn_return_any`) — the package was already
+clean to that bar, so it now holds the line in CI.
