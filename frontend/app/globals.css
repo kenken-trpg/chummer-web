@@ -21,7 +21,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "IBM Plex Sans JP", "Hiragino Sans", sans-serif;
+  font-family: var(--font-plex-sans-jp), "IBM Plex Sans JP", "Hiragino Sans", sans-serif;
 }
 button,
 input,

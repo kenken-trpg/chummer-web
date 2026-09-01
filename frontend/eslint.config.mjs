@@ -14,17 +14,20 @@ export default [
       // which `next/image` cannot optimize anyway.
       "@next/next/no-img-element": "off",
 
-      // Pre-existing debt we want visible but not blocking. Driving these to
-      // zero is a good first contribution — see CONTRIBUTING.md.
+      // `any` and unused-vars debt is fenced off with file-level disables
+      // (blocks.tsx, the sheet helpers); keep them visible but not blocking.
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
-      "react-hooks/exhaustive-deps": "warn",
-      "react-hooks/refs": "warn",
-      "@next/next/no-page-custom-font": "warn",
-      "@next/next/no-location-assign-relative-destination": "warn",
+
+      // These were demoted while the codebase had violations; it's clean now,
+      // so keep them blocking so regressions surface in `make check`.
+      "react-hooks/exhaustive-deps": "error",
+      "react-hooks/refs": "error",
+      "@next/next/no-page-custom-font": "error",
+      "@next/next/no-location-assign-relative-destination": "error",
     },
   },
 ];

@@ -178,6 +178,11 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      18 `<*Section {...s}/>` + footer, **92 lines** down from ~1,155.
 5. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
    character}.ts` + an `index.ts` barrel; `@/lib/types` still resolves.
-6. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
-   remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
-   internal `location.href`, and one `any` in a sheet helper.
+6. **eslint warnings to zero** — *done:* the Google-fonts `<link>` moved to
+   `next/font/google` (`--font-plex-sans-jp` CSS var), the `.chum5` export
+   button downloads via a generated `<a>` instead of `window.location.href`,
+   and the mount-only bootstrap effect carries an
+   `// eslint-disable-next-line react-hooks/exhaustive-deps`. Those three
+   rules + `react-hooks/refs` are promoted back to `error` in
+   `eslint.config.mjs`; `no-explicit-any` / `no-unused-vars` stay `warn`
+   (file-level disables fence off the remaining `any`).

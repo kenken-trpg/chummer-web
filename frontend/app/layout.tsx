@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+const plexSansJp = IBM_Plex_Sans_JP({
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-plex-sans-jp",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: "Chummer Web",
@@ -8,13 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="ja" className={plexSansJp.variable}>
       <body>{children}</body>
     </html>
   );

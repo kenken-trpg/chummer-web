@@ -85,6 +85,9 @@ export default function Page() {
         setError(e instanceof Error ? e.message : "起動に失敗しました");
       }
     })();
+    // one-time bootstrap: load catalog + roster, then open the last / a new
+    // character. `remember` is stable enough for a mount-only effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function openCharacter(id: string) {
@@ -206,6 +209,15 @@ export default function Page() {
     a.download = `${ch.name || "character"}.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  function downloadChum5() {
+    if (!ch) return;
+    // hit the .chum5 export endpoint via an anchor so the browser handles the
+    // Content-Disposition download (not client-side navigation).
+    const a = document.createElement("a");
+    a.href = `/api/characters/${ch.id}/chummer`;
+    a.click();
   }
 
   async function copyText(text: string, tag: string) {
@@ -352,9 +364,7 @@ export default function Page() {
             </button>
             <button
               className="btn"
-              onClick={() => {
-                window.location.href = `/api/characters/${ch.id}/chummer`;
-              }}
+              onClick={downloadChum5}
               title="Chummer5a で開ける .chum5（XML）で書き出す"
             >
               .chum5書出
