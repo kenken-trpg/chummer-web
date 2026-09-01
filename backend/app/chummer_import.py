@@ -265,9 +265,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     # --- magic: spells / powers / complex forms / arts ---------------
     spell_r = _Resolver(cat["spells"])
     st["spells"] = [
-        {"id": str(uuid.uuid4()), "spell_id": sid, "alchemical": _text(sp.find("alchemical")).lower() == "true"}
+        {"id": str(uuid.uuid4()), "spell_id": spell_ref, "alchemical": _text(sp.find("alchemical")).lower() == "true"}
         for sp in root.findall("./spells/spell")
-        if (sid := spell_r.resolve(sp, warn, "術式"))
+        if (spell_ref := spell_r.resolve(sp, warn, "術式"))
     ]
     power_r = _Resolver(cat["powers"])
     powers = []

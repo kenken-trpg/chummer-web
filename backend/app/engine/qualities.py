@@ -324,18 +324,17 @@ def resolve_quality_sides(
             continue
         raw = str(extras.get(spec["id"]) or "").strip()
         side = _normalize_side(raw)
-        if raw and not side:
-            errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
-            continue
         if not side:
+            if raw:
+                errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
             continue
         chosen[spec["id"]] = side
-        slot = _quality_limb_slot(spec)
-        if not slot:
+        limb_slot = _quality_limb_slot(spec)
+        if not limb_slot:
             continue
-        key = (slot, side)
+        key = (limb_slot, side)
         if key in occupied:
-            slot_ja = _SLOT_JA.get(slot, slot)
+            slot_ja = _SLOT_JA.get(limb_slot, limb_slot)
             errors.append(
                 f"{spec['name']}（{_SIDE_JA.get(side, side)}）は"
                 f"{occupied[key]}と{_SIDE_JA.get(side, side)}の{slot_ja}が重複しています"
