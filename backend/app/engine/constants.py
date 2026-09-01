@@ -141,3 +141,24 @@ def quality_spirit_category_extra_key(quality_id: str) -> str:
 
 def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
     return f"{quality_id}{QUALITY_ADDSPIRIT_EXTRA_MARKER}{int(index)}"
+
+
+# Cyberlimb / bioware limb-side maths: Left/Right normalisation plus the
+# Japanese slot/side labels used in duplicate-side warnings. Shared by the
+# 'ware side pipeline (engine/ware/) and the quality selectside validators
+# (apply_quality_rules / resolve_quality_sides in engine/qualities.py).
+SIDES = ("Left", "Right")
+_SLOT_JA = {"arm": "腕", "leg": "脚", "torso": "胴", "skull": "頭蓋", "head": "頭蓋"}
+_SIDE_JA = {"Left": "左", "Right": "右"}
+
+
+def _normalize_side(value: str | None) -> str | None:
+    raw = (value or "").strip()
+    if raw in SIDES:
+        return raw
+    lower = raw.lower()
+    if lower in {"left", "l", "左"}:
+        return "Left"
+    if lower in {"right", "r", "右"}:
+        return "Right"
+    return None

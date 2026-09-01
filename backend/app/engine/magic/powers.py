@@ -16,9 +16,9 @@ from typing import Any
 from ...data_loader import SPELL_CAST_CATEGORIES, catalog
 from ...improvements import substitute_rating
 from ...models import CharacterState
-from ..constants import ADEPT_TALENTS
+from ..constants import ADEPT_TALENTS, ENHANCEMENT_KARMA
 from ..formulas import _ceil_div
-from ..lookups import _power_by_id, _power_by_name
+from ..lookups import _enhancement_by_id, _power_by_id, _power_by_name
 from ..selects import parse_selectskill_spec, selectskill_options
 from ._common import spell_cast_info
 
@@ -282,4 +282,54 @@ def resolve_adept_powers(
         "discount_max": cap_limit,
         "mystic_pp": max(0, min(int(mag), int(state.mystic_pp or 0))) if talent_name == "Mystic Adept" else 0,
         "power_names": installed_names,
+    }
+
+
+def resolve_enhancements(
+    state: CharacterState,
+    talent_name: str,
+    quality_names: set[str],
+    power_names: set[str],
+) -> dict[str, Any]:
+    warnings: list[str] = []
+    public: list[dict[str, Any]] = []
+    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    kept: list[str] = []
+    if talent_name not in ADEPT_TALENTS:
+        state.adept_enhancements = []
+        return {"warnings": warnings, "public": public, "bonus_sources": bonus_sources, "karma": 0}
+    for eid in state.adept_enhancements:
+        spec = _enhancement_by_id(eid)
+        if not spec:
+            continue
+        req = spec.get("required") or {}
+        missing_quality = [name for name in (req.get("quality") or []) if name not in quality_names]
+        missing_power = [name for name in (req.get("power") or []) if name not in power_names]
+        if spec.get("power") and spec["power"] not in power_names and spec["power"] not in missing_power:
+            missing_power.append(spec["power"])
+        if missing_quality:
+            warnings.append(f"{spec['name']} は {' / '.join(missing_quality)} が外れたため削除しました")
+            continue
+        missing = missing_power
+        if missing:
+            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+        kept.append(spec["id"])
+        bonus_sources.append((spec["name"], spec.get("bonus") or []))
+        public.append(
+            {
+                "id": spec["id"],
+                "name": spec["name"],
+                "power": spec.get("power"),
+                "karma": ENHANCEMENT_KARMA,
+                "source": spec.get("source"),
+                "page": spec.get("page"),
+                "ok": not missing,
+            }
+        )
+    state.adept_enhancements = kept
+    return {
+        "warnings": warnings,
+        "public": public,
+        "bonus_sources": bonus_sources,
+        "karma": ENHANCEMENT_KARMA * len(kept),
     }

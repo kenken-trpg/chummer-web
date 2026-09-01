@@ -42,6 +42,13 @@ def _power_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
+def _enhancement_by_id(eid: str) -> dict[str, Any] | None:
+    for item in catalog().get("enhancements") or []:
+        if item["id"] == eid:
+            return item
+    return None
+
+
 def _mentor_by_id(mid: str) -> dict[str, Any] | None:
     for item in catalog().get("mentors") or []:
         if item["id"] == mid:

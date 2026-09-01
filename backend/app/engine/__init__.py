@@ -33,13 +33,14 @@ from ..models import (
     WeaponInstall,
 )
 from .constants import (
+    _SIDE_JA,
+    _SLOT_JA,
     ADEPT_TALENTS,
     BLACK_MARKET_AVAIL_BONUS,
     BUILD_METHOD_KARMA,
     CAREER_SKILL_GROUP_MAX,
     CAREER_SKILL_MAX,
     COMPLEX_FORM_TALENTS,
-    ENHANCEMENT_KARMA,
     FOCUS_TALENTS,
     KARMA_ACTIVE_SKILL,
     KARMA_ATTRIBUTE,
@@ -68,6 +69,7 @@ from .constants import (
     SUM_TO_TEN_BUDGET,
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
+    _normalize_side,
     quality_addspirit_extra_key,
     quality_contact_extra_key,
     quality_spirit_category_extra_key,
@@ -173,6 +175,7 @@ from .magic import (  # noqa: E402  (awakened/emerged pipeline clusters; see eng
     bind_spell_category_drain_damage,
     bind_spell_spirit_limits,
     resolve_adept_powers,
+    resolve_enhancements,
     resolve_foci,
     resolve_initiation,
     resolve_mentor,
@@ -1260,13 +1263,6 @@ def apply_quality_rules(
     return negative_gain
 
 
-def _enhancement_by_id(eid: str) -> dict[str, Any] | None:
-    for item in catalog().get("enhancements") or []:
-        if item["id"] == eid:
-            return item
-    return None
-
-
 def racial_formula_extras(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, int]:
     extras: dict[str, int] = {}
     for key, spec in attrs_spec.items():
@@ -1331,11 +1327,8 @@ LIMB_BODY_SLOTS = {"arm": 2, "leg": 2, "torso": 1}
 LIMB_BODY_PARTS = 5
 CYBERLIMB_BASE_ATTR = 3  # SR5 p.456: an empty cyberlimb has STR 3 / AGI 3
 REDLINER_BASE_SLOTS = {"arm": 2, "leg": 2}
-SIDES = ("Left", "Right")
 _PARTIAL_LIMB = re.compile(r"\b(hand|foot|lower|modular connector)\b", re.I)
 _MUSCLE_WARE = re.compile(r"\bmuscle (replacement|toner|augmentation)\b", re.I)
-_SLOT_JA = {"arm": "腕", "leg": "脚", "torso": "胴", "skull": "頭蓋", "head": "頭蓋"}
-_SIDE_JA = {"Left": "左", "Right": "右"}
 
 
 def redliner_slot_caps(options: CharacterOptions | None = None) -> dict[str, int]:
@@ -1377,18 +1370,6 @@ def _limb_slot_count(item: dict[str, Any]) -> int:
         return max(1, int(float(raw)))
     except ValueError:
         return 1
-
-
-def _normalize_side(value: str | None) -> str | None:
-    raw = (value or "").strip()
-    if raw in SIDES:
-        return raw
-    lower = raw.lower()
-    if lower in {"left", "l", "左"}:
-        return "Left"
-    if lower in {"right", "r", "右"}:
-        return "Right"
-    return None
 
 
 def _occupied_sides(items: list[CyberwareInstall], kind: str, slot: str, skip_id: str | None = None) -> set[str]:
@@ -1995,56 +1976,6 @@ def gather_qualities(
                         free_ids.add(child["id"])
                         pending.append(child["id"])
     return qualities, sorted(free_ids), dropped
-
-
-def resolve_enhancements(
-    state: CharacterState,
-    talent_name: str,
-    quality_names: set[str],
-    power_names: set[str],
-) -> dict[str, Any]:
-    warnings: list[str] = []
-    public: list[dict[str, Any]] = []
-    bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
-    kept: list[str] = []
-    if talent_name not in ADEPT_TALENTS:
-        state.adept_enhancements = []
-        return {"warnings": warnings, "public": public, "bonus_sources": bonus_sources, "karma": 0}
-    for eid in state.adept_enhancements:
-        spec = _enhancement_by_id(eid)
-        if not spec:
-            continue
-        req = spec.get("required") or {}
-        missing_quality = [name for name in (req.get("quality") or []) if name not in quality_names]
-        missing_power = [name for name in (req.get("power") or []) if name not in power_names]
-        if spec.get("power") and spec["power"] not in power_names and spec["power"] not in missing_power:
-            missing_power.append(spec["power"])
-        if missing_quality:
-            warnings.append(f"{spec['name']} は {' / '.join(missing_quality)} が外れたため削除しました")
-            continue
-        missing = missing_power
-        if missing:
-            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
-        kept.append(spec["id"])
-        bonus_sources.append((spec["name"], spec.get("bonus") or []))
-        public.append(
-            {
-                "id": spec["id"],
-                "name": spec["name"],
-                "power": spec.get("power"),
-                "karma": ENHANCEMENT_KARMA,
-                "source": spec.get("source"),
-                "page": spec.get("page"),
-                "ok": not missing,
-            }
-        )
-    state.adept_enhancements = kept
-    return {
-        "warnings": warnings,
-        "public": public,
-        "bonus_sources": bonus_sources,
-        "karma": ENHANCEMENT_KARMA * len(kept),
-    }
 
 
 def _first_allowed_grade(kind: str, current: str, banned: set[str]) -> str:

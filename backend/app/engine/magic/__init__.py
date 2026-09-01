@@ -44,6 +44,7 @@ from .powers import (
     power_point_cost,
     power_select_options,
     resolve_adept_powers,
+    resolve_enhancements,
     way_discount_cap,
     way_discount_eligible,
 )
@@ -94,6 +95,7 @@ __all__ = [
     "power_select_options",
     "qi_focus_granted_power_rating",
     "resolve_adept_powers",
+    "resolve_enhancements",
     "resolve_foci",
     "resolve_initiation",
     "resolve_mentor",
