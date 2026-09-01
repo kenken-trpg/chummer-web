@@ -240,6 +240,12 @@ from .skills import (  # noqa: E402  (knowledge / specialization / exotic / skil
     resolve_skillsofts,
     resolve_specializations,
 )
+from .ware import (  # noqa: E402  (cyberware/bioware pipeline clusters; see engine/ware/)
+    _clamp_ware_rating,
+    racial_formula_extras,
+    ware_ranges,
+    ware_rating_bounds,
+)
 
 
 def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
@@ -1263,31 +1269,6 @@ def apply_quality_rules(
     return negative_gain
 
 
-def racial_formula_extras(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, int]:
-    extras: dict[str, int] = {}
-    for key, spec in attrs_spec.items():
-        extras[f"{key}Minimum"] = int(spec.get("min") or 1)
-        extras[f"{key}Maximum"] = int(spec.get("max") or 6)
-    return extras
-
-
-def ware_rating_bounds(
-    ware: dict[str, Any],
-    extras: dict[str, int | float] | None = None,
-) -> tuple[int, int]:
-    extras = extras or {}
-    lo = int(eval_formula(ware.get("minrating_expr") or str(ware.get("minrating") or 1), 1, default=1, extras=extras))
-    hi = int(eval_formula(ware.get("maxrating_expr") or str(ware.get("maxrating") or 1), 1, default=1, extras=extras))
-    if hi < lo:
-        hi = lo
-    return lo, hi
-
-
-def _clamp_ware_rating(ware: dict[str, Any], rating: int, extras: dict[str, int | float] | None = None) -> int:
-    lo, hi = ware_rating_bounds(ware, extras)
-    return max(lo, min(hi, int(rating or lo)))
-
-
 def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str, dict[str, int | float]]) -> None:
     """Resolve each cyberlimb's Strength/Agility/Armor from its enhancement mods.
 
@@ -1642,18 +1623,6 @@ def redliner_incompat_warnings(installed: list[dict[str, Any]], targets: list[st
         return []
     joined = " / ".join(names)
     return [f"Redliner は {joined} と併用できません（肢の特注・強化は可）"]
-
-
-def ware_ranges(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, dict[str, int]]:
-    extras = racial_formula_extras(attrs_spec)
-    out: dict[str, dict[str, int]] = {}
-    for kind in ("cyberware", "bioware"):
-        for ware in catalog().get(kind, {}).get("items") or []:
-            if not ware.get("formula_rating"):
-                continue
-            lo, hi = ware_rating_bounds(ware, extras)
-            out[ware["id"]] = {"min": lo, "max": hi}
-    return out
 
 
 def _cascade_orphans(
