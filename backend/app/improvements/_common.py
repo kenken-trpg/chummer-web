@@ -173,6 +173,7 @@ IMPLEMENTED = {
     "selectpowers",
     "unarmedreach",
     "unarmedap",
+    "smartlink",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -213,7 +214,6 @@ SILENT_TAGS = {
     "specialattburnmultiplier",
     "allowspritefettering",
     "weaponcategorydice",
-    "smartlink",
     "throwstr",
     "throwrangestr",
     "defensetest",

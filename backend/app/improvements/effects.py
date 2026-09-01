@@ -90,6 +90,7 @@ class EffectsDict(TypedDict):
     skilljack: int
     matrix_initiative_dice: int
     reach: int
+    smartlink: int
     lifestyle_cost: int
     notoriety: int
     fame: int
@@ -254,6 +255,7 @@ def empty_effects() -> EffectsDict:
         "living_persona": {"attack": 0, "sleaze": 0, "dataprocessing": 0, "firewall": 0},
         "matrix_initiative_dice": 0,
         "reach": 0,
+        "smartlink": 0,
         "lifestyle_cost": 0,
         "notoriety": 0,
         "fame": 0,

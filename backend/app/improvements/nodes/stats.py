@@ -112,6 +112,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             )
         elif tag == "reach":
             effects["reach"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "smartlink":
+            # Accuracy value of a usable smartlink: 2 (implant), 1 (imaging device).
+            # A smartgun system's Accuracy is gated on this being > 0; keep the best.
+            effects["smartlink"] = max(
+                int(effects.get("smartlink") or 0),
+                _as_int(node.get("value") or fields.get("val") or fields.get("bonus"), 2),
+            )
         elif tag in TEST_MOD_TAGS:
             key = TEST_MOD_TAGS[tag]
             effects["test_mods"][key] = int(effects["test_mods"].get(key) or 0) + _as_int(
