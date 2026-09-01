@@ -120,18 +120,24 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      services + summoning tests + addspirit), `magic/spells.py` (spell list +
      free-spell allowances + tradition/quality binders + drain summary),
      `magic/initiation.py` (metamagic / art grades + free metamagics),
-     `magic/submersion.py` (echo grades); and `engine/resonance.py` — the
+     `magic/submersion.py` (echo grades); `engine/resonance.py` — the
      technomancer mirror (complex forms + fading, sprites, living persona,
-     addecho grants). `resolve_gear()` and `compute()` stay in `__init__.py`
-     as orchestrators. `__init__.py` is ~4.5k lines, down from ~10.5k.
+     addecho grants); `engine/martial_arts.py` (styles + techniques),
+     `engine/contacts.py` (contact network + Ex-Con / Erased caps),
+     `engine/skills.py` (knowledge / specialization / exotic / skillsoft
+     resolution + skill-bonus modifiers), and `engine/limits.py` (chargen
+     avail / device-rating / ware-attribute-bonus caps). `resolve_gear()` and
+     `compute()` stay in `__init__.py` as orchestrators. `__init__.py` is
+     ~3.3k lines, down from ~10.5k.
    - The mid-file `from .priority import (...)` / `from .lookups import (...)`
      blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
      the lifestyle-quality helper lands in a module and imports move to the top.
    - *Next (own session):* `engine/ware/` (the cyberware / bioware / cyberlimb
-     / vehicle-hosted-ware pipeline — `resolve_ware` + the redliner/limb-side
-     logic). Smaller self-contained clusters still in `__init__.py`:
-     martial arts, contacts, the skill resolvers, and the avail /
-     device-rating / ware-attribute-cap chargen checks.
+     / vehicle-hosted-ware pipeline — `resolve_ware` + the redliner / limb-side
+     logic) and `engine/qualities.py` (`gather_qualities` / `apply_quality_rules`
+     + the `bind_*` / `_quality_*` helpers). After those, `__init__.py` is just
+     `compute()` / `resolve_gear()` + a handful of attribute / reward / movement
+     helpers.
 2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/

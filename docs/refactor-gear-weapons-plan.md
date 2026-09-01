@@ -254,6 +254,34 @@ no package needed): `resolve_complex_forms` (+ `_complex_form_fading_mod`,
 is compute()-only; all deps already extracted. `resonance` → `magic`
 (`tradition_resist` / `spell_drain_value`) is a clean one-way edge.
 
+## Step 5c — small self-contained clusters — **done**
+
+`__init__.py`: 4,497 → 3,323 lines. Five green commits:
+
+1. `_ware_by_id` / `_ware_by_name` / `_grade_by_name` → `engine/lookups.py`
+   (prep — shared by skills + limits + the future `engine/ware/`)
+2. `engine/martial_arts.py` — `sync_quality_martial_arts` /
+   `resolve_martial_arts` + the four `_martial_art_*` catalog helpers
+3. `engine/contacts.py` — `sync_quality_contacts` / `resolve_contacts` +
+   `apply_erased_lifestyle_cap` / `apply_excon_ware_ban` (the two quality
+   caps that ride with contacts) + `_contact_*` / `_excon_contact_*` /
+   `_erased_lifestyle_*`
+4. `engine/skills.py` — knowledge (+ `KNOWLEDGE_CATEGORIES` /
+   `KNOWLEDGE_DEFAULT_ATTR`), specializations / select-expertise, exotic
+   skills, `<skillsoft>` autosofts, activesoft picks, `resolve_skill_mods`
+5. `engine/limits.py` — `_finalize_avail_tree` + the avail /
+   device-rating / ware-attribute-bonus cap checks
+
+`selectskill_options` / `resolve_skill_mods` stay re-exported for tests.
+Every cluster is compute()-only otherwise; snapshot byte-identical, 468
+tests pass throughout.
+
+Left in `__init__.py`: `compute()` / `resolve_gear()` orchestrators, the
+qualities cluster (`gather_qualities`, `apply_quality_rules`, `bind_*`),
+the 'ware pipeline (`resolve_ware` + redliner / limb-side / vehicle-hosted
+-ware), and a handful of attribute / reward / movement / lifestyle
+helpers. Next natural splits: `engine/ware/` and `engine/qualities.py`.
+
 ## Step 6 — mid-file import cleanup (not done)
 
 `apply_lifestyle_cost_mod` (a loop-local closure → the `B023` ignore) and
