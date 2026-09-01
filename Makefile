@@ -32,7 +32,7 @@ fmt: ## Auto-format backend (ruff) and frontend (prettier)
 check-backend: ## ruff + format check + pytest + mypy
 	cd backend && ./.venv/bin/ruff check . && ./.venv/bin/ruff format --check . && ./.venv/bin/python -m pytest -q && ./.venv/bin/mypy
 
-check-frontend: ## tsc + eslint + prettier check + build
-	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run build
+check-frontend: ## tsc + eslint + prettier check + vitest + build
+	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 
 check: check-backend check-frontend ## Everything CI runs

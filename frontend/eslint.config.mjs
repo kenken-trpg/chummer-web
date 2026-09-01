@@ -4,7 +4,15 @@ import prettier from "eslint-config-prettier/flat";
 /** @type {import("eslint").Linter.Config[]} */
 export default [
   {
-    ignores: [".next/**", "out/**", "node_modules/**", "next-env.d.ts", "*.config.mjs"],
+    ignores: [
+      ".next/**",
+      "out/**",
+      "coverage/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      "*.config.mjs",
+      "*.config.mts",
+    ],
   },
   ...next,
   prettier,
