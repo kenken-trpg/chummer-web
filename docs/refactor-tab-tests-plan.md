@@ -54,3 +54,24 @@ Commits may be merged where two tabs are near-identical in shape
 ```
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 ```
+
+## Done
+
+Every tab now has a `*.test.tsx` beside it. Suite went **91 → 157**.
+
+- `makeCatalog()` widened: every catalog collection is present-and-empty,
+  so any tab renders against a bare fixture; `makeDerived().points` gained
+  `skill_groups`.
+- Landed commits: `AttrsTab` (+ fixture), `MetaTab`, `PriorityTab`,
+  `ContactsTab`, `MartialTab`, `SkillsTab`, `CyberTab`+`BioTab`, `AdeptTab`,
+  `SpellsTab`+`SpiritsTab`, `FociTab`+`ComplexFormsTab`+`SpritesTab`,
+  `InitiationTab`+`SubmersionTab`, `GearTab`+`WeaponGear`,
+  `VehicleDroneGear`+`MiscDrugsGear`, then this doc.
+- Shape per file: a render smoke over an empty character (info line / key
+  controls, no throw) + one or two behaviour assertions on the primary
+  `patch()` / `setCharacter()` payload. Controlled-slider tabs (`Attrs`,
+  `Skills`, `Initiation`, `Submersion`) use a small stateful harness so the
+  preview sticks before the commit. No snapshot files.
+- Not covered (thin, low-risk): the gear sub-panels `ArmorGear`,
+  `CommlinkGear`, `CyberdeckGear`, `RccGear`, `OpticsGear`, `SensorGear`,
+  `LifestyleGear`; per-row editors inside the already-tested tabs.
