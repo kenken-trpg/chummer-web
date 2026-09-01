@@ -131,3 +131,46 @@ cd backend && source .venv/bin/activate && \
   python -c "import app.main, app.store, app.engine, app.improvements, app.data_loader"
 # expect: 469 passed; snapshot 6 passed, no diff
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `app/data_loader.py`
+(2,864 lines, one file) → `app/data_loader/` package; `__init__.py` down to
+**240 lines** (barrel + `@lru_cache catalog()` + `reset_catalog()`). Every
+commit `make check` green + snapshot gate 6 passed, byte-identical.
+
+| commit | what |
+| --- | --- |
+| `5d804ec` | 1 — `git mv` to `__init__.py`; `_xml.py` (paths anchored on `parents[2]`, attr tuples, `_text`/`_int`/`_float`/`_child`, `log`) |
+| `432b07b` | 2 — `formulas.py` (`eval_formula`, avail + capacity parsers, `CHARGEN_*`) |
+| `df4671f` | 3 — `bonus.py` (requirement / bonus / select-slot parsers, quality inspectors, `selecttext_catalog_options`; `MATRIX_ATTRIBUTES` up to `_xml.py`) |
+| `b8b0ec2` | 4 — `loaders/` package + `ware` / `metatypes` / `skills` / `qualities`; `_is_variable_cost` up to `formulas.py` |
+| `2e24e30` | 5 — `loaders/magic.py` (~465 lines: powers … foci) |
+| `494270d` | 6 — `loaders/{armor,weapons,gear,vehicles}`; `_parse_weaponbonus` down to `bonus.py` |
+| `411a600` | 7 — `loaders/{lifestyle,drugs,martial_arts,priorities,translations}` + metamagics/echoes/qi-focus appended to `magic.py` |
+| _this_ | docs |
+
+Deviations from the plan:
+
+- Commits 8–9 folded into 6–7 (armor/weapons/gear/vehicles in one, the
+  small loaders + translations in one).
+- Three helpers found to be shared across domains got hoisted rather than
+  duplicated: `_is_variable_cost` → `formulas.py`, `_parse_weaponbonus` and
+  `MATRIX_ATTRIBUTES` → `bonus.py` / `_xml.py`.
+- `tests/test_translation_overrides.py` had to repoint its `OVERRIDE_DIR`
+  monkeypatch from the `data_loader` barrel to
+  `app.data_loader.loaders.translations` — `_load_ja_overrides` reads the
+  constant from its own module now, so patching the re-export no longer
+  reached it. No production behaviour changed (snapshot byte-identical).
+
+Every external `from app.data_loader import …` (constants
+`PHYSICAL_ATTRS` / `MATRIX_ATTRIBUTES` / `PROGRAM_HOSTS` /
+`SPELL_CAST_CATEGORIES` / `SPELL_CATEGORIES` / `CHARGEN_*` / `OVERRIDE_DIR` /
+`LANG_DIR`, functions `catalog` / `reset_catalog` / `eval_formula` /
+`parse_avail` / `format_avail` / `sum_avail` / `parse_capacity` /
+`parse_select_power_slot` / `selecttext_catalog_options` /
+`drug_effect_summary` / `drug_node_value` / `load_translations` /
+`load_ui_strings` / `_load_ja_overrides`) still resolves via `__init__.py`'s
+re-exports.

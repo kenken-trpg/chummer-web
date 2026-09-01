@@ -155,7 +155,17 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    `tests/test_improvements_nodes.py` guards that every `IMPLEMENTED` tag
    still has a handler. `from app.improvements import …` is unchanged (the
    package `__init__` is the barrel).
-3. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
+3. **Split `app/data_loader.py`** (vendored-XML → catalog dict) — *done:*
+   now the `app/data_loader/` package. `_xml.py` (paths + `_text` / `_int`
+   element accessors), `formulas.py` (`eval_formula` + avail / capacity
+   parsers), `bonus.py` (the `<bonus>` / `<required>` sub-tree parsers +
+   select-option inspectors), and `loaders/` — one module per domain
+   (`ware`, `metatypes`, `skills`, `qualities`, `magic`, `weapons`, `armor`,
+   `gear`, `vehicles`, `lifestyle`, `drugs`, `martial_arts`, `priorities`,
+   `translations`). `__init__.py` is the barrel + the `@lru_cache`
+   `catalog()` assembler that does the cross-entity wiring — 2,864 → 240
+   lines. `from app.data_loader import …` is unchanged.
+4. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/
      blocks.tsx`; range-band + special-armor formatting →
@@ -163,8 +173,8 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `lib/character/format.ts`.
    - *Next:* pull each `<Section>` in the big `return (…)` into its own
      component under `components/character/sheet/`, passing `d` / `tr` / `t`.
-4. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
+5. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
    character}.ts` + an `index.ts` barrel; `@/lib/types` still resolves.
-5. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
+6. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
    remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
    internal `location.href`, and one `any` in a sheet helper.

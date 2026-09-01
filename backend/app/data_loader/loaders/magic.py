@@ -1,6 +1,6 @@
 """Awakened / Emerged catalog loaders: powers, enhancements, mentors,
-spells, traditions, spirits, complex forms, streams, sprites, foci and
-focus formulae.
+spells, traditions, spirits, complex forms, streams, sprites, foci,
+focus formulae, metamagics, magic arts, echoes and the qi-focus map.
 """
 
 from __future__ import annotations
