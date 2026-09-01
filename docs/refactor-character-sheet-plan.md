@@ -73,3 +73,32 @@ section-local helper imports, wire it into `CharacterSheet.tsx`, run
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run build
 # expect: 0 errors; 3 pre-existing eslint warnings; build OK
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `CharacterSheet.tsx`:
+**1,155 → 92 lines**. Both commits typecheck + lint + build green (0
+errors, 3 pre-existing warnings).
+
+| commit | what |
+| --- | --- |
+| `e39e2ab` | `lib/character/sheet-data.ts` — `buildSheetData()` → typed `SheetData` bundle (the ~55 lines of derived-data massaging) |
+| `02020cc` | `components/character/sheet/sections/*.tsx` (18) + `SheetHeader.tsx`; `CharacterSheet.tsx` reduced to the shell |
+| _this_ | docs |
+
+Deviations from the plan:
+
+- Commits 2–5 folded into one — the 18 sections are verbatim JSX slices
+  (each just destructures the `SheetData` keys it uses + imports its own
+  helpers), so per-group commits were pure churn given typecheck + build
+  are the only guards.
+- The three conditionally-rendered sections (Career, ActionDp, Description)
+  fold their `{cond ? … : null}` wrapper into an early `return null`
+  instead of the parent gating them.
+- `SheetData` arrays are typed off `Character["derived"]` (not `any[]` like
+  the older `TextArgs`) so the section components keep full inference.
+
+No behaviour change: the `<article>` still renders `<SheetHeader/>` + the
+same 18 sections in the same order + `<footer>`.

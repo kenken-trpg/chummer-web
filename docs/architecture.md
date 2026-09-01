@@ -170,9 +170,12 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/
      blocks.tsx`; range-band + special-armor formatting →
      `lib/character/sheet-format.ts`; formatters consolidated in
-     `lib/character/format.ts`.
-   - *Next:* pull each `<Section>` in the big `return (…)` into its own
-     component under `components/character/sheet/`, passing `d` / `tr` / `t`.
+     `lib/character/format.ts`. Then `lib/character/sheet-data.ts`
+     (`buildSheetData()` → the typed `SheetData` bundle) and one component
+     per section under `components/character/sheet/sections/` +
+     `SheetHeader.tsx` — `CharacterSheet.tsx` is now props →
+     `buildSheetData` → the text branch → `<article>` = `<SheetHeader/>` +
+     18 `<*Section {...s}/>` + footer, **92 lines** down from ~1,155.
 5. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
    character}.ts` + an `index.ts` barrel; `@/lib/types` still resolves.
 6. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
