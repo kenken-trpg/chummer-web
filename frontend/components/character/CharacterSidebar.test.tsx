@@ -51,4 +51,39 @@ describe("<CharacterSidebar>", () => {
     expect(screen.getByText("伝統")).toBeDefined();
     expect(screen.getByText("something wrong")).toBeDefined();
   });
+
+  it("SidebarEconomy always shows the ニューエン row", () => {
+    const ch = makeCharacter({ derived: { nuyen: 12500 } });
+    render(
+      <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
+    );
+    expect(screen.getByText("ニューエン").nextSibling?.textContent).toBe("12,500¥");
+  });
+
+  it("SidebarAwakened shows イニシエーション only when the tab is enabled", () => {
+    const plain = makeCharacter();
+    const { unmount } = render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={plain}
+        d={plain.derived}
+        tr={identityTr}
+      />,
+    );
+    expect(screen.queryByText("イニシエーション")).toBeNull();
+    unmount();
+
+    const initiate = makeCharacter({
+      derived: { enabled_tabs: ["initiation"], initiation: { grade: 2, karma: 13 } as any },
+    });
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={initiate}
+        d={initiate.derived}
+        tr={identityTr}
+      />,
+    );
+    expect(screen.getByText("イニシエーション")).toBeDefined();
+  });
 });
