@@ -44,6 +44,7 @@ from .effect_rows import (
     SpellDescriptorValueRow,
     SpellDicePoolRow,
     UnimplementedRow,
+    WeaponCategoryDiceRow,
     WeaponCategoryDvSlotRow,
     WeaponDvBonusRow,
     WeaponSkillAccuracySlotRow,
@@ -195,6 +196,7 @@ class EffectsDict(TypedDict):
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
     weapon_category_dv: list[WeaponDvBonusRow]
+    weapon_category_dice: list[WeaponCategoryDiceRow]
     weapon_skill_accuracy_slots: list[WeaponSkillAccuracySlotRow]
     weapon_skill_accuracy: list[WeaponDvBonusRow]
     add_spirit_slots: list[AddSpiritSlotRow]
@@ -328,6 +330,7 @@ def empty_effects() -> EffectsDict:
         "select_power_slots": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],
+        "weapon_category_dice": [],
         "weapon_skill_accuracy_slots": [],
         "weapon_skill_accuracy": [],
         "add_spirit_slots": [],

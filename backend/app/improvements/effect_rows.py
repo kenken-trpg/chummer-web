@@ -322,6 +322,15 @@ class WeaponSkillAccuracySlotRow(TypedDict):
     needs_select: bool
 
 
+class WeaponCategoryDiceRow(TypedDict):
+    """``weapon_category_dice`` — a ``<weaponcategorydice>`` attack dice-pool
+    bonus for one weapon category (e.g. Master Archer: Bows +1)."""
+
+    category: str
+    dice: int
+    source: str
+
+
 # --- resolved / bind_*-produced rows (G6) ----------------------------
 
 

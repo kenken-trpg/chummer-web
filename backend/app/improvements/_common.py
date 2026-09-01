@@ -177,6 +177,7 @@ IMPLEMENTED = {
     "smartlink",
     "throwstr",
     "throwrangestr",
+    "weaponcategorydice",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -216,7 +217,6 @@ SILENT_TAGS = {
     "astralreputation",
     "specialattburnmultiplier",
     "allowspritefettering",
-    "weaponcategorydice",
     "defensetest",
     "swapskillattribute",
     "swapskillspecattribute",

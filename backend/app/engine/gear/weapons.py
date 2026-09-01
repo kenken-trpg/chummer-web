@@ -344,6 +344,26 @@ def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: E
             weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), bonus)
 
 
+def apply_weapon_category_dice(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
+    """``<weaponcategorydice>`` — a situational attack dice-pool bonus for a
+    weapon category (e.g. Master Archer: Bows +1). Surfaced on the weapon row
+    as ``category_dice`` for the sheet, alongside ``focus_dice``.
+    """
+    rows = list((effects or empty_effects()).get("weapon_category_dice") or [])
+    if not weapons or not rows:
+        return
+    for weapon in weapons:
+        category = str(weapon.get("category") or "")
+        skill = weapon_skill_dictionary_key(weapon)
+        dice = 0
+        for row in rows:
+            name = str(row.get("category") or "").strip()
+            if name and (name == category or name == skill):
+                dice += int(row.get("dice") or 0)
+        if dice:
+            weapon["category_dice"] = int(weapon.get("category_dice") or 0) + dice
+
+
 def apply_smartlink_accuracy(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
     """Add a smartgun system's Accuracy only when the character has a smartlink.
 

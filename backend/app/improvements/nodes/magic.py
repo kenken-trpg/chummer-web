@@ -225,6 +225,15 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             )
         elif tag == "burnoutsway":
             effects["burnout_way"] = True
+        elif tag == "weaponcategorydice":
+            # <weaponcategorydice><category><name>Bows</name><value>1</value></category>…
+            # parses to nested["category"] == [name, value, name, value, …].
+            raw = (node.get("nested") or {}).get("category") or []
+            for idx in range(0, len(raw) - 1, 2):
+                name = str(raw[idx]).strip()
+                dice = _as_int(raw[idx + 1])
+                if name and dice:
+                    effects["weapon_category_dice"].append({"category": name, "dice": dice, "source": source})
         elif tag == "weaponcategorydv":
             select_attrs = (node.get("field_attrs") or {}).get("selectskill") or {}
             limit_raw = str(select_attrs.get("limittoskill") or "").strip()

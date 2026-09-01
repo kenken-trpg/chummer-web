@@ -42,6 +42,7 @@ from ..gear import (
     apply_lifestyle_cost_mod,
     apply_reach_bonus,
     apply_smartlink_accuracy,
+    apply_weapon_category_dice,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
     resolve_lifestyles,
@@ -295,6 +296,7 @@ def gear_phase(ctx: Ctx) -> None:
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
     apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)
+    apply_weapon_category_dice(ctx.gear.get("weapons"), ctx.effects)
     apply_weapon_skill_accuracy(ctx.gear.get("weapons"), ctx.effects)
     ctx.bmp_category = ""
     ctx.bmp_contact_id = ""

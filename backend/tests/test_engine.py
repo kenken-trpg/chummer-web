@@ -1701,6 +1701,8 @@ def test_improved_ability_adds_dice_not_rating() -> None:
 
 MISSILE_MASTERY = "1221e699-e61b-4aed-adbb-a8eec02a65e2"
 PRECISION_THROWING = "18da4f2f-f813-4d17-8b7b-29b2751e9cfa"  # levels, max 3, throwrangestr = Rating*2
+MASTER_ARCHER = "3c0862c4-1070-44dd-8866-0ba89276246b"  # weaponcategorydice: Bows +1
+BOW_RATING_4 = "b6bf94d9-3513-409f-b5aa-29f415fe9fd7"
 
 
 def test_missile_mastery_grants_throw_str() -> None:
@@ -1717,6 +1719,31 @@ def test_precision_throwing_evaluates_rating_times_two() -> None:
     out = compute(_adept("pt-2", adept_powers=[AdeptPowerInstall(power_id=PRECISION_THROWING, rating=2)]))
     assert out.derived["throw_range_str"] == 4  # "Rating*2" -> 2*2
     assert out.derived["throw_str"] == 0
+
+
+def test_master_archer_adds_category_dice_to_bows() -> None:
+    out = compute(
+        _adept(
+            "master-archer",
+            adept_powers=[AdeptPowerInstall(power_id=MASTER_ARCHER)],
+            weapons=[WeaponInstall(weapon_id=BOW_RATING_4)],
+        )
+    )
+    bow = out.derived["weapons"][0]
+    assert bow["category"] == "Bows"
+    assert bow["category_dice"] == 1
+    assert out.derived["errors"] == []
+
+
+def test_master_archer_leaves_non_bows_weapon_alone() -> None:
+    out = compute(
+        _adept(
+            "ma-pistol",
+            adept_powers=[AdeptPowerInstall(power_id=MASTER_ARCHER)],
+            weapons=[WeaponInstall(weapon_id=PREDATOR)],
+        )
+    )
+    assert out.derived["weapons"][0].get("category_dice", 0) == 0
 
 
 def test_adept_power_overspend_is_an_error() -> None:
