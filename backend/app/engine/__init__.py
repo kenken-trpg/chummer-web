@@ -112,7 +112,6 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     _clamp_rating,
     _device_rating_of,
     _ensure_drone_equipment,
-    _iter_vehicle_hosts,
     _public_weapon,
     _publish_drone_stats,
     _recompute_worn_armor,
@@ -134,7 +133,6 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     apply_weapon_skill_accuracy,
     bind_weapon_category_dv,
     bind_weapon_skill_accuracy,
-    mod_fits_vehicle,
 )
 from .karma import (  # noqa: E402  (cost maths)
     _active_karma_mults,
@@ -240,8 +238,15 @@ from .skills import (  # noqa: E402  (knowledge / specialization / exotic / skil
 )
 from .ware import (  # noqa: E402  (cyberware/bioware pipeline clusters; see engine/ware/)
     _apply_limb_attributes,
+    _attach_ware_to_vehicle_mods,
+    _cascade_orphans,
     _clamp_ware_rating,
+    _drop_invalid_vehicle_ware,
+    _public_installed,
     _side_conflicts,
+    _vehicle_hosted_ware_ids,
+    _vehicle_mod_hosts,
+    _zero_vehicle_hosted_essence,
     apply_cyberseeker,
     ensure_sides,
     limb_attribute_replace,
@@ -1344,122 +1349,6 @@ def resolve_quality_sides(
     return chosen
 
 
-def _cascade_orphans(
-    items: list[CyberwareInstall],
-    extra_parent_ids: set[str] | None = None,
-) -> list[CyberwareInstall]:
-    ids = {item.id for item in items} | (extra_parent_ids or set())
-    keep = [item for item in items if not item.parent_id or item.parent_id in ids]
-    if len(keep) == len(items):
-        return keep
-    return _cascade_orphans(keep, extra_parent_ids)
-
-
-def _vehicle_mod_hosts(state: CharacterState) -> dict[str, dict[str, Any]]:
-    specs = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
-    parents = {inst.id: spec for inst, spec in _iter_vehicle_hosts(state)}
-    hosts: dict[str, dict[str, Any]] = {}
-    for inst in state.vehicle_mods or []:
-        spec = specs.get(inst.mod_id)
-        parent = parents.get(inst.parent_id or "")
-        if not spec or not spec.get("subsystems") or not parent:
-            continue
-        if not inst.included and not mod_fits_vehicle(spec, parent):
-            continue
-        hosts[inst.id] = spec
-    return hosts
-
-
-def _ware_fits_vehicle_mod(ware: dict[str, Any], spec: dict[str, Any]) -> bool:
-    if ware.get("category") not in (spec.get("subsystems") or []):
-        return False
-    if not (ware.get("plugin") or ware.get("requireparent")):
-        return False
-    names = ware.get("required_parent_names") or []
-    if not names:
-        return True
-    parent_name = spec.get("name") or ""
-    return any(name in parent_name for name in names)
-
-
-def _drop_invalid_vehicle_ware(state: CharacterState) -> list[str]:
-    hosts = _vehicle_mod_hosts(state)
-    cyber_ids = {item.id for item in state.cyberware}
-    warnings: list[str] = []
-    kept: list[CyberwareInstall] = []
-    for inst in state.cyberware:
-        parent_id = inst.parent_id
-        if not parent_id or parent_id in cyber_ids:
-            kept.append(inst)
-            continue
-        spec = hosts.get(parent_id)
-        ware = _ware_by_id("cyberware", inst.ware_id)
-        if not spec or not ware:
-            continue
-        if not _ware_fits_vehicle_mod(ware, spec):
-            warnings.append(f"{ware['name']} は {spec['name']} に装着できません")
-            continue
-        kept.append(inst)
-    state.cyberware = _cascade_orphans(kept, set(hosts))
-    return warnings
-
-
-def _vehicle_hosted_ware_ids(resolved: list[dict[str, Any]], vehicle_hosts: set[str]) -> set[str]:
-    hosted: set[str] = set()
-    by_id = {str(item.get("id") or ""): item for item in resolved}
-
-    def is_hosted(item: dict[str, Any]) -> bool:
-        parent_id = item.get("parent_id") or ""
-        seen: set[str] = set()
-        while parent_id:
-            if parent_id in vehicle_hosts:
-                return True
-            if parent_id in seen:
-                return False
-            seen.add(parent_id)
-            parent = by_id.get(parent_id)
-            if not parent:
-                return False
-            parent_id = parent.get("parent_id") or ""
-        return False
-
-    for item in resolved:
-        if is_hosted(item):
-            hosted.add(str(item.get("id") or ""))
-    return hosted
-
-
-def _zero_vehicle_hosted_essence(resolved: list[dict[str, Any]], vehicle_hosts: set[str]) -> None:
-    hosted = _vehicle_hosted_ware_ids(resolved, vehicle_hosts)
-    for item in resolved:
-        if item.get("id") in hosted:
-            item["essence"] = 0.0
-            item["ess_to_parent"] = 0.0
-
-
-def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str, Any]]) -> list[str]:
-    errors: list[str] = []
-    by_id = {str(mod.get("id") or ""): mod for mod in mods}
-    for mod in mods:
-        mod["cyberware"] = []
-        mod["capacity_used"] = 0.0
-    for item in ware:
-        parent = by_id.get(str(item.get("parent_id") or ""))
-        if not parent:
-            continue
-        parent["cyberware"].append(_public_installed(item))
-        parent["capacity_used"] = round(
-            float(parent.get("capacity_used") or 0) + float(item.get("capacity_cost") or 0),
-            4,
-        )
-    for mod in mods:
-        cap_max = float(mod.get("capacity_max") or 0)
-        used = float(mod.get("capacity_used") or 0)
-        if cap_max > 0 and used > cap_max + 1e-9:
-            errors.append(f"{mod['name']} の容量超過（{used:g}/{cap_max:g}）")
-    return errors
-
-
 def ensure_subsystems(state: CharacterState) -> CharacterState:
     extra = set(_vehicle_mod_hosts(state))
     state.cyberware = ensure_sides("cyberware", _ensure_kind_subsystems("cyberware", state.cyberware, extra))
@@ -1582,36 +1471,6 @@ def resolve_ware(
 def resolve_cyberware(state: CharacterState) -> list[dict[str, Any]]:
     meta = find_metatype(state.metatype, state.metavariant)
     return resolve_ware("cyberware", state.cyberware, meta["attributes"])
-
-
-def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "id": item["id"],
-        "ware_id": item["ware_id"],
-        "name": item["name"],
-        "category": item["category"],
-        "rating": item["rating"],
-        "grade": item["grade"],
-        "wireless": item["wireless"],
-        "parent_id": item.get("parent_id"),
-        "included": bool(item.get("included")),
-        "essence": item["essence"],
-        "nuyen": item["nuyen"],
-        "capacity_used": item.get("capacity_used") or 0,
-        "capacity_max": item.get("capacity_max") or 0,
-        "rating_min": item.get("rating_min") or 1,
-        "rating_max": item.get("rating_max") or 1,
-        "limb_str": item.get("limb_str"),
-        "limb_agi": item.get("limb_agi"),
-        "limb_armor": item.get("limb_armor"),
-        "selectside": bool(item.get("selectside")),
-        "side": item.get("side"),
-        "avail": item.get("avail") or "",
-        "avail_value": int(item.get("avail_value") or 0),
-        "restricted_gear": bool(item.get("restricted_gear")),
-        "device_rating": int(item.get("device_rating") or 0),
-        "source": item.get("source"),
-    }
 
 
 def gather_qualities(

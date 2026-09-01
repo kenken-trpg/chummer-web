@@ -12,6 +12,7 @@ into ``app.engine`` — so the import graph stays a DAG.
 
 from __future__ import annotations
 
+from ._common import _cascade_orphans, _public_installed
 from .limbs import (
     CYBERLIMB_BASE_ATTR,
     LIMB_BODY_PARTS,
@@ -40,6 +41,14 @@ from .sides import (
     _side_conflicts,
     ensure_sides,
 )
+from .vehicles import (
+    _attach_ware_to_vehicle_mods,
+    _drop_invalid_vehicle_ware,
+    _vehicle_hosted_ware_ids,
+    _vehicle_mod_hosts,
+    _ware_fits_vehicle_mod,
+    _zero_vehicle_hosted_essence,
+)
 
 __all__ = [
     "CYBERLIMB_BASE_ATTR",
@@ -47,14 +56,22 @@ __all__ = [
     "LIMB_BODY_SLOTS",
     "REDLINER_BASE_SLOTS",
     "_apply_limb_attributes",
+    "_attach_ware_to_vehicle_mods",
+    "_cascade_orphans",
     "_clamp_ware_rating",
+    "_drop_invalid_vehicle_ware",
     "_is_body_limb",
     "_is_full_limb",
     "_is_redliner_limb",
     "_limb_slot_count",
     "_next_free_side",
     "_occupied_sides",
+    "_public_installed",
     "_side_conflicts",
+    "_vehicle_hosted_ware_ids",
+    "_vehicle_mod_hosts",
+    "_ware_fits_vehicle_mod",
+    "_zero_vehicle_hosted_essence",
     "apply_cyberseeker",
     "count_redliner_limbs",
     "ensure_sides",
