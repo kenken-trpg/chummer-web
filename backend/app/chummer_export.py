@@ -155,7 +155,14 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(q, "extra", state.quality_extras.get(qid, ""))
         _sub(q, "qualitysource", "Selected")
 
-    def _named_list(container: str, item: str, rows: list, id_key: str, bag: str, extra: dict | None = None):
+    def _named_list(
+        container: str,
+        item: str,
+        rows: list[Any],
+        id_key: str,
+        bag: str,
+        extra: dict[str, Any] | None = None,
+    ) -> ET.Element:
         parent = _sub(root, container)
         for row in rows:
             iid = getattr(row, id_key)

@@ -106,6 +106,8 @@ The base ruleset stays lenient; a per-module `[[tool.mypy.overrides]]`
   `qualities` / `pricing`) all passed the bar as-is — the per-module list
   collapsed to `app.engine` / `app.engine.*`. The two `Any` fountains
   (`Ctx` bundles + `catalog()`) were the whole story.
-
-Still lenient: `store` / the API / `chummer_import|export` / `data_loader`
-itself. Promote when they hold the bar.
+- **the whole `app/`** — the boundary modules (`store` / `main` /
+  `chummer_import|export` / `data_loader`) turned out to already hold the
+  bar (one `no-untyped-def` in a `chummer_export` closure aside), so the
+  strict flags moved into base `[tool.mypy]` and `[[tool.mypy.overrides]]`
+  is gone. `mypy` is strict over the whole backend.

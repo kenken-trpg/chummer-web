@@ -40,30 +40,14 @@ docstring-code-format = true
 python_version = "3.11"
 files = ["app"]
 exclude = ["vendor", "saves"]
-# Clean and blocking (CI + `make check`), but the ruleset is still lenient
-# (`check_untyped_defs = false` etc.) — tighten module by module with
-# stricter overrides below rather than flipping everything at once.
+# Strict across the whole backend (CI + `make check`). The tightening was
+# done package by package — `app.engine.*` / `app.improvements.*` reached
+# the bar once their two `Any` fountains were typed (the `Ctx` bundles /
+# `effects` as `EffectsDict`, and `catalog()` as `CatalogDict`) — and once
+# every module held it, the per-module overrides collapsed into the base.
 ignore_missing_imports = true
-check_untyped_defs = false
 warn_unused_ignores = true
 warn_redundant_casts = true
-
-# --- per-module strictness --------------------------------------------------
-# The strict bar (check_untyped_defs / disallow_untyped_defs /
-# disallow_incomplete_defs / warn_return_any) vs. the lenient base ruleset.
-# `app.engine.*` reached it once its two Any fountains were typed — the Ctx
-# bundles / `effects` (EffectsDict) and `catalog()` (CatalogDict) — plus
-# `app.improvements.*` (the <bonus> -> effects pipeline). The rest of the
-# repo (store / API / chummer_import|export / data_loader) stays lenient;
-# promote a module here once it holds this bar.
-[[tool.mypy.overrides]]
-module = [
-    "app.engine",
-    "app.engine.*",
-    "app.improvements",
-    "app.improvements.*",
-    "app.data_loader.catalog_types",
-]
 check_untyped_defs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

@@ -276,19 +276,17 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    `ware_rating_bounds` `extras` widened to `Mapping[str, float] | None`),
    and a couple of `str | None` narrows. `mypy` is now clean and part of
    `make check` / CI (`ci.yml` dropped `continue-on-error`).
-   - *Tightening, module by module:* the base ruleset stays lenient
-     (`check_untyped_defs = false`); a `[[tool.mypy.overrides]]` block runs
-     the strict bar (`check_untyped_defs`, `disallow_untyped_defs`,
-     `disallow_incomplete_defs`, `warn_return_any`). **The whole
-     `app.engine.*` package is now in it**, together with
-     `app.improvements.*` and `app.data_loader.catalog_types`. The engine
-     got there once its two `Any` fountains were typed: the `Ctx` bundles /
-     `effects` (`EffectsDict` + `effect_rows.py`) and `catalog()`
-     (`CatalogDict`) — after that every engine module passed the bar with at
-     most a rename or a cast (`_match_by`, `catalog_list` / `catalog_ware`).
-     The rest of the repo — `store` / the API / `chummer_import|export` /
-     `data_loader` itself — stays lenient; promote a module when it holds
-     the bar.
+   - *Strict across the whole backend.* `[tool.mypy]` now runs
+     `check_untyped_defs` / `disallow_untyped_defs` /
+     `disallow_incomplete_defs` / `warn_return_any` over all of `app/` —
+     no per-module `[[tool.mypy.overrides]]`. This was reached package by
+     package: `app.engine.*` / `app.improvements.*` cleared once their two
+     `Any` fountains were typed — the `Ctx` bundles / `effects`
+     (`EffectsDict` + `effect_rows.py`) and `catalog()` (`CatalogDict`) —
+     after which every module passed with at most a rename or a cast
+     (`_match_by`, `catalog_list` / `catalog_ware`). The boundary modules
+     (`store` / `main` / `chummer_import|export` / `data_loader`) turned out
+     to already hold the bar, so the overrides collapsed into the base.
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`
