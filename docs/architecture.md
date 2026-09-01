@@ -59,10 +59,12 @@ That dict is typed: `improvements.EffectsDict` (a `total=True` `TypedDict`
 next to `empty_effects()`, which produces it) fixes the ~134 keys and their
 value types, so `effects["initiave_dice"]` (typo) is a `mypy` error rather
 than a silent `None`. `collect_effects()` / `apply_bonus_nodes` / the four
-`nodes/*.py` handlers and `Ctx.effects` all carry it; scalars and the obvious
-nested dicts are precise, the `*_mods` / `*_slots` / `grant_*` / `add_*` row
-lists stay `list[dict[str, Any]]`. `enabled_tabs` is a `set[str]` throughout;
-callers `sorted(...)` it where they need an ordered list.
+`nodes/*.py` handlers and `Ctx.effects` all carry it. Scalars and nested
+dicts are precise; the `*_mods` / `*_slots` / `grant_*` / cost-rule list
+values carry row `TypedDict`s from `improvements/effect_rows.py` (one per
+`nodes/*.py` producer branch), so `row.get("nam")` (typo) is caught too.
+`enabled_tabs` is a `set[str]` throughout; callers `sorted(...)` it where
+they need an ordered list.
 
 Adding support for a new modifier = add a branch in `apply_bonus_nodes` (or a
 tag to `SILENT_TAGS` if we intentionally ignore it) plus wherever `effects`
@@ -289,3 +291,7 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`
      accumulator, as `improvements.EffectsDict` (next to `empty_effects()`).
      A mistyped key or wrong value type at a phase seam is a `mypy` error.
+     `EffectsDict`'s ~45 row-list values are typed one level deeper too —
+     row `TypedDict`s in `improvements/effect_rows.py`, one per `nodes/*.py`
+     producer branch. Still `list[dict[str, Any]]`: the `Ctx` bundle
+     `.public` / gear-category lists (serialisation DTOs, a separate job).

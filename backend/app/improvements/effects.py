@@ -57,11 +57,12 @@ class EffectsDict(TypedDict):
     nodes into it via ``apply_bonus_nodes``, and ~25 engine modules read it.
     ``total=True`` (the default): every key is present from ``empty_effects()``
     on, so ``effects["initiave_dice"]`` (typo) is now a ``mypy`` error rather
-    than a silent ``None``. The scalars and the obvious nested dicts are typed
-    precisely; the ``*_mods`` / ``*_slots`` / ``grant_*`` / ``add_*`` row lists
-    stay ``list[dict[str, Any]]`` — their row shapes are out of scope, exactly
-    as with the other ``Ctx`` bundles (see
-    ``docs/refactor-effects-typeddict-plan.md``).
+    than a silent ``None``. Scalars and the obvious nested dicts are typed
+    precisely; the ``*_mods`` / ``*_slots`` / ``grant_*`` / cost-rule list
+    values carry row ``TypedDict``s from ``effect_rows.py`` too, so
+    ``row.get("nam")`` (typo) is likewise caught (see
+    ``docs/refactor-effects-typeddict-plan.md`` and
+    ``docs/refactor-effect-rows-plan.md``).
 
     ``enabled_tabs`` is a ``set[str]`` throughout the pipeline; callers that
     need an ordered list ``sorted(...)`` it at the point of use.

@@ -47,8 +47,9 @@ dicts typed precisely —
 - `enabled_tabs` → `set[str]`
 
 — and the ~40 `*_mods` / `*_slots` / `grant_*` / `add_*` lists stay
-`list[dict[str, Any]]` (their row shapes are out of scope, exactly as with
-the other bundles). `Ctx.effects: EffectsDict = field(default_factory=empty_effects)`.
+`list[dict[str, Any]]` (their row shapes are out of scope here — done as a
+follow-on, `docs/refactor-effect-rows-plan.md`).
+`Ctx.effects: EffectsDict = field(default_factory=empty_effects)`.
 
 `empty_effects() -> EffectsDict`; `apply_bonus_nodes` and the four
 `nodes/*.py` `apply(...)` handlers take `EffectsDict`;

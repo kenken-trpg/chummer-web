@@ -153,3 +153,31 @@ cd backend && ./.venv/bin/python -m pytest -q && ./.venv/bin/ruff check . \
 `tests/test_snapshot.py` first (byte-identical gate);
 `tests/test_improvements_nodes.py` guards producer completeness;
 `tests/test_compute_phases.py` guards the phase seams.
+
+## Done
+
+All ~45 `EffectsDict` row-list values now carry a row `TypedDict` from
+`app/improvements/effect_rows.py` (24 shapes). Landed in the planned
+groups, each commit `pytest` + `ruff` + `mypy` green, snapshots
+byte-identical:
+
+| commit | groups | notes |
+| --- | --- | --- |
+| G1+G2 | `KarmaCostRow` / `KarmaMultRow` / `SkillModRow` / `NamedBonusRow` (12 keys) | `karma.py`'s rule helpers widened to `Sequence[Mapping[str, Any]]`; `resolve_skill_mods` loop vars renamed per loop |
+| G3+G5 | grants + misc (~20 keys) | `action_dice_pools.needs_action` → `NotRequired` (dropped by `bind_action_dice_pools`); `foci.py` `focus_binding` params → `Sequence[Mapping[str, Any]]` |
+| G4 | 9 pick-slot keys | `select_power_slots` row is `cast` at the single producer — `**` can't expand into a `TypedDict` literal; `parse_select_power_slot` stayed `dict[str, Any]` (friction #3 not needed) |
+| G6 | `WeaponDvBonusRow` (×2) + `AddSpiritPickRow` | the `bind_*`-produced rows |
+
+**Deviations from plan:**
+- Friction #3 (typing `parse_select_power_slot`) skipped — it wouldn't
+  help the `**`-into-TypedDict problem, which needs a `cast` regardless.
+- Friction #4 (`warn_return_any` in `compute/`) — no fallout; the typed
+  `row.get("x")` reads were already `int(... or 0)`-wrapped.
+- Extra: several consumer `for row in ...` loops that reused one variable
+  across lists of different row types got per-loop names (`spec_mod` /
+  `attr_mod`, `skill_row` / `attr_row`, `spell_slot` / `spirit_slot`).
+
+**Out of scope, as planned:** the `Ctx` bundle row lists
+(`bundle_types.py` `.public` / gear-category lists,
+`InitiationBundle.choices` etc., `BonusSource`). A stage-5 job if ever
+wanted.
