@@ -57,3 +57,24 @@ The mount-only bootstrap `useEffect` (and its
 ```
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 ```
+
+## Done
+
+`app/page.tsx` went 620 → 90 lines. All six commits landed green:
+
+1. `lib/character/useSheetLayout.ts` + `lib/character/useKeyboardShortcuts.ts`.
+2. `lib/character/useCharacterEditor.ts` (~264 L) — every state field +
+   handler + the mount bootstrap effect; exports `CharacterEditor =
+   ReturnType<typeof useCharacterEditor>`. `setTab("priority")` became
+   `onCharacterOpened?.()`.
+3. `components/character/Toolbar.tsx` (179 L, takes the `ed` bag + view
+   props) + `components/character/SheetDescEditor.tsx` (92 L).
+4. `components/character/TabBar.tsx` (`enabledTabs: string[]`) +
+   `components/character/TabPanels.tsx` (imports `CharacterSheet` +
+   `SheetDescEditor` + all 18 `*Tab`s; `const { catalog, character: ch, d,
+   tr, patch } = panel`). `page.tsx` is now hooks + a flat layout.
+5. Tests (74 → 91): `useSheetLayout`, `useKeyboardShortcuts`,
+   `useCharacterEditor` (mocked `@/lib/api` via `vi.hoisted`), `Toolbar`.
+6. This doc + `docs/architecture.md` Frontend section.
+
+Behaviour identical: `next build` + the vitest suite green at every step.

@@ -73,10 +73,24 @@ is consumed. See `docs/adding-rules.md`.
 
 ## Frontend
 
-- `app/page.tsx` owns `catalog`, the current `Character`, the active tab, and
-  the `patch()` / undo-redo plumbing. It passes a `TabPanelProps` bag
-  (`catalog`, `character`, `d = character.derived`, `tr`, `patch`,
-  `setCharacter`) to each tab.
+- `app/page.tsx` is a ~90-line shell: it holds only view state (active tab,
+  sheet layout, the hidden file-input ref), calls the editor hook, and lays
+  out `<Toolbar> / <TabBar> / <TabPanels> / <CharacterSidebar>`. It passes a
+  `TabPanelProps` bag (`catalog`, `character`, `d = character.derived`, `tr`,
+  `patch`, `setCharacter`) to each tab via `<TabPanels>`.
+- `lib/character/useCharacterEditor.ts` — owns `catalog` / `ch` / `error` /
+  `roster` / `history` and every mutation (create / open / delete / duplicate
+  / patch / undo-redo / import / export / clipboard / portrait). The
+  mount-only bootstrap effect lives here. Returns a bag consumed by `Page`,
+  `Toolbar` and the panels; takes `{ onCharacterOpened }` so `Page` resets the
+  tab on open/new/dup/import.
+- `lib/character/useSheetLayout.ts` (localStorage-backed `standard|compact|text`)
+  and `lib/character/useKeyboardShortcuts.ts` (Ctrl/⌘+Z / +Y / +Shift+Z →
+  undo/redo, inert while an INPUT/TEXTAREA is focused).
+- `components/character/{Toolbar,TabBar,TabPanels,SheetDescEditor}.tsx` — the
+  four presentational chunks of the old `Page` return: the `.toolbar` row, the
+  `.tabs` row (enabled-tab aware), the `{tab === "x" && <XTab/>}` switch
+  (+ `<CharacterSheet>` for `tab==="sheet"`), and the sheet portrait/bio editor.
 - `components/character/tabs/*` — one file per tab; gear sub-tabs under
   `tabs/gear/`. Tabs are presentational: they read `d.*` and call `patch({...})`.
   `QualitiesTab` delegates the per-quality "extra pick" editor to
@@ -94,11 +108,13 @@ is consumed. See `docs/adding-rules.md`.
 - **Tests** — `vitest` (jsdom + React Testing Library), `*.test.{ts,tsx}`
   next to the code, shared fixtures in `frontend/tests/fixtures.ts`
   (`makeCharacter` / `makeCatalog`). `npm run test` is part of `make check`
-  and CI. Coverage (~74 tests): the `lib/character/*` pure helpers
+  and CI. Coverage (~91 tests): the `lib/character/*` pure helpers
   (`sheet-format`, `format`, `sheet-data`, `gear`, `quality`) + `cocofolia`
-  builders; render smoke tests for `CharacterSheet` / `CharacterSidebar` /
-  `QualitiesTab` (sections wired, all layouts render); and a few
-  behaviour tests (quality picker filter / add-via-`patch`, sidebar rows).
+  builders; the `page.tsx` hooks (`useCharacterEditor` against a mocked
+  `@/lib/api`, `useSheetLayout`, `useKeyboardShortcuts`); render smoke tests
+  for `CharacterSheet` / `CharacterSidebar` / `QualitiesTab` / `Toolbar`
+  (sections wired, all layouts render); and a few behaviour tests (quality
+  picker filter / add-via-`patch`, sidebar rows).
 
 ## Planned refactors
 
