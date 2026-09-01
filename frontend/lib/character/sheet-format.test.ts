@@ -2,6 +2,7 @@ import {
   lifeIncrement,
   rangeNameFor,
   rangeRow,
+  resolveDamageStr,
   specialArmorBits,
 } from "@/lib/character/sheet-format";
 
@@ -25,6 +26,22 @@ describe("rangeRow", () => {
 
   it("renders a missing (-1) band as a dash", () => {
     expect(rangeRow({ ...pistolBands, extreme: "-1" }, 3)).toEqual(["0–5", "6–15", "16–30", "–"]);
+  });
+});
+
+describe("resolveDamageStr", () => {
+  it("resolves ({STR}+n)P against a Strength", () => {
+    expect(resolveDamageStr("({STR}+1)P", 3)).toBe("4P");
+    expect(resolveDamageStr("({STR})P", 3)).toBe("3P");
+    expect(resolveDamageStr("({STR}-1)S", 5)).toBe("4S");
+  });
+  it("passes non-{STR} damage codes through", () => {
+    expect(resolveDamageStr("8P", 3)).toBe("8P");
+    expect(resolveDamageStr("Grenade", 3)).toBe("Grenade");
+    expect(resolveDamageStr(undefined, 3)).toBe("");
+  });
+  it("folds a throwstr bonus in via the caller's Strength", () => {
+    expect(resolveDamageStr("({STR}+1)P", 3 + 1)).toBe("5P"); // Missile Mastery: STR 3, throw_str 1
   });
 });
 

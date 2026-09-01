@@ -278,6 +278,8 @@ export interface Character {
     unarmed_reach?: number;
     unarmed_ap?: number;
     reach?: number;
+    throw_str?: number;
+    throw_range_str?: number;
     lifestyle_cost_mod?: number;
     notoriety?: number;
     fame?: number;

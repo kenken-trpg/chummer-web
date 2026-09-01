@@ -1,6 +1,6 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
-import { rangeNameFor, rangeRow } from "@/lib/character/sheet-format";
+import { rangeNameFor, rangeRow, resolveDamageStr } from "@/lib/character/sheet-format";
 import { Fragment } from "react";
 
 export function CombatSection(s: SheetData) {
@@ -51,6 +51,10 @@ export function CombatSection(s: SheetData) {
             <tbody>
               {weapons.map((item) => {
                 const dash = (v?: string) => (v && v !== "0" && v !== "-" ? v : "–");
+                const thrown = (item.useskill || "") === "Throwing Weapons";
+                const dv = thrown
+                  ? resolveDamageStr(item.damage, (totals.STR || 0) + (d.throw_str || 0))
+                  : item.damage;
                 const sub = [
                   (item.accessories || []).map((a) => tr(a.name)).join("、"),
                   (item.focus_dice || 0) > 0 ? `武器フォーカス +${item.focus_dice}d` : "",
@@ -66,7 +70,7 @@ export function CombatSection(s: SheetData) {
                         {item.qty > 1 ? ` ×${item.qty}` : ""}
                       </td>
                       <td>{dash(item.accuracy)}</td>
-                      <td>{dash(item.damage)}</td>
+                      <td>{dash(dv)}</td>
                       <td>{item.ap && item.ap !== "0" ? item.ap : "–"}</td>
                       <td>{dash(item.mode)}</td>
                       <td>{dash(item.rc)}</td>
@@ -89,20 +93,30 @@ export function CombatSection(s: SheetData) {
           {(() => {
             const table = catalog.weapon_ranges || {};
             const str = totals.STR || 0;
+            const throwBonus = d.throw_range_str || 0;
             const names: string[] = [];
+            const thrownNames = new Set<string>();
             for (const w of weapons) {
               if ((w.type || "") === "Melee") continue;
+              const isThrown = (w.useskill || "") === "Throwing Weapons";
               for (const n of [rangeNameFor(w), (w.alt_range || "").trim()]) {
-                if (n && table[n] && !names.includes(n)) names.push(n);
+                if (!n || !table[n]) continue;
+                if (!names.includes(n)) names.push(n);
+                if (isThrown) thrownNames.add(n);
               }
             }
             if (!names.length) return null;
             const strScaled = names.some((n) => /\{STR\}/i.test(JSON.stringify(table[n])));
+            const throwApplies = throwBonus > 0 && [...thrownNames].some((n) => names.includes(n));
             return (
               <table className="sheet-table sheet-table--range">
                 <thead>
                   <tr>
-                    <th>レンジ (m){strScaled ? `・筋力 ${str}` : ""}</th>
+                    <th>
+                      レンジ (m)
+                      {strScaled ? `・筋力 ${str}` : ""}
+                      {throwApplies ? `（投擲 ${str + throwBonus}）` : ""}
+                    </th>
                     <th>至近 ±0</th>
                     <th>近 −1</th>
                     <th>中 −3</th>
@@ -111,7 +125,10 @@ export function CombatSection(s: SheetData) {
                 </thead>
                 <tbody>
                   {names.map((name) => {
-                    const cells = rangeRow(table[name], str);
+                    const cells = rangeRow(
+                      table[name],
+                      str + (thrownNames.has(name) ? throwBonus : 0),
+                    );
                     return (
                       <tr key={name}>
                         <td className="left">{tr(name)}</td>

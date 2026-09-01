@@ -11,6 +11,18 @@ export function rangeNameFor(w: { range?: string; category?: string }) {
   return (w.range || "").trim() || RANGE_CAT_ALIAS[w.category || ""] || w.category || "";
 }
 
+/** Resolve `{STR}` in a weapon DV formula ("({STR}+1)P" -> "3P", "({STR})P" -> "2P").
+ * Non-`{STR}` damage codes pass through untouched. */
+export function resolveDamageStr(dv: string | undefined, str: number): string {
+  const raw = (dv || "").trim();
+  if (!/\{STR\}/i.test(raw)) return raw;
+  return raw
+    .replace(/\{STR\}\s*([+-]\s*\d+)?/gi, (_m, add?: string) =>
+      String(str + (add ? parseInt(add.replace(/\s+/g, ""), 10) : 0)),
+    )
+    .replace(/\((-?\d+)\)/g, "$1"); // (3)P -> 3P
+}
+
 /** Evaluate a ranges.xml band formula ("5", "{STR}*10", "{STR}/2", "-1"). */
 function evalRangeBand(formula: string | undefined, str: number): number | null {
   const f = (formula || "").trim();
