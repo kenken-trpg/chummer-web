@@ -7,7 +7,6 @@ from functools import lru_cache
 from typing import Any
 
 from ._xml import (
-    ATTR_KEYS,
     DATA_DIR,
     LANG_DIR,  # noqa: F401  (re-exported for tests)
     MATRIX_ATTRIBUTES,  # noqa: F401  (re-exported for engine)
@@ -21,7 +20,6 @@ from ._xml import (
 )
 from .bonus import (
     _filter_active_skill_names,
-    _parent_name_requirements,
     _specific_powers,
     _weaponskillaccuracy_needs_select,
     _weaponskillaccuracy_select_attrs,
@@ -29,7 +27,6 @@ from .bonus import (
     parse_required,
     parse_requirement_tree,
     parse_select_power_slot,  # noqa: F401  (re-exported for improvements)
-    quality_extra_meta,
     quality_needs_extra,
     selecttext_catalog_options,  # noqa: F401  (re-exported for engine)
 )
@@ -37,6 +34,7 @@ from .formulas import (
     CHARGEN_AVAIL_MAX,  # noqa: F401  (re-exported for engine)
     CHARGEN_DEVICE_RATING_MAX,  # noqa: F401  (re-exported for engine)
     CHARGEN_WARE_ATTR_BONUS_MAX,  # noqa: F401  (re-exported for engine)
+    _is_variable_cost,
     eval_formula,  # noqa: F401  (re-exported for engine / gear / magic)
     format_avail,  # noqa: F401  (re-exported for engine)
     parse_avail,  # noqa: F401  (re-exported for engine / tests)
@@ -44,252 +42,13 @@ from .formulas import (
     split_capacity,
     sum_avail,  # noqa: F401  (re-exported for engine)
 )
-
-CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
-
-
-def _load_grades(root: ET.Element) -> list[dict[str, Any]]:
-    grades = []
-    for el in root.findall("./grades/grade"):
-        name = _text(el.find("name"))
-        if not name:
-            continue
-        grades.append(
-            {
-                "id": _text(el.find("id")),
-                "name": name,
-                "ess": _float(el.find("ess"), 1.0),
-                "cost": _float(el.find("cost"), 1.0),
-                "avail": _text(el.find("avail")),
-                "source": _text(el.find("source")),
-                "core": name in CORE_GRADES,
-            }
-        )
-    return grades
-
-
-def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> list[dict[str, Any]]:
-    items = []
-    for el in root.findall(xpath):
-        if el.find("hide") is not None:
-            continue
-        name = _text(el.find("name"))
-        if not name:
-            continue
-        cap_raw = _text(el.find("capacity"))
-        plugin, cap_expr = parse_capacity(cap_raw)
-        rating_raw = _text(el.find("rating"))
-        min_raw = _text(el.find("minrating"))
-        formula_rating = "{" in rating_raw or "{" in min_raw
-        max_rating = 1 if formula_rating else _int(el.find("rating"), 1)
-        min_rating = 1 if formula_rating else _int(el.find("minrating"), 1)
-        if max_rating <= 0:
-            max_rating = 1
-        minrating_expr = min_raw or str(min_rating)
-        maxrating_expr = rating_raw or str(max_rating)
-        subs_el = el.find("subsystems")
-        subsystems = [
-            _text(sub.find("name")) for sub in list(subs_el if subs_el is not None else []) if _text(sub.find("name"))
-        ]
-        items.append(
-            {
-                "id": _text(el.find("id")),
-                "name": name,
-                "category": _text(el.find("category"), default_category),
-                "ess": _text(el.find("ess"), "0"),
-                "cost": _text(el.find("cost"), "0"),
-                "avail": _text(el.find("avail")),
-                "capacity": cap_expr,
-                "minrating": min_rating,
-                "maxrating": max_rating,
-                "minrating_expr": minrating_expr,
-                "maxrating_expr": maxrating_expr,
-                "forcegrade": _text(el.find("forcegrade")) or None,
-                "plugin": plugin,
-                "requireparent": el.find("requireparent") is not None,
-                "addtoparentess": el.find("addtoparentess") is not None,
-                "formula_rating": formula_rating,
-                "allow_subsystems": [_text(c) for c in el.findall("./allowsubsystems/category") if _text(c)],
-                "subsystems": subsystems,
-                "bonus": parse_bonus(el.find("bonus")),
-                "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
-                "bannedgrades": [_text(g) for g in el.findall("./bannedgrades/grade") if _text(g)],
-                "required": parse_required(el.find("required")),
-                "required_parent_names": _parent_name_requirements(el),
-                "limbslot": _text(el.find("limbslot")) or None,
-                "selectside": el.find("selectside") is not None,
-                "limbslotcount": _text(el.find("limbslotcount")) or "1",
-                "add_weapon": _text(el.find("addweapon")),
-                "devicerating": _text(el.find("devicerating")),
-                "source": _text(el.find("source")),
-                "page": _text(el.find("page")),
-            }
-        )
-    return items
-
-
-def load_cyberware() -> dict[str, Any]:
-    path = DATA_DIR / "cyberware.xml"
-    if not path.exists():
-        return {"grades": [], "items": []}
-    root = ET.parse(path).getroot()
-    return {"grades": _load_grades(root), "items": _load_ware_items(root, "./cyberwares/cyberware", "Bodyware")}
-
-
-def load_bioware() -> dict[str, Any]:
-    path = DATA_DIR / "bioware.xml"
-    if not path.exists():
-        return {"grades": [], "items": []}
-    root = ET.parse(path).getroot()
-    return {"grades": _load_grades(root), "items": _load_ware_items(root, "./biowares/bioware", "Basic")}
-
-
-def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str, Any]:
-    attrs: dict[str, dict[str, int | float]] = {}
-    for key in ATTR_KEYS:
-        upper = key.upper()
-        attrs[upper] = {
-            "min": _int(el.find(f"{key}min"), 1 if key != "ess" else 6),
-            "max": _int(el.find(f"{key}max"), 6 if key != "ess" else 6),
-            "aug": _int(el.find(f"{key}aug"), 10 if key not in {"edg", "mag", "res", "ess"} else 6),
-        }
-    if attrs["ESS"]["min"] == 1 and el.find("essmin") is None:
-        attrs["ESS"] = {"min": 6, "max": 6, "aug": 6}
-
-    variants = []
-    mv_root = el.find("metavariants")
-    if mv_root is not None:
-        for mv in mv_root.findall("metavariant"):
-            variants.append(_parse_metatype(mv, _text(el.find("name"))))
-
-    return {
-        "id": _text(el.find("id")),
-        "name": _text(el.find("name")),
-        "parent": parent_name,
-        "category": _text(el.find("category"), "Metahuman"),
-        "karma": _int(el.find("karma")),
-        "attributes": attrs,
-        "walk": _text(el.find("walk"), "2/1/0"),
-        "run": _text(el.find("run"), "4/0/0"),
-        "sprint": _text(el.find("sprint"), "2/1/0"),
-        "source": _text(el.find("source")),
-        "page": _text(el.find("page")),
-        "bonus": parse_bonus(el.find("bonus")),
-        "metavariants": variants,
-    }
-
-
-def load_metatypes() -> list[dict[str, Any]]:
-    tree = ET.parse(DATA_DIR / "metatypes.xml")
-    items = []
-    for el in tree.getroot().findall("./metatypes/metatype"):
-        items.append(_parse_metatype(el))
-    return items
-
-
-def _skill_specs(el: ET.Element) -> list[str]:
-    specs: list[str] = []
-    seen: set[str] = set()
-    for node in el.findall("./specs/spec"):
-        name = _text(node)
-        if not name or name in seen:
-            continue
-        seen.add(name)
-        specs.append(name)
-    return specs
-
-
-def load_skills() -> dict[str, Any]:
-    tree = ET.parse(DATA_DIR / "skills.xml")
-    root = tree.getroot()
-    groups = [_text(g) for g in root.findall("./skillgroups/name") if _text(g)]
-    skills = []
-    for el in root.findall("./skills/skill"):
-        exotic = _text(el.find("exotic"), "False").lower() == "true"
-        skills.append(
-            {
-                "id": _text(el.find("id")),
-                "name": _text(el.find("name")),
-                "attribute": _text(el.find("attribute")).upper(),
-                "category": _text(el.find("category")),
-                "skillgroup": _text(el.find("skillgroup")) or None,
-                "exotic": exotic,
-                "default": _text(el.find("default"), "True").lower() == "true",
-                "source": _text(el.find("source")),
-                "page": _text(el.find("page")),
-                "knowledge": False,
-                "specs": _skill_specs(el),
-            }
-        )
-    knowledge = []
-    for el in root.findall("./knowledgeskills/skill"):
-        knowledge.append(
-            {
-                "id": _text(el.find("id")),
-                "name": _text(el.find("name")),
-                "attribute": (_text(el.find("attribute")) or _text(el.find("defaultattribute")) or "INT").upper(),
-                "category": _text(el.find("category"), "Street"),
-                "skillgroup": None,
-                "exotic": False,
-                "source": _text(el.find("source")),
-                "page": _text(el.find("page")),
-                "knowledge": True,
-                "specs": _skill_specs(el),
-            }
-        )
-    return {"groups": groups, "skills": skills, "knowledge": knowledge}
-
-
-def load_qualities() -> list[dict[str, Any]]:
-    tree = ET.parse(DATA_DIR / "qualities.xml")
-    items = []
-    for el in tree.getroot().findall("./qualities/quality"):
-        if el.find("hide") is not None:
-            continue
-        name = _text(el.find("name"))
-        if not name:
-            continue
-        bonus = parse_bonus(el.find("bonus"))
-        extra_meta = quality_extra_meta(bonus)
-        limit_el = el.find("limit")
-        limit_raw = _text(limit_el) if limit_el is not None else ""
-        if limit_el is None:
-            max_takes = 1
-        elif limit_raw.lower() == "false":
-            max_takes = None
-        else:
-            try:
-                max_takes = max(1, int(limit_raw))
-            except ValueError:
-                max_takes = 1
-        items.append(
-            {
-                "id": _text(el.find("id")),
-                "name": name,
-                "karma": _int(el.find("karma")),
-                "category": _text(el.find("category"), "Positive"),
-                "source": _text(el.find("source")),
-                "page": _text(el.find("page")),
-                "bonus": bonus,
-                "max_takes": max_takes,
-                "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
-                "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
-                "chargenonly": el.find("chargenonly") is not None,
-                "metagenic": el.find("metagenic") is not None,
-                "contributes_to_metagenic_limit": _text(el.find("contributetolimit"), "True").lower() != "false",
-                "forbidden": parse_required(el.find("forbidden")),
-                "required": parse_required(el.find("required")),
-                "required_tree": parse_requirement_tree(el.find("required")),
-                "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
-                "needs_extra": quality_needs_extra(bonus),
-                "extra_kind": extra_meta.get("extra_kind"),
-                "select_options": extra_meta.get("select_options") or [],
-                "spirit_options": extra_meta.get("spirit_options") or [],
-                "expertise_skill": extra_meta.get("expertise_skill") or "",
-                "add_spirit_count": int(extra_meta.get("add_spirit_count") or 0),
-            }
-        )
-    return items
+from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
+    load_bioware,
+    load_cyberware,
+    load_metatypes,
+    load_qualities,
+    load_skills,
+)
 
 
 def _power_required_names(el: ET.Element) -> list[str]:
@@ -766,10 +525,6 @@ SKIP_WEAPON_CATEGORIES = {
     "Underbarrel Weapons",
     "Micro-Drone Weapons",
 }
-
-
-def _is_variable_cost(cost: str) -> bool:
-    return "Variable" in (cost or "")
 
 
 def _armor_included_mods(el: ET.Element) -> list[dict[str, Any]]:

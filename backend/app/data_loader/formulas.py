@@ -142,3 +142,7 @@ def split_capacity(expr: str | None) -> tuple[bool, str, str]:
     if raw.startswith("[") and raw.endswith("]"):
         return True, "", raw[1:-1]
     return False, raw, ""
+
+
+def _is_variable_cost(cost: str) -> bool:
+    return "Variable" in (cost or "")
