@@ -3,7 +3,8 @@
 Each ``nodes/<domain>.py`` owns a slice of the old ``if/elif tag`` chain as
 ``apply(tag, node, fields, effects, source) -> bool``; this module tries them
 in order (no tag is claimed by two domains, so order across domains is
-irrelevant). ``_chain`` is the not-yet-carved remainder.
+irrelevant). Completeness is guarded by
+``tests/test_improvements_nodes.py``.
 """
 
 from __future__ import annotations
@@ -11,9 +12,9 @@ from __future__ import annotations
 from typing import Any
 
 from .._common import IMPLEMENTED, SILENT_TAGS
-from . import _chain
+from . import magic, skills, social, stats
 
-_DOMAINS = (_chain.apply,)
+_DOMAINS = (stats.apply, skills.apply, magic.apply, social.apply)
 
 
 def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], source: str) -> None:
