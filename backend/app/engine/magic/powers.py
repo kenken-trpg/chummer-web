@@ -16,6 +16,7 @@ from typing import Any
 from ...data_loader import SPELL_CAST_CATEGORIES, catalog
 from ...improvements import substitute_rating
 from ...models import CharacterState
+from ..bundle_types import AdeptBundle, EnhancementsBundle
 from ..constants import ADEPT_TALENTS, ENHANCEMENT_KARMA
 from ..formulas import _ceil_div
 from ..lookups import _enhancement_by_id, _power_by_id, _power_by_name
@@ -120,7 +121,7 @@ def resolve_adept_powers(
     free_powers: list[dict[str, Any]] | None = None,
     wil: int = 1,
     intuition: int = 1,
-) -> dict[str, Any]:
+) -> AdeptBundle:
     warnings: list[str] = []
     errors: list[str] = []
     public: list[dict[str, Any]] = []
@@ -290,7 +291,7 @@ def resolve_enhancements(
     talent_name: str,
     quality_names: set[str],
     power_names: set[str],
-) -> dict[str, Any]:
+) -> EnhancementsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []

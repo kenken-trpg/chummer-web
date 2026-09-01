@@ -18,6 +18,7 @@ from typing import Any
 from ...data_loader import catalog, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, FocusInstall, QiFocusInstall
+from ..bundle_types import FociBundle, FocusLimits, QiFociBundle
 from ..constants import ADEPT_TALENTS, FOCUS_FORCE_MULT, FOCUS_TALENTS, QI_FOCUS_NAME, SPIRIT_REAGENT_YEN
 from ..dice import magic_opposed_test
 from ..formulas import _ceil_div
@@ -72,7 +73,7 @@ def resolve_qi_foci(
     mag: int,
     skills_data: dict[str, Any],
     focus_binding: list[dict[str, Any]],
-) -> dict[str, Any]:
+) -> QiFociBundle:
     warnings: list[str] = []
     errors: list[str] = []
     public: list[dict[str, Any]] = []
@@ -178,7 +179,7 @@ def resolve_foci(
     talent_name: str,
     mag: int,
     focus_binding: list[dict[str, Any]],
-) -> dict[str, Any]:
+) -> FociBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -330,7 +331,7 @@ def apply_focus_limits(
     qi_public: list[dict[str, Any]],
     foci_public: list[dict[str, Any]],
     errors: list[str],
-) -> dict[str, int]:
+) -> FocusLimits:
     count = len(qi_public) + len(foci_public)
     force = sum(int(item.get("rating") or item.get("force") or 0) for item in qi_public + foci_public)
     count_max = max(0, int(mag or 0))

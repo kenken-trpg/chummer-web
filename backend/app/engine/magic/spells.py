@@ -18,6 +18,7 @@ from typing import Any
 from ...data_loader import SPELL_CATEGORIES
 from ...improvements import apply_bonus_nodes
 from ...models import CharacterState, SpellInstall
+from ..bundle_types import SpellsBundle
 from ..constants import MAG_TALENTS, SPELL_KARMA, SPELL_TALENTS, quality_spirit_category_extra_key
 from ..lookups import _spell_by_id, _spell_by_name, _tradition_by_id
 from ._common import _active_skill_rating_from_state, spell_cast_info, tradition_resist
@@ -304,7 +305,7 @@ def resolve_spells(
     attrs: dict[str, int],
     owned_magic_names: set[str] | None = None,
     effects: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+) -> SpellsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     owned = set(owned_magic_names or [])

@@ -101,6 +101,104 @@ class SubmersionBundle(TypedDict):
     res_max_bonus: int
 
 
+class AdeptBundle(TypedDict):
+    """``resolve_adept_powers`` — chosen powers, power-point spend, Way discount."""
+
+    warnings: list[str]
+    errors: list[str]
+    public: list[dict[str, Any]]
+    bonus_sources: list[BonusSource]
+    spent: float
+    discount_used: float
+    discount_max: float
+    mystic_pp: int
+    power_names: set[str]
+
+
+class EnhancementsBundle(TypedDict):
+    """``resolve_enhancements`` — adept enhancement picks + their karma."""
+
+    warnings: list[str]
+    public: list[dict[str, Any]]
+    bonus_sources: list[BonusSource]
+    karma: int
+
+
+class FociBundle(TypedDict):
+    """``resolve_foci`` — bonded foci, their nuyen / karma and bonus nodes."""
+
+    warnings: list[str]
+    public: list[dict[str, Any]]
+    bonus_sources: list[BonusSource]
+    nuyen: int
+    karma: int
+
+
+class QiFociBundle(TypedDict):
+    """``resolve_qi_foci`` — Qi foci, granted free powers, nuyen / karma."""
+
+    warnings: list[str]
+    errors: list[str]
+    public: list[dict[str, Any]]
+    free_powers: list[dict[str, Any]]
+    nuyen: int
+    karma: int
+
+
+class FocusLimits(TypedDict):
+    """``apply_focus_limits`` — bonded-focus count / force ceilings."""
+
+    count: int
+    count_max: int
+    force: int
+    force_max: int
+
+
+class SpellsBundle(TypedDict):
+    """``resolve_spells`` — spell list, free/paid allowance, tradition + drain resist."""
+
+    warnings: list[str]
+    public: list[dict[str, Any]]
+    free_max: int
+    used: int
+    paid: int
+    karma: int
+    tradition: dict[str, Any] | None
+    resist: int
+    resist_attrs: str
+    range_gated: bool
+
+
+class SpiritsBundle(TypedDict):
+    """``resolve_spirits`` — bound / unbound spirits and their reagent nuyen."""
+
+    warnings: list[str]
+    public: list[dict[str, Any]]
+    nuyen: int
+
+
+class ComplexFormsBundle(TypedDict):
+    """``resolve_complex_forms`` — complex forms, free/paid allowance, stream + fade resist."""
+
+    warnings: list[str]
+    public: list[dict[str, Any]]
+    free_max: int
+    used: int
+    paid: int
+    karma: int
+    stream: dict[str, Any] | None
+    resist: int
+    resist_attrs: str
+
+
+class SpritesBundle(TypedDict):
+    """``resolve_sprites`` — compiled / registered sprites."""
+
+    warnings: list[str]
+    errors: list[str]
+    public: list[dict[str, Any]]
+
+
 # --- empty-bundle factories -------------------------------------------------
 # ``Ctx`` fields need a default; the producing phase always overwrites it
 # before any consumer reads, but the placeholder is a structurally-valid
@@ -163,3 +261,70 @@ def empty_submersion() -> SubmersionBundle:
         bonus_sources=[],
         res_max_bonus=0,
     )
+
+
+def empty_adept() -> AdeptBundle:
+    return AdeptBundle(
+        warnings=[],
+        errors=[],
+        public=[],
+        bonus_sources=[],
+        spent=0.0,
+        discount_used=0.0,
+        discount_max=0.0,
+        mystic_pp=0,
+        power_names=set(),
+    )
+
+
+def empty_enhancements() -> EnhancementsBundle:
+    return EnhancementsBundle(warnings=[], public=[], bonus_sources=[], karma=0)
+
+
+def empty_foci() -> FociBundle:
+    return FociBundle(warnings=[], public=[], bonus_sources=[], nuyen=0, karma=0)
+
+
+def empty_qi_foci() -> QiFociBundle:
+    return QiFociBundle(warnings=[], errors=[], public=[], free_powers=[], nuyen=0, karma=0)
+
+
+def empty_focus_limits() -> FocusLimits:
+    return FocusLimits(count=0, count_max=0, force=0, force_max=0)
+
+
+def empty_spells() -> SpellsBundle:
+    return SpellsBundle(
+        warnings=[],
+        public=[],
+        free_max=0,
+        used=0,
+        paid=0,
+        karma=0,
+        tradition=None,
+        resist=0,
+        resist_attrs="",
+        range_gated=False,
+    )
+
+
+def empty_spirits() -> SpiritsBundle:
+    return SpiritsBundle(warnings=[], public=[], nuyen=0)
+
+
+def empty_complex_forms() -> ComplexFormsBundle:
+    return ComplexFormsBundle(
+        warnings=[],
+        public=[],
+        free_max=0,
+        used=0,
+        paid=0,
+        karma=0,
+        stream=None,
+        resist=0,
+        resist_attrs="",
+    )
+
+
+def empty_sprites() -> SpritesBundle:
+    return SpritesBundle(warnings=[], errors=[], public=[])

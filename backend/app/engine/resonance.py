@@ -16,7 +16,7 @@ from typing import Any
 
 from ..data_loader import MATRIX_ATTRIBUTES, eval_formula
 from ..models import CharacterState, ComplexFormInstall, SpriteInstall
-from .bundle_types import SubmersionBundle
+from .bundle_types import ComplexFormsBundle, SpritesBundle, SubmersionBundle
 from .constants import COMPLEX_FORM_KARMA, COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
 from .dice import magic_opposed_test, skill_dice_pool
 from .lookups import _complex_form_by_id, _default_stream, _echo_by_name, _sprite_by_id, _stream_by_id
@@ -140,7 +140,7 @@ def resolve_complex_forms(
     attrs: dict[str, int],
     quality_names: set[str],
     effects: dict[str, Any] | None = None,
-) -> dict[str, Any]:
+) -> ComplexFormsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     stream = _stream_by_id(state.stream_id) or (_default_stream() if talent_name in COMPLEX_FORM_TALENTS else None)
@@ -256,7 +256,7 @@ def resolve_sprites(
     talent_name: str,
     res: int,
     stream: dict[str, Any] | None,
-) -> dict[str, Any]:
+) -> SpritesBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     errors: list[str] = []

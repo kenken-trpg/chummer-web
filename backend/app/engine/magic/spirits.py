@@ -16,6 +16,7 @@ from typing import Any
 
 from ...data_loader import catalog, eval_formula
 from ...models import CharacterState, SpiritInstall
+from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
 from ..dice import magic_opposed_test
 from ..lookups import _spirit_by_id
@@ -105,7 +106,7 @@ def resolve_spirits(
     *,
     limit_spirits: list[str] | None = None,
     extra_spirits: list[str] | None = None,
-) -> dict[str, Any]:
+) -> SpiritsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     nuyen = 0

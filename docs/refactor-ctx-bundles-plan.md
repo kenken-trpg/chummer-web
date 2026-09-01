@@ -23,16 +23,23 @@ tests green, `mypy` clean.
 
 ## Stages
 
-1. **small, single-return resolvers** — `skill_mods` (`resolve_skill_mods`),
-   `skill_picks` (`resolve_skill_picks`), `contacts` (`resolve_contacts`),
-   `martial` (`resolve_martial_arts`), `movement` (`resolve_movement`),
-   `initiation` (`resolve_initiation`), `submersion` (`resolve_submersion`).
-   Each has a fixed key set and every consumer uses string-literal keys.
-2. **incrementally-built bundles** — `adept`, `magic`, `resonance`, `gear`.
-   Built by a resolver then mutated by the phase; `TypedDict` still fits the
-   read side. Split further per bundle if the write side fights back.
-3. **stretch: `effects`** — `improvements/effects.py::empty_effects()`, ~150
-   keys, consumed everywhere. Its own plan.
+1. **done** — small, single-return resolvers: `skill_mods`
+   (`resolve_skill_mods`), `skill_picks` (`resolve_skill_picks`), `contacts`
+   (`resolve_contacts`), `martial` (`resolve_martial_arts`), `movement`
+   (`resolve_movement`), `initiation` (`resolve_initiation`), `submersion`
+   (`resolve_submersion`). Three consumers that took the bundle as
+   `dict[str, Any]` — `_copy_exotic_skill_bonuses`, `apply_free_metamagics`,
+   `apply_granted_echoes` — now take the `TypedDict`.
+2. **done** — the awakened / emerged bundles: `adept` (`resolve_adept_powers`),
+   `enhancements` (`resolve_enhancements`), `foci` (`resolve_foci`), `qi`
+   (`resolve_qi_foci`), `focus_limits` (`apply_focus_limits`), `magic`
+   (`resolve_spells`), `spirits` (`resolve_spirits`), `resonance`
+   (`resolve_complex_forms`), `techno_sprites` (`resolve_sprites`). All had
+   consistent early/late return shapes, so a `total=True` `TypedDict` fit
+   without touching the write side.
+3. **not started** — `gear` (`resolve_gear`, ~200-line resolver, ~40 consumer
+   keys) and the `effects` dict (`improvements/effects.py::empty_effects()`,
+   ~150 keys, consumed everywhere). Each is its own commit / plan.
 
 ## Verification per commit
 

@@ -14,19 +14,37 @@ from typing import Any
 
 from ...models import CharacterState
 from ..bundle_types import (
+    AdeptBundle,
+    ComplexFormsBundle,
     ContactsBundle,
+    EnhancementsBundle,
+    FociBundle,
+    FocusLimits,
     InitiationBundle,
     MartialBundle,
     MovementBundle,
+    QiFociBundle,
     SkillMods,
     SkillPicks,
+    SpellsBundle,
+    SpiritsBundle,
+    SpritesBundle,
     SubmersionBundle,
+    empty_adept,
+    empty_complex_forms,
     empty_contacts,
+    empty_enhancements,
+    empty_foci,
+    empty_focus_limits,
     empty_initiation,
     empty_martial,
     empty_movement,
+    empty_qi_foci,
     empty_skill_mods,
     empty_skill_picks,
+    empty_spells,
+    empty_spirits,
+    empty_sprites,
     empty_submersion,
 )
 
@@ -79,11 +97,11 @@ class Ctx:
     # --- magic (initiation / submersion / foci / adept) --------------------
     initiation: InitiationBundle = field(default_factory=empty_initiation)
     submersion: SubmersionBundle = field(default_factory=empty_submersion)
-    qi: dict[str, Any] = field(default_factory=dict)
-    foci: dict[str, Any] = field(default_factory=dict)
-    focus_limits: dict[str, Any] = field(default_factory=dict)
-    adept: dict[str, Any] = field(default_factory=dict)
-    enhancements: dict[str, Any] = field(default_factory=dict)
+    qi: QiFociBundle = field(default_factory=empty_qi_foci)
+    foci: FociBundle = field(default_factory=empty_foci)
+    focus_limits: FocusLimits = field(default_factory=empty_focus_limits)
+    adept: AdeptBundle = field(default_factory=empty_adept)
+    enhancements: EnhancementsBundle = field(default_factory=empty_enhancements)
     attr_totals: dict[str, int] = field(default_factory=dict)
 
     # --- gear ----------------------------------------------------------------
@@ -100,10 +118,10 @@ class Ctx:
     power_spent: float = 0.0
 
     # --- magic / resonance -------------------------------------------------
-    magic: dict[str, Any] = field(default_factory=dict)
-    spirits: dict[str, Any] = field(default_factory=dict)
-    resonance: dict[str, Any] = field(default_factory=dict)
-    techno_sprites: dict[str, Any] = field(default_factory=dict)
+    magic: SpellsBundle = field(default_factory=empty_spells)
+    spirits: SpiritsBundle = field(default_factory=empty_spirits)
+    resonance: ComplexFormsBundle = field(default_factory=empty_complex_forms)
+    techno_sprites: SpritesBundle = field(default_factory=empty_sprites)
 
     # --- priority points / nuyen -----------------------------------------
     special_from_meta: int = 0
