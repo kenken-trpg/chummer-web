@@ -236,6 +236,7 @@ from ..ware import (  # (cyberware/bioware pipeline clusters; see engine/ware/)
     resolve_ware,
     ware_ranges,
 )
+from .context import Ctx
 
 
 def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
@@ -750,153 +751,157 @@ def resolve_gear(
 
 
 def compute(state: CharacterState) -> CharacterState:
-    data = catalog()
-    state.build_method = normalize_build_method(getattr(state, "build_method", None))
-    is_karma = state.build_method == BUILD_METHOD_KARMA
-    career = bool(getattr(state, "career", False))
-    state.career = career
-    state.street_cred = max(0, int(getattr(state, "street_cred", 0) or 0))
-    state.notoriety_bonus = int(getattr(state, "notoriety_bonus", 0) or 0)
-    sync_reward_totals(state)
-    state.karma_earned = max(0, int(getattr(state, "karma_earned", 0) or 0))
-    state.nuyen_earned = max(0, int(getattr(state, "nuyen_earned", 0) or 0))
-    skill_rating_cap = CAREER_SKILL_MAX if career else 6
-    skill_group_cap = CAREER_SKILL_GROUP_MAX if career else 6
-    errors = validate_priorities(state.priorities, state.build_method)
-    meta = find_metatype(state.metatype, state.metavariant)
-    attrs_spec = meta["attributes"]
-    warnings = _drop_invalid_vehicle_ware(state)
-    ensure_subsystems(state)
-    errors.extend(_side_conflicts("cyberware", state.cyberware))
-    errors.extend(_side_conflicts("bioware", state.bioware))
+    ctx = Ctx(state=state, data=catalog())
+    ctx.state.build_method = normalize_build_method(getattr(ctx.state, "build_method", None))
+    ctx.is_karma = ctx.state.build_method == BUILD_METHOD_KARMA
+    ctx.career = bool(getattr(ctx.state, "career", False))
+    ctx.state.career = ctx.career
+    ctx.state.street_cred = max(0, int(getattr(ctx.state, "street_cred", 0) or 0))
+    ctx.state.notoriety_bonus = int(getattr(ctx.state, "notoriety_bonus", 0) or 0)
+    sync_reward_totals(ctx.state)
+    ctx.state.karma_earned = max(0, int(getattr(ctx.state, "karma_earned", 0) or 0))
+    ctx.state.nuyen_earned = max(0, int(getattr(ctx.state, "nuyen_earned", 0) or 0))
+    ctx.skill_rating_cap = CAREER_SKILL_MAX if ctx.career else 6
+    ctx.skill_group_cap = CAREER_SKILL_GROUP_MAX if ctx.career else 6
+    ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
+    ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
+    ctx.attrs_spec = ctx.meta["attributes"]
+    ctx.warnings = _drop_invalid_vehicle_ware(ctx.state)
+    ensure_subsystems(ctx.state)
+    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware))
+    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware))
     installed_names = {
-        "cyberware": _installed_ware_names("cyberware", state.cyberware),
-        "bioware": _installed_ware_names("bioware", state.bioware),
+        "cyberware": _installed_ware_names("cyberware", ctx.state.cyberware),
+        "bioware": _installed_ware_names("bioware", ctx.state.bioware),
     }
-    warnings.extend(
-        _required_warnings("cyberware", state.cyberware, installed_names, state.metatype, state.metavariant)
+    ctx.warnings.extend(
+        _required_warnings("cyberware", ctx.state.cyberware, installed_names, ctx.state.metatype, ctx.state.metavariant)
     )
-    warnings.extend(_required_warnings("bioware", state.bioware, installed_names, state.metatype, state.metavariant))
+    ctx.warnings.extend(
+        _required_warnings("bioware", ctx.state.bioware, installed_names, ctx.state.metatype, ctx.state.metavariant)
+    )
 
-    talent = resolve_talent_for_method(state.priorities.Talent, state.talent, state.build_method)
-    state.talent = talent["name"]
-    sources: list[tuple[str, list[dict[str, Any]]]] = [(meta["name"], meta.get("bonus") or [])]
-    qualities, free_quality_ids, dropped_qualities = gather_qualities(state, talent)
+    ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
+    ctx.state.talent = ctx.talent["name"]
+    ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
+    ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent)
     for name in dropped_qualities:
-        warnings.append(f"{name} は他の資質と両立しないため外しました")
-    quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in qualities])
+        ctx.warnings.append(f"{name} は他の資質と両立しないため外しました")
+    quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
-    warnings.extend(_clamp_ware_grades("cyberware", state.cyberware, disabled_cyber_grades))
-    warnings.extend(_clamp_ware_grades("bioware", state.bioware, disabled_bio_grades))
-    for q in qualities:
-        sources.append((q["name"], q.get("bonus") or []))
-    needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in qualities)
-    mentor = resolve_mentor(state, talent["name"], needs_mentor, data["skills"])
-    warnings.extend(mentor["warnings"])
-    errors.extend(mentor["errors"])
-    sources.extend(mentor["bonus_sources"])
-    vehicle_hosts = set(_vehicle_mod_hosts(state))
-    cyber_installed = resolve_ware("cyberware", state.cyberware, attrs_spec)
-    bio_installed = resolve_ware("bioware", state.bioware, attrs_spec)
-    resolve_quality_sides(qualities, state, cyber_installed, bio_installed, errors)
-    _finalize_avail_tree(cyber_installed, grade_kind="cyberware")
-    _finalize_avail_tree(bio_installed, grade_kind="bioware")
-    _zero_vehicle_hosted_essence(cyber_installed, vehicle_hosts)
-    installed = cyber_installed + bio_installed
-    hosted_ids = _vehicle_hosted_ware_ids(cyber_installed, vehicle_hosts)
-    for item in installed:
+    ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))
+    ctx.warnings.extend(_clamp_ware_grades("bioware", ctx.state.bioware, disabled_bio_grades))
+    for q in ctx.qualities:
+        ctx.sources.append((q["name"], q.get("bonus") or []))
+    ctx.needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in ctx.qualities)
+    ctx.mentor = resolve_mentor(ctx.state, ctx.talent["name"], ctx.needs_mentor, ctx.data["skills"])
+    ctx.warnings.extend(ctx.mentor["warnings"])
+    ctx.errors.extend(ctx.mentor["errors"])
+    ctx.sources.extend(ctx.mentor["bonus_sources"])
+    vehicle_hosts = set(_vehicle_mod_hosts(ctx.state))
+    ctx.cyber_installed = resolve_ware("cyberware", ctx.state.cyberware, ctx.attrs_spec)
+    ctx.bio_installed = resolve_ware("bioware", ctx.state.bioware, ctx.attrs_spec)
+    resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors)
+    _finalize_avail_tree(ctx.cyber_installed, grade_kind="cyberware")
+    _finalize_avail_tree(ctx.bio_installed, grade_kind="bioware")
+    _zero_vehicle_hosted_essence(ctx.cyber_installed, vehicle_hosts)
+    ctx.installed = ctx.cyber_installed + ctx.bio_installed
+    hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
+    for item in ctx.installed:
         if item.get("id") in hosted_ids:
             continue
-        sources.append((item["name"], item.get("bonus") or []))
-    ware_attr_bonus = _ware_attribute_bonuses([item for item in installed if item.get("id") not in hosted_ids])
-    if not career:
-        _check_ware_attribute_cap(ware_attr_bonus, errors)
-    effects = collect_effects(sources)
-    apply_excon_ware_ban(cyber_installed + bio_installed, bool(effects.get("excon")), errors)
-    bind_action_dice_pools(effects, qualities, state)
-    bind_spell_spirit_limits(effects, qualities, state, errors)
-    bind_spell_category_drain_damage(effects, qualities, state)
-    bind_weapon_category_dv(effects, qualities, state, warnings)
-    bind_weapon_skill_accuracy(effects, qualities, state, warnings, data["skills"])
-    apply_granted_spells(state, effects, qualities, warnings)
+        ctx.sources.append((item["name"], item.get("bonus") or []))
+    ctx.ware_attr_bonus = _ware_attribute_bonuses([item for item in ctx.installed if item.get("id") not in hosted_ids])
+    if not ctx.career:
+        _check_ware_attribute_cap(ctx.ware_attr_bonus, ctx.errors)
+    ctx.effects = collect_effects(ctx.sources)
+    apply_excon_ware_ban(ctx.cyber_installed + ctx.bio_installed, bool(ctx.effects.get("excon")), ctx.errors)
+    bind_action_dice_pools(ctx.effects, ctx.qualities, ctx.state)
+    bind_spell_spirit_limits(ctx.effects, ctx.qualities, ctx.state, ctx.errors)
+    bind_spell_category_drain_damage(ctx.effects, ctx.qualities, ctx.state)
+    bind_weapon_category_dv(ctx.effects, ctx.qualities, ctx.state, ctx.warnings)
+    bind_weapon_skill_accuracy(ctx.effects, ctx.qualities, ctx.state, ctx.warnings, ctx.data["skills"])
+    apply_granted_spells(ctx.state, ctx.effects, ctx.qualities, ctx.warnings)
     bind_select_powers(
-        effects,
-        qualities,
-        state,
-        warnings,
-        str((mentor.get("public") or {}).get("name") or ""),
+        ctx.effects,
+        ctx.qualities,
+        ctx.state,
+        ctx.warnings,
+        str((ctx.mentor.get("public") or {}).get("name") or ""),
     )
-    for category in effects.get("disabled_skill_group_categories") or []:
-        for group in _skill_groups_for_category(data["skills"], str(category)):
-            if group not in effects["disabled_skill_groups"]:
-                effects["disabled_skill_groups"].append(group)
-    for q in qualities:
+    for category in ctx.effects.get("disabled_skill_group_categories") or []:
+        for group in _skill_groups_for_category(ctx.data["skills"], str(category)):
+            if group not in ctx.effects["disabled_skill_groups"]:
+                ctx.effects["disabled_skill_groups"].append(group)
+    for q in ctx.qualities:
         if not any(node.get("tag") == "skillgroupdisablechoice" for node in (q.get("bonus") or [])):
             continue
-        picked = str((state.quality_extras or {}).get(q["id"]) or "").strip()
-        if picked and picked not in effects["disabled_skill_groups"]:
-            effects["disabled_skill_groups"].append(picked)
-    attr_max_bonus, attr_select_warnings = resolve_attribute_selects(state, effects, qualities)
-    warnings.extend(attr_select_warnings)
+        picked = str((ctx.state.quality_extras or {}).get(q["id"]) or "").strip()
+        if picked and picked not in ctx.effects["disabled_skill_groups"]:
+            ctx.effects["disabled_skill_groups"].append(picked)
+    ctx.attr_max_bonus, attr_select_warnings = resolve_attribute_selects(ctx.state, ctx.effects, ctx.qualities)
+    ctx.warnings.extend(attr_select_warnings)
     attr_max_mods = {
-        key: int(value) for key, value in (effects.get("attribute_max_mods") or {}).items() if int(value or 0)
+        key: int(value) for key, value in (ctx.effects.get("attribute_max_mods") or {}).items() if int(value or 0)
     }
     for key, value in attr_max_mods.items():
-        attr_max_bonus[key] = int(attr_max_bonus.get(key) or 0) + int(value)
-    seeker_targets = effects.get("cyberseeker") or []
-    limb_quality = apply_cyberseeker(cyber_installed, seeker_targets, attrs_spec, state.options)
-    warnings.extend(redliner_incompat_warnings(installed, seeker_targets))
-    if limb_quality:
-        for key, value in (limb_quality.get("attribute_bonus") or {}).items():
+        ctx.attr_max_bonus[key] = int(ctx.attr_max_bonus.get(key) or 0) + int(value)
+    seeker_targets = ctx.effects.get("cyberseeker") or []
+    ctx.limb_quality = apply_cyberseeker(ctx.cyber_installed, seeker_targets, ctx.attrs_spec, ctx.state.options)
+    ctx.warnings.extend(redliner_incompat_warnings(ctx.installed, seeker_targets))
+    if ctx.limb_quality:
+        for key, value in (ctx.limb_quality.get("attribute_bonus") or {}).items():
             if key in {"STR", "AGI"}:
                 continue
-            effects["attribute_bonus"][key] = int(effects["attribute_bonus"].get(key, 0)) + int(value)
-        effects["cm_physical"] += int(limb_quality.get("cm_physical") or 0)
+            ctx.effects["attribute_bonus"][key] = int(ctx.effects["attribute_bonus"].get(key, 0)) + int(value)
+        ctx.effects["cm_physical"] += int(ctx.limb_quality.get("cm_physical") or 0)
 
-    special_key, talent_start = talent_special(talent)
-    if is_karma and special_key:
-        talent_start = 1
-    enabled = set(effects["enabled_tabs"])
-    if special_key:
-        enabled.add(special_key)
+    ctx.special_key, ctx.talent_start = talent_special(ctx.talent)
+    if ctx.is_karma and ctx.special_key:
+        ctx.talent_start = 1
+    ctx.enabled = set(ctx.effects["enabled_tabs"])
+    if ctx.special_key:
+        ctx.enabled.add(ctx.special_key)
 
-    ess_start = float(attrs_spec.get("ESS", {}).get("max") or 6) + float(effects.get("essence_max_mod") or 0)
-    ess_lost_cyber, ess_lost_bio = apply_ware_essence_multipliers(cyber_installed, bio_installed, effects)
-    ess_lost = round(ess_lost_cyber + ess_lost_bio, 4)
-    if effects.get("disable_bioware") and bio_installed:
-        errors.append("Sensitive System などによりバイオウェアは装着できません")
-    ess_penalty = float(effects.get("essence_penalty") or 0)
-    ess_penalty_mag_exempt = float(effects.get("essence_penalty_mag_exempt") or 0)
-    ess = max(0.0, round(ess_start - ess_lost - ess_penalty, 2))
-    mag_relevant_loss = ess_lost + max(0.0, ess_penalty - ess_penalty_mag_exempt)
+    ess_start = float(ctx.attrs_spec.get("ESS", {}).get("max") or 6) + float(ctx.effects.get("essence_max_mod") or 0)
+    ctx.ess_lost_cyber, ctx.ess_lost_bio = apply_ware_essence_multipliers(
+        ctx.cyber_installed, ctx.bio_installed, ctx.effects
+    )
+    ctx.ess_lost = round(ctx.ess_lost_cyber + ctx.ess_lost_bio, 4)
+    if ctx.effects.get("disable_bioware") and ctx.bio_installed:
+        ctx.errors.append("Sensitive System などによりバイオウェアは装着できません")
+    ess_penalty = float(ctx.effects.get("essence_penalty") or 0)
+    ess_penalty_mag_exempt = float(ctx.effects.get("essence_penalty_mag_exempt") or 0)
+    ctx.ess = max(0.0, round(ess_start - ctx.ess_lost - ess_penalty, 2))
+    mag_relevant_loss = ctx.ess_lost + max(0.0, ess_penalty - ess_penalty_mag_exempt)
     mag_penalty = int(math.ceil(mag_relevant_loss - 1e-9)) if mag_relevant_loss > 0 else 0
     cyberadept_res_reduction = 0
-    if effects.get("cyberadept_daemon") and talent["name"] in RES_TALENTS:
+    if ctx.effects.get("cyberadept_daemon") and ctx.talent["name"] in RES_TALENTS:
         cyberadept_res_reduction = _cyberadept_res_penalty_reduction(
-            max(0, int(state.submersion_grade or 0)),
-            ess_lost_cyber,
-            ess_lost_bio,
+            max(0, int(ctx.state.submersion_grade or 0)),
+            ctx.ess_lost_cyber,
+            ctx.ess_lost_bio,
         )
 
-    initiate_grade = max(0, int(state.initiate_grade or 0)) if talent["name"] in MAG_TALENTS else 0
-    submersion_grade = max(0, int(state.submersion_grade or 0)) if talent["name"] in RES_TALENTS else 0
-    ratings: dict[str, int] = {}
-    for key, spec in attrs_spec.items():
+    initiate_grade = max(0, int(ctx.state.initiate_grade or 0)) if ctx.talent["name"] in MAG_TALENTS else 0
+    submersion_grade = max(0, int(ctx.state.submersion_grade or 0)) if ctx.talent["name"] in RES_TALENTS else 0
+    ctx.ratings = {}
+    for key, spec in ctx.attrs_spec.items():
         racial_min = int(spec["min"])
-        racial_max = int(spec["max"]) + int(attr_max_bonus.get(key) or 0)
-        raw = int(state.attributes.get(key, racial_min))
+        racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
+        raw = int(ctx.state.attributes.get(key, racial_min))
         if key == "MAG":
-            if special_key == "MAG":
-                floor = max(talent_start, 1)
+            if ctx.special_key == "MAG":
+                floor = max(ctx.talent_start, 1)
                 mag_cap = racial_max + initiate_grade
                 raw = max(floor, min(mag_cap, raw))
                 raw = max(0, raw - mag_penalty)
             else:
                 raw = 0
         elif key == "RES":
-            if special_key == "RES":
-                floor = max(talent_start, 1)
+            if ctx.special_key == "RES":
+                floor = max(ctx.talent_start, 1)
                 res_cap = racial_max + submersion_grade
                 raw = max(floor, min(res_cap, raw))
                 res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
@@ -904,219 +909,232 @@ def compute(state: CharacterState) -> CharacterState:
             else:
                 raw = 0
         elif key == "ESS":
-            raw = int(ess)
+            raw = int(ctx.ess)
         else:
             raw = max(racial_min, min(racial_max, raw))
-        ratings[key] = raw
+        ctx.ratings[key] = raw
 
-    quality_names = {q["name"] for q in qualities}
-    initiation = resolve_initiation(
-        state,
-        talent["name"],
-        int(ratings.get("MAG") or 0),
-        quality_names,
-        errors,
+    ctx.quality_names = {q["name"] for q in ctx.qualities}
+    ctx.initiation = resolve_initiation(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.ratings.get("MAG") or 0),
+        ctx.quality_names,
+        ctx.errors,
     )
-    apply_free_metamagics(effects, initiation, talent["name"], warnings)
-    warnings.extend(initiation["warnings"])
-    for source, nodes in initiation["bonus_sources"]:
-        apply_bonus_nodes(nodes, effects, source)
-    if talent["name"] in MAG_TALENTS:
-        enabled.add("initiation")
-    submersion = resolve_submersion(
-        state,
-        talent["name"],
-        int(ratings.get("RES") or 0),
-        quality_names,
-        errors,
+    apply_free_metamagics(ctx.effects, ctx.initiation, ctx.talent["name"], ctx.warnings)
+    ctx.warnings.extend(ctx.initiation["warnings"])
+    for source, nodes in ctx.initiation["bonus_sources"]:
+        apply_bonus_nodes(nodes, ctx.effects, source)
+    if ctx.talent["name"] in MAG_TALENTS:
+        ctx.enabled.add("initiation")
+    ctx.submersion = resolve_submersion(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.ratings.get("RES") or 0),
+        ctx.quality_names,
+        ctx.errors,
     )
-    apply_granted_echoes(effects, submersion, qualities, warnings)
-    warnings.extend(submersion["warnings"])
-    for source, nodes in submersion["bonus_sources"]:
-        apply_bonus_nodes(nodes, effects, source)
-    if talent["name"] in RES_TALENTS:
-        enabled.add("submersion")
-    qi = resolve_qi_foci(
-        state,
-        talent["name"],
-        int(ratings.get("MAG") or 0),
-        data["skills"],
-        list(effects.get("focus_binding") or []),
+    apply_granted_echoes(ctx.effects, ctx.submersion, ctx.qualities, ctx.warnings)
+    ctx.warnings.extend(ctx.submersion["warnings"])
+    for source, nodes in ctx.submersion["bonus_sources"]:
+        apply_bonus_nodes(nodes, ctx.effects, source)
+    if ctx.talent["name"] in RES_TALENTS:
+        ctx.enabled.add("submersion")
+    ctx.qi = resolve_qi_foci(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.ratings.get("MAG") or 0),
+        ctx.data["skills"],
+        list(ctx.effects.get("focus_binding") or []),
     )
-    warnings.extend(qi["warnings"])
-    errors.extend(qi["errors"])
-    foci = resolve_foci(
-        state,
-        talent["name"],
-        int(ratings.get("MAG") or 0),
-        list(effects.get("focus_binding") or []),
+    ctx.warnings.extend(ctx.qi["warnings"])
+    ctx.errors.extend(ctx.qi["errors"])
+    ctx.foci = resolve_foci(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.ratings.get("MAG") or 0),
+        list(ctx.effects.get("focus_binding") or []),
     )
-    warnings.extend(foci["warnings"])
-    _finalize_avail_tree(list(foci.get("public") or []), rating_key="force")
-    for source, nodes in foci["bonus_sources"]:
-        apply_bonus_nodes(nodes, effects, source)
-    focus_limits = apply_focus_limits(
-        int(ratings.get("MAG") or 0),
-        list(qi.get("public") or []),
-        list(foci.get("public") or []),
-        errors,
+    ctx.warnings.extend(ctx.foci["warnings"])
+    _finalize_avail_tree(list(ctx.foci.get("public") or []), rating_key="force")
+    for source, nodes in ctx.foci["bonus_sources"]:
+        apply_bonus_nodes(nodes, ctx.effects, source)
+    ctx.focus_limits = apply_focus_limits(
+        int(ctx.ratings.get("MAG") or 0),
+        list(ctx.qi.get("public") or []),
+        list(ctx.foci.get("public") or []),
+        ctx.errors,
     )
-    apply_tradition_bonuses(effects, _tradition_by_id(state.tradition_id))
-    granted_powers = free_powers_from_grants(effects, warnings)
-    adept = resolve_adept_powers(
-        state,
-        talent["name"],
-        int(ratings.get("MAG") or 0),
-        data["skills"],
-        quality_names,
-        bool(effects.get("magicians_way")),
-        list(mentor.get("free_powers") or []) + list(qi.get("free_powers") or []) + granted_powers,
-        int(ratings.get("WIL") or 1),
-        int(ratings.get("INT") or 1),
+    apply_tradition_bonuses(ctx.effects, _tradition_by_id(ctx.state.tradition_id))
+    granted_powers = free_powers_from_grants(ctx.effects, ctx.warnings)
+    ctx.adept = resolve_adept_powers(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.ratings.get("MAG") or 0),
+        ctx.data["skills"],
+        ctx.quality_names,
+        bool(ctx.effects.get("magicians_way")),
+        list(ctx.mentor.get("free_powers") or []) + list(ctx.qi.get("free_powers") or []) + granted_powers,
+        int(ctx.ratings.get("WIL") or 1),
+        int(ctx.ratings.get("INT") or 1),
     )
-    warnings.extend(adept["warnings"])
-    errors.extend(adept["errors"])
-    state.mystic_pp = int(adept["mystic_pp"])
-    enhancements = resolve_enhancements(state, talent["name"], quality_names, set(adept.get("power_names") or []))
-    warnings.extend(enhancements["warnings"])
-    effects["enabled_tabs"] = set(effects["enabled_tabs"])
-    for source, nodes in adept["bonus_sources"] + enhancements["bonus_sources"]:
-        apply_bonus_nodes(nodes, effects, source)
-    attr_totals = {
-        key: int(ratings.get(key) or 0) + int((effects.get("attribute_bonus") or {}).get(key, 0)) for key in ratings
+    ctx.warnings.extend(ctx.adept["warnings"])
+    ctx.errors.extend(ctx.adept["errors"])
+    ctx.state.mystic_pp = int(ctx.adept["mystic_pp"])
+    ctx.enhancements = resolve_enhancements(
+        ctx.state, ctx.talent["name"], ctx.quality_names, set(ctx.adept.get("power_names") or [])
+    )
+    ctx.warnings.extend(ctx.enhancements["warnings"])
+    ctx.effects["enabled_tabs"] = set(ctx.effects["enabled_tabs"])
+    for source, nodes in ctx.adept["bonus_sources"] + ctx.enhancements["bonus_sources"]:
+        apply_bonus_nodes(nodes, ctx.effects, source)
+    ctx.attr_totals = {
+        key: int(ctx.ratings.get(key) or 0) + int((ctx.effects.get("attribute_bonus") or {}).get(key, 0))
+        for key in ctx.ratings
     }
-    gear = resolve_gear(
-        state,
-        cyber_installed,
-        attr_totals,
-        special_modification_limit=int(effects.get("special_modification_limit") or 0),
+    ctx.gear = resolve_gear(
+        ctx.state,
+        ctx.cyber_installed,
+        ctx.attr_totals,
+        special_modification_limit=int(ctx.effects.get("special_modification_limit") or 0),
     )
-    warnings.extend(gear["warnings"])
-    errors.extend(gear.get("errors") or [])
-    apply_lifestyle_cost_mod(gear, int(effects.get("lifestyle_cost") or 0))
-    apply_erased_lifestyle_cap(gear, bool(effects.get("erased")), warnings)
-    apply_reach_bonus(gear.get("weapons"), int(effects.get("reach") or 0))
-    apply_weapon_category_dv(gear.get("weapons"), effects)
-    apply_weapon_skill_accuracy(gear.get("weapons"), effects)
-    bmp_category = ""
-    bmp_contact_id = ""
-    bmp_active = False
-    if effects.get("black_market_discount"):
-        for q in qualities:
+    ctx.warnings.extend(ctx.gear["warnings"])
+    ctx.errors.extend(ctx.gear.get("errors") or [])
+    apply_lifestyle_cost_mod(ctx.gear, int(ctx.effects.get("lifestyle_cost") or 0))
+    apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
+    apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
+    apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)
+    apply_weapon_skill_accuracy(ctx.gear.get("weapons"), ctx.effects)
+    ctx.bmp_category = ""
+    ctx.bmp_contact_id = ""
+    ctx.bmp_active = False
+    if ctx.effects.get("black_market_discount"):
+        for q in ctx.qualities:
             if not any(node.get("tag") == "blackmarketdiscount" for node in (q.get("bonus") or [])):
                 continue
-            bmp_category = str((state.quality_extras or {}).get(q["id"]) or "").strip()
-            bmp_contact_id = str((state.quality_extras or {}).get(quality_contact_extra_key(q["id"])) or "").strip()
-            contact_ids = {str(getattr(c, "id", "") or "") for c in (state.contacts or [])}
-            if not bmp_category:
-                warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
-            if not bmp_contact_id:
-                warnings.append("Black Market Pipeline のコンタクトを選んでください")
-            elif bmp_contact_id not in contact_ids:
-                warnings.append("Black Market Pipeline のコンタクトが見つかりません")
-                bmp_contact_id = ""
-            bmp_active = bool(bmp_category and bmp_contact_id)
+            ctx.bmp_category = str((ctx.state.quality_extras or {}).get(q["id"]) or "").strip()
+            ctx.bmp_contact_id = str(
+                (ctx.state.quality_extras or {}).get(quality_contact_extra_key(q["id"])) or ""
+            ).strip()
+            contact_ids = {str(getattr(c, "id", "") or "") for c in (ctx.state.contacts or [])}
+            if not ctx.bmp_category:
+                ctx.warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
+            if not ctx.bmp_contact_id:
+                ctx.warnings.append("Black Market Pipeline のコンタクトを選んでください")
+            elif ctx.bmp_contact_id not in contact_ids:
+                ctx.warnings.append("Black Market Pipeline のコンタクトが見つかりません")
+                ctx.bmp_contact_id = ""
+            ctx.bmp_active = bool(ctx.bmp_category and ctx.bmp_contact_id)
             break
     apply_purchase_discounts(
-        gear,
-        cyber_installed,
-        bio_installed,
-        effects,
-        black_market_category=bmp_category if bmp_active else "",
+        ctx.gear,
+        ctx.cyber_installed,
+        ctx.bio_installed,
+        ctx.effects,
+        black_market_category=ctx.bmp_category if ctx.bmp_active else "",
     )
-    if bmp_active:
+    if ctx.bmp_active:
         apply_black_market_avail(
-            gear,
-            cyber_installed,
-            bio_installed,
-            black_market_category=bmp_category,
+            ctx.gear,
+            ctx.cyber_installed,
+            ctx.bio_installed,
+            black_market_category=ctx.bmp_category,
         )
-    apply_overclocker(gear, bool(effects.get("overclocker")))
-    trust_level = int(effects.get("trustfund") or 0)
+    apply_overclocker(ctx.gear, bool(ctx.effects.get("overclocker")))
+    trust_level = int(ctx.effects.get("trustfund") or 0)
     if trust_level:
         sinner_ok = any(
             str(q.get("name") or "").startswith("SINner (National)")
             or str(q.get("name") or "").startswith("SINner (Corporate)")
-            for q in qualities
+            for q in ctx.qualities
         )
         if not sinner_ok:
-            warnings.append("Trust Fund には SINner（National または Corporate）が必要です")
-    errors.extend(_attach_ware_to_vehicle_mods(gear.get("vehicle_mods") or [], cyber_installed))
-    for source, nodes in gear["bonus_sources"]:
-        apply_bonus_nodes(nodes, effects, source)
-    active_drugs = apply_active_drugs(state, attr_totals, effects)
-    attach_weapon_focus_dice(state, list(foci.get("public") or []), list(gear.get("weapons") or []), warnings)
-    if talent["name"] in ADEPT_TALENTS:
-        enabled.add("adept")
-        effects["enabled_tabs"].add("adept")
-    enabled.update(effects["enabled_tabs"])
+            ctx.warnings.append("Trust Fund には SINner（National または Corporate）が必要です")
+    ctx.errors.extend(_attach_ware_to_vehicle_mods(ctx.gear.get("vehicle_mods") or [], ctx.cyber_installed))
+    for source, nodes in ctx.gear["bonus_sources"]:
+        apply_bonus_nodes(nodes, ctx.effects, source)
+    ctx.active_drugs = apply_active_drugs(ctx.state, ctx.attr_totals, ctx.effects)
+    attach_weapon_focus_dice(
+        ctx.state, list(ctx.foci.get("public") or []), list(ctx.gear.get("weapons") or []), ctx.warnings
+    )
+    if ctx.talent["name"] in ADEPT_TALENTS:
+        ctx.enabled.add("adept")
+        ctx.effects["enabled_tabs"].add("adept")
+    ctx.enabled.update(ctx.effects["enabled_tabs"])
 
-    if talent["name"] == "Adept":
-        power_pool = float(ratings["MAG"]) + float(effects.get("adept_power_points") or 0)
-    elif talent["name"] == "Mystic Adept":
-        power_pool = float(state.mystic_pp) + float(effects.get("adept_power_points") or 0)
+    if ctx.talent["name"] == "Adept":
+        ctx.power_pool = float(ctx.ratings["MAG"]) + float(ctx.effects.get("adept_power_points") or 0)
+    elif ctx.talent["name"] == "Mystic Adept":
+        ctx.power_pool = float(ctx.state.mystic_pp) + float(ctx.effects.get("adept_power_points") or 0)
     else:
-        power_pool = 0.0
-    power_spent = float(adept["spent"])
-    if power_spent > power_pool + 1e-9:
-        errors.append(f"パワー点が不足しています（使用 {power_spent:g} / 上限 {power_pool:g}）")
+        ctx.power_pool = 0.0
+    ctx.power_spent = float(ctx.adept["spent"])
+    if ctx.power_spent > ctx.power_pool + 1e-9:
+        ctx.errors.append(f"パワー点が不足しています（使用 {ctx.power_spent:g} / 上限 {ctx.power_pool:g}）")
 
-    bonus = effects["attribute_bonus"]
-    total = {k: ratings[k] + int(bonus.get(k, 0)) for k in ratings}
+    bonus = ctx.effects["attribute_bonus"]
+    ctx.total = {k: ctx.ratings[k] + int(bonus.get(k, 0)) for k in ctx.ratings}
     # ESS is fractional; the attribute-total consumers only ever read integer
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
-    total["ESS"] = ess  # type: ignore[assignment]
-    limb_replace = limb_attribute_replace(cyber_installed, int(total["STR"]), int(total["AGI"]), attrs_spec)
-    if limb_replace:
-        total["STR"] = int(limb_replace["str"])
-        total["AGI"] = int(limb_replace["agi"])
+    ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]
+    ctx.limb_replace = limb_attribute_replace(
+        ctx.cyber_installed, int(ctx.total["STR"]), int(ctx.total["AGI"]), ctx.attrs_spec
+    )
+    if ctx.limb_replace:
+        ctx.total["STR"] = int(ctx.limb_replace["str"])
+        ctx.total["AGI"] = int(ctx.limb_replace["agi"])
 
-    owned_magic_names = set(initiation.get("art_names") or set()) | set(initiation.get("metamagic_names") or set())
-    magic = resolve_spells(state, talent, int(total.get("MAG") or 0), total, owned_magic_names, effects)
-    warnings.extend(magic["warnings"])
-    spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (effects.get("spell_category_mods") or [])}
-    for item in magic.get("public") or []:
+    owned_magic_names = set(ctx.initiation.get("art_names") or set()) | set(
+        ctx.initiation.get("metamagic_names") or set()
+    )
+    ctx.magic = resolve_spells(
+        ctx.state, ctx.talent, int(ctx.total.get("MAG") or 0), ctx.total, owned_magic_names, ctx.effects
+    )
+    ctx.warnings.extend(ctx.magic["warnings"])
+    spell_focus = {mod["name"]: int(mod.get("bonus") or 0) for mod in (ctx.effects.get("spell_category_mods") or [])}
+    for item in ctx.magic.get("public") or []:
         bonus = int(spell_focus.get(item.get("category") or "", 0))
         if bonus:
             item["focus_bonus"] = bonus
-    bind_extra_spirits(effects, qualities, state, warnings, data["skills"])
-    spirits = resolve_spirits(
-        state,
-        talent["name"],
-        int(total.get("MAG") or 0),
-        _tradition_by_id(state.tradition_id),
-        limit_spirits=list(effects.get("limit_spirit_categories") or []),
-        extra_spirits=list(effects.get("extra_spirits") or []),
+    bind_extra_spirits(ctx.effects, ctx.qualities, ctx.state, ctx.warnings, ctx.data["skills"])
+    ctx.spirits = resolve_spirits(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.total.get("MAG") or 0),
+        _tradition_by_id(ctx.state.tradition_id),
+        limit_spirits=list(ctx.effects.get("limit_spirit_categories") or []),
+        extra_spirits=list(ctx.effects.get("extra_spirits") or []),
     )
-    warnings.extend(spirits["warnings"])
-    if talent["name"] in SPELL_TALENTS or (effects.get("allow_spell_ranges") or []):
-        enabled.add("spells")
-    if talent["name"] in SPIRIT_TALENTS:
-        enabled.add("spirits")
-    resonance = resolve_complex_forms(
-        state,
-        talent["name"],
-        int(total.get("RES") or 0),
-        total,
-        quality_names,
-        effects,
+    ctx.warnings.extend(ctx.spirits["warnings"])
+    if ctx.talent["name"] in SPELL_TALENTS or (ctx.effects.get("allow_spell_ranges") or []):
+        ctx.enabled.add("spells")
+    if ctx.talent["name"] in SPIRIT_TALENTS:
+        ctx.enabled.add("spirits")
+    ctx.resonance = resolve_complex_forms(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.total.get("RES") or 0),
+        ctx.total,
+        ctx.quality_names,
+        ctx.effects,
     )
-    warnings.extend(resonance["warnings"])
-    techno_sprites = resolve_sprites(
-        state,
-        talent["name"],
-        int(total.get("RES") or 0),
-        resonance.get("stream"),
+    ctx.warnings.extend(ctx.resonance["warnings"])
+    ctx.techno_sprites = resolve_sprites(
+        ctx.state,
+        ctx.talent["name"],
+        int(ctx.total.get("RES") or 0),
+        ctx.resonance.get("stream"),
     )
-    warnings.extend(techno_sprites["warnings"])
-    errors.extend(techno_sprites["errors"])
-    if talent["name"] in COMPLEX_FORM_TALENTS:
-        enabled.add("complexforms")
-    if talent["name"] in SPRITE_TALENTS:
-        enabled.add("sprites")
-    if talent["name"] in FOCUS_TALENTS:
-        enabled.add("foci")
-    for item in adept.get("public") or []:
+    ctx.warnings.extend(ctx.techno_sprites["warnings"])
+    ctx.errors.extend(ctx.techno_sprites["errors"])
+    if ctx.talent["name"] in COMPLEX_FORM_TALENTS:
+        ctx.enabled.add("complexforms")
+    if ctx.talent["name"] in SPRITE_TALENTS:
+        ctx.enabled.add("sprites")
+    if ctx.talent["name"] in FOCUS_TALENTS:
+        ctx.enabled.add("foci")
+    for item in ctx.adept.get("public") or []:
         extra = item.get("extra")
         if item.get("select") != "spell" or not extra:
             continue
@@ -1124,826 +1142,842 @@ def compute(state: CharacterState) -> CharacterState:
         item["spell"] = spell_cast_info(
             extra,
             force,
-            int(total.get("MAG") or 0),
-            int(magic["resist"]),
-            str(magic["resist_attrs"]),
-            effects=effects,
+            int(ctx.total.get("MAG") or 0),
+            int(ctx.magic["resist"]),
+            str(ctx.magic["resist_attrs"]),
+            effects=ctx.effects,
         )
 
-    attr_row = priority_value("Attributes", state.priorities.Attributes)
-    skill_row = priority_value("Skills", state.priorities.Skills)
-    res_row = priority_value("Resources", state.priorities.Resources)
-    her_row = priority_value("Heritage", state.priorities.Heritage)
+    attr_row = priority_value("Attributes", ctx.state.priorities.Attributes)
+    skill_row = priority_value("Skills", ctx.state.priorities.Skills)
+    res_row = priority_value("Resources", ctx.state.priorities.Resources)
+    her_row = priority_value("Heritage", ctx.state.priorities.Heritage)
 
-    special_from_meta = 0
+    ctx.special_from_meta = 0
     extra_karma = 0
     for entry in her_row.get("metatypes") or []:
-        if entry["name"] == state.metatype:
-            special_from_meta = entry.get("special", 0)
+        if entry["name"] == ctx.state.metatype:
+            ctx.special_from_meta = entry.get("special", 0)
             extra_karma += entry.get("karma", 0)
-            if state.metavariant:
+            if ctx.state.metavariant:
                 for v in entry.get("variants") or []:
-                    if v["name"] == state.metavariant:
-                        special_from_meta = v.get("special", special_from_meta)
+                    if v["name"] == ctx.state.metavariant:
+                        ctx.special_from_meta = v.get("special", ctx.special_from_meta)
                         extra_karma += v.get("karma", 0)
             break
 
-    spent_physical = 0
+    ctx.spent_physical = 0
     for key in PHYSICAL_ATTRS:
-        spent_physical += max(0, ratings[key] - int(attrs_spec[key]["min"]))
-    spent_special = max(0, ratings["EDG"] - int(attrs_spec["EDG"]["min"]))
-    if special_key == "MAG":
-        spent_special += max(0, ratings["MAG"] - talent_start)
-    elif special_key == "RES":
-        spent_special += max(0, ratings["RES"] - talent_start)
+        ctx.spent_physical += max(0, ctx.ratings[key] - int(ctx.attrs_spec[key]["min"]))
+    ctx.spent_special = max(0, ctx.ratings["EDG"] - int(ctx.attrs_spec["EDG"]["min"]))
+    if ctx.special_key == "MAG":
+        ctx.spent_special += max(0, ctx.ratings["MAG"] - ctx.talent_start)
+    elif ctx.special_key == "RES":
+        ctx.spent_special += max(0, ctx.ratings["RES"] - ctx.talent_start)
 
-    nuyen_karma_max = KARMA_NUYEN_MAX
-    if is_karma:
-        attr_points = 0
-        skill_points = 0
-        group_points = 0
-        special_from_meta = 0
-        nuyen_karma_max = KARMA_NUYEN_MAX
-        state.karma_nuyen = max(0, min(nuyen_karma_max, int(state.karma_nuyen or 0)))
-        nuyen_pool = int(state.karma_nuyen) * KARMA_TO_NUYEN
-        metatype_karma_cost = max(0, int(meta.get("karma") or 0))
-        heritage_karma_cost = 0
+    ctx.nuyen_karma_max = KARMA_NUYEN_MAX
+    if ctx.is_karma:
+        ctx.attr_points = 0
+        ctx.skill_points = 0
+        ctx.group_points = 0
+        ctx.special_from_meta = 0
+        ctx.nuyen_karma_max = KARMA_NUYEN_MAX
+        ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
+        ctx.nuyen_pool = int(ctx.state.karma_nuyen) * KARMA_TO_NUYEN
+        ctx.metatype_karma_cost = max(0, int(ctx.meta.get("karma") or 0))
+        ctx.heritage_karma_cost = 0
     else:
-        attr_points = int(attr_row.get("attribute_points") or 0)
-        skill_points = int(skill_row.get("skill_points") or 0)
-        group_points = int(skill_row.get("skill_group_points") or 0)
-        nuyen_pool = int(res_row.get("nuyen") or 0)
-        metatype_karma_cost = 0
+        ctx.attr_points = int(attr_row.get("attribute_points") or 0)
+        ctx.skill_points = int(skill_row.get("skill_points") or 0)
+        ctx.group_points = int(skill_row.get("skill_group_points") or 0)
+        ctx.nuyen_pool = int(res_row.get("nuyen") or 0)
+        ctx.metatype_karma_cost = 0
         # Priority chargen: metatypes.xml <karma> is for Karma/Sum-to-Ten, not Priority.
         # Heritage table <karma> is an extra cost for some metavariants / rare races.
-        heritage_karma_cost = extra_karma
+        ctx.heritage_karma_cost = extra_karma
         # Leftover chargen karma may buy nuyen (SR5 p.94); Born Rich raises the cap.
-        nuyen_karma_max = max(0, PRIORITY_KARMA_NUYEN_BASE + int(effects.get("nuyen_max_bp") or 0))
-        state.karma_nuyen = max(0, min(nuyen_karma_max, int(state.karma_nuyen or 0)))
-        nuyen_pool += int(state.karma_nuyen) * KARMA_TO_NUYEN
+        ctx.nuyen_karma_max = max(0, PRIORITY_KARMA_NUYEN_BASE + int(ctx.effects.get("nuyen_max_bp") or 0))
+        ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
+        ctx.nuyen_pool += int(ctx.state.karma_nuyen) * KARMA_TO_NUYEN
 
-    nuyen_pool += int(state.nuyen_earned or 0)
-    nuyen_pool += int(effects.get("nuyen_amt") or 0)
-    nuyen_spent = (
-        sum(int(item["nuyen"]) for item in installed)
-        + int(qi.get("nuyen") or 0)
-        + int(foci.get("nuyen") or 0)
-        + int(spirits.get("nuyen") or 0)
-        + int(gear.get("nuyen") or 0)
+    ctx.nuyen_pool += int(ctx.state.nuyen_earned or 0)
+    ctx.nuyen_pool += int(ctx.effects.get("nuyen_amt") or 0)
+    ctx.nuyen_spent = (
+        sum(int(item["nuyen"]) for item in ctx.installed)
+        + int(ctx.qi.get("nuyen") or 0)
+        + int(ctx.foci.get("nuyen") or 0)
+        + int(ctx.spirits.get("nuyen") or 0)
+        + int(ctx.gear.get("nuyen") or 0)
     )
-    nuyen = nuyen_pool - nuyen_spent
+    ctx.nuyen = ctx.nuyen_pool - ctx.nuyen_spent
 
-    skill_spent = 0
-    group_spent = 0
-    skill_totals: dict[str, int] = {}
-    exotic_names = {s["name"] for s in data["skills"]["skills"] if s.get("exotic")}
+    ctx.skill_spent = 0
+    ctx.group_spent = 0
+    ctx.skill_totals = {}
+    exotic_names = {s["name"] for s in ctx.data["skills"]["skills"] if s.get("exotic")}
     if exotic_names:
-        state.skills = {name: rating for name, rating in state.skills.items() if name not in exotic_names}
-    for group, rating in state.skill_groups.items():
-        rating = max(0, min(skill_group_cap, int(rating)))
-        state.skill_groups[group] = rating
-        group_spent += rating
-        for s in data["skills"]["skills"]:
+        ctx.state.skills = {name: rating for name, rating in ctx.state.skills.items() if name not in exotic_names}
+    for group, rating in ctx.state.skill_groups.items():
+        rating = max(0, min(ctx.skill_group_cap, int(rating)))
+        ctx.state.skill_groups[group] = rating
+        ctx.group_spent += rating
+        for s in ctx.data["skills"]["skills"]:
             if s.get("skillgroup") == group and not s.get("exotic"):
-                skill_totals[s["name"]] = max(skill_totals.get(s["name"], 0), rating)
-    tentative = dict(skill_totals)
-    for name, rating in state.skills.items():
-        tentative[name] = max(tentative.get(name, 0), max(0, min(skill_rating_cap + 1, int(rating))))
-    skill_picks = resolve_skill_picks(state, data["skills"], tentative)
-    warnings.extend(skill_picks["warnings"])
-    skill_cat_map = _skill_category_map(data["skills"])
-    point_mults = dict(effects.get("skill_category_point_cost_mult") or {})
-    for name, rating in state.skills.items():
-        cap = skill_rating_cap + int(skill_picks["skill_max_bonus"].get(name, 0))
+                ctx.skill_totals[s["name"]] = max(ctx.skill_totals.get(s["name"], 0), rating)
+    tentative = dict(ctx.skill_totals)
+    for name, rating in ctx.state.skills.items():
+        tentative[name] = max(tentative.get(name, 0), max(0, min(ctx.skill_rating_cap + 1, int(rating))))
+    ctx.skill_picks = resolve_skill_picks(ctx.state, ctx.data["skills"], tentative)
+    ctx.warnings.extend(ctx.skill_picks["warnings"])
+    skill_cat_map = _skill_category_map(ctx.data["skills"])
+    point_mults = dict(ctx.effects.get("skill_category_point_cost_mult") or {})
+    for name, rating in ctx.state.skills.items():
+        cap = ctx.skill_rating_cap + int(ctx.skill_picks["skill_max_bonus"].get(name, 0))
         rating = max(0, min(cap, int(rating)))
-        state.skills[name] = rating
-        base = skill_totals.get(name, 0)
+        ctx.state.skills[name] = rating
+        base = ctx.skill_totals.get(name, 0)
         extra = max(0, rating - base)
         cat = skill_cat_map.get(name, "")
-        skill_spent += _point_cost(extra, int(point_mults.get(cat, 100)))
-        skill_totals[name] = max(base, rating)
-    exotic = resolve_exotic_skills(
-        state,
-        data["skills"],
-        skill_picks["skill_max_bonus"],
-        rating_cap=skill_rating_cap,
+        ctx.skill_spent += _point_cost(extra, int(point_mults.get(cat, 100)))
+        ctx.skill_totals[name] = max(base, rating)
+    ctx.exotic = resolve_exotic_skills(
+        ctx.state,
+        ctx.data["skills"],
+        ctx.skill_picks["skill_max_bonus"],
+        rating_cap=ctx.skill_rating_cap,
     )
-    warnings.extend(exotic["warnings"])
-    skill_spent += int(exotic["spent"])
-    skill_totals.update(exotic["totals"])
-    knowledge = resolve_knowledge(
-        state,
-        data["skills"],
-        total,
-        rating_cap=skill_rating_cap,
-        native_limit=1 + int(effects.get("native_language_limit_bonus") or 0),
+    ctx.warnings.extend(ctx.exotic["warnings"])
+    ctx.skill_spent += int(ctx.exotic["spent"])
+    ctx.skill_totals.update(ctx.exotic["totals"])
+    ctx.knowledge = resolve_knowledge(
+        ctx.state,
+        ctx.data["skills"],
+        ctx.total,
+        rating_cap=ctx.skill_rating_cap,
+        native_limit=1 + int(ctx.effects.get("native_language_limit_bonus") or 0),
     )
-    warnings.extend(knowledge["warnings"])
-    know_spent = knowledge_points_spent(knowledge["public"], point_mults)
-    know_max = int(knowledge["max"]) + int(effects.get("knowledge_skill_points") or 0)
-    bought_knowledge = dict(state.knowledge_skills)
-    for name in state.native_languages:
+    ctx.warnings.extend(ctx.knowledge["warnings"])
+    ctx.know_spent = knowledge_points_spent(ctx.knowledge["public"], point_mults)
+    ctx.know_max = int(ctx.knowledge["max"]) + int(ctx.effects.get("knowledge_skill_points") or 0)
+    bought_knowledge = dict(ctx.state.knowledge_skills)
+    for name in ctx.state.native_languages:
         bought_knowledge[name] = max(int(bought_knowledge.get(name) or 0), 1)
-    skill_mods = resolve_skill_mods(data["skills"], effects, bought_knowledge, state.knowledge_categories)
-    for name, bonus in skill_picks["skill_bonus"].items():
-        skill_mods["skill_bonus"][name] = int(skill_mods["skill_bonus"].get(name, 0)) + int(bonus)
-    for name, notes in skill_picks["skill_bonus_notes"].items():
-        existing = skill_mods["skill_bonus_notes"].setdefault(name, [])
+    ctx.skill_mods = resolve_skill_mods(
+        ctx.data["skills"], ctx.effects, bought_knowledge, ctx.state.knowledge_categories
+    )
+    for name, bonus in ctx.skill_picks["skill_bonus"].items():
+        ctx.skill_mods["skill_bonus"][name] = int(ctx.skill_mods["skill_bonus"].get(name, 0)) + int(bonus)
+    for name, notes in ctx.skill_picks["skill_bonus_notes"].items():
+        existing = ctx.skill_mods["skill_bonus_notes"].setdefault(name, [])
         for note in notes:
             if note not in existing:
                 existing.append(note)
-    _copy_exotic_skill_bonuses(skill_mods, exotic["public"])
-    for name in effects.get("disabled_skills") or []:
-        if int(skill_totals.get(name) or 0) > 0 or int(state.skills.get(name) or 0) > 0:
-            warnings.append(f"{name} は無効化されている技能です")
-    for group in effects.get("disabled_skill_groups") or []:
-        if int(state.skill_groups.get(group) or 0) > 0:
-            warnings.append(f"技能グループ {group} は無効化されています")
-    blocked_defaults = list(effects.get("blocked_default_categories") or [])
+    _copy_exotic_skill_bonuses(ctx.skill_mods, ctx.exotic["public"])
+    for name in ctx.effects.get("disabled_skills") or []:
+        if int(ctx.skill_totals.get(name) or 0) > 0 or int(ctx.state.skills.get(name) or 0) > 0:
+            ctx.warnings.append(f"{name} は無効化されている技能です")
+    for group in ctx.effects.get("disabled_skill_groups") or []:
+        if int(ctx.state.skill_groups.get(group) or 0) > 0:
+            ctx.warnings.append(f"技能グループ {group} は無効化されています")
+    blocked_defaults = list(ctx.effects.get("blocked_default_categories") or [])
     if blocked_defaults:
-        warnings.append("デフォルト不可: " + "、".join(blocked_defaults))
-    skillsofts = resolve_skillsofts(list(gear.get("gear") or []), data["skills"], effects, warnings)
-    _attach_skillsoft_knowledge(knowledge["public"], skillsofts["knowledge"], data["skills"])
-    expertises, free_expertise_skills = apply_select_expertise(
-        state,
-        effects,
-        qualities,
-        skill_totals,
-        skillsofts["active"],
-        warnings,
+        ctx.warnings.append("デフォルト不可: " + "、".join(blocked_defaults))
+    ctx.skillsofts = resolve_skillsofts(list(ctx.gear.get("gear") or []), ctx.data["skills"], ctx.effects, ctx.warnings)
+    _attach_skillsoft_knowledge(ctx.knowledge["public"], ctx.skillsofts["knowledge"], ctx.data["skills"])
+    ctx.expertises, free_expertise_skills = apply_select_expertise(
+        ctx.state,
+        ctx.effects,
+        ctx.qualities,
+        ctx.skill_totals,
+        ctx.skillsofts["active"],
+        ctx.warnings,
     )
-    specs = resolve_specializations(
-        state,
-        data["skills"],
-        skill_totals,
-        skillsofts["active"],
-        skillsofts["knowledge"],
+    ctx.specs = resolve_specializations(
+        ctx.state,
+        ctx.data["skills"],
+        ctx.skill_totals,
+        ctx.skillsofts["active"],
+        ctx.skillsofts["knowledge"],
         free_expertise_skills=free_expertise_skills,
     )
-    warnings.extend(specs["warnings"])
+    ctx.warnings.extend(ctx.specs["warnings"])
     # Keep expertise picks even if resolve dropped a conflicting row.
-    for row in expertises:
+    for row in ctx.expertises:
         skill_name = str(row.get("skill") or "")
         spec_name = str(row.get("spec") or "")
         if skill_name and spec_name:
-            specs["specs"][skill_name] = spec_name
-            state.skill_specializations[skill_name] = spec_name
-    spec_active = int(specs["active_spent"])
-    spec_knowledge = int(specs["knowledge_spent"])
-    if is_karma:
-        spec_karma = (spec_active + spec_knowledge) * KARMA_SPECIALIZATION
-    elif career:
+            ctx.specs["specs"][skill_name] = spec_name
+            ctx.state.skill_specializations[skill_name] = spec_name
+    spec_active = int(ctx.specs["active_spent"])
+    spec_knowledge = int(ctx.specs["knowledge_spent"])
+    if ctx.is_karma:
+        ctx.spec_karma = (spec_active + spec_knowledge) * KARMA_SPECIALIZATION
+    elif ctx.career:
         # Priority career: new specs cost karma (baseline settles chargen specs).
-        spec_karma = 0
+        ctx.spec_karma = 0
     else:
-        skill_spent += spec_active
-        know_spent += spec_knowledge
-        spec_karma = 0
-    _attach_specializations(knowledge["public"], specs["specs"])
-    effective_skills = _merge_skill_ratings(skill_totals, skillsofts["active"])
-    effective_knowledge = _merge_skill_ratings(dict(state.knowledge_skills or {}), skillsofts["knowledge"])
+        ctx.skill_spent += spec_active
+        ctx.know_spent += spec_knowledge
+        ctx.spec_karma = 0
+    _attach_specializations(ctx.knowledge["public"], ctx.specs["specs"])
+    ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
+    ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
 
-    karma_from_q = sum(
-        q["karma"] for q in qualities if not q.get("onlyprioritygiven") and q["id"] not in free_quality_ids
+    ctx.karma_from_q = sum(
+        q["karma"] for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
     )
-    mystic_karma = int(state.mystic_pp) * MYSTIC_PP_KARMA
-    extra_adept_karma = int(enhancements.get("karma") or 0) + int(qi.get("karma") or 0) + int(foci.get("karma") or 0)
-    spell_karma = int(magic.get("karma") or 0) + int(resonance.get("karma") or 0)
-    career_adv_karma = 0
-    career_adv_lines: list[dict[str, Any]] = []
-    if is_karma:
-        attr_karma = attribute_karma_cost(ratings, attrs_spec, special_key)
-        skill_buy_karma = skill_karma_cost(state.skill_groups, skill_totals, data["skills"], group_cap=skill_group_cap)
+    ctx.mystic_karma = int(ctx.state.mystic_pp) * MYSTIC_PP_KARMA
+    ctx.extra_adept_karma = (
+        int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
+    )
+    ctx.spell_karma = int(ctx.magic.get("karma") or 0) + int(ctx.resonance.get("karma") or 0)
+    ctx.career_adv_karma = 0
+    ctx.career_adv_lines = []
+    if ctx.is_karma:
+        ctx.attr_karma = attribute_karma_cost(ctx.ratings, ctx.attrs_spec, ctx.special_key)
+        ctx.skill_buy_karma = skill_karma_cost(
+            ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
+        )
         know_cats = {
             str(row.get("name") or ""): str(row.get("category") or "")
-            for row in (knowledge.get("public") or [])
+            for row in (ctx.knowledge.get("public") or [])
             if row.get("name")
         }
-        knowledge_karma = knowledge_excess_karma(
-            dict(state.knowledge_skills or {}),
-            know_max,
+        ctx.knowledge_karma = knowledge_excess_karma(
+            dict(ctx.state.knowledge_skills or {}),
+            ctx.know_max,
             categories=know_cats,
-            karma_mults=_active_karma_mults(effects.get("skill_category_karma_cost_mult"), career=False),
+            karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
         )
-        nuyen_karma = int(state.karma_nuyen or 0)
-        karma_pool = KARMA_CHARGEN_POOL + int(state.karma_earned or 0)
-        karma_spent = (
-            karma_from_q
-            + metatype_karma_cost
-            + mystic_karma
-            + extra_adept_karma
-            + spell_karma
-            + attr_karma
-            + skill_buy_karma
-            + knowledge_karma
-            + spec_karma
+        nuyen_karma = int(ctx.state.karma_nuyen or 0)
+        ctx.karma_pool = KARMA_CHARGEN_POOL + int(ctx.state.karma_earned or 0)
+        ctx.karma_spent = (
+            ctx.karma_from_q
+            + ctx.metatype_karma_cost
+            + ctx.mystic_karma
+            + ctx.extra_adept_karma
+            + ctx.spell_karma
+            + ctx.attr_karma
+            + ctx.skill_buy_karma
+            + ctx.knowledge_karma
+            + ctx.spec_karma
             + nuyen_karma
         )
     else:
-        attr_karma = 0
-        skill_buy_karma = 0
-        knowledge_karma = 0
+        ctx.attr_karma = 0
+        ctx.skill_buy_karma = 0
+        ctx.knowledge_karma = 0
         nuyen_karma = 0
-        karma_pool = 25 + int(state.karma_earned or 0)
-        karma_spent = (
-            karma_from_q
-            + heritage_karma_cost
-            + mystic_karma
-            + extra_adept_karma
-            + spell_karma
-            + int(state.karma_nuyen or 0)
+        ctx.karma_pool = 25 + int(ctx.state.karma_earned or 0)
+        ctx.karma_spent = (
+            ctx.karma_from_q
+            + ctx.heritage_karma_cost
+            + ctx.mystic_karma
+            + ctx.extra_adept_karma
+            + ctx.spell_karma
+            + int(ctx.state.karma_nuyen or 0)
         )
-        if career:
-            baseline = state.career_baseline
+        if ctx.career:
+            baseline = ctx.state.career_baseline
             if baseline is None:
-                baseline = snapshot_career_baseline(state)
-                state.career_baseline = baseline
-            career_adv_karma, career_adv_lines = career_raise_karma(
-                state, baseline, skill_totals, data["skills"], effects=effects
+                baseline = snapshot_career_baseline(ctx.state)
+                ctx.state.career_baseline = baseline
+            ctx.career_adv_karma, ctx.career_adv_lines = career_raise_karma(
+                ctx.state, baseline, ctx.skill_totals, ctx.data["skills"], effects=ctx.effects
             )
-            karma_spent += career_adv_karma
+            ctx.karma_spent += ctx.career_adv_karma
 
-    bod = total["BOD"]
-    agi = total["AGI"]
-    rea = total["REA"]
-    stre = total["STR"]
-    wil = total["WIL"]
-    logi = total["LOG"]
-    intuition = total["INT"]
-    cha = total["CHA"]
-    warnings.extend(sync_quality_contacts(state, effects, qualities))
-    contacts = resolve_contacts(
-        state,
+    bod = ctx.total["BOD"]
+    agi = ctx.total["AGI"]
+    rea = ctx.total["REA"]
+    stre = ctx.total["STR"]
+    wil = ctx.total["WIL"]
+    logi = ctx.total["LOG"]
+    intuition = ctx.total["INT"]
+    cha = ctx.total["CHA"]
+    ctx.warnings.extend(sync_quality_contacts(ctx.state, ctx.effects, ctx.qualities))
+    ctx.contacts = resolve_contacts(
+        ctx.state,
         int(cha or 0),
-        career=career,
-        friends_in_high_places=bool(effects.get("friends_in_high_places")),
-        black_market_contact_id=bmp_contact_id if bmp_active else "",
-        contact_karma_adj=int(effects.get("contact_karma_adj") or 0),
-        contact_karma_min=int(effects.get("contact_karma_min") or 0),
-        excon=bool(effects.get("excon")),
+        career=ctx.career,
+        friends_in_high_places=bool(ctx.effects.get("friends_in_high_places")),
+        black_market_contact_id=ctx.bmp_contact_id if ctx.bmp_active else "",
+        contact_karma_adj=int(ctx.effects.get("contact_karma_adj") or 0),
+        contact_karma_min=int(ctx.effects.get("contact_karma_min") or 0),
+        excon=bool(ctx.effects.get("excon")),
     )
-    warnings.extend(contacts["warnings"])
-    karma_spent += int(contacts.get("karma") or 0)
+    ctx.warnings.extend(ctx.contacts["warnings"])
+    ctx.karma_spent += int(ctx.contacts.get("karma") or 0)
 
     martial_ctx = quality_requirement_context(
-        state,
-        talent,
-        qualities,
-        meta,
-        ess,
-        ess_lost,
-        effective_skills,
-        set(adept.get("power_names") or []),
-        {str(item.get("name") or "") for item in (magic.get("public") or []) if item.get("name")},
-        str(((magic.get("tradition") if isinstance(magic.get("tradition"), dict) else {}) or {}).get("name") or ""),
-        {item["name"] for item in cyber_installed},
-        {item["name"] for item in bio_installed},
-        effective_knowledge,
+        ctx.state,
+        ctx.talent,
+        ctx.qualities,
+        ctx.meta,
+        ctx.ess,
+        ctx.ess_lost,
+        ctx.effective_skills,
+        set(ctx.adept.get("power_names") or []),
+        {str(item.get("name") or "") for item in (ctx.magic.get("public") or []) if item.get("name")},
+        str(
+            ((ctx.magic.get("tradition") if isinstance(ctx.magic.get("tradition"), dict) else {}) or {}).get("name")
+            or ""
+        ),
+        {item["name"] for item in ctx.cyber_installed},
+        {item["name"] for item in ctx.bio_installed},
+        ctx.effective_knowledge,
     )
     martial_ctx = {
         **martial_ctx,
-        "qualities": set(martial_ctx.get("qualities") or []) | {talent["name"]},
+        "qualities": set(martial_ctx.get("qualities") or []) | {ctx.talent["name"]},
     }
-    warnings.extend(sync_quality_martial_arts(state, effects, qualities))
-    martial = resolve_martial_arts(state, martial_ctx, errors, career=career)
-    warnings.extend(martial["warnings"])
-    for source, nodes in martial.get("bonus_sources") or []:
-        apply_bonus_nodes(nodes, effects, source)
+    ctx.warnings.extend(sync_quality_martial_arts(ctx.state, ctx.effects, ctx.qualities))
+    ctx.martial = resolve_martial_arts(ctx.state, martial_ctx, ctx.errors, career=ctx.career)
+    ctx.warnings.extend(ctx.martial["warnings"])
+    for source, nodes in ctx.martial.get("bonus_sources") or []:
+        apply_bonus_nodes(nodes, ctx.effects, source)
     apply_unarmed_bonuses(
-        gear.get("weapons"),
-        int(effects.get("unarmed_reach") or 0),
-        int(effects.get("unarmed_ap") or 0),
+        ctx.gear.get("weapons"),
+        int(ctx.effects.get("unarmed_reach") or 0),
+        int(ctx.effects.get("unarmed_ap") or 0),
     )
-    karma_spent += int(martial.get("karma") or 0)
-    karma_spent += int(initiation.get("karma") or 0)
-    karma_spent += int(submersion.get("karma") or 0)
-    karma_left = karma_pool - karma_spent
+    ctx.karma_spent += int(ctx.martial.get("karma") or 0)
+    ctx.karma_spent += int(ctx.initiation.get("karma") or 0)
+    ctx.karma_spent += int(ctx.submersion.get("karma") or 0)
+    ctx.karma_left = ctx.karma_pool - ctx.karma_spent
 
-    karma_spend_lines: list[dict[str, Any]] = list(career_adv_lines)
+    ctx.karma_spend_lines = list(ctx.career_adv_lines)
     for label, amount in (
-        ("資質", karma_from_q),
-        ("メタ", metatype_karma_cost if is_karma else heritage_karma_cost),
-        ("能力値（カルマ作成）", attr_karma if is_karma else 0),
-        ("技能（カルマ作成）", skill_buy_karma if is_karma else 0),
-        ("知識（カルマ作成）", knowledge_karma if is_karma else 0),
-        ("専門化", spec_karma),
-        ("ニューエン交換", int(state.karma_nuyen or 0)),
-        ("ミスティックPP", mystic_karma),
-        ("アデプト／気／フォーカス", extra_adept_karma),
-        ("術式／複合体", spell_karma),
-        ("コンタクト超過", int(contacts.get("karma") or 0)),
-        ("武道", int(martial.get("karma") or 0)),
-        ("イニシエーション", int(initiation.get("karma") or 0)),
-        ("サブマージョン", int(submersion.get("karma") or 0)),
+        ("資質", ctx.karma_from_q),
+        ("メタ", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
+        ("能力値（カルマ作成）", ctx.attr_karma if ctx.is_karma else 0),
+        ("技能（カルマ作成）", ctx.skill_buy_karma if ctx.is_karma else 0),
+        ("知識（カルマ作成）", ctx.knowledge_karma if ctx.is_karma else 0),
+        ("専門化", ctx.spec_karma),
+        ("ニューエン交換", int(ctx.state.karma_nuyen or 0)),
+        ("ミスティックPP", ctx.mystic_karma),
+        ("アデプト／気／フォーカス", ctx.extra_adept_karma),
+        ("術式／複合体", ctx.spell_karma),
+        ("コンタクト超過", int(ctx.contacts.get("karma") or 0)),
+        ("武道", int(ctx.martial.get("karma") or 0)),
+        ("イニシエーション", int(ctx.initiation.get("karma") or 0)),
+        ("サブマージョン", int(ctx.submersion.get("karma") or 0)),
     ):
         if amount:
-            karma_spend_lines.append({"kind": "other", "label": label, "amount": int(amount)})
-    nuyen_spend_lines = nuyen_spend_breakdown(
-        cyber_installed,
-        bio_installed,
-        gear,
-        qi_nuyen=int(qi.get("nuyen") or 0),
-        foci_nuyen=int(foci.get("nuyen") or 0),
-        spirits_nuyen=int(spirits.get("nuyen") or 0),
+            ctx.karma_spend_lines.append({"kind": "other", "label": label, "amount": int(amount)})
+    ctx.nuyen_spend_lines = nuyen_spend_breakdown(
+        ctx.cyber_installed,
+        ctx.bio_installed,
+        ctx.gear,
+        qi_nuyen=int(ctx.qi.get("nuyen") or 0),
+        foci_nuyen=int(ctx.foci.get("nuyen") or 0),
+        spirits_nuyen=int(ctx.spirits.get("nuyen") or 0),
     )
 
-    quality_notoriety = int(effects.get("notoriety") or 0)
-    notoriety_total = quality_notoriety + int(state.notoriety_bonus or 0)
-    street_cred_total = int(state.street_cred or 0)
-    quality_pa = int(effects.get("public_awareness") or 0)
-    public_awareness_total = max(0, (street_cred_total + max(0, notoriety_total)) // 3 + quality_pa)
-    if effects.get("erased") and public_awareness_total >= 1:
-        public_awareness_total = 1
+    ctx.quality_notoriety = int(ctx.effects.get("notoriety") or 0)
+    ctx.notoriety_total = ctx.quality_notoriety + int(ctx.state.notoriety_bonus or 0)
+    ctx.street_cred_total = int(ctx.state.street_cred or 0)
+    quality_pa = int(ctx.effects.get("public_awareness") or 0)
+    ctx.public_awareness_total = max(0, (ctx.street_cred_total + max(0, ctx.notoriety_total)) // 3 + quality_pa)
+    if ctx.effects.get("erased") and ctx.public_awareness_total >= 1:
+        ctx.public_awareness_total = 1
 
-    physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(effects.get("limit_physical") or 0)
-    mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(effects.get("limit_mental") or 0)
-    social_limit = _ceil_div((cha * 2 + wil + ess) / 3) + int(effects.get("limit_social") or 0)
-    cm_phys = 8 + _ceil_div(bod / 2) + effects["cm_physical"]
-    cm_stun = 8 + _ceil_div(wil / 2) + effects["cm_stun"]
-    initiative = rea + intuition + effects["initiative"]
-    initiative_dice = 1 + int(effects.get("initiative_dice") or 0)
-    warnings.extend(
+    ctx.physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(ctx.effects.get("limit_physical") or 0)
+    ctx.mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(ctx.effects.get("limit_mental") or 0)
+    ctx.social_limit = _ceil_div((cha * 2 + wil + ctx.ess) / 3) + int(ctx.effects.get("limit_social") or 0)
+    ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
+    ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]
+    ctx.initiative = rea + intuition + ctx.effects["initiative"]
+    ctx.initiative_dice = 1 + int(ctx.effects.get("initiative_dice") or 0)
+    ctx.warnings.extend(
         attach_spirit_tests(
-            list(spirits.get("public") or []),
-            int(total.get("MAG") or 0),
-            effective_skills,
-            skill_mods["skill_bonus"],
-            total,
-            data["skills"],
+            list(ctx.spirits.get("public") or []),
+            int(ctx.total.get("MAG") or 0),
+            ctx.effective_skills,
+            ctx.skill_mods["skill_bonus"],
+            ctx.total,
+            ctx.data["skills"],
         )
     )
-    warnings.extend(
+    ctx.warnings.extend(
         attach_focus_tests(
-            list(foci.get("public") or []),
-            int(total.get("MAG") or 0),
-            effective_skills,
-            skill_mods["skill_bonus"],
-            total,
-            data["skills"],
-            mental_limit,
+            list(ctx.foci.get("public") or []),
+            int(ctx.total.get("MAG") or 0),
+            ctx.effective_skills,
+            ctx.skill_mods["skill_bonus"],
+            ctx.total,
+            ctx.data["skills"],
+            ctx.mental_limit,
         )
     )
-    warnings.extend(
+    ctx.warnings.extend(
         attach_complex_form_tests(
-            list(resonance.get("public") or []),
-            int(total.get("RES") or 0),
-            effective_skills,
-            skill_mods["skill_bonus"],
-            total,
-            data["skills"],
+            list(ctx.resonance.get("public") or []),
+            int(ctx.total.get("RES") or 0),
+            ctx.effective_skills,
+            ctx.skill_mods["skill_bonus"],
+            ctx.total,
+            ctx.data["skills"],
         )
     )
-    warnings.extend(
+    ctx.warnings.extend(
         attach_sprite_tests(
-            list(techno_sprites.get("public") or []),
-            int(total.get("RES") or 0),
-            effective_skills,
-            skill_mods["skill_bonus"],
-            total,
-            data["skills"],
+            list(ctx.techno_sprites.get("public") or []),
+            int(ctx.total.get("RES") or 0),
+            ctx.effective_skills,
+            ctx.skill_mods["skill_bonus"],
+            ctx.total,
+            ctx.data["skills"],
         )
     )
 
-    movement = resolve_movement(meta, effects)
+    ctx.movement = resolve_movement(ctx.meta, ctx.effects)
 
-    tradition_info = magic.get("tradition") if isinstance(magic.get("tradition"), dict) else {}
-    quality_report: dict[str, Any] = {}
-    negative_quality_karma = apply_quality_rules(
-        state,
-        qualities,
-        free_quality_ids,
+    tradition_info = ctx.magic.get("tradition") if isinstance(ctx.magic.get("tradition"), dict) else {}
+    ctx.quality_report = {}
+    ctx.negative_quality_karma = apply_quality_rules(
+        ctx.state,
+        ctx.qualities,
+        ctx.free_quality_ids,
         quality_requirement_context(
-            state,
-            talent,
-            qualities,
-            meta,
-            ess,
-            ess_lost,
-            effective_skills,
-            set(adept.get("power_names") or []),
-            {str(item.get("name") or "") for item in (magic.get("public") or []) if item.get("name")},
+            ctx.state,
+            ctx.talent,
+            ctx.qualities,
+            ctx.meta,
+            ctx.ess,
+            ctx.ess_lost,
+            ctx.effective_skills,
+            set(ctx.adept.get("power_names") or []),
+            {str(item.get("name") or "") for item in (ctx.magic.get("public") or []) if item.get("name")},
             str((tradition_info or {}).get("name") or ""),
-            {item["name"] for item in cyber_installed},
-            {item["name"] for item in bio_installed},
-            effective_knowledge,
+            {item["name"] for item in ctx.cyber_installed},
+            {item["name"] for item in ctx.bio_installed},
+            ctx.effective_knowledge,
         ),
-        errors,
-        career=career,
-        report=quality_report,
+        ctx.errors,
+        career=ctx.career,
+        report=ctx.quality_report,
     )
 
-    if not career:
-        at_six = [n for n, r in skill_totals.items() if r >= 6]
+    if not ctx.career:
+        at_six = [n for n, r in ctx.skill_totals.items() if r >= 6]
         if len(at_six) > 1:
-            errors.append("作成時にレーティング6の技能は1つまでです")
+            ctx.errors.append("作成時にレーティング6の技能は1つまでです")
         # SR5 p.65: no more than one attribute at its natural maximum at
         # character creation (Edge / unused special attributes don't count).
         # Applies to every build method, not just Karma.
         at_natural_max = []
-        for key, spec in attrs_spec.items():
-            if key in {"ESS", "EDG", "MAG", "RES"} and key != special_key:
+        for key, spec in ctx.attrs_spec.items():
+            if key in {"ESS", "EDG", "MAG", "RES"} and key != ctx.special_key:
                 continue
-            if key not in ratings:
+            if key not in ctx.ratings:
                 continue
-            racial_max = int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0)
-            if key == "MAG" and special_key == "MAG":
-                racial_max = racial_max + int(initiation.get("mag_max_bonus") or 0)
-            if key == "RES" and special_key == "RES":
-                racial_max = racial_max + int(submersion.get("res_max_bonus") or 0)
-            if racial_max > 0 and int(ratings.get(key) or 0) >= racial_max:
+            racial_max = int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0)
+            if key == "MAG" and ctx.special_key == "MAG":
+                racial_max = racial_max + int(ctx.initiation.get("mag_max_bonus") or 0)
+            if key == "RES" and ctx.special_key == "RES":
+                racial_max = racial_max + int(ctx.submersion.get("res_max_bonus") or 0)
+            if racial_max > 0 and int(ctx.ratings.get(key) or 0) >= racial_max:
                 at_natural_max.append(key)
         if len(at_natural_max) > 1:
-            errors.append("作成時に自然上限の能力値は1つまでです")
-        if not is_karma:
-            if spent_physical > attr_points:
-                errors.append(f"能力値点が不足しています（使用 {spent_physical} / 上限 {attr_points}）")
-            if spent_special > special_from_meta:
-                errors.append(f"特殊能力値点が不足しています（使用 {spent_special} / 上限 {special_from_meta}）")
-            if skill_spent > skill_points:
-                errors.append(f"技能点が不足しています（使用 {skill_spent} / 上限 {skill_points}）")
-            if group_spent > group_points:
-                errors.append(f"技能グループ点が不足しています（使用 {group_spent} / 上限 {group_points}）")
-            if know_spent > know_max:
-                errors.append(f"知識技能点が不足しています（使用 {know_spent} / 上限 {know_max}）")
-    if karma_left < 0:
-        errors.append(f"カルマが不足しています（残り {karma_left}）")
-    if nuyen < 0:
-        errors.append(f"ニューエンが不足しています（残り {nuyen}¥）")
+            ctx.errors.append("作成時に自然上限の能力値は1つまでです")
+        if not ctx.is_karma:
+            if ctx.spent_physical > ctx.attr_points:
+                ctx.errors.append(f"能力値点が不足しています（使用 {ctx.spent_physical} / 上限 {ctx.attr_points}）")
+            if ctx.spent_special > ctx.special_from_meta:
+                ctx.errors.append(
+                    f"特殊能力値点が不足しています（使用 {ctx.spent_special} / 上限 {ctx.special_from_meta}）"
+                )
+            if ctx.skill_spent > ctx.skill_points:
+                ctx.errors.append(f"技能点が不足しています（使用 {ctx.skill_spent} / 上限 {ctx.skill_points}）")
+            if ctx.group_spent > ctx.group_points:
+                ctx.errors.append(f"技能グループ点が不足しています（使用 {ctx.group_spent} / 上限 {ctx.group_points}）")
+            if ctx.know_spent > ctx.know_max:
+                ctx.errors.append(f"知識技能点が不足しています（使用 {ctx.know_spent} / 上限 {ctx.know_max}）")
+    if ctx.karma_left < 0:
+        ctx.errors.append(f"カルマが不足しています（残り {ctx.karma_left}）")
+    if ctx.nuyen < 0:
+        ctx.errors.append(f"ニューエンが不足しています（残り {ctx.nuyen}¥）")
     # SR5 p.98: at Standard power level only 5,000¥ of unspent resources
     # carry over into play (Street 200¥ / Prime 20,000¥). Surface it as a
     # chargen notice rather than silently deleting nuyen, matching Chummer.
-    if not career:
-        chargen_leftover = nuyen - int(state.nuyen_earned or 0)
+    if not ctx.career:
+        chargen_leftover = ctx.nuyen - int(ctx.state.nuyen_earned or 0)
         if chargen_leftover > NUYEN_CHARGEN_KEEP_MAX:
             lost = chargen_leftover - NUYEN_CHARGEN_KEEP_MAX
-            warnings.append(
+            ctx.warnings.append(
                 f"未使用ニューエン {chargen_leftover:,}¥：Standard レベルでは "
                 f"{NUYEN_CHARGEN_KEEP_MAX:,}¥ までしか持ち越せません（超過分 {lost:,}¥ は原則失われます）"
             )
-    if ess <= 0:
-        errors.append("エッセンスが0以下です")
-    for item in installed:
+    if ctx.ess <= 0:
+        ctx.errors.append("エッセンスが0以下です")
+    for item in ctx.installed:
         cap_max = float(item.get("capacity_max") or 0)
         if cap_max <= 0:
             continue
         used = float(item.get("capacity_used") or 0)
         if used > cap_max + 1e-9:
-            errors.append(f"{item['name']} の容量超過（{used:g}/{cap_max:g}）")
+            ctx.errors.append(f"{item['name']} の容量超過（{used:g}/{cap_max:g}）")
 
-    if not is_karma:
-        allowed = {e["name"] for e in heritage_options(state.priorities.Heritage)}
-        if allowed and state.metatype not in allowed:
-            errors.append(f"{state.metatype} はこの優先度のメタに含まれません")
-    if not career:
+    if not ctx.is_karma:
+        allowed = {e["name"] for e in heritage_options(ctx.state.priorities.Heritage)}
+        if allowed and ctx.state.metatype not in allowed:
+            ctx.errors.append(f"{ctx.state.metatype} はこの優先度のメタに含まれません")
+    if not ctx.career:
         _check_avail_limit(
             _avail_entries(
-                cyber_installed,
-                bio_installed,
-                gear.get("armor_items"),
-                gear.get("armor_mods"),
-                gear.get("weapons"),
-                gear.get("weapon_accessories"),
-                gear.get("commlinks"),
-                gear.get("cyberdecks"),
-                gear.get("rccs"),
-                gear.get("optics"),
-                gear.get("programs"),
-                gear.get("apps"),
-                gear.get("sensors"),
-                gear.get("drones"),
-                gear.get("vehicles"),
-                gear.get("vehicle_mods"),
-                gear.get("weapon_mounts"),
-                gear.get("gear"),
-                gear.get("lifestyles"),
-                foci.get("public"),
+                ctx.cyber_installed,
+                ctx.bio_installed,
+                ctx.gear.get("armor_items"),
+                ctx.gear.get("armor_mods"),
+                ctx.gear.get("weapons"),
+                ctx.gear.get("weapon_accessories"),
+                ctx.gear.get("commlinks"),
+                ctx.gear.get("cyberdecks"),
+                ctx.gear.get("rccs"),
+                ctx.gear.get("optics"),
+                ctx.gear.get("programs"),
+                ctx.gear.get("apps"),
+                ctx.gear.get("sensors"),
+                ctx.gear.get("drones"),
+                ctx.gear.get("vehicles"),
+                ctx.gear.get("vehicle_mods"),
+                ctx.gear.get("weapon_mounts"),
+                ctx.gear.get("gear"),
+                ctx.gear.get("lifestyles"),
+                ctx.foci.get("public"),
             ),
-            effects,
-            errors,
+            ctx.effects,
+            ctx.errors,
         )
         _check_device_rating_limit(
             _device_rating_entries(
-                cyber_installed,
-                bio_installed,
-                gear.get("commlinks"),
-                gear.get("cyberdecks"),
-                gear.get("rccs"),
-                gear.get("optics"),
-                gear.get("sensors"),
-                gear.get("gear"),
+                ctx.cyber_installed,
+                ctx.bio_installed,
+                ctx.gear.get("commlinks"),
+                ctx.gear.get("cyberdecks"),
+                ctx.gear.get("rccs"),
+                ctx.gear.get("optics"),
+                ctx.gear.get("sensors"),
+                ctx.gear.get("gear"),
             ),
-            errors,
+            ctx.errors,
         )
 
-    state.attributes = ratings
-    sum_spent = sum_to_ten_spent(state.priorities)
-    state.derived = {
-        "errors": errors,
-        "warnings": warnings,
-        "build_method": state.build_method,
+    ctx.state.attributes = ctx.ratings
+    sum_spent = sum_to_ten_spent(ctx.state.priorities)
+    ctx.state.derived = {
+        "errors": ctx.errors,
+        "warnings": ctx.warnings,
+        "build_method": ctx.state.build_method,
         "sum_to_ten": {
             "used": sum_spent,
             "max": SUM_TO_TEN_BUDGET,
             "costs": dict(SUM_TO_TEN_COST),
-            "unique": priorities_are_unique(state.priorities),
+            "unique": priorities_are_unique(ctx.state.priorities),
         },
         "karma_chargen": {
-            "enabled": is_karma,
-            "pool": karma_pool if is_karma else 0,
-            "nuyen_karma": int(state.karma_nuyen or 0),
-            "nuyen_karma_max": int(nuyen_karma_max),
+            "enabled": ctx.is_karma,
+            "pool": ctx.karma_pool if ctx.is_karma else 0,
+            "nuyen_karma": int(ctx.state.karma_nuyen or 0),
+            "nuyen_karma_max": int(ctx.nuyen_karma_max),
             "nuyen_per_karma": KARMA_TO_NUYEN,
-            "metatype": metatype_karma_cost if is_karma else 0,
-            "attributes": attr_karma if is_karma else 0,
-            "skills": skill_buy_karma if is_karma else 0,
-            "knowledge": knowledge_karma if is_karma else 0,
-            "specializations": spec_karma if is_karma else 0,
-            "qualities": karma_from_q,
-            "other": mystic_karma
-            + extra_adept_karma
-            + spell_karma
-            + int(contacts.get("karma") or 0)
-            + int(martial.get("karma") or 0)
-            + int(initiation.get("karma") or 0)
-            + int(submersion.get("karma") or 0),
+            "metatype": ctx.metatype_karma_cost if ctx.is_karma else 0,
+            "attributes": ctx.attr_karma if ctx.is_karma else 0,
+            "skills": ctx.skill_buy_karma if ctx.is_karma else 0,
+            "knowledge": ctx.knowledge_karma if ctx.is_karma else 0,
+            "specializations": ctx.spec_karma if ctx.is_karma else 0,
+            "qualities": ctx.karma_from_q,
+            "other": ctx.mystic_karma
+            + ctx.extra_adept_karma
+            + ctx.spell_karma
+            + int(ctx.contacts.get("karma") or 0)
+            + int(ctx.martial.get("karma") or 0)
+            + int(ctx.initiation.get("karma") or 0)
+            + int(ctx.submersion.get("karma") or 0),
         },
-        "totals": total,
+        "totals": ctx.total,
         "limits": {
-            "physical": physical_limit,
-            "mental": mental_limit,
-            "social": social_limit,
+            "physical": ctx.physical_limit,
+            "mental": ctx.mental_limit,
+            "social": ctx.social_limit,
         },
-        "limit_modifiers": compact_limit_modifiers(effects),
-        "condition_monitor": {"physical": cm_phys, "stun": cm_stun},
-        "initiative": {"value": initiative, "dice": initiative_dice},
-        "movement": movement,
-        "essence": ess,
-        "essence_lost": ess_lost,
-        "essence_lost_cyber": ess_lost_cyber,
-        "essence_lost_bio": ess_lost_bio,
-        "armor": int(effects["armor"]) + int(gear.get("armor") or 0),
-        "special_armor": special_armor_totals(effects),
-        "worn_armor": gear.get("worn_name") or "",
-        "armor_items": gear.get("armor_items") or [],
-        "armor_mods": gear.get("armor_mods") or [],
-        "weapons": gear.get("weapons") or [],
-        "weapon_accessories": gear.get("weapon_accessories") or [],
-        "recoil": gear.get("recoil") or {"str": 0, "str_rc": 0, "free": 1},
-        "active_drugs": active_drugs,
-        "commlinks": gear.get("commlinks") or [],
-        "cyberdecks": gear.get("cyberdecks") or [],
-        "rccs": gear.get("rccs") or [],
-        "optics": gear.get("optics") or [],
-        "programs": gear.get("programs") or [],
-        "apps": gear.get("apps") or [],
-        "sensors": gear.get("sensors") or [],
-        "drones": gear.get("drones") or [],
-        "vehicles": gear.get("vehicles") or [],
-        "vehicle_mods": gear.get("vehicle_mods") or [],
-        "weapon_mounts": gear.get("weapon_mounts") or [],
-        "gear": gear.get("gear") or [],
-        "lifestyles": gear.get("lifestyles") or [],
-        "commlink": gear.get("commlink"),
-        "cyberdeck": gear.get("cyberdeck"),
-        "rcc": gear.get("rcc"),
-        "lifestyle": gear.get("lifestyle"),
-        "nuyen": nuyen,
-        "nuyen_spent": nuyen_spent,
-        "nuyen_pool": nuyen_pool,
-        "nuyen_earned": int(state.nuyen_earned or 0),
-        "karma_earned": int(state.karma_earned or 0),
-        "career": career,
-        "career_advancement_karma": int(career_adv_karma),
-        "career_advancement_lines": career_adv_lines,
-        "nuyen_amt": int(effects.get("nuyen_amt") or 0),
-        "nuyen_karma_max": int(nuyen_karma_max),
-        "trustfund": int(effects.get("trustfund") or 0),
-        "trustfund_label": TRUST_FUND_STIPEND.get(int(effects.get("trustfund") or 0), ""),
-        "ambidextrous": bool(effects.get("ambidextrous")),
-        "overclocker": bool(effects.get("overclocker")),
+        "limit_modifiers": compact_limit_modifiers(ctx.effects),
+        "condition_monitor": {"physical": ctx.cm_phys, "stun": ctx.cm_stun},
+        "initiative": {"value": ctx.initiative, "dice": ctx.initiative_dice},
+        "movement": ctx.movement,
+        "essence": ctx.ess,
+        "essence_lost": ctx.ess_lost,
+        "essence_lost_cyber": ctx.ess_lost_cyber,
+        "essence_lost_bio": ctx.ess_lost_bio,
+        "armor": int(ctx.effects["armor"]) + int(ctx.gear.get("armor") or 0),
+        "special_armor": special_armor_totals(ctx.effects),
+        "worn_armor": ctx.gear.get("worn_name") or "",
+        "armor_items": ctx.gear.get("armor_items") or [],
+        "armor_mods": ctx.gear.get("armor_mods") or [],
+        "weapons": ctx.gear.get("weapons") or [],
+        "weapon_accessories": ctx.gear.get("weapon_accessories") or [],
+        "recoil": ctx.gear.get("recoil") or {"str": 0, "str_rc": 0, "free": 1},
+        "active_drugs": ctx.active_drugs,
+        "commlinks": ctx.gear.get("commlinks") or [],
+        "cyberdecks": ctx.gear.get("cyberdecks") or [],
+        "rccs": ctx.gear.get("rccs") or [],
+        "optics": ctx.gear.get("optics") or [],
+        "programs": ctx.gear.get("programs") or [],
+        "apps": ctx.gear.get("apps") or [],
+        "sensors": ctx.gear.get("sensors") or [],
+        "drones": ctx.gear.get("drones") or [],
+        "vehicles": ctx.gear.get("vehicles") or [],
+        "vehicle_mods": ctx.gear.get("vehicle_mods") or [],
+        "weapon_mounts": ctx.gear.get("weapon_mounts") or [],
+        "gear": ctx.gear.get("gear") or [],
+        "lifestyles": ctx.gear.get("lifestyles") or [],
+        "commlink": ctx.gear.get("commlink"),
+        "cyberdeck": ctx.gear.get("cyberdeck"),
+        "rcc": ctx.gear.get("rcc"),
+        "lifestyle": ctx.gear.get("lifestyle"),
+        "nuyen": ctx.nuyen,
+        "nuyen_spent": ctx.nuyen_spent,
+        "nuyen_pool": ctx.nuyen_pool,
+        "nuyen_earned": int(ctx.state.nuyen_earned or 0),
+        "karma_earned": int(ctx.state.karma_earned or 0),
+        "career": ctx.career,
+        "career_advancement_karma": int(ctx.career_adv_karma),
+        "career_advancement_lines": ctx.career_adv_lines,
+        "nuyen_amt": int(ctx.effects.get("nuyen_amt") or 0),
+        "nuyen_karma_max": int(ctx.nuyen_karma_max),
+        "trustfund": int(ctx.effects.get("trustfund") or 0),
+        "trustfund_label": TRUST_FUND_STIPEND.get(int(ctx.effects.get("trustfund") or 0), ""),
+        "ambidextrous": bool(ctx.effects.get("ambidextrous")),
+        "overclocker": bool(ctx.effects.get("overclocker")),
         "special_modification_limit": {
-            "used": int(gear.get("special_modification_used") or 0),
-            "max": int(effects.get("special_modification_limit") or 0),
+            "used": int(ctx.gear.get("special_modification_used") or 0),
+            "max": int(ctx.effects.get("special_modification_limit") or 0),
         },
-        "friends_in_high_places": bool(effects.get("friends_in_high_places")),
-        "made_man": bool(effects.get("made_man")),
-        "black_market_discount": bool(effects.get("black_market_discount")),
-        "black_market_category": bmp_category if bmp_active else "",
-        "black_market_contact_id": bmp_contact_id if bmp_active else "",
-        "black_market_avail_bonus": BLACK_MARKET_AVAIL_BONUS if bmp_active else 0,
-        "dealer_connection_categories": list(effects.get("dealer_connection_categories") or []),
-        "cyberware_ess_multiplier": int(effects.get("cyberware_ess_multiplier") or 100),
-        "bioware_ess_multiplier": int(effects.get("bioware_ess_multiplier") or 100),
-        "skill_rating_max": skill_rating_cap,
-        "skill_group_max": skill_group_cap,
-        "avail_limit": None if career else CHARGEN_AVAIL_MAX,
-        "device_rating_limit": None if career else CHARGEN_DEVICE_RATING_MAX,
-        "ware_attr_limit": None if career else CHARGEN_WARE_ATTR_BONUS_MAX,
-        "ware_attr_bonus": ware_attr_bonus,
+        "friends_in_high_places": bool(ctx.effects.get("friends_in_high_places")),
+        "made_man": bool(ctx.effects.get("made_man")),
+        "black_market_discount": bool(ctx.effects.get("black_market_discount")),
+        "black_market_category": ctx.bmp_category if ctx.bmp_active else "",
+        "black_market_contact_id": ctx.bmp_contact_id if ctx.bmp_active else "",
+        "black_market_avail_bonus": BLACK_MARKET_AVAIL_BONUS if ctx.bmp_active else 0,
+        "dealer_connection_categories": list(ctx.effects.get("dealer_connection_categories") or []),
+        "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100),
+        "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
+        "skill_rating_max": ctx.skill_rating_cap,
+        "skill_group_max": ctx.skill_group_cap,
+        "avail_limit": None if ctx.career else CHARGEN_AVAIL_MAX,
+        "device_rating_limit": None if ctx.career else CHARGEN_DEVICE_RATING_MAX,
+        "ware_attr_limit": None if ctx.career else CHARGEN_WARE_ATTR_BONUS_MAX,
+        "ware_attr_bonus": ctx.ware_attr_bonus,
         "karma": {
-            "pool": karma_pool,
-            "spent": karma_spent,
-            "remaining": karma_left,
+            "pool": ctx.karma_pool,
+            "spent": ctx.karma_spent,
+            "remaining": ctx.karma_left,
             "negative": {
-                "used": negative_quality_karma,
-                "max": None if career else NEGATIVE_QUALITY_KARMA_CAP,
+                "used": ctx.negative_quality_karma,
+                "max": None if ctx.career else NEGATIVE_QUALITY_KARMA_CAP,
             },
         },
-        "power_points": {"used": power_spent, "max": power_pool},
-        "metagenic": quality_report.get("metagenic"),
-        "adept_powers": adept["public"],
-        "mystic_pp": state.mystic_pp,
-        "way_discount": {"used": adept.get("discount_used") or 0, "max": adept.get("discount_max") or 0},
-        "mentor": mentor.get("public"),
-        "needs_mentor": needs_mentor,
-        "qi_foci": qi.get("public") or [],
-        "foci": foci.get("public") or [],
-        "focus_limits": focus_limits,
-        "spirits": spirits.get("public") or [],
-        "enhancements": enhancements.get("public") or [],
-        "damage_resistance": int(effects.get("damage_resistance") or 0),
-        "unarmed_dv": int(effects.get("unarmed_dv") or 0),
-        "unarmed_physical": bool(effects.get("unarmed_physical")),
-        "unlock_skills": list(effects.get("unlock_skills") or []),
-        "spells": magic.get("public") or [],
+        "power_points": {"used": ctx.power_spent, "max": ctx.power_pool},
+        "metagenic": ctx.quality_report.get("metagenic"),
+        "adept_powers": ctx.adept["public"],
+        "mystic_pp": ctx.state.mystic_pp,
+        "way_discount": {"used": ctx.adept.get("discount_used") or 0, "max": ctx.adept.get("discount_max") or 0},
+        "mentor": ctx.mentor.get("public"),
+        "needs_mentor": ctx.needs_mentor,
+        "qi_foci": ctx.qi.get("public") or [],
+        "foci": ctx.foci.get("public") or [],
+        "focus_limits": ctx.focus_limits,
+        "spirits": ctx.spirits.get("public") or [],
+        "enhancements": ctx.enhancements.get("public") or [],
+        "damage_resistance": int(ctx.effects.get("damage_resistance") or 0),
+        "unarmed_dv": int(ctx.effects.get("unarmed_dv") or 0),
+        "unarmed_physical": bool(ctx.effects.get("unarmed_physical")),
+        "unlock_skills": list(ctx.effects.get("unlock_skills") or []),
+        "spells": ctx.magic.get("public") or [],
         "spell_points": {
-            "used": magic.get("used") or 0,
-            "free": magic.get("free_max") or 0,
-            "paid": magic.get("paid") or 0,
-            "karma": magic.get("karma") or 0,
-            "spell_karma": spell_karma_cost("spell", effects),
+            "used": ctx.magic.get("used") or 0,
+            "free": ctx.magic.get("free_max") or 0,
+            "paid": ctx.magic.get("paid") or 0,
+            "karma": ctx.magic.get("karma") or 0,
+            "spell_karma": spell_karma_cost("spell", ctx.effects),
         },
-        "tradition": magic.get("tradition"),
-        "drain_resist": {"pool": magic.get("resist") or 0, "attrs": magic.get("resist_attrs") or "WIL+INT"},
-        "complex_forms": resonance.get("public") or [],
+        "tradition": ctx.magic.get("tradition"),
+        "drain_resist": {"pool": ctx.magic.get("resist") or 0, "attrs": ctx.magic.get("resist_attrs") or "WIL+INT"},
+        "complex_forms": ctx.resonance.get("public") or [],
         "complex_form_points": {
-            "used": resonance.get("used") or 0,
-            "free": resonance.get("free_max") or 0,
-            "paid": resonance.get("paid") or 0,
+            "used": ctx.resonance.get("used") or 0,
+            "free": ctx.resonance.get("free_max") or 0,
+            "paid": ctx.resonance.get("paid") or 0,
         },
-        "sprites": techno_sprites.get("public") or [],
-        "stream": resonance.get("stream"),
-        "fade_resist": {"pool": resonance.get("resist") or 0, "attrs": resonance.get("resist_attrs") or "WIL+RES"},
+        "sprites": ctx.techno_sprites.get("public") or [],
+        "stream": ctx.resonance.get("stream"),
+        "fade_resist": {
+            "pool": ctx.resonance.get("resist") or 0,
+            "attrs": ctx.resonance.get("resist_attrs") or "WIL+RES",
+        },
         "living_persona": (
             living_persona(
-                total,
-                int(total.get("RES") or 0),
-                effects.get("living_persona") if isinstance(effects.get("living_persona"), dict) else None,
-                int(effects.get("matrix_initiative_dice") or 0),
+                ctx.total,
+                int(ctx.total.get("RES") or 0),
+                ctx.effects.get("living_persona") if isinstance(ctx.effects.get("living_persona"), dict) else None,
+                int(ctx.effects.get("matrix_initiative_dice") or 0),
             )
-            if talent["name"] in RES_TALENTS
+            if ctx.talent["name"] in RES_TALENTS
             else None
         ),
         "points": {
-            "attributes": {"used": spent_physical, "max": attr_points},
-            "special": {"used": spent_special, "max": special_from_meta},
-            "skills": {"used": skill_spent, "max": skill_points},
-            "skill_groups": {"used": group_spent, "max": group_points},
-            "knowledge": {"used": know_spent, "max": know_max},
-            "contacts": {"used": contacts.get("used") or 0, "max": contacts.get("free") or 0},
+            "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
+            "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},
+            "skills": {"used": ctx.skill_spent, "max": ctx.skill_points},
+            "skill_groups": {"used": ctx.group_spent, "max": ctx.group_points},
+            "knowledge": {"used": ctx.know_spent, "max": ctx.know_max},
+            "contacts": {"used": ctx.contacts.get("used") or 0, "max": ctx.contacts.get("free") or 0},
         },
-        "knowledge_skills": knowledge["public"],
-        "contacts": contacts.get("public") or [],
+        "knowledge_skills": ctx.knowledge["public"],
+        "contacts": ctx.contacts.get("public") or [],
         "contact_points": {
-            "used": contacts.get("used") or 0,
-            "free": contacts.get("free") or 0,
-            "paid": contacts.get("paid") or 0,
-            "karma": int(contacts.get("karma") or 0),
-            "karma_per_point": int(contacts.get("karma_per_point", 1)),
+            "used": ctx.contacts.get("used") or 0,
+            "free": ctx.contacts.get("free") or 0,
+            "paid": ctx.contacts.get("paid") or 0,
+            "karma": int(ctx.contacts.get("karma") or 0),
+            "karma_per_point": int(ctx.contacts.get("karma_per_point", 1)),
         },
-        "martial_arts": martial.get("public") or [],
+        "martial_arts": ctx.martial.get("public") or [],
         "martial_art_points": {
-            "styles": martial.get("style_count") or 0,
-            "style_max": martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,
-            "techniques": martial.get("technique_count") or 0,
-            "technique_max": martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
-            "karma": martial.get("karma") or 0,
+            "styles": ctx.martial.get("style_count") or 0,
+            "style_max": ctx.martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,
+            "techniques": ctx.martial.get("technique_count") or 0,
+            "technique_max": ctx.martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
+            "karma": ctx.martial.get("karma") or 0,
         },
-        "martial_spec_options": martial.get("spec_extras") or {},
-        "unarmed_reach": int(effects.get("unarmed_reach") or 0) + int(effects.get("reach") or 0),
-        "unarmed_ap": int(effects.get("unarmed_ap") or 0),
-        "reach": int(effects.get("reach") or 0),
-        "lifestyle_cost_mod": int(effects.get("lifestyle_cost") or 0),
-        "street_cred": street_cred_total,
-        "notoriety": notoriety_total,
-        "notoriety_quality": quality_notoriety,
-        "notoriety_bonus": int(state.notoriety_bonus or 0),
-        "fame": int(effects.get("fame") or 0),
-        "public_awareness": public_awareness_total,
-        "erased": bool(effects.get("erased")),
-        "excon": bool(effects.get("excon")),
+        "martial_spec_options": ctx.martial.get("spec_extras") or {},
+        "unarmed_reach": int(ctx.effects.get("unarmed_reach") or 0) + int(ctx.effects.get("reach") or 0),
+        "unarmed_ap": int(ctx.effects.get("unarmed_ap") or 0),
+        "reach": int(ctx.effects.get("reach") or 0),
+        "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
+        "street_cred": ctx.street_cred_total,
+        "notoriety": ctx.notoriety_total,
+        "notoriety_quality": ctx.quality_notoriety,
+        "notoriety_bonus": int(ctx.state.notoriety_bonus or 0),
+        "fame": int(ctx.effects.get("fame") or 0),
+        "public_awareness": ctx.public_awareness_total,
+        "erased": bool(ctx.effects.get("erased")),
+        "excon": bool(ctx.effects.get("excon")),
         "reward_log": [
             {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
-            for row in (state.reward_log or [])
+            for row in (ctx.state.reward_log or [])
         ],
-        "karma_spend_breakdown": karma_spend_lines,
-        "nuyen_spend_breakdown": nuyen_spend_lines,
-        "fatigue_resist": int(effects.get("fatigue_resist") or 0),
-        "spell_resistance": int(effects.get("spell_resistance") or 0),
-        "spell_defense": spell_defense_pools(effects),
-        "spell_dice_pool": list(effects.get("spell_dice_pool") or []),
-        "action_dice_pools": list(effects.get("action_dice_pools") or []),
-        "test_mods": dict(effects.get("test_mods") or {}),
+        "karma_spend_breakdown": ctx.karma_spend_lines,
+        "nuyen_spend_breakdown": ctx.nuyen_spend_lines,
+        "fatigue_resist": int(ctx.effects.get("fatigue_resist") or 0),
+        "spell_resistance": int(ctx.effects.get("spell_resistance") or 0),
+        "spell_defense": spell_defense_pools(ctx.effects),
+        "spell_dice_pool": list(ctx.effects.get("spell_dice_pool") or []),
+        "action_dice_pools": list(ctx.effects.get("action_dice_pools") or []),
+        "test_mods": dict(ctx.effects.get("test_mods") or {}),
         "cm_recovery": {
-            "physical": int(effects.get("cm_recovery_physical") or 0)
-            + (int(ess) if effects.get("cm_recovery_physical_add_ess") else 0),
-            "stun": int(effects.get("cm_recovery_stun") or 0)
-            + (int(ess) if effects.get("cm_recovery_stun_add_ess") else 0),
+            "physical": int(ctx.effects.get("cm_recovery_physical") or 0)
+            + (int(ctx.ess) if ctx.effects.get("cm_recovery_physical_add_ess") else 0),
+            "stun": int(ctx.effects.get("cm_recovery_stun") or 0)
+            + (int(ctx.ess) if ctx.effects.get("cm_recovery_stun_add_ess") else 0),
         },
-        "essence_penalty": round(float(effects.get("essence_penalty") or 0), 4),
-        "attribute_max_bonus": dict(attr_max_bonus),
-        "disabled_skills": list(effects.get("disabled_skills") or []),
-        "disabled_skill_groups": list(effects.get("disabled_skill_groups") or []),
-        "blocked_default_categories": list(effects.get("blocked_default_categories") or []),
-        "native_language_limit": int(knowledge.get("native_limit") or 1),
-        "prototype_transhuman_ess": float(effects.get("prototype_transhuman_ess") or 0),
-        "burnout_way": bool(effects.get("burnout_way")),
-        "disabled_cyberware_grades": list(effects.get("disabled_cyberware_grades") or []),
-        "disabled_bioware_grades": list(effects.get("disabled_bioware_grades") or []),
-        "limit_spell_categories": list(effects.get("limit_spell_categories") or []),
-        "limit_spirit_categories": list(effects.get("limit_spirit_categories") or []),
-        "allow_spell_categories": list(effects.get("allow_spell_categories") or []),
-        "allow_spell_ranges": list(effects.get("allow_spell_ranges") or []),
-        "spell_range_gated": bool(magic.get("range_gated")),
-        "block_spell_descriptors": list(effects.get("block_spell_descriptors") or []),
-        "extra_spirits": list(effects.get("extra_spirits") or []),
-        "add_spirit_picks": list(effects.get("add_spirit_picks") or []),
-        "initiate_grade": int(initiation.get("grade") or 0),
+        "essence_penalty": round(float(ctx.effects.get("essence_penalty") or 0), 4),
+        "attribute_max_bonus": dict(ctx.attr_max_bonus),
+        "disabled_skills": list(ctx.effects.get("disabled_skills") or []),
+        "disabled_skill_groups": list(ctx.effects.get("disabled_skill_groups") or []),
+        "blocked_default_categories": list(ctx.effects.get("blocked_default_categories") or []),
+        "native_language_limit": int(ctx.knowledge.get("native_limit") or 1),
+        "prototype_transhuman_ess": float(ctx.effects.get("prototype_transhuman_ess") or 0),
+        "burnout_way": bool(ctx.effects.get("burnout_way")),
+        "disabled_cyberware_grades": list(ctx.effects.get("disabled_cyberware_grades") or []),
+        "disabled_bioware_grades": list(ctx.effects.get("disabled_bioware_grades") or []),
+        "limit_spell_categories": list(ctx.effects.get("limit_spell_categories") or []),
+        "limit_spirit_categories": list(ctx.effects.get("limit_spirit_categories") or []),
+        "allow_spell_categories": list(ctx.effects.get("allow_spell_categories") or []),
+        "allow_spell_ranges": list(ctx.effects.get("allow_spell_ranges") or []),
+        "spell_range_gated": bool(ctx.magic.get("range_gated")),
+        "block_spell_descriptors": list(ctx.effects.get("block_spell_descriptors") or []),
+        "extra_spirits": list(ctx.effects.get("extra_spirits") or []),
+        "add_spirit_picks": list(ctx.effects.get("add_spirit_picks") or []),
+        "initiate_grade": int(ctx.initiation.get("grade") or 0),
         "initiation": {
-            "grade": int(initiation.get("grade") or 0),
-            "karma": int(initiation.get("karma") or 0),
-            "choices": initiation.get("choices") or [],
-            "metamagics": initiation.get("metamagics") or [],
-            "arts": initiation.get("arts") or [],
+            "grade": int(ctx.initiation.get("grade") or 0),
+            "karma": int(ctx.initiation.get("karma") or 0),
+            "choices": ctx.initiation.get("choices") or [],
+            "metamagics": ctx.initiation.get("metamagics") or [],
+            "arts": ctx.initiation.get("arts") or [],
         },
-        "submersion_grade": int(submersion.get("grade") or 0),
+        "submersion_grade": int(ctx.submersion.get("grade") or 0),
         "submersion": {
-            "grade": int(submersion.get("grade") or 0),
-            "karma": int(submersion.get("karma") or 0),
-            "choices": submersion.get("choices") or [],
-            "echoes": submersion.get("echoes") or [],
+            "grade": int(ctx.submersion.get("grade") or 0),
+            "karma": int(ctx.submersion.get("karma") or 0),
+            "choices": ctx.submersion.get("choices") or [],
+            "echoes": ctx.submersion.get("echoes") or [],
         },
-        "skill_totals": skill_totals,
-        "skill_specializations": specs["specs"],
-        "skill_expertises": expertises,
-        "exotic_skills": exotic["public"],
-        "skillsoft": skillsofts["all"],
-        "skillwires": skillsofts["skillwires"],
-        "skilljack": skillsofts["skilljack"],
-        "skill_bonus": skill_mods["skill_bonus"],
-        "skill_group_bonus": skill_mods["skill_group_bonus"],
-        "skill_category_bonus": skill_mods["skill_category_bonus"],
-        "skill_bonus_notes": skill_mods["skill_bonus_notes"],
-        "skill_max_bonus": skill_picks["skill_max_bonus"],
-        "skill_pick_slots": skill_picks["slots"],
-        "enabled_tabs": sorted(enabled),
-        "unimplemented_bonuses": effects["unimplemented"],
+        "skill_totals": ctx.skill_totals,
+        "skill_specializations": ctx.specs["specs"],
+        "skill_expertises": ctx.expertises,
+        "exotic_skills": ctx.exotic["public"],
+        "skillsoft": ctx.skillsofts["all"],
+        "skillwires": ctx.skillsofts["skillwires"],
+        "skilljack": ctx.skillsofts["skilljack"],
+        "skill_bonus": ctx.skill_mods["skill_bonus"],
+        "skill_group_bonus": ctx.skill_mods["skill_group_bonus"],
+        "skill_category_bonus": ctx.skill_mods["skill_category_bonus"],
+        "skill_bonus_notes": ctx.skill_mods["skill_bonus_notes"],
+        "skill_max_bonus": ctx.skill_picks["skill_max_bonus"],
+        "skill_pick_slots": ctx.skill_picks["slots"],
+        "enabled_tabs": sorted(ctx.enabled),
+        "unimplemented_bonuses": ctx.effects["unimplemented"],
         "qualities": [
             {
                 "id": q["id"],
                 "name": q["name"],
-                "karma": 0 if q["id"] in free_quality_ids else q["karma"],
+                "karma": 0 if q["id"] in ctx.free_quality_ids else q["karma"],
                 "category": q["category"],
                 "source": q["source"],
                 "needs_extra": quality_needs_extra(q),
-                "extra": state.quality_extras.get(q["id"]) or "",
-                "spirit_extra": state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",
+                "extra": ctx.state.quality_extras.get(q["id"]) or "",
+                "spirit_extra": ctx.state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",
                 "extra_kind": q.get("extra_kind"),
                 "select_options": list(q.get("select_options") or []),
                 "spirit_options": list(q.get("spirit_options") or []),
                 "expertise_skill": q.get("expertise_skill") or "",
                 "add_spirit_count": int(q.get("add_spirit_count") or 0),
                 "selectside": _quality_has_selectside(q),
-                "side": _normalize_side(state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
-                "free": q["id"] in free_quality_ids or bool(q.get("onlyprioritygiven")),
+                "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
+                "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
             }
-            for q in qualities
+            for q in ctx.qualities
         ],
-        "cyberware": [_public_installed(item) for item in cyber_installed],
-        "bioware": [_public_installed(item) for item in bio_installed],
-        "ware_ranges": ware_ranges(attrs_spec),
-        "limb_replace": limb_replace,
-        "limb_quality": limb_quality,
-        "talent": talent,
+        "cyberware": [_public_installed(item) for item in ctx.cyber_installed],
+        "bioware": [_public_installed(item) for item in ctx.bio_installed],
+        "ware_ranges": ware_ranges(ctx.attrs_spec),
+        "limb_replace": ctx.limb_replace,
+        "limb_quality": ctx.limb_quality,
+        "talent": ctx.talent,
         "metatype_info": {
-            "name": meta["name"],
-            "parent": meta.get("parent"),
+            "name": ctx.meta["name"],
+            "parent": ctx.meta.get("parent"),
             "attributes": {
                 key: {
                     **spec,
-                    "max": int(spec.get("max") or 0) + int(attr_max_bonus.get(key) or 0),
-                    "aug": int(spec.get("aug") or 0) + int(attr_max_bonus.get(key) or 0),
+                    "max": int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0),
+                    "aug": int(spec.get("aug") or 0) + int(ctx.attr_max_bonus.get(key) or 0),
                 }
                 for key, spec in _effective_attr_spec(
-                    attrs_spec,
-                    special_key,
-                    talent_start,
-                    int(initiation.get("mag_max_bonus") or 0),
-                    int(submersion.get("res_max_bonus") or 0),
+                    ctx.attrs_spec,
+                    ctx.special_key,
+                    ctx.talent_start,
+                    int(ctx.initiation.get("mag_max_bonus") or 0),
+                    int(ctx.submersion.get("res_max_bonus") or 0),
                 ).items()
             },
-            "source": meta.get("source"),
+            "source": ctx.meta.get("source"),
         },
-        "translations": {k: data["translations"].get(k, k) for k in [state.metatype, state.metavariant or ""]},
+        "translations": {
+            k: ctx.data["translations"].get(k, k) for k in [ctx.state.metatype, ctx.state.metavariant or ""]
+        },
     }
-    return state
+    return ctx.state
