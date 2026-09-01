@@ -39,6 +39,7 @@ from .drugs import (
     _format_drug_duration,
     apply_active_drugs,
 )
+from .lifestyle import apply_lifestyle_cost_mod, resolve_lifestyles
 from .matrix import _matrix_stats, _normalize_array_order, _resolve_matrix_devices
 from .misc import _resolve_misc_gear
 from .optics import _resolve_optics
@@ -122,6 +123,7 @@ __all__ = [
     "accessory_fits_weapon",
     "ammo_fits_weapon",
     "apply_active_drugs",
+    "apply_lifestyle_cost_mod",
     "apply_reach_bonus",
     "apply_unarmed_bonuses",
     "apply_weapon_category_dv",
@@ -131,5 +133,6 @@ __all__ = [
     "bind_weapon_category_dv",
     "bind_weapon_skill_accuracy",
     "mod_fits_vehicle",
+    "resolve_lifestyles",
     "vehicle_matches",
 ]

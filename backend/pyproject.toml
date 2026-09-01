@@ -28,11 +28,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B011"]
-# B023: resolve_gear's lifestyle-quality closure binds loop-body locals (safe
-#   today — defined and called within one iteration; goes away when that block
-#   moves to engine/gear/lifestyle.py).
-# See docs/architecture.md → "Planned refactors".
-"app/engine/__init__.py" = ["B023"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
