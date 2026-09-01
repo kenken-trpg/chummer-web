@@ -16,6 +16,9 @@ from ._common import (
 from .effect_rows import (
     ActionDicePoolRow,
     AddContactRow,
+    AddSpiritSlotRow,
+    AttributeSelectRow,
+    ExpertiseSlotRow,
     FadingValueSpecificRow,
     FocusBindingRow,
     FreeMartialArtRow,
@@ -28,14 +31,20 @@ from .effect_rows import (
     KarmaCostRow,
     KarmaMultRow,
     LimitModifierRow,
+    LimitSpellCategorySlotRow,
+    LimitSpiritCategorySlotRow,
     NamedBonusRow,
     NewSpellKarmaCostRow,
     RestrictedGearRow,
+    SelectPowerSlotRow,
+    SelectQualitySlotRow,
     SkillModRow,
     SpellCategoryValueRow,
     SpellDescriptorValueRow,
     SpellDicePoolRow,
     UnimplementedRow,
+    WeaponCategoryDvSlotRow,
+    WeaponSkillAccuracySlotRow,
 )
 
 
@@ -163,12 +172,12 @@ class EffectsDict(TypedDict):
     action_dice_pools: list[ActionDicePoolRow]
     restricted_gear: list[RestrictedGearRow]
     limit_modifiers: list[LimitModifierRow]
-    attribute_selects: list[dict[str, Any]]
+    attribute_selects: list[AttributeSelectRow]
     add_contacts: list[AddContactRow]
     free_martial_arts: list[FreeMartialArtRow]
-    limit_spell_category_slots: list[dict[str, Any]]
-    limit_spirit_category_slots: list[dict[str, Any]]
-    expertise_slots: list[dict[str, Any]]
+    limit_spell_category_slots: list[LimitSpellCategorySlotRow]
+    limit_spirit_category_slots: list[LimitSpiritCategorySlotRow]
+    expertise_slots: list[ExpertiseSlotRow]
     spell_category_drain: list[SpellCategoryValueRow]
     spell_category_damage: list[SpellCategoryValueRow]
     spell_descriptor_drain: list[SpellDescriptorValueRow]
@@ -177,12 +186,12 @@ class EffectsDict(TypedDict):
     grant_echoes: list[GrantEchoRow]
     grant_spells: list[GrantSpellRow]
     grant_powers: list[GrantPowerRow]
-    select_power_slots: list[dict[str, Any]]
-    weapon_category_dv_slots: list[dict[str, Any]]
+    select_power_slots: list[SelectPowerSlotRow]
+    weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
     weapon_category_dv: list[dict[str, Any]]
-    weapon_skill_accuracy_slots: list[dict[str, Any]]
+    weapon_skill_accuracy_slots: list[WeaponSkillAccuracySlotRow]
     weapon_skill_accuracy: list[dict[str, Any]]
-    add_spirit_slots: list[dict[str, Any]]
+    add_spirit_slots: list[AddSpiritSlotRow]
     add_spirit_picks: list[dict[str, Any]]
     free_metamagics: list[FreeMetamagicRow]
     free_spells_skill: list[FreeSpellsSkillRow]
@@ -195,7 +204,7 @@ class EffectsDict(TypedDict):
     active_skill_karma_cost: list[KarmaCostRow]
     knowledge_skill_karma_cost: list[KarmaCostRow]
     knowledge_skill_karma_cost_min: list[KarmaCostRow]
-    select_quality_slots: list[dict[str, Any]]
+    select_quality_slots: list[SelectQualitySlotRow]
     unimplemented: list[UnimplementedRow]
 
 

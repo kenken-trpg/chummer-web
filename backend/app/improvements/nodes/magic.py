@@ -6,13 +6,14 @@ True iff ``tag`` is one of ours.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from ...data_loader import parse_select_power_slot
 from .._common import (
     _as_int,
     _bonus_int,
 )
+from ..effect_rows import SelectPowerSlotRow
 from ..effects import EffectsDict
 
 
@@ -170,7 +171,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         elif tag == "selectpowers":
             slot = parse_select_power_slot(node)
             if slot.get("needs_select"):
-                effects["select_power_slots"].append({"source": source, **slot})
+                # parse_select_power_slot returns exactly SelectPowerSlotRow's
+                # keys bar ``source``; ``**`` into a TypedDict literal isn't
+                # checkable, so cast the merged row.
+                effects["select_power_slots"].append(cast(SelectPowerSlotRow, {"source": source, **slot}))
         elif tag == "addspirit":
             attrs = node.get("attrs") or {}
             skill = str(attrs.get("skill") or "").strip()

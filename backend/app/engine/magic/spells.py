@@ -72,9 +72,9 @@ def bind_spell_spirit_limits(
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
     spell_limits: list[str] = []
-    for slot in effects.get("limit_spell_category_slots") or []:
-        value = str(slot.get("value") or "").strip()
-        source = str(slot.get("source") or "")
+    for spell_slot in effects.get("limit_spell_category_slots") or []:
+        value = str(spell_slot.get("value") or "").strip()
+        source = str(spell_slot.get("source") or "")
         spec = by_name.get(source)
         if not value and spec:
             value = str(extras.get(spec["id"]) or "").strip()
@@ -88,9 +88,9 @@ def bind_spell_spirit_limits(
         if value and value not in spell_limits:
             spell_limits.append(value)
     spirit_limits: list[str] = []
-    for slot in effects.get("limit_spirit_category_slots") or []:
-        spirits = [str(name).strip() for name in (slot.get("spirits") or []) if str(name).strip()]
-        source = str(slot.get("source") or "")
+    for spirit_slot in effects.get("limit_spirit_category_slots") or []:
+        spirits = [str(name).strip() for name in (spirit_slot.get("spirits") or []) if str(name).strip()]
+        source = str(spirit_slot.get("source") or "")
         spec = by_name.get(source)
         if not spirits and spec:
             picked = str(extras.get(quality_spirit_category_extra_key(spec["id"])) or "").strip()
