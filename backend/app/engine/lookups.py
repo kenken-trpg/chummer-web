@@ -193,3 +193,20 @@ def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
         if item["id"] == item_id:
             return item
     return None
+
+
+def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
+    data = catalog()
+    by_name = data["all_metatypes"]
+    if variant:
+        for base in data["metatypes"]:
+            if base["name"] != name:
+                continue
+            for mv in base.get("metavariants", []):
+                if mv["name"] == variant:
+                    return mv
+        if variant in by_name:
+            return by_name[variant]
+    if name in by_name:
+        return by_name[name]
+    raise KeyError(f"Unknown metatype: {name}/{variant}")

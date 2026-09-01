@@ -64,38 +64,19 @@ from .constants import (
     quality_contact_extra_key,
     quality_spirit_category_extra_key,
 )
-
-
-def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
-    data = catalog()
-    by_name = data["all_metatypes"]
-    if variant:
-        for base in data["metatypes"]:
-            if base["name"] != name:
-                continue
-            for mv in base.get("metavariants", []):
-                if mv["name"] == variant:
-                    return mv
-        if variant in by_name:
-            return by_name[variant]
-    if name in by_name:
-        return by_name[name]
-    raise KeyError(f"Unknown metatype: {name}/{variant}")
-
-
-from .contacts import (  # noqa: E402  (contact network + Ex-Con / Erased caps)
+from .contacts import (  # (contact network + Ex-Con / Erased caps)
     apply_erased_lifestyle_cap,
     apply_excon_ware_ban,
     resolve_contacts,
     sync_quality_contacts,
 )
-from .formulas import (  # noqa: E402  (stat-expression helpers)
+from .formulas import (  # (stat-expression helpers)
     _add_leading_int,
     _ceil_div,
     _replace_leading_int,
     parse_armor_value,
 )
-from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
+from .gear import (  # (gear pipeline clusters; see engine/gear/)
     _append_gear_weapons,
     _append_ware_weapons,
     _apply_recoil_totals,
@@ -123,7 +104,7 @@ from .gear import (  # noqa: E402  (gear pipeline clusters; see engine/gear/)
     bind_weapon_category_dv,
     bind_weapon_skill_accuracy,
 )
-from .karma import (  # noqa: E402  (cost maths)
+from .karma import (  # (cost maths)
     _active_karma_mults,
     _filter_karma_rules,
     _group_floor_map,
@@ -139,7 +120,7 @@ from .karma import (  # noqa: E402  (cost maths)
     knowledge_points_spent,
     skill_karma_cost,
 )
-from .limits import (  # noqa: E402  (chargen avail / device-rating / ware-attr caps)
+from .limits import (  # (chargen avail / device-rating / ware-attr caps)
     _avail_entries,
     _check_avail_limit,
     _check_device_rating_limit,
@@ -148,7 +129,12 @@ from .limits import (  # noqa: E402  (chargen avail / device-rating / ware-attr 
     _finalize_avail_tree,
     _ware_attribute_bonuses,
 )
-from .magic import (  # noqa: E402  (awakened/emerged pipeline clusters; see engine/magic/)
+from .lookups import (  # catalog single-row accessors; see engine/lookups.py
+    _item_by_id,
+    _tradition_by_id,
+    find_metatype,  # noqa: F401  (re-exported for store.py / chummer_export.py / tests)
+)
+from .magic import (  # (awakened/emerged pipeline clusters; see engine/magic/)
     apply_focus_limits,
     apply_free_metamagics,
     apply_granted_spells,
@@ -174,17 +160,17 @@ from .magic import (  # noqa: E402  (awakened/emerged pipeline clusters; see eng
     spell_karma_cost,
     tradition_resist,  # noqa: F401  (re-exported for tests)
 )
-from .martial_arts import (  # noqa: E402  (style/technique resolution)
+from .martial_arts import (  # (style/technique resolution)
     resolve_martial_arts,
     sync_quality_martial_arts,
 )
-from .pricing import (  # noqa: E402  (post-resolve cost/avail adjustments)
+from .pricing import (  # (post-resolve cost/avail adjustments)
     apply_black_market_avail,
     apply_overclocker,
     apply_purchase_discounts,
     apply_ware_essence_multipliers,
 )
-from .priority import (  # noqa: E402, F401  (re-exported for store.py)
+from .priority import (  # noqa: F401  (re-exported for store.py)
     all_talent_options,
     heritage_options,
     normalize_build_method,
@@ -198,7 +184,7 @@ from .priority import (  # noqa: E402, F401  (re-exported for store.py)
     talent_special,
     validate_priorities,
 )
-from .qualities import (  # noqa: E402  (quality gather / extra-pick / binder pipeline; see engine/qualities.py)
+from .qualities import (  # (quality gather / extra-pick / binder pipeline; see engine/qualities.py)
     _quality_has_selectside,
     apply_quality_rules,
     bind_action_dice_pools,
@@ -211,7 +197,7 @@ from .qualities import (  # noqa: E402  (quality gather / extra-pick / binder pi
     resolve_quality_sides,
     sanitize_quality_ids,  # noqa: F401  (re-exported for store.py)
 )
-from .resonance import (  # noqa: E402  (technomancer pipeline; see engine/resonance.py)
+from .resonance import (  # (technomancer pipeline; see engine/resonance.py)
     _cyberadept_res_penalty_reduction,
     apply_granted_echoes,
     attach_complex_form_tests,
@@ -220,11 +206,11 @@ from .resonance import (  # noqa: E402  (technomancer pipeline; see engine/reson
     resolve_complex_forms,
     resolve_sprites,
 )
-from .selects import (  # noqa: E402  (select-node option enumeration)
+from .selects import (  # (select-node option enumeration)
     gear_extra_options,  # noqa: F401  (re-exported for store.py)
     selectskill_options,  # noqa: F401  (re-exported for tests)
 )
-from .skills import (  # noqa: E402  (knowledge / specialization / exotic / skillsoft resolution)
+from .skills import (  # (knowledge / specialization / exotic / skillsoft resolution)
     _attach_skillsoft_knowledge,
     _attach_specializations,
     _copy_exotic_skill_bonuses,
@@ -237,7 +223,7 @@ from .skills import (  # noqa: E402  (knowledge / specialization / exotic / skil
     resolve_skillsofts,
     resolve_specializations,
 )
-from .ware import (  # noqa: E402  (cyberware/bioware pipeline clusters; see engine/ware/)
+from .ware import (  # (cyberware/bioware pipeline clusters; see engine/ware/)
     _attach_ware_to_vehicle_mods,
     _clamp_ware_grades,
     _drop_invalid_vehicle_ware,
@@ -490,13 +476,6 @@ def default_attributes(meta: dict[str, Any]) -> dict[str, int]:
         else:
             out[key] = int(spec["min"])
     return out
-
-
-# Catalog single-row accessors live in engine/lookups.py.
-from .lookups import (  # noqa: E402  (kept here to mark where these were defined)
-    _item_by_id,
-    _tradition_by_id,
-)
 
 
 def resolve_attribute_selects(
