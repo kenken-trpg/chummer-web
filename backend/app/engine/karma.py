@@ -7,6 +7,7 @@ skill list — no other engine imports.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from ..data_loader import PHYSICAL_ATTRS
@@ -120,8 +121,8 @@ def _karma_cost_with_category_mods(
     mult_pct: int = 100,
     flat_adj: int = 0,
     flat_min: int = 0,
-    flat_rules: list[dict[str, Any]] | None = None,
-    min_rules: list[dict[str, Any]] | None = None,
+    flat_rules: Sequence[Mapping[str, Any]] | None = None,
+    min_rules: Sequence[Mapping[str, Any]] | None = None,
 ) -> int:
     low = max(0, int(from_rating))
     high = max(0, int(to_rating))
@@ -154,7 +155,7 @@ def _karma_cost_with_category_mods(
     return total
 
 
-def _active_karma_mults(rules: list[dict[str, Any]] | None, *, career: bool) -> dict[str, int]:
+def _active_karma_mults(rules: Sequence[Mapping[str, Any]] | None, *, career: bool) -> dict[str, int]:
     out: dict[str, int] = {}
     for rule in rules or []:
         name = str(rule.get("name") or "").strip()
@@ -170,8 +171,8 @@ def _active_karma_mults(rules: list[dict[str, Any]] | None, *, career: bool) -> 
     return out
 
 
-def _filter_karma_rules(rules: list[dict[str, Any]] | None, *, career: bool) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
+def _filter_karma_rules(rules: Sequence[Mapping[str, Any]] | None, *, career: bool) -> list[Mapping[str, Any]]:
+    out: list[Mapping[str, Any]] = []
     for rule in rules or []:
         cond = str(rule.get("condition") or "").replace(" ", "")
         if cond in {"/character/created=false", "/character/created=False"} and career:
@@ -182,9 +183,9 @@ def _filter_karma_rules(rules: list[dict[str, Any]] | None, *, career: bool) -> 
     return out
 
 
-def _matching_karma_rules(rules: list[dict[str, Any]] | None, name: str) -> list[dict[str, Any]]:
+def _matching_karma_rules(rules: Sequence[Mapping[str, Any]] | None, name: str) -> list[Mapping[str, Any]]:
     target = str(name or "")
-    matched: list[dict[str, Any]] = []
+    matched: list[Mapping[str, Any]] = []
     for rule in rules or []:
         rname = str(rule.get("name") or "")
         if rname == "" or rname == target:

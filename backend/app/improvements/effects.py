@@ -13,6 +13,7 @@ from ._common import (
     TEST_MOD_TAGS,
     limit_condition_label,
 )
+from .effect_rows import KarmaCostRow, KarmaMultRow, NamedBonusRow, SkillModRow
 
 
 class EffectsDict(TypedDict):
@@ -129,12 +130,12 @@ class EffectsDict(TypedDict):
     extra_spirits: list[str]
 
     # --- row lists (row shapes out of scope) --------------------------
-    skill_group_mods: list[dict[str, Any]]
-    skill_category_mods: list[dict[str, Any]]
-    skill_specific_mods: list[dict[str, Any]]
+    skill_group_mods: list[SkillModRow]
+    skill_category_mods: list[SkillModRow]
+    skill_specific_mods: list[NamedBonusRow]
     focus_binding: list[dict[str, Any]]
-    skill_attribute_mods: list[dict[str, Any]]
-    spell_category_mods: list[dict[str, Any]]
+    skill_attribute_mods: list[NamedBonusRow]
+    spell_category_mods: list[NamedBonusRow]
     spell_dice_pool: list[dict[str, Any]]
     action_dice_pools: list[dict[str, Any]]
     restricted_gear: list[dict[str, Any]]
@@ -164,13 +165,13 @@ class EffectsDict(TypedDict):
     free_spells_skill: list[dict[str, Any]]
     free_spells_attribute: list[dict[str, Any]]
     new_spell_karma_cost: list[dict[str, Any]]
-    skill_category_karma_cost_mult: list[dict[str, Any]]
-    skill_category_karma_cost: list[dict[str, Any]]
-    skill_category_spec_karma_cost_mult: list[dict[str, Any]]
-    skill_group_category_karma_cost_mult: list[dict[str, Any]]
-    active_skill_karma_cost: list[dict[str, Any]]
-    knowledge_skill_karma_cost: list[dict[str, Any]]
-    knowledge_skill_karma_cost_min: list[dict[str, Any]]
+    skill_category_karma_cost_mult: list[KarmaMultRow]
+    skill_category_karma_cost: list[KarmaCostRow]
+    skill_category_spec_karma_cost_mult: list[KarmaMultRow]
+    skill_group_category_karma_cost_mult: list[KarmaMultRow]
+    active_skill_karma_cost: list[KarmaCostRow]
+    knowledge_skill_karma_cost: list[KarmaCostRow]
+    knowledge_skill_karma_cost_min: list[KarmaCostRow]
     select_quality_slots: list[dict[str, Any]]
     unimplemented: list[dict[str, Any]]
 

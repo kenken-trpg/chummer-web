@@ -381,18 +381,18 @@ def resolve_skill_mods(
                 continue
             add_bonus(skill["name"], bonus, mod.get("condition") or "")
 
-    for mod in effects.get("skill_specific_mods") or []:
-        add_bonus(mod.get("name") or "", int(mod.get("bonus") or 0), mod.get("condition") or "")
+    for spec_mod in effects.get("skill_specific_mods") or []:
+        add_bonus(spec_mod.get("name") or "", int(spec_mod.get("bonus") or 0), spec_mod.get("condition") or "")
 
-    for mod in effects.get("skill_attribute_mods") or []:
-        attr = (mod.get("name") or "").upper()
-        bonus = int(mod.get("bonus") or 0)
+    for attr_mod in effects.get("skill_attribute_mods") or []:
+        attr = (attr_mod.get("name") or "").upper()
+        bonus = int(attr_mod.get("bonus") or 0)
         if not attr or not bonus:
             continue
         for skill in active + knowledge:
             if (skill.get("attribute") or "").upper() != attr:
                 continue
-            add_bonus(skill["name"], bonus, mod.get("condition") or "")
+            add_bonus(skill["name"], bonus, attr_mod.get("condition") or "")
 
     return {
         "skill_bonus": skill_bonus,

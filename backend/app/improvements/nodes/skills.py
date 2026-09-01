@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from .._common import _as_int
+from ..effect_rows import SkillModRow
 from ..effects import EffectsDict
 
 
@@ -20,7 +21,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             if not name or bonus == 0:
                 continue
             exclude = (fields.get("exclude") or "").strip()
-            row = {
+            row: SkillModRow = {
                 "name": name,
                 "bonus": bonus,
                 "exclude": exclude,
