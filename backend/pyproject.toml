@@ -47,3 +47,16 @@ ignore_missing_imports = true
 check_untyped_defs = false
 warn_unused_ignores = true
 warn_redundant_casts = true
+
+# --- per-module strictness --------------------------------------------------
+# app/engine/compute/ is the phased compute() package: every phase is
+# `phase(ctx: Ctx) -> None`, the Ctx bundles are TypedDicts and
+# tests/test_compute_phases.py pins the seams — so it holds a stricter bar
+# than the rest of the (still-lenient) engine. Grow this list module by
+# module as each one is tightened.
+[[tool.mypy.overrides]]
+module = ["app.engine.compute", "app.engine.compute.*", "app.engine.bundle_types"]
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true

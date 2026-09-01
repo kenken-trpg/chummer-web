@@ -265,3 +265,11 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    `ware_rating_bounds` `extras` widened to `Mapping[str, float] | None`),
    and a couple of `str | None` narrows. `mypy` is now clean and part of
    `make check` / CI (`ci.yml` dropped `continue-on-error`).
+   - *Tightening, module by module:* the base ruleset stays lenient
+     (`check_untyped_defs = false`); stricter bars go in per-module
+     `[[tool.mypy.overrides]]`. First entry: `app.engine.compute.*` +
+     `app.engine.bundle_types` run with `check_untyped_defs`,
+     `disallow_untyped_defs`, `disallow_incomplete_defs` and
+     `warn_return_any` — the phased `compute()` package is fully annotated
+     (`phase(ctx: Ctx) -> None`, `TypedDict` bundles), so it holds the line
+     for free. Grow the list as other modules are cleaned to that bar.
