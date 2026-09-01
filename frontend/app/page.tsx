@@ -26,6 +26,8 @@ import { api, type CharacterSummary } from "@/lib/api";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import type { Tab } from "@/lib/character/constants";
 import { useCharacterHistory } from "@/lib/character/history";
+import { useSheetLayout } from "@/lib/character/useSheetLayout";
+import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
 
@@ -34,14 +36,7 @@ export default function Page() {
   const [ch, setCh] = useState<Character | null>(null);
   const [tab, setTab] = useState<Tab>("priority");
   const [error, setError] = useState<string | null>(null);
-  const [sheetLayout, setSheetLayout] = useState<SheetLayout>(() => {
-    try {
-      const v = localStorage.getItem("sheetLayout");
-      return v === "compact" || v === "text" ? v : "standard";
-    } catch {
-      return "standard";
-    }
-  });
+  const [sheetLayout, setSheetLayout] = useSheetLayout();
   const fileRef = useRef<HTMLInputElement>(null);
   const busy = useRef(false);
   const [copied, setCopied] = useState<string | null>(null);
@@ -175,28 +170,7 @@ export default function Page() {
     const snap = history.stepForward(lastCommitted.current ?? ch);
     if (snap) await restoreSnapshot(snap);
   }
-  const undoRef = useRef(undo);
-  const redoRef = useRef(redo);
-  // Keep the "latest" refs current without touching them during render.
-  useEffect(() => {
-    undoRef.current = undo;
-    redoRef.current = redo;
-  });
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-      const key = e.key.toLowerCase();
-      if (key !== "z" && key !== "y") return;
-      const el = document.activeElement;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) return;
-      e.preventDefault();
-      if (key === "y" || e.shiftKey) redoRef.current();
-      else undoRef.current();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  useKeyboardShortcuts(undo, redo);
 
   const tr = (name: string) => catalog?.translations[name] || name;
   const t = makeT(catalog);
@@ -418,13 +392,7 @@ export default function Page() {
                 <select
                   className="btn"
                   value={sheetLayout}
-                  onChange={(e) => {
-                    const v = e.target.value as SheetLayout;
-                    setSheetLayout(v);
-                    try {
-                      localStorage.setItem("sheetLayout", v);
-                    } catch {}
-                  }}
+                  onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
                   title="シートのレイアウト"
                 >
                   <option value="standard">標準</option>
