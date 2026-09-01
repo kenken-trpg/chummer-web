@@ -71,3 +71,27 @@ Extend the vitest suite first:
 ```
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`.
+
+| commit | what | lines |
+| --- | --- | --- |
+| `4721a3b` | `CharacterSidebar.test.tsx` + `QualitiesTab.test.tsx` smoke tests; `makeDerived` fills `points.*`, `makeCatalog` gets `qualities: []` | +34 vitest total |
+| `47a5504` | `renderExtraEditor` → `tabs/qualities/QualityExtraEditor.tsx` | QualitiesTab 635 → 240; editor 424 |
+| `c1e4733` | `CharacterSidebar` → nine `sidebar/*` blocks + `sidebar/types.ts` | Sidebar 760 → 48 |
+| _this_ | docs |
+
+Deviations:
+
+- Sidebar landed as one commit (not the planned 2) — the blocks are
+  verbatim JSX slices and the smoke test + typecheck/build cover them.
+- The planned `SidebarStatus` / `SidebarDerived` split collapsed into one
+  `SidebarStatus` (the auto-detected boundary put mode/build-method with
+  the derived stats; a 2-line "status" block wasn't worth it) → **9**
+  blocks, not 10.
+- `QualityExtraEditor` also needed `catalog` (not just `catalogById`) — the
+  body reads `catalog.spirits` / `catalog.skills` too.

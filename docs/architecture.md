@@ -79,6 +79,11 @@ is consumed. See `docs/adding-rules.md`.
   `setCharacter`) to each tab.
 - `components/character/tabs/*` — one file per tab; gear sub-tabs under
   `tabs/gear/`. Tabs are presentational: they read `d.*` and call `patch({...})`.
+  `QualitiesTab` delegates the per-quality "extra pick" editor to
+  `tabs/qualities/QualityExtraEditor.tsx`.
+- `components/character/CharacterSidebar.tsx` — a shell over nine
+  `sidebar/*` block components sharing a `SidebarBlockProps` bag
+  (`sidebar/types.ts`); `SidebarCareerRewards` owns the reward-log state.
 - `components/CharacterSheet.tsx` — the printable sheet (standard / compact /
   plain-text layouts); it's a thin shell over
   `lib/character/sheet-data.ts::buildSheetData` + one component per section
