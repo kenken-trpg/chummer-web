@@ -22,6 +22,7 @@ OVERRIDE_DIR = _BACKEND / "data" / "ja_overrides"
 ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "edg", "mag", "res", "ess")
 PHYSICAL_ATTRS = ("BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA")
 SPECIAL_ATTRS = ("EDG", "MAG", "RES")
+MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
 
 
 def _text(el: ET.Element | None, default: str = "") -> str:
