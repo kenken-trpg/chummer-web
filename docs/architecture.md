@@ -287,9 +287,11 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `effects` became `EffectsDict`), and the self-contained engine leaf
      modules `constants` / `formulas` / `karma` / `priority` / `selects` /
      `skills` / `contacts` / `limits` / `martial_arts` / `dice` /
-     `requirements`. Grow the list as other modules are cleaned to that bar
-     (`engine/lookups.py` is the next candidate — ~28 `no-any-return`s in
-     its catalog scans).
+     `requirements` / `lookups` (the last via a `_match_by` helper that
+     folds the ~25 `id`/`name` catalog scans). Grow the list as other
+     modules are cleaned to that bar — the remaining engine holdouts
+     (`ware/`, `gear/`, `magic/`, `resonance`, `qualities`, `pricing`)
+     need real annotation work, or a `catalog()` `TypedDict`, first.
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`

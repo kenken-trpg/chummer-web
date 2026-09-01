@@ -97,6 +97,11 @@ The base ruleset stays lenient; a per-module `[[tool.mypy.overrides]]`
   `selects` / `skills` / `contacts` / `limits` / `martial_arts` / `dice` /
   `requirements` — self-contained, already clean bar three trivial
   `no-any-return`s in the catalog-scan helpers (fixed in the same batch).
+- `engine/lookups.py` — its ~25 `id`/`name` catalog scans folded onto one
+  `_match_by(rows, field, value)` helper (returns the row itself, not a
+  copy), which clears all 28 `no-any-return`s; 212 → 165 lines.
 
-Next candidate: `engine/lookups.py` (~28 `no-any-return`s, same
-`for row in catalog()[...]: return row` shape).
+Next candidates need real work: the engine holdouts `ware/` / `gear/` /
+`magic/` / `resonance` / `qualities` / `pricing` (unannotated helpers,
+`Any` from `catalog()`), or a `catalog()` `TypedDict` that would tighten
+many at once.

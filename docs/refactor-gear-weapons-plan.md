@@ -17,8 +17,8 @@ split). Extracted:
   `spirits.py`, `spells.py`, `initiation.py`, `submersion.py`
 
 `resolve_gear()` and `compute()` stay in `__init__.py` as orchestrators.
-Steps 1–4 (gear) and Step 5 (magic) are **done**; Step 6 (mid-file import
-cleanup) is not.
+Steps 1–4 (gear), Step 5 (magic) and Step 6 (mid-file import cleanup) are
+all **done** — see the note under Step 6.
 
 ## Ground rules (unchanged)
 
@@ -282,14 +282,15 @@ the 'ware pipeline (`resolve_ware` + redliner / limb-side / vehicle-hosted
 -ware), and a handful of attribute / reward / movement / lifestyle
 helpers. Next natural splits: `engine/ware/` and `engine/qualities.py`.
 
-## Step 6 — mid-file import cleanup (not done)
+## Step 6 — mid-file import cleanup (done)
 
-`apply_lifestyle_cost_mod` (a loop-local closure → the `B023` ignore) and
-`find_metatype` still sit above the mid-file `from .xxx import (...)` blocks, so
-the `["B023", "E402"]` per-file ignore in `pyproject.toml` and the `# noqa: E402`
-blocks stay. To finish: move `apply_lifestyle_cost_mod` (lifestyle/quality
-helper) to its own module and hoist `find_metatype` (or accept it below the
-imports), then delete the ignore and lift every `from .xxx import` to the top.
+Landed with the engine-split follow-ups: `apply_lifestyle_cost_mod` moved to
+`engine/gear/lifestyle.py` (kills the `B023` site), `find_metatype` moved to
+`engine/lookups.py` (needs only `catalog`, re-exported for
+`store.py` / tests). `engine/__init__.py` is now a top-of-file re-export
+barrel — the `["B023", "E402"]` per-file ignore and every `# noqa: E402` in
+`app/engine/` are gone (the one remaining `# noqa: E402` lives in
+`data_loader/__init__.py`, a deliberate domain-loader case).
 
 ---
 

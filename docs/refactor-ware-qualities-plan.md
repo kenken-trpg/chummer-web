@@ -321,7 +321,10 @@ Deviations from the plan above:
   re-exports. `quality_addspirit_extra_key` kept its re-export (an
   `# noqa: F401`) for `tests/test_engine.py`.
 
-## Step 3 — remaining
+## Step 3 — done
 
-The `["B023", "E402"]` `pyproject` cleanup (§Step 3 above) is still open and
-independent — its own session.
+The `["B023", "E402"]` `pyproject` cleanup (§Step 3 above) landed with the
+engine-split follow-ups: `apply_lifestyle_cost_mod` → `engine/gear/lifestyle.py`,
+`find_metatype` → `engine/lookups.py`, the per-file ignore and every
+`# noqa: E402` in `app/engine/` deleted. See
+`docs/refactor-gear-weapons-plan.md` §Step 6.
