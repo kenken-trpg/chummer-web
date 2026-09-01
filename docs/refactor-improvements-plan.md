@@ -174,5 +174,37 @@ cd backend && source .venv/bin/activate && \
   python -m pytest -q && \
   python -m pytest -q tests/test_snapshot.py && \
   python -c "import app.main, app.store, app.engine, app.improvements"
-# expect: 468 passed; snapshot 6 passed, no diff
+# expect: 469 passed; snapshot 6 passed, no diff
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `app/improvements.py`
+(1,321 lines, one file) → `app/improvements/` package, largest module now
+`nodes/magic.py` at 252. Every commit `make check` green + snapshot gate 6
+passed, byte-identical.
+
+| commit | what |
+| --- | --- |
+| `08994ab` | 1 — `git mv` to `__init__.py`; `_common.py` (tables + primitives) + `effects.py` (`empty_effects` + compactors) carved out; dead `logging` dropped |
+| `bf4d891` | 2 — `apply_bonus_nodes` → `nodes/`: `__init__.py` = per-node loop + `_DOMAINS` dispatch, `_chain.py` = the whole chain wrapped in `for _once in (True,)` (keeps the 8 in-branch `continue`s exact); new `tests/test_improvements_nodes.py` completeness guard |
+| `4918d8c` | 3 — `_chain.py`'s 127 branches carved into `nodes/{stats,skills,magic,social}.py` (36/21/31/39), `_chain.py` deleted; commits 3–6 of the plan folded into one |
+| _this_ | docs |
+
+Deviations:
+
+- Commits 3–6 folded into one — each domain is a mechanical slice of the
+  same chain and the snapshot gate + completeness guard prove equivalence,
+  so per-domain commits were pure churn.
+- The `for _once in (True,)` wrapper (not a dict registry) keeps every
+  branch body **verbatim**, including the `continue` idiom, so the split is
+  a pure relocation rather than a control-flow rewrite.
+
+The `app/improvements/` package is the backend's last monolith cleared.
+`from app.improvements import …` is unchanged — the package `__init__` is
+the barrel (`__all__` covers `apply_bonus_nodes`, `collect_effects`,
+`substitute_rating`, `_as_int`, `ATTR_ALIASES`, `special_armor_totals`,
+`compact_limit_modifiers`, `empty_effects`, `special_armor_from_nodes`,
+`limit_modifiers_from_nodes`, `compact_special_armor`).

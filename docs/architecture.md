@@ -144,7 +144,18 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      lifestyle closure lives in `gear/lifestyle.py`. **The engine split is
      done** — what remains in `__init__.py` is `compute()` / `resolve_gear()`
      + a handful of attribute / reward / movement helpers.
-2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
+2. **Split `app/improvements.py`** (the `<bonus>` → `effects` pipeline) —
+   *done:* now the `app/improvements/` package. `_common.py` (constant
+   tables + `_as_int` / `substitute_rating` / `_bonus_int` primitives),
+   `effects.py` (`empty_effects` + the special-armor / limit-modifier
+   compactors), and `nodes/` — `apply_bonus_nodes` is a thin per-node loop
+   that dispatches to `nodes/{stats,skills,magic,social}.py`, each owning a
+   slice of the old ~90-branch `if/elif tag` chain as
+   `apply(tag, node, fields, effects, source) -> bool`.
+   `tests/test_improvements_nodes.py` guards that every `IMPLEMENTED` tag
+   still has a handler. `from app.improvements import …` is unchanged (the
+   package `__init__` is the barrel).
+3. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/
      blocks.tsx`; range-band + special-armor formatting →
@@ -152,8 +163,8 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `lib/character/format.ts`.
    - *Next:* pull each `<Section>` in the big `return (…)` into its own
      component under `components/character/sheet/`, passing `d` / `tr` / `t`.
-3. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
+4. **Split `lib/types.ts`** — *done:* `lib/types/{installs,catalog,derived,
    character}.ts` + an `index.ts` barrel; `@/lib/types` still resolves.
-4. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
+5. Drive the demoted eslint warnings to zero (see `eslint.config.mjs`): the
    remaining 4 are one custom-font `<link>`, one `useEffect` dep, one
    internal `location.href`, and one `any` in a sheet helper.
