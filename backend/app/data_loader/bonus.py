@@ -11,6 +11,17 @@ from typing import Any
 from ._xml import MATRIX_ATTRIBUTES, _int, _text
 
 
+def _parse_weaponbonus(el: ET.Element | None) -> dict[str, str]:
+    if el is None:
+        return {}
+    out: dict[str, str] = {}
+    for child in list(el):
+        text = _text(child)
+        if text:
+            out[child.tag] = text
+    return out
+
+
 def parse_requirement_tree(el: ET.Element | None) -> list[dict[str, Any]]:
     if el is None:
         return []

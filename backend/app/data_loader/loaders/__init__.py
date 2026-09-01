@@ -4,6 +4,18 @@
 
 from __future__ import annotations
 
+from .armor import load_armor, load_armor_mods
+from .gear import (
+    PROGRAM_HOSTS,
+    load_apps,
+    load_commlinks,
+    load_cyberdecks,
+    load_gear,
+    load_optics,
+    load_programs,
+    load_rccs,
+    load_sensors,
+)
 from .magic import (
     SPELL_CAST_CATEGORIES,
     SPELL_CATEGORIES,
@@ -21,7 +33,15 @@ from .magic import (
 from .metatypes import load_metatypes
 from .qualities import load_qualities
 from .skills import load_skills
+from .vehicles import (
+    load_drones,
+    load_vehicle_mods,
+    load_vehicle_names,
+    load_vehicles,
+    load_weapon_mounts,
+)
 from .ware import load_bioware, load_cyberware
+from .weapons import load_weapon_accessories, load_weapon_ranges, load_weapons
 
 __all__ = [
     "SPELL_CAST_CATEGORIES",
@@ -41,4 +61,23 @@ __all__ = [
     "load_sprites",
     "load_streams",
     "load_traditions",
+    "PROGRAM_HOSTS",
+    "load_apps",
+    "load_armor",
+    "load_armor_mods",
+    "load_commlinks",
+    "load_cyberdecks",
+    "load_drones",
+    "load_gear",
+    "load_optics",
+    "load_programs",
+    "load_rccs",
+    "load_sensors",
+    "load_vehicle_mods",
+    "load_vehicle_names",
+    "load_vehicles",
+    "load_weapon_accessories",
+    "load_weapon_mounts",
+    "load_weapon_ranges",
+    "load_weapons",
 ]
