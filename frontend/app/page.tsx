@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import CharacterSheet, { type SheetLayout } from "@/components/CharacterSheet";
+import CharacterSheet from "@/components/CharacterSheet";
 import { CharacterSidebar } from "@/components/character/CharacterSidebar";
 import { AdeptTab } from "@/components/character/tabs/AdeptTab";
 import { AttrsTab } from "@/components/character/tabs/AttrsTab";
@@ -22,7 +22,8 @@ import { SpiritsTab } from "@/components/character/tabs/SpiritsTab";
 import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { TabPanelProps } from "@/components/character/types";
-import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
+import { Toolbar } from "@/components/character/Toolbar";
+import { SheetDescEditor } from "@/components/character/SheetDescEditor";
 import type { Tab } from "@/lib/character/constants";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
@@ -32,30 +33,8 @@ export default function Page() {
   const [tab, setTab] = useState<Tab>("priority");
   const [sheetLayout, setSheetLayout] = useSheetLayout();
   const fileRef = useRef<HTMLInputElement>(null);
-  const {
-    catalog,
-    ch,
-    error,
-    roster,
-    copied,
-    history,
-    tr,
-    t,
-    setCh,
-    patch,
-    undo,
-    redo,
-    openCharacter,
-    newCharacter,
-    deleteCurrent,
-    duplicateCurrent,
-    onImport,
-    onPortraitFile,
-    download,
-    downloadChum5,
-    copyText,
-    refreshRoster,
-  } = useCharacterEditor({ onCharacterOpened: () => setTab("priority") });
+  const ed = useCharacterEditor({ onCharacterOpened: () => setTab("priority") });
+  const { catalog, ch, error, tr, t, patch, setCh, undo, redo, onPortraitFile } = ed;
   useKeyboardShortcuts(undo, redo);
 
   if (error && !ch) {
@@ -90,140 +69,16 @@ export default function Page() {
             (GPL-3.0)。
           </p>
 
-          <div className="toolbar">
-            <select
-              className="btn"
-              value={ch.id}
-              onChange={(e) =>
-                e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value)
-              }
-              title="保存済みキャラクター"
-            >
-              {!roster.some((r) => r.id === ch.id) ? (
-                <option value={ch.id}>{ch.name || "無名"}（未保存）</option>
-              ) : null}
-              {roster.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name || "無名"} ・ {tr(r.metatype)}
-                  {r.career ? "（キャリア）" : ""}
-                </option>
-              ))}
-              <option value="__new__">＋ 新規キャラ</option>
-            </select>
-            <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">
-              複製
-            </button>
-            <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">
-              削除
-            </button>
-            <button
-              className="btn"
-              onClick={() => void undo()}
-              disabled={!history.counts.undo}
-              title="元に戻す (Ctrl/⌘+Z)"
-            >
-              ↶ 元に戻す{history.counts.undo ? `（${history.counts.undo}）` : ""}
-            </button>
-            <button
-              className="btn"
-              onClick={() => void redo()}
-              disabled={!history.counts.redo}
-              title="やり直し (Ctrl/⌘+Shift+Z)"
-            >
-              ↷ やり直し{history.counts.redo ? `（${history.counts.redo}）` : ""}
-            </button>
-            <input
-              value={ch.name}
-              onChange={(e) => setCh({ ...ch, name: e.target.value })}
-              onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
-            />
-            <button className="btn primary" onClick={download}>
-              JSON保存
-            </button>
-            <button
-              className="btn"
-              onClick={downloadChum5}
-              title="Chummer5a で開ける .chum5（XML）で書き出す"
-            >
-              .chum5書出
-            </button>
-            <button className="btn" onClick={() => fileRef.current?.click()}>
-              読込 (JSON/.chum5)
-            </button>
-            <button
-              className="btn"
-              onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
-              title="ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5"
-            >
-              {copied === "cc" ? "コピー ✓" : "ココフォリア"}
-            </button>
-            <button
-              className="btn"
-              onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr), "cp")}
-              title="チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー"
-            >
-              {copied === "cp" ? "コピー ✓" : "チャットパレット"}
-            </button>
-            {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
-              <button
-                className="btn"
-                onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr), "cs")}
-                title="束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す"
-              >
-                {copied === "cs" ? "コピー ✓" : "精霊コマ"}
-              </button>
-            ) : null}
-            <button
-              className={`btn ${ch.career || d.career ? "primary" : ""}`}
-              title={
-                ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"
-              }
-              onClick={() => {
-                const next = !(ch.career || d.career);
-                if (next && (d.errors || []).length) {
-                  const ok = window.confirm(
-                    "作成エラーが残っています。このままキャリアに進みますか？",
-                  );
-                  if (!ok) return;
-                }
-                patch({ career: next });
-              }}
-            >
-              {ch.career || d.career ? "キャリア中" : "作成完了（キャリア）"}
-            </button>
-            {tab === "sheet" ? (
-              <>
-                <select
-                  className="btn"
-                  value={sheetLayout}
-                  onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
-                  title="シートのレイアウト"
-                >
-                  <option value="standard">標準</option>
-                  <option value="compact">コンパクト</option>
-                  <option value="text">テキスト</option>
-                </select>
-                <button
-                  className="btn primary"
-                  onClick={() => window.print()}
-                  title="印刷。ダイアログで「PDF として保存」も選べます"
-                >
-                  印刷 / PDF
-                </button>
-              </>
-            ) : (
-              <button className="btn" onClick={() => setTab("sheet")}>
-                シート表示
-              </button>
-            )}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.chum5,.chum5lz"
-              hidden
-              onChange={(e) => e.target.files && onImport(e.target.files[0])}
-            />
-          </div>
+          <Toolbar
+            ed={ed}
+            ch={ch}
+            catalog={catalog}
+            tab={tab}
+            setTab={setTab}
+            sheetLayout={sheetLayout}
+            setSheetLayout={setSheetLayout}
+            fileRef={fileRef}
+          />
 
           <div className="tabs">
             {(
@@ -267,88 +122,7 @@ export default function Page() {
         </div>
 
         {tab === "sheet" && (
-          <div className="no-print sheet-notes-edit">
-            <label>記述</label>
-            <div className="portrait-edit">
-              {ch.portrait ? (
-                <img className="portrait-thumb" src={ch.portrait} alt="ポートレート" />
-              ) : (
-                <div className="portrait-thumb portrait-empty">画像なし</div>
-              )}
-              <div className="portrait-edit-controls">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void onPortraitFile(f);
-                    e.target.value = "";
-                  }}
-                />
-                {ch.portrait ? (
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={() => void patch({ portrait: "" })}
-                  >
-                    画像を削除
-                  </button>
-                ) : null}
-                <span className="muted">.chum5 の mugshot と相互変換。3MB まで。</span>
-              </div>
-            </div>
-            <div className="sheet-desc-grid">
-              {(
-                [
-                  ["age", "年齢"],
-                  ["sex", "性別"],
-                  ["height", "身長"],
-                  ["weight", "体重"],
-                  ["eyes", "目"],
-                  ["hair", "髪"],
-                  ["skin", "肌"],
-                  ["concept", "コンセプト"],
-                ] as const
-              ).map(([field, label]) => (
-                <label key={field}>
-                  {label}
-                  <input
-                    defaultValue={(ch[field] as string) || ""}
-                    key={`${ch.id}-${field}`}
-                    onBlur={(e) => {
-                      if ((e.target.value || "") !== ((ch[field] as string) || ""))
-                        patch({ [field]: e.target.value });
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
-            {(
-              [
-                ["appearance", "容姿"],
-                ["background", "背景"],
-                ["notes", "メモ"],
-              ] as const
-            ).map(([field, label]) => (
-              <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>
-                <label>{label}</label>
-                <textarea
-                  rows={field === "notes" ? 3 : 2}
-                  defaultValue={(ch[field] as string) || ""}
-                  key={`${ch.id}-${field}`}
-                  placeholder={
-                    field === "notes"
-                      ? "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。"
-                      : ""
-                  }
-                  onBlur={(e) => {
-                    if ((e.target.value || "") !== ((ch[field] as string) || ""))
-                      patch({ [field]: e.target.value });
-                  }}
-                />
-              </div>
-            ))}
-          </div>
+          <SheetDescEditor ch={ch} patch={patch} onPortraitFile={onPortraitFile} />
         )}
         {tab === "sheet" && (
           <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />
