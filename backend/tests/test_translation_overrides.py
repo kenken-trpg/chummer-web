@@ -13,6 +13,7 @@ from app.data_loader import (
     load_translations,
     load_ui_strings,
 )
+from app.data_loader.loaders import translations as _translations_mod
 
 
 def _write(dirpath: Path, name: str, payload: object) -> None:
@@ -30,24 +31,24 @@ def test_override_dir_ships_empty_json_files() -> None:
 
 
 def test_load_ja_overrides_missing_file_returns_empty(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     assert _load_ja_overrides("data.json") == {}
 
 
 def test_load_ja_overrides_malformed_json_is_ignored(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(tmp_path, "data.json", "{ not valid json ")
     assert _load_ja_overrides("data.json") == {}
 
 
 def test_load_ja_overrides_non_object_is_ignored(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(tmp_path, "data.json", ["not", "a", "dict"])
     assert _load_ja_overrides("data.json") == {}
 
 
 def test_load_ja_overrides_skips_blank_and_non_string_values(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(
         tmp_path,
         "data.json",
@@ -60,11 +61,11 @@ def test_load_translations_merges_overlay_over_vendored(tmp_path, monkeypatch) -
     # baseline with an empty overlay so the committed data.json can't skew counts
     empty = tmp_path / "empty"
     empty.mkdir()
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", empty)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", empty)
     base = load_translations()
     assert base.get("Clothing") == "衣服", "sanity: vendored entry present"
 
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(
         tmp_path,
         "data.json",
@@ -81,11 +82,11 @@ def test_load_translations_merges_overlay_over_vendored(tmp_path, monkeypatch) -
 def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> None:
     empty = tmp_path / "empty"
     empty.mkdir()
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", empty)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", empty)
     base = load_ui_strings()
     assert base.get("String_Karma") == "カルマ", "sanity: vendored entry present"
 
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(tmp_path, "ui.json", {"String_Karma": "上書きカルマ"})
     merged = load_ui_strings()
 
@@ -94,7 +95,7 @@ def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> 
 
 
 def test_catalog_translations_reflect_overlay(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(data_loader, "OVERRIDE_DIR", tmp_path)
+    monkeypatch.setattr(_translations_mod, "OVERRIDE_DIR", tmp_path)
     _write(tmp_path, "data.json", {"Clothing": "キャタログ上書き"})
     data_loader.reset_catalog()
     try:

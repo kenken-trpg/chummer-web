@@ -10,7 +10,13 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from .._xml import DATA_DIR, _float, _int, _text
-from ..bonus import _specific_powers, parse_bonus, parse_required
+from ..bonus import (
+    _specific_powers,
+    parse_bonus,
+    parse_required,
+    parse_requirement_tree,
+    parse_select_power_slot,
+)
 
 
 def _power_required_names(el: ET.Element) -> list[str]:
@@ -478,3 +484,123 @@ def load_focus_formulae() -> dict[str, dict[str, Any]]:
             "page": _text(el.find("page")),
         }
     return items
+
+
+def load_metamagics() -> list[dict[str, Any]]:
+    path = DATA_DIR / "metamagic.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./metamagics/metamagic"):
+        name = _text(el.find("name"))
+        mid = _text(el.find("id"))
+        if not name or not mid:
+            continue
+        items.append(
+            {
+                "id": mid,
+                "name": name,
+                "adept": _text(el.find("adept"), "False").lower() == "true",
+                "magician": _text(el.find("magician"), "False").lower() == "true",
+                "repeatable": _text(el.find("limit"), "True").lower() == "false",
+                "bonus": parse_bonus(el.find("bonus")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_magic_arts() -> list[dict[str, Any]]:
+    path = DATA_DIR / "metamagic.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./arts/art"):
+        name = _text(el.find("name"))
+        art_id = _text(el.find("id"))
+        if not name or not art_id:
+            continue
+        items.append(
+            {
+                "id": art_id,
+                "name": name,
+                "bonus": parse_bonus(el.find("bonus")),
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_echoes() -> list[dict[str, Any]]:
+    path = DATA_DIR / "echoes.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./echoes/echo"):
+        name = _text(el.find("name"))
+        echo_id = _text(el.find("id"))
+        if not name or not echo_id:
+            continue
+        limit_el = el.find("limit")
+        limit_raw = _text(limit_el) if limit_el is not None else ""
+        if limit_el is None:
+            max_takes = 1
+        elif limit_raw.lower() == "false":
+            max_takes = None
+        else:
+            try:
+                max_takes = max(1, int(limit_raw))
+            except ValueError:
+                max_takes = 1
+        bonus = parse_bonus(el.find("bonus"))
+        needs_extra = el.find("./bonus/selecttext") is not None or any(
+            node.get("tag") == "selecttext" for node in bonus
+        )
+        items.append(
+            {
+                "id": echo_id,
+                "name": name,
+                "max_takes": max_takes,
+                "needs_extra": needs_extra,
+                "bonus": bonus,
+                "required_tree": parse_requirement_tree(el.find("required")),
+                "required": parse_required(el.find("required")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_qi_focus() -> dict[str, Any] | None:
+    path = DATA_DIR / "gear.xml"
+    if not path.exists():
+        return None
+    for el in ET.parse(path).getroot().findall("./gears/gear"):
+        if _text(el.find("name")) != "Qi Focus":
+            continue
+        if el.find("hide") is not None:
+            continue
+        bonus = parse_bonus(el.find("bonus"))
+        select_power = None
+        for node in bonus:
+            if node.get("tag") == "selectpowers":
+                select_power = parse_select_power_slot(node)
+                break
+        return {
+            "id": _text(el.find("id")),
+            "name": _text(el.find("name")),
+            "category": _text(el.find("category"), "Foci"),
+            "maxrating": _int(el.find("rating"), 6),
+            "cost": _text(el.find("cost"), "Rating * 3000"),
+            "source": _text(el.find("source")),
+            "page": _text(el.find("page")),
+            "select_power": select_power,
+            "pointsperlevel": float((select_power or {}).get("points_per_level") or 0.25),
+        }
+    return None
