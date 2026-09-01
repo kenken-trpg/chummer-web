@@ -125,3 +125,37 @@ cd backend && ./.venv/bin/python -m pytest -q && ./.venv/bin/ruff check . \
 
 `tests/test_snapshot.py` first (byte-identical gate);
 `tests/test_compute_phases.py` guards the phase seams.
+
+## Done
+
+`EffectsDict(TypedDict)` (`total=True`, 134 keys) lives in
+`app/improvements/effects.py` next to `empty_effects()`. Scalars +
+`attribute_bonus` / `attribute_max_mods` / `test_mods` /
+`spell_defense_resist` / `special_armor` / `walk_multiplier` /
+`run_multiplier` / `sprint_bonus` / `skill_category_point_cost_mult` /
+`living_persona` (`dict[str, int]`), `immunities` (`dict[str, bool]`),
+`movement_replace` (`dict[tuple[str, str], int]`), `enabled_tabs`
+(`set[str]`), the string lists as `list[str]`, and the ~45 row lists as
+`list[dict[str, Any]]`.
+
+- **friction #1** — `nodes/skills.py` inlines the `skill_group_mods` /
+  `skill_category_mods` two-way branch (row built once, appended to the
+  literal key).
+- **friction #2** — the `(effects or {}).get(...)` helpers
+  (`magic/spells.py`, `magic/_common.py`, `resonance.py`, `gear/weapons.py`,
+  `compute/_career.py`) keep `EffectsDict | None` and fall back to
+  `empty_effects()` instead of `{}`. `_spell_category_mod_total` /
+  `_spell_descriptor_mod_total` take a `Literal[...]` key;
+  `bind_spell_category_drain_damage` iterates the two lists directly.
+- **friction #3** — `add_spirit_picks` is in the schema and seeded by
+  `empty_effects()` (`bind_extra_spirits` already wrote it,
+  `assemble.py` already read it).
+- **friction #4** — no `warn_return_any` fallout in `compute/`; the
+  `effects.get("x")` reads there were already wrapped in `int(...)`.
+- **friction #5** — resolved the clean way: `collect_effects()` no longer
+  swaps `enabled_tabs` from `set` to `sorted` list. It stays `set[str]`
+  end to end; `qualities.py` / `gear.py` / `magic.py` / `assemble.py`
+  already `set(...)` / `sorted(...)` at their touch points.
+
+No behaviour change — 549 backend tests green, `tests/snapshots/*.json`
+byte-identical, `ruff` + `mypy` clean.

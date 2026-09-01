@@ -55,6 +55,15 @@ point: it walks the nodes and accumulates into a mutable `effects` dict
 foci, tradition, metamagics, active drugs, …) and then reads `effects` when
 computing finals.
 
+That dict is typed: `improvements.EffectsDict` (a `total=True` `TypedDict`
+next to `empty_effects()`, which produces it) fixes the ~134 keys and their
+value types, so `effects["initiave_dice"]` (typo) is a `mypy` error rather
+than a silent `None`. `collect_effects()` / `apply_bonus_nodes` / the four
+`nodes/*.py` handlers and `Ctx.effects` all carry it; scalars and the obvious
+nested dicts are precise, the `*_mods` / `*_slots` / `grant_*` / `add_*` row
+lists stay `list[dict[str, Any]]`. `enabled_tabs` is a `set[str]` throughout;
+callers `sorted(...)` it where they need an ordered list.
+
 Adding support for a new modifier = add a branch in `apply_bonus_nodes` (or a
 tag to `SILENT_TAGS` if we intentionally ignore it) plus wherever `effects`
 is consumed. See `docs/adding-rules.md`.
@@ -273,3 +282,10 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `warn_return_any` — the phased `compute()` package is fully annotated
      (`phase(ctx: Ctx) -> None`, `TypedDict` bundles), so it holds the line
      for free. Grow the list as other modules are cleaned to that bar.
+   - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
+     `compute()` phases is now a `TypedDict` — the small / awakened / gear
+     bundles in `app/engine/bundle_types.py`, and the big one, the `effects`
+     accumulator, as `improvements.EffectsDict` (next to `empty_effects()`).
+     A mistyped key or wrong value type at a phase seam is a `mypy` error.
+     `app.improvements.*` is a candidate for the strict override now the
+     package is clean to that bar.

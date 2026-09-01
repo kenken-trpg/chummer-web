@@ -43,9 +43,14 @@ tests green, `mypy` clean.
    of names — those keep a `dict[str, Any]` param and take a `cast` at the
    call site. `apply_erased_lifestyle_cap`, `apply_overclocker`,
    `apply_lifestyle_cost_mod`, `nuyen_spend_breakdown` now take `GearBundle`.
-4. **not started** — the `effects` dict
-   (`improvements/effects.py::empty_effects()`, ~150 keys, consumed
-   everywhere including outside `compute/`). Its own plan.
+4. **done** — the `effects` dict
+   (`improvements/effects.py::empty_effects()`, 134 keys, consumed
+   everywhere including outside `compute/`). Now `improvements.EffectsDict`
+   (`total=True`), carried by `empty_effects()` / `collect_effects()` /
+   `apply_bonus_nodes` / the four `nodes/*.py` handlers / `Ctx.effects` and
+   the ~54 engine `effects:` params. `enabled_tabs` stopped being a
+   set→list type-swap (it's a `set[str]` throughout; callers sort at use).
+   See `docs/refactor-effects-typeddict-plan.md`.
 
 ## Verification per commit
 
