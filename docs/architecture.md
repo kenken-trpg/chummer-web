@@ -94,8 +94,11 @@ is consumed. See `docs/adding-rules.md`.
 - **Tests** — `vitest` (jsdom + React Testing Library), `*.test.{ts,tsx}`
   next to the code, shared fixtures in `frontend/tests/fixtures.ts`
   (`makeCharacter` / `makeCatalog`). `npm run test` is part of `make check`
-  and CI. First layer: the `lib/character/*` helpers + a `CharacterSheet`
-  render smoke test (every section wired, all three layouts render).
+  and CI. Coverage (~74 tests): the `lib/character/*` pure helpers
+  (`sheet-format`, `format`, `sheet-data`, `gear`, `quality`) + `cocofolia`
+  builders; render smoke tests for `CharacterSheet` / `CharacterSidebar` /
+  `QualitiesTab` (sections wired, all layouts render); and a few
+  behaviour tests (quality picker filter / add-via-`patch`, sidebar rows).
 
 ## Planned refactors
 

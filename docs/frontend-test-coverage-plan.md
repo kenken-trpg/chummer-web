@@ -35,3 +35,21 @@ the minimal fixture omits.
 ```
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. Suite grew from
+**34 → 74 tests** (10 files). Every commit `make check` green.
+
+| commit | what | tests |
+| --- | --- | --- |
+| `c7bfaa4` | `lib/character/gear.test.ts` — the 13 picker predicates | +20 |
+| `e1e4349` | `lib/character/quality.test.ts` — `reqNodeMet` per tag, tree / pick-drop helpers | +11 |
+| `5d55ede` | `lib/cocofolia.test.ts` — `buildChatPalette` lines + `buildCocofolia` JSON shape | +5 |
+| `58ba867` | `QualitiesTab.test.tsx` (filter / category / add-via-`patch`) + `CharacterSidebar.test.tsx` (Economy / Awakened rows) | +5 |
+| _this_ | docs |
+
+No deviations — `tests/fixtures.ts` was reused as-is (no field additions
+needed this round).
