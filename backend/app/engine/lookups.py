@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from ..data_loader import catalog
+from ..data_loader import catalog, catalog_list, catalog_ware
 
 DEFAULT_STREAM_NAME = "Default"
 
@@ -115,20 +115,20 @@ def _echo_by_name(name: str) -> dict[str, Any] | None:
 
 
 def _ware_by_id(kind: str, wid: str) -> dict[str, Any] | None:
-    return _match_by(catalog().get(kind, {}).get("items"), "id", wid)
+    return _match_by(catalog_ware(kind).get("items"), "id", wid)
 
 
 def _ware_by_name(kind: str, name: str) -> dict[str, Any] | None:
-    return _match_by(catalog().get(kind, {}).get("items"), "name", name)
+    return _match_by(catalog_ware(kind).get("items"), "name", name)
 
 
 def _grade_by_name(kind: str, name: str) -> dict[str, Any]:
-    grades: list[dict[str, Any]] = catalog().get(kind, {}).get("grades") or []
+    grades: list[dict[str, Any]] = catalog_ware(kind).get("grades") or []
     match = _match_by(grades, "name", name)
     if match is not None:
         return match
     other = "bioware" if kind == "cyberware" else "cyberware"
-    other_match = _match_by(catalog().get(other, {}).get("grades"), "name", name)
+    other_match = _match_by(catalog_ware(other).get("grades"), "name", name)
     if other_match is not None:
         return other_match
     fallback: dict[str, Any] = {"name": "Standard", "ess": 1.0, "cost": 1.0}
@@ -136,7 +136,7 @@ def _grade_by_name(kind: str, name: str) -> dict[str, Any]:
 
 
 def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
-    return _match_by(catalog().get(kind), "id", item_id)
+    return _match_by(catalog_list(kind), "id", item_id)
 
 
 def find_metatype(name: str, variant: str | None) -> dict[str, Any]:

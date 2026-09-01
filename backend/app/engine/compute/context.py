@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ...data_loader import CatalogDict
 from ...improvements import EffectsDict, empty_effects
 from ...models import CharacterState
 from ..bundle_types import (
@@ -55,7 +56,7 @@ from ..bundle_types import (
 @dataclass
 class Ctx:
     state: CharacterState
-    data: dict[str, Any]
+    data: CatalogDict
 
     # --- bootstrap -------------------------------------------------------
     is_karma: bool = False

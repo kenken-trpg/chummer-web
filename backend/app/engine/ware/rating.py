@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ...data_loader import catalog, eval_formula
+from ...data_loader import catalog_ware, eval_formula
 
 
 def racial_formula_extras(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, int]:
@@ -43,7 +43,7 @@ def ware_ranges(attrs_spec: dict[str, dict[str, int | float]]) -> dict[str, dict
     extras = racial_formula_extras(attrs_spec)
     out: dict[str, dict[str, int]] = {}
     for kind in ("cyberware", "bioware"):
-        for ware in catalog().get(kind, {}).get("items") or []:
+        for ware in catalog_ware(kind).get("items") or []:
             if not ware.get("formula_rating"):
                 continue
             lo, hi = ware_rating_bounds(ware, extras)

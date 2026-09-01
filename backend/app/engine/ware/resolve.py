@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...data_loader import catalog, eval_formula
+from ...data_loader import catalog_ware, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, CyberwareInstall
 from ..constants import _normalize_side
@@ -148,7 +148,7 @@ def resolve_ware(
 
 
 def _first_allowed_grade(kind: str, current: str, banned: set[str]) -> str:
-    grades = catalog().get(kind, {}).get("grades") or []
+    grades = catalog_ware(kind).get("grades") or []
     prefer_adapsin = "(Adapsin)" in (current or "")
 
     def ok(name: str) -> bool:

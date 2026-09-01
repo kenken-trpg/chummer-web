@@ -17,7 +17,7 @@ import xml.etree.ElementTree as ET
 import zlib
 from typing import Any
 
-from .data_loader import catalog
+from .data_loader import catalog, catalog_list
 
 _BUILD_METHODS = {
     "priority": "Priority",
@@ -447,7 +447,7 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
 
     # --- gear (nested, routed to the matching catalog bucket) -----
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
-    gear_res = {b: _Resolver(cat[b]) for b in ("gear", *BUCKETS)}
+    gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
     routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
 
     def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:

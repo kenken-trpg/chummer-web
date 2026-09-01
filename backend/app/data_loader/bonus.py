@@ -6,6 +6,7 @@ pick" inspectors. Shared by every loader that reads a bonus block.
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from collections.abc import Mapping
 from typing import Any
 
 from ._xml import MATRIX_ATTRIBUTES, _int, _text
@@ -171,7 +172,7 @@ def _filter_active_skill_names(skills: list[dict[str, Any]], attrs: dict[str, st
     return sorted(set(out))
 
 
-def selecttext_catalog_options(attrs: dict[str, Any], catalog_data: dict[str, Any]) -> list[str]:
+def selecttext_catalog_options(attrs: dict[str, Any], catalog_data: Mapping[str, Any]) -> list[str]:
     xml = str(attrs.get("xml") or "")
     xpath = str(attrs.get("xpath") or "")
     if "vehicles.xml" in xml:

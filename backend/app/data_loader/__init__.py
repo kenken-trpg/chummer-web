@@ -8,7 +8,7 @@ submodule: ``_xml`` / ``formulas`` / ``bonus`` primitives and the
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, cast
 
 from ._xml import (
     DATA_DIR,
@@ -25,6 +25,7 @@ from .bonus import (
     quality_needs_extra,  # noqa: F401  (re-exported for callers of data_loader)
     selecttext_catalog_options,  # noqa: F401  (re-exported for engine)
 )
+from .catalog_types import CatalogDict
 from .formulas import (
     CHARGEN_AVAIL_MAX,  # noqa: F401  (re-exported for engine)
     CHARGEN_DEVICE_RATING_MAX,  # noqa: F401  (re-exported for engine)
@@ -92,7 +93,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
 
 
 @lru_cache(maxsize=1)
-def catalog() -> dict[str, Any]:
+def catalog() -> CatalogDict:
     if not (DATA_DIR / "metatypes.xml").exists():
         raise FileNotFoundError(f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py")
     metatypes = load_metatypes()
@@ -234,6 +235,18 @@ def catalog() -> dict[str, Any]:
         "translations": translations,
         "ui_strings": load_ui_strings(),
     }
+
+
+def catalog_list(kind: str) -> list[dict[str, Any]]:
+    """``catalog()[kind]`` where ``kind`` is computed — the ``CatalogDict``
+    escape hatch for the ``list`` buckets (the loaders really do return
+    ``list[dict[str, Any]]``; a computed key just can't prove it)."""
+    return cast("list[dict[str, Any]]", catalog().get(kind) or [])
+
+
+def catalog_ware(kind: str) -> dict[str, Any]:
+    """Same, for the ``cyberware`` / ``bioware`` buckets (``{grades, items}``)."""
+    return cast("dict[str, Any]", catalog().get(kind) or {})
 
 
 def reset_catalog() -> None:
