@@ -77,3 +77,28 @@ frontend/
 ```
 cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. Frontend went from
+**0 tests** to **5 files / 29 tests**, wired into `make check` + CI.
+
+| commit | what |
+| --- | --- |
+| `ad12221` | harness — vitest / RTL / jsdom deps, `vitest.config.mts`, `tsconfig` `types`, `tests/fixtures.ts` (`makeCharacter` / `makeCatalog`, tsc-validated against the real types), `npm run test` in `check` / `Makefile` / CI |
+| `04c7c7c` | unit tests — `sheet-format` (`rangeRow` / `specialArmorBits` / …), `format` (`matrixCM` / `cfDuration` / …), `sheet-data` (`buildSheetData` bucket + skill logic) |
+| `4e2d0b5` | `CharacterSheet.test.tsx` smoke — empty / compact / text layouts, section-appears-with-data |
+| _this_ | docs — `architecture.md` Frontend section, `CONTRIBUTING.md` |
+
+Deviations from the plan:
+
+- `vitest.config.ts` → `.mts` (the frontend `package.json` has no
+  `"type": "module"`, so Vite's native config loader warned about ESM in a
+  CJS file). eslint ignores `*.config.mts` alongside `*.config.mjs`.
+- `npm run check` = typecheck + lint + format + **test** (no `build` — the
+  Makefile's `check-frontend` adds it, matching the pre-existing split).
+- The smoke test asserts on headings / roles / `container` queries, not a
+  full HTML `toMatchSnapshot` — a snapshot is easy to add later now the
+  harness exists, but is too brittle as the first test.

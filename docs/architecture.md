@@ -80,10 +80,17 @@ is consumed. See `docs/adding-rules.md`.
 - `components/character/tabs/*` — one file per tab; gear sub-tabs under
   `tabs/gear/`. Tabs are presentational: they read `d.*` and call `patch({...})`.
 - `components/CharacterSheet.tsx` — the printable sheet (standard / compact /
-  plain-text layouts).
+  plain-text layouts); it's a thin shell over
+  `lib/character/sheet-data.ts::buildSheetData` + one component per section
+  under `components/character/sheet/sections/`.
 - `lib/types.ts` — hand-maintained mirror of the backend payloads. When you add
   a field to `derived` or a catalog entry, add it here too.
 - `lib/api.ts` — fetch wrappers. `lib/cocofolia.ts` — VTT/chat-palette export.
+- **Tests** — `vitest` (jsdom + React Testing Library), `*.test.{ts,tsx}`
+  next to the code, shared fixtures in `frontend/tests/fixtures.ts`
+  (`makeCharacter` / `makeCatalog`). `npm run test` is part of `make check`
+  and CI. First layer: the `lib/character/*` helpers + a `CharacterSheet`
+  render smoke test (every section wired, all three layouts render).
 
 ## Planned refactors
 

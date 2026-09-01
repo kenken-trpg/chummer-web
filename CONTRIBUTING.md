@@ -71,16 +71,17 @@ The backend tests come in two layers:
   cd backend && UPDATE_SNAPSHOTS=1 python -m pytest -q tests/test_snapshot.py
   ```
 
-**Frontend** — `eslint` (flat config) + `prettier` + `tsc`:
+**Frontend** — `eslint` (flat config) + `prettier` + `tsc` + `vitest`:
 
 ```bash
-cd frontend && npm run check   # typecheck + lint + format:check + build
+cd frontend && npm run check   # typecheck + lint + format:check + test
+npm run test                   # vitest (jsdom + React Testing Library)
 ```
 
-Some pre-existing `no-unused-vars` / `exhaustive-deps` / `no-explicit-any`
-findings are demoted to warnings so CI is green. **Turning a warning into a
-clean fix is a great first contribution** — keep such PRs small and scoped to
-one rule or one directory.
+Tests live next to the code (`*.test.ts` / `*.test.tsx`) with shared
+fixtures in `frontend/tests/fixtures.ts` (`makeCharacter` / `makeCatalog`).
+`eslint` is clean and mostly blocking; `no-unused-vars` / `no-explicit-any`
+stay warnings (file-level disables fence off the deliberate `any`).
 
 ## Commits & PRs
 
