@@ -9,11 +9,12 @@ active drugs, weapon-focus dice and the adept tab enable.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from ...data_loader import eval_formula
 from ...improvements import apply_bonus_nodes, substitute_rating
 from ...models import ArmorInstall, CharacterState, CommlinkInstall, WeaponInstall
+from ..bundle_types import GearBundle
 from ..constants import ADEPT_TALENTS, quality_contact_extra_key
 from ..contacts import apply_erased_lifestyle_cap
 from ..formulas import parse_armor_value
@@ -57,7 +58,7 @@ def resolve_gear(
     ware_items: list[dict[str, Any]] | None = None,
     attr_totals: dict[str, int] | None = None,
     special_modification_limit: int = 0,
-) -> dict[str, Any]:
+) -> GearBundle:
     warnings: list[str] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     nuyen = 0
@@ -315,8 +316,10 @@ def gear_phase(ctx: Ctx) -> None:
                 ctx.bmp_contact_id = ""
             ctx.bmp_active = bool(ctx.bmp_category and ctx.bmp_contact_id)
             break
+    # These two iterate gear[<category>] over a tuple of category names, so
+    # they take a plain str-keyed dict rather than the GearBundle TypedDict.
     apply_purchase_discounts(
-        ctx.gear,
+        cast("dict[str, Any]", ctx.gear),
         ctx.cyber_installed,
         ctx.bio_installed,
         ctx.effects,
@@ -324,7 +327,7 @@ def gear_phase(ctx: Ctx) -> None:
     )
     if ctx.bmp_active:
         apply_black_market_avail(
-            ctx.gear,
+            cast("dict[str, Any]", ctx.gear),
             ctx.cyber_installed,
             ctx.bio_installed,
             black_market_category=ctx.bmp_category,

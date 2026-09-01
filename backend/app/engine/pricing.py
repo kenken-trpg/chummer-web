@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import format_avail
+from .bundle_types import GearBundle
 from .constants import (
     BLACK_MARKET_AVAIL_BONUS,
     BLACK_MARKET_CATEGORY_HINTS,
@@ -205,7 +206,7 @@ def apply_purchase_discounts(
         gear["nuyen"] = max(0, int(gear.get("nuyen") or 0) - saved)
 
 
-def apply_overclocker(gear: dict[str, Any], enabled: bool) -> None:
+def apply_overclocker(gear: GearBundle, enabled: bool) -> None:
     if not enabled:
         return
     decks = list(gear.get("cyberdecks") or [])

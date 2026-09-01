@@ -4,7 +4,8 @@ lifestyle-cost-modifier bonus.
 
 The last gear category ``resolve_gear`` drives inline — now its own module
 like every sibling. Imports only ``catalog`` (``..data_loader``),
-``_item_by_id`` (``..lookups``) and models — never back into ``app.engine``.
+``_item_by_id`` (``..lookups``), ``GearBundle`` (``..bundle_types``, a leaf)
+and models — never back into ``app.engine``.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from typing import Any
 
 from ...data_loader import catalog
 from ...models import CharacterState, LifestyleInstall
+from ..bundle_types import GearBundle
 from ..lookups import _item_by_id
 
 
@@ -167,7 +169,7 @@ def resolve_lifestyles(
     return rows, nuyen, warnings, bonus_sources
 
 
-def apply_lifestyle_cost_mod(gear: dict[str, Any], percent: int) -> None:
+def apply_lifestyle_cost_mod(gear: GearBundle, percent: int) -> None:
     if not percent:
         return
     factor = (100 + int(percent)) / 100.0

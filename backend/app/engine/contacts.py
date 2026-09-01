@@ -17,7 +17,7 @@ from typing import Any
 
 from ..data_loader import catalog
 from ..models import CharacterState, ContactInstall
-from .bundle_types import ContactsBundle
+from .bundle_types import ContactsBundle, GearBundle
 from .constants import (
     CONTACT_CHARGEN_COST_MAX,
     CONTACT_FREE_MULT,
@@ -122,7 +122,7 @@ def _erased_lifestyle_too_high(name: str, cost: int, medium_cost: int) -> bool:
     return int(cost or 0) > int(medium_cost)
 
 
-def apply_erased_lifestyle_cap(gear: dict[str, Any], erased: bool, warnings: list[str]) -> None:
+def apply_erased_lifestyle_cap(gear: GearBundle, erased: bool, warnings: list[str]) -> None:
     if not erased:
         return
     medium = next((row for row in (catalog().get("lifestyles") or []) if row.get("name") == "Medium"), None)

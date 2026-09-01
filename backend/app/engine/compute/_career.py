@@ -9,6 +9,7 @@ import math
 from typing import Any
 
 from ...models import CareerBaseline, CharacterState
+from ..bundle_types import GearBundle
 from ..constants import (
     KARMA_ACTIVE_SKILL,
     KARMA_ATTRIBUTE,
@@ -166,7 +167,7 @@ def career_raise_karma(
 def nuyen_spend_breakdown(
     cyber: list[dict[str, Any]],
     bio: list[dict[str, Any]],
-    gear: dict[str, Any],
+    gear: GearBundle,
     *,
     qi_nuyen: int = 0,
     foci_nuyen: int = 0,

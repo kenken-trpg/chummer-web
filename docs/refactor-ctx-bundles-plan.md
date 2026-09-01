@@ -37,9 +37,15 @@ tests green, `mypy` clean.
    (`resolve_complex_forms`), `techno_sprites` (`resolve_sprites`). All had
    consistent early/late return shapes, so a `total=True` `TypedDict` fit
    without touching the write side.
-3. **not started** — `gear` (`resolve_gear`, ~200-line resolver, ~40 consumer
-   keys) and the `effects` dict (`improvements/effects.py::empty_effects()`,
-   ~150 keys, consumed everywhere). Each is its own commit / plan.
+3. **done** — `gear` (`resolve_gear`, single 29-key return). Consumers all
+   use string-literal keys except `apply_purchase_discounts` /
+   `apply_black_market_avail`, which iterate `gear[<category>]` over a tuple
+   of names — those keep a `dict[str, Any]` param and take a `cast` at the
+   call site. `apply_erased_lifestyle_cap`, `apply_overclocker`,
+   `apply_lifestyle_cost_mod`, `nuyen_spend_breakdown` now take `GearBundle`.
+4. **not started** — the `effects` dict
+   (`improvements/effects.py::empty_effects()`, ~150 keys, consumed
+   everywhere including outside `compute/`). Its own plan.
 
 ## Verification per commit
 

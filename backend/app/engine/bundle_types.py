@@ -199,6 +199,41 @@ class SpritesBundle(TypedDict):
     public: list[dict[str, Any]]
 
 
+class GearBundle(TypedDict):
+    """``resolve_gear`` — every resolved gear category, the nuyen tally and the
+    primary comm/deck/RCC/lifestyle picks."""
+
+    warnings: list[str]
+    errors: list[str]
+    bonus_sources: list[BonusSource]
+    nuyen: int
+    armor: int
+    worn_name: str
+    armor_items: list[dict[str, Any]]
+    armor_mods: list[dict[str, Any]]
+    weapons: list[dict[str, Any]]
+    weapon_accessories: list[dict[str, Any]]
+    recoil: dict[str, int]
+    special_modification_used: int
+    commlinks: list[dict[str, Any]]
+    cyberdecks: list[dict[str, Any]]
+    rccs: list[dict[str, Any]]
+    optics: list[dict[str, Any]]
+    programs: list[dict[str, Any]]
+    apps: list[dict[str, Any]]
+    sensors: list[dict[str, Any]]
+    drones: list[dict[str, Any]]
+    vehicles: list[dict[str, Any]]
+    vehicle_mods: list[dict[str, Any]]
+    weapon_mounts: list[dict[str, Any]]
+    gear: list[dict[str, Any]]
+    lifestyles: list[dict[str, Any]]
+    commlink: dict[str, Any] | None
+    cyberdeck: dict[str, Any] | None
+    rcc: dict[str, Any] | None
+    lifestyle: dict[str, Any] | None
+
+
 # --- empty-bundle factories -------------------------------------------------
 # ``Ctx`` fields need a default; the producing phase always overwrites it
 # before any consumer reads, but the placeholder is a structurally-valid
@@ -328,3 +363,37 @@ def empty_complex_forms() -> ComplexFormsBundle:
 
 def empty_sprites() -> SpritesBundle:
     return SpritesBundle(warnings=[], errors=[], public=[])
+
+
+def empty_gear() -> GearBundle:
+    return GearBundle(
+        warnings=[],
+        errors=[],
+        bonus_sources=[],
+        nuyen=0,
+        armor=0,
+        worn_name="",
+        armor_items=[],
+        armor_mods=[],
+        weapons=[],
+        weapon_accessories=[],
+        recoil={},
+        special_modification_used=0,
+        commlinks=[],
+        cyberdecks=[],
+        rccs=[],
+        optics=[],
+        programs=[],
+        apps=[],
+        sensors=[],
+        drones=[],
+        vehicles=[],
+        vehicle_mods=[],
+        weapon_mounts=[],
+        gear=[],
+        lifestyles=[],
+        commlink=None,
+        cyberdeck=None,
+        rcc=None,
+        lifestyle=None,
+    )

@@ -20,6 +20,7 @@ from ..bundle_types import (
     EnhancementsBundle,
     FociBundle,
     FocusLimits,
+    GearBundle,
     InitiationBundle,
     MartialBundle,
     MovementBundle,
@@ -36,6 +37,7 @@ from ..bundle_types import (
     empty_enhancements,
     empty_foci,
     empty_focus_limits,
+    empty_gear,
     empty_initiation,
     empty_martial,
     empty_movement,
@@ -105,7 +107,7 @@ class Ctx:
     attr_totals: dict[str, int] = field(default_factory=dict)
 
     # --- gear ----------------------------------------------------------------
-    gear: dict[str, Any] = field(default_factory=dict)
+    gear: GearBundle = field(default_factory=empty_gear)
     bmp_active: bool = False
     bmp_category: str = ""
     bmp_contact_id: str = ""
