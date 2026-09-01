@@ -7,13 +7,14 @@ Pure string maths, stdlib-only. Every loader (and the engine) leans on
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 
 
 def eval_formula(
     expr: str | None,
     rating: int = 1,
     default: float = 0.0,
-    extras: dict[str, int | float] | None = None,
+    extras: Mapping[str, float] | None = None,
 ) -> float:
     raw = (expr or "").strip()
     if not raw:
