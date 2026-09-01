@@ -30,6 +30,13 @@ engine.compute(CharacterState)          the rules engine
 state.derived  (plain dict)   →  every /api/characters* response
 ```
 
+`engine.compute()` is the `engine/compute/` package: it builds one `Ctx`
+dataclass (the working set) and runs it through ~19 ordered phases
+(`bootstrap → qualities → ware → effects → essence → attributes → magic →
+gear → totals → economy → finalize → assemble`), each a
+`phase(ctx: Ctx) -> None`. Order is load-bearing. See
+`docs/refactor-compute-phases-plan.md`.
+
 `translation overlay`: `backend/data/ja_overrides/{data,ui}.json` is applied by
 `data_loader` on top of the vendored `lang/ja-jp*.xml`. `data.json` is
 generated (`regen_ja.sh`); `ui.json` is hand-written.
@@ -179,13 +186,31 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      grade clamping + required-'ware warnings), and `engine/qualities.py`
      (`gather_qualities` / `apply_quality_rules` + the `bind_*` binders + the
      `_quality_*` extra-pick inspectors + `quality_requirement_context` /
-     `resolve_quality_sides`). `resolve_gear()` and `compute()` stay in
-     `__init__.py` as orchestrators, ~2.0k lines down from ~10.5k. The
+     `resolve_quality_sides`). The
      `["B023", "E402"]` per-file ignore is retired: `find_metatype` moved to
      `engine/lookups.py`, every `from .X import` is top-of-file, and the
      lifestyle closure lives in `gear/lifestyle.py`. **The engine split is
-     done** — what remains in `__init__.py` is `compute()` / `resolve_gear()`
-     + a handful of attribute / reward / movement helpers.
+     done** — `engine/__init__.py` is now a pure re-export barrel (~250 lines)
+     and `compute()` is the `engine/compute/` package (see next item).
+   - *Done:* `compute()` — the last ~1,200-line monolith — is split into
+     `engine/compute/` by phase. `context.py` holds the `@dataclass Ctx` (the
+     honest ~150-field working set threaded through the pipeline); each
+     `phase(ctx: Ctx) -> None` reads/writes `ctx.*`. `bootstrap.py` (build
+     method / caps / meta / ware sanity + `sync_reward_totals`), `qualities.py`
+     (quality gather + effects + binders + `resolve_attribute_selects`),
+     `ware.py`, `essence.py` (essence penalty + the ratings loop), `magic.py`
+     (initiation / submersion / foci / adept + spells / spirits / resonance),
+     `gear.py` (carries `resolve_gear` in with it + post-gear application),
+     `economy.py` (priority points / skills / karma / social) with the
+     career-layer helpers in `_career.py` (`snapshot_career_baseline` /
+     `career_raise_karma` / `nuyen_spend_breakdown`), `finalize.py` (totals
+     check + limits / CM / initiative + quality rules + chargen validation,
+     carries `resolve_movement`), `assemble.py` (the ~195-key `state.derived`
+     dict literal, carries `_effective_attr_spec`). `compute/__init__.py` is
+     ~60 lines: build one `Ctx`, run the phases, return `ctx.state`. No
+     behaviour change — `tests/test_snapshot.py` guards byte-identical output.
+     `store.py` / tests still `from app.engine import compute,
+     snapshot_career_baseline, default_attributes` unchanged.
 2. **Split `app/improvements.py`** (the `<bonus>` → `effects` pipeline) —
    *done:* now the `app/improvements/` package. `_common.py` (constant
    tables + `_as_int` / `substitute_rating` / `_bonus_int` primitives),
