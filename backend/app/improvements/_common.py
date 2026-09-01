@@ -6,6 +6,7 @@ Pure data + tiny helpers, no imports from the rest of the app, so every
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 SPELL_DEFENSE_RESIST_TAGS = {
@@ -174,6 +175,8 @@ IMPLEMENTED = {
     "unarmedreach",
     "unarmedap",
     "smartlink",
+    "throwstr",
+    "throwrangestr",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -214,8 +217,6 @@ SILENT_TAGS = {
     "specialattburnmultiplier",
     "allowspritefettering",
     "weaponcategorydice",
-    "throwstr",
-    "throwrangestr",
     "defensetest",
     "swapskillattribute",
     "swapskillspecattribute",
@@ -373,6 +374,20 @@ def _as_int(value: Any, default: int = 0) -> int:
         return int(float(raw))
     except ValueError:
         return default
+
+
+_ARITH_RE = re.compile(r"^[0-9+\-*/(). ]+$")
+
+
+def _eval_int(value: Any, default: int = 0) -> int:
+    """``_as_int`` plus bare arithmetic (``Rating*2`` after ``substitute_rating``
+    leaves ``"3*2"``). Digits and ``+-*/().`` only — no names, no calls."""
+    if isinstance(value, str) and _ARITH_RE.match(value.strip()) and not value.strip().isdigit():
+        try:
+            return int(eval(value.strip(), {"__builtins__": {}}, {}))  # noqa: S307 - guarded by _ARITH_RE
+        except (ArithmeticError, SyntaxError, ValueError):
+            return default
+    return _as_int(value, default)
 
 
 def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, rating: int = 1) -> int:

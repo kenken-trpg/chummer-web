@@ -17,6 +17,7 @@ from .._common import (
     _as_int,
     _as_text,
     _bonus_int,
+    _eval_int,
     _limit_kind,
     limit_condition_label,
 )
@@ -119,6 +120,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 int(effects.get("smartlink") or 0),
                 _as_int(node.get("value") or fields.get("val") or fields.get("bonus"), 2),
             )
+        elif tag == "throwstr":
+            # STR added when the client resolves a thrown weapon's {STR} damage.
+            effects["throw_str"] += _eval_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        elif tag == "throwrangestr":
+            # STR added when the client resolves thrown-weapon range bands
+            # (Precision Throwing's value is "Rating*2" after substitute_rating).
+            effects["throw_range_str"] += _eval_int(node.get("value") or fields.get("val") or fields.get("bonus"))
         elif tag in TEST_MOD_TAGS:
             key = TEST_MOD_TAGS[tag]
             effects["test_mods"][key] = int(effects["test_mods"].get(key) or 0) + _as_int(

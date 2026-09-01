@@ -1699,6 +1699,26 @@ def test_improved_ability_adds_dice_not_rating() -> None:
     assert out.derived["power_points"]["used"] == 1
 
 
+MISSILE_MASTERY = "1221e699-e61b-4aed-adbb-a8eec02a65e2"
+PRECISION_THROWING = "18da4f2f-f813-4d17-8b7b-29b2751e9cfa"  # levels, max 3, throwrangestr = Rating*2
+
+
+def test_missile_mastery_grants_throw_str() -> None:
+    out = compute(_adept("missile-mastery", adept_powers=[AdeptPowerInstall(power_id=MISSILE_MASTERY)]))
+    assert out.derived["throw_str"] == 1
+    assert out.derived["skill_bonus"].get("Throwing Weapons") == 1
+    assert out.derived["errors"] == []
+
+
+def test_precision_throwing_evaluates_rating_times_two() -> None:
+    base = compute(_adept("pt-none"))
+    assert base.derived["throw_range_str"] == 0
+
+    out = compute(_adept("pt-2", adept_powers=[AdeptPowerInstall(power_id=PRECISION_THROWING, rating=2)]))
+    assert out.derived["throw_range_str"] == 4  # "Rating*2" -> 2*2
+    assert out.derived["throw_str"] == 0
+
+
 def test_adept_power_overspend_is_an_error() -> None:
     out = compute(
         _adept(

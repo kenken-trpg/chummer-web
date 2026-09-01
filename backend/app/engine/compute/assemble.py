@@ -252,6 +252,9 @@ def assemble(ctx: Ctx) -> None:
         "unarmed_reach": int(ctx.effects.get("unarmed_reach") or 0) + int(ctx.effects.get("reach") or 0),
         "unarmed_ap": int(ctx.effects.get("unarmed_ap") or 0),
         "reach": int(ctx.effects.get("reach") or 0),
+        # STR added for thrown-weapon damage / range (the client resolves {STR}).
+        "throw_str": int(ctx.effects.get("throw_str") or 0),
+        "throw_range_str": int(ctx.effects.get("throw_range_str") or 0),
         "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
         "street_cred": ctx.street_cred_total,
         "notoriety": ctx.notoriety_total,

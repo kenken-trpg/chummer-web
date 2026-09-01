@@ -633,6 +633,8 @@
     "memory": 0,
     "surprise": 0
   },
+  "throw_range_str": 0,
+  "throw_str": 0,
   "totals": {
     "AGI": 1,
     "BOD": 1,

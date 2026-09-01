@@ -91,6 +91,8 @@ class EffectsDict(TypedDict):
     matrix_initiative_dice: int
     reach: int
     smartlink: int
+    throw_str: int
+    throw_range_str: int
     lifestyle_cost: int
     notoriety: int
     fame: int
@@ -256,6 +258,8 @@ def empty_effects() -> EffectsDict:
         "matrix_initiative_dice": 0,
         "reach": 0,
         "smartlink": 0,
+        "throw_str": 0,
+        "throw_range_str": 0,
         "lifestyle_cost": 0,
         "notoriety": 0,
         "fame": 0,
