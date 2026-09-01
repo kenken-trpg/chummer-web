@@ -51,7 +51,7 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     if tag == "spell":
         return name in ctx["spells"]
     if tag == "tradition":
-        return name == ctx["tradition"]
+        return bool(name == ctx["tradition"])
     if tag == "skill":
         rating = int(node.get("val") or 1)
         pool = ctx["knowledge"] if str(node.get("type") or "").lower() == "knowledge" else ctx["skills"]

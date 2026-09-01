@@ -27,7 +27,8 @@ from .requirements import requirement_tree_met
 
 
 def _martial_art_by_id(art_id: str) -> dict[str, Any] | None:
-    for item in catalog().get("martial_arts") or []:
+    arts: list[dict[str, Any]] = catalog().get("martial_arts") or []
+    for item in arts:
         if item["id"] == art_id:
             return item
     return None
@@ -37,14 +38,16 @@ def _martial_art_by_name(name: str) -> dict[str, Any] | None:
     needle = str(name or "").strip()
     if not needle:
         return None
-    for item in catalog().get("martial_arts") or []:
+    arts: list[dict[str, Any]] = catalog().get("martial_arts") or []
+    for item in arts:
         if item["name"] == needle:
             return item
     return None
 
 
 def _martial_technique_by_name(name: str) -> dict[str, Any] | None:
-    for item in catalog().get("martial_art_techniques") or []:
+    techniques: list[dict[str, Any]] = catalog().get("martial_art_techniques") or []
+    for item in techniques:
         if item["name"] == name:
             return item
     return None

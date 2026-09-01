@@ -18,7 +18,8 @@ from .constants import DRAIN_MINIMUM
 
 def _skill_spec(name: str, skills_data: dict[str, Any] | None = None) -> dict[str, Any] | None:
     data = skills_data if skills_data is not None else catalog().get("skills") or {}
-    for item in data.get("skills") or []:
+    skills: list[dict[str, Any]] = data.get("skills") or []
+    for item in skills:
         if item["name"] == name:
             return item
     return None
