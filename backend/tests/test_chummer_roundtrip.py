@@ -484,3 +484,84 @@ def test_mage_roundtrip_is_a_fixed_point() -> None:
     assert ch1.derived["initiate_grade"] == ch2.derived["initiate_grade"] == 2
     assert len(ch1.derived["spells"]) == 3
     assert ch1.derived["tradition"] == ch2.derived["tradition"]
+
+
+# --------------------------------------------------------------------------- #
+# Scenario C — technomancer: complex forms + submersion                        #
+# --------------------------------------------------------------------------- #
+
+_TECHNO_XML = build_chum5(
+    name="Echo",
+    metatype="Human",
+    talent="Technomancer",
+    priorities=("D", "B", "A", "C", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 2, "CHA": 3, "INT": 4, "LOG": 5, "WIL": 5, "RES": 6},
+    skills={"Software": 6, "Compiling": 4, "Electronic Warfare": 3},
+    skill_specs={"Software": "Editing"},
+    complex_forms=["Cleaner", "Editor", "Puppeteer"],
+    initiation=[
+        {"grade": 1, "res": True, "ordeal": True},
+        {"grade": 2, "res": True},
+        {"grade": 3, "res": True, "group": True},
+    ],
+    lifestyles=[{"name": "Low", "months": 2}],
+)
+
+
+def test_technomancer_resonance_sections_import() -> None:
+    s1, ch1, _ = _loop(_TECHNO_XML)
+    assert s1["talent"] == "Technomancer"
+    assert s1["attributes"]["RES"] == 6
+    assert len(s1["complex_forms"]) == 3
+    assert s1["submersion_grade"] == 3
+    assert len(s1["submersions"]) == 3
+    assert s1["submersions"][0]["ordeal"] is True
+    assert s1["submersions"][2]["group"] is True
+    assert s1["initiate_grade"] == 0  # res grades are submersion, not initiation
+    assert ch1.derived["submersion_grade"] == 3
+
+
+def test_technomancer_roundtrip_is_a_fixed_point() -> None:
+    _, ch1, ch2 = _loop(_TECHNO_XML)
+    assert ch1.derived["submersion_grade"] == ch2.derived["submersion_grade"] == 3
+    assert len(ch1.derived["complex_forms"]) == 3
+
+
+# --------------------------------------------------------------------------- #
+# Scenario D — career + Sum-to-Ten + martial arts                              #
+# --------------------------------------------------------------------------- #
+
+_CAREER_XML = build_chum5(
+    name="Veteran",
+    metatype="Ork",
+    talent="Mundane",
+    build_method="SumToTen",
+    created=True,
+    karma=37,
+    nuyen=12000,
+    priorities=("A", "B", "E", "C", "D"),  # 4+3+0+2+1 = 10
+    attributes={"BOD": 7, "AGI": 4, "REA": 4, "STR": 6, "CHA": 2, "INT": 3, "LOG": 2, "WIL": 4},
+    skills={"Unarmed Combat": 5, "Intimidation": 4},
+    martial_arts=[{"name": "Aikido", "techniques": ["Counterstrike", "Called Shot (Disarm)"]}],
+    contacts=[{"name": "Doc Wu", "role": "Street Doc", "connection": 3, "loyalty": 4}],
+    lifestyles=[{"name": "Squatter", "months": 6}],
+)
+
+
+def test_career_and_sum_to_ten_import() -> None:
+    s1, ch1, _ = _loop(_CAREER_XML)
+    assert s1["build_method"] == "SumToTen"
+    assert s1["career"] is True
+    assert s1["karma_earned"] == 37
+    assert s1["nuyen_earned"] == 12000
+    assert s1["metatype"] == "Ork"
+    assert len(s1["martial_arts"]) == 1
+    assert set(s1["martial_arts"][0]["techniques"]) == {"Counterstrike", "Called Shot (Disarm)"}
+    assert ch1.derived["career"] is True
+
+
+def test_career_roundtrip_is_a_fixed_point() -> None:
+    _, ch1, ch2 = _loop(_CAREER_XML)
+    assert ch1.derived["career"] is ch2.derived["career"] is True
+    assert len(ch1.derived["martial_arts"]) == len(ch2.derived["martial_arts"]) == 1
+    assert ch1.derived["karma"] == ch2.derived["karma"]
