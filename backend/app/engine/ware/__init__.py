@@ -34,6 +34,12 @@ from .rating import (
     ware_ranges,
     ware_rating_bounds,
 )
+from .sides import (
+    _next_free_side,
+    _occupied_sides,
+    _side_conflicts,
+    ensure_sides,
+)
 
 __all__ = [
     "CYBERLIMB_BASE_ATTR",
@@ -46,8 +52,12 @@ __all__ = [
     "_is_full_limb",
     "_is_redliner_limb",
     "_limb_slot_count",
+    "_next_free_side",
+    "_occupied_sides",
+    "_side_conflicts",
     "apply_cyberseeker",
     "count_redliner_limbs",
+    "ensure_sides",
     "limb_attribute_replace",
     "racial_formula_extras",
     "redliner_incompat_warnings",
