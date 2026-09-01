@@ -12,6 +12,22 @@ into ``app.engine`` — so the import graph stays a DAG.
 
 from __future__ import annotations
 
+from .limbs import (
+    CYBERLIMB_BASE_ATTR,
+    LIMB_BODY_PARTS,
+    LIMB_BODY_SLOTS,
+    REDLINER_BASE_SLOTS,
+    _apply_limb_attributes,
+    _is_body_limb,
+    _is_full_limb,
+    _is_redliner_limb,
+    _limb_slot_count,
+    apply_cyberseeker,
+    count_redliner_limbs,
+    limb_attribute_replace,
+    redliner_incompat_warnings,
+    redliner_slot_caps,
+)
 from .rating import (
     _clamp_ware_rating,
     racial_formula_extras,
@@ -20,8 +36,22 @@ from .rating import (
 )
 
 __all__ = [
+    "CYBERLIMB_BASE_ATTR",
+    "LIMB_BODY_PARTS",
+    "LIMB_BODY_SLOTS",
+    "REDLINER_BASE_SLOTS",
+    "_apply_limb_attributes",
     "_clamp_ware_rating",
+    "_is_body_limb",
+    "_is_full_limb",
+    "_is_redliner_limb",
+    "_limb_slot_count",
+    "apply_cyberseeker",
+    "count_redliner_limbs",
+    "limb_attribute_replace",
     "racial_formula_extras",
+    "redliner_incompat_warnings",
+    "redliner_slot_caps",
     "ware_ranges",
     "ware_rating_bounds",
 ]
