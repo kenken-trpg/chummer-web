@@ -13,6 +13,7 @@ Imports only ``catalog`` / ``eval_formula`` / already-extracted engine modules
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from ...data_loader import catalog, eval_formula
@@ -26,7 +27,7 @@ from ..lookups import _focus_by_id, _power_by_id
 from .powers import power_max_rating, power_point_cost, power_select_options
 
 
-def focus_bind_karma(name: str, force: int, focus_binding: list[dict[str, Any]]) -> int:
+def focus_bind_karma(name: str, force: int, focus_binding: Sequence[Mapping[str, Any]]) -> int:
     bind = int(force)
     for mod in focus_binding:
         if (mod.get("name") or "") != name:
@@ -72,7 +73,7 @@ def resolve_qi_foci(
     talent_name: str,
     mag: int,
     skills_data: dict[str, Any],
-    focus_binding: list[dict[str, Any]],
+    focus_binding: Sequence[Mapping[str, Any]],
 ) -> QiFociBundle:
     warnings: list[str] = []
     errors: list[str] = []
@@ -178,7 +179,7 @@ def resolve_foci(
     state: CharacterState,
     talent_name: str,
     mag: int,
-    focus_binding: list[dict[str, Any]],
+    focus_binding: Sequence[Mapping[str, Any]],
 ) -> FociBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []

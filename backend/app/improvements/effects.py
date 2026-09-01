@@ -13,7 +13,30 @@ from ._common import (
     TEST_MOD_TAGS,
     limit_condition_label,
 )
-from .effect_rows import KarmaCostRow, KarmaMultRow, NamedBonusRow, SkillModRow
+from .effect_rows import (
+    ActionDicePoolRow,
+    AddContactRow,
+    FadingValueSpecificRow,
+    FocusBindingRow,
+    FreeMartialArtRow,
+    FreeMetamagicRow,
+    FreeSpellsAttributeRow,
+    FreeSpellsSkillRow,
+    GrantEchoRow,
+    GrantPowerRow,
+    GrantSpellRow,
+    KarmaCostRow,
+    KarmaMultRow,
+    LimitModifierRow,
+    NamedBonusRow,
+    NewSpellKarmaCostRow,
+    RestrictedGearRow,
+    SkillModRow,
+    SpellCategoryValueRow,
+    SpellDescriptorValueRow,
+    SpellDicePoolRow,
+    UnimplementedRow,
+)
 
 
 class EffectsDict(TypedDict):
@@ -133,27 +156,27 @@ class EffectsDict(TypedDict):
     skill_group_mods: list[SkillModRow]
     skill_category_mods: list[SkillModRow]
     skill_specific_mods: list[NamedBonusRow]
-    focus_binding: list[dict[str, Any]]
+    focus_binding: list[FocusBindingRow]
     skill_attribute_mods: list[NamedBonusRow]
     spell_category_mods: list[NamedBonusRow]
-    spell_dice_pool: list[dict[str, Any]]
-    action_dice_pools: list[dict[str, Any]]
-    restricted_gear: list[dict[str, Any]]
-    limit_modifiers: list[dict[str, Any]]
+    spell_dice_pool: list[SpellDicePoolRow]
+    action_dice_pools: list[ActionDicePoolRow]
+    restricted_gear: list[RestrictedGearRow]
+    limit_modifiers: list[LimitModifierRow]
     attribute_selects: list[dict[str, Any]]
-    add_contacts: list[dict[str, Any]]
-    free_martial_arts: list[dict[str, Any]]
+    add_contacts: list[AddContactRow]
+    free_martial_arts: list[FreeMartialArtRow]
     limit_spell_category_slots: list[dict[str, Any]]
     limit_spirit_category_slots: list[dict[str, Any]]
     expertise_slots: list[dict[str, Any]]
-    spell_category_drain: list[dict[str, Any]]
-    spell_category_damage: list[dict[str, Any]]
-    spell_descriptor_drain: list[dict[str, Any]]
-    spell_descriptor_damage: list[dict[str, Any]]
-    fading_value_specific: list[dict[str, Any]]
-    grant_echoes: list[dict[str, Any]]
-    grant_spells: list[dict[str, Any]]
-    grant_powers: list[dict[str, Any]]
+    spell_category_drain: list[SpellCategoryValueRow]
+    spell_category_damage: list[SpellCategoryValueRow]
+    spell_descriptor_drain: list[SpellDescriptorValueRow]
+    spell_descriptor_damage: list[SpellDescriptorValueRow]
+    fading_value_specific: list[FadingValueSpecificRow]
+    grant_echoes: list[GrantEchoRow]
+    grant_spells: list[GrantSpellRow]
+    grant_powers: list[GrantPowerRow]
     select_power_slots: list[dict[str, Any]]
     weapon_category_dv_slots: list[dict[str, Any]]
     weapon_category_dv: list[dict[str, Any]]
@@ -161,10 +184,10 @@ class EffectsDict(TypedDict):
     weapon_skill_accuracy: list[dict[str, Any]]
     add_spirit_slots: list[dict[str, Any]]
     add_spirit_picks: list[dict[str, Any]]
-    free_metamagics: list[dict[str, Any]]
-    free_spells_skill: list[dict[str, Any]]
-    free_spells_attribute: list[dict[str, Any]]
-    new_spell_karma_cost: list[dict[str, Any]]
+    free_metamagics: list[FreeMetamagicRow]
+    free_spells_skill: list[FreeSpellsSkillRow]
+    free_spells_attribute: list[FreeSpellsAttributeRow]
+    new_spell_karma_cost: list[NewSpellKarmaCostRow]
     skill_category_karma_cost_mult: list[KarmaMultRow]
     skill_category_karma_cost: list[KarmaCostRow]
     skill_category_spec_karma_cost_mult: list[KarmaMultRow]
@@ -173,7 +196,7 @@ class EffectsDict(TypedDict):
     knowledge_skill_karma_cost: list[KarmaCostRow]
     knowledge_skill_karma_cost_min: list[KarmaCostRow]
     select_quality_slots: list[dict[str, Any]]
-    unimplemented: list[dict[str, Any]]
+    unimplemented: list[UnimplementedRow]
 
 
 def empty_effects() -> EffectsDict:

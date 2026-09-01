@@ -269,23 +269,23 @@ def free_spell_bonus_points(
     effects = effects or empty_effects()
     generic = int(effects.get("free_spells_flat") or 0)
     touch_only = 0
-    for row in effects.get("free_spells_skill") or []:
-        skill = str(row.get("skill") or "").strip()
+    for skill_row in effects.get("free_spells_skill") or []:
+        skill = str(skill_row.get("skill") or "").strip()
         if not skill:
             continue
         rating = _active_skill_rating_from_state(state, skill, skills_data)
-        points, is_touch = _apply_free_spell_limit(rating, str(row.get("limit") or ""))
+        points, is_touch = _apply_free_spell_limit(rating, str(skill_row.get("limit") or ""))
         if is_touch:
             touch_only += points
         else:
             generic += points
     attr_totals = attrs or {}
-    for row in effects.get("free_spells_attribute") or []:
-        attr = str(row.get("attribute") or "").strip().upper()
+    for attr_row in effects.get("free_spells_attribute") or []:
+        attr = str(attr_row.get("attribute") or "").strip().upper()
         if not attr:
             continue
         value = int(attr_totals.get(attr) or 0)
-        points, is_touch = _apply_free_spell_limit(value, str(row.get("limit") or ""))
+        points, is_touch = _apply_free_spell_limit(value, str(attr_row.get("limit") or ""))
         if is_touch:
             touch_only += points
         else:

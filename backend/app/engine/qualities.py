@@ -15,6 +15,7 @@ import re
 from typing import Any
 
 from ..improvements import EffectsDict, _as_int
+from ..improvements.effect_rows import ActionDicePoolRow
 from ..models import CharacterState
 from .constants import (
     _SIDE_JA,
@@ -159,13 +160,13 @@ def bind_action_dice_pools(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-) -> list[dict[str, Any]]:
+) -> list[ActionDicePoolRow]:
     """Attach chosen Matrix action names from quality_extras onto actiondicepool rows."""
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
-    out: list[dict[str, Any]] = []
+    out: list[ActionDicePoolRow] = []
     for row in effects.get("action_dice_pools") or []:
-        item = {
+        item: ActionDicePoolRow = {
             "category": str(row.get("category") or ""),
             "name": str(row.get("name") or "").strip(),
             "bonus": int(row.get("bonus") or 0),
