@@ -101,3 +101,28 @@ assert stable(ch2.derived) == stable(ch1.derived) # compute is loop-invariant
 ```
 cd backend && python3 -m pytest -q && ruff check . && ruff format --check . && mypy
 ```
+
+## Done
+
+`tests/test_chummer_roundtrip.py` — `build_chum5(**sections)` +
+`_scrub` / `_stable` / `_loop`, 8 tests, 469 → 477. Four scenarios:
+samurai (nested ware / armor+mod / weapon+accessory / gear→commlinks /
+vehicle / group contact), mage (spells / Hermetic / Bear / two
+initiation grades + Centering & Masking), technomancer (three complex
+forms / three submersion grades), career (Ork, SumToTen, `created=True`
++ karma/nuyen, martial art + techniques).
+
+Two real bugs the loop surfaced, both fixed:
+
+- **`state_to_chum5` never emitted `<included>`** — a factory sub-item
+  (armor / weapon / vehicle mod, ware / gear child) re-imported as
+  user-added and got billed; nuyen drifted 7.5k on the second pass. It
+  now writes `<included>` for ware/gear children and armor/weapon/vehicle
+  mods.
+- **ElementTree truthiness deprecation** in `chummer_import.py`
+  (`root.find(...) or root.find(...)` on an `Element`) on the
+  `mentorspirit` and nested-`character` paths — rewritten as
+  `x = find(...); if x is None: …`.
+
+`included` on `WeaponMountInstall` is not round-tripped (export emits no
+`<weaponmounts>` section at all) — out of scope here, noted for later.

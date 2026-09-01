@@ -71,6 +71,16 @@ is consumed. See `docs/adding-rules.md`.
 `store.py` keeps characters in an in-memory dict and mirrors them to
 `backend/saves/*.json`. No database, no auth.
 
+`chummer_import.py` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
+by `sourceid` then name; unknown entries become warnings, never errors.
+`chummer_export.py` (`state_to_chum5`) writes it back. The pair is a fixed
+point on a **computed** state — `tests/test_chummer_roundtrip.py` builds
+Chummer-shaped XML from the live catalog and pins
+`xml → state → compute → xml → state → compute`, asserting the second
+computed state equals the first (row ids stripped) and `derived` is
+loop-invariant, across a street samurai / mage / technomancer / career
+(SumToTen) scenario.
+
 ## Frontend
 
 - `app/page.tsx` is a ~90-line shell: it holds only view state (active tab,
