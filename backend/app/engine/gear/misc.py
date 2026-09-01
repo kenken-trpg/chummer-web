@@ -56,16 +56,16 @@ def _commlink_accessory_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
 
 def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str, Any]]]:
     hosts: dict[str, tuple[str, dict[str, Any]]] = {}
-    for inst in list(state.commlinks or []):
-        spec = _item_by_id("commlinks", inst.gear_id)
+    for link_inst in list(state.commlinks or []):
+        spec = _item_by_id("commlinks", link_inst.gear_id)
         if spec:
-            hosts[inst.id] = ("commlink", _commlink_accessory_parent_spec(spec))
-    for inst, spec in _iter_vehicle_hosts(state):
-        hosts[inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
-    for inst in list(state.weapons or []):
-        spec = _item_by_id("weapons", inst.weapon_id)
+            hosts[link_inst.id] = ("commlink", _commlink_accessory_parent_spec(spec))
+    for veh_inst, spec in _iter_vehicle_hosts(state):
+        hosts[veh_inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
+    for weapon_inst in list(state.weapons or []):
+        spec = _item_by_id("weapons", weapon_inst.weapon_id)
         if spec:
-            hosts[inst.id] = (
+            hosts[weapon_inst.id] = (
                 "weapon",
                 {
                     "name": spec.get("name") or "",
