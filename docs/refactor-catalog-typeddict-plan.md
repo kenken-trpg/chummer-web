@@ -101,3 +101,28 @@ def catalog_ware(kind: str) -> dict[str, Any]:  # cyberware / bioware buckets
 cd backend && ./.venv/bin/python -m pytest -q && ./.venv/bin/ruff check . \
   && ./.venv/bin/ruff format --check . && ./.venv/bin/mypy
 ```
+
+## Done
+
+`CatalogDict` (46 keys) in `app/data_loader/catalog_types.py`;
+`catalog() -> CatalogDict` with the return literal unchanged. The ~8
+computed-key sites route through `catalog_list(kind)` / `catalog_ware(kind)`
+cast helpers — `kind` params stayed `str`, no `Literal` cascade. `Ctx.data`
+became `CatalogDict`; `selecttext_catalog_options` widened its param to
+`Mapping[str, Any]`.
+
+**Commit 3 (literal-key sweep) was empty** — `mypy` was clean straight
+after the annotation; every literal `catalog().get("x")` already
+type-checked against the total `TypedDict`.
+
+**Commit 4 over-delivered.** The per-module strict-`mypy` probe came back
+clean for *every* engine holdout (`ware/`, `gear/`, `magic/`, `resonance`,
+`qualities`, `pricing`) plus the barrels — so the override's per-module
+list collapsed to `app.engine` + `app.engine.*`. The whole engine package
+now holds the strict bar (`check_untyped_defs` / `disallow_untyped_defs` /
+`disallow_incomplete_defs` / `warn_return_any`) in CI. The `Ctx` bundles
+and `catalog()` were the only two things standing between the engine and
+strict typing.
+
+No behaviour change — 555 backend tests green, `tests/snapshots/*.json`
+byte-identical.

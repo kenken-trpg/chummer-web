@@ -49,32 +49,20 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 
 # --- per-module strictness --------------------------------------------------
-# app/engine/compute/ is the phased compute() package: every phase is
-# `phase(ctx: Ctx) -> None`, the Ctx bundles are TypedDicts and
-# tests/test_compute_phases.py pins the seams — so it holds a stricter bar
-# than the rest of the (still-lenient) engine. app/improvements/ (the
-# <bonus> -> effects pipeline) joined once `effects` became EffectsDict, and
-# the self-contained engine leaf modules below were already clean to this
-# bar. Grow this list module by module as each one is tightened.
+# The strict bar (check_untyped_defs / disallow_untyped_defs /
+# disallow_incomplete_defs / warn_return_any) vs. the lenient base ruleset.
+# `app.engine.*` reached it once its two Any fountains were typed — the Ctx
+# bundles / `effects` (EffectsDict) and `catalog()` (CatalogDict) — plus
+# `app.improvements.*` (the <bonus> -> effects pipeline). The rest of the
+# repo (store / API / chummer_import|export / data_loader) stays lenient;
+# promote a module here once it holds this bar.
 [[tool.mypy.overrides]]
 module = [
-    "app.engine.compute",
-    "app.engine.compute.*",
-    "app.engine.bundle_types",
+    "app.engine",
+    "app.engine.*",
     "app.improvements",
     "app.improvements.*",
-    "app.engine.constants",
-    "app.engine.formulas",
-    "app.engine.karma",
-    "app.engine.priority",
-    "app.engine.selects",
-    "app.engine.skills",
-    "app.engine.contacts",
-    "app.engine.limits",
-    "app.engine.martial_arts",
-    "app.engine.dice",
-    "app.engine.requirements",
-    "app.engine.lookups",
+    "app.data_loader.catalog_types",
 ]
 check_untyped_defs = true
 disallow_untyped_defs = true

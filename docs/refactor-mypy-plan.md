@@ -100,8 +100,12 @@ The base ruleset stays lenient; a per-module `[[tool.mypy.overrides]]`
 - `engine/lookups.py` — its ~25 `id`/`name` catalog scans folded onto one
   `_match_by(rows, field, value)` helper (returns the row itself, not a
   copy), which clears all 28 `no-any-return`s; 212 → 165 lines.
+- **`app.engine` + `app.engine.*` (the whole package)** — once `catalog()`
+  became `CatalogDict` (`docs/refactor-catalog-typeddict-plan.md`), the
+  remaining holdouts (`ware/` / `gear/` / `magic/` / `resonance` /
+  `qualities` / `pricing`) all passed the bar as-is — the per-module list
+  collapsed to `app.engine` / `app.engine.*`. The two `Any` fountains
+  (`Ctx` bundles + `catalog()`) were the whole story.
 
-Next candidates need real work: the engine holdouts `ware/` / `gear/` /
-`magic/` / `resonance` / `qualities` / `pricing` (unannotated helpers,
-`Any` from `catalog()`), or a `catalog()` `TypedDict` that would tighten
-many at once.
+Still lenient: `store` / the API / `chummer_import|export` / `data_loader`
+itself. Promote when they hold the bar.

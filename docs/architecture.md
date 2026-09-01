@@ -277,21 +277,18 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    and a couple of `str | None` narrows. `mypy` is now clean and part of
    `make check` / CI (`ci.yml` dropped `continue-on-error`).
    - *Tightening, module by module:* the base ruleset stays lenient
-     (`check_untyped_defs = false`); stricter bars go in per-module
-     `[[tool.mypy.overrides]]`, run with `check_untyped_defs`,
-     `disallow_untyped_defs`, `disallow_incomplete_defs` and
-     `warn_return_any`. Members: `app.engine.compute.*` +
-     `app.engine.bundle_types` (the phased `compute()` package is fully
-     annotated — `phase(ctx: Ctx) -> None`, `TypedDict` bundles),
-     `app.improvements.*` (the `<bonus>` → `effects` pipeline, joined once
-     `effects` became `EffectsDict`), and the self-contained engine leaf
-     modules `constants` / `formulas` / `karma` / `priority` / `selects` /
-     `skills` / `contacts` / `limits` / `martial_arts` / `dice` /
-     `requirements` / `lookups` (the last via a `_match_by` helper that
-     folds the ~25 `id`/`name` catalog scans). Grow the list as other
-     modules are cleaned to that bar — the remaining engine holdouts
-     (`ware/`, `gear/`, `magic/`, `resonance`, `qualities`, `pricing`)
-     need real annotation work, or a `catalog()` `TypedDict`, first.
+     (`check_untyped_defs = false`); a `[[tool.mypy.overrides]]` block runs
+     the strict bar (`check_untyped_defs`, `disallow_untyped_defs`,
+     `disallow_incomplete_defs`, `warn_return_any`). **The whole
+     `app.engine.*` package is now in it**, together with
+     `app.improvements.*` and `app.data_loader.catalog_types`. The engine
+     got there once its two `Any` fountains were typed: the `Ctx` bundles /
+     `effects` (`EffectsDict` + `effect_rows.py`) and `catalog()`
+     (`CatalogDict`) — after that every engine module passed the bar with at
+     most a rename or a cast (`_match_by`, `catalog_list` / `catalog_ware`).
+     The rest of the repo — `store` / the API / `chummer_import|export` /
+     `data_loader` itself — stays lenient; promote a module when it holds
+     the bar.
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear
      bundles in `app/engine/bundle_types.py`, and the big one, the `effects`

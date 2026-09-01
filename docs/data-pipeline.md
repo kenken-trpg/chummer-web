@@ -24,8 +24,11 @@ run re-downloads.
   missing** (some files — `ranges.xml`, `drugcomponents.xml` — are optional and
   loaders must not raise).
 - `catalog()` calls them all, cross-links a few things (drug components onto
-  gear entries, weapons that add gear, …) and returns one big dict. It's
-  `@lru_cache`d, so it parses once per process.
+  gear entries, weapons that add gear, …) and returns one big dict — typed
+  `CatalogDict` (`data_loader/catalog_types.py`), so `catalog()["weapons"]`
+  is `list[dict[str, Any]]`, not `Any`. It's `@lru_cache`d, so it parses
+  once per process. Computed-key access goes through `catalog_list(kind)` /
+  `catalog_ware(kind)`.
 - `eval_formula(expr, rating, default, extras)` evaluates Chummer's mini
   formula language (`{STR}*10`, `FixedValues(...)`, `Rating`, `number(...)`).
 
