@@ -14,6 +14,7 @@ from typing import Any
 
 from ...data_loader import catalog, eval_formula
 from ...improvements import EffectsDict, empty_effects
+from ...improvements.effect_rows import WeaponDvBonusRow
 from ...models import CharacterState, WeaponAccessoryInstall
 from ..formulas import _add_leading_int, _add_weapon_dv, _eval_attr_stat, _leading_int
 from ..lookups import _item_by_id
@@ -535,7 +536,7 @@ def bind_weapon_category_dv(
     """Resolve weaponcategorydv selectskill picks into concrete category/skill DV bonuses."""
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
-    resolved: list[dict[str, Any]] = []
+    resolved: list[WeaponDvBonusRow] = []
     for slot in effects.get("weapon_category_dv_slots") or []:
         source = str(slot.get("source") or "")
         bonus = int(slot.get("bonus") or 0)
@@ -571,7 +572,7 @@ def bind_weapon_skill_accuracy(
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
     data = skills_data if skills_data is not None else catalog().get("skills") or {}
-    resolved: list[dict[str, Any]] = []
+    resolved: list[WeaponDvBonusRow] = []
     for slot in effects.get("weapon_skill_accuracy_slots") or []:
         source = str(slot.get("source") or "")
         bonus = int(slot.get("bonus") or 0)

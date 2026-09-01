@@ -16,6 +16,7 @@ from typing import Any
 
 from ...data_loader import catalog, eval_formula
 from ...improvements import EffectsDict
+from ...improvements.effect_rows import AddSpiritPickRow
 from ...models import CharacterState, SpiritInstall
 from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
@@ -49,14 +50,14 @@ def bind_extra_spirits(
     state: CharacterState,
     warnings: list[str],
     skills_data: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
+) -> list[AddSpiritPickRow]:
     """Resolve addspirit picks into extra summonable spirit types."""
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
     options = addspirit_option_names()
     option_set = set(options)
     resolved: list[str] = []
-    picks: list[dict[str, Any]] = []
+    picks: list[AddSpiritPickRow] = []
     index_by_quality: dict[str, int] = {}
     for slot in effects.get("add_spirit_slots") or []:
         source = str(slot.get("source") or "")
@@ -76,7 +77,7 @@ def bind_extra_spirits(
             index_by_quality[spec["id"]] = idx + 1
             key = quality_addspirit_extra_key(spec["id"], idx)
             picked = str(extras.get(key) or "").strip()
-            row = {
+            row: AddSpiritPickRow = {
                 "quality_id": spec["id"],
                 "quality_name": spec["name"],
                 "index": idx,

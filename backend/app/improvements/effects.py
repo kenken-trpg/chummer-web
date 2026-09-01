@@ -16,6 +16,7 @@ from ._common import (
 from .effect_rows import (
     ActionDicePoolRow,
     AddContactRow,
+    AddSpiritPickRow,
     AddSpiritSlotRow,
     AttributeSelectRow,
     ExpertiseSlotRow,
@@ -44,6 +45,7 @@ from .effect_rows import (
     SpellDicePoolRow,
     UnimplementedRow,
     WeaponCategoryDvSlotRow,
+    WeaponDvBonusRow,
     WeaponSkillAccuracySlotRow,
 )
 
@@ -188,11 +190,11 @@ class EffectsDict(TypedDict):
     grant_powers: list[GrantPowerRow]
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
-    weapon_category_dv: list[dict[str, Any]]
+    weapon_category_dv: list[WeaponDvBonusRow]
     weapon_skill_accuracy_slots: list[WeaponSkillAccuracySlotRow]
-    weapon_skill_accuracy: list[dict[str, Any]]
+    weapon_skill_accuracy: list[WeaponDvBonusRow]
     add_spirit_slots: list[AddSpiritSlotRow]
-    add_spirit_picks: list[dict[str, Any]]
+    add_spirit_picks: list[AddSpiritPickRow]
     free_metamagics: list[FreeMetamagicRow]
     free_spells_skill: list[FreeSpellsSkillRow]
     free_spells_attribute: list[FreeSpellsAttributeRow]
