@@ -106,13 +106,13 @@ def state_to_chum5(state: CharacterState) -> bytes:
         spec = m_attr.get(key) or {}
         lo = int(spec.get("min", 0 if key in ("MAG", "RES", "DEP") else 1))
         val = int(state.attributes.get(key, lo))
-        a = _sub(attrs, "attribute")
-        _sub(a, "name", key)
-        _sub(a, "metatypemin", lo)
-        _sub(a, "metatypemax", int(spec.get("max", 6)))
-        _sub(a, "metatypeaugmax", int(spec.get("aug", spec.get("max", 6))))
-        _sub(a, "base", max(val - lo, 0))
-        _sub(a, "karma", 0)
+        attr_el = _sub(attrs, "attribute")
+        _sub(attr_el, "name", key)
+        _sub(attr_el, "metatypemin", lo)
+        _sub(attr_el, "metatypemax", int(spec.get("max", 6)))
+        _sub(attr_el, "metatypeaugmax", int(spec.get("aug", spec.get("max", 6))))
+        _sub(attr_el, "base", max(val - lo, 0))
+        _sub(attr_el, "karma", 0)
     ess = _sub(attrs, "attribute")
     _sub(ess, "name", "ESS")
     _sub(ess, "base", 6)
@@ -130,10 +130,10 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(_sub(_sub(s, "specializations"), "spec"), "name", spn)
     grps = _sub(sk, "groups")
     for name, rating in sorted(state.skill_groups.items()):
-        g = _sub(grps, "group")
-        _sub(g, "name", name)
-        _sub(g, "base", rating)
-        _sub(g, "karma", 0)
+        grp_el = _sub(grps, "group")
+        _sub(grp_el, "name", name)
+        _sub(grp_el, "base", rating)
+        _sub(grp_el, "karma", 0)
     kno = _sub(sk, "knoskills")
     for name in state.native_languages:
         s = _sub(kno, "skill")
@@ -275,18 +275,18 @@ def state_to_chum5(state: CharacterState) -> bytes:
 
     vehs = _sub(root, "vehicles")
     vmod_by_parent: dict[str | None, list[Any]] = {}
-    for mrow in state.vehicle_mods:
-        vmod_by_parent.setdefault(mrow.parent_id, []).append(mrow)
+    for vrow in state.vehicle_mods:
+        vmod_by_parent.setdefault(vrow.parent_id, []).append(vrow)
     for v in [*state.vehicles, *state.drones]:
         el = _sub(vehs, "vehicle")
         _sub(el, "sourceid", v.gear_id)
         _sub(el, "name", names["gear"].get(v.gear_id, ""))
         mods = _sub(el, "mods")
-        for mrow in vmod_by_parent.get(v.id, []):
+        for vrow in vmod_by_parent.get(v.id, []):
             mm = _sub(mods, "mod")
-            _sub(mm, "sourceid", mrow.mod_id)
-            _sub(mm, "name", names["vmod"].get(mrow.mod_id, ""))
-            _sub(mm, "rating", mrow.rating)
+            _sub(mm, "sourceid", vrow.mod_id)
+            _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
+            _sub(mm, "rating", vrow.rating)
 
     ls = _sub(root, "lifestyles")
     for lrow in state.lifestyles:
@@ -319,12 +319,12 @@ def state_to_chum5(state: CharacterState) -> bytes:
     sub_by_grade = {int(c.grade): c for c in state.submersions}
 
     def _emit_grade(i: int, res: bool, choice: object) -> None:
-        g = _sub(grades, "initiationgrade")
-        _sub(g, "grade", i)
-        _sub(g, "res", "True" if res else "False")
-        _sub(g, "group", "True" if getattr(choice, "group", False) else "False")
-        _sub(g, "ordeal", "True" if getattr(choice, "ordeal", False) else "False")
-        _sub(g, "schooling", "True" if getattr(choice, "schooling", False) else "False")
+        grade_el = _sub(grades, "initiationgrade")
+        _sub(grade_el, "grade", i)
+        _sub(grade_el, "res", "True" if res else "False")
+        _sub(grade_el, "group", "True" if getattr(choice, "group", False) else "False")
+        _sub(grade_el, "ordeal", "True" if getattr(choice, "ordeal", False) else "False")
+        _sub(grade_el, "schooling", "True" if getattr(choice, "schooling", False) else "False")
 
     for i in range(1, state.initiate_grade + 1):
         _emit_grade(i, False, init_by_grade.get(i))
