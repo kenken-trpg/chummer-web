@@ -59,13 +59,49 @@ export function makeCharacter(
 }
 
 /** Minimal catalog covering only what `buildSheetData` / `CharacterSheet`
- * read: `skills.{skills,groups}`, `weapon_ranges`, `ui_strings`. */
+ * read: `skills.{skills,groups}`, `weapon_ranges`, `ui_strings`. Every
+ * catalog collection a tab might `.map()` / `.filter()` is present and empty,
+ * so any tab renders against a bare `makeCatalog()`; pass `overrides` for the
+ * specific slice under test. */
 export function makeCatalog(overrides: Partial<Catalog> = {}): Catalog {
+  const emptyWare = { items: [], grades: [] };
   return {
-    skills: { skills: [], groups: [] },
+    skills: { skills: [], groups: [], knowledge: [] },
     qualities: [],
-    weapon_ranges: {},
+    metatypes: [],
+    priority_table: {},
+    translations: {},
     ui_strings: {},
+    weapon_ranges: {},
+    cyberware: emptyWare,
+    bioware: emptyWare,
+    powers: [],
+    enhancements: [],
+    mentors: [],
+    spells: [],
+    traditions: [],
+    spirits: [],
+    complex_forms: [],
+    streams: [],
+    sprites: [],
+    foci: [],
+    qi_focus: null,
+    armor: [],
+    armor_mods: [],
+    weapons: [],
+    weapon_accessories: [],
+    commlinks: [],
+    cyberdecks: [],
+    rccs: [],
+    optics: [],
+    programs: [],
+    apps: [],
+    sensors: [],
+    gear: [],
+    drones: [],
+    vehicles: [],
+    vehicle_mods: [],
+    weapon_mounts: [],
     ...overrides,
   } as Catalog;
 }
