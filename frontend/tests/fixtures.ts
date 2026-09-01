@@ -17,7 +17,12 @@ function makeDerived(overrides: Partial<Derived> = {}): Derived {
     armor: 0,
     nuyen: 0,
     karma: { pool: 25, spent: 0, remaining: 25 },
-    points: {},
+    points: {
+      attributes: { used: 0, max: 0 },
+      special: { used: 0, max: 0 },
+      skills: { used: 0, max: 0 },
+      knowledge: { used: 0, max: 0 },
+    },
     skill_totals: {},
     enabled_tabs: [],
     unimplemented_bonuses: [],
@@ -58,6 +63,7 @@ export function makeCharacter(
 export function makeCatalog(overrides: Partial<Catalog> = {}): Catalog {
   return {
     skills: { skills: [], groups: [] },
+    qualities: [],
     weapon_ranges: {},
     ui_strings: {},
     ...overrides,
