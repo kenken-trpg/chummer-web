@@ -186,3 +186,11 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    rules + `react-hooks/refs` are promoted back to `error` in
    `eslint.config.mjs`; `no-explicit-any` / `no-unused-vars` stay `warn`
    (file-level disables fence off the remaining `any`).
+7. **mypy to zero + blocking** — *done:* the 30 errors were loop-variable
+   type reuse (`for inst in state.armor` then `state.weapons` in one
+   function — renamed per loop in `resolve_gear` / `state_to_chum5` /
+   `_misc_external_hosts`), `dict[str, int]` passed where the invariant
+   `dict[str, int | float]` was expected (`eval_formula` /
+   `ware_rating_bounds` `extras` widened to `Mapping[str, float] | None`),
+   and a couple of `str | None` narrows. `mypy` is now clean and part of
+   `make check` / CI (`ci.yml` dropped `continue-on-error`).

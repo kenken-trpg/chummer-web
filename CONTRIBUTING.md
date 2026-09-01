@@ -52,9 +52,9 @@ recipes (new `<bonus>` tag, new gear category, new sheet section, …).
 cd backend && ruff check . && ruff format . && python -m pytest -q
 ```
 
-`mypy` runs in CI but is non-blocking; new modules are welcome to be strict.
-The ruleset is deliberately modest — grow it in a focused PR rather than
-turning everything on at once.
+`mypy` is clean and **blocking** (CI + `make check`). The ruleset is
+deliberately modest (`check_untyped_defs = false` etc.) — grow it in a
+focused PR rather than turning everything on at once.
 
 The backend tests come in two layers:
 

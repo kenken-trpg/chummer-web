@@ -56,3 +56,28 @@ cd backend && source .venv/bin/activate && \
   mypy app && ruff check app/ && python -m pytest -q
 # 1-5: mypy error count decreasing; 6: mypy clean
 ```
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `mypy app`: **30 → 0
+errors**. Every commit `make check` green (`469 passed` + frontend) +
+snapshot 6 passed byte-identical.
+
+| commit | what | mypy |
+| --- | --- | --- |
+| `6a3a11a` | `resolve_gear` loop vars `armor_inst` / `weapon_inst` / `link_inst`; `_apply_recoil_totals(..., attr_totals or {})`; `total["ESS"] = ess  # type: ignore` | 30 → 19 |
+| `6c91446` | `state_to_chum5`: Element bindings `attr_el` / `grp_el` / `grade_el`, vehicle-mod rows `vrow` | 19 → 12 |
+| `c283ef4` | `_misc_external_hosts` loop vars `link_inst` / `veh_inst` / `weapon_inst` | 12 → 9 |
+| `b01ec4f` | `eval_formula` / `ware_rating_bounds` / `_clamp_ware_rating` `extras: Mapping[str, float] \| None` | 9 → 2 |
+| `5fe5f92` | `chummer_import` walrus `spell_ref`; `qualities.resolve_quality_sides` `limb_slot` + folded `side` guards | 2 → 0 |
+| _this_ | `ci.yml` drop `continue-on-error`; `Makefile` `check-backend` += `mypy`; `pyproject.toml` / `CONTRIBUTING.md` notes |
+
+Deviations: commits 1–5 landed roughly as planned; the `total["ESS"]`
+float-in-`dict[str,int]` tension was resolved with one targeted
+`# type: ignore[assignment]` (widening `total` would cascade into ~8
+`resolve_*` signatures) rather than a real type change.
+
+Every fix is a rename or a signature widen — no runtime behaviour change,
+snapshot byte-identical throughout.

@@ -29,8 +29,8 @@ fmt: ## Auto-format backend (ruff) and frontend (prettier)
 	cd backend && ./.venv/bin/ruff format .
 	cd frontend && npm run format
 
-check-backend: ## ruff + format check + pytest
-	cd backend && ./.venv/bin/ruff check . && ./.venv/bin/ruff format --check . && ./.venv/bin/python -m pytest -q
+check-backend: ## ruff + format check + pytest + mypy
+	cd backend && ./.venv/bin/ruff check . && ./.venv/bin/ruff format --check . && ./.venv/bin/python -m pytest -q && ./.venv/bin/mypy
 
 check-frontend: ## tsc + eslint + prettier check + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run build

@@ -45,10 +45,7 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q
-
-      - name: mypy (non-blocking)
-        continue-on-error: true
-        run: mypy
+      - run: mypy
 
   frontend:
     runs-on: ubuntu-latest

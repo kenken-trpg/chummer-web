@@ -40,8 +40,9 @@ docstring-code-format = true
 python_version = "3.11"
 files = ["app"]
 exclude = ["vendor", "saves"]
-# Lenient to start: this codebase is not fully typed yet. Tighten module by
-# module by adding stricter overrides below.
+# Clean and blocking (CI + `make check`), but the ruleset is still lenient
+# (`check_untyped_defs = false` etc.) — tighten module by module with
+# stricter overrides below rather than flipping everything at once.
 ignore_missing_imports = true
 check_untyped_defs = false
 warn_unused_ignores = true
