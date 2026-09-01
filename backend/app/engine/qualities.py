@@ -14,17 +14,23 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ..improvements import _as_int
 from ..models import CharacterState
 from .constants import (
     _SIDE_JA,
     _SLOT_JA,
+    NEGATIVE_QUALITY_KARMA_CAP,
+    POSITIVE_QUALITY_KARMA_CAP,
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
     QUALITY_CONTACT_EXTRA_SUFFIX,
     QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX,
     _normalize_side,
+    quality_addspirit_extra_key,
+    quality_spirit_category_extra_key,
 )
-from .lookups import _item_by_id, _power_by_name, _quality_by_id
+from .lookups import _item_by_id, _power_by_name, _quality_by_id, _quality_by_name
 from .priority import talent_special
+from .requirements import requirement_tree_met
 
 
 def is_way_quality(name: str) -> bool:
@@ -343,3 +349,167 @@ def resolve_quality_sides(
             next_extras[qid] = side
         state.quality_extras = next_extras
     return chosen
+
+
+def gather_qualities(
+    state: CharacterState, talent: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[str], list[str]]:
+    qualities: list[dict[str, Any]] = []
+    counts: dict[str, int] = {}
+    free_ids: set[str] = set()
+    state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
+    pending = list(state.quality_ids)
+    talent_quality = _quality_by_name(talent.get("quality") or "")
+    if talent_quality:
+        pending.append(talent_quality["id"])
+    extras = {key: str(value).strip() for key, value in (state.quality_extras or {}).items() if str(value).strip()}
+    index = 0
+    while index < len(pending):
+        qid = pending[index]
+        index += 1
+        spec = _quality_by_id(qid)
+        if not spec:
+            continue
+        max_takes = spec.get("max_takes")
+        taken = counts.get(qid, 0)
+        if max_takes is not None and taken >= int(max_takes):
+            continue
+        counts[qid] = taken + 1
+        qualities.append(spec)
+        for node in spec.get("bonus") or []:
+            tag = node.get("tag")
+            if tag == "freequality":
+                child_id = str(node.get("value") or "").strip()
+                if child_id and counts.get(child_id, 0) == 0:
+                    free_ids.add(child_id)
+                    pending.append(child_id)
+            elif tag == "addqualities":
+                raw = (node.get("fields") or {}).get("addquality") or node.get("value") or ""
+                names = raw if isinstance(raw, list) else [raw]
+                for name in names:
+                    child = _quality_by_name(str(name).strip())
+                    if child and counts.get(child["id"], 0) == 0:
+                        free_ids.add(child["id"])
+                        pending.append(child["id"])
+            elif tag == "selectquality":
+                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+                picked = extras.get(qid, "")
+                if picked and picked in options:
+                    child = _quality_by_name(picked)
+                    if child and counts.get(child["id"], 0) == 0:
+                        free_ids.add(child["id"])
+                        pending.append(child["id"])
+    return qualities, sorted(free_ids), dropped
+
+
+def apply_quality_rules(
+    state: CharacterState,
+    qualities: list[dict[str, Any]],
+    free_quality_ids: list[str],
+    ctx: dict[str, Any],
+    errors: list[str],
+    *,
+    career: bool = False,
+    report: dict[str, Any] | None = None,
+) -> int:
+    owned = {item["id"] for item in qualities}
+    extras = {
+        key: str(value).strip()
+        for key, value in (state.quality_extras or {}).items()
+        if _quality_extra_key_owned(key, owned) and str(value).strip()
+    }
+    state.quality_extras = extras
+    free_ids = set(free_quality_ids)
+    negative_gain = 0
+    positive_spend = 0
+    for spec in qualities:
+        is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
+        if not is_free and spec["karma"] < 0:
+            negative_gain += -int(spec["karma"])
+        if not is_free and spec["karma"] > 0:
+            positive_spend += int(spec["karma"])
+        if str(spec.get("extra_kind") or "") == "add_spirit":
+            count = max(1, int(spec.get("add_spirit_count") or 1))
+            if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
+                errors.append(f"{spec['name']} の追加精霊を選んでください")
+        elif quality_needs_extra(spec) and spec["id"] not in extras:
+            if _quality_has_selectside(spec):
+                errors.append(f"{spec['name']} の左右を選んでください")
+            elif _quality_has_actiondicepool(spec):
+                errors.append(f"{spec['name']} のマトリクスアクションを選んでください")
+            elif _quality_needs_spell_category(spec):
+                errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
+            elif _quality_needs_spirit_category(spec):
+                errors.append(f"{spec['name']} の精霊を選んでください")
+            elif str(spec.get("extra_kind") or "") == "weapon_skill":
+                errors.append(f"{spec['name']} の武器技能を選んでください")
+            else:
+                errors.append(f"{spec['name']} の対象を入力してください")
+        if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
+            spirit_key = quality_spirit_category_extra_key(spec["id"])
+            if spirit_key not in extras:
+                errors.append(f"{spec['name']} の精霊を選んでください")
+        elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
+            errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
+        options = list(spec.get("select_options") or [])
+        if not options:
+            for node in spec.get("bonus") or []:
+                if node.get("tag") != "selectquality":
+                    continue
+                raw = (node.get("fields") or {}).get("quality") or node.get("value") or []
+                options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
+        if options and spec["id"] in extras and extras[spec["id"]] not in options:
+            if not _quality_has_actiondicepool(spec):
+                errors.append(f"{spec['name']} の対象が不正です")
+        if is_free:
+            continue
+        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
+            errors.append(f"{spec['name']} の前提を満たしていません")
+        forbidden = spec.get("forbidden_tree") or []
+        if forbidden and requirement_tree_met(forbidden, ctx):
+            errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
+    if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
+        errors.append(
+            f"不利資質から得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
+        )
+    if positive_spend > POSITIVE_QUALITY_KARMA_CAP and not career:
+        errors.append(
+            f"有利資質に費やせるカルマが上限を超えています（{positive_spend} / {POSITIVE_QUALITY_KARMA_CAP}）"
+        )
+
+    # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
+    metagenic_limit = 0
+    for spec in qualities:
+        for node in spec.get("bonus") or []:
+            if node.get("tag") == "metageniclimit":
+                metagenic_limit = max(
+                    metagenic_limit,
+                    _as_int(node.get("value") or (node.get("fields") or {}).get("value")),
+                )
+    mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_metagenic_limit")]
+    mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
+    mg_neg = sum(-int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) < 0)
+    mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
+    if not career:
+        if (mg_pos or mg_neg) and metagenic_limit <= 0:
+            errors.append("メタジェネティック資質には Changeling（Class I／II／III SURGE）が必要です")
+        elif metagenic_limit > 0:
+            if mg_neg > metagenic_limit:
+                errors.append(f"不利メタジェネティック資質のカルマが上限を超えています（{mg_neg} / {metagenic_limit}）")
+            if mg_pos > metagenic_limit:
+                errors.append(f"有利メタジェネティック資質のカルマが上限を超えています（{mg_pos} / {metagenic_limit}）")
+            if mg_pos and not mg_balanced:
+                errors.append(
+                    "メタジェネティック資質のカルマ収支が不均衡です"
+                    f"（不利 {mg_neg}、必要 {max(0, mg_pos - 1)}〜{mg_pos}）"
+                )
+    if report is not None:
+        report["metagenic"] = {
+            "limit": metagenic_limit,
+            "positive": mg_pos,
+            "negative": mg_neg,
+            "balanced": bool(mg_balanced),
+            "count": len(mg_specs),
+        }
+    return negative_gain
