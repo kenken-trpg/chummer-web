@@ -1,19 +1,15 @@
 import { Fragment } from "react";
 import type { Catalog, Character } from "@/lib/types";
-import { attrShort, makeT } from "@/lib/ui-strings";
+import { attrShort } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import { cfDuration, cfTarget, formatPoints, matrixCM } from "@/lib/character/format";
 import { ATTRS } from "@/lib/character/constants";
 import { textSheet } from "@/lib/character/text-sheet";
 import { GradeList, Section, VehicleBlock } from "@/components/character/sheet/blocks";
-import {
-  lifeIncrement,
-  rangeNameFor,
-  rangeRow,
-  specialArmorBits,
-} from "@/lib/character/sheet-format";
+import { lifeIncrement, rangeNameFor, rangeRow } from "@/lib/character/sheet-format";
+import { buildSheetData } from "@/lib/character/sheet-data";
 
-export type SheetLayout = "standard" | "compact" | "text";
+export type { SheetLayout } from "@/lib/character/sheet-data";
 
 export default function CharacterSheet({
   character,
@@ -24,62 +20,29 @@ export default function CharacterSheet({
   character: Character;
   catalog: Catalog;
   tr: (name: string) => string;
-  layout?: SheetLayout;
+  layout?: "standard" | "compact" | "text";
 }) {
-  const d = character.derived;
-  const t = makeT(catalog);
-  const totals = d.totals || {};
-  const enabled = new Set(d.enabled_tabs || []);
-
-  const activeSkills = (catalog.skills.skills || [])
-    .filter((s) => s.source === "SR5" && !s.exotic && !s.name.includes("Exotic"))
-    .map((s) => {
-      const rating = d.skill_totals?.[s.name] || 0;
-      const soft = d.skillsoft?.[s.name] || 0;
-      const effective = Math.max(rating, soft);
-      const attr = totals[s.attribute] || 0;
-      const spec = d.skill_specializations?.[s.name];
-      return {
-        name: s.name,
-        attribute: s.attribute,
-        rating: effective,
-        pool: effective + attr,
-        soft: soft > rating ? soft : 0,
-        spec,
-      };
-    })
-    .filter((row) => row.rating > 0)
-    .sort((a, b) => tr(a.name).localeCompare(tr(b.name), "ja"));
-
-  const groups = (catalog.skills.groups || [])
-    .map((g) => ({
-      name: g,
-      rating: character.skill_groups?.[g] || 0,
-      bonus: d.skill_group_bonus?.[g] || 0,
-    }))
-    .filter((row) => row.rating > 0 || row.bonus > 0);
-
-  const exotic = (d.exotic_skills || []).filter((row) => row.rating > 0);
-  const knowledge = (d.knowledge_skills || []).filter(
-    (row) => row.rating > 0 || row.native || (row.skillsoft || 0) > 0,
-  );
-  const qualities = d.qualities || [];
-  const weapons = d.weapons || [];
-  const armors = (d.armor_items || []).filter((item) => item.equipped || item.contributes);
-  const cyber = (d.cyberware || []).filter((item) => !item.parent_id);
-  const bio = (d.bioware || []).filter((item) => !item.parent_id);
-  const isDrug = (item: { category?: string }) =>
-    item.category === "Drugs" || item.category === "Toxins" || item.category === "Chemicals";
-  const isSin = (item: { category?: string }) => item.category === "ID/Credsticks";
-  const gearMisc = (d.gear || []).filter(
-    (item) => !item.parent_id && !isDrug(item) && !isSin(item),
-  );
-  const drugs = (d.gear || []).filter((item) => !item.parent_id && isDrug(item));
-  const sins = (d.gear || []).filter((item) => !item.parent_id && isSin(item));
-  const gearChildren = (parentId: string) =>
-    (d.gear || []).filter((item) => item.parent_id === parentId);
-  const drugChildren = gearChildren;
-  const specialArmor = specialArmorBits(d.special_armor);
+  const {
+    d,
+    t,
+    totals,
+    enabled,
+    activeSkills,
+    groups,
+    exotic,
+    knowledge,
+    qualities,
+    weapons,
+    armors,
+    cyber,
+    bio,
+    gearMisc,
+    drugs,
+    sins,
+    gearChildren,
+    drugChildren,
+    specialArmor,
+  } = buildSheetData({ character, catalog, tr, layout });
 
   if (layout === "text") {
     return (
