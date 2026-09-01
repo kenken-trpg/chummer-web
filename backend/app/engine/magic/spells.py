@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...data_loader import SPELL_CATEGORIES
-from ...improvements import apply_bonus_nodes
+from ...improvements import EffectsDict, apply_bonus_nodes, empty_effects
 from ...models import CharacterState, SpellInstall
 from ..bundle_types import SpellsBundle
 from ..constants import MAG_TALENTS, SPELL_KARMA, SPELL_TALENTS, quality_spirit_category_extra_key
@@ -38,7 +38,7 @@ def _tradition_public(tradition: dict[str, Any] | None) -> dict[str, Any] | None
     }
 
 
-def apply_tradition_bonuses(effects: dict[str, Any], tradition: dict[str, Any] | None) -> None:
+def apply_tradition_bonuses(effects: EffectsDict, tradition: dict[str, Any] | None) -> None:
     if not tradition:
         return
     nodes = list(tradition.get("bonus") or [])
@@ -47,9 +47,9 @@ def apply_tradition_bonuses(effects: dict[str, Any], tradition: dict[str, Any] |
     apply_bonus_nodes(nodes, effects, str(tradition.get("name") or "Tradition"))
 
 
-def spell_defense_pools(effects: dict[str, Any] | None) -> dict[str, Any]:
-    general = int((effects or {}).get("spell_resistance") or 0)
-    specific = (effects or {}).get("spell_defense_resist") or {}
+def spell_defense_pools(effects: EffectsDict | None) -> dict[str, Any]:
+    general = int((effects or empty_effects()).get("spell_resistance") or 0)
+    specific = (effects or empty_effects()).get("spell_defense_resist") or {}
     decrease_attrs = ("BOD", "AGI", "REA", "STR", "CHA", "LOG", "INT", "WIL")
     return {
         "general": general,
@@ -63,7 +63,7 @@ def spell_defense_pools(effects: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def bind_spell_spirit_limits(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
     errors: list[str],
@@ -112,15 +112,15 @@ def bind_spell_spirit_limits(
 
 
 def bind_spell_category_drain_damage(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
 ) -> None:
     """Fill empty spellcategorydrain/damage categories from the quality's selected spell category."""
     by_name = {q["name"]: q for q in qualities}
     extras = state.quality_extras or {}
-    for key in ("spell_category_drain", "spell_category_damage"):
-        for row in effects.get(key) or []:
+    for rows in (effects["spell_category_drain"], effects["spell_category_damage"]):
+        for row in rows:
             if str(row.get("category") or "").strip():
                 continue
             source = str(row.get("source") or "")
@@ -134,7 +134,7 @@ def bind_spell_category_drain_damage(
 
 def apply_granted_spells(
     state: CharacterState,
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     warnings: list[str],
 ) -> None:
@@ -199,7 +199,7 @@ def _limit_spell_needs_from_spec(spec: dict[str, Any]) -> bool:
 
 def _spell_allowed_by_limits(
     spec: dict[str, Any],
-    effects: dict[str, Any],
+    effects: EffectsDict,
     *,
     range_gated: bool = False,
 ) -> bool:
@@ -238,11 +238,11 @@ def _spell_kind_karma_type(kind: str) -> str:
     return "Spells"
 
 
-def spell_karma_cost(kind: str | None, effects: dict[str, Any] | None = None) -> int:
+def spell_karma_cost(kind: str | None, effects: EffectsDict | None = None) -> int:
     """Base spell karma (default 5) plus newspellkarmacost improvements for the spell type."""
     cost = SPELL_KARMA
     category = _spell_kind_karma_type(kind or "spell")
-    for row in (effects or {}).get("new_spell_karma_cost") or []:
+    for row in (effects or empty_effects()).get("new_spell_karma_cost") or []:
         row_type = str(row.get("type") or "").strip()
         if row_type and row_type != category:
             continue
@@ -260,13 +260,13 @@ def _apply_free_spell_limit(value: int, limit: str) -> tuple[int, bool]:
 
 
 def free_spell_bonus_points(
-    effects: dict[str, Any] | None,
+    effects: EffectsDict | None,
     state: CharacterState,
     attrs: dict[str, int] | None = None,
     skills_data: dict[str, Any] | None = None,
 ) -> tuple[int, int]:
     """Return (generic_free, touch_only_free) from freespells improvements."""
-    effects = effects or {}
+    effects = effects or empty_effects()
     generic = int(effects.get("free_spells_flat") or 0)
     touch_only = 0
     for row in effects.get("free_spells_skill") or []:
@@ -304,12 +304,12 @@ def resolve_spells(
     mag: int,
     attrs: dict[str, int],
     owned_magic_names: set[str] | None = None,
-    effects: dict[str, Any] | None = None,
+    effects: EffectsDict | None = None,
 ) -> SpellsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
     owned = set(owned_magic_names or [])
-    effects = effects or {}
+    effects = effects or empty_effects()
     tradition = _tradition_by_id(state.tradition_id)
     if state.tradition_id and not tradition:
         warnings.append("選んだ伝統が見つからないため外しました")

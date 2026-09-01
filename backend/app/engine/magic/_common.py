@@ -9,9 +9,10 @@ already-extracted engine modules / models — never back into ``app.engine``.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Literal
 
 from ...data_loader import catalog, eval_formula
+from ...improvements import EffectsDict, empty_effects
 from ...models import CharacterState
 from ..constants import DRAIN_MINIMUM
 from ..lookups import _spell_by_name
@@ -64,7 +65,11 @@ def _active_skill_rating_from_state(
     return rating
 
 
-def _spell_category_mod_total(effects: dict[str, Any] | None, key: str, category: str) -> int:
+def _spell_category_mod_total(
+    effects: EffectsDict | None,
+    key: Literal["spell_category_drain", "spell_category_damage"],
+    category: str,
+) -> int:
     if not effects or not category:
         return 0
     total = 0
@@ -96,7 +101,11 @@ def _spell_descriptor_pattern_matches(pattern: str, descriptors: set[str]) -> bo
     return allow
 
 
-def _spell_descriptor_mod_total(effects: dict[str, Any] | None, key: str, descriptor: str | None) -> int:
+def _spell_descriptor_mod_total(
+    effects: EffectsDict | None,
+    key: Literal["spell_descriptor_drain", "spell_descriptor_damage"],
+    descriptor: str | None,
+) -> int:
     if not effects:
         return 0
     tokens = _spell_descriptor_tokens(descriptor)
@@ -114,7 +123,7 @@ def spell_cast_info(
     mag: int,
     resist: int,
     resist_attrs: str,
-    effects: dict[str, Any] | None = None,
+    effects: EffectsDict | None = None,
     *,
     barehanded: bool = False,
 ) -> dict[str, Any] | None:
@@ -132,7 +141,7 @@ def spell_cast_info(
     descriptor = str(spec.get("descriptor") or "")
     drain_mod = _spell_category_mod_total(effects, "spell_category_drain", category)
     drain_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_drain", descriptor)
-    drain_mod += int((effects or {}).get("drain_value") or 0)
+    drain_mod += int((effects or empty_effects()).get("drain_value") or 0)
     damage_mod = _spell_category_mod_total(effects, "spell_category_damage", category)
     damage_mod += _spell_descriptor_mod_total(effects, "spell_descriptor_damage", descriptor)
     value = spell_drain_value(str(spec.get("dv") or ""), chosen, mod=drain_mod)

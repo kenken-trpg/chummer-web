@@ -13,6 +13,7 @@ import re
 from typing import Any
 
 from ...data_loader import catalog, eval_formula
+from ...improvements import EffectsDict, empty_effects
 from ...models import CharacterState, WeaponAccessoryInstall
 from ..formulas import _add_leading_int, _add_weapon_dv, _eval_attr_stat, _leading_int
 from ..lookups import _item_by_id
@@ -271,8 +272,8 @@ def apply_unarmed_bonuses(
             weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), int(unarmed_ap))
 
 
-def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: dict[str, Any] | None) -> None:
-    rows = list((effects or {}).get("weapon_category_dv") or [])
+def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
+    rows = list((effects or empty_effects()).get("weapon_category_dv") or [])
     if not weapons or not rows:
         return
     for weapon in weapons:
@@ -324,8 +325,8 @@ def weapon_skill_dictionary_key(weapon: dict[str, Any]) -> str:
     return mapping.get(category, "Pistols")
 
 
-def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: dict[str, Any] | None) -> None:
-    rows = list((effects or {}).get("weapon_skill_accuracy") or [])
+def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
+    rows = list((effects or empty_effects()).get("weapon_skill_accuracy") or [])
     if not weapons or not rows:
         return
     for weapon in weapons:
@@ -526,7 +527,7 @@ def _resolve_weapon_accessories(
 
 
 def bind_weapon_category_dv(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
     warnings: list[str],
@@ -560,7 +561,7 @@ def bind_weapon_category_dv(
 
 
 def bind_weapon_skill_accuracy(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
     warnings: list[str],

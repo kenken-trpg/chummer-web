@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from ..improvements import _as_int
+from ..improvements import EffectsDict, _as_int
 from ..models import CharacterState
 from .constants import (
     _SIDE_JA,
@@ -156,7 +156,7 @@ def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
 
 
 def bind_action_dice_pools(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
 ) -> list[dict[str, Any]]:
@@ -182,7 +182,7 @@ def bind_action_dice_pools(
 
 
 def bind_select_powers(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
     warnings: list[str],
@@ -236,7 +236,7 @@ def bind_select_powers(
 
 
 def free_powers_from_grants(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     warnings: list[str],
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []

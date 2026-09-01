@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import catalog
-from ..improvements import _as_int, substitute_rating
+from ..improvements import EffectsDict, _as_int, substitute_rating
 from ..models import CharacterState, ExoticSkillInstall
 from .bundle_types import SkillMods, SkillPicks
 from .constants import EXPERTISE_BONUS
@@ -168,7 +168,7 @@ def resolve_specializations(
 
 def apply_select_expertise(
     state: CharacterState,
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     skill_totals: dict[str, int],
     skillsoft_active: dict[str, int],
@@ -311,7 +311,7 @@ def _copy_exotic_skill_bonuses(skill_mods: SkillMods, public: list[dict[str, Any
 
 def resolve_skill_mods(
     skills_data: dict[str, Any],
-    effects: dict[str, Any],
+    effects: EffectsDict,
     knowledge_ratings: dict[str, int],
     extra_categories: dict[str, str] | None = None,
 ) -> SkillMods:
@@ -421,7 +421,7 @@ def _merge_skill_ratings(base: dict[str, int], extra: dict[str, int]) -> dict[st
 def resolve_skillsofts(
     gear_items: list[dict[str, Any]],
     skills_data: dict[str, Any],
-    effects: dict[str, Any],
+    effects: EffectsDict,
     warnings: list[str],
 ) -> dict[str, Any]:
     wires = int(effects.get("skillwires") or 0)

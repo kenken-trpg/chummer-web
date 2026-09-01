@@ -20,9 +20,10 @@ from .._common import (
     _limit_kind,
     limit_condition_label,
 )
+from ..effects import EffectsDict
 
 
-def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: dict[str, Any], source: str) -> bool:
+def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     for _once in (True,):
         if tag == "specificattribute":
             name = ATTR_ALIASES.get((fields.get("name") or "").upper())

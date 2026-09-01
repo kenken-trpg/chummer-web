@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any
 
 from .._common import _as_int
+from ..effects import EffectsDict
 
 
-def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: dict[str, Any], source: str) -> bool:
+def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     for _once in (True,):
         if tag in {"skillgroup", "skillcategory"}:
             name = (fields.get("name") or node.get("value") or "").strip()
@@ -19,16 +20,17 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: dict[
             if not name or bonus == 0:
                 continue
             exclude = (fields.get("exclude") or "").strip()
-            key = "skill_group_mods" if tag == "skillgroup" else "skill_category_mods"
-            effects[key].append(
-                {
-                    "name": name,
-                    "bonus": bonus,
-                    "exclude": exclude,
-                    "condition": (fields.get("condition") or "").strip(),
-                    "source": source,
-                }
-            )
+            row = {
+                "name": name,
+                "bonus": bonus,
+                "exclude": exclude,
+                "condition": (fields.get("condition") or "").strip(),
+                "source": source,
+            }
+            if tag == "skillgroup":
+                effects["skill_group_mods"].append(row)
+            else:
+                effects["skill_category_mods"].append(row)
         elif tag == "unlockskills":
             name = (node.get("attrs") or {}).get("name") or fields.get("name") or node.get("value") or ""
             name = str(name).strip()

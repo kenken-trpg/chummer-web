@@ -13,9 +13,10 @@ from .._common import (
     _as_int,
     _bonus_int,
 )
+from ..effects import EffectsDict
 
 
-def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: dict[str, Any], source: str) -> bool:
+def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     for _once in (True,):
         if tag == "adeptpowerpoints":
             effects["adept_power_points"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))

@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from ...improvements import EffectsDict
 from ...models import CharacterState, InitiationChoice
 from ..bundle_types import InitiationBundle
 from ..constants import INITIATION_KARMA_FLAT, INITIATION_KARMA_PER_GRADE, MAG_TALENTS
@@ -23,7 +24,7 @@ from ._common import _magic_grade_discount
 
 
 def apply_free_metamagics(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     initiation: InitiationBundle,
     talent_name: str,
     warnings: list[str],

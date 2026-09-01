@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...data_loader import catalog, eval_formula
+from ...improvements import EffectsDict
 from ...models import CharacterState, SpiritInstall
 from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
@@ -43,7 +44,7 @@ def addspirit_option_names() -> list[str]:
 
 
 def bind_extra_spirits(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
     warnings: list[str],

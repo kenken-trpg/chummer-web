@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...improvements import ATTR_ALIASES, collect_effects
+from ...improvements import ATTR_ALIASES, EffectsDict, collect_effects
 from ...models import CharacterState
 from ..constants import MENTOR_SPIRIT_ID
 from ..contacts import apply_excon_ware_ban
@@ -30,7 +30,7 @@ from .context import Ctx
 
 def resolve_attribute_selects(
     state: CharacterState,
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
 ) -> tuple[dict[str, int], list[str]]:
     warnings: list[str] = []

@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from ...improvements import EffectsDict, empty_effects
 from ...models import CareerBaseline, CharacterState
 from ..bundle_types import GearBundle
 from ..constants import (
@@ -50,12 +51,12 @@ def career_raise_karma(
     skill_totals: dict[str, int],
     skills_data: dict[str, Any],
     *,
-    effects: dict[str, Any] | None = None,
+    effects: EffectsDict | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
     total = 0
     lines: list[dict[str, Any]] = []
-    eff = effects or {}
+    eff = effects or empty_effects()
     base_attrs = baseline.attributes or {}
     for key, rating in (state.attributes or {}).items():
         if key == "ESS":

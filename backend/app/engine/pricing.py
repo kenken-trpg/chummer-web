@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import format_avail
+from ..improvements import EffectsDict
 from .bundle_types import GearBundle
 from .constants import (
     BLACK_MARKET_AVAIL_BONUS,
@@ -22,7 +23,7 @@ from .karma import _floor_tenth
 def apply_ware_essence_multipliers(
     cyber: list[dict[str, Any]],
     bio: list[dict[str, Any]],
-    effects: dict[str, Any],
+    effects: EffectsDict,
 ) -> tuple[float, float]:
     cmult = int(effects.get("cyberware_ess_multiplier") or 100)
     bmult = int(effects.get("bioware_ess_multiplier") or 100)
@@ -129,7 +130,7 @@ def apply_purchase_discounts(
     gear: dict[str, Any],
     cyber_installed: list[dict[str, Any]],
     bio_installed: list[dict[str, Any]],
-    effects: dict[str, Any],
+    effects: EffectsDict,
     *,
     black_market_category: str = "",
 ) -> None:

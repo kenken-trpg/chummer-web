@@ -11,6 +11,7 @@ from typing import Any
 
 from ._common import ATTR_ALIASES, _as_int, substitute_rating
 from .effects import (
+    EffectsDict,
     compact_limit_modifiers,
     compact_special_armor,
     empty_effects,
@@ -20,6 +21,7 @@ from .nodes import apply_bonus_nodes
 
 __all__ = [
     "ATTR_ALIASES",
+    "EffectsDict",
     "_as_int",
     "apply_bonus_nodes",
     "collect_effects",
@@ -45,9 +47,8 @@ def limit_modifiers_from_nodes(nodes: list[dict[str, Any]], rating: int = 1) -> 
     return compact_limit_modifiers(effects)
 
 
-def collect_effects(sources: list[tuple[str, list[dict[str, Any]]]]) -> dict[str, Any]:
+def collect_effects(sources: list[tuple[str, list[dict[str, Any]]]]) -> EffectsDict:
     effects = empty_effects()
     for source, nodes in sources:
         apply_bonus_nodes(nodes, effects, source)
-    effects["enabled_tabs"] = sorted(effects["enabled_tabs"])
     return effects

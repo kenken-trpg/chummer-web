@@ -22,7 +22,7 @@ from ..data_loader import (
     parse_avail,
     sum_avail,
 )
-from ..improvements import ATTR_ALIASES, _as_int
+from ..improvements import ATTR_ALIASES, EffectsDict, _as_int
 from .lookups import _grade_by_name
 
 
@@ -86,7 +86,7 @@ def _avail_entries(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]
     return out
 
 
-def _restricted_gear_slots(effects: dict[str, Any]) -> list[int]:
+def _restricted_gear_slots(effects: EffectsDict) -> list[int]:
     slots: list[int] = []
     for row in effects.get("restricted_gear") or []:
         cap = max(0, int(row.get("availability") or 0))
@@ -96,7 +96,7 @@ def _restricted_gear_slots(effects: dict[str, Any]) -> list[int]:
     return slots
 
 
-def _check_avail_limit(items: list[dict[str, Any]], effects: dict[str, Any], errors: list[str]) -> None:
+def _check_avail_limit(items: list[dict[str, Any]], effects: EffectsDict, errors: list[str]) -> None:
     limit = CHARGEN_AVAIL_MAX
     slots = _restricted_gear_slots(effects)
     over = sorted(items, key=lambda row: int(row.get("avail_value") or 0), reverse=True)

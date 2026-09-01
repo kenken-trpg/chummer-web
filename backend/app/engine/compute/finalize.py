@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...improvements import EffectsDict
 from ..bundle_types import MovementBundle
 from ..constants import NUYEN_CHARGEN_KEEP_MAX
 from ..formulas import _add_leading_int, _ceil_div, _replace_leading_int
@@ -30,7 +31,7 @@ from ..ware import limb_attribute_replace
 from .context import Ctx
 
 
-def resolve_movement(meta: dict[str, Any], effects: dict[str, Any]) -> MovementBundle:
+def resolve_movement(meta: dict[str, Any], effects: EffectsDict) -> MovementBundle:
     category = "Ground"
     walk = str(meta.get("walk") or "2/1/0")
     run = str(meta.get("run") or "4/0/0")

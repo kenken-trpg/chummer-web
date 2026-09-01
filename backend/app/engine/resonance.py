@@ -15,6 +15,7 @@ import math
 from typing import Any
 
 from ..data_loader import MATRIX_ATTRIBUTES, eval_formula
+from ..improvements import EffectsDict, empty_effects
 from ..models import CharacterState, ComplexFormInstall, SpriteInstall
 from .bundle_types import ComplexFormsBundle, SpritesBundle, SubmersionBundle
 from .constants import COMPLEX_FORM_KARMA, COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
@@ -63,7 +64,7 @@ def _cyberadept_res_penalty_reduction(
 
 
 def apply_granted_echoes(
-    effects: dict[str, Any],
+    effects: EffectsDict,
     submersion: SubmersionBundle,
     qualities: list[dict[str, Any]],
     warnings: list[str],
@@ -110,13 +111,13 @@ def apply_granted_echoes(
 
 
 def _complex_form_fading_mod(
-    effects: dict[str, Any] | None,
+    effects: EffectsDict | None,
     name: str,
     label: str,
     extra: str,
 ) -> int:
-    total = int((effects or {}).get("fading_value") or 0)
-    for row in (effects or {}).get("fading_value_specific") or []:
+    total = int((effects or empty_effects()).get("fading_value") or 0)
+    for row in (effects or empty_effects()).get("fading_value_specific") or []:
         specific = str(row.get("specific") or "").strip()
         if not specific:
             continue
@@ -139,7 +140,7 @@ def resolve_complex_forms(
     res: int,
     attrs: dict[str, int],
     quality_names: set[str],
-    effects: dict[str, Any] | None = None,
+    effects: EffectsDict | None = None,
 ) -> ComplexFormsBundle:
     warnings: list[str] = []
     public: list[dict[str, Any]] = []
@@ -147,7 +148,7 @@ def resolve_complex_forms(
     if talent_name in COMPLEX_FORM_TALENTS and stream:
         state.stream_id = stream["id"]
     resist, resist_attrs = tradition_resist(stream, attrs)
-    resist += int((effects or {}).get("fading_resist") or 0)
+    resist += int((effects or empty_effects()).get("fading_resist") or 0)
     if talent_name not in COMPLEX_FORM_TALENTS:
         state.complex_forms = []
         if talent_name not in RES_TALENTS:

@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any
 
 from .._common import _as_int
+from ..effects import EffectsDict
 
 
-def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: dict[str, Any], source: str) -> bool:
+def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     for _once in (True,):
         if tag == "cyberseeker":
             target = (node.get("value") or fields.get("name") or "").upper()

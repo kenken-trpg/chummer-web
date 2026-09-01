@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import catalog
+from ..improvements import EffectsDict
 from ..models import CharacterState, MartialArtInstall
 from .bundle_types import MartialBundle
 from .constants import (
@@ -64,7 +65,7 @@ def _martial_art_spec_options(bonus_nodes: list[dict[str, Any]] | None) -> list[
 
 def sync_quality_martial_arts(
     state: CharacterState,
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
 ) -> list[str]:
     """Ensure free martial arts granted by martialart qualities exist; drop orphans."""

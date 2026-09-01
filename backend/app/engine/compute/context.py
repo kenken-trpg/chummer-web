@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from ...improvements import EffectsDict, empty_effects
 from ...models import CharacterState
 from ..bundle_types import (
     AdeptBundle,
@@ -82,7 +83,7 @@ class Ctx:
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 
     # --- effects / binders ------------------------------------------------
-    effects: dict[str, Any] = field(default_factory=dict)
+    effects: EffectsDict = field(default_factory=empty_effects)
     attr_max_bonus: dict[str, int] = field(default_factory=dict)
     limb_quality: dict[str, Any] | None = None
     special_key: str | None = None

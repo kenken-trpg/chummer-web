@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import catalog
+from ..improvements import EffectsDict
 from ..models import CharacterState, ContactInstall
 from .bundle_types import ContactsBundle, GearBundle
 from .constants import (
@@ -31,7 +32,7 @@ from .constants import (
 
 def sync_quality_contacts(
     state: CharacterState,
-    effects: dict[str, Any],
+    effects: EffectsDict,
     qualities: list[dict[str, Any]],
 ) -> list[str]:
     """Create/update free contacts granted by addcontact qualities; drop orphans."""

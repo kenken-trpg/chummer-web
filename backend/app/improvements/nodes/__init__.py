@@ -12,12 +12,13 @@ from __future__ import annotations
 from typing import Any
 
 from .._common import IMPLEMENTED, SILENT_TAGS
+from ..effects import EffectsDict
 from . import magic, skills, social, stats
 
 _DOMAINS = (stats.apply, skills.apply, magic.apply, social.apply)
 
 
-def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: dict[str, Any], source: str) -> None:
+def apply_bonus_nodes(nodes: list[dict[str, Any]], effects: EffectsDict, source: str) -> None:
     for node in nodes:
         tag = node.get("tag", "")
         if tag not in IMPLEMENTED:

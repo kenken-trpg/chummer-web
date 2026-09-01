@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...data_loader import catalog, drug_effect_summary, drug_node_value, eval_formula
-from ...improvements import apply_bonus_nodes
+from ...improvements import EffectsDict, apply_bonus_nodes
 from ...models import CharacterState
 
 _DRUG_CATEGORIES = {"Drugs", "Toxins", "Chemicals"}
@@ -67,7 +67,7 @@ def _format_drug_duration(expr: str, bod: int) -> str:
 def apply_active_drugs(
     state: CharacterState,
     attr_totals: dict[str, int],
-    effects: dict[str, Any],
+    effects: EffectsDict,
 ) -> list[dict[str, Any]]:
     """Fold the ``<bonus>`` of every drug/toxin flagged ``active`` into ``effects``
     and return a per-drug summary for the derived output."""
