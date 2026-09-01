@@ -125,19 +125,27 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      addecho grants); `engine/martial_arts.py` (styles + techniques),
      `engine/contacts.py` (contact network + Ex-Con / Erased caps),
      `engine/skills.py` (knowledge / specialization / exotic / skillsoft
-     resolution + skill-bonus modifiers), and `engine/limits.py` (chargen
-     avail / device-rating / ware-attribute-bonus caps). `resolve_gear()` and
-     `compute()` stay in `__init__.py` as orchestrators. `__init__.py` is
-     ~3.3k lines, down from ~10.5k.
+     resolution + skill-bonus modifiers), `engine/limits.py` (chargen
+     avail / device-rating / ware-attribute-bonus caps), the `engine/ware/`
+     package: `ware/rating.py` (formula-driven rating bounds + `ware_ranges`),
+     `ware/limbs.py` (cyberlimb attributes + Redliner / Cyberseeker),
+     `ware/sides.py` (Left/Right assignment for paired 'ware), `ware/vehicles.py`
+     (vehicle-hosted cyberware), `ware/_common.py` (`_cascade_orphans` /
+     `_public_installed`) and `ware/resolve.py` (`resolve_ware` + subsystems +
+     grade clamping + required-'ware warnings), and `engine/qualities.py`
+     (`gather_qualities` / `apply_quality_rules` + the `bind_*` binders + the
+     `_quality_*` extra-pick inspectors + `quality_requirement_context` /
+     `resolve_quality_sides`). `resolve_gear()` and `compute()` stay in
+     `__init__.py` as orchestrators. `__init__.py` is ~2.1k lines, down from
+     ~10.5k — the engine split is effectively done.
    - The mid-file `from .priority import (...)` / `from .lookups import (...)`
      blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
      the lifestyle-quality helper lands in a module and imports move to the top.
-   - *Next (own session):* `engine/ware/` (the cyberware / bioware / cyberlimb
-     / vehicle-hosted-ware pipeline — `resolve_ware` + the redliner / limb-side
-     logic) and `engine/qualities.py` (`gather_qualities` / `apply_quality_rules`
-     + the `bind_*` / `_quality_*` helpers). After those, `__init__.py` is just
-     `compute()` / `resolve_gear()` + a handful of attribute / reward / movement
-     helpers.
+   - *Next (own session):* only the `["B023", "E402"]` cleanup above — move
+     `apply_lifestyle_cost_mod` to a module and `find_metatype` to
+     `engine/lookups.py` so every mid-file `from .X import` can hoist to the
+     top. What's left in `__init__.py` is `compute()` / `resolve_gear()` + a
+     handful of attribute / reward / movement / lifestyle helpers.
 2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/

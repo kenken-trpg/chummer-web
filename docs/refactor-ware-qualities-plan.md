@@ -286,3 +286,42 @@ git --no-pager diff --stat
 ```
 
 Frontend is untouched but `make check` still runs it — no-op there.
+
+---
+
+## Step 1 / Step 2 — done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `__init__.py`:
+**3,323 → 2,111 lines**. Every commit `make check` green (468 passed) +
+snapshot gate 6 passed, byte-identical.
+
+| commit | what |
+| --- | --- |
+| `de39a33` | 1a prep — `_normalize_side` (+ `SIDES` / `_SLOT_JA` / `_SIDE_JA`) → `constants.py`; `_enhancement_by_id` → `lookups.py`; `resolve_enhancements` → `magic/powers.py` |
+| `e1156b1` | 1b — `ware/rating.py`: `racial_formula_extras`, `ware_rating_bounds`, `_clamp_ware_rating`, `ware_ranges` |
+| `36561f8` | 1c — `ware/limbs.py`: `_apply_limb_attributes`, `limb_attribute_replace`, `redliner_slot_caps`, `count_redliner_limbs`, `apply_cyberseeker`, `redliner_incompat_warnings`, `_is_*_limb` / `_limb_slot_count` + the `LIMB_*` constant block |
+| `edb6beb` | 1d — `ware/sides.py`: `_occupied_sides`, `_next_free_side`, `ensure_sides`, `_side_conflicts` |
+| `7c569dd` | 1e — `ware/vehicles.py`: `_vehicle_mod_hosts`, `_ware_fits_vehicle_mod`, `_drop_invalid_vehicle_ware`, `_vehicle_hosted_ware_ids`, `_zero_vehicle_hosted_essence`, `_attach_ware_to_vehicle_mods`; plus `ware/_common.py` (`_cascade_orphans`, `_public_installed`) to keep `resolve ↔ vehicles` a DAG |
+| `d78a88c` | 1f — `ware/resolve.py`: `ensure_subsystems`, `_ensure_kind_subsystems`, `resolve_ware`, `_first_allowed_grade`, `_clamp_ware_grades`, `_installed_ware_names`, `_required_warnings`. `resolve_cyberware` **dropped** (dead code). |
+| `71f7f95` | 2a — `qualities.py`: `is_way_quality`, `sanitize_quality_ids`, `quality_needs_extra`, the `_quality_*` inspectors, `_quality_has_selectside` / `_quality_limb_slot` (moved from the 'ware region), `_quality_extra_key_owned`, `bind_action_dice_pools`, `bind_select_powers`, `free_powers_from_grants`, `quality_requirement_context`, `resolve_quality_sides` |
+| `0d4d6eb` | 2b — `qualities.py`: `gather_qualities`, `apply_quality_rules` |
+
+Deviations from the plan above:
+
+- 1a folded all three relocations into one commit (diff stayed small).
+- 1e/1f: rather than land 1f first (which would make `ware → app.engine`
+  during `ensure_subsystems`'s `_vehicle_mod_hosts` call), added
+  `ware/_common.py` for the two leaf helpers both `resolve.py` and
+  `vehicles.py` need — mirrors `gear/_common.py`.
+- With `resolve_ware` gone, `__init__.py` also shed `CyberwareInstall`,
+  `_capacity_value` / `_device_rating_of`, `_grade_by_name` / `_ware_by_id`
+  / `_ware_by_name`, `_iter_vehicle_hosts` / `mod_fits_vehicle`, `_as_int`,
+  `requirement_tree_met`, `re`, `_SLOT_JA` / `_SIDE_JA`, the `QUALITY_*`
+  suffix constants and `POSITIVE_QUALITY_KARMA_CAP` — none were external
+  re-exports. `quality_addspirit_extra_key` kept its re-export (an
+  `# noqa: F401`) for `tests/test_engine.py`.
+
+## Step 3 — remaining
+
+The `["B023", "E402"]` `pyproject` cleanup (§Step 3 above) is still open and
+independent — its own session.
