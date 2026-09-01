@@ -344,6 +344,30 @@ def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: E
             weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), bonus)
 
 
+def apply_smartlink_accuracy(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
+    """Add a smartgun system's Accuracy only when the character has a smartlink.
+
+    SR5: a smartgun grants +2 Accuracy with an implanted smartlink, +1 with one
+    built into an imaging device, nothing on its own. ``effects["smartlink"]``
+    carries that value (0 / 1 / 2); the smartgun accessory's own Accuracy (2)
+    was withheld in ``_resolve_weapon_accessories``.
+    """
+    smartlink = int((effects or empty_effects()).get("smartlink") or 0)
+    if not weapons or smartlink <= 0:
+        return
+    for weapon in weapons:
+        smartgun_acc = max(
+            (
+                _leading_int(acc.get("accuracy")) or 0
+                for acc in weapon.get("accessories") or []
+                if "Smartgun" in str(acc.get("name") or "")
+            ),
+            default=0,
+        )
+        if smartgun_acc:
+            weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), min(smartgun_acc, smartlink))
+
+
 def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
     warnings: list[str] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
@@ -488,7 +512,11 @@ def _resolve_weapon_accessories(
                 "ap": _leading_int(spec.get("ap")) or 0,
                 "reach": _leading_int(spec.get("reach")) or 0,
             }
-            weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
+            # A smartgun system's Accuracy is conditional on a smartlink — held
+            # back here and added by ``apply_smartlink_accuracy`` once the
+            # smartlink improvement (implant or imaging device) is known.
+            if "Smartgun" not in str(spec.get("name") or ""):
+                weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
             weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
             weapon["conceal"] = _add_leading_int(str(weapon.get("conceal") or "0") or "0", acc_bonus["conceal"])
             weapon["damage"] = _add_leading_int(str(weapon.get("damage") or ""), acc_bonus["damage"])

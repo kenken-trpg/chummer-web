@@ -41,6 +41,7 @@ from ..gear import (
     apply_active_drugs,
     apply_lifestyle_cost_mod,
     apply_reach_bonus,
+    apply_smartlink_accuracy,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
     resolve_lifestyles,
@@ -346,6 +347,9 @@ def gear_phase(ctx: Ctx) -> None:
     for source, nodes in ctx.gear["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
     ctx.active_drugs = apply_active_drugs(ctx.state, ctx.attr_totals, ctx.effects)
+    # After every bonus source (ware folded in the effects phase, gear + drugs
+    # just now) so a smartlink from any of them counts.
+    apply_smartlink_accuracy(ctx.gear.get("weapons"), ctx.effects)
     attach_weapon_focus_dice(
         ctx.state, list(ctx.foci.get("public") or []), list(ctx.gear.get("weapons") or []), ctx.warnings
     )

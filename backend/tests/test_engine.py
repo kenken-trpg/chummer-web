@@ -2703,6 +2703,7 @@ PREDATOR = "971c711b-db32-4339-9203-865ef38f350e"
 LIGHT_FIRE_70 = "67474de7-d29b-4b31-a6ae-1e2e981fa5d2"
 KNIFE = "eb16de72-e646-4880-aa5b-21a5a0a2b342"
 INTERNAL_SMARTGUN = "d57d2c64-1f61-4f5f-a465-8ce0dfacec6a"
+SMARTLINK_WARE = "35dba0e2-1d3d-4386-a657-17fedca4622d"  # Smartlink (Eyeware) cyberware, +2
 APDS = "ef9c8aae-26df-4fe6-88b3-79fbb5eb77c5"
 REGULAR_AMMO = "b2a0b340-c793-4322-8422-8b03d18a6fae"
 GEL_ROUNDS = "0c8d16cb-6e96-4d95-8454-104a36091cf9"
@@ -3401,7 +3402,7 @@ def test_predator_purchase() -> None:
     assert row["nuyen"] == 725
     assert row["damage"] == "8P"
     assert row["ap"] == "-1"
-    assert row["accuracy"] == "7"
+    assert row["accuracy"] == "5"  # base 5; the included smartgun gives nothing without a smartlink
     assert any(acc["name"] == "Smartgun System, Internal" and acc["included"] for acc in row["accessories"])
     assert out.derived["errors"] == []
 
@@ -3734,7 +3735,7 @@ def test_predator_laser_sight() -> None:
         )
     )
     row = out.derived["weapons"][0]
-    assert row["accuracy"] == "8"
+    assert row["accuracy"] == "6"  # base 5 + laser sight 1; smartgun withheld (no smartlink)
     assert row["nuyen"] == 850
     assert out.derived["nuyen_spent"] == 850
     names = {acc["name"] for acc in row["accessories"]}
@@ -3759,7 +3760,7 @@ def test_internal_smartgun_retrofit_costs_weapon_price() -> None:
     smart = next(acc for acc in row["accessories"] if acc["name"] == "Smartgun System, Internal")
     assert smart["included"] is False
     assert smart["nuyen"] == 200
-    assert row["accuracy"] == "9"
+    assert row["accuracy"] == "7"  # Light Fire 70 base 7; retrofit smartgun inert without a smartlink
     assert row["nuyen"] == 400
     assert out.derived["nuyen_spent"] == 400
     assert out.derived["errors"] == []
@@ -3807,7 +3808,37 @@ def test_predator_keeps_included_internal_smartgun() -> None:
     assert smarts[0]["included"] is True
     assert smarts[0]["nuyen"] == 0
     assert row["nuyen"] == 725
-    assert row["accuracy"] == "7"
+    assert row["accuracy"] == "5"  # duplicate smartgun still adds nothing without a smartlink
+
+
+def test_smartlink_ware_activates_smartgun_accuracy() -> None:
+    base = compute(_mundane("sl-none", weapons=[WeaponInstall(weapon_id=PREDATOR)]))
+    assert base.derived["weapons"][0]["accuracy"] == "5"
+
+    linked = compute(
+        _mundane(
+            "sl-cyber",
+            weapons=[WeaponInstall(weapon_id=PREDATOR)],
+            cyberware=[CyberwareInstall(ware_id=SMARTLINK_WARE)],
+        )
+    )
+    row = linked.derived["weapons"][0]
+    assert row["accuracy"] == "7"  # base 5 + smartgun 2, now that a smartlink is present
+    assert linked.derived["errors"] == []
+
+
+def test_smartlink_ware_without_smartgun_leaves_accuracy_alone() -> None:
+    # A smartlink on its own does nothing; the Knife has no smartgun system.
+    out = compute(
+        _mundane(
+            "sl-noweapon",
+            weapons=[WeaponInstall(weapon_id=KNIFE)],
+            cyberware=[CyberwareInstall(ware_id=SMARTLINK_WARE)],
+        )
+    )
+    knife = out.derived["weapons"][0]
+    base = compute(_mundane("sl-knife-base", weapons=[WeaponInstall(weapon_id=KNIFE)]))
+    assert knife["accuracy"] == base.derived["weapons"][0]["accuracy"]
 
 
 def test_predator_apds_changes_ap() -> None:

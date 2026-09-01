@@ -107,6 +107,7 @@ from .gear import (  # noqa: F401  (gear pipeline clusters; see engine/gear/)
     apply_active_drugs,
     apply_lifestyle_cost_mod,
     apply_reach_bonus,
+    apply_smartlink_accuracy,
     apply_unarmed_bonuses,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
