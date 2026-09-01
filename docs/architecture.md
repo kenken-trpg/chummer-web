@@ -111,7 +111,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      pipeline + DV/accuracy binders), `gear/vehicles.py` (stat formatting +
      vehicle/mod constraints + R5 mod-slot accounting + drone/mod/mount
      resolvers), `gear/misc.py` (`_misc_external_hosts` + the catch-all
-     `_resolve_misc_gear`), and the `engine/magic/` package: `magic/_common.py`
+     `_resolve_misc_gear`), `gear/lifestyle.py` (monthly cost + LP budget +
+     lifestyle qualities + `apply_lifestyle_cost_mod`), and the `engine/magic/`
+     package: `magic/_common.py`
      (`spell_drain_value` / `tradition_resist` / `spell_cast_info` /
      `_magic_grade_discount` / `_active_skill_rating_from_state`),
      `magic/powers.py` (adept powers + `power_*` helpers + Way discounts),
@@ -136,16 +138,12 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      (`gather_qualities` / `apply_quality_rules` + the `bind_*` binders + the
      `_quality_*` extra-pick inspectors + `quality_requirement_context` /
      `resolve_quality_sides`). `resolve_gear()` and `compute()` stay in
-     `__init__.py` as orchestrators. `__init__.py` is ~2.1k lines, down from
-     ~10.5k — the engine split is effectively done.
-   - The mid-file `from .priority import (...)` / `from .lookups import (...)`
-     blocks and the `["B023", "E402"]` ignore in `pyproject.toml` go away once
-     the lifestyle-quality helper lands in a module and imports move to the top.
-   - *Next (own session):* only the `["B023", "E402"]` cleanup above — move
-     `apply_lifestyle_cost_mod` to a module and `find_metatype` to
-     `engine/lookups.py` so every mid-file `from .X import` can hoist to the
-     top. What's left in `__init__.py` is `compute()` / `resolve_gear()` + a
-     handful of attribute / reward / movement / lifestyle helpers.
+     `__init__.py` as orchestrators, ~2.0k lines down from ~10.5k. The
+     `["B023", "E402"]` per-file ignore is retired: `find_metatype` moved to
+     `engine/lookups.py`, every `from .X import` is top-of-file, and the
+     lifestyle closure lives in `gear/lifestyle.py`. **The engine split is
+     done** — what remains in `__init__.py` is `compute()` / `resolve_gear()`
+     + a handful of attribute / reward / movement helpers.
 2. **Split `CharacterSheet.tsx`** (~1.2k lines) into per-section components.
    - *Done:* plain-text sheet → `lib/character/text-sheet.ts`; shared
      `Section` / `GradeList` / `VehicleBlock` → `components/character/sheet/

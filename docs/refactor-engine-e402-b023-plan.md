@@ -234,3 +234,29 @@ grep -n "B023\|E402" pyproject.toml
 ```
 
 Frontend is untouched but `make check` still runs it — no-op there.
+
+---
+
+## Done
+
+Executed in session `session_014XsGWooKn7vH58HZzP3nMJ`. `__init__.py`:
+**2,111 → 1,953 lines**. Both commits `make check` green (468 passed) +
+snapshot gate 6 passed, byte-identical. The `per-file-ignores` entry for
+`app/engine/__init__.py` is gone; `ruff check --select B023,E402 app/` is
+clean with no suppression.
+
+| commit | track | what |
+| --- | --- | --- |
+| `f139146` | A | `find_metatype` → `engine/lookups.py` (re-exported `# noqa: F401`); all 15 mid-file `from .X import (...)` blocks hoisted to the top, block-level `# noqa: E402` stripped; `pyproject` ignore → `["B023"]` |
+| `5cab71c` | B | lifestyle resolution → `engine/gear/lifestyle.py` (`resolve_lifestyles` + `_resolve_one_lifestyle` + `apply_lifestyle_cost_mod`); the loop body is now a function so the `_append_lifestyle_quality` closure no longer binds a loop var; `pyproject` ignore deleted outright |
+
+Deviations from the plan above:
+
+- B1 + B2 folded into one commit — B1 alone (module added, unused) has no
+  runtime effect, so a green run there proves nothing; the split only made
+  sense if it bracketed a behaviour change.
+- Track C (docs) folded here rather than its own commit.
+
+The engine split is now complete. `__init__.py` is `compute()` /
+`resolve_gear()` + `find_metatype` re-export + ~14 attribute / reward /
+movement / career-baseline / nuyen-breakdown helpers.
