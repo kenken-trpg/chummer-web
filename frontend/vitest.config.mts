@@ -14,5 +14,8 @@ export default defineConfig({
     environment: "jsdom",
     include: ["**/*.test.{ts,tsx}"],
     exclude: ["node_modules", ".next"],
+    // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
+    // default when the machine / CI runner is under load.
+    testTimeout: 15000,
   },
 });
