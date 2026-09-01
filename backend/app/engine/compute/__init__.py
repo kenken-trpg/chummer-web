@@ -31,15 +31,11 @@ from ...models import (
     CareerBaseline,
     CharacterState,
     CommlinkInstall,
-    RewardEntry,
     WeaponInstall,
 )
 from ..constants import (
     ADEPT_TALENTS,
     BLACK_MARKET_AVAIL_BONUS,
-    BUILD_METHOD_KARMA,
-    CAREER_SKILL_GROUP_MAX,
-    CAREER_SKILL_MAX,
     COMPLEX_FORM_TALENTS,
     FOCUS_TALENTS,
     KARMA_ACTIVE_SKILL,
@@ -131,10 +127,8 @@ from ..limits import (  # (chargen avail / device-rating / ware-attr caps)
     _avail_entries,
     _check_avail_limit,
     _check_device_rating_limit,
-    _check_ware_attribute_cap,
     _device_rating_entries,
     _finalize_avail_tree,
-    _ware_attribute_bonuses,
 )
 from ..lookups import (  # catalog single-row accessors; see engine/lookups.py
     _item_by_id,
@@ -173,17 +167,14 @@ from ..pricing import (  # (post-resolve cost/avail adjustments)
     apply_black_market_avail,
     apply_overclocker,
     apply_purchase_discounts,
-    apply_ware_essence_multipliers,
 )
 from ..priority import (
     heritage_options,
-    normalize_build_method,
     priorities_are_unique,
     priority_value,
     resolve_talent_for_method,
     sum_to_ten_spent,
     talent_special,
-    validate_priorities,
 )
 from ..qualities import (  # (quality gather / extra-pick / binder pipeline; see engine/qualities.py)
     _quality_has_selectside,
@@ -194,10 +185,8 @@ from ..qualities import (  # (quality gather / extra-pick / binder pipeline; see
     gather_qualities,
     quality_needs_extra,
     quality_requirement_context,
-    resolve_quality_sides,
 )
 from ..resonance import (  # (technomancer pipeline; see engine/resonance.py)
-    _cyberadept_res_penalty_reduction,
     apply_granted_echoes,
     attach_complex_form_tests,
     attach_sprite_tests,
@@ -221,22 +210,19 @@ from ..skills import (  # (knowledge / specialization / exotic / skillsoft resol
 from ..ware import (  # (cyberware/bioware pipeline clusters; see engine/ware/)
     _attach_ware_to_vehicle_mods,
     _clamp_ware_grades,
-    _drop_invalid_vehicle_ware,
-    _installed_ware_names,
     _public_installed,
-    _required_warnings,
-    _side_conflicts,
-    _vehicle_hosted_ware_ids,
-    _vehicle_mod_hosts,
-    _zero_vehicle_hosted_essence,
     apply_cyberseeker,
-    ensure_subsystems,
     limb_attribute_replace,
     redliner_incompat_warnings,
-    resolve_ware,
     ware_ranges,
 )
+from .bootstrap import (
+    bootstrap,
+    sync_reward_totals,  # noqa: F401  (re-exported via app.engine)
+)
 from .context import Ctx
+from .essence import essence
+from .ware import ware
 
 
 def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
@@ -415,27 +401,6 @@ def nuyen_spend_breakdown(
         ("精霊", int(spirits_nuyen or 0)),
     ]
     return [{"kind": "nuyen", "label": label, "amount": amount} for label, amount in buckets if amount]
-
-
-def sync_reward_totals(state: CharacterState) -> None:
-    """Keep earned pools aligned with reward_log when the ledger has rows."""
-    log = list(getattr(state, "reward_log", None) or [])
-    cleaned: list[RewardEntry] = []
-    for raw in log:
-        if isinstance(raw, RewardEntry):
-            entry = raw
-        elif isinstance(raw, dict):
-            entry = RewardEntry.model_validate(raw)
-        else:
-            continue
-        entry.karma = max(0, int(entry.karma or 0))
-        entry.nuyen = max(0, int(entry.nuyen or 0))
-        entry.label = str(entry.label or "").strip() or "報酬"
-        cleaned.append(entry)
-    state.reward_log = cleaned
-    if cleaned:
-        state.karma_earned = sum(int(row.karma or 0) for row in cleaned)
-        state.nuyen_earned = sum(int(row.nuyen or 0) for row in cleaned)
 
 
 def _effective_attr_spec(
@@ -752,34 +717,7 @@ def resolve_gear(
 
 def compute(state: CharacterState) -> CharacterState:
     ctx = Ctx(state=state, data=catalog())
-    ctx.state.build_method = normalize_build_method(getattr(ctx.state, "build_method", None))
-    ctx.is_karma = ctx.state.build_method == BUILD_METHOD_KARMA
-    ctx.career = bool(getattr(ctx.state, "career", False))
-    ctx.state.career = ctx.career
-    ctx.state.street_cred = max(0, int(getattr(ctx.state, "street_cred", 0) or 0))
-    ctx.state.notoriety_bonus = int(getattr(ctx.state, "notoriety_bonus", 0) or 0)
-    sync_reward_totals(ctx.state)
-    ctx.state.karma_earned = max(0, int(getattr(ctx.state, "karma_earned", 0) or 0))
-    ctx.state.nuyen_earned = max(0, int(getattr(ctx.state, "nuyen_earned", 0) or 0))
-    ctx.skill_rating_cap = CAREER_SKILL_MAX if ctx.career else 6
-    ctx.skill_group_cap = CAREER_SKILL_GROUP_MAX if ctx.career else 6
-    ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
-    ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
-    ctx.attrs_spec = ctx.meta["attributes"]
-    ctx.warnings = _drop_invalid_vehicle_ware(ctx.state)
-    ensure_subsystems(ctx.state)
-    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware))
-    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware))
-    installed_names = {
-        "cyberware": _installed_ware_names("cyberware", ctx.state.cyberware),
-        "bioware": _installed_ware_names("bioware", ctx.state.bioware),
-    }
-    ctx.warnings.extend(
-        _required_warnings("cyberware", ctx.state.cyberware, installed_names, ctx.state.metatype, ctx.state.metavariant)
-    )
-    ctx.warnings.extend(
-        _required_warnings("bioware", ctx.state.bioware, installed_names, ctx.state.metatype, ctx.state.metavariant)
-    )
+    bootstrap(ctx)
 
     ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
     ctx.state.talent = ctx.talent["name"]
@@ -799,22 +737,9 @@ def compute(state: CharacterState) -> CharacterState:
     ctx.warnings.extend(ctx.mentor["warnings"])
     ctx.errors.extend(ctx.mentor["errors"])
     ctx.sources.extend(ctx.mentor["bonus_sources"])
-    vehicle_hosts = set(_vehicle_mod_hosts(ctx.state))
-    ctx.cyber_installed = resolve_ware("cyberware", ctx.state.cyberware, ctx.attrs_spec)
-    ctx.bio_installed = resolve_ware("bioware", ctx.state.bioware, ctx.attrs_spec)
-    resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors)
-    _finalize_avail_tree(ctx.cyber_installed, grade_kind="cyberware")
-    _finalize_avail_tree(ctx.bio_installed, grade_kind="bioware")
-    _zero_vehicle_hosted_essence(ctx.cyber_installed, vehicle_hosts)
-    ctx.installed = ctx.cyber_installed + ctx.bio_installed
-    hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
-    for item in ctx.installed:
-        if item.get("id") in hosted_ids:
-            continue
-        ctx.sources.append((item["name"], item.get("bonus") or []))
-    ctx.ware_attr_bonus = _ware_attribute_bonuses([item for item in ctx.installed if item.get("id") not in hosted_ids])
-    if not ctx.career:
-        _check_ware_attribute_cap(ctx.ware_attr_bonus, ctx.errors)
+
+    ware(ctx)
+
     ctx.effects = collect_effects(ctx.sources)
     apply_excon_ware_ban(ctx.cyber_installed + ctx.bio_installed, bool(ctx.effects.get("excon")), ctx.errors)
     bind_action_dice_pools(ctx.effects, ctx.qualities, ctx.state)
@@ -864,55 +789,7 @@ def compute(state: CharacterState) -> CharacterState:
     if ctx.special_key:
         ctx.enabled.add(ctx.special_key)
 
-    ess_start = float(ctx.attrs_spec.get("ESS", {}).get("max") or 6) + float(ctx.effects.get("essence_max_mod") or 0)
-    ctx.ess_lost_cyber, ctx.ess_lost_bio = apply_ware_essence_multipliers(
-        ctx.cyber_installed, ctx.bio_installed, ctx.effects
-    )
-    ctx.ess_lost = round(ctx.ess_lost_cyber + ctx.ess_lost_bio, 4)
-    if ctx.effects.get("disable_bioware") and ctx.bio_installed:
-        ctx.errors.append("Sensitive System などによりバイオウェアは装着できません")
-    ess_penalty = float(ctx.effects.get("essence_penalty") or 0)
-    ess_penalty_mag_exempt = float(ctx.effects.get("essence_penalty_mag_exempt") or 0)
-    ctx.ess = max(0.0, round(ess_start - ctx.ess_lost - ess_penalty, 2))
-    mag_relevant_loss = ctx.ess_lost + max(0.0, ess_penalty - ess_penalty_mag_exempt)
-    mag_penalty = int(math.ceil(mag_relevant_loss - 1e-9)) if mag_relevant_loss > 0 else 0
-    cyberadept_res_reduction = 0
-    if ctx.effects.get("cyberadept_daemon") and ctx.talent["name"] in RES_TALENTS:
-        cyberadept_res_reduction = _cyberadept_res_penalty_reduction(
-            max(0, int(ctx.state.submersion_grade or 0)),
-            ctx.ess_lost_cyber,
-            ctx.ess_lost_bio,
-        )
-
-    initiate_grade = max(0, int(ctx.state.initiate_grade or 0)) if ctx.talent["name"] in MAG_TALENTS else 0
-    submersion_grade = max(0, int(ctx.state.submersion_grade or 0)) if ctx.talent["name"] in RES_TALENTS else 0
-    ctx.ratings = {}
-    for key, spec in ctx.attrs_spec.items():
-        racial_min = int(spec["min"])
-        racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
-        raw = int(ctx.state.attributes.get(key, racial_min))
-        if key == "MAG":
-            if ctx.special_key == "MAG":
-                floor = max(ctx.talent_start, 1)
-                mag_cap = racial_max + initiate_grade
-                raw = max(floor, min(mag_cap, raw))
-                raw = max(0, raw - mag_penalty)
-            else:
-                raw = 0
-        elif key == "RES":
-            if ctx.special_key == "RES":
-                floor = max(ctx.talent_start, 1)
-                res_cap = racial_max + submersion_grade
-                raw = max(floor, min(res_cap, raw))
-                res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
-                raw = max(0, raw - res_penalty)
-            else:
-                raw = 0
-        elif key == "ESS":
-            raw = int(ctx.ess)
-        else:
-            raw = max(racial_min, min(racial_max, raw))
-        ctx.ratings[key] = raw
+    essence(ctx)
 
     ctx.quality_names = {q["name"] for q in ctx.qualities}
     ctx.initiation = resolve_initiation(
