@@ -688,7 +688,8 @@ input[type="search"] {
 
 @media print {
   @page {
-    margin: 12mm;
+    size: A4;
+    margin: 10mm;
   }
   html,
   body {
@@ -711,13 +712,16 @@ input[type="search"] {
     border-radius: 0;
     padding: 0;
     color: #111;
+  }
+  /* legacy standard/compact print: reflow the screen sheet into two columns */
+  .character-sheet:not(.character-sheet--print) {
     column-count: 2;
     column-gap: 9mm;
     column-fill: auto;
   }
   /* header + first ("コア") section run full width across both columns */
-  .character-sheet > .sheet-header,
-  .character-sheet > .sheet-section:first-of-type {
+  .character-sheet:not(.character-sheet--print) > .sheet-header,
+  .character-sheet:not(.character-sheet--print) > .sheet-section:first-of-type {
     column-span: all;
   }
   .character-sheet .sheet-section,
@@ -819,5 +823,189 @@ input[type="search"] {
     color: #111 !important;
     font-size: 9pt;
     line-height: 1.45;
+  }
+}
+
+/* --- print ("卓用 A4") sheet layout --- */
+/* Purpose-built table sheet: monochrome, dense, single column, deliberate
+ * page break after page 1. On screen it previews as an A4-ish sheet of paper;
+ * in @media print it drops the chrome and shrinks to ~8.5pt. */
+.character-sheet--print {
+  --print-scale: 1;
+  background: #fff;
+  color: #111;
+  border-color: #bbb;
+  max-width: 200mm;
+  margin-inline: auto;
+  padding: 12mm 12mm 16mm;
+  font-size: calc(0.82rem * var(--print-scale));
+  line-height: 1.4;
+}
+.character-sheet--print .sheet-section {
+  margin-bottom: 9px;
+}
+.character-sheet--print .sheet-section h3 {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  color: #111;
+  border-left-color: #111;
+}
+.character-sheet--print .sheet-section h4 {
+  font-size: 0.8rem;
+  margin-bottom: 3px;
+  color: #333;
+}
+.character-sheet--print .sheet-name,
+.character-sheet--print .sheet-header-stats b,
+.character-sheet--print .sheet-derived-grid b,
+.character-sheet--print .sheet-table td b {
+  color: #111;
+}
+.character-sheet--print .sheet-kicker,
+.character-sheet--print .sheet-meta,
+.character-sheet--print .sheet-dim,
+.character-sheet--print .sheet-note,
+.character-sheet--print .sheet-header-stats span {
+  color: #555;
+}
+.character-sheet--print .sheet-table th {
+  background: #f1f1f1;
+  color: #333;
+}
+.character-sheet--print .sheet-table th,
+.character-sheet--print .sheet-table td,
+.character-sheet--print .sheet-list li {
+  border-color: #bbb;
+  padding: 2px 6px;
+}
+.character-sheet--print .sheet-list li {
+  padding: 2px 0;
+}
+
+/* stat block */
+.print-attr-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.print-attr {
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 4px 2px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.15;
+}
+.print-attr span {
+  font-size: 0.62rem;
+  color: #555;
+  letter-spacing: 0.04em;
+}
+.print-attr b {
+  font-size: 1.05rem;
+  color: #111;
+}
+.print-attr em {
+  font-style: normal;
+  font-size: 0.6rem;
+  color: #555;
+}
+.print-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 3px 8px;
+}
+.print-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid #ccc;
+  padding: 2px 0;
+}
+.print-stat span {
+  color: #555;
+}
+.print-stat b {
+  color: #111;
+  font-weight: 600;
+}
+
+/* condition monitor */
+.print-cm-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.print-cm-label {
+  flex: 0 0 92px;
+  font-size: 0.78rem;
+  color: #555;
+  padding-top: 2px;
+}
+.print-cm-label b {
+  color: #111;
+}
+.print-cm-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.cm-box {
+  width: 6mm;
+  height: 6mm;
+  border: 1px solid #333;
+  border-radius: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cm-box--mark {
+  border-color: #111;
+  border-width: 2px;
+}
+.cm-box em {
+  font-style: normal;
+  font-size: 0.5rem;
+  color: #555;
+}
+.print-cm-boxes--overflow .cm-box {
+  border-style: dashed;
+}
+
+.print-page-2 {
+  display: contents;
+}
+
+@media screen {
+  .character-sheet--print {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  }
+}
+
+@media print {
+  .character-sheet--print {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: calc(8.5pt * var(--print-scale));
+  }
+  .character-sheet--print > .print-page-2 {
+    display: block;
+    break-before: page;
+  }
+  .character-sheet--print .sheet-section,
+  .character-sheet--print .sheet-block,
+  .character-sheet--print .sheet-table,
+  .character-sheet--print .print-cm-track {
+    break-inside: avoid;
+  }
+  .character-sheet--print .cm-box {
+    width: 5.2mm;
+    height: 5.2mm;
   }
 }

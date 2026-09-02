@@ -4,6 +4,7 @@ import type { SheetLayout } from "@/components/CharacterSheet";
 import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
+import { usePrintSheet } from "@/lib/character/usePrintSheet";
 
 export function Toolbar({
   ed,
@@ -44,6 +45,7 @@ export function Toolbar({
     refreshRoster,
   } = ed;
   const d = ch.derived;
+  const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   return (
     <div className="toolbar">
       <select
@@ -157,8 +159,8 @@ export function Toolbar({
           </select>
           <button
             className="btn primary"
-            onClick={() => window.print()}
-            title="印刷。ダイアログで「PDF として保存」も選べます"
+            onClick={printSheet}
+            title="印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます"
           >
             印刷 / PDF
           </button>
