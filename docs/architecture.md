@@ -136,14 +136,19 @@ loop-invariant, across a street samurai / mage / technomancer / career
 - **Tests** — `vitest` (jsdom + React Testing Library), `*.test.{ts,tsx}`
   next to the code, shared fixtures in `frontend/tests/fixtures.ts`
   (`makeCharacter` / `makeCatalog`). `npm run test` is part of `make check`
-  and CI. Coverage (~157 tests): the `lib/character/*` pure helpers
+  and CI. Coverage (~180 tests): the `lib/character/*` pure helpers
   (`sheet-format`, `format`, `sheet-data`, `gear`, `quality`) + `cocofolia`
-  builders; the `page.tsx` hooks (`useCharacterEditor` against a mocked
+  builders (the palette lines — skill / weapon / spell / matrix / defense —
+  pinned); the `page.tsx` hooks (`useCharacterEditor` against a mocked
   `@/lib/api`, `useSheetLayout`, `useKeyboardShortcuts`); render smoke tests
-  for `CharacterSheet` / `CharacterSidebar` / `Toolbar` (sections wired, all
-  layouts render); and a render + primary-`patch()`-payload test beside every
-  tab in `components/character/tabs/` (all 18, plus the `GearTab` container
-  and the `gear/{WeaponGear,VehicleDroneGear,MiscDrugsGear}` sub-panels).
+  for `CharacterSheet` / `CharacterSidebar` / `Toolbar` (all layouts render),
+  and `sheet-sections.test.tsx` renders every `sheet/sections/*` against one
+  rich `derived` fixture (a nested-shape change in the payload fails here;
+  top-level key parity with `assemble.py` is pinned by the backend's
+  `test_derived_contract.py`); and a render + primary-`patch()`-payload test
+  beside every tab in `components/character/tabs/` (all 18, plus the
+  `GearTab` container and the `gear/{WeaponGear,VehicleDroneGear,MiscDrugsGear}`
+  sub-panels).
 
 ## Planned refactors
 
