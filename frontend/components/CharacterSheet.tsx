@@ -1,6 +1,6 @@
 import type { Catalog, Character } from "@/lib/types";
 import { textSheet } from "@/lib/character/text-sheet";
-import { buildSheetData } from "@/lib/character/sheet-data";
+import { buildSheetData, type SheetLayout } from "@/lib/character/sheet-data";
 import { SheetHeader } from "@/components/character/sheet/SheetHeader";
 import { CoreSection } from "@/components/character/sheet/sections/Core";
 import { SkillsSection } from "@/components/character/sheet/sections/Skills";
@@ -32,7 +32,7 @@ export default function CharacterSheet({
   character: Character;
   catalog: Catalog;
   tr: (name: string) => string;
-  layout?: "standard" | "compact" | "text";
+  layout?: SheetLayout;
 }) {
   const s = buildSheetData({ character, catalog, tr, layout });
 
@@ -63,10 +63,15 @@ export default function CharacterSheet({
     );
   }
 
+  const variantClass =
+    layout === "compact"
+      ? " character-sheet--compact"
+      : layout === "print"
+        ? " character-sheet--print"
+        : "";
+
   return (
-    <article
-      className={`character-sheet${layout === "compact" ? " character-sheet--compact" : ""}`}
-    >
+    <article className={`character-sheet${variantClass}`}>
       <SheetHeader {...s} />
       <CoreSection {...s} />
       <SkillsSection {...s} />

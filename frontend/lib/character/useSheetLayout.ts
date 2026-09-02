@@ -6,7 +6,7 @@ export function useSheetLayout(): [SheetLayout, (v: SheetLayout) => void] {
   const [layout, setLayout] = useState<SheetLayout>(() => {
     try {
       const v = localStorage.getItem("sheetLayout");
-      return v === "compact" || v === "text" ? v : "standard";
+      return v === "compact" || v === "text" || v === "print" ? v : "standard";
     } catch {
       return "standard";
     }

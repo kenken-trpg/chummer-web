@@ -153,6 +153,7 @@ export function Toolbar({
             <option value="standard">標準</option>
             <option value="compact">コンパクト</option>
             <option value="text">テキスト</option>
+            <option value="print">印刷用</option>
           </select>
           <button
             className="btn primary"

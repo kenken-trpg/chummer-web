@@ -2,7 +2,7 @@ import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
 import { specialArmorBits } from "@/lib/character/sheet-format";
 
-export type SheetLayout = "standard" | "compact" | "text";
+export type SheetLayout = "standard" | "compact" | "text" | "print";
 
 type Derived = Character["derived"];
 type List<K extends keyof Derived> = NonNullable<Derived[K]>;
