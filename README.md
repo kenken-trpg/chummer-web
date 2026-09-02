@@ -2,7 +2,7 @@
 
 非公式の Shadowrun 5th Edition キャラクター作成 Web アプリです。Catalyst Game Labs / The Topps Company とは無関係です。
 
-ゲームデータと翻訳は [chummer5a/chummer5a](https://github.com/chummer5a/chummer5a)（GPL-3.0）の `Chummer/data` と `Chummer/lang` を使います。このプロジェクトも GPL-3.0 です。
+ゲームデータと基礎翻訳は [chummer5a/chummer5a](https://github.com/chummer5a/chummer5a)（GPL-3.0）の `Chummer/data` と `Chummer/lang` を使います。このプロジェクトも GPL-3.0 です。日本語用語オーバーレイ（`backend/data/ja_overrides/`）は SR5 用語集に照らした手訳を主とし、一部の固有名は chumJA（Chummer の SR4 期日本語訳）由来、用語の裏取りに [shadowrun5eja](https://github.com/MiyabiRouga/shadowrun5eja)（Foundry VTT SR5e 日本語化）を参照しています。出典の詳細は [`NOTICE.txt`](NOTICE.txt) を参照してください。
 
 第1段階: Priority、メタタイプ、属性、スキル、Quality、派生値、JSON 保存/読込。
 

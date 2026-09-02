@@ -1,0 +1,78 @@
+Chummer Web
+===========
+
+Copyright (C) the Chummer Web contributors.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License, version 3, as published by the
+Free Software Foundation. See the LICENSE file for the full text.
+
+本プロジェクトは GNU General Public License v3 の下で配布されます。全文は
+LICENSE を参照してください。
+
+
+Shadowrun trademark / copyright
+-------------------------------
+
+Shadowrun is a registered trademark and/or copyright of Catalyst Game Labs and
+The Topps Company, Inc. This is an unofficial, fan-made tool. It is not
+licensed by, endorsed by, or affiliated with either company. Game-rules content
+is cited by rulebook page number, not reproduced.
+
+Shadowrun は Catalyst Game Labs / The Topps Company, Inc. の登録商標および
+著作物です。本ツールは非公式のファンメイドで、両社とは無関係であり、許諾・
+提携関係はありません。ルール本文は再録せず、ページ番号で参照します。
+
+
+Third-party data and translations
+---------------------------------
+
+1. Game data and base translations — chummer5a/chummer5a (GPL-3.0)
+   https://github.com/chummer5a/chummer5a
+
+   Chummer/data/*.xml and Chummer/lang/{en-us,ja-jp,ja-jp_data}.xml are
+   downloaded at build time by backend/scripts/fetch_chummer_data.py into
+   backend/vendor/ (not tracked in git). This project is a derivative work of
+   that dataset and is licensed under the same GPL-3.0.
+
+   ゲームデータと基礎翻訳は chummer5a/chummer5a (GPL-3.0) のもの。ビルド時に
+   取得し backend/vendor/ に置く（git 管理外）。本プロジェクトはその派生物で、
+   同じく GPL-3.0。
+
+2. Japanese terminology overlay — backend/data/ja_overrides/{data,ui}.json
+
+   A git-tracked overlay applied on top of the vendored ja-jp files. Its
+   entries are assembled from:
+
+   a. Hand translations curated for SR5 and checked against a terminology
+      glossary (backend/scripts/ja_curated_*.py). The majority of entries.
+
+   b. Exact name / category matches imported from "chumJA" (chumJA_20130129),
+      a Shadowrun-4th-edition-era Japanese translation of Chummer. Mostly
+      proper-noun katakana and category words. The original distribution
+      states no license; the entries are treated as a Chummer derivative
+      under GPL-3.0. Per-entry provenance is listed in
+      docs/translation-import-report.md.
+
+   c. Terminology cross-checked against — not bulk-copied from — the 2021
+      Chummer sheet localisation XSLT ("chummer5th_シート日本語化_52160対応")
+      and "shadowrun5eja" (https://github.com/MiyabiRouga/shadowrun5eja), a
+      Foundry VTT SR5e Japanese i18n project. Neither ships a LICENSE file;
+      they are used for reference and verification only. The "sr5eja" column
+      in docs/translation-glossary.md reproduces terms from that project for
+      side-by-side comparison.
+
+   Full methodology: backend/data/ja_overrides/README.md and
+   docs/translation-plan.md.
+
+   日本語用語オーバーレイ（backend/data/ja_overrides/）は、SR5 用語集に照らした
+   手訳を主とし、一部の固有名カナ・カテゴリ語は chumJA（Chummer の SR4 期日本語訳、
+   ライセンス表記なし）由来。エントリ別の出典は docs/translation-import-report.md。
+   用語の裏取りに 2021 版シート用語 XSLT と shadowrun5eja（Foundry VTT SR5e
+   日本語化、LICENSE なし）を参照している（大量取り込みはしていない）。
+
+3. Regression fixtures — backend/tests/snapshots/*.json
+
+   Golden-output fixtures for the engine tests. They contain SR5 item names,
+   numeric stats and rulebook page numbers derived from the chummer5a dataset
+   (GPL-3.0).
