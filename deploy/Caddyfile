@@ -23,5 +23,10 @@
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
+		# Baseline CSP. script/style keep 'unsafe-inline' because Next's App
+		# Router injects inline bootstrap without a nonce; tightening that
+		# needs nonce middleware. img/font allow data: (base64 portraits) and
+		# blob: (the .chum5 download object URL).
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 	}
 }
