@@ -3,7 +3,19 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+# The client POSTs the whole CharacterState / CharacterPatch on every call and
+# it is fed straight into compute(). MAX_REQUEST_BYTES caps the transfer; this
+# caps how many rows a single 12 MiB body can make the engine chew through. A
+# real character is well under this in any one collection.
+_MAX_COLLECTION = 2000
+
+
+def _reject_oversized_collections(model: BaseModel) -> None:
+    for name, value in model.__dict__.items():
+        if isinstance(value, (list, dict)) and len(value) > _MAX_COLLECTION:
+            raise ValueError(f"{name}: {len(value)} entries exceeds the {_MAX_COLLECTION} cap")
 
 
 class CyberwareInstall(BaseModel):
@@ -322,6 +334,11 @@ class CharacterPatch(BaseModel):
     stream_id: str | None = None
     options: CharacterOptions | None = None
 
+    @model_validator(mode="after")
+    def _bound_collections(self) -> CharacterPatch:
+        _reject_oversized_collections(self)
+        return self
+
 
 class CharacterCreate(BaseModel):
     name: str = Field(default="Runner")
@@ -412,6 +429,11 @@ class CharacterState(BaseModel):
     # Output of compute(); kept dict[str, Any] here (Pydantic-friendly, no
     # round-trip validation). Its real shape is engine.compute.derived_types.DerivedDict.
     derived: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _bound_collections(self) -> CharacterState:
+        _reject_oversized_collections(self)
+        return self
 
 
 class StateRequest(BaseModel):

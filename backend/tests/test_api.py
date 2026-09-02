@@ -76,3 +76,11 @@ def test_client_ip_prefers_cf_connecting_ip(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr("app.main._TRUSTED_PROXY_HOPS", 2)
     req = _StubRequest({"cf-connecting-ip": "198.51.100.9", "x-forwarded-for": "spoofed, a, b"})
     assert _client_ip(req) == "198.51.100.9"  # type: ignore[arg-type]
+
+
+def test_oversized_collection_is_rejected() -> None:
+    ip = {"cf-connecting-ip": "203.0.113.55"}
+    base = client.post("/api/characters/new", json={"name": "X"}, headers=ip).json()
+    base["spells"] = [{"spell_id": "x"} for _ in range(2001)]
+    r = client.post("/api/characters/patch", json={"state": base}, headers=ip)
+    assert r.status_code == 422
