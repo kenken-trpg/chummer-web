@@ -24,6 +24,8 @@ backend/vendor
 backend/saves
 **/.DS_Store
 **/*.log
+.env
+.env.local
 
 # not needed at build/runtime (LICENSE + NOTICE.txt are COPYed explicitly)
 docs

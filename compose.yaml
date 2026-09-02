@@ -1,0 +1,26 @@
+# Run the whole app in one container:
+#
+#   cp .env.example .env      # optional — edit ports / limits
+#   make up                   # pulls the published image if available, else builds
+#   # or:  docker compose up  # always builds from this checkout (slow first time)
+#
+# -> http://localhost:8080
+services:
+  app:
+    image: ghcr.io/kenken-trpg/chummer-web:latest
+    build:
+      context: .
+      # args:
+      #   CHUMMER_REF: ed77aa3dcbe760064109d9af01ea9b5e4498294c
+    pull_policy: missing
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      PORT: "${PORT:-8080}"
+      # a single local user doesn't need the public-facing limits
+      RATE_LIMIT: "${RATE_LIMIT:-1000/minute}"
+      IMPORT_RATE_LIMIT: "${IMPORT_RATE_LIMIT:-200/minute}"
+      MAX_REQUEST_BYTES: "${MAX_REQUEST_BYTES:-12582912}"
+      CHUM5_MAX_DECOMPRESSED_BYTES: "${CHUM5_MAX_DECOMPRESSED_BYTES:-33554432}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+    restart: unless-stopped

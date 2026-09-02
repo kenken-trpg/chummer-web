@@ -14,5 +14,9 @@ frontend/coverage/
 .DS_Store
 *.log
 
+# local config (see .env.example)
+.env
+.env.local
+
 # TS incremental build cache
 frontend/tsconfig.tsbuildinfo
