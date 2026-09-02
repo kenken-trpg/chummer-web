@@ -141,6 +141,13 @@ td.rowhead {
   gap: 8px;
   margin: 6px 0;
 }
+/* label is "BOD 強靱力" (code + JA name) — keep it on one line */
+.attr-row {
+  grid-template-columns: minmax(104px, max-content) 1fr 88px;
+}
+.attr-row > span:first-child {
+  white-space: nowrap;
+}
 .skill-row.has-spec {
   grid-template-columns: 80px 1fr minmax(108px, 168px) 108px;
 }
