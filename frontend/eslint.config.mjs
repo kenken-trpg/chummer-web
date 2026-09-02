@@ -22,13 +22,13 @@ export default [
       // which `next/image` cannot optimize anyway.
       "@next/next/no-img-element": "off",
 
-      // `any` and unused-vars debt is fenced off with file-level disables
-      // (blocks.tsx, the sheet helpers); keep them visible but not blocking.
+      // Source is `any`-free (the last two holdouts, blocks.tsx and
+      // text-sheet.ts, now use the derived-payload types); keep it that way.
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
 
       // These were demoted while the codebase had violations; it's clean now,
       // so keep them blocking so regressions surface in `make check`.
@@ -37,5 +37,10 @@ export default [
       "@next/next/no-page-custom-font": "error",
       "@next/next/no-location-assign-relative-destination": "error",
     },
+  },
+  {
+    // Tests still cast fixtures with `as any`; not worth the churn.
+    files: ["**/*.test.ts", "**/*.test.tsx", "tests/**"],
+    rules: { "@typescript-eslint/no-explicit-any": "warn" },
   },
 ];

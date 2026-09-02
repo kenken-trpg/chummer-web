@@ -1,37 +1,39 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Character } from "@/lib/types";
-import { attrShort, type TFn } from "@/lib/ui-strings";
+import type { SheetData } from "@/lib/character/sheet-data";
+import { attrShort } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import { cfDuration, cfTarget, vehicleCM } from "@/lib/character/format";
 import { ATTRS } from "@/lib/character/constants";
 
-export type TextArgs = {
-  character: Character;
-  d: Character["derived"];
-  tr: (n: string) => string;
-  t: TFn;
-  totals: Record<string, number>;
-  enabled: Set<string>;
-  activeSkills: { name: string; attribute: string; rating: number; pool: number; spec?: string }[];
-  groups: { name: string; rating: number; bonus: number }[];
-  exotic: any[];
-  knowledge: any[];
-  qualities: any[];
-  weapons: any[];
-  armors: any[];
-  cyber: any[];
-  bio: any[];
-  gearMisc: any[];
-  drugs: any[];
-  sins: any[];
-};
+// The text sheet reads the same bag `buildSheetData()` produces for the
+// visual sheet — a subset of it.
+export type TextArgs = Pick<
+  SheetData,
+  | "character"
+  | "d"
+  | "tr"
+  | "t"
+  | "totals"
+  | "enabled"
+  | "activeSkills"
+  | "groups"
+  | "exotic"
+  | "knowledge"
+  | "qualities"
+  | "weapons"
+  | "armors"
+  | "cyber"
+  | "bio"
+  | "gearMisc"
+  | "drugs"
+  | "sins"
+>;
 
 /** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
 export function textSheet(x: TextArgs): string {
   const { character: ch, d, tr, t, totals, enabled } = x;
   const L: string[] = [];
   const line = (s = "") => L.push(s);
-  const names = (arr: any[]) => arr.map((a) => tr(a.name)).join("、");
+  const names = (arr: { name: string }[]) => arr.map((a) => tr(a.name)).join("、");
 
   line(ch.name || "無名のランナー");
   line(
@@ -101,7 +103,7 @@ export function textSheet(x: TextArgs): string {
         `  ${tr(w.name)}  DV ${w.damage || "-"} / AP ${w.ap || "-"} / ACC ${w.accuracy || "-"}` +
           `${w.mode ? ` / ${w.mode}` : ""}` +
           `${(w.type || "") !== "Melee" && w.rc_total != null ? ` / 合計RC ${w.rc_total}` : w.rc ? ` / RC ${w.rc}` : ""}` +
-          `${(w.accessories || []).length ? `  +${names(w.accessories)}` : ""}`,
+          `${(w.accessories || []).length ? `  +${names(w.accessories || [])}` : ""}`,
       ),
     );
     line();
@@ -111,7 +113,7 @@ export function textSheet(x: TextArgs): string {
     line("=== 防具 ===");
     x.armors.forEach((a) =>
       line(
-        `  ${tr(a.name)}  ${a.armor ?? ""}${(a.mods || []).length ? `  +${names(a.mods)}` : ""}`,
+        `  ${tr(a.name)}  ${a.armor ?? ""}${(a.mods || []).length ? `  +${names(a.mods || [])}` : ""}`,
       ),
     );
     if (!x.armors.length && d.worn_armor) line(`  ${tr(d.worn_armor)}`);
@@ -131,7 +133,7 @@ export function textSheet(x: TextArgs): string {
 
   if (enabled.has("spells") && (d.spells || []).length) {
     line("=== 術式 ===");
-    (d.spells || []).forEach((s: any) =>
+    (d.spells || []).forEach((s) =>
       line(
         `  ${tr(s.name)}  ${tr(s.category || "")} / ${spellType(s.type)} / ${spellRange(s.range)} / ${spellDuration(s.duration)} / DV ${s.dv}` +
           `${s.descriptor ? `（${spellDescriptors(s.descriptor)}）` : ""}`,
@@ -142,7 +144,7 @@ export function textSheet(x: TextArgs): string {
 
   if (enabled.has("complexforms") && (d.complex_forms || []).length) {
     line("=== 複合体 ===");
-    (d.complex_forms || []).forEach((c: any) =>
+    (d.complex_forms || []).forEach((c) =>
       line(
         `  ${tr(c.label || c.name)}  ${cfTarget(c.target)} / ${cfDuration(c.duration)} / L${c.level} / FV ${c.fv}`,
       ),
@@ -153,11 +155,11 @@ export function textSheet(x: TextArgs): string {
   const vehAll = [...(d.vehicles || []), ...(d.drones || [])];
   if (vehAll.length) {
     line("=== 車両・ドローン ===");
-    vehAll.forEach((v: any) =>
+    vehAll.forEach((v) =>
       line(
         `  ${tr(v.name)}  機動${v.handling} 速${v.speed} 加${v.accel} 車体${v.body} 装甲${v.armor} ` +
           `操縦${v.pilot} センサー${v.sensor} CM${vehicleCM(v.body)}` +
-          `${(v.mods || []).filter((m: any) => !m.parent_id).length ? `  改造: ${names((v.mods || []).filter((m: any) => !m.parent_id))}` : ""}`,
+          `${(v.mods || []).filter((m) => !m.parent_id).length ? `  改造: ${names((v.mods || []).filter((m) => !m.parent_id))}` : ""}`,
       ),
     );
     line();
@@ -165,11 +167,11 @@ export function textSheet(x: TextArgs): string {
 
   if (x.sins.length) {
     line("=== SIN／ライセンス ===");
-    x.sins.forEach((s: any) => {
-      const lic = (d.gear || []).filter((g: any) => g.parent_id === s.id);
+    x.sins.forEach((s) => {
+      const lic = (d.gear || []).filter((g) => g.parent_id === s.id);
       line(
         `  ${tr(s.name)}${s.rating > 0 ? ` R${s.rating}` : ""}` +
-          `${lic.length ? `  ライセンス: ${lic.map((l: any) => `${tr(l.name)}${l.rating > 0 ? ` R${l.rating}` : ""}`).join("、")}` : ""}`,
+          `${lic.length ? `  ライセンス: ${lic.map((l) => `${tr(l.name)}${l.rating > 0 ? ` R${l.rating}` : ""}`).join("、")}` : ""}`,
       );
     });
     line();
@@ -177,7 +179,7 @@ export function textSheet(x: TextArgs): string {
 
   if ((d.contacts || []).length) {
     line("=== コンタクト ===");
-    (d.contacts || []).forEach((c: any) =>
+    (d.contacts || []).forEach((c) =>
       line(
         `  ${c.name || "（無名）"}${c.role ? ` / ${tr(c.role)}` : ""}  C${c.connection}/L${c.loyalty}`,
       ),

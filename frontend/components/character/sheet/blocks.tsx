@@ -1,6 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ReactNode } from "react";
+import type { InstalledDrone } from "@/lib/types";
 import { vehicleCM } from "@/lib/character/format";
+
+/** Minimal shape the initiation / submersion grade lists share. */
+type GradeItem = { grade: number; name: string; extra?: string | null; kind?: string };
 
 export function Section({
   title,
@@ -20,7 +23,7 @@ export function Section({
   );
 }
 
-export function GradeList({ items, tr }: { items: any[]; tr: (n: string) => string }) {
+export function GradeList({ items, tr }: { items: GradeItem[]; tr: (n: string) => string }) {
   const grades = Array.from(new Set(items.map((i) => Number(i.grade) || 0))).sort((a, b) => a - b);
   return (
     <ul className="sheet-list">
@@ -43,11 +46,11 @@ export function GradeList({ items, tr }: { items: any[]; tr: (n: string) => stri
   );
 }
 
-export function VehicleBlock({ v, tr }: { v: any; tr: (n: string) => string }) {
-  const mods = (v.mods || []).filter((m: any) => !m.parent_id);
+export function VehicleBlock({ v, tr }: { v: InstalledDrone; tr: (n: string) => string }) {
+  const mods = (v.mods || []).filter((m) => !m.parent_id);
   const mounts = v.weapon_mounts || [];
   const sensors = v.sensors || [];
-  const gear = (v.gear || []).filter((g: any) => !g.parent_id);
+  const gear = (v.gear || []).filter((g) => !g.parent_id);
   const tracks = v.slot_tracks || [];
   return (
     <div className="sheet-block">
@@ -92,9 +95,7 @@ export function VehicleBlock({ v, tr }: { v: any; tr: (n: string) => string }) {
       {mods.length ? (
         <p className="sheet-note">
           改造:{" "}
-          {mods
-            .map((m: any) => `${tr(m.name)}${(m.rating || 0) > 1 ? ` R${m.rating}` : ""}`)
-            .join("、")}
+          {mods.map((m) => `${tr(m.name)}${(m.rating || 0) > 1 ? ` R${m.rating}` : ""}`).join("、")}
         </p>
       ) : null}
       {mounts.length ? (
@@ -102,21 +103,21 @@ export function VehicleBlock({ v, tr }: { v: any; tr: (n: string) => string }) {
           ウェポンマウント:{" "}
           {mounts
             .map(
-              (m: any) =>
+              (m) =>
                 `${tr(m.label || m.name)}${m.weapon_name ? `＝${tr(m.weapon_name)}` : "（空）"}`,
             )
             .join("、")}
         </p>
       ) : null}
       {sensors.length ? (
-        <p className="sheet-note">センサー機器: {sensors.map((s: any) => tr(s.name)).join("、")}</p>
+        <p className="sheet-note">センサー機器: {sensors.map((s) => tr(s.name)).join("、")}</p>
       ) : null}
       {gear.length ? (
-        <p className="sheet-note">搭載ギア: {gear.map((g: any) => tr(g.name)).join("、")}</p>
+        <p className="sheet-note">搭載ギア: {gear.map((g) => tr(g.name)).join("、")}</p>
       ) : null}
       {tracks.length ? (
         <p className="sheet-note">
-          スロット: {tracks.map((s: any) => `${s.label} ${s.used}/${s.max}`).join(" ・ ")}
+          スロット: {tracks.map((s) => `${s.label} ${s.used}/${s.max}`).join(" ・ ")}
         </p>
       ) : null}
     </div>
