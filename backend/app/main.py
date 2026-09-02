@@ -82,7 +82,15 @@ def catalog_endpoint() -> dict:
     try:
         return public_catalog()
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Chummer ゲームデータが見つかりません。`make data`"
+                "（または backend/scripts/fetch_chummer_data.py）を実行してください。"
+                "Docker で起動している場合はイメージに同梱されているはずです。"
+                f"（{exc}）"
+            ),
+        ) from exc
 
 
 # --- stateless character ops (the client owns the CharacterState) ------------
