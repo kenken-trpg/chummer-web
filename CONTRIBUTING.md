@@ -27,7 +27,7 @@ backend/                FastAPI + the rules engine (Python 3.11+)
     data_loader.py      Parse vendored Chummer XML -> cached catalog() dict
     engine.py           compute(state) -> state.derived  (the rules live here)
     improvements.py     the <bonus> node vocabulary (apply_bonus_nodes)
-    store.py            persistence + public_catalog() shaping for the UI
+    store.py            pure new/patch/compute helpers + public_catalog() shaping
     chummer_import.py   .chum5 / .chum5lz  ->  CharacterState
     chummer_export.py   CharacterState     ->  .chum5 XML
   scripts/fetch_chummer_data.py   downloads Chummer/data + lang files
@@ -106,6 +106,7 @@ supplement content stays in English. See `docs/translation-*` and
 
 - Not a play aid first — it's a **builder**. Play-time helpers (condition
   monitor tracking, expense ledger) are welcome but secondary.
-- No account system, no server-side multi-user state. One process, local JSON.
-- Data is never committed: `backend/vendor/` (Chummer data) and
-  `backend/saves/` (your characters) are gitignored.
+- No account system, no server-side state. The backend only computes /
+  transforms; characters live in the browser (IndexedDB), exported as
+  `.json` / `.chum5` when you want a file.
+- Data is never committed: `backend/vendor/` (Chummer data) is gitignored.

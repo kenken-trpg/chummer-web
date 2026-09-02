@@ -2,9 +2,9 @@
 
 ## One sentence
 
-The browser edits a `CharacterState`; every change is `PATCH`ed to a FastAPI
-backend that runs `engine.compute(state)` and returns the state with a fat
-`derived` blob the UI renders.
+The browser owns a `CharacterState` (IndexedDB); every change is `POST`ed with
+the state to a stateless FastAPI backend that runs `engine.compute(state)` and
+returns it with a fat `derived` blob the UI renders.
 
 ## Backend data flow
 
@@ -72,25 +72,25 @@ is consumed. See `docs/adding-rules.md`.
 
 ## HTTP API (all JSON unless noted)
 
+The backend is **stateless** — a compute/transform service. The browser owns
+every `CharacterState` (IndexedDB, `frontend/lib/character/local-store.ts`) and
+posts it back on each call.
+
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/api/health` | liveness |
 | GET | `/api/catalog` | the whole options catalog for the UI |
-| GET | `/api/characters` | roster summaries |
-| POST | `/api/characters` | create |
-| GET | `/api/characters/{id}` | full state + `derived` |
-| PATCH | `/api/characters/{id}` | partial update (`CharacterPatch`) → recomputed state |
-| DELETE | `/api/characters/{id}` | delete |
-| GET | `/api/characters/{id}/export` | raw state JSON |
-| GET | `/api/characters/{id}/chummer` | `.chum5` XML download |
-| POST | `/api/characters/import` | import raw state JSON |
+| POST | `/api/characters/new` | fresh computed state (`CharacterCreate`) |
+| POST | `/api/characters/patch` | `{state, patch?}` → `apply_patch` (talent / priority / career normalise) + recompute; no `patch` = bare recompute |
+| POST | `/api/characters/import` | import raw state JSON (id regenerated) |
 | POST | `/api/characters/import-chummer` | import `.chum5` / `.chum5lz` |
+| POST | `/api/characters/chummer` | `{state}` → `.chum5` XML download |
 
-`store.py` keeps characters in an in-memory dict and mirrors them to
-`backend/saves/*.json`. No database, no auth.
+`store.py` is pure: `new_character` / `apply_patch(state, patch)` /
+`compute_state` / `import_character`. No dict, no `saves/`, no database, no auth.
 
 **Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
-(comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 8 MiB),
+(comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 12 MiB),
 `RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`
 / first `x-forwarded-for` hop, else socket peer; defaults `120/minute` /
 `20/minute`), `CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the
