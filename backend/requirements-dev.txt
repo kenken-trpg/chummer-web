@@ -1,6 +1,9 @@
 -r requirements.txt
 
-# Linting / formatting / type-checking. Keep versions loose; CI pins via the
-# lockfile-free `pip install` and tolerates minor drift.
+# Test + lint + type-check only — kept out of requirements.txt so they don't
+# land in the runtime image. Versions loose; CI is lockfile-free and tolerates
+# minor drift.
+pytest>=8.4.1
+httpx>=0.28.1  # starlette TestClient
 ruff>=0.16
 mypy>=1.13
