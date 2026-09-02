@@ -43,6 +43,47 @@ describe("buildChatPalette", () => {
     expect(out).toContain("11B6@3 Pistols：Revolvers");
   });
 
+  it("emits a weapon attack line (pool = skill + AGI, limit = Accuracy)", () => {
+    const ch = makeCharacter({
+      derived: {
+        totals: { AGI: 5 } as any,
+        skill_totals: { Pistols: 4 },
+        weapons: [
+          {
+            id: "w1",
+            name: "Predator V",
+            useskill: "Pistols",
+            damage: "8P",
+            ap: "-1",
+            accuracy: "5",
+          },
+        ] as any,
+      },
+    });
+    const out = buildChatPalette(ch, pistolsCatalog, identityTr);
+    expect(out).toContain("// ── 武器 ──");
+    expect(out).toContain("9B6@5 Predator V攻撃 ［DV8P AP-1］");
+  });
+
+  it("emits a spellcasting line (pool = Spellcasting + MAG)", () => {
+    const scCatalog = makeCatalog({
+      skills: {
+        groups: [],
+        skills: [{ name: "Spellcasting", attribute: "MAG", category: "Magical", source: "SR5" }],
+      } as any,
+    });
+    const ch = makeCharacter({
+      derived: {
+        totals: { MAG: 5 } as any,
+        skill_totals: { Spellcasting: 6 },
+        spells: [{ id: "s1", name: "Manabolt", dv: "F-3" }] as any,
+      },
+    });
+    const out = buildChatPalette(ch, scCatalog, identityTr);
+    expect(out).toContain("// ── 術式（リミット＝Force） ──");
+    expect(out).toContain("11B6 Manabolt ［DVF-3］");
+  });
+
   it("adds a matrix block when a persona is present", () => {
     const ch = makeCharacter({
       derived: {
