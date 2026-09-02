@@ -12,12 +12,21 @@ and named in the returned warning list rather than failing the import.
 from __future__ import annotations
 
 import lzma
+import os
 import uuid
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # the Element type only — parsing goes through defusedxml
 import zlib
 from typing import Any
 
+from defusedxml import DefusedXmlException
+from defusedxml.ElementTree import fromstring as _xml_fromstring
+
 from .data_loader import catalog, catalog_list
+
+# Upper bound on the decompressed size of a .chum5lz payload — a guard against
+# decompression bombs on the import endpoint. A real Chummer save (even with
+# base64 portraits) is a few MB; the default sits well clear of that.
+_MAX_DECOMPRESSED_BYTES = int(os.environ.get("CHUM5_MAX_DECOMPRESSED_BYTES") or 32 * 1024 * 1024)
 
 _BUILD_METHODS = {
     "priority": "Priority",
@@ -28,6 +37,25 @@ _BUILD_METHODS = {
 }
 
 
+def _bounded_lzma(raw: bytes, fmt: int) -> bytes:
+    d = lzma.LZMADecompressor(format=fmt)
+    out = d.decompress(raw, _MAX_DECOMPRESSED_BYTES + 1)
+    if len(out) > _MAX_DECOMPRESSED_BYTES or not d.eof:
+        raise ValueError("decompressed .chum5lz exceeds the size limit")
+    return out
+
+
+def _bounded_zlib(raw: bytes, wbits: int) -> bytes:
+    d = zlib.decompressobj(wbits)
+    out = d.decompress(raw, _MAX_DECOMPRESSED_BYTES + 1)
+    if d.unconsumed_tail:
+        raise ValueError("decompressed .chum5lz exceeds the size limit")
+    out += d.flush()
+    if len(out) > _MAX_DECOMPRESSED_BYTES:
+        raise ValueError("decompressed .chum5lz exceeds the size limit")
+    return out
+
+
 def decompress_chum5lz(raw: bytes | str) -> bytes:
     """Return the inner XML bytes from a ``.chum5`` / ``.chum5lz`` payload.
 
@@ -36,6 +64,9 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
     LZMA property header, an 8-byte little-endian uncompressed size (``0xFF``*8
     when written with an end marker), then a raw LZMA1 stream — i.e. Python's
     ``lzma.FORMAT_ALONE``. xz / zlib / gzip are also tried as a courtesy.
+
+    Every branch is bounded to ``_MAX_DECOMPRESSED_BYTES`` so a crafted payload
+    cannot expand without limit (decompression bomb).
     """
     if isinstance(raw, str):
         raw = raw.encode("utf-8")
@@ -44,12 +75,11 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
         return raw
     errors: list[str] = []
     for attempt in (
-        lambda: lzma.decompress(raw, format=lzma.FORMAT_ALONE),  # Chummer's format
-        lambda: lzma.LZMADecompressor(format=lzma.FORMAT_ALONE).decompress(raw),
-        lambda: lzma.decompress(raw),  # xz / auto
-        lambda: zlib.decompress(raw),
-        lambda: zlib.decompress(raw, -zlib.MAX_WBITS),
-        lambda: zlib.decompress(raw, zlib.MAX_WBITS | 16),  # gzip
+        lambda: _bounded_lzma(raw, lzma.FORMAT_ALONE),  # Chummer's format
+        lambda: _bounded_lzma(raw, lzma.FORMAT_AUTO),  # xz / auto
+        lambda: _bounded_zlib(raw, zlib.MAX_WBITS),
+        lambda: _bounded_zlib(raw, -zlib.MAX_WBITS),
+        lambda: _bounded_zlib(raw, zlib.MAX_WBITS | 16),  # gzip
     ):
         try:
             out = attempt()
@@ -128,8 +158,8 @@ class _Resolver:
 def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     xml_bytes = decompress_chum5lz(xml_bytes)
     try:
-        root = ET.fromstring(xml_bytes)
-    except ET.ParseError as exc:
+        root: ET.Element = _xml_fromstring(xml_bytes)
+    except (ET.ParseError, DefusedXmlException) as exc:
         raise ValueError(f"XML を解析できませんでした: {exc}") from exc
     if root.tag != "character":
         nested = root.find("character")

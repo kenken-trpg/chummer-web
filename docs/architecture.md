@@ -89,6 +89,13 @@ is consumed. See `docs/adding-rules.md`.
 `store.py` keeps characters in an in-memory dict and mirrors them to
 `backend/saves/*.json`. No database, no auth.
 
+**Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
+(comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 8 MiB),
+`RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`
+/ first `x-forwarded-for` hop, else socket peer; defaults `120/minute` /
+`20/minute`), `CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the
+`.chum5lz` path, default 32 MiB). Untrusted XML is parsed via `defusedxml`.
+
 `chummer_import.py` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
 by `sourceid` then name; unknown entries become warnings, never errors.
 `chummer_export.py` (`state_to_chum5`) writes it back. The pair is a fixed

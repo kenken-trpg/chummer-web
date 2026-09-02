@@ -135,6 +135,30 @@ def test_decompress_rejects_garbage_with_hint() -> None:
         decompress_chum5lz(b"\x00\x01\x02not-compressed-not-xml\xff\xfe")
 
 
+def test_decompress_rejects_bomb_over_the_size_cap(monkeypatch: pytest.MonkeyPatch) -> None:
+    import app.chummer_import as ci
+
+    monkeypatch.setattr(ci, "_MAX_DECOMPRESSED_BYTES", 64 * 1024)
+    # ~4 MB of a repeating byte -> a tiny FORMAT_ALONE payload
+    bomb = lzma.compress(b"<character>" + b" " * (4 * 1024 * 1024) + b"</character>", format=lzma.FORMAT_ALONE)
+    assert len(bomb) < 64 * 1024
+    with pytest.raises(ValueError, match="非圧縮の .chum5"):
+        ci.decompress_chum5lz(bomb)
+
+
 def test_non_character_xml_rejected() -> None:
     with pytest.raises(ValueError, match="character"):
         chum5_to_state(b"<notacharacter><foo/></notacharacter>")
+
+
+def test_xml_entity_expansion_is_blocked() -> None:
+    # a "billion laughs" style payload — defusedxml must refuse it, not expand it
+    evil = (
+        b'<?xml version="1.0"?>'
+        b'<!DOCTYPE lolz [<!ENTITY lol "lol">'
+        b'<!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">'
+        b'<!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">]>'
+        b"<character>&lol3;</character>"
+    )
+    with pytest.raises(ValueError, match="解析できませんでした"):
+        chum5_to_state(evil)

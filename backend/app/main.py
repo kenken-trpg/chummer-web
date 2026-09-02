@@ -1,7 +1,14 @@
 from __future__ import annotations
 
-from fastapi import Body, FastAPI, HTTPException, Response
+import os
+from collections.abc import Awaitable, Callable
+
+from fastapi import Body, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
@@ -17,18 +24,54 @@ from .store import (
     update_character,
 )
 
+# --- deploy-time knobs (env-overridable) --------------------------------------
+_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in (os.environ.get("ALLOWED_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
+_MAX_REQUEST_BYTES = int(os.environ.get("MAX_REQUEST_BYTES") or 8 * 1024 * 1024)
+_RATE_LIMIT = os.environ.get("RATE_LIMIT") or "120/minute"
+_IMPORT_RATE_LIMIT = os.environ.get("IMPORT_RATE_LIMIT") or "20/minute"
+
+
+def _client_ip(request: Request) -> str:
+    """Best-effort caller identity for rate limiting. Behind Cloudflare / a
+    reverse proxy the socket peer is the proxy, so prefer the forwarded header."""
+    fwd = request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for", "")
+    return fwd.split(",")[0].strip() or (request.client.host if request.client else "anon")
+
+
+limiter = Limiter(key_func=_client_ip, default_limits=[_RATE_LIMIT])
+
 app = FastAPI(
     title="Chummer Web",
     description="Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst Game Labs.",
     version="0.1.0",
 )
 
+app.state.limiter = limiter
+# slowapi's handler is typed for its own exception; Starlette wants (Request, Exception)
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+app.add_middleware(SlowAPIMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def _limit_body_size(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    """Reject over-large request bodies up front. Covers the normal case where a
+    client sends Content-Length (browsers, httpx, curl); the .chum5lz path is
+    independently bounded in chummer_import."""
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) > _MAX_REQUEST_BYTES:
+        return JSONResponse({"detail": "request body too large"}, status_code=413)
+    return await call_next(request)
 
 
 @app.get("/api/health")
@@ -103,7 +146,8 @@ def export_chummer(cid: str) -> Response:
 
 
 @app.post("/api/characters/import")
-def import_json(payload: dict) -> dict:
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def import_json(request: Request, payload: dict) -> dict:
     try:
         return import_character(payload).model_dump()
     except Exception as exc:
@@ -111,7 +155,8 @@ def import_json(payload: dict) -> dict:
 
 
 @app.post("/api/characters/import-chummer")
-def import_chummer(body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def import_chummer(request: Request, body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
     """Import a Chummer5a .chum5 / .chum5lz save. Returns the character plus a
     list of things that could not be mapped."""
     try:
