@@ -12,8 +12,10 @@ const api = vi.hoisted(() => ({
   create: vi.fn(),
   remove: vi.fn(),
   patch: vi.fn(),
+  compute: vi.fn(),
   import: vi.fn(),
   importChummer: vi.fn(),
+  exportChummer: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ api }));
 
@@ -67,11 +69,12 @@ describe("useCharacterEditor", () => {
     expect(result.current.history.counts.undo).toBe(1);
   });
 
-  it("undo restores the previous snapshot through the patch path", async () => {
+  it("undo recomputes the previous snapshot via api.compute", async () => {
     const base = makeCharacter({ id: "c1", name: "Runner" });
     const patched = makeCharacter({ id: "c1", name: "Vex" });
     api.create.mockResolvedValue(base);
-    api.patch.mockResolvedValueOnce(patched).mockResolvedValueOnce(base);
+    api.patch.mockResolvedValue(patched);
+    api.compute.mockImplementation(async (snap: Character) => snap);
 
     const { result } = renderHook(() => useCharacterEditor());
     await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
@@ -83,9 +86,9 @@ describe("useCharacterEditor", () => {
       await result.current.undo();
     });
 
-    const lastCall = api.patch.mock.calls.at(-1) as [string, Record<string, unknown>];
-    expect(lastCall[0]).toBe("c1");
-    expect((lastCall[1] as Partial<Character>).name).toBe("Runner");
+    const snap = api.compute.mock.calls.at(-1)?.[0] as Character;
+    expect(snap.id).toBe("c1");
+    expect(snap.name).toBe("Runner");
     expect(result.current.ch?.name).toBe("Runner");
     expect(result.current.history.counts.undo).toBe(0);
     expect(result.current.history.counts.redo).toBe(1);

@@ -126,10 +126,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     if (busy.current) return;
     busy.current = true;
     try {
-      const { id: _id, derived: _d, ...body } = snap;
-      void _id;
-      void _d;
-      const next = await api.patch(snap.id, body as Record<string, unknown>);
+      const next = await api.compute(snap);
       setCh(next);
       lastCommitted.current = next;
       setError(null);
@@ -161,13 +158,18 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     URL.revokeObjectURL(a.href);
   }
 
-  function downloadChum5() {
+  async function downloadChum5() {
     if (!ch) return;
-    // hit the .chum5 export endpoint via an anchor so the browser handles the
-    // Content-Disposition download (not client-side navigation).
-    const a = document.createElement("a");
-    a.href = `/api/characters/${ch.id}/chummer`;
-    a.click();
+    try {
+      const blob = await api.exportChummer(ch);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${ch.name || "character"}.chum5`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "書き出しに失敗しました");
+    }
   }
 
   async function copyText(text: string, tag: string) {
