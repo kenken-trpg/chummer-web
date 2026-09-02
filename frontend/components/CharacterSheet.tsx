@@ -20,6 +20,8 @@ import { DrugsSection } from "@/components/character/sheet/sections/Drugs";
 import { SinSection } from "@/components/character/sheet/sections/Sin";
 import { MiscGearSection } from "@/components/character/sheet/sections/MiscGear";
 import { DescriptionSection } from "@/components/character/sheet/sections/Description";
+import { PrintStatBlock } from "@/components/character/sheet/sections/print/PrintStatBlock";
+import { PrintConditionMonitor } from "@/components/character/sheet/sections/print/PrintConditionMonitor";
 
 export type { SheetLayout } from "@/lib/character/sheet-data";
 
@@ -63,15 +65,44 @@ export default function CharacterSheet({
     );
   }
 
-  const variantClass =
-    layout === "compact"
-      ? " character-sheet--compact"
-      : layout === "print"
-        ? " character-sheet--print"
-        : "";
+  const footer = (
+    <footer className="sheet-footer">Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷</footer>
+  );
+
+  if (layout === "print") {
+    return (
+      <article className="character-sheet character-sheet--print">
+        <SheetHeader {...s} />
+        <PrintStatBlock {...s} />
+        <PrintConditionMonitor {...s} />
+        <SkillsSection {...s} />
+        <KnowledgeSection {...s} />
+        <CareerSection {...s} />
+        <ActionDpSection {...s} />
+        <QualitiesSection {...s} />
+        <div className="print-page-2">
+          <CombatSection {...s} />
+          <WareSection {...s} />
+          <MatrixSection {...s} />
+          <MagicSection {...s} />
+          <ResonanceSection {...s} />
+          <MartialSection {...s} />
+          <ContactsSection {...s} />
+          <VehiclesSection {...s} />
+          <DrugsSection {...s} />
+          <SinSection {...s} />
+          <MiscGearSection {...s} />
+          <DescriptionSection {...s} />
+        </div>
+        {footer}
+      </article>
+    );
+  }
 
   return (
-    <article className={`character-sheet${variantClass}`}>
+    <article
+      className={`character-sheet${layout === "compact" ? " character-sheet--compact" : ""}`}
+    >
       <SheetHeader {...s} />
       <CoreSection {...s} />
       <SkillsSection {...s} />
@@ -91,7 +122,7 @@ export default function CharacterSheet({
       <SinSection {...s} />
       <MiscGearSection {...s} />
       <DescriptionSection {...s} />
-      <footer className="sheet-footer">Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷</footer>
+      {footer}
     </article>
   );
 }
