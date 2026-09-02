@@ -23,4 +23,7 @@ services:
       MAX_REQUEST_BYTES: "${MAX_REQUEST_BYTES:-12582912}"
       CHUM5_MAX_DECOMPRESSED_BYTES: "${CHUM5_MAX_DECOMPRESSED_BYTES:-33554432}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+      # 0 locally; set to 2 behind Cloud Run / Fly so rate limiting keys on the
+      # real client IP and not a forgeable x-forwarded-for hop.
+      TRUSTED_PROXY_HOPS: "${TRUSTED_PROXY_HOPS:-0}"
     restart: unless-stopped

@@ -91,10 +91,12 @@ posts it back on each call.
 
 **Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
 (comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 12 MiB),
-`RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`
-/ first `x-forwarded-for` hop, else socket peer; defaults `120/minute` /
-`20/minute`), `CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the
-`.chum5lz` path, default 32 MiB). Untrusted XML is parsed via `defusedxml`.
+`RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`,
+else the `TRUSTED_PROXY_HOPS`-th `x-forwarded-for` entry from the right if that
+is set, else the socket peer; `x-forwarded-for` is ignored by default because a
+direct client can forge it; defaults `120/minute` / `20/minute`),
+`CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the `.chum5lz` path,
+default 32 MiB). Untrusted XML is parsed via `defusedxml`.
 
 `chummer_import.py` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
 by `sourceid` then name; unknown entries become warnings, never errors.

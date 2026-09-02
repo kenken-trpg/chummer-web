@@ -36,9 +36,21 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the two import routes |
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
+| `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
 
-Client IP is read from `cf-connecting-ip` / the first `x-forwarded-for` hop,
-so rate limiting works behind Cloudflare or a platform load balancer.
+**Client IP for rate limiting.** `cf-connecting-ip` is always trusted
+(Cloudflare overwrites it). `x-forwarded-for` is *not* trusted by default — a
+client talking straight to the app can forge it and take one request per fake
+IP, straight past every limit. If a proxy you control sits in front, set
+`TRUSTED_PROXY_HOPS` to the position (counting from the right) of the entry that
+proxy chain records the client at:
+
+- **Cloudflare Tunnel** — leave `0`; `cf-connecting-ip` covers it.
+- **Cloud Run / Fly.io** — `2` (the platform appends `client, lb-ip`).
+- **One self-managed nginx/Caddy** that appends the connecting peer — `1`.
+
+Sanity-check after deploy: hit it from a known IP and confirm that IP (not the
+LB's) shows up in a 429 / log line.
 
 Health check: `GET /api/health` (also the image `HEALTHCHECK`).
 
@@ -50,7 +62,8 @@ gcloud run deploy chummer-web \
   --region asia-northeast1 \
   --allow-unauthenticated \
   --memory 512Mi --cpu 1 \
-  --min-instances 0        # 1 to kill cold starts (~catalog parse); costs a bit
+  --min-instances 0 \
+  --set-env-vars TRUSTED_PROXY_HOPS=2   # rate-limit on the real client IP
 ```
 
 Cloud Run sets `PORT`; the container already honours it. Scale-to-zero is fine
@@ -66,6 +79,9 @@ app = "chummer-web"
 primary_region = "nrt"
 
 [build]
+
+[env]
+  TRUSTED_PROXY_HOPS = "2"   # rate-limit on the real client IP, not fly's edge
 
 [http_service]
   internal_port = 8080
