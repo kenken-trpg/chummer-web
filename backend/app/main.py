@@ -12,16 +12,13 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
-from .models import CharacterCreate, CharacterPatch
+from .models import CharacterCreate, PatchRequest, StateRequest
 from .store import (
-    create_character,
-    delete_character,
-    export_character,
-    get_character,
+    apply_patch,
+    compute_state,
     import_character,
-    list_characters,
+    new_character,
     public_catalog,
-    update_character,
 )
 
 # --- deploy-time knobs (env-overridable) --------------------------------------
@@ -30,7 +27,8 @@ _ALLOWED_ORIGINS = [
     for o in (os.environ.get("ALLOWED_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000").split(",")
     if o.strip()
 ]
-_MAX_REQUEST_BYTES = int(os.environ.get("MAX_REQUEST_BYTES") or 8 * 1024 * 1024)
+# 12 MiB: a CharacterState carrying a base64 portrait (≤3 MB image) is POSTed whole
+_MAX_REQUEST_BYTES = int(os.environ.get("MAX_REQUEST_BYTES") or 12 * 1024 * 1024)
 _RATE_LIMIT = os.environ.get("RATE_LIMIT") or "120/minute"
 _IMPORT_RATE_LIMIT = os.environ.get("IMPORT_RATE_LIMIT") or "20/minute"
 
@@ -87,57 +85,31 @@ def catalog_endpoint() -> dict:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
-@app.post("/api/characters")
+# --- stateless character ops (the client owns the CharacterState) ------------
+
+
+@app.post("/api/characters/new")
 def create(payload: CharacterCreate | None = None) -> dict:
-    return create_character(payload).model_dump()
+    return new_character(payload).model_dump()
 
 
-@app.get("/api/characters")
-def roster() -> list[dict]:
-    return list_characters()
-
-
-@app.delete("/api/characters/{cid}")
-def delete(cid: str) -> dict:
-    delete_character(cid)
-    return {"ok": True}
-
-
-@app.get("/api/characters/{cid}")
-def read(cid: str) -> dict:
+@app.post("/api/characters/patch")
+def patch(req: PatchRequest) -> dict:
+    """Merge `patch` onto `state` (talent / priority / career normalisation) and
+    recompute. With no `patch` it's a bare recompute of the given state."""
     try:
-        return get_character(cid).model_dump()
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="character not found") from exc
-
-
-@app.patch("/api/characters/{cid}")
-def patch(cid: str, payload: CharacterPatch) -> dict:
-    try:
-        return update_character(cid, payload).model_dump()
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="character not found") from exc
+        if req.patch is None:
+            return compute_state(req.state).model_dump()
+        return apply_patch(req.state, req.patch).model_dump()
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@app.get("/api/characters/{cid}/export")
-def export_json(cid: str) -> dict:
-    try:
-        return export_character(cid)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="character not found") from exc
-
-
-@app.get("/api/characters/{cid}/chummer")
-def export_chummer(cid: str) -> Response:
-    """Download a Chummer5a-compatible .chum5 (plain XML)."""
-    try:
-        state = get_character(cid)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="character not found") from exc
-    xml = state_to_chum5(state)
-    fname = (state.name or "character").replace('"', "") + ".chum5"
+@app.post("/api/characters/chummer")
+def export_chummer(req: StateRequest) -> Response:
+    """Download a Chummer5a-compatible .chum5 (plain XML) for the given state."""
+    xml = state_to_chum5(req.state)
+    fname = (req.state.name or "character").replace('"', "") + ".chum5"
     return Response(
         content=xml,
         media_type="application/xml",

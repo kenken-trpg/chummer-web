@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import json
 import uuid
-from pathlib import Path
 
 from .data_loader import catalog, drug_effect_summary
 from .engine import (
@@ -31,16 +29,9 @@ from .engine import (
 )
 from .models import CharacterCreate, CharacterPatch, CharacterState, Priorities
 
-SAVE_DIR = Path(__file__).resolve().parents[1] / "saves"
-_MEMORY: dict[str, CharacterState] = {}
-
-
-def _persist(state: CharacterState) -> None:
-    SAVE_DIR.mkdir(parents=True, exist_ok=True)
-    (SAVE_DIR / f"{state.id}.json").write_text(
-        json.dumps(state.model_dump(), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
+# The backend is stateless: characters live in the browser (IndexedDB). These
+# functions are pure — state in, computed state out — and the HTTP layer just
+# forwards a JSON `CharacterState` from the client on every call.
 
 
 def _new_state(payload: CharacterCreate) -> CharacterState:
@@ -57,53 +48,14 @@ def _new_state(payload: CharacterCreate) -> CharacterState:
     return compute(state)
 
 
-def create_character(payload: CharacterCreate | None = None) -> CharacterState:
-    state = _new_state(payload or CharacterCreate())
-    _MEMORY[state.id] = state
-    _persist(state)
-    return state
+def new_character(payload: CharacterCreate | None = None) -> CharacterState:
+    """A fresh, computed character. Persisting it is the client's job."""
+    return _new_state(payload or CharacterCreate())
 
 
-def get_character(cid: str) -> CharacterState:
-    if cid in _MEMORY:
-        return _MEMORY[cid]
-    path = SAVE_DIR / f"{cid}.json"
-    if path.exists():
-        state = compute(CharacterState.model_validate(json.loads(path.read_text(encoding="utf-8"))))
-        _MEMORY[cid] = state
-        return state
-    raise KeyError(cid)
-
-
-def list_characters(limit: int = 60) -> list[dict]:
-    """Roster: recently-saved characters, newest first."""
-    SAVE_DIR.mkdir(parents=True, exist_ok=True)
-    rows: list[dict] = []
-    for path in SAVE_DIR.glob("*.json"):
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        rows.append(
-            {
-                "id": data.get("id") or path.stem,
-                "name": data.get("name") or "(無名)",
-                "metatype": data.get("metatype") or "",
-                "metavariant": data.get("metavariant") or "",
-                "talent": data.get("talent") or "",
-                "career": bool(data.get("career")),
-                "updated": path.stat().st_mtime,
-            }
-        )
-    rows.sort(key=lambda r: r["updated"], reverse=True)
-    return rows[:limit]
-
-
-def delete_character(cid: str) -> None:
-    _MEMORY.pop(cid, None)
-    path = SAVE_DIR / f"{cid}.json"
-    if path.exists():
-        path.unlink()
+def compute_state(state: CharacterState) -> CharacterState:
+    """Recompute `derived` for a client-supplied state (no merge)."""
+    return compute(state)
 
 
 def _apply_talent_ratings(data: dict) -> None:
@@ -118,8 +70,9 @@ def _apply_talent_ratings(data: dict) -> None:
     data["attributes"] = attrs
 
 
-def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
-    state = get_character(cid)
+def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
+    """Merge a `CharacterPatch` onto a client-supplied state, run the talent /
+    priority / career normalisation, and return the recomputed state."""
     data = state.model_dump()
     old_letter = state.priorities.Talent
     old_talent = state.talent
@@ -198,23 +151,15 @@ def update_character(cid: str, patch: CharacterPatch) -> CharacterState:
             data["submersions"] = []
         if data["talent"] not in SPRITE_TALENTS:
             data["sprites"] = []
-    state = compute(CharacterState.model_validate(data))
-    _MEMORY[cid] = state
-    _persist(state)
-    return state
-
-
-def export_character(cid: str) -> dict:
-    return get_character(cid).model_dump()
+    return compute(CharacterState.model_validate(data))
 
 
 def import_character(payload: dict) -> CharacterState:
+    """Take a raw state dict (our JSON export, or a Chummer-derived dict),
+    stamp a fresh id, and return it computed."""
     payload = dict(payload)
     payload["id"] = str(uuid.uuid4())
-    state = compute(CharacterState.model_validate(payload))
-    _MEMORY[state.id] = state
-    _persist(state)
-    return state
+    return compute(CharacterState.model_validate(payload))
 
 
 CORE_METATYPES = {"Human", "Elf", "Dwarf", "Ork", "Troll"}

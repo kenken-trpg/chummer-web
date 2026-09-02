@@ -412,3 +412,16 @@ class CharacterState(BaseModel):
     # Output of compute(); kept dict[str, Any] here (Pydantic-friendly, no
     # round-trip validation). Its real shape is engine.compute.derived_types.DerivedDict.
     derived: dict[str, Any] = Field(default_factory=dict)
+
+
+class StateRequest(BaseModel):
+    """A client-owned `CharacterState` sent back for a stateless operation."""
+
+    state: CharacterState
+
+
+class PatchRequest(BaseModel):
+    """`state` plus an optional `patch`; with no patch it's a bare recompute."""
+
+    state: CharacterState
+    patch: CharacterPatch | None = None
