@@ -7,13 +7,14 @@ We fetch them at setup time instead of vendoring:
 
 ```
 backend/scripts/fetch_chummer_data.py
-  └─ downloads a fixed FILES list from raw.githubusercontent.com/chummer5a/chummer5a/master
+  └─ downloads a fixed FILES list from raw.githubusercontent.com/chummer5a/chummer5a
+     at a pinned commit (CHUMMER_REF in the script; override via the env var)
      into backend/vendor/chummer/{data,lang}/        (gitignored)
 ```
 
 `make data` runs it. CI caches `backend/vendor/` keyed on the **hash of the
-fetch script**, so adding a file to `FILES` invalidates the cache and the next
-run re-downloads.
+fetch script**, so adding a file to `FILES` — or bumping the pinned
+`CHUMMER_REF` — invalidates the cache and the next run re-downloads.
 
 ## Parsing
 

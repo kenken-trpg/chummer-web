@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
-"""Download only the Chummer data/lang files needed for phase 1."""
+"""Download only the Chummer data/lang files needed for phase 1.
+
+The chummer5a ref is pinned to a specific commit for reproducibility — the
+engine parses upstream's `<bonus>` schema, which changes on `master` without
+notice and silently breaks tests / derived output. To move the pin: bump
+``CHUMMER_REF`` below, re-run this script, run ``python -m pytest`` + ``mypy``,
+and commit the new SHA together with any parser changes it needs. Set the
+``CHUMMER_REF`` env var to fetch a different ref ad hoc (e.g. ``master``).
+"""
 
 from __future__ import annotations
 
+import os
 import sys
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor" / "chummer"
-BASE = "https://raw.githubusercontent.com/chummer5a/chummer5a/master"
+# chummer5a/chummer5a @ 2026-09-02 "Fixed incorrect format for improvement on Master Archer"
+CHUMMER_REF = os.environ.get("CHUMMER_REF") or "ed77aa3dcbe760064109d9af01ea9b5e4498294c"
+BASE = f"https://raw.githubusercontent.com/chummer5a/chummer5a/{CHUMMER_REF}"
 
 FILES = [
     "Chummer/data/books.xml",
@@ -53,7 +64,7 @@ def main() -> int:
     notice = VENDOR / "NOTICE.txt"
     notice.write_text(
         "Game data and translations are copied from chummer5a/chummer5a (GPL-3.0).\n"
-        "https://github.com/chummer5a/chummer5a\n",
+        f"https://github.com/chummer5a/chummer5a/tree/{CHUMMER_REF}\n",
         encoding="utf-8",
     )
     return 0

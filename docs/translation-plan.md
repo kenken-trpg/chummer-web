@@ -10,7 +10,7 @@ Shadowrun 5th Edition の非公式キャラクター作成 Web アプリ。
 |---|---|---|
 | backend | FastAPI (`backend/app/`) | Chummer5a の XML データを読み込み、キャラ計算エンジン (`engine.py`) と保存/読込 API を提供 |
 | frontend | Next.js + React (`frontend/`) | タブ式キャラクタービルダー UI (`components/character/tabs/*`) とシート表示 |
-| data | `backend/vendor/chummer/` | `scripts/fetch_chummer_data.py` が chummer5a リポジトリ (GPL-3.0) の `master` から取得。**Git 管理外 (`.gitignore`)** |
+| data | `backend/vendor/chummer/` | `scripts/fetch_chummer_data.py` が chummer5a リポジトリ (GPL-3.0) の**固定コミット** (`CHUMMER_REF`) から取得。**Git 管理外 (`.gitignore`)** |
 
 翻訳ファイルは 2 つ (どちらも chummer5a 上流のコミュニティ翻訳):
 
@@ -264,7 +264,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 - **SR4↔SR5 差異**: chumJA はページ番号・一部ルール用語・改称アイテムが古い。固有名カナは流用可、ルール用語は要個別確認。
 - **`vendor/` 非管理**: フェーズ 0 を飛ばして直接編集すると全て失われる。順序厳守。
-- **上流バージョン差**: リポジトリの `ja-jp*.xml` は取得時点の chummer5a `master`。`<version>` と en-us の突き合わせで、
+- **上流バージョン差**: リポジトリの `ja-jp*.xml` は固定コミット (`CHUMMER_REF`) 時点の chummer5a。`<version>` と en-us の突き合わせで、
   上流で未訳なのか取得が古いのか切り分ける。
 - **GPL-3.0**: オーバーレイも派生物。→ `NOTICE.txt` (2026-09-02) と README に出典表記を追加済み。
   第三者資料 (chumJA / 2021 XSLT / shadowrun5eja) の扱いは §7 を参照。
