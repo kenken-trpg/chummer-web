@@ -10,6 +10,9 @@
   --warn: #f0b429;
   --danger: #ff6b6b;
   --ok: #7dce82;
+  /* render native controls (the <select> popup especially) dark, so
+     unselected option text isn't near-white on a white system menu */
+  color-scheme: dark;
 }
 
 * {
@@ -28,6 +31,17 @@ input,
 select {
   font: inherit;
   color: inherit;
+}
+/* fallback for engines that keep a light popup regardless of color-scheme:
+   pin the dropdown list to the dark palette so options stay readable
+   before selection */
+select {
+  background-color: var(--panel-2);
+}
+option,
+optgroup {
+  background-color: var(--panel);
+  color: var(--text);
 }
 button {
   cursor: pointer;
