@@ -8,7 +8,8 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on a branch, but never a tag build (release images).
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   backend:
@@ -72,8 +73,10 @@ jobs:
   # Builds the runtime image on every push/PR; on main and on `v*` tags it also
   # pushes to GHCR (ghcr.io/<owner>/chummer-web). The package inherits the
   # repo's visibility — make the repo public for others to `docker pull` it.
+  # Gated on the test jobs so a red commit never publishes `:latest`.
   docker:
     runs-on: ubuntu-latest
+    needs: [backend, frontend]
     permissions:
       contents: read
       packages: write
