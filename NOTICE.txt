@@ -54,13 +54,13 @@ Third-party data and translations
       under GPL-3.0. Per-entry provenance is listed in
       docs/translation-import-report.md.
 
-   c. Terminology cross-checked against — not bulk-copied from — the 2021
-      Chummer sheet localisation XSLT ("chummer5th_シート日本語化_52160対応")
-      and "shadowrun5eja" (https://github.com/MiyabiRouga/shadowrun5eja), a
-      Foundry VTT SR5e Japanese i18n project. Neither ships a LICENSE file;
-      they are used for reference and verification only. The "sr5eja" column
-      in docs/translation-glossary.md reproduces terms from that project for
-      side-by-side comparison.
+   c. Terminology cross-checked against — not copied from — the 2021 Chummer
+      sheet localisation XSLT ("chummer5th_シート日本語化_52160対応") and
+      "shadowrun5eja" (https://github.com/MiyabiRouga/shadowrun5eja), a Foundry
+      VTT SR5e Japanese i18n project. Neither ships a LICENSE file; they are
+      used for reference only. shadowrun5eja's strings are not reproduced —
+      the "sr5eja" column in docs/translation-glossary.md carries only an
+      agree/differ marker.
 
    Full methodology: backend/data/ja_overrides/README.md and
    docs/translation-plan.md.

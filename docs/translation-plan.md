@@ -285,23 +285,25 @@ verbatim 取り込みは避ける」) は経緯として残す。
 | chummer5a `Chummer/data` `Chummer/lang` | GPL-3.0 | ビルド時取得。`backend/vendor/` は git 非管理。本プロジェクトは派生物として GPL-3.0 |
 | curated 手訳 (`ja_curated_*.py`, `import_ja_from_refs.CURATED`) | 本プロジェクト著作 | `data.json` の約 337 / 503 件 |
 | chumJA (`chumJA_20130129`) の `<name>` / `<category>` 完全一致 | 表記なし | `data.json` の約 166 / 503 件。大半が固有名カナ・カテゴリ語。エントリ別の出典は `translation-import-report.md` |
-| 2021 シート XSLT / shadowrun5eja | LICENSE なし | verbatim 取り込みなし。用語の裏取りに参照。`translation-glossary.md` の該当列は英↔訳の横並び比較 |
+| 2021 シート XSLT / shadowrun5eja | LICENSE なし | **shadowrun5eja の訳語は非収録**。`data.json` に一切入っていない。`translation-glossary.md` の `sr5eja` 列は `＝`／`≠` マーカーのみ、`translation-glossary-mismatches.md` セクション D は英語見出しのみ (2026-09-02 に verbatim 再現を除去) |
 
 ### 判断
 
 - **短い用語・固有名の対訳** (「アリゲーター」「弾薬」等) は個々には創作的表現の
   余地がほぼなく著作物性が薄い。chumJA 由来分はこの範囲に収まる。
-- **`translation-glossary.md` の `sr5eja` 列**は、英語見出しに対する各資料の訳を
-  並べた比較・照合の記録であり、当該プロジェクトの成果物を自分たちの翻訳として
-  再配布するものではない (参照目的)。
+- **shadowrun5eja は無ライセンス**。出荷物 (`data.json`) には元々含まれておらず、
+  docs 側の verbatim 再現 (旧 `sr5eja` 列 約414・旧セクション D 約302) も
+  マーカー化／英語のみに置換して除去した。glossary の `採用` 列には、2021 版に無い
+  UI ラベル約 359 語が sr5eja 由来の空欄補完として残るが、いずれも短い語句で
+  本プロジェクトが採用した用語として記録するもの (アプリには非搭載)。
 - いずれの第三者資料も `NOTICE.txt` でクレジットし、ライセンス状況を明記した。
 - 以上より、現状の内容で公開して差し支えない、というのが本プロジェクトの立場。
 
 ### 申し出があった場合の対応
 
 権利者から異議があれば、`data.json` を curated 由来のみ (約 337 件) に再生成し、
-`translation-glossary.md` の `sr5eja` 列を除去する。`import_ja_from_refs.py` の
-出典タグと `regen_ja.sh` でこの切り分けは機械的に可能。
+`translation-glossary.md` の `採用` 列の sr5eja 空欄補完も除去する。`import_ja_from_refs.py`
+の出典タグと `regen_ja.sh` でこの切り分けは機械的に可能。
 
 ## 進捗ログ
 
@@ -326,4 +328,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
 - 2026-08-30: `regen_ja.sh` 新設。`data.json` ＋ glossary ＋ import-report をまとめて決定的に再生成。
   import-report を「全エントリを出典別」に変更 (`--no-reset` でも同一出力)。
 - 2026-09-02: `NOTICE.txt` 追加 (データ・翻訳の出典表記) ＋ README 追記。§7 にライセンス判断を明記。
+- 2026-09-02: shadowrun5eja の verbatim 再現を除去 (無ライセンス確認済み)。`build_ja_glossary.py`
+  を改修し `translation-glossary.md` の `sr5eja` 列を `＝`／`≠` マーカーに、`translation-glossary-mismatches.md`
+  セクション D を英語見出しのみに。`data.json` は元々 sr5eja 非収録。
   §3 の第三者資料の留保記述は経緯として保持。

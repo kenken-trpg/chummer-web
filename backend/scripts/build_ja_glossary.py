@@ -302,11 +302,15 @@ def build_glossary_doc(
         "",
         "## 表1: 統合用語",
         "",
+        "sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語自体は"
+        "収録しない（無ライセンスのため参照のみ）。",
+        "",
         "| English | 採用 | 2021版 | sr5eja | 備考 |",
         "|---|---|---|---|---|",
     ]
     for eng, pick, xja, sja, note in merged:
-        lines.append(f"| {eng} | {pick} | {xja} | {sja} | {note} |")
+        mark = "" if not sja else ("＝" if sja == pick else "≠")
+        lines.append(f"| {eng} | {pick} | {xja} | {mark} | {note} |")
 
     lines += [
         "",
@@ -400,14 +404,17 @@ def build_mismatch_doc(
                 data_lines.append(f"| {g[0]} | {g[1]} | {label} | {cur} |")
     data_lines.append("")
 
-    # D: sr5eja terms not yet in ui.json (candidates to seed)
+    # D: UI/rule terms shadowrun5eja has translated but our ui.json has not.
+    # We list the English keys only — consult shadowrun5eja directly for the
+    # wording (no license → we don't reproduce its strings here).
     d_lines = [
-        "## D. sr5eja 由来で ui.json 未収録の用語 (seed 候補)",
+        "## D. shadowrun5eja が訳出済みで ui.json 未収録の用語 (seed 候補)",
         "",
-        "Foundry SR5e 日本語化にあり、当方の `ui.json` に無い用語。descriptor・ルール語の参照や `ui.json` 追加の材料。",
+        "Foundry SR5e 日本語化 (github.com/MiyabiRouga/shadowrun5eja) が訳している "
+        "UI・ルール語のうち、当方の `ui.json` に無いもの。訳語は shadowrun5eja を直接参照。",
         "",
-        "| English | sr5eja | 2021版 |",
-        "|---|---|---|",
+        "| English | 2021版 |",
+        "|---|---|",
     ]
     xslt_by_eng = {}
     for var, value in rows:
@@ -417,7 +424,7 @@ def build_mismatch_doc(
     for k, (eng, ja) in sorted(sr5eja.items()):
         if ja in overlay_vals or ja in ui_ja.values():
             continue
-        d_lines.append(f"| {eng} | {ja} | {xslt_by_eng.get(k, '')} |")
+        d_lines.append(f"| {eng} | {xslt_by_eng.get(k, '')} |")
     d_lines.append("")
 
     header = [

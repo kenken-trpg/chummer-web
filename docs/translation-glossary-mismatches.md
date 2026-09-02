@@ -140,312 +140,312 @@
 | Rituals | 儀式呪文 | category | 儀式 |
 | Services | 助力 | category | Services |
 
-## D. sr5eja 由来で ui.json 未収録の用語 (seed 候補)
+## D. shadowrun5eja が訳出済みで ui.json 未収録の用語 (seed 候補)
 
-Foundry SR5e 日本語化にあり、当方の `ui.json` に無い用語。descriptor・ルール語の参照や `ui.json` 追加の材料。
+Foundry SR5e 日本語化 (github.com/MiyabiRouga/shadowrun5eja) が訳している UI・ルール語のうち、当方の `ui.json` に無いもの。訳語は shadowrun5eja を直接参照。
 
-| English | sr5eja | 2021版 |
-|---|---|---|
-| Accessory | アクセサリ |  |
-| Action | アクション |  |
-| Action Type | タイプ |  |
-| Action Type None | なし |  |
-| Action Type Varies | 変動 |  |
-| Active Defense | 能動防御 |  |
-| Add Ammo | 弾薬を追加 |  |
-| Add Five To Overwatch | 監視指数+5 |  |
-| Add One To Overwatch | 監視指数+1 |  |
-| Add Skill | 技能の追加 |  |
-| adept power | アデプト・パワー |  |
-| Agent | エージェント |  |
-| Ammo Full | 弾薬満タン |  |
-| Ammo Gel Rounds | ゲル弾 |  |
-| Aoe | 効果範囲 |  |
-| Apply Wounds | 負傷を適用 |  |
-| Armor Hardened | 硬化 |  |
-| Armor Hardened Full | 硬化装甲 |  |
-| Attack | 攻撃 | アタック |
-| Attacker | 攻撃者 |  |
-| Attacker Hits | 攻撃側のヒット数 |  |
-| Attacker Net Hits | 攻撃側純ヒット数 |  |
-| Attr Intuition | 直感力 |  |
-| Availability | 入手値 |  |
-| Awakened | 覚醒者 |  |
-| Awakened Emerged | 覚醒者/発現者 |  |
-| Barrel | バレル |  |
-| Base | 基本 |  |
-| Base Value | 基本値 |  |
-| Biofeedback Damage | 生体信号フィードバックダメージ |  |
-| Biography | 経歴 |  |
-| Blast Radius | 爆発半径 |  |
-| Blitz | 速攻 |  |
-| Block | ブロック |  |
-| Bonus | ボーナス |  |
-| Bonuses | ボーナス |  |
-| Broken | 破壊 |  |
-| Bullet | ラウンド |  |
-| Bullet Count | 弾丸の数 |  |
-| Bullets | ラウンド |  |
-| Buy Hits | ヒットの購入 |  |
-| call in action | 召喚／コンパイル |  |
-| Can Default | デフォルティング可 |  |
-| Capacity | 容量 |  |
-| Career Karma | 通算カルマ |  |
-| character | キャラクター |  |
-| Clear Marks | マークを消す |  |
-| Collapse | 折りたたむ |  |
-| Collapse All | 全て折りたたむ |  |
-| Common Program | 一般プログラム |  |
-| Conceal | 隠蔽 |  |
-| Connect To Network | ネットワークに接続 |  |
-| Connection | コネクション | コネ値 |
-| contact | コネ | コンタクト |
-| Contact Type | 種類 |  |
-| Continue | 続行 |  |
-| Control Rig | コントロール・リグ |  |
-| Cover | 遮蔽 |  |
-| Create | {type}を作成 |  |
-| critter power | クリッター・パワー |  |
-| Cyberware Grade | 等級 |  |
-| Cyberware Grade Alpha | アルファ |  |
-| Cyberware Grade Beta | ベータ |  |
-| Cyberware Grade Delta | デルタ |  |
-| Cyberware Grade Gamma | ガンマ |  |
-| Cyberware Grade Grey | グレイ |  |
-| Cyberware Grade Standard | スタンダード |  |
-| Cyberware Grade Used | 中古 |  |
-| Damage | ダメージ | ダメージ(DV) |
-| Damage Replace | ダメージ置換 |  |
-| Damage Type | 種別 | ダメージタイプ |
-| Default Category Visibility | 空のカテゴリを表示 |  |
-| Defender | 防御側 |  |
-| Defender Net Hits | 防御側純ヒット数 |  |
-| Defense | 防御 | 回避 |
-| Defense Test | 防御テスト |  |
-| Delete Ammo | 弾薬を削除 |  |
-| Delete Item | アイテムを削除 |  |
-| Delete License | ライセンスを削除 |  |
-| Delete Mod | 改造・モジュールを削除 |  |
-| Delete Skill | 技能を削除 |  |
-| Description | 解説 |  |
-| Descriptors | 特性子 |  |
-| Details | 詳細 |  |
-| Detection Spell Extended | 超広域 |  |
-| device | デバイス | 機器 |
-| Device Cat Cyberdeck | サイバーデッキ |  |
-| Device Type | 種別 |  |
-| Direct Connection | 直結 |  |
-| Dmg Type Matrix | マトリックス |  |
-| Dodge | 回避 |  |
-| Dont Apply Wounds | 負傷を適用しない |  |
-| Drain | ドレイン | ドレイン |
-| Drain Attribute | ドレイン能力値 |  |
-| Drain Value | ドレイン |  |
-| Dropoff | 外す |  |
-| Duck Or Cover | 伏せもしくは遮蔽を取る |  |
-| Duration | 効果時間 | 効果時間 |
-| Duration Instant | インスタント |  |
-| Edit Ammo | 弾薬を編集 |  |
-| Edit Item | アイテムを編集 |  |
-| Edit Skill | スキルを編集 |  |
-| Effect | 効果 |  |
-| Effects | 効果 |  |
-| Emerged | 発現者 |  |
-| Environment High | 高 |  |
-| Environment Low | 低 |  |
-| Environment Medium | 中 |  |
-| Environment Modifier | 環境修正 |  |
-| Environment None | なし |  |
-| Environment Very High | 非常に高い |  |
-| Expand | 展開 |  |
-| Expand All | すべて展開 |  |
-| Extend | 継続 |  |
-| Extended | 継続 |  |
-| Extended Hits | 蓄積ヒット数 |  |
-| Extended Test | 継続テスト |  |
-| Fade | フェイディング |  |
-| Fade Attribute | フェイディングに使用する能力値 |  |
-| Fade Value | フェイディング |  |
-| Filter | フィルター |  |
-| Fire Mode | 射撃モード |  |
-| Full Defense | 全力防御 |  |
-| Full Defense Attribute | 全力防御使用能力値 |  |
-| Full Matrix Defense | マトリックス全力防御 |  |
-| Glitch | グリッチ! |  |
-| Glitch Critical | クリティカルグリッジ！ |  |
-| Glitches | グリッジ: |  |
-| Good Cover | 完全遮蔽 |  |
-| grid | グリッド |  |
-| Grids | グリッド |  |
-| Hacking Program | ハッキングプログラム |  |
-| Hardened Armor | 硬化装甲 |  |
-| Help | ヘルプ |  |
-| Hits | ヒット |  |
-| Hot Sim | ホットシム |  |
-| Immunity | 完全耐性 |  |
-| Immunity To Normal Weapons | 通常武器完全耐性 |  |
-| Import Character | キャラクターをインポートする |  |
-| Incoming Damage | 抵抗前ダメージ値 |  |
-| Incoming Drain | 抵抗前ドレイン値 |  |
-| Incoming Fade | 抵抗前フェイディング値 |  |
-| Information | 情報 |  |
-| Init Cat Matrix | マトリックス |  |
-| Internal | 内蔵 |  |
-| Is Critter | クリッター |  |
-| Is Grunt | グラント |  |
-| Item Mod | アイテム修正 |  |
-| Item Name | アイテム |  |
-| Knocked Down | 転倒 |  |
-| Knowledge Skill Academic | 学術 |  |
-| Knowledge Skill Interests | 趣味 |  |
-| Knowledge Skill Professional | 職業 |  |
-| Knowledge Skill Street | ストリート |  |
-| Languages | 言語 |  |
-| Last Roll | 最後に促されたロール |  |
-| License | 免許 |  |
-| Licenses | 免許 |  |
-| Lifestyle Comforts | 快適さ |  |
-| Lifestyle Guests | 同居人 |  |
-| Lifestyle High | 上流 |  |
-| Lifestyle Low | 下流 |  |
-| Lifestyle Luxory | 贅沢 |  |
-| Lifestyle Middle | 中流 |  |
-| Lifestyle Neighborhood | 近隣環境 |  |
-| Lifestyle Security | 治安 |  |
-| Lifestyle Squatter | 不法居住 |  |
-| Lifestyle Street | ストリート |  |
-| Lifestyle Type | 種別 |  |
-| Limit Mental | 精神リミット |  |
-| Limit Physical | 身体リミット |  |
-| Limit Social | 社交リミット |  |
-| Load | ロード |  |
-| Loaded | ロード済 | 装填 |
-| Loyalty | 忠実度 | 忠実値 |
-| Magic | 魔法 | 魔力 |
-| Manual | 手動 |  |
-| Manual Override | 手動操作優先 |  |
-| Marks | マーク |  |
-| Matrix Defense | マトリックス防御 |  |
-| Matrix Full Defense Attribute | マトリックス全力防御能力値 |  |
-| Matrix Target | マトリックスターゲット |  |
-| Melee Weapon Attack | 近接武器攻撃 |  |
-| Mental Limit | 精神リミット | 精神リミット |
-| Migration Complete | マイグレーション完了 |  |
-| Mod Points | 改造スロット |  |
-| modification | 装備改造 |  |
-| Modification Categories | 改造のカテゴリー |  |
-| Modification Category | 改造カテゴリー |  |
-| Modification Slots | 改造スロット |  |
-| Modified | 修正後 |  |
-| Modified Armor | 修正装甲値 |  |
-| Modified Damage | 修正後ダメージ |  |
-| Modified Drain | 修正後ドレイン |  |
-| Modified Fade | 修正後フェイディング |  |
-| Modify Roll | ロールを修正 |  |
-| Mount Point | マウント箇所 |  |
-| Move Item Inventory | アイテムをインベントリに移動する |  |
-| Movement | 移動 | 移動 |
-| Mundane | マンディン |  |
-| Net Hits | 純ヒット |  |
-| New | 新しい |  |
-| No Cover | 遮蔽なし |  |
-| Normal | ノーマル |  |
-| Normal Skill Button | ノーマル |  |
-| Normal Spell Button | ノーマル |  |
-| Not Extended | 継続なし |  |
-| Notoriety | 悪評 | 悪名 |
-| Open Network Manager | ネットワークマネージャーを開く |  |
-| Open Origin | アイテムを開く |  |
-| Opposed Type | タイプ |  |
-| Opposing Hits | 対抗側ヒット数 |  |
-| Opposing Net Hits | 純ヒット数 |  |
-| Original Dice Pool | 元のダイスプール |  |
-| Out Of Range | 射程距離外 |  |
-| Overflow | オバーフロー |  |
-| Override | 上書き |  |
-| Overwatch Score | 監視指数(OS) |  |
-| Owner | オーナー |  |
-| Parry | 受け流し |  |
-| Partial Cover | 部分遮蔽 |  |
-| Physical Limit | 身体リミット | 身体リミット |
-| Physical Track | 身体トラック | 身体ダメージトラック |
-| Place Template | テンプレートの場所 |  |
-| Plus Fifteen Minutes | +15分 |  |
-| Power Type | パワータイプ |  |
-| Program Type | タイプ |  |
-| Public Awareness | 公的認知度 | 公的認知度 |
-| Public Grid | 公共グリッド |  |
-| Push The Limit | 限界突破 |  |
-| Qty | 個数 | 数量 |
-| Quality Type | 資質タイプ |  |
-| Quality Type Life Module | ライフモジュール |  |
-| Quality Type Negative | 不利 |  |
-| Quality Type Positive | 有利 |  |
-| Quantity | 数量 |  |
-| Range Weapon Attack | 射撃 |  |
-| Reagent | 原質 |  |
-| Reckless Spell Button | 無謀な呪文行使 |  |
-| Recoil | 反動 |  |
-| Recoil Compensation | 反動修正 |  |
-| Refresh | リフレッシュ |  |
-| Remove Bonus | ボーナスを削除する |  |
-| Remove Specialization | 専門化を削除する |  |
-| Resist | 抵抗 |  |
-| Restore Default Skills | デフォルトのスキルに戻す |  |
-| Result Override | 結果上書き |  |
-| Result Override Glitches | グリッチ数 |  |
-| Result Override Hits | 成功数 |  |
-| Right Click To Clear | 右クリックでクリア |  |
-| Roll | ロール |  |
-| Roll Composure | 冷静 |  |
-| Roll Custom | カスタム |  |
-| Roll Defense | 防御 |  |
-| Roll Drain | ドレイン |  |
-| Roll Fade | フェイディング |  |
-| Roll Judge Intentions | 意図を図る |  |
-| Roll Lift Carry | 持ち上げ/運搬 |  |
-| Roll Memory | 記憶 |  |
-| Roll Mode | ロールモード |  |
-| Roll Soak | ダメージ抵抗 |  |
-| Rounds Remaining | 残弾数 |  |
-| Run | 走行 |  |
-| Running Silent | サイレント状態 |  |
-| Running Speed | 走行速度 |  |
-| Same Grid | 同一グリッド |  |
-| Second Attribute | 副能力値 |  |
-| Second Chance | 振り直し |  |
-| Selected Targets | 目標選択 |  |
-| Sheet Actor | アクターシート |  |
-| Sheet Item | アイテムシート |  |
-| Side | サイド |  |
-| Situational Modifier | 状況修正 |  |
-| Soak | ダメージ抵抗 |  |
-| Soak Test | ダメージ抵抗テスト |  |
-| Social Limit | 社交リミット | 社交リミット |
-| Source | 資料 |  |
-| Spare Clips | 予備クリップ |  |
-| sprite power | スプライト・パワー |  |
-| Stun Track | 精神ＣＭ | 精神ダメージトラック |
-| Suppressing | 制圧 |  |
-| Target | 目標 | 対象 |
-| Target Device | デバイス |  |
-| Temporary | 一時的 |  |
-| Temporary Modifiers | 一時的な修正 |  |
-| Test | テスト |  |
-| Threshold | 目標値 |  |
-| Toggle Active | 有効状態切替 |  |
-| Toggle Breakdown | 内訳を表示 |  |
-| Toggle Equip | 装備状態切替 |  |
-| Toggle Wireless | ワイヤレス状態切替 |  |
-| Top | トップ |  |
-| Total | トータル | 合計 |
-| Under Barrel | アンダーバレル |  |
-| Value | 数値 |  |
-| vehicle | ヴィークル／ドローン | ヴィークル |
-| Walk | 歩行 |  |
-| Walking Speed | 歩行速度 |  |
-| Wireless | ワイヤレス |  |
-| Wireless Offline | オフライン |  |
-| Wireless Online | オンライン |  |
-| Wireless Unavailable | 利用不可 |  |
+| English | 2021版 |
+|---|---|
+| Accessory |  |
+| Action |  |
+| Action Type |  |
+| Action Type None |  |
+| Action Type Varies |  |
+| Active Defense |  |
+| Add Ammo |  |
+| Add Five To Overwatch |  |
+| Add One To Overwatch |  |
+| Add Skill |  |
+| adept power |  |
+| Agent |  |
+| Ammo Full |  |
+| Ammo Gel Rounds |  |
+| Aoe |  |
+| Apply Wounds |  |
+| Armor Hardened |  |
+| Armor Hardened Full |  |
+| Attack | アタック |
+| Attacker |  |
+| Attacker Hits |  |
+| Attacker Net Hits |  |
+| Attr Intuition |  |
+| Availability |  |
+| Awakened |  |
+| Awakened Emerged |  |
+| Barrel |  |
+| Base |  |
+| Base Value |  |
+| Biofeedback Damage |  |
+| Biography |  |
+| Blast Radius |  |
+| Blitz |  |
+| Block |  |
+| Bonus |  |
+| Bonuses |  |
+| Broken |  |
+| Bullet |  |
+| Bullet Count |  |
+| Bullets |  |
+| Buy Hits |  |
+| call in action |  |
+| Can Default |  |
+| Capacity |  |
+| Career Karma |  |
+| character |  |
+| Clear Marks |  |
+| Collapse |  |
+| Collapse All |  |
+| Common Program |  |
+| Conceal |  |
+| Connect To Network |  |
+| Connection | コネ値 |
+| contact | コンタクト |
+| Contact Type |  |
+| Continue |  |
+| Control Rig |  |
+| Cover |  |
+| Create |  |
+| critter power |  |
+| Cyberware Grade |  |
+| Cyberware Grade Alpha |  |
+| Cyberware Grade Beta |  |
+| Cyberware Grade Delta |  |
+| Cyberware Grade Gamma |  |
+| Cyberware Grade Grey |  |
+| Cyberware Grade Standard |  |
+| Cyberware Grade Used |  |
+| Damage | ダメージ(DV) |
+| Damage Replace |  |
+| Damage Type | ダメージタイプ |
+| Default Category Visibility |  |
+| Defender |  |
+| Defender Net Hits |  |
+| Defense | 回避 |
+| Defense Test |  |
+| Delete Ammo |  |
+| Delete Item |  |
+| Delete License |  |
+| Delete Mod |  |
+| Delete Skill |  |
+| Description |  |
+| Descriptors |  |
+| Details |  |
+| Detection Spell Extended |  |
+| device | 機器 |
+| Device Cat Cyberdeck |  |
+| Device Type |  |
+| Direct Connection |  |
+| Dmg Type Matrix |  |
+| Dodge |  |
+| Dont Apply Wounds |  |
+| Drain | ドレイン |
+| Drain Attribute |  |
+| Drain Value |  |
+| Dropoff |  |
+| Duck Or Cover |  |
+| Duration | 効果時間 |
+| Duration Instant |  |
+| Edit Ammo |  |
+| Edit Item |  |
+| Edit Skill |  |
+| Effect |  |
+| Effects |  |
+| Emerged |  |
+| Environment High |  |
+| Environment Low |  |
+| Environment Medium |  |
+| Environment Modifier |  |
+| Environment None |  |
+| Environment Very High |  |
+| Expand |  |
+| Expand All |  |
+| Extend |  |
+| Extended |  |
+| Extended Hits |  |
+| Extended Test |  |
+| Fade |  |
+| Fade Attribute |  |
+| Fade Value |  |
+| Filter |  |
+| Fire Mode |  |
+| Full Defense |  |
+| Full Defense Attribute |  |
+| Full Matrix Defense |  |
+| Glitch |  |
+| Glitch Critical |  |
+| Glitches |  |
+| Good Cover |  |
+| grid |  |
+| Grids |  |
+| Hacking Program |  |
+| Hardened Armor |  |
+| Help |  |
+| Hits |  |
+| Hot Sim |  |
+| Immunity |  |
+| Immunity To Normal Weapons |  |
+| Import Character |  |
+| Incoming Damage |  |
+| Incoming Drain |  |
+| Incoming Fade |  |
+| Information |  |
+| Init Cat Matrix |  |
+| Internal |  |
+| Is Critter |  |
+| Is Grunt |  |
+| Item Mod |  |
+| Item Name |  |
+| Knocked Down |  |
+| Knowledge Skill Academic |  |
+| Knowledge Skill Interests |  |
+| Knowledge Skill Professional |  |
+| Knowledge Skill Street |  |
+| Languages |  |
+| Last Roll |  |
+| License |  |
+| Licenses |  |
+| Lifestyle Comforts |  |
+| Lifestyle Guests |  |
+| Lifestyle High |  |
+| Lifestyle Low |  |
+| Lifestyle Luxory |  |
+| Lifestyle Middle |  |
+| Lifestyle Neighborhood |  |
+| Lifestyle Security |  |
+| Lifestyle Squatter |  |
+| Lifestyle Street |  |
+| Lifestyle Type |  |
+| Limit Mental |  |
+| Limit Physical |  |
+| Limit Social |  |
+| Load |  |
+| Loaded | 装填 |
+| Loyalty | 忠実値 |
+| Magic | 魔力 |
+| Manual |  |
+| Manual Override |  |
+| Marks |  |
+| Matrix Defense |  |
+| Matrix Full Defense Attribute |  |
+| Matrix Target |  |
+| Melee Weapon Attack |  |
+| Mental Limit | 精神リミット |
+| Migration Complete |  |
+| Mod Points |  |
+| modification |  |
+| Modification Categories |  |
+| Modification Category |  |
+| Modification Slots |  |
+| Modified |  |
+| Modified Armor |  |
+| Modified Damage |  |
+| Modified Drain |  |
+| Modified Fade |  |
+| Modify Roll |  |
+| Mount Point |  |
+| Move Item Inventory |  |
+| Movement | 移動 |
+| Mundane |  |
+| Net Hits |  |
+| New |  |
+| No Cover |  |
+| Normal |  |
+| Normal Skill Button |  |
+| Normal Spell Button |  |
+| Not Extended |  |
+| Notoriety | 悪名 |
+| Open Network Manager |  |
+| Open Origin |  |
+| Opposed Type |  |
+| Opposing Hits |  |
+| Opposing Net Hits |  |
+| Original Dice Pool |  |
+| Out Of Range |  |
+| Overflow |  |
+| Override |  |
+| Overwatch Score |  |
+| Owner |  |
+| Parry |  |
+| Partial Cover |  |
+| Physical Limit | 身体リミット |
+| Physical Track | 身体ダメージトラック |
+| Place Template |  |
+| Plus Fifteen Minutes |  |
+| Power Type |  |
+| Program Type |  |
+| Public Awareness | 公的認知度 |
+| Public Grid |  |
+| Push The Limit |  |
+| Qty | 数量 |
+| Quality Type |  |
+| Quality Type Life Module |  |
+| Quality Type Negative |  |
+| Quality Type Positive |  |
+| Quantity |  |
+| Range Weapon Attack |  |
+| Reagent |  |
+| Reckless Spell Button |  |
+| Recoil |  |
+| Recoil Compensation |  |
+| Refresh |  |
+| Remove Bonus |  |
+| Remove Specialization |  |
+| Resist |  |
+| Restore Default Skills |  |
+| Result Override |  |
+| Result Override Glitches |  |
+| Result Override Hits |  |
+| Right Click To Clear |  |
+| Roll |  |
+| Roll Composure |  |
+| Roll Custom |  |
+| Roll Defense |  |
+| Roll Drain |  |
+| Roll Fade |  |
+| Roll Judge Intentions |  |
+| Roll Lift Carry |  |
+| Roll Memory |  |
+| Roll Mode |  |
+| Roll Soak |  |
+| Rounds Remaining |  |
+| Run |  |
+| Running Silent |  |
+| Running Speed |  |
+| Same Grid |  |
+| Second Attribute |  |
+| Second Chance |  |
+| Selected Targets |  |
+| Sheet Actor |  |
+| Sheet Item |  |
+| Side |  |
+| Situational Modifier |  |
+| Soak |  |
+| Soak Test |  |
+| Social Limit | 社交リミット |
+| Source |  |
+| Spare Clips |  |
+| sprite power |  |
+| Stun Track | 精神ダメージトラック |
+| Suppressing |  |
+| Target | 対象 |
+| Target Device |  |
+| Temporary |  |
+| Temporary Modifiers |  |
+| Test |  |
+| Threshold |  |
+| Toggle Active |  |
+| Toggle Breakdown |  |
+| Toggle Equip |  |
+| Toggle Wireless |  |
+| Top |  |
+| Total | 合計 |
+| Under Barrel |  |
+| Value |  |
+| vehicle | ヴィークル |
+| Walk |  |
+| Walking Speed |  |
+| Wireless |  |
+| Wireless Offline |  |
+| Wireless Online |  |
+| Wireless Unavailable |  |
 
