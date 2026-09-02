@@ -277,6 +277,7 @@ export interface Character {
     martial_spec_options?: Record<string, string[]>;
     unarmed_reach?: number;
     unarmed_ap?: number;
+    unarmed_physical?: boolean;
     reach?: number;
     throw_str?: number;
     throw_range_str?: number;
@@ -492,6 +493,7 @@ export interface Character {
     }[];
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
+    essence_lost?: number;
     essence_lost_cyber?: number;
     essence_lost_bio?: number;
     ware_ranges?: Record<string, { min: number; max: number }>;
@@ -516,5 +518,15 @@ export interface Character {
       name: string;
       attributes: Record<string, { min: number; max: number; aug: number }>;
     };
+    talent?: {
+      name: string;
+      label?: string;
+      value?: number;
+      magic?: number;
+      resonance?: number;
+      spells?: number;
+      cfp?: number;
+    };
+    translations?: Record<string, string>;
   };
 }
