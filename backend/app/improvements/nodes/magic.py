@@ -226,12 +226,20 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         elif tag == "burnoutsway":
             effects["burnout_way"] = True
         elif tag == "weaponcategorydice":
-            # <weaponcategorydice><category><name>Bows</name><value>1</value></category>…
-            # parses to nested["category"] == [name, value, name, value, …].
+            # Legacy upstream shape (one or more categories):
+            #   <weaponcategorydice><category><name>Bows</name><value>1</value></category>…
+            #   -> nested["category"] == [name, value, name, value, …]
+            # Current upstream shape (single category, direct children):
+            #   <weaponcategorydice><name>Bows</name><bonus>1</bonus></weaponcategorydice>
             raw = (node.get("nested") or {}).get("category") or []
             for idx in range(0, len(raw) - 1, 2):
                 name = str(raw[idx]).strip()
                 dice = _as_int(raw[idx + 1])
+                if name and dice:
+                    effects["weapon_category_dice"].append({"category": name, "dice": dice, "source": source})
+            if not raw:
+                name = str(fields.get("name") or "").strip()
+                dice = _as_int(fields.get("bonus") or fields.get("value") or fields.get("val"))
                 if name and dice:
                     effects["weapon_category_dice"].append({"category": name, "dice": dice, "source": source})
         elif tag == "weaponcategorydv":
