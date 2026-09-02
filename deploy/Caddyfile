@@ -1,0 +1,27 @@
+# Edge proxy inside the container. TLS is terminated by the platform
+# (Cloud Run / Fly / Cloudflare), so Caddy just serves HTTP on $PORT.
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:{$PORT:8080} {
+	encode zstd gzip
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+}

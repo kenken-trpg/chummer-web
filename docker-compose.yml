@@ -1,0 +1,17 @@
+# Local single-container run:  docker compose up --build
+# Open http://localhost:8080
+services:
+  app:
+    build:
+      context: .
+      # args:
+      #   CHUMMER_REF: ed77aa3dcbe760064109d9af01ea9b5e4498294c
+    image: chummer-web
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      # a single local user doesn't need the public-facing limits
+      RATE_LIMIT: "1000/minute"
+      IMPORT_RATE_LIMIT: "200/minute"
+    restart: unless-stopped

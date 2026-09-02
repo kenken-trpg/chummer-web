@@ -6,6 +6,8 @@ import type { NextConfig } from "next";
 const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN ?? "http://127.0.0.1:8000";
 
 const nextConfig: NextConfig = {
+  // self-contained server bundle for the container (`node server.js`)
+  output: "standalone",
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${BACKEND_ORIGIN}/api/:path*` }];
   },

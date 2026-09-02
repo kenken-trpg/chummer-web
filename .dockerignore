@@ -1,0 +1,31 @@
+# VCS / tooling
+.git
+.github
+.claude
+.venv
+backend/.venv
+
+# build outputs & caches
+**/node_modules
+**/.next
+**/.turbo
+**/coverage
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+frontend/tsconfig.tsbuildinfo
+
+# regenerated during the build
+backend/vendor
+
+# never belongs in an image
+backend/saves
+**/.DS_Store
+**/*.log
+
+# not needed at build/runtime (LICENSE + NOTICE.txt are COPYed explicitly)
+docs
+/README.md
+/CONTRIBUTING.md
