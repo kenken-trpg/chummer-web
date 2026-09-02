@@ -37,6 +37,29 @@ describe("<CharacterSheet>", () => {
     expect(container.textContent).toContain("Shadowrun 5e");
   });
 
+  it("renders the print layout: --print article, stat block + condition monitor, page-2 wrapper", () => {
+    const { container } = render(
+      <CharacterSheet
+        character={makeCharacter({ name: "Volt" })}
+        catalog={makeCatalog()}
+        tr={identityTr}
+        layout="print"
+      />,
+    );
+    expect(container.querySelector("article.character-sheet--print")).not.toBeNull();
+    expect(container.querySelector("section.print-statblock")).not.toBeNull();
+    expect(container.querySelector("section.print-cm")).not.toBeNull();
+    // the page-2 wrapper exists and is a direct child of the sheet (CSS break-before)
+    expect(
+      container.querySelector("article.character-sheet--print > .print-page-2"),
+    ).not.toBeNull();
+    // CoreSection is replaced by the print stat block, not rendered alongside it
+    expect(container.querySelector(".sheet-core")).toBeNull();
+    const h3 = headings();
+    expect(h3).toEqual(expect.arrayContaining(["ステータス", "コンディションモニター"]));
+    expect(h3).not.toContain("コア");
+  });
+
   it("renders the text layout as a non-empty <pre>", () => {
     const { container } = render(
       <CharacterSheet
