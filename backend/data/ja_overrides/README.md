@@ -18,8 +18,9 @@
 
 全エントリは curated モジュール
 (`scripts/import_ja_from_refs.py` の `CURATED`、`scripts/ja_curated_spells.py`、
-`scripts/ja_curated_entities.py`) ＋ `~/Downloads/` の参考資料 (chumJA SR4) の
-完全一致から生成される。**訳を足す/直すときはこれらのモジュールを編集**し、
+`scripts/ja_curated_entities.py`) ＋ `$JA_REF_DIR/` (既定 `~/Downloads/`) の
+参考資料 (chumJA SR4) の完全一致から生成される。**訳を足す/直すときはこれらの
+モジュールを編集**し、
 
 ```
 backend/scripts/regen_ja.sh

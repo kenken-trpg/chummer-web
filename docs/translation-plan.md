@@ -63,7 +63,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 ### 競合解決ルール (ユーザー指示)
 
-`~/Downloads/` 内で競合したら**新しい方が常に真**。→ chummer 系: **2021 xslt > 2020 xslt > chumJA (2013)**。
+`$JA_REF_DIR/` (既定 `~/Downloads/`) 内で競合したら**新しい方が常に真**。→ chummer 系: **2021 xslt > 2020 xslt > chumJA (2013)**。
 ただし `shadowrun5eja` は別プロジェクト (Foundry) で作法が異なるため**空欄補完のみ**、2021 xslt を上書きしない。
 2 資料が食い違う語は `translation-glossary-mismatches.md` に `差異` として上げ、人が判断。
 既存リポジトリ訳 (公式5版参照) は上記典拠と矛盾せず既に日本語なら維持。参考資料は「空欄の補完」と「明白な誤り/不統一の修正」に使う。
@@ -91,7 +91,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 - `backend/scripts/build_ja_glossary.py` を新設。2021 `xz.language.xslt` から 377 変数を抽出し、
   2020 版との差分・vendored 2 ファイルとの不一致を突き合わせて 2 つの doc を再生成する。
-  参考資料 (`~/Downloads/`) はリポジトリ非同梱のため、スクリプトを typed 引数化し**生成物を commit** する。
+  参考資料 (`$JA_REF_DIR/`、既定 `~/Downloads/`) はリポジトリ非同梱のため、スクリプトを typed 引数化し**生成物を commit** する。
 - 成果物:
   - `docs/translation-glossary.md` — 確定用語表。和訳あり 200 件 / コード・略号 177 件。
     2020 版で英語のままだった 75 件が 2021 版で和訳済み → 2020 版は参照不要。

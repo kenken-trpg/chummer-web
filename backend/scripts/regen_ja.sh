@@ -7,14 +7,15 @@
 #
 # data.json is a *generated* file: all entries come from the curated modules
 # (import_ja_from_refs.CURATED, ja_curated_spells.SPELLS, ja_curated_entities.ENTITIES)
-# plus exact-name matches from the ~/Downloads reference material. To add or fix a
+# plus exact-name matches from the external reference material. To add or fix a
 # translation, edit those modules, not data.json — this script resets and rebuilds
 # it so the file stays deterministic.
 #
 # ui.json is hand-maintained and is NOT touched here.
 #
-# Reference material lives outside the repo (~/Downloads/); the scripts degrade
-# gracefully when a file is missing (see their --help).
+# Reference material lives outside the repo; point $JA_REF_DIR at it (defaults
+# to ~/Downloads). The scripts degrade gracefully when a file is missing
+# (see their --help).
 #
 # Usage:  backend/scripts/regen_ja.sh [--no-reset] [--no-test]
 #   --no-reset : keep existing data.json entries (additive import only)

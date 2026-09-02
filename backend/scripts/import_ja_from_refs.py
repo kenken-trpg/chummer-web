@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -29,7 +30,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-DEFAULT_CHUMJA = Path.home() / "Downloads/chumJA_20130129/lang/ja_data.xml"
+# external reference material — set JA_REF_DIR (default ~/Downloads) or pass --chumja
+_REF_DIR = Path(os.environ.get("JA_REF_DIR") or (Path.home() / "Downloads"))
+DEFAULT_CHUMJA = _REF_DIR / "chumJA_20130129/lang/ja_data.xml"
 OVERLAY = ROOT / "data" / "ja_overrides" / "data.json"
 DEFAULT_REPORT = ROOT.parent / "docs" / "translation-import-report.md"
 

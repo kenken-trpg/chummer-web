@@ -4,8 +4,8 @@
 
 ## 出典と優先順位
 
-1. `~/Downloads/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — Chummer 系の作法。本アプリの正典。
-2. `~/Downloads/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。
+1. `$JA_REF_DIR/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — Chummer 系の作法。本アプリの正典。
+2. `$JA_REF_DIR/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。
 3. 2020 版 xslt — 上位互換のため参照不要 (2020→2021 で和訳された語 75 件)。
 
 - 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。

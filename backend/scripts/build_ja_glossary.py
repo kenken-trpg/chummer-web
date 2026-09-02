@@ -4,7 +4,11 @@
 Merge the SR5 terminology from the two external references and diff the result
 against the vendored lang files + our committed overlay.
 
-Sources (``~/Downloads/``):
+The reference files live outside the repo. Point ``JA_REF_DIR`` at the
+directory that holds them (defaults to ``~/Downloads``), or pass explicit
+``--xslt`` / ``--sr5eja`` paths.
+
+Sources (``$JA_REF_DIR/``):
   1. ``xz.language.xslt`` / "52160対応"       — 2021 Chummer sheet localisation.
                                                 Chummer-native conventions, so it
                                                 stays authoritative for this app.
@@ -30,13 +34,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DL = Path.home() / "Downloads"
+# external reference material — overridable so no local path is baked in
+DL = Path(os.environ.get("JA_REF_DIR") or (Path.home() / "Downloads"))
 DEFAULT_XSLT = DL / "chummer5th_シート日本語化_52160対応/xz.language.xslt"
 DEFAULT_XSLT_OLD = DL / "chummer5th_シート日本語化/xz.language.xslt"
 DEFAULT_SR5EJA = DL / "shadowrun5eja_ja.json"
@@ -282,9 +288,9 @@ def build_glossary_doc(
         "",
         "## 出典と優先順位",
         "",
-        "1. `~/Downloads/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — "
+        "1. `$JA_REF_DIR/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — "
         "Chummer 系の作法。本アプリの正典。",
-        "2. `~/Downloads/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, "
+        "2. `$JA_REF_DIR/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, "
         "github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。",
         f"3. 2020 版 xslt — 上位互換のため参照不要 (2020→2021 で和訳された語 {was_en_in_2020} 件)。",
         "",
