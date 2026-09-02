@@ -1,40 +1,28 @@
 """Parity guard for the ``derived`` payload contract.
 
-``compute()`` builds ``ctx.state.derived`` as one ~175-key dict literal in
-``app/engine/compute/assemble.py`` (it is a plain ``dict[str, Any]`` — the one
-place the strict-``mypy`` sweep can't see). The frontend mirrors it by hand as
-``Character["derived"]`` in ``frontend/lib/types/character.ts``. Nothing forced
-them to agree, and they had drifted (``essence_lost`` / ``talent`` /
-``translations`` / ``unarmed_physical`` were server-only).
+``compute()`` builds ``ctx.state.derived`` from a ``DerivedDict`` literal in
+``app/engine/compute/assemble.py`` — ``mypy`` checks the literal against
+``DerivedDict``, so ``DerivedDict.__annotations__`` is the authoritative
+server-side key set. The frontend mirrors it by hand as
+``Character["derived"]`` in ``frontend/lib/types/character.ts``; nothing
+forces the two to agree, and they had drifted (``essence_lost`` / ``talent``
+/ ``translations`` / ``unarmed_physical`` were server-only).
 
-This test pins the **top-level key set** on both sides. It is intentionally
-shallow — nested row shapes are still hand-maintained — but a renamed or
-added top-level ``derived`` key now fails here instead of silently reaching a
-component as ``undefined``.
+This pins the **top-level key set** on both sides. Nested row shapes stay
+hand-maintained, but a renamed or added top-level ``derived`` key now fails
+here instead of silently reaching a component as ``undefined``.
 """
 
 from __future__ import annotations
 
-import ast
 import re
 from pathlib import Path
 
 import pytest
 
-_ASSEMBLE = Path(__file__).resolve().parents[1] / "app" / "engine" / "compute" / "assemble.py"
+from app.engine.compute.derived_types import DerivedDict
+
 _CHARACTER_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "character.ts"
-
-
-def _python_derived_keys() -> set[str]:
-    tree = ast.parse(_ASSEMBLE.read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Assign)
-            and any(isinstance(t, ast.Attribute) and t.attr == "derived" for t in node.targets)
-            and isinstance(node.value, ast.Dict)
-        ):
-            return {k.value for k in node.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)}
-    raise AssertionError("could not find `ctx.state.derived = {...}` in assemble.py")
 
 
 def _ts_derived_keys() -> set[str]:
@@ -57,7 +45,7 @@ def _ts_derived_keys() -> set[str]:
 
 @pytest.mark.skipif(not _CHARACTER_TS.exists(), reason="frontend/ not checked out")
 def test_derived_top_level_keys_match_the_frontend_type() -> None:
-    py = _python_derived_keys()
+    py = set(DerivedDict.__annotations__)
     ts = _ts_derived_keys()
     assert py == ts, (
         "derived payload drifted from frontend/lib/types/character.ts.\n"

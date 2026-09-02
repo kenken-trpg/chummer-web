@@ -27,7 +27,7 @@ engine.compute(CharacterState)          the rules engine
         │   • folds effects into totals, limits, initiative, condition monitor
         │   • runs chargen validation → errors[] / warnings[]
         ▼
-state.derived  (plain dict)   →  every /api/characters* response
+state.derived  (DerivedDict)  →  every /api/characters* response
 ```
 
 `engine.compute()` is the `engine/compute/` package: it builds one `Ctx`
@@ -216,8 +216,10 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      career-layer helpers in `_career.py` (`snapshot_career_baseline` /
      `career_raise_karma` / `nuyen_spend_breakdown`), `finalize.py` (totals
      check + limits / CM / initiative + quality rules + chargen validation,
-     carries `resolve_movement`), `assemble.py` (the ~195-key `state.derived`
-     dict literal, carries `_effective_attr_spec`). `compute/__init__.py` is
+     carries `resolve_movement`), `assemble.py` (the ~175-key `state.derived`
+     literal — typed `DerivedDict` (`derived_types.py`), key-parity with the
+     frontend's `Character["derived"]` pinned by
+     `tests/test_derived_contract.py` — carries `_effective_attr_spec`). `compute/__init__.py` is
      ~60 lines: build one `Ctx`, run the phases, return `ctx.state`. No
      behaviour change — `tests/test_snapshot.py` guards byte-identical output
      and `tests/test_compute_phases.py` pins the *seams*: it drives the same

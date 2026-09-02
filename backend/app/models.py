@@ -409,4 +409,6 @@ class CharacterState(BaseModel):
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)
+    # Output of compute(); kept dict[str, Any] here (Pydantic-friendly, no
+    # round-trip validation). Its real shape is engine.compute.derived_types.DerivedDict.
     derived: dict[str, Any] = Field(default_factory=dict)

@@ -7,6 +7,8 @@ Writes ``ctx.state.attributes`` from the resolved ratings and builds the
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from ...data_loader import (
     CHARGEN_AVAIL_MAX,
     CHARGEN_DEVICE_RATING_MAX,
@@ -32,6 +34,7 @@ from ..qualities import _quality_has_selectside, quality_needs_extra
 from ..resonance import living_persona
 from ..ware import _public_installed, ware_ranges
 from .context import Ctx
+from .derived_types import DerivedDict
 
 
 def _effective_attr_spec(
@@ -63,7 +66,7 @@ def _effective_attr_spec(
 def assemble(ctx: Ctx) -> None:
     ctx.state.attributes = ctx.ratings
     sum_spent = sum_to_ten_spent(ctx.state.priorities)
-    ctx.state.derived = {
+    derived: DerivedDict = {
         "errors": ctx.errors,
         "warnings": ctx.warnings,
         "build_method": ctx.state.build_method,
@@ -380,3 +383,7 @@ def assemble(ctx: Ctx) -> None:
             k: ctx.data["translations"].get(k, k) for k in [ctx.state.metatype, ctx.state.metavariant or ""]
         },
     }
+    # ``CharacterState.derived`` stays ``dict[str, Any]`` (Pydantic-friendly,
+    # no round-trip validation risk); the ``DerivedDict`` annotation above is
+    # what type-checks the literal.
+    ctx.state.derived = cast("dict[str, Any]", derived)
