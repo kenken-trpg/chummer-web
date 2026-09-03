@@ -4,10 +4,25 @@ import {
   decodeShare,
   encodeShare,
   readShareValue,
+  SHARE_ERROR_KEYS,
   SHARE_PREFIX,
   SHARE_VERSION,
+  ShareError,
+  shareErrorMessage,
   toSharePayload,
 } from "@/lib/character/share";
+import { MESSAGES, type MsgKey } from "@/lib/i18n/messages";
+
+/** The `code` of the `ShareError` a promise rejects with. */
+async function codeOf(p: Promise<unknown>): Promise<string> {
+  try {
+    await p;
+  } catch (e) {
+    if (e instanceof ShareError) return e.code;
+    throw e;
+  }
+  throw new Error("expected a ShareError");
+}
 
 describe("toSharePayload", () => {
   it("drops derived, id and portrait but keeps the build", () => {
@@ -44,11 +59,11 @@ describe("encode / decode", () => {
   });
 
   it("rejects a fragment with characters base64url never emits", async () => {
-    await expect(decodeShare("not base64!!")).rejects.toThrow("壊れています");
+    expect(await codeOf(decodeShare("not base64!!"))).toBe("corrupt");
   });
 
   it("rejects a well-formed fragment that is not deflate data", async () => {
-    await expect(decodeShare("AAAAAAAA")).rejects.toThrow("壊れています");
+    expect(await codeOf(decodeShare("AAAAAAAA"))).toBe("corrupt");
   });
 
   it("rejects an envelope from a future version", async () => {
@@ -67,7 +82,27 @@ describe("encode / decode", () => {
     for (const b of bytes) bin += String.fromCharCode(b);
     const value = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
-    await expect(decodeShare(value)).rejects.toThrow("新しい形式");
+    expect(await codeOf(decodeShare(value))).toBe("future");
+  });
+});
+
+describe("error messages", () => {
+  it("has a ja *and* an en string for every failure code", () => {
+    // a share link is opened with the visitor's locale, so `en` may not fall
+    // back to `ja` here the way it may for the rest of the app chrome
+    for (const key of Object.values(SHARE_ERROR_KEYS)) {
+      expect(MESSAGES.ja[key], `ja ${key}`).toBeTruthy();
+      expect(MESSAGES.en[key], `en ${key}`).toBeTruthy();
+    }
+  });
+
+  it("translates a ShareError and passes other errors through", () => {
+    const ui = (k: MsgKey) => `ui:${k}`;
+    expect(shareErrorMessage(new ShareError("corrupt"), ui, "share.err.load")).toBe(
+      "ui:share.err.corrupt",
+    );
+    expect(shareErrorMessage(new Error("boom"), ui, "share.err.load")).toBe("boom");
+    expect(shareErrorMessage("???", ui, "share.err.load")).toBe("ui:share.err.load");
   });
 });
 

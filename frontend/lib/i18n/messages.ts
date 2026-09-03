@@ -60,6 +60,21 @@ const JA = {
   "share.long":
     "リンクが長くなりました（{length} 文字）。チャットやメールで途中で切られることがあります。",
   "share.portrait": "ポートレートは共有リンクに含まれません。",
+
+  // `share.ts` throws codes, not sentences — a share link is opened with the
+  // *visitor's* locale, so the wording lives here. See SHARE_ERROR_KEYS.
+  "share.err.corrupt": "共有リンクが壊れています。",
+  "share.err.future": "この共有リンクは新しい形式です。ページを更新してください。",
+  "share.err.tooLarge": "共有データが大きすぎます。",
+  "share.err.unsupported": "このブラウザは共有リンクに対応していません。",
+  "share.err.load": "共有リンクを読み込めません。",
+  "share.err.build": "共有リンクを作成できませんでした。",
+  "share.err.adopt": "取り込みに失敗しました。",
+
+  "sheet.layout.standard": "標準",
+  "sheet.layout.compact": "コンパクト",
+  "sheet.layout.text": "テキスト",
+  "sheet.layout.print": "印刷用",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -113,6 +128,19 @@ const EN: Partial<Record<MsgKey, string>> = {
   "share.empty": "No share payload in this link.",
   "share.long": "The link is long ({length} characters). Chat clients and mail may truncate it.",
   "share.portrait": "Portraits are not included in a share link.",
+
+  "share.err.corrupt": "This share link is corrupt.",
+  "share.err.future": "This share link uses a newer format. Please reload the page.",
+  "share.err.tooLarge": "The shared data is too large.",
+  "share.err.unsupported": "This browser cannot read share links.",
+  "share.err.load": "Could not load the share link.",
+  "share.err.build": "Could not build a share link.",
+  "share.err.adopt": "Could not add this character.",
+
+  "sheet.layout.standard": "Standard",
+  "sheet.layout.compact": "Compact",
+  "sheet.layout.text": "Text",
+  "sheet.layout.print": "Print",
 };
 
 export const MESSAGES: Record<Locale, Partial<Record<MsgKey, string>>> = {

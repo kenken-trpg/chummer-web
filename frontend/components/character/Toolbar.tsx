@@ -162,10 +162,10 @@ export function Toolbar({
             onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
             title="シートのレイアウト"
           >
-            <option value="standard">標準</option>
-            <option value="compact">コンパクト</option>
-            <option value="text">テキスト</option>
-            <option value="print">印刷用</option>
+            <option value="standard">{ui("sheet.layout.standard")}</option>
+            <option value="compact">{ui("sheet.layout.compact")}</option>
+            <option value="text">{ui("sheet.layout.text")}</option>
+            <option value="print">{ui("sheet.layout.print")}</option>
           </select>
           <button
             className="btn primary"

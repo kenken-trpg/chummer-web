@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { makeCatalog, makeCharacter } from "@/tests/fixtures";
 import { encodeShare, SHARE_PREFIX } from "@/lib/character/share";
+import { MESSAGES } from "@/lib/i18n/messages";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
@@ -71,7 +72,7 @@ it("reports a corrupt fragment instead of calling the backend", async () => {
 
   render(<SharePage />);
 
-  await screen.findByText(/壊れています/);
+  await screen.findByText(MESSAGES.ja["share.err.corrupt"]!);
   expect(preview).not.toHaveBeenCalled();
 });
 
@@ -80,6 +81,6 @@ it("reports a link with no payload", async () => {
 
   render(<SharePage />);
 
-  await screen.findByText("共有リンクが指定されていません。");
+  await screen.findByText(MESSAGES.ja["share.empty"]!);
   expect(preview).not.toHaveBeenCalled();
 });

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import CharacterSheet, { type SheetLayout } from "@/components/CharacterSheet";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
 import { api } from "@/lib/api";
-import { readShareValue, decodeShare } from "@/lib/character/share";
+import { readShareValue, decodeShare, ShareError, shareErrorMessage } from "@/lib/character/share";
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
 import { useUiText } from "@/lib/i18n";
@@ -36,13 +36,13 @@ export default function SharePage() {
     (async () => {
       try {
         const value = readShareValue(window.location.hash);
-        if (!value) throw new Error(ui("share.empty"));
+        if (!value) throw new ShareError("empty");
         const payload = await decodeShare(value);
         // the stateless service validates the payload and returns `derived`
         const [catalog, character] = await Promise.all([api.catalog(), api.preview(payload)]);
         if (live) setState({ catalog, character });
       } catch (e) {
-        if (live) setError(e instanceof Error ? e.message : "共有リンクを読み込めません");
+        if (live) setError(shareErrorMessage(e, ui, "share.err.load"));
       }
     })();
     return () => {
@@ -62,7 +62,7 @@ export default function SharePage() {
       } catch {}
       router.push("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "取り込みに失敗しました");
+      setError(shareErrorMessage(e, ui, "share.err.adopt"));
       setAdopting(false);
     }
   }
@@ -109,10 +109,10 @@ export default function SharePage() {
               onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
               title={ui("share.layout")}
             >
-              <option value="standard">標準</option>
-              <option value="compact">コンパクト</option>
-              <option value="text">テキスト</option>
-              <option value="print">印刷用</option>
+              <option value="standard">{ui("sheet.layout.standard")}</option>
+              <option value="compact">{ui("sheet.layout.compact")}</option>
+              <option value="text">{ui("sheet.layout.text")}</option>
+              <option value="print">{ui("sheet.layout.print")}</option>
             </select>
             <button className="btn" onClick={printSheet}>
               {ui("share.print")}

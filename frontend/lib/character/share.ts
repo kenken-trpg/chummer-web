@@ -1,3 +1,4 @@
+import type { MsgKey } from "@/lib/i18n/messages";
 import type { Character } from "@/lib/types";
 
 /**
@@ -30,6 +31,45 @@ export const SHARE_URL_WARN = 8_000;
 
 /** Decompression-bomb guard: a 40-char fragment must not expand into 100MB. */
 export const MAX_SHARE_BYTES = 4_000_000;
+
+/** Why a share link could not be read (or built). */
+export type ShareErrorCode = "corrupt" | "future" | "too-large" | "unsupported" | "empty";
+
+/**
+ * A share failure carrying a *code*, not a sentence. This module has no
+ * locale — a share link is the one screen a visitor reaches with someone
+ * else's settings, so the wording is looked up by the view that renders it.
+ */
+export class ShareError extends Error {
+  constructor(readonly code: ShareErrorCode) {
+    super(code);
+    this.name = "ShareError";
+  }
+}
+
+/** The message key for each failure. */
+export const SHARE_ERROR_KEYS: Record<ShareErrorCode, MsgKey> = {
+  corrupt: "share.err.corrupt",
+  future: "share.err.future",
+  "too-large": "share.err.tooLarge",
+  unsupported: "share.err.unsupported",
+  empty: "share.empty",
+};
+
+/**
+ * A user-facing message for anything thrown while sharing. `ShareError` is
+ * translated; anything else (a fetch failure, say) already carries a message,
+ * and `fallback` covers the rest.
+ */
+export function shareErrorMessage(
+  e: unknown,
+  ui: (key: MsgKey) => string,
+  fallback: MsgKey,
+): string {
+  if (e instanceof ShareError) return ui(SHARE_ERROR_KEYS[e.code]);
+  if (e instanceof Error && e.message) return e.message;
+  return ui(fallback);
+}
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -67,7 +107,7 @@ async function collect(
     total += value.byteLength;
     if (total > cap) {
       await reader.cancel();
-      throw new Error("共有データが大きすぎます");
+      throw new ShareError("too-large");
     }
     chunks.push(value);
   }
@@ -114,7 +154,7 @@ export function toSharePayload(ch: Character): SharePayload {
 
 /** The fragment *value* (no `#c=`) for a character. */
 export async function encodeShare(ch: Character): Promise<string> {
-  if (!shareSupported()) throw new Error("このブラウザは共有リンクに対応していません");
+  if (!shareSupported()) throw new ShareError("unsupported");
   const json = JSON.stringify({ v: SHARE_VERSION, s: toSharePayload(ch) });
   return toBase64Url(await deflate(enc.encode(json)));
 }
@@ -125,30 +165,29 @@ export async function encodeShare(ch: Character): Promise<string> {
  * Pydantic model is the real validator when the caller posts it to compute.
  */
 export async function decodeShare(value: string): Promise<SharePayload> {
-  if (!shareSupported()) throw new Error("このブラウザは共有リンクに対応していません");
-  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error("共有リンクが壊れています");
+  if (!shareSupported()) throw new ShareError("unsupported");
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new ShareError("corrupt");
 
   let json: string;
   try {
     json = dec.decode(await inflate(fromBase64Url(value)));
   } catch (e) {
-    if (e instanceof Error && e.message.includes("大きすぎます")) throw e;
-    throw new Error("共有リンクが壊れています");
+    if (e instanceof ShareError) throw e; // the size cap fired; say so, not "corrupt"
+    throw new ShareError("corrupt");
   }
 
   let body: unknown;
   try {
     body = JSON.parse(json);
   } catch {
-    throw new Error("共有リンクが壊れています");
+    throw new ShareError("corrupt");
   }
   if (!body || typeof body !== "object" || Array.isArray(body)) {
-    throw new Error("共有リンクが壊れています");
+    throw new ShareError("corrupt");
   }
   const { v, s } = body as { v?: unknown; s?: unknown };
-  if (v !== SHARE_VERSION)
-    throw new Error("この共有リンクは新しい形式です。ページを更新してください");
-  if (!s || typeof s !== "object" || Array.isArray(s)) throw new Error("共有リンクが壊れています");
+  if (v !== SHARE_VERSION) throw new ShareError("future");
+  if (!s || typeof s !== "object" || Array.isArray(s)) throw new ShareError("corrupt");
 
   // a hand-crafted link could still carry these; the receiver reissues both
   const { derived: _derived, id: _id, ...rest } = s as Record<string, unknown>;

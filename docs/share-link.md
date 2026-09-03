@@ -67,6 +67,28 @@ IndexedDB に保存し、`lastCharacterId` を立てて `/` に遷移する。
 シートはテキストしか描画せず、`portrait` は共有されないので `data:` URL の
 差し込み経路もない。
 
+## クローラ避け
+
+URL そのものがキャラクターなので、`app/share/layout.tsx` で
+`robots: { index: false, follow: false, nocache: true }` を宣言している。
+フラグメントはサーバーに届かないが、公開ページに貼られたリンクをクローラが
+たどれば **URL 自体**（＝ビルド）がインデックスに載りうるため。
+
+## エラー文言とロケール
+
+`share.ts` は文章ではなく **コード**（`ShareError` の `corrupt` / `future` /
+`too-large` / `unsupported` / `empty`）を throw する。共有リンクは
+「相手のロケールで開かれる唯一の画面」なので、表示側（`app/share/page.tsx`、
+`useCharacterEditor`）が `shareErrorMessage(e, ui, fallback)` で
+`SHARE_ERROR_KEYS` を引いて文字列にする。
+
+新しいコードを足したら `SHARE_ERROR_KEYS` と `messages.ts` の **ja / en 両方**に
+キーを追加すること（`share.test.ts` が両方の存在を検査している。app chrome の
+他のキーと違い、ここは `en` の ja フォールバックに頼らない）。
+
+なお共有リンクのコピー成功時に出る「リンクが長い」「ポートレートは含まれない」は
+**エラーではない**ので、赤い `.errors` ではなく `notice`（`.notice`）に出す。
+
 ## 形式を変えるとき
 
 `SHARE_VERSION` を上げる。古いリンクを生かすなら `decodeShare` にバージョン別の
