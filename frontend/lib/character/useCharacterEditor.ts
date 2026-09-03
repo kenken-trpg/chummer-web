@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
-import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
+import { buildShareUrl, shareErrorMessage, SHARE_URL_WARN } from "@/lib/character/share";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
@@ -20,6 +20,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [ch, setCh] = useState<Character | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Advisories about an action that *succeeded* — never the red error box. */
+  const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
   const { ui } = useUiText();
@@ -185,12 +187,14 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     try {
       const url = await buildShareUrl(ch, window.location.href);
       await copyText(url, "share");
+      // the copy worked — these are caveats about the link, not failures
       const notes: string[] = [];
       if (url.length > SHARE_URL_WARN) notes.push(ui("share.long", { length: url.length }));
       if (ch.portrait) notes.push(ui("share.portrait"));
-      setError(notes.length ? notes.join(" ") : null);
+      setNotice(notes.length ? notes.join(" ") : null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "共有リンクを作成できませんでした");
+      setNotice(null);
+      setError(shareErrorMessage(e, ui, "share.err.build"));
     }
   }
 
@@ -261,6 +265,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     catalog,
     ch,
     error,
+    notice,
     roster,
     copied,
     history,
@@ -268,6 +273,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     t,
     setCh,
     setError,
+    setNotice,
     refreshRoster,
     openCharacter,
     newCharacter,

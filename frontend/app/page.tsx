@@ -18,7 +18,7 @@ export default function Page() {
   const [sheetLayout, setSheetLayout] = useSheetLayout();
   const fileRef = useRef<HTMLInputElement>(null);
   const ed = useCharacterEditor({ onCharacterOpened: () => setTab("priority") });
-  const { catalog, ch, error, tr, t, patch, setCh, undo, redo, onPortraitFile } = ed;
+  const { catalog, ch, error, notice, tr, t, patch, setCh, undo, redo, onPortraitFile } = ed;
   const { ui } = useUiText();
   useKeyboardShortcuts(undo, redo);
 
@@ -64,6 +64,8 @@ export default function Page() {
             setSheetLayout={setSheetLayout}
             fileRef={fileRef}
           />
+
+          {notice ? <p className="notice">{notice}</p> : null}
 
           <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
         </div>
