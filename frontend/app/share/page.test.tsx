@@ -72,7 +72,7 @@ it("reports a corrupt fragment instead of calling the backend", async () => {
 
   render(<SharePage />);
 
-  await screen.findByText(MESSAGES.ja["share.err.corrupt"]!);
+  await screen.findByText(MESSAGES.ja["share.err.corrupt"]);
   expect(preview).not.toHaveBeenCalled();
 });
 
@@ -81,6 +81,6 @@ it("reports a link with no payload", async () => {
 
   render(<SharePage />);
 
-  await screen.findByText(MESSAGES.ja["share.empty"]!);
+  await screen.findByText(MESSAGES.ja["share.empty"]);
   expect(preview).not.toHaveBeenCalled();
 });

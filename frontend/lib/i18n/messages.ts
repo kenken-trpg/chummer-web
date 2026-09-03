@@ -3,10 +3,15 @@ export type Locale = "ja" | "en";
 export const LOCALES: readonly Locale[] = ["ja", "en"];
 
 /**
- * `ja` is the reference locale and is always complete — it mirrors the wording
- * the backend engine emits. `en` is intentionally partial; any missing key
- * falls back to the `ja` string, then to the key itself. Add a key to `JA`
- * first; `en` can catch up later. See docs/i18n.md.
+ * `ja` is the reference locale — it mirrors the wording the backend engine
+ * emits, so every key is defined here first and `MsgKey` is derived from it.
+ *
+ * Every other locale must then be *complete*: `Catalog` is typed
+ * `Record<MsgKey, string>`, so adding a key to `JA` breaks the build until each
+ * locale has it. `en` drifted to two keys behind while it was `Partial`, and a
+ * silent fall back to Japanese is worse than an obviously-untranslated string —
+ * an English reader cannot tell a missing translation from a deliberate one.
+ * See docs/i18n.md.
  */
 const JA = {
   "app.loading": "読み込み中…",
@@ -88,12 +93,19 @@ const JA = {
 
 export type MsgKey = keyof typeof JA;
 
-const EN: Partial<Record<MsgKey, string>> = {
+/** A complete locale. Adding a key to `JA` fails the build until every locale
+ *  below defines it — that is the whole point of the type. */
+type Catalog = Record<MsgKey, string>;
+
+const EN: Catalog = {
   "app.loading": "Loading…",
   "app.tagline":
     "Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst / Topps. Data from Chummer5a (GPL-3.0).",
 
   "locale.label": "Language",
+  // endonyms: the same in every locale, so a reader can find their own language
+  "locale.ja": "日本語",
+  "locale.en": "English",
 
   "tab.priority": "Priority",
   "tab.meta": "Metatype",
@@ -160,7 +172,7 @@ const EN: Partial<Record<MsgKey, string>> = {
   "sheet.layout.print": "Print",
 };
 
-export const MESSAGES: Record<Locale, Partial<Record<MsgKey, string>>> = {
+export const MESSAGES: Record<Locale, Catalog> = {
   ja: JA,
   en: EN,
 };
@@ -172,12 +184,17 @@ export function formatMessage(template: string, vars: Record<string, string | nu
   );
 }
 
-/** Pure lookup: requested locale → `ja` → the key itself, then interpolate. */
+/**
+ * Pure lookup, then interpolate. Every catalog is complete by construction, so
+ * neither fallback below should ever fire from typed code; they are there for
+ * values that arrive from outside the type system — a stale locale in
+ * localStorage, or a key reaching `ui()` through a cast.
+ */
 export function translate(
   locale: Locale,
   key: MsgKey,
   vars?: Record<string, string | number>,
 ): string {
-  const template = MESSAGES[locale]?.[key] ?? MESSAGES.ja[key] ?? key;
+  const template = (MESSAGES[locale] ?? MESSAGES.ja)[key] ?? key;
   return vars ? formatMessage(template, vars) : template;
 }
