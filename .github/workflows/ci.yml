@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # resolves to the latest 20.x, which clears the >=20.12 floor that
           # `package.json` declares (CompressionStream's `deflate-raw`)
