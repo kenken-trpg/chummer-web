@@ -16,7 +16,7 @@ data_loader.catalog()        parse the subset we use into one big dict,
    (LRU-cached, process-wide) keyed by kind: metatypes, qualities, weapons,
         │                     cyberware, spells, gear, drugs, ranges, …
         ▼
-store.public_catalog()        reshape + translate for the frontend  →  GET /api/catalog
+catalog_view.public_catalog() reshape + translate for the frontend  →  GET /api/catalog
         │
         ▼
 engine.compute(CharacterState)          the rules engine
@@ -94,8 +94,11 @@ subscribes to that channel and renders it as a `notice` (muted) — distinct fro
 | POST | `/api/characters/import-chummer` | import `.chum5` / `.chum5lz` |
 | POST | `/api/characters/chummer` | `{state}` → `.chum5` XML download |
 
-`store.py` is pure: `new_character` / `apply_patch(state, patch)` /
+`characters.py` is pure: `new_character` / `apply_patch(state, patch)` /
 `compute_state` / `import_character`. No dict, no `saves/`, no database, no auth.
+`catalog_view.py` holds `public_catalog()` — the projection of `data_loader`'s
+catalog down to what the UI reads. (Both were one `store.py` until the server
+stopped storing anything; the name outlived the thing it described.)
 
 **Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
 (comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 12 MiB),
@@ -248,7 +251,7 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      phase sequence by hand, asserts the `ctx` slice each phase owns after it
      runs, and holds `PHASES` in lock-step with `compute()` (order guard +
      manual-run-equals-`compute()` guard + no-orphan-`Ctx`-field guard).
-     `store.py` / tests still `from app.engine import compute,
+     `characters.py` / tests still `from app.engine import compute,
      snapshot_career_baseline, default_attributes` unchanged.
 2. **Split `app/improvements.py`** (the `<bonus>` → `effects` pipeline) —
    *done:* now the `app/improvements/` package. `_common.py` (constant
@@ -309,7 +312,7 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      (`EffectsDict` + `effect_rows.py`) and `catalog()` (`CatalogDict`) —
      after which every module passed with at most a rename or a cast
      (`_match_by`, `catalog_list` / `catalog_ware`). The boundary modules
-     (`store` / `main` / `chummer_import|export` / `data_loader`) turned out
+     (`characters` / `catalog_view` / `main` / `chummer_import|export` / `data_loader`) turned out
      to already hold the bar, so the overrides collapsed into the base.
    - *Ctx bundles typed:* every `dict[str, Any]` "bundle" threaded between
      `compute()` phases is now a `TypedDict` — the small / awakened / gear

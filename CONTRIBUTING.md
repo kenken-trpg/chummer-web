@@ -22,12 +22,13 @@ No `make`? Every target is a one-liner you can read off the `Makefile`.
 ```
 backend/                FastAPI + the rules engine (Python 3.11+)
   app/
-    main.py             HTTP routes (thin; delegates to store/engine)
+    main.py             HTTP routes (thin; delegates to characters/catalog_view)
     models.py           Pydantic models: CharacterState, CharacterPatch, installs
-    data_loader.py      Parse vendored Chummer XML -> cached catalog() dict
-    engine.py           compute(state) -> state.derived  (the rules live here)
-    improvements.py     the <bonus> node vocabulary (apply_bonus_nodes)
-    store.py            pure new/patch/compute helpers + public_catalog() shaping
+    characters.py       pure new / patch / compute / import (no storage)
+    catalog_view.py     public_catalog(): the catalog projected for the UI
+    data_loader/        parse vendored Chummer XML -> cached catalog() dict
+    engine/             compute(state) -> state.derived  (the rules live here)
+    improvements/       the <bonus> node vocabulary (apply_bonus_nodes)
     chummer_import.py   .chum5 / .chum5lz  ->  CharacterState
     chummer_export.py   CharacterState     ->  .chum5 XML
   scripts/fetch_chummer_data.py   downloads Chummer/data + lang files
@@ -35,9 +36,12 @@ backend/                FastAPI + the rules engine (Python 3.11+)
   data/ja_overrides/              git-tracked JP translation overlay
 frontend/               Next.js 15 (App Router) + React 19 + TypeScript
   app/page.tsx          top-level editor shell + state/patch plumbing
+  app/share/            read-only share view (state rides in the URL fragment)
   components/character/  sidebar, shared pickers, tabs/ (one file per tab)
-  lib/                   api client, types, cocofolia export, helpers
+  lib/                   api client, types, i18n, cocofolia export, helpers
+  lib/character/         editor hook, IndexedDB store, sheet + share codecs
 docs/                   architecture, data pipeline, "how to add a rule"
+docs/plans/             working docs for refactors that already shipped
 ```
 
 Read [`docs/architecture.md`](docs/architecture.md) before a first non-trivial

@@ -6,8 +6,8 @@ import lzma
 
 import pytest
 
+from app.characters import import_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
-from app.store import import_character
 
 SAMPLE = b"""<?xml version="1.0" encoding="utf-8"?>
 <character>

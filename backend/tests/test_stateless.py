@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from starlette.testclient import TestClient
 
+from app.characters import apply_patch, compute_state, import_character, new_character
 from app.main import app
 from app.models import CharacterCreate, CharacterPatch, CharacterState, Priorities, SpellInstall
-from app.store import apply_patch, compute_state, import_character, new_character
 
 client = TestClient(app)
 

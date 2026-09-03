@@ -191,7 +191,7 @@ def _committed_ui_overlay() -> dict[str, str]:
 
 
 def test_public_catalog_exposes_ui_strings() -> None:
-    from app.store import public_catalog
+    from app.catalog_view import public_catalog
 
     pc = public_catalog()
     assert isinstance(pc.get("ui_strings"), dict) and pc["ui_strings"]

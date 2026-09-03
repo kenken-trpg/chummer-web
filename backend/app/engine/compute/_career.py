@@ -1,5 +1,5 @@
 """Career-advancement helpers used by the economy phase (and re-exported
-via ``app.engine`` for ``store.py`` / tests): chargen baseline snapshot,
+via ``app.engine`` for ``characters.py`` / tests): chargen baseline snapshot,
 Priority/SumToTen raise-cost diff and the nuyen spend breakdown.
 """
 

@@ -5,7 +5,7 @@ requirement-context builder and the quality-level selectside validators.
 
 Imports only ``re`` / already-extracted engine modules / models — never
 back into ``app.engine`` — so the import graph stays a DAG. ``app.engine``
-re-exports the names ``store.py`` needs (``is_way_quality`` /
+re-exports the names ``characters.py`` / ``catalog_view.py`` need (``is_way_quality`` /
 ``sanitize_quality_ids``) plus everything ``compute`` calls.
 """
 

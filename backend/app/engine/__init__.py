@@ -144,7 +144,7 @@ from .limits import (  # noqa: F401  (chargen avail / device-rating / ware-attr 
 from .lookups import (  # noqa: F401  (catalog single-row accessors; see engine/lookups.py)
     _item_by_id,
     _tradition_by_id,
-    find_metatype,  # noqa: F401  (re-exported for store.py / chummer_export.py / tests)
+    find_metatype,  # noqa: F401  (re-exported for characters.py / chummer_export.py / tests)
 )
 from .magic import (  # noqa: F401  (awakened/emerged pipeline clusters; see engine/magic/)
     apply_focus_limits,
@@ -182,7 +182,7 @@ from .pricing import (  # noqa: F401  (post-resolve cost/avail adjustments)
     apply_purchase_discounts,
     apply_ware_essence_multipliers,
 )
-from .priority import (  # noqa: F401  (re-exported for store.py)
+from .priority import (  # noqa: F401  (re-exported for characters.py / catalog_view.py)
     all_talent_options,
     heritage_options,
     normalize_build_method,
@@ -203,11 +203,11 @@ from .qualities import (  # noqa: F401  (quality gather / extra-pick / binder pi
     bind_select_powers,
     free_powers_from_grants,
     gather_qualities,
-    is_way_quality,  # noqa: F401  (re-exported for store.py)
+    is_way_quality,  # noqa: F401  (re-exported for characters.py / catalog_view.py)
     quality_needs_extra,
     quality_requirement_context,
     resolve_quality_sides,
-    sanitize_quality_ids,  # noqa: F401  (re-exported for store.py)
+    sanitize_quality_ids,  # noqa: F401  (re-exported for characters.py / catalog_view.py)
 )
 from .resonance import (  # noqa: F401  (technomancer pipeline; see engine/resonance.py)
     _cyberadept_res_penalty_reduction,
@@ -219,7 +219,7 @@ from .resonance import (  # noqa: F401  (technomancer pipeline; see engine/reson
     resolve_sprites,
 )
 from .selects import (  # noqa: F401  (select-node option enumeration)
-    gear_extra_options,  # noqa: F401  (re-exported for store.py)
+    gear_extra_options,  # noqa: F401  (re-exported for characters.py / catalog_view.py)
     selectskill_options,  # noqa: F401  (re-exported for tests)
 )
 from .skills import (  # noqa: F401  (knowledge / specialization / exotic / skillsoft resolution)

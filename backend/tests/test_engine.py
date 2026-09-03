@@ -4670,7 +4670,7 @@ def test_meat_hand_blade_uses_character_str() -> None:
 def test_implant_weapon_is_hidden_from_catalog() -> None:
     hidden = next(item for item in catalog()["weapons"] if item["name"] == "Hand Blade" and item.get("from_cyberware"))
     assert hidden["hidden"] is True
-    from app.store import public_catalog
+    from app.catalog_view import public_catalog
 
     names = {item["name"] for item in public_catalog()["weapons"]}
     assert "Hand Blade" not in names

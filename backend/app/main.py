@@ -13,16 +13,11 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
+from .catalog_view import public_catalog
+from .characters import apply_patch, compute_state, import_character, new_character
 from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
 from .models import CharacterCreate, PatchRequest, StateRequest
-from .store import (
-    apply_patch,
-    compute_state,
-    import_character,
-    new_character,
-    public_catalog,
-)
 
 # --- deploy-time knobs (env-overridable) --------------------------------------
 _ALLOWED_ORIGINS = [

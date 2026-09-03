@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.characters import import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
@@ -18,7 +19,6 @@ from app.models import (
     WeaponAccessoryInstall,
     WeaponInstall,
 )
-from app.store import import_character
 
 
 def _rich_state() -> CharacterState:
