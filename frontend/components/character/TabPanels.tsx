@@ -1,6 +1,7 @@
 import CharacterSheet from "@/components/CharacterSheet";
 import type { SheetLayout } from "@/components/CharacterSheet";
 import type { TabPanelProps } from "@/components/character/types";
+import { ChecklistPanel } from "@/components/character/ChecklistPanel";
 import { SheetDescEditor } from "@/components/character/SheetDescEditor";
 import { AdeptTab } from "@/components/character/tabs/AdeptTab";
 import { AttrsTab } from "@/components/character/tabs/AttrsTab";
@@ -27,15 +28,18 @@ export function TabPanels({
   panel,
   sheetLayout,
   onPortraitFile,
+  setTab,
 }: {
   tab: Tab;
   panel: TabPanelProps;
   sheetLayout: SheetLayout;
   onPortraitFile: (file: File) => void | Promise<void>;
+  setTab: (t: Tab) => void;
 }) {
   const { catalog, character: ch, d, tr, patch } = panel;
   return (
     <>
+      {tab === "check" && <ChecklistPanel panel={panel} setTab={setTab} />}
       {tab === "sheet" && <SheetDescEditor ch={ch} patch={patch} onPortraitFile={onPortraitFile} />}
       {tab === "sheet" && (
         <CharacterSheet character={ch} catalog={catalog} tr={tr} layout={sheetLayout} />

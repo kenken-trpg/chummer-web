@@ -6,10 +6,12 @@ import { TabBar } from "@/components/character/TabBar";
 import { TabPanels } from "@/components/character/TabPanels";
 import type { TabPanelProps } from "@/components/character/types";
 import { Toolbar } from "@/components/character/Toolbar";
+import { LocaleSwitch } from "@/components/LocaleSwitch";
 import type { Tab } from "@/lib/character/constants";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
+import { useUiText } from "@/lib/i18n";
 
 export default function Page() {
   const [tab, setTab] = useState<Tab>("priority");
@@ -17,6 +19,7 @@ export default function Page() {
   const fileRef = useRef<HTMLInputElement>(null);
   const ed = useCharacterEditor({ onCharacterOpened: () => setTab("priority") });
   const { catalog, ch, error, tr, t, patch, setCh, undo, redo, onPortraitFile } = ed;
+  const { ui } = useUiText();
   useKeyboardShortcuts(undo, redo);
 
   if (error && !ch) {
@@ -27,7 +30,7 @@ export default function Page() {
     );
   }
   if (!catalog || !ch) {
-    return <div className="main">読み込み中…</div>;
+    return <div className="main">{ui("app.loading")}</div>;
   }
 
   const d = ch.derived;
@@ -45,11 +48,11 @@ export default function Page() {
     <div className={`app ${tab === "sheet" ? "sheet-mode" : ""}`}>
       <div className="main">
         <div className="no-print">
-          <h1>CHUMMER WEB</h1>
-          <p className="sub">
-            非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a
-            (GPL-3.0)。
-          </p>
+          <div className="topline">
+            <h1>CHUMMER WEB</h1>
+            <LocaleSwitch />
+          </div>
+          <p className="sub">{ui("app.tagline")}</p>
 
           <Toolbar
             ed={ed}
@@ -70,6 +73,7 @@ export default function Page() {
           panel={panel}
           sheetLayout={sheetLayout}
           onPortraitFile={onPortraitFile}
+          setTab={setTab}
         />
       </div>
 

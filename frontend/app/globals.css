@@ -1030,3 +1030,67 @@ input[type="search"] {
     height: 5.2mm;
   }
 }
+
+/* --- app chrome: language switch ------------------------------------------- */
+.topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.locale-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* --- 作成チェック panel -------------------------------------------------------- */
+.checklist-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.checklist-head.ok {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.checklist-head.bad {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.checklist-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.ci {
+  display: grid;
+  grid-template-columns: 1.4em 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.ci-dot {
+  text-align: center;
+}
+.ci-error .ci-dot {
+  color: var(--danger);
+}
+.ci-warn .ci-dot {
+  color: var(--warn);
+}
+.ci-info .ci-dot {
+  color: var(--muted);
+}
+.ci-jump {
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
