@@ -78,6 +78,7 @@ export type Tab =
   | "foci"
   | "complexforms"
   | "sprites"
+  | "check"
   | "sheet";
 export type GearKind =
   | "armor"

@@ -1,4 +1,30 @@
 import type { Tab } from "@/lib/character/constants";
+import { type MsgKey, useUiText } from "@/lib/i18n";
+
+// [tab, always-shown]. The awakened / emerged tabs appear only when the engine
+// reports them in `enabled_tabs`.
+const TABS: [Tab, boolean][] = [
+  ["priority", true],
+  ["meta", true],
+  ["attrs", true],
+  ["skills", true],
+  ["qualities", true],
+  ["cyber", true],
+  ["bio", true],
+  ["gear", true],
+  ["contacts", true],
+  ["martial", true],
+  ["initiation", false],
+  ["submersion", false],
+  ["adept", false],
+  ["spells", false],
+  ["spirits", false],
+  ["foci", false],
+  ["complexforms", false],
+  ["sprites", false],
+  ["check", true],
+  ["sheet", true],
+];
 
 export function TabBar({
   tab,
@@ -9,37 +35,12 @@ export function TabBar({
   setTab: (t: Tab) => void;
   enabledTabs: string[];
 }) {
+  const { ui } = useUiText();
   return (
     <div className="tabs">
-      {(
-        [
-          ["priority", "優先度"],
-          ["meta", "メタ"],
-          ["attrs", "能力値"],
-          ["skills", "技能"],
-          ["qualities", "資質"],
-          ["cyber", "サイバー"],
-          ["bio", "バイオ"],
-          ["gear", "ギア"],
-          ["contacts", "コンタクト"],
-          ["martial", "武道"],
-          ...(enabledTabs.includes("initiation")
-            ? [["initiation", "イニシエーション"] as const]
-            : []),
-          ...(enabledTabs.includes("submersion")
-            ? [["submersion", "サブマージョン"] as const]
-            : []),
-          ...(enabledTabs.includes("adept") ? [["adept", "アデプト"] as const] : []),
-          ...(enabledTabs.includes("spells") ? [["spells", "術式"] as const] : []),
-          ...(enabledTabs.includes("spirits") ? [["spirits", "精霊"] as const] : []),
-          ...(enabledTabs.includes("foci") ? [["foci", "フォーカス"] as const] : []),
-          ...(enabledTabs.includes("complexforms") ? [["complexforms", "複合体"] as const] : []),
-          ...(enabledTabs.includes("sprites") ? [["sprites", "スプライト"] as const] : []),
-          ["sheet", "シート"],
-        ] as const
-      ).map(([k, label]) => (
+      {TABS.filter(([k, always]) => always || enabledTabs.includes(k)).map(([k]) => (
         <button key={k} className={`tab ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>
-          {label}
+          {ui(`tab.${k}` as MsgKey)}
         </button>
       ))}
     </div>

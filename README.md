@@ -68,6 +68,7 @@ docs/       アーキテクチャ・データパイプライン・デプロイ�
 - [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / 自宅 + Cloudflare Tunnel
 - [`docs/adding-rules.md`](docs/adding-rules.md) — 新しい modifier / アイテム項目 / タブ / 検証の追加レシピ
 - [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → 翻訳オーバーレイ
+- [`docs/i18n.md`](docs/i18n.md) — UI 文言の 2 レイヤーと `ja`/`en` の増やし方
 
 コントリビュート歓迎です。ゲームルールの変更は SR5（またはサプリ）のページ番号を添え、
 書籍が曖昧な箇所は Chummer5a の挙動に合わせてください。
