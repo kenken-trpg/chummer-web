@@ -1,7 +1,7 @@
 # Convenience wrappers. See README.md / CONTRIBUTING.md for the full story.
 .PHONY: help up down logs update doctor \
         setup dev data dev-backend dev-frontend test lint fmt check check-backend check-frontend \
-        coverage coverage-backend coverage-frontend
+        coverage coverage-backend coverage-frontend e2e
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -66,6 +66,9 @@ check-frontend: ## tsc + eslint + prettier check + vitest + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 
 check: check-backend check-frontend ## Everything CI runs
+
+e2e: ## Playwright: one real browser against both halves (needs `make data`)
+	cd frontend && npx playwright install chromium && npm run test:e2e
 
 coverage: coverage-backend coverage-frontend ## Coverage for both (no threshold)
 

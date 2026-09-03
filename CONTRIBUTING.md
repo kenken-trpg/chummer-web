@@ -89,6 +89,26 @@ fixtures in `frontend/tests/fixtures.ts` (`makeCharacter` / `makeCatalog`).
 `any`-free; test files may still cast fixtures). `no-unused-vars` stays a
 warning, with `_`-prefixed names exempt.
 
+### End-to-end
+
+```bash
+make e2e          # or: cd frontend && npm run test:e2e  (--ui to watch it)
+```
+
+Playwright, one Chromium, `frontend/e2e/*.spec.ts`. It builds the frontend and
+starts `uvicorn` on 8100 / `next start` on 3100 itself — off the `make dev`
+ports so it never drives a server you already had running. It needs
+`backend/vendor` (`make data`); without it `/api/catalog` 503s.
+
+Keep it to flows the unit suite **cannot** reach. In vitest, `lib/api` is
+mocked, the local store is a `Map`, and jsdom has no IndexedDB — so anything
+crossing browser storage or the Python engine for real belongs here, and
+anything else belongs in a fast unit test. Two specs today: create → edit →
+reload → `.chum5` export, and share-link → fragment → read-only view.
+
+CI runs it on pushes to `main` and on tags, not on every PR push; the report is
+uploaded as an artifact when it fails.
+
 ### Accessibility
 
 `eslint-plugin-jsx-a11y`'s recommended set is on and blocking. The house rules:

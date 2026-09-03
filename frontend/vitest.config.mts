@@ -13,7 +13,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     include: ["**/*.test.{ts,tsx}"],
-    exclude: ["node_modules", ".next"],
+    // `e2e/` is Playwright's (`*.spec.ts`); vitest must not try to run it
+    exclude: ["node_modules", ".next", "e2e"],
     // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
