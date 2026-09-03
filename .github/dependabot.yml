@@ -1,13 +1,18 @@
 version: 2
 updates:
-  # Pinned action majors (actions/checkout@v4, docker/*@v3…) — weekly PRs when
-  # a new patch/minor or major is out.
+  # Pinned action majors (actions/checkout@v7, docker/*@v4…) — weekly PRs when
+  # a new patch/minor or major is out. Worth taking promptly: GitHub retires the
+  # Node runtime old action majors ship with, and stale ones get force-migrated.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
     commit-message:
       prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   # frontend/package.json — loose `^` ranges; batch the noise into one PR.
   - package-ecosystem: npm
