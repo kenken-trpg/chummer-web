@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 import re
 from collections.abc import Awaitable, Callable
+from functools import lru_cache
+from typing import NamedTuple
 from urllib.parse import quote
 
 from fastapi import Body, FastAPI, HTTPException, Request, Response
@@ -91,10 +95,50 @@ def health() -> dict:
     return {"ok": True}
 
 
+class _CachedCatalog(NamedTuple):
+    body: bytes
+    etag: str
+
+
+@lru_cache(maxsize=1)
+def _cached_catalog() -> _CachedCatalog:
+    """Serialise the catalog once per process.
+
+    The vendored Chummer data is fixed at image-build time, so the payload
+    cannot change while the process lives — `data_loader.catalog()` is already
+    `lru_cache`d, but `public_catalog()` rebuilt its ~2.9 MB projection on every
+    request. Caching the *bytes* also gives us a stable ETag for free.
+
+    `lru_cache` does not memoise exceptions, so a request that arrives before
+    `make data` still raises `FileNotFoundError` and a later one can succeed.
+
+    Separators and `ensure_ascii` match Starlette's `JSONResponse` so the body
+    is byte-identical to what the plain `-> dict` route used to send.
+    """
+    body = json.dumps(public_catalog(), ensure_ascii=False, separators=(",", ":")).encode()
+    return _CachedCatalog(body, f'"{hashlib.blake2b(body, digest_size=16).hexdigest()}"')
+
+
+def _matches_etag(header: str, etag: str) -> bool:
+    """RFC 9110 If-None-Match: `*`, or a comma-separated list where a `W/`
+    prefix is ignored (weak comparison is the right one for GET)."""
+    candidates = [t.strip() for t in header.split(",") if t.strip()]
+    return "*" in candidates or any(c.removeprefix("W/") == etag for c in candidates)
+
+
 @app.get("/api/catalog")
-def catalog_endpoint() -> dict:
+def catalog_endpoint(request: Request) -> Response:
+    """The whole options catalog. ~2.9 MB, and the same bytes for the life of
+    the process, so it is served with an ETag: a reload costs one 304 instead
+    of a re-transfer. Deliberately *not* `immutable` — the URL has no version
+    in it, so a container update has to be able to invalidate it.
+
+    No gzip here on purpose. In the bundled container Caddy encodes (zstd/gzip)
+    and in dev the Next proxy is on localhost; compressing at this layer would
+    only take zstd off the table.
+    """
     try:
-        return public_catalog()
+        cached = _cached_catalog()
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=503,
@@ -105,6 +149,10 @@ def catalog_endpoint() -> dict:
                 f"（{exc}）"
             ),
         ) from exc
+    headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
+    if _matches_etag(request.headers.get("if-none-match", ""), cached.etag):
+        return Response(status_code=304, headers=headers)
+    return Response(cached.body, media_type="application/json", headers=headers)
 
 
 # --- stateless character ops (the client owns the CharacterState) ------------

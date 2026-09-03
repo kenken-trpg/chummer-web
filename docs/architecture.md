@@ -87,7 +87,7 @@ subscribes to that channel and renders it as a `notice` (muted) — distinct fro
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/api/health` | liveness |
-| GET | `/api/catalog` | the whole options catalog for the UI |
+| GET | `/api/catalog` | the whole options catalog for the UI (ETag + `no-cache`; see below) |
 | POST | `/api/characters/new` | fresh computed state (`CharacterCreate`) |
 | POST | `/api/characters/patch` | `{state, patch?}` → `apply_patch` (talent / priority / career normalise) + recompute; no `patch` = bare recompute |
 | POST | `/api/characters/import` | import raw state JSON (id regenerated) |
@@ -96,6 +96,14 @@ subscribes to that channel and renders it as a `notice` (muted) — distinct fro
 
 `characters.py` is pure: `new_character` / `apply_patch(state, patch)` /
 `compute_state` / `import_character`. No dict, no `saves/`, no database, no auth.
+`/api/catalog` is ~2.9 MB and identical for the life of the process (the
+vendored data is fixed at image-build time), so `main.py` serialises it once and
+serves it with an ETag: a reload revalidates and gets a 304 instead of the
+payload again. `no-cache`, not `immutable` — the URL carries no version, so a
+container update has to be able to invalidate it. Nothing on the client opts
+in; the browser's HTTP cache does the work. Compression is left to the edge
+(Caddy `encode zstd gzip` in the bundled container).
+
 `catalog_view.py` holds `public_catalog()` — the projection of `data_loader`'s
 catalog down to what the UI reads. (Both were one `store.py` until the server
 stopped storing anything; the name outlived the thing it described.)

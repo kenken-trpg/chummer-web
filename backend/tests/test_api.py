@@ -108,3 +108,23 @@ def test_chummer_export_succeeds_with_a_non_ascii_name() -> None:
     assert r.headers["content-type"].startswith("application/xml")
     assert "filename*=UTF-8''%E5%A4%9C%E5%8F%89.chum5" in r.headers["content-disposition"]
     assert r.text.lstrip().startswith("<")
+
+
+def test_catalog_is_served_with_an_etag_and_revalidates_to_304() -> None:
+    first = client.get("/api/catalog")
+    assert first.status_code == 200
+    assert first.headers["content-type"].startswith("application/json")
+    etag = first.headers["etag"]
+    assert etag.startswith('"') and etag.endswith('"')
+    assert first.headers["cache-control"] == "no-cache"
+    # the body still parses as the catalog the UI expects
+    assert "metatypes" in first.json()
+
+    again = client.get("/api/catalog", headers={"If-None-Match": etag})
+    assert again.status_code == 304
+    assert again.content == b""
+    assert again.headers["etag"] == etag
+
+    # a weak validator is still a match for GET, a stale one is not
+    assert client.get("/api/catalog", headers={"If-None-Match": f"W/{etag}"}).status_code == 304
+    assert client.get("/api/catalog", headers={"If-None-Match": '"stale"'}).status_code == 200
