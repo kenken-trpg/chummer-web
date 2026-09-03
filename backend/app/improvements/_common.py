@@ -381,10 +381,12 @@ _ARITH_RE = re.compile(r"^[0-9+\-*/(). ]+$")
 
 def _eval_int(value: Any, default: int = 0) -> int:
     """``_as_int`` plus bare arithmetic (``Rating*2`` after ``substitute_rating``
-    leaves ``"3*2"``). Digits and ``+-*/().`` only — no names, no calls."""
-    if isinstance(value, str) and _ARITH_RE.match(value.strip()) and not value.strip().isdigit():
+    leaves ``"3*2"``). Digits and ``+-*/().`` only — no names, no calls, and no
+    ``**`` (``9**9**9`` passes the char-class regex but would blow up ``eval``)."""
+    expr = value.strip() if isinstance(value, str) else ""
+    if expr and "**" not in expr and _ARITH_RE.match(expr) and not expr.isdigit():
         try:
-            return int(eval(value.strip(), {"__builtins__": {}}, {}))  # noqa: S307 - guarded by _ARITH_RE
+            return int(eval(expr, {"__builtins__": {}}, {}))  # noqa: S307 - guarded by _ARITH_RE
         except (ArithmeticError, SyntaxError, ValueError):
             return default
     return _as_int(value, default)

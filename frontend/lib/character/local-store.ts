@@ -11,7 +11,24 @@ import type { Character } from "@/lib/types";
 const DB_NAME = "chummer-web";
 const STORE = "characters";
 
-type StoredCharacter = { id: string; savedAt: number; character: Character };
+/** Bump when a `Character` shape change needs a read-time migration; add the
+ *  transform to {@link migrate}. Records written before this field existed
+ *  read back as `undefined` and are treated as v0. */
+const SCHEMA_VERSION = 1;
+
+export type StoredCharacter = {
+  id: string;
+  savedAt: number;
+  schemaVersion?: number;
+  character: Character;
+};
+
+/** Upgrade a stored record to the current `Character` shape. v0 → v1 is a
+ *  no-op (the field just starts being written); real transforms slot in here
+ *  keyed on `rec.schemaVersion`. Exported for unit tests. */
+export function migrate(rec: StoredCharacter): Character {
+  return rec.character;
+}
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -48,7 +65,9 @@ function run<T>(
 
 export async function putCharacter(character: Character): Promise<void> {
   try {
-    await run("readwrite", (s) => s.put({ id: character.id, savedAt: Date.now(), character }));
+    await run("readwrite", (s) =>
+      s.put({ id: character.id, savedAt: Date.now(), schemaVersion: SCHEMA_VERSION, character }),
+    );
   } catch {
     /* storage unavailable — the in-memory copy in the editor still applies */
   }
@@ -57,7 +76,7 @@ export async function putCharacter(character: Character): Promise<void> {
 export async function getCharacter(id: string): Promise<Character | null> {
   try {
     const rec = await run<StoredCharacter | undefined>("readonly", (s) => s.get(id));
-    return rec?.character ?? null;
+    return rec ? migrate(rec) : null;
   } catch {
     return null;
   }

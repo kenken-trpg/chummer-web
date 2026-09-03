@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # Pinned action majors (actions/checkout@v4, docker/*@v3…) — weekly PRs when
+  # a new patch/minor or major is out.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+
+  # frontend/package.json — loose `^` ranges; batch the noise into one PR.
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(deps)
+    groups:
+      npm:
+        patterns:
+          - "*"
+
+  # backend/requirements*.txt — loose `>=` pins.
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(deps)
+    groups:
+      pip:
+        patterns:
+          - "*"

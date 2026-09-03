@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from collections.abc import Awaitable, Callable
+from urllib.parse import quote
 
 from fastapi import Body, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -131,15 +133,25 @@ def patch(req: PatchRequest) -> dict:
         raise HTTPException(status_code=400, detail="この変更を適用できませんでした。") from exc
 
 
+def _content_disposition(name: str) -> str:
+    """RFC 6266 attachment header. Starlette encodes header values as latin-1,
+    so a Japanese character name in a bare `filename="..."` raises at send time
+    (500). Emit an ASCII-safe `filename=` fallback plus a percent-encoded
+    `filename*=UTF-8''` that carries the real name."""
+    stem = (name or "").strip() or "character"
+    ascii_stem = re.sub(r"[^A-Za-z0-9._ -]", "_", stem) or "character"
+    encoded = quote(f"{stem}.chum5", safe="")
+    return f"attachment; filename=\"{ascii_stem}.chum5\"; filename*=UTF-8''{encoded}"
+
+
 @app.post("/api/characters/chummer")
 def export_chummer(req: StateRequest) -> Response:
     """Download a Chummer5a-compatible .chum5 (plain XML) for the given state."""
     xml = state_to_chum5(req.state)
-    fname = (req.state.name or "character").replace('"', "") + ".chum5"
     return Response(
         content=xml,
         media_type="application/xml",
-        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+        headers={"Content-Disposition": _content_disposition(req.state.name)},
     )
 
 

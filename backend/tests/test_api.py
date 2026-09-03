@@ -6,10 +6,12 @@ the suite calls the store / engine directly.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from starlette.testclient import TestClient
 
-from app.main import _MAX_REQUEST_BYTES, _client_ip, app
+from app.main import _MAX_REQUEST_BYTES, _client_ip, _content_disposition, app
 
 client = TestClient(app)
 
@@ -84,3 +86,25 @@ def test_oversized_collection_is_rejected() -> None:
     base["spells"] = [{"spell_id": "x"} for _ in range(2001)]
     r = client.post("/api/characters/patch", json={"state": base}, headers=ip)
     assert r.status_code == 422
+
+
+def test_content_disposition_is_latin1_safe_for_a_japanese_name() -> None:
+    header = _content_disposition("サムライ・ドッグ")
+    # latin-1 is what Starlette/uvicorn encode header values as; a bare
+    # filename="..." with kana used to raise UnicodeEncodeError -> 500.
+    header.encode("latin-1")
+    assert re.fullmatch(
+        r'attachment; filename="[A-Za-z0-9._ -]+\.chum5"; filename\*=UTF-8\'\'%.+\.chum5',
+        header,
+    )
+    assert "%E3%82%B5" in header  # percent-encoded "サ"
+
+
+def test_chummer_export_succeeds_with_a_non_ascii_name() -> None:
+    ip = {"cf-connecting-ip": "203.0.113.56"}
+    state = client.post("/api/characters/new", json={"name": "夜叉"}, headers=ip).json()
+    r = client.post("/api/characters/chummer", json={"state": state}, headers=ip)
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/xml")
+    assert "filename*=UTF-8''%E5%A4%9C%E5%8F%89.chum5" in r.headers["content-disposition"]
+    assert r.text.lstrip().startswith("<")

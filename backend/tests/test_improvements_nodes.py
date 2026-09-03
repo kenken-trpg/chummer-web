@@ -4,7 +4,16 @@ character-level test exercises.
 """
 
 from app.improvements import apply_bonus_nodes, empty_effects
-from app.improvements._common import IMPLEMENTED
+from app.improvements._common import IMPLEMENTED, _eval_int
+
+
+def test_eval_int_does_bare_arithmetic_but_refuses_exponentiation() -> None:
+    assert _eval_int("3*2") == 6
+    assert _eval_int("(4+2)/3") == 2
+    assert _eval_int("Rating*2", 0) == 0  # names never eval
+    # "9**9**9" clears the digit/operator char class but would hang eval;
+    # the "**" guard sends it to the plain-int path, which falls back.
+    assert _eval_int("9**9**9", 7) == 7
 
 
 def test_every_implemented_tag_has_a_handler() -> None:

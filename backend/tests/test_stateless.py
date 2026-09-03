@@ -97,7 +97,8 @@ def test_post_chummer_returns_xml_download() -> None:
     r = client.post("/api/characters/chummer", json={"state": st})
     assert r.status_code == 200
     assert "xml" in r.headers["content-type"]
-    assert r.headers["content-disposition"].endswith('.chum5"')
+    cd = r.headers["content-disposition"]
+    assert 'filename="Export.chum5"' in cd and "filename*=UTF-8''Export.chum5" in cd
     assert r.content.lstrip()[:16].lower().startswith((b"<?xml", b"<character"))
 
 
