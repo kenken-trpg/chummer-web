@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-extend-exclude = ["vendor", "saves", ".venv"]
+extend-exclude = ["vendor", ".venv"]
 
 [tool.ruff.lint]
 # A pragmatic baseline. Grow this set over time rather than turning on
@@ -55,7 +55,7 @@ exclude_also = [
 [tool.mypy]
 python_version = "3.11"
 files = ["app"]
-exclude = ["vendor", "saves"]
+exclude = ["vendor"]
 # Strict across the whole backend (CI + `make check`). The tightening was
 # done package by package — `app.engine.*` / `app.improvements.*` reached
 # the bar once their two `Any` fountains were typed (the `Ctx` bundles /
