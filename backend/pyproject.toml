@@ -36,6 +36,22 @@ known-first-party = ["app"]
 # Opt in to the default Ruff formatter (Black-compatible).
 docstring-code-format = true
 
+[tool.coverage.run]
+source = ["app"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+# Measurement only — deliberately no `fail_under`. The number is here to show
+# which engine phases and loaders the suite never enters; pick a floor once
+# those gaps are either covered or accepted, rather than freezing today's
+# percentage as the bar.
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
 [tool.mypy]
 python_version = "3.11"
 files = ["app"]

@@ -1,6 +1,7 @@
 # Convenience wrappers. See README.md / CONTRIBUTING.md for the full story.
 .PHONY: help up down logs update doctor \
-        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-frontend
+        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-frontend \
+        coverage coverage-backend coverage-frontend
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -65,3 +66,11 @@ check-frontend: ## tsc + eslint + prettier check + vitest + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 
 check: check-backend check-frontend ## Everything CI runs
+
+coverage: coverage-backend coverage-frontend ## Coverage for both (no threshold)
+
+coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
+	cd backend && ./.venv/bin/python -m pytest -q --cov --cov-report=term --cov-report=html
+
+coverage-frontend: ## vitest --coverage; HTML in frontend/coverage/
+	cd frontend && npm run test:coverage

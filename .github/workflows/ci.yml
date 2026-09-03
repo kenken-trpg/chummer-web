@@ -46,7 +46,12 @@ jobs:
 
       - run: ruff check .
       - run: ruff format --check .
-      - run: python -m pytest -q
+
+      # Coverage on one interpreter only — the numbers are identical across
+      # the matrix and it roughly doubles the run. Reported, never gated: see
+      # backend/pyproject.toml [tool.coverage.report].
+      - run: python -m pytest -q ${{ matrix.python-version == '3.13' && '--cov --cov-report=term' || '' }}
+
       - run: mypy
 
   frontend:
@@ -69,7 +74,8 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
-      - run: npm run test
+      # same deal as the backend: the summary goes in the log, nothing gates on it
+      - run: npm run test:coverage
       - run: npm run build
 
   # Builds the runtime image on every push/PR; on main and on `v*` tags it also

@@ -17,5 +17,22 @@ export default defineConfig({
     // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
+
+    // Measurement only — no `thresholds`. The point is to see which modules
+    // the 249 tests never touch; pick a floor once the numbers are known,
+    // rather than enshrining whatever today's percentage happens to be.
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary", "html", "lcov"],
+      reportsDirectory: "coverage",
+      include: ["app/**", "components/**", "lib/**"],
+      exclude: [
+        "**/*.test.{ts,tsx}",
+        "tests/**",
+        // types-only modules compile away to nothing executable
+        "lib/types/**",
+        "**/*.d.ts",
+      ],
+    },
   },
 });

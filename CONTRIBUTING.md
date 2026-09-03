@@ -52,9 +52,10 @@ recipes (new `<bonus>` tag, new gear category, new sheet section, …).
 cd backend && ruff check . && ruff format . && python -m pytest -q
 ```
 
-`mypy` is clean and **blocking** (CI + `make check`). The ruleset is
-deliberately modest (`check_untyped_defs = false` etc.) — grow it in a
-focused PR rather than turning everything on at once.
+`mypy` is clean and **blocking** (CI + `make check`), and now strict across
+the whole `app` package (`disallow_untyped_defs`, `warn_return_any`, …). New
+code needs full annotations; see `docs/plans/refactor-mypy-plan.md` for how it
+got there.
 
 The backend tests come in two layers:
 
@@ -80,8 +81,25 @@ npm run test                   # vitest (jsdom + React Testing Library)
 
 Tests live next to the code (`*.test.ts` / `*.test.tsx`) with shared
 fixtures in `frontend/tests/fixtures.ts` (`makeCharacter` / `makeCatalog`).
-`eslint` is clean and mostly blocking; `no-unused-vars` / `no-explicit-any`
-stay warnings (file-level disables fence off the deliberate `any`).
+`eslint` is clean and blocking, including `no-explicit-any` (the source is
+`any`-free; test files may still cast fixtures). `no-unused-vars` stays a
+warning, with `_`-prefixed names exempt.
+
+### Coverage
+
+```bash
+make coverage            # both, or coverage-backend / coverage-frontend
+```
+
+**Nothing gates on the number** and there is no `fail_under` — the point is to
+see *which* modules the suite never enters. At the time of writing the backend
+is ~91% and the frontend ~49% of statements (the gap is components: the pure
+`lib/` helpers are well covered, the tab UIs much less). HTML reports land in
+`backend/htmlcov/` and `frontend/coverage/`, both gitignored. CI prints the
+summary in the log — backend on 3.13 only, since the matrix would repeat it.
+
+A PR that lowers coverage is fine if it is the right change; a PR that adds a
+new module with no test at all is worth a second look.
 
 ## Commits & PRs
 

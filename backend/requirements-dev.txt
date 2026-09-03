@@ -4,6 +4,7 @@
 # land in the runtime image. Versions loose; CI is lockfile-free and tolerates
 # minor drift.
 pytest>=8.4.1
+pytest-cov>=6.0  # `make coverage-backend`; measurement only, no gate
 httpx>=0.28.1  # starlette TestClient
 ruff>=0.16
 mypy>=1.13
