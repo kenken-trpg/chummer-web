@@ -1,6 +1,10 @@
 {
   "name": "chummer-web-ui",
   "private": true,
+  "//engines": "The share-link codec uses CompressionStream('deflate-raw'), which Node grew in v21.2.0 / v20.12.0. Browsers are unaffected; this is the floor for `npm run test`.",
+  "engines": {
+    "node": ">=20.12"
+  },
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
