@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
+import { buildShareUrl, shareErrorMessage, SHARE_URL_WARN } from "@/lib/character/share";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
+import { useUiText } from "@/lib/i18n";
 
 /**
  * Owns the character-editor state: the loaded catalog, the current
@@ -18,8 +20,11 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [ch, setCh] = useState<Character | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Advisories about an action that *succeeded* — never the red error box. */
+  const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
+  const { ui } = useUiText();
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
@@ -172,6 +177,27 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
+  /**
+   * Copy a read-only `/share#c=…` link for the current character. The state
+   * lives entirely in the fragment — nothing is uploaded — so the only limit
+   * is URL length; past {@link SHARE_URL_WARN} we still copy but say so.
+   */
+  async function copyShareLink() {
+    if (!ch) return;
+    try {
+      const url = await buildShareUrl(ch, window.location.href);
+      await copyText(url, "share");
+      // the copy worked — these are caveats about the link, not failures
+      const notes: string[] = [];
+      if (url.length > SHARE_URL_WARN) notes.push(ui("share.long", { length: url.length }));
+      if (ch.portrait) notes.push(ui("share.portrait"));
+      setNotice(notes.length ? notes.join(" ") : null);
+    } catch (e) {
+      setNotice(null);
+      setError(shareErrorMessage(e, ui, "share.err.build"));
+    }
+  }
+
   async function copyText(text: string, tag: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -239,6 +265,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     catalog,
     ch,
     error,
+    notice,
     roster,
     copied,
     history,
@@ -246,6 +273,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     t,
     setCh,
     setError,
+    setNotice,
     refreshRoster,
     openCharacter,
     newCharacter,
@@ -260,6 +288,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     download,
     downloadChum5,
     copyText,
+    copyShareLink,
   };
 }
 

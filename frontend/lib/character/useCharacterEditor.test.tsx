@@ -2,6 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { makeCharacter } from "@/tests/fixtures";
 import type { Catalog, Character } from "@/lib/types";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
+import { MESSAGES } from "@/lib/i18n/messages";
 
 const catalog = { translations: { Ork: "オーク" } } as unknown as Catalog;
 
@@ -92,6 +93,24 @@ describe("useCharacterEditor", () => {
     expect(result.current.ch?.name).toBe("Runner");
     expect(result.current.history.counts.undo).toBe(0);
     expect(result.current.history.counts.redo).toBe(1);
+  });
+
+  it("copyShareLink reports a dropped portrait as a notice, not an error", async () => {
+    const base = makeCharacter({ id: "c1", portrait: "data:image/png;base64,AAAA" });
+    api.create.mockResolvedValue(base);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    await act(async () => {
+      await result.current.copyShareLink();
+    });
+
+    expect(writeText.mock.calls[0][0]).toContain("/share#c=");
+    expect(result.current.notice).toBe(MESSAGES.ja["share.portrait"]);
+    expect(result.current.error).toBeNull();
   });
 
   it("onCharacterOpened fires after opening another character", async () => {

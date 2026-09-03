@@ -5,6 +5,7 @@ import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
+import { useUiText } from "@/lib/i18n";
 
 export function Toolbar({
   ed,
@@ -42,9 +43,11 @@ export function Toolbar({
     download,
     downloadChum5,
     copyText,
+    copyShareLink,
     refreshRoster,
   } = ed;
   const d = ch.derived;
+  const { ui } = useUiText();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   return (
     <div className="toolbar">
@@ -109,6 +112,13 @@ export function Toolbar({
       </button>
       <button
         className="btn"
+        onClick={() => void copyShareLink()}
+        title="読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）"
+      >
+        {copied === "share" ? ui("share.copied") : ui("share.copy")}
+      </button>
+      <button
+        className="btn"
         onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
         title="ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5"
       >
@@ -152,10 +162,10 @@ export function Toolbar({
             onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
             title="シートのレイアウト"
           >
-            <option value="standard">標準</option>
-            <option value="compact">コンパクト</option>
-            <option value="text">テキスト</option>
-            <option value="print">印刷用</option>
+            <option value="standard">{ui("sheet.layout.standard")}</option>
+            <option value="compact">{ui("sheet.layout.compact")}</option>
+            <option value="text">{ui("sheet.layout.text")}</option>
+            <option value="print">{ui("sheet.layout.print")}</option>
           </select>
           <button
             className="btn primary"
