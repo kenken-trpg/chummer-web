@@ -1,7 +1,7 @@
 # Plan: retire the `app/engine/__init__.py` `["B023", "E402"]` ignore
 
 Working doc for a dedicated session. Follow-on to
-`docs/refactor-ware-qualities-plan.md` (Step 3, "remaining"). This is the
+`docs/plans/refactor-ware-qualities-plan.md` (Step 3, "remaining"). This is the
 *last* item on `docs/architecture.md` §"Planned refactors" item 1 — after it
 the engine split is fully done and the per-file ruff ignore is gone.
 

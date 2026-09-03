@@ -1,6 +1,6 @@
 # Plan: broaden the frontend test suite
 
-Working doc. The harness (`docs/frontend-test-setup-plan.md`) landed a thin
+Working doc. The harness (`docs/plans/frontend-test-setup-plan.md`) landed a thin
 layer — 5 helper files + 3 smoke tests. This adds focused coverage for the
 pure `lib/` predicates/builders and the two tabs that were just split.
 

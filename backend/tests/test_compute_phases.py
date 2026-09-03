@@ -1,7 +1,7 @@
 """Per-phase contract tests for :mod:`app.engine.compute`.
 
 ``compute()`` is a straight-line pipeline of ``phase(ctx: Ctx) -> None``
-calls (see ``docs/refactor-compute-phases-plan.md``).  ``test_snapshot.py``
+calls (see ``docs/plans/refactor-compute-phases-plan.md``).  ``test_snapshot.py``
 freezes the *end* of that pipeline byte-for-byte; this module pins the
 *seams*.  It drives the identical phase sequence by hand and, after each
 phase, asserts the ``ctx`` slice that phase is responsible for is filled

@@ -7,7 +7,7 @@ mistyped key or wrong value type at a phase seam is a ``mypy`` error.
 This module imports nothing from ``app.engine`` — it sits below every engine
 module so both the resolvers and ``context.py`` can import it without a
 cycle. Nested "public" row lists stay ``list[dict[str, Any]]``; typing those
-is out of scope (see ``docs/refactor-ctx-bundles-plan.md``).
+is out of scope (see ``docs/plans/refactor-ctx-bundles-plan.md``).
 """
 
 from __future__ import annotations

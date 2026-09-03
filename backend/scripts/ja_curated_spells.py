@@ -1,5 +1,5 @@
 """Hand translations for spells / rituals / enchantments still on English
-fallback (Phase 2b, see docs/translation-plan.md).
+fallback (Phase 2b, see docs/plans/translation-plan.md).
 
 Scope: only entries that are a common English word with an unambiguous JP form,
 or a compositional parallel to a spell already translated upstream (the Ward /

@@ -1,7 +1,7 @@
 # Plan: split `app/improvements.py` into an `improvements/` package
 
 Working doc for a dedicated session. Same playbook as the engine split
-(`docs/refactor-*-plan.md`): incremental, every commit green, snapshot gate
+(`docs/plans/refactor-*-plan.md`): incremental, every commit green, snapshot gate
 byte-identical.
 
 ## Where we are

@@ -9,7 +9,7 @@ consumers via string-literal keys.
 
 Imports only ``typing`` — ``effects.py`` imports from here, nothing imports
 back, so the ``improvements`` package stays a DAG. See
-``docs/refactor-effect-rows-plan.md``.
+``docs/plans/refactor-effect-rows-plan.md``.
 """
 
 from __future__ import annotations

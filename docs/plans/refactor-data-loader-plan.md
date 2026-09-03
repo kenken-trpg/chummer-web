@@ -1,7 +1,7 @@
 # Plan: split `app/data_loader.py` into a `data_loader/` package
 
 Working doc for a dedicated session. Fourth in the series
-(`docs/refactor-{gear-weapons,ware-qualities,engine-e402-b023,improvements}-plan.md`).
+(`docs/plans/refactor-{gear-weapons,ware-qualities,engine-e402-b023,improvements}-plan.md`).
 Same playbook: incremental, every commit green, snapshot gate byte-identical.
 
 ## Where we are

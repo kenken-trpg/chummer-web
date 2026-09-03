@@ -62,8 +62,8 @@ class EffectsDict(TypedDict):
     precisely; the ``*_mods`` / ``*_slots`` / ``grant_*`` / cost-rule list
     values carry row ``TypedDict``s from ``effect_rows.py`` too, so
     ``row.get("nam")`` (typo) is likewise caught (see
-    ``docs/refactor-effects-typeddict-plan.md`` and
-    ``docs/refactor-effect-rows-plan.md``).
+    ``docs/plans/refactor-effects-typeddict-plan.md`` and
+    ``docs/plans/refactor-effect-rows-plan.md``).
 
     ``enabled_tabs`` is a ``set[str]`` throughout the pipeline; callers that
     need an ordered list ``sorted(...)`` it at the point of use.

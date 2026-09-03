@@ -1,7 +1,7 @@
 """``compute(state)`` — build one ``Ctx`` and run it through the phases.
 
 Relocated from ``app.engine`` and split into ``app/engine/compute/`` (the
-compute-phases refactor; see ``docs/refactor-compute-phases-plan.md``).
+compute-phases refactor; see ``docs/plans/refactor-compute-phases-plan.md``).
 ``compute/__init__.py`` is now just the ``Ctx`` build plus the phase loop;
 ``app.engine`` re-exports ``compute`` and the handful of helpers
 ``store.py`` / tests reference by name.

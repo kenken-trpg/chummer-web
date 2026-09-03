@@ -1,4 +1,4 @@
-"""Phase 4 of docs/translation-plan.md — lock in the unified UI terminology.
+"""Phase 4 of docs/plans/translation-plan.md — lock in the unified UI terminology.
 
 Every Japanese label below was deliberately standardised across the app. This
 test fails if a banned form reappears anywhere in the frontend sources, the

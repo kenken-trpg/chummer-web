@@ -1,6 +1,6 @@
 # Plan: type the `Ctx` bundle dicts
 
-Working doc. After the `compute()` phase split (`docs/refactor-compute-phases-plan.md`)
+Working doc. After the `compute()` phase split (`docs/plans/refactor-compute-phases-plan.md`)
 `Ctx` (in `app/engine/compute/context.py`) has ~40 `dict[str, Any]` "bundle"
 fields — `effects`, `gear`, `magic`, `adept`, `foci`, `skill_mods`,
 `contacts`, `martial`, … — each produced by one resolver and read by two or
@@ -50,7 +50,7 @@ tests green, `mypy` clean.
    `apply_bonus_nodes` / the four `nodes/*.py` handlers / `Ctx.effects` and
    the ~54 engine `effects:` params. `enabled_tabs` stopped being a
    set→list type-swap (it's a `set[str]` throughout; callers sort at use).
-   See `docs/refactor-effects-typeddict-plan.md`.
+   See `docs/plans/refactor-effects-typeddict-plan.md`.
 
 ## Verification per commit
 

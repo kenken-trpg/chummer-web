@@ -58,4 +58,4 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
 - Regenerating: `backend/scripts/build_ja_glossary.py` and
   `import_ja_from_refs.py` build the glossary/overlay from external reference
   files under `$JA_REF_DIR/` (default `~/Downloads/`; see
-  `docs/translation-plan.md`).
+  `docs/plans/translation-plan.md`).

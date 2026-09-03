@@ -46,7 +46,7 @@ backend/scripts/regen_ja.sh
 
 ## 出典と方針
 
-`docs/translation-plan.md` を参照。用語は 2021 年版シート用語集
+`docs/plans/translation-plan.md` を参照。用語は 2021 年版シート用語集
 (`xz.language.xslt` / 公式 5 版表記) を正とし、競合時は新しい資料を優先する。
 
 ## ライセンス

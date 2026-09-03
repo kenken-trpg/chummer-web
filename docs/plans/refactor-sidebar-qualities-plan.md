@@ -1,7 +1,7 @@
 # Plan: split CharacterSidebar.tsx + QualitiesTab.tsx
 
 Working doc. The last two oversized frontend components. Now that the
-`vitest` harness exists (`docs/frontend-test-setup-plan.md`), each split
+`vitest` harness exists (`docs/plans/frontend-test-setup-plan.md`), each split
 gets a render smoke test as a guard.
 
 ## Targets

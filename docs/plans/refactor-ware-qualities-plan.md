@@ -1,7 +1,7 @@
 # Plan: split `engine/ware/` then `engine/qualities.py`
 
 Working doc for a dedicated session. Companion to `docs/architecture.md`
-§"Planned refactors" item 1 and `docs/refactor-gear-weapons-plan.md` (which
+§"Planned refactors" item 1 and `docs/plans/refactor-gear-weapons-plan.md` (which
 covered `engine/gear/`, `engine/magic/`, `engine/resonance.py`,
 `martial_arts` / `contacts` / `skills` / `limits`).
 
@@ -327,4 +327,4 @@ The `["B023", "E402"]` `pyproject` cleanup (§Step 3 above) landed with the
 engine-split follow-ups: `apply_lifestyle_cost_mod` → `engine/gear/lifestyle.py`,
 `find_metatype` → `engine/lookups.py`, the per-file ignore and every
 `# noqa: E402` in `app/engine/` deleted. See
-`docs/refactor-gear-weapons-plan.md` §Step 6.
+`docs/plans/refactor-gear-weapons-plan.md` §Step 6.

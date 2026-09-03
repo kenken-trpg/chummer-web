@@ -1,5 +1,5 @@
 """Hand translations for the smaller entity buckets still on English fallback
-(Phase 2b, see docs/translation-plan.md): mentors, lifestyles, martial arts,
+(Phase 2b, see docs/plans/translation-plan.md): mentors, lifestyles, martial arts,
 adept powers, echoes, complex forms, plus SR5 core-rulebook gear.
 
 House style matches what upstream already translated:

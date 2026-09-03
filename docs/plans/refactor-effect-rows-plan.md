@@ -1,7 +1,7 @@
 # Plan: type the `EffectsDict` row lists
 
 Working doc for a dedicated session. Follow-on to
-`docs/refactor-effects-typeddict-plan.md`: that made `effects` an
+`docs/plans/refactor-effects-typeddict-plan.md`: that made `effects` an
 `EffectsDict` but left the ~45 `list[dict[str, Any]]` values (the
 `*_mods` / `*_slots` / `grant_*` / `add_*` / cost-rule rows) as `Any`
 row dicts — `row.get("nam")` (typo) still passes. Same playbook:

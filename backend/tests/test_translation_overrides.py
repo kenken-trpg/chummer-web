@@ -1,5 +1,5 @@
 """Phase 0: Git-tracked Japanese translation overlay merged on top of the
-vendored chummer5a lang files (see docs/translation-plan.md)."""
+vendored chummer5a lang files (see docs/plans/translation-plan.md)."""
 
 from __future__ import annotations
 

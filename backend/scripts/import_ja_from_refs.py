@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Phase 2 of docs/translation-plan.md — seed backend/data/ja_overrides/data.json.
+"""Phase 2 of docs/plans/translation-plan.md — seed backend/data/ja_overrides/data.json.
 
-Sources, newest-wins (see docs/translation-plan.md):
+Sources, newest-wins (see docs/plans/translation-plan.md):
   1. curated map below (SR5, glossary-checked) — highest priority
   2. chumJA SR4 ``ja_data.xml`` — only exact ``<name>`` / category matches, JP only
 

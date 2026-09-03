@@ -35,7 +35,7 @@ dataclass (the working set) and runs it through ~19 ordered phases
 (`bootstrap → qualities → ware → effects → essence → attributes → magic →
 gear → totals → economy → finalize → assemble`), each a
 `phase(ctx: Ctx) -> None`. Order is load-bearing. See
-`docs/refactor-compute-phases-plan.md`.
+`docs/plans/refactor-compute-phases-plan.md`.
 
 `translation overlay`: `backend/data/ja_overrides/{data,ui}.json` is applied by
 `data_loader` on top of the vendored `lang/ja-jp*.xml`. `data.json` is

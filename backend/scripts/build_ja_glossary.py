@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phases 1 / 4 of docs/translation-plan.md.
+"""Phases 1 / 4 of docs/plans/translation-plan.md.
 
 Merge the SR5 terminology from the two external references and diff the result
 against the vendored lang files + our committed overlay.

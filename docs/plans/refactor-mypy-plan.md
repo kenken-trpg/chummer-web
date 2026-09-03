@@ -101,7 +101,7 @@ The base ruleset stays lenient; a per-module `[[tool.mypy.overrides]]`
   `_match_by(rows, field, value)` helper (returns the row itself, not a
   copy), which clears all 28 `no-any-return`s; 212 → 165 lines.
 - **`app.engine` + `app.engine.*` (the whole package)** — once `catalog()`
-  became `CatalogDict` (`docs/refactor-catalog-typeddict-plan.md`), the
+  became `CatalogDict` (`docs/plans/refactor-catalog-typeddict-plan.md`), the
   remaining holdouts (`ware/` / `gear/` / `magic/` / `resonance` /
   `qualities` / `pricing`) all passed the bar as-is — the per-module list
   collapsed to `app.engine` / `app.engine.*`. The two `Any` fountains

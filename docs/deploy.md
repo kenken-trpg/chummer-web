@@ -10,7 +10,7 @@ server, supervised by `supervisord`.
                        └───────────────────────────────────┘
 ```
 
-The backend is stateless (see `docs/stateless-refactor.md`); characters live in
+The backend is stateless (see `docs/plans/stateless-refactor.md`); characters live in
 the browser. Nothing to back up, safe to scale to zero / run many instances.
 
 ## Build & run locally

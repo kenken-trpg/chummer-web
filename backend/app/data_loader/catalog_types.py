@@ -8,7 +8,7 @@ mistyped key is a ``mypy`` error.
 
 Row shapes stay ``dict[str, Any]`` — typing those is a separate job (the
 row lists here are the same "public DTO" territory as the ``Ctx`` bundles).
-Imports only ``typing``. See ``docs/refactor-catalog-typeddict-plan.md``.
+Imports only ``typing``. See ``docs/plans/refactor-catalog-typeddict-plan.md``.
 """
 
 from __future__ import annotations

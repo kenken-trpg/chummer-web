@@ -1,7 +1,7 @@
 # Plan: type the `effects` dict as `EffectsDict`
 
 Working doc for a dedicated session. Stage 4 (and last) of
-`docs/refactor-ctx-bundles-plan.md` — the one bundle left over because it is
+`docs/plans/refactor-ctx-bundles-plan.md` — the one bundle left over because it is
 the biggest. Same playbook: incremental, every commit green, snapshot gate
 byte-identical, `mypy` clean.
 
@@ -48,7 +48,7 @@ dicts typed precisely —
 
 — and the ~40 `*_mods` / `*_slots` / `grant_*` / `add_*` lists stay
 `list[dict[str, Any]]` (their row shapes are out of scope here — done as a
-follow-on, `docs/refactor-effect-rows-plan.md`).
+follow-on, `docs/plans/refactor-effect-rows-plan.md`).
 `Ctx.effects: EffectsDict = field(default_factory=empty_effects)`.
 
 `empty_effects() -> EffectsDict`; `apply_bonus_nodes` and the four

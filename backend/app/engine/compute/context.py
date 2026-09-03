@@ -4,7 +4,7 @@
 Every field is typed and (bar ``state`` / ``data``) has a default so
 ``Ctx(state=..., data=...)`` constructs. The field set is the honest
 top-to-bottom working set of the old monolithic ``compute()`` — see
-``docs/refactor-compute-phases-plan.md``.
+``docs/plans/refactor-compute-phases-plan.md``.
 """
 
 from __future__ import annotations
