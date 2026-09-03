@@ -6,6 +6,7 @@ import {
   migrate,
   putCharacter,
 } from "@/lib/character/local-store";
+import { onNotice } from "@/lib/notices";
 
 // jsdom ships no IndexedDB. Every accessor must degrade to an empty result
 // rather than throw — the editor keeps working from its in-memory copy.
@@ -15,9 +16,33 @@ describe("local-store without IndexedDB", () => {
     expect(await getCharacter("nope")).toBeNull();
   });
 
-  it("writes resolve without throwing", async () => {
-    await expect(putCharacter(makeCharacter({ id: "x" }))).resolves.toBeUndefined();
+  it("writes resolve without throwing, but report the failure", async () => {
+    const seen: string[] = [];
+    onNotice((key) => seen.push(key));
+
+    // false, not a throw: the editor's in-memory copy is still usable
+    expect(await putCharacter(makeCharacter({ id: "x" }))).toBe(false);
+    expect(seen).toEqual(["store.unavailable"]);
     await expect(deleteCharacter("x")).resolves.toBeUndefined();
+
+    onNotice(null);
+  });
+
+  it("names quota exhaustion specifically — it is the actionable one", async () => {
+    const seen: string[] = [];
+    onNotice((key) => seen.push(key));
+    const quota = Object.assign(new Error("full"), { name: "QuotaExceededError" });
+    vi.stubGlobal("indexedDB", {
+      open: () => {
+        throw quota;
+      },
+    });
+
+    expect(await putCharacter(makeCharacter({ id: "x" }))).toBe(false);
+    expect(seen).toEqual(["store.quota"]);
+
+    vi.unstubAllGlobals();
+    onNotice(null);
   });
 });
 

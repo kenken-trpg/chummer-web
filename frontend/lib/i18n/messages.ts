@@ -71,6 +71,15 @@ const JA = {
   "share.err.build": "共有リンクを作成できませんでした。",
   "share.err.adopt": "取り込みに失敗しました。",
 
+  // degraded-but-not-failed reports from `lib/notices`
+  "store.quota":
+    "ブラウザの保存領域が足りず、このキャラクターを保存できませんでした。ポートレートを外すか、不要なキャラクターを削除してください。",
+  "store.unavailable":
+    "このブラウザにキャラクターを保存できません（プライベートウィンドウなど）。タブを閉じると変更は失われます。",
+  "compute.offline":
+    "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
+  "app.newFailed": "新しいキャラクターを作成できませんでした。",
+
   "sheet.layout.standard": "標準",
   "sheet.layout.compact": "コンパクト",
   "sheet.layout.text": "テキスト",
@@ -136,6 +145,14 @@ const EN: Partial<Record<MsgKey, string>> = {
   "share.err.load": "Could not load the share link.",
   "share.err.build": "Could not build a share link.",
   "share.err.adopt": "Could not add this character.",
+
+  "store.quota":
+    "There is not enough browser storage to save this character. Remove the portrait, or delete a character you no longer need.",
+  "store.unavailable":
+    "This browser cannot store characters (a private window, perhaps). Changes will be lost when the tab closes.",
+  "compute.offline":
+    "The server is unreachable, so the values shown may be out of date. Edits are still saved.",
+  "app.newFailed": "Could not create a new character.",
 
   "sheet.layout.standard": "Standard",
   "sheet.layout.compact": "Compact",

@@ -1,11 +1,17 @@
 import type { CharacterSummary } from "@/lib/api";
+import { notify } from "@/lib/notices";
 import type { Character } from "@/lib/types";
 
 /**
  * The character roster lives in the browser (IndexedDB). The backend is a
- * stateless compute/transform service — it never stores a character. Every
- * accessor swallows failure (private mode, storage disabled, SSR) and returns
- * an empty result, the same way {@link useSheetLayout} treats localStorage.
+ * stateless compute/transform service — it never stores a character. Reads
+ * degrade to an empty result (private mode, storage disabled, SSR) the same
+ * way {@link useSheetLayout} treats localStorage.
+ *
+ * *Writes* are different: this is the only place a character is kept, so a
+ * failed `put` means the work is gone at the next reload. It cannot throw —
+ * the in-memory copy in the editor is still good and the session should carry
+ * on — so it reports through {@link notify} and returns false instead.
  */
 
 const DB_NAME = "chummer-web";
@@ -45,6 +51,11 @@ function openDB(): Promise<IDBDatabase> {
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });
+    // don't cache a failure: a transient open error would otherwise disable
+    // storage for the life of the tab
+    dbPromise.catch(() => {
+      dbPromise = null;
+    });
   }
   return dbPromise;
 }
@@ -63,13 +74,25 @@ function run<T>(
   );
 }
 
-export async function putCharacter(character: Character): Promise<void> {
+/**
+ * Persist a character. Returns false when the browser refused the write —
+ * out of quota (a portrait is megabytes of base64) or storage disabled — and
+ * says so through {@link notify}, because the caller's in-memory copy looks
+ * saved but will not survive a reload.
+ */
+export async function putCharacter(character: Character): Promise<boolean> {
   try {
     await run("readwrite", (s) =>
       s.put({ id: character.id, savedAt: Date.now(), schemaVersion: SCHEMA_VERSION, character }),
     );
-  } catch {
-    /* storage unavailable — the in-memory copy in the editor still applies */
+    return true;
+  } catch (e) {
+    // QuotaExceededError is actionable (drop the portrait, delete a character);
+    // anything else means storage is simply not available in this context.
+    notify(
+      e instanceof Error && e.name === "QuotaExceededError" ? "store.quota" : "store.unavailable",
+    );
+    return false;
   }
 }
 

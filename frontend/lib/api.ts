@@ -1,5 +1,6 @@
 import type { Catalog, Character } from "./types";
 import * as local from "@/lib/character/local-store";
+import { notify } from "@/lib/notices";
 
 export type CharacterSummary = {
   id: string;
@@ -63,8 +64,13 @@ export const api = {
   get: async (id: string): Promise<Character> => {
     const stored = await local.getCharacter(id);
     if (!stored) throw new Error("キャラクターが見つかりません");
-    // refresh `derived` against the current engine; tolerate the backend being down
-    const fresh = await computeRemote(stored).catch(() => stored);
+    // refresh `derived` against the current engine. The backend being down is
+    // survivable — the stored `derived` still renders — but say so, or the
+    // sheet quietly shows numbers from a previous engine version.
+    const fresh = await computeRemote(stored).catch(() => {
+      notify("compute.offline");
+      return stored;
+    });
     await local.putCharacter(fresh);
     return fresh;
   },

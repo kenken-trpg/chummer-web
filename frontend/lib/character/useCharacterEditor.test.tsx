@@ -3,6 +3,7 @@ import { makeCharacter } from "@/tests/fixtures";
 import type { Catalog, Character } from "@/lib/types";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { MESSAGES } from "@/lib/i18n/messages";
+import { notify } from "@/lib/notices";
 
 const catalog = { translations: { Ork: "オーク" } } as unknown as Catalog;
 
@@ -110,6 +111,33 @@ describe("useCharacterEditor", () => {
 
     expect(writeText.mock.calls[0][0]).toContain("/share#c=");
     expect(result.current.notice).toBe(MESSAGES.ja["share.portrait"]);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("reports a failed newCharacter instead of rejecting unhandled", async () => {
+    api.create.mockResolvedValueOnce(makeCharacter({ id: "c1" }));
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    api.create.mockRejectedValueOnce(new Error("バックエンドに接続できません"));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await result.current.newCharacter();
+    });
+
+    expect(ok).toBe(false);
+    expect(result.current.error).toBe("バックエンドに接続できません");
+    expect(result.current.ch?.id).toBe("c1"); // still on the old one
+  });
+
+  it("surfaces a notice published by the api / storage layers", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    act(() => notify("compute.offline"));
+
+    expect(result.current.notice).toBe(MESSAGES.ja["compute.offline"]);
     expect(result.current.error).toBeNull();
   });
 

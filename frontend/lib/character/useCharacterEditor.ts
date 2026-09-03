@@ -5,6 +5,7 @@ import { buildShareUrl, shareErrorMessage, SHARE_URL_WARN } from "@/lib/characte
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
+import { onNotice } from "@/lib/notices";
 
 /**
  * Owns the character-editor state: the loaded catalog, the current
@@ -28,6 +29,17 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
+  // `ui` is rebuilt on every locale change; the notice listener is registered
+  // once, so it reads the current one through a ref instead of re-subscribing.
+  const uiRef = useRef(ui);
+  uiRef.current = ui;
+
+  // `lib/api` and `local-store` have no locale and no React — they report a
+  // degraded save / a stale compute as a message key. See `lib/notices`.
+  useEffect(() => {
+    onNotice((key) => setNotice(uiRef.current(key)));
+    return () => onNotice(null);
+  }, []);
 
   function remember(c: Character) {
     setCh(c);
@@ -80,16 +92,27 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       setError(e instanceof Error ? e.message : "読込に失敗しました");
     }
   }
-  async function newCharacter() {
-    remember(await api.create("Runner"));
-    onCharacterOpened?.();
-    void refreshRoster();
+  /** Returns false when the backend refused — `deleteCurrent` needs to know,
+   *  and the Toolbar's "＋ 新規キャラ" must not reject unhandled. */
+  async function newCharacter(): Promise<boolean> {
+    try {
+      remember(await api.create("Runner"));
+      onCharacterOpened?.();
+      void refreshRoster();
+      setError(null);
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : ui("app.newFailed"));
+      return false;
+    }
   }
   async function deleteCurrent() {
     if (!ch) return;
     if (!window.confirm(`「${ch.name || "無名"}」を削除しますか？`)) return;
     const others = roster.filter((r) => r.id !== ch.id);
     await api.remove(ch.id).catch(() => {});
+    // deleting the last one mints a replacement; if the backend is down that
+    // fails loudly rather than leaving the editor pointing at a deleted id
     if (others[0]) await openCharacter(others[0].id);
     else await newCharacter();
     void refreshRoster();

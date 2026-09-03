@@ -76,6 +76,14 @@ The backend is **stateless** — a compute/transform service. The browser owns
 every `CharacterState` (IndexedDB, `frontend/lib/character/local-store.ts`) and
 posts it back on each call.
 
+IndexedDB being the *only* copy has a consequence: a failed write is data loss,
+so `putCharacter` returns `false` and publishes `store.quota` /
+`store.unavailable` through `lib/notices.ts` rather than swallowing the error.
+`lib/api.ts` does the same with `compute.offline` when the compute service is
+unreachable and a stale `derived` is served from storage. The editor hook
+subscribes to that channel and renders it as a `notice` (muted) — distinct from
+`error` (red), which is reserved for operations that actually failed.
+
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/api/health` | liveness |
