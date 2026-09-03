@@ -5,6 +5,7 @@ import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
+import { useUiText } from "@/lib/i18n";
 
 export function Toolbar({
   ed,
@@ -42,9 +43,11 @@ export function Toolbar({
     download,
     downloadChum5,
     copyText,
+    copyShareLink,
     refreshRoster,
   } = ed;
   const d = ch.derived;
+  const { ui } = useUiText();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   return (
     <div className="toolbar">
@@ -106,6 +109,13 @@ export function Toolbar({
       </button>
       <button className="btn" onClick={() => fileRef.current?.click()}>
         読込 (JSON/.chum5)
+      </button>
+      <button
+        className="btn"
+        onClick={() => void copyShareLink()}
+        title="読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）"
+      >
+        {copied === "share" ? ui("share.copied") : ui("share.copy")}
       </button>
       <button
         className="btn"

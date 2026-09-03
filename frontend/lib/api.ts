@@ -98,11 +98,16 @@ export const api = {
     return next;
   },
 
+  /**
+   * Compute a foreign state (a share link, a pasted JSON) for *viewing* only:
+   * the backend reissues the id and returns `derived`, and nothing touches the
+   * local roster. `import` is this plus the write.
+   */
+  preview: (payload: unknown): Promise<Character> =>
+    req<Character>("/api/characters/import", { method: "POST", body: JSON.stringify(payload) }),
+
   import: async (payload: unknown): Promise<Character> => {
-    const c = await req<Character>("/api/characters/import", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const c = await api.preview(payload);
     await local.putCharacter(c);
     return c;
   },

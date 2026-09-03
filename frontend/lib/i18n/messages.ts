@@ -45,6 +45,21 @@ const JA = {
   "check.group.warn": "警告",
   "check.group.info": "情報",
   "check.jump": "該当タブへ",
+
+  "share.copy": "共有リンク",
+  "share.copied": "コピー ✓",
+  "share.title": "共有ビュー（読み取り専用）",
+  "share.note": "このキャラクターは URL に埋め込まれています。サーバーには保存されていません。",
+  "share.loading": "共有キャラクターを読み込み中…",
+  "share.adopt": "自分のロースターに取り込む",
+  "share.adopting": "取り込み中…",
+  "share.mine": "自分のキャラクターへ",
+  "share.layout": "レイアウト",
+  "share.print": "印刷 / PDF",
+  "share.empty": "共有リンクが指定されていません。",
+  "share.long":
+    "リンクが長くなりました（{length} 文字）。チャットやメールで途中で切られることがあります。",
+  "share.portrait": "ポートレートは共有リンクに含まれません。",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -84,6 +99,20 @@ const EN: Partial<Record<MsgKey, string>> = {
   "check.group.warn": "Warnings",
   "check.group.info": "Notes",
   "check.jump": "Go to tab",
+
+  "share.copy": "Share link",
+  "share.copied": "Copied ✓",
+  "share.title": "Shared view (read-only)",
+  "share.note": "This character is embedded in the URL. Nothing is stored on the server.",
+  "share.loading": "Loading the shared character…",
+  "share.adopt": "Add to my roster",
+  "share.adopting": "Adding…",
+  "share.mine": "My characters",
+  "share.layout": "Layout",
+  "share.print": "Print / PDF",
+  "share.empty": "No share payload in this link.",
+  "share.long": "The link is long ({length} characters). Chat clients and mail may truncate it.",
+  "share.portrait": "Portraits are not included in a share link.",
 };
 
 export const MESSAGES: Record<Locale, Partial<Record<MsgKey, string>>> = {
