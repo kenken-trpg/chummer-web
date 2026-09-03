@@ -194,6 +194,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
       <input
         type="search"
         placeholder="視覚／聴覚を検索"
+        aria-label="視覚／聴覚を検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

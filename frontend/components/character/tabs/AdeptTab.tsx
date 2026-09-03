@@ -164,6 +164,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
         <input
           type="search"
           placeholder="アデプトパワーを検索"
+          aria-label="アデプトパワーを検索"
           value={powerSearch}
           onChange={(e) => setPowerSearch(e.target.value)}
         />
@@ -225,6 +226,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
       <input
         type="search"
         placeholder="Enhancement を検索"
+        aria-label="Enhancement を検索"
         value={enhSearch}
         onChange={(e) => setEnhSearch(e.target.value)}
       />
@@ -350,6 +352,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
       <input
         type="search"
         placeholder="気焦点に入れるパワーを検索"
+        aria-label="気焦点に入れるパワーを検索"
         value={qiSearch}
         onChange={(e) => setQiSearch(e.target.value)}
       />

@@ -1,5 +1,6 @@
 import next from "eslint-config-next/core-web-vitals";
 import prettier from "eslint-config-prettier/flat";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 
 /** @type {import("eslint").Linter.Config[]} */
 export default [
@@ -15,6 +16,11 @@ export default [
     ],
   },
   ...next,
+  // `eslint-config-next` registers the jsx-a11y plugin but turns on only a
+  // handful of its rules; the rest of the recommended set is what catches an
+  // unlabelled control. Take the rules only — re-registering the plugin is a
+  // config error.
+  { rules: jsxA11y.flatConfigs.recommended.rules },
   prettier,
   {
     rules: {

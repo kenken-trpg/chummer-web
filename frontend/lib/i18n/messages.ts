@@ -18,6 +18,10 @@ const JA = {
   "app.tagline":
     "非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。",
 
+  // accessible names for landmarks — announced by screen readers, never drawn
+  "nav.sections": "セクション",
+  "nav.skipToMain": "本文へスキップ",
+
   "locale.label": "言語",
   "locale.ja": "日本語",
   "locale.en": "English",
@@ -101,6 +105,9 @@ const EN: Catalog = {
   "app.loading": "Loading…",
   "app.tagline":
     "Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst / Topps. Data from Chummer5a (GPL-3.0).",
+
+  "nav.sections": "Sections",
+  "nav.skipToMain": "Skip to content",
 
   "locale.label": "Language",
   // endonyms: the same in every locale, so a reader can find their own language

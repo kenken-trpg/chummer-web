@@ -145,6 +145,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
       <input
         type="search"
         placeholder="スプライトを検索"
+        aria-label="スプライトを検索"
         value={spriteSearch}
         onChange={(e) => setSpriteSearch(e.target.value)}
       />

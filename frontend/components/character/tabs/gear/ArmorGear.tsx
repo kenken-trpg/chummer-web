@@ -239,6 +239,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
       <input
         type="search"
         placeholder="防具を検索"
+        aria-label="防具を検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

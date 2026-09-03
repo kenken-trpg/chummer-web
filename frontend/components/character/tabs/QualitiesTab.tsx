@@ -171,6 +171,7 @@ export function QualitiesTab({
       <input
         type="search"
         placeholder="資質を検索"
+        aria-label="資質を検索"
         value={qSearch}
         onChange={(e) => setQSearch(e.target.value)}
       />

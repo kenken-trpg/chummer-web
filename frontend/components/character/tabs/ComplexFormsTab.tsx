@@ -84,6 +84,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch }: TabPan
       <input
         type="search"
         placeholder="複合体を検索"
+        aria-label="複合体を検索"
         value={cfSearch}
         onChange={(e) => setCfSearch(e.target.value)}
       />

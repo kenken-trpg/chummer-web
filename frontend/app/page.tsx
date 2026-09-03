@@ -46,8 +46,12 @@ export default function Page() {
 
   return (
     <div className={`app ${tab === "sheet" ? "sheet-mode" : ""}`}>
-      <div className="main">
-        <div className="no-print">
+      {/* the toolbar is ~15 controls deep; give the keyboard a way past it */}
+      <a className="skip-link" href="#main">
+        {ui("nav.skipToMain")}
+      </a>
+      <main className="main" id="main">
+        <header className="no-print">
           <div className="topline">
             <h1>CHUMMER WEB</h1>
             <LocaleSwitch />
@@ -68,7 +72,7 @@ export default function Page() {
           {notice ? <p className="notice">{notice}</p> : null}
 
           <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
-        </div>
+        </header>
 
         <TabPanels
           tab={tab}
@@ -77,7 +81,7 @@ export default function Page() {
           onPortraitFile={onPortraitFile}
           setTab={setTab}
         />
-      </div>
+      </main>
 
       <CharacterSidebar
         catalog={catalog}

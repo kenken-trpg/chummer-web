@@ -163,6 +163,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
         <input
           type="search"
           placeholder="サイバーウェアを検索"
+          aria-label="サイバーウェアを検索"
           value={cySearch}
           onChange={(e) => setCySearch(e.target.value)}
         />

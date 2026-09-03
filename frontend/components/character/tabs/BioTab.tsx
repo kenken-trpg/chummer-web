@@ -114,6 +114,7 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
         <input
           type="search"
           placeholder="バイオウェアを検索"
+          aria-label="バイオウェアを検索"
           value={bioSearch}
           onChange={(e) => setBioSearch(e.target.value)}
         />

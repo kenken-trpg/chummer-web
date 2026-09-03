@@ -340,6 +340,7 @@ export function MiscDrugsGear({
       <input
         type="search"
         placeholder={mode === "drugs" ? "ドラッグ／毒物を検索" : "ギアを検索"}
+        aria-label={mode === "drugs" ? "ドラッグ／毒物を検索" : "ギアを検索"}
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

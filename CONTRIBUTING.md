@@ -85,6 +85,30 @@ fixtures in `frontend/tests/fixtures.ts` (`makeCharacter` / `makeCatalog`).
 `any`-free; test files may still cast fixtures). `no-unused-vars` stays a
 warning, with `_`-prefixed names exempt.
 
+### Accessibility
+
+`eslint-plugin-jsx-a11y`'s recommended set is on and blocking. The house rules:
+
+- **A `<label>` wraps its control.** No `htmlFor`/`id` plumbing — the
+  association is structural and cannot drift. When the text heads a *group*
+  rather than one control, use `.field-label` on a heading instead; a `<label>`
+  pointing at nothing is what the lint rule is there to catch.
+- **A control with no visible label needs `aria-label`.** `placeholder` and
+  `title` are not labels. Search boxes carry the placeholder text again as
+  `aria-label`.
+- Landmarks: one `<main id="main">` per page, a `<header>` for the chrome, the
+  sidebar is an `<aside>`, the tab bar is a named `<nav>` with `aria-current`
+  on the active tab. There is a skip link ahead of the toolbar.
+- Focus is styled with `:focus-visible`; never `outline: none`.
+
+Assert accessible names by **role + name** in tests (`getByRole("combobox",
+{ name: … })`), not by class or DOM order — that way a dropped label fails a
+test instead of passing silently.
+
+Not done yet: the per-row `<select>` pickers in the gear and quality tabs
+(slot / ammo / extra) still have no accessible name of their own — they read as
+bare "combobox". They need a name built from the row they belong to.
+
 ### Coverage
 
 ```bash

@@ -117,6 +117,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
       <input
         type="search"
         placeholder="術式を検索"
+        aria-label="術式を検索"
         value={spellSearch}
         onChange={(e) => setSpellSearch(e.target.value)}
       />

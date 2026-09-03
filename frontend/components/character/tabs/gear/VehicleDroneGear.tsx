@@ -550,6 +550,7 @@ export function VehicleDroneGear({
       <input
         type="search"
         placeholder={mode === "drone" ? "ドローンを検索" : "車両を検索"}
+        aria-label={mode === "drone" ? "ドローンを検索" : "車両を検索"}
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

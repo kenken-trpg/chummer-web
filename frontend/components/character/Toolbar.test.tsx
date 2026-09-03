@@ -71,4 +71,14 @@ describe("<Toolbar>", () => {
     expect(screen.getByRole("button", { name: /元に戻す/ })).toHaveProperty("disabled", true);
     expect(screen.getByRole("button", { name: /やり直し/ })).toHaveProperty("disabled", true);
   });
+  // The toolbar's two comboboxes and the name field have no visible <label>;
+  // without an accessible name a screen reader announces them as bare
+  // "combobox" / "edit text". Assert by role+name so a dropped aria-label
+  // fails here rather than silently.
+  it("gives every unlabelled control an accessible name", () => {
+    render(<Toolbar ed={makeEd()} {...base} tab={"sheet"} sheetLayout={"standard"} />);
+    expect(screen.getByRole("combobox", { name: "保存済みキャラクター" })).toBeDefined();
+    expect(screen.getByRole("combobox", { name: "レイアウト" })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: "キャラクター名" })).toHaveProperty("value", "Vex");
+  });
 });

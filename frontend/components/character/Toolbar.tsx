@@ -58,6 +58,7 @@ export function Toolbar({
           e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value)
         }
         title="保存済みキャラクター"
+        aria-label="保存済みキャラクター"
       >
         {!roster.some((r) => r.id === ch.id) ? (
           <option value={ch.id}>{ch.name || "無名"}（未保存）</option>
@@ -94,6 +95,7 @@ export function Toolbar({
       </button>
       <input
         value={ch.name}
+        aria-label="キャラクター名"
         onChange={(e) => setCh({ ...ch, name: e.target.value })}
         onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
       />
@@ -161,6 +163,7 @@ export function Toolbar({
             value={sheetLayout}
             onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
             title="シートのレイアウト"
+            aria-label={ui("share.layout")}
           >
             <option value="standard">{ui("sheet.layout.standard")}</option>
             <option value="compact">{ui("sheet.layout.compact")}</option>

@@ -204,6 +204,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
       <input
         type="search"
         placeholder="ライフスタイルを検索"
+        aria-label="ライフスタイルを検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

@@ -85,8 +85,8 @@ export default function SharePage() {
 
   return (
     <div className="app sheet-mode">
-      <div className="main">
-        <div className="no-print">
+      <main className="main">
+        <header className="no-print">
           <div className="topline">
             <h1>CHUMMER WEB</h1>
             <LocaleSwitch />
@@ -108,6 +108,7 @@ export default function SharePage() {
               value={sheetLayout}
               onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
               title={ui("share.layout")}
+              aria-label={ui("share.layout")}
             >
               <option value="standard">{ui("sheet.layout.standard")}</option>
               <option value="compact">{ui("sheet.layout.compact")}</option>
@@ -118,7 +119,7 @@ export default function SharePage() {
               {ui("share.print")}
             </button>
           </div>
-        </div>
+        </header>
 
         <CharacterSheet
           character={state.character}
@@ -126,7 +127,7 @@ export default function SharePage() {
           tr={tr}
           layout={sheetLayout}
         />
-      </div>
+      </main>
     </div>
   );
 }

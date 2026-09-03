@@ -275,6 +275,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
       <input
         type="search"
         placeholder="通信機を検索"
+        aria-label="通信機を検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

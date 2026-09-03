@@ -257,6 +257,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
       <input
         type="search"
         placeholder="RCCを検索"
+        aria-label="RCCを検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

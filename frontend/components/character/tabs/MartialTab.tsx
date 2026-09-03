@@ -93,6 +93,7 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
       <input
         type="search"
         placeholder="武道を検索"
+        aria-label="武道を検索"
         value={martialSearch}
         onChange={(e) => setMartialSearch(e.target.value)}
       />

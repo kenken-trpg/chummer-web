@@ -183,6 +183,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
       <input
         type="search"
         placeholder="サイバーデッキを検索"
+        aria-label="サイバーデッキを検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

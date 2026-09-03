@@ -150,6 +150,7 @@ export function FociTab({ catalog, character: ch, d, tr, patch }: TabPanelProps)
       <input
         type="search"
         placeholder="フォーカスを検索"
+        aria-label="フォーカスを検索"
         value={focusSearch}
         onChange={(e) => setFocusSearch(e.target.value)}
       />

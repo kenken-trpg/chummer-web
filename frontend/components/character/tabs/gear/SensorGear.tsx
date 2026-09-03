@@ -250,6 +250,7 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
       <input
         type="search"
         placeholder="センサーを検索"
+        aria-label="センサーを検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

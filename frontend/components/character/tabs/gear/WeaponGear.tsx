@@ -299,6 +299,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
       <input
         type="search"
         placeholder="武器を検索"
+        aria-label="武器を検索"
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />

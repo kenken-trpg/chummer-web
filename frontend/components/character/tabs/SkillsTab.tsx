@@ -445,6 +445,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
       <input
         type="search"
         placeholder="知識技能を検索"
+        aria-label="知識技能を検索"
         value={knowSearch}
         onChange={(e) => setKnowSearch(e.target.value)}
       />

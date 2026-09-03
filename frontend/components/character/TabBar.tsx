@@ -37,12 +37,20 @@ export function TabBar({
 }) {
   const { ui } = useUiText();
   return (
-    <div className="tabs">
+    // Plain buttons in a nav rather than role="tablist"/role="tab": that
+    // pattern also owes the user arrow-key navigation and aria-controls, and a
+    // half-implemented tablist announces a contract the page does not keep.
+    <nav className="tabs" aria-label={ui("nav.sections")}>
       {TABS.filter(([k, always]) => always || enabledTabs.includes(k)).map(([k]) => (
-        <button key={k} className={`tab ${tab === k ? "active" : ""}`} onClick={() => setTab(k)}>
+        <button
+          key={k}
+          className={`tab ${tab === k ? "active" : ""}`}
+          aria-current={tab === k ? "true" : undefined}
+          onClick={() => setTab(k)}
+        >
           {ui(`tab.${k}` as MsgKey)}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
