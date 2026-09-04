@@ -21,7 +21,7 @@ from typing import Any
 from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _xml_fromstring
 
-from .data_loader import catalog, catalog_list
+from .data_loader import CatalogDict, catalog, catalog_list
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
 # decompression bombs on the import endpoint. A real Chummer save (even with
@@ -155,23 +155,8 @@ class _Resolver:
         return None
 
 
-def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
-    xml_bytes = decompress_chum5lz(xml_bytes)
-    try:
-        root: ET.Element = _xml_fromstring(xml_bytes)
-    except (ET.ParseError, DefusedXmlException) as exc:
-        raise ValueError(f"XML を解析できませんでした: {exc}") from exc
-    if root.tag != "character":
-        nested = root.find("character")
-        root = nested if nested is not None else root
-    if root.tag != "character":
-        raise ValueError("Chummer のキャラクターファイルではないようです（<character> が見つかりません）")
-
-    cat = catalog()
-    warn: list[str] = []
-    st: dict[str, Any] = {"id": str(uuid.uuid4())}
-
-    # --- identity -----------------------------------------------------------
+def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read name, metatype, build method, the bio fields and the portrait."""
     st["name"] = _text(root.find("alias")) or _text(root.find("name")) or "Imported Runner"
     st["metatype"] = _text(root.find("metatype")) or "Human"
     mv = _text(root.find("metavariant"))
@@ -215,7 +200,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         st["karma_earned"] = _int(root.find("karma"))
         st["nuyen_earned"] = _int(root.find("nuyen"))
 
-    # --- attributes -------------------------------------------------------
+
+def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read the eight attributes plus EDG/MAG/RES, as base + karma."""
     attrs: dict[str, int] = {}
     for a in root.findall("./attributes/attribute"):
         name = _text(a.find("name")).upper()
@@ -226,7 +213,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         attrs[name] = max(lo + _int(a.find("base")) + _int(a.find("karma")), lo)
     st["attributes"] = attrs or {"BOD": 1, "AGI": 1, "REA": 1, "STR": 1, "CHA": 1, "INT": 1, "LOG": 1, "WIL": 1}
 
-    # --- skills ---------------------------------------------------------
+
+def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read active skills, groups, specialisations and knowledge."""
     skills: dict[str, int] = {}
     specs: dict[str, str] = {}
     for s in root.findall("./skills/skills/skill"):
@@ -269,7 +258,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["knowledge_categories"] = know_cat
     st["native_languages"] = natives
 
-    # --- qualities -----------------------------------------------------
+
+def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read positive/negative qualities and the targets they were taken with."""
     q_by_name = _by_name(cat["qualities"])
     q_ids = {r["id"] for r in cat["qualities"]}
     quality_ids: list[str] = []
@@ -293,7 +284,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
 
-    # --- magic: spells / powers / complex forms / arts ---------------
+
+def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read spells, adept powers, complex forms and magic arts."""
     spell_r = _Resolver(cat["spells"])
     st["spells"] = [
         {"id": str(uuid.uuid4()), "spell_id": spell_ref, "alchemical": _text(sp.find("alchemical")).lower() == "true"}
@@ -342,7 +335,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         if mid:
             st["mentor_id"] = mid
 
-    # --- initiation / submersion ------------------------------------
+
+def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read initiation and submersion grades, metamagics and echoes."""
     mm_r = _Resolver(cat["metamagics"])
     art_r = _Resolver(cat.get("magic_arts") or [])
     init_grade = sub_grade = 0
@@ -384,7 +379,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["initiations"] = inits
     st["submersions"] = subs
 
-    # --- ware ---------------------------------------------------------
+
+def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read cyber- and bioware, nested to any depth."""
     ware_rows = (cat.get("cyberware") or {}).get("items") or []
     ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
     ware_r = _Resolver(ware_rows)
@@ -415,7 +412,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), "サイバーウェア")
     st["bioware"] = load_ware(root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), "バイオウェア")
 
-    # --- armor + mods -------------------------------------------------
+
+def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read armor and the mods bolted to it."""
     armor_r = _Resolver(cat["armor"])
     amod_r = _Resolver(cat["armor_mods"])
     st_armor: list[dict[str, Any]] = []
@@ -446,7 +445,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["armor"] = st_armor
     st["armor_mods"] = st_amods
 
-    # --- weapons + accessories -------------------------------------
+
+def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read weapons and their accessories."""
     weap_r = _Resolver(cat["weapons"])
     wacc_r = _Resolver(cat["weapon_accessories"])
     st_weap: list[dict[str, Any]] = []
@@ -475,7 +476,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["weapons"] = st_weap
     st["weapon_accessories"] = st_wacc
 
-    # --- gear (nested, routed to the matching catalog bucket) -----
+
+def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read gear, routed to whichever catalog bucket resolves it."""
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
     gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
     routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
@@ -521,7 +524,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     for b, rows in routed.items():
         st[b] = rows
 
-    # --- vehicles + drones + vehicle mods ------------------------
+
+def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read vehicles, drones and vehicle mods."""
     veh_r = _Resolver(cat["vehicles"])
     drone_r = _Resolver(cat["drones"])
     vmod_r = _Resolver(cat["vehicle_mods"])
@@ -555,7 +560,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods
 
-    # --- lifestyles / contacts / martial arts --------------------
+
+def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+    """Read lifestyles, contacts and martial arts."""
     ls_r = _Resolver(cat["lifestyles"])
     lifestyles = []
     for ls in root.findall("./lifestyles/lifestyle"):
@@ -596,6 +603,56 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
             marts.append({"id": str(uuid.uuid4()), "art_id": aid, "techniques": techs})
     st["martial_arts"] = marts
 
+
+def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
+    """A Chummer5a save in, a `CharacterState` dict plus warnings out.
+
+    Best-effort by design: anything the catalog cannot resolve becomes a
+    warning, never an error, because a character that imports with three
+    missing items is worth more to its owner than a refusal.
+
+    Each `_import_*` below owns one section of the file. They are independent —
+    each reads `root` and writes into `st` — which is why the 443-line function
+    they came from could be cut along its own comment banners without moving a
+    single line of logic.
+    """
+    xml_bytes = decompress_chum5lz(xml_bytes)
+    try:
+        root: ET.Element = _xml_fromstring(xml_bytes)
+    except (ET.ParseError, DefusedXmlException) as exc:
+        raise ValueError(f"XML を解析できませんでした: {exc}") from exc
+    if root.tag != "character":
+        nested = root.find("character")
+        root = nested if nested is not None else root
+    if root.tag != "character":
+        raise ValueError("Chummer のキャラクターファイルではないようです（<character> が見つかりません）")
+
+    cat = catalog()
+    warn: list[str] = []
+    st: dict[str, Any] = {"id": str(uuid.uuid4())}
+
+    for section in _SECTIONS:
+        section(root, cat, st, warn)
+
     # collapse duplicate warnings, keep order
     st["_warnings"] = list(dict.fromkeys(warn))
     return st, st["_warnings"]
+
+
+#: Applied in order. Order matters only where a later section reads what an
+#: earlier one wrote into `st` — ware before gear, because a cyberdeck can hang
+#: off a cyberlimb.
+_SECTIONS = (
+    _import_identity,
+    _import_attributes,
+    _import_skills,
+    _import_qualities,
+    _import_magic,
+    _import_initiation,
+    _import_ware,
+    _import_armor,
+    _import_weapons,
+    _import_gear,
+    _import_vehicles,
+    _import_lifestyles,
+)
