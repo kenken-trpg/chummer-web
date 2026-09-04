@@ -78,6 +78,17 @@ The backend tests come in two layers:
   cd backend && UPDATE_SNAPSHOTS=1 python -m pytest -q tests/test_snapshot.py
   ```
 
+- **`tests/test_chummer_roundtrip*.py`** — `.chum5` import ⇄ export must be a
+  fixed point: a character that has been through Chummer once must not change
+  if it goes through again. The four hand-built scenarios name maybe eighty
+  catalog entries between them; the `_property` file draws the character from
+  the live catalog with Hypothesis instead, so a field only one weapon category
+  sets is still reachable. Both share the XML builder in
+  `tests/chum5_fixtures.py` (deliberately not named `test_*`, so pytest does
+  not collect it). Hypothesis remembers failing examples in `backend/.hypothesis/`
+  (gitignored) and replays them first, so a fix is verified against the case
+  that actually broke.
+
 **Frontend** — `eslint` (flat config) + `prettier` + `tsc` + `vitest`:
 
 ```bash
