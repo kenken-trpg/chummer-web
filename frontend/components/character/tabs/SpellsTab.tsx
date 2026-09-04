@@ -47,7 +47,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
           value={ch.tradition_id || ""}
           onChange={(e) => patch({ tradition_id: e.target.value || null })}
         >
-          <option value="">{ui("magic.choose")}</option>
+          <option value="">{ui("common.choose")}</option>
           {(catalog.traditions || []).map((item) => (
             <option key={item.id} value={item.id}>
               {tr(item.name)}（{item.drain_attrs.join("+")}）
@@ -82,7 +82,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   })
                 : ""}
               {item.focus_bonus ? ui("spell.focusBonus", { bonus: item.focus_bonus }) : ""}
-              {item.free ? ui("spell.freeSlot") : ui("spell.karmaCost", { karma: item.karma })}
+              {item.free ? ui("common.freeSlot") : ui("common.karmaCost", { karma: item.karma })}
               {item.required?.length
                 ? ui("spell.required", {
                     list: item.required.map((name) => tr(name)).join(ui("common.termSep")),
@@ -202,7 +202,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                           list: item.required.map((name) => tr(name)).join(ui("common.termSep")),
                         })
                       : ""}
-                    {paid ? ui("spell.karmaCost", { karma: 5 }) : ui("spell.freeSlot")}
+                    {paid ? ui("common.karmaCost", { karma: 5 }) : ui("common.freeSlot")}
                   </div>
                 </div>
                 <button

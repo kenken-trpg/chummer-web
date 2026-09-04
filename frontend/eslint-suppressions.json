@@ -174,11 +174,6 @@
       "count": 11
     }
   },
-  "components/character/tabs/ComplexFormsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 19
-    }
-  },
   "components/character/tabs/ContactsTab.tsx": {
     "no-restricted-syntax": {
       "count": 22
@@ -194,11 +189,6 @@
       "count": 18
     }
   },
-  "components/character/tabs/InitiationTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 15
-    }
-  },
   "components/character/tabs/MartialTab.tsx": {
     "no-restricted-syntax": {
       "count": 21
@@ -212,16 +202,6 @@
   "components/character/tabs/PriorityTab.tsx": {
     "no-restricted-syntax": {
       "count": 19
-    }
-  },
-  "components/character/tabs/SpritesTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 21
-    }
-  },
-  "components/character/tabs/SubmersionTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 13
     }
   },
   "components/character/tabs/gear/ArmorGear.tsx": {

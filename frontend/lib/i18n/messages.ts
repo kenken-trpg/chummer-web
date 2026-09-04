@@ -153,7 +153,6 @@ const JA = {
   "adept.qiNote": "Force × 3,000¥。結合カルマ = Force（Way で減）。Force はパワー点×4",
   "adept.qiBinding": " / 結合 {karma}カルマ",
   "adept.qiPowerRating": "パワーR",
-  "adept.choose": "選択してください",
   "adept.searchQi": "気焦点に入れるパワーを検索",
   "adept.bind": "結合",
 
@@ -178,8 +177,6 @@ const JA = {
   "qual.filter.negative": "不利",
   "qual.filter.metagenic": "メタジェネ",
   "qual.search": "資質を検索",
-  "qual.repeatable": " / 繰り返し可",
-  "qual.maxTakes": " / 最大{max}",
   "qual.taken": " / 取得{count}",
   "qual.needsTarget": " / 対象が必要",
   "qual.wayExclusive": " / 他の Way と排他",
@@ -231,6 +228,14 @@ const JA = {
   /** Between list items: categories, spell names, spirit powers. */
   "common.listSep": "、",
   "common.termSep": "・",
+  "common.choose": "選択してください",
+  "common.repeatable": " / 繰り返し可",
+  "common.maxTakes": " / 最大{max}",
+  "common.freeSlot": " / 無料",
+  "common.karmaCost": " / {karma}カルマ",
+  "common.powers": "能力 {list}",
+  "common.hits": "{kind}ヒット",
+  "common.kind": "種類",
 
   "picker.coreOnly": "SR5 のみ表示中（検索するとサプリメントも探します）",
   "picker.none": "該当なし",
@@ -416,7 +421,6 @@ const JA = {
 
   // Shared by the three magic tabs (spells, spirits, foci).
   "magic.tradition": "伝統",
-  "magic.choose": "選択してください",
   "magic.drainResist": " ・ ドレイン抵抗 {attrs} {pool}",
 
   "foci.note":
@@ -453,8 +457,6 @@ const JA = {
   "spell.drainSpecial": "特殊",
   "spell.drainMod": "（修正{mod}）",
   "spell.focusBonus": " / 焦点+{bonus}",
-  "spell.freeSlot": " / 無料",
-  "spell.karmaCost": " / {karma}カルマ",
   "spell.required": " / 必要 {list}",
   "spell.kind.spell": "呪文",
   "spell.kind.ritual": "儀式",
@@ -472,12 +474,60 @@ const JA = {
   "spirit.reagent": " / 試薬 {nuyen}¥",
   "spirit.untilDawn": " / 日の出または日の入りまで",
   "spirit.services": "サービス",
-  "spirit.powers": "能力 {list}",
-  "spirit.hits": "{kind}ヒット",
   "spirit.spiritHits": "精霊ヒット",
-  "spirit.kind": "種類",
   "spirit.tests": "召喚 vs Force ・ 結合 vs Force×2",
   "spirit.extraTag": "追加",
+
+  // Shared by the matrix-resonance tabs (sprites, complex forms).
+  "res.fadeResist": " ・ フェード抵抗 {attrs} {pool}",
+
+  "sprite.note":
+    "コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェードは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。",
+  "sprite.livingPersona": " ・ リビングペルソナ DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
+  "sprite.registered": "登録",
+  "sprite.compiled": "コンパイル",
+  "sprite.tasks": "タスク",
+  "sprite.untilReboot": " / 再起動またはリブートまで",
+  "sprite.spriteHits": "スプライトヒット",
+  "sprite.search": "スプライトを検索",
+
+  "cf.free": "優先度の無料枠 {used}/{free}",
+  "cf.paid": " ・ 追加 {paid}×4カルマ",
+  "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超なら物理フェード。",
+  "cf.fadeAt": " @ L{level} → フェード {fade}",
+  "cf.fadeSpecial": "特殊",
+  "cf.attribute": "能力値",
+  "cf.search": "複合体を検索",
+  "cf.needsAttr": " / マトリクス能力値が必要",
+  "cf.required": "必要 {list}",
+
+  // Shared by the two advancement tabs (initiation, submersion).
+  "grade.label": "等級 {grade}",
+  "grade.summary": "等級 {grade} ・ カルマ {karma}",
+  "grade.karma": "{karma}カルマ",
+  "grade.named": " ・ {name}",
+  "grade.discount": "（{list} 割引）",
+  "grade.discountHint": "各 −10%（累積で減算）",
+
+  "init.note":
+    "（各等級 10 + 等級×3。集団／試練／教習は各 −10%（累積で減算）。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）",
+  "init.granted": " ・ 品質付与 {list}",
+  "init.freeMetamagics": "無料メタマジック: {list}",
+  "init.grade": "イニシエーション等級",
+  "init.group": "集団",
+  "init.groupJoin": "集団加入",
+  "init.ordeal": "試練",
+  "init.schooling": "教習",
+  "init.metamagic": "メタマジック",
+  "init.requires": " / 要 {list}",
+
+  "sub.note": "（各等級 10 + 等級×3。RES上限 = 種族上限 + 等級。等級 ≤ RES）",
+  "sub.grade": "サブマージョン等級",
+  "sub.net": "ネット",
+  "sub.network": "ネットワーク",
+  "sub.task": "タスク",
+  "sub.echo": "エコー",
+  "sub.target": "対象（プログラム名など）",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -623,7 +673,6 @@ const EN: Catalog = {
     "Force × 3,000¥. Binding karma = Force (reduced by a Way). Force is power points × 4.",
   "adept.qiBinding": " / binding {karma} karma",
   "adept.qiPowerRating": "Power R",
-  "adept.choose": "Choose one",
   "adept.searchQi": "Search powers to bind into a qi focus",
   "adept.bind": "Bind",
 
@@ -648,8 +697,6 @@ const EN: Catalog = {
   "qual.filter.negative": "Negative",
   "qual.filter.metagenic": "Metagenic",
   "qual.search": "Search qualities",
-  "qual.repeatable": " / repeatable",
-  "qual.maxTakes": " / max {max}",
   "qual.taken": " / taken {count}",
   "qual.needsTarget": " / needs a target",
   "qual.wayExclusive": " / exclusive with other Ways",
@@ -698,6 +745,14 @@ const EN: Catalog = {
   "common.count": "{count}",
   "common.listSep": ", ",
   "common.termSep": " · ",
+  "common.choose": "Choose one",
+  "common.repeatable": " / repeatable",
+  "common.maxTakes": " / max {max}",
+  "common.freeSlot": " / free",
+  "common.karmaCost": " / {karma} karma",
+  "common.powers": "Powers {list}",
+  "common.hits": "{kind} hits",
+  "common.kind": "Kind",
 
   "picker.coreOnly": "Showing SR5 only (search to reach the supplements)",
   "picker.none": "No matches",
@@ -878,7 +933,6 @@ const EN: Catalog = {
   "sheet.layout.print": "Print",
 
   "magic.tradition": "Tradition",
-  "magic.choose": "Select…",
   "magic.drainResist": " · drain resistance {attrs} {pool}",
 
   "foci.note":
@@ -915,8 +969,6 @@ const EN: Catalog = {
   "spell.drainSpecial": "special",
   "spell.drainMod": " (mod {mod})",
   "spell.focusBonus": " / focus +{bonus}",
-  "spell.freeSlot": " / free",
-  "spell.karmaCost": " / {karma} karma",
   "spell.required": " / requires {list}",
   "spell.kind.spell": "Spells",
   "spell.kind.ritual": "Rituals",
@@ -934,12 +986,58 @@ const EN: Catalog = {
   "spirit.reagent": " / reagents {nuyen}¥",
   "spirit.untilDawn": " / until the next sunrise or sunset",
   "spirit.services": "Services",
-  "spirit.powers": "Powers {list}",
-  "spirit.hits": "{kind} hits",
   "spirit.spiritHits": "Spirit hits",
-  "spirit.kind": "Kind",
   "spirit.tests": "summon vs Force · bind vs Force×2",
   "spirit.extraTag": "extra",
+
+  "res.fadeResist": " · fade resistance {attrs} {pool}",
+
+  "sprite.note":
+    "Compiling is Compiling + RES[Level] vs Level×2. Registering is Registering + RES[Level] vs Level×2 (Level hours). Fade is the sprite's hits ×2 (minimum 2), and physical if Level exceeds Resonance. You may register up to Resonance sprites.",
+  "sprite.livingPersona": " · living persona DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
+  "sprite.registered": "Registered",
+  "sprite.compiled": "Compiled",
+  "sprite.tasks": "Tasks",
+  "sprite.untilReboot": " / until you reboot or restart",
+  "sprite.spriteHits": "Sprite hits",
+  "sprite.search": "Search sprites",
+
+  "cf.free": "Free from priority {used}/{free}",
+  "cf.paid": " · {paid} extra × 4 karma",
+  "cf.note": ". Threading is Software + RES[Level]; fade is physical if Level exceeds Resonance.",
+  "cf.fadeAt": " @ L{level} → fade {fade}",
+  "cf.fadeSpecial": "special",
+  "cf.attribute": "Attribute",
+  "cf.search": "Search complex forms",
+  "cf.needsAttr": " / needs a matrix attribute",
+  "cf.required": "requires {list}",
+
+  "grade.label": "Grade {grade}",
+  "grade.summary": "Grade {grade} · karma {karma}",
+  "grade.karma": "{karma} karma",
+  "grade.named": " · {name}",
+  "grade.discount": " ({list} discount)",
+  "grade.discountHint": "−10% each, applied cumulatively",
+
+  "init.note":
+    " (10 + grade×3 karma each. Group / ordeal / schooling take −10% each, cumulatively. Magic cap = metatype cap + grade. Grade ≤ MAG.)",
+  "init.granted": " · granted by qualities: {list}",
+  "init.freeMetamagics": "Free metamagics: {list}",
+  "init.grade": "Initiate grade",
+  "init.group": "group",
+  "init.groupJoin": "Join a group",
+  "init.ordeal": "ordeal",
+  "init.schooling": "schooling",
+  "init.metamagic": "Metamagic",
+  "init.requires": " / requires {list}",
+
+  "sub.note": " (10 + grade×3 karma each. RES cap = metatype cap + grade. Grade ≤ RES.)",
+  "sub.grade": "Submersion grade",
+  "sub.net": "network",
+  "sub.network": "Network",
+  "sub.task": "task",
+  "sub.echo": "Echo",
+  "sub.target": "Target (a program name, say)",
 };
 
 export const MESSAGES: Record<Locale, Catalog> = {

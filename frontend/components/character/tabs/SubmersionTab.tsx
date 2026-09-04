@@ -7,18 +7,21 @@ export function SubmersionTab({
   character: ch,
   d,
   tr,
+  ui,
   patch,
   setCharacter,
 }: TabPanelProps) {
   return (
     <div className="card">
       <p className="muted">
-        等級 {d.submersion?.grade || 0}
-        {" ・ "}カルマ {d.submersion?.karma || 0}
-        （各等級 10 + 等級×3。RES上限 = 種族上限 + 等級。等級 ≤ RES）
+        {ui("grade.summary", {
+          grade: d.submersion?.grade || 0,
+          karma: d.submersion?.karma || 0,
+        })}
+        {ui("sub.note")}
       </p>
       <label>
-        サブマージョン等級
+        {ui("sub.grade")}
         <input
           type="range"
           min={0}
@@ -66,22 +69,31 @@ export function SubmersionTab({
           return (
             <div className="cyber-item" key={choice.id || choice.grade}>
               <div style={{ width: "100%" }}>
-                <b>等級 {choice.grade}</b>
+                <b>{ui("grade.label", { grade: choice.grade })}</b>
                 <div className="muted">
-                  {choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}
+                  {ui("grade.karma", { karma: choice.karma })}
+                  {choice.name ? ui("grade.named", { name: tr(choice.name) }) : ""}
                   {choice.group || choice.ordeal || choice.schooling
-                    ? `（${[choice.group && "ネット", choice.ordeal && "タスク", choice.schooling && "教習"].filter(Boolean).join("・")} 割引）`
+                    ? ui("grade.discount", {
+                        list: [
+                          choice.group && ui("sub.net"),
+                          choice.ordeal && ui("sub.task"),
+                          choice.schooling && ui("init.schooling"),
+                        ]
+                          .filter(Boolean)
+                          .join(ui("common.termSep")),
+                      })
                     : ""}
                 </div>
                 <div className="cyber-controls" style={{ marginTop: 6 }}>
                   {(
                     [
-                      ["group", "ネットワーク"],
-                      ["ordeal", "タスク"],
-                      ["schooling", "教習"],
+                      ["group", "sub.network"],
+                      ["ordeal", "sub.task"],
+                      ["schooling", "init.schooling"],
                     ] as const
                   ).map(([key, label]) => (
-                    <label key={key} title="各 −10%（累積で減算）">
+                    <label key={key} title={ui("grade.discountHint")}>
                       <input
                         type="checkbox"
                         checked={Boolean(local?.[key] ?? choice[key])}
@@ -92,13 +104,13 @@ export function SubmersionTab({
                           patch({ submersions });
                         }}
                       />
-                      {label}
+                      {ui(label)}
                     </label>
                   ))}
                 </div>
                 <div className="grid" style={{ marginTop: 8 }}>
                   <label>
-                    エコー
+                    {ui("sub.echo")}
                     <select
                       value={echoId}
                       onChange={(e) => {
@@ -116,14 +128,14 @@ export function SubmersionTab({
                         patch({ submersions });
                       }}
                     >
-                      <option value="">選択してください</option>
+                      <option value="">{ui("common.choose")}</option>
                       {(catalog.echoes || []).map((item) => (
                         <option key={item.id} value={item.id}>
                           {tr(item.name)} ({item.name})
                           {item.max_takes == null
-                            ? " / 繰り返し可"
+                            ? ui("common.repeatable")
                             : item.max_takes > 1
-                              ? ` / 最大${item.max_takes}`
+                              ? ui("common.maxTakes", { max: item.max_takes })
                               : ""}
                         </option>
                       ))}
@@ -131,7 +143,7 @@ export function SubmersionTab({
                   </label>
                   {selected?.needs_extra ? (
                     <label>
-                      対象（プログラム名など）
+                      {ui("sub.target")}
                       <input
                         type="text"
                         value={extra || ""}

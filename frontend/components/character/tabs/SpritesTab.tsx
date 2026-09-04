@@ -3,17 +3,24 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
-export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
 
   return (
     <div className="card">
       <p className="muted">
-        コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs
-        Level×2（Level時間）。フェードは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。
-        {d.fade_resist ? ` ・ フェード抵抗 ${d.fade_resist.attrs} ${d.fade_resist.pool}` : ""}
+        {ui("sprite.note")}
+        {d.fade_resist
+          ? ui("res.fadeResist", { attrs: d.fade_resist.attrs, pool: d.fade_resist.pool })
+          : ""}
         {d.living_persona
-          ? ` ・ リビングペルソナ DR${d.living_persona.device_rating} ATK${d.living_persona.attack} SLZ${d.living_persona.sleaze} DP${d.living_persona.dataprocessing} FW${d.living_persona.firewall}`
+          ? ui("sprite.livingPersona", {
+              dr: d.living_persona.device_rating,
+              atk: d.living_persona.attack,
+              slz: d.living_persona.sleaze,
+              dp: d.living_persona.dataprocessing,
+              fw: d.living_persona.firewall,
+            })
           : ""}
       </p>
       {(d.sprites || []).map((item) => (
@@ -21,9 +28,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
-              {item.name} / {item.registered ? "登録" : "コンパイル"} / L{item.level} / タスク{" "}
-              {item.services}
-              {item.registered ? "" : " / 再起動またはリブートまで"}
+              {item.name} / {item.registered ? ui("sprite.registered") : ui("sprite.compiled")} / L
+              {item.level} / {ui("sprite.tasks")} {item.services}
+              {item.registered ? "" : ui("sprite.untilReboot")}
               {" / "}
               {item.source}
             </div>
@@ -36,7 +43,11 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               </div>
             ) : null}
             {item.powers?.length ? (
-              <div className="muted">能力 {item.powers.map((name) => tr(name)).join("・")}</div>
+              <div className="muted">
+                {ui("common.powers", {
+                  list: item.powers.map((name) => tr(name)).join(ui("common.termSep")),
+                })}
+              </div>
             ) : null}
             <div className="cyber-controls">
               <label>
@@ -56,7 +67,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                タスク
+                {ui("sprite.tasks")}
                 <input
                   type="number"
                   min={0}
@@ -79,7 +90,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                {item.registered ? "登録" : "コンパイル"}ヒット
+                {ui("common.hits", {
+                  kind: item.registered ? ui("sprite.registered") : ui("sprite.compiled"),
+                })}
                 <input
                   type="number"
                   min={0}
@@ -94,7 +107,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                スプライトヒット
+                {ui("sprite.spriteHits")}
                 <input
                   type="number"
                   min={0}
@@ -111,7 +124,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                種類
+                {ui("common.kind")}
                 <select
                   value={item.registered ? "registered" : "compiled"}
                   onChange={(e) =>
@@ -124,8 +137,8 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  <option value="compiled">コンパイル</option>
-                  <option value="registered">登録</option>
+                  <option value="compiled">{ui("sprite.compiled")}</option>
+                  <option value="registered">{ui("sprite.registered")}</option>
                 </select>
               </label>
             </div>
@@ -138,14 +151,14 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               })
             }
           >
-            削除
+            {ui("common.delete")}
           </button>
         </div>
       ))}
       <input
         type="search"
-        placeholder="スプライトを検索"
-        aria-label="スプライトを検索"
+        placeholder={ui("sprite.search")}
+        aria-label={ui("sprite.search")}
         value={spriteSearch}
         onChange={(e) => setSpriteSearch(e.target.value)}
       />
@@ -177,7 +190,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  コンパイル
+                  {ui("sprite.compiled")}
                 </button>{" "}
                 <button
                   className="btn primary"
@@ -190,7 +203,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  登録
+                  {ui("sprite.registered")}
                 </button>
               </div>
             </div>

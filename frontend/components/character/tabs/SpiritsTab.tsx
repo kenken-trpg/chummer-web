@@ -26,7 +26,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
           value={ch.tradition_id || ""}
           onChange={(e) => patch({ tradition_id: e.target.value || null })}
         >
-          <option value="">{ui("magic.choose")}</option>
+          <option value="">{ui("common.choose")}</option>
           {(catalog.traditions || []).map((item) => (
             <option key={item.id} value={item.id}>
               {tr(item.name)}（{item.drain_attrs.join("+")}）
@@ -59,7 +59,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
             ) : null}
             {item.powers?.length ? (
               <div className="muted">
-                {ui("spirit.powers", {
+                {ui("common.powers", {
                   list: item.powers.map((name) => tr(name)).join(ui("common.termSep")),
                 })}
               </div>
@@ -105,7 +105,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 />
               </label>
               <label>
-                {ui("spirit.hits", {
+                {ui("common.hits", {
                   kind: item.bound ? ui("spirit.bind") : ui("spirit.summon"),
                 })}
                 <input
@@ -139,7 +139,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 />
               </label>
               <label>
-                {ui("spirit.kind")}
+                {ui("common.kind")}
                 <select
                   value={item.bound ? "bound" : "summoned"}
                   onChange={(e) =>

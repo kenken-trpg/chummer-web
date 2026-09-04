@@ -7,34 +7,39 @@ export function InitiationTab({
   character: ch,
   d,
   tr,
+  ui,
   patch,
   setCharacter,
 }: TabPanelProps) {
   return (
     <div className="card">
       <p className="muted">
-        等級 {d.initiation?.grade || 0}
-        {" ・ "}カルマ {d.initiation?.karma || 0}
-        （各等級 10 + 等級×3。集団／試練／教習は各 −10%（累積で減算）。魔力上限 = 種族上限 +
-        等級。等級 ≤ MAG）
+        {ui("grade.summary", {
+          grade: d.initiation?.grade || 0,
+          karma: d.initiation?.karma || 0,
+        })}
+        {ui("init.note")}
         {(d.initiation?.metamagics || []).some((m) => m.free)
-          ? ` ・ 品質付与 ${(d.initiation?.metamagics || [])
-              .filter((m) => m.free)
-              .map((m) => m.name)
-              .join("、")}`
+          ? ui("init.granted", {
+              list: (d.initiation?.metamagics || [])
+                .filter((m) => m.free)
+                .map((m) => m.name)
+                .join(ui("common.listSep")),
+            })
           : ""}
       </p>
       {(d.initiation?.metamagics || []).filter((m) => m.free).length ? (
         <div className="muted" style={{ marginBottom: 8 }}>
-          無料メタマジック:{" "}
-          {(d.initiation?.metamagics || [])
-            .filter((m) => m.free)
-            .map((m) => `${tr(m.name)}${m.source_quality ? `（${tr(m.source_quality)}）` : ""}`)
-            .join(" ・ ")}
+          {ui("init.freeMetamagics", {
+            list: (d.initiation?.metamagics || [])
+              .filter((m) => m.free)
+              .map((m) => `${tr(m.name)}${m.source_quality ? `（${tr(m.source_quality)}）` : ""}`)
+              .join(` ${ui("common.termSep")} `),
+          })}
         </div>
       ) : null}
       <label>
-        イニシエーション等級
+        {ui("init.grade")}
         <input
           type="range"
           min={0}
@@ -89,22 +94,31 @@ export function InitiationTab({
           return (
             <div className="cyber-item" key={choice.id || choice.grade}>
               <div style={{ width: "100%" }}>
-                <b>等級 {choice.grade}</b>
+                <b>{ui("grade.label", { grade: choice.grade })}</b>
                 <div className="muted">
-                  {choice.karma}カルマ{choice.name ? ` ・ ${tr(choice.name)}` : ""}
+                  {ui("grade.karma", { karma: choice.karma })}
+                  {choice.name ? ui("grade.named", { name: tr(choice.name) }) : ""}
                   {choice.group || choice.ordeal || choice.schooling
-                    ? `（${[choice.group && "集団", choice.ordeal && "試練", choice.schooling && "教習"].filter(Boolean).join("・")} 割引）`
+                    ? ui("grade.discount", {
+                        list: [
+                          choice.group && ui("init.group"),
+                          choice.ordeal && ui("init.ordeal"),
+                          choice.schooling && ui("init.schooling"),
+                        ]
+                          .filter(Boolean)
+                          .join(ui("common.termSep")),
+                      })
                     : ""}
                 </div>
                 <div className="cyber-controls" style={{ marginTop: 6 }}>
                   {(
                     [
-                      ["group", "集団加入"],
-                      ["ordeal", "試練"],
-                      ["schooling", "教習"],
+                      ["group", "init.groupJoin"],
+                      ["ordeal", "init.ordeal"],
+                      ["schooling", "init.schooling"],
                     ] as const
                   ).map(([key, label]) => (
-                    <label key={key} title="各 −10%（累積で減算）">
+                    <label key={key} title={ui("grade.discountHint")}>
                       <input
                         type="checkbox"
                         checked={Boolean(local?.[key] ?? choice[key])}
@@ -115,13 +129,13 @@ export function InitiationTab({
                           patch({ initiations });
                         }}
                       />
-                      {label}
+                      {ui(label)}
                     </label>
                   ))}
                 </div>
                 <div className="grid" style={{ marginTop: 8 }}>
                   <label>
-                    種類
+                    {ui("common.kind")}
                     <select
                       value={kind}
                       onChange={(e) => {
@@ -134,12 +148,12 @@ export function InitiationTab({
                         patch({ initiations });
                       }}
                     >
-                      <option value="metamagic">メタマジック</option>
+                      <option value="metamagic">{ui("init.metamagic")}</option>
                       <option value="art">Art</option>
                     </select>
                   </label>
                   <label>
-                    {kind === "art" ? "Art" : "メタマジック"}
+                    {kind === "art" ? "Art" : ui("init.metamagic")}
                     <select
                       value={optionId}
                       onChange={(e) => {
@@ -151,7 +165,7 @@ export function InitiationTab({
                         patch({ initiations });
                       }}
                     >
-                      <option value="">選択してください</option>
+                      <option value="">{ui("common.choose")}</option>
                       {kind === "art"
                         ? (catalog.magic_arts || []).map((item) => (
                             <option key={item.id} value={item.id}>
@@ -161,7 +175,9 @@ export function InitiationTab({
                         : metaOptions.map((item) => (
                             <option key={item.id} value={item.id}>
                               {tr(item.name)} ({item.name})
-                              {item.required?.length ? ` / 要 ${item.required.join(", ")}` : ""}
+                              {item.required?.length
+                                ? ui("init.requires", { list: item.required.join(", ") })
+                                : ""}
                             </option>
                           ))}
                     </select>

@@ -359,7 +359,7 @@ export function AdeptTab({
                       })
                     }
                   >
-                    <option value="">{ui("adept.choose")}</option>
+                    <option value="">{ui("common.choose")}</option>
                     {item.options.map((name) => (
                       <option key={name} value={name}>
                         {item.select === "attribute" ? attrLabel(name, t) : tr(name)}

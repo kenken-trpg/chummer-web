@@ -214,9 +214,9 @@ export function QualitiesTab({
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
                   / {ui("qual.karmaLabel")} {q.karma} / {q.source}
                   {maxTakes == null
-                    ? ui("qual.repeatable")
+                    ? ui("common.repeatable")
                     : maxTakes > 1
-                      ? ui("qual.maxTakes", { max: maxTakes })
+                      ? ui("common.maxTakes", { max: maxTakes })
                       : ""}
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
                     ? ui("qual.taken", { count: ownedCount })
