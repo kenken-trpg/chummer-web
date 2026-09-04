@@ -3,25 +3,30 @@ import type { TabPanelProps } from "@/components/character/types";
 import { SPIRIT_ROLE_JA } from "@/lib/character/constants";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
-export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <div className="card">
       <p className="muted">
-        一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と試薬
-        Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。
-        {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
-        {(d.limit_spirit_categories || []).length
-          ? ` ・ 許可精霊 ${(d.limit_spirit_categories || []).join("、")}`
+        {ui("spirit.note")}
+        {d.drain_resist
+          ? ui("magic.drainResist", { attrs: d.drain_resist.attrs, pool: d.drain_resist.pool })
           : ""}
-        {(d.extra_spirits || []).length ? ` ・ 追加精霊 ${(d.extra_spirits || []).join("、")}` : ""}
+        {(d.limit_spirit_categories || []).length
+          ? ui("spirit.allowed", {
+              list: (d.limit_spirit_categories || []).join(ui("common.listSep")),
+            })
+          : ""}
+        {(d.extra_spirits || []).length
+          ? ui("spirit.extra", { list: (d.extra_spirits || []).join(ui("common.listSep")) })
+          : ""}
       </p>
       <label>
-        伝統
+        {ui("magic.tradition")}
         <select
           value={ch.tradition_id || ""}
           onChange={(e) => patch({ tradition_id: e.target.value || null })}
         >
-          <option value="">選択してください</option>
+          <option value="">{ui("magic.choose")}</option>
           {(catalog.traditions || []).map((item) => (
             <option key={item.id} value={item.id}>
               {tr(item.name)}（{item.drain_attrs.join("+")}）
@@ -34,11 +39,12 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
-              {item.name} / {item.role_label || item.role} / {item.bound ? "結合" : "一時召喚"} / F
-              {item.force} / サービス {item.services}
+              {item.name} / {item.role_label || item.role} /{" "}
+              {item.bound ? ui("spirit.bound") : ui("spirit.summoned")} / F{item.force} /{" "}
+              {ui("spirit.services")} {item.services}
               {item.bound
-                ? ` / 試薬 ${item.nuyen.toLocaleString()}¥`
-                : " / 日の出または日の入りまで"}
+                ? ui("spirit.reagent", { nuyen: item.nuyen.toLocaleString() })
+                : ui("spirit.untilDawn")}
               {" / "}
               {item.source}
             </div>
@@ -52,7 +58,11 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               </div>
             ) : null}
             {item.powers?.length ? (
-              <div className="muted">能力 {item.powers.map((name) => tr(name)).join("・")}</div>
+              <div className="muted">
+                {ui("spirit.powers", {
+                  list: item.powers.map((name) => tr(name)).join(ui("common.termSep")),
+                })}
+              </div>
             ) : null}
             <div className="cyber-controls">
               <label>
@@ -72,7 +82,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                サービス
+                {ui("spirit.services")}
                 <input
                   type="number"
                   min={0}
@@ -95,7 +105,9 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                {item.bound ? "結合" : "召喚"}ヒット
+                {ui("spirit.hits", {
+                  kind: item.bound ? ui("spirit.bind") : ui("spirit.summon"),
+                })}
                 <input
                   type="number"
                   min={0}
@@ -110,7 +122,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                精霊ヒット
+                {ui("spirit.spiritHits")}
                 <input
                   type="number"
                   min={0}
@@ -127,7 +139,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 />
               </label>
               <label>
-                種類
+                {ui("spirit.kind")}
                 <select
                   value={item.bound ? "bound" : "summoned"}
                   onChange={(e) =>
@@ -138,8 +150,8 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  <option value="summoned">一時召喚</option>
-                  <option value="bound">結合</option>
+                  <option value="summoned">{ui("spirit.summoned")}</option>
+                  <option value="bound">{ui("spirit.bound")}</option>
                 </select>
               </label>
             </div>
@@ -152,7 +164,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               })
             }
           >
-            削除
+            {ui("common.delete")}
           </button>
         </div>
       ))}
@@ -167,13 +179,13 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               <div>
                 <b>{tr(spec.name)}</b>
                 <div className="muted">
-                  {spec.name} / {SPIRIT_ROLE_JA[role] || role} / 召喚 vs Force ・ 結合 vs Force×2 /{" "}
+                  {spec.name} / {SPIRIT_ROLE_JA[role] || role} / {ui("spirit.tests")} /{" "}
                   {spec.source}
                 </div>
                 <div className="muted">
                   {["BOD", "AGI", "REA", "STR"]
                     .map((key) => `${key} ${spec.attributes?.[key] || "F"}`)
-                    .join(" ・ ")}
+                    .join(` ${ui("common.termSep")} `)}
                 </div>
               </div>
               <div>
@@ -188,7 +200,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  召喚
+                  {ui("spirit.summon")}
                 </button>{" "}
                 <button
                   className="btn primary"
@@ -201,7 +213,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  結合
+                  {ui("spirit.bind")}
                 </button>
               </div>
             </div>
@@ -216,7 +228,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               <div>
                 <b>{tr(spec.name)}</b>
                 <div className="muted">
-                  {spec.name} / 追加 / 召喚 vs Force ・ 結合 vs Force×2 / {spec.source}
+                  {spec.name} / {ui("spirit.extraTag")} / {ui("spirit.tests")} / {spec.source}
                 </div>
               </div>
               <div>
@@ -231,7 +243,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  召喚
+                  {ui("spirit.summon")}
                 </button>{" "}
                 <button
                   className="btn primary"
@@ -244,7 +256,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     })
                   }
                 >
-                  結合
+                  {ui("spirit.bind")}
                 </button>
               </div>
             </div>

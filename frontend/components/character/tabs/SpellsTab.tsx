@@ -5,35 +5,49 @@ import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
 
-export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
   const [spellKind, setSpellKind] = useState<"all" | "spell" | "ritual" | "enchantment">("all");
 
   return (
     <div className="card">
       <p className="muted">
-        無料 {(d.spell_points?.used || 0) - (d.spell_points?.paid || 0)}/{d.spell_points?.free || 0}
+        {ui("spell.free", {
+          used: (d.spell_points?.used || 0) - (d.spell_points?.paid || 0),
+          free: d.spell_points?.free || 0,
+        })}
         {(d.spell_points?.paid || 0) > 0
-          ? ` ・ 追加 ${d.spell_points?.paid}（各${d.spell_points?.spell_karma ?? 5}カルマ）`
+          ? ui("spell.paid", {
+              paid: d.spell_points?.paid || 0,
+              karma: d.spell_points?.spell_karma ?? 5,
+            })
           : d.spell_points?.spell_karma != null && d.spell_points.spell_karma !== 5
-            ? ` ・ 追加呪文 ${d.spell_points.spell_karma}カルマ`
+            ? ui("spell.extraKarma", { karma: d.spell_points.spell_karma })
             : ""}
-        {d.drain_resist ? ` ・ ドレイン抵抗 ${d.drain_resist.attrs} ${d.drain_resist.pool}` : ""}
-        {" ・ 呪文・儀式・エンチャントは同じ無料枠"}
+        {d.drain_resist
+          ? ui("magic.drainResist", { attrs: d.drain_resist.attrs, pool: d.drain_resist.pool })
+          : ""}
+        {ui("spell.sharedPool")}
         {(d.limit_spell_categories || []).length || (d.allow_spell_categories || []).length
-          ? ` ・ 許可カテゴリ ${[...(d.limit_spell_categories || []), ...(d.allow_spell_categories || [])].filter((v, i, a) => a.indexOf(v) === i).join("、")}`
+          ? ui("spell.allowedCategories", {
+              list: [...(d.limit_spell_categories || []), ...(d.allow_spell_categories || [])]
+                .filter((v, i, a) => a.indexOf(v) === i)
+                .join(ui("common.listSep")),
+            })
           : ""}
         {(d.allow_spell_ranges || []).length
-          ? ` ・ 許可射程 ${(d.allow_spell_ranges || []).join("、")}`
+          ? ui("spell.allowedRanges", {
+              list: (d.allow_spell_ranges || []).join(ui("common.listSep")),
+            })
           : ""}
       </p>
       <label>
-        伝統
+        {ui("magic.tradition")}
         <select
           value={ch.tradition_id || ""}
           onChange={(e) => patch({ tradition_id: e.target.value || null })}
         >
-          <option value="">選択してください</option>
+          <option value="">{ui("magic.choose")}</option>
           {(catalog.traditions || []).map((item) => (
             <option key={item.id} value={item.id}>
               {tr(item.name)}（{item.drain_attrs.join("+")}）
@@ -51,15 +65,28 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
                 ? ` / ${[spellRange(item.range), spellDuration(item.duration)].filter(Boolean).join("・")}`
                 : ""}
               {item.descriptor ? ` / ${spellDescriptors(item.descriptor)}` : ""}
-              {item.damage_mod ? ` ・ ダメージ+${item.damage_mod}` : ""}
-              {item.barehanded_adept ? " ・ 素手アデプト（ドレイン×2）" : ""}
+              {item.damage_mod ? ui("spell.damageMod", { mod: item.damage_mod }) : ""}
+              {item.barehanded_adept ? ui("spell.barehanded") : ""}
               {item.spell
-                ? ` @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}${item.spell.drain_mod ? `（修正${item.spell.drain_mod > 0 ? "+" : ""}${item.spell.drain_mod}）` : ""}`
+                ? ui("spell.drainAt", {
+                    force: item.spell.force,
+                    drain:
+                      (item.spell.drain == null
+                        ? ui("spell.drainSpecial")
+                        : `${item.spell.drain}${item.spell.drain_code || ""}`) +
+                      (item.spell.drain_mod
+                        ? ui("spell.drainMod", {
+                            mod: `${item.spell.drain_mod > 0 ? "+" : ""}${item.spell.drain_mod}`,
+                          })
+                        : ""),
+                  })
                 : ""}
-              {item.focus_bonus ? ` / 焦点+${item.focus_bonus}` : ""}
-              {item.free ? " / 無料" : ` / ${item.karma}カルマ`}
+              {item.focus_bonus ? ui("spell.focusBonus", { bonus: item.focus_bonus }) : ""}
+              {item.free ? ui("spell.freeSlot") : ui("spell.karmaCost", { karma: item.karma })}
               {item.required?.length
-                ? ` / 必要 ${item.required.map((name) => tr(name)).join("・")}`
+                ? ui("spell.required", {
+                    list: item.required.map((name) => tr(name)).join(ui("common.termSep")),
+                  })
                 : ""}
               {" / "}
               {item.source}
@@ -93,17 +120,17 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
               })
             }
           >
-            削除
+            {ui("common.delete")}
           </button>
         </div>
       ))}
       <div className="tabs" style={{ marginTop: 12 }}>
         {(
           [
-            ["all", "すべて"],
-            ["spell", "呪文"],
-            ["ritual", "儀式"],
-            ["enchantment", "エンチャント"],
+            ["all", "common.all"],
+            ["spell", "spell.kind.spell"],
+            ["ritual", "spell.kind.ritual"],
+            ["enchantment", "spell.kind.enchantment"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -111,14 +138,14 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
             className={`tab ${spellKind === key ? "active" : ""}`}
             onClick={() => setSpellKind(key)}
           >
-            {label}
+            {ui(label)}
           </button>
         ))}
       </div>
       <input
         type="search"
-        placeholder="術式を検索"
-        aria-label="術式を検索"
+        placeholder={ui("spell.search")}
+        aria-label={ui("spell.search")}
         value={spellSearch}
         onChange={(e) => setSpellSearch(e.target.value)}
       />
@@ -171,9 +198,11 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
                     {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} /{" "}
                     {item.dv} / {item.source}
                     {item.required?.length
-                      ? ` / 必要 ${item.required.map((name) => tr(name)).join("・")}`
+                      ? ui("spell.required", {
+                          list: item.required.map((name) => tr(name)).join(ui("common.termSep")),
+                        })
                       : ""}
-                    {paid ? " / 5カルマ" : " / 無料"}
+                    {paid ? ui("spell.karmaCost", { karma: 5 }) : ui("spell.freeSlot")}
                   </div>
                 </div>
                 <button
@@ -184,7 +213,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
                     })
                   }
                 >
-                  追加
+                  {ui("common.add")}
                 </button>
               </div>
             );

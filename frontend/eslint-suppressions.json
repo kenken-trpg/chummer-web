@@ -189,11 +189,6 @@
       "count": 18
     }
   },
-  "components/character/tabs/FociTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 30
-    }
-  },
   "components/character/tabs/GearTab.tsx": {
     "no-restricted-syntax": {
       "count": 18
@@ -217,16 +212,6 @@
   "components/character/tabs/PriorityTab.tsx": {
     "no-restricted-syntax": {
       "count": 19
-    }
-  },
-  "components/character/tabs/SpellsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
-    }
-  },
-  "components/character/tabs/SpiritsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 27
     }
   },
   "components/character/tabs/SpritesTab.tsx": {
