@@ -2,12 +2,15 @@
 
 import type { InstalledAdeptPower } from "@/lib/types";
 import { attrLabel, type TFn } from "@/lib/ui-strings";
+import { type MsgKey, useUiText } from "@/lib/i18n";
 
-export function selectLabel(kind?: string | null) {
-  if (kind === "skill") return "技能";
-  if (kind === "attribute") return "能力値";
-  if (kind === "spell") return "呪文";
-  return "対象";
+/** What the power is choosing. Returns the key, not the sentence, so a
+ *  caller that already has `ui` can render it in its own locale. */
+export function selectLabel(kind?: string | null): MsgKey {
+  if (kind === "skill") return "common.skill";
+  if (kind === "attribute") return "common.attribute";
+  if (kind === "spell") return "spell.kind.spell";
+  return "common.target";
 }
 
 export function ExtraSelect({
@@ -21,12 +24,13 @@ export function ExtraSelect({
   t: TFn;
   onChange: (extra: string) => void;
 }) {
+  const { ui } = useUiText();
   if (!item.select) return null;
   return (
     <label>
-      {selectLabel(item.select)}
+      {ui(selectLabel(item.select))}
       <select value={item.extra || ""} onChange={(e) => onChange(e.target.value)}>
-        <option value="">選択してください</option>
+        <option value="">{ui("common.choose")}</option>
         {item.options.map((name) => (
           <option key={name} value={name}>
             {item.select === "attribute" ? attrLabel(name, t) : tr(name)}

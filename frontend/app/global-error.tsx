@@ -2,6 +2,11 @@
 
 // Last-resort boundary for failures in the root layout itself. It replaces
 // <html>/<body>, so it must render them and cannot rely on globals.css.
+//
+// `useLocale` is the one import: it reads localStorage directly rather than a
+// context, so nothing has to have survived above this boundary. `lang` follows
+// the same value, which is the point of localising this page at all.
+import { useLocale, translate } from "@/lib/i18n";
 export default function GlobalError({
   error,
   reset,
@@ -9,8 +14,9 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [locale] = useLocale();
   return (
-    <html lang="ja">
+    <html lang={locale}>
       <body
         style={{
           margin: 0,
@@ -20,8 +26,8 @@ export default function GlobalError({
           color: "#e8f0f3",
         }}
       >
-        <h1 style={{ fontSize: "1.35rem" }}>問題が発生しました</h1>
-        <p style={{ color: "#ff6b6b" }}>{error.message || "予期しないエラーです。"}</p>
+        <h1 style={{ fontSize: "1.35rem" }}>{translate(locale, "error.title")}</h1>
+        <p style={{ color: "#ff6b6b" }}>{error.message || translate(locale, "error.unexpected")}</p>
         <button
           onClick={reset}
           style={{
@@ -34,7 +40,7 @@ export default function GlobalError({
             cursor: "pointer",
           }}
         >
-          再読み込み
+          {translate(locale, "error.reload")}
         </button>
       </body>
     </html>

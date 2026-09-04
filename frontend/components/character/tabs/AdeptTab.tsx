@@ -348,7 +348,7 @@ export function AdeptTab({
               ) : null}
               {item.select ? (
                 <label>
-                  {selectLabel(item.select)}
+                  {ui(selectLabel(item.select))}
                   <select
                     value={item.extra || ""}
                     onChange={(e) =>

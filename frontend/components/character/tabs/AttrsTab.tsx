@@ -3,7 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 
-export function AttrsTab({ character: ch, d, t, patch, setCharacter }: TabPanelProps) {
+export function AttrsTab({ character: ch, d, t, ui, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
 
   return (
@@ -42,12 +42,15 @@ export function AttrsTab({ character: ch, d, t, patch, setCharacter }: TabPanelP
             <b>
               {d.totals[key]} <span className="muted">/{range.max}</span>
               {(d.ware_attr_bonus?.[key] || 0) !== 0 ? (
-                <span className="muted"> ウェア+{d.ware_attr_bonus![key]}</span>
+                <span className="muted">
+                  {ui("attrs.wareBonus", { bonus: d.ware_attr_bonus![key] })}
+                </span>
               ) : null}
               {d.limb_replace && (key === "STR" || key === "AGI") ? (
                 <span className="muted">
-                  {" "}
-                  肉{key === "STR" ? d.limb_replace.meat_str : d.limb_replace.meat_agi}
+                  {ui("attrs.meat", {
+                    value: key === "STR" ? d.limb_replace.meat_str : d.limb_replace.meat_agi,
+                  })}
                 </span>
               ) : null}
             </b>
@@ -55,8 +58,12 @@ export function AttrsTab({ character: ch, d, t, patch, setCharacter }: TabPanelP
         );
       })}
       <p className="muted">
-        能力値点 {d.points.attributes.used}/{d.points.attributes.max} ・ 特殊点{" "}
-        {d.points.special.used}/{d.points.special.max}
+        {ui("attrs.points", {
+          used: d.points.attributes.used,
+          max: d.points.attributes.max,
+          specialUsed: d.points.special.used,
+          specialMax: d.points.special.max,
+        })}
       </p>
     </div>
   );

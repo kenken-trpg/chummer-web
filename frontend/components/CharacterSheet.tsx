@@ -1,4 +1,5 @@
 import type { Catalog, Character } from "@/lib/types";
+import { useUiText } from "@/lib/i18n";
 import { textSheet } from "@/lib/character/text-sheet";
 import { buildSheetData, type SheetLayout } from "@/lib/character/sheet-data";
 import { SheetHeader } from "@/components/character/sheet/SheetHeader";
@@ -36,6 +37,7 @@ export default function CharacterSheet({
   tr: (name: string) => string;
   layout?: SheetLayout;
 }) {
+  const { ui } = useUiText();
   const s = buildSheetData({ character, catalog, tr, layout });
 
   if (layout === "text") {
@@ -65,9 +67,7 @@ export default function CharacterSheet({
     );
   }
 
-  const footer = (
-    <footer className="sheet-footer">Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷</footer>
-  );
+  const footer = <footer className="sheet-footer">{ui("sheet.footer")}</footer>;
 
   if (layout === "print") {
     return (

@@ -675,6 +675,54 @@ const JA = {
   "ware.limb": " ・ 肢 STR {str} / AGI {agi}",
   "ware.limbArmor": " / 装甲 {armor}",
   "ware.side": "左右",
+
+  "common.attribute": "能力値",
+
+  "error.title": "問題が発生しました",
+  "error.unexpected": "予期しないエラーです。",
+  "error.saved": "入力中の変更はブラウザに保存されています。再読み込みで復帰できることが多いです。",
+  "error.reload": "再読み込み",
+
+  "sheet.footer": "Chummer Web ・ 非公式 Shadowrun 5e ・ 卓用表示／印刷",
+
+  "desc.title": "記述",
+  "desc.portraitAlt": "ポートレート",
+  "desc.noImage": "画像なし",
+  "desc.pickPortrait": "ポートレート画像を選択",
+  "desc.removeImage": "画像を削除",
+  "desc.portraitNote": ".chum5 の mugshot と相互変換。3MB まで。",
+  "desc.age": "年齢",
+  "desc.sex": "性別",
+  "desc.height": "身長",
+  "desc.weight": "体重",
+  "desc.eyes": "目",
+  "desc.hair": "髪",
+  "desc.skin": "肌",
+  "desc.concept": "コンセプト",
+  "desc.appearance": "容姿",
+  "desc.background": "背景",
+  "desc.notes": "メモ",
+  "desc.notesPlaceholder": "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。",
+
+  "mentor.title": "メンタースピリット",
+  "mentor.none": "未選択",
+  "mentor.label": "メンター",
+  "mentor.chooseTarget": "対象を選択",
+
+  "pick.skillOf": "{source} の技能",
+  "pick.max": " 上限+{max}",
+
+  "spec.none": "専門なし",
+  "spec.placeholder": "専門化",
+  "spec.custom": "自由入力",
+
+  "meta.special": " / 特殊点 {points}",
+  "meta.metavariant": "メタバリアント",
+  "meta.noVariant": "なし（{name}）",
+
+  "attrs.wareBonus": " ウェア+{bonus}",
+  "attrs.meat": " 肉{value}",
+  "attrs.points": "能力値点 {used}/{max} ・ 特殊点 {specialUsed}/{specialMax}",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -1331,6 +1379,55 @@ const EN: Catalog = {
   "ware.limb": " · limb STR {str} / AGI {agi}",
   "ware.limbArmor": " / armor {armor}",
   "ware.side": "Side",
+
+  "common.attribute": "Attribute",
+
+  "error.title": "Something went wrong",
+  "error.unexpected": "An unexpected error.",
+  "error.saved": "Your edits are saved in this browser. Reloading usually brings them back.",
+  "error.reload": "Reload",
+
+  "sheet.footer": "Chummer Web · unofficial Shadowrun 5e · table view / print",
+
+  "desc.title": "Description",
+  "desc.portraitAlt": "Portrait",
+  "desc.noImage": "No image",
+  "desc.pickPortrait": "Choose a portrait image",
+  "desc.removeImage": "Remove the image",
+  "desc.portraitNote": "Round-trips with the .chum5 mugshot. Up to 3MB.",
+  "desc.age": "Age",
+  "desc.sex": "Sex",
+  "desc.height": "Height",
+  "desc.weight": "Weight",
+  "desc.eyes": "Eyes",
+  "desc.hair": "Hair",
+  "desc.skin": "Skin",
+  "desc.concept": "Concept",
+  "desc.appearance": "Appearance",
+  "desc.background": "Background",
+  "desc.notes": "Notes",
+  "desc.notesPlaceholder":
+    "Notes for the GM or for play. They appear on the sheet and in the .chum5 export.",
+
+  "mentor.title": "Mentor spirit",
+  "mentor.none": "None chosen",
+  "mentor.label": "Mentor",
+  "mentor.chooseTarget": "Choose a target",
+
+  "pick.skillOf": "{source} skill",
+  "pick.max": " max +{max}",
+
+  "spec.none": "No specialisation",
+  "spec.placeholder": "Specialisation",
+  "spec.custom": "Type your own",
+
+  "meta.special": " / {points} special points",
+  "meta.metavariant": "Metavariant",
+  "meta.noVariant": "None ({name})",
+
+  "attrs.wareBonus": " ware +{bonus}",
+  "attrs.meat": " meat {value}",
+  "attrs.points": "Attribute points {used}/{max} · special {specialUsed}/{specialMax}",
 };
 
 export const MESSAGES: Record<Locale, Catalog> = {

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 
+import { useUiText } from "@/lib/i18n";
+
 export function SpecPicker({
   options,
   value,
   disabled,
-  emptyLabel = "専門なし",
-  placeholder = "専門化",
+  emptyLabel,
+  placeholder,
   tr,
   onDraft,
   onCommit,
@@ -21,6 +23,9 @@ export function SpecPicker({
   onDraft: (next: string) => void;
   onCommit: (next: string) => void;
 }) {
+  const { ui } = useUiText();
+  const empty = emptyLabel ?? ui("spec.none");
+  const hint = placeholder ?? ui("spec.placeholder");
   const [customMode, setCustomMode] = useState(() => Boolean(value && !options.includes(value)));
   const selectValue =
     !value && !customMode
@@ -33,7 +38,7 @@ export function SpecPicker({
       <select
         disabled={disabled}
         value={selectValue}
-        title={value ? tr(value) : emptyLabel}
+        title={value ? tr(value) : empty}
         onChange={(e) => {
           const next = e.target.value;
           if (next === "__custom__") {
@@ -44,18 +49,18 @@ export function SpecPicker({
           onCommit(next);
         }}
       >
-        <option value="">{emptyLabel}</option>
+        <option value="">{empty}</option>
         {options.map((spec) => (
           <option key={spec} value={spec}>
             {tr(spec)}
           </option>
         ))}
-        <option value="__custom__">自由入力</option>
+        <option value="__custom__">{ui("spec.custom")}</option>
       </select>
       {(customMode || (value && !options.includes(value))) && !disabled ? (
         <input
           value={value}
-          placeholder={placeholder}
+          placeholder={hint}
           onChange={(e) => onDraft(e.target.value)}
           onBlur={(e) => onCommit(e.target.value.trim())}
         />

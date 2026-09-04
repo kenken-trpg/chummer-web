@@ -1,6 +1,7 @@
 "use client";
 
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
+import { useUiText } from "@/lib/i18n";
 
 export function MentorPicker({
   catalog,
@@ -15,21 +16,24 @@ export function MentorPicker({
   tr: (name: string) => string;
   onPatch: (body: Record<string, unknown>) => void;
 }) {
+  const { ui } = useUiText();
   return (
     <div className="cyber-item">
       <div>
-        <b>メンタースピリット</b>
-        <div className="muted">{mentor ? `${tr(mentor.name)} / ${mentor.source}` : "未選択"}</div>
+        <b>{ui("mentor.title")}</b>
+        <div className="muted">
+          {mentor ? `${tr(mentor.name)} / ${mentor.source}` : ui("mentor.none")}
+        </div>
         <div className="cyber-controls">
           <label>
-            メンター
+            {ui("mentor.label")}
             <select
               value={ch.mentor_id || ""}
               onChange={(e) =>
                 onPatch({ mentor_id: e.target.value, mentor_choices: [], mentor_extras: {} })
               }
             >
-              <option value="">選択してください</option>
+              <option value="">{ui("common.choose")}</option>
               {(catalog.mentors || []).map((item) => (
                 <option key={item.id} value={item.id}>
                   {tr(item.name)}
@@ -71,7 +75,7 @@ export function MentorPicker({
                   })
                 }
               >
-                <option value="">対象を選択</option>
+                <option value="">{ui("mentor.chooseTarget")}</option>
                 {choice.extra_options.map((name) => (
                   <option key={name} value={name}>
                     {tr(name)}

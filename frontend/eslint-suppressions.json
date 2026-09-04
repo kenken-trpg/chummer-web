@@ -1,50 +1,10 @@
 {
-  "app/error.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "app/global-error.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "app/layout.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
   },
   "app/share/layout.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "components/CharacterSheet.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "components/character/ExtraSelect.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "components/character/MentorPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "components/character/SheetDescEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 8
-    }
-  },
-  "components/character/SkillPickSelects.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "components/character/SpecPicker.tsx": {
     "no-restricted-syntax": {
       "count": 1
     }
@@ -157,16 +117,6 @@
   "components/character/sheet/sections/print/PrintStatBlock.tsx": {
     "no-restricted-syntax": {
       "count": 17
-    }
-  },
-  "components/character/tabs/AttrsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
-  "components/character/tabs/MetaTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
     }
   }
 }

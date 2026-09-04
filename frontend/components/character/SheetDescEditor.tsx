@@ -1,4 +1,5 @@
 import type { Character } from "@/lib/types";
+import { type MsgKey, useUiText } from "@/lib/i18n";
 
 export function SheetDescEditor({
   ch,
@@ -9,21 +10,22 @@ export function SheetDescEditor({
   patch: (body: Record<string, unknown>) => void | Promise<void>;
   onPortraitFile: (file: File) => void | Promise<void>;
 }) {
+  const { ui } = useUiText();
   return (
     <div className="no-print sheet-notes-edit">
       {/* a heading for the whole editor, not a label for one control */}
-      <h4 className="field-label">記述</h4>
+      <h4 className="field-label">{ui("desc.title")}</h4>
       <div className="portrait-edit">
         {ch.portrait ? (
-          <img className="portrait-thumb" src={ch.portrait} alt="ポートレート" />
+          <img className="portrait-thumb" src={ch.portrait} alt={ui("desc.portraitAlt")} />
         ) : (
-          <div className="portrait-thumb portrait-empty">画像なし</div>
+          <div className="portrait-thumb portrait-empty">{ui("desc.noImage")}</div>
         )}
         <div className="portrait-edit-controls">
           <input
             type="file"
             accept="image/*"
-            aria-label="ポートレート画像を選択"
+            aria-label={ui("desc.pickPortrait")}
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void onPortraitFile(f);
@@ -32,27 +34,27 @@ export function SheetDescEditor({
           />
           {ch.portrait ? (
             <button className="btn" type="button" onClick={() => void patch({ portrait: "" })}>
-              画像を削除
+              {ui("desc.removeImage")}
             </button>
           ) : null}
-          <span className="muted">.chum5 の mugshot と相互変換。3MB まで。</span>
+          <span className="muted">{ui("desc.portraitNote")}</span>
         </div>
       </div>
       <div className="sheet-desc-grid">
         {(
           [
-            ["age", "年齢"],
-            ["sex", "性別"],
-            ["height", "身長"],
-            ["weight", "体重"],
-            ["eyes", "目"],
-            ["hair", "髪"],
-            ["skin", "肌"],
-            ["concept", "コンセプト"],
-          ] as const
+            ["age", "desc.age"],
+            ["sex", "desc.sex"],
+            ["height", "desc.height"],
+            ["weight", "desc.weight"],
+            ["eyes", "desc.eyes"],
+            ["hair", "desc.hair"],
+            ["skin", "desc.skin"],
+            ["concept", "desc.concept"],
+          ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
         ).map(([field, label]) => (
           <label key={field}>
-            {label}
+            {ui(label)}
             <input
               defaultValue={(ch[field] as string) || ""}
               key={`${ch.id}-${field}`}
@@ -66,23 +68,19 @@ export function SheetDescEditor({
       </div>
       {(
         [
-          ["appearance", "容姿"],
-          ["background", "背景"],
-          ["notes", "メモ"],
-        ] as const
+          ["appearance", "desc.appearance"],
+          ["background", "desc.background"],
+          ["notes", "desc.notes"],
+        ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
       ).map(([field, label]) => (
         <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>
           <label>
-            {label}
+            {ui(label)}
             <textarea
               rows={field === "notes" ? 3 : 2}
               defaultValue={(ch[field] as string) || ""}
               key={`${ch.id}-${field}`}
-              placeholder={
-                field === "notes"
-                  ? "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。"
-                  : ""
-              }
+              placeholder={field === "notes" ? ui("desc.notesPlaceholder") : ""}
               onBlur={(e) => {
                 if ((e.target.value || "") !== ((ch[field] as string) || ""))
                   patch({ [field]: e.target.value });

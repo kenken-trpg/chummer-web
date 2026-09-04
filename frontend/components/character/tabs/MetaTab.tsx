@@ -1,7 +1,7 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
 
-export function MetaTab({ catalog, character: ch, tr, patch }: TabPanelProps) {
+export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps) {
   const table = catalog.priority_table;
 
   return (
@@ -24,8 +24,10 @@ export function MetaTab({ catalog, character: ch, tr, patch }: TabPanelProps) {
             <div className="muted">
               {m.name}
               {(ch.build_method || "Priority") === "Karma"
-                ? ` / ${("karma" in m ? Number(m.karma) : 0) || 0}カルマ`
-                : ` / 特殊点 ${m.special}`}
+                ? ui("common.karmaCost", {
+                    karma: ("karma" in m ? Number(m.karma) : 0) || 0,
+                  })
+                : ui("meta.special", { points: m.special })}
             </div>
           </button>
         ))}
@@ -33,12 +35,12 @@ export function MetaTab({ catalog, character: ch, tr, patch }: TabPanelProps) {
       {catalog.metatypes.find((m) => m.name === ch.metatype)?.metavariants?.length ? (
         <div style={{ marginTop: 12 }}>
           <label className="muted stacked-label">
-            メタバリアント
+            {ui("meta.metavariant")}
             <select
               value={ch.metavariant || ""}
               onChange={(e) => patch({ metavariant: e.target.value || null })}
             >
-              <option value="">なし（{tr(ch.metatype)}）</option>
+              <option value="">{ui("meta.noVariant", { name: tr(ch.metatype) })}</option>
               {catalog.metatypes
                 .find((m) => m.name === ch.metatype)
                 ?.metavariants.map((v) => (
@@ -52,7 +54,7 @@ export function MetaTab({ catalog, character: ch, tr, patch }: TabPanelProps) {
       ) : null}
       <div style={{ marginTop: 12 }}>
         <label className="muted stacked-label">
-          タレント
+          {ui("prio.talent")}
           <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
             {((ch.build_method || "Priority") === "Karma"
               ? (catalog.karma_talents || []).map((t) => ({

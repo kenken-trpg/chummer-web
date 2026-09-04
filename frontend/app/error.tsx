@@ -1,8 +1,12 @@
 "use client";
 
 // Route-segment error boundary: a render-time throw anywhere below the page
-// lands here instead of a blank white screen. Kept dependency-free (no i18n
-// hook, no editor state) so it works even when those are what failed.
+// lands here instead of a blank white screen. It touches no editor state and
+// no character data — the things most likely to be what failed. `useUiText` is
+// safe here: it is backed by `useSyncExternalStore` over localStorage, with no
+// provider above it to have failed.
+import { useUiText } from "@/lib/i18n";
+
 export default function Error({
   error,
   reset,
@@ -10,15 +14,14 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { ui } = useUiText();
   return (
     <div className="main">
-      <h1>問題が発生しました</h1>
-      <p className="errors">{error.message || "予期しないエラーです。"}</p>
-      <p className="muted">
-        入力中の変更はブラウザに保存されています。再読み込みで復帰できることが多いです。
-      </p>
+      <h1>{ui("error.title")}</h1>
+      <p className="errors">{error.message || ui("error.unexpected")}</p>
+      <p className="muted">{ui("error.saved")}</p>
       <button className="btn" onClick={reset}>
-        再読み込み
+        {ui("error.reload")}
       </button>
     </div>
   );
