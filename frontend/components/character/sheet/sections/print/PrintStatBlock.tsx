@@ -1,7 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
-import { lifeIncrement } from "@/lib/character/sheet-format";
+import { lifeIncrement } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 
 /** Page-1 "stat block" for the print layout: attributes (base + augment),

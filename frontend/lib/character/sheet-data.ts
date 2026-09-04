@@ -1,7 +1,7 @@
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
 import type { Locale } from "@/lib/i18n";
-import { specialArmorBits } from "@/lib/character/sheet-format";
+import { specialArmorBits } from "@/lib/character/format";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
 

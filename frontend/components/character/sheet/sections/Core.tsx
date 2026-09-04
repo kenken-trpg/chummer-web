@@ -2,7 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
-import { lifeIncrement } from "@/lib/character/sheet-format";
+import { lifeIncrement } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 
 export function CoreSection(s: SheetData) {

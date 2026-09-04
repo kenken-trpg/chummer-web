@@ -1,10 +1,4 @@
-import {
-  lifeIncrement,
-  rangeNameFor,
-  rangeRow,
-  resolveDamageStr,
-  specialArmorBits,
-} from "@/lib/character/sheet-format";
+import { rangeNameFor, rangeRow, resolveDamageStr } from "@/lib/character/sheet-format";
 
 const pistolBands = { min: "0", short: "5", medium: "15", long: "30", extreme: "50" };
 
@@ -54,43 +48,5 @@ describe("rangeNameFor", () => {
   });
   it("falls back to the raw category", () => {
     expect(rangeNameFor({ category: "Bows" })).toBe("Bows");
-  });
-});
-
-describe("lifeIncrement", () => {
-  it("maps day / month", () => {
-    expect(lifeIncrement("day")).toBe("日");
-    expect(lifeIncrement("month")).toBe("ヶ月");
-    expect(lifeIncrement(undefined)).toBe("ヶ月");
-  });
-});
-
-describe("specialArmorBits", () => {
-  it("returns [] for no special armor", () => {
-    expect(specialArmorBits(null)).toEqual([]);
-    expect(specialArmorBits(undefined)).toEqual([]);
-  });
-  it("emits a row per elemental protection", () => {
-    expect(specialArmorBits({ fire: 2, cold: 1 })).toEqual([
-      { label: "耐火", value: "+2" },
-      { label: "断熱", value: "+1" },
-    ]);
-  });
-  it("combines equal toxin/pathogen contact protection", () => {
-    expect(specialArmorBits({ toxin_contact: 3, pathogen_contact: 3 })).toEqual([
-      { label: "化学防護(接触)", value: "+3" },
-    ]);
-  });
-  it("collapses full contact + inhalation immunity", () => {
-    expect(
-      specialArmorBits({
-        immunities: {
-          toxin_contact: true,
-          pathogen_contact: true,
-          toxin_inhalation: true,
-          pathogen_inhalation: true,
-        },
-      }),
-    ).toEqual([{ label: "化学密閉", value: "免疫" }]);
   });
 });

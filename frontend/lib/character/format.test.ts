@@ -1,6 +1,8 @@
 import {
   cfDuration,
   cfTarget,
+  lifeIncrement,
+  specialArmorBits,
   formatAccessoryCost,
   formatAmmoCost,
   formatPoints,
@@ -73,5 +75,64 @@ describe("mergeRatings", () => {
       Blades: 2,
       Clubs: 5,
     });
+  });
+});
+
+describe("lifeIncrement", () => {
+  it("maps day / month", () => {
+    expect(lifeIncrement("day")).toBe("日");
+    expect(lifeIncrement("month")).toBe("ヶ月");
+    expect(lifeIncrement(undefined)).toBe("ヶ月");
+  });
+});
+
+describe("specialArmorBits", () => {
+  it("returns [] for no special armor", () => {
+    expect(specialArmorBits(null)).toEqual([]);
+    expect(specialArmorBits(undefined)).toEqual([]);
+  });
+
+  it("emits a row per elemental protection", () => {
+    expect(specialArmorBits({ fire: 2, cold: 1 })).toEqual([
+      { label: "耐火", value: "+2" },
+      { label: "断熱", value: "+1" },
+    ]);
+  });
+
+  it("collapses an equal toxin/pathogen pair on every vector, not just contact", () => {
+    // sheet-format.ts carried a second copy that only collapsed contact, so an
+    // armor with matched inhalation protection read differently on the sheet
+    // than in the gear tab. One implementation now, and this pins the richer
+    // behaviour on all four.
+    for (const [vector, label] of [
+      ["contact", "化学防護(接触)"],
+      ["inhalation", "化学防護(吸入)"],
+      ["ingestion", "化学防護(摂取)"],
+      ["injection", "化学防護(注射)"],
+    ] as const) {
+      expect(specialArmorBits({ [`toxin_${vector}`]: 3, [`pathogen_${vector}`]: 3 })).toEqual([
+        { label, value: "+3" },
+      ]);
+    }
+  });
+
+  it("keeps the two apart when they differ", () => {
+    expect(specialArmorBits({ toxin_inhalation: 3, pathogen_inhalation: 1 })).toEqual([
+      { label: "毒素吸入", value: "+3" },
+      { label: "病原吸入", value: "+1" },
+    ]);
+  });
+
+  it("collapses full contact + inhalation immunity", () => {
+    expect(
+      specialArmorBits({
+        immunities: {
+          toxin_contact: true,
+          pathogen_contact: true,
+          toxin_inhalation: true,
+          pathogen_inhalation: true,
+        },
+      }),
+    ).toEqual([{ label: "化学密閉", value: "免疫" }]);
   });
 });
