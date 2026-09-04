@@ -1,20 +1,26 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function DrugsSection(s: SheetData) {
   const { tr, d, drugs, drugChildren } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="ドラッグ／毒物" empty={!drugs.length && !(d.active_drugs || []).length}>
+    <Section title="sheet.drugs" empty={!drugs.length && !(d.active_drugs || []).length}>
       {(d.active_drugs || []).length ? (
         <div className="sheet-block">
-          <h4>使用中（能力値・判定に反映済み）</h4>
+          <h4>{ui("sheet.drugsActive")}</h4>
           <ul className="sheet-list sheet-list-compact">
             {(d.active_drugs || []).map((drug, i) => (
               <li key={`${drug.name}-${i}`}>
                 <b>{tr(drug.name)}</b>
                 {drug.effect ? ` ・ ${drug.effect}` : ""}
-                {drug.duration ? ` ・ 持続 ${drug.duration}` : ""}
-                {drug.vectors?.length ? ` ・ 経路 ${drug.vectors.join("・")}` : ""}
+                {drug.duration ? ui("sheet.drugDuration", { duration: drug.duration }) : ""}
+                {drug.vectors?.length
+                  ? ui("sheet.drugVector", {
+                      list: drug.vectors.join(ui("common.termSep")),
+                    })
+                  : ""}
               </li>
             ))}
           </ul>
@@ -28,7 +34,9 @@ export function DrugsSection(s: SheetData) {
               {item.active ? "▶ " : ""}
               {tr(item.name)}
               {(item.qty || 1) > 1 ? ` ×${item.qty}` : ""}
-              {grades.length ? `（${grades.map((g) => tr(g.name)).join("、")}）` : ""}
+              {grades.length
+                ? `（${grades.map((g) => tr(g.name)).join(ui("common.listSep"))}）`
+                : ""}
               {item.drug_effect ? (
                 <span className="sheet-dim">{` ・ ${item.drug_effect}`}</span>
               ) : (

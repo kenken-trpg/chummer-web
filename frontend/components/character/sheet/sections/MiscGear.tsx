@@ -4,7 +4,7 @@ import { Section } from "@/components/character/sheet/blocks";
 export function MiscGearSection(s: SheetData) {
   const { tr, gearMisc } = s;
   return (
-    <Section title="その他ギア" empty={!gearMisc.length}>
+    <Section title="sheet.miscGear" empty={!gearMisc.length}>
       <ul className="sheet-list sheet-list-compact">
         {gearMisc.map((item) => (
           <li key={item.id}>

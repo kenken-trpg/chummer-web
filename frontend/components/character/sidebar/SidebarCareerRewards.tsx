@@ -91,7 +91,7 @@ export function SidebarCareerRewards({ career, ch, d, patch, ui }: SidebarBlockP
               type="number"
               min={0}
               step={1000}
-              aria-label={ui("side.nuyen")}
+              aria-label={ui("common.nuyen")}
               value={rewardNuyen}
               onChange={(e) => setRewardNuyen(Math.max(0, Number(e.target.value) || 0))}
               style={{ width: 96 }}

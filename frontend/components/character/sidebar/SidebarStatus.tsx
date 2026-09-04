@@ -55,7 +55,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         </div>
       ))}
       <div className="stat">
-        <span>{ui("side.condition")}</span>
+        <span>{ui("common.condition")}</span>
         <b>
           P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
         </b>
@@ -72,13 +72,13 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         </div>
       ) : null}
       <div className="stat">
-        <span>{ui("side.initiative")}</span>
+        <span>{ui("common.initiative")}</span>
         <b>
           {d.initiative.value}+{d.initiative.dice}d6
         </b>
       </div>
       <div className="stat">
-        <span>{ui("side.armor")}</span>
+        <span>{ui("common.armor")}</span>
         <b>
           {d.armor}
           {d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}
@@ -107,7 +107,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       ) : null}
       {(d.notoriety || 0) !== 0 || career ? (
         <div className="stat">
-          <span>{ui("side.notoriety")}</span>
+          <span>{ui("common.notoriety")}</span>
           <b>
             {(d.notoriety || 0) > 0 ? "+" : ""}
             {d.notoriety || 0}
@@ -130,13 +130,13 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
             <b>{d.street_cred || 0}</b>
           </div>
           <div className="stat">
-            <span>{ui("side.publicAwareness")}</span>
+            <span>{ui("common.publicAwareness")}</span>
             <b>{d.public_awareness || 0}</b>
           </div>
         </>
       ) : (d.public_awareness || 0) !== 0 ? (
         <div className="stat">
-          <span>{ui("side.publicAwareness")}</span>
+          <span>{ui("common.publicAwareness")}</span>
           <b>
             {d.public_awareness! > 0 ? "+" : ""}
             {d.public_awareness}

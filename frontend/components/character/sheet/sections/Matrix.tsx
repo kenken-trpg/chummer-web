@@ -5,7 +5,10 @@ import { matrixCM } from "@/lib/character/format";
 export function MatrixSection(s: SheetData) {
   const { tr, d } = s;
   return (
-    <Section title="マトリクス" empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona}>
+    <Section
+      title="sheet.matrix"
+      empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona}
+    >
       {(() => {
         const rows: {
           key: string;

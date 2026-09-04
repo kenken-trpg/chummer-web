@@ -1,18 +1,20 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function KnowledgeSection(s: SheetData) {
   const { tr, totals, knowledge } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="知識技能" empty={!knowledge.length}>
+    <Section title="sheet.knowledge" empty={!knowledge.length}>
       <table className="sheet-table">
         <thead>
           <tr>
-            <th>知識</th>
-            <th>分類</th>
+            <th>{ui("sheet.col.knowledge")}</th>
+            <th>{ui("sheet.col.category")}</th>
             <th>R</th>
-            <th>プール</th>
-            <th>専門化</th>
+            <th>{ui("sheet.col.pool")}</th>
+            <th>{ui("sheet.col.spec")}</th>
           </tr>
         </thead>
         <tbody>
@@ -23,7 +25,7 @@ export function KnowledgeSection(s: SheetData) {
               <tr key={`${row.category}-${row.name}`}>
                 <td className="left">
                   {tr(row.name)}
-                  {row.native ? "（母語）" : ""}
+                  {row.native ? ui("sheet.native") : ""}
                   {(row.skillsoft || 0) > row.rating ? " *" : ""}
                 </td>
                 <td>{tr(row.category)}</td>

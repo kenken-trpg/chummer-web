@@ -6,7 +6,7 @@ import { Fragment } from "react";
 export function CombatSection(s: SheetData) {
   const { catalog, tr, d, totals, weapons, armors } = s;
   return (
-    <Section title="戦闘" empty={!weapons.length && !armors.length && !d.worn_armor}>
+    <Section title="sheet.combat" empty={!weapons.length && !armors.length && !d.worn_armor}>
       {armors.length || d.worn_armor ? (
         <div className="sheet-block">
           <h4>アーマー</h4>

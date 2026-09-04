@@ -77,7 +77,7 @@ export function SidebarMagicStats({ d, ui }: SidebarBlockProps) {
         );
       })}
       <div className="stat">
-        <span>{ui("side.essence")}</span>
+        <span>{ui("common.essence")}</span>
         <b>
           {d.essence}
           {d.essence_lost_cyber || d.essence_lost_bio || d.essence_penalty

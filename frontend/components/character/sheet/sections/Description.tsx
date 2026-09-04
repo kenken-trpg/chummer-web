@@ -1,40 +1,42 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { type MsgKey, useUiText } from "@/lib/i18n";
 
 export function DescriptionSection(s: SheetData) {
   const { character } = s;
-  const stats: [string, string][] = (
+  const { ui } = useUiText();
+  const stats: [MsgKey, string][] = (
     [
-      ["年齢", character.age],
-      ["性別", character.sex],
-      ["身長", character.height],
-      ["体重", character.weight],
-      ["目", character.eyes],
-      ["髪", character.hair],
-      ["肌", character.skin],
-      ["コンセプト", character.concept],
-    ] as [string, string | undefined][]
-  ).filter((r): r is [string, string] => Boolean((r[1] || "").trim()));
-  const blocks: [string, string][] = (
+      ["desc.age", character.age],
+      ["desc.sex", character.sex],
+      ["desc.height", character.height],
+      ["desc.weight", character.weight],
+      ["desc.eyes", character.eyes],
+      ["desc.hair", character.hair],
+      ["desc.skin", character.skin],
+      ["desc.concept", character.concept],
+    ] as [MsgKey, string | undefined][]
+  ).filter((r): r is [MsgKey, string] => Boolean((r[1] || "").trim()));
+  const blocks: [MsgKey, string][] = (
     [
-      ["容姿", character.appearance],
-      ["背景", character.background],
-      ["メモ", character.notes],
-    ] as [string, string | undefined][]
-  ).filter((r): r is [string, string] => Boolean((r[1] || "").trim()));
+      ["desc.appearance", character.appearance],
+      ["desc.background", character.background],
+      ["desc.notes", character.notes],
+    ] as [MsgKey, string | undefined][]
+  ).filter((r): r is [MsgKey, string] => Boolean((r[1] || "").trim()));
   if (!stats.length && !blocks.length && !character.portrait) return null;
   return (
-    <Section title="記述">
+    <Section title="desc.title">
       {character.portrait || stats.length ? (
         <div className="sheet-portrait-row">
           {character.portrait ? (
-            <img className="sheet-portrait" src={character.portrait} alt="ポートレート" />
+            <img className="sheet-portrait" src={character.portrait} alt={ui("desc.portraitAlt")} />
           ) : null}
           {stats.length ? (
             <div className="sheet-derived-grid sheet-vehicle-stats">
               {stats.map(([label, value]) => (
                 <div key={label}>
-                  <span>{label}</span>
+                  <span>{ui(label)}</span>
                   <b>{value}</b>
                 </div>
               ))}
@@ -44,7 +46,7 @@ export function DescriptionSection(s: SheetData) {
       ) : null}
       {blocks.map(([label, value]) => (
         <div key={label} className="sheet-block">
-          <h4>{label}</h4>
+          <h4>{ui(label)}</h4>
           <p className="sheet-notes">{value}</p>
         </div>
       ))}

@@ -1,15 +1,17 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function ContactsSection(s: SheetData) {
   const { d } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="コンタクト" empty={!(d.contacts || []).length}>
+    <Section title="sheet.contacts" empty={!(d.contacts || []).length}>
       <table className="sheet-table">
         <thead>
           <tr>
-            <th>名前</th>
-            <th>役割</th>
+            <th>{ui("sheet.col.name")}</th>
+            <th>{ui("sheet.col.role")}</th>
             <th>C</th>
             <th>L</th>
           </tr>

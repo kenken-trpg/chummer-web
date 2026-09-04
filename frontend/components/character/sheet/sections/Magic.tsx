@@ -7,7 +7,7 @@ export function MagicSection(s: SheetData) {
   const { tr, d, enabled } = s;
   return (
     <Section
-      title="魔法"
+      title="sheet.magic"
       empty={
         !enabled.has("adept") &&
         !enabled.has("spells") &&

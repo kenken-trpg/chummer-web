@@ -1,26 +1,29 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function SkillsSection(s: SheetData) {
   const { tr, totals, activeSkills, groups, exotic } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="技能" empty={!activeSkills.length && !groups.length && !exotic.length}>
+    <Section title="sheet.skills" empty={!activeSkills.length && !groups.length && !exotic.length}>
       {groups.length ? (
         <p className="sheet-note">
-          グループ:{" "}
-          {groups
-            .map((g) => `${tr(g.name)} ${g.rating}${g.bonus ? ` (+${g.bonus})` : ""}`)
-            .join(" ・ ")}
+          {ui("sheet.groups", {
+            list: groups
+              .map((g) => `${tr(g.name)} ${g.rating}${g.bonus ? ` (+${g.bonus})` : ""}`)
+              .join(` ${ui("common.termSep")} `),
+          })}
         </p>
       ) : null}
       <table className="sheet-table">
         <thead>
           <tr>
-            <th>技能</th>
-            <th>能力値</th>
+            <th>{ui("sheet.col.skill")}</th>
+            <th>{ui("sheet.col.attribute")}</th>
             <th>R</th>
-            <th>プール</th>
-            <th>専門化</th>
+            <th>{ui("sheet.col.pool")}</th>
+            <th>{ui("sheet.col.spec")}</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +57,9 @@ export function SkillsSection(s: SheetData) {
           })}
         </tbody>
       </table>
-      {activeSkills.some((row) => row.soft) ? <p className="sheet-note">* スキルソフト</p> : null}
+      {activeSkills.some((row) => row.soft) ? (
+        <p className="sheet-note">{ui("sheet.skillsoftNote")}</p>
+      ) : null}
     </Section>
   );
 }

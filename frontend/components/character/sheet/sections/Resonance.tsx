@@ -6,7 +6,7 @@ export function ResonanceSection(s: SheetData) {
   const { tr, d, enabled } = s;
   return (
     <Section
-      title="共鳴"
+      title="sheet.resonance"
       empty={!enabled.has("complexforms") && !enabled.has("sprites") && !enabled.has("submersion")}
     >
       {enabled.has("complexforms") && (d.complex_forms || []).length ? (

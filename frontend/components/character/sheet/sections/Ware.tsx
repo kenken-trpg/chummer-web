@@ -4,7 +4,7 @@ import { Section } from "@/components/character/sheet/blocks";
 export function WareSection(s: SheetData) {
   const { tr, d, cyber, bio } = s;
   return (
-    <Section title="ウェア" empty={!cyber.length && !bio.length}>
+    <Section title="sheet.ware" empty={!cyber.length && !bio.length}>
       {cyber.length ? (
         <div className="sheet-block">
           <h4>サイバーウェア（ESS −{d.essence_lost_cyber ?? 0}）</h4>

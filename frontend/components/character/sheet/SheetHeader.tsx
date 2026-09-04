@@ -1,15 +1,17 @@
 import type { SheetData } from "@/lib/character/sheet-data";
+import { useUiText } from "@/lib/i18n";
 
 export function SheetHeader(s: SheetData) {
   const { character, d, tr } = s;
+  const { ui } = useUiText();
   return (
     <header className="sheet-header">
       <div>
         <p className="sheet-kicker">
-          Shadowrun 5e キャラクターシート
-          {character.career || d.career ? " ・ キャリア" : " ・ 作成"}
+          {ui("sheet.kicker")}
+          {character.career || d.career ? ui("sheet.modeCareer") : ui("sheet.modeChargen")}
         </p>
-        <h2 className="sheet-name">{character.name || "無名のランナー"}</h2>
+        <h2 className="sheet-name">{character.name || ui("sheet.unnamed")}</h2>
         <p className="sheet-meta">
           {tr(character.metatype)}
           {character.metavariant ? ` / ${tr(character.metavariant)}` : ""}
@@ -17,24 +19,24 @@ export function SheetHeader(s: SheetData) {
           {character.talent || "Mundane"}
           {d.tradition ? ` ・ ${tr(d.tradition.name)}` : ""}
           {d.stream ? ` ・ ${tr(d.stream.name)}` : ""}
-          {d.mentor ? ` ・ メンター ${tr(d.mentor.name)}` : ""}
+          {d.mentor ? ui("sheet.mentor", { name: tr(d.mentor.name) }) : ""}
         </p>
       </div>
       <div className="sheet-header-stats">
         <div>
-          <span>アーマー</span>
+          <span>{ui("common.armor")}</span>
           <b>{d.armor}</b>
         </div>
         <div>
-          <span>エッセンス</span>
+          <span>{ui("common.essence")}</span>
           <b>{d.essence}</b>
         </div>
         <div>
-          <span>ニューエン</span>
+          <span>{ui("common.nuyen")}</span>
           <b>{(d.nuyen ?? 0).toLocaleString()}¥</b>
         </div>
         <div>
-          <span>カルマ残</span>
+          <span>{ui("sheet.karmaLeft")}</span>
           <b>
             {d.karma?.remaining ?? 0}/{d.karma?.pool ?? 0}
           </b>
@@ -46,11 +48,11 @@ export function SheetHeader(s: SheetData) {
               <b>{d.street_cred || 0}</b>
             </div>
             <div>
-              <span>悪名</span>
+              <span>{ui("common.notoriety")}</span>
               <b>{d.notoriety || 0}</b>
             </div>
             <div>
-              <span>周知度</span>
+              <span>{ui("common.publicAwareness")}</span>
               <b>{d.public_awareness || 0}</b>
             </div>
           </>

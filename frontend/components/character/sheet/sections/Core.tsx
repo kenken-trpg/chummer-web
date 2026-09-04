@@ -3,11 +3,13 @@ import { Section } from "@/components/character/sheet/blocks";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement } from "@/lib/character/sheet-format";
+import { useUiText } from "@/lib/i18n";
 
 export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="コア">
+    <Section title="sheet.core">
       <div className="sheet-core">
         <div className="sheet-attrs">
           {ATTRS.map((key) => {
@@ -25,68 +27,69 @@ export function CoreSection(s: SheetData) {
         </div>
         <div className="sheet-derived-grid">
           <div>
-            <span>イニシアチブ</span>
+            <span>{ui("common.initiative")}</span>
             <b>
               {d.initiative.value}+{d.initiative.dice}d6
             </b>
           </div>
           <div>
-            <span>コンディション</span>
+            <span>{ui("common.condition")}</span>
             <b>
               P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
             </b>
           </div>
           <div>
-            <span>リミット</span>
+            <span>{ui("sheet.limits")}</span>
             <b>
               {d.limits.physical} / {d.limits.mental} / {d.limits.social}
             </b>
           </div>
           <div>
-            <span>移動</span>
-            <b>
-              歩{d.movement.walk} / 走{d.movement.run}
-            </b>
+            <span>{ui("sheet.movement")}</span>
+            <b>{ui("sheet.movementValue", { walk: d.movement.walk, run: d.movement.run })}</b>
           </div>
           {(d.damage_resistance || 0) > 0 ? (
             <div>
-              <span>ダメージ抵抗</span>
+              <span>{ui("sheet.damageResist")}</span>
               <b>+{d.damage_resistance}</b>
             </div>
           ) : null}
           {(d.unarmed_dv || 0) > 0 ? (
             <div>
-              <span>非武装DV</span>
+              <span>{ui("sheet.unarmedDv")}</span>
               <b>+{d.unarmed_dv}</b>
             </div>
           ) : null}
           {(d.unarmed_reach || 0) > 0 ? (
             <div>
-              <span>非武装リーチ</span>
+              <span>{ui("sheet.unarmedReach")}</span>
               <b>+{d.unarmed_reach}</b>
             </div>
           ) : null}
           {(d.unarmed_ap ?? 0) !== 0 ? (
             <div>
-              <span>非武装AP</span>
+              <span>{ui("sheet.unarmedAp")}</span>
               <b>{(d.unarmed_ap ?? 0) > 0 ? `+${d.unarmed_ap}` : d.unarmed_ap}</b>
             </div>
           ) : null}
           {d.lifestyle ? (
             <div>
-              <span>ライフスタイル</span>
+              <span>{ui("sheet.lifestyle")}</span>
               <b>
                 {tr(d.lifestyle.name)} {d.lifestyle.months}
                 {lifeIncrement(d.lifestyle.increment)}
                 {d.lifestyle.lp_max
-                  ? `（LP ${d.lifestyle.lp_used || 0}/${d.lifestyle.lp_max}）`
+                  ? ui("sheet.lifestyleLp", {
+                      used: d.lifestyle.lp_used || 0,
+                      max: d.lifestyle.lp_max,
+                    })
                   : ""}
               </b>
               {(d.lifestyle.qualities || []).length ? (
                 <em>
                   {(d.lifestyle.qualities || [])
                     .map((q) => `${tr(q.name)}${q.extra ? `:${q.extra}` : ""}`)
-                    .join("、")}
+                    .join(ui("common.listSep"))}
                 </em>
               ) : null}
             </div>
@@ -99,7 +102,7 @@ export function CoreSection(s: SheetData) {
           ))}
           {(d.limit_modifiers || []).map((mod, idx) => (
             <div key={`${mod.limit}-${idx}`}>
-              <span>条件リミット</span>
+              <span>{ui("sheet.limitMod")}</span>
               <b>
                 {mod.limit} {mod.value > 0 ? `+${mod.value}` : mod.value}
                 {mod.condition_label || mod.condition

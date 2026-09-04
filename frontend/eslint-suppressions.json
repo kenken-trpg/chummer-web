@@ -9,104 +9,29 @@
       "count": 1
     }
   },
-  "components/character/sheet/SheetHeader.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
-  "components/character/sheet/blocks.tsx": {
-    "no-restricted-syntax": {
-      "count": 17
-    }
-  },
-  "components/character/sheet/sections/ActionDp.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "components/character/sheet/sections/Career.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
   "components/character/sheet/sections/Combat.tsx": {
     "no-restricted-syntax": {
-      "count": 25
-    }
-  },
-  "components/character/sheet/sections/Contacts.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "components/character/sheet/sections/Core.tsx": {
-    "no-restricted-syntax": {
-      "count": 13
-    }
-  },
-  "components/character/sheet/sections/Description.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
-  "components/character/sheet/sections/Drugs.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
-  "components/character/sheet/sections/Knowledge.tsx": {
-    "no-restricted-syntax": {
-      "count": 6
+      "count": 24
     }
   },
   "components/character/sheet/sections/Magic.tsx": {
     "no-restricted-syntax": {
-      "count": 15
-    }
-  },
-  "components/character/sheet/sections/Martial.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
+      "count": 14
     }
   },
   "components/character/sheet/sections/Matrix.tsx": {
     "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "components/character/sheet/sections/MiscGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "components/character/sheet/sections/Qualities.tsx": {
-    "no-restricted-syntax": {
-      "count": 8
+      "count": 4
     }
   },
   "components/character/sheet/sections/Resonance.tsx": {
     "no-restricted-syntax": {
-      "count": 13
-    }
-  },
-  "components/character/sheet/sections/Sin.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "components/character/sheet/sections/Skills.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "components/character/sheet/sections/Vehicles.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
+      "count": 12
     }
   },
   "components/character/sheet/sections/Ware.tsx": {
     "no-restricted-syntax": {
-      "count": 8
+      "count": 7
     }
   },
   "components/character/sheet/sections/print/PrintConditionMonitor.tsx": {

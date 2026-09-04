@@ -9,7 +9,7 @@ export function SidebarEconomy({ d, tr, ui }: SidebarBlockProps) {
   return (
     <>
       <div className="stat">
-        <span>{ui("side.nuyen")}</span>
+        <span>{ui("common.nuyen")}</span>
         <b>{d.nuyen.toLocaleString()}¥</b>
       </div>
       <div className="stat">

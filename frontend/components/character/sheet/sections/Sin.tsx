@@ -1,10 +1,12 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function SinSection(s: SheetData) {
   const { tr, sins, gearChildren } = s;
+  const { ui } = useUiText();
   return (
-    <Section title="SIN／ライセンス" empty={!sins.length}>
+    <Section title="sheet.sin" empty={!sins.length}>
       <ul className="sheet-list">
         {sins.map((sin) => {
           const licenses = gearChildren(sin.id);
@@ -21,7 +23,7 @@ export function SinSection(s: SheetData) {
                       (l) =>
                         `${tr(l.name)}${l.rating > 0 ? ` R${l.rating}` : ""}${l.extra ? `:${tr(l.extra)}` : ""}`,
                     )
-                    .join("、")}
+                    .join(ui("common.listSep"))}
                 </span>
               ) : null}
             </li>

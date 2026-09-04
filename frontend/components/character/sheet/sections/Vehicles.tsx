@@ -4,7 +4,7 @@ import { Section, VehicleBlock } from "@/components/character/sheet/blocks";
 export function VehiclesSection(s: SheetData) {
   const { d, tr } = s;
   return (
-    <Section title="車両・ドローン" empty={!(d.vehicles || []).length && !(d.drones || []).length}>
+    <Section title="sheet.vehicles" empty={!(d.vehicles || []).length && !(d.drones || []).length}>
       {(d.vehicles || []).map((v) => (
         <VehicleBlock key={v.id} v={v} tr={tr} />
       ))}

@@ -5,7 +5,7 @@ export function ActionDpSection(s: SheetData) {
   const { tr, d } = s;
   if (!(d.action_dice_pools || []).length) return null;
   return (
-    <Section title="アクションDP">
+    <Section title="sheet.actionDp">
       <ul className="sheet-list">
         {(d.action_dice_pools || []).map((row, idx) => (
           <li key={`${row.name}-${idx}`}>
