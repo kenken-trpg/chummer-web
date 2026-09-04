@@ -104,9 +104,15 @@ container update has to be able to invalidate it. Nothing on the client opts
 in; the browser's HTTP cache does the work. Compression is left to the edge
 (Caddy `encode zstd gzip` in the bundled container).
 
-`catalog_view.py` holds `public_catalog()` — the projection of `data_loader`'s
-catalog down to what the UI reads. (Both were one `store.py` until the server
-stopped storing anything; the name outlived the thing it described.)
+`catalog_view/` holds `public_catalog()` — the projection of `data_loader`'s
+catalog down to what the UI reads. (It and `characters.py` were one `store.py`
+until the server stopped storing anything; the name outlived the thing it
+described.) It is a package: one `section(raw) -> dict` per domain
+(`chargen`, `ware`, `magic`, `gear`, `matrix`, `vehicles`), merged by
+`__init__.py` with three raw passthroughs. The modules line up with
+`engine/`'s, so a rule and the projection that feeds it are found in the same
+place. Sections must define disjoint keys — a duplicate would be silently won
+by whichever merged last, so `tests/test_catalog_view.py` asserts it.
 
 **Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
 (comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 12 MiB),
