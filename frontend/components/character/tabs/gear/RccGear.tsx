@@ -1,12 +1,9 @@
 "use client";
-import { useState } from "react";
+import { AddonSelect } from "@/components/character/AddonSelect";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 
 export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
-
   return (
     <>
       <>
@@ -144,100 +141,46 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                     ) : null}
                   </div>
                 ))}
-              <div className="cyber-controls">
-                <select
-                  value={slotPick[item.id] || ""}
-                  onChange={(e) => {
-                    setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }));
-                    setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
-                  }}
-                >
-                  <option value="">オートソフトを追加</option>
-                  {(catalog.programs || [])
-                    .filter((prog) => prog.program_host === "rccs")
-                    .filter((prog) => prog.source === "SR5" || prog.source === "R5")
-                    .filter(
-                      (prog) =>
-                        prog.needs_extra ||
-                        !(d.programs || []).some(
-                          (row) => row.parent_id === item.id && row.gear_id === prog.id,
-                        ),
-                    )
-                    .map((prog) => (
-                      <option key={prog.id} value={prog.id}>
-                        {tr(prog.name)} ({prog.cost}¥)
-                      </option>
-                    ))}
-                </select>
-                {(() => {
-                  const spec = (catalog.programs || []).find(
-                    (prog) => prog.id === slotPick[item.id],
-                  );
-                  if (spec?.extra_kind === "skill" || spec?.extra_kind === "group") {
-                    return (
-                      <select
-                        value={extraPick[item.id] || ""}
-                        onChange={(e) =>
-                          setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
-                        }
-                      >
-                        <option value="">
-                          {spec.extra_kind === "group" ? "グループ" : "技能"}
-                        </option>
-                        {(spec.extra_options || []).map((name) => (
-                          <option key={name} value={name}>
-                            {tr(name)}
-                          </option>
-                        ))}
-                      </select>
-                    );
+              <AddonSelect
+                rowName={tr(item.name)}
+                prompt="オートソフトを追加"
+                tr={tr}
+                options={(catalog.programs || []).filter(
+                  (prog) =>
+                    prog.program_host === "rccs" &&
+                    (prog.source === "SR5" || prog.source === "R5") &&
+                    (prog.needs_extra ||
+                      !(d.programs || []).some(
+                        (row) => row.parent_id === item.id && row.gear_id === prog.id,
+                      )),
+                )}
+                extraFor={(prog) => {
+                  if (prog.extra_kind === "skill") {
+                    return { label: "技能", values: prog.extra_options || [] };
                   }
-                  if (spec?.extra_kind === "text") {
-                    return (
-                      <>
-                        <input
-                          list={`pick-extra-${item.id}`}
-                          placeholder="対象"
-                          value={extraPick[item.id] || ""}
-                          onChange={(e) =>
-                            setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
-                          }
-                        />
-                        <datalist id={`pick-extra-${item.id}`}>
-                          {(spec.extra_options || []).slice(0, 80).map((name) => (
-                            <option key={name} value={name} />
-                          ))}
-                        </datalist>
-                      </>
-                    );
+                  if (prog.extra_kind === "group") {
+                    return { label: "グループ", values: prog.extra_options || [] };
+                  }
+                  // a vehicle autosoft names a model, which is not a closed set
+                  if (prog.extra_kind === "text") {
+                    return { label: "対象", values: prog.extra_options || [], freeText: true };
                   }
                   return null;
-                })()}
-                <button
-                  className="btn"
-                  disabled={!slotPick[item.id]}
-                  onClick={() => {
-                    const wareId = slotPick[item.id];
-                    const spec = (catalog.programs || []).find((prog) => prog.id === wareId);
-                    if (!spec) return;
-                    patch({
-                      programs: [
-                        ...(ch.programs || []),
-                        {
-                          gear_id: spec.id,
-                          rating: Math.max(1, spec.minrating || 1),
-                          parent_id: item.id,
-                          extra: extraPick[item.id] || undefined,
-                        },
-                      ],
-                    });
-                    setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
-                    setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
-                  }}
-                >
-                  装着
-                </button>
-              </div>
+                }}
+                onAdd={(prog, extra) =>
+                  patch({
+                    programs: [
+                      ...(ch.programs || []),
+                      {
+                        gear_id: prog.id,
+                        rating: Math.max(1, prog.minrating || 1),
+                        parent_id: item.id,
+                        extra,
+                      },
+                    ],
+                  })
+                }
+              />
             </div>
             <button
               className="btn danger"
@@ -254,49 +197,25 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
         ))}
       </>
 
-      <input
-        type="search"
-        placeholder="RCCを検索"
-        aria-label="RCCを検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-
-      <div className="quality-list">
-        {(catalog.rccs || [])
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return item.source === "SR5";
+      <CatalogPicker
+        items={catalog.rccs || []}
+        label="RCCを検索"
+        tr={tr}
+        describe={(item) => (
+          <>
+            {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} /{" "}
+            プログラム {item.programs} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+          </>
+        )}
+        onAdd={(item) =>
+          patch({
+            rccs: [
+              ...(ch.rccs || []),
+              { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
+            ],
           })
-          .slice(0, 40)
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW{" "}
-                  {item.firewall} / プログラム {item.programs} / {item.cost}¥ / {item.avail || "-"}{" "}
-                  / {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    rccs: [
-                      ...(ch.rccs || []),
-                      { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
-                    ],
-                  })
-                }
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
+        }
+      />
     </>
   );
 }

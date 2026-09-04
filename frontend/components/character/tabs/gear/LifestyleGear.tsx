@@ -1,20 +1,16 @@
 "use client";
-import { useState } from "react";
+import { AddonSelect } from "@/components/character/AddonSelect";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement } from "@/lib/character/format";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
-
   return (
     <>
       <>
         {(d.lifestyles || []).map((item) => {
           const raw = (ch.lifestyles || []).find((row) => row.id === item.id);
-          const qualityPickKey = `lsq-${item.id}`;
           const ownedUser = new Set(raw?.quality_ids || []);
           const availableQualities = (catalog.lifestyle_qualities || []).filter((q) => {
             if (!q.allow_multiple && ownedUser.has(q.id)) return false;
@@ -116,75 +112,41 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                     ) : null}
                   </div>
                 ))}
-                {availableQualities.length ? (
-                  <div className="cyber-controls">
-                    <select
-                      value={slotPick[qualityPickKey] || ""}
-                      onChange={(e) =>
-                        setSlotPick((cur) => ({ ...cur, [qualityPickKey]: e.target.value }))
-                      }
-                    >
-                      <option value="">ライフスタイル品質</option>
-                      {availableQualities
-                        .filter((q) => {
-                          const s = gearSearch.trim().toLowerCase();
-                          if (!s)
-                            return q.source === "SR5" || q.source === "RF" || (q.lp || 0) !== 0;
-                          return (
-                            q.name.toLowerCase().includes(s) || tr(q.name).toLowerCase().includes(s)
-                          );
-                        })
-                        .slice(0, 80)
-                        .map((q) => (
-                          <option key={q.id} value={q.id}>
-                            {tr(q.name)} (LP {q.lp}
-                            {q.cost ? ` / ${q.cost}¥` : ""}
-                            {q.multiplier ? ` / ${q.multiplier}%` : ""})
-                          </option>
-                        ))}
-                    </select>
-                    {(() => {
-                      const qspec = availableQualities.find(
-                        (q) => q.id === slotPick[qualityPickKey],
-                      );
-                      if (!qspec?.needs_extra) return null;
-                      return (
-                        <input
-                          placeholder="対象"
-                          value={extraPick[qualityPickKey] || ""}
-                          onChange={(e) =>
-                            setExtraPick((cur) => ({ ...cur, [qualityPickKey]: e.target.value }))
-                          }
-                        />
-                      );
-                    })()}
-                    <button
-                      className="btn"
-                      disabled={!slotPick[qualityPickKey]}
-                      onClick={() => {
-                        const qid = slotPick[qualityPickKey];
-                        if (!qid) return;
-                        const extras = { ...(raw?.quality_extras || {}) };
-                        if (extraPick[qualityPickKey]) extras[qid] = extraPick[qualityPickKey];
-                        patch({
-                          lifestyles: (ch.lifestyles || []).map((row) =>
-                            row.id === item.id
-                              ? {
-                                  ...row,
-                                  quality_ids: [...(row.quality_ids || []), qid],
-                                  quality_extras: extras,
-                                }
-                              : row,
-                          ),
-                        });
-                        setSlotPick((cur) => ({ ...cur, [qualityPickKey]: "" }));
-                        setExtraPick((cur) => ({ ...cur, [qualityPickKey]: "" }));
-                      }}
-                    >
-                      追加
-                    </button>
-                  </div>
-                ) : null}
+                <AddonSelect
+                  rowName={tr(item.name)}
+                  prompt="ライフスタイル品質"
+                  addLabel="追加"
+                  tr={tr}
+                  // the SR5/RF-or-costed narrowing used to lift as soon as the
+                  // catalog search box below had text in it; it is unrelated
+                  // to this control, so it now always applies
+                  options={availableQualities.filter(
+                    (q) => q.source === "SR5" || q.source === "RF" || (q.lp || 0) !== 0,
+                  )}
+                  optionLabel={(q) =>
+                    `${tr(q.name)} (LP ${q.lp}${q.cost ? ` / ${q.cost}¥` : ""}${
+                      q.multiplier ? ` / ${q.multiplier}%` : ""
+                    })`
+                  }
+                  extraFor={(q) =>
+                    q.needs_extra ? { label: "対象", values: [], freeText: true } : null
+                  }
+                  onAdd={(q, extra) => {
+                    const extras = { ...(raw?.quality_extras || {}) };
+                    if (extra) extras[q.id] = extra;
+                    patch({
+                      lifestyles: (ch.lifestyles || []).map((row) =>
+                        row.id === item.id
+                          ? {
+                              ...row,
+                              quality_ids: [...(row.quality_ids || []), q.id],
+                              quality_extras: extras,
+                            }
+                          : row,
+                      ),
+                    });
+                  }}
+                />
               </div>
               <button
                 className="btn danger"
@@ -201,49 +163,32 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
         })}
       </>
 
-      <input
-        type="search"
-        placeholder="ライフスタイルを検索"
-        aria-label="ライフスタイルを検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-      <div className="quality-list">
-        {(catalog.lifestyles || [])
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return CORE_LIFESTYLES.has(item.name);
+      <CatalogPicker
+        items={catalog.lifestyles || []}
+        label="ライフスタイルを検索"
+        tr={tr}
+        idle={{
+          keep: (item) => CORE_LIFESTYLES.has(item.name),
+          note: "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
+        }}
+        describe={(item) => (
+          <>
+            {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment)}
+            {item.lp ? ` / LP ${item.lp}` : ""}
+            {(item.freegrids || []).length ? ` / 付属グリッド ${item.freegrids!.length}` : ""}
+            {" / "}
+            {item.source}
+          </>
+        )}
+        onAdd={(item) =>
+          patch({
+            lifestyles: [
+              ...(ch.lifestyles || []),
+              { lifestyle_id: item.id, months: 1, quality_ids: [] },
+            ],
           })
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment)}
-                  {item.lp ? ` / LP ${item.lp}` : ""}
-                  {(item.freegrids || []).length ? ` / 付属グリッド ${item.freegrids!.length}` : ""}
-                  {" / "}
-                  {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    lifestyles: [
-                      ...(ch.lifestyles || []),
-                      { lifestyle_id: item.id, months: 1, quality_ids: [] },
-                    ],
-                  })
-                }
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
+        }
+      />
     </>
   );
 }

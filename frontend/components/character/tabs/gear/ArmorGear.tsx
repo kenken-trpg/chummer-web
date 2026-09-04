@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { AddonSelect } from "@/components/character/AddonSelect";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { armorModFits } from "@/lib/character/gear";
 import {
@@ -11,10 +12,6 @@ import {
 } from "@/lib/character/format";
 
 export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [gearCat, setGearCat] = useState("all");
-  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-
   return (
     <>
       <>
@@ -161,50 +158,36 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                     ) : null}
                   </div>
                 ))}
-                {addons.length ? (
-                  <div className="cyber-controls">
-                    <select
-                      value={slotPick[item.id] || ""}
-                      onChange={(e) =>
-                        setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
-                      }
-                    >
-                      <option value="">改造を追加</option>
-                      {addons
-                        .filter((mod) => gearSearch.trim() || mod.source === "SR5")
-                        .map((mod) => (
-                          <option key={mod.id} value={mod.id}>
-                            {tr(mod.name)} ({formatAccessoryCost(mod.cost, parentCost)})
-                          </option>
-                        ))}
-                    </select>
-                    <button
-                      className="btn"
-                      disabled={!slotPick[item.id]}
-                      onClick={() => {
-                        const wareId = slotPick[item.id];
-                        const spec = addons.find((mod) => mod.id === wareId);
-                        if (!spec) return;
-                        patch({
-                          armor_mods: [
-                            ...(ch.armor_mods || []),
-                            {
-                              mod_id: spec.id,
-                              parent_id: item.id,
-                              rating: Math.max(1, spec.minrating || 1),
-                            },
-                          ],
-                        });
-                        setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
-                      }}
-                    >
-                      装着
-                    </button>
-                  </div>
-                ) : null}
+                <AddonSelect
+                  rowName={tr(item.name)}
+                  prompt="改造を追加"
+                  tr={tr}
+                  // `armorModFits` has already decided what can go on this
+                  // piece, so every option here is buyable. (It used to hide
+                  // non-SR5 mods unless the *catalog search box* below had text
+                  // in it — an invisible coupling between two unrelated
+                  // controls.) Cost is relative to the parent, hence the label.
+                  options={addons}
+                  optionLabel={(mod) =>
+                    `${tr(mod.name)} (${formatAccessoryCost(mod.cost, parentCost)})`
+                  }
+                  onAdd={(mod) =>
+                    patch({
+                      armor_mods: [
+                        ...(ch.armor_mods || []),
+                        {
+                          mod_id: mod.id,
+                          parent_id: item.id,
+                          rating: Math.max(1, mod.minrating || 1),
+                        },
+                      ],
+                    })
+                  }
+                />
               </div>
               <button
                 className="btn danger"
+                aria-label={`${tr(item.name)} を削除`}
                 onClick={() =>
                   patch({
                     armor: (ch.armor || []).filter((row) => row.id !== item.id),
@@ -219,70 +202,24 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
         })}
       </>
 
-      <div className="option-row">
-        <button
-          className={`tab ${gearCat === "all" ? "active" : ""}`}
-          onClick={() => setGearCat("all")}
-        >
-          すべて
-        </button>
-        {[...new Set((catalog.armor || []).map((item) => item.category))].sort().map((cat) => (
-          <button
-            key={cat}
-            className={`tab ${gearCat === cat ? "active" : ""}`}
-            onClick={() => setGearCat(cat)}
-          >
-            {tr(cat)}
-          </button>
-        ))}
-      </div>
-      <input
-        type="search"
-        placeholder="防具を検索"
-        aria-label="防具を検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-
-      <div className="quality-list">
-        {(catalog.armor || [])
-          .filter((item) => gearCat === "all" || item.category === gearCat)
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return item.source === "SR5";
+      <CatalogPicker
+        items={catalog.armor || []}
+        label="防具を検索"
+        tr={tr}
+        describe={(item) => (
+          <>
+            {item.name} / 装甲 {item.armor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+          </>
+        )}
+        onAdd={(item) =>
+          patch({
+            armor: [
+              ...(ch.armor || []),
+              { armor_id: item.id, rating: Math.max(1, item.minrating || 1), equipped: true },
+            ],
           })
-          .slice(0, 40)
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / 装甲 {item.armor} / {item.cost}¥ / {item.avail || "-"} /{" "}
-                  {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    armor: [
-                      ...(ch.armor || []),
-                      {
-                        armor_id: item.id,
-                        rating: Math.max(1, item.minrating || 1),
-                        equipped: true,
-                      },
-                    ],
-                  })
-                }
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
+        }
+      />
     </>
   );
 }

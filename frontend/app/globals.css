@@ -283,6 +283,20 @@ input[type="search"] {
 .quality-item input[type="text"] {
   margin-top: 6px;
 }
+/* Why the list stops where it does — a cut-off list and a core-only list both
+   read as "that item does not exist" without it. Sticks to the bottom of the
+   scroll box so it is visible without scrolling to the end. */
+.picker-footnote {
+  position: sticky;
+  bottom: 0;
+  margin: 0;
+  padding: 4px 2px;
+  font-size: 0.75rem;
+  background: var(--panel);
+}
+.picker-footnote:empty {
+  display: none;
+}
 .cyber-item {
   display: flex;
   justify-content: space-between;

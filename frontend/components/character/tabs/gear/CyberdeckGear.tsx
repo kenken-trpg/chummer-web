@@ -1,13 +1,11 @@
 "use client";
-import { useState } from "react";
+import { AddonSelect } from "@/components/character/AddonSelect";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { swapMatrixOrder } from "@/lib/character/gear";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-
   return (
     <>
       <>
@@ -120,50 +118,31 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
                     ) : null}
                   </div>
                 ))}
-              <div className="cyber-controls">
-                <select
-                  value={slotPick[item.id] || ""}
-                  onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
-                >
-                  <option value="">プログラムを追加</option>
-                  {(catalog.programs || [])
-                    .filter((prog) => prog.program_host === "cyberdecks")
-                    .filter(
-                      (prog) =>
-                        !(d.programs || []).some(
-                          (row) => row.parent_id === item.id && row.gear_id === prog.id,
-                        ),
-                    )
-                    .filter((prog) => prog.source === "SR5")
-                    .map((prog) => (
-                      <option key={prog.id} value={prog.id}>
-                        {tr(prog.name)} ({prog.cost}¥)
-                      </option>
-                    ))}
-                </select>
-                <button
-                  className="btn"
-                  disabled={!slotPick[item.id]}
-                  onClick={() => {
-                    const wareId = slotPick[item.id];
-                    const spec = (catalog.programs || []).find((prog) => prog.id === wareId);
-                    if (!spec) return;
-                    patch({
-                      programs: [
-                        ...(ch.programs || []),
-                        {
-                          gear_id: spec.id,
-                          rating: Math.max(1, spec.minrating || 1),
-                          parent_id: item.id,
-                        },
-                      ],
-                    });
-                    setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
-                  }}
-                >
-                  装着
-                </button>
-              </div>
+              <AddonSelect
+                rowName={tr(item.name)}
+                prompt="プログラムを追加"
+                tr={tr}
+                options={(catalog.programs || []).filter(
+                  (prog) =>
+                    prog.program_host === "cyberdecks" &&
+                    prog.source === "SR5" &&
+                    !(d.programs || []).some(
+                      (row) => row.parent_id === item.id && row.gear_id === prog.id,
+                    ),
+                )}
+                onAdd={(prog) =>
+                  patch({
+                    programs: [
+                      ...(ch.programs || []),
+                      {
+                        gear_id: prog.id,
+                        rating: Math.max(1, prog.minrating || 1),
+                        parent_id: item.id,
+                      },
+                    ],
+                  })
+                }
+              />
             </div>
             <button
               className="btn danger"
@@ -180,49 +159,26 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
         ))}
       </>
 
-      <input
-        type="search"
-        placeholder="サイバーデッキを検索"
-        aria-label="サイバーデッキを検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-
-      <div className="quality-list">
-        {(catalog.cyberdecks || [])
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return item.source === "SR5";
+      <CatalogPicker
+        items={catalog.cyberdecks || []}
+        label="サイバーデッキを検索"
+        tr={tr}
+        describe={(item) => (
+          <>
+            {item.name} / DR {item.devicerating}
+            {item.attributearray ? ` / ${item.attributearray}` : ""} / プログラム {item.programs} /{" "}
+            {item.cost}¥ / {item.avail || "-"} / {item.source}
+          </>
+        )}
+        onAdd={(item) =>
+          patch({
+            cyberdecks: [
+              ...(ch.cyberdecks || []),
+              { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
+            ],
           })
-          .slice(0, 40)
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / DR {item.devicerating}
-                  {item.attributearray ? ` / ${item.attributearray}` : ""} / プログラム{" "}
-                  {item.programs} / {item.cost}¥ / {item.avail || "-"} / {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    cyberdecks: [
-                      ...(ch.cyberdecks || []),
-                      { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
-                    ],
-                  })
-                }
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
+        }
+      />
     </>
   );
 }

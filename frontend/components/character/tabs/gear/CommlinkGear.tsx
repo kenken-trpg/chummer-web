@@ -1,13 +1,10 @@
 "use client";
-import { useState } from "react";
+import { AddonSelect } from "@/components/character/AddonSelect";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [slotPick, setSlotPick] = useState<Record<string, string>>({});
-  const [extraPick, setExtraPick] = useState<Record<string, string>>({});
-
   return (
     <>
       <>
@@ -116,71 +113,37 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                     ) : null}
                   </div>
                 ))}
-              <div className="cyber-controls">
-                <select
-                  value={slotPick[item.id] || ""}
-                  onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
-                >
-                  <option value="">アプリを追加</option>
-                  {(catalog.apps || [])
-                    .filter((app) => app.source === "SR5")
-                    .filter(
-                      (app) =>
-                        app.needs_extra ||
-                        !(d.apps || []).some(
-                          (row) => row.parent_id === item.id && row.gear_id === app.id,
-                        ),
-                    )
-                    .map((app) => (
-                      <option key={app.id} value={app.id}>
-                        {tr(app.name)} ({app.cost}¥)
-                      </option>
-                    ))}
-                </select>
-                {(() => {
-                  const spec = (catalog.apps || []).find((app) => app.id === slotPick[item.id]);
-                  if (spec?.extra_kind !== "skill") return null;
-                  return (
-                    <select
-                      value={extraPick[item.id] || ""}
-                      onChange={(e) =>
-                        setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
-                      }
-                    >
-                      <option value="">技能</option>
-                      {(spec.extra_options || []).map((name) => (
-                        <option key={name} value={name}>
-                          {tr(name)}
-                        </option>
-                      ))}
-                    </select>
-                  );
-                })()}
-                <button
-                  className="btn"
-                  disabled={!slotPick[item.id]}
-                  onClick={() => {
-                    const wareId = slotPick[item.id];
-                    const spec = (catalog.apps || []).find((app) => app.id === wareId);
-                    if (!spec) return;
-                    patch({
-                      apps: [
-                        ...(ch.apps || []),
-                        {
-                          gear_id: spec.id,
-                          rating: Math.max(1, spec.minrating || 1),
-                          parent_id: item.id,
-                          extra: extraPick[item.id] || undefined,
-                        },
-                      ],
-                    });
-                    setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
-                    setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
-                  }}
-                >
-                  装着
-                </button>
-              </div>
+              <AddonSelect
+                rowName={tr(item.name)}
+                prompt="アプリを追加"
+                tr={tr}
+                options={(catalog.apps || []).filter(
+                  (app) =>
+                    app.source === "SR5" &&
+                    (app.needs_extra ||
+                      !(d.apps || []).some(
+                        (row) => row.parent_id === item.id && row.gear_id === app.id,
+                      )),
+                )}
+                extraFor={(app) =>
+                  app.extra_kind === "skill"
+                    ? { label: "技能", values: app.extra_options || [] }
+                    : null
+                }
+                onAdd={(app, extra) =>
+                  patch({
+                    apps: [
+                      ...(ch.apps || []),
+                      {
+                        gear_id: app.id,
+                        rating: Math.max(1, app.minrating || 1),
+                        parent_id: item.id,
+                        extra,
+                      },
+                    ],
+                  })
+                }
+              />
               {(d.gear || [])
                 .filter((acc) => acc.parent_id === item.id)
                 .map((acc) => (
@@ -199,62 +162,36 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                     </button>
                   </div>
                 ))}
-              <div className="cyber-controls">
-                <select
-                  value={slotPick[`${item.id}-acc`] || ""}
-                  onChange={(e) =>
-                    setSlotPick((cur) => ({ ...cur, [`${item.id}-acc`]: e.target.value }))
-                  }
-                >
-                  <option value="">アクセサリを追加</option>
-                  {(catalog.gear || [])
-                    .filter(
-                      (mod) =>
-                        mod.category === "Commlink Accessories" ||
-                        (mod.required_categories || []).includes("Commlinks") ||
-                        (item.category === "PI-Tac" && mod.category === "PI-Tac Programs"),
-                    )
-                    .filter(
-                      (mod) =>
-                        gearSearch.trim() ||
-                        mod.source === "SR5" ||
-                        (item.category === "PI-Tac" && mod.category === "PI-Tac Programs"),
-                    )
-                    .filter(
-                      (mod) =>
-                        !(d.gear || []).some(
-                          (row) => row.parent_id === item.id && row.gear_id === mod.id,
-                        ),
-                    )
-                    .map((mod) => (
-                      <option key={mod.id} value={mod.id}>
-                        {tr(mod.name)} ({mod.cost}¥)
-                      </option>
-                    ))}
-                </select>
-                <button
-                  className="btn"
-                  disabled={!slotPick[`${item.id}-acc`]}
-                  onClick={() => {
-                    const wareId = slotPick[`${item.id}-acc`];
-                    const spec = (catalog.gear || []).find((mod) => mod.id === wareId);
-                    if (!spec) return;
-                    patch({
-                      gear: [
-                        ...(ch.gear || []),
-                        {
-                          gear_id: spec.id,
-                          rating: Math.max(1, spec.minrating || 1),
-                          parent_id: item.id,
-                        },
-                      ],
-                    });
-                    setSlotPick((cur) => ({ ...cur, [`${item.id}-acc`]: "" }));
-                  }}
-                >
-                  装着
-                </button>
-              </div>
+              <AddonSelect
+                rowName={tr(item.name)}
+                prompt="アクセサリを追加"
+                tr={tr}
+                // PI-Tac programs are core to that device even though they are
+                // not SR5-sourced, so they come through regardless. The rest
+                // used to appear only while the catalog search box below had
+                // text in it — two unrelated controls wired together.
+                options={(catalog.gear || []).filter(
+                  (mod) =>
+                    (mod.category === "Commlink Accessories" ||
+                      (mod.required_categories || []).includes("Commlinks") ||
+                      (item.category === "PI-Tac" && mod.category === "PI-Tac Programs")) &&
+                    !(d.gear || []).some(
+                      (row) => row.parent_id === item.id && row.gear_id === mod.id,
+                    ),
+                )}
+                onAdd={(mod) =>
+                  patch({
+                    gear: [
+                      ...(ch.gear || []),
+                      {
+                        gear_id: mod.id,
+                        rating: Math.max(1, mod.minrating || 1),
+                        parent_id: item.id,
+                      },
+                    ],
+                  })
+                }
+              />
             </div>
             <button
               className="btn danger"
@@ -272,48 +209,25 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
         ))}
       </>
 
-      <input
-        type="search"
-        placeholder="通信機を検索"
-        aria-label="通信機を検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-
-      <div className="quality-list">
-        {(catalog.commlinks || [])
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return item.source === "SR5";
+      <CatalogPicker
+        items={catalog.commlinks || []}
+        label="通信機を検索"
+        tr={tr}
+        describe={(item) => (
+          <>
+            {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} /{" "}
+            {item.cost}¥ / {item.avail || "-"} / {item.source}
+          </>
+        )}
+        onAdd={(item) =>
+          patch({
+            commlinks: [
+              ...(ch.commlinks || []),
+              { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
+            ],
           })
-          .slice(0, 40)
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW{" "}
-                  {item.firewall} / {item.cost}¥ / {item.avail || "-"} / {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    commlinks: [
-                      ...(ch.commlinks || []),
-                      { gear_id: item.id, rating: Math.max(1, item.minrating || 1) },
-                    ],
-                  })
-                }
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
+        }
+      />
     </>
   );
 }
