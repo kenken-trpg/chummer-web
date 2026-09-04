@@ -88,6 +88,7 @@ export function MiscDrugsGear({
                     ) : null}
                     {item.needs_extra && item.extra_kind === "skill" ? (
                       <select
+                        aria-label={`${tr(item.name)}: 技能`}
                         value={item.extra || ""}
                         onChange={(e) =>
                           patch({
@@ -207,6 +208,7 @@ export function MiscDrugsGear({
                   {addons.length ? (
                     <div className="cyber-controls">
                       <select
+                        aria-label={`${tr(item.name)}: ${mode === "drugs" ? "グレード／追加" : "追加ギア"}`}
                         value={slotPick[item.id] || ""}
                         onChange={(e) =>
                           setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
@@ -230,6 +232,7 @@ export function MiscDrugsGear({
                       {addonSpec?.extra_kind === "skill" || addonSpec?.extra_kind === "text" ? (
                         addonSpec.extra_kind === "skill" ? (
                           <select
+                            aria-label={`${tr(item.name)}: 対象`}
                             value={extraPick[item.id] || ""}
                             onChange={(e) =>
                               setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
@@ -384,6 +387,7 @@ export function MiscDrugsGear({
                     <div className="cyber-controls">
                       {item.extra_kind === "skill" ? (
                         <select
+                          aria-label={`${tr(item.name)}: 技能`}
                           value={extraPick[`buy-${item.id}`] || ""}
                           onChange={(e) =>
                             setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: e.target.value }))

@@ -170,6 +170,7 @@ export function VehicleDroneGear({
                       {wareOptions.length ? (
                         <div className="slot-picker">
                           <select
+                            aria-label={`${tr(mod.name)}: 強化を追加`}
                             value={chosenWare}
                             onChange={(e) =>
                               setSlotPick((cur) => ({ ...cur, [warePickKey]: e.target.value }))
@@ -219,6 +220,7 @@ export function VehicleDroneGear({
                 {addons.length ? (
                   <div className="cyber-controls">
                     <select
+                      aria-label={`${tr(item.name)}: 改造を追加`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
@@ -284,6 +286,7 @@ export function VehicleDroneGear({
                     )}
                     <div className="cyber-controls">
                       <select
+                        aria-label={`${tr(mount.name)}: 武器を搭載`}
                         value={mount.weapon_install_id || ""}
                         onChange={(e) =>
                           patch({
@@ -311,6 +314,7 @@ export function VehicleDroneGear({
                 {sizes.length ? (
                   <div className="cyber-controls">
                     <select
+                      aria-label={`${tr(item.name)}: 武器マウントを追加`}
                       value={slotPick[`${item.id}-mount`] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [`${item.id}-mount`]: e.target.value }))
@@ -382,6 +386,7 @@ export function VehicleDroneGear({
                       {sensorAddons.length ? (
                         <div className="cyber-controls">
                           <select
+                            aria-label={`${tr(sensor.name)}: 機能を追加`}
                             value={slotPick[sensor.id] || ""}
                             onChange={(e) =>
                               setSlotPick((cur) => ({ ...cur, [sensor.id]: e.target.value }))
@@ -467,6 +472,7 @@ export function VehicleDroneGear({
                 ))}
                 <div className="cyber-controls">
                   <select
+                    aria-label={`${tr(item.name)}: 内装ギアを追加`}
                     value={slotPick[`${item.id}-gear`] || ""}
                     onChange={(e) =>
                       setSlotPick((cur) => ({ ...cur, [`${item.id}-gear`]: e.target.value }))

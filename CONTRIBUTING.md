@@ -38,6 +38,8 @@ frontend/               Next.js 15 (App Router) + React 19 + TypeScript
   app/page.tsx          top-level editor shell + state/patch plumbing
   app/share/            read-only share view (state rides in the URL fragment)
   components/character/  sidebar, shared pickers, tabs/ (one file per tab)
+    CatalogPicker.tsx    chips + search + truncated list; PickerList/Footnote
+    AddonSelect.tsx      the per-row "pick a mod, press 装着" pair
   lib/                   api client, types, i18n, cocofolia export, helpers
   lib/character/         editor hook, IndexedDB store, sheet + share codecs
 docs/                   architecture, data pipeline, "how to add a rule"
@@ -129,9 +131,14 @@ Assert accessible names by **role + name** in tests (`getByRole("combobox",
 { name: … })`), not by class or DOM order — that way a dropped label fails a
 test instead of passing silently.
 
-Not done yet: the per-row `<select>` pickers in the gear and quality tabs
-(slot / ammo / extra) still have no accessible name of their own — they read as
-bare "combobox". They need a name built from the row they belong to.
+The per-row pickers (slot / ammo / extra) name themselves after the row they
+belong to — `Ares Predator V: アクセサリを追加` — which is what
+`<AddonSelect>` is for. Where a panel still writes its own `<select>`, give it
+the same `aria-label={`${tr(row.name)}: …`}` shape.
+
+Not done yet: `tabs/qualities/QualityExtraEditor.tsx` has a dozen bare
+`<select>`s (the quality-specific "pick a skill / attribute / side" editors).
+They need the same treatment.
 
 ### Coverage
 

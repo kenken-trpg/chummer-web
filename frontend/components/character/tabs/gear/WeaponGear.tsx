@@ -109,6 +109,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 {!fromGear && addons.length ? (
                   <div className="cyber-controls">
                     <select
+                      aria-label={`${tr(item.name)}: アクセサリを追加`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
@@ -204,6 +205,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 {!fromGear && ammoAddons.length ? (
                   <div className="cyber-controls">
                     <select
+                      aria-label={`${tr(item.name)}: 弾薬を追加`}
                       value={slotPick[ammoKey] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [ammoKey]: e.target.value }))
