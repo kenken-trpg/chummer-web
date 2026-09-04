@@ -8,10 +8,10 @@ import {
   SHARE_PREFIX,
   SHARE_VERSION,
   ShareError,
-  shareErrorMessage,
   toSharePayload,
 } from "@/lib/character/share";
 import { MESSAGES, type MsgKey } from "@/lib/i18n/messages";
+import { errorMessage } from "@/lib/errors";
 
 /** The `code` of the `ShareError` a promise rejects with. */
 async function codeOf(p: Promise<unknown>): Promise<string> {
@@ -98,11 +98,11 @@ describe("error messages", () => {
 
   it("translates a ShareError and passes other errors through", () => {
     const ui = (k: MsgKey) => `ui:${k}`;
-    expect(shareErrorMessage(new ShareError("corrupt"), ui, "share.err.load")).toBe(
+    expect(errorMessage(new ShareError("corrupt"), ui, "share.err.load")).toBe(
       "ui:share.err.corrupt",
     );
-    expect(shareErrorMessage(new Error("boom"), ui, "share.err.load")).toBe("boom");
-    expect(shareErrorMessage("???", ui, "share.err.load")).toBe("ui:share.err.load");
+    expect(errorMessage(new Error("boom"), ui, "share.err.load")).toBe("boom");
+    expect(errorMessage("???", ui, "share.err.load")).toBe("ui:share.err.load");
   });
 });
 

@@ -56,21 +56,6 @@ export const SHARE_ERROR_KEYS: Record<ShareErrorCode, MsgKey> = {
   empty: "share.empty",
 };
 
-/**
- * A user-facing message for anything thrown while sharing. `ShareError` is
- * translated; anything else (a fetch failure, say) already carries a message,
- * and `fallback` covers the rest.
- */
-export function shareErrorMessage(
-  e: unknown,
-  ui: (key: MsgKey) => string,
-  fallback: MsgKey,
-): string {
-  if (e instanceof ShareError) return ui(SHARE_ERROR_KEYS[e.code]);
-  if (e instanceof Error && e.message) return e.message;
-  return ui(fallback);
-}
-
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 

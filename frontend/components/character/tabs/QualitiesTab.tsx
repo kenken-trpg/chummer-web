@@ -205,7 +205,7 @@ export function QualitiesTab({
             !added &&
             !!q.is_way &&
             (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
-          const blocked = canAddMore ? qualityBlockReason(q, qualityCtx) : "";
+          const blocked = canAddMore ? qualityBlockReason(q, qualityCtx, ui) : "";
           return (
             <div className="quality-item" key={q.id}>
               <div>

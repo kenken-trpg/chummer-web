@@ -1,3 +1,4 @@
+import { testUi } from "@/tests/fixtures";
 import {
   dropRemovedWarePicks,
   dropSkillPicksForPrefix,
@@ -116,13 +117,15 @@ describe("qualityTreeMet / qualityBlockReason", () => {
   });
   it("qualityBlockReason: unmet required / matched forbidden / clear", () => {
     const ctx = baseCtx({ magenabled: true });
-    expect(qualityBlockReason({ required_tree: [{ tag: "magenabled" }] } as any, ctx)).toBe("");
-    expect(qualityBlockReason({ required_tree: [{ tag: "resenabled" }] } as any, ctx)).toBe(
+    expect(qualityBlockReason({ required_tree: [{ tag: "magenabled" }] } as any, ctx, testUi)).toBe(
+      "",
+    );
+    expect(qualityBlockReason({ required_tree: [{ tag: "resenabled" }] } as any, ctx, testUi)).toBe(
       "前提を満たしていません",
     );
-    expect(qualityBlockReason({ forbidden_tree: [{ tag: "magenabled" }] } as any, ctx)).toBe(
-      "現在のキャラクターでは取れません",
-    );
+    expect(
+      qualityBlockReason({ forbidden_tree: [{ tag: "magenabled" }] } as any, ctx, testUi),
+    ).toBe("現在のキャラクターでは取れません");
   });
 });
 

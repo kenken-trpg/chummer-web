@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import CharacterSheet, { type SheetLayout } from "@/components/CharacterSheet";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
 import { api } from "@/lib/api";
-import { readShareValue, decodeShare, ShareError, shareErrorMessage } from "@/lib/character/share";
+import { readShareValue, decodeShare, ShareError } from "@/lib/character/share";
+import { errorMessage } from "@/lib/errors";
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
 import { useUiText } from "@/lib/i18n";
@@ -43,7 +44,7 @@ export default function SharePage() {
         const [catalog, character] = await Promise.all([api.catalog(), api.preview(payload)]);
         if (live) setState({ catalog, character });
       } catch (e) {
-        if (live) setError(shareErrorMessage(e, ui, "share.err.load"));
+        if (live) setError(errorMessage(e, ui, "share.err.load"));
       }
     })();
     return () => {
@@ -63,7 +64,7 @@ export default function SharePage() {
       } catch {}
       router.push("/");
     } catch (e) {
-      setError(shareErrorMessage(e, ui, "share.err.adopt"));
+      setError(errorMessage(e, ui, "share.err.adopt"));
       setAdopting(false);
     }
   }

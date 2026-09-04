@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
-import { buildShareUrl, shareErrorMessage, SHARE_URL_WARN } from "@/lib/character/share";
+import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
+import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, makeTr, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
@@ -74,7 +75,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
           void refreshRoster();
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "起動に失敗しました");
+        setError(errorMessage(e, ui, "app.err.boot"));
       }
     })();
     // one-time bootstrap: load catalog + roster, then open the last / a new
@@ -89,7 +90,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       onCharacterOpened?.();
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "読込に失敗しました");
+      setError(errorMessage(e, ui, "app.err.load"));
     }
   }
   /** Returns false when the backend refused — `deleteCurrent` needs to know,
@@ -102,13 +103,13 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       setError(null);
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : ui("app.newFailed"));
+      setError(errorMessage(e, ui, "app.newFailed"));
       return false;
     }
   }
   async function deleteCurrent() {
     if (!ch) return;
-    if (!window.confirm(`「${ch.name || "無名"}」を削除しますか？`)) return;
+    if (!window.confirm(ui("app.confirm.delete", { name: ch.name || ui("app.unnamed") }))) return;
     const others = roster.filter((r) => r.id !== ch.id);
     await api.remove(ch.id).catch(() => {});
     // deleting the last one mints a replacement; if the backend is down that
@@ -119,17 +120,18 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   }
   async function duplicateCurrent() {
     if (!ch) return;
-    const name = window.prompt("複製後の名前", `${ch.name || "無名"} のコピー`);
+    const fallbackName = ui("app.copyOf", { name: ch.name || ui("app.unnamed") });
+    const name = window.prompt(ui("app.prompt.duplicateName"), fallbackName);
     if (name === null) return;
     try {
       const { id: _id, derived: _d, ...rest } = ch;
       void _id;
       void _d;
-      remember(await api.import({ ...rest, name: name || `${ch.name || "無名"} のコピー` }));
+      remember(await api.import({ ...rest, name: name || fallbackName }));
       onCharacterOpened?.();
       void refreshRoster();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "複製に失敗しました");
+      setError(errorMessage(e, ui, "app.err.duplicate"));
     }
   }
 
@@ -144,7 +146,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       lastCommitted.current = next;
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "更新に失敗しました");
+      setError(errorMessage(e, ui, "app.err.patch"));
     } finally {
       busy.current = false;
     }
@@ -159,7 +161,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       lastCommitted.current = next;
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "取り消しに失敗しました");
+      setError(errorMessage(e, ui, "app.err.undo"));
     } finally {
       busy.current = false;
     }
@@ -196,7 +198,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       a.click();
       URL.revokeObjectURL(a.href);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "書き出しに失敗しました");
+      setError(errorMessage(e, ui, "app.err.export"));
     }
   }
 
@@ -217,7 +219,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       setNotice(notes.length ? notes.join(" ") : null);
     } catch (e) {
       setNotice(null);
-      setError(shareErrorMessage(e, ui, "share.err.build"));
+      setError(errorMessage(e, ui, "share.err.build"));
     }
   }
 
@@ -245,7 +247,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         onCharacterOpened?.();
         if (warnings.length) {
           setError(
-            `取り込み時の未対応 ${warnings.length}件 — ` + warnings.slice(0, 15).join(" / "),
+            ui("app.importWarnings", {
+              count: warnings.length,
+              details: warnings.slice(0, 15).join(" / "),
+            }),
           );
         }
       } else {
@@ -254,30 +259,30 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       }
       void refreshRoster();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "読込に失敗しました");
+      setError(errorMessage(e, ui, "app.err.load"));
     }
   }
 
   async function onPortraitFile(file: File) {
     if (!ch) return;
     if (!/^image\//.test(file.type)) {
-      setError("画像ファイルを選んでください");
+      setError(ui("app.err.notImage"));
       return;
     }
     if (file.size > 3_000_000) {
-      setError("画像が大きすぎます（3MB まで）");
+      setError(ui("app.err.imageTooBig"));
       return;
     }
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const r = new FileReader();
         r.onload = () => resolve(String(r.result || ""));
-        r.onerror = () => reject(r.error ?? new Error("読込に失敗しました"));
+        r.onerror = () => reject(r.error ?? new MessageError("app.err.load"));
         r.readAsDataURL(file);
       });
       await patch({ portrait: dataUrl });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "画像の読込に失敗しました");
+      setError(errorMessage(e, ui, "app.err.portraitRead"));
     }
   }
 

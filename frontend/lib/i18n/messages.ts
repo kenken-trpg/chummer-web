@@ -1038,6 +1038,45 @@ const JA = {
 
   "fmt.melee": "近接",
   "fmt.ranged": "遠隔",
+
+  // --- text-only sheet (lib/character/text-sheet.ts) -----------------------
+  "txt.limits": "リミット 物{physical}/精{mental}/社{social}",
+  "txt.cm": "CM P{physical}/S{stun}",
+  "txt.movement": "移動 歩{walk}/走{run}",
+  "txt.pool": "プール",
+  "txt.cyber": "サイバー",
+  "txt.bio": "バイオ",
+  "txt.ess": "（ESS {essence}）",
+  "txt.rcTotal": " / 合計RC {rc}",
+  "txt.vehicle":
+    "機動{handling} 速{speed} 加{accel} 車体{body} 装甲{armor} 操縦{pilot} センサー{sensor} CM{cm}",
+  "txt.vehicleMods": "  改造: {list}",
+  "txt.licenses": "  ライセンス: {list}",
+  "txt.drugsActive": "使用中のドラッグ（反映済み）",
+  "txt.duration": " / 持続 {duration}",
+  "txt.money": "ニューエン {nuyen}¥  カルマ残 {remaining}/{pool}",
+
+  // --- editor errors, prompts and confirmations ----------------------------
+  // `lib/api` and `lib/character/quality` have no locale and no React, so they
+  // raise a `MessageError` carrying one of these keys; the editor renders it.
+  "app.err.boot": "起動に失敗しました",
+  "app.err.load": "読込に失敗しました",
+  "app.err.duplicate": "複製に失敗しました",
+  "app.err.patch": "更新に失敗しました",
+  "app.err.undo": "取り消しに失敗しました",
+  "app.err.export": "書き出しに失敗しました",
+  "app.err.portraitRead": "画像の読込に失敗しました",
+  "app.err.notImage": "画像ファイルを選んでください",
+  "app.err.imageTooBig": "画像が大きすぎます（3MB まで）",
+  "app.err.notFound": "キャラクターが見つかりません",
+  "app.unnamed": "無名",
+  "app.confirm.delete": "「{name}」を削除しますか？",
+  "app.prompt.duplicateName": "複製後の名前",
+  "app.copyOf": "{name} のコピー",
+  "app.importWarnings": "取り込み時の未対応 {count}件 — {details}",
+
+  "qual.blockPrereq": "前提を満たしていません",
+  "qual.blockForbidden": "現在のキャラクターでは取れません",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -2047,6 +2086,41 @@ const EN: Catalog = {
 
   "fmt.melee": "Melee",
   "fmt.ranged": "Ranged",
+
+  "txt.limits": "Limits P{physical}/M{mental}/S{social}",
+  "txt.cm": "CM P{physical}/S{stun}",
+  "txt.movement": "Movement walk {walk} / run {run}",
+  "txt.pool": "pool",
+  "txt.cyber": "cyber",
+  "txt.bio": "bio",
+  "txt.ess": " (ESS {essence})",
+  "txt.rcTotal": " / total RC {rc}",
+  "txt.vehicle":
+    "Han {handling} Spd {speed} Acc {accel} Bod {body} Arm {armor} Pil {pilot} Sen {sensor} CM {cm}",
+  "txt.vehicleMods": "  mods: {list}",
+  "txt.licenses": "  licences: {list}",
+  "txt.drugsActive": "Active drugs (already applied)",
+  "txt.duration": " / lasts {duration}",
+  "txt.money": "Nuyen {nuyen}¥  karma left {remaining}/{pool}",
+
+  "app.err.boot": "Could not start up.",
+  "app.err.load": "Could not load.",
+  "app.err.duplicate": "Could not duplicate.",
+  "app.err.patch": "Could not save the change.",
+  "app.err.undo": "Could not undo.",
+  "app.err.export": "Could not export.",
+  "app.err.portraitRead": "Could not read the image.",
+  "app.err.notImage": "Choose an image file.",
+  "app.err.imageTooBig": "That image is too large (3MB max).",
+  "app.err.notFound": "No such character.",
+  "app.unnamed": "Unnamed",
+  "app.confirm.delete": "Delete \u201c{name}\u201d?",
+  "app.prompt.duplicateName": "Name for the copy",
+  "app.copyOf": "{name} copy",
+  "app.importWarnings": "{count} unsupported on import — {details}",
+
+  "qual.blockPrereq": "Prerequisites not met",
+  "qual.blockForbidden": "Not available to this character",
 };
 
 export const MESSAGES: Record<Locale, Catalog> = {

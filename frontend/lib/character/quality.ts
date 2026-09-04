@@ -1,5 +1,6 @@
 import type { Catalog, QualityReqNode, WareInstall } from "@/lib/types";
 import { poolRating } from "@/lib/character/format";
+import type { UiFn } from "@/lib/i18n";
 
 export type QualityReqCtx = {
   qualities: Set<string>;
@@ -52,11 +53,15 @@ export function qualityTreeMet(tree: QualityReqNode[] | undefined, ctx: QualityR
   return nodes.every((node) => reqNodeMet(node, ctx));
 }
 
-export function qualityBlockReason(item: Catalog["qualities"][number], ctx: QualityReqCtx) {
+export function qualityBlockReason(
+  item: Catalog["qualities"][number],
+  ctx: QualityReqCtx,
+  ui: UiFn,
+) {
   if ((item.required_tree || []).length && !qualityTreeMet(item.required_tree, ctx))
-    return "前提を満たしていません";
+    return ui("qual.blockPrereq");
   if ((item.forbidden_tree || []).length && qualityTreeMet(item.forbidden_tree, ctx))
-    return "現在のキャラクターでは取れません";
+    return ui("qual.blockForbidden");
   return "";
 }
 
