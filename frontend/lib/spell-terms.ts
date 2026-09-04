@@ -1,71 +1,82 @@
-// SR5 spell metadata → Japanese. Fixed vocabularies from the rulebook, so a
-// static map is enough (no lang-file round-trip).
+// SR5 spell metadata → a display term. Fixed vocabularies from the rulebook,
+// so a static map is enough (no lang-file round-trip) — but the map holds
+// message keys rather than one language's words, and the caller supplies `ui`.
+// A code the rulebook does not define passes through unchanged.
 
-const SPELL_TYPE: Record<string, string> = {
-  M: "マナ",
-  P: "物理",
+import type { MsgKey, UiFn } from "@/lib/i18n";
+
+const SPELL_TYPE: Record<string, MsgKey> = {
+  M: "sr.type.mana",
+  P: "sr.type.physical",
 };
 
-const SPELL_RANGE: Record<string, string> = {
-  T: "接触",
-  "T (A)": "接触(範囲)",
-  LOS: "視認",
-  "LOS (A)": "視認(範囲)",
-  S: "自身",
-  "S (A)": "自身(範囲)",
-  Special: "特殊",
+const SPELL_RANGE: Record<string, MsgKey> = {
+  T: "sr.range.touch",
+  "T (A)": "sr.range.touchArea",
+  LOS: "sr.range.los",
+  "LOS (A)": "sr.range.losArea",
+  S: "sr.range.self",
+  "S (A)": "sr.range.selfArea",
+  Special: "sr.range.special",
 };
 
-const SPELL_DURATION: Record<string, string> = {
-  I: "即時",
-  P: "永続",
-  S: "維持",
-  Special: "特殊",
+const SPELL_DURATION: Record<string, MsgKey> = {
+  I: "sr.dur.instant",
+  P: "sr.dur.permanent",
+  S: "sr.dur.sustained",
+  Special: "sr.dur.special",
 };
 
-const SPELL_DESCRIPTOR: Record<string, string> = {
-  Area: "効果範囲",
-  "Extended Area": "拡大効果範囲",
-  Direct: "直接",
-  Indirect: "間接",
-  Elemental: "元素",
-  Mana: "マナ",
-  Physical: "物理",
-  Realistic: "写実的",
-  Active: "能動",
-  Passive: "受動",
-  Essence: "エッセンス",
-  Environmental: "環境",
-  "Multi-Sense": "多感覚",
-  "Single-Sense": "単感覚",
-  Directional: "指向性",
-  Anchored: "固着",
-  Blood: "血",
-  Mental: "精神",
-  Psychic: "精神感応",
-  "Material Link": "物質リンク",
-  "Organic Link": "有機リンク",
-  Minion: "従僕",
-  Spotter: "観測者",
-  Spell: "呪文",
-  Contractual: "契約",
-  Adept: "アデプト",
-  Negative: "負",
-  Obvious: "顕在",
-  Damaging: "ダメージ有",
-  Geomancy: "地霊術",
-  Object: "物体",
+const SPELL_DESCRIPTOR: Record<string, MsgKey> = {
+  Area: "sr.desc.area",
+  "Extended Area": "sr.desc.extendedArea",
+  Direct: "sr.desc.direct",
+  Indirect: "sr.desc.indirect",
+  Elemental: "sr.desc.elemental",
+  Mana: "sr.desc.mana",
+  Physical: "sr.desc.physical",
+  Realistic: "sr.desc.realistic",
+  Active: "sr.desc.active",
+  Passive: "sr.desc.passive",
+  Essence: "sr.desc.essence",
+  Environmental: "sr.desc.environmental",
+  "Multi-Sense": "sr.desc.multiSense",
+  "Single-Sense": "sr.desc.singleSense",
+  Directional: "sr.desc.directional",
+  Anchored: "sr.desc.anchored",
+  Blood: "sr.desc.blood",
+  Mental: "sr.desc.mental",
+  Psychic: "sr.desc.psychic",
+  "Material Link": "sr.desc.materialLink",
+  "Organic Link": "sr.desc.organicLink",
+  Minion: "sr.desc.minion",
+  Spotter: "sr.desc.spotter",
+  Spell: "sr.desc.spell",
+  Contractual: "sr.desc.contractual",
+  Adept: "sr.desc.adept",
+  Negative: "sr.desc.negative",
+  Obvious: "sr.desc.obvious",
+  Damaging: "sr.desc.damaging",
+  Geomancy: "sr.desc.geomancy",
+  Object: "sr.desc.object",
 };
 
-export const spellType = (v?: string | null): string => (v && SPELL_TYPE[v]) || v || "";
-export const spellRange = (v?: string | null): string => (v && SPELL_RANGE[v]) || v || "";
-export const spellDuration = (v?: string | null): string => (v && SPELL_DURATION[v]) || v || "";
+const lookup =
+  (table: Record<string, MsgKey>) =>
+  (v: string | null | undefined, ui: UiFn): string => {
+    const key = v ? table[v] : undefined;
+    return key ? ui(key) : v || "";
+  };
 
-/** "Indirect, Elemental, Area" → "間接・元素・効果範囲" */
-export const spellDescriptors = (v?: string | null): string =>
+export const spellType = lookup(SPELL_TYPE);
+export const spellRange = lookup(SPELL_RANGE);
+export const spellDuration = lookup(SPELL_DURATION);
+
+/** "Indirect, Elemental, Area" → "間接・元素・効果範囲" / "Indirect · Elemental · Area" */
+export const spellDescriptors = (v: string | null | undefined, ui: UiFn): string =>
   (v || "")
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean)
-    .map((t) => SPELL_DESCRIPTOR[t] || t)
-    .join("・");
+    .map((t) => (SPELL_DESCRIPTOR[t] ? ui(SPELL_DESCRIPTOR[t]) : t))
+    .join(ui("common.termSep"));

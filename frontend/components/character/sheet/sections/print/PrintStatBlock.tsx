@@ -88,7 +88,7 @@ export function PrintStatBlock(s: SheetData) {
         <p className="sheet-note">
           {ui("print.lifestyle", {
             value: [
-              `${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}`,
+              `${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment, ui)}`,
               d.lifestyle.lp_max
                 ? ui("sheet.lifestyleLp", {
                     used: d.lifestyle.lp_used || 0,

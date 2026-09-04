@@ -3,7 +3,7 @@ import { useState } from "react";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { WareRow } from "@/components/character/WareRow";
-import { R5_SLOT_LABELS } from "@/lib/character/constants";
+import { r5SlotLabel } from "@/lib/character/constants";
 import {
   dropDrone,
   dropTree,
@@ -84,7 +84,7 @@ export function VehicleDroneGear({
                             max: mod.capacity_max,
                           })
                         : ""}
-                      {R5_SLOT_LABELS[mod.category] ? ` / ${R5_SLOT_LABELS[mod.category]}` : null}
+                      {r5SlotLabel(mod.category, ui) ? ` / ${r5SlotLabel(mod.category, ui)}` : null}
                       {mod.included ? null : (
                         <>
                           {" "}

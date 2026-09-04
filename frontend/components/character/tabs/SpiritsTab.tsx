@@ -1,6 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
-import { SPIRIT_ROLE_JA } from "@/lib/character/constants";
+import { spiritRoleLabel } from "@/lib/character/constants";
 import { optionalNumber, testLine } from "@/lib/character/format";
 
 export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -48,7 +48,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               {" / "}
               {item.source}
             </div>
-            {item.test ? <div className="muted">{testLine(item.test)}</div> : null}
+            {item.test ? <div className="muted">{testLine(item.test, ui)}</div> : null}
             {item.attributes ? (
               <div className="muted">
                 {["BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA"]
@@ -179,8 +179,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(spec.name)}</b>
                 <div className="muted">
-                  {spec.name} / {SPIRIT_ROLE_JA[role] || role} / {ui("spirit.tests")} /{" "}
-                  {spec.source}
+                  {spec.name} / {spiritRoleLabel(role, ui)} / {ui("spirit.tests")} / {spec.source}
                 </div>
                 <div className="muted">
                   {["BOD", "AGI", "REA", "STR"]

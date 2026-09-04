@@ -1,6 +1,7 @@
 import type { WareCatalogItem, WareInstall } from "@/lib/types";
 import { DEFAULT_ARRAY_ORDER, VEHICLE_INTERIOR_CATS } from "@/lib/character/constants";
 import { removeWareTree } from "@/lib/character/ware";
+import type { UiFn } from "@/lib/i18n";
 
 export function swapMatrixOrder(
   order: string[] | undefined,
@@ -200,18 +201,21 @@ export function ammoFits(
   return types.includes(weapon.weapon_type || "");
 }
 
-export function weaponLine(item: {
-  type?: string;
-  accuracy?: string;
-  damage?: string;
-  ap?: string;
-  mode?: string;
-  ammo?: string;
-  reach?: string;
-  rc?: string;
-}) {
+export function weaponLine(
+  item: {
+    type?: string;
+    accuracy?: string;
+    damage?: string;
+    ap?: string;
+    mode?: string;
+    ammo?: string;
+    reach?: string;
+    rc?: string;
+  },
+  ui: UiFn,
+) {
   const bits: string[] = [];
-  if (item.type) bits.push(item.type === "Melee" ? "近接" : "遠隔");
+  if (item.type) bits.push(ui(item.type === "Melee" ? "fmt.melee" : "fmt.ranged"));
   if (item.accuracy && item.accuracy !== "0") bits.push(`Acc ${item.accuracy}`);
   if (item.damage) bits.push(item.damage);
   if (item.ap && item.ap !== "-" && item.ap !== "0") bits.push(`AP ${item.ap}`);

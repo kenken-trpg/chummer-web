@@ -1,5 +1,6 @@
 import type { Character, LimitModifier, MagicTestInfo, SpecialArmor } from "@/lib/types";
-import { ATTRS, REDLINER_SLOT_JA } from "@/lib/character/constants";
+import { ATTRS, redlinerSlotLabel } from "@/lib/character/constants";
+import type { MsgKey, UiFn } from "@/lib/i18n";
 
 export function formatPoints(value: number) {
   const rounded = Math.round(value * 100) / 100;
@@ -22,10 +23,10 @@ export function vehicleCM(body?: string | number) {
   return 12 + Math.ceil(leadInt(body) / 2);
 }
 
-export function kindLabel(kind?: string) {
-  if (kind === "ritual") return "儀式";
-  if (kind === "enchantment") return "エンチャント";
-  return "呪文";
+export function kindLabel(kind: string | undefined, ui: UiFn) {
+  if (kind === "ritual") return ui("sr.kind.ritual");
+  if (kind === "enchantment") return ui("sr.kind.enchantment");
+  return ui("sr.kind.spell");
 }
 
 export function optionalNumber(value: string): number | null {
@@ -34,42 +35,46 @@ export function optionalNumber(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function testLine(test?: MagicTestInfo | null, drainLabel = "ドレイン") {
+export function testLine(
+  test: MagicTestInfo | null | undefined,
+  ui: UiFn,
+  drainKey: MsgKey = "fmt.drain",
+) {
   if (!test) return "";
   const drain =
-    test.drain == null ? `2×相手ヒット（最低2）` : `${test.drain}${test.drain_code || ""}`;
-  const net = test.net == null ? "" : ` ・ 正味 ${test.net}`;
-  const miss = test.missing ? " ・ 技能なし" : "";
-  const days = test.days ? ` ・ ${test.days}日` : "";
+    test.drain == null ? ui("fmt.drainOpposed") : `${test.drain}${test.drain_code || ""}`;
+  const net = test.net == null ? "" : ui("fmt.net", { net: test.net });
+  const miss = test.missing ? ui("fmt.noSkill") : "";
+  const days = test.days ? ui("fmt.days", { days: test.days }) : "";
   const vs = test.vs ? ` vs ${test.vs}` : "";
-  return `${test.skill} ${test.pool} [${test.limit}]${vs} → ${drainLabel} ${drain}${net}${days}${miss}`;
+  return `${test.skill} ${test.pool} [${test.limit}]${vs} → ${ui(drainKey)} ${drain}${net}${days}${miss}`;
 }
 
-export function cfDuration(value?: string) {
-  if (value === "P") return "永続";
-  if (value === "S") return "維持";
-  if (value === "I") return "瞬間";
-  if (value === "E") return "永続";
+export function cfDuration(value: string | undefined, ui: UiFn) {
+  if (value === "P" || value === "E") return ui("sr.dur.permanent");
+  if (value === "S") return ui("sr.dur.sustained");
+  if (value === "I") return ui("sr.dur.instantCf");
   return value || "";
 }
 
-const CF_TARGET: Record<string, string> = {
-  Persona: "ペルソナ",
-  Device: "デバイス",
-  Host: "ホスト",
-  File: "ファイル",
-  Icon: "アイコン",
-  Self: "自身",
-  Sprite: "スプライト",
-  Cyberware: "サイバーウェア",
+const CF_TARGET: Record<string, MsgKey> = {
+  Persona: "sr.cf.persona",
+  Device: "sr.cf.device",
+  Host: "sr.cf.host",
+  File: "sr.cf.file",
+  Icon: "sr.cf.icon",
+  Self: "sr.cf.self",
+  Sprite: "sr.cf.sprite",
+  Cyberware: "sr.cf.cyberware",
 };
 
-export function cfTarget(value?: string) {
-  return (value && CF_TARGET[value]) || value || "";
+export function cfTarget(value: string | undefined, ui: UiFn) {
+  const key = value ? CF_TARGET[value] : undefined;
+  return key ? ui(key) : value || "";
 }
 
-export function lifeIncrement(inc?: string) {
-  return inc === "day" ? "日" : "ヶ月";
+export function lifeIncrement(inc: string | undefined, ui: UiFn) {
+  return ui(inc === "day" ? "fmt.increment.day" : "fmt.increment.month");
 }
 
 export function formatAccessoryCost(cost: string, parentCost?: string) {
@@ -83,75 +88,66 @@ export function formatAccessoryCost(cost: string, parentCost?: string) {
   return `${raw}¥`;
 }
 
-export function formatAmmoCost(cost: string, costfor?: number) {
+export function formatAmmoCost(cost: string, costfor: number | undefined, ui: UiFn) {
   const numeric = Number(cost);
   const yen = Number.isFinite(numeric) ? `${numeric.toLocaleString()}¥` : `${cost}¥`;
-  if (costfor && costfor > 1) return `${yen} / ${costfor}発`;
+  if (costfor && costfor > 1) return ui("fmt.perRounds", { yen, count: costfor });
   return yen;
 }
-export function specialArmorBits(sa?: SpecialArmor | null): { label: string; value: string }[] {
+export type ArmorBit = { label: string; value: string; immune?: boolean };
+
+/** Elemental + chemical protection rows. A vector whose toxin and pathogen
+ *  ratings match collapses into one "chemical (…)" row — the four vectors
+ *  behave identically, so they are one loop rather than four copies. */
+export function specialArmorBits(sa: SpecialArmor | null | undefined, ui: UiFn): ArmorBit[] {
   if (!sa) return [];
-  const rows: { label: string; value: string }[] = [];
-  if (sa.fire) rows.push({ label: "耐火", value: `+${sa.fire}` });
-  if (sa.cold) rows.push({ label: "断熱", value: `+${sa.cold}` });
-  if (sa.electricity) rows.push({ label: "絶縁", value: `+${sa.electricity}` });
-  if (sa.radiation) rows.push({ label: "放射線", value: `+${sa.radiation}` });
-  const toxinContact = sa.toxin_contact || 0;
-  const toxinIngest = sa.toxin_ingestion || 0;
-  const toxinInhale = sa.toxin_inhalation || 0;
-  const toxinInject = sa.toxin_injection || 0;
-  const pathogenContact = sa.pathogen_contact || 0;
-  const pathogenIngest = sa.pathogen_ingestion || 0;
-  const pathogenInhale = sa.pathogen_inhalation || 0;
-  const pathogenInject = sa.pathogen_injection || 0;
-  if (toxinContact && toxinContact === pathogenContact)
-    rows.push({ label: "化学防護(接触)", value: `+${toxinContact}` });
-  else {
-    if (toxinContact) rows.push({ label: "毒素接触", value: `+${toxinContact}` });
-    if (pathogenContact) rows.push({ label: "病原接触", value: `+${pathogenContact}` });
+  const rows: ArmorBit[] = [];
+  const elemental = ["fire", "cold", "electricity", "radiation"] as const;
+  for (const el of elemental) {
+    if (sa[el]) rows.push({ label: ui(`fmt.armor.${el}`), value: `+${sa[el]}` });
   }
-  if (toxinInhale && toxinInhale === pathogenInhale)
-    rows.push({ label: "化学防護(吸入)", value: `+${toxinInhale}` });
-  else {
-    if (toxinInhale) rows.push({ label: "毒素吸入", value: `+${toxinInhale}` });
-    if (pathogenInhale) rows.push({ label: "病原吸入", value: `+${pathogenInhale}` });
-  }
-  if (toxinIngest && toxinIngest === pathogenIngest)
-    rows.push({ label: "化学防護(摂取)", value: `+${toxinIngest}` });
-  else {
-    if (toxinIngest) rows.push({ label: "毒素摂取", value: `+${toxinIngest}` });
-    if (pathogenIngest) rows.push({ label: "病原摂取", value: `+${pathogenIngest}` });
-  }
-  if (toxinInject && toxinInject === pathogenInject)
-    rows.push({ label: "化学防護(注射)", value: `+${toxinInject}` });
-  else {
-    if (toxinInject) rows.push({ label: "毒素注射", value: `+${toxinInject}` });
-    if (pathogenInject) rows.push({ label: "病原注射", value: `+${pathogenInject}` });
+  const vectors = ["contact", "inhalation", "ingestion", "injection"] as const;
+  for (const v of vectors) {
+    const toxin = sa[`toxin_${v}`] || 0;
+    const pathogen = sa[`pathogen_${v}`] || 0;
+    if (toxin && toxin === pathogen) {
+      rows.push({ label: ui(`fmt.armor.chem.${v}`), value: `+${toxin}` });
+      continue;
+    }
+    if (toxin) rows.push({ label: ui(`fmt.armor.toxin.${v}`), value: `+${toxin}` });
+    if (pathogen) rows.push({ label: ui(`fmt.armor.pathogen.${v}`), value: `+${pathogen}` });
   }
   const immunities = sa.immunities || {};
   const contact = Boolean(immunities.toxin_contact && immunities.pathogen_contact);
   const inhale = Boolean(immunities.toxin_inhalation && immunities.pathogen_inhalation);
-  if (contact && inhale) rows.push({ label: "化学密閉", value: "免疫" });
+  const immune = ui("fmt.armor.immune");
+  if (contact && inhale) rows.push({ label: ui("fmt.armor.sealed"), value: immune, immune: true });
   else {
-    if (contact) rows.push({ label: "接触免疫", value: "免疫" });
-    if (inhale) rows.push({ label: "吸入免疫", value: "免疫" });
+    if (contact) rows.push({ label: ui("fmt.armor.immuneContact"), value: immune, immune: true });
+    if (inhale) rows.push({ label: ui("fmt.armor.immuneInhalation"), value: immune, immune: true });
   }
   return rows;
 }
 
-export function specialArmorLine(sa?: SpecialArmor | null): string {
-  return specialArmorBits(sa)
-    .map((row) => (row.value === "免疫" ? row.label : `${row.label} ${row.value}`))
+export function specialArmorLine(sa: SpecialArmor | null | undefined, ui: UiFn): string {
+  return specialArmorBits(sa, ui)
+    .map((row) => (row.immune ? row.label : `${row.label} ${row.value}`))
     .join(" / ");
 }
 
-export function limitModifierLine(mods?: LimitModifier[] | null): string {
+const LIMIT_KEYS: Record<string, MsgKey> = {
+  physical: "fmt.limit.physical",
+  mental: "fmt.limit.mental",
+  social: "fmt.limit.social",
+};
+
+export function limitModifierLine(mods: LimitModifier[] | null | undefined, ui: UiFn): string {
   if (!mods?.length) return "";
-  const names: Record<string, string> = { physical: "物理", mental: "精神", social: "社会" };
   return mods
     .map((mod) => {
       const sign = mod.value > 0 ? `+${mod.value}` : `${mod.value}`;
-      const base = `${names[mod.limit] || mod.limit}リミット ${sign}`;
+      const key = LIMIT_KEYS[mod.limit];
+      const base = ui("fmt.limit.line", { name: key ? ui(key) : mod.limit, sign });
       return mod.condition_label ? `${base}（${mod.condition_label}）` : base;
     })
     .join(" / ");
@@ -168,11 +164,14 @@ export function wareAttrLine(bonus?: Record<string, number> | null): string {
     .join(" / ");
 }
 
-export function availBit(item?: { avail?: string; avail_value?: number } | null): string {
+export function availBit(
+  item: { avail?: string; avail_value?: number } | null | undefined,
+  ui: UiFn,
+): string {
   if (!item) return "";
   if ((item.avail_value || 0) <= 0 && (!item.avail || item.avail === "0")) return "";
   if (!item.avail) return "";
-  return ` / 入手 ${item.avail}`;
+  return ui("fmt.avail", { avail: item.avail });
 }
 
 export function mergeSpecialArmor(
@@ -230,17 +229,17 @@ export function poolRating(pool: Record<string, number>, name: string) {
   return best;
 }
 
-export function limbQualityLine(q: NonNullable<Character["derived"]["limb_quality"]>) {
+export function limbQualityLine(q: NonNullable<Character["derived"]["limb_quality"]>, ui: UiFn) {
   const bits: string[] = [];
-  if (q.limb_bonus) bits.push(`肢 STR/AGI +${q.limb_bonus}`);
+  if (q.limb_bonus) bits.push(ui("fmt.limb.bonus", { bonus: q.limb_bonus }));
   for (const [key, value] of Object.entries(q.attribute_bonus || {})) {
     if (key === "STR" || key === "AGI" || !value) continue;
     bits.push(`${key} +${value}`);
   }
-  if (q.cm_physical) bits.push(`物理CM ${q.cm_physical}`);
-  const effect = bits.length ? bits.join(" ・ ") : "ボーナスなし";
+  if (q.cm_physical) bits.push(ui("fmt.limb.cm", { cm: q.cm_physical }));
+  const effect = bits.length ? bits.join(` ${ui("common.termSep")} `) : ui("fmt.limb.noBonus");
   const parts = (q.include || ["arm", "leg"])
-    .map((slot) => REDLINER_SLOT_JA[slot] || slot)
-    .join("・");
-  return `リム本数 Quality ${q.count}本（${q.pairs}組 / ${parts}） ・ ${effect}`;
+    .map((slot) => redlinerSlotLabel(slot, ui))
+    .join(ui("common.termSep"));
+  return ui("fmt.limb.quality", { count: q.count, pairs: q.pairs, parts, effect });
 }

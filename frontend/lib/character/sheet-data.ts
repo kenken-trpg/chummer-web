@@ -1,6 +1,6 @@
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
-import type { Locale } from "@/lib/i18n";
+import { translate, type Locale, type UiFn } from "@/lib/i18n";
 import { specialArmorBits } from "@/lib/character/format";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
@@ -17,6 +17,8 @@ export type SheetData = {
   layout: SheetLayout;
   tr: (n: string) => string;
   t: TFn;
+  /** Bound to `locale`, for the pure formatters that cannot call the hook. */
+  ui: UiFn;
   d: Character["derived"];
   totals: Record<string, number>;
   enabled: Set<string>;
@@ -59,6 +61,8 @@ export function buildSheetData({
 }): SheetData {
   const d = character.derived;
   const t = makeT(catalog, locale);
+  // the pure formatters take the dictionary rather than the hook
+  const ui: UiFn = (key, vars) => translate(locale, key, vars);
   const totals = d.totals || {};
   const enabled = new Set(d.enabled_tabs || []);
 
@@ -110,7 +114,7 @@ export function buildSheetData({
   const gearChildren = (parentId: string) =>
     (d.gear || []).filter((item) => item.parent_id === parentId);
   const drugChildren = gearChildren;
-  const specialArmor = specialArmorBits(d.special_armor);
+  const specialArmor = specialArmorBits(d.special_armor, ui);
 
   return {
     character,
@@ -118,6 +122,7 @@ export function buildSheetData({
     layout,
     tr,
     t,
+    ui,
     d,
     totals,
     enabled,

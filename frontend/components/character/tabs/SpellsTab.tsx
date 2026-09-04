@@ -60,11 +60,12 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
-              {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} / {item.dv}
+              {item.name} / {kindLabel(item.kind, ui)} / {item.useskill || "Spellcasting"} /{" "}
+              {item.dv}
               {item.range || item.duration
-                ? ` / ${[spellRange(item.range), spellDuration(item.duration)].filter(Boolean).join("・")}`
+                ? ` / ${[spellRange(item.range, ui), spellDuration(item.duration, ui)].filter(Boolean).join("・")}`
                 : ""}
-              {item.descriptor ? ` / ${spellDescriptors(item.descriptor)}` : ""}
+              {item.descriptor ? ` / ${spellDescriptors(item.descriptor, ui)}` : ""}
               {item.damage_mod ? ui("spell.damageMod", { mod: item.damage_mod }) : ""}
               {item.barehanded_adept ? ui("spell.barehanded") : ""}
               {item.spell
@@ -195,7 +196,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                 <div>
                   <b>{tr(item.name)}</b>
                   <div className="muted">
-                    {item.name} / {kindLabel(item.kind)} / {item.useskill || "Spellcasting"} /{" "}
+                    {item.name} / {kindLabel(item.kind, ui)} / {item.useskill || "Spellcasting"} /{" "}
                     {item.dv} / {item.source}
                     {item.required?.length
                       ? ui("spell.required", {

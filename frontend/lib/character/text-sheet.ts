@@ -12,6 +12,7 @@ export type TextArgs = Pick<
   | "d"
   | "tr"
   | "t"
+  | "ui"
   | "totals"
   | "enabled"
   | "activeSkills"
@@ -30,7 +31,7 @@ export type TextArgs = Pick<
 
 /** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
 export function textSheet(x: TextArgs): string {
-  const { character: ch, d, tr, t, totals, enabled } = x;
+  const { character: ch, d, tr, t, ui, totals, enabled } = x;
   const L: string[] = [];
   const line = (s = "") => L.push(s);
   const names = (arr: { name: string }[]) => arr.map((a) => tr(a.name)).join("、");
@@ -135,8 +136,8 @@ export function textSheet(x: TextArgs): string {
     line("=== 術式 ===");
     (d.spells || []).forEach((s) =>
       line(
-        `  ${tr(s.name)}  ${tr(s.category || "")} / ${spellType(s.type)} / ${spellRange(s.range)} / ${spellDuration(s.duration)} / DV ${s.dv}` +
-          `${s.descriptor ? `（${spellDescriptors(s.descriptor)}）` : ""}`,
+        `  ${tr(s.name)}  ${tr(s.category || "")} / ${spellType(s.type, ui)} / ${spellRange(s.range, ui)} / ${spellDuration(s.duration, ui)} / DV ${s.dv}` +
+          `${s.descriptor ? `（${spellDescriptors(s.descriptor, ui)}）` : ""}`,
       ),
     );
     line();
@@ -146,7 +147,7 @@ export function textSheet(x: TextArgs): string {
     line("=== 複合体 ===");
     (d.complex_forms || []).forEach((c) =>
       line(
-        `  ${tr(c.label || c.name)}  ${cfTarget(c.target)} / ${cfDuration(c.duration)} / L${c.level} / FV ${c.fv}`,
+        `  ${tr(c.label || c.name)}  ${cfTarget(c.target, ui)} / ${cfDuration(c.duration, ui)} / L${c.level} / FV ${c.fv}`,
       ),
     );
     line();

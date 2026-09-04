@@ -34,7 +34,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               {" / "}
               {item.source}
             </div>
-            {item.test ? <div className="muted">{testLine(item.test, "フェード")}</div> : null}
+            {item.test ? <div className="muted">{testLine(item.test, ui, "fmt.fade")}</div> : null}
             {item.matrix ? (
               <div className="muted">
                 ATK {item.matrix.attack} ・ SLZ {item.matrix.sleaze} ・ DP{" "}

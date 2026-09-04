@@ -1,7 +1,7 @@
 "use client";
 
 import type { InstalledWare, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
-import { SIDE_JA } from "@/lib/character/constants";
+import { sideLabel } from "@/lib/character/constants";
 import { availBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
@@ -59,12 +59,12 @@ export function WareRow(props: {
       <div>
         <b>
           {tr(item.name)}
-          {item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}
+          {item.side ? `（${sideLabel(item.side, ui)}）` : ""}
           {item.included ? ui("ware.bundledSuffix") : ""}
         </b>
         <div className="muted">
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
-          {availBit(item)} / {item.source}
+          {availBit(item, ui)} / {item.source}
           {capMax > 0 ? (
             <span className="cap">
               {ui("ware.capacityInline", { used: item.capacity_used ?? 0, max: capMax })}

@@ -48,6 +48,7 @@ export default function CharacterSheet({
           d: s.d,
           tr,
           t: s.t,
+          ui: s.ui,
           totals: s.totals,
           enabled: s.enabled,
           activeSkills: s.activeSkills,

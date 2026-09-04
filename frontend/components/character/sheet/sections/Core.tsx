@@ -77,7 +77,7 @@ export function CoreSection(s: SheetData) {
               <span>{ui("sheet.lifestyle")}</span>
               <b>
                 {tr(d.lifestyle.name)} {d.lifestyle.months}
-                {lifeIncrement(d.lifestyle.increment)}
+                {lifeIncrement(d.lifestyle.increment, ui)}
                 {d.lifestyle.lp_max
                   ? ui("sheet.lifestyleLp", {
                       used: d.lifestyle.lp_used || 0,

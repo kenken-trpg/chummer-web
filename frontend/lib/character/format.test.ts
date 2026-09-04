@@ -1,6 +1,12 @@
+import { testUi } from "@/tests/fixtures";
+import { translate, type UiFn } from "@/lib/i18n";
 import {
+  availBit,
   cfDuration,
   cfTarget,
+  kindLabel,
+  limitModifierLine,
+  specialArmorLine,
   lifeIncrement,
   specialArmorBits,
   formatAccessoryCost,
@@ -45,15 +51,15 @@ describe("formatPoints", () => {
 
 describe("cfDuration / cfTarget", () => {
   it("maps complex-form duration codes", () => {
-    expect(cfDuration("P")).toBe("永続");
-    expect(cfDuration("S")).toBe("維持");
-    expect(cfDuration("I")).toBe("瞬間");
-    expect(cfDuration("weird")).toBe("weird");
+    expect(cfDuration("P", testUi)).toBe("永続");
+    expect(cfDuration("S", testUi)).toBe("維持");
+    expect(cfDuration("I", testUi)).toBe("瞬間");
+    expect(cfDuration("weird", testUi)).toBe("weird");
   });
   it("maps known targets, passes unknown through", () => {
-    expect(cfTarget("Persona")).toBe("ペルソナ");
-    expect(cfTarget("Whatever")).toBe("Whatever");
-    expect(cfTarget(undefined)).toBe("");
+    expect(cfTarget("Persona", testUi)).toBe("ペルソナ");
+    expect(cfTarget("Whatever", testUi)).toBe("Whatever");
+    expect(cfTarget(undefined, testUi)).toBe("");
   });
 });
 
@@ -63,8 +69,8 @@ describe("formatAccessoryCost / formatAmmoCost", () => {
     expect(formatAccessoryCost("150")).toBe("150¥");
   });
   it("appends the per-N-rounds divisor", () => {
-    expect(formatAmmoCost("40", 10)).toBe("40¥ / 10発");
-    expect(formatAmmoCost("40")).toBe("40¥");
+    expect(formatAmmoCost("40", 10, testUi)).toBe("40¥ / 10発");
+    expect(formatAmmoCost("40", undefined, testUi)).toBe("40¥");
   });
 });
 
@@ -80,20 +86,20 @@ describe("mergeRatings", () => {
 
 describe("lifeIncrement", () => {
   it("maps day / month", () => {
-    expect(lifeIncrement("day")).toBe("日");
-    expect(lifeIncrement("month")).toBe("ヶ月");
-    expect(lifeIncrement(undefined)).toBe("ヶ月");
+    expect(lifeIncrement("day", testUi)).toBe("日");
+    expect(lifeIncrement("month", testUi)).toBe("ヶ月");
+    expect(lifeIncrement(undefined, testUi)).toBe("ヶ月");
   });
 });
 
 describe("specialArmorBits", () => {
   it("returns [] for no special armor", () => {
-    expect(specialArmorBits(null)).toEqual([]);
-    expect(specialArmorBits(undefined)).toEqual([]);
+    expect(specialArmorBits(null, testUi)).toEqual([]);
+    expect(specialArmorBits(undefined, testUi)).toEqual([]);
   });
 
   it("emits a row per elemental protection", () => {
-    expect(specialArmorBits({ fire: 2, cold: 1 })).toEqual([
+    expect(specialArmorBits({ fire: 2, cold: 1 }, testUi)).toEqual([
       { label: "耐火", value: "+2" },
       { label: "断熱", value: "+1" },
     ]);
@@ -110,14 +116,14 @@ describe("specialArmorBits", () => {
       ["ingestion", "化学防護(摂取)"],
       ["injection", "化学防護(注射)"],
     ] as const) {
-      expect(specialArmorBits({ [`toxin_${vector}`]: 3, [`pathogen_${vector}`]: 3 })).toEqual([
-        { label, value: "+3" },
-      ]);
+      expect(
+        specialArmorBits({ [`toxin_${vector}`]: 3, [`pathogen_${vector}`]: 3 }, testUi),
+      ).toEqual([{ label, value: "+3" }]);
     }
   });
 
   it("keeps the two apart when they differ", () => {
-    expect(specialArmorBits({ toxin_inhalation: 3, pathogen_inhalation: 1 })).toEqual([
+    expect(specialArmorBits({ toxin_inhalation: 3, pathogen_inhalation: 1 }, testUi)).toEqual([
       { label: "毒素吸入", value: "+3" },
       { label: "病原吸入", value: "+1" },
     ]);
@@ -125,14 +131,39 @@ describe("specialArmorBits", () => {
 
   it("collapses full contact + inhalation immunity", () => {
     expect(
-      specialArmorBits({
-        immunities: {
-          toxin_contact: true,
-          pathogen_contact: true,
-          toxin_inhalation: true,
-          pathogen_inhalation: true,
+      specialArmorBits(
+        {
+          immunities: {
+            toxin_contact: true,
+            pathogen_contact: true,
+            toxin_inhalation: true,
+            pathogen_inhalation: true,
+          },
         },
-      }),
-    ).toEqual([{ label: "化学密閉", value: "免疫" }]);
+        testUi,
+      ),
+    ).toEqual([{ label: "化学密閉", value: "免疫", immune: true }]);
+  });
+});
+
+describe("the formatters follow the locale", () => {
+  const enUi: UiFn = (key, vars) => translate("en", key, vars);
+
+  it("renders SR5 vocabulary in English", () => {
+    expect(cfTarget("Persona", enUi)).toBe("Persona");
+    expect(cfDuration("S", enUi)).toBe("Sustained");
+    expect(kindLabel("ritual", enUi)).toBe("Ritual");
+    expect(lifeIncrement("day", enUi)).toBe("day");
+  });
+
+  it("renders composed lines in English", () => {
+    expect(specialArmorLine({ fire: 2 }, enUi)).toBe("Fire +2");
+    expect(limitModifierLine([{ limit: "physical", value: 1 }], enUi)).toBe("Physical limit +1");
+    expect(availBit({ avail: "8R", avail_value: 8 }, enUi)).toBe(" / avail 8R");
+  });
+
+  it("leaves a code the rulebook does not define alone in either locale", () => {
+    expect(cfTarget("Whatever", enUi)).toBe("Whatever");
+    expect(cfTarget("Whatever", testUi)).toBe("Whatever");
   });
 });

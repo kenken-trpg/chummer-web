@@ -50,7 +50,7 @@ export function GearTab(props: TabPanelProps) {
           : ui("gear.availLimit", { limit: d.avail_limit })}
         {d.worn_armor ? ui("gear.worn", { name: tr(d.worn_armor) }) : ""}
         {d.lifestyle
-          ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}`
+          ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment, ui)}`
           : ""}
         {d.commlink ? ` ・ ${tr(d.commlink.name)} DR${d.commlink.device_rating}` : ""}
         {d.cyberdeck ? ` ・ ${tr(d.cyberdeck.name)} DR${d.cyberdeck.device_rating}` : ""}

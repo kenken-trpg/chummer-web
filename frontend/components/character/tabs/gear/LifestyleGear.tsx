@@ -35,8 +35,8 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     ? ui("life.qualityCost", { cost: item.quality_monthly!.toLocaleString() })
                     : ""}
                   {" / "}
-                  {item.monthly.toLocaleString()}¥/{lifeIncrement(item.increment)} × {item.months} ={" "}
-                  {item.nuyen.toLocaleString()}¥
+                  {item.monthly.toLocaleString()}¥/{lifeIncrement(item.increment, ui)} ×{" "}
+                  {item.months} = {item.nuyen.toLocaleString()}¥
                   {item.lp_max
                     ? ui("life.lpUsed", { used: item.lp_used || 0, max: item.lp_max })
                     : ""}
@@ -45,7 +45,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 </div>
                 <div className="cyber-controls">
                   <label>
-                    {lifeIncrement(item.increment)}
+                    {lifeIncrement(item.increment, ui)}
                     <input
                       type="number"
                       min={1}
@@ -186,7 +186,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
         }}
         describe={(item) => (
           <>
-            {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment)}
+            {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment, ui)}
             {item.lp ? ui("life.lp", { lp: item.lp }) : ""}
             {(item.freegrids || []).length
               ? ui("life.freeGrids", { count: item.freegrids!.length })

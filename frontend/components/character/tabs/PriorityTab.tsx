@@ -168,7 +168,7 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
             <tbody>
               {CATS.map((cat) => (
                 <tr key={cat.key}>
-                  <td className="rowhead">{cat.label}</td>
+                  <td className="rowhead">{ui(cat.label)}</td>
                   {LETTERS.map((letter) => {
                     const cell = table[cat.key][letter];
                     const sumMode = (ch.build_method || "Priority") === "SumToTen";

@@ -27,7 +27,8 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
           <div>
             <b>{tr(item.label || item.name)}</b>
             <div className="muted">
-              {item.name} / {cfTarget(item.target)} / {cfDuration(item.duration)} / {item.fv}
+              {item.name} / {cfTarget(item.target, ui)} / {cfDuration(item.duration, ui)} /{" "}
+              {item.fv}
               {ui("cf.fadeAt", {
                 level: item.level,
                 fade:
@@ -37,7 +38,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
               {" / "}
               {item.source}
             </div>
-            {item.test ? <div className="muted">{testLine(item.test, "フェード")}</div> : null}
+            {item.test ? <div className="muted">{testLine(item.test, ui, "fmt.fade")}</div> : null}
             <div className="cyber-controls">
               <label>
                 Level
@@ -127,8 +128,8 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                 <div>
                   <b>{tr(item.name)}</b>
                   <div className="muted">
-                    {item.name} / {cfTarget(item.target)} / {cfDuration(item.duration)} / {item.fv}{" "}
-                    / {item.source}
+                    {item.name} / {cfTarget(item.target, ui)} / {cfDuration(item.duration, ui)} /{" "}
+                    {item.fv} / {item.source}
                     {item.needs_extra ? ui("cf.needsAttr") : ""}
                     {blocked ? ` / ${blocked}` : ""}
                     {paid ? ui("common.karmaCost", { karma: 4 }) : ui("common.freeSlot")}

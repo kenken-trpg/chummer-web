@@ -60,15 +60,15 @@ export function MagicSection(s: SheetData) {
                 {" ・ "}
                 {[
                   tr(item.category || ""),
-                  spellType(item.type),
-                  spellRange(item.range),
-                  spellDuration(item.duration),
+                  spellType(item.type, ui),
+                  spellRange(item.range, ui),
+                  spellDuration(item.duration, ui),
                   item.damage ? ui("sheet.spellDamage", { damage: item.damage }) : "",
                   ui("sheet.spellDrain", { dv: item.dv }),
                 ]
                   .filter(Boolean)
                   .join(" / ")}
-                {item.descriptor ? `（${spellDescriptors(item.descriptor)}）` : ""}
+                {item.descriptor ? `（${spellDescriptors(item.descriptor, ui)}）` : ""}
                 {item.page ? (
                   <span className="sheet-dim">
                     {" "}

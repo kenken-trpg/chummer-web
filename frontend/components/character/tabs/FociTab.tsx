@@ -46,10 +46,10 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             </div>
             {item.formula_test ? (
               <div className="muted">
-                {ui("foci.formulaTest", { test: testLine(item.formula_test) })}
+                {ui("foci.formulaTest", { test: testLine(item.formula_test, ui) })}
               </div>
             ) : null}
-            {item.test ? <div className="muted">{testLine(item.test)}</div> : null}
+            {item.test ? <div className="muted">{testLine(item.test, ui)}</div> : null}
             <div className="cyber-controls">
               <label>
                 Force

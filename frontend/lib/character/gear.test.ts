@@ -1,3 +1,4 @@
+import { testUi } from "@/tests/fixtures";
 import {
   accessoryFits,
   ammoFits,
@@ -163,17 +164,20 @@ describe("weaponDetailsMatch / ammoFits", () => {
 describe("weaponLine", () => {
   it("joins the non-empty stat bits", () => {
     expect(
-      weaponLine({
-        type: "Ranged",
-        accuracy: "5",
-        damage: "8P",
-        ap: "-1",
-        mode: "SA",
-        ammo: "15(c)",
-        reach: "0",
-      }),
+      weaponLine(
+        {
+          type: "Ranged",
+          accuracy: "5",
+          damage: "8P",
+          ap: "-1",
+          mode: "SA",
+          ammo: "15(c)",
+          reach: "0",
+        },
+        testUi,
+      ),
     ).toBe("遠隔 / Acc 5 / 8P / AP -1 / SA / 15(c)");
-    expect(weaponLine({ type: "Melee", accuracy: "0", ap: "-", reach: "1" })).toBe(
+    expect(weaponLine({ type: "Melee", accuracy: "0", ap: "-", reach: "1" }, testUi)).toBe(
       "近接 / Reach 1",
     );
   });

@@ -73,7 +73,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
           })}
         </p>
       ) : null}
-      {d.limb_quality ? <p className="muted">{limbQualityLine(d.limb_quality)}</p> : null}
+      {d.limb_quality ? <p className="muted">{limbQualityLine(d.limb_quality, ui)}</p> : null}
       <div className="option-row">
         <span>{ui("cyber.redliner")}</span>
         <label>

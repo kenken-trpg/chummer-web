@@ -51,7 +51,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       </div>
       {(d.limit_modifiers || []).map((mod, idx) => (
         <div className="stat" key={`${mod.limit}-${mod.condition || ""}-${idx}`}>
-          <span>{limitModifierLine([mod])}</span>
+          <span>{limitModifierLine([mod], ui)}</span>
         </div>
       ))}
       <div className="stat">
@@ -84,7 +84,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
           {d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}
         </b>
       </div>
-      {specialArmorBits(d.special_armor).map((row) => (
+      {specialArmorBits(d.special_armor, ui).map((row) => (
         <div className="stat" key={row.label}>
           <span>{row.label}</span>
           <b>{row.value}</b>

@@ -25,7 +25,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                 (row) => row.mod_id === mod.id || (mod.unique && row.unique === mod.unique),
               ),
           );
-          const specialLine = specialArmorLine(mergeSpecialArmor(item.mods));
+          const specialLine = specialArmorLine(mergeSpecialArmor(item.mods), ui);
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -36,7 +36,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     ? ui("armor.contributes", { value: item.contributes ?? 0 })
                     : ui("armor.notEquipped")}
                   {specialLine ? ` / ${specialLine}` : ""}
-                  {availBit(item)}
+                  {availBit(item, ui)}
                   {item.capacity_max
                     ? ui("gear.capacity", {
                         used: item.capacity_used ?? 0,
@@ -109,13 +109,13 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                             mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost,
                         })
                       : ""}
-                    {specialArmorLine(mod.special_armor)
-                      ? ` / ${specialArmorLine(mod.special_armor)}`
+                    {specialArmorLine(mod.special_armor, ui)
+                      ? ` / ${specialArmorLine(mod.special_armor, ui)}`
                       : ""}
-                    {limitModifierLine(mod.limit_modifiers)
-                      ? ` / ${limitModifierLine(mod.limit_modifiers)}`
+                    {limitModifierLine(mod.limit_modifiers, ui)
+                      ? ` / ${limitModifierLine(mod.limit_modifiers, ui)}`
                       : ""}
-                    {availBit(mod)}
+                    {availBit(mod, ui)}
                     {mod.included ? null : (
                       <>
                         {" "}

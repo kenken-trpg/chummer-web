@@ -45,7 +45,7 @@ export function SidebarEconomy({ d, tr, ui }: SidebarBlockProps) {
           <span>{ui("side.lifestyle")}</span>
           <b>
             {tr(d.lifestyle.name)} {d.lifestyle.months}
-            {lifeIncrement(d.lifestyle.increment)}
+            {lifeIncrement(d.lifestyle.increment, ui)}
           </b>
         </div>
       ) : null}

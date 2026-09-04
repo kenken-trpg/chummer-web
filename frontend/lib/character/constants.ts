@@ -1,11 +1,17 @@
 import type { PriorityCategory, PriorityLetter } from "@/lib/types";
+import type { MsgKey, UiFn } from "@/lib/i18n";
 
-export const CATS: { key: PriorityCategory; label: string }[] = [
-  { key: "Heritage", label: "メタ" },
-  { key: "Attributes", label: "能力値" },
-  { key: "Talent", label: "魔力/共振力" },
-  { key: "Skills", label: "技能" },
-  { key: "Resources", label: "資金" },
+/** Look a code up in a key table, falling back to the code itself. */
+function labeller(table: Record<string, MsgKey>) {
+  return (code: string, ui: UiFn): string => (table[code] ? ui(table[code]) : code);
+}
+
+export const CATS: { key: PriorityCategory; label: MsgKey }[] = [
+  { key: "Heritage", label: "prio.cat.heritage" },
+  { key: "Attributes", label: "prio.cat.attributes" },
+  { key: "Talent", label: "prio.cat.talent" },
+  { key: "Skills", label: "prio.cat.skills" },
+  { key: "Resources", label: "prio.cat.resources" },
 ];
 export const LETTERS: PriorityLetter[] = ["A", "B", "C", "D", "E"];
 export const SUM_TO_TEN_COST: Record<PriorityLetter, number> = { A: 4, B: 3, C: 2, D: 1, E: 0 };
@@ -32,13 +38,14 @@ export const ATTRS = [
 // Attribute labels now come from the lang file via attrLabel()/attrShort()
 // in @/lib/ui-strings (backed by ja-jp.xml + ja_overrides/ui.json).
 export const KNOW_CATS = ["Academic", "Interest", "Language", "Professional", "Street"] as const;
-export const KNOW_CAT_JA: Record<string, string> = {
-  Academic: "学術",
-  Interest: "趣味",
-  Language: "言語",
-  Professional: "職業",
-  Street: "街",
+const KNOW_CAT_KEYS: Record<string, MsgKey> = {
+  Academic: "sr.know.academic",
+  Interest: "sr.know.interest",
+  Language: "sr.know.language",
+  Professional: "sr.know.professional",
+  Street: "sr.know.street",
 };
+export const knowCatLabel = labeller(KNOW_CAT_KEYS);
 
 export const CONTACT_ROLES = [
   "Fixer",
@@ -100,31 +107,36 @@ export const VEHICLE_INTERIOR_CATS = new Set([
   "Electronics Accessories",
   "Communications and Countermeasures",
 ]);
-export const R5_SLOT_LABELS: Record<string, string> = {
-  Powertrain: "パワートレイン",
-  Protection: "防護",
-  Weapons: "武器",
-  Body: "ボディ",
-  Electromagnetic: "電磁",
-  Cosmetic: "外装",
+const R5_SLOT_KEYS: Record<string, MsgKey> = {
+  Powertrain: "sr.r5.powertrain",
+  Protection: "sr.r5.protection",
+  Weapons: "sr.r5.weapons",
+  Body: "sr.r5.body",
+  Electromagnetic: "sr.r5.electromagnetic",
+  Cosmetic: "sr.r5.cosmetic",
 };
+export const r5SlotLabel = (code: string, ui: UiFn): string | null =>
+  R5_SLOT_KEYS[code] ? ui(R5_SLOT_KEYS[code]) : null;
 
 export const CORE_LIFESTYLES = new Set(["Street", "Squatter", "Low", "Medium", "High", "Luxury"]);
 
-export const SPIRIT_ROLE_JA: Record<string, string> = {
-  combat: "戦闘",
-  detection: "探知",
-  health: "健康",
-  illusion: "幻影",
-  manipulation: "操作",
-  extra: "追加",
+const SPIRIT_ROLE_KEYS: Record<string, MsgKey> = {
+  combat: "sr.spirit.combat",
+  detection: "sr.spirit.detection",
+  health: "sr.spirit.health",
+  illusion: "sr.spirit.illusion",
+  manipulation: "sr.spirit.manipulation",
+  extra: "sr.spirit.extra",
 };
+export const spiritRoleLabel = labeller(SPIRIT_ROLE_KEYS);
 
-export const SIDE_JA: Record<string, string> = { Left: "左", Right: "右" };
+const SIDE_KEYS: Record<string, MsgKey> = { Left: "common.left", Right: "common.right" };
+export const sideLabel = labeller(SIDE_KEYS);
 
-export const REDLINER_SLOT_JA: Record<string, string> = {
-  arm: "腕",
-  leg: "脚",
-  torso: "胴",
-  skull: "頭蓋",
+const REDLINER_SLOT_KEYS: Record<string, MsgKey> = {
+  arm: "sr.limb.arm",
+  leg: "sr.limb.leg",
+  torso: "sr.limb.torso",
+  skull: "sr.limb.skull",
 };
+export const redlinerSlotLabel = labeller(REDLINER_SLOT_KEYS);

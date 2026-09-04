@@ -3,7 +3,7 @@ import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { SpecPicker } from "@/components/character/SpecPicker";
-import { KNOW_CATS, KNOW_CAT_JA } from "@/lib/character/constants";
+import { KNOW_CATS, knowCatLabel } from "@/lib/character/constants";
 import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDice } from "@/lib/character/format";
 
@@ -334,9 +334,12 @@ export function SkillsTab({
           {Object.entries(d.skill_category_bonus || {})
             .filter(([, bonus]) => bonus)
             .map(
-              ([name, bonus]) => `${KNOW_CAT_JA[name] || tr(name)} ${bonus > 0 ? "+" : ""}${bonus}`,
+              ([name, bonus]) =>
+                `${(KNOW_CATS as readonly string[]).includes(name) ? knowCatLabel(name, ui) : tr(name)} ${
+                  bonus > 0 ? "+" : ""
+                }${bonus}`,
             )
-            .join(" ・ ")}
+            .join(` ${ui("common.termSep")} `)}
         </p>
       ) : null}
       {(d.knowledge_skills || []).length ? (
@@ -364,12 +367,12 @@ export function SkillsTab({
                 >
                   {KNOW_CATS.map((cat) => (
                     <option key={cat} value={cat}>
-                      {KNOW_CAT_JA[cat]}
+                      {knowCatLabel(cat, ui)}
                     </option>
                   ))}
                 </select>
               ) : (
-                <span className="muted">{KNOW_CAT_JA[row.category] || row.category}</span>
+                <span className="muted">{knowCatLabel(row.category, ui)}</span>
               )}
               {row.native ? (
                 <span className="muted">{ui("skills.free")}</span>
@@ -450,7 +453,7 @@ export function SkillsTab({
             className={`tab ${knowCat === cat ? "active" : ""}`}
             onClick={() => setKnowCat(cat)}
           >
-            {KNOW_CAT_JA[cat]}
+            {knowCatLabel(cat, ui)}
           </button>
         ))}
       </div>
@@ -472,7 +475,7 @@ export function SkillsTab({
         <select value={customKnowCat} onChange={(e) => setCustomKnowCat(e.target.value)}>
           {KNOW_CATS.map((cat) => (
             <option key={cat} value={cat}>
-              {KNOW_CAT_JA[cat]}
+              {knowCatLabel(cat, ui)}
             </option>
           ))}
         </select>
@@ -492,7 +495,7 @@ export function SkillsTab({
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / {KNOW_CAT_JA[item.category] || item.category} / {item.attribute}
+                  {item.name} / {knowCatLabel(item.category, ui)} / {item.attribute}
                 </div>
               </div>
               <button

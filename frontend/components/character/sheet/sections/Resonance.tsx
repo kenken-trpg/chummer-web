@@ -27,8 +27,8 @@ export function ResonanceSection(s: SheetData) {
               <li key={item.id}>
                 <b>{tr(item.label || item.name)}</b>
                 {ui("sheet.cfLine", {
-                  target: cfTarget(item.target),
-                  duration: cfDuration(item.duration),
+                  target: cfTarget(item.target, ui),
+                  duration: cfDuration(item.duration, ui),
                   level: item.level,
                   fv: item.fv,
                 })}

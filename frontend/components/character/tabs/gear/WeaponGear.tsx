@@ -39,8 +39,8 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥{availBit(item)}{" "}
-                  / {item.source}
+                  {item.name} / {weaponLine(item, ui)} / {item.nuyen.toLocaleString()}¥
+                  {availBit(item, ui)} / {item.source}
                   {fromGear ? ui("weapon.fromGear") : ""}
                   {fromWare ? ui("weapon.fromWare") : ""}
                   {item.limb_str != null ? ui("weapon.limbStr", { str: item.limb_str }) : ""}
@@ -88,7 +88,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       : acc.included
                         ? ` / ${ui("common.included")}`
                         : ` / ${acc.nuyen.toLocaleString()}¥`}
-                    {availBit(acc)}
+                    {availBit(acc, ui)}
                     {acc.included ? null : (
                       <>
                         {" "}
@@ -224,7 +224,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         .filter((mod) => mod.source === "SR5")
                         .map((mod) => (
                           <option key={mod.id} value={mod.id}>
-                            {tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor)})
+                            {tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor, ui)})
                           </option>
                         ))}
                     </select>
@@ -294,7 +294,8 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
         tr={tr}
         describe={(item) => (
           <>
-            {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+            {item.name} / {weaponLine(item, ui)} / {item.cost}¥ / {item.avail || "-"} /{" "}
+            {item.source}
           </>
         )}
         onAdd={(item) => {
