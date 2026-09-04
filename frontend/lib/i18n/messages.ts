@@ -89,6 +89,49 @@ const JA = {
     "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
   "app.newFailed": "新しいキャラクターを作成できませんでした。",
 
+  // --- toolbar ----------------------------------------------------------
+  // `title` and `aria-label` are UI copy like any other: a tooltip nobody can
+  // read and a name a screen reader announces in the wrong language are the
+  // same bug.
+  "toolbar.roster": "保存済みキャラクター",
+  "toolbar.unnamed": "無名",
+  "toolbar.unsaved": "（未保存）",
+  "toolbar.careerTag": "（キャリア）",
+  "toolbar.newCharacter": "＋ 新規キャラ",
+  "toolbar.duplicate": "複製",
+  "toolbar.duplicateHint": "名前を付けて複製",
+  "toolbar.delete": "削除",
+  "toolbar.deleteHint": "表示中のキャラクターを削除",
+  "toolbar.undo": "↶ 元に戻す",
+  "toolbar.undoCount": "↶ 元に戻す（{count}）",
+  "toolbar.undoHint": "元に戻す (Ctrl/⌘+Z)",
+  "toolbar.redo": "↷ やり直し",
+  "toolbar.redoCount": "↷ やり直し（{count}）",
+  "toolbar.redoHint": "やり直し (Ctrl/⌘+Shift+Z)",
+  "toolbar.name": "キャラクター名",
+  "toolbar.saveJson": "JSON保存",
+  "toolbar.exportChum5": ".chum5書出",
+  "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
+  "toolbar.import": "読込 (JSON/.chum5)",
+  "toolbar.shareHint":
+    "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
+  "toolbar.cocofolia": "ココフォリア",
+  "toolbar.cocofoliaHint":
+    "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5",
+  "toolbar.chatPalette": "チャットパレット",
+  "toolbar.chatPaletteHint": "チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー",
+  "toolbar.conjured": "精霊コマ",
+  "toolbar.conjuredHint":
+    "束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す",
+  "toolbar.career": "キャリア中",
+  "toolbar.toCareer": "作成完了（キャリア）",
+  "toolbar.careerHint": "作成モードに戻す",
+  "toolbar.toCareerHint": "作成完了 → 残カルマ／ニューエンで成長",
+  "toolbar.careerConfirm": "作成エラーが残っています。このままキャリアに進みますか？",
+  "toolbar.layoutHint": "シートのレイアウト",
+  "toolbar.printHint": "印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます",
+  "toolbar.showSheet": "シート表示",
+
   "sheet.layout.standard": "標準",
   "sheet.layout.compact": "コンパクト",
   "sheet.layout.text": "テキスト",
@@ -172,6 +215,47 @@ const EN: Catalog = {
   "compute.offline":
     "The server is unreachable, so the values shown may be out of date. Edits are still saved.",
   "app.newFailed": "Could not create a new character.",
+
+  // --- toolbar ----------------------------------------------------------
+  "toolbar.roster": "Saved characters",
+  "toolbar.unnamed": "Unnamed",
+  "toolbar.unsaved": " (unsaved)",
+  "toolbar.careerTag": " (career)",
+  "toolbar.newCharacter": "+ New character",
+  "toolbar.duplicate": "Duplicate",
+  "toolbar.duplicateHint": "Duplicate under a new name",
+  "toolbar.delete": "Delete",
+  "toolbar.deleteHint": "Delete the character on screen",
+  "toolbar.undo": "↶ Undo",
+  "toolbar.undoCount": "↶ Undo ({count})",
+  "toolbar.undoHint": "Undo (Ctrl/⌘+Z)",
+  "toolbar.redo": "↷ Redo",
+  "toolbar.redoCount": "↷ Redo ({count})",
+  "toolbar.redoHint": "Redo (Ctrl/⌘+Shift+Z)",
+  "toolbar.name": "Character name",
+  "toolbar.saveJson": "Save JSON",
+  "toolbar.exportChum5": "Export .chum5",
+  "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
+  "toolbar.import": "Load (JSON/.chum5)",
+  "toolbar.shareHint":
+    "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
+  "toolbar.cocofolia": "Cocofolia",
+  "toolbar.cocofoliaHint":
+    "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",
+  "toolbar.chatPalette": "Chat palette",
+  "toolbar.chatPaletteHint": "Copy the chat palette (BCDice ShadowRun5 commands)",
+  "toolbar.conjured": "Spirit pieces",
+  "toolbar.conjuredHint":
+    "Export each bound spirit / registered sprite as its own Cocofolia piece (a JSON array)",
+  "toolbar.career": "In career",
+  "toolbar.toCareer": "Finish chargen (career)",
+  "toolbar.careerHint": "Go back to character creation",
+  "toolbar.toCareerHint": "Finish creation → spend leftover karma / nuyen to advance",
+  "toolbar.careerConfirm": "There are still creation errors. Continue into career mode anyway?",
+  "toolbar.layoutHint": "Sheet layout",
+  "toolbar.printHint":
+    "Switch to the print layout and print. The dialog can also \u201cSave as PDF\u201d.",
+  "toolbar.showSheet": "Show sheet",
 
   "sheet.layout.standard": "Standard",
   "sheet.layout.compact": "Compact",

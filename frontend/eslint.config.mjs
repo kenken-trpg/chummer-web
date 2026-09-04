@@ -58,6 +58,10 @@ export default [
     // they do not fail the build — and `npm run lint:prune` shrinks that file
     // as each batch is extracted, which makes it the burn-down counter.
     //
+    // The class is kana *letters* and kanji, deliberately excluding `・`
+    // (U+30FB) and `ー` (U+30FC): those are punctuation that shows up alone as
+    // a separator, and a real Japanese word always brings a letter with it.
+    //
     // Scoped to `app/` and `components/` — the layers the user reads. `lib/`
     // holds Japanese *data* maps (game-term labels, cocofolia palettes) that
     // are a separate question, and `lib/i18n/messages.ts` is the catalog
@@ -68,23 +72,24 @@ export default [
       "no-restricted-syntax": [
         "error",
         {
-          selector: "JSXText[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          selector: "JSXText[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
             "Japanese text in JSX. Add a key to lib/i18n/messages.ts and render it with ui(). See docs/i18n.md.",
         },
         {
-          selector: "JSXAttribute Literal[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          selector: "JSXAttribute Literal[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
             "Japanese in a JSX attribute (title / aria-label / placeholder). Use ui() — a label a screen reader announces is UI text like any other.",
         },
         {
-          selector: "TemplateElement[value.cooked=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          selector:
+            "TemplateElement[value.cooked=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
             "Japanese in a template literal. Use ui() with a {placeholder} — see formatMessage in lib/i18n.",
         },
         {
           selector:
-            ":matches(VariableDeclarator, Property, ReturnStatement, ArrowFunctionExpression, ConditionalExpression) > Literal[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+            ":matches(VariableDeclarator, Property, ReturnStatement, ArrowFunctionExpression, ConditionalExpression) > Literal[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
             "Japanese string literal. Add a key to lib/i18n/messages.ts and render it with ui().",
         },

@@ -49,6 +49,7 @@ export function Toolbar({
   const d = ch.derived;
   const { ui } = useUiText();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
+  const inCareer = ch.career || d.career;
   return (
     <div className="toolbar">
       <select
@@ -57,104 +58,102 @@ export function Toolbar({
         onChange={(e) =>
           e.target.value === "__new__" ? newCharacter() : openCharacter(e.target.value)
         }
-        title="保存済みキャラクター"
-        aria-label="保存済みキャラクター"
+        title={ui("toolbar.roster")}
+        aria-label={ui("toolbar.roster")}
       >
         {!roster.some((r) => r.id === ch.id) ? (
-          <option value={ch.id}>{ch.name || "無名"}（未保存）</option>
+          <option value={ch.id}>
+            {ch.name || ui("toolbar.unnamed")}
+            {ui("toolbar.unsaved")}
+          </option>
         ) : null}
         {roster.map((r) => (
           <option key={r.id} value={r.id}>
-            {r.name || "無名"} ・ {tr(r.metatype)}
-            {r.career ? "（キャリア）" : ""}
+            {r.name || ui("toolbar.unnamed")} ・ {tr(r.metatype)}
+            {r.career ? ui("toolbar.careerTag") : ""}
           </option>
         ))}
-        <option value="__new__">＋ 新規キャラ</option>
+        <option value="__new__">{ui("toolbar.newCharacter")}</option>
       </select>
-      <button className="btn" onClick={duplicateCurrent} title="名前を付けて複製">
-        複製
+      <button className="btn" onClick={duplicateCurrent} title={ui("toolbar.duplicateHint")}>
+        {ui("toolbar.duplicate")}
       </button>
-      <button className="btn" onClick={deleteCurrent} title="表示中のキャラクターを削除">
-        削除
+      <button className="btn" onClick={deleteCurrent} title={ui("toolbar.deleteHint")}>
+        {ui("toolbar.delete")}
       </button>
       <button
         className="btn"
         onClick={() => void undo()}
         disabled={!history.counts.undo}
-        title="元に戻す (Ctrl/⌘+Z)"
+        title={ui("toolbar.undoHint")}
       >
-        ↶ 元に戻す{history.counts.undo ? `（${history.counts.undo}）` : ""}
+        {history.counts.undo
+          ? ui("toolbar.undoCount", { count: history.counts.undo })
+          : ui("toolbar.undo")}
       </button>
       <button
         className="btn"
         onClick={() => void redo()}
         disabled={!history.counts.redo}
-        title="やり直し (Ctrl/⌘+Shift+Z)"
+        title={ui("toolbar.redoHint")}
       >
-        ↷ やり直し{history.counts.redo ? `（${history.counts.redo}）` : ""}
+        {history.counts.redo
+          ? ui("toolbar.redoCount", { count: history.counts.redo })
+          : ui("toolbar.redo")}
       </button>
       <input
         value={ch.name}
-        aria-label="キャラクター名"
+        aria-label={ui("toolbar.name")}
         onChange={(e) => setCh({ ...ch, name: e.target.value })}
         onBlur={(e) => patch({ name: e.target.value }).then(refreshRoster)}
       />
       <button className="btn primary" onClick={download}>
-        JSON保存
+        {ui("toolbar.saveJson")}
       </button>
-      <button
-        className="btn"
-        onClick={downloadChum5}
-        title="Chummer5a で開ける .chum5（XML）で書き出す"
-      >
-        .chum5書出
+      <button className="btn" onClick={downloadChum5} title={ui("toolbar.exportChum5Hint")}>
+        {ui("toolbar.exportChum5")}
       </button>
       <button className="btn" onClick={() => fileRef.current?.click()}>
-        読込 (JSON/.chum5)
+        {ui("toolbar.import")}
       </button>
-      <button
-        className="btn"
-        onClick={() => void copyShareLink()}
-        title="読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）"
-      >
+      <button className="btn" onClick={() => void copyShareLink()} title={ui("toolbar.shareHint")}>
         {copied === "share" ? ui("share.copied") : ui("share.copy")}
       </button>
       <button
         className="btn"
         onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
-        title="ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5"
+        title={ui("toolbar.cocofoliaHint")}
       >
-        {copied === "cc" ? "コピー ✓" : "ココフォリア"}
+        {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
       </button>
       <button
         className="btn"
         onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr), "cp")}
-        title="チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー"
+        title={ui("toolbar.chatPaletteHint")}
       >
-        {copied === "cp" ? "コピー ✓" : "チャットパレット"}
+        {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
       </button>
       {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
         <button
           className="btn"
           onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr), "cs")}
-          title="束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す"
+          title={ui("toolbar.conjuredHint")}
         >
-          {copied === "cs" ? "コピー ✓" : "精霊コマ"}
+          {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
         </button>
       ) : null}
       <button
-        className={`btn ${ch.career || d.career ? "primary" : ""}`}
-        title={ch.career || d.career ? "作成モードに戻す" : "作成完了 → 残カルマ／ニューエンで成長"}
+        className={`btn ${inCareer ? "primary" : ""}`}
+        title={inCareer ? ui("toolbar.careerHint") : ui("toolbar.toCareerHint")}
         onClick={() => {
-          const next = !(ch.career || d.career);
+          const next = !inCareer;
           if (next && (d.errors || []).length) {
-            const ok = window.confirm("作成エラーが残っています。このままキャリアに進みますか？");
-            if (!ok) return;
+            if (!window.confirm(ui("toolbar.careerConfirm"))) return;
           }
           patch({ career: next });
         }}
       >
-        {ch.career || d.career ? "キャリア中" : "作成完了（キャリア）"}
+        {inCareer ? ui("toolbar.career") : ui("toolbar.toCareer")}
       </button>
       {tab === "sheet" ? (
         <>
@@ -162,7 +161,7 @@ export function Toolbar({
             className="btn"
             value={sheetLayout}
             onChange={(e) => setSheetLayout(e.target.value as SheetLayout)}
-            title="シートのレイアウト"
+            title={ui("toolbar.layoutHint")}
             aria-label={ui("share.layout")}
           >
             <option value="standard">{ui("sheet.layout.standard")}</option>
@@ -170,17 +169,13 @@ export function Toolbar({
             <option value="text">{ui("sheet.layout.text")}</option>
             <option value="print">{ui("sheet.layout.print")}</option>
           </select>
-          <button
-            className="btn primary"
-            onClick={printSheet}
-            title="印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます"
-          >
-            印刷 / PDF
+          <button className="btn primary" onClick={printSheet} title={ui("toolbar.printHint")}>
+            {ui("share.print")}
           </button>
         </>
       ) : (
         <button className="btn" onClick={() => setTab("sheet")}>
-          シート表示
+          {ui("toolbar.showSheet")}
         </button>
       )}
       <input

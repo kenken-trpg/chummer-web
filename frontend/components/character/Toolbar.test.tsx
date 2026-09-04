@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { Toolbar } from "@/components/character/Toolbar";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
 function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
   return {
@@ -80,5 +81,22 @@ describe("<Toolbar>", () => {
     expect(screen.getByRole("combobox", { name: "保存済みキャラクター" })).toBeDefined();
     expect(screen.getByRole("combobox", { name: "レイアウト" })).toBeDefined();
     expect(screen.getByRole("textbox", { name: "キャラクター名" })).toHaveProperty("value", "Vex");
+  });
+
+  // The reason the extraction is worth doing at all: with the copy in the
+  // components, switching to `en` left the toolbar in Japanese. This is the
+  // regression test for that — it fails the moment a literal creeps back in.
+  it("renders in English when the locale is en", () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en");
+    try {
+      render(<Toolbar ed={makeEd()} {...base} tab={"sheet"} sheetLayout={"standard"} />);
+      expect(screen.getByRole("button", { name: "Duplicate" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Save JSON" })).toBeDefined();
+      expect(screen.getByRole("combobox", { name: "Saved characters" })).toBeDefined();
+      expect(screen.getByRole("textbox", { name: "Character name" })).toBeDefined();
+      expect(screen.queryByText("複製")).toBeNull();
+    } finally {
+      window.localStorage.removeItem(LOCALE_STORAGE_KEY);
+    }
   });
 });

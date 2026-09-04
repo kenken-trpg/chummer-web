@@ -54,11 +54,6 @@
       "count": 1
     }
   },
-  "components/character/Toolbar.tsx": {
-    "no-restricted-syntax": {
-      "count": 40
-    }
-  },
   "components/character/WareRow.tsx": {
     "no-restricted-syntax": {
       "count": 12
@@ -66,7 +61,7 @@
   },
   "components/character/sheet/SheetHeader.tsx": {
     "no-restricted-syntax": {
-      "count": 12
+      "count": 10
     }
   },
   "components/character/sheet/blocks.tsx": {
@@ -86,7 +81,7 @@
   },
   "components/character/sheet/sections/Combat.tsx": {
     "no-restricted-syntax": {
-      "count": 26
+      "count": 25
     }
   },
   "components/character/sheet/sections/Contacts.tsx": {
@@ -106,7 +101,7 @@
   },
   "components/character/sheet/sections/Drugs.tsx": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 4
     }
   },
   "components/character/sheet/sections/Knowledge.tsx": {
@@ -121,7 +116,7 @@
   },
   "components/character/sheet/sections/Martial.tsx": {
     "no-restricted-syntax": {
-      "count": 3
+      "count": 2
     }
   },
   "components/character/sheet/sections/Matrix.tsx": {
@@ -171,7 +166,7 @@
   },
   "components/character/sheet/sections/print/PrintStatBlock.tsx": {
     "no-restricted-syntax": {
-      "count": 18
+      "count": 17
     }
   },
   "components/character/sidebar/SidebarAttributes.tsx": {
@@ -216,7 +211,7 @@
   },
   "components/character/sidebar/SidebarStatus.tsx": {
     "no-restricted-syntax": {
-      "count": 21
+      "count": 20
     }
   },
   "components/character/tabs/AdeptTab.tsx": {
@@ -231,7 +226,7 @@
   },
   "components/character/tabs/BioTab.tsx": {
     "no-restricted-syntax": {
-      "count": 12
+      "count": 11
     }
   },
   "components/character/tabs/ComplexFormsTab.tsx": {
@@ -246,7 +241,7 @@
   },
   "components/character/tabs/CyberTab.tsx": {
     "no-restricted-syntax": {
-      "count": 19
+      "count": 18
     }
   },
   "components/character/tabs/FociTab.tsx": {
@@ -256,12 +251,12 @@
   },
   "components/character/tabs/GearTab.tsx": {
     "no-restricted-syntax": {
-      "count": 22
+      "count": 18
     }
   },
   "components/character/tabs/InitiationTab.tsx": {
     "no-restricted-syntax": {
-      "count": 16
+      "count": 15
     }
   },
   "components/character/tabs/MartialTab.tsx": {
@@ -296,17 +291,17 @@
   },
   "components/character/tabs/SpiritsTab.tsx": {
     "no-restricted-syntax": {
-      "count": 28
+      "count": 27
     }
   },
   "components/character/tabs/SpritesTab.tsx": {
     "no-restricted-syntax": {
-      "count": 25
+      "count": 21
     }
   },
   "components/character/tabs/SubmersionTab.tsx": {
     "no-restricted-syntax": {
-      "count": 14
+      "count": 13
     }
   },
   "components/character/tabs/gear/ArmorGear.tsx": {

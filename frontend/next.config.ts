@@ -38,6 +38,14 @@ if (process.env.NODE_ENV === "production") {
 const nextConfig: NextConfig = {
   // self-contained server bundle for the container (`node server.js`)
   output: "standalone",
+  eslint: {
+    // `next build` runs its own ESLint pass that does not read
+    // `eslint-suppressions.json`, so the ~900 pre-existing Japanese literals
+    // (see docs/i18n.md) would fail every production build. Linting is not
+    // being skipped — `npm run lint` / `npm run check` / the CI frontend job
+    // all run `eslint .` directly, over more files than this pass covers.
+    ignoreDuringBuilds: true,
+  },
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${BACKEND_ORIGIN}/api/:path*` }];
   },
