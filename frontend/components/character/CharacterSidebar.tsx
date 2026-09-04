@@ -29,8 +29,8 @@ export function CharacterSidebar({
   error?: string | null;
   patch?: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
-  const t = makeT(catalog);
-  const { ui } = useUiText();
+  const { ui, locale } = useUiText();
+  const t = makeT(catalog, locale);
   const career = Boolean(ch.career || d.career);
 
   const blockProps: SidebarBlockProps = { catalog, ch, d, tr, t, ui, career, error, patch };

@@ -3,7 +3,7 @@ import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import { buildShareUrl, shareErrorMessage, SHARE_URL_WARN } from "@/lib/character/share";
 import type { Catalog, Character } from "@/lib/types";
-import { makeT, type TFn } from "@/lib/ui-strings";
+import { makeT, makeTr, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
 
@@ -25,7 +25,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
-  const { ui } = useUiText();
+  const { ui, locale } = useUiText();
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
@@ -281,8 +281,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
-  const tr = (name: string) => catalog?.translations[name] || name;
-  const t: TFn = makeT(catalog);
+  const tr = makeTr(catalog, locale);
+  const t: TFn = makeT(catalog, locale);
 
   return {
     catalog,

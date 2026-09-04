@@ -65,4 +65,5 @@ class CatalogDict(TypedDict):
     echoes: list[Row]
     priorities: list[Row]
     translations: dict[str, str]
-    ui_strings: dict[str, str]
+    #: {locale: {key: text}} — see loaders/translations.py
+    ui_strings: dict[str, dict[str, str]]

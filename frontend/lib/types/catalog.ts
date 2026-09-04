@@ -391,7 +391,8 @@ export interface Catalog {
     >
   >;
   translations: Record<string, string>;
-  ui_strings: Record<string, string>;
+  /** `{locale: {key: text}}` — narrowed by the backend to what the app reads. */
+  ui_strings: Record<string, Record<string, string>>;
   cyberware: WareCatalog;
   bioware: WareCatalog;
   powers?: PowerCatalogItem[];

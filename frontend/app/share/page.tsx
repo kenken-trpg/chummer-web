@@ -10,6 +10,7 @@ import { readShareValue, decodeShare, ShareError, shareErrorMessage } from "@/li
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
 import { useUiText } from "@/lib/i18n";
+import { makeTr } from "@/lib/ui-strings";
 import type { Catalog, Character } from "@/lib/types";
 
 /**
@@ -21,7 +22,7 @@ import type { Catalog, Character } from "@/lib/types";
  */
 export default function SharePage() {
   const router = useRouter();
-  const { ui } = useUiText();
+  const { ui, locale } = useUiText();
   const [sheetLayout, setSheetLayout] = useSheetLayout();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   const [state, setState] = useState<{
@@ -81,7 +82,7 @@ export default function SharePage() {
   }
   if (!state) return <div className="main">{ui("share.loading")}</div>;
 
-  const tr = (name: string) => state.catalog.translations[name] || name;
+  const tr = makeTr(state.catalog, locale);
 
   return (
     <div className="app sheet-mode">

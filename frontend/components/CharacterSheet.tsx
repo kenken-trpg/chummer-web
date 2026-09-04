@@ -37,8 +37,8 @@ export default function CharacterSheet({
   tr: (name: string) => string;
   layout?: SheetLayout;
 }) {
-  const { ui } = useUiText();
-  const s = buildSheetData({ character, catalog, tr, layout });
+  const { ui, locale } = useUiText();
+  const s = buildSheetData({ character, catalog, tr, layout, locale });
 
   if (layout === "text") {
     return (

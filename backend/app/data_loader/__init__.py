@@ -81,7 +81,8 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_streams,
     load_traditions,
     load_translations,
-    load_ui_strings,
+    load_ui_strings,  # noqa: F401  (re-exported for tests)
+    load_ui_strings_by_locale,
     load_vehicle_mods,
     load_vehicle_names,
     load_vehicles,
@@ -233,7 +234,7 @@ def catalog() -> CatalogDict:
         "echoes": load_echoes(),
         "priorities": load_priorities(),
         "translations": translations,
-        "ui_strings": load_ui_strings(),
+        "ui_strings": load_ui_strings_by_locale(),
     }
 
 

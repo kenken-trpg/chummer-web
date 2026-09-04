@@ -190,7 +190,9 @@ export function buildChatPalette(
 /** Cocofolia (ccfolia.com) character-piece clipboard payload. */
 export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
   const d = ch.derived;
-  const t = makeT(catalog);
+  // Cocofolia is a Japanese VTT and the piece is pasted into a Japanese
+  // table's room, so this export stays Japanese regardless of the UI locale.
+  const t = makeT(catalog, "ja");
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
   const init = d.initiative || { value: 0, dice: 1 };

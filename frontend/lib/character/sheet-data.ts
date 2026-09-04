@@ -1,5 +1,6 @@
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
+import type { Locale } from "@/lib/i18n";
 import { specialArmorBits } from "@/lib/character/sheet-format";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
@@ -48,14 +49,16 @@ export function buildSheetData({
   catalog,
   tr,
   layout,
+  locale = "ja",
 }: {
   character: Character;
   catalog: Catalog;
   tr: (n: string) => string;
   layout: SheetLayout;
+  locale?: Locale;
 }): SheetData {
   const d = character.derived;
-  const t = makeT(catalog);
+  const t = makeT(catalog, locale);
   const totals = d.totals || {};
   const enabled = new Set(d.enabled_tabs || []);
 

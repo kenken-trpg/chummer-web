@@ -41,7 +41,13 @@ from .metatypes import load_metatypes
 from .priorities import load_priorities
 from .qualities import load_qualities
 from .skills import load_skills
-from .translations import _load_ja_overrides, load_translations, load_ui_strings
+from .translations import (
+    _load_ja_overrides,
+    load_translations,
+    load_ui_strings,
+    load_ui_strings_by_locale,
+    shipped_ui_keys,
+)
 from .vehicles import (
     load_drones,
     load_vehicle_mods,
@@ -105,4 +111,6 @@ __all__ = [
     "load_qi_focus",
     "load_translations",
     "load_ui_strings",
+    "load_ui_strings_by_locale",
+    "shipped_ui_keys",
 ]

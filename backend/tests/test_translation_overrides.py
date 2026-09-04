@@ -194,9 +194,60 @@ def test_public_catalog_exposes_ui_strings() -> None:
     from app.catalog_view import public_catalog
 
     pc = public_catalog()
-    assert isinstance(pc.get("ui_strings"), dict) and pc["ui_strings"]
-    # ui.json override is reflected
-    assert pc["ui_strings"]["String_AttributeBODLong"] == "強靱力"
+    strings = pc.get("ui_strings")
+    assert isinstance(strings, dict) and set(strings) == {"ja", "en"}
+    # ui.json override is reflected in ja...
+    assert strings["ja"]["String_AttributeBODLong"] == "強靱力"
+    # ...and the same key is the English original, straight from en-us.xml
+    assert strings["en"]["String_AttributeBODLong"] == "Body"
+
+
+def test_shipped_ui_strings_are_the_same_keys_in_both_locales() -> None:
+    """A key present in one locale but not the other renders as a raw
+    `String_Foo` on one side of the language switch and not the other."""
+    from app.catalog_view import public_catalog
+
+    strings = public_catalog()["ui_strings"]
+    assert set(strings["ja"]) == set(strings["en"])
+
+
+def test_shipped_ui_strings_cover_what_the_app_reads() -> None:
+    """`attrShort` / `attrName` build `String_Attribute<KEY>Short|Long`, so the
+    projection must keep every attribute the sheet can show."""
+    from app.catalog_view import public_catalog
+
+    strings = public_catalog()["ui_strings"]
+    wanted = {
+        f"String_Attribute{key}{suffix}"
+        for key in ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES")
+        for suffix in ("Short", "Long")
+    }
+    for locale, table in strings.items():
+        assert wanted <= set(table), f"{locale} missing {sorted(wanted - set(table))}"
+
+
+def test_the_curated_overlay_keys_all_ship() -> None:
+    """ui.json is hand-written; a key that never reaches the browser is work
+    thrown away, so the projection carries the whole overlay."""
+    from app.catalog_view import public_catalog
+    from app.data_loader.loaders.translations import shipped_ui_keys
+
+    shipped = set(public_catalog()["ui_strings"]["ja"])
+    assert shipped_ui_keys() <= shipped
+
+
+def test_english_ui_strings_do_not_take_the_japanese_overlay() -> None:
+    """`ja_overrides/ui.json` corrects the vendored Japanese. Applying it to
+    `en` would overwrite the English original with a Japanese term."""
+    from app.data_loader.loaders.translations import load_ui_strings
+
+    assert load_ui_strings("en")["String_AttributeBODLong"] == "Body"
+
+
+def test_an_unknown_locale_loads_nothing_rather_than_raising() -> None:
+    from app.data_loader.loaders.translations import load_ui_strings
+
+    assert load_ui_strings("fr") == {}
 
 
 def test_committed_ui_overlay_keys_exist_in_lang() -> None:
