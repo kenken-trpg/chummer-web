@@ -874,6 +874,24 @@ const JA = {
   "sheet.deviceDeck": "デッキ {name}",
   "sheet.deviceRcc": "RCC {name}",
   "sheet.livingPersona": "リビングペルソナ",
+
+  "print.status": "ステータス",
+  "print.physicalLimit": "物理リミット",
+  "print.mentalLimit": "精神リミット",
+  "print.socialLimit": "社会リミット",
+  "print.movement": "移動 (歩/走)",
+  "print.defensePool": "防御プール",
+  "print.composure": "沈着",
+  "print.judgeIntentions": "意図看破",
+  "print.memory": "記憶",
+  "print.limitMod": "条件リミット ({limit})",
+  "print.lifestyle": "ライフスタイル: {value}",
+  "print.conditionMonitor": "コンディションモニター",
+  "print.physical": "物理",
+  "print.stun": "スタン",
+  "print.overflow": "オーバーフロー",
+  "print.recoveryDay": " 回復 {n}/日",
+  "print.recoveryHour": " 回復 {n}/時間",
 } as const;
 
 export type MsgKey = keyof typeof JA;
@@ -1727,6 +1745,24 @@ const EN: Catalog = {
   "sheet.deviceDeck": "Deck {name}",
   "sheet.deviceRcc": "RCC {name}",
   "sheet.livingPersona": "Living persona",
+
+  "print.status": "Stats",
+  "print.physicalLimit": "Physical limit",
+  "print.mentalLimit": "Mental limit",
+  "print.socialLimit": "Social limit",
+  "print.movement": "Movement (walk/run)",
+  "print.defensePool": "Defense pool",
+  "print.composure": "Composure",
+  "print.judgeIntentions": "Judge Intentions",
+  "print.memory": "Memory",
+  "print.limitMod": "Conditional limit ({limit})",
+  "print.lifestyle": "Lifestyle: {value}",
+  "print.conditionMonitor": "Condition monitor",
+  "print.physical": "Physical",
+  "print.stun": "Stun",
+  "print.overflow": "Overflow",
+  "print.recoveryDay": " heals {n}/day",
+  "print.recoveryHour": " heals {n}/hour",
 };
 
 export const MESSAGES: Record<Locale, Catalog> = {

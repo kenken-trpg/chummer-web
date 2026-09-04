@@ -2,6 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement } from "@/lib/character/sheet-format";
+import { useUiText } from "@/lib/i18n";
 
 /** Page-1 "stat block" for the print layout: attributes (base + augment),
  * limits, initiative, movement, and the derived defense / soak pools a table
@@ -11,6 +12,7 @@ import { lifeIncrement } from "@/lib/character/sheet-format";
  * no new rules. */
 export function PrintStatBlock(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
+  const { ui } = useUiText();
 
   const attrs = ATTRS.filter(
     (key) => !((key === "MAG" && !enabled.has("MAG")) || (key === "RES" && !enabled.has("RES"))),
@@ -29,30 +31,31 @@ export function PrintStatBlock(s: SheetData) {
   const memory = (totals.LOG || 0) + wil + (d.test_mods?.memory || 0);
 
   const stats: { label: string; value: string }[] = [
-    { label: "物理リミット", value: String(d.limits.physical) },
-    { label: "精神リミット", value: String(d.limits.mental) },
-    { label: "社会リミット", value: String(d.limits.social) },
-    { label: "イニシアチブ", value: `${d.initiative.value} + ${d.initiative.dice}d6` },
-    { label: "移動 (歩/走)", value: `${d.movement.walk} / ${d.movement.run}` },
-    { label: "防御プール", value: String(defensePool) },
-    { label: "ダメージ抵抗", value: String(soakPool) },
-    { label: "エッセンス", value: d.essence.toFixed(2) },
-    { label: "沈着", value: String(composure) },
-    { label: "意図看破", value: String(judge) },
-    { label: "記憶", value: String(memory) },
+    { label: ui("print.physicalLimit"), value: String(d.limits.physical) },
+    { label: ui("print.mentalLimit"), value: String(d.limits.mental) },
+    { label: ui("print.socialLimit"), value: String(d.limits.social) },
+    { label: ui("common.initiative"), value: `${d.initiative.value} + ${d.initiative.dice}d6` },
+    { label: ui("print.movement"), value: `${d.movement.walk} / ${d.movement.run}` },
+    { label: ui("print.defensePool"), value: String(defensePool) },
+    { label: ui("sheet.damageResist"), value: String(soakPool) },
+    { label: ui("common.essence"), value: d.essence.toFixed(2) },
+    { label: ui("print.composure"), value: String(composure) },
+    { label: ui("print.judgeIntentions"), value: String(judge) },
+    { label: ui("print.memory"), value: String(memory) },
   ];
-  if ((d.unarmed_dv || 0) > 0) stats.push({ label: "非武装DV", value: `+${d.unarmed_dv}` });
+  if ((d.unarmed_dv || 0) > 0)
+    stats.push({ label: ui("sheet.unarmedDv"), value: `+${d.unarmed_dv}` });
   if ((d.unarmed_reach || 0) > 0)
-    stats.push({ label: "非武装リーチ", value: `+${d.unarmed_reach}` });
+    stats.push({ label: ui("sheet.unarmedReach"), value: `+${d.unarmed_reach}` });
   if ((d.unarmed_ap ?? 0) !== 0)
     stats.push({
-      label: "非武装AP",
+      label: ui("sheet.unarmedAp"),
       value: (d.unarmed_ap ?? 0) > 0 ? `+${d.unarmed_ap}` : String(d.unarmed_ap),
     });
   for (const row of specialArmor) stats.push({ label: row.label, value: row.value });
   for (const mod of d.limit_modifiers || [])
     stats.push({
-      label: `条件リミット (${mod.limit})`,
+      label: ui("print.limitMod", { limit: mod.limit }),
       value: `${mod.value > 0 ? `+${mod.value}` : mod.value}${
         mod.condition_label || mod.condition ? `／${mod.condition_label || mod.condition}` : ""
       }`,
@@ -60,7 +63,7 @@ export function PrintStatBlock(s: SheetData) {
 
   return (
     <section className="sheet-section sheet-section--print print-statblock">
-      <h3>ステータス</h3>
+      <h3>{ui("print.status")}</h3>
       <div className="print-attr-row">
         {attrs.map((key) => {
           const ware = d.ware_attr_bonus?.[key] || 0;
@@ -83,14 +86,22 @@ export function PrintStatBlock(s: SheetData) {
       </div>
       {d.lifestyle ? (
         <p className="sheet-note">
-          ライフスタイル: {tr(d.lifestyle.name)} {d.lifestyle.months}
-          {lifeIncrement(d.lifestyle.increment)}
-          {d.lifestyle.lp_max ? `（LP ${d.lifestyle.lp_used || 0}/${d.lifestyle.lp_max}）` : ""}
-          {(d.lifestyle.qualities || []).length
-            ? ` ・ ${(d.lifestyle.qualities || [])
-                .map((q) => `${tr(q.name)}${q.extra ? `:${q.extra}` : ""}`)
-                .join("、")}`
-            : ""}
+          {ui("print.lifestyle", {
+            value: [
+              `${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}`,
+              d.lifestyle.lp_max
+                ? ui("sheet.lifestyleLp", {
+                    used: d.lifestyle.lp_used || 0,
+                    max: d.lifestyle.lp_max,
+                  })
+                : "",
+              (d.lifestyle.qualities || []).length
+                ? ` ${ui("common.termSep")} ${(d.lifestyle.qualities || [])
+                    .map((q) => `${tr(q.name)}${q.extra ? `:${q.extra}` : ""}`)
+                    .join(ui("common.listSep"))}`
+                : "",
+            ].join(""),
+          })}
         </p>
       ) : null}
     </section>

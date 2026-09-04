@@ -8,15 +8,5 @@
     "no-restricted-syntax": {
       "count": 1
     }
-  },
-  "components/character/sheet/sections/print/PrintConditionMonitor.tsx": {
-    "no-restricted-syntax": {
-      "count": 8
-    }
-  },
-  "components/character/sheet/sections/print/PrintStatBlock.tsx": {
-    "no-restricted-syntax": {
-      "count": 17
-    }
   }
 }
