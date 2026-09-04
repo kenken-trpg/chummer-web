@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { lifeIncrement } from "@/lib/character/format";
 import type { GearKind } from "@/lib/character/constants";
+import type { MsgKey } from "@/lib/i18n";
 import { ArmorGear } from "@/components/character/tabs/gear/ArmorGear";
 import { WeaponGear } from "@/components/character/tabs/gear/WeaponGear";
 import { CommlinkGear } from "@/components/character/tabs/gear/CommlinkGear";
@@ -15,33 +16,39 @@ import { VehicleDroneGear } from "@/components/character/tabs/gear/VehicleDroneG
 import { MiscDrugsGear } from "@/components/character/tabs/gear/MiscDrugsGear";
 import { LifestyleGear } from "@/components/character/tabs/gear/LifestyleGear";
 
-const KIND_TABS: { kind: GearKind; label: string }[] = [
-  { kind: "armor", label: "防具" },
-  { kind: "weapon", label: "武器" },
-  { kind: "commlink", label: "通信機" },
-  { kind: "cyberdeck", label: "サイバーデッキ" },
-  { kind: "rcc", label: "RCC" },
-  { kind: "optics", label: "視覚／聴覚" },
-  { kind: "sensor", label: "センサー" },
-  { kind: "vehicle", label: "車両" },
-  { kind: "drone", label: "ドローン" },
-  { kind: "misc", label: "ギア" },
-  { kind: "drugs", label: "ドラッグ" },
-  { kind: "lifestyle", label: "ライフスタイル" },
+// A module constant cannot call the hook, so it holds keys and the render
+// resolves them.
+const KIND_TABS: { kind: GearKind; label: MsgKey }[] = [
+  { kind: "armor", label: "gear.kind.armor" },
+  { kind: "weapon", label: "gear.kind.weapon" },
+  { kind: "commlink", label: "gear.kind.commlink" },
+  { kind: "cyberdeck", label: "gear.kind.cyberdeck" },
+  { kind: "rcc", label: "gear.kind.rcc" },
+  { kind: "optics", label: "gear.kind.optics" },
+  { kind: "sensor", label: "gear.kind.sensor" },
+  { kind: "vehicle", label: "gear.kind.vehicle" },
+  { kind: "drone", label: "gear.kind.drone" },
+  { kind: "misc", label: "gear.kind.misc" },
+  { kind: "drugs", label: "gear.kind.drugs" },
+  { kind: "lifestyle", label: "gear.kind.lifestyle" },
 ];
 
 export function GearTab(props: TabPanelProps) {
-  const { d, tr } = props;
+  const { d, tr, ui } = props;
   const [gearKind, setGearKind] = useState<GearKind>("armor");
 
   return (
     <div className="card">
       <p className="muted">
-        {d.career || false ? "キャリアの買い物" : "作成時の購入"}
-        。防具は装備中の本体1着＋ヘルメット等の加算、ウェア装甲と合算。消費{" "}
-        {(d.nuyen_spent ?? 0).toLocaleString()}¥{" ・ "}残 {d.nuyen.toLocaleString()}¥
-        {d.avail_limit == null ? " ・ 入手制限なし" : ` ・ 入手≤${d.avail_limit}`}
-        {d.worn_armor ? ` ・ 装備 ${tr(d.worn_armor)}` : ""}
+        {d.career || false ? ui("gear.careerBuy") : ui("gear.chargenBuy")}
+        {ui("gear.note", {
+          spent: (d.nuyen_spent ?? 0).toLocaleString(),
+          left: d.nuyen.toLocaleString(),
+        })}
+        {d.avail_limit == null
+          ? ui("gear.availNone")
+          : ui("gear.availLimit", { limit: d.avail_limit })}
+        {d.worn_armor ? ui("gear.worn", { name: tr(d.worn_armor) }) : ""}
         {d.lifestyle
           ? ` ・ ${tr(d.lifestyle.name)} ${d.lifestyle.months}${lifeIncrement(d.lifestyle.increment)}`
           : ""}
@@ -56,7 +63,7 @@ export function GearTab(props: TabPanelProps) {
             className={`tab ${gearKind === kind ? "active" : ""}`}
             onClick={() => setGearKind(kind)}
           >
-            {label}
+            {ui(label)}
           </button>
         ))}
       </div>

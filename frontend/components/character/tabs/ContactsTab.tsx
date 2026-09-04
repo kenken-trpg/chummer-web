@@ -3,7 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { CONTACT_ROLES } from "@/lib/character/constants";
 
-export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelProps) {
+export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
   const [contactRole, setContactRole] = useState("");
   const perPoint = d.contact_points?.karma_per_point ?? 1;
@@ -12,32 +12,37 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
   return (
     <div className="card">
       <p className="muted">
-        無料枠 CHA×3 = {d.contact_points?.used || 0}/{d.contact_points?.free || 0}
+        {ui("contact.free", {
+          used: d.contact_points?.used || 0,
+          free: d.contact_points?.free || 0,
+        })}
         {(d.contact_points?.paid || 0) > 0
-          ? ` ・ 超過 ${d.contact_points?.paid}点（${paidKarma}カルマ）`
+          ? ui("contact.over", { paid: d.contact_points?.paid || 0, karma: paidKarma })
           : ""}
-        。Connection と Loyalty は最低1
-        {d.career ? "。キャリアでは合計上限なし" : "、作成時は合計7まで"}
-        。超過分は1点{perPoint}カルマです
-        {perPoint === 0 ? "（Networker 等により無料）" : ""}。
+        {ui("contact.minimum")}
+        {d.career ? ui("contact.careerCap") : ui("contact.chargenCap")}
+        {ui("contact.perPoint", { karma: perPoint })}
+        {perPoint === 0 ? ui("contact.perPointFree") : ""}
+        {ui("common.period")}
       </p>
       {(d.contacts || []).map((item) => (
         <div className="cyber-item" key={item.id}>
           <div>
-            <b>{item.name || "（無名）"}</b>
+            <b>{item.name || ui("common.unnamed")}</b>
             <div className="muted">
               {item.role ? `${item.role} / ` : ""}
-              Connection {item.connection} / Loyalty {item.loyalty} / {item.cost}点
-              {item.free ? " / 無料" : ""}
-              {item.group ? " / グループ" : ""}
+              Connection {item.connection} / Loyalty {item.loyalty} /{" "}
+              {ui("contact.points", { points: item.cost })}
+              {item.free ? ui("common.freeSlot") : ""}
+              {item.group ? ui("contact.group") : ""}
               {item.billable != null && item.billable !== item.cost
-                ? ` / 課金 ${item.billable}点`
+                ? ui("contact.billable", { points: item.billable })
                 : ""}
               {item.black_market_pipeline ? " / Black Market Pipeline" : ""}
             </div>
             <div className="cyber-controls">
               <label>
-                名前
+                {ui("contact.name")}
                 <input
                   type="text"
                   value={(ch.contacts || []).find((row) => row.id === item.id)?.name ?? item.name}
@@ -59,7 +64,7 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
                 />
               </label>
               <label>
-                役割
+                {ui("contact.role")}
                 <input
                   type="text"
                   list="contact-roles"
@@ -118,7 +123,7 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
             </div>
           </div>
           {item.locked ? (
-            <span className="muted">品質連動</span>
+            <span className="muted">{ui("common.fromQuality")}</span>
           ) : (
             <button
               className="btn danger"
@@ -128,7 +133,7 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
                 })
               }
             >
-              削除
+              {ui("common.delete")}
             </button>
           )}
         </div>
@@ -136,14 +141,14 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
       <div className="cyber-toolbar">
         <input
           type="text"
-          placeholder="名前"
+          placeholder={ui("contact.name")}
           value={contactName}
           onChange={(e) => setContactName(e.target.value)}
         />
         <input
           type="text"
           list="contact-roles"
-          placeholder="役割（任意）"
+          placeholder={ui("contact.roleOptional")}
           value={contactRole}
           onChange={(e) => setContactRole(e.target.value)}
         />
@@ -171,7 +176,7 @@ export function ContactsTab({ character: ch, d, patch, setCharacter }: TabPanelP
             setContactRole("");
           }}
         >
-          追加
+          {ui("common.add")}
         </button>
       </div>
     </div>

@@ -69,7 +69,7 @@ export function QualitiesTab({
         onPick={(key, skill) => patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })}
       />
       <p className="muted">
-        {ui("qual.karma", { remaining: d.karma.remaining, pool: d.karma.pool })}
+        {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
         {" ・ "}
         {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}

@@ -3,18 +3,25 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 
-export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [martialSearch, setMartialSearch] = useState("");
 
   return (
     <div className="card">
       <p className="muted">
-        流派 {d.martial_art_points?.styles || 0}/{d.martial_art_points?.style_max || 1}
-        {" ・ "}技 {d.martial_art_points?.techniques || 0}/
-        {d.martial_art_points?.technique_max || 5}
-        {" ・ "}カルマ {d.martial_art_points?.karma || 0}
-        （流派7カルマに技1つ込み、追加技は各5カルマ。作成時は流派1・技合計5まで。品質武道は流派枠外）
-        {(d.unarmed_reach || 0) > 0 ? ` ・ 素手Reach +${d.unarmed_reach}` : ""}
+        {ui("martial.styles", {
+          styles: d.martial_art_points?.styles || 0,
+          max: d.martial_art_points?.style_max || 1,
+        })}
+        {ui("martial.techniques", {
+          used: d.martial_art_points?.techniques || 0,
+          max: d.martial_art_points?.technique_max || 5,
+        })}
+        {ui("martial.karma", { karma: d.martial_art_points?.karma || 0 })}
+        {ui("martial.note")}
+        {(d.unarmed_reach || 0) > 0
+          ? ui("martial.unarmedReach", { reach: d.unarmed_reach || 0 })
+          : ""}
       </p>
       {(d.martial_arts || []).map((item) => {
         const local = (ch.martial_arts || []).find((row) => row.id === item.id);
@@ -27,12 +34,12 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               <div className="muted">
                 {item.name}
                 {item.free
-                  ? " / 無料（品質）"
-                  : ` / ${item.karma}カルマ（流派 ${item.style_karma} + 追加技）`}
+                  ? ui("martial.freeQuality")
+                  : ui("martial.cost", { karma: item.karma, style: item.style_karma })}
                 {" / "}
                 {item.source}
                 {item.page ? ` p.${item.page}` : ""}
-                {techMax === 1 ? " / 技1つのみ" : ""}
+                {techMax === 1 ? ui("martial.oneTech") : ""}
               </div>
               <div className="martial-techs" style={{ display: "grid", gap: 4, marginTop: 8 }}>
                 {item.technique_options.map((name) => {
@@ -64,9 +71,9 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                       <span>
                         {tr(name)}
                         {owned && techMeta?.free
-                          ? " / 込み"
+                          ? ui("martial.techIncluded")
                           : owned
-                            ? ` / ${techMeta?.karma || 5}カルマ`
+                            ? ui("common.karmaCost", { karma: techMeta?.karma || 5 })
                             : ""}
                       </span>
                     </label>
@@ -75,7 +82,7 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
               </div>
             </div>
             {item.locked ? (
-              <span className="muted">品質連動</span>
+              <span className="muted">{ui("common.fromQuality")}</span>
             ) : (
               <button
                 className="btn"
@@ -85,7 +92,7 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                   })
                 }
               >
-                削除
+                {ui("common.delete")}
               </button>
             )}
           </div>
@@ -93,8 +100,8 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
       })}
       <input
         type="search"
-        placeholder="武道を検索"
-        aria-label="武道を検索"
+        placeholder={ui("martial.search")}
+        aria-label={ui("martial.search")}
         value={martialSearch}
         onChange={(e) => setMartialSearch(e.target.value)}
       />
@@ -116,10 +123,14 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 <div>
                   <b>{tr(item.name)}</b>
                   <div className="muted">
-                    {item.name} / {item.cost}カルマ（技1込み） / 技 {item.techniques.length}種 /{" "}
-                    {item.source}
+                    {item.name} / {ui("martial.rowCost", { karma: item.cost })} /{" "}
+                    {ui("martial.techCount", { count: item.techniques.length })} / {item.source}
                     {item.spec_options?.length
-                      ? ` / 専門化候補 ${item.spec_options.map((opt) => `${opt.skill}:${opt.spec}`).join(", ")}`
+                      ? ui("martial.specOptions", {
+                          list: item.spec_options
+                            .map((opt) => `${opt.skill}:${opt.spec}`)
+                            .join(", "),
+                        })
                       : ""}
                   </div>
                 </div>
@@ -137,7 +148,11 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     });
                   }}
                 >
-                  {owned ? "取得済" : blocked ? "上限" : "取得"}
+                  {owned
+                    ? ui("martial.owned")
+                    : blocked
+                      ? ui("martial.capped")
+                      : ui("martial.take")}
                 </button>
               </div>
             );

@@ -144,7 +144,7 @@ export function QualityExtraEditor({
           <option value="">{ui("quality.marketContact")}</option>
           {(d.contacts || []).map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name || ui("quality.contactUnnamed")} {c.role ? `／ ${tr(c.role)}` : ""} (C
+              {c.name || ui("common.unnamed")} {c.role ? `／ ${tr(c.role)}` : ""} (C
               {c.connection}/L
               {c.loyalty})
             </option>

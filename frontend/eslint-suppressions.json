@@ -174,34 +174,9 @@
       "count": 11
     }
   },
-  "components/character/tabs/ContactsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 22
-    }
-  },
-  "components/character/tabs/CyberTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 18
-    }
-  },
-  "components/character/tabs/GearTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 18
-    }
-  },
-  "components/character/tabs/MartialTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 21
-    }
-  },
   "components/character/tabs/MetaTab.tsx": {
     "no-restricted-syntax": {
       "count": 5
-    }
-  },
-  "components/character/tabs/PriorityTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 19
     }
   },
   "components/character/tabs/gear/ArmorGear.tsx": {
@@ -237,11 +212,6 @@
   "components/character/tabs/gear/SensorGear.tsx": {
     "no-restricted-syntax": {
       "count": 13
-    }
-  },
-  "components/character/tabs/gear/WeaponGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 24
     }
   }
 }

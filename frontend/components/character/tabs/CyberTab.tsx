@@ -12,7 +12,7 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [cySearch, setCySearch] = useState("");
   const [cyCat, setCyCat] = useState("all");
   const [addGrade, setAddGrade] = useState("Standard");
@@ -49,22 +49,33 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
   return (
     <div className="card">
       <p className="muted">
-        装着中 {d.cyberware?.length || 0} ・ Essence {d.essence}（サイバー −
-        {d.essence_lost_cyber ?? 0}） ・ 消費 {(d.nuyen_spent ?? 0).toLocaleString()}¥
+        {ui("cyber.summary", {
+          count: d.cyberware?.length || 0,
+          essence: d.essence,
+          lost: d.essence_lost_cyber ?? 0,
+          spent: (d.nuyen_spent ?? 0).toLocaleString(),
+        })}
       </p>
       {disabledCoreGrades.length > 0 ? (
-        <p className="muted">使用不可グレード: {disabledCoreGrades.join("、")}</p>
+        <p className="muted">
+          {ui("cyber.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
+        </p>
       ) : null}
       {d.limb_replace ? (
         <p className="muted">
-          本体 STR {d.limb_replace.str} / AGI {d.limb_replace.agi}
-          （リム平均 {d.limb_replace.count}/{d.limb_replace.parts} ・ 肉 STR{" "}
-          {d.limb_replace.meat_str} / AGI {d.limb_replace.meat_agi}）
+          {ui("cyber.limbReplace", {
+            str: d.limb_replace.str,
+            agi: d.limb_replace.agi,
+            count: d.limb_replace.count,
+            parts: d.limb_replace.parts,
+            meatStr: d.limb_replace.meat_str,
+            meatAgi: d.limb_replace.meat_agi,
+          })}
         </p>
       ) : null}
       {d.limb_quality ? <p className="muted">{limbQualityLine(d.limb_quality)}</p> : null}
       <div className="option-row">
-        <span>Redliner に含める</span>
+        <span>{ui("cyber.redliner")}</span>
         <label>
           <input
             type="checkbox"
@@ -78,7 +89,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
               })
             }
           />
-          胴
+          {ui("cyber.torso")}
         </label>
         <label>
           <input
@@ -93,7 +104,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
               })
             }
           />
-          頭蓋
+          {ui("cyber.skull")}
         </label>
       </div>
       {(d.cyberware || [])
@@ -162,13 +173,13 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
       <div className="cyber-toolbar">
         <input
           type="search"
-          placeholder="サイバーウェアを検索"
-          aria-label="サイバーウェアを検索"
+          placeholder={ui("cyber.search")}
+          aria-label={ui("cyber.search")}
           value={cySearch}
           onChange={(e) => setCySearch(e.target.value)}
         />
         <select value={cyCat} onChange={(e) => setCyCat(e.target.value)}>
-          <option value="all">すべての分類</option>
+          <option value="all">{ui("ware.allCategories")}</option>
           {cyberCats.map((c) => (
             <option key={c} value={c}>
               {tr(c)}
@@ -178,7 +189,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
         <select value={effectiveAddGrade} onChange={(e) => setAddGrade(e.target.value)}>
           {cyberGrades.map((g) => (
             <option key={g.name} value={g.name}>
-              追加時 {g.name}
+              {ui("ware.addGrade", { grade: g.name })}
             </option>
           ))}
         </select>
@@ -191,9 +202,9 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
                 <b>{tr(w.name)}</b>
                 <div className="muted">
                   {w.name} / {w.category} / ESS {w.ess}
-                  {w.plugin ? "（単独時）" : ""} / {w.cost}¥ / {w.source}
-                  {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
-                  {w.plugin ? " / スロット可" : ""}
+                  {w.plugin ? ui("ware.aloneEss") : ""} / {w.cost}¥ / {w.source}
+                  {w.maxrating > 1 ? ui("ware.maxRating", { max: w.maxrating }) : ""}
+                  {w.plugin ? ui("ware.slottable") : ""}
                 </div>
               </div>
               <button
@@ -213,7 +224,7 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
                   })
                 }
               >
-                追加
+                {ui("common.add")}
               </button>
             </div>
           )}

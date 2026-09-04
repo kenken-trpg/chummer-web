@@ -6,7 +6,7 @@ import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/g
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
-export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
 
   return (
@@ -41,18 +41,20 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 <div className="muted">
                   {item.name} / {weaponLine(item)} / {item.nuyen.toLocaleString()}¥{availBit(item)}{" "}
                   / {item.source}
-                  {fromGear ? " / ギア連動" : ""}
-                  {fromWare ? " / ウェア連動" : ""}
-                  {item.limb_str != null ? ` / 肢 STR ${item.limb_str}` : ""}
+                  {fromGear ? ui("weapon.fromGear") : ""}
+                  {fromWare ? ui("weapon.fromWare") : ""}
+                  {item.limb_str != null ? ui("weapon.limbStr", { str: item.limb_str }) : ""}
                   {item.useskill ? ` / ${item.useskill}` : ""}
-                  {item.focus_dice ? ` / フォーカス+${item.focus_dice}` : ""}
-                  {item.category_dice ? ` / カテゴリ+${item.category_dice}` : ""}
-                  {item.mounted_label ? ` / 搭載 ${tr(item.mounted_label)}` : ""}
+                  {item.focus_dice ? ui("weapon.focusDice", { dice: item.focus_dice }) : ""}
+                  {item.category_dice
+                    ? ui("weapon.categoryDice", { dice: item.category_dice })
+                    : ""}
+                  {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
                 </div>
                 {fromWare ? null : (
                   <div className="cyber-controls">
                     <label>
-                      数量
+                      {ui("common.qty")}
                       <input
                         type="number"
                         min={1}
@@ -82,9 +84,9 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                     {tr(acc.name)}
                     {acc.mount ? ` / ${acc.mount}` : ""}
                     {acc.specialmodification
-                      ? ` / 改造${acc.special_modification_cost || 1}`
+                      ? ` / ${ui("weapon.specialMod", { cost: acc.special_modification_cost || 1 })}`
                       : acc.included
-                        ? " / 付属"
+                        ? ` / ${ui("common.included")}`
                         : ` / ${acc.nuyen.toLocaleString()}¥`}
                     {availBit(acc)}
                     {acc.included ? null : (
@@ -100,7 +102,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                             })
                           }
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
@@ -109,20 +111,22 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 {!fromGear && addons.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: アクセサリを追加`}
+                      aria-label={`${tr(item.name)}: ${ui("weapon.addAccessory")}`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                       }
                     >
-                      <option value="">アクセサリを追加</option>
+                      <option value="">{ui("weapon.addAccessory")}</option>
                       {addons
                         .filter((mod) => mod.specialmodification || mod.source === "SR5")
                         .map((mod) => (
                           <option key={mod.id} value={mod.id}>
                             {tr(mod.name)} (
                             {mod.specialmodification
-                              ? `改造${mod.special_modification_cost || 1}`
+                              ? ui("weapon.specialMod", {
+                                  cost: mod.special_modification_cost || 1,
+                                })
                               : formatAccessoryCost(mod.cost, parentCost)}
                             )
                           </option>
@@ -144,16 +148,20 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                         setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
                       }}
                     >
-                      装着
+                      {ui("common.install")}
                     </button>
                   </div>
                 ) : null}
                 {(item.ammo_gear || []).map((ammo) => (
                   <div className="muted" key={ammo.id} style={{ marginTop: 6 }}>
                     {tr(ammo.label || ammo.name)}
-                    {ammo.loaded ? " / 装填中" : ""}
+                    {ammo.loaded ? ui("weapon.loaded") : ""}
                     {ammo.qty > 1 ? ` ×${ammo.qty}` : ""}
-                    {ammo.costfor ? ` / ${(ammo.costfor * ammo.qty).toLocaleString()}発` : ""}
+                    {ammo.costfor
+                      ? ui("weapon.rounds", {
+                          count: (ammo.costfor * ammo.qty).toLocaleString(),
+                        })
+                      : ""}
                     {` / ${ammo.nuyen.toLocaleString()}¥`}{" "}
                     {(ammo.ammo_weapon_types || []).length > 0 && !ammo.loaded ? (
                       <button
@@ -166,7 +174,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                           })
                         }
                       >
-                        装填
+                        {ui("weapon.load")}
                       </button>
                     ) : null}
                     <button
@@ -182,10 +190,10 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                         })
                       }
                     >
-                      外す
+                      {ui("common.remove")}
                     </button>
                     <label>
-                      数量
+                      {ui("common.qty")}
                       <input
                         type="number"
                         min={1}
@@ -205,13 +213,13 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 {!fromGear && ammoAddons.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: 弾薬を追加`}
+                      aria-label={`${tr(item.name)}: ${ui("weapon.addAmmo")}`}
                       value={slotPick[ammoKey] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [ammoKey]: e.target.value }))
                       }
                     >
-                      <option value="">弾薬を追加</option>
+                      <option value="">{ui("weapon.addAmmo")}</option>
                       {ammoAddons
                         .filter((mod) => mod.source === "SR5")
                         .map((mod) => (
@@ -240,7 +248,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                         setSlotPick((cur) => ({ ...cur, [ammoKey]: "" }));
                       }}
                     >
-                      装着
+                      {ui("common.install")}
                     </button>
                   </div>
                 ) : null}
@@ -273,7 +281,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                   });
                 }}
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -282,7 +290,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
 
       <CatalogPicker
         items={catalog.weapons || []}
-        label="武器を検索"
+        label={ui("weapon.search")}
         tr={tr}
         describe={(item) => (
           <>

@@ -2,7 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { CATS, DEFAULT_PRIORITIES, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
 
-export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: TabPanelProps) {
+export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
   const table = catalog.priority_table;
 
   return (
@@ -48,26 +48,37 @@ export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: 
         </button>
         {(ch.build_method || "Priority") === "SumToTen" ? (
           <span className="muted">
-            合計 {d.sum_to_ten?.used ?? 0}/{d.sum_to_ten?.max ?? 10}
+            {ui("prio.sumTotal", {
+              used: d.sum_to_ten?.used ?? 0,
+              max: d.sum_to_ten?.max ?? 10,
+            })}
             {" ・ "}A4 / B3 / C2 / D1 / E0
           </span>
         ) : null}
         {(ch.build_method || "Priority") === "Karma" ? (
           <span className="muted">
-            カルマ {d.karma.remaining} / {d.karma.pool}
-            {" ・ "}1K={d.karma_chargen?.nuyen_per_karma ?? 2000}¥（最大{" "}
-            {d.karma_chargen?.nuyen_karma_max ?? 235}K）
+            {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
+            {ui("prio.karmaNuyenRate", {
+              rate: d.karma_chargen?.nuyen_per_karma ?? 2000,
+              max: d.karma_chargen?.nuyen_karma_max ?? 235,
+            })}
           </span>
         ) : (
           <span className="muted">
-            残カルマ→¥ 最大 {d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}K
+            {ui("prio.leftoverToNuyen", {
+              max: d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10,
+            })}
           </span>
         )}
       </div>
       {(ch.build_method || "Priority") !== "Karma" ? (
         <label style={{ display: "block", marginBottom: 12 }}>
-          残カルマ→ニューエン（{ch.karma_nuyen || 0}K ={" "}
-          {((ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)).toLocaleString()}¥）
+          {ui("prio.leftoverSlider", {
+            k: ch.karma_nuyen || 0,
+            nuyen: (
+              (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
+            ).toLocaleString(),
+          })}
           <input
             type="range"
             min={0}
@@ -82,13 +93,9 @@ export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: 
       ) : null}
       {(ch.build_method || "Priority") === "Karma" ? (
         <div style={{ display: "grid", gap: 12 }}>
-          <p className="muted">
-            優先度表は使いません。メタ／能力値／技能／術式などをカルマで購入します（開始{" "}
-            {d.karma.pool}）。 MAG／RES
-            はタレント選択で解禁され、最低1から買い上げます。無料の術式枠はありません。
-          </p>
+          <p className="muted">{ui("prio.karmaNote", { pool: d.karma.pool })}</p>
           <label>
-            タレント
+            {ui("prio.talent")}
             <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
               {(catalog.karma_talents || []).map((t) => (
                 <option key={t.name} value={t.name}>
@@ -100,9 +107,12 @@ export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: 
             </select>
           </label>
           <label>
-            カルマ→ニューエン（{ch.karma_nuyen || 0}K ={" "}
-            {((ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)).toLocaleString()}
-            ¥）
+            {ui("prio.karmaSlider", {
+              k: ch.karma_nuyen || 0,
+              nuyen: (
+                (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
+              ).toLocaleString(),
+            })}
             <input
               type="range"
               min={0}
@@ -121,13 +131,20 @@ export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: 
           {d.karma_chargen ? (
             <div className="muted" style={{ display: "grid", gap: 4 }}>
               <div>
-                内訳: メタ {d.karma_chargen.metatype} / 能力値 {d.karma_chargen.attributes} / 技能{" "}
-                {d.karma_chargen.skills} / 知識 {d.karma_chargen.knowledge} / 専門化{" "}
-                {d.karma_chargen.specializations}
+                {ui("prio.breakdownA", {
+                  meta: d.karma_chargen.metatype,
+                  attrs: d.karma_chargen.attributes,
+                  skills: d.karma_chargen.skills,
+                  knowledge: d.karma_chargen.knowledge,
+                  specs: d.karma_chargen.specializations,
+                })}
               </div>
               <div>
-                資質 {d.karma_chargen.qualities} / ニューエン交換 {d.karma_chargen.nuyen_karma} /
-                その他 {d.karma_chargen.other}
+                {ui("prio.breakdownB", {
+                  qualities: d.karma_chargen.qualities,
+                  nuyenKarma: d.karma_chargen.nuyen_karma,
+                  other: d.karma_chargen.other,
+                })}
               </div>
             </div>
           ) : null}
@@ -192,8 +209,8 @@ export function PriorityTab({ catalog, character: ch, d, patch, setCharacter }: 
           </table>
           <p className="muted">
             {(ch.build_method || "Priority") === "SumToTen"
-              ? "同じ優先度を複数カテゴリに割り当てできます。合計がちょうど 10 になるようにしてください。"
-              : "A〜E は各1回。クリックで入れ替えます。"}
+              ? ui("prio.sumHint")
+              : ui("prio.priorityHint")}
           </p>
         </>
       )}
