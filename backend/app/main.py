@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import time
 from collections.abc import Awaitable, Callable
 from functools import lru_cache
 from typing import NamedTuple
@@ -21,7 +22,10 @@ from .catalog_view import public_catalog
 from .characters import apply_patch, compute_state, import_character, new_character
 from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
+from .logging_config import configure_logging, new_request_id, request_id_var
 from .models import CharacterCreate, PatchRequest, StateRequest
+
+configure_logging()
 
 # --- deploy-time knobs (env-overridable) --------------------------------------
 _ALLOWED_ORIGINS = [
@@ -86,8 +90,58 @@ async def _limit_body_size(request: Request, call_next: Callable[[Request], Awai
     independently bounded in chummer_import."""
     cl = request.headers.get("content-length")
     if cl and cl.isdigit() and int(cl) > _MAX_REQUEST_BYTES:
+        _log.warning("request body too large", extra={"content_length": int(cl)})
         return JSONResponse({"detail": "request body too large"}, status_code=413)
     return await call_next(request)
+
+
+# Added last, so it is the *outermost* middleware: the id has to exist before
+# anything else can log, and the access line has to see the status the body-size
+# guard and the rate limiter actually returned.
+@app.middleware("http")
+async def _request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    """Give the request an id, log one line when it finishes, hand the id back.
+
+    An id from the edge wins so a trace spans the whole hop chain — but only
+    from a header a proxy we trust would have written, on the same footing as
+    the forwarded-IP rule above.
+    """
+    incoming = request.headers.get("x-request-id", "").strip() if _TRUSTED_PROXY_HOPS > 0 else ""
+    # bound so a hostile client cannot write an essay into every log line
+    rid = incoming[:64] if incoming else new_request_id()
+    token = request_id_var.set(rid)
+    started = time.perf_counter()
+    try:
+        try:
+            response = await call_next(request)
+        except Exception:
+            # uvicorn logs the traceback itself; this is the line that carries
+            # the id and the timing, so the 500 is findable from the caller's side
+            _log.exception("request failed", extra={"method": request.method, "path": request.url.path})
+            raise
+        duration_ms = round((time.perf_counter() - started) * 1000, 1)
+        # The message is readable on its own (text mode is what you tail in
+        # dev); the same values repeat as fields so `LOG_FORMAT=json` is
+        # queryable without parsing the sentence back apart.
+        _log.info(
+            "%s %s -> %s in %sms",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration_ms,
+            extra={
+                "method": request.method,
+                # path only — a query string is not ours to log
+                "path": request.url.path,
+                "status": response.status_code,
+                "duration_ms": duration_ms,
+                "client": _client_ip(request),
+            },
+        )
+        response.headers["X-Request-ID"] = rid
+        return response
+    finally:
+        request_id_var.reset(token)
 
 
 @app.get("/api/health")

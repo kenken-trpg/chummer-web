@@ -26,4 +26,7 @@ services:
       # 0 locally; set to 2 behind Cloud Run / Fly so rate limiting keys on the
       # real client IP and not a forgeable x-forwarded-for hop.
       TRUSTED_PROXY_HOPS: "${TRUSTED_PROXY_HOPS:-0}"
+      # `json` for one queryable object per line; `text` is what you tail
+      LOG_FORMAT: "${LOG_FORMAT:-text}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
     restart: unless-stopped

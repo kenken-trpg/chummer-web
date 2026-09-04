@@ -115,7 +115,16 @@ else the `TRUSTED_PROXY_HOPS`-th `x-forwarded-for` entry from the right if that
 is set, else the socket peer; `x-forwarded-for` is ignored by default because a
 direct client can forge it; defaults `120/minute` / `20/minute`),
 `CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the `.chum5lz` path,
-default 32 MiB). Untrusted XML is parsed via `defusedxml`.
+default 32 MiB), `LOG_FORMAT` (`text` / `json`) and `LOG_LEVEL`. Untrusted XML
+is parsed via `defusedxml`.
+
+**Logging** (`logging_config.py`) — one handler, a `request_id` on every line,
+and an access line written by the app rather than uvicorn so it carries the id
+and the duration. The id goes back out as `X-Request-ID`; an id from the edge
+is adopted only when `TRUSTED_PROXY_HOPS` says there is a proxy to trust.
+Nothing derived from a `CharacterState` is ever logged — the whole point of the
+stateless design is that characters do not land on the server's disk, and a log
+line is disk.
 
 `chummer_import.py` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
 by `sourceid` then name; unknown entries become warnings, never errors.

@@ -37,6 +37,28 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
 | `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
+| `LOG_FORMAT` | `text` | `json` for one object per line |
+| `LOG_LEVEL` | `INFO` | root level |
+
+**Logs.** Every response carries `X-Request-ID`, and every log line carries the
+same id, so a user quoting the header from their network tab is enough to find
+the request. With `TRUSTED_PROXY_HOPS` above 0 an `X-Request-ID` from the edge
+is adopted instead, so one id spans the whole hop chain (at 0 the header is
+attacker-controlled and is ignored, same rule as the forwarded IP below). The
+access line is written by the app, not uvicorn — `uvicorn.access` is quieted to
+avoid a second, less useful copy.
+
+`LOG_FORMAT=json` gives one object per line:
+
+```json
+{"ts":"…","level":"INFO","logger":"chummer_web","message":"POST /api/characters/patch -> 200 in 41.2ms",
+ "request_id":"9f0c1d2e3a4b","method":"POST","path":"/api/characters/patch","status":200,
+ "duration_ms":41.2,"client":"203.0.113.7"}
+```
+
+Request bodies, query strings and anything derived from a `CharacterState` are
+never logged. Characters are the user's and never touch disk on the server; a
+log line is disk.
 
 **Client IP for rate limiting.** `cf-connecting-ip` is always trusted
 (Cloudflare overwrites it). `x-forwarded-for` is *not* trusted by default — a
