@@ -7,7 +7,15 @@ import { KNOW_CATS, KNOW_CAT_JA } from "@/lib/character/constants";
 import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDice } from "@/lib/character/format";
 
-export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }: TabPanelProps) {
+export function SkillsTab({
+  catalog,
+  character: ch,
+  d,
+  tr,
+  ui,
+  patch,
+  setCharacter,
+}: TabPanelProps) {
   const [knowSearch, setKnowSearch] = useState("");
   const [knowCat, setKnowCat] = useState("all");
   const [customKnow, setCustomKnow] = useState("");
@@ -133,11 +141,14 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
   return (
     <div className="card">
       <p className="muted">
-        技能 {d.points.skills.used}/{d.points.skills.max} ・ グループ {d.points.skill_groups.used}/
-        {d.points.skill_groups.max} ・ 知識 {d.points.knowledge.used}/{d.points.knowledge.max}
-        {career ? " ・ キャリアはカルマで成長（上限 R" + skillMax + "）" : " ・ 専門化は1点"}
+        {ui("skills.points", {
+          skills: `${d.points.skills.used}/${d.points.skills.max}`,
+          groups: `${d.points.skill_groups.used}/${d.points.skill_groups.max}`,
+          knowledge: `${d.points.knowledge.used}/${d.points.knowledge.max}`,
+        })}
+        {career ? ui("skills.careerNote", { max: skillMax }) : ui("skills.chargenNote")}
       </p>
-      <h3>技能グループ</h3>
+      <h3>{ui("skills.groups")}</h3>
       {catalog.skills.groups.map((g) => (
         <div className="skill-row" key={g}>
           <span>{tr(g)}</span>
@@ -164,7 +175,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
           <b>{skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}</b>
         </div>
       ))}
-      <h3>アクティブ技能</h3>
+      <h3>{ui("skills.active")}</h3>
       {catalog.skills.skills
         .filter((s) => s.source === "SR5" && !s.name.includes("Exotic"))
         .map((s) => {
@@ -218,10 +229,8 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
             </div>
           );
         })}
-      <h3>Exotic技能</h3>
-      <p className="muted">
-        対象の指定が技能そのものです。同じ Exotic を別対象で複数持てます。専門化の追加点は不要です。
-      </p>
+      <h3>{ui("skills.exotic")}</h3>
+      <p className="muted">{ui("skills.exoticNote")}</p>
       {(d.exotic_skills || []).length ? (
         (d.exotic_skills || []).map((row) => {
           const local = (ch.exotic_skills || []).find((item) => item.id === row.id);
@@ -266,8 +275,8 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
               <SpecPicker
                 options={row.options || []}
                 value={extra}
-                emptyLabel="対象"
-                placeholder="対象"
+                emptyLabel={ui("common.target")}
+                placeholder={ui("common.target")}
                 tr={tr}
                 onDraft={(next) => draftExotic(row.id, { extra: next })}
                 onCommit={(next) => {
@@ -285,13 +294,13 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                   patchExotic((ch.exotic_skills || []).filter((item) => item.id !== row.id))
                 }
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
         })
       ) : (
-        <p className="muted">まだありません。下のボタンから追加します。</p>
+        <p className="muted">{ui("skills.emptyExotic")}</p>
       )}
       <div className="option-row">
         {catalog.skills.skills
@@ -307,15 +316,18 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 ])
               }
             >
-              {tr(s.name)} を追加
+              {ui("skills.addNamed", { name: tr(s.name) })}
             </button>
           ))}
       </div>
-      <h3>知識技能</h3>
+      <h3>{ui("skills.knowledge")}</h3>
       <p className="muted">
-        無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。
-        {career ? `キャリアのレーティングは1〜${skillMax}` : "作成時のレーティングは1〜6"}です。
-        {career ? "追加はカルマ" : "専門化は知識点1"}です。
+        {ui("skills.knowledgeFree")}
+        {career
+          ? ui("skills.knowledgeCareerRange", { max: skillMax })
+          : ui("skills.knowledgeChargenRange")}
+        {ui("skills.rangeSuffix")}
+        {career ? ui("skills.knowledgeCareerCost") : ui("skills.knowledgeChargenCost")}
       </p>
       {Object.keys(d.skill_category_bonus || {}).length ? (
         <p className="muted">
@@ -336,7 +348,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
             <div className="know-row" key={row.name}>
               <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.name] || [])].join(" / ")}>
                 {tr(row.name)}
-                {custom ? " （カスタム）" : ""}
+                {custom ? ui("skills.custom") : ""}
               </span>
               {custom ? (
                 <select
@@ -360,7 +372,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 <span className="muted">{KNOW_CAT_JA[row.category] || row.category}</span>
               )}
               {row.native ? (
-                <span className="muted">無料</span>
+                <span className="muted">{ui("skills.free")}</span>
               ) : (
                 <input
                   type="range"
@@ -399,7 +411,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
               />
               <b>
                 {row.native
-                  ? "母語"
+                  ? ui("skills.native")
                   : skillDice(Math.max(row.rating, row.skillsoft || 0), d.skill_bonus?.[row.name])}
                 {row.native ? null : skillsoftBit(row.skillsoft)}
                 {specBit(specValue, tr(specValue))}
@@ -412,25 +424,25 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                       checked={row.native}
                       onChange={(e) => setKnowledgeNative(row.name, e.target.checked)}
                     />
-                    母語
+                    {ui("skills.native")}
                   </label>
                 ) : null}
                 <button className="btn danger" onClick={() => removeKnowledge(row.name)}>
-                  削除
+                  {ui("common.delete")}
                 </button>
               </span>
             </div>
           );
         })
       ) : (
-        <p className="muted">まだありません。カタログから追加するか、カスタム名で作れます。</p>
+        <p className="muted">{ui("skills.emptyKnowledge")}</p>
       )}
       <div className="option-row">
         <button
           className={`tab ${knowCat === "all" ? "active" : ""}`}
           onClick={() => setKnowCat("all")}
         >
-          すべて
+          {ui("common.all")}
         </button>
         {KNOW_CATS.map((cat) => (
           <button
@@ -444,15 +456,16 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
       </div>
       <input
         type="search"
-        placeholder="知識技能を検索"
-        aria-label="知識技能を検索"
+        placeholder={ui("skills.searchKnowledge")}
+        aria-label={ui("skills.searchKnowledge")}
         value={knowSearch}
         onChange={(e) => setKnowSearch(e.target.value)}
       />
       <div className="cyber-toolbar">
         <input
           type="text"
-          placeholder="カスタム知識名"
+          placeholder={ui("skills.customName")}
+          aria-label={ui("skills.customName")}
           value={customKnow}
           onChange={(e) => setCustomKnow(e.target.value)}
         />
@@ -464,7 +477,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
           ))}
         </select>
         <button className="btn primary" onClick={() => addKnowledge(customKnow, customKnowCat)}>
-          カスタム追加
+          {ui("skills.addCustom")}
         </button>
       </div>
       <div className="quality-list">
@@ -486,7 +499,7 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 className="btn primary"
                 onClick={() => addKnowledge(item.name, item.category)}
               >
-                追加
+                {ui("common.add")}
               </button>
             </div>
           )}

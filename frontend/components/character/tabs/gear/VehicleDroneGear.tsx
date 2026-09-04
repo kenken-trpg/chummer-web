@@ -21,6 +21,7 @@ export function VehicleDroneGear({
   tr,
   patch,
   mode,
+  ui,
 }: TabPanelProps & { mode: "drone" | "vehicle" }) {
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
 
@@ -57,7 +58,7 @@ export function VehicleDroneGear({
                   {(item.slot_tracks || []).length
                     ? ` / ${(item.slot_tracks || []).map((track) => `${track.label} ${track.used}/${track.max}`).join(" · ")}`
                     : item.slots_max
-                      ? ` / スロット ${item.slots_used ?? 0}/${item.slots_max}`
+                      ? ui("veh.slots", { used: item.slots_used ?? 0, max: item.slots_max })
                       : ""}
                   {" / "}
                   {item.nuyen.toLocaleString()}¥ / {item.source}
@@ -73,10 +74,15 @@ export function VehicleDroneGear({
                     <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
                       {tr(mod.name)}
                       {mod.rating_max > 0 ? ` R${mod.rating}` : ""}
-                      {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
-                      {mod.slots ? ` / スロット ${mod.slots}` : ""}
+                      {mod.included
+                        ? ` / ${ui("common.included")}`
+                        : ` / ${mod.nuyen.toLocaleString()}¥`}
+                      {mod.slots ? ui("veh.slotCost", { slots: mod.slots }) : ""}
                       {mod.capacity_max
-                        ? ` / 容量 ${mod.capacity_used ?? 0}/${mod.capacity_max}`
+                        ? ui("veh.capacity", {
+                            used: mod.capacity_used ?? 0,
+                            max: mod.capacity_max,
+                          })
                         : ""}
                       {R5_SLOT_LABELS[mod.category] ? ` / ${R5_SLOT_LABELS[mod.category]}` : null}
                       {mod.included ? null : (
@@ -93,7 +99,7 @@ export function VehicleDroneGear({
                               })
                             }
                           >
-                            外す
+                            {ui("common.remove")}
                           </button>
                         </>
                       )}
@@ -170,7 +176,7 @@ export function VehicleDroneGear({
                       {wareOptions.length ? (
                         <div className="slot-picker">
                           <select
-                            aria-label={`${tr(mod.name)}: 強化を追加`}
+                            aria-label={`${tr(mod.name)}: ${ui("veh.addSubsystem")}`}
                             value={chosenWare}
                             onChange={(e) =>
                               setSlotPick((cur) => ({ ...cur, [warePickKey]: e.target.value }))
@@ -210,7 +216,7 @@ export function VehicleDroneGear({
                               setSlotPick((cur) => ({ ...cur, [warePickKey]: "" }));
                             }}
                           >
-                            スロットに追加
+                            {ui("veh.addToSlot")}
                           </button>
                         </div>
                       ) : null}
@@ -220,13 +226,13 @@ export function VehicleDroneGear({
                 {addons.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: 改造を追加`}
+                      aria-label={`${tr(item.name)}: ${ui("veh.addMod")}`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                       }
                     >
-                      <option value="">改造を追加</option>
+                      <option value="">{ui("veh.addMod")}</option>
                       {addons
                         // used to lift as soon as the catalog search box below
                         // had text in it, which nothing signposted
@@ -257,16 +263,18 @@ export function VehicleDroneGear({
                         setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
                       }}
                     >
-                      装着
+                      {ui("common.install")}
                     </button>
                   </div>
                 ) : null}
                 {(item.weapon_mounts || []).map((mount) => (
                   <div className="muted" key={mount.id} style={{ marginTop: 6 }}>
                     {tr(mount.label || mount.name)}
-                    {mount.included ? " / 付属" : ` / ${mount.nuyen.toLocaleString()}¥`}
-                    {mount.slots ? ` / スロット ${mount.slots}` : ""}
-                    {mount.weapon_name ? ` / ${tr(mount.weapon_name)}` : " / 未搭載"}
+                    {mount.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${mount.nuyen.toLocaleString()}¥`}
+                    {mount.slots ? ui("veh.slotCost", { slots: mount.slots }) : ""}
+                    {mount.weapon_name ? ` / ${tr(mount.weapon_name)}` : ui("veh.noWeapon")}
                     {mount.included ? null : (
                       <>
                         {" "}
@@ -280,13 +288,13 @@ export function VehicleDroneGear({
                             })
                           }
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
                     <div className="cyber-controls">
                       <select
-                        aria-label={`${tr(mount.name)}: 武器を搭載`}
+                        aria-label={`${tr(mount.name)}: ${ui("veh.mountWeapon")}`}
                         value={mount.weapon_install_id || ""}
                         onChange={(e) =>
                           patch({
@@ -298,7 +306,7 @@ export function VehicleDroneGear({
                           })
                         }
                       >
-                        <option value="">武器を搭載</option>
+                        <option value="">{ui("veh.mountWeapon")}</option>
                         {mount.weapon_install_id && mount.weapon_name ? (
                           <option value={mount.weapon_install_id}>{tr(mount.weapon_name)}</option>
                         ) : null}
@@ -314,13 +322,13 @@ export function VehicleDroneGear({
                 {sizes.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: 武器マウントを追加`}
+                      aria-label={`${tr(item.name)}: ${ui("veh.addMount")}`}
                       value={slotPick[`${item.id}-mount`] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [`${item.id}-mount`]: e.target.value }))
                       }
                     >
-                      <option value="">武器マウントを追加</option>
+                      <option value="">{ui("veh.addMount")}</option>
                       {sizes
                         .filter((mod) => mod.source === "SR5" || mod.source === "R5")
                         .map((mod) => (
@@ -345,7 +353,7 @@ export function VehicleDroneGear({
                         setSlotPick((cur) => ({ ...cur, [`${item.id}-mount`]: "" }));
                       }}
                     >
-                      装着
+                      {ui("common.install")}
                     </button>
                   </div>
                 ) : null}
@@ -364,13 +372,20 @@ export function VehicleDroneGear({
                       {tr(sensor.name)}
                       {sensor.rating_max > 0 ? ` R${sensor.rating}` : ""}
                       {sensor.capacity_max
-                        ? ` / 容量 ${sensor.capacity_used}/${sensor.capacity_max}`
+                        ? ui("veh.capacity", {
+                            used: sensor.capacity_used ?? 0,
+                            max: sensor.capacity_max ?? 0,
+                          })
                         : ""}
-                      {sensor.included ? " / 付属" : ` / ${sensor.nuyen.toLocaleString()}¥`}
+                      {sensor.included
+                        ? ` / ${ui("common.included")}`
+                        : ` / ${sensor.nuyen.toLocaleString()}¥`}
                       {functions.map((child) => (
                         <div key={child.id} style={{ marginTop: 4, marginLeft: 12 }}>
                           {tr(child.name)}
-                          {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}{" "}
+                          {child.capacity_cost
+                            ? ` / ${ui("common.capacity")} ${child.capacity_cost}`
+                            : ""}{" "}
                           <button
                             className="btn danger"
                             onClick={() =>
@@ -379,20 +394,20 @@ export function VehicleDroneGear({
                               })
                             }
                           >
-                            外す
+                            {ui("common.remove")}
                           </button>
                         </div>
                       ))}
                       {sensorAddons.length ? (
                         <div className="cyber-controls">
                           <select
-                            aria-label={`${tr(sensor.name)}: 機能を追加`}
+                            aria-label={`${tr(sensor.name)}: ${ui("veh.addSensorFn")}`}
                             value={slotPick[sensor.id] || ""}
                             onChange={(e) =>
                               setSlotPick((cur) => ({ ...cur, [sensor.id]: e.target.value }))
                             }
                           >
-                            <option value="">機能を追加</option>
+                            <option value="">{ui("veh.addSensorFn")}</option>
                             {sensorAddons
                               .filter((mod) => mod.source === "SR5")
                               .map((mod) => (
@@ -421,7 +436,7 @@ export function VehicleDroneGear({
                               setSlotPick((cur) => ({ ...cur, [sensor.id]: "" }));
                             }}
                           >
-                            装着
+                            {ui("common.install")}
                           </button>
                         </div>
                       ) : null}
@@ -432,7 +447,9 @@ export function VehicleDroneGear({
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.label || acc.name)}
                     {acc.rating_max > 0 ? ` R${acc.rating}` : ""}
-                    {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}
+                    {acc.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${acc.nuyen.toLocaleString()}¥`}
                     {acc.included ? null : (
                       <>
                         {" "}
@@ -444,7 +461,7 @@ export function VehicleDroneGear({
                             })
                           }
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
@@ -472,13 +489,13 @@ export function VehicleDroneGear({
                 ))}
                 <div className="cyber-controls">
                   <select
-                    aria-label={`${tr(item.name)}: 内装ギアを追加`}
+                    aria-label={`${tr(item.name)}: ${ui("veh.addInteriorGear")}`}
                     value={slotPick[`${item.id}-gear`] || ""}
                     onChange={(e) =>
                       setSlotPick((cur) => ({ ...cur, [`${item.id}-gear`]: e.target.value }))
                     }
                   >
-                    <option value="">内装ギアを追加</option>
+                    <option value="">{ui("veh.addInteriorGear")}</option>
                     {(catalog.gear || [])
                       .filter(
                         (mod) => vehicleInteriorFits(mod) && String(mod.cost || "").trim() !== "0",
@@ -511,7 +528,7 @@ export function VehicleDroneGear({
                       setSlotPick((cur) => ({ ...cur, [`${item.id}-gear`]: "" }));
                     }}
                   >
-                    装着
+                    {ui("common.install")}
                   </button>
                 </div>
               </div>
@@ -521,7 +538,7 @@ export function VehicleDroneGear({
                   patch(dropDrone(ch, item.id, mode === "vehicle" ? "vehicles" : "drones"))
                 }
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -531,7 +548,7 @@ export function VehicleDroneGear({
       {mode === "drone" ? (
         <CatalogPicker
           items={catalog.drones || []}
-          label="ドローンを検索"
+          label={ui("veh.searchDrones")}
           tr={tr}
           describe={(item) => (
             <>
@@ -544,7 +561,7 @@ export function VehicleDroneGear({
       ) : (
         <CatalogPicker
           items={catalog.vehicles || []}
-          label="車両を検索"
+          label={ui("veh.searchVehicles")}
           tr={tr}
           describe={(item) => (
             <>

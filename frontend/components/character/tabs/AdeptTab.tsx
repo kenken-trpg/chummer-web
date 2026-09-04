@@ -9,7 +9,16 @@ import { MentorPicker } from "@/components/character/MentorPicker";
 import { attrLabel } from "@/lib/ui-strings";
 import { formatPoints } from "@/lib/character/format";
 
-export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter }: TabPanelProps) {
+export function AdeptTab({
+  catalog,
+  character: ch,
+  d,
+  tr,
+  t,
+  ui,
+  patch,
+  setCharacter,
+}: TabPanelProps) {
   const [powerSearch, setPowerSearch] = useState("");
   const [enhSearch, setEnhSearch] = useState("");
   const [qiSearch, setQiSearch] = useState("");
@@ -26,9 +35,15 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
   return (
     <div className="card">
       <p className="muted">
-        パワー点 {formatPoints(d.power_points?.used || 0)}/{formatPoints(d.power_points?.max || 0)}
+        {ui("adept.powerPoints", {
+          used: formatPoints(d.power_points?.used || 0),
+          max: formatPoints(d.power_points?.max || 0),
+        })}
         {(d.way_discount?.max || 0) > 0
-          ? ` ・ Way割引 ${formatPoints(d.way_discount?.used || 0)}/${formatPoints(d.way_discount?.max || 0)}`
+          ? ui("adept.wayDiscount", {
+              used: formatPoints(d.way_discount?.used || 0),
+              max: formatPoints(d.way_discount?.max || 0),
+            })
           : ""}
       </p>
       {d.needs_mentor ? (
@@ -36,7 +51,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
       ) : null}
       {ch.talent === "Mystic Adept" ? (
         <div className="skill-row">
-          <span>購入したパワー点（1点=5カルマ）</span>
+          <span>{ui("adept.boughtPoints")}</span>
           <input
             type="range"
             min={0}
@@ -61,23 +76,32 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
               {" / "}
               {formatPoints(item.cost)} PP
               {item.discounted && item.full_cost != null
-                ? `（割引前 ${formatPoints(item.full_cost)}）`
+                ? ui("adept.beforeDiscount", { cost: formatPoints(item.full_cost) })
                 : ""}
-              {item.free_levels ? ` / 無料Lv ${item.free_levels}` : ""}
+              {item.free_levels ? ui("adept.freeLevels", { levels: item.free_levels }) : ""}
               {item.total_rating && item.total_rating !== item.rating
-                ? ` / 合計R${item.total_rating}`
+                ? ui("adept.totalRating", { rating: item.total_rating })
                 : ""}
               {" / "}
               {item.source}
               {item.notes?.length ? ` / ${item.notes.join(" ・ ")}` : ""}
               {item.spell
-                ? ` / ${item.spell.dv} @ F${item.spell.force} → ドレイン ${item.spell.drain == null ? "特殊" : `${item.spell.drain}${item.spell.drain_code || ""}`}（抵抗 ${item.spell.resist_attrs} ${item.spell.resist}）`
+                ? ui("adept.spellLine", {
+                    dv: item.spell.dv,
+                    force: item.spell.force,
+                    drain:
+                      item.spell.drain == null
+                        ? ui("adept.drainSpecial")
+                        : `${item.spell.drain}${item.spell.drain_code || ""}`,
+                    resistAttrs: item.spell.resist_attrs,
+                    resist: item.spell.resist,
+                  })
                 : ""}
             </div>
             <div className="cyber-controls">
               {!item.free_only && item.rating_max > item.rating_min ? (
                 <label>
-                  レーティング
+                  {ui("adept.rating")}
                   <input
                     type="number"
                     min={item.rating_min}
@@ -138,13 +162,13 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                       })
                     }
                   />
-                  Way割引
+                  {ui("adept.wayDiscountToggle")}
                 </label>
               ) : null}
             </div>
           </div>
           {item.free_only ? (
-            <span className="muted">無料</span>
+            <span className="muted">{ui("adept.free")}</span>
           ) : (
             <button
               className="btn danger"
@@ -154,7 +178,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                 })
               }
             >
-              削除
+              {ui("common.delete")}
             </button>
           )}
         </div>
@@ -162,8 +186,8 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
       <div className="cyber-toolbar" style={{ gridTemplateColumns: "1fr" }}>
         <input
           type="search"
-          placeholder="アデプトパワーを検索"
-          aria-label="アデプトパワーを検索"
+          placeholder={ui("adept.searchPowers")}
+          aria-label={ui("adept.searchPowers")}
           value={powerSearch}
           onChange={(e) => setPowerSearch(e.target.value)}
         />
@@ -181,9 +205,11 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                 <div className="muted">
                   {item.name} / {formatPoints(item.points)} PP
                   {item.extrapointcost ? ` +${formatPoints(item.extrapointcost)}` : ""}
-                  {item.adeptway ? ` / Way ${formatPoints(item.adeptway)} 割引` : ""}
-                  {item.levels ? " / レベルあり" : ""}
-                  {item.select === "spell" ? " / 呪文選択" : ""}
+                  {item.adeptway
+                    ? ui("adept.wayLabel", { points: formatPoints(item.adeptway) })
+                    : ""}
+                  {item.levels ? ui("adept.hasLevels") : ""}
+                  {item.select === "spell" ? ui("adept.spellSelect") : ""}
                   {" / "}
                   {item.source}
                 </div>
@@ -199,21 +225,23 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                   })
                 }
               >
-                追加
+                {ui("common.add")}
               </button>
             </div>
           )}
         </PickerList>
       </div>
       <h3>Enhancement</h3>
-      <p className="muted">Way と対応パワーがあるとき、1つ 2カルマ</p>
+      <p className="muted">{ui("adept.enhancementNote")}</p>
       {(d.enhancements || []).map((item) => (
         <div className="cyber-item" key={item.id}>
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
               {item.name}
-              {item.power ? ` / ${item.power}` : ""} / 2カルマ / {item.source}
+              {item.power ? ` / ${item.power}` : ""}
+              {ui("adept.enhancementCost")}
+              {item.source}
             </div>
           </div>
           <button
@@ -224,14 +252,14 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
               })
             }
           >
-            削除
+            {ui("common.delete")}
           </button>
         </div>
       ))}
       <input
         type="search"
-        placeholder="Enhancement を検索"
-        aria-label="Enhancement を検索"
+        placeholder={ui("adept.searchEnhancements")}
+        aria-label={ui("adept.searchEnhancements")}
         value={enhSearch}
         onChange={(e) => setEnhSearch(e.target.value)}
       />
@@ -252,7 +280,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                   {item.name}
                   {item.power ? ` / ${item.power}` : ""}
                   {item.required?.quality?.length ? ` / ${item.required.quality.join(" ・ ")}` : ""}
-                  {" / 2カルマ / "}
+                  {ui("adept.enhancementCost")}
                   {item.source}
                 </div>
               </div>
@@ -264,13 +292,13 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                   })
                 }
               >
-                追加
+                {ui("common.add")}
               </button>
             </div>
           ))}
       </div>
-      <h3>気焦点</h3>
-      <p className="muted">Force × 3,000¥。結合カルマ = Force（Way で減）。Force はパワー点×4</p>
+      <h3>{ui("adept.qiTitle")}</h3>
+      <p className="muted">{ui("adept.qiNote")}</p>
       {(d.qi_foci || []).map((item) => (
         <div className="cyber-item" key={item.id}>
           <div>
@@ -279,7 +307,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
               {tr(item.name)}
               {item.extra ? `（${tr(item.extra)}）` : ""} / R{item.power_rating}
               {" / "}
-              {item.nuyen.toLocaleString()}¥ / 結合 {item.karma}カルマ
+              {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
             </div>
             <div className="cyber-controls">
               <label>
@@ -300,7 +328,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
               </label>
               {item.power_rating_max > 1 ? (
                 <label>
-                  パワーR
+                  {ui("adept.qiPowerRating")}
                   <input
                     type="number"
                     min={1}
@@ -331,7 +359,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                       })
                     }
                   >
-                    <option value="">選択してください</option>
+                    <option value="">{ui("adept.choose")}</option>
                     {item.options.map((name) => (
                       <option key={name} value={name}>
                         {item.select === "attribute" ? attrLabel(name, t) : tr(name)}
@@ -350,14 +378,14 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
               })
             }
           >
-            削除
+            {ui("common.delete")}
           </button>
         </div>
       ))}
       <input
         type="search"
-        placeholder="気焦点に入れるパワーを検索"
-        aria-label="気焦点に入れるパワーを検索"
+        placeholder={ui("adept.searchQi")}
+        aria-label={ui("adept.searchQi")}
         value={qiSearch}
         onChange={(e) => setQiSearch(e.target.value)}
       />
@@ -395,7 +423,7 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                   })
                 }
               >
-                結合
+                {ui("adept.bind")}
               </button>
             </div>
           )}

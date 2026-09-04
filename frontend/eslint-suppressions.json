@@ -164,11 +164,6 @@
       "count": 17
     }
   },
-  "components/character/tabs/AdeptTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 35
-    }
-  },
   "components/character/tabs/AttrsTab.tsx": {
     "no-restricted-syntax": {
       "count": 4
@@ -224,11 +219,6 @@
       "count": 19
     }
   },
-  "components/character/tabs/SkillsTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 33
-    }
-  },
   "components/character/tabs/SpellsTab.tsx": {
     "no-restricted-syntax": {
       "count": 27
@@ -282,11 +272,6 @@
   "components/character/tabs/gear/SensorGear.tsx": {
     "no-restricted-syntax": {
       "count": 13
-    }
-  },
-  "components/character/tabs/gear/VehicleDroneGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 34
     }
   },
   "components/character/tabs/gear/WeaponGear.tsx": {
