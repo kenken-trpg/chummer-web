@@ -11,6 +11,8 @@
     "start": "next start --port 3000",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:suppress": "eslint --suppress-rule no-restricted-syntax .",
+    "lint:prune": "eslint --prune-suppressions .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

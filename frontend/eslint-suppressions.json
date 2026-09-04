@@ -1,0 +1,367 @@
+{
+  "app/error.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "app/global-error.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "app/layout.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "app/share/layout.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/CharacterSheet.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/CatalogPicker.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/character/ExtraSelect.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/character/MentorPicker.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/character/SheetDescEditor.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "components/character/SkillPickSelects.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/character/SpecPicker.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/Toolbar.tsx": {
+    "no-restricted-syntax": {
+      "count": 40
+    }
+  },
+  "components/character/WareRow.tsx": {
+    "no-restricted-syntax": {
+      "count": 12
+    }
+  },
+  "components/character/sheet/SheetHeader.tsx": {
+    "no-restricted-syntax": {
+      "count": 12
+    }
+  },
+  "components/character/sheet/blocks.tsx": {
+    "no-restricted-syntax": {
+      "count": 17
+    }
+  },
+  "components/character/sheet/sections/ActionDp.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/sheet/sections/Career.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "components/character/sheet/sections/Combat.tsx": {
+    "no-restricted-syntax": {
+      "count": 26
+    }
+  },
+  "components/character/sheet/sections/Contacts.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/character/sheet/sections/Core.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "components/character/sheet/sections/Description.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "components/character/sheet/sections/Drugs.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/character/sheet/sections/Knowledge.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "components/character/sheet/sections/Magic.tsx": {
+    "no-restricted-syntax": {
+      "count": 15
+    }
+  },
+  "components/character/sheet/sections/Martial.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/character/sheet/sections/Matrix.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/character/sheet/sections/MiscGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/sheet/sections/Qualities.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "components/character/sheet/sections/Resonance.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "components/character/sheet/sections/Sin.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/sheet/sections/Skills.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "components/character/sheet/sections/Vehicles.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "components/character/sheet/sections/Ware.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "components/character/sheet/sections/print/PrintConditionMonitor.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "components/character/sheet/sections/print/PrintStatBlock.tsx": {
+    "no-restricted-syntax": {
+      "count": 18
+    }
+  },
+  "components/character/sidebar/SidebarAttributes.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/character/sidebar/SidebarAwakened.tsx": {
+    "no-restricted-syntax": {
+      "count": 16
+    }
+  },
+  "components/character/sidebar/SidebarBudgets.tsx": {
+    "no-restricted-syntax": {
+      "count": 10
+    }
+  },
+  "components/character/sidebar/SidebarCareerEdit.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "components/character/sidebar/SidebarCareerRewards.tsx": {
+    "no-restricted-syntax": {
+      "count": 11
+    }
+  },
+  "components/character/sidebar/SidebarEconomy.tsx": {
+    "no-restricted-syntax": {
+      "count": 20
+    }
+  },
+  "components/character/sidebar/SidebarFlags.tsx": {
+    "no-restricted-syntax": {
+      "count": 12
+    }
+  },
+  "components/character/sidebar/SidebarMagicStats.tsx": {
+    "no-restricted-syntax": {
+      "count": 11
+    }
+  },
+  "components/character/sidebar/SidebarStatus.tsx": {
+    "no-restricted-syntax": {
+      "count": 21
+    }
+  },
+  "components/character/tabs/AdeptTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 35
+    }
+  },
+  "components/character/tabs/AttrsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 4
+    }
+  },
+  "components/character/tabs/BioTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 12
+    }
+  },
+  "components/character/tabs/ComplexFormsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 19
+    }
+  },
+  "components/character/tabs/ContactsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 22
+    }
+  },
+  "components/character/tabs/CyberTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 19
+    }
+  },
+  "components/character/tabs/FociTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 30
+    }
+  },
+  "components/character/tabs/GearTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 22
+    }
+  },
+  "components/character/tabs/InitiationTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 16
+    }
+  },
+  "components/character/tabs/MartialTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 21
+    }
+  },
+  "components/character/tabs/MetaTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "components/character/tabs/PriorityTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 19
+    }
+  },
+  "components/character/tabs/QualitiesTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 36
+    }
+  },
+  "components/character/tabs/SkillsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 33
+    }
+  },
+  "components/character/tabs/SpellsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 27
+    }
+  },
+  "components/character/tabs/SpiritsTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 28
+    }
+  },
+  "components/character/tabs/SpritesTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 25
+    }
+  },
+  "components/character/tabs/SubmersionTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 14
+    }
+  },
+  "components/character/tabs/gear/ArmorGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 16
+    }
+  },
+  "components/character/tabs/gear/CommlinkGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 12
+    }
+  },
+  "components/character/tabs/gear/CyberdeckGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "components/character/tabs/gear/LifestyleGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 16
+    }
+  },
+  "components/character/tabs/gear/MiscDrugsGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 43
+    }
+  },
+  "components/character/tabs/gear/OpticsGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 9
+    }
+  },
+  "components/character/tabs/gear/RccGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 17
+    }
+  },
+  "components/character/tabs/gear/SensorGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "components/character/tabs/gear/VehicleDroneGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 34
+    }
+  },
+  "components/character/tabs/gear/WeaponGear.tsx": {
+    "no-restricted-syntax": {
+      "count": 24
+    }
+  },
+  "components/character/tabs/qualities/QualityExtraEditor.tsx": {
+    "no-restricted-syntax": {
+      "count": 41
+    }
+  }
+}

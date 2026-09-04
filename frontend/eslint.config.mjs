@@ -45,6 +45,53 @@ export default [
     },
   },
   {
+    // --- i18n: stop the leak, then drain it ------------------------------
+    //
+    // The app chrome is written as Japanese string literals in the components
+    // (~1,200 of them), while `lib/i18n` holds 60 keys. That is why switching
+    // the locale to `en` changes almost nothing on screen.
+    //
+    // Extracting all of it at once is not worth a single commit, so this rule
+    // draws the line instead: every *new* piece of user-visible Japanese has
+    // to go through `useUiText()` / `MsgKey`. The ~1,200 that are already here
+    // are recorded in `eslint-suppressions.json` (`npm run lint:suppress`), so
+    // they do not fail the build — and `npm run lint:prune` shrinks that file
+    // as each batch is extracted, which makes it the burn-down counter.
+    //
+    // Scoped to `app/` and `components/` — the layers the user reads. `lib/`
+    // holds Japanese *data* maps (game-term labels, cocofolia palettes) that
+    // are a separate question, and `lib/i18n/messages.ts` is the catalog
+    // itself. See docs/i18n.md.
+    files: ["app/**/*.tsx", "app/**/*.ts", "components/**/*.tsx", "components/**/*.ts"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXText[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          message:
+            "Japanese text in JSX. Add a key to lib/i18n/messages.ts and render it with ui(). See docs/i18n.md.",
+        },
+        {
+          selector: "JSXAttribute Literal[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          message:
+            "Japanese in a JSX attribute (title / aria-label / placeholder). Use ui() — a label a screen reader announces is UI text like any other.",
+        },
+        {
+          selector: "TemplateElement[value.cooked=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          message:
+            "Japanese in a template literal. Use ui() with a {placeholder} — see formatMessage in lib/i18n.",
+        },
+        {
+          selector:
+            ":matches(VariableDeclarator, Property, ReturnStatement, ArrowFunctionExpression, ConditionalExpression) > Literal[value=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/]",
+          message:
+            "Japanese string literal. Add a key to lib/i18n/messages.ts and render it with ui().",
+        },
+      ],
+    },
+  },
+  {
     // Tests still cast fixtures with `as any`; not worth the churn.
     files: ["**/*.test.ts", "**/*.test.tsx", "tests/**"],
     rules: { "@typescript-eslint/no-explicit-any": "warn" },

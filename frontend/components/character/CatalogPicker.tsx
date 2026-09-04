@@ -135,7 +135,6 @@ export function CatalogPicker<T extends Pickable>({
           : (item.source || "SR5") === "SR5",
     );
   const shown = matched.slice(0, limit);
-  const hidden = matched.length - shown.length;
 
   return (
     <>
