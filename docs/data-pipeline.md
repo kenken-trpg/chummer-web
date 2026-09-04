@@ -54,8 +54,23 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
 - Terminology consistency is enforced by `backend/tests/test_terminology.py`
   (e.g. 属性→能力値, クオリティ→資質, スキル→技能).
 - Policy: **core rulebook** content is translated; **supplement** content stays
-  in English.
+  in English — guessing at a supplement's coinages is worse than the English
+  fallback. The exception is a supplement we hold a published Japanese edition
+  of and can check term by term: so far **Run & Gun** (`scripts/ja_curated_rg.py`,
+  phase 5 of `docs/plans/translation-plan.md`). Names only, never rules text.
 - Regenerating: `backend/scripts/build_ja_glossary.py` and
   `import_ja_from_refs.py` build the glossary/overlay from external reference
   files under `$JA_REF_DIR/` (default `~/Downloads/`; see
   `docs/plans/translation-plan.md`).
+- The Run & Gun pass is worksheet-driven, because most of those names are
+  *already* Japanese from upstream and have to be checked rather than filled in:
+
+  ```
+  scripts/make_rg_worksheet.py     -> $JA_REF_DIR/rg-worksheet.tsv  (page-ordered)
+        …fill the `official` column while reading the book ('-' = leave English)
+  scripts/import_rg_worksheet.py --write  -> scripts/ja_curated_rg.py
+  scripts/regen_ja.sh                     -> data.json + the docs
+  ```
+
+  `tests/test_rg_coverage.py` holds the ledger: every RG name is either checked
+  or explicitly skipped, and `DECIDED_FLOOR` only goes up.

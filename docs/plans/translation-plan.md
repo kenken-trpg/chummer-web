@@ -288,7 +288,9 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 穴埋め 36 件より、この 430 件の検証のほうが価値が高い。
 
-#### 5-1. 前提 — 先に決める 2 点
+**進捗**: 仕組みは実装済み (5-1〜5-2、5-4〜5-5、2026-09-05)。**書籍を読む作業 (5-3) が未着手。**
+
+#### 5-1. 前提 — 先に決める 2 点 ✅
 
 1. **ライセンス (§7 に追記が必要)。** これまでの第三者資料 (chumJA・XSLT・
    shadowrun5eja) はいずれも**ファン制作物**だった。公式日本語版は**商業出版物**で
@@ -299,23 +301,33 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
      そうなる)。この線は計画に書いて守る。
 2. **方針の例外を文書化。** `docs/data-pipeline.md` の
    「core rulebook は訳す / supplement は英語のまま」を
-   「ただし RG は公式日本語版が手元にあるため訳す」に更新。
+   「ただし公式日本語版を持つサプリは項目名を訳す」に更新。
 
-#### 5-2. 作業台帳を機械生成する (`--write` の前段)
+→ §7 に「公式日本語版 (書籍)」の行と判断を追記、`data-pipeline.md` の方針を更新済み。
+**`NOTICE.txt` への出典追記は最初のバッチが入った時点で行う** (現在 `RG` が空なので、
+今書くと使っていない資料をクレジットすることになる)。
+
+#### 5-2. 作業台帳を機械生成する ✅
 
 書籍を横に置いて 483 件を潰すので、**書籍のページ順に並んだ台帳**を出す。
 カタログの各項目は `page` を持っている (例: `Aikido` = `martial_arts` p.128) ので、
 これで並べれば紙をめくる順に一致する。
 
-- 新設 `backend/scripts/make_rg_worksheet.py`
-  → TSV を吐く: `bucket / page / 英語名 / 現在の訳 / 出所 / [公式訳 (空欄)] / [備考]`
-  出力先はリポジトリ外 (`$JA_REF_DIR` 配下)。**未記入の台帳を commit しない。**
-- 新設 `backend/scripts/import_rg_worksheet.py`
-  → 記入済み TSV を読み、`backend/scripts/ja_curated_rg.py` を生成。
+- `backend/scripts/make_rg_worksheet.py`
+  → TSV を吐く: `status / bucket / page / english / current / from / official / note`。
+  `--bucket` でバッチ単位、`--pending-only` で未決分のみ。既定の出力先はリポジトリ外
+  (`$JA_REF_DIR/rg-worksheet.tsv`)。**未記入の台帳は commit しない。**
+  `official` 欄の記入規則: 空 = 未着手 / 訳語 = 日本語版の表記 / `-` = 英語のまま。
+- `backend/scripts/import_rg_worksheet.py`
+  → 記入済み TSV を読み `ja_curated_rg.py` を生成。既定は追記 (バッチをまたいで累積)、
+  `--replace` で置換。`--write` なしは dry-run。日本語を含まない訳語・カタログに無い名前・
+  「訳語と `-` の両方」は問題として報告して書き込まない。
+- 実測: 台帳は **493 行** (名前 456 ＋ カテゴリ 37)。名前がバケットをまたぐもの
+  (`Custom Fit` = armor + armor_mods 等) は 1 行に統合。
 - **前提の検証**: 最初のバッチ (武術) で、日本語版のページ番号が英語版と一致するかを
-  確認する。ずれるなら台帳は `page` ではなく章単位でグルーピングする。
+  確認する。ずれるなら `--sort name` に切り替える。
 
-#### 5-3. バッチ順 (視認性が高い順)
+#### 5-3. バッチ順 (視認性が高い順) — 未着手
 
 | # | 対象 | 件数 | 理由 |
 |---|---|---:|---|
@@ -325,30 +337,38 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 | 4 | weapons + weapon_accessories | 135 | |
 | 5 | gear + commlinks | 80 | |
 
-#### 5-4. 取り込みの仕組み
+#### 5-4. 取り込みの仕組み ✅
 
 既存の curated モジュール方式にそのまま乗る。**オーバーレイは vendored に優先し、
 `import_ja_from_refs.py` の CURATED は「既に日本語でも値が違えば上書き」する**ので
 (`main()` の `or existing.get(key) != val`)、上流訳の *訂正* も同じ経路で通る。
 
-- 新設 `backend/scripts/ja_curated_rg.py`:
+- `backend/scripts/ja_curated_rg.py`:
   ```python
-  RG: dict[str, str] = {...}            # 公式日本語版で確認した訳
+  RG: dict[str, str] = {...}              # 公式日本語版で確認した訳
   RG_UNVERIFIED: tuple[str, ...] = (...)  # 書籍に該当なし / 判断保留 → 英語のまま
   ```
-- `import_ja_from_refs.py` に `CURATED.update(_RG)` を追加 (SPELLS / ENTITIES と同じ 2 行)。
+- `import_ja_from_refs.py` で `CURATED.update(_RG)` を **SPELLS / ENTITIES の後**に適用。
+  公式版由来なので、同じ名前に上流のコミュニティ訳がある場合はこちらが勝つ。
 - **確認できた訳は、上流と一致していても `RG` に載せる。** 差分だけ記録すると
   「検証した」記録が残らず、次の `CHUMMER_REF` 更新で静かに変わりうる。
   `data.json` は生成物なので件数が増える不利益はない。
-- `backend/scripts/regen_ja.sh` は無改修で通る。
+- `regen_ja.sh` は無改修で通る (`import_ja_from_refs.py` 経由で入るため)。
+- 経路は実証済み: 上流訳のある `Bartitsu` (`バリツ`) を台帳で別表記にすると
+  `data.json` に `[curated]` として反映され、上流と一致する `Aikido` (`合気道`) も
+  同時に固定される。
 
-#### 5-5. テストとガード
+#### 5-5. テストとガード ✅
 
-- `test_terminology.py::test_curated_module_values_use_unified_terminology` の
-  import 行に `ja_curated_rg` を追加 (現在は ENTITIES / SPELLS のみ)。
-- 新テスト: **RG 網羅性** — `source == "RG"` の全カタログ名が
-  `RG` か `RG_UNVERIFIED` のどちらか一方にちょうど 1 回現れること。
-  これで「どこまで見たか」が機械的に追える。
+- `test_terminology.py::test_curated_module_values_use_unified_terminology` が
+  `RG` も走査する (ENTITIES / SPELLS と同列)。
+- 新設 `backend/tests/test_rg_coverage.py` (4 件) — RG 台帳の健全性:
+  - 同じ名前が `RG` と `RG_UNVERIFIED` の両方に無いこと。
+  - 両表のキーが全てカタログに実在すること (誤字・幽霊エントリ検出)。
+  - `RG` の値が全て日本語であること (英語のままにしたいなら `RG_UNVERIFIED` へ)。
+  - **`DECIDED_FLOOR` バーンダウン** — 決着済みの件数が floor を下回ったら fail、
+    上回っても「floor を上げろ」と fail する。`eslint-suppressions.json` と同じ作法で、
+    数字が実態から乖離できない。バッチを入れたら floor を書き換えて同じコミットに含める。
 - `test_translation_overrides.py` の orphan 検出 (全キーが `catalog()` に実在) は既存のまま効く。
 
 #### 5-6. リスク
@@ -393,6 +413,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
 | curated 手訳 (`ja_curated_*.py`, `import_ja_from_refs.CURATED`) | 本プロジェクト著作 | `data.json` の約 337 / 503 件 |
 | chumJA (`chumJA_20130129`) の `<name>` / `<category>` 完全一致 | 表記なし | `data.json` の約 166 / 503 件。大半が固有名カナ・カテゴリ語。エントリ別の出典は `translation-import-report.md` |
 | 2021 シート XSLT / shadowrun5eja | LICENSE なし | **shadowrun5eja の訳語は非収録**。`data.json` に一切入っていない。`translation-glossary.md` の `sr5eja` 列は `＝`／`≠` マーカーのみ、`translation-glossary-mismatches.md` セクション D は英語見出しのみ (2026-09-02 に verbatim 再現を除去) |
+| 『シャドウラン5th ラン＆ガン』日本語版 (書籍) | 商業出版物 (全著作権留保) | **項目名の対訳のみ**を `scripts/ja_curated_rg.py` 経由で `data.json` に収録 (フェーズ 5、2026-09-05〜) |
 
 ### 判断
 
@@ -403,6 +424,18 @@ verbatim 取り込みは避ける」) は経緯として残す。
   マーカー化／英語のみに置換して除去した。glossary の `採用` 列には、2021 版に無い
   UI ラベル約 359 語が sr5eja 由来の空欄補完として残るが、いずれも短い語句で
   本プロジェクトが採用した用語として記録するもの (アプリには非搭載)。
+- **公式日本語版 (書籍) について (2026-09-05 追記)。** これまでの第三者資料はいずれも
+  ファン制作物だったが、フェーズ 5 で参照するのは**商業出版物**である。資料の性質が
+  変わるので、線を明示的に引く:
+  - **収録するのは項目名の対訳のみ** (「Aikido → 合気道」)。ルール文・説明文・
+    数値表・見出し・イラストは一切転記しない。オーバーレイは構造上 `name → 訳` しか
+    持てないため、機械的にもこの範囲を超えられない。
+  - 個々の対訳は短い名詞句で、それ自体に創作的表現の余地はほぼない (chumJA 由来分に
+    ついて上で述べた論拠がそのまま当てはまる)。**書籍の代替にはならない** — 本アプリは
+    ルールを収録しておらず、遊ぶには書籍が必要である。
+  - `NOTICE.txt` に出典としてクレジットする。
+  - 申し出があれば `ja_curated_rg.py` を空にして `regen_ja.sh` を回すだけで
+    完全に除去できる (下記の切り分けと同じ仕組み)。
 - いずれの第三者資料も `NOTICE.txt` でクレジットし、ライセンス状況を明記した。
 - 以上より、現状の内容で公開して差し支えない、というのが本プロジェクトの立場。
 
@@ -441,4 +474,8 @@ verbatim 取り込みは避ける」) は経緯として残す。
   §3 の第三者資料の留保記述は経緯として保持。
 - 2026-09-05: フェーズ 5 計画 (『ラン＆ガン』日本語版)。実測の結果、RG 483 件のうち未訳は
   46 件 (実名 36) にすぎず、430 件は**上流コミュニティ訳が未検証のまま表示されている**と判明。
-  主作業を「穴埋め」から「公式版との突き合わせ」に置き直した。未着手。
+  主作業を「穴埋め」から「公式版との突き合わせ」に置き直した。
+- 2026-09-05: フェーズ 5 の仕組みを実装。`make_rg_worksheet.py` (493 行のページ順台帳) ＋
+  `import_rg_worksheet.py` ＋ `ja_curated_rg.py` ＋ `test_rg_coverage.py` (`DECIDED_FLOOR`
+  バーンダウン)。§7 に商業出版物を参照する場合の線引き (項目名のみ) を追記。
+  **書籍を読むバッチ作業は未着手。**

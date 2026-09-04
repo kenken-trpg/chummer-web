@@ -87,11 +87,12 @@ def test_overlay_values_use_unified_terminology() -> None:
 
 def test_curated_module_values_use_unified_terminology() -> None:
     from scripts.ja_curated_entities import ENTITIES
+    from scripts.ja_curated_rg import RG
     from scripts.ja_curated_spells import SPELLS
 
     hits = [
         f"{name}/{k}: {h}"
-        for name, table in (("SPELLS", SPELLS), ("ENTITIES", ENTITIES))
+        for name, table in (("SPELLS", SPELLS), ("ENTITIES", ENTITIES), ("RG", RG))
         for k, v in table.items()
         for h in _scan(v)
     ]
