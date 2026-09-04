@@ -30,38 +30,15 @@ def _id_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     return {r["id"]: r.get("name") or "" for r in rows if r.get("id")}
 
 
-def state_to_chum5(state: CharacterState) -> bytes:
-    cat = catalog()
-    meta = find_metatype(state.metatype, state.metavariant) or {"attributes": {}}
-    m_attr = meta.get("attributes") or {}
+#: `_id_name` maps per catalog bucket, built once and read by most sections.
+_Names = dict[str, dict[str, str]]
+#: The little that is neither the state nor a name map: the metatype's
+#: attribute minimums, which only the attribute section needs.
+_Ctx = dict[str, Any]
 
-    names = {
-        "quality": _id_name(cat["qualities"]),
-        "spell": _id_name(cat["spells"]),
-        "power": _id_name(cat["powers"]),
-        "complexform": _id_name(cat["complex_forms"]),
-        "martialart": _id_name(cat["martial_arts"]),
-        "ware": _id_name((cat.get("cyberware") or {}).get("items") or [])
-        | _id_name((cat.get("bioware") or {}).get("items") or []),
-        "armor": _id_name(cat["armor"]),
-        "armormod": _id_name(cat["armor_mods"]),
-        "weapon": _id_name(cat["weapons"]),
-        "wacc": _id_name(cat["weapon_accessories"]),
-        "gear": _id_name(cat["gear"])
-        | {
-            k: v
-            for b in ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones", "vehicles")
-            for k, v in _id_name(cat[b]).items()
-        },
-        "vmod": _id_name(cat["vehicle_mods"]),
-        "lifestyle": _id_name(cat["lifestyles"]),
-        "tradition": _id_name(cat["traditions"]),
-        "mentor": _id_name(cat["mentors"]),
-        "metamagic": _id_name(cat["metamagics"]),
-        "art": _id_name(cat.get("magic_arts") or []),
-    }
 
-    root = ET.Element("character")
+def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write name, metatype, build method, the bio fields, portrait and career totals."""
     _sub(root, "appversion", "Chummer Web")
     _sub(root, "name", "")
     _sub(root, "alias", state.name)
@@ -93,6 +70,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
 
+
+def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write the five priority letters and the talent."""
     pr = _sub(root, "priorities")
     _sub(pr, "prioritymetatype", state.priorities.Heritage)
     _sub(pr, "priorityattributes", state.priorities.Attributes)
@@ -101,6 +81,10 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _sub(pr, "priorityresources", state.priorities.Resources)
     _sub(pr, "prioritytalent", state.talent)
 
+
+def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write each attribute as Chummer's base/karma pair, relative to the metatype minimum."""
+    m_attr = ctx["meta_attrs"]
     attrs = _sub(root, "attributes")
     for key in _ATTR_ORDER:
         spec = m_attr.get(key) or {}
@@ -118,6 +102,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _sub(ess, "base", 6)
     _sub(ess, "karma", 0)
 
+
+def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write active skills, groups, native languages and knowledge."""
     sk = _sub(root, "skills")
     active = _sub(sk, "skills")
     for name, rating in sorted(state.skills.items()):
@@ -147,6 +134,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(s, "base", rating)
         _sub(s, "karma", 0)
 
+
+def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write qualities, spells, adept powers and complex forms."""
     quals = _sub(root, "qualities")
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
@@ -186,6 +176,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
         "complexforms", "complexform", state.complex_forms, "form_id", "complexform", {"rating": lambda r: r.level or 1}
     )
 
+
+def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write martial arts and their techniques."""
     marts = _sub(root, "martialarts")
     for row in state.martial_arts:
         el = _sub(marts, "martialart")
@@ -194,6 +187,10 @@ def state_to_chum5(state: CharacterState) -> bytes:
         techs = _sub(el, "martialarttechniques")
         for tn in row.techniques:
             _sub(_sub(techs, "martialarttechnique"), "name", tn)
+
+
+def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write cyber- and bioware, re-nested by parent."""
 
     def _ware(container: str, rows: list[Any]) -> None:
         top = _sub(root, container)
@@ -221,6 +218,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
     _ware("cyberwares", state.cyberware)
     _ware("biowares", state.bioware)
 
+
+def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write armor and its mods."""
     armors = _sub(root, "armors")
     amods_by_parent: dict[str | None, list[Any]] = {}
     for mrow in state.armor_mods:
@@ -238,6 +238,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(mm, "rating", mrow.rating)
             _sub(mm, "included", "True" if mrow.included else "False")
 
+
+def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write weapons and their accessories."""
     weapons = _sub(root, "weapons")
     wacc_by_parent: dict[str | None, list[Any]] = {}
     for arow in state.weapon_accessories:
@@ -255,6 +258,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(ac, "mount", arow.mount)
             _sub(ac, "included", "True" if arow.included else "False")
 
+
+def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write gear from every bucket, flattened back into one <gears>."""
     gears = _sub(root, "gears")
     gear_rows = [
         *state.gear,
@@ -286,6 +292,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
 
     emit_gear(gears, by_parent_g.get(None, []))
 
+
+def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write vehicles, drones and vehicle mods."""
     vehs = _sub(root, "vehicles")
     vmod_by_parent: dict[str | None, list[Any]] = {}
     for vrow in state.vehicle_mods:
@@ -302,6 +311,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
             _sub(mm, "rating", vrow.rating)
             _sub(mm, "included", "True" if vrow.included else "False")
 
+
+def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write lifestyles."""
     ls = _sub(root, "lifestyles")
     for lrow in state.lifestyles:
         base = names["lifestyle"].get(lrow.lifestyle_id, "")
@@ -310,6 +322,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
 
+
+def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write contacts, plus the tradition and mentor a magician carries."""
     cts = _sub(root, "contacts")
     for crow in state.contacts:
         el = _sub(cts, "contact")
@@ -328,6 +343,9 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(me, "guid", state.mentor_id)
         _sub(me, "name", names["mentor"].get(state.mentor_id, ""))
 
+
+def _export_initiation(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write initiation and submersion grades, and the metamagics on them."""
     grades = _sub(root, "initiationgrades")
     init_by_grade = {int(c.grade): c for c in state.initiations}
     sub_by_grade = {int(c.grade): c for c in state.submersions}
@@ -350,5 +368,74 @@ def state_to_chum5(state: CharacterState) -> bytes:
         _sub(el, "sourceid", ic.option_id)
         _sub(el, "name", names["metamagic"].get(ic.option_id) or names["art"].get(ic.option_id, ""))
 
+
+def state_to_chum5(state: CharacterState) -> bytes:
+    """A computed `CharacterState` out as Chummer5a-compatible XML.
+
+    The mirror of `chummer_import.chum5_to_state`, and held to the same
+    property: the pair is a fixed point on a computed character
+    (`tests/test_chummer_roundtrip*.py`).
+
+    Each `_export_*` below writes one top-level element under `<character>`.
+    They are independent — none reads what another wrote — so the 322-line
+    function they came from split along its own `_sub(root, ...)` boundaries.
+    """
+    cat = catalog()
+    meta = find_metatype(state.metatype, state.metavariant) or {"attributes": {}}
+    m_attr = meta.get("attributes") or {}
+
+    names = {
+        "quality": _id_name(cat["qualities"]),
+        "spell": _id_name(cat["spells"]),
+        "power": _id_name(cat["powers"]),
+        "complexform": _id_name(cat["complex_forms"]),
+        "martialart": _id_name(cat["martial_arts"]),
+        "ware": _id_name((cat.get("cyberware") or {}).get("items") or [])
+        | _id_name((cat.get("bioware") or {}).get("items") or []),
+        "armor": _id_name(cat["armor"]),
+        "armormod": _id_name(cat["armor_mods"]),
+        "weapon": _id_name(cat["weapons"]),
+        "wacc": _id_name(cat["weapon_accessories"]),
+        "gear": _id_name(cat["gear"])
+        | {
+            k: v
+            for b in ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones", "vehicles")
+            for k, v in _id_name(cat[b]).items()
+        },
+        "vmod": _id_name(cat["vehicle_mods"]),
+        "lifestyle": _id_name(cat["lifestyles"]),
+        "tradition": _id_name(cat["traditions"]),
+        "mentor": _id_name(cat["mentors"]),
+        "metamagic": _id_name(cat["metamagics"]),
+        "art": _id_name(cat.get("magic_arts") or []),
+    }
+
+    root = ET.Element("character")
+
+    ctx: _Ctx = {"meta_attrs": m_attr}
+    for section in _SECTIONS:
+        section(root, state, names, ctx)
+
     xml = ET.tostring(root, encoding="utf-8")
     return minidom.parseString(xml).toprettyxml(indent="  ", encoding="utf-8")
+
+
+#: Written in this order, which is the order Chummer's own files use. Nothing
+#: here reads what an earlier section wrote — the order is for the reader (and
+#: for a diff against a real .chum5), not for correctness.
+_SECTIONS = (
+    _export_identity,
+    _export_priorities,
+    _export_attributes,
+    _export_skills,
+    _export_qualities,
+    _export_martial_arts,
+    _export_ware,
+    _export_armor,
+    _export_weapons,
+    _export_gear,
+    _export_vehicles,
+    _export_lifestyles,
+    _export_contacts,
+    _export_initiation,
+)
