@@ -5,6 +5,33 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+### Added
+
+- Accessibility pass: every control has a name, the tab bar is a named `<nav>`
+  with `aria-current`, there is a skip link ahead of the toolbar, and focus is
+  visible. `eslint-plugin-jsx-a11y` is enforced.
+- Catalog pickers say why a list stops where it does — how many rows were cut
+  off, and that an empty search box lists core-rulebook entries only.
+- `X-Request-ID` on every response, and `LOG_FORMAT=json` for one structured
+  log line per request (`LOG_LEVEL` to go with it).
+- End-to-end tests (Playwright) and coverage reporting for both halves.
+
+### Changed
+
+- `GET /api/catalog` is served with an ETag, so a reload revalidates into a 304
+  instead of re-transferring ~2.9 MB.
+- Addon dropdowns (armor mods, commlink accessories, vehicle mods, lifestyle
+  qualities) no longer widen when the unrelated catalog search box below them
+  has text in it; the narrowing is unconditional.
+- A `v*` tag now publishes a GitHub Release from this file, and the image gets
+  a `{major}.{minor}` tag to pin against.
+
+### Fixed
+
+- The knowledge-skill picker cut its list to 40 rows **before** removing the
+  skills you already had, so a character with many knowledge skills was shown
+  an empty list.
+
 ## [0.1.0] — 2026-09-02
 
 First tagged release.

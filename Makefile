@@ -77,3 +77,8 @@ coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
 
 coverage-frontend: ## vitest --coverage; HTML in frontend/coverage/
 	cd frontend && npm run test:coverage
+
+release-check: ## Dry-run the release gate for VERSION=x.y.z (CHANGELOG + version bumps)
+	@test -n "$(VERSION)" || { echo "usage: make release-check VERSION=0.2.0"; exit 2; }
+	python3 scripts/release_notes.py $(VERSION) --check
+	@echo 'ok — now: git tag -a v$(VERSION) -m v$(VERSION) && git push origin v$(VERSION)' 

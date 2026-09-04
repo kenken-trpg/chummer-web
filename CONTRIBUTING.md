@@ -179,6 +179,20 @@ new module with no test at all is worth a second look.
   Chummer does when the books are ambiguous — Chummer is the reference
   implementation this project chases.
 
+## Releasing
+
+1. Write the section in `CHANGELOG.md` (rename `[Unreleased]` to the version).
+2. Bump the version in `backend/pyproject.toml` and `backend/app/main.py` —
+   the latter is what the API reports at `/docs`.
+3. `make release-check VERSION=0.2.0` — fails if either of the above is missing.
+4. `git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0`.
+
+CI then builds and pushes `ghcr.io/…/chummer-web:0.2.0`, `:0.2` and `:latest`,
+and publishes a GitHub Release whose notes are that CHANGELOG section. The tag
+build is exempt from `cancel-in-progress`, so a release image is never
+cancelled out from under you. `frontend/package.json` stays at whatever it is —
+it is `"private": true` and never published.
+
 ## Translations
 
 Japanese is the primary UI language. Terminology is enforced by
