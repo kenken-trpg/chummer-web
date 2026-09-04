@@ -3,7 +3,7 @@ import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 
-export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       <>
@@ -13,9 +13,12 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
               <b>{tr(item.name)}</b>
               <div className="muted">
                 {item.name} / DR {item.device_rating} / DP {item.dataprocessing} / FW{" "}
-                {item.firewall} / プログラム {item.program_used ?? 0}/
-                {item.program_max ?? item.programs ?? 0} / {item.nuyen.toLocaleString()}¥ /{" "}
-                {item.source}
+                {item.firewall}
+                {ui("gear.programs", {
+                  used: item.program_used ?? 0,
+                  max: item.program_max ?? item.programs ?? 0,
+                })}{" "}
+                / {item.nuyen.toLocaleString()}¥ / {item.source}
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">
@@ -52,7 +55,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                         })
                       }
                     >
-                      外す
+                      {ui("common.remove")}
                     </button>
                     {prog.rating_max > 0 ? (
                       <label>
@@ -76,7 +79,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                     ) : null}
                     {prog.extra_kind === "skill" ? (
                       <label>
-                        技能
+                        {ui("common.skill")}
                         <select
                           value={prog.extra || ""}
                           onChange={(e) =>
@@ -87,7 +90,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                             })
                           }
                         >
-                          <option value="">選択</option>
+                          <option value="">{ui("common.selectShort")}</option>
                           {(prog.extra_options || []).map((name) => (
                             <option key={name} value={name}>
                               {tr(name)}
@@ -98,7 +101,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                     ) : null}
                     {prog.extra_kind === "group" ? (
                       <label>
-                        グループ
+                        {ui("common.group")}
                         <select
                           value={prog.extra || ""}
                           onChange={(e) =>
@@ -109,7 +112,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                             })
                           }
                         >
-                          <option value="">選択</option>
+                          <option value="">{ui("common.selectShort")}</option>
                           {(prog.extra_options || []).map((name) => (
                             <option key={name} value={name}>
                               {tr(name)}
@@ -120,7 +123,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                     ) : null}
                     {prog.extra_kind === "text" ? (
                       <label>
-                        対象
+                        {ui("common.target")}
                         <input
                           list={`prog-extra-${prog.id}`}
                           value={prog.extra || ""}
@@ -143,7 +146,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                 ))}
               <AddonSelect
                 rowName={tr(item.name)}
-                prompt="オートソフトを追加"
+                prompt={ui("gear.addAutosoft")}
                 tr={tr}
                 options={(catalog.programs || []).filter(
                   (prog) =>
@@ -156,14 +159,18 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                 )}
                 extraFor={(prog) => {
                   if (prog.extra_kind === "skill") {
-                    return { label: "技能", values: prog.extra_options || [] };
+                    return { label: ui("common.skill"), values: prog.extra_options || [] };
                   }
                   if (prog.extra_kind === "group") {
-                    return { label: "グループ", values: prog.extra_options || [] };
+                    return { label: ui("common.group"), values: prog.extra_options || [] };
                   }
                   // a vehicle autosoft names a model, which is not a closed set
                   if (prog.extra_kind === "text") {
-                    return { label: "対象", values: prog.extra_options || [], freeText: true };
+                    return {
+                      label: ui("common.target"),
+                      values: prog.extra_options || [],
+                      freeText: true,
+                    };
                   }
                   return null;
                 }}
@@ -191,7 +198,7 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                 })
               }
             >
-              削除
+              {ui("common.delete")}
             </button>
           </div>
         ))}
@@ -199,12 +206,13 @@ export function RccGear({ catalog, character: ch, d, tr, patch }: TabPanelProps)
 
       <CatalogPicker
         items={catalog.rccs || []}
-        label="RCCを検索"
+        label={ui("gear.searchRcc")}
         tr={tr}
         describe={(item) => (
           <>
-            {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} /{" "}
-            プログラム {item.programs} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+            {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall}
+            {ui("gear.programCount", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
+            {item.avail || "-"} / {item.source}
           </>
         )}
         onAdd={(item) =>

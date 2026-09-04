@@ -11,7 +11,7 @@ import {
   specialArmorLine,
 } from "@/lib/character/format";
 
-export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       <>
@@ -31,11 +31,18 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / 装甲 {item.armor_value}
-                  {item.equipped ? ` ・ 加算 ${item.contributes}` : " ・ 未装備"}
+                  {item.name} / {ui("armor.value", { value: item.armor_value })}
+                  {item.equipped
+                    ? ui("armor.contributes", { value: item.contributes ?? 0 })
+                    : ui("armor.notEquipped")}
                   {specialLine ? ` / ${specialLine}` : ""}
                   {availBit(item)}
-                  {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                  {item.capacity_max
+                    ? ui("gear.capacity", {
+                        used: item.capacity_used ?? 0,
+                        max: item.capacity_max,
+                      })
+                    : ""}
                   {" / "}
                   {item.nuyen.toLocaleString()}¥ / {item.source}
                 </div>
@@ -52,7 +59,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                         })
                       }
                     />
-                    装備
+                    {ui("common.equipped")}
                   </label>
                   {item.rating_max > 0 ? (
                     <label>
@@ -73,7 +80,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                     </label>
                   ) : null}
                   {item.has_wireless ? (
-                    <label title="ワイヤレス機能を有効化してボーナスを反映">
+                    <label title={ui("common.wirelessHint")}>
                       <input
                         type="checkbox"
                         checked={item.wireless ?? true}
@@ -85,7 +92,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                           })
                         }
                       />
-                      ワイヤレス
+                      {ui("common.wireless")}
                     </label>
                   ) : null}
                 </div>
@@ -93,9 +100,14 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                   <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
                     {tr(mod.name)}
                     {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
-                    {mod.included ? " / 付属" : ` / ${mod.nuyen.toLocaleString()}¥`}
+                    {mod.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${mod.nuyen.toLocaleString()}¥`}
                     {mod.capacity_cost
-                      ? ` / 容量 ${mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost}`
+                      ? ui("gear.capacityCost", {
+                          cost:
+                            mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost,
+                        })
                       : ""}
                     {specialArmorLine(mod.special_armor)
                       ? ` / ${specialArmorLine(mod.special_armor)}`
@@ -115,7 +127,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                             })
                           }
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
@@ -140,7 +152,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                       </label>
                     ) : null}
                     {mod.has_wireless ? (
-                      <label title="ワイヤレス機能を有効化してボーナスを反映">
+                      <label title={ui("common.wirelessHint")}>
                         {" "}
                         <input
                           type="checkbox"
@@ -160,7 +172,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                 ))}
                 <AddonSelect
                   rowName={tr(item.name)}
-                  prompt="改造を追加"
+                  prompt={ui("gear.addMod")}
                   tr={tr}
                   // `armorModFits` has already decided what can go on this
                   // piece, so every option here is buyable. (It used to hide
@@ -187,7 +199,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
               </div>
               <button
                 className="btn danger"
-                aria-label={`${tr(item.name)} を削除`}
+                aria-label={ui("common.deleteLabel", { name: tr(item.name) })}
                 onClick={() =>
                   patch({
                     armor: (ch.armor || []).filter((row) => row.id !== item.id),
@@ -195,7 +207,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
                   })
                 }
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -204,11 +216,12 @@ export function ArmorGear({ catalog, character: ch, d, tr, patch }: TabPanelProp
 
       <CatalogPicker
         items={catalog.armor || []}
-        label="防具を検索"
+        label={ui("gear.searchArmor")}
         tr={tr}
         describe={(item) => (
           <>
-            {item.name} / 装甲 {item.armor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+            {item.name} / {ui("armor.value", { value: item.armor })} / {item.cost}¥ /{" "}
+            {item.avail || "-"} / {item.source}
           </>
         )}
         onAdd={(item) =>

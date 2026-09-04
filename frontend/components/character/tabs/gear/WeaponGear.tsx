@@ -111,13 +111,13 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 {!fromGear && addons.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: ${ui("weapon.addAccessory")}`}
+                      aria-label={`${tr(item.name)}: ${ui("gear.addAccessory")}`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                       }
                     >
-                      <option value="">{ui("weapon.addAccessory")}</option>
+                      <option value="">{ui("gear.addAccessory")}</option>
                       {addons
                         .filter((mod) => mod.specialmodification || mod.source === "SR5")
                         .map((mod) => (

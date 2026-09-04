@@ -6,7 +6,7 @@ import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 import { deviceRatingBit } from "@/lib/character/format";
 
-export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   /** Sensor housings nest two deep: housing → sensor → upgrade. */
   const install = (gearId: string, parentId: string, minrating: number) =>
     patch({
@@ -36,7 +36,12 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 <div className="muted">
                   {item.name} / {tr(item.category)}
                   {deviceRatingBit(item)}
-                  {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                  {item.capacity_max
+                    ? ui("gear.capacity", {
+                        used: item.capacity_used ?? 0,
+                        max: item.capacity_max,
+                      })
+                    : ""}
                   {" / "}
                   {item.nuyen.toLocaleString()}¥ / {item.source}
                 </div>
@@ -64,17 +69,21 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                   <div className="muted" key={child.id} style={{ marginTop: 6 }}>
                     {tr(child.name)}
                     {child.rating_max > 0 ? ` R${child.rating}` : ""}
-                    {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
-                    {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                    {child.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${child.nuyen.toLocaleString()}¥`}
+                    {child.capacity_cost
+                      ? ui("gear.capacityCost", { cost: child.capacity_cost })
+                      : ""}
                     {child.included ? null : (
                       <>
                         {" "}
                         <button
                           className="btn danger"
-                          aria-label={`${tr(child.name)} を外す`}
+                          aria-label={ui("common.removeLabel", { name: tr(child.name) })}
                           onClick={() => patch({ sensors: dropTree(ch.sensors || [], child.id) })}
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
@@ -103,23 +112,25 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                       .map((grand) => (
                         <div key={grand.id} style={{ marginTop: 4, marginLeft: 12 }}>
                           {tr(grand.name)}
-                          {grand.capacity_cost ? ` / 容量 ${grand.capacity_cost}` : ""}{" "}
+                          {grand.capacity_cost
+                            ? ui("gear.capacityCost", { cost: grand.capacity_cost })
+                            : ""}{" "}
                           <button
                             className="btn danger"
-                            aria-label={`${tr(grand.name)} を外す`}
+                            aria-label={ui("common.removeLabel", { name: tr(grand.name) })}
                             onClick={() =>
                               patch({
                                 sensors: (ch.sensors || []).filter((row) => row.id !== grand.id),
                               })
                             }
                           >
-                            外す
+                            {ui("common.remove")}
                           </button>
                         </div>
                       ))}
                     <AddonSelect
                       rowName={tr(child.name)}
-                      prompt="機能を追加"
+                      prompt={ui("gear.addSensorFn")}
                       tr={tr}
                       options={(catalog.sensors || []).filter(
                         (mod) =>
@@ -136,7 +147,7 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 ))}
                 <AddonSelect
                   rowName={tr(item.name)}
-                  prompt="機能／センサーを追加"
+                  prompt={ui("gear.addSensorOrFn")}
                   tr={tr}
                   options={addons}
                   onAdd={(mod) => install(mod.id, item.id, mod.minrating)}
@@ -144,10 +155,10 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
               </div>
               <button
                 className="btn danger"
-                aria-label={`${tr(item.name)} を削除`}
+                aria-label={ui("common.deleteLabel", { name: tr(item.name) })}
                 onClick={() => patch({ sensors: dropTree(ch.sensors || [], item.id) })}
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -157,7 +168,7 @@ export function SensorGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
         items={(catalog.sensors || []).filter(
           (item) => SENSOR_DEVICE_CATS.has(item.category) && !item.requireparent,
         )}
-        label="センサーを検索"
+        label={ui("gear.searchSensor")}
         tr={tr}
         describe={(item) => (
           <>

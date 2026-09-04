@@ -4,7 +4,7 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 
-export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       <>
@@ -52,7 +52,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                         })
                       }
                     >
-                      外す
+                      {ui("common.remove")}
                     </button>
                     {app.rating_max > 0 ? (
                       <label>
@@ -76,7 +76,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                     ) : null}
                     {app.extra_kind === "skill" ? (
                       <label>
-                        技能
+                        {ui("common.skill")}
                         <select
                           value={app.extra || ""}
                           onChange={(e) =>
@@ -87,7 +87,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                             })
                           }
                         >
-                          <option value="">選択</option>
+                          <option value="">{ui("common.selectShort")}</option>
                           {(app.extra_options || []).map((name) => (
                             <option key={name} value={name}>
                               {tr(name)}
@@ -98,7 +98,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                     ) : null}
                     {app.extra_kind === "text" ? (
                       <label>
-                        対象
+                        {ui("common.target")}
                         <input
                           value={app.extra || ""}
                           onChange={(e) =>
@@ -115,7 +115,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                 ))}
               <AddonSelect
                 rowName={tr(item.name)}
-                prompt="アプリを追加"
+                prompt={ui("gear.addApp")}
                 tr={tr}
                 options={(catalog.apps || []).filter(
                   (app) =>
@@ -127,7 +127,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                 )}
                 extraFor={(app) =>
                   app.extra_kind === "skill"
-                    ? { label: "技能", values: app.extra_options || [] }
+                    ? { label: ui("common.skill"), values: app.extra_options || [] }
                     : null
                 }
                 onAdd={(app, extra) =>
@@ -149,7 +149,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                 .map((acc) => (
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.label || acc.name)}
-                    {acc.included ? " / 付属" : ` / ${acc.nuyen.toLocaleString()}¥`}{" "}
+                    {acc.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${acc.nuyen.toLocaleString()}¥`}{" "}
                     <button
                       className="btn danger"
                       onClick={() =>
@@ -158,13 +160,13 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                         })
                       }
                     >
-                      外す
+                      {ui("common.remove")}
                     </button>
                   </div>
                 ))}
               <AddonSelect
                 rowName={tr(item.name)}
-                prompt="アクセサリを追加"
+                prompt={ui("gear.addAccessory")}
                 tr={tr}
                 // PI-Tac programs are core to that device even though they are
                 // not SR5-sourced, so they come through regardless. The rest
@@ -203,7 +205,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
                 })
               }
             >
-              削除
+              {ui("common.delete")}
             </button>
           </div>
         ))}
@@ -211,7 +213,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, patch }: TabPanelP
 
       <CatalogPicker
         items={catalog.commlinks || []}
-        label="通信機を検索"
+        label={ui("gear.searchCommlink")}
         tr={tr}
         describe={(item) => (
           <>

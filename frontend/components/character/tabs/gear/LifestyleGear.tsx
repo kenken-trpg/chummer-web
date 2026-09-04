@@ -5,7 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement } from "@/lib/character/format";
 
-export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       <>
@@ -22,17 +22,24 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / 基本 {(item.base_monthly ?? item.monthly).toLocaleString()}¥
+                  {item.name} /{" "}
+                  {ui("life.base", {
+                    cost: (item.base_monthly ?? item.monthly).toLocaleString(),
+                  })}
                   {(item.multiplier_pct || 0) !== 0
-                    ? ` / 倍率 ${item.multiplier_pct! > 0 ? "+" : ""}${item.multiplier_pct}%`
+                    ? ui("life.multiplier", {
+                        pct: `${item.multiplier_pct! > 0 ? "+" : ""}${item.multiplier_pct}`,
+                      })
                     : ""}
                   {(item.quality_monthly || 0) > 0
-                    ? ` / 品質 +${item.quality_monthly!.toLocaleString()}¥`
+                    ? ui("life.qualityCost", { cost: item.quality_monthly!.toLocaleString() })
                     : ""}
                   {" / "}
                   {item.monthly.toLocaleString()}¥/{lifeIncrement(item.increment)} × {item.months} ={" "}
                   {item.nuyen.toLocaleString()}¥
-                  {item.lp_max ? ` / LP ${item.lp_used || 0}/${item.lp_max}` : ""}
+                  {item.lp_max
+                    ? ui("life.lpUsed", { used: item.lp_used || 0, max: item.lp_max })
+                    : ""}
                   {" / "}
                   {item.source}
                 </div>
@@ -57,13 +64,17 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                   <div className="muted" key={q.id} style={{ marginTop: 6 }}>
                     {tr(q.name)}
                     {q.extra ? `（${q.extra}）` : ""}
-                    {q.lp ? ` / LP ${q.lp}` : ""}
-                    {q.free ? " / 無料" : q.cost ? ` / +${q.cost.toLocaleString()}¥` : ""}
+                    {q.lp ? ui("life.lp", { lp: q.lp }) : ""}
+                    {q.free
+                      ? ui("common.freeSlot")
+                      : q.cost
+                        ? ` / +${q.cost.toLocaleString()}¥`
+                        : ""}
                     {(q.multiplier || 0) !== 0
                       ? ` / ${q.multiplier! > 0 ? "+" : ""}${q.multiplier}%`
                       : ""}
                     {q.from_freegrid ? (
-                      " / 付属"
+                      ` / ${ui("common.included")}`
                     ) : (
                       <>
                         {" "}
@@ -84,14 +95,14 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                             });
                           }}
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
                     {q.needs_extra && !q.from_freegrid ? (
                       <input
                         style={{ marginLeft: 8 }}
-                        placeholder="対象"
+                        placeholder={ui("common.target")}
                         value={raw?.quality_extras?.[q.quality_id] || q.extra || ""}
                         onChange={(e) =>
                           patch({
@@ -114,8 +125,8 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                 ))}
                 <AddonSelect
                   rowName={tr(item.name)}
-                  prompt="ライフスタイル品質"
-                  addLabel="追加"
+                  prompt={ui("life.quality")}
+                  addLabel={ui("common.add")}
                   tr={tr}
                   // the SR5/RF-or-costed narrowing used to lift as soon as the
                   // catalog search box below had text in it; it is unrelated
@@ -129,7 +140,9 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                     })`
                   }
                   extraFor={(q) =>
-                    q.needs_extra ? { label: "対象", values: [], freeText: true } : null
+                    q.needs_extra
+                      ? { label: ui("common.target"), values: [], freeText: true }
+                      : null
                   }
                   onAdd={(q, extra) => {
                     const extras = { ...(raw?.quality_extras || {}) };
@@ -156,7 +169,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
                   })
                 }
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -165,7 +178,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
 
       <CatalogPicker
         items={catalog.lifestyles || []}
-        label="ライフスタイルを検索"
+        label={ui("gear.searchLifestyle")}
         tr={tr}
         idle={{
           keep: (item) => CORE_LIFESTYLES.has(item.name),
@@ -174,8 +187,10 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
         describe={(item) => (
           <>
             {item.name} / {item.cost.toLocaleString()}¥/{lifeIncrement(item.increment)}
-            {item.lp ? ` / LP ${item.lp}` : ""}
-            {(item.freegrids || []).length ? ` / 付属グリッド ${item.freegrids!.length}` : ""}
+            {item.lp ? ui("life.lp", { lp: item.lp }) : ""}
+            {(item.freegrids || []).length
+              ? ui("life.freeGrids", { count: item.freegrids!.length })
+              : ""}
             {" / "}
             {item.source}
           </>

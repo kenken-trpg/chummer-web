@@ -5,7 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 
-export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       {(d.optics || [])
@@ -24,7 +24,12 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 <b>{tr(item.name)}</b>
                 <div className="muted">
                   {item.name} / {tr(item.category)}
-                  {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                  {item.capacity_max
+                    ? ui("gear.capacity", {
+                        used: item.capacity_used ?? 0,
+                        max: item.capacity_max,
+                      })
+                    : ""}
                   {" / "}
                   {item.nuyen.toLocaleString()}¥ / {item.source}
                 </div>
@@ -52,21 +57,25 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                   <div className="muted" key={child.id} style={{ marginTop: 6 }}>
                     {tr(child.name)}
                     {child.rating_max > 0 ? ` R${child.rating}` : ""}
-                    {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
-                    {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                    {child.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${child.nuyen.toLocaleString()}¥`}
+                    {child.capacity_cost
+                      ? ui("gear.capacityCost", { cost: child.capacity_cost })
+                      : ""}
                     {child.included ? null : (
                       <>
                         {" "}
                         <button
                           className="btn danger"
-                          aria-label={`${tr(child.name)} を外す`}
+                          aria-label={ui("common.removeLabel", { name: tr(child.name) })}
                           onClick={() =>
                             patch({
                               optics: (ch.optics || []).filter((row) => row.id !== child.id),
                             })
                           }
                         >
-                          外す
+                          {ui("common.remove")}
                         </button>
                       </>
                     )}
@@ -94,7 +103,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 ))}
                 <AddonSelect
                   rowName={tr(item.name)}
-                  prompt="改造を追加"
+                  prompt={ui("gear.addMod")}
                   options={addons}
                   tr={tr}
                   onAdd={(mod) =>
@@ -113,10 +122,10 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
               </div>
               <button
                 className="btn danger"
-                aria-label={`${tr(item.name)} を削除`}
+                aria-label={ui("common.deleteLabel", { name: tr(item.name) })}
                 onClick={() => patch({ optics: dropTree(ch.optics || [], item.id) })}
               >
-                削除
+                {ui("common.delete")}
               </button>
             </div>
           );
@@ -126,7 +135,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
         items={(catalog.optics || []).filter(
           (item) => OPTICS_DEVICE_CATS.has(item.category) && !item.requireparent,
         )}
-        label="視覚／聴覚を検索"
+        label={ui("gear.searchOptics")}
         tr={tr}
         describe={(item) => (
           <>

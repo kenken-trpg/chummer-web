@@ -5,25 +5,23 @@ import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { swapMatrixOrder } from "@/lib/character/gear";
 
-export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
       <>
-        {(d.cyberdecks || []).length ? (
-          <p className="muted">
-            作成時に配列の4数を ATK / SLZ / DP / FW
-            へ割り当てます。値を選ぶと、その数値を持っていた項目と入れ替わります。
-          </p>
-        ) : null}
+        {(d.cyberdecks || []).length ? <p className="muted">{ui("deck.arrayNote")}</p> : null}
         {(d.cyberdecks || []).map((item) => (
           <div className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
               <div className="muted">
                 {item.name} / DR {item.device_rating} / ATK {item.attack} / SLZ {item.sleaze} / DP{" "}
-                {item.dataprocessing} / FW {item.firewall} / プログラム {item.program_used ?? 0}/
-                {item.program_max ?? item.programs ?? 0} / {item.nuyen.toLocaleString()}¥ /{" "}
-                {item.source}
+                {item.dataprocessing} / FW {item.firewall}
+                {ui("gear.programs", {
+                  used: item.program_used ?? 0,
+                  max: item.program_max ?? item.programs ?? 0,
+                })}{" "}
+                / {item.nuyen.toLocaleString()}¥ / {item.source}
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">
@@ -94,7 +92,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
                         })
                       }
                     >
-                      外す
+                      {ui("common.remove")}
                     </button>
                     {prog.rating_max > 0 ? (
                       <label>
@@ -120,7 +118,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
                 ))}
               <AddonSelect
                 rowName={tr(item.name)}
-                prompt="プログラムを追加"
+                prompt={ui("gear.addProgram")}
                 tr={tr}
                 options={(catalog.programs || []).filter(
                   (prog) =>
@@ -153,7 +151,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
                 })
               }
             >
-              削除
+              {ui("common.delete")}
             </button>
           </div>
         ))}
@@ -161,13 +159,14 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, patch }: TabPanel
 
       <CatalogPicker
         items={catalog.cyberdecks || []}
-        label="サイバーデッキを検索"
+        label={ui("gear.searchCyberdeck")}
         tr={tr}
         describe={(item) => (
           <>
             {item.name} / DR {item.devicerating}
-            {item.attributearray ? ` / ${item.attributearray}` : ""} / プログラム {item.programs} /{" "}
-            {item.cost}¥ / {item.avail || "-"} / {item.source}
+            {item.attributearray ? ` / ${item.attributearray}` : ""}
+            {ui("gear.programCount", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
+            {item.avail || "-"} / {item.source}
           </>
         )}
         onAdd={(item) =>

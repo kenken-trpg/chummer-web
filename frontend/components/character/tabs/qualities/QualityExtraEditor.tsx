@@ -170,8 +170,8 @@ export function QualityExtraEditor({
         }
       >
         <option value="">{ui("quality.side")}</option>
-        <option value="Left">{ui("quality.side.left")}</option>
-        <option value="Right">{ui("quality.side.right")}</option>
+        <option value="Left">{ui("common.left")}</option>
+        <option value="Right">{ui("common.right")}</option>
       </select>
     );
   }

@@ -79,7 +79,7 @@ export function VehicleDroneGear({
                         : ` / ${mod.nuyen.toLocaleString()}¥`}
                       {mod.slots ? ui("veh.slotCost", { slots: mod.slots }) : ""}
                       {mod.capacity_max
-                        ? ui("veh.capacity", {
+                        ? ui("gear.capacity", {
                             used: mod.capacity_used ?? 0,
                             max: mod.capacity_max,
                           })
@@ -216,7 +216,7 @@ export function VehicleDroneGear({
                               setSlotPick((cur) => ({ ...cur, [warePickKey]: "" }));
                             }}
                           >
-                            {ui("veh.addToSlot")}
+                            {ui("gear.addToSlot")}
                           </button>
                         </div>
                       ) : null}
@@ -226,13 +226,13 @@ export function VehicleDroneGear({
                 {addons.length ? (
                   <div className="cyber-controls">
                     <select
-                      aria-label={`${tr(item.name)}: ${ui("veh.addMod")}`}
+                      aria-label={`${tr(item.name)}: ${ui("gear.addMod")}`}
                       value={slotPick[item.id] || ""}
                       onChange={(e) =>
                         setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                       }
                     >
-                      <option value="">{ui("veh.addMod")}</option>
+                      <option value="">{ui("gear.addMod")}</option>
                       {addons
                         // used to lift as soon as the catalog search box below
                         // had text in it, which nothing signposted
@@ -372,7 +372,7 @@ export function VehicleDroneGear({
                       {tr(sensor.name)}
                       {sensor.rating_max > 0 ? ` R${sensor.rating}` : ""}
                       {sensor.capacity_max
-                        ? ui("veh.capacity", {
+                        ? ui("gear.capacity", {
                             used: sensor.capacity_used ?? 0,
                             max: sensor.capacity_max ?? 0,
                           })
@@ -401,13 +401,13 @@ export function VehicleDroneGear({
                       {sensorAddons.length ? (
                         <div className="cyber-controls">
                           <select
-                            aria-label={`${tr(sensor.name)}: ${ui("veh.addSensorFn")}`}
+                            aria-label={`${tr(sensor.name)}: ${ui("gear.addSensorFn")}`}
                             value={slotPick[sensor.id] || ""}
                             onChange={(e) =>
                               setSlotPick((cur) => ({ ...cur, [sensor.id]: e.target.value }))
                             }
                           >
-                            <option value="">{ui("veh.addSensorFn")}</option>
+                            <option value="">{ui("gear.addSensorFn")}</option>
                             {sensorAddons
                               .filter((mod) => mod.source === "SR5")
                               .map((mod) => (

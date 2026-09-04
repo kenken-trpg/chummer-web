@@ -58,7 +58,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
       </p>
       {disabledCoreGrades.length > 0 ? (
         <p className="muted">
-          {ui("cyber.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
+          {ui("ware.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
         </p>
       ) : null}
       {d.limb_replace ? (

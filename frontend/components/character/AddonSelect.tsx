@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useUiText } from "@/lib/i18n";
+
 type Option = { id: string; name: string; cost?: string | number };
 
 /**
@@ -22,7 +24,7 @@ export function AddonSelect<T extends Option>({
   options,
   onAdd,
   tr,
-  addLabel = "装着",
+  addLabel,
   optionLabel,
   extraFor,
 }: {
@@ -42,6 +44,8 @@ export function AddonSelect<T extends Option>({
    *  (a vehicle model, say). */
   extraFor?: (option: T) => { label: string; values: string[]; freeText?: boolean } | null;
 }) {
+  const { ui } = useUiText();
+  const action = addLabel ?? ui("common.install");
   const [picked, setPicked] = useState("");
   const [extra, setExtra] = useState("");
   if (!options.length) return null;
@@ -99,7 +103,7 @@ export function AddonSelect<T extends Option>({
       <button
         className="btn"
         disabled={!selected}
-        aria-label={`${rowName}: ${addLabel}`}
+        aria-label={`${rowName}: ${action}`}
         onClick={() => {
           if (!selected) return;
           onAdd(selected, extra || undefined);
@@ -107,7 +111,7 @@ export function AddonSelect<T extends Option>({
           setExtra("");
         }}
       >
-        {addLabel}
+        {action}
       </button>
     </div>
   );

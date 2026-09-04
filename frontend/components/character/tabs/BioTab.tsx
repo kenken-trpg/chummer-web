@@ -11,7 +11,7 @@ import {
   wareBounds,
 } from "@/lib/character/ware";
 
-export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
+export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [bioSearch, setBioSearch] = useState("");
   const [bioCat, setBioCat] = useState("all");
   const [bioGrade, setBioGrade] = useState("Standard");
@@ -48,11 +48,17 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
   return (
     <div className="card">
       <p className="muted">
-        装着中 {d.bioware?.length || 0} ・ Essence {d.essence}（バイオ −{d.essence_lost_bio ?? 0}）
-        ・ 消費 {(d.nuyen_spent ?? 0).toLocaleString()}¥
+        {ui("bio.summary", {
+          count: d.bioware?.length || 0,
+          essence: d.essence,
+          lost: d.essence_lost_bio ?? 0,
+          spent: (d.nuyen_spent ?? 0).toLocaleString(),
+        })}
       </p>
       {disabledCoreGrades.length > 0 ? (
-        <p className="muted">使用不可グレード: {disabledCoreGrades.join("、")}</p>
+        <p className="muted">
+          {ui("ware.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
+        </p>
       ) : null}
       {(d.bioware || [])
         .filter((item) => !item.parent_id)
@@ -113,13 +119,13 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
       <div className="cyber-toolbar">
         <input
           type="search"
-          placeholder="バイオウェアを検索"
-          aria-label="バイオウェアを検索"
+          placeholder={ui("bio.search")}
+          aria-label={ui("bio.search")}
           value={bioSearch}
           onChange={(e) => setBioSearch(e.target.value)}
         />
         <select value={bioCat} onChange={(e) => setBioCat(e.target.value)}>
-          <option value="all">すべての分類</option>
+          <option value="all">{ui("ware.allCategories")}</option>
           {bioCats.map((c) => (
             <option key={c} value={c}>
               {tr(c)}
@@ -129,7 +135,7 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
         <select value={effectiveBioGrade} onChange={(e) => setBioGrade(e.target.value)}>
           {bioGrades.map((g) => (
             <option key={g.name} value={g.name}>
-              追加時 {g.name}
+              {ui("ware.addGrade", { grade: g.name })}
             </option>
           ))}
         </select>
@@ -142,8 +148,8 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
                 <b>{tr(w.name)}</b>
                 <div className="muted">
                   {w.name} / {w.category} / ESS {w.ess} / {w.cost}¥ / {w.source}
-                  {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
-                  {w.allow_subsystems?.length ? " / スロット可" : ""}
+                  {w.maxrating > 1 ? ui("ware.maxRating", { max: w.maxrating }) : ""}
+                  {w.allow_subsystems?.length ? ui("ware.slottable") : ""}
                 </div>
               </div>
               <button
@@ -164,7 +170,7 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
                   });
                 }}
               >
-                追加
+                {ui("common.add")}
               </button>
             </div>
           )}

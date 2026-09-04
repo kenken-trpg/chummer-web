@@ -49,11 +49,6 @@
       "count": 1
     }
   },
-  "components/character/WareRow.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
   "components/character/sheet/SheetHeader.tsx": {
     "no-restricted-syntax": {
       "count": 10
@@ -169,49 +164,9 @@
       "count": 4
     }
   },
-  "components/character/tabs/BioTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 11
-    }
-  },
   "components/character/tabs/MetaTab.tsx": {
     "no-restricted-syntax": {
       "count": 5
-    }
-  },
-  "components/character/tabs/gear/ArmorGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 16
-    }
-  },
-  "components/character/tabs/gear/CommlinkGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
-  "components/character/tabs/gear/CyberdeckGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "components/character/tabs/gear/LifestyleGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 14
-    }
-  },
-  "components/character/tabs/gear/OpticsGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 9
-    }
-  },
-  "components/character/tabs/gear/RccGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 17
-    }
-  },
-  "components/character/tabs/gear/SensorGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 13
     }
   }
 }

@@ -101,9 +101,9 @@ export function QualitiesTab({
                   {q.side
                     ? ` / ${
                         q.side === "Left"
-                          ? ui("qual.sideLeft")
+                          ? ui("common.left")
                           : q.side === "Right"
-                            ? ui("qual.sideRight")
+                            ? ui("common.right")
                             : q.side
                       }`
                     : ""}

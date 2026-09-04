@@ -5,6 +5,7 @@ import { SIDE_JA } from "@/lib/character/constants";
 import { availBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
+import { useUiText } from "@/lib/i18n";
 
 export function WareRow(props: {
   item: InstalledWare;
@@ -40,6 +41,7 @@ export function WareRow(props: {
     onSkillPick,
     nested,
   } = props;
+  const { ui } = useUiText();
   const spec = catalogItems.find((w) => w.id === item.ware_id);
   const slots = (spec?.allow_subsystems || []).filter(Boolean);
   const slotOptions = catalogItems.filter((w) => {
@@ -58,43 +60,41 @@ export function WareRow(props: {
         <b>
           {tr(item.name)}
           {item.side ? `（${SIDE_JA[item.side] || item.side}）` : ""}
-          {item.included ? "（同梱）" : ""}
+          {item.included ? ui("ware.bundledSuffix") : ""}
         </b>
         <div className="muted">
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
           {availBit(item)} / {item.source}
           {capMax > 0 ? (
             <span className="cap">
-              {" "}
-              ・ 容量 {item.capacity_used ?? 0}/{capMax}
+              {ui("ware.capacityInline", { used: item.capacity_used ?? 0, max: capMax })}
             </span>
           ) : null}
           {item.limb_str != null ? (
             <span className="cap">
-              {" ・ 肢 STR "}
-              {item.limb_str}
-              {" / AGI "}
-              {item.limb_agi}
-              {(item.limb_armor ?? 0) > 0 ? ` / 装甲 ${item.limb_armor}` : ""}
+              {ui("ware.limb", { str: item.limb_str, agi: item.limb_agi ?? 0 })}
+              {(item.limb_armor ?? 0) > 0
+                ? ui("ware.limbArmor", { armor: item.limb_armor ?? 0 })
+                : ""}
             </span>
           ) : null}
         </div>
         <div className="cyber-controls">
           {spec?.selectside && !item.parent_id && !item.included ? (
             <label>
-              左右
+              {ui("ware.side")}
               <select
                 value={item.side || "Left"}
                 onChange={(e) => onPatchRow(item.id, { side: e.target.value })}
               >
-                <option value="Left">左</option>
-                <option value="Right">右</option>
+                <option value="Left">{ui("common.left")}</option>
+                <option value="Right">{ui("common.right")}</option>
               </select>
             </label>
           ) : null}
           {spec && ratingMax > ratingMin && !item.included ? (
             <label>
-              レーティング
+              {ui("common.rating")}
               <input
                 type="number"
                 min={ratingMin}
@@ -106,7 +106,7 @@ export function WareRow(props: {
           ) : null}
           {!item.included && !spec?.forcegrade ? (
             <label>
-              グレード
+              {ui("common.grade")}
               <select
                 value={item.grade}
                 onChange={(e) => onPatchRow(item.id, { grade: e.target.value })}
@@ -126,7 +126,7 @@ export function WareRow(props: {
                 checked={item.wireless}
                 onChange={(e) => onPatchRow(item.id, { wireless: e.target.checked })}
               />
-              ワイヤレス
+              {ui("common.wireless")}
             </label>
           ) : null}
         </div>
@@ -176,16 +176,16 @@ export function WareRow(props: {
               disabled={!chosen}
               onClick={() => chosen && onAddChild(chosen)}
             >
-              スロットに追加
+              {ui("gear.addToSlot")}
             </button>
           </div>
         ) : null}
       </div>
       {item.included ? (
-        <span className="muted">同梱</span>
+        <span className="muted">{ui("common.bundled")}</span>
       ) : (
         <button className="btn danger" onClick={() => onRemove(item.id)}>
-          削除
+          {ui("common.delete")}
         </button>
       )}
     </div>
