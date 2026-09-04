@@ -1,3 +1,5 @@
+*[English version / 英語版はこちら](README.en.md)*
+
 # Chummer Web
 
 非公式の Shadowrun 5th Edition キャラクター作成 Web アプリです。Catalyst Game Labs / The Topps Company とは無関係です。
@@ -5,6 +7,23 @@
 ゲームデータと基礎翻訳は [chummer5a/chummer5a](https://github.com/chummer5a/chummer5a)（GPL-3.0）の `Chummer/data` と `Chummer/lang` を使います。このプロジェクトも GPL-3.0 です。日本語用語オーバーレイ（`backend/data/ja_overrides/`）は SR5 用語集に照らした手訳を主とし、一部の固有名は chumJA（Chummer の SR4 期日本語訳）由来、用語の裏取りに [shadowrun5eja](https://github.com/MiyabiRouga/shadowrun5eja)（Foundry VTT SR5e 日本語化）を参照しています。出典の詳細は [`NOTICE.txt`](NOTICE.txt) を参照してください。
 
 キャラクターデータは**ブラウザ内（IndexedDB）に保存**されます。サーバーは計算と `.chum5` 変換をするだけで、キャラを保存しません。バックアップは JSON / `.chum5` で書き出してください。
+
+## 言語について
+
+UI は日本語と英語を切り替えられます（上部のセレクタ）。**基準ロケールは日本語**で、
+完全なのはこちらです。
+
+英語ではアプリ側の文言（タブ、ボタン、パネル、シート・印刷レイアウト）が英語になり、
+カタログ項目は Chummer のデータファイル本来の英語名で出ます。ただし
+**英語モードでも日本語のまま残る箇所が 2 つ**あります。
+
+- **作成チェックパネル** — 指摘文はルールエンジン（バックエンド）が日本語で生成します。
+  フロント側のラベルだけ英語にすると日本語の文の隣に英語のラベルが並ぶので、
+  バックエンドの文言と揃うまで一緒に据え置いています。
+- **ココフォリア書き出し** — 意図的です。日本語の VTT で、コマは日本語卓の部屋に
+  貼られるものなので。
+
+詳細は [`docs/i18n.md`](docs/i18n.md) を参照してください。
 
 ## 使い方（Docker）
 
