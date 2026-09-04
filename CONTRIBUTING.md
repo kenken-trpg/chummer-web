@@ -147,10 +147,6 @@ belong to — `Ares Predator V: アクセサリを追加` — which is what
 `<AddonSelect>` is for. Where a panel still writes its own `<select>`, give it
 the same `aria-label={`${tr(row.name)}: …`}` shape.
 
-Not done yet: `tabs/qualities/QualityExtraEditor.tsx` has a dozen bare
-`<select>`s (the quality-specific "pick a skill / attribute / side" editors).
-They need the same treatment.
-
 ### Coverage
 
 ```bash

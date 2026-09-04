@@ -37,6 +37,15 @@ export function QualityExtraEditor({
   catalog: Catalog;
   catalogById: Map<string, CatalogQuality>;
 }) {
+  /**
+   * Every control below is one row of the quality list, and its only visible
+   * cue is the placeholder option ("対象を選択"). That is not an accessible
+   * name, so a character with a dozen qualities that take a target announces
+   * a dozen identical comboboxes. Naming each one after its quality
+   * ("Allergy: 対象を選択") is what makes the panel navigable.
+   */
+  const named = (prompt: string) => `${tr(q.name)}: ${prompt}`;
+
   const kind =
     q.extra_kind ||
     catalogById.get(q.id)?.extra_kind ||
@@ -70,26 +79,28 @@ export function QualityExtraEditor({
         );
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        {slots.map((slot) => (
-          <select
-            key={slot.key}
-            value={ch.quality_extras?.[slot.key] || slot.value || ""}
-            onChange={(e) =>
-              patch({
-                quality_extras: { ...(ch.quality_extras || {}), [slot.key]: e.target.value },
-              })
-            }
-          >
-            <option value="">
-              追加精霊{slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択
-            </option>
-            {(slot.options || []).map((name) => (
-              <option key={name} value={name}>
-                {tr(name)}
-              </option>
-            ))}
-          </select>
-        ))}
+        {slots.map((slot) => {
+          const prompt = `追加精霊${slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択`;
+          return (
+            <select
+              key={slot.key}
+              aria-label={named(prompt)}
+              value={ch.quality_extras?.[slot.key] || slot.value || ""}
+              onChange={(e) =>
+                patch({
+                  quality_extras: { ...(ch.quality_extras || {}), [slot.key]: e.target.value },
+                })
+              }
+            >
+              <option value="">{prompt}</option>
+              {(slot.options || []).map((name) => (
+                <option key={name} value={name}>
+                  {tr(name)}
+                </option>
+              ))}
+            </select>
+          );
+        })}
       </div>
     );
   }
@@ -98,6 +109,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
+          aria-label={named("商品カテゴリを選択")}
           value={ch.quality_extras?.[q.id] || ""}
           onChange={(e) =>
             patch({
@@ -115,6 +127,7 @@ export function QualityExtraEditor({
           )}
         </select>
         <select
+          aria-label={named("コンタクトを選択")}
           value={ch.quality_extras?.[contactKey] || ""}
           onChange={(e) =>
             patch({
@@ -141,6 +154,7 @@ export function QualityExtraEditor({
   if (kind === "side" || q.selectside) {
     return (
       <select
+        aria-label={named("左右を選択")}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -160,6 +174,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
+          aria-label={named("マトリクスアクションを選択")}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -177,6 +192,9 @@ export function QualityExtraEditor({
         <input
           type="text"
           placeholder="または手入力"
+          // the catalog list is not exhaustive; "または手入力" alone says
+          // nothing about what is being typed
+          aria-label={named("マトリクスアクションを手入力")}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -202,6 +220,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
+          aria-label={named(`${skillName ? `${skillName} の Expertise` : "Expertise"}を選択`)}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -219,6 +238,7 @@ export function QualityExtraEditor({
         <input
           type="text"
           placeholder="または手入力"
+          aria-label={named("Expertise を手入力")}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -241,6 +261,7 @@ export function QualityExtraEditor({
     const known = options.length ? options : [];
     return (
       <select
+        aria-label={named("技能を選択")}
         value={current}
         onChange={(e) =>
           patch({
@@ -266,6 +287,7 @@ export function QualityExtraEditor({
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         {kind !== "spirit_category" ? (
           <select
+            aria-label={named("呪文カテゴリを選択")}
             value={ch.quality_extras?.[q.id] || ""}
             onChange={(e) =>
               patch({
@@ -283,6 +305,7 @@ export function QualityExtraEditor({
         ) : null}
         {kind !== "spell_category" ? (
           <select
+            aria-label={named("精霊を選択")}
             value={ch.quality_extras?.[kind === "spirit_category" ? q.id : spiritKey] || ""}
             onChange={(e) =>
               patch({
@@ -307,6 +330,7 @@ export function QualityExtraEditor({
   if (kind === "quality") {
     return (
       <select
+        aria-label={named("付帯資質を選択")}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -326,6 +350,7 @@ export function QualityExtraEditor({
   if (kind === "skillgroup") {
     return (
       <select
+        aria-label={named("技能グループを選択")}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -345,6 +370,7 @@ export function QualityExtraEditor({
   if (kind === "attribute" || q.name === "Exceptional Attribute") {
     return (
       <select
+        aria-label={named("能力値を選択")}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -369,6 +395,7 @@ export function QualityExtraEditor({
         <input
           type="text"
           placeholder="対象（花粉、日光など）"
+          aria-label={named("対象")}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -387,6 +414,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
+          aria-label={named("対象を選択")}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -404,6 +432,7 @@ export function QualityExtraEditor({
         <input
           type="text"
           placeholder="または手入力"
+          aria-label={named("対象を手入力")}
           value={current}
           onChange={(e) =>
             setCharacter({
