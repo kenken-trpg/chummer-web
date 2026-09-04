@@ -1,7 +1,19 @@
 import type { Catalog, Character } from "@/lib/types";
+import type { UiFn } from "@/lib/i18n";
+import { translate } from "@/lib/i18n/messages";
 
 /** Identity translator — tests assert on English names, not the JA overlay. */
 export const identityTr = (name: string) => name;
+
+/**
+ * The real `ui()`, pinned to `ja`.
+ *
+ * Not a stub returning the key: the tabs render app copy through this, and the
+ * assertions in these tests are the user-visible wording. Pinning the locale
+ * keeps them independent of whatever `localStorage` a previous test left
+ * behind — a test that wants English sets the locale itself.
+ */
+export const testUi: UiFn = (key, vars) => translate("ja", key, vars);
 
 type Derived = Character["derived"];
 

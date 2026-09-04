@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -27,6 +27,7 @@ function renderTab(
       d={ch.derived}
       tr={identityTr}
       t={(k) => k}
+      ui={testUi}
       patch={over.patch ?? (() => {})}
       setCharacter={() => {}}
     />,

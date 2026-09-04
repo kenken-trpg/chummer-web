@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import { QualityExtraEditor } from "./QualityExtraEditor";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -20,6 +20,7 @@ function renderFor(q: Record<string, unknown>, over: Record<string, unknown> = {
       d={{ ...ch.derived, ...(over.d as object) }}
       tr={identityTr}
       t={(k) => k}
+      ui={testUi}
       patch={vi.fn()}
       setCharacter={vi.fn()}
       catalog={makeCatalog((over.catalog as any) ?? {})}
@@ -102,6 +103,7 @@ describe("<QualityExtraEditor> accessible names", () => {
         d={makeCharacter().derived}
         tr={identityTr}
         t={(k) => k}
+        ui={testUi}
         patch={vi.fn()}
         setCharacter={vi.fn()}
         catalog={makeCatalog()}

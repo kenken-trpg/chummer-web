@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { GearTab } from "@/components/character/tabs/GearTab";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 
 function renderTab() {
   const ch = makeCharacter();
@@ -12,6 +12,7 @@ function renderTab() {
       d={ch.derived}
       tr={identityTr}
       t={(k) => k}
+      ui={testUi}
       patch={() => {}}
       setCharacter={() => {}}
     />,

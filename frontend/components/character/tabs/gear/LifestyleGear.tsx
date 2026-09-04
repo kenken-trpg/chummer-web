@@ -169,7 +169,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, patch }: TabPanel
         tr={tr}
         idle={{
           keep: (item) => CORE_LIFESTYLES.has(item.name),
-          note: "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
+          note: "gear.idleLifestyles",
         }}
         describe={(item) => (
           <>

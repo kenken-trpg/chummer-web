@@ -94,11 +94,11 @@ describe("PickerList", () => {
 
   it("carries the idle note only while it applies", () => {
     const { unmount } = render(
-      <PickerList items={["a"]} note="SR5 のみ">
+      <PickerList items={["a"]} note="picker.coreOnly">
         {(id) => <div key={id}>{id}</div>}
       </PickerList>,
     );
-    expect(screen.getByRole("status").textContent).toBe("SR5 のみ");
+    expect(screen.getByRole("status").textContent).toContain("SR5 のみ表示中");
     unmount();
 
     render(<PickerList items={["a"]}>{(id) => <div key={id}>{id}</div>}</PickerList>);

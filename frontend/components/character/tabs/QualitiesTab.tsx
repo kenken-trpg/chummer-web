@@ -18,6 +18,7 @@ export function QualitiesTab({
   character: ch,
   d,
   tr,
+  ui,
   t,
   patch,
   setCharacter,
@@ -68,33 +69,45 @@ export function QualitiesTab({
         onPick={(key, skill) => patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })}
       />
       <p className="muted">
-        カルマ {d.karma.remaining} / {d.karma.pool}
-        {" ・ "}不利から得られるカルマ {d.karma.negative?.used || 0}
+        {ui("qual.karma", { remaining: d.karma.remaining, pool: d.karma.pool })}
+        {" ・ "}
+        {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
-        {d.career ? " ・ キャリア" : ""}
+        {d.career ? ` ・ ${ui("qual.career")}` : ""}
       </p>
       {d.metagenic &&
       (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
         <p className={`muted${d.metagenic.balanced ? "" : " errors"}`}>
-          メタジェネティック資質: 有利 {d.metagenic.positive} ／ 不利 {d.metagenic.negative}
-          {d.metagenic.limit > 0 ? ` ／ 上限 ${d.metagenic.limit}` : "（Changeling 未取得）"}
-          {d.metagenic.balanced ? "" : " ・ 収支が不均衡（不利＝有利 か 有利−1）"}
+          {ui("qual.metagenic", {
+            positive: d.metagenic.positive,
+            negative: d.metagenic.negative,
+          })}
+          {d.metagenic.limit > 0
+            ? ui("qual.metagenicLimit", { limit: d.metagenic.limit })
+            : ui("qual.metagenicNoChangeling")}
+          {d.metagenic.balanced ? "" : ui("qual.metagenicUnbalanced")}
         </p>
       ) : null}
       {ownedFromDerived.length ? (
         <>
-          <h3>取得済み</h3>
+          <h3>{ui("qual.owned")}</h3>
           {ownedFromDerived.map((q, idx) => (
             <div className="quality-item" key={`owned-${q.id}-${idx}`}>
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ{" "}
-                  {q.karma}
+                  {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
+                  / {ui("qual.karmaLabel")} {q.karma}
                   {q.side
-                    ? ` / ${q.side === "Left" ? "左" : q.side === "Right" ? "右" : q.side}`
+                    ? ` / ${
+                        q.side === "Left"
+                          ? ui("qual.sideLeft")
+                          : q.side === "Right"
+                            ? ui("qual.sideRight")
+                            : q.side
+                      }`
                     : ""}
-                  {q.free ? " / 付帯（無料）" : ""}
+                  {q.free ? ui("qual.freeAttached") : ""}
                 </div>
                 <QualityExtraEditor
                   q={q}
@@ -102,6 +115,7 @@ export function QualitiesTab({
                   d={d}
                   tr={tr}
                   t={t}
+                  ui={ui}
                   patch={patch}
                   setCharacter={setCharacter}
                   catalog={catalog}
@@ -109,7 +123,7 @@ export function QualitiesTab({
                 />
               </div>
               {q.free ? (
-                <span className="muted">付帯</span>
+                <span className="muted">{ui("qual.attached")}</span>
               ) : (
                 <button
                   className="btn danger"
@@ -137,42 +151,42 @@ export function QualitiesTab({
                     });
                   }}
                 >
-                  削除
+                  {ui("common.delete")}
                 </button>
               )}
             </div>
           ))}
         </>
       ) : (
-        <p className="muted">まだありません。有利／不利で絞り込んで追加できます。</p>
+        <p className="muted">{ui("qual.empty")}</p>
       )}
       <div className="option-row">
         <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>
-          すべて
+          {ui("common.all")}
         </button>
         <button
           className={`tab ${qCat === "Positive" ? "active" : ""}`}
           onClick={() => setQCat("Positive")}
         >
-          有利
+          {ui("qual.filter.positive")}
         </button>
         <button
           className={`tab ${qCat === "Negative" ? "active" : ""}`}
           onClick={() => setQCat("Negative")}
         >
-          不利
+          {ui("qual.filter.negative")}
         </button>
         <button
           className={`tab ${qCat === "Metagenic" ? "active" : ""}`}
           onClick={() => setQCat("Metagenic")}
         >
-          メタジェネ
+          {ui("qual.filter.metagenic")}
         </button>
       </div>
       <input
         type="search"
-        placeholder="資質を検索"
-        aria-label="資質を検索"
+        placeholder={ui("qual.search")}
+        aria-label={ui("qual.search")}
         value={qSearch}
         onChange={(e) => setQSearch(e.target.value)}
       />
@@ -197,15 +211,19 @@ export function QualitiesTab({
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
-                  {q.name} / {q.category === "Negative" ? "不利な資質" : "有利な資質"} / カルマ{" "}
-                  {q.karma} / {q.source}
-                  {maxTakes == null ? " / 繰り返し可" : maxTakes > 1 ? ` / 最大${maxTakes}` : ""}
+                  {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
+                  / {ui("qual.karmaLabel")} {q.karma} / {q.source}
+                  {maxTakes == null
+                    ? ui("qual.repeatable")
+                    : maxTakes > 1
+                      ? ui("qual.maxTakes", { max: maxTakes })
+                      : ""}
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
-                    ? ` / 取得${ownedCount}`
+                    ? ui("qual.taken", { count: ownedCount })
                     : ""}
-                  {q.needs_extra ? " / 対象が必要" : ""}
-                  {q.is_way ? " / 他の Way と排他" : ""}
-                  {replaces ? " / 追加すると両立しない資質を外します" : ""}
+                  {q.needs_extra ? ui("qual.needsTarget") : ""}
+                  {q.is_way ? ui("qual.wayExclusive") : ""}
+                  {replaces ? ui("qual.replacesNote") : ""}
                   {blocked ? ` / ${blocked}` : ""}
                 </div>
               </div>
@@ -231,7 +249,11 @@ export function QualitiesTab({
                   });
                 }}
               >
-                {added && !canAddMore ? "削除" : replaces ? "入れ替え" : "追加"}
+                {added && !canAddMore
+                  ? ui("common.delete")
+                  : replaces
+                    ? ui("qual.replace")
+                    : ui("common.add")}
               </button>
             </div>
           );

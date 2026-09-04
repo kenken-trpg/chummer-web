@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { InitiationTab } from "@/components/character/tabs/InitiationTab";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -22,6 +22,7 @@ function renderTab(
       d={ch.derived}
       tr={identityTr}
       t={(k) => k}
+      ui={testUi}
       patch={over.patch ?? (() => {})}
       setCharacter={() => {}}
     />,
@@ -46,6 +47,7 @@ describe("<InitiationTab>", () => {
           d={ch.derived}
           tr={identityTr}
           t={(k) => k}
+          ui={testUi}
           patch={patch}
           setCharacter={setCh}
         />

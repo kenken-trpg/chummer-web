@@ -1,6 +1,7 @@
 "use client";
 
 import type { Catalog, Character } from "@/lib/types";
+import type { UiFn } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 
@@ -12,6 +13,7 @@ export function QualityExtraEditor({
   d,
   tr,
   t,
+  ui,
   patch,
   setCharacter,
   catalog,
@@ -32,6 +34,7 @@ export function QualityExtraEditor({
   d: Character["derived"];
   tr: (name: string) => string;
   t: (key: string, fallback?: string) => string;
+  ui: UiFn;
   patch: (body: Record<string, unknown>) => void | Promise<void>;
   setCharacter: (next: Character) => void;
   catalog: Catalog;
@@ -80,7 +83,10 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         {slots.map((slot) => {
-          const prompt = `追加精霊${slots.length > 1 ? ` ${Number(slot.index) + 1}` : ""}を選択`;
+          const prompt =
+            slots.length > 1
+              ? ui("quality.addSpiritN", { index: Number(slot.index) + 1 })
+              : ui("quality.addSpirit");
           return (
             <select
               key={slot.key}
@@ -109,7 +115,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
-          aria-label={named("商品カテゴリを選択")}
+          aria-label={named(ui("quality.marketCategory"))}
           value={ch.quality_extras?.[q.id] || ""}
           onChange={(e) =>
             patch({
@@ -117,7 +123,7 @@ export function QualityExtraEditor({
             })
           }
         >
-          <option value="">商品カテゴリを選択</option>
+          <option value="">{ui("quality.marketCategory")}</option>
           {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map(
             (cat) => (
               <option key={cat} value={cat}>
@@ -127,7 +133,7 @@ export function QualityExtraEditor({
           )}
         </select>
         <select
-          aria-label={named("コンタクトを選択")}
+          aria-label={named(ui("quality.marketContact"))}
           value={ch.quality_extras?.[contactKey] || ""}
           onChange={(e) =>
             patch({
@@ -135,17 +141,18 @@ export function QualityExtraEditor({
             })
           }
         >
-          <option value="">コンタクトを選択</option>
+          <option value="">{ui("quality.marketContact")}</option>
           {(d.contacts || []).map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name || "（無名）"} {c.role ? `／ ${tr(c.role)}` : ""} (C{c.connection}/L
+              {c.name || ui("quality.contactUnnamed")} {c.role ? `／ ${tr(c.role)}` : ""} (C
+              {c.connection}/L
               {c.loyalty})
             </option>
           ))}
         </select>
         {d.black_market_avail_bonus ? (
           <span className="muted">
-            入手判定 +{d.black_market_avail_bonus}（実効 Avail −{d.black_market_avail_bonus}）
+            {ui("quality.marketBonus", { bonus: d.black_market_avail_bonus })}
           </span>
         ) : null}
       </div>
@@ -154,7 +161,7 @@ export function QualityExtraEditor({
   if (kind === "side" || q.selectside) {
     return (
       <select
-        aria-label={named("左右を選択")}
+        aria-label={named(ui("quality.side"))}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -162,9 +169,9 @@ export function QualityExtraEditor({
           })
         }
       >
-        <option value="">左右を選択</option>
-        <option value="Left">左</option>
-        <option value="Right">右</option>
+        <option value="">{ui("quality.side")}</option>
+        <option value="Left">{ui("quality.side.left")}</option>
+        <option value="Right">{ui("quality.side.right")}</option>
       </select>
     );
   }
@@ -174,7 +181,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
-          aria-label={named("マトリクスアクションを選択")}
+          aria-label={named(ui("quality.matrixAction"))}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -182,7 +189,7 @@ export function QualityExtraEditor({
             })
           }
         >
-          <option value="">マトリクスアクションを選択</option>
+          <option value="">{ui("quality.matrixAction")}</option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -191,10 +198,10 @@ export function QualityExtraEditor({
         </select>
         <input
           type="text"
-          placeholder="または手入力"
+          placeholder={ui("quality.orType")}
           // the catalog list is not exhaustive; "または手入力" alone says
           // nothing about what is being typed
-          aria-label={named("マトリクスアクションを手入力")}
+          aria-label={named(ui("quality.matrixActionFree"))}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -220,7 +227,9 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
-          aria-label={named(`${skillName ? `${skillName} の Expertise` : "Expertise"}を選択`)}
+          aria-label={named(
+            skillName ? ui("quality.expertise", { skill: skillName }) : ui("quality.expertiseAny"),
+          )}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -228,7 +237,9 @@ export function QualityExtraEditor({
             })
           }
         >
-          <option value="">{skillName ? `${skillName} の Expertise` : "Expertise"}を選択</option>
+          <option value="">
+            {skillName ? ui("quality.expertise", { skill: skillName }) : ui("quality.expertiseAny")}
+          </option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -237,8 +248,8 @@ export function QualityExtraEditor({
         </select>
         <input
           type="text"
-          placeholder="または手入力"
-          aria-label={named("Expertise を手入力")}
+          placeholder={ui("quality.orType")}
+          aria-label={named(ui("quality.expertiseFree"))}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -252,7 +263,7 @@ export function QualityExtraEditor({
             })
           }
         />
-        <span className="muted">専門+3（無料）</span>
+        <span className="muted">{ui("quality.expertiseNote")}</span>
       </div>
     );
   }
@@ -261,7 +272,7 @@ export function QualityExtraEditor({
     const known = options.length ? options : [];
     return (
       <select
-        aria-label={named("技能を選択")}
+        aria-label={named(ui("quality.weaponSkill"))}
         value={current}
         onChange={(e) =>
           patch({
@@ -269,7 +280,7 @@ export function QualityExtraEditor({
           })
         }
       >
-        <option value="">技能を選択</option>
+        <option value="">{ui("quality.weaponSkill")}</option>
         {known.map((name) => (
           <option key={name} value={name}>
             {tr(name)}
@@ -287,7 +298,7 @@ export function QualityExtraEditor({
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         {kind !== "spirit_category" ? (
           <select
-            aria-label={named("呪文カテゴリを選択")}
+            aria-label={named(ui("quality.spellCategory"))}
             value={ch.quality_extras?.[q.id] || ""}
             onChange={(e) =>
               patch({
@@ -295,7 +306,7 @@ export function QualityExtraEditor({
               })
             }
           >
-            <option value="">呪文カテゴリを選択</option>
+            <option value="">{ui("quality.spellCategory")}</option>
             {options.map((name) => (
               <option key={name} value={name}>
                 {tr(name)}
@@ -305,7 +316,7 @@ export function QualityExtraEditor({
         ) : null}
         {kind !== "spell_category" ? (
           <select
-            aria-label={named("精霊を選択")}
+            aria-label={named(ui("quality.spirit"))}
             value={ch.quality_extras?.[kind === "spirit_category" ? q.id : spiritKey] || ""}
             onChange={(e) =>
               patch({
@@ -316,7 +327,7 @@ export function QualityExtraEditor({
               })
             }
           >
-            <option value="">精霊を選択</option>
+            <option value="">{ui("quality.spirit")}</option>
             {spirits.map((name) => (
               <option key={name} value={name}>
                 {tr(name)}
@@ -330,7 +341,7 @@ export function QualityExtraEditor({
   if (kind === "quality") {
     return (
       <select
-        aria-label={named("付帯資質を選択")}
+        aria-label={named(ui("quality.attachedQuality"))}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -338,7 +349,7 @@ export function QualityExtraEditor({
           })
         }
       >
-        <option value="">付帯資質を選択</option>
+        <option value="">{ui("quality.attachedQuality")}</option>
         {options.map((name) => (
           <option key={name} value={name}>
             {tr(name)}
@@ -350,7 +361,7 @@ export function QualityExtraEditor({
   if (kind === "skillgroup") {
     return (
       <select
-        aria-label={named("技能グループを選択")}
+        aria-label={named(ui("quality.skillGroup"))}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -358,7 +369,7 @@ export function QualityExtraEditor({
           })
         }
       >
-        <option value="">技能グループを選択</option>
+        <option value="">{ui("quality.skillGroup")}</option>
         {(catalog.skills.groups || []).map((g) => (
           <option key={g} value={g}>
             {tr(g)}
@@ -370,7 +381,7 @@ export function QualityExtraEditor({
   if (kind === "attribute" || q.name === "Exceptional Attribute") {
     return (
       <select
-        aria-label={named("能力値を選択")}
+        aria-label={named(ui("quality.attribute"))}
         value={ch.quality_extras?.[q.id] || ""}
         onChange={(e) =>
           patch({
@@ -378,7 +389,7 @@ export function QualityExtraEditor({
           })
         }
       >
-        <option value="">能力値を選択</option>
+        <option value="">{ui("quality.attribute")}</option>
         {ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES").map((key) => (
           <option key={key} value={key}>
             {attrLabel(key, t)}
@@ -394,8 +405,8 @@ export function QualityExtraEditor({
       return (
         <input
           type="text"
-          placeholder="対象（花粉、日光など）"
-          aria-label={named("対象")}
+          placeholder={ui("quality.targetPlaceholder")}
+          aria-label={named(ui("common.target"))}
           value={current}
           onChange={(e) =>
             setCharacter({
@@ -414,7 +425,7 @@ export function QualityExtraEditor({
     return (
       <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
         <select
-          aria-label={named("対象を選択")}
+          aria-label={named(ui("quality.target"))}
           value={known.includes(current) ? current : ""}
           onChange={(e) =>
             patch({
@@ -422,7 +433,7 @@ export function QualityExtraEditor({
             })
           }
         >
-          <option value="">対象を選択</option>
+          <option value="">{ui("quality.target")}</option>
           {known.map((name) => (
             <option key={name} value={name}>
               {tr(name)}
@@ -431,8 +442,8 @@ export function QualityExtraEditor({
         </select>
         <input
           type="text"
-          placeholder="または手入力"
-          aria-label={named("対象を手入力")}
+          placeholder={ui("quality.orType")}
+          aria-label={named(ui("quality.targetFree"))}
           value={current}
           onChange={(e) =>
             setCharacter({

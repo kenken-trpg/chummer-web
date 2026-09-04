@@ -40,6 +40,7 @@ export default function Page() {
     d,
     tr,
     t,
+    ui,
     patch,
     setCharacter: (next) => setCh(next),
   };

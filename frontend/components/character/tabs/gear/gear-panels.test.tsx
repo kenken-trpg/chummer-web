@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Catalog } from "@/lib/types";
 import type { TabPanelProps } from "@/components/character/types";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import { ArmorGear } from "./ArmorGear";
 import { CommlinkGear } from "./CommlinkGear";
 import { CyberdeckGear } from "./CyberdeckGear";
@@ -149,6 +149,7 @@ function renderPanel(entry: (typeof PANELS)[number], patch: (b: Record<string, u
       d={ch.derived}
       tr={identityTr}
       t={(k) => k}
+      ui={testUi}
       patch={patch}
       setCharacter={() => {}}
     />,

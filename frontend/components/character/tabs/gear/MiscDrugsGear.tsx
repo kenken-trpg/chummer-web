@@ -9,6 +9,7 @@ export function MiscDrugsGear({
   character: ch,
   d,
   tr,
+  ui,
   patch,
   mode,
 }: TabPanelProps & { mode: "misc" | "drugs" }) {
@@ -44,14 +45,16 @@ export function MiscDrugsGear({
                   <div className="muted">
                     {item.name} / {tr(item.category)}
                     {item.qty > 1 ? ` ×${item.qty}` : ""}
-                    {item.add_weapon ? " / 武器化" : ""}
-                    {item.capacity_max ? ` / 容量 ${item.capacity_used}/${item.capacity_max}` : ""}
+                    {item.add_weapon ? ` / ${ui("gear.weaponized")}` : ""}
+                    {item.capacity_max
+                      ? ` / ${ui("common.capacity")} ${item.capacity_used}/${item.capacity_max}`
+                      : ""}
                     {" / "}
                     {item.nuyen.toLocaleString()}¥ / {item.source}
                   </div>
                   <div className="cyber-controls">
                     <label>
-                      数量
+                      {ui("common.qty")}
                       <input
                         type="number"
                         min={1}
@@ -88,7 +91,7 @@ export function MiscDrugsGear({
                     ) : null}
                     {item.needs_extra && item.extra_kind === "skill" ? (
                       <select
-                        aria-label={`${tr(item.name)}: 技能`}
+                        aria-label={`${tr(item.name)}: ${ui("common.skill")}`}
                         value={item.extra || ""}
                         onChange={(e) =>
                           patch({
@@ -100,7 +103,7 @@ export function MiscDrugsGear({
                           })
                         }
                       >
-                        <option value="">技能</option>
+                        <option value="">{ui("common.skill")}</option>
                         {(item.extra_options || []).map((name) => (
                           <option key={name} value={name}>
                             {tr(name)}
@@ -112,7 +115,7 @@ export function MiscDrugsGear({
                       <>
                         <input
                           list={`gear-extra-${item.id}`}
-                          placeholder="対象"
+                          placeholder={ui("common.target")}
                           value={item.extra || ""}
                           onChange={(e) =>
                             patch({
@@ -135,14 +138,14 @@ export function MiscDrugsGear({
                   {item.is_drug && item.drug_effect ? (
                     <>
                       <div className="muted" style={{ marginTop: 4 }}>
-                        効果: {item.drug_effect}
+                        {ui("gear.effect")}: {item.drug_effect}
                         {item.drug_vectors?.length
-                          ? ` ／ 経路 ${item.drug_vectors.join("・")}`
+                          ? ` ／ ${ui("gear.vector")} ${item.drug_vectors.join("・")}`
                           : ""}
-                        {item.drug_speed ? ` ／ 発現 ${item.drug_speed}` : ""}
+                        {item.drug_speed ? ` ／ ${ui("gear.onset")} ${item.drug_speed}` : ""}
                       </div>
                       <div className="cyber-controls" style={{ marginTop: 4 }}>
-                        <label title="能力値・イニシアチブ・技能に反映">
+                        <label title={ui("gear.drugToggleHint")}>
                           <input
                             type="checkbox"
                             checked={Boolean(
@@ -156,7 +159,7 @@ export function MiscDrugsGear({
                               })
                             }
                           />
-                          使用中
+                          {ui("gear.inUse")}
                         </label>
                       </div>
                     </>
@@ -166,8 +169,12 @@ export function MiscDrugsGear({
                       {tr(child.label || child.name)}
                       {child.rating_max > 0 ? ` R${child.rating}` : ""}
                       {child.qty > 1 ? ` ×${child.qty}` : ""}
-                      {child.included ? " / 付属" : ` / ${child.nuyen.toLocaleString()}¥`}
-                      {child.capacity_cost ? ` / 容量 ${child.capacity_cost}` : ""}
+                      {child.included
+                        ? ` / ${ui("common.included")}`
+                        : ` / ${child.nuyen.toLocaleString()}¥`}
+                      {child.capacity_cost
+                        ? ` / ${ui("common.capacity")} ${child.capacity_cost}`
+                        : ""}
                       {child.included ? null : (
                         <>
                           {" "}
@@ -179,7 +186,7 @@ export function MiscDrugsGear({
                               })
                             }
                           >
-                            外す
+                            {ui("common.remove")}
                           </button>
                         </>
                       )}
@@ -208,13 +215,15 @@ export function MiscDrugsGear({
                   {addons.length ? (
                     <div className="cyber-controls">
                       <select
-                        aria-label={`${tr(item.name)}: ${mode === "drugs" ? "グレード／追加" : "追加ギア"}`}
+                        aria-label={`${tr(item.name)}: ${mode === "drugs" ? ui("gear.gradeOrAddon") : ui("gear.addGear")}`}
                         value={slotPick[item.id] || ""}
                         onChange={(e) =>
                           setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                         }
                       >
-                        <option value="">{mode === "drugs" ? "グレード／追加" : "追加ギア"}</option>
+                        <option value="">
+                          {mode === "drugs" ? ui("gear.gradeOrAddon") : ui("gear.addGear")}
+                        </option>
                         {addons
                           .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
                           .filter(
@@ -232,13 +241,13 @@ export function MiscDrugsGear({
                       {addonSpec?.extra_kind === "skill" || addonSpec?.extra_kind === "text" ? (
                         addonSpec.extra_kind === "skill" ? (
                           <select
-                            aria-label={`${tr(item.name)}: 対象`}
+                            aria-label={`${tr(item.name)}: ${ui("common.target")}`}
                             value={extraPick[item.id] || ""}
                             onChange={(e) =>
                               setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
                             }
                           >
-                            <option value="">対象</option>
+                            <option value="">{ui("common.target")}</option>
                             {(addonSpec.extra_options || []).map((name) => (
                               <option key={name} value={name}>
                                 {tr(name)}
@@ -249,7 +258,7 @@ export function MiscDrugsGear({
                           <>
                             <input
                               list={`gear-addon-extra-${item.id}`}
-                              placeholder="対象"
+                              placeholder={ui("common.target")}
                               value={extraPick[item.id] || ""}
                               onChange={(e) =>
                                 setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))
@@ -285,7 +294,7 @@ export function MiscDrugsGear({
                           setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
                         }}
                       >
-                        装着
+                        {ui("common.install")}
                       </button>
                     </div>
                   ) : null}
@@ -298,7 +307,7 @@ export function MiscDrugsGear({
                     })
                   }
                 >
-                  削除
+                  {ui("common.delete")}
                 </button>
               </div>
             );
@@ -310,7 +319,7 @@ export function MiscDrugsGear({
           className={`tab ${gearCat === "all" ? "active" : ""}`}
           onClick={() => setGearCat("all")}
         >
-          すべて
+          {ui("common.all")}
         </button>
         {(mode === "drugs"
           ? ["Drugs", "Toxins", "Chemicals"]
@@ -343,8 +352,8 @@ export function MiscDrugsGear({
       </div>
       <input
         type="search"
-        placeholder={mode === "drugs" ? "ドラッグ／毒物を検索" : "ギアを検索"}
-        aria-label={mode === "drugs" ? "ドラッグ／毒物を検索" : "ギアを検索"}
+        placeholder={mode === "drugs" ? ui("gear.searchDrugs") : ui("gear.searchMisc")}
+        aria-label={mode === "drugs" ? ui("gear.searchDrugs") : ui("gear.searchMisc")}
         value={gearSearch}
         onChange={(e) => setGearSearch(e.target.value)}
       />
@@ -387,13 +396,13 @@ export function MiscDrugsGear({
                     <div className="cyber-controls">
                       {item.extra_kind === "skill" ? (
                         <select
-                          aria-label={`${tr(item.name)}: 技能`}
+                          aria-label={`${tr(item.name)}: ${ui("common.skill")}`}
                           value={extraPick[`buy-${item.id}`] || ""}
                           onChange={(e) =>
                             setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: e.target.value }))
                           }
                         >
-                          <option value="">技能</option>
+                          <option value="">{ui("common.skill")}</option>
                           {(item.extra_options || []).map((name) => (
                             <option key={name} value={name}>
                               {tr(name)}
@@ -404,7 +413,7 @@ export function MiscDrugsGear({
                         <>
                           <input
                             list={`buy-extra-${item.id}`}
-                            placeholder="対象"
+                            placeholder={ui("common.target")}
                             value={extraPick[`buy-${item.id}`] || ""}
                             onChange={(e) =>
                               setExtraPick((cur) => ({
@@ -439,7 +448,7 @@ export function MiscDrugsGear({
                     setExtraPick((cur) => ({ ...cur, [`buy-${item.id}`]: "" }));
                   }}
                 >
-                  購入
+                  {ui("common.buy")}
                 </button>
               </div>
             )}
@@ -448,11 +457,7 @@ export function MiscDrugsGear({
         {mode === "drugs" && (
           <PickerList
             limit={60}
-            note={
-              gearSearch.trim()
-                ? undefined
-                : "SR5 とドラッグのみ表示中（検索するとサプリメントも探します）"
-            }
+            note={gearSearch.trim() ? undefined : "gear.idleDrugs"}
             items={(catalog.drugs || catalog.gear || [])
               .filter((item) => {
                 const drugCat =
@@ -483,10 +488,12 @@ export function MiscDrugsGear({
                     {item.effect ? (
                       <>
                         <br />
-                        効果: {item.effect}
+                        {ui("gear.effect")}: {item.effect}
                       </>
                     ) : null}
-                    {item.vectors?.length ? ` ／ 経路 ${item.vectors.join("・")}` : ""}
+                    {item.vectors?.length
+                      ? ` ／ ${ui("gear.vector")} ${item.vectors.join("・")}`
+                      : ""}
                   </div>
                 </div>
                 <button
@@ -497,7 +504,7 @@ export function MiscDrugsGear({
                     })
                   }
                 >
-                  購入
+                  {ui("common.buy")}
                 </button>
               </div>
             )}

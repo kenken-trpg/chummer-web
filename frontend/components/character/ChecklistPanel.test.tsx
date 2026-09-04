@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { ChecklistPanel } from "@/components/character/ChecklistPanel";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import type { TabPanelProps } from "@/components/character/types";
 
 function panelFor(ch: ReturnType<typeof makeCharacter>): TabPanelProps {
@@ -12,6 +12,7 @@ function panelFor(ch: ReturnType<typeof makeCharacter>): TabPanelProps {
     d: ch.derived,
     tr: identityTr,
     t: (k, f) => f ?? k,
+    ui: testUi,
     patch: () => {},
     setCharacter: () => {},
   };

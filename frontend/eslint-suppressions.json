@@ -24,11 +24,6 @@
       "count": 1
     }
   },
-  "components/character/CatalogPicker.tsx": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
   "components/character/ExtraSelect.tsx": {
     "no-restricted-syntax": {
       "count": 5
@@ -229,11 +224,6 @@
       "count": 19
     }
   },
-  "components/character/tabs/QualitiesTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 36
-    }
-  },
   "components/character/tabs/SkillsTab.tsx": {
     "no-restricted-syntax": {
       "count": 33
@@ -276,12 +266,7 @@
   },
   "components/character/tabs/gear/LifestyleGear.tsx": {
     "no-restricted-syntax": {
-      "count": 16
-    }
-  },
-  "components/character/tabs/gear/MiscDrugsGear.tsx": {
-    "no-restricted-syntax": {
-      "count": 43
+      "count": 14
     }
   },
   "components/character/tabs/gear/OpticsGear.tsx": {
@@ -307,11 +292,6 @@
   "components/character/tabs/gear/WeaponGear.tsx": {
     "no-restricted-syntax": {
       "count": 24
-    }
-  },
-  "components/character/tabs/qualities/QualityExtraEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 41
     }
   }
 }

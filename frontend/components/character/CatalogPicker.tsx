@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useMemo, useState } from "react";
+import { type MsgKey, useUiText } from "@/lib/i18n";
 
 /**
  * Every catalog entry the pickers list has at least these. The tabs pass their
@@ -29,7 +30,7 @@ export function PickerList<T>({
   items: T[];
   limit?: number;
   /** The idle explanation; pass undefined once the user has typed. */
-  note?: string;
+  note?: MsgKey;
   children: (item: T) => ReactNode;
 }) {
   const shown = items.slice(0, limit);
@@ -50,14 +51,17 @@ type Props<T extends Pickable> = {
   /** The muted detail line under the name. */
   describe: (item: T) => ReactNode;
   onAdd: (item: T) => void;
+  /** Defaults to 購入 / "Buy". */
   addLabel?: string;
   limit?: number;
   /** What an empty search box shows. The default is core-rulebook entries;
    *  lifestyles use a hand-picked set instead. */
-  idle?: { keep: (item: T) => boolean; note: string };
+  idle?: { keep: (item: T) => boolean; note: MsgKey };
 };
 
-export const CORE_ONLY = "SR5 のみ表示中（検索するとサプリメントも探します）";
+/** The default idle note: with an empty search box the lists show
+ *  core-rulebook entries only. */
+export const CORE_ONLY: MsgKey = "picker.coreOnly";
 
 /**
  * Why the list stops where it does.
@@ -77,13 +81,14 @@ export function PickerFootnote({
 }: {
   matched: number;
   shown: number;
-  note?: string;
+  note?: MsgKey;
 }) {
+  const { ui } = useUiText();
   const hidden = matched - shown;
   return (
     <p className="muted picker-footnote" role="status">
-      {matched === 0 ? "該当なし" : hidden > 0 ? `他 ${hidden} 件。検索で絞り込んでください` : null}
-      {note && matched > 0 ? `${hidden > 0 ? " / " : ""}${note}` : null}
+      {matched === 0 ? ui("picker.none") : hidden > 0 ? ui("picker.more", { count: hidden }) : null}
+      {note && matched > 0 ? `${hidden > 0 ? " / " : ""}${ui(note)}` : null}
     </p>
   );
 }
@@ -108,10 +113,12 @@ export function CatalogPicker<T extends Pickable>({
   tr,
   describe,
   onAdd,
-  addLabel = "購入",
+  addLabel,
   limit = 40,
   idle,
 }: Props<T>) {
+  const { ui } = useUiText();
+  const action = addLabel ?? ui("common.buy");
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("all");
 
@@ -141,7 +148,7 @@ export function CatalogPicker<T extends Pickable>({
       {categories.length > 1 ? (
         <div className="option-row">
           <button className={`tab ${cat === "all" ? "active" : ""}`} onClick={() => setCat("all")}>
-            すべて
+            {ui("common.all")}
           </button>
           {categories.map((c) => (
             <button
@@ -174,9 +181,9 @@ export function CatalogPicker<T extends Pickable>({
               className="btn primary"
               onClick={() => onAdd(item)}
               // every one of these reads "購入" on its own; name it by the row
-              aria-label={`${tr(item.name)} を${addLabel}`}
+              aria-label={ui("picker.buyLabel", { name: tr(item.name), action })}
             >
-              {addLabel}
+              {action}
             </button>
           </div>
         ))}
