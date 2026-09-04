@@ -169,51 +169,6 @@
       "count": 17
     }
   },
-  "components/character/sidebar/SidebarAttributes.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "components/character/sidebar/SidebarAwakened.tsx": {
-    "no-restricted-syntax": {
-      "count": 16
-    }
-  },
-  "components/character/sidebar/SidebarBudgets.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
-  "components/character/sidebar/SidebarCareerEdit.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "components/character/sidebar/SidebarCareerRewards.tsx": {
-    "no-restricted-syntax": {
-      "count": 11
-    }
-  },
-  "components/character/sidebar/SidebarEconomy.tsx": {
-    "no-restricted-syntax": {
-      "count": 20
-    }
-  },
-  "components/character/sidebar/SidebarFlags.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
-  "components/character/sidebar/SidebarMagicStats.tsx": {
-    "no-restricted-syntax": {
-      "count": 11
-    }
-  },
-  "components/character/sidebar/SidebarStatus.tsx": {
-    "no-restricted-syntax": {
-      "count": 20
-    }
-  },
   "components/character/tabs/AdeptTab.tsx": {
     "no-restricted-syntax": {
       "count": 35

@@ -2,6 +2,7 @@
 
 import type { Catalog, Character } from "@/lib/types";
 import { makeT } from "@/lib/ui-strings";
+import { useUiText } from "@/lib/i18n";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { SidebarStatus } from "@/components/character/sidebar/SidebarStatus";
 import { SidebarCareerEdit } from "@/components/character/sidebar/SidebarCareerEdit";
@@ -29,9 +30,10 @@ export function CharacterSidebar({
   patch?: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
   const t = makeT(catalog);
+  const { ui } = useUiText();
   const career = Boolean(ch.career || d.career);
 
-  const blockProps: SidebarBlockProps = { catalog, ch, d, tr, t, career, error, patch };
+  const blockProps: SidebarBlockProps = { catalog, ch, d, tr, t, ui, career, error, patch };
   return (
     <aside className="side no-print">
       <SidebarStatus {...blockProps} />

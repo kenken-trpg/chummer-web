@@ -6,6 +6,10 @@ import { type Locale, type MsgKey, translate } from "./messages";
 export { LOCALES, MESSAGES, formatMessage, translate } from "./messages";
 export type { Locale, MsgKey } from "./messages";
 
+/** The `ui` callback, for components that take it as a prop rather than
+ *  calling the hook themselves (the sidebar blocks). */
+export type UiFn = (key: MsgKey, vars?: Record<string, string | number>) => string;
+
 export const LOCALE_STORAGE_KEY = "chummer-web:locale";
 const LOCALE_EVENT = "chummer-web:locale-change";
 const DEFAULT_LOCALE: Locale = "ja";
@@ -63,7 +67,7 @@ export function useLocale(): [Locale, (l: Locale) => void] {
 export function useUiText(): {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  ui: (key: MsgKey, vars?: Record<string, string | number>) => string;
+  ui: UiFn;
 } {
   const [locale, setLocale] = useLocale();
   const ui = useCallback(

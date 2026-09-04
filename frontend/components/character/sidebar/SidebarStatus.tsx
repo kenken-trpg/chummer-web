@@ -1,7 +1,7 @@
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
 
-export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
+export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProps) {
   return (
     <>
       <h2>{ch.name}</h2>
@@ -10,11 +10,11 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
         {ch.metavariant ? ` / ${tr(ch.metavariant)}` : ""} ・ {ch.talent}
       </div>
       <div className="stat">
-        <span>モード</span>
-        <b>{career ? "キャリア" : "作成"}</b>
+        <span>{ui("side.mode")}</span>
+        <b>{career ? ui("side.mode.career") : ui("side.mode.chargen")}</b>
       </div>
       <div className="stat">
-        <span>作成方式</span>
+        <span>{ui("side.buildMethod")}</span>
         <b>
           {(ch.build_method || "Priority") === "Karma"
             ? `Karma ${d.karma.remaining}/${d.karma.pool}`
@@ -31,7 +31,10 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
           ))}
         </ul>
       ) : (
-        <p className="ok">{career ? "キャリア進行中" : "作成ルール上は問題なし"}</p>
+        // `errors` / `warnings` themselves come from the engine, in Japanese.
+        // Translating those means translating the backend's messages too — see
+        // docs/i18n.md.
+        <p className="ok">{career ? ui("side.ok.career") : ui("side.ok.chargen")}</p>
       )}
       {(d.warnings || []).length ? (
         <ul className="warn">
@@ -41,7 +44,7 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
         </ul>
       ) : null}
       <div className="stat">
-        <span>物理/精神/社会リミット</span>
+        <span>{ui("side.limits")}</span>
         <b>
           {d.limits.physical}/{d.limits.mental}/{d.limits.social}
         </b>
@@ -52,27 +55,30 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
         </div>
       ))}
       <div className="stat">
-        <span>コンディション</span>
+        <span>{ui("side.condition")}</span>
         <b>
           P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
         </b>
       </div>
       {d.limb_quality ? (
         <div className="stat">
-          <span>リム本数 Quality</span>
+          <span>{ui("side.limbQuality")}</span>
           <b>
-            {d.limb_quality.count}本 / {d.limb_quality.pairs}組
+            {ui("side.limbQualityValue", {
+              count: d.limb_quality.count,
+              pairs: d.limb_quality.pairs,
+            })}
           </b>
         </div>
       ) : null}
       <div className="stat">
-        <span>イニシアチブ</span>
+        <span>{ui("side.initiative")}</span>
         <b>
           {d.initiative.value}+{d.initiative.dice}d6
         </b>
       </div>
       <div className="stat">
-        <span>アーマー</span>
+        <span>{ui("side.armor")}</span>
         <b>
           {d.armor}
           {d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}
@@ -86,13 +92,13 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
       ))}
       {(d.reach || 0) > 0 ? (
         <div className="stat">
-          <span>リーチ</span>
+          <span>{ui("side.reach")}</span>
           <b>+{d.reach}</b>
         </div>
       ) : null}
       {(d.lifestyle_cost_mod || 0) !== 0 ? (
         <div className="stat">
-          <span>LSスタイル費用</span>
+          <span>{ui("side.lifestyleCost")}</span>
           <b>
             {d.lifestyle_cost_mod! > 0 ? "+" : ""}
             {d.lifestyle_cost_mod}%
@@ -101,7 +107,7 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
       ) : null}
       {(d.notoriety || 0) !== 0 || career ? (
         <div className="stat">
-          <span>悪名</span>
+          <span>{ui("side.notoriety")}</span>
           <b>
             {(d.notoriety || 0) > 0 ? "+" : ""}
             {d.notoriety || 0}
@@ -110,7 +116,7 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
       ) : null}
       {(d.fame || 0) !== 0 ? (
         <div className="stat">
-          <span>名声</span>
+          <span>{ui("side.fame")}</span>
           <b>
             {d.fame! > 0 ? "+" : ""}
             {d.fame}
@@ -120,17 +126,17 @@ export function SidebarStatus({ ch, d, tr, career, error }: SidebarBlockProps) {
       {career || (d.street_cred || 0) > 0 || (d.public_awareness || 0) > 0 ? (
         <>
           <div className="stat">
-            <span>ストリートクレド</span>
+            <span>{ui("side.streetCred")}</span>
             <b>{d.street_cred || 0}</b>
           </div>
           <div className="stat">
-            <span>周知度</span>
+            <span>{ui("side.publicAwareness")}</span>
             <b>{d.public_awareness || 0}</b>
           </div>
         </>
       ) : (d.public_awareness || 0) !== 0 ? (
         <div className="stat">
-          <span>周知度</span>
+          <span>{ui("side.publicAwareness")}</span>
           <b>
             {d.public_awareness! > 0 ? "+" : ""}
             {d.public_awareness}
