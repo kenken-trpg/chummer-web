@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { WareRow } from "@/components/character/WareRow";
 import { R5_SLOT_LABELS } from "@/lib/character/constants";
@@ -21,8 +22,6 @@ export function VehicleDroneGear({
   patch,
   mode,
 }: TabPanelProps & { mode: "drone" | "vehicle" }) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
 
   return (
@@ -227,9 +226,9 @@ export function VehicleDroneGear({
                     >
                       <option value="">改造を追加</option>
                       {addons
-                        .filter(
-                          (mod) => gearSearch.trim() || mod.source === "SR5" || mod.source === "R5",
-                        )
+                        // used to lift as soon as the catalog search box below
+                        // had text in it, which nothing signposted
+                        .filter((mod) => mod.source === "SR5" || mod.source === "R5")
                         .map((mod) => (
                           <option key={mod.id} value={mod.id}>
                             {tr(mod.name)} ({mod.cost}¥)
@@ -319,9 +318,7 @@ export function VehicleDroneGear({
                     >
                       <option value="">武器マウントを追加</option>
                       {sizes
-                        .filter(
-                          (mod) => gearSearch.trim() || mod.source === "SR5" || mod.source === "R5",
-                        )
+                        .filter((mod) => mod.source === "SR5" || mod.source === "R5")
                         .map((mod) => (
                           <option key={mod.id} value={mod.id}>
                             {tr(mod.name)} ({mod.cost}¥)
@@ -525,108 +522,33 @@ export function VehicleDroneGear({
         })}
       </>
 
-      <div className="option-row">
-        <button
-          className={`tab ${gearCat === "all" ? "active" : ""}`}
-          onClick={() => setGearCat("all")}
-        >
-          すべて
-        </button>
-        {(mode === "drone"
-          ? [...new Set((catalog.drones || []).map((item) => item.category))]
-          : [...new Set((catalog.vehicles || []).map((item) => item.category))]
-        )
-          .sort()
-          .map((cat) => (
-            <button
-              key={cat}
-              className={`tab ${gearCat === cat ? "active" : ""}`}
-              onClick={() => setGearCat(cat)}
-            >
-              {tr(cat)}
-            </button>
-          ))}
-      </div>
-      <input
-        type="search"
-        placeholder={mode === "drone" ? "ドローンを検索" : "車両を検索"}
-        aria-label={mode === "drone" ? "ドローンを検索" : "車両を検索"}
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
-      />
-      <div className="quality-list">
-        {mode === "drone" &&
-          (catalog.drones || [])
-            .filter((item) => gearCat === "all" || item.category === gearCat)
-            .filter((item) => {
-              const q = gearSearch.trim().toLowerCase();
-              if (q)
-                return (
-                  item.name.toLowerCase().includes(q) ||
-                  tr(item.name).toLowerCase().includes(q) ||
-                  item.category.toLowerCase().includes(q)
-                );
-              return item.source === "SR5";
-            })
-            .slice(0, 40)
-            .map((item) => (
-              <div className="quality-item" key={item.id}>
-                <div>
-                  <b>{tr(item.name)}</b>
-                  <div className="muted">
-                    {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / PLT{" "}
-                    {item.pilot} / SNR {item.sensor} / {item.cost}¥ / {item.avail || "-"} /{" "}
-                    {item.source}
-                  </div>
-                </div>
-                <button
-                  className="btn primary"
-                  onClick={() =>
-                    patch({
-                      drones: [...(ch.drones || []), { gear_id: item.id }],
-                    })
-                  }
-                >
-                  購入
-                </button>
-              </div>
-            ))}
-        {mode === "vehicle" &&
-          (catalog.vehicles || [])
-            .filter((item) => gearCat === "all" || item.category === gearCat)
-            .filter((item) => {
-              const q = gearSearch.trim().toLowerCase();
-              if (q)
-                return (
-                  item.name.toLowerCase().includes(q) ||
-                  tr(item.name).toLowerCase().includes(q) ||
-                  item.category.toLowerCase().includes(q)
-                );
-              return item.source === "SR5";
-            })
-            .slice(0, 40)
-            .map((item) => (
-              <div className="quality-item" key={item.id}>
-                <div>
-                  <b>{tr(item.name)}</b>
-                  <div className="muted">
-                    {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} /
-                    SEAT {item.seats || "-"} / {item.cost}¥ / {item.avail || "-"} / {item.source}
-                  </div>
-                </div>
-                <button
-                  className="btn primary"
-                  onClick={() =>
-                    patch({
-                      vehicles: [...(ch.vehicles || []), { gear_id: item.id }],
-                    })
-                  }
-                >
-                  購入
-                </button>
-              </div>
-            ))}
-      </div>
+      {mode === "drone" ? (
+        <CatalogPicker
+          items={catalog.drones || []}
+          label="ドローンを検索"
+          tr={tr}
+          describe={(item) => (
+            <>
+              {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / PLT{" "}
+              {item.pilot} / SNR {item.sensor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+            </>
+          )}
+          onAdd={(item) => patch({ drones: [...(ch.drones || []), { gear_id: item.id }] })}
+        />
+      ) : (
+        <CatalogPicker
+          items={catalog.vehicles || []}
+          label="車両を検索"
+          tr={tr}
+          describe={(item) => (
+            <>
+              {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / SEAT{" "}
+              {item.seats || "-"} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+            </>
+          )}
+          onAdd={(item) => patch({ vehicles: [...(ch.vehicles || []), { gear_id: item.id }] })}
+        />
+      )}
     </>
   );
 }

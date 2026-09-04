@@ -1,4 +1,5 @@
 "use client";
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { SpecPicker } from "@/components/character/SpecPicker";
@@ -25,15 +26,14 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
   }, [d.skill_expertises]);
 
   const catalogKnowledge = new Set((catalog.skills.knowledge || []).map((item) => item.name));
-  const filteredKnowledge = useMemo(() => {
+  const matchedKnowledge = useMemo(() => {
     const q = knowSearch.trim().toLowerCase();
     return (catalog.skills.knowledge || [])
       .filter((item) => knowCat === "all" || item.category === knowCat)
       .filter((item) => {
         if (!q) return !item.source || item.source === "SR5";
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-      })
-      .slice(0, 40);
+      });
   }, [catalog, knowSearch, knowCat, tr]);
 
   const ownedKnowledge = new Set((d.knowledge_skills || []).map((row) => row.name));
@@ -468,9 +468,13 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
         </button>
       </div>
       <div className="quality-list">
-        {filteredKnowledge
-          .filter((item) => !ownedKnowledge.has(item.name))
-          .map((item) => (
+        {/* the cut used to happen before the "already taken" filter, so a
+            character with forty knowledge skills saw an empty list */}
+        <PickerList
+          items={matchedKnowledge.filter((item) => !ownedKnowledge.has(item.name))}
+          note={knowSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => (
             <div className="quality-item" key={`${item.category}:${item.name}`}>
               <div>
                 <b>{tr(item.name)}</b>
@@ -485,7 +489,8 @@ export function SkillsTab({ catalog, character: ch, d, tr, patch, setCharacter }
                 追加
               </button>
             </div>
-          ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

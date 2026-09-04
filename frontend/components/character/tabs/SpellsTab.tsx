@@ -1,4 +1,5 @@
 "use client";
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
@@ -122,43 +123,45 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
         onChange={(e) => setSpellSearch(e.target.value)}
       />
       <div className="quality-list">
-        {(catalog.spells || [])
-          .filter((item) => item.learnable !== false)
-          .filter((item) => !(ch.spells || []).some((row) => row.spell_id === item.id))
-          .filter((item) => spellKind === "all" || (item.kind || "spell") === spellKind)
-          .filter((item) => {
-            const limits = d.limit_spell_categories || [];
-            const allows = d.allow_spell_categories || [];
-            if (limits.length || allows.length) {
-              const allowed = new Set([...limits, ...allows]);
-              if (!allowed.has(item.category || "")) return false;
-            }
-            const blocked = d.block_spell_descriptors || [];
-            for (const text of blocked) {
-              if (text.toLowerCase() === "spell" && (item.kind || "spell") === "spell")
-                return false;
-              if (text && (item.descriptor || "").includes(text)) return false;
-            }
-            const ranges = d.allow_spell_ranges || [];
-            if (d.spell_range_gated && ranges.length) {
-              if (!ranges.includes(item.range || "")) return false;
-            }
-            return true;
-          })
-          .filter((item) => {
-            const q = spellSearch.trim().toLowerCase();
-            if (q) {
-              return (
-                item.name.toLowerCase().includes(q) ||
-                tr(item.name).toLowerCase().includes(q) ||
-                (item.category || "").toLowerCase().includes(q)
-              );
-            }
-            if (spellKind === "enchantment") return true;
-            return item.source === "SR5";
-          })
-          .slice(0, 40)
-          .map((item) => {
+        <PickerList
+          items={(catalog.spells || [])
+            .filter((item) => item.learnable !== false)
+            .filter((item) => !(ch.spells || []).some((row) => row.spell_id === item.id))
+            .filter((item) => spellKind === "all" || (item.kind || "spell") === spellKind)
+            .filter((item) => {
+              const limits = d.limit_spell_categories || [];
+              const allows = d.allow_spell_categories || [];
+              if (limits.length || allows.length) {
+                const allowed = new Set([...limits, ...allows]);
+                if (!allowed.has(item.category || "")) return false;
+              }
+              const blocked = d.block_spell_descriptors || [];
+              for (const text of blocked) {
+                if (text.toLowerCase() === "spell" && (item.kind || "spell") === "spell")
+                  return false;
+                if (text && (item.descriptor || "").includes(text)) return false;
+              }
+              const ranges = d.allow_spell_ranges || [];
+              if (d.spell_range_gated && ranges.length) {
+                if (!ranges.includes(item.range || "")) return false;
+              }
+              return true;
+            })
+            .filter((item) => {
+              const q = spellSearch.trim().toLowerCase();
+              if (q) {
+                return (
+                  item.name.toLowerCase().includes(q) ||
+                  tr(item.name).toLowerCase().includes(q) ||
+                  (item.category || "").toLowerCase().includes(q)
+                );
+              }
+              if (spellKind === "enchantment") return true;
+              return item.source === "SR5";
+            })}
+          note={spellSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => {
             const paid = (d.spell_points?.used || 0) >= (d.spell_points?.free || 0);
             return (
               <div className="quality-item" key={item.id}>
@@ -185,7 +188,8 @@ export function SpellsTab({ catalog, character: ch, d, tr, patch }: TabPanelProp
                 </button>
               </div>
             );
-          })}
+          }}
+        </PickerList>
       </div>
     </div>
   );

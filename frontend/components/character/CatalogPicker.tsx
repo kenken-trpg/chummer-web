@@ -14,6 +14,33 @@ export type Pickable = {
   source?: string;
 };
 
+/**
+ * A truncated result list that admits it. For the panels whose rows are too
+ * particular for `<CatalogPicker>` — a quality's button turns into 削除 once
+ * you own it, a spell's row prices itself against the free allowance — but
+ * whose list is cut off the same way.
+ */
+export function PickerList<T>({
+  items,
+  limit = 40,
+  note,
+  children,
+}: {
+  items: T[];
+  limit?: number;
+  /** The idle explanation; pass undefined once the user has typed. */
+  note?: string;
+  children: (item: T) => ReactNode;
+}) {
+  const shown = items.slice(0, limit);
+  return (
+    <>
+      {shown.map(children)}
+      <PickerFootnote matched={items.length} shown={shown.length} note={note} />
+    </>
+  );
+}
+
 type Props<T extends Pickable> = {
   /** Already narrowed to what this tab can actually buy (no parent-only mods). */
   items: T[];
@@ -30,7 +57,36 @@ type Props<T extends Pickable> = {
   idle?: { keep: (item: T) => boolean; note: string };
 };
 
-const CORE_ONLY = "SR5 のみ表示中（検索するとサプリメントも探します）";
+export const CORE_ONLY = "SR5 のみ表示中（検索するとサプリメントも探します）";
+
+/**
+ * Why the list stops where it does.
+ *
+ * A list cut off at `limit`, and a list showing core-rulebook entries only,
+ * both look exactly like "this game does not have that item". `<CatalogPicker>`
+ * renders this itself; the panels that still own their own row markup (a
+ * quality's add button changes shape, a spell's is priced) call it directly.
+ *
+ * `note` is the idle explanation — pass `undefined` once the user has typed,
+ * since a search reaches everything.
+ */
+export function PickerFootnote({
+  matched,
+  shown,
+  note,
+}: {
+  matched: number;
+  shown: number;
+  note?: string;
+}) {
+  const hidden = matched - shown;
+  return (
+    <p className="muted picker-footnote" role="status">
+      {matched === 0 ? "該当なし" : hidden > 0 ? `他 ${hidden} 件。検索で絞り込んでください` : null}
+      {note && matched > 0 ? `${hidden > 0 ? " / " : ""}${note}` : null}
+    </p>
+  );
+}
 
 /**
  * Category chips + search + result list, shared by every "buy something from
@@ -125,19 +181,11 @@ export function CatalogPicker<T extends Pickable>({
             </button>
           </div>
         ))}
-        <p className="muted picker-footnote" role="status">
-          {matched.length === 0
-            ? "該当なし"
-            : hidden > 0
-              ? `他 ${hidden} 件。検索で絞り込んでください`
-              : null}
-          {!query && matched.length > 0 ? (
-            <>
-              {hidden > 0 ? " / " : ""}
-              {idle ? idle.note : CORE_ONLY}
-            </>
-          ) : null}
-        </p>
+        <PickerFootnote
+          matched={matched.length}
+          shown={shown.length}
+          note={query ? undefined : idle ? idle.note : CORE_ONLY}
+        />
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CORE_ONLY, PickerFootnote } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
@@ -23,7 +24,7 @@ export function QualitiesTab({
 }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
-  const filteredQualities = useMemo(() => {
+  const matchedQualities = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
     const metaOnly = qCat === "Metagenic";
     return catalog.qualities
@@ -31,9 +32,9 @@ export function QualitiesTab({
       .filter((item) => {
         if (!q) return metaOnly || !item.source || item.source === "SR5";
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-      })
-      .slice(0, 80);
+      });
   }, [catalog, qSearch, qCat, tr]);
+  const filteredQualities = matchedQualities.slice(0, 80);
 
   const qualityCtx: QualityReqCtx = {
     qualities: new Set((d.qualities || []).map((item) => item.name)),
@@ -235,6 +236,11 @@ export function QualitiesTab({
             </div>
           );
         })}
+        <PickerFootnote
+          matched={matchedQualities.length}
+          shown={filteredQualities.length}
+          note={qSearch.trim() ? undefined : CORE_ONLY}
+        />
       </div>
     </div>
   );

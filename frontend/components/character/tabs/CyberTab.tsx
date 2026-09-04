@@ -1,4 +1,5 @@
 "use client";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
@@ -34,13 +35,12 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
   const effectiveAddGrade = cyberGrades.some((g) => g.name === addGrade)
     ? addGrade
     : cyberGrades[0]?.name || "Betaware";
-  const filteredCyber = useMemo(() => {
+  const matchedCyber = useMemo(() => {
     const q = cySearch.trim().toLowerCase();
     return catalog.cyberware.items
       .filter((w) => !hideFromWareCatalog(w, "cyberware"))
       .filter((w) => cyCat === "all" || w.category === cyCat)
-      .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(cySearch))
-      .slice(0, 80);
+      .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(cySearch));
   }, [catalog, cySearch, cyCat, tr]);
   const disabledCoreGrades = (d.disabled_cyberware_grades || []).filter((g) =>
     catalog.cyberware.grades.some((row) => row.name === g),
@@ -184,38 +184,40 @@ export function CyberTab({ catalog, character: ch, d, tr, patch }: TabPanelProps
         </select>
       </div>
       <div className="quality-list">
-        {filteredCyber.map((w) => (
-          <div className="quality-item" key={w.id}>
-            <div>
-              <b>{tr(w.name)}</b>
-              <div className="muted">
-                {w.name} / {w.category} / ESS {w.ess}
-                {w.plugin ? "（単独時）" : ""} / {w.cost}¥ / {w.source}
-                {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
-                {w.plugin ? " / スロット可" : ""}
+        <PickerList items={matchedCyber} limit={80}>
+          {(w) => (
+            <div className="quality-item" key={w.id}>
+              <div>
+                <b>{tr(w.name)}</b>
+                <div className="muted">
+                  {w.name} / {w.category} / ESS {w.ess}
+                  {w.plugin ? "（単独時）" : ""} / {w.cost}¥ / {w.source}
+                  {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
+                  {w.plugin ? " / スロット可" : ""}
+                </div>
               </div>
+              <button
+                className="btn primary"
+                onClick={() =>
+                  patch({
+                    cyberware: [
+                      ...(ch.cyberware || []),
+                      {
+                        ware_id: w.id,
+                        rating: w.minrating || 1,
+                        grade: effectiveAddGrade,
+                        wireless: true,
+                        side: nextFreeSide(ch.cyberware || [], catalog.cyberware.items, w),
+                      },
+                    ],
+                  })
+                }
+              >
+                追加
+              </button>
             </div>
-            <button
-              className="btn primary"
-              onClick={() =>
-                patch({
-                  cyberware: [
-                    ...(ch.cyberware || []),
-                    {
-                      ware_id: w.id,
-                      rating: w.minrating || 1,
-                      grade: effectiveAddGrade,
-                      wireless: true,
-                      side: nextFreeSide(ch.cyberware || [], catalog.cyberware.items, w),
-                    },
-                  ],
-                })
-              }
-            >
-              追加
-            </button>
-          </div>
-        ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

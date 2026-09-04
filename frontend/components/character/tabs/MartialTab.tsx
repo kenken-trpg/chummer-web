@@ -1,4 +1,5 @@
 "use client";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 
@@ -98,14 +99,14 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
         onChange={(e) => setMartialSearch(e.target.value)}
       />
       <div className="list">
-        {(catalog.martial_arts || [])
-          .filter((item) => {
+        <PickerList
+          items={(catalog.martial_arts || []).filter((item) => {
             const q = martialSearch.trim().toLowerCase();
             if (!q) return true;
             return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-          })
-          .slice(0, 40)
-          .map((item) => {
+          })}
+        >
+          {(item) => {
             const owned = (d.martial_arts || []).some((row) => row.art_id === item.id);
             const blocked =
               !owned &&
@@ -140,7 +141,8 @@ export function MartialTab({ catalog, character: ch, d, tr, patch }: TabPanelPro
                 </button>
               </div>
             );
-          })}
+          }}
+        </PickerList>
       </div>
     </div>
   );

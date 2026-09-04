@@ -1,4 +1,5 @@
 "use client";
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
@@ -155,8 +156,8 @@ export function FociTab({ catalog, character: ch, d, tr, patch }: TabPanelProps)
         onChange={(e) => setFocusSearch(e.target.value)}
       />
       <div className="quality-list">
-        {(catalog.foci || [])
-          .filter((item) => {
+        <PickerList
+          items={(catalog.foci || []).filter((item) => {
             const q = focusSearch.trim().toLowerCase();
             if (q) {
               return (
@@ -166,9 +167,10 @@ export function FociTab({ catalog, character: ch, d, tr, patch }: TabPanelProps)
               );
             }
             return item.source === "SR5";
-          })
-          .slice(0, 40)
-          .map((item) => (
+          })}
+          note={focusSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => (
             <div className="quality-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
@@ -208,7 +210,8 @@ export function FociTab({ catalog, character: ch, d, tr, patch }: TabPanelProps)
                 </button>
               </div>
             </div>
-          ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

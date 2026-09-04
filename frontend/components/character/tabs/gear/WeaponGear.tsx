@@ -1,13 +1,12 @@
 "use client";
 import { useState } from "react";
+import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
 export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelProps) {
-  const [gearSearch, setGearSearch] = useState("");
-  const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
 
   return (
@@ -279,73 +278,24 @@ export function WeaponGear({ catalog, character: ch, d, tr, patch }: TabPanelPro
         })}
       </>
 
-      <div className="option-row">
-        <button
-          className={`tab ${gearCat === "all" ? "active" : ""}`}
-          onClick={() => setGearCat("all")}
-        >
-          すべて
-        </button>
-        {[...new Set((catalog.weapons || []).map((item) => item.category))].sort().map((cat) => (
-          <button
-            key={cat}
-            className={`tab ${gearCat === cat ? "active" : ""}`}
-            onClick={() => setGearCat(cat)}
-          >
-            {tr(cat)}
-          </button>
-        ))}
-      </div>
-      <input
-        type="search"
-        placeholder="武器を検索"
-        aria-label="武器を検索"
-        value={gearSearch}
-        onChange={(e) => setGearSearch(e.target.value)}
+      <CatalogPicker
+        items={catalog.weapons || []}
+        label="武器を検索"
+        tr={tr}
+        describe={(item) => (
+          <>
+            {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+          </>
+        )}
+        onAdd={(item) => {
+          // a few "weapons" in the catalog are really a gear entry in disguise
+          if (item.add_gear_id) {
+            patch({ gear: [...(ch.gear || []), { gear_id: item.add_gear_id, qty: 1 }] });
+            return;
+          }
+          patch({ weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }] });
+        }}
       />
-
-      <div className="quality-list">
-        {(catalog.weapons || [])
-          .filter((item) => gearCat === "all" || item.category === gearCat)
-          .filter((item) => {
-            const q = gearSearch.trim().toLowerCase();
-            if (q)
-              return (
-                item.name.toLowerCase().includes(q) ||
-                tr(item.name).toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q)
-              );
-            return item.source === "SR5";
-          })
-          .slice(0, 40)
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / {weaponLine(item)} / {item.cost}¥ / {item.avail || "-"} /{" "}
-                  {item.source}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() => {
-                  if (item.add_gear_id) {
-                    patch({
-                      gear: [...(ch.gear || []), { gear_id: item.add_gear_id, qty: 1 }],
-                    });
-                    return;
-                  }
-                  patch({
-                    weapons: [...(ch.weapons || []), { weapon_id: item.id, qty: 1 }],
-                  });
-                }}
-              >
-                購入
-              </button>
-            </div>
-          ))}
-      </div>
     </>
   );
 }

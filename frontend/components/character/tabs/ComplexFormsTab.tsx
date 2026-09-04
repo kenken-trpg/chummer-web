@@ -1,4 +1,5 @@
 "use client";
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
@@ -89,21 +90,23 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch }: TabPan
         onChange={(e) => setCfSearch(e.target.value)}
       />
       <div className="quality-list">
-        {(catalog.complex_forms || [])
-          .filter((item) => !(ch.complex_forms || []).some((row) => row.form_id === item.id))
-          .filter((item) => {
-            const q = cfSearch.trim().toLowerCase();
-            if (q) {
-              return (
-                item.name.toLowerCase().includes(q) ||
-                tr(item.name).toLowerCase().includes(q) ||
-                (item.target || "").toLowerCase().includes(q)
-              );
-            }
-            return item.source === "SR5";
-          })
-          .slice(0, 40)
-          .map((item) => {
+        <PickerList
+          items={(catalog.complex_forms || [])
+            .filter((item) => !(ch.complex_forms || []).some((row) => row.form_id === item.id))
+            .filter((item) => {
+              const q = cfSearch.trim().toLowerCase();
+              if (q) {
+                return (
+                  item.name.toLowerCase().includes(q) ||
+                  tr(item.name).toLowerCase().includes(q) ||
+                  (item.target || "").toLowerCase().includes(q)
+                );
+              }
+              return item.source === "SR5";
+            })}
+          note={cfSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => {
             const paid = (d.complex_form_points?.used || 0) >= (d.complex_form_points?.free || 0);
             const blocked = (item.required || []).length
               ? `必要 ${item.required!.map((name) => tr(name)).join("・")}`
@@ -132,7 +135,8 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, patch }: TabPan
                 </button>
               </div>
             );
-          })}
+          }}
+        </PickerList>
       </div>
     </div>
   );

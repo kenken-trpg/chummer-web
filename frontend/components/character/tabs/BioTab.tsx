@@ -1,4 +1,5 @@
 "use client";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
@@ -33,13 +34,12 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
   const effectiveBioGrade = bioGrades.some((g) => g.name === bioGrade)
     ? bioGrade
     : bioGrades[0]?.name || "Betaware";
-  const filteredBio = useMemo(() => {
+  const matchedBio = useMemo(() => {
     const q = bioSearch.trim().toLowerCase();
     return (catalog.bioware?.items || [])
       .filter((w) => !hideFromWareCatalog(w, "bioware"))
       .filter((w) => bioCat === "all" || w.category === bioCat)
-      .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(bioSearch))
-      .slice(0, 80);
+      .filter((w) => !q || w.name.toLowerCase().includes(q) || tr(w.name).includes(bioSearch));
   }, [catalog, bioSearch, bioCat, tr]);
   const disabledCoreGrades = (d.disabled_bioware_grades || []).filter((g) =>
     (catalog.bioware?.grades || []).some((row) => row.name === g),
@@ -135,38 +135,40 @@ export function BioTab({ catalog, character: ch, d, tr, patch }: TabPanelProps) 
         </select>
       </div>
       <div className="quality-list">
-        {filteredBio.map((w) => (
-          <div className="quality-item" key={w.id}>
-            <div>
-              <b>{tr(w.name)}</b>
-              <div className="muted">
-                {w.name} / {w.category} / ESS {w.ess} / {w.cost}¥ / {w.source}
-                {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
-                {w.allow_subsystems?.length ? " / スロット可" : ""}
+        <PickerList items={matchedBio} limit={80}>
+          {(w) => (
+            <div className="quality-item" key={w.id}>
+              <div>
+                <b>{tr(w.name)}</b>
+                <div className="muted">
+                  {w.name} / {w.category} / ESS {w.ess} / {w.cost}¥ / {w.source}
+                  {w.maxrating > 1 ? ` / 最大R${w.maxrating}` : ""}
+                  {w.allow_subsystems?.length ? " / スロット可" : ""}
+                </div>
               </div>
+              <button
+                className="btn primary"
+                onClick={() => {
+                  const range = wareBounds(w, d.ware_ranges);
+                  patch({
+                    bioware: [
+                      ...(ch.bioware || []),
+                      {
+                        ware_id: w.id,
+                        rating: range.min,
+                        grade: w.forcegrade || effectiveBioGrade,
+                        wireless: true,
+                        side: nextFreeSide(ch.bioware || [], catalog.bioware.items, w),
+                      },
+                    ],
+                  });
+                }}
+              >
+                追加
+              </button>
             </div>
-            <button
-              className="btn primary"
-              onClick={() => {
-                const range = wareBounds(w, d.ware_ranges);
-                patch({
-                  bioware: [
-                    ...(ch.bioware || []),
-                    {
-                      ware_id: w.id,
-                      rating: range.min,
-                      grade: w.forcegrade || effectiveBioGrade,
-                      wireless: true,
-                      side: nextFreeSide(ch.bioware || [], catalog.bioware.items, w),
-                    },
-                  ],
-                });
-              }}
-            >
-              追加
-            </button>
-          </div>
-        ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

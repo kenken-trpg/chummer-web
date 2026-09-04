@@ -1,5 +1,6 @@
 "use client";
 
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 
 import { useMemo, useState } from "react";
@@ -13,15 +14,13 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
   const [enhSearch, setEnhSearch] = useState("");
   const [qiSearch, setQiSearch] = useState("");
 
-  const filteredPowers = useMemo(() => {
+  const matchedPowers = useMemo(() => {
     const q = powerSearch.trim().toLowerCase();
-    return (catalog.powers || [])
-      .filter((item) =>
-        !q
-          ? item.source === "SR5"
-          : item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
-      )
-      .slice(0, 80);
+    return (catalog.powers || []).filter((item) =>
+      !q
+        ? item.source === "SR5"
+        : item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
+    );
   }, [catalog, powerSearch, tr]);
 
   return (
@@ -170,35 +169,41 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
         />
       </div>
       <div className="quality-list">
-        {filteredPowers.map((item) => (
-          <div className="quality-item" key={item.id}>
-            <div>
-              <b>{tr(item.name)}</b>
-              <div className="muted">
-                {item.name} / {formatPoints(item.points)} PP
-                {item.extrapointcost ? ` +${formatPoints(item.extrapointcost)}` : ""}
-                {item.adeptway ? ` / Way ${formatPoints(item.adeptway)} 割引` : ""}
-                {item.levels ? " / レベルあり" : ""}
-                {item.select === "spell" ? " / 呪文選択" : ""}
-                {" / "}
-                {item.source}
+        <PickerList
+          items={matchedPowers}
+          limit={80}
+          note={powerSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => (
+            <div className="quality-item" key={item.id}>
+              <div>
+                <b>{tr(item.name)}</b>
+                <div className="muted">
+                  {item.name} / {formatPoints(item.points)} PP
+                  {item.extrapointcost ? ` +${formatPoints(item.extrapointcost)}` : ""}
+                  {item.adeptway ? ` / Way ${formatPoints(item.adeptway)} 割引` : ""}
+                  {item.levels ? " / レベルあり" : ""}
+                  {item.select === "spell" ? " / 呪文選択" : ""}
+                  {" / "}
+                  {item.source}
+                </div>
               </div>
+              <button
+                className="btn primary"
+                onClick={() =>
+                  patch({
+                    adept_powers: [
+                      ...(ch.adept_powers || []),
+                      { power_id: item.id, rating: 1, discounted: !!item.adeptway },
+                    ],
+                  })
+                }
+              >
+                追加
+              </button>
             </div>
-            <button
-              className="btn primary"
-              onClick={() =>
-                patch({
-                  adept_powers: [
-                    ...(ch.adept_powers || []),
-                    { power_id: item.id, rating: 1, discounted: !!item.adeptway },
-                  ],
-                })
-              }
-            >
-              追加
-            </button>
-          </div>
-        ))}
+          )}
+        </PickerList>
       </div>
       <h3>Enhancement</h3>
       <p className="muted">Way と対応パワーがあるとき、1つ 2カルマ</p>
@@ -357,15 +362,16 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
         onChange={(e) => setQiSearch(e.target.value)}
       />
       <div className="quality-list">
-        {(catalog.powers || [])
-          .filter((item) => {
+        <PickerList
+          items={(catalog.powers || []).filter((item) => {
             const q = qiSearch.trim().toLowerCase();
             return q
               ? item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
               : item.source === "SR5";
-          })
-          .slice(0, 40)
-          .map((item) => (
+          })}
+          note={qiSearch.trim() ? undefined : CORE_ONLY}
+        >
+          {(item) => (
             <div className="quality-item" key={`qi-${item.id}`}>
               <div>
                 <b>{tr(item.name)}</b>
@@ -392,7 +398,8 @@ export function AdeptTab({ catalog, character: ch, d, tr, t, patch, setCharacter
                 結合
               </button>
             </div>
-          ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree, miscFits } from "@/lib/character/gear";
 
@@ -345,29 +346,31 @@ export function MiscDrugsGear({
         onChange={(e) => setGearSearch(e.target.value)}
       />
       <div className="quality-list">
-        {mode === "misc" &&
-          (catalog.gear || [])
-            .filter((item) => !item.requireparent)
-            .filter((item) => {
-              const drugCat =
-                item.category === "Drugs" ||
-                item.category === "Toxins" ||
-                item.category === "Chemicals";
-              return !drugCat;
-            })
-            .filter((item) => gearCat === "all" || item.category === gearCat)
-            .filter((item) => {
-              const q = gearSearch.trim().toLowerCase();
-              if (q)
-                return (
-                  item.name.toLowerCase().includes(q) ||
-                  tr(item.name).toLowerCase().includes(q) ||
-                  item.category.toLowerCase().includes(q)
-                );
-              return item.source === "SR5";
-            })
-            .slice(0, 40)
-            .map((item) => (
+        {mode === "misc" && (
+          <PickerList
+            note={gearSearch.trim() ? undefined : CORE_ONLY}
+            items={(catalog.gear || [])
+              .filter((item) => !item.requireparent)
+              .filter((item) => {
+                const drugCat =
+                  item.category === "Drugs" ||
+                  item.category === "Toxins" ||
+                  item.category === "Chemicals";
+                return !drugCat;
+              })
+              .filter((item) => gearCat === "all" || item.category === gearCat)
+              .filter((item) => {
+                const q = gearSearch.trim().toLowerCase();
+                if (q)
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    tr(item.name).toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q)
+                  );
+                return item.source === "SR5";
+              })}
+          >
+            {(item) => (
               <div className="quality-item" key={item.id}>
                 <div>
                   <b>{tr(item.name)}</b>
@@ -435,29 +438,38 @@ export function MiscDrugsGear({
                   購入
                 </button>
               </div>
-            ))}
-        {mode === "drugs" &&
-          (catalog.drugs || catalog.gear || [])
-            .filter((item) => {
-              const drugCat =
-                item.category === "Drugs" ||
-                item.category === "Toxins" ||
-                item.category === "Chemicals";
-              return drugCat && !item.requireparent;
-            })
-            .filter((item) => gearCat === "all" || item.category === gearCat)
-            .filter((item) => {
-              const q = gearSearch.trim().toLowerCase();
-              if (q)
-                return (
-                  item.name.toLowerCase().includes(q) ||
-                  tr(item.name).toLowerCase().includes(q) ||
-                  item.category.toLowerCase().includes(q)
-                );
-              return item.source === "SR5" || item.category === "Drugs";
-            })
-            .slice(0, 60)
-            .map((item) => (
+            )}
+          </PickerList>
+        )}
+        {mode === "drugs" && (
+          <PickerList
+            limit={60}
+            note={
+              gearSearch.trim()
+                ? undefined
+                : "SR5 とドラッグのみ表示中（検索するとサプリメントも探します）"
+            }
+            items={(catalog.drugs || catalog.gear || [])
+              .filter((item) => {
+                const drugCat =
+                  item.category === "Drugs" ||
+                  item.category === "Toxins" ||
+                  item.category === "Chemicals";
+                return drugCat && !item.requireparent;
+              })
+              .filter((item) => gearCat === "all" || item.category === gearCat)
+              .filter((item) => {
+                const q = gearSearch.trim().toLowerCase();
+                if (q)
+                  return (
+                    item.name.toLowerCase().includes(q) ||
+                    tr(item.name).toLowerCase().includes(q) ||
+                    item.category.toLowerCase().includes(q)
+                  );
+                return item.source === "SR5" || item.category === "Drugs";
+              })}
+          >
+            {(item) => (
               <div className="quality-item" key={item.id}>
                 <div>
                   <b>{tr(item.name)}</b>
@@ -484,7 +496,9 @@ export function MiscDrugsGear({
                   購入
                 </button>
               </div>
-            ))}
+            )}
+          </PickerList>
+        )}
       </div>
     </>
   );

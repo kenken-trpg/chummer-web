@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogPicker, type Pickable } from "./CatalogPicker";
+import { CatalogPicker, type Pickable, PickerList } from "./CatalogPicker";
 
 const tr = (name: string) => (name === "Lined Coat" ? "ライナーコート" : name);
 
@@ -77,5 +77,31 @@ describe("CatalogPicker", () => {
     // not twenty buttons all called "購入"
     fireEvent.click(screen.getByRole("button", { name: "ライナーコート を購入" }));
     expect(onAdd).toHaveBeenCalledWith(items[0]);
+  });
+});
+
+describe("PickerList", () => {
+  it("renders up to the limit and names what it left out", () => {
+    render(
+      <PickerList items={["a", "b", "c"]} limit={2}>
+        {(id) => <div key={id}>{id}</div>}
+      </PickerList>,
+    );
+    expect(screen.getByText("a")).toBeDefined();
+    expect(screen.queryByText("c")).toBeNull();
+    expect(screen.getByRole("status").textContent).toContain("他 1 件");
+  });
+
+  it("carries the idle note only while it applies", () => {
+    const { unmount } = render(
+      <PickerList items={["a"]} note="SR5 のみ">
+        {(id) => <div key={id}>{id}</div>}
+      </PickerList>,
+    );
+    expect(screen.getByRole("status").textContent).toBe("SR5 のみ");
+    unmount();
+
+    render(<PickerList items={["a"]}>{(id) => <div key={id}>{id}</div>}</PickerList>);
+    expect(screen.getByRole("status").textContent).toBe("");
   });
 });
