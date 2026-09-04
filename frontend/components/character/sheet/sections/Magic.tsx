@@ -2,9 +2,11 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { GradeList, Section } from "@/components/character/sheet/blocks";
 import { formatPoints } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
+import { useUiText } from "@/lib/i18n";
 
 export function MagicSection(s: SheetData) {
   const { tr, d, enabled } = s;
+  const { ui } = useUiText();
   return (
     <Section
       title="sheet.magic"
@@ -19,8 +21,10 @@ export function MagicSection(s: SheetData) {
       {enabled.has("adept") && (d.adept_powers || []).length ? (
         <div className="sheet-block">
           <h4>
-            アデプトパワー（{formatPoints(d.power_points?.used || 0)}/
-            {formatPoints(d.power_points?.max || 0)}）
+            {ui("sheet.adeptPowers", {
+              used: formatPoints(d.power_points?.used || 0),
+              max: formatPoints(d.power_points?.max || 0),
+            })}
           </h4>
           <ul className="sheet-list">
             {(d.adept_powers || []).map((item) => (
@@ -38,9 +42,12 @@ export function MagicSection(s: SheetData) {
       {enabled.has("spells") && (d.spells || []).length ? (
         <div className="sheet-block">
           <h4>
-            術式
+            {ui("sheet.spells")}
             {d.drain_resist
-              ? ` ・ ドレイン抵抗 ${d.drain_resist.pool}（${d.drain_resist.attrs}）`
+              ? ui("sheet.drainResist", {
+                  pool: d.drain_resist.pool,
+                  attrs: d.drain_resist.attrs,
+                })
               : ""}
           </h4>
           <ul className="sheet-list">
@@ -48,7 +55,7 @@ export function MagicSection(s: SheetData) {
               <li key={item.id}>
                 <b>{tr(item.name)}</b>
                 {item.kind && item.kind !== "spell"
-                  ? `〔${item.kind === "ritual" ? "儀式" : "付与"}〕`
+                  ? `〔${item.kind === "ritual" ? ui("sheet.ritual") : ui("sheet.enchantment")}〕`
                   : ""}
                 {" ・ "}
                 {[
@@ -56,8 +63,8 @@ export function MagicSection(s: SheetData) {
                   spellType(item.type),
                   spellRange(item.range),
                   spellDuration(item.duration),
-                  item.damage ? `ダメージ ${item.damage}` : "",
-                  `ドレイン ${item.dv}`,
+                  item.damage ? ui("sheet.spellDamage", { damage: item.damage }) : "",
+                  ui("sheet.spellDrain", { dv: item.dv }),
                 ]
                   .filter(Boolean)
                   .join(" / ")}
@@ -75,14 +82,14 @@ export function MagicSection(s: SheetData) {
       ) : null}
       {enabled.has("spirits") && (d.spirits || []).length ? (
         <div className="sheet-block">
-          <h4>精霊</h4>
+          <h4>{ui("sheet.spirits")}</h4>
           <ul className="sheet-list">
             {(d.spirits || []).map((item) => (
               <li key={item.id}>
                 <b>{tr(item.name)}</b>
                 {" ・ "}F{item.force}
-                {item.services != null ? ` ・ サービス ${item.services}` : ""}
-                {item.bound ? " ・ 結合" : ""}
+                {item.services != null ? ui("sheet.services", { services: item.services }) : ""}
+                {item.bound ? ui("sheet.bound") : ""}
               </li>
             ))}
           </ul>
@@ -90,7 +97,7 @@ export function MagicSection(s: SheetData) {
       ) : null}
       {enabled.has("foci") && ((d.foci || []).length || (d.qi_foci || []).length) ? (
         <div className="sheet-block">
-          <h4>フォーカス</h4>
+          <h4>{ui("sheet.foci")}</h4>
           <ul className="sheet-list">
             {(d.foci || []).map((item) => (
               <li key={item.id}>
@@ -101,7 +108,7 @@ export function MagicSection(s: SheetData) {
             ))}
             {(d.qi_foci || []).map((item) => (
               <li key={item.id}>
-                <b>気フォーカス {tr(item.name)}</b>
+                <b>{ui("sheet.qiFocus", { name: tr(item.name) })}</b>
                 {" ・ "}R{item.rating}
                 {item.extra
                   ? `（${item.select === "attribute" ? item.extra : tr(item.extra)}）`
@@ -113,11 +120,11 @@ export function MagicSection(s: SheetData) {
       ) : null}
       {enabled.has("initiation") && (d.initiation?.grade || 0) > 0 ? (
         <div className="sheet-block">
-          <h4>イニシエーション 等級 {d.initiation?.grade}</h4>
+          <h4>{ui("sheet.initiation", { grade: d.initiation?.grade ?? 0 })}</h4>
           {(d.initiation?.choices || []).length ? (
             <GradeList items={d.initiation?.choices || []} tr={tr} />
           ) : (
-            <p className="sheet-note">メタマジック未選択</p>
+            <p className="sheet-note">{ui("sheet.noMetamagic")}</p>
           )}
         </div>
       ) : null}

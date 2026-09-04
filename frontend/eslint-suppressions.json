@@ -9,31 +9,6 @@
       "count": 1
     }
   },
-  "components/character/sheet/sections/Combat.tsx": {
-    "no-restricted-syntax": {
-      "count": 24
-    }
-  },
-  "components/character/sheet/sections/Magic.tsx": {
-    "no-restricted-syntax": {
-      "count": 14
-    }
-  },
-  "components/character/sheet/sections/Matrix.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
-  "components/character/sheet/sections/Resonance.tsx": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
-  "components/character/sheet/sections/Ware.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
   "components/character/sheet/sections/print/PrintConditionMonitor.tsx": {
     "no-restricted-syntax": {
       "count": 8

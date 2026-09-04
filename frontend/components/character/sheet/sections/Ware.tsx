@@ -1,18 +1,25 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { useUiText } from "@/lib/i18n";
 
 export function WareSection(s: SheetData) {
   const { tr, d, cyber, bio } = s;
+  const { ui } = useUiText();
   return (
     <Section title="sheet.ware" empty={!cyber.length && !bio.length}>
       {cyber.length ? (
         <div className="sheet-block">
-          <h4>サイバーウェア（ESS −{d.essence_lost_cyber ?? 0}）</h4>
+          <h4>{ui("sheet.cyberware", { lost: d.essence_lost_cyber ?? 0 })}</h4>
           {d.limb_replace ? (
             <p className="sheet-note">
-              サイバーリム平均: STR {d.limb_replace.str} / AGI {d.limb_replace.agi}
-              （リム {d.limb_replace.count}/{d.limb_replace.parts}・肉 STR {d.limb_replace.meat_str}{" "}
-              / AGI {d.limb_replace.meat_agi}）
+              {ui("sheet.limbAverage", {
+                str: d.limb_replace.str,
+                agi: d.limb_replace.agi,
+                count: d.limb_replace.count,
+                parts: d.limb_replace.parts,
+                meatStr: d.limb_replace.meat_str,
+                meatAgi: d.limb_replace.meat_agi,
+              })}
             </p>
           ) : null}
           <ul className="sheet-list">
@@ -25,8 +32,10 @@ export function WareSection(s: SheetData) {
                 {item.limb_str != null ? (
                   <span className="sheet-dim">
                     {" "}
-                    肢 STR {item.limb_str} / AGI {item.limb_agi}
-                    {(item.limb_armor ?? 0) > 0 ? ` / 装甲 ${item.limb_armor}` : ""}
+                    {ui("sheet.limb", { str: item.limb_str, agi: item.limb_agi ?? 0 })}
+                    {(item.limb_armor ?? 0) > 0
+                      ? ui("sheet.limbArmor", { armor: item.limb_armor ?? 0 })
+                      : ""}
                   </span>
                 ) : null}
                 <span className="sheet-dim"> ESS −{item.essence}</span>
@@ -37,7 +46,7 @@ export function WareSection(s: SheetData) {
       ) : null}
       {bio.length ? (
         <div className="sheet-block">
-          <h4>バイオウェア（ESS −{d.essence_lost_bio ?? 0}）</h4>
+          <h4>{ui("sheet.bioware", { lost: d.essence_lost_bio ?? 0 })}</h4>
           <ul className="sheet-list">
             {bio.map((item) => (
               <li key={item.id}>

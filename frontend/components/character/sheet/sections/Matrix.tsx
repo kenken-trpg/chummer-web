@@ -1,9 +1,11 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { matrixCM } from "@/lib/character/format";
+import { useUiText } from "@/lib/i18n";
 
 export function MatrixSection(s: SheetData) {
   const { tr, d } = s;
+  const { ui } = useUiText();
   return (
     <Section
       title="sheet.matrix"
@@ -25,7 +27,7 @@ export function MatrixSection(s: SheetData) {
         if (d.commlink)
           rows.push({
             key: "cl",
-            label: `通信機 ${tr(d.commlink.name)}`,
+            label: ui("sheet.deviceCommlink", { name: tr(d.commlink.name) }),
             dr: d.commlink.device_rating,
             dp: d.commlink.dataprocessing,
             fw: d.commlink.firewall,
@@ -34,7 +36,7 @@ export function MatrixSection(s: SheetData) {
           const ck = d.cyberdeck;
           rows.push({
             key: "cd",
-            label: `デッキ ${tr(ck.name)}`,
+            label: ui("sheet.deviceDeck", { name: tr(ck.name) }),
             dr: ck.device_rating,
             a: ck.attack,
             s: ck.sleaze,
@@ -47,7 +49,7 @@ export function MatrixSection(s: SheetData) {
         if (d.rcc)
           rows.push({
             key: "rcc",
-            label: `RCC ${tr(d.rcc.name)}`,
+            label: ui("sheet.deviceRcc", { name: tr(d.rcc.name) }),
             dr: d.rcc.device_rating,
             dp: d.rcc.dataprocessing,
             fw: d.rcc.firewall,
@@ -56,7 +58,7 @@ export function MatrixSection(s: SheetData) {
           const lp = d.living_persona;
           rows.push({
             key: "lp",
-            label: "リビングペルソナ",
+            label: ui("sheet.livingPersona"),
             dr: lp.device_rating,
             a: lp.attack,
             s: lp.sleaze,
@@ -71,7 +73,7 @@ export function MatrixSection(s: SheetData) {
             <table className="sheet-table sheet-table--matrix">
               <thead>
                 <tr>
-                  <th>機器</th>
+                  <th>{ui("sheet.col.device")}</th>
                   <th>DR</th>
                   <th>A</th>
                   <th>S</th>
