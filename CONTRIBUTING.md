@@ -156,10 +156,20 @@ make coverage            # both, or coverage-backend / coverage-frontend
 
 **Nothing gates on the number** and there is no `fail_under` — the point is to
 see *which* modules the suite never enters. At the time of writing the backend
-is ~91% and the frontend ~49% of statements (the gap is components: the pure
-`lib/` helpers are well covered, the tab UIs much less). HTML reports land in
+is ~92% and the frontend ~76% of statements. The frontend gap is still the
+components (`components/character/tabs` ~66%, against ~92% for `lib/character`),
+but it is now spread thinly rather than concentrated: every panel has tests, and
+what is left is a couple of dozen statements each. HTML reports land in
 `backend/htmlcov/` and `frontend/coverage/`, both gitignored. CI prints the
 summary in the log — backend on 3.13 only, since the matrix would repeat it.
+
+When you do cover a panel, the thing worth testing is rarely that it renders.
+These components patch a *flat* list (`gear`, `weapons`, `cyberware`) while
+rendering a tree, so nearly every control maps or filters that list on
+`row.id === item.id`. Give the fixture **two** rows and act on the second —
+with one row a wrong predicate cannot be told from a right one. Where a row's
+state is spread over several fields (a knowledge skill, a lifestyle quality),
+assert the whole patch body, not the field you edited.
 
 A PR that lowers coverage is fine if it is the right change; a PR that adds a
 new module with no test at all is worth a second look.
