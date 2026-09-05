@@ -148,6 +148,7 @@ function renderPanel(entry: (typeof PANELS)[number], patch: (b: Record<string, u
       character={ch}
       d={ch.derived}
       tr={identityTr}
+      trGroup={identityTr}
       t={(k) => k}
       ui={testUi}
       patch={patch}

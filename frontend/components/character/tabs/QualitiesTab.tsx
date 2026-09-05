@@ -18,6 +18,7 @@ export function QualitiesTab({
   character: ch,
   d,
   tr,
+  trGroup,
   ui,
   t,
   patch,
@@ -114,6 +115,7 @@ export function QualitiesTab({
                   ch={ch}
                   d={d}
                   tr={tr}
+                  trGroup={trGroup}
                   t={t}
                   ui={ui}
                   patch={patch}

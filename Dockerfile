@@ -67,6 +67,10 @@ COPY --from=caddy:2@sha256:df7f1c2fb114453b951de51a98efc010db1655a92c2e86be67067
 
 WORKDIR /app
 COPY --chown=app:app backend/app                    backend/app
+# The hand-curated Japanese overlay loaders/translations.py merges on top of
+# the vendored lang files. Missing here, the image silently fell back to the
+# upstream wording for 535 terms.
+COPY --chown=app:app backend/data                   backend/data
 COPY --chown=app:app backend/scripts               backend/scripts
 COPY --chown=app:app --from=chummer  /app/backend/vendor            backend/vendor
 COPY --chown=app:app --from=frontend /app/frontend/.next/standalone frontend

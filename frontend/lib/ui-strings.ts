@@ -28,6 +28,24 @@ export function makeTr(
   return (name) => catalog?.translations?.[name] || name;
 }
 
+/**
+ * Skill-group name -> display name. Backed by `skills.group_names`, not the
+ * flat `translations` table: there, "Influence" and "Stealth" are also spells
+ * and "Firearms" and "Engineering" are also knowledge skills, so the group
+ * rendered with the other entity's reading (the Influence group showed the
+ * spell's 感化 instead of 対人) or was left untranslated entirely. Falls back
+ * to `tr` and then the English name, so an unmapped group still renders.
+ */
+export function makeTrSkillGroup(
+  catalog?: Pick<Catalog, "skills" | "translations"> | null,
+  locale: Locale = "ja",
+): (group: string) => string {
+  if (locale === "en") return (group) => group;
+  const groupNames = catalog?.skills?.group_names;
+  const tr = makeTr(catalog, locale);
+  return (group) => groupNames?.[group] || tr(group);
+}
+
 /** Short attribute label, e.g. "強靱" — from String_Attribute<KEY>Short. */
 export function attrShort(key: string, t: TFn): string {
   return t(`String_Attribute${key}Short`, key);

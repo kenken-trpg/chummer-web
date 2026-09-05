@@ -19,6 +19,7 @@ function renderFor(q: Record<string, unknown>, over: Record<string, unknown> = {
       ch={ch}
       d={{ ...ch.derived, ...(over.d as object) }}
       tr={identityTr}
+      trGroup={identityTr}
       t={(k) => k}
       ui={testUi}
       patch={vi.fn()}
@@ -102,6 +103,7 @@ describe("<QualityExtraEditor> accessible names", () => {
         ch={makeCharacter()}
         d={makeCharacter().derived}
         tr={identityTr}
+        trGroup={identityTr}
         t={(k) => k}
         ui={testUi}
         patch={vi.fn()}
@@ -141,6 +143,7 @@ function editorFor(q: Record<string, unknown>, over: Record<string, unknown> = {
       ch={ch}
       d={{ ...ch.derived, ...(over.d as object) }}
       tr={identityTr}
+      trGroup={identityTr}
       t={(k) => k}
       ui={testUi}
       patch={patch}

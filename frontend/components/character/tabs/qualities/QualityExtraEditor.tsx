@@ -12,6 +12,7 @@ export function QualityExtraEditor({
   ch,
   d,
   tr,
+  trGroup,
   t,
   ui,
   patch,
@@ -33,6 +34,7 @@ export function QualityExtraEditor({
   ch: Character;
   d: Character["derived"];
   tr: (name: string) => string;
+  trGroup: (group: string) => string;
   t: (key: string, fallback?: string) => string;
   ui: UiFn;
   patch: (body: Record<string, unknown>) => void | Promise<void>;
@@ -372,7 +374,7 @@ export function QualityExtraEditor({
         <option value="">{ui("quality.skillGroup")}</option>
         {(catalog.skills.groups || []).map((g) => (
           <option key={g} value={g}>
-            {tr(g)}
+            {trGroup(g)}
           </option>
         ))}
       </select>

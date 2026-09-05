@@ -50,6 +50,40 @@ def load_translations() -> dict[str, str]:
     return mapping
 
 
+def load_skill_group_names() -> dict[str, str]:
+    """English skill-group name -> Japanese, from `<skillgroups>` in the lang
+    file, with `ja_overrides/data.json` layered on top.
+
+    This is deliberately *not* part of `load_translations`. That table is keyed
+    by English name alone, and the group names collide with unrelated entities:
+    "Influence" and "Stealth" are also spells, "Firearms" and "Engineering" are
+    also knowledge skills. The flat table therefore rendered the Influence group
+    as the spell's 感化 rather than 対人, and folding these 15 entries into it
+    would break the collision the other way. A separate map lets the skills UI
+    ask for the group reading without disturbing anything else.
+
+    The upstream entries use `<name translate="運動">Athletics</name>` — the
+    translation is an *attribute* and the English is the element text, which is
+    why `load_translations`, which reads child `<name>`/`<translate>` elements,
+    never saw them.
+    """
+    path = LANG_DIR / "ja-jp_data.xml"
+    names: dict[str, str] = {}
+    if path.exists():
+        try:
+            root = ET.parse(path).getroot()
+        except ET.ParseError as exc:
+            log.warning("ja-jp_data.xml parse failed: %s", exc)
+        else:
+            for node in root.findall(".//skillgroups/name"):
+                english = (node.text or "").strip()
+                japanese = (node.get("translate") or "").strip()
+                if english and japanese:
+                    names[english] = japanese
+    overrides = _load_ja_overrides("data.json")
+    return {en: overrides.get(en, ja) for en, ja in names.items()}
+
+
 #: Locale -> the vendored Chummer lang file it comes from. `en-us.xml` was
 #: already being fetched by scripts/fetch_chummer_data.py; nothing read it.
 LANG_FILES = {"ja": "ja-jp.xml", "en": "en-us.xml"}

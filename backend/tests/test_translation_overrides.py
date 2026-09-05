@@ -10,6 +10,8 @@ from app import data_loader
 from app.data_loader import (
     OVERRIDE_DIR,
     _load_ja_overrides,
+    load_skill_group_names,
+    load_skills,
     load_translations,
     load_ui_strings,
 )
@@ -268,3 +270,35 @@ def test_committed_ui_overlay_keys_exist_in_lang() -> None:
 def test_committed_ui_overlay_values_are_japanese() -> None:
     for key, val in _committed_ui_overlay().items():
         assert isinstance(val, str) and JP_RE.search(val), f"{key!r} -> {val!r}"
+
+
+def test_every_skill_group_has_a_japanese_name() -> None:
+    """The skills tab renders `catalog.skills.groups` through this map, so a
+    gap shows the player a bare English group name."""
+    groups = load_skills()["groups"]
+    names = load_skill_group_names()
+    assert groups, "no skill groups loaded"
+    assert [g for g in groups if not names.get(g)] == []
+
+
+def test_skill_group_names_do_not_borrow_from_the_flat_table() -> None:
+    """`translations` is keyed by English name alone, and these four names
+    belong to other entities there: Influence and Stealth are spells, Firearms
+    and Engineering are knowledge skills. Reading groups out of that table gave
+    the Influence group the spell's 感化. Keep the two apart."""
+    names = load_skill_group_names()
+    flat = load_translations()
+    assert names["Influence"] == "対人"
+    assert names["Stealth"] == "隠密"
+    assert names["Firearms"] == "小火器"
+    assert names["Engineering"] == "機器整備"
+    assert flat["Influence"] != names["Influence"]
+
+
+def test_ja_overrides_win_over_the_upstream_group_name() -> None:
+    """Same precedence as `load_translations`: the curated overlay is the
+    project's own wording and outranks the vendored file."""
+    overrides = _load_ja_overrides("data.json")
+    names = load_skill_group_names()
+    assert overrides["Conjuring"] == "召喚"  # upstream says 召霊術
+    assert names["Conjuring"] == overrides["Conjuring"]

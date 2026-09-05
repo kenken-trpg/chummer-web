@@ -43,6 +43,7 @@ from .qualities import load_qualities
 from .skills import load_skills
 from .translations import (
     _load_ja_overrides,
+    load_skill_group_names,
     load_translations,
     load_ui_strings,
     load_ui_strings_by_locale,
@@ -109,6 +110,7 @@ __all__ = [
     "load_metamagics",
     "load_priorities",
     "load_qi_focus",
+    "load_skill_group_names",
     "load_translations",
     "load_ui_strings",
     "load_ui_strings_by_locale",

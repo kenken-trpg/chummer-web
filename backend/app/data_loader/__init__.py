@@ -74,6 +74,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_qualities,
     load_rccs,
     load_sensors,
+    load_skill_group_names,
     load_skills,
     load_spells,
     load_spirits,
@@ -142,6 +143,7 @@ def catalog() -> CatalogDict:
             item.update(eff)
     drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
     skills = load_skills()
+    skills["group_names"] = load_skill_group_names()
     qualities = load_qualities()
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
