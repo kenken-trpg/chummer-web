@@ -75,6 +75,7 @@ function renderWeapons(
       character={ch}
       d={ch.derived}
       tr={identityTr}
+      trGroup={identityTr}
       t={((k: string) => k) as any}
       ui={testUi}
       patch={patch as any}

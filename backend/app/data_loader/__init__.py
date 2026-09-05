@@ -80,6 +80,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_sprites,
     load_streams,
     load_traditions,
+    load_skill_group_names,
     load_translations,
     load_ui_strings,  # noqa: F401  (re-exported for tests)
     load_ui_strings_by_locale,
@@ -142,6 +143,7 @@ def catalog() -> CatalogDict:
             item.update(eff)
     drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
     skills = load_skills()
+    skills["group_names"] = load_skill_group_names()
     qualities = load_qualities()
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])

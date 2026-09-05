@@ -15,6 +15,7 @@ function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
       character={ch}
       d={ch.derived}
       tr={identityTr}
+      trGroup={identityTr}
       t={(k) => k}
       ui={testUi}
       patch={patch}

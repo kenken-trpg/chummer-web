@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attrLabel, attrName, attrShort, makeT, makeTr } from "@/lib/ui-strings";
+import { attrLabel, attrName, attrShort, makeT, makeTr, makeTrSkillGroup } from "@/lib/ui-strings";
 
 /** The shape the backend ships: `ui_strings` keyed by locale, `translations`
  *  English -> Japanese (there is no English table; see `makeTr`). */
@@ -62,5 +62,29 @@ describe("attribute helpers", () => {
     const t = makeT(catalog, "en");
     expect(attrShort("EDG", t)).toBe("EDG");
     expect(attrLabel("EDG", t)).toBe("EDG EDG");
+  });
+});
+
+describe("makeTrSkillGroup", () => {
+  /** "Influence" is a spell in the flat table and a skill group in
+   *  `group_names`; the group must not inherit the spell's reading. */
+  const catalog = {
+    translations: { Influence: "感化" },
+    skills: { groups: ["Influence"], group_names: { Influence: "対人" } },
+  } as unknown as Parameters<typeof makeTrSkillGroup>[0];
+
+  it("prefers the group map over the colliding flat translation", () => {
+    expect(makeTrSkillGroup(catalog, "ja")("Influence")).toBe("対人");
+  });
+
+  it("falls back to the flat table, then to the English name", () => {
+    const bare = { translations: { Sorcery: "魔術" }, skills: { groups: [] } };
+    const tr = makeTrSkillGroup(bare as never, "ja");
+    expect(tr("Sorcery")).toBe("魔術");
+    expect(tr("Tasking")).toBe("Tasking");
+  });
+
+  it("is the identity for en, like makeTr", () => {
+    expect(makeTrSkillGroup(catalog, "en")("Influence")).toBe("Influence");
   });
 });

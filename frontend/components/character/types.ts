@@ -6,6 +6,10 @@ export type TabPanelProps = {
   character: Character;
   d: Character["derived"];
   tr: (name: string) => string;
+  /** Skill-group name -> display name. Separate from `tr`: the group
+   *  names collide with spells and knowledge skills in the flat
+   *  translation table (see makeTrSkillGroup). */
+  trGroup: (group: string) => string;
   t: (key: string, fallback?: string) => string;
   /** App copy. `tr` / `t` above translate *game terms* from the catalog; this
    *  is the app's own wording, which lives in `lib/i18n` (docs/i18n.md).

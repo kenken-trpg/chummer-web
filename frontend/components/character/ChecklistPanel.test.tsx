@@ -11,6 +11,7 @@ function panelFor(ch: ReturnType<typeof makeCharacter>): TabPanelProps {
     character: ch,
     d: ch.derived,
     tr: identityTr,
+    trGroup: identityTr,
     t: (k, f) => f ?? k,
     ui: testUi,
     patch: () => {},

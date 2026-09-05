@@ -335,6 +335,10 @@ export interface Catalog {
   }[];
   skills: {
     groups: string[];
+    /** English group name -> Japanese. Separate from `translations`
+     *  because the group names collide with spells and knowledge
+     *  skills there; see loaders/translations.py. */
+    group_names?: Record<string, string>;
     skills: {
       id: string;
       name: string;

@@ -4,7 +4,7 @@ import { useCharacterHistory } from "@/lib/character/history";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { makeT, makeTr, type TFn } from "@/lib/ui-strings";
+import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
 
@@ -287,6 +287,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   }
 
   const tr = makeTr(catalog, locale);
+  const trGroup = makeTrSkillGroup(catalog, locale);
   const t: TFn = makeT(catalog, locale);
 
   return {
@@ -298,6 +299,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     copied,
     history,
     tr,
+    trGroup,
     t,
     setCh,
     setError,

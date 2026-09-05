@@ -12,6 +12,7 @@ export function SkillsTab({
   character: ch,
   d,
   tr,
+  trGroup,
   ui,
   patch,
   setCharacter,
@@ -151,7 +152,7 @@ export function SkillsTab({
       <h3>{ui("skills.groups")}</h3>
       {catalog.skills.groups.map((g) => (
         <div className="skill-row" key={g}>
-          <span>{tr(g)}</span>
+          <span>{trGroup(g)}</span>
           <input
             type="range"
             min={0}

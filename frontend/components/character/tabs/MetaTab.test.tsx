@@ -31,6 +31,7 @@ function renderTab(
       character={ch}
       d={ch.derived}
       tr={identityTr}
+      trGroup={identityTr}
       t={(k) => k}
       ui={testUi}
       patch={over.patch ?? (() => {})}
