@@ -6,9 +6,8 @@ Japanese Run & Gun, then `import_rg_worksheet.py` turns the filled file back
 into `scripts/ja_curated_rg.py`.
 
 Rows are ordered by the page number Chummer records for each entry, so the
-worksheet runs in the same order as the physical book. (Whether the Japanese
-edition keeps the English page numbering is an assumption — check it on the
-first batch and fall back to `--sort name` if it does not hold.)
+worksheet runs in the same order as the physical book — the Japanese edition
+keeps the English page numbering (confirmed against the book, 2026-09-05).
 
 The `official` column is what you fill in:
 

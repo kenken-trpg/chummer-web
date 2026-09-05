@@ -259,7 +259,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Cracking | クラッキング |
 | Create Ally Spirit | 同盟精霊創造 |
 | Custom Fit | カスタムフィット |
-| Custom Fit (Stack) | カスタムフィット（累積） |
+| Custom Fit (Stack) | カスタムフィット(累積) |
 | Cyber Microgrenade Launcher | サイバー・マイクログレネードランチャー |
 | Cyclops | キュクロプス |
 | Death | 死 |
@@ -473,15 +473,15 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Resonance Resistance | 共振抵抗 |
 | Resonance Riding | 共振ライディング |
 | Resonance Scream | 共振スクリーム |
-| Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア（RIG): アーマー |
-| Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア（RIG): ヘルメット |
+| Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア(RIG): アーマー |
+| Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア(RIG): ヘルメット |
 | Restrictive | 動きにくい |
 | Rewind | 巻き戻し/リワインド |
 | Riposte | リポスト |
 | Rooting | 根付き |
 | Rosebush | 薔薇の茂み/ローズブッシュ |
 | Rot | 腐敗/ロット |
-| Ruthenium Polymer Coating | ルテニウム・ポリマー・コーディング |
+| Ruthenium Polymer Coating | ルテニウム・ポリマー・コーティング |
 | SA Retiarius Net Gun | SA レティアルス・ネットガン |
 | Satyr | サテュロス |
 | Search History | 検索履歴 |
