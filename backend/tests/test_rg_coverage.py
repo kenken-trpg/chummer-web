@@ -63,13 +63,82 @@ def test_worksheet_shorthands(tmp_path: Path) -> None:
         ("AK-98", "", "-"),  # printed in Latin either way
         ("Krav Maga", "", "="),  # nothing to agree with -> a problem
     ]
-    sheet = tmp_path / "ws.tsv"
-    sheet.write_text("".join("\t".join(r) + "\n" for r in rows), encoding="utf-8")
-    translations, skipped, problems = _read_worksheet(sheet)
+    sheet = _write(tmp_path / "ws.tsv", rows)
+    got = _read_worksheet(sheet)
 
-    assert translations == {"Aikido": "合気道", "Bartitsu": "バーティツ"}
-    assert skipped == {"AK-98"}
-    assert problems == ["L5: 'Krav Maga' marked '=' but its `current` column is empty"]
+    assert got.translations == {"Aikido": "合気道", "Bartitsu": "バーティツ"}
+    assert got.skipped == {"AK-98"}
+    assert got.problems == ["L5: 'Krav Maga' marked '=' but its `current` column is empty"]
+
+
+def _write(path: Path, rows: list[tuple[str, ...]], delimiter: str = "\t", preamble: str = "") -> Path:
+    body = "".join(delimiter.join(r) + "\r\n" for r in rows)
+    path.write_text(preamble + body, encoding="utf-8-sig")
+    return path
+
+
+def test_reads_a_worksheet_a_spreadsheet_handed_back(tmp_path: Path) -> None:
+    """The real shape returned from the first batch: BOM, CRLF, ';', a title row.
+
+    None of that is about the content, so none of it should stop an import.
+    """
+    from scripts.import_rg_worksheet import _read_worksheet
+
+    sheet = _write(
+        tmp_path / "done_rg-worksheet.csv",
+        [("status", "english", "current", "official"), ("pending", "Aikido", "合気道", "=")],
+        delimiter=";",
+        preamble="rg-worksheet\r\n",
+    )
+    got = _read_worksheet(sheet)
+
+    assert got.translations == {"Aikido": "合気道"}
+    assert not got.problems
+    assert got.notes == ["skipped 1 line(s) above the header", "delimiter is ';', not tab"]
+
+
+def test_an_answer_in_the_wrong_column_is_reported_not_harvested(tmp_path: Path) -> None:
+    """The first batch's actual failure: answers typed into `current` and `note`.
+
+    Importing `current` silently would be worse than dropping it — most rows
+    carry an unverified upstream term there, and harvesting the column would
+    record the community translation as if a human had checked it in the book.
+    """
+    from scripts.import_rg_worksheet import _read_worksheet
+
+    rows = [
+        ("english", "current", "official", "note"),
+        ("Illuminating", "発光", "", ""),  # typed over an empty `current`
+        ("Chainsaw", "", "", "チェーンソー"),  # typed into `note`
+        ("Aikido", "合気道", "", ""),  # untouched: generator wrote this
+    ]
+    sheet = _write(tmp_path / "ws.tsv", rows)
+    expected = {"Illuminating": "", "Chainsaw": "", "Aikido": "合気道"}
+
+    got = _read_worksheet(sheet, expected_current=expected)
+    assert got.translations == {}
+    assert [p.split(" has ")[0] for p in got.problems] == ["L2: 'Illuminating'", "L3: 'Chainsaw'"]
+
+    took = _read_worksheet(sheet, accept=("current", "note"), expected_current=expected)
+    assert took.translations == {"Illuminating": "発光", "Chainsaw": "チェーンソー"}
+    assert not took.problems
+
+
+def test_worksheet_is_found_by_directory(tmp_path: Path) -> None:
+    """The file comes back renamed, so a directory means "the newest one here"."""
+    import os
+
+    from scripts.import_rg_worksheet import resolve_worksheet
+
+    assert resolve_worksheet(tmp_path)[0] is None  # nothing there yet
+    old = _write(tmp_path / "rg-worksheet.tsv", [("english",)])
+    new = _write(tmp_path / "done_rg-worksheet.csv", [("english",)])
+    os.utime(old, (1, 1))
+
+    found, note = resolve_worksheet(tmp_path)
+    assert found == new
+    assert "newest of 2" in note
+    assert resolve_worksheet(old)[0] == old  # an explicit file still wins
 
 
 def test_decided_count_does_not_regress(catalog_names: set[str]) -> None:

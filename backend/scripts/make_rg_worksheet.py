@@ -140,6 +140,36 @@ def rg_entries() -> dict[str, Entry]:
     return found
 
 
+def current_terms() -> dict[str, str]:
+    """The `current` / `from` columns: what the app shows for each name today.
+
+    A name whose merged translation is not actually Japanese renders as blank
+    with origin "—", so the column answers "is there a Japanese term here at
+    all" rather than "is there a dictionary entry".
+
+    Shared with import_rg_worksheet.py, which recomputes this to tell a cell
+    the generator wrote from one a human typed over it. That only works because
+    the two sides agree exactly, so keep this the single definition.
+    """
+    from app.data_loader import load_translations
+
+    merged = load_translations()
+    out: dict[str, str] = {}
+    for name in rg_entries():
+        current = merged.get(name, "")
+        if not (current and JP_RE.search(current)):
+            out[name] = ""
+        else:
+            out[name] = current
+    return out
+
+
+def _origin(name: str, current: str, overlay: dict[str, str]) -> str:
+    if not current:
+        return "—"
+    return "overlay" if name in overlay else "upstream"
+
+
 def _status(name: str) -> str:
     from scripts.ja_curated_rg import RG, RG_UNVERIFIED
 
@@ -158,10 +188,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sort", choices=("page", "name"), default="page")
     args = ap.parse_args(argv)
 
-    from app.data_loader import load_translations
-
     overlay: dict[str, str] = json.loads(OVERLAY.read_text(encoding="utf-8"))
-    merged = load_translations()
+    current_by_name = current_terms()
 
     entries = list(rg_entries().values())
     if args.bucket:
@@ -179,13 +207,8 @@ def main(argv: list[str] | None = None) -> int:
         counts[status] += 1
         if args.pending_only and status != "pending":
             continue
-        current = merged.get(entry.name, "")
-        if not (current and JP_RE.search(current)):
-            current, origin = "", "—"
-        elif entry.name in overlay:
-            origin = "overlay"
-        else:
-            origin = "upstream"
+        current = current_by_name.get(entry.name, "")
+        origin = _origin(entry.name, current, overlay)
         rows.append(
             {
                 "status": status,

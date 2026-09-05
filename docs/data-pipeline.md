@@ -75,5 +75,14 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
   scripts/regen_ja.sh                     -> data.json + the docs
   ```
 
+  The importer takes the worksheet back in whatever shape a spreadsheet
+  returned it — renamed, `.csv`, semicolon-separated, BOM'd, with a title row
+  above the header — and searches `$JA_REF_DIR` for the newest one. What it
+  will not do is guess at meaning: an answer typed into `current` or `note`
+  instead of `official` is reported and skipped, and imported only under
+  `--accept-column`. Harvesting `current` by default would quietly record the
+  unverified upstream translation as if someone had checked it in the book,
+  which is the one thing this pass exists to distinguish.
+
   `tests/test_rg_coverage.py` holds the ledger: every RG name is either checked
   or explicitly skipped, and `DECIDED_FLOOR` only goes up.
