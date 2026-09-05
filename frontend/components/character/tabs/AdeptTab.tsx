@@ -1,6 +1,7 @@
 "use client";
 
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
 import { useMemo, useState } from "react";
@@ -52,14 +53,14 @@ export function AdeptTab({
       {ch.talent === "Mystic Adept" ? (
         <div className="skill-row">
           <span>{ui("adept.boughtPoints")}</span>
-          <input
-            type="range"
+          <RangeInput
             min={0}
             max={d.totals.MAG || 0}
             value={ch.mystic_pp || 0}
-            onChange={(e) => setCharacter({ ...ch, mystic_pp: Number(e.target.value) })}
-            onMouseUp={(e) => patch({ mystic_pp: Number((e.target as HTMLInputElement).value) })}
-            onBlur={(e) => patch({ mystic_pp: Number(e.target.value) })}
+            label={ui("adept.boughtPoints")}
+            title={ui("adept.boughtPointsHint")}
+            onDraft={(value) => setCharacter({ ...ch, mystic_pp: value })}
+            onCommit={(value) => patch({ mystic_pp: value })}
           />
           <b>{ch.mystic_pp || 0}</b>
         </div>
@@ -195,7 +196,7 @@ export function AdeptTab({
       <div className="quality-list">
         <PickerList
           items={matchedPowers}
-          limit={80}
+          limit={200}
           note={powerSearch.trim() ? undefined : CORE_ONLY}
         >
           {(item) => (

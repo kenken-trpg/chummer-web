@@ -195,7 +195,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
         </select>
       </div>
       <div className="quality-list">
-        <PickerList items={matchedCyber} limit={80}>
+        <PickerList items={matchedCyber} limit={200}>
           {(w) => (
             <div className="quality-item" key={w.id}>
               <div>

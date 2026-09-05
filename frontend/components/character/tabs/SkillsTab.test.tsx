@@ -615,3 +615,73 @@ describe("<SkillsTab> sliders", () => {
     expect(screen.getAllByRole("slider")[1].getAttribute("max")).toBe("7");
   });
 });
+
+describe("active skill ordering", () => {
+  const pistols = { ...blades, id: "pistols", name: "Pistols", skillgroup: "Firearms" };
+  const computer = {
+    ...blades,
+    id: "computer",
+    name: "Computer",
+    category: "Technical Active",
+    skillgroup: "Electronics",
+  };
+  const con = {
+    ...blades,
+    id: "con",
+    name: "Con",
+    category: "Social Active",
+    skillgroup: "Acting",
+  };
+
+  /** The tab renders one heading per category and the rows under it, so the
+   *  skill names in document order are the on-screen order. */
+  function namesInOrder(container: HTMLElement): string[] {
+    return [...container.querySelectorAll(".skill-row.has-spec > span:first-child")].map(
+      (el) => el.textContent || "",
+    );
+  }
+
+  it("groups by category in the rulebook's order, whatever order the catalog is in", () => {
+    // catalog order here mimics the vendored file: Technical first, Combat late
+    const { container } = renderTab({
+      catalog: skillsCatalog({
+        skills: [computer, con, pistols, blades],
+        active_categories: [
+          "Combat Active",
+          "Physical Active",
+          "Social Active",
+          "Magical Active",
+          "Resonance Active",
+          "Technical Active",
+          "Vehicle Active",
+        ],
+      }),
+    });
+
+    expect(namesInOrder(container)).toEqual(["Blades", "Pistols", "Con", "Computer"]);
+    const headings = [...container.querySelectorAll(".skill-cat")].map((el) => el.textContent);
+    expect(headings).toEqual(["戦闘技能", "対人技能", "技術技能"]);
+  });
+
+  it("falls back to the rulebook order when the catalog predates active_categories", () => {
+    const { container } = renderTab({
+      catalog: skillsCatalog({ skills: [computer, con, blades] }),
+    });
+    expect(namesInOrder(container)).toEqual(["Blades", "Con", "Computer"]);
+  });
+
+  it("sorts skill groups the way the catalog hands them over", () => {
+    const { container } = renderTab({
+      catalog: skillsCatalog({
+        groups: ["Close Combat", "Electronics", "Engineering"],
+        skills: [blades],
+      }),
+    });
+    const groups = [...container.querySelectorAll(".skill-row:not(.has-spec) > span:first-child")];
+    expect(groups.map((el) => el.textContent)).toEqual([
+      "Close Combat",
+      "Electronics",
+      "Engineering",
+    ]);
+  });
+});

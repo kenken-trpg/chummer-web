@@ -1,5 +1,6 @@
 "use client";
 
+import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
 export function InitiationTab({
@@ -11,6 +12,17 @@ export function InitiationTab({
   patch,
   setCharacter,
 }: TabPanelProps) {
+  /** One row per grade, keeping whatever the user already chose for the
+   *  grades that survive the change. */
+  function gradeRows(grade: number) {
+    const byGrade = new Map((ch.initiations || []).map((row) => [row.grade, row]));
+    const next = [];
+    for (let g = 1; g <= grade; g += 1) {
+      next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
+    }
+    return next;
+  }
+
   return (
     <div className="card">
       <p className="muted">
@@ -40,41 +52,16 @@ export function InitiationTab({
       ) : null}
       <label>
         {ui("init.grade")}
-        <input
-          type="range"
+        <RangeInput
           min={0}
           max={Math.max(6, Number(d.totals.MAG || 0))}
           value={ch.initiate_grade || 0}
-          onChange={(e) => {
-            const grade = Number(e.target.value);
-            const existing = [...(ch.initiations || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
-            }
-            setCharacter({ ...ch, initiate_grade: grade, initiations: next });
-          }}
-          onMouseUp={(e) => {
-            const grade = Number((e.target as HTMLInputElement).value);
-            const existing = [...(ch.initiations || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
-            }
-            patch({ initiate_grade: grade, initiations: next });
-          }}
-          onTouchEnd={(e) => {
-            const grade = Number((e.target as HTMLInputElement).value);
-            const existing = [...(ch.initiations || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
-            }
-            patch({ initiate_grade: grade, initiations: next });
-          }}
+          label={ui("init.grade")}
+          title={ui("init.gradeHint")}
+          onDraft={(grade) =>
+            setCharacter({ ...ch, initiate_grade: grade, initiations: gradeRows(grade) })
+          }
+          onCommit={(grade) => patch({ initiate_grade: grade, initiations: gradeRows(grade) })}
         />
         <b style={{ marginLeft: 8 }}>{ch.initiate_grade || 0}</b>
       </label>

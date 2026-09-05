@@ -23,6 +23,7 @@ BANNED: dict[str, str] = {
     "クオリティ": "資質",
     "コネクト": "コンタクト",
     "メタタイプ": "メタ",
+    "ニューエン": "新円",  # the 2021 glossary's reading; the katakana form had drifted back in
     "強靭": "強靱",  # kanji-variant of 靱
     "レゾナンス": "共振力",
 }

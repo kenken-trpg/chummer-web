@@ -3,7 +3,13 @@ import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { SpecPicker } from "@/components/character/SpecPicker";
-import { KNOW_CATS, knowCatLabel } from "@/lib/character/constants";
+import { RangeInput } from "@/components/character/RangeInput";
+import {
+  ACTIVE_SKILL_CATS,
+  KNOW_CATS,
+  knowCatLabel,
+  skillCatLabel,
+} from "@/lib/character/constants";
 import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDice } from "@/lib/character/format";
 
@@ -33,6 +39,39 @@ export function SkillsTab({
     }
     return map;
   }, [d.skill_expertises]);
+
+  /**
+   * The active skills in the order the rulebook prints them: by category
+   * (SR5 p.130 — Combat, Physical, Social, Magical, Resonance, Technical,
+   * Vehicle), alphabetical inside each. The vendored file's own order is
+   * neither — it opens with Technical Active and runs Magical before Combat —
+   * so a reader coming from the book or the official sheet had to hunt.
+   *
+   * `active_categories` is the catalog's copy of that order; the constant is
+   * the fallback, and any category the catalog grows later lands after them
+   * rather than being dropped.
+   */
+  const activeByCategory = useMemo(() => {
+    const order = catalog.skills.active_categories?.length
+      ? catalog.skills.active_categories
+      : [...ACTIVE_SKILL_CATS];
+    const rank = new Map(order.map((cat, i) => [cat, i]));
+    const buckets = new Map<string, typeof catalog.skills.skills>();
+    for (const s of catalog.skills.skills) {
+      if (s.source !== "SR5" || s.name.includes("Exotic")) continue;
+      const bucket = buckets.get(s.category);
+      if (bucket) bucket.push(s);
+      else buckets.set(s.category, [s]);
+    }
+    return [...buckets.entries()]
+      .sort(([a], [b]) => (rank.get(a) ?? order.length) - (rank.get(b) ?? order.length))
+      .map(([category, list]) => ({
+        category,
+        // English name, so the order matches the book rather than the reading
+        // of whichever Japanese gloss we happen to ship.
+        skills: [...list].sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+  }, [catalog]);
 
   const catalogKnowledge = new Set((catalog.skills.knowledge || []).map((item) => item.name));
   const matchedKnowledge = useMemo(() => {
@@ -108,6 +147,20 @@ export function SkillsTab({
     });
   }
 
+  /** The one-line "what am I about to drag" for an active-skill row: the
+   *  linked attribute and category, plus whatever the engine says is already
+   *  modifying it. */
+  function skillHint(name: string, attribute: string, category: string): string {
+    return [
+      ui("skills.rowHint", {
+        attr: attribute,
+        category: skillCatLabel(category, ui),
+        max: skillMax + (d.skill_max_bonus?.[name] || 0),
+      }),
+      ...(d.skill_bonus_notes?.[name] || []),
+    ].join(" / ");
+  }
+
   function draftSpec(name: string, value: string) {
     const next = { ...(ch.skill_specializations || {}) };
     if (value) next[name] = value;
@@ -152,84 +205,69 @@ export function SkillsTab({
       <h3>{ui("skills.groups")}</h3>
       {catalog.skills.groups.map((g) => (
         <div className="skill-row" key={g}>
-          <span>{trGroup(g)}</span>
-          <input
-            type="range"
+          <span title={ui("skills.groupHint", { group: trGroup(g), max: groupMax })}>
+            {trGroup(g)}
+          </span>
+          <RangeInput
             min={0}
             max={groupMax}
             value={ch.skill_groups[g] || 0}
-            onChange={(e) =>
-              setCharacter({
-                ...ch,
-                skill_groups: { ...ch.skill_groups, [g]: Number(e.target.value) },
-              })
+            label={trGroup(g)}
+            title={ui("skills.groupHint", { group: trGroup(g), max: groupMax })}
+            onDraft={(value) =>
+              setCharacter({ ...ch, skill_groups: { ...ch.skill_groups, [g]: value } })
             }
-            onMouseUp={(e) => {
-              const value = Number((e.target as HTMLInputElement).value);
-              patch({ skill_groups: { ...ch.skill_groups, [g]: value } });
-            }}
-            onBlur={(e) => {
-              const value = Number((e.target as HTMLInputElement).value);
-              patch({ skill_groups: { ...ch.skill_groups, [g]: value } });
-            }}
+            onCommit={(value) => patch({ skill_groups: { ...ch.skill_groups, [g]: value } })}
           />
           <b>{skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}</b>
         </div>
       ))}
       <h3>{ui("skills.active")}</h3>
-      {catalog.skills.skills
-        .filter((s) => s.source === "SR5" && !s.name.includes("Exotic"))
-        .map((s) => {
-          const expertise = expertiseBySkill.get(s.name);
-          const specValue = expertise?.spec || ch.skill_specializations?.[s.name] || "";
-          const hasSkill =
-            (ch.skills[s.name] || 0) > 0 ||
-            (d.skill_totals[s.name] || 0) > 0 ||
-            (d.skillsoft?.[s.name] || 0) > 0;
-          return (
-            <div className="skill-row has-spec" key={s.id}>
-              <span title={[s.attribute, ...(d.skill_bonus_notes?.[s.name] || [])].join(" / ")}>
-                {tr(s.name)}
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={skillMax + (d.skill_max_bonus?.[s.name] || 0)}
-                value={ch.skills[s.name] || d.skill_totals[s.name] || 0}
-                onChange={(e) =>
-                  setCharacter({
-                    ...ch,
-                    skills: { ...ch.skills, [s.name]: Number(e.target.value) },
-                  })
-                }
-                onMouseUp={(e) => {
-                  const value = Number((e.target as HTMLInputElement).value);
-                  patch({ skills: { ...ch.skills, [s.name]: value } });
-                }}
-                onBlur={(e) => {
-                  const value = Number((e.target as HTMLInputElement).value);
-                  patch({ skills: { ...ch.skills, [s.name]: value } });
-                }}
-              />
-              <SpecPicker
-                options={[...(s.specs || []), ...(d.martial_spec_options?.[s.name] || [])]}
-                value={specValue}
-                disabled={!hasSkill || Boolean(expertise)}
-                tr={tr}
-                onDraft={(next) => draftSpec(s.name, next)}
-                onCommit={(next) => commitSpec(s.name, next)}
-              />
-              <b>
-                {skillDice(
-                  Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0),
-                  d.skill_bonus?.[s.name],
-                )}
-                {skillsoftBit(d.skillsoft?.[s.name])}
-                {specBit(specValue, tr(specValue), expertise?.bonus || 2)}
-              </b>
-            </div>
-          );
-        })}
+      {activeByCategory.map(({ category, skills }) => (
+        <div key={category}>
+          <h4 className="skill-cat">{skillCatLabel(category, ui)}</h4>
+          {skills.map((s) => {
+            const expertise = expertiseBySkill.get(s.name);
+            const specValue = expertise?.spec || ch.skill_specializations?.[s.name] || "";
+            const hasSkill =
+              (ch.skills[s.name] || 0) > 0 ||
+              (d.skill_totals[s.name] || 0) > 0 ||
+              (d.skillsoft?.[s.name] || 0) > 0;
+            return (
+              <div className="skill-row has-spec" key={s.id}>
+                <span title={skillHint(s.name, s.attribute, s.category)}>{tr(s.name)}</span>
+                <RangeInput
+                  min={0}
+                  max={skillMax + (d.skill_max_bonus?.[s.name] || 0)}
+                  value={ch.skills[s.name] || d.skill_totals[s.name] || 0}
+                  label={tr(s.name)}
+                  title={skillHint(s.name, s.attribute, s.category)}
+                  onDraft={(value) =>
+                    setCharacter({ ...ch, skills: { ...ch.skills, [s.name]: value } })
+                  }
+                  onCommit={(value) => patch({ skills: { ...ch.skills, [s.name]: value } })}
+                />
+                <SpecPicker
+                  options={[...(s.specs || []), ...(d.martial_spec_options?.[s.name] || [])]}
+                  value={specValue}
+                  disabled={!hasSkill || Boolean(expertise)}
+                  tr={tr}
+                  onDraft={(next) => draftSpec(s.name, next)}
+                  onCommit={(next) => commitSpec(s.name, next)}
+                />
+                <b>
+                  {skillDice(
+                    Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0),
+                    d.skill_bonus?.[s.name],
+                  )}
+                  {skillsoftBit(d.skillsoft?.[s.name])}
+                  {specBit(specValue, tr(specValue), expertise?.bonus || 2)}
+                </b>
+              </div>
+            );
+          })}
+        </div>
+      ))}
       <h3>{ui("skills.exotic")}</h3>
       <p className="muted">{ui("skills.exoticNote")}</p>
       {(d.exotic_skills || []).length ? (
@@ -250,28 +288,20 @@ export function SkillsTab({
               >
                 {tr(row.skill_name)}
               </span>
-              <input
-                type="range"
+              <RangeInput
                 min={1}
                 max={row.rating_max}
                 value={rating}
-                onChange={(e) => draftExotic(row.id, { rating: Number(e.target.value) })}
-                onMouseUp={(e) => {
-                  const value = Number((e.target as HTMLInputElement).value);
+                label={tr(row.skill_name)}
+                title={ui("skills.ratingHint", { max: row.rating_max })}
+                onDraft={(value) => draftExotic(row.id, { rating: value })}
+                onCommit={(value) =>
                   patchExotic(
                     (ch.exotic_skills || []).map((item) =>
                       item.id === row.id ? { ...item, rating: value } : item,
                     ),
-                  );
-                }}
-                onBlur={(e) => {
-                  const value = Number((e.target as HTMLInputElement).value);
-                  patchExotic(
-                    (ch.exotic_skills || []).map((item) =>
-                      item.id === row.id ? { ...item, rating: value } : item,
-                    ),
-                  );
-                }}
+                  )
+                }
               />
               <SpecPicker
                 options={row.options || []}
@@ -378,32 +408,23 @@ export function SkillsTab({
               {row.native ? (
                 <span className="muted">{ui("skills.free")}</span>
               ) : (
-                <input
-                  type="range"
+                <RangeInput
                   min={1}
                   max={skillMax}
                   value={ch.knowledge_skills[row.name] || row.rating}
-                  onChange={(e) =>
+                  label={tr(row.name)}
+                  title={ui("skills.ratingHint", { max: skillMax })}
+                  onDraft={(value) =>
                     setCharacter({
                       ...ch,
-                      knowledge_skills: {
-                        ...ch.knowledge_skills,
-                        [row.name]: Number(e.target.value),
-                      },
+                      knowledge_skills: { ...ch.knowledge_skills, [row.name]: value },
                     })
                   }
-                  onMouseUp={(e) => {
-                    const value = Number((e.target as HTMLInputElement).value);
+                  onCommit={(value) =>
                     patchKnowledge({
                       knowledge_skills: { ...ch.knowledge_skills, [row.name]: value },
-                    });
-                  }}
-                  onBlur={(e) => {
-                    const value = Number((e.target as HTMLInputElement).value);
-                    patchKnowledge({
-                      knowledge_skills: { ...ch.knowledge_skills, [row.name]: value },
-                    });
-                  }}
+                    })
+                  }
                 />
               )}
               <SpecPicker

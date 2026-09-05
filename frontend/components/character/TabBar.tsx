@@ -46,6 +46,9 @@ export function TabBar({
           key={k}
           className={`tab ${tab === k ? "active" : ""}`}
           aria-current={tab === k ? "true" : undefined}
+          // one line on what the section is for — the labels are short enough
+          // to be guessable but not short enough to be obvious ("メタ", "資質")
+          title={ui(`tab.${k}.hint` as MsgKey)}
           onClick={() => setTab(k)}
         >
           {ui(`tab.${k}` as MsgKey)}

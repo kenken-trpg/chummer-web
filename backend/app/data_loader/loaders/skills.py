@@ -23,7 +23,17 @@ def _skill_specs(el: ET.Element) -> list[str]:
 def load_skills() -> dict[str, Any]:
     tree = ET.parse(DATA_DIR / "skills.xml")
     root = tree.getroot()
-    groups = [_text(g) for g in root.findall("./skillgroups/name") if _text(g)]
+    # SR5 p.130 and the official sheet both list skill groups alphabetically;
+    # the vendored file is alphabetical except that Engineering sits after
+    # Influence, so sort rather than trusting document order.
+    groups = sorted(_text(g) for g in root.findall("./skillgroups/name") if _text(g))
+    # The rulebook's chapter order (Combat, Physical, Social, Magical,
+    # Resonance, Technical, Vehicle) — which is what `<categories>` already
+    # holds. Skills come out of the file grouped by category in a *different*
+    # order, so the UI needs this list to sort by.
+    active_categories = [
+        _text(c) for c in root.findall("./categories/category") if c.get("type") == "active" and _text(c)
+    ]
     skills = []
     for el in root.findall("./skills/skill"):
         exotic = _text(el.find("exotic"), "False").lower() == "true"
@@ -58,4 +68,9 @@ def load_skills() -> dict[str, Any]:
                 "specs": _skill_specs(el),
             }
         )
-    return {"groups": groups, "skills": skills, "knowledge": knowledge}
+    return {
+        "groups": groups,
+        "active_categories": active_categories,
+        "skills": skills,
+        "knowledge": knowledge,
+    }

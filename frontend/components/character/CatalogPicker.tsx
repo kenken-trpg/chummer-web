@@ -23,7 +23,7 @@ export type Pickable = {
  */
 export function PickerList<T>({
   items,
-  limit = 40,
+  limit = 120,
   note,
   children,
 }: {
@@ -114,7 +114,7 @@ export function CatalogPicker<T extends Pickable>({
   describe,
   onAdd,
   addLabel,
-  limit = 40,
+  limit = 120,
   idle,
 }: Props<T>) {
   const { ui } = useUiText();
@@ -147,7 +147,11 @@ export function CatalogPicker<T extends Pickable>({
     <>
       {categories.length > 1 ? (
         <div className="option-row">
-          <button className={`tab ${cat === "all" ? "active" : ""}`} onClick={() => setCat("all")}>
+          <button
+            className={`tab ${cat === "all" ? "active" : ""}`}
+            onClick={() => setCat("all")}
+            title={ui("picker.catAllHint")}
+          >
             {ui("common.all")}
           </button>
           {categories.map((c) => (
@@ -156,6 +160,7 @@ export function CatalogPicker<T extends Pickable>({
               className={`tab ${cat === c ? "active" : ""}`}
               onClick={() => setCat(c)}
               aria-pressed={cat === c}
+              title={ui("picker.catHint", { category: tr(c) })}
             >
               {tr(c)}
             </button>
@@ -182,6 +187,7 @@ export function CatalogPicker<T extends Pickable>({
               onClick={() => onAdd(item)}
               // every one of these reads "購入" on its own; name it by the row
               aria-label={ui("picker.buyLabel", { name: tr(item.name), action })}
+              title={ui("picker.buyLabel", { name: tr(item.name), action })}
             >
               {action}
             </button>

@@ -47,6 +47,35 @@ const KNOW_CAT_KEYS: Record<string, MsgKey> = {
 };
 export const knowCatLabel = labeller(KNOW_CAT_KEYS);
 
+/**
+ * SR5 p.130 groups the active skills into these categories and prints them in
+ * this order; the official sheet and Chummer5a's category sort agree. The
+ * catalog ships the same list (`skills.active_categories`, straight out of the
+ * vendored `<categories>` block) — this is the fallback for a catalog that
+ * predates that field, and the source of the Japanese headings either way.
+ */
+export const ACTIVE_SKILL_CATS = [
+  "Combat Active",
+  "Physical Active",
+  "Social Active",
+  "Magical Active",
+  "Pseudo-Magical Active",
+  "Resonance Active",
+  "Technical Active",
+  "Vehicle Active",
+] as const;
+const ACTIVE_SKILL_CAT_KEYS: Record<string, MsgKey> = {
+  "Combat Active": "sr.skillcat.combat",
+  "Physical Active": "sr.skillcat.physical",
+  "Social Active": "sr.skillcat.social",
+  "Magical Active": "sr.skillcat.magical",
+  "Pseudo-Magical Active": "sr.skillcat.pseudomagical",
+  "Resonance Active": "sr.skillcat.resonance",
+  "Technical Active": "sr.skillcat.technical",
+  "Vehicle Active": "sr.skillcat.vehicle",
+};
+export const skillCatLabel = labeller(ACTIVE_SKILL_CAT_KEYS);
+
 export const CONTACT_ROLES = [
   "Fixer",
   "Street Doc",

@@ -91,7 +91,7 @@ describe("checklistSummary", () => {
 
 describe("guessTab", () => {
   it("maps common engine phrasings", () => {
-    expect(guessTab("ニューエンが不足しています（残り -100¥）")).toBe("gear");
+    expect(guessTab("新円が不足しています（残り -100¥）")).toBe("gear");
     expect(guessTab("エッセンスが0以下です")).toBe("attrs");
     expect(guessTab("何かよくわからない文言")).toBeUndefined();
   });

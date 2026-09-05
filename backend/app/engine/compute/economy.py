@@ -345,7 +345,7 @@ def economy(ctx: Ctx) -> None:
         ("技能（カルマ作成）", ctx.skill_buy_karma if ctx.is_karma else 0),
         ("知識（カルマ作成）", ctx.knowledge_karma if ctx.is_karma else 0),
         ("専門化", ctx.spec_karma),
-        ("ニューエン交換", int(ctx.state.karma_nuyen or 0)),
+        ("新円交換", int(ctx.state.karma_nuyen or 0)),
         ("ミスティックPP", ctx.mystic_karma),
         ("アデプト／気／フォーカス", ctx.extra_adept_karma),
         ("術式／複合体", ctx.spell_karma),

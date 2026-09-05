@@ -53,12 +53,12 @@ describe("<CharacterSidebar>", () => {
     expect(screen.getByText("something wrong")).toBeDefined();
   });
 
-  it("SidebarEconomy always shows the ニューエン row", () => {
+  it("SidebarEconomy always shows the 新円 row", () => {
     const ch = makeCharacter({ derived: { nuyen: 12500 } });
     render(
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
-    expect(screen.getByText("ニューエン").nextSibling?.textContent).toBe("12,500¥");
+    expect(screen.getByText("新円").nextSibling?.textContent).toBe("12,500¥");
   });
 
   it("SidebarAwakened shows イニシエーション only when the tab is enabled", () => {
@@ -112,13 +112,13 @@ describe("<CharacterSidebar>", () => {
     // These sentences come from the Python engine. The sidebar must not try to
     // localise them — that needs the backend translated too (docs/i18n.md).
     const ch = makeCharacter({
-      derived: { errors: ["カルマが足りません"], warnings: ["未使用ニューエン"] },
+      derived: { errors: ["カルマが足りません"], warnings: ["未使用新円"] },
     });
     render(
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
     expect(screen.getByText("カルマが足りません")).toBeDefined();
-    expect(screen.getByText("未使用ニューエン")).toBeDefined();
+    expect(screen.getByText("未使用新円")).toBeDefined();
   });
 
   it("names the career-panel number fields", () => {
@@ -136,6 +136,6 @@ describe("<CharacterSidebar>", () => {
     expect(screen.getByRole("spinbutton", { name: "SC 編集" })).toBeDefined();
     expect(screen.getByRole("spinbutton", { name: "悪名ボーナス" })).toBeDefined();
     expect(screen.getByRole("spinbutton", { name: "カルマ" })).toBeDefined();
-    expect(screen.getByRole("spinbutton", { name: "ニューエン" })).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: "新円" })).toBeDefined();
   });
 });

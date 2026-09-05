@@ -201,7 +201,7 @@ def finalize(ctx: Ctx) -> None:
     if ctx.karma_left < 0:
         ctx.errors.append(f"カルマが不足しています（残り {ctx.karma_left}）")
     if ctx.nuyen < 0:
-        ctx.errors.append(f"ニューエンが不足しています（残り {ctx.nuyen}¥）")
+        ctx.errors.append(f"新円が不足しています（残り {ctx.nuyen}¥）")
     # SR5 p.98: at Standard power level only 5,000¥ of unspent resources
     # carry over into play (Street 200¥ / Prime 20,000¥). Surface it as a
     # chargen notice rather than silently deleting nuyen, matching Chummer.
@@ -210,7 +210,7 @@ def finalize(ctx: Ctx) -> None:
         if chargen_leftover > NUYEN_CHARGEN_KEEP_MAX:
             lost = chargen_leftover - NUYEN_CHARGEN_KEEP_MAX
             ctx.warnings.append(
-                f"未使用ニューエン {chargen_leftover:,}¥：Standard レベルでは "
+                f"未使用新円 {chargen_leftover:,}¥：Standard レベルでは "
                 f"{NUYEN_CHARGEN_KEEP_MAX:,}¥ までしか持ち越せません（超過分 {lost:,}¥ は原則失われます）"
             )
     if ctx.ess <= 0:

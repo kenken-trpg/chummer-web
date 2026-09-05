@@ -339,6 +339,11 @@ export interface Catalog {
      *  because the group names collide with spells and knowledge
      *  skills there; see loaders/translations.py. */
     group_names?: Record<string, string>;
+    /** Active-skill categories in the rulebook's chapter order (Combat,
+     *  Physical, Social, Magical, Resonance, Technical, Vehicle). The skill
+     *  list itself comes out of the vendored file in a different order, so the
+     *  Skills tab sorts by this. */
+    active_categories?: string[];
     skills: {
       id: string;
       name: string;

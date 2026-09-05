@@ -1,5 +1,6 @@
 "use client";
 
+import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
 export function SubmersionTab({
@@ -11,6 +12,17 @@ export function SubmersionTab({
   patch,
   setCharacter,
 }: TabPanelProps) {
+  /** One row per grade, keeping whatever the user already chose for the
+   *  grades that survive the change. */
+  function gradeRows(grade: number) {
+    const byGrade = new Map((ch.submersions || []).map((row) => [row.grade, row]));
+    const next = [];
+    for (let g = 1; g <= grade; g += 1) {
+      next.push(byGrade.get(g) || { grade: g, echo_id: "" });
+    }
+    return next;
+  }
+
   return (
     <div className="card">
       <p className="muted">
@@ -22,41 +34,16 @@ export function SubmersionTab({
       </p>
       <label>
         {ui("sub.grade")}
-        <input
-          type="range"
+        <RangeInput
           min={0}
           max={Math.max(6, Number(d.totals.RES || 0))}
           value={ch.submersion_grade || 0}
-          onChange={(e) => {
-            const grade = Number(e.target.value);
-            const existing = [...(ch.submersions || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, echo_id: "" });
-            }
-            setCharacter({ ...ch, submersion_grade: grade, submersions: next });
-          }}
-          onMouseUp={(e) => {
-            const grade = Number((e.target as HTMLInputElement).value);
-            const existing = [...(ch.submersions || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, echo_id: "" });
-            }
-            patch({ submersion_grade: grade, submersions: next });
-          }}
-          onTouchEnd={(e) => {
-            const grade = Number((e.target as HTMLInputElement).value);
-            const existing = [...(ch.submersions || [])];
-            const byGrade = new Map(existing.map((row) => [row.grade, row]));
-            const next = [];
-            for (let g = 1; g <= grade; g += 1) {
-              next.push(byGrade.get(g) || { grade: g, echo_id: "" });
-            }
-            patch({ submersion_grade: grade, submersions: next });
-          }}
+          label={ui("sub.grade")}
+          title={ui("sub.gradeHint")}
+          onDraft={(grade) =>
+            setCharacter({ ...ch, submersion_grade: grade, submersions: gradeRows(grade) })
+          }
+          onCommit={(grade) => patch({ submersion_grade: grade, submersions: gradeRows(grade) })}
         />
         <b style={{ marginLeft: 8 }}>{ch.submersion_grade || 0}</b>
       </label>

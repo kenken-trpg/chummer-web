@@ -62,6 +62,7 @@ export function GearTab(props: TabPanelProps) {
             key={kind}
             className={`tab ${gearKind === kind ? "active" : ""}`}
             onClick={() => setGearKind(kind)}
+            title={ui(`${label}.hint` as MsgKey)}
           >
             {ui(label)}
           </button>

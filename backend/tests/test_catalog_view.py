@@ -103,3 +103,41 @@ def test_the_projection_drops_the_fields_the_ui_never_reads() -> None:
     public_weapon = next(w for w in public_catalog()["weapons"] if w["id"] == raw_weapon["id"])
     assert set(public_weapon) < set(raw_weapon)
     assert "bonus" not in public_weapon
+
+
+# --- skill ordering (SR5 p.130 / the official sheet / Chummer5a) --------------
+
+
+def test_skill_groups_come_out_alphabetical() -> None:
+    """The vendored `<skillgroups>` block is alphabetical *except* that
+    Engineering sits between Influence and Outdoors, so document order alone
+    puts one group in the wrong place on the Skills tab."""
+    groups = public_catalog()["skills"]["groups"]
+    assert groups == sorted(groups)
+    assert groups.index("Engineering") == groups.index("Electronics") + 2
+
+
+def test_active_skill_categories_are_in_rulebook_order() -> None:
+    """The Skills tab groups the active list by these, in this order. The
+    skills themselves come out of the file grouped by category too — but
+    starting at Technical and running Magical before Combat."""
+    cats = public_catalog()["skills"]["active_categories"]
+    assert cats == [
+        "Combat Active",
+        "Physical Active",
+        "Social Active",
+        "Magical Active",
+        "Pseudo-Magical Active",
+        "Resonance Active",
+        "Technical Active",
+        "Vehicle Active",
+    ]
+
+
+def test_every_active_skill_falls_into_a_listed_category() -> None:
+    """A skill whose category is missing from `active_categories` would sort to
+    the end of the tab under an untranslated heading."""
+    skills = public_catalog()["skills"]
+    cats = set(skills["active_categories"])
+    orphans = sorted({s["category"] for s in skills["skills"] if s["source"] == "SR5"} - cats)
+    assert not orphans

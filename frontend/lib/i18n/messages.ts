@@ -47,6 +47,28 @@ const JA = {
   "tab.check": "チェック",
   "tab.sheet": "シート",
 
+  // hover copy for the section buttons
+  "tab.priority.hint": "優先度（A〜E）を 5 つの項目に割り振ります。ここがキャラクターの土台です",
+  "tab.meta.hint": "メタと種族。能力値の下限・上限がここで決まります",
+  "tab.attrs.hint": "能力値を割り振ります。最低値までは無料、超えた分に能力値点を使います",
+  "tab.skills.hint": "技能・技能グループ・知識技能のレーティング。判定のダイス数になります",
+  "tab.qualities.hint": "ポジティブ／ネガティブ資質。長所はカルマを払い、短所はカルマを戻します",
+  "tab.cyber.hint": "サイバーウェア。エッセンスを削って身体能力を上げます",
+  "tab.bio.hint": "バイオウェア。サイバーウェアより essence 効率が良い代わりに高価です",
+  "tab.gear.hint": "武器・防具・電子機器・生活水準など、新円で買うものすべて",
+  "tab.contacts.hint": "コンタクト（人脈）。〈つながり〉と〈忠誠〉にカルマを払います",
+  "tab.martial.hint": "武術とテクニック。近接戦闘の選択肢を増やします",
+  "tab.initiation.hint": "イニシエーション。等級ごとにメタマジックを 1 つ習得します",
+  "tab.submersion.hint": "サブマージョン。等級ごとにエコーを 1 つ習得します",
+  "tab.adept.hint": "アデプト・パワー。パワー点で購入します",
+  "tab.spells.hint": "術式（呪文）と儀式。マジシャン系のみ",
+  "tab.spirits.hint": "束縛した精霊。〈フォース〉とサービス回数を決めます",
+  "tab.foci.hint": "フォーカス。カルマで〈固着〉させて使います",
+  "tab.complexforms.hint": "コンプレックス・フォーム。テクノマンサーのみ",
+  "tab.sprites.hint": "登録したスプライト。テクノマンサーのみ",
+  "tab.check.hint": "作成ルールに違反していないかの一覧。エラーがあると完成できません",
+  "tab.sheet.hint": "完成したキャラクターシート。印刷・書き出しもここから",
+
   "check.title": "作成チェック",
   "check.pass": "作成ルール上の問題は見つかりませんでした",
   "check.summary": "エラー {errors}・警告 {warns}・情報 {infos}",
@@ -95,6 +117,9 @@ const JA = {
   "skills.chargenNote": " ・ 専門化は1点",
   "skills.groups": "技能グループ",
   "skills.active": "アクティブ技能",
+  "skills.rowHint": "{category}／関連能力値 {attr}／作成上限 {max}",
+  "skills.groupHint": "{group}：グループ内の技能をまとめて上げます（作成上限 {max}）",
+  "skills.ratingHint": "レーティング（作成上限 {max}）",
   "skills.exotic": "Exotic技能",
   "skills.exoticNote":
     "対象の指定が技能そのものです。同じ Exotic を別対象で複数持てます。専門化の追加点は不要です。",
@@ -130,6 +155,7 @@ const JA = {
   "adept.powerPoints": "パワー点 {used}/{max}",
   "adept.wayDiscount": " ・ Way割引 {used}/{max}",
   "adept.boughtPoints": "購入したパワー点（1点=5カルマ）",
+  "adept.boughtPointsHint": "MAG から何点をアデプト・パワーに回すか。1 点あたり 5 カルマ",
   "adept.beforeDiscount": "（割引前 {cost}）",
   "adept.freeLevels": " / 無料Lv {levels}",
   "adept.totalRating": " / 合計R{rating}",
@@ -222,7 +248,7 @@ const JA = {
   "common.armor": "アーマー",
   "common.notoriety": "悪名",
   "common.publicAwareness": "周知度",
-  "common.nuyen": "ニューエン",
+  "common.nuyen": "新円",
   "common.essence": "エッセンス",
   "common.initiative": "イニシアチブ",
   "common.condition": "コンディション",
@@ -250,6 +276,8 @@ const JA = {
   "picker.none": "該当なし",
   "picker.more": "他 {count} 件。検索で絞り込んでください",
   "picker.buyLabel": "{name} を{action}",
+  "picker.catAllHint": "すべてのカテゴリを表示",
+  "picker.catHint": "{category} だけに絞り込む",
 
   "gear.weaponized": "武器化",
   "gear.inUse": "使用中",
@@ -370,7 +398,7 @@ const JA = {
   "side.hideBreakdown": "内訳を隠す",
   "side.showBreakdown": "成長／買い物の内訳",
   "side.karmaSpend": "カルマ消費",
-  "side.nuyenSpend": "ニューエン消費",
+  "side.nuyenSpend": "新円消費",
   "side.none": "なし",
 
   // --- toolbar ----------------------------------------------------------
@@ -410,7 +438,7 @@ const JA = {
   "toolbar.career": "キャリア中",
   "toolbar.toCareer": "作成完了（キャリア）",
   "toolbar.careerHint": "作成モードに戻す",
-  "toolbar.toCareerHint": "作成完了 → 残カルマ／ニューエンで成長",
+  "toolbar.toCareerHint": "作成完了 → 残カルマ／新円で成長",
   "toolbar.careerConfirm": "作成エラーが残っています。このままキャリアに進みますか？",
   "toolbar.layoutHint": "シートのレイアウト",
   "toolbar.printHint": "印刷用レイアウトに切り替えて印刷。ダイアログで「PDF として保存」も選べます",
@@ -516,6 +544,7 @@ const JA = {
   "init.granted": " ・ 品質付与 {list}",
   "init.freeMetamagics": "無料メタマジック: {list}",
   "init.grade": "イニシエーション等級",
+  "init.gradeHint": "等級を上げるとメタマジックを 1 つ選べます。カルマ費用は等級ごとに増えます",
   "init.group": "集団",
   "init.groupJoin": "集団加入",
   "init.ordeal": "試練",
@@ -525,6 +554,7 @@ const JA = {
 
   "sub.note": "（各等級 10 + 等級×3。RES上限 = 種族上限 + 等級。等級 ≤ RES）",
   "sub.grade": "サブマージョン等級",
+  "sub.gradeHint": "等級を上げるとエコーを 1 つ選べます。カルマ費用は等級ごとに増えます",
   "sub.net": "ネット",
   "sub.network": "ネットワーク",
   "sub.task": "タスク",
@@ -579,14 +609,24 @@ const JA = {
   "prio.sumTotal": "合計 {used}/{max}",
   "prio.karmaNuyenRate": " ・ 1K={rate}¥（最大 {max}K）",
   "prio.leftoverToNuyen": "残カルマ→¥ 最大 {max}K",
-  "prio.leftoverSlider": "残カルマ→ニューエン（{k}K = {nuyen}¥）",
-  "prio.karmaSlider": "カルマ→ニューエン（{k}K = {nuyen}¥）",
+  "prio.leftoverSlider": "残カルマ→新円（{k}K = {nuyen}¥）",
+  "prio.karmaSlider": "カルマ→新円（{k}K = {nuyen}¥）",
+  "prio.leftoverSliderLabel": "新円に回す残カルマ",
+  "prio.cellHint": "{cat} を優先度 {letter} にする",
+  "prio.cellSwapHint":
+    "{cat} を優先度 {letter} にする（今そこを使っている {other} と入れ替わります）",
+  "prio.methodPriorityHint": "標準の作成法。A〜E を 5 項目に 1 つずつ割り当てます（SR5 p.65）",
+  "prio.methodSumHint":
+    "同じ表を使い、A=4／B=3／C=2／D=1／E=0 の合計が 10 になるように選びます。重複可",
+  "prio.methodKarmaHint": "優先度表を使わず、すべてを 800 カルマで購入します（SR5 p.94）",
+  "prio.karmaSliderLabel": "新円に回すカルマ",
+  "prio.nuyenSliderHint": "カルマ 1 点＝{rate}¥。作成中のみ交換でき、逆方向には戻せません",
   "prio.karmaNote":
     "優先度表は使いません。メタ／能力値／技能／術式などをカルマで購入します（開始 {pool}）。MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の術式枠はありません。",
   "prio.talent": "タレント",
   "prio.breakdownA":
     "内訳: メタ {meta} / 能力値 {attrs} / 技能 {skills} / 知識 {knowledge} / 専門化 {specs}",
-  "prio.breakdownB": "資質 {qualities} / ニューエン交換 {nuyenKarma} / その他 {other}",
+  "prio.breakdownB": "資質 {qualities} / 新円交換 {nuyenKarma} / その他 {other}",
   "prio.sumHint":
     "同じ優先度を複数カテゴリに割り当てできます。合計がちょうど 10 になるようにしてください。",
   "prio.priorityHint": "A〜E は各1回。クリックで入れ替えます。",
@@ -610,6 +650,20 @@ const JA = {
   "gear.kind.misc": "ギア",
   "gear.kind.drugs": "ドラッグ",
   "gear.kind.lifestyle": "ライフスタイル",
+
+  "gear.kind.armor.hint":
+    "着る防具。同時に着られるのは基本 1 着で、それ以外は追加防具として扱います",
+  "gear.kind.weapon.hint": "近接・射撃武器とアクセサリー。命中判定に使う技能もここで決まります",
+  "gear.kind.commlink.hint": "コムリンク。マトリックスに常時接続する基本デバイス",
+  "gear.kind.cyberdeck.hint": "サイバーデッキ。ハッキングに必要で、非常に高価です",
+  "gear.kind.rcc.hint": "RCC（ライガー・コマンド・コンソール）。ドローンの遠隔操作用",
+  "gear.kind.optics.hint": "サイバーアイ／イヤーやゴーグルなどの視覚・聴覚機器",
+  "gear.kind.sensor.hint": "センサーとセンサー機能。探知判定に使います",
+  "gear.kind.vehicle.hint": "車両。〈操縦〉技能で動かします",
+  "gear.kind.drone.hint": "ドローン。リガーが遠隔／ジャンプインで操作します",
+  "gear.kind.misc.hint": "その他のギア。ツール・サバイバル用品・魔法用品など",
+  "gear.kind.drugs.hint": "ドラッグと薬物。効果と副作用があります",
+  "gear.kind.lifestyle.hint": "ライフスタイル（生活水準）。作成時は月単位で前払いします",
 
   // Shared by the cyberware / bioware tabs.
   "ware.allCategories": "すべての分類",
@@ -723,6 +777,9 @@ const JA = {
   "attrs.wareBonus": " ウェア+{bonus}",
   "attrs.meat": " 肉{value}",
   "attrs.points": "能力値点 {used}/{max} ・ 特殊点 {specialUsed}/{specialMax}",
+  "attrs.rowHint": "メタの下限 {min}／作成上限 {max}／増強込みの上限 {aug}",
+  "attrs.minNote":
+    "各能力値はメタの最低値から始まります（オレンジの目盛り）。そこまでは無料で、能力値点を使うのは超えた分だけです。",
 
   // --- character sheet -----------------------------------------------------
   // Section headings. `Section` takes the key, not the sentence, so a section
@@ -968,6 +1025,16 @@ const JA = {
   "sr.know.professional": "職業",
   "sr.know.street": "街",
 
+  // Active-skill category headings, in the rulebook's chapter order.
+  "sr.skillcat.combat": "戦闘技能",
+  "sr.skillcat.physical": "肉体技能",
+  "sr.skillcat.social": "対人技能",
+  "sr.skillcat.magical": "魔法技能",
+  "sr.skillcat.pseudomagical": "準魔法技能",
+  "sr.skillcat.resonance": "共鳴技能",
+  "sr.skillcat.technical": "技術技能",
+  "sr.skillcat.vehicle": "操縦技能",
+
   "sr.spirit.combat": "戦闘",
   "sr.spirit.detection": "探知",
   "sr.spirit.health": "健康",
@@ -1054,7 +1121,7 @@ const JA = {
   "txt.licenses": "  ライセンス: {list}",
   "txt.drugsActive": "使用中のドラッグ（反映済み）",
   "txt.duration": " / 持続 {duration}",
-  "txt.money": "ニューエン {nuyen}¥  カルマ残 {remaining}/{pool}",
+  "txt.money": "新円 {nuyen}¥  カルマ残 {remaining}/{pool}",
 
   // --- editor errors, prompts and confirmations ----------------------------
   // `lib/api` and `lib/character/quality` have no locale and no React, so they
@@ -1119,6 +1186,30 @@ const EN: Catalog = {
   "tab.check": "Check",
   "tab.sheet": "Sheet",
 
+  "tab.priority.hint":
+    "Assign priorities A-E across five categories. Everything else follows from this",
+  "tab.meta.hint": "Metatype and metavariant, which set every attribute's floor and ceiling",
+  "tab.attrs.hint": "Spend attribute points. The metatype minimum is free; you pay above it",
+  "tab.skills.hint":
+    "Ratings for active skills, skill groups and knowledge skills — your dice pools",
+  "tab.qualities.hint":
+    "Positive and negative qualities. Positives cost karma, negatives refund it",
+  "tab.cyber.hint": "Cyberware: trades Essence for capability",
+  "tab.bio.hint": "Bioware: kinder on Essence than cyberware, and dearer",
+  "tab.gear.hint": "Weapons, armour, electronics, lifestyle — everything bought with nuyen",
+  "tab.contacts.hint": "Contacts. Karma buys their Connection and Loyalty",
+  "tab.martial.hint": "Martial arts and techniques, which widen your close-combat options",
+  "tab.initiation.hint": "Initiation. Each grade grants one metamagic",
+  "tab.submersion.hint": "Submersion. Each grade grants one echo",
+  "tab.adept.hint": "Adept powers, bought with power points",
+  "tab.spells.hint": "Spells and rituals. Magician talents only",
+  "tab.spirits.hint": "Bound spirits, with their Force and remaining services",
+  "tab.foci.hint": "Foci, bonded with karma",
+  "tab.complexforms.hint": "Complex forms. Technomancers only",
+  "tab.sprites.hint": "Registered sprites. Technomancers only",
+  "tab.check.hint": "Every chargen rule the character currently breaks. Errors block completion",
+  "tab.sheet.hint": "The finished character sheet — print and export live here",
+
   "check.title": "Build check",
   "check.pass": "No character-creation rule problems found",
   "check.summary": "{errors} errors · {warns} warnings · {infos} notes",
@@ -1163,6 +1254,9 @@ const EN: Catalog = {
   "skills.chargenNote": " · a specialisation costs 1 point",
   "skills.groups": "Skill groups",
   "skills.active": "Active skills",
+  "skills.rowHint": "{category} / linked attribute {attr} / chargen max {max}",
+  "skills.groupHint": "{group}: raises every skill in the group at once (chargen max {max})",
+  "skills.ratingHint": "Rating (chargen max {max})",
   "skills.exotic": "Exotic skills",
   "skills.exoticNote":
     "The target is part of the skill itself. You can take the same Exotic for different targets, and no extra point is needed for a specialisation.",
@@ -1198,6 +1292,7 @@ const EN: Catalog = {
   "adept.powerPoints": "Power points {used}/{max}",
   "adept.wayDiscount": " · Way discount {used}/{max}",
   "adept.boughtPoints": "Purchased power points (1 = 5 karma)",
+  "adept.boughtPointsHint": "How much of MAG goes to adept powers. 5 karma per point",
   "adept.beforeDiscount": " (before discount {cost})",
   "adept.freeLevels": " / free lv {levels}",
   "adept.totalRating": " / total R{rating}",
@@ -1316,6 +1411,8 @@ const EN: Catalog = {
   "picker.none": "No matches",
   "picker.more": "{count} more. Narrow the search.",
   "picker.buyLabel": "{action} {name}",
+  "picker.catAllHint": "Show every category",
+  "picker.catHint": "Show only {category}",
 
   "gear.weaponized": "as weapon",
   "gear.inUse": "In use",
@@ -1575,6 +1672,7 @@ const EN: Catalog = {
   "init.granted": " · granted by qualities: {list}",
   "init.freeMetamagics": "Free metamagics: {list}",
   "init.grade": "Initiate grade",
+  "init.gradeHint": "Each grade grants one metamagic; the karma cost rises with the grade",
   "init.group": "group",
   "init.groupJoin": "Join a group",
   "init.ordeal": "ordeal",
@@ -1584,6 +1682,7 @@ const EN: Catalog = {
 
   "sub.note": " (10 + grade×3 karma each. RES cap = metatype cap + grade. Grade ≤ RES.)",
   "sub.grade": "Submersion grade",
+  "sub.gradeHint": "Each grade grants one echo; the karma cost rises with the grade",
   "sub.net": "network",
   "sub.network": "Network",
   "sub.task": "task",
@@ -1639,6 +1738,15 @@ const EN: Catalog = {
   "prio.karmaNuyenRate": " · 1K = {rate}¥ (max {max}K)",
   "prio.leftoverToNuyen": "Leftover karma → ¥, max {max}K",
   "prio.leftoverSlider": "Leftover karma → nuyen ({k}K = {nuyen}¥)",
+  "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
+  "prio.cellHint": "Set {cat} to priority {letter}",
+  "prio.cellSwapHint": "Set {cat} to priority {letter} (swaps with {other}, which holds it now)",
+  "prio.methodPriorityHint": "The standard build: one of A-E to each of the five rows (SR5 p.65)",
+  "prio.methodSumHint":
+    "Same table, but pick freely so A=4/B=3/C=2/D=1/E=0 sums to 10. Repeats allowed",
+  "prio.methodKarmaHint": "Skip the table and buy everything out of 800 karma (SR5 p.94)",
+  "prio.karmaSliderLabel": "Karma converted to nuyen",
+  "prio.nuyenSliderHint": "1 karma = {rate}¥. Chargen only, and it does not convert back",
   "prio.karmaSlider": "Karma → nuyen ({k}K = {nuyen}¥)",
   "prio.karmaNote":
     "No priority table here — metatype, attributes, skills and spells are all bought with karma (starting from {pool}). MAG / RES unlock with the talent you pick and are bought up from 1. There are no free spell slots.",
@@ -1669,6 +1777,20 @@ const EN: Catalog = {
   "gear.kind.misc": "Gear",
   "gear.kind.drugs": "Drugs",
   "gear.kind.lifestyle": "Lifestyle",
+
+  "gear.kind.armor.hint": "Worn armor. Only one suit counts as worn; the rest stack as accessories",
+  "gear.kind.weapon.hint":
+    "Melee and ranged weapons plus accessories, and the skill each attacks with",
+  "gear.kind.commlink.hint": "Commlink — the baseline always-on Matrix device",
+  "gear.kind.cyberdeck.hint": "Cyberdeck: required to hack, and very expensive",
+  "gear.kind.rcc.hint": "RCC (rigger command console), for controlling drones remotely",
+  "gear.kind.optics.hint": "Cybereyes/ears, goggles and other vision and audio gear",
+  "gear.kind.sensor.hint": "Sensors and sensor functions, used for detection tests",
+  "gear.kind.vehicle.hint": "Vehicles, driven with the Pilot skills",
+  "gear.kind.drone.hint": "Drones, run remotely or jumped into by a rigger",
+  "gear.kind.misc.hint": "Other gear: tools, survival kit, magical supplies",
+  "gear.kind.drugs.hint": "Drugs and chemicals, with their effects and side effects",
+  "gear.kind.lifestyle.hint": "Lifestyle. At chargen it is paid for by the month, up front",
 
   "ware.allCategories": "All categories",
   "ware.addGrade": "Add as {grade}",
@@ -1782,6 +1904,9 @@ const EN: Catalog = {
   "attrs.wareBonus": " ware +{bonus}",
   "attrs.meat": " meat {value}",
   "attrs.points": "Attribute points {used}/{max} · special {specialUsed}/{specialMax}",
+  "attrs.rowHint": "Metatype minimum {min} / chargen max {max} / augmented max {aug}",
+  "attrs.minNote":
+    "Every attribute starts at its metatype minimum (the amber tick). That much is free — points are only spent above it.",
 
   "sheet.core": "Core",
   "sheet.skills": "Skills",
@@ -2016,6 +2141,15 @@ const EN: Catalog = {
   "sr.know.language": "Language",
   "sr.know.professional": "Professional",
   "sr.know.street": "Street",
+
+  "sr.skillcat.combat": "Combat Skills",
+  "sr.skillcat.physical": "Physical Skills",
+  "sr.skillcat.social": "Social Skills",
+  "sr.skillcat.magical": "Magical Skills",
+  "sr.skillcat.pseudomagical": "Pseudo-Magical Skills",
+  "sr.skillcat.resonance": "Resonance Skills",
+  "sr.skillcat.technical": "Technical Skills",
+  "sr.skillcat.vehicle": "Vehicle Skills",
 
   "sr.spirit.combat": "Combat",
   "sr.spirit.detection": "Detection",
