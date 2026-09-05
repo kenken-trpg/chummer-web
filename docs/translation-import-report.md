@@ -463,9 +463,9 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Radiation Shield | 放射線シールド/レイディエーション・シールド |
 | Radiation Shielding | 放射線遮蔽 |
 | Rapid Draw | 早抜き |
-| Rapid Transit: Diamond | ラピッド・トランジット: ダイヤモンド |
-| Rapid Transit: Elite | ラピッド・トランジット: エリート |
-| Rapid Transit: Platinum | ラピッド・トランジット: プラチナ |
+| Rapid Transit: Diamond | ラピッド・トランジット：ダイヤモンド |
+| Rapid Transit: Elite | ラピッド・トランジット：エリート |
+| Rapid Transit: Platinum | ラピッド・トランジット：プラチナ |
 | Recorded Room | 録画室/レコーデッド・ルーム |
 | Redundancy | 冗長化 |
 | Resonance Bind | 共振バインド |
@@ -473,8 +473,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Resonance Resistance | 共振抵抗 |
 | Resonance Riding | 共振ライディング |
 | Resonance Scream | 共振スクリーム |
-| Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア(RIG): アーマー |
-| Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア(RIG): ヘルメット |
+| Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア(RIG)：アーマー |
+| Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア(RIG)：ヘルメット |
 | Restrictive | 動きにくい |
 | Rewind | 巻き戻し/リワインド |
 | Riposte | リポスト |

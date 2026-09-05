@@ -52,7 +52,11 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
 ```
 
 - Terminology consistency is enforced by `backend/tests/test_terminology.py`
-  (e.g. 属性→能力値, クオリティ→資質, スキル→技能).
+  (e.g. 属性→能力値, クオリティ→資質, スキル→技能), and the punctuation around
+  the words by `backend/tests/test_ja_notation.py`: half-width `()`, full-width
+  `：`, no full-width space, and a space before `(` only for a numeric rating
+  suffix. Those are the conventions the overlay already followed — the test
+  counts, it does not legislate. Deliberate exceptions are pinned by name.
 - Policy: **core rulebook** content is translated; **supplement** content stays
   in English — guessing at a supplement's coinages is worse than the English
   fallback. The exception is a supplement we hold a published Japanese edition
