@@ -15,6 +15,13 @@ updates:
           - "*"
 
   # frontend/package.json — loose `^` ranges; batch the noise into one PR.
+  #
+  # Minors and patches only. Grouping majors as well produced a single PR
+  # carrying Next 15->16, TypeScript 5->7, ESLint 9->10, jsdom 29->30 and
+  # @types/node 22->26 — five migrations that cannot be reviewed, tested or
+  # reverted as a unit, so the PR was unmergeable from the moment it opened.
+  # Majors now arrive one per PR, which is the only shape in which a breaking
+  # change is worth looking at.
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -25,8 +32,12 @@ updates:
       npm:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
 
-  # backend/requirements*.txt — loose `>=` pins.
+  # backend/requirements*.txt — loose `>=` pins. Same split as npm: a major
+  # of pydantic or mypy is a piece of work, not a line in a batch.
   - package-ecosystem: pip
     directory: /backend
     schedule:
@@ -37,3 +48,6 @@ updates:
       pip:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
