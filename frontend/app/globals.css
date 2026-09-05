@@ -195,6 +195,17 @@ td.rowhead {
 .skill-row.has-spec.can-delete {
   grid-template-columns: minmax(110px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
 }
+/* category heading inside the active-skill list — quieter than the <h3>
+   section titles it sits under */
+.skill-cat {
+  margin: 18px 0 4px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 4px;
+}
+
 .spec-pick {
   display: flex;
   flex-direction: column;
@@ -232,6 +243,58 @@ td.rowhead {
 }
 input[type="range"] {
   width: 100%;
+}
+
+/* A slider plus a numbered scale. `--thumb` must match the real thumb width or
+   the tick labels drift away from the positions they name. */
+.range {
+  --thumb: 16px;
+  min-width: 0;
+  padding-bottom: 14px;
+}
+.range input[type="range"] {
+  display: block;
+  margin: 0;
+}
+.range-scale {
+  position: relative;
+  height: 12px;
+  margin-top: -2px;
+}
+.range-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  pointer-events: none;
+}
+.range-tick i {
+  width: 1px;
+  height: 4px;
+  background: var(--muted);
+  opacity: 0.55;
+}
+.range-tick em {
+  font-style: normal;
+  font-size: 0.62rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.range-tick.here i {
+  background: var(--accent);
+  height: 4px;
+}
+.range-tick.here em {
+  color: var(--accent);
+  font-weight: 700;
+}
+/* the racial minimum: the value cannot be dragged below it */
+.range-tick.floor i {
+  background: var(--warn);
+  height: 5px;
 }
 input[type="text"],
 input[type="search"] {

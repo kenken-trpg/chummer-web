@@ -1,4 +1,5 @@
 "use client";
+import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
@@ -14,30 +15,28 @@ export function AttrsTab({ character: ch, d, t, ui, patch, setCharacter }: TabPa
           (key === "RES" && !d.enabled_tabs.includes("RES"));
         if (hidden) return null;
         const range = spec[key] || { min: 1, max: 6, aug: 6 };
+        // A rating below the metatype's racial minimum is not a cheaper
+        // character, it is an invalid one — the engine raises it to the floor
+        // on the next compute anyway. Show it already there, so the slider and
+        // the number beside it never disagree.
+        const rating = Math.max(range.min, ch.attributes[key] ?? range.min);
+        const commit = (value: number) => patch({ attributes: { ...ch.attributes, [key]: value } });
         return (
           <div className="attr-row" key={key}>
-            <span>{attrLabel(key, t)}</span>
-            <input
-              type="range"
+            <span title={ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug })}>
+              {attrLabel(key, t)}
+            </span>
+            <RangeInput
               min={range.min}
               max={range.max}
-              value={ch.attributes[key] ?? range.min}
-              onChange={(e) => {
-                const attributes = { ...ch.attributes, [key]: Number(e.target.value) };
-                setCharacter({ ...ch, attributes });
-              }}
-              onMouseUp={(e) => {
-                const value = Number((e.target as HTMLInputElement).value);
-                patch({ attributes: { ...ch.attributes, [key]: value } });
-              }}
-              onTouchEnd={(e) => {
-                const value = Number((e.target as HTMLInputElement).value);
-                patch({ attributes: { ...ch.attributes, [key]: value } });
-              }}
-              onBlur={(e) => {
-                const value = Number((e.target as HTMLInputElement).value);
-                patch({ attributes: { ...ch.attributes, [key]: value } });
-              }}
+              value={rating}
+              floor={range.min}
+              label={attrLabel(key, t)}
+              title={ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug })}
+              onDraft={(value) =>
+                setCharacter({ ...ch, attributes: { ...ch.attributes, [key]: value } })
+              }
+              onCommit={commit}
             />
             <b>
               {d.totals[key]} <span className="muted">/{range.max}</span>
@@ -65,6 +64,7 @@ export function AttrsTab({ character: ch, d, t, ui, patch, setCharacter }: TabPa
           specialMax: d.points.special.max,
         })}
       </p>
+      <p className="muted">{ui("attrs.minNote")}</p>
     </div>
   );
 }

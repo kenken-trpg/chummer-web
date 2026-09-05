@@ -42,7 +42,7 @@ const TAB_RULES: [RegExp, Tab][] = [
   [/自然上限|エッセンス|能力値/, "attrs"],
   [/技能/, "skills"],
   [/資質|メンター|カルマが不足|不利な資質/, "qualities"],
-  [/ニューエン|容量超過|入手|アベイラ|デバイス.?レーティング|グレード/, "gear"],
+  [/新円|容量超過|入手|アベイラ|デバイス.?レーティング|グレード/, "gear"],
   [/バイオウェア|サイバーウェア|装着できません/, "cyber"],
   [/パワー点/, "adept"],
   [/術式|スペル|式典/, "spells"],
@@ -127,7 +127,7 @@ export function buildChecklist(ch: Character): CheckItem[] {
       items.push({
         id: "left-nuyen",
         severity: "info",
-        message: `ニューエンが ${d.nuyen.toLocaleString("en-US")}¥ 残っています`,
+        message: `新円が ${d.nuyen.toLocaleString("en-US")}¥ 残っています`,
         ref: "SR5 p.98",
         tab: "gear",
       });

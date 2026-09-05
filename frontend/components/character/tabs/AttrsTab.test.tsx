@@ -69,4 +69,55 @@ describe("<AttrsTab>", () => {
     fireEvent.mouseUp(str);
     expect(patch).toHaveBeenCalledWith({ attributes: expect.objectContaining({ STR: 5 }) });
   });
+
+  it("starts an unset attribute at the metatype minimum, not at zero", () => {
+    renderTab({
+      character: {
+        attributes: {},
+        derived: {
+          metatype_info: {
+            name: "Troll",
+            attributes: { BOD: { min: 5, max: 10, aug: 14 } },
+          },
+        } as any,
+      },
+    });
+    const bod = screen.getAllByRole("slider")[0] as HTMLInputElement;
+    expect(bod.min).toBe("5");
+    expect(bod.value).toBe("5");
+  });
+
+  it("raises a stored rating that sits under the metatype floor", () => {
+    // a Human BOD 1 kept across a swap to Troll. The engine clamps it up on
+    // the next compute; showing 1 until then makes the slider disagree with
+    // the number beside it.
+    renderTab({
+      character: {
+        attributes: { BOD: 1 },
+        derived: {
+          metatype_info: {
+            name: "Troll",
+            attributes: { BOD: { min: 5, max: 10, aug: 14 } },
+          },
+        } as any,
+      },
+    });
+    expect((screen.getAllByRole("slider")[0] as HTMLInputElement).value).toBe("5");
+  });
+
+  it("marks the racial minimum on the scale", () => {
+    const { container } = renderTab({
+      character: {
+        attributes: { BOD: 7 },
+        derived: {
+          metatype_info: {
+            name: "Troll",
+            attributes: { BOD: { min: 5, max: 10, aug: 14 } },
+          },
+        } as any,
+      },
+    });
+    expect(container.querySelector(".range-tick.floor")?.textContent).toBe("5");
+    expect(container.querySelector(".range-tick.here")?.textContent).toBe("7");
+  });
 });

@@ -1442,7 +1442,7 @@ def test_seeker_alone_does_not_warn_for_muscle() -> None:
     )
     out = compute(state)
     # ignore the unrelated Resources-A leftover-nuyen carryover notice
-    assert [w for w in out.derived["warnings"] if "未使用ニューエン" not in w] == []
+    assert [w for w in out.derived["warnings"] if "未使用新円" not in w] == []
 
 
 ENHANCED_ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
@@ -3440,7 +3440,7 @@ def test_low_lifestyle_two_months() -> None:
 def test_luxury_lifestyle_exceeds_resources() -> None:
     out = compute(_mundane("luxury", lifestyles=[LifestyleInstall(lifestyle_id=LUXURY_LIFESTYLE, months=1)]))
     assert out.derived["nuyen_spent"] == 100000
-    assert any("ニューエンが不足" in err for err in out.derived["errors"])
+    assert any("新円が不足" in err for err in out.derived["errors"])
 
 
 def test_predator_purchase() -> None:

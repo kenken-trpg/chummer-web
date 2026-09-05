@@ -36,7 +36,7 @@ export function QualitiesTab({
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
       });
   }, [catalog, qSearch, qCat, tr]);
-  const filteredQualities = matchedQualities.slice(0, 80);
+  const filteredQualities = matchedQualities.slice(0, 200);
 
   const qualityCtx: QualityReqCtx = {
     qualities: new Set((d.qualities || []).map((item) => item.name)),
@@ -232,6 +232,17 @@ export function QualitiesTab({
               <button
                 className={`btn ${added && !canAddMore ? "danger" : "primary"}`}
                 disabled={canAddMore ? !!blocked : false}
+                // the same button reads 追加 / 差替 / 削除 depending on what is
+                // already taken; say which quality it is about to act on
+                title={ui("picker.buyLabel", {
+                  name: tr(q.name),
+                  action:
+                    added && !canAddMore
+                      ? ui("common.delete")
+                      : replaces
+                        ? ui("qual.replace")
+                        : ui("common.add"),
+                })}
                 onClick={() => {
                   if (added && !canAddMore) {
                     const extras = { ...(ch.quality_extras || {}) };

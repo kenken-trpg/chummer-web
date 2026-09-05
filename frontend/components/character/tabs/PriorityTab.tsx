@@ -1,6 +1,7 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
 import { CATS, DEFAULT_PRIORITIES, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
+import { RangeInput } from "@/components/character/RangeInput";
 
 export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
   const table = catalog.priority_table;
@@ -18,6 +19,7 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
       >
         <button
           className={`choice ${(ch.build_method || "Priority") === "Priority" ? "selected" : ""}`}
+          title={ui("prio.methodPriorityHint")}
           onClick={() => {
             const letters = CATS.map((c) => ch.priorities[c.key]);
             const unique = [...letters].sort().join("") === "ABCDE";
@@ -36,12 +38,14 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
         </button>
         <button
           className={`choice ${(ch.build_method || "Priority") === "SumToTen" ? "selected" : ""}`}
+          title={ui("prio.methodSumHint")}
           onClick={() => patch({ build_method: "SumToTen" })}
         >
           Sum to Ten
         </button>
         <button
           className={`choice ${(ch.build_method || "Priority") === "Karma" ? "selected" : ""}`}
+          title={ui("prio.methodKarmaHint")}
           onClick={() => patch({ build_method: "Karma", talent: ch.talent || "Mundane" })}
         >
           Karma
@@ -79,15 +83,16 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
               (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
             ).toLocaleString(),
           })}
-          <input
-            type="range"
+          <RangeInput
             min={0}
             max={d.karma_chargen?.nuyen_karma_max ?? d.nuyen_karma_max ?? 10}
             value={ch.karma_nuyen || 0}
-            onChange={(e) => setCharacter({ ...ch, karma_nuyen: Number(e.target.value) })}
-            onMouseUp={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
-            onTouchEnd={(e) => patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })}
-            onBlur={(e) => patch({ karma_nuyen: Number(e.target.value) })}
+            label={ui("prio.leftoverSliderLabel")}
+            title={ui("prio.nuyenSliderHint", {
+              rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+            })}
+            onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
+            onCommit={(value) => patch({ karma_nuyen: value })}
           />
         </label>
       ) : null}
@@ -113,19 +118,16 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
                 (ch.karma_nuyen || 0) * (d.karma_chargen?.nuyen_per_karma || 2000)
               ).toLocaleString(),
             })}
-            <input
-              type="range"
+            <RangeInput
               min={0}
               max={d.karma_chargen?.nuyen_karma_max ?? 235}
               value={ch.karma_nuyen || 0}
-              onChange={(e) => setCharacter({ ...ch, karma_nuyen: Number(e.target.value) })}
-              onMouseUp={(e) =>
-                patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })
-              }
-              onTouchEnd={(e) =>
-                patch({ karma_nuyen: Number((e.target as HTMLInputElement).value) })
-              }
-              onBlur={(e) => patch({ karma_nuyen: Number(e.target.value) })}
+              label={ui("prio.karmaSliderLabel")}
+              title={ui("prio.nuyenSliderHint", {
+                rate: (d.karma_chargen?.nuyen_per_karma || 2000).toLocaleString(),
+              })}
+              onDraft={(value) => setCharacter({ ...ch, karma_nuyen: value })}
+              onCommit={(value) => patch({ karma_nuyen: value })}
             />
           </label>
           {d.karma_chargen ? (
@@ -179,6 +181,18 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
                       <td key={letter}>
                         <button
                           className={`choice ${ch.priorities[cat.key] === letter ? "selected" : ""}`}
+                          // the cell shows only the tier's name ("24"、"Human")
+                          // — say which row it belongs to and, in Priority
+                          // mode, which category it would displace
+                          title={
+                            takenBy
+                              ? ui("prio.cellSwapHint", {
+                                  cat: ui(cat.label),
+                                  letter,
+                                  other: ui(takenBy.label),
+                                })
+                              : ui("prio.cellHint", { cat: ui(cat.label), letter })
+                          }
                           onClick={() => {
                             const next = { ...ch.priorities };
                             if (!sumMode && takenBy) next[takenBy.key] = next[cat.key];

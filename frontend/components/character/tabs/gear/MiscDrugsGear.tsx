@@ -456,7 +456,7 @@ export function MiscDrugsGear({
         )}
         {mode === "drugs" && (
           <PickerList
-            limit={60}
+            limit={200}
             note={gearSearch.trim() ? undefined : "gear.idleDrugs"}
             items={(catalog.drugs || catalog.gear || [])
               .filter((item) => {

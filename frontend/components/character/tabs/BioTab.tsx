@@ -141,7 +141,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
         </select>
       </div>
       <div className="quality-list">
-        <PickerList items={matchedBio} limit={80}>
+        <PickerList items={matchedBio} limit={200}>
           {(w) => (
             <div className="quality-item" key={w.id}>
               <div>
