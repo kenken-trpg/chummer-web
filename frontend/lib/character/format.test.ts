@@ -15,7 +15,14 @@ import {
   leadInt,
   matrixCM,
   mergeRatings,
+  mergeSpecialArmor,
+  optionalNumber,
+  deviceRatingBit,
+  poolRating,
+  skillDice,
+  testLine,
   vehicleCM,
+  wareAttrLine,
 } from "@/lib/character/format";
 
 describe("matrixCM / vehicleCM", () => {
@@ -165,5 +172,214 @@ describe("the formatters follow the locale", () => {
   it("leaves a code the rulebook does not define alone in either locale", () => {
     expect(cfTarget("Whatever", enUi)).toBe("Whatever");
     expect(cfTarget("Whatever", testUi)).toBe("Whatever");
+  });
+});
+
+/**
+ * The rest of `format.ts`. These feed both sheets and several tabs, and every
+ * one of them turns structured data into a sentence a player reads and acts
+ * on — the same silently-wrong class as the exporters. A missing bit reads as
+ * "this armour has no chemical protection" rather than as a bug.
+ */
+
+describe("optionalNumber", () => {
+  it("distinguishes an empty field from a zero the user typed", () => {
+    // null means "unset"; 0 is a real value, and conflating them clears a stat
+    expect(optionalNumber("")).toBeNull();
+    expect(optionalNumber("0")).toBe(0);
+  });
+
+  it("rejects anything that is not a finite number", () => {
+    for (const bad of ["abc", "1/2", "Infinity", "NaN"]) expect(optionalNumber(bad)).toBeNull();
+    expect(optionalNumber("-3")).toBe(-3);
+    expect(optionalNumber(" 4 ")).toBe(4);
+  });
+});
+
+describe("testLine", () => {
+  // only the fields testLine reads; the rest of MagicTestInfo is irrelevant here
+  const base = { skill: "Spellcasting", pool: 10, limit: 5, drain: 3, drain_code: "S" } as Record<
+    string,
+    unknown
+  >;
+
+  it("reads skill pool [limit] → drain", () => {
+    expect(testLine(base as never, testUi)).toBe("Spellcasting 10 [5] → ドレイン 3S");
+  });
+
+  it("says the drain is opposed rather than printing a number for it", () => {
+    // drain: null is not drain 0 — the opposing roll decides it
+    const opposed = testLine({ ...base, drain: null } as never, testUi);
+    expect(opposed).toContain("相手ヒット");
+    expect(opposed).not.toContain("null");
+  });
+
+  it("flags a missing skill, which is the part that changes how you roll", () => {
+    expect(testLine({ ...base, missing: true } as never, testUi)).not.toBe(
+      testLine(base as never, testUi),
+    );
+  });
+
+  it("is empty for no test at all", () => {
+    expect(testLine(null, testUi)).toBe("");
+    expect(testLine(undefined, testUi)).toBe("");
+  });
+});
+
+describe("specialArmorBits — chemical protection", () => {
+  const ui: UiFn = testUi;
+
+  it("collapses equal toxin and pathogen values into one chemical row", () => {
+    const rows = specialArmorBits({ toxin_contact: 6, pathogen_contact: 6 } as never, ui);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].value).toBe("+6");
+  });
+
+  it("keeps them apart when they differ, because they are rolled separately", () => {
+    const rows = specialArmorBits({ toxin_contact: 6, pathogen_contact: 4 } as never, ui);
+
+    expect(rows.map((r) => r.value)).toEqual(["+6", "+4"]);
+  });
+
+  it("calls full contact + inhalation immunity 'sealed', not two immunities", () => {
+    const rows = specialArmorBits(
+      {
+        immunities: {
+          toxin_contact: true,
+          pathogen_contact: true,
+          toxin_inhalation: true,
+          pathogen_inhalation: true,
+        },
+      } as never,
+      ui,
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].immune).toBe(true);
+  });
+
+  it("needs both toxin and pathogen immunity before claiming a vector is immune", () => {
+    const partial = specialArmorBits(
+      { immunities: { toxin_contact: true, pathogen_contact: false } } as never,
+      ui,
+    );
+
+    expect(partial).toEqual([]);
+  });
+});
+
+describe("specialArmorLine", () => {
+  it("drops the value for an immunity — '+0' would read as no protection", () => {
+    const line = specialArmorLine(
+      {
+        fire: 2,
+        immunities: {
+          toxin_contact: true,
+          pathogen_contact: true,
+          toxin_inhalation: true,
+          pathogen_inhalation: true,
+        },
+      } as never,
+      testUi,
+    );
+
+    expect(line).toContain("+2");
+    expect(line).not.toContain("+0");
+    expect(line.split(" / ")).toHaveLength(2);
+  });
+
+  it("is empty rather than a stray separator when there is nothing to say", () => {
+    expect(specialArmorLine(null, testUi)).toBe("");
+    expect(specialArmorLine({} as never, testUi)).toBe("");
+  });
+});
+
+describe("mergeSpecialArmor", () => {
+  it("adds ratings across mods and ORs the immunities", () => {
+    const merged = mergeSpecialArmor([
+      { special_armor: { fire: 2, toxin_contact: 1 } as never },
+      { special_armor: { fire: 3, immunities: { toxin_contact: true } } as never },
+    ]);
+
+    expect(merged?.fire).toBe(5);
+    expect(merged?.toxin_contact).toBe(1);
+    expect(merged?.immunities?.toxin_contact).toBe(true);
+    expect(merged?.immunities?.pathogen_contact).toBe(false);
+  });
+
+  it("is undefined when no mod contributes any, so callers can skip the row", () => {
+    expect(mergeSpecialArmor([])).toBeUndefined();
+    expect(mergeSpecialArmor([{}, { special_armor: undefined }])).toBeUndefined();
+  });
+});
+
+describe("limitModifierLine", () => {
+  it("signs the modifier and names the limit", () => {
+    const line = limitModifierLine([{ limit: "physical", value: 1 } as never], testUi);
+
+    expect(line).toContain("+1");
+    expect(line).toContain("物理");
+  });
+
+  it("keeps a negative sign rather than printing +-1", () => {
+    expect(limitModifierLine([{ limit: "mental", value: -2 } as never], testUi)).toContain("-2");
+  });
+
+  it("falls back to the raw limit name for one it does not know", () => {
+    expect(limitModifierLine([{ limit: "astral", value: 1 } as never], testUi)).toContain("astral");
+  });
+
+  it("appends the condition, since a conditional bonus is not always on", () => {
+    const line = limitModifierLine(
+      [{ limit: "social", value: 2, condition_label: "対メタヒューマン" } as never],
+      testUi,
+    );
+
+    expect(line).toContain("（対メタヒューマン）");
+  });
+
+  it("is empty for none", () => {
+    expect(limitModifierLine([], testUi)).toBe("");
+    expect(limitModifierLine(null, testUi)).toBe("");
+  });
+});
+
+describe("small bits", () => {
+  it("deviceRatingBit is empty at rating 0, not ' / DR 0'", () => {
+    expect(deviceRatingBit({ device_rating: 3 })).toBe(" / DR 3");
+    expect(deviceRatingBit({ device_rating: 0 })).toBe("");
+    expect(deviceRatingBit(null)).toBe("");
+  });
+
+  it("wareAttrLine lists only the attributes actually bonused, in ATTRS order", () => {
+    expect(wareAttrLine({ AGI: 2, BOD: 1, REA: 0 })).toBe("BOD +1 / AGI +2");
+    expect(wareAttrLine(null)).toBe("");
+  });
+
+  it("skillDice signs a bonus and omits it when zero", () => {
+    expect(skillDice(4)).toBe("4");
+    expect(skillDice(4, 0)).toBe("4");
+    expect(skillDice(4, 2)).toBe("4 +2");
+    expect(skillDice(4, -1)).toBe("4 -1");
+  });
+
+  it("poolRating takes the best of a skill and its specialisations", () => {
+    const pool = { Pistols: 8, "Pistols (Semi-Automatics)": 10, Blades: 12 };
+
+    expect(poolRating(pool, "Pistols")).toBe(10);
+    expect(poolRating(pool, "Longarms")).toBe(0);
+  });
+
+  it("poolRating does not match a different skill that merely starts the same", () => {
+    // "Pistol" must not pick up "Pistols (…)": the prefix includes the paren
+    expect(poolRating({ "Pistols (Holdouts)": 9 }, "Pistol")).toBe(0);
+  });
+
+  it("availBit says nothing for freely available gear", () => {
+    expect(availBit({ avail: "8R", avail_value: 8 }, testUi)).toContain("8R");
+    expect(availBit({ avail: "0", avail_value: 0 }, testUi)).toBe("");
+    expect(availBit({ avail_value: 4 }, testUi)).toBe("");
+    expect(availBit(null, testUi)).toBe("");
   });
 });
