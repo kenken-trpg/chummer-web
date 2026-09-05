@@ -1,6 +1,6 @@
 [project]
 name = "chummer-web-backend"
-version = "0.1.0"
+version = "0.2.0"
 description = "FastAPI backend for Chummer Web — an unofficial Shadowrun 5e character builder."
 requires-python = ">=3.11"
 

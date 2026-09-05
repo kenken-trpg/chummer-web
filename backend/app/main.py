@@ -67,7 +67,7 @@ limiter = Limiter(key_func=_client_ip, default_limits=[_RATE_LIMIT])
 app = FastAPI(
     title="Chummer Web",
     description="Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst Game Labs.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 app.state.limiter = limiter
