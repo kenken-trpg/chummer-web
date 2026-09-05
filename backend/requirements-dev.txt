@@ -3,9 +3,9 @@
 # Test + lint + type-check only — kept out of requirements.txt so they don't
 # land in the runtime image. Versions loose; CI is lockfile-free and tolerates
 # minor drift.
-pytest>=8.4.1
-pytest-cov>=6.0  # `make coverage-backend`; measurement only, no gate
+pytest>=9.1.1
+pytest-cov>=7.1.0  # `make coverage-backend`; measurement only, no gate
 httpx>=0.28.1  # starlette TestClient
-hypothesis>=6.100  # generated .chum5 roundtrips (tests/test_chummer_roundtrip_property.py)
-ruff>=0.16
-mypy>=1.13
+hypothesis>=6.167.1  # generated .chum5 roundtrips (tests/test_chummer_roundtrip_property.py)
+ruff>=0.16.5
+mypy>=2.3.1
