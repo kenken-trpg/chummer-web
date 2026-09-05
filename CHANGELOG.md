@@ -5,6 +5,28 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-09-05
+
+### Security
+
+Dependency-only release. `0.2.0` ships a frontend build with five known
+advisories in it; the image published for that tag is not rebuilt, so
+self-hosters on `:0.2.0` should move to `:0.2.1` (or `:0.2`, which now points
+here). Nothing else changed — no rules, no API, no UI.
+
+- `sharp` 0.34.5 → 0.35.4, for four libvips CVEs (GHSA-f88m-g3jw-g9cj).
+- `postcss` 8.4.31 → 8.5.28, for arbitrary `.map` file disclosure via an
+  attacker-controlled `sourceMappingURL` (CVE-2026-45623, CVE-2026-73646) and
+  two lesser issues (CVE-2026-41305, CVE-2026-69153). Pinned through an
+  `overrides` entry so Next stays on 15.x: the automated fix wanted Next 16,
+  which is a migration rather than a patch.
+- `next` 15.5.23 → 15.5.25.
+
+Neither package is reachable from a request — `postcss` reads this project's
+own CSS at build time and `sharp` backs Next's image optimisation, which this
+app does not use on user input — so the practical exposure was low. `npm audit`
+now reports zero.
+
 ## [0.2.0] — 2026-09-05
 
 ### Added
@@ -99,6 +121,7 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kenken-trpg/chummer-web/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/kenken-trpg/chummer-web/releases/tag/v0.1.0
