@@ -75,3 +75,40 @@ test("the sheet renders and a share link round-trips through the URL fragment", 
   await visitor.goto(url);
   await expect(visitor.getByText("Sharetest").first()).toBeVisible();
 });
+
+test("a .chum5 written by this app is readable by it again", async ({ page }) => {
+  // The export half is covered above. What nothing else reaches is the reader:
+  // the backend parses XML produced by another program, and every unit test
+  // that touches this path mocks either the fetch or the file. Round-tripping
+  // our own writer's output through our own reader is the cheapest way to
+  // exercise both for real — and it fails loudly if either side drifts.
+  await page.goto("/");
+  await waitForEditor(page);
+
+  const name = page.getByRole("textbox", { name: "キャラクター名" });
+  await name.fill("Roundtrip");
+  await name.blur();
+
+  const download = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: ".chum5書出" }).click(),
+  ]).then(([d]) => d);
+  // saveAs, not path(): Playwright's temp file has no extension, and the
+  // editor picks its reader off the file name
+  const chum5 = test.info().outputPath("Roundtrip.chum5");
+  await download.saveAs(chum5);
+
+  // the hidden input is what the toolbar button clicks
+  await page.locator('input[type="file"]').setInputFiles(chum5);
+
+  // a second character with the same name: the import minted a new id rather
+  // than overwriting the one that produced the file
+  const roster = page.getByRole("combobox", { name: "保存済みキャラクター" });
+  await expect(roster.getByRole("option", { name: /Roundtrip/ })).toHaveCount(2);
+  await expect(name).toHaveValue("Roundtrip");
+
+  // and it survives a reload, so the imported character reached IndexedDB
+  await page.reload();
+  await waitForEditor(page);
+  await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Roundtrip");
+});

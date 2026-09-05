@@ -198,11 +198,16 @@ supplement content stays in English. See `docs/translation-*` and
 `backend/data/ja_overrides/`.
 
 **New UI strings go through `lib/i18n`, not into the JSX.** A lint rule blocks
-Japanese literals in `app/` and `components/`; the 997 that predate it are
-recorded in `frontend/eslint-suppressions.json` so they do not fail the build.
+Japanese literals in `app/` and `components/`; anything that predates it is
+recorded in `frontend/eslint-suppressions.json` so it does not fail the build.
 That file is the burn-down counter — extract a batch, then `npm run lint:prune`
 (ESLint exits non-zero on a suppression that no longer applies, so the number
 cannot drift from reality). `docs/i18n.md` has the per-batch procedure.
+
+The extraction pass is **done**: 997 down to 2. Both survivors are
+`metadata.description` in `app/layout.tsx` and `app/share/layout.tsx` —
+server-rendered `<head>` values, so they cannot call a hook and the i18n layer
+does not reach them. Expect the counter to sit at 2, not 0.
 
 ## Scope / non-goals
 
