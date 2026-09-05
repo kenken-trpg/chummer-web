@@ -16,7 +16,7 @@ from scripts.make_rg_worksheet import rg_entries
 # How many RG names have been decided. Raise it with each batch — a floor rather
 # than an equality so a batch lands in one commit, and so re-running the
 # generator can never quietly undo work.
-DECIDED_FLOOR = 34
+DECIDED_FLOOR = 35
 
 
 @pytest.fixture(scope="module")

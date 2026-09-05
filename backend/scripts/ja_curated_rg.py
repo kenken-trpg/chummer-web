@@ -60,6 +60,7 @@ RG: dict[str, str] = {
     # --- weapon_accessories ------------------------------------------------
     "Collapsed Frame": "折り畳み式",
     "Gecko Grip (for Weapon with No Stock Slot)": "ゲッコー・グリップ(ストック・スロットを持たない武器用)",
+    "Silencer (PSK-3 Collapsible Heavy Pistol)": "消音器(PSK-3 折り畳み式ヘビーピストル)",
     "Vindicator 200-Round Belt": "ヴィンディケーター 200(ベルト)",
     # --- weapons -----------------------------------------------------------
     "Chainsaw": "チェーンソー",

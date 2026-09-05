@@ -4,7 +4,7 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **534 件**
+- オーバーレイ合計: **535 件**
 
 ## chumJA(SR4) category (52)
 
@@ -182,7 +182,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (368)
+## curated (369)
 
 | English | 日本語 |
 |---|---|
@@ -492,6 +492,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Shock Weave | ショック・ウィーブ |
 | Silencer (Ares Light Fire 70) | 消音器（アレス・ライトファイア70） |
 | Silencer (Ares Light Fire 75) | 消音器（アレス・ライトファイア75） |
+| Silencer (PSK-3 Collapsible Heavy Pistol) | 消音器(PSK-3 折り畳み式ヘビーピストル) |
 | Siphon | サイフォン |
 | Skate | 滑走 |
 | Slash | 斬撃/スラッシュ |
