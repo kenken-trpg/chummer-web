@@ -67,7 +67,10 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
 
   ```
   scripts/make_rg_worksheet.py     -> $JA_REF_DIR/rg-worksheet.tsv  (page-ordered)
-        …fill the `official` column while reading the book ('-' = leave English)
+        …fill the `official` column while reading the book:
+          '=' the `current` column matches the book, pin it as is
+          '-' leave the name on its English fallback
+          otherwise, the term the book prints
   scripts/import_rg_worksheet.py --write  -> scripts/ja_curated_rg.py
   scripts/regen_ja.sh                     -> data.json + the docs
   ```

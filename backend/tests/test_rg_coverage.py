@@ -8,6 +8,8 @@ every name is either checked (`RG`) or deliberately left in English
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from scripts.ja_curated_rg import RG, RG_UNVERIFIED
@@ -43,6 +45,31 @@ def test_translations_are_japanese() -> None:
     jp = re.compile(r"[぀-ヿ㐀-鿿]")
     latin = sorted(k for k, v in RG.items() if not jp.search(v))
     assert not latin, f"use RG_UNVERIFIED to leave a name in English: {latin}"
+
+
+def test_worksheet_shorthands(tmp_path: Path) -> None:
+    """'=' pins the `current` column, '-' skips, a term overrides — see the importer.
+
+    The verification pass leans on '=' for most of its several hundred rows, so
+    a silent change here would turn "checked against the book" into "copied
+    whatever upstream said" without anything failing.
+    """
+    from scripts.import_rg_worksheet import _read_worksheet
+
+    rows = [
+        ("english", "current", "official"),
+        ("Aikido", "合気道", "="),  # agrees with upstream -> pinned as 合気道
+        ("Bartitsu", "バリツ", "バーティツ"),  # the book differs -> the book wins
+        ("AK-98", "", "-"),  # printed in Latin either way
+        ("Krav Maga", "", "="),  # nothing to agree with -> a problem
+    ]
+    sheet = tmp_path / "ws.tsv"
+    sheet.write_text("".join("\t".join(r) + "\n" for r in rows), encoding="utf-8")
+    translations, skipped, problems = _read_worksheet(sheet)
+
+    assert translations == {"Aikido": "合気道", "Bartitsu": "バーティツ"}
+    assert skipped == {"AK-98"}
+    assert problems == ["L5: 'Krav Maga' marked '=' but its `current` column is empty"]
 
 
 def test_decided_count_does_not_regress(catalog_names: set[str]) -> None:

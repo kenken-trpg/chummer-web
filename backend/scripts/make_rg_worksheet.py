@@ -12,7 +12,8 @@ keeps the English page numbering (confirmed against the book, 2026-09-05).
 The `official` column is what you fill in:
 
     <blank>   not looked at yet
-    <term>    the term printed in the Japanese edition
+    =         the `current` column already matches the book — pin it as is
+    <term>    the term printed in the Japanese edition (differs from `current`)
     -         no official term / deliberately left on English fallback
 
 The `current` column is what the app shows today. For most rows that is an
@@ -209,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"   RG names: {total}  pending {counts['pending']} / verified {counts['verified']} / skipped {counts['skipped']}"
     )
-    print("   fill the `official` column ('-' = leave on English), then:")
+    print("   fill the `official` column ('=' = `current` is right, '-' = leave on English), then:")
     print("     python scripts/import_rg_worksheet.py --write")
     return 0
 

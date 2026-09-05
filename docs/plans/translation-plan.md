@@ -318,7 +318,11 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
   → TSV を吐く: `status / bucket / page / english / current / from / official / note`。
   `--bucket` でバッチ単位、`--pending-only` で未決分のみ。既定の出力先はリポジトリ外
   (`$JA_REF_DIR/rg-worksheet.tsv`)。**未記入の台帳は commit しない。**
-  `official` 欄の記入規則: 空 = 未着手 / 訳語 = 日本語版の表記 / `-` = 英語のまま。
+  `official` 欄の記入規則: 空 = 未着手 / `=` = `current` が書籍と一致 (そのまま採用) /
+  訳語 = 日本語版の表記 (`current` と異なる場合) / `-` = 英語のまま。
+  **`=` は突き合わせパスの前提**: 458 件の大半は「上流訳で合っている」はずで、同じ語を
+  数百回打ち直すのは、見つける誤りより持ち込む誤りのほうが多い。`=` でも `RG` に
+  収録されるので、検証済みという記録としては打ち込んだ場合と等価。
 - `backend/scripts/import_rg_worksheet.py`
   → 記入済み TSV を読み `ja_curated_rg.py` を生成。既定は追記 (バッチをまたいで累積)、
   `--replace` で置換。`--write` なしは dry-run。日本語を含まない訳語・カタログに無い名前・

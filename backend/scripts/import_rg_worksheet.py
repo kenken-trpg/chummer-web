@@ -5,8 +5,16 @@ Reads the TSV produced by `make_rg_worksheet.py` and rewrites the two tables in
 `scripts/ja_curated_rg.py`:
 
     official column holds a term  ->  RG[english] = term
+    official column holds "="     ->  RG[english] = the row's `current` value
     official column holds "-"     ->  RG_UNVERIFIED += (english,)
     official column is empty      ->  still pending, left alone
+
+The "=" form is what makes the verification pass tractable: most of the RG
+names already carry an upstream community translation, and the common answer
+is "the book says exactly that". Retyping several hundred identical terms
+would introduce more errors than it caught, so "=" means "checked, and the
+`current` column is right" — it pins the same term, from the same reader,
+with the same authority as a typed one.
 
 Runs are additive, so a worksheet covering one batch does not drop the batches
 already done; pass `--replace` to rebuild the tables from this file alone.
@@ -42,6 +50,7 @@ MODULE = ROOT / "scripts" / "ja_curated_rg.py"
 JP_RE = re.compile(r"[぀-ヿ㐀-鿿]")
 MARKER = "RG: dict[str, str] = {"
 SKIP = "-"
+AGREE = "="
 
 
 def _read_worksheet(path: Path) -> tuple[dict[str, str], set[str], list[str]]:
@@ -58,6 +67,11 @@ def _read_worksheet(path: Path) -> tuple[dict[str, str], set[str], list[str]]:
             if official == SKIP:
                 skipped.add(name)
                 continue
+            if official == AGREE:
+                official = (row.get("current") or "").strip()
+                if not official:
+                    problems.append(f"L{lineno}: {name!r} marked '=' but its `current` column is empty")
+                    continue
             if not JP_RE.search(official):
                 problems.append(f"L{lineno}: {name!r} -> {official!r} has no Japanese (use '-' to leave it in English)")
                 continue
