@@ -4,7 +4,7 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **503 件**
+- オーバーレイ合計: **534 件**
 
 ## chumJA(SR4) category (52)
 
@@ -182,7 +182,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (337)
+## curated (368)
 
 | English | 日本語 |
 |---|---|
@@ -215,6 +215,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Attributes | 能力値 |
 | Attune Animal | 動物同調 |
 | Attune Item | 物品同調 |
+| Auto-Injector | 自動注射器 |
 | Badger | アナグマ |
 | Barrage | 弾幕/バラージュ |
 | Belt-Feed, 100-round | ベルト給弾, 100発 |
@@ -236,6 +237,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Capricorn | カプリコーン |
 | Catch | 捕球/キャッチ |
 | Causal Nexus | 因果連結 |
+| Chainsaw | チェーンソー |
 | Charged Ward | 充填結界 |
 | Chemical Protection | 化学防護 |
 | Chill | 冷却/チル |
@@ -243,6 +245,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Circle of Cleansing | 浄化円 |
 | Claw | 爪撃/クロウ |
 | Close Combat | 近接戦闘 |
+| Collapsed Frame | 折り畳み式 |
 | Combat | 戦闘 |
 | Comet | 彗星/コメット |
 | Commercial | 商業施設 |
@@ -255,6 +258,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Coriolis | コリオリ |
 | Cracking | クラッキング |
 | Create Ally Spirit | 同盟精霊創造 |
+| Custom Fit | カスタムフィット |
+| Custom Fit (Stack) | カスタムフィット（累積） |
 | Cyber Microgrenade Launcher | サイバー・マイクログレネードランチャー |
 | Cyclops | キュクロプス |
 | Death | 死 |
@@ -310,11 +315,15 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Fomorian | フォモリアン |
 | Forced Defense | 強制防御/フォースド・ディフェンス |
 | Forced Heuristics | 強制ヒューリスティクス |
+| Fresnel Fabric | フレネル布 |
 | Frigid | 極寒/フリジッド |
 | Full Body Armor: Chemical Seal | フルボディアーマー：化学遮断 |
 | Full Body Armor: Environment Adaptation | フルボディアーマー：環境適応 |
 | Full Body Armor: Helmet | フルボディアーマー：ヘルメット |
 | Gambler | 賭博師 |
+| Gear Access | 装備アクセス |
+| Gecko Grip (for Weapon with No Stock Slot) | ゲッコー・グリップ(ストック・スロットを持たない武器用) |
+| Gel Packs | ゲルパック |
 | Generalist Sprite | ジェネラリスト・スプライト |
 | German Jujitsu | ジャーマン柔術 |
 | German Shepherd | ジャーマン・シェパード |
@@ -333,6 +342,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Health | 身体 |
 | Heightened Concentration | 集中力向上 |
 | Heinzelmännchen | ハインツェルメンヒェン |
+| High-Fashion Armor Clothing | 高級ファッション志向のアーマー・クロージング |
 | Hinduism | ヒンドゥー教 |
 | Hobgoblin | ホブゴブリン |
 | Holy Text | 聖典 |
@@ -343,6 +353,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | IC Tray | ICトレイ |
 | Ice Spear | 氷槍/アイス・スピア |
 | Ice Storm | 氷嵐/アイス・ストーム |
+| Illuminating | 発光 |
 | Illusion | 幻影 |
 | Improved Potential (Chaos Mentor) | 潜在力強化：(混沌メンター) |
 | Incision | 切開/インシジョン |
@@ -411,6 +422,9 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Necromancy | 死霊術 |
 | Net Bind | 網の拘束/ネット・バインド |
 | Neural Synergy | ニューラル・シナジー |
+| Newest Model | 最新モデル |
+| Nightshade IR | ナイトシェード IR |
+| Nightshade IR and Contacts | ナイトシェードIRとコンタクト |
 | Nocturna | ノクターナ |
 | Nonconductivity | 非導電 |
 | Obfuscating Ward | 隠蔽結界 |
@@ -422,6 +436,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Osmosis | 浸透 |
 | Outdoors | 野外 |
 | Overdrive | オーバードライブ |
+| Padded | 急所保護 |
 | Passenger | 同乗/パッセンジャー |
 | Peacemaker | ピースメーカー |
 | Personal Warmth | 保温/パーソナル・ウォームス |
@@ -440,12 +455,17 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Professional | 職業 |
 | Protect Vehicle | ヴィークル防護/プロテクト・ヴィークル |
 | Pryon | プライオン |
+| Pulse Weave | パルス・ウィーブ |
 | Quiet | クワイエット |
 | Radiation Barrier | 放射線障壁/レイディエーション・バリアー |
 | Radiation Beam | 放射線ビーム/レイディエーション・ビーム |
 | Radiation Burst | 放射線バースト/レイディエーション・バースト |
 | Radiation Shield | 放射線シールド/レイディエーション・シールド |
+| Radiation Shielding | 放射線遮蔽 |
 | Rapid Draw | 早抜き |
+| Rapid Transit: Diamond | ラピッド・トランジット: ダイヤモンド |
+| Rapid Transit: Elite | ラピッド・トランジット: エリート |
+| Rapid Transit: Platinum | ラピッド・トランジット: プラチナ |
 | Recorded Room | 録画室/レコーデッド・ルーム |
 | Redundancy | 冗長化 |
 | Resonance Bind | 共振バインド |
@@ -453,17 +473,23 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Resonance Resistance | 共振抵抗 |
 | Resonance Riding | 共振ライディング |
 | Resonance Scream | 共振スクリーム |
+| Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア（RIG): アーマー |
+| Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア（RIG): ヘルメット |
+| Restrictive | 動きにくい |
 | Rewind | 巻き戻し/リワインド |
 | Riposte | リポスト |
 | Rooting | 根付き |
 | Rosebush | 薔薇の茂み/ローズブッシュ |
 | Rot | 腐敗/ロット |
+| Ruthenium Polymer Coating | ルテニウム・ポリマー・コーディング |
+| SA Retiarius Net Gun | SA レティアルス・ネットガン |
 | Satyr | サテュロス |
 | Search History | 検索履歴 |
 | Secret Handshake | 秘密の握手/シークレット・ハンドシェイク |
 | Sending | 送信/センディング |
 | Services | 助力 |
 | Shock Frills | ショックフリル |
+| Shock Weave | ショック・ウィーブ |
 | Silencer (Ares Light Fire 70) | 消音器（アレス・ライトファイア70） |
 | Silencer (Ares Light Fire 75) | 消音器（アレス・ライトファイア75） |
 | Siphon | サイフォン |
@@ -472,8 +498,10 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Sleepwalker | スリープウォーカー |
 | Slow Vehicle | ヴィークル減速/スロー・ヴィークル |
 | Smith | 鍛冶師 |
+| Social | 社交 |
 | Sorcery | 魔術 |
 | Sourcerer Daemon | ソーサラー・デーモン |
+| Specialty Armor | 専用の防具 |
 | Spirit Claw | 精霊の爪 |
 | Spirit Ram | 精霊の衝角 |
 | Sprite Pet | スプライト・ペット |
@@ -501,9 +529,11 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Treasure Hunter | トレジャーハンター |
 | Troll | トロール |
 | Turn To Goo | 粘液化/ターン・トゥ・グー |
+| Universal Mirror Material | 自在反射材 |
 | Urban Brawl Parkour | アーバンブロウル・パルクール |
 | Urban Explorer Jumpsuit: Helmet | アーバンエクスプローラー・ジャンプスーツ：ヘルメット |
 | Ventriloquism | 腹話術 |
+| Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) |
 | Vines | 蔦/ヴァインズ |
 | Vodou | ヴォドゥン |
 | Wakyambi | ワキャンビ |
@@ -517,6 +547,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Wild Hunt | ワイルドハント |
 | Will of the Resonance | 共振の意志 |
 | Xapiri Thëpë | シャピリ・テペ |
+| YNT Softweave Armor | YNT ソフトウィーブ・アーマー |
 | Zombie | ゾンビ |
 | Zoroastrianism | ゾロアスター教 |
 | [Critter] Form | [クリッター] 化/[クリッター] フォーム |

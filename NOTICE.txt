@@ -62,14 +62,27 @@ Third-party data and translations
       the "sr5eja" column in docs/translation-glossary.md carries only an
       agree/differ marker.
 
+   d. Entry names checked against the official Japanese edition of the
+      Shadowrun 5th Edition supplement "Run & Gun" (Run & Gun 日本語版), a
+      commercial publication, all rights reserved by its publishers. Only the
+      correspondence "English entry name -> the term printed in that edition"
+      is recorded, in backend/scripts/ja_curated_rg.py. No rules text, tables,
+      headings or artwork from that book is reproduced here, and the overlay
+      format cannot hold anything but a name-to-term pair. This tool is not a
+      substitute for the book.
+
    Full methodology: backend/data/ja_overrides/README.md and
-   docs/translation-plan.md.
+   docs/plans/translation-plan.md.
 
    日本語用語オーバーレイ（backend/data/ja_overrides/）は、SR5 用語集に照らした
    手訳を主とし、一部の固有名カナ・カテゴリ語は chumJA（Chummer の SR4 期日本語訳、
    ライセンス表記なし）由来。エントリ別の出典は docs/translation-import-report.md。
    用語の裏取りに 2021 版シート用語 XSLT と shadowrun5eja（Foundry VTT SR5e
    日本語化、LICENSE なし）を参照している（大量取り込みはしていない）。
+   『シャドウラン 5th ラン＆ガン』日本語版（商業出版物・全著作権留保）は、
+   項目名の対訳のみを backend/scripts/ja_curated_rg.py に記録している。
+   ルール本文・表・見出し・図版は一切収録しておらず、本ツールは書籍の代替
+   ではない。
 
 3. Regression fixtures — backend/tests/snapshots/*.json
 

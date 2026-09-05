@@ -288,7 +288,8 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 
 穴埋め 36 件より、この 430 件の検証のほうが価値が高い。
 
-**進捗**: 仕組みは実装済み (5-1〜5-2、5-4〜5-5、2026-09-05)。**書籍を読む作業 (5-3) が未着手。**
+**進捗**: 仕組みは実装済み (5-1〜5-2、5-4〜5-5、2026-09-05)。5-3 は**穴埋めが完了**
+(未訳 48 → 13、うち 9 件はカテゴリ名)。**上流訳 430 件の突き合わせは未着手。**
 
 #### 5-1. 前提 — 先に決める 2 点 ✅
 
@@ -327,7 +328,14 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 - **前提の検証**: 最初のバッチ (武術) で、日本語版のページ番号が英語版と一致するかを
   確認する。ずれるなら `--sort name` に切り替える。
 
-#### 5-3. バッチ順 (視認性が高い順) — 未着手
+#### 5-3. バッチ順 (視認性が高い順)
+
+**先に穴埋めが 1 パスで済んだ** (2026-09-05)。書籍を持つ側が台帳の空欄行 48 件を
+横断して埋めたため、バッチ 3・4 の未訳分と category 3 件が一度に片付き、`RG` 31 件 ＋
+`RG_UNVERIFIED` 3 件 (`AK-98` / `FN MAG-5` / `HK XM30` — 書籍もラテン文字表記) が入った。
+残り 13 件は判断保留 (下表の「保留」)。以降のバッチは**上流訳の突き合わせ**が主目的になる。
+
+| # | 対象 | 件数 | 理由 |
 
 | # | 対象 | 件数 | 理由 |
 |---|---|---:|---|
@@ -336,6 +344,17 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 | 3 | armor + armor_mods | 132 | 未訳 36 件のうち 23 件がここ。カテゴリ 12 種もここで潰す |
 | 4 | weapons + weapon_accessories | 135 | |
 | 5 | gear + commlinks | 80 | |
+
+**保留 (英語表示のまま、`RG` にも `RG_UNVERIFIED` にも入れていない)**
+
+- 実項目 4 件: `Grenade: Paint (Radioactive Tracking Dye)` (＋ `, Aerodynamic`)、
+  `Ammo: Slingshot Capsule Round`、`Atomizer`。
+- category 9 件: `Armor Enhancements` / `Customized Ballistic Mask` / `Gear` /
+  `General` / `Improvised Weapons` / `PI-Tac` / `Rapid Transit Detailing` /
+  `Tools of the Trade` / `Vision Enhancements`。category は Chummer 側の分類語で、
+  書籍に対応する見出しがないものが多い。
+- `Silencer (PSK-3 Collapsible Heavy Pistol)`: 括弧内 (`PSK-3 折り畳み式ヘビーピストル`)
+  だけ判明。`Silencer` 本体の訳が未確定なので項目名としては保留。
 
 #### 5-4. 取り込みの仕組み ✅
 
@@ -479,3 +498,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
   `import_rg_worksheet.py` ＋ `ja_curated_rg.py` ＋ `test_rg_coverage.py` (`DECIDED_FLOOR`
   バーンダウン)。§7 に商業出版物を参照する場合の線引き (項目名のみ) を追記。
   **書籍を読むバッチ作業は未着手。**
+- 2026-09-05: フェーズ 5 の第 1 バッチ。書籍所持者が台帳の**空欄行 48 件**を横断して
+  記入。`RG` 31 件 ＋ `RG_UNVERIFIED` 3 件を収録し `DECIDED_FLOOR` を 34 に。未訳は
+  48 → 13 (実項目 4・category 9)。NOTICE.txt に日本語版書籍の出典を追記 (2-d)。
+  **残る 459 件 = 上流コミュニティ訳の突き合わせで、これが本来の主作業。**

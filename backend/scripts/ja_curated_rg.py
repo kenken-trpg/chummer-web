@@ -26,7 +26,49 @@ through the worksheet rather than by hand, so the two halves stay in step.
 from __future__ import annotations
 
 # english name -> official Japanese, as printed in the Japanese Run & Gun
-RG: dict[str, str] = {}
+RG: dict[str, str] = {
+    # --- armor -------------------------------------------------------------
+    "Social": "社交",
+    # --- armor+armor_mods --------------------------------------------------
+    "Custom Fit": "カスタムフィット",
+    "Custom Fit (Stack)": "カスタムフィット（累積）",
+    "Gear Access": "装備アクセス",
+    "Newest Model": "最新モデル",
+    "Padded": "急所保護",
+    "Radiation Shielding": "放射線遮蔽",
+    "Restrictive": "動きにくい",
+    "Ruthenium Polymer Coating": "ルテニウム・ポリマー・コーディング",
+    # --- armor_mods --------------------------------------------------------
+    "Auto-Injector": "自動注射器",
+    "Fresnel Fabric": "フレネル布",
+    "Gel Packs": "ゲルパック",
+    "Illuminating": "発光",
+    "Nightshade IR and Contacts": "ナイトシェードIRとコンタクト",
+    "Pulse Weave": "パルス・ウィーブ",
+    "Rapid Transit: Diamond": "ラピッド・トランジット: ダイヤモンド",
+    "Rapid Transit: Elite": "ラピッド・トランジット: エリート",
+    "Rapid Transit: Platinum": "ラピッド・トランジット: プラチナ",
+    "Responsive Interface Gear: Armor": "レスポンシブ・インターフェース・ギア（RIG): アーマー",
+    "Responsive Interface Gear: Helmet": "レスポンシブ・インターフェース・ギア（RIG): ヘルメット",
+    "Shock Weave": "ショック・ウィーブ",
+    "Universal Mirror Material": "自在反射材",
+    "YNT Softweave Armor": "YNT ソフトウィーブ・アーマー",
+    # --- category ----------------------------------------------------------
+    "High-Fashion Armor Clothing": "高級ファッション志向のアーマー・クロージング",
+    "Nightshade IR": "ナイトシェード IR",
+    "Specialty Armor": "専用の防具",
+    # --- weapon_accessories ------------------------------------------------
+    "Collapsed Frame": "折り畳み式",
+    "Gecko Grip (for Weapon with No Stock Slot)": "ゲッコー・グリップ(ストック・スロットを持たない武器用)",
+    "Vindicator 200-Round Belt": "ヴィンディケーター 200(ベルト)",
+    # --- weapons -----------------------------------------------------------
+    "Chainsaw": "チェーンソー",
+    "SA Retiarius Net Gun": "SA レティアルス・ネットガン",
+}
 
 # RG names deliberately left on English fallback (no official term / not pinned)
-RG_UNVERIFIED: tuple[str, ...] = ()
+RG_UNVERIFIED: tuple[str, ...] = (
+    "AK-98",
+    "FN MAG-5",
+    "HK XM30",
+)
