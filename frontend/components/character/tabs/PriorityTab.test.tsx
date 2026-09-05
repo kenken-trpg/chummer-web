@@ -57,7 +57,7 @@ const cell = (row: number, letter: number) =>
 describe("<PriorityTab>", () => {
   it("renders in Priority mode with the 5×5 grid and its help line", () => {
     renderTab();
-    expect(screen.getByRole("button", { name: "Priority" }).className).toContain("selected");
+    expect(screen.getByRole("button", { name: "優先度" }).className).toContain("selected");
     expect(rows()).toHaveLength(5);
     expect(rows()[0].querySelectorAll("td button")).toHaveLength(5);
     expect(screen.getByText(/A〜E は各1回/)).toBeDefined();
@@ -97,5 +97,107 @@ describe("<PriorityTab>", () => {
       character: { build_method: "SumToTen", derived: { sum_to_ten: { used: 8, max: 10 } as any } },
     });
     expect(screen.getByText(/合計 8\/10/)).toBeDefined();
+  });
+});
+
+describe("<PriorityTab> the table reads in Japanese", () => {
+  /** The real cell names, as they come out of the vendored Chummer data. */
+  const realTable: any = {
+    Heritage: {
+      A: { name: "A - Any metatype", metatypes: [], talents: [] },
+      B: { name: "B - Any metatype", metatypes: [], talents: [] },
+      C: { name: "C - Human, Dwarf, Elf, Ork, or A.I.", metatypes: [], talents: [] },
+      D: { name: "D - Human or Elf", metatypes: [], talents: [] },
+      E: { name: "E - Human", metatypes: [], talents: [] },
+    },
+    Attributes: {
+      A: { name: "A - 24 (12) Attributes", metatypes: [], talents: [] },
+      B: { name: "B - 20 (10) Attributes", metatypes: [], talents: [] },
+      C: { name: "C - 16 (8) Attributes", metatypes: [], talents: [] },
+      D: { name: "D - 14 (7) Attributes", metatypes: [], talents: [] },
+      E: { name: "E - 12 (6) Attributes", metatypes: [], talents: [] },
+    },
+    Talent: {
+      A: { name: "A - Magician or Technomancer", metatypes: [], talents: [] },
+      B: { name: "B - Adept, Magician, or Technomancer", metatypes: [], talents: [] },
+      C: { name: "C - Adept, Magician, or Technomancer", metatypes: [], talents: [] },
+      D: { name: "D - Adept or Aspected Magician", metatypes: [], talents: [] },
+      E: { name: "E - Mundane", metatypes: [], talents: [] },
+    },
+    Skills: {
+      A: { name: "A - 46 Skills/10 Skill Groups", metatypes: [], talents: [] },
+      B: { name: "B - 36 Skills/5 Skill Groups", metatypes: [], talents: [] },
+      C: { name: "C - 28 Skills/2 Skill Groups", metatypes: [], talents: [] },
+      D: { name: "D - 22 Skills/0 Skill Groups", metatypes: [], talents: [] },
+      E: { name: "E - 18 Skills/0 Skill Groups", metatypes: [], talents: [] },
+    },
+    Resources: {
+      A: { name: "A - 450,000\u00a5", metatypes: [], talents: [] },
+      B: { name: "B - 275,000\u00a5", metatypes: [], talents: [] },
+      C: { name: "C - 140,000\u00a5", metatypes: [], talents: [] },
+      D: { name: "D - 50,000\u00a5", metatypes: [], talents: [] },
+      E: { name: "E - 6,000\u00a5", metatypes: [], talents: [] },
+    },
+  };
+
+  function renderReal() {
+    const ch = makeCharacter();
+    return render(
+      <PriorityTab
+        catalog={makeCatalog({ priority_table: realTable })}
+        character={ch}
+        d={ch.derived}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={() => {}}
+        setCharacter={() => {}}
+      />,
+    );
+  }
+
+  it("localises every cell the vendored table ships", () => {
+    const { container } = renderReal();
+    const cells = [...container.querySelectorAll("tbody td button")].map((b) => b.textContent);
+    expect(cells).toEqual([
+      "ヒューマン, エルフ, ドワーフ, オーク, トロール",
+      "ヒューマン, エルフ, ドワーフ, オーク, トロール",
+      "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
+      "ヒューマン or エルフ",
+      "ヒューマン",
+      "24 (12) 能力値",
+      "20 (10) 能力値",
+      "16 (8) 能力値",
+      "14 (7) 能力値",
+      "12 (6) 能力値",
+      "魔法使いまたはミスティックアデプト or テクノマンサー",
+      "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+      "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+      "アデプト or 偏位魔法使い",
+      // not in the requested list; still English upstream
+      "Mundane",
+      "46 技能/10 技能グループ",
+      "36 技能/5 技能グループ",
+      "28 技能/2 技能グループ",
+      "22 技能/0 技能グループ",
+      "18 技能/0 技能グループ",
+      "450,000\u00a5",
+      "275,000\u00a5",
+      "140,000\u00a5",
+      "50,000\u00a5",
+      "6,000\u00a5",
+    ]);
+  });
+
+  it("heads the metatype row with メタタイプ", () => {
+    const { container } = renderReal();
+    expect([...container.querySelectorAll("td.rowhead")].map((el) => el.textContent)).toEqual([
+      "メタタイプ",
+      "能力値",
+      "魔力/共振力",
+      "技能",
+      "資金",
+    ]);
   });
 });

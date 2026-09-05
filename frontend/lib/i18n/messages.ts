@@ -27,7 +27,7 @@ const JA = {
   "locale.en": "English",
 
   "tab.priority": "優先度",
-  "tab.meta": "メタ",
+  "tab.meta": "メタタイプ",
   "tab.attrs": "能力値",
   "tab.skills": "技能",
   "tab.qualities": "資質",
@@ -49,7 +49,7 @@ const JA = {
 
   // hover copy for the section buttons
   "tab.priority.hint": "優先度（A〜E）を 5 つの項目に割り振ります。ここがキャラクターの土台です",
-  "tab.meta.hint": "メタと種族。能力値の下限・上限がここで決まります",
+  "tab.meta.hint": "メタタイプと種族。能力値の下限・上限がここで決まります",
   "tab.attrs.hint": "能力値を割り振ります。最低値までは無料、超えた分に能力値点を使います",
   "tab.skills.hint": "技能・技能グループ・知識技能のレーティング。判定のダイス数になります",
   "tab.qualities.hint": "ポジティブ／ネガティブ資質。長所はカルマを払い、短所はカルマを戻します",
@@ -1054,7 +1054,23 @@ const JA = {
   "sr.r5.electromagnetic": "電磁",
   "sr.r5.cosmetic": "外装",
 
-  "prio.cat.heritage": "メタ",
+  "prio.cell.anyMetatype": "ヒューマン, エルフ, ドワーフ, オーク, トロール",
+  "prio.cell.humanDwarfElfOrkAi": "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
+  "prio.cell.humanOrElf": "ヒューマン or エルフ",
+  "prio.cell.human": "ヒューマン",
+  "prio.cell.magicianOrTechnomancer": "魔法使いまたはミスティックアデプト or テクノマンサー",
+  "prio.cell.adeptMagicianTechnomancer":
+    "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+  "prio.cell.adeptOrAspectedMagician": "アデプト or 偏位魔法使い",
+  "prio.cell.attributes": "{points} ({special}) 能力値",
+  "prio.cell.skills": "{skills} 技能/{groups} 技能グループ",
+  // build-method buttons. "Sum to Ten" and "Karma" are kept as they read on
+  // the sheet; only Priority had a settled Japanese label.
+  "prio.method.priority": "優先度",
+  "prio.method.sumToTen": "Sum to Ten",
+  "prio.method.karma": "Karma",
+
+  "prio.cat.heritage": "メタタイプ",
   "prio.cat.attributes": "能力値",
   "prio.cat.talent": "魔力/共振力",
   "prio.cat.skills": "技能",
@@ -2169,6 +2185,19 @@ const EN: Catalog = {
   "sr.r5.body": "Body",
   "sr.r5.electromagnetic": "Electromagnetic",
   "sr.r5.cosmetic": "Cosmetic",
+
+  "prio.cell.anyMetatype": "Any metatype",
+  "prio.cell.humanDwarfElfOrkAi": "Human, Dwarf, Elf, Ork, or A.I.",
+  "prio.cell.humanOrElf": "Human or Elf",
+  "prio.cell.human": "Human",
+  "prio.cell.magicianOrTechnomancer": "Magician or Technomancer",
+  "prio.cell.adeptMagicianTechnomancer": "Adept, Magician, or Technomancer",
+  "prio.cell.adeptOrAspectedMagician": "Adept or Aspected Magician",
+  "prio.cell.attributes": "{points} ({special}) Attributes",
+  "prio.cell.skills": "{skills} Skills/{groups} Skill Groups",
+  "prio.method.priority": "Priority",
+  "prio.method.sumToTen": "Sum to Ten",
+  "prio.method.karma": "Karma",
 
   "prio.cat.heritage": "Heritage",
   "prio.cat.attributes": "Attributes",

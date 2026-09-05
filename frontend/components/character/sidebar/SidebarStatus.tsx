@@ -1,5 +1,6 @@
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
+import { buildMethodLabel } from "@/lib/character/priority-labels";
 
 export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProps) {
   return (
@@ -17,10 +18,10 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         <span>{ui("side.buildMethod")}</span>
         <b>
           {(ch.build_method || "Priority") === "Karma"
-            ? `Karma ${d.karma.remaining}/${d.karma.pool}`
+            ? `${buildMethodLabel("Karma", ui)} ${d.karma.remaining}/${d.karma.pool}`
             : (ch.build_method || "Priority") === "SumToTen"
-              ? `Sum to Ten ${d.sum_to_ten?.used ?? 0}/${d.sum_to_ten?.max ?? 10}`
-              : "Priority"}
+              ? `${buildMethodLabel("SumToTen", ui)} ${d.sum_to_ten?.used ?? 0}/${d.sum_to_ten?.max ?? 10}`
+              : buildMethodLabel("Priority", ui)}
         </b>
       </div>
       {error ? <p className="errors">{error}</p> : null}
