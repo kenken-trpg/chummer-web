@@ -47,5 +47,8 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.68.0",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
   }
 }
