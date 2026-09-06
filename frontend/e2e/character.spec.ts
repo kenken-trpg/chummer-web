@@ -25,10 +25,12 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
   await name.blur();
 
   // Edit through the engine: pick a metatype and let the sidebar totals move.
-  await page.getByRole("button", { name: "メタ" }).click();
+  // exact: the priority table's Heritage cells read 全てのメタタイプ, and the
+  // tab labels are short enough that a substring match reaches into the panel
+  await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
   await page.getByRole("button", { name: /Ork/ }).first().click();
 
-  await page.getByRole("button", { name: "能力値" }).click();
+  await page.getByRole("button", { name: "能力値", exact: true }).click();
   const body = page.getByRole("slider").first();
   await body.focus();
   await page.keyboard.press("ArrowRight");
