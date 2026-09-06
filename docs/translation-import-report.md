@@ -4,7 +4,7 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **535 件**
+- オーバーレイ合計: **519 件**
 
 ## chumJA(SR4) category (52)
 
@@ -63,7 +63,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Unarmed | 素手 |
 | Vehicle Active | ヴィークル能動 |
 
-## chumJA(SR4) name (114)
+## chumJA(SR4) name (113)
 
 | English | 日本語 |
 |---|---|
@@ -127,7 +127,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Leeching | 搾取術 |
 | Light | 光 |
 | Lion | ライオン |
-| Living Focus | 生体集束具 |
 | Magemask | メイジマスク |
 | Magic Sense | 魔力感知 |
 | Magical Guard | 魔法の守護 |
@@ -182,7 +181,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (369)
+## curated (354)
 
 | English | 日本語 |
 |---|---|
@@ -261,7 +260,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Custom Fit | カスタムフィット |
 | Custom Fit (Stack) | カスタムフィット(累積) |
 | Cyber Microgrenade Launcher | サイバー・マイクログレネードランチャー |
-| Cyclops | キュクロプス |
 | Death | 死 |
 | Decontamination | 除染/デコンタミネーション |
 | Decoy | 囮/デコイ |
@@ -276,7 +274,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Destroy [Vehicle] | [ヴィークル] 破壊/デストロイ [ヴィークル] |
 | Detection | 探知 |
 | Dispersion Circle | 拡散円 |
-| Disrupt [Focus] | [フォーカス] 破壊/ディスラプト [フォーカス] |
+| Disrupt [Focus] | [収束具] 破壊/ディスラプト [収束具] |
 | Dissonance Spike | ディソナンス・スパイク |
 | Divination | 占術 |
 | Doberman | ドーベルマン |
@@ -286,7 +284,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Druid | ドルイド |
 | Drum Magazine, 24-round | ドラムマガジン, 24発 |
 | Drum Magazine, 32-round | ドラムマガジン, 32発 |
-| Dryad | ドリアード |
 | Dwarf | ドワーフ |
 | Earth Elemental | 大地のエレメンタル |
 | Electrochromic Clothing | エレクトロクロミック・クロージング |
@@ -311,8 +308,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Fire Elemental | 火のエレメンタル |
 | Fire Resistance | 耐火 |
 | Flame Burst | 火炎バースト/フレイム・バースト |
+| Foci | 収束具 |
 | Focused Archery | 集中射法 |
-| Fomorian | フォモリアン |
 | Forced Defense | 強制防御/フォースド・ディフェンス |
 | Forced Heuristics | 強制ヒューリスティクス |
 | Fresnel Fabric | フレネル布 |
@@ -327,8 +324,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Generalist Sprite | ジェネラリスト・スプライト |
 | German Jujitsu | ジャーマン柔術 |
 | German Shepherd | ジャーマン・シェパード |
-| Giant | ジャイアント |
-| Gnome | ノーム |
 | Goddess | 女神 |
 | Gravity | 重力/グラヴィティ |
 | Gravity Well | 重力井戸/グラヴィティ・ウェル |
@@ -338,13 +333,11 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Guanyin | 観音 |
 | Hand of Glory | 栄光の手/ハンド・オブ・グローリー |
 | Hang Time | 滞空 |
-| Hanuman | ハヌマーン |
 | Health | 身体 |
 | Heightened Concentration | 集中力向上 |
 | Heinzelmännchen | ハインツェルメンヒェン |
 | High-Fashion Armor Clothing | 高級ファッション志向のアーマー・クロージング |
 | Hinduism | ヒンドゥー教 |
-| Hobgoblin | ホブゴブリン |
 | Holy Text | 聖典 |
 | Host Emulator | ホスト・エミュレータ |
 | Human | ヒューマン |
@@ -370,7 +363,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Keratin Control | ケラチン制御 |
 | Kiai | 気合 |
 | Kinesics Mastery | キネシクス習熟 |
-| Koborokuru | コボロクル |
 | Kreussler Fencing | クロイスラー・フェンシング |
 | Language | 言語 |
 | Lash | 鞭打ち/ラッシュ |
@@ -395,6 +387,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Liner - Insulation (5) | ライナー - 断熱 (5) |
 | Liner - Insulation (6) | ライナー - 断熱 (6) |
 | Little Red Riding Hood | 赤ずきん |
+| Living Focus | 生体収束具 |
 | Looking Glass | 姿見/ルッキング・グラス |
 | Magebolt | 魔道破/メイジボルト |
 | Maintain Warmth | 保温 |
@@ -403,12 +396,10 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Master Archer | 弓術の達人 |
 | Mathemagics | マスマジック |
 | Memory Displacement | 記憶転移 |
-| Menehune | メネフネ |
 | Metahuman | メタヒューマン |
 | Metavariant | メタバリアント |
 | Mimic | 模倣 |
 | Mindnet Extended | 広域精神網/エクステンデッド・マインドネット |
-| Minotaur | ミノタウロス |
 | Mirrored Persona | ミラー・ペルソナ |
 | Misread Marks | マーク誤読 |
 | Monkey | 猿 |
@@ -417,7 +408,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Mystic Aptitude | 神秘の適性 |
 | Mystic Guardian | 神秘の守護者 |
 | Napalm Wall | ナパームの壁/ナパーム・ウォール |
-| Nartaki | ナルタキ |
 | Nauseate | 吐き気/ノージエイト |
 | Necromancy | 死霊術 |
 | Net Bind | 網の拘束/ネット・バインド |
@@ -425,11 +415,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Newest Model | 最新モデル |
 | Nightshade IR | ナイトシェード IR |
 | Nightshade IR and Contacts | ナイトシェードIRとコンタクト |
-| Nocturna | ノクターナ |
 | Nonconductivity | 非導電 |
 | Obfuscating Ward | 隠蔽結界 |
-| Ogre | オーガ |
-| Oni | オニ |
 | Opium Den | 阿片窟/オピウム・デン |
 | Oracle | オラクル |
 | Ork | オーク |
@@ -483,7 +470,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Rot | 腐敗/ロット |
 | Ruthenium Polymer Coating | ルテニウム・ポリマー・コーティング |
 | SA Retiarius Net Gun | SA レティアルス・ネットガン |
-| Satyr | サテュロス |
 | Search History | 検索履歴 |
 | Secret Handshake | 秘密の握手/シークレット・ハンドシェイク |
 | Sending | 送信/センディング |
@@ -537,7 +523,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) |
 | Vines | 蔦/ヴァインズ |
 | Vodou | ヴォドゥン |
-| Wakyambi | ワキャンビ |
 | War | 戦争 |
 | Water Elemental | 水のエレメンタル |
 | Way of Unified Mana (Hapsum-Do) | 統一マナの道（ハプスムドー） |
@@ -547,7 +532,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Whale | 鯨 |
 | Wild Hunt | ワイルドハント |
 | Will of the Resonance | 共振の意志 |
-| Xapiri Thëpë | シャピリ・テペ |
 | YNT Softweave Armor | YNT ソフトウィーブ・アーマー |
 | Zombie | ゾンビ |
 | Zoroastrianism | ゾロアスター教 |

@@ -35,7 +35,7 @@ describe("<FociTab>", () => {
   it("renders the focus-limit line and the search box", () => {
     renderTab();
     expect(screen.getByText(/同時 0\//)).toBeDefined();
-    expect(screen.getByPlaceholderText("フォーカスを検索")).toBeDefined();
+    expect(screen.getByPlaceholderText("収束具を検索")).toBeDefined();
   });
 
   it("buys and crafts a focus via patch", () => {

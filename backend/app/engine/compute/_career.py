@@ -201,8 +201,8 @@ def nuyen_spend_breakdown(
         ),
         ("その他ギア", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
         ("ライフスタイル", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
-        ("気フォーカス", int(qi_nuyen or 0)),
-        ("フォーカス", int(foci_nuyen or 0)),
+        ("気収束具", int(qi_nuyen or 0)),
+        ("収束具", int(foci_nuyen or 0)),
         ("精霊", int(spirits_nuyen or 0)),
     ]
     return [{"kind": "nuyen", "label": label, "amount": amount} for label, amount in buckets if amount]

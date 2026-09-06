@@ -22,10 +22,15 @@ BANNED: dict[str, str] = {
     "属性": "能力値",
     "クオリティ": "資質",
     "コネクト": "コンタクト",
-    "メタタイプ": "メタ",
+    # NB: メタタイプ was briefly banned in favour of "メタ" (2026-08-30). It is
+    # allowed again as of 2026-09-05 — docs/translation-glossary.md L369 has
+    # said メタタイプ all along, so the abbreviation was the outlier.
     "ニューエン": "新円",  # the 2021 glossary's reading; the katakana form had drifted back in
     "強靭": "強靱",  # kanji-variant of 靱
     "レゾナンス": "共振力",
+    # Foci: chumJA's SR4 集束具 and the loanword フォーカス were both in use
+    "フォーカス": "収束具",
+    "集束具": "収束具",
 }
 # "スキル" is banned as a standalone label but kept in these proper gear names.
 SKILL_RE = re.compile(r"スキル(?!ソフト|ワイヤ|ジャック)")

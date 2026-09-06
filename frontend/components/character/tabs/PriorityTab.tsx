@@ -1,6 +1,8 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
 import { CATS, DEFAULT_PRIORITIES, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
+import { buildMethodLabel, priorityCellLabel } from "@/lib/character/priority-labels";
+import { talentLabel } from "@/lib/character/talent-labels";
 import { RangeInput } from "@/components/character/RangeInput";
 
 export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
@@ -34,21 +36,21 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
             });
           }}
         >
-          Priority
+          {buildMethodLabel("Priority", ui)}
         </button>
         <button
           className={`choice ${(ch.build_method || "Priority") === "SumToTen" ? "selected" : ""}`}
           title={ui("prio.methodSumHint")}
           onClick={() => patch({ build_method: "SumToTen" })}
         >
-          Sum to Ten
+          {buildMethodLabel("SumToTen", ui)}
         </button>
         <button
           className={`choice ${(ch.build_method || "Priority") === "Karma" ? "selected" : ""}`}
           title={ui("prio.methodKarmaHint")}
           onClick={() => patch({ build_method: "Karma", talent: ch.talent || "Mundane" })}
         >
-          Karma
+          {buildMethodLabel("Karma", ui)}
         </button>
         {(ch.build_method || "Priority") === "SumToTen" ? (
           <span className="muted">
@@ -104,7 +106,7 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
             <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
               {(catalog.karma_talents || []).map((t) => (
                 <option key={t.name} value={t.name}>
-                  {t.label || t.name}
+                  {talentLabel(t.name, t.label, ui)}
                   {t.magic ? ` / MAG` : ""}
                   {t.resonance ? ` / RES` : ""}
                 </option>
@@ -212,7 +214,9 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
                             patch(extra);
                           }}
                         >
-                          {cell?.name?.replace(/^[A-E]\s*-\s*/, "") || letter}
+                          {cell?.name
+                            ? priorityCellLabel(cell.name.replace(/^[A-E]\s*-\s*/, ""), ui)
+                            : letter}
                         </button>
                       </td>
                     );

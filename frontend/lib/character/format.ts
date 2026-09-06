@@ -243,3 +243,16 @@ export function limbQualityLine(q: NonNullable<Character["derived"]["limb_qualit
     .join(ui("common.termSep"));
   return ui("fmt.limb.quality", { count: q.count, pairs: q.pairs, parts, effect });
 }
+
+/**
+ * "サテュロス (Satyr)" — the Japanese name with the catalog's English one
+ * beside it, so a name can still be looked up in the rulebook.
+ *
+ * Untranslated entries used to come out as "Satyr (Satyr)". Enough of the
+ * catalog is on the English fallback — every Run Faster metavariant, for one —
+ * that the doubling was the common case, not the exception.
+ */
+export function withOriginal(name: string, tr: (name: string) => string): string {
+  const ja = tr(name);
+  return ja === name ? name : `${ja} (${name})`;
+}

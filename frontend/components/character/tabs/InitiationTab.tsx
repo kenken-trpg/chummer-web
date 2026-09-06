@@ -1,6 +1,7 @@
 "use client";
 
 import { RangeInput } from "@/components/character/RangeInput";
+import { withOriginal } from "@/lib/character/format";
 import type { TabPanelProps } from "@/components/character/types";
 
 export function InitiationTab({
@@ -156,12 +157,12 @@ export function InitiationTab({
                       {kind === "art"
                         ? (catalog.magic_arts || []).map((item) => (
                             <option key={item.id} value={item.id}>
-                              {tr(item.name)} ({item.name})
+                              {withOriginal(item.name, tr)}
                             </option>
                           ))
                         : metaOptions.map((item) => (
                             <option key={item.id} value={item.id}>
-                              {tr(item.name)} ({item.name})
+                              {withOriginal(item.name, tr)}
                               {item.required?.length
                                 ? ui("init.requires", { list: item.required.join(", ") })
                                 : ""}

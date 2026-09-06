@@ -1,6 +1,6 @@
 # chummer-web 日本語訳 改善計画
 
-最終更新: 2026-09-05
+最終更新: 2026-09-06
 
 ## 1. プロジェクト概要
 
@@ -241,7 +241,7 @@ frontend 各タブ:  データ名は tr() 経由、UI ラベルは日本語ハ�
 **4a. 用語一貫性 lint ✅ (2026-08-30)**
 
 - `backend/tests/test_terminology.py` (5 件)。統一した UI 用語が逆戻りしていないか機械チェック:
-  - 禁止語 `属性`/`クオリティ`/`コネクト`/`メタタイプ`/`強靭`/`レゾナンス`、および `スキル`
+  - 禁止語 `属性`/`クオリティ`/`コネクト`/`ニューエン`/`強靭`/`レゾナンス`、および `スキル`
     (`スキルソフト`/`スキルワイヤ`/`スキルジャック` は許可) を
     **frontend 全ソース (47 ファイル) ＋ `backend/app/*.py` ＋ `ja_overrides/*.json` ＋
     `ja_curated_spells.py`** から検出したら fail。
@@ -525,6 +525,7 @@ verbatim 取り込みは避ける」) は経緯として残す。
 - 2026-08-30: フェーズ 3a。`ui_strings` を public_catalog／frontend に配線、`ui.json` を 34 件 seed。
 - 2026-08-30: フェーズ 3b。能力値ラベルを `ui-strings.ts` の `attrShort`/`attrLabel` 経由に移行、`ATTR_JA` 定数を削除。
 - 2026-08-30: UI 用語統一。属性→能力値 / クオリティ→資質 / スキル→技能 / メタタイプ→メタ / コネクト→コンタクト / 魔法・レゾナンス→魔力・共振力 / 有利・不利→有利な資質・不利な資質。
+- 2026-09-05: メタタイプ→メタ を撤回（グロッサリ L369 が一貫して「メタタイプ」のため）。禁止語表からも削除。
 - 2026-08-30: フェーズ 4a。`test_terminology.py` で用語逆戻りを機械検出 (5 件、計 419 テスト)。
 - 2026-08-30: 参考資料調査。Foundry `shadowrun5eja` を用語集に統合 (統合 559 語、seed 候補 303 語)。
 - 2026-08-30: フェーズ 2b 小バケツ。mentors/lifestyles/martial_arts/powers/echoes/CF を 102 件訳出 (overlay 465)。
@@ -555,3 +556,12 @@ verbatim 取り込みは避ける」) は経緯として残す。
   日本語版のページ番号が英語版と一致することを確認し、台帳の前提注記を削除。
   保留していた `Silencer (PSK-3 …)` を承認のうえ収録し `DECIDED_FLOOR` 35、
   未訳 13 件 (実項目 4・category 9)。
+- 2026-09-06: メタバリアント 17 件（`Nartaki` `Gnome` `Hanuman` `Koborokuru` `Menehune`
+  `Hobgoblin` `Ogre` `Oni` `Satyr` `Nocturna` `Dryad` `Wakyambi` `Xapiri Thëpë`
+  `Cyclops` `Fomorian` `Giant` `Minotaur`）を英語フォールバックに戻した。全件が
+  『Run Faster』出典で、収録していたカタカナは音写であり典拠のある定訳ではないため。
+  SR5 コアの 5 メタタイプ（ヒューマン／エルフ／ドワーフ／オーク／トロール）は据え置き。
+  同じ理由で、タレント欄の `Apprentice` `Aware` `Enchanter` `Explorer`（いずれも RF）も
+  英語のまま、レーティング部分（`魔力6/術式10` 等）のみ日本語にしている。
+  優先度表の文言も更新: `Any metatype`→全てのメタタイプ、`Human or Elf`→エルフ or ヒューマン、
+  Magician 行の「またはミスティックアデプト」を削除（`魔法使い or テクノマンサー`）。
