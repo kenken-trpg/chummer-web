@@ -4,7 +4,7 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **518 件**
+- オーバーレイ合計: **519 件**
 
 ## chumJA(SR4) category (52)
 
@@ -63,7 +63,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Unarmed | 素手 |
 | Vehicle Active | ヴィークル能動 |
 
-## chumJA(SR4) name (114)
+## chumJA(SR4) name (113)
 
 | English | 日本語 |
 |---|---|
@@ -127,7 +127,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Leeching | 搾取術 |
 | Light | 光 |
 | Lion | ライオン |
-| Living Focus | 生体集束具 |
 | Magemask | メイジマスク |
 | Magic Sense | 魔力感知 |
 | Magical Guard | 魔法の守護 |
@@ -182,7 +181,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (352)
+## curated (354)
 
 | English | 日本語 |
 |---|---|
@@ -275,7 +274,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Destroy [Vehicle] | [ヴィークル] 破壊/デストロイ [ヴィークル] |
 | Detection | 探知 |
 | Dispersion Circle | 拡散円 |
-| Disrupt [Focus] | [フォーカス] 破壊/ディスラプト [フォーカス] |
+| Disrupt [Focus] | [収束具] 破壊/ディスラプト [収束具] |
 | Dissonance Spike | ディソナンス・スパイク |
 | Divination | 占術 |
 | Doberman | ドーベルマン |
@@ -309,6 +308,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Fire Elemental | 火のエレメンタル |
 | Fire Resistance | 耐火 |
 | Flame Burst | 火炎バースト/フレイム・バースト |
+| Foci | 収束具 |
 | Focused Archery | 集中射法 |
 | Forced Defense | 強制防御/フォースド・ディフェンス |
 | Forced Heuristics | 強制ヒューリスティクス |
@@ -387,6 +387,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Liner - Insulation (5) | ライナー - 断熱 (5) |
 | Liner - Insulation (6) | ライナー - 断熱 (6) |
 | Little Red Riding Hood | 赤ずきん |
+| Living Focus | 生体収束具 |
 | Looking Glass | 姿見/ルッキング・グラス |
 | Magebolt | 魔道破/メイジボルト |
 | Maintain Warmth | 保温 |

@@ -51,6 +51,10 @@ CURATED: dict[str, str] = {
     # the katakana forms here were transliterations, not an established
     # Japanese rendering anyone could look up. The five core metatypes above
     # stay translated; they are SR5 core and the glossary carries them.
+    # 収束具, settling the "needs a manual pass" note this category carried:
+    # chumJA's SR4 集束具 and the loanword フォーカス were both in use.
+    "Foci": "収束具",
+    "Living Focus": "生体収束具",  # chumJA gives 生体集束具
     # spell categories (glossary lang.*Spells minus the 呪文 suffix used elsewhere)
     "Combat": "戦闘",
     "Detection": "探知",
@@ -164,7 +168,6 @@ CURATED.update(_RG)
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
     "Armor",  # keep vendored 防具 (category sense), not glossary 装甲 (the value)
-    "Foci",  # SR5 official is フォーカス, not chumJA's 集束具 — needs a manual pass
 }
 
 # chumJA <name> matches to skip (wrong sense in SR4 -> SR5).

@@ -338,9 +338,9 @@ def apply_focus_limits(
     count_max = max(0, int(mag or 0))
     force_max = count_max * FOCUS_FORCE_MULT
     if count_max and count > count_max:
-        errors.append(f"結合できるフォーカスは魔力までです（{count}/{count_max}）")
+        errors.append(f"結合できる収束具は魔力までです（{count}/{count_max}）")
     if force_max and force > force_max:
-        errors.append(f"結合フォーカスのForce合計が上限を超えています（{force}/{force_max}）")
+        errors.append(f"結合収束具のForce合計が上限を超えています（{force}/{force_max}）")
     return {"count": count, "count_max": count_max, "force": force, "force_max": force_max}
 
 

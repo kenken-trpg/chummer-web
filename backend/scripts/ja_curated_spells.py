@@ -22,7 +22,7 @@ from __future__ import annotations
 
 SPELLS: dict[str, str] = {
     # --- Combat ---------------------------------------------------------------
-    "Disrupt [Focus]": "[フォーカス] 破壊/ディスラプト [フォーカス]",
+    "Disrupt [Focus]": "[収束具] 破壊/ディスラプト [収束具]",
     "Destroy [Free Spirit]": "[自由精霊] 破壊/デストロイ [フリースピリット]",
     "Destroy [Vehicle]": "[ヴィークル] 破壊/デストロイ [ヴィークル]",
     "Insecticide [Insect Spirit]": "[昆虫精霊] 殺虫/インセクティサイド [インセクトスピリット]",

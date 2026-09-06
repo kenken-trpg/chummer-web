@@ -207,6 +207,23 @@ td.rowhead {
   gap: 8px;
   margin: 6px 0;
 }
+/* 80px fit "射撃" and nothing longer, so most of the list wrapped onto two
+   lines — "サイバーテクノロジー" wants 159px. `minmax`, not `max-content`:
+   each row is its own grid, so a content-sized column would start every
+   slider at a different x, while a range shrinks by the same amount in every
+   row and keeps them aligned. A name that still outgrows the track is
+   truncated rather than wrapped — they all carry a title. */
+.skill-row > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skill-row {
+  grid-template-columns: minmax(120px, 168px) 1fr 88px;
+}
+.skill-row.has-spec {
+  grid-template-columns: minmax(120px, 168px) 1fr minmax(108px, 168px) 108px;
+}
 /* label is "BOD 強靱力" (code + JA name) — keep it on one line */
 .attr-row {
   grid-template-columns: minmax(104px, max-content) 1fr 88px;
@@ -214,11 +231,8 @@ td.rowhead {
 .attr-row > span:first-child {
   white-space: nowrap;
 }
-.skill-row.has-spec {
-  grid-template-columns: 80px 1fr minmax(108px, 168px) 108px;
-}
 .skill-row.has-spec.can-delete {
-  grid-template-columns: minmax(110px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
+  grid-template-columns: minmax(120px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
 }
 /* category heading inside the active-skill list — quieter than the <h3>
    section titles it sits under */
