@@ -1,5 +1,7 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { talentLabel } from "@/lib/character/talent-labels";
+import { withOriginal } from "@/lib/character/format";
 
 export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps) {
   const table = catalog.priority_table;
@@ -45,7 +47,7 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
                 .find((m) => m.name === ch.metatype)
                 ?.metavariants.map((v) => (
                   <option key={v.name} value={v.name}>
-                    {tr(v.name)} ({v.name})
+                    {withOriginal(v.name, tr)}
                   </option>
                 ))}
             </select>
@@ -64,7 +66,7 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
               : table.Talent[ch.priorities.Talent].talents
             ).map((t) => (
               <option key={t.name} value={t.name}>
-                {t.label || t.name}
+                {talentLabel(t.name, t.label, ui)}
               </option>
             ))}
           </select>

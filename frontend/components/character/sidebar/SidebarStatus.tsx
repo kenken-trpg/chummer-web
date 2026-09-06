@@ -1,6 +1,7 @@
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
 import { buildMethodLabel } from "@/lib/character/priority-labels";
+import { talentLabel } from "@/lib/character/talent-labels";
 
 export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProps) {
   return (
@@ -8,7 +9,8 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       <h2>{ch.name}</h2>
       <div className="muted">
         {tr(ch.metatype)}
-        {ch.metavariant ? ` / ${tr(ch.metavariant)}` : ""} ・ {ch.talent}
+        {ch.metavariant ? ` / ${tr(ch.metavariant)}` : ""} ・{" "}
+        {talentLabel(ch.talent, ch.talent, ui)}
       </div>
       <div className="stat">
         <span>{ui("side.mode")}</span>

@@ -2,6 +2,7 @@
 
 import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
+import { withOriginal } from "@/lib/character/format";
 
 export function SubmersionTab({
   catalog,
@@ -118,7 +119,7 @@ export function SubmersionTab({
                       <option value="">{ui("common.choose")}</option>
                       {(catalog.echoes || []).map((item) => (
                         <option key={item.id} value={item.id}>
-                          {tr(item.name)} ({item.name})
+                          {withOriginal(item.name, tr)}
                           {item.max_takes == null
                             ? ui("common.repeatable")
                             : item.max_takes > 1

@@ -1,6 +1,6 @@
 # chummer-web 日本語訳 改善計画
 
-最終更新: 2026-09-05
+最終更新: 2026-09-06
 
 ## 1. プロジェクト概要
 
@@ -556,3 +556,12 @@ verbatim 取り込みは避ける」) は経緯として残す。
   日本語版のページ番号が英語版と一致することを確認し、台帳の前提注記を削除。
   保留していた `Silencer (PSK-3 …)` を承認のうえ収録し `DECIDED_FLOOR` 35、
   未訳 13 件 (実項目 4・category 9)。
+- 2026-09-06: メタバリアント 17 件（`Nartaki` `Gnome` `Hanuman` `Koborokuru` `Menehune`
+  `Hobgoblin` `Ogre` `Oni` `Satyr` `Nocturna` `Dryad` `Wakyambi` `Xapiri Thëpë`
+  `Cyclops` `Fomorian` `Giant` `Minotaur`）を英語フォールバックに戻した。全件が
+  『Run Faster』出典で、収録していたカタカナは音写であり典拠のある定訳ではないため。
+  SR5 コアの 5 メタタイプ（ヒューマン／エルフ／ドワーフ／オーク／トロール）は据え置き。
+  同じ理由で、タレント欄の `Apprentice` `Aware` `Enchanter` `Explorer`（いずれも RF）も
+  英語のまま、レーティング部分（`魔力6/術式10` 等）のみ日本語にしている。
+  優先度表の文言も更新: `Any metatype`→全てのメタタイプ、`Human or Elf`→エルフ or ヒューマン、
+  Magician 行の「またはミスティックアデプト」を削除（`魔法使い or テクノマンサー`）。

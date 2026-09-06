@@ -9,24 +9,18 @@ const en = (k: Parameters<typeof translate>[1], v?: Record<string, string | numb
 
 describe("priorityCellLabel", () => {
   it("names the metatype rows", () => {
-    expect(priorityCellLabel("Any metatype", ja)).toBe(
-      "ヒューマン, エルフ, ドワーフ, オーク, トロール",
-    );
+    expect(priorityCellLabel("Any metatype", ja)).toBe("全てのメタタイプ");
     expect(priorityCellLabel("Human, Dwarf, Elf, Ork, or A.I.", ja)).toBe(
       "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
     );
-    expect(priorityCellLabel("Human or Elf", ja)).toBe("ヒューマン or エルフ");
+    expect(priorityCellLabel("Human or Elf", ja)).toBe("エルフ or ヒューマン");
     expect(priorityCellLabel("Human", ja)).toBe("ヒューマン");
   });
 
-  it("spells out that the Magician rows also cover Mystic Adept", () => {
-    // Priority A "Magician" grants Mystic Adept as well; the English cell
-    // leaves that to the rulebook, the Japanese one says it.
-    expect(priorityCellLabel("Magician or Technomancer", ja)).toBe(
-      "魔法使いまたはミスティックアデプト or テクノマンサー",
-    );
+  it("names the talent rows", () => {
+    expect(priorityCellLabel("Magician or Technomancer", ja)).toBe("魔法使い or テクノマンサー");
     expect(priorityCellLabel("Adept, Magician, or Technomancer", ja)).toBe(
-      "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+      "アデプト, 魔法使い or テクノマンサー",
     );
     expect(priorityCellLabel("Adept or Aspected Magician", ja)).toBe("アデプト or 偏位魔法使い");
   });

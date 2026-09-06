@@ -9,8 +9,7 @@ import type { MsgKey, UiFn } from "@/lib/i18n";
  * on the page.
  *
  * They are not entity names, so `tr` cannot reach them: "Magician or
- * Technomancer" is a phrase, and the Japanese for it deliberately spells out
- * what Priority A actually grants (Magician *or* Mystic Adept). The
+ * Technomancer" is a phrase, not a thing the catalog names. The
  * number-bearing rows are patterns rather than fixed strings, so they are
  * rewritten by shape instead of looked up.
  */
@@ -24,6 +23,8 @@ const CELL_KEYS: Record<string, MsgKey> = {
   "Magician or Technomancer": "prio.cell.magicianOrTechnomancer",
   "Adept, Magician, or Technomancer": "prio.cell.adeptMagicianTechnomancer",
   "Adept or Aspected Magician": "prio.cell.adeptOrAspectedMagician",
+  // shared with the talent dropdown, which names the same tier
+  Mundane: "talent.mundane",
 };
 
 const ATTRIBUTES = /^(\d+) \((\d+)\) Attributes$/;

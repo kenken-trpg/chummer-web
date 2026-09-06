@@ -6,6 +6,7 @@ import { TabBar } from "@/components/character/TabBar";
 import { TabPanels } from "@/components/character/TabPanels";
 import type { TabPanelProps } from "@/components/character/types";
 import { Toolbar } from "@/components/character/Toolbar";
+import { AppFooter } from "@/components/character/AppFooter";
 import { LocaleSwitch } from "@/components/LocaleSwitch";
 import type { Tab } from "@/lib/character/constants";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
@@ -84,6 +85,8 @@ export default function Page() {
           onPortraitFile={onPortraitFile}
           setTab={setTab}
         />
+
+        <AppFooter />
       </main>
 
       <CharacterSidebar

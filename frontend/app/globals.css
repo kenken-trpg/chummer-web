@@ -79,6 +79,16 @@ button {
   grid-template-columns: 1fr 320px;
   min-height: 100vh;
 }
+/* a grid track is min-content wide by default, so one long <option> used to
+   push the whole main column out under the sidebar */
+.main,
+.main label,
+.main .grid > * {
+  min-width: 0;
+}
+.main select {
+  max-width: 100%;
+}
 
 .main {
   padding: 20px 24px 48px;
@@ -104,11 +114,16 @@ h1 {
   margin-bottom: 16px;
 }
 
+/* The toolbar above is file/roster actions; this row is where you are in the
+   character. They used to share one look, so the two rows read as one long
+   strip of buttons — hence the rule between them and the pill shape here. */
 .tabs {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
   margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 .tab,
 .btn {
@@ -116,6 +131,16 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 6px 12px;
+}
+.tab {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 999px;
+  color: var(--muted);
+}
+.tab:hover {
+  background: var(--panel-2);
+  color: var(--text);
 }
 .tab.active,
 .btn.primary {
@@ -339,8 +364,11 @@ input[type="search"] {
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
+/* Tall enough to be worth scrolling, short enough that the search box and the
+   footnote stay on screen. A flat 280px left most of the window empty on a
+   desktop, so it follows the viewport instead. */
 .quality-list {
-  max-height: 280px;
+  max-height: clamp(280px, 58vh, 760px);
   overflow: auto;
 }
 .quality-item input[type="text"] {
@@ -493,6 +521,16 @@ input[type="search"] {
   margin: 8px 0 12px;
   font-size: 0.8rem;
   color: var(--muted);
+}
+/* the filter chips share the .tab class with the section bar, but they sit
+   inside a card with nothing above them — keep their outline */
+.option-row .tab {
+  border-color: var(--line);
+  background: var(--panel-2);
+}
+.option-row .tab.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
 }
 .option-row label {
   display: flex;
@@ -1236,4 +1274,19 @@ input[type="search"] {
   border-left: 3px solid var(--ok);
   border-radius: 4px;
   font-size: 13px;
+}
+
+.app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.app-footer a {
+  color: var(--accent);
 }

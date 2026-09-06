@@ -18,6 +18,7 @@ import {
   mergeSpecialArmor,
   optionalNumber,
   deviceRatingBit,
+  withOriginal,
   poolRating,
   skillDice,
   testLine,
@@ -381,5 +382,17 @@ describe("small bits", () => {
     expect(availBit({ avail: "0", avail_value: 0 }, testUi)).toBe("");
     expect(availBit({ avail_value: 4 }, testUi)).toBe("");
     expect(availBit(null, testUi)).toBe("");
+  });
+});
+
+describe("withOriginal", () => {
+  const tr = (name: string) => ({ Satyr: "サテュロス" })[name] ?? name;
+
+  it("puts the English name beside the Japanese one", () => {
+    expect(withOriginal("Satyr", tr)).toBe("サテュロス (Satyr)");
+  });
+
+  it("does not repeat a name that has no translation", () => {
+    expect(withOriginal("Nartaki", tr)).toBe("Nartaki");
   });
 });

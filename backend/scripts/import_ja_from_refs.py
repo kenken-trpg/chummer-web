@@ -46,24 +46,11 @@ CURATED: dict[str, str] = {
     "Dwarf": "ドワーフ",
     "Ork": "オーク",
     "Troll": "トロール",
-    # core metavariants (Run Faster)
-    "Nartaki": "ナルタキ",
-    "Gnome": "ノーム",
-    "Hanuman": "ハヌマーン",
-    "Koborokuru": "コボロクル",
-    "Menehune": "メネフネ",
-    "Oni": "オニ",
-    "Satyr": "サテュロス",
-    "Nocturna": "ノクターナ",
-    "Dryad": "ドリアード",
-    "Wakyambi": "ワキャンビ",
-    "Xapiri Thëpë": "シャピリ・テペ",
-    "Fomori": "フォモール",
-    "Giant": "ジャイアント",
-    "Minotaur": "ミノタウロス",
-    "Cyclops": "キュクロプス",
-    "Formori": "フォモール",
-    "Ghoul": "グール",
+    # Metavariants are deliberately absent. Every one of them is Run Faster's,
+    # and the project shows Run Faster entries under their English names —
+    # the katakana forms here were transliterations, not an established
+    # Japanese rendering anyone could look up. The five core metatypes above
+    # stay translated; they are SR5 core and the glossary carries them.
     # spell categories (glossary lang.*Spells minus the 呪文 suffix used elsewhere)
     "Combat": "戦闘",
     "Detection": "探知",
@@ -97,10 +84,6 @@ CURATED: dict[str, str] = {
     "Outdoors": "野外",
     "Sorcery": "魔術",
     "Tasking": "タスキング",
-    # remaining playable metavariants
-    "Hobgoblin": "ホブゴブリン",
-    "Ogre": "オーガ",
-    "Fomorian": "フォモリアン",
     # derived-value pseudo-entity + a category shown via tr() (glossary lang.*)
     "Acceleration": "加速値",
     "Services": "助力",

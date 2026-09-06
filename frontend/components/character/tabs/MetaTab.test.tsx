@@ -68,6 +68,38 @@ describe("<MetaTab>", () => {
     expect(patch).toHaveBeenCalledWith({ metavariant: "Night One" });
   });
 
+  it("reads the talent options in Japanese", () => {
+    const catalog = makeCatalog({
+      priority_table: {
+        ...priorityTable,
+        Talent: {
+          B: {
+            talents: [
+              { name: "Adept", label: "Adept - 6 Magic", value: 6 },
+              { name: "Magician", label: "Magician - 4 Magic/7 Spells", value: 4 },
+              {
+                name: "Technomancer",
+                label: "Technomancer - 4 Resonance/4 Complex Forms",
+                value: 4,
+              },
+              { name: "Apprentice", label: "Apprentice - 5 Magic", value: 5 },
+            ],
+          },
+        },
+      } as any,
+    });
+    renderTab({ catalog, character: { priorities: { Heritage: "E", Talent: "B" } } as any });
+    expect(
+      [...screen.getByRole("combobox").querySelectorAll("option")].map((o) => o.textContent),
+    ).toEqual([
+      "アデプト - 魔力6",
+      "魔法使い - 魔力4/術式7",
+      "テクノマンサー - 共振力4/複合体4",
+      // Run Faster's, so English — as its metavariants are
+      "Apprentice - 魔力5",
+    ]);
+  });
+
   it("in Karma build it lists catalog metatypes with a karma cost", () => {
     const patch = vi.fn();
     const catalog = makeCatalog({

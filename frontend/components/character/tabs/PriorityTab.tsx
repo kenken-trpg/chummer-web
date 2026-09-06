@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { CATS, DEFAULT_PRIORITIES, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
 import { buildMethodLabel, priorityCellLabel } from "@/lib/character/priority-labels";
+import { talentLabel } from "@/lib/character/talent-labels";
 import { RangeInput } from "@/components/character/RangeInput";
 
 export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
@@ -105,7 +106,7 @@ export function PriorityTab({ catalog, character: ch, d, ui, patch, setCharacter
             <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
               {(catalog.karma_talents || []).map((t) => (
                 <option key={t.name} value={t.name}>
-                  {t.label || t.name}
+                  {talentLabel(t.name, t.label, ui)}
                   {t.magic ? ` / MAG` : ""}
                   {t.resonance ? ` / RES` : ""}
                 </option>

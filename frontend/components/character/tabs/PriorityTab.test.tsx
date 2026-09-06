@@ -161,22 +161,22 @@ describe("<PriorityTab> the table reads in Japanese", () => {
     const { container } = renderReal();
     const cells = [...container.querySelectorAll("tbody td button")].map((b) => b.textContent);
     expect(cells).toEqual([
-      "ヒューマン, エルフ, ドワーフ, オーク, トロール",
-      "ヒューマン, エルフ, ドワーフ, オーク, トロール",
+      "全てのメタタイプ",
+      "全てのメタタイプ",
       "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
-      "ヒューマン or エルフ",
+      "エルフ or ヒューマン",
       "ヒューマン",
       "24 (12) 能力値",
       "20 (10) 能力値",
       "16 (8) 能力値",
       "14 (7) 能力値",
       "12 (6) 能力値",
-      "魔法使いまたはミスティックアデプト or テクノマンサー",
-      "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
-      "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+      "魔法使い or テクノマンサー",
+      "アデプト, 魔法使い or テクノマンサー",
+      "アデプト, 魔法使い or テクノマンサー",
       "アデプト or 偏位魔法使い",
-      // not in the requested list; still English upstream
-      "Mundane",
+      // the talent dropdown names this tier too, and both use one key
+      "マンディン",
       "46 技能/10 技能グループ",
       "36 技能/5 技能グループ",
       "28 技能/2 技能グループ",

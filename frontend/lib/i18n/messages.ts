@@ -17,6 +17,10 @@ const JA = {
   "app.loading": "読み込み中…",
   "app.tagline":
     "非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。",
+  "app.footer.author": "制作: {author}",
+  "app.footer.repo": "GitHub リポジトリ",
+  "app.footer.repoHint": "ソースコード・不具合報告・要望はこちら（GPL-3.0）",
+  "app.footer.license": "GPL-3.0",
 
   // accessible names for landmarks — announced by screen readers, never drawn
   "nav.sections": "セクション",
@@ -1054,14 +1058,26 @@ const JA = {
   "sr.r5.electromagnetic": "電磁",
   "sr.r5.cosmetic": "外装",
 
-  "prio.cell.anyMetatype": "ヒューマン, エルフ, ドワーフ, オーク, トロール",
+  "prio.cell.anyMetatype": "全てのメタタイプ",
   "prio.cell.humanDwarfElfOrkAi": "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
-  "prio.cell.humanOrElf": "ヒューマン or エルフ",
+  "prio.cell.humanOrElf": "エルフ or ヒューマン",
   "prio.cell.human": "ヒューマン",
-  "prio.cell.magicianOrTechnomancer": "魔法使いまたはミスティックアデプト or テクノマンサー",
-  "prio.cell.adeptMagicianTechnomancer":
-    "アデプト, 魔法使いまたはミスティックアデプト or テクノマンサー",
+  "prio.cell.magicianOrTechnomancer": "魔法使い or テクノマンサー",
+  "prio.cell.adeptMagicianTechnomancer": "アデプト, 魔法使い or テクノマンサー",
   "prio.cell.adeptOrAspectedMagician": "アデプト or 偏位魔法使い",
+  // The talent dropdown's options. The catalog ships them pre-formatted
+  // ("Magician - 6 Magic/10 Spells"), so the name and the ratings tail are
+  // translated separately. Run Faster's talents (Apprentice, Aware, Enchanter,
+  // Explorer) keep their English names, as its metavariants do.
+  "talent.magician": "魔法使い",
+  "talent.mysticAdept": "ミスティックアデプト",
+  "talent.adept": "アデプト",
+  "talent.aspectedMagician": "偏位魔法使い",
+  "talent.technomancer": "テクノマンサー",
+  "talent.mundane": "マンディン",
+  "talent.magicSpells": "魔力{magic}/術式{spells}",
+  "talent.magic": "魔力{magic}",
+  "talent.resonanceForms": "共振力{resonance}/複合体{forms}",
   "prio.cell.attributes": "{points} ({special}) 能力値",
   "prio.cell.skills": "{skills} 技能/{groups} 技能グループ",
   // build-method buttons. "Sum to Ten" and "Karma" are kept as they read on
@@ -1172,6 +1188,10 @@ const EN: Catalog = {
   "app.loading": "Loading…",
   "app.tagline":
     "Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst / Topps. Data from Chummer5a (GPL-3.0).",
+  "app.footer.author": "Made by {author}",
+  "app.footer.repo": "GitHub repository",
+  "app.footer.repoHint": "Source, bug reports and requests (GPL-3.0)",
+  "app.footer.license": "GPL-3.0",
 
   "nav.sections": "Sections",
   "nav.skipToMain": "Skip to content",
@@ -2193,6 +2213,15 @@ const EN: Catalog = {
   "prio.cell.magicianOrTechnomancer": "Magician or Technomancer",
   "prio.cell.adeptMagicianTechnomancer": "Adept, Magician, or Technomancer",
   "prio.cell.adeptOrAspectedMagician": "Adept or Aspected Magician",
+  "talent.magician": "Magician",
+  "talent.mysticAdept": "Mystic Adept",
+  "talent.adept": "Adept",
+  "talent.aspectedMagician": "Aspected Magician",
+  "talent.technomancer": "Technomancer",
+  "talent.mundane": "Mundane",
+  "talent.magicSpells": "{magic} Magic/{spells} Spells",
+  "talent.magic": "{magic} Magic",
+  "talent.resonanceForms": "{resonance} Resonance/{forms} Complex Forms",
   "prio.cell.attributes": "{points} ({special}) Attributes",
   "prio.cell.skills": "{skills} Skills/{groups} Skill Groups",
   "prio.method.priority": "Priority",
