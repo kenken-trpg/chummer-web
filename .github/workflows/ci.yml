@@ -81,9 +81,10 @@ jobs:
   # A real browser against both halves at once — the one thing the 252 unit
   # tests structurally cannot cover (jsdom has no IndexedDB, and `lib/api` is
   # mocked there). ~3 min including the Chummer data and a Next production
-  # build, so it runs on pushes to main and on tags, not on every PR push.
+  # build. It used to skip pull requests to save that, which meant #23 went in
+  # all-green and broke main on the merge commit: a check that only runs after
+  # the merge cannot gate the merge. The three minutes buy the gate.
   e2e:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
