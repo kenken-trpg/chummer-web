@@ -1059,7 +1059,7 @@ const JA = {
   "sr.r5.cosmetic": "外装",
 
   "prio.cell.anyMetatype": "全てのメタタイプ",
-  "prio.cell.humanDwarfElfOrkAi": "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
+  "prio.cell.humanDwarfElfOrkAi": "ドワーフ, オーク, エルフ, ヒューマン, or A.I.",
   "prio.cell.humanOrElf": "エルフ or ヒューマン",
   "prio.cell.human": "ヒューマン",
   "prio.cell.magicianOrTechnomancer": "魔法使い or テクノマンサー",

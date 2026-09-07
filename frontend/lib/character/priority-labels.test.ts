@@ -11,7 +11,7 @@ describe("priorityCellLabel", () => {
   it("names the metatype rows", () => {
     expect(priorityCellLabel("Any metatype", ja)).toBe("全てのメタタイプ");
     expect(priorityCellLabel("Human, Dwarf, Elf, Ork, or A.I.", ja)).toBe(
-      "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
+      "ドワーフ, オーク, エルフ, ヒューマン, or A.I.",
     );
     expect(priorityCellLabel("Human or Elf", ja)).toBe("エルフ or ヒューマン");
     expect(priorityCellLabel("Human", ja)).toBe("ヒューマン");

@@ -163,7 +163,7 @@ describe("<PriorityTab> the table reads in Japanese", () => {
     expect(cells).toEqual([
       "全てのメタタイプ",
       "全てのメタタイプ",
-      "ヒューマン, ドワーフ, エルフ, オーク, or A.I.",
+      "ドワーフ, オーク, エルフ, ヒューマン, or A.I.",
       "エルフ or ヒューマン",
       "ヒューマン",
       "24 (12) 能力値",
