@@ -17,7 +17,6 @@ from .._common import (
     _as_int,
     _as_text,
     _bonus_int,
-    _eval_int,
     _limit_kind,
     limit_condition_label,
 )
@@ -41,9 +40,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["cm_physical"] += _as_int(fields.get("physical"))
         effects["cm_stun"] += _as_int(fields.get("stun"))
     elif tag == "initiative":
-        effects["initiative"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["initiative"] += _bonus_int(node, fields)
     elif tag == "initiativepass":
-        effects["initiative_dice"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["initiative_dice"] += _bonus_int(node, fields)
     elif tag == "enabletab":
         names = fields.get("name") or node.get("value") or ""
         values = names if isinstance(names, list) else [names]
@@ -62,15 +61,15 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             elif attr:
                 effects["enabled_tabs"].add(attr.lower())
     elif tag == "mentallimit":
-        effects["limit_mental"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["limit_mental"] += _bonus_int(node, fields)
     elif tag == "sociallimit":
-        effects["limit_social"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["limit_social"] += _bonus_int(node, fields)
     elif tag == "physicallimit":
-        effects["limit_physical"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["limit_physical"] += _bonus_int(node, fields)
     elif tag == "damageresistance":
-        effects["damage_resistance"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["damage_resistance"] += _bonus_int(node, fields)
     elif tag == "unarmeddv":
-        effects["unarmed_dv"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["unarmed_dv"] += _bonus_int(node, fields)
     elif tag == "unarmeddvphysical":
         effects["unarmed_physical"] = True
     elif tag == "unarmedreach":
@@ -84,7 +83,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["spell_defense_resist"][key] += _bonus_int(node, fields)
     elif tag in SPECIAL_ARMOR_TAGS:
         key = SPECIAL_ARMOR_TAGS[tag]
-        effects["special_armor"][key] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["special_armor"][key] += _bonus_int(node, fields)
     elif tag in IMMUNE_TAGS:
         effects["immunities"][IMMUNE_TAGS[tag]] = True
     elif tag == "restrictedgear":
@@ -111,26 +110,24 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             }
         )
     elif tag == "reach":
-        effects["reach"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["reach"] += _bonus_int(node, fields)
     elif tag == "smartlink":
         # Accuracy value of a usable smartlink: 2 (implant), 1 (imaging device).
         # A smartgun system's Accuracy is gated on this being > 0; keep the best.
         effects["smartlink"] = max(
             int(effects.get("smartlink") or 0),
-            _as_int(node.get("value") or fields.get("val") or fields.get("bonus"), 2),
+            _bonus_int(node, fields, default=2),
         )
     elif tag == "throwstr":
         # STR added when the client resolves a thrown weapon's {STR} damage.
-        effects["throw_str"] += _eval_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["throw_str"] += _bonus_int(node, fields)
     elif tag == "throwrangestr":
         # STR added when the client resolves thrown-weapon range bands
         # (Precision Throwing's value is "Rating*2" after substitute_rating).
-        effects["throw_range_str"] += _eval_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["throw_range_str"] += _bonus_int(node, fields)
     elif tag in TEST_MOD_TAGS:
         key = TEST_MOD_TAGS[tag]
-        effects["test_mods"][key] = int(effects["test_mods"].get(key) or 0) + _as_int(
-            node.get("value") or fields.get("val") or fields.get("bonus")
-        )
+        effects["test_mods"][key] = int(effects["test_mods"].get(key) or 0) + _bonus_int(node, fields)
     elif tag == "selectattributes":
         nested = node.get("nested") or {}
         vals = nested.get("selectattribute") or []
@@ -165,9 +162,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             }
         )
     elif tag == "physicalcmrecovery":
-        effects["cm_recovery_physical"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["cm_recovery_physical"] += _bonus_int(node, fields)
     elif tag == "stuncmrecovery":
-        effects["cm_recovery_stun"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["cm_recovery_stun"] += _bonus_int(node, fields)
     elif tag == "addesstophysicalcmrecovery":
         effects["cm_recovery_physical_add_ess"] = True
     elif tag == "addesstostuncmrecovery":
@@ -194,7 +191,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             fields.get("val") or fields.get("bonus") or node.get("value")
         )
     elif tag == "fatigueresist":
-        effects["fatigue_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["fatigue_resist"] += _bonus_int(node, fields)
     elif tag == "livingpersona":
         persona = effects.setdefault(
             "living_persona",
@@ -203,15 +200,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         for key in ("attack", "sleaze", "dataprocessing", "firewall"):
             persona[key] = int(persona.get(key) or 0) + _as_int(fields.get(key))
     elif tag == "matrixinitiativediceadd":
-        effects["matrix_initiative_dice"] = int(effects.get("matrix_initiative_dice") or 0) + _as_int(
-            node.get("value") or fields.get("bonus") or fields.get("val")
-        )
+        effects["matrix_initiative_dice"] = int(effects.get("matrix_initiative_dice") or 0) + _bonus_int(node, fields)
     elif tag == "actiondicepool":
         attrs = node.get("attrs") or {}
         category = str(attrs.get("category") or fields.get("category") or "").strip()
         name = str(fields.get("name") or "").strip()
         # Codeslinger XML has empty value; SR5 grants +2 to a chosen Matrix action.
-        bonus = _as_int(node.get("value") or fields.get("val") or fields.get("bonus") or fields.get("value"), 0)
+        bonus = _bonus_int(node, fields)
         if bonus == 0:
             bonus = 2
         effects["action_dice_pools"].append(

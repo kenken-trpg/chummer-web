@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._common import _as_int
+from .._common import _as_int, _bonus_int
 from ..effects import EffectsDict
 
 
@@ -29,28 +29,23 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             if text and text not in effects["add_qualities"]:
                 effects["add_qualities"].append(text)
     elif tag == "lifestylecost":
-        effects["lifestyle_cost"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["lifestyle_cost"] += _bonus_int(node, fields)
     elif tag == "notoriety":
-        effects["notoriety"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["notoriety"] += _bonus_int(node, fields)
     elif tag == "fame":
-        effects["fame"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["fame"] += _bonus_int(node, fields)
     elif tag == "publicawareness":
-        effects["public_awareness"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["public_awareness"] += _bonus_int(node, fields)
     elif tag == "essencepenalty":
         # Negative values mean ESS loss (e.g. -1).
-        effects["essence_penalty"] += abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus")))
+        effects["essence_penalty"] += abs(_bonus_int(node, fields))
     elif tag == "essencepenaltyt100":
-        effects["essence_penalty"] += (
-            abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
-        )
+        effects["essence_penalty"] += abs(_bonus_int(node, fields)) / 100.0
     elif tag == "essencepenaltymagonlyt100":
-        effects["essence_penalty_mag_exempt"] += (
-            abs(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"))) / 100.0
-        )
+        effects["essence_penalty_mag_exempt"] += abs(_bonus_int(node, fields)) / 100.0
     elif tag == "prototypetranshuman":
         effects["prototype_transhuman_ess"] = round(
-            float(effects.get("prototype_transhuman_ess") or 0)
-            + float(_as_int(node.get("value") or fields.get("val") or fields.get("bonus"), 0)),
+            float(effects.get("prototype_transhuman_ess") or 0) + float(_bonus_int(node, fields)),
             4,
         )
     elif tag == "selectquality":
@@ -59,13 +54,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         if options:
             effects["select_quality_slots"].append({"source": source, "options": options})
     elif tag == "nuyenmaxbp":
-        effects["nuyen_max_bp"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["nuyen_max_bp"] += _bonus_int(node, fields)
     elif tag == "nuyenamt":
         # Conditional nuyen (e.g. Stolen Gear) is ignored until that subsystem exists.
         attrs = node.get("attrs") or {}
         if attrs.get("condition"):
             return True
-        effects["nuyen_amt"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["nuyen_amt"] += _bonus_int(node, fields)
     elif tag == "trustfund":
         effects["trustfund"] = max(int(effects.get("trustfund") or 0), _as_int(node.get("value")))
     elif tag == "blackmarketdiscount":
@@ -106,9 +101,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             }
         )
     elif tag == "contactkarma":
-        effects["contact_karma_adj"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["contact_karma_adj"] += _bonus_int(node, fields)
     elif tag == "contactkarmaminimum":
-        effects["contact_karma_min"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["contact_karma_min"] += _bonus_int(node, fields)
     elif tag == "overclocker":
         effects["overclocker"] = True
     elif tag == "ambidextrous":
@@ -126,7 +121,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             round(int(effects.get("cyberware_total_ess_multiplier") or 100) * _as_int(node.get("value"), 100) / 100.0)
         )
     elif tag == "essencemax":
-        effects["essence_max_mod"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["essence_max_mod"] += _bonus_int(node, fields)
     elif tag == "disablebioware":
         effects["disable_bioware"] = True
     elif tag == "disablecyberwaregrade":
@@ -142,7 +137,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         if name:
             effects["free_martial_arts"].append({"name": name, "source": source})
     elif tag == "specialmodificationlimit":
-        effects["special_modification_limit"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["special_modification_limit"] += _bonus_int(node, fields)
     elif tag == "erased":
         effects["erased"] = True
     elif tag == "excon":

@@ -19,7 +19,7 @@ from ..effects import EffectsDict
 
 def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     if tag == "adeptpowerpoints":
-        effects["adept_power_points"] += _as_int(node.get("value") or fields.get("bonus") or fields.get("val"))
+        effects["adept_power_points"] += _bonus_int(node, fields)
     elif tag == "magicianswaydiscount":
         effects["magicians_way"] = True
     elif tag == "selectmentorspirit":
@@ -124,19 +124,19 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             }
         )
     elif tag == "drainvalue":
-        effects["drain_value"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["drain_value"] += _bonus_int(node, fields)
     elif tag == "fadingvalue":
         attrs = node.get("attrs") or {}
         specific = str(attrs.get("specific") or "").strip()
-        value = _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        value = _bonus_int(node, fields)
         if specific:
             effects["fading_value_specific"].append({"specific": specific, "value": value})
         else:
             effects["fading_value"] += value
     elif tag == "fadingresist":
-        effects["fading_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["fading_resist"] += _bonus_int(node, fields)
     elif tag == "drainresist":
-        effects["drain_resist"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["drain_resist"] += _bonus_int(node, fields)
     elif tag == "addecho":
         name = str(node.get("value") or fields.get("name") or "").strip()
         if name:
@@ -209,13 +209,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         elif attribute:
             effects["free_spells_attribute"].append({"attribute": attribute, "limit": limit, "source": source})
         else:
-            effects["free_spells_flat"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+            effects["free_spells_flat"] += _bonus_int(node, fields)
     elif tag == "newspellkarmacost":
         attrs = node.get("attrs") or {}
         effects["new_spell_karma_cost"].append(
             {
                 "type": str(attrs.get("type") or "").strip(),
-                "value": _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+                "value": _bonus_int(node, fields),
                 "condition": str(attrs.get("condition") or "").strip(),
                 "source": source,
             }
