@@ -392,7 +392,15 @@ def _eval_int(value: Any, default: int = 0) -> int:
     return _as_int(value, default)
 
 
-def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, rating: int = 1) -> int:
+def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, rating: int = 1, default: int = 0) -> int:
+    """The one way a ``<bonus>`` child's magnitude is read.
+
+    ``parse_bonus`` puts a childless element's text in ``node["value"]`` and a
+    parent element's children in ``fields``, so exactly one of the four keys
+    below is ever populated — the chain is a shape probe, not a precedence
+    rule. Ends in ``_eval_int`` because ``substitute_rating`` leaves arithmetic
+    behind: ``<skillwire>Rating * 2</skillwire>`` arrives as ``"2 * 2"``.
+    """
     fields = fields or {}
     raw = node.get("value")
     if raw is None or raw == "":
@@ -403,4 +411,4 @@ def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, ra
         raw = fields.get("value")
     if isinstance(raw, str) and "Rating" in raw:
         raw = _replace_rating(raw, rating)
-    return _as_int(raw)
+    return _eval_int(raw, default)

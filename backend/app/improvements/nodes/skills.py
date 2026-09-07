@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._common import _as_int
+from .._common import _as_int, _bonus_int
 from ..effect_rows import SkillModRow
 from ..effects import EffectsDict
 
@@ -65,12 +65,12 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
     elif tag == "skillwire":
         effects["skillwires"] = max(
             int(effects.get("skillwires") or 0),
-            _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+            _bonus_int(node, fields),
         )
     elif tag == "skillsoftaccess":
         effects["skilljack"] = max(
             int(effects.get("skilljack") or 0),
-            _as_int(node.get("value") or fields.get("val") or fields.get("bonus")),
+            _bonus_int(node, fields),
         )
     elif tag == "skilldisable":
         name = str(node.get("value") or fields.get("name") or "").strip()
@@ -92,9 +92,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         if name and name not in effects["blocked_default_categories"]:
             effects["blocked_default_categories"].append(name)
     elif tag == "nativelanguagelimit":
-        effects["native_language_limit_bonus"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["native_language_limit_bonus"] += _bonus_int(node, fields)
     elif tag == "knowledgeskillpoints":
-        effects["knowledge_skill_points"] += _as_int(node.get("value") or fields.get("val") or fields.get("bonus"))
+        effects["knowledge_skill_points"] += _bonus_int(node, fields)
     elif tag == "activeskillkarmacost":
         effects["active_skill_karma_cost"].append(
             {

@@ -3,7 +3,12 @@ claims to implement must be handled by some domain module, even the ones no
 character-level test exercises.
 """
 
-from app.improvements import apply_bonus_nodes, empty_effects
+import re
+from pathlib import Path
+
+import pytest
+
+from app.improvements import EffectsDict, apply_bonus_nodes, empty_effects, substitute_rating
 from app.improvements._common import IMPLEMENTED, _eval_int
 
 
@@ -34,3 +39,42 @@ def test_weaponcategorydice_accepts_both_upstream_shapes() -> None:
     current = empty_effects()
     apply_bonus_nodes([{"tag": "weaponcategorydice", "fields": {"name": "Bows", "bonus": "1"}}], current, "current")
     assert current["weapon_category_dice"] == [{"category": "Bows", "dice": 1, "source": "current"}]
+
+
+def test_bonus_int_evaluates_the_arithmetic_substitute_rating_leaves_behind() -> None:
+    """Five vendored items carry an expression rather than a number.
+
+    ``substitute_rating`` turns ``Rating*0.5`` into ``6*0.5``, which the old
+    per-site ``_as_int`` could not parse and silently scored 0. Values are the
+    ones in ``vendor/chummer/data`` as of Chummer 5.225.
+    """
+
+    def fold(tag: str, value: str, rating: int) -> EffectsDict:
+        effects = empty_effects()
+        apply_bonus_nodes(substitute_rating([{"tag": tag, "value": value}], rating), effects, "arith")
+        return effects
+
+    # Move-by-Wire System / Stirrup Interface (cyberware.xml)
+    assert fold("skillwire", "Rating * 2", 3)["skillwires"] == 6
+    # Bone Density Augmentation (bioware.xml)
+    assert fold("unarmeddv", "Rating-1", 4)["unarmed_dv"] == 3
+    # Striking Callus (bioware.xml)
+    assert fold("unarmeddv", "Rating*0.5", 6)["unarmed_dv"] == 3
+    # Grey Mana Tattoos (gear.xml) — t100 means hundredths of an Essence point
+    assert fold("essencepenaltyt100", "-10*Rating", 2)["essence_penalty"] == pytest.approx(0.2)
+
+
+def test_no_domain_module_reimplements_the_bonus_value_fallback() -> None:
+    """``_bonus_int`` is the single way a bonus magnitude is read.
+
+    The chain used to be pasted inline at 43 sites, which is how three of the
+    five items above drifted onto the non-arithmetic ``_as_int``. Keep new
+    handlers from starting a sixth copy.
+    """
+    magnitude_chain = re.compile(r'node\.get\("value"\)\s*or\s*fields\.get\("(?:val|bonus)"\)')
+    offenders = [
+        path.name
+        for path in sorted((Path(__file__).resolve().parents[1] / "app/improvements/nodes").glob("*.py"))
+        if magnitude_chain.search(path.read_text())
+    ]
+    assert offenders == [], f"inline fallback chain is back in: {offenders}"
