@@ -23,3 +23,12 @@ frontend/playwright-report/
 
 # TS incremental build cache
 frontend/tsconfig.tsbuildinfo
+
+# `next dev` writes these two itself (next/dist/server/lib/generate-agent-files.js):
+# a block of coding instructions for AI agents, plus a CLAUDE.md that imports it.
+# Their content is owned by whatever version of Next is installed and changes
+# without review, so they are not something this repository should carry — the
+# project's own guidance lives in CONTRIBUTING.md and docs/. Untracked, they are
+# still written and still read locally; they just cannot ride along in a commit.
+frontend/AGENTS.md
+frontend/CLAUDE.md
