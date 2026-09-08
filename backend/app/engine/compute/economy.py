@@ -181,7 +181,13 @@ def economy(ctx: Ctx) -> None:
     blocked_defaults = list(ctx.effects.get("blocked_default_categories") or [])
     if blocked_defaults:
         ctx.warn("engine.skills.noDefaulting", categories=terms(blocked_defaults))
-    ctx.skillsofts = resolve_skillsofts(list(ctx.gear.get("gear") or []), ctx.data["skills"], ctx.effects, ctx.warnings)
+    ctx.skillsofts = resolve_skillsofts(
+        list(ctx.gear.get("gear") or []),
+        ctx.data["skills"],
+        ctx.effects,
+        ctx.warnings,
+        hardwires=ctx.skill_picks["hardwires"],
+    )
     _attach_skillsoft_knowledge(ctx.knowledge["public"], ctx.skillsofts["knowledge"], ctx.data["skills"])
     ctx.expertises, free_expertise_skills = apply_select_expertise(
         ctx.state,

@@ -17,6 +17,7 @@ export function SkillPickSelects(props: {
           {ui("pick.skillOf", { source: props.tr(slot.source) })}
           {slot.bonus ? ` ${slot.bonus > 0 ? "+" : ""}${slot.bonus}` : ""}
           {slot.max ? ui("pick.max", { max: slot.max }) : ""}
+          {slot.rating ? ui("pick.rating", { rating: slot.rating }) : ""}
           <select value={slot.picked} onChange={(e) => props.onPick(slot.key, e.target.value)}>
             <option value="">{ui("common.choose")}</option>
             {slot.options.map((name) => (

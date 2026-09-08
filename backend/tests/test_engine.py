@@ -1452,6 +1452,8 @@ def test_seeker_alone_does_not_warn_for_muscle() -> None:
 ENHANCED_ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
 REFLEX_RECORDER = "17a6ba49-c21c-461b-9830-3beae8a237fc"
 VOICE_MODULATOR = "ebc25387-655f-4a24-8ae7-81548c097dac"
+ACTIVE_HARDWIRES = "b330ed31-20d4-4e5a-823b-4ef6d6270685"
+KNOWLEDGE_HARDWIRES = "56a5fcc1-5da7-4728-aae9-073c92f67c2b"
 APTITUDE = "58e3d62a-2073-4af5-b8e0-00c446b3a5ab"
 CATLIKE = "84305e09-f8d5-4a82-8257-0119b8c3f926"
 LOSS_OF_CONFIDENCE = "c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1"
@@ -1568,6 +1570,62 @@ def test_reflex_recorder_adds_picked_skill() -> None:
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
     assert not has(out.derived["warnings"], "engine.skills.pickSkill")
     assert out.derived["skill_pick_slots"][0]["picked"] == "Gymnastics"
+
+
+def test_active_hardwires_offers_a_rated_pick() -> None:
+    out = compute(_human("hw-empty", cyberware=[CyberwareInstall(id="hw1", ware_id=ACTIVE_HARDWIRES, rating=4)]))
+    assert has(out.derived["warnings"], "engine.skills.pickSkill", source="Active Hardwires")
+    slot = out.derived["skill_pick_slots"][0]
+    assert slot["key"] == "ware:hw1:0"
+    # The value is a rating, never a dice bonus.
+    assert (slot["rating"], slot["bonus"], slot["max"]) == (4, 0, 0)
+    assert "Archery" in slot["options"]
+    assert "Spellcasting" not in slot["options"]  # excludecategory="Magical Active,..."
+
+
+def test_active_hardwires_sets_the_picked_skill_rating() -> None:
+    out = compute(
+        _human(
+            "hw-archery",
+            cyberware=[CyberwareInstall(id="hw1", ware_id=ACTIVE_HARDWIRES, rating=4)],
+            skill_picks={"ware:hw1:0": "Archery"},
+        )
+    )
+    # The rating rides the skillsoft channel: bought nothing, still at 4.
+    assert out.derived["skillsoft"]["Archery"] == 4
+    assert out.derived["skill_totals"].get("Archery", 0) == 0
+    assert not has(out.derived["warnings"], "engine.skills.pickSkill")
+
+
+def test_hardwires_needs_no_skillwires_and_does_not_pay_karma() -> None:
+    plain = compute(_human("hw-cost-off"))
+    out = compute(
+        _human(
+            "hw-cost-on",
+            cyberware=[CyberwareInstall(id="hw1", ware_id=ACTIVE_HARDWIRES, rating=6)],
+            skill_picks={"ware:hw1:0": "Archery"},
+        )
+    )
+    assert out.derived["skillwires"] == 0
+    assert not has(out.derived["warnings"], "engine.skills.needsSkillwires")
+    assert out.derived["skillsoft"]["Archery"] == 6
+    assert out.derived["points"]["skills"] == plain.derived["points"]["skills"]
+
+
+def test_knowledge_hardwires_picks_a_knowledge_skill() -> None:
+    out = compute(
+        _human(
+            "hw-know",
+            cyberware=[CyberwareInstall(id="hw1", ware_id=KNOWLEDGE_HARDWIRES, rating=3)],
+            skill_picks={"ware:hw1:0": "Anatomy"},
+        )
+    )
+    slot = out.derived["skill_pick_slots"][0]
+    assert slot["knowledgeskills"] is True  # <hardwires knowledgeskill="True">
+    assert "Archery" not in slot["options"]
+    assert out.derived["skillsoft"]["Anatomy"] == 3
+    row = next(r for r in out.derived["knowledge_skills"] if r["name"] == "Anatomy")
+    assert (row["rating"], row["skillsoft"]) == (0, 3)
 
 
 def test_reflex_recorder_rejects_invalid_pick() -> None:

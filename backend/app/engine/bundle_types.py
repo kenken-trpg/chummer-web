@@ -31,13 +31,15 @@ class SkillMods(TypedDict):
 
 
 class SkillPicks(TypedDict):
-    """``resolve_skill_picks`` — ``<selectskill>`` slots and their bonuses."""
+    """``resolve_skill_picks`` — ``<selectskill>`` / ``<hardwires>`` slots and their bonuses."""
 
     slots: list[dict[str, Any]]
     warnings: list[Notice]
     skill_max_bonus: dict[str, int]
     skill_bonus: dict[str, int]
     skill_bonus_notes: dict[str, list[str]]
+    # ``<hardwires>`` picks, split active / knowledge: a rating, not a bonus.
+    hardwires: dict[str, dict[str, int]]
 
 
 class ContactsBundle(TypedDict):
@@ -247,7 +249,14 @@ def empty_skill_mods() -> SkillMods:
 
 
 def empty_skill_picks() -> SkillPicks:
-    return SkillPicks(slots=[], warnings=[], skill_max_bonus={}, skill_bonus={}, skill_bonus_notes={})
+    return SkillPicks(
+        slots=[],
+        warnings=[],
+        skill_max_bonus={},
+        skill_bonus={},
+        skill_bonus_notes={},
+        hardwires={"active": {}, "knowledge": {}},
+    )
 
 
 def empty_contacts() -> ContactsBundle:

@@ -17,7 +17,13 @@ from ..notices import Notice, notice, term
 from .bundle_types import SkillMods, SkillPicks
 from .constants import EXPERTISE_BONUS
 from .lookups import _quality_by_id, _ware_by_id
-from .selects import _skillsoft_kind, parse_selectskill_spec, selectskill_options, skillsoft_options
+from .selects import (
+    _skillsoft_kind,
+    parse_hardwires_spec,
+    parse_selectskill_spec,
+    selectskill_options,
+    skillsoft_options,
+)
 
 KNOWLEDGE_CATEGORIES = {"Academic", "Interest", "Language", "Professional", "Street"}
 KNOWLEDGE_DEFAULT_ATTR = {
@@ -438,14 +444,22 @@ def resolve_skillsofts(
     skills_data: dict[str, Any],
     effects: EffectsDict,
     warnings: list[Notice],
+    *,
+    hardwires: dict[str, dict[str, int]] | None = None,
 ) -> dict[str, Any]:
+    """Ratings a skillsoft / autosoft (or a hardwire) supplies instead of training.
+
+    ``hardwires`` seeds the two buckets because Chummer reads hardwired ratings
+    off the same cyberware rating a skillsoft does — but a hardwire carries its
+    own rating, so it is not gated on skillwires or a skilljack.
+    """
     wires = int(effects.get("skillwires") or 0)
     jack = int(effects.get("skilljack") or 0)
     specs = {item["id"]: item for item in catalog().get("gear") or []}
     active_names = {skill["name"] for skill in skills_data.get("skills") or []}
     knowledge_names = {skill["name"] for skill in skills_data.get("knowledge") or []}
-    active: dict[str, int] = {}
-    knowledge: dict[str, int] = {}
+    active: dict[str, int] = dict((hardwires or {}).get("active") or {})
+    knowledge: dict[str, int] = dict((hardwires or {}).get("knowledge") or {})
 
     def add_rating(bucket: dict[str, int], name: str, rating: int) -> None:
         if not name or rating <= 0:
@@ -525,6 +539,12 @@ def _attach_skillsoft_knowledge(
         )
 
 
+# Bonus tags that hand the user a skill to choose. `<hardwires>` is a
+# `<selectskill>` whose value is a rating rather than a dice bonus, so it rides
+# the same picker instead of growing a second one.
+SKILL_PICK_TAGS = {"selectskill", "hardwires"}
+
+
 def _extra_kind(spec: dict[str, Any]) -> str:
     return str(spec.get("extra_kind") or "")
 
@@ -539,10 +559,13 @@ def resolve_skill_picks(
     skill_max: dict[str, int] = {}
     pick_bonus: dict[str, int] = {}
     pick_notes: dict[str, list[str]] = {}
+    hardwire_active: dict[str, int] = {}
+    hardwire_knowledge: dict[str, int] = {}
     picks = state.skill_picks or {}
 
     def add_slot(key: str, source: str, source_kind: str, source_id: str, node: dict[str, Any]) -> None:
-        spec = parse_selectskill_spec(node)
+        hardwire = node.get("tag") == "hardwires"
+        spec = parse_hardwires_spec(node) if hardwire else parse_selectskill_spec(node)
         options = selectskill_options(spec, skills_data, skill_totals)
         picked = picks.get(key) or ""
         if picked and picked not in options:
@@ -559,6 +582,10 @@ def resolve_skill_picks(
                     notes.append(note)
         if picked and spec.get("max"):
             skill_max[picked] = int(skill_max.get(picked, 0)) + int(spec["max"])
+        rating = int(spec.get("rating") or 0)
+        if picked and rating:
+            bucket = hardwire_knowledge if spec.get("knowledgeskills") else hardwire_active
+            bucket[picked] = max(int(bucket.get(picked) or 0), rating)
         slots.append(
             {
                 "key": key,
@@ -568,6 +595,7 @@ def resolve_skill_picks(
                 "picked": picked,
                 "bonus": int(spec.get("bonus") or 0),
                 "max": int(spec.get("max") or 0),
+                "rating": rating,
                 "options": options,
                 "knowledgeskills": bool(spec.get("knowledgeskills")),
             }
@@ -579,7 +607,7 @@ def resolve_skill_picks(
             continue
         index = 0
         for node in quality.get("bonus") or []:
-            if node.get("tag") != "selectskill":
+            if node.get("tag") not in SKILL_PICK_TAGS:
                 continue
             add_slot(f"quality:{qid}:{index}", quality["name"], "quality", qid, node)
             index += 1
@@ -595,7 +623,7 @@ def resolve_skill_picks(
             nodes = substitute_rating(nodes, int(inst.rating or 1))
             index = 0
             for node in nodes:
-                if node.get("tag") != "selectskill":
+                if node.get("tag") not in SKILL_PICK_TAGS:
                     continue
                 add_slot(f"ware:{inst.id}:{index}", ware["name"], kind, inst.id, node)
                 index += 1
@@ -606,4 +634,5 @@ def resolve_skill_picks(
         "skill_max_bonus": skill_max,
         "skill_bonus": pick_bonus,
         "skill_bonus_notes": pick_notes,
+        "hardwires": {"active": hardwire_active, "knowledge": hardwire_knowledge},
     }
