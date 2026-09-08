@@ -21,8 +21,9 @@ from ..notices import Notice
 
 class KarmaCostRow(TypedDict):
     """``active_skill_karma_cost`` / ``knowledge_skill_karma_cost`` /
-    ``knowledge_skill_karma_cost_min`` / ``skill_category_karma_cost`` — a
-    ``<karmacost>`` flat/min rule for one skill or category."""
+    ``knowledge_skill_karma_cost_min`` / ``skill_category_karma_cost`` /
+    ``attribute_karma_cost`` — a ``<karmacost>`` flat/min rule for one skill,
+    category or attribute."""
 
     name: str
     val: int

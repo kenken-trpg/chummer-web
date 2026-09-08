@@ -24,7 +24,6 @@ from ..karma import (
     _filter_karma_rules,
     _group_floor_map,
     _karma_cost_with_category_mods,
-    _karma_raise_cost,
     _matching_karma_rules,
     _skill_category_map,
     _skill_group_category_map,
@@ -59,12 +58,18 @@ def career_raise_karma(
     lines: list[dict[str, Any]] = []
     eff = effects or empty_effects()
     base_attrs = baseline.attributes or {}
+    attr_flat = _filter_karma_rules(eff.get("attribute_karma_cost"), career=True)
     for key, rating in (state.attributes or {}).items():
         if key == "ESS":
             continue
         from_r = int(base_attrs.get(key, rating))
         to_r = int(rating or 0)
-        cost = _karma_raise_cost(from_r, to_r, KARMA_ATTRIBUTE)
+        cost = _karma_cost_with_category_mods(
+            from_r,
+            to_r,
+            KARMA_ATTRIBUTE,
+            flat_rules=_matching_karma_rules(attr_flat, key),
+        )
         if cost:
             lines.append(
                 {

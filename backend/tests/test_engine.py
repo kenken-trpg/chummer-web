@@ -62,6 +62,7 @@ PUSHED = "2c988cbe-e6e6-4c22-ae3c-14ad6e1fff1f"
 QUALIA = "b110516e-36e8-4c69-a682-066e91c02351"
 DAMPER = "3785a2cf-c3df-476a-b7cd-6e224ea77ab0"
 ADAPSIN = "3f8b9030-662e-4212-8f30-5aa394a41568"
+MYOSTATIN = "1b6713f7-f5b6-49fb-a89a-68322c06f38d"
 CUSTOM_STR = "7d61f860-0637-4214-914d-c68022361d24"
 CUSTOM_AGI = "7afb23c7-435f-450c-9d1c-f7a0e7e631a6"
 ENHANCED_STR = "a9f4efd4-b86c-4e90-b0f7-aefa32c3b9de"
@@ -199,6 +200,48 @@ def test_karma_chargen_attributes_and_metatype_cost() -> None:
     assert out.derived["karma_chargen"]["metatype"] == 40
     assert out.derived["karma_chargen"]["attributes"] == 25
     assert out.derived["karma"]["spent"] == 65
+
+
+def _karma_human(cid: str, **attrs: int) -> CharacterState:
+    values = default_attributes(find_metatype("Human", None))
+    values.update(attrs)
+    return CharacterState(
+        id=cid,
+        name=cid,
+        build_method="Karma",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=values,
+    )
+
+
+def test_myostatin_inhibitor_makes_strength_cheaper_at_chargen() -> None:
+    plain = compute(_karma_human("myo-off", STR=4))
+    st = _karma_human("myo-on", STR=4)
+    st.bioware = [CyberwareInstall(ware_id=MYOSTATIN)]
+    with_ware = compute(st)
+    # Levels 2/3/4 cost 10+15+20 = 45; the inhibitor takes 2 off each.
+    assert plain.derived["karma_chargen"]["attributes"] == 45
+    assert with_ware.derived["karma_chargen"]["attributes"] == 39
+
+
+def test_myostatin_inhibitor_discount_is_strength_only() -> None:
+    from app.engine import snapshot_career_baseline
+
+    def raise_both(cid: str, ware: bool) -> int:
+        st = _karma_human(cid, STR=3, BOD=3)
+        st.build_method = "Priority"
+        if ware:
+            st.bioware = [CyberwareInstall(ware_id=MYOSTATIN)]
+        st = compute(st)
+        st.career = True
+        st.career_baseline = snapshot_career_baseline(st)
+        st.attributes = {**dict(st.attributes), "STR": 4, "BOD": 4}
+        return int(compute(st).derived["career_advancement_karma"])
+
+    # STR 3→4 and BOD 3→4 are 20 karma each; only STR is discounted.
+    assert raise_both("myo-career-off", False) == 40
+    assert raise_both("myo-career-on", True) == 38
 
 
 def test_karma_chargen_nuyen_conversion() -> None:

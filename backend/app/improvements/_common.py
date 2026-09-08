@@ -138,6 +138,7 @@ IMPLEMENTED = {
     "knowledgeskillpoints",
     "knowledgeskillkarmacost",
     "knowledgeskillkarmacostmin",
+    "attributekarmacost",
     "activeskillkarmacost",
     "selectquality",
     "selectside",

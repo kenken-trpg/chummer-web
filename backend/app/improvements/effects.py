@@ -211,6 +211,7 @@ class EffectsDict(TypedDict):
     skill_category_karma_cost: list[KarmaCostRow]
     skill_category_spec_karma_cost_mult: list[KarmaMultRow]
     skill_group_category_karma_cost_mult: list[KarmaMultRow]
+    attribute_karma_cost: list[KarmaCostRow]
     active_skill_karma_cost: list[KarmaCostRow]
     knowledge_skill_karma_cost: list[KarmaCostRow]
     knowledge_skill_karma_cost_min: list[KarmaCostRow]
@@ -354,6 +355,7 @@ def empty_effects() -> EffectsDict:
         "skill_category_karma_cost": [],
         "skill_category_spec_karma_cost_mult": [],
         "skill_group_category_karma_cost_mult": [],
+        "attribute_karma_cost": [],
         "active_skill_karma_cost": [],
         "knowledge_skill_karma_cost": [],
         "knowledge_skill_karma_cost_min": [],

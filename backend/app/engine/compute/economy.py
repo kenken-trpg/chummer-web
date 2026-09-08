@@ -239,7 +239,9 @@ def economy(ctx: Ctx) -> None:
     ctx.career_adv_karma = 0
     ctx.career_adv_lines = []
     if ctx.is_karma:
-        ctx.attr_karma = attribute_karma_cost(ctx.ratings, ctx.attrs_spec, ctx.special_key)
+        ctx.attr_karma = attribute_karma_cost(
+            ctx.ratings, ctx.attrs_spec, ctx.special_key, rules=ctx.effects.get("attribute_karma_cost")
+        )
         ctx.skill_buy_karma = skill_karma_cost(
             ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
         )
