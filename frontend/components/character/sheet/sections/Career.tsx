@@ -1,9 +1,10 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function CareerSection(s: SheetData) {
-  const { character, d } = s;
+  const { character, d, tr } = s;
   const { ui } = useUiText();
   if (!(character.career || d.career)) return null;
   return (
@@ -48,7 +49,7 @@ export function CareerSection(s: SheetData) {
           <ul className="sheet-list">
             {(d.karma_spend_breakdown || []).map((row, idx) => (
               <li key={`ks-${idx}`}>
-                <b>{row.label}</b>
+                <b>{renderNotice(row.notice, ui, tr)}</b>
                 <span className="sheet-dim"> {row.amount}K</span>
               </li>
             ))}
@@ -61,7 +62,7 @@ export function CareerSection(s: SheetData) {
           <ul className="sheet-list">
             {(d.nuyen_spend_breakdown || []).map((row, idx) => (
               <li key={`ns-${idx}`}>
-                <b>{row.label}</b>
+                <b>{renderNotice(row.notice, ui, tr)}</b>
                 <span className="sheet-dim"> {row.amount.toLocaleString()}¥</span>
               </li>
             ))}

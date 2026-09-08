@@ -4,6 +4,7 @@ import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/sp
 import { cfDuration, cfTarget, lifeIncrement, vehicleCM } from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
+import { renderNotice, renderNotices } from "@/lib/engine-notices";
 
 // The text sheet reads the same bag `buildSheetData()` produces for the
 // visual sheet — a subset of it.
@@ -236,7 +237,7 @@ export function textSheet(x: TextArgs): string {
     head("gear.kind.misc");
     misc.forEach((g) =>
       line(
-        `  ${g.active ? "▶ " : ""}${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}${g.drug_effect ? ` — ${g.drug_effect}` : ""}`,
+        `  ${g.active ? "▶ " : ""}${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}${g.drug_effect?.length ? ` — ${renderNotices(g.drug_effect, ui, tr)}` : ""}`,
       ),
     );
     line();
@@ -245,7 +246,7 @@ export function textSheet(x: TextArgs): string {
     head("txt.drugsActive");
     (d.active_drugs || []).forEach((drug) =>
       line(
-        `  ${tr(drug.name)}${drug.effect ? ` — ${drug.effect}` : ""}${drug.duration ? ui("txt.duration", { duration: drug.duration }) : ""}`,
+        `  ${tr(drug.name)}${drug.effect?.length ? ` — ${renderNotices(drug.effect, ui, tr)}` : ""}${drug.duration ? ui("txt.duration", { duration: renderNotice(drug.duration, ui, tr) }) : ""}`,
       ),
     );
     line();

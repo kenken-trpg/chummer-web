@@ -1,3 +1,4 @@
+import type { Notice } from "@/lib/engine-notices";
 import type { MentorChoice } from "./installs";
 
 export interface InstalledMartialArtTechnique {
@@ -371,7 +372,7 @@ export interface InstalledGear extends InstalledOptics {
   drug_speed?: string;
   drug_vectors?: string[];
   drug_duration?: string;
-  drug_effect?: string;
+  drug_effect?: Notice[];
 }
 
 export interface InstalledLifestyle {
@@ -416,8 +417,8 @@ export interface ActiveDrug {
   category: string;
   speed?: string;
   vectors?: string[];
-  duration?: string;
-  effect?: string;
+  duration?: Notice | null;
+  effect?: Notice[];
 }
 
 export interface InstalledVehicleMod {

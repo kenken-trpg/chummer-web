@@ -1,6 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { renderNotice, renderNotices } from "@/lib/engine-notices";
 
 export function DrugsSection(s: SheetData) {
   const { tr, d, drugs, drugChildren } = s;
@@ -14,8 +15,12 @@ export function DrugsSection(s: SheetData) {
             {(d.active_drugs || []).map((drug, i) => (
               <li key={`${drug.name}-${i}`}>
                 <b>{tr(drug.name)}</b>
-                {drug.effect ? ` ・ ${drug.effect}` : ""}
-                {drug.duration ? ui("sheet.drugDuration", { duration: drug.duration }) : ""}
+                {drug.effect?.length ? ` ・ ${renderNotices(drug.effect, ui, tr)}` : ""}
+                {drug.duration
+                  ? ui("sheet.drugDuration", {
+                      duration: renderNotice(drug.duration, ui, tr),
+                    })
+                  : ""}
                 {drug.vectors?.length
                   ? ui("sheet.drugVector", {
                       list: drug.vectors.join(ui("common.termSep")),
@@ -37,8 +42,8 @@ export function DrugsSection(s: SheetData) {
               {grades.length
                 ? `（${grades.map((g) => tr(g.name)).join(ui("common.listSep"))}）`
                 : ""}
-              {item.drug_effect ? (
-                <span className="sheet-dim">{` ・ ${item.drug_effect}`}</span>
+              {item.drug_effect?.length ? (
+                <span className="sheet-dim">{` ・ ${renderNotices(item.drug_effect, ui, tr)}`}</span>
               ) : (
                 ""
               )}

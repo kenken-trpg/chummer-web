@@ -258,7 +258,7 @@ def _resolve_misc_gear(
                 "drug_speed": spec.get("drug_speed") or "" if is_drug else "",
                 "drug_vectors": list(spec.get("drug_vectors") or []) if is_drug else [],
                 "drug_duration": spec.get("drug_duration") or "" if is_drug else "",
-                "drug_effect": drug_effect_summary(drug_bonus) if drug_bonus else "",
+                "drug_effect": drug_effect_summary(drug_bonus) if drug_bonus else [],
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "qty": qty,

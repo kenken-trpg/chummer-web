@@ -6955,9 +6955,13 @@ def test_career_spend_breakdown_lists_attribute_raise() -> None:
     st.attributes["AGI"] = 5
     out = compute(st)
     assert out.derived["career_advancement_karma"] == 25
-    assert any(
-        row["label"].startswith("能力値 AGI") and row["amount"] == 25 for row in out.derived["career_advancement_lines"]
+    assert has(
+        [row["notice"] for row in out.derived["career_advancement_lines"]],
+        "engine.spend.attribute",
+        name="AGI",
+        after=5,
     )
+    assert any(row["amount"] == 25 for row in out.derived["career_advancement_lines"])
     assert any(row["amount"] == 25 for row in out.derived["karma_spend_breakdown"])
 
 
@@ -7157,7 +7161,8 @@ def test_active_drug_folds_bonus_into_totals() -> None:
     assert base.derived["active_drugs"] == []
     assert [d["name"] for d in dosed.derived["active_drugs"]] == ["Jazz"]
     row = dosed.derived["active_drugs"][0]
-    assert "REA +1" in row["effect"] and row["vectors"] == ["Inhalation"]
+    assert has(row["effect"], "engine.drugEffect.attribute", name="REA", value="+1")
+    assert row["vectors"] == ["Inhalation"]
 
 
 CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"

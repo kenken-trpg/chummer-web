@@ -245,7 +245,13 @@ export const RICH_DERIVED = {
       loyalty_max: 6,
     },
   ],
-  active_drugs: [{ name: "Kamikaze", effect: "+1 BOD/AGI/STR/WIL", duration: "10分" }],
+  active_drugs: [
+    {
+      name: "Kamikaze",
+      effect: [{ key: "engine.drugEffect.attribute", params: { name: "BOD", value: "+1" } }],
+      duration: { key: "engine.drugDuration.minutes", params: { value: "10" } },
+    },
+  ],
   gear: [
     { id: "g1", name: "Medkit", rating: 6, qty: 1 },
     { id: "dr1", name: "Novacoke", category: "Drugs", qty: 2 },
@@ -259,8 +265,8 @@ export const RICH_DERIVED = {
   public_awareness: 0,
   career_advancement_karma: 4,
   reward_log: [{ id: "r1", label: "Milk run", karma: 5, nuyen: 4000 }],
-  karma_spend_breakdown: [{ label: "資質", amount: 4 }],
-  nuyen_spend_breakdown: [{ label: "ギア", amount: 1000 }],
+  karma_spend_breakdown: [{ notice: { key: "engine.spend.qualities" }, amount: 4 }],
+  nuyen_spend_breakdown: [{ notice: { key: "engine.spend.otherGear" }, amount: 1000 }],
   qualities: [{ id: "q1", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" }],
 } as any;
 

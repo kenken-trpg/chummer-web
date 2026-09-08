@@ -211,7 +211,10 @@
     {
       "amount": 3,
       "kind": "other",
-      "label": "資質"
+      "notice": {
+        "key": "engine.spend.qualities",
+        "params": {}
+      }
     }
   ],
   "knowledge_skills": [],
@@ -335,7 +338,10 @@
     {
       "amount": 49500,
       "kind": "nuyen",
-      "label": "サイバーデッキ"
+      "notice": {
+        "key": "engine.spend.cyberdecks",
+        "params": {}
+      }
     }
   ],
   "nuyen_spent": 49500,

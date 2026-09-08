@@ -335,17 +335,26 @@
     {
       "amount": 150000,
       "kind": "nuyen",
-      "label": "サイバーウェア"
+      "notice": {
+        "key": "engine.spend.cyberware",
+        "params": {}
+      }
     },
     {
       "amount": 1000,
       "kind": "nuyen",
-      "label": "防具"
+      "notice": {
+        "key": "engine.spend.armor",
+        "params": {}
+      }
     },
     {
       "amount": 725,
       "kind": "nuyen",
-      "label": "武器"
+      "notice": {
+        "key": "engine.spend.weapons",
+        "params": {}
+      }
     }
   ],
   "nuyen_spent": 151725,

@@ -29,6 +29,7 @@ DYNAMIC_FAMILIES = (
     "engine.host.",
     "engine.select.",
     "engine.vehicleSlot.",
+    "engine.drugDuration.",
 )
 
 

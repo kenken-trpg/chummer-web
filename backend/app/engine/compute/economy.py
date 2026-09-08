@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import apply_bonus_nodes
-from ...notices import term, terms
+from ...notices import notice, term, terms
 from ..constants import (
     KARMA_CHARGEN_POOL,
     KARMA_NUYEN_MAX,
@@ -339,24 +339,24 @@ def economy(ctx: Ctx) -> None:
     ctx.karma_left = ctx.karma_pool - ctx.karma_spent
 
     ctx.karma_spend_lines = list(ctx.career_adv_lines)
-    for label, amount in (
-        ("資質", ctx.karma_from_q),
-        ("メタ", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
-        ("能力値（カルマ作成）", ctx.attr_karma if ctx.is_karma else 0),
-        ("技能（カルマ作成）", ctx.skill_buy_karma if ctx.is_karma else 0),
-        ("知識（カルマ作成）", ctx.knowledge_karma if ctx.is_karma else 0),
-        ("専門化", ctx.spec_karma),
-        ("新円交換", int(ctx.state.karma_nuyen or 0)),
-        ("ミスティックPP", ctx.mystic_karma),
-        ("アデプト／気／収束具", ctx.extra_adept_karma),
-        ("術式／複合体", ctx.spell_karma),
-        ("コンタクト超過", int(ctx.contacts.get("karma") or 0)),
-        ("武道", int(ctx.martial.get("karma") or 0)),
-        ("イニシエーション", int(ctx.initiation.get("karma") or 0)),
-        ("サブマージョン", int(ctx.submersion.get("karma") or 0)),
+    for key, amount in (
+        ("engine.spend.qualities", ctx.karma_from_q),
+        ("engine.spend.metatype", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
+        ("engine.spend.attributesKarma", ctx.attr_karma if ctx.is_karma else 0),
+        ("engine.spend.skillsKarma", ctx.skill_buy_karma if ctx.is_karma else 0),
+        ("engine.spend.knowledgeKarma", ctx.knowledge_karma if ctx.is_karma else 0),
+        ("engine.spend.specializations", ctx.spec_karma),
+        ("engine.spend.nuyenExchange", int(ctx.state.karma_nuyen or 0)),
+        ("engine.spend.mysticPP", ctx.mystic_karma),
+        ("engine.spend.adeptPower", ctx.extra_adept_karma),
+        ("engine.spend.spells", ctx.spell_karma),
+        ("engine.spend.contactsOver", int(ctx.contacts.get("karma") or 0)),
+        ("engine.spend.martialArts", int(ctx.martial.get("karma") or 0)),
+        ("engine.spend.initiation", int(ctx.initiation.get("karma") or 0)),
+        ("engine.spend.submersion", int(ctx.submersion.get("karma") or 0)),
     ):
         if amount:
-            ctx.karma_spend_lines.append({"kind": "other", "label": label, "amount": int(amount)})
+            ctx.karma_spend_lines.append({"kind": "other", "notice": notice(key), "amount": int(amount)})
     ctx.nuyen_spend_lines = nuyen_spend_breakdown(
         ctx.cyber_installed,
         ctx.bio_installed,

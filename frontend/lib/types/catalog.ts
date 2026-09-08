@@ -1,3 +1,4 @@
+import type { Notice } from "@/lib/engine-notices";
 import type { PriorityCategory, PriorityLetter, QualityReqNode } from "./installs";
 import type { TraditionInfo } from "./derived";
 
@@ -197,7 +198,7 @@ export interface GearCatalogItem extends OpticsCatalogItem {
   speed?: string;
   vectors?: string[];
   duration?: string;
-  effect?: string;
+  effect?: Notice[];
 }
 
 export interface LifestyleCatalogItem {
