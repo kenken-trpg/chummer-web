@@ -19,9 +19,6 @@ export default defineConfig({
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
 
-    // Measurement only — no `thresholds`. The point is to see which modules
-    // the 249 tests never touch; pick a floor once the numbers are known,
-    // rather than enshrining whatever today's percentage happens to be.
     coverage: {
       provider: "v8",
       reporter: ["text-summary", "html", "lcov"],
@@ -34,6 +31,25 @@ export default defineConfig({
         "lib/types/**",
         "**/*.d.ts",
       ],
+
+      // A ratchet, not a target. It sits a couple of points under where the
+      // suite actually is, so an ordinary refactor that shifts a branch or two
+      // does not turn CI red — what it catches is a *drop*: a feature landing
+      // with no tests, or tests deleted to make a change go through.
+      //
+      // Raise these when the real numbers move up; never lower them to make a
+      // build pass. `npm run test:coverage` prints the current figures.
+      //
+      // Not `perFile`: the floor is for the suite as a whole. Several files are
+      // still well under it (`SheetDescEditor`, `MentorPicker`, `Toolbar`), and
+      // per-file thresholds would fail today and say nothing new — the gaps are
+      // already visible in the report.
+      thresholds: {
+        statements: 78,
+        branches: 59,
+        functions: 68,
+        lines: 80,
+      },
     },
   },
 });

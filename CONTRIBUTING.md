@@ -95,10 +95,17 @@ The backend tests come in two layers:
 ```bash
 cd frontend && npm run check   # typecheck + lint + format:check + test
 npm run test                   # vitest (jsdom + React Testing Library)
+npm run test:coverage          # the same run, plus the coverage floor
 ```
 
 Tests live next to the code (`*.test.ts` / `*.test.tsx`) with shared
 fixtures in `frontend/tests/fixtures.ts` (`makeCharacter` / `makeCatalog`).
+
+CI runs `test:coverage`, and `vitest.config.mts` sets a **global floor** a
+couple of points under where the suite actually is. It is a ratchet, not a
+target: it will not fail an ordinary refactor that moves a branch or two, and
+it will fail a feature that lands with no tests. Raise it when the real
+numbers move up; do not lower it to make a build pass.
 `eslint` is clean and blocking, including `no-explicit-any` (the source is
 `any`-free; test files may still cast fixtures). `no-unused-vars` stays a
 warning, with `_`-prefixed names exempt.
