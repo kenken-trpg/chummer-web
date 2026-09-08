@@ -533,7 +533,10 @@
         "Sapience"
       ],
       "role": "combat",
-      "role_label": "戦闘",
+      "role_label": {
+        "key": "engine.spiritRole.combat",
+        "params": {}
+      },
       "services": 2,
       "skills": [
         {
@@ -675,7 +678,7 @@
     "Human": "ヒューマン"
   },
   "trustfund": 0,
-  "trustfund_label": "",
+  "trustfund_label": null,
   "unarmed_ap": 0,
   "unarmed_dv": 0,
   "unarmed_physical": false,

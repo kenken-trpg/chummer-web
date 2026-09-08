@@ -97,7 +97,7 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
                 data["reward_log"] = [
                     {
                         "id": str(uuid.uuid4()),
-                        "label": "キャリア開始時の報酬合計",
+                        "label": "",  # the front end names an unlabelled row
                         "karma": max(0, int(data.get("karma_earned") or 0)),
                         "nuyen": max(0, int(data.get("nuyen_earned") or 0)),
                     }

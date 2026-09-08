@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { spiritRoleLabel } from "@/lib/character/constants";
 import { optionalNumber, testLine } from "@/lib/character/format";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -39,7 +40,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
-              {item.name} / {item.role_label || item.role} /{" "}
+              {item.name} / {item.role_label ? renderNotice(item.role_label, ui) : item.role} /{" "}
               {item.bound ? ui("spirit.bound") : ui("spirit.summoned")} / F{item.force} /{" "}
               {ui("spirit.services")} {item.services}
               {item.bound

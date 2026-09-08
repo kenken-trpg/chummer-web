@@ -1,4 +1,5 @@
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function SidebarFlags({ d, ui }: SidebarBlockProps) {
   return (
@@ -52,7 +53,7 @@ export function SidebarFlags({ d, ui }: SidebarBlockProps) {
           <span>{ui("side.trust")}</span>
           <b>
             TF{d.trustfund}
-            {d.trustfund_label ? `（${d.trustfund_label}）` : ""}
+            {d.trustfund_label ? `（${renderNotice(d.trustfund_label, ui)}）` : ""}
           </b>
         </div>
       ) : null}

@@ -143,7 +143,7 @@ def resolve_adept_powers(
         }
 
     free_by_key: dict[tuple[str, str], int] = {}
-    free_notes: dict[tuple[str, str], list[str]] = {}
+    free_notes: dict[tuple[str, str], list[Notice]] = {}
     for gift in free_powers or []:
         spec = _power_by_id(gift["power_id"]) or _power_by_name(gift.get("name") or "")
         if not spec:
@@ -151,7 +151,10 @@ def resolve_adept_powers(
         extra = (gift.get("extra") or "").strip()
         key = (spec["id"], extra)
         free_by_key[key] = free_by_key.get(key, 0) + max(1, int(gift.get("rating") or 1))
-        free_notes.setdefault(key, []).append(gift.get("source") or "無料")
+        source = gift.get("source") or ""
+        free_notes.setdefault(key, []).append(
+            notice("engine.adept.freeFrom", source=term(source)) if source else notice("engine.adept.free")
+        )
 
     installed_names = set()
     for inst in state.adept_powers:

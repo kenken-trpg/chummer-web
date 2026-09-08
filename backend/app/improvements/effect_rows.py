@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from typing import NotRequired, TypedDict
 
+from ..notices import Notice
+
 
 class KarmaCostRow(TypedDict):
     """``active_skill_karma_cost`` / ``knowledge_skill_karma_cost`` /
@@ -126,7 +128,7 @@ class LimitModifierRow(TypedDict):
     limit: str
     value: int
     condition: str
-    condition_label: str
+    condition_label: Notice | None
     source: str
 
 

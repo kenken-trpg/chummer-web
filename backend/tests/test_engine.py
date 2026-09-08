@@ -2948,7 +2948,7 @@ def test_thermal_damping_adds_sneaking_physical_limit() -> None:
             "limit": "physical",
             "value": 2,
             "condition": "LimitCondition_TestSneakingThermal",
-            "condition_label": "熱視覚／熱センサーに対する潜伏",
+            "condition_label": {"key": "engine.limitCond.sneakingThermal", "params": {}},
             "source": "",
         }
     ]
@@ -2957,7 +2957,7 @@ def test_thermal_damping_adds_sneaking_physical_limit() -> None:
             "limit": "physical",
             "value": 2,
             "condition": "LimitCondition_TestSneakingThermal",
-            "condition_label": "熱視覚／熱センサーに対する潜伏",
+            "condition_label": {"key": "engine.limitCond.sneakingThermal", "params": {}},
             "source": "Thermal Damping",
         }
     ]

@@ -163,7 +163,7 @@ def resolve_spirits(
                 "spirit_id": spec["id"],
                 "name": spec["name"],
                 "role": role,
-                "role_label": SPIRIT_ROLE_LABELS.get(role, role),
+                "role_label": notice(SPIRIT_ROLE_LABELS[role]) if role in SPIRIT_ROLE_LABELS else None,
                 "force": force,
                 "force_max": cap,
                 "services": services,

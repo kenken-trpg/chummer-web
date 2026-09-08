@@ -333,11 +333,17 @@ describe("limitModifierLine", () => {
 
   it("appends the condition, since a conditional bonus is not always on", () => {
     const line = limitModifierLine(
-      [{ limit: "social", value: 2, condition_label: "対メタヒューマン" } as never],
+      [
+        {
+          limit: "social",
+          value: 2,
+          condition_label: { key: "engine.limitCond.skillwires" },
+        } as never,
+      ],
       testUi,
     );
 
-    expect(line).toContain("（対メタヒューマン）");
+    expect(line).toContain("（スキルワイヤ）");
   });
 
   it("is empty for none", () => {

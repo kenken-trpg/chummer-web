@@ -9,6 +9,7 @@ import { ExtraSelect, selectLabel } from "@/components/character/ExtraSelect";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { attrLabel } from "@/lib/ui-strings";
 import { formatPoints } from "@/lib/character/format";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function AdeptTab({
   catalog,
@@ -85,7 +86,9 @@ export function AdeptTab({
                 : ""}
               {" / "}
               {item.source}
-              {item.notes?.length ? ` / ${item.notes.join(" ・ ")}` : ""}
+              {item.notes?.length
+                ? ` / ${item.notes.map((n) => renderNotice(n, ui, tr)).join(" ・ ")}`
+                : ""}
               {item.spell
                 ? ui("adept.spellLine", {
                     dv: item.spell.dv,

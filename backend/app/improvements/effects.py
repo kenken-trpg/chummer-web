@@ -394,7 +394,7 @@ def compact_limit_modifiers(effects: EffectsDict) -> list[dict[str, Any]]:
                 "limit": kind,
                 "value": value,
                 "condition": condition,
-                "condition_label": str(row.get("condition_label") or limit_condition_label(condition)),
+                "condition_label": row.get("condition_label") or limit_condition_label(condition),
                 "source": str(row.get("source") or ""),
             }
         )

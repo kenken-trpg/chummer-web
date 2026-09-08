@@ -3,6 +3,7 @@ import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
+import { renderNotice } from "@/lib/engine-notices";
 
 /** Page-1 "stat block" for the print layout: attributes (base + augment),
  * limits, initiative, movement, and the derived defense / soak pools a table
@@ -57,7 +58,9 @@ export function PrintStatBlock(s: SheetData) {
     stats.push({
       label: ui("print.limitMod", { limit: mod.limit }),
       value: `${mod.value > 0 ? `+${mod.value}` : mod.value}${
-        mod.condition_label || mod.condition ? `／${mod.condition_label || mod.condition}` : ""
+        mod.condition_label || mod.condition
+          ? `／${mod.condition_label ? renderNotice(mod.condition_label, ui) : mod.condition}`
+          : ""
       }`,
     });
 

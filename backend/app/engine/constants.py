@@ -61,11 +61,12 @@ CAREER_SKILL_MAX = 12
 PRIORITY_KARMA_NUYEN_BASE = 10
 MATRIX_ARRAY_KEYS = ("attack", "sleaze", "dataprocessing", "firewall")
 TRUST_FUND_LIFESTYLE = {1: "Medium", 2: "Low", 3: "High", 4: "Medium"}
+#: The wording lives in the front end (`app.notices`); these are its keys.
 TRUST_FUND_STIPEND = {
-    1: "Medium ライフスタイル＋毎月 500¥",
-    2: "Low ライフスタイル＋毎月 2,000+(3D6×100)¥",
-    3: "High ライフスタイル＋毎月 1,000¥",
-    4: "Medium ライフスタイル＋毎月 3,000+(6D6×100)¥",
+    1: "engine.trustFund.1",
+    2: "engine.trustFund.2",
+    3: "engine.trustFund.3",
+    4: "engine.trustFund.4",
 }
 DEALER_CONNECTION_MATCH = {
     "Drones": ("Drones",),
@@ -125,12 +126,12 @@ SPRITE_MATRIX_KEYS = {
 SPIRIT_REAGENT_YEN = 20
 FOCUS_FORCE_MULT = 5
 SPIRIT_ROLE_LABELS = {
-    "combat": "戦闘",
-    "detection": "探知",
-    "health": "健康",
-    "illusion": "幻影",
-    "manipulation": "操作",
-    "extra": "追加",
+    "combat": "engine.spiritRole.combat",
+    "detection": "engine.spiritRole.detection",
+    "health": "engine.spiritRole.health",
+    "illusion": "engine.spiritRole.illusion",
+    "manipulation": "engine.spiritRole.manipulation",
+    "extra": "engine.spiritRole.extra",
 }
 
 
