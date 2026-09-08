@@ -43,6 +43,7 @@ IMPLEMENTED = {
     "skillcategory",
     "specificskill",
     "selectskill",
+    "hardwires",
     "adeptpowerpoints",
     "unlockskills",
     "damageresistance",

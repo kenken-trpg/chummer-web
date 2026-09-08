@@ -15,6 +15,8 @@ export interface SkillPickSlot {
   picked: string;
   bonus: number;
   max: number;
+  /** `<hardwires>`: the rating the ware fixes the picked skill at (0 otherwise). */
+  rating: number;
   options: string[];
   knowledgeskills: boolean;
 }

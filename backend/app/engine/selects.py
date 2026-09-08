@@ -35,6 +35,23 @@ def parse_selectskill_spec(node: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def parse_hardwires_spec(node: dict[str, Any]) -> dict[str, Any]:
+    """``<hardwires>`` picks a skill the same way ``<selectskill>`` does.
+
+    Its value is the rating the ware hardwires into the pick, not a dice bonus,
+    so it moves to ``rating`` and the dice fields are cleared. The knowledge
+    filter is spelled ``knowledgeskill`` here (singular).
+    """
+    spec = parse_selectskill_spec(node)
+    attrs = node.get("attrs") or {}
+    if str(attrs.get("knowledgeskill") or "False").lower() == "true":
+        spec["knowledgeskills"] = True
+    spec["rating"] = max(0, int(spec["bonus"]))
+    spec["bonus"] = 0
+    spec["max"] = 0
+    return spec
+
+
 def selectskill_options(
     spec: dict[str, Any],
     skills_data: dict[str, Any],
