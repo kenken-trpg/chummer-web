@@ -30,8 +30,13 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
   );
   const cyberGrades = useMemo(() => {
     const banned = new Set(d.disabled_cyberware_grades || []);
-    return catalog.cyberware.grades.filter((g) => !banned.has(g.name));
-  }, [catalog, d.disabled_cyberware_grades]);
+    // Adapsin does not add a grade, it changes what every grade costs in
+    // Essence — so the picker has to quote the number the engine will use,
+    // or the multiplier on the dropdown contradicts the ESS on the row.
+    return catalog.cyberware.grades
+      .filter((g) => !banned.has(g.name))
+      .map((g) => (d.adapsin ? { ...g, ess: g.ess_adapsin } : g));
+  }, [catalog, d.disabled_cyberware_grades, d.adapsin]);
   const effectiveAddGrade = cyberGrades.some((g) => g.name === addGrade)
     ? addGrade
     : cyberGrades[0]?.name || "Betaware";

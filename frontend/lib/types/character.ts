@@ -315,6 +315,7 @@ export interface Character {
     disabled_skill_groups?: string[];
     blocked_default_categories?: string[];
     disabled_cyberware_grades?: string[];
+    adapsin?: boolean;
     disabled_bioware_grades?: string[];
     limit_spell_categories?: string[];
     limit_spirit_categories?: string[];

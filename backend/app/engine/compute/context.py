@@ -81,6 +81,8 @@ class Ctx:
     # --- ware ------------------------------------------------------------
     cyber_installed: list[dict[str, Any]] = field(default_factory=list)
     bio_installed: list[dict[str, Any]] = field(default_factory=list)
+    #: Adapsin is on, so cyberware reads the Adapsin column of the grade table.
+    adapsin: bool = False
     installed: list[dict[str, Any]] = field(default_factory=list)
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 

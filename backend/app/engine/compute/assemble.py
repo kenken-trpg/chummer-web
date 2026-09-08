@@ -302,6 +302,7 @@ def assemble(ctx: Ctx) -> None:
         "prototype_transhuman_ess": float(ctx.effects.get("prototype_transhuman_ess") or 0),
         "burnout_way": bool(ctx.effects.get("burnout_way")),
         "disabled_cyberware_grades": list(ctx.effects.get("disabled_cyberware_grades") or []),
+        "adapsin": ctx.adapsin,
         "disabled_bioware_grades": list(ctx.effects.get("disabled_bioware_grades") or []),
         "limit_spell_categories": list(ctx.effects.get("limit_spell_categories") or []),
         "limit_spirit_categories": list(ctx.effects.get("limit_spirit_categories") or []),

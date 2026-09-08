@@ -61,6 +61,7 @@ DRAGON_HIDE = "8aa2590f-1fc5-4706-a7b9-9eec3db4fab9"
 PUSHED = "2c988cbe-e6e6-4c22-ae3c-14ad6e1fff1f"
 QUALIA = "b110516e-36e8-4c69-a682-066e91c02351"
 DAMPER = "3785a2cf-c3df-476a-b7cd-6e224ea77ab0"
+ADAPSIN = "3f8b9030-662e-4212-8f30-5aa394a41568"
 CUSTOM_STR = "7d61f860-0637-4214-914d-c68022361d24"
 CUSTOM_AGI = "7afb23c7-435f-450c-9d1c-f7a0e7e631a6"
 ENHANCED_STR = "a9f4efd4-b86c-4e90-b0f7-aefa32c3b9de"
@@ -2895,6 +2896,49 @@ def test_fire_resistance_adds_special_armor() -> None:
     assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["fire"] == 2
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "firearmor" not in tags
+
+
+def test_adapsin_discounts_cyberware_essence_but_not_its_own() -> None:
+    plain = compute(_mundane("plain", cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)]))
+    assert plain.derived["cyberware"][0]["essence"] == 2.0
+
+    out = compute(
+        _mundane(
+            "adapsin",
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)],
+            bioware=[CyberwareInstall(ware_id=ADAPSIN)],
+        )
+    )
+    # Standard grade drops 1.0 -> 0.9 for cyberware only; the Adapsin bioware
+    # itself still costs its listed 0.2, because bioware has no Adapsin grades.
+    assert out.derived["cyberware"][0]["essence"] == 1.8
+    assert out.derived["bioware"][0]["essence"] == 0.2
+    assert out.derived["essence"] == 4.0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "adapsin" not in tags
+
+
+def test_adapsin_discount_is_per_grade_not_a_flat_ten_percent() -> None:
+    """Alphaware goes 0.8 -> 0.7, which is a tenth off the multiplier, not a
+    tenth off the result (that would be 0.72). The numbers come from the grade
+    table, so this pins that they are being read rather than computed."""
+    out = compute(
+        _mundane(
+            "adapsin-alpha",
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=1, grade="Alphaware")],
+            bioware=[CyberwareInstall(ware_id=ADAPSIN)],
+        )
+    )
+    assert out.derived["cyberware"][0]["essence"] == 1.4
+
+
+def test_the_adapsin_grade_twins_are_not_offered_in_the_picker() -> None:
+    """Chummer models Adapsin by swapping in a parallel grade; those are an
+    implementation detail, not something a player picks."""
+    names = [grade["name"] for grade in catalog()["cyberware"]["grades"]]
+    assert not [name for name in names if "(Adapsin)" in name]
+    standard = next(grade for grade in catalog()["cyberware"]["grades"] if grade["name"] == "Standard")
+    assert (standard["ess"], standard["ess_adapsin"]) == (1.0, 0.9)
 
 
 def test_damper_adds_sonic_resistance() -> None:

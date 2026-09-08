@@ -68,10 +68,24 @@ def _ensure_kind_subsystems(
     return items + extra if extra else items
 
 
+def has_adapsin(resolved: list[dict[str, Any]]) -> bool:
+    """True when something in ``resolved`` carries an ``<adapsin />`` bonus.
+
+    Adapsin is bioware that makes cyberware cost less Essence, so the flag has
+    to be known *before* cyberware is resolved — too early for the effects dict,
+    which is only assembled once every source has been resolved. Reading the
+    bonus nodes straight off the resolved bioware keeps a single source of
+    truth: `improvements` claims the tag but hands the work over here.
+    """
+    return any(node.get("tag") == "adapsin" for item in resolved for node in (item.get("bonus") or []))
+
+
 def resolve_ware(
     kind: str,
     installs: list[CyberwareInstall],
     attrs_spec: dict[str, dict[str, int | float]] | None = None,
+    *,
+    adapsin: bool = False,
 ) -> list[dict[str, Any]]:
     extras = racial_formula_extras(attrs_spec) if attrs_spec else {}
     resolved: list[dict[str, Any]] = []
@@ -88,7 +102,10 @@ def resolve_ware(
         plugin = bool(ware.get("plugin"))
         add_to_parent = bool(ware.get("addtoparentess")) and slotted and not included
         formula_extras = {**extras, "MinRating": lo}
-        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * float(grade.get("ess") or 1), 4)
+        # Bioware grades have no Adapsin twin, so `ess_adapsin` mirrors `ess`
+        # there and the flag costs nothing to carry.
+        grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)
+        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * grade_ess, 4)
         ess = 0.0 if included or (slotted and (plugin or add_to_parent)) else ess_base
         cost = (
             0

@@ -16,11 +16,29 @@ from ..formulas import parse_capacity
 CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
 
 
+ADAPSIN_SUFFIX = " (Adapsin)"
+
+
 def _load_grades(root: ET.Element) -> list[dict[str, Any]]:
-    grades = []
+    """The grade table, with the Adapsin twins folded into their base grade.
+
+    ``cyberware.xml`` ships every grade twice — "Alphaware" and "Alphaware
+    (Adapsin)" — because Chummer models the Adapsin bioware by swapping the
+    grade under the character. That is not a grade anyone picks, so the twins
+    never reach the picker: each base grade carries its Adapsin essence
+    multiplier in ``ess_adapsin`` instead, and the engine chooses between the
+    two. The numbers have to come from the file — the discount is neither a
+    clean multiply nor a clean subtraction (Standard 1 → 0.9 and Used 1.25 →
+    1.125 are ×0.9, but Alphaware 0.8 → 0.7 is −0.1).
+    """
+    grades: list[dict[str, Any]] = []
+    adapsin: dict[str, float] = {}
     for el in root.findall("./grades/grade"):
         name = _text(el.find("name"))
         if not name:
+            continue
+        if name.endswith(ADAPSIN_SUFFIX):
+            adapsin[name[: -len(ADAPSIN_SUFFIX)]] = _float(el.find("ess"), 1.0)
             continue
         grades.append(
             {
@@ -33,6 +51,8 @@ def _load_grades(root: ET.Element) -> list[dict[str, Any]]:
                 "core": name in CORE_GRADES,
             }
         )
+    for grade in grades:
+        grade["ess_adapsin"] = adapsin.get(str(grade["name"]), grade["ess"])
     return grades
 
 

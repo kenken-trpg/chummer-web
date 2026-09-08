@@ -541,6 +541,6 @@ export interface WareCatalogItem {
 }
 
 export interface WareCatalog {
-  grades: { name: string; ess: number; cost: number }[];
+  grades: { name: string; ess: number; ess_adapsin: number; cost: number }[];
   items: WareCatalogItem[];
 }
