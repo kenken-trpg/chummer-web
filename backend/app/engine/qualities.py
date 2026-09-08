@@ -14,11 +14,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from ..improvements import EffectsDict, _as_int
+from ..improvements import EffectsDict, _as_int, granted_quality_names
 from ..improvements.effect_rows import ActionDicePoolRow
 from ..models import CharacterState
 from ..notices import Notice, notice, term, ui
 from .constants import (
+    MAG_TALENTS,
     NEGATIVE_QUALITY_KARMA_CAP,
     POSITIVE_QUALITY_KARMA_CAP,
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
@@ -29,7 +30,7 @@ from .constants import (
     quality_spirit_category_extra_key,
     slot_phrase,
 )
-from .lookups import _item_by_id, _power_by_name, _quality_by_id, _quality_by_name
+from .lookups import _item_by_id, _power_by_name, _quality_by_id, _quality_by_name, _tradition_by_id
 from .priority import talent_special
 from .requirements import requirement_tree_met
 
@@ -355,6 +356,24 @@ def resolve_quality_sides(
     return chosen
 
 
+def tradition_quality_grants(state: CharacterState, talent: dict[str, Any]) -> list[tuple[str, str]]:
+    """The qualities a tradition forces on its follower, each with its pick.
+
+    A tradition belongs to the awakened alone — ``resolve_spells`` clears it
+    for everyone else — so a mundane build is handed nothing. The grants ride
+    the tradition's ``<bonus>`` either singly (Traditionalist Shaman's Code of
+    Honor, FA p.74) or inside ``<addqualities>``.
+    """
+    if talent.get("name") not in MAG_TALENTS:
+        return []
+    tradition = _tradition_by_id(state.tradition_id)
+    grants: list[tuple[str, str]] = []
+    for node in (tradition or {}).get("bonus") or []:
+        if node.get("tag") in ("addquality", "addqualities"):
+            grants.extend(granted_quality_names(node))
+    return grants
+
+
 def gather_qualities(
     state: CharacterState, talent: dict[str, Any]
 ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
@@ -366,6 +385,19 @@ def gather_qualities(
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
+    # The tradition's own grants come free, like the ones a quality chains in
+    # below: the follower never chose them, so they cost no karma either way.
+    forced_extras: dict[str, str] = {}
+    for name, select in tradition_quality_grants(state, talent):
+        granted = _quality_by_name(name)
+        if not granted or granted["id"] in pending:
+            continue
+        pending.append(granted["id"])
+        free_ids.add(granted["id"])
+        if select:
+            forced_extras[granted["id"]] = select
+    if forced_extras:
+        state.quality_extras = {**(state.quality_extras or {}), **forced_extras}
     extras = {key: str(value).strip() for key, value in (state.quality_extras or {}).items() if str(value).strip()}
     index = 0
     while index < len(pending):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._common import _as_int, _bonus_int
+from .._common import _as_int, _bonus_int, granted_quality_names
 from ..effects import EffectsDict
 
 
@@ -21,13 +21,11 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         qid = str(node.get("value") or fields.get("name") or "").strip()
         if qid and qid not in effects["free_qualities"]:
             effects["free_qualities"].append(qid)
-    elif tag == "addqualities":
-        raw = fields.get("addquality") or node.get("value") or ""
-        names = raw if isinstance(raw, list) else [raw]
-        for name in names:
-            text = str(name).strip()
-            if text and text not in effects["add_qualities"]:
-                effects["add_qualities"].append(text)
+    elif tag in ("addqualities", "addquality"):
+        # Plural container or a lone grant — the same thing to everyone downstream.
+        for name, _select in granted_quality_names(node):
+            if name not in effects["add_qualities"]:
+                effects["add_qualities"].append(name)
     elif tag == "lifestylecost":
         effects["lifestyle_cost"] += _bonus_int(node, fields)
     elif tag == "notoriety":

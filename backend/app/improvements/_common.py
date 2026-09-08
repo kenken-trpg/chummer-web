@@ -53,6 +53,7 @@ IMPLEMENTED = {
     "magicianswaydiscount",
     "freequality",
     "addqualities",
+    "addquality",
     "selectmentorspirit",
     "metamagiclimit",
     "focusbindingkarmacost",
@@ -426,3 +427,27 @@ def _bonus_int(node: dict[str, Any], fields: dict[str, Any] | None = None, *, ra
     if isinstance(raw, str) and "Rating" in raw:
         raw = _replace_rating(raw, rating)
     return _eval_int(raw, default)
+
+
+def granted_quality_names(node: dict[str, Any]) -> list[tuple[str, str]]:
+    """``<addquality>`` — bare or inside ``<addqualities>`` — as (name, pick).
+
+    The pick is the ``select=`` the data puts on the grant itself: how a
+    tradition hands Code of Honor the code it demands (FA p.74). Chummer's
+    ``forced="True"`` says the follower cannot refuse, which is what granting
+    it at all already means here, so it is not read back out.
+    """
+    grants = node.get("quality_grants")
+    if grants:
+        return [
+            (str(row.get("name") or "").strip(), str(row.get("select") or "").strip())
+            for row in grants
+            if str(row.get("name") or "").strip()
+        ]
+    if node.get("tag") == "addquality":
+        name = str(node.get("value") or "").strip()
+        select = str((node.get("attrs") or {}).get("select") or "").strip()
+        return [(name, select)] if name else []
+    raw = (node.get("fields") or {}).get("addquality") or node.get("value") or ""
+    names = raw if isinstance(raw, list) else [raw]
+    return [(str(name).strip(), "") for name in names if str(name).strip()]

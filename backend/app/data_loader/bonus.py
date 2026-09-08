@@ -401,6 +401,18 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
                 ]
                 if limits:
                     payload["metamagic_grades"] = limits
+            if tag == "addqualities":
+                # `<addquality select="X">Name</addquality>` repeats, and the
+                # generic field flattening keeps only the last child's
+                # attributes; name and pick are paired back up here (same
+                # reason as `metamagiclimit` above).
+                grants = [
+                    {"name": _text(q), "select": str(q.attrib.get("select") or "")}
+                    for q in child.findall("addquality")
+                    if _text(q)
+                ]
+                if grants:
+                    payload["quality_grants"] = grants
             if tag == "selectpowers":
                 specs: list[dict[str, Any]] = []
                 for sp in child.findall("selectpower"):

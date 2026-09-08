@@ -2228,6 +2228,47 @@ def _learnable_ids(count: int) -> list[str]:
     return [item["id"] for item in catalog()["spells"] if item.get("learnable")][:count]
 
 
+TRADITIONALIST_SHAMAN = "9d0cec5d-4350-47da-9ced-6619bbcb1936"  # a lone `<addquality>`
+VIGILA_EVANGELICA = "ca673acd-961e-4491-8a8d-ddf0c577441b"  # the same inside `<addqualities>`
+DRUID_TRADITIONAL = "77288f4d-e262-47b6-aad8-2edff23859cb"
+CODE_OF_HONOR_CODE = "Harmony with Nature, the Shaman\u2019s Code"
+
+
+def test_a_tradition_grants_the_quality_it_names() -> None:
+    """`<addquality select="...">` — the tradition demands it and names the pick."""
+    out = compute(_mage("shaman-code", tradition_id=TRADITIONALIST_SHAMAN))
+    row = next(q for q in out.derived["qualities"] if q["name"] == "Code of Honor")
+    assert row["extra"] == CODE_OF_HONOR_CODE
+    assert row["free"] is True
+    assert "addquality" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_a_tradition_grant_costs_nothing_either_way() -> None:
+    """The follower never chose it, so the karma a negative quality pays back
+    is not theirs to collect (nor a positive one's cost theirs to pay)."""
+    granted = compute(_mage("shaman-karma", tradition_id=TRADITIONALIST_SHAMAN))
+    plain = compute(_mage("hermetic-karma", tradition_id=HERMETIC))
+    assert granted.derived["karma"] == plain.derived["karma"]
+
+
+def test_a_tradition_grants_from_the_plural_container_too() -> None:
+    out = compute(_mage("theurgy", tradition_id=VIGILA_EVANGELICA))
+    assert "Pacifist I" in [q["name"] for q in out.derived["qualities"]]
+
+
+def test_a_granted_mentor_spirit_still_asks_for_the_mentor() -> None:
+    """Druid [Traditional] grants Mentor Spirit — the pick stays the player's."""
+    out = compute(_mage("druid", tradition_id=DRUID_TRADITIONAL))
+    assert "Mentor Spirit" in [q["name"] for q in out.derived["qualities"]]
+    assert out.derived["needs_mentor"] is True
+    assert has(out.derived["warnings"], "engine.qualities.mentorMissing")
+
+
+def test_a_mundane_is_handed_nothing_by_a_tradition() -> None:
+    out = compute(_mundane("mundane-trad", tradition_id=TRADITIONALIST_SHAMAN))
+    assert [q["name"] for q in out.derived["qualities"]] == []
+
+
 def test_tradition_resist_hermetic() -> None:
     spec = next(item for item in catalog()["traditions"] if item["id"] == HERMETIC)
     pool, label = tradition_resist(spec, {"WIL": 5, "LOG": 6, "INT": 2, "CHA": 1})
