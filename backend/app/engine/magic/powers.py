@@ -24,7 +24,6 @@ from ..lookups import _enhancement_by_id, _power_by_id, _power_by_name
 from ..selects import parse_selectskill_spec, selectskill_options
 from ._common import spell_cast_info
 
-
 #: What ``<selectlimit>`` offers, and the fixed-limit tag each pick becomes.
 #: Chummer names the limits it wants to narrow to inside the bonus; with none
 #: named, all three qualify.
