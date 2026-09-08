@@ -70,7 +70,9 @@
   "complex_forms": [],
   "condition_monitor": {
     "physical": 9,
-    "stun": 9
+    "stun": 9,
+    "threshold": 3,
+    "threshold_offset": 0
   },
   "contact_points": {
     "free": 3,

@@ -54,6 +54,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
     elif tag == "conditionmonitor":
         effects["cm_physical"] += _as_int(fields.get("physical"))
         effects["cm_stun"] += _as_int(fields.get("stun"))
+        # `<threshold>` moves the every-third-box penalty step, `<thresholdoffset>`
+        # ignores that many boxes before the first penalty (High Pain Tolerance).
+        effects["cm_threshold"] += _as_int(fields.get("threshold"))
+        effects["cm_threshold_offset"] += _as_int(fields.get("thresholdoffset"))
     elif tag == "initiative":
         effects["initiative"] += _bonus_int(node, fields)
     elif tag == "initiativepass":

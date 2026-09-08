@@ -68,6 +68,9 @@ class _Limits(TypedDict):
 class _ConditionMonitor(TypedDict):
     physical: int
     stun: int
+    #: Boxes per −1 wound modifier, and the boxes ignored before the first one.
+    threshold: int
+    threshold_offset: int
 
 
 class _Initiative(TypedDict):

@@ -7360,7 +7360,7 @@ def test_leftover_nuyen_carryover_notice() -> None:
 JAZZ = "929c4835-1754-4999-9215-9859e8ec5384"
 
 
-def _drug_state(active: bool) -> CharacterState:
+def _drug_state(active: bool, gear_id: str = JAZZ) -> CharacterState:
     return CharacterState(
         id="drug",
         name="Drug",
@@ -7380,7 +7380,7 @@ def _drug_state(active: bool) -> CharacterState:
             "RES": 0,
             "ESS": 6,
         },
-        gear=[GearInstall(gear_id=JAZZ, active=active)],
+        gear=[GearInstall(gear_id=gear_id, active=active)],
     )
 
 
@@ -7396,6 +7396,42 @@ def test_active_drug_folds_bonus_into_totals() -> None:
     row = dosed.derived["active_drugs"][0]
     assert has(row["effect"], "engine.drugEffect.attribute", name="REA", value="+1")
     assert row["vectors"] == ["Inhalation"]
+
+
+NOVACOKE = "836f54d5-1e11-49ea-b115-34c14ed843c9"  # `<quality rating="1">High Pain Tolerance`
+NITRO = "d7ec13fa-8601-4f9c-a59c-6a86573b40ee"  # the same at rating 6
+HIGH_PAIN_TOLERANCE = "b7866fb4-3747-4caf-9240-69cbdd79ce78"
+LOW_PAIN_TOLERANCE = "9ba327d2-38c5-4a25-ae44-25e98f0bbf03"
+
+
+def test_a_drug_grants_the_quality_it_names() -> None:
+    """`<quality>` on a drug: the quality's own bonus, once per rating step."""
+    base = compute(_drug_state(False, NOVACOKE))
+    dosed = compute(_drug_state(True, NOVACOKE))
+
+    assert base.derived["condition_monitor"]["threshold_offset"] == 0
+    assert dosed.derived["condition_monitor"]["threshold_offset"] == 1
+    assert dosed.derived["condition_monitor"]["threshold"] == 3
+    assert has(dosed.derived["active_drugs"][0]["effect"], "engine.drugEffect.qualityRated")
+
+
+def test_a_drugs_quality_rating_is_the_drugs_to_give() -> None:
+    """Nitro grants six levels though the quality itself caps at three takes:
+    the `<limit>` is on buying it, not on what the drug does (CF p.190)."""
+    dosed = compute(_drug_state(True, NITRO))
+    assert dosed.derived["condition_monitor"]["threshold_offset"] == 6
+
+
+def test_high_pain_tolerance_pushes_the_first_penalty_out() -> None:
+    out = compute(_mundane("hpt", quality_ids=[HIGH_PAIN_TOLERANCE]))
+    assert out.derived["condition_monitor"]["threshold_offset"] == 1
+    assert out.derived["condition_monitor"]["threshold"] == 3
+
+
+def test_low_pain_tolerance_tightens_the_penalty_step() -> None:
+    out = compute(_mundane("lpt", quality_ids=[LOW_PAIN_TOLERANCE]))
+    assert out.derived["condition_monitor"]["threshold"] == 2
+    assert out.derived["condition_monitor"]["threshold_offset"] == 0
 
 
 CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"

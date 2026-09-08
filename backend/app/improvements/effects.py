@@ -74,6 +74,10 @@ class EffectsDict(TypedDict):
     armor: int
     cm_physical: int
     cm_stun: int
+    #: `<conditionmonitor>`: boxes per −1 wound modifier, as a delta on the 3 of
+    #: SR5 p.169, and how many boxes are ignored before the first one.
+    cm_threshold: int
+    cm_threshold_offset: int
     initiative: int
     initiative_dice: int
     limit_physical: int
@@ -225,6 +229,8 @@ def empty_effects() -> EffectsDict:
         "armor": 0,
         "cm_physical": 0,
         "cm_stun": 0,
+        "cm_threshold": 0,
+        "cm_threshold_offset": 0,
         "initiative": 0,
         "initiative_dice": 0,
         "enabled_tabs": set(),

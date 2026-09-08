@@ -829,6 +829,7 @@ const JA = {
   "sheet.karmaLeft": "カルマ残",
 
   "sheet.limits": "リミット",
+  "sheet.cmThreshold": "ペナルティ −1 は{first}ボックス目から{step}ボックスごと",
   "sheet.movement": "移動",
   "sheet.movementValue": "歩{walk} / 走{run}",
   "sheet.damageResist": "ダメージ抵抗",
@@ -2384,6 +2385,7 @@ const EN: Catalog = {
   "sheet.karmaLeft": "Karma left",
 
   "sheet.limits": "Limits",
+  "sheet.cmThreshold": "−1 from box {first}, every {step} after",
   "sheet.movement": "Movement",
   "sheet.movementValue": "walk {walk} / run {run}",
   "sheet.damageResist": "Damage resistance",
