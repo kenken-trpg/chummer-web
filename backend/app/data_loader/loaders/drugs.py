@@ -5,10 +5,15 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
+from ...notices import Notice, notice, term, ui
 from .._xml import DATA_DIR, _text
 from ..bonus import parse_bonus
 
-_DRUG_LIMIT_LABEL = {"physical": "肉体上限", "mental": "精神上限", "social": "社会上限"}
+_DRUG_LIMIT_KEY = {
+    "physical": "engine.drugLimit.physical",
+    "mental": "engine.drugLimit.mental",
+    "social": "engine.drugLimit.social",
+}
 
 
 def drug_node_value(node: dict[str, Any]) -> str:
@@ -16,30 +21,37 @@ def drug_node_value(node: dict[str, Any]) -> str:
     return str(fields.get("value") or fields.get("val") or fields.get("bonus") or node.get("value") or "").strip()
 
 
-def drug_effect_summary(nodes: list[dict[str, Any]]) -> str:
-    """Human-readable one-liner for a drug's ``<bonus>`` nodes."""
-    parts: list[str] = []
+def drug_effect_summary(nodes: list[dict[str, Any]]) -> list[Notice]:
+    """A drug's ``<bonus>`` nodes as one notice per effect, for the client to
+    join into a line (see ``app.notices``)."""
+    parts: list[Notice] = []
     for node in nodes or []:
         tag = node.get("tag")
         fields = node.get("fields") or {}
         val = drug_node_value(node)
         signed = val if val.startswith(("-", "+")) else (f"+{val}" if val else "")
         if tag == "attribute" and val:
-            parts.append(f"{str(fields.get('name') or '').upper()} {signed}")
+            parts.append(
+                notice("engine.drugEffect.attribute", name=str(fields.get("name") or "").upper(), value=signed)
+            )
         elif tag == "limit" and val:
-            label = _DRUG_LIMIT_LABEL.get(str(fields.get("name") or "").strip().lower(), str(fields.get("name") or ""))
-            parts.append(f"{label} {signed}")
+            raw = str(fields.get("name") or "").strip()
+            key = _DRUG_LIMIT_KEY.get(raw.lower())
+            parts.append(notice("engine.drugEffect.limit", limit=ui(key) if key else raw, value=signed))
         elif tag in ("initiativedice", "initiativepass") and val:
-            parts.append(f"イニシアチブ +{val}D6")
+            parts.append(notice("engine.drugEffect.initiativeDice", value=val))
         elif tag == "initiative" and val:
-            parts.append(f"イニシアチブ {signed}")
+            parts.append(notice("engine.drugEffect.initiative", value=signed))
         elif tag == "specificskill" and val:
-            parts.append(f"{str(fields.get('name') or '')} {signed}")
+            parts.append(notice("engine.drugEffect.skill", name=term(str(fields.get("name") or "")), value=signed))
         elif tag == "quality":
             rating = (node.get("attrs") or {}).get("rating")
-            name = str(node.get("value") or "")
-            parts.append(f"資質 {name}" + (f"({rating})" if rating else ""))
-    return " / ".join(p for p in parts if p.strip())
+            name = term(str(node.get("value") or ""))
+            if rating:
+                parts.append(notice("engine.drugEffect.qualityRated", name=name, rating=str(rating)))
+            else:
+                parts.append(notice("engine.drugEffect.quality", name=name))
+    return parts
 
 
 def load_drug_components() -> dict[str, dict[str, Any]]:

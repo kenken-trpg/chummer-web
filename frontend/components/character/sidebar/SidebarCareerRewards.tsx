@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
+import { renderNotice } from "@/lib/engine-notices";
 
-export function SidebarCareerRewards({ career, ch, d, patch, ui }: SidebarBlockProps) {
+export function SidebarCareerRewards({ career, ch, d, patch, tr, ui }: SidebarBlockProps) {
   const rewardLog = d.reward_log || ch.reward_log || [];
   const [rewardLabel, setRewardLabel] = useState("");
   const [rewardKarma, setRewardKarma] = useState(0);
@@ -108,8 +109,8 @@ export function SidebarCareerRewards({ career, ch, d, patch, ui }: SidebarBlockP
               <p className="muted">{ui("side.karmaSpend")}</p>
               {(d.karma_spend_breakdown || []).length ? (
                 (d.karma_spend_breakdown || []).map((row, idx) => (
-                  <div className="stat" key={`k-${row.label}-${idx}`}>
-                    <span>{row.label}</span>
+                  <div className="stat" key={`k-${idx}`}>
+                    <span>{renderNotice(row.notice, ui, tr)}</span>
                     <b>{row.amount}K</b>
                   </div>
                 ))
@@ -119,8 +120,8 @@ export function SidebarCareerRewards({ career, ch, d, patch, ui }: SidebarBlockP
               <p className="muted">{ui("side.nuyenSpend")}</p>
               {(d.nuyen_spend_breakdown || []).length ? (
                 (d.nuyen_spend_breakdown || []).map((row, idx) => (
-                  <div className="stat" key={`y-${row.label}-${idx}`}>
-                    <span>{row.label}</span>
+                  <div className="stat" key={`y-${idx}`}>
+                    <span>{renderNotice(row.notice, ui, tr)}</span>
                     <b>{row.amount.toLocaleString()}¥</b>
                   </div>
                 ))

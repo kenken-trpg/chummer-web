@@ -257,7 +257,10 @@
     {
       "amount": 60,
       "kind": "nuyen",
-      "label": "精霊"
+      "notice": {
+        "key": "engine.spend.spirits",
+        "params": {}
+      }
     }
   ],
   "nuyen_spent": 60,

@@ -195,7 +195,10 @@ describe("<MiscDrugsGear> the controls on an owned row", () => {
 describe("<MiscDrugsGear> drugs", () => {
   const novacoke = (over: Record<string, unknown> = {}) =>
     drug("d1", "Novacoke", {
-      drug_effect: "+1 CHA, +1 REA",
+      drug_effect: [
+        { key: "engine.drugEffect.attribute", params: { name: "CHA", value: "+1" } },
+        { key: "engine.drugEffect.attribute", params: { name: "REA", value: "+1" } },
+      ],
       drug_vectors: ["Ingestion", "Inhalation"],
       drug_speed: "Immediate",
       ...over,
@@ -204,7 +207,7 @@ describe("<MiscDrugsGear> drugs", () => {
   it("prints the effect, the vectors and the onset", () => {
     const { container } = renderPanel(owning([novacoke()]), vi.fn(), "drugs");
 
-    expect(container.textContent).toContain("効果: +1 CHA, +1 REA");
+    expect(container.textContent).toContain("効果: CHA +1 / REA +1");
     expect(container.textContent).toContain("経路 Ingestion・Inhalation");
     expect(container.textContent).toContain("発現 Immediate");
   });
@@ -538,7 +541,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
           category: "Drugs",
           cost: "10",
           source: "SR5",
-          effect: "+1 CHA",
+          effect: [{ key: "engine.drugEffect.attribute", params: { name: "CHA", value: "+1" } }],
           vectors: ["Ingestion"],
         },
       ],
@@ -550,7 +553,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
     const tabs = [...container.querySelectorAll(".option-row .tab")].map((el) => el.textContent);
     expect(tabs).toEqual(["すべて", "Chemicals", "Drugs", "Toxins"]);
     expect(offered()).toEqual(["Novacoke"]);
-    expect(container.textContent).toContain("効果: +1 CHA");
+    expect(container.textContent).toContain("効果: CHA +1");
   });
 
   it("buying a drug sends rating 1 and nothing else", () => {

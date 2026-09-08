@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree, miscFits } from "@/lib/character/gear";
+import { renderNotices } from "@/lib/engine-notices";
 
 export function MiscDrugsGear({
   catalog,
@@ -135,10 +136,10 @@ export function MiscDrugsGear({
                       </>
                     ) : null}
                   </div>
-                  {item.is_drug && item.drug_effect ? (
+                  {item.is_drug && item.drug_effect?.length ? (
                     <>
                       <div className="muted" style={{ marginTop: 4 }}>
-                        {ui("gear.effect")}: {item.drug_effect}
+                        {ui("gear.effect")}: {renderNotices(item.drug_effect, ui, tr)}
                         {item.drug_vectors?.length
                           ? ` ／ ${ui("gear.vector")} ${item.drug_vectors.join("・")}`
                           : ""}
@@ -485,10 +486,10 @@ export function MiscDrugsGear({
                   <div className="muted">
                     {item.name} / {tr(item.category)} / {item.cost}¥ / {item.avail || "-"} /{" "}
                     {item.source}
-                    {item.effect ? (
+                    {item.effect?.length ? (
                       <>
                         <br />
-                        {ui("gear.effect")}: {item.effect}
+                        {ui("gear.effect")}: {renderNotices(item.effect, ui, tr)}
                       </>
                     ) : null}
                     {item.vectors?.length

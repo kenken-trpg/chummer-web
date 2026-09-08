@@ -157,9 +157,9 @@ export interface Character {
     nuyen_earned?: number;
     nuyen_pool?: number;
     career_advancement_karma?: number;
-    career_advancement_lines?: { kind?: string; label: string; amount: number }[];
-    karma_spend_breakdown?: { kind?: string; label: string; amount: number }[];
-    nuyen_spend_breakdown?: { kind?: string; label: string; amount: number }[];
+    career_advancement_lines?: { kind?: string; notice: Notice; amount: number }[];
+    karma_spend_breakdown?: { kind?: string; notice: Notice; amount: number }[];
+    nuyen_spend_breakdown?: { kind?: string; notice: Notice; amount: number }[];
     reward_log?: { id: string; label: string; karma: number; nuyen: number }[];
     street_cred?: number;
     notoriety_quality?: number;

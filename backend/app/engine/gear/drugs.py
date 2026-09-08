@@ -14,6 +14,7 @@ from typing import Any
 from ...data_loader import catalog, drug_effect_summary, drug_node_value, eval_formula
 from ...improvements import EffectsDict, apply_bonus_nodes
 from ...models import CharacterState
+from ...notices import Notice, notice
 
 _DRUG_CATEGORIES = {"Drugs", "Toxins", "Chemicals"}
 _DRUG_LIMIT_TAG = {"physical": "physicallimit", "mental": "mentallimit", "social": "sociallimit"}
@@ -48,20 +49,25 @@ def _drug_effect_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def _format_drug_duration(expr: str, bod: int) -> str:
+def _format_drug_duration(expr: str, bod: int) -> Notice | None:
+    """The duration as a notice, or ``None`` when the catalog gives none.
+
+    A formula with a die in it (``{D6}``) is rolled at its average, so those
+    get the `Avg` variant of the key — the "（平均）" used to be glued on here.
+    """
     if not expr:
-        return ""
+        return None
     approx = "{D6}" in expr or "{d6}" in expr
     seconds = int(eval_formula(expr, 1, 0.0, {"BOD": max(1, int(bod)), "D6": 3.5}))
     if seconds <= 0:
-        return ""
+        return None
     if seconds >= 3600:
-        body = f"約 {seconds / 3600:g} 時間"
+        unit, value = "hours", f"{seconds / 3600:g}"
     elif seconds >= 60:
-        body = f"約 {seconds // 60} 分"
+        unit, value = "minutes", str(seconds // 60)
     else:
-        body = f"約 {seconds} 秒"
-    return f"{body}（平均）" if approx else body
+        unit, value = "seconds", str(seconds)
+    return notice(f"engine.drugDuration.{unit}{'Avg' if approx else ''}", value=value)
 
 
 def apply_active_drugs(
@@ -83,8 +89,9 @@ def apply_active_drugs(
         nodes = list(spec.get("drug_bonus") or [])
         if not nodes:
             continue
-        source = f"{spec['name']}（使用中）"
-        apply_bonus_nodes(_drug_effect_nodes(nodes), effects, source)
+        # The name alone: bonus nodes are only folded in while the drug is
+        # active, so there is nothing to tell it apart from.
+        apply_bonus_nodes(_drug_effect_nodes(nodes), effects, str(spec["name"]))
         active.append(
             {
                 "name": spec["name"],

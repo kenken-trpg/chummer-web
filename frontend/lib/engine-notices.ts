@@ -63,6 +63,16 @@ export function renderNotice(
   return isMsgKey(notice.key) ? ui(notice.key, vars) : notice.key;
 }
 
+/** Several notices as one line — the shape the engine uses when a summary is
+ *  a list of independent facts (a drug's effects, say) rather than a sentence. */
+export function renderNotices(
+  notices: Notice[] | undefined,
+  ui: UiFn,
+  tr: (name: string) => string = (name) => name,
+): string {
+  return (notices ?? []).map((n) => renderNotice(n, ui, tr)).join(LIST_SEPARATOR);
+}
+
 /** A vehicle mod slot category (`Powertrain`, `Weapons`, …) as a label. The
  *  engine ships the category, not a translated name — the same key the
  *  over-capacity notice uses. */

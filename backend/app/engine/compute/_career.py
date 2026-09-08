@@ -10,6 +10,7 @@ from typing import Any
 
 from ...improvements import EffectsDict, empty_effects
 from ...models import CareerBaseline, CharacterState
+from ...notices import notice, term
 from ..bundle_types import GearBundle
 from ..constants import (
     KARMA_ACTIVE_SKILL,
@@ -65,7 +66,13 @@ def career_raise_karma(
         to_r = int(rating or 0)
         cost = _karma_raise_cost(from_r, to_r, KARMA_ATTRIBUTE)
         if cost:
-            lines.append({"kind": "attribute", "label": f"能力値 {key} {from_r}→{to_r}", "amount": cost})
+            lines.append(
+                {
+                    "kind": "attribute",
+                    "notice": notice("engine.spend.attribute", name=key, before=from_r, after=to_r),
+                    "amount": cost,
+                }
+            )
             total += cost
 
     group_cat_map = _skill_group_category_map(skills_data)
@@ -78,7 +85,13 @@ def career_raise_karma(
         mult = int(group_mults.get(cat, 100))
         cost = _karma_cost_with_category_mods(from_r, to_r, KARMA_SKILL_GROUP, mult_pct=mult)
         if cost:
-            lines.append({"kind": "skill_group", "label": f"技能グループ {group} {from_r}→{to_r}", "amount": cost})
+            lines.append(
+                {
+                    "kind": "skill_group",
+                    "notice": notice("engine.spend.skillGroup", name=term(group), before=from_r, after=to_r),
+                    "amount": cost,
+                }
+            )
             total += cost
 
     base_floors = _group_floor_map(base_groups, skills_data)
@@ -101,7 +114,13 @@ def career_raise_karma(
             flat_rules=_matching_karma_rules(active_flat, cat),
         )
         if cost:
-            lines.append({"kind": "skill", "label": f"技能 {name} {from_r}→{to_r}", "amount": cost})
+            lines.append(
+                {
+                    "kind": "skill",
+                    "notice": notice("engine.spend.skill", name=term(name), before=from_r, after=to_r),
+                    "amount": cost,
+                }
+            )
             total += cost
 
     base_know = baseline.knowledge_skills or {}
@@ -131,7 +150,13 @@ def career_raise_karma(
             min_rules=_matching_karma_rules(know_min, cat),
         )
         if cost:
-            lines.append({"kind": "knowledge", "label": f"知識 {name} {from_r}→{to_r}", "amount": cost})
+            lines.append(
+                {
+                    "kind": "knowledge",
+                    "notice": notice("engine.spend.knowledge", name=term(name), before=from_r, after=to_r),
+                    "amount": cost,
+                }
+            )
             total += cost
 
     spec_mults = _active_karma_mults(eff.get("skill_category_spec_karma_cost_mult"), career=True)
@@ -141,7 +166,13 @@ def career_raise_karma(
             cat = skill_cat_map.get(name) or str(know_cats.get(name) or catalog_know.get(name) or "")
             mult = int(spec_mults.get(cat, 100))
             amount = max(1, int(math.ceil(KARMA_SPECIALIZATION * mult / 100.0)))
-            lines.append({"kind": "specialization", "label": f"専門化 {name}（{spec}）", "amount": amount})
+            lines.append(
+                {
+                    "kind": "specialization",
+                    "notice": notice("engine.spend.specialization", name=term(name), spec=term(str(spec))),
+                    "amount": amount,
+                }
+            )
             total += amount
 
     base_exotic = baseline.exotic_skills or {}
@@ -160,7 +191,13 @@ def career_raise_karma(
         )
         if cost:
             label = str(getattr(row, "name", None) or getattr(row, "skill", None) or "Exotic")
-            lines.append({"kind": "exotic", "label": f"特殊技能 {label} {from_r}→{to_r}", "amount": cost})
+            lines.append(
+                {
+                    "kind": "exotic",
+                    "notice": notice("engine.spend.exotic", name=term(label), before=from_r, after=to_r),
+                    "amount": cost,
+                }
+            )
             total += cost
     return total, lines
 
@@ -175,34 +212,37 @@ def nuyen_spend_breakdown(
     spirits_nuyen: int = 0,
 ) -> list[dict[str, Any]]:
     buckets: list[tuple[str, int]] = [
-        ("サイバーウェア", sum(int(item.get("nuyen") or 0) for item in cyber)),
-        ("バイオウェア", sum(int(item.get("nuyen") or 0) for item in bio)),
-        ("防具", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_items") or []))),
-        ("防具改造", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_mods") or []))),
-        ("武器", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapons") or []))),
-        ("武器アクセサリ", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapon_accessories") or []))),
-        ("通信機", sum(int(row.get("nuyen") or 0) for row in (gear.get("commlinks") or []))),
-        ("サイバーデッキ", sum(int(row.get("nuyen") or 0) for row in (gear.get("cyberdecks") or []))),
-        ("RCC", sum(int(row.get("nuyen") or 0) for row in (gear.get("rccs") or []))),
-        ("光学／音響", sum(int(row.get("nuyen") or 0) for row in (gear.get("optics") or []))),
-        ("センサー", sum(int(row.get("nuyen") or 0) for row in (gear.get("sensors") or []))),
+        ("engine.spend.cyberware", sum(int(item.get("nuyen") or 0) for item in cyber)),
+        ("engine.spend.bioware", sum(int(item.get("nuyen") or 0) for item in bio)),
+        ("engine.spend.armor", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_items") or []))),
+        ("engine.spend.armorMods", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_mods") or []))),
+        ("engine.spend.weapons", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapons") or []))),
         (
-            "プログラム",
+            "engine.spend.weaponAccessories",
+            sum(int(row.get("nuyen") or 0) for row in (gear.get("weapon_accessories") or [])),
+        ),
+        ("engine.spend.commlinks", sum(int(row.get("nuyen") or 0) for row in (gear.get("commlinks") or []))),
+        ("engine.spend.cyberdecks", sum(int(row.get("nuyen") or 0) for row in (gear.get("cyberdecks") or []))),
+        ("engine.spend.rccs", sum(int(row.get("nuyen") or 0) for row in (gear.get("rccs") or []))),
+        ("engine.spend.optics", sum(int(row.get("nuyen") or 0) for row in (gear.get("optics") or []))),
+        ("engine.spend.sensors", sum(int(row.get("nuyen") or 0) for row in (gear.get("sensors") or []))),
+        (
+            "engine.spend.programs",
             sum(int(row.get("nuyen") or 0) for row in (gear.get("programs") or []) + (gear.get("apps") or [])),
         ),
-        ("ドローン", sum(int(row.get("nuyen") or 0) for row in (gear.get("drones") or []))),
-        ("車両", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicles") or []))),
+        ("engine.spend.drones", sum(int(row.get("nuyen") or 0) for row in (gear.get("drones") or []))),
+        ("engine.spend.vehicles", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicles") or []))),
         (
-            "車両改造",
+            "engine.spend.vehicleMods",
             sum(
                 int(row.get("nuyen") or 0)
                 for row in (gear.get("vehicle_mods") or []) + (gear.get("weapon_mounts") or [])
             ),
         ),
-        ("その他ギア", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
-        ("ライフスタイル", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
-        ("気収束具", int(qi_nuyen or 0)),
-        ("収束具", int(foci_nuyen or 0)),
-        ("精霊", int(spirits_nuyen or 0)),
+        ("engine.spend.otherGear", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
+        ("engine.spend.lifestyles", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
+        ("engine.spend.qiFoci", int(qi_nuyen or 0)),
+        ("engine.spend.foci", int(foci_nuyen or 0)),
+        ("engine.spend.spirits", int(spirits_nuyen or 0)),
     ]
-    return [{"kind": "nuyen", "label": label, "amount": amount} for label, amount in buckets if amount]
+    return [{"kind": "nuyen", "notice": notice(key), "amount": amount} for key, amount in buckets if amount]
