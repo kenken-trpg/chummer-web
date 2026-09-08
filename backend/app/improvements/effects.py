@@ -34,6 +34,7 @@ from .effect_rows import (
     LimitModifierRow,
     LimitSpellCategorySlotRow,
     LimitSpiritCategorySlotRow,
+    MetamagicLimitRow,
     NamedBonusRow,
     NewSpellKarmaCostRow,
     RestrictedGearRow,
@@ -202,6 +203,7 @@ class EffectsDict(TypedDict):
     add_spirit_slots: list[AddSpiritSlotRow]
     add_spirit_picks: list[AddSpiritPickRow]
     free_metamagics: list[FreeMetamagicRow]
+    metamagic_limits: list[MetamagicLimitRow]
     free_spells_skill: list[FreeSpellsSkillRow]
     free_spells_attribute: list[FreeSpellsAttributeRow]
     new_spell_karma_cost: list[NewSpellKarmaCostRow]
@@ -337,6 +339,7 @@ def empty_effects() -> EffectsDict:
         "add_spirit_picks": [],
         "extra_spirits": [],
         "free_metamagics": [],
+        "metamagic_limits": [],
         "free_spells_flat": 0,
         "free_spells_skill": [],
         "free_spells_attribute": [],

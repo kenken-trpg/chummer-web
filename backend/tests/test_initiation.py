@@ -40,6 +40,11 @@ NECROMANCY = "fa64531c-5f86-45a0-aaaf-b8425a5b6dd1"
 # 5.31 and 5.25 essence: the cheapest way to take a magician's MAG to zero
 CUANMIZTLI = "1a112bdd-df4c-4f9f-94cd-f940fa597dda"
 MCT_KURO = "6796a057-b452-4a74-96be-eb710a38977e"
+# The only two traditions with a <metamagiclimit> (FA p.69); the third carries
+# the <addmetamagic> that the same ordering fix lets through.
+ISLAMIC_ALCHEMIST = "ad6f8984-f0c2-41e9-a2d1-73a719d21a06"  # grades 1-4 scripted
+LICIT_QURANIC = "328d6c96-9e10-424f-bbed-b6e1d1035bd2"  # grades 1-2 scripted
+CHRISTIAN_THEURGY = "dd97bcc9-a731-41fb-a558-9175bc56b587"  # forced Exorcism
 
 
 # Priority A buys Magician; Adept and Mystic Adept are only offered from B
@@ -349,6 +354,96 @@ def test_a_granted_metamagic_brings_its_bonus_along() -> None:
     assert row["source_quality"] == "Test Quality"
 
 
+# --- <metamagiclimit>: a tradition scripting its early grades ---------------
+
+
+def _meta_id(name: str) -> str:
+    return next(item["id"] for item in catalog()["metamagics"] if item["name"] == name)
+
+
+def test_a_scripted_grade_only_offers_its_one_metamagic() -> None:
+    out = compute(
+        _initiate(
+            "Magician",
+            "alchemist-ok",
+            [InitiationChoice(grade=1, kind="metamagic", option_id=_meta_id("Fixation"))],
+            tradition_id=ISLAMIC_ALCHEMIST,
+        )
+    )
+    choice = out.derived["initiation"]["choices"][0]
+    assert choice["allowed_metamagics"] == ["Fixation"]
+    assert _meta_names(out) == ["Fixation"]
+
+
+def test_a_metamagic_off_the_script_is_stripped_from_the_character() -> None:
+    out = compute(
+        _initiate(
+            "Magician",
+            "alchemist-bad",
+            [InitiationChoice(grade=1, kind="metamagic", option_id=MASKING)],
+            tradition_id=ISLAMIC_ALCHEMIST,
+        )
+    )
+    assert _warns(out, "engine.initiation.metamagicNotAllowed", name="Masking")
+    assert _meta_names(out) == []
+    assert out.initiations[0].option_id == ""
+
+
+def test_each_scripted_grade_gets_its_own_metamagic() -> None:
+    """The grade attributes are per element; the generic bonus parse keeps only
+    the last one, so a regression there would put grade 4's name on grade 1."""
+    out = compute(
+        _initiate(
+            "Magician",
+            "quranic",
+            [
+                InitiationChoice(grade=1, kind="metamagic", option_id=_meta_id("Centering")),
+                InitiationChoice(grade=2, kind="metamagic", option_id=_meta_id("Structured Spellcasting")),
+            ],
+            tradition_id=LICIT_QURANIC,
+        )
+    )
+    allowed = [c["allowed_metamagics"] for c in out.derived["initiation"]["choices"]]
+    assert allowed == [["Centering"], ["Structured Spellcasting"]]
+    assert _meta_names(out) == ["Centering", "Structured Spellcasting"]
+
+
+def test_a_grade_the_tradition_says_nothing_about_stays_free() -> None:
+    out = compute(
+        _initiate(
+            "Magician",
+            "quranic-free",
+            [InitiationChoice(grade=3, kind="metamagic", option_id=QUICKENING)],
+            initiate_grade=3,
+            tradition_id=LICIT_QURANIC,
+        )
+    )
+    grade3 = out.derived["initiation"]["choices"][2]
+    assert grade3["allowed_metamagics"] == []
+    assert not _warns(out, "engine.initiation.metamagicNotAllowed")
+    assert "Quickening" in _meta_names(out)
+
+
+def test_an_untouched_tradition_scripts_nothing() -> None:
+    out = compute(
+        _initiate(
+            "Magician",
+            "no-limit",
+            [InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING)],
+        )
+    )
+    assert out.derived["initiation"]["choices"][0]["allowed_metamagics"] == []
+    assert _meta_names(out) == ["Quickening"]
+
+
+def test_a_traditions_forced_metamagic_reaches_the_character() -> None:
+    """The tradition's bonus is folded in before the grades resolve, which is
+    also what `<addmetamagic forced="True">` needs to land at all."""
+    out = compute(_initiate("Magician", "theurgy", [], initiate_grade=0, tradition_id=CHRISTIAN_THEURGY))
+    assert _meta_names(out) == ["Exorcism"]
+    assert out.derived["initiation"]["metamagics"][0]["free"] is True
+
+
 def test_the_ids_this_file_pins_are_still_the_entries_it_means() -> None:
     """A data update that renumbers these would otherwise turn every test
     above into a test of the unknown-id branch, and they would all still pass."""
@@ -356,6 +451,10 @@ def test_the_ids_this_file_pins_are_still_the_entries_it_means() -> None:
     assert by_id[QUICKENING] == "Quickening"
     assert by_id[POWER_POINT] == "Power Point"
     assert by_id[MASKING] == "Masking"
+    traditions = {item["id"]: item["name"] for item in catalog()["traditions"]}
+    assert traditions[ISLAMIC_ALCHEMIST] == "Islam [Islamic Alchemist]"
+    assert traditions[LICIT_QURANIC] == "Islam [Licit Qur'anic]"
+    assert traditions[CHRISTIAN_THEURGY] == "Christian Theurgy [Traditional]"
     arts = {item["id"]: item["name"] for item in catalog()["magic_arts"]}
     assert arts[GEOMANCY] == "Geomancy"
     assert arts[NECROMANCY] == "Necromancy"

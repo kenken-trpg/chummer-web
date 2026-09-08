@@ -389,6 +389,18 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
         else:
             fields, nested, field_attrs = _bonus_fields(child)
             payload["fields"] = fields
+            if tag == "metamagiclimit":
+                # `<metamagic grade="N">Name</metamagic>` repeats, and the
+                # generic field flattening keeps only the last element's
+                # attributes; the grade/name pairing is rebuilt here so it
+                # survives (same reason as `selectpowers` below).
+                limits = [
+                    {"grade": str(mm.attrib.get("grade") or ""), "name": _text(mm)}
+                    for mm in child.findall("metamagic")
+                    if _text(mm)
+                ]
+                if limits:
+                    payload["metamagic_grades"] = limits
             if tag == "selectpowers":
                 specs: list[dict[str, Any]] = []
                 for sp in child.findall("selectpower"):

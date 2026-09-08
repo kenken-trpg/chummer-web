@@ -38,12 +38,16 @@ from .context import Ctx
 
 def awakened(ctx: Ctx) -> None:
     ctx.quality_names = {q["name"] for q in ctx.qualities}
+    # Before initiation: a tradition is what carries `<metamagiclimit>` and
+    # `<addmetamagic>`, and both are read while the grades resolve.
+    apply_tradition_bonuses(ctx.effects, _tradition_by_id(ctx.state.tradition_id))
     ctx.initiation = resolve_initiation(
         ctx.state,
         ctx.talent["name"],
         int(ctx.ratings.get("MAG") or 0),
         ctx.quality_names,
         ctx.errors,
+        metamagic_limits=list(ctx.effects.get("metamagic_limits") or []),
     )
     apply_free_metamagics(ctx.effects, ctx.initiation, ctx.talent["name"], ctx.warnings)
     ctx.warnings.extend(ctx.initiation["warnings"])
@@ -89,7 +93,6 @@ def awakened(ctx: Ctx) -> None:
         list(ctx.foci.get("public") or []),
         ctx.errors,
     )
-    apply_tradition_bonuses(ctx.effects, _tradition_by_id(ctx.state.tradition_id))
     granted_powers = free_powers_from_grants(ctx.effects, ctx.warnings)
     ctx.adept = resolve_adept_powers(
         ctx.state,

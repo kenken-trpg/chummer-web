@@ -52,6 +52,7 @@ IMPLEMENTED = {
     "freequality",
     "addqualities",
     "selectmentorspirit",
+    "metamagiclimit",
     "focusbindingkarmacost",
     "skillattribute",
     "skilllinkedattribute",
