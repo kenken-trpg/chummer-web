@@ -34,6 +34,21 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 effects["attribute_max_mods"][name] = int(effects["attribute_max_mods"].get(name) or 0) + _as_int(
                     fields.get("max")
                 )
+    elif tag == "attributekarmacost":
+        # The skill-side `<karmacost>` rules already shape a per-level cost in
+        # `engine/karma.py`; an attribute rule is the same row read by the
+        # attribute loops, so it rides the same `KarmaCostRow` shape.
+        name = ATTR_ALIASES.get((fields.get("name") or "").upper()) or ""
+        if name:
+            effects["attribute_karma_cost"].append(
+                {
+                    "name": name,
+                    "val": _as_int(fields.get("val") or fields.get("value")),
+                    "min": _as_int(fields.get("min")),
+                    "max": _as_int(fields.get("max")) if fields.get("max") not in (None, "") else None,
+                    "condition": str(fields.get("condition") or ""),
+                }
+            )
     elif tag == "armor":
         effects["armor"] += _as_int(node.get("value"))
     elif tag == "conditionmonitor":

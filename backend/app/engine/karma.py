@@ -31,16 +31,33 @@ def attribute_karma_cost(
     ratings: dict[str, int],
     attrs_spec: dict[str, dict[str, int | float]],
     special_key: str | None,
+    *,
+    rules: Sequence[Mapping[str, Any]] | None = None,
 ) -> int:
+    """Karma to buy the attribute ratings on a Karma-build sheet.
+
+    ``rules`` are ``<attributekarmacost>`` rows (Myostatin Inhibitor: STR -2 a
+    level). They go through the same per-level machinery as the skill-side
+    ``<karmacost>`` rules, so a rule can never drive a level below 1 karma and
+    an empty list reproduces the plain raise cost exactly.
+    """
+    flat = _filter_karma_rules(rules, career=False)
+
+    def cost(from_rating: int, to_rating: int, key: str) -> int:
+        return _karma_cost_with_category_mods(
+            from_rating,
+            to_rating,
+            KARMA_ATTRIBUTE,
+            flat_rules=_matching_karma_rules(flat, key),
+        )
+
     total = 0
     for key in (*PHYSICAL_ATTRS, "EDG"):
         spec = attrs_spec.get(key) or {}
         racial_min = int(spec.get("min") or 1)
-        total += _karma_raise_cost(racial_min, int(ratings.get(key) or racial_min), KARMA_ATTRIBUTE)
-    if special_key == "MAG":
-        total += _karma_raise_cost(1, int(ratings.get("MAG") or 0), KARMA_ATTRIBUTE)
-    elif special_key == "RES":
-        total += _karma_raise_cost(1, int(ratings.get("RES") or 0), KARMA_ATTRIBUTE)
+        total += cost(racial_min, int(ratings.get(key) or racial_min), key)
+    if special_key in {"MAG", "RES"}:
+        total += cost(1, int(ratings.get(special_key) or 0), special_key)
     return total
 
 
