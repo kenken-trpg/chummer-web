@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
+from ..notices import Notice
+
 # One (source_label, bonus_nodes) pair — the element type of every
 # ``bonus_sources`` list a resolver hands back for the effects pass.
 BonusSource = tuple[str, list[dict[str, Any]]]
@@ -32,7 +34,7 @@ class SkillPicks(TypedDict):
     """``resolve_skill_picks`` — ``<selectskill>`` slots and their bonuses."""
 
     slots: list[dict[str, Any]]
-    warnings: list[str]
+    warnings: list[Notice]
     skill_max_bonus: dict[str, int]
     skill_bonus: dict[str, int]
     skill_bonus_notes: dict[str, list[str]]
@@ -41,7 +43,7 @@ class SkillPicks(TypedDict):
 class ContactsBundle(TypedDict):
     """``resolve_contacts`` — the contact network + point / karma accounting."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     used: int
     free: int
@@ -53,7 +55,7 @@ class ContactsBundle(TypedDict):
 class MartialBundle(TypedDict):
     """``resolve_martial_arts`` — styles, techniques, their karma + spec extras."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     karma: int
     style_count: int
@@ -76,7 +78,7 @@ class MovementBundle(TypedDict):
 class InitiationBundle(TypedDict):
     """``resolve_initiation`` — grade, chosen metamagics / arts, MAG max bonus."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     grade: int
     karma: int
     choices: list[dict[str, Any]]
@@ -91,7 +93,7 @@ class InitiationBundle(TypedDict):
 class SubmersionBundle(TypedDict):
     """``resolve_submersion`` — grade, chosen echoes, RES max bonus."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     grade: int
     karma: int
     choices: list[dict[str, Any]]
@@ -104,8 +106,8 @@ class SubmersionBundle(TypedDict):
 class AdeptBundle(TypedDict):
     """``resolve_adept_powers`` — chosen powers, power-point spend, Way discount."""
 
-    warnings: list[str]
-    errors: list[str]
+    warnings: list[Notice]
+    errors: list[Notice]
     public: list[dict[str, Any]]
     bonus_sources: list[BonusSource]
     spent: float
@@ -118,7 +120,7 @@ class AdeptBundle(TypedDict):
 class EnhancementsBundle(TypedDict):
     """``resolve_enhancements`` — adept enhancement picks + their karma."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     bonus_sources: list[BonusSource]
     karma: int
@@ -127,7 +129,7 @@ class EnhancementsBundle(TypedDict):
 class FociBundle(TypedDict):
     """``resolve_foci`` — bonded foci, their nuyen / karma and bonus nodes."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     bonus_sources: list[BonusSource]
     nuyen: int
@@ -137,8 +139,8 @@ class FociBundle(TypedDict):
 class QiFociBundle(TypedDict):
     """``resolve_qi_foci`` — Qi foci, granted free powers, nuyen / karma."""
 
-    warnings: list[str]
-    errors: list[str]
+    warnings: list[Notice]
+    errors: list[Notice]
     public: list[dict[str, Any]]
     free_powers: list[dict[str, Any]]
     nuyen: int
@@ -157,7 +159,7 @@ class FocusLimits(TypedDict):
 class SpellsBundle(TypedDict):
     """``resolve_spells`` — spell list, free/paid allowance, tradition + drain resist."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     free_max: int
     used: int
@@ -172,7 +174,7 @@ class SpellsBundle(TypedDict):
 class SpiritsBundle(TypedDict):
     """``resolve_spirits`` — bound / unbound spirits and their reagent nuyen."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     nuyen: int
 
@@ -180,7 +182,7 @@ class SpiritsBundle(TypedDict):
 class ComplexFormsBundle(TypedDict):
     """``resolve_complex_forms`` — complex forms, free/paid allowance, stream + fade resist."""
 
-    warnings: list[str]
+    warnings: list[Notice]
     public: list[dict[str, Any]]
     free_max: int
     used: int
@@ -194,8 +196,8 @@ class ComplexFormsBundle(TypedDict):
 class SpritesBundle(TypedDict):
     """``resolve_sprites`` — compiled / registered sprites."""
 
-    warnings: list[str]
-    errors: list[str]
+    warnings: list[Notice]
+    errors: list[Notice]
     public: list[dict[str, Any]]
 
 
@@ -203,8 +205,8 @@ class GearBundle(TypedDict):
     """``resolve_gear`` — every resolved gear category, the nuyen tally and the
     primary comm/deck/RCC/lifestyle picks."""
 
-    warnings: list[str]
-    errors: list[str]
+    warnings: list[Notice]
+    errors: list[Notice]
     bonus_sources: list[BonusSource]
     nuyen: int
     armor: int

@@ -36,6 +36,7 @@ from app.models import (
     WeaponInstall,
     WeaponMountInstall,
 )
+from tests.notice_asserts import has
 
 DATAJACK = "47c48542-48c3-417e-91f0-b5a456183f05"
 MUSCLE = "46f80a44-80ae-41d7-a7c8-a119c4cff70f"
@@ -121,7 +122,7 @@ def test_priority_rejects_duplicate_letters() -> None:
         attributes=default_attributes(find_metatype("Human", None)),
     )
     out = compute(state)
-    assert any("各カテゴリに1つずつ" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.priority.oneEach")
 
 
 def test_sum_to_ten_allows_duplicate_a() -> None:
@@ -142,7 +143,7 @@ def test_sum_to_ten_allows_duplicate_a() -> None:
     assert out.derived["totals"]["MAG"] == 6
     assert out.derived["nuyen"] == 450_000
     assert not any("Sum to Ten" in err for err in out.derived["errors"])
-    assert not any("各カテゴリに1つずつ" in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.priority.oneEach")
 
 
 def test_sum_to_ten_requires_exact_budget() -> None:
@@ -156,7 +157,7 @@ def test_sum_to_ten_requires_exact_budget() -> None:
     )
     out = compute(state)
     assert out.derived["sum_to_ten"]["used"] == 0
-    assert any("Sum to Ten" in err and "0" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.priority.sumToTen", spent=0)
 
 
 def test_karma_chargen_human_baseline_is_800() -> None:
@@ -250,7 +251,7 @@ def test_magician_a_starts_at_magic_six_without_special_cost() -> None:
     assert "MAG" in out.derived["enabled_tabs"]
     assert "spells" in out.derived["enabled_tabs"]
     assert out.derived["spell_points"]["free"] == 10
-    assert any("伝統" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spells.pickTradition")
     assert out.derived["errors"] == []
 
 
@@ -461,7 +462,7 @@ def test_capacity_overflow_is_reported() -> None:
         ],
     )
     out = compute(state)
-    assert any("容量超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.ware.capacityOver")
 
 
 def test_orthoskin_adds_armor_and_essence() -> None:
@@ -494,7 +495,7 @@ def test_muscle_toner_raises_agility() -> None:
     assert out.derived["essence"] == 5.6
     assert out.derived["ware_attr_bonus"]["AGI"] == 2
     assert out.derived["ware_attr_limit"] == 4
-    assert all("ウェア強化" not in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.ware.attrBonusOver")
 
 
 def test_muscle_replacement_four_is_at_ware_attr_cap() -> None:
@@ -508,7 +509,7 @@ def test_muscle_replacement_four_is_at_ware_attr_cap() -> None:
     assert out.derived["ware_attr_bonus"]["AGI"] == 4
     assert out.derived["ware_attr_bonus"]["STR"] == 4
     assert out.derived["totals"]["AGI"] == 5
-    assert all("ウェア強化" not in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.ware.attrBonusOver")
 
 
 def test_muscle_replacement_and_toner_exceed_ware_attr_cap() -> None:
@@ -522,8 +523,8 @@ def test_muscle_replacement_and_toner_exceed_ware_attr_cap() -> None:
     )
     assert out.derived["ware_attr_bonus"]["AGI"] == 6
     assert out.derived["ware_attr_bonus"]["STR"] == 4
-    assert any("AGI" in err and "ウェア強化超過" in err and "+6" in err for err in out.derived["errors"])
-    assert all("STR" not in err or "ウェア強化" not in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.ware.attrBonusOver", attr="AGI", value=6)
+    assert not has(out.derived["errors"], "engine.ware.attrBonusOver", attr="STR")
 
 
 def test_toner_and_suprathyroid_exceed_ware_attr_cap() -> None:
@@ -539,7 +540,7 @@ def test_toner_and_suprathyroid_exceed_ware_attr_cap() -> None:
     )
     assert out.derived["ware_attr_bonus"]["AGI"] == 5
     assert out.derived["ware_attr_bonus"]["STR"] == 1
-    assert any("AGI" in err and "ウェア強化超過" in err and "+5" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.ware.attrBonusOver", attr="AGI", value=5)
 
 
 def test_cyberlimb_custom_strength_does_not_count_as_ware_attr_bonus() -> None:
@@ -553,7 +554,7 @@ def test_cyberlimb_custom_strength_does_not_count_as_ware_attr_bonus() -> None:
         )
     )
     assert out.derived.get("ware_attr_bonus") in ({}, None) or "STR" not in (out.derived.get("ware_attr_bonus") or {})
-    assert all("ウェア強化" not in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.ware.attrBonusOver")
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
     assert arm["limb_str"] == 6
 
@@ -795,7 +796,7 @@ def test_duplicate_left_arms_are_an_error_and_count_once() -> None:
         ],
     )
     out = compute(state)
-    assert any("左の腕が重複" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.ware.sideDuplicate", side="engine.side.Left", slot="engine.slot.arm")
     assert out.derived["limb_replace"]["count"] == 1
     assert out.derived["totals"]["STR"] == 2
 
@@ -958,7 +959,7 @@ def test_redliner_warns_against_muscle_replacement() -> None:
         ],
     )
     out = compute(state)
-    assert any("Muscle Replacement" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.ware.redlinerIncompatible", needed=["Muscle Replacement"])
     assert out.derived["limb_quality"]["pairs"] == 1
 
 
@@ -975,7 +976,7 @@ def test_redliner_warns_against_muscle_toner() -> None:
         bioware=[CyberwareInstall(ware_id=TONER, rating=1)],
     )
     out = compute(state)
-    assert any("Muscle Toner" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.ware.redlinerIncompatible", needed=["Muscle Toner"])
 
 
 def test_synaptic_booster_raises_reaction_and_initiative() -> None:
@@ -1023,7 +1024,7 @@ def test_cultured_used_grade_falls_back_to_standard() -> None:
     item = next(row for row in out.derived["bioware"] if row["ware_id"] == SYNAPTIC)
     assert item["grade"] == "Standard"
     assert item["essence"] == 0.5
-    assert any("Used" in warn and "Synaptic Booster" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.ware.gradeBanned", name="Synaptic Booster", grade="Used")
 
 
 def test_chemical_gland_expanded_reservoir_adds_parent_essence() -> None:
@@ -1072,7 +1073,7 @@ def test_orthoskin_upgrade_warns_without_orthoskin() -> None:
         bioware=[CyberwareInstall(ware_id=DRAGON_HIDE)],
     )
     out = compute(state)
-    assert any("Orthoskin" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.ware.requires", needed=["Orthoskin"])
     assert out.derived["essence_lost_bio"] == 0.1
 
 
@@ -1095,7 +1096,7 @@ def test_orthoskin_upgrade_nested_pays_own_essence() -> None:
     assert hide["essence"] == 0.1
     assert hide["parent_id"] == "skin1"
     assert out.derived["essence_lost_bio"] == 0.35
-    assert not any("Orthoskin が必要" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.ware.requires", needed=["Orthoskin"])
 
 
 def test_mnemonic_enhancer_raises_mental_limit() -> None:
@@ -1206,7 +1207,7 @@ def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:
 def test_knowledge_overspend_is_an_error() -> None:
     out = compute(_human("know-over", knowledge_skills={"Alcohol": 6, "Biology": 6, "Chemistry": 1}))
     assert out.derived["points"]["knowledge"]["used"] == 13
-    assert any("知識技能点が不足しています" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.skills.knowledgePointsOver")
 
 
 def test_custom_knowledge_keeps_category_and_mnemonic_bonus() -> None:
@@ -1228,7 +1229,7 @@ def test_custom_knowledge_keeps_category_and_mnemonic_bonus() -> None:
 def test_second_native_language_is_warned() -> None:
     out = compute(_human("know-natives", native_languages=["Japanese", "English"]))
     assert out.native_languages == ["Japanese"]
-    assert any("母語は1つまで" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.nativeLimit")
     assert out.derived["points"]["knowledge"]["used"] == 0
 
 
@@ -1246,7 +1247,7 @@ def test_skill_specialization_costs_one_skill_point() -> None:
 def test_skill_specialization_requires_the_skill() -> None:
     out = compute(_human("spec-none", skill_specializations={"Pistols": "Semi-Automatics"}))
     assert "Pistols" not in out.skill_specializations
-    assert any("Pistols の専門化には技能が必要です" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.specNeedsSkill", name="Pistols")
     assert out.derived["points"]["skills"]["used"] == 0
 
 
@@ -1347,7 +1348,7 @@ def test_exotic_skill_requires_target() -> None:
             exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="", rating=2)],
         )
     )
-    assert any("Exotic Ranged Weapon の対象を選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.pickExoticTarget", name="Exotic Ranged Weapon")
     assert "Exotic Ranged Weapon" not in out.derived["skill_totals"]
     assert out.derived["points"]["skills"]["used"] == 2
 
@@ -1379,7 +1380,7 @@ def test_exotic_skill_duplicate_target_is_dropped() -> None:
             ],
         )
     )
-    assert any("Exotic Ranged Weapon (Lasers) が重複しています" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.exoticDuplicate", name="Exotic Ranged Weapon (Lasers)")
     assert out.derived["skill_totals"]["Exotic Ranged Weapon (Lasers)"] == 4
     assert len(out.derived["exotic_skills"]) == 1
     assert out.derived["points"]["skills"]["used"] == 4
@@ -1393,7 +1394,7 @@ def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
             exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=6)],
         )
     )
-    assert any("作成時にレーティング6の技能は1つまでです" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.skills.oneAtSix")
 
 
 def test_exotic_does_not_charge_specialization_point() -> None:
@@ -1442,7 +1443,7 @@ def test_seeker_alone_does_not_warn_for_muscle() -> None:
     )
     out = compute(state)
     # ignore the unrelated Resources-A leftover-nuyen carryover notice
-    assert [w for w in out.derived["warnings"] if "未使用新円" not in w] == []
+    assert [w for w in out.derived["warnings"] if w["key"] != "engine.nuyen.chargenCarryOver"] == []
 
 
 ENHANCED_ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"
@@ -1484,7 +1485,7 @@ ASTRAL_CHAMELEON = "7d81f676-e523-4ec6-ae98-8d801f90b031"
 
 def test_allergy_requires_target_text() -> None:
     missing = compute(_human("allergy-empty", quality_ids=[ALLERGY_MILD]))
-    assert any("対象を入力してください" in err for err in missing.derived["errors"])
+    assert has(missing.derived["errors"], "engine.qualities.pickExtra")
     filled = compute(_human("allergy-sun", quality_ids=[ALLERGY_MILD], quality_extras={ALLERGY_MILD: "Sunlight"}))
     assert filled.derived["errors"] == []
     assert filled.derived["karma"]["negative"] == {"used": 5, "max": 25}
@@ -1500,12 +1501,12 @@ def test_negative_quality_karma_is_capped_at_25() -> None:
         )
     )
     assert out.derived["karma"]["negative"]["used"] == 30
-    assert any("不利資質から得られるカルマが上限を超えています" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.negativeCap")
 
 
 def test_human_looking_requires_nonhuman_metatype() -> None:
     human = compute(_human("looking-human", quality_ids=[HUMAN_LOOKING]))
-    assert any("Human-Looking の前提を満たしていません" in err for err in human.derived["errors"])
+    assert has(human.derived["errors"], "engine.qualities.prereq", name="Human-Looking")
     elf = compute(
         CharacterState(
             id="looking-elf",
@@ -1521,7 +1522,7 @@ def test_human_looking_requires_nonhuman_metatype() -> None:
 
 def test_astral_chameleon_requires_magic() -> None:
     mundane = compute(_human("astral-mundane", quality_ids=[ASTRAL_CHAMELEON]))
-    assert any("Astral Chameleon の前提を満たしていません" in err for err in mundane.derived["errors"])
+    assert has(mundane.derived["errors"], "engine.qualities.prereq", name="Astral Chameleon")
     attrs = default_attributes(find_metatype("Human", None))
     mage = compute(
         CharacterState(
@@ -1534,7 +1535,7 @@ def test_astral_chameleon_requires_magic() -> None:
             quality_ids=[ASTRAL_CHAMELEON],
         )
     )
-    assert not any("前提を満たしていません" in err for err in mage.derived["errors"])
+    assert not has(mage.derived["errors"], "engine.qualities.prereq")
 
 
 def test_voice_modulator_rating_adds_impersonation() -> None:
@@ -1544,7 +1545,7 @@ def test_voice_modulator_rating_adds_impersonation() -> None:
 
 def test_reflex_recorder_warns_until_skill_picked() -> None:
     out = compute(_human("recorder-empty", bioware=[CyberwareInstall(id="rec1", ware_id=REFLEX_RECORDER)]))
-    assert any("Reflex Recorder の技能を選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.pickSkill", source="Reflex Recorder")
     assert out.derived["skill_bonus"].get("Gymnastics", 0) == 0
     slots = out.derived["skill_pick_slots"]
     assert len(slots) == 1
@@ -1562,7 +1563,7 @@ def test_reflex_recorder_adds_picked_skill() -> None:
         )
     )
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
-    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.skills.pickSkill")
     assert out.derived["skill_pick_slots"][0]["picked"] == "Gymnastics"
 
 
@@ -1574,7 +1575,7 @@ def test_reflex_recorder_rejects_invalid_pick() -> None:
             skill_picks={"ware:rec1:0": "Software"},
         )
     )
-    assert any("技能指定が無効" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.pickInvalid")
     assert out.derived["skill_bonus"].get("Software", 0) == 0
 
 
@@ -1610,7 +1611,7 @@ def test_loss_of_confidence_requires_rating_four() -> None:
             skill_picks={"quality:c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1:0": "Gymnastics"},
         )
     )
-    assert any("技能指定が無効" in warn for warn in blocked.derived["warnings"])
+    assert has(blocked.derived["warnings"], "engine.skills.pickInvalid")
 
 
 def test_selectskill_options_limit_to_physical_attributes() -> None:
@@ -1755,7 +1756,7 @@ def test_adept_power_overspend_is_an_error() -> None:
         )
     )
     assert out.derived["totals"]["MAG"] == 2
-    assert any("パワー点" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.adept.powerPointsOver")
 
 
 def test_mystic_adept_buys_power_points_with_karma() -> None:
@@ -2004,7 +2005,7 @@ def test_later_way_replaces_earlier_way() -> None:
     assert "The Beast's Way" not in names
     assert not out.derived["needs_mentor"]
     assert out.derived["karma"]["spent"] == 20
-    assert any("The Beast's Way" in warn and "両立しない" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.qualities.droppedIncompatible", name="The Beast's Way")
 
 
 def test_way_swap_drops_old_enhancement() -> None:
@@ -2018,7 +2019,7 @@ def test_way_swap_drops_old_enhancement() -> None:
     )
     assert "The Warrior's Way" in {q["name"] for q in out.derived["qualities"]}
     assert out.adept_enhancements == []
-    assert any("Air Walking" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.adept.droppedWithQuality", name="Air Walking")
 
 
 def test_spell_drain_formulas() -> None:
@@ -2105,7 +2106,7 @@ def test_mage_stunbolt_uses_hermetic_drain() -> None:
     assert row["spell"]["resist_attrs"] == "WIL+LOG"
     assert out.derived["tradition"]["name"] == "Hermetic"
     assert out.derived["karma"]["spent"] == 0
-    assert not any("伝統" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.kind.tradition")
 
 
 def test_mage_overcast_is_physical() -> None:
@@ -2149,7 +2150,7 @@ def test_duplicate_spell_is_dropped() -> None:
         )
     )
     assert len(out.derived["spells"]) == 1
-    assert any("重複" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spells.duplicateDropped")
 
 
 def test_aspected_magician_buys_spells() -> None:
@@ -2242,7 +2243,7 @@ def test_enchantment_warns_for_metamagic() -> None:
     assert row["has_force"] is False
     assert row["spell"] is None
     assert row["free"] is True
-    assert any("Geomancy" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spells.requires", needed=["Geomancy"])
 
 
 GEOMANCY_ART = "5b922bcf-4114-4c49-a4f3-0f3dcb45dd2f"
@@ -2336,7 +2337,7 @@ def test_power_point_metamagic_adds_pp() -> None:
 
 def test_initiation_grade_above_mag_errors() -> None:
     out = compute(_mage("init-over", initiate_grade=7))
-    assert any("イニシエーション等級は魔力以下" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.initiation.gradeOverMagic")
 
 
 def test_ritual_and_spell_share_free_pool() -> None:
@@ -2383,7 +2384,7 @@ def test_adept_spell_rejects_ritual() -> None:
     )
     row = next(item for item in out.derived["adept_powers"] if item["name"] == "Adept Spell")
     assert row["extra"] != "Ward"
-    assert any("無効" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.adept.selectInvalid", name="Adept Spell", picked="Ward")
 
 
 SPIRIT_FIRE = "c0178bf8-1fc5-4c56-9ce1-92a3ae1adc45"
@@ -2439,7 +2440,7 @@ def test_shaman_rejects_fire_spirit() -> None:
         )
     )
     assert out.derived["spirits"] == []
-    assert any("召喚できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spirits.notInTradition")
 
 
 def test_spirit_force_clamps_to_magic() -> None:
@@ -2511,7 +2512,7 @@ def test_weapon_focus_requires_target_weapon() -> None:
     assert row["needs_weapon"] is True
     assert row["weapon_type"] == "Melee"
     assert row["weapon_dice"] == 2
-    assert any("対象武器を選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.foci.weaponPick")
 
 
 def test_weapon_focus_adds_dice_to_melee_weapon() -> None:
@@ -2532,7 +2533,7 @@ def test_weapon_focus_adds_dice_to_melee_weapon() -> None:
     blade = next(item for item in out.derived["weapons"] if item["id"] == weapon.id)
     assert blade["focus_dice"] == 2
     assert out.derived["errors"] == []
-    assert not any("対象武器" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.foci.weaponPick")
 
 
 def test_weapon_focus_rejects_ranged_weapon() -> None:
@@ -2548,7 +2549,7 @@ def test_weapon_focus_rejects_ranged_weapon() -> None:
     )
     focus = out.derived["foci"][0]
     assert focus["weapon_id"] == ""
-    assert any("Melee武器専用" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.foci.weaponTypeOnly", type="Melee")
     gun = next(item for item in out.derived["weapons"] if item["id"] == weapon.id)
     assert gun.get("focus_dice", 0) == 0
 
@@ -2575,7 +2576,7 @@ def test_bound_focus_count_cannot_exceed_magic() -> None:
         )
     )
     assert out.derived["focus_limits"]["count"] == 7
-    assert any("魔力まで" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.foci.countOverMagic")
 
 
 def test_bound_focus_force_total_cannot_exceed_magic_times_five() -> None:
@@ -2586,7 +2587,7 @@ def test_bound_focus_force_total_cannot_exceed_magic_times_five() -> None:
         )
     )
     assert out.derived["focus_limits"]["force"] == 36
-    assert any("Force合計" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.foci.forceOverLimit")
 
 
 def test_summoned_spirit_uses_summoning_test() -> None:
@@ -2661,7 +2662,7 @@ def test_summon_without_skill_warns() -> None:
         )
     )
     assert out.derived["spirits"][0]["test"]["missing"] is True
-    assert any("Summoning" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spirits.summonNeedsSkill", skill="Summoning")
 
 
 def test_crafted_power_focus_uses_formula_and_artificing() -> None:
@@ -2716,8 +2717,8 @@ def test_craft_without_artificing_warns() -> None:
         )
     )
     assert out.derived["foci"][0]["test"]["missing"] is True
-    assert any("Artificing" in warn for warn in out.derived["warnings"])
-    assert any("失敗" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.foci.needsArtificing")
+    assert has(out.derived["warnings"], "engine.foci.craftFailed")
 
 
 ARMOR_JACKET = "36a4cd30-c32c-44d0-847a-0c15fb51072a"
@@ -2840,7 +2841,7 @@ def test_two_armor_suits_use_highest() -> None:
     )
     assert out.derived["armor"] == 12
     assert out.derived["nuyen_spent"] == 1500
-    assert any("一番高い" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.armorHighestOnly")
 
 
 def test_orthoskin_stacks_with_jacket() -> None:
@@ -3082,7 +3083,7 @@ def test_armor_mod_capacity_overflow() -> None:
     )
     row = out.derived["armor_items"][0]
     assert row["capacity_used"] == 14
-    assert any("容量超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.capacityOver")
 
 
 def test_full_body_armor_helmet_adds_armor() -> None:
@@ -3118,7 +3119,7 @@ def test_urban_explorer_helmet_fits_only_jumpsuit() -> None:
     )
     assert ok.derived["armor"] == 11
     assert ok.derived["nuyen_spent"] == 750
-    assert any("装着できません" in warn for warn in bad.derived["warnings"])
+    assert has(bad.derived["warnings"], "engine.gear.doesNotFit")
     assert bad.derived["nuyen_spent"] == 1000
 
 
@@ -3131,14 +3132,14 @@ def test_fba_helmet_rejected_on_jacket() -> None:
             armor_mods=[ArmorModInstall(mod_id=FBA_HELMET, parent_id=jacket.id)],
         )
     )
-    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
     assert out.derived["armor"] == 12
     assert out.derived["nuyen_spent"] == 1000
 
 
 def test_armor_mod_without_parent_is_dropped() -> None:
     out = compute(_mundane("orphan-mod", armor_mods=[ArmorModInstall(mod_id=CHEM_PROT, rating=1)]))
-    assert any("防具に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.mountOnArmor")
     assert out.derived["nuyen_spent"] == 0
 
 
@@ -3185,7 +3186,7 @@ def test_duplicate_chemical_protection_is_rejected() -> None:
         )
     )
     assert len(out.derived["armor_items"][0]["mods"]) == 1
-    assert any("重複" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.duplicateMod")
     assert out.derived["nuyen_spent"] == 1500
 
 
@@ -3247,7 +3248,7 @@ def test_wired_reflexes_rating_three_exceeds_chargen_avail() -> None:
     )
     ware = out.derived["cyberware"][0]
     assert ware["avail"] == "20R"
-    assert any("入手制限超過" in err and "20R" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.availOver", shown="20R")
 
 
 def test_betaware_adds_four_avail() -> None:
@@ -3265,9 +3266,9 @@ def test_betaware_adds_four_avail() -> None:
         )
     )
     assert ok.derived["cyberware"][0]["avail"] == "12R"
-    assert all("入手制限" not in err for err in ok.derived["errors"])
+    assert not has(ok.derived["errors"], "engine.gear.availOver")
     assert over.derived["cyberware"][0]["avail"] == "16R"
-    assert any("入手制限超過" in err and "16R" in err for err in over.derived["errors"])
+    assert has(over.derived["errors"], "engine.gear.availOver", shown="16R")
 
 
 def test_restricted_gear_allows_one_item_over_avail_twelve() -> None:
@@ -3281,7 +3282,7 @@ def test_restricted_gear_allows_one_item_over_avail_twelve() -> None:
     )
     assert out.derived["cyberware"][0]["avail"] == "20R"
     assert out.derived["cyberware"][0].get("restricted_gear") is True
-    assert all("入手制限" not in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.gear.availOver")
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "restrictedgear" not in tags
 
@@ -3292,15 +3293,15 @@ def test_custom_commlink_rating_six_is_at_device_limit() -> None:
     assert row["device_rating"] == 6
     assert row["avail"] == "12"
     assert out.derived["device_rating_limit"] == 6
-    assert all("デバイスレーティング" not in err for err in out.derived["errors"])
-    assert all("入手制限" not in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.gear.deviceRatingOver")
+    assert not has(out.derived["errors"], "engine.gear.availOver")
 
 
 def test_custom_commlink_rating_seven_exceeds_device_rating() -> None:
     out = compute(_mundane("dr-custom-7", commlinks=[CommlinkInstall(gear_id=CUSTOM_LINK, rating=7)]))
     row = out.derived["commlinks"][0]
     assert row["device_rating"] == 7
-    assert any("デバイスレーティング超過" in err and "7" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.deviceRatingOver", value=7)
 
 
 def test_fairlight_caliban_exceeds_device_rating_even_with_restricted_gear() -> None:
@@ -3315,8 +3316,8 @@ def test_fairlight_caliban_exceeds_device_rating_even_with_restricted_gear() -> 
     assert row["device_rating"] == 7
     assert row["avail"] == "14"
     assert row.get("restricted_gear") is True
-    assert all("入手制限" not in err for err in out.derived["errors"])
-    assert any("Fairlight Caliban" in err and "デバイスレーティング超過" in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.gear.availOver")
+    assert has(out.derived["errors"], "engine.gear.deviceRatingOver", name="Fairlight Caliban")
 
 
 def test_transys_avalon_is_at_device_limit() -> None:
@@ -3331,11 +3332,11 @@ def test_sensor_array_rating_seven_exceeds_device_rating() -> None:
     ok = compute(_mundane("dr-array-6", sensors=[GearInstall(gear_id=SENSOR_ARRAY, rating=6)]))
     over = compute(_mundane("dr-array-7", sensors=[GearInstall(gear_id=SENSOR_ARRAY, rating=7)]))
     assert ok.derived["sensors"][0]["device_rating"] == 6
-    assert all("デバイスレーティング" not in err for err in ok.derived["errors"])
+    assert not has(ok.derived["errors"], "engine.gear.deviceRatingOver")
     assert over.derived["sensors"][0]["device_rating"] == 7
     assert over.derived["sensors"][0]["avail"] == "7"
-    assert any("Sensor Array" in err and "デバイスレーティング超過" in err for err in over.derived["errors"])
-    assert all("入手制限" not in err for err in over.derived["errors"])
+    assert has(over.derived["errors"], "engine.gear.deviceRatingOver", name="Sensor Array")
+    assert not has(over.derived["errors"], "engine.gear.availOver")
 
 
 def test_meta_link_costs_nuyen() -> None:
@@ -3422,7 +3423,7 @@ def test_pi_tac_programs_only_fit_pi_tac() -> None:
         )
     )
     assert denied.derived["gear"] == []
-    assert any("装着できません" in warn for warn in denied.derived["warnings"])
+    assert has(denied.derived["warnings"], "engine.gear.doesNotFit")
 
 
 def test_low_lifestyle_one_month() -> None:
@@ -3440,7 +3441,7 @@ def test_low_lifestyle_two_months() -> None:
 def test_luxury_lifestyle_exceeds_resources() -> None:
     out = compute(_mundane("luxury", lifestyles=[LifestyleInstall(lifestyle_id=LUXURY_LIFESTYLE, months=1)]))
     assert out.derived["nuyen_spent"] == 100000
-    assert any("新円が不足" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.nuyen.negative")
 
 
 def test_predator_purchase() -> None:
@@ -3571,7 +3572,7 @@ def test_glasses_capacity_overflow() -> None:
             ],
         )
     )
-    assert any("容量超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.capacityOver")
 
 
 def test_binoculars_include_magnification() -> None:
@@ -3589,7 +3590,7 @@ def test_binoculars_include_magnification() -> None:
 def test_vision_mod_without_parent_is_dropped() -> None:
     out = compute(_mundane("flare-loose", optics=[GearInstall(gear_id=FLARE_COMP)]))
     assert out.derived["optics"] == []
-    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsHost")
 
 
 def test_earbuds_spatial_recognizer() -> None:
@@ -3623,7 +3624,7 @@ def test_erika_can_buy_one_program() -> None:
     assert out.derived["programs"][0]["name"] == "Armor"
     assert out.derived["nuyen_spent"] == 49750
     assert out.derived["errors"] == []
-    assert not any("プログラムが上限超過" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.gear.programsOver")
 
 
 def test_erika_program_slot_overflow_warns() -> None:
@@ -3640,13 +3641,13 @@ def test_erika_program_slot_overflow_warns() -> None:
     )
     assert out.derived["cyberdecks"][0]["program_used"] == 2
     assert out.derived["nuyen_spent"] == 49830
-    assert any("プログラムが上限超過（2/1）" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.programsOver", used=2, max=1)
 
 
 def test_program_without_parent_is_dropped() -> None:
     out = compute(_mundane("loose-browse", programs=[GearInstall(gear_id=BROWSE)]))
     assert out.derived["programs"] == []
-    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsHost")
     assert out.derived["nuyen_spent"] == 0
 
 
@@ -3676,7 +3677,7 @@ def test_hacking_program_rejected_on_rcc() -> None:
         )
     )
     assert out.derived["programs"] == []
-    assert any("サイバーデッキに装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.cyberdeck")
     assert out.derived["nuyen_spent"] == 8000
 
 
@@ -3722,13 +3723,13 @@ def test_sensor_array_does_not_fit_handheld() -> None:
     parent = next(item for item in out.derived["sensors"] if item["gear_id"] == HANDHELD_HOUSING)
     assert parent["capacity_used"] == 6
     assert parent["capacity_max"] == 3
-    assert any("容量超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.capacityOver")
 
 
 def test_sensor_function_without_parent_is_dropped() -> None:
     out = compute(_mundane("loose-atmo", sensors=[GearInstall(gear_id=ATMOSPHERE)]))
     assert out.derived["sensors"] == []
-    assert any("本体に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsHost")
 
 
 SKILL_AUTOSOFT = "87d24cff-e63b-4f73-a115-7aa5e29ea467"
@@ -3751,7 +3752,7 @@ def test_skill_autosoft_needs_skill() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1500
     assert out.derived["nuyen_spent"] == 9500
-    assert any("技能を選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.pickSkill")
     assert "First Aid" in out.derived["programs"][0]["extra_options"]
 
 
@@ -3769,7 +3770,7 @@ def test_skill_autosoft_with_skill() -> None:
     assert row["label"] == "Skill Autosoft (Hardware)"
     assert row["nuyen"] == 1000
     assert out.derived["nuyen_spent"] == 9000
-    assert not any("技能を選んでください" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.skills.pickSkill")
 
 
 def test_predator_laser_sight() -> None:
@@ -3837,7 +3838,7 @@ def test_internal_smartgun_forbidden_on_melee() -> None:
     )
     assert out.derived["nuyen_spent"] == 10
     assert out.derived["weapons"][0]["accessories"] == []
-    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
 
 
 def test_predator_keeps_included_internal_smartgun() -> None:
@@ -3981,7 +3982,7 @@ def test_speed_loader_needs_cylinder() -> None:
         )
     )
     assert rejected.derived["weapons"][0]["ammo_gear"] == []
-    assert any("装着できません" in warn for warn in rejected.derived["warnings"])
+    assert has(rejected.derived["warnings"], "engine.gear.doesNotFit")
     accepted = compute(
         _mundane(
             "speed-cy",
@@ -4004,7 +4005,7 @@ def test_apds_forbidden_on_melee() -> None:
     )
     assert out.derived["weapons"][0]["ammo_gear"] == []
     assert out.derived["nuyen_spent"] == 10
-    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
 
 
 def test_predator_ammo_switch() -> None:
@@ -4136,7 +4137,7 @@ def test_barrel_accessories_conflict() -> None:
             ],
         )
     )
-    assert any("マウントが足りません" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.noFreeMount")
 
 
 def test_datasoft_on_commlink() -> None:
@@ -4171,7 +4172,7 @@ def test_agent_rating_cost() -> None:
 def test_app_without_commlink_is_dropped() -> None:
     out = compute(_mundane("loose-app", apps=[GearInstall(gear_id=DATASOFT, extra="Maps")]))
     assert out.derived["apps"] == []
-    assert any("通信機に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsCommlink")
 
 
 def test_doberman_drone() -> None:
@@ -4283,7 +4284,7 @@ def test_powertrain_slot_overflow_on_spirit() -> None:
     tracks = {item["category"]: item for item in out.derived["vehicles"][0]["slot_tracks"]}
     assert tracks["Powertrain"]["used"] == 10
     assert tracks["Powertrain"]["max"] == 8
-    assert any("パワートレインスロット超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.vehicleCategorySlotsOver", category="engine.vehicleSlot.Powertrain")
 
 
 def test_shin_hyung_extra_body_slots() -> None:
@@ -4335,7 +4336,7 @@ def test_gecko_tips_rejected_on_spirit() -> None:
             vehicle_mods=[VehicleModInstall(mod_id=GECKO_TIPS, parent_id=car.id)],
         )
     )
-    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
     assert out.derived["nuyen_spent"] == 12000
 
 
@@ -4358,7 +4359,7 @@ def test_gecko_tips_on_mirage() -> None:
 
 def test_vehicle_mod_without_parent_is_dropped() -> None:
     out = compute(_mundane("orphan-vmod", vehicle_mods=[VehicleModInstall(mod_id=RIGGER_INTERFACE)]))
-    assert any("車両に装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.mountOnVehicle")
     assert out.derived["nuyen_spent"] == 0
 
 
@@ -4418,7 +4419,7 @@ def test_sim_module_hot_and_trodes_in_spirit() -> None:
 def test_sim_module_without_parent_is_dropped() -> None:
     out = compute(_mundane("loose-sim", gear=[GearInstall(gear_id=SIM_MODULE)]))
     assert out.derived["gear"] == []
-    assert any("装着" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsHost")
 
 
 def test_sim_module_on_meta_link() -> None:
@@ -4445,7 +4446,7 @@ def test_tool_kit_does_not_install_in_spirit() -> None:
         )
     )
     assert out.derived["vehicles"][0]["gear"] == []
-    assert any("装着できません" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
     assert out.derived["nuyen_spent"] == 12000
 
 
@@ -4469,7 +4470,7 @@ def test_group_autosoft_needs_group() -> None:
     )
     assert out.derived["programs"][0]["nuyen"] == 1000
     assert "Electronics" in out.derived["programs"][0]["extra_options"]
-    assert any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.pickGroup")
 
 
 def test_group_autosoft_with_group() -> None:
@@ -4484,7 +4485,7 @@ def test_group_autosoft_with_group() -> None:
     row = out.derived["programs"][0]
     assert row["label"] == "Group Autosoft (Electronics)"
     assert row["nuyen"] == 1000
-    assert not any("技能グループを選んでください" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.gear.pickGroup")
 
 
 def test_model_maneuvering_autosoft() -> None:
@@ -4502,7 +4503,7 @@ def test_model_maneuvering_autosoft() -> None:
     assert row["label"] == "Maneuvering Autosoft (GM-Nissan Doberman (Medium))"
     assert row["nuyen"] == 1000
     assert "GM-Nissan Doberman (Medium)" in row["extra_options"]
-    assert not any("対象を入力" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.qualities.pickExtra")
 
 
 def test_weapon_targeting_autosoft_free_text() -> None:
@@ -4551,7 +4552,7 @@ def test_doberman_signature_masking() -> None:
     assert any(mod["name"] == "Signature Masking" for mod in row["mods"])
     assert out.derived["nuyen_spent"] == 7000
     assert row["slots_used"] <= row["slots_max"]
-    assert any("Signature Masking" in err and "入手制限超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.availOver", name="Signature Masking")
 
 
 def test_doberman_handling_enhancement_slots() -> None:
@@ -4576,7 +4577,7 @@ def test_doberman_handling_enhancement_slots() -> None:
             vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=drone.id, rating=2)],
         )
     )
-    assert any("改造スロット超過" in err for err in over.derived["errors"])
+    assert has(over.derived["errors"], "engine.gear.vehicleSlotsOver")
 
 
 def test_gecko_tips_body_formula() -> None:
@@ -4743,7 +4744,7 @@ def test_drone_arm_capacity_overflow() -> None:
     )
     row = next(item for item in out.derived["vehicle_mods"] if item["id"] == "arm1")
     assert row["capacity_used"] == 16
-    assert any("容量超過" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.gear.vehicleModCapacityOver")
 
 
 def test_hand_blade_without_drone_arm_is_dropped() -> None:
@@ -4847,7 +4848,7 @@ def test_medkit_rating_multiplies_cost() -> None:
 def test_fake_sin_needs_name_and_holds_license() -> None:
     sin = GearInstall(gear_id=FAKE_SIN, rating=4)
     out = compute(_mundane("sin-empty", gear=[sin]))
-    assert any("対象" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.pickExtra", name="Fake SIN")
     license = GearInstall(gear_id=FAKE_LICENSE, rating=4, parent_id=sin.id, extra="Drivers License")
     sin.extra = "John Doe"
     out = compute(_mundane("sin", gear=[sin, license]))
@@ -4858,7 +4859,7 @@ def test_fake_sin_needs_name_and_holds_license() -> None:
     assert out.derived["errors"] == []
     lone = compute(_mundane("license-only", gear=[GearInstall(gear_id=FAKE_LICENSE, rating=2)]))
     assert lone.derived["gear"] == []
-    assert any("装着" in warn for warn in lone.derived["warnings"])
+    assert has(lone.derived["warnings"], "engine.gear.needsHost", name="Fake License")
 
 
 def test_ammo_quantity_multiplies_cost() -> None:
@@ -4965,24 +4966,24 @@ def test_duplicate_complex_form_is_dropped() -> None:
         )
     )
     assert len(out.derived["complex_forms"]) == 1
-    assert any("重複" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.complexforms.duplicateDropped")
 
 
 def test_diffusion_needs_matrix_attribute() -> None:
     out = compute(_techno("diff-none", complex_forms=[ComplexFormInstall(form_id=DIFFUSION)]))
     row = out.derived["complex_forms"][0]
     assert row["needs_extra"] is True
-    assert any("マトリクス能力値" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.complexforms.pickMatrixAttribute")
     out = compute(_techno("diff-atk", complex_forms=[ComplexFormInstall(form_id=DIFFUSION, extra="Attack")]))
     assert out.derived["complex_forms"][0]["extra"] == "Attack"
     assert out.derived["complex_forms"][0]["label"] == "Diffusion of Attack"
-    assert not any("マトリクス能力値" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.complexforms.pickMatrixAttribute")
 
 
 def test_overdrive_requires_stream_quality() -> None:
     out = compute(_techno("overdrive", complex_forms=[ComplexFormInstall(form_id=OVERDRIVE)]))
     assert out.derived["complex_forms"] == []
-    assert any("Resonant Stream: Cyberadept" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.complexforms.requires", needed=["Resonant Stream: Cyberadept"])
 
 
 def test_resonant_stream_machinist_reduces_specific_complex_form_fade() -> None:
@@ -5183,7 +5184,7 @@ def test_compiled_sprite_can_exceed_resonance() -> None:
 def test_too_many_registered_sprites() -> None:
     sprites = [SpriteInstall(sprite_id=COURIER_SPRITE, level=1, registered=True) for _ in range(4)]
     out = compute(_techno("too-many", "C", sprites=sprites))
-    assert any("登録できるスプライト" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.sprites.registeredOverResonance")
 
 
 def test_mage_has_no_technomancer_tabs() -> None:
@@ -5260,12 +5261,12 @@ def test_contact_chargen_cost_is_capped_at_seven() -> None:
     assert row["connection"] == 6
     assert row["loyalty"] == 1
     assert row["cost"] == 7
-    assert any("7まで" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.contacts.pairMax", max=7)
 
 
 def test_unnamed_contact_is_warned() -> None:
     out = compute(_human("contact-noname", contacts=[ContactInstall(connection=1, loyalty=1)]))
-    assert any("名前のないコンタクト" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.contacts.unnamed")
     assert out.derived["contact_points"]["used"] == 2
 
 
@@ -5343,7 +5344,7 @@ def test_martial_art_chargen_limits() -> None:
             ],
         )
     )
-    assert any("流派は1つまで" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.martial.styleMax")
 
     techs = [
         "Counterstrike",
@@ -5359,7 +5360,7 @@ def test_martial_art_chargen_limits() -> None:
             martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=techs)],
         )
     )
-    assert any("技は合計5つまで" in err for err in out2.derived["errors"])
+    assert has(out2.derived["errors"], "engine.martial.techniqueMax")
 
 
 ONE_TRICK_PONY = "98644894-e3a4-41f2-9b7e-91feb74d0334"
@@ -5376,7 +5377,7 @@ def test_one_trick_pony_grants_free_quality_art() -> None:
     assert row["technique_max"] == 1
     assert out.derived["martial_art_points"]["styles"] == 0
     assert out.derived["martial_art_points"]["karma"] == 0
-    assert any("技を1つ選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.martial.pickTechnique")
     assert "martialart" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     # quality karma only
     assert out.derived["karma"]["spent"] == 7
@@ -5404,7 +5405,7 @@ def test_one_trick_pony_technique_is_free_and_single() -> None:
     assert row["karma"] == 0
     assert out.derived["unarmed_reach"] == 1
     assert out.derived["martial_art_points"]["techniques"] == 1
-    assert any("技を1つまで" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.martial.oneTechniqueOnly")
 
 
 def test_one_trick_pony_does_not_block_paid_style() -> None:
@@ -5473,7 +5474,7 @@ def test_submersion_raises_res_max_and_attack_upgrade() -> None:
 
 def test_submersion_grade_above_res_errors() -> None:
     out = compute(_techno("sub-over", "C", submersion_grade=5))
-    assert any("サブマージョン等級は共振力以下" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.submersion.gradeOverResonance")
 
 
 def test_echo_max_takes_blocks_third_attack_upgrade() -> None:
@@ -5490,7 +5491,7 @@ def test_echo_max_takes_blocks_third_attack_upgrade() -> None:
         )
     )
     assert len(out.derived["submersion"]["echoes"]) == 2
-    assert any("最大 2 回" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.submersion.maxTakes", max=2)
 
 
 def test_resonance_program_echo_needs_extra() -> None:
@@ -5502,7 +5503,7 @@ def test_resonance_program_echo_needs_extra() -> None:
             submersions=[SubmersionChoice(grade=1, echo_id=RESONANCE_PROGRAM)],
         )
     )
-    assert any("対象" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.submersion.pickEchoExtra")
     out2 = compute(
         _techno(
             "sub-prog2",
@@ -5512,7 +5513,7 @@ def test_resonance_program_echo_needs_extra() -> None:
         )
     )
     assert out2.derived["submersion"]["echoes"][0]["extra"] == "Browse"
-    assert not any("対象" in warn for warn in out2.derived["warnings"])
+    assert not has(out2.derived["warnings"], "engine.select.target")
 
 
 BLANDNESS = "9cffd452-8489-48d5-888c-ac35459d9174"
@@ -5587,7 +5588,7 @@ def test_resistance_pathogens_toxins_special_armor() -> None:
 
 def test_exceptional_attribute_raises_max() -> None:
     missing = compute(_human("ea-miss", quality_ids=[EXCEPTIONAL_ATTRIBUTE]))
-    assert any("能力値を選んでください" in warn for warn in missing.derived["warnings"])
+    assert has(missing.derived["warnings"], "engine.attrs.pickAttribute")
     attrs = default_attributes(find_metatype("Human", None))
     attrs["BOD"] = 6
     out = compute(
@@ -5644,7 +5645,7 @@ def test_erased_blocks_high_lifestyle() -> None:
             lifestyles=[LifestyleInstall(lifestyle_id=LIFESTYLE_HIGH)],
         )
     )
-    assert any("Medium より高い" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.erasedLifestyle")
     ok = compute(
         _human(
             "erased-med",
@@ -5652,7 +5653,7 @@ def test_erased_blocks_high_lifestyle() -> None:
             lifestyles=[LifestyleInstall(lifestyle_id=LIFESTYLE_MEDIUM)],
         )
     )
-    assert not any("Medium より高い" in warn for warn in ok.derived["warnings"])
+    assert not has(ok.derived["warnings"], "engine.gear.erasedLifestyle")
 
 
 def test_ex_con_bans_restricted_ware() -> None:
@@ -5663,7 +5664,7 @@ def test_ex_con_bans_restricted_ware() -> None:
             cyberware=[CyberwareInstall(ware_id=MUSCLE, rating=1)],
         )
     )
-    assert any("制限ウェア" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.ware.exconRestricted")
 
 
 def test_ex_con_raises_corp_and_law_loyalty() -> None:
@@ -5712,7 +5713,7 @@ def test_inspired_grants_free_artisan_expertise() -> None:
 
 def test_inspired_requires_choice_and_skill() -> None:
     missing = compute(_human("insp-empty", quality_ids=[INSPIRED_SASS], skills={"Artisan": 2}))
-    assert any("Expertise" in warn for warn in missing.derived["warnings"])
+    assert has(missing.derived["warnings"], "engine.skills.pickExpertise")
     no_skill = compute(
         _human(
             "insp-noskill",
@@ -5721,7 +5722,7 @@ def test_inspired_requires_choice_and_skill() -> None:
             quality_extras={INSPIRED_SASS: "Cooking"},
         )
     )
-    assert any("Artisan 技能" in warn for warn in no_skill.derived["warnings"])
+    assert has(no_skill.derived["warnings"], "engine.skills.expertiseNeedsSkill", skill="Artisan")
 
 
 def test_photographic_memory_and_quick_healer() -> None:
@@ -5750,11 +5751,11 @@ def test_home_ground_selecttext() -> None:
     missing = compute(_human("hg-missing", quality_ids=[HOME_GROUND]))
     tags = [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
     assert "selecttext" not in tags
-    assert any("対象を入力" in err for err in missing.derived["errors"])
+    assert has(missing.derived["errors"], "engine.qualities.pickExtra")
     out = compute(_human("hg", quality_ids=[HOME_GROUND], quality_extras={HOME_GROUND: "Barrens"}))
     row = next(item for item in out.derived["qualities"] if item["id"] == HOME_GROUND)
     assert row["extra"] == "Barrens"
-    assert not any("対象を入力" in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.qualities.pickExtra")
 
 
 def test_selecttext_quality_populates_catalog_options() -> None:
@@ -5870,7 +5871,7 @@ def test_lifestyle_lp_overflow_warns() -> None:
             ],
         )
     )
-    assert any("ライフスタイルポイント超過" in w for w in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.lifestylePointsOver")
 
 
 def test_jazz_street_cooked_parent_cost() -> None:
@@ -5907,9 +5908,9 @@ def test_career_mode_skips_avail_limit() -> None:
     assert high is not None
     gear = [GearInstall(gear_id=high["id"])]
     charged = compute(_mundane("career-avail-cg", gear=gear))
-    assert any("入手制限超過" in e for e in charged.derived["errors"])
+    assert has(charged.derived["errors"], "engine.gear.availOver")
     career = compute(_mundane("career-avail", career=True, gear=gear, nuyen_earned=10_000_000))
-    assert not any("入手制限超過" in e for e in career.derived["errors"])
+    assert not has(career.derived["errors"], "engine.gear.availOver")
     assert career.derived["avail_limit"] is None
     assert career.derived["career"] is True
     assert career.derived["nuyen"] == career.derived["nuyen_pool"] - career.derived["nuyen_spent"]
@@ -6169,12 +6170,12 @@ def test_black_market_pipeline_lowers_weapon_avail_by_two() -> None:
         )
     )
     assert bare.derived["weapons"][0]["avail"] == "14R"
-    assert any("入手制限超過" in err for err in bare.derived["errors"])
+    assert has(bare.derived["errors"], "engine.gear.availOver")
     assert linked.derived["weapons"][0]["avail_base"] == 14
     assert linked.derived["weapons"][0]["avail"] == "12R"
     assert linked.derived["weapons"][0].get("black_market_avail") is True
     assert linked.derived["black_market_avail_bonus"] == 2
-    assert not any("入手制限超過" in err for err in linked.derived["errors"])
+    assert not has(linked.derived["errors"], "engine.gear.availOver")
 
 
 def test_black_market_pipeline_warns_without_contact() -> None:
@@ -6185,7 +6186,7 @@ def test_black_market_pipeline_warns_without_contact() -> None:
             quality_extras={BLACK_MARKET_PIPELINE: "Weapons"},
         )
     )
-    assert any("コンタクトを選んでください" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.bmpContact")
     assert out.derived["black_market_avail_bonus"] == 0
 
 
@@ -6217,7 +6218,7 @@ def test_cyber_snob_clamps_standard_to_betaware() -> None:
     )
     row = out.derived["cyberware"][0]
     assert row["grade"] == "Betaware"
-    assert any("Betaware に変更" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.ware.gradeBanned", fallback="Betaware")
     # Datajack 0.1 × Betaware 0.7
     assert out.derived["essence"] == 5.93
     assert out.derived["nuyen_spent"] == 1500
@@ -6232,7 +6233,7 @@ def test_cyber_snob_allows_betaware() -> None:
         )
     )
     assert out.derived["cyberware"][0]["grade"] == "Betaware"
-    assert not any("グレードを使えません" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.ware.gradeBanned")
 
 
 MADE_MAN = "45be40cc-a21a-4771-b47d-a532ea60b205"
@@ -6327,7 +6328,7 @@ CODESLINGER = "41cc3e26-ae55-4e28-bd6a-b08866c21424"
 
 def test_codeslinger_requires_matrix_action() -> None:
     out = compute(_mundane("code-empty", quality_ids=[CODESLINGER]))
-    assert any("マトリクスアクションを選んでください" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.pickMatrixAction")
     assert out.derived["action_dice_pools"] == []
 
 
@@ -6351,7 +6352,7 @@ CRYSTAL_LIMB_ARM = "350844b9-db9f-4cce-83c3-e8965511e928"
 
 def test_crystal_limb_requires_side() -> None:
     out = compute(_mage("crystal-empty", quality_ids=[CRYSTAL_LIMB_ARM]))
-    assert any("左右を選んでください" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.pickSide")
 
 
 def test_crystal_limb_arm_selects_side() -> None:
@@ -6365,7 +6366,8 @@ def test_crystal_limb_arm_selects_side() -> None:
     row = next(q for q in out.derived["qualities"] if q["id"] == CRYSTAL_LIMB_ARM)
     assert row["selectside"] is True
     assert row["side"] == "Left"
-    assert not any("左右" in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.qualities.pickSide")
+    assert not has(out.derived["errors"], "engine.qualities.sideInvalid")
 
 
 def test_crystal_limb_conflicts_with_cyberarm_same_side() -> None:
@@ -6377,7 +6379,7 @@ def test_crystal_limb_conflicts_with_cyberarm_same_side() -> None:
             cyberware=[CyberwareInstall(id="arm1", ware_id=ARM, side="Left")],
         )
     )
-    assert any("重複" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.sideDuplicate")
 
 
 def test_crystal_limb_allows_opposite_cyberarm() -> None:
@@ -6389,7 +6391,7 @@ def test_crystal_limb_allows_opposite_cyberarm() -> None:
             cyberware=[CyberwareInstall(id="arm1", ware_id=ARM, side="Right")],
         )
     )
-    assert not any("重複" in err for err in out.derived["errors"])
+    assert not has(out.derived["errors"], "engine.qualities.sideDuplicate")
 
 
 ELEMENTALIST_AIR = "4d5e0fd2-dab3-4de0-9756-096a748bb3cc"
@@ -6402,7 +6404,7 @@ SPIRIT_FIRE = "c0178bf8-1fc5-4c56-9ce1-92a3ae1adc45"
 
 def test_elementalist_requires_spell_category() -> None:
     out = compute(_mage("elem-empty", quality_ids=[ELEMENTALIST_AIR]))
-    assert any("呪文カテゴリを選んでください" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.pickSpellCategory")
     assert "limitspellcategory" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
 
 
@@ -6423,9 +6425,9 @@ def test_elementalist_limits_spells_and_spirits() -> None:
     assert out.derived["limit_spell_categories"] == ["Combat"]
     assert out.derived["limit_spirit_categories"] == ["Spirit of Air"]
     assert [s["name"] for s in out.derived["spells"]] == ["Manabolt"]
-    assert any("Heal" in warn or "制限では習得" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spells.blockedByLimit")
     assert [s["name"] for s in out.derived["spirits"]] == ["Spirit of Air"]
-    assert any("Spirit of Fire" in warn and "制限" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spirits.blockedByLimit", name="Spirit of Fire")
     assert "Enchanting" in (out.derived["disabled_skill_groups"] or [])
 
 
@@ -6550,7 +6552,7 @@ def test_barehanded_adept_touch_spells_and_doubled_drain() -> None:
     # MAG 6 → half touch-only free spells = 3
     assert out.derived["spell_points"]["free"] == 3
     assert [s["name"] for s in out.derived["spells"]] == ["Death Touch"]
-    assert any("Manabolt" in warn or "制限では習得" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.spells.blockedByLimit", name="Manabolt")
     touch = out.derived["spells"][0]
     assert touch["free"] is True
     assert touch["barehanded_adept"] is True
@@ -6570,7 +6572,7 @@ KRIME_CALLIOPE = "7fffffff-e125-44fb-8977-7fffffffc59c"
 
 def test_practice_practice_practice_weapon_skill_accuracy() -> None:
     missing = compute(_human("ppp-empty", quality_ids=[PRACTICE_PRACTICE_PRACTICE]))
-    assert any("技能を選んでください" in warn for warn in missing.derived["warnings"])
+    assert has(missing.derived["warnings"], "engine.skills.pickSkill")
     base = compute(
         _human(
             "ppp-base",
@@ -6602,7 +6604,7 @@ def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
             weapons=[WeaponInstall(weapon_id=KATANA)],
         )
     )
-    assert any("武器技能" in err for err in missing.derived["errors"])
+    assert has(missing.derived["errors"], "engine.qualities.pickWeaponSkill")
     out = compute(
         _adept(
             "dda-blades",
@@ -6631,7 +6633,7 @@ def test_chain_breaker_adds_extra_spirit_types() -> None:
     from app.engine import quality_addspirit_extra_key
 
     missing = compute(_mage("cb-empty", quality_ids=[CHAIN_BREAKER], tradition_id=HERMETIC))
-    assert any("追加精霊" in err for err in missing.derived["errors"])
+    assert has(missing.derived["errors"], "engine.qualities.pickAddSpirit")
     assert "addspirit" not in [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
     out = compute(
         _mage(
@@ -6822,13 +6824,13 @@ def test_prototype_transhuman_waives_bioware_essence_and_forced_quality() -> Non
 
 def test_prototype_transhuman_requires_forced_quality_choice() -> None:
     out = compute(_mundane("proto-empty", quality_ids=[PROTOTYPE_TRANSHUMAN]))
-    assert any("対象を入力してください" in err for err in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.pickExtra")
 
 
 def test_uncouth_disables_social_skill_groups() -> None:
     out = compute(_mundane("uncouth-groups", quality_ids=[UNCOUTH], skill_groups={"Acting": 1}))
     assert set(out.derived["disabled_skill_groups"]) >= {"Acting", "Influence"}
-    assert any("Acting" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.groupDisabled", name="Acting")
 
 
 def test_incompetent_disables_chosen_skill_group() -> None:
@@ -6841,7 +6843,7 @@ def test_incompetent_disables_chosen_skill_group() -> None:
         )
     )
     assert "Athletics" in out.derived["disabled_skill_groups"]
-    assert any("Athletics" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.groupDisabled", name="Athletics")
 
 
 def test_jack_of_all_trades_adjusts_career_active_skill_karma() -> None:
@@ -6877,7 +6879,7 @@ def test_bilingual_allows_two_native_languages() -> None:
     )
     assert out.native_languages == ["Japanese", "English"]
     assert out.derived["native_language_limit"] == 2
-    assert not any("母語" in warn for warn in out.derived["warnings"])
+    assert not has(out.derived["warnings"], "engine.skills.nativeLimit")
 
 
 def test_aged_adds_knowledge_points_and_lowers_physical_max() -> None:
@@ -6896,7 +6898,7 @@ def test_uneducated_blocks_defaulting_and_doubles_tech_group_karma() -> None:
         "Academic",
         "Technical Active",
     }
-    assert any("デフォルト不可" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.skills.noDefaulting")
 
     st = compute(_mundane("uned-g", quality_ids=[UNEDUCATED], skill_groups={"Electronics": 1}))
     st.career = True
@@ -7005,7 +7007,7 @@ def test_special_modification_requires_quality() -> None:
         )
     )
     assert not any(acc["name"].startswith("Special Modification:") for acc in out.derived["weapons"][0]["accessories"])
-    assert any("Special Modifications が必要" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.needsSpecialMods")
 
 
 def test_special_modification_damage_costs_two() -> None:
@@ -7025,7 +7027,7 @@ def test_special_modification_damage_costs_two() -> None:
     assert row["damage"] == "9P"
     assert not any(acc["name"] == "Special Modification: Improved AP" for acc in row["accessories"])
     assert out.derived["special_modification_limit"] == {"used": 2, "max": 2}
-    assert any("上限を超えています" in warn for warn in out.derived["warnings"])
+    assert has(out.derived["warnings"], "engine.gear.specialModsOver")
 
 
 def test_special_modification_ammo_capacity() -> None:
@@ -7059,7 +7061,7 @@ def test_positive_quality_karma_cap_at_chargen() -> None:
             quality_ids=[LIGHTNING_REFLEXES, ADRENALINE_SURGE],  # 20 + 12 karma
         )
     )
-    assert any("有利資質に費やせるカルマが上限" in e for e in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.positiveCap")
     # career growth is not bound by the chargen cap
     career = compute(
         CharacterState(
@@ -7073,7 +7075,7 @@ def test_positive_quality_karma_cap_at_chargen() -> None:
             quality_ids=[LIGHTNING_REFLEXES, ADRENALINE_SURGE],
         )
     )
-    assert not any("有利資質に費やせるカルマが上限" in e for e in career.derived["errors"])
+    assert not has(career.derived["errors"], "engine.qualities.positiveCap")
 
 
 def test_only_one_attribute_at_natural_max_for_priority_build() -> None:
@@ -7092,7 +7094,7 @@ def test_only_one_attribute_at_natural_max_for_priority_build() -> None:
             attributes=two,
         )
     )
-    assert any("自然上限の能力値は1つまで" in e for e in flagged.derived["errors"])
+    assert has(flagged.derived["errors"], "engine.attrs.oneAtNaturalMax")
 
     one = default_attributes(find_metatype("Human", None))
     one["BOD"] = 6
@@ -7106,16 +7108,16 @@ def test_only_one_attribute_at_natural_max_for_priority_build() -> None:
             attributes=one,
         )
     )
-    assert not any("自然上限の能力値は1つまで" in e for e in ok.derived["errors"])
+    assert not has(ok.derived["errors"], "engine.attrs.oneAtNaturalMax")
 
 
 def test_leftover_nuyen_carryover_notice() -> None:
     prio = Priorities(Heritage="C", Attributes="D", Talent="E", Skills="B", Resources="A")
     chargen = compute(_mundane("carry-cg", priorities=prio))
-    assert any("持ち越せません" in w for w in chargen.derived["warnings"])
+    assert has(chargen.derived["warnings"], "engine.nuyen.chargenCarryOver")
     # the notice is a chargen-only reminder; career mode omits it
     career = compute(_mundane("carry-career", career=True, priorities=prio))
-    assert not any("持ち越せません" in w for w in career.derived["warnings"])
+    assert not has(career.derived["warnings"], "engine.nuyen.chargenCarryOver")
 
 
 JAZZ = "929c4835-1754-4999-9215-9859e8ec5384"
@@ -7165,16 +7167,16 @@ FEATHERS = "35279341-3611-439a-9550-8227b306198f"  # -3 negative metagenic
 
 def test_metagenic_requires_changeling() -> None:
     out = compute(_mundane("mg-nochangeling", quality_ids=[THERMO_SURGE, FEATHERS]))
-    assert any("Changeling" in e for e in out.derived["errors"])
+    assert has(out.derived["errors"], "engine.qualities.metagenicNeedsChangeling")
 
 
 def test_metagenic_karma_must_balance() -> None:
     unbalanced = compute(_mundane("mg-unbalanced", quality_ids=[CHANGELING_I, THERMO_SURGE]))
-    assert any("不均衡" in e for e in unbalanced.derived["errors"])
+    assert has(unbalanced.derived["errors"], "engine.qualities.metagenicUnbalanced")
     mg = unbalanced.derived["metagenic"]
     assert mg["limit"] == 30 and mg["positive"] == 3 and mg["negative"] == 0
 
     balanced = compute(_mundane("mg-balanced", quality_ids=[CHANGELING_I, THERMO_SURGE, FEATHERS]))
-    assert not any("不均衡" in e for e in balanced.derived["errors"])
+    assert not has(balanced.derived["errors"], "engine.qualities.metagenicUnbalanced")
     assert not any("Changeling" in e for e in balanced.derived["errors"])
     assert balanced.derived["metagenic"]["balanced"] is True

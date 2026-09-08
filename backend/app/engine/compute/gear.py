@@ -14,6 +14,7 @@ from typing import Any, cast
 from ...data_loader import eval_formula
 from ...improvements import apply_bonus_nodes, substitute_rating
 from ...models import ArmorInstall, CharacterState, CommlinkInstall, WeaponInstall
+from ...notices import Notice
 from ..bundle_types import GearBundle
 from ..constants import ADEPT_TALENTS, quality_contact_extra_key
 from ..contacts import apply_erased_lifestyle_cap
@@ -61,7 +62,7 @@ def resolve_gear(
     attr_totals: dict[str, int] | None = None,
     special_modification_limit: int = 0,
 ) -> GearBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     nuyen = 0
     armor_items: list[dict[str, Any]] = []
@@ -69,7 +70,7 @@ def resolve_gear(
     commlinks: list[dict[str, Any]] = []
     cyberdecks: list[dict[str, Any]] = []
     rccs: list[dict[str, Any]] = []
-    errors: list[str] = []
+    errors: list[Notice] = []
 
     kept_armor: list[ArmorInstall] = []
     for armor_inst in state.armor:
@@ -311,11 +312,11 @@ def gear_phase(ctx: Ctx) -> None:
             ).strip()
             contact_ids = {str(getattr(c, "id", "") or "") for c in (ctx.state.contacts or [])}
             if not ctx.bmp_category:
-                ctx.warnings.append("Black Market Pipeline の商品カテゴリを選んでください")
+                ctx.warn("engine.gear.bmpCategory")
             if not ctx.bmp_contact_id:
-                ctx.warnings.append("Black Market Pipeline のコンタクトを選んでください")
+                ctx.warn("engine.gear.bmpContact")
             elif ctx.bmp_contact_id not in contact_ids:
-                ctx.warnings.append("Black Market Pipeline のコンタクトが見つかりません")
+                ctx.warn("engine.gear.bmpContactMissing")
                 ctx.bmp_contact_id = ""
             ctx.bmp_active = bool(ctx.bmp_category and ctx.bmp_contact_id)
             break
@@ -344,7 +345,7 @@ def gear_phase(ctx: Ctx) -> None:
             for q in ctx.qualities
         )
         if not sinner_ok:
-            ctx.warnings.append("Trust Fund には SINner（National または Corporate）が必要です")
+            ctx.warn("engine.gear.trustFundNeedsSinner")
     ctx.errors.extend(_attach_ware_to_vehicle_mods(ctx.gear.get("vehicle_mods") or [], ctx.cyber_installed))
     for source, nodes in ctx.gear["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)

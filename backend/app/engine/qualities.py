@@ -17,9 +17,8 @@ from typing import Any
 from ..improvements import EffectsDict, _as_int
 from ..improvements.effect_rows import ActionDicePoolRow
 from ..models import CharacterState
+from ..notices import Notice, notice, term, ui
 from .constants import (
-    _SIDE_JA,
-    _SLOT_JA,
     NEGATIVE_QUALITY_KARMA_CAP,
     POSITIVE_QUALITY_KARMA_CAP,
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
@@ -28,6 +27,7 @@ from .constants import (
     _normalize_side,
     quality_addspirit_extra_key,
     quality_spirit_category_extra_key,
+    slot_phrase,
 )
 from .lookups import _item_by_id, _power_by_name, _quality_by_id, _quality_by_name
 from .priority import talent_special
@@ -186,7 +186,7 @@ def bind_select_powers(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-    warnings: list[str],
+    warnings: list[Notice],
     mentor_name: str = "",
 ) -> None:
     by_name = {q["name"]: q for q in qualities}
@@ -218,13 +218,13 @@ def bind_select_powers(
             if spec:
                 picked = str(quality_extras.get(spec["id"]) or "").strip()
         if not picked:
-            warnings.append(f"{source} のパワーを選んでください")
+            warnings.append(notice("engine.adept.powerPick", source=term(source)))
             continue
         if options and picked not in options:
-            warnings.append(f"{source} に {picked} は選べません")
+            warnings.append(notice("engine.adept.powerNotAllowed", source=term(source), picked=term(picked)))
             continue
         if open_select and not _power_by_name(picked):
-            warnings.append(f"{source} のパワー {picked} が見つかりません")
+            warnings.append(notice("engine.adept.powerUnknown", source=term(source), power=term(picked)))
             continue
         effects["grant_powers"].append(
             {
@@ -238,7 +238,7 @@ def bind_select_powers(
 
 def free_powers_from_grants(
     effects: EffectsDict,
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for row in effects.get("grant_powers") or []:
@@ -246,7 +246,7 @@ def free_powers_from_grants(
         source = str(row.get("source") or "").strip()
         spec = _power_by_name(name)
         if not spec:
-            warnings.append(f"{source} のパワー {name} が見つかりません")
+            warnings.append(notice("engine.adept.powerUnknown", source=term(source), power=term(name)))
             continue
         out.append(
             {
@@ -306,7 +306,7 @@ def resolve_quality_sides(
     state: CharacterState,
     cyber_installed: list[dict[str, Any]],
     bio_installed: list[dict[str, Any]],
-    errors: list[str],
+    errors: list[Notice],
 ) -> dict[str, str]:
     """Validate quality selectside extras; return quality_id → Left/Right."""
     chosen: dict[str, str] = {}
@@ -317,7 +317,7 @@ def resolve_quality_sides(
         side = _normalize_side(str(item.get("side") or ""))
         slot = str(item.get("limbslot") or "").lower()
         if side and slot:
-            occupied[(slot, side)] = str(item.get("name") or "ウェア")
+            occupied[(slot, side)] = str(item.get("name") or "")
 
     extras = state.quality_extras or {}
     for spec in qualities:
@@ -327,7 +327,7 @@ def resolve_quality_sides(
         side = _normalize_side(raw)
         if not side:
             if raw:
-                errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
+                errors.append(notice("engine.qualities.sideInvalid", name=term(str(spec["name"]))))
             continue
         chosen[spec["id"]] = side
         limb_slot = _quality_limb_slot(spec)
@@ -335,10 +335,14 @@ def resolve_quality_sides(
             continue
         key = (limb_slot, side)
         if key in occupied:
-            slot_ja = _SLOT_JA.get(limb_slot, limb_slot)
             errors.append(
-                f"{spec['name']}（{_SIDE_JA.get(side, side)}）は"
-                f"{occupied[key]}と{_SIDE_JA.get(side, side)}の{slot_ja}が重複しています"
+                notice(
+                    "engine.qualities.sideDuplicate",
+                    name=term(str(spec["name"])),
+                    other=term(occupied[key]) if occupied[key] else ui("engine.term.ware"),
+                    side=ui(f"engine.side.{side}"),
+                    slot=slot_phrase(limb_slot),
+                )
             )
             continue
         occupied[key] = spec["name"]
@@ -408,7 +412,7 @@ def apply_quality_rules(
     qualities: list[dict[str, Any]],
     free_quality_ids: list[str],
     ctx: dict[str, Any],
-    errors: list[str],
+    errors: list[Notice],
     *,
     career: bool = False,
     report: dict[str, Any] | None = None,
@@ -432,26 +436,26 @@ def apply_quality_rules(
         if str(spec.get("extra_kind") or "") == "add_spirit":
             count = max(1, int(spec.get("add_spirit_count") or 1))
             if any(quality_addspirit_extra_key(spec["id"], idx) not in extras for idx in range(count)):
-                errors.append(f"{spec['name']} の追加精霊を選んでください")
+                errors.append(notice("engine.qualities.pickAddSpirit", name=term(str(spec["name"]))))
         elif quality_needs_extra(spec) and spec["id"] not in extras:
             if _quality_has_selectside(spec):
-                errors.append(f"{spec['name']} の左右を選んでください")
+                errors.append(notice("engine.qualities.pickSide", name=term(str(spec["name"]))))
             elif _quality_has_actiondicepool(spec):
-                errors.append(f"{spec['name']} のマトリクスアクションを選んでください")
+                errors.append(notice("engine.qualities.pickMatrixAction", name=term(str(spec["name"]))))
             elif _quality_needs_spell_category(spec):
-                errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
+                errors.append(notice("engine.qualities.pickSpellCategory", name=term(str(spec["name"]))))
             elif _quality_needs_spirit_category(spec):
-                errors.append(f"{spec['name']} の精霊を選んでください")
+                errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
             elif str(spec.get("extra_kind") or "") == "weapon_skill":
-                errors.append(f"{spec['name']} の武器技能を選んでください")
+                errors.append(notice("engine.qualities.pickWeaponSkill", name=term(str(spec["name"]))))
             else:
-                errors.append(f"{spec['name']} の対象を入力してください")
+                errors.append(notice("engine.qualities.pickExtra", name=term(str(spec["name"]))))
         if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
             spirit_key = quality_spirit_category_extra_key(spec["id"])
             if spirit_key not in extras:
-                errors.append(f"{spec['name']} の精霊を選んでください")
+                errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
         elif _quality_has_selectside(spec) and spec["id"] in extras and not _normalize_side(extras[spec["id"]]):
-            errors.append(f"{spec['name']} の左右指定が不正です（Left / Right）")
+            errors.append(notice("engine.qualities.sideInvalid", name=term(str(spec["name"]))))
         options = list(spec.get("select_options") or [])
         if not options:
             for node in spec.get("bonus") or []:
@@ -461,22 +465,18 @@ def apply_quality_rules(
                 options = [str(item).strip() for item in (raw if isinstance(raw, list) else [raw]) if str(item).strip()]
         if options and spec["id"] in extras and extras[spec["id"]] not in options:
             if not _quality_has_actiondicepool(spec):
-                errors.append(f"{spec['name']} の対象が不正です")
+                errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
         if is_free:
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
-            errors.append(f"{spec['name']} の前提を満たしていません")
+            errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
         forbidden = spec.get("forbidden_tree") or []
         if forbidden and requirement_tree_met(forbidden, ctx):
-            errors.append(f"{spec['name']} は現在のキャラクターでは取れません")
+            errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
     if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
-        errors.append(
-            f"不利資質から得られるカルマが上限を超えています（{negative_gain} / {NEGATIVE_QUALITY_KARMA_CAP}）"
-        )
+        errors.append(notice("engine.qualities.negativeCap", karma=negative_gain, limit=NEGATIVE_QUALITY_KARMA_CAP))
     if positive_spend > POSITIVE_QUALITY_KARMA_CAP and not career:
-        errors.append(
-            f"有利資質に費やせるカルマが上限を超えています（{positive_spend} / {POSITIVE_QUALITY_KARMA_CAP}）"
-        )
+        errors.append(notice("engine.qualities.positiveCap", karma=positive_spend, limit=POSITIVE_QUALITY_KARMA_CAP))
 
     # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
     metagenic_limit = 0
@@ -493,16 +493,20 @@ def apply_quality_rules(
     mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
     if not career:
         if (mg_pos or mg_neg) and metagenic_limit <= 0:
-            errors.append("メタジェネティック資質には Changeling（Class I／II／III SURGE）が必要です")
+            errors.append(notice("engine.qualities.metagenicNeedsChangeling"))
         elif metagenic_limit > 0:
             if mg_neg > metagenic_limit:
-                errors.append(f"不利メタジェネティック資質のカルマが上限を超えています（{mg_neg} / {metagenic_limit}）")
+                errors.append(notice("engine.qualities.metagenicNegativeCap", karma=mg_neg, limit=metagenic_limit))
             if mg_pos > metagenic_limit:
-                errors.append(f"有利メタジェネティック資質のカルマが上限を超えています（{mg_pos} / {metagenic_limit}）")
+                errors.append(notice("engine.qualities.metagenicPositiveCap", karma=mg_pos, limit=metagenic_limit))
             if mg_pos and not mg_balanced:
                 errors.append(
-                    "メタジェネティック資質のカルマ収支が不均衡です"
-                    f"（不利 {mg_neg}、必要 {max(0, mg_pos - 1)}〜{mg_pos}）"
+                    notice(
+                        "engine.qualities.metagenicUnbalanced",
+                        negative=mg_neg,
+                        min=max(0, mg_pos - 1),
+                        max=mg_pos,
+                    )
                 )
     if report is not None:
         report["metagenic"] = {

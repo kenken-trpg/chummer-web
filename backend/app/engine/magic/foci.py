@@ -19,6 +19,7 @@ from typing import Any
 from ...data_loader import catalog, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, FocusInstall, QiFocusInstall
+from ...notices import Notice, notice, term
 from ..bundle_types import FociBundle, FocusLimits, QiFociBundle
 from ..constants import ADEPT_TALENTS, FOCUS_FORCE_MULT, FOCUS_TALENTS, QI_FOCUS_NAME, SPIRIT_REAGENT_YEN
 from ..dice import magic_opposed_test
@@ -75,8 +76,8 @@ def resolve_qi_foci(
     skills_data: dict[str, Any],
     focus_binding: Sequence[Mapping[str, Any]],
 ) -> QiFociBundle:
-    warnings: list[str] = []
-    errors: list[str] = []
+    warnings: list[Notice] = []
+    errors: list[Notice] = []
     public: list[dict[str, Any]] = []
     free_powers: list[dict[str, Any]] = []
     nuyen = 0
@@ -106,14 +107,14 @@ def resolve_qi_foci(
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
         if kind and extra and extra not in options:
-            warnings.append(f"気焦点の {spec['name']} の指定が無効です（{extra}）")
+            warnings.append(notice("engine.foci.qiSelectInvalid", name=term(str(spec["name"])), picked=term(extra)))
             extra = ""
             inst.extra = None
         if kind and not extra:
-            warnings.append(f"気焦点の {spec['name']} の対象を選んでください")
+            warnings.append(notice("engine.foci.qiPickTarget", name=term(str(spec["name"]))))
         power_rating = qi_focus_granted_power_rating(spec, int(inst.rating or 1), requested_rating, mag, select_power)
         if select_power and select_power.get("ignore_rating") and power_rating <= 0:
-            warnings.append(f"気焦点の Force が {spec['name']} に不足しています")
+            warnings.append(notice("engine.foci.qiForceTooLow", name=term(str(spec["name"]))))
             continue
         needed = max(
             1,
@@ -181,7 +182,7 @@ def resolve_foci(
     mag: int,
     focus_binding: Sequence[Mapping[str, Any]],
 ) -> FociBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     nuyen = 0
@@ -203,7 +204,7 @@ def resolve_foci(
             continue
         cap = min(int(spec.get("maxrating") or 6), max_force) if mag else 0
         if cap <= 0:
-            warnings.append(f"{spec['name']} を結合するには魔力が必要です")
+            warnings.append(notice("engine.foci.bindNeedsMagic", name=term(str(spec["name"]))))
             continue
         force = max(1, min(cap, int(inst.force or 1)))
         inst.force = force
@@ -224,7 +225,7 @@ def resolve_foci(
             reagent = force * SPIRIT_REAGENT_YEN
             formula_cost = int(eval_formula(str(formula.get("cost") or "0"), force, 0)) if formula_bought else 0
             if formula_bought and not formula:
-                warnings.append(f"{spec['name']} の術式データが見つからないため、術式代は0¥にしました")
+                warnings.append(notice("engine.foci.formulaMissing", name=term(str(spec["name"]))))
             cost = formula_cost + reagent
         else:
             cost = int(eval_formula(str(spec.get("cost") or "0"), force, 0))
@@ -292,7 +293,7 @@ def attach_weapon_focus_dice(
     state: CharacterState,
     foci_public: list[dict[str, Any]],
     weapons: list[dict[str, Any]],
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> None:
     by_id = {str(item.get("id") or ""): item for item in weapons if item.get("id")}
     for focus in foci_public:
@@ -309,12 +310,18 @@ def attach_weapon_focus_dice(
         weapon_id = str(focus.get("weapon_id") or "").strip()
         dice = int(focus.get("weapon_dice") or 0)
         if not weapon_id:
-            warnings.append(f"{focus.get('name') or 'Weapon Focus'} の対象武器を選んでください")
+            warnings.append(notice("engine.foci.weaponPick", name=term(str(focus.get("name") or "Weapon Focus"))))
             focus["weapon_id"] = ""
             focus["weapon_name"] = ""
             continue
         if weapon_id not in allowed:
-            warnings.append(f"{focus.get('name') or 'Weapon Focus'} は{weapon_type}武器専用です")
+            warnings.append(
+                notice(
+                    "engine.foci.weaponTypeOnly",
+                    name=term(str(focus.get("name") or "Weapon Focus")),
+                    type=term(weapon_type),
+                )
+            )
             focus["weapon_id"] = ""
             focus["weapon_name"] = ""
             for inst in state.foci or []:
@@ -331,16 +338,16 @@ def apply_focus_limits(
     mag: int,
     qi_public: list[dict[str, Any]],
     foci_public: list[dict[str, Any]],
-    errors: list[str],
+    errors: list[Notice],
 ) -> FocusLimits:
     count = len(qi_public) + len(foci_public)
     force = sum(int(item.get("rating") or item.get("force") or 0) for item in qi_public + foci_public)
     count_max = max(0, int(mag or 0))
     force_max = count_max * FOCUS_FORCE_MULT
     if count_max and count > count_max:
-        errors.append(f"結合できる収束具は魔力までです（{count}/{count_max}）")
+        errors.append(notice("engine.foci.countOverMagic", count=count, max=count_max))
     if force_max and force > force_max:
-        errors.append(f"結合収束具のForce合計が上限を超えています（{force}/{force_max}）")
+        errors.append(notice("engine.foci.forceOverLimit", force=force, max=force_max))
     return {"count": count, "count_max": count_max, "force": force, "force_max": force_max}
 
 
@@ -352,8 +359,8 @@ def attach_focus_tests(
     attrs: dict[str, int],
     skills_data: dict[str, Any],
     mental_limit: int,
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     for item in public:
         if not item.get("crafted"):
             continue
@@ -376,9 +383,9 @@ def attach_focus_tests(
         )
         item["test"] = test
         if test.get("missing"):
-            warnings.append(f"{item['name']} の作成にはArtificingが必要です（未習得・デフォルト不可）")
+            warnings.append(notice("engine.foci.needsArtificing", name=term(str(item["name"]))))
         if test.get("net") is not None and int(test["net"]) <= 0:
-            warnings.append(f"{item['name']} の作成に失敗しています（正味0）")
+            warnings.append(notice("engine.foci.craftFailed", name=term(str(item["name"]))))
         if item.get("formula_bought"):
             continue
         design = magic_opposed_test(
@@ -396,5 +403,5 @@ def attach_focus_tests(
         )
         item["formula_test"] = design
         if design.get("missing"):
-            warnings.append(f"{item['name']} の術式自作にはArcanaが必要です（未習得・デフォルト不可）")
+            warnings.append(notice("engine.foci.needsArcana", name=term(str(item["name"]))))
     return warnings

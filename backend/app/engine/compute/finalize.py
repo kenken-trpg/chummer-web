@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...improvements import EffectsDict
+from ...notices import term
 from ..bundle_types import MovementBundle
 from ..constants import NUYEN_CHARGEN_KEEP_MAX
 from ..formulas import _add_leading_int, _ceil_div, _replace_leading_int
@@ -61,7 +62,7 @@ def totals(ctx: Ctx) -> None:
         ctx.power_pool = 0.0
     ctx.power_spent = float(ctx.adept["spent"])
     if ctx.power_spent > ctx.power_pool + 1e-9:
-        ctx.errors.append(f"パワー点が不足しています（使用 {ctx.power_spent:g} / 上限 {ctx.power_pool:g}）")
+        ctx.err("engine.adept.powerPointsOver", used=f"{ctx.power_spent:g}", max=f"{ctx.power_pool:g}")
 
     bonus = ctx.effects["attribute_bonus"]
     ctx.total = {k: ctx.ratings[k] + int(bonus.get(k, 0)) for k in ctx.ratings}
@@ -166,7 +167,7 @@ def finalize(ctx: Ctx) -> None:
     if not ctx.career:
         at_six = [n for n, r in ctx.skill_totals.items() if r >= 6]
         if len(at_six) > 1:
-            ctx.errors.append("作成時にレーティング6の技能は1つまでです")
+            ctx.err("engine.skills.oneAtSix")
         # SR5 p.65: no more than one attribute at its natural maximum at
         # character creation (Edge / unused special attributes don't count).
         # Applies to every build method, not just Karma.
@@ -184,24 +185,22 @@ def finalize(ctx: Ctx) -> None:
             if racial_max > 0 and int(ctx.ratings.get(key) or 0) >= racial_max:
                 at_natural_max.append(key)
         if len(at_natural_max) > 1:
-            ctx.errors.append("作成時に自然上限の能力値は1つまでです")
+            ctx.err("engine.attrs.oneAtNaturalMax")
         if not ctx.is_karma:
             if ctx.spent_physical > ctx.attr_points:
-                ctx.errors.append(f"能力値点が不足しています（使用 {ctx.spent_physical} / 上限 {ctx.attr_points}）")
+                ctx.err("engine.attrs.pointsOver", used=ctx.spent_physical, max=ctx.attr_points)
             if ctx.spent_special > ctx.special_from_meta:
-                ctx.errors.append(
-                    f"特殊能力値点が不足しています（使用 {ctx.spent_special} / 上限 {ctx.special_from_meta}）"
-                )
+                ctx.err("engine.attrs.specialPointsOver", used=ctx.spent_special, max=ctx.special_from_meta)
             if ctx.skill_spent > ctx.skill_points:
-                ctx.errors.append(f"技能点が不足しています（使用 {ctx.skill_spent} / 上限 {ctx.skill_points}）")
+                ctx.err("engine.skills.pointsOver", used=ctx.skill_spent, max=ctx.skill_points)
             if ctx.group_spent > ctx.group_points:
-                ctx.errors.append(f"技能グループ点が不足しています（使用 {ctx.group_spent} / 上限 {ctx.group_points}）")
+                ctx.err("engine.skills.groupPointsOver", used=ctx.group_spent, max=ctx.group_points)
             if ctx.know_spent > ctx.know_max:
-                ctx.errors.append(f"知識技能点が不足しています（使用 {ctx.know_spent} / 上限 {ctx.know_max}）")
+                ctx.err("engine.skills.knowledgePointsOver", used=ctx.know_spent, max=ctx.know_max)
     if ctx.karma_left < 0:
-        ctx.errors.append(f"カルマが不足しています（残り {ctx.karma_left}）")
+        ctx.err("engine.karma.negative", karma=ctx.karma_left)
     if ctx.nuyen < 0:
-        ctx.errors.append(f"新円が不足しています（残り {ctx.nuyen}¥）")
+        ctx.err("engine.nuyen.negative", nuyen=ctx.nuyen)
     # SR5 p.98: at Standard power level only 5,000¥ of unspent resources
     # carry over into play (Street 200¥ / Prime 20,000¥). Surface it as a
     # chargen notice rather than silently deleting nuyen, matching Chummer.
@@ -209,24 +208,26 @@ def finalize(ctx: Ctx) -> None:
         chargen_leftover = ctx.nuyen - int(ctx.state.nuyen_earned or 0)
         if chargen_leftover > NUYEN_CHARGEN_KEEP_MAX:
             lost = chargen_leftover - NUYEN_CHARGEN_KEEP_MAX
-            ctx.warnings.append(
-                f"未使用新円 {chargen_leftover:,}¥：Standard レベルでは "
-                f"{NUYEN_CHARGEN_KEEP_MAX:,}¥ までしか持ち越せません（超過分 {lost:,}¥ は原則失われます）"
+            ctx.warn(
+                "engine.nuyen.chargenCarryOver",
+                left=f"{chargen_leftover:,}",
+                keep=f"{NUYEN_CHARGEN_KEEP_MAX:,}",
+                lost=f"{lost:,}",
             )
     if ctx.ess <= 0:
-        ctx.errors.append("エッセンスが0以下です")
+        ctx.err("engine.attrs.essenceDepleted")
     for item in ctx.installed:
         cap_max = float(item.get("capacity_max") or 0)
         if cap_max <= 0:
             continue
         used = float(item.get("capacity_used") or 0)
         if used > cap_max + 1e-9:
-            ctx.errors.append(f"{item['name']} の容量超過（{used:g}/{cap_max:g}）")
+            ctx.err("engine.ware.capacityOver", name=term(str(item["name"])), used=f"{used:g}", max=f"{cap_max:g}")
 
     if not ctx.is_karma:
         allowed = {e["name"] for e in heritage_options(ctx.state.priorities.Heritage)}
         if allowed and ctx.state.metatype not in allowed:
-            ctx.errors.append(f"{ctx.state.metatype} はこの優先度のメタに含まれません")
+            ctx.err("engine.meta.notInPriority", name=term(ctx.state.metatype))
     if not ctx.career:
         _check_avail_limit(
             _avail_entries(

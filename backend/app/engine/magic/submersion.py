@@ -14,6 +14,7 @@ import math
 from typing import Any
 
 from ...models import CharacterState, SubmersionChoice
+from ...notices import Notice, notice, term
 from ..bundle_types import SubmersionBundle
 from ..constants import RES_TALENTS, SUBMERSION_KARMA_FLAT, SUBMERSION_KARMA_PER_GRADE
 from ..lookups import _echo_by_id
@@ -46,9 +47,9 @@ def resolve_submersion(
     talent_name: str,
     res: int,
     quality_names: set[str],
-    errors: list[str],
+    errors: list[Notice],
 ) -> SubmersionBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     empty: SubmersionBundle = {
         "warnings": warnings,
         "grade": 0,
@@ -115,13 +116,13 @@ def resolve_submersion(
             "page": "",
         }
         if not echo_id:
-            warnings.append(f"サブマージョン等級 {g} のエコーを選んでください")
+            warnings.append(notice("engine.submersion.pickEcho", grade=g))
             public_choices.append(row)
             continue
 
         spec = _echo_by_id(echo_id)
         if not spec:
-            warnings.append(f"未知のエコーを等級 {g} から外しました")
+            warnings.append(notice("engine.submersion.echoUnknownDropped", grade=g))
             choice.echo_id = ""
             choice.extra = None
             row["echo_id"] = ""
@@ -132,7 +133,7 @@ def resolve_submersion(
         count = taken_counts.get(spec["id"], 0)
         max_takes = spec.get("max_takes")
         if max_takes is not None and count >= int(max_takes):
-            warnings.append(f"{spec['name']} は最大 {max_takes} 回までです（等級 {g} から外しました）")
+            warnings.append(notice("engine.submersion.maxTakes", name=term(str(spec["name"])), max=max_takes, grade=g))
             choice.echo_id = ""
             choice.extra = None
             row["echo_id"] = ""
@@ -141,7 +142,7 @@ def resolve_submersion(
             continue
 
         if spec.get("needs_extra") and not extra:
-            warnings.append(f"{spec['name']} の対象（プログラム名など）を入力してください")
+            warnings.append(notice("engine.submersion.pickEchoExtra", name=term(str(spec["name"]))))
 
         taken_counts[spec["id"]] = count + 1
         echo_names.append(spec["name"])
@@ -171,9 +172,9 @@ def resolve_submersion(
         public_choices.append(row)
 
     if grade > 0 and res <= 0:
-        errors.append("サブマージョンには共振力が必要です")
+        errors.append(notice("engine.submersion.needsResonance"))
     elif grade > res:
-        errors.append(f"サブマージョン等級は共振力以下です（等級 {grade} / RES {res}）")
+        errors.append(notice("engine.submersion.gradeOverResonance", grade=grade, resonance=res))
 
     return {
         "warnings": warnings,

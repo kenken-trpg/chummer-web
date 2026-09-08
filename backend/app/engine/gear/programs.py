@@ -10,6 +10,7 @@ from typing import Any
 
 from ...data_loader import PROGRAM_HOSTS, catalog, eval_formula
 from ...models import CharacterState, GearInstall
+from ...notices import Notice, notice, term, ui
 from ..selects import gear_extra_options
 from ._common import _clamp_rating, _program_label
 
@@ -18,8 +19,8 @@ def _resolve_programs(
     state: CharacterState,
     cyberdecks: list[dict[str, Any]],
     rccs: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int, list[str]]:
-    warnings: list[str] = []
+) -> tuple[list[dict[str, Any]], int, list[Notice]]:
+    warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("programs") or []}
     hosts: dict[str, tuple[str, dict[str, Any]]] = {}
     for row in cyberdecks:
@@ -36,30 +37,35 @@ def _resolve_programs(
         want_kind = PROGRAM_HOSTS.get(str(spec.get("category") or ""), "cyberdecks")
         host = hosts.get(inst.parent_id or "")
         if not inst.parent_id or not host:
-            warnings.append(f"{spec['name']} は本体に装着してください")
+            warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
             continue
         kind, _parent = host
         if kind != want_kind:
-            label = "サイバーデッキ" if want_kind == "cyberdecks" else "RCC"
-            warnings.append(f"{spec['name']} は{label}に装着してください")
+            warnings.append(
+                notice(
+                    "engine.gear.needsHostKind",
+                    name=term(str(spec["name"])),
+                    host=ui("engine.host.cyberdeck" if want_kind == "cyberdecks" else "engine.host.rcc"),
+                )
+            )
             continue
         extra_kind = str(spec.get("extra_kind") or "")
         extra = (inst.extra or "").strip()
         options = gear_extra_options(spec)
         if extra_kind == "skill":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} の技能指定が無効です（{extra}）")
+                warnings.append(notice("engine.gear.skillInvalid", name=term(str(spec["name"])), picked=term(extra)))
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} の技能を選んでください")
+                warnings.append(notice("engine.gear.pickSkill", name=term(str(spec["name"]))))
         elif extra_kind == "group":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} の技能グループ指定が無効です（{extra}）")
+                warnings.append(notice("engine.gear.groupInvalid", name=term(str(spec["name"])), picked=term(extra)))
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} の技能グループを選んでください")
+                warnings.append(notice("engine.gear.pickGroup", name=term(str(spec["name"]))))
         elif extra_kind == "text" and not extra:
-            warnings.append(f"{spec['name']} の対象を入力してください")
+            warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
@@ -95,9 +101,16 @@ def _resolve_programs(
         row["program_used"] = len(kids)
         row["program_max"] = int(row.get("programs") or 0)
         if row["program_max"] > 0 and len(kids) > row["program_max"]:
-            warnings.append(f"{row['name']} のプログラムが上限超過（{len(kids)}/{row['program_max']}）")
+            warnings.append(
+                notice(
+                    "engine.gear.programsOver",
+                    name=term(str(row["name"])),
+                    used=len(kids),
+                    max=row["program_max"],
+                )
+            )
         keys = [f"{kid['name']}|{kid.get('extra') or ''}" for kid in kids]
         if len(keys) != len(set(keys)):
-            warnings.append(f"{row['name']} に同じプログラムが重複しています")
+            warnings.append(notice("engine.gear.duplicateProgram", name=term(str(row["name"]))))
     state.programs = kept
     return public, nuyen, warnings

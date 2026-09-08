@@ -16,6 +16,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..improvements import EffectsDict
 from ..models import CharacterState, MartialArtInstall
+from ..notices import Notice, notice, term
 from .bundle_types import MartialBundle
 from .constants import (
     MARTIAL_ART_CHARGEN_STYLE_MAX,
@@ -70,9 +71,9 @@ def sync_quality_martial_arts(
     state: CharacterState,
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
-) -> list[str]:
+) -> list[Notice]:
     """Ensure free martial arts granted by martialart qualities exist; drop orphans."""
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     by_qname = {q["name"]: q for q in qualities}
     specs: list[dict[str, Any]] = []
     for entry in effects.get("free_martial_arts") or []:
@@ -125,11 +126,11 @@ def sync_quality_martial_arts(
 def resolve_martial_arts(
     state: CharacterState,
     ctx: dict[str, Any],
-    errors: list[str],
+    errors: list[Notice],
     *,
     career: bool = False,
 ) -> MartialBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     kept: list[MartialArtInstall] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -141,14 +142,14 @@ def resolve_martial_arts(
     for inst in state.martial_arts or []:
         spec = _martial_art_by_id(inst.art_id)
         if not spec:
-            warnings.append("未知の武道を外しました")
+            warnings.append(notice("engine.martial.unknownDropped"))
             continue
         is_free = bool(inst.free or inst.source_quality_id)
         if spec.get("is_quality") and not is_free:
-            warnings.append(f"{spec['name']} は資質経由のみです")
+            warnings.append(notice("engine.martial.qualityOnly", name=term(str(spec["name"]))))
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
-            errors.append(f"{spec['name']} の前提を満たしていません")
+            errors.append(notice("engine.martial.prereq", name=term(str(spec["name"]))))
             continue
 
         allowed = set(spec.get("techniques") or [])
@@ -161,16 +162,18 @@ def resolve_martial_arts(
             if not name or name in seen:
                 continue
             if name not in allowed:
-                warnings.append(f"{spec['name']} に {name} は選べません")
+                warnings.append(
+                    notice("engine.martial.techniqueNotAllowed", name=term(str(spec["name"])), technique=term(name))
+                )
                 continue
             seen.add(name)
             picked.append(name)
         # Quality arts (One Trick Pony) grant a single free technique.
         if is_free and spec.get("is_quality") and len(picked) > 1:
-            warnings.append(f"{spec['name']} は技を1つまでです（余分を外しました）")
+            warnings.append(notice("engine.martial.oneTechniqueOnly", name=term(str(spec["name"]))))
             picked = picked[:1]
         if not picked:
-            warnings.append(f"{spec['name']} の技を1つ選んでください")
+            warnings.append(notice("engine.martial.pickTechnique", name=term(str(spec["name"]))))
             if not is_free:
                 continue
 
@@ -232,9 +235,11 @@ def resolve_martial_arts(
     style_max = 99 if career else MARTIAL_ART_CHARGEN_STYLE_MAX
     tech_max = 99 if career else MARTIAL_ART_CHARGEN_TECHNIQUE_MAX
     if not career and paid_style_count > MARTIAL_ART_CHARGEN_STYLE_MAX:
-        errors.append(f"作成時の武道流派は{MARTIAL_ART_CHARGEN_STYLE_MAX}つまでです（現在 {paid_style_count}）")
+        errors.append(notice("engine.martial.styleMax", max=MARTIAL_ART_CHARGEN_STYLE_MAX, count=paid_style_count))
     if not career and technique_total > MARTIAL_ART_CHARGEN_TECHNIQUE_MAX:
-        errors.append(f"作成時の武道技は合計{MARTIAL_ART_CHARGEN_TECHNIQUE_MAX}つまでです（現在 {technique_total}）")
+        errors.append(
+            notice("engine.martial.techniqueMax", max=MARTIAL_ART_CHARGEN_TECHNIQUE_MAX, count=technique_total)
+        )
 
     return {
         "warnings": warnings,

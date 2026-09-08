@@ -13,11 +13,12 @@ from typing import Any
 from ...data_loader import catalog, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall
+from ...notices import Notice, notice, term, ui
 from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of
 
 
-def _ensure_sensors(state: CharacterState) -> list[str]:
-    warnings: list[str] = []
+def _ensure_sensors(state: CharacterState) -> list[Notice]:
+    warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("sensors") or []}
     by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
     drone_ids = {row.id for row in state.drones or []}
@@ -30,7 +31,7 @@ def _ensure_sensors(state: CharacterState) -> list[str]:
         if not spec:
             continue
         if spec.get("requireparent") and not inst.parent_id:
-            warnings.append(f"{spec['name']} は本体に装着してください")
+            warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
             continue
         if inst.parent_id:
             parent = next((row for row in items if row.id == inst.parent_id), None)
@@ -39,15 +40,19 @@ def _ensure_sensors(state: CharacterState) -> list[str]:
                 allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
                 if allowed and spec.get("category") not in allowed:
                     warnings.append(
-                        f"{spec['name']} は {parent_spec.get('name') if parent_spec else '本体'} に装着できません"
+                        notice(
+                            "engine.gear.doesNotFit",
+                            name=term(str(spec["name"])),
+                            host=term(str(parent_spec["name"])) if parent_spec else ui("engine.term.host"),
+                        )
                     )
                     continue
             elif inst.parent_id in host_ids:
                 if spec.get("category") not in {"Sensors", "Sensor Housings"}:
-                    warnings.append(f"{spec['name']} は車両に装着できません")
+                    warnings.append(notice("engine.gear.notOnVehicle", name=term(str(spec["name"]))))
                     continue
             else:
-                warnings.append(f"{spec['name']} は本体に装着してください")
+                warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
                 continue
         kept.append(inst)
     have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
@@ -100,9 +105,9 @@ def _plugin_capacity_expr(
 
 def _resolve_sensors(
     state: CharacterState,
-) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_sensors(state)
-    errors: list[str] = []
+    errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     specs = {item["id"]: item for item in catalog().get("sensors") or []}
     public: list[dict[str, Any]] = []
@@ -162,6 +167,13 @@ def _resolve_sensors(
         if cap_max == int(cap_max):
             item["capacity_max"] = int(cap_max)
         if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
-            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{cap_max:g}）")
+            errors.append(
+                notice(
+                    "engine.gear.capacityOver",
+                    name=term(str(item["name"])),
+                    used=f"{item['capacity_used']:g}",
+                    max=f"{cap_max:g}",
+                )
+            )
     state.sensors = kept
     return public, nuyen, warnings, errors, bonus_sources

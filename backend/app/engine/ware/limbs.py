@@ -16,6 +16,7 @@ import re
 from typing import Any
 
 from ...models import CharacterOptions
+from ...notices import Notice, notice, terms
 from ..constants import _normalize_side
 from ..gear import _limb_attr_effect
 
@@ -216,7 +217,7 @@ def apply_cyberseeker(
     }
 
 
-def redliner_incompat_warnings(installed: list[dict[str, Any]], targets: list[str]) -> list[str]:
+def redliner_incompat_warnings(installed: list[dict[str, Any]], targets: list[str]) -> list[Notice]:
     if not any(tag in {"STR", "AGI"} for tag in targets):
         return []
     names: list[str] = []
@@ -231,5 +232,4 @@ def redliner_incompat_warnings(installed: list[dict[str, Any]], targets: list[st
         names.append(name)
     if not names:
         return []
-    joined = " / ".join(names)
-    return [f"Redliner は {joined} と併用できません（肢の特注・強化は可）"]
+    return [notice("engine.ware.redlinerIncompatible", needed=terms(names))]

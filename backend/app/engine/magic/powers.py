@@ -16,6 +16,7 @@ from typing import Any
 from ...data_loader import SPELL_CAST_CATEGORIES, catalog
 from ...improvements import substitute_rating
 from ...models import CharacterState
+from ...notices import Notice, notice, term, terms, ui
 from ..bundle_types import AdeptBundle, EnhancementsBundle
 from ..constants import ADEPT_TALENTS, ENHANCEMENT_KARMA
 from ..formulas import _ceil_div
@@ -122,8 +123,8 @@ def resolve_adept_powers(
     wil: int = 1,
     intuition: int = 1,
 ) -> AdeptBundle:
-    warnings: list[str] = []
-    errors: list[str] = []
+    warnings: list[Notice] = []
+    errors: list[Notice] = []
     public: list[dict[str, Any]] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     spent = 0.0
@@ -177,31 +178,33 @@ def resolve_adept_powers(
         inst.rating = rating
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
-        select_label = {"skill": "技能", "attribute": "能力値", "spell": "呪文"}.get(kind or "", "対象")
+        select_key = kind if kind in {"skill", "attribute", "spell"} else "target"
         if kind and extra and extra not in options:
-            warnings.append(f"{spec['name']} の指定が無効です（{extra}）")
+            warnings.append(notice("engine.adept.selectInvalid", name=term(str(spec["name"])), picked=term(extra)))
             extra = ""
             inst.extra = None
             key = (spec["id"], extra)
             free_levels = free_by_key.get(key, 0)
         if kind and not extra:
-            warnings.append(f"{spec['name']} の{select_label}を選んでください")
+            warnings.append(
+                notice("engine.adept.pickSelect", name=term(str(spec["name"])), what=ui(f"engine.select.{select_key}"))
+            )
         spell = (
             spell_cast_info(extra, inst.force, mag, wil + intuition, "WIL+INT") if kind == "spell" and extra else None
         )
         if spell:
             inst.force = int(spell["force"])
         if kind and extra and key in seen_keys:
-            warnings.append(f"{spec['name']}（{extra}）が重複しています")
+            warnings.append(notice("engine.adept.duplicate", name=term(str(spec["name"])), extra=term(extra)))
         seen_keys.add(key)
         for needed in spec.get("required") or []:
             if needed not in installed_names:
-                warnings.append(f"{spec['name']} には {needed} が必要です")
+                warnings.append(notice("engine.adept.requires", name=term(str(spec["name"])), needed=terms([needed])))
         eligible = way_discount_eligible(spec, quality_names, magicians_way)
         discounted = bool(inst.discounted) and eligible
         if discounted and discount_used + float(spec.get("adeptway") or 0) > cap_limit + 1e-9:
             discounted = False
-            warnings.append(f"{spec['name']} の Way 割引は上限（MAG/4）を超えるため無効です")
+            warnings.append(notice("engine.adept.wayDiscountCap", name=term(str(spec["name"]))))
         inst.discounted = discounted
         if discounted:
             discount_used += float(spec.get("adeptway") or 0)
@@ -271,7 +274,7 @@ def resolve_adept_powers(
         )
 
     if discount_used > cap_limit + 1e-9:
-        errors.append(f"Way割引が上限を超えています（使用 {discount_used:g} / 上限 {cap_limit:g}）")
+        errors.append(notice("engine.adept.wayDiscountOver", used=f"{discount_used:g}", max=f"{cap_limit:g}"))
 
     return {
         "warnings": warnings,
@@ -292,7 +295,7 @@ def resolve_enhancements(
     quality_names: set[str],
     power_names: set[str],
 ) -> EnhancementsBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     kept: list[str] = []
@@ -309,11 +312,13 @@ def resolve_enhancements(
         if spec.get("power") and spec["power"] not in power_names and spec["power"] not in missing_power:
             missing_power.append(spec["power"])
         if missing_quality:
-            warnings.append(f"{spec['name']} は {' / '.join(missing_quality)} が外れたため削除しました")
+            warnings.append(
+                notice("engine.adept.droppedWithQuality", name=term(str(spec["name"])), needed=terms(missing_quality))
+            )
             continue
         missing = missing_power
         if missing:
-            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+            warnings.append(notice("engine.adept.requires", name=term(str(spec["name"])), needed=terms(missing)))
         kept.append(spec["id"])
         bonus_sources.append((spec["name"], spec.get("bonus") or []))
         public.append(

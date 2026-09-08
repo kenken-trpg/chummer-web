@@ -15,7 +15,8 @@ from __future__ import annotations
 from typing import Any
 
 from ...models import CyberwareInstall
-from ..constants import _SIDE_JA, _SLOT_JA, _normalize_side
+from ...notices import Notice, notice, ui
+from ..constants import _normalize_side, slot_phrase
 from ..lookups import _ware_by_id
 
 
@@ -63,7 +64,7 @@ def ensure_sides(kind: str, items: list[CyberwareInstall]) -> list[CyberwareInst
     return items
 
 
-def _side_conflicts(kind: str, items: list[CyberwareInstall]) -> list[str]:
+def _side_conflicts(kind: str, items: list[CyberwareInstall]) -> list[Notice]:
     seen: set[tuple[str, str]] = set()
     dups: set[tuple[str, str]] = set()
     for inst in items:
@@ -81,8 +82,7 @@ def _side_conflicts(kind: str, items: list[CyberwareInstall]) -> list[str]:
             dups.add(key)
         else:
             seen.add(key)
-    errors: list[str] = []
+    errors: list[Notice] = []
     for slot, side in sorted(dups):
-        slot_ja = _SLOT_JA.get(slot, slot)
-        errors.append(f"{_SIDE_JA.get(side, side)}の{slot_ja}が重複しています")
+        errors.append(notice("engine.ware.sideDuplicate", side=ui(f"engine.side.{side}"), slot=slot_phrase(slot)))
     return errors

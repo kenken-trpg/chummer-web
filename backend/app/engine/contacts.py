@@ -18,6 +18,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..improvements import EffectsDict
 from ..models import CharacterState, ContactInstall
+from ..notices import Notice, notice, term, ui
 from .bundle_types import ContactsBundle, GearBundle
 from .constants import (
     CONTACT_CHARGEN_COST_MAX,
@@ -34,9 +35,9 @@ def sync_quality_contacts(
     state: CharacterState,
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
-) -> list[str]:
+) -> list[Notice]:
     """Create/update free contacts granted by addcontact qualities; drop orphans."""
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     by_name = {q["name"]: q for q in qualities}
     specs: list[dict[str, Any]] = []
     for entry in effects.get("add_contacts") or []:
@@ -123,7 +124,7 @@ def _erased_lifestyle_too_high(name: str, cost: int, medium_cost: int) -> bool:
     return int(cost or 0) > int(medium_cost)
 
 
-def apply_erased_lifestyle_cap(gear: GearBundle, erased: bool, warnings: list[str]) -> None:
+def apply_erased_lifestyle_cap(gear: GearBundle, erased: bool, warnings: list[Notice]) -> None:
     if not erased:
         return
     medium = next((row for row in (catalog().get("lifestyles") or []) if row.get("name") == "Medium"), None)
@@ -132,17 +133,22 @@ def apply_erased_lifestyle_cap(gear: GearBundle, erased: bool, warnings: list[st
         name = str(row.get("name") or "")
         base = int(row.get("base_monthly") or row.get("monthly") or row.get("cost") or 0)
         if _erased_lifestyle_too_high(name, base, medium_cost):
-            warnings.append(f"Erased は Medium より高いライフスタイルを維持できません（{name}）")
+            warnings.append(notice("engine.gear.erasedLifestyle", name=term(name)))
 
 
-def apply_excon_ware_ban(ware_items: list[dict[str, Any]], excon: bool, errors: list[str]) -> None:
+def apply_excon_ware_ban(ware_items: list[dict[str, Any]], excon: bool, errors: list[Notice]) -> None:
     if not excon:
         return
     for item in ware_items or []:
         suffix = str(item.get("avail_suffix") or "").upper()
         if suffix in {"R", "F"}:
-            label = "制限" if suffix == "R" else "禁止"
-            errors.append(f"Ex-Con は{label}ウェアを装着できません（{item.get('name') or 'ウェア'}）")
+            raw = str(item.get("name") or "")
+            errors.append(
+                notice(
+                    "engine.ware.exconRestricted" if suffix == "R" else "engine.ware.exconForbidden",
+                    name=term(raw) if raw else ui("engine.term.ware"),
+                )
+            )
 
 
 def resolve_contacts(
@@ -156,7 +162,7 @@ def resolve_contacts(
     contact_karma_min: int = 0,
     excon: bool = False,
 ) -> ContactsBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []
     used = 0
@@ -180,11 +186,22 @@ def resolve_contacts(
                 # Prefer keeping forced loyalty; clamp connection instead.
                 loyalty = max(CONTACT_RATING_MIN, min(CONTACT_RATING_MAX, int(forced)))
                 connection = max(CONTACT_RATING_MIN, chargen_pair_max - loyalty)
-            warnings.append(f"{name or 'コンタクト'} は作成時 Connection+Loyalty が{chargen_pair_max}までです")
+            warnings.append(
+                notice(
+                    "engine.contacts.pairMax",
+                    name=name if name else ui("engine.term.contact"),
+                    max=chargen_pair_max,
+                )
+            )
         excon_loy_min = _excon_contact_loyalty_min(role) if excon else CONTACT_RATING_MIN
         if excon and loyalty < excon_loy_min:
             warnings.append(
-                f"Ex-Con の {name or 'コンタクト'}（{role or '役割なし'}）は Loyalty {excon_loy_min} 以上が必要です"
+                notice(
+                    "engine.contacts.exconLoyalty",
+                    name=name if name else ui("engine.term.contact"),
+                    role=term(role) if role else ui("engine.term.noRole"),
+                    min=excon_loy_min,
+                )
             )
             loyalty = excon_loy_min
             if not career and not quality_granted and connection + loyalty > chargen_pair_max:
@@ -196,7 +213,7 @@ def resolve_contacts(
         billable = _contact_billable_points(inst, connection, loyalty)
         cost = connection + loyalty
         if not name:
-            warnings.append("名前のないコンタクトがあります")
+            warnings.append(notice("engine.contacts.unnamed"))
         kept.append(inst)
         used += billable
         if quality_granted:

@@ -21,6 +21,7 @@ from ...improvements.effect_rows import (
     SpellDicePoolRow,
     UnimplementedRow,
 )
+from ...notices import Notice
 from ..bundle_types import FocusLimits, MovementBundle
 
 Row = dict[str, Any]
@@ -169,8 +170,8 @@ class _MetatypeInfo(TypedDict):
 
 class DerivedDict(TypedDict):
     # --- chargen budgets --------------------------------------------------
-    errors: list[str]
-    warnings: list[str]
+    errors: list[Notice]
+    warnings: list[Notice]
     build_method: str
     sum_to_ten: _SumToTen
     karma_chargen: _KarmaChargen

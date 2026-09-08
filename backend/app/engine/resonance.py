@@ -17,6 +17,7 @@ from typing import Any
 from ..data_loader import MATRIX_ATTRIBUTES, eval_formula
 from ..improvements import EffectsDict, empty_effects
 from ..models import CharacterState, ComplexFormInstall, SpriteInstall
+from ..notices import Notice, notice, term, terms
 from .bundle_types import ComplexFormsBundle, SpritesBundle, SubmersionBundle
 from .constants import COMPLEX_FORM_KARMA, COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
 from .dice import magic_opposed_test, skill_dice_pool
@@ -67,7 +68,7 @@ def apply_granted_echoes(
     effects: EffectsDict,
     submersion: SubmersionBundle,
     qualities: list[dict[str, Any]],
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> None:
     by_name = {q["name"]: q for q in qualities}
     public_echoes = list(submersion.get("echoes") or [])
@@ -83,7 +84,7 @@ def apply_granted_echoes(
         echo_name = str(row.get("name") or "").strip()
         spec = _echo_by_name(echo_name)
         if not spec:
-            warnings.append(f"{source} のエコー {echo_name} が見つかりません")
+            warnings.append(notice("engine.submersion.echoUnknown", source=term(source), name=term(echo_name)))
             continue
         if spec["id"] in seen_echo_ids:
             continue
@@ -142,7 +143,7 @@ def resolve_complex_forms(
     quality_names: set[str],
     effects: EffectsDict | None = None,
 ) -> ComplexFormsBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     stream = _stream_by_id(state.stream_id) or (_default_stream() if talent_name in COMPLEX_FORM_TALENTS else None)
     if talent_name in COMPLEX_FORM_TALENTS and stream:
@@ -174,15 +175,15 @@ def resolve_complex_forms(
         if not spec:
             continue
         if spec["id"] in seen:
-            warnings.append(f"{spec['name']} は重複しているため外しました")
+            warnings.append(notice("engine.complexforms.duplicateDropped", name=term(str(spec["name"]))))
             continue
         missing = [name for name in _required_names(spec) if name not in quality_names]
         if missing:
-            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+            warnings.append(notice("engine.complexforms.requires", name=term(str(spec["name"])), needed=terms(missing)))
             continue
         extra = (inst.extra or "").strip()
         if spec.get("needs_extra") and extra not in MATRIX_ATTRIBUTES:
-            warnings.append(f"{spec['name']} はマトリクス能力値を選んでください")
+            warnings.append(notice("engine.complexforms.pickMatrixAttribute", name=term(str(spec["name"]))))
             extra = extra if extra in MATRIX_ATTRIBUTES else ""
             inst.extra = extra or None
         seen.add(spec["id"])
@@ -258,9 +259,9 @@ def resolve_sprites(
     res: int,
     stream: dict[str, Any] | None,
 ) -> SpritesBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
-    errors: list[str] = []
+    errors: list[Notice] = []
     if talent_name not in SPRITE_TALENTS:
         state.sprites = []
         return {"warnings": warnings, "errors": errors, "public": public}
@@ -273,10 +274,10 @@ def resolve_sprites(
         if not spec:
             continue
         if allowed and spec["name"] not in allowed:
-            warnings.append(f"{spec['name']} はこのストリームではコンパイルできません")
+            warnings.append(notice("engine.sprites.notInStream", name=term(str(spec["name"]))))
             continue
         if res <= 0:
-            warnings.append(f"{spec['name']} をコンパイルするには共振力が必要です")
+            warnings.append(notice("engine.sprites.needsResonance", name=term(str(spec["name"]))))
             continue
         registered = bool(inst.registered)
         inst.registered = registered
@@ -293,7 +294,7 @@ def resolve_sprites(
         if registered:
             registered_count += 1
         if registered is False and inst.hits is not None and inst.opposed_hits is not None and services <= 0:
-            warnings.append(f"{spec['name']} のコンパイルに失敗しています（正味0）")
+            warnings.append(notice("engine.sprites.compileFailed", name=term(str(spec["name"]))))
         stats = sprite_attributes(spec, level)
         kept.append(inst)
         public.append(
@@ -320,7 +321,7 @@ def resolve_sprites(
         )
     state.sprites = kept
     if registered_count > res:
-        errors.append(f"登録できるスプライトは共振力までです（{registered_count}/{res}）")
+        errors.append(notice("engine.sprites.registeredOverResonance", count=registered_count, max=res))
     return {"warnings": warnings, "errors": errors, "public": public}
 
 
@@ -331,8 +332,8 @@ def attach_complex_form_tests(
     skill_bonus: dict[str, int],
     attrs: dict[str, int],
     skills_data: dict[str, Any],
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     for item in public:
         level = int(item.get("level") or 1)
         dice = skill_dice_pool("Software", skill_totals, skill_bonus, attrs, skills_data, attr_override="RES")
@@ -348,7 +349,7 @@ def attach_complex_form_tests(
         }
         if dice.get("missing"):
             warnings.append(
-                f"{item['label'] or item['name']} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）"
+                notice("engine.complexforms.threadNeedsSoftware", name=term(str(item["label"] or item["name"])))
             )
     return warnings
 
@@ -360,8 +361,8 @@ def attach_sprite_tests(
     skill_bonus: dict[str, int],
     attrs: dict[str, int],
     skills_data: dict[str, Any],
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     for item in public:
         registered = bool(item.get("registered"))
         level = int(item.get("level") or 1)
@@ -383,7 +384,11 @@ def attach_sprite_tests(
         item["test"] = test
         if test.get("missing"):
             warnings.append(
-                f"{item['name']} の{('登録' if registered else 'コンパイル')}判定に{skill}が必要です（未習得・デフォルト不可）"
+                notice(
+                    "engine.sprites.registerNeedsSkill" if registered else "engine.sprites.compileNeedsSkill",
+                    name=term(str(item["name"])),
+                    skill=term(skill),
+                )
             )
     return warnings
 

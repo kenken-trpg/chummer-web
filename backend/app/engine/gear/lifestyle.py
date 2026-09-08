@@ -14,6 +14,7 @@ from typing import Any
 
 from ...data_loader import catalog
 from ...models import CharacterState, LifestyleInstall
+from ...notices import Notice, notice, term
 from ..bundle_types import GearBundle
 from ..lookups import _item_by_id
 
@@ -23,7 +24,7 @@ def _resolve_one_lifestyle(
     spec: dict[str, Any],
     quality_specs: dict[str, dict[str, Any]],
     quality_by_name: dict[str, dict[str, Any]],
-    warnings: list[str],
+    warnings: list[Notice],
     bonus_sources: list[tuple[str, list[dict[str, Any]]]],
 ) -> tuple[dict[str, Any], int]:
     """Resolve one lifestyle install → (public row, monthly * months cost).
@@ -60,7 +61,13 @@ def _resolve_one_lifestyle(
         allowed = [str(name) for name in (qspec.get("allowed") or [])]
         free = bool(from_freegrid) or (bool(allowed) and lifestyle_name in allowed)
         if allowed and lifestyle_name not in allowed and not from_freegrid:
-            warnings.append(f"{qspec['name']} は {lifestyle_name} では取得できません")
+            warnings.append(
+                notice(
+                    "engine.gear.lifestyleQualityNotAllowed",
+                    name=term(str(qspec["name"])),
+                    lifestyle=term(lifestyle_name),
+                )
+            )
             return
         lp_cost = int(qspec.get("lp") or 0)
         lp_used += lp_cost
@@ -69,7 +76,7 @@ def _resolve_one_lifestyle(
         multiplier_pct += int(qspec.get("multiplier") or 0)
         extra_val = str(extra or extras.get(qid) or "").strip()
         if qspec.get("needs_extra") and not extra_val:
-            warnings.append(f"{qspec['name']} の対象を入力してください")
+            warnings.append(notice("engine.gear.pickExtra", name=term(str(qspec["name"]))))
         nodes = list(qspec.get("bonus") or [])
         bonus_nodes = [node for node in nodes if node.get("tag") != "selecttext"]
         if bonus_nodes:
@@ -111,7 +118,7 @@ def _resolve_one_lifestyle(
         _append_lifestyle_quality(qid)
 
     if lp_max > 0 and lp_used > lp_max:
-        warnings.append(f"{lifestyle_name} のライフスタイルポイント超過（使用 {lp_used} / 上限 {lp_max}）")
+        warnings.append(notice("engine.gear.lifestylePointsOver", name=term(lifestyle_name), used=lp_used, max=lp_max))
 
     monthly = int(round(base_monthly * (100 + multiplier_pct) / 100.0)) + quality_monthly
     cost = monthly * months
@@ -144,7 +151,7 @@ def _resolve_one_lifestyle(
 
 def resolve_lifestyles(
     state: CharacterState,
-) -> tuple[list[dict[str, Any]], int, list[str], list[tuple[str, list[dict[str, Any]]]]]:
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     """Resolve every lifestyle install → (rows, total nuyen, warnings, bonus_sources).
 
     Sets ``state.lifestyles`` to the kept installs (matches the in-place
@@ -155,7 +162,7 @@ def resolve_lifestyles(
     kept_lifestyles: list[LifestyleInstall] = []
     rows: list[dict[str, Any]] = []
     nuyen = 0
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     for inst in state.lifestyles:
         spec = _item_by_id("lifestyles", inst.lifestyle_id)

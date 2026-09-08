@@ -11,6 +11,7 @@ and named in the returned warning list rather than failing the import.
 
 from __future__ import annotations
 
+import json
 import lzma
 import os
 import uuid
@@ -22,6 +23,7 @@ from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _xml_fromstring
 
 from .data_loader import CatalogDict, catalog, catalog_list
+from .notices import Notice, Phrase, notice, ui
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
 # decompression bombs on the import endpoint. A real Chummer save (even with
@@ -73,7 +75,7 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
     head = raw.lstrip()[:64].lstrip(b"\xef\xbb\xbf").lstrip()
     if head.startswith(b"<"):  # already plain XML
         return raw
-    errors: list[str] = []
+    errors: list[str] = []  # exception class names, for the failure message
     for attempt in (
         lambda: _bounded_lzma(raw, lzma.FORMAT_ALONE),  # Chummer's format
         lambda: _bounded_lzma(raw, lzma.FORMAT_AUTO),  # xz / auto
@@ -142,7 +144,7 @@ class _Resolver:
         self.by_name = _by_name(rows)
         self.ids = {r["id"] for r in rows}
 
-    def resolve(self, node: ET.Element, warn: list[str], kind: str) -> str | None:
+    def resolve(self, node: ET.Element, warn: list[Notice], kind: Phrase) -> str | None:
         sid = _text(node.find("sourceid")) or _text(node.find("guid"))
         if sid and sid in self.ids:
             return sid
@@ -151,11 +153,11 @@ class _Resolver:
         if got:
             return got
         if name:
-            warn.append(f"{kind}「{name}」はカタログに無いためスキップしました")
+            warn.append(notice("engine.import.skippedUnknown", kind=kind, name=name))
         return None
 
 
-def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read name, metatype, build method, the bio fields and the portrait."""
     st["name"] = _text(root.find("alias")) or _text(root.find("name")) or "Imported Runner"
     st["metatype"] = _text(root.find("metatype")) or "Human"
@@ -201,7 +203,7 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         st["nuyen_earned"] = _int(root.find("nuyen"))
 
 
-def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read the eight attributes plus EDG/MAG/RES, as base + karma."""
     attrs: dict[str, int] = {}
     for a in root.findall("./attributes/attribute"):
@@ -214,7 +216,7 @@ def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     st["attributes"] = attrs or {"BOD": 1, "AGI": 1, "REA": 1, "STR": 1, "CHA": 1, "INT": 1, "LOG": 1, "WIL": 1}
 
 
-def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read active skills, groups, specialisations and knowledge."""
     skills: dict[str, int] = {}
     specs: dict[str, str] = {}
@@ -259,7 +261,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["native_languages"] = natives
 
 
-def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read positive/negative qualities and the targets they were taken with."""
     q_by_name = _by_name(cat["qualities"])
     q_ids = {r["id"] for r in cat["qualities"]}
@@ -274,7 +276,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         if not qid:
             nm = _text(q.find("name"))
             if nm:
-                warn.append(f"資質「{nm}」はカタログに無いためスキップしました")
+                warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.quality"), name=nm))
             continue
         if qid not in quality_ids:
             quality_ids.append(qid)
@@ -285,18 +287,18 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     st["quality_extras"] = quality_extras
 
 
-def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read spells, adept powers, complex forms and magic arts."""
     spell_r = _Resolver(cat["spells"])
     st["spells"] = [
         {"id": str(uuid.uuid4()), "spell_id": spell_ref, "alchemical": _text(sp.find("alchemical")).lower() == "true"}
         for sp in root.findall("./spells/spell")
-        if (spell_ref := spell_r.resolve(sp, warn, "術式"))
+        if (spell_ref := spell_r.resolve(sp, warn, ui("engine.kind.spell")))
     ]
     power_r = _Resolver(cat["powers"])
     powers = []
     for p in root.findall("./powers/power"):
-        pid = power_r.resolve(p, warn, "アデプトパワー")
+        pid = power_r.resolve(p, warn, ui("engine.kind.adeptPower"))
         if pid:
             powers.append(
                 {
@@ -317,13 +319,13 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "extra": _text(c.find("extra")) or None,
         }
         for c in root.findall("./complexforms/complexform")
-        if (fid := cf_r.resolve(c, warn, "複合体"))
+        if (fid := cf_r.resolve(c, warn, ui("engine.kind.complexForm")))
     ]
 
     tr_r = _Resolver(cat["traditions"])
     trad = root.find("tradition")
     if trad is not None and _text(trad.find("name")):
-        tid = tr_r.resolve(trad, warn, "伝統")
+        tid = tr_r.resolve(trad, warn, ui("engine.kind.tradition"))
         if tid:
             st["tradition_id"] = tid
 
@@ -331,12 +333,12 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     if men is None:
         men = root.find("./mentorspirits/mentorspirit")
     if men is not None:
-        mid = _Resolver(cat["mentors"]).resolve(men, warn, "メンター")
+        mid = _Resolver(cat["mentors"]).resolve(men, warn, ui("engine.kind.mentor"))
         if mid:
             st["mentor_id"] = mid
 
 
-def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read initiation and submersion grades, metamagics and echoes."""
     mm_r = _Resolver(cat["metamagics"])
     art_r = _Resolver(cat.get("magic_arts") or [])
@@ -360,7 +362,7 @@ def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     picks = [
         oid
         for m in root.findall("./metamagics/metamagic")
-        for oid in [mm_r.resolve(m, [], "メタマジック") or art_r.resolve(m, [], "術")]
+        for oid in [mm_r.resolve(m, [], ui("engine.kind.metamagic")) or art_r.resolve(m, [], ui("engine.kind.art"))]
         if oid
     ]
     inits: list[dict[str, Any]] = []
@@ -380,13 +382,13 @@ def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     st["submersions"] = subs
 
 
-def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read cyber- and bioware, nested to any depth."""
     ware_rows = (cat.get("cyberware") or {}).get("items") or []
     ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
     ware_r = _Resolver(ware_rows)
 
-    def load_ware(nodes: list[ET.Element], kind: str) -> list[dict[str, Any]]:
+    def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         for w in nodes:
             wid = ware_r.resolve(w, warn, kind)
@@ -406,21 +408,23 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 child["included"] = True
                 out.append(child)
             if w.find("./gears/gear") is not None:
-                warn.append(f"{kind}「{_text(w.find('name'))}」内蔵のギアは取り込めませんでした")
+                warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))
         return out
 
-    st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), "サイバーウェア")
-    st["bioware"] = load_ware(root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), "バイオウェア")
+    st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), ui("engine.kind.cyberware"))
+    st["bioware"] = load_ware(
+        root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
+    )
 
 
-def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read armor and the mods bolted to it."""
     armor_r = _Resolver(cat["armor"])
     amod_r = _Resolver(cat["armor_mods"])
     st_armor: list[dict[str, Any]] = []
     st_amods: list[dict[str, Any]] = []
     for a in root.findall("./armors/armor"):
-        aid = armor_r.resolve(a, warn, "防具")
+        aid = armor_r.resolve(a, warn, ui("engine.kind.armor"))
         if not aid:
             continue
         row = {
@@ -431,7 +435,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         }
         st_armor.append(row)
         for m in a.findall("./armormods/armormod"):
-            mid = amod_r.resolve(m, warn, "防具改造")
+            mid = amod_r.resolve(m, warn, ui("engine.kind.armorMod"))
             if mid:
                 st_amods.append(
                     {
@@ -446,7 +450,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     st["armor_mods"] = st_amods
 
 
-def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read weapons and their accessories."""
     weap_r = _Resolver(cat["weapons"])
     wacc_r = _Resolver(cat["weapon_accessories"])
@@ -455,13 +459,13 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     for w in root.findall("./weapons/weapon"):
         if _text(w.find("cyberware")).lower() == "true":
             continue
-        wid = weap_r.resolve(w, warn, "武器")
+        wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
         if not wid:
             continue
         row = {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _int(w.find("qty"), 1))}
         st_weap.append(row)
         for acc in w.findall("./accessories/accessory"):
-            acid = wacc_r.resolve(acc, warn, "武器アクセサリ")
+            acid = wacc_r.resolve(acc, warn, ui("engine.kind.weaponAccessory"))
             if acid:
                 st_wacc.append(
                     {
@@ -477,7 +481,7 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     st["weapon_accessories"] = st_wacc
 
 
-def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
     gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
@@ -500,7 +504,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 break
         if not gid:
             if name:
-                warn.append(f"ギア「{name}」はカタログに無いためスキップしました")
+                warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
             return
         row: dict[str, Any] = {
             "id": str(uuid.uuid4()),
@@ -525,7 +529,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         st[b] = rows
 
 
-def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read vehicles, drones and vehicle mods."""
     veh_r = _Resolver(cat["vehicles"])
     drone_r = _Resolver(cat["drones"])
@@ -534,16 +538,20 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st_veh_only: list[dict[str, Any]] = []
     st_vmods: list[dict[str, Any]] = []
     for v in root.findall("./vehicles/vehicle"):
-        is_drone = veh_r.resolve(v, [], "") is None
-        vid = drone_r.resolve(v, [], "") if is_drone else veh_r.resolve(v, warn, "ヴィークル")
+        is_drone = veh_r.resolve(v, [], ui("engine.kind.vehicle")) is None
+        vid = (
+            drone_r.resolve(v, [], ui("engine.kind.drone"))
+            if is_drone
+            else veh_r.resolve(v, warn, ui("engine.kind.vehicle"))
+        )
         if not vid:
-            vid = veh_r.resolve(v, [], "") or drone_r.resolve(v, warn, "ヴィークル")
+            vid = veh_r.resolve(v, [], ui("engine.kind.vehicle")) or drone_r.resolve(v, warn, ui("engine.kind.drone"))
         if not vid:
             continue
         row = {"id": str(uuid.uuid4()), "gear_id": vid, "rating": 1, "qty": 1}
         (st_veh if is_drone else st_veh_only).append(row)
         for m in v.findall("./mods/mod") + v.findall("./vehiclemods/vehiclemod"):
-            mid = vmod_r.resolve(m, warn, "ヴィークル改造")
+            mid = vmod_r.resolve(m, warn, ui("engine.kind.vehicleMod"))
             if mid:
                 st_vmods.append(
                     {
@@ -555,13 +563,13 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                     }
                 )
         if v.find("./weapons/weapon") is not None or v.find("./gears/gear") is not None:
-            warn.append(f"ヴィークル「{_text(v.find('name'))}」搭載の武器/ギアは取り込めませんでした")
+            warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods
 
 
-def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[str]) -> None:
+def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read lifestyles, contacts and martial arts."""
     ls_r = _Resolver(cat["lifestyles"])
     lifestyles = []
@@ -573,7 +581,7 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                 {"id": str(uuid.uuid4()), "lifestyle_id": lid, "months": max(1, _int(ls.find("months"), 1))}
             )
         elif base:
-            warn.append(f"ライフスタイル「{base}」はカタログに無いためスキップしました")
+            warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.lifestyle"), name=base))
     st["lifestyles"] = lifestyles
 
     contacts = []
@@ -596,7 +604,7 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     ma_r = _Resolver(cat["martial_arts"])
     marts = []
     for m in root.findall("./martialarts/martialart"):
-        aid = ma_r.resolve(m, warn, "武術")
+        aid = ma_r.resolve(m, warn, ui("engine.kind.martialArt"))
         if aid:
             techs = [_text(t.find("name")) for t in m.findall("./martialarttechniques/martialarttechnique")]
             techs = [t for t in techs if t]
@@ -628,14 +636,22 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
         raise ValueError("Chummer のキャラクターファイルではないようです（<character> が見つかりません）")
 
     cat = catalog()
-    warn: list[str] = []
+    warn: list[Notice] = []
     st: dict[str, Any] = {"id": str(uuid.uuid4())}
 
     for section in _SECTIONS:
         section(root, cat, st, warn)
 
-    # collapse duplicate warnings, keep order
-    st["_warnings"] = list(dict.fromkeys(warn))
+    # collapse duplicate warnings, keep order. Notices are dicts, so dedupe on
+    # a canonical rendering of each rather than on the object itself.
+    seen: set[str] = set()
+    unique: list[Notice] = []
+    for item in warn:
+        marker = json.dumps(item, sort_keys=True, ensure_ascii=False)
+        if marker not in seen:
+            seen.add(marker)
+            unique.append(item)
+    st["_warnings"] = unique
     return st, st["_warnings"]
 
 
