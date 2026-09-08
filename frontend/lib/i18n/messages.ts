@@ -1410,6 +1410,8 @@ const JA = {
   "engine.initiation.duplicateDropped": "{name} は重複しているため外しました",
   "engine.initiation.gradeOverMagic":
     "イニシエーション等級は魔力以下です（等級 {grade} / MAG {magic}）",
+  "engine.initiation.metamagicNotAllowed":
+    "この伝統では等級 {grade} は {allowed} のみで、{name} は選べません",
   "engine.initiation.metamagicUnknown": "{source} のメタマジック {name} が見つかりません",
   "engine.initiation.metamagicUnknownDropped": "未知のメタマジックを等級 {grade} から外しました",
   "engine.initiation.needsMagic": "イニシエーションには魔力が必要です",
@@ -2941,6 +2943,8 @@ const EN: Catalog = {
   "engine.initiation.duplicateDropped": "{name} was dropped as a duplicate",
   "engine.initiation.gradeOverMagic":
     "Initiate grade cannot exceed Magic (grade {grade} / MAG {magic})",
+  "engine.initiation.metamagicNotAllowed":
+    "This tradition allows only {allowed} at grade {grade}, not {name}",
   "engine.initiation.metamagicUnknown": "{source}: no such metamagic {name}",
   "engine.initiation.metamagicUnknownDropped": "Dropped an unknown metamagic from grade {grade}",
   "engine.initiation.needsMagic": "Initiation requires Magic",

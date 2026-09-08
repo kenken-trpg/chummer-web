@@ -110,6 +110,15 @@ class FreeMetamagicRow(TypedDict):
     forced: bool
 
 
+class MetamagicLimitRow(TypedDict):
+    """``metamagic_limits`` — one ``<metamagiclimit><metamagic grade="N">`` row:
+    the only metamagic that grade may take."""
+
+    grade: int
+    name: str
+    source: str
+
+
 # --- misc effect rows (G5) --------------------------------------------
 
 

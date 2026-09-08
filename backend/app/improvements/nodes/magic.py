@@ -199,6 +199,14 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                     "forced": str((node.get("attrs") or {}).get("forced") or "").lower() == "true",
                 }
             )
+    elif tag == "metamagiclimit":
+        # `metamagic_grades` is the loader's per-element rebuild: the generic
+        # field parse drops every `grade` attribute but the last one.
+        for row in node.get("metamagic_grades") or []:
+            name = str(row.get("name") or "").strip()
+            grade = _as_int(row.get("grade"))
+            if name and grade > 0:
+                effects["metamagic_limits"].append({"grade": grade, "name": name, "source": source})
     elif tag == "freespells":
         attrs = node.get("attrs") or {}
         limit = str(attrs.get("limit") or "").strip()

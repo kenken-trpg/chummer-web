@@ -15,6 +15,7 @@ import math
 from typing import Any
 
 from ...improvements import EffectsDict
+from ...improvements.effect_rows import MetamagicLimitRow
 from ...models import CharacterState, InitiationChoice
 from ...notices import Notice, notice, term, terms
 from ..bundle_types import InitiationBundle
@@ -100,12 +101,32 @@ def initiation_karma_total(grade: int, choices: list[InitiationChoice] | None = 
     return total
 
 
+def _metamagic_limits_by_grade(rows: list[MetamagicLimitRow] | None) -> dict[int, list[str]]:
+    """``<metamagiclimit>`` rows folded into {grade: [allowed metamagic names]}.
+
+    A grade the tradition says nothing about stays unrestricted — the two
+    traditions that carry the tag (FA p.69) only script their first grades.
+    """
+    out: dict[int, list[str]] = {}
+    for row in rows or []:
+        grade = int(row.get("grade") or 0)
+        name = str(row.get("name") or "").strip()
+        if grade <= 0 or not name:
+            continue
+        allowed = out.setdefault(grade, [])
+        if name not in allowed:
+            allowed.append(name)
+    return out
+
+
 def resolve_initiation(
     state: CharacterState,
     talent_name: str,
     mag: int,
     quality_names: set[str],
     errors: list[Notice],
+    *,
+    metamagic_limits: list[MetamagicLimitRow] | None = None,
 ) -> InitiationBundle:
     warnings: list[Notice] = []
     empty: InitiationBundle = {
@@ -158,6 +179,7 @@ def resolve_initiation(
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     seen_meta: set[str] = set()
     seen_art: set[str] = set()
+    limits = _metamagic_limits_by_grade(metamagic_limits)
 
     for choice in kept_choices:
         g = choice.grade
@@ -178,6 +200,7 @@ def resolve_initiation(
             "schooling": bool(choice.schooling),
             "source": "",
             "page": "",
+            "allowed_metamagics": list(limits.get(g) or []),
         }
         if not option_id:
             warnings.append(notice("engine.initiation.pickOption", grade=g))
@@ -244,6 +267,21 @@ def resolve_initiation(
             continue
         if can_magician and not can_adept and not spec.get("magician"):
             warnings.append(notice("engine.initiation.notForMagicians", name=term(str(spec["name"]))))
+            choice.option_id = ""
+            row["option_id"] = ""
+            public_choices.append(row)
+            continue
+
+        allowed = limits.get(g) or []
+        if allowed and spec["name"] not in allowed:
+            warnings.append(
+                notice(
+                    "engine.initiation.metamagicNotAllowed",
+                    grade=g,
+                    name=term(str(spec["name"])),
+                    allowed=terms(allowed),
+                )
+            )
             choice.option_id = ""
             row["option_id"] = ""
             public_choices.append(row)

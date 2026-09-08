@@ -87,4 +87,27 @@ describe("<InitiationTab>", () => {
       initiations: [{ grade: 1, kind: "metamagic", option_id: "cf" }],
     });
   });
+
+  it("a grade the tradition scripts only offers the metamagic it names", () => {
+    renderTab({
+      character: {
+        initiate_grade: 1,
+        initiations: [{ grade: 1, kind: "metamagic", option_id: "" }] as any,
+        derived: {
+          initiation: {
+            choices: [{ grade: 1, karma: 13, allowed_metamagics: ["Centering"] }],
+          } as any,
+        },
+      },
+      catalog: makeCatalog({
+        metamagics: [
+          { id: "cf", name: "Centering", magician: true, adept: false },
+          { id: "qk", name: "Quickening", magician: true, adept: false },
+        ] as any,
+      }),
+    });
+    const options = screen.getAllByRole("option").map((el) => el.textContent);
+    expect(options).toContain("Centering");
+    expect(options).not.toContain("Quickening");
+  });
 });

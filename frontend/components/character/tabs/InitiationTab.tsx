@@ -74,11 +74,15 @@ export function InitiationTab({
           const talentName = ch.talent || "";
           const canAdept = talentName === "Adept" || talentName === "Mystic Adept";
           const canMagician = talentName !== "Adept";
-          const metaOptions = (catalog.metamagics || []).filter((item) => {
-            if (canAdept && !canMagician) return item.adept;
-            if (canMagician && !canAdept) return item.magician;
-            return item.adept || item.magician;
-          });
+          // A tradition may script which metamagic a grade takes (FA p.69).
+          const allowed = choice.allowed_metamagics || [];
+          const metaOptions = (catalog.metamagics || [])
+            .filter((item) => {
+              if (canAdept && !canMagician) return item.adept;
+              if (canMagician && !canAdept) return item.magician;
+              return item.adept || item.magician;
+            })
+            .filter((item) => !allowed.length || allowed.includes(item.name));
           return (
             <div className="cyber-item" key={choice.id || choice.grade}>
               <div style={{ width: "100%" }}>

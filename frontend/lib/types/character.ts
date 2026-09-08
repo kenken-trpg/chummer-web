@@ -352,6 +352,8 @@ export interface Character {
         schooling?: boolean;
         source?: string;
         page?: string;
+        /** `<metamagiclimit>`: the only metamagics this grade may take (empty = free choice). */
+        allowed_metamagics?: string[];
       }[];
       metamagics: {
         id: string;
