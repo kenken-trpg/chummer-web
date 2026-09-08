@@ -248,7 +248,7 @@ class DerivedDict(TypedDict):
     nuyen_amt: int
     nuyen_karma_max: int
     trustfund: int
-    trustfund_label: str
+    trustfund_label: Notice | None
     ambidextrous: bool
     overclocker: bool
     special_modification_limit: _SpecialModificationLimit

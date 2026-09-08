@@ -167,7 +167,7 @@ export interface Character {
     nuyen_amt?: number;
     nuyen_karma_max?: number;
     trustfund?: number;
-    trustfund_label?: string;
+    trustfund_label?: Notice | null;
     ambidextrous?: boolean;
     erased?: boolean;
     excon?: boolean;

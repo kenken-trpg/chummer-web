@@ -15,6 +15,7 @@ from ...data_loader import (
     CHARGEN_WARE_ATTR_BONUS_MAX,
 )
 from ...improvements import compact_limit_modifiers, special_armor_totals
+from ...notices import Notice, notice
 from ..constants import (
     BLACK_MARKET_AVAIL_BONUS,
     KARMA_TO_NUYEN,
@@ -35,6 +36,13 @@ from ..resonance import living_persona
 from ..ware import _public_installed, ware_ranges
 from .context import Ctx
 from .derived_types import DerivedDict
+
+
+def _trustfund_notice(level: int) -> Notice | None:
+    """The Trust Fund stipend line, or `None` when the character has no such
+    quality. `TRUST_FUND_STIPEND` holds the dictionary keys, not the wording."""
+    key = TRUST_FUND_STIPEND.get(level)
+    return notice(key) if key else None
 
 
 def _effective_attr_spec(
@@ -147,7 +155,7 @@ def assemble(ctx: Ctx) -> None:
         "nuyen_amt": int(ctx.effects.get("nuyen_amt") or 0),
         "nuyen_karma_max": int(ctx.nuyen_karma_max),
         "trustfund": int(ctx.effects.get("trustfund") or 0),
-        "trustfund_label": TRUST_FUND_STIPEND.get(int(ctx.effects.get("trustfund") or 0), ""),
+        "trustfund_label": _trustfund_notice(int(ctx.effects.get("trustfund") or 0)),
         "ambidextrous": bool(ctx.effects.get("ambidextrous")),
         "overclocker": bool(ctx.effects.get("overclocker")),
         "special_modification_limit": {

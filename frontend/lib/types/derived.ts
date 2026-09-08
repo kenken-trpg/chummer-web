@@ -187,7 +187,7 @@ export interface LimitModifier {
   limit: "physical" | "mental" | "social" | string;
   value: number;
   condition?: string;
-  condition_label?: string;
+  condition_label?: Notice | null;
   source?: string;
 }
 
@@ -510,7 +510,7 @@ export interface InstalledSpirit {
   spirit_id: string;
   name: string;
   role?: string;
-  role_label?: string;
+  role_label?: Notice | null;
   force: number;
   force_max: number;
   services: number;
@@ -575,7 +575,7 @@ export interface InstalledAdeptPower {
   options: string[];
   source?: string;
   page?: string;
-  notes?: string[];
+  notes?: Notice[];
   free_only?: boolean;
   spell?: SpellCastInfo | null;
 }

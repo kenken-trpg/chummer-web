@@ -30,7 +30,10 @@ def sync_reward_totals(state: CharacterState) -> None:
             continue
         entry.karma = max(0, int(entry.karma or 0))
         entry.nuyen = max(0, int(entry.nuyen or 0))
-        entry.label = str(entry.label or "").strip() or "報酬"
+        # Left empty on purpose when the user typed nothing: the front end
+        # renders the fallback wording, so it reads in the *reader's* locale
+        # rather than the one the row was created in.
+        entry.label = str(entry.label or "").strip()
         cleaned.append(entry)
     state.reward_log = cleaned
     if cleaned:

@@ -1,6 +1,7 @@
 import type { Character, LimitModifier, MagicTestInfo, SpecialArmor } from "@/lib/types";
 import { ATTRS, redlinerSlotLabel } from "@/lib/character/constants";
 import type { MsgKey, UiFn } from "@/lib/i18n";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function formatPoints(value: number) {
   const rounded = Math.round(value * 100) / 100;
@@ -148,7 +149,7 @@ export function limitModifierLine(mods: LimitModifier[] | null | undefined, ui: 
       const sign = mod.value > 0 ? `+${mod.value}` : `${mod.value}`;
       const key = LIMIT_KEYS[mod.limit];
       const base = ui("fmt.limit.line", { name: key ? ui(key) : mod.limit, sign });
-      return mod.condition_label ? `${base}（${mod.condition_label}）` : base;
+      return mod.condition_label ? `${base}（${renderNotice(mod.condition_label, ui)}）` : base;
     })
     .join(" / ");
 }

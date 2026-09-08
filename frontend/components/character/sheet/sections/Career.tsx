@@ -33,7 +33,7 @@ export function CareerSection(s: SheetData) {
           <ul className="sheet-list">
             {(d.reward_log || []).map((row) => (
               <li key={row.id}>
-                <b>{row.label}</b>
+                <b>{row.label || ui("side.reward")}</b>
                 <span className="sheet-dim">
                   {" "}
                   {row.karma}K / {row.nuyen.toLocaleString()}¥

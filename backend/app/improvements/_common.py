@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ..notices import Notice, notice
+
 SPELL_DEFENSE_RESIST_TAGS = {
     "directmanaspellresist": "direct_mana",
     "detectionspellresist": "detection",
@@ -292,10 +294,13 @@ LIMIT_KIND_ALIASES = {
     "social": "social",
     "sociallimit": "social",
 }
-LIMIT_CONDITION_JA = {
-    "LimitCondition_TestSneakingThermal": "熱視覚／熱センサーに対する潜伏",
-    "LimitCondition_SkillsActiveSneaking": "熱視覚／熱センサーに対する潜伏",
-    "LimitCondition_Skillwires": "スキルワイヤ",
+#: Chummer's condition tokens -> our dictionary keys. An unlisted token falls
+#: through as itself, which renders as itself (`app.notices`) — the same
+#: visible-but-harmless fallback the key had before it was a key.
+LIMIT_CONDITION_KEYS = {
+    "LimitCondition_TestSneakingThermal": "engine.limitCond.sneakingThermal",
+    "LimitCondition_SkillsActiveSneaking": "engine.limitCond.sneakingThermal",
+    "LimitCondition_Skillwires": "engine.limitCond.skillwires",
 }
 
 ATTR_ALIASES = {
@@ -357,11 +362,11 @@ def _limit_kind(value: Any) -> str:
     return LIMIT_KIND_ALIASES.get(raw, "")
 
 
-def limit_condition_label(condition: str) -> str:
-    key = (condition or "").strip()
-    if not key:
-        return ""
-    return LIMIT_CONDITION_JA.get(key, key)
+def limit_condition_label(condition: str) -> Notice | None:
+    token = (condition or "").strip()
+    if not token:
+        return None
+    return notice(LIMIT_CONDITION_KEYS.get(token, token))
 
 
 def _as_int(value: Any, default: int = 0) -> int:

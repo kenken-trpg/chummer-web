@@ -1,5 +1,12 @@
 import type { Catalog, Character } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
+import { type UiFn, translate } from "@/lib/i18n";
+import { renderNotice } from "@/lib/engine-notices";
+
+// The Cocofolia export is deliberately Japanese-only — it goes to a Japanese
+// VTT (README) — so engine notices in it are rendered against `ja` rather than
+// the reader's locale. It is the one place that pins a locale on purpose.
+const jaUi: UiFn = (key, vars) => translate("ja", key, vars);
 
 // BCDice "ShadowRun5": there is no SR5 prefix. It configures the generic
 // scattered roll `xB6` (count hits >= 5, auto glitch) and reroll `xR6`
@@ -303,7 +310,7 @@ export function buildSpiritPieces(
       cmds.push("// 技能のリミット＝Force。対抗判定はGM。");
 
       const memo = [
-        `${tr(s.name)}（${s.role_label || s.role || "精霊"}） Force ${force}`,
+        `${tr(s.name)}（${s.role_label ? renderNotice(s.role_label, jaUi) : s.role || "精霊"}） Force ${force}`,
         `束縛済み ・ 残サービス ${s.services}`,
         "判定は BCDice の ShadowRun5。",
       ].join("\n");

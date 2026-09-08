@@ -4,6 +4,7 @@ import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
@@ -106,7 +107,7 @@ export function CoreSection(s: SheetData) {
               <b>
                 {mod.limit} {mod.value > 0 ? `+${mod.value}` : mod.value}
                 {mod.condition_label || mod.condition
-                  ? `（${mod.condition_label || mod.condition}）`
+                  ? `（${mod.condition_label ? renderNotice(mod.condition_label, ui) : mod.condition}）`
                   : ""}
               </b>
             </div>
