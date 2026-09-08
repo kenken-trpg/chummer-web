@@ -37,8 +37,8 @@ function cyberCatalog(items: any[] = [wired, datajack]) {
     cyberware: {
       items,
       grades: [
-        { name: "Standard", ess: 1, cost: 1 },
-        { name: "Alphaware", ess: 0.8, cost: 1.2 },
+        { name: "Standard", ess: 1, ess_adapsin: 0.9, cost: 1 },
+        { name: "Alphaware", ess: 0.8, ess_adapsin: 0.7, cost: 1.2 },
       ],
     },
   } as any);
@@ -93,6 +93,58 @@ describe("<CyberTab>", () => {
         }),
       ],
     });
+  });
+
+  // The grade dropdown only exists on an owned row, so these two need one.
+  function renderOwning(adapsin: boolean) {
+    const ch = makeCharacter({
+      cyberware: [{ id: "row1", ware_id: "wired1", rating: 1, grade: "Standard", wireless: false }],
+    });
+    const installed = {
+      id: "row1",
+      ware_id: "wired1",
+      name: "Wired Reflexes",
+      category: "Cyberware",
+      grade: "Standard",
+      rating: 1,
+      essence: 2,
+      nuyen: 39000,
+      source: "SR5",
+    };
+    const d = { ...ch.derived, adapsin, cyberware: [installed] } as any;
+    return render(
+      <CyberTab
+        catalog={cyberCatalog()}
+        character={{ ...ch, derived: d }}
+        d={d}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={() => {}}
+        setCharacter={() => {}}
+      />,
+    );
+  }
+
+  function gradeOptions() {
+    const select = [...document.querySelectorAll(".cyber-item select")].find((el) =>
+      el.textContent?.includes("ESS×"),
+    )!;
+    return [...select.querySelectorAll("option")].map((o) => o.textContent);
+  }
+
+  it("quotes the Adapsin essence multiplier once Adapsin is installed", () => {
+    // Adapsin does not add a grade, it changes what each grade costs. The
+    // dropdown has to say the number the engine will actually use, or it
+    // contradicts the ESS printed on the row right next to it.
+    renderOwning(true);
+    expect(gradeOptions()).toEqual(["Standard (ESS×0.9 / ¥×1)", "Alphaware (ESS×0.7 / ¥×1.2)"]);
+  });
+
+  it("quotes the plain multiplier without Adapsin", () => {
+    renderOwning(false);
+    expect(gradeOptions()).toEqual(["Standard (ESS×1 / ¥×1)", "Alphaware (ESS×0.8 / ¥×1.2)"]);
   });
 
   it("filters the catalog by the search box", () => {

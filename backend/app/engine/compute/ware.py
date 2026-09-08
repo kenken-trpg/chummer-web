@@ -9,6 +9,7 @@ from ..ware import (
     _vehicle_hosted_ware_ids,
     _vehicle_mod_hosts,
     _zero_vehicle_hosted_essence,
+    has_adapsin,
     resolve_ware,
 )
 from .context import Ctx
@@ -16,8 +17,11 @@ from .context import Ctx
 
 def ware(ctx: Ctx) -> None:
     vehicle_hosts = set(_vehicle_mod_hosts(ctx.state))
-    ctx.cyber_installed = resolve_ware("cyberware", ctx.state.cyberware, ctx.attrs_spec)
+    # Bioware first: Adapsin lives there and changes what a cyberware grade
+    # costs in Essence, so cyberware cannot be resolved until we know.
     ctx.bio_installed = resolve_ware("bioware", ctx.state.bioware, ctx.attrs_spec)
+    ctx.adapsin = has_adapsin(ctx.bio_installed)
+    ctx.cyber_installed = resolve_ware("cyberware", ctx.state.cyberware, ctx.attrs_spec, adapsin=ctx.adapsin)
     resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors)
     _finalize_avail_tree(ctx.cyber_installed, grade_kind="cyberware")
     _finalize_avail_tree(ctx.bio_installed, grade_kind="bioware")

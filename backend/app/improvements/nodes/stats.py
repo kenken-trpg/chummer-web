@@ -84,6 +84,11 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
     elif tag in SPECIAL_ARMOR_TAGS:
         key = SPECIAL_ARMOR_TAGS[tag]
         effects["special_armor"][key] += _bonus_int(node, fields)
+    elif tag == "adapsin":
+        # Claimed so it stops showing up as an unimplemented bonus; the work
+        # happens in `engine/ware/resolve.py`, which has to know about Adapsin
+        # before the effects dict exists (see `has_adapsin`).
+        pass
     elif tag in IMMUNE_TAGS:
         effects["immunities"][IMMUNE_TAGS[tag]] = True
     elif tag == "restrictedgear":

@@ -63,6 +63,7 @@ IMPLEMENTED = {
     "electricityarmor",
     "radiationresist",
     "sonicresist",
+    "adapsin",
     "toxincontactresist",
     "toxiningestionresist",
     "toxininhalationresist",

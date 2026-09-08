@@ -347,6 +347,7 @@ class DerivedDict(TypedDict):
     excon: bool
     attribute_max_bonus: dict[str, int]
     disabled_cyberware_grades: list[str]
+    adapsin: bool
     disabled_bioware_grades: list[str]
 
     # --- identity ----------------------------------------------
