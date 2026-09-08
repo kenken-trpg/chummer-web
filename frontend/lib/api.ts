@@ -1,4 +1,5 @@
 import type { Catalog, Character } from "./types";
+import type { Notice } from "@/lib/engine-notices";
 import * as local from "@/lib/character/local-store";
 import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
@@ -121,8 +122,8 @@ export const api = {
 
   importChummer: async (
     bytes: ArrayBuffer,
-  ): Promise<{ character: Character; warnings: string[] }> => {
-    const res = await req<{ character: Character; warnings: string[] }>(
+  ): Promise<{ character: Character; warnings: Notice[] }> => {
+    const res = await req<{ character: Character; warnings: Notice[] }>(
       "/api/characters/import-chummer",
       { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: bytes },
     );

@@ -25,7 +25,7 @@ engine.compute(CharacterState)          the rules engine
         │   • collects <bonus> nodes from every source into one `effects` dict
         │     via improvements.apply_bonus_nodes()
         │   • folds effects into totals, limits, initiative, condition monitor
-        │   • runs chargen validation → errors[] / warnings[]
+        │   • runs chargen validation → errors[] / warnings[] (keyed notices)
         ▼
 state.derived  (DerivedDict)  →  every /api/characters* response
 ```

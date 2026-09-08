@@ -13,6 +13,7 @@ import {
   wareFitsVehicleMod,
 } from "@/lib/character/gear";
 import { removeWareTree, wareBounds } from "@/lib/character/ware";
+import { vehicleSlotLabel } from "@/lib/engine-notices";
 
 export function VehicleDroneGear({
   catalog,
@@ -56,7 +57,12 @@ export function VehicleDroneGear({
                   {item.sensor}
                   {item.seats ? ` / SEAT ${item.seats}` : ""}
                   {(item.slot_tracks || []).length
-                    ? ` / ${(item.slot_tracks || []).map((track) => `${track.label} ${track.used}/${track.max}`).join(" · ")}`
+                    ? ` / ${(item.slot_tracks || [])
+                        .map(
+                          (track) =>
+                            `${vehicleSlotLabel(track.category, ui)} ${track.used}/${track.max}`,
+                        )
+                        .join(" · ")}`
                     : item.slots_max
                       ? ui("veh.slots", { used: item.slots_used ?? 0, max: item.slots_max })
                       : ""}

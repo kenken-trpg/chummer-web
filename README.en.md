@@ -12,10 +12,9 @@ Game data and the base translations come from [chummer5a/chummer5a](https://gith
 
 The interface ships in Japanese and English, switchable in the top bar. Japanese is the reference locale — it is the one that is complete.
 
-In English you get the app's own copy (tabs, buttons, panels, the character sheet including its print layout) plus catalog entries under their original English names, since the Chummer data files are English and the Japanese translation is an overlay on top. **Two things are still Japanese in English mode:**
+In English you get the app's own copy (tabs, buttons, panels, the character sheet including its print layout, and the creation-check messages) plus catalog entries under their original English names, since the Chummer data files are English and the Japanese translation is an overlay on top. The rules engine reports a key and its parameters rather than a sentence, so its wording lives in the frontend dictionary and follows the language switch.
 
-- **The creation-check panel.** Its validation messages come from the rules engine, which emits Japanese. Translating the frontend labels alone would leave each label sitting next to a Japanese sentence, so they are deliberately left together until the backend messages move too.
-- **The Cocofolia export**, on purpose — Cocofolia is a Japanese VTT and the exported piece is pasted into a Japanese table's room.
+**The Cocofolia export stays Japanese on purpose** — Cocofolia is a Japanese VTT and the exported piece is pasted into a Japanese table's room.
 
 [`docs/i18n.md`](docs/i18n.md) explains the two string layers and how to add a locale.
 

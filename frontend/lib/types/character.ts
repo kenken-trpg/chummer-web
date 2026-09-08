@@ -25,6 +25,7 @@ import type {
   WeaponInstall,
   WeaponMountInstall,
 } from "./installs";
+import type { Notice } from "@/lib/engine-notices";
 import type {
   ActiveDrug,
   EnhancementInfo,
@@ -148,8 +149,8 @@ export interface Character {
     redliner_skull: boolean;
   };
   derived: {
-    errors: string[];
-    warnings?: string[];
+    errors: Notice[];
+    warnings?: Notice[];
     build_method?: string;
     career?: boolean;
     karma_earned?: number;
