@@ -8,6 +8,7 @@ import pytest
 
 from app.characters import import_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
+from app.notices import NoticeError
 from tests.notice_asserts import has
 
 SAMPLE = b"""<?xml version="1.0" encoding="utf-8"?>
@@ -132,8 +133,9 @@ def test_decompress_reads_xz() -> None:
 
 
 def test_decompress_rejects_garbage_with_hint() -> None:
-    with pytest.raises(ValueError, match="非圧縮の .chum5"):
+    with pytest.raises(NoticeError) as caught:
         decompress_chum5lz(b"\x00\x01\x02not-compressed-not-xml\xff\xfe")
+    assert caught.value.notice["key"] == "api.chum5lzUndecompressible"
 
 
 def test_decompress_rejects_bomb_over_the_size_cap(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -143,13 +145,15 @@ def test_decompress_rejects_bomb_over_the_size_cap(monkeypatch: pytest.MonkeyPat
     # ~4 MB of a repeating byte -> a tiny FORMAT_ALONE payload
     bomb = lzma.compress(b"<character>" + b" " * (4 * 1024 * 1024) + b"</character>", format=lzma.FORMAT_ALONE)
     assert len(bomb) < 64 * 1024
-    with pytest.raises(ValueError, match="非圧縮の .chum5"):
+    with pytest.raises(NoticeError) as caught:
         ci.decompress_chum5lz(bomb)
+    assert caught.value.notice["key"] == "api.chum5lzUndecompressible"
 
 
 def test_non_character_xml_rejected() -> None:
-    with pytest.raises(ValueError, match="character"):
+    with pytest.raises(NoticeError) as caught:
         chum5_to_state(b"<notacharacter><foo/></notacharacter>")
+    assert caught.value.notice["key"] == "api.notACharacterFile"
 
 
 def test_xml_entity_expansion_is_blocked() -> None:
@@ -161,5 +165,6 @@ def test_xml_entity_expansion_is_blocked() -> None:
         b'<!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">]>'
         b"<character>&lol3;</character>"
     )
-    with pytest.raises(ValueError, match="解析できませんでした"):
+    with pytest.raises(NoticeError) as caught:
         chum5_to_state(evil)
+    assert caught.value.notice["key"] == "api.xmlUnparsable"

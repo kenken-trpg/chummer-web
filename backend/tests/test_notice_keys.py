@@ -1,4 +1,4 @@
-"""The engine's message keys and the front end's dictionary must agree.
+"""The backend's message keys and the front end's dictionary must agree.
 
 Splitting the two — keys here, wording in `frontend/lib/i18n/messages.ts` — is
 what lets the creation-check panel follow the locale switch, but it also means
@@ -22,6 +22,10 @@ MESSAGES = REPO / "frontend" / "lib" / "i18n" / "messages.ts"
 # Fixed engine vocabulary. Some members are named literally and some are built
 # at run time (`ui(f"engine.slot.{key}")`), so a member with no literal is not
 # evidence of a dead entry — the family as a whole is checked instead.
+#: `api.*` is the HTTP-error family (`HTTPException(detail=...)`,
+#: `NoticeError`); `engine.*` is everything `derived` carries.
+KEY_RE = r'"((?:engine|api)\.[A-Za-z0-9_.]+)"'
+
 DYNAMIC_FAMILIES = (
     "engine.side.",
     "engine.slot.",
@@ -34,25 +38,25 @@ DYNAMIC_FAMILIES = (
 
 
 def _keys_used() -> set[str]:
-    """Every `engine.*` key the backend names literally."""
+    """Every `engine.*` / `api.*` key the backend names literally."""
     used: set[str] = set()
     for path in BACKEND.rglob("*.py"):
-        used |= set(re.findall(r'"(engine\.[A-Za-z0-9_.]+)"', path.read_text()))
+        used |= set(re.findall(KEY_RE, path.read_text()))
     return used
 
 
 def _keys_defined() -> set[str]:
-    return set(re.findall(r'^\s*"(engine\.[A-Za-z0-9_.]+)":', MESSAGES.read_text(), flags=re.M))
+    return set(re.findall(r'^\s*"((?:engine|api)\.[A-Za-z0-9_.]+)":', MESSAGES.read_text(), flags=re.M))
 
 
-def test_every_engine_key_has_a_sentence() -> None:
+def test_every_message_key_has_a_sentence() -> None:
     missing = sorted(_keys_used() - _keys_defined())
     assert not missing, f"no wording in messages.ts for: {missing}"
 
 
-def test_no_orphaned_engine_keys() -> None:
+def test_no_orphaned_message_keys() -> None:
     orphans = sorted(key for key in _keys_defined() - _keys_used() if not key.startswith(DYNAMIC_FAMILIES))
-    assert not orphans, f"messages.ts defines keys the engine never emits: {orphans}"
+    assert not orphans, f"messages.ts defines keys the backend never emits: {orphans}"
 
 
 def test_dynamic_families_are_still_used() -> None:

@@ -24,6 +24,7 @@ from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
 from .logging_config import configure_logging, new_request_id, request_id_var
 from .models import CharacterCreate, PatchRequest, StateRequest
+from .notices import NoticeError, notice
 
 configure_logging()
 
@@ -196,12 +197,7 @@ def catalog_endpoint(request: Request) -> Response:
     except FileNotFoundError as exc:
         raise HTTPException(
             status_code=503,
-            detail=(
-                "Chummer ゲームデータが見つかりません。`make data`"
-                "（または backend/scripts/fetch_chummer_data.py）を実行してください。"
-                "Docker で起動している場合はイメージに同梱されているはずです。"
-                f"（{exc}）"
-            ),
+            detail=notice("api.catalogMissing", error=str(exc)),
         ) from exc
     headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
     if _matches_etag(request.headers.get("if-none-match", ""), cached.etag):
@@ -227,7 +223,7 @@ def patch(req: PatchRequest) -> dict:
         return apply_patch(req.state, req.patch).model_dump()
     except Exception as exc:
         _log.exception("patch failed")
-        raise HTTPException(status_code=400, detail="この変更を適用できませんでした。") from exc
+        raise HTTPException(status_code=400, detail=notice("api.patchFailed")) from exc
 
 
 def _content_disposition(name: str) -> str:
@@ -259,7 +255,7 @@ def import_json(request: Request, payload: dict) -> dict:
         return import_character(payload).model_dump()
     except Exception as exc:
         _log.exception("JSON import failed")
-        raise HTTPException(status_code=400, detail="この JSON を取り込めませんでした。") from exc
+        raise HTTPException(status_code=400, detail=notice("api.importJsonFailed")) from exc
 
 
 @app.post("/api/characters/import-chummer")
@@ -272,9 +268,9 @@ def import_chummer(request: Request, body: bytes = Body(..., media_type="applica
         state.pop("_warnings", None)
         char = import_character(state)
         return {"character": char.model_dump(), "warnings": warnings}
-    except ValueError as exc:
-        # chummer_import raises ValueError with an actionable, user-facing message.
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except NoticeError as exc:
+        # chummer_import raises this with an actionable, user-facing notice.
+        raise HTTPException(status_code=400, detail=exc.notice) from exc
     except Exception as exc:  # noqa: BLE001
         _log.exception("chum5 import failed")
-        raise HTTPException(status_code=400, detail="この .chum5 / .chum5lz を取り込めませんでした。") from exc
+        raise HTTPException(status_code=400, detail=notice("api.importChummerFailed")) from exc

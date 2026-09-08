@@ -73,3 +73,19 @@ def has_key(notices: Iterable[Notice], key: str) -> bool:
     """Whether `key` was emitted. Mostly for tests and for engine code that
     checks whether it already complained about something."""
     return any(n["key"] == key for n in notices)
+
+
+class NoticeError(ValueError):
+    """An error whose message is a :class:`Notice` rather than a sentence.
+
+    The wording of an API error belongs in the front end's dictionary for the
+    same reason every other message does (docs/i18n.md), but an exception has
+    to carry *something* through the call stack. It carries the notice, and
+    ``str()`` of it is the key — so a log line, or any caller that has not been
+    taught about this, still gets something identifiable rather than an empty
+    string.
+    """
+
+    def __init__(self, notice_: Notice) -> None:
+        super().__init__(notice_["key"])
+        self.notice = notice_

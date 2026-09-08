@@ -23,7 +23,7 @@ from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _xml_fromstring
 
 from .data_loader import CatalogDict, catalog, catalog_list
-from .notices import Notice, Phrase, notice, ui
+from .notices import Notice, NoticeError, Phrase, notice, ui
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
 # decompression bombs on the import endpoint. A real Chummer save (even with
@@ -89,11 +89,7 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
                 return out
         except Exception as exc:  # noqa: BLE001 - trying formats
             errors.append(type(exc).__name__)
-    raise ValueError(
-        "この .chum5lz を展開できませんでした。Chummer で「名前を付けて保存」から "
-        "非圧縮の .chum5 で書き出して読み込んでください。"
-        f"（{', '.join(dict.fromkeys(errors))}）"
-    )
+    raise NoticeError(notice("api.chum5lzUndecompressible", formats=", ".join(dict.fromkeys(errors))))
 
 
 def _text(el: ET.Element | None, default: str = "") -> str:
@@ -628,12 +624,12 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     try:
         root: ET.Element = _xml_fromstring(xml_bytes)
     except (ET.ParseError, DefusedXmlException) as exc:
-        raise ValueError(f"XML を解析できませんでした: {exc}") from exc
+        raise NoticeError(notice("api.xmlUnparsable", error=str(exc))) from exc
     if root.tag != "character":
         nested = root.find("character")
         root = nested if nested is not None else root
     if root.tag != "character":
-        raise ValueError("Chummer のキャラクターファイルではないようです（<character> が見つかりません）")
+        raise NoticeError(notice("api.notACharacterFile"))
 
     cat = catalog()
     warn: list[Notice] = []

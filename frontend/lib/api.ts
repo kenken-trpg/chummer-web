@@ -1,5 +1,6 @@
 import type { Catalog, Character } from "./types";
-import type { Notice } from "@/lib/engine-notices";
+import { type Notice, renderNotice } from "@/lib/engine-notices";
+import { readLocale, translate } from "@/lib/i18n";
 import * as local from "@/lib/character/local-store";
 import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
@@ -14,10 +15,25 @@ export type CharacterSummary = {
   updated: number;
 };
 
+/** A `{key, params}` detail, i.e. one our own API raised. FastAPI's own 422
+ *  detail is an array, and a plain string is anything else. */
+function isNotice(value: unknown): value is Notice {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Notice).key === "string"
+  );
+}
+
 /**
- * A user-facing message for a failed response. FastAPI sends `{detail: "..."}`
- * (or `{detail: [{msg}, ...]}` for 422); pull that out instead of dumping the
- * raw JSON envelope. Falls back to the body text, then the status line.
+ * A user-facing message for a failed response. Our own errors arrive as a
+ * `Notice` in `detail` — the wording lives here, in the dictionary, like every
+ * other message (docs/i18n.md) — and FastAPI's own validation errors arrive as
+ * `{detail: [{msg}, ...]}`. Falls back to the body text, then the status line.
+ *
+ * `req()` throws a plain `Error`, so this runs outside React and reads the
+ * stored locale directly rather than through `useUiText()`.
  */
 export async function errorText(res: Response): Promise<string> {
   const raw = await res.text().catch(() => "");
@@ -25,6 +41,10 @@ export async function errorText(res: Response): Promise<string> {
     try {
       const body = JSON.parse(raw) as { detail?: unknown; message?: unknown };
       const d = body.detail ?? body.message;
+      if (isNotice(d)) {
+        const locale = readLocale();
+        return renderNotice(d, (key, vars) => translate(locale, key, vars));
+      }
       if (typeof d === "string") return d;
       if (Array.isArray(d)) {
         const msgs = d
