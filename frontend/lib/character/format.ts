@@ -142,6 +142,13 @@ const LIMIT_KEYS: Record<string, MsgKey> = {
   social: "fmt.limit.social",
 };
 
+/** A limit named the way Chummer's data names it (`<selectlimit>` picks read
+ *  "Physical" / "Mental" / "Social"), rendered in the reader's locale. */
+export function limitLabel(name: string, ui: UiFn): string {
+  const key = LIMIT_KEYS[(name || "").toLowerCase()];
+  return key ? ui(key) : name;
+}
+
 export function limitModifierLine(mods: LimitModifier[] | null | undefined, ui: UiFn): string {
   if (!mods?.length) return "";
   return mods

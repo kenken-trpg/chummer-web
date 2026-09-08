@@ -245,6 +245,7 @@ const JA = {
   "common.included": "付属",
   "common.capacity": "容量",
   "common.target": "対象",
+  "common.limit": "リミット",
   "common.skill": "技能",
   "common.count": "{count}件",
   /** Between list items: categories, spell names, spirit powers. */
@@ -1567,6 +1568,7 @@ const JA = {
   "engine.select.attribute": "能力値",
   "engine.select.skill": "技能",
   "engine.select.spell": "呪文",
+  "engine.select.limit": "リミット",
   "engine.select.target": "対象",
 
   "engine.vehicleSlot.Body": "ボディ",
@@ -1812,6 +1814,7 @@ const EN: Catalog = {
   "common.included": "included",
   "common.capacity": "capacity",
   "common.target": "Target",
+  "common.limit": "Limit",
   "common.skill": "Skill",
   "common.count": "{count}",
   "common.listSep": ", ",
@@ -3103,6 +3106,7 @@ const EN: Catalog = {
   "engine.select.attribute": "an attribute",
   "engine.select.skill": "a skill",
   "engine.select.spell": "a spell",
+  "engine.select.limit": "a limit",
   "engine.select.target": "a target",
 
   "engine.vehicleSlot.Body": "body",

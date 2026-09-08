@@ -212,6 +212,16 @@ export interface QiFocusInstall {
   power_rating?: number;
 }
 
+/** A pick a power the choice grants asks for on its own, because the choice's
+ *  own `extra` is already spent on *which* power it grants. */
+export interface MentorPowerTarget {
+  power: string;
+  key: string;
+  kind: string;
+  extra: string;
+  options: string[];
+}
+
 export interface MentorChoice {
   name: string;
   set: string;
@@ -219,6 +229,7 @@ export interface MentorChoice {
   selected: boolean;
   extra: string;
   extra_options: string[];
+  power_targets?: MentorPowerTarget[];
 }
 
 export interface WareInstall {

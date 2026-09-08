@@ -5,9 +5,8 @@ import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
 import { useMemo, useState } from "react";
-import { ExtraSelect, selectLabel } from "@/components/character/ExtraSelect";
+import { ExtraSelect, optionLabel, selectLabel } from "@/components/character/ExtraSelect";
 import { MentorPicker } from "@/components/character/MentorPicker";
-import { attrLabel } from "@/lib/ui-strings";
 import { formatPoints } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
 
@@ -72,9 +71,7 @@ export function AdeptTab({
             <b>{tr(item.name)}</b>
             <div className="muted">
               {item.name}
-              {item.extra
-                ? `（${item.select === "attribute" ? attrLabel(item.extra, t) : tr(item.extra)}）`
-                : ""}
+              {item.extra ? `（${optionLabel(item.extra, item.select, tr, t, ui)}）` : ""}
               {" / "}
               {formatPoints(item.cost)} PP
               {item.discounted && item.full_cost != null
@@ -366,7 +363,7 @@ export function AdeptTab({
                     <option value="">{ui("common.choose")}</option>
                     {item.options.map((name) => (
                       <option key={name} value={name}>
-                        {item.select === "attribute" ? attrLabel(name, t) : tr(name)}
+                        {optionLabel(name, item.select, tr, t, ui)}
                       </option>
                     ))}
                   </select>

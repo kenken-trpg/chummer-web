@@ -45,6 +45,8 @@ def _power_select_kind(nodes: list[dict[str, Any]]) -> str | None:
         return "attribute"
     if "selectspell" in tags:
         return "spell"
+    if "selectlimit" in tags:
+        return "limit"
     return None
 
 
