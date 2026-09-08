@@ -58,6 +58,9 @@ GLAND = "abdbc210-c1fa-45f1-9840-4f78d9eb8867"
 RESERVOIR = "d2064cf2-e9f7-479f-92cc-7da7c6024121"
 WEBBING = "4a939488-bd12-42f9-847f-1034fc3b4154"
 DRAGON_HIDE = "8aa2590f-1fc5-4706-a7b9-9eec3db4fab9"
+PUSHED = "2c988cbe-e6e6-4c22-ae3c-14ad6e1fff1f"
+QUALIA = "b110516e-36e8-4c69-a682-066e91c02351"
+DAMPER = "3785a2cf-c3df-476a-b7cd-6e224ea77ab0"
 CUSTOM_STR = "7d61f860-0637-4214-914d-c68022361d24"
 CUSTOM_AGI = "7afb23c7-435f-450c-9d1c-f7a0e7e631a6"
 ENHANCED_STR = "a9f4efd4-b86c-4e90-b0f7-aefa32c3b9de"
@@ -2892,6 +2895,42 @@ def test_fire_resistance_adds_special_armor() -> None:
     assert out.derived["armor_items"][0]["mods"][0]["special_armor"]["fire"] == 2
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "firearmor" not in tags
+
+
+def test_damper_adds_sonic_resistance() -> None:
+    out = compute(_mundane("damper", cyberware=[CyberwareInstall(ware_id=DAMPER)]))
+    assert out.derived["special_armor"]["sonic"] == 2
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "sonicresist" not in tags
+
+
+def test_pushed_adds_dice_to_every_log_linked_skill() -> None:
+    """`skilllinkedattribute` reads like `skillattribute`: every skill hanging
+    off that attribute gets the dice, and nothing else does."""
+    out = compute(_mundane("pushed", bioware=[CyberwareInstall(ware_id=PUSHED)]))
+    bonus = out.derived["skill_bonus"]
+    assert bonus["Computer"] == 1  # LOG
+    # "Medicine" is both an active skill and a knowledge skill; the bonus is
+    # keyed by name, so it must land once, not once per list.
+    assert bonus["Medicine"] == 1  # LOG
+    assert bonus.get("Gymnastics", 0) == 0  # AGI
+    assert bonus.get("Con", 0) == 0  # CHA
+    # A knowledge skill nobody bought stays out of the sheet entirely.
+    assert bonus.get("Corporation: Evo", 0) == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "skilllinkedattribute" not in tags
+
+
+def test_qualia_and_pushed_stack_on_a_skill_linked_to_both() -> None:
+    out = compute(
+        _mundane(
+            "qualia-pushed",
+            bioware=[CyberwareInstall(ware_id=QUALIA), CyberwareInstall(ware_id=PUSHED)],
+        )
+    )
+    # Qualia is INT, PuSHed is LOG, so no single skill takes both.
+    assert out.derived["skill_bonus"]["Perception"] == 1
+    assert out.derived["skill_bonus"]["Computer"] == 1
 
 
 def test_insulation_and_nonconductivity_add_special_armor() -> None:

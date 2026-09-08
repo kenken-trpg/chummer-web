@@ -49,7 +49,12 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 "source": source,
             }
         )
-    elif tag == "skillattribute":
+    elif tag in {"skillattribute", "skilllinkedattribute"}:
+        # Chummer tells the two apart only once something has *swapped* a
+        # skill's attribute: `skillattribute` then follows the swap and
+        # `skilllinkedattribute` stays on the printed one. We ignore
+        # `swapskillattribute` (it is in SILENT_TAGS), so no skill here ever
+        # leaves its printed attribute and the two collapse into one rule.
         name = (fields.get("name") or node.get("value") or "").strip().upper()
         bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"))
         if not name or bonus == 0:
