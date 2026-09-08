@@ -260,8 +260,8 @@ export function SkillsTab({
                     Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0),
                     d.skill_bonus?.[s.name],
                   )}
-                  {skillsoftBit(d.skillsoft?.[s.name])}
-                  {specBit(specValue, tr(specValue), expertise?.bonus || 2)}
+                  {skillsoftBit(d.skillsoft?.[s.name], ui)}
+                  {specBit(specValue, tr(specValue), ui, expertise?.bonus || 2)}
                 </b>
               </div>
             );
@@ -438,8 +438,8 @@ export function SkillsTab({
                 {row.native
                   ? ui("skills.native")
                   : skillDice(Math.max(row.rating, row.skillsoft || 0), d.skill_bonus?.[row.name])}
-                {row.native ? null : skillsoftBit(row.skillsoft)}
-                {specBit(specValue, tr(specValue))}
+                {row.native ? null : skillsoftBit(row.skillsoft, ui)}
+                {specBit(specValue, tr(specValue), ui)}
               </b>
               <span className="option-row" style={{ margin: 0, gap: 6 }}>
                 {row.category === "Language" ? (

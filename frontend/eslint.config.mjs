@@ -62,12 +62,22 @@ export default [
     // (U+30FB) and `ー` (U+30FC): those are punctuation that shows up alone as
     // a separator, and a real Japanese word always brings a letter with it.
     //
-    // Scoped to `app/` and `components/` — the layers the user reads. `lib/`
-    // holds Japanese *data* maps (game-term labels, cocofolia palettes) that
-    // are a separate question, and `lib/i18n/messages.ts` is the catalog
-    // itself. See docs/i18n.md.
-    files: ["app/**/*.tsx", "app/**/*.ts", "components/**/*.tsx", "components/**/*.ts"],
-    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    // `lib/` is in scope too: it renders as much user-visible text as
+    // `components/` does (the text sheet, the formatters, the small JSX bits),
+    // and leaving it out is how `bits.tsx` kept two literals nobody noticed.
+    //
+    // Two files are exempt. `lib/i18n/messages.ts` *is* the dictionary, and
+    // `lib/cocofolia.ts` writes for a Japanese VTT on purpose (README) — the
+    // one place a locale is pinned rather than followed. See docs/i18n.md.
+    files: [
+      "app/**/*.tsx",
+      "app/**/*.ts",
+      "components/**/*.tsx",
+      "components/**/*.ts",
+      "lib/**/*.tsx",
+      "lib/**/*.ts",
+    ],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/messages.ts", "lib/cocofolia.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
