@@ -113,6 +113,13 @@ describe("specialArmorBits", () => {
     ]);
   });
 
+  it("keeps sonic alongside the other elementals", () => {
+    expect(specialArmorBits({ radiation: 1, sonic: 2 }, testUi)).toEqual([
+      { label: "放射線", value: "+1" },
+      { label: "防音", value: "+2" },
+    ]);
+  });
+
   it("collapses an equal toxin/pathogen pair on every vector, not just contact", () => {
     // sheet-format.ts carried a second copy that only collapsed contact, so an
     // armor with matched inhalation protection read differently on the sheet

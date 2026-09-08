@@ -392,10 +392,22 @@ def resolve_skill_mods(
         bonus = int(attr_mod.get("bonus") or 0)
         if not attr or not bonus:
             continue
+        # `skill_bonus` is keyed by name, and a handful of names (Medicine,
+        # Chemistry, Cybertechnology) sit in both lists — walk unique names so
+        # such a skill is not paid twice. Unbought knowledge skills are skipped
+        # for the same reason the category loop skips them: `knowledge` holds
+        # the whole catalog, not the character's sheet.
+        seen: set[str] = set()
         for skill in active + knowledge:
             if (skill.get("attribute") or "").upper() != attr:
                 continue
-            add_bonus(skill["name"], bonus, attr_mod.get("condition") or "")
+            skill_name = str(skill["name"])
+            if skill_name in seen:
+                continue
+            if skill.get("knowledge") and skill_name not in bought_knowledge:
+                continue
+            seen.add(skill_name)
+            add_bonus(skill_name, bonus, attr_mod.get("condition") or "")
 
     return {
         "skill_bonus": skill_bonus,

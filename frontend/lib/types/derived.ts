@@ -167,6 +167,7 @@ export interface SpecialArmor {
   cold?: number;
   electricity?: number;
   radiation?: number;
+  sonic?: number;
   toxin_contact?: number;
   toxin_ingestion?: number;
   toxin_inhalation?: number;

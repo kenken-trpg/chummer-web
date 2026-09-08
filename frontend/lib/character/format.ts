@@ -103,7 +103,7 @@ export type ArmorBit = { label: string; value: string; immune?: boolean };
 export function specialArmorBits(sa: SpecialArmor | null | undefined, ui: UiFn): ArmorBit[] {
   if (!sa) return [];
   const rows: ArmorBit[] = [];
-  const elemental = ["fire", "cold", "electricity", "radiation"] as const;
+  const elemental = ["fire", "cold", "electricity", "radiation", "sonic"] as const;
   for (const el of elemental) {
     if (sa[el]) rows.push({ label: ui(`fmt.armor.${el}`), value: `+${sa[el]}` });
   }

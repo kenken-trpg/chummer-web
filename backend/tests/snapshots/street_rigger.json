@@ -444,6 +444,7 @@
     "pathogen_inhalation": 0,
     "pathogen_injection": 0,
     "radiation": 0,
+    "sonic": 0,
     "toxin_contact": 0,
     "toxin_ingestion": 0,
     "toxin_inhalation": 0,
