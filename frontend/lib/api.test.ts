@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { errorText } from "@/lib/api";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
 function fakeResponse(
   body: string,
@@ -14,6 +15,23 @@ function fakeResponse(
 }
 
 describe("errorText", () => {
+  beforeEach(() => window.localStorage.clear());
+
+  it("renders our own {key, params} detail in the reader's locale", async () => {
+    const body = JSON.stringify({
+      detail: { key: "api.xmlUnparsable", params: { error: "line 3" } },
+    });
+    expect(await errorText(fakeResponse(body))).toBe("XML を解析できませんでした: line 3");
+
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en");
+    expect(await errorText(fakeResponse(body))).toBe("The XML could not be parsed: line 3");
+  });
+
+  it("shows an unknown key as itself rather than blanking the message", async () => {
+    const body = JSON.stringify({ detail: { key: "api.fromANewerBackend" } });
+    expect(await errorText(fakeResponse(body))).toBe("api.fromANewerBackend");
+  });
+
   it("pulls FastAPI's {detail} string", async () => {
     expect(
       await errorText(fakeResponse(JSON.stringify({ detail: "この JSON を取り込めません" }))),

@@ -736,6 +736,17 @@ const JA = {
 
   "common.attribute": "能力値",
 
+  "api.catalogMissing":
+    "Chummer ゲームデータが見つかりません。`make data`（または backend/scripts/fetch_chummer_data.py）を実行してください。Docker で起動している場合はイメージに同梱されているはずです。（{error}）",
+  "api.chum5lzUndecompressible":
+    "この .chum5lz を展開できませんでした。Chummer で「名前を付けて保存」から非圧縮の .chum5 で書き出して読み込んでください。（{formats}）",
+  "api.importChummerFailed": "この .chum5 / .chum5lz を取り込めませんでした。",
+  "api.importJsonFailed": "この JSON を取り込めませんでした。",
+  "api.notACharacterFile":
+    "Chummer のキャラクターファイルではないようです（<character> が見つかりません）",
+  "api.patchFailed": "この変更を適用できませんでした。",
+  "api.xmlUnparsable": "XML を解析できませんでした: {error}",
+
   "error.title": "問題が発生しました",
   "error.unexpected": "予期しないエラーです。",
   "error.saved": "入力中の変更はブラウザに保存されています。再読み込みで復帰できることが多いです。",
@@ -2272,6 +2283,17 @@ const EN: Catalog = {
   "ware.side": "Side",
 
   "common.attribute": "Attribute",
+
+  "api.catalogMissing":
+    "The Chummer game data is missing. Run `make data` (or backend/scripts/fetch_chummer_data.py). If you are running the container, it should already be bundled in the image. ({error})",
+  "api.chum5lzUndecompressible":
+    "This .chum5lz could not be decompressed. In Chummer, use Save As to write an uncompressed .chum5 and load that instead. ({formats})",
+  "api.importChummerFailed": "This .chum5 / .chum5lz could not be imported.",
+  "api.importJsonFailed": "This JSON could not be imported.",
+  "api.notACharacterFile":
+    "This does not look like a Chummer character file (no <character> element).",
+  "api.patchFailed": "That change could not be applied.",
+  "api.xmlUnparsable": "The XML could not be parsed: {error}",
 
   "error.title": "Something went wrong",
   "error.unexpected": "An unexpected error.",

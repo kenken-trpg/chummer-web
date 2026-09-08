@@ -128,3 +128,17 @@ def test_catalog_is_served_with_an_etag_and_revalidates_to_304() -> None:
     # a weak validator is still a match for GET, a stale one is not
     assert client.get("/api/catalog", headers={"If-None-Match": f"W/{etag}"}).status_code == 304
     assert client.get("/api/catalog", headers={"If-None-Match": '"stale"'}).status_code == 200
+
+
+def test_a_failed_import_answers_with_a_message_key_not_a_sentence() -> None:
+    """The error wording lives in the front end's dictionary like every other
+    message (docs/i18n.md), so `detail` carries the key and its parameters."""
+    res = client.post(
+        "/api/characters/import-chummer",
+        content=b"\x00\x01\x02not-compressed-not-xml\xff\xfe",
+        headers={"Content-Type": "application/octet-stream"},
+    )
+    assert res.status_code == 400
+    detail = res.json()["detail"]
+    assert detail["key"] == "api.chum5lzUndecompressible"
+    assert "formats" in detail["params"]
