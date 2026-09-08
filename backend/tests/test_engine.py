@@ -1483,6 +1483,55 @@ def test_catlike_adds_sneaking() -> None:
     assert out.derived["skill_pick_slots"] == []
 
 
+NANOHIVE_SOFT = "52d76c1a-2918-4531-b6ad-5ea732a1e6ea"  # <selectcyberware><category>Soft Nanoware
+IMPLANT_MEDIC = "e709cb79-e351-41ce-b305-58720993d2c1"  # <selectcyberware /> — any implant
+
+
+def _keyed(cid: str, ware_id: str, extra: str | None) -> CharacterState:
+    return _human(cid, cyberware=[CyberwareInstall(id="w1", ware_id=ware_id, rating=2, extra=extra)])
+
+
+def _ware_row(out: CharacterState) -> dict[str, object]:
+    return next(row for row in out.derived["cyberware"] if row["id"] == "w1")
+
+
+def test_a_keyed_implant_asks_for_its_target() -> None:
+    out = compute(_keyed("nanohive-empty", NANOHIVE_SOFT, None))
+    row = _ware_row(out)
+    assert (row["select_ware"], row["select_ware_category"], row["extra"]) == (True, "Soft Nanoware", "")
+    assert has(out.derived["warnings"], "engine.ware.pickTarget", name="Nanohive, Soft")
+
+
+def test_a_keyed_implant_keeps_a_target_from_its_category() -> None:
+    out = compute(_keyed("nanohive-ok", NANOHIVE_SOFT, "Nanotattoos"))
+    assert _ware_row(out)["extra"] == "Nanotattoos"
+    assert not has(out.derived["warnings"], "engine.ware.pickTarget")
+    # A label only: no bonus, no essence or nuyen of its own.
+    assert out.derived["unimplemented_bonuses"] == []
+
+
+def test_a_target_outside_the_category_is_stripped_from_the_character() -> None:
+    out = compute(_keyed("nanohive-bad", NANOHIVE_SOFT, "Cyberears"))
+    assert has(out.derived["warnings"], "engine.ware.targetInvalid", picked="Cyberears")
+    assert _ware_row(out)["extra"] == ""
+    # the state itself, not only the payload
+    assert out.cyberware[0].extra is None
+
+
+def test_an_unfiltered_keyed_implant_takes_any_implant() -> None:
+    out = compute(_keyed("medic", IMPLANT_MEDIC, "Cyberears"))
+    row = _ware_row(out)
+    assert (row["select_ware"], row["select_ware_category"]) == (True, "")
+    assert row["extra"] == "Cyberears"
+    assert not has(out.derived["warnings"], "engine.ware.targetInvalid")
+
+
+def test_ware_that_is_not_keyed_carries_no_target() -> None:
+    out = compute(_human("plain-ware", cyberware=[CyberwareInstall(id="w1", ware_id=DATAJACK)]))
+    row = _ware_row(out)
+    assert (row["select_ware"], row["extra"]) == (False, "")
+
+
 ALLERGY_MILD = "b7841930-0c7b-4be4-b1cf-86debc41aa95"
 ALLERGY_EXTREME = "8a40007a-9876-4998-a7c9-047248cfbc52"
 HUMAN_LOOKING = "2844e64e-f271-4ca7-bd58-0860b2db56c9"

@@ -735,6 +735,7 @@ const JA = {
   "ware.limb": " ・ 肢 STR {str} / AGI {agi}",
   "ware.limbArmor": " / 装甲 {armor}",
   "ware.side": "左右",
+  "ware.target": "対象",
 
   "common.attribute": "能力値",
 
@@ -1466,9 +1467,11 @@ const JA = {
   "engine.ware.exconRestricted": "Ex-Con は制限ウェアを装着できません（{name}）",
   "engine.ware.gradeBanned": "{name} は {grade} グレードを使えません（{fallback} に変更）",
   "engine.ware.metatypeOnly": "{name} は {needed} 専用です",
+  "engine.ware.pickTarget": "{name} の対象インプラントを選んでください",
   "engine.ware.redlinerIncompatible": "Redliner は {needed} と併用できません（肢の特注・強化は可）",
   "engine.ware.requires": "{name} には {needed} が必要です",
   "engine.ware.sideDuplicate": "{side}の{slot}が重複しています",
+  "engine.ware.targetInvalid": "{name} の対象 {picked} は選べないため外しました",
   "engine.ware.vehicleMountMismatch": "{name} は {host} に装着できません",
 
   "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけをアーマーに加算しています",
@@ -2289,6 +2292,7 @@ const EN: Catalog = {
   "ware.limb": " · limb STR {str} / AGI {agi}",
   "ware.limbArmor": " / armor {armor}",
   "ware.side": "Side",
+  "ware.target": "Target",
 
   "common.attribute": "Attribute",
 
@@ -3003,8 +3007,10 @@ const EN: Catalog = {
   "engine.ware.metatypeOnly": "{name} is only for {needed}",
   "engine.ware.redlinerIncompatible":
     "Redliner does not stack with {needed} (limb customisation/enhancement is fine)",
+  "engine.ware.pickTarget": "Choose the implant {name} is keyed to",
   "engine.ware.requires": "{name} requires {needed}",
   "engine.ware.sideDuplicate": "Duplicate {side} {slot}",
+  "engine.ware.targetInvalid": "{name}: {picked} is not a valid target and was cleared",
   "engine.ware.vehicleMountMismatch": "{name} cannot be installed in {host}",
 
   "engine.gear.armorHighestOnly": "Only the highest-rated worn armor counts toward Armor",

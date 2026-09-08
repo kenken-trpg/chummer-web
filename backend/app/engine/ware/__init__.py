@@ -41,9 +41,11 @@ from .resolve import (
     _first_allowed_grade,
     _installed_ware_names,
     _required_warnings,
+    check_ware_targets,
     ensure_subsystems,
     has_adapsin,
     resolve_ware,
+    ware_target_options,
 )
 from .sides import (
     _next_free_side,
@@ -95,7 +97,9 @@ __all__ = [
     "racial_formula_extras",
     "redliner_incompat_warnings",
     "redliner_slot_caps",
+    "check_ware_targets",
     "has_adapsin",
+    "ware_target_options",
     "resolve_ware",
     "ware_ranges",
     "ware_rating_bounds",

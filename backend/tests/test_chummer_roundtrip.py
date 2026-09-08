@@ -42,6 +42,8 @@ _SAMURAI_XML = build_chum5(
             "side": "Left",
             "children": [{"name": "Cyberarm Gyromount", "grade": "Standard"}],
         },
+        # `<selectcyberware>`: its target rides Chummer's own <extra>
+        {"name": "Nanohive, Soft", "rating": 2, "grade": "Standard", "extra": "Nanotattoos"},
     ],
     bioware=[{"name": "Muscle Toner", "rating": 2, "grade": "Standard"}],
     armor=[{"name": "Armor Jacket", "mods": [{"name": "Fire Resistance", "rating": 3}]}],
@@ -54,6 +56,9 @@ _SAMURAI_XML = build_chum5(
     lifestyles=[{"name": "Medium", "months": 3}],
     contacts=[{"name": "Fixer Sam", "role": "Fixer", "connection": 4, "loyalty": 3, "group": True}],
 )
+
+
+_NANOHIVE_SOFT = "52d76c1a-2918-4531-b6ad-5ea732a1e6ea"
 
 
 def test_samurai_sections_import() -> None:
@@ -72,8 +77,8 @@ def test_samurai_sections_import() -> None:
     assert s1["skill_groups"]["Stealth"] == 2
     assert s1["native_languages"] == ["Sperethiel"]
     assert s1["knowledge_skills"] == {"Corporate Security": 3}
-    # two roots + one nested child
-    assert len(s1["cyberware"]) == 3
+    # three roots + one nested child
+    assert len(s1["cyberware"]) == 4
     assert any(w.get("parent_id") for w in s1["cyberware"])
     assert len(s1["bioware"]) == 1
     assert len(s1["armor"]) == 1 and len(s1["armor_mods"]) == 1
@@ -85,6 +90,14 @@ def test_samurai_sections_import() -> None:
     assert s1["contacts"][0]["group"] is True
     assert s1["notes"] == "街の顔役に借り 2 件。"
     assert s1["age"] == "29" and s1["sex"] == "女"
+
+
+def test_a_keyed_implants_target_survives_the_round_trip() -> None:
+    s1, ch1, _ = _loop(_SAMURAI_XML)
+    hive = next(w for w in s1["cyberware"] if w["ware_id"] == _NANOHIVE_SOFT)
+    assert hive["extra"] == "Nanotattoos"
+    row = next(r for r in ch1.derived["cyberware"] if r["ware_id"] == _NANOHIVE_SOFT)
+    assert row["extra"] == "Nanotattoos"
 
 
 def test_samurai_roundtrip_is_a_fixed_point() -> None:

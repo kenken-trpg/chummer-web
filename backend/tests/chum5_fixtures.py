@@ -47,6 +47,8 @@ def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -
         _e(w, "grade", row.get("grade", "Standard"))
         if row.get("side"):
             _e(w, "location", row["side"])
+        if row.get("extra"):
+            _e(w, "extra", row["extra"])
         kids = row.get("children") or []
         if kids:
             _ware_nodes(_e(w, "children"), item_tag, kids)

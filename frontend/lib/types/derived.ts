@@ -661,6 +661,10 @@ export interface InstalledWare {
   limb_armor?: number;
   selectside?: boolean;
   side?: string | null;
+  /** `<selectcyberware>`: this implant is keyed to another one, named in `extra`. */
+  select_ware?: boolean;
+  select_ware_category?: string;
+  extra?: string;
   avail?: string;
   device_rating?: number;
   source?: string;

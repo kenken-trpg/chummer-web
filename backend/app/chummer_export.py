@@ -207,6 +207,8 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                 _sub(w, "rating", r.rating)
                 if r.side:
                     _sub(w, "location", r.side)
+                if r.extra:
+                    _sub(w, "extra", r.extra)
                 if getattr(r, "included", False):
                     _sub(w, "included", "True")
                 kids = by_parent.get(r.id)

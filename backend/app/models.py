@@ -27,6 +27,9 @@ class CyberwareInstall(BaseModel):
     parent_id: str | None = None
     included: bool = False
     side: str | None = None
+    # `<selectcyberware>`: the implant this one is keyed to (Implant Medic,
+    # Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
+    extra: str | None = None
 
 
 class Priorities(BaseModel):
