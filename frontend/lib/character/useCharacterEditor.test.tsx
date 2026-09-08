@@ -221,7 +221,16 @@ describe("useCharacterEditor.onImport", () => {
     const { result } = await editorWith();
     api.importChummer.mockResolvedValue({
       character: makeCharacter({ id: "imported" }),
-      warnings: ["unknown quality: Foo", "unknown gear: Bar"],
+      warnings: [
+        {
+          key: "engine.import.skippedUnknown",
+          params: { kind: { ui: "engine.kind.quality" }, name: "Foo" },
+        },
+        {
+          key: "engine.import.skippedUnknown",
+          params: { kind: { ui: "engine.kind.gear" }, name: "Bar" },
+        },
+      ],
     });
 
     await act(async () => {
@@ -230,12 +239,15 @@ describe("useCharacterEditor.onImport", () => {
 
     expect(result.current.ch?.id).toBe("imported");
     expect(result.current.error).toContain("2");
-    expect(result.current.error).toContain("unknown quality: Foo");
+    expect(result.current.error).toContain("資質「Foo」はカタログに無いためスキップしました");
   });
 
   it("caps the warning list rather than pasting hundreds into the UI", async () => {
     const { result } = await editorWith();
-    const warnings = Array.from({ length: 40 }, (_, i) => `w${i}`);
+    const warnings = Array.from({ length: 40 }, (_, i) => ({
+      key: "engine.import.skippedUnknown",
+      params: { kind: { ui: "engine.kind.gear" }, name: `w${i}` },
+    }));
     api.importChummer.mockResolvedValue({ character: makeCharacter({ id: "i" }), warnings });
 
     await act(async () => {

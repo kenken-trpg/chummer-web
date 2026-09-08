@@ -18,6 +18,7 @@ from typing import Any
 from ...data_loader import catalog_ware, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, CyberwareInstall
+from ...notices import Notice, notice, term, terms
 from ..constants import _normalize_side
 from ..gear import _capacity_value, _device_rating_of
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
@@ -169,8 +170,8 @@ def _clamp_ware_grades(
     kind: str,
     items: list[CyberwareInstall],
     disabled_grades: set[str] | None = None,
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     quality_banned = set(disabled_grades or ())
     for inst in items:
         ware = _ware_by_id(kind, inst.ware_id)
@@ -184,7 +185,14 @@ def _clamp_ware_grades(
         banned = set(ware.get("bannedgrades") or []) | quality_banned
         if grade in banned:
             fallback = _first_allowed_grade(kind, grade, banned)
-            warnings.append(f"{ware['name']} は {grade} グレードを使えません（{fallback} に変更）")
+            warnings.append(
+                notice(
+                    "engine.ware.gradeBanned",
+                    name=term(str(ware["name"])),
+                    grade=term(str(grade)),
+                    fallback=term(str(fallback)),
+                )
+            )
             inst.grade = fallback
     return warnings
 
@@ -204,8 +212,8 @@ def _required_warnings(
     names: dict[str, set[str]],
     metatype: str,
     metavariant: str | None,
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     have_meta = {metatype}
     if metavariant:
         have_meta.add(metavariant)
@@ -217,9 +225,8 @@ def _required_warnings(
         for other in ("bioware", "cyberware"):
             needed = req.get(other) or []
             if needed and not any(name in names.get(other, set()) for name in needed):
-                label = needed[0] if len(needed) == 1 else " / ".join(needed)
-                warnings.append(f"{ware['name']} には {label} が必要です")
+                warnings.append(notice("engine.ware.requires", name=term(str(ware["name"])), needed=terms(needed)))
         needed_meta = req.get("metatype") or []
         if needed_meta and not any(name in have_meta for name in needed_meta):
-            warnings.append(f"{ware['name']} は {' / '.join(needed_meta)} 専用です")
+            warnings.append(notice("engine.ware.metatypeOnly", name=term(str(ware["name"])), needed=terms(needed_meta)))
     return warnings

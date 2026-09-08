@@ -84,6 +84,21 @@ Example: `drugcomponents.xml` (done — use it as the reference).
 ## A new chargen validation
 
 Add the check in the relevant `engine` spot (many live in
-`apply_quality_rules` or the final block of `compute()`), appending a Japanese
-string to `errors` (hard block) or `warnings` (advisory). Gate career-mode
-exemptions on `not career`. Test both the failing and passing case.
+`apply_quality_rules` or the final block of `compute()`), appending a `Notice`
+to `errors` (hard block) or `warnings` (advisory) — `ctx.err(key, **params)` /
+`ctx.warn(...)` where you have a `Ctx`, `notice(key, **params)` otherwise:
+
+```python
+errors.append(notice("engine.gear.availOver", name=term(name), shown=shown, limit=limit))
+```
+
+The message itself does **not** live in Python. Add the key to `JA` *and* `EN`
+in `frontend/lib/i18n/messages.ts` (the type will not let you skip a locale);
+`engine.<area>.<name>` is the naming, and `<area>` also routes the item to a
+tab via `TAB_BY_AREA` in `lib/character/checklist.ts`. Wrap a catalog name in
+`term()` so the client renders it with `tr`, and fixed engine vocabulary in
+`ui()`. See `backend/app/notices.py` and `docs/i18n.md`.
+
+Gate career-mode exemptions on `not career`. Test both the failing and passing
+case — `tests/notice_asserts.has(errors, key, **params)` matches on the key and
+the parameters that matter.

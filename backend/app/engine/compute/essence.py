@@ -18,7 +18,7 @@ def essence(ctx: Ctx) -> None:
     )
     ctx.ess_lost = round(ctx.ess_lost_cyber + ctx.ess_lost_bio, 4)
     if ctx.effects.get("disable_bioware") and ctx.bio_installed:
-        ctx.errors.append("Sensitive System などによりバイオウェアは装着できません")
+        ctx.err("engine.ware.bioDisabled")
     ess_penalty = float(ctx.effects.get("essence_penalty") or 0)
     ess_penalty_mag_exempt = float(ctx.effects.get("essence_penalty_mag_exempt") or 0)
     ctx.ess = max(0.0, round(ess_start - ctx.ess_lost - ess_penalty, 2))

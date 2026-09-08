@@ -14,12 +14,13 @@ from typing import Any
 
 from ....data_loader import catalog, eval_formula
 from ....models import CharacterState, WeaponAccessoryInstall
+from ....notices import Notice, notice, term
 from ...formulas import _add_leading_int, _leading_int
 from .._common import _clamp_rating, _pick_accessory_mount, accessory_fits_weapon
 
 
-def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
-    warnings: list[str] = []
+def _ensure_weapon_accessories(state: CharacterState) -> list[Notice]:
+    warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
     by_name = {item["name"]: item for item in specs.values()}
     weapons = {item.id: item for item in state.weapons}
@@ -30,7 +31,7 @@ def _ensure_weapon_accessories(state: CharacterState) -> list[str]:
         parent = weapons.get(inst.parent_id or "")
         if not spec or not parent:
             if spec:
-                warnings.append(f"{spec['name']} は武器に装着してください")
+                warnings.append(notice("engine.gear.mountOnWeapon", name=term(str(spec["name"]))))
             continue
         kept.append(inst)
     have_included = {(row.parent_id, (specs.get(row.accessory_id) or {}).get("name")) for row in kept if row.included}
@@ -96,9 +97,9 @@ def _resolve_weapon_accessories(
     state: CharacterState,
     weapons: list[dict[str, Any]],
     special_modification_limit: int = 0,
-) -> tuple[list[dict[str, Any]], int, list[str], list[str], int]:
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], int]:
     warnings = _ensure_weapon_accessories(state)
-    errors: list[str] = []
+    errors: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
     weapon_specs = {item["id"]: item for item in catalog().get("weapons") or []}
     qty_by_id = {item.id: max(1, int(item.qty or 1)) for item in state.weapons}
@@ -124,22 +125,31 @@ def _resolve_weapon_accessories(
             inst.rating = rating
             names_without = installed_names - {spec["name"]}
             if not accessory_fits_weapon(spec, weapon, names_without):
-                warnings.append(f"{spec['name']} は {weapon['name']} に装着できません")
+                warnings.append(
+                    notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(weapon["name"])))
+                )
                 continue
             is_special = bool(spec.get("specialmodification"))
             special_cost = int(spec.get("special_modification_cost") or 0) if is_special else 0
             if is_special:
                 if limit <= 0:
-                    warnings.append(f"{spec['name']} には Special Modifications が必要です")
+                    warnings.append(notice("engine.gear.needsSpecialMods", name=term(str(spec["name"]))))
                     continue
                 if special_used + special_cost > limit:
                     warnings.append(
-                        f"Special Modifications の上限を超えています（{special_used + special_cost}/{limit}・{spec['name']}）"
+                        notice(
+                            "engine.gear.specialModsOver",
+                            used=special_used + special_cost,
+                            max=limit,
+                            name=term(str(spec["name"])),
+                        )
                     )
                     continue
             mount = _pick_accessory_mount(list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or []))
             if mount is None:
-                errors.append(f"{weapon['name']} のマウントが足りません（{spec['name']}）")
+                errors.append(
+                    notice("engine.gear.noFreeMount", name=term(str(weapon["name"])), accessory=term(str(spec["name"])))
+                )
                 mount = ""
             elif mount:
                 used_mounts.add(mount)

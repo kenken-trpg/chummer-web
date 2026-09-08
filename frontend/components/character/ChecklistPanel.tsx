@@ -3,6 +3,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import type { Tab } from "@/lib/character/constants";
 import { buildChecklist, checklistSummary, type CheckSeverity } from "@/lib/character/checklist";
+import { renderNotice } from "@/lib/engine-notices";
 import { type MsgKey, useUiText } from "@/lib/i18n";
 
 const DOT: Record<CheckSeverity, string> = { error: "✗", warn: "▲", info: "•" };
@@ -21,6 +22,7 @@ export function ChecklistPanel({
   setTab: (t: Tab) => void;
 }) {
   const { ui } = useUiText();
+  const { tr } = panel;
   const items = buildChecklist(panel.character);
   const { errors, warns, infos, ok } = checklistSummary(items);
 
@@ -44,7 +46,7 @@ export function ChecklistPanel({
                   <li key={i.id} className={`ci ci-${i.severity}`}>
                     <span className="ci-dot">{DOT[i.severity]}</span>
                     <span className="ci-msg">
-                      {i.message}
+                      {renderNotice(i.notice, ui, tr)}
                       {i.ref ? <span className="muted"> — {i.ref}</span> : null}
                     </span>
                     {i.tab ? (

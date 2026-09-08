@@ -473,7 +473,7 @@ export interface InstalledDrone {
   nuyen: number;
   slots_used?: number;
   slots_max?: number;
-  slot_tracks?: { category: string; label: string; used: number; max: number }[];
+  slot_tracks?: { category: string; used: number; max: number }[];
   mods?: InstalledVehicleMod[];
   weapon_mounts?: InstalledWeaponMount[];
   sensors?: InstalledOptics[];

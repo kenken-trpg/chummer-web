@@ -16,6 +16,7 @@ from typing import Any
 
 from ...improvements import EffectsDict
 from ...models import CharacterState, InitiationChoice
+from ...notices import Notice, notice, term, terms
 from ..bundle_types import InitiationBundle
 from ..constants import INITIATION_KARMA_FLAT, INITIATION_KARMA_PER_GRADE, MAG_TALENTS
 from ..lookups import _magic_art_by_id, _metamagic_by_id, _metamagic_by_name
@@ -27,7 +28,7 @@ def apply_free_metamagics(
     effects: EffectsDict,
     initiation: InitiationBundle,
     talent_name: str,
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> None:
     """Grant forced free metamagics from addmetamagic (grade 0, no initiation karma)."""
     can_adept = talent_name in {"Adept", "Mystic Adept"}
@@ -44,14 +45,14 @@ def apply_free_metamagics(
             continue
         spec = _metamagic_by_name(name)
         if not spec:
-            warnings.append(f"{source} のメタマジック {name} が見つかりません")
+            warnings.append(notice("engine.initiation.metamagicUnknown", source=term(source), name=term(name)))
             continue
         if not forced:
             if can_adept and not can_magician and not spec.get("adept"):
-                warnings.append(f"{name} はアデプト向けではありません")
+                warnings.append(notice("engine.initiation.notForAdepts", name=term(name)))
                 continue
             if can_magician and not can_adept and not spec.get("magician"):
-                warnings.append(f"{name} は魔術師向けではありません")
+                warnings.append(notice("engine.initiation.notForMagicians", name=term(name)))
                 continue
         if name in seen and not spec.get("repeatable"):
             continue
@@ -104,9 +105,9 @@ def resolve_initiation(
     talent_name: str,
     mag: int,
     quality_names: set[str],
-    errors: list[str],
+    errors: list[Notice],
 ) -> InitiationBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     empty: InitiationBundle = {
         "warnings": warnings,
         "grade": 0,
@@ -179,20 +180,20 @@ def resolve_initiation(
             "page": "",
         }
         if not option_id:
-            warnings.append(f"イニシエーション等級 {g} の Art／メタマジックを選んでください")
+            warnings.append(notice("engine.initiation.pickOption", grade=g))
             public_choices.append(row)
             continue
 
         if kind == "art":
             spec = _magic_art_by_id(option_id)
             if not spec:
-                warnings.append(f"未知の Art を等級 {g} から外しました")
+                warnings.append(notice("engine.initiation.artUnknownDropped", grade=g))
                 choice.option_id = ""
                 row["option_id"] = ""
                 public_choices.append(row)
                 continue
             if spec["name"] in seen_art:
-                warnings.append(f"{spec['name']} は重複しているため外しました")
+                warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(spec["name"]))))
                 choice.option_id = ""
                 row["option_id"] = ""
                 public_choices.append(row)
@@ -224,25 +225,25 @@ def resolve_initiation(
 
         spec = _metamagic_by_id(option_id)
         if not spec:
-            warnings.append(f"未知のメタマジックを等級 {g} から外しました")
+            warnings.append(notice("engine.initiation.metamagicUnknownDropped", grade=g))
             choice.option_id = ""
             row["option_id"] = ""
             public_choices.append(row)
             continue
         if not spec.get("repeatable") and spec["name"] in seen_meta:
-            warnings.append(f"{spec['name']} は重複しているため外しました")
+            warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(spec["name"]))))
             choice.option_id = ""
             row["option_id"] = ""
             public_choices.append(row)
             continue
         if can_adept and not can_magician and not spec.get("adept"):
-            warnings.append(f"{spec['name']} はアデプト向けではありません")
+            warnings.append(notice("engine.initiation.notForAdepts", name=term(str(spec["name"]))))
             choice.option_id = ""
             row["option_id"] = ""
             public_choices.append(row)
             continue
         if can_magician and not can_adept and not spec.get("magician"):
-            warnings.append(f"{spec['name']} は魔術師向けではありません")
+            warnings.append(notice("engine.initiation.notForMagicians", name=term(str(spec["name"]))))
             choice.option_id = ""
             row["option_id"] = ""
             public_choices.append(row)
@@ -268,8 +269,12 @@ def resolve_initiation(
         }
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
             needed = [name for names in (spec.get("required") or {}).values() for name in names]
-            label = " / ".join(needed) if needed else "前提"
-            warnings.append(f"{spec['name']} には {label} が必要です")
+            if needed:
+                warnings.append(
+                    notice("engine.initiation.requires", name=term(str(spec["name"])), needed=terms(needed))
+                )
+            else:
+                warnings.append(notice("engine.initiation.requiresUnmet", name=term(str(spec["name"]))))
 
         seen_meta.add(spec["name"])
         metamagic_names.add(spec["name"])
@@ -298,9 +303,9 @@ def resolve_initiation(
         public_choices.append(row)
 
     if grade > 0 and mag <= 0:
-        errors.append("イニシエーションには魔力が必要です")
+        errors.append(notice("engine.initiation.needsMagic"))
     elif grade > mag:
-        errors.append(f"イニシエーション等級は魔力以下です（等級 {grade} / MAG {mag}）")
+        errors.append(notice("engine.initiation.gradeOverMagic", grade=grade, magic=mag))
 
     return {
         "warnings": warnings,

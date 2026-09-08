@@ -1,7 +1,12 @@
 """Engine-wide constants: SR5 karma prices, talent groupings, build-method
-identifiers, and lookup tables. Pure data — no imports from the rest of the
-engine, so everything else can import from here freely.
+identifiers, and lookup tables. Pure data — nothing from the rest of the engine
+(only ``app.notices``, which sits above it), so everything else can import from
+here freely.
 """
+
+from __future__ import annotations
+
+from ..notices import Phrase, ui
 
 STANDARD_GAMEPLAY = "Standard"
 
@@ -143,13 +148,20 @@ def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
     return f"{quality_id}{QUALITY_ADDSPIRIT_EXTRA_MARKER}{int(index)}"
 
 
-# Cyberlimb / bioware limb-side maths: Left/Right normalisation plus the
-# Japanese slot/side labels used in duplicate-side warnings. Shared by the
-# 'ware side pipeline (engine/ware/) and the quality selectside validators
-# (apply_quality_rules / resolve_quality_sides in engine/qualities.py).
+# Cyberlimb / bioware limb-side maths: Left/Right normalisation plus the limb
+# slots the duplicate-side messages name. Shared by the 'ware side pipeline
+# (engine/ware/) and the quality selectside validators (apply_quality_rules /
+# resolve_quality_sides in engine/qualities.py). The labels themselves are
+# dictionary keys now — `engine.side.*` / `engine.slot.*` in messages.ts.
 SIDES = ("Left", "Right")
-_SLOT_JA = {"arm": "腕", "leg": "脚", "torso": "胴", "skull": "頭蓋", "head": "頭蓋"}
-_SIDE_JA = {"Left": "左", "Right": "右"}
+_LIMB_SLOTS = ("arm", "leg", "torso", "skull")
+
+
+def slot_phrase(slot: str) -> Phrase | str:
+    """A limb slot as a dictionary key. Chummer writes both 'skull' and 'head'
+    for the same slot; anything unrecognised falls through as its raw id."""
+    key = "skull" if slot == "head" else slot
+    return ui(f"engine.slot.{key}") if key in _LIMB_SLOTS else slot
 
 
 def _normalize_side(value: str | None) -> str | None:

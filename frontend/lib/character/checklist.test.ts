@@ -12,7 +12,7 @@ describe("buildChecklist", () => {
     const ch = makeCharacter({
       derived: {
         karma: { pool: 25, spent: 25, remaining: 0 },
-        errors: ["技能点が不足しています（使用 5 / 上限 4）"],
+        errors: [{ key: "engine.skills.pointsOver", params: { used: 5, max: 4 } }],
       },
     });
     const items = buildChecklist(ch);
@@ -78,21 +78,25 @@ describe("buildChecklist", () => {
 describe("checklistSummary", () => {
   it("counts by severity and is ok when there is no error", () => {
     const s = checklistSummary([
-      { id: "a", severity: "warn", message: "" },
-      { id: "b", severity: "info", message: "" },
+      { id: "a", severity: "warn", notice: { key: "engine.contacts.unnamed" } },
+      { id: "b", severity: "info", notice: { key: "check.karmaLeft" } },
     ]);
     expect(s).toEqual({ errors: 0, warns: 1, infos: 1, ok: true });
   });
 
   it("is not ok with an error present", () => {
-    expect(checklistSummary([{ id: "a", severity: "error", message: "" }]).ok).toBe(false);
+    expect(
+      checklistSummary([{ id: "a", severity: "error", notice: { key: "engine.karma.negative" } }])
+        .ok,
+    ).toBe(false);
   });
 });
 
 describe("guessTab", () => {
-  it("maps common engine phrasings", () => {
-    expect(guessTab("新円が不足しています（残り -100¥）")).toBe("gear");
-    expect(guessTab("エッセンスが0以下です")).toBe("attrs");
-    expect(guessTab("何かよくわからない文言")).toBeUndefined();
+  it("routes an engine notice by the area in its key", () => {
+    expect(guessTab("engine.nuyen.negative")).toBe("gear");
+    expect(guessTab("engine.attrs.essenceDepleted")).toBe("attrs");
+    expect(guessTab("engine.somethingNew.whatever")).toBeUndefined();
+    expect(guessTab("check.karmaLeft")).toBeUndefined();
   });
 });

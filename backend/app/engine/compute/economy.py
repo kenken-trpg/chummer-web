@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import apply_bonus_nodes
+from ...notices import term, terms
 from ..constants import (
     KARMA_CHARGEN_POOL,
     KARMA_NUYEN_MAX,
@@ -173,13 +174,13 @@ def economy(ctx: Ctx) -> None:
     _copy_exotic_skill_bonuses(ctx.skill_mods, ctx.exotic["public"])
     for name in ctx.effects.get("disabled_skills") or []:
         if int(ctx.skill_totals.get(name) or 0) > 0 or int(ctx.state.skills.get(name) or 0) > 0:
-            ctx.warnings.append(f"{name} は無効化されている技能です")
+            ctx.warn("engine.skills.disabled", name=term(name))
     for group in ctx.effects.get("disabled_skill_groups") or []:
         if int(ctx.state.skill_groups.get(group) or 0) > 0:
-            ctx.warnings.append(f"技能グループ {group} は無効化されています")
+            ctx.warn("engine.skills.groupDisabled", name=term(group))
     blocked_defaults = list(ctx.effects.get("blocked_default_categories") or [])
     if blocked_defaults:
-        ctx.warnings.append("デフォルト不可: " + "、".join(blocked_defaults))
+        ctx.warn("engine.skills.noDefaulting", categories=terms(blocked_defaults))
     ctx.skillsofts = resolve_skillsofts(list(ctx.gear.get("gear") or []), ctx.data["skills"], ctx.effects, ctx.warnings)
     _attach_skillsoft_knowledge(ctx.knowledge["public"], ctx.skillsofts["knowledge"], ctx.data["skills"])
     ctx.expertises, free_expertise_skills = apply_select_expertise(

@@ -8,6 +8,7 @@ import pytest
 
 from app.characters import import_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
+from tests.notice_asserts import has
 
 SAMPLE = b"""<?xml version="1.0" encoding="utf-8"?>
 <character>
@@ -90,8 +91,8 @@ def test_unresolved_entries_become_warnings_not_errors() -> None:
     st, warnings = chum5_to_state(SAMPLE)
     assert len(st["quality_ids"]) == 1  # Selected only; Metatype grant skipped
     assert len(st["spells"]) == 1  # Acid Stream resolved, nonexistent dropped
-    assert any("Totally Made Up Quality" in w for w in warnings)
-    assert any("Nonexistent Spell" in w for w in warnings)
+    assert has(warnings, "engine.import.skippedUnknown", kind="engine.kind.quality", name="Totally Made Up Quality")
+    assert has(warnings, "engine.import.skippedUnknown", kind="engine.kind.spell", name="Nonexistent Spell")
 
 
 def test_by_name_resolution_for_tradition_lifestyle_contact() -> None:

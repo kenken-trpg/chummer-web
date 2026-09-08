@@ -29,6 +29,7 @@ from app.engine import compute, default_attributes, find_metatype
 from app.engine.magic.initiation import apply_free_metamagics
 from app.improvements.effects import empty_effects
 from app.models import CharacterState, CyberwareInstall, InitiationChoice, Priorities
+from tests.notice_asserts import has
 
 # SR5 core, chosen for what each one gates on rather than for what it does.
 QUICKENING = "4ea558ed-0fe8-4b9e-b2fa-afffb3eb2476"  # magician-only
@@ -69,8 +70,8 @@ def _initiate(talent: str, cid: str, choices: list[InitiationChoice], **kwargs: 
     )
 
 
-def _warns(out: CharacterState, needle: str) -> bool:
-    return any(needle in warn for warn in out.derived["warnings"])
+def _warns(out: CharacterState, key: str, **params: object) -> bool:
+    return has(out.derived["warnings"], key, **params)
 
 
 def _meta_names(out: CharacterState) -> list[str]:
@@ -88,7 +89,7 @@ def test_an_unknown_metamagic_id_is_stripped_from_the_character() -> None:
     out = compute(
         _initiate("Magician", "unknown-meta", [InitiationChoice(grade=1, kind="metamagic", option_id="nope")])
     )
-    assert _warns(out, "未知のメタマジック")
+    assert _warns(out, "engine.initiation.metamagicUnknownDropped")
     assert _meta_names(out) == []
     # the state itself, not only the payload: this is what gets written back
     assert out.initiations[0].option_id == ""
@@ -96,7 +97,7 @@ def test_an_unknown_metamagic_id_is_stripped_from_the_character() -> None:
 
 def test_an_unknown_art_id_is_stripped_from_the_character() -> None:
     out = compute(_initiate("Magician", "unknown-art", [InitiationChoice(grade=1, kind="art", option_id="nope")]))
-    assert _warns(out, "未知の Art")
+    assert _warns(out, "engine.initiation.artUnknownDropped")
     assert _art_names(out) == []
     assert out.initiations[0].option_id == ""
 
@@ -112,7 +113,7 @@ def test_the_same_metamagic_twice_keeps_the_first_and_drops_the_second() -> None
             ],
         )
     )
-    assert _warns(out, "重複しているため外しました")
+    assert _warns(out, "engine.initiation.duplicateDropped")
     assert _meta_names(out) == ["Quickening"]
     assert out.initiations[0].option_id == QUICKENING
     assert out.initiations[1].option_id == ""
@@ -132,7 +133,7 @@ def test_a_repeatable_metamagic_may_be_taken_twice() -> None:
             ],
         )
     )
-    assert not _warns(twice, "重複")
+    assert not _warns(twice, "engine.initiation.duplicateDropped")
     assert _meta_names(twice) == ["Power Point", "Power Point"]
     assert twice.derived["power_points"]["max"] == base.derived["power_points"]["max"] + 1
 
@@ -164,7 +165,7 @@ def test_two_different_arts_are_both_kept() -> None:
         )
     )
     assert _art_names(out) == ["Geomancy", "Necromancy"]
-    assert not _warns(out, "重複")
+    assert not _warns(out, "engine.initiation.duplicateDropped")
 
 
 # --- the audience gates ---------------------------------------------------
@@ -174,7 +175,7 @@ def test_an_adept_cannot_take_a_magician_metamagic() -> None:
     out = compute(
         _initiate("Adept", "adept-quick", [InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING)])
     )
-    assert _warns(out, "Quickening はアデプト向けではありません")
+    assert _warns(out, "engine.initiation.notForAdepts", name="Quickening")
     assert _meta_names(out) == []
     assert out.initiations[0].option_id == ""
 
@@ -183,7 +184,7 @@ def test_a_magician_cannot_take_an_adept_metamagic() -> None:
     out = compute(
         _initiate("Magician", "mage-pp", [InitiationChoice(grade=1, kind="metamagic", option_id=POWER_POINT)])
     )
-    assert _warns(out, "Power Point は魔術師向けではありません")
+    assert _warns(out, "engine.initiation.notForMagicians", name="Power Point")
     assert _meta_names(out) == []
     assert out.initiations[0].option_id == ""
 
@@ -202,7 +203,8 @@ def test_a_mystic_adept_passes_both_gates() -> None:
         )
     )
     assert _meta_names(out) == ["Quickening", "Power Point"]
-    assert not _warns(out, "向けではありません")
+    assert not _warns(out, "engine.initiation.notForAdepts")
+    assert not _warns(out, "engine.initiation.notForMagicians")
 
 
 # --- warnings that do NOT take the choice away ----------------------------
@@ -213,14 +215,14 @@ def test_an_unmet_requirement_warns_but_keeps_the_metamagic() -> None:
     # keeps it: the prerequisite may be met later, and silently deleting a
     # paid-for metamagic on the way past is the worse failure.
     out = compute(_initiate("Magician", "masking", [InitiationChoice(grade=1, kind="metamagic", option_id=MASKING)]))
-    assert _warns(out, "Masking には")
+    assert _warns(out, "engine.initiation.requires", name="Masking")
     assert _meta_names(out) == ["Masking"]
     assert out.initiations[0].option_id == MASKING
 
 
 def test_a_grade_with_nothing_chosen_is_reported_but_still_costs_karma() -> None:
     out = compute(_initiate("Magician", "empty-grade", [InitiationChoice(grade=1, kind="metamagic", option_id="")]))
-    assert _warns(out, "等級 1 の Art／メタマジックを選んでください")
+    assert _warns(out, "engine.initiation.pickOption", grade=1)
     row = out.derived["initiation"]["choices"][0]
     assert row["name"] == ""
     # the grade was still bought, so the karma is still spent
@@ -274,7 +276,7 @@ def test_a_mage_who_burned_out_gets_an_error_not_a_warning() -> None:
         )
     )
     assert out.derived["totals"]["MAG"] == 0
-    assert "イニシエーションには魔力が必要です" in out.derived["errors"]
+    assert has(out.derived["errors"], "engine.initiation.needsMagic")
 
 
 # --- apply_free_metamagics ------------------------------------------------
@@ -307,18 +309,18 @@ def test_a_free_metamagic_that_is_not_one_names_the_quality_that_granted_it() ->
     # a quality naming a metamagic the data does not have -- the quality name
     # is the only thing that makes the message actionable
     bundle, warnings = _apply("Magician", [_grant("Astral Karate", source="Seer")])
-    assert warnings == ["Seer のメタマジック Astral Karate が見つかりません"]
+    assert has(warnings, "engine.initiation.metamagicUnknown", source="Seer", name="Astral Karate")
     assert bundle["metamagics"] == []
 
 
 def test_an_unforced_grant_still_has_to_suit_the_character() -> None:
     adept, adept_warnings = _apply("Adept", [_grant("Quickening")])
     assert adept["metamagics"] == []
-    assert adept_warnings == ["Quickening はアデプト向けではありません"]
+    assert has(adept_warnings, "engine.initiation.notForAdepts", name="Quickening")
 
     mage, mage_warnings = _apply("Magician", [_grant("Power Point")])
     assert mage["metamagics"] == []
-    assert mage_warnings == ["Power Point は魔術師向けではありません"]
+    assert has(mage_warnings, "engine.initiation.notForMagicians", name="Power Point")
 
 
 def test_a_forced_grant_overrides_the_audience() -> None:

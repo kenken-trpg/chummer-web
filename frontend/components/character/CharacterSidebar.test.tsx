@@ -42,7 +42,7 @@ describe("<CharacterSidebar>", () => {
       derived: {
         ambidextrous: true,
         tradition: { name: "Hermeticism" } as any,
-        errors: ["something wrong"],
+        errors: [{ key: "engine.attrs.essenceDepleted" }],
       },
     });
     render(
@@ -50,7 +50,7 @@ describe("<CharacterSidebar>", () => {
     );
     expect(screen.getByText("両利き")).toBeDefined();
     expect(screen.getByText("伝統")).toBeDefined();
-    expect(screen.getByText("something wrong")).toBeDefined();
+    expect(screen.getByText("エッセンスが0以下です")).toBeDefined();
   });
 
   it("SidebarEconomy always shows the 新円 row", () => {
@@ -108,17 +108,20 @@ describe("<CharacterSidebar>", () => {
     }
   });
 
-  it("keeps engine-authored errors and warnings verbatim", () => {
-    // These sentences come from the Python engine. The sidebar must not try to
-    // localise them — that needs the backend translated too (docs/i18n.md).
+  it("renders engine notices in the current locale", () => {
+    // The engine ships `{key, params}`; the sidebar looks the wording up like
+    // any other app copy (docs/i18n.md).
     const ch = makeCharacter({
-      derived: { errors: ["カルマが足りません"], warnings: ["未使用新円"] },
+      derived: {
+        errors: [{ key: "engine.karma.negative", params: { karma: -3 } }],
+        warnings: [{ key: "engine.contacts.unnamed" }],
+      },
     });
     render(
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
-    expect(screen.getByText("カルマが足りません")).toBeDefined();
-    expect(screen.getByText("未使用新円")).toBeDefined();
+    expect(screen.getByText("カルマが不足しています（残り -3）")).toBeDefined();
+    expect(screen.getByText("名前のないコンタクトがあります")).toBeDefined();
   });
 
   it("names the career-panel number fields", () => {

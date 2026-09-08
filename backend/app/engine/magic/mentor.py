@@ -14,6 +14,7 @@ from typing import Any
 
 from ...data_loader import parse_select_power_slot
 from ...models import CharacterState
+from ...notices import Notice, notice, term
 from ..constants import ADEPT_TALENTS, MAG_TALENTS
 from ..lookups import _mentor_by_id, _power_by_name
 from .powers import power_select_options
@@ -35,8 +36,8 @@ def resolve_mentor(
     needs_mentor: bool,
     skills_data: dict[str, Any],
 ) -> dict[str, Any]:
-    warnings: list[str] = []
-    errors: list[str] = []
+    warnings: list[Notice] = []
+    errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     free_powers: list[dict[str, Any]] = []
     public: dict[str, Any] | None = None
@@ -53,7 +54,7 @@ def resolve_mentor(
         }
     spec = _mentor_by_id(state.mentor_id or "")
     if not spec:
-        warnings.append("メンタースピリットを選んでください")
+        warnings.append(notice("engine.qualities.mentorMissing"))
         return {
             "warnings": warnings,
             "errors": errors,
@@ -95,7 +96,13 @@ def resolve_mentor(
             options = power_select_options(power_spec, skills_data)
             bound_extra = extra if extra in options else ""
             if power_spec.get("select") and not bound_extra:
-                warnings.append(f"{spec['name']} の {power_spec['name']} の対象を選んでください")
+                warnings.append(
+                    notice(
+                        "engine.qualities.mentorPowerTarget",
+                        mentor=term(str(spec["name"])),
+                        power=term(str(power_spec["name"])),
+                    )
+                )
             free_powers.append(
                 {
                     "power_id": power_spec["id"],

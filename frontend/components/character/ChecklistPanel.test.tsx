@@ -32,7 +32,7 @@ it("groups an engine error and jumps to its tab", () => {
   const ch = makeCharacter({
     derived: {
       karma: { pool: 0, spent: 0, remaining: 0 },
-      errors: ["技能点が不足しています（使用 5 / 上限 4）"],
+      errors: [{ key: "engine.skills.pointsOver", params: { used: 5, max: 4 } }],
     },
   });
   const setTab = vi.fn();

@@ -8,6 +8,7 @@ from typing import Any
 
 from ...improvements import ATTR_ALIASES, EffectsDict, collect_effects
 from ...models import CharacterState
+from ...notices import Notice, notice, term
 from ..constants import MENTOR_SPIRIT_ID
 from ..contacts import apply_excon_ware_ban
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
@@ -32,8 +33,8 @@ def resolve_attribute_selects(
     state: CharacterState,
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
-) -> tuple[dict[str, int], list[str]]:
-    warnings: list[str] = []
+) -> tuple[dict[str, int], list[Notice]]:
+    warnings: list[Notice] = []
     bonus: dict[str, int] = {}
     extras = state.quality_extras or {}
     by_name = {q["name"]: q for q in qualities}
@@ -46,10 +47,10 @@ def resolve_attribute_selects(
         exclude = {str(item) for item in (sel.get("exclude") or [])}
         max_bonus = max(1, int(sel.get("max") or 1))
         if not picked:
-            warnings.append(f"{source} の能力値を選んでください")
+            warnings.append(notice("engine.attrs.pickAttribute", source=term(source)))
             continue
         if picked in exclude or picked in {"ESS"}:
-            warnings.append(f"{source} に {picked} は選べません")
+            warnings.append(notice("engine.attrs.attributeNotAllowed", source=term(source), picked=picked))
             continue
         bonus[picked] = int(bonus.get(picked) or 0) + max_bonus
     return bonus, warnings
@@ -61,7 +62,7 @@ def gather(ctx: Ctx) -> None:
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
     ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent)
     for name in dropped_qualities:
-        ctx.warnings.append(f"{name} は他の資質と両立しないため外しました")
+        ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])

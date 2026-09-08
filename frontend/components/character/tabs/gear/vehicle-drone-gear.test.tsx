@@ -586,13 +586,13 @@ describe("<VehicleDroneGear> the summary line", () => {
       slots_used: 3,
       slots_max: 20,
       slot_tracks: [
-        { label: "Power", used: 1, max: 4 },
-        { label: "Body", used: 2, max: 6 },
+        { category: "Powertrain", used: 1, max: 4 },
+        { category: "Body", used: 2, max: 6 },
       ],
     });
     const { container } = renderVehicle(owning(v), vi.fn());
 
-    expect(container.textContent).toContain("Power 1/4 · Body 2/6");
+    expect(container.textContent).toContain("パワートレイン 1/4 · ボディ 2/6");
     expect(container.textContent).not.toContain("3/20");
   });
 

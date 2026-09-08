@@ -18,6 +18,7 @@ from ...improvements import (
     substitute_rating,
 )
 from ...models import ArmorModInstall, CharacterState
+from ...notices import Notice, notice, term
 from ..formulas import parse_armor_value
 from ._common import _clamp_rating
 
@@ -62,8 +63,8 @@ def armor_mod_fits(
     return category == str(armor.get("category") or "")
 
 
-def _ensure_armor_mods(state: CharacterState) -> list[str]:
-    warnings: list[str] = []
+def _ensure_armor_mods(state: CharacterState) -> list[Notice]:
+    warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
     by_name = {item["name"]: item for item in specs.values()}
     armors = {item.id: item for item in state.armor}
@@ -74,7 +75,7 @@ def _ensure_armor_mods(state: CharacterState) -> list[str]:
         parent = armors.get(inst.parent_id or "")
         if not spec or not parent:
             if spec:
-                warnings.append(f"{spec['name']} は防具に装着してください")
+                warnings.append(notice("engine.gear.mountOnArmor", name=term(str(spec["name"]))))
             continue
         kept.append(inst)
     have = {(row.parent_id, (specs.get(row.mod_id) or {}).get("name")) for row in kept}
@@ -101,9 +102,9 @@ def _ensure_armor_mods(state: CharacterState) -> list[str]:
 def _resolve_armor_mods(
     state: CharacterState,
     armor_items: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_armor_mods(state)
-    errors: list[str] = []
+    errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     specs = {item["id"]: item for item in catalog().get("armor_mods") or []}
     armor_specs = {item["id"]: item for item in catalog().get("armor") or []}
@@ -138,11 +139,15 @@ def _resolve_armor_mods(
                 rating = _clamp_rating(spec, inst.rating)
             inst.rating = rating
             if spec["name"] in seen_names or (spec.get("unique") and spec["unique"] in seen_unique):
-                warnings.append(f"{spec['name']} は {item['name']} に重複して装着できません")
+                warnings.append(
+                    notice("engine.gear.duplicateMod", name=term(str(spec["name"])), host=term(str(item["name"])))
+                )
                 continue
             names_without = seen_names - {spec["name"]}
             if not armor_mod_fits(spec, item, names_without):
-                warnings.append(f"{spec['name']} は {item['name']} に装着できません")
+                warnings.append(
+                    notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(item["name"])))
+                )
                 continue
             cap_cost = (
                 0.0
@@ -215,13 +220,20 @@ def _resolve_armor_mods(
         if extra:
             item["armor_value"] = int(item.get("armor_value") or 0) + extra
         if used > cap_max + 1e-9:
-            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{item['capacity_max']:g}）")
+            errors.append(
+                notice(
+                    "engine.gear.capacityOver",
+                    name=term(str(item["name"])),
+                    used=f"{item['capacity_used']:g}",
+                    max=f"{item['capacity_max']:g}",
+                )
+            )
     state.armor_mods = kept
     return public, nuyen, warnings, errors, bonus_sources
 
 
-def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, list[str]]:
-    warnings: list[str] = []
+def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, list[Notice]]:
+    warnings: list[Notice] = []
     base_values: list[tuple[str, int]] = []
     add_total = 0
     for item in armor_items:
@@ -239,7 +251,7 @@ def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, 
     if base_values:
         worn_name, worn_base = max(base_values, key=lambda row: row[1])
         if len(base_values) > 1:
-            warnings.append("防具本体は一番高い1着だけをアーマーに加算しています")
+            warnings.append(notice("engine.gear.armorHighestOnly"))
     for item in armor_items:
         if not item.get("equipped"):
             item["contributes"] = 0

@@ -18,6 +18,7 @@ from ...data_loader import catalog, eval_formula
 from ...improvements import EffectsDict
 from ...improvements.effect_rows import AddSpiritPickRow
 from ...models import CharacterState, SpiritInstall
+from ...notices import Notice, notice, term
 from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
 from ..dice import magic_opposed_test
@@ -48,7 +49,7 @@ def bind_extra_spirits(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-    warnings: list[str],
+    warnings: list[Notice],
     skills_data: dict[str, Any] | None = None,
 ) -> list[AddSpiritPickRow]:
     """Resolve addspirit picks into extra summonable spirit types."""
@@ -88,10 +89,10 @@ def bind_extra_spirits(
             }
             picks.append(row)
             if not picked:
-                warnings.append(f"{source} の追加精霊（{idx + 1}）を選んでください")
+                warnings.append(notice("engine.spirits.pickExtra", source=term(source), index=idx + 1))
                 continue
             if picked not in option_set or (allowed and picked not in allowed):
-                warnings.append(f"{source} の追加精霊が不正です（{picked}）")
+                warnings.append(notice("engine.spirits.extraInvalid", source=term(source), picked=term(picked)))
                 continue
             if picked not in resolved:
                 resolved.append(picked)
@@ -109,7 +110,7 @@ def resolve_spirits(
     limit_spirits: list[str] | None = None,
     extra_spirits: list[str] | None = None,
 ) -> SpiritsBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     nuyen = 0
     if talent_name not in SPIRIT_TALENTS:
@@ -121,7 +122,7 @@ def resolve_spirits(
         allowed.setdefault(name, "extra")
     spirit_whitelist = {str(name).strip() for name in (limit_spirits or []) if str(name).strip()}
     if not tradition:
-        warnings.append("精霊を召喚するには伝統を選んでください")
+        warnings.append(notice("engine.spirits.needsTradition"))
     kept: list[SpiritInstall] = []
     mag = max(0, int(mag or 0))
     for inst in state.spirits:
@@ -130,13 +131,13 @@ def resolve_spirits(
             continue
         role = allowed.get(spec["name"])
         if not tradition or not role:
-            warnings.append(f"{spec['name']} はこの伝統では召喚できません")
+            warnings.append(notice("engine.spirits.notInTradition", name=term(str(spec["name"]))))
             continue
         if spirit_whitelist and spec["name"] not in spirit_whitelist and spec["name"] not in extra_set:
-            warnings.append(f"{spec['name']} はこの制限では召喚できません")
+            warnings.append(notice("engine.spirits.blockedByLimit", name=term(str(spec["name"]))))
             continue
         if mag <= 0:
-            warnings.append(f"{spec['name']} を召喚するには魔力が必要です")
+            warnings.append(notice("engine.spirits.needsMagic", name=term(str(spec["name"]))))
             continue
         bound = bool(inst.bound)
         inst.bound = bound
@@ -153,7 +154,7 @@ def resolve_spirits(
         cost = force * SPIRIT_REAGENT_YEN if bound else 0
         nuyen += cost
         if bound is False and inst.hits is not None and inst.opposed_hits is not None and services <= 0:
-            warnings.append(f"{spec['name']} の召喚に失敗しています（正味0）")
+            warnings.append(notice("engine.spirits.summonFailed", name=term(str(spec["name"]))))
         attrs = spirit_attributes(spec, force)
         kept.append(inst)
         public.append(
@@ -193,8 +194,8 @@ def attach_spirit_tests(
     skill_bonus: dict[str, int],
     attrs: dict[str, int],
     skills_data: dict[str, Any],
-) -> list[str]:
-    warnings: list[str] = []
+) -> list[Notice]:
+    warnings: list[Notice] = []
     for item in public:
         bound = bool(item.get("bound"))
         force = int(item.get("force") or 1)
@@ -215,6 +216,10 @@ def attach_spirit_tests(
         item["test"] = test
         if test.get("missing"):
             warnings.append(
-                f"{item['name']} の{('結合' if bound else '召喚')}判定に{skill}が必要です（未習得・デフォルト不可）"
+                notice(
+                    "engine.spirits.testNeedsSkill" if bound else "engine.spirits.summonNeedsSkill",
+                    name=term(str(item["name"])),
+                    skill=term(skill),
+                )
             )
     return warnings

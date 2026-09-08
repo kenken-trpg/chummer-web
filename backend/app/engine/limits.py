@@ -23,6 +23,7 @@ from ..data_loader import (
     sum_avail,
 )
 from ..improvements import ATTR_ALIASES, EffectsDict, _as_int
+from ..notices import Notice, notice, term, ui
 from .lookups import _grade_by_name
 
 
@@ -96,14 +97,13 @@ def _restricted_gear_slots(effects: EffectsDict) -> list[int]:
     return slots
 
 
-def _check_avail_limit(items: list[dict[str, Any]], effects: EffectsDict, errors: list[str]) -> None:
+def _check_avail_limit(items: list[dict[str, Any]], effects: EffectsDict, errors: list[Notice]) -> None:
     limit = CHARGEN_AVAIL_MAX
     slots = _restricted_gear_slots(effects)
     over = sorted(items, key=lambda row: int(row.get("avail_value") or 0), reverse=True)
     for item in over:
         value = int(item.get("avail_value") or 0)
         shown = str(item.get("avail") or format_avail(value, str(item.get("avail_suffix") or "")))
-        name = str(item.get("label") or item.get("name") or "ギア")
         if value <= limit:
             continue
         used = False
@@ -115,7 +115,15 @@ def _check_avail_limit(items: list[dict[str, Any]], effects: EffectsDict, errors
                 break
         if used:
             continue
-        errors.append(f"{name} の入手制限超過（{shown} / 上限{limit}）")
+        raw = str(item.get("label") or item.get("name") or "")
+        errors.append(
+            notice(
+                "engine.gear.availOver",
+                name=term(raw) if raw else ui("engine.term.gear"),
+                shown=shown,
+                limit=limit,
+            )
+        )
 
 
 def _device_rating_entries(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
@@ -136,14 +144,21 @@ def _device_rating_entries(*groups: list[dict[str, Any]] | None) -> list[dict[st
     return out
 
 
-def _check_device_rating_limit(items: list[dict[str, Any]], errors: list[str]) -> None:
+def _check_device_rating_limit(items: list[dict[str, Any]], errors: list[Notice]) -> None:
     limit = CHARGEN_DEVICE_RATING_MAX
     for item in items:
         value = int(item.get("device_rating") or 0)
         if value <= limit:
             continue
-        name = str(item.get("label") or item.get("name") or "ギア")
-        errors.append(f"{name} のデバイスレーティング超過（{value} / 上限{limit}）")
+        raw = str(item.get("label") or item.get("name") or "")
+        errors.append(
+            notice(
+                "engine.gear.deviceRatingOver",
+                name=term(raw) if raw else ui("engine.term.gear"),
+                value=value,
+                limit=limit,
+            )
+        )
 
 
 def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
@@ -160,10 +175,10 @@ def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
     return {key: value for key, value in totals.items() if value}
 
 
-def _check_ware_attribute_cap(bonuses: dict[str, int], errors: list[str]) -> None:
+def _check_ware_attribute_cap(bonuses: dict[str, int], errors: list[Notice]) -> None:
     limit = CHARGEN_WARE_ATTR_BONUS_MAX
     for attr in PHYSICAL_ATTRS:
         value = int(bonuses.get(attr) or 0)
         if value <= limit:
             continue
-        errors.append(f"{attr} のウェア強化超過（+{value} / 上限+{limit}）")
+        errors.append(notice("engine.ware.attrBonusOver", attr=attr, value=value, limit=limit))

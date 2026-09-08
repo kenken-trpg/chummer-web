@@ -10,6 +10,7 @@ from typing import Any
 
 from ..data_loader import catalog
 from ..models import Priorities
+from ..notices import Notice, notice
 from .constants import (
     BUILD_METHOD_KARMA,
     BUILD_METHOD_PRIORITY,
@@ -189,20 +190,20 @@ def priorities_are_unique(p: Priorities) -> bool:
     return sorted(letters) == ["A", "B", "C", "D", "E"]
 
 
-def validate_priorities(p: Priorities, build_method: str | None = None) -> list[str]:
+def validate_priorities(p: Priorities, build_method: str | None = None) -> list[Notice]:
     method = normalize_build_method(build_method)
     if method == BUILD_METHOD_KARMA:
         return []
     letters = [str(x or "").upper() for x in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources)]
-    errors: list[str] = []
+    errors: list[Notice] = []
     if any(letter not in SUM_TO_TEN_COST for letter in letters):
-        errors.append("優先度は A〜E のみ割り当てできます")
+        errors.append(notice("engine.priority.letters"))
         return errors
     if method == BUILD_METHOD_SUM_TO_TEN:
         spent = sum(priority_letter_cost(letter) for letter in letters)
         if spent != SUM_TO_TEN_BUDGET:
-            errors.append(f"Sum to Ten の合計が {SUM_TO_TEN_BUDGET} になるように割り当ててください（現在 {spent}）")
+            errors.append(notice("engine.priority.sumToTen", budget=SUM_TO_TEN_BUDGET, spent=spent))
         return errors
     if sorted(letters) != ["A", "B", "C", "D", "E"]:
-        errors.append("優先度 A〜E を各カテゴリに1つずつ割り当ててください")
+        errors.append(notice("engine.priority.oneEach"))
     return errors

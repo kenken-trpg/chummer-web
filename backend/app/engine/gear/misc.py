@@ -15,6 +15,7 @@ from typing import Any
 from ...data_loader import catalog, drug_effect_summary, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall
+from ...notices import Notice, notice, term, ui
 from ..lookups import _item_by_id
 from ..selects import gear_extra_options
 from ._common import (
@@ -107,8 +108,8 @@ def _misc_slot_stats(spec: dict[str, Any], inst: GearInstall, rating: int) -> tu
     return False, 0.0, 0.0
 
 
-def _ensure_misc_gear(state: CharacterState) -> list[str]:
-    warnings: list[str] = []
+def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
+    warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("gear") or []}
     by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
     external = _misc_external_hosts(state)
@@ -119,27 +120,33 @@ def _ensure_misc_gear(state: CharacterState) -> list[str]:
         if not spec:
             continue
         if spec.get("requireparent") and not inst.parent_id:
-            warnings.append(f"{spec['name']} は本体に装着してください")
+            warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
             continue
         if inst.parent_id:
             parent = next((row for row in items if row.id == inst.parent_id), None)
             parent_spec = specs.get(parent.gear_id) if parent else None
             host = external.get(inst.parent_id)
+            host_name = ""
             if parent_spec:
                 fits = _misc_child_fits(parent_spec, spec)
-                label = parent_spec.get("name") or "本体"
+                host_name = str(parent_spec.get("name") or "")
             elif host:
                 kind, host_spec = host
                 if kind == "weapon":
                     fits = ammo_fits_weapon(spec, host_spec)
                 else:
                     fits = bool(inst.included) or _misc_child_fits(host_spec, spec)
-                label = host_spec.get("name") or "本体"
+                host_name = str(host_spec.get("name") or "")
             else:
                 fits = False
-                label = "本体"
             if not fits:
-                warnings.append(f"{spec['name']} は {label} に装着できません")
+                warnings.append(
+                    notice(
+                        "engine.gear.doesNotFit",
+                        name=term(str(spec["name"])),
+                        host=term(host_name) if host_name else ui("engine.term.host"),
+                    )
+                )
                 continue
         kept.append(inst)
     have = {(row.parent_id, (specs.get(row.gear_id) or {}).get("name")) for row in kept}
@@ -175,9 +182,9 @@ def _resolve_misc_gear(
     state: CharacterState,
     vehicles: list[dict[str, Any]] | None = None,
     weapons: list[dict[str, Any]] | None = None,
-) -> tuple[list[dict[str, Any]], int, list[str], list[str], list[tuple[str, list[dict[str, Any]]]]]:
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_misc_gear(state)
-    errors: list[str] = []
+    errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     specs = {item["id"]: item for item in catalog().get("gear") or []}
     public: list[dict[str, Any]] = []
@@ -196,18 +203,18 @@ def _resolve_misc_gear(
         options = gear_extra_options(spec)
         if extra_kind == "skill":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} の技能指定が無効です（{extra}）")
+                warnings.append(notice("engine.gear.skillInvalid", name=term(str(spec["name"])), picked=term(extra)))
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} の技能を選んでください")
+                warnings.append(notice("engine.gear.pickSkill", name=term(str(spec["name"]))))
         elif extra_kind == "group":
             if extra and extra not in options:
-                warnings.append(f"{spec['name']} の技能グループ指定が無効です（{extra}）")
+                warnings.append(notice("engine.gear.groupInvalid", name=term(str(spec["name"])), picked=term(extra)))
                 extra = ""
             if not extra:
-                warnings.append(f"{spec['name']} の技能グループを選んでください")
+                warnings.append(notice("engine.gear.pickGroup", name=term(str(spec["name"]))))
         elif extra_kind == "text" and not extra:
-            warnings.append(f"{spec['name']} の対象を入力してください")
+            warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
@@ -294,7 +301,14 @@ def _resolve_misc_gear(
         if cap_max == int(cap_max):
             item["capacity_max"] = int(cap_max)
         if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
-            errors.append(f"{item['name']} の容量超過（{item['capacity_used']:g}/{cap_max:g}）")
+            errors.append(
+                notice(
+                    "engine.gear.capacityOver",
+                    name=term(str(item["name"])),
+                    used=f"{item['capacity_used']:g}",
+                    max=f"{cap_max:g}",
+                )
+            )
     for row in vehicles or []:
         kids = children.get(str(row.get("id") or "")) or []
         row["gear"] = kids

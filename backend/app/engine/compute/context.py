@@ -15,6 +15,7 @@ from typing import Any
 from ...data_loader import CatalogDict
 from ...improvements import EffectsDict, empty_effects
 from ...models import CharacterState
+from ...notices import Notice, ParamValue, notice
 from ..bundle_types import (
     AdeptBundle,
     ComplexFormsBundle,
@@ -63,8 +64,8 @@ class Ctx:
     career: bool = False
     skill_rating_cap: int = 0
     skill_group_cap: int = 0
-    errors: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
+    errors: list[Notice] = field(default_factory=list)
+    warnings: list[Notice] = field(default_factory=list)
     meta: dict[str, Any] = field(default_factory=dict)
     attrs_spec: dict[str, Any] = field(default_factory=dict)
     talent: dict[str, Any] = field(default_factory=dict)
@@ -195,3 +196,13 @@ class Ctx:
     # --- quality rules ----------------------------------------------------
     quality_report: dict[str, Any] = field(default_factory=dict)
     negative_quality_karma: int = 0
+
+    # --- messages ----------------------------------------------------------
+    def err(self, key: str, **params: ParamValue) -> None:
+        """Record a rule violation. `key` indexes the UI dictionary; see
+        `app.notices` for why the wording is not here."""
+        self.errors.append(notice(key, **params))
+
+    def warn(self, key: str, **params: ParamValue) -> None:
+        """Record something the build survives but the player should see."""
+        self.warnings.append(notice(key, **params))

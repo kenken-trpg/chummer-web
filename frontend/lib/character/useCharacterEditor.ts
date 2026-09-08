@@ -4,6 +4,7 @@ import { useCharacterHistory } from "@/lib/character/history";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
+import { renderNotice } from "@/lib/engine-notices";
 import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
@@ -249,7 +250,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
           setError(
             ui("app.importWarnings", {
               count: warnings.length,
-              details: warnings.slice(0, 15).join(" / "),
+              details: warnings
+                .slice(0, 15)
+                .map((w) => renderNotice(w, ui, tr))
+                .join(" / "),
             }),
           );
         }

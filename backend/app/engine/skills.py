@@ -13,6 +13,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..improvements import EffectsDict, _as_int, substitute_rating
 from ..models import CharacterState, ExoticSkillInstall
+from ..notices import Notice, notice, term
 from .bundle_types import SkillMods, SkillPicks
 from .constants import EXPERTISE_BONUS
 from .lookups import _quality_by_id, _ware_by_id
@@ -41,7 +42,7 @@ def resolve_knowledge(
     native_limit: int = 1,
 ) -> dict[str, Any]:
     catalog_by_name = {skill["name"]: skill for skill in (skills_data.get("knowledge") or [])}
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     ratings: dict[str, int] = {}
     for name, rating in (state.knowledge_skills or {}).items():
         name = str(name).strip()
@@ -64,7 +65,7 @@ def resolve_knowledge(
         natives.append(name)
         ratings.pop(name, None)
     if extras:
-        warnings.append(f"母語は{limit}つまでです（超過分は通常の言語として扱います）")
+        warnings.append(notice("engine.skills.nativeLimit", limit=limit))
 
     extra_categories: dict[str, str] = {}
     owned = set(ratings) | set(natives)
@@ -128,7 +129,7 @@ def resolve_specializations(
     )
     free_expertise = {str(name).strip() for name in (free_expertise_skills or set()) if str(name).strip()}
     cleaned: dict[str, str] = {}
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     active_spent = 0
     knowledge_spent = 0
     for raw_name, raw_spec in (state.skill_specializations or {}).items():
@@ -142,17 +143,17 @@ def resolve_specializations(
             rating = 0 if native else int((state.knowledge_skills or {}).get(name) or 0)
             rating = max(rating, int((skillsoft_knowledge or {}).get(name) or 0))
             if not native and rating < 1:
-                warnings.append(f"{name} の専門化には知識技能が必要です")
+                warnings.append(notice("engine.skills.specNeedsKnowledge", name=term(name)))
                 continue
             if name not in free_expertise:
                 knowledge_spent += 1
         else:
             if name not in active_names:
-                warnings.append(f"{name} の専門化は未知の技能です")
+                warnings.append(notice("engine.skills.specUnknownSkill", name=term(name)))
                 continue
             rating = max(int(skill_totals.get(name) or 0), int((skillsoft_active or {}).get(name) or 0))
             if rating < 1:
-                warnings.append(f"{name} の専門化には技能が必要です")
+                warnings.append(notice("engine.skills.specNeedsSkill", name=term(name)))
                 continue
             if name not in free_expertise:
                 active_spent += 1
@@ -172,7 +173,7 @@ def apply_select_expertise(
     qualities: list[dict[str, Any]],
     skill_totals: dict[str, int],
     skillsoft_active: dict[str, int],
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> tuple[list[dict[str, Any]], set[str]]:
     """Grant free Expertise (+3) specializations from selectexpertise qualities."""
     by_name = {q["name"]: q for q in qualities}
@@ -189,17 +190,17 @@ def apply_select_expertise(
             continue
         picked = str(extras.get(spec_q["id"]) or "").strip()
         if not picked:
-            warnings.append(f"{source} の Expertise（専門化）を選んでください")
+            warnings.append(notice("engine.skills.pickExpertise", source=term(source)))
             continue
         rating = max(int(skill_totals.get(skill_name) or 0), int((skillsoft_active or {}).get(skill_name) or 0))
         if rating < 1:
-            warnings.append(f"{source} には {skill_name} 技能（レーティング1以上）が必要です")
+            warnings.append(notice("engine.skills.expertiseNeedsSkill", source=term(source), skill=term(skill_name)))
             continue
         limit_specs = [
             part.strip() for part in str(slot.get("limit_to_specialization") or "").split(",") if part.strip()
         ]
         if limit_specs and picked not in limit_specs:
-            warnings.append(f"{source} の Expertise に {picked} は選べません")
+            warnings.append(notice("engine.skills.expertiseNotAllowed", source=term(source), picked=term(picked)))
             continue
         specs[skill_name] = picked
         free_skills.add(skill_name)
@@ -236,7 +237,7 @@ def resolve_exotic_skills(
     rating_cap: int = 6,
 ) -> dict[str, Any]:
     catalog_by_name = {skill["name"]: skill for skill in skills_data.get("skills") or [] if skill.get("exotic")}
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     kept: list[ExoticSkillInstall] = []
     totals: dict[str, int] = {}
@@ -253,12 +254,14 @@ def resolve_exotic_skills(
         inst.rating = rating
         key = (inst.skill_name, extra.lower())
         if extra and key in seen:
-            warnings.append(f"{exotic_skill_label(inst.skill_name, extra)} が重複しています")
+            warnings.append(
+                notice("engine.skills.exoticDuplicate", name=term(exotic_skill_label(inst.skill_name, extra)))
+            )
             continue
         if extra:
             seen.add(key)
         else:
-            warnings.append(f"{spec['name']} の対象を選んでください")
+            warnings.append(notice("engine.skills.pickExoticTarget", name=term(str(spec["name"]))))
         kept.append(inst)
         spent += rating
         label = exotic_skill_label(inst.skill_name, extra)
@@ -422,7 +425,7 @@ def resolve_skillsofts(
     gear_items: list[dict[str, Any]],
     skills_data: dict[str, Any],
     effects: EffectsDict,
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> dict[str, Any]:
     wires = int(effects.get("skillwires") or 0)
     jack = int(effects.get("skilljack") or 0)
@@ -447,7 +450,7 @@ def resolve_skillsofts(
             kind = _skillsoft_kind(node)
             if not kind:
                 continue
-            label = str(item.get("label") or spec.get("name") or "スキルソフト")
+            label = str(item.get("label") or spec.get("name") or "")
             value = _skillsoft_value(node)
             options = set(skillsoft_options(node, skills_data))
             if extra and extra not in options:
@@ -458,19 +461,19 @@ def resolve_skillsofts(
                 if extra not in active_names:
                     continue
                 if wires <= 0:
-                    warnings.append(f"{label} を使うにはスキルワイヤが必要です")
+                    warnings.append(notice("engine.skills.needsSkillwires", name=term(label)))
                     continue
                 if value > wires:
-                    warnings.append(f"{label} がスキルワイヤを超えています（R{value} / スキルワイヤ R{wires}）")
+                    warnings.append(notice("engine.skills.overSkillwires", name=term(label), rating=value, limit=wires))
                 add_rating(active, extra, min(value, wires))
             else:
                 if extra not in knowledge_names:
                     continue
                 if jack <= 0:
-                    warnings.append(f"{label} を使うにはスキルジャックが必要です")
+                    warnings.append(notice("engine.skills.needsSkilljack", name=term(label)))
                     continue
                 if value > jack:
-                    warnings.append(f"{label} がスキルジャックを超えています（R{value} / スキルジャック R{jack}）")
+                    warnings.append(notice("engine.skills.overSkilljack", name=term(label), rating=value, limit=jack))
                 add_rating(knowledge, extra, min(value, jack))
     return {
         "active": active,
@@ -520,7 +523,7 @@ def resolve_skill_picks(
     skill_totals: dict[str, int],
 ) -> SkillPicks:
     slots: list[dict[str, Any]] = []
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     skill_max: dict[str, int] = {}
     pick_bonus: dict[str, int] = {}
     pick_notes: dict[str, list[str]] = {}
@@ -531,10 +534,10 @@ def resolve_skill_picks(
         options = selectskill_options(spec, skills_data, skill_totals)
         picked = picks.get(key) or ""
         if picked and picked not in options:
-            warnings.append(f"{source} の技能指定が無効です（{picked}）")
+            warnings.append(notice("engine.skills.pickInvalid", source=term(source), picked=term(picked)))
             picked = ""
         if not picked:
-            warnings.append(f"{source} の技能を選んでください")
+            warnings.append(notice("engine.skills.pickSkill", source=term(source)))
         elif spec.get("bonus"):
             pick_bonus[picked] = int(pick_bonus.get(picked, 0)) + int(spec["bonus"])
             note = spec.get("condition") or ""

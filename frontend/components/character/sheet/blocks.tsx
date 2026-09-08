@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { InstalledDrone } from "@/lib/types";
 import { vehicleCM } from "@/lib/character/format";
 import { type MsgKey, useUiText } from "@/lib/i18n";
+import { vehicleSlotLabel } from "@/lib/engine-notices";
 
 /** Minimal shape the initiation / submersion grade lists share. */
 type GradeItem = { grade: number; name: string; extra?: string | null; kind?: string };
@@ -138,7 +139,7 @@ export function VehicleBlock({ v, tr }: { v: InstalledDrone; tr: (n: string) => 
         <p className="sheet-note">
           {ui("sheet.veh.slots", {
             list: tracks
-              .map((row) => `${row.label} ${row.used}/${row.max}`)
+              .map((row) => `${vehicleSlotLabel(row.category, ui)} ${row.used}/${row.max}`)
               .join(` ${ui("common.termSep")} `),
           })}
         </p>

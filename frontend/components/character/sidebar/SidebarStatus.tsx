@@ -2,6 +2,7 @@ import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
 import { buildMethodLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
+import { renderNotice } from "@/lib/engine-notices";
 
 export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProps) {
   return (
@@ -29,20 +30,17 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       {error ? <p className="errors">{error}</p> : null}
       {d.errors.length ? (
         <ul className="errors">
-          {d.errors.map((e) => (
-            <li key={e}>{e}</li>
+          {d.errors.map((e, i) => (
+            <li key={`${e.key}-${i}`}>{renderNotice(e, ui, tr)}</li>
           ))}
         </ul>
       ) : (
-        // `errors` / `warnings` themselves come from the engine, in Japanese.
-        // Translating those means translating the backend's messages too — see
-        // docs/i18n.md.
         <p className="ok">{career ? ui("side.ok.career") : ui("side.ok.chargen")}</p>
       )}
       {(d.warnings || []).length ? (
         <ul className="warn">
-          {d.warnings!.map((w) => (
-            <li key={w}>{w}</li>
+          {d.warnings!.map((w, i) => (
+            <li key={`${w.key}-${i}`}>{renderNotice(w, ui, tr)}</li>
           ))}
         </ul>
       ) : null}

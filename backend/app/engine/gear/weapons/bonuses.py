@@ -18,6 +18,7 @@ from ....data_loader import catalog
 from ....improvements import EffectsDict, empty_effects
 from ....improvements.effect_rows import WeaponDvBonusRow
 from ....models import CharacterState
+from ....notices import Notice, notice, term
 from ...formulas import _add_leading_int, _add_weapon_dv, _leading_int
 from ...selects import selectskill_options
 
@@ -172,7 +173,7 @@ def bind_weapon_category_dv(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> None:
     """Resolve weaponcategorydv selectskill picks into concrete category/skill DV bonuses."""
     by_name = {q["name"]: q for q in qualities}
@@ -191,10 +192,10 @@ def bind_weapon_category_dv(
                 continue
             picked = str(extras.get(spec["id"]) or "").strip()
             if not picked:
-                warnings.append(f"{source} の武器技能を選んでください")
+                warnings.append(notice("engine.skills.pickWeaponSkill", source=term(source)))
                 continue
             if skills and picked not in skills:
-                warnings.append(f"{source} に {picked} は選べません")
+                warnings.append(notice("engine.skills.pickNotAllowed", source=term(source), picked=term(picked)))
                 continue
             resolved.append({"name": picked, "bonus": bonus, "source": source})
         elif fixed:
@@ -206,7 +207,7 @@ def bind_weapon_skill_accuracy(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-    warnings: list[str],
+    warnings: list[Notice],
     skills_data: dict[str, Any] | None = None,
 ) -> None:
     """Resolve weaponskillaccuracy selectskill picks into skill accuracy bonuses."""
@@ -226,7 +227,7 @@ def bind_weapon_skill_accuracy(
                 continue
             picked = str(extras.get(spec["id"]) or "").strip()
             if not picked:
-                warnings.append(f"{source} の技能を選んでください")
+                warnings.append(notice("engine.skills.pickSkill", source=term(source)))
                 continue
             attrs = dict(slot.get("select_attrs") or {})
             options = list(spec.get("select_options") or [])
@@ -242,7 +243,7 @@ def bind_weapon_skill_accuracy(
                     {},
                 )
             if options and picked not in options:
-                warnings.append(f"{source} に {picked} は選べません")
+                warnings.append(notice("engine.skills.pickNotAllowed", source=term(source), picked=term(picked)))
                 continue
             resolved.append({"name": picked, "bonus": bonus, "source": source})
         elif fixed:

@@ -18,6 +18,7 @@ from typing import Any
 
 from ...data_loader import catalog
 from ...models import CharacterState, CyberwareInstall
+from ...notices import Notice, notice, term
 from ..gear import _iter_vehicle_hosts, mod_fits_vehicle
 from ..lookups import _ware_by_id
 from ._common import _cascade_orphans, _public_installed
@@ -50,10 +51,10 @@ def _ware_fits_vehicle_mod(ware: dict[str, Any], spec: dict[str, Any]) -> bool:
     return any(name in parent_name for name in names)
 
 
-def _drop_invalid_vehicle_ware(state: CharacterState) -> list[str]:
+def _drop_invalid_vehicle_ware(state: CharacterState) -> list[Notice]:
     hosts = _vehicle_mod_hosts(state)
     cyber_ids = {item.id for item in state.cyberware}
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     kept: list[CyberwareInstall] = []
     for inst in state.cyberware:
         parent_id = inst.parent_id
@@ -65,7 +66,9 @@ def _drop_invalid_vehicle_ware(state: CharacterState) -> list[str]:
         if not spec or not ware:
             continue
         if not _ware_fits_vehicle_mod(ware, spec):
-            warnings.append(f"{ware['name']} は {spec['name']} に装着できません")
+            warnings.append(
+                notice("engine.ware.vehicleMountMismatch", name=term(ware["name"]), host=term(spec["name"]))
+            )
             continue
         kept.append(inst)
     state.cyberware = _cascade_orphans(kept, set(hosts))
@@ -105,8 +108,8 @@ def _zero_vehicle_hosted_essence(resolved: list[dict[str, Any]], vehicle_hosts: 
             item["ess_to_parent"] = 0.0
 
 
-def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str, Any]]) -> list[str]:
-    errors: list[str] = []
+def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str, Any]]) -> list[Notice]:
+    errors: list[Notice] = []
     by_id = {str(mod.get("id") or ""): mod for mod in mods}
     for mod in mods:
         mod["cyberware"] = []
@@ -124,5 +127,12 @@ def _attach_ware_to_vehicle_mods(mods: list[dict[str, Any]], ware: list[dict[str
         cap_max = float(mod.get("capacity_max") or 0)
         used = float(mod.get("capacity_used") or 0)
         if cap_max > 0 and used > cap_max + 1e-9:
-            errors.append(f"{mod['name']} の容量超過（{used:g}/{cap_max:g}）")
+            errors.append(
+                notice(
+                    "engine.gear.vehicleModCapacityOver",
+                    name=term(str(mod["name"])),
+                    used=f"{used:g}",
+                    max=f"{cap_max:g}",
+                )
+            )
     return errors

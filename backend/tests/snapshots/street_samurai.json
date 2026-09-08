@@ -564,7 +564,14 @@
     }
   },
   "warnings": [
-    "未使用新円 298,275¥：Standard レベルでは 5,000¥ までしか持ち越せません（超過分 293,275¥ は原則失われます）"
+    {
+      "key": "engine.nuyen.chargenCarryOver",
+      "params": {
+        "keep": "5,000",
+        "left": "298,275",
+        "lost": "293,275"
+      }
+    }
   ],
   "way_discount": {
     "max": 0,

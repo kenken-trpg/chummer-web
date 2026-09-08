@@ -18,6 +18,7 @@ from typing import Any
 from ...data_loader import SPELL_CATEGORIES
 from ...improvements import EffectsDict, apply_bonus_nodes, empty_effects
 from ...models import CharacterState, SpellInstall
+from ...notices import Notice, notice, term, terms
 from ..bundle_types import SpellsBundle
 from ..constants import MAG_TALENTS, SPELL_KARMA, SPELL_TALENTS, quality_spirit_category_extra_key
 from ..lookups import _spell_by_id, _spell_by_name, _tradition_by_id
@@ -66,7 +67,7 @@ def bind_spell_spirit_limits(
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
     state: CharacterState,
-    errors: list[str],
+    errors: list[Notice],
 ) -> None:
     """Resolve empty limitspell/spiritcategory slots from quality_extras."""
     by_name = {q["name"]: q for q in qualities}
@@ -79,11 +80,11 @@ def bind_spell_spirit_limits(
         if not value and spec:
             value = str(extras.get(spec["id"]) or "").strip()
             if not value:
-                errors.append(f"{spec['name']} の呪文カテゴリを選んでください")
+                errors.append(notice("engine.spells.pickCategory", name=term(str(spec["name"]))))
                 continue
             options = list(spec.get("select_options") or [])
             if options and value not in options:
-                errors.append(f"{spec['name']} の呪文カテゴリが不正です")
+                errors.append(notice("engine.spells.categoryInvalid", name=term(str(spec["name"]))))
                 continue
         if value and value not in spell_limits:
             spell_limits.append(value)
@@ -97,11 +98,11 @@ def bind_spell_spirit_limits(
             if not picked and not _limit_spell_needs_from_spec(spec):
                 picked = str(extras.get(spec["id"]) or "").strip()
             if not picked:
-                errors.append(f"{spec['name']} の精霊を選んでください")
+                errors.append(notice("engine.spells.pickSpirit", name=term(str(spec["name"]))))
                 continue
             options = list(spec.get("spirit_options") or [])
             if options and picked not in options:
-                errors.append(f"{spec['name']} の精霊が不正です")
+                errors.append(notice("engine.spells.spiritInvalid", name=term(str(spec["name"]))))
                 continue
             spirits = [picked]
         for name in spirits:
@@ -136,7 +137,7 @@ def apply_granted_spells(
     state: CharacterState,
     effects: EffectsDict,
     qualities: list[dict[str, Any]],
-    warnings: list[str],
+    warnings: list[Notice],
 ) -> None:
     """Ensure addspell quality bonuses exist on the character; drop orphans."""
     by_name = {q["name"]: q for q in qualities}
@@ -149,7 +150,7 @@ def apply_granted_spells(
         spell_name = str(row.get("name") or "").strip()
         spec = _spell_by_name(spell_name)
         if not spec:
-            warnings.append(f"{source} の呪文 {spell_name} が見つかりません")
+            warnings.append(notice("engine.spells.unknownSpell", source=term(source), name=term(spell_name)))
             continue
         grants.append(
             {
@@ -306,13 +307,13 @@ def resolve_spells(
     owned_magic_names: set[str] | None = None,
     effects: EffectsDict | None = None,
 ) -> SpellsBundle:
-    warnings: list[str] = []
+    warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     owned = set(owned_magic_names or [])
     effects = effects or empty_effects()
     tradition = _tradition_by_id(state.tradition_id)
     if state.tradition_id and not tradition:
-        warnings.append("選んだ伝統が見つからないため外しました")
+        warnings.append(notice("engine.spells.traditionDropped"))
         state.tradition_id = None
     resist, resist_attrs = tradition_resist(tradition, attrs)
     resist += int(effects.get("drain_resist") or 0)
@@ -337,7 +338,7 @@ def resolve_spells(
         }
 
     if not tradition:
-        warnings.append("伝統を選んでください")
+        warnings.append(notice("engine.spells.pickTradition"))
     priority_free = int(talent.get("spells") or 0) if talent["name"] in SPELL_TALENTS else 0
     bonus_free, touch_free = free_spell_bonus_points(effects, state, attrs)
     free_max = priority_free + bonus_free + touch_free
@@ -352,13 +353,19 @@ def resolve_spells(
         if not spec:
             continue
         if spec.get("category") not in SPELL_CATEGORIES:
-            warnings.append(f"{spec['name']} はこの段階では扱えません")
+            warnings.append(notice("engine.spells.categoryUnsupported", name=term(str(spec["name"]))))
             continue
         if not _spell_allowed_by_limits(spec, effects, range_gated=range_gated):
-            warnings.append(f"{spec['name']} はこの制限では習得できません（{spec.get('category') or '—'}）")
+            warnings.append(
+                notice(
+                    "engine.spells.blockedByLimit",
+                    name=term(str(spec["name"])),
+                    category=term(str(spec.get("category") or "—")),
+                )
+            )
             continue
         if spec["id"] in seen:
-            warnings.append(f"{spec['name']} は重複しているため外しました")
+            warnings.append(notice("engine.spells.duplicateDropped", name=term(str(spec["name"]))))
             continue
         seen.add(spec["id"])
         kind = spec.get("kind") or "spell"
@@ -391,7 +398,7 @@ def resolve_spells(
             name for names in (spec.get("required") or {}).values() for name in names if name and name not in owned
         ]
         if missing:
-            warnings.append(f"{spec['name']} には {' / '.join(missing)} が必要です")
+            warnings.append(notice("engine.spells.requires", name=term(str(spec["name"])), needed=terms(missing)))
         cost = 0 if free else spell_karma_cost(kind, effects)
         if not free:
             paid += 1

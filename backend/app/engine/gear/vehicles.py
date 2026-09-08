@@ -13,6 +13,7 @@ from typing import Any
 from ...data_loader import catalog, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall, VehicleModInstall, WeaponMountInstall
+from ...notices import Notice, notice, term, ui
 from ..lookups import _item_by_id
 from ._common import (
     _capacity_value,
@@ -134,14 +135,6 @@ R5_MOD_SLOT_CATEGORIES = (
     "Electromagnetic",
     "Cosmetic",
 )
-R5_SLOT_LABELS = {
-    "Powertrain": "パワートレイン",
-    "Protection": "防護",
-    "Weapons": "武器",
-    "Body": "ボディ",
-    "Electromagnetic": "電磁",
-    "Cosmetic": "外装",
-}
 R5_SLOT_ADD_KEYS = {
     "Powertrain": "powertrainmodslots",
     "Protection": "protectionmodslots",
@@ -169,8 +162,8 @@ def _add_vehicle_slot_use(parent: dict[str, Any], slots: int, category: str, inc
     tracks[category] = int(tracks.get(category) or 0) + used
 
 
-def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[str]:
-    errors: list[str] = []
+def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[Notice]:
+    errors: list[Notice] = []
     for row in hosts:
         body = int((row.get("stats") or {}).get("body") or _leading_vehicle_stat(str(row.get("body") or "0")))
         if _host_is_drone(row):
@@ -180,7 +173,9 @@ def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[str]:
             row["slots_max"] = maximum
             row["slot_tracks"] = []
             if used > maximum:
-                errors.append(f"{row['name']} の改造スロット超過（{used}/{maximum}）")
+                errors.append(
+                    notice("engine.gear.vehicleSlotsOver", name=term(str(row["name"])), used=used, max=maximum)
+                )
             continue
         used_map = row.pop("_slot_used", None) or {}
         tracks: list[dict[str, Any]] = []
@@ -193,13 +188,20 @@ def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[str]:
             tracks.append(
                 {
                     "category": category,
-                    "label": R5_SLOT_LABELS[category],
                     "used": used,
                     "max": maximum,
                 }
             )
             if used > maximum:
-                errors.append(f"{row['name']} の{R5_SLOT_LABELS[category]}スロット超過（{used}/{maximum}）")
+                errors.append(
+                    notice(
+                        "engine.gear.vehicleCategorySlotsOver",
+                        name=term(str(row["name"])),
+                        category=ui(f"engine.vehicleSlot.{category}"),
+                        used=used,
+                        max=maximum,
+                    )
+                )
         row["slot_tracks"] = tracks
         row["slots_used"] = total_used
         row["slots_max"] = body
@@ -320,9 +322,9 @@ def _ensure_drone_equipment(state: CharacterState) -> None:
 def _resolve_vehicle_mods(
     state: CharacterState,
     drones: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
-    warnings: list[str] = []
-    errors: list[str] = []
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice]]:
+    warnings: list[Notice] = []
+    errors: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
     by_drone = {str(row.get("id") or ""): row for row in drones}
     kept: list[VehicleModInstall] = []
@@ -333,10 +335,12 @@ def _resolve_vehicle_mods(
         parent = by_drone.get(inst.parent_id or "")
         if not spec or not parent:
             if spec:
-                warnings.append(f"{spec['name']} は車両に装着してください")
+                warnings.append(notice("engine.gear.mountOnVehicle", name=term(str(spec["name"]))))
             continue
         if not inst.included and not mod_fits_vehicle(spec, parent):
-            warnings.append(f"{spec['name']} は {parent['name']} に装着できません")
+            warnings.append(
+                notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(parent["name"])))
+            )
             continue
         extras = _vehicle_extras(
             parent, parent.get("stats") or {}, int(parent.get("base_nuyen") or parent.get("nuyen") or 0)
@@ -389,9 +393,9 @@ def _resolve_weapon_mounts(
     state: CharacterState,
     drones: list[dict[str, Any]],
     weapons: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], int, list[str], list[str]]:
-    warnings: list[str] = []
-    errors: list[str] = []
+) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice]]:
+    warnings: list[Notice] = []
+    errors: list[Notice] = []
     parts = {item["id"]: item for item in catalog().get("weapon_mounts") or []}
     by_drone = {str(row.get("id") or ""): row for row in drones}
     weapons_by_id = {str(row.get("id") or ""): row for row in weapons}
@@ -404,10 +408,12 @@ def _resolve_weapon_mounts(
         size = parts.get(inst.size_id)
         if not parent or not size or size.get("category") != "Size":
             if size:
-                warnings.append(f"{size['name']} は車両に装着してください")
+                warnings.append(notice("engine.gear.mountOnVehicle", name=term(str(size["name"]))))
             continue
         if not inst.included and not vehicle_matches(parent, size.get("required")):
-            warnings.append(f"{size['name']} は {parent['name']} に装着できません")
+            warnings.append(
+                notice("engine.gear.doesNotFit", name=term(str(size["name"])), host=term(str(parent["name"])))
+            )
             continue
         defaults = _default_mount_parts(size)
         vis = parts.get(inst.visibility_id) or defaults.get("visibility")
@@ -429,16 +435,22 @@ def _resolve_weapon_mounts(
         _add_vehicle_slot_use(parent, slots, "Weapons", bool(inst.included))
         weapon = weapons_by_id.get(inst.weapon_install_id or "")
         if inst.weapon_install_id and not weapon:
-            warnings.append(f"{parent['name']} の武器マウントに武器がありません")
+            warnings.append(notice("engine.gear.weaponMountEmpty", name=term(str(parent["name"]))))
             inst.weapon_install_id = None
         elif weapon and weapon["id"] in used_weapons:
-            warnings.append(f"{weapon['name']} は既に搭載されています")
+            warnings.append(notice("engine.gear.weaponAlreadyMounted", name=term(str(weapon["name"]))))
             weapon = None
             inst.weapon_install_id = None
         elif weapon:
             allowed = (inst.allowedweapons or "").strip()
             if allowed and weapon["name"] not in {part.strip() for part in allowed.split(",") if part.strip()}:
-                warnings.append(f"{weapon['name']} は {parent['name']} のマウントに搭載できません")
+                warnings.append(
+                    notice(
+                        "engine.gear.weaponNotOnMount",
+                        name=term(str(weapon["name"])),
+                        host=term(str(parent["name"])),
+                    )
+                )
                 weapon = None
                 inst.weapon_install_id = None
             else:
