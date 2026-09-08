@@ -230,6 +230,8 @@ export interface WareInstall {
   parent_id?: string | null;
   included?: boolean;
   side?: string | null;
+  /** `<selectcyberware>`: name of the implant this one is keyed to. */
+  extra?: string | null;
 }
 
 export type PriorityLetter = "A" | "B" | "C" | "D" | "E";

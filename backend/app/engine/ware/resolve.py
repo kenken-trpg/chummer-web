@@ -68,6 +68,20 @@ def _ensure_kind_subsystems(
     return items + extra if extra else items
 
 
+def _select_ware_spec(nodes: list[dict[str, Any]]) -> dict[str, str] | None:
+    """The ``<selectcyberware>`` node's filter, or None when the ware has none.
+
+    Two implants carry the tag (CF p.147 / p.151) and both are keyed to another
+    piece of ware rather than granting one: the pick is a label. An empty
+    ``<category>`` means any implant of the same kind qualifies.
+    """
+    for node in nodes:
+        if node.get("tag") == "selectcyberware":
+            fields = node.get("fields") or {}
+            return {"category": str(fields.get("category") or "").strip()}
+    return None
+
+
 def has_adapsin(resolved: list[dict[str, Any]]) -> bool:
     """True when something in ``resolved`` carries an ``<adapsin />`` bonus.
 
@@ -117,6 +131,7 @@ def resolve_ware(
         nodes = substitute_rating(ware.get("bonus") or [], rating)
         if inst.wireless:
             nodes = nodes + substitute_rating(ware.get("wirelessbonus") or [], rating)
+        select_ware = _select_ware_spec(nodes)
         resolved.append(
             {
                 "id": inst.id,
@@ -141,6 +156,9 @@ def resolve_ware(
                 "limbslotcount": ware.get("limbslotcount") or "1",
                 "selectside": bool(ware.get("selectside")),
                 "side": _normalize_side(inst.side),
+                "select_ware": select_ware is not None,
+                "select_ware_category": str((select_ware or {}).get("category") or ""),
+                "extra": str(inst.extra or ""),
                 "avail": ware.get("avail") or "",
                 "source": ware.get("source"),
                 "bonus": nodes,
@@ -221,6 +239,42 @@ def _installed_ware_names(kind: str, items: list[CyberwareInstall]) -> set[str]:
         if ware:
             names.add(ware["name"])
     return names
+
+
+def check_ware_targets(
+    kind: str,
+    installs: list[CyberwareInstall],
+    resolved: list[dict[str, Any]],
+) -> list[Notice]:
+    """Validate every ``<selectcyberware>`` pick, dropping the ones that lapsed.
+
+    The pick names another catalogue implant; a name that no longer matches the
+    filter (a category edit, a hand-written character) is cleared on the install
+    itself so the character never carries a target the picker cannot show.
+    """
+    warnings: list[Notice] = []
+    by_id = {inst.id: inst for inst in installs}
+    for item in resolved:
+        if not item.get("select_ware"):
+            continue
+        inst = by_id.get(str(item.get("id") or ""))
+        picked = str(item.get("extra") or "")
+        options = set(ware_target_options(kind, str(item.get("select_ware_category") or "")))
+        if picked and picked not in options:
+            warnings.append(notice("engine.ware.targetInvalid", name=term(str(item["name"])), picked=term(picked)))
+            picked = ""
+            item["extra"] = ""
+            if inst:
+                inst.extra = None
+        if not picked:
+            warnings.append(notice("engine.ware.pickTarget", name=term(str(item["name"]))))
+    return warnings
+
+
+def ware_target_options(kind: str, category: str) -> list[str]:
+    """Names a ``<selectcyberware>`` pick may take, filtered by its category."""
+    rows = catalog_ware(kind).get("items") or []
+    return sorted({str(row["name"]) for row in rows if not category or str(row.get("category") or "") == category})
 
 
 def _required_warnings(

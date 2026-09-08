@@ -92,6 +92,26 @@ export function WareRow(props: {
               </select>
             </label>
           ) : null}
+          {item.select_ware && !item.included ? (
+            <label>
+              {ui("ware.target")}
+              <select
+                value={item.extra || ""}
+                onChange={(e) => onPatchRow(item.id, { extra: e.target.value })}
+              >
+                <option value="">{ui("common.choose")}</option>
+                {catalogItems
+                  .filter(
+                    (w) => !item.select_ware_category || w.category === item.select_ware_category,
+                  )
+                  .map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {tr(w.name)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
           {spec && ratingMax > ratingMin && !item.included ? (
             <label>
               {ui("common.rating")}

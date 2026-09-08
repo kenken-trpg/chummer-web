@@ -396,6 +396,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "rating": max(1, _int(w.find("rating"), 1)),
                 "grade": _text(w.find("grade")) or "Standard",
                 "side": _text(w.find("location")) or None,
+                "extra": _text(w.find("extra")) or None,
             }
             out.append(row)
             kids = w.findall("./children/cyberware") + w.findall("./children/bioware")

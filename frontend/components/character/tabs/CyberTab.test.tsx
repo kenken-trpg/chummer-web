@@ -158,6 +158,55 @@ describe("<CyberTab>", () => {
     expect(names).toEqual(["Datajack"]);
   });
 
+  it("a keyed implant offers only its category and patches the target", () => {
+    const patch = vi.fn();
+    const hive = { ...wired, id: "hive", name: "Nanohive, Soft", category: "Nanocybernetics" };
+    const soft = { ...datajack, id: "soft", name: "Nanotattoos", category: "Soft Nanoware" };
+    const ch = makeCharacter({
+      cyberware: [{ id: "row1", ware_id: "hive", rating: 1, grade: "Standard", wireless: false }],
+    });
+    const d = {
+      ...ch.derived,
+      cyberware: [
+        {
+          id: "row1",
+          ware_id: "hive",
+          name: "Nanohive, Soft",
+          category: "Nanocybernetics",
+          grade: "Standard",
+          rating: 1,
+          essence: 0.2,
+          nuyen: 10000,
+          select_ware: true,
+          select_ware_category: "Soft Nanoware",
+          extra: "",
+        },
+      ],
+    } as any;
+    render(
+      <CyberTab
+        catalog={cyberCatalog([hive, soft, datajack])}
+        character={{ ...ch, derived: d }}
+        d={d}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={patch}
+        setCharacter={() => {}}
+      />,
+    );
+    const select = screen.getByLabelText("対象") as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      "選択してください",
+      "Nanotattoos",
+    ]);
+    fireEvent.change(select, { target: { value: "Nanotattoos" } });
+    expect(patch).toHaveBeenCalledWith({
+      cyberware: [expect.objectContaining({ id: "row1", extra: "Nanotattoos" })],
+    });
+  });
+
   it("toggles a Redliner option through patch", () => {
     const patch = vi.fn();
     renderTab({ patch });
