@@ -29,6 +29,9 @@ export type SheetData = {
     pool: number;
     soft: number;
     spec?: string;
+    /** `<swapskillspecattribute>`: the attribute this skill rolls off *only*
+     *  when the named specialization applies, already worded for display. */
+    swapNote?: string;
   }[];
   groups: { name: string; rating: number; bonus: number }[];
   exotic: List<"exotic_skills">;
@@ -66,21 +69,33 @@ export function buildSheetData({
   const totals = d.totals || {};
   const enabled = new Set(d.enabled_tabs || []);
 
+  // `<swapskillattribute>` moves a skill onto another attribute outright; the
+  // spec-limited variant only moves the tests using that specialization, so it
+  // stays out of the pool and becomes a note on the row.
+  const swaps = d.skill_attribute_swaps || [];
+  const swapped = new Map(swaps.filter((s) => !s.spec).map((s) => [s.skill, s.attribute]));
+  const specSwaps = new Map(swaps.filter((s) => s.spec).map((s) => [s.skill, s]));
+
   const activeSkills = (catalog.skills.skills || [])
     .filter((s) => s.source === "SR5" && !s.exotic && !s.name.includes("Exotic"))
     .map((s) => {
       const rating = d.skill_totals?.[s.name] || 0;
       const soft = d.skillsoft?.[s.name] || 0;
       const effective = Math.max(rating, soft);
-      const attr = totals[s.attribute] || 0;
+      const attribute = swapped.get(s.name) || s.attribute;
+      const attr = totals[attribute] || 0;
       const spec = d.skill_specializations?.[s.name];
+      const specSwap = specSwaps.get(s.name);
       return {
         name: s.name,
-        attribute: s.attribute,
+        attribute,
         rating: effective,
         pool: effective + attr,
         soft: soft > rating ? soft : 0,
         spec,
+        swapNote: specSwap
+          ? ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })
+          : undefined,
       };
     })
     .filter((row) => row.rating > 0)

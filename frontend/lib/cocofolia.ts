@@ -83,6 +83,14 @@ export function buildChatPalette(
 
   const skillAttr: Record<string, string> = {};
   for (const s of catalog.skills?.skills || []) skillAttr[s.name] = s.attribute;
+  // `<swapskillattribute>` (Empathic Listener: Etiquette off INT) moves the
+  // pool *and* the limit that comes with the attribute; the spec-limited
+  // variant only moves the specialized roll below.
+  const specSwap: Record<string, { spec: string; attribute: string }> = {};
+  for (const row of d.skill_attribute_swaps || []) {
+    if (row.spec) specSwap[row.skill] = { spec: row.spec, attribute: row.attribute };
+    else skillAttr[row.skill] = row.attribute;
+  }
 
   const init = d.initiative || { value: 0, dice: 1 };
   const tm = d.test_mods || {};
@@ -104,7 +112,17 @@ export function buildChatPalette(
       const pool = rating + at(attr);
       roll(pool, tr(name), limit);
       const sp = specs[name];
-      if (sp) roll(pool + 2, `${tr(name)}：${tr(sp)}`, limit);
+      if (sp) {
+        // Only the named specialization swaps — any other one rolls as printed.
+        const swap = specSwap[name];
+        const swapped = swap && swap.spec === sp ? swap.attribute : "";
+        const specAttr = swapped || attr;
+        roll(
+          rating + at(specAttr) + 2,
+          `${tr(name)}：${tr(sp)}`,
+          swapped ? (ATTR_LIMIT[specAttr] ?? null) : limit,
+        );
+      }
     });
 
   const skillPool = (name: string) => d.skill_totals?.[name] || 0;

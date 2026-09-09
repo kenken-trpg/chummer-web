@@ -54,6 +54,18 @@ class SkillModRow(TypedDict):
     source: str
 
 
+class SkillAttributeSwapRow(TypedDict):
+    """``skill_attribute_swaps`` — ``<swapskillattribute>`` /
+    ``<swapskillspecattribute>``: the skill rolls off ``attribute`` instead of
+    its printed one. ``spec`` is empty for a swap that always applies, and the
+    specialization's name when only tests using it swap."""
+
+    skill: str
+    attribute: str
+    spec: str
+    source: str
+
+
 class NamedBonusRow(TypedDict):
     """``skill_specific_mods`` / ``skill_attribute_mods`` /
     ``spell_category_mods`` — a dice bonus keyed by a name (skill / attribute
@@ -63,6 +75,10 @@ class NamedBonusRow(TypedDict):
     bonus: int
     condition: str
     source: str
+    #: ``skill_attribute_mods`` only: the row came from
+    #: ``<skilllinkedattribute>``, so it reads the skill's *printed* attribute
+    #: rather than the one a ``SkillAttributeSwapRow`` moved it to.
+    linked: NotRequired[bool]
 
 
 # --- grants (G3) ---------------------------------------------------------

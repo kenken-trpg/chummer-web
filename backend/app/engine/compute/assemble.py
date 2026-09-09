@@ -346,6 +346,9 @@ def assemble(ctx: Ctx) -> None:
         "skill_group_bonus": ctx.skill_mods["skill_group_bonus"],
         "skill_category_bonus": ctx.skill_mods["skill_category_bonus"],
         "skill_bonus_notes": ctx.skill_mods["skill_bonus_notes"],
+        # `<swapskillattribute>`: which skills roll off another attribute,
+        # and (with a `spec`) which only do so for one specialization.
+        "skill_attribute_swaps": list(ctx.effects.get("skill_attribute_swaps") or []),
         "skill_max_bonus": ctx.skill_picks["skill_max_bonus"],
         "skill_pick_slots": ctx.skill_picks["slots"],
         "enabled_tabs": sorted(ctx.enabled),

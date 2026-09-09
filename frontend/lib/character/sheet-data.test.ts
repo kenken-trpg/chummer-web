@@ -96,4 +96,58 @@ describe("buildSheetData", () => {
       { name: "Pistols", attribute: "AGI", rating: 4, pool: 9, soft: 0, spec: undefined },
     ]);
   });
+
+  it("rolls a swapped skill off its new attribute, and notes a spec-only swap", () => {
+    const catalog = makeCatalog({
+      skills: {
+        groups: [],
+        knowledge: [],
+        skills: [
+          {
+            id: "1",
+            name: "Etiquette",
+            attribute: "CHA",
+            category: "Social",
+            skillgroup: null,
+            source: "SR5",
+          },
+          {
+            id: "2",
+            name: "Negotiation",
+            attribute: "CHA",
+            category: "Social",
+            skillgroup: null,
+            source: "SR5",
+          },
+        ],
+      } as any,
+    });
+    const s = buildSheetData({
+      character: makeCharacter({
+        derived: {
+          totals: { CHA: 2, INT: 5, LOG: 6 } as any,
+          skill_totals: { Etiquette: 3, Negotiation: 3 },
+          skill_attribute_swaps: [
+            { skill: "Etiquette", attribute: "INT", spec: "", source: "Empathic Listener" },
+            {
+              skill: "Negotiation",
+              attribute: "LOG",
+              spec: "Diplomacy",
+              source: "Master Debater",
+            },
+          ],
+        },
+      }),
+      catalog,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const [etiquette, negotiation] = s.activeSkills;
+    // Empathic Listener moves the pool onto INT; Master Debater only notes it,
+    // because LOG applies to the Diplomacy tests alone.
+    expect(etiquette).toMatchObject({ attribute: "INT", pool: 8, swapNote: undefined });
+    expect(negotiation.attribute).toBe("CHA");
+    expect(negotiation.pool).toBe(5);
+    expect(negotiation.swapNote).toContain("LOG");
+  });
 });

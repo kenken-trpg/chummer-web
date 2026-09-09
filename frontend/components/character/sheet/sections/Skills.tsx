@@ -38,7 +38,11 @@ export function SkillsSection(s: SheetData) {
               <td>
                 <b>{row.pool}</b>
               </td>
-              <td className="left">{row.spec ? tr(row.spec) : ""}</td>
+              <td className="left">
+                {row.spec ? tr(row.spec) : ""}
+                {/* Master Debater negotiates off LOG, but only in Diplomacy. */}
+                {row.swapNote ? <span className="sheet-note"> {row.swapNote}</span> : null}
+              </td>
             </tr>
           ))}
           {exotic.map((row) => {

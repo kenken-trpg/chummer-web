@@ -428,6 +428,9 @@ export interface Character {
     skill_group_bonus?: Record<string, number>;
     skill_category_bonus?: Record<string, number>;
     skill_bonus_notes?: Record<string, string[]>;
+    /** `<swapskillattribute>`: the skill rolls off `attribute` instead of its
+     *  printed one — with a `spec`, only for tests using that specialization. */
+    skill_attribute_swaps?: { skill: string; attribute: string; spec: string; source: string }[];
     skill_max_bonus?: Record<string, number>;
     skill_pick_slots?: SkillPickSlot[];
     power_points?: { used: number; max: number };

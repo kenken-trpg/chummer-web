@@ -40,6 +40,7 @@ from .effect_rows import (
     RestrictedGearRow,
     SelectPowerSlotRow,
     SelectQualitySlotRow,
+    SkillAttributeSwapRow,
     SkillModRow,
     SpellCategoryValueRow,
     SpellDescriptorValueRow,
@@ -179,6 +180,7 @@ class EffectsDict(TypedDict):
     skill_specific_mods: list[NamedBonusRow]
     focus_binding: list[FocusBindingRow]
     skill_attribute_mods: list[NamedBonusRow]
+    skill_attribute_swaps: list[SkillAttributeSwapRow]
     spell_category_mods: list[NamedBonusRow]
     spell_dice_pool: list[SpellDicePoolRow]
     action_dice_pools: list[ActionDicePoolRow]
@@ -254,6 +256,7 @@ def empty_effects() -> EffectsDict:
         "needs_mentor": False,
         "focus_binding": [],
         "skill_attribute_mods": [],
+        "skill_attribute_swaps": [],
         "spell_category_mods": [],
         "spell_dice_pool": [],
         "action_dice_pools": [],
