@@ -11,7 +11,7 @@ import {
   skillCatLabel,
 } from "@/lib/character/constants";
 import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
-import { skillDefault } from "@/lib/character/skill-default";
+import { DEFAULT_PENALTY, skillDefault } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
 
 export function SkillsTab({
@@ -75,6 +75,9 @@ export function SkillsTab({
   }, [catalog]);
 
   const catalogKnowledge = new Set((catalog.skills.knowledge || []).map((item) => item.name));
+  const blockedKnowCats = (KNOW_CATS as readonly string[]).filter((cat) =>
+    (d.blocked_default_categories || []).includes(cat),
+  );
   const matchedKnowledge = useMemo(() => {
     const q = knowSearch.trim().toLowerCase();
     return (catalog.skills.knowledge || [])
@@ -368,6 +371,21 @@ export function SkillsTab({
           ))}
       </div>
       <h3>{ui("skills.knowledge")}</h3>
+      {/* Knowledge rows only exist for skills the character bought, so the
+          defaulting numbers go on one line rather than on 195 rows of their
+          own. Every knowledge skill hangs off INT or LOG, so that is two
+          numbers — plus whatever Uneducated took away (SR5 p.80). */}
+      <p className="muted">
+        {ui("skills.knowDefault", {
+          int: Math.max(0, (d.totals?.INT || 0) - DEFAULT_PENALTY),
+          log: Math.max(0, (d.totals?.LOG || 0) - DEFAULT_PENALTY),
+        })}
+        {blockedKnowCats.length
+          ? ui("skills.knowDefaultBlocked", {
+              categories: blockedKnowCats.map((cat) => knowCatLabel(cat, ui)).join("・"),
+            })
+          : ""}
+      </p>
       <p className="muted">
         {ui("skills.knowledgeFree")}
         {career

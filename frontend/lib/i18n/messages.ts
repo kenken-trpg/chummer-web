@@ -138,6 +138,9 @@ const JA = {
   "skills.emptyExotic": "まだありません。下のボタンから追加します。",
   "skills.addNamed": "{name} を追加",
   "skills.knowledge": "知識技能",
+  "skills.knowDefault":
+    "未取得の知識技能もデフォルトで振れます: INT {int} ／ LOG {log}（−1・SR5 p.130）",
+  "skills.knowDefaultBlocked": " ／ {categories} はデフォルト不可",
   "skills.knowledgeFree": "無料枠は (INT + LOG) × 2 ・ 母語は1つ無料。",
   "skills.knowledgeCareerRange": "キャリアのレーティングは1〜{max}",
   "skills.knowledgeChargenRange": "作成時のレーティングは1〜6",
@@ -1724,6 +1727,9 @@ const EN: Catalog = {
   "skills.emptyExotic": "None yet. Add one with the buttons below.",
   "skills.addNamed": "Add {name}",
   "skills.knowledge": "Knowledge skills",
+  "skills.knowDefault":
+    "A knowledge skill you do not have still defaults: INT {int} / LOG {log} (−1, SR5 p.130)",
+  "skills.knowDefaultBlocked": " / {categories} cannot default",
   "skills.knowledgeFree": "Free points are (INT + LOG) × 2; one native language is free.",
   "skills.knowledgeCareerRange": "Career ratings run 1–{max}",
   "skills.knowledgeChargenRange": "Chargen ratings run 1–6",
