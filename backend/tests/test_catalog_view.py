@@ -68,6 +68,8 @@ EXPECTED_KEYS = {
     "weapon_mounts",
     # passthroughs
     "weapon_ranges",
+    "books",
+    "settings_presets",
     "translations",
     "ui_strings",
 }

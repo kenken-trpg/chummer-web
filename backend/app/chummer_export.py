@@ -45,6 +45,14 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "metatype", state.metatype)
     _sub(root, "metavariant", state.metavariant or "")
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
+    # Chummer keeps the enabled books in the settings *file*, not in the
+    # character, so all a .chum5 can carry is which settings the character was
+    # built under. The book list is restored on import by matching this name
+    # against the shipped presets; a name from elsewhere comes back
+    # unrestricted. Written only when set, so an untouched character exports
+    # byte-identically to before.
+    if state.settings.name:
+        _sub(root, "settings", state.settings.name)
     _sub(root, "created", "True" if state.career else "False")
     if state.notes:
         _sub(root, "notes", state.notes)

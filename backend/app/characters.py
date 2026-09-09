@@ -84,6 +84,13 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         current = dict(data.get("options") or {})
         current.update(updates.pop("options"))
         data["options"] = current
+    # Merged, not replaced, for the same reason `options` is: the books list
+    # and the preset name are edited from two different controls, and either
+    # one sending only its own field must not blank the other.
+    if "settings" in updates and updates["settings"] is not None:
+        current = dict(data.get("settings") or {})
+        current.update(updates.pop("settings"))
+        data["settings"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
     if "career" in updates:
         now_career = bool(updates["career"])

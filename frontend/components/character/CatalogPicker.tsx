@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useMemo, useState } from "react";
+import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import { type MsgKey, useUiText } from "@/lib/i18n";
 
 /**
@@ -33,11 +34,12 @@ export function PickerList<T>({
   note?: MsgKey;
   children: (item: T) => ReactNode;
 }) {
-  const shown = items.slice(0, limit);
+  const allowed = filterByBooks(useAllowedBooks(), items);
+  const shown = allowed.slice(0, limit);
   return (
     <>
       {shown.map(children)}
-      <PickerFootnote matched={items.length} shown={shown.length} note={note} />
+      <PickerFootnote matched={allowed.length} shown={shown.length} note={note} />
     </>
   );
 }
@@ -121,16 +123,19 @@ export function CatalogPicker<T extends Pickable>({
   const action = addLabel ?? ui("common.buy");
   const [search, setSearch] = useState("");
   const [cat, setCat] = useState("all");
+  // The settings' book list, applied before anything else — a category chip
+  // for a disabled book would otherwise select an empty list.
+  const allowed = filterByBooks(useAllowedBooks(), items);
 
   // Chips come from the listable items, so a chip can never select an empty
   // list (they used to be derived from a slightly wider filter).
   const categories = useMemo(
-    () => [...new Set(items.map((item) => item.category).filter(Boolean))].sort() as string[],
-    [items],
+    () => [...new Set(allowed.map((item) => item.category).filter(Boolean))].sort() as string[],
+    [allowed],
   );
 
   const query = search.trim().toLowerCase();
-  const matched = items
+  const matched = allowed
     .filter((item) => cat === "all" || item.category === cat)
     .filter((item) =>
       query

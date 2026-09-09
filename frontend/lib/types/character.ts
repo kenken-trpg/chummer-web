@@ -151,6 +151,13 @@ export interface Character {
     redliner_torso: boolean;
     redliner_skull: boolean;
   };
+  /** The ruleset this character is built under. `books` is the list of
+   *  enabled `<source>` codes, and **empty means unrestricted** — a character
+   *  saved before settings existed must keep seeing the whole catalog. */
+  settings?: {
+    name: string;
+    books: string[];
+  };
   derived: {
     errors: Notice[];
     warnings?: Notice[];

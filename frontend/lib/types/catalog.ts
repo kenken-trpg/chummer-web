@@ -320,6 +320,23 @@ export interface PowerCatalogItem {
   adeptwayrequires?: string[];
 }
 
+/** One rulebook: the `<source>` code items carry, and its English title.
+ *  `tr(name)` renders it — book names live in the normal translation map. */
+export interface BookInfo {
+  code: string;
+  name: string;
+}
+
+/** A ruleset the user can pick from the settings pulldown. */
+export interface SettingsPreset {
+  id: string;
+  name: string;
+  build_method: string;
+  /** Enabled `<source>` codes. Empty means the preset restricts nothing. */
+  books: string[];
+  sum_to_ten: number;
+}
+
 export interface Catalog {
   metatypes: {
     name: string;
@@ -402,6 +419,14 @@ export interface Catalog {
       }
     >
   >;
+  /** Every rulebook `source` can name, in `books.xml` order. The settings
+   *  pulldown lists these; nothing here is filtered by them — the client
+   *  narrows its own pick lists (see `lib/character/books.ts`). */
+  books: BookInfo[];
+  /** Chummer's shipped settings files, projected to the parts this app can
+   *  apply. Presets whose build method the engine has no support for are
+   *  dropped by the loader, so every entry here is selectable. */
+  settings_presets: SettingsPreset[];
   translations: Record<string, string>;
   /** `{locale: {key: text}}` — narrowed by the backend to what the app reads. */
   ui_strings: Record<string, Record<string, string>>;

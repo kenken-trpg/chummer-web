@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from .armor import load_armor, load_armor_mods
+from .books import load_books, load_settings_presets
 from .drugs import (
     boost_drug_attribute,
     drug_effect_summary,
@@ -89,6 +90,7 @@ __all__ = [
     "load_apps",
     "load_armor",
     "load_armor_mods",
+    "load_books",
     "load_commlinks",
     "load_cyberdecks",
     "load_drones",
@@ -120,6 +122,7 @@ __all__ = [
     "load_martial_arts",
     "load_metamagics",
     "load_priorities",
+    "load_settings_presets",
     "load_qi_focus",
     "load_skill_group_names",
     "load_translations",

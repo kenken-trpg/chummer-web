@@ -710,6 +710,17 @@ const JA = {
   "prio.cellHint": "{cat} を優先度 {letter} にする",
   "prio.cellSwapHint":
     "{cat} を優先度 {letter} にする（今そこを使っている {other} と入れ替わります）",
+  "settings.preset": "セッティング",
+  "settings.presetNone": "制限なし（全ルールブック）",
+  "settings.presetHint": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",
+  "settings.booksAll": "全ルールブックが対象",
+  "settings.booksCount": "使用ルールブック {count} / {total}",
+  "settings.custom": "カスタム",
+  "settings.booksShow": "ルールブックを選ぶ",
+  "settings.booksHide": "閉じる",
+  "settings.booksHint": "購入できる項目をルールブックで絞り込みます",
+  "settings.booksNote":
+    "チェックを外したルールブックの項目は購入一覧に出なくなります。すでに所持している装備・資質は消えません。すべて外すと制限なしに戻ります。",
   "prio.methodPriorityHint": "標準の作成法。A〜E を 5 項目に 1 つずつ割り当てます（SR5 p.65）",
   "prio.methodSumHint":
     "同じ表を使い、A=4／B=3／C=2／D=1／E=0 の合計が 10 になるように選びます。重複可",
@@ -2371,6 +2382,18 @@ const EN: Catalog = {
   "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
   "prio.cellHint": "Set {cat} to priority {letter}",
   "prio.cellSwapHint": "Set {cat} to priority {letter} (swaps with {other}, which holds it now)",
+  "settings.preset": "Ruleset",
+  "settings.presetNone": "Unrestricted (all rulebooks)",
+  "settings.presetHint":
+    "A settings file shipped with Chummer. Sets the rulebooks and the build method",
+  "settings.booksAll": "All rulebooks available",
+  "settings.booksCount": "Rulebooks {count} / {total}",
+  "settings.custom": "Custom",
+  "settings.booksShow": "Choose rulebooks",
+  "settings.booksHide": "Close",
+  "settings.booksHint": "Narrow what can be bought to the books you own",
+  "settings.booksNote":
+    "Entries from an unticked book drop out of the buy lists. Gear and qualities you already own are kept. Unticking every book means no restriction.",
   "prio.methodPriorityHint": "The standard build: one of A-E to each of the five rows (SR5 p.65)",
   "prio.methodSumHint":
     "Same table, but pick freely so A=4/B=3/C=2/D=1/E=0 sums to 10. Repeats allowed",

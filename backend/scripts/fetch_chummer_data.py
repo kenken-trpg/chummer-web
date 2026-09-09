@@ -30,6 +30,7 @@ DEFAULT_REF = "ed77aa3dcbe760064109d9af01ea9b5e4498294c"
 
 FILES = [
     "Chummer/data/books.xml",
+    "Chummer/data/settings.xml",
     "Chummer/data/priorities.xml",
     "Chummer/data/metatypes.xml",
     "Chummer/data/skills.xml",

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { BooksProvider } from "@/lib/character/books";
 import { CatalogPicker, type Pickable, PickerList } from "./CatalogPicker";
 
 const tr = (name: string) => (name === "Lined Coat" ? "ライナーコート" : name);
@@ -12,17 +13,19 @@ const items: Item[] = [
   { id: "c", name: "Chameleon Suit", category: "Cloaks", source: "RG", cost: 1500 },
 ];
 
-function setup(props: { limit?: number } = {}) {
+function setup(props: { limit?: number } = {}, books?: string[]) {
   const onAdd = vi.fn();
   render(
-    <CatalogPicker
-      items={items}
-      label="防具を検索"
-      tr={tr}
-      describe={(item) => `${item.cost}¥`}
-      onAdd={onAdd}
-      {...props}
-    />,
+    <BooksProvider books={books}>
+      <CatalogPicker
+        items={items}
+        label="防具を検索"
+        tr={tr}
+        describe={(item) => `${item.cost}¥`}
+        onAdd={onAdd}
+        {...props}
+      />
+    </BooksProvider>,
   );
   return { onAdd };
 }
@@ -77,6 +80,28 @@ describe("CatalogPicker", () => {
     // not twenty buttons all called "購入"
     fireEvent.click(screen.getByRole("button", { name: "ライナーコート を購入" }));
     expect(onAdd).toHaveBeenCalledWith(items[0]);
+  });
+});
+
+describe("CatalogPicker under a settings book list", () => {
+  it("hides a disabled book even from a search", () => {
+    // the idle list is SR5-only anyway; the book filter has to survive the
+    // search that normally reaches the supplements
+    setup({}, ["SR5"]);
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "suit" } });
+    expect(screen.queryByText("Chameleon Suit")).toBeNull();
+    expect(screen.getByRole("status").textContent).toContain("該当なし");
+  });
+
+  it("drops the category chip of a book that is off", () => {
+    setup({}, ["SR5"]);
+    expect(screen.queryByRole("button", { name: "Cloaks" })).toBeNull();
+  });
+
+  it("still shows the book once it is enabled", () => {
+    setup({}, ["SR5", "RG"]);
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "suit" } });
+    expect(screen.getByText("Chameleon Suit")).toBeDefined();
   });
 });
 

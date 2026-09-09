@@ -12,6 +12,7 @@ import type { Tab } from "@/lib/character/constants";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
+import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
 
 export default function Page() {
@@ -49,54 +50,58 @@ export default function Page() {
   };
 
   return (
-    <div className={`app ${tab === "sheet" ? "sheet-mode" : ""}`}>
-      {/* the toolbar is ~15 controls deep; give the keyboard a way past it */}
-      <a className="skip-link" href="#main">
-        {ui("nav.skipToMain")}
-      </a>
-      <main className="main" id="main">
-        <header className="no-print">
-          <div className="topline">
-            <h1>CHUMMER WEB</h1>
-            <LocaleSwitch />
-          </div>
-          <p className="sub">{ui("app.tagline")}</p>
+    // The settings' book list narrows every catalog pick list, so it wraps the
+    // whole editor rather than being threaded through `TabPanelProps`.
+    <BooksProvider books={ch.settings?.books}>
+      <div className={`app ${tab === "sheet" ? "sheet-mode" : ""}`}>
+        {/* the toolbar is ~15 controls deep; give the keyboard a way past it */}
+        <a className="skip-link" href="#main">
+          {ui("nav.skipToMain")}
+        </a>
+        <main className="main" id="main">
+          <header className="no-print">
+            <div className="topline">
+              <h1>CHUMMER WEB</h1>
+              <LocaleSwitch />
+            </div>
+            <p className="sub">{ui("app.tagline")}</p>
 
-          <Toolbar
-            ed={ed}
-            ch={ch}
-            catalog={catalog}
+            <Toolbar
+              ed={ed}
+              ch={ch}
+              catalog={catalog}
+              tab={tab}
+              setTab={setTab}
+              sheetLayout={sheetLayout}
+              setSheetLayout={setSheetLayout}
+              fileRef={fileRef}
+            />
+
+            {notice ? <p className="notice">{notice}</p> : null}
+
+            <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
+          </header>
+
+          <TabPanels
             tab={tab}
-            setTab={setTab}
+            panel={panel}
             sheetLayout={sheetLayout}
-            setSheetLayout={setSheetLayout}
-            fileRef={fileRef}
+            onPortraitFile={onPortraitFile}
+            setTab={setTab}
           />
 
-          {notice ? <p className="notice">{notice}</p> : null}
+          <AppFooter />
+        </main>
 
-          <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
-        </header>
-
-        <TabPanels
-          tab={tab}
-          panel={panel}
-          sheetLayout={sheetLayout}
-          onPortraitFile={onPortraitFile}
-          setTab={setTab}
+        <CharacterSidebar
+          catalog={catalog}
+          character={ch}
+          d={d}
+          tr={tr}
+          error={error}
+          patch={patch}
         />
-
-        <AppFooter />
-      </main>
-
-      <CharacterSidebar
-        catalog={catalog}
-        character={ch}
-        d={d}
-        tr={tr}
-        error={error}
-        patch={patch}
-      />
-    </div>
+      </div>
+    </BooksProvider>
   );
 }

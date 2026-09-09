@@ -153,6 +153,29 @@ class _Resolver:
         return None
 
 
+def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
+    """`<settings>` -> `SettingsState`.
+
+    Chummer writes the name (older builds, the file name) of the settings the
+    character was built under; the enabled books live in that file, which is
+    not part of the save. So the books are recovered by looking the name up
+    among the shipped presets, and a settings file this app has never seen
+    comes back as a name with no book restriction — the whole catalog, which
+    is what an unset `books` means everywhere else.
+    """
+    el = root.find("settings")
+    # Some builds write `<settings>` as a container of house-rule elements
+    # rather than a name; there is nothing to take from that.
+    name = _text(el) if el is not None and len(el) == 0 else ""
+    name = name.removesuffix(".xml").strip()
+    if not name:
+        return {}
+    for preset in cat.get("settings_presets") or []:
+        if preset.get("name") == name:
+            return {"name": name, "books": list(preset.get("books") or [])}
+    return {"name": name, "books": []}
+
+
 def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read name, metatype, build method, the bio fields and the portrait."""
     st["name"] = _text(root.find("alias")) or _text(root.find("name")) or "Imported Runner"
@@ -161,6 +184,7 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["metavariant"] = mv if mv and mv.lower() not in ("none", "") else None
     st["talent"] = _text(root.find("./priorities/prioritytalent")) or _text(root.find("prioritytalent")) or "Mundane"
     st["build_method"] = _BUILD_METHODS.get(_text(root.find("buildmethod")).lower(), "Priority")
+    st["settings"] = _import_settings(root, cat)
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
     st["notes"] = _text(root.find("notes"))

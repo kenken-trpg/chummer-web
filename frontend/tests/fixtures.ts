@@ -115,6 +115,8 @@ export function makeCatalog(overrides: Partial<Catalog> = {}): Catalog {
     vehicles: [],
     vehicle_mods: [],
     weapon_mounts: [],
+    books: [],
+    settings_presets: [],
     ...overrides,
   } as Catalog;
 }

@@ -66,6 +66,10 @@ class CatalogDict(TypedDict):
     magic_arts: list[Row]
     echoes: list[Row]
     priorities: list[Row]
+    #: books.xml — [{code, name}]; every row's `source` is one of these codes
+    books: list[Row]
+    #: settings.xml — Chummer's shipped rulesets, see loaders/books.py
+    settings_presets: list[Row]
     translations: dict[str, str]
     #: {locale: {key: text}} — see loaders/translations.py
     ui_strings: dict[str, dict[str, str]]

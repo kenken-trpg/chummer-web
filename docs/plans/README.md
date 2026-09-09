@@ -23,6 +23,10 @@
 - [`refactor-character-sheet-plan.md`](refactor-character-sheet-plan.md) — シート描画の分割
 - [`refactor-sidebar-qualities-plan.md`](refactor-sidebar-qualities-plan.md) — サイドバーと資質タブ
 
+### ルール / データ
+
+- [`settings-plan.md`](settings-plan.md) — Chummer セッティングファイルの移植（段階 1: 使用書籍）
+
 ### エンジン / バックエンド
 
 - [`refactor-compute-phases-plan.md`](refactor-compute-phases-plan.md) — `compute()` のフェーズ分割
