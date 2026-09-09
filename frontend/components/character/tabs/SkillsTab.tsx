@@ -149,14 +149,22 @@ export function SkillsTab({
 
   /** The one-line "what am I about to drag" for an active-skill row: the
    *  linked attribute and category, plus whatever the engine says is already
-   *  modifying it. */
+   *  modifying it. A `<swapskillattribute>` replaces the printed attribute
+   *  outright; the spec-limited variant only earns a trailing note. */
   function skillHint(name: string, attribute: string, category: string): string {
+    const swaps = (d.skill_attribute_swaps || []).filter((row) => row.skill === name);
+    const swap = swaps.find((row) => !row.spec);
+    const specSwap = swaps.find((row) => row.spec);
     return [
       ui("skills.rowHint", {
-        attr: attribute,
+        attr: swap ? swap.attribute : attribute,
         category: skillCatLabel(category, ui),
         max: skillMax + (d.skill_max_bonus?.[name] || 0),
       }),
+      ...(swap ? [ui("skills.attrSwap", { attr: swap.attribute, source: tr(swap.source) })] : []),
+      ...(specSwap
+        ? [ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })]
+        : []),
       ...(d.skill_bonus_notes?.[name] || []),
     ].join(" / ");
   }

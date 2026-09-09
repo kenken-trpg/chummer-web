@@ -108,6 +108,7 @@ IMPLEMENTED = {
     "judgeintentionsdefense",
     "judgeintentionsoffense",
     "dodge",
+    "defensetest",
     "surprise",
     "selectattributes",
     "physicalcmrecovery",
@@ -191,6 +192,8 @@ IMPLEMENTED = {
     "throwstr",
     "throwrangestr",
     "weaponcategorydice",
+    "swapskillattribute",
+    "swapskillspecattribute",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -230,9 +233,6 @@ SILENT_TAGS = {
     "astralreputation",
     "specialattburnmultiplier",
     "allowspritefettering",
-    "defensetest",
-    "swapskillattribute",
-    "swapskillspecattribute",
     "skillgrouplevel",
     "matrixinitiativedice",
     "devicerating",
@@ -290,6 +290,9 @@ SPECIAL_ARMOR_KEYS = (
 )
 IMMUNE_KEYS = ("toxin_contact", "toxin_inhalation", "pathogen_contact", "pathogen_inhalation")
 TEST_MOD_TAGS = {
+    # `defensetest` rides the `dodge` bucket: both end up in the same defense
+    # pool (REA + INT + these), and Chummer prints them in the same place.
+    "defensetest": "dodge",
     "memory": "memory",
     "composure": "composure",
     "judgeintentions": "judge_intentions",

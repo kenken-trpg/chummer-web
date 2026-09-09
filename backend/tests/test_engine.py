@@ -60,6 +60,9 @@ WEBBING = "4a939488-bd12-42f9-847f-1034fc3b4154"
 DRAGON_HIDE = "8aa2590f-1fc5-4706-a7b9-9eec3db4fab9"
 PUSHED = "2c988cbe-e6e6-4c22-ae3c-14ad6e1fff1f"
 QUALIA = "b110516e-36e8-4c69-a682-066e91c02351"
+EMPATHIC_LISTENER = "919cc565-a5b6-4eda-addb-afa2e293af24"
+MASTER_DEBATER = "41416949-62eb-4638-9457-fd7e833cea58"
+CYCLOPEAN_EYE = "acd06d4f-7f09-4d80-8bab-006b680392a2"
 DAMPER = "3785a2cf-c3df-476a-b7cd-6e224ea77ab0"
 ADAPSIN = "3f8b9030-662e-4212-8f30-5aa394a41568"
 MYOSTATIN = "1b6713f7-f5b6-49fb-a89a-68322c06f38d"
@@ -3243,6 +3246,54 @@ def test_qualia_and_pushed_stack_on_a_skill_linked_to_both() -> None:
     # Qualia is INT, PuSHed is LOG, so no single skill takes both.
     assert out.derived["skill_bonus"]["Perception"] == 1
     assert out.derived["skill_bonus"]["Computer"] == 1
+
+
+def test_empathic_listener_moves_etiquette_onto_intuition() -> None:
+    """`swapskillattribute` changes the skill's linked attribute for good
+    (Empathic Listener reads the room rather than works it, RF p.153)."""
+    out = compute(_mundane("empath", quality_ids=[EMPATHIC_LISTENER]))
+    assert out.derived["skill_attribute_swaps"] == [
+        {"skill": "Etiquette", "attribute": "INT", "spec": "", "source": "Empathic Listener"}
+    ]
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "swapskillattribute" not in tags
+
+
+def test_a_swapped_skill_keeps_taking_bonuses_by_its_printed_attribute() -> None:
+    """Chummer tells `skillattribute` and `skilllinkedattribute` apart only
+    once something swapped: the linked one stays on the printed attribute, so
+    Qualia's INT dice miss the Etiquette that moved onto INT."""
+    out = compute(
+        _mundane(
+            "empath-qualia",
+            quality_ids=[EMPATHIC_LISTENER],
+            bioware=[CyberwareInstall(ware_id=QUALIA)],
+        )
+    )
+    bonus = out.derived["skill_bonus"]
+    assert bonus["Perception"] == 1  # printed INT
+    assert bonus.get("Etiquette", 0) == 0  # printed CHA, swapped to INT
+
+
+def test_master_debater_swaps_only_the_specialized_tests() -> None:
+    out = compute(_mundane("debater", quality_ids=[MASTER_DEBATER]))
+    assert out.derived["skill_attribute_swaps"] == [
+        {
+            "skill": "Negotiation",
+            "attribute": "LOG",
+            "spec": "Diplomacy",
+            "source": "Master Debater",
+        }
+    ]
+
+
+def test_cyclopean_eye_costs_a_die_on_defense_tests() -> None:
+    """`defensetest` lands in the same pool as `dodge` — one eye, no depth
+    perception (RF p.154)."""
+    out = compute(_mundane("one-eye", quality_ids=[CYCLOPEAN_EYE]))
+    assert out.derived["test_mods"]["dodge"] == -1
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "defensetest" not in tags
 
 
 def test_insulation_and_nonconductivity_add_special_armor() -> None:

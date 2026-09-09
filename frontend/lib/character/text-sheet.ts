@@ -86,7 +86,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.skills");
     x.activeSkills.forEach((s) =>
       line(
-        `  ${tr(s.name)}${s.spec ? "（" + tr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]`,
+        `  ${tr(s.name)}${s.spec ? "（" + tr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
       ),
     );
     x.exotic.forEach((r) =>

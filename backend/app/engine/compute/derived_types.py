@@ -18,6 +18,7 @@ from typing import Any, TypedDict
 from ...improvements.effect_rows import (
     ActionDicePoolRow,
     AddSpiritPickRow,
+    SkillAttributeSwapRow,
     SpellDicePoolRow,
     UnimplementedRow,
 )
@@ -326,6 +327,7 @@ class DerivedDict(TypedDict):
     skill_group_bonus: dict[str, int]
     skill_category_bonus: dict[str, int]
     skill_bonus_notes: dict[str, list[str]]
+    skill_attribute_swaps: list[SkillAttributeSwapRow]
     skill_max_bonus: dict[str, int]
     skill_pick_slots: list[Row]
     #: Skills that default without the −1 (Reflex Recorder Optimization).

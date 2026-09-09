@@ -370,6 +370,7 @@
   },
   "reward_log": [],
   "sensors": [],
+  "skill_attribute_swaps": [],
   "skill_bonus": {},
   "skill_bonus_notes": {},
   "skill_category_bonus": {},

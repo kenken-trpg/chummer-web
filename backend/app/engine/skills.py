@@ -393,6 +393,17 @@ def resolve_skill_mods(
     for spec_mod in effects.get("skill_specific_mods") or []:
         add_bonus(spec_mod.get("name") or "", int(spec_mod.get("bonus") or 0), spec_mod.get("condition") or "")
 
+    # `<swapskillattribute>` moves a skill onto another attribute for good;
+    # the spec-limited variant only moves the tests that use its
+    # specialization, so it stays out of the pool maths and is passed on as a
+    # note instead.
+    swapped: dict[str, str] = {}
+    for swap in effects.get("skill_attribute_swaps") or []:
+        name = str(swap.get("skill") or "").strip()
+        attribute = str(swap.get("attribute") or "").strip().upper()
+        if name and attribute and not swap.get("spec"):
+            swapped[name] = attribute
+
     for attr_mod in effects.get("skill_attribute_mods") or []:
         attr = (attr_mod.get("name") or "").upper()
         bonus = int(attr_mod.get("bonus") or 0)
@@ -405,9 +416,12 @@ def resolve_skill_mods(
         # the whole catalog, not the character's sheet.
         seen: set[str] = set()
         for skill in active + knowledge:
-            if (skill.get("attribute") or "").upper() != attr:
-                continue
             skill_name = str(skill["name"])
+            printed = (skill.get("attribute") or "").upper()
+            # `<skilllinkedattribute>` reads the printed attribute even after a
+            # swap; `<skillattribute>` follows the skill where it went.
+            if (printed if attr_mod.get("linked") else swapped.get(skill_name, printed)) != attr:
+                continue
             if skill_name in seen:
                 continue
             if skill.get("knowledge") and skill_name not in bought_knowledge:

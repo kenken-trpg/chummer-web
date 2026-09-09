@@ -51,10 +51,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         )
     elif tag in {"skillattribute", "skilllinkedattribute"}:
         # Chummer tells the two apart only once something has *swapped* a
-        # skill's attribute: `skillattribute` then follows the swap and
-        # `skilllinkedattribute` stays on the printed one. We ignore
-        # `swapskillattribute` (it is in SILENT_TAGS), so no skill here ever
-        # leaves its printed attribute and the two collapse into one rule.
+        # skill's attribute: `skillattribute` follows the swap, while
+        # `skilllinkedattribute` keeps looking at the printed one. Both shapes
+        # are the same row; `linked` says which attribute it reads.
         name = (fields.get("name") or node.get("value") or "").strip().upper()
         bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"))
         if not name or bonus == 0:
@@ -65,8 +64,27 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 "bonus": bonus,
                 "condition": (fields.get("condition") or "").strip(),
                 "source": source,
+                "linked": tag == "skilllinkedattribute",
             }
         )
+    elif tag in {"swapskillattribute", "swapskillspecattribute"}:
+        # `<limittoskill>` names the skill whose linked attribute moves; the
+        # spec variant only moves it for tests that use `<spec>` (Master
+        # Debater negotiates off LOG, but only when talking Diplomacy).
+        attribute = (fields.get("attribute") or "").strip().upper()
+        spec = (fields.get("spec") or "").strip() if tag == "swapskillspecattribute" else ""
+        for raw in str(fields.get("limittoskill") or "").split(","):
+            skill_name = raw.strip()
+            if not skill_name or not attribute:
+                continue
+            effects["skill_attribute_swaps"].append(
+                {
+                    "skill": skill_name,
+                    "attribute": attribute,
+                    "spec": spec,
+                    "source": source,
+                }
+            )
     elif tag == "skillwire":
         effects["skillwires"] = max(
             int(effects.get("skillwires") or 0),

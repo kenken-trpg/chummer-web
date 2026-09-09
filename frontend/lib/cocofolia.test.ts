@@ -49,6 +49,51 @@ describe("buildChatPalette", () => {
     expect(out).toContain("11B6@3 Pistols：Revolvers");
   });
 
+  it("rolls a swapped skill off its new attribute, spec swaps only with the spec", () => {
+    const catalog = makeCatalog({
+      skills: {
+        groups: [],
+        skills: [
+          {
+            id: "1",
+            name: "Etiquette",
+            attribute: "CHA",
+            category: "Social",
+            skillgroup: null,
+            source: "SR5",
+          },
+          {
+            id: "2",
+            name: "Negotiation",
+            attribute: "CHA",
+            category: "Social",
+            skillgroup: null,
+            source: "SR5",
+          },
+        ],
+      } as any,
+    });
+    const ch = makeCharacter({
+      skill_specializations: { Negotiation: "Diplomacy" },
+      derived: {
+        totals: { CHA: 2, INT: 5, LOG: 6 } as any,
+        limits: { physical: 0, mental: 7, social: 3 } as any,
+        skill_totals: { Etiquette: 3, Negotiation: 3 },
+        skill_specializations: { Negotiation: "Diplomacy" },
+        skill_attribute_swaps: [
+          { skill: "Etiquette", attribute: "INT", spec: "", source: "Empathic Listener" },
+          { skill: "Negotiation", attribute: "LOG", spec: "Diplomacy", source: "Master Debater" },
+        ],
+      },
+    });
+    const out = buildChatPalette(ch, catalog, identityTr);
+    // Etiquette moved onto INT, and took the mental limit with it.
+    expect(out).toContain("8B6@7 Etiquette");
+    // Negotiation itself still rolls CHA; only the Diplomacy line swaps.
+    expect(out).toContain("5B6@3 Negotiation");
+    expect(out).toContain("11B6@7 Negotiation：Diplomacy");
+  });
+
   it("emits a weapon attack line (pool = skill + AGI, limit = Accuracy)", () => {
     const ch = makeCharacter({
       derived: {
