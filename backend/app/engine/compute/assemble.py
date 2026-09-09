@@ -348,6 +348,7 @@ def assemble(ctx: Ctx) -> None:
         "skill_bonus_notes": ctx.skill_mods["skill_bonus_notes"],
         "skill_max_bonus": ctx.skill_picks["skill_max_bonus"],
         "skill_pick_slots": ctx.skill_picks["slots"],
+        "no_default_penalty_skills": ctx.skill_picks["no_default_penalty"],
         "enabled_tabs": sorted(ctx.enabled),
         "unimplemented_bonuses": ctx.effects["unimplemented"],
         "qualities": [

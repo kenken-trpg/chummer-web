@@ -430,6 +430,8 @@ export interface Character {
     skill_bonus_notes?: Record<string, string[]>;
     skill_max_bonus?: Record<string, number>;
     skill_pick_slots?: SkillPickSlot[];
+    /** Skills that default without the −1 (Reflex Recorder Optimization). */
+    no_default_penalty_skills?: string[];
     power_points?: { used: number; max: number };
     metagenic?: {
       limit: number;

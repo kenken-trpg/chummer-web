@@ -58,6 +58,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         # ignores that many boxes before the first penalty (High Pain Tolerance).
         effects["cm_threshold"] += _as_int(fields.get("threshold"))
         effects["cm_threshold_offset"] += _as_int(fields.get("thresholdoffset"))
+    elif tag == "drugpositiveattributemodifier":
+        effects["drug_positive_attribute"] += _bonus_int(node, fields)
+    elif tag == "reflexrecorderoptimization":
+        effects["reflex_recorder_optimization"] = True
     elif tag == "initiative":
         effects["initiative"] += _bonus_int(node, fields)
     elif tag == "initiativepass":

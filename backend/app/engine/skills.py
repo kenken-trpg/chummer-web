@@ -549,12 +549,34 @@ def _extra_kind(spec: dict[str, Any]) -> str:
     return str(spec.get("extra_kind") or "")
 
 
+#: The bioware whose pick `<reflexrecorderoptimization>` widens. Both printings
+#: ("Reflex Recorder", "Reflex Recorder (2050)") carry the same skill pick.
+REFLEX_RECORDER = "Reflex Recorder"
+
+
+def _default_free_skills(picked: str, skills_data: dict[str, Any]) -> list[str]:
+    """What a Reflex Recorder's pick covers once optimized (CF p.165).
+
+    The recorded skill defaults without the −1, and so does the rest of its
+    skill group — a skill outside any group covers only itself.
+    """
+    catalog_skills = skills_data.get("skills") or []
+    spec = next((item for item in catalog_skills if item.get("name") == picked), None)
+    group = str((spec or {}).get("skillgroup") or "").strip()
+    if not group:
+        return [picked] if spec else []
+    return [str(item["name"]) for item in catalog_skills if str(item.get("skillgroup") or "") == group]
+
+
 def resolve_skill_picks(
     state: CharacterState,
     skills_data: dict[str, Any],
     skill_totals: dict[str, int],
+    *,
+    reflex_optimized: bool = False,
 ) -> SkillPicks:
     slots: list[dict[str, Any]] = []
+    default_free: list[str] = []
     warnings: list[Notice] = []
     skill_max: dict[str, int] = {}
     pick_bonus: dict[str, int] = {}
@@ -586,6 +608,12 @@ def resolve_skill_picks(
         if picked and rating:
             bucket = hardwire_knowledge if spec.get("knowledgeskills") else hardwire_active
             bucket[picked] = max(int(bucket.get(picked) or 0), rating)
+        # Narrow: the geneware speaks of the recorder's skill, nobody else's.
+        optimized = reflex_optimized and source_kind == "bioware" and source.startswith(REFLEX_RECORDER)
+        covered = _default_free_skills(picked, skills_data) if optimized and picked else []
+        for name in covered:
+            if name not in default_free:
+                default_free.append(name)
         slots.append(
             {
                 "key": key,
@@ -598,6 +626,7 @@ def resolve_skill_picks(
                 "rating": rating,
                 "options": options,
                 "knowledgeskills": bool(spec.get("knowledgeskills")),
+                "default_free": bool(covered),
             }
         )
 
@@ -635,4 +664,5 @@ def resolve_skill_picks(
         "skill_bonus": pick_bonus,
         "skill_bonus_notes": pick_notes,
         "hardwires": {"active": hardwire_active, "knowledge": hardwire_knowledge},
+        "no_default_penalty": sorted(default_free),
     }
