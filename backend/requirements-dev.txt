@@ -2,10 +2,13 @@
 
 # Test + lint + type-check only — kept out of requirements.txt so they don't
 # land in the runtime image. Versions loose; CI is lockfile-free and tolerates
-# minor drift.
+# minor drift — except for the formatter, see `ruff` below.
 pytest>=9.1.1
 pytest-cov>=7.1.0  # `make coverage-backend`; measurement only, no gate
 httpx>=0.28.1  # starlette TestClient
 hypothesis>=6.167.1  # generated .chum5 roundtrips (tests/test_chummer_roundtrip_property.py)
-ruff>=0.16.5
+# Pinned, not floored: ruff's own output is the gate, so a new release turns CI
+# red on untouched code (0.16.6's isort began reading a trailing `#:` comment as
+# part of the import block, PR #42). Bump it deliberately, with the diff.
+ruff==0.16.6
 mypy>=2.3.1
