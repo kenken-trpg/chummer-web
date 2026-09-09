@@ -294,7 +294,12 @@ def _sort_key(v: Any) -> str:
             "grade",
         ):
             if k in v:
-                return f"{k}:{v[k]}"
+                # The id alone is not a key: a character can hold the same
+                # implant twice — one bought, one bundled with its parent (a
+                # Control Rig comes with a Datajack) — and rows that tie sort
+                # in input order, which is exactly what differs between two
+                # passes. The rest of the row breaks the tie.
+                return f"{k}:{v[k]}|{repr(sorted(v.items()))}"
         return repr(sorted(v.items()))
     return repr(v)
 

@@ -239,3 +239,39 @@ def test_career_roundtrip_is_a_fixed_point() -> None:
     assert ch1.derived["career"] is ch2.derived["career"] is True
     assert len(ch1.derived["martial_arts"]) == len(ch2.derived["martial_arts"]) == 1
     assert ch1.derived["karma"] == ch2.derived["karma"]
+
+
+# --------------------------------------------------------------------------- #
+# Scenario E — the same implant twice: one bought, one bundled                 #
+# --------------------------------------------------------------------------- #
+
+_TWICE_XML = build_chum5(
+    name="Rigger",
+    metatype="Human",
+    talent="Mundane",
+    priorities=("D", "A", "E", "C", "B"),
+    cyberware=[
+        # The Control Rig carries a Datajack of its own (`<subsystems>`), and
+        # this character bought a second one outright.
+        {"name": "Control Rig", "rating": 1},
+        {"name": "Datajack", "rating": 1},
+    ],
+)
+
+
+def test_a_bought_implant_and_its_bundled_twin_both_survive() -> None:
+    """Two rows for one implant, telling them apart by who owns them: the
+    bought Datajack stands alone, the Control Rig's hangs off the rig and is
+    marked bundled. Both come back, and the second trip changes nothing."""
+    s1, ch1, ch2 = _loop(_TWICE_XML)
+    datajacks = [row for row in ch1.derived["cyberware"] if row["name"] == "Datajack"]
+    assert len(datajacks) == 2
+    bundled = next(row for row in datajacks if row["included"])
+    bought = next(row for row in datajacks if not row["included"])
+    rig = next(row for row in ch1.derived["cyberware"] if row["name"] == "Control Rig")
+    assert bundled["parent_id"] == rig["id"]
+    assert bought["parent_id"] is None
+    assert bundled["essence"] == 0  # paid for inside the rig
+    assert bought["essence"] > 0
+    assert len(ch2.derived["cyberware"]) == len(ch1.derived["cyberware"])
+    assert ch1.derived["essence"] == ch2.derived["essence"]
