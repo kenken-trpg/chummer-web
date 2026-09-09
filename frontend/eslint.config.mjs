@@ -66,9 +66,9 @@ export default [
     // `components/` does (the text sheet, the formatters, the small JSX bits),
     // and leaving it out is how `bits.tsx` kept two literals nobody noticed.
     //
-    // Two files are exempt. `lib/i18n/messages.ts` *is* the dictionary, and
-    // `lib/cocofolia.ts` writes for a Japanese VTT on purpose (README) — the
-    // one place a locale is pinned rather than followed. See docs/i18n.md.
+    // One file is exempt: `lib/i18n/messages.ts` *is* the dictionary. The
+    // Cocofolia export used to be exempt as well; it now takes a locale and
+    // reads its labels out of the dictionary like everything else.
     files: [
       "app/**/*.tsx",
       "app/**/*.ts",
@@ -77,7 +77,7 @@ export default [
       "lib/**/*.tsx",
       "lib/**/*.ts",
     ],
-    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/messages.ts", "lib/cocofolia.ts"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/messages.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",

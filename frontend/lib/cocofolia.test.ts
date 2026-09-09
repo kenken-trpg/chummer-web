@@ -166,6 +166,48 @@ describe("buildChatPalette", () => {
   });
 });
 
+describe("the export follows the UI locale", () => {
+  const ch = makeCharacter({
+    derived: {
+      totals: { AGI: 5, REA: 4, INT: 3 } as any,
+      skill_totals: { Pistols: 4 },
+      spirits: [
+        {
+          name: "Spirit of Air",
+          bound: true,
+          force: 4,
+          services: 2,
+          attributes: { BOD: 2, REA: 8, INT: 4, WIL: 4 },
+          powers: ["Accident", "Confusion"],
+        },
+      ] as any,
+    },
+  });
+
+  it("stays Japanese when nothing says otherwise — Cocofolia is a Japanese VTT", () => {
+    expect(buildChatPalette(ch, pistolsCatalog, identityTr)).toContain("イニシアチブ");
+  });
+
+  it("writes the labels in English for an English table", () => {
+    const out = buildChatPalette(ch, pistolsCatalog, identityTr, "en");
+    expect(out).toContain("Initiative");
+    expect(out).toContain("Full Defense");
+    expect(out).not.toContain("イニシアチブ");
+    // The dice commands themselves are BCDice syntax and never translated.
+    expect(out).toContain("9B6@3 Pistols");
+  });
+
+  it("carries the locale into the piece and its conjured spirits", () => {
+    const piece = JSON.parse(buildCocofolia(ch, pistolsCatalog, identityTr, "en"));
+    expect(piece.data.memo).toContain("Armor");
+    expect(piece.data.status.map((s: { label: string }) => s.label)).toContain("Stun CM");
+
+    const spirits = JSON.parse(buildCocofoliaConjured(ch, pistolsCatalog, identityTr, "en"));
+    expect(spirits[0].data.memo).toContain("Bound");
+    expect(spirits[0].data.commands).toContain("Powers: Accident, Confusion");
+  });
+});
+
 describe("buildCocofolia", () => {
   it("produces a parseable ccfolia character piece", () => {
     const parsed = JSON.parse(
