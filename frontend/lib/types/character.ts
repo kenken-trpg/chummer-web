@@ -99,6 +99,13 @@ export interface CharacterSettings {
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   banned_ware_grades?: string[];
+  /** `<customdatadirectorynames>`, enabled ones only, in the file's order —
+   *  order decides who wins when two directories edit the same entry. */
+  customdata?: string[];
+  /** Content hash of the `customdata/` files this character was built
+   *  against. The browser keeps the files; the server keeps only what they
+   *  merge into, under this hash, and asks for them again when it has to. */
+  dataset?: string;
   /** House rules the file sets that this app does not implement. The engine
    *  turns these into a warning; they are never silently dropped. */
   unsupported?: string[];

@@ -11,10 +11,9 @@ in a `<setting>` are left on the floor until the engine can honour them.
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text, log
+from .._xml import _int, _text, data_root
 
 #: `<buildmethod>` as `settings.xml` spells it -> as `CharacterState.build_method`
 #: does. Deliberately not `chummer_import._BUILD_METHODS`: that one is lenient
@@ -26,16 +25,11 @@ _BUILD_METHODS = {"priority": "Priority", "sumtoten": "SumToTen", "karma": "Karm
 def load_books() -> list[dict[str, Any]]:
     """`[{code, name}]`, in `books.xml` order.
 
-    Returns `[]` when the file is missing so an un-fetched vendor tree still
-    imports (see docs/adding-rules.md).
+    Returns `[]` when the file is missing or unreadable so an un-fetched
+    vendor tree still imports (see docs/adding-rules.md).
     """
-    path = DATA_DIR / "books.xml"
-    if not path.exists():
-        return []
-    try:
-        root = ET.parse(path).getroot()
-    except ET.ParseError as exc:
-        log.warning("books.xml parse failed: %s", exc)
+    root = data_root("books.xml")
+    if root is None:
         return []
     books = []
     for el in root.findall("./books/book"):
@@ -54,13 +48,8 @@ def load_settings_presets() -> list[dict[str, Any]]:
     rather than silently rewritten to Priority — offering "Life Modules" in
     the pulldown and then building a Priority character would be a lie.
     """
-    path = DATA_DIR / "settings.xml"
-    if not path.exists():
-        return []
-    try:
-        root = ET.parse(path).getroot()
-    except ET.ParseError as exc:
-        log.warning("settings.xml parse failed: %s", exc)
+    root = data_root("settings.xml")
+    if root is None:
         return []
     presets = []
     for el in root.findall("./settings/setting"):

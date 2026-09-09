@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..bonus import _parse_weaponbonus, parse_bonus
 from ..formulas import _is_variable_cost, parse_capacity, split_capacity
 
@@ -15,11 +14,11 @@ def _is_pi_tac_commlink(name: str, category: str) -> bool:
 
 
 def load_commlinks() -> list[dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         category = _text(el.find("category"))
         name = _text(el.find("name"))
         if category != "Commlinks" and not _is_pi_tac_commlink(name, category):
@@ -57,11 +56,11 @@ def load_commlinks() -> list[dict[str, Any]]:
 
 
 def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False) -> list[dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         if el.find("hide") is not None:
             continue
         category = _text(el.find("category"))
@@ -222,11 +221,11 @@ GEAR_RATING_CAP = 24
 
 
 def load_gear() -> list[dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return []
     cats: set[str] = set()
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         cat = _text(el.find("category"))
         if cat:
             cats.add(cat)

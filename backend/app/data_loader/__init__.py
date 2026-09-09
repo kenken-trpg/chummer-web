@@ -16,6 +16,9 @@ from ._xml import (
     MATRIX_ATTRIBUTES,  # noqa: F401  (re-exported for engine)
     OVERRIDE_DIR,  # noqa: F401  (re-exported for tests)
     PHYSICAL_ATTRS,  # noqa: F401  (re-exported for engine)
+    Overlay,  # noqa: F401  (re-exported for the API layer)
+    current_overlay_key,
+    using_customdata,  # noqa: F401  (re-exported for the API layer)
 )
 from .bonus import (
     _filter_active_skill_names,
@@ -99,8 +102,19 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
 )
 
 
-@lru_cache(maxsize=1)
 def catalog() -> CatalogDict:
+    """The assembled data, for whichever custom-data overlay is in force.
+
+    Keyed by the overlay rather than cached once: a table playing with custom
+    data and one playing vanilla hit the same process, and rebuilding ~24 XML
+    files per request would be far too slow. Four is enough for a handful of
+    tables without holding many megabytes of parsed data hostage.
+    """
+    return _catalog_for(current_overlay_key())
+
+
+@lru_cache(maxsize=4)
+def _catalog_for(_overlay_key: str) -> CatalogDict:
     if not (DATA_DIR / "metatypes.xml").exists():
         raise FileNotFoundError(f"Chummer data not found in {DATA_DIR}. Run backend/scripts/fetch_chummer_data.py")
     metatypes = load_metatypes()
@@ -262,4 +276,4 @@ def catalog_ware(kind: str) -> dict[str, Any]:
 
 
 def reset_catalog() -> None:
-    catalog.cache_clear()
+    _catalog_for.cache_clear()

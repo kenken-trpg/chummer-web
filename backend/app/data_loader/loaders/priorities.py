@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _child, _int, _text
+from .._xml import _child, _int, _text, parse_data
 
 
 def load_priorities() -> list[dict[str, Any]]:
-    tree = ET.parse(DATA_DIR / "priorities.xml")
+    root = parse_data("priorities.xml")
     rows = []
-    for el in tree.getroot().findall("./priorities/priority"):
+    for el in root.findall("./priorities/priority"):
         category = _text(el.find("category"))
         value = _text(el.find("value"))
         if not category or not value:

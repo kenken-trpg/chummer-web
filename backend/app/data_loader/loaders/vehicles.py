@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus
 from ..formulas import _is_variable_cost
 
@@ -68,11 +68,11 @@ def _mount_part_requirements(el: ET.Element | None) -> dict[str, list[str]]:
 
 
 def load_vehicle_names() -> list[str]:
-    path = DATA_DIR / "vehicles.xml"
-    if not path.exists():
+    root = data_root("vehicles.xml")
+    if root is None:
         return []
     names: list[str] = []
-    for el in ET.parse(path).getroot().findall("./vehicles/vehicle"):
+    for el in root.findall("./vehicles/vehicle"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -82,11 +82,11 @@ def load_vehicle_names() -> list[str]:
 
 
 def load_vehicle_mods() -> list[dict[str, Any]]:
-    path = DATA_DIR / "vehicles.xml"
-    if not path.exists():
+    root = data_root("vehicles.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./mods/mod"):
+    for el in root.findall("./mods/mod"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -131,11 +131,11 @@ def load_vehicle_mods() -> list[dict[str, Any]]:
 
 
 def load_weapon_mounts() -> list[dict[str, Any]]:
-    path = DATA_DIR / "vehicles.xml"
-    if not path.exists():
+    root = data_root("vehicles.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./weaponmounts/weaponmount"):
+    for el in root.findall("./weaponmounts/weaponmount"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -201,11 +201,11 @@ def _drone_included_mounts(el: ET.Element) -> list[dict[str, str]]:
 
 
 def _load_vehicle_entries(*, drones: bool) -> list[dict[str, Any]]:
-    path = DATA_DIR / "vehicles.xml"
-    if not path.exists():
+    root = data_root("vehicles.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./vehicles/vehicle"):
+    for el in root.findall("./vehicles/vehicle"):
         if el.find("hide") is not None:
             continue
         category = _text(el.find("category"))

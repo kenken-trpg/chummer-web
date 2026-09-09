@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import ATTR_KEYS, DATA_DIR, _int, _text
+from .._xml import ATTR_KEYS, _int, _text, parse_data
 from ..bonus import parse_bonus
 
 
@@ -45,8 +45,8 @@ def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str,
 
 
 def load_metatypes() -> list[dict[str, Any]]:
-    tree = ET.parse(DATA_DIR / "metatypes.xml")
+    root = parse_data("metatypes.xml")
     items = []
-    for el in tree.getroot().findall("./metatypes/metatype"):
+    for el in root.findall("./metatypes/metatype"):
         items.append(_parse_metatype(el))
     return items

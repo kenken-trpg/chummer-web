@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus
 from ..formulas import _is_variable_cost
 
@@ -44,11 +44,11 @@ def _armor_mod_required(el: ET.Element | None) -> dict[str, list[str]]:
 
 
 def load_armor() -> list[dict[str, Any]]:
-    path = DATA_DIR / "armor.xml"
-    if not path.exists():
+    root = data_root("armor.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./armors/armor"):
+    for el in root.findall("./armors/armor"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -82,11 +82,11 @@ def load_armor() -> list[dict[str, Any]]:
 
 
 def load_armor_mods() -> list[dict[str, Any]]:
-    path = DATA_DIR / "armor.xml"
-    if not path.exists():
+    root = data_root("armor.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./mods/mod"):
+    for el in root.findall("./mods/mod"):
         name = _text(el.find("name"))
         mod_id = _text(el.find("id"))
         cost = _text(el.find("cost"), "0")

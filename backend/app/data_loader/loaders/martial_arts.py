@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus, parse_requirement_tree
 
 
 def load_martial_art_techniques() -> list[dict[str, Any]]:
-    path = DATA_DIR / "martialarts.xml"
-    if not path.exists():
+    root = data_root("martialarts.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./techniques/technique"):
+    for el in root.findall("./techniques/technique"):
         name = _text(el.find("name"))
         tech_id = _text(el.find("id"))
         if not name or not tech_id:
@@ -32,11 +31,11 @@ def load_martial_art_techniques() -> list[dict[str, Any]]:
 
 
 def load_martial_arts() -> list[dict[str, Any]]:
-    path = DATA_DIR / "martialarts.xml"
-    if not path.exists():
+    root = data_root("martialarts.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./martialarts/martialart"):
+    for el in root.findall("./martialarts/martialart"):
         name = _text(el.find("name"))
         art_id = _text(el.find("id"))
         if not name or not art_id:

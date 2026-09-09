@@ -2,6 +2,11 @@ import type { Catalog, Character, CharacterSettings } from "./types";
 import { type Notice, renderNotice } from "@/lib/engine-notices";
 import { readLocale, translate } from "@/lib/i18n";
 import * as local from "@/lib/character/local-store";
+import {
+  type CustomDataFiles,
+  getCustomData,
+  putCustomData,
+} from "@/lib/character/customdata-store";
 import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
 
@@ -59,18 +64,63 @@ export async function errorText(res: Response): Promise<string> {
   return raw || res.statusText;
 }
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
+/**
+ * The dataset the last request was told the server is missing.
+ *
+ * The custom-data handshake is not a call the UI makes — it is a retry inside
+ * `req`. The server answers 409 with the hash it lacks; we upload that set
+ * from IndexedDB and repeat the request. Held here rather than passed around
+ * because every character request can trigger it and none of them care.
+ */
+async function reuploadCustomData(res: Response): Promise<boolean> {
+  const detail = await res
+    .clone()
+    .json()
+    .then((body: { detail?: Notice }) => body.detail)
+    .catch(() => undefined);
+  const dataset = String(detail?.params?.dataset ?? "");
+  if (!dataset) return false;
+  const files = await getCustomData(dataset);
+  if (!files) return false;
+  // customdata comes back from the character on the retry; the upload only
+  // needs the files, and the server re-merges under the same hash.
+  await fetch("/api/customdata", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ files, customdata: lastCustomData }),
+  });
+  return true;
+}
+
+/** The enabled-directory list of the character in flight, for the retry. */
+let lastCustomData: string[] = [];
+
+/** Remember what the next request's character asks for, so a 409 can rebuild
+ *  exactly that set. Called by the character helpers below. */
+function noteCustomData(state: Character): void {
+  lastCustomData = state.settings?.customdata ?? [];
+}
+
+async function req<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
   const res = await fetch(path, {
     ...init,
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
   });
+  if (res.status === 409 && !retried && (await reuploadCustomData(res))) {
+    return req<T>(path, init, true);
+  }
   if (!res.ok) throw new Error(await errorText(res));
   return res.json() as Promise<T>;
 }
 
 /** Recompute `derived` for a client-owned state (no merge). */
-const computeRemote = (state: Character) =>
-  req<Character>("/api/characters/patch", { method: "POST", body: JSON.stringify({ state }) });
+const computeRemote = (state: Character) => {
+  noteCustomData(state);
+  return req<Character>("/api/characters/patch", {
+    method: "POST",
+    body: JSON.stringify({ state }),
+  });
+};
 
 /**
  * The backend is stateless: it computes and transforms, the browser
@@ -111,6 +161,7 @@ export const api = {
   patch: async (id: string, body: Record<string, unknown>): Promise<Character> => {
     const stored = await local.getCharacter(id);
     if (!stored) throw new MessageError("app.err.notFound");
+    noteCustomData(stored);
     const next = await req<Character>("/api/characters/patch", {
       method: "POST",
       body: JSON.stringify({ state: stored, patch: body }),
@@ -165,6 +216,31 @@ export const api = {
       headers: { "Content-Type": "application/octet-stream" },
       body: bytes,
     }),
+
+  /**
+   * Merge a `customdata/` folder and keep the files for the re-upload the
+   * server will eventually ask for.
+   *
+   * The hash comes back from the server rather than being computed here: it
+   * is the server's cache key, and one implementation of it is less to keep
+   * in step than two.
+   */
+  uploadCustomData: async (
+    files: CustomDataFiles,
+    customdata: string[],
+  ): Promise<{
+    dataset: string;
+    applied: number;
+    skipped: { source: string; reason: string }[];
+  }> => {
+    const res = await req<{
+      dataset: string;
+      applied: number;
+      skipped: { source: string; reason: string }[];
+    }>("/api/customdata", { method: "POST", body: JSON.stringify({ files, customdata }) });
+    await putCustomData(res.dataset, files);
+    return res;
+  },
 
   /** A `.chum5` (plain XML) blob for the given state — caller triggers the download. */
   exportChummer: async (state: Character): Promise<Blob> => {

@@ -22,8 +22,10 @@ from .catalog_view import public_catalog
 from .characters import apply_patch, compute_state, import_character, new_character
 from .chummer_export import state_to_chum5
 from .chummer_import import chum5_to_state
+from .customdata import dataset_hash
+from .dataset_store import MAX_UPLOAD_BYTES, lookup, remember
 from .logging_config import configure_logging, new_request_id, request_id_var
-from .models import CharacterCreate, PatchRequest, StateRequest
+from .models import CharacterCreate, CharacterState, CustomDataUpload, PatchRequest, StateRequest
 from .notices import NoticeError, notice
 from .settings_file import build_method_of, parse_settings_xml
 
@@ -218,6 +220,7 @@ def create(payload: CharacterCreate | None = None) -> dict:
 def patch(req: PatchRequest) -> dict:
     """Merge `patch` onto `state` (talent / priority / career normalisation) and
     recompute. With no `patch` it's a bare recompute of the given state."""
+    _require_dataset(req.state)
     try:
         if req.patch is None:
             return compute_state(req.state).model_dump()
@@ -225,6 +228,58 @@ def patch(req: PatchRequest) -> dict:
     except Exception as exc:
         _log.exception("patch failed")
         raise HTTPException(status_code=400, detail=notice("api.patchFailed")) from exc
+
+
+def _require_dataset(state: CharacterState) -> None:
+    """409 when the character's custom data is not merged here yet.
+
+    The browser holds the files and sends only their hash, so a cold server —
+    or one that has evicted the set — has to ask for them. `dataset` in the
+    detail tells the client which set to upload; it retries the same request
+    afterwards.
+    """
+    settings = state.settings
+    # No `dataset` means the folder was never loaded — the settings name custom
+    # data the user has not supplied. That is a state to compute in (with the
+    # vendored data, and the editor saying the ruleset is incomplete), not one
+    # to refuse: refusing would leave the character uncomputable rather than
+    # merely missing its extra entries.
+    if not settings.customdata or not settings.dataset:
+        return
+    if lookup(settings.dataset, settings.customdata):
+        return
+    raise HTTPException(
+        status_code=409,
+        detail=notice("api.customDataMissing", dataset=settings.dataset),
+    )
+
+
+@app.post("/api/customdata")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def upload_customdata(request: Request, body: CustomDataUpload) -> dict:
+    """Take a `customdata/` tree and merge it, once, under its content hash.
+
+    `files` is `{path relative to customdata/: XML text}` — the browser has
+    the paths from a directory pick, and sends them verbatim so the merge sees
+    the same layout Chummer would. JSON rather than multipart: the contents
+    are text, the paths matter more than filenames do, and it costs no extra
+    dependency.
+
+    Nothing is written to disk. The merge is kept in a small in-memory cache
+    that a restart empties; the client re-uploads when told to.
+    """
+    files = {path: text.encode("utf-8") for path, text in body.files.items()}
+    if not files:
+        raise HTTPException(status_code=400, detail=notice("api.customDataEmpty"))
+    if sum(len(raw) for raw in files.values()) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=notice("api.customDataTooLarge"))
+    dataset = dataset_hash(files)
+    _, report = remember(dataset, body.customdata, files)
+    return {
+        "dataset": dataset,
+        "applied": report.applied,
+        "skipped": [{"source": source, "reason": reason} for source, reason in report.skipped],
+    }
 
 
 @app.post("/api/settings/parse")

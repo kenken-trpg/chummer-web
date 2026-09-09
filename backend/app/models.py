@@ -306,6 +306,14 @@ class SettingsState(BaseModel):
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
     banned_ware_grades: list[str] = Field(default_factory=list)
+    #: `<customdatadirectorynames>`, enabled ones only, in the order the file
+    #: gave them — order decides who wins when two directories edit the same
+    #: entry, so it is not sorted.
+    customdata: list[str] = Field(default_factory=list)
+    #: Content hash of the custom-data files this character was built against.
+    #: The client sends the files once and this token thereafter; see
+    #: `app/customdata.py`.
+    dataset: str = ""
     #: Tags the file changed away from Chummer's Standard that this app does
     #: not implement. Surfaced as a warning rather than swallowed — a house
     #: rule silently dropped is worse than one the sheet says it ignored.
@@ -416,6 +424,25 @@ class CharacterPatch(BaseModel):
     @model_validator(mode="after")
     def _bound_collections(self) -> CharacterPatch:
         _reject_oversized_collections(self)
+        return self
+
+
+class CustomDataUpload(BaseModel):
+    """A `customdata/` tree on its way to the merge.
+
+    `files` is keyed by the path relative to `customdata/`
+    (`NTS4C08/amend_martialarts.xml`) because the directory is what a settings
+    file names, and `customdata` is that settings file's enabled list, in its
+    order — later entries win where two edit the same entry.
+    """
+
+    files: dict[str, str] = Field(default_factory=dict)
+    customdata: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _bounded(self) -> CustomDataUpload:
+        if len(self.files) > 500:
+            raise ValueError("too many custom-data files")
         return self
 
 

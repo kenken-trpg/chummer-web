@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import * as local from "@/lib/character/local-store";
 import { MessageError } from "@/lib/errors";
 import { onNotice } from "@/lib/notices";
+import { putCustomData } from "@/lib/character/customdata-store";
 
 /**
  * `api.ts` is the whole client/server boundary now that the backend keeps
@@ -20,7 +21,7 @@ let calls: Call[] = [];
 let respond: (path: string) => Response | Promise<Response>;
 
 function json(body: unknown, ok = true, status = 200): Response {
-  return {
+  const res = {
     ok,
     status,
     statusText: "",
@@ -28,7 +29,11 @@ function json(body: unknown, ok = true, status = 200): Response {
     text: async () => JSON.stringify(body),
     blob: async () => new Blob([JSON.stringify(body)]),
     headers: { get: () => "application/json" },
+    // a real Response has this, and the custom-data retry reads the body
+    // before `errorText` may read it again
+    clone: () => json(body, ok, status),
   } as unknown as Response;
+  return res;
 }
 
 beforeEach(async () => {
@@ -193,5 +198,79 @@ describe("api.exportChummer", () => {
     await expect(api.exportChummer(makeCharacter({ id: "a" }))).rejects.toThrow(
       "request body too large",
     );
+  });
+});
+
+describe("the custom-data handshake", () => {
+  /**
+   * The browser holds the `customdata/` files and sends only their hash. A
+   * server that has never seen that hash — or has evicted it — answers 409;
+   * `req` uploads the set and repeats the request. None of the callers know.
+   */
+  const state = makeCharacter({
+    id: "c1",
+    settings: { name: "House", books: [], customdata: ["g>1"], dataset: "hash1" },
+  });
+
+  it("uploads the stored files and retries the request once", async () => {
+    await local.putCharacter(state);
+    await putCustomData("hash1", { "d/custom_x.xml": "<chummer/>" });
+
+    let served = false;
+    respond = (path) => {
+      if (path === "/api/customdata") return json({ dataset: "hash1", applied: 1, skipped: [] });
+      if (!served) {
+        served = true;
+        return json(
+          { detail: { key: "api.customDataMissing", params: { dataset: "hash1" } } },
+          false,
+          409,
+        );
+      }
+      return json({ ...state, name: "Merged" });
+    };
+
+    expect(await api.patch("c1", { name: "Merged" })).toMatchObject({ name: "Merged" });
+    expect(calls.map((c) => c.path)).toEqual([
+      "/api/characters/patch",
+      "/api/customdata",
+      "/api/characters/patch",
+    ]);
+    // the upload carries the directories the character asks for, in order
+    expect(body(calls[1])).toEqual({
+      files: { "d/custom_x.xml": "<chummer/>" },
+      customdata: ["g>1"],
+    });
+  });
+
+  it("gives up rather than looping when the files are not in this browser", async () => {
+    await local.putCharacter(
+      makeCharacter({
+        id: "c2",
+        settings: { name: "H", books: [], customdata: ["g>1"], dataset: "gone" },
+      }),
+    );
+    respond = () =>
+      json({ detail: { key: "api.customDataMissing", params: { dataset: "gone" } } }, false, 409);
+
+    await expect(api.patch("c2", { name: "x" })).rejects.toThrow();
+    // one attempt, no upload: there was nothing to upload
+    expect(calls.map((c) => c.path)).toEqual(["/api/characters/patch"]);
+  });
+
+  it("retries at most once, so a server that keeps refusing surfaces the error", async () => {
+    await local.putCharacter(state);
+    await putCustomData("hash1", { "d/custom_x.xml": "<chummer/>" });
+    respond = (path) =>
+      path === "/api/customdata"
+        ? json({ dataset: "hash1", applied: 1, skipped: [] })
+        : json(
+            { detail: { key: "api.customDataMissing", params: { dataset: "hash1" } } },
+            false,
+            409,
+          );
+
+    await expect(api.patch("c1", { name: "x" })).rejects.toThrow();
+    expect(calls.filter((c) => c.path === "/api/customdata")).toHaveLength(1);
   });
 });
