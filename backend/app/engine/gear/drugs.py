@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...data_loader import catalog, drug_effect_summary, drug_node_value, eval_formula
+from ...data_loader import boost_drug_attribute, catalog, drug_effect_summary, drug_node_value, eval_formula
 from ...improvements import EffectsDict, apply_bonus_nodes
 from ...models import CharacterState
 from ...notices import Notice, notice
@@ -38,9 +38,14 @@ def _granted_quality_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
     return [dict(item) for _ in range(rating) for item in (spec.get("bonus") or [])]
 
 
-def _drug_effect_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _drug_effect_nodes(nodes: list[dict[str, Any]], positive_attribute: int = 0) -> list[dict[str, Any]]:
     """Translate ``drugcomponents.xml`` <bonus> vocab into the tags that
-    :func:`apply_bonus_nodes` understands."""
+    :func:`apply_bonus_nodes` understands.
+
+    ``positive_attribute`` is what ``<drugpositiveattributemodifier>`` adds to
+    each attribute the drug *raises* — Narco's doing, and only upwards: the
+    crash and the penalties it comes with are untouched (CF p.159).
+    """
     out: list[dict[str, Any]] = []
     for node in nodes:
         tag = node.get("tag")
@@ -54,7 +59,12 @@ def _drug_effect_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if tag == "attribute":
             name = str(fields.get("name") or "").upper()
             if name:
-                out.append({"tag": "specificattribute", "fields": {"name": name, "bonus": val}})
+                out.append(
+                    {
+                        "tag": "specificattribute",
+                        "fields": {"name": name, "bonus": boost_drug_attribute(val, positive_attribute)},
+                    }
+                )
         elif tag == "limit":
             kind = _DRUG_LIMIT_TAG.get(str(fields.get("name") or node.get("value") or "").strip().lower())
             if kind:
@@ -112,7 +122,9 @@ def apply_active_drugs(
             continue
         # The name alone: bonus nodes are only folded in while the drug is
         # active, so there is nothing to tell it apart from.
-        apply_bonus_nodes(_drug_effect_nodes(nodes), effects, str(spec["name"]))
+        # Narco is already in `effects` — ware is folded in before gear.
+        positive = int(effects.get("drug_positive_attribute") or 0)
+        apply_bonus_nodes(_drug_effect_nodes(nodes, positive), effects, str(spec["name"]))
         active.append(
             {
                 "name": spec["name"],
@@ -120,7 +132,7 @@ def apply_active_drugs(
                 "speed": spec.get("drug_speed") or "",
                 "vectors": list(spec.get("drug_vectors") or []),
                 "duration": _format_drug_duration(str(spec.get("drug_duration") or ""), bod),
-                "effect": drug_effect_summary(nodes),
+                "effect": drug_effect_summary(nodes, positive),
             }
         )
     return active

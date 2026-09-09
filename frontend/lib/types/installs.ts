@@ -19,6 +19,8 @@ export interface SkillPickSlot {
   rating: number;
   options: string[];
   knowledgeskills: boolean;
+  /** Reflex Recorder Optimization: this pick's skill group defaults with no −1. */
+  default_free?: boolean;
 }
 
 export interface AdeptPowerInstall {

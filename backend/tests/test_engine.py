@@ -7552,6 +7552,53 @@ def test_low_pain_tolerance_tightens_the_penalty_step() -> None:
     assert out.derived["condition_monitor"]["threshold_offset"] == 0
 
 
+NARCO = "92a00ca4-7e2b-47ca-ac02-1d58e4932d0a"  # `<drugpositiveattributemodifier>1`
+ZEN = "3a946800-be1e-4bbb-899a-c3d1c48a3a31"  # REA −2, the one drug that takes
+REFLEX_RECORDER = "17a6ba49-c21c-461b-9830-3beae8a237fc"
+REFLEX_RECORDER_OPTIMIZATION = "afe25e41-8d6c-4476-9d18-ecd23219207c"
+
+
+def test_narco_lifts_what_a_drug_gives() -> None:
+    plain = compute(_drug_state(True))
+    state = _drug_state(True)
+    state.bioware = [CyberwareInstall(ware_id=NARCO, rating=1)]
+    dosed = compute(state)
+
+    assert plain.derived["totals"]["REA"] == 5  # Jazz: +1 REA
+    assert dosed.derived["totals"]["REA"] == 6
+    # the printed line follows the engine, not the book's figure for the drug alone
+    assert has(dosed.derived["active_drugs"][0]["effect"], "engine.drugEffect.attribute", name="REA", value="+2")
+
+
+def test_narco_leaves_what_a_drug_takes_alone() -> None:
+    plain = compute(_drug_state(True, ZEN))
+    state = _drug_state(True, ZEN)
+    state.bioware = [CyberwareInstall(ware_id=NARCO, rating=1)]
+    dosed = compute(state)
+    assert dosed.derived["totals"]["REA"] == plain.derived["totals"]["REA"]  # Zen: −2 REA either way
+
+
+def _recorder(cid: str, *, optimized: bool, picked: str = "Automatics") -> CharacterState:
+    ware = [CyberwareInstall(id="rr", ware_id=REFLEX_RECORDER, rating=1)]
+    if optimized:
+        ware.append(CyberwareInstall(id="opt", ware_id=REFLEX_RECORDER_OPTIMIZATION, rating=1))
+    return _mundane(cid, bioware=ware, skill_picks={"ware:rr:0": picked})
+
+
+def test_reflex_recorder_optimization_covers_the_picks_group() -> None:
+    """The recorded skill and the rest of its group default without the −1."""
+    out = compute(_recorder("rr-opt", optimized=True))
+    assert out.derived["no_default_penalty_skills"] == ["Automatics", "Longarms", "Pistols"]
+    assert out.derived["skill_pick_slots"][0]["default_free"] is True
+    assert "reflexrecorderoptimization" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_a_reflex_recorder_alone_covers_nothing() -> None:
+    out = compute(_recorder("rr-plain", optimized=False))
+    assert out.derived["no_default_penalty_skills"] == []
+    assert out.derived["skill_pick_slots"][0]["default_free"] is False
+
+
 CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"
 THERMO_SURGE = "fd346177-3791-44c0-af8c-7cf176fc9aa3"  # +3 positive metagenic
 FEATHERS = "35279341-3611-439a-9550-8227b306198f"  # -3 negative metagenic

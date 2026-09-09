@@ -40,6 +40,8 @@ class SkillPicks(TypedDict):
     skill_bonus_notes: dict[str, list[str]]
     # ``<hardwires>`` picks, split active / knowledge: a rating, not a bonus.
     hardwires: dict[str, dict[str, int]]
+    # Skills that default without the −1, thanks to Reflex Recorder Optimization.
+    no_default_penalty: list[str]
 
 
 class ContactsBundle(TypedDict):
@@ -256,6 +258,7 @@ def empty_skill_picks() -> SkillPicks:
         skill_bonus={},
         skill_bonus_notes={},
         hardwires={"active": {}, "knowledge": {}},
+        no_default_penalty=[],
     )
 
 

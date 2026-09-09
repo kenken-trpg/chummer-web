@@ -41,6 +41,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     SPELL_CAST_CATEGORIES,  # noqa: F401  (re-exported for engine)
     SPELL_CATEGORIES,  # noqa: F401  (re-exported for engine)
     _load_ja_overrides,  # noqa: F401  (re-exported for tests)
+    boost_drug_attribute,  # noqa: F401  (re-exported for engine)
     drug_effect_summary,  # noqa: F401  (re-exported for engine)
     drug_node_value,  # noqa: F401  (re-exported for engine)
     load_apps,
