@@ -324,3 +324,16 @@ def test_the_itemisation_stops_at_the_cap_but_the_count_does_not() -> None:
     assert report.applied == MAX_CHANGES + 5
     assert len(report.changes) == MAX_CHANGES
     assert report.truncated
+
+
+def test_data_this_app_does_not_load_is_set_apart_from_a_failed_rule() -> None:
+    """Every codex pack carries `amend_critters.xml`, and this app has no
+    critters. Reporting it beside rules that genuinely did not apply told the
+    table to fix something it cannot fix."""
+    files = {
+        "d/manifest.xml": b"<manifest><guid>g</guid><version>1</version></manifest>",
+        "d/amend_critters.xml": b"<chummer><critters><critter><id>c</id></critter></critters></chummer>",
+    }
+    _, report = build_overlay(files, ["g>1"])
+    assert report.ignored == ["critters.xml"]
+    assert report.skipped == []

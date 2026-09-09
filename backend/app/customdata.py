@@ -88,6 +88,11 @@ class MergeReport:
     changes: list[Change] = field(default_factory=list)
     #: Set when `changes` stopped short of `applied`.
     truncated: bool = False
+    #: Files aimed at base data this app does not have — `critters.xml` and
+    #: the like. Kept apart from `skipped`: nothing is wrong with the pack and
+    #: there is nothing the table can do, so it belongs in a quieter line than
+    #: "a rule did not apply".
+    ignored: list[str] = field(default_factory=list)
 
     def skip(self, source: str, reason: str) -> None:
         self.skipped.append((source, reason))
@@ -333,7 +338,10 @@ def build_overlay(
                 continue  # manifest.xml, or something Chummer would ignore too
             base = base_tree(base_name)
             if base is None:
-                report.skip(path, f"{base_name} is not part of this app's data")
+                # `critters.xml`, `lifemodules.xml`: real Chummer data this app
+                # does not load. The pack is fine; this part of it has nowhere
+                # to go, which is a different thing from a rule that failed.
+                report.ignored.append(base_name)
                 continue
             text = files[path].decode("utf-8-sig", errors="replace")
             if "<chummer" not in text:
