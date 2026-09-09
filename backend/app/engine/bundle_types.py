@@ -21,6 +21,17 @@ from ..notices import Notice
 BonusSource = tuple[str, list[dict[str, Any]]]
 
 
+class MatrixInitiative(TypedDict):
+    """``matrix_initiative`` — the VR initiative of the persona a character
+    runs: Data Processing + Intuition, three dice cold / four hot (SR5 p.229)."""
+
+    device: str
+    dataprocessing: int
+    value: int
+    cold_dice: int
+    hot_dice: int
+
+
 class SkillMods(TypedDict):
     """``resolve_skill_mods`` — skill / group / category dice modifiers."""
 

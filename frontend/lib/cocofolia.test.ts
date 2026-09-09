@@ -146,6 +146,24 @@ describe("buildChatPalette", () => {
     expect(out).toContain("3B6@4 素早いハッキング"); // limit = Sleaze
     expect(out).toContain("3B6@5 データスパイク"); // limit = Attack
   });
+
+  it("rolls both sim modes when the persona has a VR initiative", () => {
+    const ch = makeCharacter({
+      derived: {
+        cyberdeck: { attack: 5, sleaze: 4, dataprocessing: 3, firewall: 2 } as any,
+        matrix_initiative: {
+          device: "cyberdeck",
+          dataprocessing: 3,
+          value: 7,
+          cold_dice: 3,
+          hot_dice: 4,
+        },
+      },
+    });
+    const out = buildChatPalette(ch, makeCatalog(), identityTr);
+    expect(out).toContain("3D6+7 マトリクス・イニシアチブ（コールドシム）");
+    expect(out).toContain("4D6+7 マトリクス・イニシアチブ（ホットシム）");
+  });
 });
 
 describe("buildCocofolia", () => {

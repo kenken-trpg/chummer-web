@@ -246,6 +246,13 @@
   },
   "martial_arts": [],
   "martial_spec_options": {},
+  "matrix_initiative": {
+    "cold_dice": 3,
+    "dataprocessing": 2,
+    "device": "cyberdeck",
+    "hot_dice": 4,
+    "value": 3
+  },
   "mentor": null,
   "metagenic": {
     "balanced": true,

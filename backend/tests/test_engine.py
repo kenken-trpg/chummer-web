@@ -4042,6 +4042,50 @@ def test_predator_purchase() -> None:
     assert out.derived["errors"] == []
 
 
+def test_a_deck_gives_its_owner_a_vr_initiative() -> None:
+    """SR5 p.229: VR rolls Data Processing + Intuition, three dice in cold sim
+    and four in hot. AR is the meat initiative, which the sheet already has."""
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["INT"] = 4
+    out = compute(
+        CharacterState(
+            id="decker",
+            name="Decker",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            cyberdecks=[GearInstall(gear_id=ERIKA_DECK)],
+        )
+    )
+    assert out.derived["matrix_initiative"] == {
+        "device": "cyberdeck",
+        "dataprocessing": 2,
+        "value": 6,  # DP 2 + INT 4
+        "cold_dice": 3,
+        "hot_dice": 4,
+    }
+
+
+def test_the_coprocessor_die_lands_in_the_vr_initiative() -> None:
+    """`matrixinitiativedice` had no surface until now (PR #48): the module's
+    die shows up in both sim modes."""
+    base = compute(_mundane("deck-only", cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
+    out = compute(
+        _mundane(
+            "deck-coproc",
+            cyberdecks=[GearInstall(gear_id=ERIKA_DECK)],
+            gear=[GearInstall(gear_id=MULTIDIMENSIONAL_COPROCESSOR)],
+        )
+    )
+    assert base.derived["matrix_initiative"]["cold_dice"] == 3
+    assert out.derived["matrix_initiative"]["cold_dice"] == 4
+    assert out.derived["matrix_initiative"]["hot_dice"] == 5
+
+
+def test_a_character_with_no_persona_has_no_matrix_initiative() -> None:
+    assert compute(_mundane("meat")).derived["matrix_initiative"] is None
+
+
 def test_erika_cyberdeck_matrix_array() -> None:
     out = compute(_mundane("erika", cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
     row = out.derived["cyberdecks"][0]

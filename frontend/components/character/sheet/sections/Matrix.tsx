@@ -6,6 +6,16 @@ import { useUiText } from "@/lib/i18n";
 export function MatrixSection(s: SheetData) {
   const { tr, d } = s;
   const { ui } = useUiText();
+  const mi = d.matrix_initiative;
+  // Only the persona the character actually runs has a VR initiative; the
+  // other devices in the table are just kit they own.
+  const initFor = (device: string) =>
+    mi && mi.device === device
+      ? ui("sheet.matrixInit", {
+          cold: `${mi.value}+${mi.cold_dice}d6`,
+          hot: `${mi.value}+${mi.hot_dice}d6`,
+        })
+      : undefined;
   return (
     <Section
       title="sheet.matrix"
@@ -31,6 +41,7 @@ export function MatrixSection(s: SheetData) {
             dr: d.commlink.device_rating,
             dp: d.commlink.dataprocessing,
             fw: d.commlink.firewall,
+            init: initFor("commlink"),
           });
         if (d.cyberdeck) {
           const ck = d.cyberdeck;
@@ -44,6 +55,7 @@ export function MatrixSection(s: SheetData) {
             fw: ck.firewall,
             prog: ck.program_max != null ? `${ck.program_used ?? 0}/${ck.program_max}` : undefined,
             order: ck.can_reorder && ck.array_order ? ck.array_order.join(" ▸ ") : undefined,
+            init: initFor("cyberdeck"),
           });
         }
         if (d.rcc)
@@ -53,6 +65,7 @@ export function MatrixSection(s: SheetData) {
             dr: d.rcc.device_rating,
             dp: d.rcc.dataprocessing,
             fw: d.rcc.firewall,
+            init: initFor("rcc"),
           });
         if (d.living_persona) {
           const lp = d.living_persona;
@@ -64,8 +77,7 @@ export function MatrixSection(s: SheetData) {
             s: lp.sleaze,
             dp: lp.dataprocessing,
             fw: lp.firewall,
-            init:
-              (lp.matrix_initiative_dice || 0) > 0 ? `+${lp.matrix_initiative_dice}d6` : undefined,
+            init: initFor("living_persona"),
           });
         }
         return (
@@ -100,6 +112,7 @@ export function MatrixSection(s: SheetData) {
                 ))}
               </tbody>
             </table>
+            {mi ? <p className="sheet-note">{ui("sheet.matrixInitNote")}</p> : null}
             {rows.some((r) => r.order) ? (
               <p className="sheet-note">
                 {rows

@@ -246,6 +246,15 @@ export interface Character {
     commlink?: InstalledCommlink | null;
     cyberdeck?: InstalledMatrixDevice | null;
     rcc?: InstalledMatrixDevice | null;
+    /** VR initiative for the persona worth running: Data Processing + INT,
+     *  three dice cold sim / four hot (SR5 p.229). AR keeps meat initiative. */
+    matrix_initiative?: {
+      device: string;
+      dataprocessing: number;
+      value: number;
+      cold_dice: number;
+      hot_dice: number;
+    } | null;
     lifestyle?: InstalledLifestyle | null;
     nuyen: number;
     nuyen_spent?: number;
