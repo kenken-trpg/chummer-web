@@ -7,8 +7,11 @@ column, so the UI never has to know how priorities are stored.
 
 from __future__ import annotations
 
-from ..data_loader import CatalogDict
+from dataclasses import replace
+
+from ..data_loader import CatalogDict, catalog
 from ..engine import all_talent_options, is_way_quality, priority_value, talent_options
+from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
 #: The five metatypes the priority table offers. Chummer's data has many more
 #: (metavariants, critters); the UI only ever builds from these.
@@ -40,21 +43,20 @@ def section(raw: CatalogDict) -> dict:
         for q in raw["qualities"]
         if not q.get("onlyprioritygiven")
     ]
-    table: dict[str, dict[str, dict]] = {}
-    for cat in ("Heritage", "Attributes", "Talent", "Skills", "Resources"):
-        table[cat] = {}
-        for letter in "ABCDE":
-            row = priority_value(cat, letter)
-            mets = [m for m in (row.get("metatypes") or []) if m["name"] in CORE_METATYPES]
-            table[cat][letter] = {
-                "name": row.get("name"),
-                "attribute_points": row.get("attribute_points"),
-                "skill_points": row.get("skill_points"),
-                "skill_group_points": row.get("skill_group_points"),
-                "nuyen": row.get("nuyen"),
-                "metatypes": mets,
-                "talents": talent_options(letter) if cat == "Talent" else row.get("talents") or [],
-            }
+    table = _table_for(DEFAULT_PRIORITY_TABLE)
+    # The catalog is shared by every character, so it cannot be built for one
+    # character's `<prioritytable>`. It carries the Standard table plus, per
+    # other table, only the cells that table actually replaces — which in the
+    # vendored data is Resources and nothing else. The client picks.
+    overrides = {}
+    for name in sorted(_other_tables()):
+        cells = {
+            cat: {letter: cell for letter, cell in rows.items() if cell != table[cat][letter]}
+            for cat, rows in _table_for(name).items()
+        }
+        trimmed = {cat: rows for cat, rows in cells.items() if rows}
+        if trimmed:
+            overrides[name] = trimmed
     return {
         "metatypes": raw["metatypes"],
         "skills": raw["skills"],
@@ -91,6 +93,7 @@ def section(raw: CatalogDict) -> dict:
             for tech in raw.get("martial_art_techniques") or []
         ],
         "priority_table": table,
+        "priority_table_overrides": overrides,
         "karma_talents": [
             {
                 "name": t["name"],
@@ -101,3 +104,30 @@ def section(raw: CatalogDict) -> dict:
             for t in all_talent_options()
         ],
     }
+
+
+def _table_for(name: str) -> dict[str, dict[str, dict]]:
+    """The whole priority table as one named `<prioritytable>` sees it."""
+    built: dict[str, dict[str, dict]] = {}
+    with using_rules(replace(current_rules(), priority_table=name)):
+        for cat in ("Heritage", "Attributes", "Talent", "Skills", "Resources"):
+            built[cat] = {}
+            for letter in "ABCDE":
+                row = priority_value(cat, letter)
+                mets = [m for m in (row.get("metatypes") or []) if m["name"] in CORE_METATYPES]
+                built[cat][letter] = {
+                    "name": row.get("name"),
+                    "attribute_points": row.get("attribute_points"),
+                    "skill_points": row.get("skill_points"),
+                    "skill_group_points": row.get("skill_group_points"),
+                    "nuyen": row.get("nuyen"),
+                    "metatypes": mets,
+                    "talents": talent_options(letter) if cat == "Talent" else row.get("talents") or [],
+                }
+    return built
+
+
+def _other_tables() -> set[str]:
+    """Every `<prioritytable>` in the data except the default one."""
+    names = {(row.get("gameplay") or "").strip() for row in catalog()["priorities"]}
+    return {name for name in names if name and name != DEFAULT_PRIORITY_TABLE}

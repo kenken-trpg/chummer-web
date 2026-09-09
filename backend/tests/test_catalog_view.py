@@ -22,6 +22,7 @@ EXPECTED_KEYS = {
     "martial_arts",
     "martial_art_techniques",
     "priority_table",
+    "priority_table_overrides",
     "karma_talents",
     # ware
     "cyberware",

@@ -2,9 +2,10 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { withOriginal } from "@/lib/character/format";
+import { priorityTableFor } from "@/lib/character/priority-table";
 
 export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps) {
-  const table = catalog.priority_table;
+  const table = priorityTableFor(catalog, ch.settings?.priority_table);
 
   return (
     <div className="card">

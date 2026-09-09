@@ -7,6 +7,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **`<prioritytable>` に対応した。** `priorities.xml` は Standard /
+  Prime Runner / Street Level の 3 表を持っているのに、この app は Standard
+  固定で、しかも未対応としても報告していなかった。セッティングが指定した表で
+  計算・表示する。プライムランナー卓なら優先度 A の資金は 450,000¥ ではなく
+  500,000¥ になる。データにない表を指定された場合は Standard に落として
+  作成を続ける。
 - **customdata が何を変えたのか内訳を出す。** これまでは「217 件適用」と
   件数だけだった。ファイル・操作・書き換えたフィールドでまとめ、項目名まで
   並べる。`qualities.xml ・ source, page を変更 ・ 21 件` なら既存項目の

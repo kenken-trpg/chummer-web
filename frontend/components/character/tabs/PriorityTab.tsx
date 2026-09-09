@@ -4,6 +4,7 @@ import { CATS, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
 import { buildMethodPatch } from "@/lib/character/build-method";
 import { buildMethodLabel, priorityCellLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
+import { priorityTableFor } from "@/lib/character/priority-table";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
 
@@ -16,7 +17,7 @@ export function PriorityTab({
   patch,
   setCharacter,
 }: TabPanelProps) {
-  const table = catalog.priority_table;
+  const table = priorityTableFor(catalog, ch.settings?.priority_table);
 
   return (
     <>
