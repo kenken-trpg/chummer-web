@@ -10,7 +10,8 @@ import {
   knowCatLabel,
   skillCatLabel,
 } from "@/lib/character/constants";
-import { skillsoftBit, specBit } from "@/lib/character/bits";
+import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
+import { skillDefault } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
 
 export function SkillsTab({
@@ -264,12 +265,19 @@ export function SkillsTab({
                   onCommit={(next) => commitSpec(s.name, next)}
                 />
                 <b>
-                  {skillDice(
-                    Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0),
-                    d.skill_bonus?.[s.name],
+                  {hasSkill ? (
+                    <>
+                      {skillDice(
+                        Math.max(d.skill_totals[s.name] || 0, d.skillsoft?.[s.name] || 0),
+                        d.skill_bonus?.[s.name],
+                      )}
+                      {skillsoftBit(d.skillsoft?.[s.name], ui)}
+                      {specBit(specValue, tr(specValue), ui, expertise?.bonus || 2)}
+                    </>
+                  ) : (
+                    // Nothing bought: what the skill still rolls at, defaulting.
+                    defaultBit(skillDefault(s, d), ui)
                   )}
-                  {skillsoftBit(d.skillsoft?.[s.name], ui)}
-                  {specBit(specValue, tr(specValue), ui, expertise?.bonus || 2)}
                 </b>
               </div>
             );
