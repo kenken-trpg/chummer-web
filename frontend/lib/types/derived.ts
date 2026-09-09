@@ -265,6 +265,11 @@ export interface InstalledWeapon {
   source_gear_id?: string;
   from_ware?: boolean;
   source_ware_id?: string;
+  /** Which ware tab owns the implant that grants it: "cyberware" or "bioware". */
+  ware_kind?: string;
+  /** A shield: armour that is also a weapon, deleted by dropping the armour. */
+  from_armor?: boolean;
+  source_armor_id?: string;
   /** Born with it (a `<naturalweapon>` grant) — nothing to buy, install or drop. */
   natural?: boolean;
   natural_source?: string;

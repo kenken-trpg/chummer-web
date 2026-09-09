@@ -139,6 +139,7 @@ def resolve_ware(
                 "ware_id": ware["id"],
                 "name": ware["name"],
                 "category": ware["category"],
+                "ware_kind": kind,
                 "rating": rating,
                 "rating_min": lo,
                 "rating_max": hi,

@@ -72,6 +72,7 @@ def load_armor() -> list[dict[str, Any]]:
                 "additive": armor_raw.startswith("+") or armor_raw.startswith("-"),
                 "addmodcategories": [_text(c) for c in el.findall("addmodcategory") if _text(c)],
                 "included_mods": _armor_included_mods(el),
+                "add_weapon": _text(el.find("addweapon")),
                 "bonus": parse_bonus(el.find("bonus")),
                 "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
                 "source": _text(el.find("source")),

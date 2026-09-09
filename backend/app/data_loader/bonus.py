@@ -181,7 +181,7 @@ def selecttext_catalog_options(attrs: dict[str, Any], catalog_data: Mapping[str,
             names = [item["name"] for item in catalog_data.get("drones") or []]
         return names
     if "weapons.xml" in xml:
-        weapons = catalog_data.get("weapons") or []
+        weapons = [w for w in (catalog_data.get("weapons") or []) if w.get("purchasable")]
         if "Melee" in xpath:
             return [item["name"] for item in weapons if item.get("type") == "Melee"]
         if "Ranged" in xpath:

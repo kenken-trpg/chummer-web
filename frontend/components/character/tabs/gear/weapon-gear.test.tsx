@@ -169,6 +169,67 @@ describe("<WeaponGear> where a row actually lives", () => {
     expect((body.cyberware as { id: string }[]).map((r) => r.id)).toEqual(["cw2"]);
   });
 
+  it("deletes a bioware weapon out of bioware, not out of cyberware", () => {
+    // Claws are `<addweapon>` bioware (CF p.72): the same `from_ware` row as a
+    // cyberspur, but filtering `cyberware` for it would remove nothing.
+    const patch = vi.fn();
+    renderWeapons(
+      owning(
+        [weapon("w1", "Claws", { from_ware: true, source_ware_id: "bw1", ware_kind: "bioware" })],
+        {
+          weapons: [],
+          bioware: [
+            { id: "bw1", ware_id: "b1" },
+            { id: "bw2", ware_id: "b2" },
+          ],
+        },
+      ),
+      patch,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+
+    const body = patch.mock.calls[0][0];
+    expect((body.bioware as { id: string }[]).map((r) => r.id)).toEqual(["bw2"]);
+    expect(body.cyberware).toBeUndefined();
+  });
+
+  it("deletes a shield by dropping the armor it is, along with its mods", () => {
+    const patch = vi.fn();
+    renderWeapons(
+      owning([weapon("w1", "Ballistic Shield", { from_armor: true, source_armor_id: "a1" })], {
+        weapons: [],
+        armor: [
+          { id: "a1", armor_id: "ca1" },
+          { id: "a2", armor_id: "ca2" },
+        ],
+        armor_mods: [
+          { id: "am1", mod_id: "cm1", parent_id: "a1" },
+          { id: "am2", mod_id: "cm2", parent_id: "a2" },
+        ],
+      }),
+      patch,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+
+    const body = patch.mock.calls[0][0];
+    expect((body.armor as { id: string }[]).map((r) => r.id)).toEqual(["a2"]);
+    expect((body.armor_mods as { id: string }[]).map((r) => r.id)).toEqual(["am2"]);
+  });
+
+  it("gives a shield no quantity of its own — the armor row owns that", () => {
+    renderWeapons(
+      owning([weapon("w1", "Ballistic Shield", { from_armor: true, source_armor_id: "a1" })], {
+        weapons: [],
+        armor: [{ id: "a1", armor_id: "ca1" }],
+      }),
+      vi.fn(),
+    );
+
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+  });
+
   it("sends a gear-backed weapon's quantity to the gear row, not the weapon", () => {
     const patch = vi.fn();
     renderWeapons(

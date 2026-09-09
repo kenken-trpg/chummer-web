@@ -45,6 +45,7 @@ def load_qualities() -> list[dict[str, Any]]:
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "bonus": bonus,
+                "add_weapon": _text(el.find("addweapon")),
                 "max_takes": max_takes,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,

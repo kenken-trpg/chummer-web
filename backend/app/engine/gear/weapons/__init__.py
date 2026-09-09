@@ -25,15 +25,19 @@ from .bonuses import (
     weapon_skill_dictionary_key,
 )
 from .rows import (
+    _append_armor_weapons,
     _append_gear_weapons,
     _append_natural_weapons,
+    _append_quality_weapons,
     _append_ware_weapons,
     _public_weapon,
 )
 
 __all__ = [
+    "_append_armor_weapons",
     "_append_gear_weapons",
     "_append_natural_weapons",
+    "_append_quality_weapons",
     "_append_ware_weapons",
     "_apply_recoil_totals",
     "_public_weapon",

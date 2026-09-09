@@ -21,8 +21,10 @@ from ..constants import ADEPT_TALENTS, quality_contact_extra_key
 from ..contacts import apply_erased_lifestyle_cap
 from ..formulas import parse_armor_value
 from ..gear import (
+    _append_armor_weapons,
     _append_gear_weapons,
     _append_natural_weapons,
+    _append_quality_weapons,
     _append_ware_weapons,
     _apply_recoil_totals,
     _clamp_rating,
@@ -153,6 +155,7 @@ def resolve_gear(
             )
         )
     state.weapons = kept_weapons
+    _append_armor_weapons(weapons, armor_items)
     _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
         state, weapons, special_modification_limit=special_modification_limit
@@ -300,7 +303,9 @@ def resolve_gear(
 def gear_phase(ctx: Ctx) -> None:
     ctx.gear = resolve_gear(
         ctx.state,
-        ctx.cyber_installed,
+        # Bioware grants weapons too — claws and tusks (CF p.72) are `<addweapon>`
+        # implants exactly like a cyberspur.
+        [*ctx.cyber_installed, *ctx.bio_installed],
         ctx.attr_totals,
         special_modification_limit=int(ctx.effects.get("special_modification_limit") or 0),
         granted_gear=list(ctx.effects["grant_gear"]),
@@ -310,6 +315,7 @@ def gear_phase(ctx: Ctx) -> None:
     # Before the weapon modifiers below: a natural weapon is an Unarmed Combat
     # attack, so a reach or unarmed-AP bonus has to reach it too.
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
+    _append_quality_weapons(ctx.gear["weapons"], ctx.qualities)
     apply_lifestyle_cost_mod(ctx.gear, int(ctx.effects.get("lifestyle_cost") or 0))
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))

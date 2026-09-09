@@ -34,6 +34,9 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           );
           const fromGear = Boolean(item.from_gear && item.source_gear_id);
           const fromWare = Boolean(item.from_ware && item.source_ware_id);
+          // A shield: bought as armour, so the armour row owns its price and
+          // its delete button.
+          const fromArmor = Boolean(item.from_armor && item.source_armor_id);
           // Born with it: no cost, no accessories, no ammo, nothing to delete.
           const natural = Boolean(item.natural);
           return (
@@ -45,6 +48,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   {availBit(item, ui)} / {item.source}
                   {fromGear ? ui("weapon.fromGear") : ""}
                   {fromWare ? ui("weapon.fromWare") : ""}
+                  {fromArmor ? ui("weapon.fromArmor") : ""}
                   {natural ? ui("weapon.natural", { source: tr(item.natural_source || "") }) : ""}
                   {item.limb_str != null ? ui("weapon.limbStr", { str: item.limb_str }) : ""}
                   {item.useskill ? ` / ${item.useskill}` : ""}
@@ -54,7 +58,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
                 </div>
-                {fromWare || natural ? null : (
+                {fromWare || natural || fromArmor ? null : (
                   <div className="cyber-controls">
                     <label>
                       {ui("common.qty")}
@@ -111,7 +115,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     )}
                   </div>
                 ))}
-                {!fromGear && !natural && addons.length ? (
+                {!fromGear && !natural && !fromArmor && addons.length ? (
                   <div className="cyber-controls">
                     <select
                       aria-label={`${tr(item.name)}: ${ui("gear.addAccessory")}`}
@@ -213,7 +217,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     </label>
                   </div>
                 ))}
-                {!fromGear && !natural && ammoAddons.length ? (
+                {!fromGear && !natural && !fromArmor && ammoAddons.length ? (
                   <div className="cyber-controls">
                     <select
                       aria-label={`${tr(item.name)}: ${ui("weapon.addAmmo")}`}
@@ -266,10 +270,20 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       });
                       return;
                     }
-                    if (fromWare) {
+                    if (fromArmor) {
                       patch({
-                        cyberware: removeWareTree(
-                          ch.cyberware || [],
+                        armor: (ch.armor || []).filter((row) => row.id !== item.source_armor_id),
+                        armor_mods: (ch.armor_mods || []).filter(
+                          (row) => row.parent_id !== item.source_armor_id,
+                        ),
+                      });
+                      return;
+                    }
+                    if (fromWare) {
+                      const wareKey = item.ware_kind === "bioware" ? "bioware" : "cyberware";
+                      patch({
+                        [wareKey]: removeWareTree(
+                          ch[wareKey] || [],
                           item.source_ware_id || item.id,
                         ),
                         weapon_accessories: (ch.weapon_accessories || []).filter(

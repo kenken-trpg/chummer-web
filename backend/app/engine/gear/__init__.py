@@ -69,8 +69,10 @@ from .vehicles import (
     vehicle_matches,
 )
 from .weapons import (
+    _append_armor_weapons,
     _append_gear_weapons,
     _append_natural_weapons,
+    _append_quality_weapons,
     _append_ware_weapons,
     _apply_recoil_totals,
     _public_weapon,
@@ -87,8 +89,10 @@ from .weapons import (
 
 __all__ = [
     "_DRUG_CATEGORIES",
+    "_append_armor_weapons",
     "_append_gear_weapons",
     "_append_natural_weapons",
+    "_append_quality_weapons",
     "_append_ware_weapons",
     "_apply_loaded_ammo",
     "_apply_recoil_totals",
