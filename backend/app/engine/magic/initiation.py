@@ -18,8 +18,9 @@ from ...improvements import EffectsDict
 from ...improvements.effect_rows import MetamagicLimitRow
 from ...models import CharacterState, InitiationChoice
 from ...notices import Notice, notice, term, terms
+from ...rules import current_rules
 from ..bundle_types import InitiationBundle
-from ..constants import INITIATION_KARMA_FLAT, INITIATION_KARMA_PER_GRADE, MAG_TALENTS
+from ..constants import MAG_TALENTS
 from ..lookups import _magic_art_by_id, _metamagic_by_id, _metamagic_by_name
 from ..requirements import requirement_tree_met
 from ._common import _magic_grade_discount
@@ -83,7 +84,7 @@ def apply_free_metamagics(
 def initiation_karma_for_grade(
     grade: int, *, group: bool = False, ordeal: bool = False, schooling: bool = False
 ) -> int:
-    base = INITIATION_KARMA_FLAT + int(grade) * INITIATION_KARMA_PER_GRADE
+    base = current_rules().karma_initiation_flat + int(grade) * current_rules().karma_initiation_per_grade
     return math.floor(base * _magic_grade_discount(group=group, ordeal=ordeal, schooling=schooling) + 0.5)
 
 

@@ -19,8 +19,9 @@ from ...data_loader import SPELL_CATEGORIES
 from ...improvements import EffectsDict, apply_bonus_nodes, empty_effects
 from ...models import CharacterState, SpellInstall
 from ...notices import Notice, notice, term, terms
+from ...rules import current_rules
 from ..bundle_types import SpellsBundle
-from ..constants import MAG_TALENTS, SPELL_KARMA, SPELL_TALENTS, quality_spirit_category_extra_key
+from ..constants import MAG_TALENTS, SPELL_TALENTS, quality_spirit_category_extra_key
 from ..lookups import _spell_by_id, _spell_by_name, _tradition_by_id
 from ._common import _active_skill_rating_from_state, spell_cast_info, tradition_resist
 
@@ -241,7 +242,7 @@ def _spell_kind_karma_type(kind: str) -> str:
 
 def spell_karma_cost(kind: str | None, effects: EffectsDict | None = None) -> int:
     """Base spell karma (default 5) plus newspellkarmacost improvements for the spell type."""
-    cost = SPELL_KARMA
+    cost = current_rules().karma_spell
     category = _spell_kind_karma_type(kind or "spell")
     for row in (effects or empty_effects()).get("new_spell_karma_cost") or []:
         row_type = str(row.get("type") or "").strip()

@@ -263,9 +263,10 @@ class CharacterOptions(BaseModel):
 class SettingsState(BaseModel):
     """A Chummer settings file, as much of one as this app honours.
 
-    Chummer's `<settings>` carries ~150 house-rule knobs; this holds the two
-    the engine can act on today plus the name to show in the pulldown. It is
-    the container the rest arrive in — see docs/plans/settings-plan.md.
+    Chummer's `<settings>` carries ~160 house-rule knobs. This holds the ones
+    the engine can act on — the enabled books, the build budget, the karma
+    price list and the chargen caps — plus the name for the pulldown and a
+    list of what had to be ignored. See docs/plans/settings-plan.md.
 
     `books` is the list of enabled `<source>` codes. **Empty means
     unrestricted**, not "no books": a character saved before this field
@@ -275,6 +276,40 @@ class SettingsState(BaseModel):
 
     name: str = ""
     books: list[str] = Field(default_factory=list)
+
+    # Every knob below is `None` when the settings file did not change it, so
+    # an unset field keeps the printed SR5 value. `app.rules.rules_for` folds
+    # them into a `Rules`; see `app/settings_file.py` for the XML side.
+    sum_to_ten: int | None = None
+    chargen_karma: int | None = None
+    karma_chargen_pool: int | None = None
+    karma_attribute: int | None = None
+    karma_active_skill: int | None = None
+    karma_skill_group: int | None = None
+    karma_knowledge: int | None = None
+    karma_specialization: int | None = None
+    karma_spell: int | None = None
+    karma_complex_form: int | None = None
+    karma_enhancement: int | None = None
+    karma_mystic_pp: int | None = None
+    karma_martial_technique: int | None = None
+    karma_initiation_flat: int | None = None
+    karma_initiation_per_grade: int | None = None
+    karma_submersion_flat: int | None = None
+    karma_submersion_per_grade: int | None = None
+    quality_karma_limit: int | None = None
+    chargen_skill_max: int | None = None
+    chargen_knowledge_skill_max: int | None = None
+    career_skill_max: int | None = None
+    career_skill_group_max: int | None = None
+    chargen_avail_max: int | None = None
+    karma_to_nuyen: int | None = None
+    priority_karma_nuyen_base: int | None = None
+    banned_ware_grades: list[str] = Field(default_factory=list)
+    #: Tags the file changed away from Chummer's Standard that this app does
+    #: not implement. Surfaced as a warning rather than swallowed — a house
+    #: rule silently dropped is worse than one the sheet says it ignored.
+    unsupported: list[str] = Field(default_factory=list)
 
 
 class CareerBaseline(BaseModel):

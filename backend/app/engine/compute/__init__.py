@@ -13,6 +13,7 @@ from typing import Any
 
 from ...data_loader import catalog
 from ...models import CharacterState
+from ...rules import rules_for, using_rules
 from ._career import (  # noqa: F401  (re-exported via app.engine)
     career_raise_karma,
     nuyen_spend_breakdown,
@@ -58,6 +59,18 @@ def default_attributes(meta: dict[str, Any]) -> dict[str, int]:
 
 
 def compute(state: CharacterState) -> CharacterState:
+    """Run one character through the phases under its own settings.
+
+    `using_rules` binds the character's settings for the length of the run, so
+    the ~100 places that read a karma price or a chargen cap can go on being
+    free functions. It is a ContextVar, so a concurrent request computing a
+    different character sees its own — see `app/rules.py`.
+    """
+    with using_rules(rules_for(state.settings)):
+        return _compute(state)
+
+
+def _compute(state: CharacterState) -> CharacterState:
     ctx = Ctx(state=state, data=catalog())
     bootstrap(ctx)
     gather(ctx)

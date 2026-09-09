@@ -18,8 +18,9 @@ from ..data_loader import MATRIX_ATTRIBUTES, eval_formula
 from ..improvements import EffectsDict, empty_effects
 from ..models import CharacterState, ComplexFormInstall, SpriteInstall
 from ..notices import Notice, notice, term, terms
+from ..rules import current_rules
 from .bundle_types import ComplexFormsBundle, SpritesBundle, SubmersionBundle
-from .constants import COMPLEX_FORM_KARMA, COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
+from .constants import COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
 from .dice import magic_opposed_test, skill_dice_pool
 from .lookups import _complex_form_by_id, _default_stream, _echo_by_name, _sprite_by_id, _stream_by_id
 from .magic import spell_drain_value, tradition_resist
@@ -221,7 +222,7 @@ def resolve_complex_forms(
                 "resist": int(resist),
                 "resist_attrs": resist_attrs,
                 "free": free,
-                "karma": 0 if free else COMPLEX_FORM_KARMA,
+                "karma": 0 if free else current_rules().karma_complex_form,
                 "source": spec.get("source"),
                 "page": spec.get("page"),
             }
@@ -234,7 +235,7 @@ def resolve_complex_forms(
         "free_max": free_max,
         "used": len(public),
         "paid": paid,
-        "karma": paid * COMPLEX_FORM_KARMA,
+        "karma": paid * current_rules().karma_complex_form,
         "stream": (
             {
                 "id": stream["id"],

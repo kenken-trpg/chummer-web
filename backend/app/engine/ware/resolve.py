@@ -19,6 +19,7 @@ from ...data_loader import catalog_ware, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, CyberwareInstall
 from ...notices import Notice, notice, term, terms
+from ...rules import current_rules
 from ..constants import _normalize_side
 from ..gear import _capacity_value, _device_rating_of
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
@@ -207,7 +208,10 @@ def _clamp_ware_grades(
     disabled_grades: set[str] | None = None,
 ) -> list[Notice]:
     warnings: list[Notice] = []
-    quality_banned = set(disabled_grades or ())
+    # A quality can disable grades (Sensitive System), and so can the settings
+    # file's `<bannedwaregrades>` — the GM's "no deltaware in this game". They
+    # stack: neither is a licence to use what the other forbids.
+    quality_banned = set(disabled_grades or ()) | set(current_rules().banned_ware_grades)
     for inst in items:
         ware = _ware_by_id(kind, inst.ware_id)
         if not ware:

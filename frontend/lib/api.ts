@@ -1,4 +1,4 @@
-import type { Catalog, Character } from "./types";
+import type { Catalog, Character, CharacterSettings } from "./types";
 import { type Notice, renderNotice } from "@/lib/engine-notices";
 import { readLocale, translate } from "@/lib/i18n";
 import * as local from "@/lib/character/local-store";
@@ -150,6 +150,21 @@ export const api = {
     await local.putCharacter(res.character);
     return res;
   },
+
+  /**
+   * Read a Chummer `settings/*.xml`. The backend owns the parsing — every
+   * other piece of Chummer XML knowledge lives there, and deciding which
+   * knobs a file changed needs the vendored `settings.xml` to compare with.
+   * Nothing is stored server-side; the caller keeps what comes back.
+   */
+  parseSettings: async (
+    bytes: ArrayBuffer,
+  ): Promise<{ settings: CharacterSettings; build_method: string | null }> =>
+    req<{ settings: CharacterSettings; build_method: string | null }>("/api/settings/parse", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: bytes,
+    }),
 
   /** A `.chum5` (plain XML) blob for the given state — caller triggers the download. */
   exportChummer: async (state: Character): Promise<Blob> => {

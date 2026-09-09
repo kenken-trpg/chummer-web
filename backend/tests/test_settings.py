@@ -9,12 +9,17 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
+import pytest
+
 from app.characters import apply_patch, new_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.data_loader.loaders.books import load_books, load_settings_presets
-from app.models import CharacterPatch, CharacterState
+from app.models import CharacterPatch, CharacterState, SettingsState
+from app.rules import _DIRECT, DEFAULT_RULES, RULE_FIELDS, rules_for
+from app.settings_file import parse_settings_xml
+from tests.notice_asserts import has
 
 
 def test_books_carry_every_code_the_catalog_cites() -> None:
@@ -91,3 +96,115 @@ def test_a_settings_element_holding_house_rules_is_not_read_as_a_name() -> None:
     """Some builds write `<settings>` as a container, not a file name."""
     xml = "<character><alias>X</alias><settings><karmaattribute>5</karmaattribute></settings></character>"
     assert chum5_to_state(xml)[0]["settings"] == {}
+
+
+# --- the settings file itself ------------------------------------------- #
+
+
+def _settings_xml(**tags: object) -> str:
+    body = "".join(f"<{k}>{v}</{k}>" for k, v in tags.items())
+    return f"<settings><name>House</name>{body}</settings>"
+
+
+def test_a_file_that_changes_nothing_reports_nothing_unsupported() -> None:
+    """The ignored-knob list is measured against Chummer's Standard preset, so
+    a default-valued knob is not "a house rule we dropped"."""
+    parsed = parse_settings_xml(_settings_xml(armordegredation="False"))
+    assert parsed.unsupported == []
+
+
+def test_a_knob_this_app_has_no_implementation_for_is_named() -> None:
+    parsed = parse_settings_xml(_settings_xml(armordegredation="True", cyberlegmovement="True"))
+    assert parsed.unsupported == ["armordegredation", "cyberlegmovement"]
+
+
+def test_the_karma_price_list_is_read() -> None:
+    xml = "<settings><name>H</name><karmacost><karmaattribute>7</karmaattribute></karmacost></settings>"
+    parsed = parse_settings_xml(xml)
+    assert parsed.karma_attribute == 7
+    assert parsed.karma_spell is None, "a knob the file left alone stays unset, not zeroed"
+    assert "karmaattribute" not in parsed.unsupported
+
+
+def test_the_karma_to_nuyen_expression_wins_over_the_plain_rate() -> None:
+    """Chummer evaluates the expression, so a file that disagrees with itself
+    is honoured the way Chummer honours it."""
+    parsed = parse_settings_xml(
+        _settings_xml(
+            nuyenperbpwftm="2000",
+            chargenkarmatonuyenexpression="{Karma} * 3000 + {PriorityNuyen}",
+        )
+    )
+    assert parsed.karma_to_nuyen == 3000
+    assert parsed.unsupported == []
+
+
+def test_an_expression_this_app_cannot_evaluate_is_reported_not_guessed() -> None:
+    parsed = parse_settings_xml(
+        _settings_xml(nuyenperbpwftm="2000", chargenkarmatonuyenexpression="{Karma} * {BOD} * 500")
+    )
+    assert parsed.karma_to_nuyen == 2000
+    assert "chargenkarmatonuyenexpression" in parsed.unsupported
+
+
+def test_a_preset_library_file_is_accepted_as_well_as_a_single_setting() -> None:
+    """Chummer's own `settings.xml` nests many; a saved one is a bare tag."""
+    library = "<chummer><settings><setting><name>Lib</name><sumtoten>13</sumtoten></setting></settings></chummer>"
+    assert parse_settings_xml(library).sum_to_ten == 13
+
+
+def test_a_non_settings_document_is_rejected() -> None:
+    """So the endpoint can answer 400 rather than an all-defaults object that
+    looks like a successful import."""
+    with pytest.raises(ValueError):
+        parse_settings_xml("<character><alias>X</alias></character>")
+    with pytest.raises(ValueError):
+        parse_settings_xml("not xml at all")
+
+
+# --- what the numbers do once they are in ------------------------------- #
+
+
+def test_rules_default_to_the_printed_sr5_values() -> None:
+    assert rules_for(None) is DEFAULT_RULES
+    assert rules_for(SettingsState()) == DEFAULT_RULES
+
+
+def test_every_direct_override_names_a_real_rules_field() -> None:
+    """Guards the two hand-written tables against a rename on either side."""
+    assert set(_DIRECT.values()) <= RULE_FIELDS
+
+
+def test_one_quality_limit_caps_both_directions() -> None:
+    rules = rules_for(SettingsState(quality_karma_limit=30))
+    assert (rules.quality_karma_cap_positive, rules.quality_karma_cap_negative) == (30, 30)
+
+
+def test_the_karma_to_nuyen_rate_reaches_the_sheet() -> None:
+    state = apply_patch(new_character(None), CharacterPatch(settings={"karma_to_nuyen": 3000}))
+    assert state.derived["karma_chargen"]["nuyen_per_karma"] == 3000
+
+
+def test_a_banned_ware_grade_is_pushed_back_to_an_allowed_one() -> None:
+    """`<bannedwaregrades>` stacks with the grades a quality disables."""
+    cat = catalog()
+    ware = next(w for w in cat["cyberware"]["items"] if w.get("name") == "Wired Reflexes")
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(
+            cyberware=[{"ware_id": ware["id"], "rating": 1, "grade": "Deltaware"}],
+            settings={"banned_ware_grades": ["Deltaware"]},
+        ),
+    )
+    assert state.cyberware[0].grade != "Deltaware"
+    assert has(state.derived["warnings"], "engine.ware.gradeBanned")
+
+
+def test_unsupported_knobs_are_surfaced_as_a_warning() -> None:
+    """A house rule silently dropped is worse than one the sheet says it
+    ignored — the GM can then decide what to do about it."""
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(settings={"name": "House", "unsupported": ["ignoreart"]}),
+    )
+    assert has(state.derived["warnings"], "engine.settings.unsupported", tags="ignoreart")

@@ -11,14 +11,8 @@ from typing import Any
 from ...improvements import EffectsDict, empty_effects
 from ...models import CareerBaseline, CharacterState
 from ...notices import notice, term
+from ...rules import current_rules
 from ..bundle_types import GearBundle
-from ..constants import (
-    KARMA_ACTIVE_SKILL,
-    KARMA_ATTRIBUTE,
-    KARMA_KNOWLEDGE,
-    KARMA_SKILL_GROUP,
-    KARMA_SPECIALIZATION,
-)
 from ..karma import (
     _active_karma_mults,
     _filter_karma_rules,
@@ -67,7 +61,7 @@ def career_raise_karma(
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
-            KARMA_ATTRIBUTE,
+            current_rules().karma_attribute,
             flat_rules=_matching_karma_rules(attr_flat, key),
         )
         if cost:
@@ -88,7 +82,7 @@ def career_raise_karma(
         to_r = int(rating or 0)
         cat = group_cat_map.get(group, "")
         mult = int(group_mults.get(cat, 100))
-        cost = _karma_cost_with_category_mods(from_r, to_r, KARMA_SKILL_GROUP, mult_pct=mult)
+        cost = _karma_cost_with_category_mods(from_r, to_r, current_rules().karma_skill_group, mult_pct=mult)
         if cost:
             lines.append(
                 {
@@ -114,7 +108,7 @@ def career_raise_karma(
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
-            KARMA_ACTIVE_SKILL,
+            current_rules().karma_active_skill,
             mult_pct=mult,
             flat_rules=_matching_karma_rules(active_flat, cat),
         )
@@ -149,7 +143,7 @@ def career_raise_karma(
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
-            KARMA_KNOWLEDGE,
+            current_rules().karma_knowledge,
             mult_pct=mult,
             flat_rules=_matching_karma_rules(know_flat, cat),
             min_rules=_matching_karma_rules(know_min, cat),
@@ -170,7 +164,7 @@ def career_raise_karma(
         if str(spec or "").strip() and name not in base_specs:
             cat = skill_cat_map.get(name) or str(know_cats.get(name) or catalog_know.get(name) or "")
             mult = int(spec_mults.get(cat, 100))
-            amount = max(1, int(math.ceil(KARMA_SPECIALIZATION * mult / 100.0)))
+            amount = max(1, int(math.ceil(current_rules().karma_specialization * mult / 100.0)))
             lines.append(
                 {
                     "kind": "specialization",
@@ -190,7 +184,7 @@ def career_raise_karma(
         cost = _karma_cost_with_category_mods(
             from_r,
             to_r,
-            KARMA_ACTIVE_SKILL,
+            current_rules().karma_active_skill,
             mult_pct=100,
             flat_rules=_matching_karma_rules(active_flat, ""),
         )
