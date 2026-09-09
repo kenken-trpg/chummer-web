@@ -256,6 +256,13 @@
   },
   "martial_arts": [],
   "martial_spec_options": {},
+  "matrix_initiative": {
+    "cold_dice": 3,
+    "dataprocessing": 1,
+    "device": "living_persona",
+    "hot_dice": 4,
+    "value": 2
+  },
   "mentor": null,
   "metagenic": {
     "balanced": true,

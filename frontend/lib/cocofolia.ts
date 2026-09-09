@@ -183,6 +183,12 @@ export function buildChatPalette(
     const DP = persona.dataprocessing ?? 0;
     const FW = persona.firewall ?? 0;
     out.push("// ── マトリクス ──");
+    // VR only: in AR the character rolls the meat initiative at the top.
+    const mi = d.matrix_initiative;
+    if (mi) {
+      out.push(`${mi.cold_dice}D6+${mi.value} マトリクス・イニシアチブ（コールドシム）`);
+      out.push(`${mi.hot_dice}D6+${mi.value} マトリクス・イニシアチブ（ホットシム）`);
+    }
     out.push(`${skillPool("Hacking") + at("LOG")}B6@${S} 素早いハッキング`);
     out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} 強行アクセス`);
     out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} データスパイク`);

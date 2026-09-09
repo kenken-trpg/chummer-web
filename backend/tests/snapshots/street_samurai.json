@@ -251,6 +251,7 @@
   },
   "martial_arts": [],
   "martial_spec_options": {},
+  "matrix_initiative": null,
   "mentor": null,
   "metagenic": {
     "balanced": true,

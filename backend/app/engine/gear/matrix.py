@@ -2,7 +2,8 @@
 
 Their ASDF attribute array (Attack / Sleaze / Data Processing / Firewall) can be
 reordered on a cyberdeck; :func:`_resolve_matrix_devices` prices each device and
-publishes the resolved array.
+publishes the resolved array. :func:`matrix_initiative` turns the persona a
+character actually runs into the VR initiative that persona rolls.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from typing import Any
 
 from ...data_loader import eval_formula
 from ...models import GearInstall
+from ..bundle_types import MatrixInitiative
 from ..constants import MATRIX_ARRAY_KEYS
 from ..lookups import _item_by_id
 from ._common import _clamp_rating
@@ -113,3 +115,42 @@ def _resolve_matrix_devices(
             }
         )
     return kept, public, nuyen
+
+
+#: SR5 p.229: VR initiative rolls Data Processing + Intuition, with three dice
+#: in cold sim and four in hot sim. In AR the character keeps their meat
+#: initiative, so there is nothing extra to publish for it.
+COLD_SIM_DICE = 3
+HOT_SIM_DICE = 4
+
+
+def matrix_initiative(
+    personas: list[tuple[str, dict[str, Any] | None]],
+    intuition: int,
+    extra_dice: int = 0,
+) -> MatrixInitiative | None:
+    """The VR initiative of the best persona the character can run.
+
+    ``personas`` is (label, row) in preference order — a technomancer's living
+    persona, then the devices. The one with the highest Data Processing wins,
+    because that is the one worth jacking into; ties keep the earlier entry.
+    ``extra_dice`` is `<matrixinitiativedice>` (a Multidimensional Coprocessor,
+    the Sourcerer echoes).
+    """
+    best: tuple[str, int] | None = None
+    for label, row in personas:
+        if not row:
+            continue
+        processing = int(row.get("dataprocessing") or 0)
+        if best is None or processing > best[1]:
+            best = (label, processing)
+    if best is None:
+        return None
+    label, processing = best
+    return {
+        "device": label,
+        "dataprocessing": processing,
+        "value": processing + int(intuition),
+        "cold_dice": COLD_SIM_DICE + int(extra_dice),
+        "hot_dice": HOT_SIM_DICE + int(extra_dice),
+    }

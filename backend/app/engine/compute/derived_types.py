@@ -23,7 +23,7 @@ from ...improvements.effect_rows import (
     UnimplementedRow,
 )
 from ...notices import Notice
-from ..bundle_types import FocusLimits, MovementBundle
+from ..bundle_types import FocusLimits, MatrixInitiative, MovementBundle
 
 Row = dict[str, Any]
 
@@ -240,6 +240,7 @@ class DerivedDict(TypedDict):
     commlink: Row | None
     cyberdeck: Row | None
     rcc: Row | None
+    matrix_initiative: MatrixInitiative | None
     lifestyle: Row | None
 
     # --- economy -----------------------------------------------------

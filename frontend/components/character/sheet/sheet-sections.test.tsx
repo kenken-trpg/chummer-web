@@ -68,6 +68,30 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).toContain(marker);
   });
 
+  it("the matrix section prints the VR initiative next to the persona", () => {
+    const withVr = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          matrix_initiative: {
+            device: "living_persona",
+            dataprocessing: 3,
+            value: 7,
+            cold_dice: 3,
+            hot_dice: 4,
+          },
+        },
+      } as any,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<MatrixSection {...(withVr as any)} />);
+    expect(container.textContent).toContain("冷7+3d6");
+    expect(container.textContent).toContain("熱7+4d6");
+  });
+
   it("the magic section says so when Quickening is in hand", () => {
     const withQuickening = buildSheetData({
       character: {

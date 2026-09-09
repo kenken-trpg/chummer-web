@@ -30,6 +30,7 @@ from ..constants import (
     _normalize_side,
     quality_spirit_category_extra_key,
 )
+from ..gear import matrix_initiative
 from ..magic import spell_defense_pools, spell_karma_cost
 from ..priority import priorities_are_unique, sum_to_ten_spent
 from ..qualities import _quality_has_selectside, quality_needs_extra
@@ -75,6 +76,18 @@ def _effective_attr_spec(
 def assemble(ctx: Ctx) -> None:
     ctx.state.attributes = ctx.ratings
     sum_spent = sum_to_ten_spent(ctx.state.priorities)
+    # A technomancer's persona is one of the personas the Matrix initiative
+    # below picks from, so it is resolved before the blob rather than inside it.
+    living = (
+        living_persona(
+            ctx.total,
+            int(ctx.total.get("RES") or 0),
+            ctx.effects.get("living_persona") if isinstance(ctx.effects.get("living_persona"), dict) else None,
+            int(ctx.effects.get("matrix_initiative_dice") or 0),
+        )
+        if ctx.talent["name"] in RES_TALENTS
+        else None
+    )
     derived: DerivedDict = {
         "errors": ctx.errors,
         "warnings": ctx.warnings,
@@ -151,6 +164,18 @@ def assemble(ctx: Ctx) -> None:
         "commlink": ctx.gear.get("commlink"),
         "cyberdeck": ctx.gear.get("cyberdeck"),
         "rcc": ctx.gear.get("rcc"),
+        # The VR initiative of whichever persona is worth running (SR5 p.229);
+        # in AR the character keeps the meat initiative above.
+        "matrix_initiative": matrix_initiative(
+            [
+                ("living_persona", living),
+                ("cyberdeck", ctx.gear.get("cyberdeck")),
+                ("rcc", ctx.gear.get("rcc")),
+                ("commlink", ctx.gear.get("commlink")),
+            ],
+            int(ctx.total.get("INT") or 0),
+            int(ctx.effects.get("matrix_initiative_dice") or 0),
+        ),
         "lifestyle": ctx.gear.get("lifestyle"),
         "nuyen": ctx.nuyen,
         "nuyen_spent": ctx.nuyen_spent,
@@ -232,16 +257,7 @@ def assemble(ctx: Ctx) -> None:
             "pool": ctx.resonance.get("resist") or 0,
             "attrs": ctx.resonance.get("resist_attrs") or "WIL+RES",
         },
-        "living_persona": (
-            living_persona(
-                ctx.total,
-                int(ctx.total.get("RES") or 0),
-                ctx.effects.get("living_persona") if isinstance(ctx.effects.get("living_persona"), dict) else None,
-                int(ctx.effects.get("matrix_initiative_dice") or 0),
-            )
-            if ctx.talent["name"] in RES_TALENTS
-            else None
-        ),
+        "living_persona": living,
         "points": {
             "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
             "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},

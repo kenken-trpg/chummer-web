@@ -963,6 +963,9 @@ const JA = {
   "sheet.deviceCommlink": "通信機 {name}",
   "sheet.deviceDeck": "デッキ {name}",
   "sheet.deviceRcc": "RCC {name}",
+  "sheet.matrixInit": "冷{cold} ／ 熱{hot}",
+  "sheet.matrixInitNote":
+    "マトリクス・イニシアチブは VR のもの（データ処理＋直感、コールドシム 3d6／ホットシム 4d6・SR5 p.229）。AR では肉体のイニシアチブで行動します。",
   "sheet.livingPersona": "リビングペルソナ",
 
   "print.status": "ステータス",
@@ -2532,6 +2535,9 @@ const EN: Catalog = {
   "sheet.deviceCommlink": "Commlink {name}",
   "sheet.deviceDeck": "Deck {name}",
   "sheet.deviceRcc": "RCC {name}",
+  "sheet.matrixInit": "cold {cold} / hot {hot}",
+  "sheet.matrixInitNote":
+    "Matrix Initiative is the VR one (Data Processing + Intuition, 3d6 cold sim / 4d6 hot, SR5 p.229). In AR you act on your physical Initiative.",
   "sheet.livingPersona": "Living persona",
 
   "print.status": "Stats",
