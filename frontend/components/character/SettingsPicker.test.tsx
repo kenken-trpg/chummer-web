@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { api } from "@/lib/api";
+import { api, type MergeResult } from "@/lib/api";
 import { saveSettingsFile } from "@/lib/character/settings-store";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
@@ -36,6 +36,11 @@ function setup(settings?: { name: string; books: string[] }) {
     />,
   );
   return { patch };
+}
+
+/** A merge response with only the fields a test cares about spelled out. */
+function mergeResult(over: Partial<MergeResult>): MergeResult {
+  return { dataset: "d", applied: 0, skipped: [], changes: [], truncated: false, ...over };
 }
 
 /** A `File` that reports a directory path, the way a folder pick does. */
@@ -194,7 +199,7 @@ describe("SettingsPicker with custom data", () => {
   it("uploads the folder and stores the hash on the character", async () => {
     const upload = vi
       .spyOn(api, "uploadCustomData")
-      .mockResolvedValue({ dataset: "abc123", applied: 217, skipped: [] });
+      .mockResolvedValue(mergeResult({ dataset: "abc123", applied: 217 }));
     const { patch } = setup(withCustom);
     const input = screen.getByLabelText("スタイル一式を読み込む");
     const file = new File(["<chummer/>"], "custom_x.xml", { type: "text/xml" });
@@ -211,11 +216,13 @@ describe("SettingsPicker with custom data", () => {
   });
 
   it("names what the merge could not apply", async () => {
-    vi.spyOn(api, "uploadCustomData").mockResolvedValue({
-      dataset: "abc",
-      applied: 3,
-      skipped: [{ source: "codex/amend_critters.xml", reason: "critters.xml is not part of it" }],
-    });
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(
+      mergeResult({
+        dataset: "abc",
+        applied: 3,
+        skipped: [{ source: "codex/amend_critters.xml", reason: "critters.xml is not part of it" }],
+      }),
+    );
     setup(withCustom);
     const file = new File(["<chummer/>"], "x.xml", { type: "text/xml" });
     Object.defineProperty(file, "webkitRelativePath", { value: "cd/d/x.xml" });
@@ -269,7 +276,7 @@ describe("SettingsPicker with custom data", () => {
     // after the ruleset, and again for every ruleset in the same folder
     const upload = vi
       .spyOn(api, "uploadCustomData")
-      .mockResolvedValue({ dataset: "hash2", applied: 5, skipped: [] });
+      .mockResolvedValue(mergeResult({ dataset: "hash2", applied: 5 }));
     vi.spyOn(api, "parseSettings").mockImplementation(async (bytes: ArrayBuffer) => ({
       settings: { name: new TextDecoder().decode(bytes), books: ["SR5"], customdata: ["a>1"] },
       build_method: "SumToTen",
@@ -297,5 +304,45 @@ describe("SettingsPicker with custom data", () => {
         }),
       ),
     );
+  });
+
+  it("groups what the merge changed, so a pack can be checked against its claim", async () => {
+    // the difference this exists for: `source, page` edits are a relabelling
+    // of entries the app already had, additions are new game content
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(
+      mergeResult({
+        applied: 3,
+        changes: [
+          { file: "qualities.xml", entry: "Adept", action: "edited", fields: ["source", "page"] },
+          {
+            file: "qualities.xml",
+            entry: "Aptitude",
+            action: "edited",
+            fields: ["source", "page"],
+          },
+          { file: "martialarts.xml", entry: "居合道", action: "added", fields: [] },
+        ],
+      }),
+    );
+    setup(withCustom);
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("customdata/d/custom_x.xml", "<chummer/>")] },
+    });
+
+    fireEvent.click(await screen.findByText("内訳を見る"));
+    expect(screen.getByText("source, page を変更")).toBeDefined();
+    expect(screen.getByText("Adept、Aptitude")).toBeDefined();
+    expect(screen.getByText("追加")).toBeDefined();
+    expect(screen.getByText("居合道")).toBeDefined();
+  });
+
+  it("offers no breakdown when the merge changed nothing", async () => {
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(mergeResult({ applied: 0 }));
+    setup(withCustom);
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("customdata/d/custom_x.xml", "<chummer/>")] },
+    });
+    await waitFor(() => expect(screen.getByText(/0 件適用/)).toBeDefined());
+    expect(screen.queryByText("内訳を見る")).toBeNull();
   });
 });

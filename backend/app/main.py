@@ -279,6 +279,12 @@ def upload_customdata(request: Request, body: CustomDataUpload) -> dict:
         "dataset": dataset,
         "applied": report.applied,
         "skipped": [{"source": source, "reason": reason} for source, reason in report.skipped],
+        # itemised so the table can check a pack against what it claims to do:
+        # 62 `source, page` edits is a different thing from 62 new weapons
+        "changes": [
+            {"file": c.file, "entry": c.entry, "action": c.action, "fields": list(c.fields)} for c in report.changes
+        ],
+        "truncated": report.truncated,
     }
 
 

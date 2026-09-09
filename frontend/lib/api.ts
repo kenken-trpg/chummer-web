@@ -10,6 +10,25 @@ import {
 import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
 
+/** One entry a merge added, removed or edited. */
+export type MergeChange = {
+  /** The base data file, e.g. `martialarts.xml`. */
+  file: string;
+  entry: string;
+  action: "added" | "removed" | "edited";
+  /** Child tags an `edited` rule wrote; empty otherwise. */
+  fields: string[];
+};
+
+export type MergeResult = {
+  dataset: string;
+  applied: number;
+  skipped: { source: string; reason: string }[];
+  changes: MergeChange[];
+  /** Set when the itemisation stopped short of `applied`. */
+  truncated: boolean;
+};
+
 export type CharacterSummary = {
   id: string;
   name: string;
@@ -225,19 +244,11 @@ export const api = {
    * is the server's cache key, and one implementation of it is less to keep
    * in step than two.
    */
-  uploadCustomData: async (
-    files: CustomDataFiles,
-    customdata: string[],
-  ): Promise<{
-    dataset: string;
-    applied: number;
-    skipped: { source: string; reason: string }[];
-  }> => {
-    const res = await req<{
-      dataset: string;
-      applied: number;
-      skipped: { source: string; reason: string }[];
-    }>("/api/customdata", { method: "POST", body: JSON.stringify({ files, customdata }) });
+  uploadCustomData: async (files: CustomDataFiles, customdata: string[]): Promise<MergeResult> => {
+    const res = await req<MergeResult>("/api/customdata", {
+      method: "POST",
+      body: JSON.stringify({ files, customdata }),
+    });
     await putCustomData(res.dataset, files);
     return res;
   },
