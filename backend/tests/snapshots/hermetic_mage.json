@@ -108,7 +108,8 @@
     "choices": [],
     "grade": 0,
     "karma": 0,
-    "metamagics": []
+    "metamagics": [],
+    "quickening": false
   },
   "initiative": {
     "dice": 1,

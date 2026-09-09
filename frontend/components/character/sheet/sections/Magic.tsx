@@ -126,6 +126,8 @@ export function MagicSection(s: SheetData) {
           ) : (
             <p className="sheet-note">{ui("sheet.noMetamagic")}</p>
           )}
+          {/* Quickening is a permission, not a number: say it out loud. */}
+          {d.initiation?.quickening ? <p className="sheet-note">{ui("sheet.quickening")}</p> : null}
         </div>
       ) : null}
     </Section>

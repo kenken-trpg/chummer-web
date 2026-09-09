@@ -156,6 +156,7 @@ class _Initiation(TypedDict):
     choices: list[Row]
     metamagics: list[Row]
     arts: list[Row]
+    quickening: bool
 
 
 class _Submersion(TypedDict):

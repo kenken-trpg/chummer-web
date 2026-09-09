@@ -931,6 +931,7 @@ const JA = {
   "sheet.qiFocus": "気収束具 {name}",
   "sheet.initiation": "イニシエーション 等級 {grade}",
   "sheet.noMetamagic": "メタマジック未選択",
+  "sheet.quickening": "クイックニング可（維持中の呪文をカルマで固定できる／SR5 p.326）",
 
   "sheet.complexForms": "複合体",
   "sheet.fadeResist": " ・ フェード抵抗 {pool}（{attrs}）",
@@ -2492,6 +2493,7 @@ const EN: Catalog = {
   "sheet.qiFocus": "Qi focus {name}",
   "sheet.initiation": "Initiation, grade {grade}",
   "sheet.noMetamagic": "No metamagic chosen",
+  "sheet.quickening": "Quickening: karma can lock a sustained spell in place (SR5 p.326)",
 
   "sheet.complexForms": "Complex forms",
   "sheet.fadeResist": " · fade resistance {pool} ({attrs})",

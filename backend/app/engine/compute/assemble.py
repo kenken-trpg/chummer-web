@@ -327,6 +327,9 @@ def assemble(ctx: Ctx) -> None:
             "choices": ctx.initiation.get("choices") or [],
             "metamagics": ctx.initiation.get("metamagics") or [],
             "arts": ctx.initiation.get("arts") or [],
+            # `<quickeningmetamagic>`: the character may spend karma to keep a
+            # sustained spell up on its own (SR5 p.326).
+            "quickening": bool(ctx.effects.get("quickening")),
         },
         "submersion_grade": int(ctx.submersion.get("grade") or 0),
         "submersion": {

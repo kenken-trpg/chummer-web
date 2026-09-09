@@ -14,7 +14,11 @@ from ..effects import EffectsDict
 
 
 def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
-    if tag in {"skillgroup", "skillcategory"}:
+    # `skillgrouplevel` is Chummer's free-level flavour, and the only thing
+    # carrying it (Heinzelmännchen, SAG p.121) reads "+1 dice pool modifier for
+    # tests using ... the Engineering skill group" — so it is the dice the book
+    # promises, not a rating nobody paid for.
+    if tag in {"skillgroup", "skillgrouplevel", "skillcategory"}:
         name = (fields.get("name") or node.get("value") or "").strip()
         bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"))
         if not name or bonus == 0:
@@ -27,7 +31,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             "condition": (fields.get("condition") or "").strip(),
             "source": source,
         }
-        if tag == "skillgroup":
+        if tag in {"skillgroup", "skillgrouplevel"}:
             effects["skill_group_mods"].append(row)
         else:
             effects["skill_category_mods"].append(row)

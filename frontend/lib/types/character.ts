@@ -382,6 +382,8 @@ export interface Character {
         source?: string;
         page?: string;
       }[];
+      /** `<quickeningmetamagic>`: sustained spells can be quickened with karma. */
+      quickening?: boolean;
     };
     submersion_grade?: number;
     submersion?: {
