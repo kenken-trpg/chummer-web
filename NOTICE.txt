@@ -89,3 +89,23 @@ Third-party data and translations
    Golden-output fixtures for the engine tests. They contain SR5 item names,
    numeric stats and rulebook page numbers derived from the chummer5a dataset
    (GPL-3.0).
+
+4. User-supplied settings and customdata — not distributed
+
+   A Chummer settings file (settings/*.xml) and the customdata/ directories it
+   names can be loaded from the user's own machine. Nothing of the sort is
+   bundled: the files stay in the browser, the server holds only the merge
+   result in memory under a content hash, and no copy is committed to this
+   repository or built into its image. Third-party settings sets — fan-made
+   content such as new martial arts, techniques or weapons, and compiled
+   source/page tables for a Japanese-edition supplement — are their authors'
+   work. Bundling any of them would require the author's explicit permission
+   and an entry here; that step has not been taken and is not planned.
+
+   セッティングファイル（settings/*.xml）と、それが参照する customdata/ は
+   利用者の手元から読み込む。**同梱はしない** — ファイルはブラウザに留まり、
+   サーバーはマージ結果を内容ハッシュの下にメモリ上で持つだけで、リポジトリ
+   にもイメージにも入らない。第三者が配布するセッティング（新しい格闘技・
+   技法・武器などの創作データ、日本語版サプリメントの出典／ページ対応表など）
+   はその作者の著作物であり、同梱するなら作者の明示的な許諾と本ファイルへの
+   出典追記が前提。現時点でその手続きは行っておらず、予定もない。
