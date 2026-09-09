@@ -244,6 +244,7 @@ class GearBundle(TypedDict):
     vehicle_mods: list[dict[str, Any]]
     weapon_mounts: list[dict[str, Any]]
     gear: list[dict[str, Any]]
+    custom_drugs: list[dict[str, Any]]
     lifestyles: list[dict[str, Any]]
     commlink: dict[str, Any] | None
     cyberdeck: dict[str, Any] | None
@@ -416,6 +417,7 @@ def empty_gear() -> GearBundle:
         vehicle_mods=[],
         weapon_mounts=[],
         gear=[],
+        custom_drugs=[],
         lifestyles=[],
         commlink=None,
         cyberdeck=None,

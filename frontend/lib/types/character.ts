@@ -5,6 +5,7 @@ import type {
   CommlinkInstall,
   ComplexFormInstall,
   ContactInstall,
+  CustomDrugInstall,
   ExoticSkillInstall,
   FocusInstall,
   GearInstall,
@@ -28,6 +29,7 @@ import type {
 import type { Notice } from "@/lib/engine-notices";
 import type {
   ActiveDrug,
+  CustomDrug,
   EnhancementInfo,
   InstalledAdeptPower,
   InstalledArmor,
@@ -106,6 +108,7 @@ export interface Character {
   drones?: GearInstall[];
   vehicles?: GearInstall[];
   gear?: GearInstall[];
+  custom_drugs?: CustomDrugInstall[];
   vehicle_mods?: VehicleModInstall[];
   weapon_mounts?: WeaponMountInstall[];
   lifestyles?: LifestyleInstall[];
@@ -242,6 +245,7 @@ export interface Character {
     vehicle_mods?: InstalledVehicleMod[];
     weapon_mounts?: InstalledWeaponMount[];
     gear?: InstalledGear[];
+    custom_drugs?: CustomDrug[];
     lifestyles?: InstalledLifestyle[];
     commlink?: InstalledCommlink | null;
     cyberdeck?: InstalledMatrixDevice | null;

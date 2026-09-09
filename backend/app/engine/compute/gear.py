@@ -41,6 +41,7 @@ from ..gear import (
     _resolve_vehicle_mods,
     _resolve_weapon_accessories,
     _resolve_weapon_mounts,
+    apply_active_custom_drugs,
     apply_active_drugs,
     apply_lifestyle_cost_mod,
     apply_reach_bonus,
@@ -48,6 +49,7 @@ from ..gear import (
     apply_weapon_category_dice,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
+    resolve_custom_drugs,
     resolve_lifestyles,
 )
 from ..limits import _finalize_avail_tree
@@ -238,6 +240,11 @@ def resolve_gear(
     bonus_sources.extend(gear_bonus)
     _append_gear_weapons(weapons, gear_items)
 
+    custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)
+    nuyen += custom_drug_nuyen
+    warnings.extend(custom_drug_warns)
+    errors.extend(custom_drug_errors)
+
     lifestyles, lifestyle_nuyen, lifestyle_warns, lifestyle_bonus = resolve_lifestyles(state)
     nuyen += lifestyle_nuyen
     warnings.extend(lifestyle_warns)
@@ -281,6 +288,7 @@ def resolve_gear(
         "vehicle_mods": vehicle_mods,
         "weapon_mounts": weapon_mounts,
         "gear": gear_items,
+        "custom_drugs": custom_drugs,
         "lifestyles": lifestyles,
         "commlink": primary_link,
         "cyberdeck": primary_deck,
@@ -359,6 +367,7 @@ def gear_phase(ctx: Ctx) -> None:
     for source, nodes in ctx.gear["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
     ctx.active_drugs = apply_active_drugs(ctx.state, ctx.attr_totals, ctx.effects)
+    ctx.active_drugs.extend(apply_active_custom_drugs(ctx.gear.get("custom_drugs") or [], ctx.effects))
     # After every bonus source (ware folded in the effects phase, gear + drugs
     # just now) so a smartlink from any of them counts.
     apply_smartlink_accuracy(ctx.gear.get("weapons"), ctx.effects)

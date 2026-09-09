@@ -51,6 +51,8 @@ class CatalogDict(TypedDict):
     gear: list[Row]
     drugs: list[Row]
     drug_grades: list[Row]
+    drug_components: list[Row]
+    drug_component_grades: list[Row]
     drones: list[Row]
     vehicles: list[Row]
     vehicle_mods: list[Row]

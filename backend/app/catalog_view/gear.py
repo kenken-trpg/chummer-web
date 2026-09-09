@@ -176,6 +176,43 @@ def section(raw: CatalogDict) -> dict:
             }
             for item in raw.get("drugs") or []
         ],
+        "drug_components": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "category": item.get("category") or "",
+                "cost": item.get("cost") or "0",
+                "avail": item.get("avail") or "",
+                "addiction_rating": int(item.get("addiction_rating") or 0),
+                "addiction_threshold": int(item.get("addiction_threshold") or 0),
+                # How many of the component one drug may hold; 0 is unlimited.
+                "limit": int(item.get("limit") or 0),
+                "levels": [
+                    {
+                        "level": int(effect.get("level") or 0),
+                        "effect": drug_effect_summary(effect.get("nodes") or []),
+                        "crash_damage": int(effect.get("crash_damage") or 0),
+                        "speed": int(effect.get("speed") or 0),
+                        "duration": int(effect.get("duration") or 0),
+                        "info": effect.get("info") or "",
+                    }
+                    for effect in item.get("effects") or []
+                ],
+                "source": item.get("source") or "",
+                "page": item.get("page") or "",
+            }
+            for item in raw.get("drug_components") or []
+        ],
+        "drug_component_grades": [
+            {
+                "id": item["id"],
+                "name": item["name"],
+                "cost_multiplier": float(item.get("cost_multiplier") or 1.0),
+                "addiction_threshold": int(item.get("addiction_threshold") or 0),
+                "source": item.get("source") or "",
+            }
+            for item in raw.get("drug_component_grades") or []
+        ],
         "drug_grades": [
             {
                 "id": item["id"],

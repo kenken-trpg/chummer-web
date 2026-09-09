@@ -178,6 +178,23 @@ export interface GearInstall {
   active?: boolean;
 }
 
+/** One component of a mixed drug, at the level it was added at. */
+export interface CustomDrugPart {
+  component_id: string;
+  level?: number;
+}
+
+/** A drug the character cooked rather than bought (CF p.190). It has no
+ *  catalog entry — the parts are the drug — so it carries its own name. */
+export interface CustomDrugInstall {
+  id?: string;
+  name?: string;
+  grade?: string;
+  qty?: number;
+  active?: boolean;
+  parts?: CustomDrugPart[];
+}
+
 export interface LifestyleInstall {
   id?: string;
   lifestyle_id: string;

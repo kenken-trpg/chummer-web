@@ -1,19 +1,13 @@
 "use client";
 import { useState } from "react";
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { CustomDrugMixer } from "@/components/character/tabs/gear/CustomDrugMixer";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree, miscFits } from "@/lib/character/gear";
 import { renderNotices } from "@/lib/engine-notices";
 
-export function MiscDrugsGear({
-  catalog,
-  character: ch,
-  d,
-  tr,
-  ui,
-  patch,
-  mode,
-}: TabPanelProps & { mode: "misc" | "drugs" }) {
+export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" }) {
+  const { catalog, character: ch, d, tr, ui, patch, mode } = props;
   const [gearSearch, setGearSearch] = useState("");
   const [gearCat, setGearCat] = useState("all");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
@@ -319,6 +313,8 @@ export function MiscDrugsGear({
             );
           })}
       </>
+
+      {mode === "drugs" ? <CustomDrugMixer {...props} /> : null}
 
       <div className="option-row">
         <button

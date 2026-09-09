@@ -253,6 +253,7 @@ def finalize(ctx: Ctx) -> None:
                 ctx.gear.get("vehicle_mods"),
                 ctx.gear.get("weapon_mounts"),
                 ctx.gear.get("gear"),
+                ctx.gear.get("custom_drugs"),
                 ctx.gear.get("lifestyles"),
                 ctx.foci.get("public"),
             ),

@@ -175,6 +175,28 @@ class GearInstall(BaseModel):
     active: bool = False  # drugs/toxins: effect currently applied
 
 
+class CustomDrugPart(BaseModel):
+    """One component in a mixed drug, at the level it was added at."""
+
+    component_id: str
+    level: int = 0
+
+
+class CustomDrugInstall(BaseModel):
+    """A drug the character cooked rather than bought (CF p.190).
+
+    It has no catalog entry — the parts are the drug — so unlike every other
+    piece of gear it carries its own name.
+    """
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str = ""
+    grade: str = "Standard"
+    qty: int = 1
+    active: bool = False  # effect currently applied, like GearInstall.active
+    parts: list[CustomDrugPart] = Field(default_factory=list)
+
+
 class LifestyleInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     lifestyle_id: str
@@ -304,6 +326,7 @@ class CharacterPatch(BaseModel):
     drones: list[GearInstall] | None = None
     vehicles: list[GearInstall] | None = None
     gear: list[GearInstall] | None = None
+    custom_drugs: list[CustomDrugInstall] | None = None
     vehicle_mods: list[VehicleModInstall] | None = None
     weapon_mounts: list[WeaponMountInstall] | None = None
     lifestyles: list[LifestyleInstall] | None = None
@@ -397,6 +420,7 @@ class CharacterState(BaseModel):
     drones: list[GearInstall] = Field(default_factory=list)
     vehicles: list[GearInstall] = Field(default_factory=list)
     gear: list[GearInstall] = Field(default_factory=list)
+    custom_drugs: list[CustomDrugInstall] = Field(default_factory=list)
     vehicle_mods: list[VehicleModInstall] = Field(default_factory=list)
     weapon_mounts: list[WeaponMountInstall] = Field(default_factory=list)
     lifestyles: list[LifestyleInstall] = Field(default_factory=list)

@@ -19,6 +19,8 @@ from app.models import (
     CommlinkInstall,
     ComplexFormInstall,
     ContactInstall,
+    CustomDrugInstall,
+    CustomDrugPart,
     CyberwareInstall,
     ExoticSkillInstall,
     FocusInstall,
@@ -7970,3 +7972,97 @@ def test_natural_weapons_take_the_unarmed_reach_bonus() -> None:
     _append_natural_weapons(weapons, effects)
     apply_reach_bonus(weapons, 1)
     assert [w["reach"] for w in weapons] == ["1", "2"]
+
+
+def _component_ids() -> dict[str, str]:
+    return {item["name"]: item["id"] for item in catalog()["drug_components"]}
+
+
+def _mixed(name: str, parts: list[tuple[str, int]], **kwargs: object) -> CharacterState:
+    ids = _component_ids()
+    drug = CustomDrugInstall(
+        name=name,
+        parts=[CustomDrugPart(component_id=ids[comp], level=level) for comp, level in parts],
+        **kwargs,  # type: ignore[arg-type]
+    )
+    return _mundane(f"mix-{name}", custom_drugs=[drug])
+
+
+def test_mixed_drug_sums_its_components() -> None:
+    """Tank (Foundation) + Crush at level 2 + a Speed Enhancer, by the book:
+    cost / availability / addiction / onset are the components added up, and
+    the drug takes effect faster than the 9-second default (CF p.190)."""
+    out = compute(_mixed("Wrecker", [("Tank", 0), ("Crush", 1), ("Speed Enhancer", 0)]))
+    row = out.derived["custom_drugs"][0]
+    assert row["nuyen"] == 145  # 75 + 20 + 50
+    assert row["avail"] == "6R"  # +4R + 1 + 1, and R survives
+    assert (row["addiction_rating"], row["addiction_threshold"]) == (7, 3)
+    assert row["speed"] == 6  # 9 baseline, the enhancer takes 3 off
+    assert row["crash_damage"] == 2  # Crush level 2 crashes you; Tank does not
+    assert out.derived["nuyen_spent"] == 145
+    assert out.derived["errors"] == []
+
+
+def test_mixed_drug_only_touches_the_character_while_it_is_active() -> None:
+    ids = _component_ids()
+    parts = [CustomDrugPart(component_id=ids["Tank"], level=0), CustomDrugPart(component_id=ids["Crush"], level=1)]
+
+    def totals(active: bool) -> dict[str, int]:
+        state = _mundane("mix-active", custom_drugs=[CustomDrugInstall(name="W", active=active, parts=parts)])
+        return compute(state).derived["totals"]
+
+    off, on = totals(False), totals(True)
+    # Tank: BOD +2 / WIL +1 / CHA -2 and 3 levels of High Pain Tolerance;
+    # Crush at level 2: STR +2 / INT -1.
+    assert (on["BOD"] - off["BOD"], on["WIL"] - off["WIL"], on["CHA"] - off["CHA"]) == (2, 1, -2)
+    assert (on["STR"] - off["STR"], on["INT"] - off["INT"]) == (2, -1)
+    state = _mundane("mix-cm", custom_drugs=[CustomDrugInstall(name="W", active=True, parts=parts)])
+    assert compute(state).derived["condition_monitor"]["threshold_offset"] == 3
+
+
+def test_mixed_drug_grade_moves_the_price_and_the_threshold() -> None:
+    """`<grades>` in `drugcomponents.xml`: Street Cooked is half price,
+    Pharmaceutical costs double and is a step harder to get hooked on."""
+    parts = [("Tank", 0), ("Crush", 1)]
+    street = compute(_mixed("W", parts, grade="Street Cooked")).derived["custom_drugs"][0]
+    pharma = compute(_mixed("W", parts, grade="Pharmaceutical")).derived["custom_drugs"][0]
+    assert (street["nuyen"], pharma["nuyen"]) == (48, 190)  # 95 halved (rounded up), doubled
+    assert (street["addiction_threshold"], pharma["addiction_threshold"]) == (2, 1)
+
+
+def test_mixed_drug_needs_exactly_one_foundation() -> None:
+    no_base = compute(_mixed("W", [("Crush", 0)])).derived
+    assert has(no_base["errors"], "engine.customDrug.missingFoundation")
+    two = compute(_mixed("W", [("Tank", 0), ("Defender", 0)])).derived
+    assert has(two["errors"], "engine.customDrug.oneFoundation")
+    assert [c["name"] for c in two["custom_drugs"][0]["components"]] == ["Tank"]
+
+
+def test_mixed_drug_respects_a_components_own_limit() -> None:
+    # Speed Enhancer carries `<limit>3</limit>`; the fourth is refused.
+    out = compute(_mixed("W", [("Tank", 0)] + [("Speed Enhancer", 0)] * 4)).derived
+    assert has(out["errors"], "engine.customDrug.tooMany")
+    assert len(out["custom_drugs"][0]["components"]) == 4
+
+
+def test_a_high_block_may_not_undo_what_its_foundation_lowers() -> None:
+    """CF p.191: Tank costs you CHA, so Smoothtalk cannot buy it back at
+    level 3 — one level down is still fine."""
+    clash = compute(_mixed("W", [("Tank", 0), ("Smoothtalk", 2)])).derived
+    assert has(clash["errors"], "engine.customDrug.blockFightsFoundation")
+    ok = compute(_mixed("W", [("Tank", 0), ("Smoothtalk", 1)])).derived
+    assert ok["errors"] == []
+
+
+def test_a_component_level_that_does_not_exist_is_dropped_with_a_warning() -> None:
+    out = compute(_mixed("W", [("Tank", 0), ("Crush", 5)])).derived
+    assert has(out["warnings"], "engine.customDrug.noSuchLevel")
+    assert [c["name"] for c in out["custom_drugs"][0]["components"]] == ["Tank"]
+
+
+def test_a_mixed_drug_is_subject_to_the_chargen_availability_limit() -> None:
+    """Two BTLs on top of a Foundation come to 20F — nothing a starting
+    character may buy, mixed or not (SR5 p.65)."""
+    out = compute(_mixed("Nasty", [("Tank", 0), ("Berserker BTL", 0), ("Bodyguard BTL", 0)])).derived
+    assert out["custom_drugs"][0]["avail"] == "20F"
+    assert has(out["errors"], "engine.gear.availOver")
