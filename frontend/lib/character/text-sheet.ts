@@ -1,7 +1,13 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { attrShort } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
-import { cfDuration, cfTarget, lifeIncrement, vehicleCM } from "@/lib/character/format";
+import {
+  cfDuration,
+  cfTarget,
+  cmThresholdNote,
+  lifeIncrement,
+  vehicleCM,
+} from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
 import { renderNotice, renderNotices } from "@/lib/engine-notices";
@@ -65,7 +71,10 @@ export function textSheet(x: TextArgs): string {
       ui("txt.cm", {
         physical: d.condition_monitor.physical,
         stun: d.condition_monitor.stun,
-      }),
+      }) +
+      (cmThresholdNote(d.condition_monitor, ui)
+        ? `  ${cmThresholdNote(d.condition_monitor, ui)}`
+        : ""),
   );
   line(
     `${ui("common.armor")} ${d.armor}  ${ui("common.essence")} ${d.essence}  ` +

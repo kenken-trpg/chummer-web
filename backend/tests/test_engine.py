@@ -2305,6 +2305,47 @@ def _learnable_ids(count: int) -> list[str]:
     return [item["id"] for item in catalog()["spells"] if item.get("learnable")][:count]
 
 
+TRADITIONALIST_SHAMAN = "9d0cec5d-4350-47da-9ced-6619bbcb1936"  # a lone `<addquality>`
+VIGILA_EVANGELICA = "ca673acd-961e-4491-8a8d-ddf0c577441b"  # the same inside `<addqualities>`
+DRUID_TRADITIONAL = "77288f4d-e262-47b6-aad8-2edff23859cb"
+CODE_OF_HONOR_CODE = "Harmony with Nature, the Shaman\u2019s Code"
+
+
+def test_a_tradition_grants_the_quality_it_names() -> None:
+    """`<addquality select="...">` — the tradition demands it and names the pick."""
+    out = compute(_mage("shaman-code", tradition_id=TRADITIONALIST_SHAMAN))
+    row = next(q for q in out.derived["qualities"] if q["name"] == "Code of Honor")
+    assert row["extra"] == CODE_OF_HONOR_CODE
+    assert row["free"] is True
+    assert "addquality" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+
+
+def test_a_tradition_grant_costs_nothing_either_way() -> None:
+    """The follower never chose it, so the karma a negative quality pays back
+    is not theirs to collect (nor a positive one's cost theirs to pay)."""
+    granted = compute(_mage("shaman-karma", tradition_id=TRADITIONALIST_SHAMAN))
+    plain = compute(_mage("hermetic-karma", tradition_id=HERMETIC))
+    assert granted.derived["karma"] == plain.derived["karma"]
+
+
+def test_a_tradition_grants_from_the_plural_container_too() -> None:
+    out = compute(_mage("theurgy", tradition_id=VIGILA_EVANGELICA))
+    assert "Pacifist I" in [q["name"] for q in out.derived["qualities"]]
+
+
+def test_a_granted_mentor_spirit_still_asks_for_the_mentor() -> None:
+    """Druid [Traditional] grants Mentor Spirit — the pick stays the player's."""
+    out = compute(_mage("druid", tradition_id=DRUID_TRADITIONAL))
+    assert "Mentor Spirit" in [q["name"] for q in out.derived["qualities"]]
+    assert out.derived["needs_mentor"] is True
+    assert has(out.derived["warnings"], "engine.qualities.mentorMissing")
+
+
+def test_a_mundane_is_handed_nothing_by_a_tradition() -> None:
+    out = compute(_mundane("mundane-trad", tradition_id=TRADITIONALIST_SHAMAN))
+    assert [q["name"] for q in out.derived["qualities"]] == []
+
+
 def test_tradition_resist_hermetic() -> None:
     spec = next(item for item in catalog()["traditions"] if item["id"] == HERMETIC)
     pool, label = tradition_resist(spec, {"WIL": 5, "LOG": 6, "INT": 2, "CHA": 1})
@@ -7437,7 +7478,7 @@ def test_leftover_nuyen_carryover_notice() -> None:
 JAZZ = "929c4835-1754-4999-9215-9859e8ec5384"
 
 
-def _drug_state(active: bool) -> CharacterState:
+def _drug_state(active: bool, gear_id: str = JAZZ) -> CharacterState:
     return CharacterState(
         id="drug",
         name="Drug",
@@ -7457,7 +7498,7 @@ def _drug_state(active: bool) -> CharacterState:
             "RES": 0,
             "ESS": 6,
         },
-        gear=[GearInstall(gear_id=JAZZ, active=active)],
+        gear=[GearInstall(gear_id=gear_id, active=active)],
     )
 
 
@@ -7473,6 +7514,42 @@ def test_active_drug_folds_bonus_into_totals() -> None:
     row = dosed.derived["active_drugs"][0]
     assert has(row["effect"], "engine.drugEffect.attribute", name="REA", value="+1")
     assert row["vectors"] == ["Inhalation"]
+
+
+NOVACOKE = "836f54d5-1e11-49ea-b115-34c14ed843c9"  # `<quality rating="1">High Pain Tolerance`
+NITRO = "d7ec13fa-8601-4f9c-a59c-6a86573b40ee"  # the same at rating 6
+HIGH_PAIN_TOLERANCE = "b7866fb4-3747-4caf-9240-69cbdd79ce78"
+LOW_PAIN_TOLERANCE = "9ba327d2-38c5-4a25-ae44-25e98f0bbf03"
+
+
+def test_a_drug_grants_the_quality_it_names() -> None:
+    """`<quality>` on a drug: the quality's own bonus, once per rating step."""
+    base = compute(_drug_state(False, NOVACOKE))
+    dosed = compute(_drug_state(True, NOVACOKE))
+
+    assert base.derived["condition_monitor"]["threshold_offset"] == 0
+    assert dosed.derived["condition_monitor"]["threshold_offset"] == 1
+    assert dosed.derived["condition_monitor"]["threshold"] == 3
+    assert has(dosed.derived["active_drugs"][0]["effect"], "engine.drugEffect.qualityRated")
+
+
+def test_a_drugs_quality_rating_is_the_drugs_to_give() -> None:
+    """Nitro grants six levels though the quality itself caps at three takes:
+    the `<limit>` is on buying it, not on what the drug does (CF p.190)."""
+    dosed = compute(_drug_state(True, NITRO))
+    assert dosed.derived["condition_monitor"]["threshold_offset"] == 6
+
+
+def test_high_pain_tolerance_pushes_the_first_penalty_out() -> None:
+    out = compute(_mundane("hpt", quality_ids=[HIGH_PAIN_TOLERANCE]))
+    assert out.derived["condition_monitor"]["threshold_offset"] == 1
+    assert out.derived["condition_monitor"]["threshold"] == 3
+
+
+def test_low_pain_tolerance_tightens_the_penalty_step() -> None:
+    out = compute(_mundane("lpt", quality_ids=[LOW_PAIN_TOLERANCE]))
+    assert out.derived["condition_monitor"]["threshold"] == 2
+    assert out.derived["condition_monitor"]["threshold_offset"] == 0
 
 
 CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"

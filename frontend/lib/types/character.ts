@@ -210,7 +210,14 @@ export interface Character {
     totals: Record<string, number>;
     limits: { physical: number; mental: number; social: number };
     limit_modifiers?: LimitModifier[];
-    condition_monitor: { physical: number; stun: number };
+    condition_monitor: {
+      physical: number;
+      stun: number;
+      /** Boxes per −1 wound modifier (3 by default, SR5 p.169). */
+      threshold?: number;
+      /** Boxes ignored before the first −1 (High Pain Tolerance, a drug). */
+      threshold_offset?: number;
+    };
     initiative: { value: number; dice: number };
     movement: { walk: string; run: string; sprint: string };
     essence: number;

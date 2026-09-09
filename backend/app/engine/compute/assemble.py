@@ -18,6 +18,7 @@ from ...improvements import compact_limit_modifiers, special_armor_totals
 from ...notices import Notice, notice
 from ..constants import (
     BLACK_MARKET_AVAIL_BONUS,
+    CM_THRESHOLD,
     KARMA_TO_NUYEN,
     MARTIAL_ART_CHARGEN_STYLE_MAX,
     MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
@@ -111,7 +112,14 @@ def assemble(ctx: Ctx) -> None:
             "social": ctx.social_limit,
         },
         "limit_modifiers": compact_limit_modifiers(ctx.effects),
-        "condition_monitor": {"physical": ctx.cm_phys, "stun": ctx.cm_stun},
+        "condition_monitor": {
+            "physical": ctx.cm_phys,
+            "stun": ctx.cm_stun,
+            # Boxes per −1 wound modifier (SR5 p.169) and the boxes ignored
+            # before the first one, both after `<conditionmonitor>`.
+            "threshold": max(1, CM_THRESHOLD + int(ctx.effects.get("cm_threshold") or 0)),
+            "threshold_offset": max(0, int(ctx.effects.get("cm_threshold_offset") or 0)),
+        },
         "initiative": {"value": ctx.initiative, "dice": ctx.initiative_dice},
         "movement": ctx.movement,
         "essence": ctx.ess,

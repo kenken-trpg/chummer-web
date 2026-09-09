@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ._common import ATTR_ALIASES, _as_int, substitute_rating
+from ._common import ATTR_ALIASES, _as_int, granted_quality_names, substitute_rating
 from .effects import (
     EffectsDict,
     compact_limit_modifiers,
@@ -23,6 +23,7 @@ __all__ = [
     "ATTR_ALIASES",
     "EffectsDict",
     "_as_int",
+    "granted_quality_names",
     "apply_bonus_nodes",
     "collect_effects",
     "compact_limit_modifiers",

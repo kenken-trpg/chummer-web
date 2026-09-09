@@ -15,9 +15,27 @@ from ...data_loader import catalog, drug_effect_summary, drug_node_value, eval_f
 from ...improvements import EffectsDict, apply_bonus_nodes
 from ...models import CharacterState
 from ...notices import Notice, notice
+from ..lookups import _quality_by_name
 
 _DRUG_CATEGORIES = {"Drugs", "Toxins", "Chemicals"}
 _DRUG_LIMIT_TAG = {"physical": "physicallimit", "mental": "mentallimit", "social": "sociallimit"}
+
+
+def _granted_quality_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
+    """A drug's ``<quality rating="N">Name</quality>`` as bonus nodes.
+
+    The drug grants N levels of the quality while it lasts, so its ``<bonus>``
+    is repeated N times — every quality a drug grants stacks additively (the
+    four in the data all grant High Pain Tolerance, SR5 p.74). The rating is
+    the drug's to give: the quality's own ``<limit>`` caps what a character may
+    *buy*, not what Nitro does to them.
+    """
+    spec = _quality_by_name(str(node.get("value") or "").strip())
+    if not spec:
+        return []
+    raw = str((node.get("attrs") or {}).get("rating") or "1").strip()
+    rating = max(1, int(raw)) if raw.lstrip("-").isdigit() else 1
+    return [dict(item) for _ in range(rating) for item in (spec.get("bonus") or [])]
 
 
 def _drug_effect_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -27,6 +45,9 @@ def _drug_effect_nodes(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for node in nodes:
         tag = node.get("tag")
         fields = node.get("fields") or {}
+        if tag == "quality":
+            out.extend(_granted_quality_nodes(node))
+            continue
         val = drug_node_value(node)
         if not val:
             continue

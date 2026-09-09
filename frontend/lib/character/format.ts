@@ -14,6 +14,19 @@ export function leadInt(v?: string | number | null) {
   return m ? parseInt(m[0], 10) : 0;
 }
 
+/** Where the −1 wound modifiers fall, when something moved them (High Pain
+ *  Tolerance, Low Pain Tolerance, a drug granting either). Null while the
+ *  every-third-box default of SR5 p.169 still holds — there is nothing to say. */
+export function cmThresholdNote(
+  cm: { threshold?: number; threshold_offset?: number } | null | undefined,
+  ui: UiFn,
+): string | null {
+  const step = Math.max(1, cm?.threshold || 3);
+  const ignored = Math.max(0, cm?.threshold_offset || 0);
+  if (step === 3 && ignored === 0) return null;
+  return ui("sheet.cmThreshold", { first: ignored + step, step });
+}
+
 /** Matrix condition monitor: 8 + ⌈Device Rating ÷ 2⌉ (SR5 p.229). */
 export function matrixCM(deviceRating?: number) {
   return 8 + Math.ceil((deviceRating || 0) / 2);
