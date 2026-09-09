@@ -18,6 +18,10 @@ def _public_ware(block: dict) -> dict:
     grades = [g for g in block.get("grades") or [] if g.get("core")]
     items = []
     for w in block.get("items") or []:
+        # Hidden ware is nobody's to buy — it exists so an `<addware>` grant
+        # has something to name.
+        if w.get("hidden"):
+            continue
         items.append(
             {
                 "id": w["id"],

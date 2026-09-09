@@ -27,8 +27,10 @@ from .effect_rows import (
     FreeSpellsAttributeRow,
     FreeSpellsSkillRow,
     GrantEchoRow,
+    GrantGearRow,
     GrantPowerRow,
     GrantSpellRow,
+    GrantWareRow,
     KarmaCostRow,
     KarmaMultRow,
     LimitModifierRow,
@@ -189,6 +191,9 @@ class EffectsDict(TypedDict):
     focus_binding: list[FocusBindingRow]
     skill_attribute_mods: list[NamedBonusRow]
     skill_attribute_swaps: list[SkillAttributeSwapRow]
+    #: `<addlimb>`: limbs beyond the usual two arms / two legs / torso,
+    #: keyed by limb slot (Shiva Arms, RF p.118).
+    extra_limbs: dict[str, int]
     spell_category_mods: list[NamedBonusRow]
     spell_dice_pool: list[SpellDicePoolRow]
     action_dice_pools: list[ActionDicePoolRow]
@@ -207,6 +212,8 @@ class EffectsDict(TypedDict):
     fading_value_specific: list[FadingValueSpecificRow]
     grant_echoes: list[GrantEchoRow]
     grant_spells: list[GrantSpellRow]
+    grant_gear: list[GrantGearRow]
+    grant_ware: list[GrantWareRow]
     grant_powers: list[GrantPowerRow]
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
@@ -267,6 +274,7 @@ def empty_effects() -> EffectsDict:
         "focus_binding": [],
         "skill_attribute_mods": [],
         "skill_attribute_swaps": [],
+        "extra_limbs": {},
         "spell_category_mods": [],
         "spell_dice_pool": [],
         "action_dice_pools": [],
@@ -349,6 +357,8 @@ def empty_effects() -> EffectsDict:
         "cyberadept_daemon": False,
         "quickening": False,
         "grant_spells": [],
+        "grant_gear": [],
+        "grant_ware": [],
         "grant_powers": [],
         "select_power_slots": [],
         "weapon_category_dv_slots": [],

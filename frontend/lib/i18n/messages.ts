@@ -288,6 +288,7 @@ const JA = {
   "picker.catAllHint": "すべてのカテゴリを表示",
   "picker.catHint": "{category} だけに絞り込む",
 
+  "gear.granted": "{source}付属",
   "gear.weaponized": "武器化",
   "gear.inUse": "使用中",
   "gear.drugToggleHint": "能力値・イニシアチブ・技能に反映",
@@ -734,6 +735,7 @@ const JA = {
   "bio.search": "バイオウェアを検索",
 
   "ware.bundledSuffix": "（同梱）",
+  "ware.grantedSuffix": "（{source}付属）",
   "ware.capacityInline": " ・ 容量 {used}/{max}",
   "ware.limb": " ・ 肢 STR {str} / AGI {agi}",
   "ware.limbArmor": " / 装甲 {armor}",
@@ -1861,6 +1863,7 @@ const EN: Catalog = {
   "picker.catAllHint": "Show every category",
   "picker.catHint": "Show only {category}",
 
+  "gear.granted": "comes with {source}",
   "gear.weaponized": "as weapon",
   "gear.inUse": "In use",
   "gear.drugToggleHint": "Apply to attributes, initiative and skills",
@@ -2298,6 +2301,7 @@ const EN: Catalog = {
   "bio.search": "Search bioware",
 
   "ware.bundledSuffix": " (bundled)",
+  "ware.grantedSuffix": " (comes with {source})",
   "ware.capacityInline": " · capacity {used}/{max}",
   "ware.limb": " · limb STR {str} / AGI {agi}",
   "ware.limbArmor": " / armor {armor}",

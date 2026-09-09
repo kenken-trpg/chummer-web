@@ -207,6 +207,63 @@ describe("<CyberTab>", () => {
     });
   });
 
+  it("a quality's implant is labelled and has neither grade box nor delete", () => {
+    const ch = makeCharacter();
+    const d = {
+      ...ch.derived,
+      cyberware: [
+        {
+          id: "granted:0",
+          ware_id: "busted",
+          name: "Busted Ware",
+          category: "Bodyware",
+          grade: "None",
+          rating: 1,
+          essence: 0.5,
+          nuyen: 0,
+          granted_by: "Busted Cyberware",
+        },
+      ],
+    } as any;
+    render(
+      <CyberTab
+        catalog={cyberCatalog()}
+        character={{ ...ch, derived: d }}
+        d={d}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={() => {}}
+        setCharacter={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Busted Cyberware/)).toBeTruthy();
+    expect(screen.queryByLabelText("グレード")).toBeNull();
+    expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
+
+    // …where a bought row of the same shape has both.
+    const bought = {
+      ...d,
+      cyberware: [{ ...d.cyberware[0], id: "row1", granted_by: "" }],
+    };
+    render(
+      <CyberTab
+        catalog={cyberCatalog()}
+        character={{ ...ch, derived: bought }}
+        d={bought}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={() => {}}
+        setCharacter={() => {}}
+      />,
+    );
+    expect(screen.getByLabelText("グレード")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "削除" })).toBeTruthy();
+  });
+
   it("toggles a Redliner option through patch", () => {
     const patch = vi.fn();
     renderTab({ patch });

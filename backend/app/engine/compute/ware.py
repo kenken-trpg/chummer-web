@@ -3,7 +3,12 @@ essence and the chargen ware-attribute cap."""
 
 from __future__ import annotations
 
+from typing import Any
+
+from ...improvements.effect_rows import GrantWareRow
+from ...models import CyberwareInstall
 from ..limits import _check_ware_attribute_cap, _finalize_avail_tree, _ware_attribute_bonuses
+from ..lookups import _ware_by_name
 from ..qualities import resolve_quality_sides
 from ..ware import (
     _vehicle_hosted_ware_ids,
@@ -16,13 +21,51 @@ from ..ware import (
 from .context import Ctx
 
 
+def _granted_ware_installs(grants: list[GrantWareRow], kind: str) -> tuple[list[CyberwareInstall], dict[str, str]]:
+    """``<addware>`` grants for one kind of ware, as installs.
+
+    Like a quality's gear, they stay out of the character: the quality is what
+    carries them, so removing it takes the implant — and its Essence — with it,
+    and the ware tab has nothing of its own to delete.
+    """
+    installs: list[CyberwareInstall] = []
+    sources: dict[str, str] = {}
+    for index, grant in enumerate(grants):
+        if str(grant.get("kind") or "cyberware").lower() != kind:
+            continue
+        spec = _ware_by_name(kind, str(grant.get("name") or ""))
+        if not spec:
+            continue
+        install_id = f"granted:{index}"
+        sources[install_id] = str(grant.get("source") or "")
+        installs.append(
+            CyberwareInstall(
+                id=install_id,
+                ware_id=str(spec["id"]),
+                grade=str(grant.get("grade") or spec.get("forcegrade") or "Standard"),
+            )
+        )
+    return installs, sources
+
+
+def _mark_granted(rows: list[dict[str, Any]], sources: dict[str, str]) -> None:
+    for row in rows:
+        row["granted_by"] = sources.get(str(row.get("id") or ""), "")
+
+
 def ware(ctx: Ctx) -> None:
     vehicle_hosts = set(_vehicle_mod_hosts(ctx.state))
+    granted_bio, bio_sources = _granted_ware_installs(ctx.granted_ware, "bioware")
+    granted_cyber, cyber_sources = _granted_ware_installs(ctx.granted_ware, "cyberware")
     # Bioware first: Adapsin lives there and changes what a cyberware grade
     # costs in Essence, so cyberware cannot be resolved until we know.
-    ctx.bio_installed = resolve_ware("bioware", ctx.state.bioware, ctx.attrs_spec)
+    ctx.bio_installed = resolve_ware("bioware", [*ctx.state.bioware, *granted_bio], ctx.attrs_spec)
     ctx.adapsin = has_adapsin(ctx.bio_installed)
-    ctx.cyber_installed = resolve_ware("cyberware", ctx.state.cyberware, ctx.attrs_spec, adapsin=ctx.adapsin)
+    ctx.cyber_installed = resolve_ware(
+        "cyberware", [*ctx.state.cyberware, *granted_cyber], ctx.attrs_spec, adapsin=ctx.adapsin
+    )
+    _mark_granted(ctx.bio_installed, bio_sources)
+    _mark_granted(ctx.cyber_installed, cyber_sources)
     resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors)
     ctx.warnings.extend(check_ware_targets("cyberware", ctx.state.cyberware, ctx.cyber_installed))
     ctx.warnings.extend(check_ware_targets("bioware", ctx.state.bioware, ctx.bio_installed))

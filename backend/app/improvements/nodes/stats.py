@@ -62,6 +62,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["drug_positive_attribute"] += _bonus_int(node, fields)
     elif tag == "reflexrecorderoptimization":
         effects["reflex_recorder_optimization"] = True
+    elif tag == "addlimb":
+        # A pair of Shiva arms is two more limbs to average a cyberlimb's
+        # STR/AGI over (SR5 p.456), so the body grows a slot, not a number.
+        slot = str(fields.get("limbslot") or "").strip().lower()
+        count = _as_int(fields.get("val") or fields.get("value") or node.get("value"))
+        if slot and count > 0:
+            effects["extra_limbs"][slot] = int(effects["extra_limbs"].get(slot) or 0) + count
     elif tag == "initiative":
         effects["initiative"] += _bonus_int(node, fields)
     elif tag == "initiativepass":

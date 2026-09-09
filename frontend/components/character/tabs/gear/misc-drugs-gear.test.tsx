@@ -98,6 +98,23 @@ describe("<MiscDrugsGear> which rows belong to which tab", () => {
   });
 });
 
+describe("<MiscDrugsGear> a row a quality granted", () => {
+  /** Dead SIN's fake SIN: it lives in `derived` only, so there is nothing in
+   *  `ch.gear` for a control to edit or a delete button to remove. */
+  const granted = [
+    gear("granted:0", "Fake SIN", { included: true, granted_by: "Dead SIN", nuyen: 0 }),
+  ];
+
+  it("names the quality and offers neither controls nor a delete button", () => {
+    const ch = makeCharacter({ gear: [], derived: { gear: granted } } as any);
+    const { container } = renderPanel(ch, vi.fn());
+
+    expect(container.textContent).toContain("Dead SIN");
+    expect(container.querySelector(".cyber-controls")).toHaveProperty("hidden", true);
+    expect(screen.queryByRole("button", { name: "common.delete" })).toBeNull();
+  });
+});
+
 describe("<MiscDrugsGear> the controls on an owned row", () => {
   const two = () => [
     gear("g1", "Medkit", { rating_max: 6 }),

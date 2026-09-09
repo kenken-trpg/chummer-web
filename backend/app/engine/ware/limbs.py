@@ -74,6 +74,20 @@ def redliner_slot_caps(options: CharacterOptions | None = None) -> dict[str, int
     return slots
 
 
+def body_limb_slots(extra_limbs: dict[str, int] | None = None) -> dict[str, int]:
+    """How many of each limb slot this body has, after ``<addlimb>``.
+
+    Two arms, two legs and a torso unless something added to them: Shiva Arms
+    is a second pair of arms (RF p.118), a Centaur has four legs.
+    """
+    slots = dict(LIMB_BODY_SLOTS)
+    for slot, count in (extra_limbs or {}).items():
+        key = str(slot).strip().lower()
+        if key in slots and int(count or 0) > 0:
+            slots[key] += int(count)
+    return slots
+
+
 def _is_full_limb(item: dict[str, Any]) -> bool:
     if item.get("parent_id") or item.get("category") != "Cyberlimb":
         return False
@@ -93,11 +107,11 @@ def _is_redliner_limb(item: dict[str, Any], slots: dict[str, int]) -> bool:
     return (item.get("limbslot") or "").lower() in slots
 
 
-def _limb_slot_count(item: dict[str, Any]) -> int:
+def _limb_slot_count(item: dict[str, Any], slots: dict[str, int] | None = None) -> int:
     raw = str(item.get("limbslotcount") or "1").strip()
     if raw.lower() == "all":
         slot = (item.get("limbslot") or "").lower()
-        return LIMB_BODY_SLOTS.get(slot, 1)
+        return (slots or LIMB_BODY_SLOTS).get(slot, 1)
     try:
         return max(1, int(float(raw)))
     except ValueError:
@@ -109,8 +123,11 @@ def limb_attribute_replace(
     meat_str: int,
     meat_agi: int,
     attrs_spec: dict[str, dict[str, int | float]],
+    extra_limbs: dict[str, int] | None = None,
 ) -> dict[str, Any] | None:
-    used = dict.fromkeys(LIMB_BODY_SLOTS, 0)
+    slots = body_limb_slots(extra_limbs)
+    parts = sum(slots.values())
+    used = dict.fromkeys(slots, 0)
     taken: set[tuple[str, str]] = set()
     limb_str: list[int] = []
     limb_agi: list[int] = []
@@ -122,9 +139,9 @@ def limb_attribute_replace(
         key = (slot, side or item.get("id") or item.get("name") or "")
         if key in taken:
             continue
-        if used[slot] >= LIMB_BODY_SLOTS[slot]:
+        if used[slot] >= slots[slot]:
             continue
-        add = min(LIMB_BODY_SLOTS[slot] - used[slot], _limb_slot_count(item))
+        add = min(slots[slot] - used[slot], _limb_slot_count(item, slots))
         if add <= 0:
             continue
         taken.add(key)
@@ -132,17 +149,17 @@ def limb_attribute_replace(
         for _ in range(add):
             limb_str.append(int(item.get("limb_str") or meat_str))
             limb_agi.append(int(item.get("limb_agi") or meat_agi))
-    count = min(LIMB_BODY_PARTS, sum(used.values()))
+    count = min(parts, sum(used.values()))
     if count == 0:
         return None
-    meat_parts = LIMB_BODY_PARTS - count
-    str_avg = (sum(limb_str) + meat_str * meat_parts) // LIMB_BODY_PARTS
-    agi_avg = (sum(limb_agi) + meat_agi * meat_parts) // LIMB_BODY_PARTS
+    meat_parts = parts - count
+    str_avg = (sum(limb_str) + meat_str * meat_parts) // parts
+    agi_avg = (sum(limb_agi) + meat_agi * meat_parts) // parts
     str_avg = min(int(attrs_spec.get("STR", {}).get("aug") or 9), str_avg)
     agi_avg = min(int(attrs_spec.get("AGI", {}).get("aug") or 9), agi_avg)
     return {
         "count": count,
-        "parts": LIMB_BODY_PARTS,
+        "parts": parts,
         "slots": used,
         "str": str_avg,
         "agi": agi_avg,

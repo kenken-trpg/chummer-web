@@ -13,6 +13,7 @@ from typing import Any, cast
 
 from ...data_loader import eval_formula
 from ...improvements import apply_bonus_nodes, substitute_rating
+from ...improvements.effect_rows import GrantGearRow
 from ...models import ArmorInstall, CharacterState, CommlinkInstall, WeaponInstall
 from ...notices import Notice
 from ..bundle_types import GearBundle
@@ -61,6 +62,7 @@ def resolve_gear(
     ware_items: list[dict[str, Any]] | None = None,
     attr_totals: dict[str, int] | None = None,
     special_modification_limit: int = 0,
+    granted_gear: list[GrantGearRow] | None = None,
 ) -> GearBundle:
     warnings: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -226,7 +228,9 @@ def resolve_gear(
     errors.extend(sensor_errors)
     bonus_sources.extend(sensor_bonus)
     _publish_drone_stats(hosts, sensors)
-    gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(state, hosts, weapons)
+    gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(
+        state, hosts, weapons, granted_gear
+    )
     nuyen += gear_nuyen
     warnings.extend(gear_warns)
     errors.extend(gear_errors)
@@ -290,6 +294,7 @@ def gear_phase(ctx: Ctx) -> None:
         ctx.cyber_installed,
         ctx.attr_totals,
         special_modification_limit=int(ctx.effects.get("special_modification_limit") or 0),
+        granted_gear=list(ctx.effects["grant_gear"]),
     )
     ctx.warnings.extend(ctx.gear["warnings"])
     ctx.errors.extend(ctx.gear.get("errors") or [])

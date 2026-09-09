@@ -14,6 +14,7 @@ from typing import Any
 
 from ...data_loader import catalog, drug_effect_summary, eval_formula, parse_capacity
 from ...improvements import substitute_rating
+from ...improvements.effect_rows import GrantGearRow
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
 from ..lookups import _item_by_id
@@ -178,10 +179,62 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
     return warnings
 
 
+def _granted_gear_installs(
+    grants: list[GrantGearRow],
+    specs: dict[str, dict[str, Any]],
+) -> tuple[list[GearInstall], dict[str, str]]:
+    """``<addgear>`` grants as installs, parents first.
+
+    They stay out of ``state.gear``: the quality is what carries them, so they
+    come and go with it and nothing in the gear tab can edit or delete them.
+    The ids are derived from the row's place in the grant, so a recompute hands
+    the client back the same rows. Returns the installs and, per install id,
+    the source that granted it.
+    """
+    by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
+
+    def find(name: str, category: str) -> dict[str, Any] | None:
+        return by_name.get((name, category)) or next((item for item in specs.values() if item["name"] == name), None)
+
+    out: list[GearInstall] = []
+    sources: dict[str, str] = {}
+    for index, grant in enumerate(grants or []):
+        spec = find(str(grant.get("name") or ""), str(grant.get("category") or ""))
+        if not spec:
+            continue
+        source = str(grant.get("source") or "")
+        parent_id = f"granted:{index}"
+        sources[parent_id] = source
+        out.append(
+            GearInstall(
+                id=parent_id,
+                gear_id=spec["id"],
+                rating=max(1, int(grant.get("rating") or 1)),
+                included=True,
+            )
+        )
+        for kid_index, kid in enumerate(grant.get("children") or []):
+            kid_spec = find(str(kid.get("name") or ""), str(kid.get("category") or ""))
+            if not kid_spec:
+                continue
+            sources[f"{parent_id}:{kid_index}"] = source
+            out.append(
+                GearInstall(
+                    id=f"{parent_id}:{kid_index}",
+                    gear_id=kid_spec["id"],
+                    parent_id=parent_id,
+                    rating=max(1, int(kid.get("rating") or 1)),
+                    included=True,
+                )
+            )
+    return out, sources
+
+
 def _resolve_misc_gear(
     state: CharacterState,
     vehicles: list[dict[str, Any]] | None = None,
     weapons: list[dict[str, Any]] | None = None,
+    granted: list[GrantGearRow] | None = None,
 ) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_misc_gear(state)
     errors: list[Notice] = []
@@ -190,10 +243,15 @@ def _resolve_misc_gear(
     public: list[dict[str, Any]] = []
     kept: list[GearInstall] = []
     nuyen = 0
-    by_id = {row.id: row for row in state.gear}
+    # The row names the quality that brought it, so the gear tab can label it
+    # and leave its controls out.
+    granted_installs, granted_by = _granted_gear_installs(granted or [], specs)
+    granted_ids = set(granted_by)
+    rows = [*state.gear, *granted_installs]
+    by_id = {row.id: row for row in rows}
     unit_costs: dict[str, int] = {}
     # Parents first so children can reference Parent Cost.
-    ordered = sorted(state.gear, key=lambda row: 1 if row.parent_id else 0)
+    ordered = sorted(rows, key=lambda row: 1 if row.parent_id else 0)
     for inst in ordered:
         spec = specs.get(inst.gear_id)
         if not spec:
@@ -213,7 +271,9 @@ def _resolve_misc_gear(
                 extra = ""
             if not extra:
                 warnings.append(notice("engine.gear.pickGroup", name=term(str(spec["name"]))))
-        elif extra_kind == "text" and not extra:
+        elif extra_kind == "text" and not extra and inst.id not in granted_ids:
+            # A granted row has no editor behind it — asking for a name would
+            # be a warning nobody can clear.
             warnings.append(notice("engine.gear.pickExtra", name=term(str(spec["name"]))))
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)
@@ -245,7 +305,8 @@ def _resolve_misc_gear(
         is_drug = (spec.get("category") or "") in _DRUG_CATEGORIES
         drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
         inst.active = bool(inst.active) and (is_drug and bool(drug_bonus))
-        kept.append(inst)
+        if inst.id not in granted_ids:
+            kept.append(inst)
         public.append(
             {
                 "id": inst.id,
@@ -264,6 +325,7 @@ def _resolve_misc_gear(
                 "qty": qty,
                 "parent_id": inst.parent_id,
                 "included": bool(inst.included),
+                "granted_by": granted_by.get(inst.id, ""),
                 "plugin": plugin,
                 "extra": extra,
                 "needs_extra": bool(extra_kind),

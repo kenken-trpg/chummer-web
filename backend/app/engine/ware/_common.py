@@ -33,6 +33,9 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         "wireless": item["wireless"],
         "parent_id": item.get("parent_id"),
         "included": bool(item.get("included")),
+        # `<addware>`: the quality that brought this implant, so the ware tab
+        # can label it and leave its controls out.
+        "granted_by": str(item.get("granted_by") or ""),
         "essence": item["essence"],
         "nuyen": item["nuyen"],
         "capacity_used": item.get("capacity_used") or 0,

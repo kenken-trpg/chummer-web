@@ -70,7 +70,11 @@ def totals(ctx: Ctx) -> None:
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
     ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]
     ctx.limb_replace = limb_attribute_replace(
-        ctx.cyber_installed, int(ctx.total["STR"]), int(ctx.total["AGI"]), ctx.attrs_spec
+        ctx.cyber_installed,
+        int(ctx.total["STR"]),
+        int(ctx.total["AGI"]),
+        ctx.attrs_spec,
+        dict(ctx.effects.get("extra_limbs") or {}),
     )
     if ctx.limb_replace:
         ctx.total["STR"] = int(ctx.limb_replace["str"])
