@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ....improvements import EffectsDict, empty_effects
 from ....models import CharacterState
 from ...formulas import _eval_attr_stat
 from ...lookups import _item_by_id
@@ -91,6 +92,46 @@ def _append_gear_weapons(weapons: list[dict[str, Any]], gear_items: list[dict[st
             )
         )
         taken.add(gear_id)
+
+
+def _append_natural_weapons(
+    weapons: list[dict[str, Any]],
+    effects: EffectsDict | None,
+) -> None:
+    """Rows for the attacks a metatype was born with (`<naturalweapon>`).
+
+    A Shapeshifter's bite and claws are not in `weapons.xml` — the metavariant's
+    bonus node carries the whole weapon (RF p.104) — so the row is built from
+    the node instead of a spec. They cost nothing, take no accessories and are
+    never in `state.weapons`, which is why the `.chum5` export never sees them.
+    """
+    rows = list((effects or empty_effects()).get("natural_weapons") or [])
+    if not rows:
+        return
+    taken = {str(row.get("id") or "") for row in weapons}
+    for index, row in enumerate(rows):
+        inst_id = f"natural-{index}"
+        if inst_id in taken:
+            continue
+        spec = {
+            "id": "",
+            "name": row["name"],
+            "category": "Unarmed",
+            "type": "Melee",
+            "weapon_type": "Melee",
+            "accuracy": row["accuracy"],
+            "reach": row["reach"],
+            "damage": row["damage"],
+            "ap": row["ap"],
+            "useskill": row["useskill"],
+            "source": row["weapon_source"],
+            "page": row["page"],
+        }
+        weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
+        weapon["natural"] = True
+        weapon["natural_source"] = row["source"]
+        weapons.append(weapon)
+        taken.add(inst_id)
 
 
 def _drone_mod_limb_attrs(

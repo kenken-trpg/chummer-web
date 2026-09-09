@@ -115,6 +115,27 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["unarmed_dv"] += _bonus_int(node, fields)
     elif tag == "unarmeddvphysical":
         effects["unarmed_physical"] = True
+    elif tag == "naturalweapon":
+        # A Shapeshifter's bite and claws (RF p.104). No `weapons.xml` entry
+        # backs these, so the node's own fields *are* the weapon row; the gear
+        # phase turns them into rows the sheet renders like any other melee
+        # weapon. `source`/`page` are the rulebook the attack is from, hence
+        # `weapon_source` — the row's `source` is the metatype that grants it.
+        name = _as_text(fields.get("name"))
+        if name:
+            effects["natural_weapons"].append(
+                {
+                    "source": source,
+                    "name": name,
+                    "damage": _as_text(fields.get("damage")),
+                    "ap": _as_text(fields.get("ap")),
+                    "reach": _as_text(fields.get("reach")),
+                    "useskill": _as_text(fields.get("useskill")),
+                    "accuracy": _as_text(fields.get("accuracy")),
+                    "weapon_source": _as_text(fields.get("source")),
+                    "page": _as_text(fields.get("page")),
+                }
+            )
     elif tag == "unarmedreach":
         effects["unarmed_reach"] += _bonus_int(node, fields)
     elif tag == "unarmedap":

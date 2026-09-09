@@ -265,6 +265,9 @@ export interface InstalledWeapon {
   source_gear_id?: string;
   from_ware?: boolean;
   source_ware_id?: string;
+  /** Born with it (a `<naturalweapon>` grant) — nothing to buy, install or drop. */
+  natural?: boolean;
+  natural_source?: string;
   useskill?: string;
   limb_str?: number | null;
   limb_agi?: number | null;

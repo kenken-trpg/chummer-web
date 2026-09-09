@@ -382,6 +382,22 @@ class WeaponSkillAccuracySlotRow(TypedDict):
     needs_select: bool
 
 
+class NaturalWeaponRow(TypedDict):
+    """``natural_weapons`` — a ``<naturalweapon>`` attack the character was
+    born with: a Shapeshifter's bite and claws (RF p.104). It has no entry in
+    ``weapons.xml``, so the node's own fields are the whole weapon."""
+
+    source: str
+    name: str
+    damage: str
+    ap: str
+    reach: str
+    useskill: str
+    accuracy: str
+    weapon_source: str
+    page: str
+
+
 class WeaponCategoryDiceRow(TypedDict):
     """``weapon_category_dice`` — a ``<weaponcategorydice>`` attack dice-pool
     bonus for one weapon category (e.g. Master Archer: Bows +1)."""

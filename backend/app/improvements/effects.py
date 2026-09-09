@@ -39,6 +39,7 @@ from .effect_rows import (
     LimitSpiritCategorySlotRow,
     MetamagicLimitRow,
     NamedBonusRow,
+    NaturalWeaponRow,
     NewSpellKarmaCostRow,
     RestrictedGearRow,
     SelectPowerSlotRow,
@@ -219,6 +220,7 @@ class EffectsDict(TypedDict):
     grant_gear: list[GrantGearRow]
     grant_ware: list[GrantWareRow]
     grant_powers: list[GrantPowerRow]
+    natural_weapons: list[NaturalWeaponRow]
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
     weapon_category_dv: list[WeaponDvBonusRow]
@@ -365,6 +367,7 @@ def empty_effects() -> EffectsDict:
         "grant_gear": [],
         "grant_ware": [],
         "grant_powers": [],
+        "natural_weapons": [],
         "select_power_slots": [],
         "weapon_category_dv_slots": [],
         "weapon_category_dv": [],

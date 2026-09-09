@@ -22,6 +22,7 @@ from ..contacts import apply_erased_lifestyle_cap
 from ..formulas import parse_armor_value
 from ..gear import (
     _append_gear_weapons,
+    _append_natural_weapons,
     _append_ware_weapons,
     _apply_recoil_totals,
     _clamp_rating,
@@ -298,6 +299,9 @@ def gear_phase(ctx: Ctx) -> None:
     )
     ctx.warnings.extend(ctx.gear["warnings"])
     ctx.errors.extend(ctx.gear.get("errors") or [])
+    # Before the weapon modifiers below: a natural weapon is an Unarmed Combat
+    # attack, so a reach or unarmed-AP bonus has to reach it too.
+    _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
     apply_lifestyle_cost_mod(ctx.gear, int(ctx.effects.get("lifestyle_cost") or 0))
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
