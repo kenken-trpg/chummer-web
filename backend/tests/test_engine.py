@@ -740,6 +740,43 @@ def test_one_customized_arm_pulls_body_strength() -> None:
     assert out.derived["limb_replace"]["meat_str"] == 1
 
 
+SHIVA_ARMS = "51ba5e67-f2fd-4149-b24c-9b502ed0e7c7"
+
+
+def test_shiva_arms_average_a_cyberlimb_over_seven_parts() -> None:
+    """`addlimb`: a second pair of arms (RF p.118) is two more body parts to
+    average a cyberlimb's STR/AGI over (SR5 p.456), so the same two cyberarms
+    move the total less."""
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["STR"] = 3
+    limbs = [
+        CyberwareInstall(id="arm1", ware_id=ARM),
+        CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm1"),
+        CyberwareInstall(id="arm2", ware_id=ARM),
+        CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm2"),
+    ]
+
+    def build(quality_ids: list[str]) -> CharacterState:
+        return CharacterState(
+            id="shiva",
+            name="Shiva",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            quality_ids=quality_ids,
+            cyberware=[item.model_copy(deep=True) for item in limbs],
+        )
+
+    plain = compute(build([]))
+    shiva = compute(build([SHIVA_ARMS]))
+    assert plain.derived["limb_replace"]["parts"] == 5
+    assert shiva.derived["limb_replace"]["parts"] == 7
+    assert shiva.derived["limb_replace"]["count"] == 2
+    assert shiva.derived["totals"]["STR"] < plain.derived["totals"]["STR"]
+    tags = [item["tag"] for item in shiva.derived["unimplemented_bonuses"]]
+    assert "addlimb" not in tags
+
+
 def test_two_arms_average_with_meat() -> None:
     attrs = default_attributes(find_metatype("Human", None))
     attrs["STR"] = 3

@@ -187,6 +187,9 @@ class EffectsDict(TypedDict):
     focus_binding: list[FocusBindingRow]
     skill_attribute_mods: list[NamedBonusRow]
     skill_attribute_swaps: list[SkillAttributeSwapRow]
+    #: `<addlimb>`: limbs beyond the usual two arms / two legs / torso,
+    #: keyed by limb slot (Shiva Arms, RF p.118).
+    extra_limbs: dict[str, int]
     spell_category_mods: list[NamedBonusRow]
     spell_dice_pool: list[SpellDicePoolRow]
     action_dice_pools: list[ActionDicePoolRow]
@@ -265,6 +268,7 @@ def empty_effects() -> EffectsDict:
         "focus_binding": [],
         "skill_attribute_mods": [],
         "skill_attribute_swaps": [],
+        "extra_limbs": {},
         "spell_category_mods": [],
         "spell_dice_pool": [],
         "action_dice_pools": [],
