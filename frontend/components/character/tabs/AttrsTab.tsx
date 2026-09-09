@@ -4,7 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 
-export function AttrsTab({ character: ch, d, t, ui, patch, setCharacter }: TabPanelProps) {
+export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
 
   return (
@@ -65,6 +65,14 @@ export function AttrsTab({ character: ch, d, t, ui, patch, setCharacter }: TabPa
         })}
       </p>
       <p className="muted">{ui("attrs.minNote")}</p>
+      {/* Infected / Quadriplegic: these are no longer the metatype's ranges. */}
+      {(d.metatype_info.attributes_replaced_by || []).length ? (
+        <p className="muted">
+          {ui("attrs.replacedRanges", {
+            list: (d.metatype_info.attributes_replaced_by || []).map((name) => tr(name)).join("、"),
+          })}
+        </p>
+      ) : null}
     </div>
   );
 }

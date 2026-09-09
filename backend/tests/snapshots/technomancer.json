@@ -327,6 +327,7 @@
         "min": 1
       }
     },
+    "attributes_replaced_by": [],
     "name": "Human",
     "parent": null,
     "source": "SR5"

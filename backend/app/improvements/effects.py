@@ -18,6 +18,7 @@ from .effect_rows import (
     AddContactRow,
     AddSpiritPickRow,
     AddSpiritSlotRow,
+    AttributeRangeRow,
     AttributeSelectRow,
     ExpertiseSlotRow,
     FadingValueSpecificRow,
@@ -194,6 +195,9 @@ class EffectsDict(TypedDict):
     #: `<addlimb>`: limbs beyond the usual two arms / two legs / torso,
     #: keyed by limb slot (Shiva Arms, RF p.118).
     extra_limbs: dict[str, int]
+    #: `<replaceattributes>`: metatype attribute ranges this character does
+    #: not keep — min / max / augmented max, by attribute.
+    attribute_replacements: dict[str, AttributeRangeRow]
     spell_category_mods: list[NamedBonusRow]
     spell_dice_pool: list[SpellDicePoolRow]
     action_dice_pools: list[ActionDicePoolRow]
@@ -275,6 +279,7 @@ def empty_effects() -> EffectsDict:
         "skill_attribute_mods": [],
         "skill_attribute_swaps": [],
         "extra_limbs": {},
+        "attribute_replacements": {},
         "spell_category_mods": [],
         "spell_dice_pool": [],
         "action_dice_pools": [],

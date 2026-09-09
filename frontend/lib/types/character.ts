@@ -535,6 +535,9 @@ export interface Character {
     metatype_info: {
       name: string;
       attributes: Record<string, { min: number; max: number; aug: number }>;
+      /** `<replaceattributes>`: the qualities these ranges come from instead of
+       *  the metatype (the Infected qualities, Quadriplegic). */
+      attributes_replaced_by?: string[];
     };
     talent?: {
       name: string;

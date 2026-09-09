@@ -54,6 +54,17 @@ class SkillModRow(TypedDict):
     source: str
 
 
+class AttributeRangeRow(TypedDict):
+    """``attribute_replacements`` — ``<replaceattributes>``: the metatype's
+    range for one attribute, replaced wholesale (the Infected qualities,
+    Quadriplegic)."""
+
+    min: int
+    max: int
+    aug: int
+    source: str
+
+
 class SkillAttributeSwapRow(TypedDict):
     """``skill_attribute_swaps`` — ``<swapskillattribute>`` /
     ``<swapskillspecattribute>``: the skill rolls off ``attribute`` instead of

@@ -120,4 +120,19 @@ describe("<AttrsTab>", () => {
     expect(container.querySelector(".range-tick.floor")?.textContent).toBe("5");
     expect(container.querySelector(".range-tick.here")?.textContent).toBe("7");
   });
+
+  it("says whose ranges these are when a quality replaced the metatype's", () => {
+    const { container } = renderTab({
+      character: {
+        derived: {
+          metatype_info: {
+            name: "Human",
+            attributes: { BOD: { min: 3, max: 10, aug: 14 } },
+            attributes_replaced_by: ["Infected: Ghoul (Human)"],
+          },
+        } as any,
+      },
+    });
+    expect(container.textContent).toContain("Infected: Ghoul (Human)");
+  });
 });
