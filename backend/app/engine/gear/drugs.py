@@ -136,3 +136,40 @@ def apply_active_drugs(
             }
         )
     return active
+
+
+def apply_active_custom_drugs(
+    rows: list[dict[str, Any]],
+    effects: EffectsDict,
+) -> list[dict[str, Any]]:
+    """The mixed-drug half of :func:`apply_active_drugs`.
+
+    A custom drug's components speak the same ``<bonus>`` vocabulary a premade
+    drug does (``gear/custom_drugs.py`` keeps the nodes in that shape), so the
+    same translation applies — and the summary comes out in the same shape, so
+    the sheet renders one list of active drugs rather than two.
+    """
+    active: list[dict[str, Any]] = []
+    for row in rows:
+        if not row.get("active"):
+            continue
+        nodes = list(row.get("bonus") or [])
+        if not nodes:
+            continue
+        positive = int(effects.get("drug_positive_attribute") or 0)
+        apply_bonus_nodes(_drug_effect_nodes(nodes, positive), effects, str(row.get("name") or ""))
+        duration = int(row.get("duration") or 0)
+        active.append(
+            {
+                "name": row.get("name") or "",
+                "category": "Drugs",
+                "speed": str(row.get("speed") or ""),
+                # An Enhancer's `<info>` is how it is taken (Ingestion /
+                # Inhalation), which is what a premade drug calls a vector.
+                "vectors": list(row.get("infos") or []),
+                "duration": _format_drug_duration(str(duration), 0) if duration else None,
+                "effect": drug_effect_summary(nodes, positive),
+                "custom": True,
+            }
+        )
+    return active

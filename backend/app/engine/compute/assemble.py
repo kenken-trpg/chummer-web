@@ -160,6 +160,7 @@ def assemble(ctx: Ctx) -> None:
         "vehicle_mods": ctx.gear.get("vehicle_mods") or [],
         "weapon_mounts": ctx.gear.get("weapon_mounts") or [],
         "gear": ctx.gear.get("gear") or [],
+        "custom_drugs": ctx.gear.get("custom_drugs") or [],
         "lifestyles": ctx.gear.get("lifestyles") or [],
         "commlink": ctx.gear.get("commlink"),
         "cyberdeck": ctx.gear.get("cyberdeck"),

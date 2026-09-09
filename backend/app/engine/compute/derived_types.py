@@ -236,6 +236,7 @@ class DerivedDict(TypedDict):
     vehicle_mods: list[Row]
     weapon_mounts: list[Row]
     gear: list[Row]
+    custom_drugs: list[Row]
     lifestyles: list[Row]
     commlink: Row | None
     cyberdeck: Row | None

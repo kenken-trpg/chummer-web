@@ -486,6 +486,8 @@ export interface Catalog {
   lifestyle_qualities?: LifestyleQualityCatalogItem[];
   drugs?: GearCatalogItem[];
   drug_grades?: GearCatalogItem[];
+  drug_components?: DrugComponentCatalogItem[];
+  drug_component_grades?: DrugComponentGradeCatalogItem[];
   martial_arts?: MartialArtCatalogItem[];
   martial_art_techniques?: { id: string; name: string; source?: string; page?: string }[];
   metamagics?: {
@@ -545,4 +547,40 @@ export interface WareCatalogItem {
 export interface WareCatalog {
   grades: { name: string; ess: number; ess_adapsin: number; cost: number }[];
   items: WareCatalogItem[];
+}
+
+/** One level of a drug component: what it does, and what it costs you when the
+ *  drug wears off. A component with a single level only has level 0. */
+export interface DrugComponentLevel {
+  level: number;
+  effect?: Notice[];
+  crash_damage: number;
+  speed: number;
+  duration: number;
+  info: string;
+}
+
+/** A part a custom drug is mixed from (CF p.190): Foundation, Block, Enhancer
+ *  or BTL. `limit` is how many one drug may hold, 0 meaning unlimited. */
+export interface DrugComponentCatalogItem {
+  id: string;
+  name: string;
+  category: string;
+  cost: string;
+  avail: string;
+  addiction_rating: number;
+  addiction_threshold: number;
+  limit: number;
+  levels: DrugComponentLevel[];
+  source?: string;
+  page?: string;
+}
+
+/** The quality a custom drug is cooked to. */
+export interface DrugComponentGradeCatalogItem {
+  id: string;
+  name: string;
+  cost_multiplier: number;
+  addiction_threshold: number;
+  source?: string;
 }

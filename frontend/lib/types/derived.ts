@@ -427,6 +427,37 @@ export interface ActiveDrug {
   effect?: Notice[];
 }
 
+export interface CustomDrugComponentRow {
+  component_id: string;
+  name: string;
+  category: string;
+  level: number;
+}
+
+/** A mixed drug as the engine resolved it: the totals a bought drug would read
+ *  off its catalog entry, summed from the components instead. */
+export interface CustomDrug {
+  id: string;
+  name: string;
+  grade: string;
+  qty: number;
+  active: boolean;
+  nuyen: number;
+  avail: string;
+  addiction_rating: number;
+  addiction_threshold: number;
+  crash_damage: number;
+  /** Onset in seconds; under 3 is immediate (a Combat Turn). */
+  speed: number;
+  /** Duration in seconds; 0 when no component gives one. */
+  duration: number;
+  infos: string[];
+  components: CustomDrugComponentRow[];
+  effect?: Notice[];
+  source?: string;
+  page?: string;
+}
+
 export interface InstalledVehicleMod {
   id: string;
   mod_id: string;

@@ -33,10 +33,12 @@ from .armor import (
     armor_mod_fits,
     armor_plugin_capacity,
 )
+from .custom_drugs import resolve_custom_drugs
 from .drugs import (
     _DRUG_CATEGORIES,
     _drug_effect_nodes,
     _format_drug_duration,
+    apply_active_custom_drugs,
     apply_active_drugs,
 )
 from .lifestyle import apply_lifestyle_cost_mod, resolve_lifestyles
@@ -132,6 +134,7 @@ __all__ = [
     "_weapon_matches_or",
     "accessory_fits_weapon",
     "ammo_fits_weapon",
+    "apply_active_custom_drugs",
     "apply_active_drugs",
     "apply_lifestyle_cost_mod",
     "apply_reach_bonus",
@@ -145,6 +148,7 @@ __all__ = [
     "bind_weapon_category_dv",
     "bind_weapon_skill_accuracy",
     "mod_fits_vehicle",
+    "resolve_custom_drugs",
     "resolve_lifestyles",
     "vehicle_matches",
 ]

@@ -9,6 +9,8 @@ from .drugs import (
     boost_drug_attribute,
     drug_effect_summary,
     drug_node_value,
+    load_custom_drug_components,
+    load_custom_drug_grades,
     load_drug_components,
     load_drug_grades,
 )
@@ -106,6 +108,8 @@ __all__ = [
     "boost_drug_attribute",
     "drug_effect_summary",
     "drug_node_value",
+    "load_custom_drug_components",
+    "load_custom_drug_grades",
     "load_drug_components",
     "load_drug_grades",
     "load_echoes",

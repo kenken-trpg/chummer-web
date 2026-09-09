@@ -157,3 +157,106 @@ def load_drug_grades() -> list[dict[str, Any]]:
             }
         )
     return items
+
+
+_EFFECT_SCALARS = {"level", "crashdamage", "speed", "duration", "info"}
+
+
+def _component_effects(el: ET.Element) -> list[dict[str, Any]]:
+    """One entry per ``<effect>``, keyed by the level it belongs to.
+
+    The ``<bonus>`` vocabulary a component's effect speaks is the one premade
+    drugs already speak (``attribute`` / ``limit`` / ``quality`` /
+    ``initiativedice`` / ``specificskill``), so the nodes are kept in
+    ``parse_bonus`` shape and go through the same translation the engine
+    already applies to a premade drug. The rest — level, crash damage, onset,
+    duration, the free-text ``<info>`` — is not a bonus and is pulled out here.
+    """
+    effects: list[dict[str, Any]] = []
+    for effect_el in el.findall("./effects/effect"):
+        nodes = parse_bonus(effect_el)
+        scalars = {node["tag"]: str(node.get("value") or "") for node in nodes if node["tag"] in _EFFECT_SCALARS}
+        effects.append(
+            {
+                "level": _int_text(scalars.get("level")),
+                "nodes": [node for node in nodes if node["tag"] not in _EFFECT_SCALARS],
+                "crash_damage": _int_text(scalars.get("crashdamage")),
+                "speed": _int_text(scalars.get("speed")),
+                "duration": _int_text(scalars.get("duration")),
+                "info": scalars.get("info") or "",
+            }
+        )
+    return effects
+
+
+def _int_text(value: str | None, default: int = 0) -> int:
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def load_custom_drug_components() -> list[dict[str, Any]]:
+    """The Foundation / Block / Enhancer / BTL parts a custom drug is mixed
+    from (CF p.190).
+
+    ``rating`` / ``threshold`` in the XML are the component's *addiction*
+    rating and threshold, not a gear rating — they are renamed here so nothing
+    downstream mistakes them for one. ``limit`` is how many of the component
+    one drug may hold; absent means unlimited.
+    """
+    path = DATA_DIR / "drugcomponents.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./drugcomponents/drugcomponent"):
+        comp_id = _text(el.find("id"))
+        name = _text(el.find("name"))
+        if not comp_id or not name:
+            continue
+        items.append(
+            {
+                "id": comp_id,
+                "name": name,
+                "category": _text(el.find("category")),
+                "cost": _text(el.find("cost"), "0"),
+                "avail": _text(el.find("availability")),
+                "addiction_rating": _int_text(_text(el.find("rating"))),
+                "addiction_threshold": _int_text(_text(el.find("threshold"))),
+                "limit": _int_text(_text(el.find("limit"))),
+                "effects": _component_effects(el),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
+def load_custom_drug_grades() -> list[dict[str, Any]]:
+    """The quality a custom drug is cooked to (``<grades>`` in
+    ``drugcomponents.xml``): a cost multiplier and, for Pharmaceutical, an
+    addiction-threshold modifier."""
+    path = DATA_DIR / "drugcomponents.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./grades/grade"):
+        name = _text(el.find("name"))
+        if not name:
+            continue
+        raw_cost = _text(el.find("cost"), "1")
+        try:
+            cost_mult = float(raw_cost)
+        except ValueError:
+            cost_mult = 1.0
+        items.append(
+            {
+                "id": _text(el.find("id")),
+                "name": name,
+                "cost_multiplier": cost_mult,
+                "addiction_threshold": _int_text(_text(el.find("addictionthreshold"))),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items

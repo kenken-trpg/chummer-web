@@ -51,6 +51,8 @@ EXPECTED_KEYS = {
     "lifestyle_qualities",
     "drugs",
     "drug_grades",
+    "drug_components",
+    "drug_component_grades",
     # matrix
     "commlinks",
     "cyberdecks",
