@@ -69,6 +69,19 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         count = _as_int(fields.get("val") or fields.get("value") or node.get("value"))
         if slot and count > 0:
             effects["extra_limbs"][slot] = int(effects["extra_limbs"].get(slot) or 0) + count
+    elif tag == "replaceattributes":
+        # An Infected character keeps none of their metatype's ranges for the
+        # attributes listed (RF p.136); Quadriplegic zeroes three of them.
+        for row in node.get("attribute_ranges") or []:
+            name = ATTR_ALIASES.get(str(row.get("name") or "").strip().upper())
+            if not name:
+                continue
+            effects["attribute_replacements"][name] = {
+                "min": _as_int(row.get("min")),
+                "max": _as_int(row.get("max")),
+                "aug": _as_int(row.get("aug")),
+                "source": source,
+            }
     elif tag == "initiative":
         effects["initiative"] += _bonus_int(node, fields)
     elif tag == "initiativepass":

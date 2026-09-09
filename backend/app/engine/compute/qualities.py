@@ -65,6 +65,20 @@ def gather(ctx: Ctx) -> None:
         ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
     ctx.granted_ware = list(quality_grade_effects["grant_ware"])
+    # `<replaceattributes>`: an Infected character stops being their metatype
+    # where these attributes are concerned (RF p.136), and a Quadriplegic's
+    # AGI/REA/STR are gone (BTB p.139). The whole pipeline reads the ranges off
+    # `attrs_spec`, so replacing them here is enough — on a copy, because the
+    # metatype's own dict belongs to the cached catalog.
+    replacements = quality_grade_effects["attribute_replacements"]
+    if replacements:
+        ctx.attrs_spec = {
+            key: {**spec, **{k: v for k, v in replacements[key].items() if k != "source"}}
+            if key in replacements
+            else spec
+            for key, spec in ctx.attrs_spec.items()
+        }
+        ctx.attr_replaced_by = sorted({str(row["source"]) for row in replacements.values() if row.get("source")})
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
     ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))

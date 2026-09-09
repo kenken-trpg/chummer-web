@@ -402,6 +402,9 @@ def assemble(ctx: Ctx) -> None:
                 ).items()
             },
             "source": ctx.meta.get("source"),
+            # `<replaceattributes>`: whose ranges these are, when they are not
+            # the metatype's own (Infected, Quadriplegic).
+            "attributes_replaced_by": list(ctx.attr_replaced_by),
         },
         "translations": {
             k: ctx.data["translations"].get(k, k) for k in [ctx.state.metatype, ctx.state.metavariant or ""]

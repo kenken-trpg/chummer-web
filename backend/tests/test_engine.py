@@ -830,6 +830,51 @@ def test_shiva_arms_average_a_cyberlimb_over_seven_parts() -> None:
     assert "addlimb" not in tags
 
 
+QUADRIPLEGIC = "39803e82-d85a-4da1-9637-fdd3249f2f21"
+INFECTED_GHOUL_HUMAN = "2d99bbb6-7af0-45c6-a83b-46d9d9f10838"
+
+
+def test_infected_ghoul_replaces_the_metatype_attribute_ranges() -> None:
+    """`replaceattributes`: a ghoul stops being a human where BOD/REA/STR are
+    concerned (RF p.136) — the sheet ranges, the chargen cap and the augmented
+    max all come from the quality."""
+    plain = compute(_mundane("human"))
+    out = compute(_mundane("ghoul", quality_ids=[INFECTED_GHOUL_HUMAN]))
+    human = plain.derived["metatype_info"]["attributes"]
+    ghoul = out.derived["metatype_info"]["attributes"]
+    assert human["BOD"] == {"min": 1, "max": 6, "aug": 10}
+    assert ghoul["BOD"] == {"min": 1, "max": 10, "aug": 14}
+    assert ghoul["STR"]["max"] == 9
+    assert ghoul["CHA"]["max"] == 4  # ghouls are not charming
+    # An attribute the quality says nothing about keeps the metatype's range.
+    assert ghoul["EDG"] == human["EDG"]
+    assert out.derived["metatype_info"]["attributes_replaced_by"] == ["Infected: Ghoul (Human)"]
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "replaceattributes" not in tags
+
+
+def test_quadriplegic_zeroes_agility_reaction_and_strength() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["AGI"] = 5
+    attrs["REA"] = 4
+    out = compute(
+        CharacterState(
+            id="quad",
+            name="Quad",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            quality_ids=[QUADRIPLEGIC],
+        )
+    )
+    # The ranges are gone, so a rating bought above them is clamped away.
+    assert out.derived["totals"]["AGI"] == 0
+    assert out.derived["totals"]["REA"] == 0
+    assert out.derived["totals"]["STR"] == 0
+    assert out.derived["totals"]["BOD"] >= 1
+    assert out.derived["points"]["attributes"]["used"] == 0
+
+
 def test_two_arms_average_with_meat() -> None:
     attrs = default_attributes(find_metatype("Human", None))
     attrs["STR"] = 3

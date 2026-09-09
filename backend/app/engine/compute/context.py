@@ -69,6 +69,8 @@ class Ctx:
     warnings: list[Notice] = field(default_factory=list)
     meta: dict[str, Any] = field(default_factory=dict)
     attrs_spec: dict[str, Any] = field(default_factory=dict)
+    #: `<replaceattributes>`: what replaced the metatype's ranges, for the sheet.
+    attr_replaced_by: list[str] = field(default_factory=list)
     talent: dict[str, Any] = field(default_factory=dict)
     sources: list[tuple[str, list[dict[str, Any]]]] = field(default_factory=list)
 

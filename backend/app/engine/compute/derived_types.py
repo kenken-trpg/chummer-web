@@ -171,6 +171,7 @@ class _MetatypeInfo(TypedDict):
     parent: str | None
     attributes: dict[str, dict[str, int | float]]
     source: str | None
+    attributes_replaced_by: list[str]
 
 
 class DerivedDict(TypedDict):

@@ -425,6 +425,17 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
                 ]
                 if kids:
                     payload["gear_children"] = kids
+            if tag == "replaceattributes":
+                # `<replaceattribute>` repeats, and the generic flattening
+                # loses which min/max/aug belongs to which attribute — the
+                # rows are rebuilt here (same reason as `metamagiclimit`).
+                ranges = [
+                    {sub.tag: _text(sub) for sub in list(rep)}
+                    for rep in child.findall("replaceattribute")
+                    if _text(rep.find("name"))
+                ]
+                if ranges:
+                    payload["attribute_ranges"] = ranges
             if tag == "selectpowers":
                 specs: list[dict[str, Any]] = []
                 for sp in child.findall("selectpower"):

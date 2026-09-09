@@ -805,6 +805,8 @@ const JA = {
   "attrs.rowHint": "メタの下限 {min}／作成上限 {max}／増強込みの上限 {aug}",
   "attrs.minNote":
     "各能力値はメタの最低値から始まります（オレンジの目盛り）。そこまでは無料で、能力値点を使うのは超えた分だけです。",
+  "attrs.replacedRanges":
+    "能力値の上下限は {list} のものに置き換わっています（メタタイプのものではありません）。",
 
   // --- character sheet -----------------------------------------------------
   // Section headings. `Section` takes the key, not the sentence, so a section
@@ -2372,6 +2374,7 @@ const EN: Catalog = {
   "attrs.rowHint": "Metatype minimum {min} / chargen max {max} / augmented max {aug}",
   "attrs.minNote":
     "Every attribute starts at its metatype minimum (the amber tick). That much is free — points are only spent above it.",
+  "attrs.replacedRanges": "These ranges come from {list}, not from the metatype.",
 
   "sheet.core": "Core",
   "sheet.skills": "Skills",
