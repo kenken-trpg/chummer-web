@@ -353,6 +353,8 @@ export interface Catalog {
       skillgroup: string | null;
       source: string;
       exotic?: boolean;
+      /** False for the skills SR5 p.130 says cannot be defaulted at all. */
+      default?: boolean;
       specs?: string[];
     }[];
     knowledge: {

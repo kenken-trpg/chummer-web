@@ -102,6 +102,39 @@ describe("<SkillsTab>", () => {
     }
   });
 
+  it("shows what an unlearned skill still rolls at, and stops once it is bought", () => {
+    const { container } = renderTab({
+      character: { derived: { totals: { AGI: 5 } } as any },
+    });
+    const row = container.querySelector(".skill-row.has-spec") as HTMLElement;
+    expect(row.textContent).toContain("デフォルト 4"); // AGI 5 − 1
+
+    const bought = renderTab({
+      character: {
+        skills: { Blades: 3 },
+        derived: { totals: { AGI: 5 }, skill_totals: { Blades: 3 } } as any,
+      },
+    });
+    const boughtRow = bought.container.querySelector(".skill-row.has-spec") as HTMLElement;
+    expect(boughtRow.textContent).not.toContain("デフォルト");
+    expect(boughtRow.textContent).toContain("3");
+  });
+
+  it("drops the −1 on a skill the Reflex Recorder covers, and says when defaulting is out", () => {
+    const free = renderTab({
+      character: {
+        derived: { totals: { AGI: 5 }, no_default_penalty_skills: ["Blades"] } as any,
+      },
+    });
+    expect(free.container.textContent).toContain("デフォルト 5（−1なし）");
+
+    const blocked = renderTab({
+      catalog: skillsCatalog({ skills: [{ ...blades, default: false }] }),
+      character: { derived: { totals: { AGI: 5 } } as any },
+    });
+    expect(blocked.container.textContent).toContain("デフォルト不可");
+  });
+
   it("commits an active-skill rating via patch on mouseUp", () => {
     const patch = vi.fn();
     function Harness() {
