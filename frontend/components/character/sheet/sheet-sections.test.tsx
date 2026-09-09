@@ -68,6 +68,31 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).toContain(marker);
   });
 
+  it("the magic section says so when Quickening is in hand", () => {
+    const withQuickening = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          enabled_tabs: [...(RICH_CHARACTER.derived.enabled_tabs || []), "initiation"],
+          initiation: {
+            grade: 1,
+            karma: 13,
+            choices: [],
+            metamagics: [],
+            arts: [],
+            quickening: true,
+          },
+        },
+      } as any,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<MagicSection {...(withQuickening as any)} />);
+    expect(container.textContent).toContain("クイックニング可");
+  });
+
   it("every section collapses to null for an empty character", () => {
     const empty = buildSheetData({
       character: makeCharacter(),

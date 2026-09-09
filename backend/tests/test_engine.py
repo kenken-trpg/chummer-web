@@ -1942,6 +1942,7 @@ ATHLETE_WAY = "3f536570-2f0c-40b1-a056-d310e29e983d"
 BEAST_WAY = "2e7424d3-5d11-4c9d-ba92-f0431bb86786"
 MENTOR_SPIRIT = "ced3fecf-2277-4b20-b1e0-894162ca9ae2"
 BEAR = "136a3dc5-d9c4-45ad-bc24-705f54692590"
+HEINZELMANNCHEN = "62188234-323a-4c8e-96c4-b8b8a750e272"
 NORSE_BERSERKER = "52668f12-2895-48e1-8b84-2382ef0fcee0"
 BERSERKER_TEMPER = "ad6f8984-f0c2-41e9-a2d1-73a719d21a06"
 HOLY_TEXT = "2dcbe44e-3789-4cf2-b51b-0337c239ce7c"
@@ -1997,6 +1998,29 @@ def test_magician_way_can_discount_combat_sense() -> None:
         )
     )
     assert out.derived["power_points"]["used"] == 0.25
+
+
+def test_heinzelmannchen_adds_a_die_to_artisan_and_the_engineering_group() -> None:
+    """`skillgrouplevel` is Chummer's free-level flavour, but the mentor reads
+    "+1 dice pool modifier ... the Engineering skill group" (SAG p.121), so it
+    is dice — the same +1 the sibling `specificskill` gives Artisan."""
+    out = compute(
+        _mage(
+            "heinzel",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=HEINZELMANNCHEN,
+            skills={"Artisan": 2, "Automotive Mechanic": 3},
+        )
+    )
+    assert out.derived["skill_group_bonus"]["Engineering"] == 1
+    assert out.derived["skill_bonus"]["Automotive Mechanic"] == 1
+    assert out.derived["skill_bonus"]["Artisan"] == 1
+    # A level would have shown up as a rating nobody paid for.
+    assert out.derived["skill_totals"]["Automotive Mechanic"] == 3
+    assert out.derived["skill_totals"].get("Nautical Mechanic", 0) == 0
+    assert out.derived["points"]["skill_groups"]["used"] == 0
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "skillgrouplevel" not in tags
 
 
 def test_bear_mentor_gives_free_rapid_healing() -> None:
@@ -2539,6 +2563,32 @@ def test_initiation_grade_one_costs_thirteen_karma() -> None:
     assert out.derived["initiation"]["karma"] == 13
     assert out.derived["karma"]["spent"] == 13
     assert out.derived["initiation"]["metamagics"][0]["name"] == "Quickening"
+
+
+def test_quickening_metamagic_is_reported_on_the_sheet() -> None:
+    """`quickeningmetamagic` grants no dice — it is the permission to lock a
+    sustained spell in with karma (SR5 p.326), so the sheet just says so."""
+    out = compute(
+        _mage(
+            "quicken",
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META)],
+        )
+    )
+    assert out.derived["initiation"]["quickening"] is True
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "quickeningmetamagic" not in tags
+
+
+def test_a_mage_without_quickening_says_nothing() -> None:
+    out = compute(
+        _mage(
+            "no-quicken",
+            initiate_grade=1,
+            initiations=[InitiationChoice(grade=1, kind="metamagic", option_id=POWER_POINT_META)],
+        )
+    )
+    assert out.derived["initiation"]["quickening"] is False
 
 
 def test_initiation_ordeal_and_group_discount_karma() -> None:
@@ -5949,6 +5999,26 @@ def test_mage_enableattribute_not_unimplemented() -> None:
     )
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "enableattribute" not in tags
+
+
+MULTIDIMENSIONAL_COPROCESSOR = "8706c98d-b53b-4a29-b21b-a921030ae801"
+MUZZLE = "605b82f9-9f12-4a14-b567-091dd5fcde80"
+
+
+def test_coprocessor_matrix_initiative_die_is_not_unimplemented() -> None:
+    """Chummer keeps a "set" and an "add" flavour of the tag apart; the module
+    is a +1 either way (DT p.65), so it lands in the same die count."""
+    out = compute(_mundane("coproc", gear=[GearInstall(gear_id=MULTIDIMENSIONAL_COPROCESSOR)]))
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "matrixinitiativedice" not in tags
+
+
+def test_muzzle_does_not_report_an_unimplemented_bonus() -> None:
+    """`weaponaccuracy` sharpens the `Fangs` natural weapon, and natural
+    weapons belong to critters we do not build — nothing to report to the
+    player about it."""
+    out = compute(_mundane("muzzle", bioware=[CyberwareInstall(ware_id=MUZZLE)]))
+    assert out.derived["unimplemented_bonuses"] == []
 
 
 def test_troll_reach_and_lifestyle_cost() -> None:

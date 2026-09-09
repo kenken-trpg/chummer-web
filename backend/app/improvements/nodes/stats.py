@@ -227,7 +227,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         )
         for key in ("attack", "sleaze", "dataprocessing", "firewall"):
             persona[key] = int(persona.get(key) or 0) + _as_int(fields.get(key))
-    elif tag == "matrixinitiativediceadd":
+    elif tag in ("matrixinitiativediceadd", "matrixinitiativedice"):
+        # Chummer keeps a "set" and an "add" flavour apart; every
+        # `matrixinitiativedice` in the data is a +1 module, so both add here.
         effects["matrix_initiative_dice"] = int(effects.get("matrix_initiative_dice") or 0) + _bonus_int(node, fields)
     elif tag == "actiondicepool":
         attrs = node.get("attrs") or {}

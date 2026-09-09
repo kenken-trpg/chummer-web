@@ -143,6 +143,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             effects["grant_echoes"].append({"source": source, "name": name})
     elif tag == "cyberadeptdaemon":
         effects["cyberadept_daemon"] = True
+    elif tag == "quickeningmetamagic":
+        # Nothing to add up: the metamagic is the permission to quicken a
+        # sustained spell with karma (SR5 p.326), so it is reported, not summed.
+        effects["quickening"] = True
     elif tag == "addspell":
         attrs = node.get("attrs") or {}
         name = str(node.get("value") or fields.get("name") or "").strip()

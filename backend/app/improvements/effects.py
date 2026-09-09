@@ -140,6 +140,8 @@ class EffectsDict(TypedDict):
     fading_resist: int
     drain_resist: int
     cyberadept_daemon: bool
+    #: `<quickeningmetamagic>`: the Quickening metamagic is in hand (SR5 p.326).
+    quickening: bool
     free_spells_flat: int
     prototype_transhuman_ess: float
     burnout_way: bool
@@ -345,6 +347,7 @@ def empty_effects() -> EffectsDict:
         "drain_resist": 0,
         "grant_echoes": [],
         "cyberadept_daemon": False,
+        "quickening": False,
         "grant_spells": [],
         "grant_powers": [],
         "select_power_slots": [],

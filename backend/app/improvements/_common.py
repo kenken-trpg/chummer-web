@@ -194,6 +194,9 @@ IMPLEMENTED = {
     "weaponcategorydice",
     "swapskillattribute",
     "swapskillspecattribute",
+    "skillgrouplevel",
+    "quickeningmetamagic",
+    "matrixinitiativedice",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
@@ -212,6 +215,9 @@ SILENT_TAGS = {
     "linguasoft",
     "skillsoft",
     "weaponspecificdice",
+    # `Muzzle` sharpens a `Fangs` natural weapon; natural weapons live on
+    # critters and metavariants we do not build, so there is no row to sharpen.
+    "weaponaccuracy",
     "addskillspecializationoption",
     "critterpowers",
     "limitcritterpowercategory",
@@ -233,10 +239,13 @@ SILENT_TAGS = {
     "astralreputation",
     "specialattburnmultiplier",
     "allowspritefettering",
-    "skillgrouplevel",
-    "matrixinitiativedice",
+    # A vehicle's Device Rating is nowhere in `vehicles.xml`; Chummer derives
+    # it, and we do not model it at all, so the one mod that raises it has
+    # nothing to raise.
     "devicerating",
-    "quickeningmetamagic",
+    # Only on the hidden `Sourcerer Daemon` echo, whose `(Rating - 1) / 2`
+    # comes out at 0 for the single level a character can hold — and we do
+    # not model sustaining penalties to spend it on either.
     "penaltyfreesustain",
     "availability",
     "handling",
