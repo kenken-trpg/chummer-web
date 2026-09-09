@@ -19,10 +19,10 @@ from ..data_loader import catalog
 from ..improvements import EffectsDict
 from ..models import CharacterState, ContactInstall
 from ..notices import Notice, notice, term, ui
+from ..rules import current_rules
 from .bundle_types import ContactsBundle, GearBundle
 from .constants import (
     CONTACT_CHARGEN_COST_MAX,
-    CONTACT_FREE_MULT,
     CONTACT_RATING_MAX,
     CONTACT_RATING_MIN,
     ERASED_LIFESTYLE_FORBIDDEN,
@@ -166,7 +166,7 @@ def resolve_contacts(
     public: list[dict[str, Any]] = []
     kept: list[ContactInstall] = []
     used = 0
-    free_max = max(0, int(cha or 0) * CONTACT_FREE_MULT)
+    free_max = max(0, int(cha or 0) * current_rules().contact_free_mult)
     bmp_id = str(black_market_contact_id or "").strip()
     for inst in state.contacts or []:
         name = (inst.name or "").strip()

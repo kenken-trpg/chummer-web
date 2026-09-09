@@ -7,14 +7,7 @@ from __future__ import annotations
 from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import apply_bonus_nodes
 from ...notices import notice, term, terms
-from ..constants import (
-    KARMA_CHARGEN_POOL,
-    KARMA_NUYEN_MAX,
-    KARMA_SPECIALIZATION,
-    KARMA_TO_NUYEN,
-    MYSTIC_PP_KARMA,
-    PRIORITY_KARMA_NUYEN_BASE,
-)
+from ...rules import current_rules
 from ..contacts import resolve_contacts, sync_quality_contacts
 from ..gear import apply_unarmed_bonuses
 from ..karma import (
@@ -74,15 +67,15 @@ def economy(ctx: Ctx) -> None:
     elif ctx.special_key == "RES":
         ctx.spent_special += max(0, ctx.ratings["RES"] - ctx.talent_start)
 
-    ctx.nuyen_karma_max = KARMA_NUYEN_MAX
+    ctx.nuyen_karma_max = current_rules().karma_nuyen_max
     if ctx.is_karma:
         ctx.attr_points = 0
         ctx.skill_points = 0
         ctx.group_points = 0
         ctx.special_from_meta = 0
-        ctx.nuyen_karma_max = KARMA_NUYEN_MAX
+        ctx.nuyen_karma_max = current_rules().karma_nuyen_max
         ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
-        ctx.nuyen_pool = int(ctx.state.karma_nuyen) * KARMA_TO_NUYEN
+        ctx.nuyen_pool = int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
         ctx.metatype_karma_cost = max(0, int(ctx.meta.get("karma") or 0))
         ctx.heritage_karma_cost = 0
     else:
@@ -95,9 +88,11 @@ def economy(ctx: Ctx) -> None:
         # Heritage table <karma> is an extra cost for some metavariants / rare races.
         ctx.heritage_karma_cost = extra_karma
         # Leftover chargen karma may buy nuyen (SR5 p.94); Born Rich raises the cap.
-        ctx.nuyen_karma_max = max(0, PRIORITY_KARMA_NUYEN_BASE + int(ctx.effects.get("nuyen_max_bp") or 0))
+        ctx.nuyen_karma_max = max(
+            0, current_rules().priority_karma_nuyen_base + int(ctx.effects.get("nuyen_max_bp") or 0)
+        )
         ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
-        ctx.nuyen_pool += int(ctx.state.karma_nuyen) * KARMA_TO_NUYEN
+        ctx.nuyen_pool += int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
 
     ctx.nuyen_pool += int(ctx.state.nuyen_earned or 0)
     ctx.nuyen_pool += int(ctx.effects.get("nuyen_amt") or 0)
@@ -221,7 +216,7 @@ def economy(ctx: Ctx) -> None:
     spec_active = int(ctx.specs["active_spent"])
     spec_knowledge = int(ctx.specs["knowledge_spent"])
     if ctx.is_karma:
-        ctx.spec_karma = (spec_active + spec_knowledge) * KARMA_SPECIALIZATION
+        ctx.spec_karma = (spec_active + spec_knowledge) * current_rules().karma_specialization
     elif ctx.career:
         # Priority career: new specs cost karma (baseline settles chargen specs).
         ctx.spec_karma = 0
@@ -236,7 +231,7 @@ def economy(ctx: Ctx) -> None:
     ctx.karma_from_q = sum(
         q["karma"] for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
     )
-    ctx.mystic_karma = int(ctx.state.mystic_pp) * MYSTIC_PP_KARMA
+    ctx.mystic_karma = int(ctx.state.mystic_pp) * current_rules().karma_mystic_pp
     ctx.extra_adept_karma = (
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
     )
@@ -262,7 +257,7 @@ def economy(ctx: Ctx) -> None:
             karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
         )
         nuyen_karma = int(ctx.state.karma_nuyen or 0)
-        ctx.karma_pool = KARMA_CHARGEN_POOL + int(ctx.state.karma_earned or 0)
+        ctx.karma_pool = current_rules().karma_chargen_pool + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
             ctx.karma_from_q
             + ctx.metatype_karma_cost

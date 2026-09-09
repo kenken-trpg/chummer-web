@@ -17,12 +17,11 @@ from ..data_loader import catalog
 from ..improvements import EffectsDict
 from ..models import CharacterState, MartialArtInstall
 from ..notices import Notice, notice, term
+from ..rules import current_rules
 from .bundle_types import MartialBundle
 from .constants import (
     MARTIAL_ART_CHARGEN_STYLE_MAX,
     MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
-    MARTIAL_ART_STYLE_KARMA,
-    MARTIAL_ART_TECHNIQUE_KARMA,
 )
 from .requirements import requirement_tree_met
 
@@ -177,9 +176,9 @@ def resolve_martial_arts(
             if not is_free:
                 continue
 
-        style_cost = 0 if is_free else int(spec.get("cost") or MARTIAL_ART_STYLE_KARMA)
+        style_cost = 0 if is_free else int(spec.get("cost") or current_rules().karma_martial_style)
         paid_techniques = 0 if is_free else max(0, len(picked) - 1)
-        art_karma = style_cost + paid_techniques * MARTIAL_ART_TECHNIQUE_KARMA
+        art_karma = style_cost + paid_techniques * current_rules().karma_martial_technique
         karma += art_karma
         technique_total += len(picked)
         if not is_free:
@@ -194,7 +193,7 @@ def resolve_martial_arts(
                     "id": tech.get("id") or "",
                     "name": name,
                     "free": free_tech,
-                    "karma": 0 if free_tech else MARTIAL_ART_TECHNIQUE_KARMA,
+                    "karma": 0 if free_tech else current_rules().karma_martial_technique,
                     "source": tech.get("source") or "",
                     "page": tech.get("page") or "",
                 }

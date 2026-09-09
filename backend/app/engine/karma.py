@@ -11,12 +11,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from ..data_loader import PHYSICAL_ATTRS
-from .constants import (
-    KARMA_ACTIVE_SKILL,
-    KARMA_ATTRIBUTE,
-    KARMA_KNOWLEDGE,
-    KARMA_SKILL_GROUP,
-)
+from ..rules import current_rules
 
 
 def _karma_raise_cost(from_rating: int, to_rating: int, per_rating: int) -> int:
@@ -47,7 +42,7 @@ def attribute_karma_cost(
         return _karma_cost_with_category_mods(
             from_rating,
             to_rating,
-            KARMA_ATTRIBUTE,
+            current_rules().karma_attribute,
             flat_rules=_matching_karma_rules(flat, key),
         )
 
@@ -72,7 +67,7 @@ def skill_karma_cost(
     group_floor: dict[str, int] = {}
     for group, rating in (skill_groups or {}).items():
         grade = max(0, min(int(group_cap), int(rating or 0)))
-        total += _karma_raise_cost(0, grade, KARMA_SKILL_GROUP)
+        total += _karma_raise_cost(0, grade, current_rules().karma_skill_group)
         for skill in skills_data.get("skills") or []:
             if skill.get("skillgroup") == group and not skill.get("exotic"):
                 name = skill.get("name") or ""
@@ -80,7 +75,7 @@ def skill_karma_cost(
                     group_floor[name] = max(group_floor.get(name, 0), grade)
     for name, rating in (skill_totals or {}).items():
         floor = int(group_floor.get(name) or 0)
-        total += _karma_raise_cost(floor, int(rating or 0), KARMA_ACTIVE_SKILL)
+        total += _karma_raise_cost(floor, int(rating or 0), current_rules().karma_active_skill)
     return total
 
 
@@ -255,7 +250,7 @@ def knowledge_excess_karma(
         cat = str(cats.get(name) or "")
         mult = int(mults.get(cat, 100))
         for level in range(1, max(0, int(rating or 0)) + 1):
-            levels.append(max(1, int(math.ceil(level * KARMA_KNOWLEDGE * mult / 100.0))))
+            levels.append(max(1, int(math.ceil(level * current_rules().karma_knowledge * mult / 100.0))))
     levels.sort()
     free = max(0, int(free_points))
     if free >= len(levels):

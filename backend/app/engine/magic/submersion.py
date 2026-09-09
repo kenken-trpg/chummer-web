@@ -15,8 +15,9 @@ from typing import Any
 
 from ...models import CharacterState, SubmersionChoice
 from ...notices import Notice, notice, term
+from ...rules import current_rules
 from ..bundle_types import SubmersionBundle
-from ..constants import RES_TALENTS, SUBMERSION_KARMA_FLAT, SUBMERSION_KARMA_PER_GRADE
+from ..constants import RES_TALENTS
 from ..lookups import _echo_by_id
 from ._common import _magic_grade_discount
 
@@ -24,7 +25,7 @@ from ._common import _magic_grade_discount
 def submersion_karma_for_grade(
     grade: int, *, group: bool = False, ordeal: bool = False, schooling: bool = False
 ) -> int:
-    base = SUBMERSION_KARMA_FLAT + int(grade) * SUBMERSION_KARMA_PER_GRADE
+    base = current_rules().karma_submersion_flat + int(grade) * current_rules().karma_submersion_per_grade
     return math.floor(base * _magic_grade_discount(group=group, ordeal=ordeal, schooling=schooling) + 0.5)
 
 

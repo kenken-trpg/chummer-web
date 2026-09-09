@@ -61,6 +61,49 @@ import type {
   TraditionInfo,
 } from "./derived";
 
+/**
+ * The ruleset a character is built under — a Chummer settings file, as much of
+ * one as this app implements.
+ *
+ * Every numeric knob is optional and means "the file did not change this", so
+ * an absent field keeps the printed SR5 value rather than zeroing it. `books`
+ * is the same idea in list form: **empty means unrestricted**, not "no books",
+ * so a character saved before settings existed keeps seeing everything.
+ */
+export interface CharacterSettings {
+  name: string;
+  books: string[];
+  sum_to_ten?: number | null;
+  chargen_karma?: number | null;
+  karma_chargen_pool?: number | null;
+  karma_attribute?: number | null;
+  karma_active_skill?: number | null;
+  karma_skill_group?: number | null;
+  karma_knowledge?: number | null;
+  karma_specialization?: number | null;
+  karma_spell?: number | null;
+  karma_complex_form?: number | null;
+  karma_enhancement?: number | null;
+  karma_mystic_pp?: number | null;
+  karma_martial_technique?: number | null;
+  karma_initiation_flat?: number | null;
+  karma_initiation_per_grade?: number | null;
+  karma_submersion_flat?: number | null;
+  karma_submersion_per_grade?: number | null;
+  quality_karma_limit?: number | null;
+  chargen_skill_max?: number | null;
+  chargen_knowledge_skill_max?: number | null;
+  career_skill_max?: number | null;
+  career_skill_group_max?: number | null;
+  chargen_avail_max?: number | null;
+  karma_to_nuyen?: number | null;
+  priority_karma_nuyen_base?: number | null;
+  banned_ware_grades?: string[];
+  /** House rules the file sets that this app does not implement. The engine
+   *  turns these into a warning; they are never silently dropped. */
+  unsupported?: string[];
+}
+
 export interface Character {
   id: string;
   name: string;
@@ -151,13 +194,7 @@ export interface Character {
     redliner_torso: boolean;
     redliner_skull: boolean;
   };
-  /** The ruleset this character is built under. `books` is the list of
-   *  enabled `<source>` codes, and **empty means unrestricted** — a character
-   *  saved before settings existed must keep seeing the whole catalog. */
-  settings?: {
-    name: string;
-    books: string[];
-  };
+  settings?: CharacterSettings;
   derived: {
     errors: Notice[];
     warnings?: Notice[];

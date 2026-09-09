@@ -183,6 +183,10 @@ export function Toolbar({
         type="file"
         accept="application/json,.chum5,.chum5lz"
         hidden
+        // named for the same reason the settings one is: the page now holds
+        // more than one file input, so "the file input" is no longer a thing
+        // a screen reader — or a test — can point at
+        aria-label={ui("toolbar.import")}
         onChange={(e) => e.target.files && onImport(e.target.files[0])}
       />
     </div>

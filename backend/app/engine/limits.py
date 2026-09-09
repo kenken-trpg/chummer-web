@@ -2,7 +2,7 @@
 
 ``_finalize_avail_tree`` rolls each install's own + children availability into a
 tree total (grade-aware); the ``_check_*`` helpers raise the SR5 chargen errors
-when a total exceeds CHARGEN_AVAIL_MAX / CHARGEN_DEVICE_RATING_MAX /
+when a total exceeds current_rules().chargen_avail_max / CHARGEN_DEVICE_RATING_MAX /
 CHARGEN_WARE_ATTR_BONUS_MAX. Career characters skip these.
 
 Imports only ``format_avail`` etc. / already-extracted engine modules — never
@@ -14,7 +14,6 @@ from __future__ import annotations
 from typing import Any
 
 from ..data_loader import (
-    CHARGEN_AVAIL_MAX,
     CHARGEN_DEVICE_RATING_MAX,
     CHARGEN_WARE_ATTR_BONUS_MAX,
     PHYSICAL_ATTRS,
@@ -24,6 +23,7 @@ from ..data_loader import (
 )
 from ..improvements import ATTR_ALIASES, EffectsDict, _as_int
 from ..notices import Notice, notice, term, ui
+from ..rules import current_rules
 from .lookups import _grade_by_name
 
 
@@ -98,7 +98,7 @@ def _restricted_gear_slots(effects: EffectsDict) -> list[int]:
 
 
 def _check_avail_limit(items: list[dict[str, Any]], effects: EffectsDict, errors: list[Notice]) -> None:
-    limit = CHARGEN_AVAIL_MAX
+    limit = current_rules().chargen_avail_max
     slots = _restricted_gear_slots(effects)
     over = sorted(items, key=lambda row: int(row.get("avail_value") or 0), reverse=True)
     for item in over:

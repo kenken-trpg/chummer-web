@@ -11,6 +11,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..models import Priorities
 from ..notices import Notice, notice
+from ..rules import current_rules
 from .constants import (
     BUILD_METHOD_KARMA,
     BUILD_METHOD_PRIORITY,
@@ -18,7 +19,6 @@ from .constants import (
     MAG_TALENTS,
     RES_TALENTS,
     SKIP_TALENTS,
-    SUM_TO_TEN_BUDGET,
     SUM_TO_TEN_COST,
 )
 
@@ -201,8 +201,8 @@ def validate_priorities(p: Priorities, build_method: str | None = None) -> list[
         return errors
     if method == BUILD_METHOD_SUM_TO_TEN:
         spent = sum(priority_letter_cost(letter) for letter in letters)
-        if spent != SUM_TO_TEN_BUDGET:
-            errors.append(notice("engine.priority.sumToTen", budget=SUM_TO_TEN_BUDGET, spent=spent))
+        if spent != current_rules().sum_to_ten_budget:
+            errors.append(notice("engine.priority.sumToTen", budget=current_rules().sum_to_ten_budget, spent=spent))
         return errors
     if sorted(letters) != ["A", "B", "C", "D", "E"]:
         errors.append(notice("engine.priority.oneEach"))

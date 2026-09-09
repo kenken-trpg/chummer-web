@@ -15,8 +15,8 @@ from typing import Any
 
 from ...improvements import EffectsDict
 from ...notices import term
+from ...rules import current_rules
 from ..bundle_types import MovementBundle
-from ..constants import NUYEN_CHARGEN_KEEP_MAX
 from ..formulas import _add_leading_int, _ceil_div, _replace_leading_int
 from ..limits import (
     _avail_entries,
@@ -210,14 +210,20 @@ def finalize(ctx: Ctx) -> None:
     # chargen notice rather than silently deleting nuyen, matching Chummer.
     if not ctx.career:
         chargen_leftover = ctx.nuyen - int(ctx.state.nuyen_earned or 0)
-        if chargen_leftover > NUYEN_CHARGEN_KEEP_MAX:
-            lost = chargen_leftover - NUYEN_CHARGEN_KEEP_MAX
+        if chargen_leftover > current_rules().nuyen_chargen_keep_max:
+            lost = chargen_leftover - current_rules().nuyen_chargen_keep_max
             ctx.warn(
                 "engine.nuyen.chargenCarryOver",
                 left=f"{chargen_leftover:,}",
-                keep=f"{NUYEN_CHARGEN_KEEP_MAX:,}",
+                keep=f"{current_rules().nuyen_chargen_keep_max:,}",
                 lost=f"{lost:,}",
             )
+    # House rules from the settings file that this app has no implementation
+    # for. Said out loud once per build: a GM who set `<mysaddppcareer>` and
+    # got a sheet that quietly ignored it is worse off than one who was told.
+    unsupported = list(ctx.state.settings.unsupported)
+    if unsupported:
+        ctx.warn("engine.settings.unsupported", count=len(unsupported), tags=", ".join(unsupported))
     if ctx.ess <= 0:
         ctx.err("engine.attrs.essenceDepleted")
     for item in ctx.installed:

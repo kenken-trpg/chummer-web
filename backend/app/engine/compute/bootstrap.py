@@ -4,7 +4,8 @@ caps, metatype spec and cyber/bioware sanity checks."""
 from __future__ import annotations
 
 from ...models import CharacterState, RewardEntry
-from ..constants import BUILD_METHOD_KARMA, CAREER_SKILL_GROUP_MAX, CAREER_SKILL_MAX
+from ...rules import current_rules
+from ..constants import BUILD_METHOD_KARMA
 from ..lookups import find_metatype
 from ..priority import normalize_build_method, validate_priorities
 from ..ware import (
@@ -51,8 +52,8 @@ def bootstrap(ctx: Ctx) -> None:
     sync_reward_totals(ctx.state)
     ctx.state.karma_earned = max(0, int(getattr(ctx.state, "karma_earned", 0) or 0))
     ctx.state.nuyen_earned = max(0, int(getattr(ctx.state, "nuyen_earned", 0) or 0))
-    ctx.skill_rating_cap = CAREER_SKILL_MAX if ctx.career else 6
-    ctx.skill_group_cap = CAREER_SKILL_GROUP_MAX if ctx.career else 6
+    ctx.skill_rating_cap = current_rules().career_skill_max if ctx.career else 6
+    ctx.skill_group_cap = current_rules().career_skill_group_max if ctx.career else 6
     ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
     ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]

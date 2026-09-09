@@ -18,10 +18,9 @@ from ..improvements import EffectsDict, _as_int, granted_quality_names
 from ..improvements.effect_rows import ActionDicePoolRow
 from ..models import CharacterState
 from ..notices import Notice, notice, term, ui
+from ..rules import current_rules
 from .constants import (
     MAG_TALENTS,
-    NEGATIVE_QUALITY_KARMA_CAP,
-    POSITIVE_QUALITY_KARMA_CAP,
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
     QUALITY_CONTACT_EXTRA_SUFFIX,
     QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX,
@@ -505,10 +504,18 @@ def apply_quality_rules(
         forbidden = spec.get("forbidden_tree") or []
         if forbidden and requirement_tree_met(forbidden, ctx):
             errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
-    if negative_gain > NEGATIVE_QUALITY_KARMA_CAP and not career:
-        errors.append(notice("engine.qualities.negativeCap", karma=negative_gain, limit=NEGATIVE_QUALITY_KARMA_CAP))
-    if positive_spend > POSITIVE_QUALITY_KARMA_CAP and not career:
-        errors.append(notice("engine.qualities.positiveCap", karma=positive_spend, limit=POSITIVE_QUALITY_KARMA_CAP))
+    if negative_gain > current_rules().quality_karma_cap_negative and not career:
+        errors.append(
+            notice(
+                "engine.qualities.negativeCap", karma=negative_gain, limit=current_rules().quality_karma_cap_negative
+            )
+        )
+    if positive_spend > current_rules().quality_karma_cap_positive and not career:
+        errors.append(
+            notice(
+                "engine.qualities.positiveCap", karma=positive_spend, limit=current_rules().quality_karma_cap_positive
+            )
+        )
 
     # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
     metagenic_limit = 0

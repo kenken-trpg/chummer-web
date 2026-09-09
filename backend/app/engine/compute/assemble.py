@@ -10,21 +10,18 @@ from __future__ import annotations
 from typing import Any, cast
 
 from ...data_loader import (
-    CHARGEN_AVAIL_MAX,
     CHARGEN_DEVICE_RATING_MAX,
     CHARGEN_WARE_ATTR_BONUS_MAX,
 )
 from ...improvements import compact_limit_modifiers, special_armor_totals
 from ...notices import Notice, notice
+from ...rules import current_rules
 from ..constants import (
     BLACK_MARKET_AVAIL_BONUS,
     CM_THRESHOLD,
-    KARMA_TO_NUYEN,
     MARTIAL_ART_CHARGEN_STYLE_MAX,
     MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
-    NEGATIVE_QUALITY_KARMA_CAP,
     RES_TALENTS,
-    SUM_TO_TEN_BUDGET,
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
     _normalize_side,
@@ -94,7 +91,7 @@ def assemble(ctx: Ctx) -> None:
         "build_method": ctx.state.build_method,
         "sum_to_ten": {
             "used": sum_spent,
-            "max": SUM_TO_TEN_BUDGET,
+            "max": current_rules().sum_to_ten_budget,
             "costs": dict(SUM_TO_TEN_COST),
             "unique": priorities_are_unique(ctx.state.priorities),
         },
@@ -103,7 +100,7 @@ def assemble(ctx: Ctx) -> None:
             "pool": ctx.karma_pool if ctx.is_karma else 0,
             "nuyen_karma": int(ctx.state.karma_nuyen or 0),
             "nuyen_karma_max": int(ctx.nuyen_karma_max),
-            "nuyen_per_karma": KARMA_TO_NUYEN,
+            "nuyen_per_karma": current_rules().karma_to_nuyen,
             "metatype": ctx.metatype_karma_cost if ctx.is_karma else 0,
             "attributes": ctx.attr_karma if ctx.is_karma else 0,
             "skills": ctx.skill_buy_karma if ctx.is_karma else 0,
@@ -207,7 +204,7 @@ def assemble(ctx: Ctx) -> None:
         "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
         "skill_rating_max": ctx.skill_rating_cap,
         "skill_group_max": ctx.skill_group_cap,
-        "avail_limit": None if ctx.career else CHARGEN_AVAIL_MAX,
+        "avail_limit": None if ctx.career else current_rules().chargen_avail_max,
         "device_rating_limit": None if ctx.career else CHARGEN_DEVICE_RATING_MAX,
         "ware_attr_limit": None if ctx.career else CHARGEN_WARE_ATTR_BONUS_MAX,
         "ware_attr_bonus": ctx.ware_attr_bonus,
@@ -217,7 +214,7 @@ def assemble(ctx: Ctx) -> None:
             "remaining": ctx.karma_left,
             "negative": {
                 "used": ctx.negative_quality_karma,
-                "max": None if ctx.career else NEGATIVE_QUALITY_KARMA_CAP,
+                "max": None if ctx.career else current_rules().quality_karma_cap_negative,
             },
         },
         "power_points": {"used": ctx.power_spent, "max": ctx.power_pool},

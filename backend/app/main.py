@@ -25,6 +25,7 @@ from .chummer_import import chum5_to_state
 from .logging_config import configure_logging, new_request_id, request_id_var
 from .models import CharacterCreate, PatchRequest, StateRequest
 from .notices import NoticeError, notice
+from .settings_file import build_method_of, parse_settings_xml
 
 configure_logging()
 
@@ -224,6 +225,27 @@ def patch(req: PatchRequest) -> dict:
     except Exception as exc:
         _log.exception("patch failed")
         raise HTTPException(status_code=400, detail=notice("api.patchFailed")) from exc
+
+
+@app.post("/api/settings/parse")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def parse_settings(request: Request, body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
+    """Read a Chummer `settings/*.xml` into a `SettingsState`.
+
+    Parsing runs here rather than in the browser because every other piece of
+    Chummer XML knowledge lives in Python, and the "which knobs did this file
+    change that we cannot honour" answer needs the vendored `settings.xml` to
+    compare against. The client stores the result and sends it back as part of
+    the character; nothing about the upload is kept server-side.
+    """
+    try:
+        settings = parse_settings_xml(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=notice("api.settingsParseFailed")) from exc
+    except Exception as exc:  # noqa: BLE001
+        _log.exception("settings parse failed")
+        raise HTTPException(status_code=400, detail=notice("api.settingsParseFailed")) from exc
+    return {"settings": settings.model_dump(), "build_method": build_method_of(body)}
 
 
 def _content_disposition(name: str) -> str:

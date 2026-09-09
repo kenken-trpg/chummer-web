@@ -54,6 +54,7 @@ const POINT_ROWS: { key: string; label: MsgKey; tab: Tab; ref: string }[] = [
  */
 const TAB_BY_AREA: Partial<Record<string, Tab>> = {
   priority: "priority",
+  settings: "priority",
   meta: "meta",
   attrs: "attrs",
   skills: "skills",

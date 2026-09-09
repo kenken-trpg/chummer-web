@@ -1,7 +1,7 @@
 # Chummer セッティングファイルの移植
 
 Chummer の「セッティングファイル」（`settings/*.xml`）を chummer-web に移す計画。
-本文書は **段階 1（書籍フィルタ）を実施した時点**の記録で、段階 2・3 は未実施。
+本文書は **段階 2（セッティング XML の読み込み）を実施した時点**の記録で、段階 3 は未実施。
 
 ## 何が足りていなかったか
 
@@ -42,14 +42,36 @@ Chummer が `<settings>` に持つものはほぼ全てハードコードか未�
   やるほうが安い。
 * エンジン定数の設定値化（カルマ表・各種上限）。段階 2。
 
-## 段階 2 — セッティング XML の読み込み（未実施）
+## 段階 2 — セッティング XML の読み込み（実施済み）
 
-ユーザーが手元の `settings/*.xml` をブラウザから読み込み、プルダウンに
-追加できるようにする。同時に `<karmacost>` / 各種上限 / `<sumtoten>` /
-`<bannedwaregrades>` をエンジンの定数から `SettingsState` に移す。
+* `app/settings_file.py` — `settings/*.xml` を `SettingsState` に読む。
+  パースはサーバ側。Chummer XML の知識が全部そこにあるのと、「このファイルは
+  何を変えたか」の判定に同梱 `settings.xml` との比較が要るため。
+  **保存はしない** — 読んで返すだけで、ルールセットはキャラクターの中を旅する。
+* `app/rules.py` — `Rules`。エンジンの定数を「設定で変わりうる数値」と
+  「変わらない数値」に割り、前者をここへ移した。エンジンからの参照は
+  17 ファイル・約 100 箇所あり、その多くは `Ctx` を持たない自由関数なので、
+  引数で回す代わりに **ContextVar** で `compute()` が 1 回だけ束ねる。
+  `catalog()` が既にプロセス全体のシングルトンである前例に合わせた形。
+* **未対応ノブの明示**。Chummer 標準（`Standard` プリセット）と比べて
+  値が変わっていて、かつこの app が実装していないタグだけを列挙し、
+  `engine.settings.unsupported` の警告として出す。全 160 タグを並べても
+  ノイズにしかならないので、差分だけを見る。ユーザーの 5 ファイルでは
+  `ignoreart` / `cyberlegmovement` / `mysaddppcareer` の 3 件に収まる。
+* `<chargenkarmatonuyenexpression>` は `{Karma} * N + {PriorityNuyen}` の
+  形のときだけ N を読む。この app の換算式がちょうどその形だから。
+  それ以外は本物の式なので、近似せず未対応として報告する。
+* 読み込んだファイルは `localStorage`（`lib/character/settings-store.ts`）。
+  失っても再読み込み 1 回で済み、キャラクターは失われない。
 
 **リポジトリに第三者のセッティングファイルを同梱しない**のが要点。
 ローカル読み込みなら再配布に当たらない。
+
+### 段階 2 で honour していないもの
+
+`contactpointsexpression` / `knowledgepointsexpression` などの式、
+エンカンブランス系、`limbcount`、イニシアチブ・ダイスの上下限。
+いずれも未対応リストに出るので、黙って無視はしない。
 
 ## 段階 3 — customdata のマージ（未実施）
 

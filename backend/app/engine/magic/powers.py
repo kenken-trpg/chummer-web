@@ -17,8 +17,9 @@ from ...data_loader import SPELL_CAST_CATEGORIES, catalog
 from ...improvements import substitute_rating
 from ...models import CharacterState
 from ...notices import Notice, notice, term, terms, ui
+from ...rules import current_rules
 from ..bundle_types import AdeptBundle, EnhancementsBundle
-from ..constants import ADEPT_TALENTS, ENHANCEMENT_KARMA
+from ..constants import ADEPT_TALENTS
 from ..formulas import _ceil_div
 from ..lookups import _enhancement_by_id, _power_by_id, _power_by_name
 from ..selects import parse_selectskill_spec, selectskill_options
@@ -350,7 +351,7 @@ def resolve_enhancements(
                 "id": spec["id"],
                 "name": spec["name"],
                 "power": spec.get("power"),
-                "karma": ENHANCEMENT_KARMA,
+                "karma": current_rules().karma_enhancement,
                 "source": spec.get("source"),
                 "page": spec.get("page"),
                 "ok": not missing,
@@ -361,5 +362,5 @@ def resolve_enhancements(
         "warnings": warnings,
         "public": public,
         "bonus_sources": bonus_sources,
-        "karma": ENHANCEMENT_KARMA * len(kept),
+        "karma": current_rules().karma_enhancement * len(kept),
     }

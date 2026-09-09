@@ -710,6 +710,16 @@ const JA = {
   "prio.cellHint": "{cat} を優先度 {letter} にする",
   "prio.cellSwapHint":
     "{cat} を優先度 {letter} にする（今そこを使っている {other} と入れ替わります）",
+  "settings.groupLoaded": "読み込んだファイル",
+  "settings.groupShipped": "Chummer 同梱",
+  "settings.load": "セッティングを読み込む",
+  "settings.loadHint":
+    "Chummer の settings フォルダにある .xml を読み込みます。ファイルは送信されず、このブラウザにだけ残ります",
+  "settings.loadFailed": "セッティングファイルを読み込めませんでした。",
+  "settings.forget": "このセッティングを削除",
+  "settings.forgetHint": "{name} をこのブラウザから削除します（キャラクターは消えません）",
+  "settings.unsupportedHere":
+    "未対応のハウスルール {count} 件: {tags}（数値には反映されていません）",
   "settings.preset": "セッティング",
   "settings.presetNone": "制限なし（全ルールブック）",
   "settings.presetHint": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",
@@ -845,6 +855,8 @@ const JA = {
   "api.chum5lzUndecompressible":
     "この .chum5lz を展開できませんでした。Chummer で「名前を付けて保存」から非圧縮の .chum5 で書き出して読み込んでください。（{formats}）",
   "api.importChummerFailed": "この .chum5 / .chum5lz を取り込めませんでした。",
+  "api.settingsParseFailed":
+    "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.importJsonFailed": "この JSON を取り込めませんでした。",
   "api.notACharacterFile":
     "Chummer のキャラクターファイルではないようです（<character> が見つかりません）",
@@ -1636,6 +1648,8 @@ const JA = {
 
   "engine.nuyen.chargenCarryOver":
     "未使用新円 {left}¥：Standard レベルでは {keep}¥ までしか持ち越せません（超過分 {lost}¥ は原則失われます）",
+  "engine.settings.unsupported":
+    "このセッティングのハウスルール {count} 件は未対応です（{tags}）。数値には反映されていないので、卓で確認してください",
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
 
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
@@ -2382,6 +2396,16 @@ const EN: Catalog = {
   "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
   "prio.cellHint": "Set {cat} to priority {letter}",
   "prio.cellSwapHint": "Set {cat} to priority {letter} (swaps with {other}, which holds it now)",
+  "settings.groupLoaded": "Loaded files",
+  "settings.groupShipped": "Shipped with Chummer",
+  "settings.load": "Load settings file",
+  "settings.loadHint":
+    "Read an .xml from your Chummer settings folder. The file is not stored anywhere but this browser",
+  "settings.loadFailed": "That settings file could not be read.",
+  "settings.forget": "Remove this ruleset",
+  "settings.forgetHint": "Remove {name} from this browser (characters are untouched)",
+  "settings.unsupportedHere":
+    "{count} house rule(s) not implemented: {tags} (not reflected in any number here)",
   "settings.preset": "Ruleset",
   "settings.presetNone": "Unrestricted (all rulebooks)",
   "settings.presetHint":
@@ -2518,6 +2542,7 @@ const EN: Catalog = {
   "api.chum5lzUndecompressible":
     "This .chum5lz could not be decompressed. In Chummer, use Save As to write an uncompressed .chum5 and load that instead. ({formats})",
   "api.importChummerFailed": "This .chum5 / .chum5lz could not be imported.",
+  "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.importJsonFailed": "This JSON could not be imported.",
   "api.notACharacterFile":
     "This does not look like a Chummer character file (no <character> element).",
@@ -3286,6 +3311,8 @@ const EN: Catalog = {
 
   "engine.nuyen.chargenCarryOver":
     "{left}¥ unspent: Standard gameplay carries over at most {keep}¥, so {lost}¥ is normally lost",
+  "engine.settings.unsupported":
+    "{count} house rule(s) in these settings are not implemented ({tags}). They are not reflected in any number here — check with your table",
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
 
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
