@@ -710,10 +710,9 @@ const JA = {
   "prio.cellHint": "{cat} を優先度 {letter} にする",
   "prio.cellSwapHint":
     "{cat} を優先度 {letter} にする（今そこを使っている {other} と入れ替わります）",
-  "settings.customData": "カスタムデータを読み込む（{count} 件必要）",
-  "settings.customDataReload": "カスタムデータを読み込み直す（{count} 件）",
-  "settings.customDataHint":
-    "セッティングが参照している customdata フォルダを選びます。フォルダごと選んでください。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
+  "settings.folder": "スタイル一式を読み込む",
+  "settings.folderHint":
+    "settings と customdata が入ったフォルダごと選びます。中のセッティングは全部プルダウンに入り、選んだものに合わせてカスタムデータが結合されます。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
   "settings.customDataFailed": "カスタムデータを読み込めませんでした。",
   "settings.customDataNotAFolder":
     "個別のファイルではなく customdata フォルダ自体を選んでください（同じ名前のファイルが複数あり、どのフォルダのものか判別できません）。",
@@ -2411,10 +2410,9 @@ const EN: Catalog = {
   "prio.leftoverSliderLabel": "Leftover karma converted to nuyen",
   "prio.cellHint": "Set {cat} to priority {letter}",
   "prio.cellSwapHint": "Set {cat} to priority {letter} (swaps with {other}, which holds it now)",
-  "settings.customData": "Load custom data ({count} needed)",
-  "settings.customDataReload": "Reload custom data ({count})",
-  "settings.customDataHint":
-    "Pick the customdata folder this ruleset refers to — the folder itself, not a file. The files stay in this browser; only the merged result is held on the server, and only for a while",
+  "settings.folder": "Load a ruleset folder",
+  "settings.folderHint":
+    "Pick the folder holding settings and customdata — the folder itself, not a file. Every settings file in it joins the pulldown, and picking one merges the custom data it names. The files stay in this browser; only the merged result is held on the server, and only for a while",
   "settings.customDataFailed": "That custom data could not be loaded.",
   "settings.customDataNotAFolder":
     "Pick the customdata folder itself rather than individual files — several files share a name and there is no way to tell which directory each belongs to.",
