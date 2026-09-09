@@ -101,7 +101,8 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
   await download.saveAs(chum5);
 
   // the hidden input is what the toolbar button clicks
-  await page.locator('input[type="file"]').setInputFiles(chum5);
+  // by name, not by type: the editor has more than one file input now
+  await page.getByLabel("読込 (JSON/.chum5)").setInputFiles(chum5);
 
   // a second character with the same name: the import minted a new id rather
   // than overwriting the one that produced the file
