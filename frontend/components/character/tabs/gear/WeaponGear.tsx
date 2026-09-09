@@ -34,6 +34,8 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           );
           const fromGear = Boolean(item.from_gear && item.source_gear_id);
           const fromWare = Boolean(item.from_ware && item.source_ware_id);
+          // Born with it: no cost, no accessories, no ammo, nothing to delete.
+          const natural = Boolean(item.natural);
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -43,6 +45,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   {availBit(item, ui)} / {item.source}
                   {fromGear ? ui("weapon.fromGear") : ""}
                   {fromWare ? ui("weapon.fromWare") : ""}
+                  {natural ? ui("weapon.natural", { source: tr(item.natural_source || "") }) : ""}
                   {item.limb_str != null ? ui("weapon.limbStr", { str: item.limb_str }) : ""}
                   {item.useskill ? ` / ${item.useskill}` : ""}
                   {item.focus_dice ? ui("weapon.focusDice", { dice: item.focus_dice }) : ""}
@@ -51,7 +54,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
                 </div>
-                {fromWare ? null : (
+                {fromWare || natural ? null : (
                   <div className="cyber-controls">
                     <label>
                       {ui("common.qty")}
@@ -108,7 +111,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     )}
                   </div>
                 ))}
-                {!fromGear && addons.length ? (
+                {!fromGear && !natural && addons.length ? (
                   <div className="cyber-controls">
                     <select
                       aria-label={`${tr(item.name)}: ${ui("gear.addAccessory")}`}
@@ -210,7 +213,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     </label>
                   </div>
                 ))}
-                {!fromGear && ammoAddons.length ? (
+                {!fromGear && !natural && ammoAddons.length ? (
                   <div className="cyber-controls">
                     <select
                       aria-label={`${tr(item.name)}: ${ui("weapon.addAmmo")}`}
@@ -253,36 +256,41 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   </div>
                 ) : null}
               </div>
-              <button
-                className="btn danger"
-                onClick={() => {
-                  if (fromGear) {
+              {natural ? null : (
+                <button
+                  className="btn danger"
+                  onClick={() => {
+                    if (fromGear) {
+                      patch({
+                        gear: dropTree(ch.gear || [], item.source_gear_id || item.id),
+                      });
+                      return;
+                    }
+                    if (fromWare) {
+                      patch({
+                        cyberware: removeWareTree(
+                          ch.cyberware || [],
+                          item.source_ware_id || item.id,
+                        ),
+                        weapon_accessories: (ch.weapon_accessories || []).filter(
+                          (row) => row.parent_id !== item.id,
+                        ),
+                        gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                      });
+                      return;
+                    }
                     patch({
-                      gear: dropTree(ch.gear || [], item.source_gear_id || item.id),
-                    });
-                    return;
-                  }
-                  if (fromWare) {
-                    patch({
-                      cyberware: removeWareTree(ch.cyberware || [], item.source_ware_id || item.id),
+                      weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
                       weapon_accessories: (ch.weapon_accessories || []).filter(
                         (row) => row.parent_id !== item.id,
                       ),
                       gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
                     });
-                    return;
-                  }
-                  patch({
-                    weapons: (ch.weapons || []).filter((row) => row.id !== item.id),
-                    weapon_accessories: (ch.weapon_accessories || []).filter(
-                      (row) => row.parent_id !== item.id,
-                    ),
-                    gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
-                  });
-                }}
-              >
-                {ui("common.delete")}
-              </button>
+                  }}
+                >
+                  {ui("common.delete")}
+                </button>
+              )}
             </div>
           );
         })}

@@ -57,6 +57,7 @@ IMPLEMENTED = {
     "damageresistance",
     "unarmeddv",
     "unarmeddvphysical",
+    "naturalweapon",
     "magicianswaydiscount",
     "freequality",
     "addqualities",

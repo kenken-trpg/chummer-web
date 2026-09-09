@@ -556,6 +556,35 @@ describe("<WeaponGear> buying from the catalog", () => {
     expect(patch.mock.calls[0][0]).toEqual({ gear: [{ gear_id: "g-gren", qty: 1 }] });
   });
 
+  it("offers nothing to change on a weapon the character was born with", () => {
+    // A `<naturalweapon>` row exists only in `derived` — there is no entry in
+    // `weapons`, `gear` or `cyberware` behind it, so every control that patches
+    // one of those lists would be a button that does nothing.
+    const patch = vi.fn();
+    renderWeapons(
+      owning(
+        [
+          weapon("nat-0", "Bite (Ursine Form)", {
+            weapon_id: "",
+            category: "Unarmed",
+            type: "Melee",
+            damage: "({STR}+2)P",
+            nuyen: 0,
+            natural: true,
+            natural_source: "Shapeshifter: Ursine",
+          }),
+        ],
+        { weapons: [] },
+      ),
+      patch,
+    );
+
+    expect(screen.getByText(/Shapeshifter: Ursine/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
+    expect(screen.queryByLabelText(/Bite \(Ursine Form\)/)).toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+  });
+
   it("adds an ordinary weapon to weapons", () => {
     const patch = vi.fn();
     renderWeapons(

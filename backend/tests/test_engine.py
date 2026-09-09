@@ -8,6 +8,7 @@ from app.engine import (
     spell_drain_value,
     tradition_resist,
 )
+from app.engine.gear import _append_natural_weapons, apply_reach_bonus
 from app.improvements import collect_effects
 from app.models import (
     AdeptPowerInstall,
@@ -7919,3 +7920,53 @@ def test_metagenic_karma_must_balance() -> None:
     assert not has(balanced.derived["errors"], "engine.qualities.metagenicUnbalanced")
     assert not any("Changeling" in e for e in balanced.derived["errors"])
     assert balanced.derived["metagenic"]["balanced"] is True
+
+
+def _shapeshifter_natural_weapon_nodes() -> tuple[str, list[dict[str, object]]]:
+    """The Ursine shifter's bite and claws, straight out of `metatypes.xml`.
+
+    Every `<naturalweapon>` in the catalog sits on a Shapeshifter metavariant,
+    and `catalog()["metatypes"]` offers only the five core metatypes — so the
+    grant is reached here through `all_metatypes`, the way it would reach the
+    engine if a Shapeshifter were ever selectable.
+    """
+    base = catalog()["all_metatypes"]["Shapeshifter: Ursine"]
+    variant = next(mv for mv in base["metavariants"] if mv["name"] == "Human")
+    return base["name"], list(variant["bonus"])
+
+
+def test_natural_weapon_nodes_become_weapon_rows() -> None:
+    source, nodes = _shapeshifter_natural_weapon_nodes()
+    effects = collect_effects([(source, nodes)])
+    assert [row["name"] for row in effects["natural_weapons"]] == ["Bite (Ursine Form)", "Claws"]
+    assert not [row for row in effects["unimplemented"] if row["tag"] == "naturalweapon"]
+
+    weapons: list[dict[str, object]] = []
+    _append_natural_weapons(weapons, effects)
+    bite, claws = weapons
+    assert (bite["name"], bite["damage"], bite["ap"], bite["reach"]) == (
+        "Bite (Ursine Form)",
+        "({STR}+2)P",
+        "-2",
+        "0",
+    )
+    assert (claws["damage"], claws["ap"], claws["reach"]) == ("({STR}+3)P", "-1", "1")
+    # Melee, Unarmed Combat, free, and not something the player bought: the row
+    # has no catalog weapon behind it and never enters `state.weapons`, so the
+    # `.chum5` export cannot write it back out as a purchase.
+    assert bite["type"] == "Melee"
+    assert bite["useskill"] == "Unarmed Combat"
+    assert (bite["nuyen"], bite["qty"], bite["weapon_id"]) == (0, 1, "")
+    assert bite["natural"] is True
+    assert bite["natural_source"] == "Shapeshifter: Ursine"
+
+
+def test_natural_weapons_take_the_unarmed_reach_bonus() -> None:
+    """A natural weapon is an Unarmed Combat attack, so Reach from a quality
+    lands on it like it lands on any other melee weapon."""
+    source, nodes = _shapeshifter_natural_weapon_nodes()
+    effects = collect_effects([(source, nodes)])
+    weapons: list[dict[str, object]] = []
+    _append_natural_weapons(weapons, effects)
+    apply_reach_bonus(weapons, 1)
+    assert [w["reach"] for w in weapons] == ["1", "2"]
