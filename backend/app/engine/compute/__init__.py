@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...data_loader import catalog
+from ...data_loader import Overlay, catalog, using_customdata
+from ...dataset_store import lookup
 from ...models import CharacterState
 from ...rules import rules_for, using_rules
 from ._career import (  # noqa: F401  (re-exported via app.engine)
@@ -66,8 +67,23 @@ def compute(state: CharacterState) -> CharacterState:
     free functions. It is a ContextVar, so a concurrent request computing a
     different character sees its own — see `app/rules.py`.
     """
-    with using_rules(rules_for(state.settings)):
+    with using_rules(rules_for(state.settings)), using_customdata(_overlay_for(state)):
         return _compute(state)
+
+
+def _overlay_for(state: CharacterState) -> Overlay | None:
+    """The character's custom data, if the server still has it merged.
+
+    `None` when the settings ask for none, and also when the cache has lost
+    the set — the API layer answers 409 before it gets here, so reaching this
+    with a miss means an internal caller (an import, a test) that is content
+    with the vendored data.
+    """
+    settings = state.settings
+    if not settings.customdata:
+        return None
+    found = lookup(settings.dataset, settings.customdata)
+    return found[0] if found else None
 
 
 def _compute(state: CharacterState) -> CharacterState:

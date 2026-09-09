@@ -1,7 +1,7 @@
 # Chummer セッティングファイルの移植
 
 Chummer の「セッティングファイル」（`settings/*.xml`）を chummer-web に移す計画。
-本文書は **段階 2（セッティング XML の読み込み）を実施した時点**の記録で、段階 3 は未実施。
+本文書は **段階 3（customdata マージ）まで実施した時点**の記録。
 
 ## 何が足りていなかったか
 
@@ -12,7 +12,7 @@ Chummer が `<settings>` に持つものはほぼ全てハードコードか未�
 | --- | --- | --- |
 | `<books>` 使用書籍 | なし（全 63 書籍が常時出る） | `SettingsState.books` |
 | `<buildmethod>` | あり | プリセットから適用 |
-| `<customdatadirectorynames>` | なし | なし（段階 3） |
+| `<customdatadirectorynames>` | なし | `SettingsState` + マージ実装 |
 | `<sumtoten>` / `<priorityarray>` | 定数 | 定数のまま |
 | `<karmacost>` 40 項目 | 定数 | 定数のまま |
 | `<maxskillratingcreate>` ほか上限 | 定数 | 定数のまま |
@@ -73,21 +73,69 @@ Chummer が `<settings>` に持つものはほぼ全てハードコードか未�
 エンカンブランス系、`limbcount`、イニシアチブ・ダイスの上下限。
 いずれも未対応リストに出るので、黙って無視はしない。
 
-## 段階 3 — customdata のマージ（未実施）
+## 段階 3 — customdata のマージ（実施済み）
 
-`<customdatadirectorynames>` が指す `customdata/*/` を適用する。これが無いと
-書籍フィルタだけでは意味を持たないセッティングがある — たとえば日本語版
-シャドウラン・コデックス向けのセッティングは、既存 SR5 / SG / HT 項目の
-`<source>` を `JCD` / `JCDS` に**付け替える** amend が本体なので、customdata
-なしで books を `[SR5, RG, JCD, JCDS]` に絞ると、実質 SR5 + RG に縮退する。
+`<customdatadirectorynames>` が指す `customdata/*/` を、**ローダより上流の
+XML ツリー**に適用する。追加された格闘技は、最初から同梱されていたものと
+区別がつかない。
 
-必要なマージ機能は実物を見る限り小さい:
+### amend の方言
 
-* `custom_*.xml` — ノードの追加
-* `amend_*.xml` — `<id>` 一致で子要素を上書き
-* `amendoperation="remove"` / `="addnode"`
+Chummer の amend エンジンは大きい（xpath フィルタ、`replace`、`recurse`、
+`regexreplace`）。実データが使うのは 4 つだけだった:
 
-Chummer の amend エンジン全体（xpath フィルタほか）は要らない。
+* `<id>`（無ければ `<name>`）一致で、同じタグの子要素を差し替える
+* `amendoperation="addnode"` — 差し替えでなく追加
+* `amendoperation="remove"` — その子要素を削除
+* `pathfilter="field='value'"` — id でなくフィールドで対象を選ぶ
+
+公開されている 5 セッティング分の customdata 全 23 XML で使われている属性は
+`addnode` 63 回・`remove` 1 回・`pathfilter` 1 回で、他は全部 id 一致。
+実装したのはこの範囲だけで、それ以外は**半端に適用せず報告する**。
+
+### 一致判定で 2 回踏んだ罠
+
+* **GUID の大小文字**。manifest は `5682BC90-…`、それを参照する
+  セッティングは `5682bc90-…` と書く。
+* **Unicode 正規化**。日本語のディレクトリ名は macOS のファイルシステムから
+  NFD で、それを名指す XML からは NFC で来る。同じディレクトリで、バイト列が
+  違う。
+
+どちらも `_fold()`（casefold + NFC）で吸収する。
+
+### どこに置くか
+
+`catalog()` はプロセス全体のシングルトンで、エンジンから 36 ファイル・
+102 箇所で直接呼ばれている。引数で回すのは大工事なので、`app/rules.py` と
+同じく **ContextVar** にした:
+
+* `_xml.parse_data(name)` / `data_root(name)` — 全ローダの唯一の読み口。
+  オーバーレイがあればそれを、無ければ vendor を返す（31 箇所を置換）
+* `catalog()` はオーバーレイのキーで LRU（4 件）。素で遊ぶ卓と customdata の
+  卓が同じプロセスに来るので、1 件キャッシュでは足りない
+
+### content-hash + サーバ側 LRU
+
+ブラウザが `customdata/` のファイルを持ち、サーバは**マージ結果だけ**を
+内容ハッシュの下に持つ。
+
+1. リクエストはハッシュ（32 バイト）だけを運ぶ
+2. サーバがそのハッシュを知らなければ **409** と「どのセットが要るか」を返す
+3. クライアントが IndexedDB からファイルを送り、同じリクエストを 1 回だけ再送
+
+サーバ側は永続化しない。再起動で消えて、次のリクエストが再アップロードする。
+キャラクターはブラウザにあるので、消えて困るものは無い。
+
+**`dataset` が空のときは 409 にしない。** セッティングが customdata を
+参照していて、ユーザーがまだ読み込んでいない状態は「拒否する状態」ではなく
+「素のデータで計算しつつ、UI が不足を告げる状態」。ここを拒否にすると、
+キャラクターが計算不能になる（実装中に実際に踏んだ）。
+
+### 段階 3 で対応していないもの
+
+* `critters.xml` — この app がそもそも読んでいないので、amend も適用できない。
+  スキップとして報告される
+* Chummer の amend エンジンの残り（xpath フィルタ、`regexreplace` ほか）
 
 ## 権利面
 

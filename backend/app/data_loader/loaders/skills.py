@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _text
+from .._xml import _text, parse_data
 
 
 def _skill_specs(el: ET.Element) -> list[str]:
@@ -21,8 +21,7 @@ def _skill_specs(el: ET.Element) -> list[str]:
 
 
 def load_skills() -> dict[str, Any]:
-    tree = ET.parse(DATA_DIR / "skills.xml")
-    root = tree.getroot()
+    root = parse_data("skills.xml")
     # SR5 p.130 and the official sheet both list skill groups alphabetically;
     # the vendored file is alphabetical except that Engineering sits after
     # Influence, so sort rather than trusting document order.

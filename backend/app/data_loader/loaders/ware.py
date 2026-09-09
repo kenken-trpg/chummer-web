@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _float, _int, _text
+from .._xml import _float, _int, _text, data_root
 from ..bonus import (
     _parent_name_requirements,
     parse_bonus,
@@ -120,16 +120,16 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
 
 
 def load_cyberware() -> dict[str, Any]:
-    path = DATA_DIR / "cyberware.xml"
-    if not path.exists():
+    root = data_root("cyberware.xml")
+    if root is None:
         return {"grades": [], "items": []}
-    root = ET.parse(path).getroot()
+    root = root
     return {"grades": _load_grades(root), "items": _load_ware_items(root, "./cyberwares/cyberware", "Bodyware")}
 
 
 def load_bioware() -> dict[str, Any]:
-    path = DATA_DIR / "bioware.xml"
-    if not path.exists():
+    root = data_root("bioware.xml")
+    if root is None:
         return {"grades": [], "items": []}
-    root = ET.parse(path).getroot()
+    root = root
     return {"grades": _load_grades(root), "items": _load_ware_items(root, "./biowares/bioware", "Basic")}

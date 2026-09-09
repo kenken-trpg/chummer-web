@@ -5,7 +5,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..formulas import _is_variable_cost
 
 SKIP_WEAPON_CATEGORIES = {
@@ -28,10 +28,10 @@ def _weapon_category_types(root: ET.Element) -> dict[str, str]:
 
 
 def load_weapons() -> list[dict[str, Any]]:
-    path = DATA_DIR / "weapons.xml"
-    if not path.exists():
+    root = data_root("weapons.xml")
+    if root is None:
         return []
-    root = ET.parse(path).getroot()
+    root = root
     category_types = _weapon_category_types(root)
     items: list[dict[str, Any]] = []
     for el in root.findall("./weapons/weapon"):
@@ -88,10 +88,10 @@ def load_weapon_ranges() -> dict[str, dict[str, str]]:
     Formulas are kept as raw strings; firearm bands are literal integers,
     Strength-scaled bands (bows, thrown) use ``{STR}`` (e.g. ``{STR}*10``).
     """
-    path = DATA_DIR / "ranges.xml"
-    if not path.exists():
+    root = data_root("ranges.xml")
+    if root is None:
         return {}
-    root = ET.parse(path).getroot()
+    root = root
     out: dict[str, dict[str, str]] = {}
     for el in root.findall("./ranges/range"):
         name = _text(el.find("name"))
@@ -143,11 +143,11 @@ def _weapon_constraints(el: ET.Element | None) -> dict[str, Any]:
 
 
 def load_weapon_accessories() -> list[dict[str, Any]]:
-    path = DATA_DIR / "weapons.xml"
-    if not path.exists():
+    root = data_root("weapons.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./accessories/accessory"):
+    for el in root.findall("./accessories/accessory"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))

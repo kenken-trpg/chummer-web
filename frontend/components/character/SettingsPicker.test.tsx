@@ -162,3 +162,57 @@ describe("SettingsPicker with a loaded settings file", () => {
     );
   });
 });
+
+describe("SettingsPicker with custom data", () => {
+  const withCustom = {
+    name: "新東京スタイル2024_SumTo10",
+    books: ["SR5", "RG"],
+    customdata: ["a>1", "b>1"],
+  };
+
+  it("says the ruleset is incomplete until the folder is loaded", () => {
+    // a settings file naming custom data is unusable without it: everything
+    // those directories add is simply missing
+    setup(withCustom);
+    expect(screen.getByText(/カスタムデータを参照しています/)).toBeDefined();
+  });
+
+  it("offers no custom-data button for a ruleset that needs none", () => {
+    setup({ name: "Standard", books: ["SR5"] });
+    expect(screen.queryByText(/カスタムデータを読み込む/)).toBeNull();
+  });
+
+  it("uploads the folder and stores the hash on the character", async () => {
+    const upload = vi
+      .spyOn(api, "uploadCustomData")
+      .mockResolvedValue({ dataset: "abc123", applied: 217, skipped: [] });
+    const { patch } = setup(withCustom);
+    const input = screen.getByLabelText("カスタムデータを読み込む（2 件必要）");
+    const file = new File(["<chummer/>"], "custom_x.xml", { type: "text/xml" });
+    Object.defineProperty(file, "webkitRelativePath", { value: "customdata/d/custom_x.xml" });
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith({ "d/custom_x.xml": "<chummer/>" }, ["a>1", "b>1"]),
+    );
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith({ settings: { ...withCustom, dataset: "abc123" } }),
+    );
+    expect(screen.getByText(/217 件適用/)).toBeDefined();
+  });
+
+  it("names what the merge could not apply", async () => {
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue({
+      dataset: "abc",
+      applied: 3,
+      skipped: [{ source: "codex/amend_critters.xml", reason: "critters.xml is not part of it" }],
+    });
+    setup(withCustom);
+    const file = new File(["<chummer/>"], "x.xml", { type: "text/xml" });
+    Object.defineProperty(file, "webkitRelativePath", { value: "cd/d/x.xml" });
+    fireEvent.change(screen.getByLabelText("カスタムデータを読み込む（2 件必要）"), {
+      target: { files: [file] },
+    });
+    await waitFor(() => expect(screen.getByText(/amend_critters/)).toBeDefined());
+  });
+});

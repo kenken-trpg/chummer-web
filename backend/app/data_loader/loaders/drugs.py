@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from ...notices import Notice, notice, term, ui
-from .._xml import DATA_DIR, _text
+from .._xml import _text, data_root
 from ..bonus import parse_bonus
 
 _DRUG_LIMIT_KEY = {
@@ -84,11 +84,11 @@ def load_drug_components() -> dict[str, dict[str, Any]]:
     (seconds, may use ``{BOD}`` / ``{D6}``), ``<speed>`` and ``<vectors>`` that
     the flat ``gear.xml`` ``Drugs`` entries omit.
     """
-    path = DATA_DIR / "drugcomponents.xml"
-    if not path.exists():
+    root = data_root("drugcomponents.xml")
+    if root is None:
         return {}
     out: dict[str, dict[str, Any]] = {}
-    for el in ET.parse(path).getroot().findall("./drugs/drug"):
+    for el in root.findall("./drugs/drug"):
         drug_id = _text(el.find("id"))
         bonus = parse_bonus(el.find("bonus"))
         duration = _text(el.find("duration"))
@@ -106,11 +106,11 @@ def load_drug_components() -> dict[str, dict[str, Any]]:
 
 
 def load_drug_grades() -> list[dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         if _text(el.find("category")) != "Drug Grades":
             continue
         if el.find("hide") is not None:
@@ -205,11 +205,11 @@ def load_custom_drug_components() -> list[dict[str, Any]]:
     downstream mistakes them for one. ``limit`` is how many of the component
     one drug may hold; absent means unlimited.
     """
-    path = DATA_DIR / "drugcomponents.xml"
-    if not path.exists():
+    root = data_root("drugcomponents.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./drugcomponents/drugcomponent"):
+    for el in root.findall("./drugcomponents/drugcomponent"):
         comp_id = _text(el.find("id"))
         name = _text(el.find("name"))
         if not comp_id or not name:
@@ -236,11 +236,11 @@ def load_custom_drug_grades() -> list[dict[str, Any]]:
     """The quality a custom drug is cooked to (``<grades>`` in
     ``drugcomponents.xml``): a cost multiplier and, for Pharmaceutical, an
     addiction-threshold modifier."""
-    path = DATA_DIR / "drugcomponents.xml"
-    if not path.exists():
+    root = data_root("drugcomponents.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./grades/grade"):
+    for el in root.findall("./grades/grade"):
         name = _text(el.find("name"))
         if not name:
             continue

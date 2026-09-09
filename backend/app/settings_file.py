@@ -144,6 +144,23 @@ def _karma_to_nuyen(flat: dict[str, str]) -> tuple[int | None, bool]:
     return _int(flat.get("nuyenperbpwftm", "")), True
 
 
+def _customdata_names(root: ET.Element) -> list[str]:
+    """The enabled `<customdatadirectoryname>` entries, in file order.
+
+    Order is the file's, not sorted: when two directories edit the same entry
+    the later one wins, which is how Chummer's `<order>` is meant to read.
+    A disabled entry is dropped — the settings file already said no.
+    """
+    names = []
+    for entry in root.findall("./customdatadirectorynames/customdatadirectoryname"):
+        if _text(entry.find("enabled"), "True").strip().lower() == "false":
+            continue
+        name = _text(entry.find("directoryname"))
+        if name:
+            names.append(name)
+    return names
+
+
 def parse_settings_xml(raw: str | bytes) -> SettingsState:
     """One Chummer `settings/*.xml` -> `SettingsState`.
 
@@ -194,6 +211,7 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         name=_text(root.find("name")),
         books=[code for code in (_text(b) for b in root.findall("./books/book")) if code],
         banned_ware_grades=[grade for grade in (_text(g) for g in root.findall("./bannedwaregrades/grade")) if grade],
+        customdata=_customdata_names(root),
         unsupported=unsupported,
         **fields,
     )

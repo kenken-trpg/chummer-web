@@ -9,6 +9,7 @@ import {
   saveSettingsFile,
 } from "@/lib/character/settings-store";
 import { api } from "@/lib/api";
+import { CustomDataShapeError, readCustomDataFolder } from "@/lib/character/customdata-store";
 import { errorMessage } from "@/lib/errors";
 import type { UiFn } from "@/lib/i18n";
 
@@ -39,6 +40,8 @@ export function SettingsPicker({
   patch: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [merge, setMerge] = useState<{ applied: number; skipped: string[] } | null>(null);
+  const folderRef = useRef<HTMLInputElement>(null);
   // Read once, lazily — the same shape as `useSheetLayout`. `loadSettingsFiles`
   // swallows a missing / disabled store, so a prerender just sees none.
   const [files, setFiles] = useState<CharacterSettings[]>(loadSettingsFiles);
@@ -51,6 +54,10 @@ export function SettingsPicker({
   const name = ch.settings?.name || "";
   const unsupported = ch.settings?.unsupported || [];
   const known = presets.some((p) => p.name === name) || files.some((f) => f.name === name);
+  // A settings file that names custom-data directories is unusable without
+  // them: every entry they add or re-source is simply missing until the
+  // folder is here.
+  const needsCustomData = (ch.settings?.customdata || []).length > 0;
 
   function apply(settings: CharacterSettings, method?: string | null) {
     void patch({
@@ -83,6 +90,30 @@ export function SettingsPicker({
       apply(settings, build_method);
     } catch (e) {
       setError(errorMessage(e, ui, "settings.loadFailed"));
+    }
+  }
+
+  async function onFolder(list: FileList) {
+    setError(null);
+    setMerge(null);
+    try {
+      const contents = await readCustomDataFolder(list);
+      const wanted = ch.settings?.customdata || [];
+      const res = await api.uploadCustomData(contents, wanted);
+      setMerge({
+        applied: res.applied,
+        skipped: res.skipped.map((s) => `${s.source}: ${s.reason}`),
+      });
+      // the hash is what every later request carries; the files stay here
+      void patch({
+        settings: { ...(ch.settings || { name: "", books: [] }), dataset: res.dataset },
+      });
+    } catch (e) {
+      setError(
+        e instanceof CustomDataShapeError
+          ? ui("settings.customDataNotAFolder")
+          : errorMessage(e, ui, "settings.customDataFailed"),
+      );
     }
   }
 
@@ -149,6 +180,35 @@ export function SettingsPicker({
           }}
         />
 
+        {needsCustomData ? (
+          <button
+            className="btn"
+            onClick={() => folderRef.current?.click()}
+            title={ui("settings.customDataHint")}
+          >
+            {ui(ch.settings?.dataset ? "settings.customDataReload" : "settings.customData", {
+              count: (ch.settings?.customdata || []).length,
+            })}
+          </button>
+        ) : null}
+        <input
+          ref={folderRef}
+          type="file"
+          hidden
+          multiple
+          aria-label={ui("settings.customData", {
+            count: (ch.settings?.customdata || []).length,
+          })}
+          // a directory pick: the settings file names directories, so the
+          // whole `customdata/` tree is what has to come across
+          {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+          onChange={(e) => {
+            const list = e.target.files;
+            e.target.value = "";
+            if (list && list.length) void onFolder(list);
+          }}
+        />
+
         <span className="muted">
           {books.length === 0
             ? ui("settings.booksAll")
@@ -176,6 +236,20 @@ export function SettingsPicker({
       </div>
 
       {error ? <p className="errors">{error}</p> : null}
+      {needsCustomData && !ch.settings?.dataset ? (
+        <p className="muted">{ui("settings.customDataNeeded")}</p>
+      ) : null}
+      {merge ? (
+        <p className="muted">
+          {ui("settings.customDataApplied", { count: merge.applied })}
+          {merge.skipped.length > 0
+            ? ` ・ ${ui("settings.customDataSkipped", {
+                count: merge.skipped.length,
+                items: merge.skipped.join(" / "),
+              })}`
+            : ""}
+        </p>
+      ) : null}
       {unsupported.length > 0 ? (
         <p className="muted">
           {ui("settings.unsupportedHere", {

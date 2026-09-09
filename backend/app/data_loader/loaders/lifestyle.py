@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus, quality_needs_extra
 
 
 def load_lifestyles() -> list[dict[str, Any]]:
-    path = DATA_DIR / "lifestyles.xml"
-    if not path.exists():
+    root = data_root("lifestyles.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./lifestyles/lifestyle"):
+    for el in root.findall("./lifestyles/lifestyle"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -49,11 +48,11 @@ def load_lifestyles() -> list[dict[str, Any]]:
 
 
 def load_lifestyle_qualities() -> list[dict[str, Any]]:
-    path = DATA_DIR / "lifestyles.xml"
-    if not path.exists():
+    root = data_root("lifestyles.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./qualities/quality"):
+    for el in root.findall("./qualities/quality"):
         name = _text(el.find("name"))
         qid = _text(el.find("id"))
         if not name or not qid:

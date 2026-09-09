@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from .._xml import DATA_DIR, _int, _text
+from .._xml import _int, _text, parse_data
 from ..bonus import (
     parse_bonus,
     parse_required,
@@ -16,9 +15,9 @@ from ..bonus import (
 
 
 def load_qualities() -> list[dict[str, Any]]:
-    tree = ET.parse(DATA_DIR / "qualities.xml")
+    root = parse_data("qualities.xml")
     items = []
-    for el in tree.getroot().findall("./qualities/quality"):
+    for el in root.findall("./qualities/quality"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
