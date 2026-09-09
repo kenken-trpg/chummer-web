@@ -47,7 +47,7 @@ export function Toolbar({
     refreshRoster,
   } = ed;
   const d = ch.derived;
-  const { ui } = useUiText();
+  const { locale, ui } = useUiText();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   const inCareer = ch.career || d.career;
   return (
@@ -121,14 +121,14 @@ export function Toolbar({
       </button>
       <button
         className="btn"
-        onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr), "cc")}
+        onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr, locale), "cc")}
         title={ui("toolbar.cocofoliaHint")}
       >
         {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
       </button>
       <button
         className="btn"
-        onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr), "cp")}
+        onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr, locale), "cp")}
         title={ui("toolbar.chatPaletteHint")}
       >
         {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
@@ -136,7 +136,7 @@ export function Toolbar({
       {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
         <button
           className="btn"
-          onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr), "cs")}
+          onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")}
           title={ui("toolbar.conjuredHint")}
         >
           {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}

@@ -1,12 +1,15 @@
 import type { Catalog, Character } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
-import { type UiFn, translate } from "@/lib/i18n";
+import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 
-// The Cocofolia export is deliberately Japanese-only — it goes to a Japanese
-// VTT (README) — so engine notices in it are rendered against `ja` rather than
-// the reader's locale. It is the one place that pins a locale on purpose.
-const jaUi: UiFn = (key, vars) => translate("ja", key, vars);
+// Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
+// caller says nothing; it follows the UI locale otherwise. Dice commands
+// (`9B6@3`) are BCDice syntax and never translated — only the labels are.
+const uiFor =
+  (locale: Locale): UiFn =>
+  (key, vars) =>
+    translate(locale, key, vars);
 
 // BCDice "ShadowRun5": there is no SR5 prefix. It configures the generic
 // scattered roll `xB6` (count hits >= 5, auto glitch) and reroll `xR6`
@@ -75,7 +78,9 @@ export function buildChatPalette(
   ch: Character,
   catalog: Catalog,
   tr: (n: string) => string,
+  locale: Locale = "ja",
 ): string {
+  const ui = uiFor(locale);
   const d = ch.derived;
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
@@ -100,12 +105,12 @@ export function buildChatPalette(
   const roll = (pool: number, label: string, l: LimitKind = null) =>
     out.push(`${Math.max(pool, 0)}B6${l ? `@${lim(l)}` : ""} ${label}`);
 
-  out.push(`${init.dice}D6+${init.value} イニシアチブ`);
+  out.push(`${init.dice}D6+${init.value} ${ui("coco.initiative")}`);
 
   const specs = ch.skill_specializations || {};
   Object.entries(d.skill_totals || {})
     .filter(([, r]) => r > 0)
-    .sort((a, b) => tr(a[0]).localeCompare(tr(b[0]), "ja"))
+    .sort((a, b) => tr(a[0]).localeCompare(tr(b[0]), locale))
     .forEach(([name, rating]) => {
       const attr = skillAttr[name] || "";
       const limit = ATTR_LIMIT[attr] ?? null;
@@ -134,15 +139,15 @@ export function buildChatPalette(
     const dv = Math.ceil(at("STR") / 2) + (d.unarmed_dv || 0);
     const ap = d.unarmed_ap || 0;
     const reach = d.unarmed_reach || 0;
-    const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? `リーチ+${reach}` : ""]
+    const info = [`DV${dv}S`, `AP${ap === 0 ? "-" : ap}`, reach ? ui("coco.reach", { reach }) : ""]
       .filter(Boolean)
       .join(" ");
-    roll(unarmedSkill + at("AGI"), `非武装攻撃 ［${info}］`, "physical");
+    roll(unarmedSkill + at("AGI"), `${ui("coco.unarmed")} ［${info}］`, "physical");
   }
 
   // --- weapons: attack test = skill + AGI, limit = weapon Accuracy ---------
   const weapons = d.weapons || [];
-  if (weapons.length) out.push("// ── 武器 ──");
+  if (weapons.length) out.push(ui("coco.secWeapons"));
   weapons.forEach((w) => {
     const sk = weaponSkill(w);
     const pool = skillPool(sk) + at("AGI");
@@ -151,12 +156,14 @@ export function buildChatPalette(
     const dmg = [w.damage && `DV${w.damage}`, w.ap && `AP${w.ap}`, w.mode]
       .filter(Boolean)
       .join(" ");
-    out.push(`${Math.max(pool, 0)}B6${accCap} ${tr(w.name)}攻撃${dmg ? ` ［${dmg}］` : ""}`);
+    out.push(
+      `${Math.max(pool, 0)}B6${accCap} ${ui("coco.attack", { name: tr(w.name) })}${dmg ? ` ［${dmg}］` : ""}`,
+    );
   });
 
   // --- spells: casting test = Spellcasting + MAG (limit = Force, variable) --
   const spells = (d.spells || []).filter((s) => (s.kind || "spell") === "spell");
-  if (spells.length) out.push("// ── 術式（リミット＝Force） ──");
+  if (spells.length) out.push(ui("coco.secSpells"));
   spells.forEach((s) => {
     const sk = s.useskill || "Spellcasting";
     const pool = skillPool(sk) + at("MAG");
@@ -165,14 +172,14 @@ export function buildChatPalette(
 
   // --- conjuring: skill + MAG (limit = Force, variable) --------------------
   if (tabs.includes("spirits")) {
-    const conj: [string, string][] = [
-      ["Summoning", "精霊召喚"],
-      ["Binding", "精霊束縛"],
-      ["Banishing", "精霊追放"],
+    const conj: [string, MsgKey][] = [
+      ["Summoning", "coco.summoning"],
+      ["Binding", "coco.binding"],
+      ["Banishing", "coco.banishing"],
     ];
     const have = conj.filter(([s]) => skillPool(s) > 0);
-    if (have.length) out.push("// ── 召喚（リミット＝Force、対抗＝精霊のForce） ──");
-    have.forEach(([s, label]) => out.push(`${skillPool(s) + at("MAG")}B6 ${label}`));
+    if (have.length) out.push(ui("coco.secConjuring"));
+    have.forEach(([s, label]) => out.push(`${skillPool(s) + at("MAG")}B6 ${ui(label)}`));
   }
 
   // --- matrix basic actions (limit = the relevant Matrix attribute) --------
@@ -182,48 +189,52 @@ export function buildChatPalette(
     const S = persona.sleaze ?? 0;
     const DP = persona.dataprocessing ?? 0;
     const FW = persona.firewall ?? 0;
-    out.push("// ── マトリクス ──");
+    out.push(ui("coco.secMatrix"));
     // VR only: in AR the character rolls the meat initiative at the top.
     const mi = d.matrix_initiative;
     if (mi) {
-      out.push(`${mi.cold_dice}D6+${mi.value} マトリクス・イニシアチブ（コールドシム）`);
-      out.push(`${mi.hot_dice}D6+${mi.value} マトリクス・イニシアチブ（ホットシム）`);
+      out.push(`${mi.cold_dice}D6+${mi.value} ${ui("coco.matrixInitCold")}`);
+      out.push(`${mi.hot_dice}D6+${mi.value} ${ui("coco.matrixInitHot")}`);
     }
-    out.push(`${skillPool("Hacking") + at("LOG")}B6@${S} 素早いハッキング`);
-    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} 強行アクセス`);
-    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} データスパイク`);
-    out.push(`${skillPool("Computer") + at("INT")}B6@${DP} マトリクス知覚`);
-    out.push(`${at("WIL") + FW}B6 マトリクス防御（フルは +${at("INT")}）`);
+    out.push(`${skillPool("Hacking") + at("LOG")}B6@${S} ${ui("coco.hackOnTheFly")}`);
+    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.bruteForce")}`);
+    out.push(`${skillPool("Cybercombat") + at("LOG")}B6@${A} ${ui("coco.dataSpike")}`);
+    out.push(`${skillPool("Computer") + at("INT")}B6@${DP} ${ui("coco.matrixPerception")}`);
+    out.push(`${at("WIL") + FW}B6 ${ui("coco.matrixDefense", { int: at("INT") })}`);
   }
 
   if (weapons.length || spells.length || persona || tabs.includes("spirits"))
-    out.push("// ── 判定・抵抗 ──");
-  roll(at("REA") + at("INT") + (tm.dodge || 0), "完全回避");
+    out.push(ui("coco.secTests"));
+  roll(at("REA") + at("INT") + (tm.dodge || 0), ui("coco.defense"));
   const meleeDef = Math.max(skillPool("Unarmed Combat"), skillPool("Blades"), skillPool("Clubs"));
-  roll(at("REA") + at("INT") + meleeDef + (tm.dodge || 0), "受け（ブロック／パリィ）", "physical");
-  roll(at("REA") + at("INT") + at("WIL") + (tm.dodge || 0), "フル防御");
-  out.push("2D6 グレネード散乱（投擲・m／実効ヒットで減算）");
-  out.push("4D6 グレネード散乱（発射・m／実効ヒットで減算）");
-  roll(at("WIL") + at("CHA") + (tm.composure || 0), "冷静", "social");
-  roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), "意図看破", "social");
-  roll(at("LOG") + at("WIL") + (tm.memory || 0), "記憶", "mental");
-  roll(at("STR") + at("BOD"), "運搬", "physical");
-  roll(at("BOD"), "ダメージ抵抗（＋装甲）");
+  roll(at("REA") + at("INT") + meleeDef + (tm.dodge || 0), ui("coco.meleeDefense"), "physical");
+  roll(at("REA") + at("INT") + at("WIL") + (tm.dodge || 0), ui("coco.fullDefense"));
+  out.push(`2D6 ${ui("coco.scatterThrown")}`);
+  out.push(`4D6 ${ui("coco.scatterLaunched")}`);
+  roll(at("WIL") + at("CHA") + (tm.composure || 0), ui("coco.composure"), "social");
+  roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), ui("coco.judge"), "social");
+  roll(at("LOG") + at("WIL") + (tm.memory || 0), ui("coco.memory"), "mental");
+  roll(at("STR") + at("BOD"), ui("coco.lifting"), "physical");
+  roll(at("BOD"), ui("coco.damageResist"));
   if (d.drain_resist && tabs.includes("spells"))
-    roll(d.drain_resist.pool, `ドレイン抵抗（${d.drain_resist.attrs}）`);
+    roll(d.drain_resist.pool, ui("coco.drainResist", { attrs: d.drain_resist.attrs }));
   if (d.fade_resist && tabs.includes("complexforms"))
-    roll(d.fade_resist.pool, `フェード抵抗（${d.fade_resist.attrs}）`);
-  out.push(`// エッジ振り足しは B6→R6、限界突破は @L を外す`);
+    roll(d.fade_resist.pool, ui("coco.fadeResist", { attrs: d.fade_resist.attrs }));
+  out.push(ui("coco.edgeNote"));
 
   return out.join("\n");
 }
 
 /** Cocofolia (ccfolia.com) character-piece clipboard payload. */
-export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) => string): string {
+export function buildCocofolia(
+  ch: Character,
+  catalog: Catalog,
+  tr: (n: string) => string,
+  locale: Locale = "ja",
+): string {
+  const ui = uiFor(locale);
   const d = ch.derived;
-  // Cocofolia is a Japanese VTT and the piece is pasted into a Japanese
-  // table's room, so this export stays Japanese regardless of the UI locale.
-  const t = makeT(catalog, "ja");
+  const t = makeT(catalog, locale);
   const totals: Record<string, number> = d.totals || {};
   const at = (k: string) => totals[k] || 0;
   const init = d.initiative || { value: 0, dice: 1 };
@@ -232,26 +243,34 @@ export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) 
     label: attrShort(k, t),
     value: String(at(k)),
   }));
-  params.push({ label: "物理LIM", value: String(d.limits?.physical ?? 0) });
-  params.push({ label: "精神LIM", value: String(d.limits?.mental ?? 0) });
-  params.push({ label: "社会LIM", value: String(d.limits?.social ?? 0) });
-  params.push({ label: "装甲", value: String(d.armor ?? 0) });
+  params.push({ label: ui("coco.limPhysical"), value: String(d.limits?.physical ?? 0) });
+  params.push({ label: ui("coco.limMental"), value: String(d.limits?.mental ?? 0) });
+  params.push({ label: ui("coco.limSocial"), value: String(d.limits?.social ?? 0) });
+  params.push({ label: ui("coco.armor"), value: String(d.armor ?? 0) });
   params.push({ label: "ESS", value: String(d.essence ?? 0) });
 
   const cm = d.condition_monitor || { physical: 0, stun: 0 };
   const status = [
-    { label: "物理CM", value: cm.physical, max: cm.physical },
-    { label: "精神CM", value: cm.stun, max: cm.stun },
-    { label: "エッジ", value: at("EDG"), max: at("EDG") },
+    { label: ui("coco.cmPhysical"), value: cm.physical, max: cm.physical },
+    { label: ui("coco.cmStun"), value: cm.stun, max: cm.stun },
+    { label: ui("coco.edge"), value: at("EDG"), max: at("EDG") },
   ];
 
   const memo = [
-    `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${ch.talent || "Mundane"}`,
-    d.tradition ? `伝統: ${tr(d.tradition.name)}` : "",
-    d.mentor ? `メンター: ${tr(d.mentor.name)}` : "",
-    `イニシアチブ ${init.value}+${init.dice}d6 ・ リミット 物${d.limits?.physical}/精${d.limits?.mental}/社${d.limits?.social}`,
-    `装甲 ${d.armor} ・ エッセンス ${d.essence}`,
-    "判定は BCDice の ShadowRun5 で。",
+    `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""}${ui(
+      "common.termSep",
+    )}${ch.talent || "Mundane"}`,
+    d.tradition ? ui("coco.memoTradition", { name: tr(d.tradition.name) }) : "",
+    d.mentor ? ui("coco.memoMentor", { name: tr(d.mentor.name) }) : "",
+    ui("coco.memoInit", {
+      value: init.value,
+      dice: init.dice,
+      physical: d.limits?.physical ?? 0,
+      mental: d.limits?.mental ?? 0,
+      social: d.limits?.social ?? 0,
+    }),
+    ui("coco.memoArmor", { armor: d.armor ?? 0, essence: d.essence ?? 0 }),
+    ui("coco.memoDice"),
   ]
     .filter(Boolean)
     .join("\n");
@@ -262,7 +281,7 @@ export function buildCocofolia(ch: Character, catalog: Catalog, tr: (n: string) 
       name: ch.name || "Runner",
       memo,
       initiative: init.value,
-      commands: buildChatPalette(ch, catalog, tr),
+      commands: buildChatPalette(ch, catalog, tr, locale),
       status,
       params,
     },
@@ -293,7 +312,9 @@ export function buildSpiritPieces(
   ch: Character,
   _catalog: Catalog,
   tr: (n: string) => string,
+  locale: Locale = "ja",
 ): CocofoliaPiece[] {
+  const ui = uiFor(locale);
   return (ch.derived.spirits || [])
     .filter((s) => s.bound)
     .map((s) => {
@@ -313,30 +334,35 @@ export function buildSpiritPieces(
       const physCM = 8 + Math.ceil((a.BOD || 0) / 2);
       const stunCM = 8 + Math.ceil((a.WIL || 0) / 2);
       const status = [
-        { label: "物理CM", value: physCM, max: physCM },
-        { label: "精神CM", value: stunCM, max: stunCM },
-        { label: "エッジ", value: force, max: force },
+        { label: ui("coco.cmPhysical"), value: physCM, max: physCM },
+        { label: ui("coco.cmStun"), value: stunCM, max: stunCM },
+        { label: ui("coco.edge"), value: force, max: force },
       ];
 
       const cmds: string[] = [];
-      cmds.push(`2D6+${ini} イニシアチブ`);
+      cmds.push(`2D6+${ini} ${ui("coco.initiative")}`);
       for (const sk of s.skills || []) {
         const attr = sk.attribute || "";
         const pool = (sk.rating || force) + (attr ? a[attr] || 0 : 0);
         cmds.push(`${Math.max(pool, 0)}B6@${force} ${tr(sk.name)}`);
       }
-      cmds.push(`${(a.REA || 0) + (a.INT || 0)}B6 完全回避`);
-      cmds.push(`${(a.BOD || 0) + force * 2}B6 ダメージ抵抗（イミュニティ）`);
-      cmds.push(`${force * 2}B6 精霊追放に対抗`);
+      cmds.push(`${(a.REA || 0) + (a.INT || 0)}B6 ${ui("coco.defense")}`);
+      cmds.push(`${(a.BOD || 0) + force * 2}B6 ${ui("coco.immunityResist")}`);
+      cmds.push(`${force * 2}B6 ${ui("coco.resistBanishing")}`);
       const powers = [...(s.powers || []), ...(s.optionalpowers || [])].map(tr);
-      if (powers.length) cmds.push(`// パワー: ${powers.join("、")}`);
-      if (s.weaknesses?.length) cmds.push(`// 弱点: ${s.weaknesses.map(tr).join("、")}`);
-      cmds.push("// 技能のリミット＝Force。対抗判定はGM。");
+      if (powers.length) cmds.push(ui("coco.powers", { list: powers.join(ui("common.listSep")) }));
+      if (s.weaknesses?.length)
+        cmds.push(ui("coco.weaknesses", { list: s.weaknesses.map(tr).join(ui("common.listSep")) }));
+      cmds.push(ui("coco.spiritNote"));
 
       const memo = [
-        `${tr(s.name)}（${s.role_label ? renderNotice(s.role_label, jaUi) : s.role || "精霊"}） Force ${force}`,
-        `束縛済み ・ 残サービス ${s.services}`,
-        "判定は BCDice の ShadowRun5。",
+        ui("coco.spiritName", {
+          name: tr(s.name),
+          role: s.role_label ? renderNotice(s.role_label, ui) : s.role || ui("coco.spirit"),
+          force,
+        }),
+        ui("coco.spiritMemo", { services: s.services }),
+        ui("coco.memoDice"),
       ].join("\n");
 
       return {
@@ -358,7 +384,9 @@ export function buildSpritePieces(
   ch: Character,
   _catalog: Catalog,
   tr: (n: string) => string,
+  locale: Locale = "ja",
 ): CocofoliaPiece[] {
+  const ui = uiFor(locale);
   return (ch.derived.sprites || [])
     .filter((s) => s.registered)
     .map((s) => {
@@ -377,25 +405,25 @@ export function buildSpritePieces(
 
       const cm = 8 + Math.ceil(level / 2);
       const status = [
-        { label: "マトリクスCM", value: cm, max: cm },
-        { label: "エッジ", value: level, max: level },
+        { label: ui("coco.cmMatrix"), value: cm, max: cm },
+        { label: ui("coco.edge"), value: level, max: level },
       ];
 
       const cmds: string[] = [];
-      cmds.push(`${level}D6+${ini} イニシアチブ`);
+      cmds.push(`${level}D6+${ini} ${ui("coco.initiative")}`);
       for (const sk of s.skills || []) {
         cmds.push(`${(sk.rating || level) + level}B6@${level} ${tr(sk.name)}`);
       }
-      cmds.push(`${m.firewall + level}B6 マトリクス防御`);
-      cmds.push(`${level * 2}B6 消去（デレゾ）に対抗`);
+      cmds.push(`${m.firewall + level}B6 ${ui("coco.matrixDefensePlain")}`);
+      cmds.push(`${level * 2}B6 ${ui("coco.resistDerez")}`);
       const powers = (s.powers || []).map(tr);
-      if (powers.length) cmds.push(`// パワー: ${powers.join("、")}`);
-      cmds.push("// 技能判定は レベル×2、リミット＝レベル。");
+      if (powers.length) cmds.push(ui("coco.powers", { list: powers.join(ui("common.listSep")) }));
+      cmds.push(ui("coco.spriteNote"));
 
       const memo = [
-        `${tr(s.name)} レベル ${level}`,
-        `登録済み ・ 残タスク ${s.services}`,
-        "判定は BCDice の ShadowRun5。",
+        ui("coco.spriteLevel", { name: tr(s.name), level }),
+        ui("coco.spriteMemo", { services: s.services }),
+        ui("coco.memoDice"),
       ].join("\n");
 
       return {
@@ -420,7 +448,11 @@ export function buildCocofoliaConjured(
   ch: Character,
   catalog: Catalog,
   tr: (n: string) => string,
+  locale: Locale = "ja",
 ): string {
-  const pieces = [...buildSpiritPieces(ch, catalog, tr), ...buildSpritePieces(ch, catalog, tr)];
+  const pieces = [
+    ...buildSpiritPieces(ch, catalog, tr, locale),
+    ...buildSpritePieces(ch, catalog, tr, locale),
+  ];
   return pieces.length ? JSON.stringify(pieces) : "";
 }

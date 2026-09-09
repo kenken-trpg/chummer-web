@@ -1,4 +1,4 @@
-*[日本語版はこちら / Japanese version](README.md)*
+_[日本語版はこちら / Japanese version](README.md)_
 
 # Chummer Web
 
@@ -14,7 +14,7 @@ The interface ships in Japanese and English, switchable in the top bar. Japanese
 
 In English you get the app's own copy (tabs, buttons, panels, the character sheet including its print layout, and the creation-check messages) plus catalog entries under their original English names, since the Chummer data files are English and the Japanese translation is an overlay on top. The rules engine reports a key and its parameters rather than a sentence, so its wording lives in the frontend dictionary and follows the language switch.
 
-**The Cocofolia export is still Japanese** — Cocofolia is a Japanese VTT and the exported piece is pasted into a Japanese table's room, so translating it is deferred rather than ruled out.
+**The Cocofolia export follows the UI language too**, but defaults to Japanese: Cocofolia is a Japanese VTT and the exported piece is pasted into a Japanese table's room. The dice commands themselves are BCDice syntax and read the same either way.
 
 [`docs/i18n.md`](docs/i18n.md) explains the two string layers and how to add a locale.
 
@@ -31,12 +31,12 @@ make up                   # → http://localhost:8080
 
 `make up` pulls the published image (`ghcr.io/kenken-trpg/chummer-web`) if one is available and builds locally otherwise. Without `make`, `docker compose up` works too — the first build takes a few minutes.
 
-| Command | What it does |
-|---|---|
-| `make up` | Start it (`http://localhost:8080`) |
-| `make down` | Stop it |
-| `make logs` | Follow the logs |
-| `make update` | `git pull`, refresh the image, restart |
+| Command       | What it does                             |
+| ------------- | ---------------------------------------- |
+| `make up`     | Start it (`http://localhost:8080`)       |
+| `make down`   | Stop it                                  |
+| `make logs`   | Follow the logs                          |
+| `make update` | `git pull`, refresh the image, restart   |
 | `make doctor` | Pre-flight check (Docker, free ports, …) |
 
 The Chummer game data is fetched at image build time and bundled, pinned to a specific upstream commit — so running the container needs no network access.
