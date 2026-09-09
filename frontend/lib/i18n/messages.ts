@@ -288,6 +288,7 @@ const JA = {
   "picker.catAllHint": "すべてのカテゴリを表示",
   "picker.catHint": "{category} だけに絞り込む",
 
+  "gear.granted": "{source}付属",
   "gear.weaponized": "武器化",
   "gear.inUse": "使用中",
   "gear.drugToggleHint": "能力値・イニシアチブ・技能に反映",
@@ -1860,6 +1861,7 @@ const EN: Catalog = {
   "picker.catAllHint": "Show every category",
   "picker.catHint": "Show only {category}",
 
+  "gear.granted": "comes with {source}",
   "gear.weaponized": "as weapon",
   "gear.inUse": "In use",
   "gear.drugToggleHint": "Apply to attributes, initiative and skills",

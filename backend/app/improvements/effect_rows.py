@@ -101,6 +101,17 @@ class GrantSpellRow(TypedDict):
     limited: bool
 
 
+class GrantGearRow(TypedDict):
+    """``grant_gear`` — an ``<addgear>`` grant: the item a quality hands over,
+    with the children that come clipped to it (Dead SIN's fake licenses)."""
+
+    source: str
+    name: str
+    category: str
+    rating: int
+    children: list[dict[str, str]]
+
+
 class GrantPowerRow(TypedDict):
     """``grant_powers`` — a ``<specificpower>`` / resolved ``<selectpowers>``
     grant."""

@@ -27,6 +27,7 @@ from .effect_rows import (
     FreeSpellsAttributeRow,
     FreeSpellsSkillRow,
     GrantEchoRow,
+    GrantGearRow,
     GrantPowerRow,
     GrantSpellRow,
     KarmaCostRow,
@@ -208,6 +209,7 @@ class EffectsDict(TypedDict):
     fading_value_specific: list[FadingValueSpecificRow]
     grant_echoes: list[GrantEchoRow]
     grant_spells: list[GrantSpellRow]
+    grant_gear: list[GrantGearRow]
     grant_powers: list[GrantPowerRow]
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
@@ -350,6 +352,7 @@ def empty_effects() -> EffectsDict:
         "grant_echoes": [],
         "cyberadept_daemon": False,
         "grant_spells": [],
+        "grant_gear": [],
         "grant_powers": [],
         "select_power_slots": [],
         "weapon_category_dv_slots": [],

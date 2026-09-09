@@ -741,6 +741,32 @@ def test_one_customized_arm_pulls_body_strength() -> None:
 
 
 SHIVA_ARMS = "51ba5e67-f2fd-4149-b24c-9b502ed0e7c7"
+DEAD_SIN = "c0d411e6-ca88-4011-b56c-9f594882beb4"
+
+
+def test_dead_sin_comes_with_a_fake_sin_and_four_licenses() -> None:
+    """`addgear` hands the gear over free (BTB p.162). The rows live in the
+    derived output only — the quality carries them, so they cost no nuyen, ask
+    for nothing, and go when it goes."""
+    out = compute(_mundane("dead-sin", quality_ids=[DEAD_SIN]))
+    rows = [row for row in out.derived["gear"] if row.get("granted_by")]
+    sin = next(row for row in rows if row["name"] == "Fake SIN")
+    licenses = [row for row in rows if row["name"] == "Fake License"]
+    assert sin["rating"] == 3 and sin["nuyen"] == 0 and sin["granted_by"] == "Dead SIN"
+    assert len(licenses) == 4
+    assert all(row["parent_id"] == sin["id"] and row["rating"] == 3 for row in licenses)
+    assert out.derived["nuyen_spent"] == 0
+    # Nothing in the gear tab can fill these in, so nothing asks.
+    keys = [item["key"] for item in out.derived["warnings"]]
+    assert "engine.gear.pickExtra" not in keys
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "addgear" not in tags
+
+
+def test_gear_a_quality_granted_is_not_written_into_the_character() -> None:
+    state = _mundane("dead-sin-state", quality_ids=[DEAD_SIN])
+    compute(state)
+    assert state.gear == []
 
 
 def test_shiva_arms_average_a_cyberlimb_over_seven_parts() -> None:

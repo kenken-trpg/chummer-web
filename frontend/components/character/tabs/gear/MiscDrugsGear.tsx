@@ -46,6 +46,9 @@ export function MiscDrugsGear({
                   <div className="muted">
                     {item.name} / {tr(item.category)}
                     {item.qty > 1 ? ` ×${item.qty}` : ""}
+                    {item.granted_by
+                      ? ` / ${ui("gear.granted", { source: tr(item.granted_by) })}`
+                      : ""}
                     {item.add_weapon ? ` / ${ui("gear.weaponized")}` : ""}
                     {item.capacity_max
                       ? ` / ${ui("common.capacity")} ${item.capacity_used}/${item.capacity_max}`
@@ -53,7 +56,7 @@ export function MiscDrugsGear({
                     {" / "}
                     {item.nuyen.toLocaleString()}¥ / {item.source}
                   </div>
-                  <div className="cyber-controls">
+                  <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
                     <label>
                       {ui("common.qty")}
                       <input
@@ -300,16 +303,18 @@ export function MiscDrugsGear({
                     </div>
                   ) : null}
                 </div>
-                <button
-                  className="btn danger"
-                  onClick={() =>
-                    patch({
-                      gear: dropTree(ch.gear || [], item.id),
-                    })
-                  }
-                >
-                  {ui("common.delete")}
-                </button>
+                {item.granted_by ? null : (
+                  <button
+                    className="btn danger"
+                    onClick={() =>
+                      patch({
+                        gear: dropTree(ch.gear || [], item.id),
+                      })
+                    }
+                  >
+                    {ui("common.delete")}
+                  </button>
+                )}
               </div>
             );
           })}

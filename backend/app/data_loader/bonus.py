@@ -413,6 +413,18 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
                 ]
                 if grants:
                     payload["quality_grants"] = grants
+            if tag == "addgear":
+                # `<children><child>…</child></children>` is a list of whole
+                # gear specs, which the generic flattening drops; Dead SIN's
+                # four fake licenses live there, so they are rebuilt (same
+                # reason as `metamagiclimit` above).
+                kids = [
+                    {sub.tag: _text(sub) for sub in list(kid)}
+                    for kid in child.findall("./children/child")
+                    if _text(kid.find("name"))
+                ]
+                if kids:
+                    payload["gear_children"] = kids
             if tag == "selectpowers":
                 specs: list[dict[str, Any]] = []
                 for sp in child.findall("selectpower"):

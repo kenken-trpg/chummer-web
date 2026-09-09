@@ -130,6 +130,20 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         name = str(node.get("value") or fields.get("name") or "").strip()
         if name and name not in effects["disabled_bioware_grades"]:
             effects["disabled_bioware_grades"].append(name)
+    elif tag == "addgear":
+        # The item a quality hands over, free: Dead SIN comes with a rating-3
+        # fake SIN and the four licenses clipped to it (BTB p.162).
+        name = str(fields.get("name") or node.get("value") or "").strip()
+        if name:
+            effects["grant_gear"].append(
+                {
+                    "source": source,
+                    "name": name,
+                    "category": str(fields.get("category") or "").strip(),
+                    "rating": _as_int(fields.get("rating") or 1, 1),
+                    "children": [dict(kid) for kid in node.get("gear_children") or []],
+                }
+            )
     elif tag == "martialart":
         name = str(node.get("value") or fields.get("name") or "").strip()
         if name:

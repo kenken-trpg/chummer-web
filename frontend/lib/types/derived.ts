@@ -374,6 +374,8 @@ export interface InstalledGear extends InstalledOptics {
   drug_vectors?: string[];
   drug_duration?: string;
   drug_effect?: Notice[];
+  /** `<addgear>`: the quality that handed this row over (Dead SIN). */
+  granted_by?: string;
 }
 
 export interface InstalledLifestyle {
