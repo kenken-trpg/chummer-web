@@ -44,6 +44,7 @@ IMPLEMENTED = {
     "specificskill",
     "selectskill",
     "selectcyberware",
+    "selectlimit",
     "hardwires",
     "adeptpowerpoints",
     "unlockskills",

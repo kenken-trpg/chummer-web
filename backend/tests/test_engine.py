@@ -1944,6 +1944,13 @@ BERSERKER_TEMPER = "ad6f8984-f0c2-41e9-a2d1-73a719d21a06"
 HOLY_TEXT = "2dcbe44e-3789-4cf2-b51b-0337c239ce7c"
 MYSTIC_ARMOR = "da5f9389-a5fd-48ed-8825-8852ff5c56a8"
 HOLY_TEXT_POWER_CHOICE = "Adept: Gain 1 free level of Mystic Armor or Empathic Healing (choose one)."
+CHAOS = "2c6a5ac3-0d61-46dd-86a3-a630ebc91070"
+CHAOS_POWER_CHOICE = "Adept: 2 free levels of Improved Potential"
+IMPROVED_POTENTIAL_PHYSICAL = "Improved Potential (Physical)"
+CHAOS_POTENTIAL = "Improved Potential (Chaos Mentor)"
+# `<selectlimit>`'s only carrier is granted by that choice, so its own pick
+# lives beside the choice's under a key naming the power.
+CHAOS_LIMIT_KEY = f"{CHAOS_POWER_CHOICE} / {CHAOS_POTENTIAL}"
 RAPID_HEALING = "4676b6f7-120d-4344-81ac-5922445a521b"
 LIGHT_BODY = "ce7df757-792e-4fac-a86e-6b587586deb2"
 AIR_WALKING = "8dc0a8e3-535a-4935-8c90-2079666e6a01"
@@ -2038,6 +2045,76 @@ def test_holy_text_mentor_selectpowers_grants_mystic_armor() -> None:
     assert names["Mystic Armor"]["cost"] == 0
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "selectpowers" not in tags
+
+
+def _chaos(extras: dict[str, str]) -> object:
+    return compute(
+        _adept(
+            "chaos",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=CHAOS,
+            mentor_choices=[CHAOS_POWER_CHOICE],
+            mentor_extras={CHAOS_POWER_CHOICE: IMPROVED_POTENTIAL_PHYSICAL, **extras},
+        )
+    )
+
+
+def test_a_selectlimit_power_offers_the_three_limits() -> None:
+    out = _chaos({})
+    power = next(row for row in out.derived["adept_powers"] if row["name"] == CHAOS_POTENTIAL)
+    assert power["select"] == "limit"
+    assert power["options"] == ["Physical", "Mental", "Social"]
+    assert power["extra"] == ""
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "selectlimit" not in tags
+
+
+def test_an_unpicked_selectlimit_raises_no_limit() -> None:
+    picked = _chaos({CHAOS_LIMIT_KEY: "Social"}).derived["limits"]
+    unpicked = _chaos({}).derived["limits"]
+    assert picked["social"] == unpicked["social"] + 1
+    assert picked["physical"] == unpicked["physical"]
+    assert picked["mental"] == unpicked["mental"]
+
+
+def test_the_selectlimit_pick_chooses_which_limit_gains() -> None:
+    mental = _chaos({CHAOS_LIMIT_KEY: "Mental"}).derived["limits"]
+    social = _chaos({CHAOS_LIMIT_KEY: "Social"}).derived["limits"]
+    assert mental["mental"] == social["mental"] + 1
+    assert social["social"] == mental["social"] + 1
+
+
+def test_the_chaos_limit_pick_is_offered_beside_the_power_pick() -> None:
+    # The choice's own `extra` is spent on *which* Improved Potential it grants,
+    # so the limit needs a select of its own.
+    out = _chaos({CHAOS_LIMIT_KEY: "Mental"})
+    choice = next(row for row in out.derived["mentor"]["choices"] if row["name"] == CHAOS_POWER_CHOICE)
+    assert choice["extra"] == IMPROVED_POTENTIAL_PHYSICAL
+    assert choice["power_targets"] == [
+        {
+            "power": CHAOS_POTENTIAL,
+            "key": CHAOS_LIMIT_KEY,
+            "kind": "limit",
+            "extra": "Mental",
+            "options": ["Physical", "Mental", "Social"],
+        }
+    ]
+
+
+def test_a_mentor_power_target_still_reads_the_plain_choice_key() -> None:
+    # Holy Text has no `<selectpowers>`, so its granted power's target stays
+    # under the choice name — where every character saved so far keeps it.
+    out = compute(
+        _adept(
+            "holy-text-target",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=HOLY_TEXT,
+            mentor_choices=[HOLY_TEXT_POWER_CHOICE],
+            mentor_extras={HOLY_TEXT_POWER_CHOICE: "Mystic Armor"},
+        )
+    )
+    choice = next(row for row in out.derived["mentor"]["choices"] if row["name"] == HOLY_TEXT_POWER_CHOICE)
+    assert choice["power_targets"] == []
 
 
 def test_beasts_way_grants_free_mentor_spirit() -> None:

@@ -30,6 +30,17 @@ def _choice_allowed(audience: str, talent_name: str) -> bool:
     return False
 
 
+def _power_target_key(choice_name: str, power_name: str) -> str:
+    """Where a granted power's own pick lives in ``mentor_extras``.
+
+    A choice that also carries ``<selectpowers>`` already spends its plain
+    ``mentor_extras[choice]`` on *which* power it grants (Chaos, SG p.200), so a
+    power that then asks for a target of its own — the ``<selectlimit>`` on
+    Improved Potential (Chaos Mentor) — needs a key beside it.
+    """
+    return f"{choice_name} / {power_name}"
+
+
 def resolve_mentor(
     state: CharacterState,
     talent_name: str,
@@ -94,7 +105,8 @@ def resolve_mentor(
             if not power_spec:
                 continue
             options = power_select_options(power_spec, skills_data)
-            bound_extra = extra if extra in options else ""
+            own = (state.mentor_extras or {}).get(_power_target_key(picked, power_spec["name"]), "")
+            bound_extra = next((value for value in (own, extra) if value in options), "")
             if power_spec.get("select") and not bound_extra:
                 warnings.append(
                     notice(
@@ -126,6 +138,22 @@ def resolve_mentor(
                 power_spec = _power_by_name(power["name"])
                 if power_spec:
                     extras = power_select_options(power_spec, skills_data)
+        power_targets: list[dict[str, Any]] = []
+        if power_options:
+            for power in choice.get("powers") or []:
+                power_spec = _power_by_name(power["name"])
+                if not power_spec or not power_spec.get("select"):
+                    continue
+                key = _power_target_key(choice["name"], power_spec["name"])
+                power_targets.append(
+                    {
+                        "power": power_spec["name"],
+                        "key": key,
+                        "kind": str(power_spec.get("select") or ""),
+                        "extra": (state.mentor_extras or {}).get(key, ""),
+                        "options": power_select_options(power_spec, skills_data),
+                    }
+                )
         public_choices.append(
             {
                 "name": choice["name"],
@@ -134,6 +162,7 @@ def resolve_mentor(
                 "selected": choice["name"] in selected,
                 "extra": (state.mentor_extras or {}).get(choice["name"], ""),
                 "extra_options": extras,
+                "power_targets": power_targets,
             }
         )
     public = {

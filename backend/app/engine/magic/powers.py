@@ -24,6 +24,12 @@ from ..lookups import _enhancement_by_id, _power_by_id, _power_by_name
 from ..selects import parse_selectskill_spec, selectskill_options
 from ._common import spell_cast_info
 
+#: What ``<selectlimit>`` offers, and the fixed-limit tag each pick becomes.
+#: Chummer names the limits it wants to narrow to inside the bonus; with none
+#: named, all three qualify.
+LIMIT_CHOICES = ("Physical", "Mental", "Social")
+LIMIT_BONUS_TAGS = {name: f"{name.lower()}limit" for name in LIMIT_CHOICES}
+
 
 def power_point_cost(spec: dict[str, Any], rating: int, discounted: bool = False) -> float:
     points = float(spec.get("points") or 0)
@@ -87,6 +93,15 @@ def bind_power_bonus(nodes: list[dict[str, Any]], extra: str, rating: int) -> li
                 continue
             bound.append({"tag": "specificattribute", "fields": {"name": extra, "bonus": bonus}})
             continue
+        if tag == "selectlimit":
+            # The pick names the limit, the value is what it gains — so the
+            # node becomes the fixed `<physicallimit>` the pick chose.
+            bonus = fields.get("val") or fields.get("bonus") or fields.get("value")
+            limit_tag = LIMIT_BONUS_TAGS.get(extra.strip().title())
+            if not limit_tag or bonus in (None, ""):
+                continue
+            bound.append({"tag": limit_tag, "fields": {"val": bonus}})
+            continue
         if tag == "selectspell":
             continue
         bound.append(node)
@@ -109,6 +124,12 @@ def power_select_options(spec: dict[str, Any], skills_data: dict[str, Any]) -> l
         return _field_list((node.get("fields") or {}).get("attribute"))
     if kind == "spell":
         return [item["name"] for item in catalog().get("spells") or [] if item.get("category") in SPELL_CAST_CATEGORIES]
+    if kind == "limit":
+        node = next((item for item in (spec.get("bonus") or []) if item.get("tag") == "selectlimit"), None)
+        if not node:
+            return []
+        named = {name.title() for name in _field_list((node.get("fields") or {}).get("limit"))}
+        return [name for name in LIMIT_CHOICES if not named or name in named]
     return []
 
 
@@ -181,7 +202,7 @@ def resolve_adept_powers(
         inst.rating = rating
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
-        select_key = kind if kind in {"skill", "attribute", "spell"} else "target"
+        select_key = kind if kind in {"skill", "attribute", "spell", "limit"} else "target"
         if kind and extra and extra not in options:
             warnings.append(notice("engine.adept.selectInvalid", name=term(str(spec["name"])), picked=term(extra)))
             extra = ""

@@ -2,6 +2,7 @@
 
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
 import { useUiText } from "@/lib/i18n";
+import { limitLabel } from "@/lib/character/format";
 
 export function MentorPicker({
   catalog,
@@ -83,6 +84,27 @@ export function MentorPicker({
                 ))}
               </select>
             ) : null}
+            {/* A power the choice grants may ask for a target of its own once
+                the choice's own select is spent on which power it grants. */}
+            {(choice.power_targets || []).map((target) => (
+              <select
+                key={target.key}
+                aria-label={`${tr(target.power)} ${ui("mentor.chooseTarget")}`}
+                value={target.extra || ""}
+                onChange={(e) =>
+                  onPatch({
+                    mentor_extras: { ...(ch.mentor_extras || {}), [target.key]: e.target.value },
+                  })
+                }
+              >
+                <option value="">{ui("mentor.chooseTarget")}</option>
+                {target.options.map((name) => (
+                  <option key={name} value={name}>
+                    {target.kind === "limit" ? limitLabel(name, ui) : tr(name)}
+                  </option>
+                ))}
+              </select>
+            ))}
           </label>
         ))}
       </div>
