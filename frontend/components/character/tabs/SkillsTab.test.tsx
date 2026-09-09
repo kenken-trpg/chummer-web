@@ -135,6 +135,28 @@ describe("<SkillsTab>", () => {
     expect(blocked.container.textContent).toContain("デフォルト不可");
   });
 
+  it("gives the knowledge section the two defaulting pools, and Uneducated's cut", () => {
+    const plain = renderTab({
+      character: { derived: { totals: { INT: 4, LOG: 6 } } as any },
+    });
+    expect(plain.container.textContent).toContain("INT 3 ／ LOG 5");
+    expect(plain.container.textContent).not.toContain("デフォルト不可");
+
+    const uneducated = renderTab({
+      character: {
+        derived: {
+          totals: { INT: 4, LOG: 6 },
+          // Uneducated (SR5 p.80) also blocks an active category, which does
+          // not belong on the knowledge line.
+          blocked_default_categories: ["Academic", "Professional", "Technical Active"],
+        } as any,
+      },
+    });
+    const line = uneducated.container.textContent || "";
+    expect(line).toContain("はデフォルト不可");
+    expect(line).not.toContain("Technical Active");
+  });
+
   it("commits an active-skill rating via patch on mouseUp", () => {
     const patch = vi.fn();
     function Harness() {
