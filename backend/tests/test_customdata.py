@@ -15,6 +15,8 @@ from starlette.testclient import TestClient
 
 from app import dataset_store
 from app.customdata import (
+    MAX_CHANGES,
+    Change,
     MergeReport,
     apply_amend,
     apply_custom,
@@ -52,6 +54,7 @@ def test_an_amend_replaces_the_fields_it_names_and_leaves_the_rest() -> None:
         ),
         "f",
         report,
+        "martialarts.xml",
     )
     art = base.find("./martialarts/martialart")
     assert (art.findtext("source"), art.findtext("page")) == ("JCD", "7")
@@ -68,6 +71,7 @@ def test_addnode_appends_into_a_list_rather_than_replacing_it() -> None:
         ),
         "f",
         MergeReport(),
+        "martialarts.xml",
     )
     names = [t.findtext("name") for t in base.findall("./martialarts/martialart/techniques/technique")]
     assert names == ["Throw", "Kick"], "the existing technique must survive"
@@ -82,6 +86,7 @@ def test_remove_deletes_the_child_it_names() -> None:
         ),
         "f",
         MergeReport(),
+        "martialarts.xml",
     )
     assert base.find("./martialarts/martialart[2]/bannedgrades") is None
 
@@ -97,6 +102,7 @@ def test_pathfilter_selects_by_a_field_instead_of_an_id() -> None:
         ),
         "f",
         MergeReport(),
+        "martialarts.xml",
     )
     assert base.find("./martialarts/martialart[2]/bannedgrades") is None
 
@@ -110,6 +116,7 @@ def test_a_rule_that_matches_nothing_is_reported_not_swallowed() -> None:
         _root("<chummer><martialarts><martialart><id>nope</id><source>X</source></martialart></martialarts></chummer>"),
         "f.xml",
         report,
+        "martialarts.xml",
     )
     assert report.applied == 0
     assert report.skipped == [("f.xml", "no <martialart> matches 'nope'")]
@@ -123,6 +130,7 @@ def test_custom_appends_new_entries() -> None:
         _root("<chummer><martialarts><martialart><id>a3</id><name>New</name></martialart></martialarts></chummer>"),
         "f",
         report,
+        "martialarts.xml",
     )
     assert [a.findtext("name") for a in base.findall("./martialarts/martialart")] == ["Aikido", "Boxing", "New"]
     assert report.applied == 1
@@ -261,3 +269,58 @@ def test_the_same_files_with_different_directories_enabled_are_different_sets(cl
     assert client.post("/api/characters/patch", json={"state": state}).status_code == 200
     state["settings"]["customdata"] = ["other>1"]
     assert client.post("/api/characters/patch", json={"state": state}).status_code == 409
+
+
+def test_an_edit_names_the_entry_and_the_fields_it_wrote() -> None:
+    """The difference between "217 rules applied" and knowing a pack changed
+    no game values: a re-sourcing pack reports `source, page` and nothing else.
+    """
+    report = MergeReport()
+    apply_amend(
+        _root(BASE),
+        _root(
+            "<chummer><martialarts><martialart><id>a1</id><source>JCD</source><page>7</page></martialart></martialarts></chummer>"
+        ),
+        "f",
+        report,
+        "martialarts.xml",
+    )
+    assert report.changes == [Change("martialarts.xml", "Aikido", "edited", ("source", "page"))]
+
+
+def test_a_pathfilter_rule_reports_each_entry_it_touched() -> None:
+    """The rule carries no name — the entries it matched are what to report."""
+    report = MergeReport()
+    apply_amend(
+        _root(BASE),
+        _root(
+            '<chummer><martialarts><martialart pathfilter="category=\'Sport\'"><bannedgrades amendoperation="remove"/></martialart></martialarts></chummer>'
+        ),
+        "f",
+        report,
+        "martialarts.xml",
+    )
+    assert report.changes == [Change("martialarts.xml", "Boxing", "edited", ("bannedgrades",))]
+
+
+def test_a_new_entry_is_reported_as_added_with_no_fields() -> None:
+    report = MergeReport()
+    apply_custom(
+        _root(BASE),
+        _root("<chummer><martialarts><martialart><id>a3</id><name>New</name></martialart></martialarts></chummer>"),
+        "f",
+        report,
+        "martialarts.xml",
+    )
+    assert report.changes == [Change("martialarts.xml", "New", "added")]
+
+
+def test_the_itemisation_stops_at_the_cap_but_the_count_does_not() -> None:
+    """A pathological pack must not be able to grow the response without
+    bound; the number it applied is still exact."""
+    report = MergeReport()
+    for i in range(MAX_CHANGES + 5):
+        report.change("x.xml", f"e{i}", "added")
+    assert report.applied == MAX_CHANGES + 5
+    assert len(report.changes) == MAX_CHANGES
+    assert report.truncated

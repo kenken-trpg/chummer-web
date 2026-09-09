@@ -48,6 +48,31 @@ _PATHFILTER = re.compile(r"^\s*(\w+)\s*=\s*'([^']*)'\s*$")
 _SELECTORS = ("id", "name")
 
 
+@dataclass(frozen=True)
+class Change:
+    """One entry a merge added, removed or edited.
+
+    `fields` is what an edit touched — for the common case of a published pack
+    re-sourcing entries to a translated edition, that reads `source, page`,
+    which is the difference between "217 rules applied" and knowing the pack
+    changed no game values.
+    """
+
+    #: The base data file, e.g. `martialarts.xml`.
+    file: str
+    #: The entry's name, or its id when it has no name.
+    entry: str
+    #: `added` | `removed` | `edited`.
+    action: str
+    #: Child tags an `edited` rule wrote, in document order. Empty otherwise.
+    fields: tuple[str, ...] = ()
+
+
+#: Enough to describe the largest published pack twice over. Past it the count
+#: is still right; only the itemisation stops, and `truncated` says so.
+MAX_CHANGES = 2000
+
+
 @dataclass
 class MergeReport:
     """What a merge did, and what it could not do.
@@ -59,9 +84,20 @@ class MergeReport:
     applied: int = 0
     #: `(file, reason)` for rules that were skipped.
     skipped: list[tuple[str, str]] = field(default_factory=list)
+    #: Every change, up to `MAX_CHANGES`.
+    changes: list[Change] = field(default_factory=list)
+    #: Set when `changes` stopped short of `applied`.
+    truncated: bool = False
 
     def skip(self, source: str, reason: str) -> None:
         self.skipped.append((source, reason))
+
+    def change(self, file: str, entry: str, action: str, fields: tuple[str, ...] = ()) -> None:
+        self.applied += 1
+        if len(self.changes) >= MAX_CHANGES:
+            self.truncated = True
+            return
+        self.changes.append(Change(file, entry, action, fields))
 
 
 def dataset_hash(files: dict[str, bytes]) -> str:
@@ -123,29 +159,40 @@ def _targets(base_list: ET.Element, rule: ET.Element) -> list[ET.Element]:
     return []
 
 
-def _apply_children(target: ET.Element, rule: ET.Element) -> None:
-    """Fold one amend rule's children into the base node it matched."""
+def _apply_children(target: ET.Element, rule: ET.Element) -> list[str]:
+    """Fold one amend rule's children into the base node it matched.
+
+    Returns the child tags it actually wrote, so the report can say what an
+    edit changed rather than only that one happened. A tag a nested rule
+    reached is named once, by its container.
+    """
+    touched: list[str] = []
     for child in rule:
         op = child.get(_OP)
         if op == "addnode":
             clone = _stripped(child)
             target.append(clone)
+            touched.append(child.tag)
             continue
         existing = target.find(child.tag)
         if op == "remove":
             if existing is not None:
                 target.remove(existing)
+                touched.append(child.tag)
             continue
         if child.tag in _SELECTORS:
             continue  # it named the node; it is not an edit
         if len(child) and existing is not None:
             # a container (`<techniques>`): recurse so `addnode` lands inside
             # it rather than replacing the whole list
-            _apply_children(existing, child)
+            if _apply_children(existing, child):
+                touched.append(child.tag)
             continue
         if existing is not None:
             target.remove(existing)
         target.append(_stripped(child))
+        touched.append(child.tag)
+    return touched
 
 
 def _stripped(node: ET.Element) -> ET.Element:
@@ -158,7 +205,12 @@ def _stripped(node: ET.Element) -> ET.Element:
     return clone
 
 
-def apply_amend(base: ET.Element, amend: ET.Element, source: str, report: MergeReport) -> None:
+def _label(node: ET.Element) -> str:
+    """What to call an entry in the report: its name, else its id, else its tag."""
+    return (node.findtext("name") or node.findtext("id") or node.tag).strip() or node.tag
+
+
+def apply_amend(base: ET.Element, amend: ET.Element, source: str, report: MergeReport, base_name: str) -> None:
     """`amend_*.xml` -> edits on the base tree.
 
     Both are `<chummer>` roots holding one list element per kind
@@ -173,19 +225,26 @@ def apply_amend(base: ET.Element, amend: ET.Element, source: str, report: MergeR
         for rule in amend_list:
             if rule.get(_OP) == "addnode":
                 base_list.append(_stripped(rule))
-                report.applied += 1
+                report.change(base_name, _label(rule), "added")
                 continue
+            if rule.get(_OP) == "remove":
+                removed = _targets(base_list, rule)
+                for target in removed:
+                    base_list.remove(target)
+                    report.change(base_name, _label(target), "removed")
+                if removed:
+                    continue
             targets = _targets(base_list, rule)
             if not targets:
-                name = (rule.findtext("name") or rule.findtext("id") or rule.tag).strip()
-                report.skip(source, f"no <{rule.tag}> matches {name!r}")
+                report.skip(source, f"no <{rule.tag}> matches {_label(rule)!r}")
                 continue
             for target in targets:
-                _apply_children(target, rule)
-                report.applied += 1
+                # the target's own name, not the rule's: a `pathfilter` rule
+                # carries none, and the entry it changed is what to report
+                report.change(base_name, _label(target), "edited", tuple(_apply_children(target, rule)))
 
 
-def apply_custom(base: ET.Element, custom: ET.Element, source: str, report: MergeReport) -> None:
+def apply_custom(base: ET.Element, custom: ET.Element, source: str, report: MergeReport, base_name: str) -> None:
     """`custom_*.xml` -> new entries appended to the matching list.
 
     A list the base does not have is created rather than skipped: a custom
@@ -198,7 +257,7 @@ def apply_custom(base: ET.Element, custom: ET.Element, source: str, report: Merg
             base_list = ET.SubElement(base, custom_list.tag)
         for entry in custom_list:
             base_list.append(_stripped(entry))
-            report.applied += 1
+            report.change(base_name, _label(entry), "added")
         if not len(custom_list):
             report.skip(source, f"<{custom_list.tag}> is empty")
 
@@ -288,7 +347,7 @@ def build_overlay(
                 report.skip(path, f"not valid XML: {exc}")
                 continue
             if filename.startswith("amend_"):
-                apply_amend(base, node, path, report)
+                apply_amend(base, node, path, report, base_name)
             else:
-                apply_custom(base, node, path, report)
+                apply_custom(base, node, path, report, base_name)
     return trees, report

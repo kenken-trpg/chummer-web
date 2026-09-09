@@ -568,6 +568,39 @@ input[type="search"] {
   font-size: 0.85rem;
 }
 
+/* The merge breakdown: a wide table of names inside a card, so it scrolls
+   itself rather than widening the page. */
+.settings-picker .merge-detail {
+  margin-top: 6px;
+  max-height: 40vh;
+  overflow: auto;
+  font-size: 0.85rem;
+}
+.settings-picker .merge-detail table {
+  border-collapse: collapse;
+}
+.settings-picker .merge-detail td {
+  padding: 2px 10px 2px 0;
+  vertical-align: top;
+}
+.settings-picker .merge-file {
+  white-space: nowrap;
+  font-family: var(--mono, monospace);
+}
+.settings-picker .merge-what,
+.settings-picker .merge-count {
+  white-space: nowrap;
+}
+.settings-picker .linklike {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .sheet-mode {
   grid-template-columns: 1fr;
 }

@@ -718,6 +718,14 @@ const JA = {
     "個別のファイルではなく customdata フォルダ自体を選んでください（同じ名前のファイルが複数あり、どのフォルダのものか判別できません）。",
   "settings.customDataApplied": "カスタムデータを {count} 件適用しました",
   "settings.customDataSkipped": "未適用 {count} 件: {items}",
+  "settings.mergeShow": "内訳を見る",
+  "settings.mergeHide": "内訳を閉じる",
+  "settings.mergeAdded": "追加",
+  "settings.mergeRemoved": "削除",
+  "settings.mergeEdited": "{fields} を変更",
+  "settings.mergeCount": "{count} 件",
+  "settings.mergeTruncated":
+    "件数が多いため、内訳はここまでを表示しています（適用件数は上のとおり）。",
   "settings.customDataNeeded":
     "このセッティングはカスタムデータを参照しています。読み込むまで、追加のアイテムや格闘技は出てきません。",
   "settings.groupLoaded": "読み込んだファイル",
@@ -2418,6 +2426,14 @@ const EN: Catalog = {
     "Pick the customdata folder itself rather than individual files — several files share a name and there is no way to tell which directory each belongs to.",
   "settings.customDataApplied": "Applied {count} custom-data rules",
   "settings.customDataSkipped": "{count} not applied: {items}",
+  "settings.mergeShow": "Show what changed",
+  "settings.mergeHide": "Hide what changed",
+  "settings.mergeAdded": "added",
+  "settings.mergeRemoved": "removed",
+  "settings.mergeEdited": "changed {fields}",
+  "settings.mergeCount": "{count}",
+  "settings.mergeTruncated":
+    "Too many to itemise; the breakdown stops here. The count above is still exact.",
   "settings.customDataNeeded":
     "This ruleset refers to custom data. Until it is loaded, the entries it adds are simply missing.",
   "settings.groupLoaded": "Loaded files",
