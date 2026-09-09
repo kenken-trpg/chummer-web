@@ -248,6 +248,7 @@
   "mystic_pp": 0,
   "native_language_limit": 1,
   "needs_mentor": false,
+  "no_default_penalty_skills": [],
   "notoriety": 0,
   "notoriety_bonus": 0,
   "notoriety_quality": 0,

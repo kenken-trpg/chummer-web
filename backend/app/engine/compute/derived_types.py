@@ -328,6 +328,8 @@ class DerivedDict(TypedDict):
     skill_bonus_notes: dict[str, list[str]]
     skill_max_bonus: dict[str, int]
     skill_pick_slots: list[Row]
+    #: Skills that default without the −1 (Reflex Recorder Optimization).
+    no_default_penalty_skills: list[str]
     native_language_limit: int
     disabled_skills: list[str]
     disabled_skill_groups: list[str]

@@ -5,7 +5,13 @@
 from __future__ import annotations
 
 from .armor import load_armor, load_armor_mods
-from .drugs import drug_effect_summary, drug_node_value, load_drug_components, load_drug_grades
+from .drugs import (
+    boost_drug_attribute,
+    drug_effect_summary,
+    drug_node_value,
+    load_drug_components,
+    load_drug_grades,
+)
 from .gear import (
     PROGRAM_HOSTS,
     load_apps,
@@ -97,6 +103,7 @@ __all__ = [
     "load_weapon_ranges",
     "load_weapons",
     "_load_ja_overrides",
+    "boost_drug_attribute",
     "drug_effect_summary",
     "drug_node_value",
     "load_drug_components",

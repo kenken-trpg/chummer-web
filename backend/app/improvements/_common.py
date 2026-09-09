@@ -31,6 +31,8 @@ IMPLEMENTED = {
     "specificattribute",
     "armor",
     "conditionmonitor",
+    "drugpositiveattributemodifier",
+    "reflexrecorderoptimization",
     "initiative",
     "initiativepass",
     "enabletab",

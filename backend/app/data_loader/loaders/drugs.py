@@ -21,14 +21,36 @@ def drug_node_value(node: dict[str, Any]) -> str:
     return str(fields.get("value") or fields.get("val") or fields.get("bonus") or node.get("value") or "").strip()
 
 
-def drug_effect_summary(nodes: list[dict[str, Any]]) -> list[Notice]:
+def boost_drug_attribute(value: str, positive_attribute: int) -> str:
+    """One attribute modifier after ``<drugpositiveattributemodifier>``.
+
+    Narco lifts what a drug *gives* by its rating and leaves what a drug takes
+    alone (CF p.159), so a negative — or an unparseable — modifier is returned
+    untouched.
+    """
+    if not positive_attribute:
+        return value
+    try:
+        amount = int(str(value).strip().lstrip("+"))
+    except ValueError:
+        return value
+    return str(amount + positive_attribute) if amount > 0 else value
+
+
+def drug_effect_summary(nodes: list[dict[str, Any]], positive_attribute: int = 0) -> list[Notice]:
     """A drug's ``<bonus>`` nodes as one notice per effect, for the client to
-    join into a line (see ``app.notices``)."""
+    join into a line (see ``app.notices``).
+
+    ``positive_attribute`` is Narco's lift, so the line reads what the engine
+    actually applied rather than what the book prints for the drug alone.
+    """
     parts: list[Notice] = []
     for node in nodes or []:
         tag = node.get("tag")
         fields = node.get("fields") or {}
         val = drug_node_value(node)
+        if tag == "attribute":
+            val = boost_drug_attribute(val, positive_attribute)
         signed = val if val.startswith(("-", "+")) else (f"+{val}" if val else "")
         if tag == "attribute" and val:
             parts.append(

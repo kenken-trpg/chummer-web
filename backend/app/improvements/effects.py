@@ -78,6 +78,12 @@ class EffectsDict(TypedDict):
     #: SR5 p.169, and how many boxes are ignored before the first one.
     cm_threshold: int
     cm_threshold_offset: int
+    #: `<drugpositiveattributemodifier>`: added to every positive attribute
+    #: modifier an active drug gives (Narco, CF p.159).
+    drug_positive_attribute: int
+    #: `<reflexrecorderoptimization>`: a Reflex Recorder's skill, and the rest
+    #: of its group, default without the −1 (CF p.165).
+    reflex_recorder_optimization: bool
     initiative: int
     initiative_dice: int
     limit_physical: int
@@ -231,6 +237,8 @@ def empty_effects() -> EffectsDict:
         "cm_stun": 0,
         "cm_threshold": 0,
         "cm_threshold_offset": 0,
+        "drug_positive_attribute": 0,
+        "reflex_recorder_optimization": False,
         "initiative": 0,
         "initiative_dice": 0,
         "enabled_tabs": set(),

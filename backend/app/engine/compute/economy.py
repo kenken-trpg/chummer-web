@@ -126,7 +126,12 @@ def economy(ctx: Ctx) -> None:
     tentative = dict(ctx.skill_totals)
     for name, rating in ctx.state.skills.items():
         tentative[name] = max(tentative.get(name, 0), max(0, min(ctx.skill_rating_cap + 1, int(rating))))
-    ctx.skill_picks = resolve_skill_picks(ctx.state, ctx.data["skills"], tentative)
+    ctx.skill_picks = resolve_skill_picks(
+        ctx.state,
+        ctx.data["skills"],
+        tentative,
+        reflex_optimized=bool(ctx.effects.get("reflex_recorder_optimization")),
+    )
     ctx.warnings.extend(ctx.skill_picks["warnings"])
     skill_cat_map = _skill_category_map(ctx.data["skills"])
     point_mults = dict(ctx.effects.get("skill_category_point_cost_mult") or {})
