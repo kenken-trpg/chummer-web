@@ -9,7 +9,13 @@ import {
   saveSettingsFile,
 } from "@/lib/character/settings-store";
 import { api } from "@/lib/api";
-import { CustomDataShapeError, readCustomDataFolder } from "@/lib/character/customdata-store";
+import {
+  CustomDataShapeError,
+  readStyleFolder,
+  recallFolder,
+  rememberFolder,
+  type CustomDataFiles,
+} from "@/lib/character/customdata-store";
 import { errorMessage } from "@/lib/errors";
 import type { UiFn } from "@/lib/i18n";
 
@@ -21,6 +27,11 @@ import type { UiFn } from "@/lib/i18n";
  * and settings files the user loaded from their own Chummer folder, which live
  * in this browser (`settings-store`). Picking either applies its books, its
  * build method and its house-rule numbers.
+ *
+ * A published ruleset is one folder holding `settings/` and `customdata/`, so
+ * that folder is what the load button asks for: every settings file in it
+ * joins the pulldown at once, and picking one of them merges the custom data
+ * it names without asking for the folder a second time.
  *
  * Ticking a book by hand deviates from whatever was picked, which drops the
  * name: the character is no longer "Standard", and saying so is better than
@@ -42,6 +53,10 @@ export function SettingsPicker({
   const [open, setOpen] = useState(false);
   const [merge, setMerge] = useState<{ applied: number; skipped: string[] } | null>(null);
   const folderRef = useRef<HTMLInputElement>(null);
+  // The last folder's files, so a second ruleset from the same pick merges
+  // without another trip through the file dialog. Null until one is picked or
+  // `recallFolder` finds the previous session's.
+  const [folder, setFolder] = useState<CustomDataFiles | null>(null);
   // Read once, lazily — the same shape as `useSheetLayout`. `loadSettingsFiles`
   // swallows a missing / disabled store, so a prerender just sees none.
   const [files, setFiles] = useState<CharacterSettings[]>(loadSettingsFiles);
@@ -59,11 +74,40 @@ export function SettingsPicker({
   // folder is here.
   const needsCustomData = (ch.settings?.customdata || []).length > 0;
 
-  function apply(settings: CharacterSettings, method?: string | null) {
-    void patch({
-      ...(method ? buildMethodPatch(method, ch) : {}),
-      settings,
+  /**
+   * Apply a ruleset, merging its custom data when the folder is already here.
+   *
+   * The dataset hash is per settings file, not per folder: two files in one
+   * pick enable different directories, so each needs its own merge. Waiting
+   * for it keeps the character from being patched twice.
+   */
+  async function apply(settings: CharacterSettings, method?: string | null): Promise<void> {
+    const base = { ...(method ? buildMethodPatch(method, ch) : {}) };
+    const wanted = settings.customdata || [];
+    const files = wanted.length > 0 ? (folder ?? (await recallFolder())) : null;
+    if (!files) {
+      await patch({ ...base, settings });
+      return;
+    }
+    setFolder(files);
+    try {
+      await patch({ ...base, settings: { ...settings, ...(await merged(files, wanted)) } });
+    } catch (e) {
+      // The ruleset still applies — it is the custom data that did not, and
+      // the missing-data line below says so.
+      await patch({ ...base, settings });
+      setError(errorMessage(e, ui, "settings.customDataFailed"));
+    }
+  }
+
+  /** Merge `wanted` out of `files` and report it. Returns the hash to carry. */
+  async function merged(files: CustomDataFiles, wanted: string[]): Promise<{ dataset: string }> {
+    const res = await api.uploadCustomData(files, wanted);
+    setMerge({
+      applied: res.applied,
+      skipped: res.skipped.map((s) => `${s.source}: ${s.reason}`),
     });
+    return { dataset: res.dataset };
   }
 
   function onPick(picked: string) {
@@ -73,41 +117,69 @@ export function SettingsPicker({
       void patch({ settings: { name: "", books: [] } });
       return;
     }
+    setError(null);
+    setMerge(null);
     const file = files.find((f) => f.name === picked);
     if (file) {
-      apply(file);
+      void apply(file);
       return;
     }
     const preset = presets.find((p) => p.name === picked);
-    if (preset) apply({ name: preset.name, books: [...preset.books] }, preset.build_method);
+    if (preset) void apply({ name: preset.name, books: [...preset.books] }, preset.build_method);
   }
 
   async function onFile(file: File) {
     setError(null);
+    setMerge(null);
     try {
       const { settings, build_method } = await api.parseSettings(await file.arrayBuffer());
       setFiles(saveSettingsFile(settings));
-      apply(settings, build_method);
+      await apply(settings, build_method);
     } catch (e) {
       setError(errorMessage(e, ui, "settings.loadFailed"));
     }
   }
 
+  /**
+   * A whole ruleset folder: every settings file in it, and the custom data.
+   *
+   * All of the settings files join the pulldown, because that is what the
+   * folder offers — but only one can be applied, and picking for the user
+   * would be a guess. One file applies itself; several leave the choice in
+   * the pulldown, with the folder already here so the choice merges.
+   */
   async function onFolder(list: FileList) {
     setError(null);
     setMerge(null);
     try {
-      const contents = await readCustomDataFolder(list);
+      const pick = await readStyleFolder(list);
+      if (Object.keys(pick.customdata).length > 0) {
+        setFolder(pick.customdata);
+        await rememberFolder(pick.customdata);
+      }
+      let loaded: CharacterSettings[] = [];
+      let first: { settings: CharacterSettings; build_method: string | null } | null = null;
+      for (const file of pick.settings) {
+        const parsed = await api.parseSettings(new TextEncoder().encode(file.text).buffer);
+        loaded = saveSettingsFile(parsed.settings);
+        first ??= parsed;
+      }
+      if (loaded.length > 0) setFiles(loaded);
+      if (pick.settings.length === 1 && first) {
+        await apply(first.settings, first.build_method);
+        return;
+      }
+      // No settings half — a bare `customdata/` pick for the ruleset already
+      // applied, which is the pre-folder way of doing it and still works.
       const wanted = ch.settings?.customdata || [];
-      const res = await api.uploadCustomData(contents, wanted);
-      setMerge({
-        applied: res.applied,
-        skipped: res.skipped.map((s) => `${s.source}: ${s.reason}`),
-      });
-      // the hash is what every later request carries; the files stay here
-      void patch({
-        settings: { ...(ch.settings || { name: "", books: [] }), dataset: res.dataset },
-      });
+      if (pick.settings.length === 0 && wanted.length > 0) {
+        await patch({
+          settings: {
+            ...(ch.settings || { name: "", books: [] }),
+            ...(await merged(pick.customdata, wanted)),
+          },
+        });
+      }
     } catch (e) {
       setError(
         e instanceof CustomDataShapeError
@@ -180,27 +252,21 @@ export function SettingsPicker({
           }}
         />
 
-        {needsCustomData ? (
-          <button
-            className="btn"
-            onClick={() => folderRef.current?.click()}
-            title={ui("settings.customDataHint")}
-          >
-            {ui(ch.settings?.dataset ? "settings.customDataReload" : "settings.customData", {
-              count: (ch.settings?.customdata || []).length,
-            })}
-          </button>
-        ) : null}
+        <button
+          className="btn"
+          onClick={() => folderRef.current?.click()}
+          title={ui("settings.folderHint")}
+        >
+          {ui("settings.folder")}
+        </button>
         <input
           ref={folderRef}
           type="file"
           hidden
           multiple
-          aria-label={ui("settings.customData", {
-            count: (ch.settings?.customdata || []).length,
-          })}
-          // a directory pick: the settings file names directories, so the
-          // whole `customdata/` tree is what has to come across
+          aria-label={ui("settings.folder")}
+          // a directory pick: `settings/` and `customdata/` are siblings in a
+          // published ruleset, so the folder holding both is what comes across
           {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
           onChange={(e) => {
             const list = e.target.files;

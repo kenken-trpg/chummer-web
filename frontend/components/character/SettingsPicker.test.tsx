@@ -38,6 +38,13 @@ function setup(settings?: { name: string; books: string[] }) {
   return { patch };
 }
 
+/** A `File` that reports a directory path, the way a folder pick does. */
+function folderFile(path: string, text: string): File {
+  const file = new File([text], path.split("/").pop() as string, { type: "text/xml" });
+  Object.defineProperty(file, "webkitRelativePath", { value: path });
+  return file;
+}
+
 beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
@@ -177,9 +184,11 @@ describe("SettingsPicker with custom data", () => {
     expect(screen.getByText(/カスタムデータを参照しています/)).toBeDefined();
   });
 
-  it("offers no custom-data button for a ruleset that needs none", () => {
+  it("offers the folder load whether or not the ruleset needs custom data", () => {
+    // the folder is how a ruleset arrives at all, so it cannot be gated on
+    // having already loaded one
     setup({ name: "Standard", books: ["SR5"] });
-    expect(screen.queryByText(/カスタムデータを読み込む/)).toBeNull();
+    expect(screen.getByText("スタイル一式を読み込む")).toBeDefined();
   });
 
   it("uploads the folder and stores the hash on the character", async () => {
@@ -187,7 +196,7 @@ describe("SettingsPicker with custom data", () => {
       .spyOn(api, "uploadCustomData")
       .mockResolvedValue({ dataset: "abc123", applied: 217, skipped: [] });
     const { patch } = setup(withCustom);
-    const input = screen.getByLabelText("カスタムデータを読み込む（2 件必要）");
+    const input = screen.getByLabelText("スタイル一式を読み込む");
     const file = new File(["<chummer/>"], "custom_x.xml", { type: "text/xml" });
     Object.defineProperty(file, "webkitRelativePath", { value: "customdata/d/custom_x.xml" });
     fireEvent.change(input, { target: { files: [file] } });
@@ -210,9 +219,83 @@ describe("SettingsPicker with custom data", () => {
     setup(withCustom);
     const file = new File(["<chummer/>"], "x.xml", { type: "text/xml" });
     Object.defineProperty(file, "webkitRelativePath", { value: "cd/d/x.xml" });
-    fireEvent.change(screen.getByLabelText("カスタムデータを読み込む（2 件必要）"), {
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
       target: { files: [file] },
     });
     await waitFor(() => expect(screen.getByText(/amend_critters/)).toBeDefined());
+  });
+
+  it("puts every settings file in a folder into the pulldown", async () => {
+    // a published folder holds one ruleset per variant; picking for the user
+    // would be a guess, so all of them are offered and none is applied
+    const parse = vi.spyOn(api, "parseSettings").mockImplementation(async (bytes: ArrayBuffer) => ({
+      settings: { name: new TextDecoder().decode(bytes), books: ["SR5"] },
+      build_method: "SumToTen",
+    }));
+    const { patch } = setup();
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: {
+        files: [
+          folderFile("スタイル/settings/a.xml", "A"),
+          folderFile("スタイル/settings/b.xml", "B"),
+        ],
+      },
+    });
+
+    await waitFor(() => expect(parse).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByRole("option", { name: "A" })).toBeDefined());
+    expect(screen.getByRole("option", { name: "B" })).toBeDefined();
+    expect(patch).not.toHaveBeenCalled();
+  });
+
+  it("applies the ruleset straight away when the folder holds only one", async () => {
+    vi.spyOn(api, "parseSettings").mockResolvedValue({
+      settings: { name: "新東京", books: ["SR5"] },
+      build_method: "SumToTen",
+    });
+    const { patch } = setup();
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("スタイル/settings/only.xml", "X")] },
+    });
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith(
+        expect.objectContaining({ settings: { name: "新東京", books: ["SR5"] } }),
+      ),
+    );
+  });
+
+  it("merges the custom data on the pulldown pick, without asking for the folder again", async () => {
+    // the ordering trap this replaces: the folder used to have to be picked
+    // after the ruleset, and again for every ruleset in the same folder
+    const upload = vi
+      .spyOn(api, "uploadCustomData")
+      .mockResolvedValue({ dataset: "hash2", applied: 5, skipped: [] });
+    vi.spyOn(api, "parseSettings").mockImplementation(async (bytes: ArrayBuffer) => ({
+      settings: { name: new TextDecoder().decode(bytes), books: ["SR5"], customdata: ["a>1"] },
+      build_method: "SumToTen",
+    }));
+    const { patch } = setup();
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: {
+        files: [
+          folderFile("スタイル/settings/a.xml", "A"),
+          folderFile("スタイル/settings/b.xml", "B"),
+          folderFile("スタイル/customdata/d/custom_x.xml", "<chummer/>"),
+        ],
+      },
+    });
+    await waitFor(() => expect(screen.getByRole("option", { name: "B" })).toBeDefined());
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "B" } });
+    await waitFor(() =>
+      expect(upload).toHaveBeenCalledWith({ "d/custom_x.xml": "<chummer/>" }, ["a>1"]),
+    );
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          settings: { name: "B", books: ["SR5"], customdata: ["a>1"], dataset: "hash2" },
+        }),
+      ),
+    );
   });
 });
