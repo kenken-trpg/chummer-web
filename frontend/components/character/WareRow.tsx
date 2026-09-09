@@ -52,6 +52,9 @@ export function WareRow(props: {
   const rowGrades = grades.filter((g) => !(spec?.bannedgrades || []).includes(g.name));
   const chosen = slotValue || slotOptions[0]?.id || "";
   const capMax = item.capacity_max || 0;
+  // Bundled with a parent, or handed over by a quality (`<addware>`): either
+  // way there is nothing here for the player to change or remove.
+  const locked = Boolean(item.included || item.granted_by);
   const ratingMin = item.rating_min ?? spec?.minrating ?? 1;
   const ratingMax = item.rating_max ?? spec?.maxrating ?? 1;
   return (
@@ -61,6 +64,7 @@ export function WareRow(props: {
           {tr(item.name)}
           {item.side ? `（${sideLabel(item.side, ui)}）` : ""}
           {item.included ? ui("ware.bundledSuffix") : ""}
+          {item.granted_by ? ui("ware.grantedSuffix", { source: tr(item.granted_by) }) : ""}
         </b>
         <div className="muted">
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
@@ -80,7 +84,7 @@ export function WareRow(props: {
           ) : null}
         </div>
         <div className="cyber-controls">
-          {spec?.selectside && !item.parent_id && !item.included ? (
+          {spec?.selectside && !item.parent_id && !locked ? (
             <label>
               {ui("ware.side")}
               <select
@@ -92,7 +96,7 @@ export function WareRow(props: {
               </select>
             </label>
           ) : null}
-          {item.select_ware && !item.included ? (
+          {item.select_ware && !locked ? (
             <label>
               {ui("ware.target")}
               <select
@@ -112,7 +116,7 @@ export function WareRow(props: {
               </select>
             </label>
           ) : null}
-          {spec && ratingMax > ratingMin && !item.included ? (
+          {spec && ratingMax > ratingMin && !locked ? (
             <label>
               {ui("common.rating")}
               <input
@@ -124,7 +128,7 @@ export function WareRow(props: {
               />
             </label>
           ) : null}
-          {!item.included && !spec?.forcegrade ? (
+          {!locked && !spec?.forcegrade ? (
             <label>
               {ui("common.grade")}
               <select
@@ -201,7 +205,7 @@ export function WareRow(props: {
           </div>
         ) : null}
       </div>
-      {item.included ? (
+      {locked ? (
         <span className="muted">{ui("common.bundled")}</span>
       ) : (
         <button className="btn danger" onClick={() => onRemove(item.id)}>

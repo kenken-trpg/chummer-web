@@ -14,6 +14,7 @@ from typing import Any
 
 from ...data_loader import CatalogDict
 from ...improvements import EffectsDict, empty_effects
+from ...improvements.effect_rows import GrantWareRow
 from ...models import CharacterState
 from ...notices import Notice, ParamValue, notice
 from ..bundle_types import (
@@ -79,6 +80,9 @@ class Ctx:
     mentor: dict[str, Any] = field(default_factory=dict)
 
     # --- ware ------------------------------------------------------------
+    #: `<addware>` grants, read out of the qualities in `gather` because the
+    #: ware phase runs before the full effects pass.
+    granted_ware: list[GrantWareRow] = field(default_factory=list)
     cyber_installed: list[dict[str, Any]] = field(default_factory=list)
     bio_installed: list[dict[str, Any]] = field(default_factory=list)
     #: Adapsin is on, so cyberware reads the Adapsin column of the grade table.

@@ -144,6 +144,19 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                     "children": [dict(kid) for kid in node.get("gear_children") or []],
                 }
             )
+    elif tag == "addware":
+        # The implant a quality comes with: Busted Cyberware is half a point of
+        # Essence of junk somebody left in you (TSG p.30).
+        name = str(fields.get("name") or node.get("value") or "").strip()
+        if name:
+            effects["grant_ware"].append(
+                {
+                    "source": source,
+                    "name": name,
+                    "kind": str(fields.get("type") or "Cyberware").strip().lower(),
+                    "grade": str(fields.get("grade") or "").strip(),
+                }
+            )
     elif tag == "martialart":
         name = str(node.get("value") or fields.get("name") or "").strip()
         if name:

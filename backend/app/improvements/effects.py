@@ -30,6 +30,7 @@ from .effect_rows import (
     GrantGearRow,
     GrantPowerRow,
     GrantSpellRow,
+    GrantWareRow,
     KarmaCostRow,
     KarmaMultRow,
     LimitModifierRow,
@@ -210,6 +211,7 @@ class EffectsDict(TypedDict):
     grant_echoes: list[GrantEchoRow]
     grant_spells: list[GrantSpellRow]
     grant_gear: list[GrantGearRow]
+    grant_ware: list[GrantWareRow]
     grant_powers: list[GrantPowerRow]
     select_power_slots: list[SelectPowerSlotRow]
     weapon_category_dv_slots: list[WeaponCategoryDvSlotRow]
@@ -353,6 +355,7 @@ def empty_effects() -> EffectsDict:
         "cyberadept_daemon": False,
         "grant_spells": [],
         "grant_gear": [],
+        "grant_ware": [],
         "grant_powers": [],
         "select_power_slots": [],
         "weapon_category_dv_slots": [],

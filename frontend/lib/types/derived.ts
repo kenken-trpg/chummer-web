@@ -652,6 +652,8 @@ export interface InstalledWare {
   wireless: boolean;
   parent_id?: string | null;
   included?: boolean;
+  /** `<addware>`: the quality that came with this implant (Busted Cyberware). */
+  granted_by?: string;
   essence: number;
   nuyen: number;
   capacity_used?: number;

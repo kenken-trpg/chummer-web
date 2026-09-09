@@ -112,6 +112,16 @@ class GrantGearRow(TypedDict):
     children: list[dict[str, str]]
 
 
+class GrantWareRow(TypedDict):
+    """``grant_ware`` — an ``<addware>`` grant: the implant a quality comes
+    with, at the grade it forces (Busted Cyberware, TSG p.30)."""
+
+    source: str
+    name: str
+    kind: str
+    grade: str
+
+
 class GrantPowerRow(TypedDict):
     """``grant_powers`` — a ``<specificpower>`` / resolved ``<selectpowers>``
     grant."""

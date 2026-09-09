@@ -742,6 +742,33 @@ def test_one_customized_arm_pulls_body_strength() -> None:
 
 SHIVA_ARMS = "51ba5e67-f2fd-4149-b24c-9b502ed0e7c7"
 DEAD_SIN = "c0d411e6-ca88-4011-b56c-9f594882beb4"
+BUSTED_CYBERWARE = "ab862f1f-5ed3-4976-a781-bf63565faf26"
+
+
+def test_busted_cyberware_costs_half_a_point_of_essence() -> None:
+    """`addware`: somebody left junk in you (TSG p.30). The implant is hidden
+    in Chummer's catalog, so it is nobody's to buy — it arrives with the
+    quality, at the grade the quality forces, and takes its Essence."""
+    plain = compute(_mundane("clean"))
+    out = compute(_mundane("busted", quality_ids=[BUSTED_CYBERWARE]))
+    row = next(item for item in out.derived["cyberware"] if item["name"] == "Busted Ware")
+    assert row["granted_by"] == "Busted Cyberware"
+    assert row["grade"] == "None"
+    assert row["nuyen"] == 0
+    assert out.derived["essence"] == plain.derived["essence"] - 0.5
+    tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
+    assert "addware" not in tags
+
+
+def test_hidden_ware_stays_out_of_the_picker() -> None:
+    """It is in the catalog so `<addware>` has something to name, and out of
+    the picker so nobody buys half a point of junk on purpose."""
+    from app.catalog_view import public_catalog
+
+    assert any(item["name"] == "Busted Ware" for item in catalog()["cyberware"]["items"])
+    names = {item["name"] for item in public_catalog()["cyberware"]["items"]}
+    assert "Busted Ware" not in names
+    assert "Wired Reflexes" in names
 
 
 def test_dead_sin_comes_with_a_fake_sin_and_four_licenses() -> None:

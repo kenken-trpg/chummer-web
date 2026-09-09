@@ -64,6 +64,7 @@ def gather(ctx: Ctx) -> None:
     for name in dropped_qualities:
         ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
+    ctx.granted_ware = list(quality_grade_effects["grant_ware"])
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
     ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))

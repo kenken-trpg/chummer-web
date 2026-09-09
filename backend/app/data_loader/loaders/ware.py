@@ -59,8 +59,10 @@ def _load_grades(root: ET.Element) -> list[dict[str, Any]]:
 def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> list[dict[str, Any]]:
     items = []
     for el in root.findall(xpath):
-        if el.find("hide") is not None:
-            continue
+        # Chummer hides the ware nothing may buy (Busted Ware, a metavariant's
+        # claws). It stays in the catalog so a `<addware>` grant can name it,
+        # and `catalog_view` keeps it out of the pickers.
+        hidden = el.find("hide") is not None
         name = _text(el.find("name"))
         if not name:
             continue
@@ -83,6 +85,7 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
             {
                 "id": _text(el.find("id")),
                 "name": name,
+                "hidden": hidden,
                 "category": _text(el.find("category"), default_category),
                 "ess": _text(el.find("ess"), "0"),
                 "cost": _text(el.find("cost"), "0"),
