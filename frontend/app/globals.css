@@ -552,6 +552,22 @@ input[type="search"] {
   align-items: center;
 }
 
+/* the settings' rulebook list: 63 short labels, so let them column up rather
+   than run one per line down half a screen */
+.settings-picker .book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 4px 12px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.settings-picker .book-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
 .sheet-mode {
   grid-template-columns: 1fr;
 }

@@ -39,6 +39,11 @@ def public_catalog() -> dict:
     # else. `translations` and `ui_strings` are the two-layer i18n described in
     # docs/i18n.md; `weapon_ranges` is a lookup table the sheet reads directly.
     out["weapon_ranges"] = raw.get("weapon_ranges") or {}
+    # The settings pulldown: which rulebooks exist, and Chummer's own presets
+    # over them. Not a domain section — nothing here filters by book; the
+    # client narrows its pick lists against `Character.settings.books`.
+    out["books"] = raw.get("books") or []
+    out["settings_presets"] = raw.get("settings_presets") or []
     out["translations"] = raw["translations"]
     out["ui_strings"] = raw["ui_strings"]
     return out

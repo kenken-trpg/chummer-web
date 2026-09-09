@@ -260,6 +260,23 @@ class CharacterOptions(BaseModel):
     redliner_skull: bool = False
 
 
+class SettingsState(BaseModel):
+    """A Chummer settings file, as much of one as this app honours.
+
+    Chummer's `<settings>` carries ~150 house-rule knobs; this holds the two
+    the engine can act on today plus the name to show in the pulldown. It is
+    the container the rest arrive in — see docs/plans/settings-plan.md.
+
+    `books` is the list of enabled `<source>` codes. **Empty means
+    unrestricted**, not "no books": a character saved before this field
+    existed, or one built without picking a preset, must keep seeing the whole
+    catalog rather than suddenly owning gear from disabled books.
+    """
+
+    name: str = ""
+    books: list[str] = Field(default_factory=list)
+
+
 class CareerBaseline(BaseModel):
     """Snapshot of chargen ratings when entering career mode (Priority/SumToTen raises bill from here)."""
 
@@ -359,6 +376,7 @@ class CharacterPatch(BaseModel):
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
+    settings: SettingsState | None = None
 
     @model_validator(mode="after")
     def _bound_collections(self) -> CharacterPatch:
@@ -453,6 +471,7 @@ class CharacterState(BaseModel):
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)
+    settings: SettingsState = Field(default_factory=SettingsState)
     # Output of compute(); kept dict[str, Any] here (Pydantic-friendly, no
     # round-trip validation). Its real shape is engine.compute.derived_types.DerivedDict.
     derived: dict[str, Any] = Field(default_factory=dict)
