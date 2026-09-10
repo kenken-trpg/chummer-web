@@ -814,6 +814,7 @@ const JA = {
   // Shared by the cyberware / bioware tabs.
   "ware.allCategories": "すべての分類",
   "ware.compact": "簡易表示（名称のみ）",
+  "ware.pending": "（未選択あり）",
   "ware.addGrade": "追加時 {grade}",
   "ware.aloneEss": "（単独時）",
   "ware.maxRating": " / 最大R{max}",
@@ -2559,6 +2560,7 @@ const EN: Catalog = {
 
   "ware.allCategories": "All categories",
   "ware.compact": "Compact (names only)",
+  "ware.pending": "(choice pending)",
   "ware.addGrade": "Add as {grade}",
   "ware.aloneEss": " (standalone)",
   "ware.maxRating": " / max R{max}",
