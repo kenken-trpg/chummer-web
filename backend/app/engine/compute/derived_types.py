@@ -289,6 +289,7 @@ class DerivedDict(TypedDict):
     way_discount: _WayDiscount
     mentor: Row | None
     needs_mentor: bool
+    needs_paragon: bool
     qi_foci: list[Row]
     foci: list[Row]
     focus_limits: FocusLimits

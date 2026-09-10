@@ -49,7 +49,7 @@ export function textSheet(x: TextArgs): string {
   line(
     `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${ch.talent || "Mundane"}` +
       `${d.tradition ? " ・ " + tr(d.tradition.name) : ""}${d.stream ? " ・ " + tr(d.stream.name) : ""}` +
-      `${d.mentor ? ui("sheet.mentor", { name: tr(d.mentor.name) }) : ""}`,
+      `${d.mentor ? ui(d.needs_paragon ? "sheet.paragon" : "sheet.mentor", { name: tr(d.mentor.name) }) : ""}`,
   );
   line();
 

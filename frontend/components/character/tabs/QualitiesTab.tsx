@@ -61,8 +61,15 @@ export function QualitiesTab({
 
   return (
     <div className="card">
-      {d.needs_mentor ? (
-        <MentorPicker catalog={catalog} mentor={d.mentor} ch={ch} tr={tr} onPatch={patch} />
+      {d.needs_mentor || d.needs_paragon ? (
+        <MentorPicker
+          catalog={catalog}
+          mentor={d.mentor}
+          ch={ch}
+          tr={tr}
+          onPatch={patch}
+          paragon={Boolean(d.needs_paragon)}
+        />
       ) : null}
       <SkillPickSelects
         slots={(d.skill_pick_slots || []).filter((slot) => slot.source_kind === "quality")}

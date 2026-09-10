@@ -86,9 +86,9 @@ export function SidebarAwakened({ d, tr, ui }: SidebarBlockProps) {
           <b>{tr(d.tradition.name)}</b>
         </div>
       ) : null}
-      {d.needs_mentor && d.mentor ? (
+      {(d.needs_mentor || d.needs_paragon) && d.mentor ? (
         <div className="stat">
-          <span>{ui("side.mentor")}</span>
+          <span>{ui(d.needs_paragon ? "side.paragon" : "side.mentor")}</span>
           <b>{tr(d.mentor.name)}</b>
         </div>
       ) : null}

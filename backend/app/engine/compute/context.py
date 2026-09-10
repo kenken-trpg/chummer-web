@@ -79,6 +79,7 @@ class Ctx:
     free_quality_ids: list[str] = field(default_factory=list)
     quality_names: set[str] = field(default_factory=set)
     needs_mentor: bool = False
+    needs_paragon: bool = False
     mentor: dict[str, Any] = field(default_factory=dict)
 
     # --- ware ------------------------------------------------------------

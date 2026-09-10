@@ -516,6 +516,7 @@ export interface Character {
     way_discount?: { used: number; max: number };
     mentor?: MentorInfo | null;
     needs_mentor?: boolean;
+    needs_paragon?: boolean;
     qi_foci?: InstalledQiFocus[];
     foci?: InstalledFocus[];
     focus_limits?: { count: number; count_max: number; force: number; force_max: number };

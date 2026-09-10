@@ -24,6 +24,11 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["magicians_way"] = True
     elif tag == "selectmentorspirit":
         effects["needs_mentor"] = True
+    elif tag == "selectparagon":
+        # A technomancer's paragon (KC p.102) is a mentor spirit in every way
+        # that matters here — the quality only says "pick one", and the list it
+        # picks from is `paragons.xml` rather than `mentors.xml`.
+        effects["needs_paragon"] = True
     elif tag == "focusbindingkarmacost":
         effects["focus_binding"].append(
             {

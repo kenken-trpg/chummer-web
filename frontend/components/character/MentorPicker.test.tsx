@@ -66,6 +66,34 @@ describe("MentorPicker", () => {
     ]);
   });
 
+  it("picks out of the paragon list, and says so, in paragon mode", () => {
+    // A paragon shares `mentor_id` — no character can have both — so the only
+    // thing that changes is which list is offered and what it is called.
+    const onPatch = vi.fn();
+    render(
+      <MentorPicker
+        catalog={makeCatalog({
+          mentors: [{ id: "chaos", name: "Chaos", source: "SG", page: "200", advantage: "" }],
+          paragons: [{ id: "delphi", name: "Delphi", source: "KC", page: "103", advantage: "" }],
+        })}
+        mentor={null}
+        ch={makeCharacter({})}
+        tr={(n) => n}
+        onPatch={onPatch}
+        paragon
+      />,
+    );
+    const select = screen.getByRole("combobox", { name: "パラゴン" }) as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual(["選択してください", "Delphi"]);
+
+    fireEvent.change(select, { target: { value: "delphi" } });
+    expect(onPatch).toHaveBeenCalledWith({
+      mentor_id: "delphi",
+      mentor_choices: [],
+      mentor_extras: {},
+    });
+  });
+
   it("patches the power target under its own key, keeping the choice's", () => {
     const onPatch = renderPicker();
     fireEvent.change(

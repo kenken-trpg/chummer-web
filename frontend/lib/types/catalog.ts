@@ -447,6 +447,8 @@ export interface Catalog {
     required?: { quality?: string[]; power?: string[] };
   }[];
   mentors?: { id: string; name: string; source: string; page: string; advantage: string }[];
+  /** Paragons (KC p.103) — the technomancer's mentor spirits, same shape. */
+  paragons?: { id: string; name: string; source: string; page: string; advantage: string }[];
   spells?: {
     id: string;
     name: string;

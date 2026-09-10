@@ -261,7 +261,9 @@ export function buildCocofolia(
       "common.termSep",
     )}${ch.talent || "Mundane"}`,
     d.tradition ? ui("coco.memoTradition", { name: tr(d.tradition.name) }) : "",
-    d.mentor ? ui("coco.memoMentor", { name: tr(d.mentor.name) }) : "",
+    d.mentor
+      ? ui(d.needs_paragon ? "coco.memoParagon" : "coco.memoMentor", { name: tr(d.mentor.name) })
+      : "",
     ui("coco.memoInit", {
       value: init.value,
       dice: init.dice,

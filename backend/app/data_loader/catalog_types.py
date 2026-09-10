@@ -28,6 +28,7 @@ class CatalogDict(TypedDict):
     powers: list[Row]
     enhancements: list[Row]
     mentors: list[Row]
+    paragons: list[Row]
     spells: list[Row]
     traditions: list[Row]
     spirits: list[Row]

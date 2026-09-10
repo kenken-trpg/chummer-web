@@ -76,6 +76,10 @@ def _mentor_by_id(mid: str) -> dict[str, Any] | None:
     return _match_by(catalog().get("mentors"), "id", mid)
 
 
+def _paragon_by_id(pid: str) -> dict[str, Any] | None:
+    return _match_by(catalog().get("paragons"), "id", pid)
+
+
 def _spell_by_name(name: str) -> dict[str, Any] | None:
     return _match_by(catalog().get("spells"), "name", name)
 

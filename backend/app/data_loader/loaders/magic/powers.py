@@ -110,7 +110,22 @@ def load_enhancements() -> list[dict[str, Any]]:
 
 
 def load_mentors() -> list[dict[str, Any]]:
-    path = DATA_DIR / "mentors.xml"
+    return _load_mentor_file("mentors.xml")
+
+
+def load_paragons() -> list[dict[str, Any]]:
+    """A technomancer's paragon (KC p.103), in the shape a mentor spirit has.
+
+    ``paragons.xml`` is written against ``mentors.xsd`` — same ``<mentors>`` /
+    ``<mentor>`` element names, same ``<advantage>`` / ``<disadvantage>`` /
+    ``<bonus>`` — so the same reader serves both. None of the nine carries
+    ``<choices>``: a paragon gives what it gives.
+    """
+    return _load_mentor_file("paragons.xml")
+
+
+def _load_mentor_file(filename: str) -> list[dict[str, Any]]:
+    path = DATA_DIR / filename
     if not path.exists():
         return []
     items: list[dict[str, Any]] = []

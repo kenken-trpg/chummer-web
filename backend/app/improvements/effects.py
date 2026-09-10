@@ -104,9 +104,11 @@ class EffectsDict(TypedDict):
     unarmed_ap: int
     magicians_way: bool
     needs_mentor: bool
+    needs_paragon: bool
     spell_resistance: int
     skillwires: int
     skilljack: int
+    matrix_initiative: int
     matrix_initiative_dice: int
     reach: int
     smartlink: int
@@ -279,6 +281,7 @@ def empty_effects() -> EffectsDict:
         "free_qualities": [],
         "add_qualities": [],
         "needs_mentor": False,
+        "needs_paragon": False,
         "focus_binding": [],
         "skill_attribute_mods": [],
         "skill_attribute_swaps": [],
@@ -296,6 +299,7 @@ def empty_effects() -> EffectsDict:
         "skillwires": 0,
         "skilljack": 0,
         "living_persona": {"attack": 0, "sleaze": 0, "dataprocessing": 0, "firewall": 0},
+        "matrix_initiative": 0,
         "matrix_initiative_dice": 0,
         "reach": 0,
         "smartlink": 0,

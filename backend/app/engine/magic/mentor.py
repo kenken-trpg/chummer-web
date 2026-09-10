@@ -16,7 +16,7 @@ from ...data_loader import parse_select_power_slot
 from ...models import CharacterState
 from ...notices import Notice, notice, term
 from ..constants import ADEPT_TALENTS, MAG_TALENTS
-from ..lookups import _mentor_by_id, _power_by_name
+from ..lookups import _mentor_by_id, _paragon_by_id, _power_by_name
 from .powers import power_select_options
 
 
@@ -46,7 +46,17 @@ def resolve_mentor(
     talent_name: str,
     needs_mentor: bool,
     skills_data: dict[str, Any],
+    *,
+    paragon: bool = False,
 ) -> dict[str, Any]:
+    """``paragon`` reads the pick out of ``paragons.xml`` instead.
+
+    A paragon (KC p.102) is the technomancer's mentor spirit, and Chummer
+    models it with the same class in the same ``<mentorspirit>`` element, so it
+    lives in the same ``state.mentor_id`` here. The two qualities cannot meet:
+    Mentor Spirit wants an awakened quality, Paragon wants Technomancer, and no
+    character is both.
+    """
     warnings: list[Notice] = []
     errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
@@ -63,9 +73,9 @@ def resolve_mentor(
             "free_powers": free_powers,
             "public": None,
         }
-    spec = _mentor_by_id(state.mentor_id or "")
+    spec = _paragon_by_id(state.mentor_id or "") if paragon else _mentor_by_id(state.mentor_id or "")
     if not spec:
-        warnings.append(notice("engine.qualities.mentorMissing"))
+        warnings.append(notice("engine.qualities.paragonMissing" if paragon else "engine.qualities.mentorMissing"))
         return {
             "warnings": warnings,
             "errors": errors,

@@ -9,7 +9,7 @@ from typing import Any
 from ...improvements import ATTR_ALIASES, EffectsDict, collect_effects
 from ...models import CharacterState
 from ...notices import Notice, notice, term
-from ..constants import MENTOR_SPIRIT_ID
+from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID
 from ..contacts import apply_excon_ware_ban
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
 from ..karma import _skill_groups_for_category
@@ -86,7 +86,16 @@ def gather(ctx: Ctx) -> None:
     for q in ctx.qualities:
         ctx.sources.append((q["name"], q.get("bonus") or []))
     ctx.needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in ctx.qualities)
-    ctx.mentor = resolve_mentor(ctx.state, ctx.talent["name"], ctx.needs_mentor, ctx.data["skills"])
+    # Paragon is Mentor Spirit for a technomancer and shares `mentor_id`; the
+    # two qualities gate on opposite talents, so at most one is ever set.
+    ctx.needs_paragon = any(q["id"] == PARAGON_ID for q in ctx.qualities)
+    ctx.mentor = resolve_mentor(
+        ctx.state,
+        ctx.talent["name"],
+        ctx.needs_mentor or ctx.needs_paragon,
+        ctx.data["skills"],
+        paragon=ctx.needs_paragon,
+    )
     ctx.warnings.extend(ctx.mentor["warnings"])
     ctx.errors.extend(ctx.mentor["errors"])
     ctx.sources.extend(ctx.mentor["bonus_sources"])
