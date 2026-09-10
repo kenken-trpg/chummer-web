@@ -108,6 +108,17 @@ export function buildChecklist(ch: Character): CheckItem[] {
       item("needs-mentor", "error", "check.needsMentor", {}, { ref: "SR5 p.78", tab: "qualities" }),
     );
   }
+  if (d.needs_paragon) {
+    items.push(
+      item(
+        "needs-paragon",
+        "error",
+        "check.needsParagon",
+        {},
+        { ref: "KC p.102", tab: "qualities" },
+      ),
+    );
+  }
   if (d.metagenic && !d.metagenic.balanced) {
     items.push(
       item(

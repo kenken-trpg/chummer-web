@@ -272,6 +272,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         )
         for key in ("attack", "sleaze", "dataprocessing", "firewall"):
             persona[key] = int(persona.get(key) or 0) + _as_int(fields.get(key))
+    elif tag == "matrixinitiative":
+        # The VR initiative score itself, not the dice — Delphi trades two
+        # points of it for a Threading bonus (KC p.103).
+        effects["matrix_initiative"] = int(effects.get("matrix_initiative") or 0) + _bonus_int(node, fields)
     elif tag in ("matrixinitiativediceadd", "matrixinitiativedice"):
         # Chummer keeps a "set" and an "add" flavour apart; every
         # `matrixinitiativedice` in the data is a +1 module, so both add here.

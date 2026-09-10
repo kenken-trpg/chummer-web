@@ -661,7 +661,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
         "wmount": _id_name(cat["weapon_mounts"]),
         "lifestyle": _id_name(cat["lifestyles"]),
         "tradition": _id_name(cat["traditions"]),
-        "mentor": _id_name(cat["mentors"]),
+        "mentor": _id_name(list(cat["mentors"]) + list(cat["paragons"])),
         "metamagic": _id_name(cat["metamagics"]),
         "art": _id_name(cat.get("magic_arts") or []),
         "focus": _id_name(cat.get("foci") or []),

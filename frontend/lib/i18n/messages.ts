@@ -306,6 +306,7 @@ const JA = {
   "coco.edge": "エッジ",
   "coco.memoTradition": "伝統: {name}",
   "coco.memoMentor": "メンター: {name}",
+  "coco.memoParagon": "パラゴン: {name}",
   "coco.memoInit": "イニシアチブ {value}+{dice}d6 ・ リミット 物{physical}/精{mental}/社{social}",
   "coco.memoArmor": "装甲 {armor} ・ エッセンス {essence}",
   "coco.memoDice": "判定は BCDice の ShadowRun5 で。",
@@ -465,6 +466,7 @@ const JA = {
   "side.matrixInit": "マトリクスInit",
   "side.tradition": "伝統",
   "side.mentor": "メンター",
+  "side.paragon": "パラゴン",
   "side.damageResist": "ダメージ抵抗",
   "side.unarmedDv": "非武装DV",
 
@@ -918,6 +920,8 @@ const JA = {
   "desc.notesPlaceholder": "GM 用メモ・運用メモなど。シートと .chum5 書き出しに反映されます。",
 
   "mentor.title": "メンタースピリット",
+  "mentor.paragonTitle": "パラゴン",
+  "mentor.paragonLabel": "パラゴン",
   "mentor.none": "未選択",
   "mentor.label": "メンター",
   "mentor.chooseTarget": "対象を選択",
@@ -970,6 +974,7 @@ const JA = {
   "sheet.modeChargen": " ・ 作成",
   "sheet.unnamed": "無名のランナー",
   "sheet.mentor": " ・ メンター {name}",
+  "sheet.paragon": " ・ パラゴン {name}",
   "sheet.karmaLeft": "カルマ残",
 
   "sheet.limits": "リミット",
@@ -1355,7 +1360,8 @@ const JA = {
   "qual.blockPrereq": "前提を満たしていません",
   "qual.blockForbidden": "現在のキャラクターでは取れません",
 
-  "check.needsMentor": "メンター精霊／イディオットが未選択です",
+  "check.needsMentor": "メンタースピリットが未選択です",
+  "check.needsParagon": "パラゴンが未選択です",
   "check.metagenicUnbalanced":
     "メタジェネティック資質のカルマ収支が不均衡です（＋{positive} / −{negative}）",
   "check.pointsLeft": "{label}が {left} 点余っています（使用 {used} / {max}）",
@@ -1504,6 +1510,7 @@ const JA = {
   "engine.qualities.extraInvalid": "{name} の対象が不正です",
   "engine.qualities.forbidden": "{name} は現在のキャラクターでは取れません",
   "engine.qualities.mentorMissing": "メンタースピリットを選んでください",
+  "engine.qualities.paragonMissing": "パラゴンを選んでください",
   "engine.qualities.mentorPowerTarget": "{mentor} の {power} の対象を選んでください",
   "engine.qualities.metagenicNeedsChangeling":
     "メタジェネティック資質には Changeling（Class I／II／III SURGE）が必要です",
@@ -2049,6 +2056,7 @@ const EN: Catalog = {
   "coco.edge": "Edge",
   "coco.memoTradition": "Tradition: {name}",
   "coco.memoMentor": "Mentor: {name}",
+  "coco.memoParagon": "Paragon: {name}",
   "coco.memoInit": "Initiative {value}+{dice}d6 · limits P{physical}/M{mental}/S{social}",
   "coco.memoArmor": "Armor {armor} · Essence {essence}",
   "coco.memoDice": "Roll with BCDice's ShadowRun5.",
@@ -2204,6 +2212,7 @@ const EN: Catalog = {
   "side.matrixInit": "Matrix init",
   "side.tradition": "Tradition",
   "side.mentor": "Mentor",
+  "side.paragon": "Paragon",
   "side.damageResist": "Damage resistance",
   "side.unarmedDv": "Unarmed DV",
 
@@ -2651,6 +2660,8 @@ const EN: Catalog = {
     "Notes for the GM or for play. They appear on the sheet and in the .chum5 export.",
 
   "mentor.title": "Mentor spirit",
+  "mentor.paragonTitle": "Paragon",
+  "mentor.paragonLabel": "Paragon",
   "mentor.none": "None chosen",
   "mentor.label": "Mentor",
   "mentor.chooseTarget": "Choose a target",
@@ -2699,6 +2710,7 @@ const EN: Catalog = {
   "sheet.modeChargen": " · creation",
   "sheet.unnamed": "Unnamed runner",
   "sheet.mentor": " · mentor {name}",
+  "sheet.paragon": " · paragon {name}",
   "sheet.karmaLeft": "Karma left",
 
   "sheet.limits": "Limits",
@@ -3060,7 +3072,8 @@ const EN: Catalog = {
   "qual.blockPrereq": "Prerequisites not met",
   "qual.blockForbidden": "Not available to this character",
 
-  "check.needsMentor": "No mentor spirit / paragon chosen",
+  "check.needsMentor": "No mentor spirit chosen",
+  "check.needsParagon": "No paragon chosen",
   "check.metagenicUnbalanced": "Metagenic karma is unbalanced (+{positive} / −{negative})",
   "check.pointsLeft": "{label}: {left} left (spent {used} / {max})",
   "check.points.attributes": "Attribute points",
@@ -3208,6 +3221,7 @@ const EN: Catalog = {
   "engine.qualities.extraInvalid": "{name}: that target is not valid",
   "engine.qualities.forbidden": "{name} is not available to this character",
   "engine.qualities.mentorMissing": "Choose a mentor spirit",
+  "engine.qualities.paragonMissing": "Choose a paragon",
   "engine.qualities.mentorPowerTarget": "Choose a target for {mentor}'s {power}",
   "engine.qualities.metagenicNeedsChangeling":
     "Metagenic qualities require Changeling (Class I/II/III SURGE)",

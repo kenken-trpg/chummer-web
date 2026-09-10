@@ -63,6 +63,7 @@ IMPLEMENTED = {
     "addqualities",
     "addquality",
     "selectmentorspirit",
+    "selectparagon",
     "metamagiclimit",
     "focusbindingkarmacost",
     "skillattribute",
@@ -201,6 +202,7 @@ IMPLEMENTED = {
     "swapskillspecattribute",
     "skillgrouplevel",
     "quickeningmetamagic",
+    "matrixinitiative",
     "matrixinitiativedice",
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
@@ -233,7 +235,6 @@ SILENT_TAGS = {
     "metageniclimit",
     "selectarmor",
     "selectsprite",
-    "selectparagon",
     "selectinherentaiprogram",
     "selectattribute",
     "streetcredmultiplier",

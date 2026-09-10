@@ -393,7 +393,10 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     if men is None:
         men = root.find("./mentorspirits/mentorspirit")
     if men is not None:
-        mid = _Resolver(cat["mentors"]).resolve(men, warn, ui("engine.kind.mentor"))
+        # Chummer writes a paragon into the same element with the same class,
+        # so both lists answer here; the guids are unique across the two files.
+        mentors = list(cat["mentors"]) + list(cat["paragons"])
+        mid = _Resolver(mentors).resolve(men, warn, ui("engine.kind.mentor"))
         if mid:
             st["mentor_id"] = mid
         # This app's own pair of lists (see the export); a file Chummer wrote

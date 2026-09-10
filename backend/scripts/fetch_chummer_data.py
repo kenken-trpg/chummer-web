@@ -47,6 +47,7 @@ FILES = [
     "Chummer/data/vehicles.xml",
     "Chummer/data/lifestyles.xml",
     "Chummer/data/mentors.xml",
+    "Chummer/data/paragons.xml",
     "Chummer/data/spells.xml",
     "Chummer/data/traditions.xml",
     "Chummer/data/critterpowers.xml",

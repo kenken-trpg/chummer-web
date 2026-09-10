@@ -10,7 +10,7 @@ and the rules that consume it are found under the same name.
 from __future__ import annotations
 
 from .foci import load_foci, load_focus_formulae, load_magic_arts, load_metamagics
-from .powers import load_enhancements, load_mentors, load_powers, load_qi_focus
+from .powers import load_enhancements, load_mentors, load_paragons, load_powers, load_qi_focus
 from .resonance import load_complex_forms, load_echoes, load_sprites, load_streams
 from .spells import (
     SPELL_CAST_CATEGORIES,
@@ -32,6 +32,7 @@ __all__ = [
     "load_focus_formulae",
     "load_magic_arts",
     "load_mentors",
+    "load_paragons",
     "load_metamagics",
     "load_powers",
     "load_qi_focus",

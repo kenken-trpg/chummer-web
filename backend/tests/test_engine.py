@@ -5592,6 +5592,58 @@ def _techno(cid: str, letter: str = "A", **kwargs: object) -> CharacterState:
     )
 
 
+PARAGON = "c5311ee0-8a9b-41b9-857f-28541090968a"  # the quality, KC p.102
+DELPHI = "c45c123c-06c7-42b3-a2ee-01e37f2f7bf8"
+SHOOTER = "de755412-5cae-4859-880f-75a7bd68d5a4"
+
+
+def test_a_paragon_is_the_technomancers_mentor_spirit() -> None:
+    """Delphi trades initiative for Threading (KC p.103). It reaches the
+    character through the mentor machinery, off `paragons.xml`."""
+    base = compute(_techno("no-paragon"))
+    out = compute(_techno("delphi", quality_ids=[PARAGON], mentor_id=DELPHI))
+
+    assert out.derived["needs_paragon"] is True
+    assert out.derived["needs_mentor"] is False
+    assert out.derived["mentor"]["name"] == "Delphi (The Oracle)"
+    assert out.derived["initiative"]["value"] == base.derived["initiative"]["value"] - 2
+    threading = [row for row in out.derived["action_dice_pools"] if row["name"] == "Threading"]
+    assert [row["bonus"] for row in threading] == [1]
+
+
+def test_delphi_gives_up_matrix_initiative_as_well() -> None:
+    """`<matrixinitiative>` moves the VR score itself, not the dice — the one
+    tag in the file that the initiative-dice handler does not cover."""
+    base = compute(_techno("no-paragon"))
+    out = compute(_techno("delphi-vr", quality_ids=[PARAGON], mentor_id=DELPHI))
+
+    assert out.derived["matrix_initiative"]["value"] == base.derived["matrix_initiative"]["value"] - 2
+    assert out.derived["matrix_initiative"]["cold_dice"] == base.derived["matrix_initiative"]["cold_dice"]
+
+
+def test_a_paragon_gives_and_takes_dice() -> None:
+    """Shooter is +1 Cybercombat and -2 Compiling (KC p.104)."""
+    out = compute(
+        _techno("shooter", quality_ids=[PARAGON], mentor_id=SHOOTER, skills={"Cybercombat": 3, "Compiling": 3})
+    )
+    assert out.derived["skill_bonus"]["Cybercombat"] == 1
+    assert out.derived["skill_bonus"]["Compiling"] == -2
+
+
+def test_the_paragon_quality_asks_for_a_pick() -> None:
+    out = compute(_techno("unpicked", quality_ids=[PARAGON]))
+    assert out.derived["needs_paragon"] is True
+    assert out.derived["mentor"] is None
+    assert has(out.derived["warnings"], "engine.qualities.paragonMissing")
+
+
+def test_no_paragon_bonus_is_left_unimplemented() -> None:
+    """All nine, so a data bump that adds a tag we do not read shows up here."""
+    for spec in catalog()["paragons"]:
+        out = compute(_techno(f"p-{spec['id'][:8]}", quality_ids=[PARAGON], mentor_id=spec["id"]))
+        assert out.derived["unimplemented_bonuses"] == [], spec["name"]
+
+
 def test_complex_form_fade_formula() -> None:
     assert spell_drain_value("L-2", 3) == 2
     assert spell_drain_value("L+1", 3) == 4

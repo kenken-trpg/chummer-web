@@ -46,6 +46,16 @@ def section(raw: CatalogDict) -> dict:
             }
             for m in raw.get("mentors") or []
         ],
+        "paragons": [
+            {
+                "id": m["id"],
+                "name": m["name"],
+                "source": m.get("source"),
+                "page": m.get("page"),
+                "advantage": m.get("advantage") or "",
+            }
+            for m in raw.get("paragons") or []
+        ],
         "spells": [
             {
                 "id": s["id"],

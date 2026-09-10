@@ -62,6 +62,20 @@ describe("buildChecklist", () => {
     });
   });
 
+  it("flags a missing paragon as an error of its own", () => {
+    const items = buildChecklist(
+      makeCharacter({
+        derived: { karma: { pool: 25, spent: 25, remaining: 0 }, needs_paragon: true },
+      }),
+    );
+    expect(items.find((i) => i.id === "needs-paragon")).toMatchObject({
+      severity: "error",
+      tab: "qualities",
+      ref: "KC p.102",
+    });
+    expect(items.find((i) => i.id === "needs-mentor")).toBeUndefined();
+  });
+
   it("lists unimplemented bonuses as notes", () => {
     const items = buildChecklist(
       makeCharacter({

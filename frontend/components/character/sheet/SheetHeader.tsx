@@ -19,7 +19,9 @@ export function SheetHeader(s: SheetData) {
           {character.talent || "Mundane"}
           {d.tradition ? ` ・ ${tr(d.tradition.name)}` : ""}
           {d.stream ? ` ・ ${tr(d.stream.name)}` : ""}
-          {d.mentor ? ui("sheet.mentor", { name: tr(d.mentor.name) }) : ""}
+          {d.mentor
+            ? ui(d.needs_paragon ? "sheet.paragon" : "sheet.mentor", { name: tr(d.mentor.name) })
+            : ""}
         </p>
       </div>
       <div className="sheet-header-stats">

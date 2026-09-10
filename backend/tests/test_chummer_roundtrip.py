@@ -434,6 +434,30 @@ def test_a_technomancers_stream_and_sprites_survive() -> None:
     assert len(ch1.derived["sprites"]) == len(ch2.derived["sprites"]) == 1
 
 
+_PARAGON_XML = build_chum5(
+    name="Oracle",
+    metatype="Human",
+    talent="Technomancer",
+    priorities=("D", "C", "A", "B", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 3, "INT": 4, "LOG": 4, "WIL": 5, "RES": 6},
+    skills={"Compiling": 4},
+    stream="Default",
+    qualities=["Paragon"],
+    mentor="Delphi (The Oracle)",
+)
+
+
+def test_a_paragon_survives_the_round_trip() -> None:
+    """Chummer writes a paragon into `<mentorspirit>` like any other mentor, so
+    the name resolves against `paragons.xml` on the way back in."""
+    s1, ch1, ch2 = _loop(_PARAGON_XML)
+
+    assert s1["mentor_id"]
+    assert ch1.derived["needs_paragon"] is True
+    assert ch1.derived["mentor"]["name"] == ch2.derived["mentor"]["name"] == "Delphi (The Oracle)"
+    assert ch1.derived["initiative"]["value"] == ch2.derived["initiative"]["value"]
+
+
 _MENTOR_PICK_XML = build_chum5(
     name="Smith",
     metatype="Human",

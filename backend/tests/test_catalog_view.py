@@ -37,6 +37,7 @@ EXPECTED_KEYS = {
     "complex_forms",
     "streams",
     "sprites",
+    "paragons",
     "foci",
     "qi_focus",
     "metamagics",

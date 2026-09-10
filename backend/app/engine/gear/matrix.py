@@ -128,6 +128,7 @@ def matrix_initiative(
     personas: list[tuple[str, dict[str, Any] | None]],
     intuition: int,
     extra_dice: int = 0,
+    offset: int = 0,
 ) -> MatrixInitiative | None:
     """The VR initiative of the best persona the character can run.
 
@@ -135,7 +136,8 @@ def matrix_initiative(
     persona, then the devices. The one with the highest Data Processing wins,
     because that is the one worth jacking into; ties keep the earlier entry.
     ``extra_dice`` is `<matrixinitiativedice>` (a Multidimensional Coprocessor,
-    the Sourcerer echoes).
+    the Sourcerer echoes); ``offset`` is `<matrixinitiative>`, which moves the
+    score rather than the dice — Delphi gives up two points of it (KC p.103).
     """
     best: tuple[str, int] | None = None
     for label, row in personas:
@@ -150,7 +152,7 @@ def matrix_initiative(
     return {
         "device": label,
         "dataprocessing": processing,
-        "value": processing + int(intuition),
+        "value": max(0, processing + int(intuition) + int(offset)),
         "cold_dice": COLD_SIM_DICE + int(extra_dice),
         "hot_dice": HOT_SIM_DICE + int(extra_dice),
     }

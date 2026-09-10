@@ -10,24 +10,29 @@ export function MentorPicker({
   ch,
   tr,
   onPatch,
+  paragon = false,
 }: {
   catalog: Catalog;
   mentor?: MentorInfo | null;
   ch: Character;
   tr: (name: string) => string;
   onPatch: (body: Record<string, unknown>) => void;
+  /** Pick out of `catalog.paragons` instead — a technomancer's mentor spirit
+   * (KC p.102). It shares `mentor_id`, because no character can have both. */
+  paragon?: boolean;
 }) {
   const { ui } = useUiText();
+  const options = (paragon ? catalog.paragons : catalog.mentors) || [];
   return (
     <div className="cyber-item">
       <div>
-        <b>{ui("mentor.title")}</b>
+        <b>{ui(paragon ? "mentor.paragonTitle" : "mentor.title")}</b>
         <div className="muted">
           {mentor ? `${tr(mentor.name)} / ${mentor.source}` : ui("mentor.none")}
         </div>
         <div className="cyber-controls">
           <label>
-            {ui("mentor.label")}
+            {ui(paragon ? "mentor.paragonLabel" : "mentor.label")}
             <select
               value={ch.mentor_id || ""}
               onChange={(e) =>
@@ -35,7 +40,7 @@ export function MentorPicker({
               }
             >
               <option value="">{ui("common.choose")}</option>
-              {(catalog.mentors || []).map((item) => (
+              {options.map((item) => (
                 <option key={item.id} value={item.id}>
                   {tr(item.name)}
                 </option>
