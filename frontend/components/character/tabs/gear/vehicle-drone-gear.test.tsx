@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import { VehicleDroneGear } from "./VehicleDroneGear";
@@ -602,5 +602,40 @@ describe("<VehicleDroneGear> the summary line", () => {
 
     expect(container.textContent).toContain("SEAT 4");
     expect(container.textContent).toContain("3/20");
+  });
+});
+
+describe("<VehicleDroneGear> compact view", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("folds a vehicle to its name and what is fitted, and remembers it", () => {
+    const v = vehicle("v1", "Americar", {
+      mods: [mod("m1", "Improved Economy")],
+      weapon_mounts: [{ id: "wm1", name: "Front", nuyen: 2500, slots: 2, included: false }],
+    });
+    const patch = vi.fn();
+    const first = renderVehicle(owning(v), patch);
+    expect(document.querySelectorAll(".cyber-item .cyber-controls").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByLabelText("簡易表示（名称のみ）"));
+    const card = document.querySelector(".cyber-item.compact")!;
+    expect(card.querySelector(".cyber-controls")).toBeNull();
+    expect(card.textContent).not.toContain("HND");
+    expect(card.textContent).toContain("Improved Economy、Front");
+    expect(localStorage.getItem("vehicleCompact")).toBe("1");
+    // a garage folds apart from the body
+    expect(localStorage.getItem("wareCompact")).toBeNull();
+
+    fireEvent.click(within(card as HTMLElement).getByRole("button", { name: "削除" }));
+    expect(patch).toHaveBeenCalledWith(expect.objectContaining({ vehicles: [] }));
+
+    first.unmount();
+    renderVehicle(owning(v), vi.fn());
+    expect(document.querySelector(".cyber-item.compact")).not.toBeNull();
+  });
+
+  it("has no switch until there is a vehicle to fold", () => {
+    renderVehicle(makeCharacter({} as any), vi.fn());
+    expect(screen.queryByLabelText("簡易表示（名称のみ）")).toBeNull();
   });
 });
