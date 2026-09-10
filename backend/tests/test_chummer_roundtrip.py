@@ -371,3 +371,87 @@ def test_qi_focus_keeps_the_power_it_carries() -> None:
     assert ch2.derived["qi_foci"][0]["name"] == "Improved Reflexes"
     # The power it grants is free — the focus paid for it, not the power points.
     assert any(p["name"] == "Improved Reflexes" for p in ch1.derived["adept_powers"])
+
+
+# --------------------------------------------------------------------------- #
+# Scenario G — the magic side-cars: spirits, mentor picks, mystic-adept split   #
+# --------------------------------------------------------------------------- #
+
+_SUMMONER_XML = build_chum5(
+    name="Kettle",
+    metatype="Human",
+    talent="Mystic Adept",
+    priorities=("D", "C", "A", "B", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 4, "INT": 4, "LOG": 3, "WIL": 4, "MAG": 6},
+    skills={"Summoning": 5, "Spellcasting": 4, "Unarmed Combat": 3},
+    qualities=["The Warrior's Way"],
+    spells=["Manabolt"],
+    powers=[{"name": "Counterstrike", "rating": 1}],
+    enhancements=["Master of Taijiquan"],
+    tradition="Hermetic",
+    mentor="Bear",
+    mystic_pp=2,
+    spirits=[
+        {"name": "Spirit of Fire", "force": 4, "services": 2, "bound": True},
+        {"name": "Spirit of Water", "force": 3, "services": 1, "bound": False},
+    ],
+)
+
+
+def test_bound_spirits_and_the_mystic_adept_split_survive() -> None:
+    s1, ch1, ch2 = _loop(_SUMMONER_XML)
+
+    assert [(row["force"], row["services"], row["bound"]) for row in s1["spirits"]] == [(4, 2, True), (3, 1, False)]
+    assert len(ch1.derived["spirits"]) == len(ch2.derived["spirits"]) == 2
+    # Power points bought with karma, not the whole of MAG.
+    assert s1["mystic_pp"] == ch1.mystic_pp == 2
+    assert ch1.derived["power_points"]["max"] == ch2.derived["power_points"]["max"]
+    assert s1["adept_enhancements"] and s1["mentor_id"]
+    assert [row["name"] for row in ch1.derived["enhancements"]] == ["Master of Taijiquan"]
+
+
+_TECHNO_STREAM_XML = build_chum5(
+    name="Static",
+    metatype="Human",
+    talent="Technomancer",
+    priorities=("D", "C", "A", "B", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 3, "INT": 4, "LOG": 4, "WIL": 5, "RES": 6},
+    skills={"Compiling": 4, "Software": 3},
+    complex_forms=["Puppeteer"],
+    stream="Default",
+    sprites=[{"name": "Courier Sprite", "level": 3, "services": 2, "registered": True}],
+)
+
+
+def test_a_technomancers_stream_and_sprites_survive() -> None:
+    """Sprites ride in the same `<spirits>` as a mage's spirits; the stream is
+    the technomancer's answer to a tradition."""
+    s1, ch1, ch2 = _loop(_TECHNO_STREAM_XML)
+
+    assert s1["stream_id"]
+    assert s1["spirits"] == []
+    assert [(row["level"], row["services"], row["registered"]) for row in s1["sprites"]] == [(3, 2, True)]
+    assert len(ch1.derived["sprites"]) == len(ch2.derived["sprites"]) == 1
+
+
+_MENTOR_PICK_XML = build_chum5(
+    name="Smith",
+    metatype="Human",
+    talent="Magician",
+    priorities=("D", "C", "A", "B", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 4, "INT": 4, "LOG": 3, "WIL": 4, "MAG": 6},
+    skills={"Spellcasting": 4},
+    spells=["Manabolt"],
+    tradition="Hermetic",
+    qualities=["Mentor Spirit"],
+    mentor="Fire-Bringer",
+    # The *second* option in its group, so a lost pick would fall back to
+    # "+2 dice on Artisan Tests" and the assertion below would catch it.
+    mentor_choices=["+2 dice on Alchemy Tests"],
+)
+
+
+def test_a_deliberate_mentor_pick_is_not_reset_to_the_default() -> None:
+    _, ch1, ch2 = _loop(_MENTOR_PICK_XML)
+    assert "+2 dice on Alchemy Tests" in ch1.mentor_choices
+    assert ch2.mentor_choices == ch1.mentor_choices

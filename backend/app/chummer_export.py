@@ -109,6 +109,11 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
     _sub(ess, "name", "ESS")
     _sub(ess, "base", 6)
     _sub(ess, "karma", 0)
+    if state.mystic_pp:
+        # A Mystic Adept's MAG is split between spells and power points, and
+        # the adept half is what this app calls `mystic_pp`.
+        _sub(root, "magsplitadept", state.mystic_pp)
+        _sub(root, "magsplitmagician", max(0, int(state.attributes.get("MAG", 0)) - int(state.mystic_pp)))
 
 
 def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -482,10 +487,73 @@ def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx
         tr = _sub(root, "tradition")
         _sub(tr, "guid", state.tradition_id)
         _sub(tr, "name", names["tradition"].get(state.tradition_id, ""))
+    if state.stream_id:
+        # A technomancer's stream is a tradition-shaped thing of its own;
+        # Chummer reads it from `<stream>`.
+        _sub(root, "stream", names["stream"].get(state.stream_id, ""))
     if state.mentor_id:
         me = _sub(root, "mentorspirit")
         _sub(me, "guid", state.mentor_id)
         _sub(me, "name", names["mentor"].get(state.mentor_id, ""))
+        # Chummer holds at most two mentor picks, in two fixed fields. This app
+        # keeps a list plus a map of what each pick resolved to, so the pair of
+        # lists below is what actually round-trips; the two fields mirror the
+        # first two picks so Chummer has something to show.
+        for index, tag in enumerate(("extrachoice1", "extrachoice2")):
+            _sub(me, tag, state.mentor_choices[index] if index < len(state.mentor_choices) else "")
+        choices = _sub(me, "choices")
+        for picked in state.mentor_choices:
+            _sub(choices, "choice", picked)
+        extras = _sub(me, "extras")
+        for key, value in sorted(state.mentor_extras.items()):
+            row = _sub(extras, "extra")
+            _sub(row, "key", key)
+            _sub(row, "value", value)
+
+
+def _export_spirits(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write bound spirits and registered sprites into one `<spirits>`.
+
+    Chummer keeps both in the same list and tells them apart by `<type>`; a
+    sprite's Level is its `<force>`. The hits of the summoning/compiling test
+    are this app's own and ride along as extra children.
+    """
+    spirits = _sub(root, "spirits")
+    for srow in state.spirits:
+        el = _sub(spirits, "spirit")
+        _sub(el, "guid", srow.id)
+        _sub(el, "name", names["spirit"].get(srow.spirit_id, ""))
+        _sub(el, "type", "Spirit")
+        _sub(el, "force", srow.force)
+        _sub(el, "services", srow.services)
+        _sub(el, "bound", "True" if srow.bound else "False")
+        _sub(el, "fettered", "False")
+        if srow.hits is not None:
+            _sub(el, "hits", srow.hits)
+        if srow.opposed_hits is not None:
+            _sub(el, "opposedhits", srow.opposed_hits)
+    for prow in state.sprites:
+        el = _sub(spirits, "spirit")
+        _sub(el, "guid", prow.id)
+        _sub(el, "name", names["sprite"].get(prow.sprite_id, ""))
+        _sub(el, "type", "Sprite")
+        _sub(el, "force", prow.level)
+        _sub(el, "services", prow.services)
+        _sub(el, "bound", "True" if prow.registered else "False")
+        _sub(el, "fettered", "False")
+        if prow.hits is not None:
+            _sub(el, "hits", prow.hits)
+        if prow.opposed_hits is not None:
+            _sub(el, "opposedhits", prow.opposed_hits)
+
+
+def _export_enhancements(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write the adept-power enhancements (`<enhancements>`)."""
+    el = _sub(root, "enhancements")
+    for eid in state.adept_enhancements:
+        row = _sub(el, "enhancement")
+        _sub(row, "sourceid", eid)
+        _sub(row, "name", names["enhancement"].get(eid, ""))
 
 
 def _export_initiation(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -560,6 +628,10 @@ def state_to_chum5(state: CharacterState) -> bytes:
             "name": str((cat.get("qi_focus") or {}).get("name") or ""),
         },
         "drugcomponent": _id_name(cat.get("drug_components") or []),
+        "spirit": _id_name(cat.get("spirits") or []),
+        "sprite": _id_name(cat.get("sprites") or []),
+        "stream": _id_name(cat.get("streams") or []),
+        "enhancement": _id_name(cat.get("enhancements") or []),
     }
 
     root = ET.Element("character")
@@ -591,5 +663,7 @@ _SECTIONS = (
     _export_lifestyles,
     _export_custom_drugs,
     _export_contacts,
+    _export_spirits,
+    _export_enhancements,
     _export_initiation,
 )

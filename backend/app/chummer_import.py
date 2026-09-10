@@ -349,6 +349,19 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         if tid:
             st["tradition_id"] = tid
 
+    stream_name = _text(root.find("stream"))
+    if stream_name:
+        sid = _Resolver(cat["streams"]).by_name.get(stream_name.lower())
+        if sid:
+            st["stream_id"] = sid
+        else:
+            warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.stream"), name=stream_name))
+
+    # A Mystic Adept's MAG is split; the adept half is the power points bought.
+    split = _int(root.find("magsplitadept"), 0)
+    if split > 0:
+        st["mystic_pp"] = split
+
     men = root.find("mentorspirit")
     if men is None:
         men = root.find("./mentorspirits/mentorspirit")
@@ -356,6 +369,73 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         mid = _Resolver(cat["mentors"]).resolve(men, warn, ui("engine.kind.mentor"))
         if mid:
             st["mentor_id"] = mid
+        # This app's own pair of lists (see the export); a file Chummer wrote
+        # has only `<extrachoice1>` / `<extrachoice2>`, which name the pick
+        # itself rather than what it resolved to.
+        choices = [_text(c) for c in men.findall("./choices/choice")]
+        choices = [c for c in choices if c]
+        extras = {
+            key: _text(row.find("value")) for row in men.findall("./extras/extra") if (key := _text(row.find("key")))
+        }
+        if not choices:
+            choices = [name for tag in ("extrachoice1", "extrachoice2") if (name := _text(men.find(tag)))]
+        st["mentor_choices"] = choices
+        st["mentor_extras"] = extras
+
+
+def _import_spirits(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read bound spirits, registered sprites and adept enhancements.
+
+    Chummer keeps spirits and sprites in one `<spirits>`, told apart by
+    `<type>`; a sprite's Level is its `<force>`.
+    """
+    spirit_r = _Resolver(cat["spirits"])
+    sprite_r = _Resolver(cat["sprites"])
+    spirits: list[dict[str, Any]] = []
+    sprites: list[dict[str, Any]] = []
+    for el in root.findall("./spirits/spirit"):
+        force = max(1, _int(el.find("force"), 1))
+        services = max(0, _int(el.find("services"), 0))
+        hits = _int(el.find("hits"), 0) or None
+        opposed = _int(el.find("opposedhits"), 0) or None
+        bound = _text(el.find("bound")).lower() == "true"
+        if _text(el.find("type")).lower() == "sprite":
+            pid = sprite_r.resolve(el, warn, ui("engine.kind.sprite"))
+            if pid:
+                sprites.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "sprite_id": pid,
+                        "level": force,
+                        "services": services,
+                        "registered": bound,
+                        "hits": hits,
+                        "opposed_hits": opposed,
+                    }
+                )
+            continue
+        sid = spirit_r.resolve(el, warn, ui("engine.kind.spirit"))
+        if sid:
+            spirits.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "spirit_id": sid,
+                    "force": force,
+                    "services": services,
+                    "bound": bound,
+                    "hits": hits,
+                    "opposed_hits": opposed,
+                }
+            )
+    st["spirits"] = spirits
+    st["sprites"] = sprites
+
+    enh_r = _Resolver(cat["enhancements"])
+    st["adept_enhancements"] = [
+        eid
+        for el in root.findall("./enhancements/enhancement")
+        if (eid := enh_r.resolve(el, warn, ui("engine.kind.enhancement")))
+    ]
 
 
 def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -821,6 +901,7 @@ _SECTIONS = (
     _import_skills,
     _import_qualities,
     _import_magic,
+    _import_spirits,
     _import_initiation,
     _import_ware,
     _import_armor,
