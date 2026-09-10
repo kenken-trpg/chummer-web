@@ -104,6 +104,12 @@ def build_chum5(
     foci: list[dict[str, Any]] | None = None,
     weapon_mounts: list[dict[str, Any]] | None = None,
     custom_drugs: list[dict[str, Any]] | None = None,
+    spirits: list[dict[str, Any]] | None = None,
+    sprites: list[dict[str, Any]] | None = None,
+    enhancements: list[str] | None = None,
+    stream: str | None = None,
+    mystic_pp: int = 0,
+    mentor_choices: list[str] | None = None,
 ) -> bytes:
     root = ET.Element("character")
     _e(root, "name", "")
@@ -178,10 +184,40 @@ def build_chum5(
     for cname in complex_forms or []:
         _e(_e(cf_el, "complexform"), "name", cname)
 
+    sp_el = _e(root, "spirits")
+    # Chummer keeps spirits and sprites in the one list, told apart by <type>.
+    for row in spirits or []:
+        sp = _e(sp_el, "spirit")
+        _e(sp, "name", row["name"])
+        _e(sp, "type", "Spirit")
+        _e(sp, "force", row.get("force", 1))
+        _e(sp, "services", row.get("services", 1))
+        _flag(sp, "bound", bool(row.get("bound", True)))
+    for row in sprites or []:
+        sp = _e(sp_el, "spirit")
+        _e(sp, "name", row["name"])
+        _e(sp, "type", "Sprite")
+        _e(sp, "force", row.get("level", 1))
+        _e(sp, "services", row.get("services", 1))
+        _flag(sp, "bound", bool(row.get("registered", True)))
+
+    en_el = _e(root, "enhancements")
+    for ename in enhancements or []:
+        _e(_e(en_el, "enhancement"), "name", ename)
+
+    if stream:
+        _e(root, "stream", stream)
+    if mystic_pp:
+        _e(root, "magsplitadept", mystic_pp)
+
     if tradition:
         _e(_e(root, "tradition"), "name", tradition)
     if mentor:
-        _e(_e(root, "mentorspirit"), "name", mentor)
+        me = _e(root, "mentorspirit")
+        _e(me, "name", mentor)
+        # As Chummer writes them: at most two, and only the pick's own name.
+        for tag, picked in zip(("extrachoice1", "extrachoice2"), mentor_choices or [], strict=False):
+            _e(me, tag, picked)
 
     grades = _e(root, "initiationgrades")
     metamagics = _e(root, "metamagics")
