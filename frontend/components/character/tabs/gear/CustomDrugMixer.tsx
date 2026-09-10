@@ -6,7 +6,7 @@ import type { CustomDrugInstall, DrugComponentCatalogItem } from "@/lib/types";
 
 /** Foundation first: it is the one part a drug must have, and it decides what
  *  the blocks under it are allowed to do (CF p.190). */
-const CATEGORY_ORDER = ["Foundation", "Block", "Enhancer", "BTLs"];
+const CATEGORY_ORDER = ["Foundation", "Block", "Enhancer"];
 
 function sortComponents(items: DrugComponentCatalogItem[]) {
   return [...items].sort(

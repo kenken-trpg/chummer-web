@@ -79,12 +79,14 @@ def drug_effect_summary(nodes: list[dict[str, Any]], positive_attribute: int = 0
 def load_drug_components() -> dict[str, dict[str, Any]]:
     """Mechanical data for premade drugs, keyed by the shared drug/gear id.
 
-    ``drugcomponents.xml`` carries the ``<bonus>`` (attribute / limit /
-    initiativedice / quality / specificskill), the ``<duration>`` formula
-    (seconds, may use ``{BOD}`` / ``{D6}``), ``<speed>`` and ``<vectors>`` that
-    the flat ``gear.xml`` ``Drugs`` entries omit.
+    ``drugs.xml`` carries the ``<bonus>`` (attribute / limit / initiativedice /
+    quality / specificskill), the ``<duration>`` formula (seconds, may use
+    ``{BOD}`` / ``{D6}``), ``<speed>`` and ``<vectors>`` that the flat
+    ``gear.xml`` ``Drugs`` entries omit. Upstream kept all of this in
+    ``drugcomponents.xml`` until it split the premade drugs — the BTLs among
+    them — into a file of their own.
     """
-    root = data_root("drugcomponents.xml")
+    root = data_root("drugs.xml")
     if root is None:
         return {}
     out: dict[str, dict[str, Any]] = {}
@@ -197,8 +199,9 @@ def _int_text(value: str | None, default: int = 0) -> int:
 
 
 def load_custom_drug_components() -> list[dict[str, Any]]:
-    """The Foundation / Block / Enhancer / BTL parts a custom drug is mixed
-    from (CF p.190).
+    """The Foundation / Block / Enhancer parts a custom drug is mixed from
+    (CF p.190). BTLs used to be mixable parts too; upstream moved them to
+    ``drugs.xml``, where each is a premade drug of its own.
 
     ``rating`` / ``threshold`` in the XML are the component's *addiction*
     rating and threshold, not a gear rating — they are renamed here so nothing
@@ -233,10 +236,10 @@ def load_custom_drug_components() -> list[dict[str, Any]]:
 
 
 def load_custom_drug_grades() -> list[dict[str, Any]]:
-    """The quality a custom drug is cooked to (``<grades>`` in
-    ``drugcomponents.xml``): a cost multiplier and, for Pharmaceutical, an
-    addiction-threshold modifier."""
-    root = data_root("drugcomponents.xml")
+    """The quality a custom drug is cooked to (``<grades>`` in ``drugs.xml``):
+    a cost multiplier and, for Pharmaceutical, an addiction-threshold
+    modifier."""
+    root = data_root("drugs.xml")
     if root is None:
         return []
     items: list[dict[str, Any]] = []

@@ -1,6 +1,6 @@
 """Drug / toxin / chemical effects used at play time.
 
-``drugcomponents.xml`` expresses a drug's effect with its own small ``<bonus>``
+``drugs.xml`` expresses a drug's effect with its own small ``<bonus>``
 vocabulary; :func:`_drug_effect_nodes` translates that into the tags
 :func:`app.improvements.apply_bonus_nodes` understands, and
 :func:`apply_active_drugs` folds every drug flagged ``active`` on the character
@@ -18,7 +18,20 @@ from ...notices import Notice, notice
 from ..lookups import _quality_by_name
 
 _DRUG_CATEGORIES = {"Drugs", "Toxins", "Chemicals"}
+#: What a custom drug counts as when a `<drugpositiveattributemodifier>` picks
+#: its drugs by category — the category `gear.xml` files a mixed drug under.
+CUSTOM_DRUG_CATEGORY = "Custom Drugs"
 _DRUG_LIMIT_TAG = {"physical": "physicallimit", "mental": "mentallimit", "social": "sociallimit"}
+
+
+def _positive_attribute(effects: EffectsDict, category: str) -> int:
+    """How much Narco adds to what a drug of ``category`` raises (CF p.159).
+
+    A node without a category applies to every drug, so the two add up; the
+    data has only Narco, which names one category per node.
+    """
+    modifiers = effects.get("drug_positive_attribute") or {}
+    return int(modifiers.get("", 0)) + int(modifiers.get(category, 0))
 
 
 def _granted_quality_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
@@ -39,7 +52,7 @@ def _granted_quality_nodes(node: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _drug_effect_nodes(nodes: list[dict[str, Any]], positive_attribute: int = 0) -> list[dict[str, Any]]:
-    """Translate ``drugcomponents.xml`` <bonus> vocab into the tags that
+    """Translate the drug <bonus> vocab into the tags that
     :func:`apply_bonus_nodes` understands.
 
     ``positive_attribute`` is what ``<drugpositiveattributemodifier>`` adds to
@@ -123,7 +136,7 @@ def apply_active_drugs(
         # The name alone: bonus nodes are only folded in while the drug is
         # active, so there is nothing to tell it apart from.
         # Narco is already in `effects` — ware is folded in before gear.
-        positive = int(effects.get("drug_positive_attribute") or 0)
+        positive = _positive_attribute(effects, str(spec.get("category") or ""))
         apply_bonus_nodes(_drug_effect_nodes(nodes, positive), effects, str(spec["name"]))
         active.append(
             {
@@ -156,7 +169,7 @@ def apply_active_custom_drugs(
         nodes = list(row.get("bonus") or [])
         if not nodes:
             continue
-        positive = int(effects.get("drug_positive_attribute") or 0)
+        positive = _positive_attribute(effects, CUSTOM_DRUG_CATEGORY)
         apply_bonus_nodes(_drug_effect_nodes(nodes, positive), effects, str(row.get("name") or ""))
         duration = int(row.get("duration") or 0)
         active.append(

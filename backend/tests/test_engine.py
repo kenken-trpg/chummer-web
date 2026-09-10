@@ -7873,6 +7873,21 @@ def test_narco_lifts_what_a_drug_gives() -> None:
     assert has(dosed.derived["active_drugs"][0]["effect"], "engine.drugEffect.attribute", name="REA", value="+2")
 
 
+def test_narco_lifts_a_mixed_drug_too() -> None:
+    """Narco names its drug categories one node at a time, and `Custom Drugs`
+    is one of them — a drug you cooked yourself is still a drug (CF p.159)."""
+    ids = _component_ids()
+    parts = [CustomDrugPart(component_id=ids["Tank"], level=0)]
+
+    def bod(*, narco: bool) -> int:
+        state = _mundane("mix-narco", custom_drugs=[CustomDrugInstall(name="W", active=True, parts=parts)])
+        if narco:
+            state.bioware = [CyberwareInstall(ware_id=NARCO, rating=1)]
+        return int(compute(state).derived["totals"]["BOD"])
+
+    assert bod(narco=True) - bod(narco=False) == 1  # Tank: BOD +2, and +3 on Narco
+
+
 def test_narco_leaves_what_a_drug_takes_alone() -> None:
     plain = compute(_drug_state(True, ZEN))
     state = _drug_state(True, ZEN)
@@ -8061,10 +8076,22 @@ def test_a_component_level_that_does_not_exist_is_dropped_with_a_warning() -> No
 
 
 def test_a_mixed_drug_is_subject_to_the_chargen_availability_limit() -> None:
-    """Two BTLs on top of a Foundation come to 20F — nothing a starting
+    """Five Blocks on top of a Foundation come to 14R — nothing a starting
     character may buy, mixed or not (SR5 p.65)."""
-    out = compute(_mixed("Nasty", [("Tank", 0), ("Berserker BTL", 0), ("Bodyguard BTL", 0)])).derived
-    assert out["custom_drugs"][0]["avail"] == "20F"
+    out = compute(
+        _mixed(
+            "Nasty",
+            [
+                ("Tank", 0),
+                ("Razor Mind", 0),
+                ("Resist", 0),
+                ("Shock and Awe", 0),
+                ("Speed Demon", 0),
+                ("The General", 0),
+            ],
+        )
+    ).derived
+    assert out["custom_drugs"][0]["avail"] == "14R"
     assert has(out["errors"], "engine.gear.availOver")
 
 

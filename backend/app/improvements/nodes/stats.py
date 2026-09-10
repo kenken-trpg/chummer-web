@@ -59,7 +59,11 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["cm_threshold"] += _as_int(fields.get("threshold"))
         effects["cm_threshold_offset"] += _as_int(fields.get("thresholdoffset"))
     elif tag == "drugpositiveattributemodifier":
-        effects["drug_positive_attribute"] += _bonus_int(node, fields)
+        # One node per drug category, each carrying the same +1: Narco lifts a
+        # drug by one, not by one per category it lists.
+        category = str((node.get("attrs") or {}).get("category") or "")
+        modifiers = effects["drug_positive_attribute"]
+        modifiers[category] = modifiers.get(category, 0) + _bonus_int(node, fields)
     elif tag == "reflexrecorderoptimization":
         effects["reflex_recorder_optimization"] = True
     elif tag == "addlimb":

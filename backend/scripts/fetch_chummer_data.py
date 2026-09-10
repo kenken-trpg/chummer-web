@@ -25,8 +25,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor" / "chummer"
 REF_FILE = VENDOR / ".chummer-ref"
-# chummer5a/chummer5a @ 2026-09-02 "Fixed incorrect format for improvement on Master Archer"
-DEFAULT_REF = "ed77aa3dcbe760064109d9af01ea9b5e4498294c"
+# chummer5a/chummer5a @ 2026-09-09 "Fixed an Oversight in params-less SplitFixedSizePooledArray"
+DEFAULT_REF = "d7e94f6a090f267362757675d05bbe4d7543c217"
 
 FILES = [
     "Chummer/data/books.xml",
@@ -40,6 +40,7 @@ FILES = [
     "Chummer/data/powers.xml",
     "Chummer/data/gear.xml",
     "Chummer/data/drugcomponents.xml",
+    "Chummer/data/drugs.xml",
     "Chummer/data/armor.xml",
     "Chummer/data/weapons.xml",
     "Chummer/data/ranges.xml",

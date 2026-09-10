@@ -1,6 +1,6 @@
 """Drugs the character mixed instead of buying (CF p.190).
 
-A custom drug is one Foundation plus any number of Blocks, Enhancers and BTLs.
+A custom drug is one Foundation plus any number of Blocks and Enhancers.
 There is no catalog entry for the result — the components *are* the drug — so
 everything a bought drug reads off its gear spec is summed here instead: cost,
 availability, addiction rating and threshold, onset, duration, crash damage,

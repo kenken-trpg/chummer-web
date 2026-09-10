@@ -590,8 +590,8 @@ export interface DrugComponentLevel {
   info: string;
 }
 
-/** A part a custom drug is mixed from (CF p.190): Foundation, Block, Enhancer
- *  or BTL. `limit` is how many one drug may hold, 0 meaning unlimited. */
+/** A part a custom drug is mixed from (CF p.190): Foundation, Block or
+ *  Enhancer. `limit` is how many one drug may hold, 0 meaning unlimited. */
 export interface DrugComponentCatalogItem {
   id: string;
   name: string;
