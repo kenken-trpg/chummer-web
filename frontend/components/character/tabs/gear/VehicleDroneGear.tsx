@@ -13,6 +13,7 @@ import {
   wareFitsVehicleMod,
 } from "@/lib/character/gear";
 import { removeWareTree, wareBounds } from "@/lib/character/ware";
+import { useWareCompact } from "@/lib/character/useWareCompact";
 import { vehicleSlotLabel } from "@/lib/engine-notices";
 
 export function VehicleDroneGear({
@@ -25,11 +26,19 @@ export function VehicleDroneGear({
   ui,
 }: TabPanelProps & { mode: "drone" | "vehicle" }) {
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
+  const [compact, setCompact] = useWareCompact("vehicleCompact");
+  const owned = (mode === "drone" ? d.drones : d.vehicles) || [];
 
   return (
     <>
+      {owned.length ? (
+        <label className="option-row">
+          <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
+          {ui("ware.compact")}
+        </label>
+      ) : null}
       <>
-        {((mode === "drone" ? d.drones : d.vehicles) || []).map((item) => {
+        {owned.map((item) => {
           const addons = (catalog.vehicle_mods || []).filter(
             (mod) =>
               mod.purchasable !== false &&
@@ -47,6 +56,36 @@ export function VehicleDroneGear({
           const freeWeapons = (d.weapons || []).filter(
             (weapon) => !weapon.mounted_on && !mountedIds.has(weapon.id),
           );
+          const deleteButton = (
+            <button
+              className="btn danger"
+              onClick={() =>
+                patch(dropDrone(ch, item.id, mode === "vehicle" ? "vehicles" : "drones"))
+              }
+            >
+              {ui("common.delete")}
+            </button>
+          );
+          if (compact) {
+            // Names only: what is fitted to the vehicle, none of the controls.
+            const fitted = [
+              ...(item.mods || []).map((mod) => tr(mod.name)),
+              ...(item.weapon_mounts || []).map((mount) => tr(mount.label || mount.name)),
+              ...(item.sensors || []).map((sensor) => tr(sensor.name)),
+              ...(item.gear || []).map((acc) => tr(acc.label || acc.name)),
+            ];
+            return (
+              <div className="cyber-item compact" key={item.id}>
+                <div>
+                  <b>{tr(item.name)}</b>
+                  {fitted.length ? (
+                    <div className="muted">{fitted.join(ui("common.listSep"))}</div>
+                  ) : null}
+                </div>
+                {deleteButton}
+              </div>
+            );
+          }
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -538,14 +577,7 @@ export function VehicleDroneGear({
                   </button>
                 </div>
               </div>
-              <button
-                className="btn danger"
-                onClick={() =>
-                  patch(dropDrone(ch, item.id, mode === "vehicle" ? "vehicles" : "drones"))
-                }
-              >
-                {ui("common.delete")}
-              </button>
+              {deleteButton}
             </div>
           );
         })}
