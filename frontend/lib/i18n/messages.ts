@@ -1693,6 +1693,8 @@ const JA = {
   "engine.kind.complexForm": "複合体",
   "engine.kind.cyberware": "サイバーウェア",
   "engine.kind.drone": "ドローン",
+  "engine.kind.drugComponent": "ドラッグ・コンポーネント",
+  "engine.kind.focus": "収束具",
   "engine.kind.gear": "ギア",
   "engine.kind.lifestyle": "ライフスタイル",
   "engine.kind.martialArt": "武術",
@@ -1705,6 +1707,7 @@ const JA = {
   "engine.kind.vehicleMod": "ヴィークル改造",
   "engine.kind.weapon": "武器",
   "engine.kind.weaponAccessory": "武器アクセサリ",
+  "engine.kind.weaponMount": "武器マウント",
 
   "engine.side.Left": "左",
   "engine.side.Right": "右",
@@ -3380,6 +3383,8 @@ const EN: Catalog = {
   "engine.kind.complexForm": "complex form",
   "engine.kind.cyberware": "cyberware",
   "engine.kind.drone": "drone",
+  "engine.kind.drugComponent": "drug component",
+  "engine.kind.focus": "focus",
   "engine.kind.gear": "gear",
   "engine.kind.lifestyle": "lifestyle",
   "engine.kind.martialArt": "martial art",
@@ -3392,6 +3397,7 @@ const EN: Catalog = {
   "engine.kind.vehicleMod": "vehicle mod",
   "engine.kind.weapon": "weapon",
   "engine.kind.weaponAccessory": "weapon accessory",
+  "engine.kind.weaponMount": "weapon mount",
 
   "engine.side.Left": "left",
   "engine.side.Right": "right",
