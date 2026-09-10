@@ -545,6 +545,10 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             route_gear(child, row["id"], bucket)
 
     for g in root.findall("./gears/gear"):
+        # A bonded focus is gear too, but it belongs to `foci` / `qi_foci`
+        # rather than to any gear bucket — `_import_foci` reads it there.
+        if _text(g.find("category")) == "Foci":
+            continue
         route_gear(g, None, None)
     for b, rows in routed.items():
         st[b] = rows
@@ -555,6 +559,14 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     veh_r = _Resolver(cat["vehicles"])
     drone_r = _Resolver(cat["drones"])
     vmod_r = _Resolver(cat["vehicle_mods"])
+    mount_r = _Resolver(cat["weapon_mounts"])
+    mount_categories = {row["id"]: row.get("category") or "" for row in cat["weapon_mounts"]}
+    # A mount points at a weapon row by name: ids are regenerated on import.
+    weapon_ids: dict[str, str] = {}
+    for wrow in st.get("weapons") or []:
+        wname = next((w["name"] for w in cat["weapons"] if w["id"] == wrow.get("weapon_id")), "")
+        weapon_ids.setdefault(wname.lower(), wrow["id"])
+    st_mounts: list[dict[str, Any]] = []
     st_veh: list[dict[str, Any]] = list(st.get("drones") or [])
     st_veh_only: list[dict[str, Any]] = []
     st_vmods: list[dict[str, Any]] = []
@@ -583,11 +595,34 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                         "included": _text(m.find("included")).lower() == "true",
                     }
                 )
+        for m in v.findall("./weaponmounts/weaponmount"):
+            size_id = mount_r.resolve(m, warn, ui("engine.kind.weaponMount"))
+            if not size_id:
+                continue
+            parts = {"Visibility": "", "Flexibility": "", "Control": ""}
+            for opt in m.findall("./weaponmountoptions/weaponmountoption"):
+                part_id = mount_r.resolve(opt, warn, ui("engine.kind.weaponMount"))
+                if part_id and mount_categories.get(part_id) in parts:
+                    parts[mount_categories[part_id]] = part_id
+            st_mounts.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "parent_id": row["id"],
+                    "size_id": size_id,
+                    "visibility_id": parts["Visibility"],
+                    "flexibility_id": parts["Flexibility"],
+                    "control_id": parts["Control"],
+                    "included": _text(m.find("included")).lower() == "true",
+                    "weapon_install_id": weapon_ids.get(_text(m.find("mountedweaponname")).lower()),
+                    "allowedweapons": _text(m.find("weaponmountcategories")),
+                }
+            )
         if v.find("./weapons/weapon") is not None or v.find("./gears/gear") is not None:
             warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods
+    st["weapon_mounts"] = st_mounts
 
 
 def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -631,6 +666,104 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
             techs = [t for t in techs if t]
             marts.append({"id": str(uuid.uuid4()), "art_id": aid, "techniques": techs})
     st["martial_arts"] = marts
+
+
+def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read bonded foci back out of `<foci>` and the gear it points at.
+
+    Chummer keeps the focus itself in `<gears>` (category `Foci`, `<bonded>`)
+    and only a pointer in `<foci>`; a Qi focus is the same gear with the power
+    it carries in `<extra>`. What this app knows on top of that — crafted vs.
+    bought, the artificing test, the weapon a weapon focus is bound to — rides
+    on the pointer and is simply absent on a file Chummer wrote.
+    """
+    qi_spec = cat.get("qi_focus") or {}
+    qi_id = str(qi_spec.get("id") or "")
+    focus_r = _Resolver(cat.get("foci") or [])
+    power_r = _Resolver(cat["powers"])
+    gear_by_id = {guid: g for g in root.findall("./gears/gear") if (guid := _text(g.find("guid")))}
+    # Weapon foci point at a weapon row by name: ids are regenerated on import.
+    weapon_ids: dict[str, str] = {}
+    for row in st.get("weapons") or []:
+        name = next((w["name"] for w in cat["weapons"] if w["id"] == row.get("weapon_id")), "")
+        weapon_ids.setdefault(name.lower(), row["id"])
+
+    foci: list[dict[str, Any]] = []
+    qi_foci: list[dict[str, Any]] = []
+    for f in root.findall("./foci/focus"):
+        gear = gear_by_id.get(_text(f.find("gearid")))
+        if gear is None:
+            continue
+        force = max(1, _int(gear.find("rating"), 1))
+        sid = _text(gear.find("sourceid")) or _text(gear.find("guid"))
+        if sid == qi_id or _text(gear.find("name")) == str(qi_spec.get("name") or ""):
+            power_name = _text(gear.find("extra"))
+            pid = power_r.by_name.get(power_name.lower())
+            if not pid:
+                if power_name:
+                    warn.append(
+                        notice("engine.import.skippedUnknown", kind=ui("engine.kind.adeptPower"), name=power_name)
+                    )
+                continue
+            qi_foci.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "rating": force,
+                    "power_id": pid,
+                    "power_rating": max(1, _int(f.find("powerrating"), 1)),
+                    "extra": _text(f.find("powerextra")) or None,
+                }
+            )
+            continue
+        gid = focus_r.resolve(gear, warn, ui("engine.kind.focus"))
+        if not gid:
+            continue
+        weapon_name = _text(f.find("weaponname"))
+        foci.append(
+            {
+                "id": str(uuid.uuid4()),
+                "gear_id": gid,
+                "force": force,
+                "crafted": _text(f.find("crafted")).lower() == "true",
+                "formula_bought": _text(f.find("formulabought")).lower() != "false",
+                "hits": _int(f.find("hits"), 0) or None,
+                "opposed_hits": _int(f.find("opposedhits"), 0) or None,
+                "extra": weapon_ids.get(weapon_name.lower()),
+            }
+        )
+    st["foci"] = foci
+    st["qi_foci"] = qi_foci
+
+
+def _import_custom_drugs(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read mixed drugs back out of `<drugs><drug>`.
+
+    A custom drug is its components: cost, availability, addiction and onset
+    are recomputed from them, so nothing Chummer wrote about the totals is
+    read back. `<active>` is this app's own element (see the export) and is
+    simply absent on a file Chummer wrote.
+    """
+    comp_r = _Resolver(cat.get("drug_components") or [])
+    drugs = []
+    for d in root.findall("./drugs/drug"):
+        parts = []
+        for c in d.findall("./drugcomponents/drugcomponent"):
+            cid = comp_r.resolve(c, warn, ui("engine.kind.drugComponent"))
+            if cid:
+                parts.append({"component_id": cid, "level": max(0, _int(c.find("level"), 0))})
+        if not parts:
+            continue
+        drugs.append(
+            {
+                "id": str(uuid.uuid4()),
+                "name": _text(d.find("name")),
+                "grade": _text(d.find("grade")) or "Standard",
+                "qty": max(1, _int(d.find("quantity"), 1)),
+                "active": _text(d.find("active")).lower() == "true",
+                "parts": parts,
+            }
+        )
+    st["custom_drugs"] = drugs
 
 
 def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
@@ -692,4 +825,6 @@ _SECTIONS = (
     _import_gear,
     _import_vehicles,
     _import_lifestyles,
+    _import_foci,
+    _import_custom_drugs,
 )

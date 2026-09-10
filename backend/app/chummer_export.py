@@ -301,6 +301,70 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                 emit_gear(_sub(el, "children"), kids)
 
     emit_gear(gears, by_parent_g.get(None, []))
+    _emit_focus_gear(gears, state, names)
+
+
+def _emit_focus_gear(gears: ET.Element, state: CharacterState, names: _Names) -> None:
+    """A bonded focus is gear: Chummer keeps it in `<gears>` with `<bonded>`,
+    and `<foci>` only holds a pointer to it.
+
+    The gear's `<guid>` is the focus row's own id, which is what `_export_foci`
+    writes as the `<gearid>` on the other side of that pointer.
+    """
+    for frow in state.foci:
+        el = _sub(gears, "gear")
+        _sub(el, "guid", frow.id)
+        _sub(el, "sourceid", frow.gear_id)
+        _sub(el, "name", names["focus"].get(frow.gear_id, ""))
+        _sub(el, "category", "Foci")
+        _sub(el, "rating", frow.force)
+        _sub(el, "qty", 1)
+        _sub(el, "bonded", "True")
+    for qrow in state.qi_foci:
+        el = _sub(gears, "gear")
+        _sub(el, "guid", qrow.id)
+        _sub(el, "sourceid", names["qifocus"].get("id", ""))
+        _sub(el, "name", names["qifocus"].get("name", ""))
+        _sub(el, "category", "Foci")
+        _sub(el, "rating", qrow.rating)
+        _sub(el, "qty", 1)
+        _sub(el, "bonded", "True")
+        # Which power the Qi focus carries — Chummer's own `<extra>` on the
+        # gear, the same field its `<selectpower>` bonus fills in.
+        _sub(el, "extra", names["power"].get(qrow.power_id, ""))
+
+
+def _export_foci(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write `<foci>`, the bonded-focus pointers into `<gears>`.
+
+    Chummer stores nothing here but the link. What this app knows on top —
+    whether the focus was crafted rather than bought, the artificing test, the
+    weapon a weapon focus is bound to, the rating a Qi focus grants its power —
+    rides along as extra children, which Chummer's loader ignores.
+    """
+    foci = _sub(root, "foci")
+    weapon_names = {w.id: names["weapon"].get(w.weapon_id, "") for w in state.weapons}
+    for frow in state.foci:
+        el = _sub(foci, "focus")
+        _sub(el, "guid", frow.id)
+        _sub(el, "gearid", frow.id)
+        _sub(el, "crafted", "True" if frow.crafted else "False")
+        _sub(el, "formulabought", "True" if frow.formula_bought else "False")
+        if frow.hits is not None:
+            _sub(el, "hits", frow.hits)
+        if frow.opposed_hits is not None:
+            _sub(el, "opposedhits", frow.opposed_hits)
+        # A weapon focus points at a weapon *row*, whose id is regenerated on
+        # every import — so the link travels as the weapon's name instead.
+        if frow.extra:
+            _sub(el, "weaponname", weapon_names.get(frow.extra, ""))
+    for qrow in state.qi_foci:
+        el = _sub(foci, "focus")
+        _sub(el, "guid", qrow.id)
+        _sub(el, "gearid", qrow.id)
+        _sub(el, "powerrating", qrow.power_rating)
+        if qrow.extra:
+            _sub(el, "powerextra", qrow.extra)
 
 
 def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -320,6 +384,48 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
             _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
             _sub(mm, "rating", vrow.rating)
             _sub(mm, "included", "True" if vrow.included else "False")
+        _emit_weapon_mounts(el, state, names, v.id)
+
+
+def _emit_weapon_mounts(vehicle_el: ET.Element, state: CharacterState, names: _Names, vehicle_id: str) -> None:
+    """Write one vehicle's weapon mounts.
+
+    A mount is its size plus three options (visibility, flexibility, control),
+    which is how Chummer stores it: the size on the mount itself, the rest as
+    `<weaponmountoption>` rows.
+
+    The gun bolted to it is not written into the mount, though Chummer would:
+    the weapon is a row in the character's own `<weapons>` here, and writing it
+    in both places would import it twice. The link travels as
+    `<mountedweaponname>` instead, which Chummer ignores.
+    """
+    rows = [row for row in state.weapon_mounts if row.parent_id == vehicle_id]
+    if not rows:
+        return
+    weapon_names = {w.id: names["weapon"].get(w.weapon_id, "") for w in state.weapons}
+    mounts = _sub(vehicle_el, "weaponmounts")
+    for row in rows:
+        el = _sub(mounts, "weaponmount")
+        _sub(el, "guid", row.id)
+        _sub(el, "sourceid", row.size_id)
+        _sub(el, "name", names["wmount"].get(row.size_id, ""))
+        _sub(el, "category", "Size")
+        _sub(el, "included", "True" if row.included else "False")
+        _sub(el, "weaponmountcategories", row.allowedweapons)
+        options = _sub(el, "weaponmountoptions")
+        for part_id, category in (
+            (row.visibility_id, "Visibility"),
+            (row.flexibility_id, "Flexibility"),
+            (row.control_id, "Control"),
+        ):
+            if not part_id:
+                continue
+            opt = _sub(options, "weaponmountoption")
+            _sub(opt, "sourceid", part_id)
+            _sub(opt, "name", names["wmount"].get(part_id, ""))
+            _sub(opt, "category", category)
+        if row.weapon_install_id:
+            _sub(el, "mountedweaponname", weapon_names.get(row.weapon_install_id, ""))
 
 
 def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -331,6 +437,34 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(el, "baselifestyle", base)
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
+
+
+def _export_custom_drugs(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write mixed drugs as Chummer's `<drugs><drug>` with their components.
+
+    Chummer rebuilds a custom drug from the components it was mixed from, so
+    the component ids and their levels are the whole payload — every total
+    (cost, availability, addiction, onset) is recomputed on load, here and
+    there alike.
+
+    `<active>` is this app's own: Chummer has no "currently dosed" flag, and
+    it ignores elements it does not know.
+    """
+    drugs = _sub(root, "drugs")
+    for drow in state.custom_drugs:
+        el = _sub(drugs, "drug")
+        _sub(el, "guid", drow.id)
+        _sub(el, "name", drow.name)
+        _sub(el, "category", "Custom Drug")
+        _sub(el, "quantity", drow.qty)
+        _sub(el, "grade", drow.grade)
+        _sub(el, "active", "True" if drow.active else "False")
+        parts = _sub(el, "drugcomponents")
+        for part in drow.parts:
+            comp = _sub(parts, "drugcomponent")
+            _sub(comp, "sourceid", part.component_id)
+            _sub(comp, "name", names["drugcomponent"].get(part.component_id, ""))
+            _sub(comp, "level", part.level)
 
 
 def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -413,11 +547,19 @@ def state_to_chum5(state: CharacterState) -> bytes:
             for k, v in _id_name(cat[b]).items()
         },
         "vmod": _id_name(cat["vehicle_mods"]),
+        "wmount": _id_name(cat["weapon_mounts"]),
         "lifestyle": _id_name(cat["lifestyles"]),
         "tradition": _id_name(cat["traditions"]),
         "mentor": _id_name(cat["mentors"]),
         "metamagic": _id_name(cat["metamagics"]),
         "art": _id_name(cat.get("magic_arts") or []),
+        "focus": _id_name(cat.get("foci") or []),
+        # The one gear a Qi focus is, kept as id/name rather than a lookup map.
+        "qifocus": {
+            "id": str((cat.get("qi_focus") or {}).get("id") or ""),
+            "name": str((cat.get("qi_focus") or {}).get("name") or ""),
+        },
+        "drugcomponent": _id_name(cat.get("drug_components") or []),
     }
 
     root = ET.Element("character")
@@ -444,8 +586,10 @@ _SECTIONS = (
     _export_armor,
     _export_weapons,
     _export_gear,
+    _export_foci,
     _export_vehicles,
     _export_lifestyles,
+    _export_custom_drugs,
     _export_contacts,
     _export_initiation,
 )

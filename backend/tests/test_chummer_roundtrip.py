@@ -275,3 +275,99 @@ def test_a_bought_implant_and_its_bundled_twin_both_survive() -> None:
     assert bought["essence"] > 0
     assert len(ch2.derived["cyberware"]) == len(ch1.derived["cyberware"])
     assert ch1.derived["essence"] == ch2.derived["essence"]
+
+
+# --------------------------------------------------------------------------- #
+# Scenario F — foci / weapon mounts / mixed drugs: the gear that used to vanish #
+# --------------------------------------------------------------------------- #
+
+_KIT_XML = build_chum5(
+    name="Toolkit",
+    metatype="Human",
+    talent="Magician",
+    priorities=("D", "B", "A", "C", "E"),
+    attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 3, "INT": 3, "LOG": 3, "WIL": 4, "MAG": 5},
+    skills={"Spellcasting": 4, "Blades": 3},
+    spells=["Manabolt"],
+    tradition="Hermetic",
+    weapons=[{"name": "Combat Knife"}, {"name": "AK-97"}],
+    foci=[
+        {"name": "Power Focus", "force": 2},
+        # A weapon focus is bound to one weapon row; the link travels by name.
+        {"name": "Weapon Focus", "force": 2, "weapon": "Combat Knife"},
+    ],
+    vehicles=[
+        {
+            "name": "Dodge Scoot (Scooter)",
+            "weapon_mounts": [
+                {
+                    "size": "Standard [SR5]",
+                    "visibility": "External [SR5]",
+                    "flexibility": "Flexible [SR5]",
+                    "control": "Manual [SR5]",
+                    "weapon": "AK-97",
+                }
+            ],
+        }
+    ],
+    custom_drugs=[
+        {
+            "name": "Wrecker",
+            "grade": "Street Cooked",
+            "qty": 2,
+            "components": [{"name": "Tank", "level": 0}, {"name": "Crush", "level": 1}],
+        }
+    ],
+)
+
+
+def test_foci_mounts_and_mixed_drugs_survive_the_trip() -> None:
+    """None of these three used to be written at all: a bonded focus, a weapon
+    mount and a mixed drug were dropped on the way out to `.chum5`."""
+    s1, ch1, ch2 = _loop(_KIT_XML)
+
+    assert [row["force"] for row in s1["foci"]] == [2, 2]
+    knife = next(w for w in ch1.derived["weapons"] if w["name"] == "Combat Knife")
+    weapon_focus = next(row for row in ch1.derived["foci"] if row["name"] == "Weapon Focus")
+    assert weapon_focus["weapon_id"] == knife["id"]
+
+    mount = s1["weapon_mounts"][0]
+    assert mount["parent_id"] == s1["vehicles"][0]["id"]
+    assert all(mount[part] for part in ("size_id", "visibility_id", "flexibility_id", "control_id"))
+    ak = next(w for w in ch1.derived["weapons"] if w["name"] == "AK-97")
+    assert mount["weapon_install_id"] == ak["id"]
+
+    # …and the link is still the right one after a second trip, though the row
+    # ids it is made of are new both times.
+    knife2 = next(w for w in ch2.derived["weapons"] if w["name"] == "Combat Knife")
+    assert next(row for row in ch2.derived["foci"] if row["name"] == "Weapon Focus")["weapon_id"] == knife2["id"]
+
+    drug = ch1.derived["custom_drugs"][0]
+    assert (drug["name"], drug["grade"], drug["qty"]) == ("Wrecker", "Street Cooked", 2)
+    assert [part["name"] for part in drug["components"]] == ["Tank", "Crush"]
+    assert drug["nuyen"] == ch2.derived["custom_drugs"][0]["nuyen"]
+
+
+_ADEPT_XML = build_chum5(
+    name="Fist",
+    metatype="Human",
+    talent="Adept",
+    priorities=("D", "B", "B", "C", "E"),
+    attributes={"BOD": 3, "AGI": 4, "REA": 3, "STR": 3, "CHA": 3, "INT": 3, "LOG": 3, "WIL": 3, "MAG": 4},
+    skills={"Unarmed Combat": 4},
+    # A Qi focus is the same bonded gear, carrying an adept power in `<extra>`.
+    # Force 6 is what Improved Reflexes 1 costs at 0.25 power points per Force.
+    foci=[{"name": "Qi Focus", "force": 6, "power": "Improved Reflexes", "power_rating": 1}],
+)
+
+
+def test_qi_focus_keeps_the_power_it_carries() -> None:
+    s1, ch1, ch2 = _loop(_ADEPT_XML)
+    assert s1["foci"] == []
+    qi = s1["qi_foci"][0]
+    assert (qi["rating"], qi["power_rating"]) == (6, 1)
+    row = ch1.derived["qi_foci"][0]
+    assert (row["name"], row["rating"]) == ("Improved Reflexes", 6)
+    assert ch2.derived["qi_foci"][0]["name"] == "Improved Reflexes"
+    # The power it grants is free — the focus paid for it, not the power points.
+    assert any(p["name"] == "Improved Reflexes" for p in ch1.derived["adept_powers"])

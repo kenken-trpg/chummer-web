@@ -101,6 +101,9 @@ def build_chum5(
     lifestyles: list[dict[str, Any]] | None = None,
     contacts: list[dict[str, Any]] | None = None,
     martial_arts: list[dict[str, Any]] | None = None,
+    foci: list[dict[str, Any]] | None = None,
+    weapon_mounts: list[dict[str, Any]] | None = None,
+    custom_drugs: list[dict[str, Any]] | None = None,
 ) -> bytes:
     root = ET.Element("character")
     _e(root, "name", "")
@@ -216,7 +219,8 @@ def build_chum5(
             _e(ac, "name", arow["name"])
             _e(ac, "mount", arow.get("mount", ""))
 
-    _gear_nodes(_e(root, "gears"), gear or [])
+    gear_el = _e(root, "gears")
+    _gear_nodes(gear_el, gear or [])
 
     veh_el = _e(root, "vehicles")
     for row in vehicles or []:
@@ -227,6 +231,57 @@ def build_chum5(
             m = _e(mods, "mod")
             _e(m, "name", mrow["name"])
             _e(m, "rating", mrow.get("rating", 1))
+        mounts = _e(v, "weaponmounts")
+        for mrow in row.get("weapon_mounts") or []:
+            mount = _e(mounts, "weaponmount")
+            _e(mount, "name", mrow["size"])
+            _e(mount, "category", "Size")
+            opts = _e(mount, "weaponmountoptions")
+            for part, category in (
+                ("visibility", "Visibility"),
+                ("flexibility", "Flexibility"),
+                ("control", "Control"),
+            ):
+                if not mrow.get(part):
+                    continue
+                opt = _e(opts, "weaponmountoption")
+                _e(opt, "name", mrow[part])
+                _e(opt, "category", category)
+            if mrow.get("weapon"):
+                _e(mount, "mountedweaponname", mrow["weapon"])
+
+    foci_el = _e(root, "foci")
+    for row in foci or []:
+        # A focus is gear with `<bonded>`; `<foci>` only points at it.
+        g = _e(gear_el, "gear")
+        _e(g, "guid", row["name"])
+        _e(g, "name", row["name"])
+        _e(g, "category", "Foci")
+        _e(g, "rating", row.get("force", 1))
+        _flag(g, "bonded", True)
+        if row.get("power"):
+            _e(g, "extra", row["power"])
+        f = _e(foci_el, "focus")
+        _e(f, "gearid", row["name"])
+        if row.get("power"):
+            _e(f, "powerrating", row.get("power_rating", 1))
+        if row.get("crafted"):
+            _flag(f, "crafted", True)
+        if row.get("weapon"):
+            _e(f, "weaponname", row["weapon"])
+
+    drugs_el = _e(root, "drugs")
+    for row in custom_drugs or []:
+        d = _e(drugs_el, "drug")
+        _e(d, "name", row["name"])
+        _e(d, "grade", row.get("grade", "Standard"))
+        _e(d, "quantity", row.get("qty", 1))
+        _flag(d, "active", bool(row.get("active")))
+        comps = _e(d, "drugcomponents")
+        for crow in row["components"]:
+            c = _e(comps, "drugcomponent")
+            _e(c, "name", crow["name"])
+            _e(c, "level", crow.get("level", 0))
 
     ls_el = _e(root, "lifestyles")
     for row in lifestyles or []:
@@ -260,13 +315,20 @@ def build_chum5(
 
 # ``id`` / ``parent_id`` are freshly-generated uuids on every import; ``derived``
 # and ``career_baseline`` are compute side-cars compared separately via _stable.
-_DROP_KEYS = {"id", "parent_id", "derived", "career_baseline", "_warnings"}
+#: `weapon_install_id` is a weapon-mount's pointer at a weapon row, generated
+#: like `parent_id` and regenerated on every import.
+_DROP_KEYS = {"id", "parent_id", "weapon_install_id", "derived", "career_baseline", "_warnings"}
 
 
 def _scrub(obj: Any) -> Any:
     """Drop generated ids / computed side-cars, sort list rows for a stable compare."""
     if isinstance(obj, dict):
-        return {k: _scrub(v) for k, v in sorted(obj.items()) if k not in _DROP_KEYS}
+        drop = _DROP_KEYS
+        # A weapon focus keeps the weapon row it is bound to in `extra`, so on
+        # a focus that field is a generated id rather than text.
+        if "force" in obj and "gear_id" in obj:
+            drop = drop | {"extra"}
+        return {k: _scrub(v) for k, v in sorted(obj.items()) if k not in drop}
     if isinstance(obj, list):
         cleaned = [_scrub(v) for v in obj]
         try:
@@ -335,6 +397,10 @@ def _stable(derived: dict[str, Any]) -> dict[str, Any]:
         "contacts",
         "lifestyles",
         "martial_arts",
+        "foci",
+        "qi_foci",
+        "weapon_mounts",
+        "custom_drugs",
     ):
         out[f"len:{bucket}"] = len(derived.get(bucket) or [])
     return out
