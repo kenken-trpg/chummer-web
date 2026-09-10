@@ -77,6 +77,11 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(_sub(root, "mugshots"), "mugshot", b64)
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
+    # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
+    # the latter in `<nuyenbp>`, which is build points in old money.
+    _sub(root, "streetcred", state.street_cred)
+    _sub(root, "notoriety", state.notoriety_bonus)
+    _sub(root, "nuyenbp", state.karma_nuyen)
 
 
 def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -128,6 +133,14 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         spn = state.skill_specializations.get(name)
         if spn:
             _sub(_sub(_sub(s, "specializations"), "spec"), "name", spn)
+    for exotic in state.exotic_skills:
+        # An exotic skill is one skill per weapon, which Chummer writes as an
+        # ordinary skill carrying `<specific>`.
+        s = _sub(active, "skill")
+        _sub(s, "name", exotic.skill_name)
+        _sub(s, "specific", exotic.extra)
+        _sub(s, "base", exotic.rating)
+        _sub(s, "karma", 0)
     grps = _sub(sk, "groups")
     for name, rating in sorted(state.skill_groups.items()):
         grp_el = _sub(grps, "group")
@@ -157,6 +170,19 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         _sub(q, "name", names["quality"].get(qid, ""))
         _sub(q, "extra", state.quality_extras.get(qid, ""))
         _sub(q, "qualitysource", "Selected")
+        # A quality with a `<selectskill>` bonus carries the skill picked for
+        # it. Unlike the implant picks in `_export_ware`, these are keyed by
+        # the quality's catalog id, which survives an import unchanged.
+        prefix = f"quality:{qid}:"
+        picks = sorted(
+            (key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix)
+        )
+        if picks:
+            picks_el = _sub(q, "skillpicks")
+            for index, skill in picks:
+                pick = _sub(picks_el, "pick")
+                _sub(pick, "index", index)
+                _sub(pick, "skill", skill)
 
     def _named_list(
         container: str,
@@ -203,7 +229,17 @@ def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names,
 
 
 def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write cyber- and bioware, re-nested by parent."""
+    """Write cyber- and bioware, re-nested by parent.
+
+    An implant with a `<selectskill>` or `<hardwires>` bonus also carries the
+    skill that was picked for it. This app keys those picks by the *install*
+    row, whose id is regenerated on every import, so the pick travels on the
+    implant itself rather than in a map of ids.
+    """
+
+    def _picks_of(inst_id: str) -> list[tuple[str, str]]:
+        prefix = f"ware:{inst_id}:"
+        return sorted((key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix))
 
     def _ware(container: str, rows: list[Any]) -> None:
         top = _sub(root, container)
@@ -224,6 +260,13 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                     _sub(w, "extra", r.extra)
                 if getattr(r, "included", False):
                     _sub(w, "included", "True")
+                picks = _picks_of(r.id)
+                if picks:
+                    picks_el = _sub(w, "skillpicks")
+                    for index, skill in picks:
+                        pick = _sub(picks_el, "pick")
+                        _sub(pick, "index", index)
+                        _sub(pick, "skill", skill)
                 kids = by_parent.get(r.id)
                 if kids:
                     emit(_sub(w, "children"), kids)
