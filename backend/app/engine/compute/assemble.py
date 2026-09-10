@@ -283,7 +283,7 @@ def assemble(ctx: Ctx) -> None:
             "technique_max": ctx.martial.get("technique_max") or MARTIAL_ART_CHARGEN_TECHNIQUE_MAX,
             "karma": ctx.martial.get("karma") or 0,
         },
-        "martial_spec_options": ctx.martial.get("spec_extras") or {},
+        "skill_spec_options": {k: list(v) for k, v in (ctx.effects.get("skill_spec_options") or {}).items()},
         "unarmed_reach": int(ctx.effects.get("unarmed_reach") or 0) + int(ctx.effects.get("reach") or 0),
         "unarmed_ap": int(ctx.effects.get("unarmed_ap") or 0),
         "reach": int(ctx.effects.get("reach") or 0),

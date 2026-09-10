@@ -260,7 +260,7 @@ export function SkillsTab({
                   onCommit={(value) => patch({ skills: { ...ch.skills, [s.name]: value } })}
                 />
                 <SpecPicker
-                  options={[...(s.specs || []), ...(d.martial_spec_options?.[s.name] || [])]}
+                  options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
                   value={specValue}
                   disabled={!hasSkill || Boolean(expertise)}
                   tr={tr}

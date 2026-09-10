@@ -1644,6 +1644,10 @@ APTITUDE = "58e3d62a-2073-4af5-b8e0-00c446b3a5ab"
 CATLIKE = "84305e09-f8d5-4a82-8257-0119b8c3f926"
 DRUG_TOLERANT = "00c827f6-aaa7-4003-87c9-f14e36263252"  # CF p.54
 ELEVATED_STRESS = "0b28f554-8929-4b8b-b8c6-4203ca856b33"  # TCT p.189
+
+
+CHANGELING_I = "3ea0d4dd-5ed7-4ab0-817f-68d7d67ab3d1"
+ELECTROCEPTION = "67767d53-56f0-4b66-b7ef-5ff6319ea551"  # (Electrosense), RF p.114
 LOSS_OF_CONFIDENCE = "c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1"
 
 
@@ -6040,9 +6044,18 @@ def test_martial_art_style_includes_one_technique() -> None:
     assert row["karma"] == 7
     assert row["techniques"][0]["free"] is True
     assert out.derived["martial_art_points"]["karma"] == 7
-    assert out.derived["martial_spec_options"]["Unarmed Combat"] == ["Karate"]
+    assert out.derived["skill_spec_options"]["Unarmed Combat"] == ["Karate"]
     assert out.derived["karma"]["spent"] == 7
     assert out.derived["errors"] == []
+
+
+def test_a_quality_can_widen_a_skills_specialization_list() -> None:
+    """Electroception (RF p.114) offers Perception a specialization no style
+    does — the same `<addskillspecializationoption>` a martial art carries, in
+    upstream's nested `<skills>` shape."""
+    out = compute(_human("electro", quality_ids=[CHANGELING_I, ELECTROCEPTION]))
+    assert out.derived["skill_spec_options"]["Perception"] == ["Electroception"]
+    assert out.derived["unimplemented_bonuses"] == []
 
 
 def test_martial_art_extra_technique_and_kick_reach() -> None:

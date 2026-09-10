@@ -53,19 +53,6 @@ def _martial_technique_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
-def _martial_art_spec_options(bonus_nodes: list[dict[str, Any]] | None) -> list[tuple[str, str]]:
-    options: list[tuple[str, str]] = []
-    for node in bonus_nodes or []:
-        if node.get("tag") != "addskillspecializationoption":
-            continue
-        fields = node.get("fields") or {}
-        skill = str(fields.get("skill") or "").strip()
-        spec = str(fields.get("spec") or "").strip()
-        if skill and spec:
-            options.append((skill, spec))
-    return options
-
-
 def sync_quality_martial_arts(
     state: CharacterState,
     effects: EffectsDict,
@@ -133,7 +120,6 @@ def resolve_martial_arts(
     public: list[dict[str, Any]] = []
     kept: list[MartialArtInstall] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
-    spec_extras: dict[str, list[str]] = {}
     karma = 0
     technique_total = 0
     paid_style_count = 0
@@ -201,13 +187,11 @@ def resolve_martial_arts(
             for node in tech.get("bonus") or []:
                 bonus_sources.append((f"{spec['name']}:{name}", [node]))
 
-        for skill_name, spec_name in _martial_art_spec_options(spec.get("bonus") or []):
-            bucket = spec_extras.setdefault(skill_name, [])
-            if spec_name not in bucket:
-                bucket.append(spec_name)
-        other_nodes = [node for node in (spec.get("bonus") or []) if node.get("tag") != "addskillspecializationoption"]
-        if other_nodes:
-            bonus_sources.append((spec["name"], other_nodes))
+        # Including `<addskillspecializationoption>`: the bonus pipeline turns a
+        # style's specialization offer into `skill_spec_options` the same way it
+        # does for the Electroception qualities (RF p.114).
+        if spec.get("bonus"):
+            bonus_sources.append((spec["name"], list(spec["bonus"])))
 
         inst.techniques = picked
         inst.free = is_free
@@ -248,6 +232,5 @@ def resolve_martial_arts(
         "technique_count": technique_total,
         "style_max": style_max,
         "technique_max": tech_max,
-        "spec_extras": spec_extras,
         "bonus_sources": bonus_sources,
     }

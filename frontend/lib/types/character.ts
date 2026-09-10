@@ -348,7 +348,7 @@ export interface Character {
       technique_max: number;
       karma: number;
     };
-    martial_spec_options?: Record<string, string[]>;
+    skill_spec_options?: Record<string, string[]>;
     unarmed_reach?: number;
     unarmed_ap?: number;
     unarmed_physical?: boolean;

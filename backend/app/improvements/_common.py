@@ -49,6 +49,7 @@ IMPLEMENTED = {
     "skillgroup",
     "skillcategory",
     "specificskill",
+    "addskillspecializationoption",
     "selectskill",
     "selectcyberware",
     "selectlimit",
@@ -229,7 +230,6 @@ SILENT_TAGS = {
     # Infirm's first level: hold AGI/BOD/REA/STR to their lowered maximum.
     # The attribute pass already clamps every attribute to its maximum.
     "attributemaxclamp",
-    "addskillspecializationoption",
     "critterpowers",
     "limitcritterpowercategory",
     "optionalpowers",

@@ -173,6 +173,9 @@ class EffectsDict(TypedDict):
     sprint_bonus: dict[str, int]
     skill_category_point_cost_mult: dict[str, int]
     living_persona: dict[str, int]
+    #: Extra specialization choices a style/quality opens up, keyed by skill
+    #: name — the option to buy one, never a specialization the character has.
+    skill_spec_options: dict[str, list[str]]
     immunities: dict[str, bool]
     movement_replace: dict[tuple[str, str], int]
     enabled_tabs: set[str]
@@ -282,6 +285,7 @@ def empty_effects() -> EffectsDict:
         "skill_specific_mods": [],
         "adept_power_points": 0,
         "unlock_skills": [],
+        "skill_spec_options": {},
         "damage_resistance": 0,
         "unarmed_dv": 0,
         "unarmed_physical": False,
