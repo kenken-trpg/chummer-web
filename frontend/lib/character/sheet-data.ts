@@ -1,6 +1,7 @@
 import type { Catalog, Character } from "@/lib/types";
 import { makeT, type TFn } from "@/lib/ui-strings";
 import { translate, type Locale, type UiFn } from "@/lib/i18n";
+import { isDrugCategory } from "@/lib/character/constants";
 import { specialArmorBits } from "@/lib/character/format";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
@@ -118,13 +119,11 @@ export function buildSheetData({
   const armors = (d.armor_items || []).filter((item) => item.equipped || item.contributes);
   const cyber = (d.cyberware || []).filter((item) => !item.parent_id);
   const bio = (d.bioware || []).filter((item) => !item.parent_id);
-  const isDrug = (item: { category?: string }) =>
-    item.category === "Drugs" || item.category === "Toxins" || item.category === "Chemicals";
   const isSin = (item: { category?: string }) => item.category === "ID/Credsticks";
   const gearMisc = (d.gear || []).filter(
-    (item) => !item.parent_id && !isDrug(item) && !isSin(item),
+    (item) => !item.parent_id && !isDrugCategory(item) && !isSin(item),
   );
-  const drugs = (d.gear || []).filter((item) => !item.parent_id && isDrug(item));
+  const drugs = (d.gear || []).filter((item) => !item.parent_id && isDrugCategory(item));
   const sins = (d.gear || []).filter((item) => !item.parent_id && isSin(item));
   const gearChildren = (parentId: string) =>
     (d.gear || []).filter((item) => item.parent_id === parentId);

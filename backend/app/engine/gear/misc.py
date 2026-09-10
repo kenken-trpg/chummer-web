@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...data_loader import catalog, drug_effect_summary, eval_formula, parse_capacity
+from ...data_loader import DRUG_CATEGORIES, catalog, drug_effect_summary, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...improvements.effect_rows import GrantGearRow
 from ...models import CharacterState, GearInstall
@@ -27,7 +27,6 @@ from ._common import (
     _program_label,
 )
 from .ammo import _apply_loaded_ammo, _pick_loaded_ammo, ammo_fits_weapon
-from .drugs import _DRUG_CATEGORIES
 from .vehicles import _iter_vehicle_hosts
 
 VEHICLE_INTERIOR_CATEGORIES = [
@@ -302,7 +301,7 @@ def _resolve_misc_gear(
         nodes = substitute_rating(list(spec.get("bonus") or []), rating)
         if nodes:
             bonus_sources.append((_program_label(spec, extra), nodes))
-        is_drug = (spec.get("category") or "") in _DRUG_CATEGORIES
+        is_drug = (spec.get("category") or "") in DRUG_CATEGORIES
         drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
         inst.active = bool(inst.active) and (is_drug and bool(drug_bonus))
         if inst.id not in granted_ids:

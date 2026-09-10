@@ -9,6 +9,17 @@ from ...notices import Notice, notice, term, ui
 from .._xml import _text, data_root
 from ..bonus import parse_bonus
 
+#: The gear categories this app hands to the drug machinery: the chemicals of
+#: CF p.185 and the chips of CF p.193. A BTL is not a chemical, but upstream
+#: files it in ``drugs.xml`` with the same ``<bonus>`` a drug gets, and the
+#: character wears the modifiers the same way — so it is taken the same way.
+DRUG_CATEGORIES = frozenset({"Drugs", "Toxins", "Chemicals", "BTLs"})
+#: What a drug grade (CF p.190) may be cooked into — narrower than
+#: :data:`DRUG_CATEGORIES` on purpose: upstream's ``<required>`` names ``Drugs``
+#: alone, toxins and chemicals come out of the same lab, and a chip is burned,
+#: not cooked.
+DRUG_GRADE_CATEGORIES = ("Drugs", "Toxins", "Chemicals")
+
 _DRUG_LIMIT_KEY = {
     "physical": "engine.drugLimit.physical",
     "mental": "engine.drugLimit.mental",
@@ -137,7 +148,7 @@ def load_drug_grades() -> list[dict[str, Any]]:
                 "requireparent": True,
                 "addoncategories": [],
                 "required_names": [],
-                "required_categories": ["Drugs", "Toxins", "Chemicals"],
+                "required_categories": list(DRUG_GRADE_CATEGORIES),
                 "included": [],
                 "ammo_weapon_types": [],
                 "costfor": 0,

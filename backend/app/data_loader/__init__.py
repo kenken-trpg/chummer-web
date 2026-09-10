@@ -40,6 +40,7 @@ from .formulas import (
     sum_avail,  # noqa: F401  (re-exported for engine)
 )
 from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
+    DRUG_CATEGORIES,
     PROGRAM_HOSTS,  # noqa: F401  (re-exported for engine)
     SPELL_CAST_CATEGORIES,  # noqa: F401  (re-exported for engine)
     SPELL_CATEGORIES,  # noqa: F401  (re-exported for engine)
@@ -161,7 +162,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         eff = drug_effects.get(item["id"])
         if eff:
             item.update(eff)
-    drugs = [item for item in gear if item.get("category") in {"Drugs", "Toxins", "Chemicals"}]
+    drugs = [item for item in gear if item.get("category") in DRUG_CATEGORIES]
     skills = load_skills()
     skills["group_names"] = load_skill_group_names()
     qualities = load_qualities()
