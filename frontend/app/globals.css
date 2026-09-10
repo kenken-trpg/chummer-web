@@ -460,6 +460,13 @@ input[type="search"] {
   padding-left: 12px;
   border-left: 2px solid var(--line);
 }
+.cyber-item.compact {
+  align-items: center;
+  padding: 4px 0;
+}
+.cyber-item.compact.nested {
+  border-bottom: none;
+}
 .slot-picker {
   display: flex;
   flex-wrap: wrap;

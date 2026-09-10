@@ -23,6 +23,9 @@ export function WareRow(props: {
   pickSlots?: SkillPickSlot[];
   onSkillPick?: (key: string, skill: string) => void;
   nested?: boolean;
+  /** Name only: no stat line, no controls, no slot picker — the row keeps
+   *  its plug-ins (as names) and its delete button. */
+  compact?: boolean;
 }) {
   const {
     item,
@@ -40,6 +43,7 @@ export function WareRow(props: {
     pickSlots,
     onSkillPick,
     nested,
+    compact,
   } = props;
   const { ui } = useUiText();
   const spec = catalogItems.find((w) => w.id === item.ware_id);
@@ -57,15 +61,49 @@ export function WareRow(props: {
   const locked = Boolean(item.included || item.granted_by);
   const ratingMin = item.rating_min ?? spec?.minrating ?? 1;
   const ratingMax = item.rating_max ?? spec?.maxrating ?? 1;
+  const title = (
+    <b>
+      {tr(item.name)}
+      {compact && item.rating > 1 ? ` R${item.rating}` : ""}
+      {item.side ? `（${sideLabel(item.side, ui)}）` : ""}
+      {item.included ? ui("ware.bundledSuffix") : ""}
+      {item.granted_by ? ui("ware.grantedSuffix", { source: tr(item.granted_by) }) : ""}
+    </b>
+  );
+  const removeControl = locked ? (
+    <span className="muted">{ui("common.bundled")}</span>
+  ) : (
+    <button className="btn danger" onClick={() => onRemove(item.id)}>
+      {ui("common.delete")}
+    </button>
+  );
+  if (compact) {
+    return (
+      <div className={`cyber-item compact${nested ? " nested" : ""}`}>
+        <div>
+          {title}
+          {childrenItems.map((child) => (
+            <WareRow
+              key={child.id}
+              {...props}
+              item={child}
+              childrenItems={[]}
+              slotValue=""
+              onSlotChange={() => undefined}
+              onAddChild={() => undefined}
+              nested
+            />
+          ))}
+        </div>
+        {/* the name already says （同梱）／（…付与） on a locked row */}
+        {locked ? null : removeControl}
+      </div>
+    );
+  }
   return (
     <div className={`cyber-item${nested ? " nested" : ""}`}>
       <div>
-        <b>
-          {tr(item.name)}
-          {item.side ? `（${sideLabel(item.side, ui)}）` : ""}
-          {item.included ? ui("ware.bundledSuffix") : ""}
-          {item.granted_by ? ui("ware.grantedSuffix", { source: tr(item.granted_by) }) : ""}
-        </b>
+        {title}
         <div className="muted">
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
           {availBit(item, ui)} / {item.source}
@@ -205,13 +243,7 @@ export function WareRow(props: {
           </div>
         ) : null}
       </div>
-      {locked ? (
-        <span className="muted">{ui("common.bundled")}</span>
-      ) : (
-        <button className="btn danger" onClick={() => onRemove(item.id)}>
-          {ui("common.delete")}
-        </button>
-      )}
+      {removeControl}
     </div>
   );
 }
