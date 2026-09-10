@@ -43,7 +43,7 @@ The Chummer game data is fetched at image build time and bundled, pinned to a sp
 
 ## Running it without Docker (for development)
 
-Python 3.11+ and Node 20.12+. On Windows, Docker is the easier path.
+Python 3.11+ and Node 22.12+ (CI and Docker run 24.x). On Windows, Docker is the easier path.
 
 ```bash
 make setup       # backend venv + npm install

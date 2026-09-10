@@ -16,8 +16,8 @@
 # and bump the tag in the comment alongside it.
 
 # ─── 1. frontend: Next standalone bundle ─────────────────────────────────────
-# node:20-bookworm-slim
-FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS frontend
+# node:24-bookworm-slim
+FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -62,7 +62,7 @@ RUN set -eux; \
 
 # binaries: python venv (+ supervisor + uvicorn), node, caddy
 COPY --from=pydeps /opt/venv                        /opt/venv
-COPY --from=node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 /usr/local/bin/node /usr/local/bin/node
 COPY --from=caddy:2@sha256:df7f1c2fb114453b951de51a98efc010db1655a92c2e86be6706714e2417a78d /usr/bin/caddy /usr/bin/caddy
 
 WORKDIR /app

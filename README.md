@@ -49,7 +49,7 @@ Chummer のゲームデータはイメージのビルド時に取得して同梱
 
 ## 使い方（Docker なし・開発向け）
 
-Python 3.11+ と Node 20+ が必要です（Windows は Docker を推奨）。
+Python 3.11+ と Node 22.12+ が必要です（CI と Docker は 24 系。Windows は Docker を推奨）。
 
 ```bash
 make setup       # backend venv ＋ npm install
