@@ -11,7 +11,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..models import Priorities
 from ..notices import Notice, notice
-from ..rules import current_rules
+from ..rules import DEFAULT_PRIORITY_TABLE, current_rules
 from .constants import (
     BUILD_METHOD_KARMA,
     BUILD_METHOD_PRIORITY,
@@ -24,13 +24,29 @@ from .constants import (
 
 
 def _priority_rows(category: str) -> list[dict[str, Any]]:
-    rows = [r for r in catalog()["priorities"] if r["category"] == category and _is_standard(r)]
+    """The rows of the settings file's priority table, for one category.
+
+    `priorities.xml` holds several tables — Standard, Prime Runner, Street
+    Level, and whatever custom data adds — distinguished by
+    `<prioritytable>`. A row that names none belongs to every table: that is
+    how the vendored file writes the core rows.
+
+    Falls back to Standard when the named table has nothing in this category,
+    so a settings file naming a table this data does not have still builds a
+    character instead of an empty one.
+    """
+    wanted = current_rules().priority_table
+    rows = [r for r in catalog()["priorities"] if r["category"] == category and _in_table(r, wanted)]
+    if not rows and wanted != DEFAULT_PRIORITY_TABLE:
+        return [
+            r for r in catalog()["priorities"] if r["category"] == category and _in_table(r, DEFAULT_PRIORITY_TABLE)
+        ]
     return rows
 
 
-def _is_standard(row: dict[str, Any]) -> bool:
+def _in_table(row: dict[str, Any], table: str) -> bool:
     gp = (row.get("gameplay") or "").strip()
-    return gp == "" or gp == "Standard"
+    return gp == "" or gp == table
 
 
 def priority_value(category: str, letter: str) -> dict[str, Any]:

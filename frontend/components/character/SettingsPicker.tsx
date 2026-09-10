@@ -315,6 +315,9 @@ export function SettingsPicker({
                   items: merge.skipped.map((s) => `${s.source}: ${s.reason}`).join(" / "),
                 })}`
               : ""}
+            {merge.ignored.length > 0
+              ? ` ・ ${ui("settings.customDataIgnored", { files: merge.ignored.join(", ") })}`
+              : ""}
             {merge.changes.length > 0 ? (
               <>
                 {" ・ "}

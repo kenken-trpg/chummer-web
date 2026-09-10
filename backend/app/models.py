@@ -276,6 +276,9 @@ class SettingsState(BaseModel):
 
     name: str = ""
     books: list[str] = Field(default_factory=list)
+    #: Which `<prioritytable>` in `priorities.xml` the rows come from —
+    #: Standard, Prime Runner, Street Level, or one custom data adds.
+    priority_table: str = Field(default="Standard", max_length=100)
 
     # Every knob below is `None` when the settings file did not change it, so
     # an unset field keeps the printed SR5 value. `app.rules.rules_for` folds

@@ -19,6 +19,7 @@ from typing import Any
 
 from .data_loader._xml import DATA_DIR, _text
 from .models import SettingsState
+from .rules import DEFAULT_PRIORITY_TABLE
 
 #: Cap on an uploaded settings file. A real one is ~10 KB; the largest thing
 #: Chummer ships is its whole preset library at ~320 KB.
@@ -66,6 +67,9 @@ _HANDLED_ELSEWHERE = {
     "customdatadirectorynames",
     "bannedwaregrades",
     "prioritytable",
+    # `<priorityarray>` is the letters a Priority build may spend (`ABCDE`).
+    # This app offers each letter once, which is that array — a file that
+    # writes another one is caught by the baseline diff.
     "priorityarray",
     # `<nuyenperbpwftp>` is the career-mode twin of `<nuyenperbpwftm>`; this
     # app has one rate, and a file that sets them differently is caught by the
@@ -209,6 +213,7 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
 
     return SettingsState(
         name=_text(root.find("name")),
+        priority_table=_text(root.find("prioritytable"), DEFAULT_PRIORITY_TABLE),
         books=[code for code in (_text(b) for b in root.findall("./books/book")) if code],
         banned_ware_grades=[grade for grade in (_text(g) for g in root.findall("./bannedwaregrades/grade")) if grade],
         customdata=_customdata_names(root),

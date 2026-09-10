@@ -11,13 +11,15 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from app.catalog_view.chargen import section as catalog_section
 from app.characters import apply_patch, new_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.data_loader.loaders.books import load_books, load_settings_presets
+from app.engine.priority import priority_value
 from app.models import CharacterPatch, CharacterState, SettingsState
-from app.rules import _DIRECT, DEFAULT_RULES, RULE_FIELDS, rules_for
+from app.rules import _DIRECT, DEFAULT_RULES, RULE_FIELDS, rules_for, using_rules
 from app.settings_file import parse_settings_xml
 from tests.notice_asserts import has
 
@@ -208,3 +210,33 @@ def test_unsupported_knobs_are_surfaced_as_a_warning() -> None:
         CharacterPatch(settings={"name": "House", "unsupported": ["ignoreart"]}),
     )
     assert has(state.derived["warnings"], "engine.settings.unsupported", tags="ignoreart")
+
+
+def test_the_priority_table_a_settings_file_names_is_the_one_used() -> None:
+    """`priorities.xml` carries three tables and this app used to hard-code
+    Standard, so a Prime Runner table silently paid Standard nuyen."""
+    xml = "<settings><name>PR</name><prioritytable>Prime Runner</prioritytable></settings>"
+    settings = parse_settings_xml(xml)
+    assert settings.priority_table == "Prime Runner"
+    with using_rules(rules_for(settings)):
+        prime = priority_value("Resources", "A")["nuyen"]
+    with using_rules(DEFAULT_RULES):
+        standard = priority_value("Resources", "A")["nuyen"]
+    assert prime != standard
+    assert prime == 500000
+
+
+def test_a_table_the_data_does_not_have_falls_back_rather_than_emptying() -> None:
+    """A settings file may name a table that lives in custom data the user did
+    not load. Building against Standard beats offering no options at all."""
+    with using_rules(rules_for(SettingsState(priority_table="Nonexistent"))):
+        assert priority_value("Resources", "A")["nuyen"] == 450000
+
+
+def test_the_catalog_carries_only_what_another_table_replaces() -> None:
+    """The catalog is shared by every character, so it ships the Standard
+    table plus the differences — not three copies of the metatype lists."""
+    overrides = catalog_section(catalog())["priority_table_overrides"]
+    assert set(overrides) == {"Prime Runner", "Street Level"}
+    assert set(overrides["Prime Runner"]) == {"Resources"}, "only Resources differs in SR5"
+    assert overrides["Prime Runner"]["Resources"]["A"]["nuyen"] == 500000

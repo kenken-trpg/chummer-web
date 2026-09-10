@@ -27,6 +27,9 @@ export type MergeResult = {
   changes: MergeChange[];
   /** Set when the itemisation stopped short of `applied`. */
   truncated: boolean;
+  /** Base data files the pack edits that this app does not load, e.g.
+   *  `critters.xml`. Not a failure — there is nothing to apply them to. */
+  ignored: string[];
 };
 
 export type CharacterSummary = {

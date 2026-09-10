@@ -285,6 +285,7 @@ def upload_customdata(request: Request, body: CustomDataUpload) -> dict:
             {"file": c.file, "entry": c.entry, "action": c.action, "fields": list(c.fields)} for c in report.changes
         ],
         "truncated": report.truncated,
+        "ignored": sorted(set(report.ignored)),
     }
 
 

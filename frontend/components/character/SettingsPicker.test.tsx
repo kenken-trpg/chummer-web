@@ -40,7 +40,15 @@ function setup(settings?: { name: string; books: string[] }) {
 
 /** A merge response with only the fields a test cares about spelled out. */
 function mergeResult(over: Partial<MergeResult>): MergeResult {
-  return { dataset: "d", applied: 0, skipped: [], changes: [], truncated: false, ...over };
+  return {
+    dataset: "d",
+    applied: 0,
+    skipped: [],
+    changes: [],
+    truncated: false,
+    ignored: [],
+    ...over,
+  };
 }
 
 /** A `File` that reports a directory path, the way a folder pick does. */
@@ -344,5 +352,19 @@ describe("SettingsPicker with custom data", () => {
     });
     await waitFor(() => expect(screen.getByText(/0 件適用/)).toBeDefined());
     expect(screen.queryByText("内訳を見る")).toBeNull();
+  });
+
+  it("says what a pack aims at data this app does not load, apart from failures", async () => {
+    // every codex pack carries `amend_critters.xml`; listing it beside rules
+    // that genuinely did not apply told the table to fix the unfixable
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(
+      mergeResult({ applied: 65, ignored: ["critters.xml"] }),
+    );
+    setup(withCustom);
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("customdata/d/custom_x.xml", "<chummer/>")] },
+    });
+    await waitFor(() => expect(screen.getByText(/critters.xml/)).toBeDefined());
+    expect(screen.queryByText(/未適用/)).toBeNull();
   });
 });

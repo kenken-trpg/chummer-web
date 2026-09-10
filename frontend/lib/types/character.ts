@@ -73,6 +73,8 @@ import type {
 export interface CharacterSettings {
   name: string;
   books: string[];
+  /** Which `<prioritytable>` the priority rows come from. */
+  priority_table?: string;
   sum_to_ten?: number | null;
   chargen_karma?: number | null;
   karma_chargen_pool?: number | null;

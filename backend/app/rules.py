@@ -41,6 +41,11 @@ CHARGEN_SKILL_MAX = 6
 CHARGEN_KNOWLEDGE_SKILL_MAX = 6
 
 
+#: The table every core priority row belongs to, and the fallback when a
+#: settings file names one this data does not have.
+DEFAULT_PRIORITY_TABLE = "Standard"
+
+
 @dataclass(frozen=True)
 class Rules:
     """One resolved settings file. Every default is the printed SR5 value, so
@@ -87,6 +92,10 @@ class Rules:
     # --- misc ----------------------------------------------------------
     contact_free_mult: int = 3
     banned_ware_grades: tuple[str, ...] = ()
+    #: Which `<prioritytable>` the priority rows come from. `priorities.xml`
+    #: carries several — Standard, Prime Runner, Street Level — and a settings
+    #: file picks one for the whole table.
+    priority_table: str = DEFAULT_PRIORITY_TABLE
 
 
 DEFAULT_RULES = Rules()
@@ -163,4 +172,7 @@ def rules_for(settings: object | None) -> Rules:
     grades = getattr(settings, "banned_ware_grades", None)
     if grades:
         overrides["banned_ware_grades"] = tuple(str(g) for g in grades)
+    table = getattr(settings, "priority_table", None)
+    if table:
+        overrides["priority_table"] = str(table)
     return Rules(**overrides)  # type: ignore[arg-type]

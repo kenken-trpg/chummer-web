@@ -337,6 +337,18 @@ export interface SettingsPreset {
   sum_to_ten: number;
 }
 
+export type PriorityCell = {
+  name: string;
+  attribute_points?: number;
+  skill_points?: number;
+  skill_group_points?: number;
+  nuyen?: number;
+  metatypes: { name: string; special: number; variants: { name: string }[] }[];
+  talents: { name: string; label?: string; value: number; spells?: number }[];
+};
+
+export type PriorityTable = Record<PriorityCategory, Record<PriorityLetter, PriorityCell>>;
+
 export interface Catalog {
   metatypes: {
     name: string;
@@ -404,20 +416,13 @@ export interface Catalog {
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];
   }[];
-  priority_table: Record<
-    PriorityCategory,
-    Record<
-      PriorityLetter,
-      {
-        name: string;
-        attribute_points?: number;
-        skill_points?: number;
-        skill_group_points?: number;
-        nuyen?: number;
-        metatypes: { name: string; special: number; variants: { name: string }[] }[];
-        talents: { name: string; label?: string; value: number; spells?: number }[];
-      }
-    >
+  priority_table: PriorityTable;
+  /** Per non-default `<prioritytable>`, only the cells that table replaces.
+   *  The catalog is shared by every character, so it carries the Standard
+   *  table and the differences; `priorityTableFor` puts them together. */
+  priority_table_overrides?: Record<
+    string,
+    Partial<Record<PriorityCategory, Partial<PriorityTable[PriorityCategory]>>>
   >;
   /** Every rulebook `source` can name, in `books.xml` order. The settings
    *  pulldown lists these; nothing here is filtered by them — the client
