@@ -15,6 +15,7 @@ from .resonance import load_complex_forms, load_echoes, load_sprites, load_strea
 from .spells import (
     SPELL_CAST_CATEGORIES,
     SPELL_CATEGORIES,
+    load_critter_powers,
     load_spells,
     load_spirits,
     load_traditions,
@@ -35,6 +36,7 @@ __all__ = [
     "load_powers",
     "load_qi_focus",
     "load_spells",
+    "load_critter_powers",
     "load_spirits",
     "load_sprites",
     "load_streams",

@@ -22,7 +22,14 @@ from ..rules import current_rules
 from .bundle_types import ComplexFormsBundle, SpritesBundle, SubmersionBundle
 from .constants import COMPLEX_FORM_TALENTS, RES_TALENTS, SPRITE_TALENTS
 from .dice import magic_opposed_test, skill_dice_pool
-from .lookups import _complex_form_by_id, _default_stream, _echo_by_name, _sprite_by_id, _stream_by_id
+from .lookups import (
+    _complex_form_by_id,
+    _default_stream,
+    _echo_by_name,
+    _sprite_by_id,
+    _stream_by_id,
+    critter_power_rows,
+)
 from .magic import spell_drain_value, tradition_resist
 from .priority import resolve_talent
 
@@ -311,7 +318,7 @@ def resolve_sprites(
                 "opposed_hits": inst.opposed_hits,
                 "attributes": stats["attributes"],
                 "matrix": stats["matrix"],
-                "powers": list(spec.get("powers") or []),
+                "powers": critter_power_rows(list(spec.get("powers") or [])),
                 "skills": [
                     {"name": row["name"], "attribute": row.get("attribute") or "", "rating": level}
                     for row in (spec.get("skills") or [])

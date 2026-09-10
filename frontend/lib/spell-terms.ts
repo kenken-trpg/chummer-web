@@ -27,6 +27,35 @@ const SPELL_DURATION: Record<string, MsgKey> = {
   Special: "sr.dur.special",
 };
 
+/** Critter powers write their range and duration out in words where a spell
+ *  uses a one-letter code, and add an action and an "Always" duration of their
+ *  own (SR5 p.394). Anything else — `MAG x 50`, `F x 10 Combat Turns` — is a
+ *  formula the table spells out, and passes through. */
+const CRITTER_RANGE: Record<string, MsgKey> = {
+  Self: "sr.range.self",
+  Touch: "sr.range.touch",
+  LOS: "sr.range.los",
+  "LOS (A)": "sr.range.losArea",
+  Special: "sr.range.special",
+};
+
+const CRITTER_DURATION: Record<string, MsgKey> = {
+  Always: "sr.dur.always",
+  Sustained: "sr.dur.sustained",
+  Instant: "sr.dur.instant",
+  Permanent: "sr.dur.permanent",
+  Special: "sr.dur.special",
+};
+
+const CRITTER_ACTION: Record<string, MsgKey> = {
+  Auto: "sr.action.auto",
+  Free: "sr.action.free",
+  Simple: "sr.action.simple",
+  Complex: "sr.action.complex",
+  Special: "sr.action.special",
+  None: "sr.action.none",
+};
+
 const SPELL_DESCRIPTOR: Record<string, MsgKey> = {
   Area: "sr.desc.area",
   "Extended Area": "sr.desc.extendedArea",
@@ -71,6 +100,37 @@ const lookup =
 export const spellType = lookup(SPELL_TYPE);
 export const spellRange = lookup(SPELL_RANGE);
 export const spellDuration = lookup(SPELL_DURATION);
+export const critterRange = lookup(CRITTER_RANGE);
+export const critterDuration = lookup(CRITTER_DURATION);
+export const critterAction = lookup(CRITTER_ACTION);
+
+/** "物理 ・ 複雑 ・ 自身 ・ 維持" — what a spirit's power costs and how long it
+ *  lasts, in the order the table prints it. Empty fields drop out: a few
+ *  powers in the data give no action or no duration at all. */
+export const critterPowerLine = (
+  power: { type?: string; action?: string; range?: string; duration?: string },
+  ui: UiFn,
+): string =>
+  [
+    spellType(power.type, ui),
+    critterAction(power.action, ui),
+    critterRange(power.range, ui),
+    critterDuration(power.duration, ui),
+  ]
+    .filter(Boolean)
+    .join(ui("common.termSep"));
+
+/** One line for a spirit's power: the translated name, and the table's terms
+ *  in brackets. A power the data leaves blank prints as the name alone. */
+export const critterPowerRow = (
+  power: { name: string; type?: string; action?: string; range?: string; duration?: string },
+  tr: (name: string) => string,
+  ui: UiFn,
+): string => {
+  const detail = critterPowerLine(power, ui);
+  const name = tr(power.name);
+  return detail ? ui("common.powerRow", { name, detail }) : name;
+};
 
 /** "Indirect, Elemental, Area" → "間接・元素・効果範囲" / "Indirect · Elemental · Area" */
 export const spellDescriptors = (v: string | null | undefined, ui: UiFn): string =>

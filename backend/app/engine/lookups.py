@@ -39,6 +39,35 @@ def _power_by_name(name: str) -> dict[str, Any] | None:
     return _match_by(catalog().get("powers"), "name", name)
 
 
+def critter_power_rows(names: list[str]) -> list[dict[str, Any]]:
+    """Spirit / sprite power names with what SR5 p.394 gives each one.
+
+    `traditions.xml` and `streams.xml` name the powers and nothing else, so
+    every name is looked up in `critterpowers.xml` for its type, action, range
+    and duration. A name the data does not know still comes back as a row with
+    the name alone — the sheet prints it either way.
+    """
+    by_name = {str(row.get("name") or ""): row for row in catalog().get("critter_powers") or []}
+    rows: list[dict[str, Any]] = []
+    for name in names:
+        # A spirit names the flavour it comes in — `Engulf (Fire)`, `Enhanced
+        # Senses (Smell)` — where the power itself is the part before the
+        # bracket, which is what carries the action and the duration.
+        spec = by_name.get(name) or by_name.get(name.split(" (")[0].strip()) or {}
+        rows.append(
+            {
+                "name": name,
+                "type": spec.get("type") or "",
+                "action": spec.get("action") or "",
+                "range": spec.get("range") or "",
+                "duration": spec.get("duration") or "",
+                "source": spec.get("source") or "",
+                "page": spec.get("page") or "",
+            }
+        )
+    return rows
+
+
 def _enhancement_by_id(eid: str) -> dict[str, Any] | None:
     return _match_by(catalog().get("enhancements"), "id", eid)
 

@@ -534,8 +534,24 @@
       "opposed_hits": null,
       "page": "258",
       "powers": [
-        "Cookie",
-        "Hash"
+        {
+          "action": "Complex",
+          "duration": "Predetermined by Sprite",
+          "name": "Cookie",
+          "page": "256",
+          "range": "",
+          "source": "SR5",
+          "type": "Persona"
+        },
+        {
+          "action": "Special",
+          "duration": "F x 10 Combat Turns",
+          "name": "Hash",
+          "page": "257",
+          "range": "",
+          "source": "SR5",
+          "type": "File"
+        }
       ],
       "registered": true,
       "services": 2,

@@ -1,6 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { GradeList, Section } from "@/components/character/sheet/blocks";
 import { cfDuration, cfTarget } from "@/lib/character/format";
+import { critterPowerRow } from "@/lib/spell-terms";
 import { useUiText } from "@/lib/i18n";
 
 export function ResonanceSection(s: SheetData) {
@@ -52,6 +53,15 @@ export function ResonanceSection(s: SheetData) {
                 {" ・ "}L{item.level}
                 {item.services != null ? ui("sheet.services", { services: item.services }) : ""}
                 {item.registered ? ui("sheet.registered") : ui("sheet.compiled")}
+                {item.powers?.length ? (
+                  <div className="sheet-dim">
+                    {ui("common.powers", {
+                      list: item.powers
+                        .map((power) => critterPowerRow(power, tr, ui))
+                        .join(ui("common.termSep")),
+                    })}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

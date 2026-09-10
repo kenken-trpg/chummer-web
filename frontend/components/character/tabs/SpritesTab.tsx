@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
+import { critterPowerRow } from "@/lib/spell-terms";
 
 export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
@@ -44,9 +45,12 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
             ) : null}
             {item.powers?.length ? (
               <div className="muted">
-                {ui("common.powers", {
-                  list: item.powers.map((name) => tr(name)).join(ui("common.termSep")),
-                })}
+                {ui("common.powersHead")}
+                <ul className="critter-powers">
+                  {item.powers.map((power) => (
+                    <li key={power.name}>{critterPowerRow(power, tr, ui)}</li>
+                  ))}
+                </ul>
               </div>
             ) : null}
             <div className="cyber-controls">

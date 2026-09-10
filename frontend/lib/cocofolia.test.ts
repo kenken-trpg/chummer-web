@@ -178,7 +178,7 @@ describe("the export follows the UI locale", () => {
           force: 4,
           services: 2,
           attributes: { BOD: 2, REA: 8, INT: 4, WIL: 4 },
-          powers: ["Accident", "Confusion"],
+          powers: [{ name: "Accident" }, { name: "Confusion" }],
         },
       ] as any,
     },
@@ -246,7 +246,7 @@ const spirit = (over: any = {}) => ({
   role_label: "戦闘",
   attributes: { BOD: 5, AGI: 6, REA: 6, STR: 3, CHA: 4, INT: 4, LOG: 3, WIL: 4, INI: 12 },
   skills: [{ name: "Unarmed Combat", attribute: "AGI", rating: 0 }],
-  powers: ["Engulf"],
+  powers: [{ name: "Engulf" }],
   optionalpowers: [],
   weaknesses: ["Allergy (Water)"],
   ...over,
@@ -260,7 +260,7 @@ const sprite = (over: any = {}) => ({
   registered: true,
   matrix: { attack: 0, sleaze: 3, dataprocessing: 6, firewall: 4, initiative: 9 },
   skills: [{ name: "Hacking", rating: 0 }],
-  powers: ["Hash"],
+  powers: [{ name: "Hash" }],
   ...over,
 });
 

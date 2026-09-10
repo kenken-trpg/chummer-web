@@ -92,6 +92,16 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).toContain("熱7+4d6");
   });
 
+  it("the magic section prints a bound spirit's powers with their action", () => {
+    const { container } = render(<MagicSection {...(s as any)} />);
+    expect(container.textContent).toContain("Engulf（物理・複雑・接触・維持）");
+  });
+
+  it("the resonance section prints a sprite's powers the same way", () => {
+    const { container } = render(<ResonanceSection {...(s as any)} />);
+    expect(container.textContent).toContain("Hash（物理・複雑・接触・即時）");
+  });
+
   it("the magic section says so when Quickening is in hand", () => {
     const withQuickening = buildSheetData({
       character: {

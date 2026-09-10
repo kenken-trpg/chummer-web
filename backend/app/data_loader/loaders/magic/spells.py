@@ -116,6 +116,40 @@ def load_traditions() -> list[dict[str, Any]]:
     return items
 
 
+def load_critter_powers() -> list[dict[str, Any]]:
+    """The powers a spirit or sprite comes with (SR5 p.394).
+
+    `traditions.xml` names them and nothing else, so a spirit's power list
+    reads as bare names until this fills in what the table at SR5 p.394 gives
+    each one: mana or physical, the action it takes, its range and how long it
+    lasts. Hidden entries are loaded too — a `<hide>` keeps a power out of
+    Chummer's own pick lists, but spirits still name it.
+    """
+    path = DATA_DIR / "critterpowers.xml"
+    if not path.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for el in ET.parse(path).getroot().findall("./powers/power"):
+        name = _text(el.find("name"))
+        power_id = _text(el.find("id"))
+        if not name or not power_id:
+            continue
+        items.append(
+            {
+                "id": power_id,
+                "name": name,
+                "category": _text(el.find("category")),
+                "type": _text(el.find("type")),
+                "action": _text(el.find("action")),
+                "range": _text(el.find("range")),
+                "duration": _text(el.find("duration")),
+                "source": _text(el.find("source")),
+                "page": _text(el.find("page")),
+            }
+        )
+    return items
+
+
 def load_spirits() -> list[dict[str, Any]]:
     path = DATA_DIR / "traditions.xml"
     if not path.exists():
