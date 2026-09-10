@@ -380,6 +380,10 @@ export interface Character {
       judge_intentions_offense?: number;
       dodge?: number;
       surprise?: number;
+      addiction_physiological_first?: number;
+      addiction_physiological_addicted?: number;
+      addiction_psychological_first?: number;
+      addiction_psychological_addicted?: number;
     };
     cm_recovery?: { physical: number; stun: number };
     essence_penalty?: number;

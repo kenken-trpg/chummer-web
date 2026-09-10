@@ -738,6 +738,10 @@
     "value": 6
   },
   "test_mods": {
+    "addiction_physiological_addicted": 0,
+    "addiction_physiological_first": 0,
+    "addiction_psychological_addicted": 0,
+    "addiction_psychological_first": 0,
     "composure": 0,
     "dodge": 0,
     "judge_intentions": 0,

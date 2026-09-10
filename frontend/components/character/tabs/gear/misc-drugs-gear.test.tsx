@@ -104,6 +104,27 @@ describe("<MiscDrugsGear> which rows belong to which tab", () => {
   });
 });
 
+describe("<MiscDrugsGear> the addiction test", () => {
+  it("shows both pools, and only in the drugs tab", () => {
+    const misc = renderPanel(owning([]), vi.fn(), "misc");
+    expect(misc.container.textContent).not.toContain("中毒抵抗");
+
+    // The fixture is 3s across the board: BOD + WIL and LOG + WIL are both 6.
+    const { container } = renderPanel(owning([]), vi.fn(), "drugs");
+    expect(container.textContent).toContain("中毒抵抗: 生理 6 ／ 心理 6");
+  });
+
+  it("splits the first dose from the test an addict makes", () => {
+    const ch = makeCharacter({
+      gear: [],
+      derived: { gear: [], test_mods: { addiction_physiological_first: 2 } },
+    } as any);
+    const { container } = renderPanel(ch, vi.fn(), "drugs");
+
+    expect(container.textContent).toContain("生理 8 (中毒後 6) ／ 心理 6");
+  });
+});
+
 describe("<MiscDrugsGear> a row a quality granted", () => {
   /** Dead SIN's fake SIN: it lives in `derived` only, so there is nothing in
    *  `ch.gear` for a control to edit or a delete button to remove. */

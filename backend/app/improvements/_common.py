@@ -116,6 +116,10 @@ IMPLEMENTED = {
     "dodge",
     "defensetest",
     "surprise",
+    "physiologicaladdictionfirsttime",
+    "physiologicaladdictionalreadyaddicted",
+    "psychologicaladdictionfirsttime",
+    "psychologicaladdictionalreadyaddicted",
     "selectattributes",
     "physicalcmrecovery",
     "stuncmrecovery",
@@ -228,10 +232,6 @@ SILENT_TAGS = {
     "critterpowers",
     "limitcritterpowercategory",
     "optionalpowers",
-    "physiologicaladdictionfirsttime",
-    "physiologicaladdictionalreadyaddicted",
-    "psychologicaladdictionfirsttime",
-    "psychologicaladdictionalreadyaddicted",
     "metageniclimit",
     "selectarmor",
     "selectsprite",
@@ -311,6 +311,15 @@ TEST_MOD_TAGS = {
     "judgeintentionsoffense": "judge_intentions_offense",
     "dodge": "dodge",
     "surprise": "surprise",
+    # The Addiction Test (SR5 p.414): BOD + WIL against the drug's threshold
+    # for a physiological habit, LOG + WIL for a psychological one. Chummer
+    # keeps the first dose apart from the test an already-addicted character
+    # makes, and `Drug Tolerant` (CF p.54) is exactly that split — +2 the first
+    # time and nothing once the habit is there.
+    "physiologicaladdictionfirsttime": "addiction_physiological_first",
+    "physiologicaladdictionalreadyaddicted": "addiction_physiological_addicted",
+    "psychologicaladdictionfirsttime": "addiction_psychological_first",
+    "psychologicaladdictionalreadyaddicted": "addiction_psychological_addicted",
 }
 LIMIT_KINDS = ("physical", "mental", "social")
 LIMIT_KIND_ALIASES = {
