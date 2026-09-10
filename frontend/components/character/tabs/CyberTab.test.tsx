@@ -273,3 +273,71 @@ describe("<CyberTab>", () => {
     });
   });
 });
+
+describe("<CyberTab> compact view", () => {
+  beforeEach(() => localStorage.clear());
+
+  function renderInstalled(patch = vi.fn()) {
+    const ch = makeCharacter({
+      cyberware: [
+        { id: "row1", ware_id: "wired1", rating: 2, grade: "Standard", wireless: false },
+        { id: "row2", ware_id: "datajack", rating: 1, grade: "Standard", parent_id: "row1" },
+      ],
+    } as any);
+    const base = { category: "Cyberware", grade: "Standard", nuyen: 1000, source: "SR5" };
+    const d = {
+      ...ch.derived,
+      cyberware: [
+        { ...base, id: "row1", ware_id: "wired1", name: "Wired Reflexes", rating: 2, essence: 2 },
+        {
+          ...base,
+          id: "row2",
+          ware_id: "datajack",
+          name: "Datajack",
+          rating: 1,
+          essence: 0.1,
+          parent_id: "row1",
+        },
+      ],
+    } as any;
+    return render(
+      <CyberTab
+        catalog={cyberCatalog()}
+        character={{ ...ch, derived: d }}
+        d={d}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={patch}
+        setCharacter={() => {}}
+      />,
+    );
+  }
+
+  it("folds each installed row down to its name, and remembers it", () => {
+    const patch = vi.fn();
+    const first = renderInstalled(patch);
+    expect(document.querySelectorAll(".cyber-item .cyber-controls").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByLabelText("簡易表示（名称のみ）"));
+    expect(document.querySelectorAll(".cyber-item .cyber-controls")).toHaveLength(0);
+    expect(document.querySelector(".cyber-item .slot-picker")).toBeNull();
+    expect(document.querySelector(".cyber-item")!.textContent).not.toContain("ESS −2");
+    expect(screen.getByText("Wired Reflexes R2")).toBeDefined();
+    // the plug-in stays, as a name under its parent
+    expect(document.querySelector(".cyber-item.compact.nested")!.textContent).toContain("Datajack");
+    expect(localStorage.getItem("wareCompact")).toBe("1");
+
+    // the delete button is still there
+    fireEvent.click(document.querySelector(".cyber-item.compact.nested .btn.danger")!);
+    expect(patch).toHaveBeenCalledWith(
+      expect.objectContaining({ cyberware: [expect.objectContaining({ id: "row1" })] }),
+    );
+
+    first.unmount();
+    renderInstalled();
+    expect((screen.getByLabelText("簡易表示（名称のみ）") as HTMLInputElement).checked).toBe(true);
+    expect(document.querySelectorAll(".cyber-item .cyber-controls")).toHaveLength(0);
+  });
+});

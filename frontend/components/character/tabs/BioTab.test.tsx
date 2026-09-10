@@ -93,3 +93,39 @@ describe("<BioTab>", () => {
     expect(names).toEqual(["Muscle Toner"]);
   });
 });
+
+describe("<BioTab> compact view", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("shares the cyberware tab's name-only switch", () => {
+    // one setting for both tabs: set it here as if the cyber tab had
+    localStorage.setItem("wareCompact", "1");
+    renderTab({
+      character: {
+        bioware: [{ id: "b1", ware_id: "musc", rating: 3, grade: "Standard" }],
+        derived: {
+          bioware: [
+            {
+              id: "b1",
+              ware_id: "musc",
+              name: "Muscle Augmentation",
+              category: "Bioware",
+              grade: "Standard",
+              rating: 3,
+              essence: 0.6,
+              nuyen: 93000,
+              source: "SR5",
+            },
+          ],
+        },
+      } as any,
+    });
+    expect((screen.getByLabelText("簡易表示（名称のみ）") as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByText("Muscle Augmentation R3")).toBeDefined();
+    expect(document.querySelectorAll(".cyber-item .cyber-controls")).toHaveLength(0);
+
+    fireEvent.click(screen.getByLabelText("簡易表示（名称のみ）"));
+    expect(document.querySelectorAll(".cyber-item .cyber-controls").length).toBeGreaterThan(0);
+    expect(localStorage.getItem("wareCompact")).toBe("0");
+  });
+});

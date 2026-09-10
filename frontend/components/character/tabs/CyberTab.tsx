@@ -3,6 +3,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { useWareCompact } from "@/lib/character/useWareCompact";
 import { limbQualityLine } from "@/lib/character/format";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
 import {
@@ -17,6 +18,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
   const [cyCat, setCyCat] = useState("all");
   const [addGrade, setAddGrade] = useState("Standard");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
+  const [compact, setCompact] = useWareCompact();
   const cyberCats = useMemo(
     () =>
       [
@@ -112,6 +114,10 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
           {ui("cyber.skull")}
         </label>
       </div>
+      <label className="option-row">
+        <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
+        {ui("ware.compact")}
+      </label>
       {(d.cyberware || [])
         .filter((item) => !item.parent_id)
         .map((item) => (
@@ -123,6 +129,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
             grades={cyberGrades}
             kind="cyberware"
             tr={tr}
+            compact={compact}
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
             pickSlots={(d.skill_pick_slots || []).filter(

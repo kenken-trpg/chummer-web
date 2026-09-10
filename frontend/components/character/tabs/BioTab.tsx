@@ -3,6 +3,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { useWareCompact } from "@/lib/character/useWareCompact";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
 import {
   hideFromWareCatalog,
@@ -16,6 +17,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
   const [bioCat, setBioCat] = useState("all");
   const [bioGrade, setBioGrade] = useState("Standard");
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
+  const [compact, setCompact] = useWareCompact();
   const bioCats = useMemo(
     () =>
       [
@@ -60,6 +62,10 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
           {ui("ware.disabledGrades", { list: disabledCoreGrades.join(ui("common.listSep")) })}
         </p>
       ) : null}
+      <label className="option-row">
+        <input type="checkbox" checked={compact} onChange={(e) => setCompact(e.target.checked)} />
+        {ui("ware.compact")}
+      </label>
       {(d.bioware || [])
         .filter((item) => !item.parent_id)
         .map((item) => (
@@ -71,6 +77,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             grades={bioGrades}
             kind="bioware"
             tr={tr}
+            compact={compact}
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
             pickSlots={(d.skill_pick_slots || []).filter((slot) => slot.source_kind === "bioware")}
