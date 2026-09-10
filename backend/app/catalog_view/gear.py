@@ -74,7 +74,7 @@ def section(raw: CatalogDict) -> dict:
                 "add_gear_id": w.get("add_gear_id") or "",
             }
             for w in raw.get("weapons") or []
-            if not w.get("hidden")
+            if w.get("purchasable")
         ],
         "weapon_accessories": [
             {

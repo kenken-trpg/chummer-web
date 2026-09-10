@@ -473,7 +473,10 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
 
 def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read weapons and their accessories."""
-    weap_r = _Resolver(cat["weapons"])
+    # Only weapons a character could have bought: the granted ones (a cyberspur,
+    # bioware claws) come back with the ware that grants them, and matching them
+    # here as well would give the character the weapon twice.
+    weap_r = _Resolver([w for w in cat["weapons"] if w.get("purchasable")])
     wacc_r = _Resolver(cat["weapon_accessories"])
     st_weap: list[dict[str, Any]] = []
     st_wacc: list[dict[str, Any]] = []

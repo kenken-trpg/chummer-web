@@ -8066,3 +8066,68 @@ def test_a_mixed_drug_is_subject_to_the_chargen_availability_limit() -> None:
     out = compute(_mixed("Nasty", [("Tank", 0), ("Berserker BTL", 0), ("Bodyguard BTL", 0)])).derived
     assert out["custom_drugs"][0]["avail"] == "20F"
     assert has(out["errors"], "engine.gear.availOver")
+
+
+BALLISTIC_SHIELD = "943d19f7-ee6b-4ce9-8a43-93d3fe5100f2"
+BIOWARE_CLAWS = "dfd48ff5-3ecf-47b4-81fd-62b1ff3f74e4"
+RAZOR_CLAWS = "72a6fe4e-056d-4f04-872d-d911f2e66946"
+
+
+def test_quality_addweapon_grows_a_natural_weapon() -> None:
+    """Razor Claws is a quality that is also a weapon (RF p.104).
+
+    The row is `natural` like a metatype's own attack: free, no accessories,
+    and named after the quality that grew it.
+    """
+    out = compute(_mundane("claws-quality", quality_ids=[RAZOR_CLAWS]))
+    row = next(w for w in out.derived["weapons"] if w["name"] == "Razor Claws")
+    assert (row["damage"], row["ap"]) == ("({STR}+1)P", "-1")
+    assert (row["nuyen"], row["qty"]) == (0, 1)
+    assert row["natural"] is True
+    assert row["natural_source"] == "Razor Claws"
+    # The quality's karma is the whole price: growing claws costs no nuyen.
+    assert out.derived["nuyen_spent"] == 0
+
+
+def test_shield_is_armor_you_can_hit_people_with() -> None:
+    """A Ballistic Shield is armour with an `<addweapon>`: one purchase, two
+    rows, and the weapon row is charged nothing on its own."""
+    out = compute(_mundane("shield", armor=[ArmorInstall(armor_id=BALLISTIC_SHIELD, equipped=True)]))
+    row = next(w for w in out.derived["weapons"] if w["name"] == "Ballistic Shield")
+    assert row["damage"] == "({STR}+2)S"
+    assert row["from_armor"] is True
+    assert row["source_armor_id"] == out.derived["armor_items"][0]["id"]
+    assert out.derived["nuyen_spent"] == 1200
+
+
+def test_bioware_claws_become_a_weapon_row() -> None:
+    """Bioware claws are `<addweapon>` implants like a cyberspur (CF p.72), and
+    the row says which tab to delete them from."""
+    out = compute(_mundane("claws-bio", bioware=[CyberwareInstall(ware_id=BIOWARE_CLAWS)]))
+    row = next(w for w in out.derived["weapons"] if w["name"].startswith("Claws"))
+    # An implant weapon resolves STR from the body it is in, so no placeholder
+    # is left for the client: STR 1 claws do 2P.
+    assert (row["damage"], row["ap"]) == ("2P", "-3")
+    assert row["from_ware"] is True
+    assert row["ware_kind"] == "bioware"
+
+
+def test_granted_weapons_are_loaded_but_never_for_sale() -> None:
+    """Claws, fangs and shield bashes have to be in `catalog()["weapons"]` for
+    the rows above to find a spec — and out of the shop, so nobody buys a pair
+    of fangs off the weapons tab."""
+    from app.catalog_view import public_catalog
+
+    granted = {"Razor Claws", "Fangs", "Ballistic Shield", "Claws (Bio-Weapon)"}
+    specs = {item["name"] for item in catalog()["weapons"]}
+    assert granted <= specs
+    assert granted.isdisjoint({item["name"] for item in public_catalog()["weapons"]})
+    # Every `<addweapon>` in the catalog now resolves to one of those specs.
+    sources: list[dict[str, object]] = [
+        *catalog()["armor"],
+        *catalog()["qualities"],
+        *catalog()["gear"],
+        *catalog()["cyberware"]["items"],
+        *catalog()["bioware"]["items"],
+    ]
+    assert [i["name"] for i in sources if i.get("add_weapon") and not i.get("add_weapon_id")] == []

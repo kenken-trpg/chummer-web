@@ -164,6 +164,14 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     skills = load_skills()
     skills["group_names"] = load_skill_group_names()
     qualities = load_qualities()
+    armor = load_armor()
+    # A shield is armour you hit people with, and metagenetic claws are a
+    # quality that is also a weapon (RF p.104) — both name the weapon they
+    # bring in `<addweapon>`, the same way gear and ware do above.
+    for item in list(armor) + list(qualities):
+        add_name = str(item.get("add_weapon") or "")
+        if add_name:
+            item["add_weapon_id"] = weapon_ids.get(add_name) or ""
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])
@@ -226,7 +234,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "sprites": load_sprites(),
         "foci": load_foci(),
         "qi_focus": load_qi_focus(),
-        "armor": load_armor(),
+        "armor": armor,
         "armor_mods": load_armor_mods(),
         "weapons": weapons,
         "weapon_ranges": load_weapon_ranges(),

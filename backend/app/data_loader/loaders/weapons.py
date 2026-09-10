@@ -35,22 +35,26 @@ def load_weapons() -> list[dict[str, Any]]:
     category_types = _weapon_category_types(root)
     items: list[dict[str, Any]] = []
     for el in root.findall("./weapons/weapon"):
-        hidden = el.find("hide") is not None
-        from_cyberware = _text(el.find("cyberware")).lower() == "true"
-        if hidden and not from_cyberware:
-            continue
         name = _text(el.find("name"))
         weapon_id = _text(el.find("id"))
         category = _text(el.find("category"))
         cost = _text(el.find("cost"), "0")
-        if not name or not weapon_id or category in SKIP_WEAPON_CATEGORIES or _is_variable_cost(cost):
+        if not name or not weapon_id:
             continue
+        # A weapon nobody can buy is still loaded: bioware claws, a cyberspur
+        # and a shield are all `<addweapon>` targets, and the row they turn
+        # into needs the same spec as a bought weapon. `purchasable` is what
+        # keeps them out of the shop.
+        hidden = el.find("hide") is not None
+        from_cyberware = _text(el.find("cyberware")).lower() == "true"
+        purchasable = not hidden and category not in SKIP_WEAPON_CATEGORIES and not _is_variable_cost(cost)
         weapon_type = _text(el.find("weapontype")) or category_types.get(category) or category.lower()
         items.append(
             {
                 "id": weapon_id,
                 "name": name,
                 "category": category,
+                "purchasable": purchasable,
                 "type": _text(el.find("type")),
                 "weapon_type": weapon_type,
                 "accuracy": _text(el.find("accuracy")),

@@ -94,6 +94,60 @@ def _append_gear_weapons(weapons: list[dict[str, Any]], gear_items: list[dict[st
         taken.add(gear_id)
 
 
+def _append_armor_weapons(weapons: list[dict[str, Any]], armor_items: list[dict[str, Any]]) -> None:
+    """Rows for armour that is also a weapon — a shield you hit people with.
+
+    Same shape as the gear-granted rows above: the armour was paid for as
+    armour, so the weapon costs nothing more and is deleted by dropping the
+    armour it belongs to.
+    """
+    taken = {str(row.get("id") or "") for row in weapons}
+    for item in armor_items:
+        armor_spec = _item_by_id("armor", str(item.get("armor_id") or ""))
+        spec_id = str((armor_spec or {}).get("add_weapon_id") or "")
+        if not spec_id:
+            continue
+        spec = _item_by_id("weapons", spec_id)
+        if not spec:
+            continue
+        armor_id = str(item.get("id") or "")
+        if not armor_id or armor_id in taken:
+            continue
+        weapon = _public_weapon(spec, inst_id=armor_id, qty=1, nuyen=int(item.get("nuyen") or 0))
+        weapon["from_armor"] = True
+        weapon["source_armor_id"] = armor_id
+        weapons.append(weapon)
+        taken.add(armor_id)
+
+
+def _append_quality_weapons(weapons: list[dict[str, Any]], qualities: list[dict[str, Any]]) -> None:
+    """Rows for the attacks a quality brings with it (`<addweapon>`).
+
+    Claws, Fangs, Goring Horns and the rest of the metagenetic qualities
+    (RF p.104) are weapons the character grew rather than bought, so they are
+    marked `natural` exactly like a metatype's own attack: no cost, no
+    accessories, and nothing to delete but the quality itself.
+    """
+    taken = {str(row.get("id") or "") for row in weapons}
+    for index, quality in enumerate(qualities):
+        spec_id = str(quality.get("add_weapon_id") or "")
+        if not spec_id:
+            continue
+        spec = _item_by_id("weapons", spec_id)
+        if not spec:
+            continue
+        # By position, not by quality id: a quality can be taken twice, and
+        # each take is its own set of claws.
+        inst_id = f"quality-{index}-{spec_id}"
+        if inst_id in taken:
+            continue
+        weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
+        weapon["natural"] = True
+        weapon["natural_source"] = str(quality.get("name") or "")
+        weapons.append(weapon)
+        taken.add(inst_id)
+
+
 def _append_natural_weapons(
     weapons: list[dict[str, Any]],
     effects: EffectsDict | None,
@@ -266,6 +320,9 @@ def _append_ware_weapons(
             from_ware=True,
             source_ware_id=ware_id,
         )
+        # Which tab owns it: bioware claws are deleted from `bioware`, a
+        # cyberspur from `cyberware`.
+        row["ware_kind"] = str(item.get("ware_kind") or "cyberware")
         _apply_ware_weapon_attrs(row, item, ware_by_id, state, attr_totals)
         weapons.append(row)
         taken.add(ware_id)

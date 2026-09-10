@@ -657,6 +657,7 @@ const JA = {
 
   "weapon.fromGear": " / ギア連動",
   "weapon.fromWare": " / ウェア連動",
+  "weapon.fromArmor": " / アーマー連動",
   "weapon.natural": " / {source} 由来（生得）",
   "weapon.limbStr": " / 肢 STR {str}",
   "weapon.focusDice": " / 収束具+{dice}",
@@ -2367,6 +2368,7 @@ const EN: Catalog = {
 
   "weapon.fromGear": " / linked to gear",
   "weapon.fromWare": " / linked to ware",
+  "weapon.fromArmor": " / linked to armor",
   "weapon.natural": " / natural weapon from {source}",
   "weapon.limbStr": " / limb STR {str}",
   "weapon.focusDice": " / focus +{dice}",
