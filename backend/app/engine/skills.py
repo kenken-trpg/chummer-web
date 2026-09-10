@@ -559,6 +559,90 @@ def _attach_skillsoft_knowledge(
 SKILL_PICK_TAGS = {"selectskill", "hardwires"}
 
 
+def _ware_bonus_nodes(kind: str, inst: Any) -> tuple[str, list[dict[str, Any]]] | None:
+    """The ware's name and the bonus nodes it applies as installed."""
+    ware = _ware_by_id(kind, inst.ware_id)
+    if not ware:
+        return None
+    nodes = list(ware.get("bonus") or [])
+    if inst.wireless:
+        nodes.extend(ware.get("wirelessbonus") or [])
+    return str(ware["name"]), substitute_rating(nodes, int(inst.rating or 1))
+
+
+def _needs_accuracy_pick(node: dict[str, Any]) -> bool:
+    fields = node.get("fields") or {}
+    return (
+        node.get("tag") == "weaponskillaccuracy"
+        and "selectskill" in fields
+        and not str(fields.get("name") or "").strip()
+    )
+
+
+def ware_accuracy_picks(
+    state: CharacterState, skip_ids: set[str] | frozenset[str] = frozenset()
+) -> list[tuple[str, str, str, str, dict[str, Any]]]:
+    """``<weaponskillaccuracy>`` on ware whose skill is the player's to name —
+    Cyberlimb Optimization (CF p.87): +1 Accuracy with one chosen skill.
+
+    Upstream spells it that way rather than as a `<selectskill>` so the bonus
+    lands on the limit, not the pool; the pick itself is the same one. Returns
+    ``(key, ware name, kind, install id, node)``. The key is numbered apart
+    (``acc{n}``) so the plain `<selectskill>` picks on the same ware keep the
+    keys they were saved under. Ware in a vehicle mod (`skip_ids`) is the
+    vehicle's, not the character's, and gets no pick.
+    """
+    rows: list[tuple[str, str, str, str, dict[str, Any]]] = []
+    for kind in ("cyberware", "bioware"):
+        for inst in getattr(state, kind):
+            if inst.id in skip_ids:
+                continue
+            resolved = _ware_bonus_nodes(kind, inst)
+            if not resolved:
+                continue
+            name, nodes = resolved
+            index = 0
+            for node in nodes:
+                if not _needs_accuracy_pick(node):
+                    continue
+                rows.append((f"ware:{inst.id}:acc{index}", name, kind, inst.id, node))
+                index += 1
+    return rows
+
+
+def bind_ware_skill_accuracy(
+    effects: EffectsDict,
+    state: CharacterState,
+    skills_data: dict[str, Any],
+    skip_ids: set[str] | frozenset[str] = frozenset(),
+) -> None:
+    """Fold the picked skills of :func:`ware_accuracy_picks` into
+    ``effects["weapon_skill_accuracy"]``. This runs before the weapons are
+    priced, long before :func:`resolve_skill_picks`, so it reads the pick
+    straight off the state; an out-of-range pick is left for that pass to
+    report and simply does nothing here."""
+    picks = state.skill_picks or {}
+    rows = effects.setdefault("weapon_skill_accuracy", [])
+    for key, source, _kind, _inst_id, node in ware_accuracy_picks(state, skip_ids):
+        picked = str(picks.get(key) or "").strip()
+        if not picked:
+            continue
+        spec = parse_selectskill_spec(_accuracy_select_node(node))
+        if picked not in selectskill_options(spec, skills_data, {}):
+            continue
+        bonus = _as_int((node.get("fields") or {}).get("value"))
+        if bonus:
+            rows.append({"name": picked, "bonus": bonus, "source": source})
+
+
+def _accuracy_select_node(node: dict[str, Any]) -> dict[str, Any]:
+    """The `<selectskill>` inside a `<weaponskillaccuracy>`, shaped like a
+    top-level one: its filters sit in ``field_attrs``, its value is the
+    Accuracy, not dice."""
+    attrs = dict((node.get("field_attrs") or {}).get("selectskill") or {})
+    return {"tag": "selectskill", "attrs": attrs, "fields": {}}
+
+
 def _extra_kind(spec: dict[str, Any]) -> str:
     return str(spec.get("extra_kind") or "")
 
@@ -588,6 +672,7 @@ def resolve_skill_picks(
     skill_totals: dict[str, int],
     *,
     reflex_optimized: bool = False,
+    skip_ids: set[str] | frozenset[str] = frozenset(),
 ) -> SkillPicks:
     slots: list[dict[str, Any]] = []
     default_free: list[str] = []
@@ -599,7 +684,9 @@ def resolve_skill_picks(
     hardwire_knowledge: dict[str, int] = {}
     picks = state.skill_picks or {}
 
-    def add_slot(key: str, source: str, source_kind: str, source_id: str, node: dict[str, Any]) -> None:
+    def add_slot(
+        key: str, source: str, source_kind: str, source_id: str, node: dict[str, Any], accuracy: int = 0
+    ) -> None:
         hardwire = node.get("tag") == "hardwires"
         spec = parse_hardwires_spec(node) if hardwire else parse_selectskill_spec(node)
         options = selectskill_options(spec, skills_data, skill_totals)
@@ -641,6 +728,7 @@ def resolve_skill_picks(
                 "options": options,
                 "knowledgeskills": bool(spec.get("knowledgeskills")),
                 "default_free": bool(covered),
+                "accuracy": accuracy,
             }
         )
 
@@ -657,19 +745,29 @@ def resolve_skill_picks(
 
     for kind in ("cyberware", "bioware"):
         for inst in getattr(state, kind):
-            ware = _ware_by_id(kind, inst.ware_id)
-            if not ware:
+            resolved = _ware_bonus_nodes(kind, inst)
+            if not resolved:
                 continue
-            nodes = list(ware.get("bonus") or [])
-            if inst.wireless:
-                nodes.extend(ware.get("wirelessbonus") or [])
-            nodes = substitute_rating(nodes, int(inst.rating or 1))
+            name, nodes = resolved
             index = 0
             for node in nodes:
                 if node.get("tag") not in SKILL_PICK_TAGS:
                     continue
-                add_slot(f"ware:{inst.id}:{index}", ware["name"], kind, inst.id, node)
+                add_slot(f"ware:{inst.id}:{index}", name, kind, inst.id, node)
                 index += 1
+
+    # The Accuracy picks: the same picker, but the value is Accuracy on the
+    # chosen skill's weapons (bound earlier, in `bind_ware_skill_accuracy`),
+    # so the slot carries it as `accuracy` and adds no dice.
+    for key, name, kind, inst_id, node in ware_accuracy_picks(state, skip_ids):
+        add_slot(
+            key,
+            name,
+            kind,
+            inst_id,
+            _accuracy_select_node(node),
+            accuracy=_as_int((node.get("fields") or {}).get("value")),
+        )
 
     return {
         "slots": slots,

@@ -21,6 +21,9 @@ export interface SkillPickSlot {
   knowledgeskills: boolean;
   /** Reflex Recorder Optimization: this pick's skill group defaults with no −1. */
   default_free?: boolean;
+  /** `<weaponskillaccuracy>` (Cyberlimb Optimization): Accuracy on the picked
+   *  skill's weapons, not dice. */
+  accuracy?: number;
 }
 
 export interface AdeptPowerInstall {

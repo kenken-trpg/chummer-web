@@ -935,6 +935,7 @@ const JA = {
   "pick.skillOf": "{source} の技能",
   "pick.max": " 上限+{max}",
   "pick.rating": " R{rating} 固定",
+  "pick.accuracy": " 武器の精度+{accuracy}",
   "pick.noDefaultPenalty": " 同グループはデフォルト −1 なし",
 
   "spec.none": "専門なし",
@@ -2681,6 +2682,7 @@ const EN: Catalog = {
   "pick.skillOf": "{source} skill",
   "pick.max": " max +{max}",
   "pick.rating": " hardwired R{rating}",
+  "pick.accuracy": " weapon Accuracy +{accuracy}",
   "pick.noDefaultPenalty": " group defaults without the −1",
 
   "spec.none": "No specialisation",
