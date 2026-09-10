@@ -3,8 +3,21 @@ import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 
 export function WareSection(s: SheetData) {
-  const { tr, d, cyber, bio } = s;
+  const { tr, d, cyber, bio, layout } = s;
   const { ui } = useUiText();
+  // The compact sheet lists ware by name alone — grade, limb stats and ESS
+  // are one click away in the editor, and the section total says the loss.
+  const namesOnly = layout === "compact";
+  const nameList = (items: typeof cyber) => (
+    <ul className="sheet-list sheet-list-compact">
+      {items.map((item) => (
+        <li key={item.id}>
+          <b>{tr(item.name)}</b>
+          {item.rating > 1 ? ` R${item.rating}` : ""}
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <Section title="sheet.ware" empty={!cyber.length && !bio.length}>
       {cyber.length ? (
@@ -22,41 +35,49 @@ export function WareSection(s: SheetData) {
               })}
             </p>
           ) : null}
-          <ul className="sheet-list">
-            {cyber.map((item) => (
-              <li key={item.id}>
-                <b>{tr(item.name)}</b>
-                {item.rating > 1 ? ` R${item.rating}` : ""}
-                {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
-                {item.side ? ` / ${item.side}` : ""}
-                {item.limb_str != null ? (
-                  <span className="sheet-dim">
-                    {" "}
-                    {ui("sheet.limb", { str: item.limb_str, agi: item.limb_agi ?? 0 })}
-                    {(item.limb_armor ?? 0) > 0
-                      ? ui("sheet.limbArmor", { armor: item.limb_armor ?? 0 })
-                      : ""}
-                  </span>
-                ) : null}
-                <span className="sheet-dim"> ESS −{item.essence}</span>
-              </li>
-            ))}
-          </ul>
+          {namesOnly ? (
+            nameList(cyber)
+          ) : (
+            <ul className="sheet-list">
+              {cyber.map((item) => (
+                <li key={item.id}>
+                  <b>{tr(item.name)}</b>
+                  {item.rating > 1 ? ` R${item.rating}` : ""}
+                  {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
+                  {item.side ? ` / ${item.side}` : ""}
+                  {item.limb_str != null ? (
+                    <span className="sheet-dim">
+                      {" "}
+                      {ui("sheet.limb", { str: item.limb_str, agi: item.limb_agi ?? 0 })}
+                      {(item.limb_armor ?? 0) > 0
+                        ? ui("sheet.limbArmor", { armor: item.limb_armor ?? 0 })
+                        : ""}
+                    </span>
+                  ) : null}
+                  <span className="sheet-dim"> ESS −{item.essence}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : null}
       {bio.length ? (
         <div className="sheet-block">
           <h4>{ui("sheet.bioware", { lost: d.essence_lost_bio ?? 0 })}</h4>
-          <ul className="sheet-list">
-            {bio.map((item) => (
-              <li key={item.id}>
-                <b>{tr(item.name)}</b>
-                {item.rating > 1 ? ` R${item.rating}` : ""}
-                {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
-                <span className="sheet-dim"> ESS −{item.essence}</span>
-              </li>
-            ))}
-          </ul>
+          {namesOnly ? (
+            nameList(bio)
+          ) : (
+            <ul className="sheet-list">
+              {bio.map((item) => (
+                <li key={item.id}>
+                  <b>{tr(item.name)}</b>
+                  {item.rating > 1 ? ` R${item.rating}` : ""}
+                  {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
+                  <span className="sheet-dim"> ESS −{item.essence}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : null}
     </Section>
