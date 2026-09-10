@@ -455,3 +455,50 @@ def test_a_deliberate_mentor_pick_is_not_reset_to_the_default() -> None:
     _, ch1, ch2 = _loop(_MENTOR_PICK_XML)
     assert "+2 dice on Alchemy Tests" in ch1.mentor_choices
     assert ch2.mentor_choices == ch1.mentor_choices
+
+
+# --------------------------------------------------------------------------- #
+# Scenario H — exotic skills, granted skill picks, reputation, karma→nuyen      #
+# --------------------------------------------------------------------------- #
+
+_LEDGER_XML = build_chum5(
+    name="Ledger",
+    metatype="Human",
+    talent="Mundane",
+    priorities=("D", "B", "E", "A", "C"),
+    attributes={"BOD": 3, "AGI": 5, "REA": 3, "STR": 3, "CHA": 3, "INT": 4, "LOG": 3, "WIL": 3},
+    skills={"Pistols": 4, "Sneaking": 3},
+    # Two exotic skills of the same name: they only differ by `<specific>`,
+    # which is why they cannot live in the skills map.
+    exotic_skills=[
+        {"name": "Exotic Ranged Weapon", "specific": "Blowguns", "rating": 3},
+        {"name": "Exotic Ranged Weapon", "specific": "Lasers", "rating": 2},
+    ],
+    # Aptitude's `<selectskill>` slot, and the skill hardwired into an implant.
+    qualities=["Aptitude"],
+    quality_picks={"Aptitude": ["Pistols"]},
+    cyberware=[{"name": "Active Hardwires", "rating": 3, "skill_picks": ["Sneaking"]}],
+    street_cred=4,
+    notoriety=2,
+    karma_nuyen=5,
+)
+
+
+def test_exotic_skills_picks_and_reputation_survive_the_trip() -> None:
+    s1, ch1, ch2 = _loop(_LEDGER_XML)
+
+    assert [(row["skill_name"], row["extra"], row["rating"]) for row in s1["exotic_skills"]] == [
+        ("Exotic Ranged Weapon", "Blowguns", 3),
+        ("Exotic Ranged Weapon", "Lasers", 2),
+    ]
+    assert "Exotic Ranged Weapon" not in s1["skills"]
+
+    # The quality's pick is keyed by a catalog id and survives as written; the
+    # implant's is keyed by the install row, whose id is new on every import.
+    assert sorted(ch1.skill_picks.values()) == ["Pistols", "Sneaking"]
+    assert sorted(ch2.skill_picks.values()) == ["Pistols", "Sneaking"]
+    assert not any(row["key"] == "engine.skills.pickSkill" for row in ch1.derived["warnings"])
+
+    assert (ch1.street_cred, ch1.notoriety_bonus, ch1.karma_nuyen) == (4, 2, 5)
+    assert ch2.derived["street_cred"] == ch1.derived["street_cred"]
+    assert ch2.derived["nuyen"] == ch1.derived["nuyen"]

@@ -184,6 +184,10 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["metavariant"] = mv if mv and mv.lower() not in ("none", "") else None
     st["talent"] = _text(root.find("./priorities/prioritytalent")) or _text(root.find("prioritytalent")) or "Mundane"
     st["build_method"] = _BUILD_METHODS.get(_text(root.find("buildmethod")).lower(), "Priority")
+    st["street_cred"] = max(0, _int(root.find("streetcred"), 0))
+    st["notoriety_bonus"] = _int(root.find("notoriety"), 0)
+    # Nuyen bought with karma at chargen; `<nuyenbp>` is build points in old money.
+    st["karma_nuyen"] = max(0, _int(root.find("nuyenbp"), 0))
     st["settings"] = _import_settings(root, cat)
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
@@ -240,11 +244,25 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     """Read active skills, groups, specialisations and knowledge."""
     skills: dict[str, int] = {}
     specs: dict[str, str] = {}
+    exotic: list[dict[str, Any]] = []
+    exotic_names = {row["name"] for row in (cat["skills"].get("skills") or []) if row.get("exotic")}
     for s in root.findall("./skills/skills/skill"):
         name = _text(s.find("name"))
         if not name:
             continue
         rating = _int(s.find("base")) + _int(s.find("karma"))
+        # An exotic skill is one row per weapon, told apart by `<specific>` —
+        # two of them share a name, so they cannot go in the `skills` map.
+        if name in exotic_names:
+            exotic.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "skill_name": name,
+                    "extra": _text(s.find("specific")),
+                    "rating": max(1, rating),
+                }
+            )
+            continue
         if rating > 0:
             skills[name] = rating
         sp = _text(s.find("./specializations/spec/name")) or _text(s.find("./specializations/skillspecialization/name"))
@@ -252,6 +270,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
             specs[name] = sp
     st["skills"] = skills
     st["skill_specializations"] = specs
+    st["exotic_skills"] = exotic
 
     groups: dict[str, int] = {}
     for g in root.findall("./skills/groups/group"):
@@ -287,6 +306,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     q_ids = {r["id"] for r in cat["qualities"]}
     quality_ids: list[str] = []
     quality_extras: dict[str, str] = {}
+    picks: dict[str, str] = {}
     for q in root.findall("./qualities/quality"):
         src = _text(q.find("qualitysource")).lower()
         if src and src not in ("selected", "builtin", ""):
@@ -303,8 +323,15 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         extra = _text(q.find("extra"))
         if extra:
             quality_extras[qid] = extra
+        for pick in q.findall("./skillpicks/pick"):
+            skill = _text(pick.find("skill"))
+            if skill:
+                picks[f"quality:{qid}:{_text(pick.find('index'))}"] = skill
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
+    # Merged rather than assigned: `_import_ware` fills in the implant picks,
+    # and the two sections run in either order.
+    st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
 
 
 def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -487,6 +514,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     ware_rows = (cat.get("cyberware") or {}).get("items") or []
     ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
     ware_r = _Resolver(ware_rows)
+    picks: dict[str, str] = {}
 
     def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
@@ -503,6 +531,10 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "extra": _text(w.find("extra")) or None,
             }
             out.append(row)
+            for pick in w.findall("./skillpicks/pick"):
+                skill = _text(pick.find("skill"))
+                if skill:
+                    picks[f"ware:{row['id']}:{_text(pick.find('index'))}"] = skill
             kids = w.findall("./children/cyberware") + w.findall("./children/bioware")
             for child in load_ware(kids, kind):
                 child["parent_id"] = row["id"]
@@ -516,6 +548,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     st["bioware"] = load_ware(
         root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
     )
+    st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
 
 
 def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:

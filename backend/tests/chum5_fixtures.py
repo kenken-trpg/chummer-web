@@ -11,6 +11,7 @@ Not collected by pytest — the filename is deliberately not ``test_*``.
 
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET
 from typing import Any
 
@@ -39,6 +40,17 @@ def _flag(parent: ET.Element, tag: str, on: bool) -> None:
     _e(parent, tag, "True" if on else "False")
 
 
+def _pick_nodes(parent: ET.Element, skills: list[str]) -> None:
+    """`<skillpicks>`: the skill chosen for each `<selectskill>` slot, in order."""
+    if not skills:
+        return
+    picks = _e(parent, "skillpicks")
+    for index, skill in enumerate(skills):
+        pick = _e(picks, "pick")
+        _e(pick, "index", index)
+        _e(pick, "skill", skill)
+
+
 def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -> None:
     for row in rows:
         w = _e(parent, item_tag)
@@ -49,6 +61,7 @@ def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -
             _e(w, "location", row["side"])
         if row.get("extra"):
             _e(w, "extra", row["extra"])
+        _pick_nodes(w, row.get("skill_picks") or [])
         kids = row.get("children") or []
         if kids:
             _ware_nodes(_e(w, "children"), item_tag, kids)
@@ -110,6 +123,11 @@ def build_chum5(
     stream: str | None = None,
     mystic_pp: int = 0,
     mentor_choices: list[str] | None = None,
+    exotic_skills: list[dict[str, Any]] | None = None,
+    quality_picks: dict[str, list[str]] | None = None,
+    street_cred: int = 0,
+    notoriety: int = 0,
+    karma_nuyen: int = 0,
 ) -> bytes:
     root = ET.Element("character")
     _e(root, "name", "")
@@ -125,6 +143,12 @@ def build_chum5(
     if created:
         _e(root, "karma", karma)
         _e(root, "nuyen", nuyen)
+    if street_cred:
+        _e(root, "streetcred", street_cred)
+    if notoriety:
+        _e(root, "notoriety", notoriety)
+    if karma_nuyen:
+        _e(root, "nuyenbp", karma_nuyen)
 
     pr = _e(root, "priorities")
     for tag, letter in zip(_PRIO_TAGS, priorities, strict=True):
@@ -149,6 +173,13 @@ def build_chum5(
         spec = (skill_specs or {}).get(sname)
         if spec:
             _e(_e(_e(s, "specializations"), "spec"), "name", spec)
+    for row in exotic_skills or []:
+        # An exotic skill is an ordinary <skill> carrying <specific>.
+        ex = _e(active, "skill")
+        _e(ex, "name", row["name"])
+        _e(ex, "specific", row["specific"])
+        _e(ex, "base", row.get("rating", 1))
+        _e(ex, "karma", 0)
     grp_el = _e(sk, "groups")
     for gname, rating in (groups or {}).items():
         g = _e(grp_el, "group")
@@ -171,6 +202,7 @@ def build_chum5(
         q = _e(q_el, "quality")
         _e(q, "name", qname)
         _e(q, "qualitysource", "Selected")
+        _pick_nodes(q, (quality_picks or {}).get(qname) or [])
 
     sp_el = _e(root, "spells")
     for sname in spells or []:
@@ -356,9 +388,15 @@ def build_chum5(
 _DROP_KEYS = {"id", "parent_id", "weapon_install_id", "derived", "career_baseline", "_warnings"}
 
 
+#: A skill-pick key names the row that granted the slot — `ware:<install id>:0`
+#: — so the id sits inside the key rather than in a field of its own.
+_GENERATED_IN_KEY = re.compile(r"^(ware):[0-9a-fA-F-]{36}:")
+
+
 def _scrub(obj: Any) -> Any:
     """Drop generated ids / computed side-cars, sort list rows for a stable compare."""
     if isinstance(obj, dict):
+        obj = {_GENERATED_IN_KEY.sub(r"\1:*:", k) if isinstance(k, str) else k: v for k, v in obj.items()}
         drop = _DROP_KEYS
         # A weapon focus keeps the weapon row it is bound to in `extra`, so on
         # a focus that field is a generated id rather than text.
