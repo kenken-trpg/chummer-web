@@ -1642,6 +1642,8 @@ ACTIVE_HARDWIRES = "b330ed31-20d4-4e5a-823b-4ef6d6270685"
 KNOWLEDGE_HARDWIRES = "56a5fcc1-5da7-4728-aae9-073c92f67c2b"
 APTITUDE = "58e3d62a-2073-4af5-b8e0-00c446b3a5ab"
 CATLIKE = "84305e09-f8d5-4a82-8257-0119b8c3f926"
+DRUG_TOLERANT = "00c827f6-aaa7-4003-87c9-f14e36263252"  # CF p.54
+ELEVATED_STRESS = "0b28f554-8929-4b8b-b8c6-4203ca856b33"  # TCT p.189
 LOSS_OF_CONFIDENCE = "c9cd05ad-cd3c-451e-8285-e0fb1d95ebc1"
 
 
@@ -7920,6 +7922,23 @@ def test_active_drug_folds_bonus_into_totals() -> None:
 
 
 INFILTRATOR_BTL = "c153d7ec-af89-4c6f-a31d-fc3a6a490de4"  # CF p.193
+
+
+def test_a_quality_moves_the_addiction_test() -> None:
+    """The Addiction Test (SR5 p.414) is BOD + WIL / LOG + WIL against the
+    drug's threshold. `Drug Tolerant` (CF p.54) helps only on the first dose;
+    `Elevated Stress` (TCT p.189) hurts both tests, addicted or not."""
+    tolerant = compute(_human("tolerant", quality_ids=[DRUG_TOLERANT])).derived["test_mods"]
+    assert tolerant["addiction_physiological_first"] == 2
+    assert tolerant["addiction_psychological_first"] == 2
+    assert tolerant["addiction_physiological_addicted"] == 0
+    assert tolerant["addiction_psychological_addicted"] == 0
+
+    stressed = compute(_human("stressed", quality_ids=[ELEVATED_STRESS])).derived["test_mods"]
+    assert stressed["addiction_physiological_first"] == -1
+    assert stressed["addiction_physiological_addicted"] == -1
+    assert stressed["addiction_psychological_first"] == -1
+    assert stressed["addiction_psychological_addicted"] == -1
 
 
 def test_a_btl_is_taken_the_way_a_drug_is() -> None:
