@@ -270,6 +270,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 "needs_select": bool(skills) or "selectskill" in (node.get("fields") or {}),
             }
         )
+    elif tag == "weaponaccuracy":
+        # Accuracy on one weapon by name — `[contains]` for a family (Muzzle:
+        # every Fangs, SR5 bioware), or exact (paired Digigrade Legs: Raptor Foot).
+        target = str(fields.get("name") or "").strip()
+        bonus = _as_int(fields.get("value") or fields.get("val") or fields.get("bonus"))
+        if target and bonus:
+            effects["weapon_accuracy"].append({"name": target, "bonus": bonus, "source": source})
     elif tag == "weaponskillaccuracy":
         select_attrs = dict((node.get("field_attrs") or {}).get("selectskill") or {})
         fixed = str(fields.get("name") or "").strip()

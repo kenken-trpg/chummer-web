@@ -231,6 +231,7 @@ class EffectsDict(TypedDict):
     weapon_category_dice: list[WeaponCategoryDiceRow]
     weapon_skill_accuracy_slots: list[WeaponSkillAccuracySlotRow]
     weapon_skill_accuracy: list[WeaponDvBonusRow]
+    weapon_accuracy: list[WeaponDvBonusRow]
     add_spirit_slots: list[AddSpiritSlotRow]
     add_spirit_picks: list[AddSpiritPickRow]
     free_metamagics: list[FreeMetamagicRow]
@@ -380,6 +381,7 @@ def empty_effects() -> EffectsDict:
         "weapon_category_dice": [],
         "weapon_skill_accuracy_slots": [],
         "weapon_skill_accuracy": [],
+        "weapon_accuracy": [],
         "add_spirit_slots": [],
         "add_spirit_picks": [],
         "extra_spirits": [],

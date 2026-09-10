@@ -186,6 +186,7 @@ IMPLEMENTED = {
     "spelldescriptordamage",
     "allowspellrange",
     "weaponskillaccuracy",
+    "weaponaccuracy",
     "drainvalue",
     "fadingvalue",
     "fadingresist",
@@ -227,7 +228,6 @@ SILENT_TAGS = {
     "weaponspecificdice",
     # `Muzzle` sharpens a `Fangs` natural weapon; natural weapons live on
     # critters and metavariants we do not build, so there is no row to sharpen.
-    "weaponaccuracy",
     "addskillspecializationoption",
     "critterpowers",
     "limitcritterpowercategory",
