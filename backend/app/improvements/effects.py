@@ -84,8 +84,10 @@ class EffectsDict(TypedDict):
     cm_threshold: int
     cm_threshold_offset: int
     #: `<drugpositiveattributemodifier>`: added to every positive attribute
-    #: modifier an active drug gives (Narco, CF p.159).
-    drug_positive_attribute: int
+    #: modifier an active drug gives (Narco, CF p.159), keyed by the drug
+    #: category the node names — `""` for a node that names none, and so
+    #: applies to every drug.
+    drug_positive_attribute: dict[str, int]
     #: `<reflexrecorderoptimization>`: a Reflex Recorder's skill, and the rest
     #: of its group, default without the −1 (CF p.165).
     reflex_recorder_optimization: bool
@@ -254,7 +256,7 @@ def empty_effects() -> EffectsDict:
         "cm_stun": 0,
         "cm_threshold": 0,
         "cm_threshold_offset": 0,
-        "drug_positive_attribute": 0,
+        "drug_positive_attribute": {},
         "reflex_recorder_optimization": False,
         "initiative": 0,
         "initiative_dice": 0,

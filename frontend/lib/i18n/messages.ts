@@ -369,7 +369,7 @@ const JA = {
   "customDrug.duration": "持続 {seconds} 秒",
   "customDrug.grade": "品質",
   "customDrug.help":
-    "基剤（Foundation）1つに、ブロック・強化剤・BTL を重ねます。値段・入手・中毒・発現は組んだ内容から計算します（CF p.190）。",
+    "基剤（Foundation）1つに、ブロックと強化剤を重ねます。値段・入手・中毒・発現は組んだ内容から計算します（CF p.190）。",
   "customDrug.level": "レベル {level}",
   "customDrug.mix": "調合ドラッグを作る",
   "customDrug.name": "ドラッグ名",
@@ -2095,7 +2095,7 @@ const EN: Catalog = {
   "customDrug.duration": "Lasts {seconds}s",
   "customDrug.grade": "Grade",
   "customDrug.help":
-    "One Foundation, plus any blocks, enhancers and BTLs on top. Price, availability, addiction and onset are worked out from what you mix (CF p.190).",
+    "One Foundation, plus any blocks and enhancers on top. Price, availability, addiction and onset are worked out from what you mix (CF p.190).",
   "customDrug.level": "Level {level}",
   "customDrug.mix": "Mix a drug",
   "customDrug.name": "Drug name",

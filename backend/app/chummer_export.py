@@ -503,7 +503,7 @@ def _export_custom_drugs(root: ET.Element, state: CharacterState, names: _Names,
         el = _sub(drugs, "drug")
         _sub(el, "guid", drow.id)
         _sub(el, "name", drow.name)
-        _sub(el, "category", "Custom Drug")
+        _sub(el, "category", "Custom Drugs")
         _sub(el, "quantity", drow.qty)
         _sub(el, "grade", drow.grade)
         _sub(el, "active", "True" if drow.active else "False")

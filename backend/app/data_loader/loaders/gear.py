@@ -209,7 +209,7 @@ GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
     "Formulae",
     "Custom",
     "Custom Cyberdeck Attributes",
-    "Custom Drug",
+    "Custom Drugs",
     "Paydata",
     "Commlink Apps",
     "Electronic Modification",
