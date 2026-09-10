@@ -340,4 +340,40 @@ describe("<CyberTab> compact view", () => {
     expect((screen.getByLabelText("簡易表示（名称のみ）") as HTMLInputElement).checked).toBe(true);
     expect(document.querySelectorAll(".cyber-item .cyber-controls")).toHaveLength(0);
   });
+
+  it("says 同梱 once on a folded bundled row", () => {
+    localStorage.setItem("wareCompact", "1");
+    const ch = makeCharacter({} as any);
+    const base = { category: "Cyberware", grade: "Standard", nuyen: 0, source: "SR5", rating: 1 };
+    const d = {
+      ...ch.derived,
+      cyberware: [
+        { ...base, id: "eyes", ware_id: "wired1", name: "Cybereyes", essence: 0.2 },
+        {
+          ...base,
+          id: "link",
+          ware_id: "datajack",
+          name: "Image Link",
+          essence: 0,
+          parent_id: "eyes",
+          included: true,
+        },
+      ],
+    } as any;
+    render(
+      <CyberTab
+        catalog={cyberCatalog()}
+        character={{ ...ch, derived: d }}
+        d={d}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={() => {}}
+        setCharacter={() => {}}
+      />,
+    );
+    const nested = document.querySelector(".cyber-item.compact.nested")!;
+    expect(nested.textContent).toBe("Image Link（同梱）");
+  });
 });

@@ -95,7 +95,8 @@ export function WareRow(props: {
             />
           ))}
         </div>
-        {removeControl}
+        {/* the name already says （同梱）／（…付与） on a locked row */}
+        {locked ? null : removeControl}
       </div>
     );
   }
