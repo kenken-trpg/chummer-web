@@ -31,6 +31,7 @@ class CatalogDict(TypedDict):
     spells: list[Row]
     traditions: list[Row]
     spirits: list[Row]
+    critter_powers: list[Row]
     complex_forms: list[Row]
     streams: list[Row]
     sprites: list[Row]

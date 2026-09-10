@@ -9,6 +9,7 @@ from app.engine import (
     tradition_resist,
 )
 from app.engine.gear import _append_natural_weapons, apply_reach_bonus
+from app.engine.lookups import critter_power_rows
 from app.improvements import collect_effects
 from app.models import (
     AdeptPowerInstall,
@@ -2889,9 +2890,56 @@ def test_hermetic_binds_fire_spirit() -> None:
     assert row["attributes"]["REA"] == 6
     assert row["attributes"]["STR"] == 1
     assert row["attributes"]["INI"] == 9
-    assert "Elemental Attack" in row["powers"]
+    # Each power carries what the table gives it (SR5 p.394), not just a name
+    assert {"name": "Elemental Attack", "type": "P", "action": "Complex"}.items() <= next(
+        p for p in row["powers"] if p["name"] == "Elemental Attack"
+    ).items()
     assert out.derived["nuyen_spent"] == 60
     assert "spirits" in out.derived["enabled_tabs"]
+
+
+def test_a_spirit_power_carries_what_the_table_gives_it() -> None:
+    """`traditions.xml` names a spirit's powers and nothing else, so each name
+    is filled in from `critterpowers.xml`: Engulf is a Complex Action at Touch
+    that you sustain (SR5 p.396)."""
+    out = compute(
+        _mage(
+            "spirit-powers",
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=1, bound=True)],
+        )
+    )
+    engulf = next(p for p in out.derived["spirits"][0]["powers"] if p["name"] == "Engulf")
+    assert (engulf["type"], engulf["action"], engulf["range"], engulf["duration"]) == (
+        "P",
+        "Complex",
+        "Touch",
+        "Sustained",
+    )
+
+
+def test_a_power_names_the_flavour_it_comes_in() -> None:
+    """A toxic spirit's `Engulf (Fire)` is Engulf, in fire: the bracket says
+    what it engulfs you with, and the power before it is what holds the
+    action and the duration."""
+    assert critter_power_rows(["Engulf (Fire)"])[0] == {
+        "name": "Engulf (Fire)",
+        "type": "P",
+        "action": "Complex",
+        "range": "Touch",
+        "duration": "Sustained",
+        "source": "SR5",
+        "page": "396",
+    }
+
+
+def test_a_power_the_data_does_not_describe_is_still_listed() -> None:
+    """Three names in `traditions.xml` have no entry of their own — one of
+    them is a typo upstream. The name is what the sheet prints, so the row
+    comes back with the name and nothing else rather than going missing."""
+    assert critter_power_rows(["Natural Weaponry"]) == [
+        {"name": "Natural Weaponry", "type": "", "action": "", "range": "", "duration": "", "source": "", "page": ""}
+    ]
 
 
 def test_shaman_rejects_fire_spirit() -> None:
@@ -5789,7 +5837,7 @@ def test_courier_sprite_matrix_stats() -> None:
     assert row["matrix"]["dataprocessing"] == 4
     assert row["matrix"]["firewall"] == 5
     assert row["matrix"]["initiative"] == 7
-    assert "Cookie" in row["powers"]
+    assert [p["name"] for p in row["powers"] if p["name"] == "Cookie"] == ["Cookie"]
     assert out.derived["errors"] == []
 
 

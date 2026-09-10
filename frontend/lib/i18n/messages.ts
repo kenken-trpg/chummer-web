@@ -348,6 +348,10 @@ const JA = {
   "common.freeSlot": " / 無料",
   "common.karmaCost": " / {karma}カルマ",
   "common.powers": "能力 {list}",
+  "common.powersHead": "能力",
+  /** A spirit power and what the table gives it: "物質化（物理・複雑・自身・
+   *  維持）". A power the data leaves blank prints as the name alone. */
+  "common.powerRow": "{name}（{detail}）",
   "common.hits": "{kind}ヒット",
   "common.kind": "種類",
 
@@ -1136,6 +1140,19 @@ const JA = {
    *  duration. Kept apart rather than unified under cover of a translation
    *  pass — collapsing them changes what the sheet reads. */
   "sr.dur.instantCf": "瞬間",
+  /** Critter powers add a duration spells have no use for: the power is
+   *  simply always on (SR5 p.394). */
+  "sr.dur.always": "常時",
+
+  /** The action a power takes, in the glossary's words (`Action Type …`):
+   *  複雑 / 単純 / 簡易 / なし. `Auto` is the critter table's own — the power
+   *  is on without anyone spending an action on it. */
+  "sr.action.auto": "自動",
+  "sr.action.free": "簡易",
+  "sr.action.simple": "単純",
+  "sr.action.complex": "複雑",
+  "sr.action.special": "特殊",
+  "sr.action.none": "なし",
 
   "sr.desc.area": "効果範囲",
   "sr.desc.extendedArea": "拡大効果範囲",
@@ -2074,6 +2091,8 @@ const EN: Catalog = {
   "common.freeSlot": " / free",
   "common.karmaCost": " / {karma} karma",
   "common.powers": "Powers {list}",
+  "common.powersHead": "Powers",
+  "common.powerRow": "{name} ({detail})",
   "common.hits": "{kind} hits",
   "common.kind": "Kind",
 
@@ -2844,6 +2863,14 @@ const EN: Catalog = {
   "sr.dur.sustained": "Sustained",
   "sr.dur.special": "Special",
   "sr.dur.instantCf": "Instant",
+  "sr.dur.always": "Always",
+
+  "sr.action.auto": "Auto",
+  "sr.action.free": "Free",
+  "sr.action.simple": "Simple",
+  "sr.action.complex": "Complex",
+  "sr.action.special": "Special",
+  "sr.action.none": "None",
 
   "sr.desc.area": "Area",
   "sr.desc.extendedArea": "Extended Area",

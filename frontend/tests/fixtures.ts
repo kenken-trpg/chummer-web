@@ -131,7 +131,7 @@ export function makeCatalog(overrides: Partial<Catalog> = {}): Catalog {
  * one the other sees, or the two drift and only one of them notices.
  */
 export const RICH_DERIVED = {
-  enabled_tabs: ["magic", "spells", "adept", "complexforms", "sprites", "submersion"],
+  enabled_tabs: ["magic", "spells", "adept", "spirits", "complexforms", "sprites", "submersion"],
   skill_totals: { Pistols: 4 },
   unarmed_dv: 3,
   unarmed_ap: 1,
@@ -160,7 +160,17 @@ export const RICH_DERIVED = {
   power_points: { used: 2.5, max: 6 },
   foci: [{ id: "f1", name: "Power Focus", force: 2, bonded: true }],
   qi_foci: [],
-  spirits: [{ id: "sp1", name: "Spirit of Fire", force: 3, services: 2 }],
+  spirits: [
+    {
+      id: "sp1",
+      name: "Spirit of Fire",
+      force: 3,
+      services: 2,
+      powers: [
+        { name: "Engulf", type: "P", action: "Complex", range: "Touch", duration: "Sustained" },
+      ],
+    },
+  ],
   spells: [
     {
       id: "s1",
@@ -185,7 +195,15 @@ export const RICH_DERIVED = {
       fv: "L-2",
     },
   ],
-  sprites: [{ id: "spr1", name: "Courier Sprite", level: 3, services: 2 }],
+  sprites: [
+    {
+      id: "spr1",
+      name: "Courier Sprite",
+      level: 3,
+      services: 2,
+      powers: [{ name: "Hash", type: "P", action: "Complex", range: "Touch", duration: "Instant" }],
+    },
+  ],
   fade_resist: { pool: 6, attrs: "WIL+RES" },
   submersion: { grade: 1, karma: 13, choices: [], echoes: [] },
   living_persona: { attack: 4, sleaze: 3, dataprocessing: 3, firewall: 2 },

@@ -61,4 +61,35 @@ describe("<SpiritsTab>", () => {
       spirits: [{ spirit_id: "fire", force: 1, services: 1, bound: true }],
     });
   });
+
+  it("prints each power with the action and duration it takes", () => {
+    renderTab({
+      character: {
+        derived: {
+          spirits: [
+            {
+              id: "s1",
+              name: "Fire Spirit",
+              force: 4,
+              force_max: 6,
+              services: 1,
+              powers: [
+                {
+                  name: "Engulf",
+                  type: "P",
+                  action: "Complex",
+                  range: "Touch",
+                  duration: "Sustained",
+                },
+                { name: "Natural Weaponry" },
+              ],
+            },
+          ] as any,
+        },
+      },
+    });
+    expect(screen.getByText("Engulf（物理・複雑・接触・維持）")).toBeDefined();
+    // a power the data describes with nothing at all is still listed, by name
+    expect(screen.getByText("Natural Weaponry")).toBeDefined();
+  });
 });

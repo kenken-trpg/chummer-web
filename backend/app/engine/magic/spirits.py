@@ -22,7 +22,7 @@ from ...notices import Notice, notice, term
 from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
 from ..dice import magic_opposed_test
-from ..lookups import _spirit_by_id
+from ..lookups import _spirit_by_id, critter_power_rows
 from ._common import _active_skill_rating_from_state
 
 
@@ -172,8 +172,8 @@ def resolve_spirits(
                 "hits": inst.hits,
                 "opposed_hits": inst.opposed_hits,
                 "attributes": attrs,
-                "powers": list(spec.get("powers") or []),
-                "optionalpowers": list(spec.get("optionalpowers") or []),
+                "powers": critter_power_rows(list(spec.get("powers") or [])),
+                "optionalpowers": critter_power_rows(list(spec.get("optionalpowers") or [])),
                 "skills": [
                     {"name": row["name"], "attribute": row.get("attribute") or "", "rating": force}
                     for row in (spec.get("skills") or [])

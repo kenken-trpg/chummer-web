@@ -111,6 +111,19 @@ export interface InstalledComplexForm {
   page?: string;
 }
 
+/** One power a spirit or sprite comes with, and what SR5 p.394 gives it.
+ *  `type` is `M` / `P`; the rest are the words the data file uses (`Complex`,
+ *  `LOS`, `Sustained`, …), or a formula the table spells out. */
+export interface CritterPower {
+  name: string;
+  type?: string;
+  action?: string;
+  range?: string;
+  duration?: string;
+  source?: string;
+  page?: string;
+}
+
 export interface InstalledSprite {
   id: string;
   sprite_id: string;
@@ -130,7 +143,7 @@ export interface InstalledSprite {
     firewall: number;
     initiative: number;
   };
-  powers?: string[];
+  powers?: CritterPower[];
   skills?: { name: string; attribute?: string; rating: number }[];
   source?: string;
   page?: string;
@@ -562,8 +575,8 @@ export interface InstalledSpirit {
   opposed_hits?: number | null;
   test?: MagicTestInfo;
   attributes?: Record<string, number>;
-  powers?: string[];
-  optionalpowers?: string[];
+  powers?: CritterPower[];
+  optionalpowers?: CritterPower[];
   skills?: { name: string; attribute?: string; rating: number }[];
   weaknesses?: string[];
   source?: string;

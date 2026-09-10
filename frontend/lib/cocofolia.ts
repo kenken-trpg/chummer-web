@@ -349,7 +349,7 @@ export function buildSpiritPieces(
       cmds.push(`${(a.REA || 0) + (a.INT || 0)}B6 ${ui("coco.defense")}`);
       cmds.push(`${(a.BOD || 0) + force * 2}B6 ${ui("coco.immunityResist")}`);
       cmds.push(`${force * 2}B6 ${ui("coco.resistBanishing")}`);
-      const powers = [...(s.powers || []), ...(s.optionalpowers || [])].map(tr);
+      const powers = [...(s.powers || []), ...(s.optionalpowers || [])].map((p) => tr(p.name));
       if (powers.length) cmds.push(ui("coco.powers", { list: powers.join(ui("common.listSep")) }));
       if (s.weaknesses?.length)
         cmds.push(ui("coco.weaknesses", { list: s.weaknesses.map(tr).join(ui("common.listSep")) }));
@@ -416,7 +416,7 @@ export function buildSpritePieces(
       }
       cmds.push(`${m.firewall + level}B6 ${ui("coco.matrixDefensePlain")}`);
       cmds.push(`${level * 2}B6 ${ui("coco.resistDerez")}`);
-      const powers = (s.powers || []).map(tr);
+      const powers = (s.powers || []).map((p) => tr(p.name));
       if (powers.length) cmds.push(ui("coco.powers", { list: powers.join(ui("common.listSep")) }));
       cmds.push(ui("coco.spriteNote"));
 

@@ -1,7 +1,13 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { GradeList, Section } from "@/components/character/sheet/blocks";
 import { formatPoints } from "@/lib/character/format";
-import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
+import {
+  critterPowerRow,
+  spellDescriptors,
+  spellDuration,
+  spellRange,
+  spellType,
+} from "@/lib/spell-terms";
 import { useUiText } from "@/lib/i18n";
 
 export function MagicSection(s: SheetData) {
@@ -90,6 +96,15 @@ export function MagicSection(s: SheetData) {
                 {" ・ "}F{item.force}
                 {item.services != null ? ui("sheet.services", { services: item.services }) : ""}
                 {item.bound ? ui("sheet.bound") : ""}
+                {item.powers?.length ? (
+                  <div className="sheet-dim">
+                    {ui("common.powers", {
+                      list: item.powers
+                        .map((power) => critterPowerRow(power, tr, ui))
+                        .join(ui("common.termSep")),
+                    })}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

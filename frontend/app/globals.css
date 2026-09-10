@@ -760,6 +760,17 @@ input[type="search"] {
   padding: 4px 0;
   border-bottom: 1px solid var(--line);
 }
+/* A spirit's or sprite's powers: one per line under the summary, tight
+   enough that nine of them do not push the Force control off the card. */
+.critter-powers {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 12px;
+}
+
 .sheet-dim {
   color: var(--muted);
   font-size: 0.82em;

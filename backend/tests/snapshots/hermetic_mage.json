@@ -526,21 +526,117 @@
       "nuyen": 60,
       "opposed_hits": null,
       "optionalpowers": [
-        "Fear",
-        "Guard",
-        "Noxious Breath",
-        "Search"
+        {
+          "action": "Complex",
+          "duration": "Special",
+          "name": "Fear",
+          "page": "397",
+          "range": "LOS",
+          "source": "SR5",
+          "type": "M"
+        },
+        {
+          "action": "Complex",
+          "duration": "Sustained",
+          "name": "Guard",
+          "page": "397",
+          "range": "LOS",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Complex",
+          "duration": "Instant",
+          "name": "Noxious Breath",
+          "page": "165",
+          "range": "Special",
+          "source": "HS",
+          "type": "P"
+        },
+        {
+          "action": "Complex",
+          "duration": "Special",
+          "name": "Search",
+          "page": "400",
+          "range": "Special",
+          "source": "SR5",
+          "type": "P"
+        }
       ],
       "page": "303",
       "powers": [
-        "Accident",
-        "Astral Form",
-        "Confusion",
-        "Elemental Attack",
-        "Energy Aura",
-        "Engulf",
-        "Materialization",
-        "Sapience"
+        {
+          "action": "Complex",
+          "duration": "Instant",
+          "name": "Accident",
+          "page": "394",
+          "range": "LOS",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Auto",
+          "duration": "Always",
+          "name": "Astral Form",
+          "page": "394",
+          "range": "Self",
+          "source": "SR5",
+          "type": "M"
+        },
+        {
+          "action": "Complex",
+          "duration": "Sustained",
+          "name": "Confusion",
+          "page": "395",
+          "range": "LOS",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Complex",
+          "duration": "Instant",
+          "name": "Elemental Attack",
+          "page": "396",
+          "range": "LOS",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Auto",
+          "duration": "Always",
+          "name": "Energy Aura",
+          "page": "396",
+          "range": "Self",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Complex",
+          "duration": "Sustained",
+          "name": "Engulf",
+          "page": "396",
+          "range": "Touch",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Complex",
+          "duration": "Sustained",
+          "name": "Materialization",
+          "page": "398",
+          "range": "Self",
+          "source": "SR5",
+          "type": "P"
+        },
+        {
+          "action": "Auto",
+          "duration": "Always",
+          "name": "Sapience",
+          "page": "400",
+          "range": "Self",
+          "source": "SR5",
+          "type": "P"
+        }
       ],
       "role": "combat",
       "role_label": {
