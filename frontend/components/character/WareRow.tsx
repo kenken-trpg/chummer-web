@@ -78,10 +78,16 @@ export function WareRow(props: {
     </button>
   );
   if (compact) {
+    // The folded row hides the selects, so say when one still wants an answer
+    // — an unpicked skill is a bonus the engine is silently not applying.
+    const pending =
+      (pickSlots || []).some((slot) => slot.source_id === item.id && !slot.picked) ||
+      Boolean(item.select_ware && !locked && !item.extra);
     return (
       <div className={`cyber-item compact${nested ? " nested" : ""}`}>
         <div>
           {title}
+          {pending ? <span className="warn"> {ui("ware.pending")}</span> : null}
           {childrenItems.map((child) => (
             <WareRow
               key={child.id}

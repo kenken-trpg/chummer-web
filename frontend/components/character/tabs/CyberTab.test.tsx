@@ -277,7 +277,7 @@ describe("<CyberTab>", () => {
 describe("<CyberTab> compact view", () => {
   beforeEach(() => localStorage.clear());
 
-  function renderInstalled(patch = vi.fn()) {
+  function renderInstalled(patch = vi.fn(), extra: Record<string, unknown> = {}) {
     const ch = makeCharacter({
       cyberware: [
         { id: "row1", ware_id: "wired1", rating: 2, grade: "Standard", wireless: false },
@@ -299,6 +299,7 @@ describe("<CyberTab> compact view", () => {
           parent_id: "row1",
         },
       ],
+      ...extra,
     } as any;
     return render(
       <CyberTab
@@ -375,5 +376,30 @@ describe("<CyberTab> compact view", () => {
     );
     const nested = document.querySelector(".cyber-item.compact.nested")!;
     expect(nested.textContent).toBe("Image Link（同梱）");
+  });
+
+  it("flags a folded row whose skill pick is still empty", () => {
+    localStorage.setItem("wareCompact", "1");
+    const slot = {
+      key: "k1",
+      source: "Wired Reflexes",
+      source_kind: "cyberware",
+      source_id: "row1",
+      picked: "",
+      bonus: 1,
+      max: 0,
+      rating: 0,
+      options: ["Pistols"],
+      knowledgeskills: false,
+    };
+    const first = renderInstalled(vi.fn(), { skill_pick_slots: [slot] });
+    const parent = document.querySelector(".cyber-item.compact:not(.nested)")!;
+    expect(parent.querySelector(".warn")!.textContent).toContain("未選択あり");
+    // only the row that owns the slot
+    expect(document.querySelector(".cyber-item.compact.nested .warn")).toBeNull();
+
+    first.unmount();
+    renderInstalled(vi.fn(), { skill_pick_slots: [{ ...slot, picked: "Pistols" }] });
+    expect(document.querySelector(".cyber-item .warn")).toBeNull();
   });
 });
