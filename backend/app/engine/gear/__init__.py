@@ -35,7 +35,6 @@ from .armor import (
 )
 from .custom_drugs import resolve_custom_drugs
 from .drugs import (
-    _DRUG_CATEGORIES,
     _drug_effect_nodes,
     _format_drug_duration,
     apply_active_custom_drugs,
@@ -88,7 +87,6 @@ from .weapons import (
 )
 
 __all__ = [
-    "_DRUG_CATEGORIES",
     "_append_armor_weapons",
     "_append_gear_weapons",
     "_append_natural_weapons",

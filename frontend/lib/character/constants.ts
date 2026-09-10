@@ -131,6 +131,16 @@ export type GearKind =
   | "lifestyle";
 export const OPTICS_DEVICE_CATS = new Set(["Vision Devices", "Audio Devices"]);
 export const SENSOR_DEVICE_CATS = new Set(["Sensors", "Sensor Housings"]);
+/**
+ * The gear categories the drugs panel and the drug half of the sheet own: the
+ * chemicals of CF p.185 and the chips of CF p.193. A BTL is not a chemical,
+ * but the catalog hands it a drug's `<bonus>` and the character wears it the
+ * same way, so it is taken the same way. Mirrors `DRUG_CATEGORIES` in
+ * `backend/app/data_loader/loaders/drugs.py`.
+ */
+export const DRUG_CATS = ["Drugs", "Toxins", "Chemicals", "BTLs"];
+export const isDrugCategory = (item: { category?: string }) =>
+  DRUG_CATS.includes(item.category || "");
 export const VEHICLE_INTERIOR_CATS = new Set([
   "Commlink Accessories",
   "Electronics Accessories",

@@ -11,13 +11,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...data_loader import boost_drug_attribute, catalog, drug_effect_summary, drug_node_value, eval_formula
+from ...data_loader import (
+    DRUG_CATEGORIES,
+    boost_drug_attribute,
+    catalog,
+    drug_effect_summary,
+    drug_node_value,
+    eval_formula,
+)
 from ...improvements import EffectsDict, apply_bonus_nodes
 from ...models import CharacterState
 from ...notices import Notice, notice
 from ..lookups import _quality_by_name
 
-_DRUG_CATEGORIES = {"Drugs", "Toxins", "Chemicals"}
 #: What a custom drug counts as when a `<drugpositiveattributemodifier>` picks
 #: its drugs by category — the category `gear.xml` files a mixed drug under.
 CUSTOM_DRUG_CATEGORY = "Custom Drugs"
@@ -128,7 +134,7 @@ def apply_active_drugs(
         if not getattr(inst, "active", False):
             continue
         spec = specs.get(inst.gear_id)
-        if not spec or (spec.get("category") or "") not in _DRUG_CATEGORIES:
+        if not spec or (spec.get("category") or "") not in DRUG_CATEGORIES:
             continue
         nodes = list(spec.get("drug_bonus") or [])
         if not nodes:

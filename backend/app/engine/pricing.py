@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..data_loader import format_avail
+from ..data_loader import DRUG_CATEGORIES, format_avail
 from ..improvements import EffectsDict
 from .bundle_types import GearBundle
 from .constants import (
@@ -84,7 +84,7 @@ def _bmp_row_matches(row: dict[str, Any], category: str, *, gear_key: str = "") 
     if gear_key and gear_key not in keys:
         return False
     if gear_key == "gear" and category == "Drugs":
-        return str(row.get("category") or "") in {"Drugs", "Toxins", "Chemicals"}
+        return str(row.get("category") or "") in DRUG_CATEGORIES
     return bool(gear_key)
 
 
@@ -179,7 +179,7 @@ def apply_purchase_discounts(
         for row in gear.get(key) or []:
             if bmp and key in bmp_keys:
                 if key == "gear" and black_market_category == "Drugs":
-                    if str(row.get("category") or "") not in {"Drugs", "Toxins", "Chemicals"}:
+                    if str(row.get("category") or "") not in DRUG_CATEGORIES:
                         continue
                 _discount(row, 10)
             if made and "R" in str(row.get("avail") or "").upper():

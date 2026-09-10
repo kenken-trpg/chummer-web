@@ -9,7 +9,7 @@ import { MiscDrugsGear } from "./MiscDrugsGear";
 /**
  * One component, two tabs. `mode` decides whether a row belongs here at all,
  * and the test for it is a category check written out three times over —
- * `Drugs`, `Toxins`, `Chemicals` — in the owned list, in the category tabs
+ * `Drugs`, `Toxins`, `Chemicals`, `BTLs` — in the owned list, in the category tabs
  * and in each picker. Get one of the three wrong and a drug is invisible in
  * both tabs, or shows up in both.
  *
@@ -77,16 +77,22 @@ describe("<MiscDrugsGear> which rows belong to which tab", () => {
     drug("g2", "Novacoke"),
     gear("g3", "Neuro-Stun VIII", { category: "Toxins" }),
     gear("g4", "Cleaner", { category: "Chemicals" }),
+    gear("g5", "Berserker BTL", { category: "BTLs" }),
   ];
 
-  it("keeps drugs, toxins and chemicals out of the misc tab", () => {
+  it("keeps drugs, toxins, chemicals and BTLs out of the misc tab", () => {
     const { container } = renderPanel(owning(rows), vi.fn(), "misc");
     expect(ownedNames(container)).toEqual(["Medkit"]);
   });
 
-  it("shows exactly those three categories in the drugs tab", () => {
+  it("shows exactly those four categories in the drugs tab", () => {
     const { container } = renderPanel(owning(rows), vi.fn(), "drugs");
-    expect(ownedNames(container)).toEqual(["Novacoke", "Neuro-Stun VIII", "Cleaner"]);
+    expect(ownedNames(container)).toEqual([
+      "Novacoke",
+      "Neuro-Stun VIII",
+      "Cleaner",
+      "Berserker BTL",
+    ]);
   });
 
   it("lists a child under its parent rather than as a row of its own", () => {
@@ -568,7 +574,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
     const { container } = renderPanel(owning([]), vi.fn(), "drugs", drugs);
 
     const tabs = [...container.querySelectorAll(".option-row .tab")].map((el) => el.textContent);
-    expect(tabs).toEqual(["すべて", "Chemicals", "Drugs", "Toxins"]);
+    expect(tabs).toEqual(["すべて", "BTLs", "Chemicals", "Drugs", "Toxins"]);
     expect(offered()).toEqual(["Novacoke"]);
     expect(container.textContent).toContain("効果: CHA +1");
   });

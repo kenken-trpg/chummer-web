@@ -3,6 +3,7 @@ import { useState } from "react";
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import { CustomDrugMixer } from "@/components/character/tabs/gear/CustomDrugMixer";
 import type { TabPanelProps } from "@/components/character/types";
+import { DRUG_CATS, isDrugCategory } from "@/lib/character/constants";
 import { dropTree, miscFits } from "@/lib/character/gear";
 import { renderNotices } from "@/lib/engine-notices";
 
@@ -19,10 +20,7 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
         {(d.gear || [])
           .filter((item) => {
             if (item.parent_id) return false;
-            const drugCat =
-              item.category === "Drugs" ||
-              item.category === "Toxins" ||
-              item.category === "Chemicals";
+            const drugCat = isDrugCategory(item);
             return mode === "drugs" ? drugCat : !drugCat;
           })
           .map((item) => {
@@ -324,17 +322,13 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
           {ui("common.all")}
         </button>
         {(mode === "drugs"
-          ? ["Drugs", "Toxins", "Chemicals"]
+          ? [...DRUG_CATS]
           : [
               ...new Set(
                 (catalog.gear || [])
                   .filter((item) => {
                     if (item.requireparent) return false;
-                    const drugCat =
-                      item.category === "Drugs" ||
-                      item.category === "Toxins" ||
-                      item.category === "Chemicals";
-                    if (drugCat) return false;
+                    if (isDrugCategory(item)) return false;
                     return gearSearch.trim() || item.source === "SR5";
                   })
                   .map((item) => item.category),
@@ -365,13 +359,7 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
             note={gearSearch.trim() ? undefined : CORE_ONLY}
             items={(catalog.gear || [])
               .filter((item) => !item.requireparent)
-              .filter((item) => {
-                const drugCat =
-                  item.category === "Drugs" ||
-                  item.category === "Toxins" ||
-                  item.category === "Chemicals";
-                return !drugCat;
-              })
+              .filter((item) => !isDrugCategory(item))
               .filter((item) => gearCat === "all" || item.category === gearCat)
               .filter((item) => {
                 const q = gearSearch.trim().toLowerCase();
@@ -461,13 +449,7 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
             limit={200}
             note={gearSearch.trim() ? undefined : "gear.idleDrugs"}
             items={(catalog.drugs || catalog.gear || [])
-              .filter((item) => {
-                const drugCat =
-                  item.category === "Drugs" ||
-                  item.category === "Toxins" ||
-                  item.category === "Chemicals";
-                return drugCat && !item.requireparent;
-              })
+              .filter((item) => isDrugCategory(item) && !item.requireparent)
               .filter((item) => gearCat === "all" || item.category === gearCat)
               .filter((item) => {
                 const q = gearSearch.trim().toLowerCase();
@@ -477,7 +459,13 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
                     tr(item.name).toLowerCase().includes(q) ||
                     item.category.toLowerCase().includes(q)
                   );
-                return item.source === "SR5" || item.category === "Drugs";
+                // Toxins and chemicals are a long tail you search for; the
+                // twelve drugs-proper and the twelve chips are the list you
+                // browse, so they show without a search even though CF is not
+                // the core book.
+                return (
+                  item.source === "SR5" || item.category === "Drugs" || item.category === "BTLs"
+                );
               })}
           >
             {(item) => (

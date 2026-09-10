@@ -7,6 +7,7 @@ from __future__ import annotations
 from .armor import load_armor, load_armor_mods
 from .books import load_books, load_settings_presets
 from .drugs import (
+    DRUG_CATEGORIES,
     boost_drug_attribute,
     drug_effect_summary,
     drug_node_value,
@@ -110,6 +111,7 @@ __all__ = [
     "load_weapons",
     "_load_ja_overrides",
     "boost_drug_attribute",
+    "DRUG_CATEGORIES",
     "drug_effect_summary",
     "drug_node_value",
     "load_custom_drug_components",

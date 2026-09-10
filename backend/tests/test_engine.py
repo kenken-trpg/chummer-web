@@ -7867,6 +7867,33 @@ def test_active_drug_folds_bonus_into_totals() -> None:
     assert row["vectors"] == ["Inhalation"]
 
 
+INFILTRATOR_BTL = "c153d7ec-af89-4c6f-a31d-fc3a6a490de4"  # CF p.193
+
+
+def test_a_btl_is_taken_the_way_a_drug_is() -> None:
+    """A BTL is a chip, not a chemical, but upstream gives it a drug's
+    `<bonus>` and the character wears it the same way (CF p.193)."""
+    base = compute(_drug_state(False, INFILTRATOR_BTL))
+    dosed = compute(_drug_state(True, INFILTRATOR_BTL))
+
+    assert base.derived["totals"]["AGI"] == 3
+    assert dosed.derived["totals"]["AGI"] == 5  # Infiltrator: AGI +2
+    assert dosed.derived["totals"]["CHA"] == 1  # and CHA -2
+    row = dosed.derived["active_drugs"][0]
+    assert row["name"] == "Infiltrator"
+    assert row["category"] == "BTLs"
+    assert has(row["effect"], "engine.drugEffect.skill", value="+2")
+
+
+def test_a_drug_grade_is_not_burned_onto_a_chip() -> None:
+    """Drug grades (CF p.190) come out of a lab, so they stay on the chemicals
+    even though a BTL now counts as a drug everywhere else."""
+    grades = [row for row in catalog()["gear"] if row.get("category") == "Drug Grades"]
+    assert grades
+    for grade in grades:
+        assert "BTLs" not in (grade.get("required_categories") or [])
+
+
 NOVACOKE = "836f54d5-1e11-49ea-b115-34c14ed843c9"  # `<quality rating="1">High Pain Tolerance`
 NITRO = "d7ec13fa-8601-4f9c-a59c-6a86573b40ee"  # the same at rating 6
 HIGH_PAIN_TOLERANCE = "b7866fb4-3747-4caf-9240-69cbdd79ce78"
