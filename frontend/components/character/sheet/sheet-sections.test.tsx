@@ -141,3 +141,24 @@ describe("sheet sections — smoke render", () => {
     }
   });
 });
+
+describe("<WareSection> on the compact sheet", () => {
+  it("lists ware by name alone", () => {
+    const standard = render(<WareSection {...(s as any)} />);
+    expect(standard.container.querySelector(".sheet-list li")!.textContent).toContain("ESS −2");
+    standard.unmount();
+
+    const compact = buildSheetData({
+      character: RICH_CHARACTER,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "compact",
+    });
+    const { container } = render(<WareSection {...(compact as any)} />);
+    const lists = [...container.querySelectorAll(".sheet-list")];
+    expect(lists.every((ul) => ul.classList.contains("sheet-list-compact"))).toBe(true);
+    expect(lists[0].textContent).toBe("Wired Reflexes R2");
+    // the loss stays on the heading
+    expect(container.querySelector("h4")!.textContent).toContain("ESS −2");
+  });
+});
