@@ -8363,3 +8363,68 @@ def test_cyberlimb_optimization_in_a_drone_arm_is_the_drones() -> None:
     ).derived
     assert any(item["name"] == "Cyberlimb Optimization" for item in out["cyberware"])
     assert out["skill_pick_slots"] == []
+
+
+def _ware_id(kind: str, name: str) -> str:
+    return next(str(w["id"]) for w in catalog()[kind]["items"] if w["name"] == name)
+
+
+def test_two_lower_cyberlimbs_add_a_box_between_them() -> None:
+    """`<pairbonus>` (Obvious Lower Arm, CF p.87): +1 physical box once a
+    second lower limb is in — any lower limb, via `<pairinclude>`."""
+    arm = _ware_id("cyberware", "Obvious Lower Arm")
+    leg = _ware_id("cyberware", "Obvious Lower Leg")
+
+    def physical(*rows: CyberwareInstall) -> int:
+        return int(compute(_human("pair", cyberware=list(rows))).derived["condition_monitor"]["physical"])
+
+    alone = physical(CyberwareInstall(id="a", ware_id=arm, side="Left"))
+    assert (
+        physical(
+            CyberwareInstall(id="a", ware_id=arm, side="Left"), CyberwareInstall(id="b", ware_id=arm, side="Right")
+        )
+        == alone + 1
+    )
+    assert (
+        physical(CyberwareInstall(id="a", ware_id=arm, side="Left"), CyberwareInstall(id="b", ware_id=leg, side="Left"))
+        == alone + 1
+    )
+    # one bonus per pair, not per partner
+    four = [
+        CyberwareInstall(id="a", ware_id=arm, side="Left"),
+        CyberwareInstall(id="b", ware_id=arm, side="Right"),
+        CyberwareInstall(id="c", ware_id=leg, side="Left"),
+        CyberwareInstall(id="d", ware_id=leg, side="Right"),
+    ]
+    assert physical(*four) == alone + 2
+
+
+def test_a_pair_of_fins_swims() -> None:
+    fin = _ware_id("cyberware", "Cyberfins (Hands)")
+    one = compute(_human("fin", cyberware=[CyberwareInstall(id="a", ware_id=fin)])).derived
+    two = compute(
+        _human("fins", cyberware=[CyberwareInstall(id="a", ware_id=fin), CyberwareInstall(id="b", ware_id=fin)])
+    ).derived
+    assert one["skill_bonus"].get("Swimming", 0) == 0
+    assert two["skill_bonus"]["Swimming"] == 1
+
+
+def test_two_cyberlimb_optimizations_on_one_skill_add_a_die() -> None:
+    """Upstream's pair bonus is a `<selectskill>` that means the skill the
+    pair was optimized for (CF p.87) — and only a matching pair pairs."""
+    full = _ware_id("cyberware", "Obvious Full Arm")
+    rows = [
+        CyberwareInstall(id="L", ware_id=full, side="Left"),
+        CyberwareInstall(id="R", ware_id=full, side="Right"),
+        CyberwareInstall(id="o1", ware_id=CYBERLIMB_OPTIMIZATION, parent_id="L"),
+        CyberwareInstall(id="o2", ware_id=CYBERLIMB_OPTIMIZATION, parent_id="R"),
+    ]
+    same = compute(
+        _human("co", cyberware=rows, skill_picks={"ware:o1:acc0": "Pistols", "ware:o2:acc0": "Pistols"})
+    ).derived
+    assert same["skill_bonus"]["Pistols"] == 1
+    split = compute(
+        _human("co2", cyberware=rows, skill_picks={"ware:o1:acc0": "Pistols", "ware:o2:acc0": "Longarms"})
+    ).derived
+    assert split["skill_bonus"].get("Pistols", 0) == 0
+    assert split["skill_bonus"].get("Longarms", 0) == 0

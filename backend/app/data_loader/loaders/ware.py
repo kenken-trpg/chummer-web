@@ -104,6 +104,8 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "subsystems": subsystems,
                 "bonus": parse_bonus(el.find("bonus")),
                 "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
+                "pairbonus": parse_bonus(el.find("pairbonus")),
+                "pairinclude": [_text(n) for n in el.findall("./pairinclude/name") if _text(n)],
                 "bannedgrades": [_text(g) for g in el.findall("./bannedgrades/grade") if _text(g)],
                 "required": parse_required(el.find("required")),
                 "required_parent_names": _parent_name_requirements(el),

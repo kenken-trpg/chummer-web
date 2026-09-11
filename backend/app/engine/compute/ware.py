@@ -10,6 +10,7 @@ from ...models import CyberwareInstall
 from ..limits import _check_ware_attribute_cap, _finalize_avail_tree, _ware_attribute_bonuses
 from ..lookups import _ware_by_name
 from ..qualities import resolve_quality_sides
+from ..skills import ware_accuracy_picks
 from ..ware import (
     _vehicle_hosted_ware_ids,
     _vehicle_mod_hosts,
@@ -18,6 +19,7 @@ from ..ware import (
     has_adapsin,
     resolve_ware,
 )
+from ..ware.pairs import pair_bonus_sources
 from .context import Ctx
 
 
@@ -79,6 +81,21 @@ def ware(ctx: Ctx) -> None:
         if item.get("id") in hosted_ids:
             continue
         ctx.sources.append((item["name"], item.get("bonus") or []))
+    # What a pair adds on top of the two halves (two lower limbs: +1 box).
+    picks = ctx.state.skill_picks or {}
+    optimized = {
+        inst_id: str(picks.get(key) or "")
+        for key, _name, _kind, inst_id, _node in ware_accuracy_picks(ctx.state, hosted_ids)
+    }
+    ctx.sources.extend(
+        pair_bonus_sources(
+            [
+                *(("cyberware", item) for item in ctx.cyber_installed if item.get("id") not in hosted_ids),
+                *(("bioware", item) for item in ctx.bio_installed),
+            ],
+            optimized,
+        )
+    )
     ctx.ware_attr_bonus = _ware_attribute_bonuses([item for item in ctx.installed if item.get("id") not in hosted_ids])
     if not ctx.career:
         _check_ware_attribute_cap(ctx.ware_attr_bonus, ctx.errors)
