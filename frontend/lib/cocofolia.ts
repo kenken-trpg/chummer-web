@@ -2,6 +2,7 @@ import type { Catalog, Character } from "@/lib/types";
 import { attrShort, makeT } from "@/lib/ui-strings";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
+import { skillDefault } from "@/lib/character/skill-default";
 
 // Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
 // caller says nothing; it follows the UI locale otherwise. Dice commands
@@ -73,12 +74,19 @@ const WEAPON_SKILL: Record<string, string> = {
 const weaponSkill = (w: { useskill?: string; category?: string }) =>
   (w.useskill || "").trim() || WEAPON_SKILL[w.category || ""] || "Pistols";
 
+export type CocofoliaOptions = {
+  /** Also list every active skill the runner can default on (SR5 p.130),
+   *  plus the knowledge skills they actually have. */
+  untrained?: boolean;
+};
+
 /** Newline-separated BCDice ShadowRun5 chat-palette commands. */
 export function buildChatPalette(
   ch: Character,
   catalog: Catalog,
   tr: (n: string) => string,
   locale: Locale = "ja",
+  opts: CocofoliaOptions = {},
 ): string {
   const ui = uiFor(locale);
   const d = ch.derived;
@@ -129,6 +137,32 @@ export function buildChatPalette(
         );
       }
     });
+
+  if (opts.untrained) {
+    // unlearned: the linked attribute − 1; the no-default skills drop out
+    const untrained = (catalog.skills?.skills || [])
+      .filter((s) => !s.exotic && !((d.skill_totals?.[s.name] || 0) > 0))
+      .map((s) => {
+        const attr = skillAttr[s.name] || s.attribute;
+        return { s, attr, def: skillDefault({ ...s, attribute: attr }, d) };
+      })
+      .filter((row) => !row.def.blocked)
+      .sort((a, b) => tr(a.s.name).localeCompare(tr(b.s.name), locale));
+    if (untrained.length) out.push(ui("coco.secUntrained"));
+    untrained.forEach(({ s, attr, def }) => {
+      if (!def.blocked) roll(def.pool, tr(s.name), ATTR_LIMIT[attr] ?? null);
+    });
+    // knowledge: only the ones taken — there is no defaulting on knowledge
+    const known = (d.knowledge_skills || [])
+      .filter((k) => k.rating > 0)
+      .sort((a, b) => tr(a.name).localeCompare(tr(b.name), locale));
+    if (known.length) out.push(ui("coco.secKnowledge"));
+    known.forEach((k) => {
+      const pool = k.rating + at(k.attribute);
+      roll(pool, tr(k.name), "mental");
+      if (k.spec) roll(pool + 2, `${tr(k.name)}：${tr(k.spec)}`, "mental");
+    });
+  }
 
   const skillPool = (name: string) => d.skill_totals?.[name] || 0;
 
@@ -233,6 +267,7 @@ export function buildCocofolia(
   catalog: Catalog,
   tr: (n: string) => string,
   locale: Locale = "ja",
+  opts: CocofoliaOptions = {},
 ): string {
   const ui = uiFor(locale);
   const d = ch.derived;
@@ -285,7 +320,7 @@ export function buildCocofolia(
       name: ch.name || "Runner",
       memo,
       initiative: init.value,
-      commands: buildChatPalette(ch, catalog, tr, locale),
+      commands: buildChatPalette(ch, catalog, tr, locale, opts),
       status,
       params,
     },

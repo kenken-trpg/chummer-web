@@ -5,6 +5,7 @@ import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
+import { useWareCompact } from "@/lib/character/useWareCompact";
 import { useUiText } from "@/lib/i18n";
 
 export function Toolbar({
@@ -50,6 +51,8 @@ export function Toolbar({
   const { locale, ui } = useUiText();
   const printSheet = usePrintSheet(sheetLayout, setSheetLayout);
   const inCareer = ch.career || d.career;
+  // a local switch, the same as the sheet's names-only one
+  const [untrained, setUntrained] = useWareCompact("cocoUntrained");
   return (
     <div className="toolbar">
       <select
@@ -121,18 +124,30 @@ export function Toolbar({
       </button>
       <button
         className="btn"
-        onClick={() => catalog && copyText(buildCocofolia(ch, catalog, tr, locale), "cc")}
+        onClick={() =>
+          catalog && copyText(buildCocofolia(ch, catalog, tr, locale, { untrained }), "cc")
+        }
         title={ui("toolbar.cocofoliaHint")}
       >
         {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
       </button>
       <button
         className="btn"
-        onClick={() => catalog && copyText(buildChatPalette(ch, catalog, tr, locale), "cp")}
+        onClick={() =>
+          catalog && copyText(buildChatPalette(ch, catalog, tr, locale, { untrained }), "cp")
+        }
         title={ui("toolbar.chatPaletteHint")}
       >
         {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
       </button>
+      <label className="btn" title={ui("toolbar.cocoUntrainedHint")}>
+        <input
+          type="checkbox"
+          checked={untrained}
+          onChange={(e) => setUntrained(e.target.checked)}
+        />
+        {ui("toolbar.cocoUntrained")}
+      </label>
       {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
         <button
           className="btn"

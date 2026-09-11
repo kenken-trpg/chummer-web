@@ -183,6 +183,84 @@ describe("buildChatPalette", () => {
   });
 });
 
+describe("buildChatPalette with unlearned skills", () => {
+  const skill = (name: string, attribute: string, extra: Record<string, unknown> = {}) => ({
+    id: name,
+    name,
+    attribute,
+    category: "Physical",
+    skillgroup: null,
+    source: "SR5",
+    ...extra,
+  });
+  const catalog = makeCatalog({
+    skills: {
+      groups: [],
+      skills: [
+        skill("Pistols", "AGI"),
+        skill("Sneaking", "AGI"),
+        skill("Negotiation", "CHA"),
+        skill("Spellcasting", "MAG", { default: false }),
+        skill("Flight", "AGI", { exotic: true }),
+      ],
+      knowledge: [],
+    } as any,
+  });
+  const ch = makeCharacter({
+    derived: {
+      totals: { AGI: 5, CHA: 3, LOG: 4 } as any,
+      skill_totals: { Pistols: 4 },
+      knowledge_skills: [
+        { name: "Gangs", category: "Street", attribute: "INT", rating: 3, native: false },
+        {
+          name: "Chemistry",
+          category: "Academic",
+          attribute: "LOG",
+          rating: 2,
+          native: false,
+          spec: "Drugs",
+        },
+        { name: "Sperethiel", category: "Language", attribute: "INT", rating: 0, native: true },
+      ] as any,
+    },
+  });
+
+  it("leaves the default palette as it was", () => {
+    const out = buildChatPalette(ch, catalog, identityTr);
+    expect(out).not.toContain("Sneaking");
+    expect(out).not.toContain("Gangs");
+  });
+
+  it("defaults the unlearned ones at attribute − 1 and drops the no-default ones", () => {
+    const out = buildChatPalette(ch, catalog, identityTr, "ja", { untrained: true });
+    expect(out).toContain("9B6@3 Pistols");
+    expect(out).toContain("// ── 未修得の技能（能力値−1で代用） ──");
+    expect(out).toContain("4B6@3 Sneaking");
+    expect(out).toContain("2B6@4 Negotiation");
+    expect(out).not.toContain("Spellcasting");
+    expect(out).not.toContain("Flight");
+    // Pistols is learned, so it shows once
+    expect(out.match(/Pistols/g)).toHaveLength(1);
+  });
+
+  it("lists only the knowledge skills taken, with their spec", () => {
+    const out = buildChatPalette(ch, catalog, identityTr, "ja", { untrained: true });
+    expect(out).toContain("// ── 知識技能（リミット＝精神） ──");
+    expect(out).toContain("3B6@4 Gangs");
+    expect(out).toContain("6B6@4 Chemistry");
+    expect(out).toContain("8B6@4 Chemistry：Drugs");
+    expect(out).not.toContain("Sperethiel");
+  });
+
+  it("carries the switch into the Cocofolia piece", () => {
+    const piece = JSON.parse(buildCocofolia(ch, catalog, identityTr, "ja", { untrained: true }));
+    expect(piece.data.commands).toContain("4B6@3 Sneaking");
+    expect(JSON.parse(buildCocofolia(ch, catalog, identityTr)).data.commands).not.toContain(
+      "Sneaking",
+    );
+  });
+});
+
 describe("the export follows the UI locale", () => {
   const ch = makeCharacter({
     derived: {
