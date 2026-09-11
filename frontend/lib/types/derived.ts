@@ -260,6 +260,8 @@ export interface InstalledWeapon {
   accuracy: string;
   /** `Physical` / `Physical-1` before the engine put the limit in. */
   accuracy_formula?: string;
+  /** `({STR}+5)P` before the engine put the body's STR in. */
+  damage_formula?: string;
   reach: string;
   damage: string;
   ap: string;

@@ -20,7 +20,7 @@ from ....improvements import EffectsDict, empty_effects
 from ....improvements.effect_rows import WeaponDvBonusRow
 from ....models import CharacterState
 from ....notices import Notice, notice, term
-from ...formulas import _add_accuracy, _add_leading_int, _add_weapon_dv, _leading_int
+from ...formulas import _add_accuracy, _add_leading_int, _add_weapon_dv, _eval_attr_stat, _leading_int
 from ...selects import selectskill_options
 
 
@@ -262,6 +262,25 @@ def bind_weapon_skill_accuracy(
 
 
 _LIMIT_ACCURACY = re.compile(r"^Physical\s*([+-]\s*\d+)?$")
+
+
+def resolve_attr_formulas(weapons: list[dict[str, Any]] | None, totals: dict[str, int], throw_str: int = 0) -> None:
+    """``({STR}+5)P`` and the like on a weapon the character swings. Ware
+    weapons were already resolved against their limb (``rows.py``); what
+    still carries a ``{`` here is held in the body's hands, so it takes the
+    body's STR/AGI — known only now, after the totals. A thrown weapon adds
+    `<throwstr>` to that STR (Throwing Weapons skill), as Chummer does."""
+    body = {"STR": int(totals.get("STR") or 0), "AGI": int(totals.get("AGI") or 0)}
+    thrown = {**body, "STR": body["STR"] + int(throw_str or 0)}
+    for weapon in weapons or []:
+        attrs = thrown if weapon_skill_dictionary_key(weapon) == "Throwing Weapons" else body
+        for key in ("damage", "ap", "accuracy", "reach"):
+            raw = str(weapon.get(key) or "")
+            if "{" not in raw:
+                continue
+            if key in ("damage", "accuracy"):
+                weapon[f"{key}_formula"] = raw
+            weapon[key] = _eval_attr_stat(raw, attrs)
 
 
 def resolve_limit_accuracy(weapons: list[dict[str, Any]] | None, physical_limit: int) -> None:

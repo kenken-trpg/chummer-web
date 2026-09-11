@@ -177,6 +177,8 @@ describe("<CombatSection> a limit-based Accuracy", () => {
               name: "Hand Blade",
               accuracy: "6",
               accuracy_formula: "Physical",
+              damage: "4P",
+              damage_formula: "({STR}+1)P",
             },
           ],
         },
@@ -188,5 +190,6 @@ describe("<CombatSection> a limit-based Accuracy", () => {
     const { container } = render(<CombatSection {...(withBlade as any)} />);
     const cell = container.querySelector('td[title="Physical"]');
     expect(cell?.textContent).toBe("6");
+    expect(container.querySelector('td[title="({STR}+1)P"]')?.textContent).toBe("4P");
   });
 });
