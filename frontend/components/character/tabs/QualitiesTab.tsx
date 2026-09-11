@@ -62,6 +62,15 @@ export function QualitiesTab({
   // negative one off costs twice what it gave (`double_career: false` opts out)
   const careerPricing = Boolean(d.quality_career_pricing);
   const careerMult = (id: string) => (catalogById.get(id)?.double_career === false ? 1 : 2);
+  const careerChanged =
+    careerPricing &&
+    (ownedFromDerived.some((q) => q.career_cost != null) || (d.qualities_removed || []).length > 0);
+  // a chargen slip fixed in play is not a purchase: take today's list as the
+  // chargen one, which drops every career charge and buy-off
+  const rebaseline = () => {
+    if (!ch.career_baseline || !window.confirm(ui("qual.rebaselineConfirm"))) return;
+    patch({ career_baseline: { ...ch.career_baseline, quality_ids: [...ch.quality_ids] } });
+  };
 
   return (
     <div className="card">
@@ -201,9 +210,24 @@ export function QualitiesTab({
                     : ui("qual.removedPositive")}
                 </div>
               </div>
+              <button
+                className="btn"
+                title={ui("qual.restoreHint", { name: tr(q.name) })}
+                // back to the chargen count: the buy-off charge goes with it
+                onClick={() => patch({ quality_ids: [...ch.quality_ids, q.id] })}
+              >
+                {ui("qual.restore")}
+              </button>
             </div>
           ))}
         </>
+      ) : null}
+      {careerChanged ? (
+        <p className="muted">
+          <button className="btn" onClick={rebaseline} title={ui("qual.rebaselineHint")}>
+            {ui("qual.rebaseline")}
+          </button>
+        </p>
       ) : null}
       <div className="option-row">
         <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>

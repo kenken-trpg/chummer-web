@@ -8825,3 +8825,24 @@ def test_a_baseline_saved_before_qualities_keeps_chargen_prices() -> None:
     assert out["quality_career_pricing"] is False
     assert before - out["karma"]["remaining"] == amb["karma"]
     assert "career_cost" not in _quality_row(out, "Ambidextrous")
+
+
+def test_taking_the_current_qualities_as_chargen_cancels_career_charges() -> None:
+    """The Qualities tab's reset: patching the baseline's quality list to the
+    current one drops the buy-off and the ×2 purchase."""
+    from app.characters import apply_patch
+    from app.models import CharacterPatch
+
+    amb = _career_quality("Ambidextrous")
+    bad = _career_quality("Bad Luck")
+    st = _into_career("career-reset", [bad["id"]])
+    clean = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = [amb["id"]]
+    charged = compute(st)
+    assert charged.derived["qualities_removed"]
+    baseline = charged.career_baseline.model_dump()
+    out = apply_patch(charged, CharacterPatch(career_baseline={**baseline, "quality_ids": [amb["id"]]})).derived
+    assert out["qualities_removed"] == []
+    assert "career_cost" not in _quality_row(out, "Ambidextrous")
+    # held at the chargen price now: Bad Luck's gain and Ambidextrous at ×1
+    assert out["karma"]["remaining"] == clean + bad["karma"] - amb["karma"]

@@ -258,3 +258,59 @@ describe("<QualitiesTab> karma overspent", () => {
     expect(line().textContent).not.toContain("不足");
   });
 });
+
+describe("<QualitiesTab> undoing career changes", () => {
+  const removed = [{ id: "dist", name: "Distinctive Style", category: "Negative", karma: 10 }];
+
+  it("restores a dropped quality with one click", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        quality_ids: ["amb"],
+        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "戻す" }));
+    expect(patch).toHaveBeenCalledWith({ quality_ids: ["amb", "dist"] });
+  });
+
+  it("takes today's qualities as the chargen ones after asking", () => {
+    const patch = vi.fn();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderTab({
+      patch,
+      character: {
+        quality_ids: ["amb"],
+        career_baseline: { skills: { Pistols: 3 }, quality_ids: ["dist"] },
+        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "今の資質を作成時のものとして扱う" }));
+    expect(confirm).toHaveBeenCalled();
+    expect(patch).toHaveBeenCalledWith({
+      career_baseline: { skills: { Pistols: 3 }, quality_ids: ["amb"] },
+    });
+    confirm.mockRestore();
+  });
+
+  it("does nothing when the question is declined", () => {
+    const patch = vi.fn();
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderTab({
+      patch,
+      character: {
+        career_baseline: { quality_ids: ["dist"] },
+        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "今の資質を作成時のものとして扱う" }));
+    expect(patch).not.toHaveBeenCalled();
+    confirm.mockRestore();
+  });
+
+  it("offers the reset only once something changed in career", () => {
+    renderTab({ character: { derived: { quality_career_pricing: true } as any } });
+    expect(screen.queryByRole("button", { name: "今の資質を作成時のものとして扱う" })).toBeNull();
+  });
+});
