@@ -158,6 +158,11 @@ class EffectsDict(TypedDict):
 
     # --- precisely-typed nested containers ------------------------------
     attribute_bonus: dict[str, int]
+    #: Chummer `precedence` groups, resolved by `resolve_precedence`:
+    #: key ("attr:REA", "initiative_dice", "initiative") -> precedence -> values.
+    precedence_bonus: dict[str, dict[str, list[int]]]
+    #: what `resolve_precedence` has already folded in, per key
+    precedence_applied: dict[str, int]
     attribute_max_mods: dict[str, int]
     test_mods: dict[str, int]
     spell_defense_resist: dict[str, int]
@@ -254,6 +259,8 @@ class EffectsDict(TypedDict):
 def empty_effects() -> EffectsDict:
     return {
         "attribute_bonus": {k: 0 for k in ATTR_ALIASES.values() if len(k) <= 3},
+        "precedence_bonus": {},
+        "precedence_applied": {},
         "armor": 0,
         "cm_physical": 0,
         "cm_stun": 0,
@@ -450,3 +457,36 @@ def compact_limit_modifiers(effects: EffectsDict) -> list[dict[str, Any]]:
             }
         )
     return out
+
+
+def precedence_value(groups: dict[str, list[int]]) -> int:
+    """Chummer's rule for bonuses tagged ``precedence`` (ImprovementManager
+    ``ValueOf``): with any precedence 0 present only the *best* of them counts,
+    plus every precedence −1 — reflex augmentations do not stack (SR5 p.459).
+    Without one, the precedence 1 bonuses stack (the wireless Wired Reflexes +
+    Reaction Enhancers pair); a lone −1 group gives its best."""
+    zero, minus, one = groups.get("0") or [], groups.get("-1") or [], groups.get("1") or []
+    if zero:
+        return max(zero) + sum(minus)
+    if one:
+        return sum(one)
+    return max(minus) if minus else 0
+
+
+def resolve_precedence(effects: EffectsDict) -> None:
+    """Fold the precedence groups into the plain buckets. Bonuses keep coming
+    after the first pass (adept powers, drugs), and Wired Reflexes against
+    Improved Reflexes is one group across all of them — so the groups stay,
+    and each call applies only the change since the last one. Untagged
+    bonuses (a drug's REA, say) were added directly and keep stacking."""
+    applied = effects.setdefault("precedence_applied", {})
+    for key, groups in (effects.get("precedence_bonus") or {}).items():
+        delta = precedence_value(groups) - int(applied.get(key) or 0)
+        if not delta:
+            continue
+        applied[key] = int(applied.get(key) or 0) + delta
+        if key.startswith("attr:"):
+            name = key[len("attr:") :]
+            effects["attribute_bonus"][name] = int(effects["attribute_bonus"].get(name) or 0) + delta
+        elif key in ("initiative_dice", "initiative"):
+            effects[key] += delta  # type: ignore[literal-required]

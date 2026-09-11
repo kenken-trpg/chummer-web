@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...improvements import substitute_rating
 from ..lookups import _ware_by_id
 
 
@@ -74,3 +75,30 @@ def pair_bonus_sources(
                     sources.append((name, nodes))
         seen.append((item, spec))
     return sources
+
+
+def apply_wireless_pairs(installed: list[tuple[str, dict[str, Any]]]) -> None:
+    """`<wirelesspairbonus>`: what two wireless implants do together.
+
+    Wired Reflexes and Reaction Enhancers (SR5 p.459/461) name each other in
+    `<wirelesspairinclude>`; with both installed and both wireless, each one's
+    bonus is *replaced* (``mode="replace"``) by a version whose REA (and
+    initiative) moves from precedence 0 — only the best counts — to 1, which
+    stacks. Rewrites ``item["bonus"]`` in place so every later reader (the
+    effects pass, the chargen cap) sees the paired version.
+    """
+    wireless = [(kind, item) for kind, item in installed if item.get("wireless")]
+    for kind, item in wireless:
+        spec = _ware_by_id(kind, str(item.get("ware_id") or ""))
+        if not spec or not spec.get("wirelesspairbonus"):
+            continue
+        partners = set(spec.get("wirelesspairinclude") or [])
+        if not any(other is not item and other.get("name") in partners for _, other in wireless):
+            continue
+        rating = int(item.get("rating") or 1)
+        paired = substitute_rating(list(spec["wirelesspairbonus"]), rating)
+        if spec.get("wirelesspairmode") == "replace":
+            item["bonus"] = paired + substitute_rating(list(spec.get("wirelessbonus") or []), rating)
+        else:
+            item["bonus"] = list(item.get("bonus") or []) + paired
+        item["wireless_paired"] = True

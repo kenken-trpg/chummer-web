@@ -23,12 +23,22 @@ from .._common import (
 from ..effects import EffectsDict
 
 
+def _by_precedence(effects: EffectsDict, node: dict[str, Any], key: str, value: int) -> bool:
+    """Park a ``precedence``-tagged bonus for :func:`resolve_precedence`
+    instead of adding it; False (add it as usual) when it carries none."""
+    precedence = (node.get("attrs") or {}).get("precedence")
+    if precedence is None or not value:
+        return False
+    effects["precedence_bonus"].setdefault(key, {}).setdefault(str(precedence).strip(), []).append(int(value))
+    return True
+
+
 def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> bool:
     if tag == "specificattribute":
         name = ATTR_ALIASES.get((fields.get("name") or "").upper())
         if name:
             bonus = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"), 0)
-            if bonus:
+            if bonus and not _by_precedence(effects, node, f"attr:{name}", bonus):
                 effects["attribute_bonus"][name] = effects["attribute_bonus"].get(name, 0) + bonus
             if fields.get("max") not in (None, ""):
                 effects["attribute_max_mods"][name] = int(effects["attribute_max_mods"].get(name) or 0) + _as_int(
@@ -87,9 +97,13 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 "source": source,
             }
     elif tag == "initiative":
-        effects["initiative"] += _bonus_int(node, fields)
+        value = _bonus_int(node, fields)
+        if not _by_precedence(effects, node, "initiative", value):
+            effects["initiative"] += value
     elif tag == "initiativepass":
-        effects["initiative_dice"] += _bonus_int(node, fields)
+        value = _bonus_int(node, fields)
+        if not _by_precedence(effects, node, "initiative_dice", value):
+            effects["initiative_dice"] += value
     elif tag == "enabletab":
         names = fields.get("name") or node.get("value") or ""
         values = names if isinstance(names, list) else [names]

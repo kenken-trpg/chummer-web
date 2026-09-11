@@ -8549,3 +8549,50 @@ def test_a_ware_weapon_keeps_its_formula_too() -> None:
     weapon = next(w for w in out["weapons"] if w["name"] == "Hand Blade")
     assert weapon["damage_formula"] == "({STR}+2)P"
     assert weapon["damage"] == f"{out['totals']['STR'] + 2}P"
+
+
+def _reflexes(wireless: bool, **kwargs: object) -> dict:
+    wired = _ware_id("cyberware", "Wired Reflexes")
+    enhancers = _ware_id("cyberware", "Reaction Enhancers")
+    rows = [
+        CyberwareInstall(ware_id=wired, rating=3, wireless=wireless),
+        CyberwareInstall(ware_id=enhancers, rating=3, wireless=wireless),
+    ]
+    return compute(_human("reflexes", cyberware=rows, **kwargs)).derived
+
+
+def test_reflex_augmentations_do_not_stack_on_their_own() -> None:
+    """Wired Reflexes and Reaction Enhancers both give REA at precedence 0:
+    only the better one counts (Chummer `precedence`, SR5 p.459)."""
+    base = compute(_human("plain")).derived["totals"]["REA"]
+    out = _reflexes(wireless=False)
+    assert out["totals"]["REA"] == base + 3
+    assert out["ware_attr_bonus"]["REA"] == 3
+
+
+def test_a_wireless_pair_of_reflex_augmentations_stacks() -> None:
+    """`<wirelesspairbonus mode="replace">`: both wireless, each bonus moves to
+    precedence 1, and those stack — REA +6, with `<aug>` lifting the chargen
+    cap by one each at Rating 3 so the build is legal."""
+    base = compute(_human("plain")).derived["totals"]["REA"]
+    out = _reflexes(wireless=True)
+    assert out["totals"]["REA"] == base + 6
+    assert out["ware_attr_bonus"]["REA"] == 6
+    assert not any(e["key"] == "engine.ware.attrBonusOver" for e in out["errors"])
+    # the initiative dice are Wired Reflexes' alone either way
+    assert out["initiative"]["dice"] == 1 + 3
+
+
+def test_initiative_dice_from_ware_and_power_take_the_best() -> None:
+    """Improved Reflexes (power) and Wired Reflexes (ware) both add dice at
+    precedence 0 — across the two sources, only the better one counts."""
+    power = next(p["id"] for p in catalog()["powers"] if p["name"] == "Improved Reflexes")
+    wired = _ware_id("cyberware", "Wired Reflexes")
+    out = compute(
+        _adept(
+            "ir-wr",
+            adept_powers=[AdeptPowerInstall(power_id=power, rating=2)],
+            cyberware=[CyberwareInstall(ware_id=wired, rating=1)],
+        )
+    ).derived
+    assert out["initiative"]["dice"] == 1 + 2
