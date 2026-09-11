@@ -226,8 +226,9 @@ SILENT_TAGS = {
     "linguasoft",
     "skillsoft",
     "weaponspecificdice",
-    # `Muzzle` sharpens a `Fangs` natural weapon; natural weapons live on
-    # critters and metavariants we do not build, so there is no row to sharpen.
+    # Infirm's first level: hold AGI/BOD/REA/STR to their lowered maximum.
+    # The attribute pass already clamps every attribute to its maximum.
+    "attributemaxclamp",
     "addskillspecializationoption",
     "critterpowers",
     "limitcritterpowercategory",

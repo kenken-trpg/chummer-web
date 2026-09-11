@@ -45,6 +45,8 @@ def load_qualities() -> list[dict[str, Any]]:
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
                 "bonus": bonus,
+                # applied once, however many levels are taken (Gremlins: +1 Notoriety)
+                "firstlevelbonus": parse_bonus(el.find("firstlevelbonus")),
                 "add_weapon": _text(el.find("addweapon")),
                 "max_takes": max_takes,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
