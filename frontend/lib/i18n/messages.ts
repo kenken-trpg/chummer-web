@@ -510,6 +510,10 @@ const JA = {
   "side.unimplemented": "未実装ボーナス {count} 件（無視して継続）",
 
   "side.scEdit": "SC 補正",
+  "side.scBurn": "SC を 2 燃やす（悪名 −1）",
+  "side.scBurnHint": "ストリート・クレドを 2 点燃やして悪名を 1 点下げる（SR5 p.373）",
+  "side.scBurnt": "燃やした SC {burnt}",
+  "side.scUnburn": "燃やしを戻す",
   "side.scFormula": "SC = 得たカルマ {karma} ÷ {divisor} → {earned} ＋ 補正 {extra} ＝ {total}",
   "side.notorietyBonus": "悪名ボーナス",
   "side.awarenessFormula": "周知度 = ⌊(SC + max(悪名,0)) / 3⌋ + 品質修正",
@@ -2289,6 +2293,10 @@ const EN: Catalog = {
   "side.unimplemented": "{count} unimplemented bonuses (ignored, continuing)",
 
   "side.scEdit": "Street cred adjustment",
+  "side.scBurn": "Burn 2 street cred (−1 notoriety)",
+  "side.scBurnHint": "Burn two points of Street Cred to take a point of Notoriety off (SR5 p.373)",
+  "side.scBurnt": "{burnt} street cred burned",
+  "side.scUnburn": "Undo a burn",
   "side.scFormula":
     "SC = karma earned {karma} ÷ {divisor} → {earned} + adjustment {extra} = {total}",
   "side.notorietyBonus": "Notoriety bonus",

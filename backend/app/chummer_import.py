@@ -185,6 +185,7 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["talent"] = _text(root.find("./priorities/prioritytalent")) or _text(root.find("prioritytalent")) or "Mundane"
     st["build_method"] = _BUILD_METHODS.get(_text(root.find("buildmethod")).lower(), "Priority")
     st["street_cred"] = max(0, _int(root.find("streetcred"), 0))
+    st["burnt_street_cred"] = max(0, _int(root.find("burntstreetcred"), 0))
     st["notoriety_bonus"] = _int(root.find("notoriety"), 0)
     # Nuyen bought with karma at chargen; `<nuyenbp>` is build points in old money.
     st["karma_nuyen"] = max(0, _int(root.find("nuyenbp"), 0))

@@ -8934,3 +8934,27 @@ def test_street_cred_outside_career_is_only_the_adjustment() -> None:
     st.street_cred = 2
     out = compute(st).derived
     assert (out["street_cred_earned"], out["street_cred"]) == (0, 2)
+
+
+def test_burning_street_cred_takes_notoriety_off_two_for_one() -> None:
+    """SR5 p.373 (Chummer `BurntStreetCred`): burned points leave Street Cred,
+    and every two of them take a point of Notoriety with them."""
+    st = _into_career("burn", [])
+    st.karma_earned = 50
+    st.notoriety_bonus = 3
+    before = compute(st).derived
+    assert (before["street_cred"], before["notoriety"]) == (5, 3)
+    st.burnt_street_cred = 4
+    out = compute(st).derived
+    assert (out["street_cred"], out["notoriety"], out["street_cred_burnt"]) == (1, 1, 4)
+
+
+def test_burnt_street_cred_round_trips_through_chum5() -> None:
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+
+    st = _into_career("burn-io", [])
+    st.street_cred = 6
+    st.burnt_street_cred = 2
+    back, _skipped = chum5_to_state(state_to_chum5(compute(st)))
+    assert (back["street_cred"], back["burnt_street_cred"]) == (6, 2)

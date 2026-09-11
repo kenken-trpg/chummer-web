@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { CharacterSidebar } from "@/components/character/CharacterSidebar";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
@@ -163,5 +163,45 @@ describe("<CharacterSidebar>", () => {
       />,
     );
     expect(screen.getByText("SC = 得たカルマ 45 ÷ 20 → 2 ＋ 補正 3 ＝ 5")).toBeDefined();
+  });
+
+  it("burns street cred two at a time and can take a burn back", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({
+      career: true,
+      burnt_street_cred: 2,
+      derived: { street_cred: 3 } as any,
+    });
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={ch}
+        d={ch.derived}
+        tr={identityTr}
+        patch={patch}
+      />,
+    );
+    expect(screen.getByText("燃やした SC 2")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "SC を 2 燃やす（悪名 −1）" }));
+    expect(patch).toHaveBeenCalledWith({ burnt_street_cred: 4 });
+    fireEvent.click(screen.getByRole("button", { name: "燃やしを戻す" }));
+    expect(patch).toHaveBeenCalledWith({ burnt_street_cred: 0 });
+  });
+
+  it("will not burn below two points", () => {
+    const ch = makeCharacter({ career: true, derived: { street_cred: 1 } as any });
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={ch}
+        d={ch.derived}
+        tr={identityTr}
+        patch={() => {}}
+      />,
+    );
+    const burn = screen.getByRole("button", {
+      name: "SC を 2 燃やす（悪名 −1）",
+    }) as HTMLButtonElement;
+    expect(burn.disabled).toBe(true);
   });
 });

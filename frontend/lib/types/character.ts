@@ -187,6 +187,8 @@ export interface Character {
   karma_earned?: number;
   nuyen_earned?: number;
   street_cred?: number;
+  /** SR5 p.373: burned for Notoriety, two points a time */
+  burnt_street_cred?: number;
   notoriety_bonus?: number;
   reward_log?: { id?: string; label?: string; karma?: number; nuyen?: number }[];
   career_baseline?: {
@@ -224,6 +226,7 @@ export interface Character {
     street_cred_earned?: number;
     /** karma per point of it: 10, raised by Consummate Professional */
     street_cred_divisor?: number;
+    street_cred_burnt?: number;
     notoriety_quality?: number;
     notoriety_bonus?: number;
     nuyen_amt?: number;
