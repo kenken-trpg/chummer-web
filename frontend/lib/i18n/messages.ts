@@ -214,6 +214,13 @@ const JA = {
   "qual.removed": "キャリアで外した資質",
   "qual.removedBuyoff": "買い戻し {cost}カルマ",
   "qual.removedPositive": "返金なし",
+  "qual.restore": "戻す",
+  "qual.restoreHint": "{name} を取り直して、キャリアで外す前に戻す",
+  "qual.rebaseline": "今の資質を作成時のものとして扱う",
+  "qual.rebaselineHint":
+    "作成時のミスをキャリアで直したときに。キャリアでの取得・買い戻しの請求をすべて取り消します",
+  "qual.rebaselineConfirm":
+    "今の資質を作成時のものとして扱い、キャリアでの取得・買い戻しのカルマを取り消しますか？",
   "qual.attached": "付帯",
   "qual.empty": "まだありません。有利／不利で絞り込んで追加できます。",
   "qual.filter.positive": "有利",
@@ -1993,6 +2000,13 @@ const EN: Catalog = {
   "qual.removed": "Qualities dropped in career",
   "qual.removedBuyoff": "bought off for {cost} karma",
   "qual.removedPositive": "no refund",
+  "qual.restore": "Restore",
+  "qual.restoreHint": "Take {name} again, as it was before it was dropped in career",
+  "qual.rebaseline": "Treat the current qualities as chargen",
+  "qual.rebaselineHint":
+    "For fixing a chargen slip in play. Cancels every career purchase and buy-off charge",
+  "qual.rebaselineConfirm":
+    "Treat the current qualities as chargen and cancel the career purchase and buy-off karma?",
   "qual.attached": "attached",
   "qual.empty": "None yet. Filter by positive / negative and add one.",
   "qual.filter.positive": "Positive",
