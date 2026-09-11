@@ -8539,3 +8539,13 @@ def test_eval_attr_stat_handles_number_tests() -> None:
     assert _eval_attr_stat("({STR}+5)P", {"STR": 3}) == "8P"
     # a signed number is not a sum
     assert _eval_attr_stat("+1", {"STR": 3}) == "+1"
+
+
+def test_a_ware_weapon_keeps_its_formula_too() -> None:
+    """A Hand Blade's `({STR}+2)P` is resolved against the limb in rows.py;
+    the sheet shows the formula on hover for it as for a hand-held blade."""
+    blade = _ware_id("cyberware", "Hand Blade")
+    out = compute(_human("blade", cyberware=[CyberwareInstall(ware_id=blade)])).derived
+    weapon = next(w for w in out["weapons"] if w["name"] == "Hand Blade")
+    assert weapon["damage_formula"] == "({STR}+2)P"
+    assert weapon["damage"] == f"{out['totals']['STR'] + 2}P"
