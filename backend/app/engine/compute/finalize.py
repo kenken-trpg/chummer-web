@@ -27,9 +27,10 @@ from ..limits import (
 )
 from ..magic import attach_focus_tests, attach_spirit_tests
 from ..priority import heritage_options
-from ..qualities import apply_quality_rules, quality_requirement_context
+from ..qualities import apply_quality_rules
 from ..resonance import attach_complex_form_tests, attach_sprite_tests
 from ..ware import limb_attribute_replace
+from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
 
@@ -147,27 +148,12 @@ def finalize(ctx: Ctx) -> None:
 
     ctx.movement = resolve_movement(ctx.meta, ctx.effects)
 
-    tradition_info = ctx.magic.get("tradition") if isinstance(ctx.magic.get("tradition"), dict) else {}
     ctx.quality_report = {}
     ctx.negative_quality_karma = apply_quality_rules(
         ctx.state,
         ctx.qualities,
         ctx.free_quality_ids,
-        quality_requirement_context(
-            ctx.state,
-            ctx.talent,
-            ctx.qualities,
-            ctx.meta,
-            ctx.ess,
-            ctx.ess_lost,
-            ctx.effective_skills,
-            set(ctx.adept.get("power_names") or []),
-            {str(item.get("name") or "") for item in (ctx.magic.get("public") or []) if item.get("name")},
-            str((tradition_info or {}).get("name") or ""),
-            {item["name"] for item in ctx.cyber_installed},
-            {item["name"] for item in ctx.bio_installed},
-            ctx.effective_knowledge,
-        ),
+        quality_req_ctx(ctx),
         ctx.errors,
         career=ctx.career,
         report=ctx.quality_report,

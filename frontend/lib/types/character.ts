@@ -579,6 +579,8 @@ export interface Character {
       selectside?: boolean;
       side?: string | null;
       free?: boolean;
+      /** the table karma, when a `<costdiscount>` condition changed it */
+      karma_base?: number | null;
     }[];
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];

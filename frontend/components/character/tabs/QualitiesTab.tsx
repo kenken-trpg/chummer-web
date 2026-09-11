@@ -106,6 +106,9 @@ export function QualitiesTab({
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
                   / {ui("qual.karmaLabel")} {q.karma}
+                  {q.karma_base != null && q.karma_base !== q.karma
+                    ? ui("qual.karmaBase", { base: q.karma_base })
+                    : ""}
                   {q.side
                     ? ` / ${
                         q.side === "Left"

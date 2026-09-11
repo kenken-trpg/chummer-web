@@ -21,7 +21,7 @@ from ..karma import (
 )
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
 from ..priority import priority_value
-from ..qualities import quality_requirement_context
+from ..qualities import apply_cost_discounts
 from ..skills import (
     _attach_skillsoft_knowledge,
     _attach_specializations,
@@ -36,6 +36,7 @@ from ..skills import (
     resolve_specializations,
 )
 from ._career import career_raise_karma, nuyen_spend_breakdown, snapshot_career_baseline
+from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
 
@@ -229,6 +230,8 @@ def economy(ctx: Ctx) -> None:
     ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
     ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
 
+    # `<costdiscount>` decides what a quality costs, so before the sum
+    ctx.qualities = apply_cost_discounts(ctx.qualities, quality_req_ctx(ctx))
     ctx.karma_from_q = sum(
         q["karma"] for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
     )
@@ -310,24 +313,7 @@ def economy(ctx: Ctx) -> None:
     ctx.warnings.extend(ctx.contacts["warnings"])
     ctx.karma_spent += int(ctx.contacts.get("karma") or 0)
 
-    martial_ctx = quality_requirement_context(
-        ctx.state,
-        ctx.talent,
-        ctx.qualities,
-        ctx.meta,
-        ctx.ess,
-        ctx.ess_lost,
-        ctx.effective_skills,
-        set(ctx.adept.get("power_names") or []),
-        {str(item.get("name") or "") for item in (ctx.magic.get("public") or []) if item.get("name")},
-        str(
-            ((ctx.magic.get("tradition") if isinstance(ctx.magic.get("tradition"), dict) else {}) or {}).get("name")
-            or ""
-        ),
-        {item["name"] for item in ctx.cyber_installed},
-        {item["name"] for item in ctx.bio_installed},
-        ctx.effective_knowledge,
-    )
+    martial_ctx = quality_req_ctx(ctx)
     martial_ctx = {
         **martial_ctx,
         "qualities": set(martial_ctx.get("qualities") or []) | {ctx.talent["name"]},
