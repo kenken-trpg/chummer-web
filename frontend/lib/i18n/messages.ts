@@ -552,6 +552,7 @@ const JA = {
   "sheet.layout.compact": "コンパクト",
   "sheet.layout.text": "テキスト",
   "sheet.layout.print": "印刷用",
+  "sheet.wareNamesOnly": "ウェアは名称のみ",
 
   // Shared by the three magic tabs (spells, spirits, foci).
   "magic.tradition": "伝統",
@@ -2302,6 +2303,7 @@ const EN: Catalog = {
   "sheet.layout.compact": "Compact",
   "sheet.layout.text": "Text",
   "sheet.layout.print": "Print",
+  "sheet.wareNamesOnly": "Ware by name only",
 
   "magic.tradition": "Tradition",
   "magic.drainResist": " · drain resistance {attrs} {pool}",

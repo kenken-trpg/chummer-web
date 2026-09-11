@@ -16,6 +16,8 @@ export type SheetData = {
   character: Character;
   catalog: Catalog;
   layout: SheetLayout;
+  /** List ware by name alone on every layout (compact always does). */
+  wareNamesOnly: boolean;
   tr: (n: string) => string;
   t: TFn;
   /** Bound to `locale`, for the pure formatters that cannot call the hook. */
@@ -56,12 +58,14 @@ export function buildSheetData({
   tr,
   layout,
   locale = "ja",
+  wareNamesOnly = false,
 }: {
   character: Character;
   catalog: Catalog;
   tr: (n: string) => string;
   layout: SheetLayout;
   locale?: Locale;
+  wareNamesOnly?: boolean;
 }): SheetData {
   const d = character.derived;
   const t = makeT(catalog, locale);
@@ -134,6 +138,7 @@ export function buildSheetData({
     character,
     catalog,
     layout,
+    wareNamesOnly,
     tr,
     t,
     ui,

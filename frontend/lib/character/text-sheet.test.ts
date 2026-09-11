@@ -97,6 +97,23 @@ describe("textSheet sections", () => {
     expect(ware[0].slice(0, 6)).not.toBe(ware[1].slice(0, 6)); // different tag
   });
 
+  it("lists ware by name, one line per kind, when asked", () => {
+    const text = textSheet(
+      buildSheetData({
+        character: RICH_CHARACTER,
+        catalog: RICH_CATALOG,
+        tr: identityTr,
+        layout: "text",
+        wareNamesOnly: true,
+      }),
+    );
+    const ware = section(text, "ウェア");
+    expect(ware).toHaveLength(2);
+    expect(ware[0]).toMatch(/Wired Reflexes R2$/);
+    expect(ware[1]).toMatch(/Muscle Toner R2$/);
+    expect(ware.join("\n")).not.toContain("ESS");
+  });
+
   it("renders a spell's category, type, range, duration and drain", () => {
     const [spell] = section(sheet(), "術式");
 

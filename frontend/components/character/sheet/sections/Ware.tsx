@@ -3,11 +3,11 @@ import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 
 export function WareSection(s: SheetData) {
-  const { tr, d, cyber, bio, layout } = s;
+  const { tr, d, cyber, bio, layout, wareNamesOnly } = s;
   const { ui } = useUiText();
   // The compact sheet lists ware by name alone — grade, limb stats and ESS
   // are one click away in the editor, and the section total says the loss.
-  const namesOnly = layout === "compact";
+  const namesOnly = layout === "compact" || wareNamesOnly;
   const nameList = (items: typeof cyber) => (
     <ul className="sheet-list sheet-list-compact">
       {items.map((item) => (

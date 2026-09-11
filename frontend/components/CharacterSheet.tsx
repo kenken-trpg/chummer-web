@@ -2,6 +2,7 @@ import type { Catalog, Character } from "@/lib/types";
 import { useUiText } from "@/lib/i18n";
 import { textSheet } from "@/lib/character/text-sheet";
 import { buildSheetData, type SheetLayout } from "@/lib/character/sheet-data";
+import { useWareCompact } from "@/lib/character/useWareCompact";
 import { SheetHeader } from "@/components/character/sheet/SheetHeader";
 import { CoreSection } from "@/components/character/sheet/sections/Core";
 import { SkillsSection } from "@/components/character/sheet/sections/Skills";
@@ -38,33 +39,51 @@ export default function CharacterSheet({
   layout?: SheetLayout;
 }) {
   const { ui, locale } = useUiText();
-  const s = buildSheetData({ character, catalog, tr, layout, locale });
+  const [wareNamesOnly, setWareNamesOnly] = useWareCompact("sheetWareNames");
+  const s = buildSheetData({ character, catalog, tr, layout, locale, wareNamesOnly });
+  // Compact lists ware by name already; the other three get the choice. The
+  // switch itself never prints.
+  const wareSwitch =
+    layout === "compact" ? null : (
+      <label className="option-row no-print">
+        <input
+          type="checkbox"
+          checked={wareNamesOnly}
+          onChange={(e) => setWareNamesOnly(e.target.checked)}
+        />
+        {ui("sheet.wareNamesOnly")}
+      </label>
+    );
 
   if (layout === "text") {
     return (
-      <pre className="sheet-text">
-        {textSheet({
-          character,
-          d: s.d,
-          tr,
-          t: s.t,
-          ui: s.ui,
-          totals: s.totals,
-          enabled: s.enabled,
-          activeSkills: s.activeSkills,
-          groups: s.groups,
-          exotic: s.exotic,
-          knowledge: s.knowledge,
-          qualities: s.qualities,
-          weapons: s.weapons,
-          armors: s.armors,
-          cyber: s.cyber,
-          bio: s.bio,
-          gearMisc: s.gearMisc,
-          drugs: s.drugs,
-          sins: s.sins,
-        })}
-      </pre>
+      <>
+        {wareSwitch}
+        <pre className="sheet-text">
+          {textSheet({
+            character,
+            d: s.d,
+            tr,
+            t: s.t,
+            ui: s.ui,
+            totals: s.totals,
+            enabled: s.enabled,
+            activeSkills: s.activeSkills,
+            groups: s.groups,
+            exotic: s.exotic,
+            knowledge: s.knowledge,
+            qualities: s.qualities,
+            weapons: s.weapons,
+            armors: s.armors,
+            cyber: s.cyber,
+            bio: s.bio,
+            gearMisc: s.gearMisc,
+            drugs: s.drugs,
+            sins: s.sins,
+            wareNamesOnly: s.wareNamesOnly,
+          })}
+        </pre>
+      </>
     );
   }
 
@@ -73,6 +92,7 @@ export default function CharacterSheet({
   if (layout === "print") {
     return (
       <article className="character-sheet character-sheet--print">
+        {wareSwitch}
         <SheetHeader {...s} />
         <PrintStatBlock {...s} />
         <PrintConditionMonitor {...s} />
@@ -104,6 +124,7 @@ export default function CharacterSheet({
     <article
       className={`character-sheet${layout === "compact" ? " character-sheet--compact" : ""}`}
     >
+      {wareSwitch}
       <SheetHeader {...s} />
       <CoreSection {...s} />
       <SkillsSection {...s} />

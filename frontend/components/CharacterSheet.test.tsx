@@ -1,6 +1,12 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import CharacterSheet from "@/components/CharacterSheet";
-import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
+import {
+  identityTr,
+  makeCatalog,
+  makeCharacter,
+  RICH_CATALOG,
+  RICH_CHARACTER,
+} from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -122,5 +128,43 @@ describe("<CharacterSheet>", () => {
     // qualities + martial arts run names through `tr`; contacts render `c.name` raw
     expect(seen).toEqual(expect.arrayContaining(["Ambidextrous", "Krav Maga"]));
     expect(screen.getByText("Fixer")).toBeDefined();
+  });
+});
+
+describe("<CharacterSheet> ware by name only", () => {
+  beforeEach(() => localStorage.clear());
+  const LABEL = "ウェアは名称のみ";
+  const sheet = (layout: "standard" | "compact" | "text" | "print") =>
+    render(
+      <CharacterSheet
+        character={RICH_CHARACTER}
+        catalog={RICH_CATALOG}
+        tr={identityTr}
+        layout={layout}
+      />,
+    );
+
+  it("folds the print sheet's ware list and remembers it", () => {
+    const first = sheet("print");
+    const wareList = () =>
+      [...document.querySelectorAll("section.sheet-section")].find((el) =>
+        el.textContent?.includes("Wired Reflexes"),
+      )!;
+    expect(wareList().querySelector("li")!.textContent).toContain("ESS");
+
+    fireEvent.click(screen.getByLabelText(LABEL));
+    expect(wareList().querySelector("li")!.textContent).toBe("Wired Reflexes R2");
+    expect(localStorage.getItem("sheetWareNames")).toBe("1");
+    // the switch is chrome, not sheet: it stays off paper
+    expect(screen.getByLabelText(LABEL).closest(".no-print")).not.toBeNull();
+
+    first.unmount();
+    sheet("text");
+    expect(document.querySelector("pre.sheet-text")!.textContent).not.toContain("ESS −2");
+  });
+
+  it("has no switch on the compact sheet, which is names-only already", () => {
+    sheet("compact");
+    expect(screen.queryByLabelText(LABEL)).toBeNull();
   });
 });
