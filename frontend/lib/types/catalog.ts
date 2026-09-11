@@ -416,6 +416,8 @@ export interface Catalog {
     include_in_limit?: string[];
     /** that shared cap when it differs from max_takes (Tough as Nails: 4); 0 = max_takes */
     limit_with_inclusions?: number;
+    /** false: bought in career at the table karma, not twice it */
+    double_career?: boolean;
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];

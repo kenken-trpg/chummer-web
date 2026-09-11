@@ -39,6 +39,7 @@ def section(raw: CatalogDict) -> dict:
             "max_takes": q.get("max_takes"),
             "include_in_limit": list(q.get("includeinlimit") or []),
             "limit_with_inclusions": int(q.get("limitwithinclusions") or 0),
+            "double_career": q.get("double_career", True) is not False,
             "required_tree": q.get("required_tree") or [],
             "forbidden_tree": q.get("forbidden_tree") or [],
         }

@@ -332,6 +332,9 @@ class CareerBaseline(BaseModel):
     knowledge_skills: dict[str, int] = Field(default_factory=dict)
     skill_specializations: list[str] = Field(default_factory=list)
     exotic_skills: dict[str, int] = Field(default_factory=dict)
+    # None for a baseline saved before qualities were recorded: those
+    # characters keep the chargen price for every quality they hold.
+    quality_ids: list[str] | None = None
 
 
 class RewardEntry(BaseModel):

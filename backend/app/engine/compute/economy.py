@@ -36,6 +36,7 @@ from ..skills import (
     resolve_specializations,
 )
 from ._career import career_raise_karma, nuyen_spend_breakdown, snapshot_career_baseline
+from ._career_qualities import career_quality_karma
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
@@ -331,11 +332,19 @@ def economy(ctx: Ctx) -> None:
     ctx.karma_spent += int(ctx.martial.get("karma") or 0)
     ctx.karma_spent += int(ctx.initiation.get("karma") or 0)
     ctx.karma_spent += int(ctx.submersion.get("karma") or 0)
+    baseline_qualities = ctx.state.career_baseline.quality_ids if ctx.state.career_baseline else None
+    if ctx.career and baseline_qualities is not None:
+        ctx.quality_career_pricing = True
+        ctx.quality_career_karma, ctx.quality_career_costs, ctx.qualities_removed = career_quality_karma(
+            ctx.qualities, ctx.free_quality_ids, baseline_qualities
+        )
+        ctx.karma_spent += ctx.quality_career_karma
     ctx.karma_left = ctx.karma_pool - ctx.karma_spent
 
     ctx.karma_spend_lines = list(ctx.career_adv_lines)
     for key, amount in (
         ("engine.spend.qualities", ctx.karma_from_q),
+        ("engine.spend.qualitiesCareer", ctx.quality_career_karma),
         ("engine.spend.metatype", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
         ("engine.spend.attributesKarma", ctx.attr_karma if ctx.is_karma else 0),
         ("engine.spend.skillsKarma", ctx.skill_buy_karma if ctx.is_karma else 0),

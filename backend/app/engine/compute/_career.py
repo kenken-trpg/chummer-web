@@ -36,6 +36,7 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
         exotic_skills={
             str(row.id): int(row.rating or 0) for row in (state.exotic_skills or []) if getattr(row, "id", None)
         },
+        quality_ids=[str(qid) for qid in state.quality_ids or []],
     )
 
 

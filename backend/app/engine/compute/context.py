@@ -172,6 +172,11 @@ class Ctx:
 
     # --- karma totals -------------------------------------------------------
     karma_from_q: int = 0
+    # what taking / dropping qualities after chargen adds on top (SR5 p.107)
+    quality_career_karma: int = 0
+    quality_career_costs: list[int | None] = field(default_factory=list)
+    qualities_removed: list[dict[str, Any]] = field(default_factory=list)
+    quality_career_pricing: bool = False
     mystic_karma: int = 0
     extra_adept_karma: int = 0
     spell_karma: int = 0
