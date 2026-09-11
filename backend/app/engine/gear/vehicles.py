@@ -94,6 +94,7 @@ def _apply_vehicle_bonus(stats: dict[str, int], nodes: list[dict[str, Any]], rat
         "speed": "speed",
         "accel": "accel",
         "offroadaccel": "offroadaccel",
+        "offroadspeed": "offroadspeed",
         "body": "body",
         "armor": "armor",
         "pilot": "pilot",
@@ -104,6 +105,9 @@ def _apply_vehicle_bonus(stats: dict[str, int], nodes: list[dict[str, Any]], rat
         tag = str(node.get("tag") or "")
         key = aliases.get(tag)
         if not key:
+            continue
+        # off-road only exists where the vehicle prints a second value ("4/3")
+        if key.startswith("offroad") and key not in stats:
             continue
         raw = str(node.get("value") or "").strip()
         if raw.lower() == "rating":
@@ -508,6 +512,10 @@ def _resolve_drones(state: CharacterState, kind: str = "drones") -> tuple[list[d
             "sensor": _leading_vehicle_stat(spec.get("sensor")),
             "seats": _leading_vehicle_stat(spec.get("seats")),
         }
+        for stat in ("handling", "speed", "accel"):
+            parts = str(spec.get(stat) or "").split("/")
+            if len(parts) > 1:
+                stats[f"offroad{stat}"] = _leading_vehicle_stat(parts[1])
         kept.append(inst)
         public.append(
             {
@@ -556,9 +564,12 @@ def _publish_drone_stats(drones: list[dict[str, Any]], sensors: list[dict[str, A
             children.setdefault(str(item.get("parent_id") or ""), []).append(item)
     for row in drones:
         stats = row.get("stats") or {}
-        row["handling"] = _format_vehicle_stat(str(row.get("handling") or ""), int(stats.get("handling") or 0))
-        row["speed"] = str(stats.get("speed") or row.get("speed") or "")
-        row["accel"] = str(stats.get("accel") or row.get("accel") or "")
+        for stat in ("handling", "speed", "accel"):
+            if stat not in stats:
+                continue
+            row[stat] = _format_vehicle_stat(
+                str(row.get(stat) or ""), int(stats.get(stat) or 0), stats.get(f"offroad{stat}")
+            )
         row["body"] = str(stats.get("body") or row.get("body") or "")
         row["armor"] = str(stats.get("armor") or row.get("armor") or "")
         row["pilot"] = str(stats.get("pilot") or row.get("pilot") or "")

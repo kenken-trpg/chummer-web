@@ -8846,3 +8846,40 @@ def test_taking_the_current_qualities_as_chargen_cancels_career_charges() -> Non
     assert "career_cost" not in _quality_row(out, "Ambidextrous")
     # held at the chargen price now: Bad Luck's gain and Ambidextrous at ×1
     assert out["karma"]["remaining"] == clean + bad["karma"] - amb["karma"]
+
+
+def _vehicle_item(kind: str, name: str) -> dict:
+    rows = catalog()[kind]
+    rows = rows["items"] if isinstance(rows, dict) and "items" in rows else rows
+    return next(item for item in rows if item["name"] == name)
+
+
+def test_off_road_mods_move_the_second_value() -> None:
+    """A "4/3" vehicle's off-road half takes `<offroad*>` mods: Off-Road
+    Suspension trades 1 on-road Handling for 1 off-road, Speed Enhancement
+    raises both Speeds (R5 p.154-155)."""
+    xenon = _vehicle_item("vehicles", "Dodge Xenon")  # Handling 3/2, Speed 4/3
+    assert (xenon["handling"], xenon["speed"]) == ("3/2", "4/3")
+    car = GearInstall(gear_id=xenon["id"])
+    mods = [
+        VehicleModInstall(mod_id=_vehicle_item("vehicle_mods", "Off-Road Suspension")["id"], parent_id=car.id),
+        VehicleModInstall(mod_id=_vehicle_item("vehicle_mods", "Speed Enhancement")["id"], parent_id=car.id, rating=2),
+    ]
+    row = compute(_mundane("offroad", vehicles=[car], vehicle_mods=mods)).derived["vehicles"][0]
+    assert row["handling"] == "2/3"
+    assert row["speed"] == "6/5"
+    assert row["accel"] == "2"
+
+
+def test_off_road_mods_do_nothing_on_a_single_value() -> None:
+    """No second value printed, nothing for the off-road half to move."""
+    car_spec = next(
+        v
+        for v in catalog()["vehicles"]
+        if str(v.get("handling") or "").isdigit() and str(v.get("speed") or "").isdigit()
+    )
+    car = GearInstall(gear_id=car_spec["id"])
+    mod = VehicleModInstall(mod_id=_vehicle_item("vehicle_mods", "Off-Road Suspension")["id"], parent_id=car.id)
+    row = compute(_mundane("offroad-single", vehicles=[car], vehicle_mods=[mod])).derived["vehicles"][0]
+    assert row["handling"] == str(int(car_spec["handling"]) - 1)
+    assert "/" not in row["speed"]
