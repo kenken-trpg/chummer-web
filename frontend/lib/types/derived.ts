@@ -327,6 +327,9 @@ export interface InstalledCommlink {
   rating: number;
   rating_max: number;
   device_rating: number;
+  /** from a plugged-in Attack / Stealth Dongle (DT p.61); 0 on a bare commlink */
+  attack?: number;
+  sleaze?: number;
   dataprocessing: number;
   firewall: number;
   nuyen: number;

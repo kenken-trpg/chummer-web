@@ -147,6 +147,23 @@ describe("buildChatPalette", () => {
     expect(out).toContain("3B6@5 データスパイク"); // limit = Attack
   });
 
+  it("hacks with a dongled commlink when there is no deck", () => {
+    const withDongle = makeCharacter({
+      derived: {
+        commlink: { attack: 2, sleaze: 1, dataprocessing: 4, firewall: 4 } as any,
+      },
+    });
+    const out = buildChatPalette(withDongle, makeCatalog(), identityTr);
+    expect(out).toContain("3B6@1 素早いハッキング"); // limit = the dongle's Sleaze
+    expect(out).toContain("3B6@2 データスパイク");
+
+    // a bare commlink is no persona to hack with
+    const bare = makeCharacter({
+      derived: { commlink: { attack: 0, sleaze: 0, dataprocessing: 4, firewall: 4 } as any },
+    });
+    expect(buildChatPalette(bare, makeCatalog(), identityTr)).not.toContain("素早いハッキング");
+  });
+
   it("rolls both sim modes when the persona has a VR initiative", () => {
     const ch = makeCharacter({
       derived: {

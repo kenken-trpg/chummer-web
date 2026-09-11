@@ -54,6 +54,7 @@ from ..gear import (
     resolve_custom_drugs,
     resolve_lifestyles,
 )
+from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..lookups import _item_by_id
 from ..magic import attach_weapon_focus_dice
@@ -187,6 +188,8 @@ def resolve_gear(
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "device_rating": device,
+                "attack": int(eval_formula(str(spec.get("attack") or "0"), rating, 0)),
+                "sleaze": int(eval_formula(str(spec.get("sleaze") or "0"), rating, 0)),
                 "dataprocessing": processing,
                 "firewall": firewall,
                 "nuyen": cost,
@@ -242,6 +245,7 @@ def resolve_gear(
     errors.extend(gear_errors)
     bonus_sources.extend(gear_bonus)
     _append_gear_weapons(weapons, gear_items)
+    apply_host_matrix_mods(commlinks, gear_items)
 
     custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)
     nuyen += custom_drug_nuyen
