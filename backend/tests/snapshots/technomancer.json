@@ -616,6 +616,8 @@
     ]
   },
   "street_cred": 0,
+  "street_cred_divisor": 10,
+  "street_cred_earned": 0,
   "submersion": {
     "choices": [],
     "echoes": [],

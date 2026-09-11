@@ -1,6 +1,6 @@
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 
-export function SidebarCareerEdit({ ch, career, patch, ui }: SidebarBlockProps) {
+export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProps) {
   return (
     <>
       {career && patch ? (
@@ -16,6 +16,15 @@ export function SidebarCareerEdit({ ch, career, patch, ui }: SidebarBlockProps) 
               style={{ width: 64 }}
             />
           </div>
+          <p className="muted">
+            {ui("side.scFormula", {
+              karma: d.karma_earned || 0,
+              divisor: d.street_cred_divisor || 10,
+              earned: d.street_cred_earned || 0,
+              extra: ch.street_cred || 0,
+              total: d.street_cred || 0,
+            })}
+          </p>
           <div className="stat">
             <span>{ui("side.notorietyBonus")}</span>
             <input

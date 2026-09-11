@@ -372,7 +372,12 @@ def economy(ctx: Ctx) -> None:
 
     ctx.quality_notoriety = int(ctx.effects.get("notoriety") or 0)
     ctx.notoriety_total = ctx.quality_notoriety + int(ctx.state.notoriety_bonus or 0)
-    ctx.street_cred_total = int(ctx.state.street_cred or 0)
+    # SR5 p.372: a point of Street Cred per 10 karma earned in play, on top of
+    # what the table hands out (`street_cred`, Chummer's own manual field).
+    # Consummate Professional (AP p.17) raises the 10.
+    ctx.street_cred_divisor = max(1, 10 + int(ctx.effects.get("street_cred_divisor") or 0))
+    ctx.street_cred_earned = int(ctx.state.karma_earned or 0) // ctx.street_cred_divisor if ctx.career else 0
+    ctx.street_cred_total = ctx.street_cred_earned + int(ctx.state.street_cred or 0)
     quality_pa = int(ctx.effects.get("public_awareness") or 0)
     ctx.public_awareness_total = max(0, (ctx.street_cred_total + max(0, ctx.notoriety_total)) // 3 + quality_pa)
     if ctx.effects.get("erased") and ctx.public_awareness_total >= 1:

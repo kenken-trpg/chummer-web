@@ -200,6 +200,8 @@ class Ctx:
     quality_notoriety: int = 0
     notoriety_total: int = 0
     street_cred_total: int = 0
+    street_cred_earned: int = 0
+    street_cred_divisor: int = 10
     public_awareness_total: int = 0
 
     # --- derived stats ----------------------------------------------------

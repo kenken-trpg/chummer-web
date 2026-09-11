@@ -136,9 +136,32 @@ describe("<CharacterSidebar>", () => {
       />,
     );
     // bare number boxes, previously announced as "spin button" with no name
-    expect(screen.getByRole("spinbutton", { name: "SC 編集" })).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: "SC 補正" })).toBeDefined();
     expect(screen.getByRole("spinbutton", { name: "悪名ボーナス" })).toBeDefined();
     expect(screen.getByRole("spinbutton", { name: "カルマ" })).toBeDefined();
     expect(screen.getByRole("spinbutton", { name: "新円" })).toBeDefined();
+  });
+
+  it("shows where the street cred comes from", () => {
+    const ch = makeCharacter({
+      career: true,
+      street_cred: 3,
+      derived: {
+        karma_earned: 45,
+        street_cred: 5,
+        street_cred_earned: 2,
+        street_cred_divisor: 20,
+      } as any,
+    });
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={ch}
+        d={ch.derived}
+        tr={identityTr}
+        patch={() => {}}
+      />,
+    );
+    expect(screen.getByText("SC = 得たカルマ 45 ÷ 20 → 2 ＋ 補正 3 ＝ 5")).toBeDefined();
   });
 });

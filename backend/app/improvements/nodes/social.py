@@ -30,6 +30,8 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["lifestyle_cost"] += _bonus_int(node, fields)
     elif tag == "notoriety":
         effects["notoriety"] += _bonus_int(node, fields)
+    elif tag == "streetcredmultiplier":
+        effects["street_cred_divisor"] += _bonus_int(node, fields)
     elif tag == "fame":
         effects["fame"] += _bonus_int(node, fields)
     elif tag == "publicawareness":

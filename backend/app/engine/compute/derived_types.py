@@ -352,6 +352,9 @@ class DerivedDict(TypedDict):
 
     # --- social / misc -------------------------------------------
     street_cred: int
+    # the part earned from karma, and the karma it takes per point
+    street_cred_earned: int
+    street_cred_divisor: int
     notoriety: int
     notoriety_quality: int
     notoriety_bonus: int

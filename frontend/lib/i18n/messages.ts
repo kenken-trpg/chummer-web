@@ -509,7 +509,8 @@ const JA = {
   "side.limbAverage": "リム平均",
   "side.unimplemented": "未実装ボーナス {count} 件（無視して継続）",
 
-  "side.scEdit": "SC 編集",
+  "side.scEdit": "SC 補正",
+  "side.scFormula": "SC = 得たカルマ {karma} ÷ {divisor} → {earned} ＋ 補正 {extra} ＝ {total}",
   "side.notorietyBonus": "悪名ボーナス",
   "side.awarenessFormula": "周知度 = ⌊(SC + max(悪名,0)) / 3⌋ + 品質修正",
 
@@ -2287,7 +2288,9 @@ const EN: Catalog = {
   "side.limbAverage": "limb average",
   "side.unimplemented": "{count} unimplemented bonuses (ignored, continuing)",
 
-  "side.scEdit": "Street cred",
+  "side.scEdit": "Street cred adjustment",
+  "side.scFormula":
+    "SC = karma earned {karma} ÷ {divisor} → {earned} + adjustment {extra} = {total}",
   "side.notorietyBonus": "Notoriety bonus",
   "side.awarenessFormula": "Awareness = ⌊(SC + max(notoriety, 0)) / 3⌋ + quality modifiers",
 
