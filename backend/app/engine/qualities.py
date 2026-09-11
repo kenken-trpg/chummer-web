@@ -64,14 +64,35 @@ def sanitize_quality_ids(quality_ids: list[str]) -> tuple[list[str], list[str]]:
         spec = _quality_by_id(qid)
         if not spec:
             continue
-        max_takes = spec.get("max_takes")
-        taken = counts.get(qid, 0)
-        if max_takes is not None and taken >= int(max_takes):
+        if _at_quality_limit(spec, counts):
             removed.append(spec["name"])
             continue
+        taken = counts.get(qid, 0)
         counts[qid] = taken + 1
         limited.append(qid)
     return limited, removed
+
+
+def _at_quality_limit(spec: dict[str, Any], counts: dict[str, int]) -> bool:
+    """Would one more take of `spec` go over its limit? `<includeinlimit>`
+    counts the named siblings too (Indomitable, SR5 p.75: Physical, Mental and
+    Social share one limit of 3); `<limitwithinclusions>` sets that shared cap
+    apart from the per-kind `limit` (Tough as Nails, RF p.150: 3 each, 4 in
+    all)."""
+    max_takes = spec.get("max_takes")
+    own = counts.get(str(spec["id"]), 0)
+    if max_takes is not None and own >= int(max_takes):
+        return True
+    siblings = set(spec.get("includeinlimit") or [])
+    if not siblings:
+        return False
+    shared = own + sum(
+        count
+        for qid, count in counts.items()
+        if qid != spec["id"] and ((_quality_by_id(qid) or {}).get("name") in siblings)
+    )
+    cap = int(spec.get("limitwithinclusions") or 0) or (int(max_takes) if max_takes is not None else 0)
+    return bool(cap) and shared >= cap
 
 
 def quality_needs_extra(spec: dict[str, Any]) -> bool:
@@ -405,10 +426,9 @@ def gather_qualities(
         spec = _quality_by_id(qid)
         if not spec:
             continue
-        max_takes = spec.get("max_takes")
-        taken = counts.get(qid, 0)
-        if max_takes is not None and taken >= int(max_takes):
+        if _at_quality_limit(spec, counts):
             continue
+        taken = counts.get(qid, 0)
         counts[qid] = taken + 1
         qualities.append(spec)
         for node in spec.get("bonus") or []:

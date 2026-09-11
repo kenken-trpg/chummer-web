@@ -412,6 +412,10 @@ export interface Catalog {
     expertise_skill?: string;
     add_spirit_count?: number;
     max_takes?: number | null;
+    /** siblings counted toward the same limit (Indomitable) */
+    include_in_limit?: string[];
+    /** that shared cap when it differs from max_takes (Tough as Nails: 4); 0 = max_takes */
+    limit_with_inclusions?: number;
     chargenonly?: boolean;
     required_tree?: QualityReqNode[];
     forbidden_tree?: QualityReqNode[];

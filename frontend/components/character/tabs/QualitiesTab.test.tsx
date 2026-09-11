@@ -93,3 +93,46 @@ describe("<QualitiesTab>", () => {
     expect(patch).toHaveBeenCalledWith(expect.objectContaining({ quality_ids: ["amb"] }));
   });
 });
+
+describe("<QualitiesTab> a limit shared between siblings", () => {
+  // Indomitable (SR5 p.75): three kinds, 3 takes across all of them
+  const kinds = ["Physical", "Mental", "Social"].map((k) => `Indomitable (${k})`);
+  const catalog = makeCatalog({
+    qualities: kinds.map((name, i) => ({
+      id: `ind${i}`,
+      name,
+      karma: 8,
+      category: "Positive",
+      source: "SR5",
+      max_takes: 3,
+      include_in_limit: kinds.filter((other) => other !== name),
+    })) as any,
+  });
+  const row = (name: string) =>
+    [...document.querySelectorAll(".quality-list .quality-item")].find(
+      (el) => el.querySelector("b")?.textContent === name,
+    )!;
+
+  it("says the limit is shared", () => {
+    renderTab({ catalog });
+    expect(row("Indomitable (Social)").textContent).toContain(
+      "Indomitable (Physical)、Indomitable (Mental) と合わせて最大3",
+    );
+  });
+
+  it("stops the add once the siblings hold the whole limit", () => {
+    const patch = vi.fn();
+    renderTab({ catalog, patch, character: { quality_ids: ["ind0", "ind0", "ind1"] } });
+    const social = row("Indomitable (Social)").querySelector("button")!;
+    expect(social.disabled).toBe(true);
+    fireEvent.click(social);
+    expect(patch).not.toHaveBeenCalled();
+  });
+
+  it("still adds while the shared count is under it", () => {
+    const patch = vi.fn();
+    renderTab({ catalog, patch, character: { quality_ids: ["ind0"] } });
+    fireEvent.click(row("Indomitable (Social)").querySelector("button")!);
+    expect(patch).toHaveBeenCalledWith(expect.objectContaining({ quality_ids: ["ind0", "ind2"] }));
+  });
+});
