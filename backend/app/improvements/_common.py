@@ -214,6 +214,8 @@ IMPLEMENTED = {
     *SPELL_DEFENSE_RESIST_TAGS.keys(),
 }
 SILENT_TAGS = {
+    # read off the installed ware in `engine/compute/ware.py`, which drops the
+    # quality's own bonus before the effects pass
     "disablequality",
     "selectweapon",
     "addgears",

@@ -136,6 +136,7 @@ export function QualitiesTab({
                       }`
                     : ""}
                   {q.free ? ui("qual.freeAttached") : ""}
+                  {q.disabled_by ? ui("qual.disabledBy", { ware: tr(q.disabled_by) }) : ""}
                   {q.career_cost == null
                     ? careerPricing && !q.free && q.category === "Negative"
                       ? ui("qual.buyoffHint", { cost: -q.karma * careerMult(q.id) })

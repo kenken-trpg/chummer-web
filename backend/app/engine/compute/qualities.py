@@ -109,6 +109,10 @@ def gather(ctx: Ctx) -> None:
 
 
 def effects_and_binders(ctx: Ctx) -> None:
+    if ctx.disabled_qualities:
+        off = {q["name"] for q in ctx.qualities if q["id"] in ctx.disabled_qualities}
+        quality_names = {q["name"] for q in ctx.qualities}
+        ctx.sources = [(name, nodes) for name, nodes in ctx.sources if not (name in off and name in quality_names)]
     ctx.effects = collect_effects(ctx.sources)
     apply_excon_ware_ban(ctx.cyber_installed + ctx.bio_installed, bool(ctx.effects.get("excon")), ctx.errors)
     bind_action_dice_pools(ctx.effects, ctx.qualities, ctx.state)

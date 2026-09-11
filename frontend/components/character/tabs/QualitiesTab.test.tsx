@@ -314,3 +314,28 @@ describe("<QualitiesTab> undoing career changes", () => {
     expect(screen.queryByRole("button", { name: "今の資質を作成時のものとして扱う" })).toBeNull();
   });
 });
+
+describe("<QualitiesTab> a quality switched off by ware", () => {
+  it("names the ware that switched it off", () => {
+    renderTab({
+      character: {
+        quality_ids: ["lr"],
+        derived: {
+          qualities: [
+            {
+              id: "lr",
+              name: "Lightning Reflexes",
+              karma: 20,
+              category: "Positive",
+              source: "RF",
+              disabled_by: "Wired Reflexes",
+            },
+          ],
+        } as any,
+      },
+    });
+    expect(document.querySelector(".quality-item")!.textContent).toContain(
+      "Wired Reflexes があるので無効",
+    );
+  });
+});
