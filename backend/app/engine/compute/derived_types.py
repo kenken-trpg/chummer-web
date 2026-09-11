@@ -368,6 +368,10 @@ class DerivedDict(TypedDict):
     enabled_tabs: list[str]
     unimplemented_bonuses: list[UnimplementedRow]
     qualities: list[Row]
+    # held at chargen, gone in career: the buy-off / the karma that stays spent
+    qualities_removed: list[Row]
+    # career with a recorded chargen quality list: SR5 p.107 prices apply
+    quality_career_pricing: bool
     cyberware: list[Row]
     bioware: list[Row]
     ware_ranges: dict[str, dict[str, int]]

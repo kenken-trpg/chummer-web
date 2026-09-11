@@ -411,6 +411,8 @@
   "public_awareness": 0,
   "qi_foci": [],
   "qualities": [],
+  "qualities_removed": [],
+  "quality_career_pricing": false,
   "rcc": null,
   "rccs": [],
   "reach": 0,

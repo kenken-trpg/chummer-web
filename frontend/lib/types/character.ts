@@ -196,6 +196,8 @@ export interface Character {
     knowledge_skills?: Record<string, number>;
     skill_specializations?: string[];
     exotic_skills?: Record<string, number>;
+    /** absent in a baseline saved before qualities were recorded */
+    quality_ids?: string[] | null;
   } | null;
   tradition_id?: string | null;
   stream_id?: string | null;
@@ -581,7 +583,13 @@ export interface Character {
       free?: boolean;
       /** the table karma, when a `<costdiscount>` condition changed it */
       karma_base?: number | null;
+      /** taken after chargen: what it cost (SR5 p.107: positive ×2, negative 0) */
+      career_cost?: number;
     }[];
+    /** held at chargen, gone in career: the buy-off cost (0 for a positive one) */
+    qualities_removed?: { id: string; name: string; category: string; karma: number }[];
+    /** career with a recorded chargen quality list, so the career prices apply */
+    quality_career_pricing?: boolean;
     cyberware: InstalledWare[];
     bioware?: InstalledWare[];
     essence_lost?: number;

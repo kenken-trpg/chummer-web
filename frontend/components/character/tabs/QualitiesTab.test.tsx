@@ -162,3 +162,83 @@ describe("<QualitiesTab> a cost moved by a condition", () => {
     expect(owned.textContent).toContain("カルマ -5（条件で変動・表では -15）");
   });
 });
+
+describe("<QualitiesTab> career prices (SR5 p.107)", () => {
+  const catalog = makeCatalog({
+    qualities: [
+      { id: "amb", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
+      { id: "dist", name: "Distinctive Style", karma: -5, category: "Negative", source: "SR5" },
+      {
+        id: "way",
+        name: "The Artist's Way",
+        karma: 20,
+        category: "Positive",
+        source: "SR5",
+        double_career: false,
+      },
+    ] as any,
+  });
+  const itemText = (scope: string, name: string) =>
+    [...document.querySelectorAll(`${scope} .quality-item`)].find(
+      (el) => el.querySelector("b")?.textContent === name,
+    )!.textContent;
+
+  it("prices the catalog at the career rate", () => {
+    renderTab({ catalog, character: { derived: { quality_career_pricing: true } as any } });
+    expect(itemText(".quality-list", "Ambidextrous")).toContain("キャリアでは 8カルマ");
+    expect(itemText(".quality-list", "The Artist's Way")).toContain("キャリアでは 20カルマ");
+    expect(itemText(".quality-list", "Distinctive Style")).toContain("キャリアではカルマなし");
+  });
+
+  it("says what a taken one cost and what a held negative would take to buy off", () => {
+    renderTab({
+      catalog,
+      character: {
+        quality_ids: ["amb", "dist"],
+        derived: {
+          quality_career_pricing: true,
+          qualities: [
+            {
+              id: "amb",
+              name: "Ambidextrous",
+              karma: 4,
+              category: "Positive",
+              source: "SR5",
+              career_cost: 8,
+            },
+            {
+              id: "dist",
+              name: "Distinctive Style",
+              karma: -5,
+              category: "Negative",
+              source: "SR5",
+            },
+          ],
+        } as any,
+      },
+    });
+    expect(itemText(".card", "Ambidextrous")).toContain("キャリアで取得（8カルマ）");
+    expect(itemText(".card", "Distinctive Style")).toContain("外すと買い戻し 10カルマ");
+  });
+
+  it("lists the qualities dropped in career", () => {
+    renderTab({
+      catalog,
+      character: {
+        derived: {
+          quality_career_pricing: true,
+          qualities_removed: [
+            { id: "dist", name: "Distinctive Style", category: "Negative", karma: 10 },
+          ],
+        } as any,
+      },
+    });
+    expect(screen.getByText("キャリアで外した資質")).toBeTruthy();
+    expect(document.body.textContent).toContain("買い戻し 10カルマ");
+  });
+
+  it("stays quiet outside career", () => {
+    renderTab({ catalog });
+    expect(document.body.textContent).not.toContain("キャリアでは");
+  });
+});

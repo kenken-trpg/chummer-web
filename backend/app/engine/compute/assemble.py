@@ -37,6 +37,10 @@ from .context import Ctx
 from .derived_types import DerivedDict
 
 
+def _nth(rows: list[int | None], idx: int) -> int | None:
+    return rows[idx] if idx < len(rows) else None
+
+
 def _trustfund_notice(level: int) -> Notice | None:
     """The Trust Fund stipend line, or `None` when the character has no such
     quality. `TRUST_FUND_STIPEND` holds the dictionary keys, not the wording."""
@@ -106,7 +110,7 @@ def assemble(ctx: Ctx) -> None:
             "skills": ctx.skill_buy_karma if ctx.is_karma else 0,
             "knowledge": ctx.knowledge_karma if ctx.is_karma else 0,
             "specializations": ctx.spec_karma if ctx.is_karma else 0,
-            "qualities": ctx.karma_from_q,
+            "qualities": ctx.karma_from_q + ctx.quality_career_karma,
             "other": ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
@@ -393,9 +397,13 @@ def assemble(ctx: Ctx) -> None:
                 "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
                 # the table value, only when a `<costdiscount>` moved it
                 **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
+                # taken after chargen: what it cost then (SR5 p.107)
+                **({"career_cost": cost} if (cost := _nth(ctx.quality_career_costs, idx)) is not None else {}),
             }
-            for q in ctx.qualities
+            for idx, q in enumerate(ctx.qualities)
         ],
+        "qualities_removed": ctx.qualities_removed,
+        "quality_career_pricing": ctx.quality_career_pricing,
         "cyberware": [_public_installed(item) for item in ctx.cyber_installed],
         "bioware": [_public_installed(item) for item in ctx.bio_installed],
         "ware_ranges": ware_ranges(ctx.attrs_spec),

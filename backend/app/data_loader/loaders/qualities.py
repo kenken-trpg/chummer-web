@@ -54,6 +54,8 @@ def load_qualities() -> list[dict[str, Any]]:
                 "add_weapon": _text(el.find("addweapon")),
                 "max_takes": max_takes,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
+                # SR5 p.107: bought in play at twice the karma; False opts out
+                "double_career": _text(el.find("doublecareer"), "True").lower() == "true",
                 "onlyprioritygiven": el.find("onlyprioritygiven") is not None,
                 "chargenonly": el.find("chargenonly") is not None,
                 "metagenic": el.find("metagenic") is not None,

@@ -8740,3 +8740,88 @@ def test_elemental_body_grows_a_weapon_that_scales_with_magic() -> None:
 
     bare = compute(_adept("no-power")).derived
     assert not any(w["name"] == "Elemental Body" for w in bare["weapons"])
+
+
+def _career_quality(name: str) -> dict:
+    return next(q for q in catalog()["qualities"] if q["name"] == name)
+
+
+def _into_career(name: str, quality_ids: list[str]):
+    from app.engine import snapshot_career_baseline
+
+    st = compute(_mundane(name, quality_ids=quality_ids))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    return st
+
+
+def test_a_positive_quality_taken_in_career_costs_twice() -> None:
+    """SR5 p.107: after chargen a positive quality costs twice its karma."""
+    amb = _career_quality("Ambidextrous")
+    st = _into_career("career-pos", [])
+    before = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = [amb["id"]]
+    out = compute(st).derived
+    assert out["quality_career_pricing"] is True
+    assert _quality_row(out, "Ambidextrous")["career_cost"] == amb["karma"] * 2
+    assert before - out["karma"]["remaining"] == amb["karma"] * 2
+    line = next(row for row in out["karma_spend_breakdown"] if row["notice"]["key"] == "engine.spend.qualitiesCareer")
+    assert line["amount"] == amb["karma"]
+
+
+def test_a_negative_quality_taken_in_career_gives_no_karma() -> None:
+    bad = _career_quality("Bad Luck")
+    st = _into_career("career-neg", [])
+    before = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = [bad["id"]]
+    out = compute(st).derived
+    assert _quality_row(out, "Bad Luck")["career_cost"] == 0
+    assert out["karma"]["remaining"] == before
+
+
+def test_buying_off_a_chargen_negative_costs_twice_what_it_gave() -> None:
+    bad = _career_quality("Bad Luck")
+    st = _into_career("career-buyoff", [bad["id"]])
+    held = compute(st).derived
+    assert "career_cost" not in _quality_row(held, "Bad Luck")
+    st.quality_ids = []
+    out = compute(st).derived
+    assert out["qualities_removed"] == [
+        {"id": bad["id"], "name": "Bad Luck", "category": "Negative", "karma": -bad["karma"] * 2}
+    ]
+    assert held["karma"]["remaining"] - out["karma"]["remaining"] == -bad["karma"] * 2
+
+
+def test_a_chargen_positive_dropped_in_career_is_not_refunded() -> None:
+    amb = _career_quality("Ambidextrous")
+    st = _into_career("career-drop", [amb["id"]])
+    held = compute(st).derived
+    st.quality_ids = []
+    out = compute(st).derived
+    assert out["karma"]["remaining"] == held["karma"]["remaining"]
+    assert out["qualities_removed"][0]["karma"] == 0
+
+
+def test_doublecareer_false_takes_the_single_price_in_career() -> None:
+    single = next(
+        q
+        for q in catalog()["qualities"]
+        if q.get("double_career") is False and q["category"] == "Positive" and q["karma"] > 0
+    )
+    st = _into_career("career-single", [])
+    before = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = [single["id"]]
+    out = compute(st).derived
+    assert before - out["karma"]["remaining"] == single["karma"]
+
+
+def test_a_baseline_saved_before_qualities_keeps_chargen_prices() -> None:
+    amb = _career_quality("Ambidextrous")
+    st = _into_career("career-old", [])
+    before = compute(st).derived["karma"]["remaining"]
+    st.career_baseline.quality_ids = None
+    st.quality_ids = [amb["id"]]
+    out = compute(st).derived
+    assert out["quality_career_pricing"] is False
+    assert before - out["karma"]["remaining"] == amb["karma"]
+    assert "career_cost" not in _quality_row(out, "Ambidextrous")

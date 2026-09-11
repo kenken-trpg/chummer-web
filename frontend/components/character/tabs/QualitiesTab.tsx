@@ -53,11 +53,15 @@ export function QualitiesTab({
     essence: d.essence,
     essLost: (d.essence_lost_cyber || 0) + (d.essence_lost_bio || 0),
   };
-  const ownedFromDerived = d.qualities || [];
   const catalogById = useMemo(() => {
     const map = new Map((catalog.qualities || []).map((item) => [item.id, item]));
     return map;
   }, [catalog.qualities]);
+  const ownedFromDerived = d.qualities || [];
+  // SR5 p.107: after chargen a positive quality costs twice, and buying a
+  // negative one off costs twice what it gave (`double_career: false` opts out)
+  const careerPricing = Boolean(d.quality_career_pricing);
+  const careerMult = (id: string) => (catalogById.get(id)?.double_career === false ? 1 : 2);
 
   return (
     <div className="card">
@@ -119,6 +123,13 @@ export function QualitiesTab({
                       }`
                     : ""}
                   {q.free ? ui("qual.freeAttached") : ""}
+                  {q.career_cost == null
+                    ? careerPricing && !q.free && q.category === "Negative"
+                      ? ui("qual.buyoffHint", { cost: -q.karma * careerMult(q.id) })
+                      : ""
+                    : q.career_cost > 0
+                      ? ui("qual.careerTaken", { cost: q.career_cost })
+                      : ui("qual.careerTakenNegative")}
                 </div>
                 <QualityExtraEditor
                   q={q}
@@ -172,6 +183,24 @@ export function QualitiesTab({
       ) : (
         <p className="muted">{ui("qual.empty")}</p>
       )}
+      {d.qualities_removed?.length ? (
+        <>
+          <h3>{ui("qual.removed")}</h3>
+          {d.qualities_removed.map((q, idx) => (
+            <div className="quality-item" key={`removed-${q.id}-${idx}`}>
+              <div>
+                <b>{tr(q.name)}</b>
+                <div className="muted">
+                  {q.name} /{" "}
+                  {q.category === "Negative"
+                    ? ui("qual.removedBuyoff", { cost: q.karma })
+                    : ui("qual.removedPositive")}
+                </div>
+              </div>
+            </div>
+          ))}
+        </>
+      ) : null}
       <div className="option-row">
         <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>
           {ui("common.all")}
@@ -239,6 +268,13 @@ export function QualitiesTab({
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
                   / {ui("qual.karmaLabel")} {q.karma} / {q.source}
+                  {careerPricing
+                    ? q.karma > 0
+                      ? ui("qual.careerPrice", {
+                          cost: q.karma * (q.double_career === false ? 1 : 2),
+                        })
+                      : ui("qual.careerPriceNegative")
+                    : ""}
                   {maxTakes == null
                     ? ui("common.repeatable")
                     : maxTakes > 1
