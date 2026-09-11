@@ -18,6 +18,7 @@ export function SkillPickSelects(props: {
           {slot.bonus ? ` ${slot.bonus > 0 ? "+" : ""}${slot.bonus}` : ""}
           {slot.max ? ui("pick.max", { max: slot.max }) : ""}
           {slot.rating ? ui("pick.rating", { rating: slot.rating }) : ""}
+          {slot.accuracy ? ui("pick.accuracy", { accuracy: slot.accuracy }) : ""}
           {/* Reflex Recorder Optimization widens the pick to its whole group. */}
           {slot.default_free ? ui("pick.noDefaultPenalty") : ""}
           <select value={slot.picked} onChange={(e) => props.onPick(slot.key, e.target.value)}>

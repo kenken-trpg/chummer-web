@@ -74,6 +74,7 @@ def ware(ctx: Ctx) -> None:
     _zero_vehicle_hosted_essence(ctx.cyber_installed, vehicle_hosts)
     ctx.installed = ctx.cyber_installed + ctx.bio_installed
     hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
+    ctx.hosted_ware_ids = set(hosted_ids)
     for item in ctx.installed:
         if item.get("id") in hosted_ids:
             continue

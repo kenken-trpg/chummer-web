@@ -8304,3 +8304,62 @@ def test_granted_weapons_are_loaded_but_never_for_sale() -> None:
         *catalog()["bioware"]["items"],
     ]
     assert [i["name"] for i in sources if i.get("add_weapon") and not i.get("add_weapon_id")] == []
+
+
+CYBERLIMB_OPTIMIZATION = "2a6ab1b1-f008-4c92-83d9-a298a5dad855"  # CF p.87
+
+
+def _optimized_arm(**kwargs: object) -> CharacterState:
+    arm = next(w for w in catalog()["cyberware"]["items"] if w["name"] == "Obvious Full Arm")
+    return _human(
+        "optimized",
+        cyberware=[
+            CyberwareInstall(id="arm", ware_id=arm["id"], side="Left"),
+            CyberwareInstall(id="opt", ware_id=CYBERLIMB_OPTIMIZATION, parent_id="arm"),
+        ],
+        weapons=[WeaponInstall(id="w", weapon_id=PREDATOR)],
+        **kwargs,
+    )
+
+
+def test_cyberlimb_optimization_asks_for_its_skill() -> None:
+    """Upstream writes the pick as `<weaponskillaccuracy><selectskill/>`, not a
+    bare `<selectskill>`, so it used to get no picker and do nothing, silently."""
+    out = compute(_optimized_arm()).derived
+    (slot,) = out["skill_pick_slots"]
+    assert slot["key"] == "ware:opt:acc0"
+    assert slot["source"] == "Cyberlimb Optimization"
+    assert slot["accuracy"] == 1
+    # Accuracy, not dice: nothing on the pool
+    assert slot["bonus"] == 0
+    assert "Pistols" in slot["options"]
+    assert any(w["key"] == "engine.skills.pickSkill" for w in out["warnings"])
+    assert out["weapons"][0]["accuracy"] == "5"
+
+
+def test_cyberlimb_optimization_adds_accuracy_to_the_picked_skill() -> None:
+    out = compute(_optimized_arm(skill_picks={"ware:opt:acc0": "Pistols"})).derived
+    assert out["skill_pick_slots"][0]["picked"] == "Pistols"
+    assert out["weapons"][0]["accuracy"] == "6"
+    assert out["skill_bonus"].get("Pistols", 0) == 0
+    assert not any(w["key"] == "engine.skills.pickSkill" for w in out["warnings"])
+
+    other = compute(_optimized_arm(skill_picks={"ware:opt:acc0": "Longarms"})).derived
+    assert other["weapons"][0]["accuracy"] == "5"
+
+
+def test_cyberlimb_optimization_in_a_drone_arm_is_the_drones() -> None:
+    """Ware in a vehicle mod gives the character nothing — so no pick either."""
+    drone = GearInstall(gear_id=DOBERMAN)
+    arm = VehicleModInstall(id="arm1", mod_id=DRONE_ARM, parent_id=drone.id)
+    out = compute(
+        _mundane(
+            "dob-opt",
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(id="opt", ware_id=CYBERLIMB_OPTIMIZATION, parent_id=arm.id)],
+            skill_picks={"ware:opt:acc0": "Pistols"},
+        )
+    ).derived
+    assert any(item["name"] == "Cyberlimb Optimization" for item in out["cyberware"])
+    assert out["skill_pick_slots"] == []

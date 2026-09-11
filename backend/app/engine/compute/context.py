@@ -91,6 +91,9 @@ class Ctx:
     #: Adapsin is on, so cyberware reads the Adapsin column of the grade table.
     adapsin: bool = False
     installed: list[dict[str, Any]] = field(default_factory=list)
+    #: Ware sitting in a vehicle mod: the vehicle's, so none of its bonuses
+    #: (or skill picks) reach the character.
+    hosted_ware_ids: set[str] = field(default_factory=set)
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 
     # --- effects / binders ------------------------------------------------

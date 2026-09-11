@@ -32,4 +32,26 @@ describe("SkillPickSelects", () => {
     render(<SkillPickSelects slots={[slot]} tr={identityTr} onPick={() => undefined} />);
     expect(screen.queryByText(/デフォルト −1 なし/)).toBeNull();
   });
+
+  it("labels an Accuracy pick as Accuracy, not dice", () => {
+    const { container } = render(
+      <SkillPickSelects
+        slots={[
+          {
+            ...slot,
+            key: "ware:opt:acc0",
+            source: "Cyberlimb Optimization",
+            picked: "",
+            bonus: 0,
+            accuracy: 1,
+          },
+        ]}
+        tr={identityTr}
+        onPick={() => undefined}
+      />,
+    );
+    const label = container.querySelector("label")!.textContent!;
+    expect(label).toContain("Cyberlimb Optimization の技能 武器の精度+1");
+    expect(label).not.toMatch(/\+1 /);
+  });
 });
