@@ -47,6 +47,87 @@ make up                   # → http://localhost:8080
 
 Chummer のゲームデータはイメージのビルド時に取得して同梱されます（実行時のネットワーク不要、特定コミットに固定）。
 
+## Web に公開する（localhost ＋ Cloudflare Tunnel）
+
+自宅の PC やサーバーで動かしたまま、ポートを開けずにインターネットへ公開する手順です。
+`cloudflared` が外向きの 443 だけでつなぐので、ルーターの設定は要りません。
+
+### 1. localhost で起動する
+
+上の「使い方（Docker）」のとおり起動し、http://localhost:8080 で開けることを確かめます。
+`compose.yaml` はポートを `127.0.0.1` だけに公開しているので、LAN からは直接届きません（トンネル経由だけ）。
+
+公開するときは、ローカル向けに緩めてある制限を元に戻しておきます。`.env` に：
+
+```bash
+RATE_LIMIT=120/minute
+IMPORT_RATE_LIMIT=20/minute
+# TRUSTED_PROXY_HOPS は 0 のまま（Cloudflare の cf-connecting-ip を使う）
+```
+
+書き換えたら `make up` をもう一度実行すると反映されます。
+
+### 2. cloudflared を入れる
+
+```bash
+brew install cloudflared            # macOS
+# Linux / Windows: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+cloudflared --version
+```
+
+### 3a. お試し：一時 URL で公開（アカウント不要）
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+
+表示される `https://<ランダム>.trycloudflare.com` がそのまま公開 URL です。Ctrl-C で止まり、
+起動のたびに URL が変わります。卓の当日だけ共有する、といった用途向けです。
+
+### 3b. 常設：自分のドメインで公開（Cloudflare アカウント＋ドメインが必要）
+
+ドメインを Cloudflare の DNS で管理している前提です。以下 `chummer.example.com` を自分のホスト名に置き換えます。
+
+```bash
+cloudflared tunnel login                                   # ブラウザで認証 → ~/.cloudflared/cert.pem
+cloudflared tunnel create chummer                          # トンネル ID と ~/.cloudflared/<ID>.json ができる
+cloudflared tunnel route dns chummer chummer.example.com   # DNS に CNAME を作る
+```
+
+`~/.cloudflared/config.yml` を作ります（`<ID>` と `<ユーザー名>` は置き換え）：
+
+```yaml
+tunnel: <ID>
+credentials-file: /Users/<ユーザー名>/.cloudflared/<ID>.json   # Linux なら /home/<ユーザー名>/...
+ingress:
+  - hostname: chummer.example.com
+    service: http://localhost:8080
+  - service: http_status:404
+```
+
+```bash
+cloudflared tunnel run chummer      # 前面で起動 → https://chummer.example.com
+```
+
+動いたら、OS 起動時に自動で立ち上がるようにします：
+
+```bash
+sudo cloudflared service install    # config.yml を読んでサービス登録（macOS: launchd / Linux: systemd）
+```
+
+Linux の systemd 版は `/etc/cloudflared/config.yml` を読むので、`config.yml` と `<ID>.json` をそこへコピーし、
+`credentials-file` のパスも合わせてください。アプリ側は `restart: unless-stopped` なので、Docker が起動すれば一緒に上がります。
+
+### 4. 確認と後片付け
+
+- `https://chummer.example.com/api/health` が `{"ok":true}` を返せば疎通しています。
+- 身内だけで使うなら、Cloudflare ダッシュボードの **Zero Trust → Access** でそのホスト名にログイン（メール認証など）を掛けるのがおすすめです。匿名アクセスがなくなります。
+- 止めるとき：`cloudflared` を Ctrl-C（サービス化したなら `sudo cloudflared service uninstall`）、アプリは `make down`。
+  トンネル自体を消すなら `cloudflared tunnel delete chummer` と、DNS の CNAME を削除します。
+
+キャラクターはブラウザ側に保存されるので、公開してもサーバーにキャラは残りません。
+環境変数や他のデプロイ先は [`docs/deploy.md`](docs/deploy.md) を参照してください。
+
 ## 使い方（Docker なし・開発向け）
 
 Python 3.11+ と Node 22.12+ が必要です（CI と Docker は 24 系。Windows は Docker を推奨）。

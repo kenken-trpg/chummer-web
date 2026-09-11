@@ -41,6 +41,87 @@ make up                   # → http://localhost:8080
 
 The Chummer game data is fetched at image build time and bundled, pinned to a specific upstream commit — so running the container needs no network access.
 
+## Putting it on the web (localhost + Cloudflare Tunnel)
+
+How to publish an instance running on your own PC or server without opening any ports.
+`cloudflared` connects out over 443 only, so there is nothing to configure on the router.
+
+### 1. Run it on localhost
+
+Start it as in "Running it (Docker)" above and check that http://localhost:8080 opens.
+`compose.yaml` publishes the port on `127.0.0.1` only, so nothing on the LAN reaches it directly — only the tunnel does.
+
+Before going public, put back the limits that are loosened for local use. In `.env`:
+
+```bash
+RATE_LIMIT=120/minute
+IMPORT_RATE_LIMIT=20/minute
+# leave TRUSTED_PROXY_HOPS at 0 (Cloudflare's cf-connecting-ip is used)
+```
+
+Run `make up` again to apply them.
+
+### 2. Install cloudflared
+
+```bash
+brew install cloudflared            # macOS
+# Linux / Windows: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+cloudflared --version
+```
+
+### 3a. Quick try: a temporary URL (no account needed)
+
+```bash
+cloudflared tunnel --url http://localhost:8080
+```
+
+The printed `https://<random>.trycloudflare.com` is the public URL. Ctrl-C stops it, and the
+URL changes every run — good for sharing it for one session.
+
+### 3b. Permanent: your own domain (needs a Cloudflare account and a domain)
+
+This assumes the domain's DNS is on Cloudflare. Replace `chummer.example.com` with your hostname.
+
+```bash
+cloudflared tunnel login                                   # authenticate in the browser → ~/.cloudflared/cert.pem
+cloudflared tunnel create chummer                          # prints the tunnel ID, writes ~/.cloudflared/<ID>.json
+cloudflared tunnel route dns chummer chummer.example.com   # creates the DNS CNAME
+```
+
+Create `~/.cloudflared/config.yml` (replace `<ID>` and `<user>`):
+
+```yaml
+tunnel: <ID>
+credentials-file: /Users/<user>/.cloudflared/<ID>.json   # /home/<user>/... on Linux
+ingress:
+  - hostname: chummer.example.com
+    service: http://localhost:8080
+  - service: http_status:404
+```
+
+```bash
+cloudflared tunnel run chummer      # runs in the foreground → https://chummer.example.com
+```
+
+Once it works, have it start with the OS:
+
+```bash
+sudo cloudflared service install    # registers a service from config.yml (macOS: launchd / Linux: systemd)
+```
+
+The Linux systemd service reads `/etc/cloudflared/config.yml`, so copy `config.yml` and `<ID>.json` there
+and fix the `credentials-file` path. The app itself is `restart: unless-stopped`, so it comes back with Docker.
+
+### 4. Check and clean up
+
+- `https://chummer.example.com/api/health` answering `{"ok":true}` means it is reachable.
+- For a small group, put **Zero Trust → Access** (Cloudflare dashboard) in front of the hostname with a login (e.g. email one-time PIN). That removes anonymous access entirely.
+- To stop: Ctrl-C `cloudflared` (or `sudo cloudflared service uninstall` if you installed the service), and `make down` for the app.
+  To remove the tunnel for good, `cloudflared tunnel delete chummer` and delete the DNS CNAME.
+
+Characters are stored in the browser, so publishing it does not leave any characters on the server.
+See [`docs/deploy.md`](docs/deploy.md) for the environment variables and other deploy targets.
+
 ## Running it without Docker (for development)
 
 Python 3.11+ and Node 22.12+ (CI and Docker run 24.x). On Windows, Docker is the easier path.
