@@ -8709,3 +8709,21 @@ def test_a_positive_discount_lowers_the_cost() -> None:
     assert _quality_row(alone, "The Beast's Way")["karma"] == 20
     assert _quality_row(paired, "The Beast's Way")["karma"] == 17
     assert paired["karma"]["spent"] - alone["karma"]["spent"] == 5 - 3  # the familiar's 5, less the 3 off
+
+
+def test_elemental_body_grows_a_weapon_that_scales_with_magic() -> None:
+    """Elemental Body (SG p.170) is a power whose `<addweapon>` sits in its
+    bonus; the weapon is hidden in `weapons.xml`, so the power is the only way
+    in. DV `({MAG}*2)P` and AP `-{MAG}*0.5` resolve against the adept's Magic."""
+    power = next(p["id"] for p in catalog()["powers"] if p["name"] == "Elemental Body")
+    out = compute(_adept("elemental", adept_powers=[AdeptPowerInstall(power_id=power)])).derived
+    mag = int(out["totals"]["MAG"])
+    weapon = next(w for w in out["weapons"] if w["name"] == "Elemental Body")
+    assert weapon["natural"] is True
+    assert weapon["damage_formula"] == "({MAG}*2)P"
+    assert weapon["damage"] == f"{mag * 2}P"
+    assert weapon["ap"] == str(int(-mag * 0.5))
+    assert out["unimplemented_bonuses"] == []
+
+    bare = compute(_adept("no-power")).derived
+    assert not any(w["name"] == "Elemental Body" for w in bare["weapons"])

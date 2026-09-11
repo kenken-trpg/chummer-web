@@ -144,6 +144,12 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                     "children": [dict(kid) for kid in node.get("gear_children") or []],
                 }
             )
+    elif tag == "addweapon":
+        # The attack a power grows: Elemental Body (SG p.170) turns the adept's
+        # body into a weapon whose DV and AP scale with Magic.
+        name = str(fields.get("name") or node.get("value") or "").strip()
+        if name:
+            effects["grant_weapons"].append({"source": source, "name": name})
     elif tag == "addware":
         # The implant a quality comes with: Busted Cyberware is half a point of
         # Essence of junk somebody left in you (TSG p.30).

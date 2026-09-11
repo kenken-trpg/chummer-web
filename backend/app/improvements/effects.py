@@ -32,6 +32,7 @@ from .effect_rows import (
     GrantPowerRow,
     GrantSpellRow,
     GrantWareRow,
+    GrantWeaponRow,
     KarmaCostRow,
     KarmaMultRow,
     LimitModifierRow,
@@ -227,6 +228,7 @@ class EffectsDict(TypedDict):
     grant_echoes: list[GrantEchoRow]
     grant_spells: list[GrantSpellRow]
     grant_gear: list[GrantGearRow]
+    grant_weapons: list[GrantWeaponRow]
     grant_ware: list[GrantWareRow]
     grant_powers: list[GrantPowerRow]
     natural_weapons: list[NaturalWeaponRow]
@@ -379,6 +381,7 @@ def empty_effects() -> EffectsDict:
         "quickening": False,
         "grant_spells": [],
         "grant_gear": [],
+        "grant_weapons": [],
         "grant_ware": [],
         "grant_powers": [],
         "natural_weapons": [],
