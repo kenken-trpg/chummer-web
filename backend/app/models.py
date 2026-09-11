@@ -420,6 +420,7 @@ class CharacterPatch(BaseModel):
     nuyen_earned: int | None = None
     career_baseline: CareerBaseline | None = None
     street_cred: int | None = None
+    burnt_street_cred: int | None = None
     notoriety_bonus: int | None = None
     reward_log: list[RewardEntry] | None = None
     tradition_id: str | None = None
@@ -534,6 +535,8 @@ class CharacterState(BaseModel):
     nuyen_earned: int = 0
     career_baseline: CareerBaseline | None = None
     street_cred: int = 0
+    # SR5 p.373: two points burned take a point of Notoriety off
+    burnt_street_cred: int = 0
     notoriety_bonus: int = 0
     reward_log: list[RewardEntry] = Field(default_factory=list)
     tradition_id: str | None = None

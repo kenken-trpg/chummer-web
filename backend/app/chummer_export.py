@@ -80,6 +80,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
     # the latter in `<nuyenbp>`, which is build points in old money.
     _sub(root, "streetcred", state.street_cred)
+    _sub(root, "burntstreetcred", state.burnt_street_cred)
     _sub(root, "notoriety", state.notoriety_bonus)
     _sub(root, "nuyenbp", state.karma_nuyen)
 

@@ -710,6 +710,7 @@
   "sprites": [],
   "stream": null,
   "street_cred": 0,
+  "street_cred_burnt": 0,
   "street_cred_divisor": 10,
   "street_cred_earned": 0,
   "submersion": {

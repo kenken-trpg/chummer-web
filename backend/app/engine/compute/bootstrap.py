@@ -48,6 +48,7 @@ def bootstrap(ctx: Ctx) -> None:
     ctx.career = bool(getattr(ctx.state, "career", False))
     ctx.state.career = ctx.career
     ctx.state.street_cred = max(0, int(getattr(ctx.state, "street_cred", 0) or 0))
+    ctx.state.burnt_street_cred = max(0, int(getattr(ctx.state, "burnt_street_cred", 0) or 0))
     ctx.state.notoriety_bonus = int(getattr(ctx.state, "notoriety_bonus", 0) or 0)
     sync_reward_totals(ctx.state)
     ctx.state.karma_earned = max(0, int(getattr(ctx.state, "karma_earned", 0) or 0))

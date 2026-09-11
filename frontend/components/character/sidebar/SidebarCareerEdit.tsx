@@ -25,6 +25,32 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
               total: d.street_cred || 0,
             })}
           </p>
+          {/* SR5 p.373: two points of Street Cred take one of Notoriety off */}
+          <div className="option-row">
+            <button
+              className="btn"
+              disabled={(d.street_cred || 0) < 2}
+              title={ui("side.scBurnHint")}
+              onClick={() => patch({ burnt_street_cred: (ch.burnt_street_cred || 0) + 2 })}
+            >
+              {ui("side.scBurn")}
+            </button>
+            {(ch.burnt_street_cred || 0) > 0 ? (
+              <>
+                <span className="muted">
+                  {ui("side.scBurnt", { burnt: ch.burnt_street_cred || 0 })}
+                </span>
+                <button
+                  className="btn"
+                  onClick={() =>
+                    patch({ burnt_street_cred: Math.max(0, (ch.burnt_street_cred || 0) - 2) })
+                  }
+                >
+                  {ui("side.scUnburn")}
+                </button>
+              </>
+            ) : null}
+          </div>
           <div className="stat">
             <span>{ui("side.notorietyBonus")}</span>
             <input
