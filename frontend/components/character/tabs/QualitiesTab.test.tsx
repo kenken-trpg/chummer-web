@@ -242,3 +242,19 @@ describe("<QualitiesTab> career prices (SR5 p.107)", () => {
     expect(document.body.textContent).not.toContain("キャリアでは");
   });
 });
+
+describe("<QualitiesTab> karma overspent", () => {
+  const line = () => document.querySelector(".card > p.muted")!;
+
+  it("turns the karma line red and says so", () => {
+    renderTab({ character: { derived: { karma: { pool: 25, spent: 29, remaining: -4 } } as any } });
+    expect(line().className).toContain("errors");
+    expect(line().textContent).toContain("カルマが不足しています（残り -4）");
+  });
+
+  it("leaves it plain while there is karma left", () => {
+    renderTab();
+    expect(line().className).not.toContain("errors");
+    expect(line().textContent).not.toContain("不足");
+  });
+});
