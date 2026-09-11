@@ -80,8 +80,12 @@ export function QualitiesTab({
         tr={tr}
         onPick={(key, skill) => patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })}
       />
-      <p className="muted">
+      {/* a career buy-off can take the pool below zero; say so where it happened */}
+      <p className={`muted${d.karma.remaining < 0 ? " errors" : ""}`}>
         {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
+        {d.karma.remaining < 0
+          ? ` ・ ${ui("engine.karma.negative", { karma: d.karma.remaining })}`
+          : ""}
         {" ・ "}
         {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
