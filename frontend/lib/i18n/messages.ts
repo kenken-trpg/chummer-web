@@ -274,6 +274,8 @@ const JA = {
   "coco.secConjuring": "// ── 召喚（リミット＝Force、対抗＝精霊のForce） ──",
   "coco.secMatrix": "// ── マトリクス ──",
   "coco.secTests": "// ── 判定・抵抗 ──",
+  "coco.secUntrained": "// ── 未修得の技能（能力値−1で代用） ──",
+  "coco.secKnowledge": "// ── 知識技能（リミット＝精神） ──",
   "coco.summoning": "精霊召喚",
   "coco.binding": "精霊束縛",
   "coco.banishing": "精霊追放",
@@ -538,6 +540,9 @@ const JA = {
     "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5",
   "toolbar.chatPalette": "チャットパレット",
   "toolbar.chatPaletteHint": "チャットパレット（BCDice ShadowRun5 のコマンド一覧）をコピー",
+  "toolbar.cocoUntrained": "未修得技能も",
+  "toolbar.cocoUntrainedHint":
+    "ココフォリア／チャットパレットに、未修得の技能（能力値−1で代用できるもの）と取得済みの知識技能も出す",
   "toolbar.conjured": "精霊コマ",
   "toolbar.conjuredHint":
     "束縛済み精霊／登録スプライトを、それぞれ別のココフォリアのコマ（JSON 配列）として書き出す",
@@ -2034,6 +2039,8 @@ const EN: Catalog = {
   "coco.secConjuring": "// ── Conjuring (limit = Force, opposed by the spirit's Force) ──",
   "coco.secMatrix": "// ── Matrix ──",
   "coco.secTests": "// ── Tests and resistance ──",
+  "coco.secUntrained": "// ── Unlearned skills (defaulting: attribute − 1) ──",
+  "coco.secKnowledge": "// ── Knowledge skills (limit = Mental) ──",
   "coco.summoning": "Summoning",
   "coco.binding": "Binding",
   "coco.banishing": "Banishing",
@@ -2291,6 +2298,9 @@ const EN: Catalog = {
     "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",
   "toolbar.chatPalette": "Chat palette",
   "toolbar.chatPaletteHint": "Copy the chat palette (BCDice ShadowRun5 commands)",
+  "toolbar.cocoUntrained": "Unlearned skills too",
+  "toolbar.cocoUntrainedHint":
+    "Add the unlearned skills you can default on (attribute − 1) and the knowledge skills you have to the Cocofolia piece and chat palette",
   "toolbar.conjured": "Spirit pieces",
   "toolbar.conjuredHint":
     "Export each bound spirit / registered sprite as its own Cocofolia piece (a JSON array)",
