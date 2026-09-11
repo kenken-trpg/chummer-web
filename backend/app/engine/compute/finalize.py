@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...improvements import EffectsDict
+from ...improvements import EffectsDict, resolve_precedence
 from ...notices import term
 from ...rules import current_rules
 from ..bundle_types import MovementBundle
@@ -55,6 +55,7 @@ def resolve_movement(meta: dict[str, Any], effects: EffectsDict) -> MovementBund
 
 
 def totals(ctx: Ctx) -> None:
+    resolve_precedence(ctx.effects)  # powers and drugs arrived after the first pass
     if ctx.talent["name"] == "Adept":
         ctx.power_pool = float(ctx.ratings["MAG"]) + float(ctx.effects.get("adept_power_points") or 0)
     elif ctx.talent["name"] == "Mystic Adept":
@@ -83,6 +84,7 @@ def totals(ctx: Ctx) -> None:
 
 
 def finalize(ctx: Ctx) -> None:
+    resolve_precedence(ctx.effects)
     bod = ctx.total["BOD"]
     agi = ctx.total["AGI"]
     rea = ctx.total["REA"]

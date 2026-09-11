@@ -15,6 +15,7 @@ from .effects import (
     compact_limit_modifiers,
     compact_special_armor,
     empty_effects,
+    resolve_precedence,
     special_armor_totals,
 )
 from .nodes import apply_bonus_nodes
@@ -32,6 +33,7 @@ __all__ = [
     "limit_modifiers_from_nodes",
     "special_armor_from_nodes",
     "special_armor_totals",
+    "resolve_precedence",
     "substitute_rating",
 ]
 
@@ -52,4 +54,5 @@ def collect_effects(sources: list[tuple[str, list[dict[str, Any]]]]) -> EffectsD
     effects = empty_effects()
     for source, nodes in sources:
         apply_bonus_nodes(nodes, effects, source)
+    resolve_precedence(effects)
     return effects

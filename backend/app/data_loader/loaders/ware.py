@@ -19,6 +19,10 @@ CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
 ADAPSIN_SUFFIX = " (Adapsin)"
 
 
+def _attr(el: ET.Element | None, name: str) -> str:
+    return str(el.get(name) or "") if el is not None else ""
+
+
 def _load_grades(root: ET.Element) -> list[dict[str, Any]]:
     """The grade table, with the Adapsin twins folded into their base grade.
 
@@ -106,6 +110,9 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "wirelessbonus": parse_bonus(el.find("wirelessbonus")),
                 "pairbonus": parse_bonus(el.find("pairbonus")),
                 "pairinclude": [_text(n) for n in el.findall("./pairinclude/name") if _text(n)],
+                "wirelesspairbonus": parse_bonus(el.find("wirelesspairbonus")),
+                "wirelesspairmode": _attr(el.find("wirelesspairbonus"), "mode"),
+                "wirelesspairinclude": [_text(n) for n in el.findall("./wirelesspairinclude/name") if _text(n)],
                 "bannedgrades": [_text(g) for g in el.findall("./bannedgrades/grade") if _text(g)],
                 "required": parse_required(el.find("required")),
                 "required_parent_names": _parent_name_requirements(el),

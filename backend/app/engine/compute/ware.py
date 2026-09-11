@@ -7,7 +7,12 @@ from typing import Any
 
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CyberwareInstall
-from ..limits import _check_ware_attribute_cap, _finalize_avail_tree, _ware_attribute_bonuses
+from ..limits import (
+    _check_ware_attribute_cap,
+    _finalize_avail_tree,
+    _ware_attribute_aug,
+    _ware_attribute_bonuses,
+)
 from ..lookups import _ware_by_name
 from ..qualities import resolve_quality_sides
 from ..skills import ware_accuracy_picks
@@ -19,7 +24,7 @@ from ..ware import (
     has_adapsin,
     resolve_ware,
 )
-from ..ware.pairs import pair_bonus_sources
+from ..ware.pairs import apply_wireless_pairs, pair_bonus_sources
 from .context import Ctx
 
 
@@ -77,6 +82,12 @@ def ware(ctx: Ctx) -> None:
     ctx.installed = ctx.cyber_installed + ctx.bio_installed
     hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
     ctx.hosted_ware_ids = set(hosted_ids)
+    apply_wireless_pairs(
+        [
+            *(("cyberware", item) for item in ctx.cyber_installed if item.get("id") not in hosted_ids),
+            *(("bioware", item) for item in ctx.bio_installed),
+        ]
+    )
     for item in ctx.installed:
         if item.get("id") in hosted_ids:
             continue
@@ -96,6 +107,7 @@ def ware(ctx: Ctx) -> None:
             optimized,
         )
     )
-    ctx.ware_attr_bonus = _ware_attribute_bonuses([item for item in ctx.installed if item.get("id") not in hosted_ids])
+    own_ware = [item for item in ctx.installed if item.get("id") not in hosted_ids]
+    ctx.ware_attr_bonus = _ware_attribute_bonuses(own_ware)
     if not ctx.career:
-        _check_ware_attribute_cap(ctx.ware_attr_bonus, ctx.errors)
+        _check_ware_attribute_cap(ctx.ware_attr_bonus, ctx.errors, _ware_attribute_aug(own_ware))

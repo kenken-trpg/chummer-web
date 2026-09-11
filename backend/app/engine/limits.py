@@ -22,6 +22,7 @@ from ..data_loader import (
     sum_avail,
 )
 from ..improvements import ATTR_ALIASES, EffectsDict, _as_int
+from ..improvements.effects import precedence_value
 from ..notices import Notice, notice, term, ui
 from ..rules import current_rules
 from .lookups import _grade_by_name
@@ -161,8 +162,23 @@ def _check_device_rating_limit(items: list[dict[str, Any]], errors: list[Notice]
         )
 
 
+def _fixed_value(raw: Any, rating: int) -> int:
+    """``FixedValues(0,0,1)`` picks by rating (1-based); anything else is a number."""
+    text = str(raw or "").strip()
+    if text.startswith("FixedValues(") and text.endswith(")"):
+        values = [v.strip() for v in text[len("FixedValues(") : -1].split(",")]
+        if not values:
+            return 0
+        return _as_int(values[min(max(rating, 1), len(values)) - 1], 0)
+    return _as_int(text, 0)
+
+
 def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
+    """The ware's physical-attribute bonus, for the chargen +4 cap. Reflex
+    augmentations tagged ``precedence`` resolve as the effects pass does
+    (only the best precedence 0 counts), or this would flag a legal build."""
     totals: dict[str, int] = dict.fromkeys(PHYSICAL_ATTRS, 0)
+    groups: dict[str, dict[str, list[int]]] = {}
     for item in items:
         for node in item.get("bonus") or []:
             if node.get("tag") != "specificattribute":
@@ -171,13 +187,40 @@ def _ware_attribute_bonuses(items: list[dict[str, Any]]) -> dict[str, int]:
             name = ATTR_ALIASES.get(str(fields.get("name") or "").upper())
             if name not in totals:
                 continue
-            totals[name] += _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"), 0)
+            value = _as_int(fields.get("bonus") or fields.get("val") or fields.get("value"), 0)
+            precedence = (node.get("attrs") or {}).get("precedence")
+            if precedence is None:
+                totals[name] += value
+            elif value:
+                groups.setdefault(name, {}).setdefault(str(precedence).strip(), []).append(value)
+    for name, by_precedence in groups.items():
+        totals[name] += precedence_value(by_precedence)
     return {key: value for key, value in totals.items() if value}
 
 
-def _check_ware_attribute_cap(bonuses: dict[str, int], errors: list[Notice]) -> None:
-    limit = CHARGEN_WARE_ATTR_BONUS_MAX
+def _ware_attribute_aug(items: list[dict[str, Any]]) -> dict[str, int]:
+    """``<aug>`` on a ware's `specificattribute`: how far it lifts the
+    augmented cap (the wireless Wired Reflexes + Reaction Enhancers pair, +1
+    each at Rating 3)."""
+    out: dict[str, int] = {}
+    for item in items:
+        rating = int(item.get("rating") or 1)
+        for node in item.get("bonus") or []:
+            if node.get("tag") != "specificattribute":
+                continue
+            fields = node.get("fields") or {}
+            name = ATTR_ALIASES.get(str(fields.get("name") or "").upper())
+            if not name:
+                continue
+            aug = _fixed_value(fields.get("aug"), rating)
+            if aug:
+                out[name] = out.get(name, 0) + aug
+    return out
+
+
+def _check_ware_attribute_cap(bonuses: dict[str, int], errors: list[Notice], aug: dict[str, int] | None = None) -> None:
     for attr in PHYSICAL_ATTRS:
+        limit = CHARGEN_WARE_ATTR_BONUS_MAX + int((aug or {}).get(attr) or 0)
         value = int(bonuses.get(attr) or 0)
         if value <= limit:
             continue
