@@ -101,6 +101,18 @@ def _add_leading_int(raw: str | None, delta: int) -> str:
     return f"{int(match.group(1)) + delta}{match.group(2)}"
 
 
+def _add_accuracy(raw: str | None, delta: int) -> str:
+    """:func:`_add_leading_int`, plus the limit-based Accuracy of natural and
+    ware weapons (``Physical-1`` for a Raptor Foot): the offset moves, the
+    limit stays a word — it is resolved nowhere else either."""
+    text = str(raw or "").strip()
+    match = re.match(r"^([A-Za-z]+)\s*([+-]\s*\d+)?$", text)
+    if not delta or not match:
+        return _add_leading_int(text, delta)
+    offset = int((match.group(2) or "0").replace(" ", "")) + delta
+    return match.group(1) + (f"{offset:+d}" if offset else "")
+
+
 def _replace_leading_int(raw: str | None, value: int) -> str:
     text = str(raw or "").strip()
     match = re.match(r"^([+-]?\d+)(.*)$", text)

@@ -19,7 +19,7 @@ from ....improvements import EffectsDict, empty_effects
 from ....improvements.effect_rows import WeaponDvBonusRow
 from ....models import CharacterState
 from ....notices import Notice, notice, term
-from ...formulas import _add_leading_int, _add_weapon_dv, _leading_int
+from ...formulas import _add_accuracy, _add_leading_int, _add_weapon_dv, _leading_int
 from ...selects import selectskill_options
 
 
@@ -109,7 +109,8 @@ def weapon_skill_dictionary_key(weapon: dict[str, Any]) -> str:
 
 def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:
     rows = list((effects or empty_effects()).get("weapon_skill_accuracy") or [])
-    if not weapons or not rows:
+    by_name = list((effects or empty_effects()).get("weapon_accuracy") or [])
+    if not weapons or not (rows or by_name):
         return
     for weapon in weapons:
         skill = weapon_skill_dictionary_key(weapon)
@@ -121,8 +122,16 @@ def apply_weapon_skill_accuracy(weapons: list[dict[str, Any]] | None, effects: E
                 continue
             if target == skill or target == name:
                 bonus += int(row.get("bonus") or 0)
+        for row in by_name:
+            target = str(row.get("name") or "").strip()
+            if target.startswith("[contains]"):
+                hit = target[len("[contains]") :] in name
+            else:
+                hit = target == name
+            if target and hit:
+                bonus += int(row.get("bonus") or 0)
         if bonus:
-            weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), bonus)
+            weapon["accuracy"] = _add_accuracy(str(weapon.get("accuracy") or ""), bonus)
 
 
 def apply_weapon_category_dice(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:

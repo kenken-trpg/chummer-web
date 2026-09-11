@@ -8428,3 +8428,48 @@ def test_two_cyberlimb_optimizations_on_one_skill_add_a_die() -> None:
     ).derived
     assert split["skill_bonus"].get("Pistols", 0) == 0
     assert split["skill_bonus"].get("Longarms", 0) == 0
+
+
+def test_muzzle_sharpens_every_fang() -> None:
+    """`<weaponaccuracy><name>[contains]Fangs` (Muzzle, CF p.121): +2 Accuracy
+    on any weapon whose name holds "Fangs"."""
+    fangs = _ware_id("bioware", "Fangs")
+    muzzle = _ware_id("bioware", "Muzzle")
+
+    def fang_accuracy(*ids: str) -> str:
+        out = compute(_human("muzzle", bioware=[CyberwareInstall(ware_id=i) for i in ids])).derived
+        return next(str(w["accuracy"]) for w in out["weapons"] if "Fangs" in w["name"])
+
+    assert fang_accuracy(fangs) == "3"
+    assert fang_accuracy(fangs, muzzle) == "5"
+
+
+def test_paired_digigrade_legs_steady_the_raptor_foot() -> None:
+    """Digigrade Legs' pair bonus (CF p.87) gives the Raptor Foot +1 on an
+    Accuracy that is a limit formula — the offset moves, the limit stays."""
+    leg = _ware_id("cyberware", "Obvious Full Leg")
+    digi = _ware_id("cyberware", "Digigrade Legs")
+    foot = _ware_id("cyberware", "Raptor Foot")
+    rows = [
+        CyberwareInstall(id="L", ware_id=leg, side="Left"),
+        CyberwareInstall(id="R", ware_id=leg, side="Right"),
+        CyberwareInstall(id="rf", ware_id=foot, parent_id="L", side="Left"),
+        CyberwareInstall(id="d1", ware_id=digi, parent_id="L"),
+    ]
+
+    def raptor(cyber: list[CyberwareInstall]) -> str:
+        out = compute(_human("digi", cyberware=cyber)).derived
+        return next(str(w["accuracy"]) for w in out["weapons"] if w["name"] == "Raptor Foot")
+
+    assert raptor(rows) == "Physical-1"
+    assert raptor([*rows, CyberwareInstall(id="d2", ware_id=digi, parent_id="R")]) == "Physical"
+
+
+def test_add_accuracy_keeps_a_limit_a_word() -> None:
+    from app.engine.formulas import _add_accuracy
+
+    assert _add_accuracy("5", 1) == "6"
+    assert _add_accuracy("Physical-1", 1) == "Physical"
+    assert _add_accuracy("Physical", 2) == "Physical+2"
+    assert _add_accuracy("Physical+1", -2) == "Physical-1"
+    assert _add_accuracy("Physical", 0) == "Physical"
