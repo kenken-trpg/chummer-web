@@ -35,6 +35,7 @@ export type TextArgs = Pick<
   | "gearMisc"
   | "drugs"
   | "sins"
+  | "wareNamesOnly"
 >;
 
 /** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
@@ -145,7 +146,17 @@ export function textSheet(x: TextArgs): string {
     line();
   }
 
-  if (x.cyber.length || x.bio.length) {
+  if ((x.cyber.length || x.bio.length) && x.wareNamesOnly) {
+    // one line per kind, the ESS left to the section it came from
+    head("sheet.ware");
+    const named = (items: typeof x.cyber) =>
+      items
+        .map((i) => `${tr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}`)
+        .join(ui("common.listSep"));
+    if (x.cyber.length) line(`  [${ui("txt.cyber")}] ${named(x.cyber)}`);
+    if (x.bio.length) line(`  [${ui("txt.bio")}] ${named(x.bio)}`);
+    line();
+  } else if (x.cyber.length || x.bio.length) {
     head("sheet.ware");
     x.cyber.forEach((i) =>
       line(
