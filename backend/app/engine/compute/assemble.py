@@ -397,6 +397,7 @@ def assemble(ctx: Ctx) -> None:
                 "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
                 # the table value, only when a `<costdiscount>` moved it
                 **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
+                **({"disabled_by": ctx.disabled_qualities[q["id"]]} if q["id"] in ctx.disabled_qualities else {}),
                 # taken after chargen: what it cost then (SR5 p.107)
                 **({"career_cost": cost} if (cost := _nth(ctx.quality_career_costs, idx)) is not None else {}),
             }

@@ -93,6 +93,8 @@ class Ctx:
     installed: list[dict[str, Any]] = field(default_factory=list)
     #: Ware sitting in a vehicle mod: the vehicle's, so none of its bonuses
     #: (or skill picks) reach the character.
+    # quality id -> the ware that switches it off (`<disablequality>`)
+    disabled_qualities: dict[str, str] = field(default_factory=dict)
     hosted_ware_ids: set[str] = field(default_factory=set)
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 

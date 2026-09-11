@@ -583,6 +583,8 @@ export interface Character {
       free?: boolean;
       /** the table karma, when a `<costdiscount>` condition changed it */
       karma_base?: number | null;
+      /** the ware that switches this quality off (`<disablequality>`, RF p.148) */
+      disabled_by?: string;
       /** taken after chargen: what it cost (SR5 p.107: positive ×2, negative 0) */
       career_cost?: number;
     }[];

@@ -8883,3 +8883,32 @@ def test_off_road_mods_do_nothing_on_a_single_value() -> None:
     row = compute(_mundane("offroad-single", vehicles=[car], vehicle_mods=[mod])).derived["vehicles"][0]
     assert row["handling"] == str(int(car_spec["handling"]) - 1)
     assert "/" not in row["speed"]
+
+
+def _ware_named(name: str) -> str:
+    return next(item["id"] for item in catalog()["cyberware"]["items"] if item["name"] == name)
+
+
+def test_wired_reflexes_switch_lightning_reflexes_off() -> None:
+    """`<disablequality>` (RF p.148): Lightning Reflexes stops working once
+    Wired Reflexes does its job — its initiative bonus goes, Wired's stays."""
+    lr = _career_quality("Lightning Reflexes")["id"]
+    alone = compute(_mundane("lr", quality_ids=[lr])).derived
+    wired = compute(_mundane("wr", cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)])).derived
+    both = compute(_mundane("lr-wr", quality_ids=[lr], cyberware=[CyberwareInstall(ware_id=WIRED, rating=1)])).derived
+    plain = compute(_mundane("none")).derived
+    assert alone["initiative"] != plain["initiative"]
+    assert both["initiative"] == wired["initiative"]
+    assert _quality_row(both, "Lightning Reflexes")["disabled_by"] == "Wired Reflexes"
+    assert "disabled_by" not in _quality_row(alone, "Lightning Reflexes")
+
+
+def test_muscle_replacement_switches_celerity_off() -> None:
+    celerity = _career_quality("Celerity")["id"]
+    muscle = CyberwareInstall(ware_id=_ware_named("Muscle Replacement"), rating=1)
+    alone = compute(_mundane("cel", quality_ids=[celerity])).derived
+    both = compute(_mundane("cel-mr", quality_ids=[celerity], cyberware=[muscle])).derived
+    plain = compute(_mundane("cel-none")).derived
+    assert alone["movement"] != plain["movement"]
+    assert both["movement"] == plain["movement"]
+    assert _quality_row(both, "Celerity")["disabled_by"] == "Muscle Replacement"

@@ -13,7 +13,7 @@ from ..limits import (
     _ware_attribute_aug,
     _ware_attribute_bonuses,
 )
-from ..lookups import _ware_by_name
+from ..lookups import _quality_by_id, _quality_by_name, _ware_by_name
 from ..qualities import resolve_quality_sides
 from ..skills import ware_accuracy_picks
 from ..ware import (
@@ -88,10 +88,20 @@ def ware(ctx: Ctx) -> None:
             *(("bioware", item) for item in ctx.bio_installed),
         ]
     )
+    owned_qualities = {q["id"] for q in ctx.qualities}
     for item in ctx.installed:
         if item.get("id") in hosted_ids:
             continue
         ctx.sources.append((item["name"], item.get("bonus") or []))
+        # `<disablequality>`: the ware does the quality's job, so the quality
+        # stops working (Wired Reflexes over Lightning Reflexes, RF p.148).
+        for node in item.get("bonus") or []:
+            if node.get("tag") != "disablequality":
+                continue
+            ref = str(node.get("value") or "").strip()
+            target = _quality_by_id(ref) or _quality_by_name(ref)
+            if target and target["id"] in owned_qualities:
+                ctx.disabled_qualities.setdefault(target["id"], str(item["name"]))
     # What a pair adds on top of the two halves (two lower limbs: +1 box).
     picks = ctx.state.skill_picks or {}
     optimized = {
