@@ -258,6 +258,8 @@ export interface InstalledWeapon {
   type: string;
   weapon_type?: string;
   accuracy: string;
+  /** `Physical` / `Physical-1` before the engine put the limit in. */
+  accuracy_formula?: string;
   reach: string;
   damage: string;
   ap: string;

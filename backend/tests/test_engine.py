@@ -8457,12 +8457,27 @@ def test_paired_digigrade_legs_steady_the_raptor_foot() -> None:
         CyberwareInstall(id="d1", ware_id=digi, parent_id="L"),
     ]
 
-    def raptor(cyber: list[CyberwareInstall]) -> str:
+    def raptor(cyber: list[CyberwareInstall]) -> tuple[str, str, int]:
         out = compute(_human("digi", cyberware=cyber)).derived
-        return next(str(w["accuracy"]) for w in out["weapons"] if w["name"] == "Raptor Foot")
+        weapon = next(w for w in out["weapons"] if w["name"] == "Raptor Foot")
+        return str(weapon["accuracy_formula"]), str(weapon["accuracy"]), int(out["limits"]["physical"])
 
-    assert raptor(rows) == "Physical-1"
-    assert raptor([*rows, CyberwareInstall(id="d2", ware_id=digi, parent_id="R")]) == "Physical"
+    formula, accuracy, physical = raptor(rows)
+    assert formula == "Physical-1"
+    assert accuracy == str(physical - 1)
+    formula, accuracy, physical = raptor([*rows, CyberwareInstall(id="d2", ware_id=digi, parent_id="R")])
+    assert formula == "Physical"
+    assert accuracy == str(physical)
+
+
+def test_a_limit_accuracy_reads_as_the_number_rolled_against() -> None:
+    """`Physical` (SR5 p.169) becomes the character's Physical limit once it
+    is known; the formula stays beside it."""
+    blade = _ware_id("cyberware", "Hand Blade")
+    out = compute(_human("blade", cyberware=[CyberwareInstall(ware_id=blade)])).derived
+    weapon = next(w for w in out["weapons"] if w["name"] == "Hand Blade")
+    assert weapon["accuracy_formula"] == "Physical"
+    assert weapon["accuracy"] == str(out["limits"]["physical"])
 
 
 def test_add_accuracy_keeps_a_limit_a_word() -> None:

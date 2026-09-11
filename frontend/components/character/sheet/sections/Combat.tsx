@@ -85,7 +85,7 @@ export function CombatSection(s: SheetData) {
                         {tr(item.name)}
                         {item.qty > 1 ? ` ×${item.qty}` : ""}
                       </td>
-                      <td>{dash(item.accuracy)}</td>
+                      <td title={item.accuracy_formula || undefined}>{dash(item.accuracy)}</td>
                       <td>{dash(dv)}</td>
                       <td>{item.ap && item.ap !== "0" ? item.ap : "–"}</td>
                       <td>{dash(item.mode)}</td>

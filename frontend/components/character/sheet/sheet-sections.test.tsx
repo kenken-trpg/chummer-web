@@ -162,3 +162,31 @@ describe("<WareSection> on the compact sheet", () => {
     expect(container.querySelector("h4")!.textContent).toContain("ESS −2");
   });
 });
+
+describe("<CombatSection> a limit-based Accuracy", () => {
+  it("shows the number and keeps the formula on hover", () => {
+    const withBlade = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          weapons: [
+            {
+              ...(RICH_CHARACTER.derived as any).weapons[0],
+              id: "blade",
+              name: "Hand Blade",
+              accuracy: "6",
+              accuracy_formula: "Physical",
+            },
+          ],
+        },
+      } as any,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<CombatSection {...(withBlade as any)} />);
+    const cell = container.querySelector('td[title="Physical"]');
+    expect(cell?.textContent).toBe("6");
+  });
+});

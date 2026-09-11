@@ -12,6 +12,7 @@ concrete bonus rows the appliers above then read.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ....data_loader import catalog
@@ -258,3 +259,22 @@ def bind_weapon_skill_accuracy(
         elif fixed:
             resolved.append({"name": fixed, "bonus": bonus, "source": source})
     effects["weapon_skill_accuracy"] = resolved
+
+
+_LIMIT_ACCURACY = re.compile(r"^Physical\s*([+-]\s*\d+)?$")
+
+
+def resolve_limit_accuracy(weapons: list[dict[str, Any]] | None, physical_limit: int) -> None:
+    """Melee, natural and implant weapons quote Accuracy as the Physical limit
+    (SR5 p.169 — ``Physical``, ``Physical-1`` for a Raptor Foot). Once the
+    limit is known it becomes the number a player rolls against; the formula
+    stays on ``accuracy_formula`` for anyone who wants to see where it came
+    from. ``Missile`` (the round's own) and STR formulas are left alone."""
+    for weapon in weapons or []:
+        raw = str(weapon.get("accuracy") or "").strip()
+        match = _LIMIT_ACCURACY.match(raw)
+        if not match:
+            continue
+        offset = int((match.group(1) or "0").replace(" ", ""))
+        weapon["accuracy_formula"] = raw
+        weapon["accuracy"] = str(physical_limit + offset)
