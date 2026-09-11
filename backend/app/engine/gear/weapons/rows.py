@@ -288,7 +288,12 @@ def _apply_ware_weapon_attrs(
     str_val, agi_val, from_limb = _ware_weapon_attr_values(ware, ware_by_id, state, attr_totals)
     attrs = {"STR": str_val, "AGI": agi_val}
     for key in ("damage", "ap", "accuracy", "reach"):
-        weapon[key] = _eval_attr_stat(str(weapon.get(key) or ""), attrs)
+        raw = str(weapon.get(key) or "")
+        # keep the formula beside the number, as `resolve_attr_formulas` does
+        # for a weapon held in the hand
+        if key in ("damage", "accuracy") and "{" in raw:
+            weapon[f"{key}_formula"] = raw
+        weapon[key] = _eval_attr_stat(raw, attrs)
     if from_limb:
         weapon["limb_str"] = str_val
         weapon["limb_agi"] = agi_val
