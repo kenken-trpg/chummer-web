@@ -2011,6 +2011,23 @@ def test_missile_mastery_grants_throw_str() -> None:
     assert out.derived["errors"] == []
 
 
+def test_missile_mastery_lands_in_a_thrown_weapons_dv() -> None:
+    """`<throwstr>` is STR for a thrown weapon's `{STR}` only. The engine now
+    resolves `{STR}` itself, so it has to add it there — the sheet used to."""
+    knife = GearInstall(gear_id=THROWING_KNIFE_GEAR)
+    plain = compute(_adept("tk", gear=[knife])).derived
+    mastered = compute(
+        _adept("tk-mm", gear=[knife], adept_powers=[AdeptPowerInstall(power_id=MISSILE_MASTERY)])
+    ).derived
+
+    def dv(out: dict) -> int:
+        return int(str(out["weapons"][0]["damage"]).rstrip("PS"))
+
+    assert dv(mastered) == dv(plain) + 1
+    # only the throw gets it: the character's STR itself does not move
+    assert mastered["totals"]["STR"] == plain["totals"]["STR"]
+
+
 def test_precision_throwing_evaluates_rating_times_two() -> None:
     base = compute(_adept("pt-none"))
     assert base.derived["throw_range_str"] == 0
