@@ -8644,3 +8644,35 @@ def test_infirm_first_level_clamp_is_not_left_unimplemented() -> None:
     out = compute(ch).derived
     assert out["totals"]["BOD"] == 5
     assert not any("attributemaxclamp" in str(row) for row in out.get("unimplemented_bonuses") or [])
+
+
+def _limit_quality(name: str) -> str:
+    return next(str(q["id"]) for q in catalog()["qualities"] if q["name"] == name)
+
+
+def _taken(ids: list[str]) -> dict[str, int]:
+    out = compute(_human("limits", career=True, quality_ids=ids)).derived
+    counts: dict[str, int] = {}
+    for row in out["qualities"]:
+        counts[row["name"]] = counts.get(row["name"], 0) + 1
+    return counts
+
+
+def test_indomitable_kinds_share_one_limit() -> None:
+    """`<includeinlimit>` (Indomitable, SR5 p.75): Physical, Mental and Social
+    count together toward the limit of 3."""
+    physical = _limit_quality("Indomitable (Physical)")
+    mental = _limit_quality("Indomitable (Mental)")
+    counts = _taken([physical, physical, mental, mental])
+    assert counts["Indomitable (Physical)"] + counts["Indomitable (Mental)"] == 3
+    assert _taken([physical] * 3)["Indomitable (Physical)"] == 3
+
+
+def test_tough_as_nails_has_its_own_shared_cap() -> None:
+    """`<limitwithinclusions>4` (Tough as Nails, RF p.150): up to 3 of either
+    kind, 4 across both."""
+    physical = _limit_quality("Tough as Nails (Physical)")
+    stun = _limit_quality("Tough as Nails (Stun)")
+    counts = _taken([physical] * 3 + [stun] * 3)
+    assert counts == {"Tough as Nails (Physical)": 3, "Tough as Nails (Stun)": 1}
+    assert _taken([physical, physical, stun, stun]) == {"Tough as Nails (Physical)": 2, "Tough as Nails (Stun)": 2}

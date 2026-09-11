@@ -37,6 +37,8 @@ def section(raw: CatalogDict) -> dict:
             "spirit_options": list(q.get("spirit_options") or []),
             "expertise_skill": q.get("expertise_skill") or "",
             "max_takes": q.get("max_takes"),
+            "include_in_limit": list(q.get("includeinlimit") or []),
+            "limit_with_inclusions": int(q.get("limitwithinclusions") or 0),
             "required_tree": q.get("required_tree") or [],
             "forbidden_tree": q.get("forbidden_tree") or [],
         }

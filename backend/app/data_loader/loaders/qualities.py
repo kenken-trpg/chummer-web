@@ -47,6 +47,10 @@ def load_qualities() -> list[dict[str, Any]]:
                 "bonus": bonus,
                 # applied once, however many levels are taken (Gremlins: +1 Notoriety)
                 "firstlevelbonus": parse_bonus(el.find("firstlevelbonus")),
+                # counted together toward the limit (Indomitable: three kinds, 3 in all)
+                "includeinlimit": [_text(n) for n in el.findall("./includeinlimit/name") if _text(n)],
+                # the shared cap when it differs from `limit` (Tough as Nails: 4)
+                "limitwithinclusions": _int(el.find("limitwithinclusions"), 0),
                 "add_weapon": _text(el.find("addweapon")),
                 "max_takes": max_takes,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",

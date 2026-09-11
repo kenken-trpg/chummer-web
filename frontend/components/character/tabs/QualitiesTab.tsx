@@ -203,7 +203,21 @@ export function QualitiesTab({
         {filteredQualities.map((q) => {
           const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
           const maxTakes = q.max_takes == null ? null : Number(q.max_takes ?? 1);
-          const canAddMore = maxTakes == null || ownedCount < maxTakes;
+          // `include_in_limit`: siblings share the limit (Indomitable: 3 across all three)
+          const siblings = new Set(q.include_in_limit || []);
+          const sharedCap = siblings.size ? q.limit_with_inclusions || maxTakes : null;
+          const sharedCount = siblings.size
+            ? ch.quality_ids.filter(
+                (id) =>
+                  id === q.id ||
+                  siblings.has(
+                    (catalog.qualities || []).find((item) => item.id === id)?.name || "",
+                  ),
+              ).length
+            : ownedCount;
+          const canAddMore =
+            (maxTakes == null || ownedCount < maxTakes) &&
+            (sharedCap == null || sharedCount < sharedCap);
           const added = ownedCount > 0;
           const ownedWays = new Set(
             (catalog.qualities || [])
@@ -230,6 +244,12 @@ export function QualitiesTab({
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
                     ? ui("qual.taken", { count: ownedCount })
                     : ""}
+                  {sharedCap != null
+                    ? ui("qual.sharedLimit", {
+                        names: [...siblings].map(tr).join(ui("common.listSep")),
+                        max: sharedCap,
+                      })
+                    : ""}
                   {q.needs_extra ? ui("qual.needsTarget") : ""}
                   {q.is_way ? ui("qual.wayExclusive") : ""}
                   {replaces ? ui("qual.replacesNote") : ""}
@@ -238,7 +258,8 @@ export function QualitiesTab({
               </div>
               <button
                 className={`btn ${added && !canAddMore ? "danger" : "primary"}`}
-                disabled={canAddMore ? !!blocked : false}
+                // full and not taken: a sibling holds the shared limit, nothing to do
+                disabled={canAddMore ? !!blocked : !added}
                 // the same button reads 追加 / 差替 / 削除 depending on what is
                 // already taken; say which quality it is about to act on
                 title={ui("picker.buyLabel", {
