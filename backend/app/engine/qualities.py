@@ -458,6 +458,24 @@ def gather_qualities(
     return qualities, sorted(free_ids), dropped
 
 
+def apply_cost_discounts(qualities: list[dict[str, Any]], req_ctx: dict[str, Any]) -> list[dict[str, Any]]:
+    """`<costdiscount>`: a quality's karma moves by `value` when its tree is
+    met. As Chummer reads it, `value` is added to a positive quality's cost
+    and taken from a negative one's: The Beast's Way 20 → 17 with an Animal
+    Familiar (SG p.176), Blind −15 → −5 for the astrally aware (RF p.153),
+    Astral Hazing −5 → −15 for the Awakened (RF p.119). Returns copies — the
+    specs are the catalog's own dicts — with the table value on `karma_base`."""
+    out: list[dict[str, Any]] = []
+    for spec in qualities:
+        discount = spec.get("cost_discount") or {}
+        value = int(discount.get("value") or 0)
+        if value and requirement_tree_met(discount.get("required_tree"), req_ctx):
+            karma = int(spec["karma"])
+            spec = {**spec, "karma_base": karma, "karma": karma + value if karma > 0 else karma - value}
+        out.append(spec)
+    return out
+
+
 def apply_quality_rules(
     state: CharacterState,
     qualities: list[dict[str, Any]],

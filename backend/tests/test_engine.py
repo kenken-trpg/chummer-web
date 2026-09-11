@@ -8676,3 +8676,36 @@ def test_tough_as_nails_has_its_own_shared_cap() -> None:
     counts = _taken([physical] * 3 + [stun] * 3)
     assert counts == {"Tough as Nails (Physical)": 3, "Tough as Nails (Stun)": 1}
     assert _taken([physical, physical, stun, stun]) == {"Tough as Nails (Physical)": 2, "Tough as Nails (Stun)": 2}
+
+
+def _discount_quality(name: str) -> str:
+    return next(str(q["id"]) for q in catalog()["qualities"] if q["name"] == name)
+
+
+def _quality_row(out: dict, name: str) -> dict:
+    return next(q for q in out["qualities"] if q["name"] == name)
+
+
+def test_blind_is_worth_less_to_someone_who_sees_astrally() -> None:
+    """`<costdiscount>` (Blind, RF p.153): −15 karma, but −5 for a character
+    with astral perception (a Magician here)."""
+    blind = _discount_quality("Blind")
+    mundane = compute(_human("blind", quality_ids=[blind])).derived
+    assert _quality_row(mundane, "Blind")["karma"] == -15
+    assert "karma_base" not in _quality_row(mundane, "Blind")
+    assert mundane["karma"]["negative"]["used"] == 15
+
+    magician = compute(_human("blind-mage", quality_ids=[blind, _discount_quality("Magician")])).derived
+    row = _quality_row(magician, "Blind")
+    assert (row["karma"], row["karma_base"]) == (-5, -15)
+    assert magician["karma"]["negative"]["used"] == 5
+
+
+def test_a_positive_discount_lowers_the_cost() -> None:
+    """The Beast's Way (SG p.176): 20 karma, 17 with an Animal Familiar."""
+    way = _discount_quality("The Beast's Way")
+    alone = compute(_human("way", quality_ids=[way])).derived
+    paired = compute(_human("way-fam", quality_ids=[way, _discount_quality("Animal Familiar")])).derived
+    assert _quality_row(alone, "The Beast's Way")["karma"] == 20
+    assert _quality_row(paired, "The Beast's Way")["karma"] == 17
+    assert paired["karma"]["spent"] - alone["karma"]["spent"] == 5 - 3  # the familiar's 5, less the 3 off

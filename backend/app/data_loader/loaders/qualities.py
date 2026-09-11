@@ -61,6 +61,14 @@ def load_qualities() -> list[dict[str, Any]]:
                 "forbidden": parse_required(el.find("forbidden")),
                 "required": parse_required(el.find("required")),
                 "required_tree": parse_requirement_tree(el.find("required")),
+                # karma moves by `value` when the tree is met (Blind: worth 5, not 15, to
+                # someone who can see astrally — RF p.153)
+                "cost_discount": {
+                    "required_tree": parse_requirement_tree(el.find("./costdiscount/required")),
+                    "value": _int(el.find("./costdiscount/value"), 0),
+                }
+                if el.find("costdiscount") is not None
+                else None,
                 "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
                 "needs_extra": quality_needs_extra(bonus),
                 "extra_kind": extra_meta.get("extra_kind"),

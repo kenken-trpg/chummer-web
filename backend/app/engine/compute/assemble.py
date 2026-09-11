@@ -391,6 +391,8 @@ def assemble(ctx: Ctx) -> None:
                 "selectside": _quality_has_selectside(q),
                 "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
+                # the table value, only when a `<costdiscount>` moved it
+                **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
             }
             for q in ctx.qualities
         ],

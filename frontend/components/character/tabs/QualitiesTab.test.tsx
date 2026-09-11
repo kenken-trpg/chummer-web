@@ -136,3 +136,29 @@ describe("<QualitiesTab> a limit shared between siblings", () => {
     expect(patch).toHaveBeenCalledWith(expect.objectContaining({ quality_ids: ["ind0", "ind2"] }));
   });
 });
+
+describe("<QualitiesTab> a cost moved by a condition", () => {
+  it("shows the table karma beside the one charged", () => {
+    renderTab({
+      character: {
+        quality_ids: ["blind"],
+        derived: {
+          qualities: [
+            {
+              id: "blind",
+              name: "Blind",
+              karma: -5,
+              karma_base: -15,
+              category: "Negative",
+              source: "RF",
+            },
+          ] as any,
+        },
+      },
+    });
+    const owned = [...document.querySelectorAll(".quality-item")].find((el) =>
+      el.textContent?.includes("Blind"),
+    )!;
+    expect(owned.textContent).toContain("カルマ -5（条件で変動・表では -15）");
+  });
+});
