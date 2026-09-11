@@ -1,6 +1,6 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
-import { rangeNameFor, rangeRow, resolveDamageStr } from "@/lib/character/sheet-format";
+import { rangeNameFor, rangeRow } from "@/lib/character/sheet-format";
 import { Fragment } from "react";
 import { useUiText } from "@/lib/i18n";
 
@@ -62,10 +62,8 @@ export function CombatSection(s: SheetData) {
             <tbody>
               {weapons.map((item) => {
                 const dash = (v?: string) => (v && v !== "0" && v !== "-" ? v : "–");
-                const thrown = (item.useskill || "") === "Throwing Weapons";
-                const dv = thrown
-                  ? resolveDamageStr(item.damage, (totals.STR || 0) + (d.throw_str || 0))
-                  : item.damage;
+                // {STR} (and a thrown weapon's throw_str) is resolved by the engine
+                const dv = item.damage;
                 const sub = [
                   (item.accessories || []).map((a) => tr(a.name)).join(ui("common.listSep")),
                   (item.focus_dice || 0) > 0

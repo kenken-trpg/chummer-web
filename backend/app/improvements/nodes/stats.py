@@ -192,7 +192,7 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             _bonus_int(node, fields, default=2),
         )
     elif tag == "throwstr":
-        # STR added when the client resolves a thrown weapon's {STR} damage.
+        # STR added to a thrown weapon's {STR} (resolve_attr_formulas).
         effects["throw_str"] += _bonus_int(node, fields)
     elif tag == "throwrangestr":
         # STR added when the client resolves thrown-weapon range bands
