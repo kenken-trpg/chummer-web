@@ -8621,3 +8621,26 @@ def test_dongles_give_a_commlink_attack_and_sleaze() -> None:
     ).derived["commlinks"][0]
     assert (out["attack"], out["sleaze"]) == (3, 2)
     assert (out["dataprocessing"], out["firewall"]) == (bare["dataprocessing"], bare["firewall"])
+
+
+def _quality_id(name: str) -> str:
+    return next(str(q["id"]) for q in catalog()["qualities"] if q["name"] == name)
+
+
+def test_gremlins_notoriety_comes_with_the_first_level_only() -> None:
+    """`<firstlevelbonus><notoriety>1` (Gremlins, SR5 p.81): one point of
+    Notoriety for taking the quality, not one per level."""
+    gremlins = _quality_id("Gremlins")
+    for levels, expected in ((0, 0), (1, 1), (3, 1)):
+        out = compute(_human("gremlins", quality_ids=[gremlins] * levels)).derived
+        assert out["notoriety"] == expected, levels
+
+
+def test_infirm_first_level_clamp_is_not_left_unimplemented() -> None:
+    """Infirm's `<attributemaxclamp>` (RF p.156) is what the attribute pass
+    does anyway: a BOD above the lowered maximum comes down to it."""
+    ch = _human("infirm", quality_ids=[_quality_id("Infirm")])
+    ch.attributes["BOD"] = 6
+    out = compute(ch).derived
+    assert out["totals"]["BOD"] == 5
+    assert not any("attributemaxclamp" in str(row) for row in out.get("unimplemented_bonuses") or [])

@@ -84,8 +84,14 @@ def gather(ctx: Ctx) -> None:
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
     ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))
     ctx.warnings.extend(_clamp_ware_grades("bioware", ctx.state.bioware, disabled_bio_grades))
+    first_levels: set[str] = set()
     for q in ctx.qualities:
         ctx.sources.append((q["name"], q.get("bonus") or []))
+        # a leveled quality is listed once per level; `<firstlevelbonus>`
+        # rides the first one only (Chummer `Quality.FirstLevelBonus`)
+        if q.get("firstlevelbonus") and q["id"] not in first_levels:
+            first_levels.add(q["id"])
+            ctx.sources.append((q["name"], q["firstlevelbonus"]))
     ctx.needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in ctx.qualities)
     # Paragon is Mentor Spirit for a technomancer and shares `mentor_id`; the
     # two qualities gate on opposite talents, so at most one is ever set.
