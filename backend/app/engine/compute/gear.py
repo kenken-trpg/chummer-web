@@ -23,6 +23,7 @@ from ..formulas import parse_armor_value
 from ..gear import (
     _append_armor_weapons,
     _append_gear_weapons,
+    _append_granted_weapons,
     _append_natural_weapons,
     _append_quality_weapons,
     _append_ware_weapons,
@@ -320,6 +321,7 @@ def gear_phase(ctx: Ctx) -> None:
     # attack, so a reach or unarmed-AP bonus has to reach it too.
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
     _append_quality_weapons(ctx.gear["weapons"], ctx.qualities)
+    _append_granted_weapons(ctx.gear["weapons"], ctx.effects)
     apply_lifestyle_cost_mod(ctx.gear, int(ctx.effects.get("lifestyle_cost") or 0))
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))

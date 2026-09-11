@@ -112,6 +112,14 @@ class GrantSpellRow(TypedDict):
     limited: bool
 
 
+class GrantWeaponRow(TypedDict):
+    """``grant_weapons`` — an ``<addweapon>`` bonus node: the attack a power
+    grows (Elemental Body, SG p.170)."""
+
+    source: str
+    name: str
+
+
 class GrantGearRow(TypedDict):
     """``grant_gear`` — an ``<addgear>`` grant: the item a quality hands over,
     with the children that come clipped to it (Dead SIN's fake licenses)."""

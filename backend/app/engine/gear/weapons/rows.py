@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ....data_loader import catalog
 from ....improvements import EffectsDict, empty_effects
 from ....models import CharacterState
 from ...formulas import _eval_attr_stat
@@ -144,6 +145,30 @@ def _append_quality_weapons(weapons: list[dict[str, Any]], qualities: list[dict[
         weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
         weapon["natural"] = True
         weapon["natural_source"] = str(quality.get("name") or "")
+        weapons.append(weapon)
+        taken.add(inst_id)
+
+
+def _append_granted_weapons(weapons: list[dict[str, Any]], effects: EffectsDict | None) -> None:
+    """Rows for an attack a power grows (`<addweapon>` in a bonus): Elemental
+    Body (SG p.170). Hidden in `weapons.xml`, so the only way in is the power;
+    a natural weapon like a quality's claws — no cost, nothing to delete but
+    the power."""
+    rows = list((effects or empty_effects()).get("grant_weapons") or [])
+    if not rows:
+        return
+    taken = {str(row.get("id") or "") for row in weapons}
+    for index, grant in enumerate(rows):
+        name = str(grant.get("name") or "")
+        spec = next((item for item in catalog().get("weapons") or [] if item.get("name") == name), None)
+        if not spec:
+            continue
+        inst_id = f"granted-weapon-{index}-{spec['id']}"
+        if inst_id in taken:
+            continue
+        weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
+        weapon["natural"] = True
+        weapon["natural_source"] = str(grant.get("source") or "")
         weapons.append(weapon)
         taken.add(inst_id)
 

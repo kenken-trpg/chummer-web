@@ -45,7 +45,7 @@ def _set_damage_type(damage: str, dtype: str) -> str:
     return f"{match.group(1)}{dtype}"
 
 
-_ATTR_TOKEN = re.compile(r"\{(STR|AGI)(?:Unaug|Base)?\}", re.I)
+_ATTR_TOKEN = re.compile(r"\{(STR|AGI|MAG)(?:Unaug|Base)?\}", re.I)
 
 
 #: Chummer's ``number(cond)`` — 1 when the comparison holds, else 0 (Osmium

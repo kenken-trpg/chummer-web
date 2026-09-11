@@ -27,6 +27,7 @@ from .bonuses import (
 from .rows import (
     _append_armor_weapons,
     _append_gear_weapons,
+    _append_granted_weapons,
     _append_natural_weapons,
     _append_quality_weapons,
     _append_ware_weapons,
@@ -37,6 +38,7 @@ __all__ = [
     "_append_armor_weapons",
     "_append_gear_weapons",
     "_append_natural_weapons",
+    "_append_granted_weapons",
     "_append_quality_weapons",
     "_append_ware_weapons",
     "_apply_recoil_totals",
