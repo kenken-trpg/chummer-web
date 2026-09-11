@@ -77,7 +77,6 @@ class MartialBundle(TypedDict):
     technique_count: int
     style_max: int
     technique_max: int
-    spec_extras: dict[str, list[str]]
     bonus_sources: list[BonusSource]
 
 
@@ -287,7 +286,6 @@ def empty_martial() -> MartialBundle:
         technique_count=0,
         style_max=0,
         technique_max=0,
-        spec_extras={},
         bonus_sources=[],
     )
 

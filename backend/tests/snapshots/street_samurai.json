@@ -251,7 +251,6 @@
     "techniques": 0
   },
   "martial_arts": [],
-  "martial_spec_options": {},
   "matrix_initiative": null,
   "mentor": null,
   "metagenic": {
@@ -432,6 +431,7 @@
   "skill_max_bonus": {},
   "skill_pick_slots": [],
   "skill_rating_max": 6,
+  "skill_spec_options": {},
   "skill_specializations": {},
   "skill_totals": {
     "Automatics": 6,

@@ -53,6 +53,23 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 "source": source,
             }
         )
+    elif tag == "addskillspecializationoption":
+        # A style or quality that widens the specialization list a skill offers
+        # (SR5 p.140 for the styles, RF p.114 for Electroception). It hands out
+        # the *option* — the character still pays for the specialization. The
+        # skill is named either inline (`<skill>`, the styles) or as a nested
+        # `<skills>` list (the two Electroception qualities).
+        spec_name = str(fields.get("spec") or fields.get("name") or "").strip()
+        names = [str(n).strip() for n in ((node.get("nested") or {}).get("skills") or [])]
+        names.append(str(fields.get("skill") or "").strip())
+        if not spec_name:
+            return True
+        for skill_name in names:
+            if not skill_name:
+                continue
+            bucket = effects["skill_spec_options"].setdefault(skill_name, [])
+            if spec_name not in bucket:
+                bucket.append(spec_name)
     elif tag in {"skillattribute", "skilllinkedattribute"}:
         # Chummer tells the two apart only once something has *swapped* a
         # skill's attribute: `skillattribute` follows the swap, while
