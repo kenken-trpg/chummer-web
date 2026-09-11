@@ -15,8 +15,10 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
               <div className="muted">
                 {item.name}
                 {item.category && item.category !== "Commlinks" ? ` / ${tr(item.category)}` : ""}
-                {" / "}DR {item.device_rating} / DP {item.dataprocessing} / FW {item.firewall} /{" "}
-                {item.nuyen.toLocaleString()}¥ / {item.source}
+                {" / "}DR {item.device_rating}
+                {item.attack ? ` / A ${item.attack}` : ""}
+                {item.sleaze ? ` / S ${item.sleaze}` : ""} / DP {item.dataprocessing} / FW{" "}
+                {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">

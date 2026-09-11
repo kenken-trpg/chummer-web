@@ -156,3 +156,35 @@ def matrix_initiative(
         "cold_dice": COLD_SIM_DICE + int(extra_dice),
         "hot_dice": HOT_SIM_DICE + int(extra_dice),
     }
+
+
+#: accessory field -> host ASDF key
+_HOST_MODS = {
+    "modattack": "attack",
+    "modsleaze": "sleaze",
+    "moddataprocessing": "dataprocessing",
+    "modfirewall": "firewall",
+}
+
+
+def apply_host_matrix_mods(hosts: list[dict[str, Any]], gear_rows: list[dict[str, Any]]) -> None:
+    """Add what a plugged-in accessory gives its host's ASDF: an Attack Dongle
+    (DT p.61) turns a commlink into something that can hack — Attack equal to
+    its Rating — and a Stealth Dongle does the same for Sleaze. The host row
+    grows the keys it lacked (a commlink only publishes DP / Firewall)."""
+    by_id = {str(row.get("id") or ""): row for row in hosts}
+    for row in gear_rows:
+        host = by_id.get(str(row.get("parent_id") or ""))
+        if host is None:
+            continue
+        spec = _item_by_id("gear", str(row.get("gear_id") or ""))
+        if not spec:
+            continue
+        rating = int(row.get("rating") or 1)
+        for field, key in _HOST_MODS.items():
+            raw = str(spec.get(field) or "").strip()
+            if not raw:
+                continue
+            delta = int(eval_formula(raw, rating, 0))
+            if delta:
+                host[key] = int(host.get(key) or 0) + delta

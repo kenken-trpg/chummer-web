@@ -183,7 +183,9 @@ export function buildChatPalette(
   }
 
   // --- matrix basic actions (limit = the relevant Matrix attribute) --------
-  const persona = d.cyberdeck || d.living_persona;
+  // a commlink with a dongle can hack too (DT p.61) — after a deck or a living persona
+  const donglelink = d.commlink && (d.commlink.attack || d.commlink.sleaze) ? d.commlink : null;
+  const persona = d.cyberdeck || d.living_persona || donglelink;
   if (persona) {
     const A = persona.attack ?? 0;
     const S = persona.sleaze ?? 0;

@@ -143,6 +143,11 @@ def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False)
                 "dataprocessing": _text(el.find("dataprocessing"), "0"),
                 "firewall": _text(el.find("firewall"), "0"),
                 "attributearray": _text(el.find("attributearray")),
+                # what an accessory adds to its host's ASDF (Attack Dongle, DT p.61)
+                "modattack": _text(el.find("modattack")),
+                "modsleaze": _text(el.find("modsleaze")),
+                "moddataprocessing": _text(el.find("moddataprocessing")),
+                "modfirewall": _text(el.find("modfirewall")),
                 "programs": _text(el.find("programs"), "0"),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),

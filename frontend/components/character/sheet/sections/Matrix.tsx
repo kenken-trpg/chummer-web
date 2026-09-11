@@ -39,6 +39,8 @@ export function MatrixSection(s: SheetData) {
             key: "cl",
             label: ui("sheet.deviceCommlink", { name: tr(d.commlink.name) }),
             dr: d.commlink.device_rating,
+            a: d.commlink.attack || undefined,
+            s: d.commlink.sleaze || undefined,
             dp: d.commlink.dataprocessing,
             fw: d.commlink.firewall,
             init: initFor("commlink"),

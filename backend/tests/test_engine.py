@@ -8596,3 +8596,28 @@ def test_initiative_dice_from_ware_and_power_take_the_best() -> None:
         )
     ).derived
     assert out["initiative"]["dice"] == 1 + 2
+
+
+def test_dongles_give_a_commlink_attack_and_sleaze() -> None:
+    """Attack / Stealth Dongle (DT p.61): `<modattack>{Rating}` on a
+    commlink accessory becomes the commlink's Attack; same for Sleaze."""
+    link = next(x for x in catalog()["commlinks"] if x["name"].startswith("Hermes Ikon"))
+    attack = next(x["id"] for x in catalog()["gear"] if x["name"] == "Attack Dongle")
+    stealth = next(x["id"] for x in catalog()["gear"] if x["name"] == "Stealth Dongle")
+    host = CommlinkInstall(id="L", gear_id=link["id"])
+
+    bare = compute(_human("bare", commlinks=[host])).derived["commlinks"][0]
+    assert (bare["attack"], bare["sleaze"]) == (0, 0)
+
+    out = compute(
+        _human(
+            "dongled",
+            commlinks=[host],
+            gear=[
+                GearInstall(gear_id=attack, rating=3, parent_id="L"),
+                GearInstall(gear_id=stealth, rating=2, parent_id="L"),
+            ],
+        )
+    ).derived["commlinks"][0]
+    assert (out["attack"], out["sleaze"]) == (3, 2)
+    assert (out["dataprocessing"], out["firewall"]) == (bare["dataprocessing"], bare["firewall"])
