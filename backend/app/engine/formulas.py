@@ -48,6 +48,23 @@ def _set_damage_type(damage: str, dtype: str) -> str:
 _ATTR_TOKEN = re.compile(r"\{(STR|AGI)(?:Unaug|Base)?\}", re.I)
 
 
+#: Chummer's ``number(cond)`` — 1 when the comparison holds, else 0 (Osmium
+#: Mace, TCT p.185: ``3+number({STR} >= 5)+number({STR} >= 7)``).
+_NUMBER_TEST = re.compile(r"number\(\s*(-?\d+)\s*(>=|<=|==|>|<)\s*(-?\d+)\s*\)")
+_COMPARE = {
+    ">=": lambda a, b: a >= b,
+    "<=": lambda a, b: a <= b,
+    "==": lambda a, b: a == b,
+    ">": lambda a, b: a > b,
+    "<": lambda a, b: a < b,
+}
+
+
+def _number_test(match: re.Match[str]) -> str:
+    left, op, right = int(match.group(1)), match.group(2), int(match.group(3))
+    return "1" if _COMPARE[op](left, right) else "0"
+
+
 def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
     text = str(raw or "")
     if "{" not in text:
@@ -57,7 +74,7 @@ def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
     def _token(match: re.Match[str]) -> str:
         return str(values.get(match.group(1).upper(), 0))
 
-    replaced = _ATTR_TOKEN.sub(_token, text)
+    replaced = _NUMBER_TEST.sub(_number_test, _ATTR_TOKEN.sub(_token, text))
     if "{" in replaced:
         return text
 
@@ -81,6 +98,9 @@ def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
         if nxt == out:
             break
         out = nxt
+    # a bare sum left at the top (`3+1+0`) — but not a signed number (`+1` AP)
+    if re.search(r"\d\s*[+\-*/]\s*\d", out):
+        return _try_eval(out) or out
     return out
 
 

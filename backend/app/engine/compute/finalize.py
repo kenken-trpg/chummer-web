@@ -18,7 +18,7 @@ from ...notices import term
 from ...rules import current_rules
 from ..bundle_types import MovementBundle
 from ..formulas import _add_leading_int, _ceil_div, _replace_leading_int
-from ..gear.weapons.bonuses import resolve_limit_accuracy
+from ..gear.weapons.bonuses import resolve_attr_formulas, resolve_limit_accuracy
 from ..limits import (
     _avail_entries,
     _check_avail_limit,
@@ -95,6 +95,7 @@ def finalize(ctx: Ctx) -> None:
     ctx.physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(ctx.effects.get("limit_physical") or 0)
     ctx.mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(ctx.effects.get("limit_mental") or 0)
     ctx.social_limit = _ceil_div((cha * 2 + wil + ctx.ess) / 3) + int(ctx.effects.get("limit_social") or 0)
+    resolve_attr_formulas(ctx.gear.get("weapons"), ctx.total)
     resolve_limit_accuracy(ctx.gear.get("weapons"), ctx.physical_limit)
     ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
     ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]

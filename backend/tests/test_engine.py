@@ -4736,7 +4736,8 @@ def test_throwing_knife_gear_is_weapon() -> None:
     row = out.derived["weapons"][0]
     assert row["name"] == "Throwing Knife"
     assert row["from_gear"] is True
-    assert "({STR}+1)P" in row["damage"]
+    assert row["damage_formula"] == "({STR}+1)P"
+    assert row["damage"] == f"{out.derived['totals']['STR'] + 1}P"
 
 
 def test_weapon_range_table_loads_from_ranges_xml() -> None:
@@ -7371,7 +7372,8 @@ def test_death_dealer_adept_weapon_dv_and_skill_select() -> None:
         )
     )
     katana = next(w for w in out.derived["weapons"] if w["name"] == "Katana")
-    assert "({STR}+4)P" in katana["damage"] or katana["damage"] == "({STR}+4)P"
+    assert katana["damage_formula"] == "({STR}+4)P"
+    assert katana["damage"] == "5P"  # STR 1
     assert "weaponcategorydv" not in [item["tag"] for item in out.derived["unimplemented_bonuses"]]
 
 
@@ -8254,7 +8256,8 @@ def test_quality_addweapon_grows_a_natural_weapon() -> None:
     """
     out = compute(_mundane("claws-quality", quality_ids=[RAZOR_CLAWS]))
     row = next(w for w in out.derived["weapons"] if w["name"] == "Razor Claws")
-    assert (row["damage"], row["ap"]) == ("({STR}+1)P", "-1")
+    assert (row["damage"], row["ap"]) == ("2P", "-1")  # STR 1
+    assert row["damage_formula"] == "({STR}+1)P"
     assert (row["nuyen"], row["qty"]) == (0, 1)
     assert row["natural"] is True
     assert row["natural_source"] == "Razor Claws"
@@ -8267,7 +8270,8 @@ def test_shield_is_armor_you_can_hit_people_with() -> None:
     rows, and the weapon row is charged nothing on its own."""
     out = compute(_mundane("shield", armor=[ArmorInstall(armor_id=BALLISTIC_SHIELD, equipped=True)]))
     row = next(w for w in out.derived["weapons"] if w["name"] == "Ballistic Shield")
-    assert row["damage"] == "({STR}+2)S"
+    assert row["damage"] == "3S"  # STR 1
+    assert row["damage_formula"] == "({STR}+2)S"
     assert row["from_armor"] is True
     assert row["source_armor_id"] == out.derived["armor_items"][0]["id"]
     assert out.derived["nuyen_spent"] == 1200
@@ -8488,3 +8492,33 @@ def test_add_accuracy_keeps_a_limit_a_word() -> None:
     assert _add_accuracy("Physical", 2) == "Physical+2"
     assert _add_accuracy("Physical+1", -2) == "Physical-1"
     assert _add_accuracy("Physical", 0) == "Physical"
+
+
+def test_osmium_mace_reads_its_strength_thresholds() -> None:
+    """`number({STR} >= 5)` (Osmium Mace, TCT p.185): +1 Accuracy and +2 DV
+    at STR 5, again at STR 7 — now a number, not the formula."""
+    mace = next(w["id"] for w in catalog()["weapons"] if w["name"] == "Osmium Mace")
+
+    def at(strength: int) -> tuple[str, str]:
+        attrs = default_attributes(find_metatype("Human", None))
+        attrs["STR"] = strength
+        ch = _human("mace", weapons=[WeaponInstall(weapon_id=mace)], career=True)
+        ch.attributes = attrs
+        row = compute(ch).derived["weapons"][0]
+        return str(row["accuracy"]), str(row["damage"])
+
+    assert at(4) == ("3", "6P")
+    assert at(5) == ("4", "9P")
+    assert at(6) == ("4", "10P")  # a human stops at 6; the STR 7 step is below
+
+
+def test_eval_attr_stat_handles_number_tests() -> None:
+    from app.engine.formulas import _eval_attr_stat
+
+    assert _eval_attr_stat("3+number({STR} >= 5)", {"STR": 5}) == "4"
+    assert _eval_attr_stat("3+number({STR} >= 5)", {"STR": 4}) == "3"
+    assert _eval_attr_stat("3+number({STR} >= 5)+number({STR} >= 7)", {"STR": 7}) == "5"
+    assert _eval_attr_stat("({STR}+2+(2*number({STR} >= 5))+(2*number({STR} >= 7)))P", {"STR": 7}) == "13P"
+    assert _eval_attr_stat("({STR}+5)P", {"STR": 3}) == "8P"
+    # a signed number is not a sum
+    assert _eval_attr_stat("+1", {"STR": 3}) == "+1"
