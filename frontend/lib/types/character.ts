@@ -220,6 +220,10 @@ export interface Character {
     nuyen_spend_breakdown?: { kind?: string; notice: Notice; amount: number }[];
     reward_log?: { id: string; label: string; karma: number; nuyen: number }[];
     street_cred?: number;
+    /** the part of `street_cred` earned from karma (SR5 p.372) */
+    street_cred_earned?: number;
+    /** karma per point of it: 10, raised by Consummate Professional */
+    street_cred_divisor?: number;
     notoriety_quality?: number;
     notoriety_bonus?: number;
     nuyen_amt?: number;

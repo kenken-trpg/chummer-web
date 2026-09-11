@@ -8912,3 +8912,25 @@ def test_muscle_replacement_switches_celerity_off() -> None:
     assert alone["movement"] != plain["movement"]
     assert both["movement"] == plain["movement"]
     assert _quality_row(both, "Celerity")["disabled_by"] == "Muscle Replacement"
+
+
+def test_street_cred_is_earned_from_career_karma() -> None:
+    """SR5 p.372: one point per 10 karma earned, plus the table's own
+    adjustment; Consummate Professional (AP p.17) makes it 20 karma a point."""
+    st = _into_career("sc", [])
+    st.karma_earned = 25
+    st.street_cred = 3
+    out = compute(st).derived
+    assert (out["street_cred_earned"], out["street_cred_divisor"], out["street_cred"]) == (2, 10, 5)
+
+    st.quality_ids = [_career_quality("Consummate Professional")["id"]]
+    out = compute(st).derived
+    assert (out["street_cred_earned"], out["street_cred_divisor"], out["street_cred"]) == (1, 20, 4)
+
+
+def test_street_cred_outside_career_is_only_the_adjustment() -> None:
+    st = compute(_mundane("sc-chargen"))
+    st.karma_earned = 40
+    st.street_cred = 2
+    out = compute(st).derived
+    assert (out["street_cred_earned"], out["street_cred"]) == (0, 2)

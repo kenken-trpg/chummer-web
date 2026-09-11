@@ -296,6 +296,8 @@ def assemble(ctx: Ctx) -> None:
         "throw_range_str": int(ctx.effects.get("throw_range_str") or 0),
         "lifestyle_cost_mod": int(ctx.effects.get("lifestyle_cost") or 0),
         "street_cred": ctx.street_cred_total,
+        "street_cred_earned": ctx.street_cred_earned,
+        "street_cred_divisor": ctx.street_cred_divisor,
         "notoriety": ctx.notoriety_total,
         "notoriety_quality": ctx.quality_notoriety,
         "notoriety_bonus": int(ctx.state.notoriety_bonus or 0),

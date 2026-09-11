@@ -117,6 +117,8 @@ class EffectsDict(TypedDict):
     throw_range_str: int
     lifestyle_cost: int
     notoriety: int
+    # `<streetcredmultiplier>`: added to the karma-per-Street-Cred divisor (10)
+    street_cred_divisor: int
     fame: int
     public_awareness: int
     essence_penalty: float
@@ -321,6 +323,7 @@ def empty_effects() -> EffectsDict:
         "throw_range_str": 0,
         "lifestyle_cost": 0,
         "notoriety": 0,
+        "street_cred_divisor": 0,
         "fame": 0,
         "public_awareness": 0,
         "essence_penalty": 0.0,
