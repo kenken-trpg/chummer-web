@@ -233,9 +233,19 @@ def economy(ctx: Ctx) -> None:
 
     # `<costdiscount>` decides what a quality costs, so before the sum
     ctx.qualities = apply_cost_discounts(ctx.qualities, quality_req_ctx(ctx))
-    ctx.karma_from_q = sum(
-        q["karma"] for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
-    )
+    paid_qualities = [
+        q for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
+    ]
+    ctx.karma_from_q = sum(q["karma"] for q in paid_qualities)
+    rules = current_rules()
+    if rules.quality_exceed_negative_no_bonus:
+        # Chummer's `NegativeQualityKarma`: past the limit, a negative
+        # quality is still taken but its karma is not handed out.
+        negative = sum(-int(q["karma"]) for q in paid_qualities if int(q["karma"]) < 0)
+        excess = max(0, negative - rules.quality_karma_cap_negative)
+        if excess:
+            ctx.karma_from_q += excess
+            ctx.warn("engine.qualities.negativeNoBonus", karma=excess, limit=rules.quality_karma_cap_negative)
     ctx.mystic_karma = int(ctx.state.mystic_pp) * current_rules().karma_mystic_pp
     ctx.extra_adept_karma = (
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)

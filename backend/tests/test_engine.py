@@ -1752,6 +1752,40 @@ def test_negative_quality_karma_is_capped_at_25() -> None:
     assert has(out.derived["errors"], "engine.qualities.negativeCap")
 
 
+def _over_the_negative_cap(cid: str, settings: SettingsState) -> CharacterState:
+    return _human(
+        cid,
+        quality_ids=[ALLERGY_EXTREME, ALLERGY_MILD],
+        quality_extras={ALLERGY_EXTREME: "Bees", ALLERGY_MILD: "Sunlight"},
+        settings=settings,
+    )
+
+
+def test_a_settings_file_may_let_negative_qualities_pass_the_cap() -> None:
+    """`<exceednegativequalities>` (the Missions presets): 30 karma of
+    negatives is legal and all 30 is paid out."""
+    capped = compute(_over_the_negative_cap("neg-strict", SettingsState()))
+    loose = compute(_over_the_negative_cap("neg-loose", SettingsState(exceed_negative_qualities=True)))
+    assert not has(loose.derived["errors"], "engine.qualities.negativeCap")
+    assert loose.derived["karma"]["negative"]["used"] == 30
+    assert loose.derived["karma"]["remaining"] == capped.derived["karma"]["remaining"]
+
+
+def test_past_the_cap_a_no_bonus_file_pays_no_karma() -> None:
+    """`<exceednegativequalitiesnobonus>`: the qualities stay, but only 25 of
+    the 30 karma is handed out (Chummer's `NegativeQualityKarma`)."""
+    loose = compute(_over_the_negative_cap("neg-loose2", SettingsState(exceed_negative_qualities=True)))
+    no_bonus = compute(
+        _over_the_negative_cap(
+            "neg-nobonus",
+            SettingsState(exceed_negative_qualities=True, exceed_negative_qualities_no_bonus=True),
+        )
+    )
+    assert not has(no_bonus.derived["errors"], "engine.qualities.negativeCap")
+    assert no_bonus.derived["karma"]["remaining"] == loose.derived["karma"]["remaining"] - 5
+    assert has(no_bonus.derived["warnings"], "engine.qualities.negativeNoBonus", karma=5, limit=25)
+
+
 def test_human_looking_requires_nonhuman_metatype() -> None:
     human = compute(_human("looking-human", quality_ids=[HUMAN_LOOKING]))
     assert has(human.derived["errors"], "engine.qualities.prereq", name="Human-Looking")

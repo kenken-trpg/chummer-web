@@ -560,7 +560,8 @@ def apply_quality_rules(
         forbidden = spec.get("forbidden_tree") or []
         if forbidden and requirement_tree_met(forbidden, ctx):
             errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
-    if negative_gain > current_rules().quality_karma_cap_negative and not career:
+    rules = current_rules()
+    if negative_gain > rules.quality_karma_cap_negative and not career and not rules.quality_exceed_negative:
         errors.append(
             notice(
                 "engine.qualities.negativeCap", karma=negative_gain, limit=current_rules().quality_karma_cap_negative
