@@ -19,6 +19,7 @@ from ...improvements import EffectsDict
 from ...improvements.effect_rows import AddSpiritPickRow
 from ...models import CharacterState, SpiritInstall
 from ...notices import Notice, notice, term
+from ...rules import current_rules
 from ..bundle_types import SpiritsBundle
 from ..constants import SPIRIT_REAGENT_YEN, SPIRIT_ROLE_LABELS, SPIRIT_TALENTS, quality_addspirit_extra_key
 from ..dice import magic_opposed_test
@@ -109,13 +110,18 @@ def resolve_spirits(
     *,
     limit_spirits: list[str] | None = None,
     extra_spirits: list[str] | None = None,
+    bound_limit: int | None = None,
 ) -> SpiritsBundle:
+    """``bound_limit`` is the bound-spirit ceiling (CHA under Standard);
+    ``None`` skips the check."""
     warnings: list[Notice] = []
+    errors: list[Notice] = []
+    bound_count = 0
     public: list[dict[str, Any]] = []
     nuyen = 0
     if talent_name not in SPIRIT_TALENTS:
         state.spirits = []
-        return {"warnings": warnings, "public": public, "nuyen": 0}
+        return {"warnings": warnings, "errors": errors, "public": public, "nuyen": 0}
     allowed = {name: role for role, name in (tradition.get("spirits") or {}).items()} if tradition else {}
     extra_set = {str(name).strip() for name in (extra_spirits or []) if str(name).strip()}
     for name in extra_set:
@@ -152,6 +158,8 @@ def resolve_spirits(
             services = max(0, int(inst.services or 0))
         inst.services = services
         cost = force * SPIRIT_REAGENT_YEN if bound else 0
+        if bound and not spec.get("ignore_bound_limit"):
+            bound_count += 1
         nuyen += cost
         if bound is False and inst.hits is not None and inst.opposed_hits is not None and services <= 0:
             warnings.append(notice("engine.spirits.summonFailed", name=term(str(spec["name"]))))
@@ -184,7 +192,16 @@ def resolve_spirits(
             }
         )
     state.spirits = kept
-    return {"warnings": warnings, "public": public, "nuyen": nuyen}
+    if bound_limit is not None and bound_count > bound_limit:
+        errors.append(
+            notice(
+                "engine.spirits.boundOverLimit",
+                count=bound_count,
+                max=bound_limit,
+                attr=current_rules().bound_spirit_attr,
+            )
+        )
+    return {"warnings": warnings, "errors": errors, "public": public, "nuyen": nuyen}
 
 
 def attach_spirit_tests(

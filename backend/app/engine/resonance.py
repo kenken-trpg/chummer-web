@@ -266,7 +266,10 @@ def resolve_sprites(
     talent_name: str,
     res: int,
     stream: dict[str, Any] | None,
+    registered_limit: int | None = None,
 ) -> SpritesBundle:
+    """``registered_limit`` is the registered-sprite ceiling (CHA under
+    Standard); ``None`` falls back to Resonance."""
     warnings: list[Notice] = []
     public: list[dict[str, Any]] = []
     errors: list[Notice] = []
@@ -328,8 +331,16 @@ def resolve_sprites(
             }
         )
     state.sprites = kept
-    if registered_count > res:
-        errors.append(notice("engine.sprites.registeredOverResonance", count=registered_count, max=res))
+    limit = res if registered_limit is None else max(0, int(registered_limit))
+    if registered_count > limit:
+        errors.append(
+            notice(
+                "engine.sprites.registeredOverLimit",
+                count=registered_count,
+                max=limit,
+                attr=current_rules().registered_sprite_attr if registered_limit is not None else "RES",
+            )
+        )
     return {"warnings": warnings, "errors": errors, "public": public}
 
 

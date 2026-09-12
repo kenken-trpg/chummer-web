@@ -255,3 +255,19 @@ def test_a_contact_expression_this_app_cannot_evaluate_is_reported() -> None:
     parsed = parse_settings_xml(_settings_xml(contactpointsexpression="({CHAUnaug} + {INTUnaug}) * 2"))
     assert parsed.contact_free_mult is None
     assert "contactpointsexpression" in parsed.unsupported
+
+
+def test_the_spirit_and_sprite_limits_read_a_single_attribute() -> None:
+    """Standard writes `{CHA}` for both; the German presets `{LOG}` for sprites."""
+    parsed = parse_settings_xml(_settings_xml(boundspiritexpression="{CHA}", registeredspriteexpression="{LOG}"))
+    assert parsed.bound_spirit_attr == "CHA"
+    assert parsed.registered_sprite_attr == "LOG"
+    assert parsed.unsupported == []
+    rules = rules_for(parsed)
+    assert (rules.bound_spirit_attr, rules.registered_sprite_attr) == ("CHA", "LOG")
+
+
+def test_a_limit_expression_this_app_cannot_evaluate_is_reported() -> None:
+    parsed = parse_settings_xml(_settings_xml(boundspiritexpression="{CHA} + 1"))
+    assert parsed.bound_spirit_attr is None
+    assert "boundspiritexpression" in parsed.unsupported

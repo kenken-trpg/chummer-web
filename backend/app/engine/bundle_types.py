@@ -189,6 +189,7 @@ class SpiritsBundle(TypedDict):
     """``resolve_spirits`` — bound / unbound spirits and their reagent nuyen."""
 
     warnings: list[Notice]
+    errors: list[Notice]
     public: list[dict[str, Any]]
     nuyen: int
 
@@ -370,7 +371,7 @@ def empty_spells() -> SpellsBundle:
 
 
 def empty_spirits() -> SpiritsBundle:
-    return SpiritsBundle(warnings=[], public=[], nuyen=0)
+    return SpiritsBundle(warnings=[], errors=[], public=[], nuyen=0)
 
 
 def empty_complex_forms() -> ComplexFormsBundle:

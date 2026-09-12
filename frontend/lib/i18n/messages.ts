@@ -1602,6 +1602,7 @@ const JA = {
   "engine.spells.unknownSpell": "{source} の呪文 {name} が見つかりません",
 
   "engine.spirits.blockedByLimit": "{name} はこの制限では召喚できません",
+  "engine.spirits.boundOverLimit": "束縛できる精霊は {attr} までです（{count}/{max}）",
   "engine.spirits.extraInvalid": "{source} の追加精霊が不正です（{picked}）",
   "engine.spirits.needsMagic": "{name} を召喚するには魔力が必要です",
   "engine.spirits.needsTradition": "精霊を召喚するには伝統を選んでください",
@@ -1663,7 +1664,7 @@ const JA = {
   "engine.sprites.notInStream": "{name} はこのストリームではコンパイルできません",
   "engine.sprites.registerNeedsSkill":
     "{name} の登録判定に{skill}が必要です（未習得・デフォルト不可）",
-  "engine.sprites.registeredOverResonance": "登録できるスプライトは共振力までです（{count}/{max}）",
+  "engine.sprites.registeredOverLimit": "登録できるスプライトは {attr} までです（{count}/{max}）",
 
   "engine.martial.oneTechniqueOnly": "{name} は技を1つまでです（余分を外しました）",
   "engine.martial.pickTechnique": "{name} の技を1つ選んでください",
@@ -3361,6 +3362,7 @@ const EN: Catalog = {
   "engine.spells.unknownSpell": "{source}: no such spell {name}",
 
   "engine.spirits.blockedByLimit": "{name} is blocked by a summoning limit",
+  "engine.spirits.boundOverLimit": "You may hold at most {attr} bound spirits ({count}/{max})",
   "engine.spirits.extraInvalid": "{source}: {picked} is not a valid extra spirit",
   "engine.spirits.needsMagic": "Summoning {name} requires Magic",
   "engine.spirits.needsTradition": "Choose a tradition before summoning spirits",
@@ -3421,8 +3423,7 @@ const EN: Catalog = {
   "engine.sprites.notInStream": "{name} cannot be compiled in this stream",
   "engine.sprites.registerNeedsSkill":
     "Registering {name} needs {skill} (not known, no defaulting)",
-  "engine.sprites.registeredOverResonance":
-    "You may register at most Resonance sprites ({count}/{max})",
+  "engine.sprites.registeredOverLimit": "You may register at most {attr} sprites ({count}/{max})",
 
   "engine.martial.oneTechniqueOnly": "{name} allows a single technique; the extras were dropped",
   "engine.martial.pickTechnique": "Choose a technique for {name}",

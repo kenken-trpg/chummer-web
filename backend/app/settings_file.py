@@ -79,6 +79,9 @@ _HANDLED_ELSEWHERE = {
     "chargenkarmatonuyenexpression",
     # Read by `_contact_points` when it is the plain multiplier shape.
     "contactpointsexpression",
+    # Read into `_ATTR_FIELDS` when they are a single attribute.
+    "boundspiritexpression",
+    "registeredspriteexpression",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
@@ -91,6 +94,17 @@ _KARMA_NUYEN_EXPR = re.compile(r"^\{Karma\}\s*\*\s*(\d+)\s*\+\s*\{PriorityNuyen\
 #: prices contacts with: unaugmented Charisma times a multiplier. Prime Runner
 #: writes `* 6`; anything that is not a plain multiplier gets reported.
 _CONTACT_POINTS_EXPR = re.compile(r"^\{CHAUnaug\}\s*\*\s*(\d+)$")
+
+#: `{CHA}` — `<boundspiritexpression>` / `<registeredspriteexpression>` as a
+#: single attribute, which is every shape Chummer ships (Standard `{CHA}`,
+#: the German presets `{LOG}` for sprites).
+_ATTR_EXPR = re.compile(r"^\{(BOD|AGI|REA|STR|CHA|INT|LOG|WIL|EDG|MAG|RES)\}$")
+
+#: `<tag>` -> `SettingsState` field, for the single-attribute limits.
+_ATTR_FIELDS: dict[str, str] = {
+    "boundspiritexpression": "bound_spirit_attr",
+    "registeredspriteexpression": "registered_sprite_attr",
+}
 
 
 @lru_cache(maxsize=1)
@@ -223,6 +237,15 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         unsupported.append("chargenkarmatonuyenexpression")
     if not contact_understood:
         unsupported.append("contactpointsexpression")
+    for tag, field in _ATTR_FIELDS.items():
+        expression = flat.get(tag, "")
+        if not expression:
+            continue
+        match = _ATTR_EXPR.match(expression)
+        if match is None:
+            unsupported.append(tag)
+        else:
+            fields[field] = match.group(1)
 
     return SettingsState(
         name=_text(root.find("name")),

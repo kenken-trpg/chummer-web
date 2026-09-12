@@ -1,4 +1,5 @@
 from app.data_loader import catalog, parse_avail
+from app.data_loader.loaders.magic.spells import load_spirits
 from app.engine import (
     compute,
     default_attributes,
@@ -5940,7 +5941,28 @@ def test_compiled_sprite_can_exceed_resonance() -> None:
 def test_too_many_registered_sprites() -> None:
     sprites = [SpriteInstall(sprite_id=COURIER_SPRITE, level=1, registered=True) for _ in range(4)]
     out = compute(_techno("too-many", "C", sprites=sprites))
-    assert has(out.derived["errors"], "engine.sprites.registeredOverResonance")
+    assert has(out.derived["errors"], "engine.sprites.registeredOverLimit", attr="CHA", count=4, max=1)
+
+
+def test_registered_sprites_are_capped_by_charisma_not_resonance() -> None:
+    """Chummer's Standard `<registeredspriteexpression>` is `{CHA}`."""
+
+    def run(cid: str, cha: int, settings: SettingsState | None = None) -> list:
+        state = _techno(
+            cid, "A", sprites=[SpriteInstall(sprite_id=COURIER_SPRITE, level=1, registered=True) for _ in range(2)]
+        )
+        state.attributes["CHA"] = cha
+        state.attributes["LOG"] = 2
+        if settings is not None:
+            state.settings = settings
+        out = compute(state)
+        assert out.derived["totals"]["RES"] >= 2
+        return out.derived["errors"]
+
+    assert has(run("cha1", 1), "engine.sprites.registeredOverLimit", max=1)
+    assert not has(run("cha2", 2), "engine.sprites.registeredOverLimit")
+    # the German presets cap them by LOG instead
+    assert not has(run("log", 1, SettingsState(registered_sprite_attr="LOG")), "engine.sprites.registeredOverLimit")
 
 
 def test_mage_has_no_technomancer_tabs() -> None:
@@ -9179,3 +9201,31 @@ def test_a_settings_contact_multiplier_widens_the_free_network() -> None:
     out = compute(state)
     assert out.derived["contact_points"]["free"] == 18
     assert out.derived["contact_points"]["free_mult"] == 6
+
+
+def test_bound_spirits_are_capped_by_charisma() -> None:
+    """Chummer's Standard `<boundspiritexpression>` is `{CHA}`; an unbound
+    spirit does not count."""
+
+    def run(cid: str, cha: int, *, second_bound: bool = True) -> list:
+        state = _mage(
+            cid,
+            tradition_id=HERMETIC,
+            spirits=[
+                SpiritInstall(spirit_id=SPIRIT_FIRE, force=2, services=1),
+                SpiritInstall(spirit_id=SPIRIT_FIRE, force=2, services=1, bound=second_bound),
+            ],
+        )
+        state.attributes["CHA"] = cha
+        return compute(state).derived["errors"]
+
+    assert has(run("bound-cha1", 1), "engine.spirits.boundOverLimit", attr="CHA", count=2, max=1)
+    assert not has(run("bound-cha2", 2), "engine.spirits.boundOverLimit")
+    assert not has(run("unbound", 1, second_bound=False), "engine.spirits.boundOverLimit")
+
+
+def test_homunculi_and_watchers_sit_outside_the_bound_limit() -> None:
+    flagged = {row["name"] for row in load_spirits() if row["ignore_bound_limit"]}
+    assert "Watcher" in flagged
+    assert "Homunculus (Fragile)" in flagged
+    assert "Spirit of Fire" not in flagged

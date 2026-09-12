@@ -314,6 +314,10 @@ class SettingsState(BaseModel):
     #: `<contactpointsexpression>`'s multiplier: free contact points are
     #: unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
     contact_free_mult: int | None = None
+    #: The attribute capping bound spirits / registered sprites
+    #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
+    bound_spirit_attr: str | None = Field(default=None, max_length=3)
+    registered_sprite_attr: str | None = Field(default=None, max_length=3)
     banned_ware_grades: list[str] = Field(default_factory=list)
     #: `<customdatadirectorynames>`, enabled ones only, in the order the file
     #: gave them — order decides who wins when two directories edit the same
