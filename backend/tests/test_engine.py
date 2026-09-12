@@ -742,7 +742,8 @@ def test_one_customized_arm_pulls_body_strength() -> None:
     )
     out = compute(state)
     assert out.derived["limb_replace"]["count"] == 1
-    assert out.derived["limb_replace"]["parts"] == 5
+    # Chummer's six limbs, skull included: (6 + 1×5) / 6, rounded up
+    assert out.derived["limb_replace"]["parts"] == 6
     assert out.derived["totals"]["STR"] == 2
     assert out.derived["limb_replace"]["meat_str"] == 1
 
@@ -803,12 +804,12 @@ def test_gear_a_quality_granted_is_not_written_into_the_character() -> None:
     assert state.gear == []
 
 
-def test_shiva_arms_average_a_cyberlimb_over_seven_parts() -> None:
+def test_shiva_arms_average_a_cyberlimb_over_eight_parts() -> None:
     """`addlimb`: a second pair of arms (RF p.118) is two more body parts to
     average a cyberlimb's STR/AGI over (SR5 p.456), so the same two cyberarms
     move the total less."""
     attrs = default_attributes(find_metatype("Human", None))
-    attrs["STR"] = 3
+    attrs["STR"] = 2
     limbs = [
         CyberwareInstall(id="arm1", ware_id=ARM),
         CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm1"),
@@ -829,8 +830,9 @@ def test_shiva_arms_average_a_cyberlimb_over_seven_parts() -> None:
 
     plain = compute(build([]))
     shiva = compute(build([SHIVA_ARMS]))
-    assert plain.derived["limb_replace"]["parts"] == 5
-    assert shiva.derived["limb_replace"]["parts"] == 7
+    # six limbs (skull included) and two more arms: 4 = ⌈20/6⌉, 3 = ⌈24/8⌉
+    assert plain.derived["limb_replace"]["parts"] == 6
+    assert shiva.derived["limb_replace"]["parts"] == 8
     assert shiva.derived["limb_replace"]["count"] == 2
     assert shiva.derived["totals"]["STR"] < plain.derived["totals"]["STR"]
     tags = [item["tag"] for item in shiva.derived["unimplemented_bonuses"]]
@@ -9339,3 +9341,31 @@ def test_two_cyberlegs_set_movement_under_the_house_rule() -> None:
 
     one = compute(_legged("leg-one", 1, on)).derived
     assert one["movement"]["walk"] == "2", "a single cyberleg does not count"
+
+
+def test_a_cyberarm_averages_over_six_limbs_rounding_up() -> None:
+    """Chummer's `CalculatedTotalValue`: AGI 3 with one AGI 5 arm is
+    ⌈(5 + 3×5) / 6⌉ = 4, where five parts rounded down gave 3."""
+    state = _human(
+        "arm-avg",
+        cyberware=[
+            CyberwareInstall(id="a1", ware_id=ARM, side="Left"),
+            CyberwareInstall(ware_id=CUSTOM_AGI, rating=5, parent_id="a1"),
+        ],
+    )
+    state.attributes["AGI"] = 3
+    assert compute(state).derived["totals"]["AGI"] == 4
+
+
+def test_a_cyberskull_is_one_of_the_limbs() -> None:
+    """A skull has STR 3 like any cyberlimb, so on a STR 1 body it lifts the
+    average to ⌈(3 + 1×5) / 6⌉ = 2 — unless the settings leave the skull
+    out, as Neon Anarchy's `<excludelimbslot>skull` does."""
+    plain = compute(_human("skull", cyberware=[CyberwareInstall(ware_id=SKULL)])).derived
+    assert plain["limb_replace"]["count"] == 1
+    assert plain["totals"]["STR"] == 2
+
+    anarchy = SettingsState(limb_count=5, exclude_limb_slot="skull")
+    out = compute(_human("skull-na", cyberware=[CyberwareInstall(ware_id=SKULL)], settings=anarchy))
+    assert out.derived["limb_replace"] is None
+    assert out.derived["totals"]["STR"] == 1

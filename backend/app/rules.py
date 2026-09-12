@@ -92,6 +92,10 @@ class Rules:
     #: rolls `min(min, max)` of the two settings.
     min_astral_initiative_dice: int = 3
     max_astral_initiative_dice: int = 5
+    #: Cyberlimb averaging (Chummer's `LimbCount`): six limbs, skull
+    #: included, unless a settings file says otherwise.
+    limb_count: int = 6
+    exclude_limb_slot: str = ""
 
     # --- money ---------------------------------------------------------
     karma_to_nuyen: int = 2000
@@ -160,6 +164,7 @@ _DIRECT: dict[str, str] = {
     "chargen_avail_max": "chargen_avail_max",
     "min_astral_initiative_dice": "min_astral_initiative_dice",
     "max_astral_initiative_dice": "max_astral_initiative_dice",
+    "limb_count": "limb_count",
     "karma_to_nuyen": "karma_to_nuyen",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
     "contact_free_mult": "contact_free_mult",
@@ -201,6 +206,9 @@ def rules_for(settings: object | None) -> Rules:
         attr = getattr(settings, attr_field, None)
         if attr:
             overrides[attr_field] = str(attr)
+    exclude = getattr(settings, "exclude_limb_slot", None)
+    if exclude:
+        overrides["exclude_limb_slot"] = str(exclude)
     table = getattr(settings, "priority_table", None)
     if table:
         overrides["priority_table"] = str(table)

@@ -38,6 +38,7 @@ _INT_FIELDS: dict[str, str] = {
     "nuyenmaxbp": "priority_karma_nuyen_base",
     "nuyenperbpwftm": "karma_to_nuyen",
     "minastralinitiativedice": "min_astral_initiative_dice",
+    "limbcount": "limb_count",
     "maxastralinitiativedice": "max_astral_initiative_dice",
 }
 
@@ -62,6 +63,8 @@ _KARMA_FIELDS: dict[str, str] = {
 #: they are not reported as ignored.
 _HANDLED_ELSEWHERE = {
     "id",
+    # a slot name, not a number: read next to `_BOOL_FIELDS`
+    "excludelimbslot",
     "name",
     "gameplayoptionname",
     "books",
@@ -230,6 +233,8 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         value = _int(flat.get(tag, ""))
         if value is not None:
             fields[field] = value
+    if flat.get("excludelimbslot", "").strip():
+        fields["exclude_limb_slot"] = flat["excludelimbslot"].strip().lower()
     for tag, field in _BOOL_FIELDS.items():
         text = flat.get(tag, "").lower()
         if text in ("true", "false"):

@@ -311,6 +311,10 @@ class SettingsState(BaseModel):
     chargen_avail_max: int | None = None
     min_astral_initiative_dice: int | None = None
     max_astral_initiative_dice: int | None = None
+    #: `<limbcount>` / `<excludelimbslot>`: how many limbs a cyberlimb's
+    #: STR / AGI is averaged across, and a slot left out of that average
+    limb_count: int | None = None
+    exclude_limb_slot: str | None = Field(default=None, max_length=20)
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
     #: `<contactpointsexpression>`'s multiplier: free contact points are
