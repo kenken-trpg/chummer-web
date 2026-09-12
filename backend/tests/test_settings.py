@@ -331,3 +331,7 @@ def test_the_upload_reads_the_settings_and_build_method_from_one_parse() -> None
     assert build_method == "SumToTen"
     _, none = parse_settings_upload(_settings_xml(sumtoten=13))
     assert none is None
+
+
+def test_the_number_of_attributes_allowed_at_maximum_is_read() -> None:
+    assert parse_settings_xml(_settings_xml(maxnumbermaxattributescreate=2)).chargen_attributes_at_max == 2

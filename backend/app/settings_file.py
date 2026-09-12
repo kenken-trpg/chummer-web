@@ -32,6 +32,7 @@ _INT_FIELDS: dict[str, str] = {
     "qualitykarmalimit": "quality_karma_limit",
     "maxskillratingcreate": "chargen_skill_max",
     "maxknowledgeskillratingcreate": "chargen_knowledge_skill_max",
+    "maxnumbermaxattributescreate": "chargen_attributes_at_max",
     "maxskillrating": "career_skill_max",
     "maxknowledgeskillrating": "career_skill_group_max",
     "availability": "chargen_avail_max",

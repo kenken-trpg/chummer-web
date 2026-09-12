@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import EffectsDict, resolve_precedence
 from ...notices import term
 from ...rules import current_rules
@@ -196,23 +197,20 @@ def finalize(ctx: Ctx) -> None:
         if len(at_six) > 1:
             ctx.err("engine.skills.oneAtSix")
         # SR5 p.65: no more than one attribute at its natural maximum at
-        # character creation (Edge / unused special attributes don't count).
-        # Applies to every build method, not just Karma.
+        # character creation. Chummer counts its `AttributeList` — BOD to WIL
+        # — and not the special attributes: an Adept with MAG 6 may still
+        # take AGI to 6. Applies to every build method, not just Karma.
         at_natural_max = []
-        for key, spec in ctx.attrs_spec.items():
-            if key in {"ESS", "EDG", "MAG", "RES"} and key != ctx.special_key:
-                continue
-            if key not in ctx.ratings:
+        for key in PHYSICAL_ATTRS:
+            spec = ctx.attrs_spec.get(key)
+            if spec is None or key not in ctx.ratings:
                 continue
             racial_max = int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0)
-            if key == "MAG" and ctx.special_key == "MAG":
-                racial_max = racial_max + int(ctx.initiation.get("mag_max_bonus") or 0)
-            if key == "RES" and ctx.special_key == "RES":
-                racial_max = racial_max + int(ctx.submersion.get("res_max_bonus") or 0)
             if racial_max > 0 and int(ctx.ratings.get(key) or 0) >= racial_max:
                 at_natural_max.append(key)
-        if len(at_natural_max) > 1:
-            ctx.err("engine.attrs.oneAtNaturalMax")
+        limit = current_rules().chargen_attributes_at_max
+        if len(at_natural_max) > limit:
+            ctx.err("engine.attrs.oneAtNaturalMax", count=len(at_natural_max), limit=limit)
         if not ctx.is_karma:
             if ctx.spent_physical > ctx.attr_points:
                 ctx.err("engine.attrs.pointsOver", used=ctx.spent_physical, max=ctx.attr_points)

@@ -1438,7 +1438,8 @@ const JA = {
 
   "engine.attrs.attributeNotAllowed": "{source} に {picked} は選べません",
   "engine.attrs.essenceDepleted": "エッセンスが0以下です",
-  "engine.attrs.oneAtNaturalMax": "作成時に自然上限の能力値は1つまでです",
+  "engine.attrs.oneAtNaturalMax":
+    "作成時に自然上限にできる能力値（BOD〜WIL）は {limit} つまでです（今は {count} つ）",
   "engine.attrs.pickAttribute": "{source} の能力値を選んでください",
   "engine.attrs.pointsOver": "能力値点が不足しています（使用 {used} / 上限 {max}）",
   "engine.attrs.specialPointsOver": "特殊能力値点が不足しています（使用 {used} / 上限 {max}）",
@@ -3205,7 +3206,8 @@ const EN: Catalog = {
 
   "engine.attrs.attributeNotAllowed": "{picked} is not an option for {source}",
   "engine.attrs.essenceDepleted": "Essence has dropped to 0 or below",
-  "engine.attrs.oneAtNaturalMax": "Only one attribute may start at its natural maximum",
+  "engine.attrs.oneAtNaturalMax":
+    "At most {limit} of BOD–WIL may start at their natural maximum (now {count})",
   "engine.attrs.pickAttribute": "Choose an attribute for {source}",
   "engine.attrs.pointsOver": "Not enough attribute points (spent {used} / {max})",
   "engine.attrs.specialPointsOver": "Not enough special attribute points (spent {used} / {max})",

@@ -88,6 +88,9 @@ class Rules:
     cyberleg_movement: bool = False
     chargen_skill_max: int = CHARGEN_SKILL_MAX
     chargen_knowledge_skill_max: int = CHARGEN_KNOWLEDGE_SKILL_MAX
+    #: `<maxnumbermaxattributescreate>`: how many of BOD..WIL may sit at
+    #: their natural maximum when creation ends (SR5 p.65: one)
+    chargen_attributes_at_max: int = 1
     career_skill_max: int = 12
     career_skill_group_max: int = 12
     chargen_avail_max: int = CHARGEN_AVAIL_MAX
@@ -163,6 +166,7 @@ _DIRECT: dict[str, str] = {
     "karma_submersion_per_grade": "karma_submersion_per_grade",
     "chargen_skill_max": "chargen_skill_max",
     "chargen_knowledge_skill_max": "chargen_knowledge_skill_max",
+    "chargen_attributes_at_max": "chargen_attributes_at_max",
     "career_skill_max": "career_skill_max",
     "career_skill_group_max": "career_skill_group_max",
     "chargen_avail_max": "chargen_avail_max",

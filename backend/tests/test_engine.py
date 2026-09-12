@@ -7995,6 +7995,35 @@ def test_only_one_attribute_at_natural_max_for_priority_build() -> None:
     assert not has(ok.derived["errors"], "engine.attrs.oneAtNaturalMax")
 
 
+def _adept_at_mag_six(cid: str, **attrs: int) -> CharacterState:
+    base = default_attributes(find_metatype("Human", None))
+    base.update(attrs)
+    return CharacterState(
+        id=cid,
+        name=cid,
+        build_method="Priority",
+        priorities=Priorities(Heritage="E", Attributes="A", Talent="B", Skills="C", Resources="D"),
+        metatype="Human",
+        talent="Adept",
+        attributes={**base, "MAG": 6},
+    )
+
+
+def test_a_special_attribute_at_its_maximum_is_not_counted() -> None:
+    """Chummer counts its `AttributeList` — BOD to WIL. MAG 6 plus AGI 6 on a
+    human Adept is one attribute at the maximum, not two."""
+    out = compute(_adept_at_mag_six("natmax-mag", AGI=6))
+    assert out.attributes["MAG"] == 6
+    assert not has(out.derived["errors"], "engine.attrs.oneAtNaturalMax")
+
+
+def test_the_settings_file_can_allow_more_attributes_at_maximum() -> None:
+    state = _adept_at_mag_six("natmax-two", AGI=6, BOD=6)
+    assert has(compute(state.model_copy(deep=True)).derived["errors"], "engine.attrs.oneAtNaturalMax")
+    state.settings.chargen_attributes_at_max = 2
+    assert not has(compute(state).derived["errors"], "engine.attrs.oneAtNaturalMax")
+
+
 def test_leftover_nuyen_carryover_notice() -> None:
     prio = Priorities(Heritage="C", Attributes="D", Talent="E", Skills="B", Resources="A")
     chargen = compute(_mundane("carry-cg", priorities=prio))
