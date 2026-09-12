@@ -314,6 +314,11 @@ class SettingsState(BaseModel):
     #: `<contactpointsexpression>`'s multiplier: free contact points are
     #: unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
     contact_free_mult: int | None = None
+    #: `<exceednegativequalities>`: negative qualities may pass the karma
+    #: limit at chargen; `<exceednegativequalitiesnobonus>`: the part past it
+    #: gives no karma.
+    exceed_negative_qualities: bool | None = None
+    exceed_negative_qualities_no_bonus: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

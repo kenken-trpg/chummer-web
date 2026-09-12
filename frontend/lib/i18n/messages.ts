@@ -1563,6 +1563,8 @@ const JA = {
     "メタジェネティック資質のカルマ収支が不均衡です（不利 {negative}、必要 {min}〜{max}）",
   "engine.qualities.negativeCap":
     "不利資質から得られるカルマが上限を超えています（{karma} / {limit}）",
+  "engine.qualities.negativeNoBonus":
+    "不利資質のカルマは上限 {limit} までしか得られません（超過 {karma} は加算しません）",
   "engine.qualities.pickAddSpirit": "{name} の追加精霊を選んでください",
   "engine.qualities.pickOptionalPower": "{name} の任意パワーを 1 つ選んでください",
   "engine.qualities.pickExtra": "{name} の対象を入力してください",
@@ -3322,6 +3324,8 @@ const EN: Catalog = {
     "Metagenic karma is unbalanced (negative {negative}, needs {min}–{max})",
   "engine.qualities.negativeCap":
     "Karma gained from negative qualities is over the limit ({karma} / {limit})",
+  "engine.qualities.negativeNoBonus":
+    "Negative qualities give karma only up to {limit}; the {karma} past it is not added",
   "engine.qualities.pickAddSpirit": "Choose the extra spirit for {name}",
   "engine.qualities.pickOptionalPower": "Choose one optional power for {name}",
   "engine.qualities.pickExtra": "Enter a target for {name}",

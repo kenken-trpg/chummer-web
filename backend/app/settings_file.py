@@ -84,6 +84,12 @@ _HANDLED_ELSEWHERE = {
     "registeredspriteexpression",
 }
 
+#: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
+_BOOL_FIELDS: dict[str, str] = {
+    "exceednegativequalities": "exceed_negative_qualities",
+    "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
+}
+
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
 #: `<chargenkarmatonuyenexpression>` this app can honour, because its own
 #: conversion *is* that formula. Anything else is a real expression and gets
@@ -221,6 +227,10 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         value = _int(flat.get(tag, ""))
         if value is not None:
             fields[field] = value
+    for tag, field in _BOOL_FIELDS.items():
+        text = flat.get(tag, "").lower()
+        if text in ("true", "false"):
+            fields[field] = text == "true"
 
     rate, expression_understood = _karma_to_nuyen(flat)
     if rate is not None:
@@ -231,7 +241,7 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         fields["contact_free_mult"] = contact_mult
 
     baseline = _baseline()
-    read = set(_INT_FIELDS) | set(_KARMA_FIELDS) | _HANDLED_ELSEWHERE
+    read = set(_INT_FIELDS) | set(_KARMA_FIELDS) | set(_BOOL_FIELDS) | _HANDLED_ELSEWHERE
     unsupported = sorted(tag for tag, value in flat.items() if tag not in read and baseline.get(tag, value) != value)
     if not expression_understood:
         unsupported.append("chargenkarmatonuyenexpression")

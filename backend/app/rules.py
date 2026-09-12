@@ -77,6 +77,10 @@ class Rules:
     # --- caps ----------------------------------------------------------
     quality_karma_cap_positive: int = 25
     quality_karma_cap_negative: int = 25
+    #: House rules on that cap: pass it without an error, and (separately)
+    #: earn no karma for what lies past it.
+    quality_exceed_negative: bool = False
+    quality_exceed_negative_no_bonus: bool = False
     chargen_skill_max: int = CHARGEN_SKILL_MAX
     chargen_knowledge_skill_max: int = CHARGEN_KNOWLEDGE_SKILL_MAX
     career_skill_max: int = 12
@@ -174,6 +178,13 @@ def rules_for(settings: object | None) -> Rules:
     if limit is not None:
         overrides["quality_karma_cap_positive"] = int(limit)
         overrides["quality_karma_cap_negative"] = int(limit)
+    for src, dest in (
+        ("exceed_negative_qualities", "quality_exceed_negative"),
+        ("exceed_negative_qualities_no_bonus", "quality_exceed_negative_no_bonus"),
+    ):
+        flag = getattr(settings, src, None)
+        if flag is not None:
+            overrides[dest] = bool(flag)
     grades = getattr(settings, "banned_ware_grades", None)
     if grades:
         overrides["banned_ware_grades"] = tuple(str(g) for g in grades)

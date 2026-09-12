@@ -271,3 +271,14 @@ def test_a_limit_expression_this_app_cannot_evaluate_is_reported() -> None:
     parsed = parse_settings_xml(_settings_xml(boundspiritexpression="{CHA} + 1"))
     assert parsed.bound_spirit_attr is None
     assert "boundspiritexpression" in parsed.unsupported
+
+
+def test_the_negative_quality_house_rules_are_read() -> None:
+    parsed = parse_settings_xml(_settings_xml(exceednegativequalities="True", exceednegativequalitiesnobonus="True"))
+    assert parsed.exceed_negative_qualities is True
+    assert parsed.exceed_negative_qualities_no_bonus is True
+    assert parsed.unsupported == []
+    rules = rules_for(parsed)
+    assert rules.quality_exceed_negative and rules.quality_exceed_negative_no_bonus
+    standard = parse_settings_xml(_settings_xml(exceednegativequalities="False"))
+    assert rules_for(standard) == DEFAULT_RULES
