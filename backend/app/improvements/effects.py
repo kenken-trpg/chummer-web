@@ -176,6 +176,10 @@ class EffectsDict(TypedDict):
     walk_multiplier: dict[str, int]
     run_multiplier: dict[str, int]
     sprint_bonus: dict[str, int]
+    #: the `<percent>` form of the three above: +N% on the rate, by category
+    walk_multiplier_percent: dict[str, int]
+    run_multiplier_percent: dict[str, int]
+    sprint_bonus_percent: dict[str, int]
     skill_category_point_cost_mult: dict[str, int]
     living_persona: dict[str, int]
     #: Extra specialization choices a style/quality opens up, keyed by skill
@@ -335,6 +339,9 @@ def empty_effects() -> EffectsDict:
         "run_multiplier": {},
         "movement_replace": {},
         "sprint_bonus": {},
+        "walk_multiplier_percent": {},
+        "run_multiplier_percent": {},
+        "sprint_bonus_percent": {},
         "fatigue_resist": 0,
         "test_mods": dict.fromkeys(TEST_MOD_TAGS.values(), 0),
         "attribute_selects": [],

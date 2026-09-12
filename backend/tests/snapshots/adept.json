@@ -293,10 +293,10 @@
     "source": "SR5"
   },
   "movement": {
-    "run": "4/0/0",
-    "sprint": "2/1/0",
+    "run": "4",
+    "sprint": "2",
     "sprint_bonus": 0,
-    "walk": "2/1/0"
+    "walk": "2"
   },
   "mystic_pp": 0,
   "native_language_limit": 1,

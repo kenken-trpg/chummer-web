@@ -58,7 +58,13 @@ export function CoreSection(s: SheetData) {
           </div>
           <div>
             <span>{ui("sheet.movement")}</span>
-            <b>{ui("sheet.movementValue", { walk: d.movement.walk, run: d.movement.run })}</b>
+            <b>
+              {ui("sheet.movementValue", {
+                walk: d.movement.walk,
+                run: d.movement.run,
+                sprint: d.movement.sprint,
+              })}
+            </b>
           </div>
           {(d.damage_resistance || 0) > 0 ? (
             <div>
