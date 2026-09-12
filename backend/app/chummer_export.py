@@ -15,6 +15,7 @@ from .data_loader import catalog
 from .engine import find_metatype
 from .engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
+    quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
 )
@@ -178,7 +179,9 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         q = _sub(quals, "quality")
         _sub(q, "sourceid", qid)
         _sub(q, "name", names["quality"].get(qid, ""))
-        extra, spell_category = _quality_extra_out(specs.get(qid) or {}, qid, state.quality_extras)
+        extra, spell_category = _quality_extra_out(
+            specs.get(qid) or {}, qid, state.quality_extras, {c.id: c.name for c in state.contacts}
+        )
         if spell_category:
             _sub(q, "guid", qid)
             spell_limits.append((qid, spell_category))
@@ -268,7 +271,9 @@ def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> N
         _sub(el, "grade", -1)
 
 
-def _quality_extra_out(spec: dict[str, Any], qid: str, extras: dict[str, str]) -> tuple[str, str]:
+def _quality_extra_out(
+    spec: dict[str, Any], qid: str, extras: dict[str, str], contact_names: dict[str, str]
+) -> tuple[str, str]:
     """A quality's `<extra>` as Chummer writes it, and a spell category that
     has to go on an improvement instead.
 
@@ -276,6 +281,8 @@ def _quality_extra_out(spec: dict[str, Any], qid: str, extras: dict[str, str]) -
     quality's selected value, `, `-joined: Chain Breaker's two `<addspirit>`
     picks, or Apprentice's `<limitspiritcategory>` spirit — whose
     `<limitspellcategory>` pick is not added, so it rides an improvement.
+    `<selectcontact>` appends the contact's name the same way, after Black
+    Market Pipeline's category.
     """
     if str(spec.get("extra_kind") or "") == "add_spirit":
         marker = f"{qid}{QUALITY_ADDSPIRIT_EXTRA_MARKER}"
@@ -287,7 +294,14 @@ def _quality_extra_out(spec: dict[str, Any], qid: str, extras: dict[str, str]) -
         return ", ".join(value for _, value in picks), ""
     if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
         return extras.get(quality_spirit_category_extra_key(qid), ""), extras.get(qid, "")
+    if _quality_selects_contact(spec):
+        contact = contact_names.get(extras.get(quality_contact_extra_key(qid), ""), "")
+        return ", ".join(part for part in (extras.get(qid, ""), contact) if part), ""
     return extras.get(qid, ""), ""
+
+
+def _quality_selects_contact(spec: dict[str, Any]) -> bool:
+    return any(node.get("tag") == "selectcontact" for node in spec.get("bonus") or [])
 
 
 def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -596,6 +610,9 @@ def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx
     cts = _sub(root, "contacts")
     for crow in state.contacts:
         el = _sub(cts, "contact")
+        # Chummer's `UniqueId`; kept so a quality's pick of this contact
+        # points at the same row after an import
+        _sub(el, "guid", crow.id)
         _sub(el, "name", crow.name)
         _sub(el, "role", crow.role or "")
         _sub(el, "connection", crow.connection)

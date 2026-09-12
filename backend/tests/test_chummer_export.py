@@ -256,3 +256,39 @@ def test_an_apprentice_file_from_before_keeps_its_spell_category() -> None:
     quality.find("extra").text = "Health"  # type: ignore[union-attr]
     back = chum5_to_state(ET.tostring(root))[0]["quality_extras"]
     assert back == {qid: "Health"}
+
+
+def test_black_market_pipelines_contact_survives_the_round_trip() -> None:
+    """`<blackmarketdiscount />` then `<selectcontact />`: Chummer's `<extra>`
+    is the category and the contact's name, `, `-joined. Import points the
+    name back at the contact, which keeps its `<guid>`."""
+    state, qid = _with_quality("Black Market Pipeline", {"{id}": "Weapons"})
+    fixer = ContactInstall(name="Mr. Johnson", role="Fixer", connection=3, loyalty=2)
+    state = state.model_copy(
+        update={"contacts": [fixer], "quality_extras": {qid: "Weapons", f"{qid}:contact": fixer.id}}
+    )
+    xml = state_to_chum5(state)
+    assert _quality_el(xml).findtext("extra") == "Weapons, Mr. Johnson"
+
+    back = chum5_to_state(xml)[0]
+    assert back["contacts"][0]["id"] == fixer.id
+    assert back["quality_extras"] == {qid: "Weapons", f"{qid}:contact": fixer.id}
+
+
+def test_a_chummer_pipeline_names_its_contact_without_our_guid() -> None:
+    """A file Chummer saved has its own contact guids; the name still finds
+    the row, and a name no contact carries is dropped rather than kept dangling."""
+    state, qid = _with_quality("Black Market Pipeline", {"{id}": "Drugs"})
+    root = ET.fromstring(state_to_chum5(state))
+    quality = root.find("./qualities/quality")
+    assert quality is not None
+    quality.find("extra").text = "Drugs, Ghost"  # type: ignore[union-attr]
+    contacts = root.find("contacts")
+    assert contacts is not None
+    ghost = ET.SubElement(contacts, "contact")
+    ET.SubElement(ghost, "name").text = "Ghost"
+    back = chum5_to_state(ET.tostring(root))[0]
+    assert back["quality_extras"] == {qid: "Drugs", f"{qid}:contact": back["contacts"][0]["id"]}
+
+    quality.find("extra").text = "Drugs, Nobody"  # type: ignore[union-attr]
+    assert chum5_to_state(ET.tostring(root))[0]["quality_extras"] == {qid: "Drugs"}
