@@ -11,6 +11,19 @@ import {
   specialArmorLine,
 } from "@/lib/character/format";
 
+/** The other pieces a Custom Fit (Stack) can be tailored to: whole armors
+ * (not `+N` accessories), by catalog name, keeping the current pick even
+ * when that armor has since been sold. */
+function stackTargets(
+  items: { id: string; name: string; additive?: boolean }[],
+  selfId: string,
+  current?: string,
+): string[] {
+  const names = items.filter((row) => row.id !== selfId && !row.additive).map((row) => row.name);
+  if (current) names.push(current);
+  return [...new Set(names)];
+}
+
 export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
@@ -149,6 +162,32 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                             })
                           }
                         />
+                      </label>
+                    ) : null}
+                    {mod.select_armor ? (
+                      <label title={ui("gear.stackWithHint")}>
+                        {" "}
+                        {ui("gear.stackWith")}{" "}
+                        <select
+                          aria-label={ui("gear.stackWith")}
+                          value={mod.stack_with || ""}
+                          onChange={(e) =>
+                            patch({
+                              armor_mods: (ch.armor_mods || []).map((row) =>
+                                row.id === mod.id ? { ...row, stack_with: e.target.value } : row,
+                              ),
+                            })
+                          }
+                        >
+                          <option value="">—</option>
+                          {stackTargets(d.armor_items || [], item.id, mod.stack_with).map(
+                            (name) => (
+                              <option key={name} value={name}>
+                                {tr(name)}
+                              </option>
+                            ),
+                          )}
+                        </select>
                       </label>
                     ) : null}
                     {mod.has_wireless ? (

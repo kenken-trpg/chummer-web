@@ -17,6 +17,7 @@
       "armor_id": "36a4cd30-c32c-44d0-847a-0c15fb51072a",
       "armor_value": 12,
       "armorcapacity": "12",
+      "armoroverride": "",
       "avail": "2",
       "avail_additive": false,
       "avail_folded": false,

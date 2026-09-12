@@ -582,6 +582,8 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
                         "parent_id": row["id"],
                         "rating": max(1, _int(m.find("rating"), 1)),
                         "included": _text(m.find("included")).lower() == "true",
+                        # Custom Fit (Stack): the armor it was tailored to
+                        "stack_with": _text(m.find("extra")),
                     }
                 )
     st["armor"] = st_armor

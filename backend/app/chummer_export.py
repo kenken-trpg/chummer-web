@@ -296,6 +296,8 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
             _sub(mm, "name", names["armormod"].get(mrow.mod_id, ""))
             _sub(mm, "rating", mrow.rating)
             _sub(mm, "included", "True" if mrow.included else "False")
+            if mrow.stack_with:
+                _sub(mm, "extra", mrow.stack_with)
 
 
 def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

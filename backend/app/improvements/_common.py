@@ -235,6 +235,8 @@ SILENT_TAGS = {
     "limitcritterpowercategory",
     "optionalpowers",
     "metageniclimit",
+    # Custom Fit (Stack): read off the mod in `engine/gear/armor.py`, which
+    # stacks the piece onto the armor it names
     "selectarmor",
     "selectsprite",
     "selectinherentaiprogram",

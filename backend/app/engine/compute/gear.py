@@ -110,6 +110,7 @@ def resolve_gear(
                 "armor": spec.get("armor") or "0",
                 "armor_value": value,
                 "additive": additive,
+                "armoroverride": spec.get("armoroverride") or "",
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "equipped": armor_inst.equipped,

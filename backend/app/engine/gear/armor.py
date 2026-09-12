@@ -121,6 +121,7 @@ def _resolve_armor_mods(
         seen_names: set[str] = set()
         seen_unique: set[str] = set()
         item["mod_armor"] = 0
+        item.pop("stack_with", None)
         cap_max_base = eval_formula(str(item.get("armorcapacity") or "0"), int(item.get("rating") or 1), 0)
         parent_unit = int(
             eval_formula(
@@ -205,6 +206,12 @@ def _resolve_armor_mods(
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",
             }
+            if any(node.get("tag") == "selectarmor" for node in spec.get("bonus") or []):
+                inst.stack_with = str(inst.stack_with or "")
+                row["select_armor"] = True
+                row["stack_with"] = inst.stack_with
+                if inst.stack_with:
+                    item["stack_with"] = inst.stack_with
             special = special_armor_from_nodes(display_nodes, rating)
             if special:
                 row["special_armor"] = special
@@ -232,31 +239,50 @@ def _resolve_armor_mods(
     return public, nuyen, warnings, errors, bonus_sources
 
 
+def _stack_value(item: dict[str, Any]) -> int:
+    """What a Custom Fit (Stack) piece adds on top of the armor it was
+    tailored to: its `+N` `<armoroverride>`, 0 when it has none."""
+    value, additive = parse_armor_value(str(item.get("armoroverride") or ""), int(item.get("rating") or 1))
+    return value if additive else 0
+
+
 def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, list[Notice]]:
+    """Only the best piece counts, plus every `+N` accessory (SR5 p.169).
+
+    Custom Fit (Stack) (RG p.59) is the exception: a piece tailored to another
+    worn piece adds its `+N` override to that one instead of competing with it
+    — Chummer's `ArmorRating` stacking pass.
+    """
     warnings: list[Notice] = []
-    base_values: list[tuple[str, int]] = []
-    add_total = 0
-    for item in armor_items:
-        if not item.get("equipped"):
-            item["contributes"] = 0
+    worn = [item for item in armor_items if item.get("equipped")]
+    add_total = sum(int(item.get("armor_value") or 0) for item in worn if item.get("additive"))
+    bases = [item for item in worn if not item.get("additive")]
+    # base piece id -> the pieces stacked onto it
+    stacked_on: dict[str, list[dict[str, Any]]] = {}
+    for item in bases:
+        target = str(item.get("stack_with") or "")
+        if not target or not _stack_value(item):
             continue
-        value = int(item.get("armor_value") or 0)
-        if item.get("additive"):
-            add_total += value
-            item["contributes"] = value
-        else:
-            base_values.append((str(item.get("name") or ""), value))
-    worn_name = ""
-    worn_base = 0
-    if base_values:
-        worn_name, worn_base = max(base_values, key=lambda row: row[1])
-        if len(base_values) > 1:
-            warnings.append(notice("engine.gear.armorHighestOnly"))
+        host = next((other for other in bases if other is not item and other.get("name") == target), None)
+        if host is not None:
+            stacked_on.setdefault(str(host["id"]), []).append(item)
+    best: dict[str, Any] | None = None
+    best_value = 0
+    for item in bases:
+        value = int(item.get("armor_value") or 0) + sum(_stack_value(p) for p in stacked_on.get(str(item["id"]), []))
+        if best is None or value > best_value:
+            best, best_value = item, value
+    riders = stacked_on.get(str(best["id"]), []) if best is not None else []
+    if len(bases) > 1 + len(riders):
+        warnings.append(notice("engine.gear.armorHighestOnly"))
     for item in armor_items:
         if not item.get("equipped"):
             item["contributes"] = 0
-        elif item.get("additive"):
+        elif item.get("additive") or item is best:
             item["contributes"] = int(item.get("armor_value") or 0)
+        elif any(item is rider for rider in riders):
+            item["contributes"] = _stack_value(item)
         else:
-            item["contributes"] = int(item.get("armor_value") or 0) if item.get("name") == worn_name else 0
-    return worn_base + add_total, worn_name, warnings
+            item["contributes"] = 0
+    worn_name = str(best.get("name") or "") if best is not None else ""
+    return best_value + add_total, worn_name, warnings

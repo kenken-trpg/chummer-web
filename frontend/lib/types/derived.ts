@@ -224,6 +224,9 @@ export interface InstalledArmorMod {
   source?: string;
   special_armor?: SpecialArmor;
   limit_modifiers?: LimitModifier[];
+  /** Custom Fit (Stack) `<selectarmor>`: the mod names an armor to stack with */
+  select_armor?: boolean;
+  stack_with?: string;
 }
 
 export interface InstalledArmor {
@@ -234,6 +237,8 @@ export interface InstalledArmor {
   armor: string;
   armor_value: number;
   additive: boolean;
+  /** `+N` a Custom Fit (Stack) piece adds to the armor it stacks with */
+  armoroverride?: string;
   rating: number;
   rating_max: number;
   equipped: boolean;
