@@ -211,8 +211,11 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         st["portrait"] = mug
 
     def prio(tag: str) -> str:
-        v = _text(root.find(f"./priorities/{tag}")) or _text(root.find(tag))
-        return v.upper() if v in "ABCDEabcde" else "C"
+        # Chummer writes `E,0` (letter, sum-to-ten value) and reads only the
+        # letter back (`priority[0]`); a bare letter is what older exports
+        # from this app wrote, nested in `<priorities>`.
+        v = (_text(root.find(tag)) or _text(root.find(f"./priorities/{tag}")))[:1].upper()
+        return v if v and v in "ABCDE" else "C"
 
     st["priorities"] = {
         "Heritage": prio("prioritymetatype"),

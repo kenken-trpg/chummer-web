@@ -114,6 +114,20 @@ def test_round_trip_preserves_the_core() -> None:
     assert st["portrait"] == src.portrait
 
 
+def test_priorities_are_written_where_and_how_chummer_reads_them() -> None:
+    """`Character.Load` reads the priorities straight off `<character>`; a
+    `<priorities>` wrapper was invisible to it and the file opened on defaults."""
+    root = ET.fromstring(state_to_chum5(_rich_state()))
+    assert root.find("priorities") is None
+    assert [root.findtext(t) for t in ("prioritymetatype", "priorityattributes", "priorityspecial")] == [
+        "C,2",
+        "B,3",
+        "A,4",
+    ]
+    assert (root.findtext("priorityskills"), root.findtext("priorityresources")) == ("D,1", "E,0")
+    assert root.findtext("prioritytalent") == "Magician"
+
+
 def test_round_tripped_state_still_validates() -> None:
     st, _ = chum5_to_state(state_to_chum5(_rich_state()))
     ch = import_character({k: v for k, v in st.items() if k != "_warnings"})

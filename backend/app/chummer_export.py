@@ -120,15 +120,27 @@ def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
             _sub(el, "rewardid", row.id)
 
 
+#: Chummer writes a priority as "letter,sum-to-ten value" (`E,0` … `A,4`) —
+#: the form every save it produces carries, in every build method.
+_PRIORITY_VALUE = {"A": 4, "B": 3, "C": 2, "D": 1, "E": 0}
+
+
 def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write the five priority letters and the talent."""
-    pr = _sub(root, "priorities")
-    _sub(pr, "prioritymetatype", state.priorities.Heritage)
-    _sub(pr, "priorityattributes", state.priorities.Attributes)
-    _sub(pr, "priorityspecial", state.priorities.Talent)
-    _sub(pr, "priorityskills", state.priorities.Skills)
-    _sub(pr, "priorityresources", state.priorities.Resources)
-    _sub(pr, "prioritytalent", state.talent)
+    """Write the five priorities and the talent, straight under `<character>`.
+
+    That is where Chummer reads them (`Character.Load`); inside a wrapper
+    element they would be ignored and the character would open on defaults.
+    """
+    p = state.priorities
+    for tag, letter in (
+        ("prioritymetatype", p.Heritage),
+        ("priorityattributes", p.Attributes),
+        ("priorityspecial", p.Talent),
+        ("priorityskills", p.Skills),
+        ("priorityresources", p.Resources),
+    ):
+        _sub(root, tag, f"{letter},{_PRIORITY_VALUE.get(letter, 0)}")
+    _sub(root, "prioritytalent", state.talent)
 
 
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
