@@ -238,6 +238,9 @@ SILENT_TAGS = {
     # Custom Fit (Stack): read off the mod in `engine/gear/armor.py`, which
     # stacks the piece onto the armor it names
     "selectarmor",
+    # Sprite Affinity: the pick is the quality's extra, offered from the
+    # sprite list in `data_loader` (Chummer's `AddSprite` only widens a
+    # stream's sprite list, and every stream here already has them all)
     "selectsprite",
     "selectinherentaiprogram",
     "selectattribute",

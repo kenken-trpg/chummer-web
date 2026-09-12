@@ -9025,3 +9025,19 @@ def test_custom_fit_stack_does_nothing_until_it_names_a_worn_armor() -> None:
         out = compute(_custom_fit_state(target)).derived
         assert out["armor"] == 12
         assert any(w["key"] == "engine.gear.armorHighestOnly" for w in out["warnings"])
+
+
+def test_sprite_affinity_picks_one_sprite_from_the_catalog() -> None:
+    """`<selectsprite>` (KC p.97): Sprite Affinity names one sprite type — a
+    required pick, offered from the sprites the character can compile."""
+    spec = _career_quality("Sprite Affinity")
+    sprites = [s["name"] for s in catalog()["sprites"]]
+    assert (spec["needs_extra"], spec["extra_kind"], spec["select_options"]) == (True, "text", sprites)
+
+    missing = compute(_techno("sa-none", quality_ids=[spec["id"]])).derived
+    assert has(missing["errors"], "engine.qualities.pickExtra")
+    picked = compute(_techno("sa-data", quality_ids=[spec["id"]], quality_extras={spec["id"]: "Data Sprite"})).derived
+    assert not has(picked["errors"], "engine.qualities.pickExtra")
+    assert not has(picked["errors"], "engine.qualities.extraInvalid")
+    bogus = compute(_techno("sa-bogus", quality_ids=[spec["id"]], quality_extras={spec["id"]: "Fire Spirit"})).derived
+    assert has(bogus["errors"], "engine.qualities.extraInvalid")
