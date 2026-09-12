@@ -713,7 +713,7 @@ const JA = {
   "weapon.load": "装填",
   "weapon.search": "武器を検索",
 
-  "contact.free": "無料枠 CHA×3 = {used}/{free}",
+  "contact.free": "無料枠 CHA×{mult} = {used}/{free}",
   "contact.over": " ・ 超過 {paid}点（{karma}カルマ）",
   "contact.minimum": "。Connection と Loyalty は最低1",
   "contact.careerCap": "。キャリアでは合計上限なし",
@@ -2501,7 +2501,7 @@ const EN: Catalog = {
   "weapon.load": "Load",
   "weapon.search": "Search weapons",
 
-  "contact.free": "Free CHA×3 = {used}/{free}",
+  "contact.free": "Free CHA×{mult} = {used}/{free}",
   "contact.over": " · {paid} over ({karma} karma)",
   "contact.minimum": ". Connection and Loyalty are at least 1",
   "contact.careerCap": ". Career has no combined cap",

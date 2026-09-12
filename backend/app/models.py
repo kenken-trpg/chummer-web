@@ -311,6 +311,9 @@ class SettingsState(BaseModel):
     chargen_avail_max: int | None = None
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
+    #: `<contactpointsexpression>`'s multiplier: free contact points are
+    #: unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
+    contact_free_mult: int | None = None
     banned_ware_grades: list[str] = Field(default_factory=list)
     #: `<customdatadirectorynames>`, enabled ones only, in the order the file
     #: gave them — order decides who wins when two directories edit the same

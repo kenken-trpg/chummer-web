@@ -77,6 +77,8 @@ _HANDLED_ELSEWHERE = {
     "nuyenperbpwftp",
     # Read by `_karma_to_nuyen` when it is the plain multiplier shape.
     "chargenkarmatonuyenexpression",
+    # Read by `_contact_points` when it is the plain multiplier shape.
+    "contactpointsexpression",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
@@ -84,6 +86,11 @@ _HANDLED_ELSEWHERE = {
 #: conversion *is* that formula. Anything else is a real expression and gets
 #: reported instead of being approximated.
 _KARMA_NUYEN_EXPR = re.compile(r"^\{Karma\}\s*\*\s*(\d+)\s*\+\s*\{PriorityNuyen\}$")
+
+#: `{CHAUnaug} * 3` — `<contactpointsexpression>` in the one shape the engine
+#: prices contacts with: unaugmented Charisma times a multiplier. Prime Runner
+#: writes `* 6`; anything that is not a plain multiplier gets reported.
+_CONTACT_POINTS_EXPR = re.compile(r"^\{CHAUnaug\}\s*\*\s*(\d+)$")
 
 
 @lru_cache(maxsize=1)
@@ -205,11 +212,17 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
     if rate is not None:
         fields["karma_to_nuyen"] = rate
 
+    contact_mult, contact_understood = _contact_points(flat)
+    if contact_mult is not None:
+        fields["contact_free_mult"] = contact_mult
+
     baseline = _baseline()
     read = set(_INT_FIELDS) | set(_KARMA_FIELDS) | _HANDLED_ELSEWHERE
     unsupported = sorted(tag for tag, value in flat.items() if tag not in read and baseline.get(tag, value) != value)
     if not expression_understood:
         unsupported.append("chargenkarmatonuyenexpression")
+    if not contact_understood:
+        unsupported.append("contactpointsexpression")
 
     return SettingsState(
         name=_text(root.find("name")),
@@ -220,6 +233,17 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         unsupported=unsupported,
         **fields,
     )
+
+
+def _contact_points(flat: dict[str, str]) -> tuple[int | None, bool]:
+    """The free-contact-point multiplier, and whether the expression was readable."""
+    expression = flat.get("contactpointsexpression", "")
+    if not expression:
+        return None, True
+    match = _CONTACT_POINTS_EXPR.match(expression)
+    if match is None:
+        return None, False
+    return int(match.group(1)), True
 
 
 def build_method_of(raw: str | bytes) -> str | None:

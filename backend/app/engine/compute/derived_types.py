@@ -135,6 +135,8 @@ class _ContactPoints(TypedDict):
     paid: int
     karma: int
     karma_per_point: int
+    #: free points per unaugmented CHA (`<contactpointsexpression>`)
+    free_mult: int
 
 
 class _MartialArtPoints(TypedDict):

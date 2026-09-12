@@ -146,6 +146,7 @@ _DIRECT: dict[str, str] = {
     "chargen_avail_max": "chargen_avail_max",
     "karma_to_nuyen": "karma_to_nuyen",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
+    "contact_free_mult": "contact_free_mult",
 }
 
 #: Every `Rules` field name — `test_settings.py` asserts `_DIRECT` only names

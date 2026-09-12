@@ -15,6 +15,7 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
         {ui("contact.free", {
           used: d.contact_points?.used || 0,
           free: d.contact_points?.free || 0,
+          mult: d.contact_points?.free_mult ?? 3,
         })}
         {(d.contact_points?.paid || 0) > 0
           ? ui("contact.over", { paid: d.contact_points?.paid || 0, karma: paidKarma })

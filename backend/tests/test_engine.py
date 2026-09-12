@@ -31,6 +31,7 @@ from app.models import (
     MartialArtInstall,
     Priorities,
     QiFocusInstall,
+    SettingsState,
     SpellInstall,
     SpiritInstall,
     SpriteInstall,
@@ -9160,3 +9161,21 @@ def test_heavy_stacked_armor_lowers_agility_and_reaction() -> None:
     light = shield(5)
     assert (light["totals"]["AGI"], light["totals"]["REA"]) == (3, 3)
     assert not has(light["warnings"], "engine.gear.armorEncumbrance")
+
+
+def test_contact_free_points_come_off_unaugmented_charisma() -> None:
+    """Chummer's `{CHAUnaug} * 3`: a dose of Novacoke raises CHA on the sheet
+    but not the network a runner walked in with."""
+    dosed = compute(_drug_state(True, NOVACOKE))
+    assert dosed.derived["totals"]["CHA"] == 4
+    assert dosed.derived["contact_points"]["free"] == 9
+    assert dosed.derived["contact_points"]["free_mult"] == 3
+
+
+def test_a_settings_contact_multiplier_widens_the_free_network() -> None:
+    """Prime Runner's `{CHAUnaug} * 6`."""
+    state = _human("contact-prime", settings=SettingsState(contact_free_mult=6))
+    state.attributes["CHA"] = 3
+    out = compute(state)
+    assert out.derived["contact_points"]["free"] == 18
+    assert out.derived["contact_points"]["free_mult"] == 6
