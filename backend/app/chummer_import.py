@@ -23,6 +23,8 @@ from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _xml_fromstring
 
 from .data_loader import CatalogDict, catalog, catalog_list
+from .engine.constants import quality_optional_power_extra_key
+from .engine.lookups import critter_power_label
 from .notices import Notice, NoticeError, Phrase, notice, ui
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
@@ -328,11 +330,44 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
             skill = _text(pick.find("skill"))
             if skill:
                 picks[f"quality:{qid}:{_text(pick.find('index'))}"] = skill
+    _import_optional_powers(root, cat, quality_ids, quality_extras)
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
     # Merged rather than assigned: `_import_ware` fills in the implant picks,
     # and the two sections run in either order.
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
+
+
+def _import_optional_powers(
+    root: ET.Element, cat: CatalogDict, quality_ids: list[str], quality_extras: dict[str, str]
+) -> None:
+    """An Infected quality's optional power, back out of `<critterpowers>`.
+
+    The file lists every power the character has without saying which pick
+    it was, so each quality first claims the powers it always grants and then
+    the first remaining one on its optional list — by name and `<extra>`,
+    because Immunity comes both ways (Grendel is granted Immunity (Toxins)
+    and may pick it again).
+    """
+    pool = [
+        critter_power_label({"name": _text(p.find("name")), "select": _text(p.find("extra"))})
+        for p in root.findall("./critterpowers/critterpower")
+        if _text(p.find("name"))
+    ]
+    by_id = {str(row["id"]): row for row in cat["qualities"]}
+    for qid in quality_ids:
+        spec = by_id.get(qid) or {}
+        optional = [critter_power_label(row) for row in spec.get("optional_powers") or []]
+        if not optional:
+            continue
+        for row in spec.get("critter_powers") or []:
+            label = critter_power_label(row)
+            if label in pool:
+                pool.remove(label)
+        picked = next((label for label in pool if label in optional), None)
+        if picked is not None:
+            pool.remove(picked)
+            quality_extras[quality_optional_power_extra_key(qid)] = picked
 
 
 def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
