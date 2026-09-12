@@ -29,7 +29,7 @@ from ..magic import attach_focus_tests, attach_spirit_tests
 from ..priority import heritage_options
 from ..qualities import apply_quality_rules
 from ..resonance import attach_complex_form_tests, attach_sprite_tests
-from ..ware import limb_attribute_replace
+from ..ware import cyberleg_movement_agi, limb_attribute_replace
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
@@ -173,7 +173,12 @@ def finalize(ctx: Ctx) -> None:
     )
 
     # meat AGI: `ctx.total` already carries the cyberlimb replacement
-    ctx.movement = resolve_movement(ctx.meta, ctx.effects, ctx.ratings["AGI"] + ctx.attr_bonus("AGI"))
+    move_agi = ctx.ratings["AGI"] + ctx.attr_bonus("AGI")
+    if current_rules().cyberleg_movement:
+        leg_agi = cyberleg_movement_agi(ctx.cyber_installed, dict(ctx.effects.get("extra_limbs") or {}))
+        if leg_agi is not None:
+            move_agi = leg_agi
+    ctx.movement = resolve_movement(ctx.meta, ctx.effects, move_agi)
 
     ctx.quality_report = {}
     ctx.negative_quality_karma = apply_quality_rules(

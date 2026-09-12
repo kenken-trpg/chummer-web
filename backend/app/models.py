@@ -321,6 +321,8 @@ class SettingsState(BaseModel):
     #: gives no karma.
     exceed_negative_qualities: bool | None = None
     exceed_negative_qualities_no_bonus: bool | None = None
+    #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
+    cyberleg_movement: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

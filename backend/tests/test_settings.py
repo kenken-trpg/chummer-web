@@ -116,8 +116,8 @@ def test_a_file_that_changes_nothing_reports_nothing_unsupported() -> None:
 
 
 def test_a_knob_this_app_has_no_implementation_for_is_named() -> None:
-    parsed = parse_settings_xml(_settings_xml(armordegredation="True", cyberlegmovement="True"))
-    assert parsed.unsupported == ["armordegredation", "cyberlegmovement"]
+    parsed = parse_settings_xml(_settings_xml(armordegredation="True", dronemods="True"))
+    assert parsed.unsupported == ["armordegredation", "dronemods"]
 
 
 def test_the_karma_price_list_is_read() -> None:
@@ -290,3 +290,10 @@ def test_the_astral_initiative_dice_are_read() -> None:
     assert parsed.min_astral_initiative_dice == 2
     assert "minastralinitiativedice" not in parsed.unsupported
     assert rules_for(parsed).min_astral_initiative_dice == 2
+
+
+def test_the_cyberleg_movement_rule_is_read() -> None:
+    parsed = parse_settings_xml(_settings_xml(cyberlegmovement="True"))
+    assert parsed.cyberleg_movement is True
+    assert "cyberlegmovement" not in parsed.unsupported
+    assert rules_for(parsed).cyberleg_movement is True

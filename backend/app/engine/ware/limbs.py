@@ -63,6 +63,26 @@ def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str,
         item["limb_armor"] = limb_armor
 
 
+def cyberleg_movement_agi(resolved: list[dict[str, Any]], extra_limbs: dict[str, int] | None = None) -> int | None:
+    """The AGI movement runs off under `<cyberlegmovement>`, or `None`.
+
+    Chummer's `CalculatedMovement`: every installed ware in the `leg` slot
+    counts its limb slots, and once there are two the lowest of their AGIs
+    replaces the character's own.
+    """
+    slots = body_limb_slots(extra_limbs)
+    legs = [
+        item
+        for item in resolved
+        if not item.get("parent_id")
+        and (item.get("limbslot") or "").lower() == "leg"
+        and item.get("limb_agi") is not None
+    ]
+    if sum(_limb_slot_count(item, slots) for item in legs) < 2:
+        return None
+    return min(int(item["limb_agi"]) for item in legs)
+
+
 def redliner_slot_caps(options: CharacterOptions | None = None) -> dict[str, int]:
     opts = options or CharacterOptions()
     slots = dict(REDLINER_BASE_SLOTS)
