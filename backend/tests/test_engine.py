@@ -1740,6 +1740,17 @@ def test_allergy_requires_target_text() -> None:
     assert filled.derived["karma"]["remaining"] == 30
 
 
+def test_a_quality_outside_the_limit_does_not_fill_the_positive_cap() -> None:
+    """`<contributetolimit>False` (Chummer's `PositiveQualityLimitKarma`):
+    Infected: Ghoul costs 29 but sits outside the 25-karma limit."""
+    ghoul = next(q for q in catalog()["qualities"] if q["name"] == "Infected: Ghoul (Human)")
+    assert ghoul["karma"] > 25
+    out = compute(_human("ghoul-limit", quality_ids=[ghoul["id"]]))
+    assert not has(out.derived["errors"], "engine.qualities.positiveCap")
+    # still paid for, just not counted against the limit
+    assert out.derived["karma"]["remaining"] == 25 - ghoul["karma"]
+
+
 def test_negative_quality_karma_is_capped_at_25() -> None:
     out = compute(
         _human(
