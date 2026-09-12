@@ -106,6 +106,7 @@ export interface CharacterSettings {
   contact_free_mult?: number | null;
   exceed_negative_qualities?: boolean | null;
   exceed_negative_qualities_no_bonus?: boolean | null;
+  cyberleg_movement?: boolean | null;
   /** Attribute capping bound spirits / registered sprites (Standard: CHA). */
   bound_spirit_attr?: string | null;
   registered_sprite_attr?: string | null;

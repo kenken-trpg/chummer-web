@@ -90,6 +90,7 @@ _HANDLED_ELSEWHERE = {
 _BOOL_FIELDS: dict[str, str] = {
     "exceednegativequalities": "exceed_negative_qualities",
     "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
+    "cyberlegmovement": "cyberleg_movement",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

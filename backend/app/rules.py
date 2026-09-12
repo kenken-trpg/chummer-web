@@ -81,6 +81,8 @@ class Rules:
     #: earn no karma for what lies past it.
     quality_exceed_negative: bool = False
     quality_exceed_negative_no_bonus: bool = False
+    #: Movement off the cyberlegs' AGI once two legs are chrome.
+    cyberleg_movement: bool = False
     chargen_skill_max: int = CHARGEN_SKILL_MAX
     chargen_knowledge_skill_max: int = CHARGEN_KNOWLEDGE_SKILL_MAX
     career_skill_max: int = 12
@@ -187,6 +189,7 @@ def rules_for(settings: object | None) -> Rules:
     for src, dest in (
         ("exceed_negative_qualities", "quality_exceed_negative"),
         ("exceed_negative_qualities_no_bonus", "quality_exceed_negative_no_bonus"),
+        ("cyberleg_movement", "cyberleg_movement"),
     ):
         flag = getattr(settings, src, None)
         if flag is not None:

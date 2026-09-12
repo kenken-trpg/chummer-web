@@ -9315,3 +9315,27 @@ def test_a_magician_has_an_astral_initiative() -> None:
 
     german = _mage("astral-init-de", settings=SettingsState(min_astral_initiative_dice=2))
     assert compute(german).derived["astral_initiative"]["dice"] == 2
+
+
+def _legged(cid: str, legs: int, settings: SettingsState) -> CharacterState:
+    ware = [
+        CyberwareInstall(id="leg1", ware_id=LEG, side="Left"),
+        CyberwareInstall(ware_id=CUSTOM_AGI, rating=5, parent_id="leg1"),
+        CyberwareInstall(id="leg2", ware_id=LEG, side="Right"),
+    ][: 2 if legs == 1 else 3]
+    return _human(cid, cyberware=ware, settings=settings)
+
+
+def test_two_cyberlegs_set_movement_under_the_house_rule() -> None:
+    """`<cyberlegmovement>` (Chummer's `CalculatedMovement`): with both legs
+    chrome, movement runs off the lower leg AGI (3, the plain leg) instead
+    of the runner's own AGI 1."""
+    on = SettingsState(cyberleg_movement=True)
+    both = compute(_legged("legs-on", 2, on)).derived
+    assert (both["movement"]["walk"], both["movement"]["run"]) == ("6", "12")
+
+    off = compute(_legged("legs-off", 2, SettingsState())).derived
+    assert (off["movement"]["walk"], off["movement"]["run"]) == ("2", "4")
+
+    one = compute(_legged("leg-one", 1, on)).derived
+    assert one["movement"]["walk"] == "2", "a single cyberleg does not count"
