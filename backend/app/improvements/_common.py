@@ -231,9 +231,12 @@ SILENT_TAGS = {
     "linguasoft",
     "skillsoft",
     "weaponspecificdice",
+    # the Infected's powers: read element by element in
+    # `data_loader/loaders/qualities.py` and listed on the quality's row
     "critterpowers",
-    "limitcritterpowercategory",
     "optionalpowers",
+    # narrows what a Critter Powers tab may buy; there is no such tab here
+    "limitcritterpowercategory",
     "metageniclimit",
     # Custom Fit (Stack): read off the mod in `engine/gear/armor.py`, which
     # stacks the piece onto the armor it names

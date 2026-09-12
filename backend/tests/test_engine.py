@@ -9041,3 +9041,65 @@ def test_sprite_affinity_picks_one_sprite_from_the_catalog() -> None:
     assert not has(picked["errors"], "engine.qualities.extraInvalid")
     bogus = compute(_techno("sa-bogus", quality_ids=[spec["id"]], quality_extras={spec["id"]: "Fire Spirit"})).derived
     assert has(bogus["errors"], "engine.qualities.extraInvalid")
+
+
+def _elf_banshee(extras: dict[str, str] | None = None) -> dict:
+    banshee = _career_quality("Infected: Banshee")["id"]
+    st = CharacterState(
+        id="banshee",
+        name="banshee",
+        metatype="Elf",
+        attributes=default_attributes(find_metatype("Elf", None)),
+        priorities=Priorities(),
+        quality_ids=[banshee],
+        quality_extras=extras or {},
+    )
+    out = compute(st).derived
+    return {"out": out, "row": _quality_row(out, "Infected: Banshee"), "id": banshee}
+
+
+def test_infected_quality_lists_the_critter_powers_it_grants() -> None:
+    """`<critterpowers>` (RF p.126): every power the Infected quality names,
+    each with its own `select` — the two Vulnerabilities stay apart."""
+    row = _elf_banshee()["row"]
+    names = [p["name"] for p in row["critter_powers"]]
+    assert names == [
+        "Dual Natured",
+        "Essence Drain",
+        "Immunity (Age)",
+        "Essence Loss",
+        "Allergy (Sunlight, Severe)",
+        "Dietary Requirement (Metahuman Blood)",
+        "Vulnerability (Silver)",
+        "Vulnerability (Wood)",
+    ]
+    # looked up in critterpowers.xml like a spirit's powers
+    assert next(p for p in row["critter_powers"] if p["name"] == "Dual Natured")["type"]
+
+
+def test_infected_optional_power_is_a_required_pick_from_its_list() -> None:
+    """`<optionalpowers>`: one power, chosen from the quality's own list."""
+    first = _elf_banshee()
+    assert first["row"]["optional_powers"] == [
+        "Enhanced Senses (Hearing)",
+        "Immunity (Toxins)",
+        "Enhanced Senses (Smell)",
+        "Immunity (Pathogens)",
+    ]
+    assert first["row"]["optional_power"] == ""
+    assert has(first["out"]["errors"], "engine.qualities.pickOptionalPower")
+
+    key = f"{first['id']}:optionalpower"
+    picked = _elf_banshee({key: "Immunity (Toxins)"})
+    assert not has(picked["out"]["errors"], "engine.qualities.pickOptionalPower")
+    assert picked["row"]["optional_power"] == "Immunity (Toxins)"
+    assert picked["row"]["critter_powers"][-1]["name"] == "Immunity (Toxins)"
+
+    wrong = _elf_banshee({key: "Armor"})
+    assert has(wrong["out"]["errors"], "engine.qualities.extraInvalid")
+    assert "Armor" not in [p["name"] for p in wrong["row"]["critter_powers"]]
+
+
+def test_qualities_without_critter_powers_carry_no_power_fields() -> None:
+    row = compute(_mundane("plain", quality_ids=[ALLERGY_MILD])).derived["qualities"][0]
+    assert "critter_powers" not in row and "optional_powers" not in row

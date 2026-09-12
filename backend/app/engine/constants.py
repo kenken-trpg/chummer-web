@@ -72,6 +72,7 @@ BLACK_MARKET_AVAIL_BONUS = 2
 QUALITY_CONTACT_EXTRA_SUFFIX = ":contact"
 QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX = ":spiritcategory"
 QUALITY_ADDSPIRIT_EXTRA_MARKER = ":addspirit:"
+QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX = ":optionalpower"
 # Ex-Con (RF): corp contacts need Loyalty 4+, law enforcement Loyalty 5+.
 EXCON_CORP_ROLE_HINTS = (
     "johnson",
@@ -127,6 +128,10 @@ def quality_contact_extra_key(quality_id: str) -> str:
 
 def quality_spirit_category_extra_key(quality_id: str) -> str:
     return f"{quality_id}{QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX}"
+
+
+def quality_optional_power_extra_key(quality_id: str) -> str:
+    return f"{quality_id}{QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX}"
 
 
 def quality_addspirit_extra_key(quality_id: str, index: int) -> str:

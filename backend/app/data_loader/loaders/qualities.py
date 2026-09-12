@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from typing import Any
 
 from .._xml import _int, _text, parse_data
@@ -12,6 +13,27 @@ from ..bonus import (
     quality_extra_meta,
     quality_needs_extra,
 )
+
+
+def _critter_power_refs(parent: ET.Element | None, tag: str) -> list[dict[str, Any]]:
+    """`<critterpowers><power select="Wood">Allergy</power>` and the
+    `<optionalpowers><optionalpower>` twin, one row per element.
+
+    `parse_bonus` folds repeated children into one list and keeps a single
+    `select`, which loses which Allergy is to Wood; these read the elements.
+    """
+    if parent is None:
+        return []
+    rows: list[dict[str, Any]] = []
+    for el in parent.findall(tag):
+        name = _text(el)
+        if not name:
+            continue
+        row: dict[str, Any] = {"name": name, "select": el.attrib.get("select") or ""}
+        if el.attrib.get("rating"):
+            row["rating"] = el.attrib["rating"]
+        rows.append(row)
+    return rows
 
 
 def load_qualities() -> list[dict[str, Any]]:
@@ -78,6 +100,10 @@ def load_qualities() -> list[dict[str, Any]]:
                 "spirit_options": extra_meta.get("spirit_options") or [],
                 "expertise_skill": extra_meta.get("expertise_skill") or "",
                 "add_spirit_count": int(extra_meta.get("add_spirit_count") or 0),
+                # `<critterpowers>` / `<optionalpowers>` (the Infected, RF p.126):
+                # the powers it grants, and the list the player picks one from
+                "critter_powers": _critter_power_refs(el.find("./bonus/critterpowers"), "power"),
+                "optional_powers": _critter_power_refs(el.find("./bonus/optionalpowers"), "optionalpower"),
             }
         )
     return items

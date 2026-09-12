@@ -207,6 +207,7 @@ const JA = {
   "qual.karmaBase": "（条件で変動・表では {base}）",
   "qual.freeAttached": " / 付帯（無料）",
   "qual.disabledBy": " / {ware} があるので無効",
+  "qual.optionalPower": "任意パワーを選択",
   "qual.careerTaken": " / キャリアで取得（{cost}カルマ）",
   "qual.careerTakenNegative": " / キャリアで取得（カルマなし）",
   "qual.buyoffHint": " / 外すと買い戻し {cost}カルマ",
@@ -1563,6 +1564,7 @@ const JA = {
   "engine.qualities.negativeCap":
     "不利資質から得られるカルマが上限を超えています（{karma} / {limit}）",
   "engine.qualities.pickAddSpirit": "{name} の追加精霊を選んでください",
+  "engine.qualities.pickOptionalPower": "{name} の任意パワーを 1 つ選んでください",
   "engine.qualities.pickExtra": "{name} の対象を入力してください",
   "engine.qualities.pickMatrixAction": "{name} のマトリクスアクションを選んでください",
   "engine.qualities.pickSide": "{name} の左右を選んでください",
@@ -2002,6 +2004,7 @@ const EN: Catalog = {
   "qual.karmaBase": " (adjusted; table {base})",
   "qual.freeAttached": " / attached (free)",
   "qual.disabledBy": " / switched off by {ware}",
+  "qual.optionalPower": "Choose an optional power",
   "qual.careerTaken": " / taken in career ({cost} karma)",
   "qual.careerTakenNegative": " / taken in career (no karma)",
   "qual.buyoffHint": " / buying it off costs {cost} karma",
@@ -3315,6 +3318,7 @@ const EN: Catalog = {
   "engine.qualities.negativeCap":
     "Karma gained from negative qualities is over the limit ({karma} / {limit})",
   "engine.qualities.pickAddSpirit": "Choose the extra spirit for {name}",
+  "engine.qualities.pickOptionalPower": "Choose one optional power for {name}",
   "engine.qualities.pickExtra": "Enter a target for {name}",
   "engine.qualities.pickMatrixAction": "Choose a Matrix action for {name}",
   "engine.qualities.pickSide": "Choose a side for {name}",

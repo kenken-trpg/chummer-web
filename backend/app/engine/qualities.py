@@ -23,13 +23,22 @@ from .constants import (
     MAG_TALENTS,
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
     QUALITY_CONTACT_EXTRA_SUFFIX,
+    QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX,
     QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX,
     _normalize_side,
     quality_addspirit_extra_key,
+    quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
     slot_phrase,
 )
-from .lookups import _item_by_id, _power_by_name, _quality_by_id, _quality_by_name, _tradition_by_id
+from .lookups import (
+    _item_by_id,
+    _power_by_name,
+    _quality_by_id,
+    _quality_by_name,
+    _tradition_by_id,
+    critter_power_label,
+)
 from .priority import talent_special
 from .requirements import requirement_tree_met
 
@@ -170,6 +179,8 @@ def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
         return True
     if key.endswith(QUALITY_CONTACT_EXTRA_SUFFIX):
         return key[: -len(QUALITY_CONTACT_EXTRA_SUFFIX)] in owned
+    if key.endswith(QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX):
+        return key[: -len(QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX)] in owned
     if key.endswith(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX):
         return key[: -len(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX)] in owned
     if QUALITY_ADDSPIRIT_EXTRA_MARKER in key:
@@ -519,6 +530,13 @@ def apply_quality_rules(
                 errors.append(notice("engine.qualities.pickWeaponSkill", name=term(str(spec["name"]))))
             else:
                 errors.append(notice("engine.qualities.pickExtra", name=term(str(spec["name"]))))
+        optional = [critter_power_label(row) for row in spec.get("optional_powers") or []]
+        if optional:
+            picked = extras.get(quality_optional_power_extra_key(spec["id"]))
+            if not picked:
+                errors.append(notice("engine.qualities.pickOptionalPower", name=term(str(spec["name"]))))
+            elif picked not in optional:
+                errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
         if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
             spirit_key = quality_spirit_category_extra_key(spec["id"])
             if spirit_key not in extras:
