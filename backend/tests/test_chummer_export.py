@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
+
 from app.characters import import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
@@ -135,3 +137,59 @@ def test_custom_fit_stack_target_survives_export() -> None:
     )
     st, _ = chum5_to_state(state_to_chum5(src))
     assert [m["stack_with"] for m in st["armor_mods"] if m["mod_id"] == fit] == ["Armor Jacket"]
+
+
+def _infected(name: str, picked: str) -> tuple[CharacterState, str]:
+    qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == name)
+    state = CharacterState(
+        id="inf",
+        name="Infected",
+        priorities=Priorities(),
+        metatype="Elf",
+        attributes={},
+        quality_ids=[qid],
+        quality_extras={f"{qid}:optionalpower": picked} if picked else {},
+    )
+    return state, qid
+
+
+def _powers(xml: bytes) -> list[tuple[str, str]]:
+    root = ET.fromstring(xml)
+    return [(p.findtext("name") or "", p.findtext("extra") or "") for p in root.findall("./critterpowers/critterpower")]
+
+
+def test_an_infected_optional_power_survives_the_round_trip() -> None:
+    """Chummer's `optionalpowers` improvement adds the pick to
+    `<critterpowers>` next to the fixed ones; that is the only place a
+    `.chum5` has for it, so export writes it there and import reads it back."""
+    state, qid = _infected("Infected: Banshee", "Immunity (Toxins)")
+    xml = state_to_chum5(state)
+    powers = _powers(xml)
+    assert ("Immunity", "Toxins") in powers
+    assert ("Dual Natured", "") in powers
+    assert all(p.findtext("grade") == "-1" for p in ET.fromstring(xml).findall("./critterpowers/critterpower"))
+
+    back, _ = chum5_to_state(xml)
+    assert back["quality_extras"][f"{qid}:optionalpower"] == "Immunity (Toxins)"
+
+
+def test_a_pick_that_repeats_a_granted_power_is_told_apart_by_count() -> None:
+    """Grendel is granted Immunity (Toxins) and may pick it again: the file
+    then lists it twice, and only the second copy is the pick."""
+    state, qid = _infected("Infected: Grendel", "Immunity (Toxins)")
+    xml = state_to_chum5(state)
+    assert _powers(xml).count(("Immunity", "Toxins")) == 2
+    assert chum5_to_state(xml)[0]["quality_extras"][f"{qid}:optionalpower"] == "Immunity (Toxins)"
+
+    unpicked, _ = _infected("Infected: Grendel", "")
+    back = chum5_to_state(state_to_chum5(unpicked))[0]
+    assert f"{qid}:optionalpower" not in back["quality_extras"]
+
+
+def test_no_critter_powers_are_written_for_a_character_without_them() -> None:
+    assert (
+        ET.fromstring(
+            state_to_chum5(_infected("Infected: Banshee", "")[0].model_copy(update={"quality_ids": []}))
+        ).find("critterpowers")
+        is None
+    )

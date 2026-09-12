@@ -13,6 +13,8 @@ from xml.dom import minidom
 
 from .data_loader import catalog
 from .engine import find_metatype
+from .engine.constants import quality_optional_power_extra_key
+from .engine.lookups import critter_power_label
 from .models import CharacterState
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
@@ -185,6 +187,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                 _sub(pick, "index", index)
                 _sub(pick, "skill", skill)
 
+    _export_quality_critter_powers(root, state)
+
     def _named_list(
         container: str,
         item: str,
@@ -215,6 +219,32 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     _named_list(
         "complexforms", "complexform", state.complex_forms, "form_id", "complexform", {"rating": lambda r: r.level or 1}
     )
+
+
+def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> None:
+    """`<critterpowers>`: what an Infected quality grants, plus its one
+    optional power — where Chummer's `critterpowers` / `optionalpowers`
+    improvements put them (`grade` −1 marks a power a quality gave). The
+    optional pick has nowhere else to live in a `.chum5`, so without this it
+    is lost on the way out."""
+    by_id = {str(row["id"]): row for row in catalog()["qualities"]}
+    power_ids = {str(row.get("name") or ""): str(row.get("id") or "") for row in catalog().get("critter_powers") or []}
+    refs: list[dict[str, Any]] = []
+    for qid in state.quality_ids:
+        spec = by_id.get(qid) or {}
+        refs.extend(spec.get("critter_powers") or [])
+        picked = state.quality_extras.get(quality_optional_power_extra_key(qid), "")
+        refs.extend(row for row in spec.get("optional_powers") or [] if critter_power_label(row) == picked)
+    if not refs:
+        return
+    powers = _sub(root, "critterpowers")
+    for ref in refs:
+        el = _sub(powers, "critterpower")
+        _sub(el, "sourceid", power_ids.get(str(ref["name"]), ""))
+        _sub(el, "name", ref["name"])
+        _sub(el, "extra", ref.get("select") or "")
+        _sub(el, "rating", ref.get("rating") or 0)
+        _sub(el, "grade", -1)
 
 
 def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
