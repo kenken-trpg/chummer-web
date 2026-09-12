@@ -17,6 +17,8 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from starlette.datastructures import Headers
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from .catalog_view import public_catalog
 from .characters import apply_patch, compute_state, import_character, new_character
@@ -87,16 +89,69 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def _limit_body_size(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-    """Reject over-large request bodies up front. Covers the normal case where a
-    client sends Content-Length (browsers, httpx, curl); the .chum5lz path is
-    independently bounded in chummer_import."""
-    cl = request.headers.get("content-length")
-    if cl and cl.isdigit() and int(cl) > _MAX_REQUEST_BYTES:
-        _log.warning("request body too large", extra={"content_length": int(cl)})
-        return JSONResponse({"detail": "request body too large"}, status_code=413)
-    return await call_next(request)
+class _LimitBodySize:
+    """Reject over-large request bodies.
+
+    A declared Content-Length is refused before anything is read. A body sent
+    without one (chunked transfer) is counted as it streams in: the read that
+    crosses the cap reports a client disconnect instead, so nothing past it is
+    buffered, and whatever the app answers to that is swapped for the 413.
+    The .chum5lz path is independently bounded in chummer_import.
+
+    Plain ASGI rather than `@app.middleware("http")`: counting needs to wrap
+    `receive`, which a `BaseHTTPMiddleware` does not hand to its dispatch. It
+    does not raise out of `receive` either — the `BaseHTTPMiddleware`s inside
+    (slowapi) wrap that in an ExceptionGroup and FastAPI answers it with 400.
+    """
+
+    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        cl = Headers(scope=scope).get("content-length")
+        if cl and cl.isdigit() and int(cl) > self.max_bytes:
+            _log.warning("request body too large", extra={"content_length": int(cl)})
+            await _TOO_LARGE(scope, receive, send)
+            return
+
+        seen = 0
+        too_large = False
+        rejected = False
+
+        async def counting_receive() -> Message:
+            nonlocal seen, too_large
+            if too_large:
+                return {"type": "http.disconnect"}
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body", b""))
+                if seen > self.max_bytes:
+                    too_large = True
+                    _log.warning("request body too large", extra={"content_length": seen})
+                    return {"type": "http.disconnect"}
+            return message
+
+        async def guarded_send(message: Message) -> None:
+            nonlocal rejected
+            if not too_large:
+                await send(message)
+            elif not rejected:
+                rejected = True
+                await _TOO_LARGE(scope, receive, send)
+
+        await self.app(scope, counting_receive, guarded_send)
+        if too_large and not rejected:
+            await _TOO_LARGE(scope, receive, send)
+
+
+_TOO_LARGE = JSONResponse({"detail": "request body too large"}, status_code=413)
+
+
+app.add_middleware(_LimitBodySize, max_bytes=_MAX_REQUEST_BYTES)
 
 
 # Added last, so it is the *outermost* middleware: the id has to exist before

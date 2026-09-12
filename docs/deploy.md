@@ -34,7 +34,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `ALLOWED_ORIGINS` | `localhost:3000` list | only matters for a split deploy (frontend on another origin) |
 | `RATE_LIMIT` | `120/minute` | per client IP, all routes |
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the two import routes |
-| `MAX_REQUEST_BYTES` | `12582912` | 413 above this |
+| `MAX_REQUEST_BYTES` | `12582912` | 413 above this, chunked bodies included; the bundled Caddy enforces it too |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
 | `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
 | `LOG_FORMAT` | `text` | `json` for one object per line |
