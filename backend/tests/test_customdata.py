@@ -337,3 +337,25 @@ def test_data_this_app_does_not_load_is_set_apart_from_a_failed_rule() -> None:
     _, report = build_overlay(files, ["g>1"])
     assert report.ignored == ["critters.xml"]
     assert report.skipped == []
+
+
+def test_a_pack_file_with_entities_is_refused_not_expanded() -> None:
+    """Uploaded packs go through defusedxml like a .chum5: a DTD entity is a
+    reason to skip the file, never something to expand."""
+    files = {
+        "d/manifest.xml": b"<manifest><guid>g</guid><version>1</version></manifest>",
+        "d/custom_martialarts.xml": (
+            b'<!DOCTYPE c [<!ENTITY a "Aikido">]>'
+            b"<chummer><martialarts><martialart><id>x</id><name>&a;</name></martialart></martialarts></chummer>"
+        ),
+    }
+    _, report = build_overlay(files, ["g>1"])
+    assert report.applied == 0
+    [(source, reason)] = report.skipped
+    assert source == "d/custom_martialarts.xml"
+    assert reason.startswith("not valid XML")
+
+
+def test_a_manifest_with_entities_is_not_read() -> None:
+    raw = b'<!DOCTYPE m [<!ENTITY g "guid">]><manifest><guid>&g;</guid><version>1</version></manifest>'
+    assert manifest_key(raw) is None

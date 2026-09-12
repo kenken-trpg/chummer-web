@@ -179,3 +179,34 @@ def test_a_failed_import_answers_with_a_message_key_not_a_sentence() -> None:
     detail = res.json()["detail"]
     assert detail["key"] == "api.chum5lzUndecompressible"
     assert "formats" in detail["params"]
+
+
+def _preflight(method: str, headers: str) -> dict[str, str]:
+    r = client.options(
+        "/api/characters/patch",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": method,
+            "Access-Control-Request-Headers": headers,
+        },
+    )
+    return {"status": str(r.status_code), **r.headers}
+
+
+def test_cors_allows_what_the_frontend_sends() -> None:
+    ok = _preflight("POST", "content-type")
+    assert ok["status"] == "200"
+    assert ok["access-control-allow-origin"] == "http://localhost:3000"
+
+
+@pytest.mark.parametrize(("method", "headers"), [("DELETE", "content-type"), ("POST", "x-anything")])
+def test_cors_refuses_methods_and_headers_the_frontend_never_sends(method: str, headers: str) -> None:
+    assert _preflight(method, headers)["status"] == "400"
+
+
+def test_cors_refuses_an_unlisted_origin() -> None:
+    r = client.options(
+        "/api/characters/patch",
+        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
+    )
+    assert r.status_code == 400
