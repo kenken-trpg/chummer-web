@@ -102,6 +102,9 @@ export interface CharacterSettings {
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   contact_free_mult?: number | null;
+  /** Attribute capping bound spirits / registered sprites (Standard: CHA). */
+  bound_spirit_attr?: string | null;
+  registered_sprite_attr?: string | null;
   banned_ware_grades?: string[];
   /** `<customdatadirectorynames>`, enabled ones only, in the file's order —
    *  order decides who wins when two directories edit the same entry. */

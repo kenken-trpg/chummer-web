@@ -91,6 +91,10 @@ class Rules:
 
     # --- misc ----------------------------------------------------------
     contact_free_mult: int = 3
+    #: How many spirits a magician may hold bound, and sprites a technomancer
+    #: registered: the rating of this attribute (Chummer's Standard: CHA).
+    bound_spirit_attr: str = "CHA"
+    registered_sprite_attr: str = "CHA"
     banned_ware_grades: tuple[str, ...] = ()
     #: Which `<prioritytable>` the priority rows come from. `priorities.xml`
     #: carries several — Standard, Prime Runner, Street Level — and a settings
@@ -173,6 +177,10 @@ def rules_for(settings: object | None) -> Rules:
     grades = getattr(settings, "banned_ware_grades", None)
     if grades:
         overrides["banned_ware_grades"] = tuple(str(g) for g in grades)
+    for attr_field in ("bound_spirit_attr", "registered_sprite_attr"):
+        attr = getattr(settings, attr_field, None)
+        if attr:
+            overrides[attr_field] = str(attr)
     table = getattr(settings, "priority_table", None)
     if table:
         overrides["priority_table"] = str(table)

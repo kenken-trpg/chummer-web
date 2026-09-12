@@ -175,6 +175,8 @@ def load_spirits() -> list[dict[str, Any]]:
                     if _text(s)
                 ],
                 "weaknesses": [_text(w) for w in el.findall("./weaknesses/weakness") if _text(w)],
+                # Homunculi and Watchers: bound, but outside the CHA limit
+                "ignore_bound_limit": _text(el.find("ignoreboundspiritlimit")).lower() == "true",
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }

@@ -5,6 +5,7 @@ spirits, complex forms and sprites once ``ctx.total`` is settled (``spells``).""
 from __future__ import annotations
 
 from ...improvements import apply_bonus_nodes
+from ...rules import current_rules
 from ..constants import (
     COMPLEX_FORM_TALENTS,
     FOCUS_TALENTS,
@@ -139,8 +140,10 @@ def spells(ctx: Ctx) -> None:
         _tradition_by_id(ctx.state.tradition_id),
         limit_spirits=list(ctx.effects.get("limit_spirit_categories") or []),
         extra_spirits=list(ctx.effects.get("extra_spirits") or []),
+        bound_limit=int(ctx.total.get(current_rules().bound_spirit_attr) or 0),
     )
     ctx.warnings.extend(ctx.spirits["warnings"])
+    ctx.errors.extend(ctx.spirits["errors"])
     if ctx.talent["name"] in SPELL_TALENTS or (ctx.effects.get("allow_spell_ranges") or []):
         ctx.enabled.add("spells")
     if ctx.talent["name"] in SPIRIT_TALENTS:
@@ -159,6 +162,7 @@ def spells(ctx: Ctx) -> None:
         ctx.talent["name"],
         int(ctx.total.get("RES") or 0),
         ctx.resonance.get("stream"),
+        registered_limit=int(ctx.total.get(current_rules().registered_sprite_attr) or 0),
     )
     ctx.warnings.extend(ctx.techno_sprites["warnings"])
     ctx.errors.extend(ctx.techno_sprites["errors"])
