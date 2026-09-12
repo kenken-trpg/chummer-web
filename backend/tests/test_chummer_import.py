@@ -214,3 +214,38 @@ def test_priorities_in_chummers_own_form_are_read() -> None:
     st, _ = chum5_to_state(SAMPLE.replace(legacy, chummer))
     assert st["priorities"] == {"Heritage": "E", "Attributes": "A", "Talent": "B", "Skills": "C", "Resources": "D"}
     assert st["talent"] == "Adept"
+
+
+_CHUMMER_ADDED = b"""
+  <weapons><weapon><sourceid>63dcfdb6-bbd9-4a58-bbf4-cd35f7614fdc</sourceid><name>Unarmed Attack</name></weapon></weapons>
+  <gears><gear><id>9f0d5d35-43f3-4877-b384-cf4188b5bca7</id><name>Lighter</name></gear></gears>
+  <cyberwares><cyberware><sourceid>47c48542-48c3-417e-91f0-b5a456183f05</sourceid><name>Datajack</name>
+    <gears><gear><name>Universal Connector Cord (Meter)</name></gear></gears></cyberware></cyberwares>
+  <vehicles><vehicle><sourceid>c0d3e7fd-d5fd-48c4-b49d-0c7dea26895d</sourceid><name>Dodge Scoot (Scooter)</name>
+    <gears><gear><id>2ca81a10-d0f7-4b39-ac93-a84f2f69f9d9</id><name>Sensor Array</name></gear></gears></vehicle></vehicles>
+"""
+
+
+def _import_keys(extra: bytes) -> list[str]:
+    _, warnings = chum5_to_state(SAMPLE.replace(b"</character>", extra + b"</character>"))
+    return [w["key"] for w in warnings]
+
+
+def test_what_chummer_adds_itself_is_not_reported_as_lost() -> None:
+    """`<hide />` entries (the Unarmed Attack, a Survival Kit's lighter) and the
+    gear a ware or vehicle entry includes (a Datajack's cord, a vehicle's
+    Sensor Array) are in every save though nobody picked them. Reporting each
+    as "could not be imported" buried the entries that really were lost."""
+    baseline = _import_keys(b"")
+    assert _import_keys(_CHUMMER_ADDED) == baseline
+
+
+def test_gear_nobody_included_is_still_reported() -> None:
+    picked = (
+        _CHUMMER_ADDED.replace(b"<name>Universal Connector Cord (Meter)</name>", b"<name>Sim Module, Hot</name>")
+        .replace(b"<name>Lighter</name>", b"<name>Homebrew Gizmo</name>")
+        .replace(b"<id>9f0d5d35-43f3-4877-b384-cf4188b5bca7</id>", b"")
+    )
+    keys = _import_keys(picked)
+    assert keys.count("engine.import.skippedUnknown") == _import_keys(b"").count("engine.import.skippedUnknown") + 1
+    assert "engine.import.nestedGearSkipped" in keys
