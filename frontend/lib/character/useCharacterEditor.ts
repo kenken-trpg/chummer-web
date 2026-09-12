@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
+import { PORTRAIT_TYPES } from "@/lib/character/portrait";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
@@ -269,7 +270,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
 
   async function onPortraitFile(file: File) {
     if (!ch) return;
-    if (!/^image\//.test(file.type)) {
+    // the same four the backend keeps (models.clean_portrait); anything else
+    // would be dropped there without a word
+    if (!PORTRAIT_TYPES.includes(file.type)) {
       setError(ui("app.err.notImage"));
       return;
     }

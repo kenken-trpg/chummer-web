@@ -1,3 +1,4 @@
+import { PORTRAIT_TYPES } from "@/lib/character/portrait";
 import type { Character } from "@/lib/types";
 import { type MsgKey, useUiText } from "@/lib/i18n";
 
@@ -24,7 +25,7 @@ export function SheetDescEditor({
         <div className="portrait-edit-controls">
           <input
             type="file"
-            accept="image/*"
+            accept={PORTRAIT_TYPES.join(",")}
             aria-label={ui("desc.pickPortrait")}
             onChange={(e) => {
               const f = e.target.files?.[0];

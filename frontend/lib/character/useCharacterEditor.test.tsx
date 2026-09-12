@@ -614,6 +614,17 @@ describe("useCharacterEditor.onPortraitFile", () => {
     expect(api.patch).not.toHaveBeenCalled();
   });
 
+  it("refuses an SVG, which the server would not keep as a portrait", async () => {
+    const { result } = await booted();
+
+    await act(async () => {
+      await result.current.onPortraitFile(image(8, "image/svg+xml"));
+    });
+
+    expect(result.current.error).toBe(MESSAGES.ja["app.err.notImage"]);
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
   it("refuses an image over 3MB", async () => {
     // it would be base64'd into the character and posted on every patch
     const { result } = await booted();
