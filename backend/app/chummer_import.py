@@ -32,6 +32,7 @@ from .engine.constants import (
 )
 from .engine.lookups import critter_power_label
 from .engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
+from .models import clean_portrait
 from .notices import Notice, NoticeError, Phrase, notice, ui
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
@@ -115,7 +116,8 @@ def _int(el: ET.Element | None, default: int = 0) -> int:
 def _read_mugshot(root: ET.Element) -> str:
     """Chummer stores portraits as base64 either in ``<mugshots><mugshot>`` (with
     ``<mainmugshotindex>`` picking one) or a legacy flat ``<mugshot>``. Return a
-    ``data:`` URI ready for an ``<img>`` ``src``, or ``""``."""
+    ``data:`` URI ready for an ``<img>`` ``src``, or ``""`` — also for a
+    mugshot that is not a PNG / JPEG / GIF / WebP (see `clean_portrait`)."""
     shots = [_text(m) for m in root.findall("./mugshots/mugshot") if _text(m)]
     raw = ""
     if shots:
@@ -128,9 +130,9 @@ def _read_mugshot(root: ET.Element) -> str:
     if not raw:
         return ""
     if raw.startswith("data:"):
-        return raw
+        return clean_portrait(raw)
     mime = "image/jpeg" if raw.startswith("/9j/") else "image/png"
-    return f"data:{mime};base64,{raw}"
+    return clean_portrait(f"data:{mime};base64,{raw}")
 
 
 def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:

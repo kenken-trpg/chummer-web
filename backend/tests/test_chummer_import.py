@@ -168,3 +168,29 @@ def test_xml_entity_expansion_is_blocked() -> None:
     with pytest.raises(NoticeError) as caught:
         chum5_to_state(evil)
     assert caught.value.notice["key"] == "api.xmlUnparsable"
+
+
+_PNG_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+
+
+def _with_mugshot(mugshot: str) -> bytes:
+    return SAMPLE.replace(b"</character>", f"<mugshot>{mugshot}</mugshot></character>".encode())
+
+
+@pytest.mark.parametrize(
+    ("mugshot", "expected"),
+    [
+        # Chummer's own form: bare base64, the type guessed from the header
+        (_PNG_B64, f"data:image/png;base64,{_PNG_B64}"),
+        # wrapped across lines by an editor — still the same picture
+        (f"{_PNG_B64[:40]}\n  {_PNG_B64[40:]}", f"data:image/png;base64,{_PNG_B64}"),
+        (f"data:image/png;base64,{_PNG_B64}", f"data:image/png;base64,{_PNG_B64}"),
+        # anything that is not an inline raster image goes into <img src> nowhere
+        ("data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=", ""),
+        ("data:text/html;base64,PGgxPmhpPC9oMT4=", ""),
+        ("data:image/png,not-base64", ""),
+    ],
+)
+def test_mugshot_is_kept_only_as_a_raster_data_uri(mugshot: str, expected: str) -> None:
+    st, _ = chum5_to_state(_with_mugshot(mugshot))
+    assert st.get("portrait", "") == expected
