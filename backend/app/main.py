@@ -29,7 +29,7 @@ from .dataset_store import MAX_UPLOAD_BYTES, lookup, remember
 from .logging_config import configure_logging, new_request_id, request_id_var
 from .models import CharacterCreate, CharacterState, CustomDataUpload, PatchRequest, StateRequest
 from .notices import NoticeError, notice
-from .settings_file import build_method_of, parse_settings_xml
+from .settings_file import parse_settings_upload
 
 configure_logging()
 
@@ -81,11 +81,14 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_middleware(SlowAPIMiddleware)
 
+# Only what `frontend/lib/api.ts` sends: GET for the catalog, POST for
+# everything else, and a Content-Type (JSON or octet-stream). A split deploy
+# whose frontend starts sending something new has to be listed here first.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 
@@ -356,13 +359,13 @@ def parse_settings(request: Request, body: bytes = Body(..., media_type="applica
     the character; nothing about the upload is kept server-side.
     """
     try:
-        settings = parse_settings_xml(body)
+        settings, build_method = parse_settings_upload(body)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=notice("api.settingsParseFailed")) from exc
     except Exception as exc:  # noqa: BLE001
         _log.exception("settings parse failed")
         raise HTTPException(status_code=400, detail=notice("api.settingsParseFailed")) from exc
-    return {"settings": settings.model_dump(), "build_method": build_method_of(body)}
+    return {"settings": settings.model_dump(), "build_method": build_method}
 
 
 def _content_disposition(name: str) -> str:

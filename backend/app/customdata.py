@@ -33,7 +33,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
-from .data_loader._xml import data_root
+from .data_loader._xml import data_root, parse_untrusted
 
 #: `<technique amendoperation="addnode">` etc.
 _OP = "amendoperation"
@@ -136,7 +136,7 @@ def _fold(value: str) -> str:
 def manifest_key(raw: bytes) -> str | None:
     """`manifest.xml` -> the `<guid>>version` a settings file refers to it by."""
     try:
-        root = ET.fromstring(raw.decode("utf-8-sig", errors="replace"))
+        root = parse_untrusted(raw.decode("utf-8-sig", errors="replace"))
     except ET.ParseError:
         return None
     guid = (root.findtext("guid") or "").strip()
@@ -350,7 +350,7 @@ def build_overlay(
                 # is not something to report.
                 continue
             try:
-                node = ET.fromstring(text)
+                node = parse_untrusted(text)
             except ET.ParseError as exc:
                 report.skip(path, f"not valid XML: {exc}")
                 continue

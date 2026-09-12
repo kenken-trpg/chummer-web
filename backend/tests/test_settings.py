@@ -20,7 +20,7 @@ from app.data_loader.loaders.books import load_books, load_settings_presets
 from app.engine.priority import priority_value
 from app.models import CharacterPatch, CharacterState, SettingsState
 from app.rules import _DIRECT, DEFAULT_RULES, RULE_FIELDS, rules_for, using_rules
-from app.settings_file import parse_settings_xml
+from app.settings_file import parse_settings_upload, parse_settings_xml
 from tests.notice_asserts import has
 
 
@@ -316,3 +316,18 @@ def test_the_knowledge_specialization_price_is_read() -> None:
     assert parsed.karma_knowledge_specialization == 3
     assert "karmaknospecialization" not in parsed.unsupported
     assert rules_for(parsed).karma_knowledge_specialization == 3
+
+
+def test_a_settings_file_with_entities_is_refused() -> None:
+    """Parsed with defusedxml, like every other uploaded XML: no DTD entity is
+    expanded, however small."""
+    with pytest.raises(ValueError, match="not valid XML"):
+        parse_settings_xml('<!DOCTYPE s [<!ENTITY n "House">]><settings><name>&n;</name></settings>')
+
+
+def test_the_upload_reads_the_settings_and_build_method_from_one_parse() -> None:
+    settings, build_method = parse_settings_upload(_settings_xml(buildmethod="SumtoTen", sumtoten=13).encode())
+    assert settings.sum_to_ten == 13
+    assert build_method == "SumToTen"
+    _, none = parse_settings_upload(_settings_xml(sumtoten=13))
+    assert none is None

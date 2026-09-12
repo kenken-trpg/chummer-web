@@ -17,7 +17,7 @@ import xml.etree.ElementTree as ET
 from functools import lru_cache
 from typing import Any
 
-from .data_loader._xml import DATA_DIR, _text
+from .data_loader._xml import DATA_DIR, _text, parse_untrusted
 from .models import SettingsState
 from .rules import DEFAULT_PRIORITY_TABLE
 
@@ -206,6 +206,21 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
     endpoint can answer 400 rather than returning an all-defaults object that
     looks like a successful import.
     """
+    return _settings_from(_settings_root(raw))
+
+
+def parse_settings_upload(raw: str | bytes) -> tuple[SettingsState, str | None]:
+    """`parse_settings_xml` plus the file's `<buildmethod>`, from one parse.
+
+    The build method is returned apart because it lives on the character, not
+    in its settings — the caller patches both.
+    """
+    root = _settings_root(raw)
+    return _settings_from(root), _build_method(root)
+
+
+def _settings_root(raw: str | bytes) -> ET.Element:
+    """The `<settings>` element of an uploaded file, or `ValueError`."""
     if isinstance(raw, bytes):
         if len(raw) > MAX_SETTINGS_BYTES:
             raise ValueError("settings file too large")
@@ -213,7 +228,7 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
     elif len(raw.encode("utf-8")) > MAX_SETTINGS_BYTES:
         raise ValueError("settings file too large")
     try:
-        root = ET.fromstring(raw.lstrip("﻿"))
+        root = parse_untrusted(raw.lstrip("\ufeff"))
     except ET.ParseError as exc:
         raise ValueError(f"not valid XML: {exc}") from exc
     # A file saved from Chummer's settings folder is a bare `<settings>`; the
@@ -223,7 +238,10 @@ def parse_settings_xml(raw: str | bytes) -> SettingsState:
         if found is None:
             raise ValueError("no <settings> element")
         root = found
+    return root
 
+
+def _settings_from(root: ET.Element) -> SettingsState:
     flat = _flatten(root)
     fields: dict[str, Any] = {}
     for tag, field in _INT_FIELDS.items():
@@ -288,23 +306,8 @@ def _contact_points(flat: dict[str, str]) -> tuple[int | None, bool]:
     return int(match.group(1)), True
 
 
-def build_method_of(raw: str | bytes) -> str | None:
-    """The file's `<buildmethod>`, as `CharacterState.build_method` spells it.
-
-    Separate from `parse_settings_xml` because the build method lives on the
-    character, not in its settings — the caller patches both.
-    """
+def _build_method(root: ET.Element) -> str | None:
+    """The file's `<buildmethod>`, as `CharacterState.build_method` spells it."""
     from .chummer_import import _BUILD_METHODS
 
-    if isinstance(raw, bytes):
-        raw = raw.decode("utf-8-sig", errors="replace")
-    try:
-        root = ET.fromstring(raw.lstrip("﻿"))
-    except ET.ParseError:
-        return None
-    if root.tag != "settings":
-        found = root.find("./settings/setting")
-        if found is None:
-            return None
-        root = found
     return _BUILD_METHODS.get(_text(root.find("buildmethod")).lower())

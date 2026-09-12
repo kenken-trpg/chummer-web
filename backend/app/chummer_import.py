@@ -15,14 +15,12 @@ import json
 import lzma
 import os
 import uuid
-import xml.etree.ElementTree as ET  # the Element type only — parsing goes through defusedxml
+import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 import zlib
 from typing import Any
 
-from defusedxml import DefusedXmlException
-from defusedxml.ElementTree import fromstring as _xml_fromstring
-
 from .data_loader import CatalogDict, catalog, catalog_list
+from .data_loader._xml import _int, _text, parse_untrusted
 from .engine.constants import (
     QUALITY_CONTACT_EXTRA_SUFFIX,
     quality_addspirit_extra_key,
@@ -100,17 +98,6 @@ def decompress_chum5lz(raw: bytes | str) -> bytes:
         except Exception as exc:  # noqa: BLE001 - trying formats
             errors.append(type(exc).__name__)
     raise NoticeError(notice("api.chum5lzUndecompressible", formats=", ".join(dict.fromkeys(errors))))
-
-
-def _text(el: ET.Element | None, default: str = "") -> str:
-    return (el.text or default).strip() if el is not None and el.text else default
-
-
-def _int(el: ET.Element | None, default: int = 0) -> int:
-    try:
-        return int(float(_text(el) or default))
-    except (TypeError, ValueError):
-        return default
 
 
 def _read_mugshot(root: ET.Element) -> str:
@@ -1050,8 +1037,8 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
     """
     xml_bytes = decompress_chum5lz(xml_bytes)
     try:
-        root: ET.Element = _xml_fromstring(xml_bytes)
-    except (ET.ParseError, DefusedXmlException) as exc:
+        root: ET.Element = parse_untrusted(xml_bytes)
+    except ET.ParseError as exc:
         raise NoticeError(notice("api.xmlUnparsable", error=str(exc))) from exc
     if root.tag != "character":
         nested = root.find("character")

@@ -10,6 +10,9 @@ from contextvars import ContextVar
 from pathlib import Path
 from typing import NamedTuple
 
+from defusedxml import DefusedXmlException
+from defusedxml.ElementTree import fromstring as _defused_fromstring
+
 log = logging.getLogger(__name__)
 
 # backend/  (this file is app/data_loader/_xml.py -> parents[2] == backend/)
@@ -102,6 +105,23 @@ ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "edg", "mag
 PHYSICAL_ATTRS = ("BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA")
 SPECIAL_ATTRS = ("EDG", "MAG", "RES")
 MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
+
+
+def parse_untrusted(raw: str | bytes) -> ET.Element:
+    """Parse XML that came from a visitor — a .chum5, a settings file, a
+    customdata pack — rather than from `vendor/`.
+
+    Goes through defusedxml, which refuses a DTD's entities and external
+    references outright instead of relying on expat's amplification limit.
+    Chummer never writes a DTD, so nothing a real file holds is lost. A refusal
+    comes out as `ET.ParseError`, the same as malformed XML: to every caller
+    both mean "not a file we can read".
+    """
+    try:
+        root: ET.Element = _defused_fromstring(raw)
+    except DefusedXmlException as exc:
+        raise ET.ParseError(f"refused: {exc}") from exc
+    return root
 
 
 def _text(el: ET.Element | None, default: str = "") -> str:
