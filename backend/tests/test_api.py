@@ -7,6 +7,7 @@ the suite calls the store / engine directly.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 
 import pytest
 from starlette.testclient import TestClient
@@ -43,6 +44,42 @@ def test_oversize_body_is_rejected_413() -> None:
         headers={"content-type": "application/octet-stream", "cf-connecting-ip": "203.0.113.7"},
     )
     assert r.status_code == 413
+
+
+def _chunks(total: int, size: int = 64 * 1024) -> Iterator[bytes]:
+    """A body with no Content-Length: httpx sends a generator chunked."""
+    while total > 0:
+        yield b"x" * min(size, total)
+        total -= size
+
+
+@pytest.mark.parametrize(
+    ("path", "content_type"),
+    [
+        ("/api/characters/import-chummer", "application/octet-stream"),
+        ("/api/settings/parse", "application/octet-stream"),
+        ("/api/characters/patch", "application/json"),
+    ],
+)
+def test_oversize_chunked_body_is_rejected_413(path: str, content_type: str) -> None:
+    # without a Content-Length the up-front check has nothing to read; the body
+    # has to be counted as it arrives, or the endpoint buffers all of it
+    r = client.post(
+        path,
+        content=_chunks(_MAX_REQUEST_BYTES + 1),
+        headers={"content-type": content_type, "cf-connecting-ip": "203.0.113.8"},
+    )
+    assert r.status_code == 413
+    assert r.json() == {"detail": "request body too large"}
+
+
+def test_a_chunked_body_under_the_cap_goes_through() -> None:
+    r = client.post(
+        "/api/characters/new",
+        content=iter([b"{}"]),
+        headers={"content-type": "application/json", "cf-connecting-ip": "203.0.113.8"},
+    )
+    assert r.status_code == 200
 
 
 def test_rate_limit_returns_429_after_the_burst() -> None:
