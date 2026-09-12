@@ -36,6 +36,14 @@ export function PrintStatBlock(s: SheetData) {
     { label: ui("print.mentalLimit"), value: String(d.limits.mental) },
     { label: ui("print.socialLimit"), value: String(d.limits.social) },
     { label: ui("common.initiative"), value: `${d.initiative.value} + ${d.initiative.dice}d6` },
+    ...(d.astral_initiative
+      ? [
+          {
+            label: ui("common.astralInitiative"),
+            value: `${d.astral_initiative.value} + ${d.astral_initiative.dice}d6`,
+          },
+        ]
+      : []),
     { label: ui("print.movement"), value: `${d.movement.walk} / ${d.movement.run}` },
     { label: ui("print.defensePool"), value: String(defensePool) },
     { label: ui("sheet.damageResist"), value: String(soakPool) },

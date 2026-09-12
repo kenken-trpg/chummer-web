@@ -9274,3 +9274,16 @@ def test_homunculi_and_watchers_sit_outside_the_bound_limit() -> None:
     assert "Watcher" in flagged
     assert "Homunculus (Fragile)" in flagged
     assert "Spirit of Fire" not in flagged
+
+
+def test_a_magician_has_an_astral_initiative() -> None:
+    """Chummer's `AstralInitiativeValue` (INT×2) + `AstralInitiativeDice`
+    (the settings' minimum, 3 in Standard); a mundane has none."""
+    state = _mage("astral-init")
+    state.attributes["INT"] = 4
+    out = compute(state)
+    assert out.derived["astral_initiative"] == {"value": 8, "dice": 3}
+    assert compute(_human("mundane-astral")).derived["astral_initiative"] is None
+
+    german = _mage("astral-init-de", settings=SettingsState(min_astral_initiative_dice=2))
+    assert compute(german).derived["astral_initiative"]["dice"] == 2

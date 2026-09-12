@@ -92,6 +92,23 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).toContain("熱7+4d6");
   });
 
+  it("the core section prints the astral initiative only when there is one", () => {
+    const sheet = (astral: unknown) =>
+      buildSheetData({
+        character: {
+          ...RICH_CHARACTER,
+          derived: { ...RICH_CHARACTER.derived, astral_initiative: astral },
+        } as any,
+        catalog: RICH_CATALOG,
+        tr: identityTr,
+        layout: "standard",
+      });
+    const awakened = render(<CoreSection {...(sheet({ value: 8, dice: 3 }) as any)} />);
+    expect(awakened.container.textContent).toContain("アストラル・イニシアチブ8+3d6");
+    const mundane = render(<CoreSection {...(sheet(null) as any)} />);
+    expect(mundane.container.textContent).not.toContain("アストラル・イニシアチブ");
+  });
+
   it("the magic section prints a bound spirit's powers with their action", () => {
     const { container } = render(<MagicSection {...(s as any)} />);
     expect(container.textContent).toContain("Engulf（物理・複雑・接触・維持）");

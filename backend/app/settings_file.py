@@ -37,6 +37,8 @@ _INT_FIELDS: dict[str, str] = {
     "availability": "chargen_avail_max",
     "nuyenmaxbp": "priority_karma_nuyen_base",
     "nuyenperbpwftm": "karma_to_nuyen",
+    "minastralinitiativedice": "min_astral_initiative_dice",
+    "maxastralinitiativedice": "max_astral_initiative_dice",
 }
 
 #: `<karmacost>` child -> `SettingsState` field.

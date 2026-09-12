@@ -193,6 +193,8 @@ class DerivedDict(TypedDict):
     limit_modifiers: list[Row]
     condition_monitor: _ConditionMonitor
     initiative: _Initiative
+    #: INT×2 + the settings' astral dice; `None` without Magic
+    astral_initiative: _Initiative | None
     movement: MovementBundle
     essence: float
     essence_lost: float

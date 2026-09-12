@@ -159,6 +159,16 @@ def assemble(ctx: Ctx) -> None:
             "threshold_offset": max(0, int(ctx.effects.get("cm_threshold_offset") or 0)),
         },
         "initiative": {"value": ctx.initiative, "dice": ctx.initiative_dice},
+        # Chummer's `AstralInitiativeValue` / `AstralInitiativeDice`, shown
+        # for anyone with Magic
+        "astral_initiative": (
+            {
+                "value": int(ctx.total.get("INT") or 0) * 2,
+                "dice": min(current_rules().min_astral_initiative_dice, current_rules().max_astral_initiative_dice),
+            }
+            if ctx.special_key == "MAG"
+            else None
+        ),
         "movement": ctx.movement,
         "essence": ctx.ess,
         "essence_lost": ctx.ess_lost,

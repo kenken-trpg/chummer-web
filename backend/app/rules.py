@@ -86,6 +86,10 @@ class Rules:
     career_skill_max: int = 12
     career_skill_group_max: int = 12
     chargen_avail_max: int = CHARGEN_AVAIL_MAX
+    #: Astral initiative is INT×2 + this many D6 (SR5 p.315: 3); Chummer
+    #: rolls `min(min, max)` of the two settings.
+    min_astral_initiative_dice: int = 3
+    max_astral_initiative_dice: int = 5
 
     # --- money ---------------------------------------------------------
     karma_to_nuyen: int = 2000
@@ -152,6 +156,8 @@ _DIRECT: dict[str, str] = {
     "career_skill_max": "career_skill_max",
     "career_skill_group_max": "career_skill_group_max",
     "chargen_avail_max": "chargen_avail_max",
+    "min_astral_initiative_dice": "min_astral_initiative_dice",
+    "max_astral_initiative_dice": "max_astral_initiative_dice",
     "karma_to_nuyen": "karma_to_nuyen",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
     "contact_free_mult": "contact_free_mult",
