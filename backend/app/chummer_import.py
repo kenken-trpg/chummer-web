@@ -24,7 +24,9 @@ from defusedxml.ElementTree import fromstring as _xml_fromstring
 
 from .data_loader import CatalogDict, catalog, catalog_list
 from .engine.constants import (
+    QUALITY_CONTACT_EXTRA_SUFFIX,
     quality_addspirit_extra_key,
+    quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
 )
@@ -385,6 +387,14 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
     told apart by whether the text names a spirit.
     """
     spec = next((row for row in cat["qualities"] if row["id"] == qid), None) or {}
+    if any(node.get("tag") == "selectcontact" for node in spec.get("bonus") or []):
+        # Black Market Pipeline: `Category, Contact Name`. The name is swapped
+        # for the contact's id once `_import_lifestyles` has read the contacts.
+        category, _, contact = extra.partition(",")
+        picked = {qid: category.strip()} if category.strip() else {}
+        if contact.strip():
+            picked[quality_contact_extra_key(qid)] = contact.strip()
+        return picked
     if str(spec.get("extra_kind") or "") == "add_spirit":
         spirits = [part.strip() for part in extra.split(",") if part.strip()]
         return {quality_addspirit_extra_key(qid, idx): name for idx, name in enumerate(spirits)}
@@ -824,6 +834,14 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["weapon_mounts"] = st_mounts
 
 
+def _is_uuid(text: str) -> bool:
+    try:
+        uuid.UUID(text)
+    except ValueError:
+        return False
+    return True
+
+
 def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read lifestyles, contacts and martial arts."""
     ls_r = _Resolver(cat["lifestyles"])
@@ -844,9 +862,10 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
         nm = _text(c.find("name"))
         if not nm and not _text(c.find("role")):
             continue
+        guid = _text(c.find("guid"))
         contacts.append(
             {
-                "id": str(uuid.uuid4()),
+                "id": guid if _is_uuid(guid) else str(uuid.uuid4()),
                 "name": nm,
                 "role": _text(c.find("role")) or None,
                 "connection": max(1, _int(c.find("connection"), 1)),
@@ -855,6 +874,18 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
             }
         )
     st["contacts"] = contacts
+    # a `<selectcontact>` pick came in as the contact's name (see
+    # `_quality_extra_in`); point it at the row it names
+    ids_by_name: dict[str, str] = {}
+    for row in contacts:
+        ids_by_name.setdefault(str(row["name"]), str(row["id"]))
+    extras = st.get("quality_extras") or {}
+    for key, value in list(extras.items()):
+        if key.endswith(QUALITY_CONTACT_EXTRA_SUFFIX):
+            if value in ids_by_name:
+                extras[key] = ids_by_name[value]
+            else:
+                del extras[key]
 
     ma_r = _Resolver(cat["martial_arts"])
     marts = []
