@@ -9369,3 +9369,20 @@ def test_a_cyberskull_is_one_of_the_limbs() -> None:
     out = compute(_human("skull-na", cyberware=[CyberwareInstall(ware_id=SKULL)], settings=anarchy))
     assert out.derived["limb_replace"] is None
     assert out.derived["totals"]["STR"] == 1
+
+
+def test_a_knowledge_specialization_has_its_own_karma_price() -> None:
+    """`<karmaknospecialization>`: Neon Anarchy prices a knowledge skill's
+    specialization at 3 while an active skill's stays at 7."""
+
+    def spec_karma(settings: SettingsState) -> int:
+        state = _karma_human("kno-spec")
+        state.skills = {"Pistols": 2}
+        state.knowledge_skills = {"Seattle Gangs": 2}
+        state.knowledge_categories = {"Seattle Gangs": "Street"}
+        state.skill_specializations = {"Pistols": "Revolvers", "Seattle Gangs": "Halloweeners"}
+        state.settings = settings
+        return int(compute(state).derived["karma_chargen"]["specializations"])
+
+    assert spec_karma(SettingsState()) == 14
+    assert spec_karma(SettingsState(karma_knowledge_specialization=3)) == 10

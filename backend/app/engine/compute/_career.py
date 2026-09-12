@@ -165,7 +165,12 @@ def career_raise_karma(
         if str(spec or "").strip() and name not in base_specs:
             cat = skill_cat_map.get(name) or str(know_cats.get(name) or catalog_know.get(name) or "")
             mult = int(spec_mults.get(cat, 100))
-            amount = max(1, int(math.ceil(current_rules().karma_specialization * mult / 100.0)))
+            price = (
+                current_rules().karma_specialization
+                if name in skill_cat_map
+                else current_rules().karma_knowledge_specialization
+            )
+            amount = max(1, int(math.ceil(price * mult / 100.0)))
             lines.append(
                 {
                     "kind": "specialization",

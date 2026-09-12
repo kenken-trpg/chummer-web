@@ -84,6 +84,7 @@ export interface CharacterSettings {
   karma_skill_group?: number | null;
   karma_knowledge?: number | null;
   karma_specialization?: number | null;
+  karma_knowledge_specialization?: number | null;
   karma_spell?: number | null;
   karma_complex_form?: number | null;
   karma_enhancement?: number | null;

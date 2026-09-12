@@ -219,7 +219,10 @@ def economy(ctx: Ctx) -> None:
     spec_active = int(ctx.specs["active_spent"])
     spec_knowledge = int(ctx.specs["knowledge_spent"])
     if ctx.is_karma:
-        ctx.spec_karma = (spec_active + spec_knowledge) * current_rules().karma_specialization
+        rules = current_rules()
+        ctx.spec_karma = (
+            spec_active * rules.karma_specialization + spec_knowledge * rules.karma_knowledge_specialization
+        )
     elif ctx.career:
         # Priority career: new specs cost karma (baseline settles chargen specs).
         ctx.spec_karma = 0
