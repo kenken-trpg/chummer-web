@@ -297,3 +297,12 @@ def test_the_cyberleg_movement_rule_is_read() -> None:
     assert parsed.cyberleg_movement is True
     assert "cyberlegmovement" not in parsed.unsupported
     assert rules_for(parsed).cyberleg_movement is True
+
+
+def test_the_limb_count_and_excluded_slot_are_read() -> None:
+    """Neon Anarchy: five limbs, the skull left out of the average."""
+    parsed = parse_settings_xml(_settings_xml(limbcount="5", excludelimbslot="skull"))
+    assert (parsed.limb_count, parsed.exclude_limb_slot) == (5, "skull")
+    assert not {"limbcount", "excludelimbslot"} & set(parsed.unsupported)
+    rules = rules_for(parsed)
+    assert (rules.limb_count, rules.exclude_limb_slot) == (5, "skull")

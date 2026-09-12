@@ -101,6 +101,8 @@ export interface CharacterSettings {
   chargen_avail_max?: number | null;
   min_astral_initiative_dice?: number | null;
   max_astral_initiative_dice?: number | null;
+  limb_count?: number | null;
+  exclude_limb_slot?: string | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   contact_free_mult?: number | null;

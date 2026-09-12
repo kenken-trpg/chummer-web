@@ -17,11 +17,14 @@ from typing import Any
 
 from ...models import CharacterOptions
 from ...notices import Notice, notice, terms
+from ...rules import current_rules
 from ..constants import _normalize_side
 from ..gear import _limb_attr_effect
 
-LIMB_BODY_SLOTS = {"arm": 2, "leg": 2, "torso": 1}
-LIMB_BODY_PARTS = 5
+# Chummer's default `<limbcount>` 6: the skull counts as one of the limbs a
+# cyberlimb's STR / AGI is averaged across, next to the torso.
+LIMB_BODY_SLOTS = {"arm": 2, "leg": 2, "torso": 1, "skull": 1}
+LIMB_BODY_PARTS = 6
 CYBERLIMB_BASE_ATTR = 3  # SR5 p.456: an empty cyberlimb has STR 3 / AGI 3
 REDLINER_BASE_SLOTS = {"arm": 2, "leg": 2}
 _PARTIAL_LIMB = re.compile(r"\b(hand|foot|lower|modular connector)\b", re.I)
@@ -146,7 +149,13 @@ def limb_attribute_replace(
     extra_limbs: dict[str, int] | None = None,
 ) -> dict[str, Any] | None:
     slots = body_limb_slots(extra_limbs)
-    parts = sum(slots.values())
+    # `<excludelimbslot>` (Neon Anarchy: skull) takes a slot out of the
+    # average; `<limbcount>` is the divisor, plus whatever `<addlimb>` added
+    rules = current_rules()
+    excluded = rules.exclude_limb_slot.strip().lower()
+    slots = {slot: n for slot, n in slots.items() if slot != excluded}
+    added = sum(max(0, int(n or 0)) for n in (extra_limbs or {}).values())
+    parts = max(1, rules.limb_count + added)
     used = dict.fromkeys(slots, 0)
     taken: set[tuple[str, str]] = set()
     limb_str: list[int] = []
@@ -155,6 +164,8 @@ def limb_attribute_replace(
         if not _is_body_limb(item):
             continue
         slot = (item.get("limbslot") or "").lower()
+        if slot not in slots:
+            continue
         side = _normalize_side(item.get("side")) or ""
         key = (slot, side or item.get("id") or item.get("name") or "")
         if key in taken:
@@ -173,8 +184,9 @@ def limb_attribute_replace(
     if count == 0:
         return None
     meat_parts = parts - count
-    str_avg = (sum(limb_str) + meat_str * meat_parts) // parts
-    agi_avg = (sum(limb_agi) + meat_agi * meat_parts) // parts
+    # Chummer's `CalculatedTotalValue`: the average rounds up
+    str_avg = -(-(sum(limb_str) + meat_str * meat_parts) // parts)
+    agi_avg = -(-(sum(limb_agi) + meat_agi * meat_parts) // parts)
     str_avg = min(int(attrs_spec.get("STR", {}).get("aug") or 9), str_avg)
     agi_avg = min(int(attrs_spec.get("AGI", {}).get("aug") or 9), agi_avg)
     return {
