@@ -101,6 +101,7 @@ IMPLEMENTED = {
     "lifestylecost",
     "notoriety",
     "streetcredmultiplier",
+    "attributemaxclamp",
     "fame",
     "publicawareness",
     "essencepenalty",
@@ -230,9 +231,6 @@ SILENT_TAGS = {
     "linguasoft",
     "skillsoft",
     "weaponspecificdice",
-    # Infirm's first level: hold AGI/BOD/REA/STR to their lowered maximum.
-    # The attribute pass already clamps every attribute to its maximum.
-    "attributemaxclamp",
     "critterpowers",
     "limitcritterpowercategory",
     "optionalpowers",

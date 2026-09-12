@@ -227,3 +227,13 @@ class Ctx:
     def warn(self, key: str, **params: ParamValue) -> None:
         """Record something the build survives but the player should see."""
         self.warnings.append(notice(key, **params))
+
+    def attr_bonus(self, key: str) -> int:
+        """The augmentation on `key`'s rating. Under `<attributemaxclamp>`
+        (Infirm) the augmented maximum is the natural one, so a bonus only
+        fills the gap up to it — Chummer's `AttributeModifiers`."""
+        bonus = int((self.effects.get("attribute_bonus") or {}).get(key, 0))
+        if key in (self.effects.get("attribute_max_clamp") or []) and key in self.attrs_spec:
+            natural_max = int(self.attrs_spec[key].get("max") or 0) + int(self.attr_max_bonus.get(key) or 0)
+            bonus = min(bonus, natural_max - int(self.ratings.get(key) or 0))
+        return bonus

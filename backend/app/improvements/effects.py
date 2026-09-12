@@ -167,6 +167,9 @@ class EffectsDict(TypedDict):
     #: what `resolve_precedence` has already folded in, per key
     precedence_applied: dict[str, int]
     attribute_max_mods: dict[str, int]
+    #: `<attributemaxclamp>` (Infirm): attributes whose augmented maximum is
+    #: their natural maximum — augmentation cannot lift them past it
+    attribute_max_clamp: list[str]
     test_mods: dict[str, int]
     spell_defense_resist: dict[str, int]
     special_armor: dict[str, int]
@@ -413,6 +416,7 @@ def empty_effects() -> EffectsDict:
         "native_language_limit_bonus": 0,
         "knowledge_skill_points": 0,
         "attribute_max_mods": {},
+        "attribute_max_clamp": [],
         "skill_category_point_cost_mult": {},
         "skill_category_karma_cost_mult": [],
         "skill_category_karma_cost": [],

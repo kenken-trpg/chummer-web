@@ -77,6 +77,7 @@ def _effective_attr_spec(
 def assemble(ctx: Ctx) -> None:
     ctx.state.attributes = ctx.ratings
     sum_spent = sum_to_ten_spent(ctx.state.priorities)
+    clamped = set(ctx.effects.get("attribute_max_clamp") or [])
     # A technomancer's persona is one of the personas the Matrix initiative
     # below picks from, so it is resolved before the blob rather than inside it.
     living = (
@@ -421,7 +422,9 @@ def assemble(ctx: Ctx) -> None:
                 key: {
                     **spec,
                     "max": int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0),
-                    "aug": int(spec.get("aug") or 0) + int(ctx.attr_max_bonus.get(key) or 0),
+                    # `<attributemaxclamp>`: no augmented headroom above the natural maximum
+                    "aug": int(spec.get("max" if key in clamped else "aug") or 0)
+                    + int(ctx.attr_max_bonus.get(key) or 0),
                 }
                 for key, spec in _effective_attr_spec(
                     ctx.attrs_spec,

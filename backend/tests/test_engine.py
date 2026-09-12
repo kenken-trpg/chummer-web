@@ -8958,3 +8958,26 @@ def test_burnt_street_cred_round_trips_through_chum5() -> None:
     st.burnt_street_cred = 2
     back, _skipped = chum5_to_state(state_to_chum5(compute(st)))
     assert (back["street_cred"], back["burnt_street_cred"]) == (6, 2)
+
+
+def test_infirm_caps_augmentation_at_the_natural_maximum() -> None:
+    """`<attributemaxclamp>` (RF p.156): an Infirm character's augmented
+    maximum for BOD/AGI/REA/STR is the lowered natural one, so Muscle
+    Replacement cannot push STR past it. Attributes Infirm leaves alone keep
+    their +4 headroom."""
+    infirm = _career_quality("Infirm")["id"]
+    muscle = CyberwareInstall(ware_id=_ware_named("Muscle Replacement"), rating=2)
+    healthy_st = _mundane("mr", cyberware=[muscle])
+    frail_st = _mundane("mr-infirm", cyberware=[muscle], quality_ids=[infirm])
+    for st in (healthy_st, frail_st):
+        st.attributes.update({"STR": 5, "AGI": 3})
+    healthy = compute(healthy_st).derived
+    frail = compute(frail_st).derived
+    assert healthy["totals"]["STR"] == 7
+    # Infirm lowers the STR maximum to 5, and STR is already there
+    assert frail["totals"]["STR"] == 5
+    # AGI 3 has room up to 5 — the +2 still fits
+    assert frail["totals"]["AGI"] == 5
+    spec = frail["metatype_info"]["attributes"]
+    assert (spec["STR"]["max"], spec["STR"]["aug"]) == (5, 5)
+    assert spec["INT"]["aug"] == healthy["metatype_info"]["attributes"]["INT"]["aug"]
