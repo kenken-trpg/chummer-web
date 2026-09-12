@@ -11,16 +11,17 @@ and named in the returned warning list rather than failing the import.
 
 from __future__ import annotations
 
+import functools
 import json
 import lzma
 import os
 import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 import zlib
-from typing import Any
+from typing import Any, NamedTuple
 
 from .data_loader import CatalogDict, catalog, catalog_list
-from .data_loader._xml import _int, _text, parse_untrusted
+from .data_loader._xml import _int, _text, current_overlay_key, data_root, parse_untrusted
 from .engine.constants import (
     QUALITY_CONTACT_EXTRA_SUFFIX,
     quality_addspirit_extra_key,
@@ -131,6 +132,85 @@ def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     return out
 
 
+# Data files whose entries a save can carry, for `_DataIndex` below.
+_INDEXED_FILES = ("weapons.xml", "gear.xml", "armor.xml", "cyberware.xml", "bioware.xml", "vehicles.xml")
+
+
+class _DataIndex(NamedTuple):
+    hidden_ids: frozenset[str]
+    #: names every entry of which is hidden, lower-cased — a fallback for a
+    #: save without ids, safe only where no pickable entry shares the name
+    hidden_names: frozenset[str]
+    #: parent id -> lower-cased names of the gear / weapons its entry includes
+    included: dict[str, frozenset[str]]
+
+
+@functools.lru_cache(maxsize=4)
+def _data_index(_overlay_key: str) -> _DataIndex:
+    """What a save can hold that nobody picked: `<hide />` entries, and the
+    `<gears>` / `<weapons>` a ware or vehicle entry brings with it.
+
+    Chummer adds those itself — the Unarmed Attack on every character, a
+    Survival Kit's lighter and compass, a vehicle's Sensor Array, a
+    Datajack's connector cord — so a save lists them though nobody picked
+    them. The app models them through their parent or not at all, and naming
+    each one "could not be imported" buried the entries that really were lost.
+    """
+    hidden_ids: set[str] = set()
+    hidden: set[str] = set()
+    visible: set[str] = set()
+    included: dict[str, frozenset[str]] = {}
+    for filename in _INDEXED_FILES:
+        root = data_root(filename)
+        if root is None:
+            continue
+        for el in root.iter():
+            eid = _text(el.find("id"))
+            name = _text(el.find("name")).lower()
+            if not eid or not name:
+                continue
+            if el.find("hide") is not None:
+                hidden_ids.add(eid)
+                hidden.add(name)
+            else:
+                visible.add(name)
+            kids = {
+                _text(n).lower()
+                for sub in ("gears", "weapons")
+                for holder in el.findall(sub)
+                for n in holder.iter("name")
+                if _text(n)
+            }
+            if kids:
+                included[eid] = frozenset(kids)
+    return _DataIndex(frozenset(hidden_ids), frozenset(hidden - visible), included)
+
+
+def _chummer_added(node: ET.Element) -> bool:
+    """A `<hide />` entry: Chummer put it there, nobody picked it."""
+    index = _data_index(current_overlay_key())
+    sid = _text(node.find("sourceid")) or _text(node.find("id"))
+    if sid:
+        return sid in index.hidden_ids
+    return _text(node.find("name")).lower() in index.hidden_names
+
+
+def _unexpected_children(parent_id: str, nodes: list[ET.Element]) -> list[ET.Element]:
+    """`nodes` minus what the parent's entry includes or Chummer adds itself.
+
+    Matched by prefix as well: a Datajack's entry includes "Universal
+    Connector Cord", which the save names "Universal Connector Cord (Meter)".
+    """
+    included = _data_index(current_overlay_key()).included.get(parent_id, frozenset())
+    out = []
+    for node in nodes:
+        name = _text(node.find("name")).lower()
+        if _chummer_added(node) or any(name == n or name.startswith(n + " ") for n in included):
+            continue
+        out.append(node)
+    return out
+
+
 class _Resolver:
     """name / sourceid -> catalog id for one bucket."""
 
@@ -146,7 +226,7 @@ class _Resolver:
         got = self.by_name.get(name.lower())
         if got:
             return got
-        if name:
+        if name and not _chummer_added(node):
             warn.append(notice("engine.import.skippedUnknown", kind=kind, name=name))
         return None
 
@@ -661,7 +741,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 child["parent_id"] = row["id"]
                 child["included"] = True
                 out.append(child)
-            if w.find("./gears/gear") is not None:
+            if _unexpected_children(wid, w.findall("./gears/gear")):
                 warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))
         return out
 
@@ -763,7 +843,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 gid, bucket = cand, b
                 break
         if not gid:
-            if name:
+            if name and not _chummer_added(g):
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
             return
         row: dict[str, Any] = {
@@ -856,7 +936,7 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                     "allowedweapons": _text(m.find("weaponmountcategories")),
                 }
             )
-        if v.find("./weapons/weapon") is not None or v.find("./gears/gear") is not None:
+        if _unexpected_children(vid, v.findall("./weapons/weapon") + v.findall("./gears/gear")):
             warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
