@@ -67,8 +67,7 @@ def totals(ctx: Ctx) -> None:
     if ctx.power_spent > ctx.power_pool + 1e-9:
         ctx.err("engine.adept.powerPointsOver", used=f"{ctx.power_spent:g}", max=f"{ctx.power_pool:g}")
 
-    bonus = ctx.effects["attribute_bonus"]
-    ctx.total = {k: ctx.ratings[k] + int(bonus.get(k, 0)) for k in ctx.ratings}
+    ctx.total = {k: ctx.ratings[k] + ctx.attr_bonus(k) for k in ctx.ratings}
     # ESS is fractional; the attribute-total consumers only ever read integer
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
     ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]

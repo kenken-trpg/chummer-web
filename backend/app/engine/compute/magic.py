@@ -115,10 +115,7 @@ def awakened(ctx: Ctx) -> None:
     ctx.effects["enabled_tabs"] = set(ctx.effects["enabled_tabs"])
     for source, nodes in ctx.adept["bonus_sources"] + ctx.enhancements["bonus_sources"]:
         apply_bonus_nodes(nodes, ctx.effects, source)
-    ctx.attr_totals = {
-        key: int(ctx.ratings.get(key) or 0) + int((ctx.effects.get("attribute_bonus") or {}).get(key, 0))
-        for key in ctx.ratings
-    }
+    ctx.attr_totals = {key: int(ctx.ratings.get(key) or 0) + ctx.attr_bonus(key) for key in ctx.ratings}
 
 
 def spells(ctx: Ctx) -> None:

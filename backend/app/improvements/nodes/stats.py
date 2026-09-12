@@ -44,6 +44,10 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
                 effects["attribute_max_mods"][name] = int(effects["attribute_max_mods"].get(name) or 0) + _as_int(
                     fields.get("max")
                 )
+    elif tag == "attributemaxclamp":
+        name = ATTR_ALIASES.get(_as_text(node.get("value") or fields.get("name")).upper())
+        if name and name not in effects["attribute_max_clamp"]:
+            effects["attribute_max_clamp"].append(name)
     elif tag == "attributekarmacost":
         # The skill-side `<karmacost>` rules already shape a per-level cost in
         # `engine/karma.py`; an attribute rule is the same row read by the
