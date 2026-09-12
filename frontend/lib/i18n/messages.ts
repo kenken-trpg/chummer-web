@@ -353,6 +353,9 @@ const JA = {
   "common.condition": "コンディション",
   "gear.capacity": " / 容量 {used}/{max}",
   "gear.addMod": "改造を追加",
+  "gear.stackWith": "重ねる防具",
+  "gear.stackWithHint":
+    "仕立てた相手の防具と一緒に着ると、この防具の +値が相手に上乗せされる（RG p.59）",
   "gear.addSensorFn": "機能を追加",
   "gear.addToSlot": "スロットに追加",
   "gear.addAccessory": "アクセサリを追加",
@@ -2140,6 +2143,9 @@ const EN: Catalog = {
   "common.condition": "Condition",
   "gear.capacity": " / capacity {used}/{max}",
   "gear.addMod": "Add a mod",
+  "gear.stackWith": "Stacks with",
+  "gear.stackWithHint":
+    "Worn with the armor it was tailored to, this piece adds its + value on top of that armor (RG p.59)",
   "gear.addSensorFn": "Add a function",
   "gear.addToSlot": "Add to slot",
   "gear.addAccessory": "Add an accessory",

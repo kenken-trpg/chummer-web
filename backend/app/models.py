@@ -118,6 +118,9 @@ class ArmorModInstall(BaseModel):
     included: bool = False
     rating: int = 1
     wireless: bool = True
+    # Custom Fit (Stack) `<selectarmor>`: the catalog name of the armor this
+    # piece was tailored to stack with (Chummer's `<extra>`)
+    stack_with: str = ""
 
 
 class WeaponInstall(BaseModel):

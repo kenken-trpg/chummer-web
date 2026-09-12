@@ -70,6 +70,9 @@ def load_armor() -> list[dict[str, Any]]:
                 "minrating": 1 if rating_max > 0 else 0,
                 "maxrating": rating_max,
                 "additive": armor_raw.startswith("+") or armor_raw.startswith("-"),
+                # `+3` on a piece sold with Custom Fit (Stack): what it adds on
+                # top of the armor it was tailored to, worn together (RG p.59)
+                "armoroverride": _text(el.find("armoroverride")),
                 "addmodcategories": [_text(c) for c in el.findall("addmodcategory") if _text(c)],
                 "included_mods": _armor_included_mods(el),
                 "add_weapon": _text(el.find("addweapon")),

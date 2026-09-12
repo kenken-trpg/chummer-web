@@ -540,4 +540,30 @@ describe("<ArmorGear> mods on a piece", () => {
     expect((body.armor as { id: string }[]).map((r) => r.id)).toEqual(["a2"]);
     expect((body.armor_mods as { id: string }[]).map((r) => r.id)).toEqual(["m2"]);
   });
+
+  /** Custom Fit (Stack) names the *other* piece it was tailored to, so the
+   *  picker offers every piece but its own, and the pick lands on that mod. */
+  it("Custom Fit (Stack) picks another piece to stack with", () => {
+    const patch = vi.fn();
+    renderPanel(
+      ArmorGear,
+      character([
+        mod("m1", "Custom Fit (Stack)", "a1", { included: true, select_armor: true }),
+        mod("m2", "Nonconductivity", "a2"),
+      ]),
+      patch,
+    );
+
+    const picker = screen.getByRole("combobox", { name: "重ねる防具" });
+    const options = within(picker)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
+    expect(options).toEqual(["—", "Armor Jacket"]);
+
+    fireEvent.change(picker, { target: { value: "Armor Jacket" } });
+
+    const out = patch.mock.calls[0][0].armor_mods as { id: string; stack_with?: string }[];
+    expect(out.find((r) => r.id === "m1")?.stack_with).toBe("Armor Jacket");
+    expect(out.find((r) => r.id === "m2")?.stack_with).toBeUndefined();
+  });
 });

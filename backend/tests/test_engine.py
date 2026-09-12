@@ -8981,3 +8981,47 @@ def test_infirm_caps_augmentation_at_the_natural_maximum() -> None:
     spec = frail["metatype_info"]["attributes"]
     assert (spec["STR"]["max"], spec["STR"]["aug"]) == (5, 5)
     assert spec["INT"]["aug"] == healthy["metatype_info"]["attributes"]["INT"]["aug"]
+
+
+def _armor_named(name: str) -> str:
+    return next(item["id"] for item in catalog()["armor"] if item["name"] == name)
+
+
+def _custom_fit_state(stack_with: str | None) -> CharacterState:
+    """Armor Jacket worn under a Mortimer of London Greatcoat, whose bundled
+    Custom Fit (Stack) is pointed at `stack_with`."""
+    coat = ArmorInstall(armor_id=_armor_named("Mortimer of London: Greatcoat Coat"))
+    st = _mundane("custom-fit", armor=[ArmorInstall(armor_id=ARMOR_JACKET), coat])
+    st = compute(st)
+    if stack_with is not None:
+        fit = next(
+            mod
+            for mod in st.armor_mods
+            if mod.parent_id == coat.id and mod.mod_id == _armor_mod_named("Custom Fit (Stack)")
+        )
+        fit.stack_with = stack_with
+    return st
+
+
+def _armor_mod_named(name: str) -> str:
+    return next(item["id"] for item in catalog()["armor_mods"] if item["name"] == name)
+
+
+def test_custom_fit_stack_adds_the_override_to_the_armor_it_names() -> None:
+    """`<selectarmor>` (RG p.59): the Greatcoat tailored to the Armor Jacket
+    adds its +3 on top of the jacket's 12 instead of competing with it."""
+    out = compute(_custom_fit_state("Armor Jacket")).derived
+    assert out["armor"] == 15
+    assert out["worn_armor"] == "Armor Jacket"
+    assert not any(w["key"] == "engine.gear.armorHighestOnly" for w in out["warnings"])
+    contributes = {row["name"]: row["contributes"] for row in out["armor_items"]}
+    assert contributes == {"Armor Jacket": 12, "Mortimer of London: Greatcoat Coat": 3}
+    fit = next(mod for mod in out["armor_mods"] if mod["name"] == "Custom Fit (Stack)")
+    assert (fit["select_armor"], fit["stack_with"]) == (True, "Armor Jacket")
+
+
+def test_custom_fit_stack_does_nothing_until_it_names_a_worn_armor() -> None:
+    for target in ("", "Lined Coat"):
+        out = compute(_custom_fit_state(target)).derived
+        assert out["armor"] == 12
+        assert any(w["key"] == "engine.gear.armorHighestOnly" for w in out["warnings"])

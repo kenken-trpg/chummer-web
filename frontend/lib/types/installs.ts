@@ -144,6 +144,8 @@ export interface ArmorModInstall {
   included?: boolean;
   rating?: number;
   wireless?: boolean;
+  /** Custom Fit (Stack): catalog name of the armor this piece stacks with */
+  stack_with?: string;
 }
 
 export interface WeaponInstall {

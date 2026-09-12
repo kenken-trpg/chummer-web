@@ -116,3 +116,22 @@ def test_round_tripped_state_still_validates() -> None:
     st, _ = chum5_to_state(state_to_chum5(_rich_state()))
     ch = import_character({k: v for k, v in st.items() if k != "_warnings"})
     assert ch.id and isinstance(ch.derived, dict)
+
+
+def test_custom_fit_stack_target_survives_export() -> None:
+    """Chummer keeps the armor a Custom Fit (Stack) was tailored to in the
+    mod's `<extra>`; so do we."""
+    c = catalog()
+    coat = next(r["id"] for r in c["armor"] if r["name"] == "Mortimer of London: Greatcoat Coat")
+    fit = next(r["id"] for r in c["armor_mods"] if r["name"] == "Custom Fit (Stack)")
+    src = CharacterState(
+        id="cf",
+        name="cf",
+        metatype="Human",
+        attributes={},
+        priorities=Priorities(),
+        armor=[ArmorInstall(id="a1", armor_id=coat)],
+        armor_mods=[ArmorModInstall(mod_id=fit, parent_id="a1", included=True, stack_with="Armor Jacket")],
+    )
+    st, _ = chum5_to_state(state_to_chum5(src))
+    assert [m["stack_with"] for m in st["armor_mods"] if m["mod_id"] == fit] == ["Armor Jacket"]
