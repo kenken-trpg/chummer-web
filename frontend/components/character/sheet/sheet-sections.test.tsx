@@ -109,6 +109,11 @@ describe("sheet sections — smoke render", () => {
     expect(mundane.container.textContent).not.toContain("アストラル・イニシアチブ");
   });
 
+  it("the core section prints movement in metres with the sprint rate", () => {
+    const { container } = render(<CoreSection {...(s as any)} />);
+    expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");
+  });
+
   it("the magic section prints a bound spirit's powers with their action", () => {
     const { container } = render(<MagicSection {...(s as any)} />);
     expect(container.textContent).toContain("Engulf（物理・複雑・接触・維持）");

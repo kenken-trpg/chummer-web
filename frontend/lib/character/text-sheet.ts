@@ -79,7 +79,7 @@ export function textSheet(x: TextArgs): string {
   );
   line(
     `${ui("common.armor")} ${d.armor}  ${ui("common.essence")} ${d.essence}  ` +
-      ui("txt.movement", { walk: d.movement.walk, run: d.movement.run }),
+      ui("txt.movement", { walk: d.movement.walk, run: d.movement.run, sprint: d.movement.sprint }),
   );
   line();
 

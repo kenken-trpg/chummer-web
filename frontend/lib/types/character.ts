@@ -295,6 +295,8 @@ export interface Character {
     initiative: { value: number; dice: number };
     /** INT×2 + the settings' astral dice (3 in Standard); absent without Magic. */
     astral_initiative?: { value: number; dice: number } | null;
+    /** Ground walk / run in metres, sprint in metres per hit (Chummer's
+     *  `CalculatedMovement("Ground")`). */
     movement: { walk: string; run: string; sprint: string };
     essence: number;
     armor: number;

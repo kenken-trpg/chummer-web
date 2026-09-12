@@ -17,7 +17,7 @@ from ...improvements import EffectsDict, resolve_precedence
 from ...notices import term
 from ...rules import current_rules
 from ..bundle_types import MovementBundle
-from ..formulas import _add_leading_int, _ceil_div, _replace_leading_int
+from ..formulas import _ceil_div
 from ..gear.weapons.bonuses import resolve_attr_formulas, resolve_limit_accuracy
 from ..limits import (
     _avail_entries,
@@ -34,23 +34,50 @@ from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
 
-def resolve_movement(meta: dict[str, Any], effects: EffectsDict) -> MovementBundle:
+def _ground_rate(rates: str) -> float:
+    """The Ground entry of a metatype `Ground/Swim/Fly` rate string."""
+    head = str(rates or "").split("/")[0].strip()
+    try:
+        return float(head)
+    except ValueError:
+        return 0.0
+
+
+def _metres(value: float) -> str:
+    """Chummer's `#,0.##`: at most two decimals, no trailing zeros."""
+    return f"{round(value, 2):.2f}".rstrip("0").rstrip(".") or "0"
+
+
+def resolve_movement(meta: dict[str, Any], effects: EffectsDict, agi: int) -> MovementBundle:
+    """Ground walk / run in metres and sprint in metres per hit, the way
+    Chummer's `CalculatedMovement("Ground")` works them out:
+    (rate + multiplier) × (1 + percent) × AGI for walking and running, and
+    rate + bonus / 100, scaled by its percent, for sprinting. `agi` is the
+    meat AGI — Chummer leaves cyberlimbs out of it."""
     category = "Ground"
-    walk = str(meta.get("walk") or "2/1/0")
-    run = str(meta.get("run") or "4/0/0")
-    sprint = str(meta.get("sprint") or "2/1/0")
     replace = effects.get("movement_replace") or {}
-    if (category, "walk") in replace:
-        walk = _replace_leading_int(walk, int(replace[(category, "walk")]))
-    if (category, "run") in replace:
-        run = _replace_leading_int(run, int(replace[(category, "run")]))
-    walk = _add_leading_int(walk, int((effects.get("walk_multiplier") or {}).get(category) or 0))
-    run = _add_leading_int(run, int((effects.get("run_multiplier") or {}).get(category) or 0))
+
+    def rate(kind: str, default: str) -> float:
+        if (category, kind) in replace:
+            return float(replace[(category, kind)])
+        return _ground_rate(str(meta.get(kind) or default))
+
+    def pct(key: str) -> float:
+        return 1.0 + int((effects.get(key) or {}).get(category) or 0) / 100.0  # type: ignore[attr-defined]
+
+    walk = (rate("walk", "2/1/0") + int((effects.get("walk_multiplier") or {}).get(category) or 0)) * pct(
+        "walk_multiplier_percent"
+    )
+    run = (rate("run", "4/0/0") + int((effects.get("run_multiplier") or {}).get(category) or 0)) * pct(
+        "run_multiplier_percent"
+    )
     sprint_bonus = int((effects.get("sprint_bonus") or {}).get(category) or 0)
+    sprint = (rate("sprint", "2/1/0") + sprint_bonus / 100.0) * pct("sprint_bonus_percent")
+    agi = max(0, int(agi))
     return {
-        "walk": walk,
-        "run": run,
-        "sprint": sprint,
+        "walk": _metres(walk * agi),
+        "run": _metres(run * agi),
+        "sprint": _metres(sprint),
         "sprint_bonus": sprint_bonus,
     }
 
@@ -145,7 +172,8 @@ def finalize(ctx: Ctx) -> None:
         )
     )
 
-    ctx.movement = resolve_movement(ctx.meta, ctx.effects)
+    # meat AGI: `ctx.total` already carries the cyberlimb replacement
+    ctx.movement = resolve_movement(ctx.meta, ctx.effects, ctx.ratings["AGI"] + ctx.attr_bonus("AGI"))
 
     ctx.quality_report = {}
     ctx.negative_quality_karma = apply_quality_rules(

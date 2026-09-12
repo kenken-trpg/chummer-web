@@ -81,7 +81,7 @@ class MartialBundle(TypedDict):
 
 
 class MovementBundle(TypedDict):
-    """``resolve_movement`` — the walk / run / sprint rate strings."""
+    """``resolve_movement`` — Ground walk / run in metres, sprint in metres per hit."""
 
     walk: str
     run: str

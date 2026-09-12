@@ -24,7 +24,7 @@ function makeDerived(overrides: Partial<Derived> = {}): Derived {
     limits: { physical: 3, mental: 4, social: 4 },
     condition_monitor: { physical: 10, stun: 10 },
     initiative: { value: 6, dice: 1 },
-    movement: { walk: "2/1/0", run: "4/0/0", sprint: "2/1/0" },
+    movement: { walk: "6", run: "12", sprint: "2" },
     essence: 6,
     armor: 0,
     nuyen: 0,

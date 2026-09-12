@@ -9,6 +9,7 @@ from app.engine import (
     spell_drain_value,
     tradition_resist,
 )
+from app.engine.compute.finalize import resolve_movement
 from app.engine.gear import _append_natural_weapons, apply_reach_bonus
 from app.engine.lookups import critter_power_rows
 from app.improvements import collect_effects
@@ -6620,13 +6621,37 @@ def test_selecttext_quality_populates_catalog_options() -> None:
 
 
 def test_celerity_replaces_movement() -> None:
+    """Celerity sets the Ground rates to 3/6 and adds 1 m per sprint hit;
+    at AGI 1 that is 3 m walking, 6 m running, 3 m per hit."""
     out = compute(_human("celerity", quality_ids=[CELERITY]))
-    assert out.derived["movement"]["walk"].startswith("3")
-    assert out.derived["movement"]["run"].startswith("6")
+    assert out.derived["totals"]["AGI"] == 1
+    assert out.derived["movement"]["walk"] == "3"
+    assert out.derived["movement"]["run"] == "6"
+    assert out.derived["movement"]["sprint"] == "3"
     assert out.derived["movement"]["sprint_bonus"] == 100
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "movementreplace" not in tags
     assert "sprintbonus" not in tags
+
+
+def test_movement_is_metres_off_agility() -> None:
+    """Chummer's `CalculatedMovement("Ground")`: a human walks 2×AGI and
+    runs 4×AGI metres, and sprints +2 m per hit."""
+    state = _human("move-agi")
+    state.attributes["AGI"] = 4
+    move = compute(state).derived["movement"]
+    assert (move["walk"], move["run"], move["sprint"]) == ("8", "16", "2")
+
+
+def test_a_percent_movement_bonus_scales_the_rate() -> None:
+    """`<walkmultiplier><percent>` was read as `+0` before; it scales the
+    Ground rate, so +50% on a 2× walk at AGI 2 is 6 m."""
+    effects = collect_effects([("t", [{"tag": "walkmultiplier", "fields": {"category": "Ground", "percent": "50"}}])])
+    assert effects["walk_multiplier_percent"] == {"Ground": 50}
+    assert effects["walk_multiplier"] == {}
+    move = resolve_movement({"walk": "2/1/0", "run": "4/0/0", "sprint": "2/1/0"}, effects, 2)
+    assert move["walk"] == "6"
+    assert move["run"] == "8"
 
 
 def test_crystal_breath_essence_penalty() -> None:
@@ -8974,8 +8999,11 @@ def test_muscle_replacement_switches_celerity_off() -> None:
     alone = compute(_mundane("cel", quality_ids=[celerity])).derived
     both = compute(_mundane("cel-mr", quality_ids=[celerity], cyberware=[muscle])).derived
     plain = compute(_mundane("cel-none")).derived
+    # movement is metres now, so Muscle Replacement's AGI moves it too:
+    # compare with the ware on its own, not with a bare runner
+    muscle_only = compute(_mundane("cel-mr-only", cyberware=[muscle])).derived
     assert alone["movement"] != plain["movement"]
-    assert both["movement"] == plain["movement"]
+    assert both["movement"] == muscle_only["movement"]
     assert _quality_row(both, "Celerity")["disabled_by"] == "Muscle Replacement"
 
 

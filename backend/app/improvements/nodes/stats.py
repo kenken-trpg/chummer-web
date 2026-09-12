@@ -260,25 +260,25 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
         effects["cm_recovery_physical_add_ess"] = True
     elif tag == "addesstostuncmrecovery":
         effects["cm_recovery_stun_add_ess"] = True
-    elif tag == "walkmultiplier":
+    elif tag in ("walkmultiplier", "runmultiplier", "sprintbonus"):
+        # `<val>` adds to the rate; `<percent>` scales it (Chummer's
+        # WalkMultiplier / WalkMultiplierPercent and their siblings)
         category = str(fields.get("category") or "Ground").strip() or "Ground"
-        effects["walk_multiplier"][category] = int(effects["walk_multiplier"].get(category) or 0) + _as_int(
-            fields.get("val") or fields.get("bonus") or node.get("value")
-        )
-    elif tag == "runmultiplier":
-        category = str(fields.get("category") or "Ground").strip() or "Ground"
-        effects["run_multiplier"][category] = int(effects["run_multiplier"].get(category) or 0) + _as_int(
-            fields.get("val") or fields.get("bonus") or node.get("value")
-        )
+        key = {"walkmultiplier": "walk_multiplier", "runmultiplier": "run_multiplier", "sprintbonus": "sprint_bonus"}[
+            tag
+        ]
+        if fields.get("percent") not in (None, ""):
+            bucket = effects[f"{key}_percent"]  # type: ignore[literal-required]
+            bucket[category] = int(bucket.get(category) or 0) + _as_int(fields.get("percent"))
+        else:
+            bucket = effects[key]  # type: ignore[literal-required]
+            bucket[category] = int(bucket.get(category) or 0) + _as_int(
+                fields.get("val") or fields.get("bonus") or node.get("value")
+            )
     elif tag == "movementreplace":
         category = str(fields.get("category") or "Ground").strip() or "Ground"
         speed = str(fields.get("speed") or "walk").strip().lower() or "walk"
         effects["movement_replace"][(category, speed)] = _as_int(
-            fields.get("val") or fields.get("bonus") or node.get("value")
-        )
-    elif tag == "sprintbonus":
-        category = str(fields.get("category") or "Ground").strip() or "Ground"
-        effects["sprint_bonus"][category] = int(effects["sprint_bonus"].get(category) or 0) + _as_int(
             fields.get("val") or fields.get("bonus") or node.get("value")
         )
     elif tag == "fatigueresist":

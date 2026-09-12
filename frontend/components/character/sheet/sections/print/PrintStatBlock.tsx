@@ -44,7 +44,10 @@ export function PrintStatBlock(s: SheetData) {
           },
         ]
       : []),
-    { label: ui("print.movement"), value: `${d.movement.walk} / ${d.movement.run}` },
+    {
+      label: ui("print.movement"),
+      value: `${d.movement.walk}m / ${d.movement.run}m / +${d.movement.sprint}m`,
+    },
     { label: ui("print.defensePool"), value: String(defensePool) },
     { label: ui("sheet.damageResist"), value: String(soakPool) },
     { label: ui("common.essence"), value: d.essence.toFixed(2) },
