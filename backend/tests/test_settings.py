@@ -282,3 +282,11 @@ def test_the_negative_quality_house_rules_are_read() -> None:
     assert rules.quality_exceed_negative and rules.quality_exceed_negative_no_bonus
     standard = parse_settings_xml(_settings_xml(exceednegativequalities="False"))
     assert rules_for(standard) == DEFAULT_RULES
+
+
+def test_the_astral_initiative_dice_are_read() -> None:
+    """The German presets roll 2D6 astral initiative instead of 3."""
+    parsed = parse_settings_xml(_settings_xml(minastralinitiativedice="2", maxastralinitiativedice="5"))
+    assert parsed.min_astral_initiative_dice == 2
+    assert "minastralinitiativedice" not in parsed.unsupported
+    assert rules_for(parsed).min_astral_initiative_dice == 2

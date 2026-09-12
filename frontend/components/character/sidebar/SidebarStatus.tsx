@@ -78,6 +78,14 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
           {d.initiative.value}+{d.initiative.dice}d6
         </b>
       </div>
+      {d.astral_initiative ? (
+        <div className="stat">
+          <span>{ui("common.astralInitiative")}</span>
+          <b>
+            {d.astral_initiative.value}+{d.astral_initiative.dice}d6
+          </b>
+        </div>
+      ) : null}
       <div className="stat">
         <span>{ui("common.armor")}</span>
         <b>

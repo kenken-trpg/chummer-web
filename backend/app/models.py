@@ -309,6 +309,8 @@ class SettingsState(BaseModel):
     career_skill_max: int | None = None
     career_skill_group_max: int | None = None
     chargen_avail_max: int | None = None
+    min_astral_initiative_dice: int | None = None
+    max_astral_initiative_dice: int | None = None
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
     #: `<contactpointsexpression>`'s multiplier: free contact points are

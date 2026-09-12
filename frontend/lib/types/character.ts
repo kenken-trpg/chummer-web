@@ -99,6 +99,8 @@ export interface CharacterSettings {
   career_skill_max?: number | null;
   career_skill_group_max?: number | null;
   chargen_avail_max?: number | null;
+  min_astral_initiative_dice?: number | null;
+  max_astral_initiative_dice?: number | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   contact_free_mult?: number | null;
@@ -291,6 +293,8 @@ export interface Character {
       threshold_offset?: number;
     };
     initiative: { value: number; dice: number };
+    /** INT×2 + the settings' astral dice (3 in Standard); absent without Magic. */
+    astral_initiative?: { value: number; dice: number } | null;
     movement: { walk: string; run: string; sprint: string };
     essence: number;
     armor: number;

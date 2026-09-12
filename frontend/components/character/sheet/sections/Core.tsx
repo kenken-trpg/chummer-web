@@ -33,6 +33,14 @@ export function CoreSection(s: SheetData) {
               {d.initiative.value}+{d.initiative.dice}d6
             </b>
           </div>
+          {d.astral_initiative ? (
+            <div>
+              <span>{ui("common.astralInitiative")}</span>
+              <b>
+                {d.astral_initiative.value}+{d.astral_initiative.dice}d6
+              </b>
+            </div>
+          ) : null}
           <div>
             <span>{ui("common.condition")}</span>
             <b>

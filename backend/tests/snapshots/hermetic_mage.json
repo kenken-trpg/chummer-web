@@ -11,6 +11,10 @@
   "armor": 0,
   "armor_items": [],
   "armor_mods": [],
+  "astral_initiative": {
+    "dice": 3,
+    "value": 2
+  },
   "attribute_max_bonus": {},
   "avail_limit": 12,
   "bioware": [],
