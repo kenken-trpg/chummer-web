@@ -3356,12 +3356,9 @@ def test_armor_wireless_defaults_on() -> None:
 
 
 def test_helmet_stacks_on_jacket() -> None:
-    out = compute(
-        _mundane(
-            "helm",
-            armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=HELMET)],
-        )
-    )
+    st = _mundane("helm", armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=HELMET)])
+    st.attributes["STR"] = 3  # the helmet's +2 fits under STR (SR5 p.169)
+    out = compute(st)
     assert out.derived["armor"] == 14
     assert out.derived["nuyen_spent"] == 1100
 
@@ -8987,11 +8984,12 @@ def _armor_named(name: str) -> str:
     return next(item["id"] for item in catalog()["armor"] if item["name"] == name)
 
 
-def _custom_fit_state(stack_with: str | None) -> CharacterState:
+def _custom_fit_state(stack_with: str | None, strength: int = 4) -> CharacterState:
     """Armor Jacket worn under a Mortimer of London Greatcoat, whose bundled
     Custom Fit (Stack) is pointed at `stack_with`."""
     coat = ArmorInstall(armor_id=_armor_named("Mortimer of London: Greatcoat Coat"))
     st = _mundane("custom-fit", armor=[ArmorInstall(armor_id=ARMOR_JACKET), coat])
+    st.attributes["STR"] = strength
     st = compute(st)
     if stack_with is not None:
         fit = next(
@@ -9103,3 +9101,62 @@ def test_infected_optional_power_is_a_required_pick_from_its_list() -> None:
 def test_qualities_without_critter_powers_carry_no_power_fields() -> None:
     row = compute(_mundane("plain", quality_ids=[ALLERGY_MILD])).derived["qualities"][0]
     assert "critter_powers" not in row and "optional_powers" not in row
+
+
+def test_stacked_armor_counts_only_up_to_strength() -> None:
+    """SR5 p.169: accessories (and a Custom Fit piece) add to worn armor only
+    up to the wearer's Strength — Chummer's cap, said as a warning."""
+
+    def helmet(strength: int) -> dict:
+        st = _mundane("helm-str", armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=HELMET)])
+        st.attributes["STR"] = strength
+        return compute(st).derived
+
+    weak = helmet(1)
+    assert weak["armor"] == 13
+    assert has(weak["warnings"], "engine.gear.armorAccessoryCapped")
+    assert {r["name"]: r["contributes"] for r in weak["armor_items"]} == {"Armor Jacket": 12, "Helmet": 1}
+    strong = helmet(2)
+    assert strong["armor"] == 14
+    assert not has(strong["warnings"], "engine.gear.armorAccessoryCapped")
+
+
+def test_custom_fit_stack_shares_the_strength_cap() -> None:
+    out = compute(_custom_fit_state("Armor Jacket", strength=2)).derived
+    assert out["armor"] == 14
+    assert has(out["warnings"], "engine.gear.armorAccessoryCapped")
+
+
+def test_accessories_alone_are_capped_too() -> None:
+    st = _mundane("helm-only", armor=[ArmorInstall(armor_id=HELMET)])
+    st.attributes["STR"] = 1
+    assert compute(st).derived["armor"] == 1
+
+
+def test_armor_encumbrance_is_minus_one_per_two_points_past_strength() -> None:
+    """SR5 p.169: nothing up to STR + 1, then −1 per 2 full points past STR."""
+    from app.engine.gear.armor import armor_encumbrance
+
+    assert [armor_encumbrance(load, 3) for load in (3, 4, 5, 6, 7, 8)] == [0, 0, -1, -1, -2, -2]
+    assert armor_encumbrance(0, 0) == 0
+
+
+def test_heavy_stacked_armor_lowers_agility_and_reaction() -> None:
+    """A Ballistic Shield's +6 on STR 3: armor counts +3 (the cap) and the
+    load of 6 costs 1 AGI and 1 REA, said as a warning."""
+
+    def shield(strength: int) -> dict:
+        st = _mundane(
+            "shield",
+            armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=_armor_named("Ballistic Shield"))],
+        )
+        st.attributes.update({"STR": strength, "AGI": 3, "REA": 3})
+        return compute(st).derived
+
+    heavy = shield(3)
+    assert heavy["armor"] == 15
+    assert (heavy["totals"]["AGI"], heavy["totals"]["REA"]) == (2, 2)
+    assert has(heavy["warnings"], "engine.gear.armorEncumbrance")
+    light = shield(5)
+    assert (light["totals"]["AGI"], light["totals"]["REA"]) == (3, 3)
+    assert not has(light["warnings"], "engine.gear.armorEncumbrance")

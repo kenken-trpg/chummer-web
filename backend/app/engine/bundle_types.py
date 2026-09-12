@@ -225,6 +225,8 @@ class GearBundle(TypedDict):
     nuyen: int
     armor: int
     worn_name: str
+    #: SR5 p.169: the AGI/REA malus from stacked armor past STR (0 or negative)
+    armor_encumbrance: int
     armor_items: list[dict[str, Any]]
     armor_mods: list[dict[str, Any]]
     weapons: list[dict[str, Any]]
@@ -396,6 +398,7 @@ def empty_gear() -> GearBundle:
         bonus_sources=[],
         nuyen=0,
         armor=0,
+        armor_encumbrance=0,
         worn_name="",
         armor_items=[],
         armor_mods=[],

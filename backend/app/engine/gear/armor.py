@@ -246,16 +246,34 @@ def _stack_value(item: dict[str, Any]) -> int:
     return value if additive else 0
 
 
-def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, list[Notice]]:
+def armor_encumbrance(load: int, strength: int) -> int:
+    """SR5 p.169: −1 AGI and REA for every 2 full points of stacked armor
+    past Strength — Chummer's `ArmorEncumbrance`, 0 up to STR + 1."""
+    if load <= strength + 1:
+        return 0
+    return -((load - strength) // 2)
+
+
+def _recompute_worn_armor(
+    armor_items: list[dict[str, Any]], strength: int | None = None
+) -> tuple[int, str, list[Notice], int]:
     """Only the best piece counts, plus every `+N` accessory (SR5 p.169).
 
     Custom Fit (Stack) (RG p.59) is the exception: a piece tailored to another
     worn piece adds its `+N` override to that one instead of competing with it
     — Chummer's `ArmorRating` stacking pass.
+
+    What stacks on top — accessories and tailored pieces together — counts up
+    to the wearer's Strength (SR5 p.169), as Chummer caps it; `strength=None`
+    leaves it uncapped.
+
+    The fourth value is the AGI/REA encumbrance from that same stack, taken
+    before the cap (see `armor_encumbrance`).
     """
     warnings: list[Notice] = []
     worn = [item for item in armor_items if item.get("equipped")]
-    add_total = sum(int(item.get("armor_value") or 0) for item in worn if item.get("additive"))
+    accessories = [item for item in worn if item.get("additive")]
+    add_total = sum(int(item.get("armor_value") or 0) for item in accessories)
     bases = [item for item in worn if not item.get("additive")]
     # base piece id -> the pieces stacked onto it
     stacked_on: dict[str, list[dict[str, Any]]] = {}
@@ -266,23 +284,43 @@ def _recompute_worn_armor(armor_items: list[dict[str, Any]]) -> tuple[int, str, 
         host = next((other for other in bases if other is not item and other.get("name") == target), None)
         if host is not None:
             stacked_on.setdefault(str(host["id"]), []).append(item)
+
+    def capped(stack: int) -> int:
+        return stack if strength is None else min(stack, max(0, strength))
+
     best: dict[str, Any] | None = None
     best_value = 0
     for item in bases:
-        value = int(item.get("armor_value") or 0) + sum(_stack_value(p) for p in stacked_on.get(str(item["id"]), []))
+        stack = add_total + sum(_stack_value(p) for p in stacked_on.get(str(item["id"]), []))
+        value = int(item.get("armor_value") or 0) + capped(stack)
         if best is None or value > best_value:
             best, best_value = item, value
     riders = stacked_on.get(str(best["id"]), []) if best is not None else []
+    stack_total = add_total + sum(_stack_value(p) for p in riders)
+    if best is None:
+        best_value = capped(add_total)
+    if capped(stack_total) < stack_total:
+        warnings.append(notice("engine.gear.armorAccessoryCapped", bonus=stack_total, strength=int(strength or 0)))
     if len(bases) > 1 + len(riders):
         warnings.append(notice("engine.gear.armorHighestOnly"))
+    # what each stacking piece still adds once the cap has taken its share,
+    # in the order they are listed
+    room = capped(stack_total)
     for item in armor_items:
         if not item.get("equipped"):
             item["contributes"] = 0
-        elif item.get("additive") or item is best:
+        elif item is best:
             item["contributes"] = int(item.get("armor_value") or 0)
-        elif any(item is rider for rider in riders):
-            item["contributes"] = _stack_value(item)
+        elif item.get("additive") or any(item is rider for rider in riders):
+            full = int(item.get("armor_value") or 0) if item.get("additive") else _stack_value(item)
+            item["contributes"] = min(full, room)
+            room -= item["contributes"]
         else:
             item["contributes"] = 0
     worn_name = str(best.get("name") or "") if best is not None else ""
-    return best_value + add_total, worn_name, warnings
+    penalty = armor_encumbrance(stack_total, strength) if strength is not None else 0
+    if penalty:
+        warnings.append(
+            notice("engine.gear.armorEncumbrance", load=stack_total, strength=int(strength or 0), penalty=penalty)
+        )
+    return best_value, worn_name, warnings, penalty
