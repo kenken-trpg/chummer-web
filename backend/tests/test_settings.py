@@ -306,3 +306,13 @@ def test_the_limb_count_and_excluded_slot_are_read() -> None:
     assert not {"limbcount", "excludelimbslot"} & set(parsed.unsupported)
     rules = rules_for(parsed)
     assert (rules.limb_count, rules.exclude_limb_slot) == (5, "skull")
+
+
+def test_the_knowledge_specialization_price_is_read() -> None:
+    xml = (
+        "<settings><name>NA</name><karmacost><karmaknospecialization>3</karmaknospecialization></karmacost></settings>"
+    )
+    parsed = parse_settings_xml(xml)
+    assert parsed.karma_knowledge_specialization == 3
+    assert "karmaknospecialization" not in parsed.unsupported
+    assert rules_for(parsed).karma_knowledge_specialization == 3

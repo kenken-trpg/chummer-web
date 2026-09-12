@@ -294,6 +294,7 @@ class SettingsState(BaseModel):
     karma_skill_group: int | None = None
     karma_knowledge: int | None = None
     karma_specialization: int | None = None
+    karma_knowledge_specialization: int | None = None
     karma_spell: int | None = None
     karma_complex_form: int | None = None
     karma_enhancement: int | None = None

@@ -63,6 +63,9 @@ class Rules:
     karma_skill_group: int = 5
     karma_knowledge: int = 1
     karma_specialization: int = 7
+    #: `<karmaknospecialization>`: a knowledge skill's specialization, priced
+    #: apart from an active skill's (Neon Anarchy: 3)
+    karma_knowledge_specialization: int = 7
     karma_spell: int = 5
     karma_complex_form: int = 4
     karma_enhancement: int = 2
@@ -148,6 +151,7 @@ _DIRECT: dict[str, str] = {
     "karma_skill_group": "karma_skill_group",
     "karma_knowledge": "karma_knowledge",
     "karma_specialization": "karma_specialization",
+    "karma_knowledge_specialization": "karma_knowledge_specialization",
     "karma_spell": "karma_spell",
     "karma_complex_form": "karma_complex_form",
     "karma_enhancement": "karma_enhancement",

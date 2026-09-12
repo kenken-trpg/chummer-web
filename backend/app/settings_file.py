@@ -49,6 +49,7 @@ _KARMA_FIELDS: dict[str, str] = {
     "karmaimproveskillgroup": "karma_skill_group",
     "karmaimproveknowledgeskill": "karma_knowledge",
     "karmaspecialization": "karma_specialization",
+    "karmaknospecialization": "karma_knowledge_specialization",
     "karmaspell": "karma_spell",
     "karmanewcomplexform": "karma_complex_form",
     "karmaenhancement": "karma_enhancement",
