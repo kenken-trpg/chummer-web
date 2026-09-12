@@ -219,6 +219,10 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
                     options.append(name)
         if options:
             quality["select_options"] = options
+    sprites = load_sprites()
+    for quality in qualities:
+        if any(node.get("tag") == "selectsprite" for node in quality.get("bonus") or []):
+            quality["select_options"] = [str(s["name"]) for s in sprites if s.get("name")]
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
@@ -236,7 +240,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "critter_powers": load_critter_powers(),
         "complex_forms": load_complex_forms(),
         "streams": load_streams(),
-        "sprites": load_sprites(),
+        "sprites": sprites,
         "foci": load_foci(),
         "qi_focus": load_qi_focus(),
         "armor": armor,
