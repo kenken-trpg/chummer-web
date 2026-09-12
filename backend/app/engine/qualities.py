@@ -511,7 +511,8 @@ def apply_quality_rules(
         is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
         if not is_free and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
-        if not is_free and spec["karma"] > 0:
+        # Chummer's `PositiveQualityLimitKarma` skips `<contributetolimit>False`
+        if not is_free and spec["karma"] > 0 and spec.get("contributes_to_limit", True):
             positive_spend += int(spec["karma"])
         if str(spec.get("extra_kind") or "") == "add_spirit":
             count = max(1, int(spec.get("add_spirit_count") or 1))
@@ -582,7 +583,7 @@ def apply_quality_rules(
                     metagenic_limit,
                     _as_int(node.get("value") or (node.get("fields") or {}).get("value")),
                 )
-    mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_metagenic_limit")]
+    mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_limit")]
     mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
     mg_neg = sum(-int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) < 0)
     mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
