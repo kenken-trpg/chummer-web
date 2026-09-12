@@ -21,7 +21,7 @@ from ..karma import (
 )
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
 from ..priority import priority_value
-from ..qualities import apply_cost_discounts
+from ..qualities import apply_cost_discounts, counts_toward_quality_limit, surge_metagenic_limit
 from ..skills import (
     _attach_skillsoft_knowledge,
     _attach_specializations,
@@ -244,7 +244,10 @@ def economy(ctx: Ctx) -> None:
     if rules.quality_exceed_negative_no_bonus:
         # Chummer's `NegativeQualityKarma`: past the limit, a negative
         # quality is still taken but its karma is not handed out.
-        negative = sum(-int(q["karma"]) for q in paid_qualities if int(q["karma"]) < 0)
+        surge = surge_metagenic_limit(ctx.qualities) > 0
+        negative = sum(
+            -int(q["karma"]) for q in paid_qualities if int(q["karma"]) < 0 and counts_toward_quality_limit(q, surge)
+        )
         excess = max(0, negative - rules.quality_karma_cap_negative)
         if excess:
             ctx.karma_from_q += excess

@@ -487,6 +487,30 @@ def apply_cost_discounts(qualities: list[dict[str, Any]], req_ctx: dict[str, Any
     return out
 
 
+def surge_metagenic_limit(qualities: list[dict[str, Any]]) -> int:
+    """The karma a SURGE Changeling may put into metagenic qualities (RF p.106),
+    or 0 for anyone else — the largest `<metageniclimit>` among `qualities`."""
+    limit = 0
+    for spec in qualities:
+        for node in spec.get("bonus") or []:
+            if node.get("tag") == "metageniclimit":
+                limit = max(limit, _as_int(node.get("value") or (node.get("fields") or {}).get("value")))
+    return limit
+
+
+def counts_toward_quality_limit(spec: dict[str, Any], surge: bool) -> bool:
+    """Chummer's `Quality.ContributeToLimit`, for the 25-karma limits both ways.
+
+    `<contributetolimit>False` keeps a quality out (Infected, the talents).
+    So does being metagenic on a SURGE Changeling: those answer to the SURGE
+    limit instead ("Positive Metagenic Qualities are free if you're a
+    Changeling"), and counting them twice would refuse a legal 30-karma build.
+    """
+    if not spec.get("contributes_to_limit", True):
+        return False
+    return not (surge and spec.get("metagenic"))
+
+
 def apply_quality_rules(
     state: CharacterState,
     qualities: list[dict[str, Any]],
@@ -505,14 +529,16 @@ def apply_quality_rules(
     }
     state.quality_extras = extras
     free_ids = set(free_quality_ids)
+    surge = surge_metagenic_limit(qualities) > 0
     negative_gain = 0
     positive_spend = 0
     for spec in qualities:
         is_free = bool(spec.get("onlyprioritygiven") or spec["id"] in free_ids)
-        if not is_free and spec["karma"] < 0:
+        # Chummer's `PositiveQualityLimitKarma` / `NegativeQualityLimitKarma`
+        counted = not is_free and counts_toward_quality_limit(spec, surge)
+        if counted and spec["karma"] < 0:
             negative_gain += -int(spec["karma"])
-        # Chummer's `PositiveQualityLimitKarma` skips `<contributetolimit>False`
-        if not is_free and spec["karma"] > 0 and spec.get("contributes_to_limit", True):
+        if counted and spec["karma"] > 0:
             positive_spend += int(spec["karma"])
         if str(spec.get("extra_kind") or "") == "add_spirit":
             count = max(1, int(spec.get("add_spirit_count") or 1))
@@ -576,14 +602,7 @@ def apply_quality_rules(
         )
 
     # --- Metagenic / SURGE (Run Faster p.106) ------------------------------
-    metagenic_limit = 0
-    for spec in qualities:
-        for node in spec.get("bonus") or []:
-            if node.get("tag") == "metageniclimit":
-                metagenic_limit = max(
-                    metagenic_limit,
-                    _as_int(node.get("value") or (node.get("fields") or {}).get("value")),
-                )
+    metagenic_limit = surge_metagenic_limit(qualities)
     mg_specs = [spec for spec in qualities if spec.get("metagenic") and spec.get("contributes_to_limit")]
     mg_pos = sum(int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) > 0)
     mg_neg = sum(-int(spec["karma"]) for spec in mg_specs if int(spec["karma"]) < 0)
