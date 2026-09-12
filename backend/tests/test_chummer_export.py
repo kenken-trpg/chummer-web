@@ -292,3 +292,44 @@ def test_a_chummer_pipeline_names_its_contact_without_our_guid() -> None:
 
     quality.find("extra").text = "Drugs, Nobody"  # type: ignore[union-attr]
     assert chum5_to_state(ET.tostring(root))[0]["quality_extras"] == {qid: "Drugs"}
+
+
+def _career_with_rewards() -> CharacterState:
+    from app.models import RewardEntry
+
+    state, _ = _with_quality("Black Market Pipeline", {})
+    log = [
+        RewardEntry(label="Run: Renraku job", karma=6, nuyen=12000),
+        RewardEntry(label="GM bonus", karma=2),
+    ]
+    return state.model_copy(
+        update={"quality_ids": [], "career": True, "reward_log": log, "karma_earned": 8, "nuyen_earned": 12000}
+    )
+
+
+def test_the_reward_ledger_rides_chummers_expense_log() -> None:
+    """Chummer logs karma and nuyen apart, so the run that paid both is two
+    `<expense>` rows; `<rewardid>` joins them again on the way back."""
+    state = _career_with_rewards()
+    xml = state_to_chum5(state)
+    rows = ET.fromstring(xml).findall("./expenses/expense")
+    assert [(r.findtext("type"), r.findtext("amount"), r.findtext("reason")) for r in rows] == [
+        ("Karma", "6", "Run: Renraku job"),
+        ("Nuyen", "12000", "Run: Renraku job"),
+        ("Karma", "2", "GM bonus"),
+    ]
+
+    back = chum5_to_state(xml)[0]
+    assert back["reward_log"] == [row.model_dump() for row in state.reward_log]
+
+
+def test_an_expense_log_that_does_not_add_up_is_left_out() -> None:
+    """Chummer's `<karma>` is what is left, not what was earned — when the
+    earnings in the log do not come to it, the rows would change the totals,
+    so the import keeps the totals and says it skipped the rows."""
+    root = ET.fromstring(state_to_chum5(_career_with_rewards()))
+    root.find("karma").text = "3"  # type: ignore[union-attr]
+    back, warnings = chum5_to_state(ET.tostring(root))
+    assert "reward_log" not in back
+    assert back["karma_earned"] == 3
+    assert any(w["key"] == "engine.import.expensesSkipped" for w in warnings)

@@ -1751,6 +1751,8 @@ const JA = {
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
 
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
+  "engine.import.expensesSkipped":
+    "履歴の稼ぎ（カルマ {karma}・新円 {nuyen}）が所持の合計と合わないため、報酬の明細は読み込みませんでした",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
 
@@ -3512,6 +3514,8 @@ const EN: Catalog = {
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
 
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
+  "engine.import.expensesSkipped":
+    "The expense log's earnings (karma {karma}, nuyen {nuyen}) do not match the totals, so the reward rows were not imported",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
