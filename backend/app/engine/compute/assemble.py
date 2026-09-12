@@ -296,6 +296,11 @@ def assemble(ctx: Ctx) -> None:
             "attrs": ctx.resonance.get("resist_attrs") or "WIL+RES",
         },
         "living_persona": living,
+        "attribute_karma": {
+            "levels": dict(ctx.attr_karma_levels),
+            "floors": dict(ctx.attr_floors),
+            "karma": 0 if ctx.is_karma else ctx.attr_karma,
+        },
         "points": {
             "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
             "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},

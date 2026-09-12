@@ -129,6 +129,15 @@ class _Points(TypedDict):
     contacts: _UsedMax
 
 
+class _AttributeKarma(TypedDict):
+    #: levels bought with karma, per attribute (Priority / Sum-to-Ten)
+    levels: dict[str, int]
+    #: the rating those levels sit above — the racial minimum, or the
+    #: talent's starting MAG / RES — so the editor knows how many it may mark
+    floors: dict[str, int]
+    karma: int
+
+
 class _ContactPoints(TypedDict):
     used: int
     free: int
@@ -185,6 +194,7 @@ class DerivedDict(TypedDict):
     karma_chargen: _KarmaChargen
     karma: _Karma
     points: _Points
+    attribute_karma: _AttributeKarma
     power_points: _PowerPoints
 
     # --- combat / body --------------------------------------------------

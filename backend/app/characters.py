@@ -125,6 +125,7 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
     if patch.metatype or patch.metavariant is not None:
         meta = find_metatype(data["metatype"], data.get("metavariant"))
         data["attributes"] = default_attributes(meta)
+        data["attribute_karma"] = {}
     data["build_method"] = normalize_build_method(data.get("build_method"))
     talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]

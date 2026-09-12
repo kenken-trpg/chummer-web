@@ -395,6 +395,7 @@ class CharacterPatch(BaseModel):
     metavariant: str | None = None
     talent: str | None = None
     attributes: dict[str, int] | None = None
+    attribute_karma: dict[str, int] | None = None
     skills: dict[str, int] | None = None
     skill_groups: dict[str, int] | None = None
     skill_specializations: dict[str, str] | None = None
@@ -515,6 +516,11 @@ class CharacterState(BaseModel):
     metavariant: str | None = None
     talent: str = "Mundane"
     attributes: dict[str, int]
+    #: Priority / Sum-to-Ten creation: of `attributes[key]`, how many of the
+    #: top levels were bought with karma rather than attribute points
+    #: (Chummer's `<karma>` beside `<base>`). Ignored by a Karma build, where
+    #: every level is karma anyway.
+    attribute_karma: dict[str, int] = Field(default_factory=dict)
     skills: dict[str, int] = Field(default_factory=dict)
     skill_groups: dict[str, int] = Field(default_factory=dict)
     skill_specializations: dict[str, str] = Field(default_factory=dict)

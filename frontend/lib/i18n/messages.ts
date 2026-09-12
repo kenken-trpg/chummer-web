@@ -984,6 +984,10 @@ const JA = {
   "attrs.meat": " 肉{value}",
   "attrs.points": "能力値点 {used}/{max} ・ 特殊点 {specialUsed}/{specialMax}",
   "attrs.rowHint": "メタの下限 {min}／作成上限 {max}／増強込みの上限 {aug}",
+  "attrs.karmaLevels": "うちカルマ",
+  "attrs.karmaHint":
+    "この能力値の上から何レベルをカルマで買ったか。その分は能力値点を使わず、上げた後の値×5 カルマかかります。",
+  "attrs.karmaSpent": "カルマで上げた能力値：{karma} カルマ",
   "attrs.minNote":
     "各能力値はメタの最低値から始まります（オレンジの目盛り）。そこまでは無料で、能力値点を使うのは超えた分だけです。",
   "attrs.replacedRanges":
@@ -2777,6 +2781,10 @@ const EN: Catalog = {
   "attrs.meat": " meat {value}",
   "attrs.points": "Attribute points {used}/{max} · special {specialUsed}/{specialMax}",
   "attrs.rowHint": "Metatype minimum {min} / chargen max {max} / augmented max {aug}",
+  "attrs.karmaLevels": "by karma",
+  "attrs.karmaHint":
+    "How many of this attribute's top levels were bought with karma. They use no attribute points and cost the new rating × 5 karma each.",
+  "attrs.karmaSpent": "Attributes raised with karma: {karma} karma",
   "attrs.minNote":
     "Every attribute starts at its metatype minimum (the amber tick). That much is free — points are only spent above it.",
   "attrs.replacedRanges": "These ranges come from {list}, not from the metatype.",

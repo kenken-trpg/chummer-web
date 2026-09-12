@@ -350,14 +350,23 @@ def _reward_log_from_expenses(root: ET.Element) -> list[dict[str, Any]] | None:
 def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read the eight attributes plus EDG/MAG/RES, as base + karma."""
     attrs: dict[str, int] = {}
+    karma_levels: dict[str, int] = {}
     for a in root.findall("./attributes/attribute"):
         name = _text(a.find("name")).upper()
         if name in ("ESS", "ESSENCE") or not name:
             continue
-        # Chummer <base> is points spent above the metatype minimum.
+        # Chummer <base> is points spent above the metatype minimum; <karma>
+        # the levels on top of it bought with karma.
         lo = _int(a.find("metatypemin"), 1)
-        attrs[name] = max(lo + _int(a.find("base")) + _int(a.find("karma")), lo)
+        karma = max(0, _int(a.find("karma")))
+        attrs[name] = max(lo + _int(a.find("base")) + karma, lo)
+        # Before creation is finished that split is a choice the sheet keeps.
+        # After it, <karma> also holds every career raise, which the career
+        # baseline taken from these ratings already accounts for.
+        if karma and not st.get("career"):
+            karma_levels[name] = karma
     st["attributes"] = attrs or {"BOD": 1, "AGI": 1, "REA": 1, "STR": 1, "CHA": 1, "INT": 1, "LOG": 1, "WIL": 1}
+    st["attribute_karma"] = karma_levels
 
 
 def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
