@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 jobs:
-  backend:
+  pip-audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -40,7 +40,7 @@ jobs:
       # install — and so the next image build — would get.
       - run: pip-audit -r backend/requirements.txt
 
-  frontend:
+  npm-audit:
     runs-on: ubuntu-latest
     defaults:
       run:
