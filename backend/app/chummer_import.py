@@ -235,6 +235,44 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     if created:
         st["karma_earned"] = _int(root.find("karma"))
         st["nuyen_earned"] = _int(root.find("nuyen"))
+        log = _reward_log_from_expenses(root)
+        if log is not None:
+            karma = sum(row["karma"] for row in log)
+            nuyen = sum(row["nuyen"] for row in log)
+            if (karma, nuyen) == (st["karma_earned"], st["nuyen_earned"]):
+                st["reward_log"] = log
+            else:
+                warn.append(notice("engine.import.expensesSkipped", karma=karma, nuyen=nuyen))
+
+
+def _reward_log_from_expenses(root: ET.Element) -> list[dict[str, Any]] | None:
+    """`<expenses>` back into reward rows, or `None` when there are none.
+
+    Only what was earned counts — a positive amount that is not a refund.
+    Rows this app wrote carry `<rewardid>`, which joins a karma row to the
+    nuyen row of the same reward; any other row is a reward of its own.
+    """
+    rows = root.findall("./expenses/expense")
+    if not rows:
+        return None
+    log: dict[str, dict[str, Any]] = {}
+    for el in rows:
+        amount = _int(el.find("amount"))
+        kind = _text(el.find("type")).lower()
+        if amount <= 0 or kind not in ("karma", "nuyen") or _text(el.find("refund")).lower() == "true":
+            continue
+        key = _text(el.find("rewardid")) or _text(el.find("guid")) or str(uuid.uuid4())
+        row = log.setdefault(
+            key,
+            {
+                "id": key if _is_uuid(key) else str(uuid.uuid4()),
+                "label": _text(el.find("reason")),
+                "karma": 0,
+                "nuyen": 0,
+            },
+        )
+        row[kind] += amount
+    return list(log.values())
 
 
 def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:

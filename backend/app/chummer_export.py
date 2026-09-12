@@ -7,7 +7,9 @@ round-trips through :func:`app.chummer_import.chum5_to_state`.
 
 from __future__ import annotations
 
+import uuid
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from typing import Any
 from xml.dom import minidom
 
@@ -85,12 +87,37 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(_sub(root, "mugshots"), "mugshot", b64)
     _sub(root, "karma", state.karma_earned if state.career else 0)
     _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
+    if state.career and state.reward_log:
+        _export_reward_log(root, state)
     # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
     # the latter in `<nuyenbp>`, which is build points in old money.
     _sub(root, "streetcred", state.street_cred)
     _sub(root, "burntstreetcred", state.burnt_street_cred)
     _sub(root, "notoriety", state.notoriety_bonus)
     _sub(root, "nuyenbp", state.karma_nuyen)
+
+
+def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
+    """`<expenses>`: the career reward ledger as Chummer's expense log.
+
+    Chummer logs karma and nuyen as separate rows, so a reward that paid both
+    becomes two. `<rewardid>` is this app's — Chummer ignores it — and is what
+    puts the pair back together on import.
+    """
+    expenses = _sub(root, "expenses")
+    stamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    for row in state.reward_log:
+        for kind, amount in (("Karma", row.karma), ("Nuyen", row.nuyen)):
+            if not amount:
+                continue
+            el = _sub(expenses, "expense")
+            _sub(el, "guid", row.id if kind == "Karma" else str(uuid.uuid5(uuid.NAMESPACE_URL, f"{row.id}:nuyen")))
+            _sub(el, "date", stamp)
+            _sub(el, "amount", amount)
+            _sub(el, "reason", row.label)
+            _sub(el, "type", kind)
+            _sub(el, "refund", "False")
+            _sub(el, "rewardid", row.id)
 
 
 def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
