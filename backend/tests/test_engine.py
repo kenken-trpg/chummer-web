@@ -8209,6 +8209,46 @@ def test_metagenic_karma_must_balance() -> None:
     assert balanced.derived["metagenic"]["balanced"] is True
 
 
+def _quality_id(name: str) -> str:
+    return next(q["id"] for q in catalog()["qualities"] if q["name"] == name)
+
+
+def _surge_thirty(cid: str, *, changeling: bool = True) -> CharacterState:
+    """30 karma of metagenic qualities each way — the most Class I allows."""
+    names = [
+        "Metagenic Improvement (Agility)",  # +15
+        "Dermal Alteration (Granite Shell)",  # +15
+        "Deformity (Quasimodo)",  # -15
+        "Adiposis",  # -10
+        "Astral Hazing",  # -5
+    ]
+    ids = [_quality_id(n) for n in names]
+    return _mundane(cid, quality_ids=[CHANGELING_I, *ids] if changeling else ids)
+
+
+def test_a_changelings_metagenic_qualities_answer_to_the_surge_limit_not_the_25() -> None:
+    """Chummer's `ContributeToLimit`: metagenic qualities on a SURGE Changeling
+    are out of the 25-karma quality limits both ways. A legal Class I build
+    with 30 each way used to be told it was over the positive and negative 25."""
+    out = compute(_surge_thirty("mg-thirty"))
+    keys = {e["key"] for e in out.derived["errors"]}
+    assert "engine.qualities.positiveCap" not in keys
+    assert "engine.qualities.negativeCap" not in keys
+    assert not any(k.startswith("engine.qualities.metagenic") for k in keys)
+    mg = out.derived["metagenic"]
+    assert (mg["positive"], mg["negative"]) == (30, 30)
+
+
+def test_the_negative_karma_limit_does_not_clip_a_changelings_metagenic_qualities() -> None:
+    """`exceednegativequalitiesnobonus` withholds karma past the negative 25 —
+    counted the same way, so a Changeling's metagenic 30 keeps all of it."""
+    state = _surge_thirty("mg-nobonus")
+    state.settings.exceed_negative_qualities = True
+    state.settings.exceed_negative_qualities_no_bonus = True
+    out = compute(state)
+    assert not has(out.derived["warnings"], "engine.qualities.negativeNoBonus")
+
+
 def _shapeshifter_natural_weapon_nodes() -> tuple[str, list[dict[str, object]]]:
     """The Ursine shifter's bite and claws, straight out of `metatypes.xml`.
 
