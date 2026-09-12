@@ -6,6 +6,10 @@ import { attrLabel } from "@/lib/ui-strings";
 
 export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: TabPanelProps) {
   const spec = d.metatype_info.attributes;
+  // Priority / Sum-to-Ten creation only: a Karma build buys every level with
+  // karma already, and after creation raises are billed from the baseline.
+  const splitKarma = !ch.career && !d.karma_chargen?.enabled;
+  const karmaSplit = d.attribute_karma;
 
   return (
     <div className="card">
@@ -20,9 +24,10 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
         // on the next compute anyway. Show it already there, so the slider and
         // the number beside it never disagree.
         const rating = Math.max(range.min, ch.attributes[key] ?? range.min);
+        const showKarma = splitKarma && !!karmaSplit && key in karmaSplit.floors;
         const commit = (value: number) => patch({ attributes: { ...ch.attributes, [key]: value } });
         return (
-          <div className="attr-row" key={key}>
+          <div className={showKarma ? "attr-row has-karma" : "attr-row"} key={key}>
             <span title={ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug })}>
               {attrLabel(key, t)}
             </span>
@@ -38,6 +43,26 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
               }
               onCommit={commit}
             />
+            {showKarma && karmaSplit ? (
+              <label className="attr-karma" title={ui("attrs.karmaHint")}>
+                {ui("attrs.karmaLevels")}
+                <input
+                  type="number"
+                  aria-label={`${attrLabel(key, t)} ${ui("attrs.karmaLevels")}`}
+                  min={0}
+                  max={Math.max(0, rating - karmaSplit.floors[key])}
+                  value={karmaSplit.levels[key] ?? 0}
+                  onChange={(e) =>
+                    patch({
+                      attribute_karma: {
+                        ...(ch.attribute_karma || {}),
+                        [key]: Math.max(0, Number(e.target.value) || 0),
+                      },
+                    })
+                  }
+                />
+              </label>
+            ) : null}
             <b>
               {d.totals[key]} <span className="muted">/{range.max}</span>
               {(d.ware_attr_bonus?.[key] || 0) !== 0 ? (
@@ -64,6 +89,9 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
           specialMax: d.points.special.max,
         })}
       </p>
+      {splitKarma && karmaSplit && karmaSplit.karma > 0 ? (
+        <p className="muted">{ui("attrs.karmaSpent", { karma: karmaSplit.karma })}</p>
+      ) : null}
       <p className="muted">{ui("attrs.minNote")}</p>
       {/* Infected / Quadriplegic: these are no longer the metatype's ranges. */}
       {(d.metatype_info.attributes_replaced_by || []).length ? (

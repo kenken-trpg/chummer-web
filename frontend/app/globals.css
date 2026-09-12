@@ -231,6 +231,20 @@ td.rowhead {
 .attr-row > span:first-child {
   white-space: nowrap;
 }
+/* Priority / Sum-to-Ten: a "by karma" count between the slider and the total */
+.attr-row.has-karma {
+  grid-template-columns: minmax(104px, max-content) 1fr auto 88px;
+}
+.attr-karma {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 0.85em;
+}
+.attr-karma input {
+  width: 3.5em;
+}
 .skill-row.has-spec.can-delete {
   grid-template-columns: minmax(120px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
 }

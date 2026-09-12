@@ -43,6 +43,21 @@
   ],
   "armor_mods": [],
   "astral_initiative": null,
+  "attribute_karma": {
+    "floors": {
+      "AGI": 1,
+      "BOD": 1,
+      "CHA": 1,
+      "EDG": 2,
+      "INT": 1,
+      "LOG": 1,
+      "REA": 1,
+      "STR": 1,
+      "WIL": 1
+    },
+    "karma": 0,
+    "levels": {}
+  },
   "attribute_max_bonus": {},
   "avail_limit": 12,
   "bioware": [],

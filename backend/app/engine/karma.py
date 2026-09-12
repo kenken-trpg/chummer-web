@@ -56,6 +56,31 @@ def attribute_karma_cost(
     return total
 
 
+def attribute_levels_karma_cost(
+    ratings: Mapping[str, int],
+    levels: Mapping[str, int],
+    *,
+    rules: Sequence[Mapping[str, Any]] | None = None,
+) -> int:
+    """Karma for the top `levels[key]` of each attribute on a Priority /
+    Sum-to-Ten sheet — the part Chummer keeps in `<karma>` beside `<base>`.
+
+    The same per-level price as a Karma build or a career raise: the new
+    rating times `karmaattribute`, with `<attributekarmacost>` applied.
+    """
+    flat = _filter_karma_rules(rules, career=False)
+    total = 0
+    for key, count in levels.items():
+        rating = int(ratings.get(key) or 0)
+        total += _karma_cost_with_category_mods(
+            rating - int(count),
+            rating,
+            current_rules().karma_attribute,
+            flat_rules=_matching_karma_rules(flat, key),
+        )
+    return total
+
+
 def skill_karma_cost(
     skill_groups: dict[str, int],
     skill_totals: dict[str, int],

@@ -146,6 +146,9 @@ class Ctx:
     special_from_meta: int = 0
     spent_physical: int = 0
     spent_special: int = 0
+    #: the rating attribute points start from: racial minimum, or the talent's MAG / RES
+    attr_floors: dict[str, int] = field(default_factory=dict)
+    attr_karma_levels: dict[str, int] = field(default_factory=dict)
     attr_points: int = 0
     skill_points: int = 0
     group_points: int = 0

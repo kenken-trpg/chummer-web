@@ -156,8 +156,10 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(attr_el, "metatypemin", lo)
         _sub(attr_el, "metatypemax", int(spec.get("max", 6)))
         _sub(attr_el, "metatypeaugmax", int(spec.get("aug", spec.get("max", 6))))
-        _sub(attr_el, "base", max(val - lo, 0))
-        _sub(attr_el, "karma", 0)
+        # the top levels bought with karma at creation are Chummer's <karma>
+        karma = 0 if state.career else max(0, min(int(state.attribute_karma.get(key, 0)), val - lo))
+        _sub(attr_el, "base", max(val - lo - karma, 0))
+        _sub(attr_el, "karma", karma)
     ess = _sub(attrs, "attribute")
     _sub(ess, "name", "ESS")
     _sub(ess, "base", 6)

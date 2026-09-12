@@ -37,6 +37,43 @@ describe("<AttrsTab>", () => {
     expect(screen.getByText(/能力値点 0\/0 ・ 特殊点 0\/0/)).toBeDefined();
   });
 
+  const split = {
+    levels: { AGI: 1 },
+    floors: { BOD: 1, AGI: 1, REA: 1, STR: 1, CHA: 1, INT: 1, LOG: 1, WIL: 1, EDG: 1 },
+    karma: 20,
+  };
+
+  it("lets a Priority creation mark attribute levels as bought with karma", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        attributes: { AGI: 4, BOD: 3 },
+        attribute_karma: { AGI: 1 },
+        derived: { attribute_karma: split } as any,
+      },
+    });
+    const agi = screen.getByRole("spinbutton", { name: /AGI.*うちカルマ/ }) as HTMLInputElement;
+    expect(agi.value).toBe("1");
+    expect(agi.max).toBe("3"); // AGI 4 over a floor of 1
+    expect(screen.getByText("カルマで上げた能力値：20 カルマ")).toBeDefined();
+    fireEvent.change(screen.getByRole("spinbutton", { name: /BOD.*うちカルマ/ }), {
+      target: { value: "2" },
+    });
+    expect(patch).toHaveBeenCalledWith({ attribute_karma: { AGI: 1, BOD: 2 } });
+  });
+
+  it("offers no split in a Karma build or after creation", () => {
+    for (const character of [
+      { derived: { attribute_karma: split, karma_chargen: { enabled: true } } as any },
+      { career: true, derived: { attribute_karma: split } as any },
+    ]) {
+      const { unmount } = renderTab({ character });
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+      unmount();
+    }
+  });
+
   it("shows the MAG row once the MAG tab is enabled", () => {
     renderTab({ character: { derived: { enabled_tabs: ["MAG"], totals: { MAG: 4 } as any } } });
     expect(screen.getAllByRole("slider")).toHaveLength(10);

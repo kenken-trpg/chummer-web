@@ -135,6 +135,9 @@ export interface Character {
   metavariant: string | null;
   talent: string;
   attributes: Record<string, number>;
+  /** Priority / Sum-to-Ten: how many top levels of each attribute were bought
+   *  with karma instead of attribute points (Chummer's `<karma>`). */
+  attribute_karma?: Record<string, number>;
   skills: Record<string, number>;
   skill_groups: Record<string, number>;
   skill_specializations?: Record<string, string>;
@@ -349,6 +352,12 @@ export interface Character {
       negative?: { used: number; max: number | null };
     };
     points: Record<string, { used: number; max: number }>;
+    /** Levels bought with karma, the rating each sits above, and their karma. */
+    attribute_karma?: {
+      levels: Record<string, number>;
+      floors: Record<string, number>;
+      karma: number;
+    };
     knowledge_skills?: {
       name: string;
       category: string;

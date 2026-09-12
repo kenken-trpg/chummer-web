@@ -15,6 +15,7 @@ from ..karma import (
     _point_cost,
     _skill_category_map,
     attribute_karma_cost,
+    attribute_levels_karma_cost,
     knowledge_excess_karma,
     knowledge_points_spent,
     skill_karma_cost,
@@ -60,14 +61,18 @@ def economy(ctx: Ctx) -> None:
                         extra_karma += v.get("karma", 0)
             break
 
+    floors = {key: int(ctx.attrs_spec[key]["min"]) for key in (*PHYSICAL_ATTRS, "EDG")}
+    if ctx.special_key in ("MAG", "RES"):
+        floors[ctx.special_key] = ctx.talent_start
+    ctx.attr_floors = floors
+    ctx.attr_karma_levels = _attribute_karma_levels(ctx, floors)
     ctx.spent_physical = 0
     for key in PHYSICAL_ATTRS:
-        ctx.spent_physical += max(0, ctx.ratings[key] - int(ctx.attrs_spec[key]["min"]))
-    ctx.spent_special = max(0, ctx.ratings["EDG"] - int(ctx.attrs_spec["EDG"]["min"]))
-    if ctx.special_key == "MAG":
-        ctx.spent_special += max(0, ctx.ratings["MAG"] - ctx.talent_start)
-    elif ctx.special_key == "RES":
-        ctx.spent_special += max(0, ctx.ratings["RES"] - ctx.talent_start)
+        ctx.spent_physical += max(0, ctx.ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
+    ctx.spent_special = 0
+    for key in ("EDG", "MAG", "RES"):
+        if key in floors:
+            ctx.spent_special += max(0, ctx.ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
 
     ctx.nuyen_karma_max = current_rules().karma_nuyen_max
     if ctx.is_karma:
@@ -292,7 +297,9 @@ def economy(ctx: Ctx) -> None:
             + nuyen_karma
         )
     else:
-        ctx.attr_karma = 0
+        ctx.attr_karma = attribute_levels_karma_cost(
+            ctx.ratings, ctx.attr_karma_levels, rules=ctx.effects.get("attribute_karma_cost")
+        )
         ctx.skill_buy_karma = 0
         ctx.knowledge_karma = 0
         nuyen_karma = 0
@@ -303,6 +310,7 @@ def economy(ctx: Ctx) -> None:
             + ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
+            + ctx.attr_karma
             + int(ctx.state.karma_nuyen or 0)
         )
         if ctx.career:
@@ -364,7 +372,7 @@ def economy(ctx: Ctx) -> None:
         ("engine.spend.qualities", ctx.karma_from_q),
         ("engine.spend.qualitiesCareer", ctx.quality_career_karma),
         ("engine.spend.metatype", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
-        ("engine.spend.attributesKarma", ctx.attr_karma if ctx.is_karma else 0),
+        ("engine.spend.attributesKarma", ctx.attr_karma),
         ("engine.spend.skillsKarma", ctx.skill_buy_karma if ctx.is_karma else 0),
         ("engine.spend.knowledgeKarma", ctx.knowledge_karma if ctx.is_karma else 0),
         ("engine.spend.specializations", ctx.spec_karma),
@@ -405,3 +413,22 @@ def economy(ctx: Ctx) -> None:
     ctx.public_awareness_total = max(0, (ctx.street_cred_total + max(0, ctx.notoriety_total)) // 3 + quality_pa)
     if ctx.effects.get("erased") and ctx.public_awareness_total >= 1:
         ctx.public_awareness_total = 1
+
+
+def _attribute_karma_levels(ctx: Ctx, floors: dict[str, int]) -> dict[str, int]:
+    """`state.attribute_karma`, clamped to what each rating has above its floor.
+
+    A Karma build has no points to split from, so it keeps none. The cleaned
+    map is written back, so a lowered rating cannot leave karma levels behind
+    that it no longer has.
+    """
+    levels: dict[str, int] = {}
+    if not ctx.is_karma:
+        for key, count in (ctx.state.attribute_karma or {}).items():
+            if key not in floors:
+                continue
+            kept = max(0, min(int(count or 0), int(ctx.ratings.get(key) or 0) - floors[key]))
+            if kept:
+                levels[key] = kept
+    ctx.state.attribute_karma = dict(levels)
+    return levels
