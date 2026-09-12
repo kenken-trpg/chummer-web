@@ -324,6 +324,7 @@ class SettingsState(BaseModel):
     quality_karma_limit: int | None = None
     chargen_skill_max: int | None = None
     chargen_knowledge_skill_max: int | None = None
+    chargen_attributes_at_max: int | None = None
     career_skill_max: int | None = None
     career_skill_group_max: int | None = None
     chargen_avail_max: int | None = None
