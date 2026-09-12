@@ -13,8 +13,13 @@ from xml.dom import minidom
 
 from .data_loader import catalog
 from .engine import find_metatype
-from .engine.constants import quality_optional_power_extra_key
+from .engine.constants import (
+    QUALITY_ADDSPIRIT_EXTRA_MARKER,
+    quality_optional_power_extra_key,
+    quality_spirit_category_extra_key,
+)
 from .engine.lookups import critter_power_label
+from .engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
 from .models import CharacterState
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
@@ -167,11 +172,17 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write qualities, spells, adept powers and complex forms."""
     quals = _sub(root, "qualities")
+    specs = {str(row["id"]): row for row in catalog()["qualities"]}
+    spell_limits: list[tuple[str, str]] = []
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
         _sub(q, "sourceid", qid)
         _sub(q, "name", names["quality"].get(qid, ""))
-        _sub(q, "extra", state.quality_extras.get(qid, ""))
+        extra, spell_category = _quality_extra_out(specs.get(qid) or {}, qid, state.quality_extras)
+        if spell_category:
+            _sub(q, "guid", qid)
+            spell_limits.append((qid, spell_category))
+        _sub(q, "extra", extra)
         _sub(q, "qualitysource", "Selected")
         # A quality with a `<selectskill>` bonus carries the skill picked for
         # it. Unlike the implant picks in `_export_ware`, these are keyed by
@@ -188,6 +199,16 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                 _sub(pick, "skill", skill)
 
     _export_quality_critter_powers(root, state)
+    if spell_limits:
+        # Chummer keeps a picked spell category only on the improvement
+        # `<limitspellcategory />` made, tied to the quality by its guid
+        imps = _sub(root, "improvements")
+        for qid, category in spell_limits:
+            imp = _sub(imps, "improvement")
+            _sub(imp, "improvedname", category)
+            _sub(imp, "sourcename", qid)
+            _sub(imp, "improvementttype", "LimitSpellCategory")
+            _sub(imp, "improvementsource", "Quality")
 
     def _named_list(
         container: str,
@@ -245,6 +266,28 @@ def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> N
         _sub(el, "extra", ref.get("select") or "")
         _sub(el, "rating", ref.get("rating") or 0)
         _sub(el, "grade", -1)
+
+
+def _quality_extra_out(spec: dict[str, Any], qid: str, extras: dict[str, str]) -> tuple[str, str]:
+    """A quality's `<extra>` as Chummer writes it, and a spell category that
+    has to go on an improvement instead.
+
+    Chummer's `AddSpiritOrSprite` appends every spirit it is given to the
+    quality's selected value, `, `-joined: Chain Breaker's two `<addspirit>`
+    picks, or Apprentice's `<limitspiritcategory>` spirit — whose
+    `<limitspellcategory>` pick is not added, so it rides an improvement.
+    """
+    if str(spec.get("extra_kind") or "") == "add_spirit":
+        marker = f"{qid}{QUALITY_ADDSPIRIT_EXTRA_MARKER}"
+        picks = sorted(
+            (int(key[len(marker) :]), value)
+            for key, value in extras.items()
+            if key.startswith(marker) and key[len(marker) :].isdigit() and value
+        )
+        return ", ".join(value for _, value in picks), ""
+    if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
+        return extras.get(quality_spirit_category_extra_key(qid), ""), extras.get(qid, "")
+    return extras.get(qid, ""), ""
 
 
 def _export_martial_arts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

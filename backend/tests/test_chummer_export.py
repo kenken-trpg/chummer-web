@@ -153,6 +153,20 @@ def _infected(name: str, picked: str) -> tuple[CharacterState, str]:
     return state, qid
 
 
+def _with_quality(name: str, extras: dict[str, str]) -> tuple[CharacterState, str]:
+    qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == name)
+    state = CharacterState(
+        id="q",
+        name="Quality",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        quality_ids=[qid],
+        quality_extras={key.replace("{id}", qid): value for key, value in extras.items()},
+    )
+    return state, qid
+
+
 def _powers(xml: bytes) -> list[tuple[str, str]]:
     root = ET.fromstring(xml)
     return [(p.findtext("name") or "", p.findtext("extra") or "") for p in root.findall("./critterpowers/critterpower")]
@@ -193,3 +207,52 @@ def test_no_critter_powers_are_written_for_a_character_without_them() -> None:
         ).find("critterpowers")
         is None
     )
+
+
+def _quality_el(xml: bytes) -> ET.Element:
+    el = ET.fromstring(xml).find("./qualities/quality")
+    assert el is not None
+    return el
+
+
+def test_chain_breakers_spirits_ride_the_quality_extra() -> None:
+    """Chummer's `AddSpiritOrSprite` appends each `<addspirit>` pick to the
+    quality's selected value, `, `-joined — that is Chain Breaker's `<extra>`."""
+    state, qid = _with_quality(
+        "Chain Breaker", {"{id}:addspirit:0": "Guardian Spirit", "{id}:addspirit:1": "Plant Spirit"}
+    )
+    xml = state_to_chum5(state)
+    assert _quality_el(xml).findtext("extra") == "Guardian Spirit, Plant Spirit"
+
+    back = chum5_to_state(xml)[0]["quality_extras"]
+    assert back == {f"{qid}:addspirit:0": "Guardian Spirit", f"{qid}:addspirit:1": "Plant Spirit"}
+
+
+def test_apprentices_spirit_is_the_extra_and_its_spell_category_an_improvement() -> None:
+    """Apprentice: `<limitspiritcategory />` adds the spirit to the selected
+    value, `<limitspellcategory />` does not — Chummer keeps that pick on the
+    improvement, tied to the quality's guid."""
+    state, qid = _with_quality("Apprentice", {"{id}": "Combat", "{id}:spiritcategory": "Spirit of Fire"})
+    xml = state_to_chum5(state)
+    quality = _quality_el(xml)
+    assert quality.findtext("extra") == "Spirit of Fire"
+    imp = ET.fromstring(xml).find("./improvements/improvement")
+    assert imp is not None
+    assert imp.findtext("improvementttype") == "LimitSpellCategory"
+    assert imp.findtext("improvedname") == "Combat"
+    assert imp.findtext("sourcename") == quality.findtext("guid")
+
+    back = chum5_to_state(xml)[0]["quality_extras"]
+    assert back == {qid: "Combat", f"{qid}:spiritcategory": "Spirit of Fire"}
+
+
+def test_an_apprentice_file_from_before_keeps_its_spell_category() -> None:
+    """This app used to write the spell category into `<extra>` with no
+    improvement; a spell category is not a spirit, so it goes back where it was."""
+    state, qid = _with_quality("Apprentice", {})
+    root = ET.fromstring(state_to_chum5(state))
+    quality = root.find("./qualities/quality")
+    assert quality is not None
+    quality.find("extra").text = "Health"  # type: ignore[union-attr]
+    back = chum5_to_state(ET.tostring(root))[0]["quality_extras"]
+    assert back == {qid: "Health"}

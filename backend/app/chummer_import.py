@@ -23,8 +23,13 @@ from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as _xml_fromstring
 
 from .data_loader import CatalogDict, catalog, catalog_list
-from .engine.constants import quality_optional_power_extra_key
+from .engine.constants import (
+    quality_addspirit_extra_key,
+    quality_optional_power_extra_key,
+    quality_spirit_category_extra_key,
+)
 from .engine.lookups import critter_power_label
+from .engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
 from .notices import Notice, NoticeError, Phrase, notice, ui
 
 # Upper bound on the decompressed size of a .chum5lz payload — a guard against
@@ -324,8 +329,7 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         if qid not in quality_ids:
             quality_ids.append(qid)
         extra = _text(q.find("extra"))
-        if extra:
-            quality_extras[qid] = extra
+        quality_extras.update(_quality_extra_in(cat, qid, extra, _text(q.find("guid")), root))
         for pick in q.findall("./skillpicks/pick"):
             skill = _text(pick.find("skill"))
             if skill:
@@ -368,6 +372,44 @@ def _import_optional_powers(
         if picked is not None:
             pool.remove(picked)
             quality_extras[quality_optional_power_extra_key(qid)] = picked
+
+
+def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: ET.Element) -> dict[str, str]:
+    """The mirror of the export's `_quality_extra_out`: a quality's `<extra>`
+    back into the keys the engine reads.
+
+    Chain Breaker / Dark Ally: the `, `-joined spirits, one `:addspirit:N`
+    slot each. Apprentice: `<extra>` is the spirit and the spell category is
+    on the `LimitSpellCategory` improvement carrying the quality's guid — a
+    file this app wrote before that has the category in `<extra>` instead,
+    told apart by whether the text names a spirit.
+    """
+    spec = next((row for row in cat["qualities"] if row["id"] == qid), None) or {}
+    if str(spec.get("extra_kind") or "") == "add_spirit":
+        spirits = [part.strip() for part in extra.split(",") if part.strip()]
+        return {quality_addspirit_extra_key(qid, idx): name for idx, name in enumerate(spirits)}
+    if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
+        out: dict[str, str] = {}
+        category = ""
+        if guid:
+            for imp in root.findall("./improvements/improvement"):
+                if (
+                    _text(imp.find("sourcename")) == guid
+                    and _text(imp.find("improvementttype")) == "LimitSpellCategory"
+                ):
+                    category = _text(imp.find("improvedname"))
+                    break
+        spirit_names = {str(row.get("name") or "") for row in cat.get("spirits") or []}
+        if category:
+            out[qid] = category
+            if extra:
+                out[quality_spirit_category_extra_key(qid)] = extra
+        elif extra in spirit_names:
+            out[quality_spirit_category_extra_key(qid)] = extra
+        elif extra:
+            out[qid] = extra
+        return out
+    return {qid: extra} if extra else {}
 
 
 def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
