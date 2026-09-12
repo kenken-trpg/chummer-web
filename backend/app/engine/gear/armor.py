@@ -246,9 +246,17 @@ def _stack_value(item: dict[str, Any]) -> int:
     return value if additive else 0
 
 
+def armor_encumbrance(load: int, strength: int) -> int:
+    """SR5 p.169: −1 AGI and REA for every 2 full points of stacked armor
+    past Strength — Chummer's `ArmorEncumbrance`, 0 up to STR + 1."""
+    if load <= strength + 1:
+        return 0
+    return -((load - strength) // 2)
+
+
 def _recompute_worn_armor(
     armor_items: list[dict[str, Any]], strength: int | None = None
-) -> tuple[int, str, list[Notice]]:
+) -> tuple[int, str, list[Notice], int]:
     """Only the best piece counts, plus every `+N` accessory (SR5 p.169).
 
     Custom Fit (Stack) (RG p.59) is the exception: a piece tailored to another
@@ -258,6 +266,9 @@ def _recompute_worn_armor(
     What stacks on top — accessories and tailored pieces together — counts up
     to the wearer's Strength (SR5 p.169), as Chummer caps it; `strength=None`
     leaves it uncapped.
+
+    The fourth value is the AGI/REA encumbrance from that same stack, taken
+    before the cap (see `armor_encumbrance`).
     """
     warnings: list[Notice] = []
     worn = [item for item in armor_items if item.get("equipped")]
@@ -307,4 +318,9 @@ def _recompute_worn_armor(
         else:
             item["contributes"] = 0
     worn_name = str(best.get("name") or "") if best is not None else ""
-    return best_value, worn_name, warnings
+    penalty = armor_encumbrance(stack_total, strength) if strength is not None else 0
+    if penalty:
+        warnings.append(
+            notice("engine.gear.armorEncumbrance", load=stack_total, strength=int(strength or 0), penalty=penalty)
+        )
+    return best_value, worn_name, warnings, penalty

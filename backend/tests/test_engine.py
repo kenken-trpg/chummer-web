@@ -9131,3 +9131,32 @@ def test_accessories_alone_are_capped_too() -> None:
     st = _mundane("helm-only", armor=[ArmorInstall(armor_id=HELMET)])
     st.attributes["STR"] = 1
     assert compute(st).derived["armor"] == 1
+
+
+def test_armor_encumbrance_is_minus_one_per_two_points_past_strength() -> None:
+    """SR5 p.169: nothing up to STR + 1, then −1 per 2 full points past STR."""
+    from app.engine.gear.armor import armor_encumbrance
+
+    assert [armor_encumbrance(load, 3) for load in (3, 4, 5, 6, 7, 8)] == [0, 0, -1, -1, -2, -2]
+    assert armor_encumbrance(0, 0) == 0
+
+
+def test_heavy_stacked_armor_lowers_agility_and_reaction() -> None:
+    """A Ballistic Shield's +6 on STR 3: armor counts +3 (the cap) and the
+    load of 6 costs 1 AGI and 1 REA, said as a warning."""
+
+    def shield(strength: int) -> dict:
+        st = _mundane(
+            "shield",
+            armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=_armor_named("Ballistic Shield"))],
+        )
+        st.attributes.update({"STR": strength, "AGI": 3, "REA": 3})
+        return compute(st).derived
+
+    heavy = shield(3)
+    assert heavy["armor"] == 15
+    assert (heavy["totals"]["AGI"], heavy["totals"]["REA"]) == (2, 2)
+    assert has(heavy["warnings"], "engine.gear.armorEncumbrance")
+    light = shield(5)
+    assert (light["totals"]["AGI"], light["totals"]["REA"]) == (3, 3)
+    assert not has(light["warnings"], "engine.gear.armorEncumbrance")

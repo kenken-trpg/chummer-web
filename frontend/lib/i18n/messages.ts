@@ -1695,6 +1695,8 @@ const JA = {
   "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけをアーマーに加算しています",
   "engine.gear.armorAccessoryCapped":
     "重ねた防具の +{bonus} は STR {strength} までしか加算されません（SR5 p.169）",
+  "engine.gear.armorEncumbrance":
+    "重ねた防具 {load} が STR {strength} を超えているので AGI・REA {penalty}（SR5 p.169）",
   "engine.gear.availOver": "{name} の入手制限超過（{shown} / 上限{limit}）",
   "engine.gear.bmpCategory": "Black Market Pipeline の商品カテゴリを選んでください",
   "engine.gear.bmpContact": "Black Market Pipeline のコンタクトを選んでください",
@@ -3455,6 +3457,8 @@ const EN: Catalog = {
   "engine.gear.armorHighestOnly": "Only the highest-rated worn armor counts toward Armor",
   "engine.gear.armorAccessoryCapped":
     "Stacked armor adds +{bonus}, but only up to STR {strength} counts (SR5 p.169)",
+  "engine.gear.armorEncumbrance":
+    "Stacked armor {load} is over STR {strength}: AGI and REA {penalty} (SR5 p.169)",
   "engine.gear.availOver": "{name} exceeds the availability limit ({shown} / max {limit})",
   "engine.gear.bmpCategory": "Choose a category for Black Market Pipeline",
   "engine.gear.bmpContact": "Choose a contact for Black Market Pipeline",

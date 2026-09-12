@@ -134,7 +134,7 @@ def resolve_gear(
     warnings.extend(mod_warns)
     errors.extend(mod_errors)
     bonus_sources.extend(mod_bonus)
-    worn_armor, worn_name, worn_warns = _recompute_worn_armor(
+    worn_armor, worn_name, worn_warns, encumbrance = _recompute_worn_armor(
         armor_items, int(attr_totals["STR"]) if attr_totals and "STR" in attr_totals else None
     )
     warnings.extend(worn_warns)
@@ -281,6 +281,7 @@ def resolve_gear(
         "nuyen": nuyen,
         "armor": worn_armor,
         "worn_name": worn_name,
+        "armor_encumbrance": encumbrance,
         "armor_items": armor_items,
         "armor_mods": armor_mods,
         "weapons": weapons,
@@ -320,6 +321,12 @@ def gear_phase(ctx: Ctx) -> None:
     )
     ctx.warnings.extend(ctx.gear["warnings"])
     ctx.errors.extend(ctx.gear.get("errors") or [])
+    # SR5 p.169 armor encumbrance: an augmented malus on AGI and REA, folded in
+    # before `totals` sums the attributes
+    for key in ("AGI", "REA"):
+        ctx.effects["attribute_bonus"][key] = int(ctx.effects["attribute_bonus"].get(key, 0)) + int(
+            ctx.gear.get("armor_encumbrance") or 0
+        )
     # Before the weapon modifiers below: a natural weapon is an Unarmed Combat
     # attack, so a reach or unarmed-AP bonus has to reach it too.
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
