@@ -134,7 +134,9 @@ def resolve_gear(
     warnings.extend(mod_warns)
     errors.extend(mod_errors)
     bonus_sources.extend(mod_bonus)
-    worn_armor, worn_name, worn_warns = _recompute_worn_armor(armor_items)
+    worn_armor, worn_name, worn_warns = _recompute_worn_armor(
+        armor_items, int(attr_totals["STR"]) if attr_totals and "STR" in attr_totals else None
+    )
     warnings.extend(worn_warns)
 
     kept_weapons: list[WeaponInstall] = []
