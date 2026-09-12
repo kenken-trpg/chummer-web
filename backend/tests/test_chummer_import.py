@@ -8,6 +8,7 @@ import pytest
 
 from app.characters import import_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
+from app.data_loader import catalog
 from app.notices import NoticeError
 from tests.notice_asserts import has
 
@@ -249,3 +250,40 @@ def test_gear_nobody_included_is_still_reported() -> None:
     keys = _import_keys(picked)
     assert keys.count("engine.import.skippedUnknown") == _import_keys(b"").count("engine.import.skippedUnknown") + 1
     assert "engine.import.nestedGearSkipped" in keys
+
+
+_EAGLE_ADEPT = b"""
+  <mentorspirits><mentorspirit><id>9e38a8c0-f11c-461d-a489-ba1432f4551f</id><name>Eagle</name></mentorspirit></mentorspirits>
+  <powers><power><name>Combat Sense</name><rating>0</rating></power>
+    <power><name>Critical Strike</name><rating>1</rating><extra>Unarmed Combat</extra></power></powers>
+  <improvements>
+    <improvement><improvedname>Perception</improvedname><improvementttype>Skill</improvementttype>
+      <improvementsource>MentorSpirit</improvementsource></improvement>
+    <improvement><improvedname>Combat Sense</improvedname><improvementttype>AdeptPowerFreeLevels</improvementttype>
+      <improvementsource>MentorSpirit</improvementsource></improvement>
+  </improvements>
+"""
+
+
+def test_a_mentor_choice_is_recovered_from_the_improvements_it_made() -> None:
+    """Chummer saves without `<extrachoice1>` keep the pick only as what it
+    did: Eagle's adept option is an `AdeptPowerFreeLevels` "Combat Sense"."""
+    st, _ = chum5_to_state(SAMPLE.replace(b"</character>", _EAGLE_ADEPT + b"</character>"))
+    assert st["mentor_choices"] == ["Adept: 1 free level of Combat Sense"]
+
+
+def test_a_power_only_free_levels_hold_up_is_not_imported_as_bought() -> None:
+    """Rating 0 is Chummer's row for a power the mentor's free level carries;
+    as a paid level 1 it billed half a power point nobody spent."""
+    st, _ = chum5_to_state(SAMPLE.replace(b"</character>", _EAGLE_ADEPT + b"</character>"))
+    names = {p["name"]: p["id"] for p in catalog()["powers"]}
+    assert [p["power_id"] for p in st["adept_powers"]] == [names["Critical Strike"]]
+
+
+def test_an_explicit_mentor_choice_still_wins() -> None:
+    explicit = _EAGLE_ADEPT.replace(
+        b"<name>Eagle</name>",
+        b"<name>Eagle</name><extrachoice1>Magician: +2 dice summoning spirits of air</extrachoice1>",
+    )
+    st, _ = chum5_to_state(SAMPLE.replace(b"</character>", explicit + b"</character>"))
+    assert st["mentor_choices"] == ["Magician: +2 dice summoning spirits of air"]

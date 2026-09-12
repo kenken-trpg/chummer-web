@@ -541,6 +541,40 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
     return {qid: extra} if extra else {}
 
 
+def _bonus_names(bonus: list[dict[str, Any]] | None) -> set[str]:
+    """Every `<name>` a bonus list names, lower-cased."""
+    out: set[str] = set()
+    for node in bonus or []:
+        raw = (node.get("fields") or {}).get("name")
+        for name in raw if isinstance(raw, list) else [raw]:
+            if name and str(name).strip():
+                out.add(str(name).strip().lower())
+    return out
+
+
+def _mentor_choices_from_improvements(root: ET.Element, mentor: dict[str, Any]) -> list[str]:
+    """The mentor's picks, recovered from what they did.
+
+    A save without `<extrachoice1>` keeps the choice only as the improvements
+    it made — `AdeptPowerFreeLevels` "Combat Sense", `SpellCategory`
+    "Combat" — with `<improvementsource>MentorSpirit`. A choice is taken when
+    every name its bonus mentions is among them. Names the mentor's own bonus
+    already grants prove nothing, so a choice made only of those is skipped.
+    """
+    granted = {
+        _text(imp.find("improvedname")).lower()
+        for imp in root.findall("./improvements/improvement")
+        if _text(imp.find("improvementsource")) == "MentorSpirit" and _text(imp.find("improvedname"))
+    }
+    base = _bonus_names(mentor.get("bonus"))
+    picks = []
+    for choice in mentor.get("choices") or []:
+        names = _bonus_names(choice.get("bonus")) - base
+        if names and names <= granted:
+            picks.append(str(choice["name"]))
+    return picks
+
+
 def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read spells, adept powers, complex forms and magic arts."""
     spell_r = _Resolver(cat["spells"])
@@ -552,6 +586,12 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     power_r = _Resolver(cat["powers"])
     powers = []
     for p in root.findall("./powers/power"):
+        # Rating 0 is how Chummer keeps a power that only a mentor's free
+        # levels hold up (Eagle's Combat Sense): nothing was bought. The free
+        # levels come back from the mentor choice; importing the row as a
+        # paid level 1 billed power points the character never spent.
+        if _text(p.find("rating")) == "0":
+            continue
         pid = power_r.resolve(p, warn, ui("engine.kind.adeptPower"))
         if pid:
             powers.append(
@@ -616,6 +656,9 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         }
         if not choices:
             choices = [name for tag in ("extrachoice1", "extrachoice2") if (name := _text(men.find(tag)))]
+        if not choices and mid:
+            row = next((m for m in mentors if m["id"] == mid), None)
+            choices = _mentor_choices_from_improvements(root, row) if row else []
         st["mentor_choices"] = choices
         st["mentor_extras"] = extras
 
