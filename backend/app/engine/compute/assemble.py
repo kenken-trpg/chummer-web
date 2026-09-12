@@ -25,9 +25,11 @@ from ..constants import (
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
     _normalize_side,
+    quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
 )
 from ..gear import matrix_initiative
+from ..lookups import critter_power_label, critter_power_rows
 from ..magic import spell_defense_pools, spell_karma_cost
 from ..priority import priorities_are_unique, sum_to_ten_spent
 from ..qualities import _quality_has_selectside, quality_needs_extra
@@ -46,6 +48,27 @@ def _trustfund_notice(level: int) -> Notice | None:
     quality. `TRUST_FUND_STIPEND` holds the dictionary keys, not the wording."""
     key = TRUST_FUND_STIPEND.get(level)
     return notice(key) if key else None
+
+
+def _quality_critter_powers(q: dict[str, Any], extras: dict[str, str]) -> dict[str, Any]:
+    """The critter powers an Infected quality grants (RF p.126), the list its
+    one optional power comes from, and the pick — empty for every other
+    quality, so their rows stay as they were."""
+    fixed = list(q.get("critter_powers") or [])
+    optional = [critter_power_label(row) for row in q.get("optional_powers") or []]
+    if not fixed and not optional:
+        return {}
+    picked = extras.get(quality_optional_power_extra_key(q["id"])) or ""
+    labels = [critter_power_label(row) for row in fixed]
+    rows = critter_power_rows(labels + ([picked] if picked in optional else []))
+    for row, ref in zip(rows, fixed, strict=False):
+        if ref.get("rating"):
+            row["rating"] = ref["rating"]
+    out: dict[str, Any] = {"critter_powers": rows}
+    if optional:
+        out["optional_powers"] = optional
+        out["optional_power"] = picked
+    return out
 
 
 def _effective_attr_spec(
@@ -399,6 +422,7 @@ def assemble(ctx: Ctx) -> None:
                 "selectside": _quality_has_selectside(q),
                 "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
                 "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
+                **_quality_critter_powers(q, ctx.state.quality_extras),
                 # the table value, only when a `<costdiscount>` moved it
                 **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
                 **({"disabled_by": ctx.disabled_qualities[q["id"]]} if q["id"] in ctx.disabled_qualities else {}),

@@ -29,6 +29,7 @@ import type {
 import type { Notice } from "@/lib/engine-notices";
 import type {
   ActiveDrug,
+  CritterPower,
   CustomDrug,
   EnhancementInfo,
   InstalledAdeptPower,
@@ -594,6 +595,11 @@ export interface Character {
       disabled_by?: string;
       /** taken after chargen: what it cost (SR5 p.107: positive ×2, negative 0) */
       career_cost?: number;
+      /** the Infected's powers (RF p.126), the optional one included once picked */
+      critter_powers?: CritterPower[];
+      /** the list the one optional power comes from, and the pick */
+      optional_powers?: string[];
+      optional_power?: string;
     }[];
     /** held at chargen, gone in career: the buy-off cost (0 for a positive one) */
     qualities_removed?: { id: string; name: string; category: string; karma: number }[];

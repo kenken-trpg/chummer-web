@@ -39,6 +39,12 @@ def _power_by_name(name: str) -> dict[str, Any] | None:
     return _match_by(catalog().get("powers"), "name", name)
 
 
+def critter_power_label(row: dict[str, Any]) -> str:
+    """`Allergy (Wood)`: a quality's power reference as the sheet and the
+    optional-power pick name it."""
+    return f"{row['name']} ({row['select']})" if row.get("select") else str(row["name"])
+
+
 def critter_power_rows(names: list[str]) -> list[dict[str, Any]]:
     """Spirit / sprite power names with what SR5 p.394 gives each one.
 

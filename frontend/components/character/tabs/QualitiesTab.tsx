@@ -7,6 +7,7 @@ import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { QualityExtraEditor } from "@/components/character/tabs/qualities/QualityExtraEditor";
 import { mergeRatings } from "@/lib/character/format";
+import { critterPowerRow } from "@/lib/spell-terms";
 import {
   dropSkillPicksForPrefix,
   qualityBlockReason,
@@ -158,6 +159,37 @@ export function QualitiesTab({
                   catalog={catalog}
                   catalogById={catalogById}
                 />
+                {q.optional_powers?.length ? (
+                  <select
+                    aria-label={`${tr(q.name)}: ${ui("qual.optionalPower")}`}
+                    value={q.optional_power || ""}
+                    onChange={(e) =>
+                      patch({
+                        quality_extras: {
+                          ...(ch.quality_extras || {}),
+                          [`${q.id}:optionalpower`]: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value="">{ui("qual.optionalPower")}</option>
+                    {q.optional_powers.map((name) => (
+                      <option key={name} value={name}>
+                        {tr(name)}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {q.critter_powers?.length ? (
+                  <div className="muted">
+                    {ui("common.powersHead")}
+                    <ul className="critter-powers">
+                      {q.critter_powers.map((power, i) => (
+                        <li key={`${power.name}-${i}`}>{critterPowerRow(power, tr, ui)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
               {q.free ? (
                 <span className="muted">{ui("qual.attached")}</span>

@@ -339,3 +339,56 @@ describe("<QualitiesTab> a quality switched off by ware", () => {
     );
   });
 });
+
+describe("<QualitiesTab> an Infected quality's critter powers", () => {
+  const banshee = (over: Record<string, unknown> = {}) => ({
+    id: "inf",
+    name: "Infected: Banshee",
+    karma: 30,
+    category: "Positive",
+    source: "RF",
+    critter_powers: [
+      { name: "Dual Natured", type: "P", action: "Auto", range: "Self", duration: "Always" },
+      { name: "Vulnerability (Wood)" },
+    ],
+    optional_powers: ["Immunity (Toxins)", "Enhanced Senses (Hearing)"],
+    optional_power: "",
+    ...over,
+  });
+
+  it("lists the powers the quality grants", () => {
+    renderTab({ character: { derived: { qualities: [banshee()] as any } } });
+    expect(screen.getByText(/Dual Natured/)).toBeDefined();
+    expect(screen.getByText(/Vulnerability \(Wood\)/)).toBeDefined();
+  });
+
+  it("picks the optional power into its own extra, keeping the others", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: {
+        quality_extras: { inf: "BOD" },
+        derived: { qualities: [banshee()] as any },
+      } as any,
+      patch,
+    });
+
+    const picker = screen.getByRole("combobox", { name: "Infected: Banshee: 任意パワーを選択" });
+    expect([...picker.querySelectorAll("option")].map((o) => o.textContent)).toEqual([
+      "任意パワーを選択",
+      "Immunity (Toxins)",
+      "Enhanced Senses (Hearing)",
+    ]);
+    fireEvent.change(picker, { target: { value: "Immunity (Toxins)" } });
+
+    expect(patch).toHaveBeenCalledWith({
+      quality_extras: { inf: "BOD", "inf:optionalpower": "Immunity (Toxins)" },
+    });
+  });
+
+  it("offers no picker for a quality without optional powers", () => {
+    renderTab({
+      character: { derived: { qualities: [banshee({ optional_powers: undefined })] as any } },
+    });
+    expect(screen.queryByRole("combobox", { name: /任意パワー/ })).toBeNull();
+  });
+});
