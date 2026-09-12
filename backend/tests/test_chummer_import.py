@@ -194,3 +194,23 @@ def _with_mugshot(mugshot: str) -> bytes:
 def test_mugshot_is_kept_only_as_a_raster_data_uri(mugshot: str, expected: str) -> None:
     st, _ = chum5_to_state(_with_mugshot(mugshot))
     assert st.get("portrait", "") == expected
+
+
+def test_priorities_in_chummers_own_form_are_read() -> None:
+    """Chummer saves `<prioritymetatype>E,0</prioritymetatype>` straight under
+    `<character>` — letter, then the sum-to-ten value. Only a bare letter used
+    to be accepted, so every real save came in as C across the board."""
+    legacy = b"""<priorities>
+    <prioritymetatype>D</prioritymetatype><priorityattributes>B</priorityattributes>
+    <priorityspecial>A</priorityspecial><priorityskills>C</priorityskills>
+    <priorityresources>E</priorityresources><prioritytalent>Magician</prioritytalent>
+  </priorities>"""
+    chummer = (
+        b"<prioritymetatype>E,0</prioritymetatype><priorityattributes>A,4</priorityattributes>"
+        b"<priorityspecial>B,3</priorityspecial><priorityskills>C,2</priorityskills>"
+        b"<priorityresources>D,1</priorityresources><prioritytalent>Adept</prioritytalent>"
+    )
+    assert legacy in SAMPLE
+    st, _ = chum5_to_state(SAMPLE.replace(legacy, chummer))
+    assert st["priorities"] == {"Heritage": "E", "Attributes": "A", "Talent": "B", "Skills": "C", "Resources": "D"}
+    assert st["talent"] == "Adept"

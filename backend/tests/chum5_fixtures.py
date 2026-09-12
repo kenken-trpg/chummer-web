@@ -150,10 +150,10 @@ def build_chum5(
     if karma_nuyen:
         _e(root, "nuyenbp", karma_nuyen)
 
-    pr = _e(root, "priorities")
+    # the way Chummer saves them: straight under <character>, "letter,value"
     for tag, letter in zip(_PRIO_TAGS, priorities, strict=True):
-        _e(pr, tag, letter)
-    _e(pr, "prioritytalent", talent)
+        _e(root, tag, f"{letter},{'EDCBA'.index(letter)}")
+    _e(root, "prioritytalent", talent)
 
     attr_el = _e(root, "attributes")
     for attr_name, value in (attributes or {"BOD": 3}).items():
