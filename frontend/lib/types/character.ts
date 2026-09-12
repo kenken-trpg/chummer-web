@@ -101,6 +101,7 @@ export interface CharacterSettings {
   chargen_avail_max?: number | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
+  contact_free_mult?: number | null;
   banned_ware_grades?: string[];
   /** `<customdatadirectorynames>`, enabled ones only, in the file's order —
    *  order decides who wins when two directories edit the same entry. */
@@ -349,6 +350,8 @@ export interface Character {
       paid: number;
       karma?: number;
       karma_per_point?: number;
+      /** Free points per unaugmented CHA — 3, or what the settings file says. */
+      free_mult?: number;
     };
     martial_arts?: InstalledMartialArt[];
     martial_art_points?: {

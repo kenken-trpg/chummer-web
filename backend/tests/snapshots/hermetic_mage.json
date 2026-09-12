@@ -46,6 +46,7 @@
   },
   "contact_points": {
     "free": 3,
+    "free_mult": 3,
     "karma": 0,
     "karma_per_point": 1,
     "paid": 0,

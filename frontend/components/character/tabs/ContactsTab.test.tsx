@@ -47,6 +47,13 @@ describe("<ContactsTab>", () => {
     expect(document.querySelectorAll(".cyber-item")).toHaveLength(0);
   });
 
+  it("shows the settings file's multiplier in the point line", () => {
+    renderTab({
+      character: { derived: { contact_points: { used: 2, free: 18, paid: 0, free_mult: 6 } } },
+    });
+    expect(screen.getByText(/無料枠 CHA×6 = 2\/18/)).toBeDefined();
+  });
+
   it("adds a contact through the toolbar, appending to the patch payload", () => {
     const patch = vi.fn();
     renderTab({ patch });

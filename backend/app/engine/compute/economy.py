@@ -299,7 +299,9 @@ def economy(ctx: Ctx) -> None:
             )
             ctx.karma_spent += ctx.career_adv_karma
 
-    cha = ctx.total["CHA"]
+    # Chummer's `{CHAUnaug}`: free contact points come off natural Charisma,
+    # so a tailored-pheromones bonus does not buy a bigger network.
+    cha = ctx.ratings["CHA"]
     ctx.warnings.extend(sync_quality_contacts(ctx.state, ctx.effects, ctx.qualities))
     ctx.contacts = resolve_contacts(
         ctx.state,

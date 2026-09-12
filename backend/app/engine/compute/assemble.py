@@ -302,6 +302,7 @@ def assemble(ctx: Ctx) -> None:
             "paid": ctx.contacts.get("paid") or 0,
             "karma": int(ctx.contacts.get("karma") or 0),
             "karma_per_point": int(ctx.contacts.get("karma_per_point", 1)),
+            "free_mult": current_rules().contact_free_mult,
         },
         "martial_arts": ctx.martial.get("public") or [],
         "martial_art_points": {

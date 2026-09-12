@@ -240,3 +240,18 @@ def test_the_catalog_carries_only_what_another_table_replaces() -> None:
     assert set(overrides) == {"Prime Runner", "Street Level"}
     assert set(overrides["Prime Runner"]) == {"Resources"}, "only Resources differs in SR5"
     assert overrides["Prime Runner"]["Resources"]["A"]["nuyen"] == 500000
+
+
+def test_the_contact_points_expression_sets_the_free_multiplier() -> None:
+    """Prime Runner writes `{CHAUnaug} * 6`; Standard's `* 3` changes nothing."""
+    assert parse_settings_xml(_settings_xml(contactpointsexpression="{CHAUnaug} * 6")).contact_free_mult == 6
+    standard = parse_settings_xml(_settings_xml(contactpointsexpression="{CHAUnaug} * 3"))
+    assert standard.contact_free_mult == 3
+    assert standard.unsupported == []
+    assert rules_for(standard) == DEFAULT_RULES
+
+
+def test_a_contact_expression_this_app_cannot_evaluate_is_reported() -> None:
+    parsed = parse_settings_xml(_settings_xml(contactpointsexpression="({CHAUnaug} + {INTUnaug}) * 2"))
+    assert parsed.contact_free_mult is None
+    assert "contactpointsexpression" in parsed.unsupported
