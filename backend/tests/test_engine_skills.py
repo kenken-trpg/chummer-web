@@ -64,10 +64,20 @@ def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:
     assert out.native_languages == ["Japanese"]
 
 
-def test_knowledge_overspend_is_an_error() -> None:
+def test_knowledge_past_its_points_is_paid_with_skill_points() -> None:
+    """Chummer's `SkillPointsSpentOnKnoskills`: on a priority sheet the
+    knowledge over the (INT + LOG) x 2 pool comes out of the active skill
+    points — an error only once those run out as well."""
     out = compute(_human("know-over", knowledge_skills={"Alcohol": 6, "Biology": 6, "Chemistry": 1}))
-    assert out.derived["points"]["knowledge"]["used"] == 13
-    assert has(out.derived["errors"], "engine.skills.knowledgePointsOver")
+    assert out.derived["points"]["knowledge"] == {"used": 4, "max": 4}
+    assert out.derived["points"]["skills"]["used"] == 9  # 13 ranks, 4 of them knowledge points
+    assert has(out.derived["warnings"], "engine.skills.knowledgeOnSkillPoints", points=9)
+    assert not has(out.derived["errors"], "engine.skills.knowledgePointsOver")
+
+    six = dict.fromkeys(("Pistols", "Sneaking", "Perception", "Etiquette", "Running", "Swimming"), 6)
+    both = compute(_human("know-over-both", skills=six, knowledge_skills={"Alcohol": 6, "Biology": 6}))
+    assert both.derived["points"]["skills"] == {"used": 36 + 8, "max": 36}
+    assert has(both.derived["errors"], "engine.skills.pointsOver", used=44, max=36)
 
 
 def test_second_native_language_is_warned() -> None:

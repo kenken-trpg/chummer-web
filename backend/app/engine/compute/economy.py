@@ -252,6 +252,14 @@ def economy(ctx: Ctx) -> None:
         ctx.skill_spent += spec_active
         ctx.know_spent += spec_knowledge
         ctx.spec_karma = 0
+        # Chummer's `SkillPointsSpentOnKnoskills`: on a priority sheet the
+        # knowledge a character has no knowledge points left for is paid with
+        # active skill points ("even if it is stupid"), not refused.
+        overflow = max(0, ctx.know_spent - ctx.know_max)
+        if overflow:
+            ctx.skill_spent += overflow
+            ctx.know_spent = ctx.know_max
+            ctx.warn("engine.skills.knowledgeOnSkillPoints", points=overflow)
     _attach_specializations(ctx.knowledge["public"], ctx.specs["specs"])
     ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
     ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
