@@ -69,6 +69,13 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   `Rapelling Gloves`、`Ondanstron`、`Metagenetic Improvement`、
   `Spirit of Guidance` など。古い保存ファイルにはこれらの sourceid が無く、
   名前でしか照合できない。
+- **Prototype Transhuman で選んだネガティブ資質を .chum5 で往復させる。**
+  Chummer は選んだ資質を別の資質行（`<qualitysource>Improvement</qualitysource>`、
+  `<sourcename>` に親の名前）として持ち、親の `<extra>` は空にする。この
+  app はその行を読み飛ばして「選択が必要」と出し、書き出しでは親の
+  `<extra>` にしか書かず Chummer 側で選択が消えていた。子の行と、親子を
+  結ぶ SpecificQuality の改善を読み書きし、子の選択（Allergy の対象、
+  Wanted の相手）も保つ。
 
 ## [0.2.1] — 2026-09-05
 

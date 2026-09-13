@@ -272,6 +272,41 @@ def test_an_apprentice_file_from_before_keeps_its_spell_category() -> None:
     assert back == {qid: "Health"}
 
 
+def test_prototype_transhumans_pick_is_a_quality_of_its_own() -> None:
+    """`<selectquality>`: Chummer adds the picked quality with
+    `<qualitysource>Improvement</qualitysource>` and the granting quality's
+    name as `<sourcename>`, ties the two with a SpecificQuality improvement,
+    and leaves the granting quality's `<extra>` empty."""
+    allergy = next(q["id"] for q in catalog()["qualities"] if q["name"] == "Allergy (Common, Mild)")
+    state, qid = _with_quality("Prototype Transhuman", {"{id}": "Allergy (Common, Mild)", allergy: "Soy"})
+    xml = state_to_chum5(state)
+    root = ET.fromstring(xml)
+    parent, child = root.findall("./qualities/quality")
+    assert parent.findtext("extra") == ""
+    assert (child.findtext("name"), child.findtext("extra")) == ("Allergy (Common, Mild)", "Soy")
+    assert child.findtext("qualitysource") == "Improvement"
+    assert child.findtext("sourcename") == "Prototype Transhuman"
+    imp = root.find("./improvements/improvement")
+    assert imp is not None
+    assert imp.findtext("improvementttype") == "SpecificQuality"
+    assert imp.findtext("improvedname") == child.findtext("guid")
+    assert imp.findtext("sourcename") == parent.findtext("guid")
+
+    back = chum5_to_state(xml)[0]
+    assert back["quality_ids"] == [qid]  # the pick is granted, not bought
+    assert back["quality_extras"] == {qid: "Allergy (Common, Mild)", allergy: "Soy"}
+
+
+def test_a_prototype_transhuman_file_from_before_keeps_its_pick() -> None:
+    """This app used to write the pick into the granting quality's `<extra>`."""
+    state, qid = _with_quality("Prototype Transhuman", {})
+    root = ET.fromstring(state_to_chum5(state))
+    quality = root.find("./qualities/quality")
+    assert quality is not None
+    quality.find("extra").text = "Astral Beacon"  # type: ignore[union-attr]
+    assert chum5_to_state(ET.tostring(root))[0]["quality_extras"] == {qid: "Astral Beacon"}
+
+
 def test_black_market_pipelines_contact_survives_the_round_trip() -> None:
     """`<blackmarketdiscount />` then `<selectcontact />`: Chummer's `<extra>`
     is the category and the contact's name, `, `-joined. Import points the
