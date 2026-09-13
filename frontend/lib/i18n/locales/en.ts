@@ -1396,6 +1396,8 @@ export const EN: Catalog = {
   "engine.skills.expertiseNotAllowed": "{picked} is not an Expertise option for {source}",
   "engine.skills.groupDisabled": "The {name} skill group is disabled for this character",
   "engine.skills.groupPointsOver": "Not enough skill group points (spent {used} / {max})",
+  "engine.skills.knowledgeOnSkillPoints":
+    "{points} knowledge points over the knowledge pool are paid from skill points",
   "engine.skills.knowledgePointsOver": "Not enough knowledge skill points (spent {used} / {max})",
   "engine.skills.nativeLimit":
     "At most {limit} native language(s); the rest count as ordinary languages",

@@ -1450,6 +1450,7 @@ export const JA = {
   "engine.skills.expertiseNotAllowed": "{source} の Expertise に {picked} は選べません",
   "engine.skills.groupDisabled": "技能グループ {name} は無効化されています",
   "engine.skills.groupPointsOver": "技能グループ点が不足しています（使用 {used} / 上限 {max}）",
+  "engine.skills.knowledgeOnSkillPoints": "知識技能点を超えた {points} 点は技能点から払っています",
   "engine.skills.knowledgePointsOver": "知識技能点が不足しています（使用 {used} / 上限 {max}）",
   "engine.skills.nativeLimit": "母語は{limit}つまでです（超過分は通常の言語として扱います）",
   "engine.skills.needsSkilljack": "{name} を使うにはスキルジャックが必要です",
