@@ -16,7 +16,7 @@ from typing import Any
 from .._xml import _int, _text, data_root
 
 #: `<buildmethod>` as `settings.xml` spells it -> as `CharacterState.build_method`
-#: does. Deliberately not `chummer_import._BUILD_METHODS`: that one is lenient
+#: does. Deliberately not `chummer_import.identity._BUILD_METHODS`: that one is lenient
 #: because it has a character to place somewhere, and folds `LifeModule` into
 #: Priority. A preset has no character, so an unbuildable one is dropped.
 _BUILD_METHODS = {"priority": "Priority", "sumtoten": "SumToTen", "karma": "Karma"}

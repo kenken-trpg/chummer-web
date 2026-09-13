@@ -30,7 +30,8 @@ backend/                FastAPI + the rules engine (Python 3.11+)
     data_loader/        parse vendored Chummer XML -> cached catalog() dict
     engine/             compute(state) -> state.derived  (the rules live here)
     improvements/       the <bonus> node vocabulary (apply_bonus_nodes)
-    chummer_import.py   .chum5 / .chum5lz  ->  CharacterState
+    chummer_import/     .chum5 / .chum5lz  ->  CharacterState
+                        (one module per group of sections)
     chummer_export.py   CharacterState     ->  .chum5 XML
   scripts/fetch_chummer_data.py   downloads Chummer/data + lang files
   tests/                          pytest

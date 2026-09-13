@@ -309,6 +309,6 @@ def _contact_points(flat: dict[str, str]) -> tuple[int | None, bool]:
 
 def _build_method(root: ET.Element) -> str | None:
     """The file's `<buildmethod>`, as `CharacterState.build_method` spells it."""
-    from .chummer_import import _BUILD_METHODS
+    from .chummer_import.identity import _BUILD_METHODS
 
     return _BUILD_METHODS.get(_text(root.find("buildmethod")).lower())
