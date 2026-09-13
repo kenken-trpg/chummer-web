@@ -474,6 +474,8 @@ def test_crystal_breath_essence_penalty() -> None:
 
 
 def test_medium_lifestyle_freegrids_and_quality() -> None:
+    """The built-in Grid Subscriptions cost nothing; Gym, `<allowed>` on
+    Medium, takes no LP there but is still paid for (Chummer's `LPFree`)."""
     out = compute(
         _mundane(
             "medium-gym",
@@ -489,17 +491,17 @@ def test_medium_lifestyle_freegrids_and_quality() -> None:
     ls = out.derived["lifestyle"]
     assert ls["name"] == "Medium"
     assert ls["base_monthly"] == 5000
-    assert ls["monthly"] == 5000  # Gym is free on Medium via allowed
-    assert ls["lp_used"] == 4
+    assert ls["monthly"] == 5300  # Gym's 300 on top
+    assert ls["lp_used"] == 0
     assert ls["lp_max"] == 4
     grids = [q for q in ls["qualities"] if q["name"] == "Grid Subscription"]
     assert len(grids) == 2
     assert {q["extra"] for q in grids} == {"Local Grid", "Public Grid"}
     assert all(q.get("from_freegrid") for q in grids)
     gym = next(q for q in ls["qualities"] if q["name"] == "Gym")
-    assert gym["free"] is True
-    assert gym["cost"] == 0
-    assert out.derived["nuyen_spent"] == 5000
+    assert gym["free"] is False
+    assert (gym["cost"], gym["lp"]) == (300, 0)
+    assert out.derived["nuyen_spent"] == 5300
     assert out.derived["errors"] == []
 
 

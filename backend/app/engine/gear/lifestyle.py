@@ -58,18 +58,15 @@ def _resolve_one_lifestyle(
         if qid in seen_quality and not qspec.get("allow_multiple"):
             return
         seen_quality.add(qid)
+        # `<allowed>` (Chummer's `AllowedFreeLifestyles`) is not a list of the
+        # only lifestyles that may take the quality — a Low lifestyle buys a
+        # Grid Subscription at its price — but of those where it takes no
+        # LP (`LPFree`). It is still paid for in nuyen unless the player
+        # chose to spend LP on it instead, which Chummer's default is not.
+        # Only the lifestyle's own built-in qualities cost nothing.
         allowed = [str(name) for name in (qspec.get("allowed") or [])]
-        free = bool(from_freegrid) or (bool(allowed) and lifestyle_name in allowed)
-        if allowed and lifestyle_name not in allowed and not from_freegrid:
-            warnings.append(
-                notice(
-                    "engine.gear.lifestyleQualityNotAllowed",
-                    name=term(str(qspec["name"])),
-                    lifestyle=term(lifestyle_name),
-                )
-            )
-            return
-        lp_cost = int(qspec.get("lp") or 0)
+        free = bool(from_freegrid)
+        lp_cost = 0 if free or lifestyle_name in allowed else int(qspec.get("lp") or 0)
         lp_used += lp_cost
         add_cost = 0 if free else int(qspec.get("cost") or 0)
         quality_monthly += add_cost
@@ -92,6 +89,7 @@ def _resolve_one_lifestyle(
                 "free": free,
                 "from_freegrid": from_freegrid,
                 "multiplier": int(qspec.get("multiplier") or 0),
+                "base_multiplier": int(qspec.get("base_multiplier") or 0),
                 "extra": extra_val,
                 "needs_extra": bool(qspec.get("needs_extra")),
                 "source": qspec.get("source") or "",
@@ -120,7 +118,7 @@ def _resolve_one_lifestyle(
     if lp_max > 0 and lp_used > lp_max:
         warnings.append(notice("engine.gear.lifestylePointsOver", name=term(lifestyle_name), used=lp_used, max=lp_max))
 
-    monthly = int(round(base_monthly * (100 + multiplier_pct) / 100.0)) + quality_monthly
+    monthly = _monthly_cost(base_monthly, [row for row in kept_qualities if not row.get("from_freegrid")])
     cost = monthly * months
     # Persist user picks only; freegrids are re-derived each compute.
     inst.quality_ids = [row["quality_id"] for row in kept_qualities if not row.get("from_freegrid")]
@@ -147,6 +145,42 @@ def _resolve_one_lifestyle(
         "page": spec.get("page") or "",
     }
     return row, cost
+
+
+def _monthly_cost(base: int, qualities: list[dict[str, Any]]) -> int:
+    """A lifestyle's monthly cost the way Chummer works it out
+    (`Lifestyle.CostPreSplit` / `GetTotalMonthlyCost`, after HT p.139).
+
+    Multipliers compound rather than add, and apply stage by stage: a quality's
+    base multiplier on the base cost; then the entertainment assets, their
+    multipliers on everything so far and their prices after; then every other
+    quality that is neither entertainment nor a contract (Cramped, Dangerous
+    Area, Safehouse) the same way, floored at zero; then services and
+    outings; contracts are added last, untouched. A lifestyle's own built-in
+    qualities (its free Grid Subscription) take no part.
+    """
+
+    def kind(row: dict[str, Any]) -> str:
+        category = str(row.get("category") or "")
+        if category == "Contracts":
+            return "contract"
+        if category.startswith("Entertainment"):
+            return "asset" if "Asset" in category else "outing"
+        return "other"
+
+    def stage(cost: float, rows: list[dict[str, Any]]) -> float:
+        for row in rows:
+            cost *= 1 + int(row.get("multiplier") or 0) / 100
+        return cost + sum(int(row.get("cost") or 0) for row in rows)
+
+    cost = float(base)
+    for row in qualities:
+        cost *= 1 + int(row.get("base_multiplier") or 0) / 100
+    cost = stage(cost, [row for row in qualities if kind(row) == "asset"])
+    cost = max(0.0, stage(cost, [row for row in qualities if kind(row) == "other"]))
+    cost = stage(cost, [row for row in qualities if kind(row) == "outing"])
+    cost += sum(int(row.get("cost") or 0) for row in qualities if kind(row) == "contract")
+    return int(round(cost))
 
 
 def resolve_lifestyles(

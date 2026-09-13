@@ -66,6 +66,13 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **ライフスタイルの資質と費用を Chummer に合わせた。** .chum5 からライフ
+  スタイルの資質を読み込み、書き出すようにした。費用は Chummer と同じ段階計算
+  （倍率は足さずに掛け合わせる、娯楽の資産 → それ以外の資質 → 契約の順）にした。
+  資質の「allowed」は取得できるライフスタイルの制限ではなく、そのライフスタイル
+  では LP を使わないという意味なので、Low でも Grid Subscription を買え、Medium の
+  Gym も LP を使わずにお金を払う。ライフスタイルに最初から付く Grid Subscription
+  だけが無料。
 - **セッティングの技能の上限が効いていなかった。** 作成時は 6 に固定されていて
   `maxskillratingcreate` / `maxknowledgeskillratingcreate` を無視し、キャリアの
   `maxknowledgeskillrating`（知識技能の上限）は技能グループの上限として読まれて

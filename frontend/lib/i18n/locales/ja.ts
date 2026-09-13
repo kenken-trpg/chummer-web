@@ -1721,7 +1721,6 @@ export const JA = {
   "engine.gear.groupInvalid": "{name} の技能グループ指定が無効です（{picked}）",
   "engine.gear.lifestylePointsOver":
     "{name} のライフスタイルポイント超過（使用 {used} / 上限 {max}）",
-  "engine.gear.lifestyleQualityNotAllowed": "{name} は {lifestyle} では取得できません",
   "engine.gear.mountOnArmor": "{name} は防具に装着してください",
   "engine.gear.mountOnVehicle": "{name} は車両に装着してください",
   "engine.gear.mountOnWeapon": "{name} は武器に装着してください",
@@ -1779,6 +1778,7 @@ export const JA = {
   "engine.kind.focus": "収束具",
   "engine.kind.gear": "ギア",
   "engine.kind.lifestyle": "ライフスタイル",
+  "engine.kind.lifestyleQuality": "ライフスタイル資質",
   "engine.kind.martialArt": "武術",
   "engine.kind.mentor": "メンター",
   "engine.kind.metamagic": "メタマジック",

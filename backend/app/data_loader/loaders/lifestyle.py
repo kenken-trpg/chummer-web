@@ -68,6 +68,7 @@ def load_lifestyle_qualities() -> list[dict[str, Any]]:
                 "lp": _int(el.find("lp")),
                 "cost": _int(el.find("cost")),
                 "multiplier": _int(el.find("multiplier")),
+                "base_multiplier": _int(el.find("multiplierbaseonly")),
                 "allowed": allowed,
                 "allow_multiple": el.find("allowmultiple") is not None,
                 "needs_extra": quality_needs_extra(bonus),

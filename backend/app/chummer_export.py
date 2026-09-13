@@ -687,7 +687,9 @@ def _emit_weapon_mounts(vehicle_el: ET.Element, state: CharacterState, names: _N
 
 
 def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write lifestyles."""
+    """Write lifestyles and the qualities picked for them (the built-in free
+    ones Chummer derives again, as this app does)."""
+    lq_names = _id_name(catalog().get("lifestyle_qualities") or [])
     ls = _sub(root, "lifestyles")
     for lrow in state.lifestyles:
         base = names["lifestyle"].get(lrow.lifestyle_id, "")
@@ -695,6 +697,14 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(el, "baselifestyle", base)
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
+        if lrow.quality_ids:
+            quals = _sub(el, "lifestylequalities")
+            for qid in lrow.quality_ids:
+                q = _sub(quals, "lifestylequality")
+                _sub(q, "id", qid)
+                _sub(q, "name", lq_names.get(qid, ""))
+                _sub(q, "extra", lrow.quality_extras.get(qid, ""))
+                _sub(q, "lifestylequalitysource", "Selected")
 
 
 def _export_custom_drugs(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
