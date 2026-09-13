@@ -215,7 +215,9 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     """Write qualities, spells, adept powers and complex forms."""
     quals = _sub(root, "qualities")
     specs = {str(row["id"]): row for row in catalog()["qualities"]}
+    ids_by_name = {str(row["name"]): str(row["id"]) for row in catalog()["qualities"]}
     spell_limits: list[tuple[str, str]] = []
+    granted: list[tuple[str, str]] = []  # (granting quality id, granted quality's guid)
     for qid in state.quality_ids:
         q = _sub(quals, "quality")
         _sub(q, "sourceid", qid)
@@ -241,17 +243,36 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
                 pick = _sub(picks_el, "pick")
                 _sub(pick, "index", index)
                 _sub(pick, "skill", skill)
+        # `<selectquality>` (Prototype Transhuman): Chummer adds the pick as a
+        # quality of its own, sourced from this one, and ties the two with a
+        # SpecificQuality improvement so removing this one removes the pick.
+        picked = state.quality_extras.get(qid, "")
+        if str((specs.get(qid) or {}).get("extra_kind") or "") == "quality" and picked in ids_by_name:
+            if q.find("guid") is None:
+                _sub(q, "guid", qid)
+            child_guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{qid}:selectquality"))
+            child_id = ids_by_name[picked]
+            child = _sub(quals, "quality")
+            _sub(child, "guid", child_guid)
+            _sub(child, "sourceid", child_id)
+            _sub(child, "name", picked)
+            _sub(child, "extra", state.quality_extras.get(child_id, ""))
+            _sub(child, "qualitysource", "Improvement")
+            _sub(child, "sourcename", names["quality"].get(qid, ""))
+            granted.append((qid, child_guid))
 
     _export_quality_critter_powers(root, state)
-    if spell_limits:
-        # Chummer keeps a picked spell category only on the improvement
-        # `<limitspellcategory />` made, tied to the quality by its guid
+    # Chummer keeps a picked spell category only on the improvement
+    # `<limitspellcategory />` made, tied to the quality by its guid
+    links = [(category, qid, "LimitSpellCategory") for qid, category in spell_limits]
+    links += [(child_guid, qid, "SpecificQuality") for qid, child_guid in granted]
+    if links:
         imps = _sub(root, "improvements")
-        for qid, category in spell_limits:
+        for improved, qid, kind in links:
             imp = _sub(imps, "improvement")
-            _sub(imp, "improvedname", category)
+            _sub(imp, "improvedname", improved)
             _sub(imp, "sourcename", qid)
-            _sub(imp, "improvementttype", "LimitSpellCategory")
+            _sub(imp, "improvementttype", kind)
             _sub(imp, "improvementsource", "Quality")
 
     def _named_list(
@@ -335,6 +356,9 @@ def _quality_extra_out(
         return ", ".join(value for _, value in picks), ""
     if _quality_needs_spirit_category(spec) and _quality_needs_spell_category(spec):
         return extras.get(quality_spirit_category_extra_key(qid), ""), extras.get(qid, "")
+    if str(spec.get("extra_kind") or "") == "quality":
+        # the pick is a quality of its own; see `_export_qualities`
+        return "", ""
     if _quality_selects_contact(spec):
         contact = contact_names.get(extras.get(quality_contact_extra_key(qid), ""), "")
         return ", ".join(part for part in (extras.get(qid, ""), contact) if part), ""

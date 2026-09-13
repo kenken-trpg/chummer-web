@@ -475,12 +475,53 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
             skill = _text(pick.find("skill"))
             if skill:
                 picks[f"quality:{qid}:{_text(pick.find('index'))}"] = skill
+    _import_selected_qualities(root, cat, quality_ids, quality_extras)
     _import_optional_powers(root, cat, quality_ids, quality_extras)
     st["quality_ids"] = quality_ids
     st["quality_extras"] = quality_extras
     # Merged rather than assigned: `_import_ware` fills in the implant picks,
     # and the two sections run in either order.
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
+
+
+def _import_selected_qualities(
+    root: ET.Element, cat: CatalogDict, quality_ids: list[str], quality_extras: dict[str, str]
+) -> None:
+    """A `<selectquality>` pick (Prototype Transhuman's negative quality), back
+    out of the quality it granted.
+
+    Chummer leaves the granting quality's `<extra>` empty and adds the pick as
+    a quality of its own, `<qualitysource>Improvement</qualitysource>` with the
+    granting quality's name as `<sourcename>`. A file this app wrote before
+    that has the pick in `<extra>` instead, already read by the caller.
+    """
+    granted: dict[str, list[str]] = {}
+    rows: dict[str, ET.Element] = {}
+    for q in root.findall("./qualities/quality"):
+        if _text(q.find("qualitysource")).lower() == "improvement":
+            granted.setdefault(_text(q.find("sourcename")).lower(), []).append(_text(q.find("name")))
+            rows.setdefault(_text(q.find("name")), q)
+    by_id = {str(row["id"]): row for row in cat["qualities"]}
+    ids_by_name = {str(row["name"]): str(row["id"]) for row in cat["qualities"]}
+    for qid in quality_ids:
+        spec = by_id.get(qid) or {}
+        if str(spec.get("extra_kind") or "") != "quality" or quality_extras.get(qid):
+            continue
+        options = list(spec.get("select_options") or [])
+        # `<sourcename>` is the display name, so a save from a translated
+        # Chummer names the granting quality in that language: fall back to
+        # any granted quality the pick list allows.
+        candidates = granted.get(str(spec["name"]).lower()) or [n for names in granted.values() for n in names]
+        picked = next((name for name in candidates if name in options), None)
+        if not picked:
+            continue
+        quality_extras[qid] = picked
+        # the pick's own choice — Wanted's who and how much, Allergy's what
+        child, child_id = rows[picked], ids_by_name.get(picked)
+        if child_id and _text(child.find("extra")):
+            quality_extras.update(
+                _quality_extra_in(cat, child_id, _text(child.find("extra")), _text(child.find("guid")), root)
+            )
 
 
 def _import_optional_powers(
