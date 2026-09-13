@@ -424,6 +424,9 @@ export interface InstalledLifestyle {
   nuyen: number;
   lp_used?: number;
   lp_max?: number;
+  /** Points bought above the lifestyle's own, and how far each may go. */
+  raised?: Record<"comforts" | "area" | "security", number>;
+  raise_max?: Record<"comforts" | "area" | "security", number>;
   dice?: number;
   qualities?: InstalledLifestyleQuality[];
   source?: string;

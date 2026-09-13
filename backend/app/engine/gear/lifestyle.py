@@ -115,10 +115,22 @@ def _resolve_one_lifestyle(
     for qid in quality_ids:
         _append_lifestyle_quality(qid)
 
+    raise_max = dict(spec.get("raise_max") or {})
+    raised: dict[str, int] = {}
+    for key in ("comforts", "area", "security"):
+        value = max(0, min(int(getattr(inst, key) or 0), int(raise_max.get(key, 0))))
+        setattr(inst, key, value)
+        raised[key] = value
+    # every point raised is a point of LP (Chummer's `TotalLP`)
+    lp_used += sum(raised.values())
     if lp_max > 0 and lp_used > lp_max:
         warnings.append(notice("engine.gear.lifestylePointsOver", name=term(lifestyle_name), used=lp_used, max=lp_max))
-
-    monthly = _monthly_cost(base_monthly, [row for row in kept_qualities if not row.get("from_freegrid")])
+    monthly = _monthly_cost(
+        base_monthly,
+        [row for row in kept_qualities if not row.get("from_freegrid")],
+        raised=raised,
+        cost_for={key: int(spec.get(f"cost_for_{key}") or 0) for key in raised},
+    )
     cost = monthly * months
     # Persist user picks only; freegrids are re-derived each compute.
     inst.quality_ids = [row["quality_id"] for row in kept_qualities if not row.get("from_freegrid")]
@@ -138,6 +150,8 @@ def _resolve_one_lifestyle(
         "nuyen": cost,
         "lp_used": lp_used,
         "lp_max": lp_max,
+        "raised": raised,
+        "raise_max": {key: int(raise_max.get(key, 0)) for key in raised},
         "dice": int(spec.get("dice") or 0),
         "qualities": kept_qualities,
         "avail": spec.get("avail") or "",
@@ -147,7 +161,13 @@ def _resolve_one_lifestyle(
     return row, cost
 
 
-def _monthly_cost(base: int, qualities: list[dict[str, Any]]) -> int:
+def _monthly_cost(
+    base: int,
+    qualities: list[dict[str, Any]],
+    *,
+    raised: dict[str, int] | None = None,
+    cost_for: dict[str, int] | None = None,
+) -> int:
     """A lifestyle's monthly cost the way Chummer works it out
     (`Lifestyle.CostPreSplit` / `GetTotalMonthlyCost`, after HT p.139).
 
@@ -176,6 +196,10 @@ def _monthly_cost(base: int, qualities: list[dict[str, Any]]) -> int:
     cost = float(base)
     for row in qualities:
         cost *= 1 + int(row.get("base_multiplier") or 0) / 100
+    # each raised point of Comforts / Neighborhood / Security: +10% and its price
+    points = raised or {}
+    cost *= 1 + 0.1 * sum(points.values())
+    cost += sum(int(points[key]) * int((cost_for or {}).get(key, 0)) for key in points)
     cost = stage(cost, [row for row in qualities if kind(row) == "asset"])
     cost = max(0.0, stage(cost, [row for row in qualities if kind(row) == "other"]))
     cost = stage(cost, [row for row in qualities if kind(row) == "outing"])

@@ -221,6 +221,11 @@ class LifestyleInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     lifestyle_id: str
     months: int = 1
+    #: Points bought above the lifestyle's own Comforts / Neighborhood /
+    #: Security (RF p.219, Chummer's `<comforts>` / `<area>` / `<security>`).
+    comforts: int = 0
+    area: int = 0
+    security: int = 0
     quality_ids: list[str] = Field(default_factory=list)
     quality_extras: dict[str, str] = Field(default_factory=dict)
 

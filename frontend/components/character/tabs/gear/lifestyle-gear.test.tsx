@@ -389,7 +389,7 @@ describe("<LifestyleGear> the quality picker", () => {
         { id: "cq-space", name: "Extra Space", lp: 1, cost: 0, source: "RF" },
         // taken already, and not repeatable
         { id: "cq-cramped", name: "Cramped", lp: -1, cost: 0, source: "SR5" },
-        // only offered on the lifestyles it names
+        // `allowed` lists where it takes no LP — still offered everywhere
         { id: "cq-vault", name: "Vault", lp: 3, cost: 0, source: "SR5", allowed: ["High"] },
         // a supplement quality that is free and so stays off the list
         { id: "cq-sg", name: "Obscure Perk", lp: 0, cost: 0, source: "SG" },
@@ -406,7 +406,7 @@ describe("<LifestyleGear> the quality picker", () => {
       ],
     );
 
-  it("hides what is taken, what this lifestyle cannot have, and free supplements", () => {
+  it("hides what is taken and free supplements, not what `allowed` leaves out", () => {
     renderLifestyles(middle(), vi.fn(), catalog());
 
     const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" });
@@ -415,6 +415,7 @@ describe("<LifestyleGear> the quality picker", () => {
       "ライフスタイル品質",
       "Special Work Area (LP 2)",
       "Extra Space (LP 1)",
+      "Vault (LP 3)",
     ]);
   });
 
@@ -545,5 +546,31 @@ describe("<LifestyleGear> buying a lifestyle", () => {
     expect(patch.mock.calls[0][0].lifestyles).toEqual([
       { lifestyle_id: "c-low", months: 1, quality_ids: [] },
     ]);
+  });
+});
+
+describe("<LifestyleGear> comforts / neighborhood / security", () => {
+  it("offers a point count for each the lifestyle can raise, up to its limit", () => {
+    const patch = vi.fn();
+    renderLifestyles(
+      owning(
+        [{ id: "l1", lifestyle_id: "c-l1", months: 1, comforts: 1 }],
+        [
+          lifestyle("l1", "Low", {
+            raised: { comforts: 1, area: 0, security: 0 },
+            raise_max: { comforts: 1, area: 2, security: 0 },
+          }),
+        ],
+      ),
+      patch,
+    );
+    const comforts = screen.getByRole("spinbutton", { name: /快適さ/ }) as HTMLInputElement;
+    expect(comforts.value).toBe("1");
+    expect(comforts.max).toBe("1");
+    expect(screen.queryByRole("spinbutton", { name: /防犯/ })).toBeNull(); // Low's security cannot rise
+    fireEvent.change(screen.getByRole("spinbutton", { name: /地域/ }), { target: { value: "2" } });
+    expect(patch).toHaveBeenCalledWith({
+      lifestyles: [{ id: "l1", lifestyle_id: "c-l1", months: 1, comforts: 1, area: 2 }],
+    });
   });
 });

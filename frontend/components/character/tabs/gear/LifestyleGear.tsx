@@ -12,11 +12,11 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
         {(d.lifestyles || []).map((item) => {
           const raw = (ch.lifestyles || []).find((row) => row.id === item.id);
           const ownedUser = new Set(raw?.quality_ids || []);
-          const availableQualities = (catalog.lifestyle_qualities || []).filter((q) => {
-            if (!q.allow_multiple && ownedUser.has(q.id)) return false;
-            if (q.allowed?.length && !q.allowed.includes(item.name)) return false;
-            return true;
-          });
+          // `allowed` lists where a quality takes no LP, not the only
+          // lifestyles that may have it (Chummer's AllowedFreeLifestyles)
+          const availableQualities = (catalog.lifestyle_qualities || []).filter(
+            (q) => q.allow_multiple || !ownedUser.has(q.id),
+          );
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -44,6 +44,28 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   {item.source}
                 </div>
                 <div className="cyber-controls">
+                  {(["comforts", "area", "security"] as const).map((key) =>
+                    item.raise_max?.[key] ? (
+                      <label key={key} title={ui("life.raiseHint")}>
+                        {ui(`life.${key}`)}
+                        <input
+                          type="number"
+                          min={0}
+                          max={item.raise_max[key]}
+                          value={item.raised?.[key] ?? 0}
+                          onChange={(e) =>
+                            patch({
+                              lifestyles: (ch.lifestyles || []).map((row) =>
+                                row.id === item.id
+                                  ? { ...row, [key]: Math.max(0, Number(e.target.value) || 0) }
+                                  : row,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                    ) : null,
+                  )}
                   <label>
                     {lifeIncrement(item.increment, ui)}
                     <input

@@ -204,6 +204,10 @@ export interface LifestyleInstall {
   id?: string;
   lifestyle_id: string;
   months?: number;
+  /** Points bought above the lifestyle's own Comforts / Neighborhood / Security. */
+  comforts?: number;
+  area?: number;
+  security?: number;
   quality_ids?: string[];
   quality_extras?: Record<string, string>;
 }

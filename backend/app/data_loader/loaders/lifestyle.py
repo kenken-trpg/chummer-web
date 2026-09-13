@@ -12,6 +12,16 @@ def load_lifestyles() -> list[dict[str, Any]]:
     root = data_root("lifestyles.xml")
     if root is None:
         return []
+    # Comforts / Neighborhood / Security (RF p.219): where each lifestyle
+    # starts and how far it can be raised, by lifestyle name.
+    ranges: dict[str, dict[str, tuple[int, int]]] = {}
+    for table, row, key in (
+        ("comforts", "comfort", "comforts"),
+        ("neighborhoods", "neighborhood", "area"),
+        ("securities", "security", "security"),
+    ):
+        for el in root.findall(f"./{table}/{row}"):
+            ranges.setdefault(_text(el.find("name")), {})[key] = (_int(el.find("minimum")), _int(el.find("limit")))
     items: list[dict[str, Any]] = []
     for el in root.findall("./lifestyles/lifestyle"):
         if el.find("hide") is not None:
@@ -38,6 +48,9 @@ def load_lifestyles() -> list[dict[str, Any]]:
                 "cost_for_comforts": _int(el.find("costforcomforts")),
                 "cost_for_security": _int(el.find("costforsecurity")),
                 "cost_for_area": _int(el.find("costforarea")),
+                # how many points each can be raised above where the
+                # lifestyle starts (the table's limit less its minimum)
+                "raise_max": {key: max(0, limit - base) for key, (base, limit) in (ranges.get(name) or {}).items()},
                 "increment": _text(el.find("increment"), "month"),
                 "freegrids": freegrids,
                 "source": _text(el.find("source")),
