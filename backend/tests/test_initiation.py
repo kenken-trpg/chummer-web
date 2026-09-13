@@ -7,7 +7,8 @@ patch, and again on import, so a gate that is wrong by one condition does not
 merely mislabel a metamagic; it deletes the player's selection, permanently,
 behind a single line of warning text.
 
-`test_engine.py` covers the paths where a choice is accepted. This file covers
+`test_engine_magic.py` / `test_engine_resonance.py` cover the paths where a choice is
+accepted. This file covers
 the paths where one is taken away, and — just as importantly — the two places
 that *warn without* taking it away, so the difference stays deliberate.
 

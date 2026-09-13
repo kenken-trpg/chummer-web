@@ -66,7 +66,9 @@ got there.
 
 The backend tests come in two layers:
 
-- **`tests/test_engine.py`** — hundreds of targeted assertions, one rule each.
+- **`tests/test_engine_*.py`** — hundreds of targeted assertions, one rule each,
+  one file per area (`_ware`, `_magic`, `_qualities`, …); shared ids and
+  character builders live in `tests/engine_support.py`.
   Copy the nearest existing test when you add or change a rule.
 - **`tests/test_snapshot.py`** — golden snapshots of the whole `derived` blob
   for five representative characters (samurai / mage / adept / technomancer /
@@ -188,7 +190,7 @@ new module with no test at all is worth a second look.
 - Conventional-ish prefixes: `feat:`, `fix:`, `refactor:`, `chore:`, `docs:`,
   `style:`, `test:`. A scope is nice: `feat(engine): …`.
 - Every PR must pass `make check` locally. Add or update tests for rule
-  changes — `backend/tests/test_engine.py` has lots of patterns to copy.
+  changes — `backend/tests/test_engine_*.py` have lots of patterns to copy.
 - Rules changes should cite the SR5 (or supplement) page, and match what
   Chummer does when the books are ambiguous — Chummer is the reference
   implementation this project chases.

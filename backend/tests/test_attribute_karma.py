@@ -12,9 +12,8 @@ import xml.etree.ElementTree as ET
 from app.characters import apply_patch
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
-from app.engine import compute
+from app.engine import compute, default_attributes, find_metatype
 from app.models import CharacterPatch, CharacterState, Priorities
-from tests.test_engine import default_attributes, find_metatype
 
 
 def _human(cid: str, **kw: object) -> CharacterState:

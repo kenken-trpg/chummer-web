@@ -3,7 +3,7 @@
 Each fixture builds a full character that exercises a broad slice of the rules
 engine; the *entire* ``derived`` blob is frozen to ``tests/snapshots/<name>.json``.
 A refactor meant to preserve behaviour must leave every snapshot byte-identical
-(``make check`` runs this). The targeted assertions in ``test_engine.py`` pin
+(``make check`` runs this). The targeted assertions in ``test_engine_*.py`` pin
 individual rules; these pin the shape and every field of a realistic result, so a
 code-motion change that silently drops or reorders part of ``derived`` is caught
 even where no unit test looks.
@@ -37,7 +37,7 @@ from app.models import (
     SpriteInstall,
     WeaponInstall,
 )
-from tests.test_engine import (
+from tests.engine_support import (
     ARMOR_JACKET,
     CLEANER,
     COURIER_SPRITE,
