@@ -2,7 +2,7 @@ import { type MsgKey, MESSAGES, type UiFn } from "@/lib/i18n";
 
 /**
  * A message from the rules engine: a dictionary key plus its parameters, with
- * the wording living in `lib/i18n/messages.ts` (see `backend/app/notices.py`
+ * the wording living in `lib/i18n/locales/` (see `backend/app/notices.py`
  * for why). Parameters are primitives, except for the two wrappers the backend
  * uses to say "this is not literal text":
  *
