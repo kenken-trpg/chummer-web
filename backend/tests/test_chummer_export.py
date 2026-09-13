@@ -420,3 +420,21 @@ def test_skills_are_written_the_way_chummer_reads_them() -> None:
     assert back["knowledge_skills"] == {"Seattle Gangs": 2, "Arcana Lore": 1}
     assert back["native_languages"] == ["Japanese"]
     assert back["skill_specializations"] == {"Pistols": "Revolvers", "Seattle Gangs": "Halloweeners"}
+
+
+def test_ammo_counts_rounds_in_chummer_and_boxes_here() -> None:
+    """Chummer's `<qty>` is single rounds; this app's `qty` is lots of
+    `costfor` (a box of 10). Read straight across, 100 rounds of APDS were
+    billed as a hundred boxes."""
+    apds = next(row for row in catalog()["gear"] if row["name"] == "Ammo: APDS")
+    assert apds["costfor"] == 10
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear><name>Ammo: APDS</name><category>Ammunition</category><qty>100</qty></gear></gears>
+    </character>"""
+    st, _ = chum5_to_state(xml)
+    assert [row["qty"] for row in st["gear"]] == [10]
+    derived = import_character(st).derived
+    assert derived["gear"][0]["nuyen"] == 10 * int(apds["cost"])
+
+    back = ET.fromstring(state_to_chum5(import_character(st)))
+    assert back.findtext("./gears/gear/qty") == "100"
