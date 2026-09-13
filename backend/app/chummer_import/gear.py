@@ -12,6 +12,21 @@ from ..notices import Notice, Phrase, notice, ui
 from ._common import _chummer_added, _Resolver, _unexpected_children
 
 
+def _came_with_parent(node: ET.Element) -> bool:
+    """Whether a piece of ware came with the one it sits in, rather than being
+    bought for it.
+
+    Chummer sets `<parentid>` to the parent's guid on what the parent's own
+    data added (a cybereye's Image Link, a subsystem) and leaves it empty on
+    what the player put in — that is paid for, Customized Agility in a
+    cyberlimb or a Biomonitor in its capacity. This app's older exports mark
+    the former with `<included>True`.
+    """
+    if node.find("parentid") is not None:
+        return bool(_text(node.find("parentid")))
+    return _text(node.find("included")).lower() == "true"
+
+
 def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read cyber- and bioware, nested to any depth."""
     ware_rows = (cat.get("cyberware") or {}).get("items") or []
@@ -32,6 +47,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "grade": _text(w.find("grade")) or "Standard",
                 "side": _text(w.find("location")) or None,
                 "extra": _text(w.find("extra")) or None,
+                "included": _came_with_parent(w),
             }
             out.append(row)
             for pick in w.findall("./skillpicks/pick"):
@@ -43,7 +59,6 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 # `load_ware` returns the whole subtree flat: only the direct
                 # children are this row's, a grandchild keeps its own parent
                 child.setdefault("parent_id", row["id"])
-                child["included"] = True
                 out.append(child)
             if _unexpected_children(wid, w.findall("./gears/gear")):
                 warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))

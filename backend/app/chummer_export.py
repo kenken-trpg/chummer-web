@@ -403,6 +403,7 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
         def emit(parent_el: ET.Element, rowset: list[Any]) -> None:
             for r in rowset:
                 w = _sub(parent_el, "cyberware" if container == "cyberwares" else "bioware")
+                _sub(w, "guid", r.id)
                 _sub(w, "sourceid", r.ware_id)
                 _sub(w, "name", names["ware"].get(r.ware_id, ""))
                 _sub(w, "grade", r.grade)
@@ -413,6 +414,9 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                     _sub(w, "extra", r.extra)
                 if getattr(r, "included", False):
                     _sub(w, "included", "True")
+                # Chummer's mark for "came with its parent": the parent's guid.
+                # Empty on a top-level piece and on anything bought for a parent.
+                _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
                 picks = _picks_of(r.id)
                 if picks:
                     picks_el = _sub(w, "skillpicks")
