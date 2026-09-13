@@ -171,51 +171,87 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(root, "magsplitmagician", max(0, int(state.attributes.get("MAG", 0)) - int(state.mystic_pp)))
 
 
+#: Chummer's id for a knowledge skill it has no data for (a custom one).
+_NO_SKILL_ID = "00000000-0000-0000-0000-000000000000"
+
+
 def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write active skills, groups, native languages and knowledge."""
-    sk = _sub(root, "skills")
-    active = _sub(sk, "skills")
+    """Write skills the way Chummer does: `<newskills>`, an active skill named
+    only by its skills.xml id (`<suid>`), a knowledge skill by name and type.
+
+    Chummer drops a skill that has no `<suid>` (`Skill.Load`), and without
+    `<newskills>` falls back to a pre-5 layout this app never wrote — so the
+    old `<skills><skills>` export opened in Chummer with no skills at all.
+    """
+    data = catalog()["skills"]
+    active_ids = {str(row["name"]): str(row["id"]) for row in data.get("skills") or []}
+    active_cats = {str(row["name"]): str(row.get("category") or "") for row in data.get("skills") or []}
+    knowledge_ids = {str(row["name"]): str(row["id"]) for row in data.get("knowledge") or [] if row.get("id")}
+    ns = _sub(root, "newskills")
 
     def karma_of(levels: dict[str, int], name: str, rating: int) -> int:
         # the top levels bought with karma at creation are Chummer's <karma>
         return 0 if state.career else max(0, min(int(levels.get(name, 0)), int(rating)))
 
-    for name, rating in sorted(state.skills.items()):
-        s = _sub(active, "skill")
-        _sub(s, "name", name)
-        karma = karma_of(state.skill_karma, name, rating)
-        _sub(s, "base", rating - karma)
-        _sub(s, "karma", karma)
+    def specs(el: ET.Element, name: str) -> None:
         spn = state.skill_specializations.get(name)
         if spn:
-            _sub(_sub(_sub(s, "specializations"), "spec"), "name", spn)
-    for exotic in state.exotic_skills:
-        # An exotic skill is one skill per weapon, which Chummer writes as an
-        # ordinary skill carrying `<specific>`.
+            spec = _sub(_sub(el, "specs"), "spec")
+            _sub(spec, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:spec:{name}")))
+            _sub(spec, "name", spn)
+            _sub(spec, "free", "False")
+
+    active = _sub(ns, "skills")
+    for name, rating in sorted(state.skills.items()):
+        if name not in active_ids:
+            continue
         s = _sub(active, "skill")
-        _sub(s, "name", exotic.skill_name)
-        _sub(s, "specific", exotic.extra)
-        _sub(s, "base", exotic.rating)
+        _sub(s, "suid", active_ids[name])
+        _sub(s, "isknowledge", "False")
+        _sub(s, "skillcategory", active_cats.get(name, ""))
+        karma = karma_of(state.skill_karma, name, rating)
+        _sub(s, "karma", karma)
+        _sub(s, "base", rating - karma)
+        specs(s, name)
+    for exotic in state.exotic_skills:
+        # One skill per weapon, which Chummer writes as the exotic skill's id
+        # plus the weapon in `<specific>`.
+        if exotic.skill_name not in active_ids:
+            continue
+        s = _sub(active, "skill")
+        _sub(s, "suid", active_ids[exotic.skill_name])
+        _sub(s, "isknowledge", "False")
+        _sub(s, "skillcategory", active_cats.get(exotic.skill_name, ""))
         _sub(s, "karma", 0)
-    grps = _sub(sk, "groups")
+        _sub(s, "base", exotic.rating)
+        _sub(s, "specific", exotic.extra)
+
+    kno = _sub(ns, "knoskills")
+
+    def knowledge(name: str, typ: str, base: int, karma: int, native: bool) -> None:
+        s = _sub(kno, "skill")
+        _sub(s, "suid", knowledge_ids.get(name, _NO_SKILL_ID))
+        _sub(s, "isknowledge", "True")
+        _sub(s, "skillcategory", typ)
+        _sub(s, "karma", karma)
+        _sub(s, "base", base)
+        _sub(s, "name", name)
+        _sub(s, "type", typ)
+        _sub(s, "isnativelanguage", "True" if native else "False")
+        specs(s, name)
+
+    for name in state.native_languages:
+        knowledge(name, "Language", 0, 0, True)
+    for name, rating in sorted(state.knowledge_skills.items()):
+        karma = karma_of(state.knowledge_karma, name, rating)
+        knowledge(name, state.knowledge_categories.get(name, "Academic"), rating - karma, karma, False)
+
+    grps = _sub(ns, "groups")
     for name, rating in sorted(state.skill_groups.items()):
         grp_el = _sub(grps, "group")
-        _sub(grp_el, "name", name)
-        _sub(grp_el, "base", rating)
         _sub(grp_el, "karma", 0)
-    kno = _sub(sk, "knoskills")
-    for name in state.native_languages:
-        s = _sub(kno, "skill")
-        _sub(s, "name", name)
-        _sub(s, "type", "Language")
-        _sub(s, "isnativelanguage", "True")
-    for name, rating in sorted(state.knowledge_skills.items()):
-        s = _sub(kno, "skill")
-        _sub(s, "name", name)
-        _sub(s, "type", state.knowledge_categories.get(name, "Academic"))
-        karma = karma_of(state.knowledge_karma, name, rating)
-        _sub(s, "base", rating - karma)
-        _sub(s, "karma", karma)
+        _sub(grp_el, "base", rating)
+        _sub(grp_el, "name", name)
 
 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

@@ -257,6 +257,9 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
         name = _text(s.find("name"))
         if not name:
             continue
+        know_spec = _text(s.find("./specs/spec/name"))
+        if know_spec:
+            specs[name] = know_spec
         r = _int(s.find("base")) + _int(s.find("karma"))
         typ = _text(s.find("skillcategory")) or _text(s.find("type"))
         native = _text(s.find("isnativelanguage")).lower()

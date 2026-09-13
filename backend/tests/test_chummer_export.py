@@ -382,3 +382,41 @@ def test_an_expense_log_that_does_not_add_up_is_left_out() -> None:
     assert "reward_log" not in back
     assert back["karma_earned"] == 3
     assert any(w["key"] == "engine.import.expensesSkipped" for w in warnings)
+
+
+def test_skills_are_written_the_way_chummer_reads_them() -> None:
+    """`<newskills>`, an active skill by its skills.xml id: Chummer drops a
+    skill with no `<suid>`, and without `<newskills>` looks for a pre-5 layout."""
+    c = catalog()
+    state = CharacterState(
+        id="sk",
+        name="Skills",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        skills={"Pistols": 4},
+        skill_specializations={"Pistols": "Revolvers", "Seattle Gangs": "Halloweeners"},
+        skill_groups={"Stealth": 2},
+        knowledge_skills={"Seattle Gangs": 2, "Arcana Lore": 1},
+        knowledge_categories={"Seattle Gangs": "Street", "Arcana Lore": "Academic"},
+        native_languages=["Japanese"],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    assert root.find("skills") is None
+    pistols_id = next(row["id"] for row in c["skills"]["skills"] if row["name"] == "Pistols")
+    (active,) = root.findall("./newskills/skills/skill")
+    assert (active.findtext("suid"), active.findtext("base"), active.findtext("karma")) == (pistols_id, "4", "0")
+    assert active.findtext("./specs/spec/name") == "Revolvers"
+    know = {s.findtext("name"): s for s in root.findall("./newskills/knoskills/skill")}
+    assert know["Japanese"].findtext("isnativelanguage") == "True"
+    assert know["Seattle Gangs"].findtext("suid") == "00000000-0000-0000-0000-000000000000"  # custom
+    assert know["Seattle Gangs"].findtext("./specs/spec/name") == "Halloweeners"
+    assert root.findtext("./newskills/groups/group/name") == "Stealth"
+
+    back, warnings = chum5_to_state(ET.tostring(root))
+    assert warnings == []
+    assert back["skills"] == {"Pistols": 4}
+    assert back["skill_groups"] == {"Stealth": 2}
+    assert back["knowledge_skills"] == {"Seattle Gangs": 2, "Arcana Lore": 1}
+    assert back["native_languages"] == ["Japanese"]
+    assert back["skill_specializations"] == {"Pistols": "Revolvers", "Seattle Gangs": "Halloweeners"}
