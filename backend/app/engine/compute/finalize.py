@@ -193,9 +193,9 @@ def finalize(ctx: Ctx) -> None:
     )
 
     if not ctx.career:
-        at_six = [n for n, r in ctx.skill_totals.items() if r >= 6]
-        if len(at_six) > 1:
-            ctx.err("engine.skills.oneAtSix")
+        # No count of skills at rating 6 here: "one at 6 or two at 5" is the
+        # SR4 creation rule. SR5 caps a skill at 6 (7 with Aptitude) and no
+        # more — the cap is `skill_rating_cap` — and Chummer checks the same.
         # SR5 p.65: no more than one attribute at its natural maximum at
         # character creation. Chummer counts its `AttributeList` — BOD to WIL
         # — and not the special attributes: an Adept with MAG 6 may still

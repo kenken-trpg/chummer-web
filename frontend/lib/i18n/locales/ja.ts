@@ -1455,7 +1455,6 @@ export const JA = {
   "engine.skills.needsSkilljack": "{name} を使うにはスキルジャックが必要です",
   "engine.skills.needsSkillwires": "{name} を使うにはスキルワイヤが必要です",
   "engine.skills.noDefaulting": "デフォルト不可: {categories}",
-  "engine.skills.oneAtSix": "作成時にレーティング6の技能は1つまでです",
   "engine.skills.overSkilljack":
     "{name} がスキルジャックを超えています（R{rating} / スキルジャック R{limit}）",
   "engine.skills.overSkillwires":
