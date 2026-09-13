@@ -104,6 +104,34 @@ def test_by_name_resolution_for_tradition_lifestyle_contact() -> None:
     assert st["contacts"][0]["name"] == "Fixer Sam"
 
 
+def test_names_chummer_has_since_corrected_still_resolve() -> None:
+    """Older saves carry no sourceid on these, only the name the data dropped."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <qualities>
+        <quality><name>Biocompatability (Cyberware)</name><qualitysource>Selected</qualitysource></quality>
+        <quality><name>Dishevelled</name><qualitysource>Selected</qualitysource></quality>
+      </qualities>
+      <gears><gear><name>Rapelling Gloves</name><category>Climbing Gear</category><qty>1</qty></gear></gears>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    names = {row["id"]: row["name"] for row in catalog()["qualities"]}
+    assert sorted(names[q] for q in st["quality_ids"]) == ["Biocompatibility (Cyberware)", "Disheveled"]
+    assert not has(warnings, "engine.import.skippedUnknown", name="Rapelling Gloves")
+
+
+def test_a_stream_saved_as_a_res_tradition_is_read_as_the_stream() -> None:
+    """Current Chummer writes the stream as `<tradition>` of type RES; the
+    `<stream>` element is its legacy form."""
+    stream = next(s for s in catalog()["streams"] if s["name"] == "Default")
+    xml = f"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <tradition><traditiontype>RES</traditiontype><id>{stream["id"]}</id><name>Default</name></tradition>
+    </character>""".encode()
+    st, warnings = chum5_to_state(xml)
+    assert st["stream_id"] == stream["id"]
+    assert "tradition_id" not in st
+    assert not warnings
+
+
 def test_imported_state_validates_and_computes() -> None:
     st, _ = chum5_to_state(SAMPLE)
     ch = import_character({k: v for k, v in st.items() if k != "_warnings"})

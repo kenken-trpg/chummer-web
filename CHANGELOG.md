@@ -58,6 +58,18 @@ self-hosters can pin to a tag instead of tracking `main`.
 Chummer の amend エンジンのうち実データが使っていない部分。段取りは
 `docs/plans/settings-plan.md`。
 
+### Fixed
+
+- **テクノマンサーのストリームが .chum5 から読めていなかった。** 今の
+  Chummer はストリームを `<tradition>`（`<traditiontype>RES</traditiontype>`）
+  に書くが、この app は旧形式の `<stream>` しか読まず、`Default` を知らない
+  流派として捨てていた。
+- **Chummer が綴りを直した品目を、古い保存ファイルの旧名でも読む。**
+  `Biocompatability`→`Biocompatibility`、`Dishevelled`→`Disheveled`、
+  `Rapelling Gloves`、`Ondanstron`、`Metagenetic Improvement`、
+  `Spirit of Guidance` など。古い保存ファイルにはこれらの sourceid が無く、
+  名前でしか照合できない。
+
 ## [0.2.1] — 2026-09-05
 
 ### Security
