@@ -175,11 +175,17 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
     """Write active skills, groups, native languages and knowledge."""
     sk = _sub(root, "skills")
     active = _sub(sk, "skills")
+
+    def karma_of(levels: dict[str, int], name: str, rating: int) -> int:
+        # the top levels bought with karma at creation are Chummer's <karma>
+        return 0 if state.career else max(0, min(int(levels.get(name, 0)), int(rating)))
+
     for name, rating in sorted(state.skills.items()):
         s = _sub(active, "skill")
         _sub(s, "name", name)
-        _sub(s, "base", rating)
-        _sub(s, "karma", 0)
+        karma = karma_of(state.skill_karma, name, rating)
+        _sub(s, "base", rating - karma)
+        _sub(s, "karma", karma)
         spn = state.skill_specializations.get(name)
         if spn:
             _sub(_sub(_sub(s, "specializations"), "spec"), "name", spn)
@@ -207,8 +213,9 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         s = _sub(kno, "skill")
         _sub(s, "name", name)
         _sub(s, "type", state.knowledge_categories.get(name, "Academic"))
-        _sub(s, "base", rating)
-        _sub(s, "karma", 0)
+        karma = karma_of(state.knowledge_karma, name, rating)
+        _sub(s, "base", rating - karma)
+        _sub(s, "karma", karma)
 
 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

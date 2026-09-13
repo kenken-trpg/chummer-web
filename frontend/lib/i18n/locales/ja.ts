@@ -143,6 +143,9 @@ export const JA = {
   "skills.knowledgeChargenRange": "作成時のレーティングは1〜6",
   "skills.rangeSuffix": "です。",
   "skills.knowledgeCareerCost": "追加はカルマ",
+  "skills.karmaHint":
+    "この技能の上から何レベルをカルマで買ったか。その分は技能点（知識技能点）を使わず、上げた後の値×2（知識技能は×1）カルマかかります。",
+  "skills.karmaSpent": "カルマで上げた技能：{karma} カルマ（知識技能 {knowledge} カルマ）",
   "skills.knowledgeChargenCost": "専門化は知識点1",
   "skills.custom": " （カスタム）",
   "skills.free": "無料",

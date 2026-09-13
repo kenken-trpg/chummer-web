@@ -398,10 +398,12 @@ class CharacterPatch(BaseModel):
     attributes: dict[str, int] | None = None
     attribute_karma: dict[str, int] | None = None
     skills: dict[str, int] | None = None
+    skill_karma: dict[str, int] | None = None
     skill_groups: dict[str, int] | None = None
     skill_specializations: dict[str, str] | None = None
     exotic_skills: list[ExoticSkillInstall] | None = None
     knowledge_skills: dict[str, int] | None = None
+    knowledge_karma: dict[str, int] | None = None
     native_languages: list[str] | None = None
     knowledge_categories: dict[str, str] | None = None
     quality_ids: list[str] | None = None
@@ -523,6 +525,10 @@ class CharacterState(BaseModel):
     #: every level is karma anyway.
     attribute_karma: dict[str, int] = Field(default_factory=dict)
     skills: dict[str, int] = Field(default_factory=dict)
+    #: The same split for skills: of `skills[name]` / `knowledge_skills[name]`,
+    #: the top levels bought with karma rather than skill / knowledge points.
+    skill_karma: dict[str, int] = Field(default_factory=dict)
+    knowledge_karma: dict[str, int] = Field(default_factory=dict)
     skill_groups: dict[str, int] = Field(default_factory=dict)
     skill_specializations: dict[str, str] = Field(default_factory=dict)
     exotic_skills: list[ExoticSkillInstall] = Field(default_factory=list)

@@ -139,6 +139,10 @@ export interface Character {
    *  with karma instead of attribute points (Chummer's `<karma>`). */
   attribute_karma?: Record<string, number>;
   skills: Record<string, number>;
+  /** Priority / Sum-to-Ten: the same split for skills — the top levels of
+   *  `skills[name]` / `knowledge_skills[name]` bought with karma. */
+  skill_karma?: Record<string, number>;
+  knowledge_karma?: Record<string, number>;
   skill_groups: Record<string, number>;
   skill_specializations?: Record<string, string>;
   exotic_skills?: ExoticSkillInstall[];
@@ -357,6 +361,13 @@ export interface Character {
       levels: Record<string, number>;
       floors: Record<string, number>;
       karma: number;
+    };
+    /** Skill levels bought with karma (active / knowledge) and their karma. */
+    skill_karma?: {
+      levels: Record<string, number>;
+      knowledge_levels: Record<string, number>;
+      karma: number;
+      knowledge_karma: number;
     };
     knowledge_skills?: {
       name: string;

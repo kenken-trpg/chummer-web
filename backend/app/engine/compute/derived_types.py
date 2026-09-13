@@ -138,6 +138,15 @@ class _AttributeKarma(TypedDict):
     karma: int
 
 
+class _SkillKarma(TypedDict):
+    #: levels bought with karma, per active / knowledge skill (Priority /
+    #: Sum-to-Ten) — Chummer's `<karma>` beside `<base>`
+    levels: dict[str, int]
+    knowledge_levels: dict[str, int]
+    karma: int
+    knowledge_karma: int
+
+
 class _ContactPoints(TypedDict):
     used: int
     free: int
@@ -195,6 +204,7 @@ class DerivedDict(TypedDict):
     karma: _Karma
     points: _Points
     attribute_karma: _AttributeKarma
+    skill_karma: _SkillKarma
     power_points: _PowerPoints
 
     # --- combat / body --------------------------------------------------

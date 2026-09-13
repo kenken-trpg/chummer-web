@@ -132,6 +132,9 @@ export const EN: Catalog = {
   "skills.knowledgeChargenRange": "Chargen ratings run 1–6",
   "skills.rangeSuffix": ". ",
   "skills.knowledgeCareerCost": "More cost karma.",
+  "skills.karmaHint":
+    "How many of this skill's top levels were bought with karma. They use no skill (knowledge) points and cost the new rating × 2 karma each (× 1 for knowledge).",
+  "skills.karmaSpent": "Skills raised with karma: {karma} karma (knowledge {knowledge} karma)",
   "skills.knowledgeChargenCost": "A specialisation costs 1 knowledge point.",
   "skills.custom": " (custom)",
   "skills.free": "free",

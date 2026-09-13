@@ -209,6 +209,49 @@ describe("<SkillsTab>", () => {
     );
   });
 
+  const split = { levels: { Blades: 1 }, knowledge_levels: {}, karma: 8, knowledge_karma: 0 };
+
+  it("lets a Priority creation mark skill levels as bought with karma", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        skills: { Blades: 4 },
+        skill_karma: { Blades: 1 },
+        knowledge_skills: { "Magic Theory": 2 },
+        derived: {
+          skill_totals: { Blades: 4 },
+          skill_karma: split,
+          knowledge_skills: [knowRow("Magic Theory", { rating: 2 })],
+        } as any,
+      },
+    });
+    const blades = screen.getByRole("spinbutton", {
+      name: /Blades.*うちカルマ/,
+    }) as HTMLInputElement;
+    expect(blades.value).toBe("1");
+    expect(blades.max).toBe("4");
+    expect(screen.getByText("カルマで上げた技能：8 カルマ（知識技能 0 カルマ）")).toBeDefined();
+    fireEvent.change(screen.getByRole("spinbutton", { name: /Magic Theory.*うちカルマ/ }), {
+      target: { value: "1" },
+    });
+    expect(patch).toHaveBeenCalledWith({ knowledge_karma: { "Magic Theory": 1 } });
+  });
+
+  it("offers no skill split in a Karma build or after creation", () => {
+    for (const character of [
+      {
+        skills: { Blades: 4 },
+        derived: { skill_karma: split, karma_chargen: { enabled: true } } as any,
+      },
+      { skills: { Blades: 4 }, career: true, derived: { skill_karma: split } as any },
+    ]) {
+      const { unmount } = renderTab({ character });
+      expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
+      unmount();
+    }
+  });
+
   it("adds an exotic skill row via patch", () => {
     const patch = vi.fn();
     renderTab({ catalog: skillsCatalog({ skills: [blades, exoticSkill] }), patch });

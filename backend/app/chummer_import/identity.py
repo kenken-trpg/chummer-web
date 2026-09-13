@@ -200,6 +200,12 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     skills: dict[str, int] = {}
     specs: dict[str, str] = {}
     exotic: list[dict[str, Any]] = []
+    # Before creation is finished, <karma> is the top levels bought with karma
+    # rather than skill points (as for attributes); after it, every career
+    # raise is in there too, which the career baseline already accounts for.
+    split = not st.get("career")
+    skill_karma: dict[str, int] = {}
+    knowledge_karma: dict[str, int] = {}
     for s in _skill_nodes(root, "skills/skill"):
         rating = _int(s.find("base")) + _int(s.find("karma"))
         name = _text(s.find("name")) or names_by_id.get(_text(s.find("suid")), "")
@@ -223,6 +229,8 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
             continue
         if rating > 0:
             skills[name] = rating
+            if split and _int(s.find("karma")) > 0:
+                skill_karma[name] = _int(s.find("karma"))
         sp = (
             _text(s.find("./specs/spec/name"))
             or _text(s.find("./specializations/spec/name"))
@@ -231,6 +239,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
         if sp:
             specs[name] = sp
     st["skills"] = skills
+    st["skill_karma"] = skill_karma
     st["skill_specializations"] = specs
     st["exotic_skills"] = exotic
 
@@ -258,8 +267,11 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
             continue
         if r > 0:
             know[name] = r
+            if split and _int(s.find("karma")) > 0:
+                knowledge_karma[name] = _int(s.find("karma"))
         if typ:
             know_cat[name] = typ
     st["knowledge_skills"] = know
+    st["knowledge_karma"] = knowledge_karma
     st["knowledge_categories"] = know_cat
     st["native_languages"] = natives

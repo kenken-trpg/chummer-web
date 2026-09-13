@@ -139,12 +139,16 @@ def _skill_category_map(skills_data: dict[str, Any]) -> dict[str, str]:
 def knowledge_points_spent(
     public: list[dict[str, Any]],
     point_mults: dict[str, int],
+    karma_levels: Mapping[str, int] | None = None,
 ) -> int:
+    """Knowledge points spent: every rating above native, less the top levels
+    bought with karma on a Priority / Sum-to-Ten sheet (`karma_levels`)."""
+    levels = karma_levels or {}
     total = 0
     for row in public or []:
         if row.get("native"):
             continue
-        rating = int(row.get("rating") or 0)
+        rating = max(0, int(row.get("rating") or 0) - int(levels.get(str(row.get("name") or ""), 0)))
         cat = str(row.get("category") or "")
         total += _point_cost(rating, int(point_mults.get(cat, 100)))
     return total
@@ -281,3 +285,37 @@ def knowledge_excess_karma(
     if free >= len(levels):
         return 0
     return sum(levels[free:])
+
+
+def skill_levels_karma_cost(
+    ratings: Mapping[str, int],
+    levels: Mapping[str, int],
+    categories: Mapping[str, str],
+    *,
+    per_rating: int,
+    karma_mults: Mapping[str, int] | None = None,
+    flat_rules: Sequence[Mapping[str, Any]] | None = None,
+    min_rules: Sequence[Mapping[str, Any]] | None = None,
+) -> int:
+    """Karma for the top `levels[name]` of each skill on a Priority /
+    Sum-to-Ten sheet — Chummer's `<karma>` beside `<base>`.
+
+    Chummer's `Skill.RangeCost` from the points-bought rating up: the new
+    rating times the per-level price, with the category multipliers and
+    `<karmacost>` rules a career raise uses. (Its first-level `KarmaNew…`
+    price only differs from rating 1 × `KarmaImprove…` in a house rule.)
+    """
+    mults = karma_mults or {}
+    total = 0
+    for name, count in levels.items():
+        rating = int(ratings.get(name) or 0)
+        cat = str(categories.get(name) or "")
+        total += _karma_cost_with_category_mods(
+            rating - int(count),
+            rating,
+            per_rating,
+            mult_pct=int(mults.get(cat, 100)),
+            flat_rules=_matching_karma_rules(flat_rules, cat),
+            min_rules=_matching_karma_rules(min_rules, cat),
+        )
+    return total
