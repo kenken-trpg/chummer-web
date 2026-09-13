@@ -123,12 +123,32 @@ def _read_mugshot(root: ET.Element) -> str:
     return clean_portrait(f"data:{mime};base64,{raw}")
 
 
+#: Names Chummer's data has since corrected, old spelling -> current one.
+#: Matching is by `sourceid` first, but older saves carry none on these entries,
+#: so the name is all there is to go on — and it is the one the data dropped.
+_LEGACY_NAMES = {
+    "biocompatability (cyberware)": "biocompatibility (cyberware)",
+    "biocompatability (bioware)": "biocompatibility (bioware)",
+    "dishevelled": "disheveled",
+    "rapelling gloves": "rappelling gloves",
+    "ondanstron": "ondansetron",
+    "spirit of guidance": "guidance spirit",
+    **{
+        f"metagenetic improvement ({a})": f"metagenic improvement ({a})"
+        for a in ("body", "agility", "reaction", "strength", "charisma", "intuition", "logic", "willpower")
+    },
+}
+
+
 def _by_name(rows: list[dict[str, Any]]) -> dict[str, str]:
     out: dict[str, str] = {}
     for r in rows:
         n = (r.get("name") or "").strip()
         if n:
             out.setdefault(n.lower(), r["id"])
+    for old, new in _LEGACY_NAMES.items():
+        if new in out:
+            out.setdefault(old, out[new])
     return out
 
 
@@ -616,10 +636,18 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         if (fid := cf_r.resolve(c, warn, ui("engine.kind.complexForm")))
     ]
 
-    tr_r = _Resolver(cat["traditions"])
     trad = root.find("tradition")
-    if trad is not None and _text(trad.find("name")):
-        tid = tr_r.resolve(trad, warn, ui("engine.kind.tradition"))
+    if trad is not None and _text(trad.find("traditiontype")) == "RES":
+        # Current Chummer saves a technomancer's stream here, as a tradition
+        # of type RES with the streams.xml `<id>`; `<stream>` below is the
+        # legacy spelling it still reads.
+        stream_r = _Resolver(cat["streams"])
+        data_id = _text(trad.find("id"))
+        stream_id = data_id if data_id in stream_r.ids else stream_r.resolve(trad, warn, ui("engine.kind.stream"))
+        if stream_id:
+            st["stream_id"] = stream_id
+    elif trad is not None and _text(trad.find("name")):
+        tid = _Resolver(cat["traditions"]).resolve(trad, warn, ui("engine.kind.tradition"))
         if tid:
             st["tradition_id"] = tid
 
