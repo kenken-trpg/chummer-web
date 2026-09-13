@@ -1402,7 +1402,6 @@ export const EN: Catalog = {
   "engine.skills.needsSkilljack": "{name} needs a skilljack to run",
   "engine.skills.needsSkillwires": "{name} needs skillwires to run",
   "engine.skills.noDefaulting": "No defaulting: {categories}",
-  "engine.skills.oneAtSix": "Only one skill may start at rating 6",
   "engine.skills.overSkilljack":
     "{name} is above the skilljack rating (R{rating} / skilljack R{limit})",
   "engine.skills.overSkillwires":

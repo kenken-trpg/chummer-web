@@ -230,7 +230,9 @@ def test_exotic_skill_duplicate_target_is_dropped() -> None:
     assert out.derived["points"]["skills"]["used"] == 4
 
 
-def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
+def test_sr5_allows_more_than_one_skill_at_rating_six() -> None:
+    """SR4 creation allowed one skill at 6 or two at 5. SR5 only caps each
+    skill at 6, so an exotic and an ordinary skill may both sit there."""
     out = compute(
         _human(
             "exotic-six",
@@ -238,7 +240,9 @@ def test_exotic_and_normal_skill_share_rating_six_limit() -> None:
             exotic_skills=[ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Lasers", rating=6)],
         )
     )
-    assert has(out.derived["errors"], "engine.skills.oneAtSix")
+    assert out.derived["skill_totals"]["Pistols"] == 6
+    assert out.derived["skill_totals"]["Exotic Ranged Weapon (Lasers)"] == 6
+    assert not [e for e in out.derived["errors"] if e["key"].startswith("engine.skills.")]
 
 
 def test_exotic_does_not_charge_specialization_point() -> None:
