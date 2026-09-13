@@ -12,6 +12,13 @@ the result of the whole build. A mismatch there means an item, a price or a
 rule differs, without having to find which one first. In career mode the same
 elements are the running balance, so only the warnings and errors are listed.
 
+Two limits on that. The test saves were written by Chummer 5.18x-5.202, which
+kept the creation remainder there; current Chummer only sets `<nuyen>` when
+creation is finished, so a newer save says nothing about it. And a character
+over budget is saved with `0`, not the deficit: when the save says 0 and this
+app is below zero as well, both agree the build is overspent — marked `over`
+and left out of the mismatches, since by how much cannot be told.
+
 The files are fetched once into ``vendor/chummer-tests/`` (gitignored), at the
 same chummer5a ref as the game data::
 
@@ -99,6 +106,11 @@ def _matches(pair: tuple[float, Any] | None, tolerance: float) -> bool:
     return abs(pair[0] - float(pair[1])) <= tolerance
 
 
+def _both_over(pair: tuple[float, Any] | None) -> bool:
+    """Chummer saved 0 and this app is short too: an overspent build both ways."""
+    return pair is not None and pair[1] is not None and pair[0] == 0 and float(pair[1]) < 0
+
+
 def _fmt(pair: tuple[float, Any] | None) -> str:
     if pair is None:
         return "-"
@@ -124,7 +136,10 @@ def main() -> int:
     for row in rows:
         karma = row.get("karma")
         nuyen = row.get("nuyen")
-        mark = "" if row["career"] or (_matches(karma, 0) and _matches(nuyen, NUYEN_TOLERANCE)) else "  ≠"
+        ok = [_matches(karma, 0) or _both_over(karma), _matches(nuyen, NUYEN_TOLERANCE) or _both_over(nuyen)]
+        over = _both_over(karma) or _both_over(nuyen)
+        mark = "" if row["career"] or all(ok) else "  ≠"
+        mark += "  over" if over and not row["career"] else ""
         label = "career" if row["career"] else _fmt(karma)
         print(
             f"{row['file']:<{width}}  {label:<26}  {_fmt(nuyen):<34}  {len(row['warnings']):>4}  {len(row['errors']):>3}{mark}"
@@ -139,7 +154,16 @@ def main() -> int:
     nuyen_ok = sum(_matches(row.get("nuyen"), NUYEN_TOLERANCE) for row in chargen)
     both_ok = sum(_matches(row.get("karma"), 0) and _matches(row.get("nuyen"), NUYEN_TOLERANCE) for row in chargen)
     print()
-    print(f"in creation: {len(chargen)}  karma matches {karma_ok}  nuyen matches {nuyen_ok}  both {both_ok}")
+    over = sum(_both_over(row.get("karma")) or _both_over(row.get("nuyen")) for row in chargen)
+    agree = sum(
+        (_matches(row.get("karma"), 0) or _both_over(row.get("karma")))
+        and (_matches(row.get("nuyen"), NUYEN_TOLERANCE) or _both_over(row.get("nuyen")))
+        for row in chargen
+    )
+    print(
+        f"in creation: {len(chargen)}  karma matches {karma_ok}  nuyen matches {nuyen_ok}  both {both_ok}"
+        f"  (over budget both ways: {over}; agreeing, counting those: {agree})"
+    )
     for kind in ("warnings", "errors"):
         counts = collections.Counter(key for row in rows for key in row[kind])
         print(f"{kind} ({sum(counts.values())}):")
