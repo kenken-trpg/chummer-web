@@ -1088,3 +1088,24 @@ def test_elemental_body_grows_a_weapon_that_scales_with_magic() -> None:
 
     bare = compute(_adept("no-power")).derived
     assert not any(w["name"] == "Elemental Body" for w in bare["weapons"])
+
+
+def test_what_a_weapon_comes_with_sits_on_its_internal_mount() -> None:
+    """Chummer puts an included accessory on the weapon's "Internal" mount
+    unless the weapon's entry names a `<mount>` for it — the Ingram's
+    built-in gas vent (a barrel accessory) leaves the barrel to an Electronic
+    Firing."""
+    ingram = next(row for row in catalog()["weapons"] if row["name"] == "Ingram Smartgun X")
+    firing = next(row for row in catalog()["weapon_accessories"] if row["name"] == "Electronic Firing")
+    weapon = WeaponInstall(weapon_id=ingram["id"])
+    out = compute(
+        _mundane(
+            "ingram",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=firing["id"], parent_id=weapon.id)],
+        )
+    )
+    mounts = {acc["name"]: acc["mount"] for acc in out.derived["weapons"][0]["accessories"]}
+    assert mounts["Gas-Vent 2 System"] == "Internal"
+    assert mounts["Electronic Firing"] == "Barrel"
+    assert not has(out.derived["errors"], "engine.gear.noFreeMount")
