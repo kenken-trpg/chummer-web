@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 from app.characters import apply_patch
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
+from app.data_loader import catalog
 from app.engine import compute, default_attributes, find_metatype
 from app.models import CharacterPatch, CharacterState, Priorities
 
@@ -79,7 +80,8 @@ def test_the_skill_cost_stays_on_the_books_in_career() -> None:
 def test_the_skill_split_round_trips_through_chum5_as_base_and_karma() -> None:
     state = compute(_human("sk-chum5", skill_karma={"Pistols": 2}, knowledge_karma={"Seattle Gangs": 1}))
     root = ET.fromstring(state_to_chum5(state))
-    pistols = next(s for s in root.iter("skill") if s.findtext("name") == "Pistols")
+    pistols_id = next(row["id"] for row in catalog()["skills"]["skills"] if row["name"] == "Pistols")
+    pistols = next(s for s in root.iter("skill") if s.findtext("suid") == pistols_id)
     assert (pistols.findtext("base"), pistols.findtext("karma")) == ("3", "2")
     st, _ = chum5_to_state(ET.tostring(root))
     assert st["skills"]["Pistols"] == 5

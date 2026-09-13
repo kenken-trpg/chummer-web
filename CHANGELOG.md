@@ -70,6 +70,10 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   ルール（6 を 1 つ、または 5 を 2 つ）が紛れ込んでいた。SR5 の上限は各技能 6
   （Aptitude で 7）だけで、個数の制限は無く、Chummer も咎めない。上限そのものは
   これまでどおり守られる。
+- **書き出した .chum5 を Chummer で開くと、技能が一つも無かった。** 技能を
+  `<skills><skills>` に名前で書いていたが、Chummer は `<newskills>` を読み、
+  行動技能は skills.xml の id（`<suid>`）が無いと捨てる。Chummer と同じ形で
+  書く。取り込みでは知識技能の専門化も読むようにした。
 - **Chummer が書いた .chum5 の技能が一切読み込まれていなかった。** Chummer は
   技能を `<newskills>` に、行動技能は名前でなく skills.xml の id（`<suid>`）で
   書く。この app は自分の書き出し形式（`<skills>`・名前）しか読まず、行動技能・
