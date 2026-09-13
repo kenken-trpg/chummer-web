@@ -152,7 +152,9 @@ MINI_HE = "daecdfc8-15d5-4864-9e20-13e4a0dca88e"
 MINI_FLASH = "f092fca8-46a9-4351-a06a-362846e6546a"
 
 
-def test_internal_smartgun_adds_restricted_avail_to_predator() -> None:
+def test_an_included_internal_smartgun_adds_nothing_to_the_predators_avail() -> None:
+    """The Predator V comes with its smartgun, and its printed 5R already
+    covers it: Chummer leaves `IncludedInWeapon` accessories out of the total."""
     weapon = WeaponInstall(weapon_id=PREDATOR)
     out = compute(
         _mundane(
@@ -163,10 +165,25 @@ def test_internal_smartgun_adds_restricted_avail_to_predator() -> None:
     )
     row = out.derived["weapons"][0]
     smart = next(acc for acc in row["accessories"] if acc["name"] == "Smartgun System, Internal")
-    assert row["avail"] == "7R"
+    assert smart["included"] is True
     assert smart["avail"] == "2R"
     assert smart["avail_additive"] is True
+    assert row["avail"] == "5R"
     assert out.derived["errors"] == []
+
+
+def test_a_retrofitted_internal_smartgun_adds_its_restricted_avail() -> None:
+    """Bought on top of a weapon that lacks one, the `+2R` does count."""
+    weapon = WeaponInstall(weapon_id=LIGHT_FIRE_70)
+    out = compute(
+        _mundane(
+            "avail-retrofit",
+            weapons=[weapon],
+            weapon_accessories=[WeaponAccessoryInstall(accessory_id=INTERNAL_SMARTGUN, parent_id=weapon.id)],
+        )
+    )
+    row = out.derived["weapons"][0]
+    assert row["avail"] == "5R"  # Light Fire 70 3R + retrofit 2R
 
 
 def test_predator_purchase() -> None:

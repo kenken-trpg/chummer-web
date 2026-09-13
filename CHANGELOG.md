@@ -60,6 +60,12 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **最初から付いている付属品の入手可能度を、親に足していた。** Ares Predator V
+  や Ares Alpha の内蔵スマートガン（`+2R`）のように品目に含まれているものは、
+  その品目の入手可能度にすでに入っている。Chummer と同じく、武器の付属品・
+  防具の改造・車両の改造・武器マウント・ギアの子品目では足さない（ウェアの
+  子品目は Chummer でも足すのでそのまま）。Predator V は 7R ではなく 5R になり、
+  入手可能度 12 を超えたと誤って出ていた Ares Alpha（13F）なども通る。
 - **テクノマンサーのストリームが .chum5 から読めていなかった。** 今の
   Chummer はストリームを `<tradition>`（`<traditiontype>RES</traditiontype>`）
   に書くが、この app は旧形式の `<stream>` しか読まず、`Default` を知らない
