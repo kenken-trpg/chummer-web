@@ -245,6 +245,13 @@ td.rowhead {
 .attr-karma input {
   width: 3.5em;
 }
+/* the same "by karma" count on a skill, between the slider and the spec */
+.skill-row.has-spec.has-karma {
+  grid-template-columns: minmax(120px, 168px) 1fr auto minmax(108px, 168px) 108px;
+}
+.know-row.has-karma {
+  grid-template-columns: minmax(120px, 1.5fr) 72px 1fr auto minmax(108px, 168px) 88px auto;
+}
 .skill-row.has-spec.can-delete {
   grid-template-columns: minmax(120px, 1.2fr) 1fr minmax(108px, 168px) 88px auto;
 }

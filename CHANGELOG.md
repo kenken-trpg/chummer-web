@@ -7,6 +7,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **Priority / Sum-to-Ten の作成中に、技能の上の何レベルかをカルマで買える
+  ようにした。** 能力値（前の変更）の技能版。技能タブの各技能に「うちカルマ」
+  欄が増え、その分は技能点（知識技能点）を使わず、上げた後の値×2（知識技能は
+  ×1）カルマかかる。Chummer の `<base>` / `<karma>` とも往復するので、作成中に
+  技能をカルマで上げた Chummer のキャラクターを読み込んでも「技能点の超過」に
+  ならない。
 - **`<prioritytable>` に対応した。** `priorities.xml` は Standard /
   Prime Runner / Street Level の 3 表を持っているのに、この app は Standard
   固定で、しかも未対応としても報告していなかった。セッティングが指定した表で

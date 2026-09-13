@@ -31,6 +31,39 @@ export function SkillsTab({
   const skillMax = d.skill_rating_max ?? 6;
   const groupMax = d.skill_group_max ?? 6;
   const career = Boolean(ch.career || d.career);
+  // Priority / Sum-to-Ten creation only, as on the attributes tab: a Karma
+  // build buys every level with karma already, and after creation raises are
+  // billed from the baseline.
+  const splitKarma = !career && !d.karma_chargen?.enabled && Boolean(d.skill_karma);
+  const karmaSplit = d.skill_karma;
+
+  /** "of which by karma": the top levels of a skill bought with karma. */
+  function karmaLevels(
+    name: string,
+    rating: number,
+    levels: Record<string, number> | undefined,
+    field: "skill_karma" | "knowledge_karma",
+  ) {
+    if (!splitKarma) return null;
+    if (rating <= 0) return <span />;
+    return (
+      <label className="attr-karma" title={ui("skills.karmaHint")}>
+        {ui("attrs.karmaLevels")}
+        <input
+          type="number"
+          aria-label={`${tr(name)} ${ui("attrs.karmaLevels")}`}
+          min={0}
+          max={rating}
+          value={levels?.[name] ?? 0}
+          onChange={(e) =>
+            patch({
+              [field]: { ...(ch[field] || {}), [name]: Math.max(0, Number(e.target.value) || 0) },
+            })
+          }
+        />
+      </label>
+    );
+  }
   const expertiseBySkill = useMemo(() => {
     const map = new Map<string, { spec: string; bonus: number; source?: string }>();
     for (const row of d.skill_expertises || []) {
@@ -214,6 +247,14 @@ export function SkillsTab({
         })}
         {career ? ui("skills.careerNote", { max: skillMax }) : ui("skills.chargenNote")}
       </p>
+      {splitKarma && karmaSplit && karmaSplit.karma + karmaSplit.knowledge_karma > 0 ? (
+        <p className="muted">
+          {ui("skills.karmaSpent", {
+            karma: karmaSplit.karma,
+            knowledge: karmaSplit.knowledge_karma,
+          })}
+        </p>
+      ) : null}
       <h3>{ui("skills.groups")}</h3>
       {catalog.skills.groups.map((g) => (
         <div className="skill-row" key={g}>
@@ -246,7 +287,10 @@ export function SkillsTab({
               (d.skill_totals[s.name] || 0) > 0 ||
               (d.skillsoft?.[s.name] || 0) > 0;
             return (
-              <div className="skill-row has-spec" key={s.id}>
+              <div
+                className={splitKarma ? "skill-row has-spec has-karma" : "skill-row has-spec"}
+                key={s.id}
+              >
                 <span title={skillHint(s.name, s.attribute, s.category)}>{tr(s.name)}</span>
                 <RangeInput
                   min={0}
@@ -259,6 +303,7 @@ export function SkillsTab({
                   }
                   onCommit={(value) => patch({ skills: { ...ch.skills, [s.name]: value } })}
                 />
+                {karmaLevels(s.name, ch.skills[s.name] || 0, karmaSplit?.levels, "skill_karma")}
                 <SpecPicker
                   options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
                   value={specValue}
@@ -413,7 +458,7 @@ export function SkillsTab({
           const specValue = ch.skill_specializations?.[row.name] || row.spec || "";
           const knowSpec = (catalog.skills.knowledge || []).find((item) => item.name === row.name);
           return (
-            <div className="know-row" key={row.name}>
+            <div className={splitKarma ? "know-row has-karma" : "know-row"} key={row.name}>
               <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.name] || [])].join(" / ")}>
                 {tr(row.name)}
                 {custom ? ui("skills.custom") : ""}
@@ -460,6 +505,12 @@ export function SkillsTab({
                     })
                   }
                 />
+              )}
+              {karmaLevels(
+                row.name,
+                row.native ? 0 : ch.knowledge_skills[row.name] || row.rating,
+                karmaSplit?.knowledge_levels,
+                "knowledge_karma",
               )}
               <SpecPicker
                 options={knowSpec?.specs || []}

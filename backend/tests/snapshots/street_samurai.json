@@ -448,6 +448,12 @@
   "skill_expertises": [],
   "skill_group_bonus": {},
   "skill_group_max": 6,
+  "skill_karma": {
+    "karma": 0,
+    "knowledge_karma": 0,
+    "knowledge_levels": {},
+    "levels": {}
+  },
   "skill_max_bonus": {},
   "skill_pick_slots": [],
   "skill_rating_max": 6,

@@ -301,6 +301,12 @@ def assemble(ctx: Ctx) -> None:
             "floors": dict(ctx.attr_floors),
             "karma": 0 if ctx.is_karma else ctx.attr_karma,
         },
+        "skill_karma": {
+            "levels": dict(ctx.skill_karma_levels),
+            "knowledge_levels": dict(ctx.knowledge_karma_levels),
+            "karma": 0 if ctx.is_karma else ctx.skill_buy_karma,
+            "knowledge_karma": 0 if ctx.is_karma else ctx.knowledge_karma,
+        },
         "points": {
             "attributes": {"used": ctx.spent_physical, "max": ctx.attr_points},
             "special": {"used": ctx.spent_special, "max": ctx.special_from_meta},

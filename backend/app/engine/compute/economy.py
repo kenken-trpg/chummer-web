@@ -12,6 +12,7 @@ from ..contacts import resolve_contacts, sync_quality_contacts
 from ..gear import apply_unarmed_bonuses
 from ..karma import (
     _active_karma_mults,
+    _filter_karma_rules,
     _point_cost,
     _skill_category_map,
     attribute_karma_cost,
@@ -19,6 +20,7 @@ from ..karma import (
     knowledge_excess_karma,
     knowledge_points_spent,
     skill_karma_cost,
+    skill_levels_karma_cost,
 )
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
 from ..priority import priority_value
@@ -138,15 +140,22 @@ def economy(ctx: Ctx) -> None:
     ctx.warnings.extend(ctx.skill_picks["warnings"])
     skill_cat_map = _skill_category_map(ctx.data["skills"])
     point_mults = dict(ctx.effects.get("skill_category_point_cost_mult") or {})
+    # Priority / Sum-to-Ten: the top levels bought with karma are not skill
+    # points. A Karma build has no points to split from, so it keeps none.
+    wanted_karma = {} if ctx.is_karma else dict(ctx.state.skill_karma or {})
     for name, rating in ctx.state.skills.items():
         cap = ctx.skill_rating_cap + int(ctx.skill_picks["skill_max_bonus"].get(name, 0))
         rating = max(0, min(cap, int(rating)))
         ctx.state.skills[name] = rating
         base = ctx.skill_totals.get(name, 0)
-        extra = max(0, rating - base)
+        levels = max(0, min(int(wanted_karma.get(name) or 0), rating - base))
+        if levels:
+            ctx.skill_karma_levels[name] = levels
+        extra = max(0, rating - base - levels)
         cat = skill_cat_map.get(name, "")
         ctx.skill_spent += _point_cost(extra, int(point_mults.get(cat, 100)))
         ctx.skill_totals[name] = max(base, rating)
+    ctx.state.skill_karma = dict(ctx.skill_karma_levels)
     ctx.exotic = resolve_exotic_skills(
         ctx.state,
         ctx.data["skills"],
@@ -164,7 +173,15 @@ def economy(ctx: Ctx) -> None:
         native_limit=1 + int(ctx.effects.get("native_language_limit_bonus") or 0),
     )
     ctx.warnings.extend(ctx.knowledge["warnings"])
-    ctx.know_spent = knowledge_points_spent(ctx.knowledge["public"], point_mults)
+    if not ctx.is_karma:
+        for row in ctx.knowledge["public"]:
+            name = str(row.get("name") or "")
+            wanted = int((ctx.state.knowledge_karma or {}).get(name) or 0)
+            levels = 0 if row.get("native") else max(0, min(wanted, int(row.get("rating") or 0)))
+            if levels:
+                ctx.knowledge_karma_levels[name] = levels
+    ctx.state.knowledge_karma = dict(ctx.knowledge_karma_levels)
+    ctx.know_spent = knowledge_points_spent(ctx.knowledge["public"], point_mults, ctx.knowledge_karma_levels)
     ctx.know_max = int(ctx.knowledge["max"]) + int(ctx.effects.get("knowledge_skill_points") or 0)
     bought_knowledge = dict(ctx.state.knowledge_skills)
     for name in ctx.state.native_languages:
@@ -300,8 +317,28 @@ def economy(ctx: Ctx) -> None:
         ctx.attr_karma = attribute_levels_karma_cost(
             ctx.ratings, ctx.attr_karma_levels, rules=ctx.effects.get("attribute_karma_cost")
         )
-        ctx.skill_buy_karma = 0
-        ctx.knowledge_karma = 0
+        ctx.skill_buy_karma = skill_levels_karma_cost(
+            ctx.skill_totals,
+            ctx.skill_karma_levels,
+            skill_cat_map,
+            per_rating=current_rules().karma_active_skill,
+            karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
+            flat_rules=_filter_karma_rules(ctx.effects.get("active_skill_karma_cost"), career=False),
+        )
+        know_rows = ctx.knowledge.get("public") or []
+        ctx.knowledge_karma = skill_levels_karma_cost(
+            {str(row.get("name") or ""): int(row.get("rating") or 0) for row in know_rows},
+            ctx.knowledge_karma_levels,
+            {str(row.get("name") or ""): str(row.get("category") or "") for row in know_rows},
+            per_rating=current_rules().karma_knowledge,
+            karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
+            flat_rules=_filter_karma_rules(
+                list(ctx.effects.get("skill_category_karma_cost") or [])
+                + list(ctx.effects.get("knowledge_skill_karma_cost") or []),
+                career=False,
+            ),
+            min_rules=_filter_karma_rules(ctx.effects.get("knowledge_skill_karma_cost_min"), career=False),
+        )
         nuyen_karma = 0
         ctx.karma_pool = 25 + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
@@ -311,6 +348,8 @@ def economy(ctx: Ctx) -> None:
             + ctx.extra_adept_karma
             + ctx.spell_karma
             + ctx.attr_karma
+            + ctx.skill_buy_karma
+            + ctx.knowledge_karma
             + int(ctx.state.karma_nuyen or 0)
         )
         if ctx.career:
@@ -373,8 +412,8 @@ def economy(ctx: Ctx) -> None:
         ("engine.spend.qualitiesCareer", ctx.quality_career_karma),
         ("engine.spend.metatype", ctx.metatype_karma_cost if ctx.is_karma else ctx.heritage_karma_cost),
         ("engine.spend.attributesKarma", ctx.attr_karma),
-        ("engine.spend.skillsKarma", ctx.skill_buy_karma if ctx.is_karma else 0),
-        ("engine.spend.knowledgeKarma", ctx.knowledge_karma if ctx.is_karma else 0),
+        ("engine.spend.skillsKarma", ctx.skill_buy_karma),
+        ("engine.spend.knowledgeKarma", ctx.knowledge_karma),
         ("engine.spend.specializations", ctx.spec_karma),
         ("engine.spend.nuyenExchange", int(ctx.state.karma_nuyen or 0)),
         ("engine.spend.mysticPP", ctx.mystic_karma),

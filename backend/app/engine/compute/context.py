@@ -149,6 +149,8 @@ class Ctx:
     #: the rating attribute points start from: racial minimum, or the talent's MAG / RES
     attr_floors: dict[str, int] = field(default_factory=dict)
     attr_karma_levels: dict[str, int] = field(default_factory=dict)
+    skill_karma_levels: dict[str, int] = field(default_factory=dict)
+    knowledge_karma_levels: dict[str, int] = field(default_factory=dict)
     attr_points: int = 0
     skill_points: int = 0
     group_points: int = 0
