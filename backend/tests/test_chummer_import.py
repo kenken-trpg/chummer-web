@@ -315,3 +315,27 @@ def test_an_explicit_mentor_choice_still_wins() -> None:
     )
     st, _ = chum5_to_state(SAMPLE.replace(b"</character>", explicit + b"</character>"))
     assert st["mentor_choices"] == ["Magician: +2 dice summoning spirits of air"]
+
+
+def test_ware_nested_three_deep_keeps_each_parent() -> None:
+    """A modular connector holds the arm, the arm holds its enhancements: the
+    enhancements belong to the arm, not to the connector at the top."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <cyberwares><cyberware><name>Modular Connector, Shoulder</name><grade>Used</grade>
+        <children><cyberware><name>Obvious Full Arm, Modular</name><grade>Used</grade>
+          <children><cyberware><name>Customized Agility</name><rating>6</rating><grade>Used</grade></cyberware></children>
+        </cyberware></children>
+      </cyberware></cyberwares>
+    </character>"""
+    st, _ = chum5_to_state(xml)
+    ware = {row["id"]: row for row in catalog()["cyberware"]["items"]}
+    by_name = {ware[row["ware_id"]]["name"]: row for row in st["cyberware"]}
+    connector = by_name["Modular Connector, Shoulder"]
+    arm = by_name["Obvious Full Arm, Modular"]
+    assert "parent_id" not in connector
+    assert arm["parent_id"] == connector["id"]
+    assert by_name["Customized Agility"]["parent_id"] == arm["id"]
+
+    # the enhancement's `+` availability rolls into the arm, not the connector
+    rows = {row["name"]: row for row in import_character(st).derived["cyberware"]}
+    assert rows["Modular Connector, Shoulder"]["avail"] == "8"  # 12, Used -4
