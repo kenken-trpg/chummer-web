@@ -95,10 +95,18 @@ def _data_index(_overlay_key: str) -> _DataIndex:
     return _DataIndex(frozenset(hidden_ids), frozenset(hidden - visible), included)
 
 
+#: The id Chummer gives what it makes up rather than takes from its data — a
+#: Shapeshifter's Bite (Vulpine Form), built from the metatype's critter powers.
+_NO_SOURCE_ID = "00000000-0000-0000-0000-000000000000"
+
+
 def _chummer_added(node: ET.Element) -> bool:
-    """A `<hide />` entry: Chummer put it there, nobody picked it."""
+    """A `<hide />` entry, or one with no data behind it: Chummer put it
+    there, nobody picked it."""
     index = _data_index(current_overlay_key())
     sid = _text(node.find("sourceid")) or _text(node.find("id"))
+    if sid == _NO_SOURCE_ID:
+        return True
     if sid:
         return sid in index.hidden_ids
     return _text(node.find("name")).lower() in index.hidden_names
