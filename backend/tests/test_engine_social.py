@@ -12,7 +12,6 @@ from tests.engine_support import (
     LIFESTYLE_CRAMPED,
     LIFESTYLE_GYM,
     LOW_LIFESTYLE,
-    MEDIUM_LIFESTYLE,
     NOVACOKE,
     _drug_state,
     _human,
@@ -108,16 +107,20 @@ def test_unnamed_contact_is_warned() -> None:
     assert out.derived["contact_points"]["used"] == 2
 
 
+EXTRA_SECURE = "4fb84713-6171-409d-ad7c-ccbc44b891ad"
+
+
 def test_lifestyle_lp_overflow_warns() -> None:
-    # Gym (2) + Cramped (1) + 2 freegrids (2) = 5 > Medium LP 4
+    # On Low (3 LP), where Gym is not `<allowed>`: Gym 2 + Cramped 1 + Extra
+    # Secure 1 = 4. The built-in Grid Subscription takes none.
     out = compute(
         _mundane(
             "lp-over",
             lifestyles=[
                 LifestyleInstall(
-                    lifestyle_id=MEDIUM_LIFESTYLE,
+                    lifestyle_id=LOW_LIFESTYLE,
                     months=1,
-                    quality_ids=[LIFESTYLE_GYM, LIFESTYLE_CRAMPED],
+                    quality_ids=[LIFESTYLE_GYM, LIFESTYLE_CRAMPED, EXTRA_SECURE],
                 )
             ],
         )
@@ -188,3 +191,30 @@ def test_a_settings_contact_multiplier_widens_the_free_network() -> None:
     out = compute(state)
     assert out.derived["contact_points"]["free"] == 18
     assert out.derived["contact_points"]["free_mult"] == 6
+
+
+GRID_SUBSCRIPTION = "adaf6b3d-874a-42e5-b08b-37adf1222f23"
+DANGEROUS_AREA = "ae63d09f-22a1-4c27-bc99-d82887fcef15"
+DATAHOST = "4d2bac20-5051-4035-8959-2286c0879686"
+
+
+def test_lifestyle_cost_follows_chummers_stages() -> None:
+    """Chummer's `Lifestyle.CostPreSplit` (HT p.139): multipliers compound
+    stage by stage — an entertainment asset's price goes in before the
+    Cramped / Dangerous Area multipliers — and a contract is added last."""
+    out = compute(
+        _mundane(
+            "ls-stages",
+            lifestyles=[
+                LifestyleInstall(
+                    lifestyle_id=LOW_LIFESTYLE,
+                    quality_ids=[GRID_SUBSCRIPTION, LIFESTYLE_CRAMPED, DANGEROUS_AREA, DATAHOST],
+                )
+            ],
+        )
+    )
+    # (2000 + 50 Grid) x 0.9 x 0.8 = 1476, + 250 Datahost = 1726
+    assert out.derived["lifestyles"][0]["monthly"] == 1726
+    # a Low lifestyle may buy a Grid Subscription — `<allowed>` only lists where it takes no LP
+    grids = [q for q in out.derived["lifestyles"][0]["qualities"] if q["name"] == "Grid Subscription"]
+    assert [(q["cost"], q["from_freegrid"]) for q in grids] == [(0, True), (50, False)]

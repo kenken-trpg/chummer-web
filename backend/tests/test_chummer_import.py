@@ -418,3 +418,25 @@ def test_bioware_chummer_keeps_among_the_cyberware_is_read_as_bioware() -> None:
     assert [row["name"] for row in derived["cyberware"]] == ["Datajack"]
     assert [(row["name"], row["rating"]) for row in derived["bioware"]] == [("Muscle Toner", 2)]
     assert derived["bioware"][0]["nuyen"] > 0
+
+
+def test_lifestyle_qualities_come_in_but_not_the_built_in_ones() -> None:
+    """A `Selected` quality is the player's pick; a `BuiltIn` one comes with
+    the lifestyle and is derived again. Chummer's `<extra>` holding display
+    text is kept only where the quality asks for a pick."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <lifestyles><lifestyle><baselifestyle>Low</baselifestyle><months>2</months>
+        <lifestylequalities>
+          <lifestylequality><id>ff0cb981-4459-46e7-ab75-d8c5bcb0c486</id><name>Cramped</name>
+            <extra>Cramped [-10%]</extra><lifestylequalitysource>Selected</lifestylequalitysource></lifestylequality>
+          <lifestylequality><id>adaf6b3d-874a-42e5-b08b-37adf1222f23</id><name>Grid Subscription</name>
+            <extra>Public Grid</extra><lifestylequalitysource>BuiltIn</lifestylequalitysource></lifestylequality>
+        </lifestylequalities>
+      </lifestyle></lifestyles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    (row,) = st["lifestyles"]
+    assert row["months"] == 2
+    assert row["quality_ids"] == ["ff0cb981-4459-46e7-ab75-d8c5bcb0c486"]
+    assert row["quality_extras"] == {}
+    assert warnings == []

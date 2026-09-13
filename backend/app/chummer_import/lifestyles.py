@@ -18,13 +18,37 @@ from ._common import _is_uuid, _Resolver
 def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read lifestyles, contacts and martial arts."""
     ls_r = _Resolver(cat["lifestyles"])
+    lq_r = _Resolver(cat.get("lifestyle_qualities") or [])
+    # Chummer fills `<extra>` with display text ("Cramped [-10%]") on a
+    # quality that asks for nothing; keep it only where a pick is asked for.
+    lq_pick = {str(row["id"]) for row in cat.get("lifestyle_qualities") or [] if row.get("needs_extra")}
     lifestyles = []
     for ls in root.findall("./lifestyles/lifestyle"):
         base = _text(ls.find("baselifestyle")) or _text(ls.find("name"))
         lid = ls_r.by_name.get(base.lower())
         if lid:
+            quality_ids: list[str] = []
+            quality_extras: dict[str, str] = {}
+            for q in ls.findall("./lifestylequalities/lifestylequality"):
+                # a built-in one (the free Grid Subscription) comes with the
+                # lifestyle and is derived again from it
+                if _text(q.find("lifestylequalitysource")).lower() == "builtin":
+                    continue
+                data_id = _text(q.find("id"))
+                qid = data_id if data_id in lq_r.ids else lq_r.resolve(q, warn, ui("engine.kind.lifestyleQuality"))
+                if not qid:
+                    continue
+                quality_ids.append(qid)
+                if qid in lq_pick and _text(q.find("extra")):
+                    quality_extras[qid] = _text(q.find("extra"))
             lifestyles.append(
-                {"id": str(uuid.uuid4()), "lifestyle_id": lid, "months": max(1, _int(ls.find("months"), 1))}
+                {
+                    "id": str(uuid.uuid4()),
+                    "lifestyle_id": lid,
+                    "months": max(1, _int(ls.find("months"), 1)),
+                    "quality_ids": quality_ids,
+                    "quality_extras": quality_extras,
+                }
             )
         elif base:
             warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.lifestyle"), name=base))
