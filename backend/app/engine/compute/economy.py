@@ -169,7 +169,7 @@ def economy(ctx: Ctx) -> None:
         ctx.state,
         ctx.data["skills"],
         ctx.total,
-        rating_cap=ctx.skill_rating_cap,
+        rating_cap=ctx.knowledge_rating_cap,
         native_limit=1 + int(ctx.effects.get("native_language_limit_bonus") or 0),
     )
     ctx.warnings.extend(ctx.knowledge["warnings"])

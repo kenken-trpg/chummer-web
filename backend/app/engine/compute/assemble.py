@@ -242,6 +242,7 @@ def assemble(ctx: Ctx) -> None:
         "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100),
         "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
         "skill_rating_max": ctx.skill_rating_cap,
+        "knowledge_rating_max": ctx.knowledge_rating_cap,
         "skill_group_max": ctx.skill_group_cap,
         "avail_limit": None if ctx.career else current_rules().chargen_avail_max,
         "device_rating_limit": None if ctx.career else CHARGEN_DEVICE_RATING_MAX,

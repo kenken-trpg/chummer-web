@@ -300,6 +300,7 @@ class DerivedDict(TypedDict):
 
     # --- caps -------------------------------------------------------
     skill_rating_max: int
+    knowledge_rating_max: int
     skill_group_max: int
     avail_limit: int | None
     device_rating_limit: int | None

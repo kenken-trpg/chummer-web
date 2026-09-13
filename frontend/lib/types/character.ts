@@ -98,7 +98,7 @@ export interface CharacterSettings {
   chargen_skill_max?: number | null;
   chargen_knowledge_skill_max?: number | null;
   career_skill_max?: number | null;
-  career_skill_group_max?: number | null;
+  career_knowledge_skill_max?: number | null;
   chargen_avail_max?: number | null;
   min_astral_initiative_dice?: number | null;
   max_astral_initiative_dice?: number | null;
@@ -268,6 +268,7 @@ export interface Character {
     cyberware_ess_multiplier?: number;
     bioware_ess_multiplier?: number;
     skill_rating_max?: number;
+    knowledge_rating_max?: number;
     skill_group_max?: number;
     avail_limit?: number | null;
     device_rating_limit?: number | null;

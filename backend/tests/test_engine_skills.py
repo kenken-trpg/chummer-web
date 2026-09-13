@@ -422,3 +422,19 @@ def test_a_knowledge_specialization_has_its_own_karma_price() -> None:
 
     assert spec_karma(SettingsState()) == 14
     assert spec_karma(SettingsState(karma_knowledge_specialization=3)) == 10
+
+
+def test_the_settings_skill_caps_apply_at_creation() -> None:
+    """`maxskillratingcreate` / `maxknowledgeskillratingcreate` — the engine
+    used to hold creation at a hard-coded 6 whatever the settings said. A
+    group follows the active-skill cap, as in Chummer."""
+    state = _human("caps", skills={"Pistols": 7}, skill_groups={"Stealth": 7}, knowledge_skills={"Alcohol": 7})
+    state.settings = SettingsState(chargen_skill_max=7, chargen_knowledge_skill_max=5)
+    out = compute(state)
+    assert out.derived["skill_totals"]["Pistols"] == 7
+    assert out.skill_groups["Stealth"] == 7
+    assert out.knowledge_skills["Alcohol"] == 5
+    assert (out.derived["skill_rating_max"], out.derived["knowledge_rating_max"]) == (7, 5)
+
+    plain = compute(_human("caps-plain", skills={"Pistols": 7}))
+    assert plain.derived["skill_totals"]["Pistols"] == 6

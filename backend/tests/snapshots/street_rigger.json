@@ -239,6 +239,7 @@
       }
     }
   ],
+  "knowledge_rating_max": 6,
   "knowledge_skills": [],
   "lifestyle": null,
   "lifestyle_cost_mod": 0,
