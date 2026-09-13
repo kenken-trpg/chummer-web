@@ -60,8 +60,14 @@ def _finalize_avail_tree(
         for kid in children.get(str(item.get("id") or ""), []):
             if not kid.get("avail_additive"):
                 continue
-            adds.append((int(kid.get("avail_value") or 0), str(kid.get("avail_suffix") or "")))
             kid["avail_folded"] = True
+            # What a weapon, armor, vehicle or gear entry comes with is already
+            # in its own Availability: Chummer skips `IncludedInWeapon` /
+            # `IncludedInArmor` / `IncludedInVehicle` / `IncludedInParent`
+            # children. Ware is the exception — its children always add.
+            if kid.get("included") and not grade_kind:
+                continue
+            adds.append((int(kid.get("avail_value") or 0), str(kid.get("avail_suffix") or "")))
         if not adds:
             continue
         value, suffix = sum_avail([(int(item.get("avail_value") or 0), str(item.get("avail_suffix") or ""))] + adds)
