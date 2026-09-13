@@ -1,4 +1,4 @@
-"""Chummer5a .chum5 / .chum5lz import (see backend/app/chummer_import.py)."""
+"""Chummer5a .chum5 / .chum5lz import (see backend/app/chummer_import/)."""
 
 from __future__ import annotations
 
@@ -168,7 +168,7 @@ def test_decompress_rejects_garbage_with_hint() -> None:
 
 
 def test_decompress_rejects_bomb_over_the_size_cap(monkeypatch: pytest.MonkeyPatch) -> None:
-    import app.chummer_import as ci
+    import app.chummer_import.container as ci
 
     monkeypatch.setattr(ci, "_MAX_DECOMPRESSED_BYTES", 64 * 1024)
     # ~4 MB of a repeating byte -> a tiny FORMAT_ALONE payload

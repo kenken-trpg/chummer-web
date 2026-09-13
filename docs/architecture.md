@@ -132,7 +132,7 @@ Nothing derived from a `CharacterState` is ever logged — the whole point of th
 stateless design is that characters do not land on the server's disk, and a log
 line is disk.
 
-`chummer_import.py` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
+`chummer_import/` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
 by `sourceid` then name; unknown entries become warnings, never errors.
 `chummer_export.py` (`state_to_chum5`) writes it back. The pair is a fixed
 point on a **computed** state — `tests/test_chummer_roundtrip.py` builds

@@ -1,0 +1,277 @@
+"""Everything bought: ware, armor, weapons, gear, vehicles and custom drugs."""
+
+from __future__ import annotations
+
+import uuid
+import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
+from typing import Any
+
+from ..data_loader import CatalogDict, catalog_list
+from ..data_loader._xml import _int, _text
+from ..notices import Notice, Phrase, notice, ui
+from ._common import _chummer_added, _Resolver, _unexpected_children
+
+
+def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read cyber- and bioware, nested to any depth."""
+    ware_rows = (cat.get("cyberware") or {}).get("items") or []
+    ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
+    ware_r = _Resolver(ware_rows)
+    picks: dict[str, str] = {}
+
+    def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for w in nodes:
+            wid = ware_r.resolve(w, warn, kind)
+            if not wid:
+                continue
+            row = {
+                "id": str(uuid.uuid4()),
+                "ware_id": wid,
+                "rating": max(1, _int(w.find("rating"), 1)),
+                "grade": _text(w.find("grade")) or "Standard",
+                "side": _text(w.find("location")) or None,
+                "extra": _text(w.find("extra")) or None,
+            }
+            out.append(row)
+            for pick in w.findall("./skillpicks/pick"):
+                skill = _text(pick.find("skill"))
+                if skill:
+                    picks[f"ware:{row['id']}:{_text(pick.find('index'))}"] = skill
+            kids = w.findall("./children/cyberware") + w.findall("./children/bioware")
+            for child in load_ware(kids, kind):
+                child["parent_id"] = row["id"]
+                child["included"] = True
+                out.append(child)
+            if _unexpected_children(wid, w.findall("./gears/gear")):
+                warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))
+        return out
+
+    st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), ui("engine.kind.cyberware"))
+    st["bioware"] = load_ware(
+        root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
+    )
+    st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
+
+
+def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read armor and the mods bolted to it."""
+    armor_r = _Resolver(cat["armor"])
+    amod_r = _Resolver(cat["armor_mods"])
+    st_armor: list[dict[str, Any]] = []
+    st_amods: list[dict[str, Any]] = []
+    for a in root.findall("./armors/armor"):
+        aid = armor_r.resolve(a, warn, ui("engine.kind.armor"))
+        if not aid:
+            continue
+        row = {
+            "id": str(uuid.uuid4()),
+            "armor_id": aid,
+            "rating": max(1, _int(a.find("rating"), 1)),
+            "equipped": _text(a.find("equipped")).lower() != "false",
+        }
+        st_armor.append(row)
+        for m in a.findall("./armormods/armormod"):
+            mid = amod_r.resolve(m, warn, ui("engine.kind.armorMod"))
+            if mid:
+                st_amods.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "mod_id": mid,
+                        "parent_id": row["id"],
+                        "rating": max(1, _int(m.find("rating"), 1)),
+                        "included": _text(m.find("included")).lower() == "true",
+                        # Custom Fit (Stack): the armor it was tailored to
+                        "stack_with": _text(m.find("extra")),
+                    }
+                )
+    st["armor"] = st_armor
+    st["armor_mods"] = st_amods
+
+
+def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read weapons and their accessories."""
+    # Only weapons a character could have bought: the granted ones (a cyberspur,
+    # bioware claws) come back with the ware that grants them, and matching them
+    # here as well would give the character the weapon twice.
+    weap_r = _Resolver([w for w in cat["weapons"] if w.get("purchasable")])
+    wacc_r = _Resolver(cat["weapon_accessories"])
+    st_weap: list[dict[str, Any]] = []
+    st_wacc: list[dict[str, Any]] = []
+    for w in root.findall("./weapons/weapon"):
+        if _text(w.find("cyberware")).lower() == "true":
+            continue
+        wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
+        if not wid:
+            continue
+        row = {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _int(w.find("qty"), 1))}
+        st_weap.append(row)
+        for acc in w.findall("./accessories/accessory"):
+            acid = wacc_r.resolve(acc, warn, ui("engine.kind.weaponAccessory"))
+            if acid:
+                st_wacc.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "accessory_id": acid,
+                        "parent_id": row["id"],
+                        "mount": _text(acc.find("mount")),
+                        "rating": max(1, _int(acc.find("rating"), 1)),
+                        "included": _text(acc.find("included")).lower() == "true",
+                    }
+                )
+    st["weapons"] = st_weap
+    st["weapon_accessories"] = st_wacc
+
+
+def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read gear, routed to whichever catalog bucket resolves it."""
+    BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
+    gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
+    routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
+
+    def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:
+        sid = _text(g.find("sourceid")) or _text(g.find("guid"))
+        name = _text(g.find("name"))
+        bucket = "gear"
+        gid: str | None = None
+        # a child stays with its parent's bucket if it resolves there
+        order = ([parent_bucket] if parent_bucket else []) + list(BUCKETS) + ["gear"]
+        for b in order:
+            if not b:
+                continue
+            r = gear_res[b]
+            cand = sid if sid in r.ids else r.by_name.get(name.lower())
+            if cand:
+                gid, bucket = cand, b
+                break
+        if not gid:
+            if name and not _chummer_added(g):
+                warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
+            return
+        row: dict[str, Any] = {
+            "id": str(uuid.uuid4()),
+            "gear_id": gid,
+            "rating": max(1, _int(g.find("rating"), 1)),
+        }
+        if bucket == "commlinks":
+            row.pop("rating", None)
+            row["rating"] = max(1, _int(g.find("rating"), 1))
+        else:
+            row["qty"] = max(1, _int(g.find("qty"), 1))
+            if parent_id:
+                row["parent_id"] = parent_id
+                row["included"] = _text(g.find("included")).lower() == "true"
+        routed[bucket].append(row)
+        for child in g.findall("./children/gear"):
+            route_gear(child, row["id"], bucket)
+
+    for g in root.findall("./gears/gear"):
+        # A bonded focus is gear too, but it belongs to `foci` / `qi_foci`
+        # rather than to any gear bucket — `_import_foci` reads it there.
+        if _text(g.find("category")) == "Foci":
+            continue
+        route_gear(g, None, None)
+    for b, rows in routed.items():
+        st[b] = rows
+
+
+def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read vehicles, drones and vehicle mods."""
+    veh_r = _Resolver(cat["vehicles"])
+    drone_r = _Resolver(cat["drones"])
+    vmod_r = _Resolver(cat["vehicle_mods"])
+    mount_r = _Resolver(cat["weapon_mounts"])
+    mount_categories = {row["id"]: row.get("category") or "" for row in cat["weapon_mounts"]}
+    # A mount points at a weapon row by name: ids are regenerated on import.
+    weapon_ids: dict[str, str] = {}
+    for wrow in st.get("weapons") or []:
+        wname = next((w["name"] for w in cat["weapons"] if w["id"] == wrow.get("weapon_id")), "")
+        weapon_ids.setdefault(wname.lower(), wrow["id"])
+    st_mounts: list[dict[str, Any]] = []
+    st_veh: list[dict[str, Any]] = list(st.get("drones") or [])
+    st_veh_only: list[dict[str, Any]] = []
+    st_vmods: list[dict[str, Any]] = []
+    for v in root.findall("./vehicles/vehicle"):
+        is_drone = veh_r.resolve(v, [], ui("engine.kind.vehicle")) is None
+        vid = (
+            drone_r.resolve(v, [], ui("engine.kind.drone"))
+            if is_drone
+            else veh_r.resolve(v, warn, ui("engine.kind.vehicle"))
+        )
+        if not vid:
+            vid = veh_r.resolve(v, [], ui("engine.kind.vehicle")) or drone_r.resolve(v, warn, ui("engine.kind.drone"))
+        if not vid:
+            continue
+        row = {"id": str(uuid.uuid4()), "gear_id": vid, "rating": 1, "qty": 1}
+        (st_veh if is_drone else st_veh_only).append(row)
+        for m in v.findall("./mods/mod") + v.findall("./vehiclemods/vehiclemod"):
+            mid = vmod_r.resolve(m, warn, ui("engine.kind.vehicleMod"))
+            if mid:
+                st_vmods.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "mod_id": mid,
+                        "parent_id": row["id"],
+                        "rating": max(1, _int(m.find("rating"), 1)),
+                        "included": _text(m.find("included")).lower() == "true",
+                    }
+                )
+        for m in v.findall("./weaponmounts/weaponmount"):
+            size_id = mount_r.resolve(m, warn, ui("engine.kind.weaponMount"))
+            if not size_id:
+                continue
+            parts = {"Visibility": "", "Flexibility": "", "Control": ""}
+            for opt in m.findall("./weaponmountoptions/weaponmountoption"):
+                part_id = mount_r.resolve(opt, warn, ui("engine.kind.weaponMount"))
+                if part_id and mount_categories.get(part_id) in parts:
+                    parts[mount_categories[part_id]] = part_id
+            st_mounts.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "parent_id": row["id"],
+                    "size_id": size_id,
+                    "visibility_id": parts["Visibility"],
+                    "flexibility_id": parts["Flexibility"],
+                    "control_id": parts["Control"],
+                    "included": _text(m.find("included")).lower() == "true",
+                    "weapon_install_id": weapon_ids.get(_text(m.find("mountedweaponname")).lower()),
+                    "allowedweapons": _text(m.find("weaponmountcategories")),
+                }
+            )
+        if _unexpected_children(vid, v.findall("./weapons/weapon") + v.findall("./gears/gear")):
+            warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
+    st["drones"] = st_veh
+    st["vehicles"] = st_veh_only
+    st["vehicle_mods"] = st_vmods
+    st["weapon_mounts"] = st_mounts
+
+
+def _import_custom_drugs(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """Read mixed drugs back out of `<drugs><drug>`.
+
+    A custom drug is its components: cost, availability, addiction and onset
+    are recomputed from them, so nothing Chummer wrote about the totals is
+    read back. `<active>` is this app's own element (see the export) and is
+    simply absent on a file Chummer wrote.
+    """
+    comp_r = _Resolver(cat.get("drug_components") or [])
+    drugs = []
+    for d in root.findall("./drugs/drug"):
+        parts = []
+        for c in d.findall("./drugcomponents/drugcomponent"):
+            cid = comp_r.resolve(c, warn, ui("engine.kind.drugComponent"))
+            if cid:
+                parts.append({"component_id": cid, "level": max(0, _int(c.find("level"), 0))})
+        if not parts:
+            continue
+        drugs.append(
+            {
+                "id": str(uuid.uuid4()),
+                "name": _text(d.find("name")),
+                "grade": _text(d.find("grade")) or "Standard",
+                "qty": max(1, _int(d.find("quantity"), 1)),
+                "active": _text(d.find("active")).lower() == "true",
+                "parts": parts,
+            }
+        )
+    st["custom_drugs"] = drugs
