@@ -92,6 +92,13 @@ The backend tests come in two layers:
   not collect it). Hypothesis remembers failing examples in `backend/.hypothesis/`
   (gitignored) and replays them first, so a fix is verified against the case
   that actually broke.
+- **`make reconcile`** (`scripts/chum5_reconcile.py`, not part of `make check`)
+  — the round trip above cannot catch a mistake the reader and the writer
+  share. This imports the characters Chummer itself saved in
+  `Chummer.Tests/TestFiles` (fetched once into `backend/vendor/`) and, for the
+  ones still in creation, compares the karma and nuyen the save says are left
+  with what the engine computes. Run it before and after a `.chum5` or pricing
+  change; the summary line is the number to move.
 
 **Frontend** — `eslint` (flat config) + `prettier` + `tsc` + `vitest`:
 
