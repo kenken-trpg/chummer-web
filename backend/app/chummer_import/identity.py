@@ -10,7 +10,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..models import clean_portrait
-from ..notices import Notice, notice
+from ..notices import Notice, notice, ui
 from ._common import _is_uuid
 
 _BUILD_METHODS = {
@@ -182,17 +182,33 @@ def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     st["attribute_karma"] = karma_levels
 
 
+def _skill_nodes(root: ET.Element, section: str) -> list[ET.Element]:
+    """One skills section in both layouts: `<newskills>` is what Chummer writes
+    (`skills` / `knoskills` / `groups`); `<skills>` is this app's older export."""
+    return root.findall(f"./newskills/{section}") + root.findall(f"./skills/{section}")
+
+
 def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
-    """Read active skills, groups, specialisations and knowledge."""
+    """Read active skills, groups, specialisations and knowledge.
+
+    Chummer names an active skill only by its skills.xml id (`<suid>`); a
+    knowledge skill and a group carry their `<name>`.
+    """
+    rows = cat["skills"].get("skills") or []
+    names_by_id = {str(row["id"]): str(row["name"]) for row in rows}
+    exotic_names = {row["name"] for row in rows if row.get("exotic")}
     skills: dict[str, int] = {}
     specs: dict[str, str] = {}
     exotic: list[dict[str, Any]] = []
-    exotic_names = {row["name"] for row in (cat["skills"].get("skills") or []) if row.get("exotic")}
-    for s in root.findall("./skills/skills/skill"):
-        name = _text(s.find("name"))
-        if not name:
-            continue
+    for s in _skill_nodes(root, "skills/skill"):
         rating = _int(s.find("base")) + _int(s.find("karma"))
+        name = _text(s.find("name")) or names_by_id.get(_text(s.find("suid")), "")
+        if not name:
+            if rating > 0:
+                warn.append(
+                    notice("engine.import.skippedUnknown", kind=ui("engine.kind.skill"), name=_text(s.find("suid")))
+                )
+            continue
         # An exotic skill is one row per weapon, told apart by `<specific>` —
         # two of them share a name, so they cannot go in the `skills` map.
         if name in exotic_names:
@@ -207,7 +223,11 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
             continue
         if rating > 0:
             skills[name] = rating
-        sp = _text(s.find("./specializations/spec/name")) or _text(s.find("./specializations/skillspecialization/name"))
+        sp = (
+            _text(s.find("./specs/spec/name"))
+            or _text(s.find("./specializations/spec/name"))
+            or _text(s.find("./specializations/skillspecialization/name"))
+        )
         if sp:
             specs[name] = sp
     st["skills"] = skills
@@ -215,7 +235,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["exotic_skills"] = exotic
 
     groups: dict[str, int] = {}
-    for g in root.findall("./skills/groups/group"):
+    for g in _skill_nodes(root, "groups/group"):
         r = _int(g.find("base")) + _int(g.find("karma"))
         if r > 0:
             groups[_text(g.find("name"))] = r
@@ -224,17 +244,20 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     know: dict[str, int] = {}
     know_cat: dict[str, str] = {}
     natives: list[str] = []
-    for s in root.findall("./skills/knoskills/skill"):
+    for s in _skill_nodes(root, "knoskills/skill"):
         name = _text(s.find("name"))
         if not name:
             continue
-        if _text(s.find("isnativelanguage")).lower() == "true":
+        r = _int(s.find("base")) + _int(s.find("karma"))
+        typ = _text(s.find("skillcategory")) or _text(s.find("type"))
+        native = _text(s.find("isnativelanguage")).lower()
+        # Saves from before Chummer 5.212.72 carry no flag: Chummer reads a
+        # language nobody put a point into as the native one (KnowledgeSkill.Load).
+        if native == "true" or (not native and typ == "Language" and r == 0):
             natives.append(name)
             continue
-        r = _int(s.find("base")) + _int(s.find("karma"))
         if r > 0:
             know[name] = r
-        typ = _text(s.find("skillcategory")) or _text(s.find("type"))
         if typ:
             know_cat[name] = typ
     st["knowledge_skills"] = know
