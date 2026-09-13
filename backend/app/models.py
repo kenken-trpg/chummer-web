@@ -326,7 +326,7 @@ class SettingsState(BaseModel):
     chargen_knowledge_skill_max: int | None = None
     chargen_attributes_at_max: int | None = None
     career_skill_max: int | None = None
-    career_skill_group_max: int | None = None
+    career_knowledge_skill_max: int | None = None
     chargen_avail_max: int | None = None
     min_astral_initiative_dice: int | None = None
     max_astral_initiative_dice: int | None = None

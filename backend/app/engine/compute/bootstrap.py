@@ -53,8 +53,12 @@ def bootstrap(ctx: Ctx) -> None:
     sync_reward_totals(ctx.state)
     ctx.state.karma_earned = max(0, int(getattr(ctx.state, "karma_earned", 0) or 0))
     ctx.state.nuyen_earned = max(0, int(getattr(ctx.state, "nuyen_earned", 0) or 0))
-    ctx.skill_rating_cap = current_rules().career_skill_max if ctx.career else 6
-    ctx.skill_group_cap = current_rules().career_skill_group_max if ctx.career else 6
+    # Chummer's caps: a skill group follows the active-skill cap (it has no
+    # setting of its own), a knowledge skill has its own pair.
+    rules = current_rules()
+    ctx.skill_rating_cap = rules.career_skill_max if ctx.career else rules.chargen_skill_max
+    ctx.skill_group_cap = ctx.skill_rating_cap
+    ctx.knowledge_rating_cap = rules.career_knowledge_skill_max if ctx.career else rules.chargen_knowledge_skill_max
     ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
     ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]

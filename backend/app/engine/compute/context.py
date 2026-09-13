@@ -64,6 +64,7 @@ class Ctx:
     is_karma: bool = False
     career: bool = False
     skill_rating_cap: int = 0
+    knowledge_rating_cap: int = 0
     skill_group_cap: int = 0
     errors: list[Notice] = field(default_factory=list)
     warnings: list[Notice] = field(default_factory=list)

@@ -29,6 +29,7 @@ export function SkillsTab({
   const [customKnow, setCustomKnow] = useState("");
   const [customKnowCat, setCustomKnowCat] = useState("Street");
   const skillMax = d.skill_rating_max ?? 6;
+  const knowledgeMax = d.knowledge_rating_max ?? skillMax;
   const groupMax = d.skill_group_max ?? 6;
   const career = Boolean(ch.career || d.career);
   // Priority / Sum-to-Ten creation only, as on the attributes tab: a Karma
@@ -489,10 +490,10 @@ export function SkillsTab({
               ) : (
                 <RangeInput
                   min={1}
-                  max={skillMax}
+                  max={knowledgeMax}
                   value={ch.knowledge_skills[row.name] || row.rating}
                   label={tr(row.name)}
-                  title={ui("skills.ratingHint", { max: skillMax })}
+                  title={ui("skills.ratingHint", { max: knowledgeMax })}
                   onDraft={(value) =>
                     setCharacter({
                       ...ch,

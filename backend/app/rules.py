@@ -92,7 +92,7 @@ class Rules:
     #: their natural maximum when creation ends (SR5 p.65: one)
     chargen_attributes_at_max: int = 1
     career_skill_max: int = 12
-    career_skill_group_max: int = 12
+    career_knowledge_skill_max: int = 12
     chargen_avail_max: int = CHARGEN_AVAIL_MAX
     #: Astral initiative is INT×2 + this many D6 (SR5 p.315: 3); Chummer
     #: rolls `min(min, max)` of the two settings.
@@ -168,7 +168,7 @@ _DIRECT: dict[str, str] = {
     "chargen_knowledge_skill_max": "chargen_knowledge_skill_max",
     "chargen_attributes_at_max": "chargen_attributes_at_max",
     "career_skill_max": "career_skill_max",
-    "career_skill_group_max": "career_skill_group_max",
+    "career_knowledge_skill_max": "career_knowledge_skill_max",
     "chargen_avail_max": "chargen_avail_max",
     "min_astral_initiative_dice": "min_astral_initiative_dice",
     "max_astral_initiative_dice": "max_astral_initiative_dice",

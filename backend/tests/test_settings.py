@@ -335,3 +335,10 @@ def test_the_upload_reads_the_settings_and_build_method_from_one_parse() -> None
 
 def test_the_number_of_attributes_allowed_at_maximum_is_read() -> None:
     assert parse_settings_xml(_settings_xml(maxnumbermaxattributescreate=2)).chargen_attributes_at_max == 2
+
+
+def test_the_career_knowledge_cap_is_not_read_as_the_group_cap() -> None:
+    """`<maxknowledgeskillrating>` is the knowledge-skill cap after creation;
+    it used to land on a skill-group cap Chummer does not have."""
+    parsed = parse_settings_xml(_settings_xml(maxskillrating=13, maxknowledgeskillrating=9))
+    assert (parsed.career_skill_max, parsed.career_knowledge_skill_max) == (13, 9)
