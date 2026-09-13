@@ -73,6 +73,13 @@ def load_weapons() -> list[dict[str, Any]]:
                 "included": [
                     _text(a.find("name")) for a in el.findall("./accessories/accessory") if _text(a.find("name"))
                 ],
+                # the ones whose entry names a `<mount>`: those take one of the
+                # weapon's mounts; the rest are built in (Chummer's "Internal")
+                "included_mounted": [
+                    _text(a.find("name"))
+                    for a in el.findall("./accessories/accessory")
+                    if _text(a.find("name")) and a.find("mount") is not None
+                ],
                 "hidden": hidden,
                 "from_cyberware": from_cyberware,
                 "useskill": _text(el.find("useskill")),

@@ -117,7 +117,10 @@ def _resolve_weapon_accessories(
         installed_names = {
             str((specs.get(row.accessory_id) or {}).get("name") or "") for row in children.get(weapon["id"]) or []
         }
-        for inst in children.get(weapon["id"]) or []:
+        wspec = weapon_specs.get(str(weapon.get("weapon_id") or "")) or {}
+        built_in = set(wspec.get("included") or []) - set(wspec.get("included_mounted") or [])
+        # what the weapon comes with claims its mounts before anything added
+        for inst in sorted(children.get(weapon["id"]) or [], key=lambda row: not row.included):
             spec = specs.get(inst.accessory_id)
             if not spec:
                 continue
@@ -145,13 +148,19 @@ def _resolve_weapon_accessories(
                         )
                     )
                     continue
-            mount = _pick_accessory_mount(list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or []))
+            if inst.included and spec["name"] in built_in:
+                # Chummer creates it on the weapon's "Internal" mount
+                mount: str | None = "Internal"
+            else:
+                mount = _pick_accessory_mount(
+                    list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or [])
+                )
             if mount is None:
                 errors.append(
                     notice("engine.gear.noFreeMount", name=term(str(weapon["name"])), accessory=term(str(spec["name"])))
                 )
                 mount = ""
-            elif mount:
+            elif mount and mount != "Internal":
                 used_mounts.add(mount)
             inst.mount = mount
             parent_unit = int(
