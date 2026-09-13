@@ -1727,6 +1727,7 @@ export const EN: Catalog = {
   "engine.kind.mentor": "mentor",
   "engine.kind.metamagic": "metamagic",
   "engine.kind.quality": "quality",
+  "engine.kind.skill": "skill",
   "engine.kind.enhancement": "enhancement",
   "engine.kind.spell": "spell",
   "engine.kind.spirit": "spirit",

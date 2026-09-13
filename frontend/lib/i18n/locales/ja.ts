@@ -1780,6 +1780,7 @@ export const JA = {
   "engine.kind.mentor": "メンター",
   "engine.kind.metamagic": "メタマジック",
   "engine.kind.quality": "資質",
+  "engine.kind.skill": "技能",
   "engine.kind.enhancement": "強化",
   "engine.kind.spell": "術式",
   "engine.kind.spirit": "精霊",

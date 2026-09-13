@@ -339,3 +339,42 @@ def test_ware_nested_three_deep_keeps_each_parent() -> None:
     # the enhancement's `+` availability rolls into the arm, not the connector
     rows = {row["name"]: row for row in import_character(st).derived["cyberware"]}
     assert rows["Modular Connector, Shoulder"]["avail"] == "8"  # 12, Used -4
+
+
+NEWSKILLS = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+  <newskills>
+    <skills>
+      <skill><suid>adf31a50-b228-4e09-a09c-46ab9f5e59a1</suid><isknowledge>False</isknowledge>
+        <karma>1</karma><base>4</base>
+        <specs><spec><name>Revolvers</name><free>False</free></spec></specs></skill>
+      <skill><suid>9cff9aa7-d092-4f89-8b7b-3ab835818874</suid><karma>0</karma><base>0</base></skill>
+      <skill><suid>a1366ec2-772d-4f08-8c65-5f79464d975b</suid><karma>0</karma><base>3</base>
+        <specific>Horns</specific></skill>
+      <skill><suid>00000000-1111-2222-3333-444444444444</suid><karma>0</karma><base>2</base></skill>
+    </skills>
+    <knoskills>
+      <skill><suid>a72084f6-3a4c-4c23-82aa-4697e543ee0b</suid><isknowledge>True</isknowledge>
+        <karma>0</karma><base>0</base><name>German</name><type>Language</type></skill>
+      <skill><isknowledge>True</isknowledge><karma>0</karma><base>2</base>
+        <name>Runner Hangouts</name><type>Street</type></skill>
+    </knoskills>
+    <groups><group><karma>0</karma><base>2</base><name>Stealth</name></group></groups>
+  </newskills>
+</character>"""
+
+
+def test_skills_in_chummers_newskills_layout() -> None:
+    """Chummer writes `<newskills>` and names an active skill only by its
+    skills.xml id; this app's own export used `<skills>` with names."""
+    st, warnings = chum5_to_state(NEWSKILLS)
+    assert st["skills"] == {"Pistols": 5}  # base 4 + karma 1; Sneaking at 0 is no skill
+    assert st["skill_specializations"] == {"Pistols": "Revolvers"}
+    assert [(row["skill_name"], row["extra"], row["rating"]) for row in st["exotic_skills"]] == [
+        ("Exotic Melee Weapon", "Horns", 3)
+    ]
+    assert st["skill_groups"] == {"Stealth": 2}
+    assert st["knowledge_skills"] == {"Runner Hangouts": 2}
+    assert st["knowledge_categories"] == {"Runner Hangouts": "Street"}
+    # a pre-5.212.72 save has no <isnativelanguage>: a language with no points is the native one
+    assert st["native_languages"] == ["German"]
+    assert has(warnings, "engine.import.skippedUnknown", name="00000000-1111-2222-3333-444444444444")
