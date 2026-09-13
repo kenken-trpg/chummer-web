@@ -66,7 +66,7 @@ export default [
     // `components/` does (the text sheet, the formatters, the small JSX bits),
     // and leaving it out is how `bits.tsx` kept two literals nobody noticed.
     //
-    // One file is exempt: `lib/i18n/messages.ts` *is* the dictionary. The
+    // The dictionaries are exempt: `lib/i18n/locales/*.ts` *are* the text. The
     // Cocofolia export used to be exempt as well; it now takes a locale and
     // reads its labels out of the dictionary like everything else.
     files: [
@@ -77,14 +77,14 @@ export default [
       "lib/**/*.tsx",
       "lib/**/*.ts",
     ],
-    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/messages.ts"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/locales/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
         {
           selector: "JSXText[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
-            "Japanese text in JSX. Add a key to lib/i18n/messages.ts and render it with ui(). See docs/i18n.md.",
+            "Japanese text in JSX. Add a key to lib/i18n/locales/ja.ts (and en.ts) and render it with ui(). See docs/i18n.md.",
         },
         {
           selector: "JSXAttribute Literal[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
@@ -101,7 +101,7 @@ export default [
           selector:
             ":matches(VariableDeclarator, Property, ReturnStatement, ArrowFunctionExpression, ConditionalExpression) > Literal[value=/[\\u3041-\\u3096\\u30a1-\\u30fa\\u4e00-\\u9fff]/]",
           message:
-            "Japanese string literal. Add a key to lib/i18n/messages.ts and render it with ui().",
+            "Japanese string literal. Add a key to lib/i18n/locales/ja.ts (and en.ts) and render it with ui().",
         },
       ],
     },

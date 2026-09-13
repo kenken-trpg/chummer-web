@@ -82,7 +82,7 @@ URL そのものがキャラクターなので、`app/share/layout.tsx` で
 `useCharacterEditor`）が `shareErrorMessage(e, ui, fallback)` で
 `SHARE_ERROR_KEYS` を引いて文字列にする。
 
-新しいコードを足したら `SHARE_ERROR_KEYS` と `messages.ts` の **ja / en 両方**に
+新しいコードを足したら `SHARE_ERROR_KEYS` と `locales/ja.ts`・`locales/en.ts` の**両方**に
 キーを追加すること（`share.test.ts` が両方の存在を検査している。app chrome の
 他のキーと違い、ここは `en` の ja フォールバックに頼らない）。
 

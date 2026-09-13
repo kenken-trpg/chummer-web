@@ -142,7 +142,7 @@ def quality_addspirit_extra_key(quality_id: str, index: int) -> str:
 # slots the duplicate-side messages name. Shared by the 'ware side pipeline
 # (engine/ware/) and the quality selectside validators (apply_quality_rules /
 # resolve_quality_sides in engine/qualities.py). The labels themselves are
-# dictionary keys now — `engine.side.*` / `engine.slot.*` in messages.ts.
+# dictionary keys now — `engine.side.*` / `engine.slot.*` in frontend/lib/i18n/locales/.
 SIDES = ("Left", "Right")
 _LIMB_SLOTS = ("arm", "leg", "torso", "skull")
 

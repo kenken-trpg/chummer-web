@@ -7,7 +7,7 @@ front end could only regex-match it to guess which tab fixes the problem
 (``lib/character/checklist.ts``).
 
 So the engine now emits a *key* plus its parameters and nothing else. All
-wording — every locale of it — lives in ``frontend/lib/i18n/messages.ts`` with
+wording — every locale of it — lives in ``frontend/lib/i18n/locales/`` with
 the rest of the app's copy, where the ``Record<MsgKey, string>`` type stops a
 locale from silently falling behind (docs/i18n.md).
 

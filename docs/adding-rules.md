@@ -92,8 +92,8 @@ to `errors` (hard block) or `warnings` (advisory) — `ctx.err(key, **params)` /
 errors.append(notice("engine.gear.availOver", name=term(name), shown=shown, limit=limit))
 ```
 
-The message itself does **not** live in Python. Add the key to `JA` *and* `EN`
-in `frontend/lib/i18n/messages.ts` (the type will not let you skip a locale);
+The message itself does **not** live in Python. Add the key to `JA` in
+`frontend/lib/i18n/locales/ja.ts` *and* `EN` in `en.ts` (the type will not let you skip a locale);
 `engine.<area>.<name>` is the naming, and `<area>` also routes the item to a
 tab via `TAB_BY_AREA` in `lib/character/checklist.ts`. Wrap a catalog name in
 `term()` so the client renders it with `tr`, and fixed engine vocabulary in
