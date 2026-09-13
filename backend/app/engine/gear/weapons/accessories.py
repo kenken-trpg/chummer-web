@@ -151,6 +151,11 @@ def _resolve_weapon_accessories(
             if inst.included and spec["name"] in built_in:
                 # Chummer creates it on the weapon's "Internal" mount
                 mount: str | None = "Internal"
+            elif not inst.included and inst.mount == "None":
+                # Chummer's "no mount": what a save says it sits on takes no
+                # slot — a save from before Chummer tracked mounts has every
+                # accessory on "None", and Chummer does not re-check them
+                mount = "None"
             else:
                 mount = _pick_accessory_mount(
                     list(weapon.get("mounts") or []), used_mounts, list(spec.get("mounts") or [])
@@ -160,7 +165,7 @@ def _resolve_weapon_accessories(
                     notice("engine.gear.noFreeMount", name=term(str(weapon["name"])), accessory=term(str(spec["name"])))
                 )
                 mount = ""
-            elif mount and mount != "Internal":
+            elif mount and mount not in ("Internal", "None"):
                 used_mounts.add(mount)
             inst.mount = mount
             parent_unit = int(

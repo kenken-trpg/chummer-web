@@ -505,6 +505,9 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
     wacc_by_parent: dict[str | None, list[Any]] = {}
     for arow in state.weapon_accessories:
         wacc_by_parent.setdefault(arow.parent_id, []).append(arow)
+    # Chummer writes "None" for an accessory that takes no mount; one that
+    # wants a mount and found none keeps its empty value, and its error
+    mountless = {str(row["id"]) for row in catalog().get("weapon_accessories") or [] if not row.get("mounts")}
     for w in state.weapons:
         el = _sub(weapons, "weapon")
         _sub(el, "sourceid", w.weapon_id)
@@ -515,7 +518,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
             ac = _sub(accs, "accessory")
             _sub(ac, "sourceid", arow.accessory_id)
             _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
-            _sub(ac, "mount", arow.mount)
+            _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
             _sub(ac, "included", "True" if arow.included else "False")
 
 

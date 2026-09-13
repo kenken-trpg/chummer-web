@@ -440,3 +440,22 @@ def test_lifestyle_qualities_come_in_but_not_the_built_in_ones() -> None:
     assert row["quality_ids"] == ["ff0cb981-4459-46e7-ab75-d8c5bcb0c486"]
     assert row["quality_extras"] == {}
     assert warnings == []
+
+
+def test_an_accessory_a_save_puts_on_no_mount_takes_no_slot() -> None:
+    """Chummer's "None" mount takes no slot. A save from before Chummer
+    tracked mounts has every accessory on it — two Stock accessories on one
+    Savalette Guardian included — and Chummer does not re-check them."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <weapons><weapon><name>Savalette Guardian</name><accessories>
+        <accessory><name>Folding Stock</name><mount>None</mount></accessory>
+        <accessory><name>Gecko Grip</name><mount>None</mount></accessory>
+        <accessory><name>Silencer</name><mount>None</mount></accessory>
+      </accessories></weapon></weapons>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []  # "Silencer" is the old name of Silencer/Suppressor
+    derived = import_character(st).derived
+    mounts = {acc["name"]: acc["mount"] for acc in derived["weapons"][0]["accessories"] if not acc["included"]}
+    assert mounts == {"Folding Stock": "None", "Gecko Grip": "None", "Silencer/Suppressor": "None"}
+    assert not has(derived["errors"], "engine.gear.noFreeMount")

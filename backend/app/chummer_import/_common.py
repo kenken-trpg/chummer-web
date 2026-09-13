@@ -21,6 +21,7 @@ _LEGACY_NAMES = {
     "rapelling gloves": "rappelling gloves",
     "ondanstron": "ondansetron",
     "spirit of guidance": "guidance spirit",
+    "silencer": "silencer/suppressor",
     **{
         f"metagenetic improvement ({a})": f"metagenic improvement ({a})"
         for a in ("body", "agility", "reaction", "strength", "charisma", "intuition", "logic", "willpower")
