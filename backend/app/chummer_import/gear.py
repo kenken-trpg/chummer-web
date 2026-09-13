@@ -64,9 +64,15 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))
         return out
 
-    st["cyberware"] = load_ware(root.findall("./cyberwares/cyberware"), ui("engine.kind.cyberware"))
+    # Chummer keeps bioware in `<cyberwares>` too, as `<cyberware>` rows told
+    # apart only by `<improvementsource>Bioware</improvementsource>`. Left in
+    # with the cyberware they resolved to a bioware id the cyberware side
+    # cannot price, and every piece of bioware in a Chummer save was dropped.
+    rows = root.findall("./cyberwares/cyberware")
+    bio_rows = [w for w in rows if _text(w.find("improvementsource")).lower() == "bioware"]
+    st["cyberware"] = load_ware([w for w in rows if w not in bio_rows], ui("engine.kind.cyberware"))
     st["bioware"] = load_ware(
-        root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
+        bio_rows + root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
     )
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
 
