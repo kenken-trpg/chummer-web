@@ -40,7 +40,9 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                     picks[f"ware:{row['id']}:{_text(pick.find('index'))}"] = skill
             kids = w.findall("./children/cyberware") + w.findall("./children/bioware")
             for child in load_ware(kids, kind):
-                child["parent_id"] = row["id"]
+                # `load_ware` returns the whole subtree flat: only the direct
+                # children are this row's, a grandchild keeps its own parent
+                child.setdefault("parent_id", row["id"])
                 child["included"] = True
                 out.append(child)
             if _unexpected_children(wid, w.findall("./gears/gear")):
