@@ -46,6 +46,11 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                     "id": str(uuid.uuid4()),
                     "lifestyle_id": lid,
                     "months": max(1, _int(ls.find("months"), 1)),
+                    # the points bought above the lifestyle's own; the
+                    # engine holds them to what the lifestyle allows
+                    "comforts": max(0, _int(ls.find("comforts"))),
+                    "area": max(0, _int(ls.find("area"))),
+                    "security": max(0, _int(ls.find("security"))),
                     "quality_ids": quality_ids,
                     "quality_extras": quality_extras,
                 }

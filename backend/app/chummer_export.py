@@ -697,6 +697,8 @@ def _export_lifestyles(root: ET.Element, state: CharacterState, names: _Names, c
         _sub(el, "baselifestyle", base)
         _sub(el, "name", base)
         _sub(el, "months", lrow.months)
+        for key in ("comforts", "area", "security"):
+            _sub(el, key, getattr(lrow, key))
         if lrow.quality_ids:
             quals = _sub(el, "lifestylequalities")
             for qid in lrow.quality_ids:

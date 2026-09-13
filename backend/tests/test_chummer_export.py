@@ -16,6 +16,7 @@ from app.models import (
     ContactInstall,
     CyberwareInstall,
     GearInstall,
+    LifestyleInstall,
     Priorities,
     SpellInstall,
     WeaponAccessoryInstall,
@@ -438,3 +439,17 @@ def test_ammo_counts_rounds_in_chummer_and_boxes_here() -> None:
 
     back = ET.fromstring(state_to_chum5(import_character(st)))
     assert back.findtext("./gears/gear/qty") == "100"
+
+
+def test_raised_lifestyle_points_round_trip() -> None:
+    low = next(row["id"] for row in catalog()["lifestyles"] if row["name"] == "Low")
+    state = CharacterState(
+        id="ls",
+        name="ls",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        lifestyles=[LifestyleInstall(lifestyle_id=low, comforts=1, area=1)],
+    )
+    back = chum5_to_state(state_to_chum5(state))[0]["lifestyles"][0]
+    assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)

@@ -218,3 +218,15 @@ def test_lifestyle_cost_follows_chummers_stages() -> None:
     # a Low lifestyle may buy a Grid Subscription — `<allowed>` only lists where it takes no LP
     grids = [q for q in out.derived["lifestyles"][0]["qualities"] if q["name"] == "Grid Subscription"]
     assert [(q["cost"], q["from_freegrid"]) for q in grids] == [(0, True), (50, False)]
+
+
+def test_raising_comforts_neighborhood_security_costs_lp_and_ten_percent_each() -> None:
+    """RF p.219 / Chummer's `CostPreSplit`: each point raised above the
+    lifestyle's own costs a point of LP and 10% of the base cost (plus its
+    own price where the lifestyle has one); no further than the table allows."""
+    out = compute(_mundane("ls-raise", lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, comforts=5, area=1)]))
+    row = out.derived["lifestyles"][0]
+    assert row["raised"] == {"comforts": 1, "area": 1, "security": 0}  # Low's comforts 2 → limit 3
+    assert row["monthly"] == 2400  # 2000 x (1 + 0.1 x 2)
+    assert row["lp_used"] == 2
+    assert out.lifestyles[0].comforts == 1
