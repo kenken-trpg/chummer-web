@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any
@@ -146,11 +147,22 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     st["weapon_accessories"] = st_wacc
 
 
+def _qty(node: ET.Element) -> float:
+    """`<qty>` as Chummer writes it — a decimal ("100", "2.5")."""
+    try:
+        return max(0.0, float(_text(node.find("qty")) or 1))
+    except ValueError:
+        return 1.0
+
+
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
     gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
     routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
+    # Chummer's `<qty>` counts single items (100 rounds); this app's `qty`
+    # counts what the price is quoted for — `costfor` of them (a box of 10).
+    cost_for = {str(row["id"]): int(row.get("costfor") or 0) for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
     def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:
         sid = _text(g.find("sourceid")) or _text(g.find("guid"))
@@ -180,7 +192,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             row.pop("rating", None)
             row["rating"] = max(1, _int(g.find("rating"), 1))
         else:
-            row["qty"] = max(1, _int(g.find("qty"), 1))
+            row["qty"] = max(1, math.ceil(_qty(g) / max(1, cost_for.get(gid, 0))))
             if parent_id:
                 row["parent_id"] = parent_id
                 row["included"] = _text(g.find("included")).lower() == "true"

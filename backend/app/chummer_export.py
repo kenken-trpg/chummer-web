@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any
 from xml.dom import minidom
 
-from .data_loader import catalog
+from .data_loader import catalog, catalog_list
 from .engine import find_metatype
 from .engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
@@ -536,6 +536,14 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
     for g in gear_rows:
         by_parent_g.setdefault(getattr(g, "parent_id", None), []).append(g)
 
+    # this app's `qty` is in lots of `costfor` (a box of 10 rounds); Chummer's
+    # `<qty>` counts the single items
+    cost_for = {
+        str(row["id"]): int(row.get("costfor") or 0)
+        for bucket in ("gear", "commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps")
+        for row in catalog_list(bucket)
+    }
+
     def emit_gear(parent_el: ET.Element, rows: list[Any]) -> None:
         for g in rows:
             gid = g.gear_id
@@ -543,7 +551,7 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
             _sub(el, "sourceid", gid)
             _sub(el, "name", names["gear"].get(gid, ""))
             _sub(el, "rating", getattr(g, "rating", 1))
-            _sub(el, "qty", getattr(g, "qty", 1))
+            _sub(el, "qty", int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)))
             if getattr(g, "parent_id", None):
                 _sub(el, "included", "True" if getattr(g, "included", False) else "False")
             kids = by_parent_g.get(g.id)
