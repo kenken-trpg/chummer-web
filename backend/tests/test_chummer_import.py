@@ -400,3 +400,21 @@ def test_ware_a_player_put_in_is_bought_and_what_came_with_it_is_not() -> None:
     rows = {row["name"]: row for row in import_character(st).derived["cyberware"]}
     assert rows["Customized Agility"]["nuyen"] > 0  # bought, so it costs
     assert rows["Biomonitor"]["nuyen"] == 0
+
+
+def test_bioware_chummer_keeps_among_the_cyberware_is_read_as_bioware() -> None:
+    """Chummer writes bioware as `<cyberware>` rows in `<cyberwares>`, marked
+    only by `<improvementsource>Bioware</improvementsource>`; filed with the
+    cyberware they were priced nowhere and dropped."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <cyberwares>
+        <cyberware><name>Datajack</name><grade>Standard</grade><improvementsource>Cyberware</improvementsource></cyberware>
+        <cyberware><name>Muscle Toner</name><rating>2</rating><grade>Standard</grade>
+          <improvementsource>Bioware</improvementsource></cyberware>
+      </cyberwares>
+    </character>"""
+    st, _ = chum5_to_state(xml)
+    derived = import_character(st).derived
+    assert [row["name"] for row in derived["cyberware"]] == ["Datajack"]
+    assert [(row["name"], row["rating"]) for row in derived["bioware"]] == [("Muscle Toner", 2)]
+    assert derived["bioware"][0]["nuyen"] > 0
