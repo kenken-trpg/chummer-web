@@ -1,7 +1,7 @@
 # How to add a rule / feature
 
 Concrete recipes. Each ends with "add a test" because rule changes without a
-test don't get merged. Copy an existing test in `backend/tests/test_engine.py`.
+test don't get merged. Copy an existing test in the matching `backend/tests/test_engine_*.py`.
 
 ---
 
@@ -41,7 +41,7 @@ Example: weapons gained a `<somestat>` you want.
 3. `engine` — use `spec.get("somestat")` wherever weapons are resolved
    (`resolve_gear` / `_public_weapon`).
 4. `frontend/lib/types.ts` — add to `WeaponCatalogItem` / `InstalledWeapon`.
-5. Test in `test_engine.py` (+ `test_chummer_export.py` if it round-trips).
+5. Test in `test_engine_weapons.py` (+ `test_chummer_export.py` if it round-trips).
 
 ---
 
