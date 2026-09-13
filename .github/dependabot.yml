@@ -1,8 +1,10 @@
 version: 2
 updates:
-  # Pinned action majors (actions/checkout@v7, docker/*@v4…) — weekly PRs when
-  # a new patch/minor or major is out. Worth taking promptly: GitHub retires the
-  # Node runtime old action majors ship with, and stale ones get force-migrated.
+  # Actions are pinned by commit SHA with the release tag in a trailing comment
+  # (a moved or hijacked tag can't swap the code under us). Dependabot bumps the
+  # SHA and the comment together — weekly PRs when a new patch/minor or major is
+  # out. Worth taking promptly: GitHub retires the Node runtime old action
+  # majors ship with, and stale ones get force-migrated.
   - package-ecosystem: github-actions
     directory: /
     schedule:
