@@ -378,3 +378,25 @@ def test_skills_in_chummers_newskills_layout() -> None:
     # a pre-5.212.72 save has no <isnativelanguage>: a language with no points is the native one
     assert st["native_languages"] == ["German"]
     assert has(warnings, "engine.import.skippedUnknown", name="00000000-1111-2222-3333-444444444444")
+
+
+def test_ware_a_player_put_in_is_bought_and_what_came_with_it_is_not() -> None:
+    """Chummer's `<parentid>` is the parent's guid on what the parent's data
+    added and empty on what was bought for it — which is paid for."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <cyberwares><cyberware><guid>11111111-0000-0000-0000-000000000000</guid>
+        <name>Obvious Full Arm</name><grade>Standard</grade><parentid />
+        <children>
+          <cyberware><name>Customized Agility</name><rating>4</rating><grade>Standard</grade><parentid /></cyberware>
+          <cyberware><name>Biomonitor</name><grade>Standard</grade>
+            <parentid>11111111-0000-0000-0000-000000000000</parentid></cyberware>
+        </children>
+      </cyberware></cyberwares>
+    </character>"""
+    st, _ = chum5_to_state(xml)
+    ware = {row["id"]: row["name"] for row in catalog()["cyberware"]["items"]}
+    included = {ware[row["ware_id"]]: row.get("included") for row in st["cyberware"]}
+    assert included == {"Obvious Full Arm": False, "Customized Agility": False, "Biomonitor": True}
+    rows = {row["name"]: row for row in import_character(st).derived["cyberware"]}
+    assert rows["Customized Agility"]["nuyen"] > 0  # bought, so it costs
+    assert rows["Biomonitor"]["nuyen"] == 0
