@@ -1,13 +1,13 @@
 "use client";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
+import { ArmorModRow, CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { armorModFits } from "@/lib/character/gear";
 import {
   availBit,
   formatAccessoryCost,
-  limitModifierLine,
   mergeSpecialArmor,
   specialArmorLine,
 } from "@/lib/character/format";
@@ -130,155 +130,25 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   ) : null}
                 </div>
                 {(item.mods || []).map((mod) => (
-                  <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
-                    {tr(mod.name)}
-                    {mod.rating_max > 1 ? ` R${mod.rating}` : ""}
-                    {mod.included
-                      ? ` / ${ui("common.included")}`
-                      : ` / ${mod.nuyen.toLocaleString()}¥`}
-                    {mod.capacity_cost
-                      ? ui("gear.capacityCost", {
-                          cost:
-                            mod.capacity_cost < 0 ? `+${-mod.capacity_cost}` : mod.capacity_cost,
-                        })
-                      : ""}
-                    {specialArmorLine(mod.special_armor, ui)
-                      ? ` / ${specialArmorLine(mod.special_armor, ui)}`
-                      : ""}
-                    {limitModifierLine(mod.limit_modifiers, ui)
-                      ? ` / ${limitModifierLine(mod.limit_modifiers, ui)}`
-                      : ""}
-                    {availBit(mod, ui)}
-                    {mod.included ? null : (
-                      <>
-                        {" "}
-                        <button
-                          className="btn danger"
-                          onClick={() =>
-                            patch({
-                              armor_mods: (ch.armor_mods || []).filter((row) => row.id !== mod.id),
-                            })
-                          }
-                        >
-                          {ui("common.remove")}
-                        </button>
-                      </>
-                    )}
-                    {mod.rating_max > 1 && !mod.included ? (
-                      <label>
-                        Rating
-                        <input
-                          type="number"
-                          min={1}
-                          max={mod.rating_max}
-                          value={mod.rating}
-                          onChange={(e) =>
-                            patch({
-                              armor_mods: (ch.armor_mods || []).map((row) =>
-                                row.id === mod.id
-                                  ? { ...row, rating: Number(e.target.value) }
-                                  : row,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                    ) : null}
-                    {mod.select_armor ? (
-                      <label title={ui("gear.stackWithHint")}>
-                        {" "}
-                        {ui("gear.stackWith")}{" "}
-                        <select
-                          aria-label={ui("gear.stackWith")}
-                          value={mod.stack_with || ""}
-                          onChange={(e) =>
-                            patch({
-                              armor_mods: (ch.armor_mods || []).map((row) =>
-                                row.id === mod.id ? { ...row, stack_with: e.target.value } : row,
-                              ),
-                            })
-                          }
-                        >
-                          <option value="">—</option>
-                          {stackTargets(d.armor_items || [], item.id, mod.stack_with).map(
-                            (name) => (
-                              <option key={name} value={name}>
-                                {tr(name)}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </label>
-                    ) : null}
-                    {mod.has_wireless ? (
-                      <label title={ui("common.wirelessHint")}>
-                        {" "}
-                        <input
-                          type="checkbox"
-                          checked={mod.wireless ?? true}
-                          onChange={(e) =>
-                            patch({
-                              armor_mods: (ch.armor_mods || []).map((row) =>
-                                row.id === mod.id ? { ...row, wireless: e.target.checked } : row,
-                              ),
-                            })
-                          }
-                        />
-                        WL
-                      </label>
-                    ) : null}
-                  </div>
+                  <ArmorModRow
+                    key={mod.id}
+                    mod={mod}
+                    stackOptions={stackTargets(d.armor_items || [], item.id, mod.stack_with)}
+                    character={ch}
+                    tr={tr}
+                    ui={ui}
+                    patch={patch}
+                  />
                 ))}
                 {(item.gear || []).map((gear) => (
-                  <div className="muted" key={gear.id} style={{ marginTop: 6 }}>
-                    {tr(gear.name)}
-                    {gear.rating_max > 1 ? ` R${gear.rating}` : ""}
-                    {gear.qty > 1 ? ` ×${gear.qty}` : ""}
-                    {gear.included
-                      ? ` / ${ui("common.included")}`
-                      : ` / ${gear.nuyen.toLocaleString()}¥`}
-                    {gear.armor_capacity
-                      ? ui("gear.capacityCost", { cost: gear.armor_capacity })
-                      : ""}
-                    {availBit(gear, ui)}
-                    {gear.included ? null : (
-                      <>
-                        {" "}
-                        <button
-                          className="btn danger"
-                          onClick={() =>
-                            patch({
-                              gear: (ch.gear || []).filter(
-                                (row) => row.id !== gear.id && row.parent_id !== gear.id,
-                              ),
-                            })
-                          }
-                        >
-                          {ui("common.remove")}
-                        </button>
-                      </>
-                    )}
-                    {gear.rating_max > 1 && !gear.included ? (
-                      <label>
-                        Rating
-                        <input
-                          type="number"
-                          min={1}
-                          max={gear.rating_max}
-                          value={gear.rating}
-                          onChange={(e) =>
-                            patch({
-                              gear: (ch.gear || []).map((row) =>
-                                row.id === gear.id
-                                  ? { ...row, rating: Number(e.target.value) }
-                                  : row,
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                    ) : null}
-                  </div>
+                  <CarriedGearRow
+                    key={gear.id}
+                    gear={gear}
+                    character={ch}
+                    tr={tr}
+                    ui={ui}
+                    patch={patch}
+                  />
                 ))}
                 <AddonSelect
                   rowName={tr(item.name)}
