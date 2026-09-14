@@ -30,6 +30,7 @@ from .apps import _resolve_apps
 from .armor import (
     _recompute_worn_armor,
     _resolve_armor_mods,
+    apply_armor_gear,
     armor_mod_fits,
     armor_plugin_capacity,
 )
@@ -89,6 +90,7 @@ from .weapons import (
 
 __all__ = [
     "_append_armor_weapons",
+    "apply_armor_gear",
     "_append_gear_weapons",
     "_append_natural_weapons",
     "_append_granted_weapons",

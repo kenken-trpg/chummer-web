@@ -483,6 +483,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
     amods_by_parent: dict[str | None, list[Any]] = {}
     for mrow in state.armor_mods:
         amods_by_parent.setdefault(mrow.parent_id, []).append(mrow)
+    gear_by_parent, emit_gear = _gear_writer(state, names)
     for a in state.armor:
         el = _sub(armors, "armor")
         _sub(el, "sourceid", a.armor_id)
@@ -499,6 +500,10 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
             _sub(mm, "included", "True" if mrow.included else "False")
             if mrow.stack_with:
                 _sub(mm, "extra", mrow.stack_with)
+        # the gear it carries (a Holster, a Medkit), as Chummer keeps it
+        carried = gear_by_parent.get(a.id)
+        if carried:
+            emit_gear(_sub(el, "gears"), carried)
 
 
 def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -524,9 +529,8 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
             _sub(ac, "included", "True" if arow.included else "False")
 
 
-def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write gear from every bucket, flattened back into one <gears>."""
-    gears = _sub(root, "gears")
+def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
+    """Gear of every bucket by parent id, and the writer of a `<gear>` list."""
     gear_rows = [
         *state.gear,
         *state.commlinks,
@@ -568,6 +572,13 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
             if kids:
                 emit_gear(_sub(el, "children"), kids)
 
+    return by_parent_g, emit_gear
+
+
+def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write gear from every bucket, flattened back into one <gears>."""
+    gears = _sub(root, "gears")
+    by_parent_g, emit_gear = _gear_writer(state, names)
     emit_gear(gears, by_parent_g.get(None, []))
     _emit_focus_gear(gears, state, names)
 

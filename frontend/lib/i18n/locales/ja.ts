@@ -354,6 +354,8 @@ export const JA = {
   "common.astralInitiative": "アストラル・イニシアチブ",
   "common.condition": "コンディション",
   "gear.capacity": " / 容量 {used}/{max}",
+  "gear.addArmorGear": "ギアを入れる",
+  "gear.putIn": "入れる",
   "gear.addMod": "改造を追加",
   "gear.stackWith": "重ねる防具",
   "gear.stackWithHint":
@@ -1762,6 +1764,8 @@ export const JA = {
     "このセッティングのハウスルール {count} 件は未対応です（{tags}）。数値には反映されていないので、卓で確認してください",
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
 
+  "engine.import.armorGearSkipped":
+    "防具「{armor}」に入っていた「{name}」は取り込めませんでした（センサーや視覚・聴覚強化は、防具以外のギアに付けられます）",
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
   "engine.import.expensesSkipped":
     "履歴の稼ぎ（カルマ {karma}・新円 {nuyen}）が所持の合計と合わないため、報酬の明細は読み込みませんでした",

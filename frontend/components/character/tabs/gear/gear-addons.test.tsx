@@ -567,3 +567,92 @@ describe("<ArmorGear> mods on a piece", () => {
     expect(out.find((r) => r.id === "m2")?.stack_with).toBeUndefined();
   });
 });
+
+describe("<ArmorGear> gear carried in a piece", () => {
+  const piece = (id: string, name: string, gear: Record<string, unknown>[] = []) => ({
+    id,
+    armor_id: `c-${id}`,
+    name,
+    armor_value: 9,
+    contributes: 9,
+    equipped: true,
+    rating: 1,
+    rating_max: 0,
+    nuyen: 900,
+    capacity_max: 6,
+    capacity_used: 3,
+    source: "SR5",
+    mods: [],
+    gear,
+  });
+  const holster = {
+    id: "g1",
+    gear_id: "c-holster",
+    name: "Holster",
+    parent_id: "a1",
+    rating: 1,
+    rating_max: 0,
+    qty: 1,
+    nuyen: 150,
+    armor_capacity: 3,
+    included: false,
+  };
+  const medkit = {
+    id: "g2",
+    gear_id: "c-medkit",
+    name: "Medkit",
+    parent_id: "a2",
+    rating: 1,
+    rating_max: 6,
+    qty: 1,
+    nuyen: 250,
+    armor_capacity: 5,
+    included: false,
+  };
+  const character = () =>
+    makeCharacter({
+      armor: [piece("a1", "Lined Coat"), piece("a2", "Armor Jacket")],
+      gear: [holster, medkit, { id: "g3", gear_id: "c-x", name: "Rope" }],
+      derived: {
+        armor_items: [piece("a1", "Lined Coat", [holster]), piece("a2", "Armor Jacket", [medkit])],
+      },
+    } as any);
+  const catalog = {
+    gear: [
+      {
+        id: "c-holster",
+        name: "Holster",
+        category: "Armor Enhancements",
+        cost: "150",
+        armor_capacity: "[3]",
+      },
+      { id: "c-rope", name: "Rope", category: "Survival Gear", cost: "10" },
+    ] as any,
+  };
+
+  it("lists each piece's own gear and offers only gear that fits in armor", () => {
+    const patch = vi.fn();
+    const { container } = renderPanel(ArmorGear, character(), patch, catalog);
+    const [coat, jacket] = [...container.querySelectorAll<HTMLElement>(".cyber-item")];
+    expect(coat.textContent).toContain("Holster");
+    expect(coat.textContent).not.toContain("Medkit");
+    expect(jacket.textContent).toContain("Medkit");
+
+    const picker = screen.getByRole("combobox", { name: "Armor Jacket: ギアを入れる" });
+    expect(within(picker).queryByText(/Rope/)).toBeNull();
+    fireEvent.change(picker, { target: { value: "c-holster" } });
+    fireEvent.click(screen.getByRole("button", { name: "Armor Jacket: 入れる" }));
+    const added = (patch.mock.calls[0][0].gear as { gear_id: string; parent_id?: string }[]).at(-1);
+    expect(added).toMatchObject({ gear_id: "c-holster", parent_id: "a2" });
+  });
+
+  it("deleting a piece takes the gear carried in it and only that", () => {
+    const patch = vi.fn();
+    renderPanel(ArmorGear, character(), patch, catalog);
+    fireEvent.click(screen.getByRole("button", { name: "Lined Coat を削除" }));
+    expect((patch.mock.calls[0][0].gear as { id: string }[]).map((r) => r.id)).toEqual([
+      "g2",
+      "g3",
+    ]);
+  });
+});

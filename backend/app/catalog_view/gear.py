@@ -116,6 +116,7 @@ def section(raw: CatalogDict) -> dict:
                 "ammo_weapon_types": list(c.get("ammo_weapon_types") or []),
                 "costfor": int(c.get("costfor") or 0),
                 "cost_range": c.get("cost_range"),
+                "armor_capacity": c.get("armor_capacity") or "",
                 "weapon_details": c.get("weapon_details") or "",
                 "add_weapon": c.get("add_weapon") or "",
                 "add_weapon_id": c.get("add_weapon_id") or "",

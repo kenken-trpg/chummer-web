@@ -253,6 +253,8 @@ export interface InstalledArmor {
   armorcapacity?: string;
   addmodcategories?: string[];
   mods?: InstalledArmorMod[];
+  /** gear carried in it (a Holster, a Medkit) */
+  gear?: InstalledGear[];
   capacity_used?: number;
   capacity_max?: number;
 }
@@ -404,6 +406,8 @@ export interface InstalledGear extends InstalledOptics {
   required_categories?: string[];
   ammo_weapon_types?: string[];
   costfor?: number;
+  /** what it takes of the armor it is carried in */
+  armor_capacity?: number;
   add_weapon?: string;
   add_weapon_id?: string;
   loaded?: boolean;

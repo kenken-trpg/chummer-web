@@ -78,13 +78,26 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
 
 
+def _is_gear_not_mod(node: ET.Element, mods: _Resolver, gear: _Resolver) -> bool:
+    sid = _text(node.find("sourceid")) or _text(node.find("guid"))
+    name = _text(node.find("name")).lower()
+    if (sid and sid in mods.ids) or name in mods.by_name:
+        return False
+    return bool(sid and sid in gear.ids) or name in gear.by_name
+
+
 def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
-    """Read armor and the mods bolted to it."""
+    """Read armor and the mods bolted to it.
+
+    The gear carried in it (a Holster, a Medkit) is left for `_import_gear`,
+    which knows the gear buckets, as (armor row id, gear node) pairs."""
     armor_r = _Resolver(cat["armor"])
     amod_r = _Resolver(cat["armor_mods"])
     variable_armor = {str(row["id"]) for row in cat["armor"] if row.get("cost_range")}
+    gear_r = _Resolver(catalog_list("gear"))
     st_armor: list[dict[str, Any]] = []
     st_amods: list[dict[str, Any]] = []
+    carried: list[tuple[str, ET.Element]] = []
     for a in root.findall("./armors/armor"):
         aid = armor_r.resolve(a, warn, ui("engine.kind.armor"))
         if not aid:
@@ -98,7 +111,15 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         if aid in variable_armor:
             row["cost"] = _picked_cost(a)
         st_armor.append(row)
+        # what the armor's own entry brings is not modelled apart from it
+        armor_id = str(row["id"])
+        carried += [(armor_id, g) for g in _unexpected_children(aid, a.findall("./gears/gear"))]
         for m in a.findall("./armormods/armormod"):
+            if _is_gear_not_mod(m, amod_r, gear_r):
+                # older saves list a Personal Drone Rack with the mods; the
+                # data has it as gear that takes the armor's capacity
+                carried.append((armor_id, m))
+                continue
             mid = amod_r.resolve(m, warn, ui("engine.kind.armorMod"))
             if mid:
                 st_amods.append(
@@ -114,6 +135,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
                 )
     st["armor"] = st_armor
     st["armor_mods"] = st_amods
+    st["_armor_gear"] = carried
 
 
 def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -177,7 +199,9 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
 
     rows_by_id = {str(row["id"]): row for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
-    def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:
+    def route_gear(
+        g: ET.Element, parent_id: str | None, parent_bucket: str | None, armor_name: str | None = None
+    ) -> None:
         # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
         # is whatever the player called it
         sid = _text(g.find("sourceid")) or (_text(g.find("id")) if _text(g.find("id")) in rows_by_id else "")
@@ -198,6 +222,11 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         if not gid:
             if name and not _chummer_added(g):
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
+            return
+        if armor_name is not None and bucket != "gear":
+            # a sensor or an optic in armor: this app fits those to other
+            # hosts only, so the piece is left out — but said so
+            warn.append(notice("engine.import.armorGearSkipped", name=name, armor=armor_name))
             return
         row: dict[str, Any] = {
             "id": str(uuid.uuid4()),
@@ -227,6 +256,10 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         if _text(g.find("category")) == "Foci":
             continue
         route_gear(g, None, None)
+    armor_names = {str(a["id"]): str(a.get("name") or "") for a in catalog_list("armor")}
+    armor_of = {str(a["id"]): armor_names.get(str(a["armor_id"]), "") for a in st.get("armor") or []}
+    for armor_id, g in st.pop("_armor_gear", None) or []:
+        route_gear(g, armor_id, "gear", armor_of.get(armor_id, ""))
     for b, rows in routed.items():
         st[b] = rows
 

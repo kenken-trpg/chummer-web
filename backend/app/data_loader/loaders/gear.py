@@ -141,6 +141,8 @@ def _load_gear_categories(
                 "ammo_weapon_types": ammo_types,
                 "costfor": max(0, _int(el.find("costfor"), 0)),
                 "cost_range": list(cost_range) if cost_range else None,
+                # what it takes of an armor's capacity when carried in one
+                "armor_capacity": _text(el.find("armorcapacity")),
                 "weapon_details": weapon_details,
                 "add_weapon": _text(el.find("addweapon")),
                 "weaponbonus": _parse_weaponbonus(el.find("weaponbonus")),

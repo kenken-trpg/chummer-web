@@ -324,3 +324,32 @@ def _recompute_worn_armor(
             notice("engine.gear.armorEncumbrance", load=stack_total, strength=int(strength or 0), penalty=penalty)
         )
     return best_value, worn_name, warnings, penalty
+
+
+def apply_armor_gear(armor_items: list[dict[str, Any]], gear_items: list[dict[str, Any]], errors: list[Notice]) -> None:
+    """Gear carried in a piece of armor takes its `<armorcapacity>` from the
+    armor's capacity — once per item of its quantity — as the mods do
+    (Chummer's `Armor.CapacityRemaining`), and is listed on the armor it
+    sits in. What came with the armor takes none."""
+    for item in armor_items:
+        carried = [row for row in gear_items if row.get("parent_id") == item["id"]]
+        item["gear"] = carried
+        if not carried:
+            continue
+        before = float(item.get("capacity_used") or 0)
+        used = round(
+            before + sum(float(row.get("armor_capacity") or 0) * int(row.get("qty") or 1) for row in carried), 4
+        )
+        cap_max = float(item.get("capacity_max") or 0)
+        item["capacity_used"] = int(used) if used == int(used) else used
+        # armor without capacity (a Hat) is not checked, as in Chummer; when
+        # the mods alone went over, that error is already in the list
+        if cap_max > 0 and used > cap_max + 1e-9 and before <= cap_max + 1e-9:
+            errors.append(
+                notice(
+                    "engine.gear.capacityOver",
+                    name=term(str(item["name"])),
+                    used=f"{used:g}",
+                    max=f"{cap_max:g}",
+                )
+            )

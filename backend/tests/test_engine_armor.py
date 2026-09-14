@@ -11,6 +11,7 @@ from app.models import (
     ArmorModInstall,
     CharacterState,
     CyberwareInstall,
+    GearInstall,
     Priorities,
 )
 from tests.engine_support import (
@@ -695,3 +696,43 @@ def test_heavy_stacked_armor_lowers_agility_and_reaction() -> None:
     light = shield(5)
     assert (light["totals"]["AGI"], light["totals"]["REA"]) == (3, 3)
     assert not has(light["warnings"], "engine.gear.armorEncumbrance")
+
+
+HOLSTER = "5977fb0b-b74e-4eb9-b433-9b7c9877b14f"
+MEDKIT = "ae9c37df-6d82-44c1-aa21-6c87e45e2dc1"
+
+
+def test_gear_carried_in_armor_takes_its_armor_capacity() -> None:
+    """A Holster or a Medkit in armor takes its `<armorcapacity>` from the
+    armor's capacity, as a mod does, and is paid for as gear."""
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "carried",
+            armor=[jacket],
+            gear=[
+                GearInstall(gear_id=HOLSTER, parent_id=jacket.id),
+                GearInstall(gear_id=MEDKIT, rating=2, parent_id=jacket.id),
+            ],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert row["capacity_used"] == 8
+    assert {g["name"] for g in row["gear"]} == {"Holster", "Medkit"}
+    assert out.derived["nuyen_spent"] == 1000 + 150 + 500
+    assert out.derived["errors"] == []
+    assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+
+
+def test_gear_over_the_armors_capacity_is_an_error() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "overfull",
+            armor=[jacket],
+            gear=[GearInstall(gear_id=MEDKIT, parent_id=jacket.id) for _ in range(3)],
+        )
+    )
+    row = out.derived["armor_items"][0]
+    assert row["capacity_used"] == 15 > row["capacity_max"]
+    assert has(out.derived["errors"], "engine.gear.capacityOver")

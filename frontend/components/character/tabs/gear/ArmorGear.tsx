@@ -40,6 +40,8 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
               ),
           );
           const specialLine = specialArmorLine(mergeSpecialArmor(item.mods), ui);
+          // gear that says what capacity it takes in armor (`<armorcapacity>`)
+          const carriable = (catalog.gear || []).filter((row) => row.armor_capacity);
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -227,6 +229,78 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     ) : null}
                   </div>
                 ))}
+                {(item.gear || []).map((gear) => (
+                  <div className="muted" key={gear.id} style={{ marginTop: 6 }}>
+                    {tr(gear.name)}
+                    {gear.rating_max > 1 ? ` R${gear.rating}` : ""}
+                    {gear.qty > 1 ? ` ×${gear.qty}` : ""}
+                    {gear.included
+                      ? ` / ${ui("common.included")}`
+                      : ` / ${gear.nuyen.toLocaleString()}¥`}
+                    {gear.armor_capacity
+                      ? ui("gear.capacityCost", { cost: gear.armor_capacity })
+                      : ""}
+                    {availBit(gear, ui)}
+                    {gear.included ? null : (
+                      <>
+                        {" "}
+                        <button
+                          className="btn danger"
+                          onClick={() =>
+                            patch({
+                              gear: (ch.gear || []).filter(
+                                (row) => row.id !== gear.id && row.parent_id !== gear.id,
+                              ),
+                            })
+                          }
+                        >
+                          {ui("common.remove")}
+                        </button>
+                      </>
+                    )}
+                    {gear.rating_max > 1 && !gear.included ? (
+                      <label>
+                        Rating
+                        <input
+                          type="number"
+                          min={1}
+                          max={gear.rating_max}
+                          value={gear.rating}
+                          onChange={(e) =>
+                            patch({
+                              gear: (ch.gear || []).map((row) =>
+                                row.id === gear.id
+                                  ? { ...row, rating: Number(e.target.value) }
+                                  : row,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+                ))}
+                <AddonSelect
+                  rowName={tr(item.name)}
+                  prompt={ui("gear.addArmorGear")}
+                  addLabel={ui("gear.putIn")}
+                  tr={tr}
+                  options={carriable}
+                  optionLabel={(row) => `${tr(row.name)} ${row.armor_capacity} (${row.cost}¥)`}
+                  onAdd={(row) =>
+                    patch({
+                      gear: [
+                        ...(ch.gear || []),
+                        {
+                          gear_id: row.id,
+                          parent_id: item.id,
+                          rating: Math.max(1, row.minrating || 1),
+                          qty: 1,
+                        },
+                      ],
+                    })
+                  }
+                />
                 <AddonSelect
                   rowName={tr(item.name)}
                   prompt={ui("gear.addMod")}
@@ -261,6 +335,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   patch({
                     armor: (ch.armor || []).filter((row) => row.id !== item.id),
                     armor_mods: (ch.armor_mods || []).filter((row) => row.parent_id !== item.id),
+                    gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
                   })
                 }
               >
