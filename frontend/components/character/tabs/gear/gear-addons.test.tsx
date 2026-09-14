@@ -690,6 +690,67 @@ describe("<ArmorGear> gear carried in a piece", () => {
     });
   });
 
+  it("a sensor carried in armor takes its functions there", () => {
+    const patch = vi.fn();
+    const sensor = {
+      id: "s1",
+      gear_id: "c-ss",
+      name: "Single Sensor",
+      parent_id: "a1",
+      rating: 1,
+      rating_max: 0,
+      nuyen: 100,
+      armor_capacity: 1,
+      bucket: "sensors" as const,
+      addoncategories: ["Sensor Functions"],
+      included: false,
+    };
+    const fn = {
+      id: "s2",
+      gear_id: "c-cam",
+      name: "Camera",
+      parent_id: "s1",
+      rating: 1,
+      rating_max: 0,
+      nuyen: 50,
+      capacity_cost: 1,
+      included: false,
+    };
+    const ch = makeCharacter({
+      armor: [piece("a1", "Lined Coat")],
+      sensors: [sensor, fn],
+      derived: {
+        armor_items: [piece("a1", "Lined Coat", [sensor])],
+        sensors: [sensor, fn],
+      },
+    } as any);
+    renderPanel(ArmorGear, ch, patch, {
+      sensors: [
+        { id: "c-cam", name: "Camera", category: "Sensor Functions", cost: "50", source: "SR5" },
+        {
+          id: "c-mic",
+          name: "Microphone",
+          category: "Sensor Functions",
+          cost: "50",
+          source: "SR5",
+        },
+      ] as any,
+    });
+
+    expect(screen.getByText(/Camera/)).toBeTruthy();
+    // the one already in it is not offered again
+    const picker = screen.getByRole("combobox", { name: "Single Sensor: 機能を追加" });
+    expect(
+      within(picker)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["機能を追加", "Microphone (50¥)"]);
+    fireEvent.change(picker, { target: { value: "c-mic" } });
+    fireEvent.click(screen.getByRole("button", { name: "Single Sensor: 装着" }));
+    const out = patch.mock.calls[0][0].sensors as { gear_id: string; parent_id?: string }[];
+    expect(out.at(-1)).toMatchObject({ gear_id: "c-mic", parent_id: "s1" });
+  });
+
   it("deleting a piece takes the gear carried in it and only that", () => {
     const patch = vi.fn();
     renderPanel(ArmorGear, character(), patch, catalog);

@@ -1,7 +1,14 @@
 "use client";
+import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
+import { dropTree } from "@/lib/character/gear";
 import { availBit, limitModifierLine, specialArmorLine } from "@/lib/character/format";
-import type { InstalledArmorMod, InstalledGear, InstalledOptics } from "@/lib/types";
+import type {
+  InstalledArmorMod,
+  InstalledGear,
+  InstalledOptics,
+  OpticsCatalogItem,
+} from "@/lib/types";
 
 type RowProps = Pick<TabPanelProps, "character" | "tr" | "ui" | "patch">;
 
@@ -120,7 +127,15 @@ export function CarriedGearRow({
   tr,
   ui,
   patch,
-}: RowProps & { gear: InstalledOptics & { qty?: number; bucket?: InstalledGear["bucket"] } }) {
+  inside = [],
+  addons = [],
+}: RowProps & {
+  gear: InstalledOptics & { qty?: number; bucket?: InstalledGear["bucket"] };
+  /** what hangs off it — a sensor housing's functions */
+  inside?: InstalledOptics[];
+  /** what may still be added to it */
+  addons?: OpticsCatalogItem[];
+}) {
   const bucket = gear.bucket || "gear";
   const rows = ch[bucket] || [];
   return (
@@ -163,6 +178,42 @@ export function CarriedGearRow({
             }
           />
         </label>
+      ) : null}
+      {inside.map((child) => (
+        <div key={child.id} style={{ marginTop: 4, marginLeft: 12 }}>
+          {tr(child.name)}
+          {child.rating_max > 0 ? ` R${child.rating}` : ""}
+          {child.included ? ` / ${ui("common.included")}` : ` / ${child.nuyen.toLocaleString()}¥`}
+          {child.capacity_cost ? ui("gear.capacityCost", { cost: child.capacity_cost }) : ""}
+          {child.included ? null : (
+            <>
+              {" "}
+              <button
+                className="btn danger"
+                aria-label={ui("common.removeLabel", { name: tr(child.name) })}
+                onClick={() => patch({ [bucket]: dropTree(rows, child.id || "") })}
+              >
+                {ui("common.remove")}
+              </button>
+            </>
+          )}
+        </div>
+      ))}
+      {addons.length ? (
+        <AddonSelect
+          rowName={tr(gear.name)}
+          prompt={ui("gear.addSensorFn")}
+          tr={tr}
+          options={addons}
+          onAdd={(mod) =>
+            patch({
+              [bucket]: [
+                ...rows,
+                { gear_id: mod.id, parent_id: gear.id, rating: Math.max(1, mod.minrating || 1) },
+              ],
+            })
+          }
+        />
       ) : null}
     </div>
   );
