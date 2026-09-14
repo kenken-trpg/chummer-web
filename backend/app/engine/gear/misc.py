@@ -140,6 +140,11 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
                 kind, host_spec = host
                 if kind == "weapon":
                     fits = ammo_fits_weapon(spec, host_spec)
+                elif kind == "vehicle":
+                    # a vehicle is a container: a medkit or a camera rides in
+                    # it as it is. Only what plugs into a host of its own
+                    # (`requireparent`) has to match the interior categories.
+                    fits = bool(inst.included) or not spec.get("requireparent") or _misc_child_fits(host_spec, spec)
                 elif kind == "armor":
                     # armor carries gear that says what capacity it takes
                     # there (`<armorcapacity>`: a Holster, a Medkit, Trodes)

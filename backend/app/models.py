@@ -501,6 +501,7 @@ class CharacterPatch(BaseModel):
     burnt_street_cred: int | None = None
     notoriety_bonus: int | None = None
     reward_log: list[RewardEntry] | None = None
+    expense_log: list[RewardEntry] | None = None
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions | None = None
@@ -636,6 +637,10 @@ class CharacterState(BaseModel):
     burnt_street_cred: int = 0
     notoriety_bonus: int = 0
     reward_log: list[RewardEntry] = Field(default_factory=list)
+    #: what a Chummer save's expense log spent (negative), kept as history:
+    #: the balance itself is already met by `karma_adjust` / `nuyen_adjust`,
+    #: so these rows are shown and written back, never counted again
+    expense_log: list[RewardEntry] = Field(default_factory=list)
     tradition_id: str | None = None
     stream_id: str | None = None
     options: CharacterOptions = Field(default_factory=CharacterOptions)

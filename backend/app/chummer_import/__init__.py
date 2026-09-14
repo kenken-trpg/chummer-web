@@ -88,8 +88,9 @@ _SECTIONS = (
     _import_ware,
     _import_armor,
     _import_weapons,
-    _import_gear,
+    # vehicles first: `_import_gear` puts what is stowed in them in its buckets
     _import_vehicles,
+    _import_gear,
     _import_lifestyles,
     _import_foci,
     _import_custom_drugs,

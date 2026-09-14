@@ -108,6 +108,7 @@
   "essence_penalty": 0.0,
   "excon": false,
   "exotic_skills": [],
+  "expense_log": [],
   "extra_spirits": [],
   "fade_resist": {
     "attrs": "WIL+INT",

@@ -145,6 +145,23 @@ export function SidebarCareerRewards({ career, ch, d, patch, tr, ui }: SidebarBl
               ) : (
                 <p className="muted">{ui("side.none")}</p>
               )}
+              {(d.expense_log || []).length ? (
+                <>
+                  {/* what a Chummer save spent: history, already in the
+                      adjustment above rather than counted again */}
+                  <p className="muted">{ui("side.chummerSpend")}</p>
+                  {(d.expense_log || []).map((row) => (
+                    <div className="stat" key={row.id}>
+                      <span>{row.label || ui("side.expense")}</span>
+                      <b>
+                        {row.karma ? `${row.karma}K` : ""}
+                        {row.karma && row.nuyen ? " / " : ""}
+                        {row.nuyen ? `${row.nuyen.toLocaleString()}¥` : ""}
+                      </b>
+                    </div>
+                  ))}
+                </>
+              ) : null}
             </div>
           ) : null}
         </div>

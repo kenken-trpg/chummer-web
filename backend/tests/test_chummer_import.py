@@ -619,3 +619,55 @@ def test_the_black_market_discount_is_kept_per_item() -> None:
     assert [row["discounted"] for row in st["weapons"]] == [True, False]
     root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
     assert [_text(w.find("discountedcost")) for w in root.findall("./weapons/weapon")] == ["True", "False"]
+
+
+def test_what_is_stowed_in_a_vehicle_comes_in_on_it() -> None:
+    """A vehicle carries gear in its own `<gears>`. Its Sensor Array is not
+    one: Chummer builds that from the vehicle's sensor rating and saves it,
+    while this app keeps the rating."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <vehicles><vehicle><name>Ford Americar (Sedan)</name><gears>
+        <gear><name>Sensor Array</name><rating>2</rating><cost>0</cost></gear>
+        <gear><name>Medkit</name><rating>3</rating><qty>1</qty></gear>
+      </gears></vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    (vehicle,) = st["vehicles"]
+    assert [(row["gear_id"], row["parent_id"]) for row in st["gear"]] == [
+        (next(g["id"] for g in catalog()["gear"] if g["name"] == "Medkit"), vehicle["id"])
+    ]
+    derived = import_character(st).derived
+    assert not has(derived["warnings"], "engine.gear.doesNotFit")
+    assert [row["name"] for row in derived["vehicles"][0]["gear"]] == ["Medkit"]
+    root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
+    assert [_text(g.find("name")) for g in root.findall("./vehicles/vehicle/gears/gear")] == ["Medkit"]
+    assert root.findall("./gears/gear") == []
+
+
+def test_a_career_saves_spending_is_kept_as_history() -> None:
+    """The expense log's negative rows say where the balance went. They are
+    history only — what they bought is priced from the character itself — so
+    they are shown and written back, never counted again."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod><created>True</created>
+      <karma>5</karma><nuyen>1000</nuyen>
+      <expenses>
+        <expense><type>Karma</type><amount>10</amount><reason>Run payout</reason><refund>False</refund></expense>
+        <expense><type>Karma</type><amount>-6</amount><reason>Gained Positive Quality Toughness</reason>
+          <refund>False</refund></expense>
+        <expense><type>Nuyen</type><amount>-240</amount><reason>Purchased Gear Ammo</reason><refund>False</refund></expense>
+      </expenses>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    assert [(row["label"], row["karma"], row["nuyen"]) for row in st["expense_log"]] == [
+        ("Gained Positive Quality Toughness", -6, 0),
+        ("Purchased Gear Ammo", 0, -240),
+    ]
+    assert [row["karma"] for row in st["reward_log"]] == [10]
+    derived = import_character(st).derived
+    assert derived["karma"]["remaining"] == 5  # the adjustment still meets the balance
+    assert derived["karma_earned"] == 10  # spending is not earning
+    root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
+    amounts = sorted(int(e.findtext("amount") or 0) for e in root.findall("./expenses/expense"))
+    assert amounts == [-240, -6, 10]
