@@ -170,6 +170,7 @@ export interface CommlinkInstall {
   id?: string;
   gear_id: string;
   rating?: number;
+  qty?: number;
 }
 
 export interface GearInstall {

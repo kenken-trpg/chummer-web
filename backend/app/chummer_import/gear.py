@@ -8,9 +8,9 @@ import xml.etree.ElementTree as ET  # the Element type only — parsing goes thr
 from typing import Any
 
 from ..data_loader import CatalogDict, catalog_list
-from ..data_loader._xml import _int, _text
+from ..data_loader._xml import _int, _text, current_overlay_key
 from ..notices import Notice, Phrase, notice, ui
-from ._common import _chummer_added, _Resolver, _unexpected_children
+from ._common import _chummer_added, _data_index, _Resolver, _unexpected_children
 
 
 def _came_with_parent(node: ET.Element) -> bool:
@@ -200,7 +200,11 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     rows_by_id = {str(row["id"]): row for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
     def route_gear(
-        g: ET.Element, parent_id: str | None, parent_bucket: str | None, armor_name: str | None = None
+        g: ET.Element,
+        parent_id: str | None,
+        parent_bucket: str | None,
+        armor_name: str | None = None,
+        parent_gid: str = "",
     ) -> None:
         # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
         # is whatever the player called it
@@ -239,16 +243,21 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         if spec.get("category") == "Custom" and name and name != spec.get("name"):
             row["name"] = name
         if bucket == "commlinks":
-            row.pop("rating", None)
-            row["rating"] = max(1, _int(g.find("rating"), 1))
+            row["qty"] = max(1, math.ceil(_qty(g)))
         else:
             row["qty"] = max(1, math.ceil(_qty(g) / max(1, cost_for.get(gid, 0))))
             if parent_id:
                 row["parent_id"] = parent_id
-                row["included"] = _text(g.find("included")).lower() == "true"
+                row["included"] = (
+                    _text(g.find("included")).lower() == "true"
+                    or _text(g.find("includedinparent")).lower() == "true"
+                    # older saves do not say: what the parent's own entry
+                    # brings (a Nixdorf Sekretar's Agent) came with it
+                    or name.lower() in _data_index(current_overlay_key()).included.get(parent_gid, frozenset())
+                )
         routed[bucket].append(row)
         for child in g.findall("./children/gear"):
-            route_gear(child, row["id"], bucket)
+            route_gear(child, row["id"], bucket, parent_gid=gid)
 
     for g in root.findall("./gears/gear"):
         # A bonded focus is gear too, but it belongs to `foci` / `qi_foci`

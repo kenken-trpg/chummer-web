@@ -551,3 +551,37 @@ def test_gear_carried_in_armor_comes_in_on_the_armor_and_goes_back_out_there() -
     carried = [_text(g.find("name")) for g in root.findall("./armors/armor/gears/gear")]
     assert sorted(carried) == ["Holster", "Medkit", "Personal Drone Rack"]
     assert root.findall("./gears/gear") == []
+
+
+def test_a_stack_of_commlinks_keeps_its_count() -> None:
+    """Chummer's `<qty>` on a commlink (two burner Meta Links) is paid for
+    and written back, not read as one."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear><name>Meta Link</name><qty>2</qty></gear></gears>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    (link,) = st["commlinks"]
+    assert link["qty"] == 2
+    derived = import_character(st).derived
+    assert derived["commlinks"][0]["nuyen"] == 200
+    root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
+    assert root.findtext("./gears/gear/qty") == "2"
+
+
+def test_what_a_commlink_comes_with_is_not_bought_again() -> None:
+    """A Nixdorf Sekretar's entry includes a rating-3 Agent. Older saves do
+    not mark it, but it came with the commlink: free, and not an item over
+    the Availability limit on its own."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear><name>Nixdorf Sekretar w/ Liebesekretar</name><children>
+        <gear><name>Agent</name><category>Software</category><rating>3</rating><cost>0</cost></gear>
+      </children></gear></gears>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    (agent,) = st["apps"]
+    assert agent["included"] is True
+    derived = import_character(st).derived
+    assert derived["apps"][0]["nuyen"] == 0
+    assert derived["nuyen_spent"] == 6000

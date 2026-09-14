@@ -736,3 +736,27 @@ def test_gear_over_the_armors_capacity_is_an_error() -> None:
     row = out.derived["armor_items"][0]
     assert row["capacity_used"] == 15 > row["capacity_max"]
     assert has(out.derived["errors"], "engine.gear.capacityOver")
+
+
+def test_a_mod_that_came_with_the_armor_is_not_held_to_the_avail_limit() -> None:
+    """Chummer's `CheckRestrictedGear` skips a mod `IncludedInArmor` — a
+    designer armor's Ruthenium Polymer Coating (16F) is the armor's own
+    Availability, not a second item over 12. One bought for it is checked."""
+    coating = _armor_mod_named("Ruthenium Polymer Coating")
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    came_with = compute(
+        _mundane(
+            "designer",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=coating, parent_id=jacket.id, rating=3, included=True)],
+        )
+    )
+    assert not has(came_with.derived["errors"], "engine.gear.availOver")
+    bought = compute(
+        _mundane(
+            "bought",
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=coating, parent_id=jacket.id, rating=3)],
+        )
+    )
+    assert has(bought.derived["errors"], "engine.gear.availOver")

@@ -19,6 +19,11 @@ over budget is saved with `0`, not the deficit: when the save says 0 and this
 app is below zero as well, both agree the build is overspent — marked `over`
 and left out of the mismatches, since by how much cannot be told.
 
+A build over the 25 karma of negative qualities is marked `negcap`. Chummer's
+default settings refund all of it and call the build invalid, which is what
+this app does; the 5.202 saves stored the remainder as if the refund stopped
+at 25, so their karma differs by the excess (Barrett by 53, Blindfire by 15).
+
 The files are fetched once into ``vendor/chummer-tests/`` (gitignored), at the
 same chummer5a ref as the game data::
 
@@ -140,6 +145,7 @@ def main() -> int:
         over = _both_over(karma) or _both_over(nuyen)
         mark = "" if row["career"] or all(ok) else "  ≠"
         mark += "  over" if over and not row["career"] else ""
+        mark += "  negcap" if "engine.qualities.negativeCap" in row["errors"] and not row["career"] else ""
         label = "career" if row["career"] else _fmt(karma)
         print(
             f"{row['file']:<{width}}  {label:<26}  {_fmt(nuyen):<34}  {len(row['warnings']):>4}  {len(row['errors']):>3}{mark}"

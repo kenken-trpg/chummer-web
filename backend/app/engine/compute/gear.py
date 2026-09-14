@@ -182,7 +182,8 @@ def resolve_gear(
             continue
         rating = _clamp_rating(spec, link_inst.rating)
         link_inst.rating = rating
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        qty = max(1, int(link_inst.qty or 1))
+        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0)) * qty
         nuyen += cost
         device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
         processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
@@ -196,6 +197,7 @@ def resolve_gear(
                 "category": spec.get("category") or "Commlinks",
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
+                "qty": qty,
                 "device_rating": device,
                 "attack": int(eval_formula(str(spec.get("attack") or "0"), rating, 0)),
                 "sleaze": int(eval_formula(str(spec.get("sleaze") or "0"), rating, 0)),
