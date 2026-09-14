@@ -1,6 +1,7 @@
 "use client";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -19,6 +20,9 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
                 / {item.nuyen.toLocaleString()}¥ / {item.source}
+              </div>
+              <div className="cyber-controls">
+                <DiscountToggle list="rccs" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { WareRow } from "@/components/character/WareRow";
 import { r5SlotLabel } from "@/lib/character/constants";
@@ -90,6 +91,16 @@ export function VehicleDroneGear({
             <div className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
+                <div className="cyber-controls">
+                  <DiscountToggle
+                    list={mode === "vehicle" ? "vehicles" : "drones"}
+                    id={item.id}
+                    ch={ch}
+                    d={d}
+                    ui={ui}
+                    patch={patch}
+                  />
+                </div>
                 <div className="muted">
                   {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / ACC{" "}
                   {item.accel} / BOD {item.body} / ARM {item.armor} / PLT {item.pilot} / SNR{" "}

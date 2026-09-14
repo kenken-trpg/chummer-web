@@ -13,6 +13,12 @@ from ..notices import Notice, Phrase, notice, ui
 from ._common import _chummer_added, _data_index, _Resolver, _unexpected_children
 
 
+def _discounted(node: ET.Element) -> bool:
+    """`<discountedcost>`: the buyer took the Black Market Pipeline's 10% off
+    this one item (Chummer's `DiscountCost`)."""
+    return _text(node.find("discountedcost")).lower() == "true"
+
+
 def _came_with_parent(node: ET.Element) -> bool:
     """Whether a piece of ware came with the one it sits in, rather than being
     bought for it.
@@ -49,6 +55,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "side": _text(w.find("location")) or None,
                 "extra": _text(w.find("extra")) or None,
                 "included": _came_with_parent(w),
+                "discounted": _discounted(w),
             }
             out.append(row)
             for pick in w.findall("./skillpicks/pick"):
@@ -107,6 +114,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "armor_id": aid,
             "rating": max(1, _int(a.find("rating"), 1)),
             "equipped": _text(a.find("equipped")).lower() != "false",
+            "discounted": _discounted(a),
         }
         if aid in variable_armor:
             row["cost"] = _picked_cost(a)
@@ -153,7 +161,12 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
         wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
         if not wid:
             continue
-        row = {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _int(w.find("qty"), 1))}
+        row = {
+            "id": str(uuid.uuid4()),
+            "weapon_id": wid,
+            "qty": max(1, _int(w.find("qty"), 1)),
+            "discounted": _discounted(w),
+        }
         st_weap.append(row)
         for acc in w.findall("./accessories/accessory"):
             acid = wacc_r.resolve(acc, warn, ui("engine.kind.weaponAccessory"))
@@ -241,6 +254,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             "id": str(uuid.uuid4()),
             "gear_id": gid,
             "rating": max(1, _int(g.find("rating"), 1)),
+            "discounted": _discounted(g),
         }
         spec = rows_by_id.get(gid) or {}
         if spec.get("cost_range"):

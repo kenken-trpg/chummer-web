@@ -1,6 +1,7 @@
 "use client";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { swapMatrixOrder } from "@/lib/character/gear";
@@ -22,6 +23,16 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
                 / {item.nuyen.toLocaleString()}¥ / {item.source}
+              </div>
+              <div className="cyber-controls">
+                <DiscountToggle
+                  list="cyberdecks"
+                  id={item.id}
+                  ch={ch}
+                  d={d}
+                  ui={ui}
+                  patch={patch}
+                />
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">

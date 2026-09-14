@@ -715,7 +715,7 @@ def test_black_market_pipeline_discounts_weapons() -> None:
                 f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
             },
             contacts=[contact],
-            weapons=[WeaponInstall(weapon_id=weapon["id"])],
+            weapons=[WeaponInstall(weapon_id=weapon["id"], discounted=True)],
         )
     )
     assert disc.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))

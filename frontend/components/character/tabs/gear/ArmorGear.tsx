@@ -2,6 +2,7 @@
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { ArmorModRow, CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { armorModFits } from "@/lib/character/gear";
@@ -71,6 +72,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   {item.nuyen.toLocaleString()}¥ / {item.source}
                 </div>
                 <div className="cyber-controls">
+                  <DiscountToggle list="armor" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
                   <PriceField
                     range={item.cost_range}
                     value={

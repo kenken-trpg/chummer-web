@@ -342,6 +342,9 @@ export const EN: Catalog = {
   "gear.addArmorGear": "Carry gear in it",
   "gear.putIn": "Put in",
   "gear.addMod": "Add a mod",
+  "gear.blackMarket": "Black market",
+  "gear.blackMarketHint":
+    "10% off this item, through the Black Market Pipeline (one item at a time, in its own category)",
   "gear.stackWith": "Stacks with",
   "gear.stackWithHint":
     "Worn with the armor it was tailored to, this piece adds its + value on top of that armor (RG p.59)",
