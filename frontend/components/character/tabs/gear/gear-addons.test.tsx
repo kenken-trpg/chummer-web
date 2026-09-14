@@ -646,6 +646,50 @@ describe("<ArmorGear> gear carried in a piece", () => {
     expect(added).toMatchObject({ gear_id: "c-holster", parent_id: "a2" });
   });
 
+  it("a vision enhancement goes in the optics list, on the helmet it is put in", () => {
+    const patch = vi.fn();
+    renderPanel(ArmorGear, character(), patch, {
+      ...catalog,
+      optics: [
+        {
+          id: "c-vm",
+          name: "Vision Magnification",
+          category: "Vision Enhancements",
+          cost: "250",
+          armor_capacity: "[1]",
+        },
+      ] as any,
+      sensors: [
+        {
+          id: "c-ss",
+          name: "Single Sensor",
+          category: "Sensors",
+          cost: "100",
+          armor_capacity: "[1]",
+        },
+        {
+          id: "c-sf",
+          name: "Vision Magnification",
+          category: "Sensor Functions",
+          cost: "250",
+          armor_capacity: "[1]",
+        },
+      ] as any,
+    });
+    const picker = screen.getByRole("combobox", { name: "Lined Coat: ギアを入れる" });
+    // a sensor function goes in its housing, not straight in the armor
+    expect(
+      within(picker)
+        .getAllByRole("option")
+        .filter((o) => o.textContent?.startsWith("Vision Magnification")),
+    ).toHaveLength(1);
+    fireEvent.change(picker, { target: { value: "c-vm" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lined Coat: 入れる" }));
+    expect(patch.mock.calls[0][0]).toEqual({
+      optics: [{ gear_id: "c-vm", parent_id: "a1", rating: 1 }],
+    });
+  });
+
   it("deleting a piece takes the gear carried in it and only that", () => {
     const patch = vi.fn();
     renderPanel(ArmorGear, character(), patch, catalog);

@@ -25,6 +25,7 @@ from ._common import (
     _clamp_rating,
     _device_rating_of,
     _program_label,
+    armor_capacity_of,
     chosen_cost,
 )
 from .ammo import _apply_loaded_ammo, _pick_loaded_ammo, ammo_fits_weapon
@@ -349,9 +350,7 @@ def _resolve_misc_gear(
                 "capacity_cost": cap_cost,
                 "capacity_used": 0.0,
                 "capacity_max": cap_max,
-                "armor_capacity": _capacity_value(str(spec.get("armor_capacity") or "").strip("[]"), rating)
-                if spec.get("armor_capacity") and not inst.included
-                else 0,
+                "armor_capacity": armor_capacity_of(spec, inst, rating),
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
                 "required_names": list(spec.get("required_names") or []),

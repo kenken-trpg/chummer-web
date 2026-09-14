@@ -326,13 +326,21 @@ def _recompute_worn_armor(
     return best_value, worn_name, warnings, penalty
 
 
-def apply_armor_gear(armor_items: list[dict[str, Any]], gear_items: list[dict[str, Any]], errors: list[Notice]) -> None:
+def apply_armor_gear(
+    armor_items: list[dict[str, Any]], carried_by_bucket: dict[str, list[dict[str, Any]]], errors: list[Notice]
+) -> None:
     """Gear carried in a piece of armor takes its `<armorcapacity>` from the
     armor's capacity — once per item of its quantity — as the mods do
     (Chummer's `Armor.CapacityRemaining`), and is listed on the armor it
     sits in. What came with the armor takes none."""
     for item in armor_items:
-        carried = [row for row in gear_items if row.get("parent_id") == item["id"]]
+        carried = []
+        for bucket, rows in carried_by_bucket.items():
+            for row in rows:
+                if row.get("parent_id") == item["id"]:
+                    # which list the row lives in, for the front end to edit it
+                    row["bucket"] = bucket
+                    carried.append(row)
         item["gear"] = carried
         if not carried:
             continue

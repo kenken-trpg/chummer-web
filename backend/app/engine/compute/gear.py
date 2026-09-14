@@ -257,7 +257,7 @@ def resolve_gear(
     bonus_sources.extend(gear_bonus)
     _append_gear_weapons(weapons, gear_items)
     apply_host_matrix_mods(commlinks, gear_items)
-    apply_armor_gear(armor_items, gear_items, errors)
+    apply_armor_gear(armor_items, {"gear": gear_items, "optics": optics, "sensors": sensors}, errors)
 
     custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)
     nuyen += custom_drug_nuyen

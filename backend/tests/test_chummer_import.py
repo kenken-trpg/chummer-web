@@ -525,31 +525,48 @@ def test_a_picked_price_is_held_to_its_range() -> None:
 
 def test_gear_carried_in_armor_comes_in_on_the_armor_and_goes_back_out_there() -> None:
     """Chummer keeps a Holster or a Medkit in the armor's own `<gears>`; a
-    Personal Drone Rack older saves list with the mods is gear too. A sensor
-    in armor is fitted to other hosts in this app, so it is named, not lost."""
+    Personal Drone Rack older saves list with the mods is gear too, and a
+    helmet's sensor and vision enhancements sit there as well."""
     xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
       <armors><armor><name>Armor Jacket</name>
         <armormods><armormod><name>Personal Drone Rack</name></armormod></armormods>
         <gears>
           <gear><name>Holster</name><qty>1</qty></gear>
           <gear><name>Medkit</name><rating>3</rating><qty>1</qty></gear>
+        </gears>
+      </armor>
+      <armor><name>Helmet</name>
+        <gears>
           <gear><name>Single Sensor</name><qty>1</qty></gear>
+          <gear><name>Vision Magnification</name><qty>1</qty></gear>
+          <gear><name>Vision Enhancement</name><rating>2</rating><qty>1</qty></gear>
         </gears>
       </armor></armors>
     </character>"""
     st, warnings = chum5_to_state(xml)
-    assert [w["key"] for w in warnings] == ["engine.import.armorGearSkipped"]
-    (armor,) = st["armor"]
+    assert warnings == []
+    jacket, helmet = st["armor"]
     assert st["armor_mods"] == []
-    assert {g["parent_id"] for g in st["gear"]} == {armor["id"]}
+    assert {g["parent_id"] for g in st["gear"]} == {jacket["id"]}
     assert len(st["gear"]) == 3
+    # Vision Magnification is an optic here, not a sensor function
+    assert {g["parent_id"] for g in st["optics"] + st["sensors"]} == {helmet["id"]}
+    assert (len(st["optics"]), len(st["sensors"])) == (2, 1)
     derived = import_character(st).derived
-    assert derived["armor_items"][0]["capacity_used"] == 1 + 3 + 5
+    jacket_row, helmet_row = derived["armor_items"]
+    assert jacket_row["capacity_used"] == 1 + 3 + 5
+    assert helmet_row["capacity_used"] == 1 + 1 + 2
+    assert {row["bucket"] for row in helmet_row["gear"]} == {"optics", "sensors"}
     assert not has(derived["warnings"], "engine.gear.doesNotFit")
 
     root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
-    carried = [_text(g.find("name")) for g in root.findall("./armors/armor/gears/gear")]
-    assert sorted(carried) == ["Holster", "Medkit", "Personal Drone Rack"]
+    armors = root.findall("./armors/armor")
+    assert sorted(_text(g.find("name")) for g in armors[0].findall("./gears/gear")) == [
+        "Holster",
+        "Medkit",
+        "Personal Drone Rack",
+    ]
+    assert len(armors[1].findall("./gears/gear")) == 3
     assert root.findall("./gears/gear") == []
 
 
