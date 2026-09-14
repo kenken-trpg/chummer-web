@@ -111,8 +111,25 @@ def test_client_ip_reads_nth_hop_from_the_right(monkeypatch: pytest.MonkeyPatch)
     assert _client_ip(short) == "10.0.0.2"  # type: ignore[arg-type]
 
 
-def test_client_ip_prefers_cf_connecting_ip(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_client_ip_ignores_cf_connecting_ip_unless_the_deploy_is_behind_cloudflare(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only Cloudflare overwrites that header. Anywhere else the caller writes
+    it, and a fresh value per request would walk past every rate limit."""
+    monkeypatch.setattr("app.main._TRUSTED_PROXY_HOPS", 0)
+    monkeypatch.setattr("app.main._TRUST_CLOUDFLARE_IP", False)
+    req = _StubRequest({"cf-connecting-ip": "198.51.100.9"})
+    assert _client_ip(req) == "10.0.0.1"  # type: ignore[arg-type]
+
+    monkeypatch.setattr("app.main._TRUST_CLOUDFLARE_IP", True)
+    assert _client_ip(req) == "198.51.100.9"  # type: ignore[arg-type]
+
+
+def test_cf_connecting_ip_wins_over_x_forwarded_for_behind_cloudflare(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr("app.main._TRUSTED_PROXY_HOPS", 2)
+    monkeypatch.setattr("app.main._TRUST_CLOUDFLARE_IP", True)
     req = _StubRequest({"cf-connecting-ip": "198.51.100.9", "x-forwarded-for": "spoofed, a, b"})
     assert _client_ip(req) == "198.51.100.9"  # type: ignore[arg-type]
 
@@ -210,3 +227,13 @@ def test_cors_refuses_an_unlisted_origin() -> None:
         headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "POST"},
     )
     assert r.status_code == 400
+
+
+def test_every_answer_carries_the_security_headers() -> None:
+    """A split deploy exposes this app with nothing in front of it, so the
+    headers Caddy and Next add in the bundled one are set here too."""
+    r = client.get("/api/health")
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["x-frame-options"] == "DENY"
+    assert r.headers["referrer-policy"] == "no-referrer"
+    assert "frame-ancestors 'none'" in r.headers["content-security-policy"]

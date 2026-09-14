@@ -46,17 +46,21 @@ _IMPORT_RATE_LIMIT = os.environ.get("IMPORT_RATE_LIMIT") or "20/minute"
 # How many entries to count in from the *right* of `x-forwarded-for` to find the
 # real client. 0 (default) = don't trust `x-forwarded-for` at all — a direct
 # client can put anything in it, and taking the leftmost hop lets it forge a
-# fresh IP per request and walk straight past every rate limit. `cf-connecting-ip`
-# is always honoured (Cloudflare overwrites it). Behind a platform LB
-# (Cloud Run / Fly) set 2; behind a single self-managed reverse proxy that
-# appends the peer, set 1.
+# fresh IP per request and walk straight past every rate limit. Behind a
+# platform LB (Cloud Run / Fly) set 2; behind a single self-managed reverse
+# proxy that appends the peer, set 1.
 _TRUSTED_PROXY_HOPS = int(os.environ.get("TRUSTED_PROXY_HOPS") or 0)
+#: `cf-connecting-ip` is only meaningful behind Cloudflare, which overwrites
+#: it on the way in. Anywhere else the caller writes it, and a fresh value per
+#: request walks past every rate limit — so it is read only when the deploy
+#: says it is behind Cloudflare.
+_TRUST_CLOUDFLARE_IP = (os.environ.get("TRUST_CLOUDFLARE_IP") or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _client_ip(request: Request) -> str:
     """Best-effort caller identity for rate limiting. Only reads forwarded
     headers that infrastructure we trust is known to have written."""
-    cf = (request.headers.get("cf-connecting-ip") or "").strip()
+    cf = (request.headers.get("cf-connecting-ip") or "").strip() if _TRUST_CLOUDFLARE_IP else ""
     if cf:
         return cf
     if _TRUSTED_PROXY_HOPS > 0:
@@ -65,6 +69,17 @@ def _client_ip(request: Request) -> str:
             return hops[-_TRUSTED_PROXY_HOPS]
     return request.client.host if request.client else "anon"
 
+
+#: Set on every response, unless something in front already did. JSON and a
+#: .chum5 download, never a page: the policy says "no page here at all".
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-site",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+}
 
 _log = logging.getLogger("chummer_web")
 
@@ -201,6 +216,12 @@ async def _request_context(request: Request, call_next: Callable[[Request], Awai
             },
         )
         response.headers["X-Request-ID"] = rid
+        # The bundled deploy has Caddy in front and the browser talks to Next,
+        # both of which set these. A split deploy exposes this app directly,
+        # where nothing else would: an API answer is never a document, so it
+        # is marked as one nobody may sniff, frame or embed.
+        for header, value in _SECURITY_HEADERS.items():
+            response.headers.setdefault(header, value)
         return response
     finally:
         request_id_var.reset(token)

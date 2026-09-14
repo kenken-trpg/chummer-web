@@ -56,7 +56,8 @@ Before going public, put back the limits that are loosened for local use. In `.e
 ```bash
 RATE_LIMIT=120/minute
 IMPORT_RATE_LIMIT=20/minute
-# leave TRUSTED_PROXY_HOPS at 0 (Cloudflare's cf-connecting-ip is used)
+# behind Cloudflare, set TRUST_CLOUDFLARE_IP=1 (reads cf-connecting-ip)
+# behind your own proxy, set TRUSTED_PROXY_HOPS to 1 or 2
 ```
 
 Run `make up` again to apply them.

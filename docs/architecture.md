@@ -116,10 +116,11 @@ by whichever merged last, so `tests/test_catalog_view.py` asserts it.
 
 **Runtime env** (all optional, sensible dev defaults): `ALLOWED_ORIGINS`
 (comma-separated CORS list), `MAX_REQUEST_BYTES` (413 above this, default 12 MiB),
-`RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`,
-else the `TRUSTED_PROXY_HOPS`-th `x-forwarded-for` entry from the right if that
-is set, else the socket peer; `x-forwarded-for` is ignored by default because a
-direct client can forge it; defaults `120/minute` / `20/minute`),
+`RATE_LIMIT` / `IMPORT_RATE_LIMIT` (slowapi, per client IP — `cf-connecting-ip`
+when `TRUST_CLOUDFLARE_IP` is set, else the `TRUSTED_PROXY_HOPS`-th
+`x-forwarded-for` entry from the right if that is set, else the socket peer;
+both headers are ignored by default because a direct client can forge either;
+defaults `120/minute` / `20/minute`),
 `CHUM5_MAX_DECOMPRESSED_BYTES` (decompression-bomb cap on the `.chum5lz` path,
 default 32 MiB), `LOG_FORMAT` (`text` / `json`) and `LOG_LEVEL`. Untrusted XML
 is parsed via `defusedxml`.
