@@ -602,3 +602,20 @@ def test_what_a_commlink_comes_with_is_not_bought_again() -> None:
     derived = import_character(st).derived
     assert derived["apps"][0]["nuyen"] == 0
     assert derived["nuyen_spent"] == 6000
+
+
+def test_the_black_market_discount_is_kept_per_item() -> None:
+    """Chummer marks the one item the buyer took the Black Market Pipeline's
+    10% off with `<discountedcost>`, rather than discounting everything of
+    that category."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <weapons>
+        <weapon><name>Ares Predator V</name><discountedcost>True</discountedcost></weapon>
+        <weapon><name>Ares Predator V</name><discountedcost>False</discountedcost></weapon>
+      </weapons>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    assert [row["discounted"] for row in st["weapons"]] == [True, False]
+    root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
+    assert [_text(w.find("discountedcost")) for w in root.findall("./weapons/weapon")] == ["True", "False"]

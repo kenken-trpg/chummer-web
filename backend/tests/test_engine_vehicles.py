@@ -696,14 +696,17 @@ def test_dealer_connection_matches_drone_and_watercraft_categories() -> None:
     assert b_deal.derived["nuyen_spent"] == int(round(b_base.derived["nuyen_spent"] * 0.9))
 
 
-def test_made_man_discounts_restricted_vehicle() -> None:
+def test_a_dealer_connection_discounts_its_vehicles_and_made_man_does_not() -> None:
+    """Chummer takes 10% off every vehicle of a Dealer Connection's categories
+    on its own (`DoesDealerConnectionApply`), while Made Man only adds a
+    contact — no price of its own."""
     restricted = next(
         v for v in catalog()["vehicles"] if "R" in str(v.get("avail") or "").upper() and int(v.get("cost") or 0) > 0
     )
     base = compute(_mundane("mm-veh0", vehicles=[GearInstall(gear_id=restricted["id"])]))
     made = compute(_mundane("mm-veh1", quality_ids=[MADE_MAN], vehicles=[GearInstall(gear_id=restricted["id"])]))
-    assert made.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
-    assert made.derived["vehicles"][0]["discount_pct"] == 10
+    assert made.derived["nuyen_spent"] == base.derived["nuyen_spent"]
+    assert not made.derived["vehicles"][0].get("discount_pct")
 
 
 PROTOTYPE_TRANSHUMAN = "08c4dfad-3661-48d9-a265-43cce84e20d8"

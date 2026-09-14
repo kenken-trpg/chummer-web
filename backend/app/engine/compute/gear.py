@@ -66,6 +66,29 @@ from ..ware import _attach_ware_to_vehicle_mods
 from .context import Ctx
 
 
+def _discounted_ids(state: CharacterState) -> set[str]:
+    """Ids of what the buyer took the Black Market Pipeline's 10% off."""
+    out: set[str] = set()
+    for rows in (
+        state.gear,
+        state.commlinks,
+        state.cyberdecks,
+        state.rccs,
+        state.optics,
+        state.sensors,
+        state.programs,
+        state.apps,
+        state.weapons,
+        state.armor,
+        state.vehicles,
+        state.drones,
+        state.cyberware,
+        state.bioware,
+    ):
+        out |= {row.id for row in rows or [] if getattr(row, "discounted", False)}
+    return out
+
+
 def resolve_gear(
     state: CharacterState,
     ware_items: list[dict[str, Any]] | None = None,
@@ -375,6 +398,7 @@ def gear_phase(ctx: Ctx) -> None:
         ctx.bio_installed,
         ctx.effects,
         black_market_category=ctx.bmp_category if ctx.bmp_active else "",
+        discounted_ids=_discounted_ids(ctx.state),
     )
     if ctx.bmp_active:
         apply_black_market_avail(

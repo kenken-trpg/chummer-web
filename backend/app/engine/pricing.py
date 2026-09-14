@@ -133,10 +133,18 @@ def apply_purchase_discounts(
     effects: EffectsDict,
     *,
     black_market_category: str = "",
+    discounted_ids: set[str] | None = None,
 ) -> None:
-    """Mutate item nuyen in place; adjust gear["nuyen"] by discount savings only."""
+    """Mutate item nuyen in place; adjust gear["nuyen"] by discount savings only.
+
+    A Dealer Connection applies on its own — Chummer takes 10% off every
+    vehicle of the categories it names. The Black Market Pipeline does not:
+    it lets the buyer take 10% off an item of its category, one item at a
+    time (Chummer's `<discountedcost>`), so only what `discounted_ids` names
+    is cheaper.
+    """
     dealer = list(effects.get("dealer_connection_categories") or [])
-    made = bool(effects.get("made_man"))
+    picked = discounted_ids or set()
     bmp = bool(effects.get("black_market_discount")) and bool(black_market_category)
     bmp_keys = set(BLACK_MARKET_CATEGORY_HINTS.get(black_market_category) or ())
     saved = 0
@@ -155,9 +163,7 @@ def apply_purchase_discounts(
         for row in gear.get(key) or []:
             if _dealer_matches(str(row.get("category") or ""), dealer):
                 _discount(row, 10)
-            if bmp and key in bmp_keys:
-                _discount(row, 10)
-            if made and "R" in str(row.get("avail") or "").upper():
+            if bmp and key in bmp_keys and str(row.get("id") or "") in picked:
                 _discount(row, 10)
 
     for key in (
@@ -177,20 +183,21 @@ def apply_purchase_discounts(
         "weapon_mounts",
     ):
         for row in gear.get(key) or []:
-            if bmp and key in bmp_keys:
-                if key == "gear" and black_market_category == "Drugs":
-                    if str(row.get("category") or "") not in DRUG_CATEGORIES:
-                        continue
-                _discount(row, 10)
-            if made and "R" in str(row.get("avail") or "").upper():
-                _discount(row, 10)
+            if not (bmp and key in bmp_keys and str(row.get("id") or "") in picked):
+                continue
+            if key == "gear" and black_market_category == "Drugs":
+                if str(row.get("category") or "") not in DRUG_CATEGORIES:
+                    continue
+            _discount(row, 10)
 
     if bmp and black_market_category == "Cyberware":
         for row in cyber_installed:
-            _discount(row, 10)
+            if str(row.get("id") or "") in picked:
+                _discount(row, 10)
     if bmp and black_market_category == "Bioware":
         for row in bio_installed:
-            _discount(row, 10)
+            if str(row.get("id") or "") in picked:
+                _discount(row, 10)
 
     trust = int(effects.get("trustfund") or 0)
     covered = TRUST_FUND_LIFESTYLE.get(trust)

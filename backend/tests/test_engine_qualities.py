@@ -610,12 +610,14 @@ def test_biocompatibility_bioware_scales_bioware_essence() -> None:
     assert compat.derived["essence_lost_bio"] == 0.3  # 0.4 * 0.9, floored to the tenth
 
 
-def test_made_man_discounts_restricted_gear_by_ten_percent() -> None:
+def test_made_man_does_not_discount_gear() -> None:
+    """Chummer's Made Man adds a contact and nothing else — its `mademan`
+    improvement never touches a price, so a Restricted weapon costs the same."""
     weapon = next(w for w in catalog()["weapons"] if w.get("name") == "Ares Predator V")  # 5R
     base = compute(_mundane("mm-disc0", weapons=[WeaponInstall(weapon_id=weapon["id"])]))
     made = compute(_mundane("mm-disc1", quality_ids=[MADE_MAN], weapons=[WeaponInstall(weapon_id=weapon["id"])]))
-    assert made.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
-    assert made.derived["weapons"][0]["discount_pct"] == 10
+    assert made.derived["nuyen_spent"] == base.derived["nuyen_spent"]
+    assert not made.derived["weapons"][0].get("discount_pct")
 
 
 def test_black_market_pipeline_discounts_and_lowers_cyberware_avail() -> None:
@@ -630,7 +632,7 @@ def test_black_market_pipeline_discounts_and_lowers_cyberware_avail() -> None:
                 f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
             },
             contacts=[contact],
-            cyberware=[CyberwareInstall(ware_id=WIRED, rating=2)],
+            cyberware=[CyberwareInstall(ware_id=WIRED, rating=2, discounted=True)],
         )
     )
     assert bmp.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))
@@ -651,7 +653,7 @@ def test_black_market_pipeline_discounts_and_lowers_bioware_avail() -> None:
                 f"{BLACK_MARKET_PIPELINE}:contact": contact.id,
             },
             contacts=[contact],
-            bioware=[CyberwareInstall(ware_id=SUPRATHYROID)],
+            bioware=[CyberwareInstall(ware_id=SUPRATHYROID, discounted=True)],
         )
     )
     assert bmp.derived["nuyen_spent"] == int(round(base.derived["nuyen_spent"] * 0.9))

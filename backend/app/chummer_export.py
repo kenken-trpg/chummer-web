@@ -463,6 +463,7 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                 # Chummer's mark for "came with its parent": the parent's guid.
                 # Empty on a top-level piece and on anything bought for a parent.
                 _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
+                _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
                 picks = _picks_of(r.id)
                 if picks:
                     picks_el = _sub(w, "skillpicks")
@@ -494,6 +495,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         if a.cost is not None:
             _sub(el, "cost", a.cost)
         _sub(el, "equipped", "True" if a.equipped else "False")
+        _sub(el, "discountedcost", "True" if a.discounted else "False")
         mods = _sub(el, "armormods")
         for mrow in amods_by_parent.get(a.id, []):
             mm = _sub(mods, "armormod")
@@ -523,6 +525,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         _sub(el, "sourceid", w.weapon_id)
         _sub(el, "name", names["weapon"].get(w.weapon_id, ""))
         _sub(el, "qty", w.qty)
+        _sub(el, "discountedcost", "True" if w.discounted else "False")
         accs = _sub(el, "accessories")
         for arow in wacc_by_parent.get(w.id, []):
             ac = _sub(accs, "accessory")
@@ -567,6 +570,7 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 el.find("name").text = g.name  # type: ignore[union-attr]
             _sub(el, "rating", getattr(g, "rating", 1))
             _sub(el, "qty", int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)))
+            _sub(el, "discountedcost", "True" if getattr(g, "discounted", False) else "False")
             if getattr(g, "cost", None) is not None:
                 _sub(el, "cost", g.cost)
             if getattr(g, "parent_id", None):

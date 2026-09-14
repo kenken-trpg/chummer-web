@@ -90,6 +90,13 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **闇市の割引を、品目ごとに選ぶようにした（Chummer の `<discountedcost>`）。**
+  Black Market Pipeline は分類の全部が安くなる資質ではなく、その分類の品目を
+  1 つずつ選んで 10% 引きにするもの。これまでは対象分類を丸ごと自動で
+  引いていた。.chum5 とも往復する。
+- **Made Man では値段が変わらないようにした。** Chummer の Made Man は
+  コンタクトを 1 人足すだけで、制限品の値引きはしない（`ImprovementType.MadeMan`
+  は値段に使われていない）。Dealer Connection は Chummer と同じく自動のまま。
 - **キャリアのセーブのカルマと新円を、残高として読み書きするようにした。**
   Chummer の `<karma>` / `<nuyen>` は使える残りだが、稼いだ合計として読んで
   いたので、読み込むと残りが大きくずれていた。今は履歴（`<expenses>`）の稼ぎを

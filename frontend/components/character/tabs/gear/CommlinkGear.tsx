@@ -2,6 +2,7 @@
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 
@@ -20,6 +21,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 {item.attack ? ` / A ${item.attack}` : ""}
                 {item.sleaze ? ` / S ${item.sleaze}` : ""} / DP {item.dataprocessing} / FW{" "}
                 {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
+              </div>
+              <div className="cyber-controls">
+                <DiscountToggle list="commlinks" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
               </div>
               <div className="cyber-controls">
                 {item.rating_max > 0 ? (

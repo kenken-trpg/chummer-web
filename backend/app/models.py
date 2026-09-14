@@ -47,6 +47,9 @@ class CyberwareInstall(BaseModel):
     # `<selectcyberware>`: the implant this one is keyed to (Implant Medic,
     # Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
     extra: str | None = None
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class Priorities(BaseModel):
@@ -128,6 +131,9 @@ class ArmorInstall(BaseModel):
     cost: int | None = None
     equipped: bool = True
     wireless: bool = True
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class ArmorModInstall(BaseModel):
@@ -147,6 +153,9 @@ class WeaponInstall(BaseModel):
     weapon_id: str
     qty: int = 1
     loaded_ammo_id: str | None = None
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class VehicleModInstall(BaseModel):
@@ -176,6 +185,9 @@ class WeaponAccessoryInstall(BaseModel):
     included: bool = False
     rating: int = 1
     mount: str = ""
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class CommlinkInstall(BaseModel):
@@ -184,6 +196,9 @@ class CommlinkInstall(BaseModel):
     rating: int = 1
     #: how many alike — a stack of burner Meta Links
     qty: int = Field(default=1, ge=1, le=999)
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class GearInstall(BaseModel):
@@ -201,6 +216,9 @@ class GearInstall(BaseModel):
     #: Commlink App), and a Custom Item's own name
     cost: int | None = None
     name: str | None = Field(default=None, max_length=200)
+    #: bought through the Black Market Pipeline: 10% off (Chummer's
+    #: `<discountedcost>`, which the quality's categories allow)
+    discounted: bool = False
 
 
 class CustomDrugPart(BaseModel):

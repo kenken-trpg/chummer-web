@@ -3,6 +3,7 @@ import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { useState } from "react";
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import { CustomDrugMixer } from "@/components/character/tabs/gear/CustomDrugMixer";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { DRUG_CATS, isDrugCategory } from "@/lib/character/constants";
 import { dropTree, miscFits } from "@/lib/character/gear";
@@ -86,6 +87,10 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
                       : ""}
                     {" / "}
                     {item.nuyen.toLocaleString()}¥ / {item.source}
+                  </div>
+                  {/* a quality's gift was not bought: no price to discount */}
+                  <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
+                    <DiscountToggle list="gear" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
                   </div>
                   <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
                     {item.category === "Custom" ? (

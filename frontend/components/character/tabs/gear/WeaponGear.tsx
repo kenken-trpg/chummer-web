@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
@@ -57,6 +58,9 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     ? ui("weapon.categoryDice", { dice: item.category_dice })
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
+                </div>
+                <div className="cyber-controls">
+                  <DiscountToggle list="weapons" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
                 </div>
                 {fromWare || natural || fromArmor ? null : (
                   <div className="cyber-controls">
