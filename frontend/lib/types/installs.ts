@@ -277,6 +277,8 @@ export interface WareInstall {
   side?: string | null;
   /** `<selectcyberware>`: name of the implant this one is keyed to. */
   extra?: string | null;
+  /** bought through the Black Market Pipeline: 10% off this one piece */
+  discounted?: boolean;
 }
 
 export type PriorityLetter = "A" | "B" | "C" | "D" | "E";
