@@ -471,3 +471,49 @@ def test_what_chummer_made_up_rather_than_took_from_data_is_not_reported() -> No
     st, warnings = chum5_to_state(xml)
     assert st["weapons"] == []
     assert warnings == []
+
+
+def test_items_the_player_prices_keep_their_price_and_name() -> None:
+    """`Variable(lo-hi)` in Chummer's data: the save's `<cost>` is the price
+    picked, and a Custom Item's `<name>` is the player's (its `<id>` says
+    which entry it is)."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <armors><armor><sourceid>31c68476-6328-476a-ae8a-94f65d505a04</sourceid><name>Clothing</name>
+        <cost>1000</cost></armor></armors>
+      <gears>
+        <gear><id>0025f1c7-45a4-4ec5-a692-e18aab2f97a9</id><name>Golden Lotus Flower</name>
+          <category>Custom</category><cost>100</cost><qty>1</qty></gear>
+        <gear><name>Hermes Ikon</name><category>Commlinks</category><children>
+          <gear><id>f1d72c1e-32f6-48d1-88c9-f916119cbaf8</id><name>Theme Music</name>
+            <category>Commlink Apps</category><cost>40</cost></gear></children></gear>
+      </gears>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    derived = import_character(st).derived
+    assert [(row["name"], row["nuyen"]) for row in derived["armor_items"]] == [("Clothing", 1000)]
+    (lotus,) = derived["gear"]
+    assert (lotus["label"], lotus["nuyen"]) == ("Golden Lotus Flower", 100)
+    assert [(row["name"], row["nuyen"]) for row in derived["apps"]] == [("Theme Music", 40)]
+
+
+def test_a_picked_price_is_held_to_its_range() -> None:
+    from app.engine import compute
+    from app.models import ArmorInstall, CharacterState, GearInstall, Priorities
+
+    custom = "0025f1c7-45a4-4ec5-a692-e18aab2f97a9"
+    clothing = "31c68476-6328-476a-ae8a-94f65d505a04"
+    out = compute(
+        CharacterState(
+            id="p",
+            name="p",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes={},
+            armor=[ArmorInstall(armor_id=clothing, cost=5)],  # Clothing starts at 20
+            gear=[GearInstall(gear_id=custom, cost=2500, name="Rosary")],
+        )
+    )
+    assert out.armor[0].cost == 20
+    assert out.derived["armor_items"][0]["nuyen"] == 20
+    assert (out.derived["gear"][0]["label"], out.derived["gear"][0]["nuyen"]) == ("Rosary", 2500)

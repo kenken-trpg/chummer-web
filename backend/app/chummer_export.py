@@ -487,6 +487,8 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         el = _sub(armors, "armor")
         _sub(el, "sourceid", a.armor_id)
         _sub(el, "name", names["armor"].get(a.armor_id, ""))
+        if a.cost is not None:
+            _sub(el, "cost", a.cost)
         _sub(el, "equipped", "True" if a.equipped else "False")
         mods = _sub(el, "armormods")
         for mrow in amods_by_parent.get(a.id, []):
@@ -553,8 +555,13 @@ def _export_gear(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
             el = _sub(parent_el, "gear")
             _sub(el, "sourceid", gid)
             _sub(el, "name", names["gear"].get(gid, ""))
+            if getattr(g, "name", None):
+                # a Custom Item goes by the name the player gave it
+                el.find("name").text = g.name  # type: ignore[union-attr]
             _sub(el, "rating", getattr(g, "rating", 1))
             _sub(el, "qty", int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)))
+            if getattr(g, "cost", None) is not None:
+                _sub(el, "cost", g.cost)
             if getattr(g, "parent_id", None):
                 _sub(el, "included", "True" if getattr(g, "included", False) else "False")
             kids = by_parent_g.get(g.id)

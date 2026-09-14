@@ -55,6 +55,7 @@ from ..gear import (
     resolve_custom_drugs,
     resolve_lifestyles,
 )
+from ..gear._common import chosen_cost
 from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..lookups import _item_by_id
@@ -91,7 +92,9 @@ def resolve_gear(
         armor_inst.equipped = bool(armor_inst.equipped)
         armor_inst.wireless = bool(armor_inst.wireless)
         has_wireless = bool(spec.get("wirelessbonus"))
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        picked = chosen_cost(spec, armor_inst.cost)
+        armor_inst.cost = picked
+        cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
         if armor_inst.equipped:
@@ -117,6 +120,7 @@ def resolve_gear(
                 "wireless": armor_inst.wireless,
                 "has_wireless": has_wireless,
                 "nuyen": cost,
+                "cost_range": spec.get("cost_range"),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",

@@ -453,3 +453,17 @@ def test_raised_lifestyle_points_round_trip() -> None:
     )
     back = chum5_to_state(state_to_chum5(state))[0]["lifestyles"][0]
     assert (back["comforts"], back["area"], back["security"]) == (1, 1, 0)
+
+
+def test_a_picked_price_and_a_custom_name_round_trip() -> None:
+    custom = "0025f1c7-45a4-4ec5-a692-e18aab2f97a9"
+    state = CharacterState(
+        id="pc",
+        name="pc",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        gear=[GearInstall(gear_id=custom, cost=250, name="Rosary")],
+    )
+    back = chum5_to_state(state_to_chum5(import_character(state.model_dump())))[0]["gear"][0]
+    assert (back["gear_id"], back["cost"], back["name"]) == (custom, 250, "Rosary")

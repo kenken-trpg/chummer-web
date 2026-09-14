@@ -130,6 +130,8 @@ export interface FocusInstall {
 }
 
 export interface ArmorInstall {
+  /** the price picked for a `Variable(lo-hi)` piece */
+  cost?: number | null;
   id?: string;
   armor_id: string;
   rating?: number;
@@ -171,6 +173,9 @@ export interface CommlinkInstall {
 }
 
 export interface GearInstall {
+  /** the price picked for a `Variable(lo-hi)` item, and a Custom Item's name */
+  cost?: number | null;
+  name?: string | null;
   id?: string;
   gear_id: string;
   rating?: number;

@@ -88,6 +88,7 @@ def section(raw: CatalogDict) -> dict:
                 "name": c["name"],
                 "category": c.get("category") or "",
                 "cost": c.get("cost") or "0",
+                "cost_range": c.get("cost_range"),
                 "avail": c.get("avail") or "",
                 "minrating": int(c.get("minrating") or 0),
                 "maxrating": int(c.get("maxrating") or 0),

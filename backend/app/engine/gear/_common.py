@@ -186,3 +186,13 @@ def _limb_attr_effect(name: str) -> tuple[str, str] | None:
     if "enhanced agility" in lower or "augmentation, agility" in lower:
         return "AGI", "add"
     return None
+
+
+def chosen_cost(spec: dict[str, Any], picked: int | None) -> int | None:
+    """The price of a `Variable(lo-hi)` item — what the player picked, held to
+    the range (its bottom when nothing is picked) — or None for a fixed one."""
+    rng = spec.get("cost_range")
+    if not rng:
+        return None
+    lo, hi = int(rng[0]), int(rng[1])
+    return max(lo, min(hi, int(picked if picked is not None else lo)))

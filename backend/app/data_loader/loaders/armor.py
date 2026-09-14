@@ -7,7 +7,7 @@ from typing import Any
 
 from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus
-from ..formulas import _is_variable_cost
+from ..formulas import _is_variable_cost, variable_cost_range
 
 
 def _armor_included_mods(el: ET.Element) -> list[dict[str, Any]]:
@@ -54,6 +54,10 @@ def load_armor() -> list[dict[str, Any]]:
         name = _text(el.find("name"))
         armor_id = _text(el.find("id"))
         cost = _text(el.find("cost"), "0")
+        # Clothing: `Variable(20-100000)`, priced by the player within the range
+        cost_range = variable_cost_range(cost)
+        if cost_range:
+            cost = "0"
         if not name or not armor_id or _is_variable_cost(cost):
             continue
         armor_raw = _text(el.find("armor"), "0")
@@ -67,6 +71,7 @@ def load_armor() -> list[dict[str, Any]]:
                 "armorcapacity": _text(el.find("armorcapacity")),
                 "avail": _text(el.find("avail")),
                 "cost": cost,
+                "cost_range": list(cost_range) if cost_range else None,
                 "minrating": 1 if rating_max > 0 else 0,
                 "maxrating": rating_max,
                 "additive": armor_raw.startswith("+") or armor_raw.startswith("-"),

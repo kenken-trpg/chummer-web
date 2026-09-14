@@ -612,3 +612,37 @@ describe("<MiscDrugsGear> the catalog picker", () => {
     expect(patch.mock.calls[0][0].gear).toEqual([{ gear_id: "d-nova", rating: 1 }]);
   });
 });
+
+describe("<MiscDrugsGear> an item the player prices", () => {
+  it("offers a price within its range, and a Custom Item a name of its own", () => {
+    const patch = vi.fn();
+    const ch = makeCharacter({
+      gear: [{ id: "g1", gear_id: "c-g1", cost: 100 }] as any,
+      derived: {
+        gear: [
+          gear("g1", "Custom Item", {
+            category: "Custom",
+            label: "Custom Item",
+            cost_range: [0, 1000000],
+            custom_name: "",
+          }),
+        ],
+      } as any,
+    });
+    renderPanel(ch, patch);
+    const price = screen.getByRole("spinbutton", { name: /Custom Item: 値段/ }) as HTMLInputElement;
+    expect(price.max).toBe("1000000");
+    expect(price.value).toBe("100");
+    fireEvent.change(price, { target: { value: "2500" } });
+    expect(patch).toHaveBeenCalledWith({ gear: [{ id: "g1", gear_id: "c-g1", cost: 2500 }] });
+    fireEvent.change(screen.getByPlaceholderText("Custom Item"), { target: { value: "Rosary" } });
+    expect(patch).toHaveBeenLastCalledWith({
+      gear: [{ id: "g1", gear_id: "c-g1", cost: 100, name: "Rosary" }],
+    });
+  });
+
+  it("shows no price for an item with a fixed one", () => {
+    renderPanel(makeCharacter({ derived: { gear: [gear("g1", "Medkit")] } as any }), vi.fn());
+    expect(screen.queryByRole("spinbutton", { name: /値段/ })).toBeNull();
+  });
+});

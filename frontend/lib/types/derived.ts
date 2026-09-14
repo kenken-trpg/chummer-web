@@ -230,6 +230,8 @@ export interface InstalledArmorMod {
 }
 
 export interface InstalledArmor {
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
   id: string;
   armor_id: string;
   name: string;
@@ -388,6 +390,10 @@ export interface InstalledOptics {
 }
 
 export interface InstalledGear extends InstalledOptics {
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
+  /** a Custom Item's own name */
+  custom_name?: string;
   label?: string;
   qty: number;
   extra?: string;
@@ -433,6 +439,8 @@ export interface InstalledLifestyle {
 }
 
 export interface InstalledProgram {
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
   id: string;
   gear_id: string;
   name: string;

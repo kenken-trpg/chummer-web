@@ -25,6 +25,7 @@ from ._common import (
     _clamp_rating,
     _device_rating_of,
     _program_label,
+    chosen_cost,
 )
 from .ammo import _apply_loaded_ammo, _pick_loaded_ammo, ammo_fits_weapon
 from .vehicles import _iter_vehicle_hosts
@@ -293,7 +294,11 @@ def _resolve_misc_gear(
                 )
             extras["Parent Cost"] = int(parent_unit)
             extras["ParentCost"] = int(parent_unit)
-        unit = 0 if inst.included else int(eval_formula(cost_expr, rating, 0, extras))
+        picked = chosen_cost(spec, inst.cost)
+        inst.cost = picked
+        if (spec.get("category") or "") != "Custom":
+            inst.name = None
+        unit = 0 if inst.included else picked if picked is not None else int(eval_formula(cost_expr, rating, 0, extras))
         unit_costs[inst.id] = unit
         cost = unit * qty
         nuyen += cost
@@ -311,7 +316,9 @@ def _resolve_misc_gear(
                 "id": inst.id,
                 "gear_id": spec["id"],
                 "name": spec["name"],
-                "label": _program_label(spec, extra),
+                "label": inst.name or _program_label(spec, extra),
+                "custom_name": inst.name or "",
+                "cost_range": spec.get("cost_range"),
                 "category": spec.get("category") or "",
                 "is_drug": is_drug,
                 "active": inst.active,

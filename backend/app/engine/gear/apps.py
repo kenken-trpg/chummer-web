@@ -12,7 +12,7 @@ from ...data_loader import catalog, eval_formula
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term
 from ..selects import gear_extra_options
-from ._common import _clamp_rating, _program_label
+from ._common import _clamp_rating, _program_label, chosen_cost
 
 
 def _resolve_apps(
@@ -52,7 +52,9 @@ def _resolve_apps(
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        picked = chosen_cost(spec, inst.cost)
+        inst.cost = picked
+        cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         kept.append(inst)
         public.append(
@@ -62,6 +64,7 @@ def _resolve_apps(
                 "name": spec["name"],
                 "label": _program_label(spec, extra),
                 "category": spec.get("category") or "",
+                "cost_range": spec.get("cost_range"),
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
