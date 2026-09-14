@@ -274,6 +274,8 @@ class DerivedDict(TypedDict):
     nuyen_pool: int
     nuyen_earned: int
     karma_earned: int
+    karma_adjust: int
+    nuyen_adjust: int
     career: bool
     career_advancement_karma: int
     career_advancement_lines: list[Row]

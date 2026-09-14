@@ -206,6 +206,9 @@ export interface Character {
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;
+  /** a Chummer career save's balance less what the build and rewards leave */
+  karma_adjust?: number;
+  nuyen_adjust?: number;
   street_cred?: number;
   /** SR5 p.373: burned for Notoriety, two points a time */
   burnt_street_cred?: number;
@@ -235,6 +238,8 @@ export interface Character {
     career?: boolean;
     karma_earned?: number;
     nuyen_earned?: number;
+    karma_adjust?: number;
+    nuyen_adjust?: number;
     nuyen_pool?: number;
     career_advancement_karma?: number;
     career_advancement_lines?: { kind?: string; notice: Notice; amount: number }[];

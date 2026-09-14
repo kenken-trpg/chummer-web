@@ -10,7 +10,9 @@ For a character still in creation (``<created>False``), ``<karma>`` and
 ``<nuyen>`` are what Chummer computed as *left*: the one place a save states
 the result of the whole build. A mismatch there means an item, a price or a
 rule differs, without having to find which one first. In career mode the same
-elements are the running balance, so only the warnings and errors are listed.
+elements are the running balance, which the import meets by construction: the
+adjustment it needed (`karma_adjust` / `nuyen_adjust` — rent, purchases at
+their own prices, or a price this app gets wrong) is listed instead.
 
 Two limits on that. The test saves were written by Chummer 5.18x-5.202, which
 kept the creation remainder there; current Chummer only sets `<nuyen>` when
@@ -98,7 +100,9 @@ def reconcile(path: Path) -> dict[str, Any]:
         "warnings": [w["key"] for w in warnings],
         "errors": [e["key"] for e in derived.get("errors") or []],
     }
-    if not created:
+    if created:
+        row["adjust"] = (int(state.get("karma_adjust") or 0), int(state.get("nuyen_adjust") or 0))
+    else:
         karma = derived.get("karma") or {}
         row["karma"] = (_number(root, "karma"), karma.get("remaining"))
         row["nuyen"] = (_number(root, "nuyen"), derived.get("nuyen"))
@@ -146,9 +150,10 @@ def main() -> int:
         mark = "" if row["career"] or all(ok) else "  ≠"
         mark += "  over" if over and not row["career"] else ""
         mark += "  negcap" if "engine.qualities.negativeCap" in row["errors"] and not row["career"] else ""
-        label = "career" if row["career"] else _fmt(karma)
+        label = f"career, adj {row['adjust'][0]:+d}" if row["career"] else _fmt(karma)
+        nuyen_label = f"adj {row['adjust'][1]:+,d}" if row["career"] else _fmt(nuyen)
         print(
-            f"{row['file']:<{width}}  {label:<26}  {_fmt(nuyen):<34}  {len(row['warnings']):>4}  {len(row['errors']):>3}{mark}"
+            f"{row['file']:<{width}}  {label:<26}  {nuyen_label:<34}  {len(row['warnings']):>4}  {len(row['errors']):>3}{mark}"
         )
         if args.verbose:
             for kind in ("warnings", "errors"):

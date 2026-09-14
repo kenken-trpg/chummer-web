@@ -67,6 +67,23 @@ export function SidebarCareerRewards({ career, ch, d, patch, tr, ui }: SidebarBl
               </button>
             </div>
           ))}
+          {d.karma_adjust || d.nuyen_adjust ? (
+            <div className="stat">
+              <span className="muted" title={ui("side.chummerAdjustHint")}>
+                {ui("side.chummerAdjust")} · {d.karma_adjust || 0}K /{" "}
+                {(d.nuyen_adjust || 0).toLocaleString()}¥
+              </span>
+              <button
+                type="button"
+                className="btn danger"
+                style={{ padding: "2px 6px", fontSize: "0.75rem" }}
+                aria-label={`${ui("side.chummerAdjust")}: ${ui("side.deleteReward")}`}
+                onClick={() => patch({ karma_adjust: 0, nuyen_adjust: 0 })}
+              >
+                {ui("side.deleteReward")}
+              </button>
+            </div>
+          ) : null}
           <label className="muted">
             {ui("side.rewardLabel")}
             <input

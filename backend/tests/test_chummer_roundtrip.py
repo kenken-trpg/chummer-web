@@ -226,8 +226,9 @@ def test_career_and_sum_to_ten_import() -> None:
     s1, ch1, _ = _loop(_CAREER_XML)
     assert s1["build_method"] == "SumToTen"
     assert s1["career"] is True
-    assert s1["karma_earned"] == 37
-    assert s1["nuyen_earned"] == 12000
+    # the save's `<karma>` / `<nuyen>` are the balance left to spend
+    assert ch1.derived["karma"]["remaining"] == 37
+    assert ch1.derived["nuyen"] == 12000
     assert s1["metatype"] == "Ork"
     assert len(s1["martial_arts"]) == 1
     assert set(s1["martial_arts"][0]["techniques"]) == {"Counterstrike", "Called Shot (Disarm)"}

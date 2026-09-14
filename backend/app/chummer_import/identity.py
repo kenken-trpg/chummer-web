@@ -3,6 +3,7 @@ career ledger, attributes and skills."""
 
 from __future__ import annotations
 
+import copy
 import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any
@@ -117,17 +118,8 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         "Skills": prio("priorityskills"),
         "Resources": prio("priorityresources"),
     }
-    if created:
-        st["karma_earned"] = _int(root.find("karma"))
-        st["nuyen_earned"] = _int(root.find("nuyen"))
-        log = _reward_log_from_expenses(root)
-        if log is not None:
-            karma = sum(row["karma"] for row in log)
-            nuyen = sum(row["nuyen"] for row in log)
-            if (karma, nuyen) == (st["karma_earned"], st["nuyen_earned"]):
-                st["reward_log"] = log
-            else:
-                warn.append(notice("engine.import.expensesSkipped", karma=karma, nuyen=nuyen))
+    # A career save's `<karma>` / `<nuyen>` are the balance, not what was
+    # earned: `_import_balance` works that out once everything is read.
 
 
 def _reward_log_from_expenses(root: ET.Element) -> list[dict[str, Any]] | None:
@@ -278,3 +270,33 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["knowledge_karma"] = knowledge_karma
     st["knowledge_categories"] = know_cat
     st["native_languages"] = natives
+
+
+def _import_balance(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
+    """A career character's money, from the balance Chummer saved.
+
+    Chummer keeps `<karma>` and `<nuyen>` as what is left to spend
+    (`Character.Karma` / `Nuyen`) and `<expenses>` as the history. This app
+    keeps what was earned — the earning rows of that history, which are also
+    what Street Cred counts (`CareerKarma`) — and works the balance out. What
+    that leaves apart from the saved balance (rent paid, purchases at their
+    own prices) is kept as an adjustment, so the balance comes back as saved.
+    """
+    if not st.get("career"):
+        return
+    from ..engine import compute
+    from ..models import CharacterState
+
+    log = _reward_log_from_expenses(root) or []
+    if log:
+        st["reward_log"] = log
+    st["karma_earned"] = sum(row["karma"] for row in log)
+    st["nuyen_earned"] = sum(row["nuyen"] for row in log)
+    bare = copy.deepcopy({k: v for k, v in st.items() if not k.startswith("_")})
+    derived = compute(CharacterState.model_validate(bare)).derived
+    try:
+        nuyen_balance = round(float(_text(root.find("nuyen")) or 0))
+    except ValueError:
+        nuyen_balance = 0
+    st["karma_adjust"] = _int(root.find("karma")) - int((derived.get("karma") or {}).get("remaining") or 0)
+    st["nuyen_adjust"] = nuyen_balance - int(derived.get("nuyen") or 0)

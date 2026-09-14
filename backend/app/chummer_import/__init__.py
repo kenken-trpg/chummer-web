@@ -25,7 +25,7 @@ from ..data_loader._xml import parse_untrusted
 from ..notices import Notice, NoticeError, notice
 from .container import decompress_chum5lz
 from .gear import _import_armor, _import_custom_drugs, _import_gear, _import_vehicles, _import_ware, _import_weapons
-from .identity import _import_attributes, _import_identity, _import_skills
+from .identity import _import_attributes, _import_balance, _import_identity, _import_skills
 from .lifestyles import _import_lifestyles
 from .magic import _import_foci, _import_initiation, _import_magic, _import_spirits
 from .qualities import _import_qualities
@@ -93,6 +93,8 @@ _SECTIONS = (
     _import_lifestyles,
     _import_foci,
     _import_custom_drugs,
+    # last: reads the whole character to turn a career balance into earnings
+    _import_balance,
 )
 
 __all__ = ["chum5_to_state", "decompress_chum5lz"]

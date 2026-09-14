@@ -373,16 +373,23 @@ def test_the_reward_ledger_rides_chummers_expense_log() -> None:
     assert back["reward_log"] == [row.model_dump() for row in state.reward_log]
 
 
-def test_an_expense_log_that_does_not_add_up_is_left_out() -> None:
-    """Chummer's `<karma>` is what is left, not what was earned — when the
-    earnings in the log do not come to it, the rows would change the totals,
-    so the import keeps the totals and says it skipped the rows."""
+def test_a_career_balance_is_what_is_left_not_what_was_earned() -> None:
+    """Chummer's `<karma>` / `<nuyen>` are what is left to spend. The log's
+    earnings stay the rewards (Street Cred counts them); whatever else sets
+    the saved balance apart — rent, purchases — is kept as an adjustment, so
+    the balance comes back as saved."""
     root = ET.fromstring(state_to_chum5(_career_with_rewards()))
-    root.find("karma").text = "3"  # type: ignore[union-attr]
+    saved_karma = int(root.findtext("karma") or 0)
     back, warnings = chum5_to_state(ET.tostring(root))
-    assert "reward_log" not in back
-    assert back["karma_earned"] == 3
-    assert any(w["key"] == "engine.import.expensesSkipped" for w in warnings)
+    assert (back["karma_adjust"], back["nuyen_adjust"]) == (0, 0)  # a fixed point
+
+    root.find("karma").text = str(saved_karma - 3)  # type: ignore[union-attr]
+    back, warnings = chum5_to_state(ET.tostring(root))
+    assert warnings == []
+    assert back["karma_adjust"] == -3
+    derived = import_character(back).derived
+    assert derived["karma"]["remaining"] == saved_karma - 3
+    assert derived["karma_earned"] == sum(row.karma for row in _career_with_rewards().reward_log)
 
 
 def test_skills_are_written_the_way_chummer_reads_them() -> None:

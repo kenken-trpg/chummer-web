@@ -14,7 +14,7 @@ from typing import Any
 from xml.dom import minidom
 
 from .data_loader import catalog, catalog_list
-from .engine import find_metatype
+from .engine import compute, find_metatype
 from .engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
     quality_contact_extra_key,
@@ -85,8 +85,11 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         b64 = state.portrait.split(",", 1)[-1] if state.portrait.startswith("data:") else state.portrait
         _sub(root, "mainmugshotindex", "0")
         _sub(_sub(root, "mugshots"), "mugshot", b64)
-    _sub(root, "karma", state.karma_earned if state.career else 0)
-    _sub(root, "nuyen", state.nuyen_earned if state.career else 0)
+    # Chummer's `<karma>` / `<nuyen>` are what is left to spend, not what was
+    # earned (the reward log below is the history)
+    left = compute(state.model_copy(deep=True)).derived if state.career else {}
+    _sub(root, "karma", int((left.get("karma") or {}).get("remaining") or 0) if state.career else 0)
+    _sub(root, "nuyen", int(left.get("nuyen") or 0) if state.career else 0)
     if state.career and state.reward_log:
         _export_reward_log(root, state)
     # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
