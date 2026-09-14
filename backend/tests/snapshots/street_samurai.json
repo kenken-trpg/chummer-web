@@ -29,6 +29,7 @@
       "contributes": 12,
       "cost_range": null,
       "equipped": true,
+      "gear": [],
       "has_wireless": false,
       "id": "#1",
       "mod_armor": 0,

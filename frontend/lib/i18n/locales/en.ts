@@ -339,6 +339,8 @@ export const EN: Catalog = {
   "common.astralInitiative": "Astral initiative",
   "common.condition": "Condition",
   "gear.capacity": " / capacity {used}/{max}",
+  "gear.addArmorGear": "Carry gear in it",
+  "gear.putIn": "Put in",
   "gear.addMod": "Add a mod",
   "gear.stackWith": "Stacks with",
   "gear.stackWithHint":
@@ -1709,6 +1711,8 @@ export const EN: Catalog = {
     "{count} house rule(s) in these settings are not implemented ({tags}). They are not reflected in any number here — check with your table",
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
 
+  "engine.import.armorGearSkipped":
+    "Could not import “{name}” carried in the armor “{armor}”: sensors and optics go in other gear",
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
   "engine.import.expensesSkipped":
     "The expense log's earnings (karma {karma}, nuyen {nuyen}) do not match the totals, so the reward rows were not imported",

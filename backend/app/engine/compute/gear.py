@@ -46,6 +46,7 @@ from ..gear import (
     _resolve_weapon_mounts,
     apply_active_custom_drugs,
     apply_active_drugs,
+    apply_armor_gear,
     apply_lifestyle_cost_mod,
     apply_reach_bonus,
     apply_smartlink_accuracy,
@@ -254,6 +255,7 @@ def resolve_gear(
     bonus_sources.extend(gear_bonus)
     _append_gear_weapons(weapons, gear_items)
     apply_host_matrix_mods(commlinks, gear_items)
+    apply_armor_gear(armor_items, gear_items, errors)
 
     custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)
     nuyen += custom_drug_nuyen

@@ -64,6 +64,10 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
             hosts[link_inst.id] = ("commlink", _commlink_accessory_parent_spec(spec))
     for veh_inst, spec in _iter_vehicle_hosts(state):
         hosts[veh_inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
+    for armor_inst in list(state.armor or []):
+        spec = _item_by_id("armor", armor_inst.armor_id)
+        if spec:
+            hosts[armor_inst.id] = ("armor", {"name": spec.get("name") or "", "category": "Armor"})
     for weapon_inst in list(state.weapons or []):
         spec = _item_by_id("weapons", weapon_inst.weapon_id)
         if spec:
@@ -135,6 +139,10 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
                 kind, host_spec = host
                 if kind == "weapon":
                     fits = ammo_fits_weapon(spec, host_spec)
+                elif kind == "armor":
+                    # armor carries gear that says what capacity it takes
+                    # there (`<armorcapacity>`: a Holster, a Medkit, Trodes)
+                    fits = bool(inst.included) or bool(spec.get("armor_capacity"))
                 else:
                     fits = bool(inst.included) or _misc_child_fits(host_spec, spec)
                 host_name = str(host_spec.get("name") or "")
@@ -341,6 +349,9 @@ def _resolve_misc_gear(
                 "capacity_cost": cap_cost,
                 "capacity_used": 0.0,
                 "capacity_max": cap_max,
+                "armor_capacity": _capacity_value(str(spec.get("armor_capacity") or "").strip("[]"), rating)
+                if spec.get("armor_capacity") and not inst.included
+                else 0,
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
                 "required_names": list(spec.get("required_names") or []),

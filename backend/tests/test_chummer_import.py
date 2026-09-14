@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import lzma
+import xml.etree.ElementTree as ET
 
 import pytest
 
 from app.characters import import_character
+from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state, decompress_chum5lz
 from app.data_loader import catalog
+from app.data_loader._xml import _text
+from app.models import CharacterState
 from app.notices import NoticeError
 from tests.notice_asserts import has
 
@@ -517,3 +521,33 @@ def test_a_picked_price_is_held_to_its_range() -> None:
     assert out.armor[0].cost == 20
     assert out.derived["armor_items"][0]["nuyen"] == 20
     assert (out.derived["gear"][0]["label"], out.derived["gear"][0]["nuyen"]) == ("Rosary", 2500)
+
+
+def test_gear_carried_in_armor_comes_in_on_the_armor_and_goes_back_out_there() -> None:
+    """Chummer keeps a Holster or a Medkit in the armor's own `<gears>`; a
+    Personal Drone Rack older saves list with the mods is gear too. A sensor
+    in armor is fitted to other hosts in this app, so it is named, not lost."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <armors><armor><name>Armor Jacket</name>
+        <armormods><armormod><name>Personal Drone Rack</name></armormod></armormods>
+        <gears>
+          <gear><name>Holster</name><qty>1</qty></gear>
+          <gear><name>Medkit</name><rating>3</rating><qty>1</qty></gear>
+          <gear><name>Single Sensor</name><qty>1</qty></gear>
+        </gears>
+      </armor></armors>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert [w["key"] for w in warnings] == ["engine.import.armorGearSkipped"]
+    (armor,) = st["armor"]
+    assert st["armor_mods"] == []
+    assert {g["parent_id"] for g in st["gear"]} == {armor["id"]}
+    assert len(st["gear"]) == 3
+    derived = import_character(st).derived
+    assert derived["armor_items"][0]["capacity_used"] == 1 + 3 + 5
+    assert not has(derived["warnings"], "engine.gear.doesNotFit")
+
+    root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
+    carried = [_text(g.find("name")) for g in root.findall("./armors/armor/gears/gear")]
+    assert sorted(carried) == ["Holster", "Medkit", "Personal Drone Rack"]
+    assert root.findall("./gears/gear") == []
