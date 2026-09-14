@@ -85,6 +85,18 @@ COPY LICENSE NOTICE.txt      /app/
 # Fail the build on a malformed Caddyfile rather than at container start.
 RUN caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
+# The upstream binary carries `cap_net_bind_service` as a file capability, for
+# serving :443 as a non-root user. This one serves $PORT (8080), so it never
+# needs it — and a binary that asks for a capability cannot be exec'd at all
+# under `--cap-drop ALL --security-opt no-new-privileges` (EPERM). Stripped
+# here so the container can run with no capabilities at all.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends libcap2-bin; \
+    setcap -r /usr/bin/caddy; \
+    apt-get purge -y --auto-remove libcap2-bin; \
+    rm -rf /var/lib/apt/lists/*
+
 USER app
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=25s CMD \
