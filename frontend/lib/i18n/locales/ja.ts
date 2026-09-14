@@ -527,6 +527,9 @@ export const JA = {
 
   "side.rewardTotal": "報酬合計",
   "side.reward": "報酬",
+  "side.chummerAdjust": "Chummer との差",
+  "side.chummerAdjustHint":
+    "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差（払った家賃や、別の値段での購入など）。残りに足しています",
   "side.deleteReward": "削除",
   "side.rewardLabel": "ラベル",
   "side.rewardLabelHint": "Run 名など",
@@ -1767,8 +1770,6 @@ export const JA = {
   "engine.import.armorGearSkipped":
     "防具「{armor}」に入っていた「{name}」は取り込めませんでした（センサーや視覚・聴覚強化は、防具以外のギアに付けられます）",
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
-  "engine.import.expensesSkipped":
-    "履歴の稼ぎ（カルマ {karma}・新円 {nuyen}）が所持の合計と合わないため、報酬の明細は読み込みませんでした",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
 

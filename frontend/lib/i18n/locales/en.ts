@@ -509,6 +509,9 @@ export const EN: Catalog = {
 
   "side.rewardTotal": "Rewards total",
   "side.reward": "Reward",
+  "side.chummerAdjust": "Chummer balance",
+  "side.chummerAdjustHint":
+    "What a Chummer save’s balance leaves apart from the build and the rewards — rent paid, purchases at their own prices — added to what is left",
   "side.deleteReward": "Delete",
   "side.rewardLabel": "Label",
   "side.rewardLabelHint": "run name, etc.",
@@ -1714,8 +1717,6 @@ export const EN: Catalog = {
   "engine.import.armorGearSkipped":
     "Could not import “{name}” carried in the armor “{armor}”: sensors and optics go in other gear",
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
-  "engine.import.expensesSkipped":
-    "The expense log's earnings (karma {karma}, nuyen {nuyen}) do not match the totals, so the reward rows were not imported",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",

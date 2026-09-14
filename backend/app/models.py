@@ -476,6 +476,8 @@ class CharacterPatch(BaseModel):
     career: bool | None = None
     karma_earned: int | None = None
     nuyen_earned: int | None = None
+    karma_adjust: int | None = None
+    nuyen_adjust: int | None = None
     career_baseline: CareerBaseline | None = None
     street_cred: int | None = None
     burnt_street_cred: int | None = None
@@ -605,6 +607,11 @@ class CharacterState(BaseModel):
     career: bool = False
     karma_earned: int = 0
     nuyen_earned: int = 0
+    #: a Chummer career save's balance less what this app works out from
+    #: the build and the rewards: spending the app does not model (rent,
+    #: purchases at their own prices). Added to what is left, either sign.
+    karma_adjust: int = 0
+    nuyen_adjust: int = 0
     career_baseline: CareerBaseline | None = None
     street_cred: int = 0
     # SR5 p.373: two points burned take a point of Notoriety off

@@ -104,6 +104,7 @@ def economy(ctx: Ctx) -> None:
         ctx.nuyen_pool += int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
 
     ctx.nuyen_pool += int(ctx.state.nuyen_earned or 0)
+    ctx.nuyen_pool += int(ctx.state.nuyen_adjust or 0) if ctx.career else 0
     ctx.nuyen_pool += int(ctx.effects.get("nuyen_amt") or 0)
     ctx.nuyen_spent = (
         sum(int(item["nuyen"]) for item in ctx.installed)
@@ -412,6 +413,8 @@ def economy(ctx: Ctx) -> None:
             ctx.qualities, ctx.free_quality_ids, baseline_qualities
         )
         ctx.karma_spent += ctx.quality_career_karma
+    if ctx.career:
+        ctx.karma_pool += int(ctx.state.karma_adjust or 0)
     ctx.karma_left = ctx.karma_pool - ctx.karma_spent
 
     ctx.karma_spend_lines = list(ctx.career_adv_lines)

@@ -219,6 +219,8 @@ def assemble(ctx: Ctx) -> None:
         "nuyen_pool": ctx.nuyen_pool,
         "nuyen_earned": int(ctx.state.nuyen_earned or 0),
         "karma_earned": int(ctx.state.karma_earned or 0),
+        "karma_adjust": int(ctx.state.karma_adjust or 0) if ctx.career else 0,
+        "nuyen_adjust": int(ctx.state.nuyen_adjust or 0) if ctx.career else 0,
         "career": ctx.career,
         "career_advancement_karma": int(ctx.career_adv_karma),
         "career_advancement_lines": ctx.career_adv_lines,
