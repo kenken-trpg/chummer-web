@@ -459,3 +459,15 @@ def test_an_accessory_a_save_puts_on_no_mount_takes_no_slot() -> None:
     mounts = {acc["name"]: acc["mount"] for acc in derived["weapons"][0]["accessories"] if not acc["included"]}
     assert mounts == {"Folding Stock": "None", "Gecko Grip": "None", "Silencer/Suppressor": "None"}
     assert not has(derived["errors"], "engine.gear.noFreeMount")
+
+
+def test_what_chummer_made_up_rather_than_took_from_data_is_not_reported() -> None:
+    """A Shapeshifter's Bite is built from its critter powers and saved with
+    an empty id; there is nothing to import and nobody to warn."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <weapons><weapon><sourceid>00000000-0000-0000-0000-000000000000</sourceid>
+        <name>Bite (Vulpine Form)</name><category>Critter Powers</category></weapon></weapons>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert st["weapons"] == []
+    assert warnings == []
