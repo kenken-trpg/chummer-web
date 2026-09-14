@@ -62,7 +62,8 @@ Chummer のゲームデータはイメージのビルド時に取得して同梱
 ```bash
 RATE_LIMIT=120/minute
 IMPORT_RATE_LIMIT=20/minute
-# TRUSTED_PROXY_HOPS は 0 のまま（Cloudflare の cf-connecting-ip を使う）
+# Cloudflare の後ろなら TRUST_CLOUDFLARE_IP=1（cf-connecting-ip を使う）
+# 自前のプロキシの後ろなら TRUSTED_PROXY_HOPS を 1 か 2 に
 ```
 
 書き換えたら `make up` をもう一度実行すると反映されます。

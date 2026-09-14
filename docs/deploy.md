@@ -37,6 +37,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this, chunked bodies included; the bundled Caddy enforces it too |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
 | `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
+| `TRUST_CLOUDFLARE_IP` | unset | `1` behind Cloudflare, which sets `cf-connecting-ip`; ignored otherwise |
 | `LOG_FORMAT` | `text` | `json` for one object per line |
 | `LOG_LEVEL` | `INFO` | root level |
 
@@ -60,14 +61,13 @@ Request bodies, query strings and anything derived from a `CharacterState` are
 never logged. Characters are the user's and never touch disk on the server; a
 log line is disk.
 
-**Client IP for rate limiting.** `cf-connecting-ip` is always trusted
-(Cloudflare overwrites it). `x-forwarded-for` is *not* trusted by default — a
-client talking straight to the app can forge it and take one request per fake
-IP, straight past every limit. If a proxy you control sits in front, set
-`TRUSTED_PROXY_HOPS` to the position (counting from the right) of the entry that
-proxy chain records the client at:
+**Client IP for rate limiting.** No forwarded header is trusted by default — a
+client talking straight to the app can forge one and take one request per fake
+IP, straight past every limit. Say what sits in front:
 
-- **Cloudflare Tunnel** — leave `0`; `cf-connecting-ip` covers it.
+- **Cloudflare (Tunnel or proxied DNS)** — `TRUST_CLOUDFLARE_IP=1`, which reads
+  `cf-connecting-ip`; Cloudflare overwrites it on the way in. Without the flag
+  the header is ignored, because anywhere else the caller writes it.
 - **Cloud Run / Fly.io** — `2` (the platform appends `client, lb-ip`).
 - **One self-managed nginx/Caddy** that appends the connecting peer — `1`.
 
