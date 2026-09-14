@@ -182,6 +182,8 @@ export interface OpticsCatalogItem {
   plugin?: boolean;
   requireparent?: boolean;
   addoncategories?: string[];
+  /** `<armorcapacity>`: what it takes of an armor's capacity when carried in one */
+  armor_capacity?: string;
   source: string;
   page: string;
 }
@@ -196,8 +198,6 @@ export interface GearCatalogItem extends OpticsCatalogItem {
   required_categories?: string[];
   ammo_weapon_types?: string[];
   costfor?: number;
-  /** `<armorcapacity>`: what it takes of an armor's capacity when carried in one */
-  armor_capacity?: string;
   weapon_details?: string;
   add_weapon?: string;
   add_weapon_id?: string;

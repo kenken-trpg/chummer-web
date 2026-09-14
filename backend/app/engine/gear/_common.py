@@ -196,3 +196,12 @@ def chosen_cost(spec: dict[str, Any], picked: int | None) -> int | None:
         return None
     lo, hi = int(rng[0]), int(rng[1])
     return max(lo, min(hi, int(picked if picked is not None else lo)))
+
+
+def armor_capacity_of(spec: dict[str, Any], inst: GearInstall, rating: int) -> float:
+    """What a piece takes of the armor it is carried in (`<armorcapacity>`,
+    "[Rating]" for a Vision Enhancement); nothing when it came with it."""
+    expr = str(spec.get("armor_capacity") or "").strip("[]")
+    if not expr or inst.included:
+        return 0.0
+    return _capacity_value(expr, rating)

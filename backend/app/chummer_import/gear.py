@@ -190,6 +190,7 @@ def _qty(node: ET.Element) -> float:
 
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
+    ARMOR_BUCKETS = ("gear", "optics", "sensors")
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
     gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
     routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
@@ -215,6 +216,10 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         gid: str | None = None
         # a child stays with its parent's bucket if it resolves there
         order = ([parent_bucket] if parent_bucket else []) + list(BUCKETS) + ["gear"]
+        if armor_name is not None:
+            # in armor, an optic before a sensor function of the same name
+            # (Vision Magnification is both)
+            order = list(ARMOR_BUCKETS) + order
         for b in order:
             if not b:
                 continue
@@ -227,8 +232,8 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             if name and not _chummer_added(g):
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
             return
-        if armor_name is not None and bucket != "gear":
-            # a sensor or an optic in armor: this app fits those to other
+        if armor_name is not None and bucket not in ARMOR_BUCKETS:
+            # a commlink or a deck in armor: this app fits those to other
             # hosts only, so the piece is left out — but said so
             warn.append(notice("engine.import.armorGearSkipped", name=name, armor=armor_name))
             return
@@ -268,7 +273,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     armor_names = {str(a["id"]): str(a.get("name") or "") for a in catalog_list("armor")}
     armor_of = {str(a["id"]): armor_names.get(str(a["armor_id"]), "") for a in st.get("armor") or []}
     for armor_id, g in st.pop("_armor_gear", None) or []:
-        route_gear(g, armor_id, "gear", armor_of.get(armor_id, ""))
+        route_gear(g, armor_id, None, armor_of.get(armor_id, ""))
     for b, rows in routed.items():
         st[b] = rows
 

@@ -1768,7 +1768,7 @@ export const JA = {
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
 
   "engine.import.armorGearSkipped":
-    "防具「{armor}」に入っていた「{name}」は取り込めませんでした（センサーや視覚・聴覚強化は、防具以外のギアに付けられます）",
+    "防具「{armor}」に入っていた「{name}」は取り込めませんでした（防具には入れられず、ほかのギアに付けるものです）",
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",

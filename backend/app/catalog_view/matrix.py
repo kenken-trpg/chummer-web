@@ -77,6 +77,7 @@ def section(raw: CatalogDict) -> dict:
                 "plugin": bool(c.get("plugin")),
                 "requireparent": bool(c.get("requireparent")),
                 "addoncategories": list(c.get("addoncategories") or []),
+                "armor_capacity": c.get("armor_capacity") or "",
                 "source": c.get("source") or "",
                 "page": c.get("page") or "",
             }
@@ -133,6 +134,7 @@ def section(raw: CatalogDict) -> dict:
                 "plugin": bool(c.get("plugin")),
                 "requireparent": bool(c.get("requireparent")),
                 "addoncategories": list(c.get("addoncategories") or []),
+                "armor_capacity": c.get("armor_capacity") or "",
                 "source": c.get("source") or "",
                 "page": c.get("page") or "",
             }

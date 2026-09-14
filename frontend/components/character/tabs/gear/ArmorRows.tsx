@@ -1,7 +1,7 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
 import { availBit, limitModifierLine, specialArmorLine } from "@/lib/character/format";
-import type { InstalledArmorMod, InstalledGear } from "@/lib/types";
+import type { InstalledArmorMod, InstalledGear, InstalledOptics } from "@/lib/types";
 
 type RowProps = Pick<TabPanelProps, "character" | "tr" | "ui" | "patch">;
 
@@ -111,20 +111,23 @@ export function ArmorModRow({
   );
 }
 
-/** One piece of gear carried in armor (a Holster, a Medkit): what it takes
- * of the armor's capacity, and remove / rating. */
+/** One piece carried in armor — a Holster, a Medkit, a helmet's sensor or
+ * vision enhancement: what it takes of the armor's capacity, and remove /
+ * rating on whichever list it lives in. */
 export function CarriedGearRow({
   gear,
   character: ch,
   tr,
   ui,
   patch,
-}: RowProps & { gear: InstalledGear }) {
+}: RowProps & { gear: InstalledOptics & { qty?: number; bucket?: InstalledGear["bucket"] } }) {
+  const bucket = gear.bucket || "gear";
+  const rows = ch[bucket] || [];
   return (
     <div className="muted" style={{ marginTop: 6 }}>
       {tr(gear.name)}
       {gear.rating_max > 1 ? ` R${gear.rating}` : ""}
-      {gear.qty > 1 ? ` ×${gear.qty}` : ""}
+      {(gear.qty ?? 1) > 1 ? ` ×${gear.qty}` : ""}
       {gear.included ? ` / ${ui("common.included")}` : ` / ${gear.nuyen.toLocaleString()}¥`}
       {gear.armor_capacity ? ui("gear.capacityCost", { cost: gear.armor_capacity }) : ""}
       {availBit(gear, ui)}
@@ -135,9 +138,7 @@ export function CarriedGearRow({
             className="btn danger"
             onClick={() =>
               patch({
-                gear: (ch.gear || []).filter(
-                  (row) => row.id !== gear.id && row.parent_id !== gear.id,
-                ),
+                [bucket]: rows.filter((row) => row.id !== gear.id && row.parent_id !== gear.id),
               })
             }
           >
@@ -155,7 +156,7 @@ export function CarriedGearRow({
             value={gear.rating}
             onChange={(e) =>
               patch({
-                gear: (ch.gear || []).map((row) =>
+                [bucket]: rows.map((row) =>
                   row.id === gear.id ? { ...row, rating: Number(e.target.value) } : row,
                 ),
               })

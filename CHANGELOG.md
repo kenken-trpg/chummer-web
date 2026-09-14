@@ -7,6 +7,11 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **防具にセンサーと視覚・聴覚強化を入れられるようにした。** ヘルメットや
+  マスクの Single Sensor・Vision Magnification・Audio Enhancement なども、
+  `<armorcapacity>` の分だけ防具の容量を使う。.chum5 の防具の `<gears>` から
+  読み込み（これまでは取り込めないと警告して捨てていた、16 件）、同じ場所へ
+  書き出す。防具の画面の「ギアを入れる」でも選べる。
 - **値段を自分で決める品目を扱えるようにした。** Chummer のデータで値段が
   `Variable(下限-上限)` の品目 — カスタム品目（Custom Item）、Clothing、
   コムリンクアプリ（Theme Music など）、Uniforms など — をカタログに載せ、範囲内

@@ -13,14 +13,15 @@ from ...data_loader import catalog, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
-from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of
+from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of, armor_capacity_of
 
 
 def _ensure_optics(state: CharacterState) -> list[Notice]:
     warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("optics") or []}
     by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
-    items = _cascade_optics(list(state.optics or []))
+    armor_ids = {row.id for row in state.armor or []}
+    items = _cascade_optics(list(state.optics or []), armor_ids)
     kept: list[GearInstall] = []
     for inst in items:
         spec = specs.get(inst.gear_id)
@@ -29,7 +30,14 @@ def _ensure_optics(state: CharacterState) -> list[Notice]:
         if spec.get("requireparent") and not inst.parent_id:
             warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
             continue
-        if inst.parent_id:
+        if inst.parent_id in armor_ids:
+            # in a helmet or a mask: what says its armor capacity fits
+            if not (inst.included or spec.get("armor_capacity")):
+                warnings.append(
+                    notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=ui("engine.term.host"))
+                )
+                continue
+        elif inst.parent_id:
             parent = next((row for row in items if row.id == inst.parent_id), None)
             parent_spec = specs.get(parent.gear_id) if parent else None
             allowed = set(parent_spec.get("addoncategories") or []) if parent_spec else set()
@@ -115,6 +123,7 @@ def _resolve_optics(
                 "capacity_cost": cap_cost,
                 "capacity_used": 0.0,
                 "capacity_max": cap_max,
+                "armor_capacity": armor_capacity_of(spec, inst, rating),
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
                 "device_rating": _device_rating_of(spec, rating),

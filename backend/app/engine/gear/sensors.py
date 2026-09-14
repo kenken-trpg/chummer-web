@@ -14,7 +14,7 @@ from ...data_loader import catalog, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
-from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of
+from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of, armor_capacity_of
 
 
 def _ensure_sensors(state: CharacterState) -> list[Notice]:
@@ -24,7 +24,8 @@ def _ensure_sensors(state: CharacterState) -> list[Notice]:
     drone_ids = {row.id for row in state.drones or []}
     vehicle_ids = {row.id for row in state.vehicles or []}
     host_ids = drone_ids | vehicle_ids
-    items = _cascade_optics(list(state.sensors or []), host_ids)
+    armor_ids = {row.id for row in state.armor or []}
+    items = _cascade_optics(list(state.sensors or []), host_ids | armor_ids)
     kept: list[GearInstall] = []
     for inst in items:
         spec = specs.get(inst.gear_id)
@@ -45,6 +46,13 @@ def _ensure_sensors(state: CharacterState) -> list[Notice]:
                             name=term(str(spec["name"])),
                             host=term(str(parent_spec["name"])) if parent_spec else ui("engine.term.host"),
                         )
+                    )
+                    continue
+            elif inst.parent_id in armor_ids:
+                # a Single Sensor in a helmet: what says its armor capacity fits
+                if not (inst.included or spec.get("armor_capacity")):
+                    warnings.append(
+                        notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=ui("engine.term.host"))
                     )
                     continue
             elif inst.parent_id in host_ids:
@@ -85,9 +93,14 @@ def _ensure_sensors(state: CharacterState) -> list[Notice]:
 
 
 def _plugin_capacity_expr(
-    spec: dict[str, Any], inst: GearInstall, host_ids: set[str] | None = None
+    spec: dict[str, Any], inst: GearInstall, host_ids: set[str] | None = None, armor_ids: set[str] | None = None
 ) -> tuple[bool, str, float]:
     rating = int(inst.rating or 1)
+    if inst.parent_id and inst.parent_id in (armor_ids or set()):
+        # armor takes its `<armorcapacity>` (`apply_armor_gear`); in itself
+        # the sensor is a housing like a free-standing one
+        expr = str(spec.get("host_capacity") or spec.get("capacity") or "")
+        return False, expr, _capacity_value(expr, rating)
     if inst.capacity_override is not None:
         return True, str(inst.capacity_override), _capacity_value(inst.capacity_override, rating)
     if inst.parent_id and inst.parent_id in (host_ids or set()):
@@ -125,6 +138,7 @@ def _resolve_sensors(
             spec,
             inst,
             {row.id for row in list(state.drones or []) + list(state.vehicles or [])},
+            {row.id for row in state.armor or []},
         )
         cap_cost = cap_value if plugin else 0.0
         cap_max = 0.0 if plugin else cap_value
@@ -147,6 +161,7 @@ def _resolve_sensors(
                 "capacity_cost": cap_cost,
                 "capacity_used": 0.0,
                 "capacity_max": cap_max,
+                "armor_capacity": armor_capacity_of(spec, inst, rating),
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
                 "device_rating": _device_rating_of(spec, rating),

@@ -385,6 +385,10 @@ export interface InstalledOptics {
   capacity_cost?: number;
   capacity_used?: number;
   capacity_max?: number;
+  /** what it takes of the armor it is carried in */
+  armor_capacity?: number;
+  /** on a row carried in armor: the list it lives in */
+  bucket?: "gear" | "optics" | "sensors";
   addoncategories?: string[];
   requireparent?: boolean;
   device_rating?: number;
@@ -407,8 +411,6 @@ export interface InstalledGear extends InstalledOptics {
   required_categories?: string[];
   ammo_weapon_types?: string[];
   costfor?: number;
-  /** what it takes of the armor it is carried in */
-  armor_capacity?: number;
   add_weapon?: string;
   add_weapon_id?: string;
   loaded?: boolean;

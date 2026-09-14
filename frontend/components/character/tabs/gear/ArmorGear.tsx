@@ -26,6 +26,16 @@ function stackTargets(
 }
 
 export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  // what says the capacity it takes in armor (`<armorcapacity>`): gear, a
+  // helmet's vision / audio enhancements, a sensor housing (its functions go
+  // in the housing, not the armor)
+  const carriable = [
+    ...(catalog.gear || []).map((row) => ({ ...row, bucket: "gear" as const })),
+    ...(catalog.optics || []).map((row) => ({ ...row, bucket: "optics" as const })),
+    ...(catalog.sensors || [])
+      .filter((row) => row.category === "Sensors")
+      .map((row) => ({ ...row, bucket: "sensors" as const })),
+  ].filter((row) => row.armor_capacity);
   return (
     <>
       <>
@@ -40,8 +50,6 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
               ),
           );
           const specialLine = specialArmorLine(mergeSpecialArmor(item.mods), ui);
-          // gear that says what capacity it takes in armor (`<armorcapacity>`)
-          const carriable = (catalog.gear || []).filter((row) => row.armor_capacity);
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -159,13 +167,13 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   optionLabel={(row) => `${tr(row.name)} ${row.armor_capacity} (${row.cost}¥)`}
                   onAdd={(row) =>
                     patch({
-                      gear: [
-                        ...(ch.gear || []),
+                      [row.bucket]: [
+                        ...(ch[row.bucket] || []),
                         {
                           gear_id: row.id,
                           parent_id: item.id,
                           rating: Math.max(1, row.minrating || 1),
-                          qty: 1,
+                          ...(row.bucket === "gear" ? { qty: 1 } : {}),
                         },
                       ],
                     })
@@ -205,7 +213,22 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   patch({
                     armor: (ch.armor || []).filter((row) => row.id !== item.id),
                     armor_mods: (ch.armor_mods || []).filter((row) => row.parent_id !== item.id),
-                    gear: (ch.gear || []).filter((row) => row.parent_id !== item.id),
+                    // what is carried in it, and what hangs off that
+                    ...Object.fromEntries(
+                      (["gear", "optics", "sensors"] as const).map((key) => {
+                        const inside = new Set(
+                          (ch[key] || [])
+                            .filter((row) => row.parent_id === item.id)
+                            .map((row) => row.id),
+                        );
+                        return [
+                          key,
+                          (ch[key] || []).filter(
+                            (row) => row.parent_id !== item.id && !inside.has(row.parent_id || ""),
+                          ),
+                        ];
+                      }),
+                    ),
                   })
                 }
               >
