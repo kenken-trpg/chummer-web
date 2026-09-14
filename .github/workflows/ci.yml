@@ -80,7 +80,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
+      # no install hooks: see the Dockerfile
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
@@ -129,7 +130,7 @@ jobs:
         run: ./.venv/bin/python scripts/fetch_chummer_data.py
 
       - working-directory: frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - working-directory: frontend
         run: npx playwright install --with-deps chromium
@@ -182,10 +183,40 @@ jobs:
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          # also keep it in the local daemon, for the smoke test below
+          load: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            chummer-web:ci
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Start it the way compose.yaml does — read-only root, no capabilities,
+      # no way to gain one — so a change that needs to write somewhere new
+      # fails here rather than on someone's host.
+      - name: Smoke-test the image, locked down
+        run: |
+          set -euo pipefail
+          docker run -d --name smoke \
+            --read-only \
+            --security-opt no-new-privileges:true \
+            --cap-drop ALL \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --tmpfs /app/frontend/.next/cache:rw,noexec,nosuid,size=16m \
+            -p 8080:8080 chummer-web:ci
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/api/health >/dev/null; then
+              echo "health ok after ${i}s"
+              curl -fsS -o /dev/null http://127.0.0.1:8080/
+              docker rm -f smoke >/dev/null
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "the container never became healthy:"
+          docker logs smoke
+          exit 1
 
   # A `v*` tag becomes a GitHub Release, with the CHANGELOG section as its
   # notes. `needs: docker` so the release never points at an image that is not

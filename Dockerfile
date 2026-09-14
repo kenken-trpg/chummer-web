@@ -20,7 +20,9 @@
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci
+# --ignore-scripts: a dependency's install hook runs arbitrary code at build
+# time, which is how a hijacked package gets in. Nothing here needs one.
+RUN npm ci --ignore-scripts
 COPY frontend/ ./
 RUN mkdir -p public && npm run build
 # -> .next/standalone (server.js + traced node_modules), .next/static, public
