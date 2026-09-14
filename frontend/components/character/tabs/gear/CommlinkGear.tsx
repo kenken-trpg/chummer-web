@@ -21,8 +21,8 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 {item.sleaze ? ` / S ${item.sleaze}` : ""} / DP {item.dataprocessing} / FW{" "}
                 {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
               </div>
-              {item.rating_max > 0 ? (
-                <div className="cyber-controls">
+              <div className="cyber-controls">
+                {item.rating_max > 0 ? (
                   <label>
                     Rating
                     <input
@@ -39,14 +39,36 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                       }
                     />
                   </label>
-                </div>
-              ) : null}
+                ) : null}
+                <label>
+                  {ui("common.qty")}
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={item.qty ?? 1}
+                    onChange={(e) =>
+                      patch({
+                        commlinks: (ch.commlinks || []).map((row) =>
+                          row.id === item.id
+                            ? { ...row, qty: Math.max(1, Number(e.target.value) || 1) }
+                            : row,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+              </div>
               {(d.apps || [])
                 .filter((app) => app.parent_id === item.id)
                 .map((app) => (
                   <div className="muted" key={app.id} style={{ marginTop: 6 }}>
                     {tr(app.label || app.name)}
-                    {app.nuyen ? ` / ${app.nuyen.toLocaleString()}¥` : ""}{" "}
+                    {app.included
+                      ? ` / ${ui("common.included")}`
+                      : app.nuyen
+                        ? ` / ${app.nuyen.toLocaleString()}¥`
+                        : ""}{" "}
                     <button
                       className="btn danger"
                       onClick={() =>

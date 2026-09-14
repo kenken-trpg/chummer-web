@@ -54,7 +54,11 @@ def _resolve_apps(
         inst.rating = rating
         picked = chosen_cost(spec, inst.cost)
         inst.cost = picked
-        cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
+        if inst.included:
+            # came with the commlink (a Nixdorf Sekretar's Agent)
+            cost = 0
+        else:
+            cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
         nuyen += cost
         kept.append(inst)
         public.append(
@@ -68,6 +72,7 @@ def _resolve_apps(
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
+                "included": bool(inst.included),
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,

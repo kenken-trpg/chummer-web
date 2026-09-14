@@ -90,7 +90,9 @@ describe.each(RATING_PANELS)("<%s> owned rows", (_name, Panel, chKey, dKey) => {
     const patch = vi.fn();
     renderPanel(Panel, character(), patch);
 
-    fireEvent.change(screen.getAllByRole("spinbutton")[1], { target: { value: "4" } });
+    fireEvent.change(screen.getAllByRole("spinbutton", { name: "Rating" })[1], {
+      target: { value: "4" },
+    });
 
     const rows = patch.mock.calls[0][0][chKey] as { id: string; rating: number }[];
     expect(rows).toHaveLength(2); // a map, not a replace

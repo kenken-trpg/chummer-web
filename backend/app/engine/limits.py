@@ -88,6 +88,12 @@ def _avail_entries(*groups: list[dict[str, Any]] | None) -> list[dict[str, Any]]
                 seen.add(item_id)
             if item.get("avail_folded") or item.get("from_ware") or item.get("from_gear"):
                 continue
+            # what came with its parent is not checked on its own: Chummer's
+            # `CheckRestrictedGear` skips `IncludedInArmor` / `IncludedInWeapon`
+            # / `IncludedInVehicle` / `IncludedInParent` and ware with a
+            # `ParentID` (a designer armor's Ruthenium Polymer Coating)
+            if item.get("included"):
+                continue
             if int(item.get("avail_value") or 0) <= 0:
                 continue
             out.append(item)

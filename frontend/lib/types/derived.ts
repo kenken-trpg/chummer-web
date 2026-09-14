@@ -335,6 +335,7 @@ export interface InstalledCommlink {
   category?: string;
   rating: number;
   rating_max: number;
+  qty?: number;
   device_rating: number;
   /** from a plugged-in Attack / Stealth Dongle (DT p.61); 0 on a bare commlink */
   attack?: number;
@@ -452,6 +453,8 @@ export interface InstalledProgram {
   rating: number;
   rating_max: number;
   parent_id?: string | null;
+  /** came with its host (a Nixdorf Sekretar's Agent): free */
+  included?: boolean;
   extra?: string;
   label?: string;
   needs_extra?: boolean;

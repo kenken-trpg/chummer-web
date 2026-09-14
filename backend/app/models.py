@@ -182,6 +182,8 @@ class CommlinkInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     gear_id: str
     rating: int = 1
+    #: how many alike — a stack of burner Meta Links
+    qty: int = Field(default=1, ge=1, le=999)
 
 
 class GearInstall(BaseModel):
