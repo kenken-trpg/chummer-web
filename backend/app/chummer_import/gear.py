@@ -203,7 +203,8 @@ def _qty(node: ET.Element) -> float:
 
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
-    ARMOR_BUCKETS = ("gear", "optics", "sensors")
+    #: what this app can fit inside a piece of armor or a vehicle
+    HOST_BUCKETS = ("gear", "optics", "sensors")
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
     gear_res = {b: _Resolver(catalog_list(b)) for b in ("gear", *BUCKETS)}
     routed: dict[str, list[dict[str, Any]]] = {b: [] for b in ("gear", *BUCKETS)}
@@ -217,7 +218,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         g: ET.Element,
         parent_id: str | None,
         parent_bucket: str | None,
-        armor_name: str | None = None,
+        host: tuple[Phrase, str] | None = None,
         parent_gid: str = "",
     ) -> None:
         # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
@@ -229,10 +230,10 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         gid: str | None = None
         # a child stays with its parent's bucket if it resolves there
         order = ([parent_bucket] if parent_bucket else []) + list(BUCKETS) + ["gear"]
-        if armor_name is not None:
-            # in armor, an optic before a sensor function of the same name
-            # (Vision Magnification is both)
-            order = list(ARMOR_BUCKETS) + order
+        if host is not None:
+            # inside armor or a vehicle, an optic before a sensor function of
+            # the same name (Vision Magnification is both)
+            order = list(HOST_BUCKETS) + order
         for b in order:
             if not b:
                 continue
@@ -245,10 +246,11 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             if name and not _chummer_added(g):
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
             return
-        if armor_name is not None and bucket not in ARMOR_BUCKETS:
-            # a commlink or a deck in armor: this app fits those to other
-            # hosts only, so the piece is left out — but said so
-            warn.append(notice("engine.import.armorGearSkipped", name=name, armor=armor_name))
+        if host is not None and bucket not in HOST_BUCKETS:
+            # a commlink or an autosoft stowed there: this app fits those to
+            # other hosts only, so the piece is left out — but said so
+            kind, host_name = host
+            warn.append(notice("engine.import.hostGearSkipped", kind=kind, name=name, host=host_name))
             return
         row: dict[str, Any] = {
             "id": str(uuid.uuid4()),
@@ -287,9 +289,20 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     armor_names = {str(a["id"]): str(a.get("name") or "") for a in catalog_list("armor")}
     armor_of = {str(a["id"]): armor_names.get(str(a["armor_id"]), "") for a in st.get("armor") or []}
     for armor_id, g in st.pop("_armor_gear", None) or []:
-        route_gear(g, armor_id, None, armor_of.get(armor_id, ""))
+        route_gear(g, armor_id, None, (ui("engine.kind.armor"), armor_of.get(armor_id, "")))
+    vehicle_names = {
+        str(v["id"]): next(
+            (row["name"] for b in ("vehicles", "drones") for row in catalog_list(b) if row["id"] == v["gear_id"]),
+            "",
+        )
+        for b in ("vehicles", "drones")
+        for v in st.get(b) or []
+    }
+    for vehicle_id, g in st.pop("_vehicle_gear", None) or []:
+        route_gear(g, vehicle_id, None, (ui("engine.kind.vehicle"), vehicle_names.get(vehicle_id, "")))
     for b, rows in routed.items():
-        st[b] = rows
+        # vehicles import first: its drones are already in `st`
+        st[b] = (st.get(b) or []) + rows
 
 
 def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -305,9 +318,10 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         wname = next((w["name"] for w in cat["weapons"] if w["id"] == wrow.get("weapon_id")), "")
         weapon_ids.setdefault(wname.lower(), wrow["id"])
     st_mounts: list[dict[str, Any]] = []
-    st_veh: list[dict[str, Any]] = list(st.get("drones") or [])
+    st_veh: list[dict[str, Any]] = list(st.get("drones") or [])  # gear rows come later
     st_veh_only: list[dict[str, Any]] = []
     st_vmods: list[dict[str, Any]] = []
+    carried: list[tuple[str, ET.Element]] = []
     for v in root.findall("./vehicles/vehicle"):
         is_drone = veh_r.resolve(v, [], ui("engine.kind.vehicle")) is None
         vid = (
@@ -355,12 +369,22 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                     "allowedweapons": _text(m.find("weaponmountcategories")),
                 }
             )
-        if _unexpected_children(vid, v.findall("./weapons/weapon") + v.findall("./gears/gear")):
+        vehicle_id = str(row["id"])
+        carried += [
+            (vehicle_id, g)
+            for g in _unexpected_children(vid, v.findall("./gears/gear"))
+            # Chummer builds a vehicle's Sensor Array from its sensor rating
+            # and saves it as gear; this app keeps the rating instead
+            if _text(g.find("name")) != "Sensor Array"
+        ]
+        if _unexpected_children(vid, v.findall("./weapons/weapon")):
             warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods
     st["weapon_mounts"] = st_mounts
+    # what is stowed in them — `_import_gear` knows the buckets
+    st["_vehicle_gear"] = carried
 
 
 def _import_custom_drugs(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:

@@ -296,6 +296,7 @@ class DerivedDict(TypedDict):
     cyberware_ess_multiplier: int
     bioware_ess_multiplier: int
     reward_log: list[Row]
+    expense_log: list[Row]
     karma_spend_breakdown: list[Row]
     nuyen_spend_breakdown: list[Row]
     lifestyle_cost_mod: int

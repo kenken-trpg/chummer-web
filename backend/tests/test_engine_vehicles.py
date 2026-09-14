@@ -343,7 +343,10 @@ def test_sim_module_on_meta_link() -> None:
     assert out.derived["errors"] == []
 
 
-def test_tool_kit_does_not_install_in_spirit() -> None:
+def test_a_tool_kit_rides_in_the_car_it_is_stowed_in() -> None:
+    """A vehicle is a container: gear put in it is carried, not fitted, so
+    anything that does not plug into a host of its own goes in (Chummer keeps
+    it in the vehicle's own `<gears>`)."""
     car = GearInstall(gear_id=HONDA_SPIRIT)
     out = compute(
         _mundane(
@@ -352,9 +355,9 @@ def test_tool_kit_does_not_install_in_spirit() -> None:
             gear=[GearInstall(gear_id=TOOL_KIT, parent_id=car.id, extra="Hardware")],
         )
     )
-    assert out.derived["vehicles"][0]["gear"] == []
-    assert has(out.derived["warnings"], "engine.gear.doesNotFit")
-    assert out.derived["nuyen_spent"] == 12000
+    assert [row["name"] for row in out.derived["vehicles"][0]["gear"]] == ["Tool Kit"]
+    assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+    assert out.derived["nuyen_spent"] == 12000 + 500
 
 
 GROUP_AUTOSOFT = "25235dcf-089a-4c17-bc8f-6a1f5b2fb0b6"

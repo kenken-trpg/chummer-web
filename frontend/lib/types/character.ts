@@ -214,6 +214,8 @@ export interface Character {
   burnt_street_cred?: number;
   notoriety_bonus?: number;
   reward_log?: { id?: string; label?: string; karma?: number; nuyen?: number }[];
+  /** what a Chummer save's expense log spent (negative), history only */
+  expense_log?: { id?: string; label?: string; karma?: number; nuyen?: number }[];
   career_baseline?: {
     attributes?: Record<string, number>;
     skills?: Record<string, number>;
@@ -246,6 +248,7 @@ export interface Character {
     karma_spend_breakdown?: { kind?: string; notice: Notice; amount: number }[];
     nuyen_spend_breakdown?: { kind?: string; notice: Notice; amount: number }[];
     reward_log?: { id: string; label: string; karma: number; nuyen: number }[];
+    expense_log?: { id: string; label: string; karma: number; nuyen: number }[];
     street_cred?: number;
     /** the part of `street_cred` earned from karma (SR5 p.372) */
     street_cred_earned?: number;

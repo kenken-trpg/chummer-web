@@ -530,6 +530,8 @@ export const JA = {
 
   "side.rewardTotal": "報酬合計",
   "side.reward": "報酬",
+  "side.chummerSpend": "Chummer での支出",
+  "side.expense": "支出",
   "side.chummerAdjust": "Chummer との差",
   "side.chummerAdjustHint":
     "Chummer のセーブの残高と、この app が構成と報酬から出す残りとの差（払った家賃や、別の値段での購入など）。残りに足しています",
@@ -1770,8 +1772,8 @@ export const JA = {
     "このセッティングのハウスルール {count} 件は未対応です（{tags}）。数値には反映されていないので、卓で確認してください",
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
 
-  "engine.import.armorGearSkipped":
-    "防具「{armor}」に入っていた「{name}」は取り込めませんでした（防具には入れられず、ほかのギアに付けるものです）",
+  "engine.import.hostGearSkipped":
+    "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",

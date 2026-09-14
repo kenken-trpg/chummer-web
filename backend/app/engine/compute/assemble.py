@@ -359,6 +359,10 @@ def assemble(ctx: Ctx) -> None:
             {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
             for row in (ctx.state.reward_log or [])
         ],
+        "expense_log": [
+            {"id": row.id, "label": row.label, "karma": int(row.karma or 0), "nuyen": int(row.nuyen or 0)}
+            for row in (ctx.state.expense_log or [])
+        ],
         "karma_spend_breakdown": ctx.karma_spend_lines,
         "nuyen_spend_breakdown": ctx.nuyen_spend_lines,
         "fatigue_resist": int(ctx.effects.get("fatigue_resist") or 0),

@@ -12,7 +12,8 @@ the result of the whole build. A mismatch there means an item, a price or a
 rule differs, without having to find which one first. In career mode the same
 elements are the running balance, which the import meets by construction: the
 adjustment it needed (`karma_adjust` / `nuyen_adjust` — rent, purchases at
-their own prices, or a price this app gets wrong) is listed instead.
+their own prices, or a price this app gets wrong) is listed instead, with
+what the save's own expense log spent beside it.
 
 Two limits on that. The test saves were written by Chummer 5.18x-5.202, which
 kept the creation remainder there; current Chummer only sets `<nuyen>` when
@@ -102,6 +103,11 @@ def reconcile(path: Path) -> dict[str, Any]:
     }
     if created:
         row["adjust"] = (int(state.get("karma_adjust") or 0), int(state.get("nuyen_adjust") or 0))
+        spent = state.get("expense_log") or []
+        row["spent"] = (
+            sum(int(e.get("karma") or 0) for e in spent),
+            sum(int(e.get("nuyen") or 0) for e in spent),
+        )
     else:
         karma = derived.get("karma") or {}
         row["karma"] = (_number(root, "karma"), karma.get("remaining"))
@@ -150,8 +156,9 @@ def main() -> int:
         mark = "" if row["career"] or all(ok) else "  ≠"
         mark += "  over" if over and not row["career"] else ""
         mark += "  negcap" if "engine.qualities.negativeCap" in row["errors"] and not row["career"] else ""
-        label = f"career, adj {row['adjust'][0]:+d}" if row["career"] else _fmt(karma)
-        nuyen_label = f"adj {row['adjust'][1]:+,d}" if row["career"] else _fmt(nuyen)
+        # the save's own expense log explains part of the adjustment
+        label = f"career, adj {row['adjust'][0]:+d} (log {row['spent'][0]:+d})" if row["career"] else _fmt(karma)
+        nuyen_label = f"adj {row['adjust'][1]:+,d} (log {row['spent'][1]:+,d})" if row["career"] else _fmt(nuyen)
         print(
             f"{row['file']:<{width}}  {label:<26}  {nuyen_label:<34}  {len(row['warnings']):>4}  {len(row['errors']):>3}{mark}"
         )

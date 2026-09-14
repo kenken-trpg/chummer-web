@@ -512,6 +512,8 @@ export const EN: Catalog = {
 
   "side.rewardTotal": "Rewards total",
   "side.reward": "Reward",
+  "side.chummerSpend": "Spent in Chummer",
+  "side.expense": "Spending",
   "side.chummerAdjust": "Chummer balance",
   "side.chummerAdjustHint":
     "What a Chummer save’s balance leaves apart from the build and the rewards — rent paid, purchases at their own prices — added to what is left",
@@ -1717,8 +1719,8 @@ export const EN: Catalog = {
     "{count} house rule(s) in these settings are not implemented ({tags}). They are not reflected in any number here — check with your table",
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
 
-  "engine.import.armorGearSkipped":
-    "Could not import “{name}” carried in the armor “{armor}”: it goes in other gear, not in armor",
+  "engine.import.hostGearSkipped":
+    "Could not import “{name}” carried in the {kind} “{host}”: it goes in other gear",
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
   "engine.import.vehicleLoadSkipped":

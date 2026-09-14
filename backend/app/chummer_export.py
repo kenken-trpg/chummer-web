@@ -90,7 +90,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     left = compute(state.model_copy(deep=True)).derived if state.career else {}
     _sub(root, "karma", int((left.get("karma") or {}).get("remaining") or 0) if state.career else 0)
     _sub(root, "nuyen", int(left.get("nuyen") or 0) if state.career else 0)
-    if state.career and state.reward_log:
+    if state.career and (state.reward_log or state.expense_log):
         _export_reward_log(root, state)
     # Reputation, and the nuyen bought with karma at chargen — Chummer keeps
     # the latter in `<nuyenbp>`, which is build points in old money.
@@ -105,11 +105,12 @@ def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
 
     Chummer logs karma and nuyen as separate rows, so a reward that paid both
     becomes two. `<rewardid>` is this app's — Chummer ignores it — and is what
-    puts the pair back together on import.
+    puts the pair back together on import. What a save's log spent comes back
+    out the same way, as the negative rows it came in as.
     """
     expenses = _sub(root, "expenses")
     stamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    for row in state.reward_log:
+    for row in [*state.reward_log, *state.expense_log]:
         for kind, amount in (("Karma", row.karma), ("Nuyen", row.nuyen)):
             if not amount:
                 continue
@@ -659,6 +660,7 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
     vmod_by_parent: dict[str | None, list[Any]] = {}
     for vrow in state.vehicle_mods:
         vmod_by_parent.setdefault(vrow.parent_id, []).append(vrow)
+    gear_by_parent, emit_gear = _gear_writer(state, names)
     for v in [*state.vehicles, *state.drones]:
         el = _sub(vehs, "vehicle")
         _sub(el, "sourceid", v.gear_id)
@@ -670,6 +672,10 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
             _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
             _sub(mm, "rating", vrow.rating)
             _sub(mm, "included", "True" if vrow.included else "False")
+        # what is stowed in it (a camera, a medkit), as Chummer keeps it
+        stowed = gear_by_parent.get(v.id)
+        if stowed:
+            emit_gear(_sub(el, "gears"), stowed)
         _emit_weapon_mounts(el, state, names, v.id)
 
 
