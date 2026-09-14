@@ -20,6 +20,9 @@ export function WareRow(props: {
   onPatchRow: (id: string, next: Partial<WareInstall>) => void;
   onRemove: (id: string) => void;
   onAddChild: (wareId: string) => void;
+  /** Black Market Pipeline: 10% off this one piece, when the quality's
+   *  category reaches this kind of ware (null when it does not). */
+  discounted?: boolean | null;
   pickSlots?: SkillPickSlot[];
   onSkillPick?: (key: string, skill: string) => void;
   nested?: boolean;
@@ -40,6 +43,7 @@ export function WareRow(props: {
     onPatchRow,
     onRemove,
     onAddChild,
+    discounted,
     pickSlots,
     onSkillPick,
     nested,
@@ -128,6 +132,16 @@ export function WareRow(props: {
           ) : null}
         </div>
         <div className="cyber-controls">
+          {discounted !== null && discounted !== undefined && !locked ? (
+            <label title={ui("gear.blackMarketHint")}>
+              <input
+                type="checkbox"
+                checked={discounted}
+                onChange={(e) => onPatchRow(item.id, { discounted: e.target.checked })}
+              />
+              {ui("gear.blackMarket")}
+            </label>
+          ) : null}
           {spec?.selectside && !item.parent_id && !locked ? (
             <label>
               {ui("ware.side")}

@@ -80,6 +80,11 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             compact={compact}
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
+            discounted={
+              d.black_market_discount && d.black_market_category === "Bioware"
+                ? !!(ch.bioware || []).find((row) => row.id === item.id)?.discounted
+                : null
+            }
             pickSlots={(d.skill_pick_slots || []).filter((slot) => slot.source_kind === "bioware")}
             onSkillPick={(key, skill) =>
               patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })

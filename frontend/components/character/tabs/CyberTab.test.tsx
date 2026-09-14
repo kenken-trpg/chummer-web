@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
+import { beforeEach } from "vitest";
 import { CyberTab } from "@/components/character/tabs/CyberTab";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 
@@ -401,5 +402,52 @@ describe("<CyberTab> compact view", () => {
     first.unmount();
     renderInstalled(vi.fn(), { skill_pick_slots: [{ ...slot, picked: "Pistols" }] });
     expect(document.querySelector(".cyber-item .warn")).toBeNull();
+  });
+});
+
+describe("<CyberTab> black market discount", () => {
+  // another test in this file leaves the compact view on (localStorage)
+  beforeEach(() => localStorage.setItem("wareCompact", "0"));
+
+  const installed = {
+    id: "w1",
+    ware_id: "wired1",
+    name: "Wired Reflexes",
+    category: "Cyberware",
+    rating: 1,
+    rating_max: 3,
+    grade: "Standard",
+    ess: 2,
+    nuyen: 39000,
+    wireless: true,
+  };
+  const character = (extra: Record<string, unknown>) => ({
+    cyberware: [{ id: "w1", ware_id: "wired1", rating: 1, grade: "Standard", wireless: true }],
+    derived: { cyberware: [installed], ...extra },
+  });
+
+  /** The box belongs to whichever kind the quality's category names, and
+   *  ticking it marks that one piece. */
+  it("shows nothing when the pipeline covers another category", () => {
+    renderTab({
+      character: character({
+        black_market_discount: true,
+        black_market_category: "Bioware",
+      }) as any,
+    });
+    expect(screen.queryByLabelText("闇市")).toBeNull();
+  });
+
+  it("marks the piece it is ticked on", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: character({
+        black_market_discount: true,
+        black_market_category: "Cyberware",
+      }) as any,
+      patch,
+    });
+    fireEvent.click(screen.getByLabelText("闇市"));
+    expect((patch.mock.calls[0][0] as any).cyberware[0].discounted).toBe(true);
   });
 });
