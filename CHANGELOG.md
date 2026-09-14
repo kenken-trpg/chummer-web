@@ -7,6 +7,9 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **防具に入れたセンサーに、機能を付け外しできるようにした。** ヘルメットの
+  Single Sensor に付くセンサー機能（カメラなど）が、防具の画面に出て、追加も
+  取り外しもできる。読み込みと計算は前からできていて、画面だけができなかった。
 - **防具にセンサーと視覚・聴覚強化を入れられるようにした。** ヘルメットや
   マスクの Single Sensor・Vision Magnification・Audio Enhancement なども、
   `<armorcapacity>` の分だけ防具の容量を使う。.chum5 の防具の `<gears>` から

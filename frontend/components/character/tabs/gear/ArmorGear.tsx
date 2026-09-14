@@ -148,16 +148,29 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     patch={patch}
                   />
                 ))}
-                {(item.gear || []).map((gear) => (
-                  <CarriedGearRow
-                    key={gear.id}
-                    gear={gear}
-                    character={ch}
-                    tr={tr}
-                    ui={ui}
-                    patch={patch}
-                  />
-                ))}
+                {(item.gear || []).map((gear) => {
+                  const inside = (d[gear.bucket || "gear"] || []).filter(
+                    (row) => row.parent_id === gear.id,
+                  );
+                  return (
+                    <CarriedGearRow
+                      key={gear.id}
+                      gear={gear}
+                      inside={inside}
+                      addons={(catalog[gear.bucket || "gear"] || []).filter(
+                        (mod) =>
+                          (gear.addoncategories || []).includes(mod.category) &&
+                          mod.category !== "Custom" &&
+                          mod.source === "SR5" &&
+                          !inside.some((row) => row.gear_id === mod.id),
+                      )}
+                      character={ch}
+                      tr={tr}
+                      ui={ui}
+                      patch={patch}
+                    />
+                  );
+                })}
                 <AddonSelect
                   rowName={tr(item.name)}
                   prompt={ui("gear.addArmorGear")}
