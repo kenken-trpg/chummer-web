@@ -124,6 +124,8 @@ class ArmorInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     armor_id: str
     rating: int = 1
+    #: the price picked for a `Variable(lo-hi)` piece (Clothing)
+    cost: int | None = None
     equipped: bool = True
     wireless: bool = True
 
@@ -193,6 +195,10 @@ class GearInstall(BaseModel):
     array_order: list[str] = Field(default_factory=list)
     extra: str | None = None
     active: bool = False  # drugs/toxins: effect currently applied
+    #: the price picked for a `Variable(lo-hi)` item (a Custom Item, a
+    #: Commlink App), and a Custom Item's own name
+    cost: int | None = None
+    name: str | None = Field(default=None, max_length=200)
 
 
 class CustomDrugPart(BaseModel):

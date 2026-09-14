@@ -29,6 +29,8 @@ export interface LifestyleQualityCatalogItem {
 }
 
 export interface ArmorCatalogItem {
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
   id: string;
   name: string;
   category: string;
@@ -185,6 +187,8 @@ export interface OpticsCatalogItem {
 }
 
 export interface GearCatalogItem extends OpticsCatalogItem {
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
   needs_extra?: boolean;
   extra_kind?: string;
   extra_options?: string[];

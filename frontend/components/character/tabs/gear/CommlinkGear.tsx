@@ -1,4 +1,5 @@
 "use client";
+import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
@@ -56,6 +57,23 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     >
                       {ui("common.remove")}
                     </button>
+                    <PriceField
+                      range={app.cost_range}
+                      value={
+                        (ch.apps || []).find((row) => row.id === app.id)?.cost ??
+                        app.cost_range?.[0] ??
+                        0
+                      }
+                      label={tr(app.label || app.name)}
+                      ui={ui}
+                      onChange={(cost) =>
+                        patch({
+                          apps: (ch.apps || []).map((row) =>
+                            row.id === app.id ? { ...row, cost } : row,
+                          ),
+                        })
+                      }
+                    />
                     {app.rating_max > 0 ? (
                       <label>
                         Rating

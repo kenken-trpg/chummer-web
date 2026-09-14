@@ -6,7 +6,7 @@ from typing import Any
 
 from .._xml import _int, _text, data_root
 from ..bonus import _parse_weaponbonus, parse_bonus
-from ..formulas import _is_variable_cost, parse_capacity, split_capacity
+from ..formulas import _is_variable_cost, parse_capacity, split_capacity, variable_cost_range
 
 
 def _is_pi_tac_commlink(name: str, category: str) -> bool:
@@ -55,7 +55,11 @@ def load_commlinks() -> list[dict[str, Any]]:
     return items
 
 
-def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False) -> list[dict[str, Any]]:
+def _load_gear_categories(
+    categories: set[str], *, allow_brackets: bool = False, allow_variable: bool = False
+) -> list[dict[str, Any]]:
+    """`allow_variable`: keep a `Variable(lo-hi)` price as `cost_range` (the
+    cost itself 0) — only for buckets whose engine prices from the range."""
     root = data_root("gear.xml")
     if root is None:
         return []
@@ -69,6 +73,9 @@ def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False)
         name = _text(el.find("name"))
         gear_id = _text(el.find("id"))
         cost = _text(el.find("cost"), "0")
+        cost_range = variable_cost_range(cost) if allow_variable else None
+        if cost_range:
+            cost = "0"
         if not name or not gear_id or name.startswith("ID ERROR") or _is_variable_cost(cost):
             continue
         if name.startswith("[") and not allow_brackets:
@@ -133,6 +140,7 @@ def _load_gear_categories(categories: set[str], *, allow_brackets: bool = False)
                 "included": included,
                 "ammo_weapon_types": ammo_types,
                 "costfor": max(0, _int(el.find("costfor"), 0)),
+                "cost_range": list(cost_range) if cost_range else None,
                 "weapon_details": weapon_details,
                 "add_weapon": _text(el.find("addweapon")),
                 "weaponbonus": _parse_weaponbonus(el.find("weaponbonus")),
@@ -212,7 +220,6 @@ GEAR_SPECIALIZED_CATEGORIES = {
 GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
     "Foci",
     "Formulae",
-    "Custom",
     "Custom Cyberdeck Attributes",
     "Custom Drugs",
     "Paydata",
@@ -235,7 +242,7 @@ def load_gear() -> list[dict[str, Any]]:
         if cat:
             cats.add(cat)
     items: list[dict[str, Any]] = []
-    for item in _load_gear_categories(cats - GEAR_SKIP_CATEGORIES):
+    for item in _load_gear_categories(cats - GEAR_SKIP_CATEGORIES, allow_variable=True):
         cost = str(item.get("cost") or "").strip()
         if "Parent Cost" in cost:
             continue
@@ -247,7 +254,7 @@ def load_gear() -> list[dict[str, Any]]:
             continue
         if item.get("category") == "PI-Tac Programs":
             item["requireparent"] = True
-        if cost in {"0", ""} and not item.get("requireparent"):
+        if cost in {"0", ""} and not item.get("requireparent") and not item.get("cost_range"):
             continue
         rating_max = int(item.get("maxrating") or 0)
         if rating_max > GEAR_RATING_CAP:
@@ -281,10 +288,10 @@ def load_programs() -> list[dict[str, Any]]:
 
 def load_apps() -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    for item in _load_gear_categories({"Software"}):
+    for item in _load_gear_categories({"Software", "Commlink Apps"}, allow_variable=True):
         if "Parent Cost" in (item.get("cost") or ""):
             continue
-        if (item.get("cost") or "").strip() in {"0", ""}:
+        if (item.get("cost") or "").strip() in {"0", ""} and not item.get("cost_range"):
             continue
         item["requireparent"] = True
         item["extra_kind"] = _extra_kind(item.get("bonus"), item.get("name") or "")

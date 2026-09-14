@@ -1,4 +1,5 @@
 "use client";
+import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { useState } from "react";
 import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import { CustomDrugMixer } from "@/components/character/tabs/gear/CustomDrugMixer";
@@ -87,6 +88,39 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
                     {item.nuyen.toLocaleString()}¥ / {item.source}
                   </div>
                   <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
+                    {item.category === "Custom" ? (
+                      <label>
+                        {ui("gear.customName")}
+                        <input
+                          value={item.custom_name || ""}
+                          placeholder={tr(item.name)}
+                          onChange={(e) =>
+                            patch({
+                              gear: (ch.gear || []).map((row) =>
+                                row.id === item.id ? { ...row, name: e.target.value || null } : row,
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+                    ) : null}
+                    <PriceField
+                      range={item.cost_range}
+                      value={
+                        (ch.gear || []).find((row) => row.id === item.id)?.cost ??
+                        item.cost_range?.[0] ??
+                        0
+                      }
+                      label={tr(item.label || item.name)}
+                      ui={ui}
+                      onChange={(cost) =>
+                        patch({
+                          gear: (ch.gear || []).map((row) =>
+                            row.id === item.id ? { ...row, cost } : row,
+                          ),
+                        })
+                      }
+                    />
                     <label>
                       {ui("common.qty")}
                       <input

@@ -27,6 +27,7 @@
       "capacity_used": 0,
       "category": "Armor",
       "contributes": 12,
+      "cost_range": null,
       "equipped": true,
       "has_wireless": false,
       "id": "#1",

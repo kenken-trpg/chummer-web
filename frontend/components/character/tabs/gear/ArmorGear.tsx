@@ -1,4 +1,5 @@
 "use client";
+import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
@@ -60,6 +61,23 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   {item.nuyen.toLocaleString()}¥ / {item.source}
                 </div>
                 <div className="cyber-controls">
+                  <PriceField
+                    range={item.cost_range}
+                    value={
+                      (ch.armor || []).find((row) => row.id === item.id)?.cost ??
+                      item.cost_range?.[0] ??
+                      0
+                    }
+                    label={tr(item.name)}
+                    ui={ui}
+                    onChange={(cost) =>
+                      patch({
+                        armor: (ch.armor || []).map((row) =>
+                          row.id === item.id ? { ...row, cost } : row,
+                        ),
+                      })
+                    }
+                  />
                   <label>
                     <input
                       type="checkbox"

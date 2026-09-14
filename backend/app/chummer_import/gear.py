@@ -82,6 +82,7 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
     """Read armor and the mods bolted to it."""
     armor_r = _Resolver(cat["armor"])
     amod_r = _Resolver(cat["armor_mods"])
+    variable_armor = {str(row["id"]) for row in cat["armor"] if row.get("cost_range")}
     st_armor: list[dict[str, Any]] = []
     st_amods: list[dict[str, Any]] = []
     for a in root.findall("./armors/armor"):
@@ -94,6 +95,8 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
             "rating": max(1, _int(a.find("rating"), 1)),
             "equipped": _text(a.find("equipped")).lower() != "false",
         }
+        if aid in variable_armor:
+            row["cost"] = _picked_cost(a)
         st_armor.append(row)
         for m in a.findall("./armormods/armormod"):
             mid = amod_r.resolve(m, warn, ui("engine.kind.armorMod"))
@@ -147,6 +150,14 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     st["weapon_accessories"] = st_wacc
 
 
+def _picked_cost(node: ET.Element) -> int | None:
+    """`<cost>` of an item Chummer let the player price — the number picked."""
+    try:
+        return max(0, int(round(float(_text(node.find("cost"))))))
+    except ValueError:
+        return None
+
+
 def _qty(node: ET.Element) -> float:
     """`<qty>` as Chummer writes it — a decimal ("100", "2.5")."""
     try:
@@ -164,8 +175,13 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     # counts what the price is quoted for — `costfor` of them (a box of 10).
     cost_for = {str(row["id"]): int(row.get("costfor") or 0) for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
+    rows_by_id = {str(row["id"]): row for b in ("gear", *BUCKETS) for row in catalog_list(b)}
+
     def route_gear(g: ET.Element, parent_id: str | None, parent_bucket: str | None) -> None:
-        sid = _text(g.find("sourceid")) or _text(g.find("guid"))
+        # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
+        # is whatever the player called it
+        sid = _text(g.find("sourceid")) or (_text(g.find("id")) if _text(g.find("id")) in rows_by_id else "")
+        sid = sid or _text(g.find("guid"))
         name = _text(g.find("name"))
         bucket = "gear"
         gid: str | None = None
@@ -188,6 +204,11 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             "gear_id": gid,
             "rating": max(1, _int(g.find("rating"), 1)),
         }
+        spec = rows_by_id.get(gid) or {}
+        if spec.get("cost_range"):
+            row["cost"] = _picked_cost(g)
+        if spec.get("category") == "Custom" and name and name != spec.get("name"):
+            row["name"] = name
         if bucket == "commlinks":
             row.pop("rating", None)
             row["rating"] = max(1, _int(g.find("rating"), 1))

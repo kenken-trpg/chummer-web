@@ -7,6 +7,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **値段を自分で決める品目を扱えるようにした。** Chummer のデータで値段が
+  `Variable(下限-上限)` の品目 — カスタム品目（Custom Item）、Clothing、
+  コムリンクアプリ（Theme Music など）、Uniforms など — をカタログに載せ、範囲内
+  で値段を入力できる。カスタム品目には名前も付けられる。.chum5 の `<cost>` と
+  名前とも往復するので、Chummer で作った「Wine」「Golden Lotus Flower」のような
+  品目が取り込めずに消えることがなくなった。
 - **ライフスタイルの快適さ・地域・防犯を上げられるようにした（RF p.219）。**
   1 段ごとに LP 1 と基本額の 10%（段の値段があればそれも）がかかり、上げ
   られるのはライフスタイルごとの上限まで。.chum5 の `<comforts>` / `<area>` /

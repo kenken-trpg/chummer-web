@@ -147,3 +147,13 @@ def split_capacity(expr: str | None) -> tuple[bool, str, str]:
 
 def _is_variable_cost(cost: str) -> bool:
     return "Variable" in (cost or "")
+
+
+def variable_cost_range(cost: str | None) -> tuple[int, int] | None:
+    """`Variable(lo-hi)`: a price the player sets within the range (a Custom
+    Item, Clothing, a Commlink App), or None for a fixed price."""
+    match = re.fullmatch(r"\s*Variable\(\s*(\d+)\s*-\s*(\d+)\s*\)\s*", cost or "")
+    if not match:
+        return None
+    lo, hi = int(match.group(1)), int(match.group(2))
+    return (min(lo, hi), max(lo, hi))
