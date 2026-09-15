@@ -123,6 +123,7 @@ def _resolve_sensors(
     errors: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
     specs = {item["id"]: item for item in catalog().get("sensors") or []}
+    host_ids = {row.id for row in state.drones or []} | {row.id for row in state.vehicles or []}
     public: list[dict[str, Any]] = []
     kept: list[GearInstall] = []
     nuyen = 0
@@ -165,6 +166,10 @@ def _resolve_sensors(
                 "addoncategories": list(spec.get("addoncategories") or []),
                 "requireparent": bool(spec.get("requireparent")),
                 "device_rating": _device_rating_of(spec, rating),
+                # Bolted to a vehicle or drone, not carried. Its rating is the
+                # host's Sensor attribute, so the chargen device-rating cap —
+                # a rule about the gear a person buys — must not read it.
+                "on_vehicle": bool(inst.parent_id and inst.parent_id in host_ids),
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
                 "page": spec.get("page") or "",

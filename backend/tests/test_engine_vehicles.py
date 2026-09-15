@@ -793,3 +793,61 @@ def test_off_road_mods_do_nothing_on_a_single_value() -> None:
     row = compute(_mundane("offroad-single", vehicles=[car], vehicle_mods=[mod])).derived["vehicles"][0]
     assert row["handling"] == str(int(car_spec["handling"]) - 1)
     assert "/" not in row["speed"]
+
+
+SENSOR_DOWNGRADE = "df14f2ec-c85c-4b5f-9765-98bbc7c8b7d5"
+HANDLING_DOWNGRADE = "f56c3103-e5e7-4b7c-8cdf-7d74d7196f35"
+
+
+def test_a_downgrade_buys_the_drone_a_mod_slot() -> None:
+    """R5: trading a stat away frees a slot (`Vehicle.DroneModSlots`)."""
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "downgraded",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=SENSOR_DOWNGRADE, parent_id=drone.id)],
+        )
+    )
+    row = out.derived["drones"][0]
+    assert row["slots_max"] == 5  # 4 by Body, +1 from the downgrade
+    # the downgrade itself is not spending a slot: Chummer leaves downgrades
+    # out of `DroneModSlotsUsed` entirely
+    assert row["slots_used"] == 0
+    assert not has(out.derived["errors"], "engine.gear.vehicleSlotsOver")
+
+
+def test_a_second_downgrade_buys_nothing() -> None:
+    """ "You receive only one additional Mod Point from Downgrades" (R5 p.123)."""
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "twice-downgraded",
+            drones=[drone],
+            vehicle_mods=[
+                VehicleModInstall(mod_id=SENSOR_DOWNGRADE, parent_id=drone.id),
+                VehicleModInstall(mod_id=HANDLING_DOWNGRADE, parent_id=drone.id),
+            ],
+        )
+    )
+    row = out.derived["drones"][0]
+    assert row["slots_max"] == 5  # still 5, not 6
+    assert row["slots_used"] == 0
+
+
+def test_a_vehicle_sensor_is_not_the_characters_device() -> None:
+    """A drone's Sensor Array reports the host's Sensor attribute as its device
+    rating. That is a vehicle stat, not a device someone bought, so the chargen
+    device-rating cap must not read it — four of Chummer's own saves carry a
+    legal vehicle above the cap."""
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "sensor-host",
+            drones=[drone],
+            sensors=[GearInstall(gear_id=SENSOR_ARRAY, parent_id=drone.id, included=True, rating=8)],
+        )
+    )
+    array = next(row for row in out.derived["sensors"] if row["name"] == "Sensor Array")
+    assert array["on_vehicle"] is True
+    assert not has(out.derived["errors"], "engine.gear.deviceRatingOver")

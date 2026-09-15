@@ -117,6 +117,10 @@ def load_vehicle_mods() -> list[dict[str, Any]]:
                 "required": _vehicle_constraints(el.find("required")),
                 "forbidden": _vehicle_constraints(el.find("forbidden")),
                 "optionaldrone": el.find("optionaldrone") is not None,
+                # `<downgrade />`, an empty tag. A drone downgrade trades a stat
+                # away for a mod slot, and Chummer gives that slot back only once
+                # however many downgrades are fitted — see `_drone_slot_bonus`.
+                "downgrade": el.find("downgrade") is not None,
                 "capacity": _text(el.find("capacity")),
                 "subsystems": [
                     _text(sub)

@@ -149,7 +149,7 @@ def _device_rating_entries(*groups: list[dict[str, Any]] | None) -> list[dict[st
                 continue
             if item_id:
                 seen.add(item_id)
-            if item.get("from_ware") or item.get("from_gear"):
+            if item.get("from_ware") or item.get("from_gear") or item.get("on_vehicle"):
                 continue
             if int(item.get("device_rating") or 0) <= 0:
                 continue
