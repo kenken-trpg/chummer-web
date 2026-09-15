@@ -66,7 +66,8 @@ export default [
     // `components/` does (the text sheet, the formatters, the small JSX bits),
     // and leaving it out is how `bits.tsx` kept two literals nobody noticed.
     //
-    // The dictionaries are exempt: `lib/i18n/locales/*.ts` *are* the text. The
+    // The dictionaries are exempt: `lib/i18n/locales/**` *are* the text — the
+    // barrels and the per-area files they spread together alike. The
     // Cocofolia export used to be exempt as well; it now takes a locale and
     // reads its labels out of the dictionary like everything else.
     files: [
@@ -77,7 +78,7 @@ export default [
       "lib/**/*.tsx",
       "lib/**/*.ts",
     ],
-    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/locales/*.ts"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "lib/i18n/locales/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",
