@@ -224,6 +224,10 @@ class GearBundle(TypedDict):
     errors: list[Notice]
     bonus_sources: list[BonusSource]
     nuyen: int
+    #: `nuyen` split the way the sidebar shows it, keyed by the `engine.spend.*`
+    #: suffix. Recorded as the money is counted, so the parts always add back up
+    #: to the whole — see the note in `compute/gear.py`.
+    nuyen_by_bucket: dict[str, int]
     armor: int
     worn_name: str
     #: SR5 p.169: the AGI/REA malus from stacked armor past STR (0 or negative)
@@ -398,6 +402,7 @@ def empty_gear() -> GearBundle:
         errors=[],
         bonus_sources=[],
         nuyen=0,
+        nuyen_by_bucket={},
         armor=0,
         armor_encumbrance=0,
         worn_name="",

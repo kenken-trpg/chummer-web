@@ -100,6 +100,7 @@ export const JA_ENGINE = {
   "engine.spend.initiation": "イニシエーション",
   "engine.spend.knowledge": "知識 {name} {before}→{after}",
   "engine.spend.knowledgeKarma": "知識（カルマ作成）",
+  "engine.spend.customDrugs": "自作ドラッグ",
   "engine.spend.lifestyles": "ライフスタイル",
   "engine.spend.martialArts": "武道",
   "engine.spend.metatype": "メタ",

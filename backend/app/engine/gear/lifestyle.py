@@ -250,3 +250,8 @@ def apply_lifestyle_cost_mod(gear: GearBundle, percent: int) -> None:
     if gear.get("lifestyle") and (gear.get("lifestyles") or []):
         gear["lifestyle"] = (gear.get("lifestyles") or [])[0]
     gear["nuyen"] = int(gear.get("nuyen") or 0) + delta
+    # the per-line tally has to move with the total, or the sidebar's breakdown
+    # stops adding up to the money it is breaking down
+    by_bucket = gear.get("nuyen_by_bucket")
+    if by_bucket is not None:
+        by_bucket["lifestyles"] = int(by_bucket.get("lifestyles") or 0) + delta
