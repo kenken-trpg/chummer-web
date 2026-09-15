@@ -36,10 +36,14 @@ predating that fails to exec caddy (`EPERM`) under the compose file that asks
 for it. Reusing whatever image the host happens to have turns that into a
 container that never becomes healthy.
 
-CI publishes to `ghcr.io/<owner>/chummer-web`, but a GHCR package is private
-when first created whatever the repository's visibility — `docker compose pull`
-fails with `unauthorized` until someone flips it once in the package settings.
-Pull explicitly when you have access and want to skip the build.
+CI builds the same image for `linux/amd64` and `linux/arm64`, each on its own
+native runner, smoke-tests both locked down, and only then joins the two
+digests into one tag — so a pull gets the right architecture and never gets an
+image that failed to start. It publishes to `ghcr.io/<owner>/chummer-web`, but
+a GHCR package is private when first created whatever the repository's
+visibility: `docker compose pull` fails with `unauthorized` until someone flips
+it once in the package settings. Building is the path that always works; pull
+explicitly when you have access and want to skip the build.
 
 The Chummer game data is fetched at **build time** (`fetch_chummer_data.py`,
 pinned to `CHUMMER_REF`) and baked into the image — no network needed at
