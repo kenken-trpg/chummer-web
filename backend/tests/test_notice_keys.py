@@ -1,6 +1,6 @@
 """The backend's message keys and the front end's dictionary must agree.
 
-Splitting the two — keys here, wording in `frontend/lib/i18n/locales/` — is
+Splitting the two — keys here, wording in `frontend/lib/i18n/locales/ja/` — is
 what lets the creation-check panel follow the locale switch, but it also means
 nothing in Python knows whether a key has a sentence behind it. A missing one
 renders as `engine.foo.bar` in the UI rather than crashing, which is exactly
@@ -17,7 +17,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 BACKEND = REPO / "backend" / "app"
-MESSAGES = REPO / "frontend" / "lib" / "i18n" / "locales" / "ja.ts"
+#: the reference locale, split by area — `ja.ts` is only the barrel that
+#: spreads these together, so the wording is read from the parts
+MESSAGES = sorted((REPO / "frontend" / "lib" / "i18n" / "locales" / "ja").glob("*.ts"))
 
 # Fixed engine vocabulary. Some members are named literally and some are built
 # at run time (`ui(f"engine.slot.{key}")`), so a member with no literal is not
@@ -46,17 +48,18 @@ def _keys_used() -> set[str]:
 
 
 def _keys_defined() -> set[str]:
-    return set(re.findall(r'^\s*"((?:engine|api)\.[A-Za-z0-9_.]+)":', MESSAGES.read_text(), flags=re.M))
+    text = "\n".join(path.read_text() for path in MESSAGES)
+    return set(re.findall(r'^\s*"((?:engine|api)\.[A-Za-z0-9_.]+)":', text, flags=re.M))
 
 
 def test_every_message_key_has_a_sentence() -> None:
     missing = sorted(_keys_used() - _keys_defined())
-    assert not missing, f"no wording in locales/ja.ts for: {missing}"
+    assert not missing, f"no wording in locales/ja/ for: {missing}"
 
 
 def test_no_orphaned_message_keys() -> None:
     orphans = sorted(key for key in _keys_defined() - _keys_used() if not key.startswith(DYNAMIC_FAMILIES))
-    assert not orphans, f"locales/ja.ts defines keys the backend never emits: {orphans}"
+    assert not orphans, f"locales/ja/ defines keys the backend never emits: {orphans}"
 
 
 def test_dynamic_families_are_still_used() -> None:
