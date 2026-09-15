@@ -16,7 +16,7 @@ the browser. Nothing to back up, safe to scale to zero / run many instances.
 ## Build & run locally
 
 ```bash
-docker compose up --build      # http://localhost:8080
+docker compose up -d           # http://localhost:8080 (builds from this checkout)
 # or
 docker build -t chummer-web .
 # nothing in the image is written to at run time, so run it locked down —
@@ -27,6 +27,18 @@ docker run --rm -p 8080:8080 \
   --tmpfs /app/frontend/.next/cache:rw,noexec,nosuid,size=16m \
   chummer-web
 ```
+
+`compose.yaml` sets `pull_policy: build`, so the image is rebuilt from the
+checkout on every `up`. Cached, that costs seconds, and it is what keeps the
+image in step with the file starting it: the read-only / `--cap-drop ALL`
+runtime needs the Dockerfile's `setcap -r` on the caddy binary, and an image
+predating that fails to exec caddy (`EPERM`) under the compose file that asks
+for it. Reusing whatever image the host happens to have turns that into a
+container that never becomes healthy.
+
+CI publishes to `ghcr.io/<owner>/chummer-web`, but a GHCR package inherits the
+repository's visibility — `docker compose pull` is only an option for a public
+repo. Pull explicitly when you have access and want to skip the build.
 
 The Chummer game data is fetched at **build time** (`fetch_chummer_data.py`,
 pinned to `CHUMMER_REF`) and baked into the image — no network needed at
