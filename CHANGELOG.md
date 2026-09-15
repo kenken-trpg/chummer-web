@@ -168,6 +168,14 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   あわせて、GHCR のパッケージはリポジトリが公開でも初回作成時は private のため
   `docker compose pull` が `unauthorized` で落ちることを README と `docs/deploy.md`
   に明記した。
+- **`.dockerignore` が `.env` を完全一致でしか除外していなかった。** Dockerfile は
+  `COPY frontend/ ./` でフロントエンドを丸ごとイメージに入れ、Next はビルド時に
+  `frontend/.env.production` を読んで `NEXT_PUBLIC_*` をクライアントのバンドルに
+  焼き込む。つまり置いた覚えのないファイルが、公開イメージから読める状態で
+  出ていきうる。しかもレイヤは消せないので、後から気づいても取り消せない。
+  `**/.env*` ＋ `!**/.env.example` にした。実際にダミーを置いてビルドし、
+  修正前は Next が `- Environments: .env.production` と読み込んでいたこと、
+  修正後はイメージ内にファイルも値も残らないことを確認した。
 - **`.gitignore` が `.env` を完全一致でしか除外していなかった。** `.env` を編集した
   ついでにできる `.env.bak` や、`.env.production` は素通りする。中身は同じ秘密なので
   `.env*` で除外し、`.env.example` だけ戻す形にした。

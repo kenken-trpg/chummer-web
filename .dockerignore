@@ -24,8 +24,13 @@ backend/vendor
 backend/saves
 **/.DS_Store
 **/*.log
-.env
-.env.local
+# `**/.env*` rather than the two exact names at the root. `COPY frontend/ ./`
+# takes the whole directory, and Next reads `frontend/.env.production` at build
+# time and inlines every NEXT_PUBLIC_* value into the client bundle — so a file
+# nobody meant to ship ends up readable in a published image, in a layer that
+# deleting the file later cannot take back.
+**/.env*
+!**/.env.example
 
 # not needed at build/runtime (LICENSE + NOTICE.txt are COPYed explicitly)
 docs
