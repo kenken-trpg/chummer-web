@@ -7,6 +7,14 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **CodeQL を CI に入れた。** 依存の既知脆弱性は `audit.yml` が見ているが、
+  このリポジトリ自身のコードは誰も静的解析していなかった。バックエンドは
+  設計上、他人のブラウザから来る信用できない XML を解析するので、テストでは
+  出ない種類の穴（リクエスト由来の値で組み立てたパス、後戻りする正規表現、
+  素通りする比較）を拾う余地がある。Python と TypeScript の両方を
+  `security-and-quality` のクエリで解析し、結果は Security タブに出る。
+  マージはゲートしない — このコードベースでの誤検出率が分かるまでは、
+  読む価値はあってもリリースを止める価値はない。
 - **電子機器の改造（Electronic Modification）を扱えるようにした。** Data Trails
   p.66 の改造 — Increase Attack や Modify Matrix Attribute、Add Module など
   32 件 — をカタログに載せ、コムリンク・サイバーデッキ・RCC のそれぞれに
