@@ -132,7 +132,6 @@ def load_cyberware() -> dict[str, Any]:
     root = data_root("cyberware.xml")
     if root is None:
         return {"grades": [], "items": []}
-    root = root
     return {"grades": _load_grades(root), "items": _load_ware_items(root, "./cyberwares/cyberware", "Bodyware")}
 
 
@@ -140,5 +139,4 @@ def load_bioware() -> dict[str, Any]:
     root = data_root("bioware.xml")
     if root is None:
         return {"grades": [], "items": []}
-    root = root
     return {"grades": _load_grades(root), "items": _load_ware_items(root, "./biowares/bioware", "Basic")}

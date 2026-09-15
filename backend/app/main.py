@@ -8,6 +8,7 @@ import re
 import time
 from collections.abc import Awaitable, Callable
 from functools import lru_cache
+from pathlib import PurePosixPath
 from typing import NamedTuple
 from urllib.parse import quote
 
@@ -277,9 +278,16 @@ def catalog_endpoint(request: Request) -> Response:
     try:
         cached = _cached_catalog()
     except FileNotFoundError as exc:
+        # The name of the file, not the path to it. `str(exc)` reads
+        # "[Errno 2] No such file or directory: '/app/backend/vendor/…'", and
+        # this response goes to anyone who can reach the port — it would hand
+        # out the server's directory layout to ask for a missing data file.
+        # The operator who has to act on it gets the whole thing in the log.
+        _log.error("catalog unavailable: %s", exc)
+        missing = PurePosixPath(str(getattr(exc, "filename", "") or "")).name
         raise HTTPException(
             status_code=503,
-            detail=notice("api.catalogMissing", error=str(exc)),
+            detail=notice("api.catalogMissing", file=missing or "?"),
         ) from exc
     headers = {"ETag": cached.etag, "Cache-Control": "no-cache"}
     if _matches_etag(request.headers.get("if-none-match", ""), cached.etag):

@@ -204,7 +204,7 @@ export const EN_APP = {
 
   "common.attribute": "Attribute",
   "api.catalogMissing":
-    "The Chummer game data is missing. Run `make data` (or backend/scripts/fetch_chummer_data.py). If you are running the container, it should already be bundled in the image. ({error})",
+    "The Chummer game data is missing. Run `make data` (or backend/scripts/fetch_chummer_data.py). If you are running the container, it should already be bundled in the image. ({file} not found)",
   "api.chum5lzUndecompressible":
     "This .chum5lz could not be decompressed. In Chummer, use Save As to write an uncompressed .chum5 and load that instead. ({formats})",
   "api.importChummerFailed": "This .chum5 / .chum5lz could not be imported.",

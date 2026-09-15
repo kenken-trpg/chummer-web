@@ -31,7 +31,6 @@ def load_weapons() -> list[dict[str, Any]]:
     root = data_root("weapons.xml")
     if root is None:
         return []
-    root = root
     category_types = _weapon_category_types(root)
     items: list[dict[str, Any]] = []
     for el in root.findall("./weapons/weapon"):
@@ -102,7 +101,6 @@ def load_weapon_ranges() -> dict[str, dict[str, str]]:
     root = data_root("ranges.xml")
     if root is None:
         return {}
-    root = root
     out: dict[str, dict[str, str]] = {}
     for el in root.findall("./ranges/range"):
         name = _text(el.find("name"))
