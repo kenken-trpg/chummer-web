@@ -153,17 +153,47 @@ def _host_is_drone(row: dict[str, Any]) -> bool:
     return str(row.get("category") or "").startswith("Drones")
 
 
-def _add_vehicle_slot_use(parent: dict[str, Any], slots: int, category: str, included: bool) -> None:
+def _add_vehicle_slot_use(
+    parent: dict[str, Any], slots: int, category: str, included: bool, *, downgrade: bool = False
+) -> None:
     if included:
         return
     used = max(0, int(slots))
     if _host_is_drone(parent):
+        # A mod that costs a negative number of slots hands them to the drone
+        # instead of taking them (`Vehicle.DroneModSlots`). It is banked here
+        # and added to the maximum in `_finalize_vehicle_slots`, never
+        # subtracted from the used count: Chummer leaves downgrades out of
+        # `DroneModSlotsUsed` entirely, which `max(0, ...)` above already does.
+        if int(slots) < 0:
+            banked = parent.setdefault("_slot_given_back", [])
+            banked.append((bool(downgrade), -int(slots)))
         parent["slots_used"] = int(parent.get("slots_used") or 0) + used
         return
     if category not in R5_SLOT_ADD_KEYS:
         return
     tracks = parent.setdefault("_slot_used", {})
     tracks[category] = int(tracks.get(category) or 0) + used
+
+
+def _drone_slot_bonus(given_back: list[tuple[bool, int]]) -> int:
+    """The mod slots a drone gains back from its negative-slot mods.
+
+    `Vehicle.DroneModSlots`: every such mod hands its slots over, except that
+    downgrades are capped at one between them — "You receive only one
+    additional Mod Point from Downgrades". Trading away handling *and* sensors
+    still buys a single slot, so the cheapest downgrade is the only one worth
+    fitting for space.
+    """
+    bonus = 0
+    downgraded = False
+    for is_downgrade, slots in given_back:
+        if is_downgrade:
+            if downgraded:
+                continue
+            downgraded = True
+        bonus += slots
+    return bonus
 
 
 def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[Notice]:
@@ -173,6 +203,7 @@ def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[Notice]:
         if _host_is_drone(row):
             listed = row.get("modslots")
             maximum = int(listed) if listed is not None else body
+            maximum += _drone_slot_bonus(row.pop("_slot_given_back", None) or [])
             used = int(row.get("slots_used") or 0)
             row["slots_max"] = maximum
             row["slot_tracks"] = []
@@ -361,7 +392,13 @@ def _resolve_vehicle_mods(
         if spec.get("bonus"):
             _apply_vehicle_bonus(parent.setdefault("stats", {}), list(spec.get("bonus") or []), rating)
         parent["nuyen"] = int(parent.get("nuyen") or 0) + cost
-        _add_vehicle_slot_use(parent, slots, str(spec.get("category") or ""), bool(inst.included))
+        _add_vehicle_slot_use(
+            parent,
+            slots,
+            str(spec.get("category") or ""),
+            bool(inst.included),
+            downgrade=bool(spec.get("downgrade")),
+        )
         kept.append(inst)
         public.append(
             {
