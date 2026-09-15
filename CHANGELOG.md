@@ -109,6 +109,15 @@ self-hosters can pin to a tag instead of tracking `main`.
 Chummer の amend エンジンのうち実データが使っていない部分。段取りは
 `docs/plans/settings-plan.md`。
 
+### Changed
+
+- **`chummer_export.py`（971 行）を `chummer_export/` パッケージに分割した。**
+  インポート側と同じ軸（`identity` / `qualities` / `gear` / `lifestyles` /
+  `magic` / `_common`）に割り、往復の両側が並ぶようにした。`<spells>`・
+  `<powers>`・`<complexforms>` はクオリティの出力から `magic` に、トラディション
+  とメンターは連絡先の出力から切り出している。出力は Chummer のテストセーブ
+  34 件すべてでバイト単位で変わらない（uuid と日時を伏せて全文を突き合わせた）。
+
 ### Fixed
 
 - **`cf-connecting-ip` を無条件に信じるのをやめた（レート制限の回避）。** この
