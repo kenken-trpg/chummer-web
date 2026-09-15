@@ -148,6 +148,7 @@ export const JA_ENGINE = {
   "engine.qualities.pickAddSpirit": "{name} の追加精霊を選んでください",
   "engine.qualities.pickOptionalPower": "{name} の任意パワーを 1 つ選んでください",
   "engine.qualities.pickExtra": "{name} の対象を入力してください",
+  "engine.qualities.pickText": "{name} の内容が未記入です",
   "engine.qualities.pickMatrixAction": "{name} のマトリクスアクションを選んでください",
   "engine.qualities.pickSide": "{name} の左右を選んでください",
   "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリを選んでください",

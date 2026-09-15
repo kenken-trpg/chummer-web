@@ -405,3 +405,35 @@ def test_a_raised_availability_limit_lets_the_equipment_through() -> None:
     state.settings = SettingsState(chargen_avail_max=15)
     prime = compute(state)
     assert not has(prime.derived["errors"], "engine.gear.availOver")
+
+
+def test_a_prime_runner_is_judged_by_prime_runner_rules() -> None:
+    """`<gameplayoption>` names the preset; `<settings>` names the *file*, which
+    is `default.xml` even for a Prime Runner. Matching on the file found no
+    preset, so two of Chummer's own saves were judged by Standard's 25-karma
+    quality cap instead of Prime Runner's 35."""
+    from app.data_loader import catalog
+
+    presets = {row["name"]: row for row in catalog()["settings_presets"]}
+    assert presets["Standard"]["quality_karma_limit"] == 25
+    assert presets["Prime Runner"]["quality_karma_limit"] == 35
+
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <settings>default.xml</settings>
+      <gameplayoption>Prime Runner</gameplayoption>
+      <metatype>Human</metatype>
+    </character>"""
+    settings = chum5_to_state(raw)[0]["settings"]
+    assert settings["name"] == "Prime Runner"
+    assert settings["quality_karma_limit"] == 35
+
+
+def test_the_standard_preset_leaves_the_printed_cap_unset() -> None:
+    """A settings state says what it changes. Standard does not move the cap,
+    so it must not come back as "set to 25" — that is a different thing."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <settings>default.xml</settings>
+      <gameplayoption>Standard</gameplayoption>
+      <metatype>Human</metatype>
+    </character>"""
+    assert "quality_karma_limit" not in chum5_to_state(raw)[0]["settings"]

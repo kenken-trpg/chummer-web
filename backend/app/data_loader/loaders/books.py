@@ -65,6 +65,12 @@ def load_settings_presets() -> list[dict[str, Any]]:
                 "build_method": method,
                 "books": books,
                 "sum_to_ten": _int(el.find("sumtoten"), 10),
+                # The 25-karma cap on qualities, both directions, which the
+                # preset is free to move: Prime Runner and the Neon Anarchy
+                # Prime sets allow 35. Carried so an imported character is
+                # judged by the rules it was built under — without it, a legal
+                # Prime Runner is called illegal over 10 karma of qualities.
+                "quality_karma_limit": _int(el.find("qualitykarmalimit"), 25),
             }
         )
     return presets

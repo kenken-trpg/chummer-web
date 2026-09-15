@@ -169,4 +169,21 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
         elif extra:
             out[qid] = extra
         return out
-    return {qid: extra} if extra else {}
+    return {qid: _match_option(spec, extra)} if extra else {}
+
+
+def _match_option(spec: dict[str, Any], extra: str) -> str:
+    """The saved pick, spelled the way this app's option list spells it.
+
+    Chummer stores what its own dropdown held, which is not always the catalog
+    entry's name: Spirit Bane is saved as `Man` where the list this app builds
+    from the critter data says `Spirit of Man`. Left alone the pick matches
+    nothing and the quality is reported as holding an invalid choice. Only an
+    exact match after the prefix is accepted — anything looser would quietly
+    turn a genuinely unknown pick into a valid one.
+    """
+    options = [str(item) for item in (spec.get("select_options") or [])]
+    if not options or extra in options:
+        return extra
+    prefixed = f"Spirit of {extra}"
+    return prefixed if prefixed in options else extra

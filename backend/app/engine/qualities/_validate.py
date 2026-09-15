@@ -31,6 +31,22 @@ from ._picks import (
 )
 
 
+def _is_flavour_text_only(spec: dict[str, Any]) -> bool:
+    """A quality whose only unfilled pick is a line of prose.
+
+    `<selecttext>` on its own sets the quality's Extra and nothing else — what
+    you regret (Big Regret), who wants you (Wanted). No rule reads it, so an
+    empty one cannot make a build illegal, and Chummer saves it empty without
+    complaint on three of its own test characters. A pick that carries a
+    mechanical choice — a skill, an attribute, an expertise — is a different
+    thing and stays an error: the bonus cannot be applied without it.
+    """
+    if spec.get("select_options") or spec.get("optional_powers"):
+        return False
+    tags = [node.get("tag") for node in (spec.get("bonus") or [])]
+    return tags == ["selecttext"]
+
+
 def apply_quality_rules(
     state: CharacterState,
     qualities: list[dict[str, Any]],
@@ -40,6 +56,7 @@ def apply_quality_rules(
     *,
     career: bool = False,
     report: dict[str, Any] | None = None,
+    warnings: list[Notice] | None = None,
 ) -> int:
     owned = {item["id"] for item in qualities}
     extras = {
@@ -75,6 +92,9 @@ def apply_quality_rules(
                 errors.append(notice("engine.qualities.pickSpirit", name=term(str(spec["name"]))))
             elif str(spec.get("extra_kind") or "") == "weapon_skill":
                 errors.append(notice("engine.qualities.pickWeaponSkill", name=term(str(spec["name"]))))
+            elif _is_flavour_text_only(spec):
+                if warnings is not None:
+                    warnings.append(notice("engine.qualities.pickText", name=term(str(spec["name"]))))
             else:
                 errors.append(notice("engine.qualities.pickExtra", name=term(str(spec["name"]))))
         optional = [critter_power_label(row) for row in spec.get("optional_powers") or []]
@@ -100,7 +120,14 @@ def apply_quality_rules(
         if options and spec["id"] in extras and extras[spec["id"]] not in options:
             if not _quality_has_actiondicepool(spec):
                 errors.append(notice("engine.qualities.extraInvalid", name=term(str(spec["name"]))))
-        if is_free:
+        if is_free or career:
+            # `<required>` / `<forbidden>` are a purchase-time gate, not a
+            # standing invariant: Chummer evaluates `RequirementsMetAsync` when
+            # a quality is *added* and never again. So a career character who
+            # legally bought Apt Pupil at Arcana 6 keeps it after moving those
+            # points elsewhere, and re-deciding it every compute would call two
+            # of Chummer's own career saves illegal. In creation the engine is
+            # the only gate there is, so the check stays.
             continue
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
             errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
@@ -129,7 +156,15 @@ def apply_quality_rules(
     mg_balanced = (not mg_pos) or mg_neg in (mg_pos, mg_pos - 1)
     if not career:
         if (mg_pos or mg_neg) and metagenic_limit <= 0:
-            errors.append(notice("engine.qualities.metagenicNeedsChangeling"))
+            # RF p.106 sells metagenic qualities to Changelings alone, but the
+            # data does not say so — Chummer keeps non-Changelings away from
+            # them by filtering its purchase list, and its validity sweep runs
+            # the whole metagenic block only `if (intMetagenicLimit > 0)`. So a
+            # save that holds one without SURGE is legal as far as Chummer is
+            # concerned, and calling it invalid would reject a character it
+            # wrote. Said, not enforced.
+            if warnings is not None:
+                warnings.append(notice("engine.qualities.metagenicNeedsChangeling"))
         elif metagenic_limit > 0:
             if mg_neg > metagenic_limit:
                 errors.append(notice("engine.qualities.metagenicNegativeCap", karma=mg_neg, limit=metagenic_limit))

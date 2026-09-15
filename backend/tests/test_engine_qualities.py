@@ -109,8 +109,12 @@ HUMAN_LOOKING = "2844e64e-f271-4ca7-bd58-0860b2db56c9"
 
 
 def test_allergy_requires_target_text() -> None:
+    """An unfilled `<selecttext>` is said, not enforced. What you are allergic
+    to is prose: no rule reads it, so an empty one cannot make the build
+    illegal, and Chummer saves it empty on three of its own test characters."""
     missing = compute(_human("allergy-empty", quality_ids=[ALLERGY_MILD]))
-    assert has(missing.derived["errors"], "engine.qualities.pickExtra")
+    assert not has(missing.derived["errors"], "engine.qualities.pickExtra")
+    assert has(missing.derived["warnings"], "engine.qualities.pickText")
     filled = compute(_human("allergy-sun", quality_ids=[ALLERGY_MILD], quality_extras={ALLERGY_MILD: "Sunlight"}))
     assert filled.derived["errors"] == []
     assert filled.derived["karma"]["negative"] == {"used": 5, "max": 25}
@@ -447,7 +451,8 @@ def test_home_ground_selecttext() -> None:
     missing = compute(_human("hg-missing", quality_ids=[HOME_GROUND]))
     tags = [item["tag"] for item in missing.derived["unimplemented_bonuses"]]
     assert "selecttext" not in tags
-    assert has(missing.derived["errors"], "engine.qualities.pickExtra")
+    # prose, so a warning rather than an error — see test_allergy_requires_target_text
+    assert has(missing.derived["warnings"], "engine.qualities.pickText")
     out = compute(_human("hg", quality_ids=[HOME_GROUND], quality_extras={HOME_GROUND: "Barrens"}))
     row = next(item for item in out.derived["qualities"] if item["id"] == HOME_GROUND)
     assert row["extra"] == "Barrens"
@@ -929,8 +934,13 @@ FEATHERS = "35279341-3611-439a-9550-8227b306198f"  # -3 negative metagenic
 
 
 def test_metagenic_requires_changeling() -> None:
+    """RF p.106 sells these to Changelings alone, but Chummer enforces it by
+    filtering its purchase list and runs the metagenic validity block only
+    `if (intMetagenicLimit > 0)`. A save holding one without SURGE is legal to
+    Chummer, so this is said and not enforced."""
     out = compute(_mundane("mg-nochangeling", quality_ids=[THERMO_SURGE, FEATHERS]))
-    assert has(out.derived["errors"], "engine.qualities.metagenicNeedsChangeling")
+    assert not has(out.derived["errors"], "engine.qualities.metagenicNeedsChangeling")
+    assert has(out.derived["warnings"], "engine.qualities.metagenicNeedsChangeling")
 
 
 def test_metagenic_karma_must_balance() -> None:
@@ -1105,3 +1115,39 @@ def test_infected_optional_power_is_a_required_pick_from_its_list() -> None:
 def test_qualities_without_critter_powers_carry_no_power_fields() -> None:
     row = compute(_mundane("plain", quality_ids=[ALLERGY_MILD])).derived["qualities"][0]
     assert "critter_powers" not in row and "optional_powers" not in row
+
+
+def test_a_career_character_keeps_a_quality_whose_prerequisite_moved() -> None:
+    """`<required>` is a purchase-time gate: Chummer calls `RequirementsMetAsync`
+    when a quality is *added* and its validity sweep never re-checks. So a career
+    character who bought Apt Pupil at Arcana 6 keeps it after moving those points
+    — two of Chummer's own career saves depend on this."""
+    apt_pupil = next(q for q in catalog()["qualities"] if q["name"] == "Apt Pupil")
+    assert apt_pupil["required_tree"]  # it does have prerequisites to miss
+
+    chargen = compute(_mundane("apt-chargen", quality_ids=[apt_pupil["id"]]))
+    assert has(chargen.derived["errors"], "engine.qualities.prereq")
+
+    state = _mundane("apt-career", quality_ids=[apt_pupil["id"]])
+    state.career = True
+    assert not has(compute(state).derived["errors"], "engine.qualities.prereq")
+
+
+def test_a_spirit_pick_saved_the_short_way_is_still_valid() -> None:
+    """Chummer stores Spirit Bane's pick as `Man`; the option list this app
+    builds from the critter data spells it `Spirit of Man`. Left alone the pick
+    matches nothing and the quality is reported as holding an invalid choice."""
+    from app.chummer_import import chum5_to_state
+
+    bane = next(q for q in catalog()["qualities"] if q["name"] == "Spirit Bane")
+    assert "Spirit of Man" in bane["select_options"] and "Man" not in bane["select_options"]
+
+    raw = f"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <qualities><quality>
+        <name>Spirit Bane</name><extra>Man</extra>
+        <sourceid>{bane["id"]}</sourceid><qualitytype>Negative</qualitytype>
+      </quality></qualities>
+    </character>""".encode()
+    state = chum5_to_state(raw)[0]
+    assert state["quality_extras"][bane["id"]] == "Spirit of Man"
