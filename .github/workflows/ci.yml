@@ -35,7 +35,10 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
 
-      - run: pip install -r requirements-dev.txt
+      # ../scripts/retry.sh: the registry is not a guaranteed-available
+      # service, and an empty index page fails the install the same way a bad
+      # pin does. See the comment in the script.
+      - run: ../scripts/retry.sh pip install -r requirements-dev.txt
 
       # Chummer game data is not vendored in git (GPL-3.0, large). Cache it
       # between runs, keyed on the fetch script so a new source file busts it.
@@ -81,7 +84,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       # no install hooks: see the Dockerfile
-      - run: npm ci --ignore-scripts
+      - run: ../scripts/retry.sh npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run format:check
@@ -123,17 +126,17 @@ jobs:
       - name: Install the backend
         run: |
           python -m venv backend/.venv
-          backend/.venv/bin/pip install -r backend/requirements.txt
+          scripts/retry.sh backend/.venv/bin/pip install -r backend/requirements.txt
 
       - if: steps.chummer-cache.outputs.cache-hit != 'true'
         working-directory: backend
         run: ./.venv/bin/python scripts/fetch_chummer_data.py
 
       - working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: ../scripts/retry.sh npm ci --ignore-scripts
 
       - working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: ../scripts/retry.sh npx playwright install --with-deps chromium
 
       - working-directory: frontend
         run: npm run test:e2e

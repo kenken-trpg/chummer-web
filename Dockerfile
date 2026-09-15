@@ -20,9 +20,12 @@
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
+COPY scripts/retry.sh /usr/local/bin/retry
 # --ignore-scripts: a dependency's install hook runs arbitrary code at build
 # time, which is how a hijacked package gets in. Nothing here needs one.
-RUN npm ci --ignore-scripts
+# retry: an empty index page from the registry reads as a bad pin — see the
+# comment in scripts/retry.sh.
+RUN retry npm ci --ignore-scripts
 COPY frontend/ ./
 RUN mkdir -p public && npm run build
 # -> .next/standalone (server.js + traced node_modules), .next/static, public
@@ -34,7 +37,8 @@ ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
 COPY backend/requirements.txt ./
-RUN pip install -r requirements.txt supervisor
+COPY scripts/retry.sh /usr/local/bin/retry
+RUN retry pip install -r requirements.txt supervisor
 
 # ─── 3. bake the pinned Chummer game data ───────────────────────────────────
 # python:3.12-slim-bookworm

@@ -31,8 +31,8 @@ doctor: ## Check the toolchain / data / ports before first run
 ## ── develop it (no Docker) ───────────────────────────────────────────────────
 
 setup: ## Install backend + frontend dependencies
-	cd backend && python3 -m venv .venv && ./.venv/bin/pip install -r requirements-dev.txt
-	cd frontend && npm install --ignore-scripts
+	cd backend && python3 -m venv .venv && ../scripts/retry.sh ./.venv/bin/pip install -r requirements-dev.txt
+	cd frontend && ../scripts/retry.sh npm install --ignore-scripts
 
 data: ## Download Chummer game data into backend/vendor (gitignored)
 	cd backend && ./.venv/bin/python scripts/fetch_chummer_data.py
