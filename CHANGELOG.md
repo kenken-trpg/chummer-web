@@ -151,8 +151,9 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   (`EPERM`)、supervisord が再試行を諦めてコンテナは永久に unhealthy になる。
   毎回チェックアウトからビルドするようにして、イメージと `compose.yaml` が
   ずれないようにした。キャッシュが効くので通常は数秒で、`make up` の挙動は変わらない。
-  あわせて、GHCR の公開イメージはリポジトリの公開設定を継ぐため `docker compose pull`
-  が誰にでも通るわけではないことを README と `docs/deploy.md` に明記した。
+  あわせて、GHCR のパッケージはリポジトリが公開でも初回作成時は private のため
+  `docker compose pull` が `unauthorized` で落ちることを README と `docs/deploy.md`
+  に明記した。
 - **`.gitignore` が `.env` を完全一致でしか除外していなかった。** `.env` を編集した
   ついでにできる `.env.bak` や、`.env.production` は素通りする。中身は同じ秘密なので
   `.env*` で除外し、`.env.example` だけ戻す形にした。

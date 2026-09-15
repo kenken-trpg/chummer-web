@@ -22,9 +22,11 @@ services:
     # come up.
     #
     # The ghcr.io image above is the build tag. It is also where CI publishes,
-    # but that package inherits the repository's visibility, so `docker compose
-    # pull` only works for a public repo. Building is the path that always
-    # works; pull explicitly if you have access and want to skip the build.
+    # but a GHCR package is private when first created whatever the
+    # repository's visibility, so `docker compose pull` fails with
+    # `unauthorized` until someone flips it in the package settings. Building
+    # is the path that always works; pull explicitly if you have access and
+    # want to skip the build.
     pull_policy: build
     ports:
       # loopback only: cloudflared runs on this host and reaches the app here.
