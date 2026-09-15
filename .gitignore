@@ -17,9 +17,11 @@ frontend/playwright-report/
 .DS_Store
 *.log
 
-# local config (see .env.example)
-.env
-.env.local
+# local config. `.env*` rather than the two exact names: a stray `.env.bak`
+# from editing one, or a `.env.production`, is the same secret in a file git
+# was happy to commit.
+.env*
+!.env.example
 
 # TS incremental build cache
 frontend/tsconfig.tsbuildinfo

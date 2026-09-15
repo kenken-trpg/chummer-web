@@ -12,7 +12,22 @@ services:
       context: .
       # args:
       #   CHUMMER_REF: ed77aa3dcbe760064109d9af01ea9b5e4498294c
-    pull_policy: missing
+    # Build from this checkout, every time. The layer cache makes that a few
+    # seconds when nothing changed, and it is the only setting that keeps the
+    # image and this file in step. `missing` — the obvious choice — reuses
+    # whatever image is already on the host no matter how old: an image built
+    # before the hardening below lacked the matching Dockerfile change, and
+    # caddy then failed to exec with EPERM on every start until the image was
+    # rebuilt by hand. The two halves ship together or the container does not
+    # come up.
+    #
+    # The ghcr.io image above is the build tag. It is also where CI publishes,
+    # but a GHCR package is private when first created whatever the
+    # repository's visibility, so `docker compose pull` fails with
+    # `unauthorized` until someone flips it in the package settings. Building
+    # is the path that always works; pull explicitly if you have access and
+    # want to skip the build.
+    pull_policy: build
     ports:
       # loopback only: cloudflared runs on this host and reaches the app here.
       # Publishing on 0.0.0.0 would let anything on the LAN bypass the tunnel.

@@ -9,8 +9,7 @@ help:
 
 ## ── run it (Docker) ──────────────────────────────────────────────────────────
 
-up: ## Start the app in Docker (pulls the published image if available)
-	-docker compose pull --quiet 2>/dev/null || true
+up: ## Start the app in Docker (builds from this checkout; cached, so fast)
 	docker compose up -d
 	@echo "→ http://localhost:$${PORT:-8080}"
 
@@ -20,9 +19,8 @@ down: ## Stop the Docker app
 logs: ## Follow the Docker app logs
 	docker compose logs -f
 
-update: ## Pull the latest code + image and restart
+update: ## Pull the latest code, rebuild and restart
 	git pull --ff-only
-	-docker compose pull --quiet 2>/dev/null || true
 	docker compose up -d --build
 
 doctor: ## Check the toolchain / data / ports before first run
