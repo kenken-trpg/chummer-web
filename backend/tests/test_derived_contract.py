@@ -4,7 +4,7 @@
 ``app/engine/compute/assemble.py`` — ``mypy`` checks the literal against
 ``DerivedDict``, so ``DerivedDict.__annotations__`` is the authoritative
 server-side key set. The frontend mirrors it by hand as
-``Character["derived"]`` in ``frontend/lib/types/character.ts``; nothing
+``Derived`` in ``frontend/lib/types/derived.ts``; nothing
 forces the two to agree, and they had drifted (``essence_lost`` / ``talent``
 / ``translations`` / ``unarmed_physical`` were server-only).
 
@@ -30,12 +30,12 @@ import pytest
 
 from app.engine.compute.derived_types import DerivedDict
 
-_CHARACTER_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "character.ts"
+_DERIVED_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "derived.ts"
 
 
 def _ts_derived_keys() -> set[str]:
-    text = _CHARACTER_TS.read_text(encoding="utf-8")
-    start = text.index("derived: {")
+    text = _DERIVED_TS.read_text(encoding="utf-8")
+    start = text.index("export interface Derived {")
     depth = 0
     end = start
     for i in range(text.index("{", start), len(text)):
@@ -47,18 +47,18 @@ def _ts_derived_keys() -> set[str]:
                 end = i
                 break
     block = text[start:end]
-    # Direct children only: exactly four leading spaces (nested props are 6+).
-    return set(re.findall(r"^ {4}([A-Za-z_][A-Za-z0-9_]*)\??:", block, re.MULTILINE))
+    # Direct children only: exactly two leading spaces (nested props are 4+).
+    return set(re.findall(r"^ {2}([A-Za-z_][A-Za-z0-9_]*)\??:", block, re.MULTILINE))
 
 
-@pytest.mark.skipif(not _CHARACTER_TS.exists(), reason="frontend/ not checked out")
+@pytest.mark.skipif(not _DERIVED_TS.exists(), reason="frontend/ not checked out")
 def test_derived_top_level_keys_match_the_frontend_type() -> None:
     py = set(DerivedDict.__annotations__)
     ts = _ts_derived_keys()
     assert py == ts, (
-        "derived payload drifted from frontend/lib/types/character.ts.\n"
-        f"  server-only (add to character.ts): {sorted(py - ts)}\n"
-        f"  frontend-only (stale in character.ts): {sorted(ts - py)}"
+        "derived payload drifted from frontend/lib/types/derived.ts.\n"
+        f"  server-only (add to derived.ts): {sorted(py - ts)}\n"
+        f"  frontend-only (stale in derived.ts): {sorted(ts - py)}"
     )
 
 
@@ -110,3 +110,20 @@ def test_catalog_top_level_keys_match_the_frontend_type() -> None:
         f"  served but undeclared (add to catalog.ts): {sorted(payload - ts)}\n"
         f"  declared but never served (stale in catalog.ts): {sorted(ts - payload)}"
     )
+
+
+_GENERATED_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "generated.ts"
+
+
+@pytest.mark.skipif(not _GENERATED_TS.exists(), reason="frontend/ not checked out")
+def test_the_generated_state_types_are_not_stale() -> None:
+    """The third contract, and the only one that needs no guessing: the state
+    models are Pydantic, so `frontend/lib/types/generated.ts` is written from
+    them rather than mirrored by hand. This fails when someone edits a model
+    and forgets to re-run the script."""
+    import subprocess
+    import sys
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "gen_frontend_types.py"
+    done = subprocess.run([sys.executable, str(script), "--check"], capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr.strip()

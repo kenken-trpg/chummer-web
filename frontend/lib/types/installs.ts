@@ -1,3 +1,13 @@
+/** The hand-written half of the state types.
+ *
+ * Everything that mirrors a Pydantic model lives in `generated.ts` and is
+ * re-exported from here, so the browser keeps importing these names from one
+ * place. What is left below has no Python counterpart: shapes the engine
+ * publishes as plain dicts, and two unions the browser types more tightly
+ * than `str`.
+ */
+export * from "./generated";
+
 export interface QualityReqNode {
   tag: string;
   name?: string;
@@ -26,226 +36,6 @@ export interface SkillPickSlot {
   accuracy?: number;
 }
 
-export interface AdeptPowerInstall {
-  id?: string;
-  power_id: string;
-  rating: number;
-  extra?: string | null;
-  discounted?: boolean;
-  force?: number | null;
-}
-
-export interface SpellInstall {
-  id?: string;
-  spell_id: string;
-  force?: number | null;
-}
-
-export interface ComplexFormInstall {
-  id?: string;
-  form_id: string;
-  level?: number | null;
-  extra?: string | null;
-}
-
-export interface SpriteInstall {
-  id?: string;
-  sprite_id: string;
-  level?: number;
-  services?: number;
-  registered?: boolean;
-  hits?: number | null;
-  opposed_hits?: number | null;
-}
-
-export interface ContactInstall {
-  id?: string;
-  name: string;
-  role?: string | null;
-  connection?: number;
-  loyalty?: number;
-  group?: boolean;
-  free?: boolean;
-  forced_loyalty?: number | null;
-  force_group?: boolean;
-  source_quality_id?: string | null;
-  free_connection?: number;
-  free_loyalty?: number;
-}
-
-export interface MartialArtInstall {
-  id?: string;
-  art_id: string;
-  techniques?: string[];
-  free?: boolean;
-  source_quality_id?: string | null;
-}
-
-export interface InitiationChoice {
-  id?: string;
-  grade: number;
-  kind: "metamagic" | "art" | string;
-  option_id: string;
-  group?: boolean;
-  ordeal?: boolean;
-  schooling?: boolean;
-}
-
-export interface SubmersionChoice {
-  id?: string;
-  grade: number;
-  echo_id: string;
-  extra?: string | null;
-  group?: boolean;
-  ordeal?: boolean;
-  schooling?: boolean;
-}
-
-export interface ExoticSkillInstall {
-  id?: string;
-  skill_name: string;
-  extra?: string;
-  rating?: number;
-}
-
-export interface SpiritInstall {
-  id?: string;
-  spirit_id: string;
-  force?: number;
-  services?: number;
-  bound?: boolean;
-  hits?: number | null;
-  opposed_hits?: number | null;
-}
-
-export interface FocusInstall {
-  id?: string;
-  gear_id: string;
-  force?: number;
-  crafted?: boolean;
-  formula_bought?: boolean;
-  hits?: number | null;
-  opposed_hits?: number | null;
-  extra?: string | null;
-}
-
-export interface ArmorInstall {
-  /** the price picked for a `Variable(lo-hi)` piece */
-  cost?: number | null;
-  id?: string;
-  armor_id: string;
-  rating?: number;
-  equipped?: boolean;
-  wireless?: boolean;
-}
-
-export interface ArmorModInstall {
-  id?: string;
-  mod_id: string;
-  parent_id?: string | null;
-  included?: boolean;
-  rating?: number;
-  wireless?: boolean;
-  /** Custom Fit (Stack): catalog name of the armor this piece stacks with */
-  stack_with?: string;
-}
-
-export interface WeaponInstall {
-  id?: string;
-  weapon_id: string;
-  qty?: number;
-  loaded_ammo_id?: string | null;
-}
-
-export interface WeaponAccessoryInstall {
-  id?: string;
-  accessory_id: string;
-  parent_id?: string | null;
-  included?: boolean;
-  rating?: number;
-  mount?: string;
-}
-
-export interface CommlinkInstall {
-  id?: string;
-  gear_id: string;
-  rating?: number;
-  qty?: number;
-}
-
-export interface GearInstall {
-  /** the price picked for a `Variable(lo-hi)` item, and a Custom Item's name */
-  cost?: number | null;
-  name?: string | null;
-  id?: string;
-  gear_id: string;
-  rating?: number;
-  qty?: number;
-  parent_id?: string | null;
-  included?: boolean;
-  capacity_override?: string | null;
-  array_order?: string[];
-  extra?: string | null;
-  active?: boolean;
-}
-
-/** One component of a mixed drug, at the level it was added at. */
-export interface CustomDrugPart {
-  component_id: string;
-  level?: number;
-}
-
-/** A drug the character cooked rather than bought (CF p.190). It has no
- *  catalog entry — the parts are the drug — so it carries its own name. */
-export interface CustomDrugInstall {
-  id?: string;
-  name?: string;
-  grade?: string;
-  qty?: number;
-  active?: boolean;
-  parts?: CustomDrugPart[];
-}
-
-export interface LifestyleInstall {
-  id?: string;
-  lifestyle_id: string;
-  months?: number;
-  /** Points bought above the lifestyle's own Comforts / Neighborhood / Security. */
-  comforts?: number;
-  area?: number;
-  security?: number;
-  quality_ids?: string[];
-  quality_extras?: Record<string, string>;
-}
-
-export interface VehicleModInstall {
-  id?: string;
-  mod_id: string;
-  parent_id?: string | null;
-  included?: boolean;
-  rating?: number;
-}
-
-export interface WeaponMountInstall {
-  id?: string;
-  parent_id?: string | null;
-  size_id: string;
-  visibility_id?: string;
-  flexibility_id?: string;
-  control_id?: string;
-  included?: boolean;
-  weapon_install_id?: string | null;
-  allowedweapons?: string;
-}
-
-export interface QiFocusInstall {
-  id?: string;
-  rating: number;
-  power_id: string;
-  extra?: string | null;
-  power_rating?: number;
-}
-
 /** A pick a power the choice grants asks for on its own, because the choice's
  *  own `extra` is already spent on *which* power it grants. */
 export interface MentorPowerTarget {
@@ -264,21 +54,6 @@ export interface MentorChoice {
   extra: string;
   extra_options: string[];
   power_targets?: MentorPowerTarget[];
-}
-
-export interface WareInstall {
-  id: string;
-  ware_id: string;
-  rating: number;
-  grade: string;
-  wireless: boolean;
-  parent_id?: string | null;
-  included?: boolean;
-  side?: string | null;
-  /** `<selectcyberware>`: name of the implant this one is keyed to. */
-  extra?: string | null;
-  /** bought through the Black Market Pipeline: 10% off this one piece */
-  discounted?: boolean;
 }
 
 export type PriorityLetter = "A" | "B" | "C" | "D" | "E";

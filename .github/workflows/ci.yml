@@ -52,6 +52,10 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
 
+      # frontend/lib/types/generated.ts is written from app/models.py. The
+      # pytest run checks it too; this fails earlier and says so plainly.
+      - run: python scripts/gen_frontend_types.py --check
+
       # Coverage on one interpreter only — the numbers are identical across
       # the matrix and it roughly doubles the run. Reported, never gated: see
       # backend/pyproject.toml [tool.coverage.report].

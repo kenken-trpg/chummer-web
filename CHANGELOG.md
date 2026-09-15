@@ -117,6 +117,17 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   `<powers>`・`<complexforms>` はクオリティの出力から `magic` に、トラディション
   とメンターは連絡先の出力から切り出している。出力は Chummer のテストセーブ
   34 件すべてでバイト単位で変わらない（uuid と日時を伏せて全文を突き合わせた）。
+- **フロントの状態の型を `app/models.py` から生成するようにした。**
+  キャラクターの状態は JSON で行き来するので、同じ形が Pydantic と
+  `frontend/lib/types/` に二重に書かれていて、実際にずれていた——
+  `SpellInstall` の `alchemical` と `source_quality_id`、5 種類の
+  `discounted`、`chargen_attributes_at_max`、`career_baseline`、`options` の
+  計 11 個がブラウザ側の型に存在しなかった。`backend/scripts/
+  gen_frontend_types.py` が `generated.ts` を書き、`--check` で古くなって
+  いれば CI と pytest が落ちる。`character.ts` はなくなり、中にあった
+  460 行の無名の `derived: {...}` は `derived.ts` の `Derived` になった。
+  エンジンの出力とカタログは Python 側もただの dict なので、これまで通り
+  手書きのまま。
 
 ### Fixed
 
