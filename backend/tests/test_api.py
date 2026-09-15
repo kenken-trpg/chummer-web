@@ -237,3 +237,23 @@ def test_every_answer_carries_the_security_headers() -> None:
     assert r.headers["x-frame-options"] == "DENY"
     assert r.headers["referrer-policy"] == "no-referrer"
     assert "frame-ancestors 'none'" in r.headers["content-security-policy"]
+
+
+def test_a_missing_catalog_does_not_hand_out_the_server_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`str(FileNotFoundError)` carries the absolute path it tried to open, and
+    this response goes to anyone who can reach the port. The operator needs the
+    name of the file; nobody outside needs the directory it lives in."""
+    import app.main as main
+
+    secret = "/srv/deploy-name/backend/vendor/chummer/data/weapons.xml"
+
+    def _boom() -> None:
+        raise FileNotFoundError(2, "No such file or directory", secret)
+
+    monkeypatch.setattr(main, "_cached_catalog", _boom)
+    response = client.get("/api/catalog")
+    assert response.status_code == 503
+    body = response.text
+    assert "weapons.xml" in body
+    assert "/srv/deploy-name" not in body
+    assert secret not in body

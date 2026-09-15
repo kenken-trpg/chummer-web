@@ -210,7 +210,7 @@ export const JA_APP = {
 
   "common.attribute": "能力値",
   "api.catalogMissing":
-    "Chummer ゲームデータが見つかりません。`make data`（または backend/scripts/fetch_chummer_data.py）を実行してください。Docker で起動している場合はイメージに同梱されているはずです。（{error}）",
+    "Chummer ゲームデータが見つかりません。`make data`（または backend/scripts/fetch_chummer_data.py）を実行してください。Docker で起動している場合はイメージに同梱されているはずです。（{file} が見つかりません）",
   "api.chum5lzUndecompressible":
     "この .chum5lz を展開できませんでした。Chummer で「名前を付けて保存」から非圧縮の .chum5 で書き出して読み込んでください。（{formats}）",
   "api.importChummerFailed": "この .chum5 / .chum5lz を取り込めませんでした。",
