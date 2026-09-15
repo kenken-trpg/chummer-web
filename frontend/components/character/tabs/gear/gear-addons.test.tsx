@@ -761,3 +761,90 @@ describe("<ArmorGear> gear carried in a piece", () => {
     ]);
   });
 });
+
+/**
+ * A Data Trails Electronic Modification (DT p.66) is soldered into a device
+ * rather than plugged into it, and all three device panels take one. The
+ * commlink panel already listed its gear children for accessories, so the
+ * thing to keep true there is that a modification is not drawn twice.
+ */
+const MOD_HOSTS: [string, Panel, string, string][] = [
+  ["CommlinkGear", CommlinkGear, "commlinks", "commlinks"],
+  ["CyberdeckGear", CyberdeckGear, "cyberdecks", "cyberdecks"],
+  ["RccGear", RccGear, "rccs", "rccs"],
+];
+
+const modCatalog = {
+  gear: [
+    {
+      id: "m1",
+      name: "Increase Attack Modification",
+      category: "Electronic Modification",
+      cost: "0",
+      avail: "0",
+      source: "DT",
+      page: "66",
+      minrating: 0,
+      maxrating: 0,
+    },
+  ],
+} as Partial<Catalog>;
+
+describe.each(MOD_HOSTS)("<%s> electronic modifications", (_name, Panel, chKey, dKey) => {
+  const installed = {
+    id: "g1",
+    gear_id: "m1",
+    name: "Increase Attack Modification",
+    category: "Electronic Modification",
+    rating: 1,
+    rating_max: 0,
+    parent_id: "h1",
+    qty: 1,
+    nuyen: 0,
+    source: "DT",
+  };
+  const character = () =>
+    makeCharacter({
+      [chKey]: [host("h1", "First"), host("h2", "Second")],
+      gear: [installed],
+      derived: {
+        [dKey]: [host("h1", "First"), host("h2", "Second")],
+        gear: [installed],
+      },
+    } as any);
+
+  it("draws the modification once, under the device it names", () => {
+    const { container } = renderPanel(Panel, character(), vi.fn(), modCatalog);
+
+    // the name is also an <option> in every device's select, so what says a
+    // modification is *installed* here is its own remove button
+    const label = "Increase Attack Modification を外す";
+    const rows = [...container.querySelectorAll<HTMLElement>(".cyber-item")];
+    expect(within(rows[0]).getAllByRole("button", { name: label })).toHaveLength(1);
+    expect(within(rows[1]).queryByRole("button", { name: label })).toBeNull();
+  });
+
+  it("adds one to the device the select belongs to", () => {
+    const patch = vi.fn();
+    const { container } = renderPanel(Panel, character(), patch, modCatalog);
+
+    const second = container.querySelectorAll<HTMLElement>(".cyber-item")[1];
+    const select = within(second).getByRole("combobox", { name: "Second: 改造を追加" });
+    fireEvent.change(select, { target: { value: "m1" } });
+    // the panels carry several "装着" buttons; this one is the select's own
+    fireEvent.click(within(select.parentElement!).getByRole("button"));
+
+    const added = (patch.mock.calls[0][0].gear as { gear_id: string; parent_id: string }[]).at(-1);
+    expect(added).toMatchObject({ gear_id: "m1", parent_id: "h2" });
+  });
+
+  it("deleting the device takes its modifications with it", () => {
+    const patch = vi.fn();
+    const { container } = renderPanel(Panel, character(), patch, modCatalog);
+
+    const first = container.querySelectorAll<HTMLElement>(".cyber-item")[0];
+    fireEvent.click(within(first).getByRole("button", { name: "削除" }));
+
+    expect(patch.mock.calls[0][0].gear).toEqual([]);
+  });
+});

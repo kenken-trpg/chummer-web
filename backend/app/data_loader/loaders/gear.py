@@ -158,6 +158,10 @@ def _load_gear_categories(
                 "modsleaze": _text(el.find("modsleaze")),
                 "moddataprocessing": _text(el.find("moddataprocessing")),
                 "modfirewall": _text(el.find("modfirewall")),
+                # a positional delta on a cyberdeck's ASDF array, slot by slot
+                # ("1,-1,0,0"): the Data Trails modifications trade one point
+                # of one attribute for another
+                "modattributearray": _text(el.find("modattributearray")),
                 "programs": _text(el.find("programs"), "0"),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
@@ -226,7 +230,6 @@ GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
     "Custom Drugs",
     "Paydata",
     "Commlink Apps",
-    "Electronic Modification",
     "Drug Grades",
     "Currency",
 }
@@ -250,6 +253,19 @@ def load_gear() -> list[dict[str, Any]]:
             continue
         if cost.lstrip().startswith("+"):
             item["requireparent"] = True
+        if item.get("category") == "Electronic Modification":
+            # DT p.66: each one is free, and only means anything on the device
+            # it is soldered into. `<required><geardetails>` here is a test on
+            # the host's matrix attributes ("has an Attack of its own", "already
+            # carries Add Attack") rather than a whitelist of parent names, so
+            # the two name/category lists would only mis-file it.
+            item["requireparent"] = True
+            item["required_names"] = []
+            item["required_categories"] = []
+            # its `<armorcapacity>` is the module space it takes in the device,
+            # not something a jacket could carry: without this every one of
+            # them would offer itself as armor-borne gear
+            item["armor_capacity"] = ""
         if item.get("required_names") or item.get("required_categories"):
             item["requireparent"] = True
         if _is_pi_tac_commlink(str(item.get("name") or ""), str(item.get("category") or "")):

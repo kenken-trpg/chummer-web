@@ -351,6 +351,7 @@ export const EN: Catalog = {
   "gear.addSensorFn": "Add a function",
   "gear.addToSlot": "Add to slot",
   "gear.addAccessory": "Add an accessory",
+  "gear.addModification": "Add a modification",
   "ware.disabledGrades": "Unavailable grades: {list}",
   "common.left": "Left",
   "common.right": "Right",

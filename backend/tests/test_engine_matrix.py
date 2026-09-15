@@ -606,3 +606,53 @@ def test_dongles_give_a_commlink_attack_and_sleaze() -> None:
     ).derived["commlinks"][0]
     assert (out["attack"], out["sleaze"]) == (3, 2)
     assert (out["dataprocessing"], out["firewall"]) == (bare["dataprocessing"], bare["firewall"])
+
+
+def _mod_id(name: str) -> str:
+    return next(x["id"] for x in catalog()["gear"] if x["name"] == name and x["category"] == "Electronic Modification")
+
+
+def test_an_electronic_modification_raises_its_commlink_attribute() -> None:
+    """DT p.66: soldering an Increase Data Processing Modification into a
+    device buys a point of Data Processing, free and without a rating."""
+    link = next(x for x in catalog()["commlinks"] if x["name"].startswith("Hermes Ikon"))
+    host = CommlinkInstall(id="L", gear_id=link["id"])
+    bare = compute(_human("plain", commlinks=[host])).derived["commlinks"][0]
+
+    out = compute(
+        _human(
+            "modded",
+            commlinks=[host],
+            gear=[GearInstall(gear_id=_mod_id("Increase Data Processing Modification"), parent_id="L")],
+        )
+    ).derived
+    assert out["commlinks"][0]["dataprocessing"] == bare["dataprocessing"] + 1
+    # free, and no longer an unknown piece of gear
+    assert out["gear"][0]["nuyen"] == 0
+    assert not has(out["warnings"], "engine.import.skippedUnknown")
+    assert not has(out["warnings"], "engine.gear.doesNotFit")
+
+
+def test_a_modification_moves_a_point_between_a_decks_array_slots() -> None:
+    """`<modattributearray>` "1,-1,0,0" is positional: Chummer appends it to
+    the deck's own array slot by slot, before the slots are handed out to
+    Attack / Sleaze / Data Processing / Firewall."""
+    deck = GearInstall(id="D", gear_id=ERIKA_DECK)
+    bare = compute(_mundane("deck-bare", cyberdecks=[deck])).derived["cyberdecks"][0]
+
+    out = compute(
+        _mundane(
+            "deck-modded",
+            cyberdecks=[deck],
+            gear=[GearInstall(gear_id=_mod_id("Modify Matrix Attribute (Increase 1st, Decrease 2nd)"), parent_id="D")],
+        )
+    ).derived["cyberdecks"][0]
+    assert out["array"] == [bare["array"][0] + 1, bare["array"][1] - 1, *bare["array"][2:]]
+    assert out["attack"] == bare["attack"] + 1
+    assert out["sleaze"] == bare["sleaze"] - 1
+
+
+def test_a_modification_needs_a_device_to_live_in() -> None:
+    out = compute(_human("loose-mod", gear=[GearInstall(gear_id=_mod_id("Add Attack Modification"))])).derived
+    assert has(out["warnings"], "engine.gear.needsHost")
+    assert out["gear"] == []
