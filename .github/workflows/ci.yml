@@ -159,7 +159,7 @@ jobs:
   # for public repositories. Gated on the test jobs so a red commit never
   # publishes, and the smoke test runs *before* the push, so a tag that cannot
   # start is never the tag anyone pulls.
-  docker:
+  docker-build:
     runs-on: ${{ matrix.runner }}
     needs: [backend, frontend]
     permissions:
@@ -262,13 +262,29 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # One check with a fixed name over the whole matrix. A matrix job's checks are
+  # named after its parameters — `docker (linux/arm64, ubuntu-24.04-arm)` — so a
+  # branch rule naming `docker` would stop matching anything the moment the
+  # matrix changes, and block every PR. This job is what the rule watches.
+  # `always()` so a cancelled or skipped leg fails it rather than passing by
+  # omission.
+  docker:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - name: Every architecture built and started
+        run: |
+          echo "docker-build: ${{ needs.docker-build.result }}"
+          test "${{ needs.docker-build.result }}" = "success"
+
   # The tags (`latest`, semver, short sha) are created here, once, pointing at
   # a manifest list over both per-architecture digests. Nothing is tagged until
   # every architecture has built and started.
   docker-manifest:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    needs: docker
+    needs: docker-build
     permissions:
       contents: read
       packages: write
