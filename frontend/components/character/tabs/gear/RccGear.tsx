@@ -2,7 +2,9 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
+import { dropTree } from "@/lib/character/gear";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -192,6 +194,16 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   })
                 }
               />
+              <MatrixModRows
+                hostId={item.id}
+                hostName={tr(item.name)}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
             </div>
             <button
               className="btn danger"
@@ -199,6 +211,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 patch({
                   rccs: (ch.rccs || []).filter((row) => row.id !== item.id),
                   programs: (ch.programs || []).filter((row) => row.parent_id !== item.id),
+                  gear: dropTree(ch.gear || [], item.id),
                 })
               }
             >

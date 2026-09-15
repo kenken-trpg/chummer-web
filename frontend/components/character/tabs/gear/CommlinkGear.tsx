@@ -3,6 +3,7 @@ import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 
@@ -191,7 +192,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 }
               />
               {(d.gear || [])
-                .filter((acc) => acc.parent_id === item.id)
+                .filter(
+                  (acc) => acc.parent_id === item.id && acc.category !== "Electronic Modification",
+                )
                 .map((acc) => (
                   <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
                     {tr(acc.label || acc.name)}
@@ -239,6 +242,16 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     ],
                   })
                 }
+              />
+              <MatrixModRows
+                hostId={item.id}
+                hostName={tr(item.name)}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
               />
             </div>
             <button

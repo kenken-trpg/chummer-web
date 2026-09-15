@@ -7,6 +7,15 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **電子機器の改造（Electronic Modification）を扱えるようにした。** Data Trails
+  p.66 の改造 — Increase Attack や Modify Matrix Attribute、Add Module など
+  32 件 — をカタログに載せ、コムリンク・サイバーデッキ・RCC のそれぞれに
+  付けられるようにした。無料で、付けた機器のマトリックス属性を 1 点動かす。
+  デッキのように属性が配列になっている機器では、`<modattributearray>` の
+  とおり枠ごとに増減する（1 枠目 +1、2 枠目 -1 など）。.chum5 の読み書きにも
+  対応し、Chummer 自身のテスト用セーブで「取り込めない品目」だった 3 件が
+  なくなった。マトリックスの負傷ボックスへの影響（`<matrixcmbonus>`）は、
+  そもそもこのアプリがまだ負傷ボックスを持っていないので入れていない。
 - **車両に積んだギアを読み書きできるようにした。** メディキットやカメラなど、
   車両の `<gears>` にあるものを車両の持ち物として読み込み、同じ場所へ書き出す。
   Chummer が車両のセンサー評価から作る Sensor Array は、こちらは評価値で

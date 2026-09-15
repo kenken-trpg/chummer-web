@@ -2,9 +2,10 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
-import { swapMatrixOrder } from "@/lib/character/gear";
+import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -152,6 +153,16 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   })
                 }
               />
+              <MatrixModRows
+                hostId={item.id}
+                hostName={tr(item.name)}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
             </div>
             <button
               className="btn danger"
@@ -159,6 +170,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 patch({
                   cyberdecks: (ch.cyberdecks || []).filter((row) => row.id !== item.id),
                   programs: (ch.programs || []).filter((row) => row.parent_id !== item.id),
+                  gear: dropTree(ch.gear || [], item.id),
                 })
               }
             >

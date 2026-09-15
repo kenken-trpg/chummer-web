@@ -167,11 +167,29 @@ _HOST_MODS = {
 }
 
 
+def _array_deltas(spec: dict[str, Any]) -> list[int]:
+    raw = str(spec.get("modattributearray") or "").strip()
+    if not raw:
+        return []
+    parts = [p.strip() for p in raw.split(",")]
+    if len(parts) != len(MATRIX_ARRAY_KEYS):
+        return []
+    try:
+        return [int(p or 0) for p in parts]
+    except ValueError:
+        return []
+
+
 def apply_host_matrix_mods(hosts: list[dict[str, Any]], gear_rows: list[dict[str, Any]]) -> None:
-    """Add what a plugged-in accessory gives its host's ASDF: an Attack Dongle
-    (DT p.61) turns a commlink into something that can hack — Attack equal to
-    its Rating — and a Stealth Dongle does the same for Sleaze. The host row
-    grows the keys it lacked (a commlink only publishes DP / Firewall)."""
+    """Add what a plugged-in accessory gives its host's ASDF.
+
+    Two shapes, both `GetBonusMatrixAttribute` summing over the children: an
+    Attack Dongle (DT p.61) names the attribute it raises — Attack equal to its
+    Rating — and a Data Trails Electronic Modification (DT p.66) either does the
+    same for a flat point or, on a deck whose attributes sit in an array, moves
+    a point between two slots (`<modattributearray>` "1,-1,0,0"). The host row
+    grows the keys it lacked (a commlink only publishes DP / Firewall).
+    """
     by_id = {str(row.get("id") or ""): row for row in hosts}
     for row in gear_rows:
         host = by_id.get(str(row.get("parent_id") or ""))
@@ -181,6 +199,14 @@ def apply_host_matrix_mods(hosts: list[dict[str, Any]], gear_rows: list[dict[str
         if not spec:
             continue
         rating = int(row.get("rating") or 1)
+        deltas = _array_deltas(spec)
+        array = list(host.get("array") or [])
+        if deltas and len(array) == len(MATRIX_ARRAY_KEYS):
+            # positional, slot by slot, the way Chummer appends "+(n)" to each
+            # entry of the deck's own array before handing the slots out
+            host["array"] = [value + delta for value, delta in zip(array, deltas, strict=True)]
+            for key, value in zip(host.get("array_order") or MATRIX_ARRAY_KEYS, host["array"], strict=False):
+                host[key] = value
         for field, key in _HOST_MODS.items():
             raw = str(spec.get(field) or "").strip()
             if not raw:

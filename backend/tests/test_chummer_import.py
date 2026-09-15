@@ -671,3 +671,23 @@ def test_a_career_saves_spending_is_kept_as_history() -> None:
     root = ET.fromstring(state_to_chum5(CharacterState.model_validate(st)))
     amounts = sorted(int(e.findtext("amount") or 0) for e in root.findall("./expenses/expense"))
     assert amounts == [-240, -6, 10]
+
+
+def test_an_electronic_modification_comes_in_with_the_deck_it_is_soldered_into() -> None:
+    """DT p.66 modifications sit in a device's `<children>`. They used to be
+    left out of the catalog entirely, so three of Chummer's own test saves
+    imported with an unknown piece of gear."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears>
+        <gear><name>Hermes Ikon</name><category>Commlinks</category><children>
+          <gear><name>Increase Data Processing Modification</name>
+            <category>Electronic Modification</category><qty>1</qty></gear></children></gear>
+      </gears>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    derived = import_character(st).derived
+    (mod,) = derived["gear"]
+    assert (mod["name"], mod["nuyen"]) == ("Increase Data Processing Modification", 0)
+    assert mod["parent_id"] == derived["commlinks"][0]["id"]
+    assert derived["commlinks"][0]["dataprocessing"] == 6  # a Hermes Ikon's 5, plus the point

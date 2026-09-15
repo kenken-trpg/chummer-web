@@ -366,6 +366,7 @@ export const JA = {
   "gear.addSensorFn": "機能を追加",
   "gear.addToSlot": "スロットに追加",
   "gear.addAccessory": "アクセサリを追加",
+  "gear.addModification": "改造を追加",
   "ware.disabledGrades": "使用不可グレード: {list}",
   "common.left": "左",
   "common.right": "右",
