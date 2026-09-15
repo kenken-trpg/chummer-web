@@ -35,6 +35,10 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     # byte-identically to before.
     if state.settings.name:
         _sub(root, "settings", state.settings.name)
+    # the creation availability limit does travel in the save — see the note in
+    # `chummer_import.identity._import_settings`
+    if state.settings.chargen_avail_max is not None:
+        _sub(root, "maxavail", state.settings.chargen_avail_max)
     _sub(root, "created", "True" if state.career else "False")
     if state.notes:
         _sub(root, "notes", state.notes)
