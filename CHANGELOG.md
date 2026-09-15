@@ -125,6 +125,14 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   パラメータ込みになるので、そのままだとマトリクスを触るたびにブランチ保護の
   ルールが誰にも一致しなくなり、全 PR がマージ不能になる。実ビルドは
   `docker-build` に改名し、それを束ねる `docker` ジョブが名前を固定している。
+- **`engine/qualities.py`（635 行）を `engine/qualities/` パッケージに分割した。**
+  docstring が既に5つの役割を並べていたので、その軸で割った: 何を持っているかを
+  組み立てる `_gather`、まだプレイヤーの選択が要るかを見る `_picks`、その選択を
+  効果の行に結びつける `_binders`、要件木を評価する土台の `_context`、資質側の
+  `<selectside>` を扱う `_sides`、割引と上限の `_limits`、エラーを出す `_validate`。
+  `__init__.py` が全ての名前を再エクスポートするので、ここから import している
+  14 のモジュールは無変更。最大でも 160 行になった。出力は一切変えていない
+  （981 テスト・`make reconcile` の警告2／エラー63 とも分割前と同じ）。
 - **`chummer_export.py`（971 行）を `chummer_export/` パッケージに分割した。**
   インポート側と同じ軸（`identity` / `qualities` / `gear` / `lifestyles` /
   `magic` / `_common`）に割り、往復の両側が並ぶようにした。`<spells>`・
