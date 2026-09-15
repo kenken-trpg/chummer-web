@@ -12,6 +12,7 @@ from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..models import clean_portrait
 from ..notices import Notice, notice, ui
+from ..rules import DEFAULT_RULES
 from ._common import _is_uuid
 
 _BUILD_METHODS = {
@@ -60,11 +61,19 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     12, Prime Runner 15) and a table can house-rule to anything. Ignoring it
     and using the preset's 12 called four of Chummer's own test characters
     illegal over equipment they were entitled to.
+
+    The name is read from `<gameplayoption>` first. `<settings>` holds the
+    *file* the rules came from, which is `default.xml` even for a character
+    built as a Prime Runner, so matching on it finds the wrong preset — or, as
+    here, no preset at all, and the character is then judged by Standard's
+    25-karma quality cap instead of Prime Runner's 35.
     """
     el = root.find("settings")
     # Some builds write `<settings>` as a container of house-rule elements
     # rather than a name; there is nothing to take from that.
-    name = _text(el) if el is not None and len(el) == 0 else ""
+    name = _text(root.find("gameplayoption")).strip()
+    if not name:
+        name = _text(el) if el is not None and len(el) == 0 else ""
     name = name.removesuffix(".xml").strip()
     extra: dict[str, Any] = {}
     max_avail = _text(root.find("maxavail"))
@@ -76,8 +85,16 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     if not name:
         return extra
     for preset in cat.get("settings_presets") or []:
-        if preset.get("name") == name:
-            return {"name": name, "books": list(preset.get("books") or []), **extra}
+        if preset.get("name") != name:
+            continue
+        found: dict[str, Any] = {"name": name, "books": list(preset.get("books") or [])}
+        # Only when the preset moves it. A settings state says what it changes,
+        # not everything (`rules_for`), so writing the printed 25 back would
+        # turn "unset" into "set to the default" on every import.
+        limit = preset.get("quality_karma_limit")
+        if limit is not None and int(limit) != DEFAULT_RULES.quality_karma_cap_positive:
+            found["quality_karma_limit"] = int(limit)
+        return {**found, **extra}
     return {"name": name, "books": [], **extra}
 
 

@@ -190,6 +190,7 @@ def finalize(ctx: Ctx) -> None:
         ctx.errors,
         career=ctx.career,
         report=ctx.quality_report,
+        warnings=ctx.warnings,
     )
 
     if not ctx.career:

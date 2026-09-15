@@ -149,6 +149,7 @@ export const EN_ENGINE = {
   "engine.qualities.pickAddSpirit": "Choose the extra spirit for {name}",
   "engine.qualities.pickOptionalPower": "Choose one optional power for {name}",
   "engine.qualities.pickExtra": "Enter a target for {name}",
+  "engine.qualities.pickText": "{name} has no description filled in",
   "engine.qualities.pickMatrixAction": "Choose a Matrix action for {name}",
   "engine.qualities.pickSide": "Choose a side for {name}",
   "engine.qualities.pickSpellCategory": "Choose a spell category for {name}",
