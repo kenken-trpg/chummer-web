@@ -148,16 +148,31 @@ jobs:
           path: frontend/playwright-report/
           retention-days: 7
 
-  # Builds the runtime image on every push/PR; on main and on `v*` tags it also
-  # pushes to GHCR (ghcr.io/<owner>/chummer-web). The package inherits the
-  # repo's visibility — make the repo public for others to `docker pull` it.
-  # Gated on the test jobs so a red commit never publishes `:latest`.
+  # Builds the runtime image on every push/PR, one job per architecture, and
+  # smoke-tests each. On main and on `v*` tags each job pushes its own layers
+  # by digest and `docker-manifest` below stitches them into one multi-arch
+  # tag. The package inherits nothing from the repo — it is private until
+  # flipped once in the package settings.
+  #
+  # Two native runners rather than one runner with QEMU: `next build` and
+  # `npm ci` under emulation take tens of minutes, and arm64 runners are free
+  # for public repositories. Gated on the test jobs so a red commit never
+  # publishes, and the smoke test runs *before* the push, so a tag that cannot
+  # start is never the tag anyone pulls.
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     needs: [backend, frontend]
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -175,25 +190,22 @@ jobs:
         id: meta
         with:
           images: ghcr.io/${{ github.repository_owner }}/chummer-web
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            # a self-hoster who wants patches but not surprises pins :0.2
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,format=short
 
+      # Native, single-platform, into the local daemon — `load` cannot take a
+      # manifest list, and this is the image the smoke test starts.
       - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        id: local
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          # also keep it in the local daemon, for the smoke test below
+          platforms: ${{ matrix.platform }}
           load: true
-          tags: |
-            ${{ steps.meta.outputs.tags }}
-            chummer-web:ci
+          push: false
+          tags: chummer-web:ci
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # one scope per architecture: a shared one has the two jobs
+          # overwriting each other's cache with layers the other cannot use
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
 
       # Start it the way compose.yaml does — read-only root, no capabilities,
       # no way to gain one — so a change that needs to write somewhere new
@@ -221,13 +233,93 @@ jobs:
           docker logs smoke
           exit 1
 
+      # Same layers again, now pushed anonymously by digest. Everything is a
+      # cache hit from the build above, so this costs seconds.
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        id: push
+        if: github.event_name != 'pull_request'
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/chummer-web,push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform }}
+
+      - name: Hand the digest to the manifest job
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digest-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # The tags (`latest`, semver, short sha) are created here, once, pointing at
+  # a manifest list over both per-architecture digests. Nothing is tagged until
+  # every architecture has built and started.
+  docker-manifest:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: docker
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chummer-web
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            # a self-hoster who wants patches but not surprises pins :0.2
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+
+      - name: Create the manifest list
+        working-directory: /tmp/digests
+        run: |
+          set -euo pipefail
+          image=ghcr.io/${{ github.repository_owner }}/chummer-web
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<<"$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "${image}@sha256:%s " *)
+          docker buildx imagetools inspect "${image}:${VERSION}"
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+
   # A `v*` tag becomes a GitHub Release, with the CHANGELOG section as its
-  # notes. `needs: docker` so the release never points at an image that is not
-  # in the registry yet — a tag build is never cancelled (see `concurrency`).
+  # notes. `needs: docker-manifest` so the release never points at an image
+  # that is not in the registry yet — and the version tag only exists once the
+  # manifest job has created it. A tag build is never cancelled (see
+  # `concurrency`).
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs: [backend, frontend, docker]
+    needs: [backend, frontend, docker-manifest]
     permissions:
       contents: write
     steps:
