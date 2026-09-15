@@ -101,6 +101,7 @@ export const EN_ENGINE = {
   "engine.spend.initiation": "Initiation",
   "engine.spend.knowledge": "Knowledge {name} {before}→{after}",
   "engine.spend.knowledgeKarma": "Knowledge skills (karma build)",
+  "engine.spend.customDrugs": "Custom drugs",
   "engine.spend.lifestyles": "Lifestyles",
   "engine.spend.martialArts": "Martial arts",
   "engine.spend.metatype": "Metatype",

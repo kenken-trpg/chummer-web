@@ -9,6 +9,7 @@ active drugs, weapon-focus dice and the adept tab enable.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Any, cast
 
 from ...data_loader import eval_formula
@@ -98,7 +99,13 @@ def resolve_gear(
 ) -> GearBundle:
     warnings: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
-    nuyen = 0
+    # What each line of the sidebar's spending breakdown is responsible for.
+    # Kept here rather than re-added from the public rows later: a thing bolted
+    # onto something else has its price folded into the row it is bolted to (a
+    # cyberspur into the implant, ammunition into the gun, a plate into the
+    # jacket), so adding those rows up counts the same money twice — which is
+    # what the breakdown used to do, on 29 of Chummer's 34 test saves.
+    spend: defaultdict[str, int] = defaultdict(int)
     armor_items: list[dict[str, Any]] = []
     weapons: list[dict[str, Any]] = []
     commlinks: list[dict[str, Any]] = []
@@ -119,7 +126,7 @@ def resolve_gear(
         picked = chosen_cost(spec, armor_inst.cost)
         armor_inst.cost = picked
         cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
-        nuyen += cost
+        spend["armor"] += cost
         value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
         if armor_inst.equipped:
             nodes = substitute_rating(list(spec.get("bonus") or []), rating)
@@ -158,7 +165,7 @@ def resolve_gear(
         )
     state.armor = kept_armor
     armor_mods, mod_nuyen, mod_warns, mod_errors, mod_bonus = _resolve_armor_mods(state, armor_items)
-    nuyen += mod_nuyen
+    spend["armorMods"] += mod_nuyen
     warnings.extend(mod_warns)
     errors.extend(mod_errors)
     bonus_sources.extend(mod_bonus)
@@ -176,7 +183,7 @@ def resolve_gear(
         weapon_inst.qty = qty
         unit = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
         cost = unit * qty
-        nuyen += cost
+        spend["weapons"] += cost
         kept_weapons.append(weapon_inst)
         weapons.append(
             _public_weapon(
@@ -194,7 +201,7 @@ def resolve_gear(
         state, weapons, special_modification_limit=special_modification_limit
     )
     recoil_info = _apply_recoil_totals(weapons, attr_totals or {})
-    nuyen += acc_nuyen
+    spend["weaponAccessories"] += acc_nuyen
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
 
@@ -207,7 +214,7 @@ def resolve_gear(
         link_inst.rating = rating
         qty = max(1, int(link_inst.qty or 1))
         cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0)) * qty
-        nuyen += cost
+        spend["commlinks"] += cost
         device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
         processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
         firewall = int(eval_formula(str(spec.get("firewall") or "0"), rating, 0))
@@ -236,37 +243,37 @@ def resolve_gear(
 
     kept_decks, cyberdecks, deck_nuyen = _resolve_matrix_devices("cyberdecks", list(state.cyberdecks or []))
     state.cyberdecks = kept_decks
-    nuyen += deck_nuyen
+    spend["cyberdecks"] += deck_nuyen
     kept_rccs, rccs, rcc_nuyen = _resolve_matrix_devices("rccs", list(state.rccs or []))
     state.rccs = kept_rccs
-    nuyen += rcc_nuyen
+    spend["rccs"] += rcc_nuyen
     optics, optic_nuyen, optic_warns, optic_errors, optic_bonus = _resolve_optics(state)
-    nuyen += optic_nuyen
+    spend["optics"] += optic_nuyen
     warnings.extend(optic_warns)
     errors.extend(optic_errors)
     bonus_sources.extend(optic_bonus)
     programs, prog_nuyen, prog_warns = _resolve_programs(state, cyberdecks, rccs)
-    nuyen += prog_nuyen
+    spend["programs"] += prog_nuyen
     warnings.extend(prog_warns)
     apps, app_nuyen, app_warns = _resolve_apps(state, commlinks)
-    nuyen += app_nuyen
+    spend["programs"] += app_nuyen
     warnings.extend(app_warns)
     drones, drone_nuyen = _resolve_drones(state, "drones")
-    nuyen += drone_nuyen
+    spend["drones"] += drone_nuyen
     vehicles, vehicle_nuyen = _resolve_drones(state, "vehicles")
-    nuyen += vehicle_nuyen
+    spend["vehicles"] += vehicle_nuyen
     hosts = drones + vehicles
     _ensure_drone_equipment(state)
     vehicle_mods, mod_nuyen, mod_warns, mod_errors = _resolve_vehicle_mods(state, hosts)
-    nuyen += mod_nuyen
+    spend["vehicleMods"] += mod_nuyen
     warnings.extend(mod_warns)
     errors.extend(mod_errors)
     weapon_mounts, mount_nuyen, mount_warns, mount_errors = _resolve_weapon_mounts(state, hosts, weapons)
-    nuyen += mount_nuyen
+    spend["vehicleMods"] += mount_nuyen
     warnings.extend(mount_warns)
     errors.extend(mount_errors)
     sensors, sensor_nuyen, sensor_warns, sensor_errors, sensor_bonus = _resolve_sensors(state)
-    nuyen += sensor_nuyen
+    spend["sensors"] += sensor_nuyen
     warnings.extend(sensor_warns)
     errors.extend(sensor_errors)
     bonus_sources.extend(sensor_bonus)
@@ -274,7 +281,7 @@ def resolve_gear(
     gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(
         state, hosts, weapons, granted_gear
     )
-    nuyen += gear_nuyen
+    spend["otherGear"] += gear_nuyen
     warnings.extend(gear_warns)
     errors.extend(gear_errors)
     bonus_sources.extend(gear_bonus)
@@ -285,12 +292,12 @@ def resolve_gear(
     apply_armor_gear(armor_items, {"gear": gear_items, "optics": optics, "sensors": sensors}, errors)
 
     custom_drugs, custom_drug_nuyen, custom_drug_warns, custom_drug_errors = resolve_custom_drugs(state)
-    nuyen += custom_drug_nuyen
+    spend["customDrugs"] += custom_drug_nuyen
     warnings.extend(custom_drug_warns)
     errors.extend(custom_drug_errors)
 
     lifestyles, lifestyle_nuyen, lifestyle_warns, lifestyle_bonus = resolve_lifestyles(state)
-    nuyen += lifestyle_nuyen
+    spend["lifestyles"] += lifestyle_nuyen
     warnings.extend(lifestyle_warns)
     bonus_sources.extend(lifestyle_bonus)
 
@@ -311,7 +318,8 @@ def resolve_gear(
         "warnings": warnings,
         "errors": errors,
         "bonus_sources": bonus_sources,
-        "nuyen": nuyen,
+        "nuyen": sum(spend.values()),
+        "nuyen_by_bucket": dict(spend),
         "armor": worn_armor,
         "worn_name": worn_name,
         "armor_encumbrance": encumbrance,

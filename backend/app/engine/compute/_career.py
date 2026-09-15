@@ -207,6 +207,32 @@ def career_raise_karma(
     return total, lines
 
 
+#: (`nuyen_by_bucket` key, message key), in the order the sidebar lists them.
+#: Every bucket the gear engine records must appear here, or the money would
+#: vanish from the breakdown while still counting against the total —
+#: `test_nuyen_breakdown` holds the two together. The message keys are spelled
+#: out rather than built from the bucket name so `test_notice_keys` can still
+#: see them.
+_GEAR_SPEND_ORDER = (
+    ("armor", "engine.spend.armor"),
+    ("armorMods", "engine.spend.armorMods"),
+    ("weapons", "engine.spend.weapons"),
+    ("weaponAccessories", "engine.spend.weaponAccessories"),
+    ("commlinks", "engine.spend.commlinks"),
+    ("cyberdecks", "engine.spend.cyberdecks"),
+    ("rccs", "engine.spend.rccs"),
+    ("optics", "engine.spend.optics"),
+    ("sensors", "engine.spend.sensors"),
+    ("programs", "engine.spend.programs"),
+    ("drones", "engine.spend.drones"),
+    ("vehicles", "engine.spend.vehicles"),
+    ("vehicleMods", "engine.spend.vehicleMods"),
+    ("otherGear", "engine.spend.otherGear"),
+    ("customDrugs", "engine.spend.customDrugs"),
+    ("lifestyles", "engine.spend.lifestyles"),
+)
+
+
 def nuyen_spend_breakdown(
     cyber: list[dict[str, Any]],
     bio: list[dict[str, Any]],
@@ -216,36 +242,19 @@ def nuyen_spend_breakdown(
     foci_nuyen: int = 0,
     spirits_nuyen: int = 0,
 ) -> list[dict[str, Any]]:
+    """The sidebar's "where the nuyen went", as lines that add up to what was
+    spent.
+
+    The gear half comes from the tally `resolve_gear` kept while it was
+    counting, not from re-adding the rows it published: a thing bolted onto
+    something else has its price folded into the row it is bolted to, so the
+    rows do not partition the money and adding them up counts some of it twice.
+    """
+    by_bucket = gear.get("nuyen_by_bucket") or {}
     buckets: list[tuple[str, int]] = [
         ("engine.spend.cyberware", sum(int(item.get("nuyen") or 0) for item in cyber)),
         ("engine.spend.bioware", sum(int(item.get("nuyen") or 0) for item in bio)),
-        ("engine.spend.armor", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_items") or []))),
-        ("engine.spend.armorMods", sum(int(row.get("nuyen") or 0) for row in (gear.get("armor_mods") or []))),
-        ("engine.spend.weapons", sum(int(row.get("nuyen") or 0) for row in (gear.get("weapons") or []))),
-        (
-            "engine.spend.weaponAccessories",
-            sum(int(row.get("nuyen") or 0) for row in (gear.get("weapon_accessories") or [])),
-        ),
-        ("engine.spend.commlinks", sum(int(row.get("nuyen") or 0) for row in (gear.get("commlinks") or []))),
-        ("engine.spend.cyberdecks", sum(int(row.get("nuyen") or 0) for row in (gear.get("cyberdecks") or []))),
-        ("engine.spend.rccs", sum(int(row.get("nuyen") or 0) for row in (gear.get("rccs") or []))),
-        ("engine.spend.optics", sum(int(row.get("nuyen") or 0) for row in (gear.get("optics") or []))),
-        ("engine.spend.sensors", sum(int(row.get("nuyen") or 0) for row in (gear.get("sensors") or []))),
-        (
-            "engine.spend.programs",
-            sum(int(row.get("nuyen") or 0) for row in (gear.get("programs") or []) + (gear.get("apps") or [])),
-        ),
-        ("engine.spend.drones", sum(int(row.get("nuyen") or 0) for row in (gear.get("drones") or []))),
-        ("engine.spend.vehicles", sum(int(row.get("nuyen") or 0) for row in (gear.get("vehicles") or []))),
-        (
-            "engine.spend.vehicleMods",
-            sum(
-                int(row.get("nuyen") or 0)
-                for row in (gear.get("vehicle_mods") or []) + (gear.get("weapon_mounts") or [])
-            ),
-        ),
-        ("engine.spend.otherGear", sum(int(row.get("nuyen") or 0) for row in (gear.get("gear") or []))),
-        ("engine.spend.lifestyles", sum(int(row.get("nuyen") or 0) for row in (gear.get("lifestyles") or []))),
+        *((message, int(by_bucket.get(bucket) or 0)) for bucket, message in _GEAR_SPEND_ORDER),
         ("engine.spend.qiFoci", int(qi_nuyen or 0)),
         ("engine.spend.foci", int(foci_nuyen or 0)),
         ("engine.spend.spirits", int(spirits_nuyen or 0)),
