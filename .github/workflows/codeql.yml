@@ -1,0 +1,59 @@
+name: CodeQL
+
+# Static analysis of the code in this repository, as opposed to the published
+# advisories against its dependencies (that is audit.yml). Finds the classes a
+# test suite does not: a path built from request data, a regex that backtracks,
+# a comparison that lets a check through.
+#
+# Both halves are analysed. The backend parses hostile input by design — a
+# `.chum5` is an untrusted XML document from a stranger's browser — and the
+# frontend renders whatever that parse produced.
+#
+# Results land in the repository's Security tab. Nothing here gates a merge:
+# a first-party finding is worth reading, not worth blocking a release on
+# until the signal-to-noise on this codebase is known.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Mondays, alongside audit.yml. The query packs get new rules without any
+    # commit here, so a scheduled run finds things a push-triggered one cannot.
+    - cron: "30 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # writing the SARIF back to the Security tab
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Neither language is compiled, so there is no build step to intercept:
+      # `init` + `analyze` is the whole job. `security-and-quality` over the
+      # default suite — the extra rules are the ones that read like review
+      # comments, which is what this is for.
+      - uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          category: "/language:${{ matrix.language }}"
