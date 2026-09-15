@@ -18,7 +18,7 @@ from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.data_loader.loaders.books import load_books, load_settings_presets
 from app.engine.priority import priority_value
-from app.models import CharacterPatch, CharacterState, SettingsState
+from app.models import CharacterPatch, CharacterState, Priorities, SettingsState
 from app.rules import _DIRECT, DEFAULT_RULES, RULE_FIELDS, rules_for, using_rules
 from app.settings_file import parse_settings_upload, parse_settings_xml
 from tests.notice_asserts import has
@@ -342,3 +342,66 @@ def test_the_career_knowledge_cap_is_not_read_as_the_group_cap() -> None:
     it used to land on a skill-group cap Chummer does not have."""
     parsed = parse_settings_xml(_settings_xml(maxskillrating=13, maxknowledgeskillrating=9))
     assert (parsed.career_skill_max, parsed.career_knowledge_skill_max) == (13, 9)
+
+
+def _save_with(max_avail: str) -> bytes:
+    return (
+        "<character><alias>Prime</alias><metatype>Human</metatype>"
+        f"<settings>default.xml</settings><maxavail>{max_avail}</maxavail>"
+        "</character>"
+    ).encode()
+
+
+def test_the_creation_availability_limit_comes_from_the_save() -> None:
+    """`<maxavail>` is the one house rule a `.chum5` carries itself: the
+    gameplay option sets it (Standard 12, Prime Runner 15) and a table can move
+    it anywhere. It used to be ignored in favour of the preset's 12, which
+    called seven pieces of equipment across four of Chummer's own test
+    characters illegal when they were within the limit those characters were
+    actually built to.
+    """
+    state, _ = chum5_to_state(_save_with("15"))
+    assert state["settings"]["chargen_avail_max"] == 15
+
+
+def test_a_save_with_no_availability_limit_leaves_it_unset() -> None:
+    state, _ = chum5_to_state(_save_with(""))
+    assert state["settings"].get("chargen_avail_max") is None
+    state, _ = chum5_to_state(b"<character><metatype>Human</metatype></character>")
+    assert state["settings"].get("chargen_avail_max") is None
+
+
+def test_the_availability_limit_round_trips() -> None:
+    state, _ = chum5_to_state(_save_with("20"))
+    again, _ = chum5_to_state(state_to_chum5(CharacterState(**state)))
+    assert again["settings"]["chargen_avail_max"] == 20
+
+
+def test_a_raised_availability_limit_lets_the_equipment_through() -> None:
+    """The limit is not just stored, it is the one the engine checks against.
+
+    A Prime Runner is built to 15, so a piece of gear at 14 is theirs to buy;
+    the same gear on a Standard character is not.
+    """
+    from app.engine import compute
+    from app.models import GearInstall
+
+    over = next(
+        item
+        for item in catalog()["gear"]
+        if str(item.get("avail") or "").rstrip("RF").isdigit() and 12 < int(str(item["avail"]).rstrip("RF")) <= 15
+    )
+    state = CharacterState(
+        id="prime",
+        name="Prime",
+        metatype="Human",
+        attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 3, "INT": 3, "LOG": 3, "WIL": 3, "EDG": 3},
+        priorities=Priorities(),
+        gear=[GearInstall(gear_id=over["id"])],
+    )
+    standard = compute(state.model_copy(deep=True))
+    assert has(standard.derived["errors"], "engine.gear.availOver")
+
+    state.settings = SettingsState(chargen_avail_max=15)
+    prime = compute(state)
+    assert not has(prime.derived["errors"], "engine.gear.availOver")

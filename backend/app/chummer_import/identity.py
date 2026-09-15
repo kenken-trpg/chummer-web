@@ -54,18 +54,31 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     among the shipped presets, and a settings file this app has never seen
     comes back as a name with no book restriction — the whole catalog, which
     is what an unset `books` means everywhere else.
+
+    `<maxavail>` is the exception that *is* in the save: it is the character's
+    own creation availability limit, which the gameplay option sets (Standard
+    12, Prime Runner 15) and a table can house-rule to anything. Ignoring it
+    and using the preset's 12 called four of Chummer's own test characters
+    illegal over equipment they were entitled to.
     """
     el = root.find("settings")
     # Some builds write `<settings>` as a container of house-rule elements
     # rather than a name; there is nothing to take from that.
     name = _text(el) if el is not None and len(el) == 0 else ""
     name = name.removesuffix(".xml").strip()
+    extra: dict[str, Any] = {}
+    max_avail = _text(root.find("maxavail"))
+    if max_avail:
+        try:
+            extra["chargen_avail_max"] = int(max_avail)
+        except ValueError:
+            pass
     if not name:
-        return {}
+        return extra
     for preset in cat.get("settings_presets") or []:
         if preset.get("name") == name:
-            return {"name": name, "books": list(preset.get("books") or [])}
-    return {"name": name, "books": []}
+            return {"name": name, "books": list(preset.get("books") or []), **extra}
+    return {"name": name, "books": [], **extra}
 
 
 def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
