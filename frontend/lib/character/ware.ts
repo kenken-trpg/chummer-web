@@ -6,13 +6,15 @@ export function removeWareTree(items: WareInstall[], id: string): WareInstall[] 
   while (grew) {
     grew = false;
     for (const row of items) {
-      if (row.parent_id && drop.has(row.parent_id) && !drop.has(row.id)) {
+      // a row the browser just added has no id yet — the server assigns one,
+      // and nothing can be hanging off it in the meantime
+      if (row.id && row.parent_id && drop.has(row.parent_id) && !drop.has(row.id)) {
         drop.add(row.id);
         grew = true;
       }
     }
   }
-  return items.filter((row) => !drop.has(row.id));
+  return items.filter((row) => !row.id || !drop.has(row.id));
 }
 
 export function wareBounds(
