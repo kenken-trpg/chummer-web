@@ -34,4 +34,18 @@ services:
       # `json` for one queryable object per line; `text` is what you tail
       LOG_FORMAT: "${LOG_FORMAT:-text}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    # Nothing in the image is written to at run time: the app keeps no state,
+    # Caddy's and supervisord's writes go to /tmp (XDG_* point there), and
+    # Python is told not to write bytecode. So the filesystem is read-only,
+    # with a small tmpfs for those, and the container gives up every Linux
+    # capability and the ability to gain one.
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      # Next writes its fetch cache here when a page asks for one
+      - /app/frontend/.next/cache:rw,noexec,nosuid,size=16m
     restart: unless-stopped

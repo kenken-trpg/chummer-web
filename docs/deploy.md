@@ -19,7 +19,13 @@ the browser. Nothing to back up, safe to scale to zero / run many instances.
 docker compose up --build      # http://localhost:8080
 # or
 docker build -t chummer-web .
-docker run --rm -p 8080:8080 chummer-web
+# nothing in the image is written to at run time, so run it locked down —
+# `compose.yaml` does the same, and CI smoke-tests this exact shape
+docker run --rm -p 8080:8080 \
+  --read-only --security-opt no-new-privileges:true --cap-drop ALL \
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  --tmpfs /app/frontend/.next/cache:rw,noexec,nosuid,size=16m \
+  chummer-web
 ```
 
 The Chummer game data is fetched at **build time** (`fetch_chummer_data.py`,
