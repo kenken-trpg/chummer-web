@@ -208,6 +208,15 @@ jobs:
       - working-directory: frontend
         run: ../scripts/retry.sh npx playwright install --with-deps chromium
 
+      # playwright.config.ts runs `next build` before any test; its compile
+      # cache is most of what makes that slow
+      - name: Cache Next build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/.next/cache
+          key: next-e2e-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx', 'frontend/**/*.css') }}
+          restore-keys: next-e2e-${{ hashFiles('frontend/package-lock.json') }}-
+
       - working-directory: frontend
         run: npm run test:e2e
 
