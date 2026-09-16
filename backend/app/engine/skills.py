@@ -77,9 +77,18 @@ def resolve_knowledge(
     owned = set(ratings) | set(natives)
     for name, category in (state.knowledge_categories or {}).items():
         name = str(name).strip()
-        if name not in owned or name in catalog_by_name:
+        if name not in owned or name in natives:
             continue
         category = str(category)
+        if name in catalog_by_name:
+            # Chummer lets a knowledge skill's type be changed while the
+            # character is being built, listed ones included
+            # (`KnowledgeSkill.AllowTypeChange`), so a saved type that differs
+            # from the list is a choice, and what the costs follow — College
+            # Education halves Academic points, whatever the list said.
+            if category in KNOWLEDGE_CATEGORIES and category != catalog_by_name[name].get("category"):
+                extra_categories[name] = category
+            continue
         extra_categories[name] = category if category in KNOWLEDGE_CATEGORIES else "Street"
     for name in natives:
         if name not in catalog_by_name:
@@ -90,10 +99,13 @@ def resolve_knowledge(
     for name in names:
         spec = catalog_by_name.get(name) or {}
         native = name in natives
-        category = str(spec.get("category") or extra_categories.get(name) or ("Language" if native else "Street"))
+        chosen = extra_categories.get(name)
+        category = str(chosen or spec.get("category") or ("Language" if native else "Street"))
         if category not in KNOWLEDGE_CATEGORIES:
             category = "Street"
-        attribute = str(spec.get("attribute") or KNOWLEDGE_DEFAULT_ATTR.get(category) or "INT").upper()
+        # a changed type brings its default attribute with it, as in Chummer
+        listed = None if chosen and spec else spec.get("attribute")
+        attribute = str(listed or KNOWLEDGE_DEFAULT_ATTR.get(category) or "INT").upper()
         public.append(
             {
                 "name": name,
@@ -136,8 +148,12 @@ def resolve_specializations(
     free_expertise = {str(name).strip() for name in (free_expertise_skills or set()) if str(name).strip()}
     cleaned: dict[str, str] = {}
     warnings: list[Notice] = []
-    active_spent = 0
-    knowledge_spent = 0
+    # Skills whose specialization is paid for with a point. Kept per skill, not
+    # as a count: a point-cost multiplier applies to a skill's points and its
+    # specialization together (Chummer's `CurrentSpCost`), so the caller needs
+    # to know which skill each one belongs to.
+    active_paid: set[str] = set()
+    knowledge_paid: set[str] = set()
     for raw_name, raw_spec in (state.skill_specializations or {}).items():
         name = str(raw_name).strip()
         spec = str(raw_spec or "").strip()
@@ -152,7 +168,7 @@ def resolve_specializations(
                 warnings.append(notice("engine.skills.specNeedsKnowledge", name=term(name)))
                 continue
             if name not in free_expertise:
-                knowledge_spent += 1
+                knowledge_paid.add(name)
         else:
             if name not in active_names:
                 warnings.append(notice("engine.skills.specUnknownSkill", name=term(name)))
@@ -162,13 +178,15 @@ def resolve_specializations(
                 warnings.append(notice("engine.skills.specNeedsSkill", name=term(name)))
                 continue
             if name not in free_expertise:
-                active_spent += 1
+                active_paid.add(name)
         cleaned[name] = spec
     state.skill_specializations = cleaned
     return {
         "warnings": warnings,
-        "active_spent": active_spent,
-        "knowledge_spent": knowledge_spent,
+        "active_spent": len(active_paid),
+        "knowledge_spent": len(knowledge_paid),
+        "active_paid": active_paid,
+        "knowledge_paid": knowledge_paid,
         "specs": cleaned,
     }
 
@@ -326,9 +344,11 @@ def resolve_skill_mods(
 ) -> SkillMods:
     active = list(skills_data.get("skills") or [])
     knowledge = list(skills_data.get("knowledge") or [])
-    catalog_names = {skill["name"] for skill in knowledge}
+    overridden = {name for name in (extra_categories or {}) if name}
+    # a listed skill whose type was changed is re-described below, not twice
+    knowledge = [skill for skill in knowledge if skill["name"] not in overridden]
     for name, category in (extra_categories or {}).items():
-        if not name or name in catalog_names:
+        if not name:
             continue
         category = category if category in KNOWLEDGE_CATEGORIES else "Street"
         knowledge.append(

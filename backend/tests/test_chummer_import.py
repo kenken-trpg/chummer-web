@@ -123,6 +123,22 @@ def test_names_chummer_has_since_corrected_still_resolve() -> None:
     assert not has(warnings, "engine.import.skippedUnknown", name="Rapelling Gloves")
 
 
+def test_a_quality_resolves_by_the_id_chummer_saved_before_its_name() -> None:
+    """Chummer writes the data id to `<id>` (`<guid>` is the instance). "College
+    Education" is two qualities — SASS's changes a limit, Run Faster's halves
+    Academic point costs — and matching by name took the SASS one, so every
+    save with the Run Faster one lost the discount."""
+    run_faster = "604aea10-3f13-4f28-a87b-25b8bf677276"
+    xml = f"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <qualities><quality>
+        <guid>6f8fdf12-a624-44a6-a1b1-f188cd287a96</guid><id>{run_faster}</id>
+        <name>College Education</name><qualitysource>Selected</qualitysource>
+      </quality></qualities>
+    </character>""".encode()
+    st, _ = chum5_to_state(xml)
+    assert st["quality_ids"] == [run_faster]
+
+
 def test_a_stream_saved_as_a_res_tradition_is_read_as_the_stream() -> None:
     """Current Chummer writes the stream as `<tradition>` of type RES; the
     `<stream>` element is its legacy form."""

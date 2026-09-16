@@ -30,8 +30,13 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
         src = _text(q.find("qualitysource")).lower()
         if src and src not in ("selected", "builtin", ""):
             continue  # metatype / life-module grants are re-derived by the engine
-        sid = _text(q.find("sourceid")) or _text(q.find("guid"))
-        qid = sid if sid in q_ids else q_by_name.get(_text(q.find("name")).lower())
+        # Chummer writes the data id to `<id>` (`<guid>` is this instance), and
+        # this app writes it to `<sourceid>`. The name is the last resort, and a
+        # lossy one: "College Education" is two qualities — SASS's is a limit
+        # modifier, Run Faster's halves the Academic point cost — and matching
+        # by name picked the first for saves that had the second.
+        candidates = (_text(q.find("sourceid")), _text(q.find("id")), _text(q.find("guid")))
+        qid = next((c for c in candidates if c in q_ids), None) or q_by_name.get(_text(q.find("name")).lower())
         if not qid:
             nm = _text(q.find("name"))
             if nm:
