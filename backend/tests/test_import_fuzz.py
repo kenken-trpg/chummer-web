@@ -241,6 +241,10 @@ def test_a_damaged_settings_file_is_read_or_refused(raw: bytes) -> None:
         # and an unknown metatype was a KeyError from deep inside the engine
         b"<character><metatype>Dracoform</metatype></character>",
     ],
+    # Short names, not the bytes: pytest puts the test id in an environment
+    # variable, and Windows refuses one past 32,767 characters — the deep
+    # nesting case alone is 26 KB.
+    ids=["empty", "bare", "no-metatype", "utf-16", "latin-1", "deep", "non-finite", "unknown-metatype"],
 )
 def test_odd_but_plausible_files_are_read_or_refused(raw: bytes) -> None:
     _read_or_refuse(raw)
