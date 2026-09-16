@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import { waitForEditor } from "./helpers";
+import { storedCharacters, waitForEditor } from "./helpers";
 
 /**
  * A save written by Chummer itself, not by this app. The round trip in
@@ -66,21 +66,9 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
   await name.blur();
   // the patch returns before IndexedDB has the multi-MB record; a reload any
   // sooner reads the old one
-  const stored = () =>
-    page.evaluate(
-      () =>
-        new Promise<string[]>((resolve, reject) => {
-          const open = indexedDB.open("chummer-web");
-          open.onerror = () => reject(open.error);
-          open.onsuccess = () => {
-            const all = open.result.transaction("characters").objectStore("characters").getAll();
-            all.onsuccess = () =>
-              resolve(all.result.map((r: { character: { name: string } }) => r.character.name));
-            all.onerror = () => reject(all.error);
-          };
-        }),
-    );
-  await expect.poll(stored, { timeout: 15_000 }).toContain("Ghile Edited");
+  await expect
+    .poll(async () => (await storedCharacters(page)).map((c) => c.name), { timeout: 15_000 })
+    .toContain("Ghile Edited");
   await page.reload();
   await waitForEditor(page);
   await expect(name).toHaveValue("Ghile Edited");

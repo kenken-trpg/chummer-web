@@ -98,7 +98,7 @@ function segment(parts: string[], name: string): number {
   return found;
 }
 
-export async function readStyleFolder(list: FileList): Promise<StyleFolder> {
+export async function readStyleFolder(list: ArrayLike<File>): Promise<StyleFolder> {
   const picked = Array.from(list).filter((file) => file.name.toLowerCase().endsWith(".xml"));
   const paths = picked.map((file) => (file.webkitRelativePath || file.name).split("/"));
   // Either half being addressed by name makes this a whole ruleset folder, and
