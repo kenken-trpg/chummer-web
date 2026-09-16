@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { waitForEditor, watchCsp } from "./helpers";
 
 /**
  * The one flow the unit suite structurally cannot cover: a character is created
@@ -9,11 +10,6 @@ import { expect, test, type Page } from "@playwright/test";
  * `vi.mock`ed, `local-store` is a Map, and jsdom has no IndexedDB at all. If
  * this passes, the app actually works end to end.
  */
-
-/** The editor mints a character on first load; wait for the toolbar it fills. */
-async function waitForEditor(page: Page) {
-  await expect(page.getByRole("textbox", { name: "キャラクター名" })).toBeVisible();
-}
 
 test("a character survives a reload and exports to .chum5", async ({ page }) => {
   await page.goto("/");
@@ -120,12 +116,7 @@ test("pages run under a nonce CSP without tripping it", async ({ page }) => {
   // A violation is a console error in Chromium ("Refused to execute inline
   // script …"), and a blocked bootstrap would leave the page dead rather than
   // failing loudly — so collect them, then prove the app actually hydrated.
-  const violations: string[] = [];
-  page.on("console", (msg) => {
-    if (msg.type() === "error" && /Content Security Policy/i.test(msg.text())) {
-      violations.push(msg.text());
-    }
-  });
+  const violations = watchCsp(page);
 
   const response = await page.goto("/");
   const csp = response?.headers()["content-security-policy"] ?? "";

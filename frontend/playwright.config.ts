@@ -9,8 +9,8 @@ const UVICORN = existsSync("../backend/.venv/Scripts/uvicorn.exe")
   : "../backend/.venv/bin/uvicorn";
 
 /**
- * One browser, one worker, one flow. The unit suite (249 vitest tests) already
- * covers the logic; what it cannot cover is the seam this app is built on —
+ * One browser, only what the unit suite cannot reach. The vitest suite covers
+ * the logic; what it cannot cover is the seam this app is built on —
  * the character lives in IndexedDB in the browser and the rules engine lives in
  * a Python process, and nothing but a real browser exercises both at once.
  *
@@ -22,8 +22,13 @@ export default defineConfig({
   // a real browser round-tripping through uvicorn is slower than jsdom
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  fullyParallel: false,
-  workers: 1,
+  // Every test gets its own browser context, so its own IndexedDB and
+  // localStorage: nothing is shared, and the servers are started once for all
+  // workers. CI runners have 4 cores; the build is the slow part, not this.
+  // Keep the import-heavy test count well under the backend's 20/minute
+  // import limit (all workers share 127.0.0.1) rather than loosening it.
+  fullyParallel: true,
+  workers: process.env.CI ? 4 : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
