@@ -115,3 +115,35 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
   await waitForEditor(page);
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Roundtrip");
 });
+
+test("pages run under a nonce CSP without tripping it", async ({ page }) => {
+  // A violation is a console error in Chromium ("Refused to execute inline
+  // script …"), and a blocked bootstrap would leave the page dead rather than
+  // failing loudly — so collect them, then prove the app actually hydrated.
+  const violations: string[] = [];
+  page.on("console", (msg) => {
+    if (msg.type() === "error" && /Content Security Policy/i.test(msg.text())) {
+      violations.push(msg.text());
+    }
+  });
+
+  const response = await page.goto("/");
+  const csp = response?.headers()["content-security-policy"] ?? "";
+  const scriptSrc = csp.split("; ").find((part) => part.startsWith("script-src ")) ?? "";
+  const nonce = /'nonce-([^']+)'/.exec(scriptSrc)?.[1];
+  expect(nonce).toBeTruthy();
+  expect(scriptSrc).not.toContain("'unsafe-inline'");
+
+  await waitForEditor(page);
+
+  // every script Next wrote into the document carries this request's nonce
+  const nonces = await page.$$eval("script", (tags) => tags.map((tag) => tag.nonce));
+  expect(nonces.length).toBeGreaterThan(0);
+  expect(new Set(nonces)).toEqual(new Set([nonce]));
+
+  // and a second request gets a different one
+  const again = await page.request.get("/");
+  expect(again.headers()["content-security-policy"]).not.toContain(`'nonce-${nonce}'`);
+
+  expect(violations).toEqual([]);
+});
