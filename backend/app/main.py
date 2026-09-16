@@ -97,6 +97,17 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 app.add_middleware(SlowAPIMiddleware)
 
+
+async def _notice_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """A `NoticeError` is a refusal with a reason the user can act on. Wherever
+    it is raised — the engine included — it goes out as a 400 carrying that
+    reason, not as a 500 or a catch-all "that failed"."""
+    assert isinstance(exc, NoticeError)
+    return JSONResponse(status_code=400, content={"detail": exc.notice})
+
+
+app.add_exception_handler(NoticeError, _notice_error_handler)
+
 # Only what `frontend/lib/api.ts` sends: GET for the catalog, POST for
 # everything else, and a Content-Type (JSON or octet-stream). A split deploy
 # whose frontend starts sending something new has to be listed here first.
@@ -312,6 +323,8 @@ def patch(req: PatchRequest) -> dict:
         if req.patch is None:
             return compute_state(req.state).model_dump()
         return apply_patch(req.state, req.patch).model_dump()
+    except NoticeError:
+        raise
     except Exception as exc:
         _log.exception("patch failed")
         raise HTTPException(status_code=400, detail=notice("api.patchFailed")) from exc
@@ -424,6 +437,8 @@ def export_chummer(req: StateRequest) -> Response:
 def import_json(request: Request, payload: dict) -> dict:
     try:
         return import_character(payload).model_dump()
+    except NoticeError:
+        raise
     except Exception as exc:
         _log.exception("JSON import failed")
         raise HTTPException(status_code=400, detail=notice("api.importJsonFailed")) from exc

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import math
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator, Mapping
 from contextvars import ContextVar
@@ -133,23 +134,25 @@ def _text(el: ET.Element | None, default: str = "") -> str:
 
 
 def _int(el: ET.Element | None, default: int = 0) -> int:
-    raw = _text(el)
-    if not raw:
-        return default
-    try:
-        return int(float(raw))
-    except ValueError:
-        return default
+    return int(_float(el, float(default)))
 
 
 def _float(el: ET.Element | None, default: float = 0.0) -> float:
+    """A finite number, or `default`.
+
+    These read visitors' files too, where `1e309` or `NaN` is a hand edit away.
+    `float()` takes both; `int()` of the first raises `OverflowError`, which
+    nothing caught, and a `NaN` that reaches a response fails JSON encoding
+    after the handler has already returned.
+    """
     raw = _text(el)
     if not raw:
         return default
     try:
-        return float(raw)
+        value = float(raw)
     except ValueError:
         return default
+    return value if math.isfinite(value) else default
 
 
 def _child(parent: ET.Element, *names: str) -> ET.Element | None:

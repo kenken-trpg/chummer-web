@@ -258,3 +258,28 @@ def test_a_missing_catalog_does_not_hand_out_the_server_path(monkeypatch: pytest
     assert "weapons.xml" in body
     assert "/srv/deploy-name" not in body
     assert secret not in body
+
+
+def test_an_unknown_metatype_is_a_400_that_names_it_on_every_route() -> None:
+    """A JSON export hand-edited, or one from a server with a custom-data
+    metatype: the engine cannot build the character, and the answer should say
+    which metatype, not "that failed" — and on `/new`, not a 500."""
+    state = client.post("/api/characters/new", json={}).json()
+    state.pop("derived", None)
+    state["metatype"] = "Dracoform"
+
+    for path, body in (
+        ("/api/characters/new", {"metatype": "Dracoform"}),
+        ("/api/characters/patch", {"state": state}),
+        ("/api/characters/import", state),
+    ):
+        r = client.post(path, json=body)
+        assert r.status_code == 400, (path, r.status_code, r.text)
+        assert r.json()["detail"] == {"key": "api.unknownMetatype", "params": {"name": "Dracoform"}}, path
+
+
+def test_a_chummer_save_with_an_unknown_metatype_names_it() -> None:
+    xml = b"<character><metatype>Dracoform</metatype><buildmethod>Priority</buildmethod></character>"
+    r = client.post("/api/characters/import-chummer", content=xml, headers={"content-type": "application/octet-stream"})
+    assert r.status_code == 400
+    assert r.json()["detail"]["key"] == "api.unknownMetatype"
