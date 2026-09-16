@@ -148,7 +148,7 @@ export function SettingsPicker({
    * would be a guess. One file applies itself; several leave the choice in
    * the pulldown, with the folder already here so the choice merges.
    */
-  async function onFolder(list: FileList) {
+  async function onFolder(list: readonly File[]) {
     setError(null);
     setMerge(null);
     try {
@@ -269,9 +269,11 @@ export function SettingsPicker({
           // published ruleset, so the folder holding both is what comes across
           {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
           onChange={(e) => {
-            const list = e.target.files;
+            // copy first: clearing the input empties this same FileList in
+            // Chromium, and the clear is what lets the same folder be re-picked
+            const list = Array.from(e.target.files ?? []);
             e.target.value = "";
-            if (list && list.length) void onFolder(list);
+            if (list.length) void onFolder(list);
           }}
         />
 

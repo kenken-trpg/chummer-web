@@ -42,3 +42,24 @@ export async function freshCharacter(
   expect(res.ok()).toBe(true);
   return res.json();
 }
+
+/**
+ * The characters in the page's IndexedDB, read directly. For waiting on a
+ * write the UI does not announce: a patch resolves before its record is stored.
+ */
+export function storedCharacters(
+  page: Page,
+): Promise<{ name: string; settings?: { dataset?: string } }[]> {
+  return page.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const open = indexedDB.open("chummer-web");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const all = open.result.transaction("characters").objectStore("characters").getAll();
+          all.onerror = () => reject(all.error);
+          all.onsuccess = () => resolve(all.result.map((r) => r.character));
+        };
+      }),
+  );
+}
