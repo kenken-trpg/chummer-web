@@ -67,9 +67,14 @@ function run<T>(
   return openDB().then(
     (db) =>
       new Promise<T>((resolve, reject) => {
-        const req = op(db.transaction(STORE, mode).objectStore(STORE));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        // Settle on the transaction, not the request: a request's success
+        // only means it was queued, and a write is not on disk (or safe from
+        // a reload) until the transaction commits. A quota failure also
+        // surfaces here, as an abort after the request already "succeeded".
+        const tx = db.transaction(STORE, mode);
+        const req = op(tx.objectStore(STORE));
+        tx.oncomplete = () => resolve(req.result);
+        tx.onabort = tx.onerror = () => reject(tx.error ?? req.error);
       }),
   );
 }

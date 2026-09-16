@@ -72,8 +72,37 @@ describe("api.create / api.patch", () => {
     await api.patch("a", { name: "After" });
 
     expect(calls[0].path).toBe("/api/characters/patch");
-    expect(body(calls[0])).toEqual({ state: stored, patch: { name: "After" } });
+    const { portrait: _p, ...sent } = stored;
+    void _p;
+    expect(body(calls[0])).toEqual({ state: sent, patch: { name: "After" } });
     expect((await local.getCharacter("a"))?.name).toBe("After");
+  });
+
+  it("leaves the portrait out of the request and puts the stored one back", async () => {
+    // megabytes the engine never reads; sending them made every edit slow
+    // enough that a reload in between lost it
+    const picture = "data:image/png;base64,iVBORw0KGgo=";
+    await local.putCharacter(makeCharacter({ id: "a", name: "Before", portrait: picture }));
+    respond = () => json(makeCharacter({ id: "a", name: "After", portrait: "" }));
+
+    const next = await api.patch("a", { name: "After" });
+
+    expect(body(calls[0]).state).not.toHaveProperty("portrait");
+    expect(next.portrait).toBe(picture);
+    expect((await local.getCharacter("a"))?.portrait).toBe(picture);
+  });
+
+  it("takes the server's portrait when the patch is the one setting it", async () => {
+    // the backend vets a new portrait (`clean_portrait`), so its answer wins
+    await local.putCharacter(
+      makeCharacter({ id: "a", portrait: "data:image/png;base64,iVBORw0KGgo=" }),
+    );
+    respond = () => json(makeCharacter({ id: "a", portrait: "" }));
+
+    const next = await api.patch("a", { portrait: "" });
+
+    expect(body(calls[0]).patch).toEqual({ portrait: "" });
+    expect(next.portrait).toBe("");
   });
 
   it("refuses to patch an id the browser does not hold", async () => {
@@ -178,8 +207,21 @@ describe("api.list / api.remove / api.compute", () => {
 
     await api.compute(snapshot);
 
-    expect(body(calls[0])).toEqual({ state: snapshot });
+    const { portrait: _p, ...sent } = snapshot;
+    void _p;
+    expect(body(calls[0])).toEqual({ state: sent });
     expect(await local.getCharacter("a")).toEqual(snapshot);
+  });
+
+  it("compute restores the snapshot's own portrait, not the server's blank", async () => {
+    // undoing a portrait change has to bring the old picture back
+    const picture = "data:image/png;base64,iVBORw0KGgo=";
+    respond = () => json(makeCharacter({ id: "a", portrait: "" }));
+
+    const next = await api.compute(makeCharacter({ id: "a", portrait: picture }));
+
+    expect(body(calls[0]).state).not.toHaveProperty("portrait");
+    expect(next.portrait).toBe(picture);
   });
 });
 

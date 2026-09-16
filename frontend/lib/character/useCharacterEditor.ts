@@ -44,6 +44,17 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     return () => onNotice(null);
   }, []);
 
+  // An edit is only kept once the compute answers and IndexedDB commits; a
+  // reload or a closed tab before that loses it. `busy` spans exactly that
+  // window, so ask the browser to confirm leaving while it is set.
+  useEffect(() => {
+    const guard = (e: BeforeUnloadEvent) => {
+      if (busy.current) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", guard);
+    return () => window.removeEventListener("beforeunload", guard);
+  }, []);
+
   function remember(c: Character) {
     setCh(c);
     lastCommitted.current = c;
