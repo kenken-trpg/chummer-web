@@ -288,22 +288,30 @@ def build_glossary_doc(
         "",
         "## 出典と優先順位",
         "",
-        "1. `$JA_REF_DIR/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — "
-        "Chummer 系の作法。本アプリの正典。",
-        "2. `$JA_REF_DIR/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, "
-        "github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。",
+        (
+            "1. `$JA_REF_DIR/chummer5th_シート日本語化_52160対応/xz.language.xslt` (2021) — "
+            "Chummer 系の作法。本アプリの正典。"
+        ),
+        (
+            "2. `$JA_REF_DIR/shadowrun5eja_ja.json` — Foundry VTT SR5e 日本語化 (保守中, "
+            "github.com/MiyabiRouga/shadowrun5eja)。**空欄補完のみ**で 2021 版を上書きしない。"
+        ),
         f"3. 2020 版 xslt — 上位互換のため参照不要 (2020→2021 で和訳された語 {was_en_in_2020} 件)。",
         "",
         "- 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。",
         "- 2 資料が食い違う語は **採用=2021版** のまま `差異` を立てる (下表の備考)。人が判断する。",
         "",
-        f"- 統合語数: **{len(merged)}** / うち sr5eja だけにある新規: **{sr5eja_only}** / "
-        f"2 資料で表記が割れる語: **{conflicts}**。",
+        (
+            f"- 統合語数: **{len(merged)}** / うち sr5eja だけにある新規: **{sr5eja_only}** / "
+            f"2 資料で表記が割れる語: **{conflicts}**。"
+        ),
         "",
         "## 表1: 統合用語",
         "",
-        "sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語自体は"
-        "収録しない（無ライセンスのため参照のみ）。",
+        (
+            "sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語自体は"
+            "収録しない（無ライセンスのため参照のみ）。"
+        ),
         "",
         "| English | 採用 | 2021版 | sr5eja | 備考 |",
         "|---|---|---|---|---|",
@@ -410,8 +418,10 @@ def build_mismatch_doc(
     d_lines = [
         "## D. shadowrun5eja が訳出済みで ui.json 未収録の用語 (seed 候補)",
         "",
-        "Foundry SR5e 日本語化 (github.com/MiyabiRouga/shadowrun5eja) が訳している "
-        "UI・ルール語のうち、当方の `ui.json` に無いもの。訳語は shadowrun5eja を直接参照。",
+        (
+            "Foundry SR5e 日本語化 (github.com/MiyabiRouga/shadowrun5eja) が訳している "
+            "UI・ルール語のうち、当方の `ui.json` に無いもの。訳語は shadowrun5eja を直接参照。"
+        ),
         "",
         "| English | 2021版 |",
         "|---|---|",
