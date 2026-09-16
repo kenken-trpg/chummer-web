@@ -97,6 +97,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "exceednegativequalities": "exceed_negative_qualities",
     "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
     "cyberlegmovement": "cyberleg_movement",
+    "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

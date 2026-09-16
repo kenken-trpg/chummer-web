@@ -2,16 +2,16 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { RangeInput } from "@/components/character/RangeInput";
 import { skillDice } from "@/lib/character/format";
-import { skillLimits } from "./shared";
+import { KarmaLevels, skillLimits } from "./shared";
 
 export function SkillGroups(props: TabPanelProps) {
   const { catalog, character: ch, d, trGroup, ui, patch, setCharacter } = props;
-  const { groupMax } = skillLimits(props);
+  const { groupMax, splitKarma, karmaSplit } = skillLimits(props);
   return (
     <>
       <h3>{ui("skills.groups")}</h3>
       {catalog.skills.groups.map((g) => (
-        <div className="skill-row" key={g}>
+        <div className={splitKarma ? "skill-row has-karma" : "skill-row"} key={g}>
           <span title={ui("skills.groupHint", { group: trGroup(g), max: groupMax })}>
             {trGroup(g)}
           </span>
@@ -25,6 +25,14 @@ export function SkillGroups(props: TabPanelProps) {
               setCharacter({ ...ch, skill_groups: { ...ch.skill_groups, [g]: value } })
             }
             onCommit={(value) => patch({ skill_groups: { ...ch.skill_groups, [g]: value } })}
+          />
+          <KarmaLevels
+            name={g}
+            rating={ch.skill_groups[g] || 0}
+            levels={karmaSplit?.group_levels}
+            field="skill_group_karma"
+            props={props}
+            label={trGroup(g)}
           />
           <b>{skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}</b>
         </div>

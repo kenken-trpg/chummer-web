@@ -143,6 +143,8 @@ class _SkillKarma(TypedDict):
     #: Sum-to-Ten) — Chummer's `<karma>` beside `<base>`
     levels: dict[str, int]
     knowledge_levels: dict[str, int]
+    #: the same, per skill group
+    group_levels: dict[str, int]
     karma: int
     knowledge_karma: int
 

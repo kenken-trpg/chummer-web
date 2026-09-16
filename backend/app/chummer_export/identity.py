@@ -229,8 +229,9 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
     grps = _sub(ns, "groups")
     for name, rating in sorted(state.skill_groups.items()):
         grp_el = _sub(grps, "group")
-        _sub(grp_el, "karma", 0)
-        _sub(grp_el, "base", rating)
+        karma = karma_of(state.skill_group_karma, name, rating)
+        _sub(grp_el, "karma", karma)
+        _sub(grp_el, "base", rating - karma)
         _sub(grp_el, "name", name)
 
 

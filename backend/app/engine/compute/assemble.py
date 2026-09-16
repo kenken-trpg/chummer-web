@@ -306,6 +306,7 @@ def assemble(ctx: Ctx) -> None:
         },
         "skill_karma": {
             "levels": dict(ctx.skill_karma_levels),
+            "group_levels": dict(ctx.skill_group_karma_levels),
             "knowledge_levels": dict(ctx.knowledge_karma_levels),
             "karma": 0 if ctx.is_karma else ctx.skill_buy_karma,
             "knowledge_karma": 0 if ctx.is_karma else ctx.knowledge_karma,

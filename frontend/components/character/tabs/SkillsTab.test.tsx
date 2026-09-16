@@ -238,6 +238,25 @@ describe("<SkillsTab>", () => {
     expect(patch).toHaveBeenCalledWith({ knowledge_karma: { "Magic Theory": 1 } });
   });
 
+  it("lets a skill group mark its top levels as bought with karma", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        skill_groups: { "Close Combat": 2 },
+        skill_group_karma: { "Close Combat": 1 },
+        derived: { skill_karma: { ...split, group_levels: { "Close Combat": 1 } } } as any,
+      },
+    });
+    const group = screen.getByRole("spinbutton", {
+      name: /Close Combat.*うちカルマ/,
+    }) as HTMLInputElement;
+    expect(group.value).toBe("1");
+    expect(group.max).toBe("2");
+    fireEvent.change(group, { target: { value: "2" } });
+    expect(patch).toHaveBeenCalledWith({ skill_group_karma: { "Close Combat": 2 } });
+  });
+
   it("offers no skill split in a Karma build or after creation", () => {
     for (const character of [
       {

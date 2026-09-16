@@ -290,11 +290,16 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["exotic_skills"] = exotic
 
     groups: dict[str, int] = {}
+    group_karma: dict[str, int] = {}
     for g in _skill_nodes(root, "groups/group"):
+        name = _text(g.find("name"))
         r = _int(g.find("base")) + _int(g.find("karma"))
-        if r > 0:
-            groups[_text(g.find("name"))] = r
-    st["skill_groups"] = {k: v for k, v in groups.items() if k}
+        if r > 0 and name:
+            groups[name] = r
+            if split and _int(g.find("karma")) > 0:
+                group_karma[name] = _int(g.find("karma"))
+    st["skill_groups"] = groups
+    st["skill_group_karma"] = group_karma
 
     know: dict[str, int] = {}
     know_cat: dict[str, str] = {}
