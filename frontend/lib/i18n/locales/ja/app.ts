@@ -225,6 +225,8 @@ export const JA_APP = {
     "Chummer のキャラクターファイルではないようです（<character> が見つかりません）",
   "api.patchFailed": "この変更を適用できませんでした。",
 
+  "api.unknownMetatype":
+    "メタタイプ「{name}」がこのアプリのデータにないため、このキャラクターを扱えません（カスタムデータのメタタイプかもしれません）。",
   "api.xmlUnparsable": "XML を解析できませんでした: {error}",
   "error.title": "問題が発生しました",
   "error.unexpected": "予期しないエラーです。",

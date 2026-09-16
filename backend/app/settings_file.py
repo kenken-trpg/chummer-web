@@ -12,6 +12,7 @@ bury the two or three the GM actually changed.
 
 from __future__ import annotations
 
+import math
 import re
 import xml.etree.ElementTree as ET
 from functools import lru_cache
@@ -161,9 +162,11 @@ def _flatten(root: ET.Element) -> dict[str, str]:
 
 def _int(value: str) -> int | None:
     try:
-        return int(float(value))
+        number = float(value)
     except ValueError:
         return None
+    # `1e309` and `NaN` are floats; neither is a setting
+    return int(number) if math.isfinite(number) else None
 
 
 def _karma_to_nuyen(flat: dict[str, str]) -> tuple[int | None, bool]:

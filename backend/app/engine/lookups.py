@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from ..data_loader import catalog, catalog_list, catalog_ware
+from ..notices import NoticeError, notice
 
 DEFAULT_STREAM_NAME = "Default"
 
@@ -194,4 +195,6 @@ def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
             return by_name[variant]
     if name in by_name:
         return by_name[name]
-    raise KeyError(f"Unknown metatype: {name}/{variant}")
+    # Not a KeyError: this is reached from a visitor's file — a JSON export, a
+    # .chum5 using a custom-data metatype — and the name is what tells them why.
+    raise NoticeError(notice("api.unknownMetatype", name=name))

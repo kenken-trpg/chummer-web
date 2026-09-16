@@ -218,6 +218,8 @@ export const EN_APP = {
     "This does not look like a Chummer character file (no <character> element).",
   "api.patchFailed": "That change could not be applied.",
 
+  "api.unknownMetatype":
+    'The metatype "{name}" is not in this app\'s data, so this character cannot be built (it may come from custom data).',
   "api.xmlUnparsable": "The XML could not be parsed: {error}",
   "error.title": "Something went wrong",
   "error.unexpected": "An unexpected error.",
