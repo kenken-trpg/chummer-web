@@ -455,6 +455,7 @@
   "skill_group_bonus": {},
   "skill_group_max": 6,
   "skill_karma": {
+    "group_levels": {},
     "karma": 0,
     "knowledge_karma": 0,
     "knowledge_levels": {},

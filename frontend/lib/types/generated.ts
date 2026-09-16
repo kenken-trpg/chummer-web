@@ -331,6 +331,8 @@ export interface CharacterSettings {
   exceed_negative_qualities_no_bonus?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
+  /** `<allowpointbuyspecializationsonkarmaskills>` */
+  allow_point_buy_specializations_on_karma_skills?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */
@@ -396,6 +398,8 @@ export interface Character {
   skill_karma?: Record<string, number>;
   knowledge_karma?: Record<string, number>;
   skill_groups: Record<string, number>;
+  /** of `skill_groups[name]`, the top levels bought with karma */
+  skill_group_karma?: Record<string, number>;
   skill_specializations?: Record<string, string>;
   exotic_skills?: ExoticSkillInstall[];
   knowledge_skills: Record<string, number>;

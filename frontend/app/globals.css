@@ -246,6 +246,10 @@ td.rowhead {
   width: 3.5em;
 }
 /* the same "by karma" count on a skill, between the slider and the spec */
+/* and on a skill group, which has no spec column */
+.skill-row.has-karma:not(.has-spec) {
+  grid-template-columns: minmax(120px, 168px) 1fr auto 88px;
+}
 .skill-row.has-spec.has-karma {
   grid-template-columns: minmax(120px, 168px) 1fr auto minmax(108px, 168px) 108px;
 }

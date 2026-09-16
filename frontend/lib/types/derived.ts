@@ -914,6 +914,7 @@ export interface Derived {
   skill_karma?: {
     levels: Record<string, number>;
     knowledge_levels: Record<string, number>;
+    group_levels: Record<string, number>;
     karma: number;
     knowledge_karma: number;
   };

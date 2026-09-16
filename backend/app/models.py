@@ -377,6 +377,8 @@ class SettingsState(BaseModel):
     exceed_negative_qualities_no_bonus: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
+    #: `<allowpointbuyspecializationsonkarmaskills>`
+    allow_point_buy_specializations_on_karma_skills: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)
@@ -431,6 +433,7 @@ class CharacterPatch(BaseModel):
     skills: dict[str, int] | None = None
     skill_karma: dict[str, int] | None = None
     skill_groups: dict[str, int] | None = None
+    skill_group_karma: dict[str, int] | None = None
     skill_specializations: dict[str, str] | None = None
     exotic_skills: list[ExoticSkillInstall] | None = None
     knowledge_skills: dict[str, int] | None = None
@@ -564,6 +567,8 @@ class CharacterState(BaseModel):
     skill_karma: dict[str, int] = Field(default_factory=dict)
     knowledge_karma: dict[str, int] = Field(default_factory=dict)
     skill_groups: dict[str, int] = Field(default_factory=dict)
+    #: of `skill_groups[name]`, the top levels bought with karma
+    skill_group_karma: dict[str, int] = Field(default_factory=dict)
     skill_specializations: dict[str, str] = Field(default_factory=dict)
     exotic_skills: list[ExoticSkillInstall] = Field(default_factory=list)
     knowledge_skills: dict[str, int] = Field(default_factory=dict)

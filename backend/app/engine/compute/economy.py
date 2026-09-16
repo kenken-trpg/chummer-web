@@ -121,13 +121,20 @@ def economy(ctx: Ctx) -> None:
     exotic_names = {s["name"] for s in ctx.data["skills"]["skills"] if s.get("exotic")}
     if exotic_names:
         ctx.state.skills = {name: rating for name, rating in ctx.state.skills.items() if name not in exotic_names}
+    # Priority / Sum-to-Ten: a group's top levels bought with karma are not
+    # group points (Chummer's `<karma>` beside `<base>` on a group).
+    wanted_group_karma = {} if ctx.is_karma else dict(ctx.state.skill_group_karma or {})
     for group, rating in ctx.state.skill_groups.items():
         rating = max(0, min(ctx.skill_group_cap, int(rating)))
         ctx.state.skill_groups[group] = rating
-        ctx.group_spent += rating
+        group_levels = max(0, min(int(wanted_group_karma.get(group) or 0), rating))
+        if group_levels:
+            ctx.skill_group_karma_levels[group] = group_levels
+        ctx.group_spent += rating - group_levels
         for s in ctx.data["skills"]["skills"]:
             if s.get("skillgroup") == group and not s.get("exotic"):
                 ctx.skill_totals[s["name"]] = max(ctx.skill_totals.get(s["name"], 0), rating)
+    ctx.state.skill_group_karma = dict(ctx.skill_group_karma_levels)
     tentative = dict(ctx.skill_totals)
     for name, rating in ctx.state.skills.items():
         tentative[name] = max(tentative.get(name, 0), max(0, min(ctx.skill_rating_cap + 1, int(rating))))
@@ -249,6 +256,30 @@ def economy(ctx: Ctx) -> None:
     # only the ratings count there.
     paid_active = set() if ctx.is_karma or ctx.career else set(ctx.specs["active_paid"])
     paid_knowledge = set() if ctx.is_karma or ctx.career else set(ctx.specs["knowledge_paid"])
+    # Chummer's `Skill.ForcedBuyWithKarma`: a skill with karma levels and no
+    # points of its own takes its specialization for karma too, unless the
+    # settings allow a point for it. A group's rating is not the skill's own
+    # points, so a grouped skill raised only with karma counts as well.
+    karma_specs_active: set[str] = set()
+    karma_specs_knowledge: set[str] = set()
+    if paid_active or paid_knowledge:
+        if not current_rules().allow_point_buy_specializations_on_karma_skills:
+            karma_specs_active = {
+                name for name in paid_active if not active_points.get(name) and ctx.skill_karma_levels.get(name)
+            }
+            know_points = {
+                str(row.get("name") or ""): int(row.get("rating") or 0)
+                - int(ctx.knowledge_karma_levels.get(str(row.get("name") or ""), 0))
+                for row in ctx.knowledge["public"]
+                if not row.get("native")
+            }
+            karma_specs_knowledge = {
+                name
+                for name in paid_knowledge
+                if know_points.get(name, 0) <= 0 and ctx.knowledge_karma_levels.get(name)
+            }
+    paid_active -= karma_specs_active
+    paid_knowledge -= karma_specs_knowledge
     for name in set(active_points) | paid_active:
         units = int(active_points.get(name, 0)) + (1 if name in paid_active else 0)
         cat = skill_cat_map.get(name, "")
@@ -265,7 +296,11 @@ def economy(ctx: Ctx) -> None:
         # Priority career: new specs cost karma (baseline settles chargen specs).
         ctx.spec_karma = 0
     else:
-        ctx.spec_karma = 0
+        rules = current_rules()
+        ctx.spec_karma = (
+            len(karma_specs_active) * rules.karma_specialization
+            + len(karma_specs_knowledge) * rules.karma_knowledge_specialization
+        )
         # Chummer's `SkillPointsSpentOnKnoskills`: on a priority sheet the
         # knowledge a character has no knowledge points left for is paid with
         # active skill points ("even if it is stupid"), not refused.
@@ -361,6 +396,12 @@ def economy(ctx: Ctx) -> None:
             ),
             min_rules=_filter_karma_rules(ctx.effects.get("knowledge_skill_karma_cost_min"), career=False),
         )
+        ctx.skill_buy_karma += skill_levels_karma_cost(
+            ctx.state.skill_groups,
+            ctx.skill_group_karma_levels,
+            {},
+            per_rating=current_rules().karma_skill_group,
+        )
         ctx.karma_pool = 25 + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
             ctx.karma_from_q
@@ -371,6 +412,7 @@ def economy(ctx: Ctx) -> None:
             + ctx.attr_karma
             + ctx.skill_buy_karma
             + ctx.knowledge_karma
+            + ctx.spec_karma
             + int(ctx.state.karma_nuyen or 0)
         )
         if ctx.career:

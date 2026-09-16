@@ -16,7 +16,7 @@ from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.engine import compute, default_attributes, find_metatype
-from app.models import CharacterPatch, CharacterState, Priorities
+from app.models import CharacterPatch, CharacterState, Priorities, SettingsState
 
 
 def _human(cid: str, **kw: object) -> CharacterState:
@@ -46,6 +46,7 @@ def test_skill_karma_levels_leave_the_point_pool_and_cost_the_raise_price() -> N
     assert split.derived["skill_karma"] == {
         "levels": {"Pistols": 2},
         "knowledge_levels": {"Seattle Gangs": 1},
+        "group_levels": {},
         "karma": 18,
         "knowledge_karma": 3,
     }
@@ -96,3 +97,63 @@ def test_a_finished_characters_skill_karma_is_not_read_as_a_creation_split() -> 
     st, _ = chum5_to_state(ET.tostring(root))
     assert st["skill_karma"] == {}
     assert st["skills"]["Pistols"] == 5
+
+
+def test_a_skill_bought_only_with_karma_pays_its_specialization_in_karma() -> None:
+    """Chummer's `Skill.ForcedBuyWithKarma`: karma levels and no points of its
+    own, so the specialization is 7 karma rather than a skill point. Yeti in
+    Chummer's test saves is the case: Computer 1 from karma, with a spec."""
+    base = _human("bwk-base", skills={"Computer": 1})
+    plain = compute(base).derived
+    state = _human(
+        "bwk-spec",
+        skills={"Computer": 1},
+        skill_karma={"Computer": 1},
+        skill_specializations={"Computer": "Matrix Perception"},
+    )
+    out = compute(state).derived
+    assert out["points"]["skills"]["used"] == plain["points"]["skills"]["used"] - 1
+    assert out["karma"]["spent"] == plain["karma"]["spent"] + 2 + 7
+
+
+def test_a_settings_file_can_let_that_specialization_take_a_point() -> None:
+    state = _human(
+        "bwk-allowed",
+        skills={"Computer": 1},
+        skill_karma={"Computer": 1},
+        skill_specializations={"Computer": "Matrix Perception"},
+    )
+    state.settings = SettingsState(allow_point_buy_specializations_on_karma_skills=True)
+    out = compute(state).derived
+    assert out["points"]["skills"]["used"] == 1
+
+
+def test_a_skill_with_points_keeps_paying_its_specialization_in_points() -> None:
+    state = _human(
+        "points-spec",
+        skills={"Computer": 3},
+        skill_karma={"Computer": 1},
+        skill_specializations={"Computer": "Matrix Perception"},
+    )
+    out = compute(state).derived
+    assert out["points"]["skills"]["used"] == 2 + 1
+
+
+def test_group_levels_bought_with_karma_leave_the_group_points() -> None:
+    """Rez0luti0n2.0 in Chummer's test saves: Acting 1 from karma, no group
+    points to spend. The level costs 5 × 1 karma instead."""
+    plain = compute(_human("grp-plain", skill_groups={"Acting": 1})).derived
+    split = compute(_human("grp-karma", skill_groups={"Acting": 1}, skill_group_karma={"Acting": 1})).derived
+    assert split["points"]["skill_groups"]["used"] == plain["points"]["skill_groups"]["used"] - 1
+    assert split["skill_karma"]["group_levels"] == {"Acting": 1}
+    assert split["karma"]["spent"] == plain["karma"]["spent"] + 5
+
+
+def test_group_karma_survives_a_chummer_round_trip() -> None:
+    state = _human("grp-trip", skill_groups={"Acting": 2}, skill_group_karma={"Acting": 1})
+    xml = state_to_chum5(compute(state))
+    group = next(g for g in ET.fromstring(xml).iter("group") if g.findtext("name") == "Acting")
+    assert (group.findtext("base"), group.findtext("karma")) == ("1", "1")
+    back, _ = chum5_to_state(xml)
+    assert back["skill_groups"] == {"Acting": 2}
+    assert back["skill_group_karma"] == {"Acting": 1}

@@ -25,11 +25,14 @@ export function KarmaLevels({
   levels,
   field,
   props,
+  label,
 }: {
   name: string;
+  /** what a screen reader calls the row; the translated name by default */
+  label?: string;
   rating: number;
   levels: Record<string, number> | undefined;
-  field: "skill_karma" | "knowledge_karma";
+  field: "skill_karma" | "knowledge_karma" | "skill_group_karma";
   props: TabPanelProps;
 }) {
   const { character: ch, tr, ui, patch } = props;
@@ -40,7 +43,7 @@ export function KarmaLevels({
       {ui("attrs.karmaLevels")}
       <input
         type="number"
-        aria-label={`${tr(name)} ${ui("attrs.karmaLevels")}`}
+        aria-label={`${label ?? tr(name)} ${ui("attrs.karmaLevels")}`}
         min={0}
         max={rating}
         value={levels?.[name] ?? 0}
