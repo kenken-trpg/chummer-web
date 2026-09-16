@@ -197,6 +197,11 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   を読んだ時点で `UnicodeDecodeError` になる。`gen_frontend_types.py` は
   `generated.ts` をそのコードページで**書いて**もいた。アプリ本体の `open()` は
   以前から全て `encoding` 付きなので、影響はテストと開発用スクリプトに閉じる。
+- **`make` の各ターゲットが Windows の venv を見つけられなかった。** virtualenv は
+  POSIX では `bin/`、Windows では `Scripts/`（しかも `.exe` 付き）にコマンドを置くが、
+  `Makefile` と `scripts/{dev,doctor}.sh` は `bin/` を決め打ちしていた。実際にある方を
+  見て選ぶようにしたので、Git Bash や WSL の中からなら Windows のチェックアウトでも
+  同じターゲットが使える。`python3` が無い環境では `python` に落ちる。
 - **ゲームデータが無いときの応答が、サーバのファイルパスを漏らしていた。**
   `str(FileNotFoundError)` は開こうとした絶対パスを含み、この応答はポートに
   届く相手なら誰でも受け取れる。運用者が必要としているのは足りないファイルの
