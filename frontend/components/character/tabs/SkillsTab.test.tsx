@@ -309,6 +309,16 @@ describe("<SkillsTab> knowledge skills", () => {
     fireEvent.click(screen.getByRole("button", { name: "カスタム追加" }));
 
     expect(patch).not.toHaveBeenCalled();
+    // and the name stays in the box to be corrected, rather than vanishing
+    expect((name as HTMLInputElement).value).toBe(" Underworld ");
+  });
+
+  it("clears the name box once a custom skill is added", () => {
+    renderTab();
+    const name = screen.getByPlaceholderText("カスタム知識名") as HTMLInputElement;
+    fireEvent.change(name, { target: { value: "Underworld" } });
+    fireEvent.click(screen.getByRole("button", { name: "カスタム追加" }));
+    expect(name.value).toBe("");
   });
 
   it("records a category only for a skill the catalog does not already place", () => {
