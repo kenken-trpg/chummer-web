@@ -66,6 +66,44 @@ jobs:
 
       - run: mypy
 
+  # The one job that is not Linux. Chummer5a is Windows software, so a good
+  # share of the people running this locally are on Windows, and nothing else
+  # in CI would notice a path or an encoding that only breaks there — Python's
+  # default text encoding is the ANSI code page (cp1252 on a US install), not
+  # UTF-8, and this repository is full of Japanese. Tests only: ruff, mypy and
+  # the generated-types check read the same files on every platform, so running
+  # them again here would buy nothing.
+  backend-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - run: ../scripts/retry.sh pip install -r requirements-dev.txt
+
+      # Same key as the Linux job: the fetched tree is plain XML, identical
+      # whoever downloaded it.
+      - name: Cache Chummer data
+        id: chummer-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: backend/vendor
+          key: chummer-data-${{ hashFiles('backend/scripts/fetch_chummer_data.py') }}
+
+      - if: steps.chummer-cache.outputs.cache-hit != 'true'
+        run: python scripts/fetch_chummer_data.py
+
+      - run: python -m pytest -q
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

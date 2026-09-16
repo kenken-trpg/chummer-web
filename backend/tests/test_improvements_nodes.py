@@ -75,6 +75,6 @@ def test_no_domain_module_reimplements_the_bonus_value_fallback() -> None:
     offenders = [
         path.name
         for path in sorted((Path(__file__).resolve().parents[1] / "app/improvements/nodes").glob("*.py"))
-        if magnitude_chain.search(path.read_text())
+        if magnitude_chain.search(path.read_text(encoding="utf-8"))
     ]
     assert offenders == [], f"inline fallback chain is back in: {offenders}"
