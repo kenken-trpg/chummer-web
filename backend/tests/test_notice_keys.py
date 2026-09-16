@@ -43,12 +43,12 @@ def _keys_used() -> set[str]:
     """Every `engine.*` / `api.*` key the backend names literally."""
     used: set[str] = set()
     for path in BACKEND.rglob("*.py"):
-        used |= set(re.findall(KEY_RE, path.read_text()))
+        used |= set(re.findall(KEY_RE, path.read_text(encoding="utf-8")))
     return used
 
 
 def _keys_defined() -> set[str]:
-    text = "\n".join(path.read_text() for path in MESSAGES)
+    text = "\n".join(path.read_text(encoding="utf-8") for path in MESSAGES)
     return set(re.findall(r'^\s*"((?:engine|api)\.[A-Za-z0-9_.]+)":', text, flags=re.M))
 
 
@@ -65,6 +65,6 @@ def test_no_orphaned_message_keys() -> None:
 def test_dynamic_families_are_still_used() -> None:
     """The families above are exempt from the orphan check, so make sure each is
     still built somewhere rather than quietly dead."""
-    source = "".join(path.read_text() for path in BACKEND.rglob("*.py"))
+    source = "".join(path.read_text(encoding="utf-8") for path in BACKEND.rglob("*.py"))
     unused = [family for family in DYNAMIC_FAMILIES if family not in source]
     assert not unused, f"nothing builds these key families any more: {unused}"

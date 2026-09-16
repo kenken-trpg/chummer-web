@@ -7,6 +7,11 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **CI に Windows のジョブを足した。** Chummer5a は Windows のソフトなので、
+  これを手元で動かす人にも Windows は多い。それまで CI は全ジョブ Linux で、
+  そこでしか壊れない書き方を誰も見ていなかった。`windows-latest` で
+  バックエンドのテストだけ回す（ruff・mypy・型生成チェックはどの OS でも
+  同じファイルを読むので、もう一度回しても得るものがない）。
 - **CodeQL を CI に入れた。** 依存の既知脆弱性は `audit.yml` が見ているが、
   このリポジトリ自身のコードは誰も静的解析していなかった。バックエンドは
   設計上、他人のブラウザから来る信用できない XML を解析するので、テストでは
@@ -185,6 +190,13 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 - **README.en.md の Docker の説明が古いままだった。** 「公開イメージがあれば
   pull する」と書いてあったが、いまは常にチェックアウトからビルドする
   （`pull_policy: build`）。日本語版だけ直っていた。
+- **Windows でテストとスクリプトが文字化け・例外になっていた。** `read_text()` /
+  `write_text()` に `encoding=` が無い箇所が 7 つあり、Python の既定のテキスト
+  エンコーディングは Windows では UTF-8 ではなく ANSI コードページ（US 環境なら
+  cp1252）なので、日本語を含むファイル — ロケール辞書やコメント入りのソース —
+  を読んだ時点で `UnicodeDecodeError` になる。`gen_frontend_types.py` は
+  `generated.ts` をそのコードページで**書いて**もいた。アプリ本体の `open()` は
+  以前から全て `encoding` 付きなので、影響はテストと開発用スクリプトに閉じる。
 - **ゲームデータが無いときの応答が、サーバのファイルパスを漏らしていた。**
   `str(FileNotFoundError)` は開こうとした絶対パスを含み、この応答はポートに
   届く相手なら誰でも受け取れる。運用者が必要としているのは足りないファイルの

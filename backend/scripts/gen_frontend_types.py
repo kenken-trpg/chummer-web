@@ -109,7 +109,7 @@ def _comments() -> dict[tuple[str, str], list[str]]:
     models carry — dropping them on the way out would make the generated file
     worse than the hand-written one it replaces.
     """
-    source = Path(models.__file__).read_text().split("\n")
+    source = Path(models.__file__).read_text(encoding="utf-8").split("\n")
     out: dict[tuple[str, str], list[str]] = {}
     tree = ast.parse("\n".join(source))
     for node in tree.body:
@@ -170,11 +170,11 @@ def main() -> int:
     args = parser.parse_args()
     text = render()
     if args.check:
-        if not OUT.exists() or OUT.read_text() != text:
+        if not OUT.exists() or OUT.read_text(encoding="utf-8") != text:
             print(f"{OUT} is out of date — run backend/scripts/gen_frontend_types.py", file=sys.stderr)
             return 1
         return 0
-    OUT.write_text(text)
+    OUT.write_text(text, encoding="utf-8")
     print(f"wrote {OUT}")
     return 0
 
