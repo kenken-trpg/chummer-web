@@ -77,8 +77,9 @@ clone 済みのチェックアウトは直りません。その場合は `git rm
 で入れ直します。CRLF のままだとビルド中に走るシェルスクリプトの shebang が壊れ、
 イメージのビルドが失敗します。
 
-Docker なしの開発環境（次節）は `bash` と `.venv/bin/` を前提にしているので、
-Windows では Git Bash か WSL の中で作業してください。
+Docker なしの開発環境（次節）は `bash` を前提にしているので、Windows では
+Git Bash か WSL の中で作業してください（venv が `Scripts/` にある Windows の
+レイアウトは `make` 側が見分けます）。
 
 ## Web に公開する（localhost ＋ Cloudflare Tunnel）
 

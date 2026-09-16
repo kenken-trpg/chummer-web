@@ -68,8 +68,9 @@ checkout already cloned with CRLF. Re-materialise that one with
 `git rm --cached -r . && git reset --hard`. Left as CRLF, the shebang of a shell script the image
 build runs is broken and the build fails.
 
-The no-Docker development setup (next section) assumes `bash` and `.venv/bin/`, so on Windows work
-inside Git Bash or WSL.
+The no-Docker development setup (next section) assumes `bash`, so on Windows work inside Git Bash
+or WSL. The venv's Windows layout (`Scripts/` rather than `bin/`) is something `make` works out for
+itself.
 
 ## Putting it on the web (localhost + Cloudflare Tunnel)
 
