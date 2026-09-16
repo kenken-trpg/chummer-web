@@ -217,6 +217,13 @@ jobs:
           key: next-e2e-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx', 'frontend/**/*.css') }}
           restore-keys: next-e2e-${{ hashFiles('frontend/package-lock.json') }}-
 
+      # the Chummer save e2e/chummer-import.spec.ts pins by commit and sha256
+      - name: Cache E2E fixtures
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/e2e/.fixtures
+          key: e2e-fixtures-${{ hashFiles('frontend/e2e/chummer-import.spec.ts') }}
+
       - working-directory: frontend
         run: npm run test:e2e
 
