@@ -78,8 +78,10 @@ clone 済みのチェックアウトは直りません。その場合は `git rm
 イメージのビルドが失敗します。
 
 Docker なしの開発環境（次節）は `bash` を前提にしているので、Windows では
-Git Bash か WSL の中で作業してください（venv が `Scripts/` にある Windows の
-レイアウトは `make` 側が見分けます）。
+**WSL** の中で作業するのが一番素直です。Git Bash でもシェルは手に入りますが、
+Git for Windows に `make` は同梱されていないため、各ターゲットは `Makefile` の
+1行コマンドを直接叩く形になります（venv が `Scripts/` にある Windows のレイアウトは
+`make` と `playwright.config.ts` が見分けます）。
 
 ## Web に公開する（localhost ＋ Cloudflare Tunnel）
 

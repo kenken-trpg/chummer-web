@@ -179,6 +179,13 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **e2e が Windows の venv を見つけられなかった。** `playwright.config.ts` の
+  `webServer` が uvicorn を `.venv/bin/` 決め打ちで起動していた。`Makefile` と
+  `scripts/*.sh` は直したのに、playwright が直接読むこの設定だけ漏れていた。
+  同じ要領で `Scripts/` も見る。あわせて「Windows は Git Bash か WSL で」と
+  書いていた箇所を直した — Git for Windows に `make` は同梱されていないので、
+  Git Bash で手に入るのはシェルだけで、ターゲットは `Makefile` の1行を直接
+  叩くことになる。
 - **Windows で clone すると Docker ビルドが失敗していた。** `.gitattributes` が
   無かったので、Git for Windows の既定（`core.autocrlf=true`）が clone 時に
   `scripts/retry.sh` を CRLF へ書き換える。このスクリプトはイメージに入って

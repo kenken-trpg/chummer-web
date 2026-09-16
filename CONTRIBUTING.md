@@ -17,10 +17,13 @@ make check     # everything CI runs: ruff, pytest, tsc, eslint, prettier, build
 
 No `make`? Every target is a one-liner you can read off the `Makefile`.
 
-**On Windows**, develop inside WSL or Git Bash. The targets find the venv
-wherever it is — `bin/` on POSIX, `Scripts/` on Windows — but they shell out to
-`bash scripts/*.sh`, so `cmd`/PowerShell cannot run them. Just
-running the app needs none of this — Docker Desktop is enough (see
+**On Windows**, develop inside WSL. The targets shell out to `bash
+scripts/*.sh`, so `cmd`/PowerShell cannot run them — and Git for Windows ships
+no `make` either, so Git Bash gets you the shell but not the targets unless you
+install GNU make yourself. In Git Bash, read the one-liner off the `Makefile`
+and run it directly. The venv is found wherever it is (`bin/` on POSIX,
+`Scripts/` on Windows), here and in `playwright.config.ts`. Just running the app
+needs none of this — Docker Desktop is enough (see
 [`README.en.md`](README.en.md)). Whatever the shell, leave the newline rewriting
 off (`git config --global core.autocrlf input`): `.gitattributes` pins the tree
 to LF, and a CRLF `scripts/retry.sh` breaks the Docker build.
