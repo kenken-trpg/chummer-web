@@ -406,7 +406,7 @@ def _scrub(obj: Any) -> Any:
     if isinstance(obj, list):
         cleaned = [_scrub(v) for v in obj]
         try:
-            return sorted(cleaned, key=lambda v: _sort_key(v))
+            return sorted(cleaned, key=_sort_key)
         except TypeError:
             return cleaned
     return obj

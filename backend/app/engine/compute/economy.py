@@ -348,7 +348,6 @@ def economy(ctx: Ctx) -> None:
             ),
             min_rules=_filter_karma_rules(ctx.effects.get("knowledge_skill_karma_cost_min"), career=False),
         )
-        nuyen_karma = 0
         ctx.karma_pool = 25 + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
             ctx.karma_from_q
