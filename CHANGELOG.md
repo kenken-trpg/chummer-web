@@ -7,6 +7,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **CI の Windows ジョブを frontend にも広げた。** `backend-windows` は入れてあったが、
+  frontend 側は Linux でしか回していなかった。Node は Python ほど OS に左右されない
+  ので狙いは狭く、リテラルの `/` で組んだパス、大文字小文字だけ違う import、
+  CRLF で読むと結果が変わるツール — といったあたり。`format:check` が鋭い:
+  prettier は LF 前提の設定なので、CRLF で checkout されたツリーでは落ちる。
+  つまりこのジョブは `.gitattributes` が効いているかの実地試験も兼ねる。
 - **CI に Windows のジョブを足した。** Chummer5a は Windows のソフトなので、
   これを手元で動かす人にも Windows は多い。それまで CI は全ジョブ Linux で、
   そこでしか壊れない書き方を誰も見ていなかった。`windows-latest` で
