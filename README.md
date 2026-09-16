@@ -52,6 +52,34 @@ make up                   # → http://localhost:8080
 
 Chummer のゲームデータはイメージのビルド時に取得して同梱されます（実行時のネットワーク不要、特定コミットに固定）。
 
+### Windows で動かす
+
+Docker Desktop（WSL2 バックエンド）を入れれば、そのまま動きます。PowerShell から:
+
+```powershell
+git clone https://github.com/kenken-trpg/chummer-web.git
+cd chummer-web
+Copy-Item .env.example .env   # 任意
+docker compose up -d          # → http://localhost:8080
+```
+
+`make` は Windows に無いので、上表のターゲットは直接叩いてください
+（`docker compose down` / `logs -f` / `up -d --build`）。`make doctor` に相当するものはありません。
+
+**clone 前に一度だけ**、改行コードの自動変換を切っておいてください:
+
+```powershell
+git config --global core.autocrlf input
+```
+
+このリポジトリには `.gitattributes` があるので新しい Git なら不要ですが、既に CRLF で
+clone 済みのチェックアウトは直りません。その場合は `git rm --cached -r . && git reset --hard`
+で入れ直します。CRLF のままだとビルド中に走るシェルスクリプトの shebang が壊れ、
+イメージのビルドが失敗します。
+
+Docker なしの開発環境（次節）は `bash` と `.venv/bin/` を前提にしているので、
+Windows では Git Bash か WSL の中で作業してください。
+
 ## Web に公開する（localhost ＋ Cloudflare Tunnel）
 
 自宅の PC やサーバーで動かしたまま、ポートを開けずにインターネットへ公開する手順です。

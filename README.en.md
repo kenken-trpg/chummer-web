@@ -29,17 +29,47 @@ cp .env.example .env      # optional — to change ports or limits
 make up                   # → http://localhost:8080
 ```
 
-`make up` pulls the published image (`ghcr.io/kenken-trpg/chummer-web`) if one is available and builds locally otherwise. Without `make`, `docker compose up` works too — the first build takes a few minutes.
+`make up` builds the image from this checkout and starts it. The first build takes a few minutes; after that the layer cache makes it seconds. Without `make`, `docker compose up -d` is the same thing.
+
+Building every time is what keeps the image and `compose.yaml` in step. With "reuse whatever image is on the host" an image predating the container hardening stayed in use and the container stopped coming up at all (`caddy: EPERM`) — the capability drop and the matching Dockerfile change ship together.
 
 | Command       | What it does                             |
 | ------------- | ---------------------------------------- |
 | `make up`     | Start it (`http://localhost:8080`)       |
 | `make down`   | Stop it                                  |
 | `make logs`   | Follow the logs                          |
-| `make update` | `git pull`, refresh the image, restart   |
+| `make update` | `git pull`, rebuild, restart             |
 | `make doctor` | Pre-flight check (Docker, free ports, …) |
 
 The Chummer game data is fetched at image build time and bundled, pinned to a specific upstream commit — so running the container needs no network access.
+
+### On Windows
+
+Docker Desktop (WSL2 backend) runs it as-is. From PowerShell:
+
+```powershell
+git clone https://github.com/kenken-trpg/chummer-web.git
+cd chummer-web
+Copy-Item .env.example .env   # optional
+docker compose up -d          # → http://localhost:8080
+```
+
+There is no `make` on Windows, so run the targets above directly
+(`docker compose down` / `logs -f` / `up -d --build`). Nothing stands in for `make doctor`.
+
+**Once, before cloning**, turn off the newline rewriting:
+
+```powershell
+git config --global core.autocrlf input
+```
+
+This repository ships a `.gitattributes`, so a current Git needs neither — but it cannot fix a
+checkout already cloned with CRLF. Re-materialise that one with
+`git rm --cached -r . && git reset --hard`. Left as CRLF, the shebang of a shell script the image
+build runs is broken and the build fails.
+
+The no-Docker development setup (next section) assumes `bash` and `.venv/bin/`, so on Windows work
+inside Git Bash or WSL.
 
 ## Putting it on the web (localhost + Cloudflare Tunnel)
 

@@ -174,6 +174,17 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **Windows で clone すると Docker ビルドが失敗していた。** `.gitattributes` が
+  無かったので、Git for Windows の既定（`core.autocrlf=true`）が clone 時に
+  `scripts/retry.sh` を CRLF へ書き換える。このスクリプトはイメージに入って
+  ビルド中に実行されるため、shebang 末尾の `\r` で `docker compose up` が
+  最初のビルドから失敗していた — README が Windows に勧めている経路そのもの。
+  `* text=auto eol=lf` でツリー全体を LF に固定した（現状 CRLF のファイルは
+  無いので、他プラットフォームでの中身は変わらない）。あわせて README に
+  Windows 節を、CONTRIBUTING に「開発は WSL か Git Bash で」を書いた。
+- **README.en.md の Docker の説明が古いままだった。** 「公開イメージがあれば
+  pull する」と書いてあったが、いまは常にチェックアウトからビルドする
+  （`pull_policy: build`）。日本語版だけ直っていた。
 - **ゲームデータが無いときの応答が、サーバのファイルパスを漏らしていた。**
   `str(FileNotFoundError)` は開こうとした絶対パスを含み、この応答はポートに
   届く相手なら誰でも受け取れる。運用者が必要としているのは足りないファイルの
