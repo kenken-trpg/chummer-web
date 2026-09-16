@@ -144,6 +144,9 @@ def economy(ctx: Ctx) -> None:
     # Priority / Sum-to-Ten: the top levels bought with karma are not skill
     # points. A Karma build has no points to split from, so it keeps none.
     wanted_karma = {} if ctx.is_karma else dict(ctx.state.skill_karma or {})
+    # Points above the group rating and below the karma-bought levels, per
+    # skill. Priced once the specializations are known — see below.
+    active_points: dict[str, int] = {}
     for name, rating in ctx.state.skills.items():
         cap = ctx.skill_rating_cap + int(ctx.skill_picks["skill_max_bonus"].get(name, 0))
         rating = max(0, min(cap, int(rating)))
@@ -152,9 +155,7 @@ def economy(ctx: Ctx) -> None:
         levels = max(0, min(int(wanted_karma.get(name) or 0), rating - base))
         if levels:
             ctx.skill_karma_levels[name] = levels
-        extra = max(0, rating - base - levels)
-        cat = skill_cat_map.get(name, "")
-        ctx.skill_spent += _point_cost(extra, int(point_mults.get(cat, 100)))
+        active_points[name] = max(0, rating - base - levels)
         ctx.skill_totals[name] = max(base, rating)
     ctx.state.skill_karma = dict(ctx.skill_karma_levels)
     ctx.exotic = resolve_exotic_skills(
@@ -169,7 +170,9 @@ def economy(ctx: Ctx) -> None:
     ctx.knowledge = resolve_knowledge(
         ctx.state,
         ctx.data["skills"],
-        ctx.total,
+        # Chummer's `({INTUnaug} + {LOGUnaug}) * 2`: a cerebral booster makes
+        # the character smarter, not better schooled.
+        ctx.ratings,
         rating_cap=ctx.knowledge_rating_cap,
         native_limit=1 + int(ctx.effects.get("native_language_limit_bonus") or 0),
     )
@@ -182,7 +185,6 @@ def economy(ctx: Ctx) -> None:
             if levels:
                 ctx.knowledge_karma_levels[name] = levels
     ctx.state.knowledge_karma = dict(ctx.knowledge_karma_levels)
-    ctx.know_spent = knowledge_points_spent(ctx.knowledge["public"], point_mults, ctx.knowledge_karma_levels)
     ctx.know_max = int(ctx.knowledge["max"]) + int(ctx.effects.get("knowledge_skill_points") or 0)
     bought_knowledge = dict(ctx.state.knowledge_skills)
     for name in ctx.state.native_languages:
@@ -241,6 +243,19 @@ def economy(ctx: Ctx) -> None:
             ctx.state.skill_specializations[skill_name] = spec_name
     spec_active = int(ctx.specs["active_spent"])
     spec_knowledge = int(ctx.specs["knowledge_spent"])
+    # Points, priced the way Chummer's `CurrentSpCost` does: a skill's points
+    # and its specialization together, through the category multiplier, rounded
+    # up once. A Karma build buys its specializations with karma (above), so
+    # only the ratings count there.
+    paid_active = set() if ctx.is_karma or ctx.career else set(ctx.specs["active_paid"])
+    paid_knowledge = set() if ctx.is_karma or ctx.career else set(ctx.specs["knowledge_paid"])
+    for name in set(active_points) | paid_active:
+        units = int(active_points.get(name, 0)) + (1 if name in paid_active else 0)
+        cat = skill_cat_map.get(name, "")
+        ctx.skill_spent += _point_cost(units, int(point_mults.get(cat, 100)))
+    ctx.know_spent = knowledge_points_spent(
+        ctx.knowledge["public"], point_mults, ctx.knowledge_karma_levels, paid_knowledge
+    )
     if ctx.is_karma:
         rules = current_rules()
         ctx.spec_karma = (
@@ -250,8 +265,6 @@ def economy(ctx: Ctx) -> None:
         # Priority career: new specs cost karma (baseline settles chargen specs).
         ctx.spec_karma = 0
     else:
-        ctx.skill_spent += spec_active
-        ctx.know_spent += spec_knowledge
         ctx.spec_karma = 0
         # Chummer's `SkillPointsSpentOnKnoskills`: on a priority sheet the
         # knowledge a character has no knowledge points left for is paid with

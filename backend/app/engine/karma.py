@@ -7,7 +7,7 @@ skill list — no other engine imports.
 from __future__ import annotations
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from typing import Any
 
 from ..data_loader import PHYSICAL_ATTRS
@@ -140,17 +140,25 @@ def knowledge_points_spent(
     public: list[dict[str, Any]],
     point_mults: dict[str, int],
     karma_levels: Mapping[str, int] | None = None,
+    paid_specs: Collection[str] = (),
 ) -> int:
     """Knowledge points spent: every rating above native, less the top levels
-    bought with karma on a Priority / Sum-to-Ten sheet (`karma_levels`)."""
+    bought with karma on a Priority / Sum-to-Ten sheet (`karma_levels`), plus
+    one for each specialization in `paid_specs`.
+
+    A category multiplier (College Education, School of Hard Knocks) applies to
+    a skill's points and its specialization together and rounds up once, as
+    Chummer's `KnowledgeSkill.CurrentSpCost` does — not to the rating alone
+    with the specialization added at full price afterwards.
+    """
     levels = karma_levels or {}
     total = 0
     for row in public or []:
-        if row.get("native"):
-            continue
-        rating = max(0, int(row.get("rating") or 0) - int(levels.get(str(row.get("name") or ""), 0)))
+        name = str(row.get("name") or "")
+        spec = 1 if name in paid_specs else 0
+        rating = 0 if row.get("native") else max(0, int(row.get("rating") or 0) - int(levels.get(name, 0)))
         cat = str(row.get("category") or "")
-        total += _point_cost(rating, int(point_mults.get(cat, 100)))
+        total += _point_cost(rating + spec, int(point_mults.get(cat, 100)))
     return total
 
 

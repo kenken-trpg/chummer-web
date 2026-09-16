@@ -25,6 +25,7 @@ from tests.notice_asserts import has
 
 EMPATHIC_LISTENER = "919cc565-a5b6-4eda-addb-afa2e293af24"
 MASTER_DEBATER = "41416949-62eb-4638-9457-fd7e833cea58"
+CEREBRAL_BOOSTER = "81b40aa8-98d1-4a5d-89d6-9b6d438006da"
 
 
 def test_knowledge_points_are_intuition_plus_logic_times_two() -> None:
@@ -35,6 +36,20 @@ def test_knowledge_points_are_intuition_plus_logic_times_two() -> None:
     high_state.attributes["LOG"] = 4
     high = compute(high_state)
     assert high.derived["points"]["knowledge"] == {"used": 0, "max": 18}
+
+
+def test_knowledge_points_count_natural_intuition_and_logic_only() -> None:
+    """Chummer's expression is `({INTUnaug} + {LOGUnaug}) * 2`: a Cerebral
+    Booster raises LOG for tests, not the schooling the character arrived with."""
+    base = _human("know-pool-natural")
+    base.attributes["INT"] = 3
+    base.attributes["LOG"] = 3
+    boosted = base.model_copy(deep=True)
+    boosted.bioware = [CyberwareInstall(ware_id=CEREBRAL_BOOSTER, rating=2)]
+    plain = compute(base).derived
+    out = compute(boosted).derived
+    assert out["totals"]["LOG"] == plain["totals"]["LOG"] + 2
+    assert out["points"]["knowledge"]["max"] == plain["points"]["knowledge"]["max"] == 12
 
 
 def test_knowledge_skills_spend_free_points_and_keep_native_free() -> None:

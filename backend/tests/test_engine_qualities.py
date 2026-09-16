@@ -679,6 +679,58 @@ def test_college_education_halves_academic_knowledge_points() -> None:
     assert out.derived["points"]["knowledge"]["used"] == 2
 
 
+def test_a_point_multiplier_prices_a_skill_and_its_specialization_together() -> None:
+    """Chummer's `CurrentSpCost`: (points + specialization) × multiplier, rounded
+    up once. Halving the 3 points and adding the specialization at full price
+    made it 2 + 1 = 3; Chummer charges ceil(4 × 0.5) = 2."""
+    out = compute(
+        _mundane(
+            "college-spec",
+            quality_ids=[COLLEGE_EDUCATION_RF],
+            knowledge_skills={"History": 3},
+            knowledge_categories={"History": "Academic"},
+            skill_specializations={"History": "Ancient"},
+        )
+    )
+    assert out.derived["points"]["knowledge"]["used"] == 2
+
+
+def test_a_multiplier_that_raises_the_cost_raises_the_specialization_too() -> None:
+    out = compute(
+        _mundane(
+            "uncouth-spec",
+            quality_ids=[UNCOUTH],
+            skills={"Negotiation": 2},
+            skill_specializations={"Negotiation": "Bargaining"},
+        )
+    )
+    assert out.derived["points"]["skills"]["used"] == 6
+
+
+def test_a_listed_knowledge_skill_can_change_its_type_and_the_cost_follows() -> None:
+    """Chummer lets any non-native knowledge skill change type during creation
+    (`KnowledgeSkill.AllowTypeChange`), listed ones too, and the new type brings
+    its default attribute. Alcohol is listed as Interest; filed as Academic it
+    is halved by College Education and rolls LOG."""
+    out = compute(
+        _mundane(
+            "college-retyped",
+            quality_ids=[COLLEGE_EDUCATION_RF],
+            knowledge_skills={"Alcohol": 4},
+            knowledge_categories={"Alcohol": "Academic"},
+        )
+    )
+    assert out.derived["points"]["knowledge"]["used"] == 2
+    row = next(r for r in out.derived["knowledge_skills"] if r["name"] == "Alcohol")
+    assert (row["category"], row["attribute"]) == ("Academic", "LOG")
+
+
+def test_a_listed_knowledge_skill_keeps_its_type_when_none_was_chosen() -> None:
+    out = compute(_mundane("alcohol-listed", knowledge_skills={"Alcohol": 2}))
+    row = next(r for r in out.derived["knowledge_skills"] if r["name"] == "Alcohol")
+    assert (row["category"], row["attribute"]) == ("Interest", "INT")
+
+
 def test_uncouth_doubles_social_active_skill_points() -> None:
     out = compute(_mundane("uncouth", quality_ids=[UNCOUTH], skills={"Negotiation": 2}))
     assert out.derived["points"]["skills"]["used"] == 4

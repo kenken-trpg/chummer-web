@@ -191,6 +191,22 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **技能ポイントの数え方を Chummer に合わせた（4 件）。** Chummer 自身のテスト用
+  キャラで「技能ポイント超過」と出ていたうち、3 体（Fuzzy・Munin・Soma）は
+  こちらの数え間違いだった。
+  - **同名の資質を取り違えていた。** "College Education" は 2 つあり、SASS 版は
+    限界値の修正、Run Faster 版は Academic の知識ポイントを半額にする。取り込みが
+    名前で先に見つかる SASS 版を選んでいたので、半額が効いていなかった。Chummer が
+    `<id>` に書くデータ ID を先に見るようにした。
+  - **倍率を特化にも掛ける。** Chummer は（ポイント＋特化）に倍率を掛けて 1 回だけ
+    切り上げる。こちらはレベルだけに掛けて、特化を満額で足していた。
+  - **カタログにある知識技能でも、選んだカテゴリを使う。** Chummer は作成中なら
+    カタログにある知識技能のカテゴリも変えられ、変えると能力値もそのカテゴリの
+    既定値になる。こちらはカタログの値で上書きしていた。
+  - **知識ポイントの上限は強化前の INT・LOG で決める**（Chummer の
+    `({INTUnaug} + {LOGUnaug}) * 2`）。Cerebral Booster で増えていた。
+  Soma はカルマの残りも Chummer と一致するようになった。`make reconcile` の
+  エラーは 49 → 46。
 - **e2e が Windows の venv を見つけられなかった。** `playwright.config.ts` の
   `webServer` が uvicorn を `.venv/bin/` 決め打ちで起動していた。`Makefile` と
   `scripts/*.sh` は直したのに、playwright が直接読むこの設定だけ漏れていた。
