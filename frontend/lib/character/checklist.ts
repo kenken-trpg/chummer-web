@@ -38,7 +38,12 @@ export interface ChecklistSummary {
   ok: boolean;
 }
 
-const POINT_ROWS: { key: string; label: MsgKey; tab: Tab; ref: string }[] = [
+const POINT_ROWS: {
+  key: keyof Character["derived"]["points"];
+  label: MsgKey;
+  tab: Tab;
+  ref: string;
+}[] = [
   { key: "attributes", label: "check.points.attributes", tab: "attrs", ref: "SR5 p.65" },
   { key: "special", label: "check.points.special", tab: "attrs", ref: "SR5 p.65" },
   { key: "skills", label: "check.points.skills", tab: "skills", ref: "SR5 p.87" },

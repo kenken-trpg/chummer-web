@@ -849,7 +849,7 @@ export interface Derived {
   astral_initiative?: { value: number; dice: number } | null;
   /** Ground walk / run in metres, sprint in metres per hit (Chummer's
    *  `CalculatedMovement("Ground")`). */
-  movement: { walk: string; run: string; sprint: string };
+  movement: { walk: string; run: string; sprint: string; sprint_bonus: number };
   essence: number;
   armor: number;
   special_armor?: SpecialArmor;
@@ -896,7 +896,14 @@ export interface Derived {
     remaining: number;
     negative?: { used: number; max: number | null };
   };
-  points: Record<string, { used: number; max: number }>;
+  points: {
+    attributes: { used: number; max: number };
+    special: { used: number; max: number };
+    skills: { used: number; max: number };
+    skill_groups: { used: number; max: number };
+    knowledge: { used: number; max: number };
+    contacts: { used: number; max: number };
+  };
   /** Levels bought with karma, the rating each sits above, and their karma. */
   attribute_karma?: {
     levels: Record<string, number>;
@@ -960,7 +967,14 @@ export interface Derived {
     decrease: Record<string, number>;
   };
   spell_dice_pool?: { name: string; id?: string; bonus: number; source?: string }[];
-  action_dice_pools?: { category?: string; name: string; bonus: number; source?: string }[];
+  action_dice_pools?: {
+    category?: string;
+    name: string;
+    bonus: number;
+    source?: string;
+    /** a Matrix action still to be chosen; gone once it is */
+    needs_action?: boolean;
+  }[];
   test_mods?: {
     memory?: number;
     composure?: number;
@@ -1209,6 +1223,9 @@ export interface Derived {
   } | null;
   metatype_info: {
     name: string;
+    /** the base metatype, for a metavariant */
+    parent: string | null;
+    source: string | null;
     attributes: Record<string, { min: number; max: number; aug: number }>;
     /** `<replaceattributes>`: the qualities these ranges come from instead of
      *  the metatype (the Infected qualities, Quadriplegic). */

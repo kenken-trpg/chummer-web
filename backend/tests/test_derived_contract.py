@@ -15,15 +15,16 @@ read. It gets checked against the *actual* response instead, which is the
 stronger guard of the two: it compares what the frontend will really receive
 rather than what a type says it should.
 
-Both pin the **top-level key set** only. Nested row shapes stay
-hand-maintained; pinning those by hand as well would cost more to keep honest
-than it protects, and a wrong nested field is usually visible on screen where
-a missing top-level key is just ``undefined``.
+Both pin the **top-level key set**. ``derived`` is also held one level down
+wherever the server types a value as a ``TypedDict`` — ``points``,
+``karma_chargen`` and the like. The "public row" lists are plain dicts on the
+server and stay hand-maintained: there is nothing to compare them against.
 """
 
 from __future__ import annotations
 
 import re
+import typing
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,84 @@ def test_derived_top_level_keys_match_the_frontend_type() -> None:
         f"  server-only (add to derived.ts): {sorted(py - ts)}\n"
         f"  frontend-only (stale in derived.ts): {sorted(ts - py)}"
     )
+
+
+def _typed_dict_of(annotation: object) -> type | None:
+    """The `TypedDict` an annotation names — directly, in a union with `None`,
+    or as the element of a list — or `None` when it names none."""
+    if typing.is_typeddict(annotation):
+        return annotation  # type: ignore[return-value]
+    for arg in typing.get_args(annotation):
+        found = _typed_dict_of(arg)
+        if found is not None:
+            return found
+    return None
+
+
+def _ts_inline_members(block: str, key: str) -> set[str] | None:
+    """Members of the object literal `Derived` declares inline for `key`
+    (`key: {...}`, `key?: {...} | null`, `key?: {...}[]`), or `None` when the
+    type is written some other way."""
+    found = re.search(rf"^ {{2}}{key}\??: \{{", block, re.MULTILINE)
+    if found is None:
+        return None
+    text = re.sub(r"/\*.*?\*/", "", block[found.end() :], flags=re.S)
+    # Split the literal's body into members at depth 0 on `;` and newlines —
+    # both spellings occur, `{ a: number; b: number }` and one per line.
+    members: set[str] = set()
+    depth, token = 0, ""
+    for char in text:
+        if depth == 0 and char == "}":
+            break
+        if char in "{[(<":
+            depth += 1
+        elif char in "}])>":
+            depth -= 1
+        if depth == 0 and char in ";\n":
+            name = re.match(r"\s*([A-Za-z_][A-Za-z0-9_]*)\??\s*:", token)
+            if name:
+                members.add(name.group(1))
+            token = ""
+        else:
+            token += char
+    name = re.match(r"\s*([A-Za-z_][A-Za-z0-9_]*)\??\s*:", token)
+    if name:
+        members.add(name.group(1))
+    return members
+
+
+#: Typed on the server but declared on the frontend by name, from a module that
+#: owns the shape — nothing to compare member by member.
+_NAMED_ON_THE_FRONTEND = {"Notice"}
+
+
+@pytest.mark.skipif(not _DERIVED_TS.exists(), reason="frontend/ not checked out")
+def test_derived_nested_objects_match_the_frontend_type() -> None:
+    """One level down from the key set: the sub-objects the server types.
+
+    The "public row" lists are plain dicts on the server and stay unchecked,
+    as the module docstring says. But about thirty of `DerivedDict`'s values
+    are `TypedDict`s — `points`, `karma_chargen`, `metatype_info` — and those
+    have an authoritative member list that the frontend's inline object
+    literal can be held to. They had drifted: `movement.sprint_bonus`,
+    `metatype_info.parent` / `.source` and `action_dice_pools[].needs_action`
+    were sent and undeclared.
+    """
+    text = _DERIVED_TS.read_text(encoding="utf-8")
+    block = text[text.index("export interface Derived {") :]
+    drift: list[str] = []
+    for key, annotation in typing.get_type_hints(DerivedDict).items():
+        shape = _typed_dict_of(annotation)
+        if shape is None or shape.__name__ in _NAMED_ON_THE_FRONTEND:
+            continue
+        ts = _ts_inline_members(block, key)
+        if ts is None:
+            drift.append(f"{key}: typed as {shape.__name__} on the server, not an inline object in derived.ts")
+            continue
+        py = set(typing.get_type_hints(shape))
+        if py != ts:
+            drift.append(f"{key} ({shape.__name__}): server-only {sorted(py - ts)}, frontend-only {sorted(ts - py)}")
+    assert not drift, "derived sub-objects drifted from frontend/lib/types/derived.ts:\n  " + "\n  ".join(drift)
 
 
 _CATALOG_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "catalog.ts"
