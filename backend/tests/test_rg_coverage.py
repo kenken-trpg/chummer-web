@@ -72,8 +72,16 @@ def test_worksheet_shorthands(tmp_path: Path) -> None:
 
 
 def _write(path: Path, rows: list[tuple[str, ...]], delimiter: str = "\t", preamble: str = "") -> Path:
+    """Write the worksheet with the CRLF a spreadsheet really emits.
+
+    `write_text` would not do: it opens in text mode, where Windows translates
+    every `\n` on the way out, so the `\r\n` written here lands as `\r\r\n` and
+    the reader — correctly — sees a blank line that was never in the fixture.
+    Bytes, so the file holds exactly what a spreadsheet would have put there on
+    any platform.
+    """
     body = "".join(delimiter.join(r) + "\r\n" for r in rows)
-    path.write_text(preamble + body, encoding="utf-8-sig")
+    path.write_bytes((preamble + body).encode("utf-8-sig"))
     return path
 
 
