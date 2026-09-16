@@ -135,14 +135,27 @@ async function req<T>(path: string, init?: RequestInit, retried = false): Promis
   return res.json() as Promise<T>;
 }
 
-/** Recompute `derived` for a client-owned state (no merge). */
-const computeRemote = (state: Character) => {
+/**
+ * POST a state (and optionally a patch) to the compute service, without the
+ * portrait. The engine never reads it, and it is megabytes of base64: sending
+ * it made every edit of a character with a picture a multi-MB round trip, and
+ * a reload inside that window lost the edit. The stored one is put back on the
+ * answer — unless the patch itself sets a portrait, which the backend has to
+ * see to vet (`clean_portrait`).
+ */
+async function computeRemote(
+  state: Character,
+  patch?: Record<string, unknown>,
+): Promise<Character> {
   noteCustomData(state);
-  return req<Character>("/api/characters/patch", {
+  const { portrait, ...rest } = state;
+  const next = await req<Character>("/api/characters/patch", {
     method: "POST",
-    body: JSON.stringify({ state }),
+    body: JSON.stringify(patch ? { state: rest, patch } : { state: rest }),
   });
-};
+  if (patch && "portrait" in patch) return next;
+  return portrait === undefined ? next : { ...next, portrait };
+}
 
 /**
  * The backend is stateless: it computes and transforms, the browser
@@ -183,11 +196,7 @@ export const api = {
   patch: async (id: string, body: Record<string, unknown>): Promise<Character> => {
     const stored = await local.getCharacter(id);
     if (!stored) throw new MessageError("app.err.notFound");
-    noteCustomData(stored);
-    const next = await req<Character>("/api/characters/patch", {
-      method: "POST",
-      body: JSON.stringify({ state: stored, patch: body }),
-    });
+    const next = await computeRemote(stored, body);
     await local.putCharacter(next);
     return next;
   },

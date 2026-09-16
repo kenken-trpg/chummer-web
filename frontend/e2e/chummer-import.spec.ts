@@ -61,14 +61,21 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
   await expect(portrait).toBeVisible();
   expect(await portrait.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 
-  // an edit posts the whole state, portrait included, back through the rewrite
+  // an edit leaves the multi-MB portrait behind: it once rode along on every
+  // patch, and a reload during that round trip lost the edit
+  const sizes: number[] = [];
+  page.on("request", (req) => {
+    if (req.url().endsWith("/api/characters/patch")) sizes.push(req.postDataBuffer()?.length ?? 0);
+  });
   await name.fill("Ghile Edited");
   await name.blur();
-  // the patch returns before IndexedDB has the multi-MB record; a reload any
-  // sooner reads the old one
+  // the editor does not announce when the save has committed; wait for that
+  // rather than race it (a real user gets a leave-page prompt instead)
   await expect
     .poll(async () => (await storedCharacters(page)).map((c) => c.name), { timeout: 15_000 })
     .toContain("Ghile Edited");
+  expect(sizes.length).toBeGreaterThan(0);
+  expect(Math.max(...sizes)).toBeLessThan(200_000);
   await page.reload();
   await waitForEditor(page);
   await expect(name).toHaveValue("Ghile Edited");

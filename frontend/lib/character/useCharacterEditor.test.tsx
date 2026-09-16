@@ -74,6 +74,33 @@ describe("useCharacterEditor", () => {
     expect(result.current.history.counts.undo).toBe(1);
   });
 
+  it("asks before leaving the page only while an edit is still being saved", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValue(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+    const leave = () => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+
+    expect(leave()).toBe(false);
+    let pending: Promise<void> = Promise.resolve();
+    act(() => {
+      pending = result.current.patch({ name: "Vex" });
+    });
+    expect(leave()).toBe(true);
+
+    await act(async () => {
+      finish(makeCharacter({ id: "c1", name: "Vex" }));
+      await pending;
+    });
+    expect(leave()).toBe(false);
+  });
+
   it("undo recomputes the previous snapshot via api.compute", async () => {
     const base = makeCharacter({ id: "c1", name: "Runner" });
     const patched = makeCharacter({ id: "c1", name: "Vex" });
