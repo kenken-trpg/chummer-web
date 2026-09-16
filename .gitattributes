@@ -1,0 +1,10 @@
+# Line endings. `.editorconfig` already says `end_of_line = lf`, but that binds
+# editors, not `git checkout` — and Git for Windows defaults to
+# `core.autocrlf=true`, so a clone there rewrites every text file to CRLF
+# before any editor sees it. That is not cosmetic here: `scripts/retry.sh` is
+# copied into the image and run during the build (`Dockerfile:23,28`), and a
+# shebang ending in `\r` makes `docker compose up` fail on the very first
+# build — the path this project recommends to Windows users. `Makefile` needs
+# LF too. The tree is text through and through; `text=auto` still detects and
+# leaves alone anything binary added later.
+* text=auto eol=lf

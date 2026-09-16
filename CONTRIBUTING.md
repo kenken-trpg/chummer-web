@@ -17,6 +17,14 @@ make check     # everything CI runs: ruff, pytest, tsc, eslint, prettier, build
 
 No `make`? Every target is a one-liner you can read off the `Makefile`.
 
+**On Windows**, develop inside WSL or Git Bash. The targets shell out to
+`bash scripts/*.sh` and hard-code the venv's POSIX layout (`.venv/bin/`, which
+Windows spells `.venv/Scripts/`), so `cmd`/PowerShell cannot run them. Just
+running the app needs none of this — Docker Desktop is enough (see
+[`README.en.md`](README.en.md)). Whatever the shell, leave the newline rewriting
+off (`git config --global core.autocrlf input`): `.gitattributes` pins the tree
+to LF, and a CRLF `scripts/retry.sh` breaks the Docker build.
+
 ## Repository layout
 
 ```
