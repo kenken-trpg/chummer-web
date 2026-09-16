@@ -68,9 +68,11 @@ checkout already cloned with CRLF. Re-materialise that one with
 `git rm --cached -r . && git reset --hard`. Left as CRLF, the shebang of a shell script the image
 build runs is broken and the build fails.
 
-The no-Docker development setup (next section) assumes `bash`, so on Windows work inside Git Bash
-or WSL. The venv's Windows layout (`Scripts/` rather than `bin/`) is something `make` works out for
-itself.
+The no-Docker development setup (next section) assumes `bash`, so on Windows **WSL** is the
+straightforward place to work. Git Bash gets you the shell but not the targets: Git for Windows
+ships no `make`, so read the one-liner off the `Makefile` and run it directly. The venv's Windows
+layout (`Scripts/` rather than `bin/`) is something `make` and `playwright.config.ts` work out for
+themselves.
 
 ## Putting it on the web (localhost + Cloudflare Tunnel)
 

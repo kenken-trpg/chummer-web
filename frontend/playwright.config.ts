@@ -1,4 +1,12 @@
+import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
+
+// A virtualenv puts its entry points in `bin/` on POSIX and in `Scripts/` on
+// Windows. The `Makefile` and `scripts/*.sh` work this out too; this config is
+// spawned by playwright rather than by them, so it has to do it itself.
+const UVICORN = existsSync("../backend/.venv/Scripts/uvicorn.exe")
+  ? "../backend/.venv/Scripts/uvicorn"
+  : "../backend/.venv/bin/uvicorn";
 
 /**
  * One browser, one worker, one flow. The unit suite (249 vitest tests) already
@@ -31,7 +39,7 @@ export default defineConfig({
 
   webServer: [
     {
-      command: "../backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8100",
+      command: `${UVICORN} app.main:app --host 127.0.0.1 --port 8100`,
       cwd: "../backend",
       url: "http://127.0.0.1:8100/api/health",
       reuseExistingServer: !process.env.CI,
