@@ -29,6 +29,7 @@ describe("buildChecklist", () => {
         skills: { used: 0, max: 0 },
         skill_groups: { used: 0, max: 0 },
         knowledge: { used: 0, max: 0 },
+        contacts: { used: 0, max: 0 },
       },
     };
     const chargen = buildChecklist(makeCharacter({ derived }));

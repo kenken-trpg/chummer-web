@@ -143,6 +143,14 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   `deploy/Caddyfile` の静的な CSP は消した（Caddy には、上流が何も付けなかった
   ときだけ使う厳しい既定値を残した）。開発サーバーにも CSP が掛かるように
   なった（`'unsafe-eval'` と HMR 用の `ws:` だけ緩める）。
+- **派生データの入れ子の型も、サーバーとフロントエンドで突き合わせるようにした。**
+  これまでは上位のキーの集合だけを照合していた。サーバー側で `TypedDict` に
+  なっている値（`points`・`karma_chargen`・`metatype_info` など 30 ほど）は
+  中身のキーも照合する。これで 4 か所のずれが見つかり、`derived.ts` を直した:
+  `movement.sprint_bonus`、`metatype_info.parent` / `.source`、
+  `action_dice_pools[].needs_action` が未宣言だった。`points` は
+  `Record<string, …>` から名前付きのキーにし、テスト用のデータに抜けていた
+  `contacts` を足した。
 - **CodeQL の指摘のうち、直す価値のある 3 件を直した。** 用語集生成スクリプトで
   行を折り返していた文字列リテラルを括弧で囲んだ — 意図した連結とカンマの打ち忘れは
   見た目で区別できず、そこが指摘の主旨なので、人にも解析器にも分かる形にした

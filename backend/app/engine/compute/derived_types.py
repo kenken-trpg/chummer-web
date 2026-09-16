@@ -1,9 +1,9 @@
 """``DerivedDict`` — the shape of ``ctx.state.derived`` (the API payload).
 
-``assemble()`` builds this ~175-key dict literal; the frontend mirrors the
-top-level key set as ``Character["derived"]`` in
-``frontend/lib/types/character.ts`` (kept honest by
-``tests/test_derived_contract.py``). Typing it here makes a key typo or a
+``assemble()`` builds this ~175-key dict literal; the frontend mirrors it as
+``Derived`` in ``frontend/lib/types/derived.ts``, and
+``tests/test_derived_contract.py`` holds the two to the same keys — at the top
+level, and inside every value typed here as a ``TypedDict``. Typing it here makes a key typo or a
 wrong value type in ``assemble.py`` a ``mypy`` error.
 
 Nested sub-objects get their own ``TypedDict``; the "public row" lists stay
