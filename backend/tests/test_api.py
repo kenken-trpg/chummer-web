@@ -243,14 +243,15 @@ def test_a_missing_catalog_does_not_hand_out_the_server_path(monkeypatch: pytest
     """`str(FileNotFoundError)` carries the absolute path it tried to open, and
     this response goes to anyone who can reach the port. The operator needs the
     name of the file; nobody outside needs the directory it lives in."""
-    import app.main as main
-
     secret = "/srv/deploy-name/backend/vendor/chummer/data/weapons.xml"
 
     def _boom() -> None:
         raise FileNotFoundError(2, "No such file or directory", secret)
 
-    monkeypatch.setattr(main, "_cached_catalog", _boom)
+    # patched by name: the module is already imported `from` at the top, and
+    # importing it a second time as a module is what `py/import-and-import-from`
+    # is about
+    monkeypatch.setattr("app.main._cached_catalog", _boom)
     response = client.get("/api/catalog")
     assert response.status_code == 503
     body = response.text
