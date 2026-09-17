@@ -35,6 +35,7 @@ def essence(ctx: Ctx) -> None:
     initiate_grade = max(0, int(ctx.state.initiate_grade or 0)) if ctx.talent["name"] in MAG_TALENTS else 0
     submersion_grade = max(0, int(ctx.state.submersion_grade or 0)) if ctx.talent["name"] in RES_TALENTS else 0
     ctx.ratings = {}
+    ctx.bought_ratings = {}
     for key, spec in ctx.attrs_spec.items():
         racial_min = int(spec["min"])
         racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
@@ -44,6 +45,7 @@ def essence(ctx: Ctx) -> None:
                 floor = max(ctx.talent_start, 1)
                 mag_cap = racial_max + initiate_grade
                 raw = max(floor, min(mag_cap, raw))
+                ctx.bought_ratings[key] = raw
                 raw = max(0, raw - mag_penalty)
             else:
                 raw = 0
@@ -52,6 +54,7 @@ def essence(ctx: Ctx) -> None:
                 floor = max(ctx.talent_start, 1)
                 res_cap = racial_max + submersion_grade
                 raw = max(floor, min(res_cap, raw))
+                ctx.bought_ratings[key] = raw
                 res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
                 raw = max(0, raw - res_penalty)
             else:
@@ -61,3 +64,4 @@ def essence(ctx: Ctx) -> None:
         else:
             raw = max(racial_min, min(racial_max, raw))
         ctx.ratings[key] = raw
+        ctx.bought_ratings.setdefault(key, raw)
