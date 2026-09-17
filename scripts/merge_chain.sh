@@ -7,7 +7,9 @@
 # already in), checked the way CI checks it, pushed, and merged once GitHub's
 # checks pass. A conflict in CHANGELOG.md or a test file keeps both sides —
 # two entries or two test cases are what the two branches meant. Any other
-# conflict stops the run for a human. The run ends on main, up to date.
+# conflict stops the run for a human — the i18n dictionaries included, even
+# though two branches usually just append there: a conflicting wording is a
+# choice, and a duplicated key would only surface in locales.test.ts. The run ends on main, up to date.
 set -u
 cd "$(dirname "$0")/.."
 here=$(pwd)

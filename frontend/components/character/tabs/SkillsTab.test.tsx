@@ -255,6 +255,43 @@ describe("<SkillsTab>", () => {
     }
   });
 
+  it("explains a knowledge row's terms behind its help button", () => {
+    const { container } = renderTab({
+      character: {
+        knowledge_skills: { "Magic Theory": 2 },
+        derived: { knowledge_skills: [knowRow("Magic Theory", { rating: 2 })] } as any,
+      },
+    });
+    const button = container.querySelector(".know-row button") as HTMLElement;
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("(INT + LOG) × 2");
+  });
+
+  it("says an exotic skill cannot be defaulted", () => {
+    const { container } = renderTab({
+      catalog: skillsCatalog({ skills: [blades, exoticSkill] }),
+      character: {
+        exotic_skills: [{ id: "e1", skill_name: "Exotic Ranged Weapon", extra: "", rating: 1 }],
+        derived: {
+          exotic_skills: [
+            {
+              id: "e1",
+              skill_name: "Exotic Ranged Weapon",
+              label: "Exotic Ranged Weapon",
+              extra: "",
+              attribute: "AGI",
+              rating: 1,
+              rating_max: 6,
+            },
+          ],
+        } as any,
+      },
+    });
+    const button = container.querySelector(".can-delete button") as HTMLElement;
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("デフォルトで振れない");
+  });
+
   it("adds an exotic skill row via patch", () => {
     const patch = vi.fn();
     renderTab({ catalog: skillsCatalog({ skills: [blades, exoticSkill] }), patch });
