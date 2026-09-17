@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import { CORE_ONLY, PickerFootnote } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
@@ -97,7 +98,16 @@ export function QualitiesTab({
           ? ` ・ ${ui("engine.karma.negative", { karma: d.karma.remaining })}`
           : ""}
         {" ・ "}
-        {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
+        <HelpTip
+          label={ui("help.open", { label: ui("qual.negativeKarma", { used: "" }).trim() })}
+          lines={[
+            { label: ui("help.quality.positive") },
+            { label: ui("help.quality.negative") },
+            { label: ui("help.quality.career") },
+          ]}
+        >
+          {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
+        </HelpTip>
         {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
         {d.career ? ` ・ ${ui("qual.career")}` : ""}
       </p>

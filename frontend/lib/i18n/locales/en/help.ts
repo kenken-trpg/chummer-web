@@ -61,4 +61,21 @@ export const EN_HELP = {
     "Exotic skill: one skill per target (a weapon type, say); the same skill can be held for several targets",
   "help.exotic.nodefault":
     "It cannot be defaulted — you need a rating to use it at all (SR5 p.130)",
+  "help.essence.what":
+    "Essence: how much of you is still flesh. Everyone starts at 6; cyberware and bioware spend it",
+  "help.essence.magic":
+    "Magic and Resonance lose what Essence loses (rounded up, one step at a time)",
+  "help.essence.zero": "At 0 you die; a character must leave creation above 0",
+  "help.essence.grade": "The grade multiplier (the C / B figures) changes what the same ware costs",
+  "help.quality.positive": "Positive qualities cost karma — 25 karma worth at creation by default",
+  "help.quality.negative": "Negative qualities give karma back, also capped at 25 karma worth",
+  "help.quality.career":
+    "In career play, buying or buying off a quality costs double karma (SR5 p.72)",
+  "help.vehicle.statsLabel": "Stats",
+  "help.vehicle.stats":
+    "HND handling / SPD speed / ACC acceleration / BOD body / ARM armor / PLT pilot / SNR sensor",
+  "help.vehicle.pilot":
+    "Pilot is the autopilot\u2019s skill: it rolls when the vehicle acts on its own",
+  "help.vehicle.body":
+    "Body is toughness: damage resistance, and how many mod slots the vehicle has",
 } as const;

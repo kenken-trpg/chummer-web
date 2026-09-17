@@ -50,6 +50,24 @@ function renderTab(
 }
 
 describe("<VehicleDroneGear>", () => {
+  it("spells out the vehicle stat abbreviations", () => {
+    const owned = { ...vehicle, accel: 2, body: 11, armor: 6, pilot: 1, sensor: 2, nuyen: 16000 };
+    const ch = makeCharacter({ vehicles: [owned], derived: { vehicles: [owned] } } as any);
+    const { container } = render(
+      <VehicleDroneGear
+        {...(panelProps(ch, {
+          catalog: makeCatalog({ drones: [drone] as any, vehicles: [vehicle] as any }),
+          patch: () => {},
+        }) as any)}
+        mode="vehicle"
+      />,
+    );
+    const button = container.querySelector(".muted button") as HTMLElement;
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("HND 操縦性");
+    expect(tip?.textContent).toContain("PLT はオートパイロット");
+  });
+
   it("shows the drone search + list in drone mode and buys via patch", () => {
     const patch = vi.fn();
     renderTab("drone", { patch });
