@@ -192,7 +192,7 @@ export function WareRow(props: {
             </label>
           ) : null}
           {!locked && !spec?.forcegrade ? (
-            <label>
+            <label title={ui("help.gradeHint")}>
               {ui("common.grade")}
               <select
                 value={item.grade}

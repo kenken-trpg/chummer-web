@@ -27,4 +27,12 @@ export const EN_HELP = {
   "help.attr.EDG": "Edge. Points per session to reroll, push the limit and so on",
   "help.attr.MAG": "Magic. The strength of spells, spirits and adept powers; drops with Essence",
   "help.attr.RES": "Resonance. The strength of complex forms and sprites; drops with Essence",
+  "help.avail.what": "Availability: how hard an item is to get. Higher is harder",
+  "help.avail.suffix":
+    "A trailing R means a licence is needed (Restricted); F means it is illegal to own (Forbidden)",
+  "help.avail.chargen":
+    "At creation you cannot buy items above this availability (12 by default). In career play you roll to acquire them",
+  "help.deviceRating": "The highest device rating you can buy at creation (6 by default)",
+  "help.gradeHint":
+    "Ware quality. Better grades cost less Essence but more nuyen and availability. Which grades are banned at creation depends on the settings (betaware and up by default)",
 } as const;

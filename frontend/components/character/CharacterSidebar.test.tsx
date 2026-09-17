@@ -21,6 +21,20 @@ describe("<CharacterSidebar>", () => {
     expect(screen.getByText("作成ルール上は問題なし")).toBeDefined();
   });
 
+  it("explains the availability limit behind a help button", () => {
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={makeCharacter()}
+        d={makeCharacter().derived}
+        tr={identityTr}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "入手制限 の説明" });
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("Forbidden");
+  });
+
   it("switches to キャリア mode and shows the reward panel when career + patch", () => {
     const ch = makeCharacter({ career: true });
     render(
