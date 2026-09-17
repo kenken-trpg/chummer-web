@@ -48,7 +48,10 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       ) : null}
       <div className="stat">
         <span>
-          <HelpTip label={ui("help.open", { label: ui("side.limits") })} lines={limitHelp(d, ui)}>
+          <HelpTip
+            label={ui("help.open", { label: ui("side.limits") })}
+            lines={limitHelp(d, ui, tr)}
+          >
             {ui("side.limits")}
           </HelpTip>
         </span>
@@ -65,7 +68,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         <span>
           <HelpTip
             label={ui("help.open", { label: ui("common.condition") })}
-            lines={conditionHelp(d, ui)}
+            lines={conditionHelp(d, ui, tr)}
           >
             {ui("common.condition")}
           </HelpTip>
@@ -89,7 +92,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         <span>
           <HelpTip
             label={ui("help.open", { label: ui("common.initiative") })}
-            lines={initiativeHelp(d, ui)}
+            lines={initiativeHelp(d, ui, tr)}
           >
             {ui("common.initiative")}
           </HelpTip>

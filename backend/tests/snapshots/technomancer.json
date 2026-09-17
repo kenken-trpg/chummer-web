@@ -624,6 +624,7 @@
       }
     }
   ],
+  "stat_sources": {},
   "stream": {
     "drain": "{WIL} + {RES}",
     "drain_attrs": [

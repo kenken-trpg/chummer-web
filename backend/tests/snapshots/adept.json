@@ -483,6 +483,14 @@
   "spells": [],
   "spirits": [],
   "sprites": [],
+  "stat_sources": {
+    "initiative_dice": [
+      {
+        "source": "Improved Reflexes",
+        "value": 2
+      }
+    ]
+  },
   "stream": null,
   "street_cred": 0,
   "street_cred_burnt": 0,

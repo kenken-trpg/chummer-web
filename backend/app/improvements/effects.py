@@ -167,6 +167,9 @@ class EffectsDict(TypedDict):
     #: Chummer `precedence` groups, resolved by `resolve_precedence`:
     #: key ("attr:REA", "initiative_dice", "initiative") -> precedence -> values.
     precedence_bonus: dict[str, dict[str, list[int]]]
+    #: sidebar key ("limit_physical", "initiative", …) -> what each named
+    #: source added, before precedence stacking is resolved
+    stat_sources: dict[str, list[dict[str, Any]]]
     #: what `resolve_precedence` has already folded in, per key
     precedence_applied: dict[str, int]
     attribute_max_mods: dict[str, int]
@@ -278,6 +281,7 @@ def empty_effects() -> EffectsDict:
         "attribute_bonus": {k: 0 for k in ATTR_ALIASES.values() if len(k) <= 3},
         "precedence_bonus": {},
         "precedence_applied": {},
+        "stat_sources": {},
         "armor": 0,
         "cm_physical": 0,
         "cm_stun": 0,

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { HelpTip } from "@/components/help/HelpTip";
-import { limitHelp } from "@/lib/character/help-breakdown";
+import { initiativeHelp, limitHelp } from "@/lib/character/help-breakdown";
 import { translate } from "@/lib/i18n";
 import { makeCharacter } from "@/tests/fixtures";
 
@@ -42,5 +42,31 @@ describe("limitHelp", () => {
     // social: ceil((6+3+6)/3) = 5, +1 from somewhere
     const social = lines.slice(6);
     expect(social.map((l) => l.value)).toEqual([undefined, 5, "+1", 6, undefined]);
+  });
+});
+
+describe("named sources", () => {
+  it("lists each source and puts what they do not explain on one other line", () => {
+    const d = makeCharacter().derived;
+    d.totals = { REA: 3, INT: 3 };
+    d.initiative = { value: 8, dice: 3 };
+    d.stat_sources = {
+      initiative: [{ source: "Wired Reflexes", value: 2 }],
+      // two non-stacking dice bonuses: 2 + 1 listed, only 2 counted
+      initiative_dice: [
+        { source: "Wired Reflexes", value: 2 },
+        { source: "Jazz", value: 1 },
+      ],
+    };
+    const lines = initiativeHelp(d, ui, (n) => `訳:${n}`);
+    expect(lines.slice(0, 4).map((l) => [l.label, l.value])).toEqual([
+      ["イニシアチブ = REA + INT", undefined],
+      ["基本値", 6],
+      ["訳:Wired Reflexes", "+2"],
+      ["合計", 8],
+    ]);
+    const dice = lines.slice(4);
+    expect(dice.map((l) => l.value)).toEqual([undefined, 1, "+2", "+1", -1, 3, undefined]);
+    expect(dice[4].label).toBe("その他（重複しない分など）");
   });
 });
