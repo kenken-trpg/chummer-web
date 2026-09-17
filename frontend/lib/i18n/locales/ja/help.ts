@@ -3,6 +3,7 @@ export const JA_HELP = {
   "help.open": "{label} の説明",
   "help.base": "基本値",
   "help.bonus": "修正（資質・ウェア・装備など）",
+  "help.bonusOther": "その他（重複しない分など）",
   "help.total": "合計",
   "help.limit.physical": "物理リミット = (BOD×2 + AGI + REA + STR) ÷ 3（切り上げ）",
   "help.limit.mental": "精神リミット = (LOG×2 + INT + WIL) ÷ 3（切り上げ）",

@@ -213,6 +213,8 @@ class DerivedDict(TypedDict):
     totals: dict[str, int]
     limits: _Limits
     limit_modifiers: list[Row]
+    #: per sidebar value, what each named source added (see `SOURCED_KEYS`)
+    stat_sources: dict[str, list[Row]]
     condition_monitor: _ConditionMonitor
     initiative: _Initiative
     #: INT×2 + the settings' astral dice; `None` without Magic

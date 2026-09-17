@@ -3,6 +3,7 @@ export const EN_HELP = {
   "help.open": "About {label}",
   "help.base": "Base",
   "help.bonus": "Modifiers (qualities, ware, gear, …)",
+  "help.bonusOther": "Other (non-stacking bonuses, …)",
   "help.total": "Total",
   "help.limit.physical": "Physical limit = (BOD×2 + AGI + REA + STR) ÷ 3, rounded up",
   "help.limit.mental": "Mental limit = (LOG×2 + INT + WIL) ÷ 3, rounded up",

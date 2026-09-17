@@ -152,6 +152,7 @@ def assemble(ctx: Ctx) -> None:
             "social": ctx.social_limit,
         },
         "limit_modifiers": compact_limit_modifiers(ctx.effects),
+        "stat_sources": ctx.effects.get("stat_sources") or {},
         "condition_monitor": {
             "physical": ctx.cm_phys,
             "stun": ctx.cm_stun,

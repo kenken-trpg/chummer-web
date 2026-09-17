@@ -118,6 +118,9 @@ export interface Derived {
   totals: Record<string, number>;
   limits: { physical: number; mental: number; social: number };
   limit_modifiers?: LimitModifier[];
+  /** Per sidebar value (`limit_physical`, `initiative`, …), what each named
+   *  source added — before non-stacking bonuses are resolved. */
+  stat_sources?: Record<string, { source: string; value: number }[]>;
   condition_monitor: {
     physical: number;
     stun: number;

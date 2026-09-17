@@ -78,3 +78,25 @@ def test_no_domain_module_reimplements_the_bonus_value_fallback() -> None:
         if magnitude_chain.search(path.read_text(encoding="utf-8"))
     ]
     assert offenders == [], f"inline fallback chain is back in: {offenders}"
+
+
+def test_stat_sources_name_what_each_source_added() -> None:
+    effects = empty_effects()
+    apply_bonus_nodes([{"tag": "sociallimit", "value": "1"}], effects, "First Impression")
+    apply_bonus_nodes(
+        [
+            {"tag": "initiativepass", "value": "1", "attrs": {"precedence": "0"}},
+            {"tag": "conditionmonitor", "fields": {"physical": "1", "stun": "1"}},
+        ],
+        effects,
+        "Wired Reflexes",
+    )
+    apply_bonus_nodes([{"tag": "sociallimit", "value": "1"}], effects, "First Impression")
+    apply_bonus_nodes([{"tag": "sociallimit", "value": "5"}], effects, "")  # a probe, not a source
+    assert effects["stat_sources"] == {
+        "limit_social": [{"source": "First Impression", "value": 2}],
+        # parked in a precedence group, still attributed
+        "initiative_dice": [{"source": "Wired Reflexes", "value": 1}],
+        "cm_physical": [{"source": "Wired Reflexes", "value": 1}],
+        "cm_stun": [{"source": "Wired Reflexes", "value": 1}],
+    }
