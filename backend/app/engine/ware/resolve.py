@@ -101,7 +101,10 @@ def resolve_ware(
     attrs_spec: dict[str, dict[str, int | float]] | None = None,
     *,
     adapsin: bool = False,
+    gear_costs: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
+    """``gear_costs`` is the price of the gear held in each install, by id:
+    Chummer's `Gear Cost` (a Chemical Gland is `20000 + (99 * Gear Cost)`)."""
     extras = racial_formula_extras(attrs_spec) if attrs_spec else {}
     resolved: list[dict[str, Any]] = []
     by_id = {inst.id: inst for inst in installs}
@@ -134,10 +137,11 @@ def resolve_ware(
         plugin = bool(ware.get("plugin"))
         add_to_parent = bool(ware.get("addtoparentess")) and slotted and not included
         # Chummer prices a Chemical Gland as `20000 + (99 * Gear Cost)`: the
-        # chemicals put inside it. Ware holds no gear here, so the sum is 0 —
-        # what Chummer charges for an empty gland. Left unset, the unknown
-        # words made the whole price 0.
-        formula_extras = {**ware_extras, "MinRating": lo, "Parent Gear Cost": 0, "Gear Cost": 0}
+        # chemicals put inside it. Left unset, the unknown words made the
+        # whole price 0.
+        held = int((gear_costs or {}).get(inst.id, 0))
+        parent_held = int((gear_costs or {}).get(inst.parent_id or "", 0))
+        formula_extras = {**ware_extras, "MinRating": lo, "Parent Gear Cost": parent_held, "Gear Cost": held}
         # Bioware grades have no Adapsin twin, so `ess_adapsin` mirrors `ess`
         # there and the flag costs nothing to carry.
         grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)
@@ -175,6 +179,7 @@ def resolve_ware(
                 "capacity_used": 0.0,
                 "capacity_max": 0.0 if plugin else _capacity_value(ware.get("capacity"), rating),
                 "allow_subsystems": list(ware.get("allow_subsystems") or []),
+                "allow_gear": list(ware.get("allow_gear") or []),
                 "limbslot": ware.get("limbslot"),
                 "limbslotcount": ware.get("limbslotcount") or "1",
                 "selectside": bool(ware.get("selectside")),

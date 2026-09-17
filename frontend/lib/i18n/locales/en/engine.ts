@@ -333,7 +333,6 @@ export const EN_ENGINE = {
     "“{name}” was inside “{host}”, where it cannot go, so it is carried on its own",
   "engine.import.hostGearSkipped":
     "Could not import “{name}” carried in the {kind} “{host}”: it goes in other gear",
-  "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
 
   "engine.import.vehicleLoadSkipped":

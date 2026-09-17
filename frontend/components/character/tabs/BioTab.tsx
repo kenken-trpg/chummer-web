@@ -3,11 +3,13 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
 import {
   hideFromWareCatalog,
   nextFreeSide,
+  dropUnderRemovedWare,
   removeWareTree,
   wareBounds,
 } from "@/lib/character/ware";
@@ -76,6 +78,16 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             catalogItems={catalog.bioware.items}
             grades={bioGrades}
             kind="bioware"
+            renderHeld={(row) => (
+              <WareHeldGear
+                item={row}
+                catalog={catalog}
+                character={ch}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+            )}
             tr={tr}
             compact={compact}
             slotValue={slotPick[item.id] || ""}
@@ -103,6 +115,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
               const bioware = removeWareTree(ch.bioware || [], id);
               patch({
                 bioware,
+                gear: dropUnderRemovedWare(ch.gear || [], ch.bioware || [], bioware),
                 skill_picks: dropRemovedWarePicks(ch.skill_picks, [
                   ...(ch.cyberware || []),
                   ...bioware,

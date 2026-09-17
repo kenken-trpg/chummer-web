@@ -155,6 +155,7 @@ export const EN_GEAR = {
 
   "bio.search": "Search bioware",
   "ware.bundledSuffix": " (bundled)",
+  "ware.addHeldGear": "Choose what goes inside",
   "ware.grantedSuffix": " (comes with {source})",
   "ware.capacityInline": " · capacity {used}/{max}",
   "ware.limb": " · limb STR {str} / AGI {agi}",

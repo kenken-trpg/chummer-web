@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
-from typing import Any
+from typing import Any, cast
 
 from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text, current_overlay_key
@@ -40,6 +40,8 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
     ware_r = _Resolver(ware_rows)
     picks: dict[str, str] = {}
+    #: gear held in a piece of ware: (install id, ware id, kind, node)
+    carried: list[tuple[str, str, Phrase, ET.Element]] = []
 
     def load_ware(nodes: list[ET.Element], kind: Phrase) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
@@ -68,8 +70,10 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 # children are this row's, a grandchild keeps its own parent
                 child.setdefault("parent_id", row["id"])
                 out.append(child)
-            if _unexpected_children(wid, w.findall("./gears/gear")):
-                warn.append(notice("engine.import.nestedGearSkipped", kind=kind, name=_text(w.find("name"))))
+            held = _unexpected_children(wid, w.findall("./gears/gear"))
+            if held:
+                # routed with the rest of the gear, which knows the buckets
+                carried.extend((str(row["id"]), wid, kind, g) for g in held)
         return out
 
     # Chummer keeps bioware in `<cyberwares>` too, as `<cyberware>` rows told
@@ -83,6 +87,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         bio_rows + root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
     )
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
+    st["_ware_gear"] = carried
 
 
 def _is_gear_not_mod(node: ET.Element, mods: _Resolver, gear: _Resolver) -> bool:
@@ -231,9 +236,15 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         parent_gid: str,
         host: tuple[Phrase, str] | None,
         host_armor: bool,
+        host_allow: list[str] | None = None,
     ) -> bool:
         """Whether the engine keeps a gear-bucket item where the save put it
         (`engine/gear/misc.py` runs the same tests)."""
+        if host_allow is not None:
+            # a piece of ware holds the categories its `<allowgear>` names;
+            # ware that holds none is no host to the engine at all, which
+            # would drop the piece without a word
+            return str(spec.get("category") or "") in host_allow
         if spec.get("requireparent"):
             # it cannot be carried on its own either: left where it is, the
             # engine says it does not fit
@@ -258,6 +269,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         host: tuple[Phrase, str] | None = None,
         parent_gid: str = "",
         host_armor: bool = False,
+        host_allow: list[str] | None = None,
     ) -> None:
         # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
         # is whatever the player called it
@@ -291,7 +303,11 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             and host[0] == ui("engine.kind.vehicle")
             and (rows_by_id.get(gid) or {}).get("program_host") == "rccs"
         )
-        if host is not None and bucket not in HOST_BUCKETS and not runs_there:
+        if (
+            host is not None
+            and (bucket not in HOST_BUCKETS or host_allow is not None and bucket != "gear")
+            and not runs_there
+        ):
             # a commlink stowed there (or an autosoft in armor): this app fits
             # those to other hosts only, so the piece is left out — but said so
             kind, host_name = host
@@ -321,7 +337,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             parent_id
             and bucket == "gear"
             and not included
-            and not stays(spec, parent_bucket, parent_gid, host, host_armor)
+            and not stays(spec, parent_bucket, parent_gid, host, host_armor, host_allow)
         ):
             # Chummer lets a player drag any gear into any other (ammo into a
             # Spare Clip, a reader into a commlink); this app would drop it
@@ -361,6 +377,21 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     }
     for vehicle_id, g in st.pop("_vehicle_gear", None) or []:
         route_gear(g, vehicle_id, None, (ui("engine.kind.vehicle"), vehicle_names.get(vehicle_id, "")))
+    ware_rows: dict[str, dict[str, Any]] = {
+        str(row["id"]): row
+        for kind in ("cyberware", "bioware")
+        for row in (cast(dict[str, Any], cat.get(kind) or {}).get("items") or [])
+    }
+    for ware_inst, ware_id, kind, g in st.pop("_ware_gear", None) or []:
+        ware = ware_rows.get(ware_id) or {}
+        route_gear(
+            g,
+            ware_inst,
+            None,
+            (kind, str(ware.get("name") or "")),
+            parent_gid=ware_id,
+            host_allow=list(ware.get("allow_gear") or []),
+        )
     for b, rows in routed.items():
         # vehicles import first: its drones are already in `st`
         st[b] = (st.get(b) or []) + rows

@@ -107,6 +107,7 @@
   "cyberdecks": [],
   "cyberware": [
     {
+      "allow_gear": [],
       "avail": "12R",
       "avail_value": 12,
       "capacity_max": 0,
@@ -115,6 +116,7 @@
       "device_rating": 0,
       "essence": 3.0,
       "extra": "",
+      "gear": [],
       "grade": "Standard",
       "granted_by": "",
       "id": "#2",
@@ -138,6 +140,7 @@
       "wireless": true
     },
     {
+      "allow_gear": [],
       "avail": "2",
       "avail_value": 2,
       "capacity_max": 0,
@@ -146,6 +149,7 @@
       "device_rating": 0,
       "essence": 0.1,
       "extra": "",
+      "gear": [],
       "grade": "Standard",
       "granted_by": "",
       "id": "#3",

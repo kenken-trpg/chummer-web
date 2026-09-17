@@ -297,7 +297,11 @@ def test_gear_nobody_included_is_still_reported() -> None:
     )
     keys = _import_keys(picked)
     assert keys.count("engine.import.skippedUnknown") == _import_keys(b"").count("engine.import.skippedUnknown") + 1
-    assert "engine.import.nestedGearSkipped" in keys
+    # a Datajack holds no gear: the module is taken out, and that is said;
+    # it needs a host of its own, which the sheet says in turn
+    assert "engine.import.gearMovedOut" in keys
+    state, _ = chum5_to_state(SAMPLE.replace(b"</character>", picked + b"</character>"))
+    assert has(import_character(state).derived["warnings"], "engine.gear.needsHost")
 
 
 _EAGLE_ADEPT = b"""
@@ -832,3 +836,29 @@ def test_the_holster_an_armor_comes_with_is_not_bought_again() -> None:
     state = chum5_to_state(raw)[0]
     assert [row for row in state.get("gear") or [] if row.get("parent_id")] == []
     assert import_character(state).derived["nuyen_spent"] == 3000
+
+
+def test_the_chemical_in_a_gland_is_kept_and_priced_into_it() -> None:
+    """SCSi keeps Psyche in a Chemical Gland. Chummer prices the gland as
+    `20000 + (99 * Gear Cost)` and adds the chemical's own price; the import
+    used to drop the chemical, so the sheet was 20,000¥ short and the export
+    lost it."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <cyberwares><cyberware><name>Chemical Gland (Internal Release or Gradual Release)</name>
+        <improvementsource>Bioware</improvementsource><grade>Standard</grade><extra>Psyche</extra>
+        <gears><gear><name>Psyche</name><category>Drugs</category><qty>1</qty></gear></gears>
+      </cyberware></cyberwares>
+    </character>"""
+    state, warnings = chum5_to_state(raw)
+    assert warnings == []
+    ch = import_character(state)
+    gland = ch.derived["bioware"][0]
+    assert gland["nuyen"] == 20000 + 99 * 200
+    assert [row["name"] for row in gland["gear"]] == ["Psyche"]
+    assert ch.derived["nuyen_spent"] == 20000 + 99 * 200 + 200
+    assert not has(ch.derived["warnings"], "engine.gear.doesNotFit")
+
+    back = import_character(chum5_to_state(state_to_chum5(ch))[0])
+    assert back.derived["nuyen_spent"] == ch.derived["nuyen_spent"]
+    assert [row.parent_id for row in back.gear] == [back.bioware[0].id]

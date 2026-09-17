@@ -158,6 +158,7 @@ export const JA_GEAR = {
 
   "bio.search": "バイオウェアを検索",
   "ware.bundledSuffix": "（同梱）",
+  "ware.addHeldGear": "中に入れるものを選ぶ",
   "ware.grantedSuffix": "（{source}付属）",
   "ware.capacityInline": " ・ 容量 {used}/{max}",
   "ware.limb": " ・ 肢 STR {str} / AGI {agi}",
