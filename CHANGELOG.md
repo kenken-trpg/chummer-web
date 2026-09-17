@@ -250,7 +250,7 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   ままだった。取り込みと同じく、プリセットが既定から動かすものだけを入れる。
 - **防具に最初から付いている Holster を、取り込みで 150¥ のギアとして買い直していた。**
   Ares Victory: Wild Hunt などはデータで `<usegear>Holster</usegear>` と名前を直接書くが、
-  付属品の判定が `<name>` 要素しか見ていなかった。Barrett（3 着）の差が 1,450¥ から 0 に。
+  付属品の判定が `<name>` 要素しか見ていなかった。Barrett の差が 1,450¥（Holster 3 本と Generic CCOB の Medkit）から 0 に。
 
 - **中身の無い Chemical Gland を 0¥ にしていた。** 値段 `20000 + (99 * Gear Cost)` の
   `Gear Cost`（入れた薬品の値段）を解釈できず、式全体を 0 にしていた。このアプリの
