@@ -33,6 +33,17 @@ same chummer5a ref as the game data::
     python scripts/chum5_reconcile.py             # table + summary
     python scripts/chum5_reconcile.py -v          # + each file's warnings / errors
     python scripts/chum5_reconcile.py --dir DIR   # other saves instead
+    python scripts/chum5_reconcile.py --roundtrip # + export / re-import check
+    python scripts/chum5_reconcile.py --items Mittens   # one save, item by item
+
+`--roundtrip` writes each save back out and reads it again: what it holds
+(gear by bucket, ware, vehicle mods — with whether each sits in a parent) and
+what it spent must come back the same. It catches what an import reads but the
+export has nowhere to write.
+
+`--items` lists what this app charges for each piece of one save (the first
+file whose name contains the text), to set beside the save's own `<cost>`
+expressions when a nuyen total disagrees.
 """
 
 from __future__ import annotations
@@ -115,6 +126,65 @@ def reconcile(path: Path) -> dict[str, Any]:
     return row
 
 
+_GEAR_BUCKETS = ("gear", "commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps")
+
+
+def _holdings(ch: Any) -> collections.Counter[tuple[Any, ...]]:
+    """What a character holds, ids aside (they are new on every import)."""
+    held: collections.Counter[tuple[Any, ...]] = collections.Counter()
+    for bucket in _GEAR_BUCKETS:
+        for r in getattr(ch, bucket):
+            held[(bucket, r.gear_id, r.rating, getattr(r, "extra", None), bool(getattr(r, "parent_id", None)))] += 1
+    mods = {m.id for m in ch.vehicle_mods}
+    for kind in ("cyberware", "bioware"):
+        for r in getattr(ch, kind):
+            where = "mod" if r.parent_id in mods else bool(r.parent_id)
+            held[(kind, r.ware_id, r.rating, r.grade, where)] += 1
+    for m in ch.vehicle_mods:
+        held[("vehicle_mods", m.mod_id, m.rating, m.included)] += 1
+    return held
+
+
+def roundtrip(path: Path) -> list[str]:
+    """What changed when the save was exported and imported again."""
+    from app.characters import import_character
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+
+    first = import_character(chum5_to_state(path.read_bytes())[0])
+    again = import_character(chum5_to_state(state_to_chum5(first))[0])
+    before, after = _holdings(first), _holdings(again)
+    out = [f"lost {key} ×{n}" for key, n in (before - after).items()]
+    out += [f"gained {key} ×{n}" for key, n in (after - before).items()]
+    spent = (first.derived.get("nuyen_spent"), again.derived.get("nuyen_spent"))
+    if spent[0] != spent[1]:
+        out.append(f"nuyen spent {spent[0]} -> {spent[1]}")
+    return out
+
+
+def items(path: Path) -> None:
+    """Print this app's price for every piece of one save."""
+    from app.characters import import_character
+    from app.chummer_import import chum5_to_state
+
+    derived = import_character(chum5_to_state(path.read_bytes())[0]).derived
+    print(f"{path.name}: pool {derived.get('nuyen_pool')}  spent {derived.get('nuyen_spent')}")
+    for line in derived.get("nuyen_spend_breakdown") or []:
+        print(f"  {line['notice']['key'].rsplit('.', 1)[-1]:<20} {line['amount']:>10,}")
+    for key, rows in derived.items():
+        if not isinstance(rows, list) or not rows or not isinstance(rows[0], dict) or "nuyen" not in rows[0]:
+            continue
+        for row in rows:
+            extra = f" R{row['rating']}" if row.get("rating") not in (None, 0, 1) else ""
+            qty = f" ×{row['qty']}" if (row.get("qty") or 1) > 1 else ""
+            inside = "  (in a parent)" if row.get("parent_id") else ""
+            print(f"  {key:<20} {row.get('name')}{extra}{qty}  {row.get('nuyen')}{inside}")
+    for vehicle in [*(derived.get("drones") or []), *(derived.get("vehicles") or [])]:
+        for mod in vehicle.get("mods") or []:
+            for ware in mod.get("cyberware") or []:
+                print(f"  {'vehicle ware':<20} {vehicle['name']} / {mod['name']} / {ware['name']}  {ware['nuyen']}")
+
+
 def _matches(pair: tuple[float, Any] | None, tolerance: float) -> bool:
     if pair is None or pair[1] is None:
         return False
@@ -141,9 +211,18 @@ def main() -> int:
     ap.add_argument("--dir", type=Path, help="saves to check instead of Chummer's test files")
     ap.add_argument("--ref", default=_ref(), help="chummer5a ref to fetch the test files at")
     ap.add_argument("-v", "--verbose", action="store_true", help="list each file's warning / error keys")
+    ap.add_argument("--roundtrip", action="store_true", help="also export and re-import each save")
+    ap.add_argument("--items", metavar="NAME", help="list one save's prices item by item, and stop")
     args = ap.parse_args()
 
     folder = args.dir or fetch(args.ref)
+    if args.items:
+        match = next((p for p in sorted(folder.glob("*.chum5")) if args.items.lower() in p.name.lower()), None)
+        if match is None:
+            print(f"no save matching {args.items!r} in {folder}", file=sys.stderr)
+            return 1
+        items(match)
+        return 0
     rows = [reconcile(path) for path in sorted(folder.glob("*.chum5"))]
 
     width = max((len(row["file"]) for row in rows), default=4)
@@ -187,6 +266,15 @@ def main() -> int:
         print(f"{kind} ({sum(counts.values())}):")
         for key, count in counts.most_common():
             print(f"  {count:>4}  {key}")
+    if args.roundtrip:
+        changed = {path.name: roundtrip(path) for path in sorted(folder.glob("*.chum5"))}
+        broken = {name: lines for name, lines in changed.items() if lines}
+        print(f"round trip: {len(changed) - len(broken)} of {len(changed)} unchanged")
+        for name, lines in broken.items():
+            print(f"  {name}")
+            for line in lines:
+                print(f"    {line}")
+        return 1 if broken else 0
     return 0
 
 
