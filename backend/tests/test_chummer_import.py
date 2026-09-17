@@ -764,3 +764,18 @@ def test_an_autosoft_loaded_into_a_drone_stays_there() -> None:
     assert "Clearsight Autosoft" in [_text(g.find("name")) for g in root.findall("./vehicles/vehicle/gears/gear")]
     loose = root.find("./gears/gear")
     assert loose is not None and _text(loose.find("extra")) == "Horizon Noizquito (Microdrone)"
+
+
+def test_what_a_kit_brings_is_not_reported_as_not_fitting() -> None:
+    """A Survival Kit's Matches is listed under "Survival Gear" there but is a
+    "Tools" item in the catalog, which the kit takes no add-ons of. It came
+    with the kit, so it stays — once — without a "does not fit" warning."""
+    from tests.chum5_fixtures import build_chum5
+
+    xml = build_chum5(
+        gear=[{"name": "Survival Kit", "children": [{"name": "Matches", "included": True}]}],
+    )
+    ch = import_character(chum5_to_state(xml)[0])
+    names = {str(g["id"]): g["name"] for g in catalog()["gear"]}
+    assert sorted(names[row.gear_id] for row in ch.gear) == ["Matches", "Survival Kit"]
+    assert not has(ch.derived["warnings"], "engine.gear.doesNotFit")
