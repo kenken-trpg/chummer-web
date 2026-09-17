@@ -324,6 +324,15 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     ...over,
   });
 
+  it("explains each matrix attribute behind a help button", () => {
+    const ch = makeCharacter({ cyberdecks: [deck()], derived: { cyberdecks: [deck()] } } as any);
+    renderPanel(CyberdeckGear, ch, vi.fn());
+    const button = screen.getByRole("button", { name: "FW の説明" });
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("ファイアウォール（FW）");
+    expect(tip?.textContent).toContain("無料行動で 2 つを入れ替えられる");
+  });
+
   it("swaps two attributes rather than shifting the whole array", () => {
     const ch = makeCharacter({
       cyberdecks: [deck()],

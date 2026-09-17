@@ -5,6 +5,7 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
@@ -62,8 +63,17 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 <div className="matrix-array">
                   {MATRIX_ATTRS.map(([key, label]) => (
                     <label key={key}>
-                      {label}
+                      <HelpTip
+                        label={ui("help.open", { label })}
+                        lines={[
+                          { label: ui(`help.matrix.${key}`) },
+                          { label: ui("help.matrix.array") },
+                        ]}
+                      >
+                        {label}
+                      </HelpTip>
                       <select
+                        aria-label={label}
                         value={String((item.array_order || DEFAULT_ARRAY_ORDER).indexOf(key))}
                         onChange={(e) =>
                           patch({
