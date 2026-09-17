@@ -42,4 +42,13 @@ export const EN_HELP = {
   "help.skill.default":
     "A skill you have not learned can still be defaulted: the linked attribute −1 (SR5 p.130)",
   "help.skill.cap": "The rating cap at creation. One skill may sit at the cap (+1 with Aptitude)",
+  "help.matrix.attack":
+    "Attack: breaking into or damaging another icon. It also answers attacks made on you",
+  "help.matrix.sleaze": "Sleaze: getting in and staying unnoticed; it opposes Matrix Perception",
+  "help.matrix.dataprocessing":
+    "Data Processing: quiet work — editing, searching, holding marks. It also drives the deck initiative",
+  "help.matrix.firewall":
+    "Firewall: defence against attacks and intrusions; the value that opposes them",
+  "help.matrix.array":
+    "A deck comes with a fixed set of four values that you assign to these slots; swapping two is a free action once per turn (SR5 p.222)",
 } as const;
