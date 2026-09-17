@@ -90,13 +90,14 @@ def _data_index(_overlay_key: str) -> _DataIndex:
                 for n in holder.iter("name")
                 if _text(n)
             }
-            # `<usegear>Holster</usegear>` names the gear in its own text
-            # (Ares Victory: Wild Hunt) rather than in a `<name>` child.
+            # `<usegear>Holster</usegear>` (Ares Victory: Wild Hunt) and
+            # `<gear>Quicksilver Camera</gear>` (Telestrian Shamus) name the
+            # gear in their own text rather than in a `<name>` child.
             kids |= {
                 _text(n).lower()
                 for holder in el.findall("gears")
-                for n in holder.iter("usegear")
-                if n.find("name") is None and _text(n)
+                for n in holder.iter()
+                if n.tag in ("gear", "usegear") and n.find("name") is None and _text(n)
             }
             if kids:
                 included[eid] = frozenset(kids)

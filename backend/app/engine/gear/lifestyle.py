@@ -42,7 +42,7 @@ def _resolve_one_lifestyle(
     kept_qualities: list[dict[str, Any]] = []
     seen_quality: set[str] = set()
     lp_used = 0
-    quality_monthly = 0
+    quality_monthly = 0.0
     multiplier_pct = 0
 
     def _append_lifestyle_quality(
@@ -68,7 +68,7 @@ def _resolve_one_lifestyle(
         free = bool(from_freegrid)
         lp_cost = 0 if free or lifestyle_name in allowed else int(qspec.get("lp") or 0)
         lp_used += lp_cost
-        add_cost = 0 if free else int(qspec.get("cost") or 0)
+        add_cost = 0 if free else float(qspec.get("cost") or 0)
         quality_monthly += add_cost
         multiplier_pct += int(qspec.get("multiplier") or 0)
         extra_val = str(extra or extras.get(qid) or "").strip()
@@ -146,7 +146,7 @@ def _resolve_one_lifestyle(
         "increment": spec.get("increment") or "month",
         "monthly": monthly,
         "base_monthly": base_monthly,
-        "quality_monthly": quality_monthly,
+        "quality_monthly": round(quality_monthly, 2),
         "multiplier_pct": multiplier_pct,
         "nuyen": cost,
         # the two halves a character's `<lifestylecost>` splits: it scales the
@@ -196,7 +196,7 @@ def _monthly_cost_parts(
     def stage(cost: float, rows: list[dict[str, Any]]) -> float:
         for row in rows:
             cost *= 1 + int(row.get("multiplier") or 0) / 100
-        return cost + sum(int(row.get("cost") or 0) for row in rows)
+        return cost + sum(float(row.get("cost") or 0) for row in rows)
 
     cost = float(base)
     for row in qualities:
@@ -213,8 +213,8 @@ def _monthly_cost_parts(
     factor = 1.0
     for row in outings:
         factor *= 1 + int(row.get("multiplier") or 0) / 100
-    after = sum(int(row.get("cost") or 0) for row in outings)
-    after += sum(int(row.get("cost") or 0) for row in qualities if kind(row) == "contract")
+    after = sum(float(row.get("cost") or 0) for row in outings)
+    after += sum(float(row.get("cost") or 0) for row in qualities if kind(row) == "contract")
     return cost * factor, after
 
 
