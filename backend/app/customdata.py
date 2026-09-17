@@ -26,6 +26,7 @@ avoid.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import re
 import unicodedata
@@ -318,7 +319,7 @@ def build_overlay(
             if root is None:
                 return None
             # a copy: the overlay must not edit the tree another request reads
-            trees[name] = ET.fromstring(ET.tostring(root, encoding="unicode"))
+            trees[name] = copy.deepcopy(root)
         return trees[name]
 
     by_directory = {_fold(_directory_of(p)): _directory_of(p) for p in files if "/" in p}
