@@ -14,4 +14,17 @@ export const EN_HELP = {
   "help.init.value": "Initiative = REA + INT",
   "help.init.dice": "Initiative dice = 1D6 + extra dice (max 5D6)",
   "help.init.note": "Turn order in combat; −10 per action phase (SR5 p.159)",
+  "help.attr.BOD": "Body. Damage resistance, the physical monitor and the physical limit",
+  "help.attr.AGI": "Agility. Most physical skills, shooting and melee; part of the physical limit",
+  "help.attr.REA": "Reaction. Initiative, defense tests and piloting; part of the physical limit",
+  "help.attr.STR":
+    "Strength. Melee damage, throwing range and carrying; part of the physical limit",
+  "help.attr.WIL": "Willpower. The stun monitor, drain resistance and the mental and social limits",
+  "help.attr.LOG": "Logic. Technical skills and the Matrix; the main source of the mental limit",
+  "help.attr.INT": "Intuition. Initiative, perception and defense tests; part of the mental limit",
+  "help.attr.CHA":
+    "Charisma. Social skills such as negotiation; the main source of the social limit",
+  "help.attr.EDG": "Edge. Points per session to reroll, push the limit and so on",
+  "help.attr.MAG": "Magic. The strength of spells, spirits and adept powers; drops with Essence",
+  "help.attr.RES": "Resonance. The strength of complex forms and sprites; drops with Essence",
 } as const;
