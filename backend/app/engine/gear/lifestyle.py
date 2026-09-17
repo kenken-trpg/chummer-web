@@ -125,12 +125,13 @@ def _resolve_one_lifestyle(
     lp_used += sum(raised.values())
     if lp_max > 0 and lp_used > lp_max:
         warnings.append(notice("engine.gear.lifestylePointsOver", name=term(lifestyle_name), used=lp_used, max=lp_max))
-    monthly = _monthly_cost(
+    pre_mod, after_mod = _monthly_cost_parts(
         base_monthly,
         [row for row in kept_qualities if not row.get("from_freegrid")],
         raised=raised,
         cost_for={key: int(spec.get(f"cost_for_{key}") or 0) for key in raised},
     )
+    monthly = int(round(pre_mod + after_mod))
     cost = monthly * months
     # Persist user picks only; freegrids are re-derived each compute.
     inst.quality_ids = [row["quality_id"] for row in kept_qualities if not row.get("from_freegrid")]
@@ -148,6 +149,10 @@ def _resolve_one_lifestyle(
         "quality_monthly": quality_monthly,
         "multiplier_pct": multiplier_pct,
         "nuyen": cost,
+        # the two halves a character's `<lifestylecost>` splits: it scales the
+        # first, not the outings, services and contracts in the second
+        "_pre_mod": pre_mod,
+        "_after_mod": after_mod,
         "lp_used": lp_used,
         "lp_max": lp_max,
         "raised": raised,
@@ -161,13 +166,13 @@ def _resolve_one_lifestyle(
     return row, cost
 
 
-def _monthly_cost(
+def _monthly_cost_parts(
     base: int,
     qualities: list[dict[str, Any]],
     *,
     raised: dict[str, int] | None = None,
     cost_for: dict[str, int] | None = None,
-) -> int:
+) -> tuple[float, float]:
     """A lifestyle's monthly cost the way Chummer works it out
     (`Lifestyle.CostPreSplit` / `GetTotalMonthlyCost`, after HT p.139).
 
@@ -202,9 +207,15 @@ def _monthly_cost(
     cost += sum(int(points[key]) * int((cost_for or {}).get(key, 0)) for key in points)
     cost = stage(cost, [row for row in qualities if kind(row) == "asset"])
     cost = max(0.0, stage(cost, [row for row in qualities if kind(row) == "other"]))
-    cost = stage(cost, [row for row in qualities if kind(row) == "outing"])
-    cost += sum(int(row.get("cost") or 0) for row in qualities if kind(row) == "contract")
-    return int(round(cost))
+    # Here Chummer applies the character's own `<lifestylecost>` (a troll's
+    # +100%), which is why the rest is returned apart.
+    outings = [row for row in qualities if kind(row) == "outing"]
+    factor = 1.0
+    for row in outings:
+        factor *= 1 + int(row.get("multiplier") or 0) / 100
+    after = sum(int(row.get("cost") or 0) for row in outings)
+    after += sum(int(row.get("cost") or 0) for row in qualities if kind(row) == "contract")
+    return cost * factor, after
 
 
 def resolve_lifestyles(
@@ -234,16 +245,42 @@ def resolve_lifestyles(
     return rows, nuyen, warnings, bonus_sources
 
 
-def apply_lifestyle_cost_mod(gear: GearBundle, percent: int) -> None:
-    if not percent:
+def lifestyle_cost_factor(mods: list[dict[str, Any]], metatype_sources: set[str]) -> float:
+    """Chummer's `Lifestyle.GetTotalMonthlyCost`: a Dependents quality's
+    percentages add up, so do the metatype's, and every other one compounds —
+    +10%, -10% and -10% make 0.891, not 0.9."""
+    dependents = sum(int(m["value"]) for m in mods if "Dependent" in str(m.get("source") or ""))
+    metatype = sum(
+        int(m["value"])
+        for m in mods
+        if "Dependent" not in str(m.get("source") or "") and str(m.get("source") or "") in metatype_sources
+    )
+    factor = (1 + dependents / 100) * (1 + metatype / 100)
+    for m in mods:
+        source = str(m.get("source") or "")
+        if "Dependent" not in source and source not in metatype_sources:
+            factor *= 1 + int(m["value"]) / 100
+    return factor
+
+
+def apply_lifestyle_cost_mod(gear: GearBundle, percent: int, factor: float | None = None) -> None:
+    """Scale every lifestyle by the character's `<lifestylecost>` total.
+
+    ``factor`` is the compounded multiplier (`lifestyle_cost_factor`);
+    ``percent`` is only the summed figure the sheet shows."""
+    if factor is None:
+        factor = (100 + int(percent)) / 100.0
+    if factor == 1.0:
         return
-    factor = (100 + int(percent)) / 100.0
     delta = 0
     for row in gear.get("lifestyles") or []:
         before = int(row.get("nuyen") or 0)
-        monthly = int(row.get("monthly") or 0)
-        after = int(round(before * factor))
-        row["monthly"] = int(round(monthly * factor))
+        months = int(row.get("months") or 1)
+        pre = float(row.get("_pre_mod") or 0.0)
+        post = float(row.get("_after_mod") or 0.0)
+        monthly = int(round(max(0.0, pre * factor) + post))
+        after = monthly * months
+        row["monthly"] = monthly
         row["nuyen"] = after
         row["lifestyle_cost_mod"] = int(percent)
         delta += after - before

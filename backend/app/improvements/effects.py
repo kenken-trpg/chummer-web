@@ -116,6 +116,9 @@ class EffectsDict(TypedDict):
     throw_str: int
     throw_range_str: int
     lifestyle_cost: int
+    # each `<lifestylecost>` with where it came from: Chummer groups them by
+    # source before applying (`Lifestyle.GetTotalMonthlyCost`)
+    lifestyle_cost_mods: list[dict[str, Any]]
     notoriety: int
     # `<streetcredmultiplier>`: added to the karma-per-Street-Cred divisor (10)
     street_cred_divisor: int
@@ -329,6 +332,7 @@ def empty_effects() -> EffectsDict:
         "throw_str": 0,
         "throw_range_str": 0,
         "lifestyle_cost": 0,
+        "lifestyle_cost_mods": [],
         "notoriety": 0,
         "street_cred_divisor": 0,
         "fame": 0,

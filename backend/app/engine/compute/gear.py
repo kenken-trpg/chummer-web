@@ -54,6 +54,7 @@ from ..gear import (
     apply_weapon_category_dice,
     apply_weapon_category_dv,
     apply_weapon_skill_accuracy,
+    lifestyle_cost_factor,
     resolve_custom_drugs,
     resolve_lifestyles,
 )
@@ -373,7 +374,15 @@ def gear_phase(ctx: Ctx) -> None:
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
     _append_quality_weapons(ctx.gear["weapons"], ctx.qualities)
     _append_granted_weapons(ctx.gear["weapons"], ctx.effects)
-    apply_lifestyle_cost_mod(ctx.gear, int(ctx.effects.get("lifestyle_cost") or 0))
+    metatype_sources = {str(ctx.meta.get("name") or "")} - {""}
+    apply_lifestyle_cost_mod(
+        ctx.gear,
+        int(ctx.effects.get("lifestyle_cost") or 0),
+        lifestyle_cost_factor(list(ctx.effects.get("lifestyle_cost_mods") or []), metatype_sources),
+    )
+    for row in ctx.gear.get("lifestyles") or []:
+        row.pop("_pre_mod", None)
+        row.pop("_after_mod", None)
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
     apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)
