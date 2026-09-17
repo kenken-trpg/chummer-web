@@ -34,7 +34,7 @@ to LF, and a CRLF `scripts/retry.sh` breaks the Docker build.
 backend/                FastAPI + the rules engine (Python 3.11+)
   app/
     main.py             HTTP routes (thin; delegates to characters/catalog_view)
-    models.py           Pydantic models: CharacterState, CharacterPatch, installs
+    models/             Pydantic models: CharacterState, CharacterPatch, installs
     characters.py       pure new / patch / compute / import (no storage)
     catalog_view/       public_catalog(): the catalog projected for the UI,
                         one section(raw) per domain (chargen/ware/magic/…)
