@@ -28,8 +28,8 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
               </div>
               <div className="cyber-controls">
                 {item.rating_max > 0 ? (
-                  <label>
-                    Rating
+                  <label title={ui("common.ratingHint")}>
+                    {ui("common.rating")}
                     <input
                       type="number"
                       min={1}
@@ -45,7 +45,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     />
                   </label>
                 ) : null}
-                <label>
+                <label title={ui("common.qtyHint")}>
                   {ui("common.qty")}
                   <input
                     type="number"

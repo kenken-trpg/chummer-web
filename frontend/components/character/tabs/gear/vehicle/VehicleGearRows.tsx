@@ -45,8 +45,8 @@ export function VehicleGearRows({
             </>
           )}
           {acc.rating_max > 0 && !acc.included ? (
-            <label>
-              Rating
+            <label title={ui("common.ratingHint")}>
+              {ui("common.rating")}
               <input
                 type="number"
                 min={1}

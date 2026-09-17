@@ -40,8 +40,8 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
             </div>
             {item.test ? <div className="muted">{testLine(item.test, ui, "fmt.fade")}</div> : null}
             <div className="cyber-controls">
-              <label>
-                Level
+              <label title={ui("common.levelHint")}>
+                {ui("common.level")}
                 <input
                   type="number"
                   min={item.level_min}

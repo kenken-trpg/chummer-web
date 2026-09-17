@@ -57,8 +57,8 @@ export function AppRows({
               }
             />
             {app.rating_max > 0 ? (
-              <label>
-                Rating
+              <label title={ui("common.ratingHint")}>
+                {ui("common.rating")}
                 <input
                   type="number"
                   min={1}

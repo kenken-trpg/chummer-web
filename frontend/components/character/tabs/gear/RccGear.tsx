@@ -31,8 +31,8 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">
-                  <label>
-                    Rating
+                  <label title={ui("common.ratingHint")}>
+                    {ui("common.rating")}
                     <input
                       type="number"
                       min={1}

@@ -38,8 +38,8 @@ export function AutosoftRows({
               {ui("common.remove")}
             </button>
             {prog.rating_max > 0 ? (
-              <label>
-                Rating
+              <label title={ui("common.ratingHint")}>
+                {ui("common.rating")}
                 <input
                   type="number"
                   min={1}

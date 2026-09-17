@@ -133,8 +133,8 @@ export function AdeptTab({
                 />
               ) : null}
               {item.spell ? (
-                <label>
-                  Force
+                <label title={ui("common.forceHint")}>
+                  {ui("common.force")}
                   <input
                     type="number"
                     min={item.spell.force_min}
@@ -311,8 +311,8 @@ export function AdeptTab({
               {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
             </div>
             <div className="cyber-controls">
-              <label>
-                Force
+              <label title={ui("common.forceHint")}>
+                {ui("common.force")}
                 <input
                   type="number"
                   min={item.rating_min}

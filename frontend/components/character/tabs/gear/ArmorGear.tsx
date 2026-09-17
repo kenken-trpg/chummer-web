@@ -105,8 +105,8 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                     {ui("common.equipped")}
                   </label>
                   {item.rating_max > 0 ? (
-                    <label>
-                      Rating
+                    <label title={ui("common.ratingHint")}>
+                      {ui("common.rating")}
                       <input
                         type="number"
                         min={1}

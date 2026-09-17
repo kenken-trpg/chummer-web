@@ -196,6 +196,13 @@ export const EN_APP = {
   "common.wirelessHint": "Turn the wireless bonus on",
   "common.equipped": "Worn",
   "common.rating": "Rating",
+  "common.ratingHint":
+    "Quality level. Raising it usually raises the price and availability too; the cap depends on the item",
+  "common.force": "Force",
+  "common.forceHint": "Strength. Caps the hits on its tests and sets drain and cost",
+  "common.level": "Level",
+  "common.levelHint": "Strength. Caps the hits on its tests and sets fading",
+  "common.qtyHint": "How many. The price is multiplied by it",
   "common.grade": "Grade",
   "common.bundled": "Bundled",
   "common.removeLabel": "Remove {name}",
