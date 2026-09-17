@@ -90,8 +90,9 @@ describe("<SkillsTab>", () => {
     const { container } = renderTab({
       character: { derived: { totals: { AGI: 5 } } as any },
     });
-    const row = container.querySelector(".skill-row.has-spec") as HTMLElement;
-    expect(row.textContent).toContain("デフォルト 4"); // AGI 5 − 1
+    // the value side of the row, not the help tooltip on its name
+    const value = container.querySelector(".skill-row.has-spec b") as HTMLElement;
+    expect(value.textContent).toContain("デフォルト 4"); // AGI 5 − 1
 
     const bought = renderTab({
       character: {
@@ -99,9 +100,18 @@ describe("<SkillsTab>", () => {
         derived: { totals: { AGI: 5 }, skill_totals: { Blades: 3 } } as any,
       },
     });
-    const boughtRow = bought.container.querySelector(".skill-row.has-spec") as HTMLElement;
-    expect(boughtRow.textContent).not.toContain("デフォルト");
-    expect(boughtRow.textContent).toContain("3");
+    const boughtValue = bought.container.querySelector(".skill-row.has-spec b") as HTMLElement;
+    expect(boughtValue.textContent).not.toContain("デフォルト");
+    expect(boughtValue.textContent).toContain("3");
+  });
+
+  it("explains the terms behind a skill row: pool, specialization, defaulting, cap", () => {
+    const { container } = renderTab();
+    const button = container.querySelector(".skill-row.has-spec button") as HTMLElement;
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("判定ダイス = 技能レーティング + 関連能力値");
+    expect(tip?.textContent).toContain("+2 ダイス");
+    expect(tip?.textContent).toContain("戦闘技能／関連能力値 AGI／作成上限 6");
   });
 
   it("drops the −1 on a skill the Reflex Recorder covers, and says when defaulting is out", () => {
@@ -725,9 +735,9 @@ describe("active skill ordering", () => {
   /** The tab renders one heading per category and the rows under it, so the
    *  skill names in document order are the on-screen order. */
   function namesInOrder(container: HTMLElement): string[] {
-    return [...container.querySelectorAll(".skill-row.has-spec > span:first-child")].map(
-      (el) => el.textContent || "",
-    );
+    return [
+      ...container.querySelectorAll(".skill-row.has-spec > span:first-child .help-tip-label"),
+    ].map((el) => el.textContent || "");
   }
 
   it("groups by category in the rulebook's order, whatever order the catalog is in", () => {

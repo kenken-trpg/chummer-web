@@ -25,7 +25,7 @@ export function HelpTip({
   const [open, setOpen] = useState(false);
   return (
     <span className="help-tip" data-open={open || undefined} onMouseLeave={() => setOpen(false)}>
-      {children}
+      <span className="help-tip-label">{children}</span>
       <button
         type="button"
         className="help-tip-button"
