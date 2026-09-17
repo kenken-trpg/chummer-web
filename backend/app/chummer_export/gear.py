@@ -81,6 +81,7 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _sub(el, "name", names["armor"].get(a.armor_id, ""))
         if a.cost is not None:
             _sub(el, "cost", a.cost)
+        _sub(el, "rating", a.rating)
         _sub(el, "equipped", "True" if a.equipped else "False")
         _sub(el, "discountedcost", "True" if a.discounted else "False")
         mods = _sub(el, "armormods")
@@ -119,6 +120,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
             _sub(ac, "sourceid", arow.accessory_id)
             _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
             _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
+            _sub(ac, "rating", arow.rating)
             _sub(ac, "included", "True" if arow.included else "False")
 
 
