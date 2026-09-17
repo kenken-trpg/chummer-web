@@ -707,3 +707,34 @@ def test_an_electronic_modification_comes_in_with_the_deck_it_is_soldered_into()
     assert (mod["name"], mod["nuyen"]) == ("Increase Data Processing Modification", 0)
     assert mod["parent_id"] == derived["commlinks"][0]["id"]
     assert derived["commlinks"][0]["dataprocessing"] == 6  # a Hermes Ikon's 5, plus the point
+
+
+def test_gear_dragged_where_it_cannot_go_is_carried_on_its_own() -> None:
+    """Chummer lets a player drag ammo into a Spare Clip. Kept there, the
+    engine drops the ammo — and anything inside it, which then went missing
+    on the next export. Carried on its own, both stay, and the move is said."""
+    from tests.chum5_fixtures import build_chum5
+
+    xml = build_chum5(
+        gear=[
+            {
+                "name": "Spare Clip",
+                "children": [
+                    {"name": "Ammo: Injection Darts", "qty": 10, "children": [{"name": "Narcoject"}]},
+                ],
+            }
+        ],
+    )
+    state, warnings = chum5_to_state(xml)
+    assert [w["params"]["name"] for w in warnings if w["key"] == "engine.import.gearMovedOut"] == [
+        "Ammo: Injection Darts"
+    ]
+    names = {str(g["id"]): g["name"] for g in catalog()["gear"]}
+    ch = import_character(state)
+    by_id = {row.id: row for row in ch.gear}
+    held = {names[row.gear_id]: names[by_id[row.parent_id].gear_id] if row.parent_id else None for row in ch.gear}
+    assert held == {"Spare Clip": None, "Ammo: Injection Darts": None, "Narcoject": "Ammo: Injection Darts"}
+    assert not has(ch.derived["warnings"], "engine.gear.doesNotFit")
+
+    back = import_character(chum5_to_state(state_to_chum5(ch))[0])
+    assert sorted(names[row.gear_id] for row in back.gear) == sorted(held)

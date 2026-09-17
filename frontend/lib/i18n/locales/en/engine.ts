@@ -329,6 +329,8 @@ export const EN_ENGINE = {
     "{count} house rule(s) in these settings are not implemented ({tags}). They are not reflected in any number here — check with your table",
 
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
+  "engine.import.gearMovedOut":
+    "“{name}” was inside “{host}”, where it cannot go, so it is carried on its own",
   "engine.import.hostGearSkipped":
     "Could not import “{name}” carried in the {kind} “{host}”: it goes in other gear",
   "engine.import.nestedGearSkipped": "Could not import the gear inside {kind} “{name}”",
