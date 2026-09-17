@@ -140,6 +140,28 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Changed
 
+- **取り込み経路で素の `xml.etree` / `minidom` を使えないようにした。** 信頼できない
+  XML は `parse_untrusted`（defusedxml）で読む決まりだが、それを破るコードが入っても
+  誰も気づけなかった。ruff の `S313` / `S314` / `S318` / `S319` を有効にし、違反は
+  CI が落とす。同梱ファイルしか読まないローダー・テスト・スクリプトは除外し、
+  個別の例外（同梱の `settings.xml`、書き出しの自前出力の整形など）は理由付きの
+  `noqa` にした。`customdata.py` のツリー複製は再パースをやめて `copy.deepcopy` に。
+- **`derived.ts`（1,245 行）の行型を `lib/types/rows/` に分野ごとに分けた。**
+  `Derived` が並べる行の型 38 個を `character` / `magic` / `gear` / `lifestyle` /
+  `vehicles` / `ware` に移し、`derived.ts` は再エクスポートするだけにした（`Derived`
+  本体は契約テストが直接読むので残した）。型の中身は変えていない。
+- **`app/models.py`（678 行）を `app/models/` パッケージに分割した。** `gear` /
+  `magic` / `social` / `settings` / `career` / `character` と共通ガードの `_common`。
+  `from app.models import ...` は無変更。型生成スクリプトは `models.__all__` の順に
+  出力し、コメントをパッケージ内の全ファイルから拾うようにした（`generated.ts` の
+  差分はヘッダ 1 行のみ）。
+- **`engine/gear/vehicles.py`（624 行）を `gear/vehicles/` パッケージに分割した。**
+  `gear/weapons/` と同じ形で、能力値の `stats`、改造スロット勘定の `slots`、
+  `equipment`、`mods`、`drones` に割った。関数の中身は移動のみ。
+- **タブのテストが `TabPanelProps` の 9 個の props を毎回並べるのをやめた。**
+  30 ファイル 42 か所にあった重複を `tests/fixtures.ts` の `panelProps()` にまとめ、
+  既定値と違う props だけが残るようにした。アサーションは変えていない（−496 行）。
+
 - **CSP から `script-src 'unsafe-inline'` を外した。** これまでは Next が埋め込む
   起動用スクリプトに nonce が付かなかったので、インラインのスクリプトを丸ごと
   許していた。つまり XSS が 1 箇所でもあれば、そのまま実行されていた。
@@ -259,6 +281,15 @@ Chummer の amend エンジンのうち実データが使っていない部分�
   購入した値から数えるので、減少で 0 まで下がっていた RES のカルマ分（Bastion・SCSi の
   20 カルマ）が計上されるようになった。`.chum5` の往復で MAG が 1 減っていた
   （Draught・Gangerbean）のも同じ原因。
+- **`.chum5` の書き出しで落ちていた 4 種類の値を書くようにした。** Chummer の
+  テスト用セーブ 34 件を往復させて見つけたもの。
+  - 一覧にある知識技能の種別が `Academic` になっていた（Street なら能力値が
+    INT → LOG に変わる。20 件）。一覧の種別を使い、一覧に無ければエンジンと同じ
+    `Street` にする。
+  - 防具と武器アクセサリの `<rating>` を書いておらず、レーティングが 1 に戻って
+    nuyen も変わっていた（Apex Predator・Barrett など）。
+  - 複合フォームの `<extra>`（Firewall / Sleaze）と、呪文の `<alchemical>` を
+    書いていなかった（Bastion・Yeti・Draught）。
 - **カルマで買った技能グループと、カルマだけで上げた技能の特化を扱えるようにした。**
   - 技能グループも、上のレベルをカルマで買った分（`skill_group_karma`）を
     グループポイントから外し、新しいレベル × 5 カルマで数える。`.chum5` の
