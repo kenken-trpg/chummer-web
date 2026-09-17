@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Catalog, Character } from "@/lib/types";
 import type { TabPanelProps } from "@/components/character/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { ArmorGear } from "./ArmorGear";
 import { CommlinkGear } from "./CommlinkGear";
 import { CyberdeckGear } from "./CyberdeckGear";
@@ -34,19 +34,7 @@ function renderPanel(
   patch: (b: Record<string, unknown>) => void,
   catalog: Partial<Catalog> = {},
 ) {
-  return render(
-    <Panel
-      catalog={makeCatalog(catalog)}
-      character={character}
-      d={character.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<Panel {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
 }
 
 const host = (id: string, name: string) => ({

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { ContactsTab } from "@/components/character/tabs/ContactsTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -12,19 +12,7 @@ function renderTab(
   } = {},
 ) {
   const ch = makeCharacter(over.character);
-  return render(
-    <ContactsTab
-      catalog={makeCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<ContactsTab {...panelProps(ch, { patch: over.patch ?? (() => {}) })} />);
 }
 
 const contact = (over: Record<string, unknown> = {}) => ({

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { WeaponGear } from "./WeaponGear";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -69,19 +69,7 @@ function renderWeapons(
   patch: (b: Record<string, unknown>) => void,
   catalog = makeCatalog(),
 ) {
-  return render(
-    <WeaponGear
-      catalog={catalog}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<WeaponGear {...panelProps(ch, { catalog, patch })} />);
 }
 
 /** A character owning the given weapons, mirrored into `derived`. */

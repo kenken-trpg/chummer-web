@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { PriorityTab } from "@/components/character/tabs/PriorityTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -37,15 +37,10 @@ function renderTab(
   const ch = makeCharacter(over.character);
   return render(
     <PriorityTab
-      catalog={makeCatalog({ priority_table: fullTable })}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: makeCatalog({ priority_table: fullTable }),
+        patch: over.patch ?? (() => {}),
+      })}
     />,
   );
 }
@@ -143,17 +138,7 @@ describe("<PriorityTab> the table reads in Japanese", () => {
   function renderReal() {
     const ch = makeCharacter();
     return render(
-      <PriorityTab
-        catalog={makeCatalog({ priority_table: realTable })}
-        character={ch}
-        d={ch.derived}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
+      <PriorityTab {...panelProps(ch, { catalog: makeCatalog({ priority_table: realTable }) })} />,
     );
   }
 

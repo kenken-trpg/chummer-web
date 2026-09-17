@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { LifestyleGear } from "./LifestyleGear";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -54,19 +54,7 @@ function renderLifestyles(
   patch: (b: Record<string, unknown>) => void,
   catalog = makeCatalog(),
 ) {
-  return render(
-    <LifestyleGear
-      catalog={catalog}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<LifestyleGear {...panelProps(ch, { catalog, patch })} />);
 }
 
 /**

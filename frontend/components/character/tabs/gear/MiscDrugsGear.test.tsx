@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { MiscDrugsGear } from "@/components/character/tabs/gear/MiscDrugsGear";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -37,15 +37,10 @@ function renderTab(
   const ch = makeCharacter();
   return render(
     <MiscDrugsGear
-      catalog={over.catalog ?? makeCatalog({ gear: [rope, kit, jazz] as any })}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? makeCatalog({ gear: [rope, kit, jazz] as any }),
+        patch: over.patch ?? (() => {}),
+      })}
       mode={mode}
     />,
   );

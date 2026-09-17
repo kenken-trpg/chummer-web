@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { FociTab } from "@/components/character/tabs/FociTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,17 +17,7 @@ const powerFocus = {
 function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
   const ch = makeCharacter();
   return render(
-    <FociTab
-      catalog={makeCatalog({ foci: [powerFocus] as any })}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={patch}
-      setCharacter={() => {}}
-    />,
+    <FociTab {...panelProps(ch, { catalog: makeCatalog({ foci: [powerFocus] as any }), patch })} />,
   );
 }
 

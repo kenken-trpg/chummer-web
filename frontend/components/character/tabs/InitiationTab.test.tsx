@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { InitiationTab } from "@/components/character/tabs/InitiationTab";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,15 +17,10 @@ function renderTab(
   const ch = makeCharacter({ talent: "Magician", ...over.character });
   return render(
     <InitiationTab
-      catalog={over.catalog ?? makeCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? makeCatalog(),
+        patch: over.patch ?? (() => {}),
+      })}
     />,
   );
 }
@@ -41,19 +36,7 @@ describe("<InitiationTab>", () => {
     const patch = vi.fn();
     function Harness() {
       const [ch, setCh] = useState<Character>(() => makeCharacter({ talent: "Magician" }));
-      return (
-        <InitiationTab
-          catalog={makeCatalog()}
-          character={ch}
-          d={ch.derived}
-          tr={identityTr}
-          trGroup={identityTr}
-          t={(k) => k}
-          ui={testUi}
-          patch={patch}
-          setCharacter={setCh}
-        />
-      );
+      return <InitiationTab {...panelProps(ch, { patch, setCharacter: setCh })} />;
     }
     render(<Harness />);
     const slider = screen.getByRole("slider");

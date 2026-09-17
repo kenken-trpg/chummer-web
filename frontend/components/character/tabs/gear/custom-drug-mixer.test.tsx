@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { CustomDrugMixer } from "./CustomDrugMixer";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -45,19 +45,7 @@ const CATALOG = makeCatalog({
 } as any);
 
 function renderMixer(ch: Character, patch: (b: Record<string, unknown>) => void) {
-  return render(
-    <CustomDrugMixer
-      catalog={CATALOG}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<CustomDrugMixer {...panelProps(ch, { catalog: CATALOG, patch })} />);
 }
 
 /** A character holding the given mixed drugs, mirrored into `derived`. */
