@@ -201,8 +201,15 @@ def _qty(node: ET.Element) -> float:
         return 1.0
 
 
+def _included(node: ET.Element) -> bool:
+    """Whether Chummer says the entry came with its parent."""
+    return any(_text(node.find(tag)).lower() == "true" for tag in ("included", "includedinparent"))
+
+
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
+    from ..engine.gear.misc import _misc_child_fits
+
     #: what this app can fit inside a piece of armor or a vehicle
     HOST_BUCKETS = ("gear", "optics", "sensors")
     BUCKETS = ("commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps", "drones")
@@ -263,19 +270,37 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             row["cost"] = _picked_cost(g)
         if spec.get("category") == "Custom" and name and name != spec.get("name"):
             row["name"] = name
+        included = bool(parent_id) and (
+            _included(g)
+            # older saves do not say: what the parent's own entry
+            # brings (a Nixdorf Sekretar's Agent) came with it
+            or name.lower() in _data_index(current_overlay_key()).included.get(parent_gid, frozenset())
+        )
+        if (
+            parent_id
+            and host is None
+            and bucket == parent_bucket == "gear"
+            and not included
+            and not _misc_child_fits(rows_by_id.get(parent_gid) or {}, spec)
+        ):
+            # Chummer lets a player drag any gear into any other (ammo into a
+            # Spare Clip); this app would drop it there, and what it holds
+            # with it, so it is carried on its own instead — and said so.
+            warn.append(
+                notice(
+                    "engine.import.gearMovedOut",
+                    name=name,
+                    host=str((rows_by_id.get(parent_gid) or {}).get("name") or ""),
+                )
+            )
+            parent_id = None
         if bucket == "commlinks":
             row["qty"] = max(1, math.ceil(_qty(g)))
         else:
             row["qty"] = max(1, math.ceil(_qty(g) / max(1, cost_for.get(gid, 0))))
             if parent_id:
                 row["parent_id"] = parent_id
-                row["included"] = (
-                    _text(g.find("included")).lower() == "true"
-                    or _text(g.find("includedinparent")).lower() == "true"
-                    # older saves do not say: what the parent's own entry
-                    # brings (a Nixdorf Sekretar's Agent) came with it
-                    or name.lower() in _data_index(current_overlay_key()).included.get(parent_gid, frozenset())
-                )
+                row["included"] = included
         routed[bucket].append(row)
         for child in g.findall("./children/gear"):
             route_gear(child, row["id"], bucket, parent_gid=gid)

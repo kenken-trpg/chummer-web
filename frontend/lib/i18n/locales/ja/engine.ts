@@ -329,6 +329,8 @@ export const JA_ENGINE = {
     "このセッティングのハウスルール {count} 件は未対応です（{tags}）。数値には反映されていないので、卓で確認してください",
 
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
+  "engine.import.gearMovedOut":
+    "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
     "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
   "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
