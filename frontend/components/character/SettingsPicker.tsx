@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Catalog, Character, CharacterSettings } from "@/lib/types";
+import type { Catalog, Character, CharacterSettings, SettingsPreset } from "@/lib/types";
 import { buildMethodPatch } from "@/lib/character/build-method";
 import {
   loadSettingsFiles,
@@ -125,7 +125,7 @@ export function SettingsPicker({
       return;
     }
     const preset = presets.find((p) => p.name === picked);
-    if (preset) void apply({ name: preset.name, books: [...preset.books] }, preset.build_method);
+    if (preset) void apply(presetSettings(preset), preset.build_method);
   }
 
   async function onFile(file: File) {
@@ -399,4 +399,24 @@ function MergeDetail({ merge, ui }: { merge: MergeResult; ui: UiFn }) {
       {merge.truncated ? <p className="muted">{ui("settings.mergeTruncated")}</p> : null}
     </div>
   );
+}
+
+/**
+ * The settings a preset changes. Only the knobs it moves off the printed SR5
+ * values are written — the same rule the .chum5 import follows — so Standard
+ * stays a bare `{name, books}`. Without them, picking Prime Runner kept
+ * Standard's priority rows, quality cap and 10-point karma-to-nuyen cap.
+ */
+function presetSettings(preset: SettingsPreset): CharacterSettings {
+  const out: CharacterSettings = { name: preset.name, books: [...preset.books] };
+  if (preset.priority_table && preset.priority_table !== "Standard") {
+    out.priority_table = preset.priority_table;
+  }
+  if (preset.quality_karma_limit != null && preset.quality_karma_limit !== 25) {
+    out.quality_karma_limit = preset.quality_karma_limit;
+  }
+  if (preset.nuyen_max_bp != null && preset.nuyen_max_bp !== 10) {
+    out.priority_karma_nuyen_base = preset.nuyen_max_bp;
+  }
+  return out;
 }

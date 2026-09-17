@@ -21,6 +21,16 @@ const catalog = makeCatalog({
       books: ["SR5", "RG"],
       sum_to_ten: 10,
     },
+    {
+      id: "3",
+      name: "Prime Runner",
+      build_method: "SumToTen",
+      books: ["SR5"],
+      sum_to_ten: 10,
+      quality_karma_limit: 35,
+      priority_table: "Prime Runner",
+      nuyen_max_bp: 25,
+    },
   ],
 });
 
@@ -67,6 +77,21 @@ describe("SettingsPicker", () => {
   it("starts unrestricted and says so", () => {
     setup();
     expect(screen.getByText("全ルールブックが対象")).toBeDefined();
+  });
+
+  it("carries the rules a preset moves off the printed values", () => {
+    const { patch } = setup();
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Prime Runner" } });
+    expect(patch).toHaveBeenCalledWith({
+      build_method: "SumToTen",
+      settings: {
+        name: "Prime Runner",
+        books: ["SR5"],
+        priority_table: "Prime Runner",
+        quality_karma_limit: 35,
+        priority_karma_nuyen_base: 25,
+      },
+    });
   });
 
   it("applies a preset's books and its build method together", () => {
