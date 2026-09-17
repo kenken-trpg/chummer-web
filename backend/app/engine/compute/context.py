@@ -113,6 +113,9 @@ class Ctx:
     ess_lost_cyber: float = 0.0
     ess_lost_bio: float = 0.0
     ratings: dict[str, int] = field(default_factory=dict)
+    #: `ratings` before essence loss takes MAG / RES down: what was bought,
+    #: and so what is saved back and what points and karma are counted from.
+    bought_ratings: dict[str, int] = field(default_factory=dict)
 
     # --- magic (initiation / submersion / foci / adept) --------------------
     initiation: InitiationBundle = field(default_factory=empty_initiation)

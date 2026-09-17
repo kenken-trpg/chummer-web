@@ -258,8 +258,10 @@ def test_cyberadept_daemon_reduces_res_essence_penalty() -> None:
     }
     base = compute(_techno("ca-base", "A", **common))
     out = compute(_techno("ca", "A", quality_ids=[RESONANT_STREAM_CYBERADEPT], **common))
-    assert base.attributes["RES"] == 5
-    assert out.attributes["RES"] == 6
+    # the rating bought stays 6; essence loss shows in the total
+    assert base.attributes["RES"] == out.attributes["RES"] == 6
+    assert base.derived["totals"]["RES"] == 5
+    assert out.derived["totals"]["RES"] == 6
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "cyberadeptdaemon" not in tags
 
@@ -450,3 +452,15 @@ def test_sprite_affinity_picks_one_sprite_from_the_catalog() -> None:
     assert not has(picked["errors"], "engine.qualities.extraInvalid")
     bogus = compute(_techno("sa-bogus", quality_ids=[spec["id"]], quality_extras={spec["id"]: "Fire Spirit"})).derived
     assert has(bogus["errors"], "engine.qualities.extraInvalid")
+
+
+def test_essence_loss_is_not_saved_into_the_rating() -> None:
+    """The reduced RES used to be written back to the state, so every
+    recompute took the loss off again: 6, 5, 4, down to the talent floor."""
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["RES"] = 6
+    state = _techno("drift", "A", attributes=attrs, cyberware=[CyberwareInstall(ware_id=DATAJACK)])
+    for _ in range(3):
+        state = compute(state)
+    assert state.attributes["RES"] == 6
+    assert state.derived["totals"]["RES"] == 5

@@ -98,7 +98,9 @@ def _effective_attr_spec(
 
 
 def assemble(ctx: Ctx) -> None:
-    ctx.state.attributes = ctx.ratings
+    # what was bought, not what essence loss left: saved back, a reduced
+    # rating would lose the loss again on every recompute
+    ctx.state.attributes = ctx.bought_ratings
     sum_spent = sum_to_ten_spent(ctx.state.priorities)
     clamped = set(ctx.effects.get("attribute_max_clamp") or [])
     # A technomancer's persona is one of the personas the Matrix initiative
