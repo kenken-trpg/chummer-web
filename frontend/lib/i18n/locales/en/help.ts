@@ -51,4 +51,14 @@ export const EN_HELP = {
     "Firewall: defence against attacks and intrusions; the value that opposes them",
   "help.matrix.array":
     "A deck comes with a fixed set of four values that you assign to these slots; swapping two is a free action once per turn (SR5 p.222)",
+  "help.knowledge.what":
+    "Knowledge skill: linked to LOG or INT. Categories are academic, professional, interest, street and language",
+  "help.knowledge.free":
+    "Creation gives (INT + LOG) × 2 free points, plus one free native language",
+  "help.knowledge.cost":
+    "Past the free points, one karma buys one rating; a specialization is one as well",
+  "help.exotic.what":
+    "Exotic skill: one skill per target (a weapon type, say); the same skill can be held for several targets",
+  "help.exotic.nodefault":
+    "It cannot be defaulted — you need a rating to use it at all (SR5 p.130)",
 } as const;

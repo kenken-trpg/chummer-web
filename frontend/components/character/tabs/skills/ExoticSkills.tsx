@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { skillDice } from "@/lib/character/format";
@@ -40,15 +41,23 @@ export function ExoticSkills({
           const bonus = d.skill_bonus?.[row.label] || d.skill_bonus?.[row.skill_name];
           return (
             <div className="skill-row has-spec can-delete" key={row.id}>
-              <span
-                title={[
-                  row.attribute,
-                  ...(d.skill_bonus_notes?.[row.label] ||
-                    d.skill_bonus_notes?.[row.skill_name] ||
-                    []),
-                ].join(" / ")}
-              >
-                {tr(row.skill_name)}
+              <span>
+                <HelpTip
+                  label={ui("help.open", { label: tr(row.skill_name) })}
+                  lines={[
+                    { label: row.attribute },
+                    ...(
+                      d.skill_bonus_notes?.[row.label] ||
+                      d.skill_bonus_notes?.[row.skill_name] ||
+                      []
+                    ).map((label) => ({ label })),
+                    { label: ui("help.exotic.what") },
+                    { label: ui("help.skill.pool") },
+                    { label: ui("help.exotic.nodefault") },
+                  ]}
+                >
+                  {tr(row.skill_name)}
+                </HelpTip>
               </span>
               <RangeInput
                 min={1}

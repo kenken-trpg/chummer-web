@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { KNOW_CATS, knowCatLabel } from "@/lib/character/constants";
@@ -65,9 +66,22 @@ export function KnowledgeSkills(props: TabPanelProps) {
           const knowSpec = (catalog.skills.knowledge || []).find((item) => item.name === row.name);
           return (
             <div className={splitKarma ? "know-row has-karma" : "know-row"} key={row.name}>
-              <span title={[row.attribute, ...(d.skill_bonus_notes?.[row.name] || [])].join(" / ")}>
-                {tr(row.name)}
-                {custom ? ui("skills.custom") : ""}
+              <span>
+                <HelpTip
+                  label={ui("help.open", { label: tr(row.name) })}
+                  lines={[
+                    { label: row.attribute },
+                    ...(d.skill_bonus_notes?.[row.name] || []).map((label) => ({ label })),
+                    { label: ui("help.knowledge.what") },
+                    { label: ui("help.skill.pool") },
+                    { label: ui("help.knowledge.free") },
+                    { label: ui("help.knowledge.cost") },
+                    { label: ui("help.skill.spec") },
+                  ]}
+                >
+                  {tr(row.name)}
+                  {custom ? ui("skills.custom") : ""}
+                </HelpTip>
               </span>
               {custom ? (
                 <select
