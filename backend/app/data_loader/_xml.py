@@ -77,7 +77,7 @@ def parse_data(name: str) -> ET.Element:
     overlay = _overlay.get()
     if overlay is not None and name in overlay.trees:
         return overlay.trees[name]
-    return ET.parse(DATA_DIR / name).getroot()
+    return ET.parse(DATA_DIR / name).getroot()  # noqa: S314 -- vendored file
 
 
 def data_root(name: str) -> ET.Element | None:
@@ -94,7 +94,7 @@ def data_root(name: str) -> ET.Element | None:
     if not path.exists():
         return None
     try:
-        return ET.parse(path).getroot()
+        return ET.parse(path).getroot()  # noqa: S314 -- vendored file
     except ET.ParseError as exc:
         # A truncated download, or a hand-edited vendor file. One unreadable
         # data file should cost its own section, not the whole catalog.

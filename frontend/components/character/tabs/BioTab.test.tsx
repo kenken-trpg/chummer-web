@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { BioTab } from "@/components/character/tabs/BioTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -48,15 +48,10 @@ function renderTab(
   const ch = makeCharacter(over.character);
   return render(
     <BioTab
-      catalog={over.catalog ?? bioCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? bioCatalog(),
+        patch: over.patch ?? (() => {}),
+      })}
     />,
   );
 }

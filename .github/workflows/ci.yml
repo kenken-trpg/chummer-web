@@ -55,7 +55,7 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
 
-      # frontend/lib/types/generated.ts is written from app/models.py. The
+      # frontend/lib/types/generated.ts is written from app/models/. The
       # pytest run checks it too; this fails earlier and says so plainly.
       - run: python scripts/gen_frontend_types.py --check
 

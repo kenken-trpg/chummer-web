@@ -70,11 +70,11 @@ def economy(ctx: Ctx) -> None:
     ctx.attr_karma_levels = _attribute_karma_levels(ctx, floors)
     ctx.spent_physical = 0
     for key in PHYSICAL_ATTRS:
-        ctx.spent_physical += max(0, ctx.ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
+        ctx.spent_physical += max(0, ctx.bought_ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
     ctx.spent_special = 0
     for key in ("EDG", "MAG", "RES"):
         if key in floors:
-            ctx.spent_special += max(0, ctx.ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
+            ctx.spent_special += max(0, ctx.bought_ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
 
     ctx.nuyen_karma_max = current_rules().karma_nuyen_max
     if ctx.is_karma:
@@ -340,7 +340,7 @@ def economy(ctx: Ctx) -> None:
     ctx.career_adv_lines = []
     if ctx.is_karma:
         ctx.attr_karma = attribute_karma_cost(
-            ctx.ratings, ctx.attrs_spec, ctx.special_key, rules=ctx.effects.get("attribute_karma_cost")
+            ctx.bought_ratings, ctx.attrs_spec, ctx.special_key, rules=ctx.effects.get("attribute_karma_cost")
         )
         ctx.skill_buy_karma = skill_karma_cost(
             ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
@@ -372,7 +372,7 @@ def economy(ctx: Ctx) -> None:
         )
     else:
         ctx.attr_karma = attribute_levels_karma_cost(
-            ctx.ratings, ctx.attr_karma_levels, rules=ctx.effects.get("attribute_karma_cost")
+            ctx.bought_ratings, ctx.attr_karma_levels, rules=ctx.effects.get("attribute_karma_cost")
         )
         ctx.skill_buy_karma = skill_levels_karma_cost(
             ctx.skill_totals,
@@ -531,7 +531,7 @@ def _attribute_karma_levels(ctx: Ctx, floors: dict[str, int]) -> dict[str, int]:
         for key, count in (ctx.state.attribute_karma or {}).items():
             if key not in floors:
                 continue
-            kept = max(0, min(int(count or 0), int(ctx.ratings.get(key) or 0) - floors[key]))
+            kept = max(0, min(int(count or 0), int(ctx.bought_ratings.get(key) or 0) - floors[key]))
             if kept:
                 levels[key] = kept
     ctx.state.attribute_karma = dict(levels)

@@ -13,6 +13,7 @@ from app.models import (
     ArmorModInstall,
     CharacterState,
     CommlinkInstall,
+    ComplexFormInstall,
     ContactInstall,
     CyberwareInstall,
     GearInstall,
@@ -474,6 +475,52 @@ def test_a_picked_price_and_a_custom_name_round_trip() -> None:
     )
     back = chum5_to_state(state_to_chum5(import_character(state.model_dump())))[0]["gear"][0]
     assert (back["gear_id"], back["cost"], back["name"]) == (custom, 250, "Rosary")
+
+
+def test_a_listed_knowledge_skill_keeps_its_type() -> None:
+    """The engine stores a listed skill's type only when it was changed, and
+    the export filled the gap with Academic: Area Knowledge: Seattle came back
+    a LOG skill in 20 of Chummer's 34 test saves."""
+    state = compute_state(
+        CharacterState(
+            id="k",
+            name="K",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes={},
+            knowledge_skills={"Area Knowledge: Seattle": 3, "Homebrew Lore": 2},
+        )
+    )
+    know = {
+        s.findtext("name"): s.findtext("skillcategory")
+        for s in ET.fromstring(state_to_chum5(state)).findall("./newskills/knoskills/skill")
+    }
+    assert know["Area Knowledge: Seattle"] == "Street"
+    assert know["Homebrew Lore"] == "Street"
+
+
+def test_ratings_extras_and_alchemy_survive_the_round_trip() -> None:
+    """Armor and accessory ratings, a complex form's attribute and a spell's
+    alchemical form were read on import but never written."""
+    state = CharacterState(
+        id="rt",
+        name="Round trip",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes={},
+        armor=[ArmorInstall(id="a1", armor_id="fc4074b5-b48a-43d4-8d9c-25a11da2a6a8", rating=6)],
+        weapons=[WeaponInstall(id="w1", weapon_id="971c711b-db32-4339-9203-865ef38f350e")],
+        weapon_accessories=[
+            WeaponAccessoryInstall(accessory_id="d40d2fc6-3aad-4793-843d-20e3597b2365", parent_id="w1", rating=2)
+        ],
+        complex_forms=[ComplexFormInstall(form_id="2abb9759-30b1-490f-9b42-0d6b7d282526", level=1, extra="Firewall")],
+        spells=[SpellInstall(spell_id="c78d91cc-fa02-48c3-a243-28823a2038ef", alchemical=True)],
+    )
+    back, _ = chum5_to_state(state_to_chum5(state))
+    assert [row["rating"] for row in back["armor"]] == [6]
+    assert [row["rating"] for row in back["weapon_accessories"]] == [2]
+    assert [row["extra"] for row in back["complex_forms"]] == ["Firewall"]
+    assert [row["alchemical"] for row in back["spells"]] == [True]
 
 
 MADE_MAN = "45be40cc-a21a-4771-b47d-a532ea60b205"

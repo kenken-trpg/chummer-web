@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { SpritesTab } from "@/components/character/tabs/SpritesTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -11,15 +11,7 @@ function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
   const ch = makeCharacter();
   return render(
     <SpritesTab
-      catalog={makeCatalog({ sprites: [courier] as any })}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={patch}
-      setCharacter={() => {}}
+      {...panelProps(ch, { catalog: makeCatalog({ sprites: [courier] as any }), patch })}
     />,
   );
 }

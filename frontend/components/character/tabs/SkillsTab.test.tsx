@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { SkillsTab } from "@/components/character/tabs/SkillsTab";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -49,15 +49,11 @@ function renderTab(
   const ch = makeCharacter(over.character);
   return render(
     <SkillsTab
-      catalog={over.catalog ?? skillsCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={over.setCharacter ?? (() => {})}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? skillsCatalog(),
+        patch: over.patch ?? (() => {}),
+        setCharacter: over.setCharacter ?? (() => {}),
+      })}
     />,
   );
 }
@@ -76,19 +72,7 @@ function renderStateful(
 ) {
   function Harness() {
     const [ch, setCh] = useState<Character>(() => makeCharacter(init));
-    return (
-      <SkillsTab
-        catalog={catalog}
-        character={ch}
-        d={ch.derived}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={patch}
-        setCharacter={setCh}
-      />
-    );
+    return <SkillsTab {...panelProps(ch, { catalog, patch, setCharacter: setCh })} />;
   }
   return render(<Harness />);
 }
@@ -162,17 +146,7 @@ describe("<SkillsTab>", () => {
     function Harness() {
       const [ch, setCh] = useState<Character>(() => makeCharacter());
       return (
-        <SkillsTab
-          catalog={skillsCatalog()}
-          character={ch}
-          d={ch.derived}
-          tr={identityTr}
-          trGroup={identityTr}
-          t={(k) => k}
-          ui={testUi}
-          patch={patch}
-          setCharacter={setCh}
-        />
+        <SkillsTab {...panelProps(ch, { catalog: skillsCatalog(), patch, setCharacter: setCh })} />
       );
     }
     render(<Harness />);
@@ -600,19 +574,7 @@ describe("<SkillsTab> specialisations", () => {
     expect((screen.getAllByRole("combobox")[0] as HTMLSelectElement).disabled).toBe(true);
 
     const ch = makeCharacter({ skills: { Blades: 1 }, derived: { skill_totals: { Blades: 1 } } });
-    rerender(
-      <SkillsTab
-        catalog={skillsCatalog()}
-        character={ch}
-        d={ch.derived}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
-    );
+    rerender(<SkillsTab {...panelProps(ch, { catalog: skillsCatalog() })} />);
     expect((screen.getAllByRole("combobox")[0] as HTMLSelectElement).disabled).toBe(false);
   });
 

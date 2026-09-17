@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCharacter, panelProps } from "@/tests/fixtures";
 import { WeaponGear } from "@/components/character/tabs/gear/WeaponGear";
 import { makeCatalog } from "@/tests/fixtures";
 
@@ -23,19 +23,7 @@ function renderWeapons(derivedExtra: Record<string, unknown>, patch = vi.fn()) {
     weapons: [{ id: "w1", weapon_id: "c-w1" }],
     derived: { weapons: [weapon], ...derivedExtra },
   } as any) as Character;
-  render(
-    <WeaponGear
-      catalog={makeCatalog({})}
-      character={character}
-      d={character.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-    />,
-  );
+  render(<WeaponGear {...panelProps(character, { catalog: makeCatalog({}), patch })} />);
   return patch;
 }
 
