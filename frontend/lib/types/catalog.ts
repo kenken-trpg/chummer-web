@@ -349,6 +349,12 @@ export interface SettingsPreset {
   /** Enabled `<source>` codes. Empty means the preset restricts nothing. */
   books: string[];
   sum_to_ten: number;
+  /** Positive/negative quality karma cap (Prime Runner 35). */
+  quality_karma_limit?: number;
+  /** `<prioritytable>` the preset builds from. */
+  priority_table?: string;
+  /** `<nuyenmaxbp>`: karma a Priority build may turn into nuyen. */
+  nuyen_max_bp?: number;
 }
 
 export type PriorityCell = {
