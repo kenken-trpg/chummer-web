@@ -59,6 +59,20 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
             warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.lifestyle"), name=base))
     st["lifestyles"] = lifestyles
 
+    # a contact a quality added: Chummer's AddContact improvement names the
+    # contact's guid and the quality's `<id>` (this app writes its `<guid>`)
+    catalog_qualities = {str(row["id"]) for row in cat["qualities"]}
+    quality_of: dict[str, str] = {}
+    for q in root.findall("./qualities/quality"):
+        qid = next((ref for tag in ("sourceid", "guid") if (ref := _text(q.find(tag))) in catalog_qualities), "")
+        for tag in ("id", "guid"):
+            if qid and _text(q.find(tag)):
+                quality_of[_text(q.find(tag))] = qid
+    granted_by = {
+        _text(imp.find("improvedname")): quality_of[_text(imp.find("sourcename"))]
+        for imp in root.findall("./improvements/improvement")
+        if _text(imp.find("improvementttype")) == "AddContact" and _text(imp.find("sourcename")) in quality_of
+    }
     contacts = []
     for c in root.findall("./contacts/contact"):
         nm = _text(c.find("name"))
@@ -73,6 +87,7 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
                 "connection": max(1, _int(c.find("connection"), 1)),
                 "loyalty": max(1, _int(c.find("loyalty"), 1)),
                 "group": _text(c.find("type")).lower() == "group" or _text(c.find("isgroup")).lower() == "true",
+                "source_quality_id": granted_by.get(guid),
             }
         )
     st["contacts"] = contacts

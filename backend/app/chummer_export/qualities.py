@@ -71,12 +71,17 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(child, "qualitysource", "Improvement")
             _sub(child, "sourcename", names["quality"].get(qid, ""))
             granted.append((qid, child_guid))
+        # a contact the quality added (Made Man): Chummer ties it to the
+        # quality with an AddContact improvement, which the import follows back
+        if any(c.source_quality_id == qid for c in state.contacts) and q.find("guid") is None:
+            _sub(q, "guid", qid)
 
     _export_quality_critter_powers(root, state)
     # Chummer keeps a picked spell category only on the improvement
     # `<limitspellcategory />` made, tied to the quality by its guid
     links = [(category, qid, "LimitSpellCategory") for qid, category in spell_limits]
     links += [(child_guid, qid, "SpecificQuality") for qid, child_guid in granted]
+    links += [(c.id, c.source_quality_id, "AddContact") for c in state.contacts if c.source_quality_id]
     if links:
         imps = _sub(root, "improvements")
         for improved, qid, kind in links:

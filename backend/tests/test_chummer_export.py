@@ -521,3 +521,46 @@ def test_ratings_extras_and_alchemy_survive_the_round_trip() -> None:
     assert [row["rating"] for row in back["weapon_accessories"]] == [2]
     assert [row["extra"] for row in back["complex_forms"]] == ["Firewall"]
     assert [row["alchemical"] for row in back["spells"]] == [True]
+
+
+MADE_MAN = "45be40cc-a21a-4771-b47d-a532ea60b205"
+
+
+def test_a_contact_a_quality_added_is_not_added_twice() -> None:
+    """Made Man adds a contact. Exported without the AddContact improvement
+    that ties it to the quality, it came back as a contact of its own, and the
+    quality added a second one (Ushi Resub: 3 contacts became 4)."""
+    state = compute_state(
+        CharacterState(
+            id="mm",
+            name="Made",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes={},
+            quality_ids=[MADE_MAN],
+            contacts=[ContactInstall(name="Fixer", connection=3, loyalty=2)],
+        )
+    )
+    granted = [c for c in state.contacts if c.source_quality_id == MADE_MAN]
+    assert len(granted) == 1
+    back = import_character(chum5_to_state(state_to_chum5(state))[0])
+    assert sorted(c.name for c in back.contacts) == sorted(c.name for c in state.contacts)
+    assert [c.source_quality_id for c in back.contacts if c.name == granted[0].name] == [MADE_MAN]
+
+
+def test_chummers_addcontact_improvement_marks_the_granted_contact() -> None:
+    """Chummer names the quality by its `<id>`, not by the catalog guid."""
+    xml = f"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <qualities><quality><guid>{MADE_MAN}</guid><name>Made Man</name>
+        <id>0b1e7a3c-0000-4000-8000-000000000001</id></quality></qualities>
+      <contacts><contact><name>Made Man</name><connection>1</connection><loyalty>3</loyalty>
+        <guid>0b1e7a3c-0000-4000-8000-000000000002</guid></contact></contacts>
+      <improvements><improvement>
+        <improvedname>0b1e7a3c-0000-4000-8000-000000000002</improvedname>
+        <sourcename>0b1e7a3c-0000-4000-8000-000000000001</sourcename>
+        <improvementttype>AddContact</improvementttype><improvementsource>Quality</improvementsource>
+      </improvement></improvements>
+    </character>""".encode()
+    st, _ = chum5_to_state(xml)
+    assert [c["source_quality_id"] for c in st["contacts"]] == [MADE_MAN]
+    assert len(import_character(st).contacts) == 1
