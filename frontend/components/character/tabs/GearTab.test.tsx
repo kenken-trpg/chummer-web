@@ -1,23 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { GearTab } from "@/components/character/tabs/GearTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCharacter, panelProps } from "@/tests/fixtures";
 
 function renderTab() {
   const ch = makeCharacter();
-  return render(
-    <GearTab
-      catalog={makeCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={() => {}}
-      setCharacter={() => {}}
-    />,
-  );
+  return render(<GearTab {...panelProps(ch)} />);
 }
 
 describe("<GearTab>", () => {

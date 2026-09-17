@@ -1,3 +1,4 @@
+import type { TabPanelProps } from "@/components/character/types";
 import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
 import { translate } from "@/lib/i18n/messages";
@@ -311,3 +312,24 @@ export const RICH_CATALOG = makeCatalog({
     ],
   } as any,
 });
+
+/** Every `TabPanelProps` a tab takes: `character` and its `derived`, a bare
+ * catalog, identity translators, the real `ui` and inert callbacks. Pass only
+ * what the test is about — `<WeaponGear {...panelProps(ch, { catalog, patch })} />`. */
+export function panelProps(
+  character: Character = makeCharacter(),
+  over: Partial<TabPanelProps> = {},
+): TabPanelProps {
+  return {
+    catalog: makeCatalog(),
+    character,
+    d: character.derived,
+    tr: identityTr,
+    trGroup: identityTr,
+    t: (key) => key,
+    ui: testUi,
+    patch: () => {},
+    setCharacter: () => {},
+    ...over,
+  };
+}

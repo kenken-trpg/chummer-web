@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
 import type { TabPanelProps } from "@/components/character/types";
 import { translate } from "@/lib/i18n";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCharacter, panelProps } from "@/tests/fixtures";
 import { ArmorGear } from "./ArmorGear";
 import { CommlinkGear } from "./CommlinkGear";
 import { CyberdeckGear } from "./CyberdeckGear";
@@ -36,19 +36,7 @@ function renderPanel(
   patch: (b: Record<string, unknown>) => void,
   extra: Record<string, unknown> = {},
 ) {
-  return render(
-    <Panel
-      catalog={makeCatalog()}
-      character={character}
-      d={character.derived}
-      tr={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={patch}
-      setCharacter={() => {}}
-      {...(extra as any)}
-    />,
-  );
+  return render(<Panel {...panelProps(character, { patch })} {...(extra as any)} />);
 }
 
 /** Two owned rows, mirrored into `character` and `derived` under their keys. */

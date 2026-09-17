@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { beforeEach } from "vitest";
 import { CyberTab } from "@/components/character/tabs/CyberTab";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -55,15 +55,10 @@ function renderTab(
   const ch = makeCharacter(over.character);
   return render(
     <CyberTab
-      catalog={over.catalog ?? cyberCatalog()}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? cyberCatalog(),
+        patch: over.patch ?? (() => {}),
+      })}
     />,
   );
 }
@@ -113,19 +108,7 @@ describe("<CyberTab>", () => {
       source: "SR5",
     };
     const d = { ...ch.derived, adapsin, cyberware: [installed] } as any;
-    return render(
-      <CyberTab
-        catalog={cyberCatalog()}
-        character={{ ...ch, derived: d }}
-        d={d}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
-    );
+    return render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
   }
 
   function gradeOptions() {
@@ -186,15 +169,10 @@ describe("<CyberTab>", () => {
     } as any;
     render(
       <CyberTab
-        catalog={cyberCatalog([hive, soft, datajack])}
-        character={{ ...ch, derived: d }}
-        d={d}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={patch}
-        setCharacter={() => {}}
+        {...panelProps(
+          { ...ch, derived: d },
+          { catalog: cyberCatalog([hive, soft, datajack]), patch },
+        )}
       />,
     );
     const select = screen.getByLabelText("対象") as HTMLSelectElement;
@@ -226,19 +204,7 @@ describe("<CyberTab>", () => {
         },
       ],
     } as any;
-    render(
-      <CyberTab
-        catalog={cyberCatalog()}
-        character={{ ...ch, derived: d }}
-        d={d}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
-    );
+    render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
     expect(screen.getByText(/Busted Cyberware/)).toBeTruthy();
     expect(screen.queryByLabelText("グレード")).toBeNull();
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
@@ -248,19 +214,7 @@ describe("<CyberTab>", () => {
       ...d,
       cyberware: [{ ...d.cyberware[0], id: "row1", granted_by: "" }],
     };
-    render(
-      <CyberTab
-        catalog={cyberCatalog()}
-        character={{ ...ch, derived: bought }}
-        d={bought}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
-    );
+    render(<CyberTab {...panelProps({ ...ch, derived: bought }, { catalog: cyberCatalog() })} />);
     expect(screen.getByLabelText("グレード")).toBeTruthy();
     expect(screen.getByRole("button", { name: "削除" })).toBeTruthy();
   });
@@ -303,17 +257,7 @@ describe("<CyberTab> compact view", () => {
       ...extra,
     } as any;
     return render(
-      <CyberTab
-        catalog={cyberCatalog()}
-        character={{ ...ch, derived: d }}
-        d={d}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={patch}
-        setCharacter={() => {}}
-      />,
+      <CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog(), patch })} />,
     );
   }
 
@@ -362,19 +306,7 @@ describe("<CyberTab> compact view", () => {
         },
       ],
     } as any;
-    render(
-      <CyberTab
-        catalog={cyberCatalog()}
-        character={{ ...ch, derived: d }}
-        d={d}
-        tr={identityTr}
-        trGroup={identityTr}
-        t={(k) => k}
-        ui={testUi}
-        patch={() => {}}
-        setCharacter={() => {}}
-      />,
-    );
+    render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
     const nested = document.querySelector(".cyber-item.compact.nested")!;
     expect(nested.textContent).toBe("Image Link（同梱）");
   });

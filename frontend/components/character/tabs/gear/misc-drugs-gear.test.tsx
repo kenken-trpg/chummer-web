@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { MiscDrugsGear } from "./MiscDrugsGear";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -47,20 +47,7 @@ function renderPanel(
   mode: "misc" | "drugs" = "misc",
   catalog = makeCatalog(),
 ) {
-  return render(
-    <MiscDrugsGear
-      catalog={catalog}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={((k: string) => k) as any}
-      ui={testUi}
-      patch={patch as any}
-      setCharacter={() => {}}
-      mode={mode}
-    />,
-  );
+  return render(<MiscDrugsGear {...panelProps(ch, { catalog, patch })} mode={mode} />);
 }
 
 /** A character owning these gear rows, mirrored into `derived`. */

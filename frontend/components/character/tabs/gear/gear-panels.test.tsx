@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Catalog } from "@/lib/types";
 import type { TabPanelProps } from "@/components/character/types";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { ArmorGear } from "./ArmorGear";
 import { CommlinkGear } from "./CommlinkGear";
 import { CyberdeckGear } from "./CyberdeckGear";
@@ -142,19 +142,7 @@ const PANELS: {
 
 function renderPanel(entry: (typeof PANELS)[number], patch: (b: Record<string, unknown>) => void) {
   const ch = makeCharacter();
-  render(
-    <entry.Panel
-      catalog={makeCatalog(entry.catalog)}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={patch}
-      setCharacter={() => {}}
-    />,
-  );
+  render(<entry.Panel {...panelProps(ch, { catalog: makeCatalog(entry.catalog), patch })} />);
 }
 
 describe.each(PANELS)("<$name>", (entry) => {

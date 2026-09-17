@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { WeaponGear } from "@/components/character/tabs/gear/WeaponGear";
-import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -24,15 +24,10 @@ function renderTab(
   const ch = makeCharacter();
   return render(
     <WeaponGear
-      catalog={over.catalog ?? makeCatalog({ weapons: [ak, knife] as any })}
-      character={ch}
-      d={ch.derived}
-      tr={identityTr}
-      trGroup={identityTr}
-      t={(k) => k}
-      ui={testUi}
-      patch={over.patch ?? (() => {})}
-      setCharacter={() => {}}
+      {...panelProps(ch, {
+        catalog: over.catalog ?? makeCatalog({ weapons: [ak, knife] as any }),
+        patch: over.patch ?? (() => {}),
+      })}
     />,
   );
 }
