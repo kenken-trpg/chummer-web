@@ -862,3 +862,40 @@ def test_the_chemical_in_a_gland_is_kept_and_priced_into_it() -> None:
     back = import_character(chum5_to_state(state_to_chum5(ch))[0])
     assert back.derived["nuyen_spent"] == ch.derived["nuyen_spent"]
     assert [row.parent_id for row in back.gear] == [back.bioware[0].id]
+
+
+def _gear_named(name: str) -> str:
+    return next(str(row["id"]) for row in catalog()["gear"] if row["name"] == name)
+
+
+def test_what_is_inside_a_gear_item_is_bought_once_for_each_of_it() -> None:
+    """Chummer's `Gear.TotalCost`: three gas grenades are three loads of CS/Tear
+    Gas, not one. A box of ammo counts its rounds. And a box of 2,000
+    datachips is 200 lots, not the 99 the engine used to cut it to."""
+    from app.engine import compute
+    from app.models import GearInstall
+    from tests.engine_support import _mundane
+
+    grenade = GearInstall(gear_id=_gear_named("Minigrenade: Gas"), qty=3)
+    gas = GearInstall(gear_id=_gear_named("CS/Tear Gas"), parent_id=grenade.id)
+    chips = GearInstall(gear_id=_gear_named("Datachip"), qty=200)
+    rows = {row["name"]: row for row in compute(_mundane("held", gear=[grenade, gas, chips])).derived["gear"]}
+    assert rows["CS/Tear Gas"]["nuyen"] == 20 * 3
+    assert rows["Minigrenade: Gas"]["nuyen"] == 40 * 3
+    assert (rows["Datachip"]["qty"], rows["Datachip"]["nuyen"]) == (200, 1000)
+
+
+def test_a_weapon_chummer_made_from_gear_is_not_bought_again() -> None:
+    """A grenade bought as gear shows in Chummer's `<weapons>` too, with the
+    gear's guid in `<parentid>` and no price. Importing it as a weapon paid for
+    the grenade twice (SCSi: 480¥)."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <weapons>
+        <weapon><name>Minigrenade: Gas</name><cost>0</cost><parentid>abc</parentid></weapon>
+        <weapon><name>Combat Knife</name><cost>300</cost><parentid /></weapon>
+      </weapons>
+    </character>"""
+    state, _ = chum5_to_state(raw)
+    names = {str(row["id"]): row["name"] for row in catalog()["weapons"]}
+    assert [names[row["weapon_id"]] for row in state["weapons"]] == ["Combat Knife"]

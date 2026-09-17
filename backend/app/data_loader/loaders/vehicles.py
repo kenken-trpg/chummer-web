@@ -81,6 +81,10 @@ def load_vehicle_names() -> list[str]:
     return names
 
 
+#: Chummer's `Vehicle.MaxWheels`: the most tyres a `qty` mod counts
+MAX_WHEELS = 50
+
+
 def load_vehicle_mods() -> list[dict[str, Any]]:
     root = data_root("vehicles.xml")
     if root is None:
@@ -97,7 +101,9 @@ def load_vehicle_mods() -> list[dict[str, Any]]:
         rating_raw = _text(el.find("rating"))
         min_raw = _text(el.find("minrating"))
         qty_rating = rating_raw.lower() == "qty"
-        rating_max = _int(el.find("rating"), 0) if rating_raw.isdigit() else 0
+        # `qty` counts tyres rather than rating them: Chummer offers 1 to
+        # `Vehicle.MaxWheels` (50) of them, priced per tyre
+        rating_max = _int(el.find("rating"), 0) if rating_raw.isdigit() else MAX_WHEELS if qty_rating else 0
         subs_el = el.find("subsystems")
         items.append(
             {
@@ -111,8 +117,8 @@ def load_vehicle_mods() -> list[dict[str, Any]]:
                 "minrating": _int(el.find("minrating"), 1) if rating_max > 0 else 0,
                 "maxrating": rating_max,
                 "minrating_expr": min_raw,
-                "maxrating_expr": rating_raw if rating_raw and not rating_raw.isdigit() else "",
-                "purchasable": not _is_variable_cost(cost) and not qty_rating and cost.strip() not in {"0", ""},
+                "maxrating_expr": rating_raw if rating_raw and not rating_raw.isdigit() and not qty_rating else "",
+                "purchasable": not _is_variable_cost(cost) and cost.strip() not in {"0", ""},
                 "bonus": parse_bonus(el.find("bonus")),
                 "required": _vehicle_constraints(el.find("required")),
                 "forbidden": _vehicle_constraints(el.find("forbidden")),

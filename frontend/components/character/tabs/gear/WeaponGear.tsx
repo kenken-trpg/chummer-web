@@ -211,7 +211,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       <input
                         type="number"
                         min={1}
-                        max={99}
+                        max={999}
                         value={ammo.qty}
                         onChange={(e) =>
                           patch({

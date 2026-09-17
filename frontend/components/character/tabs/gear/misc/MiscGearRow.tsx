@@ -96,7 +96,7 @@ export function MiscGearRow({
             <input
               type="number"
               min={1}
-              max={99}
+              max={999}
               value={item.qty}
               onChange={(e) =>
                 patch({

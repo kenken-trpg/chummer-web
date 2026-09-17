@@ -163,6 +163,11 @@ def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     for w in root.findall("./weapons/weapon"):
         if _text(w.find("cyberware")).lower() == "true":
             continue
+        if _text(w.find("parentid")):
+            # made by Chummer from what brought it — a grenade bought as gear,
+            # a Survival Kit's knife, a shield — and not bought again: this
+            # app makes those rows from the same gear, armor or ware
+            continue
         wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
         if not wid:
             continue
