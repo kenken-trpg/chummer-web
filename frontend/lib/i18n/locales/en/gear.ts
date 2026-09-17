@@ -128,6 +128,8 @@ export const EN_GEAR = {
   "gear.programs": " / programs {used}/{max}",
   "gear.programCount": " / programs {count}",
   "gear.addAutosoft": "Add an autosoft",
+  "gear.loosePrograms": "Programs not loaded anywhere",
+  "gear.loadInto": "Load into",
   "gear.addApp": "Add an app",
   "gear.addProgram": "Add a program",
   "gear.addSensorOrFn": "Add a sensor or function",

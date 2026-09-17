@@ -89,9 +89,14 @@ describe("dropDrone", () => {
         { id: "s2", parent_id: "s1" },
       ],
       gear: [{ id: "g1", parent_id: "dr1" }],
+      programs: [
+        { id: "p1", parent_id: "dr1" },
+        { id: "p2", parent_id: "dr2" },
+      ],
       cyberware: [],
     };
     const out = dropDrone(ch, "dr1");
+    expect(out.programs).toEqual([{ id: "p2", parent_id: "dr2" }]);
     expect((out.drones ?? []).map((d: any) => d.id)).toEqual(["dr2"]);
     expect(out.vehicle_mods).toEqual([{ id: "m2", parent_id: "dr2" }]);
     expect(out.weapon_mounts).toEqual([]);

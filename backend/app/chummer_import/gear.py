@@ -253,9 +253,16 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             if name and not _chummer_added(g):
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.gear"), name=name))
             return
-        if host is not None and bucket not in HOST_BUCKETS:
-            # a commlink or an autosoft stowed there: this app fits those to
-            # other hosts only, so the piece is left out — but said so
+        # an autosoft runs on the drone or vehicle it is loaded into
+        runs_there = (
+            bucket == "programs"
+            and host is not None
+            and host[0] == ui("engine.kind.vehicle")
+            and (rows_by_id.get(gid) or {}).get("program_host") == "rccs"
+        )
+        if host is not None and bucket not in HOST_BUCKETS and not runs_there:
+            # a commlink stowed there (or an autosoft in armor): this app fits
+            # those to other hosts only, so the piece is left out — but said so
             kind, host_name = host
             warn.append(notice("engine.import.hostGearSkipped", kind=kind, name=name, host=host_name))
             return
@@ -270,6 +277,9 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             row["cost"] = _picked_cost(g)
         if spec.get("category") == "Custom" and name and name != spec.get("name"):
             row["name"] = name
+        if _text(g.find("extra")) and bucket != "commlinks":
+            # what the item is for: an autosoft's model or weapon, a skillsoft's skill
+            row["extra"] = _text(g.find("extra"))
         included = bool(parent_id) and (
             _included(g)
             # older saves do not say: what the parent's own entry

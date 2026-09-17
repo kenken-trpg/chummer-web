@@ -131,6 +131,8 @@ export const JA_GEAR = {
   "gear.programs": " / プログラム {used}/{max}",
   "gear.programCount": " / プログラム {count}",
   "gear.addAutosoft": "オートソフトを追加",
+  "gear.loosePrograms": "どこにも入っていないプログラム",
+  "gear.loadInto": "入れる先",
   "gear.addApp": "アプリを追加",
   "gear.addProgram": "プログラムを追加",
   "gear.addSensorOrFn": "機能／センサーを追加",

@@ -738,3 +738,29 @@ def test_gear_dragged_where_it_cannot_go_is_carried_on_its_own() -> None:
 
     back = import_character(chum5_to_state(state_to_chum5(ch))[0])
     assert sorted(names[row.gear_id] for row in back.gear) == sorted(held)
+
+
+def test_an_autosoft_loaded_into_a_drone_stays_there() -> None:
+    """Chummer saves the autosofts a drone runs in its `<gears>`, with the
+    model or weapon each covers in `<extra>`. Both come back, and go out
+    again the same way."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear><name>[Model] Stealth Autosoft</name><rating>2</rating><qty>1</qty>
+        <extra>Horizon Noizquito (Microdrone)</extra></gear></gears>
+      <vehicles><vehicle><name>Horizon Noizquito (Microdrone)</name><gears>
+        <gear><name>Clearsight Autosoft</name><rating>3</rating><qty>1</qty></gear>
+      </gears></vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    (drone,) = st["drones"]
+    assert sorted((row["rating"], row.get("parent_id"), row.get("extra")) for row in st["programs"]) == [
+        (2, None, "Horizon Noizquito (Microdrone)"),
+        (3, drone["id"], None),
+    ]
+    ch = import_character(st)
+    assert not has(ch.derived["warnings"], "engine.gear.pickExtra")
+    root = ET.fromstring(state_to_chum5(ch))
+    assert "Clearsight Autosoft" in [_text(g.find("name")) for g in root.findall("./vehicles/vehicle/gears/gear")]
+    loose = root.find("./gears/gear")
+    assert loose is not None and _text(loose.find("extra")) == "Horizon Noizquito (Microdrone)"

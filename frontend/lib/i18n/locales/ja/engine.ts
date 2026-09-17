@@ -384,6 +384,7 @@ export const JA_ENGINE = {
   "engine.host.cyberdeck": "サイバーデッキ",
 
   "engine.host.rcc": "RCC",
+  "engine.host.rccOrVehicle": "RCC かドローン・車両",
   "engine.select.attribute": "能力値",
   "engine.select.skill": "技能",
   "engine.select.spell": "呪文",

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { VehicleGearRows } from "@/components/character/tabs/gear/vehicle/VehicleGearRows";
@@ -62,6 +63,9 @@ export function VehicleDroneGear({
               ...(item.weapon_mounts || []).map((mount) => tr(mount.label || mount.name)),
               ...(item.sensors || []).map((sensor) => tr(sensor.name)),
               ...(item.gear || []).map((acc) => tr(acc.label || acc.name)),
+              ...(d.programs || [])
+                .filter((prog) => prog.parent_id === item.id)
+                .map((prog) => tr(prog.label || prog.name)),
             ];
             return (
               <div className="cyber-item compact" key={item.id}>
@@ -111,6 +115,16 @@ export function VehicleDroneGear({
                 <VehicleMountRows {...rowProps} />
                 <VehicleSensorRows {...rowProps} />
                 <VehicleGearRows {...rowProps} />
+                <AutosoftRows
+                  hostId={item.id}
+                  hostName={tr(item.name)}
+                  catalog={catalog}
+                  character={ch}
+                  d={d}
+                  tr={tr}
+                  ui={ui}
+                  patch={patch}
+                />
               </div>
               {deleteButton}
             </div>

@@ -2,6 +2,8 @@
 
 Each program occupies one of the host device's program slots; some carry a
 ``[Skill]`` / ``[Group]`` / free-text pick that ``gear_extra_options`` enumerates.
+An autosoft can also run on a drone or vehicle itself, and a program need not
+be installed anywhere: Chummer keeps a bought copy in the inventory.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
 from ..selects import gear_extra_options
 from ._common import _clamp_rating, _program_label
+from .vehicles import _iter_vehicle_hosts
 
 
 def _resolve_programs(
@@ -27,6 +30,8 @@ def _resolve_programs(
         hosts[str(row.get("id") or "")] = ("cyberdecks", row)
     for row in rccs:
         hosts[str(row.get("id") or "")] = ("rccs", row)
+    for vehicle, vehicle_spec in _iter_vehicle_hosts(state):
+        hosts[vehicle.id] = ("vehicles", vehicle_spec)
     kept: list[GearInstall] = []
     public: list[dict[str, Any]] = []
     nuyen = 0
@@ -36,19 +41,18 @@ def _resolve_programs(
             continue
         want_kind = PROGRAM_HOSTS.get(str(spec.get("category") or ""), "cyberdecks")
         host = hosts.get(inst.parent_id or "")
-        if not inst.parent_id or not host:
-            warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
-            continue
-        kind, _parent = host
-        if kind != want_kind:
+        # an autosoft runs on the RCC that shares it, or on the drone itself
+        kinds = (want_kind, "vehicles") if want_kind == "rccs" else (want_kind,)
+        if inst.parent_id and (host is None or host[0] not in kinds):
+            # left where nothing runs it: kept as a copy the character owns
             warnings.append(
                 notice(
                     "engine.gear.needsHostKind",
                     name=term(str(spec["name"])),
-                    host=ui("engine.host.cyberdeck" if want_kind == "cyberdecks" else "engine.host.rcc"),
+                    host=ui("engine.host.cyberdeck" if want_kind == "cyberdecks" else "engine.host.rccOrVehicle"),
                 )
             )
-            continue
+            inst.parent_id = None
         extra_kind = str(spec.get("extra_kind") or "")
         extra = (inst.extra or "").strip()
         options = gear_extra_options(spec)
