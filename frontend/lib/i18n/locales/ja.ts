@@ -20,6 +20,7 @@ import { JA_APP } from "./ja/app";
 import { JA_CHARGEN } from "./ja/chargen";
 import { JA_ENGINE } from "./ja/engine";
 import { JA_GEAR } from "./ja/gear";
+import { JA_HELP } from "./ja/help";
 import { JA_MAGIC } from "./ja/magic";
 import { JA_RULES } from "./ja/rules";
 import { JA_SHEET } from "./ja/sheet";
@@ -34,6 +35,7 @@ export const JA = {
   ...JA_CHARGEN,
   ...JA_GEAR,
   ...JA_MAGIC,
+  ...JA_HELP,
 } as const;
 
 export type MsgKey = keyof typeof JA;

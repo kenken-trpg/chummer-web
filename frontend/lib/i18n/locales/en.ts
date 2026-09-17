@@ -5,6 +5,7 @@ import { EN_APP } from "./en/app";
 import { EN_CHARGEN } from "./en/chargen";
 import { EN_ENGINE } from "./en/engine";
 import { EN_GEAR } from "./en/gear";
+import { EN_HELP } from "./en/help";
 import { EN_MAGIC } from "./en/magic";
 import { EN_RULES } from "./en/rules";
 import { EN_SHEET } from "./en/sheet";
@@ -19,4 +20,5 @@ export const EN: Catalog = {
   ...EN_CHARGEN,
   ...EN_GEAR,
   ...EN_MAGIC,
+  ...EN_HELP,
 };
