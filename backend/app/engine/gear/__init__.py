@@ -17,13 +17,12 @@ from ._common import (
     _default_mount_parts,
     _device_rating_of,
     _find_mount_part,
-    _has_weapon_constraints,
     _leading_vehicle_stat,
     _limb_attr_effect,
     _pick_accessory_mount,
     _program_label,
-    _weapon_matches_or,
     accessory_fits_weapon,
+    weapon_details_met,
 )
 from .ammo import _apply_loaded_ammo, _pick_loaded_ammo, ammo_fits_weapon
 from .apps import _resolve_apps
@@ -112,7 +111,6 @@ __all__ = [
     "_find_mount_part",
     "_format_drug_duration",
     "_format_vehicle_stat",
-    "_has_weapon_constraints",
     "_iter_vehicle_hosts",
     "_leading_vehicle_stat",
     "_limb_attr_effect",
@@ -137,8 +135,8 @@ __all__ = [
     "_resolve_weapon_accessories",
     "_resolve_weapon_mounts",
     "_vehicle_extras",
-    "_weapon_matches_or",
     "accessory_fits_weapon",
+    "weapon_details_met",
     "ammo_fits_weapon",
     "apply_active_custom_drugs",
     "apply_active_drugs",

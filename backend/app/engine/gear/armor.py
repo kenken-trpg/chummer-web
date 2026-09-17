@@ -145,7 +145,9 @@ def _resolve_armor_mods(
                 )
                 continue
             names_without = seen_names - {spec["name"]}
-            if not armor_mod_fits(spec, item, names_without):
+            # what the armor came with (a Victory liner picked at purchase)
+            # is on it, whatever its category says
+            if not inst.included and not armor_mod_fits(spec, item, names_without):
                 warnings.append(
                     notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(item["name"])))
                 )
