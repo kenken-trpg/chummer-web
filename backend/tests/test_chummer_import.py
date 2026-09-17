@@ -815,3 +815,20 @@ def test_gear_dragged_into_a_commlink_armor_or_vehicle_is_carried_on_its_own() -
     assert [w["params"]["name"] for w in derived["warnings"] if w["key"] == "engine.gear.doesNotFit"] == [
         {"tr": "Seeker Shaft"}
     ]
+
+
+def test_the_holster_an_armor_comes_with_is_not_bought_again() -> None:
+    """Ares Victory: Wild Hunt names its Holster as `<usegear>Holster</usegear>`,
+    text rather than a `<name>` child. The included-gear index missed that
+    form, so the free Holster came in as 150¥ of gear — Barrett paid it three
+    times."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <armors><armor><name>Ares Victory: Wild Hunt</name><rating>0</rating>
+        <gears><gear><name>Holster</name><category>Clothing</category><qty>1</qty>
+          <cost>0</cost><parentid>28dcb75f-9b25-4e26-9d18-4c9de0c14b06</parentid></gear></gears>
+      </armor></armors>
+    </character>"""
+    state = chum5_to_state(raw)[0]
+    assert [row for row in state.get("gear") or [] if row.get("parent_id")] == []
+    assert import_character(state).derived["nuyen_spent"] == 3000
