@@ -1,3 +1,5 @@
+import type { InstalledGear } from "./gear";
+
 // Cyberware and bioware: row shapes listed in `Derived` (../derived.ts).
 
 export interface InstalledWare {
@@ -30,4 +32,8 @@ export interface InstalledWare {
   avail?: string;
   device_rating?: number;
   source?: string;
+  /** `<allowgear>`: the gear categories it holds (a Chemical Gland's chemical). */
+  allow_gear?: string[];
+  /** what it holds, as gear rows */
+  gear?: InstalledGear[];
 }

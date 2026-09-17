@@ -105,6 +105,13 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "addtoparentess": el.find("addtoparentess") is not None,
                 "formula_rating": formula_rating,
                 "allow_subsystems": [_text(c) for c in el.findall("./allowsubsystems/category") if _text(c)],
+                # the gear categories it holds (`<allowgear>`, and the drug
+                # categories of `<allowdrug>`: a Chemical Gland's chemical)
+                "allow_gear": [
+                    _text(c)
+                    for c in el.findall("./allowgear/gearcategory") + el.findall("./allowdrug/drugcategory")
+                    if _text(c)
+                ],
                 "subsystems": subsystems,
                 "bonus": parse_bonus(el.find("bonus")),
                 "wirelessbonus": parse_bonus(el.find("wirelessbonus")),

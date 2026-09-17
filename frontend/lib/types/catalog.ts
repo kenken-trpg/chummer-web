@@ -586,6 +586,8 @@ export interface WareCatalogItem {
   addtoparentess?: boolean;
   formula_rating?: boolean;
   allow_subsystems?: string[];
+  /** `<allowgear>` / `<allowdrug>`: the gear categories it holds. */
+  allow_gear?: string[];
   has_wireless: boolean;
   forcegrade?: string | null;
   bannedgrades?: string[];

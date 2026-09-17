@@ -383,3 +383,75 @@ describe("<CyberTab> black market discount", () => {
     expect((patch.mock.calls[0][0] as any).cyberware[0].discounted).toBe(true);
   });
 });
+
+describe("<CyberTab> held gear", () => {
+  // A piece that holds gear: the held row, the select for more, and a removal
+  // that takes only what it held with it.
+  function renderHolder(patch: (b: Record<string, unknown>) => void) {
+    const injector = { ...datajack, id: "inj", name: "Auto Injector", allow_gear: ["Drugs"] };
+    const catalog = makeCatalog({
+      ...(cyberCatalog([wired, injector]) as any),
+      gear: [
+        { id: "jazz", name: "Jazz", category: "Drugs", cost: "75", source: "SR5" },
+        { id: "rope", name: "Rope", category: "Survival Gear", cost: "50", source: "SR5" },
+      ],
+    } as any);
+    const ch = makeCharacter({
+      cyberware: [{ id: "c1", ware_id: "inj", rating: 1, grade: "Standard", wireless: true }],
+      weapons: [{ id: "w1", weapon_id: "gun" }] as any,
+      weapon_accessories: [{ id: "a1", accessory_id: "scope", parent_id: "w1" }] as any,
+      gear: [
+        { id: "g1", gear_id: "jazz", parent_id: "c1", qty: 1 },
+        { id: "g2", gear_id: "rope", parent_id: "armor1", qty: 1 },
+      ] as any,
+    });
+    const held = {
+      id: "g1",
+      gear_id: "jazz",
+      name: "Jazz",
+      parent_id: "c1",
+      nuyen: 75,
+      rating: 1,
+      rating_max: 1,
+    };
+    const installed = {
+      id: "c1",
+      ware_id: "inj",
+      name: "Auto Injector",
+      category: "Cyberware",
+      grade: "Standard",
+      rating: 1,
+      essence: 0.1,
+      nuyen: 1000,
+      source: "SR5",
+      allow_gear: ["Drugs"],
+      gear: [held],
+    };
+    const d = { ...ch.derived, cyberware: [installed] } as any;
+    return render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog, patch })} />);
+  }
+
+  it("lists what a piece holds and offers only what it may hold", () => {
+    const patch = vi.fn();
+    renderHolder(patch);
+    expect(screen.getByText(/Jazz/, { selector: ".cyber-item .muted" })).toBeDefined();
+    const select = screen.getByRole("combobox", { name: /Auto Injector/ });
+    const labels = [...select.querySelectorAll("option")].map((o) => o.textContent);
+    expect(labels.some((t) => t?.includes("Jazz"))).toBe(true);
+    expect(labels.some((t) => t?.includes("Rope"))).toBe(false);
+    fireEvent.change(select, { target: { value: "jazz" } });
+    fireEvent.click(screen.getByRole("button", { name: "Auto Injector: 入れる" }));
+    expect(patch).toHaveBeenCalledWith({
+      gear: expect.arrayContaining([expect.objectContaining({ gear_id: "jazz", parent_id: "c1" })]),
+    });
+  });
+
+  it("removing a piece takes what it held, and nothing held elsewhere", () => {
+    const patch = vi.fn();
+    renderHolder(patch);
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    const body = patch.mock.calls[0][0];
+    expect(body.gear.map((row: any) => row.id)).toEqual(["g2"]);
+    expect(body.weapon_accessories.map((row: any) => row.id)).toEqual(["a1"]);
+  });
+});

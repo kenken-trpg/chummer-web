@@ -53,3 +53,30 @@ export function nextFreeSide(
   );
   return used.has("Left") && !used.has("Right") ? "Right" : "Left";
 }
+
+/**
+ * `rows` minus what hung off the ware a removal took away: the gear a gland
+ * held, the accessories on an implanted weapon — and whatever hangs off
+ * those in turn. Rows under anything else (a weapon, a piece of armor) stay.
+ */
+export function dropUnderRemovedWare<T extends { id?: string; parent_id?: string | null }>(
+  rows: T[],
+  before: WareInstall[],
+  after: WareInstall[],
+): T[] {
+  const kept = new Set(after.map((row) => row.id));
+  const drop = new Set(
+    before.map((row) => row.id).filter((id): id is string => !!id && !kept.has(id)),
+  );
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const row of rows) {
+      if (row.id && row.parent_id && drop.has(row.parent_id) && !drop.has(row.id)) {
+        drop.add(row.id);
+        grew = true;
+      }
+    }
+  }
+  return rows.filter((row) => !row.parent_id || !drop.has(row.parent_id));
+}

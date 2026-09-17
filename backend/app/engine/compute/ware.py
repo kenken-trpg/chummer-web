@@ -7,6 +7,7 @@ from typing import Any
 
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CyberwareInstall
+from ..gear.misc import ware_gear_costs
 from ..limits import (
     _check_ware_attribute_cap,
     _finalize_avail_tree,
@@ -66,10 +67,11 @@ def ware(ctx: Ctx) -> None:
     granted_cyber, cyber_sources = _granted_ware_installs(ctx.granted_ware, "cyberware")
     # Bioware first: Adapsin lives there and changes what a cyberware grade
     # costs in Essence, so cyberware cannot be resolved until we know.
-    ctx.bio_installed = resolve_ware("bioware", [*ctx.state.bioware, *granted_bio], ctx.attrs_spec)
+    held = ware_gear_costs(ctx.state)
+    ctx.bio_installed = resolve_ware("bioware", [*ctx.state.bioware, *granted_bio], ctx.attrs_spec, gear_costs=held)
     ctx.adapsin = has_adapsin(ctx.bio_installed)
     ctx.cyber_installed = resolve_ware(
-        "cyberware", [*ctx.state.cyberware, *granted_cyber], ctx.attrs_spec, adapsin=ctx.adapsin
+        "cyberware", [*ctx.state.cyberware, *granted_cyber], ctx.attrs_spec, adapsin=ctx.adapsin, gear_costs=held
     )
     _mark_granted(ctx.bio_installed, bio_sources)
     _mark_granted(ctx.cyber_installed, cyber_sources)

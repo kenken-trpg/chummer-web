@@ -27,6 +27,8 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
         prefix = f"ware:{inst_id}:"
         return sorted((key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix))
 
+    gear_by_parent, emit_gear = _gear_writer(state, names)
+
     def _ware(container: str, rows: list[Any]) -> None:
         top = _sub(root, container)
         by_parent: dict[str | None, list[Any]] = {}
@@ -61,6 +63,10 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
                 kids = by_parent.get(r.id)
                 if kids:
                     emit(_sub(w, "children"), kids)
+                # what it holds (a Chemical Gland's chemical)
+                held = gear_by_parent.get(r.id)
+                if held:
+                    emit_gear(_sub(w, "gears"), held)
 
         emit(top, by_parent.get(None, []))
 

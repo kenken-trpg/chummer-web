@@ -3,12 +3,14 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { limbQualityLine } from "@/lib/character/format";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
 import {
   hideFromWareCatalog,
   nextFreeSide,
+  dropUnderRemovedWare,
   removeWareTree,
   wareBounds,
 } from "@/lib/character/ware";
@@ -128,6 +130,16 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
             catalogItems={catalog.cyberware.items}
             grades={cyberGrades}
             kind="cyberware"
+            renderHeld={(row) => (
+              <WareHeldGear
+                item={row}
+                catalog={catalog}
+                character={ch}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+            )}
             tr={tr}
             compact={compact}
             slotValue={slotPick[item.id] || ""}
@@ -154,14 +166,15 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
               })
             }
             onRemove={(id) => {
-              const keptIds = new Set(removeWareTree(ch.cyberware || [], id).map((row) => row.id));
               const cyberware = removeWareTree(ch.cyberware || [], id);
               patch({
                 cyberware,
-                weapon_accessories: (ch.weapon_accessories || []).filter(
-                  (row) => !row.parent_id || keptIds.has(row.parent_id),
+                weapon_accessories: dropUnderRemovedWare(
+                  ch.weapon_accessories || [],
+                  ch.cyberware || [],
+                  cyberware,
                 ),
-                gear: (ch.gear || []).filter((row) => !row.parent_id || keptIds.has(row.parent_id)),
+                gear: dropUnderRemovedWare(ch.gear || [], ch.cyberware || [], cyberware),
                 skill_picks: dropRemovedWarePicks(ch.skill_picks, [
                   ...cyberware,
                   ...(ch.bioware || []),

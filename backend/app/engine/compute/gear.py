@@ -383,6 +383,12 @@ def gear_phase(ctx: Ctx) -> None:
     for row in ctx.gear.get("lifestyles") or []:
         row.pop("_pre_mod", None)
         row.pop("_after_mod", None)
+    # what a piece of ware holds (a Chemical Gland's chemical) is listed on it
+    for item in [*ctx.cyber_installed, *ctx.bio_installed]:
+        if item.get("allow_gear"):
+            item["gear"] = [
+                {**row, "bucket": "gear"} for row in ctx.gear.get("gear") or [] if row.get("parent_id") == item["id"]
+            ]
     apply_erased_lifestyle_cap(ctx.gear, bool(ctx.effects.get("erased")), ctx.warnings)
     apply_reach_bonus(ctx.gear.get("weapons"), int(ctx.effects.get("reach") or 0))
     apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)

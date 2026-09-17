@@ -333,7 +333,6 @@ export const JA_ENGINE = {
     "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
     "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
-  "engine.import.nestedGearSkipped": "{kind}「{name}」内蔵のギアは取り込めませんでした",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
 
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",

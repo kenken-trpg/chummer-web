@@ -40,6 +40,7 @@ def _public_ware(block: dict) -> dict:
                 "addtoparentess": bool(w.get("addtoparentess")),
                 "formula_rating": bool(w.get("formula_rating")),
                 "allow_subsystems": list(w.get("allow_subsystems") or []),
+                "allow_gear": list(w.get("allow_gear") or []),
                 "has_wireless": bool(w.get("wirelessbonus")),
                 "bannedgrades": list(w.get("bannedgrades") or []),
                 "required": w.get("required") or {"bioware": [], "cyberware": [], "metatype": [], "quality": []},

@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import type { InstalledWare, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
 import { sideLabel } from "@/lib/character/constants";
 import { availBit } from "@/lib/character/format";
@@ -29,6 +30,9 @@ export function WareRow(props: {
   /** Name only: no stat line, no controls, no slot picker — the row keeps
    *  its plug-ins (as names) and its delete button. */
   compact?: boolean;
+  /** What the row holds beyond its plug-ins (a gland's chemical), drawn
+   *  under its children. */
+  renderHeld?: (item: InstalledWare) => React.ReactNode;
 }) {
   const {
     item,
@@ -48,6 +52,7 @@ export function WareRow(props: {
     onSkillPick,
     nested,
     compact,
+    renderHeld,
   } = props;
   const { ui } = useUiText();
   const spec = catalogItems.find((w) => w.id === item.ware_id);
@@ -236,9 +241,11 @@ export function WareRow(props: {
             onAddChild={() => undefined}
             pickSlots={pickSlots}
             onSkillPick={onSkillPick}
+            renderHeld={renderHeld}
             nested
           />
         ))}
+        {renderHeld ? renderHeld(item) : null}
         {slotOptions.length > 0 ? (
           <div className="slot-picker">
             <select value={chosen} onChange={(e) => onSlotChange(e.target.value)}>

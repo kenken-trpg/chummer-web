@@ -55,4 +55,7 @@ def _public_installed(item: dict[str, Any]) -> dict[str, Any]:
         "restricted_gear": bool(item.get("restricted_gear")),
         "device_rating": int(item.get("device_rating") or 0),
         "source": item.get("source"),
+        # what it may hold (`<allowgear>`) and what it holds
+        "allow_gear": list(item.get("allow_gear") or []),
+        "gear": list(item.get("gear") or []),
     }

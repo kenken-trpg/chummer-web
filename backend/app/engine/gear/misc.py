@@ -17,7 +17,7 @@ from ...improvements import substitute_rating
 from ...improvements.effect_rows import GrantGearRow
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
-from ..lookups import _item_by_id
+from ..lookups import _item_by_id, _ware_by_id
 from ..selects import gear_extra_options
 from ._common import (
     _capacity_value,
@@ -98,7 +98,42 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
                     "type": spec.get("type") or "",
                 },
             )
+    hosts.update(_ware_hosts(state))
     return hosts
+
+
+def _ware_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str, Any]]]:
+    """Cyber- and bioware that holds gear (`<allowgear>`): a Chemical Gland's
+    chemical, an Auto Injector's drug, a grenade cyberfinger's grenade."""
+    hosts: dict[str, tuple[str, dict[str, Any]]] = {}
+    for kind in ("cyberware", "bioware"):
+        for inst in list(getattr(state, kind) or []):
+            spec = _ware_by_id(kind, inst.ware_id)
+            if spec and spec.get("allow_gear"):
+                hosts[inst.id] = (
+                    "ware",
+                    {"name": spec.get("name") or "", "category": "", "allow_gear": list(spec["allow_gear"])},
+                )
+    return hosts
+
+
+def ware_gear_costs(state: CharacterState) -> dict[str, int]:
+    """What the gear inside each piece of ware cost, by the ware's install id —
+    Chummer's `Gear Cost` in a ware price."""
+    hosts = _ware_hosts(state)
+    out: dict[str, int] = {}
+    for inst in state.gear or []:
+        if not inst.parent_id or inst.parent_id not in hosts or inst.included:
+            continue
+        spec = _item_by_id("gear", inst.gear_id)
+        if not spec:
+            continue
+        picked = chosen_cost(spec, inst.cost)
+        unit = (
+            picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), int(inst.rating or 1), 0))
+        )
+        out[inst.parent_id] = out.get(inst.parent_id, 0) + unit * max(1, int(inst.qty or 1))
+    return out
 
 
 def _misc_child_fits(parent_spec: dict[str, Any], child_spec: dict[str, Any]) -> bool:
@@ -163,6 +198,8 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
                     # it as it is. Only what plugs into a host of its own
                     # (`requireparent`) has to match the interior categories.
                     fits = bool(inst.included) or not spec.get("requireparent") or _misc_child_fits(host_spec, spec)
+                elif kind == "ware":
+                    fits = bool(inst.included) or (spec.get("category") or "") in host_spec["allow_gear"]
                 elif kind == "armor":
                     # armor carries gear that says what capacity it takes
                     # there (`<armorcapacity>`: a Holster, a Medkit, Trodes)
