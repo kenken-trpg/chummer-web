@@ -458,3 +458,26 @@ def test_a_prime_runner_is_paid_from_the_prime_runner_resources_row() -> None:
 
     standard = raw.replace(b"Prime Runner", b"Standard")
     assert "priority_table" not in chum5_to_state(standard)[0]["settings"]
+
+
+def test_a_prime_runner_may_buy_25_points_of_nuyen_with_karma() -> None:
+    """Prime Runner's `<nuyenmaxbp>` is 25, not Standard's 10. Import kept the
+    cap at 10, so Chummer's own `prime` save lost 30,000¥ of the 50,000¥ its
+    25 karma bought."""
+    from app.characters import import_character
+
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <settings>default.xml</settings>
+      <gameplayoption>Prime Runner</gameplayoption>
+      <buildmethod>SumtoTen</buildmethod>
+      <nuyenbp>25</nuyenbp>
+      <metatype>Human</metatype>
+    </character>"""
+    state = chum5_to_state(raw)[0]
+    assert state["settings"]["priority_karma_nuyen_base"] == 25
+    derived = import_character(state).derived
+    assert derived["nuyen_karma_max"] == 25
+    assert state["karma_nuyen"] == 25
+
+    standard = raw.replace(b"Prime Runner", b"Standard")
+    assert "priority_karma_nuyen_base" not in chum5_to_state(standard)[0]["settings"]
