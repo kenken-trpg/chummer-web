@@ -39,6 +39,33 @@ def _vehicle_mod_hosts(state: CharacterState) -> dict[str, dict[str, Any]]:
     return hosts
 
 
+#: what an unbounded Chummer maximum comes to here (`int.MaxValue` when the
+#: `dronemodsmaximumpilot` setting is off, as in every shipped preset)
+_UNBOUNDED = 99
+
+
+def vehicle_ware_extras(state: CharacterState) -> dict[str, dict[str, float]]:
+    """By vehicle mod id: the attribute values a formula in ware fitted to
+    that mod reads — Chummer's `Cyberware.ProcessAttributesInXPath` takes
+    Strength from the vehicle's Body and Agility from its Pilot."""
+    specs = {item["id"]: item for item in catalog().get("vehicle_mods") or []}
+    vehicles = {inst.id: spec for inst, spec in _iter_vehicle_hosts(state)}
+    out: dict[str, dict[str, float]] = {}
+    for inst in state.vehicle_mods or []:
+        vehicle = vehicles.get(inst.parent_id or "")
+        if not vehicle or inst.mod_id not in specs:
+            continue
+        body = int(vehicle.get("body") or 0)
+        pilot = int(vehicle.get("pilot") or 0)
+        out[inst.id] = {
+            "STRMinimum": max(1, body),
+            "STRMaximum": max(1, body * 2),
+            "AGIMinimum": max(1, pilot),
+            "AGIMaximum": _UNBOUNDED,
+        }
+    return out
+
+
 def _ware_fits_vehicle_mod(ware: dict[str, Any], spec: dict[str, Any]) -> bool:
     if ware.get("category") not in (spec.get("subsystems") or []):
         return False

@@ -86,8 +86,18 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     st["bioware"] = load_ware(
         bio_rows + root.findall("./biowares/bioware") + root.findall("./cyberwares/bioware"), ui("engine.kind.bioware")
     )
+    # A drone's arm or leg holds implants too (a Shock Hand, a smuggling
+    # compartment). Read here with the rest; `_import_vehicles` hangs each on
+    # the mod row it makes for that `<mod>`.
+    in_mods: dict[int, list[dict[str, Any]]] = {}
+    for mod in root.findall("./vehicles/vehicle/mods/mod"):
+        rows_in = load_ware(mod.findall("./cyberwares/cyberware"), ui("engine.kind.cyberware"))
+        if rows_in:
+            in_mods[id(mod)] = rows_in
+            st["cyberware"].extend(rows_in)
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
     st["_ware_gear"] = carried
+    st["_vehicle_mod_ware"] = in_mods
 
 
 def _is_gear_not_mod(node: ET.Element, mods: _Resolver, gear: _Resolver) -> bool:
@@ -409,6 +419,7 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     vmod_r = _Resolver(cat["vehicle_mods"])
     mount_r = _Resolver(cat["weapon_mounts"])
     mount_categories = {row["id"]: row.get("category") or "" for row in cat["weapon_mounts"]}
+    mod_ware: dict[int, list[dict[str, Any]]] = dict(st.pop("_vehicle_mod_ware", None) or {})
     # A mount points at a weapon row by name: ids are regenerated on import.
     weapon_ids: dict[str, str] = {}
     for wrow in st.get("weapons") or []:
@@ -434,16 +445,20 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         (st_veh if is_drone else st_veh_only).append(row)
         for m in v.findall("./mods/mod") + v.findall("./vehiclemods/vehiclemod"):
             mid = vmod_r.resolve(m, warn, ui("engine.kind.vehicleMod"))
+            held_ware = mod_ware.pop(id(m), [])
             if mid:
-                st_vmods.append(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "mod_id": mid,
-                        "parent_id": row["id"],
-                        "rating": max(1, _int(m.find("rating"), 1)),
-                        "included": _text(m.find("included")).lower() == "true",
-                    }
-                )
+                mod_row = {
+                    "id": str(uuid.uuid4()),
+                    "mod_id": mid,
+                    "parent_id": row["id"],
+                    "rating": max(1, _int(m.find("rating"), 1)),
+                    "included": _text(m.find("included")).lower() == "true",
+                }
+                st_vmods.append(mod_row)
+                for ware_row in held_ware:
+                    # only the mod's own implants: what is plugged into those
+                    # already has its parent
+                    ware_row.setdefault("parent_id", mod_row["id"])
         for m in v.findall("./weaponmounts/weaponmount"):
             size_id = mount_r.resolve(m, warn, ui("engine.kind.weaponMount"))
             if not size_id:
@@ -476,6 +491,10 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         ]
         if _unexpected_children(vid, v.findall("./weapons/weapon")):
             warn.append(notice("engine.import.vehicleLoadSkipped", name=_text(v.find("name"))))
+    # implants in a mod that could not be read have nowhere to go
+    orphans = {id(row) for rows in mod_ware.values() for row in rows}
+    if orphans:
+        st["cyberware"] = [row for row in st.get("cyberware") or [] if id(row) not in orphans]
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods

@@ -102,32 +102,38 @@ def resolve_ware(
     *,
     adapsin: bool = False,
     gear_costs: dict[str, int] | None = None,
+    vehicle_extras: dict[str, dict[str, float]] | None = None,
 ) -> list[dict[str, Any]]:
     """``gear_costs`` is the price of the gear held in each install, by id:
     Chummer's `Gear Cost` (a Chemical Gland is `20000 + (99 * Gear Cost)`)."""
-    extras = racial_formula_extras(attrs_spec) if attrs_spec else {}
+    extras: dict[str, float] = dict(racial_formula_extras(attrs_spec)) if attrs_spec else {}
     resolved: list[dict[str, Any]] = []
     by_id = {inst.id: inst for inst in installs}
 
-    def in_limb(inst: CyberwareInstall, ware: dict[str, Any]) -> bool:
-        """The ware is a limb or sits somewhere inside one (Chummer walks up)."""
+    def host_extras(inst: CyberwareInstall, ware: dict[str, Any]) -> dict[str, float]:
+        """The attribute values a formula in this ware reads. Chummer walks up
+        (`Cyberware.ProcessAttributesInXPath`): inside a cyberlimb they are
+        the limb's, inside a drone's mod the drone's (Body, Pilot)."""
         seen: set[str] = set()
         node: CyberwareInstall | None = inst
         spec: dict[str, Any] | None = ware
         while node is not None and spec is not None and node.id not in seen:
             if is_limb(spec):
-                return True
+                return limb_extras
             seen.add(node.id)
-            node = by_id.get(node.parent_id) if node.parent_id else None
+            parent_id = node.parent_id
+            node = by_id.get(parent_id) if parent_id else None
+            if node is None and parent_id and parent_id in (vehicle_extras or {}):
+                return {**extras, **(vehicle_extras or {})[parent_id]}
             spec = _ware_by_id(kind, node.ware_id) if node is not None else None
-        return False
+        return extras
 
     limb_extras = limb_formula_extras(extras)
     for inst in installs:
         ware = _ware_by_id(kind, inst.ware_id)
         if not ware:
             continue
-        ware_extras = limb_extras if in_limb(inst, ware) else extras
+        ware_extras = host_extras(inst, ware)
         lo, hi = ware_rating_bounds(ware, ware_extras)
         rating = max(lo, min(hi, int(inst.rating or lo)))
         grade_name = ware.get("forcegrade") or inst.grade or "Standard"
