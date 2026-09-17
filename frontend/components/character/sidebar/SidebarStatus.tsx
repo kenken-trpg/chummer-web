@@ -1,4 +1,6 @@
+import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
+import { conditionHelp, initiativeHelp, limitHelp } from "@/lib/character/help-breakdown";
 import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
 import { buildMethodLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
@@ -45,7 +47,11 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         </ul>
       ) : null}
       <div className="stat">
-        <span>{ui("side.limits")}</span>
+        <span>
+          <HelpTip label={ui("help.open", { label: ui("side.limits") })} lines={limitHelp(d, ui)}>
+            {ui("side.limits")}
+          </HelpTip>
+        </span>
         <b>
           {d.limits.physical}/{d.limits.mental}/{d.limits.social}
         </b>
@@ -56,7 +62,14 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         </div>
       ))}
       <div className="stat">
-        <span>{ui("common.condition")}</span>
+        <span>
+          <HelpTip
+            label={ui("help.open", { label: ui("common.condition") })}
+            lines={conditionHelp(d, ui)}
+          >
+            {ui("common.condition")}
+          </HelpTip>
+        </span>
         <b>
           P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
         </b>
@@ -73,7 +86,14 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         </div>
       ) : null}
       <div className="stat">
-        <span>{ui("common.initiative")}</span>
+        <span>
+          <HelpTip
+            label={ui("help.open", { label: ui("common.initiative") })}
+            lines={initiativeHelp(d, ui)}
+          >
+            {ui("common.initiative")}
+          </HelpTip>
+        </span>
         <b>
           {d.initiative.value}+{d.initiative.dice}d6
         </b>

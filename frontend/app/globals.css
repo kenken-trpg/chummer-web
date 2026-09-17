@@ -1396,3 +1396,63 @@ input[type="search"] {
 .app-footer a {
   color: var(--accent);
 }
+
+/* HelpTip: a "?" next to a label that opens the value's formula. */
+.help-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.help-tip-button {
+  width: 1.1em;
+  height: 1.1em;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: help;
+}
+.help-tip-body {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  width: max-content;
+  max-width: min(22rem, 80vw);
+  padding: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: normal;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 40%);
+}
+.help-tip:hover .help-tip-body,
+.help-tip:focus-within .help-tip-body,
+.help-tip[data-open] .help-tip-body {
+  display: block;
+}
+.help-tip-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.help-tip-line.strong {
+  border-top: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+.help-tip-line b {
+  color: var(--accent);
+}
+@media print {
+  .help-tip-button,
+  .help-tip-body {
+    display: none !important;
+  }
+}
