@@ -7,8 +7,8 @@ __pycache__/
 .coverage
 htmlcov/
 backend/vendor/
-node_modules/
-frontend/node_modules/
+# no trailing slash: a worktree's node_modules symlink is a file, not a directory
+node_modules
 frontend/.next/
 frontend/out/
 frontend/coverage/
