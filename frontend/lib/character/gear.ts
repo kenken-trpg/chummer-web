@@ -80,6 +80,7 @@ export function dropDrone(
     weapon_mounts?: { parent_id?: string | null; weapon_install_id?: string | null }[];
     sensors?: { id?: string; parent_id?: string | null }[];
     gear?: { id?: string; parent_id?: string | null }[];
+    programs?: { id?: string; parent_id?: string | null }[];
     cyberware?: WareInstall[];
   },
   id: string,
@@ -104,6 +105,7 @@ export function dropDrone(
     weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.parent_id !== id),
     sensors,
     gear: dropTree(ch.gear || [], id),
+    programs: (ch.programs || []).filter((row) => row.parent_id !== id),
     cyberware,
   };
 }

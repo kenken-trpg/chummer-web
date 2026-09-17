@@ -385,6 +385,7 @@ export const EN_ENGINE = {
   "engine.host.cyberdeck": "a cyberdeck",
 
   "engine.host.rcc": "an RCC",
+  "engine.host.rccOrVehicle": "an RCC, drone or vehicle",
   "engine.select.attribute": "an attribute",
   "engine.select.skill": "a skill",
   "engine.select.spell": "a spell",

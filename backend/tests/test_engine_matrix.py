@@ -426,11 +426,13 @@ def test_erika_program_slot_overflow_warns() -> None:
     assert has(out.derived["warnings"], "engine.gear.programsOver", used=2, max=1)
 
 
-def test_program_without_parent_is_dropped() -> None:
+def test_program_without_parent_is_kept_as_a_copy() -> None:
+    """Chummer keeps a bought program in the inventory; it runs nowhere
+    until it is loaded, but it was paid for."""
     out = compute(_mundane("loose-browse", programs=[GearInstall(gear_id=BROWSE)]))
-    assert out.derived["programs"] == []
-    assert has(out.derived["warnings"], "engine.gear.needsHost")
-    assert out.derived["nuyen_spent"] == 0
+    assert [row["parent_id"] for row in out.derived["programs"]] == [None]
+    assert not has(out.derived["warnings"], "engine.gear.needsHost")
+    assert out.derived["nuyen_spent"] == out.derived["programs"][0]["nuyen"] > 0
 
 
 def test_hacking_program_rejected_on_rcc() -> None:
@@ -442,9 +444,10 @@ def test_hacking_program_rejected_on_rcc() -> None:
             programs=[GearInstall(gear_id=EXPLOIT, parent_id=rcc.id)],
         )
     )
-    assert out.derived["programs"] == []
+    # taken off the RCC, still owned
+    assert [row["parent_id"] for row in out.derived["programs"]] == [None]
     assert has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.cyberdeck")
-    assert out.derived["nuyen_spent"] == 8000
+    assert out.derived["nuyen_spent"] == 8000 + out.derived["programs"][0]["nuyen"]
 
 
 def test_sensor_array_with_functions() -> None:
@@ -656,3 +659,27 @@ def test_a_modification_needs_a_device_to_live_in() -> None:
     out = compute(_human("loose-mod", gear=[GearInstall(gear_id=_mod_id("Add Attack Modification"))])).derived
     assert has(out["warnings"], "engine.gear.needsHost")
     assert out["gear"] == []
+
+
+CLEARSIGHT = "149a8dd2-dfef-473f-94a4-1bdd77e4f855"
+NOIZQUITO = "685a5cb6-75ee-45fd-80bd-07ea669054a3"
+
+
+def test_an_autosoft_runs_on_the_drone_it_is_loaded_into() -> None:
+    """An autosoft need not be shared from an RCC: a drone runs its own. A
+    deck program there is not run, and is kept as an owned copy instead."""
+    drone = GearInstall(gear_id=NOIZQUITO)
+    out = compute(
+        _mundane(
+            "drone-soft",
+            drones=[drone],
+            programs=[
+                GearInstall(gear_id=CLEARSIGHT, rating=3, parent_id=drone.id),
+                GearInstall(gear_id=BROWSE, parent_id=drone.id),
+            ],
+        )
+    )
+    held = {row["name"]: row["parent_id"] for row in out.derived["programs"]}
+    assert held == {"Clearsight Autosoft": drone.id, "Browse": None}
+    assert has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.cyberdeck")
+    assert not has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.rccOrVehicle")

@@ -626,3 +626,50 @@ describe("<VehicleDroneGear> compact view", () => {
     expect(screen.queryByLabelText("簡易表示（名称のみ）")).toBeNull();
   });
 });
+
+describe("<VehicleDroneGear> autosofts a drone runs itself", () => {
+  const autosoft = {
+    id: "as1",
+    name: "Clearsight Autosoft",
+    category: "Autosofts",
+    cost: "Rating * 500",
+    avail: "4",
+    source: "SR5",
+    minrating: 1,
+    maxrating: 6,
+    program_host: "rccs",
+    needs_extra: false,
+  };
+
+  it("lists the drone's own autosofts and loads a new one onto the drone", () => {
+    const dr = vehicle("d1", "Fly-Spy", { category: "Drones: Micro" });
+    const loaded = {
+      id: "p1",
+      gear_id: "as0",
+      name: "[Model] Stealth Autosoft",
+      label: "[Model] Stealth Autosoft (Fly-Spy)",
+      rating: 3,
+      rating_max: 6,
+      parent_id: "d1",
+      nuyen: 1500,
+    };
+    const ch = makeCharacter({
+      drones: [dr],
+      programs: [{ id: "p1", gear_id: "as0", rating: 3, parent_id: "d1" }],
+      derived: { drones: [dr], programs: [loaded] },
+    } as any);
+    const patch = vi.fn();
+    renderVehicle(ch, patch, makeCatalog({ programs: [autosoft] as any }), "drone");
+
+    expect(screen.getByText(/\[Model\] Stealth Autosoft \(Fly-Spy\)/)).toBeTruthy();
+    const select = screen.getByRole("combobox", { name: "Fly-Spy: オートソフトを追加" });
+    fireEvent.change(select, { target: { value: "as1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Fly-Spy: 装着" }));
+
+    const out = patch.mock.calls[0][0].programs as { gear_id: string; parent_id: string }[];
+    expect(out.map((r) => [r.gear_id, r.parent_id])).toEqual([
+      ["as0", "d1"],
+      ["as1", "d1"],
+    ]);
+  });
+});

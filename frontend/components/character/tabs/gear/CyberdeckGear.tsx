@@ -2,6 +2,7 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
@@ -10,6 +11,7 @@ import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
     <>
+      <LooseProgramRows kind="cyberdecks" character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       <>
         {(d.cyberdecks || []).length ? <p className="muted">{ui("deck.arrayNote")}</p> : null}
         {(d.cyberdecks || []).map((item) => (

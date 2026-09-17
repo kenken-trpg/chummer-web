@@ -155,6 +155,63 @@ describe.each(PROGRAM_HOSTS)("<%s> programs on a host", (_name, Panel, chKey, dK
 });
 
 /**
+ * A program nothing runs — bought and kept in the inventory, as Chummer does —
+ * is listed on its own, and loading it only sets its `parent_id`. An autosoft
+ * can go to an RCC or straight onto a drone; a deck program only to a deck.
+ */
+describe("programs loaded nowhere", () => {
+  const drone = { id: "dr1", name: "Fly-Spy" };
+  const character = () =>
+    makeCharacter({
+      rccs: [host("h1", "Gridlink")],
+      cyberdecks: [host("k1", "Erika")],
+      programs: [
+        program("a1", "Clearsight", null as any, { program_host: "rccs" }),
+        program("b1", "Browse", null as any, { program_host: "cyberdecks" }),
+      ],
+      derived: {
+        rccs: [host("h1", "Gridlink")],
+        cyberdecks: [host("k1", "Erika")],
+        drones: [drone],
+        programs: [
+          program("a1", "Clearsight", null as any, { program_host: "rccs" }),
+          program("b1", "Browse", null as any, { program_host: "cyberdecks" }),
+        ],
+      },
+    } as any);
+
+  it("the RCC panel offers its autosofts every RCC and drone, and loads one there", () => {
+    const patch = vi.fn();
+    const { container } = renderPanel(RccGear, character(), patch);
+
+    const loose = container.querySelectorAll<HTMLElement>(".cyber-item")[0];
+    expect(loose.textContent).toContain("Clearsight");
+    expect(loose.textContent).not.toContain("Browse");
+    const select = within(loose).getByRole("combobox");
+    const values = [...select.querySelectorAll("option")].map((o) => o.getAttribute("value"));
+    expect(values).toEqual(["", "h1", "dr1"]);
+
+    fireEvent.change(select, { target: { value: "dr1" } });
+    const out = patch.mock.calls[0][0].programs as { id: string; parent_id: string | null }[];
+    expect(out.map((r) => [r.id, r.parent_id])).toEqual([
+      ["a1", "dr1"],
+      ["b1", null],
+    ]);
+  });
+
+  it("the deck panel lists only deck programs and offers only decks", () => {
+    const { container } = renderPanel(CyberdeckGear, character(), vi.fn());
+    const loose = container.querySelectorAll<HTMLElement>(".cyber-item")[0];
+    expect(loose.textContent).toContain("Browse");
+    expect(loose.textContent).not.toContain("Clearsight");
+    const values = [...within(loose).getByRole("combobox").querySelectorAll("option")].map((o) =>
+      o.getAttribute("value"),
+    );
+    expect(values).toEqual(["", "k1"]);
+  });
+});
+
+/**
  * An autosoft names the thing it covers — a skill, a skill group, or a vehicle
  * model that no catalog can enumerate. `AddonSelect` renders a different
  * control for each, and the RCC panel is the only place all three appear.

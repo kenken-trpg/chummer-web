@@ -158,6 +158,8 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 # a Custom Item goes by the name the player gave it
                 el.find("name").text = g.name  # type: ignore[union-attr]
             _sub(el, "rating", getattr(g, "rating", 1))
+            if getattr(g, "extra", None):
+                _sub(el, "extra", g.extra)
             _sub(el, "qty", int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)))
             _sub(el, "discountedcost", "True" if getattr(g, "discounted", False) else "False")
             if getattr(g, "cost", None) is not None:
