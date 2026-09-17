@@ -6,6 +6,13 @@ from typing import Any
 
 from .._xml import _int, _text, data_root
 from ..bonus import parse_bonus, quality_needs_extra
+from ..formulas import eval_formula
+
+
+def _price(text: str) -> float:
+    """A lifestyle quality's monthly price. Most are whole numbers; a yearly
+    contract is written `5000 div 12` and costs its twelfth, pennies included."""
+    return round(eval_formula(text, 1, 0.0), 2)
 
 
 def load_lifestyles() -> list[dict[str, Any]]:
@@ -79,7 +86,7 @@ def load_lifestyle_qualities() -> list[dict[str, Any]]:
                 "name": name,
                 "category": _text(el.find("category")),
                 "lp": _int(el.find("lp")),
-                "cost": _int(el.find("cost")),
+                "cost": _price(_text(el.find("cost"))),
                 "multiplier": _int(el.find("multiplier")),
                 "base_multiplier": _int(el.find("multiplierbaseonly")),
                 "allowed": allowed,

@@ -899,3 +899,17 @@ def test_a_weapon_chummer_made_from_gear_is_not_bought_again() -> None:
     state, _ = chum5_to_state(raw)
     names = {str(row["id"]): row["name"] for row in catalog()["weapons"]}
     assert [names[row["weapon_id"]] for row in state["weapons"]] == ["Combat Knife"]
+
+
+def test_gear_a_drone_names_in_plain_text_comes_with_it() -> None:
+    """A Telestrian Shamus's data lists `<gear>Quicksilver Camera</gear>`,
+    the name as text. The included-gear index read only `<name>` children, so
+    the free camera came in as 2,500¥ of gear (BLUE)."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <vehicles><vehicle><name>Telestrian Shamus</name>
+        <gears><gear><name>Quicksilver Camera</name><cost>0</cost><parentid>x</parentid></gear></gears>
+      </vehicle></vehicles>
+    </character>"""
+    state, _ = chum5_to_state(raw)
+    assert state.get("gear") in (None, [])

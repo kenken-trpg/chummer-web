@@ -1,5 +1,6 @@
 """Contacts, lifestyles and notoriety."""
 
+from app.data_loader import catalog
 from app.engine import (
     compute,
 )
@@ -253,3 +254,19 @@ def test_a_characters_lifestyle_percentages_compound_before_the_outings() -> Non
     assert row["monthly"] == 2450  # 2000 x 1.1 x 1.1 + 30
     assert row["nuyen"] == 2450
     assert "_pre_mod" not in row
+
+
+DOCWAGON_BASIC = next(
+    row["id"] for row in catalog()["lifestyle_qualities"] if row["name"] == "DocWagon Contract, Basic"
+)
+
+
+def test_a_yearly_contract_costs_its_twelfth_each_month() -> None:
+    """`5000 div 12` is XPath's division. Read as nothing, the DocWagon
+    contract was free (BLUE: 416.67¥ a month)."""
+    out = compute(
+        _mundane("docwagon", lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, quality_ids=[DOCWAGON_BASIC])])
+    )
+    row = out.derived["lifestyles"][0]
+    assert next(q["cost"] for q in row["qualities"] if q["quality_id"] == DOCWAGON_BASIC) == 416.67
+    assert row["monthly"] == 2417  # 2000 + 416.67

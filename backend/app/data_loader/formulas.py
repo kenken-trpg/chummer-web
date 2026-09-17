@@ -56,6 +56,8 @@ def eval_formula(
     s = _subst_keys(raw)
     s = re.sub(r"[RF]$", "", s.strip())
     s = re.sub(r"\bmod\b", "%", s, flags=re.I)
+    # XPath's division: a yearly contract priced by the month, `5000 div 12`
+    s = re.sub(r"\bdiv\b", "/", s, flags=re.I)
     s = s.replace(" ", "")
     if not re.fullmatch(r"[0-9+\-*/().><=%int]+", s):
         try:
