@@ -14,8 +14,8 @@ from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 
 
-def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
-    """Write cyber- and bioware, re-nested by parent.
+def _ware_writer(state: CharacterState, names: _Names) -> Any:
+    """Return ``(by_parent, emit)`` for cyber- and bioware rows.
 
     An implant with a `<selectskill>` or `<hardwires>` bonus also carries the
     skill that was picked for it. This app keys those picks by the *install*
@@ -28,50 +28,55 @@ def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _C
         return sorted((key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix))
 
     gear_by_parent, emit_gear = _gear_writer(state, names)
+    by_parent: dict[str | None, list[Any]] = {}
+    for r in [*state.cyberware, *state.bioware]:
+        by_parent.setdefault(r.parent_id, []).append(r)
 
-    def _ware(container: str, rows: list[Any]) -> None:
-        top = _sub(root, container)
-        by_parent: dict[str | None, list[Any]] = {}
-        for r in rows:
-            by_parent.setdefault(r.parent_id, []).append(r)
+    def emit(parent_el: ET.Element, rowset: list[Any], tag: str) -> None:
+        for r in rowset:
+            w = _sub(parent_el, tag)
+            _sub(w, "guid", r.id)
+            _sub(w, "sourceid", r.ware_id)
+            _sub(w, "name", names["ware"].get(r.ware_id, ""))
+            _sub(w, "grade", r.grade)
+            _sub(w, "rating", r.rating)
+            if r.side:
+                _sub(w, "location", r.side)
+            if r.extra:
+                _sub(w, "extra", r.extra)
+            if getattr(r, "included", False):
+                _sub(w, "included", "True")
+            # Chummer's mark for "came with its parent": the parent's guid.
+            # Empty on a top-level piece and on anything bought for a parent.
+            _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
+            _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
+            picks = _picks_of(r.id)
+            if picks:
+                picks_el = _sub(w, "skillpicks")
+                for index, skill in picks:
+                    pick = _sub(picks_el, "pick")
+                    _sub(pick, "index", index)
+                    _sub(pick, "skill", skill)
+            kids = by_parent.get(r.id)
+            if kids:
+                emit(_sub(w, "children"), kids, tag)
+            # what it holds (a Chemical Gland's chemical)
+            held = gear_by_parent.get(r.id)
+            if held:
+                emit_gear(_sub(w, "gears"), held)
 
-        def emit(parent_el: ET.Element, rowset: list[Any]) -> None:
-            for r in rowset:
-                w = _sub(parent_el, "cyberware" if container == "cyberwares" else "bioware")
-                _sub(w, "guid", r.id)
-                _sub(w, "sourceid", r.ware_id)
-                _sub(w, "name", names["ware"].get(r.ware_id, ""))
-                _sub(w, "grade", r.grade)
-                _sub(w, "rating", r.rating)
-                if r.side:
-                    _sub(w, "location", r.side)
-                if r.extra:
-                    _sub(w, "extra", r.extra)
-                if getattr(r, "included", False):
-                    _sub(w, "included", "True")
-                # Chummer's mark for "came with its parent": the parent's guid.
-                # Empty on a top-level piece and on anything bought for a parent.
-                _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
-                _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
-                picks = _picks_of(r.id)
-                if picks:
-                    picks_el = _sub(w, "skillpicks")
-                    for index, skill in picks:
-                        pick = _sub(picks_el, "pick")
-                        _sub(pick, "index", index)
-                        _sub(pick, "skill", skill)
-                kids = by_parent.get(r.id)
-                if kids:
-                    emit(_sub(w, "children"), kids)
-                # what it holds (a Chemical Gland's chemical)
-                held = gear_by_parent.get(r.id)
-                if held:
-                    emit_gear(_sub(w, "gears"), held)
+    return by_parent, emit
 
-        emit(top, by_parent.get(None, []))
 
-    _ware("cyberwares", state.cyberware)
-    _ware("biowares", state.bioware)
+def _export_ware(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """Write cyber- and bioware, re-nested by parent. What sits in a vehicle
+    mod (a drone arm's Shock Hand) is written with the mod instead."""
+    by_parent, emit = _ware_writer(state, names)
+    cyber_ids = {r.id for r in state.cyberware}
+    bio_ids = {r.id for r in state.bioware}
+    top = by_parent.get(None, [])
+    emit(_sub(root, "cyberwares"), [r for r in top if r.id in cyber_ids], "cyberware")
+    emit(_sub(root, "biowares"), [r for r in top if r.id in bio_ids], "bioware")
 
 
 def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -257,6 +262,7 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
     for vrow in state.vehicle_mods:
         vmod_by_parent.setdefault(vrow.parent_id, []).append(vrow)
     gear_by_parent, emit_gear = _gear_writer(state, names)
+    ware_by_parent, emit_ware = _ware_writer(state, names)
     for v in [*state.vehicles, *state.drones]:
         el = _sub(vehs, "vehicle")
         _sub(el, "sourceid", v.gear_id)
@@ -268,6 +274,10 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
             _sub(mm, "name", names["vmod"].get(vrow.mod_id, ""))
             _sub(mm, "rating", vrow.rating)
             _sub(mm, "included", "True" if vrow.included else "False")
+            # the implants in it (a drone arm's Shock Hand)
+            ware = ware_by_parent.get(vrow.id)
+            if ware:
+                emit_ware(_sub(mm, "cyberwares"), ware, "cyberware")
         # what is stowed in it (a camera, a medkit), as Chummer keeps it
         stowed = gear_by_parent.get(v.id)
         if stowed:

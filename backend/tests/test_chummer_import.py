@@ -913,3 +913,30 @@ def test_gear_a_drone_names_in_plain_text_comes_with_it() -> None:
     </character>"""
     state, _ = chum5_to_state(raw)
     assert state.get("gear") in (None, [])
+
+
+def test_implants_in_a_drone_arm_are_read_priced_by_the_drone_and_kept() -> None:
+    """Mittens's Direktionssekretar has a Shock Hand and a Customized Agility
+    in its Drone Arm. The import never read a mod's `<cyberwares>` — 48,000¥
+    gone without a word — and the export had nowhere to write them. Inside a
+    drone, Chummer takes Agility from the drone's Pilot (4): Customized
+    Agility 8 is (8 - 5 + 1) x 5000."""
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <metatype>Human</metatype>
+      <vehicles><vehicle><name>Saeder-Krupp Direktionssekretar</name><mods>
+        <mod><name>Drone Arm</name><included>True</included><cyberwares>
+          <cyberware><name>Customized Agility</name><rating>8</rating><grade>Standard</grade></cyberware>
+          <cyberware><name>Shock Hand</name><rating>0</rating><grade>Standard</grade></cyberware>
+        </cyberwares></mod>
+      </mods></vehicle></vehicles>
+    </character>"""
+    state, warnings = chum5_to_state(raw)
+    assert warnings == []
+    ch = import_character(state)
+    arm = next(m for m in ch.derived["drones"][0]["mods"] if m["name"] == "Drone Arm")
+    held = {row["name"]: (row["rating"], row["nuyen"]) for row in arm["cyberware"]}
+    assert held == {"Customized Agility": (8, 20000), "Shock Hand": (1, 5000)}
+
+    back = import_character(chum5_to_state(state_to_chum5(ch))[0])
+    assert back.derived["nuyen_spent"] == ch.derived["nuyen_spent"]
+    assert {row.parent_id for row in back.cyberware} == {back.vehicle_mods[0].id}

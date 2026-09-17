@@ -26,6 +26,7 @@ from ..ware import (
     resolve_ware,
 )
 from ..ware.pairs import apply_wireless_pairs, pair_bonus_sources
+from ..ware.vehicles import vehicle_ware_extras
 from .context import Ctx
 
 
@@ -71,7 +72,12 @@ def ware(ctx: Ctx) -> None:
     ctx.bio_installed = resolve_ware("bioware", [*ctx.state.bioware, *granted_bio], ctx.attrs_spec, gear_costs=held)
     ctx.adapsin = has_adapsin(ctx.bio_installed)
     ctx.cyber_installed = resolve_ware(
-        "cyberware", [*ctx.state.cyberware, *granted_cyber], ctx.attrs_spec, adapsin=ctx.adapsin, gear_costs=held
+        "cyberware",
+        [*ctx.state.cyberware, *granted_cyber],
+        ctx.attrs_spec,
+        adapsin=ctx.adapsin,
+        gear_costs=held,
+        vehicle_extras=vehicle_ware_extras(ctx.state),
     )
     _mark_granted(ctx.bio_installed, bio_sources)
     _mark_granted(ctx.cyber_installed, cyber_sources)

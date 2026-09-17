@@ -256,6 +256,12 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **ドローンの腕や脚に入れたサイバーウェアを、取り込みで黙って捨てていた。** 車両改造の
+  `<cyberwares>` を読んでおらず、書き出しにも書く場所がなかった。取り込み・書き出しとも
+  改造の中に読み書きし、中のウェアの能力値の式は Chummer と同じくドローンの Body と
+  Pilot から取る（Pilot 4 のドローンの Customized Agility は 5 から）。
+  Mittens の差が 48,490¥ から 1,490¥ に。
+
 - **ドローンに最初から付いている Quicksilver Camera を 2,500¥ で買い直していた。**
   Telestrian Shamus のデータは `<gear>Quicksilver Camera</gear>` と名前を直接書くが、
   付属品の判定が `<usegear>` の形しか見ていなかった。
