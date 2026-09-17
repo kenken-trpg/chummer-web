@@ -7,6 +7,8 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **`scripts/merge_chain.sh`**：PR を順番にリベース・検査・マージするスクリプト。
+  CHANGELOG とテストのぶつかりは両方残す（`scripts/keep_both_sides.py`）。
 - **入手可能度とグレードに説明を付けた。** サイドバーの「入手制限」「デバイスレーティング」の
   「？」に、入手可能度の意味（R / F の区別、作成時の上限）とデバイスレーティング上限が出る。
   ウェアのグレード欄にはマウスを乗せると、エッセンス・値段への影響と作成時の制限が出る。

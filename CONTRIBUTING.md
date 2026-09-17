@@ -214,6 +214,13 @@ new module with no test at all is worth a second look.
   `style:`, `test:`. A scope is nice: `feat(engine): …`.
 - Every PR must pass `make check` locally. Add or update tests for rule
   changes — `backend/tests/test_engine_*.py` have lots of patterns to copy.
+- **`scripts/merge_chain.sh 248:branch-a 249:branch-b`** merges a queue of PRs
+  in order: each one is rebased onto the current `origin/main`, checked the way
+  CI checks it, pushed, and merged once GitHub's checks pass. Because each PR
+  branches off `main`, the one before it lands first and the next rebase picks
+  it up. A conflict in `CHANGELOG.md` or a test file keeps both sides
+  (`scripts/keep_both_sides.py`) — two entries or two test cases are what the
+  branches meant; anything else stops the run. It ends on an up-to-date `main`.
 - Rules changes should cite the SR5 (or supplement) page, and match what
   Chummer does when the books are ambiguous — Chummer is the reference
   implementation this project chases.
