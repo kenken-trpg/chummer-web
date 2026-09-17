@@ -165,6 +165,23 @@ def _misc_slot_stats(spec: dict[str, Any], inst: GearInstall, rating: int) -> tu
     return False, 0.0, 0.0
 
 
+#: the most of one gear item a row holds (a box of 2,000 datachips is 200 lots)
+MAX_QTY = 999
+
+
+def _held_multiplier(inst: GearInstall, by_id: dict[str, GearInstall], specs: dict[str, dict[str, Any]]) -> int:
+    """How many of each gear ancestor there are, multiplied up the chain."""
+    out = 1
+    seen: set[str] = set()
+    parent = by_id.get(inst.parent_id or "")
+    while parent is not None and parent.id not in seen:
+        seen.add(parent.id)
+        per_lot = max(1, int((specs.get(parent.gear_id) or {}).get("costfor") or 0))
+        out *= max(1, int(parent.qty or 1)) * per_lot
+        parent = by_id.get(parent.parent_id or "")
+    return out
+
+
 def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
     warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("gear") or []}
@@ -347,7 +364,7 @@ def _resolve_misc_gear(
         inst.extra = extra or None
         rating = _clamp_rating(spec, inst.rating)
         inst.rating = rating
-        qty = max(1, min(99, int(inst.qty or 1)))
+        qty = max(1, min(MAX_QTY, int(inst.qty or 1)))
         inst.qty = qty
         cost_expr = str(spec.get("cost") or "0")
         extras: dict[str, int | float] = {}
@@ -369,7 +386,10 @@ def _resolve_misc_gear(
             inst.name = None
         unit = 0 if inst.included else picked if picked is not None else int(eval_formula(cost_expr, rating, 0, extras))
         unit_costs[inst.id] = unit
-        cost = unit * qty
+        # Chummer's `Gear.TotalCost`: what is inside a gear item is bought
+        # once for each of it — three gas grenades, three loads of CS/Tear
+        # Gas — counting single items, not the lots a price is quoted for
+        cost = unit * qty * _held_multiplier(inst, by_id, specs)
         nuyen += cost
         plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
         nodes = substitute_rating(list(spec.get("bonus") or []), rating)

@@ -851,3 +851,22 @@ def test_a_vehicle_sensor_is_not_the_characters_device() -> None:
     array = next(row for row in out.derived["sensors"] if row["name"] == "Sensor Array")
     assert array["on_vehicle"] is True
     assert not has(out.derived["errors"], "engine.gear.deviceRatingOver")
+
+
+def test_run_flat_tires_are_priced_per_tyre() -> None:
+    """`<rating>qty</rating>` counts tyres (Chummer: 1 to `Vehicle.MaxWheels`,
+    50). It used to be read as no rating at all — clamped to one tyre — and
+    kept out of the picker."""
+    tires = next(row for row in catalog()["vehicle_mods"] if row["name"] == "Run-Flat Tires")
+    assert tires["purchasable"] is True
+    assert tires["maxrating"] == 50
+    car = GearInstall(gear_id=HONDA_SPIRIT)
+    out = compute(
+        _mundane(
+            "tires",
+            vehicles=[car],
+            vehicle_mods=[VehicleModInstall(mod_id=tires["id"], parent_id=car.id, rating=4)],
+        )
+    )
+    mod = next(m for m in out.derived["vehicles"][0]["mods"] if m["name"] == "Run-Flat Tires")
+    assert (mod["rating"], mod["nuyen"]) == (4, 1000)
