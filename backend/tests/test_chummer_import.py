@@ -779,3 +779,39 @@ def test_what_a_kit_brings_is_not_reported_as_not_fitting() -> None:
     names = {str(g["id"]): g["name"] for g in catalog()["gear"]}
     assert sorted(names[row.gear_id] for row in ch.gear) == ["Matches", "Survival Kit"]
     assert not has(ch.derived["warnings"], "engine.gear.doesNotFit")
+
+
+def test_gear_dragged_into_a_commlink_armor_or_vehicle_is_carried_on_its_own() -> None:
+    """The same drag as ammo into a Spare Clip, onto the hosts that are not
+    gear: a reader into a commlink that takes no such add-on, or into a jacket
+    that has no capacity for it. What only goes on a host of its own (a Seeker
+    Shaft) could not be carried alone either, so it stays and is reported."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <gears><gear><name>Hermes Ikon</name><qty>1</qty><children>
+        <gear><name>Biometric Reader</name><qty>1</qty></gear>
+      </children></gear></gears>
+      <armors><armor><name>Armor Jacket</name><gears>
+        <gear><name>Biometric Reader</name><qty>1</qty></gear>
+      </gears></armor></armors>
+      <vehicles><vehicle><name>Ford Americar (Sedan)</name><gears>
+        <gear><name>Seeker Shaft</name><qty>1</qty></gear>
+        <gear><name>Medkit</name><rating>3</rating><qty>1</qty></gear>
+      </gears></vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert sorted((w["params"]["name"], w["params"]["host"]) for w in warnings) == [
+        ("Biometric Reader", "Armor Jacket"),
+        ("Biometric Reader", "Hermes Ikon"),
+    ]
+    names = {str(g["id"]): g["name"] for g in catalog()["gear"]}
+    (vehicle,) = st["vehicles"]
+    assert sorted((names[row["gear_id"]], row.get("parent_id")) for row in st["gear"]) == [
+        ("Biometric Reader", None),
+        ("Biometric Reader", None),
+        ("Medkit", vehicle["id"]),
+        ("Seeker Shaft", vehicle["id"]),
+    ]
+    derived = import_character(st).derived
+    assert [w["params"]["name"] for w in derived["warnings"] if w["key"] == "engine.gear.doesNotFit"] == [
+        {"tr": "Seeker Shaft"}
+    ]

@@ -208,7 +208,11 @@ def _included(node: ET.Element) -> bool:
 
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
-    from ..engine.gear.misc import _misc_child_fits
+    from ..engine.gear.misc import (
+        _commlink_accessory_parent_spec,
+        _matrix_device_parent_spec,
+        _misc_child_fits,
+    )
 
     #: what this app can fit inside a piece of armor or a vehicle
     HOST_BUCKETS = ("gear", "optics", "sensors")
@@ -221,12 +225,39 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
 
     rows_by_id = {str(row["id"]): row for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
+    def stays(
+        spec: dict[str, Any],
+        parent_bucket: str | None,
+        parent_gid: str,
+        host: tuple[Phrase, str] | None,
+        host_armor: bool,
+    ) -> bool:
+        """Whether the engine keeps a gear-bucket item where the save put it
+        (`engine/gear/misc.py` runs the same tests)."""
+        if spec.get("requireparent"):
+            # it cannot be carried on its own either: left where it is, the
+            # engine says it does not fit
+            return True
+        if host_armor:
+            return bool(spec.get("armor_capacity"))
+        if host is not None:
+            return True  # a vehicle carries anything that needs no host
+        parent = rows_by_id.get(parent_gid) or {}
+        if parent_bucket == "gear":
+            return _misc_child_fits(parent, spec)
+        if parent_bucket == "commlinks":
+            return _misc_child_fits(_commlink_accessory_parent_spec(parent), spec)
+        if parent_bucket in ("cyberdecks", "rccs"):
+            return _misc_child_fits(_matrix_device_parent_spec(parent), spec)
+        return True
+
     def route_gear(
         g: ET.Element,
         parent_id: str | None,
         parent_bucket: str | None,
         host: tuple[Phrase, str] | None = None,
         parent_gid: str = "",
+        host_armor: bool = False,
     ) -> None:
         # Chummer names a gear entry by `<id>` too — a Custom Item's `<name>`
         # is whatever the player called it
@@ -288,21 +319,16 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         )
         if (
             parent_id
-            and host is None
-            and bucket == parent_bucket == "gear"
+            and bucket == "gear"
             and not included
-            and not _misc_child_fits(rows_by_id.get(parent_gid) or {}, spec)
+            and not stays(spec, parent_bucket, parent_gid, host, host_armor)
         ):
             # Chummer lets a player drag any gear into any other (ammo into a
-            # Spare Clip); this app would drop it there, and what it holds
-            # with it, so it is carried on its own instead — and said so.
-            warn.append(
-                notice(
-                    "engine.import.gearMovedOut",
-                    name=name,
-                    host=str((rows_by_id.get(parent_gid) or {}).get("name") or ""),
-                )
-            )
+            # Spare Clip, a reader into a commlink); this app would drop it
+            # there, and what it holds with it, so it is carried on its own
+            # instead — and said so.
+            host_name = host[1] if host is not None else str((rows_by_id.get(parent_gid) or {}).get("name") or "")
+            warn.append(notice("engine.import.gearMovedOut", name=name, host=host_name))
             parent_id = None
         if bucket == "commlinks":
             row["qty"] = max(1, math.ceil(_qty(g)))
@@ -324,7 +350,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     armor_names = {str(a["id"]): str(a.get("name") or "") for a in catalog_list("armor")}
     armor_of = {str(a["id"]): armor_names.get(str(a["armor_id"]), "") for a in st.get("armor") or []}
     for armor_id, g in st.pop("_armor_gear", None) or []:
-        route_gear(g, armor_id, None, (ui("engine.kind.armor"), armor_of.get(armor_id, "")))
+        route_gear(g, armor_id, None, (ui("engine.kind.armor"), armor_of.get(armor_id, "")), host_armor=True)
     vehicle_names = {
         str(v["id"]): next(
             (row["name"] for b in ("vehicles", "drones") for row in catalog_list(b) if row["id"] == v["gear_id"]),
