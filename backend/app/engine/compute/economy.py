@@ -418,10 +418,19 @@ def economy(ctx: Ctx) -> None:
         if ctx.career:
             baseline = ctx.state.career_baseline
             if baseline is None:
+                # From the ratings this pass settles on, not the raw input: a
+                # Chummer save carries MAGADEPT, and a mundane's RES as 0 that
+                # a re-read of our own export would bring back differently.
                 baseline = snapshot_career_baseline(ctx.state)
+                baseline.attributes = {k: int(v) for k, v in ctx.bought_ratings.items() if k != "ESS"}
                 ctx.state.career_baseline = baseline
             ctx.career_adv_karma, ctx.career_adv_lines = career_raise_karma(
-                ctx.state, baseline, ctx.skill_totals, ctx.data["skills"], effects=ctx.effects
+                ctx.state,
+                baseline,
+                ctx.skill_totals,
+                ctx.data["skills"],
+                effects=ctx.effects,
+                ratings=ctx.bought_ratings,
             )
             ctx.karma_spent += ctx.career_adv_karma
 

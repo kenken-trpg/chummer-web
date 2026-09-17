@@ -131,6 +131,10 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
         spec = m_attr.get(key) or {}
         lo = int(spec.get("min", 0 if key in ("MAG", "RES", "DEP") else 1))
         val = int(state.attributes.get(key, lo))
+        if key in ("MAG", "RES", "DEP"):
+            # An attribute the character does not have is 0, below the
+            # metatype minimum; Chummer writes that minimum as 0 too.
+            lo = min(lo, val)
         attr_el = _sub(attrs, "attribute")
         _sub(attr_el, "name", key)
         _sub(attr_el, "metatypemin", lo)
