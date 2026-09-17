@@ -590,14 +590,14 @@ def test_hand_blade_on_cyberarm_is_weapon() -> None:
 
 def test_hand_blade_uses_customized_limb_str() -> None:
     arm = CyberwareInstall(id="arm1", ware_id=ARM)
-    custom = CyberwareInstall(ware_id=CUSTOM_STR, rating=3, parent_id="arm1")
+    custom = CyberwareInstall(ware_id=CUSTOM_STR, rating=5, parent_id="arm1")
     blade = CyberwareInstall(id="blade1", ware_id=HAND_BLADE, parent_id="arm1")
     out = compute(_mundane("arm-blade-str", cyberware=[arm, custom, blade]))
     row = next(item for item in out.derived["weapons"] if item["from_ware"])
-    assert row["damage"] == "5P"
-    assert row["limb_str"] == 3
+    assert row["damage"] == "7P"
+    assert row["limb_str"] == 5
     arm_row = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
-    assert arm_row["limb_str"] == 3
+    assert arm_row["limb_str"] == 5
 
 
 def test_meat_hand_blade_uses_character_str() -> None:

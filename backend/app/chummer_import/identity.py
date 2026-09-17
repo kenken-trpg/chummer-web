@@ -94,6 +94,9 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
         limit = preset.get("quality_karma_limit")
         if limit is not None and int(limit) != DEFAULT_RULES.quality_karma_cap_positive:
             found["quality_karma_limit"] = int(limit)
+        table = preset.get("priority_table")
+        if table and table != "Standard":
+            found["priority_table"] = str(table)
         return {**found, **extra}
     return {"name": name, "books": [], **extra}
 

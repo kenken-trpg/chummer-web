@@ -437,3 +437,24 @@ def test_the_standard_preset_leaves_the_printed_cap_unset() -> None:
       <metatype>Human</metatype>
     </character>"""
     assert "quality_karma_limit" not in chum5_to_state(raw)[0]["settings"]
+
+
+def test_a_prime_runner_is_paid_from_the_prime_runner_resources_row() -> None:
+    """Prime Runner builds from its own `<prioritytable>`: Resources E is
+    100,000¥, not Standard's 6,000¥. Importing without the table left two of
+    Chummer's own Prime Runner saves ~100,000¥ in debt."""
+    from app.characters import import_character
+
+    raw = b"""<?xml version="1.0" encoding="utf-8"?><character>
+      <settings>default.xml</settings>
+      <gameplayoption>Prime Runner</gameplayoption>
+      <buildmethod>SumtoTen</buildmethod>
+      <priorityresources>E,0</priorityresources>
+      <metatype>Human</metatype>
+    </character>"""
+    state = chum5_to_state(raw)[0]
+    assert state["settings"]["priority_table"] == "Prime Runner"
+    assert import_character(state).derived["nuyen_pool"] == 100000
+
+    standard = raw.replace(b"Prime Runner", b"Standard")
+    assert "priority_table" not in chum5_to_state(standard)[0]["settings"]

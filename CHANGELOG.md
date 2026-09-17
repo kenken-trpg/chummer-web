@@ -222,6 +222,14 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **義肢の中の Customized Agility / Strength を 1 個あたり 10,000¥ 高く数えていた。**
+  値段 `(Rating - MinRating + 1) * 5000` の下限を、Chummer は親の義肢の基本値 3 から
+  取る（`Cyberware.ProcessAttributesInXPath`）が、このアプリはキャラクターの種族の
+  最小値（人間なら 1）を使っていた。Chummer のテスト用キャラ 4 件で数万¥の赤字に
+  なっていた（Bastion の -60,015¥ が -15¥ に）。レーティングの下限も 4 からになる。
+- **Prime Runner のセーブを取り込むと、Standard の優先度表で新円を配っていた。**
+  取り込みがプリセットの `<prioritytable>` を引き継いでおらず、資源 E が 100,000¥ でなく
+  6,000¥ になっていた（Apex Predator、prime）。
 - **入らない場所に入れてあったギアを、取り込みで捨てずに別に持たせるようにした。**
   Chummer ではギアを別のギアへドラッグで入れられるので、Spare Clip の中の弾や
   Hard-Shell Briefcase の中の手榴弾のようなセーブがある。このアプリはそこに入れられない

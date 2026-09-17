@@ -71,6 +71,9 @@ def load_settings_presets() -> list[dict[str, Any]]:
                 # judged by the rules it was built under — without it, a legal
                 # Prime Runner is called illegal over 10 karma of qualities.
                 "quality_karma_limit": _int(el.find("qualitykarmalimit"), 25),
+                # Which priority rows the preset builds from: Prime Runner's
+                # Resources E is 100,000¥, not Standard's 6,000¥.
+                "priority_table": _text(el.find("prioritytable")) or "Standard",
             }
         )
     return presets
