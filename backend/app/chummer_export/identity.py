@@ -167,6 +167,10 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
     active_ids = {str(row["name"]): str(row["id"]) for row in data.get("skills") or []}
     active_cats = {str(row["name"]): str(row.get("category") or "") for row in data.get("skills") or []}
     knowledge_ids = {str(row["name"]): str(row["id"]) for row in data.get("knowledge") or [] if row.get("id")}
+    # The engine keeps a listed skill's type only when it was changed, so the
+    # list is where an unchanged one's type comes from.
+    # Street is what the engine takes a typeless unlisted one for.
+    knowledge_cats = {str(row["name"]): str(row.get("category") or "") for row in data.get("knowledge") or []}
     ns = _sub(root, "newskills")
 
     def karma_of(levels: dict[str, int], name: str, rating: int) -> int:
@@ -224,7 +228,8 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         knowledge(name, "Language", 0, 0, True)
     for name, rating in sorted(state.knowledge_skills.items()):
         karma = karma_of(state.knowledge_karma, name, rating)
-        knowledge(name, state.knowledge_categories.get(name, "Academic"), rating - karma, karma, False)
+        category = state.knowledge_categories.get(name) or knowledge_cats.get(name) or "Street"
+        knowledge(name, category, rating - karma, karma, False)
 
     grps = _sub(ns, "groups")
     for name, rating in sorted(state.skill_groups.items()):

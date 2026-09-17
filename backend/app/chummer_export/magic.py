@@ -35,7 +35,14 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
                 _sub(el, k, fn(row))
         return parent
 
-    _named_list("spells", "spell", state.spells, "spell_id", "spell")
+    _named_list(
+        "spells",
+        "spell",
+        state.spells,
+        "spell_id",
+        "spell",
+        {"alchemical": lambda r: "True" if r.alchemical else "False"},
+    )
     _named_list(
         "powers",
         "power",
@@ -45,7 +52,12 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
         {"rating": lambda r: r.rating, "extra": lambda r: r.extra or ""},
     )
     _named_list(
-        "complexforms", "complexform", state.complex_forms, "form_id", "complexform", {"rating": lambda r: r.level or 1}
+        "complexforms",
+        "complexform",
+        state.complex_forms,
+        "form_id",
+        "complexform",
+        {"rating": lambda r: r.level or 1, "extra": lambda r: r.extra or ""},
     )
 
 
