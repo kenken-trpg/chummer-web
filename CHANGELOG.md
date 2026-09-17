@@ -222,6 +222,10 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 
 ### Fixed
 
+- **中身の無い Chemical Gland を 0¥ にしていた。** 値段 `20000 + (99 * Gear Cost)` の
+  `Gear Cost`（入れた薬品の値段）を解釈できず、式全体を 0 にしていた。このアプリの
+  ウェアはギアを持たないので 0 として計算し、Chummer の空の腺と同じ値段になる
+  （Ghile Mear の 2 個で 40,000¥）。
 - **義肢の中の Customized Agility / Strength を 1 個あたり 10,000¥ 高く数えていた。**
   値段 `(Rating - MinRating + 1) * 5000` の下限を、Chummer は親の義肢の基本値 3 から
   取る（`Cyberware.ProcessAttributesInXPath`）が、このアプリはキャラクターの種族の
