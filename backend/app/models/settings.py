@@ -1,0 +1,97 @@
+"""The Chummer settings file and per-character options."""
+
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class CharacterOptions(BaseModel):
+    redliner_torso: bool = False
+    redliner_skull: bool = False
+
+
+class SettingsState(BaseModel):
+    """A Chummer settings file, as much of one as this app honours.
+
+    Chummer's `<settings>` carries ~160 house-rule knobs. This holds the ones
+    the engine can act on — the enabled books, the build budget, the karma
+    price list and the chargen caps — plus the name for the pulldown and a
+    list of what had to be ignored. See docs/plans/settings-plan.md.
+
+    `books` is the list of enabled `<source>` codes. **Empty means
+    unrestricted**, not "no books": a character saved before this field
+    existed, or one built without picking a preset, must keep seeing the whole
+    catalog rather than suddenly owning gear from disabled books.
+    """
+
+    name: str = ""
+    books: list[str] = Field(default_factory=list)
+    #: Which `<prioritytable>` in `priorities.xml` the rows come from —
+    #: Standard, Prime Runner, Street Level, or one custom data adds.
+    priority_table: str = Field(default="Standard", max_length=100)
+
+    # Every knob below is `None` when the settings file did not change it, so
+    # an unset field keeps the printed SR5 value. `app.rules.rules_for` folds
+    # them into a `Rules`; see `app/settings_file.py` for the XML side.
+    sum_to_ten: int | None = None
+    chargen_karma: int | None = None
+    karma_chargen_pool: int | None = None
+    karma_attribute: int | None = None
+    karma_active_skill: int | None = None
+    karma_skill_group: int | None = None
+    karma_knowledge: int | None = None
+    karma_specialization: int | None = None
+    karma_knowledge_specialization: int | None = None
+    karma_spell: int | None = None
+    karma_complex_form: int | None = None
+    karma_enhancement: int | None = None
+    karma_mystic_pp: int | None = None
+    karma_martial_technique: int | None = None
+    karma_initiation_flat: int | None = None
+    karma_initiation_per_grade: int | None = None
+    karma_submersion_flat: int | None = None
+    karma_submersion_per_grade: int | None = None
+    quality_karma_limit: int | None = None
+    chargen_skill_max: int | None = None
+    chargen_knowledge_skill_max: int | None = None
+    chargen_attributes_at_max: int | None = None
+    career_skill_max: int | None = None
+    career_knowledge_skill_max: int | None = None
+    chargen_avail_max: int | None = None
+    min_astral_initiative_dice: int | None = None
+    max_astral_initiative_dice: int | None = None
+    #: `<limbcount>` / `<excludelimbslot>`: how many limbs a cyberlimb's
+    #: STR / AGI is averaged across, and a slot left out of that average
+    limb_count: int | None = None
+    exclude_limb_slot: str | None = Field(default=None, max_length=20)
+    karma_to_nuyen: int | None = None
+    priority_karma_nuyen_base: int | None = None
+    #: `<contactpointsexpression>`'s multiplier: free contact points are
+    #: unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
+    contact_free_mult: int | None = None
+    #: `<exceednegativequalities>`: negative qualities may pass the karma
+    #: limit at chargen; `<exceednegativequalitiesnobonus>`: the part past it
+    #: gives no karma.
+    exceed_negative_qualities: bool | None = None
+    exceed_negative_qualities_no_bonus: bool | None = None
+    #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
+    cyberleg_movement: bool | None = None
+    #: `<allowpointbuyspecializationsonkarmaskills>`
+    allow_point_buy_specializations_on_karma_skills: bool | None = None
+    #: The attribute capping bound spirits / registered sprites
+    #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
+    bound_spirit_attr: str | None = Field(default=None, max_length=3)
+    registered_sprite_attr: str | None = Field(default=None, max_length=3)
+    banned_ware_grades: list[str] = Field(default_factory=list)
+    #: `<customdatadirectorynames>`, enabled ones only, in the order the file
+    #: gave them — order decides who wins when two directories edit the same
+    #: entry, so it is not sorted.
+    customdata: list[str] = Field(default_factory=list)
+    #: Content hash of the custom-data files this character was built against.
+    #: The client sends the files once and this token thereafter; see
+    #: `app/customdata.py`.
+    dataset: str = ""
+    #: Tags the file changed away from Chummer's Standard that this app does
+    #: not implement. Surfaced as a warning rather than swallowed — a house
+    #: rule silently dropped is worse than one the sheet says it ignored.
+    unsupported: list[str] = Field(default_factory=list)

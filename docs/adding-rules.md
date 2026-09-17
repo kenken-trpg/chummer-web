@@ -62,7 +62,7 @@ Example: `drugcomponents.xml` (done — use it as the reference).
 
 ## A new character field (age, portrait, …)
 
-1. `models.py` — add to **both** `CharacterState` (with a default) and
+1. `models/character.py` — add to **both** `CharacterState` (with a default) and
    `CharacterPatch` (as `... | None = None`).
 2. `chummer_import/` (the section module) / `chummer_export.py` — map it to/from the `.chum5` tag
    if Chummer has one.
