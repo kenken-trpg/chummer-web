@@ -239,7 +239,11 @@ def test_cyberlimb_custom_strength_does_not_count_as_ware_attr_bonus() -> None:
     assert arm["limb_str"] == 6
 
 
-def test_human_customized_strength_uses_racial_min() -> None:
+def test_customized_strength_starts_above_the_limbs_base_of_three() -> None:
+    """Inside a limb `{STRMinimum}` is the limb's own base (3), not the
+    character's: Chummer's `Cyberware.ProcessAttributesInXPath` walks up to the
+    cyberlimb. Reading the racial 1 priced every Customized point 5,000¥ high,
+    which left four of Chummer's own test characters 30-60,000¥ in debt."""
     state = CharacterState(
         id="custom-human",
         name="CustomHuman",
@@ -253,18 +257,19 @@ def test_human_customized_strength_uses_racial_min() -> None:
     )
     out = compute(state)
     custom = next(item for item in out.derived["cyberware"] if item["ware_id"] == CUSTOM_STR)
-    assert custom["rating_min"] == 2
+    assert custom["rating_min"] == 4
     assert custom["rating_max"] == 6
-    assert custom["rating"] == 3
-    assert custom["nuyen"] == 10000
+    assert custom["rating"] == 4  # a stored 3 is below the floor
+    assert custom["nuyen"] == 5000
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
-    assert arm["limb_str"] == 3
+    assert arm["limb_str"] == 4
     assert arm["limb_agi"] == 3  # empty cyberlimb attribute base is 3 (SR5 p.456)
-    assert out.derived["nuyen_spent"] == 25000
-    assert out.derived["ware_ranges"][CUSTOM_STR] == {"min": 2, "max": 6}
+    assert out.derived["nuyen_spent"] == 20000
+    assert out.derived["ware_ranges"][CUSTOM_STR] == {"min": 4, "max": 6}
 
 
-def test_troll_customized_strength_starts_at_six() -> None:
+def test_troll_customized_strength_keeps_the_troll_maximum() -> None:
+    """The floor is the limb's 3 for a troll too; only the ceiling is racial."""
     state = CharacterState(
         id="custom-troll",
         name="CustomTroll",
@@ -278,12 +283,12 @@ def test_troll_customized_strength_starts_at_six() -> None:
     )
     out = compute(state)
     custom = next(item for item in out.derived["cyberware"] if item["ware_id"] == CUSTOM_STR)
-    assert custom["rating_min"] == 6
+    assert custom["rating_min"] == 4
     assert custom["rating_max"] == 10
-    assert custom["rating"] == 6
-    assert custom["nuyen"] == 5000
+    assert custom["rating"] == 5
+    assert custom["nuyen"] == 10000
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
-    assert arm["limb_str"] == 6
+    assert arm["limb_str"] == 5
     assert arm["limb_agi"] == 3
 
 
@@ -302,7 +307,7 @@ def test_customized_and_enhanced_stack_on_limb() -> None:
     )
     out = compute(state)
     custom = next(item for item in out.derived["cyberware"] if item["ware_id"] == CUSTOM_AGI)
-    assert custom["nuyen"] == 15000
+    assert custom["nuyen"] == 5000  # the first point above the limb's 3
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
     assert arm["limb_str"] == 5  # base 3 + Enhanced Strength 2
     assert arm["limb_agi"] == 4  # Customized Agility sets the base

@@ -25,7 +25,7 @@ from ..gear import _capacity_value, _device_rating_of
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
 from ._common import _cascade_orphans
 from .limbs import _apply_limb_attributes
-from .rating import _clamp_ware_rating, racial_formula_extras, ware_rating_bounds
+from .rating import _clamp_ware_rating, is_limb, limb_formula_extras, racial_formula_extras, ware_rating_bounds
 from .sides import ensure_sides
 from .vehicles import _vehicle_mod_hosts
 
@@ -104,11 +104,28 @@ def resolve_ware(
 ) -> list[dict[str, Any]]:
     extras = racial_formula_extras(attrs_spec) if attrs_spec else {}
     resolved: list[dict[str, Any]] = []
+    by_id = {inst.id: inst for inst in installs}
+
+    def in_limb(inst: CyberwareInstall, ware: dict[str, Any]) -> bool:
+        """The ware is a limb or sits somewhere inside one (Chummer walks up)."""
+        seen: set[str] = set()
+        node: CyberwareInstall | None = inst
+        spec: dict[str, Any] | None = ware
+        while node is not None and spec is not None and node.id not in seen:
+            if is_limb(spec):
+                return True
+            seen.add(node.id)
+            node = by_id.get(node.parent_id) if node.parent_id else None
+            spec = _ware_by_id(kind, node.ware_id) if node is not None else None
+        return False
+
+    limb_extras = limb_formula_extras(extras)
     for inst in installs:
         ware = _ware_by_id(kind, inst.ware_id)
         if not ware:
             continue
-        lo, hi = ware_rating_bounds(ware, extras)
+        ware_extras = limb_extras if in_limb(inst, ware) else extras
+        lo, hi = ware_rating_bounds(ware, ware_extras)
         rating = max(lo, min(hi, int(inst.rating or lo)))
         grade_name = ware.get("forcegrade") or inst.grade or "Standard"
         grade = _grade_by_name(kind, grade_name)
@@ -116,7 +133,7 @@ def resolve_ware(
         included = bool(inst.included)
         plugin = bool(ware.get("plugin"))
         add_to_parent = bool(ware.get("addtoparentess")) and slotted and not included
-        formula_extras = {**extras, "MinRating": lo}
+        formula_extras = {**ware_extras, "MinRating": lo}
         # Bioware grades have no Adapsin twin, so `ess_adapsin` mirrors `ess`
         # there and the flag costs nothing to carry.
         grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)
