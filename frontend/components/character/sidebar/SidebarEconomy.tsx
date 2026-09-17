@@ -1,3 +1,4 @@
+import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { lifeIncrement, wareAttrLine } from "@/lib/character/format";
 
@@ -13,11 +14,29 @@ export function SidebarEconomy({ d, tr, ui }: SidebarBlockProps) {
         <b>{d.nuyen.toLocaleString()}¥</b>
       </div>
       <div className="stat">
-        <span>{ui("side.availLimit")}</span>
+        <span>
+          <HelpTip
+            label={ui("help.open", { label: ui("side.availLimit") })}
+            lines={[
+              { label: ui("help.avail.what") },
+              { label: ui("help.avail.suffix") },
+              { label: ui("help.avail.chargen") },
+            ]}
+          >
+            {ui("side.availLimit")}
+          </HelpTip>
+        </span>
         <b>{d.avail_limit == null ? ui("side.availNone") : d.avail_limit}</b>
       </div>
       <div className="stat">
-        <span>{ui("side.deviceRating")}</span>
+        <span>
+          <HelpTip
+            label={ui("help.open", { label: ui("side.deviceRating") })}
+            lines={[{ label: ui("help.deviceRating") }]}
+          >
+            {ui("side.deviceRating")}
+          </HelpTip>
+        </span>
         <b>{d.device_rating_limit ?? 6}</b>
       </div>
       {d.skillwires ? (
