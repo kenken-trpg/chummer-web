@@ -301,7 +301,7 @@ export const EN_ENGINE = {
   "engine.gear.mountOnArmor": "{name} has to be installed on armor",
   "engine.gear.mountOnVehicle": "{name} has to be installed in a vehicle",
   "engine.gear.mountOnWeapon": "{name} has to be mounted on a weapon",
-  "engine.gear.needsCommlink": "{name} has to be installed on a commlink",
+  "engine.gear.needsCommlink": "{name} has to go on a commlink, cyberdeck or RCC",
   "engine.gear.needsHost": "{name} has to be attached to a host device",
   "engine.gear.needsHostKind": "{name} has to be installed in {host}",
   "engine.gear.needsSpecialMods": "{name} requires Special Modifications",

@@ -256,7 +256,8 @@ def resolve_gear(
     programs, prog_nuyen, prog_warns = _resolve_programs(state, cyberdecks, rccs)
     spend["programs"] += prog_nuyen
     warnings.extend(prog_warns)
-    apps, app_nuyen, app_warns = _resolve_apps(state, commlinks)
+    # a deck or an RCC runs apps too (BLUE's RCC carries Swarm)
+    apps, app_nuyen, app_warns = _resolve_apps(state, [*commlinks, *cyberdecks, *rccs])
     spend["programs"] += app_nuyen
     warnings.extend(app_warns)
     drones, drone_nuyen = _resolve_drones(state, "drones")

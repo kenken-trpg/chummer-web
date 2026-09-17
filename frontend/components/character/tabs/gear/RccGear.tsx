@@ -1,6 +1,7 @@
 "use client";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
@@ -58,6 +59,16 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 ui={ui}
                 patch={patch}
               />
+              <AppRows
+                hostId={item.id}
+                hostName={item.name}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
               <MatrixModRows
                 hostId={item.id}
                 hostName={tr(item.name)}
@@ -75,6 +86,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 patch({
                   rccs: (ch.rccs || []).filter((row) => row.id !== item.id),
                   programs: (ch.programs || []).filter((row) => row.parent_id !== item.id),
+                  apps: (ch.apps || []).filter((row) => row.parent_id !== item.id),
                   gear: dropTree(ch.gear || [], item.id),
                 })
               }

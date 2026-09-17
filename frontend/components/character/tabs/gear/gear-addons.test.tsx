@@ -484,6 +484,53 @@ describe("<CommlinkGear> apps on a commlink", () => {
   });
 });
 
+describe.each([
+  ["RccGear", RccGear, "rccs"],
+  ["CyberdeckGear", CyberdeckGear, "cyberdecks"],
+] as const)("<%s> apps on a deck or an RCC", (_label, Panel, list) => {
+  // Chummer lets either hold `Software` — BLUE's RCC carries Swarm.
+  const swarm = {
+    id: "a1",
+    gear_id: "swarm",
+    name: "Swarm",
+    category: "Software",
+    rating: 1,
+    rating_max: 0,
+    parent_id: "h1",
+    nuyen: 600,
+    source: "SR5",
+  };
+  const character = () =>
+    makeCharacter({
+      [list]: [host("h1", "Box")],
+      apps: [swarm],
+      programs: [],
+      derived: { [list]: [host("h1", "Box")], apps: [swarm], programs: [] },
+    } as any);
+
+  it("lists the app, offers more and drops them with the device", () => {
+    const patch = vi.fn();
+    renderPanel(Panel, character(), patch, {
+      apps: [
+        { id: "maps", name: "Mapsoft", category: "Software", cost: 100, source: "SR5" },
+      ] as any,
+    });
+    expect(screen.getByText(/Swarm/)).toBeDefined();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Box: アプリを追加" }), {
+      target: { value: "maps" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Box: 装着" }));
+    expect(patch.mock.calls[0][0].apps).toEqual([
+      swarm,
+      { gear_id: "maps", rating: 1, parent_id: "h1", extra: undefined },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    expect(patch.mock.calls[1][0].apps).toEqual([]);
+  });
+});
+
 describe("<ArmorGear> mods on a piece", () => {
   const piece = (id: string, name: string, mods: Record<string, unknown>[] = []) => ({
     id,

@@ -540,6 +540,20 @@ def test_app_without_commlink_is_dropped() -> None:
     assert has(out.derived["warnings"], "engine.gear.needsCommlink")
 
 
+def test_an_rcc_runs_apps_too() -> None:
+    """Chummer lets a deck or an RCC hold `Software`: BLUE's RCC carries
+    Swarm. Only commlinks were hosts here, so the app was dropped with a
+    warning and its price went uncounted."""
+    from tests.engine_support import RADIO_SHACK_RCC
+
+    swarm = next(row["id"] for row in catalog()["apps"] if row["name"] == "Swarm")
+    rcc = GearInstall(gear_id=RADIO_SHACK_RCC)
+    out = compute(_mundane("rcc-app", rccs=[rcc], apps=[GearInstall(gear_id=swarm, parent_id=rcc.id)]))
+    assert [row["name"] for row in out.derived["apps"]] == ["Swarm"]
+    assert [row["name"] for row in out.derived["rccs"][0]["apps"]] == ["Swarm"]
+    assert not has(out.derived["warnings"], "engine.gear.needsCommlink")
+
+
 def test_hand_blade_on_commlink_is_dropped() -> None:
     link = CommlinkInstall(gear_id=META_LINK)
     out = compute(
