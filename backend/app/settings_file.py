@@ -135,7 +135,7 @@ def _baseline() -> dict[str, str]:
     if not path.exists():
         return {}
     try:
-        root = ET.parse(path).getroot()
+        root = ET.parse(path).getroot()  # noqa: S314 -- vendored settings.xml
     except ET.ParseError:
         return {}
     for setting in root.findall("./settings/setting"):

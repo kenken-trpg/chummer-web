@@ -98,7 +98,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
         section(root, state, names, ctx)
 
     xml = ET.tostring(root, encoding="utf-8")
-    return minidom.parseString(xml).toprettyxml(indent="  ", encoding="utf-8")
+    # our own serialisation, not input
+    return minidom.parseString(xml).toprettyxml(indent="  ", encoding="utf-8")  # noqa: S318
 
 
 #: Written in this order, which is the order Chummer's own files use. Nothing
