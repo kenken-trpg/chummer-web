@@ -217,9 +217,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `gear/sensors.py`, `gear/programs.py`, `gear/apps.py`, `gear/ammo.py`,
      `gear/weapons.py` (public weapon row + gear/ware-weapons + ware-limb attrs
      + reach/unarmed/category-DV/skill-accuracy appliers + accessory & recoil
-     pipeline + DV/accuracy binders), `gear/vehicles.py` (stat formatting +
-     vehicle/mod constraints + R5 mod-slot accounting + drone/mod/mount
-     resolvers), `gear/misc.py` (`_misc_external_hosts` + the catch-all
+     pipeline + DV/accuracy binders), `gear/vehicles/` (`stats` — stat
+     formatting + vehicle/mod constraints; `slots` — R5 mod-slot accounting;
+     `equipment` / `mods` / `drones` — the resolvers), `gear/misc.py` (`_misc_external_hosts` + the catch-all
      `_resolve_misc_gear`), `gear/lifestyle.py` (monthly cost + LP budget +
      lifestyle qualities + `apply_lifestyle_cost_mod`), and the `engine/magic/`
      package: `magic/_common.py`
