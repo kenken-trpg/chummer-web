@@ -33,4 +33,10 @@ export const JA_HELP = {
   "help.deviceRating": "作成時に買える機器のデバイスレーティングの上限（標準 6）",
   "help.gradeHint":
     "ウェアの品質。上のグレードほどエッセンスの消費が減り、値段と入手可能度が上がる。作成時に使えないグレードは設定で決まる（標準では Betaware 以上は不可）",
+  "help.skill.pool": "判定ダイス = 技能レーティング + 関連能力値（+ 修正）",
+  "help.skill.spec": "専門化：その用途の判定に +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
+  "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
+  "help.skill.default":
+    "未習得でも「デフォルト」で振れる技能は、関連能力値 −1 で判定する（SR5 p.130）",
+  "help.skill.cap": "作成時のレーティング上限。1 つだけ上限まで上げられる（資質 Aptitude で +1）",
 } as const;

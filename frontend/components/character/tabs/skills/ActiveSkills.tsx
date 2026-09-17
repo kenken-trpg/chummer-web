@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import { RangeInput } from "@/components/character/RangeInput";
+import { HelpTip } from "@/components/help/HelpTip";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { ACTIVE_SKILL_CATS, skillCatLabel } from "@/lib/character/constants";
 import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
@@ -62,6 +63,14 @@ export function ActiveSkills(props: TabPanelProps) {
    *  modifying it. A `<swapskillattribute>` replaces the printed attribute
    *  outright; the spec-limited variant only earns a trailing note. */
   function skillHint(name: string, attribute: string, category: string): string {
+    return skillHintLines(name, attribute, category).join(" / ");
+  }
+
+  /** The row's own facts, one per line: the linked attribute and category, the
+   *  creation cap, and whatever the engine says already modifies it. A
+   *  `<swapskillattribute>` replaces the printed attribute outright; the
+   *  spec-limited variant only earns a trailing note. */
+  function skillHintLines(name: string, attribute: string, category: string): string[] {
     const swaps = (d.skill_attribute_swaps || []).filter((row) => row.skill === name);
     const swap = swaps.find((row) => !row.spec);
     const specSwap = swaps.find((row) => row.spec);
@@ -76,7 +85,19 @@ export function ActiveSkills(props: TabPanelProps) {
         ? [ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })]
         : []),
       ...(d.skill_bonus_notes?.[name] || []),
-    ].join(" / ");
+    ];
+  }
+
+  /** The row's facts plus the terms behind them — the same glossary on every
+   *  skill, so "what does a specialization buy" is answered where it is used. */
+  function skillHelpLines(name: string, attribute: string, category: string) {
+    return [
+      ...skillHintLines(name, attribute, category).map((label) => ({ label })),
+      { label: ui("help.skill.pool") },
+      { label: ui("help.skill.spec") },
+      { label: ui("help.skill.default") },
+      { label: ui("help.skill.cap") },
+    ];
   }
 
   return (
@@ -97,7 +118,14 @@ export function ActiveSkills(props: TabPanelProps) {
                 className={splitKarma ? "skill-row has-spec has-karma" : "skill-row has-spec"}
                 key={s.id}
               >
-                <span title={skillHint(s.name, s.attribute, s.category)}>{tr(s.name)}</span>
+                <span>
+                  <HelpTip
+                    label={ui("help.open", { label: tr(s.name) })}
+                    lines={skillHelpLines(s.name, s.attribute, s.category)}
+                  >
+                    {tr(s.name)}
+                  </HelpTip>
+                </span>
                 <RangeInput
                   min={0}
                   max={skillMax + (d.skill_max_bonus?.[s.name] || 0)}
