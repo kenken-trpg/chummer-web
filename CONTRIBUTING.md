@@ -109,7 +109,11 @@ The backend tests come in two layers:
   `Chummer.Tests/TestFiles` (fetched once into `backend/vendor/`) and, for the
   ones still in creation, compares the karma and nuyen the save says are left
   with what the engine computes. Run it before and after a `.chum5` or pricing
-  change; the summary line is the number to move.
+  change; the summary line is the number to move. It also exports every save
+  and reads it back (`--roundtrip`): what the character holds and spent must
+  not change, which catches what the import reads but the export drops. When a
+  nuyen total is off, `--items NAME` lists this app's price for each piece of
+  one save, to set beside the save's own `<cost>` expressions.
 
 **Frontend** — `eslint` (flat config) + `prettier` + `tsc` + `vitest`:
 
