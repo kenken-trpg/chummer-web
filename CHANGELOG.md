@@ -251,6 +251,10 @@ Chummer の amend エンジンのうち実データが使っていない部分�
 - **防具に最初から付いている Holster を、取り込みで 150¥ のギアとして買い直していた。**
   Ares Victory: Wild Hunt などはデータで `<usegear>Holster</usegear>` と名前を直接書くが、
   付属品の判定が `<name>` 要素しか見ていなかった。Barrett の差が 1,450¥（Holster 3 本と Generic CCOB の Medkit）から 0 に。
+- **資質による生活費の増減を、Chummer と違う方法で掛けていた。** Chummer
+  （`Lifestyle.GetTotalMonthlyCost`）は、扶養家族と種族の分をそれぞれ足し、それ以外の
+  資質の分は掛け合わせる（+10% と +10% で 1.21 倍）。しかも外出・サービス・契約の定額を
+  足す前に掛ける。このアプリは全部を足してから、定額込みの合計に掛けていた。
 
 - **中身の無い Chemical Gland を 0¥ にしていた。** 値段 `20000 + (99 * Gear Cost)` の
   `Gear Cost`（入れた薬品の値段）を解釈できず、式全体を 0 にしていた。このアプリの

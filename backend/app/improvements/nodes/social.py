@@ -27,7 +27,9 @@ def apply(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: Effec
             if name not in effects["add_qualities"]:
                 effects["add_qualities"].append(name)
     elif tag == "lifestylecost":
-        effects["lifestyle_cost"] += _bonus_int(node, fields)
+        value = _bonus_int(node, fields)
+        effects["lifestyle_cost"] += value
+        effects["lifestyle_cost_mods"].append({"value": value, "source": source})
     elif tag == "notoriety":
         effects["notoriety"] += _bonus_int(node, fields)
     elif tag == "streetcredmultiplier":

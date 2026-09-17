@@ -40,7 +40,7 @@ from .drugs import (
     apply_active_custom_drugs,
     apply_active_drugs,
 )
-from .lifestyle import apply_lifestyle_cost_mod, resolve_lifestyles
+from .lifestyle import apply_lifestyle_cost_mod, lifestyle_cost_factor, resolve_lifestyles
 from .matrix import (
     _matrix_stats,
     _normalize_array_order,
@@ -141,6 +141,7 @@ __all__ = [
     "apply_active_custom_drugs",
     "apply_active_drugs",
     "apply_lifestyle_cost_mod",
+    "lifestyle_cost_factor",
     "apply_reach_bonus",
     "apply_smartlink_accuracy",
     "apply_unarmed_bonuses",

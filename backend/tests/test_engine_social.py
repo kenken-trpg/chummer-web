@@ -230,3 +230,26 @@ def test_raising_comforts_neighborhood_security_costs_lp_and_ten_percent_each() 
     assert row["monthly"] == 2400  # 2000 x (1 + 0.1 x 2)
     assert row["lp_used"] == 2
     assert out.lifestyles[0].comforts == 1
+
+
+BAD_CREDIT = "e4bceac5-8f1d-4090-90fc-ad5e94bca8d7"
+PARAPLEGIC = "dca0897f-532a-43ab-8796-4ef761e829af"
+SUBSISTENCE_HUNTING_II = "c0051319-9565-49f1-b59d-ee1f835cf1df"
+
+
+def test_a_characters_lifestyle_percentages_compound_before_the_outings() -> None:
+    """Chummer's `Lifestyle.GetTotalMonthlyCost`: two +10% qualities make
+    x1.21, not x1.2, and they scale the lifestyle before an outing's flat
+    price is added — not after."""
+    out = compute(
+        _mundane(
+            "ls-char-mods",
+            quality_ids=[BAD_CREDIT, PARAPLEGIC],
+            lifestyles=[LifestyleInstall(lifestyle_id=LOW_LIFESTYLE, quality_ids=[SUBSISTENCE_HUNTING_II])],
+        )
+    )
+    row = out.derived["lifestyles"][0]
+    assert out.derived["lifestyle_cost_mod"] == 20  # what the sheet shows
+    assert row["monthly"] == 2450  # 2000 x 1.1 x 1.1 + 30
+    assert row["nuyen"] == 2450
+    assert "_pre_mod" not in row
