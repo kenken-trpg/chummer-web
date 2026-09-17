@@ -97,6 +97,9 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
         table = preset.get("priority_table")
         if table and table != "Standard":
             found["priority_table"] = str(table)
+        nuyen_max = preset.get("nuyen_max_bp")
+        if nuyen_max is not None and int(nuyen_max) != DEFAULT_RULES.priority_karma_nuyen_base:
+            found["priority_karma_nuyen_base"] = int(nuyen_max)
         return {**found, **extra}
     return {"name": name, "books": [], **extra}
 

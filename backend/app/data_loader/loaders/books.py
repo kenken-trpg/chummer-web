@@ -74,6 +74,9 @@ def load_settings_presets() -> list[dict[str, Any]]:
                 # Which priority rows the preset builds from: Prime Runner's
                 # Resources E is 100,000¥, not Standard's 6,000¥.
                 "priority_table": _text(el.find("prioritytable")) or "Standard",
+                # How much chargen karma may buy nuyen: Prime Runner allows 25
+                # points, not Standard's 10.
+                "nuyen_max_bp": _int(el.find("nuyenmaxbp"), 10),
             }
         )
     return presets
