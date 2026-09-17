@@ -88,6 +88,26 @@ export interface WeaponCatalogItem {
   page: string;
   from_gear?: boolean;
   add_gear_id?: string;
+  useskill?: string;
+  spec?: string;
+  spec2?: string;
+  ammocategory?: string;
+}
+
+/** One test of Chummer's `<weapondetails>` tree: an AND / OR group, or a
+ *  field of the weapon compared with `op`. */
+export interface WeaponDetailsNode {
+  tag: string;
+  not: boolean;
+  op?: string;
+  value?: string;
+  or?: boolean;
+  children?: WeaponDetailsNode[];
+}
+
+export interface WeaponConstraints {
+  accessories?: string[];
+  details?: WeaponDetailsNode[];
 }
 
 /** ranges.xml band formulas — literal integers or `{STR}`-scaled strings. */
@@ -112,20 +132,8 @@ export interface WeaponAccessoryCatalogItem {
   maxrating: number;
   specialmodification?: boolean;
   special_modification_cost?: number;
-  required?: {
-    names?: string[];
-    categories?: string[];
-    types?: string[];
-    conceal_lte?: number | null;
-    accessories?: string[];
-  };
-  forbidden?: {
-    names?: string[];
-    categories?: string[];
-    types?: string[];
-    conceal_lte?: number | null;
-    accessories?: string[];
-  };
+  required?: WeaponConstraints;
+  forbidden?: WeaponConstraints;
   source: string;
   page: string;
 }

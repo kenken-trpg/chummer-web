@@ -1,4 +1,9 @@
-import type { WareCatalogItem, WareInstall } from "@/lib/types";
+import type {
+  WareCatalogItem,
+  WareInstall,
+  WeaponConstraints,
+  WeaponDetailsNode,
+} from "@/lib/types";
 import { DEFAULT_ARRAY_ORDER, VEHICLE_INTERIOR_CATS } from "@/lib/character/constants";
 import { removeWareTree } from "@/lib/character/ware";
 import type { UiFn } from "@/lib/i18n";
@@ -227,28 +232,93 @@ export function weaponLine(
   if (item.reach && item.reach !== "0") bits.push(`Reach ${item.reach}`);
   return bits.join(" / ");
 }
+const DETAIL_GROUPS: Record<string, [boolean, boolean]> = {
+  OR: [true, false],
+  NOR: [true, true],
+  AND: [false, false],
+  NAND: [false, true],
+};
+const LESS_OPS = ["LESSTHANEQUALS", "LESSTHANEQUALTO", "LESSTHANOREQUALS", "LESSTHANOREQUALTO"];
+const GTE_OPS = [
+  "GREATERTHANEQUALS",
+  "GREATERTHANOREQUALS",
+  "GREATERTHANEQUALTO",
+  "GREATERTHANOREQUALTO",
+  ">=",
+];
+
+type DetailFields = Record<string, unknown>;
+
+const asInt = (text: string) => (/^[+-]?\d+$/.test(text) ? Number(text) : null);
+
+function detailLeafMet(node: WeaponDetailsNode, fields: DetailFields): boolean {
+  let invert = node.not;
+  const raw = fields[node.tag];
+  if (node.children) {
+    return (
+      raw != null &&
+      typeof raw === "object" &&
+      !Array.isArray(raw) &&
+      weaponDetailsMet(node.children, raw as DetailFields, Boolean(node.or)) !== invert
+    );
+  }
+  if (Array.isArray(raw)) return raw.some((item) => detailLeafMet(node, { [node.tag]: item }));
+  const target = raw == null ? "" : String(raw).trim();
+  let op = node.op || "==";
+  if (op === "exists") return Boolean(target) !== invert;
+  // no such field to test: Chummer's loop over it finds nothing
+  if (!target) return false;
+  const want = (node.value || "").trim();
+  if (!want) return invert;
+  op = op.toUpperCase();
+  if (["DOESNOTEQUAL", "NOTEQUALS", "!=", "<>"].includes(op)) return (target === want) === invert;
+  if (op === "LIKE" || op === "CONTAINS")
+    return target.toLowerCase().includes(want.toLowerCase()) !== invert;
+  if (op === "LESSTHAN" || LESS_OPS.includes(op)) {
+    invert = !invert;
+    op = op === "LESSTHAN" ? ">=" : ">";
+  }
+  const t = asInt(target);
+  const w = asInt(want);
+  if (op === "GREATERTHAN" || op === ">") return (t !== null && w !== null && t > w) !== invert;
+  if (GTE_OPS.includes(op)) return (t !== null && w !== null && t >= w) !== invert;
+  return (target === want) !== invert;
+}
+
+/** Whether a weapon (its catalog fields) passes a `<weapondetails>` tree, the
+ *  way Chummer's `ProcessFilterOperationNode` reads it; mirrors
+ *  `weapon_details_met` on the server. */
+export function weaponDetailsMet(
+  nodes: WeaponDetailsNode[],
+  fields: DetailFields,
+  isOr = false,
+): boolean {
+  for (const node of nodes) {
+    const group = DETAIL_GROUPS[node.tag.toUpperCase()];
+    let result: boolean;
+    if (group) {
+      result = weaponDetailsMet(node.children || [], fields, group[0]) !== (node.not !== group[1]);
+    } else if (node.tag.toUpperCase() === "NONE") {
+      result = node.not;
+    } else {
+      result = detailLeafMet(node, fields);
+    }
+    if (isOr && result) return true;
+    if (!isOr && !result) return false;
+  }
+  return !isOr;
+}
+
 export function accessoryFits(
   acc: {
     mounts?: string[];
     purchasable?: boolean;
     specialmodification?: boolean;
     special_modification_cost?: number;
-    required?: {
-      names?: string[];
-      categories?: string[];
-      types?: string[];
-      conceal_lte?: number | null;
-      accessories?: string[];
-    };
-    forbidden?: {
-      names?: string[];
-      categories?: string[];
-      types?: string[];
-      conceal_lte?: number | null;
-      accessories?: string[];
-    };
+    required?: WeaponConstraints;
+    forbidden?: WeaponConstraints;
   },
-  weapon: { name: string; category?: string; type?: string; conceal?: string; mounts?: string[] },
+  weapon: DetailFields & { mounts?: string[] },
   installedNames: string[],
   specialMod?: { used?: number; max?: number },
 ) {
@@ -266,38 +336,11 @@ export function accessoryFits(
     return false;
   const installed = new Set(installedNames);
   if (acc.forbidden?.accessories?.some((name) => installed.has(name))) return false;
-  const matchOr = (cons?: {
-    names?: string[];
-    categories?: string[];
-    types?: string[];
-    conceal_lte?: number | null;
-  }) => {
-    if (!cons) return false;
-    const has = Boolean(
-      cons.names?.length ||
-      cons.categories?.length ||
-      cons.types?.length ||
-      cons.conceal_lte != null,
-    );
-    if (!has) return false;
-    if (cons.names?.includes(weapon.name)) return true;
-    if (cons.categories?.includes(weapon.category || "")) return true;
-    if (cons.types?.includes(weapon.type || "")) return true;
-    const conceal = Number(weapon.conceal || 0);
-    if (cons.conceal_lte != null && Number.isFinite(conceal) && conceal <= cons.conceal_lte)
-      return true;
-    return false;
-  };
-  const required = acc.required;
-  const hasRequired = Boolean(
-    required &&
-    (required.names?.length ||
-      required.categories?.length ||
-      required.types?.length ||
-      required.conceal_lte != null),
-  );
-  if (hasRequired && !matchOr(required)) return false;
-  if (matchOr(acc.forbidden)) return false;
+  const fields = { ...weapon, accessorymounts: { mount: weapon.mounts || [] } };
+  const required = acc.required?.details || [];
+  if (required.length && !weaponDetailsMet(required, fields)) return false;
+  const forbidden = acc.forbidden?.details || [];
+  if (forbidden.length && weaponDetailsMet(forbidden, fields)) return false;
   return true;
 }
 

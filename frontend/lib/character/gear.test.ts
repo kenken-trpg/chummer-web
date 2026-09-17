@@ -1,6 +1,7 @@
 import { testUi } from "@/tests/fixtures";
 import {
   accessoryFits,
+  weaponDetailsMet,
   ammoFits,
   armorModFits,
   dropDrone,
@@ -190,7 +191,12 @@ describe("weaponLine", () => {
 
 describe("accessoryFits / armorModFits", () => {
   it("accessoryFits: mount + required 'or' + forbidden", () => {
-    const acc = { mounts: ["Top"], required: { categories: ["Assault Rifles"] } };
+    const acc = {
+      mounts: ["Top"],
+      required: {
+        details: [{ tag: "category", not: false, op: "==", value: "Assault Rifles" }],
+      },
+    };
     const rifle = { name: "AK-97", category: "Assault Rifles", mounts: ["Top", "Barrel"] };
     expect(accessoryFits(acc as any, rifle, [])).toBe(true);
     expect(accessoryFits(acc as any, { ...rifle, mounts: ["Barrel"] }, [])).toBe(false);
@@ -199,6 +205,26 @@ describe("accessoryFits / armorModFits", () => {
         "Smartgun",
       ]),
     ).toBe(false);
+  });
+  it("weaponDetailsMet: NOT groups, contains, comparisons and nested fields", () => {
+    const leaf = (tag: string, value: string, op = "==", not = false) => ({ tag, value, op, not });
+    // Chameleon Coating (Rifle): NOT (conceal <= 0 OR category contains Pistol)
+    const rifleOnly = [
+      {
+        tag: "OR",
+        not: true,
+        children: [leaf("conceal", "0", "lessthanequals"), leaf("category", "Pistol", "contains")],
+      },
+    ];
+    expect(weaponDetailsMet(rifleOnly, { category: "Submachine Guns", conceal: "2" })).toBe(true);
+    expect(weaponDetailsMet(rifleOnly, { category: "Heavy Pistols", conceal: "2" })).toBe(false);
+    expect(weaponDetailsMet(rifleOnly, { category: "Shotguns", conceal: "0" })).toBe(false);
+    expect(weaponDetailsMet([leaf("ammo", "(c)", "contains")], { ammo: "15(c)" })).toBe(true);
+    expect(weaponDetailsMet([leaf("conceal", "0", "greaterthan")], { conceal: "0" })).toBe(false);
+    expect(weaponDetailsMet([leaf("useskill", "", "exists", true)], { useskill: "" })).toBe(true);
+    const stock = [{ tag: "accessorymounts", not: false, children: [leaf("mount", "Stock")] }];
+    expect(accessoryFits({ required: { details: stock } }, { mounts: ["Stock"] }, [])).toBe(true);
+    expect(accessoryFits({ required: { details: stock } }, { mounts: ["Top"] }, [])).toBe(false);
   });
   it("armorModFits: purchasable + required + category allow-list", () => {
     const armor = {

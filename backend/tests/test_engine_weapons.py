@@ -1109,3 +1109,58 @@ def test_what_a_weapon_comes_with_sits_on_its_internal_mount() -> None:
     assert mounts["Gas-Vent 2 System"] == "Internal"
     assert mounts["Electronic Firing"] == "Barrel"
     assert not has(out.derived["errors"], "engine.gear.noFreeMount")
+
+
+def _by_name(bucket: str, name: str) -> str:
+    return next(str(row["id"]) for row in catalog()[bucket] if row["name"] == name)
+
+
+def test_accessory_requirements_read_chummers_filter_tree() -> None:
+    """`<weapondetails>` is a tree of AND / OR groups with NOT and an
+    `operation` on each test; reading it flat turned "not a pistol" into
+    "a pistol" and dropped the `contains` / `greaterthan` tests."""
+    from app.engine.gear import accessory_fits_weapon
+
+    acc = {row["name"]: row for row in catalog()["weapon_accessories"]}
+    weapon = {row["name"]: row for row in catalog()["weapons"]}
+
+    def fits(accessory: str, host: str) -> bool:
+        return accessory_fits_weapon(acc[accessory], weapon[host], set())
+
+    assert fits("Chameleon Coating (Rifle)", "Ingram Smartgun X")
+    assert not fits("Chameleon Coating (Rifle)", "Ares Predator V")
+    assert fits("Chameleon Coating (Pistol)", "Ares Predator V")  # "Heavy Pistols" contains "Pistol"
+    assert fits("Bayonet", "Ares Alpha") and not fits("Bayonet", "Ares Predator V")  # conceal > 0
+    assert not fits("Speed Loader", "Ares Predator V")  # ammo contains "(cy)"
+    assert fits("Gecko Grip", "Savalette Guardian")  # a Stock among its accessory mounts
+
+
+def test_what_a_weapon_or_armor_comes_with_is_not_reported_as_not_fitting() -> None:
+    """A Browning Phantom's Electronic Firing takes a Barrel mount the pistol
+    does not have, and an Ares Victory's liner is picked at purchase from a
+    category the armor takes no add-ons of. Both came with the item."""
+    from app.models import ArmorInstall, ArmorModInstall
+
+    phantom = WeaponInstall(weapon_id=_by_name("weapons", "Browning Phantom"))
+    hunt = ArmorInstall(armor_id=_by_name("armor", "Ares Victory: Wild Hunt"))
+    out = compute(
+        _mundane(
+            "came-with",
+            weapons=[phantom],
+            weapon_accessories=[
+                WeaponAccessoryInstall(
+                    accessory_id=_by_name("weapon_accessories", "Electronic Firing"),
+                    parent_id=phantom.id,
+                    included=True,
+                )
+            ],
+            armor=[hunt],
+            armor_mods=[
+                ArmorModInstall(
+                    mod_id=_by_name("armor_mods", "Liner - Insulation (6)"), parent_id=hunt.id, included=True
+                )
+            ],
+        )
+    )
+    assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+    assert "Electronic Firing" in {row["name"] for row in out.derived["weapons"][0]["accessories"]}

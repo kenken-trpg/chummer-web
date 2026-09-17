@@ -66,40 +66,82 @@ def _device_rating_of(spec: dict[str, Any] | None, rating: int) -> int:
     return 0
 
 
-def _has_weapon_constraints(cons: dict[str, Any] | None) -> bool:
-    if not cons:
-        return False
-    return bool(cons.get("names") or cons.get("categories") or cons.get("types") or cons.get("conceal_lte") is not None)
+_DETAIL_GROUPS = {"OR": (True, False), "NOR": (True, True), "AND": (False, False), "NAND": (False, True)}
 
 
-def _weapon_matches_or(weapon: dict[str, Any], cons: dict[str, Any] | None) -> bool:
-    if not _has_weapon_constraints(cons):
-        return False
-    cons = cons or {}
-    name = str(weapon.get("name") or "")
-    category = str(weapon.get("category") or "")
-    typ = str(weapon.get("type") or "")
+def _as_int(text: str) -> int | None:
     try:
-        conceal = int(float(str(weapon.get("conceal") or "0")))
+        return int(text)
     except ValueError:
-        conceal = 0
-    if name in (cons.get("names") or []):
-        return True
-    if category in (cons.get("categories") or []):
-        return True
-    if typ in (cons.get("types") or []):
-        return True
-    if cons.get("conceal_lte") is not None and conceal <= int(cons["conceal_lte"]):
-        return True
-    return False
+        return None
+
+
+def _detail_leaf_met(node: dict[str, Any], weapon: dict[str, Any]) -> bool:
+    """One field test, as Chummer's `ProcessFilterOperationNode` runs it."""
+    invert = bool(node.get("not"))
+    raw = weapon.get(str(node.get("tag") or ""))
+    if "children" in node:
+        return isinstance(raw, dict) and (
+            weapon_details_met(list(node["children"]), raw, bool(node.get("or"))) != invert
+        )
+    if isinstance(raw, list):
+        # a field the data repeats: any one of them passing is enough
+        return any(_detail_leaf_met(node, {str(node.get("tag")): item}) for item in raw) if raw else False
+    target = "" if raw is None else str(raw).strip()
+    op = str(node.get("op") or "==")
+    # the data carries each field once, blank when the weapon has none
+    if op == "exists":
+        return bool(target) != invert
+    if not target:
+        # no such field to test: Chummer's loop over it finds nothing
+        return False
+    want = str(node.get("value") or "").strip()
+    if not want:
+        return invert
+    op = op.upper()
+    if op in ("DOESNOTEQUAL", "NOTEQUALS", "!=", "<>"):
+        return (target == want) == invert
+    if op in ("LIKE", "CONTAINS"):
+        return (want.lower() in target.lower()) != invert
+    if op in ("LESSTHAN", "LESSTHANEQUALS", "LESSTHANEQUALTO", "LESSTHANOREQUALS", "LESSTHANOREQUALTO"):
+        invert = not invert
+        op = ">=" if op == "LESSTHAN" else ">"
+    t, w = _as_int(target), _as_int(want)
+    if op in ("GREATERTHAN", ">"):
+        return (t is not None and w is not None and t > w) != invert
+    if op in ("GREATERTHANEQUALS", "GREATERTHANOREQUALS", "GREATERTHANEQUALTO", "GREATERTHANOREQUALTO", ">="):
+        return (t is not None and w is not None and t >= w) != invert
+    return (target == want) != invert
+
+
+def weapon_details_met(nodes: list[dict[str, Any]], weapon: dict[str, Any], is_or: bool = False) -> bool:
+    """Whether ``weapon`` (its catalog entry) passes a `<weapondetails>` tree."""
+    for node in nodes:
+        invert = bool(node.get("not"))
+        tag = str(node.get("tag") or "").upper()
+        if tag in _DETAIL_GROUPS:
+            group_or, negated = _DETAIL_GROUPS[tag]
+            result = weapon_details_met(list(node.get("children") or []), weapon, group_or) != (invert != negated)
+        elif tag == "NONE":
+            result = invert
+        else:
+            result = _detail_leaf_met(node, weapon)
+        if is_or and result:
+            return True
+        if not is_or and not result:
+            return False
+    return not is_or
 
 
 def accessory_fits_weapon(acc: dict[str, Any], weapon: dict[str, Any], installed_names: set[str]) -> bool:
+    """``weapon`` is the weapon's catalog entry: Chummer tests its data, not
+    the numbers the character's accessories have changed."""
     required = acc.get("required") or {}
     forbidden = acc.get("forbidden") or {}
-    if _has_weapon_constraints(required) and not _weapon_matches_or(weapon, required):
+    weapon = {**weapon, "accessorymounts": {"mount": list(weapon.get("mounts") or [])}}
+    if required.get("details") and not weapon_details_met(required["details"], weapon):
         return False
-    if _weapon_matches_or(weapon, forbidden):
+    if forbidden.get("details") and weapon_details_met(forbidden["details"], weapon):
         return False
     for name in forbidden.get("accessories") or []:
         if name in installed_names:

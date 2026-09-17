@@ -73,6 +73,11 @@ def section(raw: CatalogDict) -> dict:
                 "page": w.get("page") or "",
                 "from_gear": bool(w.get("from_gear")),
                 "add_gear_id": w.get("add_gear_id") or "",
+                # only for accessories' `weapondetails` tests
+                "useskill": w.get("useskill") or "",
+                "spec": w.get("spec") or "",
+                "spec2": w.get("spec2") or "",
+                "ammocategory": w.get("ammocategory") or "",
             }
             for w in raw.get("weapons") or []
             if w.get("purchasable")

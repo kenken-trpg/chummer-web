@@ -82,6 +82,10 @@ def load_weapons() -> list[dict[str, Any]]:
                 "hidden": hidden,
                 "from_cyberware": from_cyberware,
                 "useskill": _text(el.find("useskill")),
+                # only for accessories' `<weapondetails>` tests
+                "spec": _text(el.find("spec")),
+                "spec2": _text(el.find("spec2")),
+                "ammocategory": _text(el.find("ammocategory")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }
@@ -110,44 +114,35 @@ def load_weapon_ranges() -> dict[str, dict[str, str]]:
     return out
 
 
+def _details_nodes(el: ET.Element) -> list[dict[str, Any]]:
+    """`<weapondetails>` as Chummer's filter tree: each node an `AND` / `OR`
+    group or a field test, with its `NOT` and `operation` kept."""
+    nodes: list[dict[str, Any]] = []
+    for child in el:
+        if not isinstance(child.tag, str):
+            continue
+        node: dict[str, Any] = {"tag": child.tag, "not": "NOT" in child.attrib}
+        if child.tag.upper() in {"OR", "NOR", "AND", "NAND", "NONE"}:
+            node["children"] = _details_nodes(child)
+        elif len(child):
+            # a test on the field's own children (`<accessorymounts><mount>`)
+            node["children"] = _details_nodes(child)
+            node["or"] = "OR" in child.attrib
+        else:
+            node["op"] = child.attrib.get("operation") or "=="
+            node["value"] = _text(child)
+        nodes.append(node)
+    return nodes
+
+
 def _weapon_constraints(el: ET.Element | None) -> dict[str, Any]:
-    names: list[str] = []
-    categories: list[str] = []
-    types: list[str] = []
-    accessories: list[str] = []
-    conceal_lte: int | None = None
+    """What an accessory needs of (or rules out on) its weapon: the other
+    accessories named anywhere under it, and the `<weapondetails>` tests."""
     if el is None:
-        return {
-            "names": names,
-            "categories": categories,
-            "types": types,
-            "accessories": accessories,
-            "conceal_lte": conceal_lte,
-        }
-    for child in el.iter():
-        tag = child.tag
-        text = _text(child)
-        if tag == "name" and text:
-            names.append(text)
-        elif tag in {"category", "ammocategory"} and text:
-            categories.append(text)
-        elif tag == "type" and text:
-            types.append(text)
-        elif tag == "accessory" and text:
-            accessories.append(text)
-        elif tag == "conceal" and text:
-            try:
-                value = int(float(text))
-            except ValueError:
-                continue
-            if (child.attrib.get("operation") or "") == "lessthanequals":
-                conceal_lte = value
+        return {"accessories": [], "details": []}
     return {
-        "names": names,
-        "categories": categories,
-        "types": types,
-        "accessories": accessories,
-        "conceal_lte": conceal_lte,
+        "accessories": [_text(child) for child in el.iter("accessory") if _text(child)],
+        "details": [node for wd in el.iter("weapondetails") for node in _details_nodes(wd)],
     }
 
 

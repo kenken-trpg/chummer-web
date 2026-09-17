@@ -127,7 +127,10 @@ def _resolve_weapon_accessories(
             rating = _clamp_rating(spec, inst.rating)
             inst.rating = rating
             names_without = installed_names - {spec["name"]}
-            if not accessory_fits_weapon(spec, weapon, names_without):
+            # what the weapon came with is on it, whatever its mount says
+            if not inst.included and not accessory_fits_weapon(
+                spec, {**weapon, **wspec, "mounts": weapon.get("mounts")}, names_without
+            ):
                 warnings.append(
                     notice("engine.gear.doesNotFit", name=term(str(spec["name"])), host=term(str(weapon["name"])))
                 )

@@ -21,11 +21,14 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
         ) : null}
         {(d.weapons || []).map((item) => {
           const installedNames = (item.accessories || []).map((acc) => acc.name);
-          const parentCost = (catalog.weapons || []).find((row) => row.id === item.weapon_id)?.cost;
+          const entry = (catalog.weapons || []).find((row) => row.id === item.weapon_id);
+          const parentCost = entry?.cost;
           const specialMod = d.special_modification_limit;
+          // Chummer tests the weapon's data, not what its accessories changed
+          const tested = { ...item, ...entry, mounts: item.mounts };
           const addons = (catalog.weapon_accessories || []).filter(
             (mod) =>
-              accessoryFits(mod, item, installedNames, specialMod) &&
+              accessoryFits(mod, tested, installedNames, specialMod) &&
               !(item.accessories || []).some((acc) => acc.accessory_id === mod.id),
           );
           const ammoKey = `${item.id}-ammo`;
