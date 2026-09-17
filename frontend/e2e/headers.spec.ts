@@ -48,6 +48,7 @@ test("a request body over the backend's 12 MB cap is refused, not buffered", asy
   // The server answers once the cap is crossed, without reading the rest, so
   // the client sees either the 413 or a reset mid-upload depending on timing.
   // Both are a refusal; a 2xx or 400 would mean the body was taken in whole.
+  // Windows reports the same cut as ECONNABORTED rather than ECONNRESET.
   const outcome = await request
     .post("/api/characters/import", {
       headers: { "content-type": "application/json" },
@@ -55,7 +56,8 @@ test("a request body over the backend's 12 MB cap is refused, not buffered", asy
     })
     .then(
       (res) => res.status(),
-      (err: Error) => (/ECONNRESET|EPIPE|socket hang up/.test(err.message) ? "reset" : err.message),
+      (err: Error) =>
+        /ECONNRESET|ECONNABORTED|EPIPE|socket hang up/.test(err.message) ? "reset" : err.message,
     );
   expect([413, "reset"]).toContain(outcome);
 });
