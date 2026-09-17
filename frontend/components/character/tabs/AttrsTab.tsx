@@ -1,5 +1,6 @@
 "use client";
 import { RangeInput } from "@/components/character/RangeInput";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
@@ -28,8 +29,18 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
         const commit = (value: number) => patch({ attributes: { ...ch.attributes, [key]: value } });
         return (
           <div className={showKarma ? "attr-row has-karma" : "attr-row"} key={key}>
-            <span title={ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug })}>
-              {attrLabel(key, t)}
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: attrLabel(key, t) })}
+                lines={[
+                  { label: ui(`help.attr.${key}`) },
+                  {
+                    label: ui("attrs.rowHint", { min: range.min, max: range.max, aug: range.aug }),
+                  },
+                ]}
+              >
+                {attrLabel(key, t)}
+              </HelpTip>
             </span>
             <RangeInput
               min={range.min}

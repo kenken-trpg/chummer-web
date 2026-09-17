@@ -37,6 +37,13 @@ describe("<AttrsTab>", () => {
     expect(screen.getByText(/能力値点 0\/0 ・ 特殊点 0\/0/)).toBeDefined();
   });
 
+  it("explains each attribute behind a help button", () => {
+    renderTab();
+    const button = screen.getAllByRole("button", { name: /の説明$/ })[0];
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("強靱力。ダメージ抵抗");
+  });
+
   const split = {
     levels: { AGI: 1 },
     floors: { BOD: 1, AGI: 1, REA: 1, STR: 1, CHA: 1, INT: 1, LOG: 1, WIL: 1, EDG: 1 },
