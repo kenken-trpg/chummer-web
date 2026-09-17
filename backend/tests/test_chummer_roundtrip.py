@@ -527,3 +527,36 @@ def test_exotic_skills_picks_and_reputation_survive_the_trip() -> None:
     assert (ch1.street_cred, ch1.notoriety_bonus, ch1.karma_nuyen) == (4, 2, 5)
     assert ch2.derived["street_cred"] == ch1.derived["street_cred"]
     assert ch2.derived["nuyen"] == ch1.derived["nuyen"]
+
+
+def _with_chummer_special_attributes(xml: bytes, rows: dict[str, int]) -> bytes:
+    """Add MAGADEPT / RES rows the way Chummer saves them: minimum 0, base 0."""
+    import xml.etree.ElementTree as ET  # noqa: S405 - our own fixture
+
+    root = ET.fromstring(xml)  # noqa: S314 - our own fixture
+    attrs = root.find("attributes")
+    assert attrs is not None
+    for name, base in rows.items():
+        a = ET.SubElement(attrs, "attribute")
+        for tag, value in (("name", name), ("metatypemin", 0), ("base", base), ("karma", 0)):
+            ET.SubElement(a, tag).text = str(value)
+    return ET.tostring(root)
+
+
+def test_career_baseline_survives_the_trip() -> None:
+    # Chummer writes a MAGADEPT row for everyone and a mundane's RES as 0,
+    # neither of which a sheet keeps: the baseline must not remember them.
+    xml = _with_chummer_special_attributes(
+        build_chum5(
+            name="Veteran",
+            created=True,
+            attributes={"BOD": 3, "AGI": 4, "REA": 3, "STR": 3, "CHA": 2, "INT": 3, "LOG": 2, "WIL": 3},
+        ),
+        {"MAGADEPT": 1, "RES": 0},
+    )
+    _, ch1, ch2 = _loop(xml)
+
+    assert ch1.career_baseline is not None and ch2.career_baseline is not None
+    assert "MAGADEPT" not in ch1.career_baseline.attributes
+    assert ch1.career_baseline.attributes["RES"] == 0
+    assert ch2.career_baseline == ch1.career_baseline

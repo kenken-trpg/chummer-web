@@ -47,14 +47,18 @@ def career_raise_karma(
     skills_data: dict[str, Any],
     *,
     effects: EffectsDict | None = None,
+    ratings: dict[str, int] | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
-    """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings."""
+    """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings.
+
+    ``ratings`` are the attribute ratings compute settled on (``state.attributes``
+    otherwise), the same ones the baseline is taken from."""
     total = 0
     lines: list[dict[str, Any]] = []
     eff = effects or empty_effects()
     base_attrs = baseline.attributes or {}
     attr_flat = _filter_karma_rules(eff.get("attribute_karma_cost"), career=True)
-    for key, rating in (state.attributes or {}).items():
+    for key, rating in (state.attributes if ratings is None else ratings).items():
         if key == "ESS":
             continue
         from_r = int(base_attrs.get(key, rating))
