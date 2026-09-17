@@ -38,7 +38,7 @@ fetch script**, so adding a file to `FILES` — or bumping the pinned
 `store.public_catalog()` takes `catalog()` and produces the `/api/catalog`
 payload: it trims fields the UI doesn't need, applies translations, and adds
 computed flags (`has_wireless`, `metagenic`, drug `effect` strings, …).
-`frontend/lib/types.ts` is the hand-maintained mirror of this payload.
+`frontend/lib/types/catalog.ts` is the hand-maintained mirror of this payload.
 
 ## Translations
 

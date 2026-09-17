@@ -24,7 +24,7 @@ Chummer expresses a modifier you want to support, e.g.
 3. **Consume** — read `effects["dodge"]` where the final number is built in
    `engine.compute()` (or the relevant `resolve_*` helper) and put it into
    `derived`.
-4. **Surface** — add the field to `frontend/lib/types.ts` and render it in
+4. **Surface** — add the field to `frontend/lib/types/` (`derived.ts` or `rows/*.ts`) and render it in
    `CharacterSheet.tsx` / the relevant tab.
 5. **Test** — pick a real catalog item that carries the bonus, build a
    `CharacterState` with it, assert on `out.derived[...]`.
@@ -40,7 +40,7 @@ Example: weapons gained a `<somestat>` you want.
 2. `store.public_catalog()` — add it to the weapons entry so the UI can see it.
 3. `engine` — use `spec.get("somestat")` wherever weapons are resolved
    (`resolve_gear` / `_public_weapon`).
-4. `frontend/lib/types.ts` — add to `WeaponCatalogItem` / `InstalledWeapon`.
+4. `frontend/lib/types/` — add to `WeaponCatalogItem` (`catalog.ts`) / `InstalledWeapon` (`rows/gear.ts`).
 5. Test in `test_engine_weapons.py` (+ `test_chummer_export.py` if it round-trips).
 
 ---
@@ -56,7 +56,7 @@ Example: `drugcomponents.xml` (done — use it as the reference).
 3. `data_loader` — write a `load_*()` that parses it, and merge/expose it in
    `catalog()`. **Return `{}`/`[]` gracefully if the file is missing** so
    environments without the fetch step still import.
-4. Surface via `store.public_catalog()` and `frontend/lib/types.ts` as needed.
+4. Surface via `store.public_catalog()` and `frontend/lib/types/` as needed.
 
 ---
 
@@ -66,7 +66,8 @@ Example: `drugcomponents.xml` (done — use it as the reference).
    `CharacterPatch` (as `... | None = None`).
 2. `chummer_import/` (the section module) / `chummer_export.py` — map it to/from the `.chum5` tag
    if Chummer has one.
-3. Frontend — add to `Character` in `lib/types.ts`, add an input that calls
+3. Frontend — regenerate `Character` (`lib/types/generated.ts`) with
+   `backend/scripts/gen_frontend_types.py`, add an input that calls
    `patch({ field: value })`, render it on the sheet.
 4. `test_chummer_export.py` — add to `_rich_state()` and assert it round-trips.
 

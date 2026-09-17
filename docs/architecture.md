@@ -174,8 +174,13 @@ loop-invariant, across a street samurai / mage / technomancer / career
   plain-text layouts); it's a thin shell over
   `lib/character/sheet-data.ts::buildSheetData` + one component per section
   under `components/character/sheet/sections/`.
-- `lib/types.ts` — hand-maintained mirror of the backend payloads. When you add
-  a field to `derived` or a catalog entry, add it here too.
+- `lib/types/` — mirror of the backend payloads, re-exported from
+  `lib/types/index.ts` (import from `@/lib/types`). `generated.ts` comes from
+  the Pydantic models (`backend/scripts/gen_frontend_types.py`); the rest is
+  hand-maintained: `catalog.ts`, `installs.ts`, `derived.ts` (the `Derived`
+  object, which `backend/tests/test_derived_contract.py` checks against the
+  server) and `rows/*.ts` (the row shapes `Derived` lists, one file per
+  area). When you add a field to `derived` or a catalog entry, add it there too.
 - `lib/api.ts` — fetch wrappers. `lib/cocofolia.ts` — VTT/chat-palette export.
 - **Tests** — `vitest` (jsdom + React Testing Library), `*.test.{ts,tsx}`
   next to the code, shared fixtures in `frontend/tests/fixtures.ts`
