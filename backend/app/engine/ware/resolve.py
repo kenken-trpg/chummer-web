@@ -133,7 +133,11 @@ def resolve_ware(
         included = bool(inst.included)
         plugin = bool(ware.get("plugin"))
         add_to_parent = bool(ware.get("addtoparentess")) and slotted and not included
-        formula_extras = {**ware_extras, "MinRating": lo}
+        # Chummer prices a Chemical Gland as `20000 + (99 * Gear Cost)`: the
+        # chemicals put inside it. Ware holds no gear here, so the sum is 0 —
+        # what Chummer charges for an empty gland. Left unset, the unknown
+        # words made the whole price 0.
+        formula_extras = {**ware_extras, "MinRating": lo, "Parent Gear Cost": 0, "Gear Cost": 0}
         # Bioware grades have no Adapsin twin, so `ess_adapsin` mirrors `ess`
         # there and the flag costs nothing to carry.
         grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)

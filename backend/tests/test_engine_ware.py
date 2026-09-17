@@ -1543,3 +1543,15 @@ def test_a_cyberskull_is_one_of_the_limbs() -> None:
     out = compute(_human("skull-na", cyberware=[CyberwareInstall(ware_id=SKULL)], settings=anarchy))
     assert out.derived["limb_replace"] is None
     assert out.derived["totals"]["STR"] == 1
+
+
+def test_an_empty_chemical_gland_still_costs_its_base_price() -> None:
+    """`20000 + (99 * Gear Cost)` — Chummer's `Gear Cost` is the chemicals
+    inside, 0 for an empty gland. The unknown words used to zero the whole
+    price, so Ghile Mear's two glands were free."""
+    gland = _ware_id("bioware", "Chemical Gland (Internal Release or Gradual Release)")
+    reservoir = _ware_id("bioware", "Chemical Gland (Weapon Reservoir)")
+    out = compute(_human("gland", bioware=[CyberwareInstall(ware_id=gland), CyberwareInstall(ware_id=reservoir)]))
+    prices = {row["name"]: row["nuyen"] for row in out.derived["bioware"]}
+    assert prices["Chemical Gland (Internal Release or Gradual Release)"] == 20000
+    assert prices["Chemical Gland (Weapon Reservoir)"] == 24000
