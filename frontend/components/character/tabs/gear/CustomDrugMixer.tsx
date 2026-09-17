@@ -150,7 +150,7 @@ export function CustomDrugMixer({ catalog, character: ch, d, tr, ui, patch }: Ta
                 >
                   {ui("common.add")}
                 </button>
-                <label>
+                <label title={ui("common.qtyHint")}>
                   {ui("common.qty")}
                   <input
                     type="number"

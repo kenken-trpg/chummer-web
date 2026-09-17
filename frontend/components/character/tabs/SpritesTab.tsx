@@ -54,8 +54,8 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               </div>
             ) : null}
             <div className="cyber-controls">
-              <label>
-                Level
+              <label title={ui("common.levelHint")}>
+                {ui("common.level")}
                 <input
                   type="number"
                   min={1}

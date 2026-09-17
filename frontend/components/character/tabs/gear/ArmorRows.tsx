@@ -56,8 +56,8 @@ export function ArmorModRow({
         </>
       )}
       {mod.rating_max > 1 && !mod.included ? (
-        <label>
-          Rating
+        <label title={ui("common.ratingHint")}>
+          {ui("common.rating")}
           <input
             type="number"
             min={1}
@@ -162,8 +162,8 @@ export function CarriedGearRow({
         </>
       )}
       {gear.rating_max > 1 && !gear.included ? (
-        <label>
-          Rating
+        <label title={ui("common.ratingHint")}>
+          {ui("common.rating")}
           <input
             type="number"
             min={1}

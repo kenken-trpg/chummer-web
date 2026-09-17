@@ -68,8 +68,8 @@ export function VehicleModRows({
               </>
             )}
             {mod.rating_max > 0 && !mod.included ? (
-              <label>
-                Rating
+              <label title={ui("common.ratingHint")}>
+                {ui("common.rating")}
                 <input
                   type="number"
                   min={1}

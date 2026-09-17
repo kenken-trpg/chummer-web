@@ -39,8 +39,8 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 </div>
                 {item.rating_max > 0 ? (
                   <div className="cyber-controls">
-                    <label>
-                      Rating
+                    <label title={ui("common.ratingHint")}>
+                      {ui("common.rating")}
                       <input
                         type="number"
                         min={1}
@@ -84,8 +84,8 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       </>
                     )}
                     {child.rating_max > 0 && !child.included ? (
-                      <label>
-                        Rating
+                      <label title={ui("common.ratingHint")}>
+                        {ui("common.rating")}
                         <input
                           type="number"
                           min={1}

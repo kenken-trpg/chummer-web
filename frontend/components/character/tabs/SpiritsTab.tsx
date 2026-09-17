@@ -70,8 +70,8 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               </div>
             ) : null}
             <div className="cyber-controls">
-              <label>
-                Force
+              <label title={ui("common.forceHint")}>
+                {ui("common.force")}
                 <input
                   type="number"
                   min={1}

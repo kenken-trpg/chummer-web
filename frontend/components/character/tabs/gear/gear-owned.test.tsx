@@ -78,7 +78,7 @@ describe.each(RATING_PANELS)("<%s> owned rows", (_name, Panel, chKey, dKey) => {
     const patch = vi.fn();
     renderPanel(Panel, character(), patch);
 
-    fireEvent.change(screen.getAllByRole("spinbutton", { name: "Rating" })[1], {
+    fireEvent.change(screen.getAllByRole("spinbutton", { name: "レーティング" })[1], {
       target: { value: "4" },
     });
 
