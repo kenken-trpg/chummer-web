@@ -7,6 +7,11 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **サイバーデッキと RCC にもアプリを入れられるようにした。** Chummer では `Software` を
+  コムリンク以外にも入れられる（BLUE の RCC の Swarm）。このアプリはコムリンクにしか
+  入れられず、デッキや RCC に入ったアプリは警告して計算から外していた。デッキ・RCC の
+  画面にもアプリの一覧と追加欄を出し、機器を削除すると中のアプリも消える。
+
 - **ウェアの中にギアを入れられるようにした。** Chemical Gland の薬品や Auto Injector の
   薬など、データの `<allowgear>` / `<allowdrug>` が許す種類だけを入れられる。
   サイバー／バイオの画面で追加・取り外しができ、.chum5 のウェアの `<gears>` と往復する。

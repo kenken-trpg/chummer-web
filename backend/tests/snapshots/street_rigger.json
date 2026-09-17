@@ -71,6 +71,7 @@
   "contacts": [],
   "custom_drugs": [],
   "cyberdeck": {
+    "apps": [],
     "array": [
       4,
       3,
@@ -109,6 +110,7 @@
   },
   "cyberdecks": [
     {
+      "apps": [],
       "array": [
         4,
         3,

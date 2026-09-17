@@ -299,7 +299,7 @@ export const JA_ENGINE = {
   "engine.gear.mountOnArmor": "{name} は防具に装着してください",
   "engine.gear.mountOnVehicle": "{name} は車両に装着してください",
   "engine.gear.mountOnWeapon": "{name} は武器に装着してください",
-  "engine.gear.needsCommlink": "{name} は通信機に装着してください",
+  "engine.gear.needsCommlink": "{name} はコムリンク・サイバーデッキ・RCC のどれかに入れてください",
   "engine.gear.needsHost": "{name} は本体に装着してください",
   "engine.gear.needsHostKind": "{name} は{host}に装着してください",
   "engine.gear.needsSpecialMods": "{name} には Special Modifications が必要です",
