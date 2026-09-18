@@ -35,6 +35,18 @@ describe("<CharacterSidebar>", () => {
     expect(tip?.textContent).toContain("Forbidden");
   });
 
+  it("explains what Essence is and what it takes with it", () => {
+    const ch = makeCharacter();
+    (ch.derived as any).enabled_tabs = ["MAG"];
+    render(
+      <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
+    );
+    const button = screen.queryByRole("button", { name: "エッセンス の説明" });
+    expect(button).not.toBeNull();
+    const tip = document.getElementById(button!.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("誰でも 6 から始まり");
+  });
+
   it("switches to キャリア mode and shows the reward panel when career + patch", () => {
     const ch = makeCharacter({ career: true });
     render(

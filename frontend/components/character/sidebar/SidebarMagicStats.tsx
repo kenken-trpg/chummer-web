@@ -1,4 +1,5 @@
 import type { MsgKey } from "@/lib/i18n";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 
 /** The defence lines that are only shown when they differ from `general`.
@@ -77,7 +78,19 @@ export function SidebarMagicStats({ d, ui }: SidebarBlockProps) {
         );
       })}
       <div className="stat">
-        <span>{ui("common.essence")}</span>
+        <span>
+          <HelpTip
+            label={ui("help.open", { label: ui("common.essence") })}
+            lines={[
+              { label: ui("help.essence.what") },
+              { label: ui("help.essence.magic") },
+              { label: ui("help.essence.grade") },
+              { label: ui("help.essence.zero") },
+            ]}
+          >
+            {ui("common.essence")}
+          </HelpTip>
+        </span>
         <b>
           {d.essence}
           {d.essence_lost_cyber || d.essence_lost_bio || d.essence_penalty

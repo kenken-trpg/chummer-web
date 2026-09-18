@@ -57,4 +57,17 @@ export const JA_HELP = {
     "Exotic 技能：対象（武器の種類など）ごとに別の技能として持つ。同じ技能を対象違いで複数持てる",
   "help.exotic.nodefault":
     "未習得ではデフォルトで振れない。使うには必ずレーティングが要る（SR5 p.130）",
+  "help.essence.what":
+    "エッセンス：生身の度合い。誰でも 6 から始まり、サイバーウェアとバイオウェアで減る",
+  "help.essence.magic": "減った分だけ魔力と共振力の上限も下がる（端数は切り上げで 1 段）",
+  "help.essence.zero": "0 になると死亡。作成時は 0 より大きい値を残す必要がある",
+  "help.essence.grade": "グレードの倍率（C / B の表示）で、同じウェアでも消費が変わる",
+  "help.quality.positive": "有利な資質はカルマで買う。作成時の上限は 25 カルマ分（設定で変わる）",
+  "help.quality.negative": "不利な資質はカルマが戻るが、戻せるのも 25 カルマ分まで",
+  "help.quality.career": "キャリア中の買い足し・買い取りはカルマ 2 倍が標準（SR5 p.72）",
+  "help.vehicle.statsLabel": "ステータス",
+  "help.vehicle.stats":
+    "HND 操縦性／SPD 速度／ACC 加速／BOD 車体／ARM 装甲／PLT パイロット／SNR センサー",
+  "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時の判定に使う",
+  "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
 } as const;

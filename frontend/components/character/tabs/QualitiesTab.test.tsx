@@ -38,6 +38,14 @@ describe("<QualitiesTab>", () => {
     expect(screen.queryByRole("heading", { name: "取得済み" })).toBeNull();
   });
 
+  it("explains what positive and negative qualities cost", () => {
+    const { container } = renderTab();
+    const button = container.querySelector("p.muted button") as HTMLElement;
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("有利な資質はカルマで買う");
+    expect(tip?.textContent).toContain("カルマ 2 倍");
+  });
+
   it("shows the owned list + a text extra-editor for a needs_extra quality", () => {
     renderTab({
       character: {

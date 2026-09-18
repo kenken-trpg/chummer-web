@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
@@ -94,6 +95,16 @@ export function VehicleDroneGear({
                   />
                 </div>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={[
+                      { label: ui("help.vehicle.stats") },
+                      { label: ui("help.vehicle.pilot") },
+                      { label: ui("help.vehicle.body") },
+                    ]}
+                  >
+                    {ui("help.vehicle.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / ACC{" "}
                   {item.accel} / BOD {item.body} / ARM {item.armor} / PLT {item.pilot} / SNR{" "}
                   {item.sensor}
