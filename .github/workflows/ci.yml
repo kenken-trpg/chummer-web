@@ -240,8 +240,23 @@ jobs:
       - working-directory: frontend
         run: ../scripts/retry.sh npm ci --ignore-scripts
 
+      # The browser is ~130MB downloaded on every run otherwise. Keyed on the
+      # lockfile: playwright pins one browser build per version, and mixing a
+      # cached browser with a different playwright is exactly what it refuses
+      # to run. The apt side of `--with-deps` is not cacheable and stays.
+      - name: Cache the Playwright browser
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
       - working-directory: frontend
-        run: ../scripts/retry.sh npx playwright install --with-deps chromium
+        run: ../scripts/retry.sh npx playwright install-deps chromium
+
+      - if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        run: ../scripts/retry.sh npx playwright install chromium
 
       # playwright.config.ts runs `next build` before any test; its compile
       # cache is most of what makes that slow
