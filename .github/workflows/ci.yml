@@ -173,7 +173,10 @@ jobs:
   # as CRLF, which makes this job a live test of `.gitattributes` as well.
   #
   # `npm run test`, not `test:coverage`: the numbers are identical to the Linux
-  # run and nothing gates on them.
+  # run and nothing gates on them. No typecheck and no lint either — tsc and
+  # eslint read the same sources on every platform, so `frontend-static` has
+  # already answered for them; what is left here is the platform-sensitive
+  # half: prettier's line endings, the test suite, and the build.
   frontend-windows:
     runs-on: windows-latest
     defaults:
@@ -190,8 +193,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: ../scripts/retry.sh npm ci --ignore-scripts
-      - run: npm run typecheck
-      - run: npm run lint
       - run: npm run format:check
       - run: npm run test
       - run: npm run build
