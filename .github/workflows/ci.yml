@@ -134,8 +134,12 @@ jobs:
           key: next-build-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx', 'frontend/**/*.css') }}
           restore-keys: next-build-${{ hashFiles('frontend/package-lock.json') }}-
 
-      # same deal as the backend: the summary goes in the log, nothing gates on it
-      - run: npm run test:coverage
+      # Instrumenting costs roughly a quarter of the run (17s -> 22s locally),
+      # so the numbers are measured on main and a pull request runs the plain
+      # suite. The trade is deliberate and worth knowing: vitest.config.ts sets
+      # coverage *thresholds*, so a change that drops coverage now fails this
+      # job on the merge commit rather than on the pull request.
+      - run: npm run ${{ github.event_name == 'push' && 'test:coverage' || 'test' }}
       - run: npm run build
 
   # typecheck, lint and prettier, away from the tests. They read the sources
