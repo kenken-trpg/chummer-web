@@ -235,22 +235,21 @@ jobs:
           retention-days: 7
 
   # Builds the runtime image on every push/PR, one job per architecture, and
-  # smoke-tests each. On main and on `v*` tags each job pushes its own layers
-  # by digest and `docker-manifest` below stitches them into one multi-arch
-  # tag. The package inherits nothing from the repo — it is private until
-  # flipped once in the package settings.
+  # smoke-tests each. Nothing is published from here: `docker-push` below is
+  # gated on the tests and pushes the layers this job left in the cache, so a
+  # red commit publishes nothing and a tag that cannot start is never the tag
+  # anyone pulls. The package inherits nothing from the repo — it is private
+  # until flipped once in the package settings.
   #
   # Two native runners rather than one runner with QEMU: `next build` and
   # `npm ci` under emulation take tens of minutes, and arm64 runners are free
-  # for public repositories. Gated on the test jobs so a red commit never
-  # publishes, and the smoke test runs *before* the push, so a tag that cannot
-  # start is never the tag anyone pulls.
+  # for public repositories. Deliberately ungated: the image build reads the
+  # same sources the tests do, so making it wait for them only lengthened the
+  # run — it is the slowest job and used to start last.
   docker-build:
     runs-on: ${{ matrix.runner }}
-    needs: [backend, frontend]
     permissions:
       contents: read
-      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -263,14 +262,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-
-      - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         id: meta
@@ -319,11 +310,47 @@ jobs:
           docker logs smoke
           exit 1
 
-      # Same layers again, now pushed anonymously by digest. Everything is a
-      # cache hit from the build above, so this costs seconds.
+  # The push, gated on the tests. It is a separate job so that the build above
+  # can start alongside them instead of after them: by the time this runs every
+  # layer is in the gha cache, so it re-resolves the same digest in seconds
+  # rather than building anything — the image published is the one the smoke
+  # test started, and a red commit still publishes nothing.
+  docker-push:
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.runner }}
+    needs: [backend, frontend, docker-build]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/chummer-web
+
+      # Pushed anonymously by digest; `docker-manifest` gives the digests their
+      # tags. Cache-read only: this job must never be what warms the cache.
       - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         id: push
-        if: github.event_name != 'pull_request'
         with:
           context: .
           platforms: ${{ matrix.platform }}
@@ -332,7 +359,6 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.platform }}
 
       - name: Hand the digest to the manifest job
-        if: github.event_name != 'pull_request'
         run: |
           set -euo pipefail
           mkdir -p /tmp/digests
@@ -340,8 +366,7 @@ jobs:
         env:
           DIGEST: ${{ steps.push.outputs.digest }}
 
-      - if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digest-${{ strategy.job-index }}
           path: /tmp/digests/*
@@ -357,12 +382,19 @@ jobs:
   docker:
     if: always()
     runs-on: ubuntu-latest
-    needs: docker-build
+    needs: [docker-build, docker-push]
     steps:
-      - name: Every architecture built and started
+      # docker-push is skipped on pull requests, which is a pass here — what it
+      # must never be is failed or cancelled.
+      - name: Every architecture built, started and (off a PR) pushed
         run: |
           echo "docker-build: ${{ needs.docker-build.result }}"
+          echo "docker-push: ${{ needs.docker-push.result }}"
           test "${{ needs.docker-build.result }}" = "success"
+          case "${{ needs.docker-push.result }}" in
+            success | skipped) ;;
+            *) exit 1 ;;
+          esac
 
   # The tags (`latest`, semver, short sha) are created here, once, pointing at
   # a manifest list over both per-architecture digests. Nothing is tagged until
@@ -370,7 +402,7 @@ jobs:
   docker-manifest:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    needs: docker-build
+    needs: docker-push
     permissions:
       contents: read
       packages: write
