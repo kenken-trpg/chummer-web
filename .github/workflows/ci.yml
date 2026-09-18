@@ -123,12 +123,42 @@ jobs:
 
       # no install hooks: see the Dockerfile
       - run: ../scripts/retry.sh npm ci --ignore-scripts
-      - run: npm run typecheck
-      - run: npm run lint
-      - run: npm run format:check
+
+      # Same cache the e2e job keeps, under its own key so the two jobs cannot
+      # race each other writing it: most of what `next build` costs is the
+      # compile cache, and a run that only touched tests reuses all of it.
+      - name: Cache Next build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/.next/cache
+          key: next-build-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx', 'frontend/**/*.css') }}
+          restore-keys: next-build-${{ hashFiles('frontend/package-lock.json') }}-
+
       # same deal as the backend: the summary goes in the log, nothing gates on it
       - run: npm run test:coverage
       - run: npm run build
+
+  # typecheck, lint and prettier, away from the tests. They read the sources
+  # and nothing else — no jsdom, no build — so they have no reason to queue
+  # behind a minute of vitest, and on a failure the log is the failure.
+  frontend-static:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: ../scripts/retry.sh npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
 
   # The frontend half of the Windows question (`backend-windows` is the other).
   # Node is far more portable than Python here, so this is looking for a
@@ -318,7 +348,7 @@ jobs:
   docker-push:
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
-    needs: [backend, frontend, docker-build]
+    needs: [backend, frontend, frontend-static, docker-build]
     permissions:
       contents: read
       packages: write
@@ -453,7 +483,7 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs: [backend, frontend, docker-manifest]
+    needs: [backend, frontend, frontend-static, docker-manifest]
     permissions:
       contents: write
     steps:
