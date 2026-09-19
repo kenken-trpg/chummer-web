@@ -6,6 +6,7 @@ import { sideLabel } from "@/lib/character/constants";
 import { availBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
+import { HelpTip } from "@/components/help/HelpTip";
 import { useUiText } from "@/lib/i18n";
 
 export function WareRow(props: {
@@ -120,6 +121,16 @@ export function WareRow(props: {
       <div>
         {title}
         <div className="muted">
+          <HelpTip
+            label={ui("help.open", { label: tr(item.name) })}
+            lines={[
+              { label: ui("help.ware.essence") },
+              { label: ui("help.gradeHint") },
+              ...(capMax > 0 ? [{ label: ui("help.ware.capacity") }] : []),
+            ]}
+          >
+            {ui("help.ware.statsLabel")}
+          </HelpTip>{" "}
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
           {availBit(item, ui)} / {item.source}
           {capMax > 0 ? (

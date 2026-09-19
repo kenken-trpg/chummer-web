@@ -3,6 +3,7 @@ import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [cfSearch, setCfSearch] = useState("");
@@ -27,6 +28,17 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
           <div>
             <b>{tr(item.label || item.name)}</b>
             <div className="muted">
+              <HelpTip
+                label={ui("help.open", { label: tr(item.name) })}
+                lines={[
+                  { label: ui("help.cf.fv") },
+                  { label: ui("help.cf.level") },
+                  { label: ui("help.cf.fade") },
+                  { label: ui("help.cf.target") },
+                ]}
+              >
+                {ui("help.cf.statsLabel")}
+              </HelpTip>{" "}
               {item.name} / {cfTarget(item.target, ui)} / {cfDuration(item.duration, ui)} /{" "}
               {item.fv}
               {ui("cf.fadeAt", {

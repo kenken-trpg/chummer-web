@@ -3,6 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
 import { critterPowerRow } from "@/lib/spell-terms";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spriteSearch, setSpriteSearch] = useState("");
@@ -29,6 +30,16 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
+              <HelpTip
+                label={ui("help.open", { label: tr(item.name) })}
+                lines={[
+                  { label: ui("help.sprite.level") },
+                  { label: ui("help.sprite.tasks") },
+                  { label: ui("help.sprite.registered") },
+                ]}
+              >
+                {ui("help.sprite.statsLabel")}
+              </HelpTip>{" "}
               {item.name} / {item.registered ? ui("sprite.registered") : ui("sprite.compiled")} / L
               {item.level} / {ui("sprite.tasks")} {item.services}
               {item.registered ? "" : ui("sprite.untilReboot")}
