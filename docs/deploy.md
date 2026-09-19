@@ -57,6 +57,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `ALLOWED_ORIGINS` | `localhost:3000` list | only matters for a split deploy (frontend on another origin) |
 | `RATE_LIMIT` | `120/minute` | per client IP, all routes |
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the two import routes |
+| `CSP_REPORT_RATE_LIMIT` | `60/minute` | per client IP, `/api/csp-report` |
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this, chunked bodies included; the bundled Caddy enforces it too |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |
 | `TRUSTED_PROXY_HOPS` | `0` | entries in from the right of `x-forwarded-for` that hold the real client |
@@ -83,6 +84,22 @@ avoid a second, less useful copy.
 Request bodies, query strings and anything derived from a `CharacterState` are
 never logged. Characters are the user's and never touch disk on the server; a
 log line is disk.
+
+**CSP violations.** The page's Content-Security-Policy names
+`/api/csp-report`, and a violation arrives there as one `info` line:
+
+```json
+{"level":"INFO","message":"csp violation: script-src-elem blocked https://evil.test/x.js",
+ "csp_report":{"document-uri":"https://…/chargen","effective-directive":"script-src-elem",
+ "blocked-uri":"https://evil.test/x.js","disposition":"enforce"},"client":"203.0.113.7"}
+```
+
+`info` rather than `warning` on purpose: browser extensions and injected page
+scripts produce a steady trickle on any public deployment, so the interesting
+signal is a *change* in what is reported, not the presence of reports. Only the
+fields above are kept, each truncated, and the endpoint answers 204 to anything
+— it is the one route whose body is written by something other than our own
+client. Turn it down with `CSP_REPORT_RATE_LIMIT`.
 
 **Client IP for rate limiting.** No forwarded header is trusted by default — a
 client talking straight to the app can forge one and take one request per fake

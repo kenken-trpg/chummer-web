@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contentSecurityPolicy, makeNonce } from "./csp";
+import { REPORT_ENDPOINT, REPORT_GROUP, contentSecurityPolicy, makeNonce } from "./csp";
 
 function directive(csp: string, name: string): string {
   return csp.split("; ").find((part) => part.startsWith(`${name} `)) ?? "";
@@ -31,6 +31,14 @@ describe("contentSecurityPolicy", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
+  });
+
+  it("names the report endpoint both ways, so no browser stays silent", () => {
+    const csp = contentSecurityPolicy("abc");
+    // report-uri is deprecated but is what Safari implements; report-to is the
+    // Reporting API's, and `proxy.ts` declares the group it names
+    expect(directive(csp, "report-uri")).toBe(`report-uri ${REPORT_ENDPOINT}`);
+    expect(directive(csp, "report-to")).toBe(`report-to ${REPORT_GROUP}`);
   });
 });
 

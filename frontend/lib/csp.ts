@@ -16,7 +16,19 @@
  *
  * `img-src` allows `data:` (base64 portraits) and `blob:` (the `.chum5`
  * download's object URL).
+ *
+ * Violations go to `/api/csp-report`, named twice because browsers are split:
+ * `report-uri` is deprecated but is what Safari and older Chrome implement,
+ * and `report-to` is the Reporting API's way, which needs the group to be
+ * declared in a `Reporting-Endpoints` header — `proxy.ts` sends that alongside
+ * this. A browser that understands both uses `report-to` only, so the endpoint
+ * receives one report per violation, not two.
  */
+export const REPORT_ENDPOINT = "/api/csp-report";
+
+/** The reporting group `report-to` names; declared in `Reporting-Endpoints`. */
+export const REPORT_GROUP = "csp";
+
 export function contentSecurityPolicy(nonce: string, { dev = false } = {}): string {
   return [
     "default-src 'self'",
@@ -31,6 +43,8 @@ export function contentSecurityPolicy(nonce: string, { dev = false } = {}): stri
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
+    `report-uri ${REPORT_ENDPOINT}`,
+    `report-to ${REPORT_GROUP}`,
   ].join("; ");
 }
 
