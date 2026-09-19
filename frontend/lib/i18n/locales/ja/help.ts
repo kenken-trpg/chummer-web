@@ -123,4 +123,21 @@ export const JA_HELP = {
   "help.life.monthly": "月額 ＝ 基本額 ×（1＋修正％）＋ ライフスタイル資質の分",
   "help.life.months": "その月額に、払う期間（月数など）を掛けたものが総額",
   "help.life.lp": "LP：自分で組むライフスタイルで資質に使える点数（使用／上限）",
+  "help.matrix.statsLabel": "マトリックス値",
+  "help.matrix.deviceRating":
+    "DR（デバイスレーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
+  "help.prio.statsLabel": "表の読み方",
+  "help.prio.attrCell": "能力値の欄の「6 (2)」は、通常の能力値点 6 と特殊能力値点 2",
+  "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
+  "help.prio.skillCell": "技能の欄の「24/2」は、技能点 24 と技能グループ点 2",
+  "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる術式・複合フォームの無料枠",
+  "help.adept.statsLabel": "パワー点",
+  "help.adept.pp": "アデプトのパワー点は魔力と同数。パワーを取った分だけ減る",
+  "help.adept.mystic":
+    "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
+  "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
+  "help.martial.statsLabel": "流派と技",
+  "help.martial.style": "流派は 7 カルマ（品目ごとに別の値段のことがある）",
+  "help.martial.technique": "技は 1 つ 5 カルマ。資質で付いてくる分は無料",
+  "help.martial.chargen": "作成時は流派 1 つ・技 5 つまで。キャリア中は上限なし",
 } as const;

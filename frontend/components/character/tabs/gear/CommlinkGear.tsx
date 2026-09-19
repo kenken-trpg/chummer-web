@@ -6,6 +6,7 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -16,6 +17,18 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
             <div>
               <b>{tr(item.name)}</b>
               <div className="muted">
+                <HelpTip
+                  label={ui("help.open", { label: tr(item.name) })}
+                  lines={[
+                    { label: ui("help.matrix.deviceRating") },
+                    ...(item.attack ? [{ label: ui("help.matrix.attack") }] : []),
+                    ...(item.sleaze ? [{ label: ui("help.matrix.sleaze") }] : []),
+                    { label: ui("help.matrix.dataprocessing") },
+                    { label: ui("help.matrix.firewall") },
+                  ]}
+                >
+                  {ui("help.matrix.statsLabel")}
+                </HelpTip>{" "}
                 {item.name}
                 {item.category && item.category !== "Commlinks" ? ` / ${tr(item.category)}` : ""}
                 {" / "}DR {item.device_rating}
