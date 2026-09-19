@@ -191,6 +191,12 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Run and Gun"] == "ラン＆ガン"
     for name in ("Street Grimoire", "Data Trails", "Chrome Flesh", "Run Faster"):
         assert not JP_RE.search(tr.get(name, "") or ""), name
+    # critter powers, imported once the catalog started exposing them
+    assert tr["Energy Drain"] == "エネルギー吸収"
+    assert tr["Skill Enhancement"] == "技能強化"
+    # "Mundane" is two different things under one English name — the critter
+    # power category and the priority table's talent — so it stays English
+    assert not JP_RE.search(tr.get("Mundane", "") or "")
 
 
 # --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------
