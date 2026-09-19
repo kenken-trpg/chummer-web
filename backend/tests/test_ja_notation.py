@@ -19,7 +19,7 @@ The five surviving full-width bracket entries are pinned in
 `FULLWIDTH_BRACKETS_KEPT` rather than rewritten. They were checked against the
 Japanese core rulebook, and quietly restyling a term somebody verified is the
 same class of move as guessing at one — see the same reasoning behind
-`DECIDED_FLOOR` in test_rg_coverage.py. Shrink the list when a person decides,
+`DECIDED_FLOOR` in test_book_coverage.py. Shrink the list when a person decides,
 not to make a run go green.
 """
 

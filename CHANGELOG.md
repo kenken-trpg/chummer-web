@@ -7,6 +7,17 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Changed
 
+- **日本語訳の突き合わせパスが、書籍ごとに走らせられるようになった。**『ラン＆ガン』
+  専用だった台帳の仕組み（`make_rg_worksheet.py` / `import_rg_worksheet.py`）を
+  `make_ja_worksheet.py --book` / `import_ja_worksheet.py --book` に一般化し、
+  どの本をどの資料で答えるかは `backend/scripts/ja_books.py` の登録表に置いた。
+  日本語版が無い Run Faster・Street Grimoire・Data Trails を、3 冊の内容を再録した
+  『シャドウラン・コデックス』由来として登録（＝「その 1 冊の翻訳」ではなく訳語源）。
+  カタログのページ番号はコデックスでは通用しないので、台帳がその旨を出す。台帳の
+  健全性テストは書籍ごとの `DECIDED_FLOOR` を持つ `test_book_coverage.py` に。
+  **3 冊の読み込み作業自体は未着手**で、`data.json` はバイト単位で不変。実測では
+  RG は 506 件のうち 488 件が既に日本語（＝突き合わせ）だったのに対し、RF は
+  732 件中 91 件、DT は 188 件中 27 件しか無く、こちらは大半が打ち込みになる。
 - **mypy がオフラインツール（`backend/scripts/`）も見るようになった。** 手で読んで
   たまに走らせるだけのコードは、間違った注釈が一番生き残る場所で、実際
   `chum5_to_state` は警告の型を `list[str]` と名乗っていた（本当は

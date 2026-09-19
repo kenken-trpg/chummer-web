@@ -60,24 +60,38 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
 - Policy: **core rulebook** content is translated; **supplement** content stays
   in English — guessing at a supplement's coinages is worse than the English
   fallback. The exception is a supplement we hold a published Japanese edition
-  of and can check term by term: so far **Run & Gun** (`scripts/ja_curated_rg.py`,
+  of and can check term by term: **Run & Gun** (`scripts/ja_curated_rg.py`,
   phase 5 of `docs/plans/translation-plan.md`). Names only, never rules text.
+  Run Faster, Street Grimoire and Data Trails are reachable the same way
+  without a Japanese edition each, because the Japanese **Shadowrun Codex**
+  reprints much of their content — a translation source rather than a
+  translation of any one book. `backend/scripts/ja_books.py` is the registry:
+  which books a pass can run over, what a reader answers from, and whether the
+  page number Chummer stores locates the term there (it does for Run & Gun; for
+  the Codex it does not, so those passes go through its index).
 - Regenerating: `backend/scripts/build_ja_glossary.py` and
   `import_ja_from_refs.py` build the glossary/overlay from external reference
   files under `$JA_REF_DIR/` (default `~/Downloads/`; see
   `docs/plans/translation-plan.md`).
-- The Run & Gun pass is worksheet-driven, because most of those names are
-  *already* Japanese from upstream and have to be checked rather than filled in:
+- A book pass is worksheet-driven. For Run & Gun that is because most of those
+  names are *already* Japanese from upstream and have to be checked rather than
+  filled in; for the Codex-sourced books it is the opposite — RF has 91 of 732
+  names in Japanese today, DT 27 of 188 — so there the `=` shorthand answers
+  little and the terms are typed in:
 
   ```
-  scripts/make_rg_worksheet.py     -> $JA_REF_DIR/rg-worksheet.tsv  (page-ordered)
+  scripts/make_ja_worksheet.py --book RG  -> $JA_REF_DIR/rg-worksheet.tsv
         …fill the `official` column while reading the book:
           '=' the `current` column matches the book, pin it as is
           '-' leave the name on its English fallback
           otherwise, the term the book prints
-  scripts/import_rg_worksheet.py --write  -> scripts/ja_curated_rg.py
-  scripts/regen_ja.sh                     -> data.json + the docs
+  scripts/import_ja_worksheet.py --book RG --write  -> scripts/ja_curated_rg.py
+  scripts/regen_ja.sh                               -> data.json + the docs
   ```
+
+  `--book` defaults to `RG`; every code in `ja_books.py` works the same way,
+  and the worksheet filename carries the book's slug so two passes can have
+  files in the same download folder.
 
   The importer takes the worksheet back in whatever shape a spreadsheet
   returned it — renamed, `.csv`, semicolon-separated, BOM'd, with a title row
@@ -88,5 +102,6 @@ data_loader applies the overlay; store.public_catalog() emits `translations`
   unverified upstream translation as if someone had checked it in the book,
   which is the one thing this pass exists to distinguish.
 
-  `tests/test_rg_coverage.py` holds the ledger: every RG name is either checked
-  or explicitly skipped, and `DECIDED_FLOOR` only goes up.
+  `tests/test_book_coverage.py` holds the ledger, one floor per book: every
+  name a pass has reached is either checked or explicitly skipped, and
+  `DECIDED_FLOOR[code]` only goes up.

@@ -92,16 +92,16 @@ def test_overlay_values_use_unified_terminology() -> None:
 
 
 def test_curated_module_values_use_unified_terminology() -> None:
+    """Every curated table, including each book pass's — so a new book is covered."""
+    from scripts.ja_books import BOOKS
     from scripts.ja_curated_entities import ENTITIES
-    from scripts.ja_curated_rg import RG
     from scripts.ja_curated_spells import SPELLS
+    from scripts.make_ja_worksheet import decided
 
-    hits = [
-        f"{name}/{k}: {h}"
-        for name, table in (("SPELLS", SPELLS), ("ENTITIES", ENTITIES), ("RG", RG))
-        for k, v in table.items()
-        for h in _scan(v)
-    ]
+    tables = [("SPELLS", SPELLS), ("ENTITIES", ENTITIES)]
+    tables += [(book.table, decided(book)[0]) for book in BOOKS.values()]
+
+    hits = [f"{name}/{k}: {h}" for name, table in tables for k, v in table.items() for h in _scan(v)]
     assert not hits, "\n  " + "\n  ".join(hits)
 
 
