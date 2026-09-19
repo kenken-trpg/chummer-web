@@ -1,0 +1,32 @@
+#!/bin/sh
+# Print the one address a person can actually open, once the stack answers.
+#
+# Three servers log their own startup line in here, and two of them are
+# misleading from outside: Next says `http://127.0.0.1:3000` and uvicorn says
+# `127.0.0.1:8000`, both true inside the container and neither reachable —
+# only Caddy's $PORT is published. Somebody reading `docker compose logs` (or
+# Docker Desktop, which shows the same output) sees 3000 first and tries it.
+#
+# So: wait until the app really serves a request, then say where. The port is
+# the one the container listens on, which is also the one compose.yaml
+# publishes; a hand-written `docker run -p 9000:8080` moves the host side and
+# nothing in here can know that.
+set -eu
+
+port="${PORT:-8080}"
+ready() {
+  node --no-warnings -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+}
+
+i=0
+while [ "$i" -lt 120 ]; do
+  if ready; then
+    printf '\n  ready → http://localhost:%s/\n\n' "$port"
+    exit 0
+  fi
+  i=$((i + 1))
+  sleep 1
+done
+
+printf 'not answering on 127.0.0.1:%s after 120s — the failure is in the log above\n' "$port" >&2
+exit 1

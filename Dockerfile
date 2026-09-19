@@ -7,6 +7,11 @@
 #   /*      -> 127.0.0.1:3000  (next)
 #   :$PORT  -> caddy           (default 8080; the platform terminates TLS)
 #
+# The first two are container-internal and are not published: the only address
+# that works from outside is Caddy's. Both of those servers announce their own
+# one on start, so `deploy/announce-url` has the last word in the log.
+
+#
 # Build:  docker build -t chummer-web .
 # Run:    docker run --rm -p 8080:8080 chummer-web
 # Pin a different Chummer data commit:  --build-arg CHUMMER_REF=<sha>
@@ -84,6 +89,7 @@ COPY --chown=app:app --from=frontend /app/frontend/.next/static     frontend/.ne
 COPY --chown=app:app --from=frontend /app/frontend/public           frontend/public
 COPY deploy/Caddyfile        /etc/caddy/Caddyfile
 COPY deploy/supervisord.conf /etc/supervisord.conf
+COPY deploy/announce-url     /usr/local/bin/announce-url
 COPY LICENSE NOTICE.txt      /app/
 
 # Fail the build on a malformed Caddyfile rather than at container start.
