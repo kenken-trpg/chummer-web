@@ -146,6 +146,9 @@ def section(raw: CatalogDict) -> dict:
                 "maxrating": f.get("maxrating") or 6,
                 "cost": f.get("cost") or "",
                 "effect": f.get("effect") or "",
+                # the picker tells a weapon focus apart before you buy it
+                "needs_weapon": bool(f.get("needs_weapon")),
+                "weapon_type": f.get("weapon_type") or "",
                 "formula": (
                     {
                         "id": (f.get("formula") or {}).get("id"),

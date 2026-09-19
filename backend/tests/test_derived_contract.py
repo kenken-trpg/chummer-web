@@ -17,8 +17,16 @@ rather than what a type says it should.
 
 Both pin the **top-level key set**. ``derived`` is also held one level down
 wherever the server types a value as a ``TypedDict`` — ``points``,
-``karma_chargen`` and the like. The "public row" lists are plain dicts on the
-server and stay hand-maintained: there is nothing to compare them against.
+``karma_chargen`` and the like.
+
+The catalog's *row* shapes are pinned one level down too, against the response
+rather than an annotation: the rows are plain ``dict``s on the server, but the
+frontend names most of them (``WeaponCatalogItem``, ``ProgramCatalogItem``, …),
+and what a row actually carries is right there in the payload. Two things had
+drifted when this was added — ``programs`` served a ``cost_range`` no type
+mentioned, and ``FocusCatalogItem`` declared ``needs_weapon`` / ``weapon_type``
+that ``public_catalog()`` dropped, which quietly made the foci picker's
+"needs a weapon" line unreachable.
 """
 
 from __future__ import annotations
@@ -144,13 +152,8 @@ def test_derived_nested_objects_match_the_frontend_type() -> None:
 _CATALOG_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "catalog.ts"
 
 
-def _ts_interface_keys(text: str, declaration: str) -> set[str]:
-    """Members of a TS interface/type body, ignoring anything nested inside it.
-
-    Brace/bracket depth rather than indentation: `Catalog` nests object and
-    array literals several levels deep, so counting leading spaces the way
-    `_ts_derived_keys` does would pick up inner properties too.
-    """
+def _ts_interface_body(text: str, declaration: str) -> str:
+    """The text between the braces of `declaration`, nested braces included."""
     start = text.index(declaration)
     open_at = text.index("{", start)
     depth = 0
@@ -160,11 +163,18 @@ def _ts_interface_keys(text: str, declaration: str) -> set[str]:
         elif text[i] == "}":
             depth -= 1
             if depth == 0:
-                body = text[open_at + 1 : i]
-                break
-    else:  # pragma: no cover - unbalanced braces would be a syntax error
-        raise AssertionError(f"unbalanced braces after {declaration!r}")
+                return text[open_at + 1 : i]
+    raise AssertionError(f"unbalanced braces after {declaration!r}")  # pragma: no cover
 
+
+def _ts_interface_keys(text: str, declaration: str) -> set[str]:
+    """Members of a TS interface/type body, ignoring anything nested inside it.
+
+    Brace/bracket depth rather than indentation: `Catalog` nests object and
+    array literals several levels deep, so counting leading spaces the way
+    `_ts_derived_keys` does would pick up inner properties too.
+    """
+    body = _ts_interface_body(text, declaration)
     keys: set[str] = set()
     depth = 0
     for line in body.split("\n"):
@@ -189,6 +199,95 @@ def test_catalog_top_level_keys_match_the_frontend_type() -> None:
         f"  served but undeclared (add to catalog.ts): {sorted(payload - ts)}\n"
         f"  declared but never served (stale in catalog.ts): {sorted(ts - payload)}"
     )
+
+
+_TYPES_DIR = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types"
+
+
+def _ts_type_sources() -> str:
+    """Every type file, concatenated. A row interface can live in any of them —
+    `TraditionInfo` is in `rows/magic.ts`, `BookInfo` in `catalog.ts` — and the
+    declarations are unique across the directory, so one haystack is enough."""
+    return "\n".join(path.read_text(encoding="utf-8") for path in sorted(_TYPES_DIR.rglob("*.ts")))
+
+
+def _ts_named_interface_keys(sources: str, name: str, _seen: tuple[str, ...] = ()) -> set[str] | None:
+    """Members of `export interface <name>`, including the ones it `extends`.
+
+    `None` when no file declares it — a type alias or an import from outside
+    the directory, which this cannot read and the caller skips.
+    """
+    match = re.search(r"export interface " + name + r"(?: extends ([A-Za-z0-9_]+))?\s*\{", sources)
+    if match is None:
+        return None
+    keys = _ts_interface_keys(sources[match.start() :], sources[match.start() : match.end()])
+    parent = match.group(1)
+    if parent and parent not in _seen:
+        inherited = _ts_named_interface_keys(sources, parent, _seen + (name,))
+        if inherited:
+            keys |= inherited
+    return keys
+
+
+def _catalog_row_interfaces(text: str) -> dict[str, str]:
+    """`{catalog key: interface name}` for the sections whose rows the frontend
+    names, read off `Catalog` itself so a new section cannot be forgotten here.
+
+    Only `key: Name[]` members qualify; a section described inline stays out —
+    an inline shape cannot drift from the frontend's *other* idea of itself,
+    which is what this is for.
+    """
+    rows: dict[str, str] = {}
+    depth = 0
+    for line in _ts_interface_body(text, "export interface Catalog {").split("\n"):
+        if depth == 0:
+            match = re.match(r"([a-z_][a-z0-9_]*)\??\s*:\s*([A-Z][A-Za-z0-9_]*)\[\];$", line.strip())
+            if match:
+                rows[match.group(1)] = match.group(2)
+        depth += line.count("{") + line.count("[") - line.count("}") - line.count("]")
+    return rows
+
+
+@pytest.mark.skipif(not _CATALOG_TS.exists(), reason="frontend/ not checked out")
+def test_catalog_row_shapes_match_the_frontend_types() -> None:
+    """Every key a row really carries is declared, and every declared key is
+    really served.
+
+    Keys are pooled per interface rather than per section, because several
+    sections share one: `programs` and `apps` are both `ProgramCatalogItem`,
+    and only the former carries `program_host`. Pooling asks the question the
+    type asks — "does anything served this way have this field?" — instead of
+    failing on a field that is simply not in this section's half.
+    """
+    from app.catalog_view import public_catalog
+
+    payload = public_catalog()
+    sources = _ts_type_sources()
+    interfaces = _catalog_row_interfaces(_CATALOG_TS.read_text(encoding="utf-8"))
+    assert interfaces, "no `key: Name[]` sections found — did Catalog change shape?"
+
+    served: dict[str, set[str]] = {}
+    sections: dict[str, list[str]] = {}
+    for key, name in sorted(interfaces.items()):
+        sections.setdefault(name, []).append(key)
+        pool = served.setdefault(name, set())
+        for row in payload.get(key) or []:
+            if isinstance(row, dict):
+                pool |= set(row)
+
+    drift = []
+    for name, pool in sorted(served.items()):
+        declared = _ts_named_interface_keys(sources, name)
+        if declared is None or not pool:
+            # not an interface we can read, or a section the vendored data
+            # leaves empty — nothing to compare either way
+            continue
+        where = "/".join(sections[name])
+        if pool - declared:
+            drift.append(f"{name} ({where}): served but undeclared {sorted(pool - declared)}")
+        if declared - pool:
+            drift.append(f"{name} ({where}): declared but never served {sorted(declared - pool)}")
+    assert not drift, "catalog row shapes drifted from frontend/lib/types:\n  " + "\n  ".join(drift)
 
 
 _GENERATED_TS = Path(__file__).resolve().parents[2] / "frontend" / "lib" / "types" / "generated.ts"

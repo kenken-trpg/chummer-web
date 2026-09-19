@@ -25,6 +25,11 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **収束具の一覧で「近接武器指定」が出なかった。** 武器収束具かどうかを表す
+  `needs_weapon` / `weapon_type` をカタログの射影が落としていたため、買う前の
+  一覧では他の収束具と見分けが付かなかった（買った後の行には出ていた）。
+  カタログの行の形をフロントエンドの型と突き合わせるテストを足したら出てきた。
+
 - **`make dev` の画面が「読み込み中…」のまま動かなかった。** `next dev` は起動時の
   ホスト名と `localhost` 以外からの要求を `Unauthorized` で弾く。HMR の WebSocket も
   その対象で、つながらないと dev バンドルがアプリを mount しないため、
@@ -37,6 +42,11 @@ self-hosters can pin to a tag instead of tracking `main`.
   収まる位置と幅に合わせる。ブラウザでの見え方・キーボード操作・印刷は e2e で見張る。
 
 ### Added
+
+- **カタログの行の形を守るテスト。** `/api/catalog` の**トップレベルのキー**は
+  以前から突き合わせていたが、行の中身（`WeaponCatalogItem` など 23 個の型）は
+  手で保つしかなかった。実際の応答と型を比べるようにしたところ、2 件ずれていた:
+  上の収束具と、`programs` が返している `cost_range` がどの型にも無かった件。
 
 - **クリッター・パワーの訳語 36 件。** `data.json` は生成物なのに、生成器を走らせると
   差分が出る状態だった（カタログがクリッター・パワーを持つようになって、chumJA の

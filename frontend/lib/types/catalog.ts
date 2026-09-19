@@ -166,6 +166,8 @@ export interface ProgramCatalogItem {
   name: string;
   category: string;
   cost: string;
+  /** `Variable(lo-hi)`: the range the player prices it within. */
+  cost_range?: [number, number] | null;
   avail: string;
   minrating: number;
   maxrating: number;
