@@ -220,22 +220,20 @@ SILENT_TAGS = {
     # quality's own bonus before the effects pass
     "disablequality",
     "selectweapon",
-    "addgears",
-    "limit",
     "selectspell",
-    "selectpower",
     "selecttradition",
     "selectrestricted",
     "activesoft",
-    "knowsoft",
-    "linguasoft",
     "skillsoft",
     "weaponspecificdice",
     # the Infected's powers: read element by element in
     # `data_loader/loaders/qualities.py` and listed on the quality's row
     "critterpowers",
     "optionalpowers",
-    # narrows what a Critter Powers tab may buy; there is no such tab here
+    # Narrows what a Critter Powers tab may buy — and there is no such tab
+    # here. All 26 sit on an Infected or a Dracoform quality, and both hand
+    # their powers over by name in the `<critterpowers>` beside this tag, so
+    # the category never decides anything the character sees.
     "limitcritterpowercategory",
     "metageniclimit",
     # Custom Fit (Stack): read off the mod in `engine/gear/armor.py`, which
@@ -245,10 +243,18 @@ SILENT_TAGS = {
     # sprite list in `data_loader` (Chummer's `AddSprite` only widens a
     # stream's sprite list, and every stream here already has them all)
     "selectsprite",
+    # Only on `Inherent Program`, a quality an A.I. takes — and `A.I.` is in
+    # `SKIP_TALENTS`, so no character here reaches the quality at all.
     "selectinherentaiprogram",
     "selectattribute",
+    # Astral Reputation (SG p.35) is a tracked value of its own, like
+    # notoriety, and we track none of it. One quality (`Conjuring Geas`)
+    # carries the only -1 in the data.
     "astralreputation",
+    # Only on `Resonant Burnout`, which is on hold as a whole.
     "specialattburnmultiplier",
+    # Permission to Fetter a sprite, on `Resonant Stream: Technoshaman`.
+    # Fettering is a career action; nothing here performs it.
     "allowspritefettering",
     # A vehicle's Device Rating is nowhere in `vehicles.xml`; Chummer derives
     # it, and we do not model it at all, so the one mod that raises it has
@@ -273,6 +279,29 @@ SILENT_TAGS = {
     "pilot",
     "sensor",
     "seats",
+}
+
+#: How many times each of these sits in the vendored data today.
+#:
+#: The rest of `SILENT_TAGS` is silent for a structural reason — a vehicle mod
+#: has no vehicle in the effects pass, an installed piece of ware is read
+#: elsewhere — and that argument holds however often the tag appears. These
+#: are silent because of *where* they appear: on the one quality, the one
+#: echo, the qualities that enumerate their powers anyway. Spread to somewhere
+#: new, the argument may not survive, and silence would hide that forever.
+#: A `CHUMMER_REF` bump that moves one of these numbers is asking a human to
+#: re-read the comment above the tag, not to update this line.
+SILENT_TAG_SITES = {
+    "limitcritterpowercategory": 26,
+    "metageniclimit": 3,
+    "allowspritefettering": 1,
+    "astralreputation": 1,
+    "devicerating": 1,
+    "penaltyfreesustain": 1,
+    "selectarmor": 1,
+    "selectinherentaiprogram": 1,
+    "selectsprite": 1,
+    "specialattburnmultiplier": 1,
 }
 
 SPECIAL_ARMOR_TAGS = {
