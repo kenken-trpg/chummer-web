@@ -41,6 +41,25 @@ The same drift happens to gear: a save records each item's own cost, so
 catalogue now says 73,000. A row whose nuyen gap is exactly that is marked
 `gdrift`, and `-v` lists the items.
 
+Lifestyles are where `--locate` points most often, and the trail ends in the
+saves rather than in this app. Chummer 5.202 did not compute these the way its
+own current source does (`Lifestyle.CostPreSplit`, which this app follows):
+`Ocelot2.0` needs 605 where every documented order of operations gives 600 or
+621, and `Harmony` and `Ushi Resub` carry *byte-identical* lifestyles — Low,
+Standard, `Cramped`, a Grid Subscription — yet one agrees with this app's 1,800
+and the other wants 2,000. One configuration, two answers, so the difference
+cannot be a rule either side is applying consistently. Matching it would mean
+reproducing a version's arithmetic against its own documentation, and these
+saves are the only thing that would confirm it. Left alone deliberately, and
+recorded here so the next reader does not spend the afternoon on it again.
+
+One thing did come out of that hunt: only `Street` defines `costforarea` /
+`costforcomforts` / `costforsecurity` in `lifestyles.xml`, so for every other
+lifestyle this app raises comforts at no charge while the saves record 50
+apiece. Chummer keeps the saved value (its legacy sweep only overwrites the
+field when the data file has one), which is worth knowing before trusting a
+lifestyle line here.
+
 A build over the 25 karma of negative qualities is marked `negcap`. Chummer's
 default settings refund all of it and call the build invalid, which is what
 this app does; the 5.202 saves stored the remainder as if the refund stopped
@@ -371,6 +390,11 @@ def locate(path: Path) -> None:
         print("  career save — <nuyen> is a running balance, not a remainder; nothing to locate")
         return
     print(f"  Chummer left {theirs_left:,.2f}, so Chummer spent {pool - theirs_left:,.2f}")
+    if theirs_left == 0:
+        print(
+            "  ...but a build over budget is saved as 0, not as the deficit, so that\n"
+            "  figure is a floor and the arithmetic below cannot be trusted for this save."
+        )
 
     print("\n  per bucket, this app:")
     for line in derived.get("nuyen_spend_breakdown") or []:
