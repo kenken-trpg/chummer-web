@@ -13,6 +13,12 @@ self-hosters can pin to a tag instead of tracking `main`.
   `list[Notice]`）。`scripts/` に `__init__.py` が無く、テストからは
   `scripts.foo`・スクリプト同士からは `foo` に見えるので、
   `explicit_package_bases` を足して二重に見つからないようにしてある。
+- **`economy.py` の 484 行の関数を、フェーズごとの 4 つに割った。** 優先度表の配点
+  （12）・技能の支出（13）・カルマ台帳（14）・社交と内訳（15）で、docstring が
+  もともと名乗っていた区切りそのまま。互いのやり取りは全部 `ctx` 経由だったので
+  機械的に割れた（境界を越えていたローカルは 2 つだけで、どちらも純粋な射影なので
+  必要な側で作り直している）。振る舞いは不変: テスト 1045 件に加えて、
+  `make reconcile` の 27 体分の出力がバイト単位で一致することも確認した。
 
 - **`frontend/next-env.d.ts` を git の管理から外した。** `next dev` は中の import を
   `.next/dev/types/` に、`next build` と `next typegen` は `.next/types/` に向けて
