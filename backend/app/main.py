@@ -73,12 +73,40 @@ def _client_ip(request: Request) -> str:
 
 #: Set on every response, unless something in front already did. JSON and a
 #: .chum5 download, never a page: the policy says "no page here at all".
+#: Every powerful browser feature this app never uses, switched off. The app
+#: has no camera, microphone, geolocation, payment or sensor code at all, so
+#: the list is "off" rather than "same-origin": a page that starts needing one
+#: has to say so here.
+_PERMISSIONS_POLICY = ", ".join(
+    f"{feature}=()"
+    for feature in (
+        "accelerometer",
+        "camera",
+        "display-capture",
+        "encrypted-media",
+        "geolocation",
+        "gyroscope",
+        "magnetometer",
+        "microphone",
+        "midi",
+        "payment",
+        "usb",
+        "xr-spatial-tracking",
+    )
+)
+
+#: The API's half of the set `tests/test_security_headers.py` holds the three
+#: senders to. `Referrer-Policy` is stricter here than on a page on purpose —
+#: a JSON body is never a document, so it has no links to leak a referrer
+#: through — and the CSP is the strict one an answer that renders nothing can
+#: afford. Everything else is the shared set.
 _SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-site",
+    "Permissions-Policy": _PERMISSIONS_POLICY,
     "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
 }
 

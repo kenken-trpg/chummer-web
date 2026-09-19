@@ -56,6 +56,16 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Added
 
+- **`Permissions-Policy` と `Cross-Origin-Resource-Policy` を送るようにし、
+  セキュリティヘッダの送り手 3 つを 1 つの表に揃えた。** ブラウザに届く経路は
+  Caddy（同梱コンテナ）・Next（分割デプロイ）・FastAPI（`/api`）の 3 つで、
+  それぞれが自分でヘッダを立てていて、揃っている保証が無かった（COOP は Caddy に
+  無く、CORP は API にしか無かった）。Caddyfile・TypeScript の設定・Python の
+  dict にまたがる 1 つのリテラルは置き場所が無いので、3 つを読んで比べるテストを
+  共通の置き場所にした。カメラ・マイク・位置情報・決済など、このアプリが一切
+  使わない機能は `()`（誰にも許さない）で切ってある。`Referrer-Policy` が API
+  だけ厳しいのは意図的（JSON の本文にリンクは無い）で、そこもテストに書いてある。
+
 - **カタログの行の形を守るテスト。** `/api/catalog` の**トップレベルのキー**は
   以前から突き合わせていたが、行の中身（`WeaponCatalogItem` など 23 個の型）は
   手で保つしかなかった。実際の応答と型を比べるようにしたところ、2 件ずれていた:
