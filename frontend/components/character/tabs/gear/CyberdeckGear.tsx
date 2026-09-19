@@ -106,6 +106,15 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 .filter((prog) => prog.parent_id === item.id)
                 .map((prog) => (
                   <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+                    <HelpTip
+                      label={ui("help.open", { label: tr(prog.name) })}
+                      lines={[
+                        { label: ui("help.program.slot") },
+                        { label: ui("help.program.rating") },
+                      ]}
+                    >
+                      {ui("help.program.statsLabel")}
+                    </HelpTip>{" "}
                     {tr(prog.name)}
                     {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
                     {` / ${prog.nuyen.toLocaleString()}¥`}{" "}

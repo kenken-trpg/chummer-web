@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { WareRow } from "@/components/character/WareRow";
@@ -40,6 +41,17 @@ export function VehicleModRows({
         const chosenWare = slotPick[warePickKey] || wareOptions[0]?.id || "";
         return (
           <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
+            <HelpTip
+              label={ui("help.open", { label: tr(mod.name) })}
+              lines={[
+                { label: ui("help.vehmod.slots") },
+                { label: ui("help.vehmod.rating") },
+                { label: ui("help.vehmod.capacity") },
+                { label: ui("help.vehmod.included") },
+              ]}
+            >
+              {ui("help.vehmod.statsLabel")}
+            </HelpTip>{" "}
             {tr(mod.name)}
             {mod.rating_max > 0 ? ` R${mod.rating}` : ""}
             {mod.included ? ` / ${ui("common.included")}` : ` / ${mod.nuyen.toLocaleString()}¥`}

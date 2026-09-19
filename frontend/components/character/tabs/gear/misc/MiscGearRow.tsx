@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
@@ -47,6 +48,16 @@ export function MiscGearRow({
       <div>
         <b>{tr(item.label || item.name)}</b>
         <div className="muted">
+          <HelpTip
+            label={ui("help.open", { label: tr(item.label || item.name) })}
+            lines={[
+              { label: ui("help.gear.rating") },
+              { label: ui("help.gear.capacity") },
+              { label: ui("help.gear.qty") },
+            ]}
+          >
+            {ui("help.gear.statsLabel")}
+          </HelpTip>{" "}
           {item.name} / {tr(item.category)}
           {item.qty > 1 ? ` ×${item.qty}` : ""}
           {item.granted_by ? ` / ${ui("gear.granted", { source: tr(item.granted_by) })}` : ""}

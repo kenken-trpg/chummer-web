@@ -70,6 +70,10 @@ export const JA_HELP = {
     "HND 操縦性／SPD 速度／ACC 加速／BOD 車体／ARM 装甲／PLT パイロット／SNR センサー",
   "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時の判定に使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
+  "help.vehicle.slots":
+    "改造スロットは R5 の 6 系統（駆動系・防護・武装・車体・電磁・外装）ごとに別枠。各系統の上限 ＝ BOD ＋ その車種が持つ追加枠",
+  "help.vehicle.slotsDrone":
+    "ドローンは系統に分けず 1 つのプール（上限 ＝ BOD）。スロットを返す改造はその分だけ上限が増える",
   "help.weapon.statsLabel": "データ",
   "help.weapon.acc":
     "Acc（精度）：この武器で出せるヒットの上限。射撃・近接判定のリミットとして使う",
@@ -140,4 +144,21 @@ export const JA_HELP = {
   "help.martial.style": "流派は 7 カルマ（品目ごとに別の値段のことがある）",
   "help.martial.technique": "技は 1 つ 5 カルマ。資質で付いてくる分は無料",
   "help.martial.chargen": "作成時は流派 1 つ・技 5 つまで。キャリア中は上限なし",
+  "help.gear.statsLabel": "装備の値",
+  "help.gear.rating":
+    "R（レーティング）：性能の段階。上げると値段も入手可能度も上がることが多い。上限は品目ごと",
+  "help.gear.capacity": "容量 n/m：この装備に部品を積める量（m）と、いま使っている量（n）",
+  "help.gear.qty": "×n は個数。値段は個数倍になる",
+  "help.program.statsLabel": "プログラムの値",
+  "help.program.slot":
+    "1 本ごとに搭載先のプログラムスロットを 1 つ使う。デッキや RCC 側に n/m で出る",
+  "help.program.rating": "R（レーティング）があるものは段階で効果が変わる。上限は品目ごと",
+  "help.program.loose": "どこにも積んでいないプログラムはここに溜まる。買ってあるだけでは働かない",
+  "help.vehmod.statsLabel": "改造の値",
+  "help.vehmod.slots": "スロット n：この改造が車体から食う枠。系統ごとの上限と突き合わせる",
+  "help.vehmod.rating":
+    "R（レーティング）：改造の段階。値段やスロットがレーティングで変わるものがある",
+  "help.vehmod.capacity": "容量 n/m：この改造自身が抱えられる量（センサーやウェアを積むもの）",
+  "help.vehmod.included":
+    "「標準装備」と出ているものは車種に最初から付いており、スロットも値段も取らない",
 } as const;

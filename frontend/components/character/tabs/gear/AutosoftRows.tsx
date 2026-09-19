@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
 
@@ -24,6 +25,12 @@ export function AutosoftRows({
         .filter((prog) => prog.parent_id === hostId)
         .map((prog) => (
           <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+            <HelpTip
+              label={ui("help.open", { label: tr(prog.label || prog.name) })}
+              lines={[{ label: ui("help.program.slot") }, { label: ui("help.program.rating") }]}
+            >
+              {ui("help.program.statsLabel")}
+            </HelpTip>{" "}
             {tr(prog.label || prog.name)}
             {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
             {` / ${prog.nuyen.toLocaleString()}¥`}{" "}
