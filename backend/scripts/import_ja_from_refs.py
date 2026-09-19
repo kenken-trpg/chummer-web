@@ -164,19 +164,40 @@ CURATED: dict[str, str] = {
 
 # bulk hand translations live in their own modules to keep this file lean.
 try:
+    from scripts.ja_books import BOOKS as _BOOKS
     from scripts.ja_curated_entities import ENTITIES as _ENTITIES
-    from scripts.ja_curated_rg import RG as _RG
     from scripts.ja_curated_spells import SPELLS as _SPELLS
 except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.py`
     # same modules by their other name; mypy only ever sees the branch above
+    from ja_books import BOOKS as _BOOKS  # type: ignore[no-redef]
     from ja_curated_entities import ENTITIES as _ENTITIES  # type: ignore[no-redef]
-    from ja_curated_rg import RG as _RG  # type: ignore[no-redef]
     from ja_curated_spells import SPELLS as _SPELLS  # type: ignore[no-redef]
 CURATED.update(_SPELLS)
 CURATED.update(_ENTITIES)
-# Run & Gun last: it is checked against the published Japanese edition, so it
-# outranks the community translation upstream shipped for the same names.
-CURATED.update(_RG)
+
+
+def _book_terms() -> dict[str, str]:
+    """Every book pass's verified table, merged in registry order.
+
+    Last, because these are the only entries somebody has read in print: they
+    outrank the community translation upstream shipped for the same names. A
+    book whose pass has not started has no module yet, which is not an error.
+    """
+    import importlib
+
+    out: dict[str, str] = {}
+    for book in _BOOKS.values():
+        for candidate in (f"scripts.{book.module}", book.module):
+            try:
+                module = importlib.import_module(candidate)
+            except ImportError:
+                continue
+            out.update(getattr(module, book.table, {}))
+            break
+    return out
+
+
+CURATED.update(_book_terms())
 
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {

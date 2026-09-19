@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Phase 5 of docs/plans/translation-plan.md — fold a filled worksheet back in.
 
-Reads the TSV produced by `make_rg_worksheet.py` and rewrites the two tables in
-`scripts/ja_curated_rg.py`:
+Reads the TSV produced by `make_ja_worksheet.py` and rewrites the two tables in
+the book's curated module — for `--book RG`, `scripts/ja_curated_rg.py`:
 
     official column holds a term  ->  RG[english] = term
     official column holds "="     ->  RG[english] = the row's `current` value
     official column holds "-"     ->  RG_UNVERIFIED += (english,)
     official column is empty      ->  still pending, left alone
 
-The "=" form is what makes the verification pass tractable: most of the RG
-names already carry an upstream community translation, and the common answer
-is "the book says exactly that". Retyping several hundred identical terms
-would introduce more errors than it caught, so "=" means "checked, and the
-`current` column is right" — it pins the same term, from the same reader,
-with the same authority as a typed one.
+The "=" form is what makes the Run & Gun pass tractable: most of its names
+already carry an upstream community translation, and the common answer is "the
+book says exactly that". Retyping several hundred identical terms would
+introduce more errors than it caught, so "=" means "checked, and the `current`
+column is right" — it pins the same term, from the same reader, with the same
+authority as a typed one. The Codex-sourced books are the opposite case and
+lean on it much less; see `scripts/ja_books.py`.
 
 Runs are additive, so a worksheet covering one batch does not drop the batches
 already done; pass `--replace` to rebuild the tables from this file alone.
@@ -33,7 +34,8 @@ forgiving about shape and strict about meaning:
     writes `;`), a UTF-8 BOM is stripped, and any preamble above the header
     row (Numbers writes the sheet's name there) is skipped;
   * `--worksheet` may name a directory, in which case the newest file matching
-    `*rg-worksheet*.{tsv,csv}` in it is used, and which one is reported;
+    `*<slug>-worksheet*.{tsv,csv}` in it is used (the book's own slug, so two
+    passes can have worksheets in the same folder), and which one is reported;
   * a `current` cell that no longer matches what the generator would write, or
     a `note` holding Japanese, is reported as an answer that landed in the
     wrong column. It is NOT imported unless `--accept-column` says so. This
@@ -42,8 +44,8 @@ forgiving about shape and strict about meaning:
     the upstream community translation.
 
 Usage:
-  python scripts/import_rg_worksheet.py [--worksheet PATH] [--write] [--replace]
-                                        [--accept-column current,note]
+  python scripts/import_ja_worksheet.py [--book RG] [--worksheet PATH] [--write]
+                                        [--replace] [--accept-column current,note]
 """
 
 from __future__ import annotations
@@ -61,41 +63,56 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.ja_books import BOOKS, Book, book  # noqa: E402
+
 _REF_DIR = Path(os.environ.get("JA_REF_DIR") or (Path.home() / "Downloads"))
 DEFAULT_WORKSHEET = _REF_DIR
-MODULE = ROOT / "scripts" / "ja_curated_rg.py"
 
 JP_RE = re.compile(r"[぀-ヿ㐀-鿿]")
-MARKER = "RG: dict[str, str] = {"
 SKIP = "-"
 AGREE = "="
 
-WORKSHEET_GLOBS = ("*rg-worksheet*.tsv", "*rg-worksheet*.csv")
 DELIMITERS = "\t,;"
 SPILL_COLUMNS = ("current", "note")
 
 
-def resolve_worksheet(path: Path) -> tuple[Path | None, str]:
+def module_path(bk: Book) -> Path:
+    return ROOT / "scripts" / f"{bk.module}.py"
+
+
+def marker(bk: Book) -> str:
+    """The line the generated half starts at; the prose above it is preserved."""
+    return f"{bk.table}: dict[str, str] = {{"
+
+
+def worksheet_globs(bk: Book) -> tuple[str, ...]:
+    return (f"*{bk.slug}-worksheet*.tsv", f"*{bk.slug}-worksheet*.csv")
+
+
+def resolve_worksheet(path: Path, bk: Book) -> tuple[Path | None, str]:
     """-> (the file to read, a line explaining the choice).
 
-    A directory means "the newest worksheet in here", because the file comes
-    back renamed as often as not (`done_rg-worksheet.csv`, `…(1).tsv`).
+    A directory means "the newest of this book's worksheets in here", because
+    the file comes back renamed as often as not (`done_rg-worksheet.csv`,
+    `…(1).tsv`) — and because a second pass's worksheet may be sitting beside
+    it, which would otherwise import into the wrong book's table.
     """
+    globs = worksheet_globs(bk)
     if path.is_dir():
         found = sorted(
-            (p for glob in WORKSHEET_GLOBS for p in path.glob(glob)),
+            (p for glob in globs for p in path.glob(glob)),
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
         if not found:
-            return None, f"no {'/'.join(WORKSHEET_GLOBS)} in {path}"
+            return None, f"no {'/'.join(globs)} in {path}"
         note = f"reading {found[0]}"
         if len(found) > 1:
             note += f"  (newest of {len(found)}; --worksheet to pick another)"
         return found[0], note
     if path.exists():
         return path, f"reading {path}"
-    return None, f"no worksheet at {path} (run make_rg_worksheet.py first)"
+    return None, f"no worksheet at {path} (run make_ja_worksheet.py --book {bk.code} first)"
 
 
 class Parsed(NamedTuple):
@@ -147,7 +164,7 @@ def _read_worksheet(
     accept: tuple[str, ...] = (),
     expected_current: dict[str, str] | None = None,
 ) -> Read:
-    """`expected_current` is `make_rg_worksheet.current_terms()`.
+    """`expected_current` is `make_ja_worksheet.current_terms()`.
 
     Given it, a `current` cell that differs from what the generator wrote is
     treated as an answer typed into the wrong column: reported, and imported
@@ -223,10 +240,10 @@ def _spilled(
     return "", problems
 
 
-def _render(translations: dict[str, str], skipped: set[str]) -> str:
-    from scripts.make_rg_worksheet import rg_entries
+def _render(translations: dict[str, str], skipped: set[str], bk: Book) -> str:
+    from scripts.make_ja_worksheet import book_entries
 
-    entries = rg_entries()
+    entries = book_entries(bk)
 
     def bucket_of(name: str) -> str:
         entry = entries.get(name)
@@ -237,29 +254,56 @@ def _render(translations: dict[str, str], skipped: set[str]) -> str:
     def lit(value: str) -> str:
         return json.dumps(value, ensure_ascii=False)
 
-    lines = [MARKER]
+    lines = [marker(bk)]
     for bucket in sorted({bucket_of(n) for n in translations}):
         names = sorted(n for n in translations if bucket_of(n) == bucket)
         lines.append(f"    # --- {bucket} " + "-" * max(3, 66 - len(bucket)))
         lines += [f"    {lit(name)}: {lit(translations[name])}," for name in names]
     lines.append("}")
     lines.append("")
-    lines.append("# RG names deliberately left on English fallback (no official term / not pinned)")
-    if skipped:
-        lines.append("RG_UNVERIFIED: tuple[str, ...] = (")
+    lines.append(f"# {bk.code} names deliberately left on English fallback (no official term / not pinned)")
+    if len(skipped) > 1:
+        lines.append(f"{bk.skipped_table}: tuple[str, ...] = (")
         lines += [f"    {lit(name)}," for name in sorted(skipped)]
         lines.append(")")
+    elif skipped:
+        # a one-element tuple the formatter would pull back onto one line anyway
+        lines.append(f"{bk.skipped_table}: tuple[str, ...] = ({lit(next(iter(skipped)))},)")
     else:
-        lines.append("RG_UNVERIFIED: tuple[str, ...] = ()")
+        lines.append(f"{bk.skipped_table}: tuple[str, ...] = ()")
     return "\n".join(lines) + "\n"
+
+
+def _preserved_head(module: Path, bk: Book) -> str | None:
+    """The prose above the marker, which the generator never touches.
+
+    A book whose pass has not started yet has no module at all; rather than
+    make registering a book a two-step job, write the minimum that makes the
+    file importable and let whoever runs the first batch say more.
+    """
+    if not module.exists():
+        return (
+            f'"""{bk.title} entries checked against {bk.ja_source} (Phase 5).\n\n'
+            f"Generated by `scripts/import_ja_worksheet.py --book {bk.code}` from a filled-in\n"
+            "worksheet — see `scripts/make_ja_worksheet.py` and\n"
+            'docs/plans/translation-plan.md phase 5.\n"""\n\n'
+            "from __future__ import annotations\n\n"
+        )
+    text = module.read_text(encoding="utf-8")
+    head, sep, _ = text.partition(marker(bk))
+    if not sep:
+        print(f"error: {module} has no {marker(bk)!r} marker", file=sys.stderr)
+        return None
+    return head
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--book", default="RG", help=f"source code: {', '.join(sorted(BOOKS))}")
     ap.add_argument(
         "--worksheet", type=Path, default=DEFAULT_WORKSHEET, help="a worksheet file, or a directory to search"
     )
-    ap.add_argument("--write", action="store_true", help="rewrite scripts/ja_curated_rg.py")
+    ap.add_argument("--write", action="store_true", help="rewrite the book's curated module")
     ap.add_argument("--replace", action="store_true", help="drop entries not in this worksheet")
     ap.add_argument(
         "--accept-column",
@@ -268,15 +312,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
-    worksheet, note = resolve_worksheet(args.worksheet)
+    bk = book(args.book)
+    worksheet, note = resolve_worksheet(args.worksheet, bk)
     if worksheet is None:
         print(f"error: {note}", file=sys.stderr)
         return 2
-    print(note)
+    print(f"{note}  (book: {bk.code}, from {bk.ja_source})")
 
-    from scripts.ja_curated_rg import RG as CURRENT
-    from scripts.ja_curated_rg import RG_UNVERIFIED as CURRENT_SKIPPED
-    from scripts.make_rg_worksheet import current_terms, rg_entries
+    from scripts.make_ja_worksheet import book_entries, current_terms, decided
+
+    current_pair = decided(bk)
+    CURRENT: dict[str, str] = dict(current_pair[0])
+    CURRENT_SKIPPED: tuple[str, ...] = tuple(current_pair[1])
 
     accept = tuple(c.strip() for c in args.accept_column.split(",") if c.strip())
     unknown = [c for c in accept if c not in SPILL_COLUMNS]
@@ -284,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: --accept-column {unknown} — choose from {SPILL_COLUMNS}", file=sys.stderr)
         return 2
 
-    translations, skipped, problems, notes = _read_worksheet(worksheet, accept, current_terms())
+    translations, skipped, problems, notes = _read_worksheet(worksheet, accept, current_terms(bk))
     for line in notes:
         print(f"  ({line})")
 
@@ -295,9 +342,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         merged, merged_skipped = dict(translations), set(skipped)
 
-    known = set(rg_entries())
+    known = set(book_entries(bk))
     orphans = sorted((set(merged) | merged_skipped) - known)
-    problems += [f"{name!r} is not an RG name in the catalog" for name in orphans]
+    problems += [f"{name!r} is not a {bk.code} name in the catalog" for name in orphans]
 
     added = sorted(set(merged) - set(CURRENT))
     changed = sorted(k for k in set(merged) & set(CURRENT) if merged[k] != CURRENT[k])
@@ -311,7 +358,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  - {name}")
     print(
         f"\ntranslated {len(merged)} / skipped {len(merged_skipped)} / "
-        f"pending {len(known) - len(merged) - len(merged_skipped)} of {len(known)} RG names"
+        f"pending {len(known) - len(merged) - len(merged_skipped)} of {len(known)} {bk.code} names"
     )
 
     if problems:
@@ -325,13 +372,12 @@ def main(argv: list[str] | None = None) -> int:
         print("\n(dry run — pass --write to apply, then run scripts/regen_ja.sh)")
         return 0
 
-    text = MODULE.read_text(encoding="utf-8")
-    head, sep, _ = text.partition(MARKER)
-    if not sep:
-        print(f"error: {MODULE} has no {MARKER!r} marker", file=sys.stderr)
+    module = module_path(bk)
+    head = _preserved_head(module, bk)
+    if head is None:
         return 2
-    MODULE.write_text(head + _render(merged, merged_skipped), encoding="utf-8")
-    print(f"\n→ {MODULE}\n   next: scripts/regen_ja.sh")
+    module.write_text(head + _render(merged, merged_skipped, bk), encoding="utf-8")
+    print(f"\n→ {module}\n   next: scripts/regen_ja.sh")
     return 0
 
 
