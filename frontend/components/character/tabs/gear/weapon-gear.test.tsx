@@ -630,7 +630,14 @@ describe("<WeaponGear> buying from the catalog", () => {
 
     expect(screen.getByText(/Shapeshifter: Ursine/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
-    expect(screen.queryByLabelText(/Bite \(Ursine Form\)/)).toBeNull();
+    // The "?" that explains the stat line patches nothing, so it belongs here;
+    // what must not be is a *control* naming this weapon.
+    expect(screen.getByLabelText("Bite (Ursine Form) の説明")).toBeTruthy();
+    expect(
+      screen
+        .queryAllByLabelText(/Bite \(Ursine Form\)/)
+        .filter((el) => el.className !== "help-tip-button"),
+    ).toHaveLength(0);
     expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 

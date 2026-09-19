@@ -120,3 +120,31 @@ export function initiativeHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLin
     ),
   ];
 }
+
+/**
+ * What the stat line of a weapon means, line by line — and only for the stats
+ * this weapon actually has, so a knife does not explain firing modes.
+ */
+export function weaponHelpLines(
+  item: {
+    accuracy?: string;
+    damage?: string;
+    ap?: string;
+    mode?: string;
+    ammo?: string;
+    reach?: string;
+    rc?: string;
+  },
+  ui: UiFn,
+): HelpLine[] {
+  const lines: HelpLine[] = [];
+  const has = (v: string | undefined) => Boolean(v) && v !== "0" && v !== "-";
+  if (has(item.accuracy)) lines.push({ label: ui("help.weapon.acc") });
+  if (has(item.damage)) lines.push({ label: ui("help.weapon.dv") });
+  if (has(item.ap)) lines.push({ label: ui("help.weapon.ap") });
+  if (has(item.rc)) lines.push({ label: ui("help.weapon.rc") });
+  if (has(item.mode)) lines.push({ label: ui("help.weapon.mode") });
+  if (has(item.ammo)) lines.push({ label: ui("help.weapon.ammo") });
+  if (has(item.reach)) lines.push({ label: ui("help.weapon.reach") });
+  return lines;
+}

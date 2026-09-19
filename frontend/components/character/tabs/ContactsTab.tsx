@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { CONTACT_ROLES } from "@/lib/character/constants";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
@@ -31,6 +32,16 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
           <div>
             <b>{item.name || ui("common.unnamed")}</b>
             <div className="muted">
+              <HelpTip
+                label={ui("help.open", { label: item.name || ui("common.unnamed") })}
+                lines={[
+                  { label: ui("help.contact.connection") },
+                  { label: ui("help.contact.loyalty") },
+                  { label: ui("help.contact.cost") },
+                ]}
+              >
+                {ui("help.contact.statsLabel")}
+              </HelpTip>{" "}
               {item.role ? `${item.role} / ` : ""}
               Connection {item.connection} / Loyalty {item.loyalty} /{" "}
               {ui("contact.points", { points: item.cost })}

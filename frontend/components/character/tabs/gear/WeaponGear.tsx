@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
+import { weaponHelpLines } from "@/lib/character/help-breakdown";
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
@@ -48,6 +50,12 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={weaponHelpLines(item, ui)}
+                  >
+                    {ui("help.weapon.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} / {weaponLine(item, ui)} / {item.nuyen.toLocaleString()}¥
                   {availBit(item, ui)} / {item.source}
                   {fromGear ? ui("weapon.fromGear") : ""}

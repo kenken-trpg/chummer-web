@@ -4,6 +4,7 @@ import { AddonSelect } from "@/components/character/AddonSelect";
 import { ArmorModRow, CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { armorModFits } from "@/lib/character/gear";
 import {
@@ -56,6 +57,17 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={[
+                      { label: ui("help.armor.value") },
+                      { label: ui("help.armor.stack") },
+                      ...(item.equipped ? [] : [{ label: ui("help.armor.equipped") }]),
+                      ...(item.capacity_max ? [{ label: ui("help.armor.capacity") }] : []),
+                    ]}
+                  >
+                    {ui("help.armor.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} / {ui("armor.value", { value: item.armor_value })}
                   {item.equipped
                     ? ui("armor.contributes", { value: item.contributes ?? 0 })

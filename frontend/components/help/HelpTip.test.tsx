@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { HelpTip } from "@/components/help/HelpTip";
-import { initiativeHelp, limitHelp } from "@/lib/character/help-breakdown";
+import { initiativeHelp, limitHelp, weaponHelpLines } from "@/lib/character/help-breakdown";
 import { translate } from "@/lib/i18n";
 import { makeCharacter } from "@/tests/fixtures";
 
@@ -68,5 +68,31 @@ describe("named sources", () => {
     const dice = lines.slice(4);
     expect(dice.map((l) => l.value)).toEqual([undefined, 1, "+2", "+1", -1, 3, undefined]);
     expect(dice[4].label).toBe("その他（重複しない分など）");
+  });
+});
+
+describe("weaponHelpLines", () => {
+  it("explains only the stats the weapon actually has", () => {
+    const knife = weaponHelpLines(
+      { accuracy: "5", damage: "(STR/2+2)P", ap: "-1", reach: "1" },
+      ui,
+    );
+    expect(knife.map((l) => l.label)).toEqual([
+      ui("help.weapon.acc"),
+      ui("help.weapon.dv"),
+      ui("help.weapon.ap"),
+      ui("help.weapon.reach"),
+    ]);
+    // "-" and "0" are how the catalog writes "this stat does not apply"
+    const pistol = weaponHelpLines(
+      { accuracy: "6", damage: "8P", ap: "-", rc: "0", mode: "SA", ammo: "15(c)", reach: "0" },
+      ui,
+    );
+    expect(pistol.map((l) => l.label)).toEqual([
+      ui("help.weapon.acc"),
+      ui("help.weapon.dv"),
+      ui("help.weapon.mode"),
+      ui("help.weapon.ammo"),
+    ]);
   });
 });

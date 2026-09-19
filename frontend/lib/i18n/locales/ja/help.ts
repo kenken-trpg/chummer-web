@@ -70,4 +70,31 @@ export const JA_HELP = {
     "HND 操縦性／SPD 速度／ACC 加速／BOD 車体／ARM 装甲／PLT パイロット／SNR センサー",
   "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時の判定に使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
+  "help.weapon.statsLabel": "データ",
+  "help.weapon.acc":
+    "Acc（精度）：この武器で出せるヒットの上限。射撃・近接判定のリミットとして使う",
+  "help.weapon.dv": "DV（ダメージ値）：命中したときのダメージ。末尾 P は物理、S は朦朧",
+  "help.weapon.ap": "AP（装甲貫通）：相手の装甲をこの分だけ下げる。−2 なら抵抗側の装甲が 2 減る",
+  "help.weapon.rc": "RC（反動補正）：連射で溜まる反動をこの分だけ打ち消す",
+  "help.weapon.mode": "発射モード：SS 単発／SA 半自動／BF 3 点バースト／FA フルオート",
+  "help.weapon.ammo":
+    "装弾数と装填方式（(c) クリップ／(m) 弾倉／(b) 折り式／(d) ドラム／(ml) 手詰め）",
+  "help.weapon.reach": "Reach（間合い）：近接戦で相手より長いと、その差が判定のボーナスになる",
+  "help.armor.statsLabel": "装甲値",
+  "help.armor.value": "装甲値：ダメージ抵抗のダイスに足す値（SR5 p.169）",
+  "help.armor.stack":
+    "着ている装甲のうち装甲値が最大の 1 着だけが効く。他の着分は改造の上乗せだけを持ち込む",
+  "help.armor.capacity": "キャパシティ：この装甲に入れられる改造の量。使用量／上限で表示する",
+  "help.armor.equipped": "装備していない装甲は装甲値に数えない",
+  "help.contact.statsLabel": "コンタクトの値",
+  "help.contact.connection":
+    "コネクション：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
+  "help.contact.loyalty": "ロイヤリティ：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
+  "help.contact.cost": "作成時の値段はコネクション＋ロイヤリティで、コンタクト値から払う",
+  "help.spell.statsLabel": "呪文データ",
+  "help.spell.drain":
+    "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",
+  "help.spell.drainResist": "ドレイン抵抗は意志力＋流派の能力値で振り、抵抗しきれない分を食らう",
+  "help.spell.force": "フォースが魔力以下なら朦朧ダメージ、超えると物理ダメージになる（SR5 p.281）",
+  "help.spell.range": "射程（LOS 視線／T 接触／範囲）と持続（瞬間／維持／永続）",
 } as const;
