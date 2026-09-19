@@ -10,7 +10,10 @@ failure mode is a number that disagrees with another number.
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCKERFILE = (ROOT / "Dockerfile").read_text(encoding="utf-8")
@@ -32,7 +35,19 @@ def test_the_announcer_is_copied_in_and_executable() -> None:
         f"{target} is never COPYed into the image"
     )
     assert ANNOUNCE.exists()
-    assert ANNOUNCE.stat().st_mode & 0o111, "deploy/announce-url is not executable — supervisord cannot run it"
+    # The mode recorded in git, not on disk: a Windows checkout has no POSIX
+    # permission bits at all, and what ends up in the image is what `COPY`
+    # reads out of the tree. A file committed 100644 gives supervisord an
+    # EACCES where the address should have been.
+    mode = subprocess.run(
+        ["git", "ls-files", "-s", "--", "deploy/announce-url"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if mode.returncode != 0 or not mode.stdout.strip():
+        pytest.skip("not a git checkout — cannot read the recorded file mode")
+    assert mode.stdout.split()[0] == "100755", f"deploy/announce-url is committed as {mode.stdout.split()[0]}"
 
 
 def test_the_announcer_runs_once_and_is_not_restarted() -> None:
