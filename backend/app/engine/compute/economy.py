@@ -45,6 +45,23 @@ from .context import Ctx
 
 
 def economy(ctx: Ctx) -> None:
+    """Phases 12 + 13 + 14 + 15.
+
+    Four passes that used to be one 480-line function. They talk to each other
+    only through `ctx`, which is what made the split mechanical: the two locals
+    that crossed a boundary (`current_rules()` and the skill-category map) are
+    both pure projections, recomputed where they are needed rather than
+    threaded through.
+    """
+    _priority_points(ctx)
+    _skill_spend(ctx)
+    _karma_totals(ctx)
+    _social_pass(ctx)
+
+
+def _priority_points(ctx: Ctx) -> None:
+    """Phase 12 — what the priority table hands out: attribute and skill
+    points, the special points the metatype adds, and the nuyen pool."""
     attr_row = priority_value("Attributes", ctx.state.priorities.Attributes)
     skill_row = priority_value("Skills", ctx.state.priorities.Skills)
     res_row = priority_value("Resources", ctx.state.priorities.Resources)
@@ -115,6 +132,10 @@ def economy(ctx: Ctx) -> None:
     )
     ctx.nuyen = ctx.nuyen_pool - ctx.nuyen_spent
 
+
+def _skill_spend(ctx: Ctx) -> None:
+    """Phase 13 — skills: ratings, groups, exotic, knowledge, skillsofts and
+    specializations, and what all of that costs in points."""
     ctx.skill_spent = 0
     ctx.group_spent = 0
     ctx.skill_totals = {}
@@ -313,6 +334,12 @@ def economy(ctx: Ctx) -> None:
     ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
     ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
 
+
+def _karma_totals(ctx: Ctx) -> None:
+    """Phase 14 — the karma ledger: what the qualities, attributes, skills,
+    magic and career advancement each take out of the pool."""
+    # a pure projection of the catalog, so cheaper to rebuild than to thread
+    skill_cat_map = _skill_category_map(ctx.data["skills"])
     # `<costdiscount>` decides what a quality costs, so before the sum
     ctx.qualities = apply_cost_discounts(ctx.qualities, quality_req_ctx(ctx))
     paid_qualities = [
@@ -434,6 +461,11 @@ def economy(ctx: Ctx) -> None:
             )
             ctx.karma_spent += ctx.career_adv_karma
 
+
+def _social_pass(ctx: Ctx) -> None:
+    """Phase 15 — contacts and martial arts (both karma, so after the ledger
+    opens), the spend breakdowns, and notoriety / street cred / public
+    awareness."""
     # Chummer's `{CHAUnaug}`: free contact points come off natural Charisma,
     # so a tailored-pheromones bonus does not buy a bigger network.
     cha = ctx.ratings["CHA"]
