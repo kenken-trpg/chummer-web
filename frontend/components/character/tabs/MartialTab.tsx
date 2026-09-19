@@ -2,6 +2,7 @@
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [martialSearch, setMartialSearch] = useState("");
@@ -9,6 +10,16 @@ export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.martial.statsLabel") })}
+          lines={[
+            { label: ui("help.martial.style") },
+            { label: ui("help.martial.technique") },
+            { label: ui("help.martial.chargen") },
+          ]}
+        >
+          {ui("help.martial.statsLabel")}
+        </HelpTip>{" "}
         {ui("martial.styles", {
           styles: d.martial_art_points?.styles || 0,
           max: d.martial_art_points?.style_max || 1,

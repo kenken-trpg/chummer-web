@@ -9,6 +9,7 @@ import { ExtraSelect, optionLabel, selectLabel } from "@/components/character/Ex
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { formatPoints } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function AdeptTab({
   catalog,
@@ -36,6 +37,16 @@ export function AdeptTab({
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.adept.statsLabel") })}
+          lines={[
+            { label: ui("help.adept.pp") },
+            { label: ui("help.adept.mystic") },
+            { label: ui("help.adept.way") },
+          ]}
+        >
+          {ui("help.adept.statsLabel")}
+        </HelpTip>{" "}
         {ui("adept.powerPoints", {
           used: formatPoints(d.power_points?.used || 0),
           max: formatPoints(d.power_points?.max || 0),

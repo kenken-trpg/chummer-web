@@ -7,6 +7,7 @@ import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramR
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -18,6 +19,16 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             <div>
               <b>{tr(item.name)}</b>
               <div className="muted">
+                <HelpTip
+                  label={ui("help.open", { label: tr(item.name) })}
+                  lines={[
+                    { label: ui("help.matrix.deviceRating") },
+                    { label: ui("help.matrix.dataprocessing") },
+                    { label: ui("help.matrix.firewall") },
+                  ]}
+                >
+                  {ui("help.matrix.statsLabel")}
+                </HelpTip>{" "}
                 {item.name} / DR {item.device_rating} / DP {item.dataprocessing} / FW{" "}
                 {item.firewall}
                 {ui("gear.programs", {

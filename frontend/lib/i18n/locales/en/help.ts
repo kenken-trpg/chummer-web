@@ -141,4 +141,27 @@ export const EN_HELP = {
   "help.life.months": "That monthly figure times how long you pay for is the total",
   "help.life.lp":
     "LP is what a lifestyle you build yourself may spend on qualities, used / maximum",
+  "help.matrix.statsLabel": "Matrix",
+  "help.matrix.deviceRating":
+    "DR is the device\u2019s own rating \u2014 what it rolls when nobody is driving it",
+  "help.prio.statsLabel": "Reading the table",
+  "help.prio.attrCell":
+    "In the attributes column, \u201c6 (2)\u201d is 6 attribute points and 2 special points",
+  "help.prio.special":
+    "Special points buy Edge, Magic and Resonance, and do not mix with ordinary ones",
+  "help.prio.skillCell":
+    "In the skills column, \u201c24/2\u201d is 24 skill points and 2 skill-group points",
+  "help.prio.magicCell":
+    "The magic/resonance column is the talent, plus the free spells or complex forms it brings",
+  "help.adept.statsLabel": "Power points",
+  "help.adept.pp": "An adept has as many power points as Magic; each power takes some",
+  "help.adept.mystic":
+    "A mystic adept buys them at 5 karma each; the Magic not spent that way stays for spells",
+  "help.adept.way":
+    "A Way quality makes its powers cheaper, up to Magic \u00f7 4 (rounded up) of discount",
+  "help.martial.statsLabel": "Styles and techniques",
+  "help.martial.style": "A style costs 7 karma (some list a price of their own)",
+  "help.martial.technique": "Each technique costs 5 karma; the ones a quality brings are free",
+  "help.martial.chargen":
+    "At creation: one style and up to five techniques; career play has no cap",
 } as const;

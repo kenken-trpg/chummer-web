@@ -7,6 +7,7 @@ import { talentLabel } from "@/lib/character/talent-labels";
 import { priorityTableFor } from "@/lib/character/priority-table";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function PriorityTab({
   catalog,
@@ -227,6 +228,17 @@ export function PriorityTab({
               </tbody>
             </table>
             <p className="muted">
+              <HelpTip
+                label={ui("help.open", { label: ui("help.prio.statsLabel") })}
+                lines={[
+                  { label: ui("help.prio.attrCell") },
+                  { label: ui("help.prio.special") },
+                  { label: ui("help.prio.skillCell") },
+                  { label: ui("help.prio.magicCell") },
+                ]}
+              >
+                {ui("help.prio.statsLabel")}
+              </HelpTip>{" "}
               {(ch.build_method || "Priority") === "SumToTen"
                 ? ui("prio.sumHint")
                 : ui("prio.priorityHint")}
