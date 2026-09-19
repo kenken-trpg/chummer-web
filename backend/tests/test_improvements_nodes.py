@@ -100,3 +100,45 @@ def test_stat_sources_name_what_each_source_added() -> None:
         "cm_physical": [{"source": "Wired Reflexes", "value": 1}],
         "cm_stun": [{"source": "Wired Reflexes", "value": 1}],
     }
+
+
+def test_no_bonus_tag_in_the_vendored_data_is_unimplemented() -> None:
+    """The other direction of `test_every_implemented_tag_has_a_handler`: every
+    tag the *data* actually uses is either implemented or deliberately silent.
+
+    It holds today — 230 distinct tags across ~3,600 `<bonus>` nodes, all
+    accounted for — so this is a ratchet rather than a to-do list. A
+    `CHUMMER_REF` bump that introduces a tag surfaces it here instead of in a
+    character's `unimplemented_bonuses` months later, and the fix is to handle
+    it or to add it to `SILENT_TAGS` *with the reason*, which is what every
+    group in that set carries.
+    """
+    from collections import Counter
+
+    from app.data_loader import catalog
+    from app.improvements._common import SILENT_TAGS
+
+    seen: Counter[str] = Counter()
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ("bonus", "firstlevelbonus", "wirelessbonus") and isinstance(value, list):
+                    for entry in value:
+                        if isinstance(entry, dict) and entry.get("tag"):
+                            seen[str(entry["tag"])] += 1
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    data = catalog()
+    for key, value in data.items():
+        if key not in ("translations", "ui_strings"):
+            walk(value)
+    assert sum(seen.values()) > 3000, "no bonus nodes found — is backend/vendor/chummer populated?"
+
+    unhandled = {tag: count for tag, count in seen.items() if tag not in IMPLEMENTED and tag not in SILENT_TAGS}
+    assert not unhandled, "bonus tags the pipeline would drop on the floor: " + repr(
+        sorted(unhandled.items(), key=lambda pair: -pair[1])
+    )
