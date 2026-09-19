@@ -4,6 +4,7 @@ import { spiritRoleLabel } from "@/lib/character/constants";
 import { optionalNumber, testLine } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
 import { critterPowerRow } from "@/lib/spell-terms";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -41,6 +42,16 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
+              <HelpTip
+                label={ui("help.open", { label: tr(item.name) })}
+                lines={[
+                  { label: ui("help.spirit.force") },
+                  { label: ui("help.spirit.services") },
+                  { label: ui("help.spirit.bound") },
+                ]}
+              >
+                {ui("help.spirit.statsLabel")}
+              </HelpTip>{" "}
               {item.name} / {item.role_label ? renderNotice(item.role_label, ui) : item.role} /{" "}
               {item.bound ? ui("spirit.bound") : ui("spirit.summoned")} / F{item.force} /{" "}
               {ui("spirit.services")} {item.services}

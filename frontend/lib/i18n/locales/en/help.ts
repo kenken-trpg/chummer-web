@@ -109,4 +109,36 @@ export const EN_HELP = {
   "help.spell.force":
     "At Force up to your Magic the drain is stun damage, above it physical (SR5 p.281)",
   "help.spell.range": "Range (LOS, touch, area) and duration (instant, sustained, permanent)",
+  "help.ware.statsLabel": "Ware",
+  "help.ware.essence": "ESS \u2212n is the essence this piece costs, after its grade multiplier",
+  "help.ware.capacity":
+    "Capacity is how much this piece can hold, shown as used / maximum \u2014 cyberlimbs and housings have it",
+  "help.cf.statsLabel": "Complex form",
+  "help.cf.fv":
+    "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",
+  "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",
+  "help.cf.level": "At Level up to your Resonance the fading is stun damage, above it physical",
+  "help.cf.target": "What it acts on (persona, device, file, sprite, …) and how long it lasts",
+  "help.spirit.statsLabel": "Spirit",
+  "help.spirit.force":
+    "Force is the spirit\u2019s strength: its attributes and its dice pools follow from it",
+  "help.spirit.services": "Services are the tasks it still owes you \u2014 one job spends one",
+  "help.spirit.bound":
+    "A bound spirit can be called again but costs reagents; a summoned one leaves at dawn",
+  "help.sprite.statsLabel": "Sprite",
+  "help.sprite.level":
+    "Level is the sprite\u2019s strength: its matrix attributes and dice pools follow from it",
+  "help.sprite.tasks": "Tasks are the jobs it still owes you \u2014 one job spends one",
+  "help.sprite.registered": "A registered sprite persists; a merely compiled one is gone on reboot",
+  "help.initiation.statsLabel": "Grade and karma",
+  "help.initiation.karma":
+    "Each grade costs 10 + grade\u00d73 karma (13 for the first, 16 for the second, …)",
+  "help.initiation.discount":
+    "A group, an ordeal and schooling each take 10% off, and they stack (SR5 p.325)",
+  "help.initiation.metamagic": "Every grade picks one metamagic or art",
+  "help.life.statsLabel": "Lifestyle",
+  "help.life.monthly": "Monthly = base \u00d7 (1 + modifier %) + what the lifestyle qualities add",
+  "help.life.months": "That monthly figure times how long you pay for is the total",
+  "help.life.lp":
+    "LP is what a lifestyle you build yourself may spend on qualities, used / maximum",
 } as const;

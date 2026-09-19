@@ -4,6 +4,7 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement } from "@/lib/character/format";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -22,6 +23,16 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={[
+                      { label: ui("help.life.monthly") },
+                      { label: ui("help.life.months") },
+                      ...(item.lp_max ? [{ label: ui("help.life.lp") }] : []),
+                    ]}
+                  >
+                    {ui("help.life.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} /{" "}
                   {ui("life.base", {
                     cost: (item.base_monthly ?? item.monthly).toLocaleString(),

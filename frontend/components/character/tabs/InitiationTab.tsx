@@ -3,6 +3,7 @@
 import { RangeInput } from "@/components/character/RangeInput";
 import { withOriginal } from "@/lib/character/format";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function InitiationTab({
   catalog,
@@ -27,6 +28,16 @@ export function InitiationTab({
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("init.grade") })}
+          lines={[
+            { label: ui("help.initiation.karma") },
+            { label: ui("help.initiation.discount") },
+            { label: ui("help.initiation.metamagic") },
+          ]}
+        >
+          {ui("help.initiation.statsLabel")}
+        </HelpTip>{" "}
         {ui("grade.summary", {
           grade: d.initiation?.grade || 0,
           karma: d.initiation?.karma || 0,
