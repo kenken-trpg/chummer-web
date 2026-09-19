@@ -22,6 +22,13 @@ over budget is saved with `0`, not the deficit: when the save says 0 and this
 app is below zero as well, both agree the build is overspent — marked `over`
 and left out of the mismatches, since by how much cannot be told.
 
+A save stores the karma it paid for a quality, not a reference to the price
+list, so a save written against an older `qualities.xml` states a price this
+app will never reproduce — the difference lands in the karma left. `-v` lists
+those qualities, and a row whose whole karma gap is exactly that is marked
+`qdrift`: Miko's single point is `Functional Tail (Prehensile)`, saved at 7
+where the catalogue now says 6. Same for `College Education` (saved 4, now 2).
+
 A build over the 25 karma of negative qualities is marked `negcap`. Chummer's
 default settings refund all of it and call the build invalid, which is what
 this app does; the 5.202 saves stored the remainder as if the refund stopped
@@ -96,6 +103,40 @@ def _number(root: ET.Element, tag: str) -> float:
         return 0.0
 
 
+def _quality_drift(root: ET.Element) -> list[tuple[str, int, int]]:
+    """Qualities whose stored price is not what today's catalogue charges.
+
+    A save keeps the karma it paid for a quality (`<bp>`) rather than a
+    reference to the price list, so a save written against an older
+    `qualities.xml` states a price this app will never reproduce. That is not
+    a rule this app gets wrong, and it is worth telling apart from one: the
+    difference lands in the karma left, which is the very number the table
+    above compares. Only qualities the character chose count — `Metatype` and
+    priority-granted ones are free on both sides — and only unlevelled,
+    plain ones, since `<bp>` on a levelled or `<extra>`-carrying quality is a
+    total this cannot take apart.
+    """
+    from app.data_loader import catalog_list
+
+    prices = {str(q.get("name") or ""): q.get("karma") for q in catalog_list("qualities")}
+    drift: list[tuple[str, int, int]] = []
+    for node in root.iter("quality"):
+        name = (node.findtext("name") or "").strip()
+        source = (node.findtext("qualitysource") or "").strip()
+        if (source and source != "Selected") or (node.findtext("extra") or "").strip():
+            continue
+        listed = prices.get(name)
+        if listed is None:
+            continue
+        try:
+            stored = int(node.findtext("bp") or 0)
+        except ValueError:
+            continue
+        if stored != int(listed):
+            drift.append((name, int(listed), stored))
+    return drift
+
+
 def reconcile(path: Path) -> dict[str, Any]:
     """One save: what Chummer says against what this app computes."""
     from app.characters import import_character
@@ -123,6 +164,7 @@ def reconcile(path: Path) -> dict[str, Any]:
         karma = derived.get("karma") or {}
         row["karma"] = (_number(root, "karma"), karma.get("remaining"))
         row["nuyen"] = (_number(root, "nuyen"), derived.get("nuyen"))
+        row["quality_drift"] = _quality_drift(root)
     return row
 
 
@@ -185,6 +227,18 @@ def items(path: Path) -> None:
                 print(f"  {'vehicle ware':<20} {vehicle['name']} / {mod['name']} / {ware['name']}  {ware['nuyen']}")
 
 
+def _drift_explains(row: dict[str, Any]) -> bool:
+    """The karma gap is exactly the qualities this save priced differently."""
+    karma = row.get("karma")
+    drift = row.get("quality_drift") or []
+    if row["career"] or not drift or karma is None or karma[1] is None:
+        return False
+    # we charge the catalogue price, so a save that paid more has us keeping
+    # that much extra karma
+    gap = float(karma[1]) - karma[0]
+    return bool(gap == sum(stored - listed for _, listed, stored in drift))
+
+
 def _matches(pair: tuple[float, Any] | None, tolerance: float) -> bool:
     if pair is None or pair[1] is None:
         return False
@@ -235,6 +289,7 @@ def main() -> int:
         mark = "" if row["career"] or all(ok) else "  ≠"
         mark += "  over" if over and not row["career"] else ""
         mark += "  negcap" if "engine.qualities.negativeCap" in row["errors"] and not row["career"] else ""
+        mark += "  qdrift" if _drift_explains(row) else ""
         # the save's own expense log explains part of the adjustment
         label = f"career, adj {row['adjust'][0]:+d} (log {row['spent'][0]:+d})" if row["career"] else _fmt(karma)
         nuyen_label = f"adj {row['adjust'][1]:+,d} (log {row['spent'][1]:+,d})" if row["career"] else _fmt(nuyen)
@@ -245,6 +300,8 @@ def main() -> int:
             for kind in ("warnings", "errors"):
                 for key, count in collections.Counter(row[kind]).most_common():
                     print(f"    {kind[:-1]}: {key} ×{count}")
+            for name, listed, stored in row.get("quality_drift") or []:
+                print(f"    quality price: {name} — save {stored}, catalogue {listed}")
 
     chargen = [row for row in rows if not row["career"]]
     karma_ok = sum(_matches(row.get("karma"), 0) for row in chargen)
