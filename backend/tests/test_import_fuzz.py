@@ -49,7 +49,8 @@ from app.settings_file import parse_settings_upload
 from tests.chum5_fixtures import build_chum5
 from tests.test_chummer_import import SAMPLE
 
-#: 120 per property keeps CI quick. `FUZZ_EXAMPLES=5000` for a real hunt.
+#: 120 per property keeps CI quick. `.github/workflows/audit.yml` raises it:
+#: 500 on a pull request, 5,000 on the weekly run, which is the real hunt.
 _FUZZ = settings(
     max_examples=int(os.environ.get("FUZZ_EXAMPLES") or 120),
     deadline=None,
