@@ -572,6 +572,52 @@ jobs:
           if-no-files-found: error
 
   # A `v*` tag becomes a GitHub Release, with the CHANGELOG section as its
+  # ─── the one check branch protection has to know about ──────────────────────
+  #
+  # Required checks are matched by *name*, in a setting that lives outside the
+  # repository — so a job nobody listed there is not a gate, and a renamed job
+  # leaves behind a required check that can never report and blocks every PR.
+  # #276 went in with `backend-windows` red for the first reason: only
+  # `frontend`, `backend (3.13)` and `e2e` were required. The run that caught it
+  # had already handed the PR to auto-merge, and auto-merge waits for the
+  # required checks, not for every check.
+  #
+  # So there is one required check and it is defined here. Adding a job means
+  # adding it to `needs` — in a pull request, reviewed like any other change,
+  # instead of in a settings page that no diff ever shows.
+  #
+  # `if: always()` because a failure upstream would otherwise skip this job, and
+  # a skipped required check never reports at all: the merge would wait forever
+  # rather than fail. `skipped` is not accepted for any of these; they all run
+  # on every event. `docker` is itself the aggregate that tolerates
+  # `docker-push` being skipped on a pull request, which is why it, and not
+  # `docker-build`, is the one named here.
+  #
+  # `docker-build` and `docker-push` are covered through `docker`.
+  # `docker-manifest`, `docker-attest` and `release` are deliberately absent:
+  # they never run on a pull request, so they cannot gate one, and gating the
+  # push to main on them would only block the next merge on a registry problem.
+  #
+  # CodeQL runs in its own workflow and cannot be a `needs` of this one. If it
+  # should gate too, it is required by name — the one exception this leaves.
+  ci-ok:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [backend, backend-windows, frontend, frontend-static, frontend-windows, e2e, docker]
+    steps:
+      - name: Every job reported success
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          bad=$(echo "$RESULTS" | jq -r 'to_entries[] | select(.value.result != "success") | "  \(.key): \(.value.result)"')
+          if [ -n "$bad" ]; then
+            echo "not green:"
+            echo "$bad"
+            exit 1
+          fi
+          echo "all green: $(echo "$RESULTS" | jq -r 'keys | join(", ")')"
+
   # notes. `needs: docker-attest` (which needs `docker-manifest`) so the release
   # never points at an image that is not in the registry yet, or at one nobody
   # has signed — the version tag only exists once the manifest job has created
