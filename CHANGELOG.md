@@ -5,6 +5,16 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+### Changed
+
+- **CI を速くした。** 全体の壁時計が 4 分から 2 分台に縮む。イメージのビルドは
+  テストと同じソースを読むだけなのでテスト待ちをやめ、公開だけを別ジョブに分けて
+  ゲートを残した（赤いコミットは今も公開されない）。frontend の typecheck・lint・
+  prettier は vitest を待たない別ジョブ `frontend-static` にし、`next build` の
+  キャッシュを追加。Playwright のブラウザもキャッシュする。Windows の frontend
+  からは、どこで動かしても結果が同じ typecheck と lint を外した。coverage の計測は
+  main の push だけにしたので、下限割れは PR ではなくマージコミットで赤くなる。
+
 ### Fixed
 
 - **説明の吹き出しが画面の外にはみ出して読めなかった。** サイドバーは横にはみ出した分を
