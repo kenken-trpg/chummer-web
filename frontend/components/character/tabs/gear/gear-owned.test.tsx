@@ -199,6 +199,16 @@ describe("<MiscDrugsGear> owned rows", () => {
     expect(items[1].textContent).toContain("Rope");
   });
 
+  it("explains the gear row's numbers behind a help button", () => {
+    renderPanel(MiscDrugsGear, owning("gear", "gear", [gear("g1", "Medkit")]), vi.fn());
+
+    const button = screen.getByRole("button", { name: "Medkit の説明" });
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("R（レーティング）");
+    expect(tip?.textContent).toContain("容量 n/m");
+    expect(tip?.textContent).toContain("値段は個数倍");
+  });
+
   it("removing a parent takes its children with it", () => {
     // a child left behind would render as an orphan row referring to nothing
     const patch = vi.fn();

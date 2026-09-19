@@ -673,3 +673,48 @@ describe("<VehicleDroneGear> autosofts a drone runs itself", () => {
     ]);
   });
 });
+
+describe("<VehicleDroneGear> the mod-slot help", () => {
+  /** The text of the tooltip a "?" button points at. */
+  const tipFor = (name: string) => {
+    const button = screen.getByRole("button", { name });
+    return document.getElementById(button.getAttribute("aria-describedby")!)?.textContent || "";
+  };
+
+  it("explains what a mod takes from the chassis", () => {
+    renderVehicle(
+      owning(vehicle("v1", "Americar", { mods: [mod("m1", "Rigger Interface")] }), {
+        vehicle_mods: [mod("m1", "Rigger Interface")],
+      }),
+      vi.fn(),
+    );
+    const tip = tipFor("Rigger Interface の説明");
+    expect(tip).toContain("この改造が車体から食う枠");
+    expect(tip).toContain("標準装備");
+  });
+
+  it("names the six R5 categories on a vehicle", () => {
+    const tracks = [{ category: "Powertrain", used: 2, max: 11 }];
+    renderVehicle(
+      owning(vehicle("v1", "Americar", { slot_tracks: tracks, slots_used: 2, slots_max: 11 })),
+      vi.fn(),
+    );
+    expect(tipFor("Americar の説明")).toContain("駆動系");
+  });
+
+  it("describes the single pool instead, on a drone", () => {
+    // a drone reports no per-category tracks: the engine keeps one pool for it
+    const drone = vehicle("d1", "Steel Lynx", {
+      category: "Drones",
+      slots_used: 1,
+      slots_max: 4,
+    });
+    renderVehicle(
+      makeCharacter({ drones: [drone], derived: { drones: [drone] } } as any),
+      vi.fn(),
+      makeCatalog(),
+      "drone",
+    );
+    expect(tipFor("Steel Lynx の説明")).toContain("1 つのプール");
+  });
+});

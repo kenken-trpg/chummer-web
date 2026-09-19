@@ -78,6 +78,10 @@ export const EN_HELP = {
     "Pilot is the autopilot\u2019s skill: it rolls when the vehicle acts on its own",
   "help.vehicle.body":
     "Body is toughness: damage resistance, and how many mod slots the vehicle has",
+  "help.vehicle.slots":
+    "Mod slots are per R5 category (Powertrain, Protection, Weapons, Body, Electromagnetic, Cosmetic); each category's cap is Body plus whatever the model adds",
+  "help.vehicle.slotsDrone":
+    "A drone has one pool instead of categories, capped at Body; a mod that hands slots back raises that cap",
   "help.weapon.statsLabel": "Stats",
   "help.weapon.acc": "Accuracy caps the hits that count on an attack with this weapon",
   "help.weapon.dv": "DV is the damage on a hit; a trailing P is physical, S is stun",
@@ -164,4 +168,26 @@ export const EN_HELP = {
   "help.martial.technique": "Each technique costs 5 karma; the ones a quality brings are free",
   "help.martial.chargen":
     "At creation: one style and up to five techniques; career play has no cap",
+  "help.gear.statsLabel": "Stats",
+  "help.gear.rating":
+    "Rating is the step of performance; raising it usually raises the price and the availability too. The cap is per item",
+  "help.gear.capacity":
+    "Capacity n/m is how much this item can hold (m) and how much is in use (n)",
+  "help.gear.qty": "\u00d7n is the quantity; the price is multiplied by it",
+  "help.program.statsLabel": "Stats",
+  "help.program.slot":
+    "Each program takes one program slot on the device running it, shown as n/m on the deck or RCC",
+  "help.program.rating":
+    "Where a program has a rating, the step changes what it does. The cap is per item",
+  "help.program.loose":
+    "Programs loaded nowhere collect here; owning a copy does nothing on its own",
+  "help.vehmod.statsLabel": "Stats",
+  "help.vehmod.slots":
+    "Slots n is what this mod takes from the chassis, against its category's cap",
+  "help.vehmod.rating":
+    "Rating is the step of the mod; for some, the price or the slot cost moves with it",
+  "help.vehmod.capacity":
+    "Capacity n/m is what this mod itself can hold (the ones that carry sensors or ware)",
+  "help.vehmod.included":
+    "Anything marked as included comes with the model and costs neither slots nor nuyen",
 } as const;

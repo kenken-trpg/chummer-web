@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 
 /** Programs the character owns but has loaded nowhere (Chummer keeps them in
@@ -34,6 +35,16 @@ export function LooseProgramRows({
         <b>{ui("gear.loosePrograms")}</b>
         {loose.map((prog) => (
           <div className="muted" key={prog.id} style={{ marginTop: 6 }}>
+            <HelpTip
+              label={ui("help.open", { label: tr(prog.label || prog.name) })}
+              lines={[
+                { label: ui("help.program.loose") },
+                { label: ui("help.program.slot") },
+                { label: ui("help.program.rating") },
+              ]}
+            >
+              {ui("help.program.statsLabel")}
+            </HelpTip>{" "}
             {tr(prog.label || prog.name)}
             {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
             {` / ${prog.nuyen.toLocaleString()}¥`}{" "}

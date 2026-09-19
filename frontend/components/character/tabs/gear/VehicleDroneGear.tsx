@@ -101,6 +101,13 @@ export function VehicleDroneGear({
                       { label: ui("help.vehicle.stats") },
                       { label: ui("help.vehicle.pilot") },
                       { label: ui("help.vehicle.body") },
+                      {
+                        label: ui(
+                          (item.slot_tracks || []).length
+                            ? "help.vehicle.slots"
+                            : "help.vehicle.slotsDrone",
+                        ),
+                      },
                     ]}
                   >
                     {ui("help.vehicle.statsLabel")}

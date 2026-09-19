@@ -199,6 +199,15 @@ describe("programs loaded nowhere", () => {
     ]);
   });
 
+  it("says a program loaded nowhere does nothing, and what a slot is", () => {
+    renderPanel(CyberdeckGear, character(), vi.fn());
+
+    const button = screen.getByRole("button", { name: "Browse の説明" });
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("買ってあるだけでは働かない");
+    expect(tip?.textContent).toContain("プログラムスロットを 1 つ使う");
+  });
+
   it("the deck panel lists only deck programs and offers only decks", () => {
     const { container } = renderPanel(CyberdeckGear, character(), vi.fn());
     const loose = container.querySelectorAll<HTMLElement>(".cyber-item")[0];
