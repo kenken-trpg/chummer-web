@@ -308,7 +308,7 @@ def main() -> int:
     nuyen_ok = sum(_matches(row.get("nuyen"), NUYEN_TOLERANCE) for row in chargen)
     both_ok = sum(_matches(row.get("karma"), 0) and _matches(row.get("nuyen"), NUYEN_TOLERANCE) for row in chargen)
     print()
-    over = sum(_both_over(row.get("karma")) or _both_over(row.get("nuyen")) for row in chargen)
+    over_count = sum(_both_over(row.get("karma")) or _both_over(row.get("nuyen")) for row in chargen)
     agree = sum(
         (_matches(row.get("karma"), 0) or _both_over(row.get("karma")))
         and (_matches(row.get("nuyen"), NUYEN_TOLERANCE) or _both_over(row.get("nuyen")))
@@ -316,7 +316,7 @@ def main() -> int:
     )
     print(
         f"in creation: {len(chargen)}  karma matches {karma_ok}  nuyen matches {nuyen_ok}  both {both_ok}"
-        f"  (over budget both ways: {over}; agreeing, counting those: {agree})"
+        f"  (over budget both ways: {over_count}; agreeing, counting those: {agree})"
     )
     for kind in ("warnings", "errors"):
         counts = collections.Counter(key for row in rows for key in row[kind])
