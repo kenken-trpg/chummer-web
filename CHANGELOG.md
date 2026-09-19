@@ -7,6 +7,14 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Changed
 
+- **`frontend/next-env.d.ts` を git の管理から外した。** `next dev` は中の import を
+  `.next/dev/types/` に、`next build` と `next typegen` は `.next/types/` に向けて
+  書き換えるので、追跡していると最後に走らせたコマンド次第で差分が行き来していた。
+  Next 自身のドキュメントも「バージョン管理に入れるべきではない」と言っており、
+  木に無くても困らない: `npm run typecheck` が先に `next typegen` を走らせて
+  生成する（0.4 秒ほど）。おまけに、これまで型チェックが見ていなかった
+  ルート型（`.next/types/routes.d.ts`）も実際に見るようになる。
+
 - **CI を速くした。** 全体の壁時計が 4 分から 2 分台に縮む。イメージのビルドは
   テストと同じソースを読むだけなのでテスト待ちをやめ、公開だけを別ジョブに分けて
   ゲートを残した（赤いコミットは今も公開されない）。frontend の typecheck・lint・

@@ -35,6 +35,14 @@ frontend/tsconfig.tsbuildinfo
 frontend/AGENTS.md
 frontend/CLAUDE.md
 
+# Written by `next dev`, `next build` and `next typegen`, differently by each:
+# dev points the route-type imports at `.next/dev/types/`, the other two at
+# `.next/types/`, so a tracked copy flips back and forth with whatever command
+# ran last. Next's own docs say it should not be in version control, and
+# nothing needs it in the tree: `npm run typecheck` runs `next typegen` first,
+# which writes it.
+frontend/next-env.d.ts
+
 # Third-party settings / customdata, dropped here while testing an import.
 # The project's stance is local-load only: these files are read from the
 # browser and never redistributed (NOTICE.txt item 4). Ignoring the two
