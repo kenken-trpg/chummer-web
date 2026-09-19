@@ -160,6 +160,19 @@ CURATED: dict[str, str] = {
     # it already identifies the book for anyone who owns the English one.
     "Shadowrun 5th Edition": "シャドウラン 第5版",
     "Run and Gun": "ラン＆ガン",
+    # --- one reading for a name the catalog uses in two senses ---------------
+    # "Mundane" is both the priority table's talent (a character with no magic
+    # at all) and the category of non-magical critter powers, and the table is
+    # keyed by English name alone, so one reading has to serve both. The
+    # glossary's マンディン wins because it is the only one anybody sees: a
+    # critter power reaches the client as name/type/action/range/duration and
+    # its category is never served (`CritterPower` in
+    # frontend/lib/types/rows/magic.ts has no `category` field), while the
+    # talent is a cell every player picks from at creation. chumJA's 通常生物
+    # would have put "ordinary creature" in that cell. If a picker grouped by
+    # critter-power category is ever added, マンディン reads acceptably there
+    # as an adjective — but that is the moment to look at this again.
+    "Mundane": "マンディン",
 }
 
 # bulk hand translations live in their own modules to keep this file lean.
@@ -206,9 +219,9 @@ CATEGORY_SKIP = {
     # (non-magical powers) and wrong for the other "Mundane" in the catalog:
     # the priority table's talent, where it means a character with no magic at
     # all and the glossary says マンディン. The translation table is keyed by
-    # English name alone and cannot tell the two apart, so the cell a player
-    # actually picks from would get the critter wording. Left in English until
-    # somebody decides one reading for both.
+    # English name alone and cannot tell the two apart, so the reading is
+    # decided once, below, in favour of the priority table — see CURATED.
+    # The skip stays so the decision is only in one place.
     "Mundane",
 }
 

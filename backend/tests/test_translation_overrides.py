@@ -195,8 +195,13 @@ def test_committed_data_overlay_anchors() -> None:
     assert tr["Energy Drain"] == "エネルギー吸収"
     assert tr["Skill Enhancement"] == "技能強化"
     # "Mundane" is two different things under one English name — the critter
-    # power category and the priority table's talent — so it stays English
-    assert not JP_RE.search(tr.get("Mundane", "") or "")
+    # power category and the priority table's talent — and the table is keyed by
+    # the name alone, so one reading serves both. Decided for the talent, the
+    # only one a player ever sees: a critter power is served without its
+    # category (`CritterPower` has no such field), while the talent is a cell
+    # in the priority table. chumJA's 通常生物 would have read "ordinary
+    # creature" there.
+    assert tr["Mundane"] == "マンディン"
 
 
 # --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------
