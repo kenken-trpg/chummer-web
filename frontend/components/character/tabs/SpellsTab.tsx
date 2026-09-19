@@ -4,6 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
+import { HelpTip } from "@/components/help/HelpTip";
 
 export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [spellSearch, setSpellSearch] = useState("");
@@ -60,6 +61,17 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
           <div>
             <b>{tr(item.name)}</b>
             <div className="muted">
+              <HelpTip
+                label={ui("help.open", { label: tr(item.name) })}
+                lines={[
+                  { label: ui("help.spell.drain") },
+                  { label: ui("help.spell.force") },
+                  { label: ui("help.spell.drainResist") },
+                  ...(item.range || item.duration ? [{ label: ui("help.spell.range") }] : []),
+                ]}
+              >
+                {ui("help.spell.statsLabel")}
+              </HelpTip>{" "}
               {item.name} / {kindLabel(item.kind, ui)} / {item.useskill || "Spellcasting"} /{" "}
               {item.dv}
               {item.range || item.duration

@@ -78,4 +78,35 @@ export const EN_HELP = {
     "Pilot is the autopilot\u2019s skill: it rolls when the vehicle acts on its own",
   "help.vehicle.body":
     "Body is toughness: damage resistance, and how many mod slots the vehicle has",
+  "help.weapon.statsLabel": "Stats",
+  "help.weapon.acc": "Accuracy caps the hits that count on an attack with this weapon",
+  "help.weapon.dv": "DV is the damage on a hit; a trailing P is physical, S is stun",
+  "help.weapon.ap":
+    "AP lowers the target\u2019s armor by that much \u2014 \u22122 means 2 less armor to resist with",
+  "help.weapon.rc": "RC cancels that much of the recoil a burst builds up",
+  "help.weapon.mode": "Firing modes: SS single shot, SA semi-auto, BF burst fire, FA full auto",
+  "help.weapon.ammo":
+    "How many rounds it holds and how it reloads: (c) clip, (m) magazine, (b) break action, (d) drum, (ml) muzzle",
+  "help.weapon.reach": "Reach: in melee, the difference over your opponent is a dice bonus",
+  "help.armor.statsLabel": "Armor",
+  "help.armor.value": "Armor adds to the dice you resist damage with (SR5 p.169)",
+  "help.armor.stack":
+    "Only the highest-rated piece worn counts; the rest bring their mods along, not their rating",
+  "help.armor.capacity": "Capacity is how much this piece can hold, shown as used / maximum",
+  "help.armor.equipped": "A piece that is not worn does not count towards armor",
+  "help.contact.statsLabel": "Ratings",
+  "help.contact.connection":
+    "Connection is the contact\u2019s reach and clout: what they can get you (SR5 p.388)",
+  "help.contact.loyalty":
+    "Loyalty is how much they care: what they will risk, and how hard they are to turn",
+  "help.contact.cost":
+    "At creation a contact costs Connection + Loyalty out of your contact points",
+  "help.spell.statsLabel": "Spell",
+  "help.spell.drain":
+    "Drain is what the caster takes; F is the Force chosen when casting, so F\u22123 is Force \u2212 3 (minimum 2)",
+  "help.spell.drainResist":
+    "Resist drain with Willpower + your tradition\u2019s attribute; the rest is damage",
+  "help.spell.force":
+    "At Force up to your Magic the drain is stun damage, above it physical (SR5 p.281)",
+  "help.spell.range": "Range (LOS, touch, area) and duration (instant, sustained, permanent)",
 } as const;
