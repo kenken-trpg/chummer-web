@@ -29,6 +29,9 @@
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy strict-origin-when-cross-origin
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Resource-Policy same-site
+		Permissions-Policy "accelerometer=(), camera=(), display-capture=(), encrypted-media=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=(), xr-spatial-tracking=()"
 		# Only a fallback, hence `?`: set when the upstream sent none. Pages get
 		# theirs from Next (`frontend/proxy.ts`), built around a per-request
 		# nonce that a static header here cannot carry — overwriting it would
