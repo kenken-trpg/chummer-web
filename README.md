@@ -31,9 +31,14 @@ BCDice の記法なので、どちらの言語でもそのままです。
 ```bash
 git clone https://github.com/kenken-trpg/chummer-web.git
 cd chummer-web
-cp .env.example .env      # 任意。ポートや制限を変えたいとき
-make up                   # → http://localhost:8080
+cp .env.example .env
+make up
 ```
+
+3 行目は任意です（ポートや制限を変えたいときだけ）。起動したら **http://localhost:8080/** を
+開きます。**コマンド行に `#` のコメントを付けていないのは意図的です** — 端末によっては
+ブロックを貼り付けたときに改行が 1 つ落ちて次の行がコメントの中に入り、その 1 行が
+黙って実行されないことがあります。
 
 `make up` はこのチェックアウトからイメージをビルドして起動します。初回は数分かかりますが、2回目以降は
 レイヤキャッシュが効くので数秒です。`make` が無い環境では `docker compose up -d` でも同じです。
@@ -59,9 +64,20 @@ Docker Desktop（WSL2 バックエンド）を入れれば、そのまま動き�
 ```powershell
 git clone https://github.com/kenken-trpg/chummer-web.git
 cd chummer-web
-Copy-Item .env.example .env   # 任意
-docker compose up -d          # → http://localhost:8080
+Copy-Item .env.example .env
+docker compose up -d
 ```
+
+3 行目は任意です。起動したら **http://localhost:8080/** を開きます。
+
+ブロックごと貼り付けて動かないときは 1 行ずつ実行してください。PowerShell のコンソールは
+貼り付けたテキストの改行を取りこぼすことがあり、そうなると直前の行の続きとして解釈されます
+（だからこの 4 行には `#` のコメントを付けていません — コメント行に飲み込まれた
+`docker compose up -d` は、エラーも出さずに実行されません）。
+
+なお **`docker compose logs` には `http://127.0.0.1:3000` という行が出ますが、そこは開けません。**
+コンテナの中で Next が名乗っている番号で、外に公開されているのは Caddy の 8080 だけです。
+起動が完了すると最後に `ready → http://localhost:8080/` と出るので、それが開く先です。
 
 `make` は Windows に無いので、上表のターゲットは直接叩いてください
 （`docker compose down` / `logs -f` / `up -d --build`）。`make doctor` に相当するものはありません。
