@@ -45,6 +45,34 @@ visibility: `docker compose pull` fails with `unauthorized` until someone flips
 it once in the package settings. Building is the path that always works; pull
 explicitly when you have access and want to skip the build.
 
+### Checking what you pulled
+
+Every published tag is signed, and carries an SBOM of what is actually in its
+layers. Both claims are attached to the manifest list — the digest a `docker
+pull` resolves — so one check covers both architectures.
+
+```sh
+owner=<owner>   # the GitHub account or org the image was published from
+
+# who built it: the signature names the workflow, ref and commit
+cosign verify ghcr.io/$owner/chummer-web:latest \
+  --certificate-identity-regexp "^https://github.com/$owner/chummer-web/" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+# what is in it
+cosign download attestation ghcr.io/$owner/chummer-web:latest \
+  | jq -r '.payload | @base64d | fromjson | .predicate' > sbom.spdx.json
+grype sbom:sbom.spdx.json      # or any SPDX reader
+```
+
+Signing is keyless: there is no public key to distribute, and nothing to rotate.
+The certificate is issued to the workflow itself, which is why the identity to
+check is a URL rather than a fingerprint — `--certificate-identity-regexp`
+above accepts any workflow in that repository, so narrow it to
+`.../ci.yml@refs/heads/main` if you want to pin the ref as well. The same SBOM
+is on the workflow run as an artifact, for comparing two releases without
+cosign.
+
 The Chummer game data is fetched at **build time** (`fetch_chummer_data.py`,
 pinned to `CHUMMER_REF`) and baked into the image — no network needed at
 runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
