@@ -259,6 +259,10 @@ SILENT_TAGS = {
     # not model sustaining penalties to spend it on either.
     "penaltyfreesustain",
     "availability",
+    # A vehicle mod's stat changes are applied by the vehicle pass itself
+    # (`_apply_vehicle_bonus` in `engine/gear/vehicles/stats.py`), which knows
+    # the "4/3" on-road/off-road split these tags come in pairs for. The
+    # effects pass has no vehicle to add them to.
     "handling",
     "offroadhandling",
     "speed",
