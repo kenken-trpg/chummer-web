@@ -111,6 +111,17 @@ def test_the_projection_drops_the_fields_the_ui_never_reads() -> None:
     assert "bonus" not in public_weapon
 
 
+def test_a_weapon_focus_is_marked_as_one_before_it_is_bought() -> None:
+    """The foci picker prints "needs a Melee weapon" from these two fields, and
+    the projection used to drop both — so the line never appeared and a weapon
+    focus looked like any other focus until it was already in the list."""
+    public = {f["id"]: f for f in public_catalog()["foci"]}
+    weapon_foci = [f for f in public.values() if f["needs_weapon"]]
+    assert weapon_foci, "no focus marked as needing a weapon"
+    assert {f["weapon_type"] for f in weapon_foci} == {"Melee"}
+    assert all(not f["weapon_type"] for f in public.values() if not f["needs_weapon"])
+
+
 # --- skill ordering (SR5 p.130 / the official sheet / Chummer5a) --------------
 
 
