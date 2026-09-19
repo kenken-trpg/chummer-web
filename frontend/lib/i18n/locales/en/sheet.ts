@@ -202,6 +202,7 @@ export const EN_SHEET = {
   "sheet.cfLine": " · target {target} / {duration} / level {level} / FV {fv}",
   "sheet.fade": " · fade {fade}",
   "sheet.physical": " (physical)",
+  "sheet.printPage2": "{name} — page 2",
   "sheet.sprites": "Sprites",
   "sheet.registered": " · registered",
   "sheet.compiled": " · compiled",

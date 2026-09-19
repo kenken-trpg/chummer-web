@@ -203,6 +203,7 @@ export const JA_SHEET = {
   "sheet.cfLine": " ・ 対象 {target} / {duration} / レベル {level} / FV {fv}",
   "sheet.fade": " ・ フェード {fade}",
   "sheet.physical": "（物理）",
+  "sheet.printPage2": "{name} ・ 2 ページ目",
   "sheet.sprites": "スプライト",
   "sheet.registered": " ・ 登録",
   "sheet.compiled": " ・ コンパイル",
