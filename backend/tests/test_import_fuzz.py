@@ -1,7 +1,7 @@
-"""Hostile input at the three doors a visitor's file comes through.
+"""Hostile input at the four doors a visitor's file comes through.
 
-`.chum5` imports, JSON imports and settings uploads all take a stranger's file.
-The endpoints wrap every failure in a 400, so nothing here can reach a 500 —
+`.chum5` imports, JSON imports, settings uploads and custom-data trees all take
+a stranger's file. The endpoints wrap every failure in a 400, so nothing here can reach a 500 —
 but that wrapper is also what hides a crash: a save with one odd field is
 refused whole, with a message that says nothing, and the exception only shows
 up in the server log. The property worth holding is narrower than "no 500":
@@ -10,7 +10,14 @@ up in the server log. The property worth holding is narrower than "no 500":
   that carries a reason the user can act on — and a state it hands back
   computes without raising;
 * `import_character` on JSON accepts it or rejects it through validation;
-* `parse_settings_upload` accepts it or raises `ValueError`.
+* `parse_settings_upload` accepts it or raises `ValueError`;
+* `decompress_chum5lz` unwraps within its size ceiling or raises `NoticeError`;
+* `build_overlay` returns — every problem there is a row in its report, not an
+  exception — and never edits the base tree it copied.
+
+A last property goes through the endpoints instead of around them, for the other
+half of the claim: whatever gets past all of the above, the caller sees a 4xx
+with a notice and never a 5xx.
 
 The seeds are real-shaped files, not noise: noise is refused at the first
 byte and explores nothing. Each example takes one seed and damages it the way
@@ -20,9 +27,11 @@ dropped, duplicated, renamed or given a value no field expects.
 
 from __future__ import annotations
 
+import gzip
 import lzma
 import os
 import xml.etree.ElementTree as ET
+import zlib
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +41,9 @@ from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from app.characters import import_character, new_character
-from app.chummer_import import chum5_to_state
+from app.chummer_import import chum5_to_state, decompress_chum5lz
+from app.chummer_import.container import _MAX_DECOMPRESSED_BYTES
+from app.customdata import build_overlay
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
 from tests.chum5_fixtures import build_chum5
@@ -256,3 +267,206 @@ def test_a_settings_number_that_is_not_finite_is_ignored(value: str) -> None:
         f"<settings><name>H</name><maxskillratingcreate>{value}</maxskillratingcreate></settings>".encode()
     )
     assert settings_state.chargen_skill_max is None
+
+
+# --- the container, on its own ------------------------------------------------
+#
+# `_damaged_chum5` compresses a *valid* save with the one format Chummer writes.
+# The container has five more branches than that, tries each in turn, and is the
+# only part of the import that allocates on the strength of a number the file
+# supplies — so it gets its own property.
+
+
+@st.composite
+def _damaged_container(draw: st.DrawFn) -> bytes:
+    inner = draw(st.sampled_from(_SEEDS))
+    how = draw(
+        st.sampled_from(
+            [
+                "lzma-alone",
+                "xz",
+                "zlib",
+                "raw-deflate",
+                "gzip",
+                "double",
+                "header-lies",
+                "tail-cut",
+                "head-cut",
+                "spliced",
+            ]
+        )
+    )
+    if how == "lzma-alone":
+        raw = lzma.compress(inner, format=lzma.FORMAT_ALONE)
+    elif how == "xz":
+        raw = lzma.compress(inner, format=lzma.FORMAT_XZ)
+    elif how == "zlib":
+        raw = zlib.compress(inner)
+    elif how == "raw-deflate":
+        deflate = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+        raw = deflate.compress(inner) + deflate.flush()
+    elif how == "gzip":
+        raw = gzip.compress(inner)
+    elif how == "double":
+        # compressed twice: the first layer decompresses to something that is
+        # not XML, which must be a refusal rather than another round
+        raw = lzma.compress(lzma.compress(inner, format=lzma.FORMAT_ALONE), format=lzma.FORMAT_ALONE)
+    elif how == "header-lies":
+        # the `.lzma` header's 8-byte size field, rewritten to a huge number.
+        # Nothing may allocate on the strength of it.
+        raw = bytearray(lzma.compress(inner, format=lzma.FORMAT_ALONE))
+        raw[5:13] = draw(st.sampled_from([b"\xff" * 8, (2**62).to_bytes(8, "little"), b"\x00" * 8]))
+        raw = bytes(raw)
+    elif how == "spliced":
+        first = lzma.compress(inner, format=lzma.FORMAT_ALONE)
+        raw = first + lzma.compress(inner, format=lzma.FORMAT_ALONE)
+    else:
+        whole = lzma.compress(inner, format=lzma.FORMAT_ALONE)
+        cut = draw(st.integers(min_value=0, max_value=len(whole)))
+        raw = whole[cut:] if how == "head-cut" else whole[:cut]
+    return raw
+
+
+@_FUZZ
+@given(_damaged_container())
+def test_a_damaged_container_unwraps_within_its_ceiling_or_refuses(raw: bytes) -> None:
+    """Either bytes come out, bounded, or a `NoticeError` says why — and what
+    comes out is something the import as a whole reads or refuses.
+
+    The ceiling is the point of the header-lying cases: a decompressor handed
+    `2**62` as the uncompressed size must not try to hold it.
+
+    Deliberately *not* asserted: that the output starts with `<?xml` or
+    `<character`. The container sniffs a leading `<` and returns anything that
+    has one as-is — a front-truncated LZMA stream that happens to begin with
+    `0x3c` goes straight through, which the first version of this test called a
+    failure. It is not the container's job: validation is `parse_untrusted`'s,
+    one layer up, and the line below is what actually matters about such a file.
+    """
+    try:
+        out = decompress_chum5lz(raw)
+    except NoticeError:
+        return
+    assert len(out) <= _MAX_DECOMPRESSED_BYTES
+    _read_or_refuse(out)
+
+
+# --- the custom-data merge ---------------------------------------------------
+#
+# The fourth door, and the odd one out: the tree is a stranger's *and* it edits
+# our own data files in place. A merge that raises takes the request with it;
+# one that corrupts the base tree takes every later request too, since
+# `build_overlay` hands out copies of a cached root.
+
+_AMEND_FILES = ("amend_qualities.xml", "amend_martialarts.xml", "amend_weapons.xml")
+
+#: A plausible amend rule, with the fields the merge dispatches on.
+_AMEND_SEED = b"""<chummer>
+  <qualities>
+    <quality>
+      <name>Ambidextrous</name>
+      <karma>4</karma>
+      <bonus><ambidextrous /></bonus>
+    </quality>
+  </qualities>
+</chummer>"""
+
+
+@st.composite
+def _damaged_customdata(draw: st.DrawFn) -> tuple[dict[str, bytes], list[str]]:
+    root = ET.fromstring(_AMEND_SEED)
+    for _ in range(draw(st.integers(min_value=1, max_value=3))):
+        nodes = list(root.iter())
+        target = draw(st.sampled_from(nodes))
+        action = draw(st.sampled_from(["text", "attr", "nest", "rename", "dup"]))
+        parents = {child: parent for parent in root.iter() for child in parent}
+        if action == "text":
+            target.text = draw(_HOSTILE)
+        elif action == "attr":
+            # `amendoperation` / `addifnotfound` are what the merge branches on
+            target.set(
+                draw(st.sampled_from(["amendoperation", "addifnotfound", "isidnode", "xxx"])),
+                draw(st.sampled_from(["append", "remove", "replace", "recurse", "True", "", "0"])),
+            )
+        elif action == "nest":
+            ET.SubElement(target, draw(st.sampled_from([t.tag for t in nodes]))).text = draw(_HOSTILE)
+        elif action == "rename" and target is not root:
+            target.tag = draw(st.sampled_from([t.tag for t in nodes] + ["name", "id", "karma"]))
+        elif action == "dup" and target in parents:
+            parents[target].append(ET.fromstring(ET.tostring(target)))
+    path = f"{draw(st.sampled_from(['NTS4C08', 'x', 'a/b']))}/{draw(st.sampled_from(_AMEND_FILES))}"
+    files = {path: ET.tostring(root, encoding="utf-8")}
+    enabled = draw(st.sampled_from([[path.split("/")[0]], ["missing"], [], ["NTS4C08", "NTS4C08"]]))
+    return files, enabled
+
+
+@_FUZZ
+@given(_damaged_customdata())
+def test_a_damaged_customdata_tree_merges_or_reports(payload: tuple[dict[str, bytes], list[str]]) -> None:
+    """`build_overlay` has no refusal to raise — every problem is a row in the
+    report — so the property is simply that it returns."""
+    files, enabled = payload
+    _trees, report = build_overlay(files, enabled)
+    assert isinstance(report.applied, int)
+
+
+def test_the_merge_never_edits_the_base_tree_it_copied() -> None:
+    """The base roots are cached per process and handed to every request. A
+    merge that edited one in place would leak a stranger's custom data into the
+    next visitor's catalog — the one bug in this door that no status code shows.
+    """
+    from app.data_loader._xml import data_root
+
+    before = ET.tostring(data_root("qualities.xml"))
+    build_overlay(
+        {
+            "NTS4C08/amend_qualities.xml": _AMEND_SEED.replace(b"<karma>4</karma>", b"<karma>999</karma>"),
+            "NTS4C08/amend_weapons.xml": b'<chummer><weapons><weapon amendoperation="remove"><name>Ares Predator V</name></weapon></weapons></chummer>',
+        },
+        ["NTS4C08"],
+    )
+    assert ET.tostring(data_root("qualities.xml")) == before
+
+
+# --- the endpoints, as the browser reaches them -------------------------------
+
+
+@pytest.mark.parametrize(
+    ("route", "content_type"),
+    [
+        ("/api/characters/import-chummer", "application/octet-stream"),
+        ("/api/settings/parse", "application/octet-stream"),
+    ],
+)
+@pytest.mark.parametrize(
+    "body",
+    [
+        b"",
+        b"\x00" * 64,
+        b"<character>",
+        b"<?xml version='1.0'?><character><metatype>\xff\xfe</metatype></character>",
+        lzma.compress(b"not xml at all", format=lzma.FORMAT_ALONE),
+        b"%PDF-1.4\n",
+    ],
+    ids=["empty", "nuls", "unclosed", "bad-bytes", "lzma-not-xml", "wrong-file"],
+)
+def test_an_upload_route_answers_with_a_status_not_a_stack_trace(route: str, content_type: str, body: bytes) -> None:
+    """The properties above bypass the endpoints to see the exceptions the
+    catch-all hides. This is the other half: whatever gets through, the caller
+    sees a 4xx with a notice, never a 5xx.
+
+    A distinct source IP per case, so the shared rate limiter does not turn a
+    later case into a 429.
+    """
+    from starlette.testclient import TestClient
+
+    from app.main import app
+
+    ip = f"198.51.100.{abs(hash((route, body))) % 200 + 1}"
+    response = TestClient(app).post(
+        route,
+        content=body,
+        headers={"content-type": content_type, "cf-connecting-ip": ip},
+    )
+    assert 400 <= response.status_code < 500, response.text
+    assert response.status_code != 429, "rate limiter got in the way of the test"
