@@ -4,9 +4,9 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **519 件**
+- オーバーレイ合計: **554 件**
 
-## chumJA(SR4) category (52)
+## chumJA(SR4) category (56)
 
 | English | 日本語 |
 |---|---|
@@ -29,12 +29,14 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Cyberlimb Accessory | サイバーリム・アクセサリ |
 | Cyberlimb Enhancement | サイバーリム強化 |
 | Cyberterminals | サイバーターミナル |
+| Cyberweapon | サイバー武器 |
 | Drugs | ドラッグ |
 | Earware | イアウェア |
 | Exotic Melee Weapons | 特殊近接武器 |
 | Exotic Ranged Weapons | 特殊射撃武器 |
 | Explosives | 爆発物 |
 | Eyeware | アイウェア |
+| Free Spirit | 自由精霊 |
 | Headware | ヘッドウェア |
 | Heavy Machine Guns | ヘビーマシンガン |
 | Hovercraft | ホバークラフト |
@@ -46,6 +48,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Medium Machine Guns | ミディアムマシンガン |
 | Nanocybernetics | ナノサイバーウェア |
 | Negative | 不利 |
+| Paranormal | 超常生物 |
 | Physical Active | 身体能動 |
 | Positive | 有利 |
 | RFID Tags | RFIDタグ |
@@ -62,8 +65,9 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Trucks | トラック |
 | Unarmed | 素手 |
 | Vehicle Active | ヴィークル能動 |
+| Weakness | 弱点 |
 
-## chumJA(SR4) name (113)
+## chumJA(SR4) name (141)
 
 | English | 日本語 |
 |---|---|
@@ -72,14 +76,15 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Alligator | アリゲーター |
 | Ally Conjuration | 同盟精霊召霊術 |
 | Ally Spirit | 同盟精霊 |
-| Alphaware (Adapsin) | アルファウェア(アダプシン) |
 | Alter Memory | 記憶改変 |
+| Anaphylaxis | 過敏症 |
 | Animal Empathy | 動物共感 |
 | Astral Armor | アストラルの鎧 |
 | Attention Coprocessor | 注意力コプロセッサ |
+| Aura Masking | オーラ擬態 |
 | Balance Tail | 安定尾 |
+| Banishing Resistance | 放逐抵抗 |
 | Bat | コウモリ |
-| Betaware (Adapsin) | ベータウェア(アダプシン) |
 | Boar | イノシシ |
 | Cannibalize | 貪肉術 |
 | Caretaker Spirit | 昆虫精霊(世話役) |
@@ -98,13 +103,21 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Coyote | コヨーテ |
 | Cybergland | サイバー分泌腺 |
 | Dark King | 冥王 |
-| Deltaware (Adapsin) | デルタウェア(アダプシン) |
+| Deathly Aura | 死のオーラ |
+| Desire Reflection | 欲望投影 |
+| Devouring | 貪食 |
 | Dietware | ダイエットウェア |
+| Divining | 啓示 |
 | Dolphin | イルカ |
+| Echolocation | 反響定位 |
 | Egyptian | エジプト |
 | Eidetic Sense Memory | 感覚記憶 |
+| Empathy | 共感 |
+| Endowment | パワー付与 |
+| Energy Drain | エネルギー吸収 |
 | Enthralling Performance | 美技披露 |
 | Essence Hole | エッセンスの穴 |
+| Evanescence | 消失 |
 | External Clip Port | 外部装弾口 |
 | Feedback Clothing | フィードバック・クロージング |
 | Flexible Signature | 霊紋偽装術 |
@@ -113,14 +126,18 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Geomancy | 地霊術 |
 | Gills | 鰓 |
 | Giraffe | キリン |
+| Gliding | 滑走 |
 | Grapple Hand | グラップルハンド |
 | Great Mother | 太母 |
 | Guardian Spirit | 護りの精霊 |
 | Guidance Spirit | 導きの精霊 |
 | Healthy Glow | 健康美 |
+| Hidden Life | 隠された生命 |
+| Hive Mind | 群体連結 |
 | Horse | ウマ |
 | Incubus | インキュバス |
 | Infirm | 虚弱 |
+| Inhabitation | 侵食 |
 | Iron Gut | 鋼の胃袋 |
 | Iron Lungs | 鋼の肺 |
 | Iron Will | 鋼の意思 |
@@ -134,8 +151,12 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Masking | 擬態術 |
 | Master Shedim | マスター・シェディム |
 | Math SPU | 算術SPU |
+| Metahuman Form | 人間形態 |
 | Micro Flare Launcher | 照明弾ピストル |
+| Mind Link | 精神連結 |
 | Mob Mood | 集団感情制御 |
+| Mutable Form | きまぐれな姿 |
+| Mutagen | 変異原 |
 | Naga | ナーガ |
 | Nodachi | ノダチ |
 | Norse | 北欧 |
@@ -143,6 +164,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Nymph Spirit | 昆虫精霊(幼虫) |
 | Oak | 樫 |
 | Paragon | パラゴン |
+| Personal Domain | 独自ドメイン |
+| Pestilence | 疫病 |
 | Piercing Senses | 透徹感覚 |
 | Pig | ブタ |
 | Pixie | ピクシー |
@@ -152,36 +175,45 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Psionic | サイオニック |
 | Psychometry | サイコメトリー術 |
 | Pulse | 電磁パルス |
+| Quake | 地震 |
 | Quickening | 固着術 |
 | Raccoon | アライグマ |
 | Radar Sensor | レーダー・センサー |
 | Rappelling Gloves | ラペリング・グローブ |
+| Realistic Form | リアルな外見 |
+| Reinforcement | 強化 |
 | Sacrifice | 供犠 |
 | Sasquatch | サスカッチ |
 | Satellite Link | 衛星リンク |
 | Scout Spirit | 昆虫精霊(斥候役) |
 | Seal | アザラシ |
+| Sense Link | 感覚連結 |
 | Sensing | 観想術 |
+| Shadow Cloak | 影の衣 |
 | Shedim | シェディム |
 | Silence | 静寂 |
 | Siren | サイレン |
+| Skill Enhancement | 技能強化 |
 | Skinlink | スキンリンク |
 | Smuggling Compartment | 密輸用容器 |
 | Soldier Spirit | 昆虫精霊(兵士役) |
+| Sonic Projection | 音響投射 |
 | Sound Link | 音声リンク |
 | Spider | クモ |
 | Spirit Pact | 精霊の契約 |
 | Standard | スタンダード |
-| Standard (Adapsin) | スタンダード(アダプシン) |
+| Storm | 嵐 |
 | Sun | 太陽 |
 | Taint | 汚染術 |
 | Task Spirit | 労役の精霊 |
 | Tonfa | トンファー |
 | Touch Link | 触覚リンク |
+| Wall Walking | 壁歩き |
+| Wealth | 富 |
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (354)
+## curated (357)
 
 | English | 日本語 |
 |---|---|
@@ -215,6 +247,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Attune Animal | 動物同調 |
 | Attune Item | 物品同調 |
 | Auto-Injector | 自動注射器 |
+| BTLs | BTLチップ |
 | Badger | アナグマ |
 | Barrage | 弾幕/バラージュ |
 | Belt-Feed, 100-round | ベルト給弾, 100発 |
@@ -468,12 +501,14 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Rooting | 根付き |
 | Rosebush | 薔薇の茂み/ローズブッシュ |
 | Rot | 腐敗/ロット |
+| Run and Gun | ラン＆ガン |
 | Ruthenium Polymer Coating | ルテニウム・ポリマー・コーティング |
 | SA Retiarius Net Gun | SA レティアルス・ネットガン |
 | Search History | 検索履歴 |
 | Secret Handshake | 秘密の握手/シークレット・ハンドシェイク |
 | Sending | 送信/センディング |
 | Services | 助力 |
+| Shadowrun 5th Edition | シャドウラン 第5版 |
 | Shock Frills | ショックフリル |
 | Shock Weave | ショック・ウィーブ |
 | Silencer (Ares Light Fire 70) | 消音器（アレス・ライトファイア70） |

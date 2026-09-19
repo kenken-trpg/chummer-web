@@ -148,6 +148,11 @@ CURATED: dict[str, str] = {
     "German Shepherd": "ジャーマン・シェパード",
     "Doberman": "ドーベルマン",
     "Weimaraner": "ワイマラナー",
+    # The overlay's one hand-added entry, from before these modules existed.
+    # Curated here so `regen_ja.sh` (which resets data.json) keeps it: the
+    # vendored file leaves "BTLs" untranslated, and it is a gear/drug category
+    # as well as a knowledge skill.
+    "BTLs": "BTLチップ",
     # --- rulebook titles (the settings picker's "ルールブックを選ぶ" list) -------
     # Only books with a published Japanese edition, titled as that edition is.
     # The other 61 stay on English fallback for the same reason supplement gear
@@ -175,6 +180,14 @@ CURATED.update(_RG)
 # chumJA category english -> skip when the SR4 term is stale / wrong for SR5.
 CATEGORY_SKIP = {
     "Armor",  # keep vendored 防具 (category sense), not glossary 装甲 (the value)
+    # chumJA gives 通常生物, which reads right for the critter-power category
+    # (non-magical powers) and wrong for the other "Mundane" in the catalog:
+    # the priority table's talent, where it means a character with no magic at
+    # all and the glossary says マンディン. The translation table is keyed by
+    # English name alone and cannot tell the two apart, so the cell a player
+    # actually picks from would get the critter wording. Left in English until
+    # somebody decides one reading for both.
+    "Mundane",
 }
 
 # chumJA <name> matches to skip (wrong sense in SR4 -> SR5).
