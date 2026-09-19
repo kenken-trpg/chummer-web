@@ -148,6 +148,13 @@ CURATED: dict[str, str] = {
     "German Shepherd": "ジャーマン・シェパード",
     "Doberman": "ドーベルマン",
     "Weimaraner": "ワイマラナー",
+    # --- rulebook titles (the settings picker's "ルールブックを選ぶ" list) -------
+    # Only books with a published Japanese edition, titled as that edition is.
+    # The other 61 stay on English fallback for the same reason supplement gear
+    # does: a transliterated title is a guess, and the code in brackets beside
+    # it already identifies the book for anyone who owns the English one.
+    "Shadowrun 5th Edition": "シャドウラン 第5版",
+    "Run and Gun": "ラン＆ガン",
 }
 
 # bulk hand translations live in their own modules to keep this file lean.
