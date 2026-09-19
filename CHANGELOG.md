@@ -7,6 +7,17 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Changed
 
+- **CI のゲートを 1 つに畳んだ。** 必須チェックはリポジトリの外（Settings）で
+  **名前の文字列一致**で指定するので、そこに書かれていないジョブはゲートになりません。
+  実際に必須だったのは `frontend` / `backend (3.13)` / `e2e` の 3 つだけで、
+  `backend-windows` も `frontend-windows` も `docker-build` も素通りでした（#276 が
+  Windows で赤いままマージされたのがこれ）。ci.yml の末尾に、他の全ジョブが success
+  でなければ落ちる `ci-ok` を置き、**何がマージを止めるかをリポジトリの中で**
+  管理できるようにしました。ジョブを足すときは `needs` に足すだけです。
+- **`merge_chain.sh` が、全チェックの green を見てから auto-merge を掛けるようにした。**
+  逆順だったので、スクリプトが `STOP` で止まっても GitHub 側に渡した指示は残り、
+  必須でないチェックが落ちた PR がそのままマージされていました。マージされなかった
+  場合は auto-merge を解除して終わります。
 - **日本語訳の突き合わせパスが、書籍ごとに走らせられるようになった。**『ラン＆ガン』
   専用だった台帳の仕組み（`make_rg_worksheet.py` / `import_rg_worksheet.py`）を
   `make_ja_worksheet.py --book` / `import_ja_worksheet.py --book` に一般化し、

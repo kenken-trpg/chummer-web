@@ -216,9 +216,19 @@ new module with no test at all is worth a second look.
   changes — `backend/tests/test_engine_*.py` have lots of patterns to copy.
 - **`scripts/merge_chain.sh 248:branch-a 249:branch-b`** merges a queue of PRs
   in order: each one is rebased onto the current `origin/main`, checked the way
-  CI checks it, pushed, and handed to GitHub's auto-merge (`gh pr merge
-  --auto`), which merges it when the required checks pass. The run still waits
-  for each merge, because the next rebase needs it. Because each PR
+  CI checks it, pushed, and — once **every** check on GitHub has reported green,
+  not only the required ones — handed to auto-merge (`gh pr merge --auto`). The
+  run still waits for each merge, because the next rebase needs it. The order
+  matters: the script used to arm auto-merge first and watch the checks after,
+  and #276 merged with `backend-windows` red because a `STOP` here is only this
+  script exiting while `--auto` is an instruction GitHub keeps. If the merge
+  does not happen, auto-merge is disarmed on the way out.
+- **CI has one required check, `ci-ok`.** It is the last job in
+  `.github/workflows/ci.yml` and passes only if every other job did, so the
+  list of what gates a merge lives in the repository and changes in a reviewed
+  PR — not in a settings page no diff ever shows. Branch protection needs to
+  name only that one context (CodeQL, being a separate workflow, is the
+  exception if it should gate too). Because each PR
   branches off `main`, the one before it lands first and the next rebase picks
   it up. A conflict in `CHANGELOG.md` or a test file keeps both sides
   (`scripts/keep_both_sides.py`) — two entries or two test cases are what the

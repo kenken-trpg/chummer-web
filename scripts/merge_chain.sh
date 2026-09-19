@@ -4,9 +4,10 @@
 #   scripts/merge_chain.sh 248:feat/help-avail-grade 249:feat/help-bonus-sources
 #
 # Each PR is rebased onto the current origin/main (so the one before it is
-# already in), checked the way CI checks it, pushed, and handed to GitHub's
-# auto-merge, which merges it when the required checks pass. The run waits for
-# that merge anyway — the next PR rebases onto a main that contains this one.
+# already in), checked the way CI checks it, pushed, and — once *every* check
+# on GitHub has reported green, not only the required ones — handed to
+# auto-merge. The run waits for that merge anyway: the next PR rebases onto a
+# main that contains this one.
 #
 # A conflict in CHANGELOG.md or a test file keeps both sides — two entries or
 # two test cases are what the two branches meant. Any other
@@ -53,23 +54,42 @@ for pair in "$@"; do
   fi
   git push -q --force-with-lease origin "$br" || exit 1
   sleep 20  # let GitHub register the push, so the checks below are this push's
-  # GitHub merges it itself when the required checks pass. A required check that
-  # has not reported yet blocks the merge, so enabling this before any check
-  # appears cannot merge early.
+  # Wait for every check to report, and require all of them green, BEFORE
+  # handing the PR to auto-merge. The other order merged #276 with
+  # `backend-windows` red: a STOP here is only this script exiting, while
+  # `--auto` is an instruction GitHub keeps and acts on, and GitHub waits for
+  # the checks branch protection calls *required* — not for the ones this loop
+  # reads. Arming it only once everything has reported means the two cannot
+  # disagree about what green is.
+  pending=
+  for _ in $(seq 1 60); do
+    # `|| true`, not `|| checks=`: gh exits 1 exactly when a check has failed,
+    # and throwing the output away then would hide the one thing this looks for.
+    checks=$(gh pr checks "$n" 2>/dev/null || true)
+    bad=$(printf '%s\n' "$checks" | grep -v -E "\bpass\b|\bpending\b|skipping")
+    if [ -n "$bad" ]; then echo "STOP: checks"; echo "$bad"; exit 1; fi
+    pending=$(printf '%s\n' "$checks" | grep -c "\bpending\b")
+    [ "$pending" = 0 ] && [ -n "$checks" ] && break
+    sleep 20
+  done
+  [ "$pending" = 0 ] || { echo "STOP: checks still pending after 20 min"; exit 1; }
   gh pr merge "$n" --squash --auto >/dev/null 2>&1 ||
     { echo "STOP: could not enable auto-merge"; exit 1; }
   # The queue still has to wait: the next PR is rebased onto a main that
-  # contains this one. A failed check leaves the PR open forever, so this
-  # watches for that as well as for the merge.
+  # contains this one. Everything has reported by now, so this is short — and
+  # if it does not merge, auto-merge is disarmed on the way out rather than
+  # left to merge the branch later, unattended, after a STOP.
   state=
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 30); do
     state=$(gh pr view "$n" --json state -q .state)
     [ "$state" = MERGED ] && break
-    bad=$(gh pr checks "$n" 2>/dev/null | grep -v -E "\bpass\b|\bpending\b|skipping")
-    if [ -n "$bad" ]; then echo "STOP: checks"; echo "$bad"; exit 1; fi
-    sleep 20
+    sleep 10
   done
-  if [ "$state" != MERGED ]; then echo "STOP: still not merged after 20 min"; exit 1; fi
+  if [ "$state" != MERGED ]; then
+    gh pr merge "$n" --disable-auto >/dev/null 2>&1 || true
+    echo "STOP: not merged 5 min after every check reported (auto-merge disarmed)"
+    exit 1
+  fi
   # The remote branch goes with the repository's delete-on-merge setting; the
   # local one is ours to clean up, and cannot be deleted while checked out.
   git switch -q main && git branch -qD "$br"
