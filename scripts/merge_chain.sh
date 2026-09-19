@@ -4,9 +4,12 @@
 #   scripts/merge_chain.sh 248:feat/help-avail-grade 249:feat/help-bonus-sources
 #
 # Each PR is rebased onto the current origin/main (so the one before it is
-# already in), checked the way CI checks it, pushed, and merged once GitHub's
-# checks pass. A conflict in CHANGELOG.md or a test file keeps both sides —
-# two entries or two test cases are what the two branches meant. Any other
+# already in), checked the way CI checks it, pushed, and handed to GitHub's
+# auto-merge, which merges it when the required checks pass. The run waits for
+# that merge anyway — the next PR rebases onto a main that contains this one.
+#
+# A conflict in CHANGELOG.md or a test file keeps both sides — two entries or
+# two test cases are what the two branches meant. Any other
 # conflict stops the run for a human — the i18n dictionaries included, even
 # though two branches usually just append there: a conflicting wording is a
 # choice, and a duplicated key would only surface in locales.test.ts. The run ends on main, up to date.
@@ -49,11 +52,27 @@ for pair in "$@"; do
     git commit -qam "style: format after rebase"
   fi
   git push -q --force-with-lease origin "$br" || exit 1
-  sleep 30  # let GitHub register the push before watching its checks
-  gh pr checks "$n" --watch >/dev/null 2>&1
-  bad=$(gh pr checks "$n" | grep -v -E "\bpass\b|skipping")
-  if [ -n "$bad" ]; then echo "STOP: checks"; echo "$bad"; exit 1; fi
-  gh pr merge "$n" --squash --delete-branch >/dev/null 2>&1 || { echo "STOP: merge failed"; exit 1; }
+  sleep 20  # let GitHub register the push, so the checks below are this push's
+  # GitHub merges it itself when the required checks pass. A required check that
+  # has not reported yet blocks the merge, so enabling this before any check
+  # appears cannot merge early.
+  gh pr merge "$n" --squash --auto >/dev/null 2>&1 ||
+    { echo "STOP: could not enable auto-merge"; exit 1; }
+  # The queue still has to wait: the next PR is rebased onto a main that
+  # contains this one. A failed check leaves the PR open forever, so this
+  # watches for that as well as for the merge.
+  state=
+  for _ in $(seq 1 60); do
+    state=$(gh pr view "$n" --json state -q .state)
+    [ "$state" = MERGED ] && break
+    bad=$(gh pr checks "$n" 2>/dev/null | grep -v -E "\bpass\b|\bpending\b|skipping")
+    if [ -n "$bad" ]; then echo "STOP: checks"; echo "$bad"; exit 1; fi
+    sleep 20
+  done
+  if [ "$state" != MERGED ]; then echo "STOP: still not merged after 20 min"; exit 1; fi
+  # The remote branch goes with the repository's delete-on-merge setting; the
+  # local one is ours to clean up, and cannot be deleted while checked out.
+  git switch -q main && git branch -qD "$br"
   echo "merged #$n"
 done
 cd "$here" && git switch -q main && git pull -q --ff-only && echo DONE

@@ -216,7 +216,9 @@ new module with no test at all is worth a second look.
   changes — `backend/tests/test_engine_*.py` have lots of patterns to copy.
 - **`scripts/merge_chain.sh 248:branch-a 249:branch-b`** merges a queue of PRs
   in order: each one is rebased onto the current `origin/main`, checked the way
-  CI checks it, pushed, and merged once GitHub's checks pass. Because each PR
+  CI checks it, pushed, and handed to GitHub's auto-merge (`gh pr merge
+  --auto`), which merges it when the required checks pass. The run still waits
+  for each merge, because the next rebase needs it. Because each PR
   branches off `main`, the one before it lands first and the next rebase picks
   it up. A conflict in `CHANGELOG.md` or a test file keeps both sides
   (`scripts/keep_both_sides.py`) — two entries or two test cases are what the
