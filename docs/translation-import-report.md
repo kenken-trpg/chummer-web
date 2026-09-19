@@ -4,7 +4,7 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **554 件**
+- オーバーレイ合計: **555 件**
 
 ## chumJA(SR4) category (56)
 
@@ -213,7 +213,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (357)
+## curated (358)
 
 | English | 日本語 |
 |---|---|
@@ -438,6 +438,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Monkey | 猿 |
 | Moon | 月 |
 | Multiply Food | 食料増殖/マルチプライ・フード |
+| Mundane | マンディン |
 | Mystic Aptitude | 神秘の適性 |
 | Mystic Guardian | 神秘の守護者 |
 | Napalm Wall | ナパームの壁/ナパーム・ウォール |
