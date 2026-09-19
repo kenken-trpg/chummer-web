@@ -23,6 +23,16 @@ self-hosters can pin to a tag instead of tracking `main`.
 - **日本語の行分割を印刷シートのセルに指定した。** `line-break: strict` で行頭の
   「、」「。」を止め、`overflow-wrap: anywhere` で長い英語の装備名が列をページ幅より
   広げる代わりに折り返るようにしました。
+- **黙らせているボーナスタグの根拠を、データに結び直した。** `SILENT_TAGS` は
+  一度入れたら永久に黙る集合でした。5 つ（`addgears` / `knowsoft` / `limit` /
+  `linguasoft` / `selectpower`）は**データに 1 件も無く**、何も黙らせていなかったので
+  外しました。残りのうち「その 1 つの資質にしか無いから」という理由のもの
+  （`limitcritterpowercategory` 26・`metageniclimit` 3・他 8 件が各 1）は
+  `SILENT_TAG_SITES` に件数を固定し、`CHUMMER_REF` の更新で別の場所に増えたら
+  テストが気づくようにしました。`limitcritterpowercategory` が表示に影響しないことも
+  確かめました — 26 件すべて Infected と Dracoform にあり、どちらも能力を隣の
+  `<critterpowers>` で名指ししているので、カテゴリは何も決めていません。
+
 - **`Mundane` の読みを「マンディン」に決めた。** カタログはこの英語名を 2 つの意味で
   使っています — 優先度表の才能（魔法を一切持たないキャラクター）と、非魔法のクリッター
   能力のカテゴリ。翻訳テーブルは英語名だけをキーにするので両方を同時に満たせず、今まで

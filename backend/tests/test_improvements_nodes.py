@@ -142,3 +142,57 @@ def test_no_bonus_tag_in_the_vendored_data_is_unimplemented() -> None:
     assert not unhandled, "bonus tags the pipeline would drop on the floor: " + repr(
         sorted(unhandled.items(), key=lambda pair: -pair[1])
     )
+
+
+def _silent_tag_counts() -> dict[str, int]:
+    """Every `<bonus>` tag in the catalogue, counted — the same walk the ratchet
+    above does, so both tests speak about the same data."""
+    from collections import Counter
+
+    from app.data_loader import catalog
+
+    seen: Counter[str] = Counter()
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in ("bonus", "firstlevelbonus", "wirelessbonus") and isinstance(value, list):
+                    for entry in value:
+                        if isinstance(entry, dict) and entry.get("tag"):
+                            seen[str(entry["tag"])] += 1
+                walk(value)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value)
+
+    data = catalog()
+    for key, value in data.items():
+        if key not in ("translations", "ui_strings"):
+            walk(value)
+    assert sum(seen.values()) > 3000, "no bonus nodes found — is backend/vendor/chummer populated?"
+    return dict(seen)
+
+
+def test_a_silent_tag_is_silencing_something() -> None:
+    """An entry that matches nothing in the data silences nothing, and the
+    ratchet above would have caught the tag anyway the day it appeared. Five
+    such entries (`addgears`, `knowsoft`, `limit`, `linguasoft`, `selectpower`)
+    were carried for a while; a reader has no way to tell a dead entry from a
+    live one by looking."""
+    from app.improvements._common import SILENT_TAGS
+
+    seen = _silent_tag_counts()
+    dead = sorted(tag for tag in SILENT_TAGS if not seen.get(tag))
+    assert not dead, "SILENT_TAGS entries that match nothing in the data: " + repr(dead)
+
+
+def test_the_tags_silenced_by_where_they_sit_have_not_moved() -> None:
+    """`SILENT_TAG_SITES` pins the count for the tags whose reason is "only on
+    X". If a bump spreads one somewhere new, the reason above it may no longer
+    hold — and the point of this file is that nothing gets dropped quietly."""
+    from app.improvements._common import SILENT_TAG_SITES, SILENT_TAGS
+
+    seen = _silent_tag_counts()
+    assert set(SILENT_TAG_SITES) <= SILENT_TAGS, "pinned a tag that is not silent"
+    moved = {tag: (want, seen.get(tag, 0)) for tag, want in SILENT_TAG_SITES.items() if seen.get(tag, 0) != want}
+    assert not moved, "pinned (expected, found) — re-read the reason above each tag: " + repr(moved)
