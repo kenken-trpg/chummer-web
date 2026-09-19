@@ -31,7 +31,7 @@ from .magic import _import_foci, _import_initiation, _import_magic, _import_spir
 from .qualities import _import_qualities
 
 
-def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[str]]:
+def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     """A Chummer5a save in, a `CharacterState` dict plus warnings out.
 
     Best-effort by design: anything the catalog cannot resolve becomes a

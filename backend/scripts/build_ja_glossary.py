@@ -263,7 +263,9 @@ def build_glossary_doc(
     for k in all_keys:
         x = xslt_jp.get(k)
         s = sr5eja.get(k)
-        eng = (x or s)[0]
+        entry = x or s
+        assert entry is not None  # k came from the union of the two maps
+        eng = entry[0]
         xja = x[1] if x else None
         sja = s[1] if s else None
         pick = adopted(eng, xja, sja)
@@ -316,9 +318,9 @@ def build_glossary_doc(
         "| English | 採用 | 2021版 | sr5eja | 備考 |",
         "|---|---|---|---|---|",
     ]
-    for eng, pick, xja, sja, note in merged:
+    for eng, pick, xja, sja, note_text in merged:
         mark = "" if not sja else ("＝" if sja == pick else "≠")
-        lines.append(f"| {eng} | {pick} | {xja} | {mark} | {note} |")
+        lines.append(f"| {eng} | {pick} | {xja} | {mark} | {note_text} |")
 
     lines += [
         "",
@@ -426,7 +428,7 @@ def build_mismatch_doc(
         "| English | 2021版 |",
         "|---|---|",
     ]
-    xslt_by_eng = {}
+    xslt_by_eng: dict[str, str] = {}
     for var, value in rows:
         if JP_RE.search(value):
             xslt_by_eng.setdefault(english_for(var, value).lower(), value)

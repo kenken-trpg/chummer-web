@@ -7,6 +7,13 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Changed
 
+- **mypy がオフラインツール（`backend/scripts/`）も見るようになった。** 手で読んで
+  たまに走らせるだけのコードは、間違った注釈が一番生き残る場所で、実際
+  `chum5_to_state` は警告の型を `list[str]` と名乗っていた（本当は
+  `list[Notice]`）。`scripts/` に `__init__.py` が無く、テストからは
+  `scripts.foo`・スクリプト同士からは `foo` に見えるので、
+  `explicit_package_bases` を足して二重に見つからないようにしてある。
+
 - **`frontend/next-env.d.ts` を git の管理から外した。** `next dev` は中の import を
   `.next/dev/types/` に、`next build` と `next typegen` は `.next/types/` に向けて
   書き換えるので、追跡していると最後に走らせたコマンド次第で差分が行き来していた。

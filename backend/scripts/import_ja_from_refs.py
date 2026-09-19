@@ -168,9 +168,10 @@ try:
     from scripts.ja_curated_rg import RG as _RG
     from scripts.ja_curated_spells import SPELLS as _SPELLS
 except ImportError:  # when run as `python backend/scripts/import_ja_from_refs.py`
-    from ja_curated_entities import ENTITIES as _ENTITIES
-    from ja_curated_rg import RG as _RG
-    from ja_curated_spells import SPELLS as _SPELLS
+    # same modules by their other name; mypy only ever sees the branch above
+    from ja_curated_entities import ENTITIES as _ENTITIES  # type: ignore[no-redef]
+    from ja_curated_rg import RG as _RG  # type: ignore[no-redef]
+    from ja_curated_spells import SPELLS as _SPELLS  # type: ignore[no-redef]
 CURATED.update(_SPELLS)
 CURATED.update(_ENTITIES)
 # Run & Gun last: it is checked against the published Japanese edition, so it
@@ -268,7 +269,8 @@ def main(argv: list[str] | None = None) -> int:
     vendored = {k: v for k, v in merged.items() if existing.get(k) != v}
 
     app_names, app_cats = catalog_names_and_categories()
-    cj_names, cj_cats = ({}, {})
+    cj_names: dict[str, str] = {}
+    cj_cats: dict[str, str] = {}
     if args.chumja.exists():
         cj_names, cj_cats = load_chumja(args.chumja)
     else:

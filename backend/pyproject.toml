@@ -62,13 +62,23 @@ exclude_also = [
 
 [tool.mypy]
 python_version = "3.11"
-files = ["app"]
+files = ["app", "scripts"]
 exclude = ["vendor"]
-# Strict across the whole backend (CI + `make check`). The tightening was
-# done package by package — `app.engine.*` / `app.improvements.*` reached
-# the bar once their two `Any` fountains were typed (the `Ctx` bundles /
-# `effects` as `EffectsDict`, and `catalog()` as `CatalogDict`) — and once
-# every module held it, the per-module overrides collapsed into the base.
+# `scripts/` has no `__init__.py` and the tests import it as `scripts.foo`,
+# while the scripts themselves run as `python scripts/foo.py` and see each
+# other as `foo`. Without this, mypy finds each file under both names and
+# refuses to check anything.
+explicit_package_bases = true
+mypy_path = "."
+# Strict across the whole backend, `scripts/` included (CI + `make check`).
+# The offline tools there are read by hand and run rarely, which is exactly
+# where a wrong annotation survives: the check found `chum5_to_state`
+# declaring `list[str]` warnings that are really `list[Notice]`.
+# The tightening of `app` was done package by package — `app.engine.*` /
+# `app.improvements.*` reached the bar once their two `Any` fountains were
+# typed (the `Ctx` bundles / `effects` as `EffectsDict`, and `catalog()` as
+# `CatalogDict`) — and once every module held it, the per-module overrides
+# collapsed into the base.
 ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
