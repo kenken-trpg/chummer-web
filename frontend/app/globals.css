@@ -1273,6 +1273,24 @@ input[type="search"] {
 .print-page-2 {
   display: contents;
 }
+/* Japanese wraps anywhere by default, so a cell needs no help there; what it
+ * needs is a ban on 、。 opening a line (`strict`) and permission to break a
+ * long Latin gear name rather than push the column wider than the page. */
+.character-sheet--print .sheet-table td,
+.character-sheet--print .sheet-table th,
+.character-sheet--print .sheet-list li {
+  line-break: strict;
+  overflow-wrap: anywhere;
+}
+
+/* Named on screen too: the print layout previews as the sheet of paper it is. */
+.print-runhead {
+  margin: 0 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #bbb;
+  font-size: 0.72rem;
+  color: #555;
+}
 
 @media screen {
   .character-sheet--print {
@@ -1292,11 +1310,35 @@ input[type="search"] {
     display: block;
     break-before: page;
   }
-  .character-sheet--print .sheet-section,
+  /* A table of 40 skills is taller than a page, and `break-inside: avoid` on
+   * the section holding it does not shrink it — it only leaves the rest of
+   * the page blank and then breaks anyway, mid-row. So the promise is kept at
+   * the size where it can be: a row, a list item, the stat block. Sections
+   * are free to continue on the next page, with their heading pulled along. */
   .character-sheet--print .sheet-block,
-  .character-sheet--print .sheet-table,
-  .character-sheet--print .print-cm-track {
+  .character-sheet--print .print-cm-track,
+  .character-sheet--print .print-stat-grid,
+  .character-sheet--print .print-attr-row {
     break-inside: avoid;
+  }
+  .character-sheet--print .sheet-table tr,
+  .character-sheet--print .sheet-list li {
+    break-inside: avoid;
+  }
+  /* A heading alone at the foot of a page, and a single stranded row, are the
+   * two ways a split section reads as two sections. */
+  .character-sheet--print .sheet-section h3,
+  .character-sheet--print .sheet-section h4 {
+    break-after: avoid;
+  }
+  .character-sheet--print {
+    orphans: 2;
+    widows: 2;
+  }
+  /* A table that continues over the break repeats its header — for the five
+   * sections that have a <thead> to repeat. */
+  .character-sheet--print .sheet-table thead {
+    display: table-header-group;
   }
   .character-sheet--print .cm-box {
     width: 5.2mm;

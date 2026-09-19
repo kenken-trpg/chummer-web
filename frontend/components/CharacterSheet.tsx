@@ -102,6 +102,11 @@ export default function CharacterSheet({
         <ActionDpSection {...s} />
         <QualitiesSection {...s} />
         <div className="print-page-2">
+          {/* Page 2 leaves the printer as a loose sheet; without this line
+           * nothing on it says whose character it is. */}
+          <p className="print-runhead" aria-hidden="true">
+            {ui("sheet.printPage2", { name: character.name || ui("sheet.unnamed") })}
+          </p>
           <CombatSection {...s} />
           <WareSection {...s} />
           <MatrixSection {...s} />

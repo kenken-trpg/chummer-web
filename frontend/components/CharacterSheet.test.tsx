@@ -66,6 +66,36 @@ describe("<CharacterSheet>", () => {
     expect(h3).not.toContain("コア");
   });
 
+  it("names the owner at the top of print page 2, and only there", () => {
+    const { container } = render(
+      <CharacterSheet
+        character={makeCharacter({ name: "Volt" })}
+        catalog={makeCatalog()}
+        tr={identityTr}
+        layout="print"
+      />,
+    );
+    const head = container.querySelector(".print-page-2 > .print-runhead");
+    expect(head?.textContent).toBe("Volt ・ 2 ページ目");
+    // it is the first thing on the page, or it is not a running head
+    expect(container.querySelector(".print-page-2")?.firstElementChild).toBe(head);
+    expect(container.querySelectorAll(".print-runhead")).toHaveLength(1);
+  });
+
+  it("falls back to the unnamed label rather than printing a bare separator", () => {
+    const { container } = render(
+      <CharacterSheet
+        character={makeCharacter({ name: "" })}
+        catalog={makeCatalog()}
+        tr={identityTr}
+        layout="print"
+      />,
+    );
+    expect(container.querySelector(".print-runhead")?.textContent).toBe(
+      "無名のランナー ・ 2 ページ目",
+    );
+  });
+
   it("renders the text layout as a non-empty <pre>", () => {
     const { container } = render(
       <CharacterSheet
