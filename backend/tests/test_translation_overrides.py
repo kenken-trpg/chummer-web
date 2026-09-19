@@ -186,6 +186,11 @@ def test_committed_data_overlay_anchors() -> None:
     # SR5 core gear translated; supplement gear stays English by policy
     assert tr["Fire Resistance"] == "耐火"
     assert tr["Liner - Insulation (3)"] == "ライナー - 断熱 (3)"
+    # rulebook titles — only the two books with a published Japanese edition
+    assert tr["Shadowrun 5th Edition"] == "シャドウラン 第5版"
+    assert tr["Run and Gun"] == "ラン＆ガン"
+    for name in ("Street Grimoire", "Data Trails", "Chrome Flesh", "Run Faster"):
+        assert not JP_RE.search(tr.get(name, "") or ""), name
 
 
 # --- Phase 3: ui_strings wired through public_catalog + ui.json seed -----------
