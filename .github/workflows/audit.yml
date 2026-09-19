@@ -57,15 +57,23 @@ jobs:
       # still prints here without blocking every PR until upstream moves.
       - run: npm audit --omit=dev --audit-level=high
 
-  # The upload paths, hunted properly. `tests/test_import_fuzz.py` runs on every
-  # PR at 120 examples per property, which is a regression check, not a hunt —
-  # enough to catch a crash somebody just introduced and nowhere near enough to
-  # find one nobody has hit yet. The weekly run is where the budget goes.
+  # The upload paths, hunted properly. ci.yml runs `tests/test_import_fuzz.py`
+  # at 120 examples per property on every PR, which is a regression check, not
+  # a hunt — enough to catch a crash somebody just introduced and nowhere near
+  # enough to find one nobody has hit yet. The weekly run is where the budget
+  # goes.
   #
-  # Not in ci.yml: a run that takes minutes has no business on a PR, and a
-  # counterexample Hypothesis finds is a finding about the code, not about the
-  # commit that happened to be pushed — the same reason the audits above live
-  # here. A failure prints the shrunk input, which is the reproduction.
+  # The depth is chosen by event, because this workflow answers to
+  # `pull_request` too (the audits above have to) and 5,000 examples took
+  # 3.3 min the first time it ran on main — a cost worth paying weekly and not
+  # per merge, the more so now that scripts/merge_chain.sh waits for every
+  # check and not only the required ones. So: a shallow extra pass on a PR
+  # (~1 min more than the fixed setup), the full hunt everywhere else.
+  #
+  # Not in ci.yml at all because a counterexample Hypothesis finds is a finding
+  # about the code, not about the commit that happened to be pushed — the same
+  # reason the audits above live here. A failure prints the shrunk input, which
+  # is the reproduction.
   fuzz:
     runs-on: ubuntu-latest
     defaults:
@@ -94,7 +102,9 @@ jobs:
       - if: steps.chummer-cache.outputs.cache-hit != 'true'
         run: python scripts/fetch_chummer_data.py
 
-      - name: 5,000 examples per property
+      - name: Examples per property, by how much time this event is worth
         env:
-          FUZZ_EXAMPLES: "5000"
-        run: python -m pytest -q tests/test_import_fuzz.py
+          FUZZ_EXAMPLES: ${{ github.event_name == 'pull_request' && '500' || '5000' }}
+        run: |
+          echo "FUZZ_EXAMPLES=$FUZZ_EXAMPLES (${{ github.event_name }})"
+          python -m pytest -q tests/test_import_fuzz.py
