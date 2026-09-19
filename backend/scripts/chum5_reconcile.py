@@ -22,12 +22,24 @@ over budget is saved with `0`, not the deficit: when the save says 0 and this
 app is below zero as well, both agree the build is overspent — marked `over`
 and left out of the mismatches, since by how much cannot be told.
 
+``--locate NAME`` narrows one save's nuyen gap to the pieces that disagree:
+the save's own price for every item beside this app's, and then the arithmetic
+that says what each bucket would have to be if all the others were right. A
+bucket whose every item matches the save cannot be the one, which usually
+leaves a single candidate. Lifestyles are the common answer, because a save
+records no lifestyle total to check against.
+
 A save stores the karma it paid for a quality, not a reference to the price
 list, so a save written against an older `qualities.xml` states a price this
 app will never reproduce — the difference lands in the karma left. `-v` lists
 those qualities, and a row whose whole karma gap is exactly that is marked
 `qdrift`: Miko's single point is `Functional Tail (Prehensile)`, saved at 7
 where the catalogue now says 6. Same for `College Education` (saved 4, now 2).
+
+The same drift happens to gear: a save records each item's own cost, so
+`Ghile Mear`'s whole 2,000 nuyen gap is `Reakt`, saved at 75,000 where the
+catalogue now says 73,000. A row whose nuyen gap is exactly that is marked
+`gdrift`, and `-v` lists the items.
 
 A build over the 25 karma of negative qualities is marked `negcap`. Chummer's
 default settings refund all of it and call the build invalid, which is what
@@ -165,6 +177,7 @@ def reconcile(path: Path) -> dict[str, Any]:
         row["karma"] = (_number(root, "karma"), karma.get("remaining"))
         row["nuyen"] = (_number(root, "nuyen"), derived.get("nuyen"))
         row["quality_drift"] = _quality_drift(root)
+        row["gear_drift"] = _gear_drift(root)
     return row
 
 
@@ -227,6 +240,168 @@ def items(path: Path) -> None:
                 print(f"  {'vehicle ware':<20} {vehicle['name']} / {mod['name']} / {ware['name']}  {ware['nuyen']}")
 
 
+# Elements a save stores a price on, and the bucket each belongs to. A weapon
+# accessory and a piece of gear inside another are their own elements, so the
+# walk is by tag rather than by nesting.
+_PRICED_TAGS = {
+    "armor": "armor",
+    "weapon": "weapons",
+    "accessory": "weaponAccessories",
+    "gear": "otherGear",
+    "cyberware": "ware",
+    "vehicle": "vehicles",
+}
+
+
+def _stored_prices(root: ET.Element) -> list[tuple[str, str, float]]:
+    """(bucket, name, price) for every item whose save records a plain number.
+
+    Chummer writes the item's own cost into the save, which is the catalogue
+    expression at the time it was written — so `Rating * 25` appears verbatim
+    and is skipped here, as is anything that does not parse. What is left is
+    directly comparable with today's price list, and that comparison is the
+    gear counterpart of `_quality_drift`.
+
+    It is *not* what the character paid: a grade multiplies ware, a rating
+    scales gear, an `included` mod costs nothing. So this answers "has the
+    price list moved under this save", never "what should the total be".
+    """
+    out: list[tuple[str, str, float]] = []
+    for tag, bucket in _PRICED_TAGS.items():
+        for node in root.iter(tag):
+            name = (node.findtext("name") or "").strip()
+            if not name:
+                continue
+            # A piece that came with its parent is written with `cost` 0 and a
+            # `parentid`: it was never priced, so reading that 0 as a price
+            # reports every such item as drift (`Camera, Micro` in three of
+            # these saves). Accessories nest inside their weapon instead and
+            # carry no `parentid`, which is right — those are paid for.
+            if (node.findtext("parentid") or "").strip():
+                continue
+            try:
+                price = float((node.findtext("cost") or "").strip())
+            except ValueError:
+                continue
+            out.append((bucket, name, price))
+    return out
+
+
+def _gear_drift(root: ET.Element) -> list[tuple[str, float, float]]:
+    """Items whose stored price is not what today's catalogue charges.
+
+    The same problem `_quality_drift` reports for qualities: a save written
+    against an older `gear.xml` states a price this app will never reproduce,
+    and the difference lands in the nuyen left — the number the table compares.
+    Telling it apart from a rule this app gets wrong is the whole point.
+    """
+    from app.data_loader import catalog
+
+    listed: dict[str, float] = {}
+    seen_twice: set[str] = set()
+
+    def as_price(cost: object) -> float | None:
+        """A catalogue cost is often an expression, which is not comparable."""
+        if not isinstance(cost, (str, int, float)):
+            return None
+        try:
+            return float(str(cost))
+        except ValueError:
+            return None
+
+    def walk(obj: object) -> None:
+        if isinstance(obj, dict):
+            name = obj.get("name")
+            price = as_price(obj.get("cost"))
+            if isinstance(name, str) and name.strip() and price is not None:
+                key = name.strip()
+                if key in listed and listed[key] != price:
+                    seen_twice.add(key)  # same name, two prices: cannot tell which
+                listed.setdefault(key, price)
+            for value in obj.values():
+                walk(value)
+        elif isinstance(obj, list):
+            for value in obj:
+                walk(value)
+
+    data = catalog()
+    for key, value in data.items():
+        if key not in {"translations", "ui_strings"}:
+            walk(value)
+
+    drift: list[tuple[str, float, float]] = []
+    for _bucket, name, stored in _stored_prices(root):
+        if name in seen_twice or name not in listed:
+            continue
+        # A catalogue price of 0 is not a price to compare against. Chummer
+        # writes `Variable(20-100000)` for `Clothing`, which this app's catalogue
+        # reduces to 0 and the player's own pick (1,000 in Miko's save) sits in
+        # the save — a difference that says nothing about either price list.
+        if not listed[name]:
+            continue
+        if listed[name] != stored:
+            drift.append((name, listed[name], stored))
+    return drift
+
+
+def locate(path: Path) -> None:
+    """Narrow one save's nuyen gap down to the pieces that disagree.
+
+    Two halves. First, every item this app charges for, beside the price the
+    save recorded for the same name: a mismatch there is either price drift or
+    a rule about that item. Second, the arithmetic that finds what is left —
+    Chummer's own total spend, minus everything whose price both sides agree
+    on, is what Chummer charged for the rest. That is how the 32 nuyen on
+    Ocelot2.0 turned out to be its lifestyle (605 against this app's 573) with
+    every other line matching to the nuyen.
+    """
+    from app.characters import import_character
+    from app.chummer_import import chum5_to_state
+
+    raw = path.read_bytes()
+    root = ET.fromstring(raw)
+    derived = import_character(chum5_to_state(raw)[0]).derived
+    pool = float(derived.get("nuyen_pool") or 0)
+    ours_spent = float(derived.get("nuyen_spent") or 0)
+    theirs_left = _number(root, "nuyen")
+
+    print(f"{path.name}: pool {pool:,.0f}")
+    print(f"  this app spent {ours_spent:,.2f}, leaving {pool - ours_spent:,.2f}")
+    if (root.findtext("created") or "").strip().lower() == "true":
+        print("  career save — <nuyen> is a running balance, not a remainder; nothing to locate")
+        return
+    print(f"  Chummer left {theirs_left:,.2f}, so Chummer spent {pool - theirs_left:,.2f}")
+
+    print("\n  per bucket, this app:")
+    for line in derived.get("nuyen_spend_breakdown") or []:
+        print(f"    {line['notice']['key'].rsplit('.', 1)[-1]:<20} {line['amount']:>12,}")
+
+    drift = _gear_drift(root)
+    if drift:
+        print("\n  price drift (the save's number is not today's catalogue price):")
+        for name, catalogue, stored in drift:
+            print(f"    {name:<44} save {stored:>10,.0f}  catalogue {catalogue:>10,.0f}")
+        print(f"    {'total':<44} {sum(stored - c for _, c, stored in drift):>+10,.0f}")
+    else:
+        print("\n  price drift: none — every stored price matches the catalogue")
+
+    gap = (pool - theirs_left) - ours_spent
+    if abs(gap) <= NUYEN_TOLERANCE:
+        print("\n  no gap to locate.")
+        return
+    print(f"\n  gap {gap:+,.2f} — if every other line is right, one bucket would have to be:")
+    for line in derived.get("nuyen_spend_breakdown") or []:
+        name = line["notice"]["key"].rsplit(".", 1)[-1]
+        ours = float(line["amount"])
+        print(f"    {name:<20} {ours + gap:>12,.2f}   (this app: {ours:,.2f})")
+    print(
+        "\n  Read that as one row at a time, not all at once. A bucket whose every item"
+        "\n  matches the save above cannot be the one, which usually leaves a single"
+        "\n  candidate — and lifestyles are the common answer, because a save records"
+        "\n  no lifestyle total to check against."
+    )
+
+
 def _drift_explains(row: dict[str, Any]) -> bool:
     """The karma gap is exactly the qualities this save priced differently."""
     karma = row.get("karma")
@@ -237,6 +412,16 @@ def _drift_explains(row: dict[str, Any]) -> bool:
     # that much extra karma
     gap = float(karma[1]) - karma[0]
     return bool(gap == sum(stored - listed for _, listed, stored in drift))
+
+
+def _gear_drift_explains(row: dict[str, Any]) -> bool:
+    """The nuyen gap is exactly the items this save priced differently."""
+    nuyen = row.get("nuyen")
+    drift = row.get("gear_drift") or []
+    if row["career"] or not drift or nuyen is None or nuyen[1] is None:
+        return False
+    gap = float(nuyen[1]) - nuyen[0]
+    return bool(abs(gap - sum(stored - listed for _, listed, stored in drift)) <= NUYEN_TOLERANCE)
 
 
 def _matches(pair: tuple[float, Any] | None, tolerance: float) -> bool:
@@ -267,15 +452,19 @@ def main() -> int:
     ap.add_argument("-v", "--verbose", action="store_true", help="list each file's warning / error keys")
     ap.add_argument("--roundtrip", action="store_true", help="also export and re-import each save")
     ap.add_argument("--items", metavar="NAME", help="list one save's prices item by item, and stop")
+    ap.add_argument("--locate", metavar="NAME", help="narrow one save's nuyen gap to the pieces that disagree")
     args = ap.parse_args()
 
     folder = args.dir or fetch(args.ref)
-    if args.items:
-        match = next((p for p in sorted(folder.glob("*.chum5")) if args.items.lower() in p.name.lower()), None)
+    for flag, run in (("items", items), ("locate", locate)):
+        wanted = getattr(args, flag)
+        if not wanted:
+            continue
+        match = next((p for p in sorted(folder.glob("*.chum5")) if wanted.lower() in p.name.lower()), None)
         if match is None:
-            print(f"no save matching {args.items!r} in {folder}", file=sys.stderr)
+            print(f"no save matching {wanted!r} in {folder}", file=sys.stderr)
             return 1
-        items(match)
+        run(match)
         return 0
     rows = [reconcile(path) for path in sorted(folder.glob("*.chum5"))]
 
@@ -290,6 +479,7 @@ def main() -> int:
         mark += "  over" if over and not row["career"] else ""
         mark += "  negcap" if "engine.qualities.negativeCap" in row["errors"] and not row["career"] else ""
         mark += "  qdrift" if _drift_explains(row) else ""
+        mark += "  gdrift" if _gear_drift_explains(row) else ""
         # the save's own expense log explains part of the adjustment
         label = f"career, adj {row['adjust'][0]:+d} (log {row['spent'][0]:+d})" if row["career"] else _fmt(karma)
         nuyen_label = f"adj {row['adjust'][1]:+,d} (log {row['spent'][1]:+,d})" if row["career"] else _fmt(nuyen)
@@ -302,6 +492,8 @@ def main() -> int:
                     print(f"    {kind[:-1]}: {key} ×{count}")
             for name, listed, stored in row.get("quality_drift") or []:
                 print(f"    quality price: {name} — save {stored}, catalogue {listed}")
+            for name, listed_cost, stored_cost in row.get("gear_drift") or []:
+                print(f"    item price: {name} — save {stored_cost:,.0f}, catalogue {listed_cost:,.0f}")
 
     chargen = [row for row in rows if not row["career"]]
     karma_ok = sum(_matches(row.get("karma"), 0) for row in chargen)
