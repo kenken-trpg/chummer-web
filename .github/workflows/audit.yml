@@ -56,3 +56,45 @@ jobs:
       # toolchain never ships. High and critical fail the check; a moderate
       # still prints here without blocking every PR until upstream moves.
       - run: npm audit --omit=dev --audit-level=high
+
+  # The upload paths, hunted properly. `tests/test_import_fuzz.py` runs on every
+  # PR at 120 examples per property, which is a regression check, not a hunt —
+  # enough to catch a crash somebody just introduced and nowhere near enough to
+  # find one nobody has hit yet. The weekly run is where the budget goes.
+  #
+  # Not in ci.yml: a run that takes minutes has no business on a PR, and a
+  # counterexample Hypothesis finds is a finding about the code, not about the
+  # commit that happened to be pushed — the same reason the audits above live
+  # here. A failure prints the shrunk input, which is the reproduction.
+  fuzz:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - run: ../scripts/retry.sh pip install -r requirements-dev.txt
+
+      # Same cache as ci.yml's backend job: the seeds are real-shaped files
+      # built against the vendored catalog, so this needs the data.
+      - name: Cache Chummer data
+        id: chummer-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: backend/vendor
+          key: chummer-data-${{ hashFiles('backend/scripts/fetch_chummer_data.py') }}
+
+      - if: steps.chummer-cache.outputs.cache-hit != 'true'
+        run: python scripts/fetch_chummer_data.py
+
+      - name: 5,000 examples per property
+        env:
+          FUZZ_EXAMPLES: "5000"
+        run: python -m pytest -q tests/test_import_fuzz.py
