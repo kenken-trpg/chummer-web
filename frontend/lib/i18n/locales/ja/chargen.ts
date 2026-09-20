@@ -183,8 +183,6 @@ export const JA_CHARGEN = {
     "件数が多いため、内訳はここまでを表示しています（適用件数は上のとおり）。",
   "settings.customDataNeeded":
     "このセッティングはカスタムデータ（ハウスルール）を {count} 件参照しています。読み込むまで、そこでの追加・変更はいっさい効きません（素のデータで計算されます）。",
-  "settings.customDataAddedNotListed":
-    "追加された項目は、まだ購入一覧には出てきません（所持しているものの計算とシートには反映されます）。",
   "settings.customDataPick": "customdata ごと読み込む",
   "settings.customDataPickHint":
     "settings と customdata が並んでいるフォルダを、フォルダごと選びます。セッティングファイル単体ではカスタムデータは付いてきません",

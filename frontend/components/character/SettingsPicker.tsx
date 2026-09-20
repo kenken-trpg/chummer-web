@@ -383,9 +383,6 @@ export function SettingsPicker({
             {merge.ignored.length > 0
               ? ` ・ ${ui("settings.customDataIgnored", { files: merge.ignored.join(", ") })}`
               : ""}
-            {merge.changes.some((c) => c.action === "added")
-              ? ` ・ ${ui("settings.customDataAddedNotListed")}`
-              : ""}
             {merge.changes.length > 0 ? (
               <>
                 {" ・ "}
