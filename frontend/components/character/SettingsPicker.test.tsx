@@ -219,7 +219,55 @@ describe("SettingsPicker with custom data", () => {
     // a settings file naming custom data is unusable without it: everything
     // those directories add is simply missing
     setup(withCustom);
-    expect(screen.getByText(/カスタムデータを参照しています/)).toBeDefined();
+    expect(screen.getByText(/読み込むまで、そこでの追加・変更はいっさい効きません/)).toBeDefined();
+  });
+
+  // The line used to say only that the data was missing. A user who had
+  // loaded the settings .xml and seen it read that as "this app cannot load
+  // house rules" — the point they miss is that the folder is a separate pick.
+  // `/api/catalog` knows nothing about custom data: the overlay is applied
+  // inside `compute()`, not to the catalog the pick lists are built from. So
+  // a merged pack reaches the sheet but not the lists, and saying "now it is
+  // loaded" without saying that sends the user looking for a list entry that
+  // is not going to be there.
+  it("admits that an added entry does not reach the pick lists yet", async () => {
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(
+      mergeResult({
+        dataset: "d1",
+        applied: 1,
+        changes: [{ file: "martialarts.xml", entry: "コデックス流", action: "added", fields: [] }],
+      }),
+    );
+    setup(withCustom);
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("cd/pack/custom_martialarts.xml", "<x/>")] },
+    });
+    await waitFor(() => expect(screen.getByText(/まだ購入一覧には出てきません/)).toBeDefined());
+  });
+
+  it("says nothing about the pick lists when the pack only edits entries", async () => {
+    vi.spyOn(api, "uploadCustomData").mockResolvedValue(
+      mergeResult({
+        dataset: "d2",
+        applied: 1,
+        changes: [
+          { file: "armor.xml", entry: "Armor Jacket", action: "edited", fields: ["source"] },
+        ],
+      }),
+    );
+    setup(withCustom);
+    fireEvent.change(screen.getByLabelText("スタイル一式を読み込む"), {
+      target: { files: [folderFile("cd/pack/amend_armor.xml", "<x/>")] },
+    });
+    await waitFor(() => expect(screen.getByText(/1 件適用しました/)).toBeDefined());
+    expect(screen.queryByText(/まだ購入一覧には出てきません/)).toBeNull();
+  });
+
+  it("puts the way out in the warning itself", () => {
+    setup(withCustom);
+
+    const fix = screen.getByRole("button", { name: "customdata ごと読み込む" });
+    expect(fix.getAttribute("title")).toMatch(/フォルダごと選びます/);
   });
 
   it("offers the folder load whether or not the ruleset needs custom data", () => {

@@ -305,7 +305,20 @@ export function SettingsPicker({
 
       {error ? <p className="errors">{error}</p> : null}
       {needsCustomData && !ch.settings?.dataset ? (
-        <p className="muted">{ui("settings.customDataNeeded")}</p>
+        // Warning-coloured, not muted, and with the way out attached: the
+        // faint line this replaces said the data was missing but not that a
+        // settings file alone never carries it, so it read as "this app
+        // cannot load house rules".
+        <p className="notice notice-warn">
+          {ui("settings.customDataNeeded", { count: (ch.settings?.customdata || []).length })}{" "}
+          <button
+            className="linklike"
+            onClick={() => folderRef.current?.click()}
+            title={ui("settings.customDataPickHint")}
+          >
+            {ui("settings.customDataPick")}
+          </button>
+        </p>
       ) : null}
       {merge ? (
         <>
@@ -319,6 +332,9 @@ export function SettingsPicker({
               : ""}
             {merge.ignored.length > 0
               ? ` ・ ${ui("settings.customDataIgnored", { files: merge.ignored.join(", ") })}`
+              : ""}
+            {merge.changes.some((c) => c.action === "added")
+              ? ` ・ ${ui("settings.customDataAddedNotListed")}`
               : ""}
             {merge.changes.length > 0 ? (
               <>
