@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
+import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { MiscDrugsGear } from "./MiscDrugsGear";
 
@@ -46,8 +47,13 @@ function renderPanel(
   patch: (b: Record<string, unknown>) => void,
   mode: "misc" | "drugs" = "misc",
   catalog = makeCatalog(),
+  books?: string[],
 ) {
-  return render(<MiscDrugsGear {...panelProps(ch, { catalog, patch })} mode={mode} />);
+  return render(
+    <BooksProvider books={books}>
+      <MiscDrugsGear {...panelProps(ch, { catalog, patch })} mode={mode} />
+    </BooksProvider>,
+  );
 }
 
 /** A character owning these gear rows, mirrored into `derived`. */
@@ -318,7 +324,12 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
   const medkit = (over: Record<string, unknown> = {}) =>
     gear("g1", "Medkit", { addoncategories: ["Medkit Add-ons", "Custom"], ...over });
 
-  it("offers only core add-ons this parent takes, minus what it already has", () => {
+  const addonOptions = () =>
+    [...screen.getByRole("combobox", { name: "Medkit: 追加ギア" }).querySelectorAll("option")].map(
+      (o) => o.textContent,
+    );
+
+  it("offers the add-ons this parent takes, minus what it already has", () => {
     renderPanel(
       owning([
         medkit(),
@@ -328,20 +339,28 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
       "misc",
       catalog(),
     );
-
-    const select = screen.getByRole("combobox", { name: "Medkit: 追加ギア" });
-    const options = [...select.querySelectorAll("option")].map((o) => o.textContent);
-    expect(options).toEqual(["追加ギア", "Stabilisation Unit (250¥)"]);
+    expect(addonOptions()).toEqual([
+      "追加ギア",
+      "Stabilisation Unit (250¥)",
+      "Trauma Patch (500¥)",
+    ]);
   });
 
-  it("a search opens the list up to supplements", () => {
+  // This select used to change with the *catalog search box* further down the
+  // panel — two unrelated controls wired together, because the search box was
+  // the only way past the hard-coded `source === "SR5"`.
+  it("does not change with the catalog search box", () => {
     renderPanel(owning([medkit()]), vi.fn(), "misc", catalog());
+    const before = addonOptions();
 
     fireEvent.change(screen.getByPlaceholderText("ギアを検索"), { target: { value: "trauma" } });
 
-    const select = screen.getByRole("combobox", { name: "Medkit: 追加ギア" });
-    const options = [...select.querySelectorAll("option")].map((o) => o.textContent);
-    expect(options).toContain("Trauma Patch (500¥)");
+    expect(addonOptions()).toEqual(before);
+  });
+
+  it("drops the add-ons whose book the settings turned off", () => {
+    renderPanel(owning([medkit()]), vi.fn(), "misc", catalog(), ["SR5"]);
+    expect(addonOptions()).not.toContain("Trauma Patch (500¥)");
   });
 
   it("installs the add-on at its own minimum rating, parented to the row", () => {

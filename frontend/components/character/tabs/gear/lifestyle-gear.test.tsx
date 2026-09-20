@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
+import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { LifestyleGear } from "./LifestyleGear";
 
@@ -53,8 +54,13 @@ function renderLifestyles(
   ch: Character,
   patch: (b: Record<string, unknown>) => void,
   catalog = makeCatalog(),
+  books?: string[],
 ) {
-  return render(<LifestyleGear {...panelProps(ch, { catalog, patch })} />);
+  return render(
+    <BooksProvider books={books}>
+      <LifestyleGear {...panelProps(ch, { catalog, patch })} />
+    </BooksProvider>,
+  );
 }
 
 /**
@@ -379,7 +385,7 @@ describe("<LifestyleGear> the quality picker", () => {
         { id: "cq-cramped", name: "Cramped", lp: -1, cost: 0, source: "SR5" },
         // `allowed` lists where it takes no LP — still offered everywhere
         { id: "cq-vault", name: "Vault", lp: 3, cost: 0, source: "SR5", allowed: ["High"] },
-        // a supplement quality that is free and so stays off the list
+        // a supplement quality: on the list unless the settings drop SG
         { id: "cq-sg", name: "Obscure Perk", lp: 0, cost: 0, source: "SG" },
       ],
     } as any);
@@ -394,17 +400,29 @@ describe("<LifestyleGear> the quality picker", () => {
       ],
     );
 
-  it("hides what is taken and free supplements, not what `allowed` leaves out", () => {
-    renderLifestyles(middle(), vi.fn(), catalog());
+  const qualityOptions = () =>
+    [
+      ...screen
+        .getByRole("combobox", { name: "Middle: ライフスタイル品質" })
+        .querySelectorAll("option"),
+    ].map((o) => o.textContent);
 
-    const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" });
-    const options = [...select.querySelectorAll("option")].map((o) => o.textContent);
-    expect(options).toEqual([
+  // The list used to be `SR5 || RF || lp !== 0`: two book codes in code, with
+  // an escape hatch so the other books' costed entries still came through.
+  it("hides what is taken, not what `allowed` leaves out", () => {
+    renderLifestyles(middle(), vi.fn(), catalog());
+    expect(qualityOptions()).toEqual([
       "ライフスタイル品質",
       "Special Work Area (LP 2)",
       "Extra Space (LP 1)",
       "Vault (LP 3)",
+      "Obscure Perk (LP 0)",
     ]);
+  });
+
+  it("drops the qualities whose book the settings turned off", () => {
+    renderLifestyles(middle(), vi.fn(), catalog(), ["SR5"]);
+    expect(qualityOptions()).not.toContain("Obscure Perk (LP 0)");
   });
 
   it("keeps offering a quality that may be taken more than once", () => {

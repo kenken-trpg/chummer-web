@@ -1,6 +1,7 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
+import { useBookFilter } from "@/lib/character/books";
 import { vehicleFits } from "@/lib/character/gear";
 
 /** The weapon mounts on one vehicle, what is mounted in each, and the picker
@@ -16,6 +17,7 @@ export function VehicleMountRows({
   slotPick,
   setSlotPick,
 }: VehicleRowProps) {
+  const byBook = useBookFilter();
   const sizes = (catalog.weapon_mounts || []).filter(
     (mod) => mod.category === "Size" && vehicleFits(mod.required, item),
   );
@@ -81,7 +83,7 @@ export function VehicleMountRows({
         pickKey={`${item.id}-mount`}
         rowName={tr(item.name)}
         label={ui("veh.addMount")}
-        options={sizes.filter((mod) => mod.source === "SR5" || mod.source === "R5")}
+        options={byBook(sizes)}
         onAdd={(spec) =>
           patch({
             weapon_mounts: [...(ch.weapon_mounts || []), { size_id: spec.id, parent_id: item.id }],

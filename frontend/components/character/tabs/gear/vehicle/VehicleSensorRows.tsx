@@ -1,6 +1,7 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
+import { useBookFilter } from "@/lib/character/books";
 
 /** The sensor housings on one vehicle and the functions slotted into each. */
 export function VehicleSensorRows({
@@ -14,6 +15,7 @@ export function VehicleSensorRows({
   slotPick,
   setSlotPick,
 }: VehicleRowProps) {
+  const byBook = useBookFilter();
   return (
     <>
       {(item.sensors || []).map((sensor) => {
@@ -59,7 +61,7 @@ export function VehicleSensorRows({
               pickKey={sensor.id}
               rowName={tr(sensor.name)}
               label={ui("gear.addSensorFn")}
-              options={sensorAddons.filter((mod) => mod.source === "SR5")}
+              options={byBook(sensorAddons)}
               onAdd={(spec) =>
                 patch({
                   sensors: [

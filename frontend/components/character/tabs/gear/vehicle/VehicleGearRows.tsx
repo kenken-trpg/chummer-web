@@ -1,6 +1,7 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
+import { useBookFilter } from "@/lib/character/books";
 import { dropTree, vehicleInteriorFits } from "@/lib/character/gear";
 
 /** Gear carried inside one vehicle — a medkit in the glovebox rather than
@@ -15,11 +16,11 @@ export function VehicleGearRows({
   slotPick,
   setSlotPick,
 }: VehicleRowProps) {
-  const interior = (catalog.gear || []).filter(
+  const byBook = useBookFilter();
+  const interior = byBook(catalog.gear || []).filter(
     (mod) =>
       vehicleInteriorFits(mod) &&
       String(mod.cost || "").trim() !== "0" &&
-      mod.source === "SR5" &&
       !(item.gear || []).some((row) => row.gear_id === mod.id),
   );
   return (

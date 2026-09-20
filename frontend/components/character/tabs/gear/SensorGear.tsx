@@ -3,11 +3,13 @@ import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
 import { deviceRatingBit } from "@/lib/character/format";
 
 export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  const byBook = useBookFilter();
   /** Sensor housings nest two deep: housing → sensor → upgrade. */
   const install = (gearId: string, parentId: string, minrating: number) =>
     patch({
@@ -23,11 +25,10 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
         .filter((item) => !item.parent_id)
         .map((item) => {
           const childrenItems = (d.sensors || []).filter((child) => child.parent_id === item.id);
-          const addons = (catalog.sensors || []).filter(
+          const addons = byBook(catalog.sensors || []).filter(
             (mod) =>
               (item.addoncategories || []).includes(mod.category) &&
               mod.category !== "Custom" &&
-              mod.source === "SR5" &&
               !childrenItems.some((child) => child.gear_id === mod.id),
           );
           return (
@@ -140,7 +141,6 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         (mod) =>
                           (child.addoncategories || []).includes(mod.category) &&
                           mod.category !== "Custom" &&
-                          mod.source === "SR5" &&
                           !(d.sensors || []).some(
                             (row) => row.parent_id === child.id && row.gear_id === mod.id,
                           ),

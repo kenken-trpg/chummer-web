@@ -7,10 +7,12 @@ import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramR
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  const byBook = useBookFilter();
   return (
     <>
       <LooseProgramRows kind="cyberdecks" character={ch} d={d} tr={tr} ui={ui} patch={patch} />
@@ -154,10 +156,9 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 rowName={tr(item.name)}
                 prompt={ui("gear.addProgram")}
                 tr={tr}
-                options={(catalog.programs || []).filter(
+                options={byBook(catalog.programs || []).filter(
                   (prog) =>
                     prog.program_host === "cyberdecks" &&
-                    prog.source === "SR5" &&
                     !(d.programs || []).some(
                       (row) => row.parent_id === item.id && row.gear_id === prog.id,
                     ),

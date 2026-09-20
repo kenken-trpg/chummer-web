@@ -3,6 +3,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
+import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { dropTree, miscFits } from "@/lib/character/gear";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
@@ -38,6 +39,7 @@ export function MiscGearRow({
   extraPick: Record<string, string>;
   setExtraPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
 }) {
+  const allowedBooks = useAllowedBooks();
   const childrenItems = (d.gear || []).filter((child) => child.parent_id === item.id);
   const addons = (catalog.gear || []).filter(
     (mod) => Boolean(mod.requireparent) && miscFits(item, mod),
@@ -259,9 +261,11 @@ export function MiscGearRow({
               </option>
               {addons
                 .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
+                // Drug grades are not a book: they are how the one drug in
+                // this row is cut, so they are always on offer.
                 .filter(
                   (mod) =>
-                    gearSearch.trim() || mod.source === "SR5" || mod.category === "Drug Grades",
+                    mod.category === "Drug Grades" || isBookEnabled(allowedBooks, mod.source),
                 )
                 .map((mod) => (
                   <option key={mod.id} value={mod.id}>

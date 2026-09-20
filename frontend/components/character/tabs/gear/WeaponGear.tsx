@@ -4,12 +4,14 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
 import { weaponHelpLines } from "@/lib/character/help-breakdown";
 import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
 export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  const byBook = useBookFilter();
   const [slotPick, setSlotPick] = useState<Record<string, string>>({});
 
   return (
@@ -140,19 +142,17 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       }
                     >
                       <option value="">{ui("gear.addAccessory")}</option>
-                      {addons
-                        .filter((mod) => mod.specialmodification || mod.source === "SR5")
-                        .map((mod) => (
-                          <option key={mod.id} value={mod.id}>
-                            {tr(mod.name)} (
-                            {mod.specialmodification
-                              ? ui("weapon.specialMod", {
-                                  cost: mod.special_modification_cost || 1,
-                                })
-                              : formatAccessoryCost(mod.cost, parentCost)}
-                            )
-                          </option>
-                        ))}
+                      {byBook(addons).map((mod) => (
+                        <option key={mod.id} value={mod.id}>
+                          {tr(mod.name)} (
+                          {mod.specialmodification
+                            ? ui("weapon.specialMod", {
+                                cost: mod.special_modification_cost || 1,
+                              })
+                            : formatAccessoryCost(mod.cost, parentCost)}
+                          )
+                        </option>
+                      ))}
                     </select>
                     <button
                       className="btn"
@@ -242,13 +242,11 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       }
                     >
                       <option value="">{ui("weapon.addAmmo")}</option>
-                      {ammoAddons
-                        .filter((mod) => mod.source === "SR5")
-                        .map((mod) => (
-                          <option key={mod.id} value={mod.id}>
-                            {tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor, ui)})
-                          </option>
-                        ))}
+                      {byBook(ammoAddons).map((mod) => (
+                        <option key={mod.id} value={mod.id}>
+                          {tr(mod.name)} ({formatAmmoCost(mod.cost, mod.costfor, ui)})
+                        </option>
+                      ))}
                     </select>
                     <button
                       className="btn"

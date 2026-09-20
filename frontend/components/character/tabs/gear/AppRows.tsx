@@ -3,6 +3,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 
 /**
  * The apps on one device and the select to add more. A commlink runs them,
@@ -22,6 +23,7 @@ export function AppRows({
   hostId: string;
   hostName: string;
 }) {
+  const byBook = useBookFilter();
   return (
     <>
       {(d.apps || [])
@@ -124,11 +126,10 @@ export function AppRows({
         rowName={tr(hostName)}
         prompt={ui("gear.addApp")}
         tr={tr}
-        options={(catalog.apps || []).filter(
+        options={byBook(catalog.apps || []).filter(
           (app) =>
-            app.source === "SR5" &&
-            (app.needs_extra ||
-              !(d.apps || []).some((row) => row.parent_id === hostId && row.gear_id === app.id)),
+            app.needs_extra ||
+            !(d.apps || []).some((row) => row.parent_id === hostId && row.gear_id === app.id),
         )}
         extraFor={(app) =>
           app.extra_kind === "skill"

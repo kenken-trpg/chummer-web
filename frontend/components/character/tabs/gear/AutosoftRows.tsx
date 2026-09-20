@@ -2,6 +2,7 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 
 /** The autosofts on one host — an RCC that shares them, or a drone or
  *  vehicle that runs them itself — with their picks, and the control that
@@ -19,6 +20,7 @@ export function AutosoftRows({
   hostId: string;
   hostName: string;
 }) {
+  const byBook = useBookFilter();
   return (
     <>
       {(d.programs || [])
@@ -133,10 +135,9 @@ export function AutosoftRows({
         rowName={hostName}
         prompt={ui("gear.addAutosoft")}
         tr={tr}
-        options={(catalog.programs || []).filter(
+        options={byBook(catalog.programs || []).filter(
           (prog) =>
             prog.program_host === "rccs" &&
-            (prog.source === "SR5" || prog.source === "R5") &&
             (prog.needs_extra ||
               !(d.programs || []).some(
                 (row) => row.parent_id === hostId && row.gear_id === prog.id,
