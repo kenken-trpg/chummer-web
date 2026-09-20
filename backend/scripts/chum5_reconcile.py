@@ -340,8 +340,9 @@ def report_fidelity(folder: Path) -> int:
     print(f"export fidelity: {clean} of {len(saves)} saves come back saying everything Chummer said")
     if dropped_counts:
         print(f"\ndropped — Chummer states it, the export does not ({len(dropped_counts)} fields):")
-        print("  (`value` / `totalvalue` / `metatypecategory` are figures Chummer recomputes;")
-        print("   whether its loader reads them back is a question for Chummer's own source.)")
+        print("  (not all of these matter: Chummer recomputes an attribute's `totalvalue`")
+        print("   and `metatypecategory` on load and never reads them back. See")
+        print("   docs/plans/chum5-export-for-chummer-plan.md for which fields `Load` reads.)")
         for tag, count in dropped_counts.most_common():
             print(f"  {count:>4}  {tag}")
     if changed_counts:
