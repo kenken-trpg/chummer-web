@@ -1,5 +1,5 @@
 "use client";
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { kindLabel } from "@/lib/character/format";
@@ -196,10 +196,10 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   (item.category || "").toLowerCase().includes(q)
                 );
               }
-              if (spellKind === "enchantment") return true;
-              return item.source === "SR5";
+              // `<PickerList>` applies the settings' book list; this used
+              // to narrow to SR5 again underneath it
+              return true;
             })}
-          note={spellSearch.trim() ? undefined : CORE_ONLY}
         >
           {(item) => {
             const paid = (d.spell_points?.used || 0) >= (d.spell_points?.free || 0);

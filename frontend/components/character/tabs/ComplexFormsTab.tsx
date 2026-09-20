@@ -1,5 +1,5 @@
 "use client";
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
@@ -124,9 +124,10 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                   (item.target || "").toLowerCase().includes(q)
                 );
               }
-              return item.source === "SR5";
+              // no book test here: `<PickerList>` already applies the
+              // settings' own, and a second one hid the books it enabled
+              return true;
             })}
-          note={cfSearch.trim() ? undefined : CORE_ONLY}
         >
           {(item) => {
             const paid = (d.complex_form_points?.used || 0) >= (d.complex_form_points?.free || 0);

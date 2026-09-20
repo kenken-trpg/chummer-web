@@ -511,9 +511,11 @@ describe("<MiscDrugsGear> the catalog picker", () => {
   const offered = () =>
     [...document.querySelectorAll(".quality-list .quality-item b")].map((el) => el.textContent);
 
-  it("leaves out drugs, parts that need a parent, and supplements", () => {
+  it("leaves out drugs and parts that need a parent", () => {
     renderPanel(owning([]), vi.fn(), "misc", catalog());
-    expect(offered()).toEqual(["Medkit", "Rope"]);
+    // supplements are on the list now: narrowing an idle list to SR5 under
+    // the settings' own book list meant enabling a book changed nothing
+    expect(offered()).toEqual(["Medkit", "Rope", "Micro Drone"]);
   });
 
   it("a search reaches supplements and matches the category too", () => {

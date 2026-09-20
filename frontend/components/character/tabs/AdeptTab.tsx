@@ -1,6 +1,6 @@
 "use client";
 
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
 import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
@@ -25,12 +25,14 @@ export function AdeptTab({
   const [enhSearch, setEnhSearch] = useState("");
   const [qiSearch, setQiSearch] = useState("");
 
+  // An empty search box lists every power the settings allow. It used to
+  // narrow to SR5 underneath the book list, so switching a book on changed
+  // nothing until you typed.
   const matchedPowers = useMemo(() => {
     const q = powerSearch.trim().toLowerCase();
-    return (catalog.powers || []).filter((item) =>
-      !q
-        ? item.source === "SR5"
-        : item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
+    return (catalog.powers || []).filter(
+      (item) =>
+        !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
     );
   }, [catalog, powerSearch, tr]);
 
@@ -205,11 +207,7 @@ export function AdeptTab({
         />
       </div>
       <div className="quality-list">
-        <PickerList
-          items={matchedPowers}
-          limit={200}
-          note={powerSearch.trim() ? undefined : CORE_ONLY}
-        >
+        <PickerList items={matchedPowers} limit={200}>
           {(item) => (
             <div className="quality-item" key={item.id}>
               <div>
@@ -405,11 +403,10 @@ export function AdeptTab({
         <PickerList
           items={(catalog.powers || []).filter((item) => {
             const q = qiSearch.trim().toLowerCase();
-            return q
-              ? item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
-              : item.source === "SR5";
+            return (
+              !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
+            );
           })}
-          note={qiSearch.trim() ? undefined : CORE_ONLY}
         >
           {(item) => (
             <div className="quality-item" key={`qi-${item.id}`}>

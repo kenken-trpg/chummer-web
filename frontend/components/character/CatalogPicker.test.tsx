@@ -31,12 +31,24 @@ function setup(props: { limit?: number } = {}, books?: string[]) {
 }
 
 describe("CatalogPicker", () => {
-  it("lists core-rulebook entries only until you search, and says so", () => {
+  // The idle list used to be SR5 only whatever the settings said, so enabling
+  // a book changed nothing until you typed: 202 armours, 12 on offer.
+  it("lists everything the enabled books allow, with no search", () => {
     setup();
     expect(screen.getByText("ライナーコート")).toBeDefined();
+    expect(screen.getByText("Chameleon Suit")).toBeDefined();
+  });
+
+  it("narrows the idle list to the settings' books", () => {
+    setup({}, ["SR5"]);
+    expect(screen.getByText("ライナーコート")).toBeDefined();
     expect(screen.queryByText("Chameleon Suit")).toBeNull();
-    // the SR5-only default used to be invisible: an item was simply "missing"
-    expect(screen.getByRole("status").textContent).toContain("SR5 のみ表示中");
+
+    // and a search does not smuggle the disabled book back in
+    fireEvent.change(screen.getByRole("searchbox", { name: "防具を検索" }), {
+      target: { value: "chameleon" },
+    });
+    expect(screen.queryByText("Chameleon Suit")).toBeNull();
   });
 
   it("searches the translated name as well as the English one", () => {
@@ -47,14 +59,13 @@ describe("CatalogPicker", () => {
     expect(screen.getByText("ライナーコート")).toBeDefined();
     expect(screen.queryByText("Armor Jacket")).toBeNull();
 
-    // and a search reaches past SR5 into the supplements
     fireEvent.change(box, { target: { value: "chameleon" } });
     expect(screen.getByText("Chameleon Suit")).toBeDefined();
   });
 
   it("reports the rows it cut off instead of dropping them silently", () => {
     setup({ limit: 1 });
-    expect(screen.getByRole("status").textContent).toContain("他 1 件");
+    expect(screen.getByRole("status").textContent).toContain("他 2 件");
   });
 
   it("says so when nothing matches", () => {
@@ -67,12 +78,18 @@ describe("CatalogPicker", () => {
 
   it("filters by category chip, and only offers chips that have rows", () => {
     setup();
-    // "Cloaks" holds a single RG item, which the idle list does not show
     expect(screen.getAllByRole("button", { name: /^(すべて|Armor|Cloaks)$/ }).length).toBe(3);
     fireEvent.click(screen.getByRole("button", { name: "Armor" }));
     expect(screen.getByText("ライナーコート")).toBeDefined();
+    // "Cloaks" holds a single RG item. The chip used to select an empty list,
+    // because the chips came from the enabled books and the rows from SR5.
     fireEvent.click(screen.getByRole("button", { name: "Cloaks" }));
-    expect(screen.getByRole("status").textContent).toContain("該当なし");
+    expect(screen.getByText("Chameleon Suit")).toBeDefined();
+  });
+
+  it("drops a chip whose book the settings turned off", () => {
+    setup({}, ["SR5"]);
+    expect(screen.queryByRole("button", { name: "Cloaks" })).toBeNull();
   });
 
   it("names each buy button after its row", () => {
@@ -119,11 +136,11 @@ describe("PickerList", () => {
 
   it("carries the idle note only while it applies", () => {
     const { unmount } = render(
-      <PickerList items={["a"]} note="picker.coreOnly">
+      <PickerList items={["a"]} note="gear.idleDrugs">
         {(id) => <div key={id}>{id}</div>}
       </PickerList>,
     );
-    expect(screen.getByRole("status").textContent).toContain("SR5 のみ表示中");
+    expect(screen.getByRole("status").textContent).toContain("SR5 とドラッグのみ表示中");
     unmount();
 
     render(<PickerList items={["a"]}>{(id) => <div key={id}>{id}</div>}</PickerList>);

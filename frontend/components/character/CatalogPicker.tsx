@@ -56,14 +56,12 @@ type Props<T extends Pickable> = {
   /** Defaults to 購入 / "Buy". */
   addLabel?: string;
   limit?: number;
-  /** What an empty search box shows. The default is core-rulebook entries;
-   *  lifestyles use a hand-picked set instead. */
+  /** Narrows what an empty search box shows, past the book list. Only for a
+   *  panel whose idle list is a game rule rather than a book — lifestyles
+   *  offer their hand-picked set. Leave it off and an empty box lists
+   *  everything the settings allow. */
   idle?: { keep: (item: T) => boolean; note: MsgKey };
 };
-
-/** The default idle note: with an empty search box the lists show
- *  core-rulebook entries only. */
-export const CORE_ONLY: MsgKey = "picker.coreOnly";
 
 /**
  * Why the list stops where it does.
@@ -100,14 +98,16 @@ export function PickerFootnote({
  * the catalog" panel.
  *
  * Ten gear panels had this same block copy-pasted, each with its own drift.
- * Two behaviours in it used to be silent, and both read to the user as "that
- * item does not exist":
  *
- * - with an empty search box the list shows core-rulebook entries only, and
- * - the list is cut off at `limit` rows.
+ * An empty search box used to list core-rulebook entries only, whatever the
+ * settings said. That is a second, invisible book filter sitting under the
+ * visible one: with every book enabled the armour list still offered 12 of its
+ * 202 entries, and turning a book *on* changed nothing until you typed. The
+ * settings' book list is now the only thing that narrows an idle list.
  *
- * Both are still true — rendering 3,000 rows is not an improvement — but they
- * are now stated under the list instead of being inferred.
+ * The list is still cut off at `limit` rows — rendering 3,000 of them is not
+ * an improvement — but the footnote says so rather than leaving it to be
+ * inferred from an item that is "missing".
  */
 export function CatalogPicker<T extends Pickable>({
   items,
@@ -142,9 +142,7 @@ export function CatalogPicker<T extends Pickable>({
         ? item.name.toLowerCase().includes(query) ||
           tr(item.name).toLowerCase().includes(query) ||
           (item.category || "").toLowerCase().includes(query)
-        : idle
-          ? idle.keep(item)
-          : (item.source || "SR5") === "SR5",
+        : !idle || idle.keep(item),
     );
   const shown = matched.slice(0, limit);
 
@@ -201,7 +199,7 @@ export function CatalogPicker<T extends Pickable>({
         <PickerFootnote
           matched={matched.length}
           shown={shown.length}
-          note={query ? undefined : idle ? idle.note : CORE_ONLY}
+          note={query || !idle ? undefined : idle.note}
         />
       </div>
     </>

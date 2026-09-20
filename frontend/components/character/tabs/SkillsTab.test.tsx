@@ -554,16 +554,18 @@ describe("<SkillsTab> the knowledge picker", () => {
       knowledge: [
         knowItem, // Magic Theory / Academic / SR5
         { name: "Street Gangs", category: "Street", attribute: "INT", source: "SR5" },
-        // a supplement entry: off the list until you search for it
+        // a supplement entry: on the list unless the settings drop its book
         { name: "Aztechnology Politics", category: "Professional", attribute: "LOG", source: "SG" },
       ],
     });
   const listed = () =>
     [...document.querySelectorAll(".quality-list .quality-item b")].map((el) => el.textContent);
 
-  it("lists core entries only until the search box has something in it", () => {
+  // It used to list SR5 entries only whatever the settings said, so a book
+  // the GM had enabled looked like one this app did not have.
+  it("lists every entry the settings allow, and searches within it", () => {
     renderTab({ catalog: catalog() });
-    expect(listed()).toEqual(["Magic Theory", "Street Gangs"]);
+    expect(listed()).toEqual(["Magic Theory", "Street Gangs", "Aztechnology Politics"]);
 
     fireEvent.change(screen.getByPlaceholderText("知識技能を検索"), {
       target: { value: "aztech" },
@@ -578,7 +580,7 @@ describe("<SkillsTab> the knowledge picker", () => {
     expect(listed()).toEqual(["Street Gangs"]);
 
     fireEvent.click(screen.getByRole("button", { name: "すべて" }));
-    expect(listed()).toEqual(["Magic Theory", "Street Gangs"]);
+    expect(listed()).toEqual(["Magic Theory", "Street Gangs", "Aztechnology Politics"]);
   });
 
   it("hides what the character already has", () => {
@@ -590,7 +592,7 @@ describe("<SkillsTab> the knowledge picker", () => {
       } as any,
     });
 
-    expect(listed()).toEqual(["Street Gangs"]);
+    expect(listed()).toEqual(["Street Gangs", "Aztechnology Politics"]);
   });
 });
 
