@@ -1,5 +1,6 @@
 "use client";
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
+import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
 import { DRUG_CATS, isDrugCategory } from "@/lib/character/constants";
 import { renderNotices } from "@/lib/engine-notices";
@@ -8,8 +9,9 @@ import { renderNotices } from "@/lib/engine-notices";
  *  box, and the list you buy from.
  *
  *  Two lists rather than one because the two modes browse differently — misc
- *  gear shows the core book until you search, drugs also show CF's Drugs and
- *  BTL chips, which are the list you actually browse. */
+ *  gear lists whatever the settings' books allow, drugs narrow to the Drugs
+ *  and BTL chips you actually browse and leave the toxin-and-chemical tail to
+ *  the search box. */
 export function MiscGearPicker({
   catalog,
   character: ch,
@@ -32,6 +34,9 @@ export function MiscGearPicker({
   extraPick: Record<string, string>;
   setExtraPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
 }) {
+  // The chips are built from the same set the list draws from, so a chip can
+  // never select an empty list.
+  const allowedGear = filterByBooks(useAllowedBooks(), catalog.gear || []);
   return (
     <>
       <div className="option-row">
@@ -45,12 +50,8 @@ export function MiscGearPicker({
           ? [...DRUG_CATS]
           : [
               ...new Set(
-                (catalog.gear || [])
-                  .filter((item) => {
-                    if (item.requireparent) return false;
-                    if (isDrugCategory(item)) return false;
-                    return gearSearch.trim() || item.source === "SR5";
-                  })
+                allowedGear
+                  .filter((item) => !item.requireparent && !isDrugCategory(item))
                   .map((item) => item.category),
               ),
             ]
@@ -76,7 +77,6 @@ export function MiscGearPicker({
       <div className="quality-list">
         {mode === "misc" && (
           <PickerList
-            note={gearSearch.trim() ? undefined : CORE_ONLY}
             items={(catalog.gear || [])
               .filter((item) => !item.requireparent)
               .filter((item) => !isDrugCategory(item))
@@ -89,7 +89,9 @@ export function MiscGearPicker({
                     tr(item.name).toLowerCase().includes(q) ||
                     item.category.toLowerCase().includes(q)
                   );
-                return item.source === "SR5";
+                // no second book test: `<PickerList>` applies the settings'
+                // own, and this one hid the books they enabled
+                return true;
               })}
           >
             {(item) => (

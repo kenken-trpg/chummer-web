@@ -147,7 +147,6 @@ export const JA_APP = {
   "common.hits": "{kind}ヒット",
 
   "common.kind": "種類",
-  "picker.coreOnly": "SR5 のみ表示中（検索するとサプリメントも探します）",
   "picker.none": "該当なし",
   "picker.more": "他 {count} 件。検索で絞り込んでください",
   "picker.buyLabel": "{name} を{action}",

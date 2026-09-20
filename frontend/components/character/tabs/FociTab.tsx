@@ -1,5 +1,5 @@
 "use client";
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
@@ -179,9 +179,10 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 (item.effect || "").toLowerCase().includes(q)
               );
             }
-            return item.source === "SR5";
+            // `<PickerList>` applies the settings' book list; this used to
+            // narrow to SR5 again underneath it
+            return true;
           })}
-          note={focusSearch.trim() ? undefined : CORE_ONLY}
         >
           {(item) => (
             <div className="quality-item" key={item.id}>

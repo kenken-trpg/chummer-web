@@ -1,4 +1,5 @@
 "use client";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
@@ -178,14 +179,18 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
         onChange={(e) => setSpriteSearch(e.target.value)}
       />
       <div className="quality-list">
-        {(catalog.sprites || [])
-          .filter((item) => {
+        {/* Through `<PickerList>` so the settings' book list reaches this one
+            too: it listed SR5 sprites until you typed, and every book's after
+            that, which is the wrong way round. */}
+        <PickerList
+          items={(catalog.sprites || []).filter((item) => {
             const q = spriteSearch.trim().toLowerCase();
-            if (q)
-              return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-            return item.source === "SR5";
-          })
-          .map((item) => (
+            return (
+              !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
+            );
+          })}
+        >
+          {(item) => (
             <div className="quality-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
@@ -222,7 +227,8 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 </button>
               </div>
             </div>
-          ))}
+          )}
+        </PickerList>
       </div>
     </div>
   );

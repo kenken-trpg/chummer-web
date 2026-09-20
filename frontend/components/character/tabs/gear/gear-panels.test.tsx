@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Catalog } from "@/lib/types";
 import type { TabPanelProps } from "@/components/character/types";
+import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { ArmorGear } from "./ArmorGear";
 import { CommlinkGear } from "./CommlinkGear";
@@ -27,11 +28,14 @@ const PANELS: {
   Panel: ComponentType<TabPanelProps>;
   label: string;
   catalog: Partial<Catalog>;
-  /** the core-rulebook row that shows with an empty search box */
+  /** a row that shows with an empty search box */
   core: string;
-  /** the supplement row that only a search reaches */
+  /** a row from a supplement, so the book filter has something to bite on */
   supplement: string;
   patch: Record<string, unknown>;
+  /** this panel hand-picks its idle list (`idle` on `<CatalogPicker>`), so an
+   *  empty search box is narrower than the book list on purpose */
+  curatedIdle?: true;
 }[] = [
   {
     name: "ArmorGear",
@@ -77,15 +81,26 @@ const PANELS: {
   },
   {
     name: "LifestyleGear",
+    curatedIdle: true,
     Panel: LifestyleGear,
     label: "ライフスタイルを検索",
     catalog: {
       lifestyles: [
         { ...base, id: "l1", name: "Medium", cost: 5000, increment: "month", lp: 3 },
-        { ...base, id: "l2", name: "Hospitalized", cost: 500, increment: "month", lp: 0 },
+        {
+          ...base,
+          id: "l2",
+          name: "Hospitalized",
+          cost: 500,
+          increment: "month",
+          lp: 0,
+          source: "RF",
+        },
       ] as any,
     },
-    // lifestyles filter on a hand-picked core set, not on `source`
+    // lifestyles narrow their idle list to a hand-picked set, not to a book,
+    // so this row stays off it whatever the settings say — the book list is
+    // still what a search is held to
     core: "Medium",
     supplement: "Hospitalized",
     patch: { lifestyles: [{ lifestyle_id: "l1", months: 1, quality_ids: [] }] },
@@ -140,18 +155,44 @@ const PANELS: {
   },
 ];
 
-function renderPanel(entry: (typeof PANELS)[number], patch: (b: Record<string, unknown>) => void) {
+function renderPanel(
+  entry: (typeof PANELS)[number],
+  patch: (b: Record<string, unknown>) => void,
+  books?: string[],
+) {
   const ch = makeCharacter();
-  render(<entry.Panel {...panelProps(ch, { catalog: makeCatalog(entry.catalog), patch })} />);
+  render(
+    <BooksProvider books={books}>
+      <entry.Panel {...panelProps(ch, { catalog: makeCatalog(entry.catalog), patch })} />
+    </BooksProvider>,
+  );
 }
 
 describe.each(PANELS)("<$name>", (entry) => {
-  it("lists the core-rulebook rows, and says why the rest are missing", () => {
+  // With no settings loaded nothing is restricted, so an empty search box
+  // lists the supplements too. It used to list SR5 only, which made a book
+  // the GM had enabled look like a book this app did not have.
+  it("lists every row the settings allow, with no search", () => {
     renderPanel(entry, vi.fn());
     expect(screen.getByRole("searchbox", { name: entry.label })).toBeDefined();
     expect(screen.getByText(entry.core)).toBeDefined();
+    if (entry.curatedIdle) {
+      expect(screen.getByRole("status").textContent).toMatch(/表示中/);
+    } else {
+      expect(screen.getByText(entry.supplement)).toBeDefined();
+    }
+  });
+
+  it("drops the supplement rows when the settings turn that book off", () => {
+    renderPanel(entry, vi.fn(), ["SR5"]);
+    expect(screen.getByText(entry.core)).toBeDefined();
     expect(screen.queryByText(entry.supplement)).toBeNull();
-    expect(screen.getByRole("status").textContent).toMatch(/表示中/);
+
+    // and the search box does not reach around the book list
+    fireEvent.change(screen.getByRole("searchbox", { name: entry.label }), {
+      target: { value: entry.supplement.slice(0, 5) },
+    });
+    expect(screen.queryByText(entry.supplement)).toBeNull();
   });
 
   it("reaches the supplement rows through the search box", () => {

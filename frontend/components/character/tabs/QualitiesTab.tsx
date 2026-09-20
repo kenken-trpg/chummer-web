@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
-import { CORE_ONLY, PickerFootnote } from "@/components/character/CatalogPicker";
+import { PickerFootnote } from "@/components/character/CatalogPicker";
 import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
@@ -40,10 +40,10 @@ export function QualitiesTab({
     const metaOnly = qCat === "Metagenic";
     return filterByBooks(allowedBooks, catalog.qualities)
       .filter((item) => (metaOnly ? item.metagenic : qCat === "all" || item.category === qCat))
-      .filter((item) => {
-        if (!q) return metaOnly || !item.source || item.source === "SR5";
-        return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
-      });
+      .filter(
+        (item) =>
+          !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
+      );
   }, [catalog, qSearch, qCat, tr, allowedBooks]);
   const filteredQualities = matchedQualities.slice(0, 200);
 
@@ -416,11 +416,7 @@ export function QualitiesTab({
             </div>
           );
         })}
-        <PickerFootnote
-          matched={matchedQualities.length}
-          shown={filteredQualities.length}
-          note={qSearch.trim() ? undefined : CORE_ONLY}
-        />
+        <PickerFootnote matched={matchedQualities.length} shown={filteredQualities.length} />
       </div>
     </div>
   );

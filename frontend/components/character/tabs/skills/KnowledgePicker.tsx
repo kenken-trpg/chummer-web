@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { CORE_ONLY, PickerList } from "@/components/character/CatalogPicker";
+import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { KNOW_CATS, knowCatLabel } from "@/lib/character/constants";
 import { knowledgeEditor } from "./shared";
@@ -19,7 +19,9 @@ export function KnowledgePicker(props: TabPanelProps) {
     return (catalog.skills.knowledge || [])
       .filter((item) => knowCat === "all" || item.category === knowCat)
       .filter((item) => {
-        if (!q) return !item.source || item.source === "SR5";
+        // `<PickerList>` applies the settings' book list; this used to
+        // narrow to SR5 again underneath it
+        if (!q) return true;
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
       });
   }, [catalog, knowSearch, knowCat, tr]);
@@ -77,10 +79,7 @@ export function KnowledgePicker(props: TabPanelProps) {
       <div className="quality-list">
         {/* the cut used to happen before the "already taken" filter, so a
             character with forty knowledge skills saw an empty list */}
-        <PickerList
-          items={matchedKnowledge.filter((item) => !know.owned.has(item.name))}
-          note={knowSearch.trim() ? undefined : CORE_ONLY}
-        >
+        <PickerList items={matchedKnowledge.filter((item) => !know.owned.has(item.name))}>
           {(item) => (
             <div className="quality-item" key={`${item.category}:${item.name}`}>
               <div>

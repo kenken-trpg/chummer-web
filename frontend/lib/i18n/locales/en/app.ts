@@ -140,7 +140,6 @@ export const EN_APP = {
   "common.hits": "{kind} hits",
 
   "common.kind": "Kind",
-  "picker.coreOnly": "Showing SR5 only (search to reach the supplements)",
   "picker.none": "No matches",
   "picker.more": "{count} more. Narrow the search.",
   "picker.buyLabel": "{action} {name}",
