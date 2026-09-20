@@ -823,3 +823,88 @@ describe("active skill ordering", () => {
     ]);
   });
 });
+
+/**
+ * A skill you do not buy but have to *name*: a quality's pick, a piece of
+ * ware's, an adept power's. Each has a control next to what grants it, on
+ * that thing's own tab — and nothing here said so, which is where a player
+ * looks for a skill. The picks are repeated here, and writing to one has to
+ * reach the right list: `skill_picks` for a quality or ware, `adept_powers`
+ * for a power whose `extra` *is* the skill.
+ */
+describe("<SkillsTab> skills that come with something", () => {
+  const slot = (over: Record<string, unknown> = {}) => ({
+    key: "quality:q1:0",
+    source: "College Education",
+    source_kind: "quality",
+    source_id: "q1",
+    picked: "",
+    bonus: 0,
+    max: 0,
+    rating: 0,
+    options: ["Blades", "Pistols"],
+    knowledgeskills: false,
+    ...over,
+  });
+
+  const power = (over: Record<string, unknown> = {}) => ({
+    id: "p1",
+    power_id: "c-p1",
+    name: "Improved Ability (Combat)",
+    rating: 1,
+    rating_min: 1,
+    rating_max: 6,
+    extra: "",
+    cost: 0.5,
+    select: "skill",
+    options: ["Blades", "Pistols"],
+    ...over,
+  });
+
+  it("says nothing when the character has no such skill", () => {
+    renderTab();
+    expect(screen.queryByText("ついてくる技能")).toBeNull();
+  });
+
+  it("writes a quality's pick to skill_picks", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: { derived: { skill_pick_slots: [slot()] } } as any,
+      patch,
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /College Education/ }), {
+      target: { value: "Blades" },
+    });
+
+    expect(patch).toHaveBeenCalledWith({ skill_picks: { "quality:q1:0": "Blades" } });
+  });
+
+  it("writes an adept power's skill to the power, not to skill_picks", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: {
+        adept_powers: [{ id: "p1", power_id: "c-p1", rating: 1, extra: "" }],
+        derived: { adept_powers: [power()] },
+      } as any,
+      patch,
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Improved Ability/ }), {
+      target: { value: "Pistols" },
+    });
+
+    expect(patch).toHaveBeenCalledWith({
+      adept_powers: [{ id: "p1", power_id: "c-p1", rating: 1, extra: "Pistols" }],
+    });
+  });
+
+  // A free power's target is not the player's to set: the choice that granted
+  // it already named one, and the adept tab hides the select for that reason.
+  it("leaves a power that came with its target already named alone", () => {
+    renderTab({
+      character: { derived: { adept_powers: [power({ free_only: true })] } } as any,
+    });
+    expect(screen.queryByText("ついてくる技能")).toBeNull();
+  });
+});

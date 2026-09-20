@@ -3,6 +3,9 @@ export const JA_CHARGEN = {
   "skills.points": "技能 {skills} ・ グループ {groups} ・ 知識 {knowledge}",
   "skills.careerNote": " ・ キャリアはカルマで成長（上限 R{max}）",
   "skills.chargenNote": " ・ 専門化は1点",
+  "skills.granted": "ついてくる技能",
+  "skills.grantedNote":
+    "資質・ウェア・アデプト能力が連れてくる技能です。ここで選んでも、それぞれのタブで選んでも同じものです。",
   "skills.groups": "技能グループ",
   "skills.softBit": "ソフトR{rating}",
   "skills.default": "デフォルト {pool}",
