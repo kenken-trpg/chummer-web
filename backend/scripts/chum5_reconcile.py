@@ -73,11 +73,23 @@ same chummer5a ref as the game data::
     python scripts/chum5_reconcile.py --dir DIR   # other saves instead
     python scripts/chum5_reconcile.py --roundtrip # + export / re-import check
     python scripts/chum5_reconcile.py --items Mittens   # one save, item by item
+    python scripts/chum5_reconcile.py --fidelity  # export vs. the save Chummer wrote
 
 `--roundtrip` writes each save back out and reads it again: what it holds
 (gear by bucket, ware, vehicle mods — with whether each sits in a parent) and
 what it spent must come back the same. It catches what an import reads but the
 export has nowhere to write.
+
+`--fidelity` answers the question `--roundtrip` cannot. Reading the export
+back with this app's own importer is blind by construction to anything
+Chummer needs and this app does not: a field neither side reads comes back
+unchanged because neither side looked, and the round trip calls that a pass.
+Chummer is the other reader of these files, and the only statement of what it
+expects is the save it wrote — so this compares the original against the
+export, field by field, over the character's own header (who they are, what
+they were built with, what the build was allowed to spend). Everything else a
+save holds is a list this app rebuilds from its own catalogue, which is
+supposed to differ.
 
 `--items` lists what this app charges for each piece of one save (the first
 file whose name contains the text), to set beside the save's own `<cost>`
@@ -234,6 +246,109 @@ def roundtrip(path: Path) -> list[str]:
     if spent[0] != spent[1]:
         out.append(f"nuyen spent {spent[0]} -> {spent[1]}")
     return out
+
+
+#: A value Chummer wrote that says nothing: the element is there because
+#: Chummer writes every field, not because this character has one.
+_EMPTY_VALUES = {"", "0", "0.0", "False"}
+
+#: Leaf elements whose text has to survive a round trip, checked by value
+#: rather than by presence. `<settings>` is the settings *file*, which is not
+#: the same string as `<gameplayoption>`'s rule name — writing one into the
+#: other is how a save comes back to Chummer naming a file that is not there.
+_SAME_VALUE_TAGS = (
+    "settings",
+    "gameplayoption",
+    "buildmethod",
+    "metatype",
+    "metavariant",
+    "prioritymetatype",
+    "priorityattributes",
+    "priorityspecial",
+    "priorityskills",
+    "priorityresources",
+    "prioritytalent",
+    "created",
+)
+
+
+def _leaves(root: ET.Element) -> dict[str, str]:
+    """The character's own fields: the leaf elements directly under
+    `<character>`, plus each attribute's own leaves.
+
+    Deliberately not the whole tree. Everything else a save holds is a *list*
+    of things — gear, qualities, vehicles — which this app rebuilds from its
+    own catalogue rather than copying across, so comparing those element by
+    element would bury the fields that matter under items that are supposed
+    to differ. What is left is the header: who the character is, what they
+    were built with, and what the build was allowed to spend.
+    """
+    out: dict[str, str] = {}
+    for child in root:
+        if len(child) == 0:
+            out[child.tag] = (child.text or "").strip()
+    for attr in root.findall("./attributes/attribute"):
+        name = (attr.findtext("name") or "").strip()
+        if not name:
+            continue
+        for leaf in attr:
+            if leaf.tag != "name" and len(leaf) == 0:
+                out[f"{name}/{leaf.tag}"] = (leaf.text or "").strip()
+    return out
+
+
+def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
+    """What Chummer states about a character that this app's export does not.
+
+    `--roundtrip` reads the export back with *this app's own* importer, so it
+    is blind by construction to anything Chummer needs and this app does not:
+    a field neither side reads comes back unchanged because neither side
+    looked. Chummer itself is the other reader, and the only statement of
+    what it expects is the save it wrote — so the comparison is the original
+    against the export, field by field.
+
+    A field Chummer wrote empty (`0`, `False`) is not reported: it is there
+    because Chummer writes every field, not because this character has one.
+    """
+    from app.characters import import_character
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+
+    theirs = _leaves(ET.fromstring(path.read_bytes()))
+    exported = state_to_chum5(import_character(chum5_to_state(path.read_bytes())[0]))
+    ours = _leaves(ET.fromstring(exported if isinstance(exported, bytes) else exported.encode()))
+    dropped = [tag for tag, text in theirs.items() if tag not in ours and text not in _EMPTY_VALUES]
+    changed = [
+        (tag, theirs[tag], ours[tag])
+        for tag in _SAME_VALUE_TAGS
+        if tag in theirs and tag in ours and theirs[tag] != ours[tag]
+    ]
+    return dropped, changed
+
+
+def report_fidelity(folder: Path) -> int:
+    saves = sorted(folder.glob("*.chum5"))
+    dropped_counts: collections.Counter[str] = collections.Counter()
+    changed_counts: collections.Counter[tuple[str, str, str]] = collections.Counter()
+    clean = 0
+    for path in saves:
+        dropped, changed = fidelity(path)
+        if not dropped and not changed:
+            clean += 1
+        dropped_counts.update(dropped)
+        changed_counts.update(changed)
+    print(f"export fidelity: {clean} of {len(saves)} saves come back saying everything Chummer said")
+    if dropped_counts:
+        print(f"\ndropped — Chummer states it, the export does not ({len(dropped_counts)} fields):")
+        print("  (`value` / `totalvalue` / `metatypecategory` are figures Chummer recomputes;")
+        print("   whether its loader reads them back is a question for Chummer's own source.)")
+        for tag, count in dropped_counts.most_common():
+            print(f"  {count:>4}  {tag}")
+    if changed_counts:
+        print("\nchanged — both state it, with different text:")
+        for (tag, theirs, ours), count in changed_counts.most_common():
+            print(f"  {count:>4}  {tag}: Chummer {theirs!r}, ours {ours!r}")
+    return 1 if dropped_counts or changed_counts else 0
 
 
 def items(path: Path) -> None:
@@ -475,11 +590,18 @@ def main() -> int:
     ap.add_argument("--ref", default=_ref(), help="chummer5a ref to fetch the test files at")
     ap.add_argument("-v", "--verbose", action="store_true", help="list each file's warning / error keys")
     ap.add_argument("--roundtrip", action="store_true", help="also export and re-import each save")
+    ap.add_argument(
+        "--fidelity",
+        action="store_true",
+        help="compare the export with the save Chummer wrote, field by field, and stop",
+    )
     ap.add_argument("--items", metavar="NAME", help="list one save's prices item by item, and stop")
     ap.add_argument("--locate", metavar="NAME", help="narrow one save's nuyen gap to the pieces that disagree")
     args = ap.parse_args()
 
     folder = args.dir or fetch(args.ref)
+    if args.fidelity:
+        return report_fidelity(folder)
     for flag, run in (("items", items), ("locate", locate)):
         wanted = getattr(args, flag)
         if not wanted:

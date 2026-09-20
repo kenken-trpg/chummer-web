@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from scripts.chum5_reconcile import _stored_prices
+from scripts.chum5_reconcile import _leaves, _stored_prices
 
 
 def _save(body: str) -> ET.Element:
@@ -63,3 +63,40 @@ def test_every_priced_kind_of_element_is_read() -> None:
         ("weaponAccessories", "Personalized Grip", 100.0),
         ("weapons", "Survival Knife", 100.0),
     ]
+
+
+def test_only_the_characters_own_fields_are_compared() -> None:
+    """`_leaves` decides what `--fidelity` is even looking at.
+
+    The saves hold lists of things this app rebuilds from its own catalogue
+    rather than copying across, so walking the whole tree would bury the
+    header fields under items that are supposed to differ. Only the leaves
+    directly under `<character>` and each attribute's own leaves count.
+    """
+    root = _save("""
+        <alias>Skink</alias>
+        <sumtoten>10</sumtoten>
+        <attributes>
+          <attribute><name>BOD</name><base>2</base><metatypemin>1</metatypemin></attribute>
+        </attributes>
+        <gears><gear><name>Medkit</name><cost>750</cost></gear></gears>
+    """)
+    assert _leaves(root) == {
+        "alias": "Skink",
+        "sumtoten": "10",
+        "BOD/base": "2",
+        "BOD/metatypemin": "1",
+    }
+
+
+def test_an_attribute_with_no_name_is_not_a_field() -> None:
+    """Keyed by the attribute's name, so a nameless one would collide with
+    the next: two `/base` entries under one key, one silently overwriting the
+    other."""
+    root = _save("""
+        <attributes>
+          <attribute><base>3</base></attribute>
+          <attribute><name>AGI</name><base>5</base></attribute>
+        </attributes>
+    """)
+    assert _leaves(root) == {"AGI/base": "5"}
