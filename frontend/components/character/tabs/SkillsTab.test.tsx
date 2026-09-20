@@ -899,6 +899,87 @@ describe("<SkillsTab> skills that come with something", () => {
     });
   });
 
+  it("writes a mentor's power target to mentor_extras", () => {
+    const patch = vi.fn();
+    renderTab({
+      character: {
+        derived: {
+          mentor: {
+            id: "m1",
+            name: "Bear",
+            advantage: "",
+            disadvantage: "",
+            choices: [
+              {
+                name: "Bear (Combat)",
+                set: "",
+                audience: "all",
+                selected: true,
+                extra: "",
+                extra_options: [],
+                power_targets: [
+                  {
+                    power: "Improved Ability (Combat)",
+                    key: "Bear (Combat)|Improved Ability (Combat)",
+                    kind: "skill",
+                    extra: "",
+                    options: ["Blades", "Pistols"],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      } as any,
+      patch,
+    });
+
+    fireEvent.change(screen.getByRole("combobox", { name: /Improved Ability/ }), {
+      target: { value: "Blades" },
+    });
+
+    expect(patch).toHaveBeenCalledWith({
+      mentor_extras: { "Bear (Combat)|Improved Ability (Combat)": "Blades" },
+    });
+  });
+
+  // An offered choice the character did not take grants nothing, so it asks
+  // for nothing here either.
+  it("leaves a mentor choice the character did not take alone", () => {
+    renderTab({
+      character: {
+        derived: {
+          mentor: {
+            id: "m1",
+            name: "Bear",
+            advantage: "",
+            disadvantage: "",
+            choices: [
+              {
+                name: "Bear (Combat)",
+                set: "",
+                audience: "all",
+                selected: false,
+                extra: "",
+                extra_options: [],
+                power_targets: [
+                  {
+                    power: "Improved Ability (Combat)",
+                    key: "k",
+                    kind: "skill",
+                    extra: "",
+                    options: ["Blades"],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      } as any,
+    });
+    expect(screen.queryByText("ついてくる技能")).toBeNull();
+  });
+
   // A free power's target is not the player's to set: the choice that granted
   // it already named one, and the adept tab hides the select for that reason.
   it("leaves a power that came with its target already named alone", () => {
