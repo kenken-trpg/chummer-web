@@ -411,6 +411,12 @@ input[type="search"] {
   margin: 0 0 12px;
   font-size: 0.85rem;
 }
+/* Same shape, but this one is telling you something is missing rather than
+   reporting what just happened. */
+.notice-warn {
+  border-left-color: var(--warn);
+  color: var(--text);
+}
 .toolbar {
   display: flex;
   gap: 8px;

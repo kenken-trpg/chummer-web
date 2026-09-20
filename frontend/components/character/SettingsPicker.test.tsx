@@ -219,7 +219,17 @@ describe("SettingsPicker with custom data", () => {
     // a settings file naming custom data is unusable without it: everything
     // those directories add is simply missing
     setup(withCustom);
-    expect(screen.getByText(/カスタムデータを参照しています/)).toBeDefined();
+    expect(screen.getByText(/カスタムデータ（ハウスルール）を 2 件参照しています/)).toBeDefined();
+  });
+
+  // The line used to say only that the data was missing. A user who had
+  // loaded the settings .xml and seen it read that as "this app cannot load
+  // house rules" — the point they miss is that the folder is a separate pick.
+  it("puts the way out in the warning itself", () => {
+    setup(withCustom);
+
+    const fix = screen.getByRole("button", { name: "customdata ごと読み込む" });
+    expect(fix.getAttribute("title")).toMatch(/フォルダごと選びます/);
   });
 
   it("offers the folder load whether or not the ruleset needs custom data", () => {

@@ -174,7 +174,10 @@ export const EN_CHARGEN = {
   "settings.mergeTruncated":
     "Too many to itemise; the breakdown stops here. The count above is still exact.",
   "settings.customDataNeeded":
-    "This ruleset refers to custom data. Until it is loaded, the entries it adds are simply missing.",
+    "This ruleset names {count} custom-data directories. Until they are loaded, everything they add or change is simply missing.",
+  "settings.customDataPick": "Load it with its customdata",
+  "settings.customDataPickHint":
+    "Pick the folder that holds settings and customdata side by side — the folder itself. A settings file on its own does not bring its custom data with it",
   "settings.groupLoaded": "Loaded files",
   "settings.groupShipped": "Shipped with Chummer",
   "settings.load": "Load settings file",
