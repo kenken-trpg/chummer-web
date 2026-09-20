@@ -20,6 +20,26 @@ describe("buildChecklist", () => {
     expect(items[0]).toMatchObject({ severity: "error", tab: "skills" });
   });
 
+  // The pick lists stop offering an item once its book is off, so a character
+  // who already holds one has no other clue. It routes to the priority tab,
+  // where the settings and the book checkboxes live.
+  it("routes the out-of-book warning to the settings tab, as a warning", () => {
+    const ch = makeCharacter({
+      derived: {
+        karma: { pool: 25, spent: 25, remaining: 0 },
+        warnings: [
+          {
+            key: "engine.settings.outOfBooks",
+            params: { count: 1, names: [{ tr: "Armanté Suit" }], more: 0, books: "RG" },
+          },
+        ],
+      },
+    });
+    const items = buildChecklist(ch);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ severity: "warn", tab: "priority" });
+  });
+
   it("reports leftover priority points in chargen but not in career", () => {
     const derived = {
       karma: { pool: 25, spent: 25, remaining: 0 },
@@ -111,6 +131,7 @@ describe("guessTab", () => {
   it("routes an engine notice by the area in its key", () => {
     expect(guessTab("engine.nuyen.negative")).toBe("gear");
     expect(guessTab("engine.attrs.essenceDepleted")).toBe("attrs");
+    expect(guessTab("engine.settings.outOfBooks")).toBe("priority");
     expect(guessTab("engine.somethingNew.whatever")).toBeUndefined();
     expect(guessTab("check.karmaLeft")).toBeUndefined();
   });

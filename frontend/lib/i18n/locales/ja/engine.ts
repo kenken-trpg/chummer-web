@@ -327,6 +327,10 @@ export const JA_ENGINE = {
     "未使用新円 {left}¥：Standard レベルでは {keep}¥ までしか持ち越せません（超過分 {lost}¥ は原則失われます）",
   "engine.settings.unsupported":
     "このセッティングのハウスルール {count} 件は未対応です（{tags}）。数値には反映されていないので、卓で確認してください",
+  "engine.settings.outOfBooks":
+    "使用ルールブック外の項目が {count} 件あります（{books}）：{names}。購入一覧には出てこないので、卓で確認してください",
+  "engine.settings.outOfBooksMore":
+    "使用ルールブック外の項目が {count} 件あります（{books}）：{names} ほか {more} 件。購入一覧には出てこないので、卓で確認してください",
 
   "engine.nuyen.negative": "新円が不足しています（残り {nuyen}¥）",
   "engine.import.gearMovedOut":

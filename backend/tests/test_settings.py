@@ -212,6 +212,46 @@ def test_unsupported_knobs_are_surfaced_as_a_warning() -> None:
     assert has(state.derived["warnings"], "engine.settings.unsupported", tags="ignoreart")
 
 
+def _armor_from(source: str) -> dict:
+    return next(a for a in catalog()["armor"] if a.get("source") == source)
+
+
+def test_gear_outside_the_enabled_books_is_named_in_the_warnings() -> None:
+    """The pick lists stop offering it, which on its own reads as "that item
+    is gone". A character can arrive holding it — imported from Chummer, or
+    built before the GM dropped the book — so the sheet says which pieces."""
+    core, supplement = _armor_from("SR5"), _armor_from("RG")
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(
+            armor=[
+                {"armor_id": core["id"], "rating": 1, "equipped": True},
+                {"armor_id": supplement["id"], "rating": 1, "equipped": True},
+            ],
+            settings={"name": "SR5 only", "books": ["SR5"]},
+        ),
+    )
+    assert has(
+        state.derived["warnings"],
+        "engine.settings.outOfBooks",
+        names=[supplement["name"]],
+        books="RG",
+    )
+
+
+def test_nothing_is_out_of_book_when_the_settings_name_no_books() -> None:
+    """An empty book list means unrestricted, not "no books at all" — a
+    character saved before the field existed must not light up in red."""
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(
+            armor=[{"armor_id": _armor_from("RG")["id"], "rating": 1, "equipped": True}],
+            settings={"name": "unrestricted", "books": []},
+        ),
+    )
+    assert not has(state.derived["warnings"], "engine.settings.outOfBooks")
+
+
 def test_the_priority_table_a_settings_file_names_is_the_one_used() -> None:
     """`priorities.xml` carries three tables and this app used to hard-code
     Standard, so a Prime Runner table silently paid Standard nuyen."""

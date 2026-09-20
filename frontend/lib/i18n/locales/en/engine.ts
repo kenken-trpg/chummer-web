@@ -327,6 +327,10 @@ export const EN_ENGINE = {
     "{left}¥ unspent: Standard gameplay carries over at most {keep}¥, so {lost}¥ is normally lost",
   "engine.settings.unsupported":
     "{count} house rule(s) in these settings are not implemented ({tags}). They are not reflected in any number here — check with your table",
+  "engine.settings.outOfBooks":
+    "{count} things here are outside the books this ruleset allows ({books}): {names}. The pick lists no longer offer them — check with your GM.",
+  "engine.settings.outOfBooksMore":
+    "{count} things here are outside the books this ruleset allows ({books}): {names} and {more} more. The pick lists no longer offer them — check with your GM.",
 
   "engine.nuyen.negative": "Nuyen is overspent ({nuyen}¥ left)",
   "engine.import.gearMovedOut":
