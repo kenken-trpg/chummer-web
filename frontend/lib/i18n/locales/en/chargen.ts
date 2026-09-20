@@ -179,8 +179,6 @@ export const EN_CHARGEN = {
     "Too many to itemise; the breakdown stops here. The count above is still exact.",
   "settings.customDataNeeded":
     "This ruleset names {count} custom-data directories. Until they are loaded, nothing they add or change applies at all — the character is worked out from the stock data.",
-  "settings.customDataAddedNotListed":
-    "The entries it adds do not appear in the pick lists yet. What the character already holds is worked out, and printed, with them.",
   "settings.customDataPick": "Load it with its customdata",
   "settings.customDataPickHint":
     "Pick the folder that holds settings and customdata side by side — the folder itself. A settings file on its own does not bring its custom data with it",
