@@ -164,7 +164,26 @@ async function computeRemote(
  * the state to the compute service.
  */
 export const api = {
-  catalog: () => req<Catalog>("/api/catalog"),
+  /**
+   * The options catalog, as the character's custom data sees it.
+   *
+   * Without a dataset this is the vendored data. With one the server applies
+   * that merge to the catalog too, which is what puts a house-ruled martial
+   * art in the pick lists rather than only in the sheet of a character that
+   * already had one. A set the server does not hold answers 409, and `req`
+   * uploads it and asks again — the same handshake the character calls use,
+   * which is why the directory list is noted first.
+   */
+  catalog: (settings?: { dataset?: string; customdata?: string[] }) => {
+    const wanted = settings?.customdata ?? [];
+    if (!settings?.dataset || wanted.length === 0) return req<Catalog>("/api/catalog");
+    lastCustomData = wanted;
+    const query = new URLSearchParams([
+      ["dataset", settings.dataset],
+      ...wanted.map((name) => ["customdata", name] as [string, string]),
+    ]);
+    return req<Catalog>(`/api/catalog?${query}`);
+  },
 
   list: () => local.listCharacters(),
 

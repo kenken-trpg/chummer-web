@@ -44,6 +44,54 @@ describe("useCharacterEditor", () => {
     expect(localStorage.getItem("lastCharacterId")).toBe("c1");
   });
 
+  // The pick lists are built from the catalog, and the catalog used to be the
+  // vendored data whatever the character's settings said — so a merged
+  // custom-data pack reached the sheet and never the lists.
+  it("re-reads the catalog for the character's custom data", async () => {
+    const withPack = makeCharacter({
+      id: "c1",
+      settings: { name: "新東京", books: ["SR5"], customdata: ["pack"], dataset: "h1" },
+    });
+    api.create.mockResolvedValue(withPack);
+    const merged = { translations: {} } as unknown as Catalog;
+    api.catalog.mockResolvedValueOnce(catalog).mockResolvedValueOnce(merged);
+
+    const { result } = renderHook(() => useCharacterEditor());
+
+    await waitFor(() => expect(result.current.catalog).toBe(merged));
+    expect(api.catalog).toHaveBeenNthCalledWith(1);
+    expect(api.catalog).toHaveBeenNthCalledWith(2, { dataset: "h1", customdata: ["pack"] });
+  });
+
+  it("does not re-read it for a character with no custom data", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+
+    const { result } = renderHook(() => useCharacterEditor());
+
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+    expect(api.catalog).toHaveBeenCalledTimes(1);
+  });
+
+  // 3 MB is long enough on a phone that blanking every pick list for the
+  // length of the request reads worse than lists that are a merge behind.
+  it("keeps the catalog it has when the re-read fails, and says so", async () => {
+    api.create.mockResolvedValue(
+      makeCharacter({
+        id: "c1",
+        settings: { name: "新東京", books: [], customdata: ["pack"], dataset: "h1" },
+      }),
+    );
+    // no message on it, so the fallback wording is what shows (a fetch that
+    // failed with the server's own words keeps those, as everywhere else)
+    api.catalog.mockResolvedValueOnce(catalog).mockRejectedValueOnce(new Error());
+
+    const { result } = renderHook(() => useCharacterEditor());
+
+    await waitFor(() => expect(result.current.error).toBeTruthy());
+    expect(result.current.catalog).toBe(catalog);
+    expect(result.current.error).toBe(MESSAGES.ja["app.err.catalogReload"]);
+  });
+
   it("reopens the last character when its id is in the roster", async () => {
     localStorage.setItem("lastCharacterId", "saved");
     api.list.mockResolvedValue([{ id: "saved", name: "Saved" }]);

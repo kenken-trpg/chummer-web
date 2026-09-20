@@ -253,6 +253,67 @@ def test_a_character_with_no_custom_data_never_needs_the_handshake(client: TestC
     assert client.post("/api/characters/patch", json={"state": state}).status_code == 200
 
 
+# --- the catalog the pick lists are built from --------------------------- #
+
+
+def _arts(res: object) -> list[str]:
+    return [a["name"] for a in res.json()["martial_arts"]]  # type: ignore[attr-defined]
+
+
+def test_the_catalog_carries_the_custom_entries_of_the_set_it_is_asked_for(
+    client: TestClient,
+) -> None:
+    """The overlay used to be applied inside `compute()` only, so a merged pack
+    reached the sheet but never the pick lists: a house-ruled martial art was
+    computable, printable — and unbuyable."""
+    up = client.post("/api/customdata", json={"files": _FILES, "customdata": ["g>1"]}).json()
+    plain = client.get("/api/catalog")
+    with_set = client.get("/api/catalog", params={"dataset": up["dataset"], "customdata": ["g>1"]})
+
+    assert "Z" not in _arts(plain)
+    assert "Z" in _arts(with_set)
+    # a different payload has to be a different ETag, or a client holding the
+    # plain one is told its copy is current
+    assert plain.headers["etag"] != with_set.headers["etag"]
+
+
+def test_asking_for_a_set_the_server_lacks_gets_the_same_409_as_a_character(
+    client: TestClient,
+) -> None:
+    """So the client's existing retry — upload the files, ask again — covers
+    the catalog too, without a second handshake."""
+    res = client.get("/api/catalog", params={"dataset": "nope", "customdata": ["g>1"]})
+    assert res.status_code == 409
+    assert res.json()["detail"]["key"] == "api.customDataMissing"
+
+
+def test_the_plain_catalog_is_untouched_by_a_set_being_loaded(client: TestClient) -> None:
+    """Two characters can be open in two tabs, one under a ruleset and one
+    not. The overlay must not leak into the process-wide cache."""
+    before = client.get("/api/catalog")
+    client.post("/api/customdata", json={"files": _FILES, "customdata": ["g>1"]})
+    after = client.get("/api/catalog")
+    assert after.headers["etag"] == before.headers["etag"]
+    assert "Z" not in _arts(after)
+
+
+def test_a_repeat_ask_for_the_same_set_is_a_304(client: TestClient) -> None:
+    up = client.post("/api/customdata", json={"files": _FILES, "customdata": ["g>1"]}).json()
+    params = {"dataset": up["dataset"], "customdata": ["g>1"]}
+    first = client.get("/api/catalog", params=params)
+    again = client.get("/api/catalog", params=params, headers={"If-None-Match": first.headers["etag"]})
+    assert again.status_code == 304
+
+
+def test_a_dataset_without_its_directory_list_is_the_plain_catalog(client: TestClient) -> None:
+    """`lookup` is keyed by both halves, so a hash on its own identifies
+    nothing — and answering 409 for it would strand a client that has no
+    directories enabled at all."""
+    res = client.get("/api/catalog", params={"dataset": "whatever"})
+    assert res.status_code == 200
+    assert res.headers["etag"] == client.get("/api/catalog").headers["etag"]
+
+
 def test_an_empty_upload_is_refused(client: TestClient) -> None:
     res = client.post("/api/customdata", json={"files": {}, "customdata": []})
     assert res.status_code == 400

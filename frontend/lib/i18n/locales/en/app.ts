@@ -321,6 +321,8 @@ export const EN_APP = {
 
   "txt.money": "Nuyen {nuyen}¥  karma left {remaining}/{pool}",
   "app.err.boot": "Could not start up.",
+  "app.err.catalogReload":
+    "The option lists could not be rebuilt for this custom data. The pick lists are still the ones from before it was loaded.",
   "app.err.load": "Could not load.",
   "app.err.duplicate": "Could not duplicate.",
   "app.err.patch": "Could not save the change.",

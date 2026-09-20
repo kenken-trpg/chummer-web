@@ -330,6 +330,8 @@ export const JA_APP = {
   // raise a `MessageError` carrying one of these keys; the editor renders it.
   "txt.money": "新円 {nuyen}¥  カルマ残 {remaining}/{pool}",
   "app.err.boot": "起動に失敗しました",
+  "app.err.catalogReload":
+    "カスタムデータを反映した項目一覧を取得できませんでした。購入一覧は読み込み前のままです。",
   "app.err.load": "読込に失敗しました",
   "app.err.duplicate": "複製に失敗しました",
   "app.err.patch": "更新に失敗しました",
