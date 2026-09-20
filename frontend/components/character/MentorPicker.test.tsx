@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { BooksProvider } from "@/lib/character/books";
 import { MentorPicker } from "./MentorPicker";
 import { makeCatalog, makeCharacter } from "@/tests/fixtures";
 import type { MentorInfo } from "@/lib/types";
@@ -51,6 +52,41 @@ function renderPicker(onPatch = vi.fn()) {
 }
 
 describe("MentorPicker", () => {
+  // The mentor list never applied the settings' book list, so a Street
+  // Grimoire mentor stayed on offer with SG switched off.
+  it("narrows the list to the enabled books, but keeps the current pick", () => {
+    const catalog = makeCatalog({
+      mentors: [
+        { id: "chaos", name: "Chaos", source: "SG", page: "200", advantage: "" },
+        { id: "bear", name: "Bear", source: "SR5", page: "394", advantage: "" },
+      ],
+    });
+    const picker = (mentorId: string) => (
+      <BooksProvider books={["SR5"]}>
+        <MentorPicker
+          catalog={catalog}
+          mentor={mentorId === "chaos" ? chaos : null}
+          ch={makeCharacter({ mentor_id: mentorId })}
+          tr={(n) => n}
+          onPatch={vi.fn()}
+        />
+      </BooksProvider>
+    );
+
+    const { unmount } = render(picker(""));
+    const options = () =>
+      [...(screen.getByRole("combobox", { name: "メンター" }) as HTMLSelectElement).options]
+        .map((o) => o.textContent)
+        .slice(1);
+    expect(options()).toEqual(["Bear"]);
+    unmount();
+
+    // A character who already has Chaos can still see — and so drop — it. A
+    // <select> that quietly loses its own value reads as "no mentor".
+    render(picker("chaos"));
+    expect(options()).toEqual(["Bear", "Chaos"]);
+  });
+
   it("offers a granted power its own target beside the choice's pick", () => {
     // The choice's own select is spent on *which* Improved Potential it grants,
     // so the `<selectlimit>` on the second one needs a select of its own.

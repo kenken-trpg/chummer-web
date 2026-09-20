@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
 import { CORE_ONLY, PickerFootnote } from "@/components/character/CatalogPicker";
+import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
@@ -28,16 +29,22 @@ export function QualitiesTab({
 }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
+  // This tab writes its own list rather than using `<CatalogPicker>`, and so
+  // had never applied the settings' book list: with Chrome Flesh switched off,
+  // 「プロトタイプ・トランスヒューマン」 still turned up in the search and could
+  // still be bought. Qualities already taken are not narrowed away — they are
+  // listed, and removed, in the 所持 section above.
+  const allowedBooks = useAllowedBooks();
   const matchedQualities = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
     const metaOnly = qCat === "Metagenic";
-    return catalog.qualities
+    return filterByBooks(allowedBooks, catalog.qualities)
       .filter((item) => (metaOnly ? item.metagenic : qCat === "all" || item.category === qCat))
       .filter((item) => {
         if (!q) return metaOnly || !item.source || item.source === "SR5";
         return item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q);
       });
-  }, [catalog, qSearch, qCat, tr]);
+  }, [catalog, qSearch, qCat, tr, allowedBooks]);
   const filteredQualities = matchedQualities.slice(0, 200);
 
   const qualityCtx: QualityReqCtx = {

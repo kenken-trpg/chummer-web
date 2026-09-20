@@ -1,6 +1,7 @@
 "use client";
 
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
+import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
 import { limitLabel } from "@/lib/character/format";
 
@@ -22,7 +23,16 @@ export function MentorPicker({
   paragon?: boolean;
 }) {
   const { ui } = useUiText();
-  const options = (paragon ? catalog.paragons : catalog.mentors) || [];
+  const allowed = useAllowedBooks();
+  const all = (paragon ? catalog.paragons : catalog.mentors) || [];
+  // The one already chosen stays on the list whatever the settings say — a
+  // <select> that drops its own value silently reads as "no mentor", and the
+  // character cannot be un-mentored from an option that is not there.
+  const options = filterByBooks(allowed, all).concat(
+    ch.mentor_id && !isBookEnabled(allowed, mentor?.source)
+      ? all.filter((item) => item.id === ch.mentor_id)
+      : [],
+  );
   return (
     <div className="cyber-item">
       <div>

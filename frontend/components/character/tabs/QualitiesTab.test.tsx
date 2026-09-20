@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
+import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -17,16 +18,19 @@ function renderTab(
     character?: Parameters<typeof makeCharacter>[0];
     catalog?: ReturnType<typeof makeCatalog>;
     patch?: (b: Record<string, unknown>) => void;
+    books?: string[];
   } = {},
 ) {
   const ch = makeCharacter(over.character);
   return render(
-    <QualitiesTab
-      {...panelProps(ch, {
-        catalog: over.catalog ?? makeCatalog(),
-        patch: over.patch ?? (() => {}),
-      })}
-    />,
+    <BooksProvider books={over.books}>
+      <QualitiesTab
+        {...panelProps(ch, {
+          catalog: over.catalog ?? makeCatalog(),
+          patch: over.patch ?? (() => {}),
+        })}
+      />
+    </BooksProvider>,
   );
 }
 
@@ -77,6 +81,35 @@ describe("<QualitiesTab>", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "不利" }));
     expect(names()).toEqual(["Distinctive Style"]);
+  });
+
+  // This tab writes its own list instead of using <CatalogPicker>, so it used
+  // to be the one place the settings' book list did not reach: a search found
+  // qualities out of books the GM had switched off, and bought them.
+  it("keeps qualities out of disabled books off the list, search included", () => {
+    const catalog = makeCatalog({
+      qualities: [
+        { id: "amb", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
+        {
+          id: "pt",
+          name: "Prototype Transhuman",
+          karma: 1,
+          category: "Positive",
+          source: "CF",
+        },
+      ] as any,
+    });
+    renderTab({ catalog, books: ["SR5"] });
+    fireEvent.change(screen.getByPlaceholderText("資質を検索"), { target: { value: "proto" } });
+
+    expect(screen.queryByText("Prototype Transhuman")).toBeNull();
+
+    // …and is still reachable when the book is on
+    renderTab({ catalog, books: ["SR5", "CF"] });
+    fireEvent.change(screen.getAllByPlaceholderText("資質を検索")[1], {
+      target: { value: "proto" },
+    });
+    expect(screen.getByText("Prototype Transhuman")).toBeDefined();
   });
 
   it("filters by the search box", () => {
