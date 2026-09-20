@@ -5,7 +5,7 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
-import { dropTree } from "@/lib/character/gear";
+import { alreadySlotted, dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -122,8 +122,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     (mod.category === "Commlink Accessories" ||
                       (mod.required_categories || []).includes("Commlinks") ||
                       (item.category === "PI-Tac" && mod.category === "PI-Tac Programs")) &&
-                    !(d.gear || []).some(
-                      (row) => row.parent_id === item.id && row.gear_id === mod.id,
+                    !alreadySlotted(
+                      mod,
+                      (d.gear || []).filter((row) => row.parent_id === item.id),
                     ),
                 )}
                 onAdd={(mod) =>

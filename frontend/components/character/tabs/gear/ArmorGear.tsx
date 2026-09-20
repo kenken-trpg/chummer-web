@@ -7,7 +7,7 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
-import { armorModFits } from "@/lib/character/gear";
+import { alreadySlotted, armorModFits } from "@/lib/character/gear";
 import {
   availBit,
   formatAccessoryCost,
@@ -177,7 +177,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                         (mod) =>
                           (gear.addoncategories || []).includes(mod.category) &&
                           mod.category !== "Custom" &&
-                          !inside.some((row) => row.gear_id === mod.id),
+                          !alreadySlotted(mod, inside),
                       )}
                       character={ch}
                       tr={tr}
