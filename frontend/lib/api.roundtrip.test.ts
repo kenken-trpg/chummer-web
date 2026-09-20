@@ -285,6 +285,42 @@ describe("the custom-data handshake", () => {
     });
   });
 
+  // The catalog now asks for a dataset too — it is what the pick lists are
+  // built from — so a cold or evicted server 409s the *catalog*, not only a
+  // character. Same retry, no second handshake.
+  it("covers the catalog, which now asks for a dataset of its own", async () => {
+    await putCustomData("hash1", { "d/custom_x.xml": "<chummer/>" });
+
+    let served = false;
+    respond = (path) => {
+      if (path === "/api/customdata") return json({ dataset: "hash1", applied: 1, skipped: [] });
+      if (!served) {
+        served = true;
+        return json(
+          { detail: { key: "api.customDataMissing", params: { dataset: "hash1" } } },
+          false,
+          409,
+        );
+      }
+      return json({ martial_arts: [{ id: "m1", name: "コデックス流" }] });
+    };
+
+    const catalog = await api.catalog({ dataset: "hash1", customdata: ["g>1"] });
+    expect(catalog.martial_arts?.[0]?.name).toBe("コデックス流");
+    expect(calls.map((c) => c.path)).toEqual([
+      "/api/catalog?dataset=hash1&customdata=g%3E1",
+      "/api/customdata",
+      "/api/catalog?dataset=hash1&customdata=g%3E1",
+    ]);
+  });
+
+  it("asks for the plain catalog when the character has no custom data", async () => {
+    respond = () => json({ martial_arts: [] });
+    await api.catalog({ dataset: "", customdata: [] });
+    await api.catalog();
+    expect(calls.map((c) => c.path)).toEqual(["/api/catalog", "/api/catalog"]);
+  });
+
   it("gives up rather than looping when the files are not in this browser", async () => {
     await local.putCharacter(
       makeCharacter({
