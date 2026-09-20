@@ -164,6 +164,10 @@ export const JA_CHARGEN = {
   "settings.folderHint":
     "settings と customdata が入ったフォルダごと選びます。中のセッティングは全部プルダウンに入り、選んだものに合わせてカスタムデータが結合されます。ファイルはこのブラウザに残り、サーバーには結合結果だけが一時的に置かれます",
   "settings.customDataFailed": "カスタムデータを読み込めませんでした。",
+  "settings.zipNotAZip":
+    "zip として読めませんでした。拡張子が .zip でも中身が壊れていることがあります。",
+  "settings.zipUnsupported":
+    "この zip は読めません（パスワード付き、ZIP64、または未対応の圧縮形式）。作り直すか、フォルダごと選んでください。",
   "settings.customDataNotAFolder":
     "個別のファイルではなく customdata フォルダ自体を選んでください（同じ名前のファイルが複数あり、どのフォルダのものか判別できません）。",
   "settings.customDataApplied": "カスタムデータを {count} 件適用しました",
@@ -188,7 +192,7 @@ export const JA_CHARGEN = {
   "settings.groupShipped": "Chummer 同梱",
   "settings.load": "セッティングを読み込む",
   "settings.loadHint":
-    "Chummer の settings フォルダにある .xml を読み込みます。ファイルは送信されず、このブラウザにだけ残ります",
+    "Chummer の settings フォルダにある .xml か、settings と customdata が入ったフォルダを固めた .zip を読み込みます。ファイルは送信されず、このブラウザにだけ残ります（zip はフォルダを選べない端末 ―― Android など ―― のための入口でもあります）",
   "settings.loadFailed": "セッティングファイルを読み込めませんでした。",
   "settings.forget": "このセッティングを削除",
   "settings.forgetHint": "{name} をこのブラウザから削除します（キャラクターは消えません）",

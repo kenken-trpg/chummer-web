@@ -8,6 +8,8 @@
  * files already sit in.
  */
 
+import { unzip } from "@/lib/character/zip";
+
 const DB = "chummer-customdata";
 const STORE = "files";
 /** One entry per dataset hash, so two tables' packs can both be present. */
@@ -98,9 +100,41 @@ function segment(parts: string[], name: string): number {
   return found;
 }
 
+/** One file out of a pick, however it was picked. A directory pick carries
+ *  `webkitRelativePath`; a zip carries the path it was stored under. */
+type Picked = { path: string; text: () => Promise<string> };
+
 export async function readStyleFolder(list: ArrayLike<File>): Promise<StyleFolder> {
-  const picked = Array.from(list).filter((file) => file.name.toLowerCase().endsWith(".xml"));
-  const paths = picked.map((file) => (file.webkitRelativePath || file.name).split("/"));
+  return readStyleFiles(
+    Array.from(list).map((file) => ({
+      path: file.webkitRelativePath || file.name,
+      text: () => file.text(),
+    })),
+  );
+}
+
+/**
+ * A `.zip` of the same folder.
+ *
+ * Android's Chrome does not implement `webkitdirectory`, so on a phone there
+ * is no way to hand over a folder at all — and a ruleset that names custom
+ * data is unusable without it. A zip is what a phone can send, and once it is
+ * unpacked the paths inside it are the paths a directory pick would have had,
+ * so everything downstream is shared.
+ */
+export async function readStyleZip(data: ArrayBuffer): Promise<StyleFolder> {
+  const decoder = new TextDecoder();
+  return readStyleFiles(
+    (await unzip(data)).map((entry) => ({
+      path: entry.path,
+      text: async () => decoder.decode(entry.bytes),
+    })),
+  );
+}
+
+async function readStyleFiles(all: Picked[]): Promise<StyleFolder> {
+  const picked = all.filter((file) => file.path.toLowerCase().endsWith(".xml"));
+  const paths = picked.map((file) => file.path.split("/"));
   // Either half being addressed by name makes this a whole ruleset folder, and
   // then everything in it is addressed by name. Neither means the old bare
   // pick, where the picked folder is `customdata` itself under another name.
@@ -112,6 +146,7 @@ export async function readStyleFolder(list: ArrayLike<File>): Promise<StyleFolde
   const settings: { name: string; text: string }[] = [];
   for (const [i, file] of picked.entries()) {
     const parts = paths[i];
+    const leaf = parts[parts.length - 1];
     if (whole) {
       const at = segment(parts, "customdata");
       if (at >= 0) {
@@ -120,11 +155,11 @@ export async function readStyleFolder(list: ArrayLike<File>): Promise<StyleFolde
         if (key in customdata) throw new CustomDataShapeError(key);
         customdata[key] = await file.text();
       } else if (segment(parts, "settings") >= 0) {
-        settings.push({ name: file.name, text: await file.text() });
+        settings.push({ name: leaf, text: await file.text() });
       }
       continue;
     }
-    const key = parts.slice(1).join("/") || file.name;
+    const key = parts.slice(1).join("/") || leaf;
     if (key in customdata) throw new CustomDataShapeError(key);
     customdata[key] = await file.text();
   }
