@@ -5,6 +5,7 @@ import { api, type MergeResult } from "@/lib/api";
 import { saveSettingsFile } from "@/lib/character/settings-store";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
+import { makeZip } from "@/tests/zip-fixture";
 
 const catalog = makeCatalog({
   books: [
@@ -311,6 +312,50 @@ describe("SettingsPicker with custom data", () => {
       target: { files: [file] },
     });
     await waitFor(() => expect(screen.getByText(/amend_critters/)).toBeDefined());
+  });
+
+  // Android's Chrome has no `webkitdirectory`, so on a phone the folder
+  // button opens nothing usable and a ruleset naming custom data cannot be
+  // loaded at all. The zip goes through the ordinary file input instead, and
+  // lands in exactly the same place a folder pick does.
+  it("reads a whole ruleset out of a .zip picked as a file", async () => {
+    vi.spyOn(api, "parseSettings").mockResolvedValue({
+      settings: { name: "新東京", books: ["SR5"], customdata: ["pack"] },
+      build_method: "SumToTen",
+    });
+    const upload = vi
+      .spyOn(api, "uploadCustomData")
+      .mockResolvedValue(mergeResult({ dataset: "z1", applied: 2 }));
+    const { patch } = setup();
+
+    const bytes = await makeZip([
+      { name: "新東京スタイル/settings/nt.xml", data: "<settings/>" },
+      { name: "新東京スタイル/customdata/コデックス/manifest.xml", data: "<manifest/>" },
+      { name: "新東京スタイル/readme.txt", data: "not xml, not merged" },
+    ]);
+    fireEvent.change(screen.getByLabelText("セッティングを読み込む"), {
+      target: { files: [new File([bytes], "新東京スタイル.zip", { type: "application/zip" })] },
+    });
+
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    // the customdata half, keyed the way a directory pick would have keyed it
+    expect(upload.mock.calls[0][0]).toEqual({ "コデックス/manifest.xml": "<manifest/>" });
+    await waitFor(() =>
+      expect(patch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          settings: expect.objectContaining({ name: "新東京", dataset: "z1" }),
+        }),
+      ),
+    );
+  });
+
+  it("says a .zip it cannot open could not be opened", async () => {
+    setup();
+    const junk = new File([new TextEncoder().encode("not an archive")], "style.zip");
+    fireEvent.change(screen.getByLabelText("セッティングを読み込む"), {
+      target: { files: [junk] },
+    });
+    await waitFor(() => expect(screen.getByText(/zip として読めませんでした/)).toBeDefined());
   });
 
   it("puts every settings file in a folder into the pulldown", async () => {

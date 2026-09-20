@@ -160,6 +160,10 @@ export const EN_CHARGEN = {
   "settings.folderHint":
     "Pick the folder holding settings and customdata — the folder itself, not a file. Every settings file in it joins the pulldown, and picking one merges the custom data it names. The files stay in this browser; only the merged result is held on the server, and only for a while",
   "settings.customDataFailed": "That custom data could not be loaded.",
+  "settings.zipNotAZip":
+    "That did not read as a zip. A .zip name is no guarantee the archive inside is intact.",
+  "settings.zipUnsupported":
+    "This zip cannot be read here (password-protected, ZIP64, or a compression method this does not implement). Rebuild it, or pick the folder itself.",
   "settings.customDataNotAFolder":
     "Pick the customdata folder itself rather than individual files — several files share a name and there is no way to tell which directory each belongs to.",
   "settings.customDataApplied": "Applied {count} custom-data rules",
@@ -184,7 +188,7 @@ export const EN_CHARGEN = {
   "settings.groupShipped": "Shipped with Chummer",
   "settings.load": "Load settings file",
   "settings.loadHint":
-    "Read an .xml from your Chummer settings folder. The file is not stored anywhere but this browser",
+    "Read an .xml from your Chummer settings folder, or a .zip of the folder holding settings and customdata. The file is not stored anywhere but this browser (the zip is also the way in on a device that cannot pick a folder, such as Android)",
   "settings.loadFailed": "That settings file could not be read.",
   "settings.forget": "Remove this ruleset",
   "settings.forgetHint": "Remove {name} from this browser (characters are untouched)",

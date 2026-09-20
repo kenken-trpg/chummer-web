@@ -13,10 +13,13 @@ import { groupChanges } from "@/lib/character/merge-summary";
 import {
   CustomDataShapeError,
   readStyleFolder,
+  readStyleZip,
   recallFolder,
   rememberFolder,
   type CustomDataFiles,
+  type StyleFolder,
 } from "@/lib/character/customdata-store";
+import { ZipError } from "@/lib/character/zip";
 import { errorMessage } from "@/lib/errors";
 import type { UiFn } from "@/lib/i18n";
 
@@ -83,10 +86,17 @@ export function SettingsPicker({
    * pick enable different directories, so each needs its own merge. Waiting
    * for it keeps the character from being patched twice.
    */
-  async function apply(settings: CharacterSettings, method?: string | null): Promise<void> {
+  async function apply(
+    settings: CharacterSettings,
+    method?: string | null,
+    /** The custom data in hand, when a pick just produced it. Otherwise the
+     *  one from the last pick is found again. `folder` is React state, so a
+     *  pick cannot read back what it set a line earlier. */
+    picked?: CustomDataFiles,
+  ): Promise<void> {
     const base = { ...(method ? buildMethodPatch(method, ch) : {}) };
     const wanted = settings.customdata || [];
-    const files = wanted.length > 0 ? (folder ?? (await recallFolder())) : null;
+    const files = wanted.length > 0 ? (picked ?? folder ?? (await recallFolder())) : null;
     if (!files) {
       await patch({ ...base, settings });
       return;
@@ -128,7 +138,12 @@ export function SettingsPicker({
     if (preset) void apply(presetSettings(preset), preset.build_method);
   }
 
+  /** One picked file: a settings `.xml`, or a `.zip` of the whole folder. */
   async function onFile(file: File) {
+    if (file.name.toLowerCase().endsWith(".zip")) {
+      await onZip(file);
+      return;
+    }
     setError(null);
     setMerge(null);
     try {
@@ -137,6 +152,28 @@ export function SettingsPicker({
       await apply(settings, build_method);
     } catch (e) {
       setError(errorMessage(e, ui, "settings.loadFailed"));
+    }
+  }
+
+  /**
+   * The same folder, zipped.
+   *
+   * Android's Chrome does not implement `webkitdirectory`, so on a phone the
+   * folder button opens nothing usable and a ruleset that names custom data
+   * cannot be loaded at all. A zip goes through an ordinary file input, which
+   * every browser has.
+   */
+  async function onZip(file: File) {
+    setError(null);
+    setMerge(null);
+    try {
+      await applyStyle(await readStyleZip(await file.arrayBuffer()));
+    } catch (e) {
+      setError(
+        e instanceof ZipError
+          ? ui(e.reason === "not-a-zip" ? "settings.zipNotAZip" : "settings.zipUnsupported")
+          : styleError(e),
+      );
     }
   }
 
@@ -152,41 +189,50 @@ export function SettingsPicker({
     setError(null);
     setMerge(null);
     try {
-      const pick = await readStyleFolder(list);
-      if (Object.keys(pick.customdata).length > 0) {
-        setFolder(pick.customdata);
-        await rememberFolder(pick.customdata);
-      }
-      let loaded: CharacterSettings[] = [];
-      let first: { settings: CharacterSettings; build_method: string | null } | null = null;
-      for (const file of pick.settings) {
-        const parsed = await api.parseSettings(new TextEncoder().encode(file.text).buffer);
-        loaded = saveSettingsFile(parsed.settings);
-        first ??= parsed;
-      }
-      if (loaded.length > 0) setFiles(loaded);
-      if (pick.settings.length === 1 && first) {
-        await apply(first.settings, first.build_method);
-        return;
-      }
-      // No settings half — a bare `customdata/` pick for the ruleset already
-      // applied, which is the pre-folder way of doing it and still works.
-      const wanted = ch.settings?.customdata || [];
-      if (pick.settings.length === 0 && wanted.length > 0) {
-        await patch({
-          settings: {
-            ...(ch.settings || { name: "", books: [] }),
-            ...(await merged(pick.customdata, wanted)),
-          },
-        });
-      }
+      await applyStyle(await readStyleFolder(list));
     } catch (e) {
-      setError(
-        e instanceof CustomDataShapeError
-          ? ui("settings.customDataNotAFolder")
-          : errorMessage(e, ui, "settings.customDataFailed"),
-      );
+      setError(styleError(e));
     }
+  }
+
+  /** A ruleset that arrived whole, however it arrived. */
+  async function applyStyle(pick: StyleFolder) {
+    // An empty object is "this pick had no custom data", not "here is none" —
+    // passing it on would shadow the folder from the previous pick.
+    const picked = Object.keys(pick.customdata).length > 0 ? pick.customdata : undefined;
+    if (picked) {
+      setFolder(picked);
+      await rememberFolder(picked);
+    }
+    let loaded: CharacterSettings[] = [];
+    let first: { settings: CharacterSettings; build_method: string | null } | null = null;
+    for (const file of pick.settings) {
+      const parsed = await api.parseSettings(new TextEncoder().encode(file.text).buffer);
+      loaded = saveSettingsFile(parsed.settings);
+      first ??= parsed;
+    }
+    if (loaded.length > 0) setFiles(loaded);
+    if (pick.settings.length === 1 && first) {
+      await apply(first.settings, first.build_method, picked);
+      return;
+    }
+    // No settings half — a bare `customdata/` pick for the ruleset already
+    // applied, which is the pre-folder way of doing it and still works.
+    const wanted = ch.settings?.customdata || [];
+    if (pick.settings.length === 0 && wanted.length > 0) {
+      await patch({
+        settings: {
+          ...(ch.settings || { name: "", books: [] }),
+          ...(await merged(pick.customdata, wanted)),
+        },
+      });
+    }
+  }
+
+  function styleError(e: unknown): string {
+    return e instanceof CustomDataShapeError
+      ? ui("settings.customDataNotAFolder")
+      : errorMessage(e, ui, "settings.customDataFailed");
   }
 
   function onForget(target: string) {
@@ -241,7 +287,11 @@ export function SettingsPicker({
         <input
           ref={fileRef}
           type="file"
-          accept=".xml,text/xml,application/xml"
+          // `.zip` shares this input rather than getting its own button: on a
+          // phone the folder button below opens nothing usable, and a second
+          // button that only some devices need is worse than one that takes
+          // either shape.
+          accept=".xml,.zip,text/xml,application/xml,application/zip"
           hidden
           aria-label={ui("settings.load")}
           onChange={(e) => {
