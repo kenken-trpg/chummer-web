@@ -5,6 +5,10 @@
   --line: #2a3942;
   --text: #e8f0f3;
   --muted: #8aa0ab;
+  /* For the stat lines under an item's name. They are the numbers the sheet is
+     made of — 装甲 12 / 1,000¥ / 入手 6 — not chrome, so they are lifted clear
+     of the hint-and-footnote grey without being promoted to full body text. */
+  --muted-stat: #b6c8d1;
   --accent: #3ee0c4;
   --accent-dim: #1a4d46;
   --warn: #f0b429;
@@ -543,7 +547,16 @@ input[type="search"] {
 }
 .muted {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+}
+/* The detail line under an owned item's or a catalog row's name. The armour
+   rating and the price live here, and at hint-grey 0.8rem they were being
+   read as decoration — or not read at all. Tabular figures so the numbers in
+   a column of rows line up. */
+.cyber-item > div > .muted,
+.quality-item > div > .muted {
+  color: var(--muted-stat);
+  font-variant-numeric: tabular-nums;
 }
 .career-panel {
   display: grid;
