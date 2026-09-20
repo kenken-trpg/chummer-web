@@ -41,6 +41,7 @@
 - [`refactor-engine-e402-b023-plan.md`](refactor-engine-e402-b023-plan.md) — 遅延 import とループ変数束縛の解消
 - [`refactor-mypy-plan.md`](refactor-mypy-plan.md) — バックエンド全体の mypy strict 化
 - [`refactor-chum5-roundtrip-plan.md`](refactor-chum5-roundtrip-plan.md) — `.chum5` 入出力の往復一致
+- [`chum5-export-for-chummer-plan.md`](chum5-export-for-chummer-plan.md) — 書き出した `.chum5` を Chummer.exe が読めるようにする
 
 ### テスト / フロントエンド
 
