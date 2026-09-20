@@ -116,14 +116,24 @@ h1 {
 
 /* The toolbar above is file/roster actions; this row is where you are in the
    character. They used to share one look, so the two rows read as one long
-   strip of buttons — hence the rule between them and the pill shape here. */
+   strip of buttons — hence the rule between them and the pill shape here.
+
+   It sticks to the top of the viewport: the tabs are how you move around a
+   character, and a long gear list used to mean scrolling all the way back up
+   to leave it. The negative margins bleed the background out over `.main`'s
+   padding, so content scrolls behind the bar rather than beside it. */
 .tabs {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
-  padding-top: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  margin: 0 -24px 16px;
+  padding: 12px 24px 8px;
   border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 .tab,
 .btn {
@@ -967,6 +977,20 @@ input[type="search"] {
 @media (max-width: 960px) {
   .app {
     grid-template-columns: 1fr;
+  }
+  /* Wrapped, twenty tabs stack five rows deep and the sticky bar eats a
+     quarter of a phone screen for good. One scrolling row costs a swipe to
+     reach the far tabs and gives the character back the space. */
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: 0 0 auto;
   }
   .side {
     position: relative;

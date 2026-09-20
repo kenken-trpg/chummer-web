@@ -40,7 +40,7 @@ export function TabBar({
     // Plain buttons in a nav rather than role="tablist"/role="tab": that
     // pattern also owes the user arrow-key navigation and aria-controls, and a
     // half-implemented tablist announces a contract the page does not keep.
-    <nav className="tabs" aria-label={ui("nav.sections")}>
+    <nav className="tabs no-print" aria-label={ui("nav.sections")}>
       {TABS.filter(([k, always]) => always || enabledTabs.includes(k)).map(([k]) => (
         <button
           key={k}

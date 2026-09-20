@@ -78,9 +78,12 @@ export default function Page() {
             />
 
             {notice ? <p className="notice">{notice}</p> : null}
-
-            <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
           </header>
+
+          {/* Outside the <header> on purpose: a sticky element can only stick
+              inside its own containing block, so a tab bar nested in the
+              header would unstick the moment the header scrolled away. */}
+          <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
 
           <TabPanels
             tab={tab}

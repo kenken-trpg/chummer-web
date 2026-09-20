@@ -20,6 +20,17 @@ describe("<TabBar>", () => {
     expect(screen.getByRole("button", { name: "能力値" }).getAttribute("aria-current")).toBeNull();
   });
 
+  // It sits outside the <header> so it can stick to the top of the viewport,
+  // which means it no longer inherits the header's `no-print` and has to carry
+  // it itself — otherwise the tab strip prints across the character sheet.
+  it("keeps itself off the printed sheet", () => {
+    render(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={[]} />);
+
+    expect(
+      screen.getByRole("navigation", { name: "セクション" }).classList.contains("no-print"),
+    ).toBe(true);
+  });
+
   // "メタタイプ" and "資質" are guessable at best; the hover line says what the
   // section is for before the user commits to a click.
   it("explains each section on hover", () => {
