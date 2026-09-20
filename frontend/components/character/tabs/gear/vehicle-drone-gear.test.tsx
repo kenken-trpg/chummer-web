@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Character } from "@/lib/types";
+import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { VehicleDroneGear } from "./VehicleDroneGear";
 
@@ -81,9 +82,50 @@ function renderVehicle(
   patch: (b: Record<string, unknown>) => void,
   catalog = makeCatalog(),
   mode: "vehicle" | "drone" = "vehicle",
+  books?: string[],
 ) {
-  return render(<VehicleDroneGear {...panelProps(ch, { catalog, patch })} mode={mode} />);
+  return render(
+    <BooksProvider books={books}>
+      <VehicleDroneGear {...panelProps(ch, { catalog, patch })} mode={mode} />
+    </BooksProvider>,
+  );
 }
+
+describe("<VehicleDroneGear> the mod picker and the books", () => {
+  // The list was `SR5 || R5`: a book list written in code. It bit hardest
+  // here — of the 151 vehicle mods in the real catalog only 2 are SR5, so
+  // every one of the other books' mods depended on that `|| R5`, and the
+  // nineteen outside both were unreachable however the GM set up the table.
+  const modCatalog = () =>
+    makeCatalog({
+      vehicle_mods: [
+        { id: "vm-r5", name: "Rigger Cocoon", category: "Cosmetic", slots: 1, source: "R5" },
+        {
+          id: "vm-ht",
+          name: "Smuggling Compartment",
+          category: "Cosmetic",
+          slots: 1,
+          source: "HT",
+        },
+      ],
+    } as any);
+  const modOptions = () =>
+    [
+      ...screen.getByRole("combobox", { name: "Americar: 改造を追加" }).querySelectorAll("option"),
+    ].map((o) => o.textContent);
+
+  it("offers the mods of every enabled book, not just R5", () => {
+    renderVehicle(owning(vehicle("v1", "Americar")), vi.fn(), modCatalog());
+    expect(modOptions().join(" ")).toContain("Smuggling Compartment");
+  });
+
+  it("drops the ones whose book the settings turned off", () => {
+    renderVehicle(owning(vehicle("v1", "Americar")), vi.fn(), modCatalog(), "vehicle", ["R5"]);
+    const shown = modOptions().join(" ");
+    expect(shown).toContain("Rigger Cocoon");
+    expect(shown).not.toContain("Smuggling Compartment");
+  });
+});
 
 /**
  * The 装着 button belonging to one picker. A vehicle has four of them on

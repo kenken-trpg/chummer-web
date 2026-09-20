@@ -57,6 +57,25 @@ export function filterByBooks<T>(allowed: AllowedBooks, items: T[]): T[] {
   });
 }
 
+/**
+ * `filterByBooks` bound to the current settings.
+ *
+ * For the per-row "pick a mod, press 装着" lists. They buy from the catalog
+ * without going through `<CatalogPicker>`, so each of them used to name a book
+ * in code instead — `mod.source === "SR5"`, sometimes `|| "R5"` — which is a
+ * book list that no setting can reach. With every book enabled that hid 110 of
+ * the 136 weapon accessories.
+ */
+export function useBookFilter(): <T>(items: T[]) => T[] {
+  const allowed = useAllowedBooks();
+  return useMemo(
+    () =>
+      <T,>(items: T[]) =>
+        filterByBooks(allowed, items),
+    [allowed],
+  );
+}
+
 /** Is this one item buyable? For the panels that test a single row rather
  *  than filter a list. */
 export function isBookEnabled(allowed: AllowedBooks, source?: string): boolean {

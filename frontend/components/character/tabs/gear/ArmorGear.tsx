@@ -6,6 +6,7 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import { armorModFits } from "@/lib/character/gear";
 import {
   availBit,
@@ -28,13 +29,14 @@ function stackTargets(
 }
 
 export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  const byBook = useBookFilter();
   // what says the capacity it takes in armor (`<armorcapacity>`): gear, a
   // helmet's vision / audio enhancements, a sensor housing (its functions go
   // in the housing, not the armor)
   const carriable = [
-    ...(catalog.gear || []).map((row) => ({ ...row, bucket: "gear" as const })),
-    ...(catalog.optics || []).map((row) => ({ ...row, bucket: "optics" as const })),
-    ...(catalog.sensors || [])
+    ...byBook(catalog.gear || []).map((row) => ({ ...row, bucket: "gear" as const })),
+    ...byBook(catalog.optics || []).map((row) => ({ ...row, bucket: "optics" as const })),
+    ...byBook(catalog.sensors || [])
       .filter((row) => row.category === "Sensors")
       .map((row) => ({ ...row, bucket: "sensors" as const })),
   ].filter((row) => row.armor_capacity);
@@ -44,7 +46,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
         {(d.armor_items || []).map((item) => {
           const installedNames = (item.mods || []).map((mod) => mod.name);
           const parentCost = (catalog.armor || []).find((row) => row.id === item.armor_id)?.cost;
-          const addons = (catalog.armor_mods || []).filter(
+          const addons = byBook(catalog.armor_mods || []).filter(
             (mod) =>
               armorModFits(mod, item, installedNames) &&
               !(item.mods || []).some(
@@ -171,11 +173,10 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                       key={gear.id}
                       gear={gear}
                       inside={inside}
-                      addons={(catalog[gear.bucket || "gear"] || []).filter(
+                      addons={byBook(catalog[gear.bucket || "gear"] || []).filter(
                         (mod) =>
                           (gear.addoncategories || []).includes(mod.category) &&
                           mod.category !== "Custom" &&
-                          mod.source === "SR5" &&
                           !inside.some((row) => row.gear_id === mod.id),
                       )}
                       character={ch}

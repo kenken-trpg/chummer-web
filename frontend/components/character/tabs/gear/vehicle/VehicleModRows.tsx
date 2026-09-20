@@ -2,6 +2,7 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
+import { useBookFilter } from "@/lib/character/books";
 import { WareRow } from "@/components/character/WareRow";
 import { r5SlotLabel } from "@/lib/character/constants";
 import { vehicleFits, vehicleForbidden, wareFitsVehicleMod } from "@/lib/character/gear";
@@ -22,6 +23,7 @@ export function VehicleModRows({
   slotPick,
   setSlotPick,
 }: VehicleRowProps) {
+  const byBook = useBookFilter();
   const addons = (catalog.vehicle_mods || []).filter(
     (mod) =>
       mod.purchasable !== false &&
@@ -196,9 +198,9 @@ export function VehicleModRows({
         pickKey={item.id}
         rowName={tr(item.name)}
         label={ui("gear.addMod")}
-        // used to lift as soon as the catalog search box below had text in
-        // it, which nothing signposted
-        options={addons.filter((mod) => mod.source === "SR5" || mod.source === "R5")}
+        // was `SR5 || R5` — a book list in code, and the one that bit hardest:
+        // of the 151 vehicle mods in the real catalog only 2 are SR5
+        options={byBook(addons)}
         onAdd={(spec) =>
           patch({
             vehicle_mods: [

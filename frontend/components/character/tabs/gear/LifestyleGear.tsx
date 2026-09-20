@@ -2,11 +2,13 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
+import { useBookFilter } from "@/lib/character/books";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
+  const byBook = useBookFilter();
   return (
     <>
       <>
@@ -161,12 +163,11 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   prompt={ui("life.quality")}
                   addLabel={ui("common.add")}
                   tr={tr}
-                  // the SR5/RF-or-costed narrowing used to lift as soon as the
-                  // catalog search box below had text in it; it is unrelated
-                  // to this control, so it now always applies
-                  options={availableQualities.filter(
-                    (q) => q.source === "SR5" || q.source === "RF" || (q.lp || 0) !== 0,
-                  )}
+                  // Was `SR5 || RF || lp !== 0`: two book codes in code, with
+                  // an escape hatch so the other books' *useful* entries still
+                  // came through. The settings say which books now, so both
+                  // halves of that are gone.
+                  options={byBook(availableQualities)}
                   optionLabel={(q) =>
                     `${tr(q.name)} (LP ${q.lp}${q.cost ? ` / ${q.cost}¥` : ""}${
                       q.multiplier ? ` / ${q.multiplier}%` : ""
