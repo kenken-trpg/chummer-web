@@ -299,6 +299,31 @@ export interface CharacterSettings {
   karma_enhancement?: number | null;
   karma_mystic_pp?: number | null;
   karma_martial_technique?: number | null;
+  /** The first level of a skill, priced apart from the rest
+   *  (`<karmanewactiveskill>` and friends; Chummer's `RangeCost`).
+   */
+  karma_new_active_skill?: number | null;
+  karma_new_knowledge_skill?: number | null;
+  karma_new_skill_group?: number | null;
+  /** Karma per point of Force to bond a focus, by kind
+   *  (`<karmaweaponfocus>` and friends; Chummer's `Focus.BindingKarmaCost`).
+   */
+  karma_alchemical_focus?: number | null;
+  karma_banishing_focus?: number | null;
+  karma_binding_focus?: number | null;
+  karma_centering_focus?: number | null;
+  karma_counterspelling_focus?: number | null;
+  karma_disenchanting_focus?: number | null;
+  karma_flexible_signature_focus?: number | null;
+  karma_masking_focus?: number | null;
+  karma_power_focus?: number | null;
+  karma_qi_focus?: number | null;
+  karma_ritual_spellcasting_focus?: number | null;
+  karma_spell_shaping_focus?: number | null;
+  karma_spellcasting_focus?: number | null;
+  karma_summoning_focus?: number | null;
+  karma_sustaining_focus?: number | null;
+  karma_weapon_focus?: number | null;
   karma_initiation_flat?: number | null;
   karma_initiation_per_grade?: number | null;
   karma_submersion_flat?: number | null;

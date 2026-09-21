@@ -72,6 +72,31 @@ class Rules:
     karma_mystic_pp: int = 5
     karma_martial_style: int = 7
     karma_martial_technique: int = 5
+    #: The first level of a skill is priced apart from the rest: Chummer's
+    #: `RangeCost` charges `karmanew*` for it and `karmaimprove*` for every
+    #: level above. The Standard presets set the two to the same number, so
+    #: this only shows up under a house rule.
+    karma_new_active_skill: int = 2
+    karma_new_knowledge_skill: int = 1
+    karma_new_skill_group: int = 5
+    #: Bonding a focus costs Force x the multiplier for its kind
+    #: (`Focus.BindingKarmaCost`), not Force flat.
+    karma_alchemical_focus: int = 3
+    karma_banishing_focus: int = 2
+    karma_binding_focus: int = 2
+    karma_centering_focus: int = 3
+    karma_counterspelling_focus: int = 2
+    karma_disenchanting_focus: int = 3
+    karma_flexible_signature_focus: int = 3
+    karma_masking_focus: int = 3
+    karma_power_focus: int = 6
+    karma_qi_focus: int = 2
+    karma_ritual_spellcasting_focus: int = 2
+    karma_spell_shaping_focus: int = 3
+    karma_spellcasting_focus: int = 2
+    karma_summoning_focus: int = 2
+    karma_sustaining_focus: int = 2
+    karma_weapon_focus: int = 3
     karma_initiation_flat: int = 10
     karma_initiation_per_grade: int = 3
     karma_submersion_flat: int = 10
@@ -164,6 +189,25 @@ _DIRECT: dict[str, str] = {
     "karma_enhancement": "karma_enhancement",
     "karma_mystic_pp": "karma_mystic_pp",
     "karma_martial_technique": "karma_martial_technique",
+    "karma_new_active_skill": "karma_new_active_skill",
+    "karma_new_knowledge_skill": "karma_new_knowledge_skill",
+    "karma_new_skill_group": "karma_new_skill_group",
+    "karma_alchemical_focus": "karma_alchemical_focus",
+    "karma_banishing_focus": "karma_banishing_focus",
+    "karma_binding_focus": "karma_binding_focus",
+    "karma_centering_focus": "karma_centering_focus",
+    "karma_counterspelling_focus": "karma_counterspelling_focus",
+    "karma_disenchanting_focus": "karma_disenchanting_focus",
+    "karma_flexible_signature_focus": "karma_flexible_signature_focus",
+    "karma_masking_focus": "karma_masking_focus",
+    "karma_power_focus": "karma_power_focus",
+    "karma_qi_focus": "karma_qi_focus",
+    "karma_ritual_spellcasting_focus": "karma_ritual_spellcasting_focus",
+    "karma_spell_shaping_focus": "karma_spell_shaping_focus",
+    "karma_spellcasting_focus": "karma_spellcasting_focus",
+    "karma_summoning_focus": "karma_summoning_focus",
+    "karma_sustaining_focus": "karma_sustaining_focus",
+    "karma_weapon_focus": "karma_weapon_focus",
     "karma_initiation_flat": "karma_initiation_flat",
     "karma_initiation_per_grade": "karma_initiation_per_grade",
     "karma_submersion_flat": "karma_submersion_flat",
@@ -229,3 +273,35 @@ def rules_for(settings: object | None) -> Rules:
     if table:
         overrides["priority_table"] = str(table)
     return Rules(**overrides)  # type: ignore[arg-type]
+
+
+#: A focus's name, as `foci.xml` spells it, cut down to the kind Chummer
+#: prices: everything from the first `(` or `,` is dropped, so
+#: `Counterspelling Focus, Combat` and `Weapon Focus (2050)` both land on
+#: their kind. A name that matches nothing (Spell Lock) binds at Force flat,
+#: which is Chummer's multiplier of 1.
+_FOCUS_KARMA_FIELDS: dict[str, str] = {
+    "Alchemical Focus": "karma_alchemical_focus",
+    "Banishing Focus": "karma_banishing_focus",
+    "Binding Focus": "karma_binding_focus",
+    "Centering Focus": "karma_centering_focus",
+    "Counterspelling Focus": "karma_counterspelling_focus",
+    "Disenchanting Focus": "karma_disenchanting_focus",
+    "Flexible Signature Focus": "karma_flexible_signature_focus",
+    "Masking Focus": "karma_masking_focus",
+    "Power Focus": "karma_power_focus",
+    "Qi Focus": "karma_qi_focus",
+    "Ritual Spellcasting Focus": "karma_ritual_spellcasting_focus",
+    "Spell Shaping Focus": "karma_spell_shaping_focus",
+    "Spellcasting Focus": "karma_spellcasting_focus",
+    "Summoning Focus": "karma_summoning_focus",
+    "Sustaining Focus": "karma_sustaining_focus",
+    "Weapon Focus": "karma_weapon_focus",
+}
+
+
+def focus_karma_multiplier(name: str) -> int:
+    """Karma per point of Force for bonding this focus (`Focus.BindingKarmaCost`)."""
+    kind = str(name or "").split("(")[0].split(",")[0].strip()
+    field = _FOCUS_KARMA_FIELDS.get(kind)
+    return int(getattr(current_rules(), field)) if field else 1

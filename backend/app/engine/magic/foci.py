@@ -20,6 +20,7 @@ from ...data_loader import catalog, eval_formula
 from ...improvements import substitute_rating
 from ...models import CharacterState, FocusInstall, QiFocusInstall
 from ...notices import Notice, notice, term
+from ...rules import current_rules, focus_karma_multiplier
 from ..bundle_types import FociBundle, FocusLimits, QiFociBundle
 from ..constants import ADEPT_TALENTS, FOCUS_FORCE_MULT, FOCUS_TALENTS, QI_FOCUS_NAME, SPIRIT_REAGENT_YEN
 from ..dice import magic_opposed_test
@@ -29,7 +30,13 @@ from .powers import power_max_rating, power_point_cost, power_select_options
 
 
 def focus_bind_karma(name: str, force: int, focus_binding: Sequence[Mapping[str, Any]]) -> int:
-    bind = int(force)
+    """Karma to bond a focus: Force x the multiplier for its kind.
+
+    Chummer's `Focus.BindingKarmaCost`. The multiplier is a settings knob per
+    kind of focus (`<karmaweaponfocus>` and its fifteen siblings), and none of
+    them is 1 in the printed rules — a Force 3 weapon focus is 9 karma, not 3.
+    """
+    bind = int(force) * focus_karma_multiplier(name)
     for mod in focus_binding:
         if (mod.get("name") or "") != name:
             continue
@@ -125,7 +132,7 @@ def resolve_qi_foci(
         power_rating = qi_focus_granted_power_rating(spec, force, requested_rating, mag, select_power)
         inst.power_rating = power_rating if power_rating > 0 else requested_rating
         label = spec["name"] + (f" ({extra})" if extra else "")
-        bind = force
+        bind = force * current_rules().karma_qi_focus
         for mod in focus_binding:
             if (mod.get("name") or "") != QI_FOCUS_NAME:
                 continue

@@ -21,6 +21,7 @@ from ..karma import (
     _matching_karma_rules,
     _skill_category_map,
     _skill_group_category_map,
+    group_first_level,
 )
 
 
@@ -87,7 +88,13 @@ def career_raise_karma(
         to_r = int(rating or 0)
         cat = group_cat_map.get(group, "")
         mult = int(group_mults.get(cat, 100))
-        cost = _karma_cost_with_category_mods(from_r, to_r, current_rules().karma_skill_group, mult_pct=mult)
+        cost = _karma_cost_with_category_mods(
+            from_r,
+            to_r,
+            current_rules().karma_skill_group,
+            mult_pct=mult,
+            first_level=group_first_level(from_r, to_r),
+        )
         if cost:
             lines.append(
                 {
@@ -116,6 +123,7 @@ def career_raise_karma(
             current_rules().karma_active_skill,
             mult_pct=mult,
             flat_rules=_matching_karma_rules(active_flat, cat),
+            first_level=current_rules().karma_new_active_skill,
         )
         if cost:
             lines.append(
@@ -152,6 +160,7 @@ def career_raise_karma(
             mult_pct=mult,
             flat_rules=_matching_karma_rules(know_flat, cat),
             min_rules=_matching_karma_rules(know_min, cat),
+            first_level=current_rules().karma_new_knowledge_skill,
         )
         if cost:
             lines.append(
@@ -197,6 +206,7 @@ def career_raise_karma(
             current_rules().karma_active_skill,
             mult_pct=100,
             flat_rules=_matching_karma_rules(active_flat, ""),
+            first_level=current_rules().karma_new_active_skill,
         )
         if cost:
             label = str(getattr(row, "name", None) or getattr(row, "skill", None) or "Exotic")

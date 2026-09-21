@@ -7,6 +7,20 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **フォーカスの結合カルマが、フォースそのままではなくなった。** Chummer の
+  `Focus.BindingKarmaCost` は「フォース × その種類ごとの倍率」で、倍率 1 の
+  種類は一つもありません（武器フォーカス 3、パワーフォーカス 6、気フォーカス
+  2 …）。この app はフォース分しか請求していなかったので、フォース 3 の武器
+  フォーカスが 9 カルマではなく 3 カルマで済んでいました。16 種類ぶんの
+  設定キー（`<karmaweaponfocus>` ほか）も読むようにしています。
+
+- **技能の 1 レベル目の値段を、設定ファイルから読むようになった。**
+  `<karmanewactiveskill>` / `<karmanewknowledgeskill>` / `<karmanewskillgroup>`。
+  Chummer の `RangeCost` は「何も無いところから買う最初の 1 レベル」だけ別の
+  値段で請求します。出荷プリセットはどれも改善カルマと同額なので、効くのは
+  ハウスルールのときだけです（技能グループは、Chummer と同じく「合計が 1
+  レベル分のとき」＝レーティング 1 のときだけ新規価格になります）。
+
 - **書き出した `.chum5` で、メンター精霊（パラゴン）が消えなくなった。**
   Chummer は `mentorspirits/mentorspirit` を探して読み込みますが、この app は
   `<mentorspirit>` を最上位に書いていたので、一度も見つけてもらえていません
