@@ -8,6 +8,7 @@ from app.models import (
     CommlinkInstall,
     CyberwareInstall,
     GearInstall,
+    SettingsState,
     VehicleModInstall,
     WeaponInstall,
     WeaponMountInstall,
@@ -870,3 +871,36 @@ def test_run_flat_tires_are_priced_per_tyre() -> None:
     )
     mod = next(m for m in out.derived["vehicles"][0]["mods"] if m["name"] == "Run-Flat Tires")
     assert (mod["rating"], mod["nuyen"]) == (4, 1000)
+
+
+ARMOR_DRONE = "dfa7cdcd-5d0e-4c9c-9f0b-90bf29ac5aff"
+
+
+def _armored_doberman(settings: SettingsState) -> dict[str, object]:
+    drone = GearInstall(gear_id=DOBERMAN)
+    out = compute(
+        _mundane(
+            "doberman-armor",
+            drones=[drone],
+            vehicle_mods=[VehicleModInstall(mod_id=ARMOR_DRONE, parent_id=drone.id, rating=20)],
+            settings=settings,
+        )
+    )
+    return dict(out.derived["drones"][0])
+
+
+def test_drone_armor_stops_at_body_plus_armor() -> None:
+    # Doberman: Body 4, Armor 4. Armor (Drone) sets armor to its rating, and
+    # the rating stops at Body + Armor (Rigger 5.0 p.159).
+    row = _armored_doberman(SettingsState())
+    assert row["mods"][0]["rating"] == 8
+    assert row["armor"] == "8"
+
+
+def test_drone_armor_multiplier_setting_raises_the_ceiling() -> None:
+    on = SettingsState(drone_armor_multiplier_enabled=True, drone_armor_multiplier=2)
+    row = _armored_doberman(on)
+    assert row["mods"][0]["rating"] == 16
+    assert row["armor"] == "16"
+    # Switched off, the ceiling is Body + Armor again.
+    assert _armored_doberman(SettingsState(drone_armor_multiplier_enabled=False))["armor"] == "8"

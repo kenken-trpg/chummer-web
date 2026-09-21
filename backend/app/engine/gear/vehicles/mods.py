@@ -12,7 +12,14 @@ from .._common import (
     _default_mount_parts,
 )
 from .slots import _add_vehicle_slot_use, _finalize_vehicle_slots
-from .stats import _apply_vehicle_bonus, _clamp_vehicle_rating, _vehicle_extras, mod_fits_vehicle, vehicle_matches
+from .stats import (
+    _apply_vehicle_bonus,
+    _clamp_vehicle_rating,
+    _max_vehicle_armor,
+    _vehicle_extras,
+    mod_fits_vehicle,
+    vehicle_matches,
+)
 
 
 def _resolve_vehicle_mods(
@@ -46,6 +53,9 @@ def _resolve_vehicle_mods(
             if int(spec.get("maxrating") or 0) > 0 or spec.get("maxrating_expr")
             else 1
         )
+        # Armor mods stop at the vehicle's armor ceiling (`VehicleMod.MaxRating`).
+        if str(spec.get("name") or "").lower().startswith("armor"):
+            rating = min(rating, _max_vehicle_armor(parent))
         inst.rating = rating
         cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras))
         slots = int(eval_formula(str(spec.get("slots") or "0"), rating, 0, extras))
@@ -87,6 +97,10 @@ def _resolve_vehicle_mods(
         children.setdefault(str(item.get("parent_id") or ""), []).append(item)
     for row in drones:
         row["mods"] = children.get(str(row.get("id") or "")) or []
+        # Mod armor tops out at the same ceiling (`Vehicle.TotalArmor`).
+        stats = row.get("stats") or {}
+        if "armor" in stats:
+            stats["armor"] = min(int(stats["armor"] or 0), _max_vehicle_armor(row))
     state.vehicle_mods = kept
     return public, nuyen, warnings, errors
 

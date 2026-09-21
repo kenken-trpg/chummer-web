@@ -3,10 +3,12 @@ stat-bonus application and the rating clamp."""
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from ....data_loader import eval_formula
 from ....improvements import substitute_rating
+from ....rules import current_rules
 from .._common import (
     _leading_vehicle_stat,
 )
@@ -107,6 +109,19 @@ def _apply_vehicle_bonus(stats: dict[str, int], nodes: list[dict[str, Any]], rat
             stats[key] = int(stats.get(key) or 0) + delta
         else:
             stats[key] = delta
+
+
+def _max_vehicle_armor(vehicle: dict[str, Any]) -> int:
+    """The most armor a vehicle carries, mods included (Chummer's
+    `Vehicle.MaxArmor`): its printed Body + Armor (Rigger 5.0 p.159), or for a
+    drone under `<dronearmormultiplierenabled>` that sum times
+    `<dronearmorflatnumber>`, with a Body of 0 counted as 0.5."""
+    body = _leading_vehicle_stat(str(vehicle.get("body") or "0"))
+    armor = _leading_vehicle_stat(str(vehicle.get("armor") or "0"))
+    rules = current_rules()
+    if rules.drone_armor_multiplier_enabled and "Drone" in str(vehicle.get("category") or ""):
+        return math.floor((max(body, 0.5) + armor) * rules.drone_armor_multiplier + 0.5)
+    return max(body + armor, 1)
 
 
 def _clamp_vehicle_rating(spec: dict[str, Any], rating: int, extras: dict[str, int | float]) -> int:

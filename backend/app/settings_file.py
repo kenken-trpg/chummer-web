@@ -52,6 +52,7 @@ _INT_FIELDS: dict[str, str] = {
     "restrictedcostmultiplier": "restricted_cost_multiplier",
     "forbiddencostmultiplier": "forbidden_cost_multiplier",
     "metatypecostskarmamultiplier": "metatype_costs_karma_multiplier",
+    "dronearmorflatnumber": "drone_armor_multiplier",
 }
 
 #: `<karmacost>` child -> `SettingsState` field.
@@ -131,6 +132,11 @@ _HANDLED_ELSEWHERE = {
     # build pays the metatype's karma times `<metatypecostskarmamultiplier>`
     # either way (`CharacterCreate.CalculateBP`).
     "metatypecostskarma",
+    # `<maximumarmormodifications>` / `<nosinglearmorencumbrance>` are loaded
+    # by Chummer but never read: armor without a capacity always counts mods by
+    # rating (`Armor.CapacityRemaining`), and no code consults the second.
+    "maximumarmormodifications",
+    "nosinglearmorencumbrance",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
@@ -156,6 +162,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "allowinitiationincreatemode": "allow_initiation_in_create_mode",
     "usepointsonbrokengroups": "use_points_on_broken_groups",
     "breakskillgroupsincreatemode": "strict_skill_groups_in_create_mode",
+    "dronearmormultiplierenabled": "drone_armor_multiplier_enabled",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
