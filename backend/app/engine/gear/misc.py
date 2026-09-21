@@ -17,6 +17,7 @@ from ...improvements import substitute_rating
 from ...improvements.effect_rows import GrantGearRow
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
+from ...rules import current_rules
 from ..lookups import _item_by_id, _ware_by_id
 from ..selects import gear_extra_options
 from ._common import (
@@ -458,7 +459,7 @@ def _resolve_misc_gear(
         cap_max = float(item.get("capacity_max") or 0)
         if cap_max == int(cap_max):
             item["capacity_max"] = int(cap_max)
-        if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
+        if current_rules().enforce_capacity and cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
             errors.append(
                 notice(
                     "engine.gear.capacityOver",

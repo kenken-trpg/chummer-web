@@ -18,6 +18,7 @@ from app.models import (
     LifestyleInstall,
     MartialArtInstall,
     Priorities,
+    SettingsState,
     WeaponAccessoryInstall,
     WeaponInstall,
 )
@@ -1164,3 +1165,33 @@ def test_what_a_weapon_or_armor_comes_with_is_not_reported_as_not_fitting() -> N
     )
     assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
     assert "Electronic Firing" in {row["name"] for row in out.derived["weapons"][0]["accessories"]}
+
+
+AK_97 = next(w["id"] for w in catalog()["weapons"] if w["name"] == "AK-97")
+FOREGRIP = "8eec5df1-88e2-4822-b156-9c2340a33efc"  # RC 1, rcgroup 1
+UNDERBARREL_WEIGHT = "9dc660bb-a0b2-4b14-8c43-f5893b174265"  # RC 1, rcgroup 1
+
+
+def test_recoil_accessories_in_one_group_count_only_the_best() -> None:
+    """Chummer's `<restrictrecoil>` (on in every preset): a foregrip and an
+    underbarrel weight share RC group 1, so only one of their points counts."""
+
+    def rc(settings: SettingsState) -> int:
+        weapon = WeaponInstall(weapon_id=AK_97)
+        out = compute(
+            _mundane(
+                "rc-group",
+                weapons=[weapon],
+                weapon_accessories=[
+                    WeaponAccessoryInstall(accessory_id=FOREGRIP, parent_id=weapon.id, mount="None"),
+                    WeaponAccessoryInstall(accessory_id=UNDERBARREL_WEIGHT, parent_id=weapon.id, mount="None"),
+                ],
+                settings=settings,
+            )
+        )
+        row = next(w for w in out.derived["weapons"] if w["weapon_id"] == AK_97)
+        assert len(row["accessories"]) == 2
+        return int(row["rc_total"])
+
+    restricted = rc(SettingsState())
+    assert rc(SettingsState(restrict_recoil=False)) == restricted + 1

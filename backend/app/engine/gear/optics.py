@@ -13,6 +13,7 @@ from ...data_loader import catalog, eval_formula, parse_capacity
 from ...improvements import substitute_rating
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
+from ...rules import current_rules
 from ._common import _capacity_value, _cascade_optics, _clamp_rating, _device_rating_of, armor_capacity_of
 
 
@@ -143,7 +144,7 @@ def _resolve_optics(
         cap_max = float(item.get("capacity_max") or 0)
         if cap_max == int(cap_max):
             item["capacity_max"] = int(cap_max)
-        if cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
+        if current_rules().enforce_capacity and cap_max > 0 and float(item["capacity_used"]) > cap_max + 1e-9:
             errors.append(
                 notice(
                     "engine.gear.capacityOver",

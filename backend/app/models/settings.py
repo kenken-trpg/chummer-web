@@ -140,6 +140,10 @@ class SettingsState(BaseModel):
     #: `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>`
     use_points_on_broken_groups: bool | None = None
     strict_skill_groups_in_create_mode: bool | None = None
+    #: `<enforcecapacity>` / `<restrictrecoil>` / `<unrestrictednuyen>`
+    enforce_capacity: bool | None = None
+    restrict_recoil: bool | None = None
+    unrestricted_nuyen: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
