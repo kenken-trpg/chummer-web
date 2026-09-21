@@ -73,17 +73,41 @@ def test_an_untouched_character_writes_no_settings_tag() -> None:
     assert _export(new_character(None)).find("settings") is None
 
 
-def test_a_shipped_preset_round_trips_its_books() -> None:
-    """Only the name survives a `.chum5` — Chummer keeps the books in the
-    settings file, not in the character — so import recovers them by name."""
+def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
+    """`<settings>` is a key into Chummer's loaded settings, not the name on
+    the pulldown: the `<id>` GUID for a shipped preset. Writing the display
+    name missed every time, and Chummer answered "the settings file could not
+    be loaded". The name goes in `<gameplayoption>`, which is where this app's
+    own importer reads it from and where 5.202 kept it.
+
+    The books ride along as `<sources>` so that a Chummer without this preset
+    can still score which of its own settings to substitute; the import
+    recovers them from the name, the way it always has."""
     state = apply_patch(
         new_character(None),
         CharacterPatch(settings={"name": "Sum-to-Ten", "books": ["SR5", "RF"]}),
     )
-    assert _export(state).findtext("settings") == "Sum-to-Ten"
+    root = _export(state)
+    assert root.findtext("settings") == "3509a807-68ee-4c18-b7d5-b130313b4b77"
+    assert root.findtext("gameplayoption") == "Sum-to-Ten"
+    assert [el.text for el in root.findall("./sources/source")] == ["SR5", "RF"]
 
     back = chum5_to_state(state_to_chum5(state))[0]
     assert back["settings"] == {"name": "Sum-to-Ten", "books": ["SR5", "RF"]}
+
+
+def test_a_players_own_settings_file_is_named_as_a_file() -> None:
+    """A settings file of the player's own is keyed by its file name, which a
+    `.chum5` never carried and this app therefore does not hold. The name it
+    was saved under is the guess; the custom data directories are what let
+    Chummer score its way to the right settings when the guess misses."""
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(settings={"name": "コデックス", "books": ["SR5"], "customdata": ["Codex"]}),
+    )
+    root = _export(state)
+    assert root.findtext("settings") == "コデックス.xml"
+    assert [el.text for el in root.findall("./customdatadirectorynames/directoryname")] == ["Codex"]
 
 
 def test_an_unknown_settings_file_comes_back_unrestricted() -> None:

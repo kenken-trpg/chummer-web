@@ -253,11 +253,15 @@ def roundtrip(path: Path) -> list[str]:
 _EMPTY_VALUES = {"", "0", "0.0", "False"}
 
 #: Leaf elements whose text has to survive a round trip, checked by value
-#: rather than by presence. `<settings>` is the settings *file*, which is not
-#: the same string as `<gameplayoption>`'s rule name — writing one into the
-#: other is how a save comes back to Chummer naming a file that is not there.
+#: rather than by presence.
+#:
+#: `<settings>` is deliberately not among them. These saves are 5.202-era,
+#: where it held a bare file name (`default.xml`); the Chummer this app is
+#: pinned to takes it as a key into its loaded settings — a GUID for a
+#: shipped preset. The two eras spell the same field differently, so there is
+#: nothing here to compare against. `tests/test_settings.py` pins the rule
+#: instead.
 _SAME_VALUE_TAGS = (
-    "settings",
     "gameplayoption",
     "buildmethod",
     "metatype",
@@ -285,7 +289,12 @@ def _leaves(root: ET.Element) -> dict[str, str]:
     """
     out: dict[str, str] = {}
     for child in root:
-        if len(child) == 0:
+        # Chummer's `TryGetStringFieldQuickly` reads the *first* match, and
+        # some 5.202 saves write a field twice — ten of the test saves carry a
+        # second, empty `<priorityskills>` after the real one. Keeping the last
+        # one read those as blank and reported the export as having invented a
+        # value.
+        if len(child) == 0 and child.tag not in out:
             out[child.tag] = (child.text or "").strip()
     for attr in root.findall("./attributes/attribute"):
         name = (attr.findtext("name") or "").strip()

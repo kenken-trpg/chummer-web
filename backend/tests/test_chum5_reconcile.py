@@ -100,3 +100,12 @@ def test_an_attribute_with_no_name_is_not_a_field() -> None:
         </attributes>
     """)
     assert _leaves(root) == {"AGI/base": "5"}
+
+
+def test_a_field_written_twice_is_read_the_way_chummer_reads_it() -> None:
+    """`TryGetStringFieldQuickly` takes the first match. Ten of Chummer's own
+    test saves write a second, empty `<priorityskills>` after the real one,
+    and keeping the last read those as blank — which reported the export as
+    having invented a value that was in fact already there."""
+    root = _save("<priorityskills>B,3</priorityskills><priorityskills></priorityskills>")
+    assert _leaves(root)["priorityskills"] == "B,3"

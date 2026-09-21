@@ -29,14 +29,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "metatype", state.metatype)
     _sub(root, "metavariant", state.metavariant or "")
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
-    # Chummer keeps the enabled books in the settings *file*, not in the
-    # character, so all a .chum5 can carry is which settings the character was
-    # built under. The book list is restored on import by matching this name
-    # against the shipped presets; a name from elsewhere comes back
-    # unrestricted. Written only when set, so an untouched character exports
-    # byte-identically to before.
-    if state.settings.name:
-        _sub(root, "settings", state.settings.name)
+    _export_settings_key(root, state)
     # the creation availability limit does travel in the save — see the note in
     # `chummer_import.identity._import_settings`
     if state.settings.chargen_avail_max is not None:
@@ -79,6 +72,49 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "burntstreetcred", state.burnt_street_cred)
     _sub(root, "notoriety", state.notoriety_bonus)
     _sub(root, "nuyenbp", state.karma_nuyen)
+
+
+def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
+    """Which settings the character was built under, in the terms Chummer
+    looks them up by.
+
+    `<settings>` is not the name on the pulldown: `Character.Load` takes it as
+    a key into `SettingsManager.LoadedCharacterSettings`, whose keys are
+    `CharacterSettings.DictionaryKey` — the `<id>` GUID for one of the shipped
+    presets, the file name for a settings file of the player's own. Writing
+    the display name (`Standard`) missed on both counts, and Chummer answered
+    with "the settings file could not be loaded", naming a file the player
+    could see in their own settings folder. Worse than the dialog: the
+    settings it falls back to decide whether attribute `<base>` survives the
+    load at all, so this is also what made the numbers come out negative.
+
+    When the key does miss — a settings file that lives on another machine —
+    Chummer scores every settings it has and substitutes the closest. It
+    scores on the build method, the budget (`maxkarma` / `maxnuyen`, written
+    next door), the custom data directories and the books, so `<sources>` and
+    `<customdatadirectorynames>` are what point it at the right one.
+
+    `<gameplayoption>` is the display name, where 5.202-era Chummer kept it —
+    and where this app's own importer reads it from first.
+    """
+    settings = state.settings
+    if not settings.name:
+        return
+    preset = next((p for p in catalog().get("settings_presets") or [] if p.get("name") == settings.name), None)
+    # A settings file of the player's own is keyed by its file name, which a
+    # .chum5 never carried and this app therefore does not hold. The name it
+    # was saved under is the best guess available, and the scoring below is
+    # what makes a miss land somewhere sensible.
+    _sub(root, "settings", str(preset["id"]) if preset else f"{settings.name}.xml")
+    _sub(root, "gameplayoption", settings.name)
+    if settings.books:
+        sources = _sub(root, "sources")
+        for code in settings.books:
+            _sub(sources, "source", code)
+    if settings.customdata:
+        directories = _sub(root, "customdatadirectorynames")
+        for name in settings.customdata:
+            _sub(directories, "directoryname", name)
 
 
 def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
