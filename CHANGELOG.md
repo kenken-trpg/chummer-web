@@ -7,6 +7,9 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **書き出した .chum5 を Chummer.exe で開くと、特殊能力値の点がマイナスになる問題を直した。**
+  優先度の魔力（アデプト B の MAG 6 など）を「最小値 1 ＋ 基本値 5」と書いていたため、Chummer はその 5 を特殊能力値の点で買ったものとして数えていました。
+  Chummer 自身のセーブと同じく、MAG / RES の最小値に優先度の値を書き、基本値には買い足した分だけを書きます。
 - **車両・ドローンの装甲に、Body + Armor の上限をかけた（Rigger 5.0 p.159、Chummer の `MaxArmor`）。**
   装甲の改造（Armor (Drone) など）のレーティングと、改造込みの装甲値をこの上限で止めます。これまでは上限なしで通していました。
   設定ファイルの `<dronearmormultiplierenabled>` / `<dronearmorflatnumber>` を読み、有効ならドローンだけ上限を (Body + Armor) × 倍率にします。

@@ -274,10 +274,16 @@ def _export_flags(root: ET.Element, state: CharacterState, names: _Names, ctx: _
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write each attribute as Chummer's base/karma pair, relative to the metatype minimum."""
     m_attr = ctx["meta_attrs"]
+    # The MAG / RES the talent priority hands out is Chummer's metatype
+    # minimum, not something bought: written as `<base>`, Chummer charges it
+    # to the special attribute points and they come out negative.
+    floors = (ctx["derived"].get("attribute_karma") or {}).get("floors") or {}
     attrs = _sub(root, "attributes")
     for key in _ATTR_ORDER:
         spec = m_attr.get(key) or {}
         lo = int(spec.get("min", 0 if key in ("MAG", "RES", "DEP") else 1))
+        if key in ("MAG", "RES") and key in floors:
+            lo = int(floors[key])
         val = int(state.attributes.get(key, lo))
         if key in ("MAG", "RES", "DEP"):
             # An attribute the character does not have is 0, below the
