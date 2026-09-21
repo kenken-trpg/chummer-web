@@ -409,6 +409,10 @@ export interface CharacterSettings {
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
   allow_point_buy_specializations_on_karma_skills?: boolean | null;
+  /** `<dronearmormultiplierenabled>` */
+  drone_armor_multiplier_enabled?: boolean | null;
+  /** `<dronearmorflatnumber>` */
+  drone_armor_multiplier?: number | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */

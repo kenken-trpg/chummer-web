@@ -198,6 +198,11 @@ class Rules:
     #: `<restrictrecoil>`: of the accessories sharing an `<rcgroup>` (a
     #: bipod, a tripod and a gyro mount), only the best counts.
     restrict_recoil: bool = True
+    #: `<dronearmormultiplierenabled>` / `<dronearmorflatnumber>`: a drone's
+    #: armor tops out at (Body + Armor) times this instead of Body + Armor
+    #: (Chummer's `Vehicle.MaxArmor`, Rigger 5.0 p.159).
+    drone_armor_multiplier_enabled: bool = False
+    drone_armor_multiplier: int = 2
 
     # --- money ---------------------------------------------------------
     #: `<unrestrictednuyen>`: chargen karma may buy any amount of nuyen
@@ -313,6 +318,7 @@ _DIRECT: dict[str, str] = {
     "karma_carryover": "karma_carryover",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
     "contact_free_mult": "contact_free_mult",
+    "drone_armor_multiplier": "drone_armor_multiplier",
 }
 
 #: Every `Rules` field name — `test_settings.py` asserts `_DIRECT` only names
@@ -355,6 +361,7 @@ def rules_for(settings: object | None) -> Rules:
         ("allow_initiation_in_create_mode", "allow_initiation_in_create_mode"),
         ("use_points_on_broken_groups", "use_points_on_broken_groups"),
         ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
+        ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

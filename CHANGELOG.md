@@ -7,6 +7,10 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **車両・ドローンの装甲に、Body + Armor の上限をかけた（Rigger 5.0 p.159、Chummer の `MaxArmor`）。**
+  装甲の改造（Armor (Drone) など）のレーティングと、改造込みの装甲値をこの上限で止めます。これまでは上限なしで通していました。
+  設定ファイルの `<dronearmormultiplierenabled>` / `<dronearmorflatnumber>` を読み、有効ならドローンだけ上限を (Body + Armor) × 倍率にします。
+  `<maximumarmormodifications>` と `<nosinglearmorencumbrance>` は Chummer 本体でも計算に使われていないので、変更されていても警告を出しません。
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。
