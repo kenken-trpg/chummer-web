@@ -113,6 +113,12 @@ class Rules:
     #: (Street Cred + Notoriety) / 3 on its own. Off in every preset Chummer
     #: ships, where it is only what the GM awards plus what qualities give.
     use_calculated_public_awareness: bool = False
+    #: `<noarmorencumbrance>`: stacked armor never costs AGI / REA.
+    no_armor_encumbrance: bool = False
+    #: `<uncappedarmoraccessorybonuses>`: what stacks on the worn armor is
+    #: not capped at Strength (Chummer's `TotalArmorRating`). Encumbrance
+    #: still counts the whole stack either way.
+    uncapped_armor_accessory_bonuses: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
@@ -272,6 +278,8 @@ def rules_for(settings: object | None) -> Rules:
         ("exceed_negative_qualities_no_bonus", "quality_exceed_negative_no_bonus"),
         ("cyberleg_movement", "cyberleg_movement"),
         ("use_calculated_public_awareness", "use_calculated_public_awareness"),
+        ("no_armor_encumbrance", "no_armor_encumbrance"),
+        ("uncapped_armor_accessory_bonuses", "uncapped_armor_accessory_bonuses"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

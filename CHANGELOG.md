@@ -7,6 +7,14 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **設定ファイルの防具のハウスルールを読むようになった。**
+  `<noarmorencumbrance>` を有効にすると、重ねた防具で AGI・REA が下がらなくなります。
+  `<uncappedarmoraccessorybonuses>` を有効にすると、アクセサリーや重ね着の上乗せが
+  筋力で打ち切られなくなります。ただし、重量ペナルティはこれまでどおり上乗せ全体で数えます
+  （Chummer と同じ）。`<nosinglearmorencumbrance>` と `<maximumarmormodifications>` は
+  Chummer 本体でも計算に使われていないので、読みません。`<armordegredation>` は
+  防具の損傷をこの app が記録していないため、対象外です。
+
 - **イニシアチブのダイスに上限がついた。** Chummer の `InitiativeDice` は
   「設定の下限 ＋ 強化の分」を上限（標準 5 個）で打ち切りますが、この app は
   打ち切っていなかったので、強化を重ねると 5 個を超えていました。上限・下限と、
