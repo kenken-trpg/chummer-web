@@ -100,7 +100,9 @@ export const EN_SIDEBAR = {
     "SC = karma earned {karma} ÷ {divisor} → {earned} + adjustment {extra} = {total}",
   "side.notorietyBonus": "Notoriety bonus",
 
-  "side.awarenessFormula": "Awareness = ⌊(SC + max(notoriety, 0)) / 3⌋ + quality modifiers",
+  "side.publicAwarenessAward": "Public Awareness (GM award)",
+  "side.awarenessFormula":
+    "Awareness = GM award + quality modifiers (+ ⌊(SC + max(notoriety, 0)) / 3⌋ when the settings turn on usecalculatedpublicawareness)",
   "side.rewardTotal": "Rewards total",
   "side.reward": "Reward",
   "side.chummerSpend": "Spent in Chummer",

@@ -354,6 +354,8 @@ export interface CharacterSettings {
    */
   exceed_negative_qualities?: boolean | null;
   exceed_negative_qualities_no_bonus?: boolean | null;
+  /** `<usecalculatedpublicawareness>` */
+  use_calculated_public_awareness?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
@@ -498,6 +500,10 @@ export interface Character {
   /** SR5 p.373: two points burned take a point of Notoriety off */
   burnt_street_cred?: number;
   notoriety_bonus?: number;
+  /** Public Awareness the GM has awarded — Chummer's `<publicawareness>`,
+   *  a counter it stores as told rather than works out.
+   */
+  public_awareness?: number;
   reward_log?: RewardEntry[];
   /** what a Chummer save's expense log spent (negative), kept as history:
    *  the balance itself is already met by `karma_adjust` / `nuyen_adjust`,

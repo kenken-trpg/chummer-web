@@ -7,6 +7,14 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **周知度（Public Awareness）を、Chummer と同じ出し方にした。** Chummer の
+  周知度は「GM が付けた数 ＋ 資質の修正」で、ストリートクレッドと悪名から
+  ⌊(SC + 悪名) / 3⌋ を足すのは設定 `<usecalculatedpublicawareness>` が有効な
+  ときだけです（出荷プリセットはすべて無効）。この app は常にその式で出して
+  いたので、Chummer のセーブと食い違っていました。GM 付与分をキャリアの
+  サイドバーから入力でき、`.chum5` の `<publicawareness>` として読み書き
+  します。設定ファイルのそのキーも読みます。
+
 - **フォーカスの結合カルマが、フォースそのままではなくなった。** Chummer の
   `Focus.BindingKarmaCost` は「フォース × その種類ごとの倍率」で、倍率 1 の
   種類は一つもありません（武器フォーカス 3、パワーフォーカス 6、気フォーカス

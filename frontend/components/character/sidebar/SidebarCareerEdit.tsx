@@ -61,6 +61,19 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
               style={{ width: 64 }}
             />
           </div>
+          <div className="stat">
+            <span>{ui("side.publicAwarenessAward")}</span>
+            <input
+              type="number"
+              min={0}
+              aria-label={ui("side.publicAwarenessAward")}
+              value={ch.public_awareness || 0}
+              onChange={(e) =>
+                patch({ public_awareness: Math.max(0, Number(e.target.value) || 0) })
+              }
+              style={{ width: 64 }}
+            />
+          </div>
           <p className="muted">{ui("side.awarenessFormula")}</p>
         </div>
       ) : null}

@@ -115,6 +115,7 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["street_cred"] = max(0, _int(root.find("streetcred"), 0))
     st["burnt_street_cred"] = max(0, _int(root.find("burntstreetcred"), 0))
     st["notoriety_bonus"] = _int(root.find("notoriety"), 0)
+    st["public_awareness"] = max(0, _int(root.find("publicawareness"), 0))
     # Nuyen bought with karma at chargen; `<nuyenbp>` is build points in old money.
     st["karma_nuyen"] = max(0, _int(root.find("nuyenbp"), 0))
     st["settings"] = _import_settings(root, cat)

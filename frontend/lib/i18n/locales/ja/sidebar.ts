@@ -99,7 +99,9 @@ export const JA_SIDEBAR = {
   "side.scFormula": "SC = 得たカルマ {karma} ÷ {divisor} → {earned} ＋ 補正 {extra} ＝ {total}",
   "side.notorietyBonus": "悪名ボーナス",
 
-  "side.awarenessFormula": "周知度 = ⌊(SC + max(悪名,0)) / 3⌋ + 品質修正",
+  "side.publicAwarenessAward": "周知度（GM 付与）",
+  "side.awarenessFormula":
+    "周知度 = GM 付与 + 品質修正（設定の usecalculatedpublicawareness が有効なら + ⌊(SC + max(悪名,0)) / 3⌋）",
   "side.rewardTotal": "報酬合計",
   "side.reward": "報酬",
   "side.chummerSpend": "Chummer での支出",

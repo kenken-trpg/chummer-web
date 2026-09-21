@@ -109,6 +109,10 @@ class Rules:
     #: earn no karma for what lies past it.
     quality_exceed_negative: bool = False
     quality_exceed_negative_no_bonus: bool = False
+    #: `<usecalculatedpublicawareness>`: Public Awareness also earns
+    #: (Street Cred + Notoriety) / 3 on its own. Off in every preset Chummer
+    #: ships, where it is only what the GM awards plus what qualities give.
+    use_calculated_public_awareness: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
@@ -251,6 +255,7 @@ def rules_for(settings: object | None) -> Rules:
         ("exceed_negative_qualities", "quality_exceed_negative"),
         ("exceed_negative_qualities_no_bonus", "quality_exceed_negative_no_bonus"),
         ("cyberleg_movement", "cyberleg_movement"),
+        ("use_calculated_public_awareness", "use_calculated_public_awareness"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",
