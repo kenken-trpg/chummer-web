@@ -425,6 +425,8 @@ export interface CharacterSettings {
   spirit_force_based_on_total_mag?: boolean | null;
   /** `<freemartialartspecialization>` */
   free_martial_art_specialization?: boolean | null;
+  /** `<allowfreegrids>` */
+  allow_free_grids?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */

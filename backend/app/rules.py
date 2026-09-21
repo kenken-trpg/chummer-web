@@ -257,6 +257,9 @@ class Rules:
     #: file picks one for the whole table.
     priority_table: str = DEFAULT_PRIORITY_TABLE
 
+    #: #: `<allowfreegrids>`: lifestyles hand out their free grid subscriptions even with Hard Targets off.
+    allow_free_grids: bool = False
+
 
 DEFAULT_RULES = Rules()
 
@@ -391,6 +394,7 @@ def rules_for(settings: object | None) -> Rules:
         ("mystic_adept_pp_in_career", "mystic_adept_pp_in_career"),
         ("spirit_force_based_on_total_mag", "spirit_force_based_on_total_mag"),
         ("free_martial_art_specialization", "free_martial_art_specialization"),
+        ("allow_free_grids", "allow_free_grids"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

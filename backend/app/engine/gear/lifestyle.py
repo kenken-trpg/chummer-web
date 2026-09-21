@@ -15,6 +15,7 @@ from typing import Any
 from ...data_loader import catalog
 from ...models import CharacterState, LifestyleInstall
 from ...notices import Notice, notice, term
+from ...rules import current_rules
 from ..bundle_types import GearBundle
 from ..lookups import _item_by_id
 
@@ -26,6 +27,7 @@ def _resolve_one_lifestyle(
     quality_by_name: dict[str, dict[str, Any]],
     warnings: list[Notice],
     bonus_sources: list[tuple[str, list[dict[str, Any]]]],
+    free_grids: bool = True,
 ) -> tuple[dict[str, Any], int]:
     """Resolve one lifestyle install → (public row, monthly * months cost).
 
@@ -97,8 +99,8 @@ def _resolve_one_lifestyle(
             }
         )
 
-    # Freegrids are always derived from the lifestyle (may repeat with different selects).
-    for grid in spec.get("freegrids") or []:
+    # Freegrids are derived from the lifestyle (may repeat with different selects).
+    for grid in (spec.get("freegrids") or []) if free_grids else []:
         grid_name = str(grid.get("name") or "Grid Subscription")
         grid_spec = quality_by_name.get(grid_name)
         if not grid_spec:
@@ -233,11 +235,17 @@ def resolve_lifestyles(
     nuyen = 0
     warnings: list[Notice] = []
     bonus_sources: list[tuple[str, list[dict[str, Any]]]] = []
+    # Chummer's `Lifestyle.Create`: the free grid subscriptions come with
+    # Hard Targets, or with `<allowfreegrids>` when that book is off.
+    books = state.settings.books
+    free_grids = current_rules().allow_free_grids or not books or "HT" in books
     for inst in state.lifestyles:
         spec = _item_by_id("lifestyles", inst.lifestyle_id)
         if not spec:
             continue
-        row, cost = _resolve_one_lifestyle(inst, spec, quality_specs, quality_by_name, warnings, bonus_sources)
+        row, cost = _resolve_one_lifestyle(
+            inst, spec, quality_specs, quality_by_name, warnings, bonus_sources, free_grids
+        )
         nuyen += cost
         kept_lifestyles.append(inst)
         rows.append(row)
