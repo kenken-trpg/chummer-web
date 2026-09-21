@@ -19,6 +19,7 @@ from ...improvements import (
 )
 from ...models import ArmorModInstall, CharacterState
 from ...notices import Notice, notice, term
+from ...rules import current_rules
 from ..formulas import parse_armor_value
 from ._common import _clamp_rating
 
@@ -267,7 +268,7 @@ def _recompute_worn_armor(
 
     What stacks on top — accessories and tailored pieces together — counts up
     to the wearer's Strength (SR5 p.169), as Chummer caps it; `strength=None`
-    leaves it uncapped.
+    leaves it uncapped, as does `<uncappedarmoraccessorybonuses>`.
 
     The fourth value is the AGI/REA encumbrance from that same stack, taken
     before the cap (see `armor_encumbrance`).
@@ -287,8 +288,12 @@ def _recompute_worn_armor(
         if host is not None:
             stacked_on.setdefault(str(host["id"]), []).append(item)
 
+    rules = current_rules()
+
     def capped(stack: int) -> int:
-        return stack if strength is None else min(stack, max(0, strength))
+        if strength is None or rules.uncapped_armor_accessory_bonuses:
+            return stack
+        return min(stack, max(0, strength))
 
     best: dict[str, Any] | None = None
     best_value = 0
@@ -320,7 +325,7 @@ def _recompute_worn_armor(
         else:
             item["contributes"] = 0
     worn_name = str(best.get("name") or "") if best is not None else ""
-    penalty = armor_encumbrance(stack_total, strength) if strength is not None else 0
+    penalty = armor_encumbrance(stack_total, strength) if strength is not None and not rules.no_armor_encumbrance else 0
     if penalty:
         warnings.append(
             notice("engine.gear.armorEncumbrance", load=stack_total, strength=int(strength or 0), penalty=penalty)

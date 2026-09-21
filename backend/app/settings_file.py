@@ -123,6 +123,8 @@ _BOOL_FIELDS: dict[str, str] = {
     "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
     "cyberlegmovement": "cyberleg_movement",
     "usecalculatedpublicawareness": "use_calculated_public_awareness",
+    "noarmorencumbrance": "no_armor_encumbrance",
+    "uncappedarmoraccessorybonuses": "uncapped_armor_accessory_bonuses",
     "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
 }
 

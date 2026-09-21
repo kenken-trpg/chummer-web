@@ -13,6 +13,7 @@ from app.models import (
     CyberwareInstall,
     GearInstall,
     Priorities,
+    SettingsState,
 )
 from tests.engine_support import (
     ARM,
@@ -696,6 +697,33 @@ def test_heavy_stacked_armor_lowers_agility_and_reaction() -> None:
     light = shield(5)
     assert (light["totals"]["AGI"], light["totals"]["REA"]) == (3, 3)
     assert not has(light["warnings"], "engine.gear.armorEncumbrance")
+
+
+def _shield_with(settings: SettingsState) -> dict:
+    st = _mundane(
+        "shield-rule",
+        armor=[ArmorInstall(armor_id=ARMOR_JACKET), ArmorInstall(armor_id=_armor_named("Ballistic Shield"))],
+    )
+    st.attributes.update({"STR": 3, "AGI": 3, "REA": 3})
+    st.settings = settings
+    return compute(st).derived
+
+
+def test_the_house_rule_lifts_the_strength_cap_on_stacked_armor() -> None:
+    """`<uncappedarmoraccessorybonuses>`: the shield's whole +6 counts, and
+    the load still costs AGI / REA (Chummer caps only the armor value)."""
+    out = _shield_with(SettingsState(uncapped_armor_accessory_bonuses=True))
+    assert out["armor"] == 18
+    assert not has(out["warnings"], "engine.gear.armorAccessoryCapped")
+    assert (out["totals"]["AGI"], out["totals"]["REA"]) == (2, 2)
+
+
+def test_the_house_rule_drops_armor_encumbrance() -> None:
+    """`<noarmorencumbrance>`: Chummer's `ArmorEncumbrance` is 0."""
+    out = _shield_with(SettingsState(no_armor_encumbrance=True))
+    assert out["armor"] == 15
+    assert (out["totals"]["AGI"], out["totals"]["REA"]) == (3, 3)
+    assert not has(out["warnings"], "engine.gear.armorEncumbrance")
 
 
 HOLSTER = "5977fb0b-b74e-4eb9-b433-9b7c9877b14f"

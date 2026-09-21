@@ -105,6 +105,9 @@ class SettingsState(BaseModel):
     exceed_negative_qualities_no_bonus: bool | None = None
     #: `<usecalculatedpublicawareness>`
     use_calculated_public_awareness: bool | None = None
+    #: `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>`
+    no_armor_encumbrance: bool | None = None
+    uncapped_armor_accessory_bonuses: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`

@@ -362,6 +362,9 @@ export interface CharacterSettings {
   exceed_negative_qualities_no_bonus?: boolean | null;
   /** `<usecalculatedpublicawareness>` */
   use_calculated_public_awareness?: boolean | null;
+  /** `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>` */
+  no_armor_encumbrance?: boolean | null;
+  uncapped_armor_accessory_bonuses?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
