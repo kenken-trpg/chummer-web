@@ -7,6 +7,13 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **書き出した `.chum5` で、メンター精霊（パラゴン）が消えなくなった。**
+  Chummer は `mentorspirits/mentorspirit` を探して読み込みますが、この app は
+  `<mentorspirit>` を最上位に書いていたので、一度も見つけてもらえていません
+  でした。Chummer 自身が書く場所と項目 —— `sourceid` / `guid` / `name` /
+  `mentortype`（メンター精霊かパラゴンか。どちらのデータファイルで id を
+  引くかがこれで決まります）/ 出典 / 利点 / 欠点 —— で書きます。
+
 - **書き出しの測定器が、Chummer が一つだけ持つものの中も見るようになった。**
   `--fidelity` は `<character>` 直下の葉要素だけを比べていたので、伝統が
   まるごと落ちていても 34 件すべてを「忠実」と数えていました（実際に 1 件の

@@ -9,7 +9,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..engine.lookups import _stream_by_id, _tradition_by_id
+from ..engine.lookups import _mentor_by_id, _paragon_by_id, _stream_by_id, _tradition_by_id
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 
@@ -122,27 +122,68 @@ def _export_tradition_block(root: ET.Element, state: CharacterState) -> None:
         _sub(available, "spirit", name)
 
 
+def _export_mentor_block(root: ET.Element, state: CharacterState, names: _Names, mentor_id: str) -> None:
+    """Write the mentor spirit where Chummer looks for it, with the fields it reads.
+
+    `Character.Load` collects mentors with
+    `SelectNodes("mentorspirits/mentorspirit")` — a top-level `<mentorspirit>`,
+    which is all this app used to write, is never seen, so every exported
+    character opened in Chummer.exe with no mentor at all.
+
+    The fields are `MentorSpirit.Save`'s. `mentortype` decides which data file
+    Chummer resolves the mentor in (`MentorSpirit` → mentors.xml, `Paragon` →
+    paragons.xml), and `sourceid` is the id it resolves there; `guid` is this
+    character's own copy of it, and `id` is the same source id again, the older
+    spelling Chummer still writes. `choice1` / `choice2` carry the raw bonus
+    XML of the picks, which this app keeps in parsed form; the picks themselves
+    ride in `extrachoice1` / `extrachoice2`, which is what Chummer reads back.
+    """
+    mentor = _mentor_by_id(mentor_id)
+    is_paragon = mentor is None
+    if is_paragon:
+        mentor = _paragon_by_id(mentor_id)
+    row = mentor or {}
+    parent = _sub(root, "mentorspirits")
+    el = _sub(parent, "mentorspirit")
+    _sub(el, "sourceid", mentor_id)
+    _sub(el, "guid", mentor_id)
+    _sub(el, "name", names["mentor"].get(mentor_id, "") or row.get("name") or "")
+    _sub(el, "mentortype", "Paragon" if is_paragon else "MentorSpirit")
+    _sub(el, "extra", "")
+    # Chummer holds at most two mentor picks, in two fixed fields. This app
+    # keeps a list plus a map of what each pick resolved to, so the pair of
+    # lists below is what actually round-trips; the two fields mirror the
+    # first two picks so Chummer has something to show.
+    for index, tag in enumerate(("extrachoice1", "extrachoice2")):
+        _sub(el, tag, state.mentor_choices[index] if index < len(state.mentor_choices) else "")
+    _sub(el, "source", row.get("source") or "")
+    _sub(el, "page", row.get("page") or "")
+    _sub(el, "advantage", row.get("advantage") or "")
+    _sub(el, "disadvantage", row.get("disadvantage") or "")
+    # Mentor's Mask is a quality this app does not model, so it is never on.
+    _sub(el, "mentormask", "False")
+    # Chummer falls back to the data file for an empty `bonus`, and an empty
+    # `choice1` / `choice2` is what it writes for a mentor without picks.
+    for tag in ("bonus", "choice1", "choice2"):
+        _sub(el, tag, "")
+    _sub(el, "notes", "")
+    _sub(el, "id", mentor_id)
+    # This app's own round-trip: the picks in full, and what each resolved to.
+    choices = _sub(el, "choices")
+    for picked in state.mentor_choices:
+        _sub(choices, "choice", picked)
+    extras = _sub(el, "extras")
+    for key, value in sorted(state.mentor_extras.items()):
+        extra_row = _sub(extras, "extra")
+        _sub(extra_row, "key", key)
+        _sub(extra_row, "value", value)
+
+
 def _export_magic_tradition(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """The tradition, stream or mentor spirit a magician or technomancer has."""
     _export_tradition_block(root, state)
     if state.mentor_id:
-        me = _sub(root, "mentorspirit")
-        _sub(me, "guid", state.mentor_id)
-        _sub(me, "name", names["mentor"].get(state.mentor_id, ""))
-        # Chummer holds at most two mentor picks, in two fixed fields. This app
-        # keeps a list plus a map of what each pick resolved to, so the pair of
-        # lists below is what actually round-trips; the two fields mirror the
-        # first two picks so Chummer has something to show.
-        for index, tag in enumerate(("extrachoice1", "extrachoice2")):
-            _sub(me, tag, state.mentor_choices[index] if index < len(state.mentor_choices) else "")
-        choices = _sub(me, "choices")
-        for picked in state.mentor_choices:
-            _sub(choices, "choice", picked)
-        extras = _sub(me, "extras")
-        for key, value in sorted(state.mentor_extras.items()):
-            row = _sub(extras, "extra")
-            _sub(row, "key", key)
-            _sub(row, "value", value)
+        _export_mentor_block(root, state, names, state.mentor_id)
 
 
 def _export_spirits(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
