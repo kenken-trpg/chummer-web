@@ -163,6 +163,8 @@ class CustomDataUpload(BaseModel):
     def _bounded(self) -> CustomDataUpload:
         if len(self.files) > 500:
             raise ValueError("too many custom-data files")
+        if len(self.customdata) > 500 or any(len(name) > 256 for name in self.customdata):
+            raise ValueError("too many or too long custom-data directory names")
         return self
 
 

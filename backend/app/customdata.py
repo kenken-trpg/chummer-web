@@ -323,6 +323,7 @@ def build_overlay(
         return trees[name]
 
     by_directory = {_fold(_directory_of(p)): _directory_of(p) for p in files if "/" in p}
+    applied: set[str] = set()
     for wanted in enabled:
         # tolerate a settings file naming the directory rather than the guid,
         # which is what a hand-edited one usually does
@@ -330,6 +331,12 @@ def build_overlay(
         if directory is None:
             report.skip(wanted, "the custom data for this entry was not supplied")
             continue
+        if directory in applied:
+            # named twice (by guid and by directory, or a repeated entry):
+            # Chummer loads a directory once, and merging it again would only
+            # redo the same work — which a crafted list could repeat at will
+            continue
+        applied.add(directory)
         for path in sorted(files):
             if _directory_of(path) != directory:
                 continue
