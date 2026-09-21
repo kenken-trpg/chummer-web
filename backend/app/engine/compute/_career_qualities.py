@@ -3,7 +3,9 @@
 A positive quality taken in play costs twice its karma; buying a negative one
 off costs twice the karma it gave. A negative quality picked up in play gives
 nothing, and a positive one dropped is not refunded. `<doublecareer>False`
-(the Ways, metagenic qualities, ...) takes the single price instead.
+(the Ways, metagenic qualities, ...) takes the single price instead, as
+does every purchase under `<dontdoublequalities>` and every buy-off under
+`<dontdoublequalityrefunds>`.
 
 Chargen already sums every held quality at its table karma (`karma_from_q`);
 this works out only the difference, measured against the qualities held when
@@ -15,12 +17,16 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from ...rules import current_rules
 from ..lookups import _quality_by_id
 
 CAREER_MULT = 2
 
 
-def _mult(spec: dict[str, Any]) -> int:
+def _mult(spec: dict[str, Any], *, refund: bool = False) -> int:
+    rules = current_rules()
+    if rules.quality_dont_double_refunds if refund else rules.quality_dont_double_purchases:
+        return 1
     return CAREER_MULT if spec.get("double_career", True) is not False else 1
 
 
@@ -67,7 +73,7 @@ def career_quality_karma(
         karma = int(gone_spec["karma"])
         if karma < 0:
             # the chargen gain stays; the buy-off is paid on top
-            cost = -karma * _mult(gone_spec)
+            cost = -karma * _mult(gone_spec, refund=True)
             delta += (cost + karma) * gone
         else:
             # spent karma stays spent

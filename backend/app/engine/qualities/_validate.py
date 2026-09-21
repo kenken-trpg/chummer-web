@@ -141,7 +141,7 @@ def apply_quality_rules(
                 "engine.qualities.negativeCap", karma=negative_gain, limit=current_rules().quality_karma_cap_negative
             )
         )
-    if positive_spend > current_rules().quality_karma_cap_positive and not career:
+    if positive_spend > rules.quality_karma_cap_positive and not career and not rules.quality_exceed_positive:
         errors.append(
             notice(
                 "engine.qualities.positiveCap", karma=positive_spend, limit=current_rules().quality_karma_cap_positive

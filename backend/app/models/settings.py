@@ -103,6 +103,11 @@ class SettingsState(BaseModel):
     #: gives no karma.
     exceed_negative_qualities: bool | None = None
     exceed_negative_qualities_no_bonus: bool | None = None
+    #: `<exceedpositivequalities>`: positive qualities may pass the limit.
+    exceed_positive_qualities: bool | None = None
+    #: `<dontdoublequalities>` / `<dontdoublequalityrefunds>`
+    dont_double_quality_purchases: bool | None = None
+    dont_double_quality_refunds: bool | None = None
     #: `<usecalculatedpublicawareness>`
     use_calculated_public_awareness: bool | None = None
     #: `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>`

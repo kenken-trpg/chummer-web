@@ -291,3 +291,29 @@ def test_burnt_street_cred_round_trips_through_chum5() -> None:
     st.burnt_street_cred = 2
     back, _skipped = chum5_to_state(state_to_chum5(compute(st)))
     assert (back["street_cred"], back["burnt_street_cred"]) == (6, 2)
+
+
+def test_the_house_rule_charges_career_qualities_once() -> None:
+    """`<dontdoublequalities>`: a positive quality taken in play costs its
+    table karma (Chummer skips the ×2 when the setting is on)."""
+    amb = _career_quality("Ambidextrous")
+    st = _into_career("career-once", [])
+    st.settings = SettingsState(dont_double_quality_purchases=True)
+    before = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = [amb["id"]]
+    out = compute(st).derived
+    assert _quality_row(out, "Ambidextrous")["career_cost"] == amb["karma"]
+    assert before - out["karma"]["remaining"] == amb["karma"]
+
+
+def test_the_house_rule_buys_off_negatives_once() -> None:
+    """`<dontdoublequalityrefunds>`: buying a negative quality off costs the
+    karma it gave, not twice it."""
+    bad = _career_quality("Bad Luck")
+    st = _into_career("career-refund", [bad["id"]])
+    st.settings = SettingsState(dont_double_quality_refunds=True)
+    held = compute(st).derived["karma"]["remaining"]
+    st.quality_ids = []
+    out = compute(st).derived
+    assert out["qualities_removed"][0]["karma"] == -bad["karma"]
+    assert held - out["karma"]["remaining"] == -bad["karma"]
