@@ -65,6 +65,12 @@ default settings refund all of it and call the build invalid, which is what
 this app does; the 5.202 saves stored the remainder as if the refund stopped
 at 25, so their karma differs by the excess (Barrett by 53, Blindfire by 15).
 
+`prime`'s 13 karma is its settings, not its build. It was saved under a
+5.202 Prime Runner that gave 35 build karma and 6 contact points per Charisma
+(`<buildkarma>` / `<contactmultiplier>` in the save); today's `settings.xml`
+Prime Runner gives neither, and current Chummer no longer reads those two
+fields, so it opens the character at 25 and x3 too — 10 + 3 short, as here.
+
 The files are fetched once into ``vendor/chummer-tests/`` (gitignored), at the
 same chummer5a ref as the game data::
 

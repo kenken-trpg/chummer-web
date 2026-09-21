@@ -150,6 +150,8 @@ def all_talent_options() -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for talent in by_name.values():
         row = dict(talent)
+        # a Karma build buys every skill; the free ones are a priority's
+        row["free_skills"] = None
         name = row.get("name") or ""
         if name in MAG_TALENTS or int(row.get("magic") or 0) > 0:
             if name not in RES_TALENTS:

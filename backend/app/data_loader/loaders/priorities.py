@@ -63,8 +63,40 @@ def load_priorities() -> list[dict[str, Any]]:
                         "quality": _text(t.find("./qualities/quality")),
                         "spells": _int(t.find("spells")),
                         "cfp": _int(t.find("cfp")),
+                        "free_skills": _free_skills(t),
                     }
                 )
             row["talents"] = talents
         rows.append(row)
     return rows
+
+
+def _free_skills(t: Any) -> dict[str, Any] | None:
+    """The skills a talent hands out at a fixed rating (Magician's two
+    magical skills at 5, Adept's one active skill, Aspected's one group).
+
+    ``type`` says which skills qualify, as Chummer's `SelectMetatypePriority`
+    reads it: ``magic`` / ``resonance`` / ``matrix`` name a fixed filter,
+    ``specific`` lists them in ``choices``, ``xpath`` carries its own filter
+    in ``xpath``, and ``grouped`` picks a skill group out of ``choices``.
+    """
+    if t.find("skillgroupqty") is not None:
+        return {
+            "group": True,
+            "qty": _int(t.find("skillgroupqty")),
+            "val": _int(t.find("skillgroupval")),
+            "type": "grouped",
+            "xpath": "",
+            "choices": [_text(g) for g in t.findall("./skillgroupchoices/skillgroup") if _text(g)],
+        }
+    if t.find("skillqty") is None:
+        return None
+    typ = t.find("skilltype")
+    return {
+        "group": False,
+        "qty": _int(t.find("skillqty")),
+        "val": _int(t.find("skillval")),
+        "type": _text(typ).lower(),
+        "xpath": typ.get("xpath", "") if typ is not None else "",
+        "choices": [_text(c) for c in t.findall("./skillchoices/skill") if _text(c)],
+    }

@@ -508,6 +508,12 @@ export interface Character {
   /** of `skill_groups[name]`, the top levels bought with karma */
   skill_group_karma?: Record<string, number>;
   skill_specializations?: Record<string, string>;
+  /** the skills (or, for an Aspected Magician, the skill group) the priority
+   *  talent hands out at its fixed rating — Chummer's Heritage `SkillBase` /
+   *  `SkillGroupBase` improvements. `skills` / `skill_groups` hold the total
+   *  rating, free levels included.
+   */
+  talent_skills?: string[];
   exotic_skills?: ExoticSkillInstall[];
   knowledge_skills: Record<string, number>;
   native_languages?: string[];

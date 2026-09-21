@@ -679,6 +679,14 @@
   },
   "talent": {
     "cfp": 7,
+    "free_skills": {
+      "choices": [],
+      "group": false,
+      "qty": 3,
+      "type": "resonance",
+      "val": 5,
+      "xpath": ""
+    },
     "label": "Technomancer - 6 Resonance/7 Complex Forms",
     "magic": 0,
     "name": "Technomancer",
@@ -686,6 +694,23 @@
     "resonance": 6,
     "spells": 0,
     "value": 6
+  },
+  "talent_skills": {
+    "group": false,
+    "options": [
+      "Compiling",
+      "Computer",
+      "Cybercombat",
+      "Decompiling",
+      "Electronic Warfare",
+      "Hacking",
+      "Hardware",
+      "Registering",
+      "Software"
+    ],
+    "picked": [],
+    "qty": 3,
+    "rating": 5
   },
   "test_mods": {
     "addiction_physiological_addicted": 0,

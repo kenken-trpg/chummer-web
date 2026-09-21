@@ -23,7 +23,7 @@ from ...improvements.effect_rows import (
     UnimplementedRow,
 )
 from ...notices import Notice
-from ..bundle_types import FocusLimits, MatrixInitiative, MovementBundle
+from ..bundle_types import FocusLimits, MatrixInitiative, MovementBundle, TalentSkills
 
 Row = dict[str, Any]
 
@@ -367,6 +367,9 @@ class DerivedDict(TypedDict):
     skill_attribute_swaps: list[SkillAttributeSwapRow]
     skill_max_bonus: dict[str, int]
     skill_pick_slots: list[Row]
+    #: the priority talent's free skills; `None` only if the skills phase
+    #: never ran
+    talent_skills: TalentSkills | None
     #: Skills that default without the −1 (Reflex Recorder Optimization).
     no_default_penalty_skills: list[str]
     native_language_limit: int

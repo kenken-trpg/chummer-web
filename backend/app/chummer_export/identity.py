@@ -15,7 +15,7 @@ from ..engine import find_metatype
 from ..engine.priority import heritage_cost, priority_value
 from ..models import CharacterState
 from ..rules import current_rules
-from ._common import _Ctx, _Names, _sub
+from ._common import _Ctx, _Names, _sub, improvements_of
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
 _BUILD_METHOD_OUT = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma"}
@@ -166,6 +166,13 @@ def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, c
     ):
         _sub(root, tag, f"{letter},{_PRIORITY_VALUE.get(letter, 0)}")
     _sub(root, "prioritytalent", state.talent)
+    # the talent's free skills by name, beside the Heritage improvements
+    # `_export_skills` writes; Chummer lists them here after the talent
+    talent_skills = ctx["derived"].get("talent_skills") or {}
+    if talent_skills.get("picked") and not talent_skills.get("group"):
+        picks = _sub(root, "priorityskills")
+        for name in talent_skills["picked"]:
+            _sub(picks, "priorityskill", name)
 
 
 def _export_build_points(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -356,6 +363,11 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
     # Street is what the engine takes a typeless unlisted one for.
     knowledge_cats = {str(row["name"]): str(row.get("category") or "") for row in data.get("knowledge") or []}
     ns = _sub(root, "newskills")
+    talent = ctx["derived"].get("talent_skills") or {}
+    free_rating = int(talent.get("rating") or 0)
+    free = dict.fromkeys(talent.get("picked") or [], free_rating)
+    free_skills = {} if talent.get("group") else free
+    free_groups = free if talent.get("group") else {}
 
     def karma_of(levels: dict[str, int], name: str, rating: int) -> int:
         # the top levels bought with karma at creation are Chummer's <karma>
@@ -379,7 +391,7 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         _sub(s, "skillcategory", active_cats.get(name, ""))
         karma = karma_of(state.skill_karma, name, rating)
         _sub(s, "karma", karma)
-        _sub(s, "base", rating - karma)
+        _sub(s, "base", max(0, rating - karma - free_skills.get(name, 0)))
         specs(s, name)
     for exotic in state.exotic_skills:
         # One skill per weapon, which Chummer writes as the exotic skill's id
@@ -420,8 +432,19 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
         grp_el = _sub(grps, "group")
         karma = karma_of(state.skill_group_karma, name, rating)
         _sub(grp_el, "karma", karma)
-        _sub(grp_el, "base", rating - karma)
+        _sub(grp_el, "base", max(0, rating - karma - free_groups.get(name, 0)))
         _sub(grp_el, "name", name)
+
+    # Chummer gives the free levels back only through these (`FreeBase`)
+    for kind, picks in (("SkillBase", free_skills), ("SkillGroupBase", free_groups)):
+        for name, val in picks.items():
+            imp = _sub(improvements_of(root), "improvement")
+            _sub(imp, "improvedname", name)
+            _sub(imp, "val", val)
+            _sub(imp, "rating", 1)
+            _sub(imp, "improvementttype", kind)
+            _sub(imp, "improvementsource", "Heritage")
+            _sub(imp, "enabled", "True")
 
 
 def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

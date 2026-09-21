@@ -394,6 +394,16 @@ export interface Derived {
   skill_attribute_swaps?: { skill: string; attribute: string; spec: string; source: string }[];
   skill_max_bonus?: Record<string, number>;
   skill_pick_slots?: SkillPickSlot[];
+  /** The priority talent's free skills (a group, for an Aspected Magician). */
+  talent_skills?: {
+    qty: number;
+    /** the free rating each pick gets */
+    rating: number;
+    /** an Aspected Magician's pick is a skill group */
+    group: boolean;
+    options: string[];
+    picked: string[];
+  } | null;
   /** Skills that default without the −1 (Reflex Recorder Optimization). */
   no_default_penalty_skills?: string[];
   power_points?: { used: number; max: number };

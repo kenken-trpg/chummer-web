@@ -35,6 +35,7 @@ from ..bundle_types import (
     SpiritsBundle,
     SpritesBundle,
     SubmersionBundle,
+    TalentSkills,
     empty_adept,
     empty_complex_forms,
     empty_contacts,
@@ -175,6 +176,8 @@ class Ctx:
     skill_spent: int = 0
     skill_totals: dict[str, int] = field(default_factory=dict)
     skill_picks: SkillPicks = field(default_factory=empty_skill_picks)
+    #: the priority talent's free skills; `None` until the skills phase
+    talent_skills: TalentSkills | None = None
     exotic: dict[str, Any] = field(default_factory=dict)
     knowledge: dict[str, Any] = field(default_factory=dict)
     know_spent: int = 0

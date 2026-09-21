@@ -19,7 +19,7 @@ from ..engine.constants import (
 from ..engine.lookups import critter_power_label
 from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
 from ..models import CharacterState
-from ._common import _Ctx, _Names, _sub
+from ._common import _Ctx, _Names, _sub, improvements_of
 
 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -83,7 +83,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     links += [(child_guid, qid, "SpecificQuality") for qid, child_guid in granted]
     links += [(c.id, c.source_quality_id, "AddContact") for c in state.contacts if c.source_quality_id]
     if links:
-        imps = _sub(root, "improvements")
+        imps = improvements_of(root)
         for improved, qid, kind in links:
             imp = _sub(imps, "improvement")
             _sub(imp, "improvedname", improved)

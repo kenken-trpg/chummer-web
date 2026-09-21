@@ -776,6 +776,14 @@
   },
   "talent": {
     "cfp": 0,
+    "free_skills": {
+      "choices": [],
+      "group": false,
+      "qty": 2,
+      "type": "magic",
+      "val": 5,
+      "xpath": ""
+    },
     "label": "Magician - 6 Magic/10 Spells",
     "magic": 6,
     "name": "Magician",
@@ -783,6 +791,26 @@
     "resonance": 0,
     "spells": 10,
     "value": 6
+  },
+  "talent_skills": {
+    "group": false,
+    "options": [
+      "Alchemy",
+      "Arcana",
+      "Artificing",
+      "Assensing",
+      "Astral Combat",
+      "Banishing",
+      "Binding",
+      "Counterspelling",
+      "Disenchanting",
+      "Ritual Spellcasting",
+      "Spellcasting",
+      "Summoning"
+    ],
+    "picked": [],
+    "qty": 2,
+    "rating": 5
   },
   "test_mods": {
     "addiction_physiological_addicted": 0,
