@@ -636,6 +636,8 @@ def _check_grouped_skills(ctx: Ctx, active_points: dict[str, int]) -> None:
         group_points = rating - int(ctx.skill_group_karma_levels.get(group) or 0)
         if group_points > 0 and active_points.get(name):
             ctx.errors.append(notice("engine.skills.pointsOnGroupedSkill", name=term(name), group=term(group)))
+
+
 def _spirit_karma(ctx: Ctx) -> int:
     """Chargen karma for the spirits and sprites that start with the
     character: `<karmaspirit>` per service owed (Chummer's `CalculateBP`).

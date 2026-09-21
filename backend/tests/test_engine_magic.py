@@ -1343,6 +1343,8 @@ def test_initiation_at_chargen_needs_the_setting() -> None:
     assert allowed.derived["initiation"]["karma"] == 13
     career = compute(_mage("init-career", career=True, **kw))
     assert not has(career.derived["errors"], "engine.initiation.notInCreate")
+
+
 def test_starting_spirits_cost_karma_per_service() -> None:
     """Chummer's `CalculateBP`: `<karmaspirit>` (1) per service owed."""
     kw = {"tradition_id": HERMETIC, "spirits": [SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=2)]}
