@@ -751,3 +751,26 @@ def test_a_paragon_is_written_as_the_paragon_kind_of_mentor() -> None:
     men = root.find("./mentorspirits/mentorspirit")
     assert men is not None
     assert (men.findtext("mentortype"), men.findtext("name")) == ("Paragon", paragon["name"])
+
+
+def test_the_talent_mag_is_the_metatype_minimum_not_bought_base() -> None:
+    """Chummer's own saves keep an Adept B's MAG 6 as `<metatypemin>6` with
+    `<base>0`. Written as a minimum of 1 plus 5 bought, Chummer.exe charged
+    the 5 to the special attribute points and showed them negative."""
+    src = CharacterState.model_validate(
+        {
+            "id": "muse",
+            "name": "Muse",
+            "build_method": "SumToTen",
+            "priorities": {"Heritage": "D", "Attributes": "B", "Talent": "B", "Skills": "D", "Resources": "C"},
+            "metatype": "Human",
+            "talent": "Adept",
+            "attributes": {"EDG": 3, "MAG": 6},
+        }
+    )
+    root = ET.fromstring(state_to_chum5(compute_state(src)))
+    mag = root.find("./attributes/attribute[name='MAG']")
+    assert mag is not None
+    assert [mag.findtext(t) for t in ("metatypemin", "base", "karma")] == ["6", "0", "0"]
+    st, _ = chum5_to_state(state_to_chum5(compute_state(src)))
+    assert st["attributes"]["MAG"] == 6
