@@ -140,6 +140,22 @@ export function vehicleInteriorFits(mod: { category: string; required_categories
   );
 }
 
+/** Whether a plugin the host already carries should stay off its "slot
+ *  something in" list.
+ *
+ *  A second Vision Magnification in the same optic does nothing, so these
+ *  lists hide what is already there. But an item that names *what it is for*
+ *  (`needs_extra`: the Fake License's license, an autosoft's model) is a
+ *  different item every time it is bought — and a Fake SIN carries several
+ *  licenses, which the flat rule made impossible after the first. */
+export function alreadySlotted(
+  mod: { id: string; needs_extra?: boolean },
+  siblings: { gear_id?: string }[],
+) {
+  if (mod.needs_extra) return false;
+  return siblings.some((row) => row.gear_id === mod.id);
+}
+
 export function miscFits(
   parent: { name: string; category: string; addoncategories?: string[] },
   child: {

@@ -2,7 +2,7 @@
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
-import { dropTree, vehicleInteriorFits } from "@/lib/character/gear";
+import { alreadySlotted, dropTree, vehicleInteriorFits } from "@/lib/character/gear";
 
 /** Gear carried inside one vehicle — a medkit in the glovebox rather than
  *  anything bolted to the chassis. */
@@ -21,7 +21,7 @@ export function VehicleGearRows({
     (mod) =>
       vehicleInteriorFits(mod) &&
       String(mod.cost || "").trim() !== "0" &&
-      !(item.gear || []).some((row) => row.gear_id === mod.id),
+      !alreadySlotted(mod, item.gear || []),
   );
   return (
     <>

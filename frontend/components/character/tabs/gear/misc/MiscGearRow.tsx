@@ -4,7 +4,7 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
-import { dropTree, miscFits } from "@/lib/character/gear";
+import { alreadySlotted, dropTree, miscFits } from "@/lib/character/gear";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
 
@@ -260,7 +260,7 @@ export function MiscGearRow({
                 {mode === "drugs" ? ui("gear.gradeOrAddon") : ui("gear.addGear")}
               </option>
               {addons
-                .filter((mod) => !childrenItems.some((child) => child.gear_id === mod.id))
+                .filter((mod) => !alreadySlotted(mod, childrenItems))
                 // Drug grades are not a book: they are how the one drug in
                 // this row is cut, so they are always on offer.
                 .filter(

@@ -346,6 +346,37 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     ]);
   });
 
+  // "minus what it already has" is right for a Vision Magnification and wrong
+  // for a Fake License: a Fake SIN carries one per licensed thing, and each is
+  // a different item. Hiding the second one made them unbuyable past the first.
+  it("keeps offering an add-on that names what it is for", () => {
+    const licenses = makeCatalog({
+      gear: [
+        {
+          id: "a-license",
+          name: "Fake License",
+          category: "Medkit Add-ons",
+          cost: "200",
+          source: "SR5",
+          requireparent: true,
+          needs_extra: true,
+          extra_kind: "text",
+        },
+      ],
+    } as any);
+    renderPanel(
+      owning([
+        medkit(),
+        gear("g1a", "Fake License", { gear_id: "a-license", parent_id: "g1", extra: "運転" }),
+      ]),
+      vi.fn(),
+      "misc",
+      licenses,
+    );
+
+    expect(addonOptions()).toContain("Fake License (200¥)");
+  });
+
   // This select used to change with the *catalog search box* further down the
   // panel — two unrelated controls wired together, because the search box was
   // the only way past the hard-coded `source === "SR5"`.
