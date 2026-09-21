@@ -28,6 +28,10 @@ self-hosters can pin to a tag instead of tracking `main`.
   上がる量の上限にした。Enhancement と Redliner / Cyberseeker の上乗せを合わせてこの上限で止める。
   Enhancement が 2 つ付いているときは、Chummer と同じく足さずに高いほうを使う。
   `<dontusecyberlimbcalculation>` を有効にすると、サイバーリムの平均で体の STR / AGI を置き換えない。
+- **設定ファイルの知識技能点の式を読むようになった。**
+  `<knowledgepointsexpression>`（既定 `({INTUnaug} + {LOGUnaug}) * 2`）で無料の知識技能点を計算する。
+  使えるのは能力値のトークン（`{INT}` は強化込み、`{INTUnaug}` は強化なし）、数字、`+ - * /`（XPath の `div`）、
+  括弧だけで、結果は Chummer と同じく切り上げる。それ以外の書き方の式は、未対応の設定として報告する。
 
 - **設定ファイルの資質のハウスルールを読むようになった。**
   `<dontdoublequalities>` を有効にすると、キャリアで取るポジティブ資質が 2 倍ではなく表の値段になります。

@@ -188,6 +188,10 @@ class Rules:
     #: value however many cyberlimbs it has.
     dont_use_cyberlimb_calculation: bool = False
 
+    #: Free knowledge points (Chummer's `KnowledgePointsExpression`, SR5
+    #: p.99), rounded up.
+    knowledge_points_expression: str = "({INTUnaug} + {LOGUnaug}) * 2"
+
     # --- money ---------------------------------------------------------
     karma_to_nuyen: int = 2000
     #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
@@ -359,6 +363,9 @@ def rules_for(settings: object | None) -> Rules:
         attr = getattr(settings, attr_field, None)
         if attr:
             overrides[attr_field] = str(attr)
+    knowledge = getattr(settings, "knowledge_points_expression", None)
+    if knowledge:
+        overrides["knowledge_points_expression"] = str(knowledge)
     exclude = getattr(settings, "exclude_limb_slot", None)
     if exclude:
         overrides["exclude_limb_slot"] = str(exclude)

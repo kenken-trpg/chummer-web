@@ -118,6 +118,8 @@ _HANDLED_ELSEWHERE = {
     "chargenkarmatonuyenexpression",
     # Read by `_contact_points` when it is the plain multiplier shape.
     "contactpointsexpression",
+    # Read by `_knowledge_points` when it is tokens and arithmetic.
+    "knowledgepointsexpression",
     # Read into `_ATTR_FIELDS` when they are a single attribute.
     "boundspiritexpression",
     "registeredspriteexpression",
@@ -163,6 +165,7 @@ _CONTACT_POINTS_EXPR = re.compile(r"^\{CHAUnaug\}\s*\*\s*(\d+)$")
 #: `{CHA}` — `<boundspiritexpression>` / `<registeredspriteexpression>` as a
 #: single attribute, which is every shape Chummer ships (Standard `{CHA}`,
 #: the German presets `{LOG}` for sprites).
+_ATTR_TOKENS = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES")
 _ATTR_EXPR = re.compile(r"^\{(BOD|AGI|REA|STR|CHA|INT|LOG|WIL|EDG|MAG|RES)\}$")
 
 #: `<tag>` -> `SettingsState` field, for the single-attribute limits.
@@ -321,6 +324,11 @@ def _settings_from(root: ET.Element) -> SettingsState:
     if contact_mult is not None:
         fields["contact_free_mult"] = contact_mult
 
+    knowledge = flat.get("knowledgepointsexpression", "").strip()
+    knowledge_understood = not knowledge or _knowledge_points_readable(knowledge)
+    if knowledge and knowledge_understood:
+        fields["knowledge_points_expression"] = knowledge
+
     baseline = _baseline()
     read = set(_INT_FIELDS) | set(_KARMA_FIELDS) | set(_BOOL_FIELDS) | _HANDLED_ELSEWHERE
     unsupported = sorted(tag for tag, value in flat.items() if tag not in read and baseline.get(tag, value) != value)
@@ -328,6 +336,8 @@ def _settings_from(root: ET.Element) -> SettingsState:
         unsupported.append("chargenkarmatonuyenexpression")
     if not contact_understood:
         unsupported.append("contactpointsexpression")
+    if not knowledge_understood:
+        unsupported.append("knowledgepointsexpression")
     for tag, field in _ATTR_FIELDS.items():
         expression = flat.get(tag, "")
         if not expression:
@@ -347,6 +357,17 @@ def _settings_from(root: ET.Element) -> SettingsState:
         unsupported=unsupported,
         **fields,
     )
+
+
+def _knowledge_points_readable(expression: str) -> bool:
+    """Whether `<knowledgepointsexpression>` is something the engine can
+    evaluate: attribute tokens, numbers and arithmetic."""
+    from .engine.formulas import eval_attribute_expression
+
+    if len(expression) > 200:
+        return False
+    probe = {attr + suffix: 1 for attr in _ATTR_TOKENS for suffix in ("", "Unaug")}
+    return eval_attribute_expression(expression, probe) is not None
 
 
 def _contact_points(flat: dict[str, str]) -> tuple[int | None, bool]:

@@ -321,6 +321,20 @@ def test_a_contact_expression_this_app_cannot_evaluate_is_reported() -> None:
     assert "contactpointsexpression" in parsed.unsupported
 
 
+def test_the_knowledge_points_expression_is_kept_when_it_is_arithmetic() -> None:
+    standard = parse_settings_xml(_settings_xml(knowledgepointsexpression="({INTUnaug} + {LOGUnaug}) * 2"))
+    assert standard.unsupported == []
+    assert rules_for(standard) == DEFAULT_RULES
+    house = parse_settings_xml(_settings_xml(knowledgepointsexpression="({INTUnaug} + {LOGUnaug}) * 3"))
+    assert rules_for(house).knowledge_points_expression == "({INTUnaug} + {LOGUnaug}) * 3"
+
+
+def test_a_knowledge_expression_this_app_cannot_evaluate_is_reported() -> None:
+    parsed = parse_settings_xml(_settings_xml(knowledgepointsexpression="{Skill} * 2"))
+    assert parsed.knowledge_points_expression is None
+    assert "knowledgepointsexpression" in parsed.unsupported
+
+
 def test_the_spirit_and_sprite_limits_read_a_single_attribute() -> None:
     """Standard writes `{CHA}` for both; the German presets `{LOG}` for sprites."""
     parsed = parse_settings_xml(_settings_xml(boundspiritexpression="{CHA}", registeredspriteexpression="{LOG}"))

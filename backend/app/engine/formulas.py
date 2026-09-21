@@ -5,8 +5,10 @@ beyond ``eval_formula``.
 
 from __future__ import annotations
 
+import ast
 import math
 import re
+from collections.abc import Mapping
 
 from ..data_loader import eval_formula
 
@@ -160,3 +162,52 @@ def _add_weapon_dv(raw: str | None, delta: int) -> str:
         sign = "+" if delta > 0 else ""
         return f"{type_match.group(1)}{sign}{delta}{type_match.group(2)}"
     return f"{text}+{delta}" if delta > 0 else f"{text}{delta}"
+
+
+#: `{INT}` / `{INTUnaug}` in a settings-file expression.
+_SETTINGS_TOKEN = re.compile(r"\{([A-Z]{3})(Unaug)?\}")
+_ARITH = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b}
+
+
+def eval_attribute_expression(expr: str, values: Mapping[str, float]) -> float | None:
+    """A settings-file expression such as ``({INTUnaug} + {LOGUnaug}) * 2``.
+
+    Only attribute tokens (``values`` keys, ``INT`` or ``INTUnaug``), numbers,
+    ``+ - * /`` (XPath's ``div`` too) and brackets: the text comes from an uploaded file, so it is
+    walked as an AST instead of handed to ``eval``. ``None`` when it holds
+    anything else or divides by zero.
+    """
+
+    def token(match: re.Match[str]) -> str:
+        key = match.group(1) + (match.group(2) or "")
+        if key not in values:
+            raise KeyError(key)
+        return f"({float(values[key])!r})"
+
+    try:
+        text = re.sub(r"\bdiv\b", "/", _SETTINGS_TOKEN.sub(token, expr.strip()))
+        tree = ast.parse(text, mode="eval")
+    except (KeyError, SyntaxError, ValueError):
+        return None
+
+    def walk(node: ast.AST) -> float:
+        if isinstance(node, ast.Expression):
+            return walk(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, int | float) and not isinstance(node.value, bool):
+            return float(node.value)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub | ast.UAdd):
+            inner = walk(node.operand)
+            return -inner if isinstance(node.op, ast.USub) else inner
+        if isinstance(node, ast.BinOp):
+            left, right = walk(node.left), walk(node.right)
+            if isinstance(node.op, ast.Div):
+                return left / right
+            op = _ARITH.get(type(node.op))
+            if op is not None:
+                return float(op(left, right))
+        raise ValueError(ast.dump(node))
+
+    try:
+        return walk(tree)
+    except (ValueError, ZeroDivisionError, RecursionError):
+        return None
