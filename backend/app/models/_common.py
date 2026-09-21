@@ -30,6 +30,21 @@ def clean_portrait(value: str) -> str:
 
 
 def _reject_oversized_collections(model: BaseModel) -> None:
-    for name, value in model.__dict__.items():
-        if isinstance(value, (list, dict)) and len(value) > _MAX_COLLECTION:
-            raise ValueError(f"{name}: {len(value)} entries exceeds the {_MAX_COLLECTION} cap")
+    """Hold every list / dict in `model` to `_MAX_COLLECTION`, nested ones too.
+
+    Only the top level used to be checked, so a drug's parts, a gear piece's
+    `array_order` or the settings' `books` could each carry every row the
+    body limit allows.
+    """
+    _walk(model, "")
+
+
+def _walk(value: object, path: str) -> None:
+    if isinstance(value, BaseModel):
+        for name, child in value.__dict__.items():
+            _walk(child, f"{path}.{name}" if path else name)
+    elif isinstance(value, (list, dict)):
+        if len(value) > _MAX_COLLECTION:
+            raise ValueError(f"{path}: {len(value)} entries exceeds the {_MAX_COLLECTION} cap")
+        for child in value.values() if isinstance(value, dict) else value:
+            _walk(child, path)
