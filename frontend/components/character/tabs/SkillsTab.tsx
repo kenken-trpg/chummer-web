@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { ActiveSkills } from "./skills/ActiveSkills";
 import { ExoticSkills } from "./skills/ExoticSkills";
+import { GrantedSkills } from "./skills/GrantedSkills";
 import { KnowledgePicker } from "./skills/KnowledgePicker";
 import { KnowledgeSkills } from "./skills/KnowledgeSkills";
 import { SkillGroups } from "./skills/SkillGroups";
@@ -28,6 +29,7 @@ export function SkillsTab(props: TabPanelProps) {
           })}
         </p>
       ) : null}
+      <GrantedSkills {...props} />
       <SkillGroups {...props} />
       <ActiveSkills {...props} />
       <ExoticSkills {...props} />

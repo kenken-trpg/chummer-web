@@ -3,6 +3,9 @@ export const EN_CHARGEN = {
   "skills.points": "Skills {skills} · Groups {groups} · Knowledge {knowledge}",
   "skills.careerNote": " · career advances with karma (max R{max})",
   "skills.chargenNote": " · a specialisation costs 1 point",
+  "skills.granted": "Skills that come with something",
+  "skills.grantedNote":
+    "Skills a quality, a piece of ware, an adept power or a mentor spirit brings with it. Picking one here is the same as picking it on that thing's own tab.",
   "skills.groups": "Skill groups",
   "skills.softBit": "softR{rating}",
   "skills.default": "default {pool}",
