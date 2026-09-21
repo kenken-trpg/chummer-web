@@ -1287,3 +1287,45 @@ def test_a_magician_has_an_astral_initiative() -> None:
 
     german = _mage("astral-init-de", settings=SettingsState(min_astral_initiative_dice=2))
     assert compute(german).derived["astral_initiative"]["dice"] == 2
+
+
+def _magician_with_datajacks(grades: list[str], settings: SettingsState | None = None) -> dict:
+    attrs = default_attributes(find_metatype("Human", None))
+    attrs["MAG"] = 4
+    state = CharacterState(
+        id="ess-rule",
+        name="Ess Rule",
+        priorities=Priorities(Heritage="C", Attributes="B", Talent="B", Skills="D", Resources="E"),
+        metatype="Human",
+        talent="Magician",
+        attributes=attrs,
+        cyberware=[CyberwareInstall(ware_id=DATAJACK, grade=grade) for grade in grades],
+    )
+    if settings is not None:
+        state.settings = settings
+    return compute(state).derived
+
+
+#: Five Used, four Betaware and one Standard datajack: 1.005 Essence gone.
+_ESS_1005 = ["Used"] * 5 + ["Betaware"] * 4 + ["Standard"]
+
+
+def test_magic_loss_rounds_the_essence_left_first() -> None:
+    """Chummer rounds 4.995 Essence to 5.00 before taking MAG off it."""
+    assert _magician_with_datajacks(_ESS_1005)["totals"]["MAG"] == 3
+
+
+def test_the_house_rule_keeps_essence_unrounded() -> None:
+    """`<donotroundessenceinternally>`: 4.995 stays 4.995, so two points go."""
+    out = _magician_with_datajacks(_ESS_1005, SettingsState(dont_round_essence_internally=True))
+    assert out["totals"]["MAG"] == 2
+    assert out["essence"] == 4.995
+
+
+def test_the_house_rule_lowers_only_the_magic_maximum() -> None:
+    """`<esslossreducesmaximumonly>`: 1.25 Essence gone takes the maximum to
+    4, so a Magic of 4 bought keeps its 4 instead of dropping two."""
+    grades = ["Used"] * 10
+    assert _magician_with_datajacks(grades)["totals"]["MAG"] == 2
+    out = _magician_with_datajacks(grades, SettingsState(ess_loss_reduces_maximum_only=True))
+    assert out["totals"]["MAG"] == 4

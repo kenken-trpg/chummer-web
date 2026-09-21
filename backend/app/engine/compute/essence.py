@@ -4,11 +4,22 @@
 from __future__ import annotations
 
 import math
+from decimal import ROUND_HALF_UP, Decimal
 
+from ...rules import current_rules
 from ..constants import MAG_TALENTS, RES_TALENTS
 from ..pricing import apply_ware_essence_multipliers
 from ..resonance import _cyberadept_res_penalty_reduction
 from .context import Ctx
+
+
+def _after_loss(bought: int, cap: int, penalty: int, maximum_only: bool) -> int:
+    """MAG / RES once essence loss has taken `penalty` off it. By the book
+    the rating falls with the maximum; under `<esslossreducesmaximumonly>`
+    only the maximum falls, and the rating just cannot sit above it."""
+    if maximum_only:
+        return max(0, min(bought, cap - penalty))
+    return max(0, bought - penalty)
 
 
 def essence(ctx: Ctx) -> None:
@@ -21,8 +32,16 @@ def essence(ctx: Ctx) -> None:
         ctx.err("engine.ware.bioDisabled")
     ess_penalty = float(ctx.effects.get("essence_penalty") or 0)
     ess_penalty_mag_exempt = float(ctx.effects.get("essence_penalty_mag_exempt") or 0)
-    ctx.ess = max(0.0, round(ess_start - ctx.ess_lost - ess_penalty, 2))
+    rules = current_rules()
+    # Six places only strips float noise; two is the sheet's rounding.
+    ctx.ess = max(0.0, round(ess_start - ctx.ess_lost - ess_penalty, 6 if rules.dont_round_essence_internally else 2))
     mag_relevant_loss = ctx.ess_lost + max(0.0, ess_penalty - ess_penalty_mag_exempt)
+    if not rules.dont_round_essence_internally:
+        # Chummer rounds the essence left (away from zero) to two places
+        # before taking MAG / RES off it, so 4.995 left is 5 and costs one
+        # point, not two.
+        left = Decimal(str(ess_start - mag_relevant_loss)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        mag_relevant_loss = ess_start - float(left)
     mag_penalty = int(math.ceil(mag_relevant_loss - 1e-9)) if mag_relevant_loss > 0 else 0
     cyberadept_res_reduction = 0
     if ctx.effects.get("cyberadept_daemon") and ctx.talent["name"] in RES_TALENTS:
@@ -46,7 +65,7 @@ def essence(ctx: Ctx) -> None:
                 mag_cap = racial_max + initiate_grade
                 raw = max(floor, min(mag_cap, raw))
                 ctx.bought_ratings[key] = raw
-                raw = max(0, raw - mag_penalty)
+                raw = _after_loss(raw, mag_cap, mag_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
         elif key == "RES":
@@ -56,7 +75,7 @@ def essence(ctx: Ctx) -> None:
                 raw = max(floor, min(res_cap, raw))
                 ctx.bought_ratings[key] = raw
                 res_penalty = max(0, mag_penalty - cyberadept_res_reduction)
-                raw = max(0, raw - res_penalty)
+                raw = _after_loss(raw, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
         elif key == "ESS":

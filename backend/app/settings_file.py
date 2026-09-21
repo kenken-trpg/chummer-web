@@ -128,6 +128,8 @@ _BOOL_FIELDS: dict[str, str] = {
     "usecalculatedpublicawareness": "use_calculated_public_awareness",
     "noarmorencumbrance": "no_armor_encumbrance",
     "uncappedarmoraccessorybonuses": "uncapped_armor_accessory_bonuses",
+    "esslossreducesmaximumonly": "ess_loss_reduces_maximum_only",
+    "donotroundessenceinternally": "dont_round_essence_internally",
     "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
 }
 

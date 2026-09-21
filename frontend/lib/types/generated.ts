@@ -370,6 +370,9 @@ export interface CharacterSettings {
   /** `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>` */
   no_armor_encumbrance?: boolean | null;
   uncapped_armor_accessory_bonuses?: boolean | null;
+  /** `<esslossreducesmaximumonly>` / `<donotroundessenceinternally>` */
+  ess_loss_reduces_maximum_only?: boolean | null;
+  dont_round_essence_internally?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
