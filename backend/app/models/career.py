@@ -19,6 +19,10 @@ class CareerBaseline(BaseModel):
     # None for a baseline saved before qualities were recorded: those
     # characters keep the chargen price for every quality they hold.
     quality_ids: list[str] | None = None
+    # Every gear / ware instance id owned on entering career, so what was
+    # bought after is known (Restricted / Forbidden markup). None for an
+    # older baseline: nothing is marked up.
+    item_ids: list[str] | None = None
 
 
 class RewardEntry(BaseModel):

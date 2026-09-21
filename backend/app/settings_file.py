@@ -48,6 +48,8 @@ _INT_FIELDS: dict[str, str] = {
     "minastralinitiativedice": "min_astral_initiative_dice",
     "limbcount": "limb_count",
     "maxastralinitiativedice": "max_astral_initiative_dice",
+    "restrictedcostmultiplier": "restricted_cost_multiplier",
+    "forbiddencostmultiplier": "forbidden_cost_multiplier",
 }
 
 #: `<karmacost>` child -> `SettingsState` field.
@@ -130,6 +132,8 @@ _BOOL_FIELDS: dict[str, str] = {
     "uncappedarmoraccessorybonuses": "uncapped_armor_accessory_bonuses",
     "esslossreducesmaximumonly": "ess_loss_reduces_maximum_only",
     "donotroundessenceinternally": "dont_round_essence_internally",
+    "multiplyrestrictedcost": "multiply_restricted_cost",
+    "multiplyforbiddencost": "multiply_forbidden_cost",
     "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
 }
 

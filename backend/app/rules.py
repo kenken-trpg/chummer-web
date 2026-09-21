@@ -171,6 +171,12 @@ class Rules:
     karma_nuyen_max: int = 235
     priority_karma_nuyen_base: int = 10
     nuyen_chargen_keep_max: int = 5000
+    #: What a Restricted / Forbidden item bought in career costs, times
+    #: (`<multiplyrestrictedcost>` + `<restrictedcostmultiplier>`, and the
+    #: forbidden pair). 1 unless the file turns the multiplier on — Chummer
+    #: charges it at purchase in career mode only (`CharacterCareer.cs`).
+    career_restricted_cost_multiplier: int = 1
+    career_forbidden_cost_multiplier: int = 1
 
     # --- misc ----------------------------------------------------------
     contact_free_mult: int = 3
@@ -307,6 +313,12 @@ def rules_for(settings: object | None) -> Rules:
         flag = getattr(settings, src, None)
         if flag is not None:
             overrides[dest] = bool(flag)
+    for switch, factor, dest in (
+        ("multiply_restricted_cost", "restricted_cost_multiplier", "career_restricted_cost_multiplier"),
+        ("multiply_forbidden_cost", "forbidden_cost_multiplier", "career_forbidden_cost_multiplier"),
+    ):
+        if getattr(settings, switch, None):
+            overrides[dest] = max(1, int(getattr(settings, factor, None) or 1))
     grades = getattr(settings, "banned_ware_grades", None)
     if grades:
         overrides["banned_ware_grades"] = tuple(str(g) for g in grades)

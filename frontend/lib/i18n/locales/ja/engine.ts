@@ -121,6 +121,7 @@ export const JA_ENGINE = {
   "engine.spend.specializations": "専門化",
   "engine.spend.spells": "術式／複合体",
   "engine.spend.spirits": "精霊",
+  "engine.spend.restrictedMarkup": "制限品・禁止品の割増",
   "engine.spend.submersion": "サブマージョン",
   "engine.spend.vehicleMods": "車両改造",
   "engine.spend.vehicles": "車両",

@@ -20,6 +20,10 @@ self-hosters can pin to a tag instead of tracking `main`.
   `<esslossreducesmaximumonly>` が有効なら、エッセンスの減少は MAG / RES の最大値だけを下げ、買った値は最大値を超えたときだけ下がる。
   `<donotroundessenceinternally>` が有効なら、エッセンスを丸めずに計算する。
   `<unclampattributeminimum>` は読まない（この app には能力値の最低値を下げる効果がなく、何も変わらないため）。
+- **設定ファイルの制限品・禁止品の値段の倍率を読むようになった。**
+  `<multiplyrestrictedcost>` / `<multiplyforbiddencost>` が有効なら、キャリアに入ってから買った入手可能度 R / F の品物に `<restrictedcostmultiplier>` / `<forbiddencostmultiplier>` 倍の値段がかかる（Chummer と同じく、キャラ作成で買った品物にはかからない）。
+  割増分はニューエンの内訳に「制限品・禁止品の割増」として出る。
+  この変更より前にキャリアに入ったキャラは、どの品物がキャリアで買われたかの記録がないため割増しない。
 - **設定ファイルの防具のハウスルールを読むようになった。**
   `<noarmorencumbrance>` を有効にすると、重ねた防具で AGI・REA が下がらなくなります。
   `<uncappedarmoraccessorybonuses>` を有効にすると、アクセサリーや重ね着の上乗せが

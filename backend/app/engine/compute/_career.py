@@ -38,7 +38,80 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
             str(row.id): int(row.rating or 0) for row in (state.exotic_skills or []) if getattr(row, "id", None)
         },
         quality_ids=[str(qid) for qid in state.quality_ids or []],
+        item_ids=sorted({str(row.id) for field in _ITEM_FIELDS for row in getattr(state, field) or []}),
     )
+
+
+#: The `CharacterState` lists that hold things bought with nuyen, as far as
+#: the Restricted / Forbidden markup goes. Lifestyles are rent, not a buy.
+_ITEM_FIELDS = (
+    "cyberware",
+    "bioware",
+    "qi_foci",
+    "foci",
+    "armor",
+    "armor_mods",
+    "weapons",
+    "weapon_accessories",
+    "commlinks",
+    "cyberdecks",
+    "rccs",
+    "optics",
+    "programs",
+    "apps",
+    "sensors",
+    "drones",
+    "vehicles",
+    "gear",
+    "custom_drugs",
+    "vehicle_mods",
+    "weapon_mounts",
+)
+
+#: The published rows `restricted_markup` looks at, by `GearBundle` key.
+_GEAR_ROW_KEYS = (
+    "armor_items",
+    "armor_mods",
+    "weapons",
+    "weapon_accessories",
+    "commlinks",
+    "cyberdecks",
+    "rccs",
+    "optics",
+    "programs",
+    "apps",
+    "sensors",
+    "drones",
+    "vehicles",
+    "vehicle_mods",
+    "weapon_mounts",
+    "gear",
+    "custom_drugs",
+)
+
+
+def restricted_markup(baseline: CareerBaseline | None, rows: list[dict[str, Any]]) -> int:
+    """Extra nuyen for Restricted / Forbidden things bought after chargen.
+
+    Chummer multiplies the price of an R / F item as it is bought in career
+    (`<multiplyrestrictedcost>` and the forbidden twin); what came through
+    chargen is never marked up. So a row counts when its id is not in the
+    baseline. A row bolted onto another new row is skipped: Chummer charges
+    the whole assembly once, at the parent's availability."""
+    rules = current_rules()
+    factors = {"R": rules.career_restricted_cost_multiplier, "F": rules.career_forbidden_cost_multiplier}
+    if baseline is None or baseline.item_ids is None or factors == {"R": 1, "F": 1}:
+        return 0
+    old = set(baseline.item_ids)
+    new_ids = {str(row.get("id")) for row in rows if row.get("id") and str(row.get("id")) not in old}
+    extra = 0
+    for row in rows:
+        row_id = str(row.get("id") or "")
+        if not row_id or row_id in old or str(row.get("parent_id") or "") in new_ids:
+            continue
+        factor = factors.get(str(row.get("avail_suffix") or ""), 1)
+        extra += int(row.get("nuyen") or 0) * (factor - 1)
+    return extra
 
 
 def career_raise_karma(
@@ -255,6 +328,7 @@ def nuyen_spend_breakdown(
     qi_nuyen: int = 0,
     foci_nuyen: int = 0,
     spirits_nuyen: int = 0,
+    markup_nuyen: int = 0,
 ) -> list[dict[str, Any]]:
     """The sidebar's "where the nuyen went", as lines that add up to what was
     spent.
@@ -272,5 +346,6 @@ def nuyen_spend_breakdown(
         ("engine.spend.qiFoci", int(qi_nuyen or 0)),
         ("engine.spend.foci", int(foci_nuyen or 0)),
         ("engine.spend.spirits", int(spirits_nuyen or 0)),
+        ("engine.spend.restrictedMarkup", int(markup_nuyen or 0)),
     ]
     return [{"kind": "nuyen", "notice": notice(key), "amount": amount} for key, amount in buckets if amount]

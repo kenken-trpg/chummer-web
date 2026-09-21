@@ -373,6 +373,13 @@ export interface CharacterSettings {
   /** `<esslossreducesmaximumonly>` / `<donotroundessenceinternally>` */
   ess_loss_reduces_maximum_only?: boolean | null;
   dont_round_essence_internally?: boolean | null;
+  /** `<multiplyrestrictedcost>` / `<restrictedcostmultiplier>` and the
+   *  forbidden pair: what an R / F item bought in career costs, times.
+   */
+  multiply_restricted_cost?: boolean | null;
+  restricted_cost_multiplier?: number | null;
+  multiply_forbidden_cost?: boolean | null;
+  forbidden_cost_multiplier?: number | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
@@ -411,6 +418,11 @@ export interface CareerBaseline {
    *  characters keep the chargen price for every quality they hold.
    */
   quality_ids?: string[] | null;
+  /** Every gear / ware instance id owned on entering career, so what was
+   *  bought after is known (Restricted / Forbidden markup). None for an
+   *  older baseline: nothing is marked up.
+   */
+  item_ids?: string[] | null;
 }
 
 export interface RewardEntry {
