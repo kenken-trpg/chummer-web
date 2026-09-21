@@ -29,6 +29,10 @@ self-hosters can pin to a tag instead of tracking `main`.
 - **設定ファイルの `<mysaddppcareer>` を読むようになった。** 無効（Standard）のとき、キャリアでミスティックアデプトのパワーポイントを増やすとエラーにします。判定は、今回から記録するキャリア開始時のパワーポイント数と比べて行うので、キャリア開始が今回より前のキャラクターは対象外です。
   `<freespiritpowerpointsmag>` は Chummer 本体でも使われていないので、変更されていても警告を出しません。
   `<mysadeptsecondmagattribute>`（ミスティックアデプトの MAG を 2 本に分ける）はまだ読みません。変更されていれば未対応の警告に出ます。
+- **精霊のフォースの上限を、Chummer と同じく強化前の MAG で決めるようにし、設定ファイルの `<spiritforcebasedontotalmag>` を読むようになった。**
+  Chummer の Standard ではこの設定がオフで、フォースの上限は強化前の MAG（`CharacterAttrib.Value`）から決まります。有効にすると、強化込みの MAG で決めます。
+  これまでは常に強化込みの MAG を使っていました。Chummer 付属のデータで両者が食い違うのは、MAG を下げるサイバーウェアなどに限られます。
+  `<allowhigherstackedfoci>` は Chummer 本体でも使われていないので、変更されていても警告を出しません。
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。

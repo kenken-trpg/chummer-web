@@ -154,6 +154,8 @@ _HANDLED_ELSEWHERE = {
     "exceedpositivequalitiescostdoubled",
     # `<freespiritpowerpointsmag>` is loaded by Chummer but never read.
     "freespiritpowerpointsmag",
+    # `<allowhigherstackedfoci>` is loaded by Chummer but never read.
+    "allowhigherstackedfoci",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
@@ -184,6 +186,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "compensateskillgroupkarmadifference": "compensate_skill_group_karma_difference",
     "increasedimprovedabilitymodifier": "increased_improved_ability_modifier",
     "mysaddppcareer": "mystic_adept_pp_in_career",
+    "spiritforcebasedontotalmag": "spirit_force_based_on_total_mag",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

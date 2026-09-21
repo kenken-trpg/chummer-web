@@ -160,6 +160,8 @@ class SettingsState(BaseModel):
     increased_improved_ability_modifier: bool | None = None
     #: `<mysaddppcareer>`
     mystic_adept_pp_in_career: bool | None = None
+    #: `<spiritforcebasedontotalmag>`
+    spirit_force_based_on_total_mag: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

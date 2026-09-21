@@ -111,9 +111,11 @@ def resolve_spirits(
     limit_spirits: list[str] | None = None,
     extra_spirits: list[str] | None = None,
     bound_limit: int | None = None,
+    force_mag: int | None = None,
 ) -> SpiritsBundle:
     """``bound_limit`` is the bound-spirit ceiling (CHA under Standard);
-    ``None`` skips the check."""
+    ``None`` skips the check. ``force_mag`` is the MAG a spirit's Force is
+    capped by, when it is not ``mag`` (`<spiritforcebasedontotalmag>`)."""
     warnings: list[Notice] = []
     errors: list[Notice] = []
     bound_count = 0
@@ -131,6 +133,7 @@ def resolve_spirits(
         warnings.append(notice("engine.spirits.needsTradition"))
     kept: list[SpiritInstall] = []
     mag = max(0, int(mag or 0))
+    cap_mag = mag if force_mag is None else max(0, int(force_mag))
     for inst in state.spirits:
         spec = _spirit_by_id(inst.spirit_id)
         if not spec:
@@ -147,7 +150,7 @@ def resolve_spirits(
             continue
         bound = bool(inst.bound)
         inst.bound = bound
-        cap = mag if bound else max(1, mag * 2)
+        cap = max(1, cap_mag) if bound else max(1, cap_mag * 2)
         force = max(1, min(cap, int(inst.force or 1)))
         inst.force = force
         if inst.hits is not None and inst.opposed_hits is not None:

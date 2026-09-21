@@ -147,6 +147,9 @@ def spells(ctx: Ctx) -> None:
         limit_spirits=list(ctx.effects.get("limit_spirit_categories") or []),
         extra_spirits=list(ctx.effects.get("extra_spirits") or []),
         bound_limit=int(ctx.total.get(current_rules().bound_spirit_attr) or 0),
+        # Chummer caps Force by the natural MAG (`CharacterAttrib.Value`)
+        # unless `<spiritforcebasedontotalmag>` says the augmented one.
+        force_mag=int((ctx.total if current_rules().spirit_force_based_on_total_mag else ctx.ratings).get("MAG") or 0),
     )
     ctx.warnings.extend(ctx.spirits["warnings"])
     ctx.errors.extend(ctx.spirits["errors"])

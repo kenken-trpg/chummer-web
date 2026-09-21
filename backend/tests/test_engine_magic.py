@@ -9,7 +9,8 @@ from app.engine import (
     spell_drain_value,
     tradition_resist,
 )
-from app.engine.lookups import critter_power_rows
+from app.engine.lookups import _tradition_by_id, critter_power_rows
+from app.engine.magic.spirits import resolve_spirits
 from app.improvements import collect_effects
 from app.models import (
     CharacterState,
@@ -22,6 +23,7 @@ from app.models import (
     SpellInstall,
     SpiritInstall,
 )
+from app.settings_file import parse_settings_xml
 from tests.engine_support import (
     DATAJACK,
     EYES,
@@ -1377,3 +1379,28 @@ def test_unspent_chargen_karma_past_the_carryover_warns() -> None:
     assert has(out.derived["warnings"], "engine.karma.chargenCarryOver", left=25, keep=7, lost=18)
     loose = compute(_mage("carry-loose", settings=SettingsState(karma_carryover=25)))
     assert not has(loose.derived["warnings"], "engine.karma.chargenCarryOver")
+
+
+def test_spirit_force_is_capped_by_the_mag_compute_chooses() -> None:
+    """`force_mag` is the MAG the Force cap reads — the natural rating under
+    Standard, the augmented one under `<spiritforcebasedontotalmag>` — while
+    services and the rest keep the character's MAG."""
+    state = _mage(
+        "force-mag", tradition_id=HERMETIC, spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=12, bound=False)]
+    )
+    natural = resolve_spirits(state, "Magician", 3, _tradition_by_id(HERMETIC), force_mag=3)
+    assert natural["public"][0]["force_max"] == 6
+    augmented = resolve_spirits(state, "Magician", 3, _tradition_by_id(HERMETIC), force_mag=5)
+    assert augmented["public"][0]["force_max"] == 10
+
+
+def test_spirit_force_setting_is_read() -> None:
+    parsed = parse_settings_xml(
+        "<settings><name>H</name><spiritforcebasedontotalmag>True</spiritforcebasedontotalmag></settings>"
+    )
+    assert parsed.spirit_force_based_on_total_mag is True
+    assert parsed.unsupported == []
+    stacked = parse_settings_xml(
+        "<settings><name>H</name><allowhigherstackedfoci>True</allowhigherstackedfoci></settings>"
+    )
+    assert stacked.unsupported == []
