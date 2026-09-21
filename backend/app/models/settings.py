@@ -156,6 +156,10 @@ class SettingsState(BaseModel):
     alternate_metatype_attribute_karma: bool | None = None
     #: `<compensateskillgroupkarmadifference>`
     compensate_skill_group_karma_difference: bool | None = None
+    #: `<increasedimprovedabilitymodifier>`
+    increased_improved_ability_modifier: bool | None = None
+    #: `<mysaddppcareer>`
+    mystic_adept_pp_in_career: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

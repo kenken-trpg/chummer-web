@@ -59,14 +59,39 @@ def way_discount_eligible(spec: dict[str, Any], quality_names: set[str], magicia
     return any(name in quality_names for name in (spec.get("adeptwayrequires") or []))
 
 
-def power_max_rating(spec: dict[str, Any], mag: int) -> int:
+def power_max_rating(spec: dict[str, Any], mag: int, learned: int | None = None) -> int:
+    """How many levels a power may have (Chummer's `Power.TotalMaximumLevels`).
+
+    Improved Ability is capped by the boosted skill's ``learned`` rating —
+    half of it rounded up, or that plus the rating under
+    `<increasedimprovedabilitymodifier>` — and, like every power, by MAG.
+    With no skill picked yet only MAG caps it.
+    """
     if not spec.get("levels"):
         return 1
     if spec.get("maxlevels"):
         return int(spec["maxlevels"])
-    if str(spec.get("name") or "").startswith("Improved Ability"):
-        return max(1, _ceil_div(max(int(mag), 1) / 2))
-    return max(1, int(mag))
+    cap = max(1, int(mag))
+    if str(spec.get("name") or "").startswith("Improved Ability") and learned is not None:
+        half = _ceil_div(max(int(learned), 0) / 2)
+        boost = int(learned) + half if current_rules().increased_improved_ability_modifier else half
+        cap = min(cap, max(1, boost))
+    return cap
+
+
+def improved_ability_learned(
+    state: CharacterState, spec: dict[str, Any], extra: str, skills_data: dict[str, Any]
+) -> int | None:
+    """The learned rating Improved Ability is capped by: the picked active
+    skill's own rating or its group's, unaugmented (`Skill.LearnedRating`).
+    `None` for any other power, or before a skill is picked."""
+    if not extra or not str(spec.get("name") or "").startswith("Improved Ability"):
+        return None
+    group = next(
+        (str(s.get("skillgroup") or "") for s in skills_data.get("skills") or [] if s.get("name") == extra),
+        "",
+    )
+    return max(int((state.skills or {}).get(extra) or 0), int((state.skill_groups or {}).get(group) or 0))
 
 
 def _field_list(value: Any) -> list[str]:
@@ -194,8 +219,8 @@ def resolve_adept_powers(
         spec = _power_by_id(inst.power_id)
         if not spec:
             continue
-        cap = power_max_rating(spec, mag)
         extra = (inst.extra or "").strip()
+        cap = power_max_rating(spec, mag, improved_ability_learned(state, spec, extra, skills_data))
         key = (spec["id"], extra)
         free_levels = free_by_key.get(key, 0)
         paid_max = max(1, cap - free_levels) if spec.get("levels") else 1
@@ -270,7 +295,7 @@ def resolve_adept_powers(
         if not spec:
             continue
         extra = key[1]
-        cap = power_max_rating(spec, mag)
+        cap = power_max_rating(spec, mag, improved_ability_learned(state, spec, extra, skills_data))
         total_rating = 1 if not spec.get("levels") else min(cap, free_levels)
         options = power_select_options(spec, skills_data)
         bonus_sources.append((spec["name"], bind_power_bonus(spec.get("bonus") or [], extra, total_rating)))

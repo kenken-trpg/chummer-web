@@ -395,6 +395,7 @@ def _karma_totals(ctx: Ctx) -> None:
             ctx.karma_from_q += excess
             ctx.warn("engine.qualities.negativeNoBonus", karma=excess, limit=rules.quality_karma_cap_negative)
     ctx.mystic_karma = int(ctx.state.mystic_pp) * current_rules().karma_mystic_pp
+    _check_career_mystic_pp(ctx)
     ctx.extra_adept_karma = (
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
     )
@@ -677,6 +678,16 @@ def _check_grouped_skills(ctx: Ctx, active_points: dict[str, int]) -> None:
         group_points = rating - int(ctx.skill_group_karma_levels.get(group) or 0)
         if group_points > 0 and active_points.get(name):
             ctx.errors.append(notice("engine.skills.pointsOnGroupedSkill", name=term(name), group=term(group)))
+
+
+def _check_career_mystic_pp(ctx: Ctx) -> None:
+    """A mystic adept buys power points in career only under
+    `<mysaddppcareer>` (Chummer's `MysAdeptAllowPPCareer`)."""
+    baseline = ctx.state.career_baseline if ctx.career else None
+    if baseline is None or baseline.mystic_pp is None or current_rules().mystic_adept_pp_in_career:
+        return
+    if int(ctx.state.mystic_pp or 0) > baseline.mystic_pp:
+        ctx.errors.append(notice("engine.adept.mysticPpInCareer", before=baseline.mystic_pp, after=ctx.state.mystic_pp))
 
 
 def _spirit_karma(ctx: Ctx) -> int:

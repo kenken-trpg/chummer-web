@@ -1,5 +1,6 @@
 """Adepts: power points, powers, ways, qi foci and mentor powers."""
 
+from app.characters import apply_patch
 from app.engine import (
     compute,
     default_attributes,
@@ -7,11 +8,13 @@ from app.engine import (
 )
 from app.models import (
     AdeptPowerInstall,
+    CharacterPatch,
     CharacterState,
     CyberwareInstall,
     InitiationChoice,
     Priorities,
     QiFocusInstall,
+    SettingsState,
     SpellInstall,
     WeaponInstall,
 )
@@ -76,11 +79,12 @@ def test_improved_ability_adds_dice_not_rating() -> None:
     out = compute(
         _adept(
             "ability",
+            skills={"Gymnastics": 4},
             adept_powers=[AdeptPowerInstall(power_id=IMPROVED_ABILITY, rating=2, extra="Gymnastics")],
         )
     )
     assert out.derived["skill_bonus"]["Gymnastics"] == 2
-    assert out.derived["skill_totals"].get("Gymnastics", 0) == 0
+    assert out.derived["skill_totals"].get("Gymnastics", 0) == 4
     assert out.derived["power_points"]["used"] == 1
 
 
@@ -407,6 +411,7 @@ def test_qi_focus_selectpowers_grants_multiple_levels_from_force() -> None:
     out = compute(
         _adept(
             "qi-ia",
+            skills={"Gymnastics": 4},
             qi_foci=[QiFocusInstall(power_id=IMPROVED_ABILITY, rating=4, power_rating=2, extra="Gymnastics")],
         )
     )
@@ -555,3 +560,52 @@ def test_barehanded_adept_touch_spells_and_doubled_drain() -> None:
     tags = [item["tag"] for item in out.derived["unimplemented_bonuses"]]
     assert "allowspellrange" not in tags
     assert "freespells" not in tags
+
+
+def _improved_gymnastics(learned: int, rating: int, settings: SettingsState | None = None) -> int:
+    state = _adept(
+        f"ia-{learned}-{rating}",
+        skills={"Gymnastics": learned},
+        adept_powers=[AdeptPowerInstall(power_id=IMPROVED_ABILITY, rating=rating, extra="Gymnastics")],
+    )
+    state.attributes["MAG"] = 6
+    state.settings = settings or SettingsState()
+    return int(compute(state).derived["skill_bonus"].get("Gymnastics", 0))
+
+
+def test_improved_ability_is_capped_by_the_learned_rating() -> None:
+    """Half the boosted skill's learned rating, rounded up — or that plus the
+    rating under `<increasedimprovedabilitymodifier>` — and never past MAG
+    (`Power.TotalMaximumLevels`)."""
+    assert _improved_gymnastics(3, 6) == 2
+    assert _improved_gymnastics(3, 6, SettingsState(increased_improved_ability_modifier=True)) == 5
+    assert _improved_gymnastics(6, 6, SettingsState(increased_improved_ability_modifier=True)) == 6
+
+
+def _career_mystic(settings: SettingsState) -> tuple[list[object], int]:
+    attrs = default_attributes(find_metatype("Human", None))
+    created = compute(
+        CharacterState(
+            id="mystic-career",
+            name="mystic-career",
+            priorities=Priorities(Heritage="C", Attributes="A", Talent="C", Skills="B", Resources="E"),
+            metatype="Human",
+            talent="Mystic Adept",
+            attributes=attrs,
+            mystic_pp=1,
+            settings=settings,
+        )
+    )
+    career = apply_patch(created, CharacterPatch(career=True))
+    out = apply_patch(career, CharacterPatch(mystic_pp=2))
+    return list(out.derived["errors"]), int(out.mystic_pp)
+
+
+def test_mystic_adept_power_points_in_career_need_the_setting() -> None:
+    """Chummer sells a mystic adept more power points in career only under
+    `<mysaddppcareer>` (`Character.MysAdeptAllowPPCareer`)."""
+    errors, _ = _career_mystic(SettingsState())
+    assert has(errors, "engine.adept.mysticPpInCareer", before=1, after=2)
+    errors, pp = _career_mystic(SettingsState(mystic_adept_pp_in_career=True))
+    assert not has(errors, "engine.adept.mysticPpInCareer")
+    assert pp == 2

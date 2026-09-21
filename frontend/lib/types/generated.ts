@@ -417,6 +417,10 @@ export interface CharacterSettings {
   alternate_metatype_attribute_karma?: boolean | null;
   /** `<compensateskillgroupkarmadifference>` */
   compensate_skill_group_karma_difference?: boolean | null;
+  /** `<increasedimprovedabilitymodifier>` */
+  increased_improved_ability_modifier?: boolean | null;
+  /** `<mysaddppcareer>` */
+  mystic_adept_pp_in_career?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */
@@ -456,6 +460,10 @@ export interface CareerBaseline {
    *  older baseline: nothing is marked up.
    */
   item_ids?: string[] | null;
+  /** A mystic adept's power points bought at chargen, so a career purchase
+   *  can be told apart (`<mysaddppcareer>`). None for an older baseline.
+   */
+  mystic_pp?: number | null;
 }
 
 export interface RewardEntry {

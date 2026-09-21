@@ -23,6 +23,9 @@ class CareerBaseline(BaseModel):
     # bought after is known (Restricted / Forbidden markup). None for an
     # older baseline: nothing is marked up.
     item_ids: list[str] | None = None
+    # A mystic adept's power points bought at chargen, so a career purchase
+    # can be told apart (`<mysaddppcareer>`). None for an older baseline.
+    mystic_pp: int | None = None
 
 
 class RewardEntry(BaseModel):

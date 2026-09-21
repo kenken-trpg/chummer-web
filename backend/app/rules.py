@@ -211,6 +211,12 @@ class Rules:
     #: (Chummer's `Vehicle.MaxArmor`, Rigger 5.0 p.159).
     drone_armor_multiplier_enabled: bool = False
     drone_armor_multiplier: int = 2
+    #: `<increasedimprovedabilitymodifier>`: Improved Ability tops out at 1.5x
+    #: the boosted skill's learned rating instead of 0.5x (`Power.TotalMaximumLevels`).
+    increased_improved_ability_modifier: bool = False
+    #: `<mysaddppcareer>`: a mystic adept may buy more power points in career
+    #: (`Character.MysAdeptAllowPPCareer`).
+    mystic_adept_pp_in_career: bool = False
 
     # --- money ---------------------------------------------------------
     #: `<unrestrictednuyen>`: chargen karma may buy any amount of nuyen
@@ -372,6 +378,8 @@ def rules_for(settings: object | None) -> Rules:
         ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),
         ("alternate_metatype_attribute_karma", "alternate_metatype_attribute_karma"),
         ("compensate_skill_group_karma_difference", "compensate_skill_group_karma_difference"),
+        ("increased_improved_ability_modifier", "increased_improved_ability_modifier"),
+        ("mystic_adept_pp_in_career", "mystic_adept_pp_in_career"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

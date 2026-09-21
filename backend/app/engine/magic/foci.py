@@ -26,7 +26,7 @@ from ..constants import ADEPT_TALENTS, FOCUS_FORCE_MULT, FOCUS_TALENTS, QI_FOCUS
 from ..dice import magic_opposed_test
 from ..formulas import _ceil_div
 from ..lookups import _focus_by_id, _power_by_id
-from .powers import power_max_rating, power_point_cost, power_select_options
+from .powers import improved_ability_learned, power_max_rating, power_point_cost, power_select_options
 
 
 def focus_bind_karma(name: str, force: int, focus_binding: Sequence[Mapping[str, Any]]) -> int:
@@ -108,9 +108,9 @@ def resolve_qi_foci(
         spec = _power_by_id(inst.power_id)
         if not spec:
             continue
-        cap = power_max_rating(spec, mag)
-        requested_rating = 1 if not spec.get("levels") else max(1, min(cap, int(inst.power_rating or 1)))
         extra = (inst.extra or "").strip()
+        cap = power_max_rating(spec, mag, improved_ability_learned(state, spec, extra, skills_data))
+        requested_rating = 1 if not spec.get("levels") else max(1, min(cap, int(inst.power_rating or 1)))
         options = power_select_options(spec, skills_data)
         kind = spec.get("select")
         if kind and extra and extra not in options:
