@@ -318,6 +318,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["skill_karma"] = skill_karma
     st["skill_specializations"] = specs
     st["exotic_skills"] = exotic
+    st["skill_specs_karma"] = _specs_bought_with_karma(root, names_by_id)
 
     groups: dict[str, int] = {}
     group_karma: dict[str, int] = {}
@@ -359,6 +360,20 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     st["knowledge_karma"] = knowledge_karma
     st["knowledge_categories"] = know_cat
     st["native_languages"] = natives
+
+
+def _specs_bought_with_karma(root: ET.Element, names_by_id: dict[str, str]) -> list[str]:
+    """Skills whose specialization the player ticked to pay with karma
+    (`<buywithkarma>`). Chummer also writes True for the ones it forces to
+    karma, which the engine works out again on its own."""
+    picked: list[str] = []
+    for s in _skill_nodes(root, "skills/skill") + _skill_nodes(root, "knoskills/skill"):
+        if _text(s.find("buywithkarma")).lower() != "true":
+            continue
+        name = _text(s.find("name")) or names_by_id.get(_text(s.find("suid")), "")
+        if name and name not in picked:
+            picked.append(name)
+    return picked
 
 
 def _import_balance(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:

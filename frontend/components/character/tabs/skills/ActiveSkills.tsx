@@ -8,7 +8,7 @@ import { ACTIVE_SKILL_CATS, skillCatLabel } from "@/lib/character/constants";
 import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDefault } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
-import { KarmaLevels, skillLimits, specEditor } from "./shared";
+import { KarmaLevels, SpecKarma, skillLimits, specEditor } from "./shared";
 
 export function ActiveSkills(props: TabPanelProps) {
   const { catalog, character: ch, d, tr, ui, patch, setCharacter } = props;
@@ -144,14 +144,17 @@ export function ActiveSkills(props: TabPanelProps) {
                   field="skill_karma"
                   props={props}
                 />
-                <SpecPicker
-                  options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
-                  value={specValue}
-                  disabled={!hasSkill || Boolean(expertise)}
-                  tr={tr}
-                  onDraft={(next) => spec.draft(s.name, next)}
-                  onCommit={(next) => spec.commit(s.name, next)}
-                />
+                <span className="spec-cell">
+                  <SpecPicker
+                    options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
+                    value={specValue}
+                    disabled={!hasSkill || Boolean(expertise)}
+                    tr={tr}
+                    onDraft={(next) => spec.draft(s.name, next)}
+                    onCommit={(next) => spec.commit(s.name, next)}
+                  />
+                  {expertise ? null : <SpecKarma name={s.name} spec={specValue} props={props} />}
+                </span>
                 <b>
                   {hasSkill ? (
                     <>

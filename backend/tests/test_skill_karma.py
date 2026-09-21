@@ -205,3 +205,26 @@ def test_strict_groups_forbid_any_own_level_at_chargen() -> None:
     )
     career = apply_patch(career, CharacterPatch(skills={"Sneaking": 3}))
     assert not has(career.derived["errors"], "engine.skills.groupedSkillLocked")
+
+
+def test_the_player_can_pay_a_point_skills_specialization_with_karma() -> None:
+    """Chummer's `<buywithkarma>` ticked by hand: the skill keeps its points,
+    the specialization moves to 7 karma. Bastion in Chummer's test saves."""
+    kw: dict[str, object] = {"skills": {"Computer": 3}, "skill_specializations": {"Computer": "Matrix Perception"}}
+    points = compute(_human("spec-points", **kw)).derived
+    karma = compute(_human("spec-karma", skill_specs_karma=["Computer"], **kw)).derived
+    assert karma["points"]["skills"]["used"] == points["points"]["skills"]["used"] - 1
+    assert karma["karma"]["spent"] == points["karma"]["spent"] + 7
+
+
+def test_the_karma_specialization_tick_survives_a_chum5_round_trip() -> None:
+    state = _human(
+        "spec-karma-rt",
+        skills={"Computer": 3},
+        skill_specializations={"Computer": "Matrix Perception"},
+        skill_specs_karma=["Computer"],
+    )
+    root = ET.fromstring(state_to_chum5(state))
+    assert [el.text for el in root.iter("buywithkarma")].count("True") == 1
+    st, _ = chum5_to_state(ET.tostring(root))
+    assert st["skill_specs_karma"] == ["Computer"]

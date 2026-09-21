@@ -514,6 +514,10 @@ export interface Character {
    *  rating, free levels included.
    */
   talent_skills?: string[];
+  /** skills (active or knowledge) whose specialization the player chose to
+   *  buy with karma on a priority sheet — Chummer's `<buywithkarma>`
+   */
+  skill_specs_karma?: string[];
   exotic_skills?: ExoticSkillInstall[];
   knowledge_skills: Record<string, number>;
   native_languages?: string[];

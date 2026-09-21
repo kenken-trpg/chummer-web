@@ -155,3 +155,33 @@ export function knowledgeEditor({
     },
   };
 }
+
+/** Chummer's `<buywithkarma>`: pay this specialization with karma instead of
+ *  a skill (knowledge) point. Only while points are being spent. */
+export function SpecKarma({
+  name,
+  spec,
+  props,
+}: {
+  name: string;
+  spec: string;
+  props: TabPanelProps;
+}) {
+  const { character: ch, tr, ui, patch } = props;
+  if (!skillLimits(props).splitKarma || !spec) return null;
+  const picked = ch.skill_specs_karma || [];
+  const on = picked.includes(name);
+  return (
+    <label className="spec-karma" title={ui("skills.specKarmaHint")}>
+      <input
+        type="checkbox"
+        aria-label={`${tr(name)} ${ui("skills.specKarma")}`}
+        checked={on}
+        onChange={() =>
+          patch({ skill_specs_karma: on ? picked.filter((n) => n !== name) : [...picked, name] })
+        }
+      />
+      {ui("skills.specKarma")}
+    </label>
+  );
+}
