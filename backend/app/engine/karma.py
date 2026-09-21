@@ -145,6 +145,54 @@ def skill_karma_cost(
     return total
 
 
+def group_karma_compensation(
+    skill_groups: Mapping[str, int],
+    skill_totals: Mapping[str, int],
+    karma_floor: Mapping[str, int],
+    skills_data: dict[str, Any],
+) -> int:
+    """`<compensateskillgroupkarmadifference>`: the chargen karma a group's
+    skills get back (or pay extra) for having been raised one at a time.
+
+    Chummer's `Skill.RangeCost`: the group's first skill, raising from
+    ``karma_floor`` (the level its points already reached) to its rating,
+    swaps the levels every member shares — up to the lowest of the others —
+    from N skills' price to the group's. The arithmetic is Chummer's own,
+    `(U - 1) * U / 2` levels past the first one included. Only a group with
+    no rating of its own is counted here: a bought group already charges
+    those levels at the group price.
+    """
+    rules = current_rules()
+    if not rules.compensate_skill_group_karma_difference:
+        return 0
+    members: dict[str, list[str]] = {}
+    for skill in skills_data.get("skills") or []:
+        group = str(skill.get("skillgroup") or "")
+        if group and not skill.get("exotic") and skill.get("name"):
+            members.setdefault(group, []).append(str(skill["name"]))
+    total = 0
+    for group, names in members.items():
+        if int(skill_groups.get(group) or 0) > 0 or len(names) < 2:
+            continue
+        first, others = names[0], names[1:]
+        upper = int(skill_totals.get(first) or 0)
+        lower = int(karma_floor.get(first) or 0)
+        shared = min(upper, *(int(skill_totals.get(name) or 0) for name in others))
+        if shared <= lower:
+            continue
+        count = len(names)
+        if lower == 0:
+            extra = (shared - 1) * shared
+            group_cost = extra * rules.karma_skill_group // 2 + rules.karma_new_skill_group
+            naked = extra * rules.karma_active_skill // 2 + rules.karma_new_active_skill
+        else:
+            extra = shared * (shared + 1) - lower * (lower + 1)
+            group_cost = extra * rules.karma_skill_group // 2
+            naked = extra * rules.karma_active_skill // 2
+        total += group_cost - count * naked
+    return total
+
+
 def _group_floor_map(skill_groups: dict[str, int], skills_data: dict[str, Any]) -> dict[str, int]:
     floors: dict[str, int] = {}
     for group, rating in (skill_groups or {}).items():

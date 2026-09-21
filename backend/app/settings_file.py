@@ -179,6 +179,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "breakskillgroupsincreatemode": "strict_skill_groups_in_create_mode",
     "dronearmormultiplierenabled": "drone_armor_multiplier_enabled",
     "alternatemetatypeattributekarma": "alternate_metatype_attribute_karma",
+    "compensateskillgroupkarmadifference": "compensate_skill_group_karma_difference",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

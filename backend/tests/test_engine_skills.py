@@ -463,3 +463,24 @@ def test_the_settings_skill_caps_apply_at_creation() -> None:
 
     plain = compute(_human("caps-plain", skills={"Pistols": 7}))
     assert plain.derived["skill_totals"]["Pistols"] == 6
+
+
+def _firearms_by_hand(settings: SettingsState, **skills: int) -> int:
+    state = _karma_human("firearms-hand")
+    state.settings = settings
+    state.skills = dict(skills)
+    return int(compute(state).derived["karma"]["spent"])
+
+
+def test_compensating_a_group_raised_skill_by_skill() -> None:
+    """Automatics, Longarms and Pistols each bought to 2 with karma: 3 x
+    (2 + 2 x 2) = 18. Chummer's compensation swaps the shared levels for the
+    group's price by its own arithmetic — (1 x 2) x 5 / 2 + 5 = 10 against
+    3 x ((1 x 2) x 2 / 2 + 2) = 12 — so 2 karma less (`Skill.RangeCost`)."""
+    skills = {"Automatics": 2, "Longarms": 2, "Pistols": 2}
+    plain = _firearms_by_hand(SettingsState(), **skills)
+    on = SettingsState(compensate_skill_group_karma_difference=True)
+    assert plain - _firearms_by_hand(on, **skills) == 2
+    # Only the levels every member shares: Pistols left at 0 shares none.
+    partial = {"Automatics": 2, "Longarms": 2}
+    assert _firearms_by_hand(on, **partial) == _firearms_by_hand(SettingsState(), **partial)

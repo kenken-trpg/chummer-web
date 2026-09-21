@@ -109,6 +109,10 @@ class Rules:
     #: levels from 1 instead of the metatype minimum, so a troll's BOD 6 costs
     #: what a human's BOD 5 would (Chummer's `CharacterAttrib.TotalKarmaCost`).
     alternate_metatype_attribute_karma: bool = False
+    #: `<compensateskillgroupkarmadifference>`: at chargen, the levels every
+    #: skill of a group shares, bought one skill at a time with karma, are priced
+    #: as the group would have been (`Skill.RangeCost`).
+    compensate_skill_group_karma_difference: bool = False
 
     # --- caps ----------------------------------------------------------
     quality_karma_cap_positive: int = 25
@@ -367,6 +371,7 @@ def rules_for(settings: object | None) -> Rules:
         ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
         ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),
         ("alternate_metatype_attribute_karma", "alternate_metatype_attribute_karma"),
+        ("compensate_skill_group_karma_difference", "compensate_skill_group_karma_difference"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",
