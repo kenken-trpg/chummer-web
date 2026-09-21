@@ -230,7 +230,9 @@ new module with no test at all is worth a second look.
   name only that one context (CodeQL, being a separate workflow, is the
   exception if it should gate too). Because each PR
   branches off `main`, the one before it lands first and the next rebase picks
-  it up. A conflict in `CHANGELOG.md` or a test file keeps both sides
+  it up. Changelog entries go in `changelog.d/` (one file per PR, see its
+  README), so PRs no longer collide in `CHANGELOG.md`. A conflict in a test
+  file — or in `CHANGELOG.md`, from an older branch — keeps both sides
   (`scripts/keep_both_sides.py`) — two entries or two test cases are what the
   branches meant; anything else stops the run. It ends on an up-to-date `main`.
 - Rules changes should cite the SR5 (or supplement) page, and match what
@@ -239,10 +241,12 @@ new module with no test at all is worth a second look.
 
 ## Releasing
 
-1. Write the section in `CHANGELOG.md` (rename `[Unreleased]` to the version).
+1. `make changelog` to fold `changelog.d/` into `[Unreleased]`, then write the
+   section in `CHANGELOG.md` (rename `[Unreleased]` to the version).
 2. Bump the version in `backend/pyproject.toml` and `backend/app/main.py` —
    the latter is what the API reports at `/docs`.
-3. `make release-check VERSION=0.2.0` — fails if either of the above is missing.
+3. `make release-check VERSION=0.2.0` — fails if either of the above is
+   missing, or if a fragment is still in `changelog.d/`.
 4. `git tag -a v0.2.0 -m v0.2.0 && git push origin v0.2.0`.
 
 CI then builds and pushes `ghcr.io/…/chummer-web:0.2.0`, `:0.2` and `:latest`,
