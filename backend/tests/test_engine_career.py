@@ -6,6 +6,7 @@ from app.engine import (
 )
 from app.models import (
     GearInstall,
+    SettingsState,
 )
 from tests.engine_support import (
     BLANDNESS,
@@ -99,10 +100,31 @@ def test_career_street_cred_and_public_awareness() -> None:
             quality_ids=[BLANDNESS],
         )
     )
-    # quality -1 + bonus 2 = 1; PA = (7+1)//3 = 2
+    # quality -1 + bonus 2 = 1. Public Awareness is not earned from these
+    # under Chummer's own presets: `<usecalculatedpublicawareness>` is off.
     assert out.derived["street_cred"] == 7
     assert out.derived["notoriety"] == 1
+    assert out.derived["public_awareness"] == 0
+
+
+def test_public_awareness_is_what_the_gm_awarded() -> None:
+    """Chummer stores `<publicawareness>` as a counter the GM moves, and adds
+    what qualities give. It is not worked out from Street Cred."""
+    out = compute(_mundane("pa", career=True, street_cred=7, public_awareness=2))
     assert out.derived["public_awareness"] == 2
+
+
+def test_the_house_rule_earns_public_awareness_from_street_cred() -> None:
+    """`<usecalculatedpublicawareness>`: a point per three of Street Cred
+    and Notoriety, on top of the GM's award (Chummer's
+    `CalculatedPublicAwareness`)."""
+    state = _mundane(
+        "pa-rule", career=True, street_cred=7, notoriety_bonus=2, quality_ids=[BLANDNESS], public_awareness=1
+    )
+    state.settings = SettingsState(use_calculated_public_awareness=True)
+    out = compute(state)
+    # (7 + 1) // 3 = 2, plus the 1 awarded
+    assert out.derived["public_awareness"] == 3
 
 
 def test_career_reward_log_sets_earned_totals() -> None:

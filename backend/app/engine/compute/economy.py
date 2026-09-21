@@ -545,8 +545,16 @@ def _social_pass(ctx: Ctx) -> None:
     ctx.street_cred_total = max(
         0, ctx.street_cred_earned + int(ctx.state.street_cred or 0) - int(ctx.state.burnt_street_cred or 0)
     )
+    # Chummer `TotalPublicAwareness`: what the GM awarded, what qualities
+    # give, and — only under `<usecalculatedpublicawareness>`, off in every
+    # preset it ships — a point per three of Street Cred and Notoriety.
     quality_pa = int(ctx.effects.get("public_awareness") or 0)
-    ctx.public_awareness_total = max(0, (ctx.street_cred_total + max(0, ctx.notoriety_total)) // 3 + quality_pa)
+    earned_pa = (
+        (ctx.street_cred_total + max(0, ctx.notoriety_total)) // 3
+        if current_rules().use_calculated_public_awareness
+        else 0
+    )
+    ctx.public_awareness_total = max(0, int(ctx.state.public_awareness or 0) + quality_pa + earned_pa)
     if ctx.effects.get("erased") and ctx.public_awareness_total >= 1:
         ctx.public_awareness_total = 1
 

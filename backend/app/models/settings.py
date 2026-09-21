@@ -97,6 +97,8 @@ class SettingsState(BaseModel):
     #: gives no karma.
     exceed_negative_qualities: bool | None = None
     exceed_negative_qualities_no_bonus: bool | None = None
+    #: `<usecalculatedpublicawareness>`
+    use_calculated_public_awareness: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`

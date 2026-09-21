@@ -71,6 +71,10 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "streetcred", state.street_cred)
     _sub(root, "burntstreetcred", state.burnt_street_cred)
     _sub(root, "notoriety", state.notoriety_bonus)
+    # The GM's own counter, stored as told — not the total, which Chummer
+    # works out again from this, the qualities and (under a house rule)
+    # Street Cred and Notoriety.
+    _sub(root, "publicawareness", state.public_awareness)
     _sub(root, "nuyenbp", state.karma_nuyen)
 
 
@@ -265,13 +269,6 @@ def _export_flags(root: ET.Element, state: CharacterState, names: _Names, ctx: _
         _sub(root, "essenceatspecialstart", 6)
     _sub(root, "prototypetranshuman", int(derived.get("prototype_transhuman_ess") or 0))
     _sub(root, "cfplimit", int((derived.get("complex_form_points") or {}).get("free") or 0))
-    # `<publicawareness>` is left out on purpose. Chummer keeps it as a
-    # counter a GM moves and stores what it is told; this app works it out
-    # from street cred and notoriety instead, and the two do not agree in
-    # either direction in Chummer's own saves (`Serpent` stores 3 where this
-    # computes 0, `Popstar` stores 0 where this computes 3). Writing a
-    # computed figure into a stored field would make one of them up. It needs
-    # a field of its own on the import side first.
 
 
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

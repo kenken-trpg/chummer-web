@@ -126,6 +126,7 @@ class CharacterPatch(BaseModel):
     street_cred: int | None = None
     burnt_street_cred: int | None = None
     notoriety_bonus: int | None = None
+    public_awareness: int | None = None
     reward_log: list[RewardEntry] | None = None
     expense_log: list[RewardEntry] | None = None
     tradition_id: str | None = None
@@ -264,6 +265,9 @@ class CharacterState(BaseModel):
     # SR5 p.373: two points burned take a point of Notoriety off
     burnt_street_cred: int = 0
     notoriety_bonus: int = 0
+    #: Public Awareness the GM has awarded — Chummer's `<publicawareness>`,
+    #: a counter it stores as told rather than works out.
+    public_awareness: int = 0
     reward_log: list[RewardEntry] = Field(default_factory=list)
     #: what a Chummer save's expense log spent (negative), kept as history:
     #: the balance itself is already met by `karma_adjust` / `nuyen_adjust`,
