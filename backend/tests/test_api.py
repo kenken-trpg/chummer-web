@@ -142,6 +142,20 @@ def test_oversized_collection_is_rejected() -> None:
     assert r.status_code == 422
 
 
+def test_oversized_nested_collection_is_rejected() -> None:
+    """The cap reaches lists inside rows and inside the settings too."""
+    ip = {"cf-connecting-ip": "203.0.113.56"}
+    base = client.post("/api/characters/new", json={"name": "X"}, headers=ip).json()
+    drug = {**base, "custom_drugs": [{"parts": [{"component_id": "x"}] * 2001}]}
+    r = client.post("/api/characters/patch", json={"state": drug}, headers=ip)
+    assert r.status_code == 422
+    books = {**base, "settings": {**base["settings"], "books": ["SR5"] * 2001}}
+    r = client.post("/api/characters/patch", json={"state": books}, headers=ip)
+    assert r.status_code == 422
+    fine = {**base, "custom_drugs": [{"parts": [{"component_id": "x"}] * 2000}]}
+    assert client.post("/api/characters/patch", json={"state": fine}, headers=ip).status_code == 200
+
+
 def test_content_disposition_is_latin1_safe_for_a_japanese_name() -> None:
     header = _content_disposition("サムライ・ドッグ")
     # latin-1 is what Starlette/uvicorn encode header values as; a bare
