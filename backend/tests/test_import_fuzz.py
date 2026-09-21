@@ -44,6 +44,7 @@ from app.characters import import_character, new_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
 from app.chummer_import.container import _MAX_DECOMPRESSED_BYTES
 from app.customdata import build_overlay
+from app.data_loader._xml import MAX_UNTRUSTED_DEPTH, MAX_UNTRUSTED_ELEMENTS, parse_untrusted
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
 from tests.chum5_fixtures import build_chum5
@@ -471,3 +472,25 @@ def test_an_upload_route_answers_with_a_status_not_a_stack_trace(route: str, con
     )
     assert 400 <= response.status_code < 500, response.text
     assert response.status_code != 429, "rate limiter got in the way of the test"
+
+
+# --- size ceilings ------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "xml",
+    [
+        pytest.param("<r>" + "<a/>" * (MAX_UNTRUSTED_ELEMENTS + 1) + "</r>", id="too-many-elements"),
+        pytest.param("<a>" * (MAX_UNTRUSTED_DEPTH + 1) + "</a>" * (MAX_UNTRUSTED_DEPTH + 1), id="too-deep"),
+    ],
+)
+def test_an_oversized_tree_is_refused_as_unparsable(xml: str) -> None:
+    with pytest.raises(ET.ParseError, match="refused"):
+        parse_untrusted(xml)
+
+
+def test_a_tree_at_the_ceilings_still_parses() -> None:
+    deep = "<a>" * MAX_UNTRUSTED_DEPTH + "</a>" * MAX_UNTRUSTED_DEPTH
+    assert parse_untrusted(deep).tag == "a"
+    wide = "<r>" + "<a/>" * (MAX_UNTRUSTED_ELEMENTS - 1) + "</r>"
+    assert len(parse_untrusted(wide)) == MAX_UNTRUSTED_ELEMENTS - 1

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from defusedxml import DefusedXmlException
-from defusedxml.ElementTree import fromstring as _defused_fromstring
+from defusedxml.ElementTree import DefusedXMLParser
 
 log = logging.getLogger(__name__)
 
@@ -108,18 +108,53 @@ SPECIAL_ATTRS = ("EDG", "MAG", "RES")
 MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
 
 
+#: Ceilings for an uploaded tree. The largest of Chummer's own test saves has
+#: ~13k elements nested 14 deep, and the largest vendored data file (which a
+#: customdata pack may replace wholesale) ~22k; these leave an order of
+#: magnitude on top. Without them a 12 MB body of `<a/>` builds ~2M Python
+#: objects, and deep nesting blows the recursion of every walker downstream.
+MAX_UNTRUSTED_ELEMENTS = 250_000
+MAX_UNTRUSTED_DEPTH = 64
+
+
+class _BoundedBuilder(ET.TreeBuilder):
+    """A `TreeBuilder` that gives up once the tree outgrows the ceilings,
+    while expat is still feeding it — so the cost stops at the cap."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._count = 0
+        self._depth = 0
+
+    def start(self, tag: str, attrs: dict[str, str]) -> ET.Element:
+        self._count += 1
+        self._depth += 1
+        if self._count > MAX_UNTRUSTED_ELEMENTS:
+            raise ET.ParseError(f"refused: more than {MAX_UNTRUSTED_ELEMENTS} elements")
+        if self._depth > MAX_UNTRUSTED_DEPTH:
+            raise ET.ParseError(f"refused: nested deeper than {MAX_UNTRUSTED_DEPTH}")
+        return super().start(tag, attrs)
+
+    def end(self, tag: str) -> ET.Element:
+        self._depth -= 1
+        return super().end(tag)
+
+
 def parse_untrusted(raw: str | bytes) -> ET.Element:
     """Parse XML that came from a visitor — a .chum5, a settings file, a
     customdata pack — rather than from `vendor/`.
 
     Goes through defusedxml, which refuses a DTD's entities and external
     references outright instead of relying on expat's amplification limit.
-    Chummer never writes a DTD, so nothing a real file holds is lost. A refusal
-    comes out as `ET.ParseError`, the same as malformed XML: to every caller
-    both mean "not a file we can read".
+    Chummer never writes a DTD, so nothing a real file holds is lost. The tree
+    is also capped in size and depth (`MAX_UNTRUSTED_*`). A refusal comes out
+    as `ET.ParseError`, the same as malformed XML: to every caller both mean
+    "not a file we can read".
     """
+    parser = DefusedXMLParser(target=_BoundedBuilder())
     try:
-        root: ET.Element = _defused_fromstring(raw)
+        parser.feed(raw)
+        root: ET.Element = parser.close()
     except DefusedXmlException as exc:
         raise ET.ParseError(f"refused: {exc}") from exc
     return root
