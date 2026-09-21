@@ -74,8 +74,9 @@ check-frontend: ## tsc + eslint + prettier check + vitest + build
 
 check: check-backend check-frontend ## Everything CI runs
 
-reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, and round-trip them (needs network once)
+reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, round-trip them, and check the export against what Chummer itself wrote (needs network once)
 	cd backend && ./$(VENV)/python scripts/chum5_reconcile.py --roundtrip
+	cd backend && ./$(VENV)/python scripts/chum5_reconcile.py --fidelity
 
 e2e: ## Playwright: one real browser against both halves (needs `make data`)
 	cd frontend && npx playwright install chromium && npm run test:e2e

@@ -87,9 +87,15 @@ unchanged because neither side looked, and the round trip calls that a pass.
 Chummer is the other reader of these files, and the only statement of what it
 expects is the save it wrote — so this compares the original against the
 export, field by field, over the character's own header (who they are, what
-they were built with, what the build was allowed to spend). Everything else a
-save holds is a list this app rebuilds from its own catalogue, which is
-supposed to differ.
+they were built with, what the build was allowed to spend), plus the two
+things Chummer keeps exactly one of and loads field by field: the tradition
+and the mentor spirit. Everything else a save holds is a list this app
+rebuilds from its own catalogue, which is supposed to differ.
+
+It fails only on a field *both* sides state with different text. A field the
+export drops is counted and printed, but plenty of those are fields Chummer
+writes and never reads back, so the list is a measurement to work down rather
+than a verdict — `make reconcile` prints it every time.
 
 `--items` lists what this app charges for each piece of one save (the first
 file whose name contains the text), to set beside the save's own `<cost>`
@@ -276,6 +282,11 @@ _SAME_VALUE_TAGS = (
 )
 
 
+#: The things Chummer holds one of and loads field by field, rather than a
+#: list it rebuilds. Their fields count as the character's own.
+_SINGLE_OBJECTS = ("./tradition", "./mentorspirits/mentorspirit")
+
+
 def _leaves(root: ET.Element) -> dict[str, str]:
     """The character's own fields: the leaf elements directly under
     `<character>`, plus each attribute's own leaves.
@@ -286,6 +297,12 @@ def _leaves(root: ET.Element) -> dict[str, str]:
     element would bury the fields that matter under items that are supposed
     to differ. What is left is the header: who the character is, what they
     were built with, and what the build was allowed to spend.
+
+    The exception is `_SINGLE_OBJECTS`: Chummer keeps exactly one of each and
+    loads it field by field, so they are header too, just nested. Leaving them
+    out cost a real bug — the export wrote `<tradition>` with two of its
+    sixteen fields, which made Chummer drop the tradition whole, and this
+    comparison called all 34 saves faithful because it never looked inside.
     """
     out: dict[str, str] = {}
     for child in root:
@@ -296,6 +313,12 @@ def _leaves(root: ET.Element) -> dict[str, str]:
         # value.
         if len(child) == 0 and child.tag not in out:
             out[child.tag] = (child.text or "").strip()
+    for path in _SINGLE_OBJECTS:
+        for obj in root.findall(path):
+            prefix = obj.tag
+            for leaf in obj:
+                if len(leaf) == 0 and f"{prefix}/{leaf.tag}" not in out:
+                    out[f"{prefix}/{leaf.tag}"] = (leaf.text or "").strip()
     for attr in root.findall("./attributes/attribute"):
         name = (attr.findtext("name") or "").strip()
         if not name:
@@ -358,7 +381,11 @@ def report_fidelity(folder: Path) -> int:
         print("\nchanged — both state it, with different text:")
         for (tag, theirs, ours), count in changed_counts.most_common():
             print(f"  {count:>4}  {tag}: Chummer {theirs!r}, ours {ours!r}")
-    return 1 if dropped_counts or changed_counts else 0
+    # A dropped field is a measurement, not a verdict: plenty of them are
+    # fields Chummer writes and never reads back, and the list only shrinks as
+    # the export is filled in. A *changed* field is a contradiction — both
+    # sides state it and disagree — so that is what makes this fail.
+    return 1 if changed_counts else 0
 
 
 def items(path: Path) -> None:

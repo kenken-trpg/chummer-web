@@ -109,3 +109,39 @@ def test_a_field_written_twice_is_read_the_way_chummer_reads_it() -> None:
     having invented a value that was in fact already there."""
     root = _save("<priorityskills>B,3</priorityskills><priorityskills></priorityskills>")
     assert _leaves(root)["priorityskills"] == "B,3"
+
+
+def test_the_one_tradition_a_character_has_is_compared_field_by_field() -> None:
+    """Chummer keeps exactly one tradition and loads it field by field, so its
+    fields are header too — just nested. Leaving them out cost a real bug: the
+    export wrote two of `<tradition>`'s sixteen fields, which made Chummer drop
+    the tradition whole, and this comparison called every save faithful because
+    it never looked inside."""
+    root = _save("""
+        <tradition>
+          <traditiontype>MAG</traditiontype>
+          <drain>{WIL} + {LOG}</drain>
+          <spirits><spirit>Spirit of Fire</spirit></spirits>
+        </tradition>
+        <mentorspirits>
+          <mentorspirit><name>Bear</name></mentorspirit>
+        </mentorspirits>
+    """)
+    assert _leaves(root) == {
+        "tradition/traditiontype": "MAG",
+        "tradition/drain": "{WIL} + {LOG}",
+        "mentorspirit/name": "Bear",
+    }
+
+
+def test_a_list_of_things_is_still_not_compared() -> None:
+    """The nested fields that count are the ones Chummer keeps *one* of. A
+    list — gear, qualities, vehicles — is rebuilt from this app's own
+    catalogue, so walking into it would bury the fields that matter under
+    items that are supposed to differ."""
+    root = _save("""
+        <alias>Skink</alias>
+        <gears><gear><name>Medkit</name></gear></gears>
+        <qualities><quality><name>Focused Concentration</name></quality></qualities>
+    """)
+    assert _leaves(root) == {"alias": "Skink"}
