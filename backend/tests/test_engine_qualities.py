@@ -547,6 +547,13 @@ def test_born_rich_raises_priority_karma_nuyen_cap() -> None:
     assert out.derived["karma"]["spent"] == 5 + 40
 
 
+def test_unrestricted_nuyen_lifts_the_karma_for_nuyen_cap() -> None:
+    out = compute(_mundane("unrestricted", karma_nuyen=30, settings=SettingsState(unrestricted_nuyen=True)))
+    assert out.derived["karma_chargen"]["nuyen_karma_max"] > 30
+    assert out.derived["nuyen_pool"] == 50_000 + 60_000
+    assert out.derived["karma"]["spent"] == 30
+
+
 def test_in_debt_adds_nuyen_and_lowers_cap() -> None:
     out = compute(_mundane("in-debt", quality_ids=[IN_DEBT]))
     assert out.derived["nuyen_amt"] == 5000

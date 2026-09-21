@@ -15,6 +15,7 @@ from typing import Any
 from ....data_loader import catalog, eval_formula
 from ....models import CharacterState, WeaponAccessoryInstall
 from ....notices import Notice, notice, term
+from ....rules import current_rules
 from ...formulas import _add_leading_int, _leading_int
 from .._common import _clamp_rating, _pick_accessory_mount, accessory_fits_weapon
 
@@ -112,8 +113,11 @@ def _resolve_weapon_accessories(
     for inst in list(state.weapon_accessories or []):
         children.setdefault(inst.parent_id or "", []).append(inst)
 
+    restrict_recoil = current_rules().restrict_recoil
     for weapon in weapons:
         used_mounts: set[str] = set()
+        # `<restrictrecoil>`: (deployable, group) -> the best RC in it
+        rc_groups: dict[tuple[bool, int], int] = {}
         installed_names = {
             str((specs.get(row.accessory_id) or {}).get("name") or "") for row in children.get(weapon["id"]) or []
         }
@@ -194,7 +198,12 @@ def _resolve_weapon_accessories(
             # smartlink improvement (implant or imaging device) is known.
             if "Smartgun" not in str(spec.get("name") or ""):
                 weapon["accuracy"] = _add_leading_int(str(weapon.get("accuracy") or ""), acc_bonus["accuracy"])
-            weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
+            group = int(spec.get("rcgroup") or 0)
+            if restrict_recoil and group:
+                key = (bool(spec.get("rcdeployable")), group)
+                rc_groups[key] = max(rc_groups.get(key, 0), acc_bonus["rc"])
+            else:
+                weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", acc_bonus["rc"])
             weapon["conceal"] = _add_leading_int(str(weapon.get("conceal") or "0") or "0", acc_bonus["conceal"])
             weapon["damage"] = _add_leading_int(str(weapon.get("damage") or ""), acc_bonus["damage"])
             weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), acc_bonus["ap"])
@@ -225,6 +234,8 @@ def _resolve_weapon_accessories(
                     "special_modification_cost": special_cost,
                 }
             )
+        if rc_groups:
+            weapon["rc"] = _add_leading_int(str(weapon.get("rc") or "0") or "0", sum(rc_groups.values()))
         weapon["accessories"] = [item for item in public if item.get("parent_id") == weapon["id"]]
         weapon["mounts_used"] = sorted(used_mounts)
 

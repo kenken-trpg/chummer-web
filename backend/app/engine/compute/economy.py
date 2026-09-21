@@ -53,6 +53,10 @@ from ._career_qualities import career_quality_karma
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
+#: The karma-for-nuyen cap under `<unrestrictednuyen>`: no rule stops it,
+#: and spending past the karma the build has is already an error.
+UNRESTRICTED_NUYEN_KARMA = 10_000
+
 
 def economy(ctx: Ctx) -> None:
     """Phases 12 + 13 + 14 + 15.
@@ -99,6 +103,8 @@ def _priority_points(ctx: Ctx) -> None:
         ctx.group_points = 0
         ctx.special_from_meta = 0
         ctx.nuyen_karma_max = current_rules().karma_nuyen_max
+        if current_rules().unrestricted_nuyen:
+            ctx.nuyen_karma_max = UNRESTRICTED_NUYEN_KARMA
         ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
         ctx.nuyen_pool = int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
         ctx.metatype_karma_cost = (
@@ -118,6 +124,8 @@ def _priority_points(ctx: Ctx) -> None:
         ctx.nuyen_karma_max = max(
             0, current_rules().priority_karma_nuyen_base + int(ctx.effects.get("nuyen_max_bp") or 0)
         )
+        if current_rules().unrestricted_nuyen:
+            ctx.nuyen_karma_max = UNRESTRICTED_NUYEN_KARMA
         ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
         ctx.nuyen_pool += int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
 

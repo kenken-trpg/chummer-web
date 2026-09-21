@@ -192,7 +192,17 @@ class Rules:
     #: p.99), rounded up.
     knowledge_points_expression: str = "({INTUnaug} + {LOGUnaug}) * 2"
 
+    #: `<enforcecapacity>`: gear, armor and ware over their capacity are
+    #: errors.
+    enforce_capacity: bool = True
+    #: `<restrictrecoil>`: of the accessories sharing an `<rcgroup>` (a
+    #: bipod, a tripod and a gyro mount), only the best counts.
+    restrict_recoil: bool = True
+
     # --- money ---------------------------------------------------------
+    #: `<unrestrictednuyen>`: chargen karma may buy any amount of nuyen
+    #: (Chummer's `TotalNuyenMaximumBP`); the karma budget is the limit.
+    unrestricted_nuyen: bool = False
     karma_to_nuyen: int = 2000
     #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
     #: `<karma>` times this (Chummer's `CalculateBP`; Priority is untouched).
@@ -334,6 +344,9 @@ def rules_for(settings: object | None) -> Rules:
         ("dont_double_quality_refunds", "quality_dont_double_refunds"),
         ("cyberleg_movement", "cyberleg_movement"),
         ("dont_use_cyberlimb_calculation", "dont_use_cyberlimb_calculation"),
+        ("enforce_capacity", "enforce_capacity"),
+        ("restrict_recoil", "restrict_recoil"),
+        ("unrestricted_nuyen", "unrestricted_nuyen"),
         ("use_calculated_public_awareness", "use_calculated_public_awareness"),
         ("no_armor_encumbrance", "no_armor_encumbrance"),
         ("uncapped_armor_accessory_bonuses", "uncapped_armor_accessory_bonuses"),

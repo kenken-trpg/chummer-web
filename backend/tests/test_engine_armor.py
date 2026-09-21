@@ -788,3 +788,25 @@ def test_a_mod_that_came_with_the_armor_is_not_held_to_the_avail_limit() -> None
         )
     )
     assert has(bought.derived["errors"], "engine.gear.availOver")
+
+
+def test_capacity_overflow_is_allowed_when_the_settings_do_not_enforce_it() -> None:
+    jacket = ArmorInstall(armor_id=ARMOR_JACKET)
+    out = compute(
+        _mundane(
+            "overflow-allowed",
+            armor=[jacket],
+            armor_mods=[
+                ArmorModInstall(mod_id=FIRE_RES, parent_id=jacket.id, rating=6),
+                ArmorModInstall(mod_id=CHEM_PROT, parent_id=jacket.id, rating=6),
+                ArmorModInstall(mod_id=SHOCK_FRILLS, parent_id=jacket.id),
+            ],
+            cyberware=[
+                CyberwareInstall(id="eyes1", ware_id=EYES, rating=1),
+                CyberwareInstall(ware_id=OCULAR_DRONE, parent_id="eyes1"),
+            ],
+            settings=SettingsState(enforce_capacity=False),
+        )
+    )
+    assert not has(out.derived["errors"], "engine.gear.capacityOver")
+    assert not has(out.derived["errors"], "engine.ware.capacityOver")

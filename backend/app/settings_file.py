@@ -120,6 +120,10 @@ _HANDLED_ELSEWHERE = {
     "contactpointsexpression",
     # Read by `_knowledge_points` when it is tokens and arithmetic.
     "knowledgepointsexpression",
+    # `<licenserestricted>` only changes what Chummer's Fake License picker
+    # lists (every license kind, or the character's own Restricted items);
+    # this app's license text is free, so either list fits.
+    "licenserestricted",
     # Read into `_ATTR_FIELDS` when they are a single attribute.
     "boundspiritexpression",
     "registeredspriteexpression",
@@ -138,6 +142,9 @@ _BOOL_FIELDS: dict[str, str] = {
     "dontdoublequalityrefunds": "dont_double_quality_refunds",
     "cyberlegmovement": "cyberleg_movement",
     "dontusecyberlimbcalculation": "dont_use_cyberlimb_calculation",
+    "enforcecapacity": "enforce_capacity",
+    "restrictrecoil": "restrict_recoil",
+    "unrestrictednuyen": "unrestricted_nuyen",
     "usecalculatedpublicawareness": "use_calculated_public_awareness",
     "noarmorencumbrance": "no_armor_encumbrance",
     "uncappedarmoraccessorybonuses": "uncapped_armor_accessory_bonuses",

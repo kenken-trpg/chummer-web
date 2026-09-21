@@ -401,6 +401,10 @@ export interface CharacterSettings {
   /** `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>` */
   use_points_on_broken_groups?: boolean | null;
   strict_skill_groups_in_create_mode?: boolean | null;
+  /** `<enforcecapacity>` / `<restrictrecoil>` / `<unrestrictednuyen>` */
+  enforce_capacity?: boolean | null;
+  restrict_recoil?: boolean | null;
+  unrestricted_nuyen?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */

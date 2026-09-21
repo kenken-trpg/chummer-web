@@ -229,7 +229,7 @@ def _resolve_armor_mods(
         extra = int(item.get("mod_armor") or 0)
         if extra:
             item["armor_value"] = int(item.get("armor_value") or 0) + extra
-        if used > cap_max + 1e-9:
+        if current_rules().enforce_capacity and used > cap_max + 1e-9:
             errors.append(
                 notice(
                     "engine.gear.capacityOver",
@@ -359,7 +359,7 @@ def apply_armor_gear(
         item["capacity_used"] = int(used) if used == int(used) else used
         # armor without capacity (a Hat) is not checked, as in Chummer; when
         # the mods alone went over, that error is already in the list
-        if cap_max > 0 and used > cap_max + 1e-9 and before <= cap_max + 1e-9:
+        if current_rules().enforce_capacity and cap_max > 0 and used > cap_max + 1e-9 and before <= cap_max + 1e-9:
             errors.append(
                 notice(
                     "engine.gear.capacityOver",

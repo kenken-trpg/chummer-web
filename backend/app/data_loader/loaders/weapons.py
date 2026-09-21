@@ -182,6 +182,8 @@ def load_weapon_accessories() -> list[dict[str, Any]]:
                 "purchasable": not _is_variable_cost(cost) and cost.strip() not in {"0", ""},
                 "accuracy": _text(el.find("accuracy")),
                 "rc": _text(el.find("rc")),
+                "rcgroup": _int(el.find("rcgroup")),
+                "rcdeployable": _text(el.find("rcdeployable")).lower() == "true",
                 "conceal": _text(el.find("conceal")),
                 "damage": _text(el.find("damage")),
                 "ap": _text(el.find("ap")),

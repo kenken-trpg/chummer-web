@@ -266,7 +266,8 @@ def finalize(ctx: Ctx) -> None:
         ctx.warn("engine.settings.unsupported", count=len(unsupported), tags=", ".join(unsupported))
     if ctx.ess <= 0:
         ctx.err("engine.attrs.essenceDepleted")
-    for item in ctx.installed:
+    # `<enforcecapacity>` off: a ware may hold more than its capacity
+    for item in ctx.installed if current_rules().enforce_capacity else []:
         cap_max = float(item.get("capacity_max") or 0)
         if cap_max <= 0:
             continue
