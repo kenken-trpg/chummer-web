@@ -324,6 +324,8 @@ export interface CharacterSettings {
   karma_summoning_focus?: number | null;
   karma_sustaining_focus?: number | null;
   karma_weapon_focus?: number | null;
+  karma_spirit?: number | null;
+  karma_carryover?: number | null;
   karma_initiation_flat?: number | null;
   karma_initiation_per_grade?: number | null;
   karma_submersion_flat?: number | null;

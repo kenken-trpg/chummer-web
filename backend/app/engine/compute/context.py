@@ -161,6 +161,8 @@ class Ctx:
     group_points: int = 0
     group_spent: int = 0
     metatype_karma_cost: int = 0
+    #: `<karmaspirit>` x services owed by the starting spirits / sprites
+    spirit_karma: int = 0
     heritage_karma_cost: int = 0
     nuyen_karma_max: int = 0
     nuyen_pool: int = 0

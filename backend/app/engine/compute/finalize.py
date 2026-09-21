@@ -246,6 +246,13 @@ def finalize(ctx: Ctx) -> None:
                 keep=f"{current_rules().nuyen_chargen_keep_max:,}",
                 lost=f"{lost:,}",
             )
+    # `<karmacarryover>` (SR5 p.107: 7): unspent chargen karma past it is
+    # lost when play starts. Chummer asks before finishing; a notice here.
+    if not ctx.career:
+        karma_leftover = ctx.karma_left - int(ctx.state.karma_earned or 0)
+        keep = current_rules().karma_carryover
+        if karma_leftover > keep:
+            ctx.warn("engine.karma.chargenCarryOver", left=karma_leftover, keep=keep, lost=karma_leftover - keep)
     # House rules from the settings file that this app has no implementation
     # for. Said out loud once per build: a GM who set `<mysaddppcareer>` and
     # got a sheet that quietly ignored it is worse off than one who was told.

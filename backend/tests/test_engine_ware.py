@@ -968,8 +968,9 @@ def test_seeker_alone_does_not_warn_for_muscle() -> None:
         ],
     )
     out = compute(state)
-    # ignore the unrelated Resources-A leftover-nuyen carryover notice
-    assert [w for w in out.derived["warnings"] if w["key"] != "engine.nuyen.chargenCarryOver"] == []
+    # ignore the unrelated leftover-nuyen / leftover-karma carryover notices
+    carry = {"engine.nuyen.chargenCarryOver", "engine.karma.chargenCarryOver"}
+    assert [w for w in out.derived["warnings"] if w["key"] not in carry] == []
 
 
 ENHANCED_ARTICULATION = "dfada66f-73f7-4648-aff4-6b6bce25f84c"

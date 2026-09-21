@@ -70,6 +70,8 @@ class SettingsState(BaseModel):
     karma_summoning_focus: int | None = None
     karma_sustaining_focus: int | None = None
     karma_weapon_focus: int | None = None
+    karma_spirit: int | None = None
+    karma_carryover: int | None = None
     karma_initiation_flat: int | None = None
     karma_initiation_per_grade: int | None = None
     karma_submersion_flat: int | None = None

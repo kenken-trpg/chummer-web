@@ -651,6 +651,14 @@
         "left": "298,275",
         "lost": "293,275"
       }
+    },
+    {
+      "key": "engine.karma.chargenCarryOver",
+      "params": {
+        "keep": 7,
+        "left": 25,
+        "lost": 18
+      }
     }
   ],
   "way_discount": {
