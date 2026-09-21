@@ -97,6 +97,7 @@ _KARMA_FIELDS: dict[str, str] = {
 #: method, the name — or deliberately equivalent to one that is. Listed so
 #: they are not reported as ignored.
 _HANDLED_ELSEWHERE = {
+    "redlinerexclusion",
     "id",
     # a slot name, not a number: read next to `_BOOL_FIELDS`
     "excludelimbslot",
@@ -187,6 +188,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "increasedimprovedabilitymodifier": "increased_improved_ability_modifier",
     "mysaddppcareer": "mystic_adept_pp_in_career",
     "spiritforcebasedontotalmag": "spirit_force_based_on_total_mag",
+    "freemartialartspecialization": "free_martial_art_specialization",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
@@ -395,6 +397,11 @@ def _settings_from(root: ET.Element) -> SettingsState:
         priority_table=_text(root.find("prioritytable"), DEFAULT_PRIORITY_TABLE),
         books=[code for code in (_text(b) for b in root.findall("./books/book")) if code],
         banned_ware_grades=[grade for grade in (_text(g) for g in root.findall("./bannedwaregrades/grade")) if grade],
+        redliner_exclusion=(
+            [limb.lower() for limb in (_text(x) for x in root.findall("./redlinerexclusion/limb")) if limb]
+            if root.find("redlinerexclusion") is not None
+            else None
+        ),
         customdata=_customdata_names(root),
         unsupported=unsupported,
         **fields,

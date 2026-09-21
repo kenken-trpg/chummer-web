@@ -113,6 +113,10 @@ class Rules:
     #: skill of a group shares, bought one skill at a time with karma, are priced
     #: as the group would have been (`Skill.RangeCost`).
     compensate_skill_group_karma_difference: bool = False
+    #: `<freemartialartspecialization>`: the specialization a martial art style
+    #: offers (`<addskillspecializationoption>`) comes free
+    #: (`AddImprovementCollection.skillspecializationoption`).
+    free_martial_art_specialization: bool = False
 
     # --- caps ----------------------------------------------------------
     quality_karma_cap_positive: int = 25
@@ -246,6 +250,8 @@ class Rules:
     bound_spirit_attr: str = "CHA"
     registered_sprite_attr: str = "CHA"
     banned_ware_grades: tuple[str, ...] = ()
+    #: `<redlinerexclusion>`: limb slots Redliner leaves out of its count.
+    redliner_excludes: tuple[str, ...] = ("skull", "torso")
     #: Which `<prioritytable>` the priority rows come from. `priorities.xml`
     #: carries several — Standard, Prime Runner, Street Level — and a settings
     #: file picks one for the whole table.
@@ -384,6 +390,7 @@ def rules_for(settings: object | None) -> Rules:
         ("increased_improved_ability_modifier", "increased_improved_ability_modifier"),
         ("mystic_adept_pp_in_career", "mystic_adept_pp_in_career"),
         ("spirit_force_based_on_total_mag", "spirit_force_based_on_total_mag"),
+        ("free_martial_art_specialization", "free_martial_art_specialization"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",
@@ -408,6 +415,9 @@ def rules_for(settings: object | None) -> Rules:
     knowledge = getattr(settings, "knowledge_points_expression", None)
     if knowledge:
         overrides["knowledge_points_expression"] = str(knowledge)
+    redliner = getattr(settings, "redliner_exclusion", None)
+    if redliner is not None:
+        overrides["redliner_excludes"] = tuple(str(limb) for limb in redliner)
     exclude = getattr(settings, "exclude_limb_slot", None)
     if exclude:
         overrides["exclude_limb_slot"] = str(exclude)

@@ -274,6 +274,8 @@ def _skill_spend(ctx: Ctx) -> None:
         ctx.skillsofts["active"],
         ctx.warnings,
     )
+    if current_rules().free_martial_art_specialization:
+        free_expertise_skills = set(free_expertise_skills) | _martial_art_free_specs(ctx)
     ctx.specs = resolve_specializations(
         ctx.state,
         ctx.data["skills"],
@@ -705,3 +707,22 @@ def _spirit_karma(ctx: Ctx) -> int:
             continue
         services += max(0, int(row.get("services") or 0))
     return services * current_rules().karma_spirit
+
+
+def _martial_art_free_specs(ctx: Ctx) -> set[str]:
+    """`<freemartialartspecialization>`: a specialization a known style offers
+    (`<addskillspecializationoption>`) costs nothing when it is the one taken.
+    Nothing is added on its own — the player still picks the specialization."""
+    arts = {str(art.get("id")): art for art in ctx.data.get("martial_arts") or []}
+    chosen = ctx.state.skill_specializations or {}
+    free: set[str] = set()
+    for inst in ctx.state.martial_arts or []:
+        for node in (arts.get(str(inst.art_id)) or {}).get("bonus") or []:
+            if node.get("tag") != "addskillspecializationoption":
+                continue
+            fields = node.get("fields") or {}
+            skill = str(fields.get("skill") or "").strip()
+            spec = str(fields.get("spec") or "").strip()
+            if skill and spec and str(chosen.get(skill) or "").strip() == spec:
+                free.add(skill)
+    return free

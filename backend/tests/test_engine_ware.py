@@ -1641,3 +1641,26 @@ def test_the_knowledge_points_expression_reads_augmented_and_unaugmented_attribu
     assert points("({INT} + {LOG}) * 2") == 8  # LOG 3 with the booster
     assert points("({INTUnaug} + {LOGUnaug}) * 2.5") == 5
     assert points("({INTUnaug} + {LOGUnaug} + 1) div 2") == 2  # 1.5 rounds up
+
+
+def test_redliner_exclusion_setting() -> None:
+    def count(exclusion: list[str] | None) -> int:
+        attrs = default_attributes(find_metatype("Human", None))
+        state = CharacterState(
+            id="redliner-exclusion",
+            name="RedlinerExclusion",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=attrs,
+            quality_ids=[REDLINER],
+            cyberware=[
+                CyberwareInstall(id="arm1", ware_id=ARM, side="Left"),
+                CyberwareInstall(id="torso1", ware_id=TORSO),
+            ],
+            settings=SettingsState(redliner_exclusion=exclusion),
+        )
+        return compute(state).derived["limb_quality"]["count"]
+
+    assert count(None) == 1
+    assert count([]) == 2
+    assert count(["arm", "torso"]) == 0

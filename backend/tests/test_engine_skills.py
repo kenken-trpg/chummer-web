@@ -484,3 +484,19 @@ def test_compensating_a_group_raised_skill_by_skill() -> None:
     # Only the levels every member shares: Pistols left at 0 shares none.
     partial = {"Automatics": 2, "Longarms": 2}
     assert _firearms_by_hand(on, **partial) == _firearms_by_hand(SettingsState(), **partial)
+
+
+def test_free_martial_art_specialization_setting() -> None:
+    def build(free: bool | None) -> dict:
+        return compute(
+            _human(
+                f"karate-spec-{free}",
+                skills={"Unarmed Combat": 4},
+                skill_specializations={"Unarmed Combat": "Karate"},
+                martial_arts=[MartialArtInstall(art_id=_karate_id(), techniques=["Counterstrike"])],
+                settings=SettingsState(free_martial_art_specialization=free),
+            )
+        ).derived
+
+    assert build(None)["points"]["skills"]["used"] == 5
+    assert build(True)["points"]["skills"]["used"] == 4

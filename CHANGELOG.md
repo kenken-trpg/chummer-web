@@ -33,6 +33,7 @@ self-hosters can pin to a tag instead of tracking `main`.
   Chummer の Standard ではこの設定がオフで、フォースの上限は強化前の MAG（`CharacterAttrib.Value`）から決まります。有効にすると、強化込みの MAG で決めます。
   これまでは常に強化込みの MAG を使っていました。Chummer 付属のデータで両者が食い違うのは、MAG を下げるサイバーウェアなどに限られます。
   `<allowhigherstackedfoci>` は Chummer 本体でも使われていないので、変更されていても警告を出しません。
+- 設定ファイルの `freemartialartspecialization`（格闘術が提供する専門化を取ると無料）と `redlinerexclusion`（Redliner が数えない部位。既定は頭蓋と胴体）を読むようにしました。
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。
