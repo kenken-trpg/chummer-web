@@ -22,7 +22,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        # A pull request runs the newest interpreter only; the push to main
+        # runs all three, so an old-interpreter break still turns main red on
+        # the merge commit, one run later instead of before it.
+        python-version: ${{ fromJSON(github.event_name == 'pull_request' && '["3.13"]' || '["3.11", "3.12", "3.13"]') }}
     defaults:
       run:
         working-directory: backend
