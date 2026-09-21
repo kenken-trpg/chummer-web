@@ -290,7 +290,9 @@ export const RICH_DERIVED = {
   karma_spend_breakdown: [{ notice: { key: "engine.spend.qualities" }, amount: 4 }],
   nuyen_spend_breakdown: [{ notice: { key: "engine.spend.otherGear" }, amount: 1000 }],
   qualities: [{ id: "q1", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" }],
-} as any;
+  // Rows carry only what the renderers read, not every required column of
+  // the generated row types, hence the cast.
+} as unknown as Partial<Derived>;
 
 export const RICH_CHARACTER = makeCharacter({
   notes: "背景メモ",
@@ -303,14 +305,17 @@ export const RICH_CATALOG = makeCatalog({
     groups: [],
     skills: [
       {
+        id: "pistols",
         name: "Pistols",
         attribute: "AGI",
+        skillgroup: null,
         category: "Combat Active",
         exotic: false,
         source: "SR5",
       },
     ],
-  } as any,
+    knowledge: [],
+  },
 });
 
 /** Every `TabPanelProps` a tab takes: `character` and its `derived`, a bare

@@ -39,7 +39,6 @@ export function MiscDrugsGear(props: TabPanelProps & { mode: "misc" | "drugs" })
               extraPick={extraPick}
               setExtraPick={setExtraPick}
               mode={mode}
-              gearSearch={gearSearch}
             />
           ))}
       </>
