@@ -62,7 +62,9 @@ jobs:
       # Coverage on one interpreter only — the numbers are identical across
       # the matrix and it roughly doubles the run. Reported, never gated: see
       # backend/pyproject.toml [tool.coverage.report].
-      - run: python -m pytest -q ${{ matrix.python-version == '3.13' && '--cov --cov-report=term' || '' }}
+      # `-n auto`: one worker per core. The suite shares nothing on disk
+      # between tests, and it roughly halves this step.
+      - run: python -m pytest -q -n auto ${{ matrix.python-version == '3.13' && '--cov --cov-report=term' || '' }}
 
       - run: mypy
 
@@ -102,7 +104,7 @@ jobs:
       - if: steps.chummer-cache.outputs.cache-hit != 'true'
         run: python scripts/fetch_chummer_data.py
 
-      - run: python -m pytest -q
+      - run: python -m pytest -q -n auto
 
   frontend:
     runs-on: ubuntu-latest
