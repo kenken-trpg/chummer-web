@@ -11,6 +11,11 @@ self-hosters can pin to a tag instead of tracking `main`.
   装甲の改造（Armor (Drone) など）のレーティングと、改造込みの装甲値をこの上限で止めます。これまでは上限なしで通していました。
   設定ファイルの `<dronearmormultiplierenabled>` / `<dronearmorflatnumber>` を読み、有効ならドローンだけ上限を (Body + Armor) × 倍率にします。
   `<maximumarmormodifications>` と `<nosinglearmorencumbrance>` は Chummer 本体でも計算に使われていないので、変更されていても警告を出しません。
+- **設定ファイルの `<alternatemetatypeattributekarma>` を読むようになった。**
+  有効にすると、能力値のカルマの値段をメタタイプの最小値ではなく 1 から数えます（トロールの BOD 5→7 が、人間の 1→3 と同じ 25 カルマ）。
+  Karma 作成の能力値、Priority / Sum-to-Ten 作成でカルマで買った能力値、キャリアでの上昇のすべてに効きます。MAG / RES は Chummer と同じく対象外です。
+- **旧形式の `<allow2ndmaxattribute>` を読むようになった。** `<maxnumbermaxattributescreate>` がないファイルでこれが True なら、作成中に最大値の能力値を 2 つまで許します（Chummer の読み込みと同じ）。
+  `<unclampattributeminimum>` は、Chummer のデータでは計算結果が変わらないので、変更されていても警告を出しません。
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。

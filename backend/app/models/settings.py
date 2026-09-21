@@ -152,6 +152,8 @@ class SettingsState(BaseModel):
     drone_armor_multiplier_enabled: bool | None = None
     #: `<dronearmorflatnumber>`
     drone_armor_multiplier: int | None = None
+    #: `<alternatemetatypeattributekarma>`
+    alternate_metatype_attribute_karma: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

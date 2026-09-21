@@ -42,6 +42,21 @@ def group_first_level(from_rating: int, to_rating: int) -> int | None:
     return current_rules().karma_new_skill_group if int(from_rating) == 0 and int(to_rating) == 1 else None
 
 
+#: Left out of `<alternatemetatypeattributekarma>`, as in Chummer
+#: (`s_SetAlternateMetatypeAttributeKarmaExceptions`).
+_ALT_ATTR_KARMA_EXCEPTIONS = frozenset({"MAG", "RES", "DEP", "MAGAdept"})
+
+
+def alternate_attribute_shift(key: str, minimum: int) -> int:
+    """Levels `<alternatemetatypeattributekarma>` takes off an attribute's
+    price: the metatype minimum above 1. A raise from `r` to `r + n` is then
+    priced as the raise from `r - shift` — the same karma a metatype with a
+    minimum of 1 would pay for the same number of levels."""
+    if not current_rules().alternate_metatype_attribute_karma or key in _ALT_ATTR_KARMA_EXCEPTIONS:
+        return 0
+    return max(0, int(minimum) - 1)
+
+
 def attribute_karma_cost(
     ratings: dict[str, int],
     attrs_spec: dict[str, dict[str, int | float]],
@@ -70,7 +85,8 @@ def attribute_karma_cost(
     for key in (*PHYSICAL_ATTRS, "EDG"):
         spec = attrs_spec.get(key) or {}
         racial_min = int(spec.get("min") or 1)
-        total += cost(racial_min, int(ratings.get(key) or racial_min), key)
+        shift = alternate_attribute_shift(key, racial_min)
+        total += cost(racial_min - shift, int(ratings.get(key) or racial_min) - shift, key)
     if special_key in {"MAG", "RES"}:
         total += cost(1, int(ratings.get(special_key) or 0), special_key)
     return total
@@ -81,20 +97,23 @@ def attribute_levels_karma_cost(
     levels: Mapping[str, int],
     *,
     rules: Sequence[Mapping[str, Any]] | None = None,
+    minimums: Mapping[str, int] | None = None,
 ) -> int:
     """Karma for the top `levels[key]` of each attribute on a Priority /
     Sum-to-Ten sheet — the part Chummer keeps in `<karma>` beside `<base>`.
 
     The same per-level price as a Karma build or a career raise: the new
     rating times `karmaattribute`, with `<attributekarmacost>` applied.
+    ``minimums`` are the metatype minimums `alternate_attribute_shift` reads.
     """
     flat = _filter_karma_rules(rules, career=False)
     total = 0
     for key, count in levels.items():
         rating = int(ratings.get(key) or 0)
+        shift = alternate_attribute_shift(key, int((minimums or {}).get(key) or 1))
         total += _karma_cost_with_category_mods(
-            rating - int(count),
-            rating,
+            rating - int(count) - shift,
+            rating - shift,
             current_rules().karma_attribute,
             flat_rules=_matching_karma_rules(flat, key),
         )

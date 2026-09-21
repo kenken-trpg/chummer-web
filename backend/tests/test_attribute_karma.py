@@ -13,7 +13,9 @@ from app.characters import apply_patch
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.engine import compute, default_attributes, find_metatype
-from app.models import CharacterPatch, CharacterState, Priorities
+from app.engine.karma import alternate_attribute_shift
+from app.models import CharacterPatch, CharacterState, Priorities, SettingsState
+from app.rules import Rules, using_rules
 
 
 def _human(cid: str, **kw: object) -> CharacterState:
@@ -83,3 +85,44 @@ def test_a_finished_characters_karma_is_not_read_as_a_creation_split() -> None:
     st, _ = chum5_to_state(ET.tostring(root))
     assert st["attribute_karma"] == {}
     assert st["attributes"]["AGI"] == 5
+
+
+# --- <alternatemetatypeattributekarma> ------------------------------------ #
+
+
+def _troll(cid: str, settings: SettingsState, **kw: object) -> CharacterState:
+    attrs = default_attributes(find_metatype("Troll", None))
+    attrs["BOD"] = attrs["BOD"] + 2
+    return CharacterState(
+        id=cid, name=cid, metatype="Troll", attributes=attrs, priorities=Priorities(), settings=settings, **kw
+    )
+
+
+def test_alternate_metatype_attribute_karma_prices_from_one_in_a_karma_build() -> None:
+    """Troll BOD minimum 5, raised two levels to 7: 6 x 5 + 7 x 5 = 65 by
+    the book, 2 x 5 + 3 x 5 = 25 under the house rule — what a metatype with a
+    minimum of 1 pays for its first two levels (`TotalKarmaCost`)."""
+    plain = compute(_troll("alt-off", SettingsState(), build_method="Karma")).derived["karma"]["spent"]
+    alt = compute(
+        _troll("alt-on", SettingsState(alternate_metatype_attribute_karma=True), build_method="Karma")
+    ).derived["karma"]["spent"]
+    assert plain - alt == 65 - 25
+
+
+def test_alternate_metatype_attribute_karma_prices_priority_karma_levels_from_one() -> None:
+    """The karma levels on a Priority sheet shift the same way: BOD 7 with
+    one level bought with karma pays for level 3, not level 7."""
+    on = SettingsState(alternate_metatype_attribute_karma=True)
+    out = compute(_troll("alt-prio", on, attribute_karma={"BOD": 1}))
+    assert out.derived["attribute_karma"]["karma"] == 3 * 5
+    assert (
+        compute(_troll("alt-prio-off", SettingsState(), attribute_karma={"BOD": 1})).derived["attribute_karma"]["karma"]
+        == 7 * 5
+    )
+
+
+def test_alternate_metatype_attribute_karma_leaves_magic_alone() -> None:
+    with using_rules(Rules(alternate_metatype_attribute_karma=True)):
+        assert alternate_attribute_shift("MAG", 3) == 0
+        assert alternate_attribute_shift("BOD", 5) == 4
+    assert alternate_attribute_shift("BOD", 5) == 0

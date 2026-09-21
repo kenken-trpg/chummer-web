@@ -105,6 +105,10 @@ class Rules:
     karma_initiation_per_grade: int = 3
     karma_submersion_flat: int = 10
     karma_submersion_per_grade: int = 3
+    #: `<alternatemetatypeattributekarma>`: an attribute's karma price counts
+    #: levels from 1 instead of the metatype minimum, so a troll's BOD 6 costs
+    #: what a human's BOD 5 would (Chummer's `CharacterAttrib.TotalKarmaCost`).
+    alternate_metatype_attribute_karma: bool = False
 
     # --- caps ----------------------------------------------------------
     quality_karma_cap_positive: int = 25
@@ -362,6 +366,7 @@ def rules_for(settings: object | None) -> Rules:
         ("use_points_on_broken_groups", "use_points_on_broken_groups"),
         ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
         ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),
+        ("alternate_metatype_attribute_karma", "alternate_metatype_attribute_karma"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",
