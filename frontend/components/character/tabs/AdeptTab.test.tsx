@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { AdeptTab } from "@/components/character/tabs/AdeptTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const power = {
   id: "imprv",
   name: "Improved Reflexes",
@@ -28,7 +26,7 @@ function renderTab(
   return render(
     <AdeptTab
       {...panelProps(ch, {
-        catalog: over.catalog ?? makeCatalog({ powers: [power, power2] as any }),
+        catalog: over.catalog ?? makeCatalog({ powers: [power, power2] as never }),
         patch: over.patch ?? (() => {}),
       })}
     />,
@@ -71,8 +69,8 @@ describe("<AdeptTab>", () => {
     const patch = vi.fn();
     renderTab({
       catalog: makeCatalog({
-        powers: [power] as any,
-        enhancements: [{ id: "e1", name: "Critical Strike", source: "SR5" }] as any,
+        powers: [power] as never,
+        enhancements: [{ id: "e1", name: "Critical Strike", source: "SR5" }] as never,
       }),
       patch,
     });

@@ -1,12 +1,10 @@
 import { skillDefault } from "@/lib/character/skill-default";
 import { makeCharacter } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const pistols = { name: "Pistols", attribute: "AGI", category: "Combat Active" };
 
 const derived = (over: Record<string, unknown> = {}) =>
-  makeCharacter({ derived: { totals: { AGI: 5, INT: 3 }, ...over } } as any).derived;
+  makeCharacter({ derived: { totals: { AGI: 5, INT: 3 }, ...over } } as never).derived;
 
 describe("skillDefault", () => {
   it("rolls the linked attribute minus one", () => {

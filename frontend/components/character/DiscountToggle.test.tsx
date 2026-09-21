@@ -5,8 +5,6 @@ import { makeCharacter, panelProps } from "@/tests/fixtures";
 import { WeaponGear } from "@/components/character/tabs/gear/WeaponGear";
 import { makeCatalog } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /** The Black Market Pipeline takes 10% off one item at a time, in its own
  *  category — so the box shows only where that category reaches. */
 function renderWeapons(derivedExtra: Record<string, unknown>, patch = vi.fn()) {
@@ -22,7 +20,7 @@ function renderWeapons(derivedExtra: Record<string, unknown>, patch = vi.fn()) {
   const character = makeCharacter({
     weapons: [{ id: "w1", weapon_id: "c-w1" }],
     derived: { weapons: [weapon], ...derivedExtra },
-  } as any) as Character;
+  } as never) as Character;
   render(<WeaponGear {...panelProps(character, { catalog: makeCatalog({}), patch })} />);
   return patch;
 }

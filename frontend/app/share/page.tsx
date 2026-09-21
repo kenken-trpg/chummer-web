@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CharacterSheet, { type SheetLayout } from "@/components/CharacterSheet";
@@ -33,6 +33,11 @@ export default function SharePage() {
   const [error, setError] = useState<string | null>(null);
   const [adopting, setAdopting] = useState(false);
 
+  // An effect event, so the fragment is read once on mount and a locale switch
+  // rewords the error without reloading the character.
+  const onLoadError = useEffectEvent((e: unknown) =>
+    setError(errorMessage(e, ui, "share.err.load")),
+  );
   useEffect(() => {
     let live = true;
     (async () => {
@@ -44,14 +49,12 @@ export default function SharePage() {
         const [catalog, character] = await Promise.all([api.catalog(), api.preview(payload)]);
         if (live) setState({ catalog, character });
       } catch (e) {
-        if (live) setError(errorMessage(e, ui, "share.err.load"));
+        if (live) onLoadError(e);
       }
     })();
     return () => {
       live = false;
     };
-    // mount-only: the fragment is fixed for the life of the page
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function adopt() {

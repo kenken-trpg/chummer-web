@@ -3,8 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 import { QualityExtraEditor } from "./QualityExtraEditor";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Each branch of this component renders a control whose only visible cue is a
  * placeholder option. A quality list with several of these used to announce
@@ -15,7 +13,7 @@ function renderFor(q: Record<string, unknown>, over: Record<string, unknown> = {
   const ch = makeCharacter();
   render(
     <QualityExtraEditor
-      q={{ id: "q1", name: "Allergy", ...q } as any}
+      q={{ id: "q1", name: "Allergy", ...q } as never}
       ch={ch}
       d={{ ...ch.derived, ...(over.d as object) }}
       tr={identityTr}
@@ -24,7 +22,7 @@ function renderFor(q: Record<string, unknown>, over: Record<string, unknown> = {
       ui={testUi}
       patch={vi.fn()}
       setCharacter={vi.fn()}
-      catalog={makeCatalog((over.catalog as any) ?? {})}
+      catalog={makeCatalog((over.catalog as never) ?? {})}
       catalogById={new Map()}
     />,
   );
@@ -80,7 +78,7 @@ describe("<QualityExtraEditor> accessible names", () => {
   it("numbers the slots when a quality grants more than one spirit", () => {
     renderFor(
       { name: "Mentor Spirit", extra_kind: "add_spirit", add_spirit_count: 2 },
-      { catalog: { spirits: [{ name: "Spirit of Air" }] as any } },
+      { catalog: { spirits: [{ name: "Spirit of Air" }] as never } },
     );
     expect(screen.getByRole("combobox", { name: "Mentor Spirit: 追加精霊 1を選択" })).toBeDefined();
     expect(screen.getByRole("combobox", { name: "Mentor Spirit: 追加精霊 2を選択" })).toBeDefined();
@@ -99,7 +97,7 @@ describe("<QualityExtraEditor> accessible names", () => {
   it("renders nothing for a quality that takes no target", () => {
     const { container } = render(
       <QualityExtraEditor
-        q={{ id: "q1", name: "Toughness" } as any}
+        q={{ id: "q1", name: "Toughness" } as never}
         ch={makeCharacter()}
         d={makeCharacter().derived}
         tr={identityTr}
@@ -136,10 +134,10 @@ describe("<QualityExtraEditor> accessible names", () => {
 function editorFor(q: Record<string, unknown>, over: Record<string, unknown> = {}) {
   const patch = vi.fn();
   const setCharacter = vi.fn();
-  const ch = makeCharacter((over.ch as any) ?? {});
+  const ch = makeCharacter((over.ch as never) ?? {});
   render(
     <QualityExtraEditor
-      q={{ id: "q1", name: "Allergy", ...q } as any}
+      q={{ id: "q1", name: "Allergy", ...q } as never}
       ch={ch}
       d={{ ...ch.derived, ...(over.d as object) }}
       tr={identityTr}
@@ -148,8 +146,8 @@ function editorFor(q: Record<string, unknown>, over: Record<string, unknown> = {
       ui={testUi}
       patch={patch}
       setCharacter={setCharacter}
-      catalog={makeCatalog((over.catalog as any) ?? {})}
-      catalogById={(over.catalogById as any) ?? new Map()}
+      catalog={makeCatalog((over.catalog as never) ?? {})}
+      catalogById={(over.catalogById as never) ?? new Map()}
     />,
   );
   return { patch, setCharacter, ch };

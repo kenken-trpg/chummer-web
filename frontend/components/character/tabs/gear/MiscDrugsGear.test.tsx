@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { MiscDrugsGear } from "@/components/character/tabs/gear/MiscDrugsGear";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const rope = {
   id: "rope",
   name: "Climbing Rope",
@@ -38,7 +36,7 @@ function renderTab(
   return render(
     <MiscDrugsGear
       {...panelProps(ch, {
-        catalog: over.catalog ?? makeCatalog({ gear: [rope, kit, jazz] as any }),
+        catalog: over.catalog ?? makeCatalog({ gear: [rope, kit, jazz] as never }),
         patch: over.patch ?? (() => {}),
       })}
       mode={mode}

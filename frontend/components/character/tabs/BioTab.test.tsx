@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { BioTab } from "@/components/character/tabs/BioTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const muscle = {
   id: "musc",
   name: "Muscle Augmentation",
@@ -32,10 +30,10 @@ const toner = {
   page: "",
 };
 
-function bioCatalog(items: any[] = [muscle, toner]) {
+function bioCatalog(items: object[] = [muscle, toner]) {
   return makeCatalog({
     bioware: { items, grades: [{ name: "Standard", ess: 1, cost: 1 }] },
-  } as any);
+  } as never);
 }
 
 function renderTab(
@@ -113,7 +111,7 @@ describe("<BioTab> compact view", () => {
             },
           ],
         },
-      } as any,
+      } as never,
     });
     expect((screen.getByLabelText("簡易表示（名称のみ）") as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText("Muscle Augmentation R3")).toBeDefined();

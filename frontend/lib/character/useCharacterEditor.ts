@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import { PORTRAIT_TYPES } from "@/lib/character/portrait";
@@ -75,33 +75,37 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setRoster(await api.list().catch(() => []));
   }
 
+  // One-time bootstrap: load catalog + roster, then open the last / a new
+  // character. The steps that read `remember` and `ui` are effect events, so
+  // they see the current ones without making them re-run the bootstrap.
+  const openInitial = useEffectEvent(async (list: CharacterSummary[]) => {
+    let last: string | null = null;
+    try {
+      last = localStorage.getItem("lastCharacterId");
+    } catch {}
+    let opened: Character | null = null;
+    if (last && list.some((r) => r.id === last)) {
+      opened = await api.get(last).catch(() => null);
+    }
+    if (opened) {
+      remember(opened);
+    } else {
+      remember(await api.create("Runner"));
+      void refreshRoster();
+    }
+  });
+  const onBootError = useEffectEvent((e: unknown) => setError(errorMessage(e, ui, "app.err.boot")));
   useEffect(() => {
     (async () => {
       try {
         const [cat, list] = await Promise.all([api.catalog(), api.list().catch(() => [])]);
         setCatalog(cat);
         setRoster(list);
-        let last: string | null = null;
-        try {
-          last = localStorage.getItem("lastCharacterId");
-        } catch {}
-        let opened: Character | null = null;
-        if (last && list.some((r) => r.id === last)) {
-          opened = await api.get(last).catch(() => null);
-        }
-        if (opened) {
-          remember(opened);
-        } else {
-          remember(await api.create("Runner"));
-          void refreshRoster();
-        }
+        await openInitial(list);
       } catch (e) {
-        setError(errorMessage(e, ui, "app.err.boot"));
+        onBootError(e);
       }
     })();
-    // one-time bootstrap: load catalog + roster, then open the last / a new
-    // character. `remember` is stable enough for a mount-only effect.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
@@ -125,6 +129,11 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
    *  one, which is what no dataset and no directories spell. */
   const loadedKey = useRef(NO_CUSTOM_DATA);
   const catalogLoaded = catalog !== null;
+  // `ui` only words the failure; re-running on a locale switch would refetch
+  // 3 MB to change a sentence that is not on screen.
+  const onReloadError = useEffectEvent((e: unknown) =>
+    setError(errorMessage(e, ui, "app.err.catalogReload")),
+  );
   useEffect(() => {
     if (!catalogLoaded || loadedKey.current === catalogKey) return;
     let live = true;
@@ -138,16 +147,13 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         loadedKey.current = catalogKey;
         setCatalog(next);
       } catch (e) {
-        if (live) setError(errorMessage(e, ui, "app.err.catalogReload"));
+        if (live) onReloadError(e);
       }
     })();
     return () => {
       live = false;
     };
-    // `ui` only words the failure; re-running on a locale switch would refetch
-    // 3 MB to change a sentence that is not on screen.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalogKey, catalogLoaded]);
+  }, [catalogKey, catalogLoaded, dataset, enabledDirs]);
 
   async function openCharacter(id: string) {
     if (!id || id === ch?.id) return;

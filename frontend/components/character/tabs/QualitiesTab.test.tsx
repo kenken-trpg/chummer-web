@@ -4,13 +4,11 @@ import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
 import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const pickerCatalog = makeCatalog({
   qualities: [
     { id: "amb", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
     { id: "dist", name: "Distinctive Style", karma: -5, category: "Negative", source: "SR5" },
-  ] as any,
+  ] as never,
 });
 
 function renderTab(
@@ -64,7 +62,7 @@ describe("<QualitiesTab>", () => {
               needs_extra: true,
               extra_kind: "text",
             },
-          ] as any,
+          ] as never,
         },
       },
     });
@@ -97,7 +95,7 @@ describe("<QualitiesTab>", () => {
           category: "Positive",
           source: "CF",
         },
-      ] as any,
+      ] as never,
     });
     renderTab({ catalog, books: ["SR5"] });
     fireEvent.change(screen.getByPlaceholderText("資質を検索"), { target: { value: "proto" } });
@@ -142,7 +140,7 @@ describe("<QualitiesTab> a limit shared between siblings", () => {
       source: "SR5",
       max_takes: 3,
       include_in_limit: kinds.filter((other) => other !== name),
-    })) as any,
+    })) as never,
   });
   const row = (name: string) =>
     [...document.querySelectorAll(".quality-list .quality-item")].find(
@@ -188,7 +186,7 @@ describe("<QualitiesTab> a cost moved by a condition", () => {
               category: "Negative",
               source: "RF",
             },
-          ] as any,
+          ] as never,
         },
       },
     });
@@ -212,7 +210,7 @@ describe("<QualitiesTab> career prices (SR5 p.107)", () => {
         source: "SR5",
         double_career: false,
       },
-    ] as any,
+    ] as never,
   });
   const itemText = (scope: string, name: string) =>
     [...document.querySelectorAll(`${scope} .quality-item`)].find(
@@ -220,7 +218,7 @@ describe("<QualitiesTab> career prices (SR5 p.107)", () => {
     )!.textContent;
 
   it("prices the catalog at the career rate", () => {
-    renderTab({ catalog, character: { derived: { quality_career_pricing: true } as any } });
+    renderTab({ catalog, character: { derived: { quality_career_pricing: true } as never } });
     expect(itemText(".quality-list", "Ambidextrous")).toContain("キャリアでは 8カルマ");
     expect(itemText(".quality-list", "The Artist's Way")).toContain("キャリアでは 20カルマ");
     expect(itemText(".quality-list", "Distinctive Style")).toContain("キャリアではカルマなし");
@@ -250,7 +248,7 @@ describe("<QualitiesTab> career prices (SR5 p.107)", () => {
               source: "SR5",
             },
           ],
-        } as any,
+        } as never,
       },
     });
     expect(itemText(".card", "Ambidextrous")).toContain("キャリアで取得（8カルマ）");
@@ -266,7 +264,7 @@ describe("<QualitiesTab> career prices (SR5 p.107)", () => {
           qualities_removed: [
             { id: "dist", name: "Distinctive Style", category: "Negative", karma: 10 },
           ],
-        } as any,
+        } as never,
       },
     });
     expect(screen.getByText("キャリアで外した資質")).toBeTruthy();
@@ -283,7 +281,9 @@ describe("<QualitiesTab> karma overspent", () => {
   const line = () => document.querySelector(".card > p.muted")!;
 
   it("turns the karma line red and says so", () => {
-    renderTab({ character: { derived: { karma: { pool: 25, spent: 29, remaining: -4 } } as any } });
+    renderTab({
+      character: { derived: { karma: { pool: 25, spent: 29, remaining: -4 } } as never },
+    });
     expect(line().className).toContain("errors");
     expect(line().textContent).toContain("カルマが不足しています（残り -4）");
   });
@@ -304,7 +304,7 @@ describe("<QualitiesTab> undoing career changes", () => {
       patch,
       character: {
         quality_ids: ["amb"],
-        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+        derived: { quality_career_pricing: true, qualities_removed: removed } as never,
       },
     });
     fireEvent.click(screen.getByRole("button", { name: "戻す" }));
@@ -319,7 +319,7 @@ describe("<QualitiesTab> undoing career changes", () => {
       character: {
         quality_ids: ["amb"],
         career_baseline: { skills: { Pistols: 3 }, quality_ids: ["dist"] },
-        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+        derived: { quality_career_pricing: true, qualities_removed: removed } as never,
       },
     });
     fireEvent.click(screen.getByRole("button", { name: "今の資質を作成時のものとして扱う" }));
@@ -337,7 +337,7 @@ describe("<QualitiesTab> undoing career changes", () => {
       patch,
       character: {
         career_baseline: { quality_ids: ["dist"] },
-        derived: { quality_career_pricing: true, qualities_removed: removed } as any,
+        derived: { quality_career_pricing: true, qualities_removed: removed } as never,
       },
     });
     fireEvent.click(screen.getByRole("button", { name: "今の資質を作成時のものとして扱う" }));
@@ -346,7 +346,7 @@ describe("<QualitiesTab> undoing career changes", () => {
   });
 
   it("offers the reset only once something changed in career", () => {
-    renderTab({ character: { derived: { quality_career_pricing: true } as any } });
+    renderTab({ character: { derived: { quality_career_pricing: true } as never } });
     expect(screen.queryByRole("button", { name: "今の資質を作成時のものとして扱う" })).toBeNull();
   });
 });
@@ -367,7 +367,7 @@ describe("<QualitiesTab> a quality switched off by ware", () => {
               disabled_by: "Wired Reflexes",
             },
           ],
-        } as any,
+        } as never,
       },
     });
     expect(document.querySelector(".quality-item")!.textContent).toContain(
@@ -393,7 +393,7 @@ describe("<QualitiesTab> an Infected quality's critter powers", () => {
   });
 
   it("lists the powers the quality grants", () => {
-    renderTab({ character: { derived: { qualities: [banshee()] as any } } });
+    renderTab({ character: { derived: { qualities: [banshee()] as never } } });
     expect(screen.getByText(/Dual Natured/)).toBeDefined();
     expect(screen.getByText(/Vulnerability \(Wood\)/)).toBeDefined();
   });
@@ -403,8 +403,8 @@ describe("<QualitiesTab> an Infected quality's critter powers", () => {
     renderTab({
       character: {
         quality_extras: { inf: "BOD" },
-        derived: { qualities: [banshee()] as any },
-      } as any,
+        derived: { qualities: [banshee()] as never },
+      } as never,
       patch,
     });
 
@@ -423,7 +423,7 @@ describe("<QualitiesTab> an Infected quality's critter powers", () => {
 
   it("offers no picker for a quality without optional powers", () => {
     renderTab({
-      character: { derived: { qualities: [banshee({ optional_powers: undefined })] as any } },
+      character: { derived: { qualities: [banshee({ optional_powers: undefined })] as never } },
     });
     expect(screen.queryByRole("combobox", { name: /任意パワー/ })).toBeNull();
   });

@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { ContactsTab } from "@/components/character/tabs/ContactsTab";
 import { makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function renderTab(
   over: {
     character?: Parameters<typeof makeCharacter>[0];
@@ -56,7 +54,7 @@ describe("<ContactsTab>", () => {
   it("renders an existing contact and deletes it via patch", () => {
     const patch = vi.fn();
     renderTab({
-      character: { contacts: [contact() as any], derived: { contacts: [contact()] as any } },
+      character: { contacts: [contact() as never], derived: { contacts: [contact()] as never } },
       patch,
     });
     expect(screen.getByText("Mr. Johnson")).toBeDefined();
@@ -67,7 +65,7 @@ describe("<ContactsTab>", () => {
   it("edits Connection through a patch", () => {
     const patch = vi.fn();
     renderTab({
-      character: { contacts: [contact() as any], derived: { contacts: [contact()] as any } },
+      character: { contacts: [contact() as never], derived: { contacts: [contact()] as never } },
       patch,
     });
     fireEvent.change(screen.getByLabelText("Connection"), { target: { value: "5" } });
@@ -79,8 +77,8 @@ describe("<ContactsTab>", () => {
   it("hides delete for a quality-locked row", () => {
     renderTab({
       character: {
-        contacts: [contact() as any],
-        derived: { contacts: [contact({ locked: true })] as any },
+        contacts: [contact() as never],
+        derived: { contacts: [contact({ locked: true })] as never },
       },
     });
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();

@@ -16,8 +16,6 @@ import {
   weaponLine,
 } from "@/lib/character/gear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 describe("swapMatrixOrder", () => {
   it("swaps the element at fromKey with the one at toPos", () => {
     expect(
@@ -78,7 +76,7 @@ describe("dropTree", () => {
 
 describe("dropDrone", () => {
   it("drops the drone + its mods, mounts, child sensors and gear", () => {
-    const ch: any = {
+    const ch = {
       drones: [{ id: "dr1" }, { id: "dr2" }],
       vehicle_mods: [
         { id: "m1", parent_id: "dr1" },
@@ -98,7 +96,7 @@ describe("dropDrone", () => {
     };
     const out = dropDrone(ch, "dr1");
     expect(out.programs).toEqual([{ id: "p2", parent_id: "dr2" }]);
-    expect((out.drones ?? []).map((d: any) => d.id)).toEqual(["dr2"]);
+    expect((out.drones ?? []).map((d: { id?: string }) => d.id)).toEqual(["dr2"]);
     expect(out.vehicle_mods).toEqual([{ id: "m2", parent_id: "dr2" }]);
     expect(out.weapon_mounts).toEqual([]);
     expect(out.sensors).toEqual([]);
@@ -128,14 +126,14 @@ describe("miscFits", () => {
 describe("wareFitsVehicleMod", () => {
   const mod = { name: "Weapon Mount, Standard", subsystems: ["Cyberware"] };
   it("requires the category slot + plugin/requireparent", () => {
-    expect(wareFitsVehicleMod({ category: "Cyberware", plugin: true } as any, mod)).toBe(true);
-    expect(wareFitsVehicleMod({ category: "Bioware", plugin: true } as any, mod)).toBe(false);
-    expect(wareFitsVehicleMod({ category: "Cyberware" } as any, mod)).toBe(false);
+    expect(wareFitsVehicleMod({ category: "Cyberware", plugin: true } as never, mod)).toBe(true);
+    expect(wareFitsVehicleMod({ category: "Bioware", plugin: true } as never, mod)).toBe(false);
+    expect(wareFitsVehicleMod({ category: "Cyberware" } as never, mod)).toBe(false);
   });
   it("honours required_parent_names", () => {
     expect(
       wareFitsVehicleMod(
-        { category: "Cyberware", plugin: true, required_parent_names: ["Standard"] } as any,
+        { category: "Cyberware", plugin: true, required_parent_names: ["Standard"] } as never,
         mod,
       ),
     ).toBe(true);
@@ -198,10 +196,10 @@ describe("accessoryFits / armorModFits", () => {
       },
     };
     const rifle = { name: "AK-97", category: "Assault Rifles", mounts: ["Top", "Barrel"] };
-    expect(accessoryFits(acc as any, rifle, [])).toBe(true);
-    expect(accessoryFits(acc as any, { ...rifle, mounts: ["Barrel"] }, [])).toBe(false);
+    expect(accessoryFits(acc as never, rifle, [])).toBe(true);
+    expect(accessoryFits(acc as never, { ...rifle, mounts: ["Barrel"] }, [])).toBe(false);
     expect(
-      accessoryFits({ ...acc, forbidden: { accessories: ["Smartgun"] } } as any, rifle, [
+      accessoryFits({ ...acc, forbidden: { accessories: ["Smartgun"] } } as never, rifle, [
         "Smartgun",
       ]),
     ).toBe(false);

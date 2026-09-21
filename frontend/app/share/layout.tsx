@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { translate } from "@/lib/i18n/messages";
 
 /**
  * A share URL *is* the character — the whole state rides in the fragment. Keep
@@ -7,7 +8,7 @@ import type { Metadata } from "next";
  * that follows the link would still archive the URL itself.)
  */
 export const metadata: Metadata = {
-  title: "共有ビュー | Chummer Web",
+  title: translate("ja", "share.meta.title"),
   robots: { index: false, follow: false, nocache: true },
 };
 

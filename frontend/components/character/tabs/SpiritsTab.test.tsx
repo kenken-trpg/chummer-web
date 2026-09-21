@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { SpiritsTab } from "@/components/character/tabs/SpiritsTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const traditions = [{ id: "hermetic", name: "Hermetic", drain_attrs: ["WIL", "LOG"] }];
 const spirits = [{ id: "fire", name: "Fire Spirit", source: "SR5", attributes: {} }];
 
@@ -20,7 +18,7 @@ function renderTab(
     <SpiritsTab
       {...panelProps(ch, { patch: over.patch ?? (() => {}) })}
       catalog={
-        over.catalog ?? makeCatalog({ traditions: traditions as any, spirits: spirits as any })
+        over.catalog ?? makeCatalog({ traditions: traditions as never, spirits: spirits as never })
       }
     />,
   );
@@ -42,7 +40,7 @@ describe("<SpiritsTab>", () => {
   it("summons and binds a tradition spirit via patch", () => {
     const patch = vi.fn();
     renderTab({
-      character: { derived: { tradition: { spirits: { Combat: "Fire Spirit" } } as any } },
+      character: { derived: { tradition: { spirits: { Combat: "Fire Spirit" } } as never } },
       patch,
     });
     fireEvent.click(screen.getByRole("button", { name: "召喚" }));
@@ -77,7 +75,7 @@ describe("<SpiritsTab>", () => {
                 { name: "Natural Weaponry" },
               ],
             },
-          ] as any,
+          ] as never,
         },
       },
     });

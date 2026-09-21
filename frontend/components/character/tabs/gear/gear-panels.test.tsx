@@ -13,8 +13,6 @@ import { OpticsGear } from "./OpticsGear";
 import { RccGear } from "./RccGear";
 import { SensorGear } from "./SensorGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * The seven panels that buy from the catalog through `<CatalogPicker>`. They
  * are near-identical by construction now, so they are covered as one table:
@@ -45,7 +43,7 @@ const PANELS: {
       armor: [
         { ...base, id: "a1", name: "Lined Coat", category: "Armor", armor: "9" },
         { ...base, id: "a2", name: "Chameleon Suit", category: "Armor", source: "RG", armor: "9" },
-      ] as any,
+      ] as never,
     },
     core: "Lined Coat",
     supplement: "Chameleon Suit",
@@ -59,7 +57,7 @@ const PANELS: {
       commlinks: [
         { ...base, id: "c1", name: "Meta Link", devicerating: 1 },
         { ...base, id: "c2", name: "Hermes Ikon", source: "DT", devicerating: 5 },
-      ] as any,
+      ] as never,
     },
     core: "Meta Link",
     supplement: "Hermes Ikon",
@@ -73,7 +71,7 @@ const PANELS: {
       cyberdecks: [
         { ...base, id: "d1", name: "Erika MCD-1", devicerating: 1, programs: 1 },
         { ...base, id: "d2", name: "Novatech Navi", source: "DT", devicerating: 3, programs: 3 },
-      ] as any,
+      ] as never,
     },
     core: "Erika MCD-1",
     supplement: "Novatech Navi",
@@ -96,7 +94,7 @@ const PANELS: {
           lp: 0,
           source: "RF",
         },
-      ] as any,
+      ] as never,
     },
     // lifestyles narrow their idle list to a hand-picked set, not to a book,
     // so this row stays off it whatever the settings say — the book list is
@@ -113,7 +111,7 @@ const PANELS: {
       optics: [
         { ...base, id: "o1", name: "Goggles", category: "Vision Devices" },
         { ...base, id: "o2", name: "Ear Buds", category: "Audio Devices", source: "RG" },
-      ] as any,
+      ] as never,
     },
     core: "Goggles",
     supplement: "Ear Buds",
@@ -127,7 +125,7 @@ const PANELS: {
       rccs: [
         { ...base, id: "r1", name: "Sony Emperor", devicerating: 2, programs: 2 },
         { ...base, id: "r2", name: "Proteus Poseidon", source: "R5", devicerating: 6, programs: 6 },
-      ] as any,
+      ] as never,
     },
     core: "Sony Emperor",
     supplement: "Proteus Poseidon",
@@ -147,7 +145,7 @@ const PANELS: {
           category: "Sensor Housings",
           source: "R5",
         },
-      ] as any,
+      ] as never,
     },
     core: "Motion Sensor",
     supplement: "Micro Drone Housing",

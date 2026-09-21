@@ -5,8 +5,6 @@ import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { WeaponGear } from "./WeaponGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * A weapon row on screen is not necessarily a weapon in the character.
  *
@@ -85,7 +83,7 @@ function owning(rows: Record<string, unknown>[], rest: Record<string, unknown> =
     weapons: rows,
     ...top,
     derived: { weapons: rows, ...(derived as object) },
-  } as any);
+  } as never);
 }
 
 /** The 装着 button belonging to one picker — a weapon has two. */
@@ -281,7 +279,7 @@ describe("<WeaponGear> accessories", () => {
           special_modification_cost: 1,
         },
       ],
-    } as any);
+    } as never);
 
   // The list used to be `specialmodification || source === "SR5"` — a book
   // list written in code, which no setting could reach: 110 of the 136
@@ -444,7 +442,7 @@ describe("<WeaponGear> ammunition", () => {
           ammo_weapon_types: ["Shotguns"],
         },
       ],
-    } as any);
+    } as never);
 
   it("offers only ammunition the weapon can chamber, minus what it already carries", () => {
     renderWeapons(
@@ -619,7 +617,7 @@ describe("<WeaponGear> buying from the catalog", () => {
             add_gear_id: "g-gren",
           },
         ],
-      } as any),
+      } as never),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Grenade: Frag/ }));
@@ -670,7 +668,7 @@ describe("<WeaponGear> buying from the catalog", () => {
       patch,
       makeCatalog({
         weapons: [{ id: "c-w1", name: "Predator", cost: "725", source: "SR5" }],
-      } as any),
+      } as never),
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Predator/ }));

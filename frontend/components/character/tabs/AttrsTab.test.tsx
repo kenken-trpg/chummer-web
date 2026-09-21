@@ -5,13 +5,11 @@ import { AttrsTab } from "@/components/character/tabs/AttrsTab";
 import type { Character } from "@/lib/types";
 import { identityTr, makeCatalog, makeCharacter, testUi } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function renderTab(
   over: {
     character?: Parameters<typeof makeCharacter>[0];
     patch?: (b: Record<string, unknown>) => void;
-    setCharacter?: (c: any) => void;
+    setCharacter?: (c: Character) => void;
   } = {},
 ) {
   const ch = makeCharacter(over.character);
@@ -57,7 +55,7 @@ describe("<AttrsTab>", () => {
       character: {
         attributes: { AGI: 4, BOD: 3 },
         attribute_karma: { AGI: 1 },
-        derived: { attribute_karma: split } as any,
+        derived: { attribute_karma: split } as never,
       },
     });
     const agi = screen.getByRole("spinbutton", { name: /AGI.*うちカルマ/ }) as HTMLInputElement;
@@ -72,8 +70,8 @@ describe("<AttrsTab>", () => {
 
   it("offers no split in a Karma build or after creation", () => {
     for (const character of [
-      { derived: { attribute_karma: split, karma_chargen: { enabled: true } } as any },
-      { career: true, derived: { attribute_karma: split } as any },
+      { derived: { attribute_karma: split, karma_chargen: { enabled: true } } as never },
+      { career: true, derived: { attribute_karma: split } as never },
     ]) {
       const { unmount } = renderTab({ character });
       expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
@@ -82,7 +80,7 @@ describe("<AttrsTab>", () => {
   });
 
   it("shows the MAG row once the MAG tab is enabled", () => {
-    renderTab({ character: { derived: { enabled_tabs: ["MAG"], totals: { MAG: 4 } as any } } });
+    renderTab({ character: { derived: { enabled_tabs: ["MAG"], totals: { MAG: 4 } as never } } });
     expect(screen.getAllByRole("slider")).toHaveLength(10);
   });
 
@@ -123,7 +121,7 @@ describe("<AttrsTab>", () => {
             name: "Troll",
             attributes: { BOD: { min: 5, max: 10, aug: 14 } },
           },
-        } as any,
+        } as never,
       },
     });
     const bod = screen.getAllByRole("slider")[0] as HTMLInputElement;
@@ -143,7 +141,7 @@ describe("<AttrsTab>", () => {
             name: "Troll",
             attributes: { BOD: { min: 5, max: 10, aug: 14 } },
           },
-        } as any,
+        } as never,
       },
     });
     expect((screen.getAllByRole("slider")[0] as HTMLInputElement).value).toBe("5");
@@ -158,7 +156,7 @@ describe("<AttrsTab>", () => {
             name: "Troll",
             attributes: { BOD: { min: 5, max: 10, aug: 14 } },
           },
-        } as any,
+        } as never,
       },
     });
     expect(container.querySelector(".range-tick.floor")?.textContent).toBe("5");
@@ -174,7 +172,7 @@ describe("<AttrsTab>", () => {
             attributes: { BOD: { min: 3, max: 10, aug: 14 } },
             attributes_replaced_by: ["Infected: Ghoul (Human)"],
           },
-        } as any,
+        } as never,
       },
     });
     expect(container.textContent).toContain("Infected: Ghoul (Human)");

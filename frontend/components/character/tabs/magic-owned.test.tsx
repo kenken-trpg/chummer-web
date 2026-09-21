@@ -8,8 +8,6 @@ import { AdeptTab } from "./AdeptTab";
 import { FociTab } from "./FociTab";
 import { SpiritsTab } from "./SpiritsTab";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * The magic tabs' catalog halves are covered by the per-tab tests. This covers
  * the half that only exists once something is *bought*: the row of controls
@@ -22,12 +20,13 @@ import { SpiritsTab } from "./SpiritsTab";
  */
 
 function renderTab(
-  Panel: ComponentType<TabPanelProps> | ComponentType<any>,
+  Panel: ComponentType<never>,
   character: Character,
   patch: (b: Record<string, unknown>) => void,
   catalog: Partial<Catalog> = {},
 ) {
-  return render(<Panel {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
+  const P = Panel as ComponentType<TabPanelProps>;
+  return render(<P {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
 }
 
 const rows = (container: HTMLElement) => [
@@ -51,7 +50,7 @@ describe("<AdeptTab> installed powers", () => {
       talent: "Adept",
       adept_powers: list,
       derived: { adept_powers: list },
-    } as any);
+    } as never);
 
   it("the rating box edits the power it sits under", () => {
     const patch = vi.fn();
@@ -138,7 +137,7 @@ describe("<SpiritsTab> summoned spirits", () => {
     ...over,
   });
   const owning = (list: Record<string, unknown>[]) =>
-    makeCharacter({ spirits: list, derived: { spirits: list } } as any);
+    makeCharacter({ spirits: list, derived: { spirits: list } } as never);
 
   const character = () => owning([spirit("s1", "Fire"), spirit("s2", "Air")]);
 
@@ -206,7 +205,7 @@ describe("<FociTab> bonded foci", () => {
     ...over,
   });
   const owning = (list: Record<string, unknown>[]) =>
-    makeCharacter({ foci: list, derived: { foci: list } } as any);
+    makeCharacter({ foci: list, derived: { foci: list } } as never);
 
   it("Force on the second focus leaves the first alone", () => {
     const patch = vi.fn();

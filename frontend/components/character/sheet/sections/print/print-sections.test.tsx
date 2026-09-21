@@ -4,8 +4,6 @@ import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 import { PrintStatBlock } from "./PrintStatBlock";
 import { PrintConditionMonitor } from "./PrintConditionMonitor";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const s = buildSheetData({
   character: makeCharacter({
     derived: {
@@ -16,7 +14,7 @@ const s = buildSheetData({
       enabled_tabs: ["MAG"],
       cm_recovery: { physical: 2, stun: 3 },
       limit_modifiers: [{ limit: "physical", value: 1, condition: "全力疾走" }],
-      lifestyle: { id: "l1", name: "Low", months: 2, increment: "month" } as any,
+      lifestyle: { id: "l1", name: "Low", months: 2, increment: "month" } as never,
     },
   }),
   catalog: makeCatalog(),
@@ -26,7 +24,7 @@ const s = buildSheetData({
 
 describe("print sections", () => {
   it("PrintStatBlock renders the attribute row and derived pools", () => {
-    const { container } = render(<PrintStatBlock {...(s as any)} />);
+    const { container } = render(<PrintStatBlock {...s} />);
     expect(container.querySelector("section.print-statblock")).not.toBeNull();
     // one attr cell per enabled attribute (MAG on, RES off)
     expect(container.querySelectorAll(".print-attr")).toHaveLength(10);
@@ -42,7 +40,7 @@ describe("print sections", () => {
   });
 
   it("PrintConditionMonitor draws one box per CM point plus BOD/2 overflow", () => {
-    const { container } = render(<PrintConditionMonitor {...(s as any)} />);
+    const { container } = render(<PrintConditionMonitor {...s} />);
     // physical 10 + overflow ceil(5/2)=3 + stun 10
     expect(container.querySelectorAll(".cm-box")).toHaveLength(23);
     expect(container.querySelectorAll(".print-cm-boxes--overflow .cm-box")).toHaveLength(3);

@@ -8,8 +8,6 @@ import {
   RICH_CHARACTER,
 } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const headings = () => screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
 
 describe("<CharacterSheet>", () => {
@@ -123,7 +121,7 @@ describe("<CharacterSheet>", () => {
           derived: {
             qualities: [
               { id: "q1", name: "Ambidextrous", karma: -4, category: "Positive", source: "SR5" },
-            ] as any,
+            ] as never,
             martial_arts: [
               {
                 id: "m1",
@@ -134,7 +132,7 @@ describe("<CharacterSheet>", () => {
                 techniques: [],
                 technique_options: [],
               },
-            ] as any,
+            ] as never,
             contacts: [
               {
                 id: "c1",
@@ -146,7 +144,7 @@ describe("<CharacterSheet>", () => {
                 connection_max: 6,
                 loyalty_max: 6,
               },
-            ] as any,
+            ] as never,
           },
         })}
         catalog={makeCatalog()}

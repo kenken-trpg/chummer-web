@@ -2,8 +2,6 @@ import { act, renderHook } from "@testing-library/react";
 import { useCharacterHistory } from "@/lib/character/history";
 import type { Character } from "@/lib/types";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // Snapshots are opaque to the stack — a tagged stub is enough.
 const snap = (tag: string) => ({ id: tag }) as unknown as Character;
 
@@ -25,14 +23,14 @@ describe("useCharacterHistory", () => {
     act(() => {
       restored = result.current.stepBack(snap("v2"));
     });
-    expect((restored as any).id).toBe("v1");
+    expect(restored).toMatchObject({ id: "v1" });
     expect(result.current.counts).toEqual({ undo: 0, redo: 1 });
 
     let forward: Character | null = null;
     act(() => {
       forward = result.current.stepForward(snap("v1"));
     });
-    expect((forward as any).id).toBe("v2");
+    expect(forward).toMatchObject({ id: "v2" });
     expect(result.current.counts).toEqual({ undo: 1, redo: 0 });
   });
 
@@ -63,7 +61,7 @@ describe("useCharacterHistory", () => {
     act(() => {
       for (let i = 0; i < 50; i++) last = result.current.stepBack(snap("cur"));
     });
-    expect((last as any).id).toBe("v5");
+    expect(last).toMatchObject({ id: "v5" });
   });
 
   it("reset drops both stacks", () => {

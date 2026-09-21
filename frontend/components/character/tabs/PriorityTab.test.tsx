@@ -2,13 +2,12 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { PriorityTab } from "@/components/character/tabs/PriorityTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Character } from "@/lib/types";
 
 const CAT_KEYS = ["Heritage", "Attributes", "Talent", "Skills", "Resources"];
 const LETTERS = ["A", "B", "C", "D", "E"];
 
-const fullTable: any = {};
+const fullTable: Record<string, Record<string, unknown>> = {};
 for (const k of CAT_KEYS) {
   fullTable[k] = {};
   for (const l of LETTERS) {
@@ -38,7 +37,7 @@ function renderTab(
   return render(
     <PriorityTab
       {...panelProps(ch, {
-        catalog: makeCatalog({ priority_table: fullTable }),
+        catalog: makeCatalog({ priority_table: fullTable as never }),
         patch: over.patch ?? (() => {}),
       })}
     />,
@@ -73,7 +72,7 @@ describe("<PriorityTab>", () => {
     renderTab({ patch });
     expect(cell(0, 4).className).toContain("selected"); // Heritage = E
     fireEvent.click(cell(0, 2)); // give Heritage the C that Attributes holds
-    const next = (patch.mock.calls[0][0] as any).priorities;
+    const next = (patch.mock.calls[0][0] as Character).priorities;
     expect(next.Heritage).toBe("C");
     expect(next.Attributes).toBe("E"); // took Heritage's old letter
   });
@@ -82,14 +81,17 @@ describe("<PriorityTab>", () => {
     const patch = vi.fn();
     renderTab({ patch });
     fireEvent.click(cell(2, 0)); // Talent = A
-    const call = patch.mock.calls[0][0] as any;
+    const call = patch.mock.calls[0][0] as Character;
     expect(call.priorities.Talent).toBe("A");
     expect(call.talent).toBe("Magician"); // Mundane not offered at A -> first option
   });
 
   it("shows the Sum-to-Ten readout when that method is active", () => {
     renderTab({
-      character: { build_method: "SumToTen", derived: { sum_to_ten: { used: 8, max: 10 } as any } },
+      character: {
+        build_method: "SumToTen",
+        derived: { sum_to_ten: { used: 8, max: 10 } as never },
+      },
     });
     expect(screen.getByText(/合計 8\/10/)).toBeDefined();
   });
@@ -97,7 +99,7 @@ describe("<PriorityTab>", () => {
 
 describe("<PriorityTab> the table reads in Japanese", () => {
   /** The real cell names, as they come out of the vendored Chummer data. */
-  const realTable: any = {
+  const realTable = {
     Heritage: {
       A: { name: "A - Any metatype", metatypes: [], talents: [] },
       B: { name: "B - Any metatype", metatypes: [], talents: [] },
@@ -138,7 +140,9 @@ describe("<PriorityTab> the table reads in Japanese", () => {
   function renderReal() {
     const ch = makeCharacter();
     return render(
-      <PriorityTab {...panelProps(ch, { catalog: makeCatalog({ priority_table: realTable }) })} />,
+      <PriorityTab
+        {...panelProps(ch, { catalog: makeCatalog({ priority_table: realTable as never }) })}
+      />,
     );
   }
 

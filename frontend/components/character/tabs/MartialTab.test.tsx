@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { MartialTab } from "@/components/character/tabs/MartialTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const catStyle = {
   id: "s1",
   name: "Karate",
@@ -52,7 +50,7 @@ describe("<MartialTab>", () => {
 
   it("filters the catalog and acquires a style with its first technique", () => {
     const patch = vi.fn();
-    renderTab({ catalog: makeCatalog({ martial_arts: [catStyle] as any }), patch });
+    renderTab({ catalog: makeCatalog({ martial_arts: [catStyle] as never }), patch });
     fireEvent.change(screen.getByPlaceholderText("武道を検索"), { target: { value: "kara" } });
     fireEvent.click(screen.getByRole("button", { name: "取得" }));
     expect(patch).toHaveBeenCalledWith({
@@ -62,8 +60,8 @@ describe("<MartialTab>", () => {
 
   it("disables acquire once the style cap is reached", () => {
     renderTab({
-      catalog: makeCatalog({ martial_arts: [catStyle] as any }),
-      character: { derived: { martial_art_points: { styles: 1, style_max: 1 } as any } },
+      catalog: makeCatalog({ martial_arts: [catStyle] as never }),
+      character: { derived: { martial_art_points: { styles: 1, style_max: 1 } as never } },
     });
     expect(screen.getByRole("button", { name: "上限" })).toHaveProperty("disabled", true);
   });
@@ -72,8 +70,8 @@ describe("<MartialTab>", () => {
     const patch = vi.fn();
     renderTab({
       character: {
-        martial_arts: [{ id: "m1", art_id: "s1", techniques: ["Kick Attack"] } as any],
-        derived: { martial_arts: [ownedStyle] as any },
+        martial_arts: [{ id: "m1", art_id: "s1", techniques: ["Kick Attack"] } as never],
+        derived: { martial_arts: [ownedStyle] as never },
       },
       patch,
     });

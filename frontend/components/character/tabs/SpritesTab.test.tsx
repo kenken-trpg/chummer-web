@@ -3,15 +3,13 @@ import { fireEvent } from "@testing-library/dom";
 import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const courier = { id: "cs", name: "Courier Sprite", source: "SR5" };
 
 function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
   const ch = makeCharacter();
   return render(
     <SpritesTab
-      {...panelProps(ch, { catalog: makeCatalog({ sprites: [courier] as any }), patch })}
+      {...panelProps(ch, { catalog: makeCatalog({ sprites: [courier] as never }), patch })}
     />,
   );
 }
