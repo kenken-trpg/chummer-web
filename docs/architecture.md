@@ -266,7 +266,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      `ware.py`, `essence.py` (essence penalty + the ratings loop), `magic.py`
      (initiation / submersion / foci / adept + spells / spirits / resonance),
      `gear.py` (carries `resolve_gear` in with it + post-gear application),
-     `economy.py` (priority points / skills / karma / social) with the
+     `economy.py` (the entry point; one module per pass —
+     `_econ_priority.py` / `_econ_skills.py` / `_econ_karma.py` /
+     `_econ_social.py`) with the
      career-layer helpers in `_career.py` (`snapshot_career_baseline` /
      `career_raise_karma` / `nuyen_spend_breakdown`), `finalize.py` (totals
      check + limits / CM / initiative + quality rules + chargen validation,
