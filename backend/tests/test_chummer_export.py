@@ -652,3 +652,20 @@ def test_a_portrait_free_character_says_it_has_no_main_portrait() -> None:
     root = ET.fromstring(state_to_chum5(import_character(_rich_state().model_copy(update={"portrait": ""}))))
     assert root.findtext("mainmugshotindex") == "-1"
     assert root.find("mugshots") is None
+
+
+def test_every_attribute_chummer_looks_for_is_written_including_magadept() -> None:
+    """Chummer walks a fixed list of attribute names and rebuilds from scratch
+    any the save does not carry. `MAGAdept` was the one name this app never
+    wrote, so Chummer guessed it on every load. It is a second MAG attribute
+    only under a house rule this app does not offer, so the numbers are the
+    untouched defaults Chummer itself saves — the split a Mystic Adept
+    actually paid for still rides on `<magsplitadept>`."""
+    src = _rich_state()
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    names = [attr.findtext("name") for attr in root.findall("./attributes/attribute")]
+    assert names.index("MAGAdept") == names.index("MAG") + 1
+    magadept = root.find("./attributes/attribute[name='MAGAdept']")
+    assert magadept is not None
+    assert [magadept.findtext(t) for t in ("metatypemin", "metatypemax", "metatypeaugmax")] == ["1", "6", "10"]
+    assert (magadept.findtext("base"), magadept.findtext("karma")) == ("0", "0")

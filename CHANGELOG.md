@@ -7,6 +7,16 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **書き出した `.chum5` に、Chummer が探す能力値行が全部そろうようになった。**
+  Chummer は決まった名前の一覧（`AttributeStrings`）を順に見て、**セーブに無い名前は
+  その場で作り直します**。この app が一度も書いていなかったのが `MAGAdept` で、
+  Chummer 自身のテストセーブ 34 件すべてが持っている行でした。これはハウスルール
+  （`mysadeptsecondmagattribute`）を使うときだけ「2 つめの〈魔法〉」になる能力値で、
+  この app はそのルールを扱わないため、数字は Chummer 自身が保存しているのと同じ
+  既定値（`1 / 6 / 10`・base と karma は 0）です。ミスティックアデプトが実際に
+  割り振った分は、これまでどおり `<magsplitadept>` が運びます。書き出しの
+  言い落としは 70 項目から 67 項目になりました。
+
 - **書き出した `.chum5` が、Chummer.exe で能力値マイナスにならなくなった（1/2）。**
   Chummer は作成時の持ち点を**計算し直さずに保存値から読みます**（`Character.Load` が
   `special` `totalspecial` `totalattributes` `contactpoints` `spelllimit` `metatypebp`

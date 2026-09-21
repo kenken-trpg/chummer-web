@@ -295,6 +295,8 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
         karma = 0 if state.career else max(0, min(int(state.attribute_karma.get(key, 0)), val - lo))
         _sub(attr_el, "base", max(val - lo - karma, 0))
         _sub(attr_el, "karma", karma)
+        if key == "MAG":
+            _export_magadept(attrs)
     ess = _sub(attrs, "attribute")
     _sub(ess, "name", "ESS")
     _sub(ess, "base", 6)
@@ -304,6 +306,30 @@ def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, c
         # the adept half is what this app calls `mystic_pp`.
         _sub(root, "magsplitadept", state.mystic_pp)
         _sub(root, "magsplitmagician", max(0, int(state.attributes.get("MAG", 0)) - int(state.mystic_pp)))
+
+
+def _export_magadept(attrs: ET.Element) -> None:
+    """Write the `MAGAdept` row Chummer expects between `MAG` and `RES`.
+
+    Chummer loops over a fixed list of attribute names (`AttributeStrings`) and
+    **rebuilds from scratch** any name the save does not carry, so leaving this
+    row out is not fatal — but it is the one row missing from every file this
+    app wrote, and it costs one element to stop making Chummer guess.
+
+    The numbers are constants on purpose. `MAGAdept` is a second MAG attribute
+    only under a house rule (`mysadeptsecondmagattribute`), which this app does
+    not offer; with the rule off, Chummer leaves the attribute untouched and
+    saves its defaults, which is why all 34 of Chummer's own test saves carry
+    `1 / 6 / 10` here whatever the character's real MAG is. A Mystic Adept's
+    split still rides on `<magsplitadept>` below, the field Chummer reads when
+    the house rule is off."""
+    el = _sub(attrs, "attribute")
+    _sub(el, "name", "MAGAdept")
+    _sub(el, "metatypemin", 1)
+    _sub(el, "metatypemax", 6)
+    _sub(el, "metatypeaugmax", 10)
+    _sub(el, "base", 0)
+    _sub(el, "karma", 0)
 
 
 #: Chummer's id for a knowledge skill it has no data for (a custom one).
