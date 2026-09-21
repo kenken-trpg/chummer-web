@@ -350,6 +350,12 @@ export interface CharacterSettings {
    */
   limb_count?: number | null;
   exclude_limb_slot?: string | null;
+  /** `<cyberlimbattributebonuscap>`: the most a cyberlimb's STR / AGI rises
+   *  above its Customization; `<dontusecyberlimbcalculation>`: the body's
+   *  STR / AGI ignores the cyberlimb average
+   */
+  cyberlimb_attribute_bonus_cap?: number | null;
+  dont_use_cyberlimb_calculation?: boolean | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   /** `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's

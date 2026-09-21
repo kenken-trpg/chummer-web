@@ -99,12 +99,17 @@ def totals(ctx: Ctx) -> None:
     # ESS is fractional; the attribute-total consumers only ever read integer
     # attrs (STR / AGI / …), so the dict[str, int] inference stays useful.
     ctx.total["ESS"] = ctx.ess  # type: ignore[assignment]
-    ctx.limb_replace = limb_attribute_replace(
-        ctx.cyber_installed,
-        int(ctx.total["STR"]),
-        int(ctx.total["AGI"]),
-        ctx.attrs_spec,
-        dict(ctx.effects.get("extra_limbs") or {}),
+    # `<dontusecyberlimbcalculation>`: the body keeps its own STR / AGI
+    ctx.limb_replace = (
+        None
+        if current_rules().dont_use_cyberlimb_calculation
+        else limb_attribute_replace(
+            ctx.cyber_installed,
+            int(ctx.total["STR"]),
+            int(ctx.total["AGI"]),
+            ctx.attrs_spec,
+            dict(ctx.effects.get("extra_limbs") or {}),
+        )
     )
     if ctx.limb_replace:
         ctx.total["STR"] = int(ctx.limb_replace["str"])

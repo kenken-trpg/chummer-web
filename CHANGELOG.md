@@ -23,6 +23,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 - **作成中に残したカルマが `<karmacarryover>`（既定 7）を超えると警告を出すようにした。** nuyen の持ち越し警告と同じ扱いです。
   そのほかの `karma*` タグ（AI プログラム、敵、隷属、イニシエーション集団への加入・脱退、作成後のメタマジック、複合体のオプションなど）は、
   この app にまだない機能にしか効かないので、これまでどおり変更されていれば未対応の警告に出ます。
+- **設定ファイルのサイバーリムの設定を読むようになった。**
+  `<cyberlimbattributebonuscap>`（既定 4）を、サイバーリムの STR / AGI が Customization から
+  上がる量の上限にした。Enhancement と Redliner / Cyberseeker の上乗せを合わせてこの上限で止める。
+  Enhancement が 2 つ付いているときは、Chummer と同じく足さずに高いほうを使う。
+  `<dontusecyberlimbcalculation>` を有効にすると、サイバーリムの平均で体の STR / AGI を置き換えない。
+
 - **設定ファイルの資質のハウスルールを読むようになった。**
   `<dontdoublequalities>` を有効にすると、キャリアで取るポジティブ資質が 2 倍ではなく表の値段になります。
   `<dontdoublequalityrefunds>` を有効にすると、ネガティブ資質の買い消しが 2 倍ではなく

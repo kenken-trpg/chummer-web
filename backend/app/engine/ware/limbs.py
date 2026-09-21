@@ -34,20 +34,23 @@ _MUSCLE_WARE = re.compile(r"\bmuscle (replacement|toner|augmentation)\b", re.I)
 def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str, dict[str, int | float]]) -> None:
     """Resolve each cyberlimb's Strength/Agility/Armor from its enhancement mods.
 
-    SR5 p.456: an empty cyberlimb has Strength 3 and Agility 3. "Customized"
-    mods set the base, "Enhanced" mods add on top, and the per-limb total is
-    capped at the character's augmented maximum for that attribute.
+    SR5 p.456: an empty cyberlimb has Strength 3 and Agility 3. A
+    "Customized" mod sets the base and the best "Enhanced" mod adds on top,
+    held to `<cyberlimbattributebonuscap>` (Chummer's
+    `GetAttributeTotalValue`); the per-limb total is capped at the
+    character's augmented maximum for that attribute. The base and bonus are
+    kept so Redliner / Cyberseeker can add to the bonus under the same cap.
     """
     children: dict[str, list[dict[str, Any]]] = {}
     for item in resolved:
         if item.get("parent_id"):
             children.setdefault(item["parent_id"], []).append(item)
-    str_aug = int(attrs_spec.get("STR", {}).get("aug") or 9)
-    agi_aug = int(attrs_spec.get("AGI", {}).get("aug") or 9)
+    cap = current_rules().cyberlimb_attribute_bonus_cap
     for item in resolved:
         if item.get("category") != "Cyberlimb":
             continue
-        str_val = agi_val = CYBERLIMB_BASE_ATTR
+        base = {"STR": CYBERLIMB_BASE_ATTR, "AGI": CYBERLIMB_BASE_ATTR}
+        bonus = {"STR": 0, "AGI": 0}
         limb_armor = 0
         for kid in children.get(item["id"]) or []:
             if (kid.get("name") or "") == "Armor":
@@ -57,13 +60,21 @@ def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str,
             if not effect:
                 continue
             attr, mode = effect
-            if attr == "STR":
-                str_val = kid["rating"] if mode == "set" else str_val + int(kid["rating"])
+            if mode == "set":
+                base[attr] = int(kid["rating"])
             else:
-                agi_val = kid["rating"] if mode == "set" else agi_val + int(kid["rating"])
-        item["limb_str"] = min(str_aug, str_val)
-        item["limb_agi"] = min(agi_aug, agi_val)
+                bonus[attr] = max(bonus[attr], int(kid["rating"]))
+        for attr in ("STR", "AGI"):
+            key = attr.lower()
+            item[f"limb_{key}_base"] = base[attr]
+            item[f"limb_{key}_bonus"] = bonus[attr]
+            item[f"limb_{key}"] = _limb_total(base[attr], bonus[attr], cap, attrs_spec, attr)
         item["limb_armor"] = limb_armor
+
+
+def _limb_total(base: int, bonus: int, cap: int, attrs_spec: dict[str, dict[str, int | float]], attr: str) -> int:
+    aug = int(attrs_spec.get(attr, {}).get("aug") or 9)
+    return min(aug, base + min(bonus, cap))
 
 
 def cyberleg_movement_agi(resolved: list[dict[str, Any]], extra_limbs: dict[str, int] | None = None) -> int | None:
@@ -246,15 +257,17 @@ def apply_cyberseeker(
         elif target in attr_bonus:
             attr_bonus[target] = pairs
     if limb_bonus:
-        str_aug = int(attrs_spec.get("STR", {}).get("aug") or 9)
-        agi_aug = int(attrs_spec.get("AGI", {}).get("aug") or 9)
+        cap = current_rules().cyberlimb_attribute_bonus_cap
         for item in resolved:
             if item.get("category") != "Cyberlimb" or item.get("parent_id"):
                 continue
-            if item.get("limb_str") is not None:
-                item["limb_str"] = min(str_aug, int(item["limb_str"]) + limb_bonus)
-            if item.get("limb_agi") is not None:
-                item["limb_agi"] = min(agi_aug, int(item["limb_agi"]) + limb_bonus)
+            for attr in ("STR", "AGI"):
+                key = attr.lower()
+                if item.get(f"limb_{key}") is None:
+                    continue
+                base = int(item.get(f"limb_{key}_base") or CYBERLIMB_BASE_ATTR)
+                bonus = int(item.get(f"limb_{key}_bonus") or 0) + limb_bonus
+                item[f"limb_{key}"] = _limb_total(base, bonus, cap, attrs_spec, attr)
     included = [slot for slot in ("arm", "leg", "torso", "skull") if slot in slots]
     return {
         "count": count,
