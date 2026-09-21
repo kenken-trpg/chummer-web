@@ -57,6 +57,7 @@ def test_an_amend_replaces_the_fields_it_names_and_leaves_the_rest() -> None:
         "martialarts.xml",
     )
     art = base.find("./martialarts/martialart")
+    assert art is not None
     assert (art.findtext("source"), art.findtext("page")) == ("JCD", "7")
     assert art.findtext("name") == "Aikido", "the selector must not be treated as an edit"
     assert report.skipped == []

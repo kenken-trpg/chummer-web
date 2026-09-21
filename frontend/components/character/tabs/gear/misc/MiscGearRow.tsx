@@ -26,14 +26,9 @@ export function MiscGearRow({
   extraPick,
   setExtraPick,
   mode,
-  gearSearch,
 }: Pick<TabPanelProps, "catalog" | "character" | "d" | "tr" | "ui" | "patch"> & {
   item: InstalledGear;
   mode: "misc" | "drugs";
-  /** what is typed in the search box below: while it has text, the "slot
-   *  something in" list widens past the core book, the way the catalog list
-   *  does */
-  gearSearch: string;
   slotPick: Record<string, string>;
   setSlotPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
   extraPick: Record<string, string>;
