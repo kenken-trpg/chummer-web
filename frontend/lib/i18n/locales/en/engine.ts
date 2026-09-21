@@ -22,6 +22,8 @@ export const EN_ENGINE = {
   "engine.skills.expertiseNotAllowed": "{picked} is not an Expertise option for {source}",
   "engine.skills.groupDisabled": "The {name} skill group is disabled for this character",
   "engine.skills.groupPointsOver": "Not enough skill group points (spent {used} / {max})",
+  "engine.skills.groupedSkillLocked":
+    "{name} cannot be raised on its own while its group {group} has a rating during creation",
   "engine.skills.knowledgeOnSkillPoints":
     "{points} knowledge points over the knowledge pool are paid from skill points",
   "engine.skills.knowledgePointsOver": "Not enough knowledge skill points (spent {used} / {max})",
@@ -40,6 +42,8 @@ export const EN_ENGINE = {
   "engine.skills.pickNotAllowed": "{picked} is not an option for {source}",
   "engine.skills.pickSkill": "Choose a skill for {source}",
   "engine.skills.pickWeaponSkill": "Choose a weapon skill for {source}",
+  "engine.skills.pointsOnGroupedSkill":
+    "{name} cannot take skill points while its group {group} holds group points (karma is fine)",
   "engine.skills.pointsOver": "Not enough skill points (spent {used} / {max})",
   "engine.skills.specNeedsKnowledge": "A specialization in {name} needs the knowledge skill",
   "engine.skills.specNeedsSkill": "A specialization in {name} needs the skill at rating 1+",

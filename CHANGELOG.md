@@ -13,6 +13,11 @@ self-hosters can pin to a tag instead of tracking `main`.
 - **設定ファイルのメタタイプのカルマ倍率 `<metatypecostskarmamultiplier>` を読むようになった。**
   Karma 作成では、メタタイプのカルマにこの倍率をかけます。Priority 作成と Sum-to-Ten 作成には効きません（Chummer と同じ）。
   `<metatypecostskarma>` は Chummer 本体でも計算に使われていないので、無視しても警告を出しません。
+- **キャラ作成中の技能グループの扱いを、設定ファイルの `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>` に合わせた。**
+  Chummer の Standard では、技能グループに技能グループ点が入っている間、そのグループの技能を技能点で個別に上げることはできません
+  （カルマでなら上げられます）。これまでは通していましたが、エラーを出すようにしました。`<usepointsonbrokengroups>` を有効にすると許可します。
+  `<breakskillgroupsincreatemode>` を有効にすると、作成中はレーティングのあるグループの技能を一切個別に上げられません。
+  キャリアの再グループ化（`<allowskillregrouping>`）とカルマ差の補填（`<compensateskillgroupkarmadifference>`）は、まだ読みません。
 - **設定ファイルの資質のハウスルールを読むようになった。**
   `<dontdoublequalities>` を有効にすると、キャリアで取るポジティブ資質が 2 倍ではなく表の値段になります。
   `<dontdoublequalityrefunds>` を有効にすると、ネガティブ資質の買い消しが 2 倍ではなく

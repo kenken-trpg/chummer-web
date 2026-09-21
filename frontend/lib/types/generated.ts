@@ -386,6 +386,9 @@ export interface CharacterSettings {
   forbidden_cost_multiplier?: number | null;
   /** `<allowinitiationincreatemode>` */
   allow_initiation_in_create_mode?: boolean | null;
+  /** `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>` */
+  use_points_on_broken_groups?: boolean | null;
+  strict_skill_groups_in_create_mode?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */

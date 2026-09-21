@@ -127,6 +127,9 @@ class SettingsState(BaseModel):
     forbidden_cost_multiplier: int | None = None
     #: `<allowinitiationincreatemode>`
     allow_initiation_in_create_mode: bool | None = None
+    #: `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>`
+    use_points_on_broken_groups: bool | None = None
+    strict_skill_groups_in_create_mode: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
