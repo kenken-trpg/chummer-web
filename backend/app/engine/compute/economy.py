@@ -21,6 +21,7 @@ from ..karma import (
     _skill_category_map,
     attribute_karma_cost,
     attribute_levels_karma_cost,
+    group_karma_compensation,
     knowledge_excess_karma,
     knowledge_points_spent,
     skill_karma_cost,
@@ -407,7 +408,7 @@ def _karma_totals(ctx: Ctx) -> None:
         )
         ctx.skill_buy_karma = skill_karma_cost(
             ctx.state.skill_groups, ctx.skill_totals, ctx.data["skills"], group_cap=ctx.skill_group_cap
-        )
+        ) + group_karma_compensation(ctx.state.skill_groups, ctx.skill_totals, {}, ctx.data["skills"])
         know_cats = {
             str(row.get("name") or ""): str(row.get("category") or "")
             for row in (ctx.knowledge.get("public") or [])
@@ -470,6 +471,12 @@ def _karma_totals(ctx: Ctx) -> None:
             ctx.skill_group_karma_levels,
             {},
             per_rating=current_rules().karma_skill_group,
+        )
+        ctx.skill_buy_karma += group_karma_compensation(
+            ctx.state.skill_groups,
+            ctx.skill_totals,
+            {name: int(total) - int(ctx.skill_karma_levels.get(name) or 0) for name, total in ctx.skill_totals.items()},
+            ctx.data["skills"],
         )
         ctx.karma_pool = 25 + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
