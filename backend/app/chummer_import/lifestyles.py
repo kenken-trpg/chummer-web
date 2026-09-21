@@ -79,14 +79,22 @@ def _import_lifestyles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
         if not nm and not _text(c.find("role")):
             continue
         guid = _text(c.find("guid"))
+        connection = max(1, _int(c.find("connection"), 1))
+        loyalty = max(1, _int(c.find("loyalty"), 1))
+        # Chummer's "Free" box: the contact costs nothing at the ratings it
+        # was saved with, which is what `free_connection` / `free_loyalty` say
+        free = _text(c.find("free")).lower() == "true"
         contacts.append(
             {
                 "id": guid if _is_uuid(guid) else str(uuid.uuid4()),
                 "name": nm,
                 "role": _text(c.find("role")) or None,
-                "connection": max(1, _int(c.find("connection"), 1)),
-                "loyalty": max(1, _int(c.find("loyalty"), 1)),
+                "connection": connection,
+                "loyalty": loyalty,
                 "group": _text(c.find("type")).lower() == "group" or _text(c.find("isgroup")).lower() == "true",
+                "free": free,
+                "free_connection": connection if free else 0,
+                "free_loyalty": loyalty if free else 0,
                 "source_quality_id": granted_by.get(guid),
             }
         )

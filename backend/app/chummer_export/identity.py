@@ -461,3 +461,5 @@ def _export_contacts(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(el, "connection", crow.connection)
         _sub(el, "loyalty", crow.loyalty)
         _sub(el, "type", "Group" if crow.group else "Contact")
+        if crow.free:
+            _sub(el, "free", "True")

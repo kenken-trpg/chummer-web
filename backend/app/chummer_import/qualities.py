@@ -42,8 +42,10 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
             if nm:
                 warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.quality"), name=nm))
             continue
-        if qid not in quality_ids:
-            quality_ids.append(qid)
+        # every take, not every kind: Chummer saves a quality taken twice
+        # (Gremlins at 2, Favored against two targets) as two `<quality>`s,
+        # and `quality_ids` holds a repeat the same way
+        quality_ids.append(qid)
         extra = _text(q.find("extra"))
         quality_extras.update(_quality_extra_in(cat, qid, extra, _text(q.find("guid")), root))
         for pick in q.findall("./skillpicks/pick"):
