@@ -10,7 +10,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..._xml import DATA_DIR, _float, _int, _text
+from ..._xml import _float, _int, _text, data_root
 from ...bonus import _specific_powers, parse_bonus, parse_required, parse_select_power_slot
 
 
@@ -51,11 +51,11 @@ def _power_select_kind(nodes: list[dict[str, Any]]) -> str | None:
 
 
 def load_powers() -> list[dict[str, Any]]:
-    path = DATA_DIR / "powers.xml"
-    if not path.exists():
+    root = data_root("powers.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./powers/power"):
+    for el in root.findall("./powers/power"):
         hidden = el.find("hide") is not None
         name = _text(el.find("name"))
         power_id = _text(el.find("id"))
@@ -86,11 +86,11 @@ def load_powers() -> list[dict[str, Any]]:
 
 
 def load_enhancements() -> list[dict[str, Any]]:
-    path = DATA_DIR / "powers.xml"
-    if not path.exists():
+    root = data_root("powers.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./enhancements/enhancement"):
+    for el in root.findall("./enhancements/enhancement"):
         name = _text(el.find("name"))
         enh_id = _text(el.find("id"))
         if not name or not enh_id:
@@ -125,11 +125,11 @@ def load_paragons() -> list[dict[str, Any]]:
 
 
 def _load_mentor_file(filename: str) -> list[dict[str, Any]]:
-    path = DATA_DIR / filename
-    if not path.exists():
+    root = data_root(filename)
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./mentors/mentor"):
+    for el in root.findall("./mentors/mentor"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -176,10 +176,10 @@ def _mentor_audience(name: str) -> str:
 
 
 def load_qi_focus() -> dict[str, Any] | None:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return None
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         if _text(el.find("name")) != "Qi Focus":
             continue
         if el.find("hide") is not None:

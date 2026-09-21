@@ -7,20 +7,19 @@ tradition, a sprite is a spirit, an echo is a metamagic.
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..._xml import DATA_DIR, _text
+from ..._xml import _text, data_root
 from ...bonus import parse_bonus, parse_required, parse_requirement_tree
 from ._common import SPIRIT_ATTR_KEYS
 
 
 def load_complex_forms() -> list[dict[str, Any]]:
-    path = DATA_DIR / "complexforms.xml"
-    if not path.exists():
+    root = data_root("complexforms.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./complexforms/complexform"):
+    for el in root.findall("./complexforms/complexform"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -44,11 +43,11 @@ def load_complex_forms() -> list[dict[str, Any]]:
 
 
 def load_streams() -> list[dict[str, Any]]:
-    path = DATA_DIR / "streams.xml"
-    if not path.exists():
+    root = data_root("streams.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./traditions/tradition"):
+    for el in root.findall("./traditions/tradition"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -73,11 +72,11 @@ def load_streams() -> list[dict[str, Any]]:
 
 
 def load_sprites() -> list[dict[str, Any]]:
-    path = DATA_DIR / "streams.xml"
-    if not path.exists():
+    root = data_root("streams.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./spirits/spirit"):
+    for el in root.findall("./spirits/spirit"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -103,11 +102,11 @@ def load_sprites() -> list[dict[str, Any]]:
 
 
 def load_echoes() -> list[dict[str, Any]]:
-    path = DATA_DIR / "echoes.xml"
-    if not path.exists():
+    root = data_root("echoes.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./echoes/echo"):
+    for el in root.findall("./echoes/echo"):
         name = _text(el.find("name"))
         echo_id = _text(el.find("id"))
         if not name or not echo_id:

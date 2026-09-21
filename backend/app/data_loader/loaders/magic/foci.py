@@ -6,10 +6,9 @@ things bought with an initiation grade rather than with karma or nuyen.
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..._xml import DATA_DIR, _int, _text
+from ..._xml import _int, _text, data_root
 from ...bonus import parse_bonus, parse_required, parse_requirement_tree
 
 
@@ -45,11 +44,11 @@ def _focus_weapon_type(nodes: list[dict[str, Any]]) -> str:
 
 
 def load_foci() -> list[dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         if _text(el.find("category")) != "Foci":
             continue
         if el.find("hide") is not None:
@@ -92,11 +91,11 @@ def _focus_name_from_formula(name: str) -> str:
 
 
 def load_focus_formulae() -> dict[str, dict[str, Any]]:
-    path = DATA_DIR / "gear.xml"
-    if not path.exists():
+    root = data_root("gear.xml")
+    if root is None:
         return {}
     items: dict[str, dict[str, Any]] = {}
-    for el in ET.parse(path).getroot().findall("./gears/gear"):
+    for el in root.findall("./gears/gear"):
         if _text(el.find("category")) != "Formulae":
             continue
         if el.find("hide") is not None:
@@ -116,11 +115,11 @@ def load_focus_formulae() -> dict[str, dict[str, Any]]:
 
 
 def load_metamagics() -> list[dict[str, Any]]:
-    path = DATA_DIR / "metamagic.xml"
-    if not path.exists():
+    root = data_root("metamagic.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./metamagics/metamagic"):
+    for el in root.findall("./metamagics/metamagic"):
         name = _text(el.find("name"))
         mid = _text(el.find("id"))
         if not name or not mid:
@@ -143,11 +142,11 @@ def load_metamagics() -> list[dict[str, Any]]:
 
 
 def load_magic_arts() -> list[dict[str, Any]]:
-    path = DATA_DIR / "metamagic.xml"
-    if not path.exists():
+    root = data_root("metamagic.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./arts/art"):
+    for el in root.findall("./arts/art"):
         name = _text(el.find("name"))
         art_id = _text(el.find("id"))
         if not name or not art_id:

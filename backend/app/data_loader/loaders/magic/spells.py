@@ -8,10 +8,9 @@ marks.
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as ET
 from typing import Any
 
-from ..._xml import DATA_DIR, _text
+from ..._xml import _text, data_root
 from ...bonus import parse_bonus, parse_required
 from ._common import SPIRIT_ATTR_KEYS
 
@@ -37,11 +36,11 @@ def spell_kind(category: str) -> str:
 
 
 def load_spells() -> list[dict[str, Any]]:
-    path = DATA_DIR / "spells.xml"
-    if not path.exists():
+    root = data_root("spells.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./spells/spell"):
+    for el in root.findall("./spells/spell"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -81,11 +80,11 @@ SPIRIT_SLOTS = (
 
 
 def load_traditions() -> list[dict[str, Any]]:
-    path = DATA_DIR / "traditions.xml"
-    if not path.exists():
+    root = data_root("traditions.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./traditions/tradition"):
+    for el in root.findall("./traditions/tradition"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
@@ -128,11 +127,11 @@ def load_critter_powers() -> list[dict[str, Any]]:
     lasts. Hidden entries are loaded too — a `<hide>` keeps a power out of
     Chummer's own pick lists, but spirits still name it.
     """
-    path = DATA_DIR / "critterpowers.xml"
-    if not path.exists():
+    root = data_root("critterpowers.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./powers/power"):
+    for el in root.findall("./powers/power"):
         name = _text(el.find("name"))
         power_id = _text(el.find("id"))
         if not name or not power_id:
@@ -154,11 +153,11 @@ def load_critter_powers() -> list[dict[str, Any]]:
 
 
 def load_spirits() -> list[dict[str, Any]]:
-    path = DATA_DIR / "traditions.xml"
-    if not path.exists():
+    root = data_root("traditions.xml")
+    if root is None:
         return []
     items: list[dict[str, Any]] = []
-    for el in ET.parse(path).getroot().findall("./spirits/spirit"):
+    for el in root.findall("./spirits/spirit"):
         if el.find("hide") is not None:
             continue
         name = _text(el.find("name"))
