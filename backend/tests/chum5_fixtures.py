@@ -61,6 +61,8 @@ def _ware_nodes(parent: ET.Element, item_tag: str, rows: list[dict[str, Any]]) -
             _e(w, "location", row["side"])
         if row.get("extra"):
             _e(w, "extra", row["extra"])
+        if row.get("cost") is not None:
+            _e(w, "cost", row["cost"])
         _pick_nodes(w, row.get("skill_picks") or [])
         kids = row.get("children") or []
         if kids:

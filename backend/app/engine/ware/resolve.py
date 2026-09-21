@@ -22,6 +22,7 @@ from ...notices import Notice, notice, term, terms
 from ...rules import current_rules
 from ..constants import _normalize_side
 from ..gear import _capacity_value, _device_rating_of
+from ..gear._common import chosen_cost
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
 from ._common import _cascade_orphans
 from .limbs import _apply_limb_attributes
@@ -153,13 +154,10 @@ def resolve_ware(
         grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)
         ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * grade_ess, 4)
         ess = 0.0 if included or (slotted and (plugin or add_to_parent)) else ess_base
-        cost = (
-            0
-            if included
-            else int(
-                round(eval_formula(ware.get("cost"), rating, extras=formula_extras) * float(grade.get("cost") or 1))
-            )
-        )
+        picked = chosen_cost(ware, inst.cost)
+        inst.cost = picked
+        base_cost = picked if picked is not None else eval_formula(ware.get("cost"), rating, extras=formula_extras)
+        cost = 0 if included else int(round(base_cost * float(grade.get("cost") or 1)))
         nodes = substitute_rating(ware.get("bonus") or [], rating)
         if inst.wireless:
             nodes = nodes + substitute_rating(ware.get("wirelessbonus") or [], rating)
@@ -181,6 +179,8 @@ def resolve_ware(
                 "plugin": plugin,
                 "essence": ess,
                 "nuyen": cost,
+                "cost": picked,
+                "cost_range": ware.get("cost_range"),
                 "capacity_cost": _capacity_value(ware.get("capacity"), rating) if plugin else 0.0,
                 "capacity_used": 0.0,
                 "capacity_max": 0.0 if plugin else _capacity_value(ware.get("capacity"), rating),

@@ -28,7 +28,8 @@ def _public_ware(block: dict) -> dict:
                 "name": w["name"],
                 "category": w["category"],
                 "ess": w["ess"],
-                "cost": w["cost"],
+                # a player-priced piece shows its range, as the data wrote it
+                "cost": "{}-{}".format(*w["cost_range"]) if w.get("cost_range") else w["cost"],
                 "capacity": w.get("capacity") or "",
                 "minrating": w["minrating"],
                 "maxrating": w["maxrating"],

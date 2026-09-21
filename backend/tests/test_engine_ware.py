@@ -1664,3 +1664,40 @@ def test_redliner_exclusion_setting() -> None:
     assert count(None) == 1
     assert count([]) == 2
     assert count(["arm", "torso"]) == 0
+
+
+BIOSCULPT = "0e54ccda-6ba9-4668-b100-0442efd56221"  # Moderate Biosculpting, Variable(500-2000)
+
+
+def test_a_player_priced_implant_costs_what_was_picked_times_its_grade() -> None:
+    """Biosculpting is `Variable(500-2000)`: the player names the price, and
+    the grade multiplies it like any other. Unpicked, it is the bottom."""
+
+    def spent(cost: int | None, grade: str = "Standard") -> int:
+        state = CharacterState(
+            id="bio",
+            name="Bio",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+            bioware=[CyberwareInstall(ware_id=BIOSCULPT, grade=grade, cost=cost)],
+        )
+        return int(compute(state).derived["nuyen_spent"])
+
+    assert spent(None) == 500
+    assert spent(1000) == 1000
+    assert spent(99999) == 2000  # held to the range
+    assert spent(1000, "Used") == 750
+
+
+def test_a_player_priced_implant_keeps_its_price_through_chum5() -> None:
+    from app.characters import import_character
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+    from tests.chum5_fixtures import build_chum5
+
+    xml = build_chum5(bioware=[{"name": "Moderate Biosculpting Modification", "rating": 0, "cost": 1000}])
+    state = import_character(chum5_to_state(xml)[0])
+    assert [w.cost for w in state.bioware] == [1000]
+    back = import_character(chum5_to_state(state_to_chum5(state))[0])
+    assert [w.cost for w in back.bioware] == [1000]

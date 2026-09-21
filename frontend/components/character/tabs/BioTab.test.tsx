@@ -122,3 +122,62 @@ describe("<BioTab> compact view", () => {
     expect(localStorage.getItem("wareCompact")).toBe("0");
   });
 });
+
+describe("<BioTab> a player-priced piece", () => {
+  it("offers a price field held to the range and patches the pick", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        bioware: [{ id: "b1", ware_id: "sculpt", rating: 1, grade: "Standard", cost: 1000 }],
+        derived: {
+          bioware: [
+            {
+              id: "b1",
+              ware_id: "sculpt",
+              name: "Moderate Biosculpting Modification",
+              category: "Biosculpting",
+              grade: "Standard",
+              rating: 1,
+              essence: 0,
+              nuyen: 1000,
+              cost: 1000,
+              cost_range: [500, 2000],
+              source: "CF",
+            },
+          ],
+        },
+      } as never,
+    });
+    const field = screen.getByLabelText(/Moderate Biosculpting Modification: /) as HTMLInputElement;
+    expect(field.value).toBe("1000");
+    fireEvent.change(field, { target: { value: "5000" } });
+    expect(patch).toHaveBeenLastCalledWith({
+      bioware: [{ id: "b1", ware_id: "sculpt", rating: 1, grade: "Standard", cost: 2000 }],
+    });
+  });
+
+  it("shows no price field for a fixed-price piece", () => {
+    renderTab({
+      character: {
+        bioware: [{ id: "b1", ware_id: "musc", rating: 1, grade: "Standard" }],
+        derived: {
+          bioware: [
+            {
+              id: "b1",
+              ware_id: "musc",
+              name: "Muscle Augmentation",
+              category: "Bioware",
+              grade: "Standard",
+              rating: 1,
+              essence: 0.2,
+              nuyen: 31000,
+              source: "SR5",
+            },
+          ],
+        },
+      } as never,
+    });
+    expect(screen.queryByLabelText(/Muscle Augmentation: /)).toBeNull();
+  });
+});

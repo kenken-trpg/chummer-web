@@ -17,6 +17,8 @@ export interface WareInstall {
    *  Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
    */
   extra?: string | null;
+  /** the price picked for a `Variable(lo-hi)` piece (Biosculpting) */
+  cost?: number | null;
   /** bought through the Black Market Pipeline: 10% off (Chummer's
    *  `<discountedcost>`, which the quality's categories allow)
    */
