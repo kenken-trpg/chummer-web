@@ -10,6 +10,9 @@ self-hosters can pin to a tag instead of tracking `main`.
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。
+- **設定ファイルのメタタイプのカルマ倍率 `<metatypecostskarmamultiplier>` を読むようになった。**
+  Karma 作成では、メタタイプのカルマにこの倍率をかけます。Priority 作成と Sum-to-Ten 作成には効きません（Chummer と同じ）。
+  `<metatypecostskarma>` は Chummer 本体でも計算に使われていないので、無視しても警告を出しません。
 - **設定ファイルの資質のハウスルールを読むようになった。**
   `<dontdoublequalities>` を有効にすると、キャリアで取るポジティブ資質が 2 倍ではなく表の値段になります。
   `<dontdoublequalityrefunds>` を有効にすると、ネガティブ資質の買い消しが 2 倍ではなく

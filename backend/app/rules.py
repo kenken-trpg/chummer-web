@@ -172,6 +172,9 @@ class Rules:
 
     # --- money ---------------------------------------------------------
     karma_to_nuyen: int = 2000
+    #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
+    #: `<karma>` times this (Chummer's `CalculateBP`; Priority is untouched).
+    metatype_costs_karma_multiplier: int = 1
     karma_nuyen_max: int = 235
     priority_karma_nuyen_base: int = 10
     nuyen_chargen_keep_max: int = 5000
@@ -272,6 +275,7 @@ _DIRECT: dict[str, str] = {
     "max_astral_initiative_dice": "max_astral_initiative_dice",
     "limb_count": "limb_count",
     "karma_to_nuyen": "karma_to_nuyen",
+    "metatype_costs_karma_multiplier": "metatype_costs_karma_multiplier",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
     "contact_free_mult": "contact_free_mult",
 }

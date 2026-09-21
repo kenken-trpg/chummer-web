@@ -95,6 +95,9 @@ class SettingsState(BaseModel):
     exclude_limb_slot: str | None = Field(default=None, max_length=20)
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
+    #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
+    #: karma times this.
+    metatype_costs_karma_multiplier: int | None = None
     #: `<contactpointsexpression>`'s multiplier: free contact points are
     #: unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
     contact_free_mult: int | None = None

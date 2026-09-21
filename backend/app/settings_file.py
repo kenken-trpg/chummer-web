@@ -50,6 +50,7 @@ _INT_FIELDS: dict[str, str] = {
     "maxastralinitiativedice": "max_astral_initiative_dice",
     "restrictedcostmultiplier": "restricted_cost_multiplier",
     "forbiddencostmultiplier": "forbidden_cost_multiplier",
+    "metatypecostskarmamultiplier": "metatype_costs_karma_multiplier",
 }
 
 #: `<karmacost>` child -> `SettingsState` field.
@@ -117,6 +118,10 @@ _HANDLED_ELSEWHERE = {
     # Read into `_ATTR_FIELDS` when they are a single attribute.
     "boundspiritexpression",
     "registeredspriteexpression",
+    # `<metatypecostskarma>` is loaded by Chummer but never read: a Karma
+    # build pays the metatype's karma times `<metatypecostskarmamultiplier>`
+    # either way (`CharacterCreate.CalculateBP`).
+    "metatypecostskarma",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
