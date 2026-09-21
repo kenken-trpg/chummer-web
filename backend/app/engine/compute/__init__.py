@@ -15,15 +15,13 @@ from ...data_loader import Overlay, catalog, using_customdata
 from ...dataset_store import lookup
 from ...models import CharacterState
 from ...rules import rules_for, using_rules
+from ._assemble_qualities import _effective_attr_spec  # noqa: F401  (re-exported via app.engine)
 from ._career import (  # noqa: F401  (re-exported via app.engine)
     career_raise_karma,
     nuyen_spend_breakdown,
     snapshot_career_baseline,
 )
-from .assemble import (
-    _effective_attr_spec,  # noqa: F401  (re-exported via app.engine)
-    assemble,
-)
+from .assemble import assemble
 from .bootstrap import (
     bootstrap,
     sync_reward_totals,  # noqa: F401  (re-exported via app.engine)

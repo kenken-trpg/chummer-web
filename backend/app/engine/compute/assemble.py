@@ -1,8 +1,9 @@
 """Phase 19 — assemble ``ctx.state.derived``.
 
 Writes ``ctx.state.attributes`` from the resolved ratings and builds the
-~195-key ``state.derived`` dict the API returns. Also hosts
-``_effective_attr_spec`` (the metatype-info attribute rewrite).
+~195-key ``state.derived`` dict the API returns. The quality rows and the
+metatype-info block are built in ``_assemble_qualities``, the out-of-book
+warning in ``_assemble_books``.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from ...data_loader import (
     CHARGEN_WARE_ATTR_BONUS_MAX,
 )
 from ...improvements import compact_limit_modifiers, special_armor_totals
-from ...notices import Notice, notice, terms
+from ...notices import Notice, notice
 from ...rules import current_rules
 from ..constants import (
     BLACK_MARKET_AVAIL_BONUS,
@@ -24,23 +25,16 @@ from ..constants import (
     RES_TALENTS,
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
-    _normalize_side,
-    quality_optional_power_extra_key,
-    quality_spirit_category_extra_key,
 )
 from ..gear import matrix_initiative
-from ..lookups import critter_power_label, critter_power_rows
 from ..magic import spell_defense_pools, spell_karma_cost
 from ..priority import priorities_are_unique, sum_to_ten_spent
-from ..qualities import _quality_has_selectside, quality_needs_extra
 from ..resonance import living_persona
 from ..ware import _public_installed, ware_ranges
+from ._assemble_books import _out_of_book_warning
+from ._assemble_qualities import metatype_info, quality_rows
 from .context import Ctx
 from .derived_types import DerivedDict
-
-
-def _nth(rows: list[int | None], idx: int) -> int | None:
-    return rows[idx] if idx < len(rows) else None
 
 
 def _trustfund_notice(level: int) -> Notice | None:
@@ -48,111 +42,6 @@ def _trustfund_notice(level: int) -> Notice | None:
     quality. `TRUST_FUND_STIPEND` holds the dictionary keys, not the wording."""
     key = TRUST_FUND_STIPEND.get(level)
     return notice(key) if key else None
-
-
-def _quality_critter_powers(q: dict[str, Any], extras: dict[str, str]) -> dict[str, Any]:
-    """The critter powers an Infected quality grants (RF p.126), the list its
-    one optional power comes from, and the pick — empty for every other
-    quality, so their rows stay as they were."""
-    fixed = list(q.get("critter_powers") or [])
-    optional = [critter_power_label(row) for row in q.get("optional_powers") or []]
-    if not fixed and not optional:
-        return {}
-    picked = extras.get(quality_optional_power_extra_key(q["id"])) or ""
-    labels = [critter_power_label(row) for row in fixed]
-    rows = critter_power_rows(labels + ([picked] if picked in optional else []))
-    for row, ref in zip(rows, fixed, strict=False):
-        if ref.get("rating"):
-            row["rating"] = ref["rating"]
-    out: dict[str, Any] = {"critter_powers": rows}
-    if optional:
-        out["optional_powers"] = optional
-        out["optional_power"] = picked
-    return out
-
-
-def _effective_attr_spec(
-    attrs_spec: dict[str, dict[str, int | float]],
-    special_key: str | None,
-    talent_start: int,
-    mag_max_bonus: int = 0,
-    res_max_bonus: int = 0,
-) -> dict[str, dict[str, int | float]]:
-    out = {key: dict(spec) for key, spec in attrs_spec.items()}
-    if special_key == "MAG":
-        out["MAG"]["min"] = max(talent_start, 1)
-        out["MAG"]["max"] = int(out["MAG"].get("max") or 0) + max(0, int(mag_max_bonus))
-        out["RES"]["min"] = 0
-        out["RES"]["max"] = 0
-    elif special_key == "RES":
-        out["RES"]["min"] = max(talent_start, 1)
-        out["RES"]["max"] = int(out["RES"].get("max") or 0) + max(0, int(res_max_bonus))
-        out["MAG"]["min"] = 0
-        out["MAG"]["max"] = 0
-    else:
-        out["MAG"]["min"] = 0
-        out["MAG"]["max"] = 0
-        out["RES"]["min"] = 0
-        out["RES"]["max"] = 0
-    return out
-
-
-#: How many names the out-of-book warning spells out before it stops. A
-#: character imported against the wrong settings can be wrong in fifty places,
-#: and a warning that is fifty names long is not read.
-OUT_OF_BOOK_NAMES_SHOWN = 8
-
-
-def _owned_sources(node: object, out: dict[str, str]) -> None:
-    """Every ``{name, source}`` the derived blob holds, as ``name -> source``.
-
-    A generic walk rather than a list of sections. The blob has forty places a
-    sourced thing can sit — a weapon's accessories, a lifestyle's qualities,
-    a drone's sensors — and they are also reachable by more than one path, so
-    naming them would be both long and out of date by the next section anyone
-    adds. Keying by name collapses the duplicate paths for free.
-    """
-    if isinstance(node, dict):
-        name, source = node.get("name"), node.get("source")
-        if isinstance(name, str) and isinstance(source, str) and source:
-            out[name] = source
-        for value in node.values():
-            _owned_sources(value, out)
-    elif isinstance(node, list):
-        for value in node:
-            _owned_sources(value, out)
-
-
-def _out_of_book_warning(derived: DerivedDict, books: list[str]) -> Notice | None:
-    """What the character holds that the settings' books do not allow.
-
-    Nothing stops the character being built or printed: a GM who drops a book
-    mid-campaign has not confiscated the gear, and a save imported from
-    Chummer arrives with whatever it arrives with. But the pick lists no
-    longer offer these, so without this the only clue is an entry you cannot
-    buy a second one of.
-
-    An entry with no ``source`` is allowed, the same rule the pick lists use:
-    house-ruled and generated entries belong to no book.
-    """
-    if not books:  # empty means unrestricted, not "no books at all"
-        return None
-    allowed = set(books)
-    owned: dict[str, str] = {}
-    _owned_sources(derived, owned)
-    offending = sorted(name for name, source in owned.items() if source not in allowed)
-    if not offending:
-        return None
-    more = max(0, len(offending) - OUT_OF_BOOK_NAMES_SHOWN)
-    return notice(
-        # two keys rather than one with an empty tail: "…: A / B ほか 0 件" is
-        # not a sentence anyone wants to read
-        "engine.settings.outOfBooksMore" if more else "engine.settings.outOfBooks",
-        count=len(offending),
-        names=terms(offending[:OUT_OF_BOOK_NAMES_SHOWN]),
-        more=more,
-        books=", ".join(sorted({owned[name] for name in offending})),
-    )
 
 
 def assemble(ctx: Ctx) -> None:
@@ -497,33 +386,7 @@ def assemble(ctx: Ctx) -> None:
         "no_default_penalty_skills": ctx.skill_picks["no_default_penalty"],
         "enabled_tabs": sorted(ctx.enabled),
         "unimplemented_bonuses": ctx.effects["unimplemented"],
-        "qualities": [
-            {
-                "id": q["id"],
-                "name": q["name"],
-                "karma": 0 if q["id"] in ctx.free_quality_ids else q["karma"],
-                "category": q["category"],
-                "source": q["source"],
-                "needs_extra": quality_needs_extra(q),
-                "extra": ctx.state.quality_extras.get(q["id"]) or "",
-                "spirit_extra": ctx.state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",
-                "extra_kind": q.get("extra_kind"),
-                "select_options": list(q.get("select_options") or []),
-                "spirit_options": list(q.get("spirit_options") or []),
-                "expertise_skill": q.get("expertise_skill") or "",
-                "add_spirit_count": int(q.get("add_spirit_count") or 0),
-                "selectside": _quality_has_selectside(q),
-                "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
-                "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
-                **_quality_critter_powers(q, ctx.state.quality_extras),
-                # the table value, only when a `<costdiscount>` moved it
-                **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
-                **({"disabled_by": ctx.disabled_qualities[q["id"]]} if q["id"] in ctx.disabled_qualities else {}),
-                # taken after chargen: what it cost then (SR5 p.107)
-                **({"career_cost": cost} if (cost := _nth(ctx.quality_career_costs, idx)) is not None else {}),
-            }
-            for idx, q in enumerate(ctx.qualities)
-        ],
+        "qualities": quality_rows(ctx),
         "qualities_removed": ctx.qualities_removed,
         "quality_career_pricing": ctx.quality_career_pricing,
         "cyberware": [_public_installed(item) for item in ctx.cyber_installed],
@@ -532,30 +395,7 @@ def assemble(ctx: Ctx) -> None:
         "limb_replace": ctx.limb_replace,
         "limb_quality": ctx.limb_quality,
         "talent": ctx.talent,
-        "metatype_info": {
-            "name": ctx.meta["name"],
-            "parent": ctx.meta.get("parent"),
-            "attributes": {
-                key: {
-                    **spec,
-                    "max": int(spec.get("max") or 0) + int(ctx.attr_max_bonus.get(key) or 0),
-                    # `<attributemaxclamp>`: no augmented headroom above the natural maximum
-                    "aug": int(spec.get("max" if key in clamped else "aug") or 0)
-                    + int(ctx.attr_max_bonus.get(key) or 0),
-                }
-                for key, spec in _effective_attr_spec(
-                    ctx.attrs_spec,
-                    ctx.special_key,
-                    ctx.talent_start,
-                    int(ctx.initiation.get("mag_max_bonus") or 0),
-                    int(ctx.submersion.get("res_max_bonus") or 0),
-                ).items()
-            },
-            "source": ctx.meta.get("source"),
-            # `<replaceattributes>`: whose ranges these are, when they are not
-            # the metatype's own (Infected, Quadriplegic).
-            "attributes_replaced_by": list(ctx.attr_replaced_by),
-        },
+        "metatype_info": metatype_info(ctx, clamped),
         "translations": {
             k: ctx.data["translations"].get(k, k) for k in [ctx.state.metatype, ctx.state.metavariant or ""]
         },
