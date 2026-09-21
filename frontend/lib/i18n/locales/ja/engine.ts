@@ -23,6 +23,8 @@ export const JA_ENGINE = {
   "engine.skills.expertiseNotAllowed": "{source} の Expertise に {picked} は選べません",
   "engine.skills.groupDisabled": "技能グループ {name} は無効化されています",
   "engine.skills.groupPointsOver": "技能グループ点が不足しています（使用 {used} / 上限 {max}）",
+  "engine.skills.groupedSkillLocked":
+    "作成中は技能グループ {group} を崩せないため、{name} を個別に上げられません",
   "engine.skills.knowledgeOnSkillPoints": "知識技能点を超えた {points} 点は技能点から払っています",
   "engine.skills.knowledgePointsOver": "知識技能点が不足しています（使用 {used} / 上限 {max}）",
   "engine.skills.nativeLimit": "母語は{limit}つまでです（超過分は通常の言語として扱います）",
@@ -39,6 +41,8 @@ export const JA_ENGINE = {
   "engine.skills.pickNotAllowed": "{source} に {picked} は選べません",
   "engine.skills.pickSkill": "{source} の技能を選んでください",
   "engine.skills.pickWeaponSkill": "{source} の武器技能を選んでください",
+  "engine.skills.pointsOnGroupedSkill":
+    "{name} は技能グループ {group} に技能グループ点が入っているため、技能点では上げられません（カルマなら可）",
   "engine.skills.pointsOver": "技能点が不足しています（使用 {used} / 上限 {max}）",
   "engine.skills.specNeedsKnowledge": "{name} の専門化には知識技能が必要です",
   "engine.skills.specNeedsSkill": "{name} の専門化には技能が必要です",

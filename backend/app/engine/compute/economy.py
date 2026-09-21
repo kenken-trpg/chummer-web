@@ -194,6 +194,8 @@ def _skill_spend(ctx: Ctx) -> None:
         active_points[name] = max(0, rating - base - levels)
         ctx.skill_totals[name] = max(base, rating)
     ctx.state.skill_karma = dict(ctx.skill_karma_levels)
+    if not ctx.career:
+        _check_grouped_skills(ctx, active_points)
     ctx.exotic = resolve_exotic_skills(
         ctx.state,
         ctx.data["skills"],
@@ -596,3 +598,37 @@ def _attribute_karma_levels(ctx: Ctx, floors: dict[str, int]) -> dict[str, int]:
                 levels[key] = kept
     ctx.state.attribute_karma = dict(levels)
     return levels
+
+
+def _check_grouped_skills(ctx: Ctx, active_points: dict[str, int]) -> None:
+    """Chargen limits on a skill of a group that has a rating (Chummer's
+    `Skill.BaseUnlocked` / `KarmaUnlocked`).
+
+    `<breakskillgroupsincreatemode>` (Chummer's `StrictSkillGroupsInCreateMode`)
+    forbids the skill any level of its own. Otherwise, while the group holds
+    group points, the skill may not take skill points unless
+    `<usepointsonbrokengroups>` allows it; karma levels are always fine.
+    """
+    rules = current_rules()
+    member_of = {
+        str(s["name"]): str(s.get("skillgroup") or "")
+        for s in ctx.data["skills"]["skills"]
+        if s.get("skillgroup") and not s.get("exotic")
+    }
+    for name in ctx.state.skills:
+        group = member_of.get(name)
+        if not group:
+            continue
+        rating = int(ctx.state.skill_groups.get(group) or 0)
+        if rating <= 0:
+            continue
+        own = active_points.get(name, 0) + int(ctx.skill_karma_levels.get(name) or 0)
+        if rules.strict_skill_groups_in_create_mode:
+            if own:
+                ctx.errors.append(notice("engine.skills.groupedSkillLocked", name=term(name), group=term(group)))
+            continue
+        if ctx.is_karma or rules.use_points_on_broken_groups:
+            continue
+        group_points = rating - int(ctx.skill_group_karma_levels.get(group) or 0)
+        if group_points > 0 and active_points.get(name):
+            ctx.errors.append(notice("engine.skills.pointsOnGroupedSkill", name=term(name), group=term(group)))

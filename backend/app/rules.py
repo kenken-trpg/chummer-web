@@ -137,6 +137,14 @@ class Rules:
     #: be taken at chargen (Chummer's `AddInitiationsAllowed`). Off in the
     #: Standard preset, so a grade is career-only.
     allow_initiation_in_create_mode: bool = False
+    #: `<usepointsonbrokengroups>`: at chargen a skill whose group holds
+    #: group points may still take skill points of its own (Chummer's
+    #: `Skill.BaseUnlocked`). Off in Standard: karma only.
+    use_points_on_broken_groups: bool = False
+    #: `<breakskillgroupsincreatemode>` (Chummer's misleadingly named
+    #: `StrictSkillGroupsInCreateMode`): at chargen a skill whose group has a
+    #: rating takes no level of its own at all.
+    strict_skill_groups_in_create_mode: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
@@ -314,6 +322,8 @@ def rules_for(settings: object | None) -> Rules:
         ("ess_loss_reduces_maximum_only", "ess_loss_reduces_maximum_only"),
         ("dont_round_essence_internally", "dont_round_essence_internally"),
         ("allow_initiation_in_create_mode", "allow_initiation_in_create_mode"),
+        ("use_points_on_broken_groups", "use_points_on_broken_groups"),
+        ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

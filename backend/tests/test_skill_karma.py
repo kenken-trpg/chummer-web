@@ -17,6 +17,7 @@ from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.engine import compute, default_attributes, find_metatype
 from app.models import CharacterPatch, CharacterState, Priorities, SettingsState
+from tests.notice_asserts import has
 
 
 def _human(cid: str, **kw: object) -> CharacterState:
@@ -157,3 +158,50 @@ def test_group_karma_survives_a_chummer_round_trip() -> None:
     back, _ = chum5_to_state(xml)
     assert back["skill_groups"] == {"Acting": 2}
     assert back["skill_group_karma"] == {"Acting": 1}
+
+
+def test_skill_points_on_a_grouped_skill_need_the_setting() -> None:
+    """Chummer's `Skill.BaseUnlocked`: while Stealth holds group points,
+    Sneaking may rise above it with karma but not with skill points, unless
+    `<usepointsonbrokengroups>` allows it."""
+    points = compute(_human("grp-points", skill_groups={"Stealth": 2}, skills={"Sneaking": 3}))
+    assert has(points.derived["errors"], "engine.skills.pointsOnGroupedSkill", name="Sneaking", group="Stealth")
+    karma = compute(
+        _human("grp-karma-ok", skill_groups={"Stealth": 2}, skills={"Sneaking": 3}, skill_karma={"Sneaking": 1})
+    )
+    assert not has(karma.derived["errors"], "engine.skills.pointsOnGroupedSkill")
+    allowed = compute(
+        _human(
+            "grp-points-ok",
+            skill_groups={"Stealth": 2},
+            skills={"Sneaking": 3},
+            settings=SettingsState(use_points_on_broken_groups=True),
+        )
+    )
+    assert not has(allowed.derived["errors"], "engine.skills.pointsOnGroupedSkill")
+
+
+def test_a_group_bought_with_karma_leaves_skill_points_free() -> None:
+    out = compute(
+        _human("grp-karma-group", skill_groups={"Stealth": 1}, skill_group_karma={"Stealth": 1}, skills={"Sneaking": 3})
+    )
+    assert not has(out.derived["errors"], "engine.skills.pointsOnGroupedSkill")
+
+
+def test_strict_groups_forbid_any_own_level_at_chargen() -> None:
+    strict = SettingsState(strict_skill_groups_in_create_mode=True, use_points_on_broken_groups=True)
+    out = compute(
+        _human(
+            "grp-strict",
+            skill_groups={"Stealth": 2},
+            skills={"Sneaking": 3},
+            skill_karma={"Sneaking": 1},
+            settings=strict,
+        )
+    )
+    assert has(out.derived["errors"], "engine.skills.groupedSkillLocked", name="Sneaking", group="Stealth")
+    career = apply_patch(
+        compute(_human("grp-strict-c", skill_groups={"Stealth": 2}, settings=strict)), CharacterPatch(career=True)
+    )
+    career = apply_patch(career, CharacterPatch(skills={"Sneaking": 3}))
+    assert not has(career.derived["errors"], "engine.skills.groupedSkillLocked")
