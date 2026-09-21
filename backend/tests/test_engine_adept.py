@@ -367,9 +367,10 @@ def test_qi_focus_binds_combat_sense() -> None:
     focus = out.derived["qi_foci"][0]
     assert focus["rating"] == 2
     assert focus["nuyen"] == 6000
-    assert focus["karma"] == 2
+    # Force x `<karmaqifocus>` (2), the way `Focus.BindingKarmaCost` prices it
+    assert focus["karma"] == 4
     assert out.derived["nuyen_spent"] == 6000
-    assert out.derived["karma"]["spent"] == 2
+    assert out.derived["karma"]["spent"] == 4
     assert out.derived["power_points"]["used"] == 0
     names = {item["name"]: item for item in out.derived["adept_powers"]}
     assert names["Combat Sense"]["free_levels"] == 1
@@ -384,7 +385,8 @@ def test_athlete_way_reduces_qi_binding_karma() -> None:
         )
     )
     focus = out.derived["qi_foci"][0]
-    assert focus["karma"] == 0
+    # Force 2 x 2 karma a point, less the Way's -2 on the bonding
+    assert focus["karma"] == 2
     assert out.derived["skill_bonus"]["Gymnastics"] == 1
 
 

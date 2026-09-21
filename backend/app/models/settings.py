@@ -47,6 +47,29 @@ class SettingsState(BaseModel):
     karma_enhancement: int | None = None
     karma_mystic_pp: int | None = None
     karma_martial_technique: int | None = None
+    #: The first level of a skill, priced apart from the rest
+    #: (`<karmanewactiveskill>` and friends; Chummer's `RangeCost`).
+    karma_new_active_skill: int | None = None
+    karma_new_knowledge_skill: int | None = None
+    karma_new_skill_group: int | None = None
+    #: Karma per point of Force to bond a focus, by kind
+    #: (`<karmaweaponfocus>` and friends; Chummer's `Focus.BindingKarmaCost`).
+    karma_alchemical_focus: int | None = None
+    karma_banishing_focus: int | None = None
+    karma_binding_focus: int | None = None
+    karma_centering_focus: int | None = None
+    karma_counterspelling_focus: int | None = None
+    karma_disenchanting_focus: int | None = None
+    karma_flexible_signature_focus: int | None = None
+    karma_masking_focus: int | None = None
+    karma_power_focus: int | None = None
+    karma_qi_focus: int | None = None
+    karma_ritual_spellcasting_focus: int | None = None
+    karma_spell_shaping_focus: int | None = None
+    karma_spellcasting_focus: int | None = None
+    karma_summoning_focus: int | None = None
+    karma_sustaining_focus: int | None = None
+    karma_weapon_focus: int | None = None
     karma_initiation_flat: int | None = None
     karma_initiation_per_grade: int | None = None
     karma_submersion_flat: int | None = None

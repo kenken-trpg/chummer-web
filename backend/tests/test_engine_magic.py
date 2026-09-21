@@ -651,9 +651,10 @@ def test_power_focus_costs_and_boosts_magic_skills() -> None:
     assert row["name"] == "Power Focus"
     assert row["force"] == 2
     assert row["nuyen"] == 36000
-    assert row["karma"] == 2
+    # Force x `<karmapowerfocus>` (6): a power focus is the dearest to bond
+    assert row["karma"] == 12
     assert out.derived["nuyen_spent"] == 36000
-    assert out.derived["karma"]["spent"] == 2
+    assert out.derived["karma"]["spent"] == 12
     assert out.derived["skill_bonus"]["Spellcasting"] == 2
     assert out.derived["skill_bonus"]["Summoning"] == 2
     assert out.derived["focus_limits"]["count"] == 1
@@ -670,7 +671,8 @@ def test_spellcasting_focus_marks_combat_spells() -> None:
         )
     )
     assert out.derived["foci"][0]["nuyen"] == 12000
-    assert out.derived["foci"][0]["karma"] == 3
+    # Force 3 x `<karmaspellcastingfocus>` (2)
+    assert out.derived["foci"][0]["karma"] == 6
     assert out.derived["spells"][0]["focus_bonus"] == 3
 
 
@@ -787,7 +789,8 @@ def test_crafted_power_focus_uses_formula_and_artificing() -> None:
     assert row["reagent_nuyen"] == 40
     assert row["nuyen"] == 9040
     assert row["retail_nuyen"] == 36000
-    assert row["karma"] == 2
+    # crafting changes what it costs in nuyen, not what bonding costs in karma
+    assert row["karma"] == 12
     test = row["test"]
     assert test["skill"] == "Artificing"
     assert test["pool"] == 11

@@ -395,6 +395,7 @@ def _karma_totals(ctx: Ctx) -> None:
             ctx.skill_karma_levels,
             skill_cat_map,
             per_rating=current_rules().karma_active_skill,
+            first_level=current_rules().karma_new_active_skill,
             karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
             flat_rules=_filter_karma_rules(ctx.effects.get("active_skill_karma_cost"), career=False),
         )
@@ -404,6 +405,7 @@ def _karma_totals(ctx: Ctx) -> None:
             ctx.knowledge_karma_levels,
             {str(row.get("name") or ""): str(row.get("category") or "") for row in know_rows},
             per_rating=current_rules().karma_knowledge,
+            first_level=current_rules().karma_new_knowledge_skill,
             karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
             flat_rules=_filter_karma_rules(
                 list(ctx.effects.get("skill_category_karma_cost") or [])

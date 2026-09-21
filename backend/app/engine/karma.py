@@ -14,12 +14,32 @@ from ..data_loader import PHYSICAL_ATTRS
 from ..rules import current_rules
 
 
-def _karma_raise_cost(from_rating: int, to_rating: int, per_rating: int) -> int:
+def _karma_raise_cost(from_rating: int, to_rating: int, per_rating: int, first_level: int | None = None) -> int:
     low = max(0, int(from_rating))
     high = max(0, int(to_rating))
     if high <= low or per_rating <= 0:
         return 0
-    return sum(level * int(per_rating) for level in range(low + 1, high + 1))
+    return sum(_level_cost(level, per_rating, low, first_level) for level in range(low + 1, high + 1))
+
+
+def _level_cost(level: int, per_rating: int, low: int, first_level: int | None) -> int:
+    """One level of a raise. The first level of a skill bought from nothing has
+    a price of its own — Chummer's `KarmaNewActiveSkill` and its two siblings,
+    charged by `Skill.RangeCost` in place of `1 x KarmaImproveActiveSkill`.
+    Every preset Chummer ships sets the two to the same number, so this shows
+    only under a house rule."""
+    if level == 1 and low == 0 and first_level is not None:
+        return int(first_level)
+    return level * int(per_rating)
+
+
+def group_first_level(from_rating: int, to_rating: int) -> int | None:
+    """`karmanewskillgroup`, when it applies. Chummer prices a skill group by
+    the triangular number of levels bought, and swaps the whole price for
+    `KarmaNewSkillGroup` only when that number is 1 — a group taken from
+    nothing to rating 1. A group raised past 1 pays `KarmaImproveSkillGroup`
+    for every level, first one included."""
+    return current_rules().karma_new_skill_group if int(from_rating) == 0 and int(to_rating) == 1 else None
 
 
 def attribute_karma_cost(
@@ -92,7 +112,7 @@ def skill_karma_cost(
     group_floor: dict[str, int] = {}
     for group, rating in (skill_groups or {}).items():
         grade = max(0, min(int(group_cap), int(rating or 0)))
-        total += _karma_raise_cost(0, grade, current_rules().karma_skill_group)
+        total += _karma_raise_cost(0, grade, current_rules().karma_skill_group, group_first_level(0, grade))
         for skill in skills_data.get("skills") or []:
             if skill.get("skillgroup") == group and not skill.get("exotic"):
                 name = skill.get("name") or ""
@@ -100,7 +120,9 @@ def skill_karma_cost(
                     group_floor[name] = max(group_floor.get(name, 0), grade)
     for name, rating in (skill_totals or {}).items():
         floor = int(group_floor.get(name) or 0)
-        total += _karma_raise_cost(floor, int(rating or 0), current_rules().karma_active_skill)
+        total += _karma_raise_cost(
+            floor, int(rating or 0), current_rules().karma_active_skill, current_rules().karma_new_active_skill
+        )
     return total
 
 
@@ -172,6 +194,7 @@ def _karma_cost_with_category_mods(
     flat_min: int = 0,
     flat_rules: Sequence[Mapping[str, Any]] | None = None,
     min_rules: Sequence[Mapping[str, Any]] | None = None,
+    first_level: int | None = None,
 ) -> int:
     low = max(0, int(from_rating))
     high = max(0, int(to_rating))
@@ -182,7 +205,7 @@ def _karma_cost_with_category_mods(
         rules.append({"val": int(flat_adj), "min": int(flat_min or 0), "max": None})
     total = 0
     for level in range(low + 1, high + 1):
-        base = level * int(per_rating)
+        base = _level_cost(level, per_rating, low, first_level)
         for rule in rules:
             rmin = int(rule.get("min") or 0)
             rmax = rule.get("max")
@@ -287,7 +310,8 @@ def knowledge_excess_karma(
         cat = str(cats.get(name) or "")
         mult = int(mults.get(cat, 100))
         for level in range(1, max(0, int(rating or 0)) + 1):
-            levels.append(max(1, int(math.ceil(level * current_rules().karma_knowledge * mult / 100.0))))
+            base = _level_cost(level, current_rules().karma_knowledge, 0, current_rules().karma_new_knowledge_skill)
+            levels.append(max(1, int(math.ceil(base * mult / 100.0))))
     levels.sort()
     free = max(0, int(free_points))
     if free >= len(levels):
@@ -304,6 +328,7 @@ def skill_levels_karma_cost(
     karma_mults: Mapping[str, int] | None = None,
     flat_rules: Sequence[Mapping[str, Any]] | None = None,
     min_rules: Sequence[Mapping[str, Any]] | None = None,
+    first_level: int | None = None,
 ) -> int:
     """Karma for the top `levels[name]` of each skill on a Priority /
     Sum-to-Ten sheet — Chummer's `<karma>` beside `<base>`.
@@ -325,5 +350,6 @@ def skill_levels_karma_cost(
             mult_pct=int(mults.get(cat, 100)),
             flat_rules=_matching_karma_rules(flat_rules, cat),
             min_rules=_matching_karma_rules(min_rules, cat),
+            first_level=first_level,
         )
     return total

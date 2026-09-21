@@ -545,3 +545,57 @@ def test_a_prime_runner_may_buy_25_points_of_nuyen_with_karma() -> None:
 
     standard = raw.replace(b"Prime Runner", b"Standard")
     assert "priority_karma_nuyen_base" not in chum5_to_state(standard)[0]["settings"]
+
+
+def test_the_focus_bonding_prices_are_read() -> None:
+    """Chummer prices bonding a focus as Force x a multiplier for its kind
+    (`Focus.BindingKarmaCost`), and every kind has its own settings tag."""
+    xml = (
+        "<settings><name>H</name><karmacost>"
+        "<karmaweaponfocus>4</karmaweaponfocus><karmaqifocus>1</karmaqifocus>"
+        "</karmacost></settings>"
+    )
+    parsed = parse_settings_xml(xml)
+    assert (parsed.karma_weapon_focus, parsed.karma_qi_focus) == (4, 1)
+    assert parsed.unsupported == []
+
+
+def test_bonding_a_focus_costs_force_times_its_kinds_price() -> None:
+    """The bug this fixes: bonding was charged at Force flat, a multiplier of
+    1, which no kind of focus has. A Force 3 weapon focus is 9 karma."""
+    from app.engine.magic import focus_bind_karma
+
+    assert focus_bind_karma("Weapon Focus", 3, []) == 9
+    # the kind is the name up to its first `(` or `,`, as Chummer cuts it
+    assert focus_bind_karma("Weapon Focus (2050)", 3, []) == 9
+    assert focus_bind_karma("Spellcasting Focus, Combat", 2, []) == 4
+    # a name that is no kind Chummer prices binds at Force flat
+    assert focus_bind_karma("Spell Lock, Combat (2050)", 3, []) == 3
+    with using_rules(rules_for(SettingsState(karma_weapon_focus=1))):
+        assert focus_bind_karma("Weapon Focus", 3, []) == 3
+
+
+def test_the_first_level_of_a_skill_can_be_priced_apart() -> None:
+    """`<karmanewactiveskill>` is what Chummer's `RangeCost` charges for the
+    level bought from nothing. Standard sets it to one improve step, so it
+    only shows under a house rule — here, 10 for the first level and the
+    printed 2 a level above it."""
+    from app.engine.karma import skill_karma_cost
+
+    skills = {"skills": [{"name": "Pistols", "category": "Combat Active"}]}
+    with using_rules(rules_for(SettingsState(karma_new_active_skill=10))):
+        assert skill_karma_cost({}, {"Pistols": 1}, skills) == 10
+        assert skill_karma_cost({}, {"Pistols": 3}, skills) == 10 + 4 + 6
+    assert skill_karma_cost({}, {"Pistols": 3}, skills) == 2 + 4 + 6
+
+
+def test_a_skill_group_pays_its_new_price_only_at_rating_one() -> None:
+    """Chummer prices a group by the triangular number of levels and swaps
+    the whole price for `<karmanewskillgroup>` only when that number is 1."""
+    from app.engine.karma import skill_karma_cost
+
+    skills = {"skills": []}
+    with using_rules(rules_for(SettingsState(karma_new_skill_group=1))):
+        assert skill_karma_cost({"Firearms": 1}, {}, skills) == 1
+        # rating 2 is three levels' worth, so every level is the improve price
+        assert skill_karma_cost({"Firearms": 2}, {}, skills) == 5 + 10
