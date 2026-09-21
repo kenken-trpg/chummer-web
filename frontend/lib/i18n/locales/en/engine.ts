@@ -122,6 +122,7 @@ export const EN_ENGINE = {
   "engine.spend.specializations": "Specializations",
   "engine.spend.spells": "Spells / complex forms",
   "engine.spend.spirits": "Spirits",
+  "engine.spend.restrictedMarkup": "Restricted / Forbidden markup",
   "engine.spend.submersion": "Submersion",
   "engine.spend.vehicleMods": "Vehicle mods",
   "engine.spend.vehicles": "Vehicles",

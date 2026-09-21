@@ -317,3 +317,43 @@ def test_the_house_rule_buys_off_negatives_once() -> None:
     out = compute(st).derived
     assert out["qualities_removed"][0]["karma"] == -bad["karma"]
     assert held - out["karma"]["remaining"] == -bad["karma"]
+
+
+def _weapon_named(name: str) -> dict:
+    return next(w for w in catalog()["weapons"] if w["name"] == name)
+
+
+def _career_with_predators(settings: SettingsState | None, *, old: int, new: int) -> dict:
+    """`old` Ares Predator Vs (5R) owned at chargen, then `new` more bought."""
+    from app.engine import snapshot_career_baseline
+    from app.models import WeaponInstall
+
+    predator = _weapon_named("Ares Predator V")["id"]
+    st = _mundane("markup", career=True, nuyen_earned=100_000)
+    st.weapons = [WeaponInstall(weapon_id=predator) for _ in range(old)]
+    st.career_baseline = snapshot_career_baseline(st)
+    st.weapons += [WeaponInstall(weapon_id=predator) for _ in range(new)]
+    if settings is not None:
+        st.settings = settings
+    return compute(st).derived
+
+
+def test_restricted_items_bought_in_career_cost_the_house_multiplier() -> None:
+    """`<multiplyrestrictedcost>` ×3: the pistol bought after chargen costs
+    725 ¥ × 3; the one carried in from chargen stays at list price."""
+    rule = SettingsState(multiply_restricted_cost=True, restricted_cost_multiplier=3)
+    plain = _career_with_predators(None, old=1, new=1)
+    marked = _career_with_predators(rule, old=1, new=1)
+    assert marked["nuyen_spent"] - plain["nuyen_spent"] == 725 * 2
+    assert any(line["amount"] == 1450 for line in marked["nuyen_spend_breakdown"])
+
+
+def test_the_multiplier_is_off_unless_the_switch_is_on() -> None:
+    """A multiplier without `<multiplyrestrictedcost>` does nothing, and a
+    forbidden multiplier leaves a Restricted pistol alone."""
+    plain = _career_with_predators(None, old=0, new=1)
+    for rule in (
+        SettingsState(restricted_cost_multiplier=3),
+        SettingsState(multiply_forbidden_cost=True, forbidden_cost_multiplier=3),
+    ):
+        assert _career_with_predators(rule, old=0, new=1)["nuyen_spent"] == plain["nuyen_spent"]

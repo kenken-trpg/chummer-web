@@ -165,6 +165,8 @@ class Ctx:
     nuyen_karma_max: int = 0
     nuyen_pool: int = 0
     nuyen_spent: int = 0
+    #: Restricted / Forbidden markup on what career bought (in `nuyen_spent`).
+    nuyen_markup: int = 0
     nuyen: int = 0
 
     # --- skills ---------------------------------------------------------

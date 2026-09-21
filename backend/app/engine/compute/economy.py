@@ -4,6 +4,8 @@ notoriety / public awareness)."""
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import apply_bonus_nodes
 from ...notices import notice, term, terms
@@ -38,7 +40,13 @@ from ..skills import (
     resolve_skillsofts,
     resolve_specializations,
 )
-from ._career import career_raise_karma, nuyen_spend_breakdown, snapshot_career_baseline
+from ._career import (
+    _GEAR_ROW_KEYS,
+    career_raise_karma,
+    nuyen_spend_breakdown,
+    restricted_markup,
+    snapshot_career_baseline,
+)
 from ._career_qualities import career_quality_karma
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -119,6 +127,15 @@ def _priority_points(ctx: Ctx) -> None:
         + int(ctx.spirits.get("nuyen") or 0)
         + int(ctx.gear.get("nuyen") or 0)
     )
+    if ctx.career:
+        rows = [
+            *ctx.installed,
+            *(ctx.foci.get("public") or []),
+            *(ctx.qi.get("public") or []),
+            *(row for key in _GEAR_ROW_KEYS for row in cast("list[dict[str, Any]]", ctx.gear.get(key) or [])),
+        ]
+        ctx.nuyen_markup = restricted_markup(ctx.state.career_baseline, rows)
+        ctx.nuyen_spent += ctx.nuyen_markup
     ctx.nuyen = ctx.nuyen_pool - ctx.nuyen_spent
 
 
@@ -530,6 +547,7 @@ def _social_pass(ctx: Ctx) -> None:
         qi_nuyen=int(ctx.qi.get("nuyen") or 0),
         foci_nuyen=int(ctx.foci.get("nuyen") or 0),
         spirits_nuyen=int(ctx.spirits.get("nuyen") or 0),
+        markup_nuyen=ctx.nuyen_markup,
     )
 
     ctx.quality_notoriety = int(ctx.effects.get("notoriety") or 0)

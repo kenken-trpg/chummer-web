@@ -116,6 +116,12 @@ class SettingsState(BaseModel):
     #: `<esslossreducesmaximumonly>` / `<donotroundessenceinternally>`
     ess_loss_reduces_maximum_only: bool | None = None
     dont_round_essence_internally: bool | None = None
+    #: `<multiplyrestrictedcost>` / `<restrictedcostmultiplier>` and the
+    #: forbidden pair: what an R / F item bought in career costs, times.
+    multiply_restricted_cost: bool | None = None
+    restricted_cost_multiplier: int | None = None
+    multiply_forbidden_cost: bool | None = None
+    forbidden_cost_multiplier: int | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
