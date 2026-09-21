@@ -350,6 +350,10 @@ export interface CharacterSettings {
   exclude_limb_slot?: string | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
+  /** `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
+   *  karma times this.
+   */
+  metatype_costs_karma_multiplier?: number | null;
   /** `<contactpointsexpression>`'s multiplier: free contact points are
    *  unaugmented CHA times this (3 in Standard, 6 in Prime Runner).
    */

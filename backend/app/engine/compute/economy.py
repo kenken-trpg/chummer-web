@@ -99,7 +99,9 @@ def _priority_points(ctx: Ctx) -> None:
         ctx.nuyen_karma_max = current_rules().karma_nuyen_max
         ctx.state.karma_nuyen = max(0, min(ctx.nuyen_karma_max, int(ctx.state.karma_nuyen or 0)))
         ctx.nuyen_pool = int(ctx.state.karma_nuyen) * current_rules().karma_to_nuyen
-        ctx.metatype_karma_cost = max(0, int(ctx.meta.get("karma") or 0))
+        ctx.metatype_karma_cost = (
+            max(0, int(ctx.meta.get("karma") or 0)) * current_rules().metatype_costs_karma_multiplier
+        )
         ctx.heritage_karma_cost = 0
     else:
         ctx.attr_points = int(attr_row.get("attribute_points") or 0)

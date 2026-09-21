@@ -12,6 +12,7 @@ from app.models import (
     CharacterState,
     CyberwareInstall,
     Priorities,
+    SettingsState,
 )
 from tests.engine_support import (
     RESTRICTED_GEAR,
@@ -153,6 +154,23 @@ def test_karma_chargen_attributes_and_metatype_cost() -> None:
     assert out.derived["karma_chargen"]["metatype"] == 40
     assert out.derived["karma_chargen"]["attributes"] == 25
     assert out.derived["karma"]["spent"] == 65
+
+
+def test_metatype_karma_multiplier_applies_to_karma_builds() -> None:
+    """`<metatypecostskarmamultiplier>`: an Elf's 40 karma doubles to 80."""
+    out = compute(
+        CharacterState(
+            id="karma-elf-x2",
+            name="Karma Elf x2",
+            build_method="Karma",
+            priorities=Priorities(),
+            metatype="Elf",
+            attributes=default_attributes(find_metatype("Elf", None)),
+            settings=SettingsState(metatype_costs_karma_multiplier=2),
+        )
+    )
+    assert out.derived["karma_chargen"]["metatype"] == 80
+    assert out.derived["karma"]["spent"] == 80
 
 
 def test_myostatin_inhibitor_makes_strength_cheaper_at_chargen() -> None:
