@@ -423,12 +423,18 @@ export interface CharacterSettings {
   mystic_adept_pp_in_career?: boolean | null;
   /** `<spiritforcebasedontotalmag>` */
   spirit_force_based_on_total_mag?: boolean | null;
+  /** `<freemartialartspecialization>` */
+  free_martial_art_specialization?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */
   bound_spirit_attr?: string | null;
   registered_sprite_attr?: string | null;
   banned_ware_grades?: string[];
+  /** `<redlinerexclusion>`: the limb slots Redliner does not count (Chummer's
+   *  default is skull and torso). `None` keeps that default.
+   */
+  redliner_exclusion?: string[] | null;
   /** `<customdatadirectorynames>`, enabled ones only, in the order the file
    *  gave them — order decides who wins when two directories edit the same
    *  entry, so it is not sorted.

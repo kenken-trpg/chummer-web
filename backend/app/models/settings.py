@@ -162,11 +162,16 @@ class SettingsState(BaseModel):
     mystic_adept_pp_in_career: bool | None = None
     #: `<spiritforcebasedontotalmag>`
     spirit_force_based_on_total_mag: bool | None = None
+    #: `<freemartialartspecialization>`
+    free_martial_art_specialization: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)
     registered_sprite_attr: str | None = Field(default=None, max_length=3)
     banned_ware_grades: list[str] = Field(default_factory=list)
+    #: `<redlinerexclusion>`: the limb slots Redliner does not count (Chummer's
+    #: default is skull and torso). `None` keeps that default.
+    redliner_exclusion: list[str] | None = None
     #: `<customdatadirectorynames>`, enabled ones only, in the order the file
     #: gave them — order decides who wins when two directories edit the same
     #: entry, so it is not sorted.

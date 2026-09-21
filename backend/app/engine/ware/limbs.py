@@ -98,11 +98,15 @@ def cyberleg_movement_agi(resolved: list[dict[str, Any]], extra_limbs: dict[str,
 
 
 def redliner_slot_caps(options: CharacterOptions | None = None) -> dict[str, int]:
+    """The limb slots Redliner counts: arms and legs, plus torso and skull
+    unless `<redlinerexclusion>` leaves them out (Chummer's default does) —
+    the character options can still add those two back."""
     opts = options or CharacterOptions()
-    slots = dict(REDLINER_BASE_SLOTS)
-    if opts.redliner_torso:
+    excludes = set(current_rules().redliner_excludes)
+    slots = {slot: n for slot, n in REDLINER_BASE_SLOTS.items() if slot not in excludes}
+    if opts.redliner_torso or "torso" not in excludes:
         slots["torso"] = 1
-    if opts.redliner_skull:
+    if opts.redliner_skull or "skull" not in excludes:
         slots["skull"] = 1
         slots["head"] = 1
     return slots

@@ -682,3 +682,12 @@ def test_doubling_the_excess_positive_qualities_is_not_reported() -> None:
         _settings_xml(exceedpositivequalities="True", exceedpositivequalitiescostdoubled="True")
     )
     assert parsed.unsupported == []
+
+
+def test_the_redliner_exclusion_list_is_read() -> None:
+    xml = "<settings><name>R</name><redlinerexclusion><limb>skull</limb></redlinerexclusion></settings>"
+    parsed = parse_settings_xml(xml)
+    assert parsed.redliner_exclusion == ["skull"]
+    assert rules_for(parsed).redliner_excludes == ("skull",)
+    assert parse_settings_xml("<settings><name>R</name></settings>").redliner_exclusion is None
+    assert rules_for(SettingsState()).redliner_excludes == ("skull", "torso")
