@@ -10,7 +10,7 @@ VENV := $(if $(wildcard backend/.venv/Scripts/python.exe),.venv/Scripts,.venv/bi
 PYTHON := $(if $(shell command -v python3 2>/dev/null),python3,python)
 .PHONY: help up down logs update doctor \
         setup dev data dev-backend dev-frontend test lint fmt check check-backend check-frontend \
-        coverage coverage-backend coverage-frontend e2e
+        coverage coverage-backend coverage-frontend e2e changelog
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -89,7 +89,11 @@ coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
 coverage-frontend: ## vitest --coverage; HTML in frontend/coverage/
 	cd frontend && npm run test:coverage
 
+changelog: ## Fold changelog.d/ fragments into CHANGELOG.md [Unreleased]
+	$(PYTHON) scripts/changelog.py collect
+
 release-check: ## Dry-run the release gate for VERSION=x.y.z (CHANGELOG + version bumps)
 	@test -n "$(VERSION)" || { echo "usage: make release-check VERSION=0.2.0"; exit 2; }
+	$(PYTHON) scripts/changelog.py check-empty
 	$(PYTHON) scripts/release_notes.py $(VERSION) --check
 	@echo 'ok — now: git tag -a v$(VERSION) -m v$(VERSION) && git push origin v$(VERSION)' 

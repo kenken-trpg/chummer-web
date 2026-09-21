@@ -147,6 +147,21 @@ jobs:
   # typecheck, lint and prettier, away from the tests. They read the sources
   # and nothing else — no jsdom, no build — so they have no reason to queue
   # behind a minute of vitest, and on a failure the log is the failure.
+  # One changelog.d/ fragment per code PR (see changelog.d/README.md). Not
+  # CHANGELOG.md itself: every PR editing [Unreleased] is what made any two open
+  # PRs conflict.
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: python3 scripts/changelog.py check-pr "$BASE" "$TITLE"
+
   frontend-static:
     runs-on: ubuntu-latest
     defaults:
@@ -635,7 +650,7 @@ jobs:
   ci-ok:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, backend-windows, frontend, frontend-static, frontend-windows, e2e, docker]
+    needs: [backend, backend-windows, changelog, frontend, frontend-static, frontend-windows, e2e, docker]
     steps:
       - name: Every job reported success
         env:

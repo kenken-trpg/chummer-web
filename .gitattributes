@@ -8,3 +8,8 @@
 # LF too. The tree is text through and through; `text=auto` still detects and
 # leaves alone anything binary added later.
 * text=auto eol=lf
+
+# Two branches that each add an entry are not in conflict: keep both. This
+# only helps a local merge or rebase (GitHub's merge check ignores it) and is
+# a fallback now that entries go in changelog.d/ — see changelog.d/README.md.
+CHANGELOG.md merge=union
