@@ -204,6 +204,11 @@ def _skill_spend(ctx: Ctx) -> None:
                 for name in paid_knowledge
                 if know_points.get(name, 0) <= 0 and ctx.knowledge_karma_levels.get(name)
             }
+    # Chummer's `<buywithkarma>`: the player may pay any specialization with
+    # karma instead of a point.
+    chosen_karma = set(ctx.state.skill_specs_karma or [])
+    karma_specs_active |= paid_active & chosen_karma
+    karma_specs_knowledge |= paid_knowledge & chosen_karma
     paid_active -= karma_specs_active
     paid_knowledge -= karma_specs_knowledge
     for name in set(active_points) | paid_active:

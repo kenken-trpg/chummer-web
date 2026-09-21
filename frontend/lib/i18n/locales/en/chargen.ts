@@ -40,6 +40,9 @@ export const EN_CHARGEN = {
     "How many of this skill's top levels were bought with karma. They use no skill (knowledge) points and cost the new rating × 2 karma each (× 1 for knowledge).",
   "skills.karmaSpent": "Skills raised with karma: {karma} karma (knowledge {knowledge} karma)",
   "skills.knowledgeChargenCost": "A specialisation costs 1 knowledge point.",
+  "skills.specKarma": "karma",
+  "skills.specKarmaHint":
+    "Buy this specialisation with karma instead of a skill (knowledge) point.",
   "skills.custom": " (custom)",
   "skills.free": "free",
   "skills.native": "Native",

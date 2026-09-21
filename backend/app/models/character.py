@@ -59,6 +59,7 @@ class CharacterPatch(BaseModel):
     skill_group_karma: dict[str, int] | None = None
     skill_specializations: dict[str, str] | None = None
     talent_skills: list[str] | None = None
+    skill_specs_karma: list[str] | None = None
     exotic_skills: list[ExoticSkillInstall] | None = None
     knowledge_skills: dict[str, int] | None = None
     knowledge_karma: dict[str, int] | None = None
@@ -200,6 +201,9 @@ class CharacterState(BaseModel):
     #: `SkillGroupBase` improvements. `skills` / `skill_groups` hold the total
     #: rating, free levels included.
     talent_skills: list[str] = Field(default_factory=list)
+    #: skills (active or knowledge) whose specialization the player chose to
+    #: buy with karma on a priority sheet — Chummer's `<buywithkarma>`
+    skill_specs_karma: list[str] = Field(default_factory=list)
     exotic_skills: list[ExoticSkillInstall] = Field(default_factory=list)
     knowledge_skills: dict[str, int] = Field(default_factory=dict)
     native_languages: list[str] = Field(default_factory=list)

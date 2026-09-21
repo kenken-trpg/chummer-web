@@ -7,7 +7,7 @@ import { KNOW_CATS, knowCatLabel } from "@/lib/character/constants";
 import { skillsoftBit, specBit } from "@/lib/character/bits";
 import { DEFAULT_PENALTY } from "@/lib/character/skill-default";
 import { skillDice } from "@/lib/character/format";
-import { KarmaLevels, knowledgeEditor, skillLimits, specEditor } from "./shared";
+import { KarmaLevels, SpecKarma, knowledgeEditor, skillLimits, specEditor } from "./shared";
 
 /** The knowledge skills the character has, with the notes that apply to all. */
 export function KnowledgeSkills(props: TabPanelProps) {
@@ -133,13 +133,16 @@ export function KnowledgeSkills(props: TabPanelProps) {
                 field="knowledge_karma"
                 props={props}
               />
-              <SpecPicker
-                options={knowSpec?.specs || []}
-                value={specValue}
-                tr={tr}
-                onDraft={(next) => spec.draft(row.name, next)}
-                onCommit={(next) => spec.commit(row.name, next)}
-              />
+              <span className="spec-cell">
+                <SpecPicker
+                  options={knowSpec?.specs || []}
+                  value={specValue}
+                  tr={tr}
+                  onDraft={(next) => spec.draft(row.name, next)}
+                  onCommit={(next) => spec.commit(row.name, next)}
+                />
+                {row.native ? null : <SpecKarma name={row.name} spec={specValue} props={props} />}
+              </span>
               <b>
                 {row.native
                   ? ui("skills.native")

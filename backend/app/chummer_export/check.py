@@ -32,6 +32,7 @@ _KIND = {
     "skill_groups": "skill",
     "skill_group_karma": "skill",
     "skill_specializations": "skill",
+    "skill_specs_karma": "skill",
     "exotic_skills": "skill",
     "skill_picks": "skill",
     "knowledge_skills": "knowledgeSkill",

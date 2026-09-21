@@ -256,6 +256,23 @@ td.rowhead {
   white-space: nowrap;
   font-size: 0.85em;
 }
+.spec-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.spec-cell > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.spec-karma {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  font-size: 0.85em;
+}
 .attr-karma input {
   width: 3.5em;
 }

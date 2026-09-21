@@ -380,6 +380,7 @@ def _export_skills(root: ET.Element, state: CharacterState, names: _Names, ctx: 
             _sub(spec, "guid", str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:spec:{name}")))
             _sub(spec, "name", spn)
             _sub(spec, "free", "False")
+        _sub(el, "buywithkarma", "True" if spn and name in state.skill_specs_karma else "False")
 
     active = _sub(ns, "skills")
     for name, rating in sorted(state.skills.items()):

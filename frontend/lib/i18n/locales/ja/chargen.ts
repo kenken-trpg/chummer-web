@@ -40,6 +40,8 @@ export const JA_CHARGEN = {
     "この技能の上から何レベルをカルマで買ったか。その分は技能点（知識技能点）を使わず、上げた後の値×2（知識技能は×1）カルマかかります。",
   "skills.karmaSpent": "カルマで上げた技能：{karma} カルマ（知識技能 {knowledge} カルマ）",
   "skills.knowledgeChargenCost": "専門化は知識点1",
+  "skills.specKarma": "カルマで",
+  "skills.specKarmaHint": "この専門化を技能点（知識技能点）ではなくカルマで買います。",
   "skills.custom": " （カスタム）",
   "skills.free": "無料",
   "skills.native": "母語",
