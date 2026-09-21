@@ -34,7 +34,7 @@ def load_translations() -> dict[str, str]:
     path = LANG_DIR / "ja-jp_data.xml"
     if path.exists():
         try:
-            root = ET.parse(path).getroot()
+            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
         except ET.ParseError as exc:
             log.warning("ja-jp_data.xml parse failed: %s", exc)
         else:
@@ -71,7 +71,7 @@ def load_skill_group_names() -> dict[str, str]:
     names: dict[str, str] = {}
     if path.exists():
         try:
-            root = ET.parse(path).getroot()
+            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
         except ET.ParseError as exc:
             log.warning("ja-jp_data.xml parse failed: %s", exc)
         else:
@@ -124,7 +124,7 @@ def load_ui_strings(locale: str = "ja") -> dict[str, str]:
     strings: dict[str, str] = {}
     if path.exists():
         try:
-            root = ET.parse(path).getroot()
+            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
         except ET.ParseError as exc:
             log.warning("%s parse failed: %s", filename, exc)
         else:

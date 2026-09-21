@@ -206,6 +206,52 @@ def test_the_overlay_reaches_the_catalog_and_leaves_no_trace_after() -> None:
         reset_catalog()
 
 
+@pytest.mark.parametrize(
+    ("filename", "xml", "kind"),
+    [
+        (
+            "custom_spells.xml",
+            "<chummer><spells><spell><id>zs</id><name>新東京スペル</name><category>Combat</category><source>NTR</source></spell></spells></chummer>",
+            "spells",
+        ),
+        (
+            "custom_powers.xml",
+            "<chummer><powers><power><id>zp</id><name>新東京パワー</name><points>0.25</points><source>NTR</source></power></powers></chummer>",
+            "powers",
+        ),
+        (
+            "custom_mentors.xml",
+            "<chummer><mentors><mentor><id>zm</id><name>新東京メンター</name><source>NTR</source></mentor></mentors></chummer>",
+            "mentors",
+        ),
+        (
+            "custom_complexforms.xml",
+            "<chummer><complexforms><complexform><id>zc</id><name>新東京フォーム</name><source>NTR</source></complexform></complexforms></chummer>",
+            "complex_forms",
+        ),
+        (
+            "custom_metamagic.xml",
+            "<chummer><metamagics><metamagic><id>zx</id><name>新東京メタマジック</name><source>NTR</source></metamagic></metamagics></chummer>",
+            "metamagics",
+        ),
+    ],
+)
+def test_custom_magic_entries_reach_the_catalog(filename: str, xml: str, kind: str) -> None:
+    """The magic loaders once read their files straight off disk, so custom
+    spells, powers, mentors, complex forms and metamagics never showed up."""
+    files = {
+        "d/manifest.xml": b"<manifest><guid>g</guid><version>1</version></manifest>",
+        f"d/{filename}": xml.encode(),
+    }
+    trees, _ = build_overlay(files, ["g>1"])
+    reset_catalog()
+    try:
+        with using_customdata(Overlay(key=dataset_hash(files), trees=trees)):
+            assert any(e["name"].startswith("新東京") for e in catalog()[kind])  # type: ignore[literal-required]
+    finally:
+        reset_catalog()
+
+
 # --- the upload handshake ----------------------------------------------- #
 
 

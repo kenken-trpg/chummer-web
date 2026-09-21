@@ -34,8 +34,6 @@ ignore = [
 "tests/**" = ["B011", "S313", "S314", "S318", "S319"]
 # Offline maintenance tools run by hand on vendored / checked-in files.
 "scripts/**" = ["S313", "S314", "S318", "S319"]
-# Loaders read only the vendored tree (DATA_DIR / LANG_DIR / OVERRIDE_DIR).
-"app/data_loader/loaders/**" = ["S314"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
