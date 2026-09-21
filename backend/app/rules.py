@@ -133,6 +133,10 @@ class Rules:
     #: `<donotroundessenceinternally>`: Essence is not rounded to two decimals
     #: before MAG / RES loss and the sheet are worked out from it.
     dont_round_essence_internally: bool = False
+    #: `<allowinitiationincreatemode>`: initiation and submersion grades may
+    #: be taken at chargen (Chummer's `AddInitiationsAllowed`). Off in the
+    #: Standard preset, so a grade is career-only.
+    allow_initiation_in_create_mode: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
@@ -305,6 +309,7 @@ def rules_for(settings: object | None) -> Rules:
         ("uncapped_armor_accessory_bonuses", "uncapped_armor_accessory_bonuses"),
         ("ess_loss_reduces_maximum_only", "ess_loss_reduces_maximum_only"),
         ("dont_round_essence_internally", "dont_round_essence_internally"),
+        ("allow_initiation_in_create_mode", "allow_initiation_in_create_mode"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

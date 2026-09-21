@@ -135,6 +135,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "multiplyrestrictedcost": "multiply_restricted_cost",
     "multiplyforbiddencost": "multiply_forbidden_cost",
     "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
+    "allowinitiationincreatemode": "allow_initiation_in_create_mode",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

@@ -221,6 +221,10 @@ export const EN_ENGINE = {
   "engine.initiation.metamagicUnknown": "{source}: no such metamagic {name}",
   "engine.initiation.metamagicUnknownDropped": "Dropped an unknown metamagic from grade {grade}",
   "engine.initiation.needsMagic": "Initiation requires Magic",
+  "engine.initiation.notInCreate":
+    "Initiation is not allowed during character creation under these settings",
+  "engine.submersion.notInCreate":
+    "Submersion is not allowed during character creation under these settings",
   "engine.initiation.notForAdepts": "{name} is not available to adepts",
   "engine.initiation.notForMagicians": "{name} is not available to magicians",
   "engine.initiation.pickOption": "Choose an art or metamagic for initiate grade {grade}",

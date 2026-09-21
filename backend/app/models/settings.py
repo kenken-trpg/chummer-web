@@ -122,6 +122,8 @@ class SettingsState(BaseModel):
     restricted_cost_multiplier: int | None = None
     multiply_forbidden_cost: bool | None = None
     forbidden_cost_multiplier: int | None = None
+    #: `<allowinitiationincreatemode>`
+    allow_initiation_in_create_mode: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
