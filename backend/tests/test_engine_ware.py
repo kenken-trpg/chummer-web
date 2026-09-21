@@ -1622,6 +1622,8 @@ def test_dont_use_cyberlimb_calculation_keeps_the_meat_strength() -> None:
     out = compute(state)
     assert out.derived["limb_replace"] is None
     assert out.derived["totals"]["STR"] == 1
+
+
 def test_the_knowledge_points_expression_reads_augmented_and_unaugmented_attributes() -> None:
     def points(expression: str | None) -> int:
         state = CharacterState(
