@@ -16,6 +16,9 @@ self-hosters can pin to a tag instead of tracking `main`.
   Karma 作成の能力値、Priority / Sum-to-Ten 作成でカルマで買った能力値、キャリアでの上昇のすべてに効きます。MAG / RES は Chummer と同じく対象外です。
 - **旧形式の `<allow2ndmaxattribute>` を読むようになった。** `<maxnumbermaxattributescreate>` がないファイルでこれが True なら、作成中に最大値の能力値を 2 つまで許します（Chummer の読み込みと同じ）。
   `<unclampattributeminimum>` は、Chummer のデータでは計算結果が変わらないので、変更されていても警告を出しません。
+- **設定ファイルの `<exceedpositivequalitiescostdoubled>` を、変更されていても未対応の警告に出さないようにした。**
+  Chummer 本体では、この設定は上限を超えた長所の分を「長所 X/25」の表示の数字でだけ 2 倍にします。
+  使ったカルマの計算と上限超過のチェックは変わらないので、この app で再現すべき違いはありません。
 - **キャラ作成中のイニシエーション・サブマージョンを、設定ファイルの `<allowinitiationincreatemode>` に合わせた。**
   Chummer の Standard ではこの設定がオフで、等級はキャリアでしか上げられません。これまでは作成中でも
   そのまま通していましたが、設定が許可していなければエラーを出すようにしました。カルマの計算は変わりません。

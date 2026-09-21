@@ -673,4 +673,12 @@ def test_attribute_karma_switches_are_read_and_not_reported() -> None:
         )
     )
     assert parsed.alternate_metatype_attribute_karma is True
+
+
+def test_doubling_the_excess_positive_qualities_is_not_reported() -> None:
+    """Chummer doubles the excess only in the "X / 25" label; the karma spent
+    and the over-limit error are the same either way."""
+    parsed = parse_settings_xml(
+        _settings_xml(exceedpositivequalities="True", exceedpositivequalitiescostdoubled="True")
+    )
     assert parsed.unsupported == []
