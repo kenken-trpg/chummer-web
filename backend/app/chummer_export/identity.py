@@ -11,8 +11,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from ..data_loader import catalog
-from ..engine import compute
+from ..engine.priority import heritage_cost, priority_value
 from ..models import CharacterState
+from ..rules import current_rules
 from ._common import _Ctx, _Names, _sub
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
@@ -63,7 +64,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         _sub(_sub(root, "mugshots"), "mugshot", b64)
     # Chummer's `<karma>` / `<nuyen>` are what is left to spend, not what was
     # earned (the reward log below is the history)
-    left = compute(state.model_copy(deep=True)).derived if state.career else {}
+    left = ctx["derived"] if state.career else {}
     _sub(root, "karma", int((left.get("karma") or {}).get("remaining") or 0) if state.career else 0)
     _sub(root, "nuyen", int(left.get("nuyen") or 0) if state.career else 0)
     if state.career and (state.reward_log or state.expense_log):
@@ -121,6 +122,49 @@ def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, c
     ):
         _sub(root, tag, f"{letter},{_PRIORITY_VALUE.get(letter, 0)}")
     _sub(root, "prioritytalent", state.talent)
+
+
+def _export_build_points(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """The build's pools and prices, as figures rather than as a rule.
+
+    Chummer stores these (`Character.Load` reads every one back) instead of
+    recomputing them from the priority table, so a save that leaves them out
+    is read as a character with nothing to spend — points paid for, no pool
+    they came from. That is what made an export open in Chummer with negative
+    attributes and negative special attribute points.
+
+    `maxkarma` / `maxnuyen` are the exception: Chummer reads those only to
+    score which settings file to substitute when the one the save names is not
+    on that machine, so they are the *settings'* figures, not this
+    character's (a Born Rich cap would make the character look like a
+    different settings file). Current Chummer does not write them at all —
+    they are a 5.202-era field it still reads — and the two Prime Runner test
+    saves state a `maxkarma` of 35 and a contact multiplier today's
+    `settings.xml` does not carry anywhere, so those two are the figures this
+    app has rather than the ones those saves were written with.
+    """
+    derived = ctx["derived"]
+    points = derived.get("points") or {}
+    rules = current_rules()
+    # `special` is what the metatype priority handed out, the same number as
+    # `totalspecial`: Chummer tracks what was spent in the attributes
+    # themselves, and never decrements this.
+    special = int((points.get("special") or {}).get("max") or 0)
+    _sub(root, "special", special)
+    _sub(root, "totalspecial", special)
+    _sub(root, "totalattributes", int((points.get("attributes") or {}).get("max") or 0))
+    _sub(root, "contactpoints", int((derived.get("contact_points") or {}).get("free") or 0))
+    _sub(root, "spelllimit", int((derived.get("spell_points") or {}).get("free") or 0))
+    if state.build_method == "Karma":
+        # No priority table to read: the metatype is bought with karma, and
+        # every nuyen is converted from it.
+        _sub(root, "metatypebp", int((derived.get("karma_chargen") or {}).get("metatype") or 0))
+        _sub(root, "startingnuyen", 0)
+    else:
+        _sub(root, "metatypebp", heritage_cost(state.priorities.Heritage, state.metatype, state.metavariant)[1])
+        _sub(root, "startingnuyen", int(priority_value("Resources", state.priorities.Resources).get("nuyen") or 0))
+    _sub(root, "maxkarma", rules.chargen_karma)
+    _sub(root, "maxnuyen", rules.priority_karma_nuyen_base)
 
 
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

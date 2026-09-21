@@ -23,7 +23,7 @@ from ..karma import (
     skill_levels_karma_cost,
 )
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
-from ..priority import priority_value
+from ..priority import heritage_cost, priority_value
 from ..qualities import apply_cost_discounts, counts_toward_quality_limit, surge_metagenic_limit
 from ..skills import (
     _attach_skillsoft_knowledge,
@@ -65,20 +65,9 @@ def _priority_points(ctx: Ctx) -> None:
     attr_row = priority_value("Attributes", ctx.state.priorities.Attributes)
     skill_row = priority_value("Skills", ctx.state.priorities.Skills)
     res_row = priority_value("Resources", ctx.state.priorities.Resources)
-    her_row = priority_value("Heritage", ctx.state.priorities.Heritage)
-
-    ctx.special_from_meta = 0
-    extra_karma = 0
-    for entry in her_row.get("metatypes") or []:
-        if entry["name"] == ctx.state.metatype:
-            ctx.special_from_meta = entry.get("special", 0)
-            extra_karma += entry.get("karma", 0)
-            if ctx.state.metavariant:
-                for v in entry.get("variants") or []:
-                    if v["name"] == ctx.state.metavariant:
-                        ctx.special_from_meta = v.get("special", ctx.special_from_meta)
-                        extra_karma += v.get("karma", 0)
-            break
+    ctx.special_from_meta, extra_karma = heritage_cost(
+        ctx.state.priorities.Heritage, ctx.state.metatype, ctx.state.metavariant
+    )
 
     floors = {key: int(ctx.attrs_spec[key]["min"]) for key in (*PHYSICAL_ATTRS, "EDG")}
     if ctx.special_key in ("MAG", "RES"):

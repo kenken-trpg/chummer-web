@@ -65,6 +65,33 @@ def heritage_options(letter: str) -> list[dict[str, Any]]:
     return row.get("metatypes") or []
 
 
+def heritage_cost(letter: str, metatype: str, metavariant: str | None) -> tuple[int, int]:
+    """What the Heritage priority hands this metatype: its special attribute
+    points, and the karma it charges on top (`(special, karma)`).
+
+    A metavariant's row **replaces** the metatype's, both numbers: it already
+    states the whole price. `Shapeshifter: Vulpine` costs 5 karma at priority
+    C and its Human variant costs 5 — the same 5, not another one. Adding the
+    two charged such a character twice for their heritage (Chummer writes the
+    result as `<metatypebp>`, and `Mittens Chargen` says 5 where this said
+    10).
+    """
+    special = 0
+    karma = 0
+    for entry in priority_value("Heritage", letter).get("metatypes") or []:
+        if entry["name"] != metatype:
+            continue
+        special = entry.get("special", 0)
+        karma = entry.get("karma", 0)
+        if metavariant:
+            for variant in entry.get("variants") or []:
+                if variant["name"] == metavariant:
+                    special = variant.get("special", special)
+                    karma = variant.get("karma", karma)
+        break
+    return special, karma
+
+
 def talent_options(letter: str) -> list[dict[str, Any]]:
     row = priority_value("Talent", letter)
     talents = [t for t in (row.get("talents") or []) if t.get("name") not in SKIP_TALENTS]

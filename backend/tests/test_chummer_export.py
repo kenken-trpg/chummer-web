@@ -8,6 +8,7 @@ from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
+from app.engine.priority import heritage_cost
 from app.models import (
     ArmorInstall,
     ArmorModInstall,
@@ -564,3 +565,39 @@ def test_chummers_addcontact_improvement_marks_the_granted_contact() -> None:
     st, _ = chum5_to_state(xml)
     assert [c["source_quality_id"] for c in st["contacts"]] == [MADE_MAN]
     assert len(import_character(st).contacts) == 1
+
+
+def test_the_build_pools_are_written_as_figures() -> None:
+    """Chummer stores these rather than recomputing them from the priority
+    table (`Character.Load` reads every one back), so a save that leaves them
+    out opens as a character with points spent and no pool they came from —
+    negative attributes and negative special attribute points, which is how
+    this was found.
+    """
+    src = _rich_state()
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    derived = import_character(src.model_dump()).derived
+    assert root.findtext("totalspecial") == str(derived["points"]["special"]["max"])
+    # Chummer tracks what was spent in the attributes themselves and never
+    # decrements this, so the two are the same number.
+    assert root.findtext("special") == root.findtext("totalspecial")
+    assert root.findtext("totalattributes") == str(derived["points"]["attributes"]["max"])
+    assert root.findtext("contactpoints") == str(derived["contact_points"]["free"])
+    assert root.findtext("spelllimit") == str(derived["spell_points"]["free"])
+    # Resources E, from the priority table — not the pool, which also holds
+    # the nuyen bought with leftover karma.
+    assert root.findtext("startingnuyen") == "6000"
+    assert (root.findtext("maxkarma"), root.findtext("maxnuyen")) == ("25", "10")
+
+
+def test_a_metavariant_is_charged_for_its_heritage_once() -> None:
+    """A metavariant's priority row replaces the metatype's rather than adding
+    to it: `Shapeshifter: Vulpine` costs 5 karma at priority C, and its Human
+    variant costs that same 5. Adding the two charged the character twice, and
+    wrote the doubled figure out as `<metatypebp>` (Chummer's own
+    `Mittens Chargen` says 5 where this said 10)."""
+    assert heritage_cost("C", "Shapeshifter: Vulpine", "Human") == (4, 5)
+    assert heritage_cost("C", "Shapeshifter: Vulpine", None) == (4, 5)
+    # a metatype whose variants really do cost extra still reads its own row
+    assert heritage_cost("C", "Elf", "Wakyambi") == (3, 12)
+    assert heritage_cost("C", "Elf", None) == (3, 0)
