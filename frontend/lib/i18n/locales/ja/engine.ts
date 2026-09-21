@@ -390,6 +390,15 @@ export const JA_ENGINE = {
   "engine.kind.weaponAccessory": "武器アクセサリ",
 
   "engine.kind.weaponMount": "武器マウント",
+  "engine.kind.attribute": "能力値",
+  "engine.kind.contact": "コンタクト",
+  "engine.kind.knowledgeSkill": "知識技能",
+  "engine.kind.other": "その他の項目",
+  "engine.export.lost": "{kind}が {count} 件失われます",
+  "engine.export.gained": "{kind}が {count} 件増えます",
+  "engine.export.changed": "{kind}の内容が変わります",
+  "engine.export.karma": "残りカルマが {before} → {after} になります",
+  "engine.export.nuyen": "残りニューヨンが {before} → {after} になります",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

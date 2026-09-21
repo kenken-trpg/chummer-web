@@ -338,6 +338,7 @@ export const EN_APP = {
   "app.copyOf": "{name} copy",
 
   "app.importWarnings": "{count} unsupported on import — {details}",
+  "app.exportDifferences": "Re-reading the exported chum5 shows {count} differences — {details}",
   "check.needsMentor": "No mentor spirit chosen",
   "check.needsParagon": "No paragon chosen",
   "check.metagenicUnbalanced": "Metagenic karma is unbalanced (+{positive} / −{negative})",

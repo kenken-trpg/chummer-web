@@ -391,6 +391,15 @@ export const EN_ENGINE = {
   "engine.kind.weaponAccessory": "weapon accessory",
 
   "engine.kind.weaponMount": "weapon mount",
+  "engine.kind.attribute": "attribute",
+  "engine.kind.contact": "contact",
+  "engine.kind.knowledgeSkill": "knowledge skill",
+  "engine.kind.other": "other field",
+  "engine.export.lost": "{count} {kind} entries are lost",
+  "engine.export.gained": "{count} extra {kind} entries appear",
+  "engine.export.changed": "{kind} entries change",
+  "engine.export.karma": "karma left goes {before} → {after}",
+  "engine.export.nuyen": "nuyen left goes {before} → {after}",
   "engine.side.Left": "left",
 
   "engine.side.Right": "right",
