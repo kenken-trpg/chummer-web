@@ -8,6 +8,7 @@ from app.characters import compute_state, import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
+from app.engine.constants import MENTOR_SPIRIT_ID, PARAGON_ID
 from app.engine.priority import heritage_cost
 from app.models import (
     ArmorInstall,
@@ -710,3 +711,43 @@ def test_a_stream_is_written_as_the_res_tradition_chummer_reads() -> None:
     assert trad.findtext("spiritcombat") == ""
     assert [el.text for el in trad.findall("./spirits/spirit")][:2] == ["Courier Sprite", "Crack Sprite"]
     assert root.find("stream") is None
+
+
+def test_a_mentor_spirit_is_written_where_chummer_looks_for_it() -> None:
+    """`Character.Load` collects mentors with
+    `SelectNodes("mentorspirits/mentorspirit")`. This app wrote the element at
+    the top level instead, so Chummer never saw it and every exported
+    character with a mentor opened without one."""
+    c = catalog()
+    bear = next(r for r in c["mentors"] if r["name"] == "Bear")
+    src = _rich_state().model_copy(
+        update={"quality_ids": [MENTOR_SPIRIT_ID], "mentor_id": bear["id"], "mentor_choices": []}
+    )
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    assert root.find("mentorspirit") is None
+    men = root.find("./mentorspirits/mentorspirit")
+    assert men is not None
+    assert (men.findtext("sourceid"), men.findtext("id")) == (bear["id"], bear["id"])
+    assert (men.findtext("name"), men.findtext("mentortype")) == ("Bear", "MentorSpirit")
+    assert men.findtext("advantage") == bear["advantage"]
+    assert men.findtext("mentormask") == "False"
+
+
+def test_a_paragon_is_written_as_the_paragon_kind_of_mentor() -> None:
+    """`mentortype` is what tells Chummer which data file to resolve the id
+    in: a paragon lives in `paragons.xml`, not `mentors.xml`."""
+    c = catalog()
+    paragon = c["paragons"][0]
+    src = _rich_state().model_copy(
+        update={
+            "talent": "Technomancer",
+            "spells": [],
+            "quality_ids": [PARAGON_ID],
+            "mentor_id": paragon["id"],
+            "mentor_choices": [],
+        }
+    )
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    men = root.find("./mentorspirits/mentorspirit")
+    assert men is not None
+    assert (men.findtext("mentortype"), men.findtext("name")) == ("Paragon", paragon["name"])
