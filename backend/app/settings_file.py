@@ -137,6 +137,15 @@ _HANDLED_ELSEWHERE = {
     # rating (`Armor.CapacityRemaining`), and no code consults the second.
     "maximumarmormodifications",
     "nosinglearmorencumbrance",
+    # Read next to `_INT_FIELDS`: the older spelling of
+    # `<maxnumbermaxattributescreate>` 2.
+    "allow2ndmaxattribute",
+    # `<unclampattributeminimum>` lets metatype minimum + minimum modifiers go
+    # below 0 (`CharacterAttrib.RawMinimum`). Every price and cap reads the
+    # clamped `TotalMinimum`, which is 1 however low that goes, and no metatype in
+    # `metatypes.xml` has a minimum the one lowering modifier (Ugly and Doesn't
+    # Care, CHA -1) can push under 0 — so the switch changes nothing here.
+    "unclampattributeminimum",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
@@ -163,6 +172,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "usepointsonbrokengroups": "use_points_on_broken_groups",
     "breakskillgroupsincreatemode": "strict_skill_groups_in_create_mode",
     "dronearmormultiplierenabled": "drone_armor_multiplier_enabled",
+    "alternatemetatypeattributekarma": "alternate_metatype_attribute_karma",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of
@@ -323,6 +333,10 @@ def _settings_from(root: ET.Element) -> SettingsState:
         value = _int(flat.get(tag, ""))
         if value is not None:
             fields[field] = value
+    # Chummer's legacy shim: a file without `<maxnumbermaxattributescreate>`
+    # that says `<allow2ndmaxattribute>True` allows two (`CharacterSettings.Load`).
+    if "maxnumbermaxattributescreate" not in flat and flat.get("allow2ndmaxattribute", "").lower() == "true":
+        fields["chargen_attributes_at_max"] = 2
     if flat.get("excludelimbslot", "").strip():
         fields["exclude_limb_slot"] = flat["excludelimbslot"].strip().lower()
     for tag, field in _BOOL_FIELDS.items():

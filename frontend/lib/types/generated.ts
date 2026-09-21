@@ -413,6 +413,8 @@ export interface CharacterSettings {
   drone_armor_multiplier_enabled?: boolean | null;
   /** `<dronearmorflatnumber>` */
   drone_armor_multiplier?: number | null;
+  /** `<alternatemetatypeattributekarma>` */
+  alternate_metatype_attribute_karma?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */

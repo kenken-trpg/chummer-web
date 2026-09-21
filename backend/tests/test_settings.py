@@ -656,3 +656,21 @@ def test_the_initiative_dice_settings_are_read() -> None:
     parsed = parse_settings_xml(xml)
     assert (parsed.max_initiative_dice, parsed.min_hotsim_initiative_dice) == (4, 5)
     assert parsed.unsupported == []
+
+
+def test_the_legacy_second_max_attribute_switch_allows_two() -> None:
+    """`<allow2ndmaxattribute>` is read only when the file has no
+    `<maxnumbermaxattributescreate>`, as Chummer's loader does."""
+    assert parse_settings_xml(_settings_xml(allow2ndmaxattribute="True")).chargen_attributes_at_max == 2
+    both = _settings_xml(allow2ndmaxattribute="True", maxnumbermaxattributescreate="1")
+    assert parse_settings_xml(both).chargen_attributes_at_max == 1
+
+
+def test_attribute_karma_switches_are_read_and_not_reported() -> None:
+    parsed = parse_settings_xml(
+        _settings_xml(
+            alternatemetatypeattributekarma="True", unclampattributeminimum="True", allow2ndmaxattribute="True"
+        )
+    )
+    assert parsed.alternate_metatype_attribute_karma is True
+    assert parsed.unsupported == []

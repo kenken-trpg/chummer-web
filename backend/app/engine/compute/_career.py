@@ -21,6 +21,7 @@ from ..karma import (
     _matching_karma_rules,
     _skill_category_map,
     _skill_group_category_map,
+    alternate_attribute_shift,
     group_first_level,
 )
 
@@ -125,6 +126,7 @@ def career_raise_karma(
     *,
     effects: EffectsDict | None = None,
     ratings: dict[str, int] | None = None,
+    minimums: dict[str, int] | None = None,
 ) -> tuple[int, list[dict[str, Any]]]:
     """Karma to raise Priority/SumToTen characters from chargen snapshot to current ratings.
 
@@ -140,9 +142,10 @@ def career_raise_karma(
             continue
         from_r = int(base_attrs.get(key, rating))
         to_r = int(rating or 0)
+        shift = alternate_attribute_shift(key, int((minimums or {}).get(key) or 1))
         cost = _karma_cost_with_category_mods(
-            from_r,
-            to_r,
+            from_r - shift,
+            to_r - shift,
             current_rules().karma_attribute,
             flat_rules=_matching_karma_rules(attr_flat, key),
         )

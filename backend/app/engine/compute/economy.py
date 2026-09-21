@@ -436,7 +436,10 @@ def _karma_totals(ctx: Ctx) -> None:
         )
     else:
         ctx.attr_karma = attribute_levels_karma_cost(
-            ctx.bought_ratings, ctx.attr_karma_levels, rules=ctx.effects.get("attribute_karma_cost")
+            ctx.bought_ratings,
+            ctx.attr_karma_levels,
+            rules=ctx.effects.get("attribute_karma_cost"),
+            minimums=_attribute_minimums(ctx),
         )
         ctx.skill_buy_karma = skill_levels_karma_cost(
             ctx.skill_totals,
@@ -498,8 +501,14 @@ def _karma_totals(ctx: Ctx) -> None:
                 ctx.data["skills"],
                 effects=ctx.effects,
                 ratings=ctx.bought_ratings,
+                minimums=_attribute_minimums(ctx),
             )
             ctx.karma_spent += ctx.career_adv_karma
+
+
+def _attribute_minimums(ctx: Ctx) -> dict[str, int]:
+    """Each attribute's metatype minimum, for `alternate_attribute_shift`."""
+    return {key: int((spec or {}).get("min") or 1) for key, spec in ctx.attrs_spec.items()}
 
 
 def _social_pass(ctx: Ctx) -> None:
