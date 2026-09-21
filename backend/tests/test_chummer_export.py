@@ -669,3 +669,44 @@ def test_every_attribute_chummer_looks_for_is_written_including_magadept() -> No
     assert magadept is not None
     assert [magadept.findtext(t) for t in ("metatypemin", "metatypemax", "metatypeaugmax")] == ["1", "6", "10"]
     assert (magadept.findtext("base"), magadept.findtext("karma")) == ("0", "0")
+
+
+def test_a_tradition_is_written_in_full_so_chummer_keeps_it() -> None:
+    """`Tradition.Load` reads `traditiontype` first and **returns on the spot**
+    if it is missing, and `Character.Load` hands it the element as soon as it
+    carries a `<guid>` — which, with the name, was all this app wrote. Every
+    magician exported from here therefore opened in Chummer with no tradition:
+    no drain attributes, no spirit types."""
+    c = catalog()
+    hermetic = next(r for r in c["traditions"] if r["name"] == "Hermetic")
+    src = _rich_state().model_copy(update={"tradition_id": hermetic["id"]})
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    trad = root.find("tradition")
+    assert trad is not None
+    assert trad.findtext("traditiontype") == "MAG"
+    assert (trad.findtext("sourceid"), trad.findtext("name")) == (hermetic["id"], "Hermetic")
+    # braced, the way `traditions.xml` spells it: Chummer only repairs a
+    # brace-less expression for saves older than 5.214.77
+    assert trad.findtext("drain") == "{WIL} + {LOG}"
+    assert trad.findtext("spiritcombat") == "Spirit of Fire"
+    assert trad.findtext("spiritmanipulation") == "Spirit of Earth"
+    assert trad.findtext("spiritform") == "Materialization"
+
+
+def test_a_stream_is_written_as_the_res_tradition_chummer_reads() -> None:
+    """Chummer keeps a technomancer's stream in the same element, typed `RES`:
+    the five spirit fields stay empty and the sprites it can compile are the
+    `<spirits>` list. The old `<stream>` spelling is not written any more —
+    Chummer prefers it over `<tradition>` when both are present, and it can
+    only carry the name."""
+    c = catalog()
+    stream = next(r for r in c["streams"] if r["name"] == "Default")
+    src = _rich_state().model_copy(update={"talent": "Technomancer", "spells": [], "stream_id": stream["id"]})
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    trad = root.find("tradition")
+    assert trad is not None
+    assert (trad.findtext("traditiontype"), trad.findtext("name")) == ("RES", "Default")
+    assert trad.findtext("drain") == "{WIL} + {RES}"
+    assert trad.findtext("spiritcombat") == ""
+    assert [el.text for el in trad.findall("./spirits/spirit")][:2] == ["Courier Sprite", "Crack Sprite"]
+    assert root.find("stream") is None

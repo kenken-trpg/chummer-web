@@ -7,6 +7,21 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **書き出した `.chum5` で、魔法の伝統が消えなくなった。** Chummer の
+  `Tradition.Load` は `<traditiontype>` を最初に読み、**無ければその場で伝統ごと
+  捨てます**。この app が書いていたのは `<guid>` と `<name>` の 2 つだけで、しかも
+  `<guid>` があるために Chummer はまさにこのローダーに渡していました —— つまり
+  **ここから書き出した魔法使いは、exe で伝統なしとして開いていました**（ドレイン
+  抵抗の能力値も、精霊の種別も無し）。Chummer 自身の `Tradition.Save` と同じ
+  一式（`traditiontype` `sourceid` `spiritform` `drain` `source` `page` と
+  5 種の精霊）を書くようにしました。テクノマンサーのストリームも Chummer と同じく
+  `RES` 型の `<tradition>` として書きます（精霊欄は空、コンパイルできる
+  スプライトが `<spirits>`）。旧綴りの `<stream>` は、両方あると Chummer が
+  そちらを優先してしまい名前しか運べないため、書くのをやめました。
+  伝統を持つテストセーブ 12 件のうち 11 件が項目まで一致します（残る 1 件は
+  名前のない Custom 伝統で、この app は扱いません）。あわせて、憑依系の伝統
+  （〈精神〉など）の `spiritform` を `traditions.xml` から読むようにしました。
+
 - **書き出した `.chum5` に、Chummer が探す能力値行が全部そろうようになった。**
   Chummer は決まった名前の一覧（`AttributeStrings`）を順に見て、**セーブに無い名前は
   その場で作り直します**。この app が一度も書いていなかったのが `MAGAdept` で、
