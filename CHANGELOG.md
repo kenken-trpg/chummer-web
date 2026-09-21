@@ -15,6 +15,11 @@ self-hosters can pin to a tag instead of tracking `main`.
   `<exceedpositivequalitiescostdoubled>` は、Chummer 本体でも上限チェックの数字を変えるだけで
   カルマの支払いには効かないので、読みません。`<karmaquality>` と `<enemykarmaqualitylimit>` は、
   この app が扱っていない機能（キャリアでの資質の段階上げ、敵）にしか効かないので、対象外です。
+- **エッセンスの減り方の設定を読むようになり、MAG / RES の減り方の丸めを Chummer に合わせた。**
+  残りのエッセンスを小数 2 桁に丸めてから MAG / RES を減らすようにした（4.995 は 5 として扱い、減るのは 1 点）。
+  `<esslossreducesmaximumonly>` が有効なら、エッセンスの減少は MAG / RES の最大値だけを下げ、買った値は最大値を超えたときだけ下がる。
+  `<donotroundessenceinternally>` が有効なら、エッセンスを丸めずに計算する。
+  `<unclampattributeminimum>` は読まない（この app には能力値の最低値を下げる効果がなく、何も変わらないため）。
 - **設定ファイルの防具のハウスルールを読むようになった。**
   `<noarmorencumbrance>` を有効にすると、重ねた防具で AGI・REA が下がらなくなります。
   `<uncappedarmoraccessorybonuses>` を有効にすると、アクセサリーや重ね着の上乗せが

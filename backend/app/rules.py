@@ -126,6 +126,13 @@ class Rules:
     #: not capped at Strength (Chummer's `TotalArmorRating`). Encumbrance
     #: still counts the whole stack either way.
     uncapped_armor_accessory_bonuses: bool = False
+    #: `<esslossreducesmaximumonly>`: essence loss lowers the MAG / RES
+    #: maximum only, so the rating drops just where that maximum falls below
+    #: what was bought (Chummer's `RefreshEssenceLossImprovements`).
+    ess_loss_reduces_maximum_only: bool = False
+    #: `<donotroundessenceinternally>`: Essence is not rounded to two decimals
+    #: before MAG / RES loss and the sheet are worked out from it.
+    dont_round_essence_internally: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
@@ -290,6 +297,8 @@ def rules_for(settings: object | None) -> Rules:
         ("use_calculated_public_awareness", "use_calculated_public_awareness"),
         ("no_armor_encumbrance", "no_armor_encumbrance"),
         ("uncapped_armor_accessory_bonuses", "uncapped_armor_accessory_bonuses"),
+        ("ess_loss_reduces_maximum_only", "ess_loss_reduces_maximum_only"),
+        ("dont_round_essence_internally", "dont_round_essence_internally"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

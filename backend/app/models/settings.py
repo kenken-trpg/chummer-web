@@ -113,6 +113,9 @@ class SettingsState(BaseModel):
     #: `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>`
     no_armor_encumbrance: bool | None = None
     uncapped_armor_accessory_bonuses: bool | None = None
+    #: `<esslossreducesmaximumonly>` / `<donotroundessenceinternally>`
+    ess_loss_reduces_maximum_only: bool | None = None
+    dont_round_essence_internally: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
