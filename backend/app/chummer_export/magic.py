@@ -9,6 +9,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from typing import Any
 
+from ..engine.lookups import _stream_by_id, _tradition_by_id
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 
@@ -61,16 +62,69 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
     )
 
 
+def _export_tradition_block(root: ET.Element, state: CharacterState) -> None:
+    """Write `<tradition>` the way Chummer's own `Tradition.Save` does.
+
+    `Tradition.Load` starts with `traditiontype` and **gives up on the whole
+    element** if it is missing::
+
+        if (!xmlNode.TryGetStringFieldQuickly("traditiontype", ref strTemp)
+            || !Enum.TryParse(strTemp, out _eTraditionType))
+        { _eTraditionType = TraditionType.None; return; }
+
+    and `Character.Load` reaches that loader as soon as the element carries a
+    `<guid>` — which is all this app used to write, alongside the name. So
+    every magician exported from here opened in Chummer with **no tradition at
+    all**: no drain attributes, no spirit types. The rest of the fields are
+    written because Chummer keeps the tradition's own copy of them rather than
+    looking them up again (a player may edit them), and a Custom tradition has
+    nothing to look up.
+
+    A technomancer's stream is the same element with `RES` as its type: the
+    five spirit fields stay empty and the sprites it can compile are the
+    `<spirits>` list. `<stream>`, the pre-5.200 spelling, is no longer written
+    — Chummer prefers it over `<tradition>` when both are there, and it can
+    only say the stream's name.
+    """
+    row = _tradition_by_id(state.tradition_id) or _stream_by_id(state.stream_id)
+    if not row:
+        return
+    is_stream = not state.tradition_id
+    spirits = row.get("spirits") or {}
+    el = _sub(root, "tradition")
+    # Chummer tells the data row (`sourceid`) from this character's copy of it
+    # (`guid`) because a Custom tradition is edited per character; nothing here
+    # is editable, so the two are the same id.
+    _sub(el, "sourceid", row["id"])
+    _sub(el, "guid", row["id"])
+    _sub(el, "traditiontype", "RES" if is_stream else "MAG")
+    _sub(el, "name", row.get("name") or "")
+    _sub(el, "extra", "")
+    # Possession for the traditions that say so in `traditions.xml`,
+    # Materialization for the rest — Chummer's own default.
+    _sub(el, "spiritform", row.get("spirit_form") or "Materialization")
+    # Braced, as `traditions.xml` writes it. Chummer un-braces the expression
+    # on the way out, but only repairs a brace-less one for saves older than
+    # 5.214.77 — and this app stamps a current version.
+    _sub(el, "drain", row.get("drain") or "")
+    _sub(el, "source", row.get("source") or "")
+    _sub(el, "page", row.get("page") or "")
+    for tag, key in (
+        ("spiritcombat", "combat"),
+        ("spiritdetection", "detection"),
+        ("spirithealth", "health"),
+        ("spiritillusion", "illusion"),
+        ("spiritmanipulation", "manipulation"),
+    ):
+        _sub(el, tag, spirits.get(key) or "")
+    available = _sub(el, "spirits")
+    for name in row.get("sprites") or []:
+        _sub(available, "spirit", name)
+
+
 def _export_magic_tradition(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """The tradition, stream or mentor spirit a magician or technomancer has."""
-    if state.tradition_id:
-        tr = _sub(root, "tradition")
-        _sub(tr, "guid", state.tradition_id)
-        _sub(tr, "name", names["tradition"].get(state.tradition_id, ""))
-    if state.stream_id:
-        # A technomancer's stream is a tradition-shaped thing of its own;
-        # Chummer reads it from `<stream>`.
-        _sub(root, "stream", names["stream"].get(state.stream_id, ""))
+    _export_tradition_block(root, state)
     if state.mentor_id:
         me = _sub(root, "mentorspirit")
         _sub(me, "guid", state.mentor_id)

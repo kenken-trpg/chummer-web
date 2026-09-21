@@ -108,6 +108,9 @@ def load_traditions() -> list[dict[str, Any]]:
                 "drain": drain,
                 "drain_attrs": [a.upper() for a in attrs],
                 "spirits": spirits,
+                # How this tradition's spirits show up. Only the possession
+                # traditions say so; Chummer's own default is the other one.
+                "spirit_form": _text(el.find("spiritform")) or "Materialization",
                 "bonus": parse_bonus(el.find("bonus")),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
