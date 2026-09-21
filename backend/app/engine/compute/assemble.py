@@ -198,6 +198,7 @@ def assemble(ctx: Ctx) -> None:
             "other": ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
+            + ctx.spirit_karma
             + int(ctx.contacts.get("karma") or 0)
             + int(ctx.martial.get("karma") or 0)
             + int(ctx.initiation.get("karma") or 0)

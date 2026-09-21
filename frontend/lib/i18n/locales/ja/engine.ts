@@ -123,6 +123,7 @@ export const JA_ENGINE = {
   "engine.spend.skillsKarma": "技能（カルマ作成）",
   "engine.spend.specialization": "専門化 {name}（{spec}）",
   "engine.spend.specializations": "専門化",
+  "engine.spend.spiritServices": "精霊・スプライトのサービス",
   "engine.spend.spells": "術式／複合体",
   "engine.spend.spirits": "精霊",
   "engine.spend.restrictedMarkup": "制限品・禁止品の割増",
@@ -331,6 +332,8 @@ export const JA_ENGINE = {
 
   "engine.gear.weaponNotOnMount": "{name} は {host} のマウントに搭載できません",
 
+  "engine.karma.chargenCarryOver":
+    "未使用カルマ {left}：持ち越せるのは {keep} までです（超過分 {lost} は原則失われます）",
   "engine.karma.negative": "カルマが不足しています（残り {karma}）",
   "engine.nuyen.chargenCarryOver":
     "未使用新円 {left}¥：Standard レベルでは {keep}¥ までしか持ち越せません（超過分 {lost}¥ は原則失われます）",

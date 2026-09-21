@@ -66,6 +66,8 @@ _KARMA_FIELDS: dict[str, str] = {
     "karmaenhancement": "karma_enhancement",
     "karmamysadpp": "karma_mystic_pp",
     "karmatechnique": "karma_martial_technique",
+    "karmaspirit": "karma_spirit",
+    "karmacarryover": "karma_carryover",
     "karmainitiationflat": "karma_initiation_flat",
     "karmainitiation": "karma_initiation_per_grade",
     "karmanewactiveskill": "karma_new_active_skill",

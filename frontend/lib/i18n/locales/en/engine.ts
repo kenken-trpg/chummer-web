@@ -124,6 +124,7 @@ export const EN_ENGINE = {
   "engine.spend.skillsKarma": "Skills (karma build)",
   "engine.spend.specialization": "Specialization {name} ({spec})",
   "engine.spend.specializations": "Specializations",
+  "engine.spend.spiritServices": "Spirit / sprite services",
   "engine.spend.spells": "Spells / complex forms",
   "engine.spend.spirits": "Spirits",
   "engine.spend.restrictedMarkup": "Restricted / Forbidden markup",
@@ -331,6 +332,8 @@ export const EN_ENGINE = {
 
   "engine.gear.weaponNotOnMount": "{name} cannot go on the mount of {host}",
 
+  "engine.karma.chargenCarryOver":
+    "{left} karma unspent: only {keep} carries over into play (the other {lost} is normally lost)",
   "engine.karma.negative": "Karma is overspent ({karma} left)",
   "engine.nuyen.chargenCarryOver":
     "{left}¥ unspent: Standard gameplay carries over at most {keep}¥, so {lost}¥ is normally lost",

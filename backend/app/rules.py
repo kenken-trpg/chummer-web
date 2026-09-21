@@ -97,6 +97,10 @@ class Rules:
     karma_summoning_focus: int = 2
     karma_sustaining_focus: int = 2
     karma_weapon_focus: int = 3
+    #: `<karmaspirit>`: chargen karma per service a spirit / sprite owes
+    karma_spirit: int = 1
+    #: `<karmacarryover>`: unspent chargen karma kept into play
+    karma_carryover: int = 7
     karma_initiation_flat: int = 10
     karma_initiation_per_grade: int = 3
     karma_submersion_flat: int = 10
@@ -284,6 +288,8 @@ _DIRECT: dict[str, str] = {
     "limb_count": "limb_count",
     "karma_to_nuyen": "karma_to_nuyen",
     "metatype_costs_karma_multiplier": "metatype_costs_karma_multiplier",
+    "karma_spirit": "karma_spirit",
+    "karma_carryover": "karma_carryover",
     "priority_karma_nuyen_base": "priority_karma_nuyen_base",
     "contact_free_mult": "contact_free_mult",
 }

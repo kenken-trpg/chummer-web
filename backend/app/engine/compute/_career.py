@@ -42,9 +42,12 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
     )
 
 
-#: The `CharacterState` lists that hold things bought with nuyen, as far as
-#: the Restricted / Forbidden markup goes. Lifestyles are rent, not a buy.
+#: The `CharacterState` lists whose rows a career purchase is told apart by:
+#: things bought with nuyen, for the Restricted / Forbidden markup (lifestyles
+#: are rent, not a buy), and the spirits / sprites chargen paid karma for.
 _ITEM_FIELDS = (
+    "spirits",
+    "sprites",
     "cyberware",
     "bioware",
     "qi_foci",

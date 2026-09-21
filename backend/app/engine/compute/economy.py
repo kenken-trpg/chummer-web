@@ -373,6 +373,7 @@ def _karma_totals(ctx: Ctx) -> None:
         int(ctx.enhancements.get("karma") or 0) + int(ctx.qi.get("karma") or 0) + int(ctx.foci.get("karma") or 0)
     )
     ctx.spell_karma = int(ctx.magic.get("karma") or 0) + int(ctx.resonance.get("karma") or 0)
+    ctx.spirit_karma = _spirit_karma(ctx)
     ctx.career_adv_karma = 0
     ctx.career_adv_lines = []
     if ctx.is_karma:
@@ -401,6 +402,7 @@ def _karma_totals(ctx: Ctx) -> None:
             + ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
+            + ctx.spirit_karma
             + ctx.attr_karma
             + ctx.skill_buy_karma
             + ctx.knowledge_karma
@@ -448,6 +450,7 @@ def _karma_totals(ctx: Ctx) -> None:
             + ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
+            + ctx.spirit_karma
             + ctx.attr_karma
             + ctx.skill_buy_karma
             + ctx.knowledge_karma
@@ -537,6 +540,7 @@ def _social_pass(ctx: Ctx) -> None:
         ("engine.spend.mysticPP", ctx.mystic_karma),
         ("engine.spend.adeptPower", ctx.extra_adept_karma),
         ("engine.spend.spells", ctx.spell_karma),
+        ("engine.spend.spiritServices", ctx.spirit_karma),
         ("engine.spend.contactsOver", int(ctx.contacts.get("karma") or 0)),
         ("engine.spend.martialArts", int(ctx.martial.get("karma") or 0)),
         ("engine.spend.initiation", int(ctx.initiation.get("karma") or 0)),
@@ -632,3 +636,18 @@ def _check_grouped_skills(ctx: Ctx, active_points: dict[str, int]) -> None:
         group_points = rating - int(ctx.skill_group_karma_levels.get(group) or 0)
         if group_points > 0 and active_points.get(name):
             ctx.errors.append(notice("engine.skills.pointsOnGroupedSkill", name=term(name), group=term(group)))
+def _spirit_karma(ctx: Ctx) -> int:
+    """Chargen karma for the spirits and sprites that start with the
+    character: `<karmaspirit>` per service owed (Chummer's `CalculateBP`).
+
+    Binding one in career is reagents and drain, not karma, so a career
+    character keeps paying only for what was already there when play began.
+    """
+    baseline = ctx.state.career_baseline if ctx.career else None
+    known = set(baseline.item_ids) if baseline is not None and baseline.item_ids is not None else None
+    services = 0
+    for row in list(ctx.spirits.get("public") or []) + list(ctx.techno_sprites.get("public") or []):
+        if known is not None and str(row.get("id") or "") not in known:
+            continue
+        services += max(0, int(row.get("services") or 0))
+    return services * current_rules().karma_spirit

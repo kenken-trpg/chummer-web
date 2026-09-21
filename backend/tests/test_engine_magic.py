@@ -1343,3 +1343,35 @@ def test_initiation_at_chargen_needs_the_setting() -> None:
     assert allowed.derived["initiation"]["karma"] == 13
     career = compute(_mage("init-career", career=True, **kw))
     assert not has(career.derived["errors"], "engine.initiation.notInCreate")
+def test_starting_spirits_cost_karma_per_service() -> None:
+    """Chummer's `CalculateBP`: `<karmaspirit>` (1) per service owed."""
+    kw = {"tradition_id": HERMETIC, "spirits": [SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=2)]}
+    out = compute(_mage("spirit-karma", **kw))
+    assert out.derived["karma"]["spent"] == 2
+    doubled = compute(_mage("spirit-karma-x2", settings=SettingsState(karma_spirit=2), **kw))
+    assert doubled.derived["karma"]["spent"] == 4
+
+
+def test_a_spirit_bound_in_career_costs_no_karma() -> None:
+    from app.engine import snapshot_career_baseline
+
+    st = compute(
+        _mage(
+            "spirit-career",
+            tradition_id=HERMETIC,
+            spirits=[SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=2)],
+        )
+    )
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st = compute(st)
+    assert st.derived["karma"]["spent"] == 2
+    st.spirits = [*st.spirits, SpiritInstall(spirit_id=SPIRIT_FIRE, force=3, services=3)]
+    assert compute(st).derived["karma"]["spent"] == 2
+
+
+def test_unspent_chargen_karma_past_the_carryover_warns() -> None:
+    out = compute(_mage("carry"))
+    assert has(out.derived["warnings"], "engine.karma.chargenCarryOver", left=25, keep=7, lost=18)
+    loose = compute(_mage("carry-loose", settings=SettingsState(karma_carryover=25)))
+    assert not has(loose.derived["warnings"], "engine.karma.chargenCarryOver")

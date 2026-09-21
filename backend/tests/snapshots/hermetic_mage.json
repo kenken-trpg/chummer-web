@@ -144,8 +144,8 @@
       "used": 0
     },
     "pool": 25,
-    "remaining": 25,
-    "spent": 0
+    "remaining": 23,
+    "spent": 2
   },
   "karma_adjust": 0,
   "karma_chargen": {
@@ -156,14 +156,23 @@
     "nuyen_karma": 0,
     "nuyen_karma_max": 10,
     "nuyen_per_karma": 2000,
-    "other": 0,
+    "other": 2,
     "pool": 0,
     "qualities": 0,
     "skills": 0,
     "specializations": 0
   },
   "karma_earned": 0,
-  "karma_spend_breakdown": [],
+  "karma_spend_breakdown": [
+    {
+      "amount": 2,
+      "kind": "other",
+      "notice": {
+        "key": "engine.spend.spiritServices",
+        "params": {}
+      }
+    }
+  ],
   "knowledge_rating_max": 6,
   "knowledge_skills": [],
   "lifestyle": null,
@@ -876,6 +885,14 @@
         "keep": "5,000",
         "left": "5,940",
         "lost": "940"
+      }
+    },
+    {
+      "key": "engine.karma.chargenCarryOver",
+      "params": {
+        "keep": 7,
+        "left": 23,
+        "lost": 16
       }
     }
   ],
