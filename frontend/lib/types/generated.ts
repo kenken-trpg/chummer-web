@@ -421,6 +421,8 @@ export interface CharacterSettings {
   increased_improved_ability_modifier?: boolean | null;
   /** `<mysaddppcareer>` */
   mystic_adept_pp_in_career?: boolean | null;
+  /** `<spiritforcebasedontotalmag>` */
+  spirit_force_based_on_total_mag?: boolean | null;
   /** The attribute capping bound spirits / registered sprites
    *  (`<boundspiritexpression>` / `<registeredspriteexpression>`).
    */

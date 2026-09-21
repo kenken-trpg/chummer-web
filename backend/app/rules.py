@@ -217,6 +217,9 @@ class Rules:
     #: `<mysaddppcareer>`: a mystic adept may buy more power points in career
     #: (`Character.MysAdeptAllowPPCareer`).
     mystic_adept_pp_in_career: bool = False
+    #: `<spiritforcebasedontotalmag>`: a spirit's Force is capped by augmented
+    #: MAG instead of the natural rating (`Character.MaxSpiritForce`).
+    spirit_force_based_on_total_mag: bool = False
 
     # --- money ---------------------------------------------------------
     #: `<unrestrictednuyen>`: chargen karma may buy any amount of nuyen
@@ -380,6 +383,7 @@ def rules_for(settings: object | None) -> Rules:
         ("compensate_skill_group_karma_difference", "compensate_skill_group_karma_difference"),
         ("increased_improved_ability_modifier", "increased_improved_ability_modifier"),
         ("mystic_adept_pp_in_career", "mystic_adept_pp_in_career"),
+        ("spirit_force_based_on_total_mag", "spirit_force_based_on_total_mag"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",
