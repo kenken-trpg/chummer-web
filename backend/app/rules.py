@@ -109,6 +109,13 @@ class Rules:
     #: earn no karma for what lies past it.
     quality_exceed_negative: bool = False
     quality_exceed_negative_no_bonus: bool = False
+    #: `<exceedpositivequalities>`: positive qualities may pass the cap.
+    quality_exceed_positive: bool = False
+    #: `<dontdoublequalities>` / `<dontdoublequalityrefunds>`: a positive
+    #: quality taken in career, or a negative one bought off, at its table
+    #: karma instead of twice it.
+    quality_dont_double_purchases: bool = False
+    quality_dont_double_refunds: bool = False
     #: `<usecalculatedpublicawareness>`: Public Awareness also earns
     #: (Street Cred + Notoriety) / 3 on its own. Off in every preset Chummer
     #: ships, where it is only what the GM awards plus what qualities give.
@@ -276,6 +283,9 @@ def rules_for(settings: object | None) -> Rules:
     for src, dest in (
         ("exceed_negative_qualities", "quality_exceed_negative"),
         ("exceed_negative_qualities_no_bonus", "quality_exceed_negative_no_bonus"),
+        ("exceed_positive_qualities", "quality_exceed_positive"),
+        ("dont_double_quality_purchases", "quality_dont_double_purchases"),
+        ("dont_double_quality_refunds", "quality_dont_double_refunds"),
         ("cyberleg_movement", "cyberleg_movement"),
         ("use_calculated_public_awareness", "use_calculated_public_awareness"),
         ("no_armor_encumbrance", "no_armor_encumbrance"),

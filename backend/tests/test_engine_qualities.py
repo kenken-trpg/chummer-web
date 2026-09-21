@@ -981,6 +981,21 @@ def test_positive_quality_karma_cap_at_chargen() -> None:
     assert not has(career.derived["errors"], "engine.qualities.positiveCap")
 
 
+def test_the_house_rule_lets_positive_qualities_pass_the_cap() -> None:
+    """`<exceedpositivequalities>`: Chummer skips its positive limit check."""
+    state = CharacterState(
+        id="posq-exceed",
+        name="PosQExceed",
+        build_method="Karma",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+        quality_ids=[LIGHTNING_REFLEXES, ADRENALINE_SURGE],
+    )
+    state.settings = SettingsState(exceed_positive_qualities=True)
+    assert not has(compute(state).derived["errors"], "engine.qualities.positiveCap")
+
+
 THERMO_SURGE = "fd346177-3791-44c0-af8c-7cf176fc9aa3"  # +3 positive metagenic
 FEATHERS = "35279341-3611-439a-9550-8227b306198f"  # -3 negative metagenic
 

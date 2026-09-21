@@ -121,6 +121,9 @@ _HANDLED_ELSEWHERE = {
 _BOOL_FIELDS: dict[str, str] = {
     "exceednegativequalities": "exceed_negative_qualities",
     "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
+    "exceedpositivequalities": "exceed_positive_qualities",
+    "dontdoublequalities": "dont_double_quality_purchases",
+    "dontdoublequalityrefunds": "dont_double_quality_refunds",
     "cyberlegmovement": "cyberleg_movement",
     "usecalculatedpublicawareness": "use_calculated_public_awareness",
     "noarmorencumbrance": "no_armor_encumbrance",

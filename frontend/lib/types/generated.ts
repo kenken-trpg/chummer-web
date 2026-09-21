@@ -360,6 +360,11 @@ export interface CharacterSettings {
    */
   exceed_negative_qualities?: boolean | null;
   exceed_negative_qualities_no_bonus?: boolean | null;
+  /** `<exceedpositivequalities>`: positive qualities may pass the limit. */
+  exceed_positive_qualities?: boolean | null;
+  /** `<dontdoublequalities>` / `<dontdoublequalityrefunds>` */
+  dont_double_quality_purchases?: boolean | null;
+  dont_double_quality_refunds?: boolean | null;
   /** `<usecalculatedpublicawareness>` */
   use_calculated_public_awareness?: boolean | null;
   /** `<noarmorencumbrance>` / `<uncappedarmoraccessorybonuses>` */

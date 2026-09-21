@@ -7,6 +7,14 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **設定ファイルの資質のハウスルールを読むようになった。**
+  `<dontdoublequalities>` を有効にすると、キャリアで取るポジティブ資質が 2 倍ではなく表の値段になります。
+  `<dontdoublequalityrefunds>` を有効にすると、ネガティブ資質の買い消しが 2 倍ではなく
+  もらったカルマの分になります。`<exceedpositivequalities>` を有効にすると、キャラ作成で
+  ポジティブ資質が上限を超えてもエラーになりません。
+  `<exceedpositivequalitiescostdoubled>` は、Chummer 本体でも上限チェックの数字を変えるだけで
+  カルマの支払いには効かないので、読みません。`<karmaquality>` と `<enemykarmaqualitylimit>` は、
+  この app が扱っていない機能（キャリアでの資質の段階上げ、敵）にしか効かないので、対象外です。
 - **設定ファイルの防具のハウスルールを読むようになった。**
   `<noarmorencumbrance>` を有効にすると、重ねた防具で AGI・REA が下がらなくなります。
   `<uncappedarmoraccessorybonuses>` を有効にすると、アクセサリーや重ね着の上乗せが
