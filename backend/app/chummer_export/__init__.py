@@ -14,13 +14,16 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
 from ..data_loader import catalog
-from ..engine import find_metatype
+from ..engine import compute, find_metatype
 from ..models import CharacterState
+from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
 from .gear import _export_armor, _export_foci, _export_gear, _export_vehicles, _export_ware, _export_weapons
 from .identity import (
     _export_attributes,
+    _export_build_points,
     _export_contacts,
+    _export_flags,
     _export_identity,
     _export_priorities,
     _export_skills,
@@ -49,9 +52,24 @@ def state_to_chum5(state: CharacterState) -> bytes:
     They are independent — none reads what another wrote — so the 322-line
     function they came from split along its own `_sub(root, ...)` boundaries.
     """
+    with using_rules(rules_for(state.settings)):
+        return _write(state)
+
+
+def _write(state: CharacterState) -> bytes:
+    """`state_to_chum5` with the character's own settings in scope.
+
+    The priority table a letter is read against, and the karma and nuyen
+    figures Chummer scores a settings file by, both come from the settings —
+    so the sections below need them bound the way `compute()` binds them.
+    """
     cat = catalog()
     meta = find_metatype(state.metatype, state.metavariant) or {"attributes": {}}
     m_attr = meta.get("attributes") or {}
+    # Several sections write a figure the engine already worked out. An export
+    # is handed a computed character (the docstring above), so this is that
+    # bundle; computing it is the fallback for a state built by hand.
+    derived = state.derived or compute(state.model_copy(deep=True)).derived
 
     names = {
         "quality": _id_name(cat["qualities"]),
@@ -93,7 +111,7 @@ def state_to_chum5(state: CharacterState) -> bytes:
 
     root = ET.Element("character")
 
-    ctx: _Ctx = {"meta_attrs": m_attr}
+    ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived}
     for section in _SECTIONS:
         section(root, state, names, ctx)
 
@@ -108,6 +126,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
 _SECTIONS = (
     _export_identity,
     _export_priorities,
+    _export_build_points,
+    _export_flags,
     _export_attributes,
     _export_skills,
     _export_qualities,

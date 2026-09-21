@@ -11,8 +11,10 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from ..data_loader import catalog
-from ..engine import compute
+from ..engine import find_metatype
+from ..engine.priority import heritage_cost, priority_value
 from ..models import CharacterState
+from ..rules import current_rules
 from ._common import _Ctx, _Names, _sub
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
@@ -27,14 +29,7 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "metatype", state.metatype)
     _sub(root, "metavariant", state.metavariant or "")
     _sub(root, "buildmethod", _BUILD_METHOD_OUT.get(state.build_method, "Priority"))
-    # Chummer keeps the enabled books in the settings *file*, not in the
-    # character, so all a .chum5 can carry is which settings the character was
-    # built under. The book list is restored on import by matching this name
-    # against the shipped presets; a name from elsewhere comes back
-    # unrestricted. Written only when set, so an untouched character exports
-    # byte-identically to before.
-    if state.settings.name:
-        _sub(root, "settings", state.settings.name)
+    _export_settings_key(root, state)
     # the creation availability limit does travel in the save — see the note in
     # `chummer_import.identity._import_settings`
     if state.settings.chargen_avail_max is not None:
@@ -57,13 +52,16 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         value = getattr(state, field, "")
         if value:
             _sub(root, tag, value)
+    # `<mainmugshotindex>` is which portrait is the main one, and -1 is
+    # Chummer's "none": a save without it is read as having a portrait at
+    # index 0 that is not there.
+    _sub(root, "mainmugshotindex", "0" if state.portrait else "-1")
     if state.portrait:
         b64 = state.portrait.split(",", 1)[-1] if state.portrait.startswith("data:") else state.portrait
-        _sub(root, "mainmugshotindex", "0")
         _sub(_sub(root, "mugshots"), "mugshot", b64)
     # Chummer's `<karma>` / `<nuyen>` are what is left to spend, not what was
     # earned (the reward log below is the history)
-    left = compute(state.model_copy(deep=True)).derived if state.career else {}
+    left = ctx["derived"] if state.career else {}
     _sub(root, "karma", int((left.get("karma") or {}).get("remaining") or 0) if state.career else 0)
     _sub(root, "nuyen", int(left.get("nuyen") or 0) if state.career else 0)
     if state.career and (state.reward_log or state.expense_log):
@@ -74,6 +72,49 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "burntstreetcred", state.burnt_street_cred)
     _sub(root, "notoriety", state.notoriety_bonus)
     _sub(root, "nuyenbp", state.karma_nuyen)
+
+
+def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
+    """Which settings the character was built under, in the terms Chummer
+    looks them up by.
+
+    `<settings>` is not the name on the pulldown: `Character.Load` takes it as
+    a key into `SettingsManager.LoadedCharacterSettings`, whose keys are
+    `CharacterSettings.DictionaryKey` — the `<id>` GUID for one of the shipped
+    presets, the file name for a settings file of the player's own. Writing
+    the display name (`Standard`) missed on both counts, and Chummer answered
+    with "the settings file could not be loaded", naming a file the player
+    could see in their own settings folder. Worse than the dialog: the
+    settings it falls back to decide whether attribute `<base>` survives the
+    load at all, so this is also what made the numbers come out negative.
+
+    When the key does miss — a settings file that lives on another machine —
+    Chummer scores every settings it has and substitutes the closest. It
+    scores on the build method, the budget (`maxkarma` / `maxnuyen`, written
+    next door), the custom data directories and the books, so `<sources>` and
+    `<customdatadirectorynames>` are what point it at the right one.
+
+    `<gameplayoption>` is the display name, where 5.202-era Chummer kept it —
+    and where this app's own importer reads it from first.
+    """
+    settings = state.settings
+    if not settings.name:
+        return
+    preset = next((p for p in catalog().get("settings_presets") or [] if p.get("name") == settings.name), None)
+    # A settings file of the player's own is keyed by its file name, which a
+    # .chum5 never carried and this app therefore does not hold. The name it
+    # was saved under is the best guess available, and the scoring below is
+    # what makes a miss land somewhere sensible.
+    _sub(root, "settings", str(preset["id"]) if preset else f"{settings.name}.xml")
+    _sub(root, "gameplayoption", settings.name)
+    if settings.books:
+        sources = _sub(root, "sources")
+        for code in settings.books:
+            _sub(sources, "source", code)
+    if settings.customdata:
+        directories = _sub(root, "customdatadirectorynames")
+        for name in settings.customdata:
+            _sub(directories, "directoryname", name)
 
 
 def _export_reward_log(root: ET.Element, state: CharacterState) -> None:
@@ -121,6 +162,116 @@ def _export_priorities(root: ET.Element, state: CharacterState, names: _Names, c
     ):
         _sub(root, tag, f"{letter},{_PRIORITY_VALUE.get(letter, 0)}")
     _sub(root, "prioritytalent", state.talent)
+
+
+def _export_build_points(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """The build's pools and prices, as figures rather than as a rule.
+
+    Chummer stores these (`Character.Load` reads every one back) instead of
+    recomputing them from the priority table, so a save that leaves them out
+    is read as a character with nothing to spend — points paid for, no pool
+    they came from. That is what made an export open in Chummer with negative
+    attributes and negative special attribute points.
+
+    `maxkarma` / `maxnuyen` are the exception: Chummer reads those only to
+    score which settings file to substitute when the one the save names is not
+    on that machine, so they are the *settings'* figures, not this
+    character's (a Born Rich cap would make the character look like a
+    different settings file). Current Chummer does not write them at all —
+    they are a 5.202-era field it still reads — and the two Prime Runner test
+    saves state a `maxkarma` of 35 and a contact multiplier today's
+    `settings.xml` does not carry anywhere, so those two are the figures this
+    app has rather than the ones those saves were written with.
+    """
+    derived = ctx["derived"]
+    points = derived.get("points") or {}
+    rules = current_rules()
+    # `special` is what the metatype priority handed out, the same number as
+    # `totalspecial`: Chummer tracks what was spent in the attributes
+    # themselves, and never decrements this.
+    special = int((points.get("special") or {}).get("max") or 0)
+    _sub(root, "special", special)
+    _sub(root, "totalspecial", special)
+    _sub(root, "totalattributes", int((points.get("attributes") or {}).get("max") or 0))
+    _sub(root, "contactpoints", int((derived.get("contact_points") or {}).get("free") or 0))
+    _sub(root, "spelllimit", int((derived.get("spell_points") or {}).get("free") or 0))
+    if state.build_method == "Karma":
+        # No priority table to read: the metatype is bought with karma, and
+        # every nuyen is converted from it.
+        _sub(root, "metatypebp", int((derived.get("karma_chargen") or {}).get("metatype") or 0))
+        _sub(root, "startingnuyen", 0)
+    else:
+        _sub(root, "metatypebp", heritage_cost(state.priorities.Heritage, state.metatype, state.metavariant)[1])
+        _sub(root, "startingnuyen", int(priority_value("Resources", state.priorities.Resources).get("nuyen") or 0))
+    _sub(root, "maxkarma", rules.chargen_karma)
+    _sub(root, "maxnuyen", rules.priority_karma_nuyen_base)
+
+
+def _flag(value: object) -> str:
+    """Chummer's spelling of a boolean."""
+    return "True" if value else "False"
+
+
+def _export_flags(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """What the character *is*, as Chummer's `Load` asks it.
+
+    Every one of these is a field `Character.Load` reads back, and each
+    missing one is read as its default — which is how an adept arrived in
+    Chummer mundane, with the Magic they paid for disallowed. They are
+    written from `enabled_tabs`, the same answer this app's own tabs are
+    drawn from, so the two readers cannot disagree about what the character
+    is.
+
+    `primaryarm` is the one figure here this app does not model: it has no
+    handedness, so every character is Chummer's own default of `Right`.
+    """
+    derived = ctx["derived"]
+    tabs = set(derived.get("enabled_tabs") or [])
+    # The category is the *metatype's*, not the metavariant's: Chummer writes
+    # `Metahuman` for a Nocturna, and `Shapeshifter` for a Vulpine's Human
+    # form.
+    base = find_metatype(state.metatype, None) or {}
+    own = find_metatype(state.metatype, state.metavariant) or {}
+    _sub(root, "gameedition", "SR5")
+    _sub(root, "createdversion", "Chummer Web")
+    _sub(root, "metatypecategory", base.get("category") or "Metahuman")
+    _sub(root, "primaryarm", "Right")
+    # The metatype's rates, not the metavariant's. A metavariant inherits
+    # them in Chummer's own saves (a Minotaur sprints at the Troll's 1/1/0),
+    # while this app's metavariant rows carry a generic 2/1/0 that no save
+    # agrees with.
+    for tag in ("walk", "run", "sprint"):
+        rate = base.get(tag) or own.get(tag)
+        if rate:
+            _sub(root, tag, rate)
+    _sub(root, "magenabled", _flag("MAG" in tabs))
+    _sub(root, "resenabled", _flag("RES" in tabs))
+    _sub(root, "depenabled", _flag("DEP" in tabs))
+    _sub(root, "adept", _flag("adept" in tabs))
+    _sub(root, "magician", _flag("magician" in tabs))
+    _sub(root, "technomancer", _flag("technomancer" in tabs))
+    # Chummer turns this on from an `<enabletab>` the metatype carries, which
+    # this app does not apply to metatypes yet: its one shapeshifter test save
+    # says True where this says False. Written all the same, so it follows
+    # `enabled_tabs` the day it does.
+    _sub(root, "critter", _flag("critter" in tabs))
+    _sub(root, "initiategrade", int(derived.get("initiate_grade") or 0))
+    _sub(root, "submersiongrade", int(derived.get("submersion_grade") or 0))
+    if tabs & {"MAG", "RES", "DEP"}:
+        # The essence the special attribute was granted at. This app has no
+        # way to start a character below 6, so that is what it always is —
+        # and a mundane character has no such moment, which Chummer's own
+        # loader fills in for itself.
+        _sub(root, "essenceatspecialstart", 6)
+    _sub(root, "prototypetranshuman", int(derived.get("prototype_transhuman_ess") or 0))
+    _sub(root, "cfplimit", int((derived.get("complex_form_points") or {}).get("free") or 0))
+    # `<publicawareness>` is left out on purpose. Chummer keeps it as a
+    # counter a GM moves and stores what it is told; this app works it out
+    # from street cred and notoriety instead, and the two do not agree in
+    # either direction in Chummer's own saves (`Serpent` stores 3 where this
+    # computes 0, `Popstar` stores 0 where this computes 3). Writing a
+    # computed figure into a stored field would make one of them up. It needs
+    # a field of its own on the import side first.
 
 
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
