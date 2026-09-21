@@ -5,6 +5,10 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ## [Unreleased]
 
+### Changed
+
+- 内部整理: `engine/compute/economy.py`（728 行）を段階ごとの 4 ファイル（優先度・技能・カルマ・社会）に分けた。計算結果は変わりません。
+
 ### Fixed
 
 - **カスタムデータで足した呪文・アデプトパワー・メンタースピリット・複合フォーム・メタマジックなどが、一覧に出なかった問題を直した。**
