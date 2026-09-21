@@ -5,7 +5,7 @@ import { PORTRAIT_TYPES } from "@/lib/character/portrait";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { renderNotice } from "@/lib/engine-notices";
+import { renderNotice, type Notice } from "@/lib/engine-notices";
 import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
@@ -30,6 +30,11 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   /** Advisories about an action that *succeeded* — never the red error box. */
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  /** what a .chum5 would lose, while the player decides whether to export it
+   *  anyway. Tied to the exact state it was checked against: any edit (or
+   *  switching character) makes it stale, and a stale review is dropped. */
+  const [review, setExportReview] = useState<{ of: Character; differences: Notice[] } | null>(null);
+  const exportReview = review && review.of === ch ? review.differences : null;
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
   const { ui, locale } = useUiText();
   const history = useCharacterHistory();
@@ -249,7 +254,32 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     URL.revokeObjectURL(a.href);
   }
 
+  /**
+   * Export a .chum5 — after asking the server what reading it back would
+   * change. A clean round trip saves straight away; otherwise the differences
+   * wait in `exportReview` for {@link confirmChum5} or {@link cancelChum5}.
+   * A failed check is not worth blocking the download over.
+   */
   async function downloadChum5() {
+    if (!ch) return;
+    const differences = await api.checkChummerExport(ch).catch(() => []);
+    if (differences.length) {
+      setExportReview({ of: ch, differences });
+      return;
+    }
+    await saveChum5();
+  }
+
+  async function confirmChum5() {
+    setExportReview(null);
+    await saveChum5();
+  }
+
+  function cancelChum5() {
+    setExportReview(null);
+  }
+
+  async function saveChum5() {
     if (!ch) return;
     try {
       const blob = await api.exportChummer(ch);
@@ -260,18 +290,6 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       URL.revokeObjectURL(a.href);
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
-      return;
-    }
-    // The file is already on its way; this only says what it will not carry.
-    // A failed check is not worth an error of its own.
-    const differences = await api.checkChummerExport(ch).catch(() => []);
-    if (differences.length) {
-      setError(
-        ui("app.exportDifferences", {
-          count: differences.length,
-          details: differences.map((d) => renderNotice(d, ui, tr)).join(" / "),
-        }),
-      );
     }
   }
 
@@ -373,6 +391,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     ch,
     error,
     notice,
+    exportReview,
     roster,
     copied,
     history,
@@ -395,6 +414,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onPortraitFile,
     download,
     downloadChum5,
+    confirmChum5,
+    cancelChum5,
     copyText,
     copyShareLink,
   };

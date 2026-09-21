@@ -664,24 +664,54 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.error).toBeNull();
   });
 
-  it("downloadChum5() says what the file will not carry, after saving it anyway", async () => {
+  it("downloadChum5() holds the file back while the player reviews what it would lose", async () => {
     api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
-    api.checkChummerExport.mockResolvedValue([
+    const lost = [
       { key: "engine.export.lost", params: { kind: { ui: "engine.kind.weapon" }, count: 1 } },
-    ]);
+    ];
+    api.checkChummerExport.mockResolvedValue(lost);
     const { result } = await booted();
 
     await act(async () => {
       await result.current.downloadChum5();
     });
+    expect(clicks).toHaveLength(0);
+    expect(result.current.exportReview).toEqual(lost);
 
+    await act(async () => {
+      await result.current.confirmChum5();
+    });
     expect(clicks).toHaveLength(1);
-    expect(result.current.error).toBe(
-      "書き出した chum5 を読み込み直すと 1 件の差が出ます — 武器が 1 件失われます",
-    );
+    expect(result.current.exportReview).toBeNull();
   });
 
-  it("a failed round-trip check does not turn a good download into an error", async () => {
+  it("cancelling the review writes nothing", async () => {
+    api.checkChummerExport.mockResolvedValue([{ key: "engine.export.karma", params: {} }]);
+    const { result } = await booted();
+
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    act(() => result.current.cancelChum5());
+
+    expect(result.current.exportReview).toBeNull();
+    expect(api.exportChummer).not.toHaveBeenCalled();
+  });
+
+  it("an edit after the check drops the now-stale review", async () => {
+    api.checkChummerExport.mockResolvedValue([{ key: "engine.export.karma", params: {} }]);
+    const { result } = await booted();
+
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    expect(result.current.exportReview).not.toBeNull();
+    act(() => result.current.setCh({ ...result.current.ch!, name: "Renamed" }));
+
+    expect(result.current.exportReview).toBeNull();
+  });
+
+  it("a failed round-trip check does not stand in the way of the download", async () => {
     api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
     api.checkChummerExport.mockRejectedValue(new Error("offline"));
     const { result } = await booted();
@@ -696,6 +726,7 @@ describe("useCharacterEditor file exports", () => {
 
   it("a refused .chum5 export is a message, not an unhandled rejection", async () => {
     api.exportChummer.mockRejectedValue(new Error(""));
+    api.checkChummerExport.mockResolvedValue([]);
     const { result } = await booted();
 
     await act(async () => {
