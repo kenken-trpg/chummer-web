@@ -181,6 +181,12 @@ class Rules:
     #: included, unless a settings file says otherwise.
     limb_count: int = 6
     exclude_limb_slot: str = ""
+    #: Chummer's `CyberlimbAttributeBonusCap`: Enhancement plus Redliner /
+    #: Cyberseeker adds at most this to a cyberlimb's STR / AGI.
+    cyberlimb_attribute_bonus_cap: int = 4
+    #: `<dontusecyberlimbcalculation>`: the body's STR / AGI stays the meat
+    #: value however many cyberlimbs it has.
+    dont_use_cyberlimb_calculation: bool = False
 
     # --- money ---------------------------------------------------------
     karma_to_nuyen: int = 2000
@@ -286,6 +292,7 @@ _DIRECT: dict[str, str] = {
     "min_astral_initiative_dice": "min_astral_initiative_dice",
     "max_astral_initiative_dice": "max_astral_initiative_dice",
     "limb_count": "limb_count",
+    "cyberlimb_attribute_bonus_cap": "cyberlimb_attribute_bonus_cap",
     "karma_to_nuyen": "karma_to_nuyen",
     "metatype_costs_karma_multiplier": "metatype_costs_karma_multiplier",
     "karma_spirit": "karma_spirit",
@@ -322,6 +329,7 @@ def rules_for(settings: object | None) -> Rules:
         ("dont_double_quality_purchases", "quality_dont_double_purchases"),
         ("dont_double_quality_refunds", "quality_dont_double_refunds"),
         ("cyberleg_movement", "cyberleg_movement"),
+        ("dont_use_cyberlimb_calculation", "dont_use_cyberlimb_calculation"),
         ("use_calculated_public_awareness", "use_calculated_public_awareness"),
         ("no_armor_encumbrance", "no_armor_encumbrance"),
         ("uncapped_armor_accessory_bonuses", "uncapped_armor_accessory_bonuses"),

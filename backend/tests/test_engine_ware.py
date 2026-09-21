@@ -1556,3 +1556,69 @@ def test_an_empty_chemical_gland_still_costs_its_base_price() -> None:
     prices = {row["name"]: row["nuyen"] for row in out.derived["bioware"]}
     assert prices["Chemical Gland (Internal Release or Gradual Release)"] == 20000
     assert prices["Chemical Gland (Weapon Reservoir)"] == 24000
+
+
+def _limb_arm(settings: SettingsState | None = None, str_rating: int = 3) -> CharacterState:
+    return CharacterState(
+        id="limb-bonus-cap",
+        name="LimbBonusCap",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=default_attributes(find_metatype("Human", None)),
+        cyberware=[
+            CyberwareInstall(id="arm1", ware_id=ARM),
+            CyberwareInstall(ware_id=ENHANCED_STR, rating=str_rating, parent_id="arm1"),
+        ],
+        settings=settings or SettingsState(),
+    )
+
+
+def test_cyberlimb_enhancement_is_held_to_the_settings_bonus_cap() -> None:
+    def arm_str(settings: SettingsState | None) -> int:
+        out = compute(_limb_arm(settings))
+        return int(next(item for item in out.derived["cyberware"] if item["id"] == "arm1")["limb_str"])
+
+    assert arm_str(None) == 6  # base 3 + Enhanced 3, under Chummer's cap of 4
+    assert arm_str(SettingsState(cyberlimb_attribute_bonus_cap=1)) == 4
+
+
+def test_redliner_shares_the_cyberlimb_bonus_cap() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    state = CharacterState(
+        id="redliner-cap",
+        name="RedlinerCap",
+        priorities=Priorities(Heritage="C", Attributes="B", Talent="E", Skills="D", Resources="A"),
+        metatype="Human",
+        attributes=attrs,
+        quality_ids=[REDLINER],
+        cyberware=[
+            CyberwareInstall(id="arm1", ware_id=ARM, side="Left"),
+            CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm1"),
+            CyberwareInstall(id="arm2", ware_id=ARM, side="Right"),
+            CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id="arm2"),
+        ],
+        settings=SettingsState(cyberlimb_attribute_bonus_cap=0),
+    )
+    out = compute(state)
+    arms = [item for item in out.derived["cyberware"] if item["ware_id"] == ARM]
+    assert all(item["limb_str"] == 6 for item in arms)
+
+
+def test_dont_use_cyberlimb_calculation_keeps_the_meat_strength() -> None:
+    attrs = default_attributes(find_metatype("Human", None))
+    ware = []
+    for i, limb in enumerate((ARM, ARM, LEG, LEG, TORSO)):
+        ware.append(CyberwareInstall(id=f"limb{i}", ware_id=limb))
+        ware.append(CyberwareInstall(ware_id=CUSTOM_STR, rating=6, parent_id=f"limb{i}"))
+    state = CharacterState(
+        id="no-limb-calc",
+        name="NoLimbCalc",
+        priorities=Priorities(),
+        metatype="Human",
+        attributes=attrs,
+        cyberware=ware,
+        settings=SettingsState(dont_use_cyberlimb_calculation=True),
+    )
+    out = compute(state)
+    assert out.derived["limb_replace"] is None
+    assert out.derived["totals"]["STR"] == 1

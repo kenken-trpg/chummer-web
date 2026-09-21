@@ -95,6 +95,11 @@ class SettingsState(BaseModel):
     #: STR / AGI is averaged across, and a slot left out of that average
     limb_count: int | None = None
     exclude_limb_slot: str | None = Field(default=None, max_length=20)
+    #: `<cyberlimbattributebonuscap>`: the most a cyberlimb's STR / AGI rises
+    #: above its Customization; `<dontusecyberlimbcalculation>`: the body's
+    #: STR / AGI ignores the cyberlimb average
+    cyberlimb_attribute_bonus_cap: int | None = None
+    dont_use_cyberlimb_calculation: bool | None = None
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
     #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
