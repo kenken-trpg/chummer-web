@@ -157,6 +157,10 @@ _HANDLED_ELSEWHERE = {
     "freespiritpowerpointsmag",
     # `<allowhigherstackedfoci>` is loaded by Chummer but never read.
     "allowhigherstackedfoci",
+    # dead in Chummer: read but never used
+    "ignorecomplexformlimit",
+    # dead in Chummer: read but never used
+    "allowtechnomancerschooling",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
@@ -189,6 +193,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "mysaddppcareer": "mystic_adept_pp_in_career",
     "spiritforcebasedontotalmag": "spirit_force_based_on_total_mag",
     "freemartialartspecialization": "free_martial_art_specialization",
+    "allowfreegrids": "allow_free_grids",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

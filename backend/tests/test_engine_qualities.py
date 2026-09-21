@@ -1225,3 +1225,20 @@ def test_a_spirit_pick_saved_the_short_way_is_still_valid() -> None:
     </character>""".encode()
     state = chum5_to_state(raw)[0]
     assert state["quality_extras"][bane["id"]] == "Spirit of Man"
+
+
+def test_free_grids_follow_hard_targets_or_the_setting() -> None:
+    def grids(settings: SettingsState) -> int:
+        out = compute(
+            _mundane(
+                "grids",
+                lifestyles=[LifestyleInstall(lifestyle_id=MEDIUM_LIFESTYLE, months=1)],
+                settings=settings,
+            )
+        )
+        return sum(1 for q in out.derived["lifestyle"]["qualities"] if q.get("from_freegrid"))
+
+    assert grids(SettingsState()) == 2
+    assert grids(SettingsState(books=["SR5", "HT"])) == 2
+    assert grids(SettingsState(books=["SR5"])) == 0
+    assert grids(SettingsState(books=["SR5"], allow_free_grids=True)) == 2

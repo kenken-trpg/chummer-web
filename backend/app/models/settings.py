@@ -164,6 +164,8 @@ class SettingsState(BaseModel):
     spirit_force_based_on_total_mag: bool | None = None
     #: `<freemartialartspecialization>`
     free_martial_art_specialization: bool | None = None
+    #: `<allowfreegrids>`
+    allow_free_grids: bool | None = None
     #: The attribute capping bound spirits / registered sprites
     #: (`<boundspiritexpression>` / `<registeredspriteexpression>`).
     bound_spirit_attr: str | None = Field(default=None, max_length=3)

@@ -691,3 +691,13 @@ def test_the_redliner_exclusion_list_is_read() -> None:
     assert rules_for(parsed).redliner_excludes == ("skull",)
     assert parse_settings_xml("<settings><name>R</name></settings>").redliner_exclusion is None
     assert rules_for(SettingsState()).redliner_excludes == ("skull", "torso")
+
+
+def test_technomancer_tags_are_read_or_known_dead() -> None:
+    parsed = parse_settings_xml(
+        _settings_xml(allowfreegrids="True", ignorecomplexformlimit="True", allowtechnomancerschooling="True")
+    )
+    assert parsed.allow_free_grids is True
+    assert rules_for(parsed).allow_free_grids is True
+    for tag in ("allowfreegrids", "ignorecomplexformlimit", "allowtechnomancerschooling"):
+        assert tag not in parsed.unsupported
