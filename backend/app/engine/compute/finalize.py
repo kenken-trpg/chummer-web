@@ -130,7 +130,13 @@ def finalize(ctx: Ctx) -> None:
     ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
     ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]
     ctx.initiative = rea + intuition + ctx.effects["initiative"]
-    ctx.initiative_dice = 1 + int(ctx.effects.get("initiative_dice") or 0)
+    # Chummer `InitiativeDice`: the settings' minimum plus what augmentations
+    # add, never past the maximum — Wired Reflexes 3 on top of Synaptic
+    # Booster 3 is still five dice.
+    ctx.initiative_dice = min(
+        current_rules().min_initiative_dice + int(ctx.effects.get("initiative_dice") or 0),
+        current_rules().max_initiative_dice,
+    )
     ctx.warnings.extend(
         attach_spirit_tests(
             list(ctx.spirits.get("public") or []),

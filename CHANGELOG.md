@@ -7,6 +7,12 @@ self-hosters can pin to a tag instead of tracking `main`.
 
 ### Fixed
 
+- **イニシアチブのダイスに上限がついた。** Chummer の `InitiativeDice` は
+  「設定の下限 ＋ 強化の分」を上限（標準 5 個）で打ち切りますが、この app は
+  打ち切っていなかったので、強化を重ねると 5 個を超えていました。上限・下限と、
+  VR のコールドシム（3〜5）・ホットシム（4〜5）のダイス数を、設定ファイルの
+  `<maxinitiativedice>` ほか 6 キーから読みます。
+
 - **周知度（Public Awareness）を、Chummer と同じ出し方にした。** Chummer の
   周知度は「GM が付けた数 ＋ 資質の修正」で、ストリートクレッドと悪名から
   ⌊(SC + 悪名) / 3⌋ を足すのは設定 `<usecalculatedpublicawareness>` が有効な

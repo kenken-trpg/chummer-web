@@ -129,6 +129,16 @@ class Rules:
     chargen_avail_max: int = CHARGEN_AVAIL_MAX
     #: Astral initiative is INT×2 + this many D6 (SR5 p.315: 3); Chummer
     #: rolls `min(min, max)` of the two settings.
+    #: Physical initiative starts at the minimum and is capped at the
+    #: maximum, however many dice augmentations add (Chummer's
+    #: `InitiativeDice`: SR5 p.159, five at most). Cold-sim and hot-sim VR
+    #: work the same way off their own pair (SR5 p.229: 3 and 4 dice).
+    min_initiative_dice: int = 1
+    max_initiative_dice: int = 5
+    min_coldsim_initiative_dice: int = 3
+    max_coldsim_initiative_dice: int = 5
+    min_hotsim_initiative_dice: int = 4
+    max_hotsim_initiative_dice: int = 5
     min_astral_initiative_dice: int = 3
     max_astral_initiative_dice: int = 5
     #: Cyberlimb averaging (Chummer's `LimbCount`): six limbs, skull
@@ -222,6 +232,12 @@ _DIRECT: dict[str, str] = {
     "career_skill_max": "career_skill_max",
     "career_knowledge_skill_max": "career_knowledge_skill_max",
     "chargen_avail_max": "chargen_avail_max",
+    "min_initiative_dice": "min_initiative_dice",
+    "max_initiative_dice": "max_initiative_dice",
+    "min_coldsim_initiative_dice": "min_coldsim_initiative_dice",
+    "max_coldsim_initiative_dice": "max_coldsim_initiative_dice",
+    "min_hotsim_initiative_dice": "min_hotsim_initiative_dice",
+    "max_hotsim_initiative_dice": "max_hotsim_initiative_dice",
     "min_astral_initiative_dice": "min_astral_initiative_dice",
     "max_astral_initiative_dice": "max_astral_initiative_dice",
     "limb_count": "limb_count",

@@ -81,6 +81,12 @@ class SettingsState(BaseModel):
     career_skill_max: int | None = None
     career_knowledge_skill_max: int | None = None
     chargen_avail_max: int | None = None
+    min_initiative_dice: int | None = None
+    max_initiative_dice: int | None = None
+    min_coldsim_initiative_dice: int | None = None
+    max_coldsim_initiative_dice: int | None = None
+    min_hotsim_initiative_dice: int | None = None
+    max_hotsim_initiative_dice: int | None = None
     min_astral_initiative_dice: int | None = None
     max_astral_initiative_dice: int | None = None
     #: `<limbcount>` / `<excludelimbslot>`: how many limbs a cyberlimb's
