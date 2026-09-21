@@ -219,6 +219,10 @@ export const JA_ENGINE = {
   "engine.initiation.metamagicUnknown": "{source} のメタマジック {name} が見つかりません",
   "engine.initiation.metamagicUnknownDropped": "未知のメタマジックを等級 {grade} から外しました",
   "engine.initiation.needsMagic": "イニシエーションには魔力が必要です",
+  "engine.initiation.notInCreate":
+    "キャラ作成中はイニシエーションできません（設定で許可されていません）",
+  "engine.submersion.notInCreate":
+    "キャラ作成中はサブマージョンできません（設定で許可されていません）",
   "engine.initiation.notForAdepts": "{name} はアデプト向けではありません",
   "engine.initiation.notForMagicians": "{name} は魔術師向けではありません",
   "engine.initiation.pickOption":

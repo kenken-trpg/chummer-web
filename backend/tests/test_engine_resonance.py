@@ -464,3 +464,11 @@ def test_essence_loss_is_not_saved_into_the_rating() -> None:
         state = compute(state)
     assert state.attributes["RES"] == 6
     assert state.derived["totals"]["RES"] == 5
+
+
+def test_submersion_at_chargen_needs_the_setting() -> None:
+    kw = {"submersion_grade": 1, "submersions": [SubmersionChoice(grade=1, echo_id=OVERCLOCKING)]}
+    chargen = compute(_techno("sub-create", "A", **kw))
+    assert has(chargen.derived["errors"], "engine.submersion.notInCreate")
+    allowed = compute(_techno("sub-create-ok", "A", settings=SettingsState(allow_initiation_in_create_mode=True), **kw))
+    assert not has(allowed.derived["errors"], "engine.submersion.notInCreate")

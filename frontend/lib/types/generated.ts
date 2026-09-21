@@ -380,6 +380,8 @@ export interface CharacterSettings {
   restricted_cost_multiplier?: number | null;
   multiply_forbidden_cost?: boolean | null;
   forbidden_cost_multiplier?: number | null;
+  /** `<allowinitiationincreatemode>` */
+  allow_initiation_in_create_mode?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */

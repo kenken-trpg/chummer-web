@@ -1329,3 +1329,17 @@ def test_the_house_rule_lowers_only_the_magic_maximum() -> None:
     assert _magician_with_datajacks(grades)["totals"]["MAG"] == 2
     out = _magician_with_datajacks(grades, SettingsState(ess_loss_reduces_maximum_only=True))
     assert out["totals"]["MAG"] == 4
+
+
+def test_initiation_at_chargen_needs_the_setting() -> None:
+    """`<allowinitiationincreatemode>` is off in Standard, so a grade taken
+    before the character is finished is an error (Chummer's
+    `AddInitiationsAllowed`); the setting or career mode lifts it."""
+    kw = {"initiate_grade": 1, "initiations": [InitiationChoice(grade=1, kind="metamagic", option_id=QUICKENING_META)]}
+    chargen = compute(_mage("init-create", **kw))
+    assert has(chargen.derived["errors"], "engine.initiation.notInCreate")
+    allowed = compute(_mage("init-create-ok", settings=SettingsState(allow_initiation_in_create_mode=True), **kw))
+    assert not has(allowed.derived["errors"], "engine.initiation.notInCreate")
+    assert allowed.derived["initiation"]["karma"] == 13
+    career = compute(_mage("init-career", career=True, **kw))
+    assert not has(career.derived["errors"], "engine.initiation.notInCreate")

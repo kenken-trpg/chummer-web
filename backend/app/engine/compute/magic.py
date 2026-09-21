@@ -5,6 +5,7 @@ spirits, complex forms and sprites once ``ctx.total`` is settled (``spells``).""
 from __future__ import annotations
 
 from ...improvements import apply_bonus_nodes
+from ...notices import notice
 from ...rules import current_rules
 from ..constants import (
     COMPLEX_FORM_TALENTS,
@@ -69,6 +70,11 @@ def awakened(ctx: Ctx) -> None:
         apply_bonus_nodes(nodes, ctx.effects, source)
     if ctx.talent["name"] in RES_TALENTS:
         ctx.enabled.add("submersion")
+    if not ctx.career and not current_rules().allow_initiation_in_create_mode:
+        if ctx.initiation["grade"]:
+            ctx.errors.append(notice("engine.initiation.notInCreate"))
+        if ctx.submersion["grade"]:
+            ctx.errors.append(notice("engine.submersion.notInCreate"))
     ctx.qi = resolve_qi_foci(
         ctx.state,
         ctx.talent["name"],
