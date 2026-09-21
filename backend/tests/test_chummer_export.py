@@ -601,3 +601,54 @@ def test_a_metavariant_is_charged_for_its_heritage_once() -> None:
     # a metatype whose variants really do cost extra still reads its own row
     assert heritage_cost("C", "Elf", "Wakyambi") == (3, 12)
     assert heritage_cost("C", "Elf", None) == (3, 0)
+
+
+def test_what_the_character_is_is_written_for_chummer_to_read() -> None:
+    """`Character.Load` reads each of these back, and a missing one is read as
+    its default: an adept whose `<adept>` is absent opens in Chummer mundane,
+    with the Magic they paid for disallowed. They follow `enabled_tabs`, the
+    same answer this app draws its own tabs from."""
+    src = _rich_state()  # a Magician
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    assert (root.findtext("magenabled"), root.findtext("magician")) == ("True", "True")
+    assert [root.findtext(t) for t in ("adept", "technomancer", "resenabled", "depenabled")] == [
+        "False",
+        "False",
+        "False",
+        "False",
+    ]
+    # the moment the special attribute was granted: this app cannot start a
+    # character below 6
+    assert root.findtext("essenceatspecialstart") == "6"
+    assert root.findtext("gameedition") == "SR5"
+    assert root.findtext("metatypecategory") == "Metahuman"
+    assert (root.findtext("walk"), root.findtext("run")) == ("2/1/0", "4/0/0")
+
+
+def test_a_mundane_character_claims_no_special_attribute() -> None:
+    """The flags are written for every character, not only the awakened: left
+    out, they are the *previous* character's in a Chummer already holding
+    one. A mundane has no moment a special attribute was granted, which
+    Chummer's own loader fills in for itself."""
+    base = _rich_state()
+    src = base.model_copy(
+        update={
+            # the talent is the *priority*, not the label: leaving Talent on A
+            # keeps Magic switched on whatever the name says
+            "priorities": base.priorities.model_copy(update={"Talent": "E", "Resources": "A"}),
+            "talent": "Mundane",
+            "spells": [],
+            "mystic_pp": 0,
+        }
+    )
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    assert [root.findtext(t) for t in ("magenabled", "magician", "adept")] == ["False", "False", "False"]
+    assert root.find("essenceatspecialstart") is None
+
+
+def test_a_portrait_free_character_says_it_has_no_main_portrait() -> None:
+    """-1 is Chummer's "none". Without it the save is read as having a
+    portrait at index 0 that is not there."""
+    root = ET.fromstring(state_to_chum5(import_character(_rich_state().model_copy(update={"portrait": ""}))))
+    assert root.findtext("mainmugshotindex") == "-1"
+    assert root.find("mugshots") is None

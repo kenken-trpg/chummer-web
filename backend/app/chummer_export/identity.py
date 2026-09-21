@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from ..data_loader import catalog
+from ..engine import find_metatype
 from ..engine.priority import heritage_cost, priority_value
 from ..models import CharacterState
 from ..rules import current_rules
@@ -58,9 +59,12 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
         value = getattr(state, field, "")
         if value:
             _sub(root, tag, value)
+    # `<mainmugshotindex>` is which portrait is the main one, and -1 is
+    # Chummer's "none": a save without it is read as having a portrait at
+    # index 0 that is not there.
+    _sub(root, "mainmugshotindex", "0" if state.portrait else "-1")
     if state.portrait:
         b64 = state.portrait.split(",", 1)[-1] if state.portrait.startswith("data:") else state.portrait
-        _sub(root, "mainmugshotindex", "0")
         _sub(_sub(root, "mugshots"), "mugshot", b64)
     # Chummer's `<karma>` / `<nuyen>` are what is left to spend, not what was
     # earned (the reward log below is the history)
@@ -165,6 +169,73 @@ def _export_build_points(root: ET.Element, state: CharacterState, names: _Names,
         _sub(root, "startingnuyen", int(priority_value("Resources", state.priorities.Resources).get("nuyen") or 0))
     _sub(root, "maxkarma", rules.chargen_karma)
     _sub(root, "maxnuyen", rules.priority_karma_nuyen_base)
+
+
+def _flag(value: object) -> str:
+    """Chummer's spelling of a boolean."""
+    return "True" if value else "False"
+
+
+def _export_flags(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
+    """What the character *is*, as Chummer's `Load` asks it.
+
+    Every one of these is a field `Character.Load` reads back, and each
+    missing one is read as its default — which is how an adept arrived in
+    Chummer mundane, with the Magic they paid for disallowed. They are
+    written from `enabled_tabs`, the same answer this app's own tabs are
+    drawn from, so the two readers cannot disagree about what the character
+    is.
+
+    `primaryarm` is the one figure here this app does not model: it has no
+    handedness, so every character is Chummer's own default of `Right`.
+    """
+    derived = ctx["derived"]
+    tabs = set(derived.get("enabled_tabs") or [])
+    # The category is the *metatype's*, not the metavariant's: Chummer writes
+    # `Metahuman` for a Nocturna, and `Shapeshifter` for a Vulpine's Human
+    # form.
+    base = find_metatype(state.metatype, None) or {}
+    own = find_metatype(state.metatype, state.metavariant) or {}
+    _sub(root, "gameedition", "SR5")
+    _sub(root, "createdversion", "Chummer Web")
+    _sub(root, "metatypecategory", base.get("category") or "Metahuman")
+    _sub(root, "primaryarm", "Right")
+    # The metatype's rates, not the metavariant's. A metavariant inherits
+    # them in Chummer's own saves (a Minotaur sprints at the Troll's 1/1/0),
+    # while this app's metavariant rows carry a generic 2/1/0 that no save
+    # agrees with.
+    for tag in ("walk", "run", "sprint"):
+        rate = base.get(tag) or own.get(tag)
+        if rate:
+            _sub(root, tag, rate)
+    _sub(root, "magenabled", _flag("MAG" in tabs))
+    _sub(root, "resenabled", _flag("RES" in tabs))
+    _sub(root, "depenabled", _flag("DEP" in tabs))
+    _sub(root, "adept", _flag("adept" in tabs))
+    _sub(root, "magician", _flag("magician" in tabs))
+    _sub(root, "technomancer", _flag("technomancer" in tabs))
+    # Chummer turns this on from an `<enabletab>` the metatype carries, which
+    # this app does not apply to metatypes yet: its one shapeshifter test save
+    # says True where this says False. Written all the same, so it follows
+    # `enabled_tabs` the day it does.
+    _sub(root, "critter", _flag("critter" in tabs))
+    _sub(root, "initiategrade", int(derived.get("initiate_grade") or 0))
+    _sub(root, "submersiongrade", int(derived.get("submersion_grade") or 0))
+    if tabs & {"MAG", "RES", "DEP"}:
+        # The essence the special attribute was granted at. This app has no
+        # way to start a character below 6, so that is what it always is —
+        # and a mundane character has no such moment, which Chummer's own
+        # loader fills in for itself.
+        _sub(root, "essenceatspecialstart", 6)
+    _sub(root, "prototypetranshuman", int(derived.get("prototype_transhuman_ess") or 0))
+    _sub(root, "cfplimit", int((derived.get("complex_form_points") or {}).get("free") or 0))
+    # `<publicawareness>` is left out on purpose. Chummer keeps it as a
+    # counter a GM moves and stores what it is told; this app works it out
+    # from street cred and notoriety instead, and the two do not agree in
+    # either direction in Chummer's own saves (`Serpent` stores 3 where this
+    # computes 0, `Popstar` stores 0 where this computes 3). Writing a
+    # computed figure into a stored field would make one of them up. It needs
+    # a field of its own on the import side first.
 
 
 def _export_attributes(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
