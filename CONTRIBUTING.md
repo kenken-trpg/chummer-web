@@ -33,7 +33,9 @@ to LF, and a CRLF `scripts/retry.sh` breaks the Docker build.
 ```
 backend/                FastAPI + the rules engine (Python 3.11+)
   app/
-    main.py             HTTP routes (thin; delegates to characters/catalog_view)
+    main.py             builds the FastAPI app: middleware order, routers
+    api/                HTTP routes (thin; delegate to characters/catalog_view),
+                        env knobs + rate limits (deploy.py), middleware.py
     models/             Pydantic models: CharacterState, CharacterPatch, installs
     characters.py       pure new / patch / compute / import (no storage)
     catalog_view/       public_catalog(): the catalog projected for the UI,

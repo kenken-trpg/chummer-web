@@ -5,7 +5,7 @@ headers itself:
 
 * ``deploy/Caddyfile`` — the bundled container's edge, in front of both
 * ``frontend/next.config.ts`` — a split deploy, or a bare ``next start``
-* ``backend/app/main.py`` — every ``/api`` answer, and a split deploy's backend
+* ``backend/app/api/middleware.py`` — every ``/api`` answer, and a split deploy's backend
 
 There is nowhere for one literal to live across a Caddyfile, a TypeScript
 config and a Python dict, so this is the shared place: it reads all three and
@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from app.main import _PERMISSIONS_POLICY, _SECURITY_HEADERS
+from app.api.middleware import _PERMISSIONS_POLICY, _SECURITY_HEADERS
 
 _ROOT = Path(__file__).resolve().parents[2]
 _CADDYFILE = _ROOT / "deploy" / "Caddyfile"
@@ -94,7 +94,7 @@ def test_the_three_senders_agree_on_the_shared_headers() -> None:
     senders = {
         "Caddyfile": _caddy_headers(),
         "next.config.ts": _next_headers(),
-        "main.py": dict(_SECURITY_HEADERS),
+        "api/middleware.py": dict(_SECURITY_HEADERS),
     }
     drift = [
         f"{where} sends {name}={sent.get(name)!r}, want {want!r}"
@@ -115,7 +115,7 @@ def test_nobody_sends_the_headers_we_decided_against() -> None:
     for where, sent in (
         ("Caddyfile", _caddy_headers()),
         ("next.config.ts", _next_headers()),
-        ("main.py", dict(_SECURITY_HEADERS)),
+        ("api/middleware.py", dict(_SECURITY_HEADERS)),
     ):
         overreach = NOT_SENT & set(sent)
         assert not overreach, f"{where} sends {sorted(overreach)} — see NOT_SENT for why it should not"

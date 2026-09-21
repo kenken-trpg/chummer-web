@@ -97,7 +97,7 @@ subscribes to that channel and renders it as a `notice` (muted) — distinct fro
 `characters.py` is pure: `new_character` / `apply_patch(state, patch)` /
 `compute_state` / `import_character`. No dict, no `saves/`, no database, no auth.
 `/api/catalog` is ~2.9 MB and identical for the life of the process (the
-vendored data is fixed at image-build time), so `main.py` serialises it once and
+vendored data is fixed at image-build time), so `api/catalog.py` serialises it once and
 serves it with an ETag: a reload revalidates and gets a 304 instead of the
 payload again. `no-cache`, not `immutable` — the URL carries no version, so a
 container update has to be able to invalidate it. Nothing on the client opts

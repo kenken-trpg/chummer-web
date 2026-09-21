@@ -42,7 +42,7 @@ def test_a_forwarded_request_id_is_ignored_without_a_trusted_proxy() -> None:
 
 
 def test_a_forwarded_request_id_is_taken_and_bounded_behind_a_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.main._TRUSTED_PROXY_HOPS", 1)
+    monkeypatch.setattr("app.api.deploy._TRUSTED_PROXY_HOPS", 1)
     assert client.get("/api/health", headers={"X-Request-ID": "edge-123"}).headers["x-request-id"] == "edge-123"
     # an essay in the header must not become an essay on every log line
     long = client.get("/api/health", headers={"X-Request-ID": "z" * 500}).headers["x-request-id"]
@@ -59,7 +59,7 @@ def test_the_access_line_names_the_route_and_its_timing(caplog: pytest.LogCaptur
 
 
 def test_the_body_size_rejection_is_logged(caplog: pytest.LogCaptureFixture) -> None:
-    from app.main import _MAX_REQUEST_BYTES
+    from app.api.deploy import _MAX_REQUEST_BYTES
 
     with caplog.at_level(logging.WARNING, logger="chummer_web"):
         response = client.post("/api/characters/patch", content=b"x" * (_MAX_REQUEST_BYTES + 1))
