@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { VehicleDroneGear } from "@/components/character/tabs/gear/VehicleDroneGear";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const drone = {
   id: "fly",
   name: "MCT Fly-Spy",
@@ -41,7 +39,7 @@ function renderTab(
     <VehicleDroneGear
       {...panelProps(ch, {
         catalog:
-          over.catalog ?? makeCatalog({ drones: [drone] as any, vehicles: [vehicle] as any }),
+          over.catalog ?? makeCatalog({ drones: [drone] as never, vehicles: [vehicle] as never }),
         patch: over.patch ?? (() => {}),
       })}
       mode={mode}
@@ -52,13 +50,13 @@ function renderTab(
 describe("<VehicleDroneGear>", () => {
   it("spells out the vehicle stat abbreviations", () => {
     const owned = { ...vehicle, accel: 2, body: 11, armor: 6, pilot: 1, sensor: 2, nuyen: 16000 };
-    const ch = makeCharacter({ vehicles: [owned], derived: { vehicles: [owned] } } as any);
+    const ch = makeCharacter({ vehicles: [owned], derived: { vehicles: [owned] } } as never);
     const { container } = render(
       <VehicleDroneGear
-        {...(panelProps(ch, {
-          catalog: makeCatalog({ drones: [drone] as any, vehicles: [vehicle] as any }),
+        {...panelProps(ch, {
+          catalog: makeCatalog({ drones: [drone] as never, vehicles: [vehicle] as never }),
           patch: () => {},
-        }) as any)}
+        })}
         mode="vehicle"
       />,
     );

@@ -107,9 +107,4 @@ export default [
       ],
     },
   },
-  {
-    // Tests still cast fixtures with `as any`; not worth the churn.
-    files: ["**/*.test.ts", "**/*.test.tsx", "tests/**"],
-    rules: { "@typescript-eslint/no-explicit-any": "warn" },
-  },
 ];

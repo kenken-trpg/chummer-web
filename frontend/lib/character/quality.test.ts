@@ -8,8 +8,6 @@ import {
   type QualityReqCtx,
 } from "@/lib/character/quality";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const baseCtx = (over: Partial<QualityReqCtx> = {}): QualityReqCtx => ({
   qualities: new Set(),
   metatypes: new Set(["Human"]),
@@ -117,14 +115,14 @@ describe("qualityTreeMet / qualityBlockReason", () => {
   });
   it("qualityBlockReason: unmet required / matched forbidden / clear", () => {
     const ctx = baseCtx({ magenabled: true });
-    expect(qualityBlockReason({ required_tree: [{ tag: "magenabled" }] } as any, ctx, testUi)).toBe(
-      "",
-    );
-    expect(qualityBlockReason({ required_tree: [{ tag: "resenabled" }] } as any, ctx, testUi)).toBe(
-      "前提を満たしていません",
-    );
     expect(
-      qualityBlockReason({ forbidden_tree: [{ tag: "magenabled" }] } as any, ctx, testUi),
+      qualityBlockReason({ required_tree: [{ tag: "magenabled" }] } as never, ctx, testUi),
+    ).toBe("");
+    expect(
+      qualityBlockReason({ required_tree: [{ tag: "resenabled" }] } as never, ctx, testUi),
+    ).toBe("前提を満たしていません");
+    expect(
+      qualityBlockReason({ forbidden_tree: [{ tag: "magenabled" }] } as never, ctx, testUi),
     ).toBe("現在のキャラクターでは取れません");
   });
 });
@@ -142,7 +140,7 @@ describe("dropSkillPicksForPrefix / dropRemovedWarePicks", () => {
     expect(
       dropRemovedWarePicks(
         { "ware:w1:skill": "Pistols", "ware:w2:skill": "Blades", other: "keep" },
-        [{ id: "w1" } as any],
+        [{ id: "w1" } as never],
       ),
     ).toEqual({ "ware:w1:skill": "Pistols", other: "keep" });
   });

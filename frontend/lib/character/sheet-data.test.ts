@@ -1,18 +1,16 @@
 import { buildSheetData } from "@/lib/character/sheet-data";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 describe("buildSheetData", () => {
   it("splits the gear list into misc / drugs / sins, skipping children", () => {
-    const gear: any[] = [
+    const gear: Record<string, unknown>[] = [
       { id: "g1", name: "Rope" },
       { id: "d1", name: "Novacoke", category: "Drugs" },
       { id: "s1", name: "Fake SIN", category: "ID/Credsticks" },
       { id: "g1c", name: "Attachment", parent_id: "g1" },
     ];
     const s = buildSheetData({
-      character: makeCharacter({ derived: { gear } }),
+      character: makeCharacter({ derived: { gear: gear as never } }),
       catalog: makeCatalog(),
       tr: identityTr,
       layout: "standard",
@@ -27,16 +25,16 @@ describe("buildSheetData", () => {
     const s = buildSheetData({
       character: makeCharacter({
         derived: {
-          cyberware: [{ id: "c1" }, { id: "c1a", parent_id: "c1" }] as any,
-          bioware: [{ id: "b1" }] as any,
+          cyberware: [{ id: "c1" }, { id: "c1a", parent_id: "c1" }] as never,
+          bioware: [{ id: "b1" }] as never,
         },
       }),
       catalog: makeCatalog(),
       tr: identityTr,
       layout: "standard",
     });
-    expect(s.cyber.map((c: any) => c.id)).toEqual(["c1"]);
-    expect(s.bio.map((c: any) => c.id)).toEqual(["b1"]);
+    expect(s.cyber.map((c: { id: string }) => c.id)).toEqual(["c1"]);
+    expect(s.bio.map((c: { id: string }) => c.id)).toEqual(["b1"]);
   });
 
   it("resolves active skills: SR5 non-exotic, rating > 0, pool = rating + attr, sorted", () => {
@@ -78,12 +76,12 @@ describe("buildSheetData", () => {
             exotic: true,
           },
         ],
-      } as any,
+      } as never,
     });
     const s = buildSheetData({
       character: makeCharacter({
         derived: {
-          totals: { AGI: 5, INT: 4 } as any,
+          totals: { AGI: 5, INT: 4 } as never,
           skill_totals: { Pistols: 4, Astral: 0 },
         },
       }),
@@ -120,12 +118,12 @@ describe("buildSheetData", () => {
             source: "SR5",
           },
         ],
-      } as any,
+      } as never,
     });
     const s = buildSheetData({
       character: makeCharacter({
         derived: {
-          totals: { CHA: 2, INT: 5, LOG: 6 } as any,
+          totals: { CHA: 2, INT: 5, LOG: 6 } as never,
           skill_totals: { Etiquette: 3, Negotiation: 3 },
           skill_attribute_swaps: [
             { skill: "Etiquette", attribute: "INT", spec: "", source: "Empathic Listener" },

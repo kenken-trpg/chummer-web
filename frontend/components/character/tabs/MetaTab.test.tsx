@@ -2,8 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { MetaTab } from "@/components/character/tabs/MetaTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { PriorityTable } from "@/lib/types";
 
 const priorityTable = {
   Heritage: {
@@ -15,7 +14,7 @@ const priorityTable = {
     },
   },
   Talent: { E: { talents: [{ name: "Mundane", label: "Mundane", value: 0 }] } },
-} as any;
+} as unknown as PriorityTable;
 
 function renderTab(
   over: {
@@ -54,7 +53,7 @@ describe("<MetaTab>", () => {
     const patch = vi.fn();
     const catalog = makeCatalog({
       priority_table: priorityTable,
-      metatypes: [{ name: "Elf", metavariants: [{ name: "Night One" }] }] as any,
+      metatypes: [{ name: "Elf", metavariants: [{ name: "Night One" }] }] as never,
     });
     renderTab({ catalog, character: { metatype: "Elf" }, patch });
     const selects = screen.getAllByRole("combobox");
@@ -81,9 +80,9 @@ describe("<MetaTab>", () => {
             ],
           },
         },
-      } as any,
+      } as never,
     });
-    renderTab({ catalog, character: { priorities: { Heritage: "E", Talent: "B" } } as any });
+    renderTab({ catalog, character: { priorities: { Heritage: "E", Talent: "B" } } as never });
     expect(
       [...screen.getByRole("combobox").querySelectorAll("option")].map((o) => o.textContent),
     ).toEqual([
@@ -101,9 +100,9 @@ describe("<MetaTab>", () => {
       metatypes: [
         { name: "Human", karma: 0, metavariants: [] },
         { name: "Ork", karma: 0, metavariants: [] },
-      ] as any,
+      ] as never,
       karma_talents: [{ name: "Mundane", label: "Mundane" }],
-    } as any);
+    } as never);
     renderTab({ catalog, character: { build_method: "Karma" }, patch });
     fireEvent.click(screen.getByRole("button", { name: /Ork/ }));
     expect(patch).toHaveBeenCalledWith({ metatype: "Ork", metavariant: null });

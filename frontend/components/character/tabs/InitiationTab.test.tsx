@@ -5,8 +5,6 @@ import { InitiationTab } from "@/components/character/tabs/InitiationTab";
 import type { Character } from "@/lib/types";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function renderTab(
   over: {
     character?: Parameters<typeof makeCharacter>[0];
@@ -56,11 +54,11 @@ describe("<InitiationTab>", () => {
     renderTab({
       character: {
         initiate_grade: 1,
-        initiations: [{ grade: 1, kind: "metamagic", option_id: "" }] as any,
-        derived: { initiation: { choices: [{ grade: 1, karma: 13 }] } as any },
+        initiations: [{ grade: 1, kind: "metamagic", option_id: "" }] as never,
+        derived: { initiation: { choices: [{ grade: 1, karma: 13 }] } as never },
       },
       catalog: makeCatalog({
-        metamagics: [{ id: "cf", name: "Centering", magician: true, adept: false }] as any,
+        metamagics: [{ id: "cf", name: "Centering", magician: true, adept: false }] as never,
       }),
       patch,
     });
@@ -75,18 +73,18 @@ describe("<InitiationTab>", () => {
     renderTab({
       character: {
         initiate_grade: 1,
-        initiations: [{ grade: 1, kind: "metamagic", option_id: "" }] as any,
+        initiations: [{ grade: 1, kind: "metamagic", option_id: "" }] as never,
         derived: {
           initiation: {
             choices: [{ grade: 1, karma: 13, allowed_metamagics: ["Centering"] }],
-          } as any,
+          } as never,
         },
       },
       catalog: makeCatalog({
         metamagics: [
           { id: "cf", name: "Centering", magician: true, adept: false },
           { id: "qk", name: "Quickening", magician: true, adept: false },
-        ] as any,
+        ] as never,
       }),
     });
     const options = screen.getAllByRole("option").map((el) => el.textContent);

@@ -4,8 +4,6 @@ import type { Character } from "@/lib/types";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { CustomDrugMixer } from "./CustomDrugMixer";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * The mixer holds no state of its own beyond which component is selected: the
  * drug is patched as it is built, and every number on screen is the engine's
@@ -42,7 +40,7 @@ const CATALOG = makeCatalog({
     { id: "g-std", name: "Standard", cost_multiplier: 1, addiction_threshold: 0 },
     { id: "g-street", name: "Street Cooked", cost_multiplier: 0.5, addiction_threshold: 0 },
   ],
-} as any);
+} as never);
 
 function renderMixer(ch: Character, patch: (b: Record<string, unknown>) => void) {
   return render(<CustomDrugMixer {...panelProps(ch, { catalog: CATALOG, patch })} />);
@@ -53,7 +51,7 @@ function mixing(drugs: Record<string, unknown>[], rows: Record<string, unknown>[
   return makeCharacter({
     custom_drugs: drugs,
     derived: { custom_drugs: rows },
-  } as any);
+  } as never);
 }
 
 const drugRow = (id: string, over: Record<string, unknown> = {}) => ({

@@ -7,8 +7,6 @@ import {
 } from "@/lib/cocofolia";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const pistolsCatalog = makeCatalog({
   skills: {
     groups: [],
@@ -22,7 +20,7 @@ const pistolsCatalog = makeCatalog({
         source: "SR5",
       },
     ],
-  } as any,
+  } as never,
 });
 
 describe("buildChatPalette", () => {
@@ -39,7 +37,7 @@ describe("buildChatPalette", () => {
     const ch = makeCharacter({
       skill_specializations: { Pistols: "Revolvers" },
       derived: {
-        totals: { AGI: 5 } as any,
+        totals: { AGI: 5 } as never,
         skill_totals: { Pistols: 4 },
         skill_specializations: { Pistols: "Revolvers" },
       },
@@ -71,13 +69,13 @@ describe("buildChatPalette", () => {
             source: "SR5",
           },
         ],
-      } as any,
+      } as never,
     });
     const ch = makeCharacter({
       skill_specializations: { Negotiation: "Diplomacy" },
       derived: {
-        totals: { CHA: 2, INT: 5, LOG: 6 } as any,
-        limits: { physical: 0, mental: 7, social: 3 } as any,
+        totals: { CHA: 2, INT: 5, LOG: 6 } as never,
+        limits: { physical: 0, mental: 7, social: 3 } as never,
         skill_totals: { Etiquette: 3, Negotiation: 3 },
         skill_specializations: { Negotiation: "Diplomacy" },
         skill_attribute_swaps: [
@@ -97,7 +95,7 @@ describe("buildChatPalette", () => {
   it("emits a weapon attack line (pool = skill + AGI, limit = Accuracy)", () => {
     const ch = makeCharacter({
       derived: {
-        totals: { AGI: 5 } as any,
+        totals: { AGI: 5 } as never,
         skill_totals: { Pistols: 4 },
         weapons: [
           {
@@ -108,7 +106,7 @@ describe("buildChatPalette", () => {
             ap: "-1",
             accuracy: "5",
           },
-        ] as any,
+        ] as never,
       },
     });
     const out = buildChatPalette(ch, pistolsCatalog, identityTr);
@@ -121,13 +119,13 @@ describe("buildChatPalette", () => {
       skills: {
         groups: [],
         skills: [{ name: "Spellcasting", attribute: "MAG", category: "Magical", source: "SR5" }],
-      } as any,
+      } as never,
     });
     const ch = makeCharacter({
       derived: {
-        totals: { MAG: 5 } as any,
+        totals: { MAG: 5 } as never,
         skill_totals: { Spellcasting: 6 },
-        spells: [{ id: "s1", name: "Manabolt", dv: "F-3" }] as any,
+        spells: [{ id: "s1", name: "Manabolt", dv: "F-3" }] as never,
       },
     });
     const out = buildChatPalette(ch, scCatalog, identityTr);
@@ -138,7 +136,7 @@ describe("buildChatPalette", () => {
   it("adds a matrix block when a persona is present", () => {
     const ch = makeCharacter({
       derived: {
-        cyberdeck: { attack: 5, sleaze: 4, dataprocessing: 3, firewall: 2 } as any,
+        cyberdeck: { attack: 5, sleaze: 4, dataprocessing: 3, firewall: 2 } as never,
       },
     });
     const out = buildChatPalette(ch, makeCatalog(), identityTr);
@@ -150,7 +148,7 @@ describe("buildChatPalette", () => {
   it("hacks with a dongled commlink when there is no deck", () => {
     const withDongle = makeCharacter({
       derived: {
-        commlink: { attack: 2, sleaze: 1, dataprocessing: 4, firewall: 4 } as any,
+        commlink: { attack: 2, sleaze: 1, dataprocessing: 4, firewall: 4 } as never,
       },
     });
     const out = buildChatPalette(withDongle, makeCatalog(), identityTr);
@@ -159,7 +157,7 @@ describe("buildChatPalette", () => {
 
     // a bare commlink is no persona to hack with
     const bare = makeCharacter({
-      derived: { commlink: { attack: 0, sleaze: 0, dataprocessing: 4, firewall: 4 } as any },
+      derived: { commlink: { attack: 0, sleaze: 0, dataprocessing: 4, firewall: 4 } as never },
     });
     expect(buildChatPalette(bare, makeCatalog(), identityTr)).not.toContain("素早いハッキング");
   });
@@ -167,7 +165,7 @@ describe("buildChatPalette", () => {
   it("rolls both sim modes when the persona has a VR initiative", () => {
     const ch = makeCharacter({
       derived: {
-        cyberdeck: { attack: 5, sleaze: 4, dataprocessing: 3, firewall: 2 } as any,
+        cyberdeck: { attack: 5, sleaze: 4, dataprocessing: 3, firewall: 2 } as never,
         matrix_initiative: {
           device: "cyberdeck",
           dataprocessing: 3,
@@ -204,11 +202,11 @@ describe("buildChatPalette with unlearned skills", () => {
         skill("Flight", "AGI", { exotic: true }),
       ],
       knowledge: [],
-    } as any,
+    } as never,
   });
   const ch = makeCharacter({
     derived: {
-      totals: { AGI: 5, CHA: 3, LOG: 4 } as any,
+      totals: { AGI: 5, CHA: 3, LOG: 4 } as never,
       skill_totals: { Pistols: 4 },
       knowledge_skills: [
         { name: "Gangs", category: "Street", attribute: "INT", rating: 3, native: false },
@@ -221,7 +219,7 @@ describe("buildChatPalette with unlearned skills", () => {
           spec: "Drugs",
         },
         { name: "Sperethiel", category: "Language", attribute: "INT", rating: 0, native: true },
-      ] as any,
+      ] as never,
     },
   });
 
@@ -264,7 +262,7 @@ describe("buildChatPalette with unlearned skills", () => {
 describe("the export follows the UI locale", () => {
   const ch = makeCharacter({
     derived: {
-      totals: { AGI: 5, REA: 4, INT: 3 } as any,
+      totals: { AGI: 5, REA: 4, INT: 3 } as never,
       skill_totals: { Pistols: 4 },
       spirits: [
         {
@@ -275,7 +273,7 @@ describe("the export follows the UI locale", () => {
           attributes: { BOD: 2, REA: 8, INT: 4, WIL: 4 },
           powers: [{ name: "Accident" }, { name: "Confusion" }],
         },
-      ] as any,
+      ] as never,
     },
   });
 
@@ -314,12 +312,12 @@ describe("buildCocofolia", () => {
     expect(typeof parsed.data.commands).toBe("string");
     expect(parsed.data.commands).toContain("イニシアチブ");
 
-    const paramLabels = parsed.data.params.map((p: any) => p.label);
+    const paramLabels = parsed.data.params.map((p: { label: string }) => p.label);
     expect(paramLabels).toEqual(expect.arrayContaining(["BOD", "AGI", "装甲", "ESS"]));
     // MAG / RES only appear when > 0
     expect(paramLabels).not.toContain("MAG");
 
-    const statusLabels = parsed.data.status.map((s: any) => s.label);
+    const statusLabels = parsed.data.status.map((s: { label: string }) => s.label);
     expect(statusLabels).toEqual(["物理CM", "精神CM", "エッジ"]);
   });
 });
@@ -332,42 +330,46 @@ describe("buildCocofolia", () => {
  * real table with nothing to catch it.
  */
 
-const spirit = (over: any = {}) => ({
-  id: "sp1",
-  name: "Spirit of Fire",
-  force: 4,
-  services: 2,
-  bound: true,
-  role_label: "戦闘",
-  attributes: { BOD: 5, AGI: 6, REA: 6, STR: 3, CHA: 4, INT: 4, LOG: 3, WIL: 4, INI: 12 },
-  skills: [{ name: "Unarmed Combat", attribute: "AGI", rating: 0 }],
-  powers: [{ name: "Engulf" }],
-  optionalpowers: [],
-  weaknesses: ["Allergy (Water)"],
-  ...over,
-});
+const spirit = (over: Record<string, unknown> = {}) =>
+  ({
+    id: "sp1",
+    name: "Spirit of Fire",
+    force: 4,
+    services: 2,
+    bound: true,
+    role_label: "戦闘",
+    attributes: { BOD: 5, AGI: 6, REA: 6, STR: 3, CHA: 4, INT: 4, LOG: 3, WIL: 4, INI: 12 },
+    skills: [{ name: "Unarmed Combat", attribute: "AGI", rating: 0 }],
+    powers: [{ name: "Engulf" }],
+    optionalpowers: [],
+    weaknesses: ["Allergy (Water)"],
+    ...over,
+  }) as never;
 
-const sprite = (over: any = {}) => ({
-  id: "spr1",
-  name: "Courier Sprite",
-  level: 3,
-  services: 2,
-  registered: true,
-  matrix: { attack: 0, sleaze: 3, dataprocessing: 6, firewall: 4, initiative: 9 },
-  skills: [{ name: "Hacking", rating: 0 }],
-  powers: [{ name: "Hash" }],
-  ...over,
-});
+const sprite = (over: Record<string, unknown> = {}) =>
+  ({
+    id: "spr1",
+    name: "Courier Sprite",
+    level: 3,
+    services: 2,
+    registered: true,
+    matrix: { attack: 0, sleaze: 3, dataprocessing: 6, firewall: 4, initiative: 9 },
+    skills: [{ name: "Hacking", rating: 0 }],
+    powers: [{ name: "Hash" }],
+    ...over,
+  }) as never;
 
-const conjure = (derived: any) =>
-  JSON.parse(buildCocofoliaConjured(makeCharacter({ derived }) as any, makeCatalog(), identityTr));
+const conjure = (derived: Record<string, unknown>) =>
+  JSON.parse(
+    buildCocofoliaConjured(makeCharacter({ derived }) as never, makeCatalog(), identityTr),
+  );
 
 describe("buildSpiritPieces", () => {
   it("only puts bound spirits on the table", () => {
     const pieces = buildSpiritPieces(
       makeCharacter({
         derived: { spirits: [spirit(), spirit({ id: "sp2", bound: false })] },
-      }) as any,
+      }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -378,7 +380,7 @@ describe("buildSpiritPieces", () => {
 
   it("derives the condition monitors from BOD and WIL, not from Force", () => {
     const [piece] = buildSpiritPieces(
-      makeCharacter({ derived: { spirits: [spirit()] } }) as any,
+      makeCharacter({ derived: { spirits: [spirit()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -393,7 +395,7 @@ describe("buildSpiritPieces", () => {
 
   it("rolls a skill at rating-or-Force + attribute, limited by Force", () => {
     const [piece] = buildSpiritPieces(
-      makeCharacter({ derived: { spirits: [spirit()] } }) as any,
+      makeCharacter({ derived: { spirits: [spirit()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -404,7 +406,7 @@ describe("buildSpiritPieces", () => {
 
   it("spells out the resist rolls a GM would otherwise have to compute", () => {
     const [piece] = buildSpiritPieces(
-      makeCharacter({ derived: { spirits: [spirit()] } }) as any,
+      makeCharacter({ derived: { spirits: [spirit()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -417,14 +419,14 @@ describe("buildSpiritPieces", () => {
 
   it("carries powers and weaknesses as comments, and drops the line when empty", () => {
     const [withThem] = buildSpiritPieces(
-      makeCharacter({ derived: { spirits: [spirit()] } }) as any,
+      makeCharacter({ derived: { spirits: [spirit()] } }) as never,
       makeCatalog(),
       identityTr,
     );
     const [without] = buildSpiritPieces(
       makeCharacter({
         derived: { spirits: [spirit({ powers: [], optionalpowers: [], weaknesses: [] })] },
-      }) as any,
+      }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -437,7 +439,9 @@ describe("buildSpiritPieces", () => {
 
   it("falls back to Force × 2 when the engine gave no initiative", () => {
     const [piece] = buildSpiritPieces(
-      makeCharacter({ derived: { spirits: [spirit({ attributes: { BOD: 4, WIL: 4 } })] } }) as any,
+      makeCharacter({
+        derived: { spirits: [spirit({ attributes: { BOD: 4, WIL: 4 } })] },
+      }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -451,7 +455,7 @@ describe("buildSpritePieces", () => {
     const pieces = buildSpritePieces(
       makeCharacter({
         derived: { sprites: [sprite(), sprite({ id: "spr2", registered: false })] },
-      }) as any,
+      }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -462,7 +466,7 @@ describe("buildSpritePieces", () => {
 
   it("exposes the matrix attributes as params, not meat attributes", () => {
     const [piece] = buildSpritePieces(
-      makeCharacter({ derived: { sprites: [sprite()] } }) as any,
+      makeCharacter({ derived: { sprites: [sprite()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -479,7 +483,7 @@ describe("buildSpritePieces", () => {
 
   it("rolls skills at rating-or-Level + Level, and defends at Firewall + Level", () => {
     const [piece] = buildSpritePieces(
-      makeCharacter({ derived: { sprites: [sprite()] } }) as any,
+      makeCharacter({ derived: { sprites: [sprite()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -491,7 +495,7 @@ describe("buildSpritePieces", () => {
 
   it("has one matrix condition monitor, not a physical/stun pair", () => {
     const [piece] = buildSpritePieces(
-      makeCharacter({ derived: { sprites: [sprite()] } }) as any,
+      makeCharacter({ derived: { sprites: [sprite()] } }) as never,
       makeCatalog(),
       identityTr,
     );
@@ -514,7 +518,7 @@ describe("buildCocofoliaConjured", () => {
             spirits: [spirit({ bound: false })],
             sprites: [sprite({ registered: false })],
           },
-        }) as any,
+        }) as never,
         makeCatalog(),
         identityTr,
       ),
@@ -524,7 +528,10 @@ describe("buildCocofoliaConjured", () => {
   it("is a JSON array of spirits then sprites", () => {
     const pieces = conjure({ spirits: [spirit()], sprites: [sprite()] });
 
-    expect(pieces.map((p: any) => p.data.name)).toEqual(["Spirit of Fire F4", "Courier Sprite L3"]);
-    expect(pieces.every((p: any) => p.kind === "character")).toBe(true);
+    expect(pieces.map((p: { data: { name: string } }) => p.data.name)).toEqual([
+      "Spirit of Fire F4",
+      "Courier Sprite L3",
+    ]);
+    expect(pieces.every((p: { kind: string }) => p.kind === "character")).toBe(true);
   });
 });

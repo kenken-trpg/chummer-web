@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { SpellsTab } from "@/components/character/tabs/SpellsTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const fireball = {
   id: "fb",
   name: "Fireball",
@@ -36,7 +34,7 @@ function renderTab(
       {...panelProps(ch, { patch: over.patch ?? (() => {}) })}
       catalog={
         over.catalog ??
-        makeCatalog({ spells: [fireball, rite] as any, traditions: traditions as any })
+        makeCatalog({ spells: [fireball, rite] as never, traditions: traditions as never })
       }
     />,
   );

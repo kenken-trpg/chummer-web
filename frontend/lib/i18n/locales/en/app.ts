@@ -1,6 +1,7 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — English。 */
 export const EN_APP = {
   "app.loading": "Loading…",
+  "app.meta.description": "Unofficial Shadowrun 5e character builder",
   "app.tagline":
     "Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst / Topps. Data from Chummer5a (GPL-3.0).",
   "app.footer.author": "Made by {author}",
@@ -72,6 +73,7 @@ export const EN_APP = {
   "share.copy": "Share link",
   "share.copied": "Copied ✓",
   "share.title": "Shared view (read-only)",
+  "share.meta.title": "Shared view | Chummer Web",
   "share.note": "This character is embedded in the URL. Nothing is stored on the server.",
   "share.loading": "Loading the shared character…",
   "share.adopt": "Add to my roster",

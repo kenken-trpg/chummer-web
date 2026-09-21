@@ -5,8 +5,6 @@ import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { MiscDrugsGear } from "./MiscDrugsGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * One component, two tabs. `mode` decides whether a row belongs here at all,
  * and the test for it is a category check written out three times over —
@@ -58,7 +56,7 @@ function renderPanel(
 
 /** A character owning these gear rows, mirrored into `derived`. */
 function owning(rows: Record<string, unknown>[], over: Record<string, unknown> = {}): Character {
-  return makeCharacter({ gear: rows, ...over, derived: { gear: rows } } as any);
+  return makeCharacter({ gear: rows, ...over, derived: { gear: rows } } as never);
 }
 
 const ownedNames = (container: HTMLElement) =>
@@ -111,7 +109,7 @@ describe("<MiscDrugsGear> the addiction test", () => {
     const ch = makeCharacter({
       gear: [],
       derived: { gear: [], test_mods: { addiction_physiological_first: 2 } },
-    } as any);
+    } as never);
     const { container } = renderPanel(ch, vi.fn(), "drugs");
 
     expect(container.textContent).toContain("生理 8 (中毒後 6) ／ 心理 6");
@@ -126,7 +124,7 @@ describe("<MiscDrugsGear> a row a quality granted", () => {
   ];
 
   it("names the quality and offers neither controls nor a delete button", () => {
-    const ch = makeCharacter({ gear: [], derived: { gear: granted } } as any);
+    const ch = makeCharacter({ gear: [], derived: { gear: granted } } as never);
     const { container } = renderPanel(ch, vi.fn());
 
     expect(container.textContent).toContain("Dead SIN");
@@ -261,7 +259,7 @@ describe("<MiscDrugsGear> drugs", () => {
     const ch = makeCharacter({
       gear: [{ ...rows[0], active: true }],
       derived: { gear: rows },
-    } as any);
+    } as never);
     renderPanel(ch, vi.fn(), "drugs");
 
     expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
@@ -319,7 +317,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
           requireparent: true,
         },
       ],
-    } as any);
+    } as never);
 
   const medkit = (over: Record<string, unknown> = {}) =>
     gear("g1", "Medkit", { addoncategories: ["Medkit Add-ons", "Custom"], ...over });
@@ -363,7 +361,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
           extra_kind: "text",
         },
       ],
-    } as any);
+    } as never);
     renderPanel(
       owning([
         medkit(),
@@ -428,7 +426,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
           extra_options: ["Pistols", "Blades"],
         },
       ],
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderPanel(owning([medkit()]), patch, "misc", withExtra);
 
@@ -458,7 +456,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
           requireparent: true,
         },
       ],
-    } as any);
+    } as never);
     renderPanel(
       owning([drug("d1", "Novacoke", { addoncategories: ["Drug Grades"] })]),
       vi.fn(),
@@ -556,7 +554,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
           requireparent: true,
         },
       ],
-    } as any);
+    } as never);
 
   const offered = () =>
     [...document.querySelectorAll(".quality-list .quality-item b")].map((el) => el.textContent);
@@ -601,7 +599,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
           extra_options: ["Pistols"],
         },
       ],
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderPanel(owning([]), patch, "misc", withExtra);
 
@@ -630,7 +628,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
       ],
       // the fallback list, which must not be the one used
       gear: [{ id: "g-jazz", name: "Jazz", category: "Drugs", cost: "75", source: "SR5" }],
-    } as any);
+    } as never);
     const { container } = renderPanel(owning([]), vi.fn(), "drugs", drugs);
 
     const tabs = [...container.querySelectorAll(".option-row .tab")].map((el) => el.textContent);
@@ -642,7 +640,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
   it("buying a drug sends rating 1 and nothing else", () => {
     const drugs = makeCatalog({
       drugs: [{ id: "d-nova", name: "Novacoke", category: "Drugs", cost: "10", source: "SR5" }],
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderPanel(owning([]), patch, "drugs", drugs);
 
@@ -656,7 +654,7 @@ describe("<MiscDrugsGear> an item the player prices", () => {
   it("offers a price within its range, and a Custom Item a name of its own", () => {
     const patch = vi.fn();
     const ch = makeCharacter({
-      gear: [{ id: "g1", gear_id: "c-g1", cost: 100 }] as any,
+      gear: [{ id: "g1", gear_id: "c-g1", cost: 100 }] as never,
       derived: {
         gear: [
           gear("g1", "Custom Item", {
@@ -666,7 +664,7 @@ describe("<MiscDrugsGear> an item the player prices", () => {
             custom_name: "",
           }),
         ],
-      } as any,
+      } as never,
     });
     renderPanel(ch, patch);
     const price = screen.getByRole("spinbutton", { name: /Custom Item: 値段/ }) as HTMLInputElement;
@@ -681,7 +679,7 @@ describe("<MiscDrugsGear> an item the player prices", () => {
   });
 
   it("shows no price for an item with a fixed one", () => {
-    renderPanel(makeCharacter({ derived: { gear: [gear("g1", "Medkit")] } as any }), vi.fn());
+    renderPanel(makeCharacter({ derived: { gear: [gear("g1", "Medkit")] } as never }), vi.fn());
     expect(screen.queryByRole("spinbutton", { name: /値段/ })).toBeNull();
   });
 });

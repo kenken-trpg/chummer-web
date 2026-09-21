@@ -5,8 +5,6 @@ import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { Character } from "@/lib/types";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 function renderTab(
   over: {
     character?: Parameters<typeof makeCharacter>[0];
@@ -56,11 +54,11 @@ describe("<SubmersionTab>", () => {
     renderTab({
       character: {
         submersion_grade: 1,
-        submersions: [{ grade: 1, echo_id: "" }] as any,
-        derived: { submersion: { choices: [{ grade: 1, karma: 13 }] } as any },
+        submersions: [{ grade: 1, echo_id: "" }] as never,
+        derived: { submersion: { choices: [{ grade: 1, karma: 13 }] } as never },
       },
       catalog: makeCatalog({
-        echoes: [{ id: "ov", name: "Overclocking", max_takes: 1 }] as any,
+        echoes: [{ id: "ov", name: "Overclocking", max_takes: 1 }] as never,
       }),
       patch,
     });

@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { WeaponGear } from "@/components/character/tabs/gear/WeaponGear";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const ak = {
   id: "ak",
   name: "AK-97",
@@ -25,7 +23,7 @@ function renderTab(
   return render(
     <WeaponGear
       {...panelProps(ch, {
-        catalog: over.catalog ?? makeCatalog({ weapons: [ak, knife] as any }),
+        catalog: over.catalog ?? makeCatalog({ weapons: [ak, knife] as never }),
         patch: over.patch ?? (() => {}),
       })}
     />,

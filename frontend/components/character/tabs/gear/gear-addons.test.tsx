@@ -11,8 +11,6 @@ import { OpticsGear } from "./OpticsGear";
 import { RccGear } from "./RccGear";
 import { SensorGear } from "./SensorGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * `gear-panels.test.tsx` covers buying, `gear-owned.test.tsx` the top-level
  * owned row. This covers what hangs *off* a row: programs on a deck or an RCC,
@@ -26,7 +24,9 @@ import { SensorGear } from "./SensorGear";
  * where `dropTree` walks the subtree. So every case here has **two** hosts.
  */
 
-type Panel = ComponentType<TabPanelProps> | ComponentType<any>;
+// Each panel takes TabPanelProps plus its own extras, so the list is typed by
+// what they share and the call site widens it back.
+type Panel = ComponentType<never>;
 
 function renderPanel(
   Panel: Panel,
@@ -34,7 +34,8 @@ function renderPanel(
   patch: (b: Record<string, unknown>) => void,
   catalog: Partial<Catalog> = {},
 ) {
-  return render(<Panel {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
+  const P = Panel as ComponentType<TabPanelProps>;
+  return render(<P {...panelProps(character, { catalog: makeCatalog(catalog), patch })} />);
 }
 
 const host = (id: string, name: string) => ({
@@ -95,7 +96,7 @@ describe.each(PROGRAM_HOSTS)("<%s> programs on a host", (_name, Panel, chKey, dK
           program("p3", "Edit", "h2"),
         ],
       },
-    } as any);
+    } as never);
 
   it("draws each program under the host it names, not under both", () => {
     const { container } = renderPanel(Panel, character(), vi.fn());
@@ -141,7 +142,7 @@ describe.each(PROGRAM_HOSTS)("<%s> programs on a host", (_name, Panel, chKey, dK
         [dKey]: [host("h1", "First")],
         programs: [...rows, program("p9", "Elsewhere", "h9", { rating_max: 6, rating: 2 })],
       },
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderPanel(Panel, ch, patch);
 
@@ -166,19 +167,19 @@ describe("programs loaded nowhere", () => {
       rccs: [host("h1", "Gridlink")],
       cyberdecks: [host("k1", "Erika")],
       programs: [
-        program("a1", "Clearsight", null as any, { program_host: "rccs" }),
-        program("b1", "Browse", null as any, { program_host: "cyberdecks" }),
+        program("a1", "Clearsight", null as never, { program_host: "rccs" }),
+        program("b1", "Browse", null as never, { program_host: "cyberdecks" }),
       ],
       derived: {
         rccs: [host("h1", "Gridlink")],
         cyberdecks: [host("k1", "Erika")],
         drones: [drone],
         programs: [
-          program("a1", "Clearsight", null as any, { program_host: "rccs" }),
-          program("b1", "Browse", null as any, { program_host: "cyberdecks" }),
+          program("a1", "Clearsight", null as never, { program_host: "rccs" }),
+          program("b1", "Browse", null as never, { program_host: "cyberdecks" }),
         ],
       },
-    } as any);
+    } as never);
 
   it("the RCC panel offers its autosofts every RCC and drone, and loads one there", () => {
     const patch = vi.fn();
@@ -231,7 +232,7 @@ describe("<RccGear> an autosoft that needs a target", () => {
       rccs: [host("h1", "Gridlink")],
       programs: [],
       derived: { rccs: [host("h1", "Gridlink")], programs: [] },
-    } as any);
+    } as never);
 
   const autosoft = (id: string, name: string, extra_kind: string, options: string[]) => ({
     id,
@@ -254,7 +255,7 @@ describe("<RccGear> an autosoft that needs a target", () => {
   ])("picks the %s from a closed list and stores it on the program", (kind, label, value) => {
     const patch = vi.fn();
     renderPanel(RccGear, rcc(), patch, {
-      programs: [autosoft("a1", "Targeting", kind, ["Gunnery", "Perception"])] as any,
+      programs: [autosoft("a1", "Targeting", kind, ["Gunnery", "Perception"])] as never,
     });
 
     fireEvent.change(screen.getByRole("combobox", { name: "Gridlink: オートソフトを追加" }), {
@@ -272,7 +273,7 @@ describe("<RccGear> an autosoft that needs a target", () => {
   it("takes a free-text target for a model the catalog cannot enumerate", () => {
     const patch = vi.fn();
     renderPanel(RccGear, rcc(), patch, {
-      programs: [autosoft("a2", "Clearsight", "text", ["Rotodrone"])] as any,
+      programs: [autosoft("a2", "Clearsight", "text", ["Rotodrone"])] as never,
     });
 
     fireEvent.change(screen.getByRole("combobox", { name: "Gridlink: オートソフトを追加" }), {
@@ -296,7 +297,7 @@ describe("<RccGear> an autosoft that needs a target", () => {
       rccs: [host("h1", "Gridlink")],
       programs: [installed],
       derived: { rccs: [host("h1", "Gridlink")], programs: [installed] },
-    } as any);
+    } as never);
     renderPanel(RccGear, ch, vi.fn(), {
       programs: [
         autosoft("a1", "Targeting", "skill", ["Gunnery"]),
@@ -310,7 +311,7 @@ describe("<RccGear> an autosoft that needs a target", () => {
           maxrating: 0,
           program_host: "rccs",
         },
-      ] as any,
+      ] as never,
     });
 
     const options = [
@@ -334,7 +335,7 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
   });
 
   it("explains each matrix attribute behind a help button", () => {
-    const ch = makeCharacter({ cyberdecks: [deck()], derived: { cyberdecks: [deck()] } } as any);
+    const ch = makeCharacter({ cyberdecks: [deck()], derived: { cyberdecks: [deck()] } } as never);
     renderPanel(CyberdeckGear, ch, vi.fn());
     const button = screen.getByRole("button", { name: "FW の説明" });
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
@@ -346,7 +347,7 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     const ch = makeCharacter({
       cyberdecks: [deck()],
       derived: { cyberdecks: [deck()] },
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderPanel(CyberdeckGear, ch, patch);
 
@@ -361,7 +362,7 @@ describe("<CyberdeckGear> the matrix attribute array", () => {
     const ch = makeCharacter({
       cyberdecks: [deck({ can_reorder: false })],
       derived: { cyberdecks: [deck({ can_reorder: false })] },
-    } as any);
+    } as never);
     renderPanel(CyberdeckGear, ch, vi.fn());
 
     expect(screen.queryByRole("combobox", { name: "ATK" })).toBeNull();
@@ -395,7 +396,7 @@ describe.each([
     node("t3", "Low Light", "t2"),
     node("t4", "Elsewhere"),
   ];
-  const character = () => makeCharacter({ [chKey]: tree(), derived: { [dKey]: tree() } } as any);
+  const character = () => makeCharacter({ [chKey]: tree(), derived: { [dKey]: tree() } } as never);
 
   it("shows only the roots as rows, with the rest nested inside", () => {
     const { container } = renderPanel(Panel, character(), vi.fn());
@@ -444,7 +445,7 @@ describe("<CommlinkGear> apps on a commlink", () => {
         commlinks: [link("l1", "Meta Link"), link("l2", "Sony Emperor")],
         apps,
       },
-    } as any);
+    } as never);
 
   it("draws each app under its own commlink", () => {
     const { container } = renderPanel(
@@ -524,14 +525,14 @@ describe.each([
       apps: [swarm],
       programs: [],
       derived: { [list]: [host("h1", "Box")], apps: [swarm], programs: [] },
-    } as any);
+    } as never);
 
   it("lists the app, offers more and drops them with the device", () => {
     const patch = vi.fn();
     renderPanel(Panel, character(), patch, {
       apps: [
         { id: "maps", name: "Mapsoft", category: "Software", cost: 100, source: "SR5" },
-      ] as any,
+      ] as never,
     });
     expect(screen.getByText(/Swarm/)).toBeDefined();
 
@@ -602,7 +603,7 @@ describe("<ArmorGear> mods on a piece", () => {
         ],
         armor_mods: mods,
       },
-    } as any);
+    } as never);
 
   /** A mod that came with the piece is not separately owned: it cannot be
    *  removed or re-rated, only listed. */
@@ -726,7 +727,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
       derived: {
         armor_items: [piece("a1", "Lined Coat", [holster]), piece("a2", "Armor Jacket", [medkit])],
       },
-    } as any);
+    } as never);
   const catalog = {
     gear: [
       {
@@ -737,7 +738,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
         armor_capacity: "[3]",
       },
       { id: "c-rope", name: "Rope", category: "Survival Gear", cost: "10" },
-    ] as any,
+    ] as never,
   };
 
   it("lists each piece's own gear and offers only gear that fits in armor", () => {
@@ -768,7 +769,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
           cost: "250",
           armor_capacity: "[1]",
         },
-      ] as any,
+      ] as never,
       sensors: [
         {
           id: "c-ss",
@@ -784,7 +785,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
           cost: "250",
           armor_capacity: "[1]",
         },
-      ] as any,
+      ] as never,
     });
     const picker = screen.getByRole("combobox", { name: "Lined Coat: ギアを入れる" });
     // a sensor function goes in its housing, not straight in the armor
@@ -833,7 +834,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
         armor_items: [piece("a1", "Lined Coat", [sensor])],
         sensors: [sensor, fn],
       },
-    } as any);
+    } as never);
     renderPanel(ArmorGear, ch, patch, {
       sensors: [
         { id: "c-cam", name: "Camera", category: "Sensor Functions", cost: "50", source: "SR5" },
@@ -844,7 +845,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
           cost: "50",
           source: "SR5",
         },
-      ] as any,
+      ] as never,
     });
 
     expect(screen.getByText(/Camera/)).toBeTruthy();
@@ -921,7 +922,7 @@ describe.each(MOD_HOSTS)("<%s> electronic modifications", (_name, Panel, chKey, 
         [dKey]: [host("h1", "First"), host("h2", "Second")],
         gear: [installed],
       },
-    } as any);
+    } as never);
 
   it("draws the modification once, under the device it names", () => {
     const { container } = renderPanel(Panel, character(), vi.fn(), modCatalog);

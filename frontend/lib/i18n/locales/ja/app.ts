@@ -1,6 +1,7 @@
 /** アプリの枠・ナビ・共通の語・書式・共有・ツールバー — 日本語。 */
 export const JA_APP = {
   "app.loading": "読み込み中…",
+  "app.meta.description": "非公式 Shadowrun 5e キャラクター作成",
   "app.tagline":
     "非公式 Shadowrun 5e キャラクター作成。Catalyst / Topps 非提携。データは Chummer5a (GPL-3.0)。",
   "app.footer.author": "制作: {author}",
@@ -70,6 +71,7 @@ export const JA_APP = {
   "share.copy": "共有リンク",
   "share.copied": "コピー ✓",
   "share.title": "共有ビュー（読み取り専用）",
+  "share.meta.title": "共有ビュー | Chummer Web",
   "share.note": "このキャラクターは URL に埋め込まれています。サーバーには保存されていません。",
   "share.loading": "共有キャラクターを読み込み中…",
   "share.adopt": "自分のロースターに取り込む",

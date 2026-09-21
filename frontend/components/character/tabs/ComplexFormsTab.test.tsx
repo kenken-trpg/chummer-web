@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { ComplexFormsTab } from "@/components/character/tabs/ComplexFormsTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const puppeteer = {
   id: "pw",
   name: "Puppeteer",
@@ -20,7 +18,7 @@ function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
   return render(
     <ComplexFormsTab
       {...panelProps(ch, {
-        catalog: makeCatalog({ complex_forms: [puppeteer, cleaner] as any }),
+        catalog: makeCatalog({ complex_forms: [puppeteer, cleaner] as never }),
         patch,
       })}
     />,

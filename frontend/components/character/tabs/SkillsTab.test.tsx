@@ -5,8 +5,6 @@ import { SkillsTab } from "@/components/character/tabs/SkillsTab";
 import type { Character } from "@/lib/types";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const blades = {
   id: "blades",
   name: "Blades",
@@ -35,7 +33,7 @@ const knowItem = {
 function skillsCatalog(over: Record<string, unknown> = {}) {
   return makeCatalog({
     skills: { groups: ["Close Combat"], skills: [blades], knowledge: [], ...over },
-  } as any);
+  } as never);
 }
 
 function renderTab(
@@ -88,7 +86,7 @@ describe("<SkillsTab>", () => {
 
   it("shows what an unlearned skill still rolls at, and stops once it is bought", () => {
     const { container } = renderTab({
-      character: { derived: { totals: { AGI: 5 } } as any },
+      character: { derived: { totals: { AGI: 5 } } as never },
     });
     // the value side of the row, not the help tooltip on its name
     const value = container.querySelector(".skill-row.has-spec b") as HTMLElement;
@@ -97,7 +95,7 @@ describe("<SkillsTab>", () => {
     const bought = renderTab({
       character: {
         skills: { Blades: 3 },
-        derived: { totals: { AGI: 5 }, skill_totals: { Blades: 3 } } as any,
+        derived: { totals: { AGI: 5 }, skill_totals: { Blades: 3 } } as never,
       },
     });
     const boughtValue = bought.container.querySelector(".skill-row.has-spec b") as HTMLElement;
@@ -117,21 +115,21 @@ describe("<SkillsTab>", () => {
   it("drops the −1 on a skill the Reflex Recorder covers, and says when defaulting is out", () => {
     const free = renderTab({
       character: {
-        derived: { totals: { AGI: 5 }, no_default_penalty_skills: ["Blades"] } as any,
+        derived: { totals: { AGI: 5 }, no_default_penalty_skills: ["Blades"] } as never,
       },
     });
     expect(free.container.textContent).toContain("デフォルト 5（−1なし）");
 
     const blocked = renderTab({
       catalog: skillsCatalog({ skills: [{ ...blades, default: false }] }),
-      character: { derived: { totals: { AGI: 5 } } as any },
+      character: { derived: { totals: { AGI: 5 } } as never },
     });
     expect(blocked.container.textContent).toContain("デフォルト不可");
   });
 
   it("gives the knowledge section the two defaulting pools, and Uneducated's cut", () => {
     const plain = renderTab({
-      character: { derived: { totals: { INT: 4, LOG: 6 } } as any },
+      character: { derived: { totals: { INT: 4, LOG: 6 } } as never },
     });
     expect(plain.container.textContent).toContain("INT 3 ／ LOG 5");
     expect(plain.container.textContent).not.toContain("デフォルト不可");
@@ -143,7 +141,7 @@ describe("<SkillsTab>", () => {
           // Uneducated (SR5 p.80) also blocks an active category, which does
           // not belong on the knowledge line.
           blocked_default_categories: ["Academic", "Professional", "Technical Active"],
-        } as any,
+        } as never,
       },
     });
     const line = uneducated.container.textContent || "";
@@ -207,7 +205,7 @@ describe("<SkillsTab>", () => {
           skill_totals: { Blades: 4 },
           skill_karma: split,
           knowledge_skills: [knowRow("Magic Theory", { rating: 2 })],
-        } as any,
+        } as never,
       },
     });
     const blades = screen.getByRole("spinbutton", {
@@ -229,7 +227,7 @@ describe("<SkillsTab>", () => {
       character: {
         skill_groups: { "Close Combat": 2 },
         skill_group_karma: { "Close Combat": 1 },
-        derived: { skill_karma: { ...split, group_levels: { "Close Combat": 1 } } } as any,
+        derived: { skill_karma: { ...split, group_levels: { "Close Combat": 1 } } } as never,
       },
     });
     const group = screen.getByRole("spinbutton", {
@@ -245,9 +243,9 @@ describe("<SkillsTab>", () => {
     for (const character of [
       {
         skills: { Blades: 4 },
-        derived: { skill_karma: split, karma_chargen: { enabled: true } } as any,
+        derived: { skill_karma: split, karma_chargen: { enabled: true } } as never,
       },
-      { skills: { Blades: 4 }, career: true, derived: { skill_karma: split } as any },
+      { skills: { Blades: 4 }, career: true, derived: { skill_karma: split } as never },
     ]) {
       const { unmount } = renderTab({ character });
       expect(screen.queryAllByRole("spinbutton")).toHaveLength(0);
@@ -259,7 +257,7 @@ describe("<SkillsTab>", () => {
     const { container } = renderTab({
       character: {
         knowledge_skills: { "Magic Theory": 2 },
-        derived: { knowledge_skills: [knowRow("Magic Theory", { rating: 2 })] } as any,
+        derived: { knowledge_skills: [knowRow("Magic Theory", { rating: 2 })] } as never,
       },
     });
     const button = container.querySelector(".know-row button") as HTMLElement;
@@ -284,7 +282,7 @@ describe("<SkillsTab>", () => {
               rating_max: 6,
             },
           ],
-        } as any,
+        } as never,
       },
     });
     const button = container.querySelector(".can-delete button") as HTMLElement;
@@ -338,7 +336,7 @@ describe("<SkillsTab> knowledge skills", () => {
       character: {
         knowledge_skills: { Underworld: 2 },
         derived: { knowledge_skills: [knowRow("Underworld", { rating: 2 })] },
-      } as any,
+      } as never,
     });
 
     const name = screen.getByPlaceholderText("カスタム知識名");
@@ -389,7 +387,7 @@ describe("<SkillsTab> knowledge skills", () => {
           knowledge_skills: [language("Japanese", { rating: 3 })],
           native_language_limit: 1,
         },
-      } as any,
+      } as never,
     });
 
     fireEvent.click(screen.getByRole("checkbox"));
@@ -417,7 +415,7 @@ describe("<SkillsTab> knowledge skills", () => {
           ],
           native_language_limit: 1,
         },
-      } as any,
+      } as never,
     });
 
     fireEvent.click(screen.getAllByRole("checkbox")[1]);
@@ -443,7 +441,7 @@ describe("<SkillsTab> knowledge skills", () => {
           ],
           native_language_limit: 2,
         },
-      } as any,
+      } as never,
     });
 
     fireEvent.click(screen.getAllByRole("checkbox")[1]);
@@ -460,7 +458,7 @@ describe("<SkillsTab> knowledge skills", () => {
         knowledge_skills: {},
         native_languages: ["English"],
         derived: { knowledge_skills: [language("English", { native: true })] },
-      } as any,
+      } as never,
     });
 
     fireEvent.click(screen.getByRole("checkbox"));
@@ -487,7 +485,7 @@ describe("<SkillsTab> knowledge skills", () => {
             knowRow("Underworld", { category: "Street", rating: 2 }),
           ],
         },
-      } as any,
+      } as never,
     });
 
     fireEvent.click(screen.getAllByRole("button", { name: "削除" })[0]);
@@ -514,7 +512,7 @@ describe("<SkillsTab> knowledge skills", () => {
             knowRow("Underworld", { category: "Street" }),
           ],
         },
-      } as any,
+      } as never,
     });
 
     // one select, not two: the catalog skill shows its category as text
@@ -536,7 +534,7 @@ describe("<SkillsTab> knowledge skills", () => {
     renderStateful(patch, {
       knowledge_skills: { Underworld: 1 },
       derived: { knowledge_skills: [knowRow("Underworld", { category: "Street" })] },
-    } as any);
+    } as never);
 
     const slider = screen.getAllByRole("slider").at(-1)!;
     fireEvent.change(slider, { target: { value: "4" } });
@@ -589,7 +587,7 @@ describe("<SkillsTab> the knowledge picker", () => {
       character: {
         knowledge_skills: { "Magic Theory": 1 },
         derived: { knowledge_skills: [knowRow("Magic Theory")] },
-      } as any,
+      } as never,
     });
 
     expect(listed()).toEqual(["Street Gangs", "Aztechnology Politics"]);
@@ -607,7 +605,7 @@ describe("<SkillsTab> specialisations", () => {
         skills: { Blades: 4 },
         skill_specializations: { Blades: "Swords" },
         derived: { skill_totals: { Blades: 4 } },
-      } as any,
+      } as never,
     });
 
     fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "" } });
@@ -636,7 +634,7 @@ describe("<SkillsTab> specialisations", () => {
           skill_totals: { Blades: 4 },
           skill_expertises: [{ skill: "Blades", spec: "Swords", bonus: 3, source: "Aptitude" }],
         },
-      } as any,
+      } as never,
     });
 
     const select = screen.getAllByRole("combobox")[0] as HTMLSelectElement;
@@ -664,7 +662,7 @@ describe("<SkillsTab> exotic skills", () => {
   ) {
     return renderStateful(
       patch,
-      { exotic_skills: rows, derived: { exotic_skills: rows } } as any,
+      { exotic_skills: rows, derived: { exotic_skills: rows } } as never,
       skillsCatalog({ skills: [blades, exoticSkill] }),
     );
   }
@@ -747,7 +745,7 @@ describe("<SkillsTab> sliders", () => {
     renderTab({
       character: {
         derived: { skill_rating_max: 6, skill_max_bonus: { Blades: 1 } },
-      } as any,
+      } as never,
     });
 
     expect(screen.getAllByRole("slider")[1].getAttribute("max")).toBe("7");
@@ -869,7 +867,7 @@ describe("<SkillsTab> skills that come with something", () => {
   it("writes a quality's pick to skill_picks", () => {
     const patch = vi.fn();
     renderTab({
-      character: { derived: { skill_pick_slots: [slot()] } } as any,
+      character: { derived: { skill_pick_slots: [slot()] } } as never,
       patch,
     });
 
@@ -886,7 +884,7 @@ describe("<SkillsTab> skills that come with something", () => {
       character: {
         adept_powers: [{ id: "p1", power_id: "c-p1", rating: 1, extra: "" }],
         derived: { adept_powers: [power()] },
-      } as any,
+      } as never,
       patch,
     });
 
@@ -930,7 +928,7 @@ describe("<SkillsTab> skills that come with something", () => {
             ],
           },
         },
-      } as any,
+      } as never,
       patch,
     });
 
@@ -975,7 +973,7 @@ describe("<SkillsTab> skills that come with something", () => {
             ],
           },
         },
-      } as any,
+      } as never,
     });
     expect(screen.queryByText("ついてくる技能")).toBeNull();
   });
@@ -984,7 +982,7 @@ describe("<SkillsTab> skills that come with something", () => {
   // it already named one, and the adept tab hides the select for that reason.
   it("leaves a power that came with its target already named alone", () => {
     renderTab({
-      character: { derived: { adept_powers: [power({ free_only: true })] } } as any,
+      character: { derived: { adept_powers: [power({ free_only: true })] } } as never,
     });
     expect(screen.queryByText("ついてくる技能")).toBeNull();
   });

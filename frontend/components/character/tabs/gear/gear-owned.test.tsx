@@ -13,8 +13,6 @@ import { RccGear } from "./RccGear";
 import { VehicleDroneGear } from "./VehicleDroneGear";
 import { WeaponGear } from "./WeaponGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * `gear-panels.test.tsx` covers the buying half — the `<CatalogPicker>` each
  * panel wraps. This covers the other half: the rows a character already owns,
@@ -28,7 +26,9 @@ import { WeaponGear } from "./WeaponGear";
  */
 
 // VehicleDroneGear takes an extra `mode`; renderPanel forwards it via `extra`.
-type Panel = ComponentType<TabPanelProps & Record<string, never>> | ComponentType<any>;
+// Each panel takes TabPanelProps plus its own extras, so the list is typed by
+// what they share and the call site widens it back.
+type Panel = ComponentType<never>;
 
 function renderPanel(
   Panel: Panel,
@@ -36,12 +36,13 @@ function renderPanel(
   patch: (b: Record<string, unknown>) => void,
   extra: Record<string, unknown> = {},
 ) {
-  return render(<Panel {...panelProps(character, { patch })} {...(extra as any)} />);
+  const P = Panel as ComponentType<TabPanelProps & Record<string, unknown>>;
+  return render(<P {...panelProps(character, { patch })} {...extra} />);
 }
 
 /** Two owned rows, mirrored into `character` and `derived` under their keys. */
 function owning(chKey: string, dKey: string, rows: Record<string, unknown>[]): Character {
-  return makeCharacter({ [chKey]: rows, derived: { [dKey]: rows } } as any);
+  return makeCharacter({ [chKey]: rows, derived: { [dKey]: rows } } as never);
 }
 
 const rated = (id: string, name: string, rating = 1) => ({
@@ -265,7 +266,7 @@ describe("<VehicleDroneGear> owned rows", () => {
       vehicles: [vehicle("v1", "Americar")],
       drones: [vehicle("dr1", "Steel Lynx")],
       derived: { vehicles: [vehicle("v1", "Americar")], drones: [vehicle("dr1", "Steel Lynx")] },
-    } as any);
+    } as never);
 
     renderPanel(VehicleDroneGear, ch, vi.fn(), { mode: "vehicle" });
     expect(screen.getByText("Americar")).toBeDefined();
@@ -289,7 +290,7 @@ describe("<VehicleDroneGear> owned rows", () => {
       vehicle_mods: v.mods,
       weapon_mounts: v.weapon_mounts,
       derived: { vehicles: [v] },
-    } as any);
+    } as never);
 
     const { container } = renderPanel(VehicleDroneGear, ch, vi.fn(), { mode: "vehicle" });
 
@@ -308,7 +309,7 @@ describe("<VehicleDroneGear> owned rows", () => {
     const patch = vi.fn();
     renderPanel(
       VehicleDroneGear,
-      makeCharacter({ vehicles: [v], vehicle_mods: v.mods, derived: { vehicles: [v] } } as any),
+      makeCharacter({ vehicles: [v], vehicle_mods: v.mods, derived: { vehicles: [v] } } as never),
       patch,
       { mode: "vehicle" },
     );
@@ -327,7 +328,7 @@ describe("<VehicleDroneGear> owned rows", () => {
     };
     renderPanel(
       VehicleDroneGear,
-      makeCharacter({ vehicles: [v], vehicle_mods: v.mods, derived: { vehicles: [v] } } as any),
+      makeCharacter({ vehicles: [v], vehicle_mods: v.mods, derived: { vehicles: [v] } } as never),
       vi.fn(),
       { mode: "vehicle" },
     );
@@ -352,7 +353,7 @@ describe("<VehicleDroneGear> owned rows", () => {
         weapons: [weapon],
         weapon_mounts: v.weapon_mounts,
         derived: { vehicles: [v], weapons: [weapon] },
-      } as any),
+      } as never),
       patch,
       { mode: "vehicle" },
     );

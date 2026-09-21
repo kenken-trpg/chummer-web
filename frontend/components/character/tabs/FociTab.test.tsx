@@ -3,8 +3,6 @@ import { fireEvent } from "@testing-library/dom";
 import { FociTab } from "@/components/character/tabs/FociTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 const powerFocus = {
   id: "pf",
   name: "Power Focus",
@@ -17,7 +15,9 @@ const powerFocus = {
 function renderTab(patch: (b: Record<string, unknown>) => void = () => {}) {
   const ch = makeCharacter();
   return render(
-    <FociTab {...panelProps(ch, { catalog: makeCatalog({ foci: [powerFocus] as any }), patch })} />,
+    <FociTab
+      {...panelProps(ch, { catalog: makeCatalog({ foci: [powerFocus] as never }), patch })}
+    />,
   );
 }
 

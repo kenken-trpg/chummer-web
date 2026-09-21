@@ -3,8 +3,7 @@ import { fireEvent } from "@testing-library/dom";
 import { beforeEach } from "vitest";
 import { CyberTab } from "@/components/character/tabs/CyberTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Character, Derived } from "@/lib/types";
 
 const wired = {
   id: "wired1",
@@ -33,7 +32,7 @@ const datajack = {
   page: "",
 };
 
-function cyberCatalog(items: any[] = [wired, datajack]) {
+function cyberCatalog(items: object[] = [wired, datajack]) {
   return makeCatalog({
     cyberware: {
       items,
@@ -42,7 +41,7 @@ function cyberCatalog(items: any[] = [wired, datajack]) {
         { name: "Alphaware", ess: 0.8, ess_adapsin: 0.7, cost: 1.2 },
       ],
     },
-  } as any);
+  } as never);
 }
 
 function renderTab(
@@ -107,7 +106,7 @@ describe("<CyberTab>", () => {
       nuyen: 39000,
       source: "SR5",
     };
-    const d = { ...ch.derived, adapsin, cyberware: [installed] } as any;
+    const d = { ...ch.derived, adapsin, cyberware: [installed] } as never;
     return render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
   }
 
@@ -166,7 +165,7 @@ describe("<CyberTab>", () => {
           extra: "",
         },
       ],
-    } as any;
+    } as never;
     render(
       <CyberTab
         {...panelProps(
@@ -203,7 +202,7 @@ describe("<CyberTab>", () => {
           granted_by: "Busted Cyberware",
         },
       ],
-    } as any;
+    } as unknown as Derived;
     render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
     expect(screen.getByText(/Busted Cyberware/)).toBeTruthy();
     expect(screen.queryByLabelText("グレード")).toBeNull();
@@ -238,7 +237,7 @@ describe("<CyberTab> compact view", () => {
         { id: "row1", ware_id: "wired1", rating: 2, grade: "Standard", wireless: false },
         { id: "row2", ware_id: "datajack", rating: 1, grade: "Standard", parent_id: "row1" },
       ],
-    } as any);
+    } as never);
     const base = { category: "Cyberware", grade: "Standard", nuyen: 1000, source: "SR5" };
     const d = {
       ...ch.derived,
@@ -255,7 +254,7 @@ describe("<CyberTab> compact view", () => {
         },
       ],
       ...extra,
-    } as any;
+    } as never;
     return render(
       <CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog(), patch })} />,
     );
@@ -289,7 +288,7 @@ describe("<CyberTab> compact view", () => {
 
   it("says 同梱 once on a folded bundled row", () => {
     localStorage.setItem("wareCompact", "1");
-    const ch = makeCharacter({} as any);
+    const ch = makeCharacter({} as never);
     const base = { category: "Cyberware", grade: "Standard", nuyen: 0, source: "SR5", rating: 1 };
     const d = {
       ...ch.derived,
@@ -305,7 +304,7 @@ describe("<CyberTab> compact view", () => {
           included: true,
         },
       ],
-    } as any;
+    } as never;
     render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
     const nested = document.querySelector(".cyber-item.compact.nested")!;
     expect(nested.textContent).toBe("Image Link（同梱）");
@@ -365,7 +364,7 @@ describe("<CyberTab> black market discount", () => {
       character: character({
         black_market_discount: true,
         black_market_category: "Bioware",
-      }) as any,
+      }) as never,
     });
     expect(screen.queryByLabelText("闇市")).toBeNull();
   });
@@ -376,11 +375,11 @@ describe("<CyberTab> black market discount", () => {
       character: character({
         black_market_discount: true,
         black_market_category: "Cyberware",
-      }) as any,
+      }) as never,
       patch,
     });
     fireEvent.click(screen.getByLabelText("闇市"));
-    expect((patch.mock.calls[0][0] as any).cyberware[0].discounted).toBe(true);
+    expect((patch.mock.calls[0][0] as Character).cyberware![0].discounted).toBe(true);
   });
 });
 
@@ -390,20 +389,20 @@ describe("<CyberTab> held gear", () => {
   function renderHolder(patch: (b: Record<string, unknown>) => void) {
     const injector = { ...datajack, id: "inj", name: "Auto Injector", allow_gear: ["Drugs"] };
     const catalog = makeCatalog({
-      ...(cyberCatalog([wired, injector]) as any),
+      ...cyberCatalog([wired, injector]),
       gear: [
         { id: "jazz", name: "Jazz", category: "Drugs", cost: "75", source: "SR5" },
         { id: "rope", name: "Rope", category: "Survival Gear", cost: "50", source: "SR5" },
       ],
-    } as any);
+    } as never);
     const ch = makeCharacter({
       cyberware: [{ id: "c1", ware_id: "inj", rating: 1, grade: "Standard", wireless: true }],
-      weapons: [{ id: "w1", weapon_id: "gun" }] as any,
-      weapon_accessories: [{ id: "a1", accessory_id: "scope", parent_id: "w1" }] as any,
+      weapons: [{ id: "w1", weapon_id: "gun" }] as never,
+      weapon_accessories: [{ id: "a1", accessory_id: "scope", parent_id: "w1" }] as never,
       gear: [
         { id: "g1", gear_id: "jazz", parent_id: "c1", qty: 1 },
         { id: "g2", gear_id: "rope", parent_id: "armor1", qty: 1 },
-      ] as any,
+      ] as never,
     });
     const held = {
       id: "g1",
@@ -427,7 +426,7 @@ describe("<CyberTab> held gear", () => {
       allow_gear: ["Drugs"],
       gear: [held],
     };
-    const d = { ...ch.derived, cyberware: [installed] } as any;
+    const d = { ...ch.derived, cyberware: [installed] } as never;
     return render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog, patch })} />);
   }
 
@@ -451,7 +450,7 @@ describe("<CyberTab> held gear", () => {
     renderHolder(patch);
     fireEvent.click(screen.getByRole("button", { name: "削除" }));
     const body = patch.mock.calls[0][0];
-    expect(body.gear.map((row: any) => row.id)).toEqual(["g2"]);
-    expect(body.weapon_accessories.map((row: any) => row.id)).toEqual(["a1"]);
+    expect(body.gear.map((row: { id: string }) => row.id)).toEqual(["g2"]);
+    expect(body.weapon_accessories.map((row: { id: string }) => row.id)).toEqual(["a1"]);
   });
 });

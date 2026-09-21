@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans_JP } from "next/font/google";
 import { connection } from "next/server";
+import { translate } from "@/lib/i18n/messages";
 import "./globals.css";
 
 const plexSansJp = IBM_Plex_Sans_JP({
@@ -13,7 +14,9 @@ const plexSansJp = IBM_Plex_Sans_JP({
 
 export const metadata: Metadata = {
   title: "Chummer Web",
-  description: "非公式 Shadowrun 5e キャラクター作成",
+  // Metadata is rendered on the server, before the reader's locale (kept in
+  // localStorage) is known — so it is the reference locale, like `lang="ja"`.
+  description: translate("ja", "app.meta.description"),
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

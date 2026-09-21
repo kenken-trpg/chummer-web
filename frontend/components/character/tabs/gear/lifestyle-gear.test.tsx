@@ -5,8 +5,6 @@ import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { LifestyleGear } from "./LifestyleGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * The one panel whose owned rows are edited through the *character* rather
  * than the derived payload.
@@ -68,7 +66,7 @@ function renderLifestyles(
  * separate arguments here because the difference is the point.
  */
 function owning(raw: Record<string, unknown>[], derived: Record<string, unknown>[]): Character {
-  return makeCharacter({ lifestyles: raw, derived: { lifestyles: derived } } as any);
+  return makeCharacter({ lifestyles: raw, derived: { lifestyles: derived } } as never);
 }
 
 describe("<LifestyleGear> the cost line", () => {
@@ -260,7 +258,7 @@ describe("<LifestyleGear> the qualities on a lifestyle", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "外す" })[0]);
 
-    const row = (patch.mock.calls[0][0].lifestyles as Record<string, any>[])[0];
+    const row = (patch.mock.calls[0][0].lifestyles as Record<string, unknown>[])[0];
     expect(row.quality_ids).toEqual(["cq-q1", "cq-q2"]);
     expect(row.quality_extras).toEqual({ "cq-q1": "Alchemy", "cq-q2": "Garage" });
   });
@@ -292,7 +290,7 @@ describe("<LifestyleGear> the qualities on a lifestyle", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "外す" })[0]);
 
-    const row = (patch.mock.calls[0][0].lifestyles as Record<string, any>[])[0];
+    const row = (patch.mock.calls[0][0].lifestyles as Record<string, unknown>[])[0];
     expect(row.quality_ids).toEqual(["cq-q2"]);
     // a target left behind would be re-applied if the quality is bought again
     expect(row.quality_extras).toEqual({ "cq-q2": "Garage" });
@@ -325,7 +323,7 @@ describe("<LifestyleGear> the qualities on a lifestyle", () => {
 
     fireEvent.change(screen.getByPlaceholderText("対象"), { target: { value: "Alchemy" } });
 
-    const row = (patch.mock.calls[0][0].lifestyles as Record<string, any>[])[0];
+    const row = (patch.mock.calls[0][0].lifestyles as Record<string, unknown>[])[0];
     expect(row.quality_extras).toEqual({ "cq-q1": "Alchemy", "cq-q2": "Garage" });
   });
 
@@ -353,7 +351,7 @@ describe("<LifestyleGear> the qualities on a lifestyle", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: "外す" })[1]);
 
-    const rows = patch.mock.calls[0][0].lifestyles as Record<string, any>[];
+    const rows = patch.mock.calls[0][0].lifestyles as Record<string, unknown>[];
     expect(rows.find((r) => r.id === "l1")!.quality_ids).toEqual(["cq-a"]);
     expect(rows.find((r) => r.id === "l2")!.quality_ids).toEqual([]);
   });
@@ -388,7 +386,7 @@ describe("<LifestyleGear> the quality picker", () => {
         // a supplement quality: on the list unless the settings drop SG
         { id: "cq-sg", name: "Obscure Perk", lp: 0, cost: 0, source: "SG" },
       ],
-    } as any);
+    } as never);
 
   const middle = (over: Record<string, unknown> = {}) =>
     owning(
@@ -430,7 +428,7 @@ describe("<LifestyleGear> the quality picker", () => {
       lifestyle_qualities: [
         { id: "cq-cramped", name: "Cramped", lp: -1, cost: 0, source: "SR5", allow_multiple: true },
       ],
-    } as any);
+    } as never);
     renderLifestyles(middle(), vi.fn(), repeatable);
 
     const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" });
@@ -453,7 +451,7 @@ describe("<LifestyleGear> the quality picker", () => {
             }),
           ],
         },
-      } as any),
+      } as never),
       patch,
       catalog(),
     );
@@ -462,7 +460,7 @@ describe("<LifestyleGear> the quality picker", () => {
     fireEvent.change(select, { target: { value: "cq-work" } });
     fireEvent.click(screen.getByRole("button", { name: "Middle: 追加" }));
 
-    const rows = patch.mock.calls[0][0].lifestyles as Record<string, any>[];
+    const rows = patch.mock.calls[0][0].lifestyles as Record<string, unknown>[];
     expect(rows.find((r) => r.id === "l1")!.quality_ids).toEqual(["cq-cramped", "cq-work"]);
     expect(rows.find((r) => r.id === "l0")!.quality_ids).toEqual([]);
   });
@@ -479,7 +477,7 @@ describe("<LifestyleGear> the quality picker", () => {
           needs_extra: true,
         },
       ],
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderLifestyles(middle({ quality_ids: [] }), patch, needsExtra);
 
@@ -492,7 +490,7 @@ describe("<LifestyleGear> the quality picker", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Middle: 追加" }));
 
-    const row = (patch.mock.calls[0][0].lifestyles as Record<string, any>[])[0];
+    const row = (patch.mock.calls[0][0].lifestyles as Record<string, unknown>[])[0];
     expect(row.quality_ids).toEqual(["cq-work"]);
     expect(row.quality_extras).toEqual({ "cq-work": "Alchemy" });
   });
@@ -518,7 +516,7 @@ describe("<LifestyleGear> buying a lifestyle", () => {
           freegrids: ["Local Grid"],
         },
       ],
-    } as any);
+    } as never);
   const offered = () =>
     [...document.querySelectorAll(".quality-list .quality-item b")].map((el) => el.textContent);
 

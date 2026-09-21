@@ -5,8 +5,6 @@ import { BooksProvider } from "@/lib/character/books";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import { VehicleDroneGear } from "./VehicleDroneGear";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * `gear-owned.test.tsx` pins this panel's backbone — mods, weapon mounts, and
  * the vehicle/drone split. This file covers the four trees hanging off it,
@@ -108,7 +106,7 @@ describe("<VehicleDroneGear> the mod picker and the books", () => {
           source: "HT",
         },
       ],
-    } as any);
+    } as never);
   const modOptions = () =>
     [
       ...screen.getByRole("combobox", { name: "Americar: 改造を追加" }).querySelectorAll("option"),
@@ -143,7 +141,7 @@ function owning(v: Record<string, unknown>, rest: Record<string, unknown> = {}):
     vehicles: [v],
     ...top,
     derived: { vehicles: [v], ...(derived as object) },
-  } as any);
+  } as never);
 }
 
 describe("<VehicleDroneGear> cyberware hosted in a mod", () => {
@@ -173,7 +171,7 @@ describe("<VehicleDroneGear> cyberware hosted in a mod", () => {
           },
         ],
       },
-    } as any);
+    } as never);
 
   it("offers only the ware the mod has a slot for", () => {
     renderVehicle(
@@ -285,7 +283,7 @@ describe("<VehicleDroneGear> the inline mod picker", () => {
           required: { category_equals: ["Bike"] },
         },
       ],
-    } as any);
+    } as never);
 
   it("leaves out free mods, mods the vehicle cannot take, and ones already on it", () => {
     const fitted = mod("m1", "Rigger Interface", { mod_id: "vm1" });
@@ -366,7 +364,7 @@ describe("<VehicleDroneGear> weapon mounts", () => {
         // not a size — control, flexibility and visibility live in the same list
         { id: "sz2", name: "Remote", category: "Control", cost: "2000", source: "SR5" },
       ],
-    } as any);
+    } as never);
     const patch = vi.fn();
     renderVehicle(owning(vehicle("v1", "Americar")), patch, catalog);
 
@@ -410,7 +408,7 @@ describe("<VehicleDroneGear> sensor functions", () => {
         // "Custom" is the build-your-own placeholder, never an option
         { id: "sf3", name: "Custom", category: "Custom", cost: "0", source: "SR5" },
       ],
-    } as any);
+    } as never);
 
   it("lists a sensor's functions under it, and does not offer one twice", () => {
     const camera = fn("s1a", "Camera", "sf1", "s1");
@@ -491,7 +489,7 @@ describe("<VehicleDroneGear> interior gear", () => {
         // a category no vehicle interior takes
         { id: "g-ammo", name: "Ammo: Regular", category: "Ammunition", cost: "20", source: "SR5" },
       ],
-    } as any);
+    } as never);
 
   it("offers only interior-fitting gear the vehicle does not already carry", () => {
     renderVehicle(owning(vehicle("v1", "Americar")), vi.fn(), catalog());
@@ -566,7 +564,7 @@ describe("<VehicleDroneGear> deleting the vehicle", () => {
         gear: [g],
         cyberware: [w],
         derived: { vehicles: [v], cyberware: [w] },
-      } as any),
+      } as never),
       patch,
     );
 
@@ -593,7 +591,7 @@ describe("<VehicleDroneGear> deleting the vehicle", () => {
         vehicles: [car],
         drones: [drone],
         derived: { vehicles: [car], drones: [drone] },
-      } as any),
+      } as never),
       patch,
       makeCatalog(),
       "drone",
@@ -664,7 +662,7 @@ describe("<VehicleDroneGear> compact view", () => {
   });
 
   it("has no switch until there is a vehicle to fold", () => {
-    renderVehicle(makeCharacter({} as any), vi.fn());
+    renderVehicle(makeCharacter({} as never), vi.fn());
     expect(screen.queryByLabelText("簡易表示（名称のみ）")).toBeNull();
   });
 });
@@ -699,9 +697,9 @@ describe("<VehicleDroneGear> autosofts a drone runs itself", () => {
       drones: [dr],
       programs: [{ id: "p1", gear_id: "as0", rating: 3, parent_id: "d1" }],
       derived: { drones: [dr], programs: [loaded] },
-    } as any);
+    } as never);
     const patch = vi.fn();
-    renderVehicle(ch, patch, makeCatalog({ programs: [autosoft] as any }), "drone");
+    renderVehicle(ch, patch, makeCatalog({ programs: [autosoft] as never }), "drone");
 
     expect(screen.getByText(/\[Model\] Stealth Autosoft \(Fly-Spy\)/)).toBeTruthy();
     const select = screen.getByRole("combobox", { name: "Fly-Spy: オートソフトを追加" });
@@ -752,7 +750,7 @@ describe("<VehicleDroneGear> the mod-slot help", () => {
       slots_max: 4,
     });
     renderVehicle(
-      makeCharacter({ drones: [drone], derived: { drones: [drone] } } as any),
+      makeCharacter({ drones: [drone], derived: { drones: [drone] } } as never),
       vi.fn(),
       makeCatalog(),
       "drone",

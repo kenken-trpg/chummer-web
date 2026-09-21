@@ -26,8 +26,6 @@ import { SkillsSection } from "@/components/character/sheet/sections/Skills";
 import { VehiclesSection } from "@/components/character/sheet/sections/Vehicles";
 import { WareSection } from "@/components/character/sheet/sections/Ware";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // A `derived` payload that touches every sheet section with realistic nested
 // rows. Rows are hand-shaped only far enough to render, then cast — like the
 // rest of the suite's fixtures.
@@ -62,7 +60,7 @@ const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
 
 describe("sheet sections — smoke render", () => {
   it.each(SECTIONS)("%s renders with populated derived data", (_title, Section, marker) => {
-    const { container } = render(<Section {...(s as any)} />);
+    const { container } = render(<Section {...s} />);
     // the section did not collapse to null and shows a representative value
     expect(container.querySelector("section.sheet-section")).not.toBeNull();
     expect(container.textContent).toContain(marker);
@@ -82,12 +80,12 @@ describe("sheet sections — smoke render", () => {
             hot_dice: 4,
           },
         },
-      } as any,
+      } as never,
       catalog: RICH_CATALOG,
       tr: identityTr,
       layout: "standard",
     });
-    const { container } = render(<MatrixSection {...(withVr as any)} />);
+    const { container } = render(<MatrixSection {...withVr} />);
     expect(container.textContent).toContain("冷7+3d6");
     expect(container.textContent).toContain("熱7+4d6");
   });
@@ -98,29 +96,29 @@ describe("sheet sections — smoke render", () => {
         character: {
           ...RICH_CHARACTER,
           derived: { ...RICH_CHARACTER.derived, astral_initiative: astral },
-        } as any,
+        } as never,
         catalog: RICH_CATALOG,
         tr: identityTr,
         layout: "standard",
       });
-    const awakened = render(<CoreSection {...(sheet({ value: 8, dice: 3 }) as any)} />);
+    const awakened = render(<CoreSection {...sheet({ value: 8, dice: 3 })} />);
     expect(awakened.container.textContent).toContain("アストラル・イニシアチブ8+3d6");
-    const mundane = render(<CoreSection {...(sheet(null) as any)} />);
+    const mundane = render(<CoreSection {...sheet(null)} />);
     expect(mundane.container.textContent).not.toContain("アストラル・イニシアチブ");
   });
 
   it("the core section prints movement in metres with the sprint rate", () => {
-    const { container } = render(<CoreSection {...(s as any)} />);
+    const { container } = render(<CoreSection {...s} />);
     expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");
   });
 
   it("the magic section prints a bound spirit's powers with their action", () => {
-    const { container } = render(<MagicSection {...(s as any)} />);
+    const { container } = render(<MagicSection {...s} />);
     expect(container.textContent).toContain("Engulf（物理・複雑・接触・維持）");
   });
 
   it("the resonance section prints a sprite's powers the same way", () => {
-    const { container } = render(<ResonanceSection {...(s as any)} />);
+    const { container } = render(<ResonanceSection {...s} />);
     expect(container.textContent).toContain("Hash（物理・複雑・接触・即時）");
   });
 
@@ -140,12 +138,12 @@ describe("sheet sections — smoke render", () => {
             quickening: true,
           },
         },
-      } as any,
+      } as never,
       catalog: RICH_CATALOG,
       tr: identityTr,
       layout: "standard",
     });
-    const { container } = render(<MagicSection {...(withQuickening as any)} />);
+    const { container } = render(<MagicSection {...withQuickening} />);
     expect(container.textContent).toContain("クイックニング可");
   });
 
@@ -158,7 +156,7 @@ describe("sheet sections — smoke render", () => {
     });
     for (const [title, Section] of SECTIONS) {
       if (title === "コア") continue; // always-on
-      const { container } = render(<Section {...(empty as any)} />);
+      const { container } = render(<Section {...empty} />);
       expect(container.querySelector("section.sheet-section")).toBeNull();
     }
   });
@@ -166,7 +164,7 @@ describe("sheet sections — smoke render", () => {
 
 describe("<WareSection> on the compact sheet", () => {
   it("lists ware by name alone", () => {
-    const standard = render(<WareSection {...(s as any)} />);
+    const standard = render(<WareSection {...s} />);
     expect(standard.container.querySelector(".sheet-list li")!.textContent).toContain("ESS −2");
     standard.unmount();
 
@@ -176,7 +174,7 @@ describe("<WareSection> on the compact sheet", () => {
       tr: identityTr,
       layout: "compact",
     });
-    const { container } = render(<WareSection {...(compact as any)} />);
+    const { container } = render(<WareSection {...compact} />);
     const lists = [...container.querySelectorAll(".sheet-list")];
     expect(lists.every((ul) => ul.classList.contains("sheet-list-compact"))).toBe(true);
     expect(lists[0].textContent).toBe("Wired Reflexes R2");
@@ -194,7 +192,7 @@ describe("<CombatSection> a limit-based Accuracy", () => {
           ...RICH_CHARACTER.derived,
           weapons: [
             {
-              ...(RICH_CHARACTER.derived as any).weapons[0],
+              ...RICH_CHARACTER.derived!.weapons![0],
               id: "blade",
               name: "Hand Blade",
               accuracy: "6",
@@ -204,12 +202,12 @@ describe("<CombatSection> a limit-based Accuracy", () => {
             },
           ],
         },
-      } as any,
+      } as never,
       catalog: RICH_CATALOG,
       tr: identityTr,
       layout: "standard",
     });
-    const { container } = render(<CombatSection {...(withBlade as any)} />);
+    const { container } = render(<CombatSection {...withBlade} />);
     const cell = container.querySelector('td[title="Physical"]');
     expect(cell?.textContent).toBe("6");
     expect(container.querySelector('td[title="({STR}+1)P"]')?.textContent).toBe("4P");

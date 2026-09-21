@@ -3,8 +3,6 @@ import { CharacterSidebar } from "@/components/character/CharacterSidebar";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 describe("<CharacterSidebar>", () => {
   it("renders name, the 能力値 block and 作成 mode for a fresh character", () => {
     render(
@@ -37,7 +35,7 @@ describe("<CharacterSidebar>", () => {
 
   it("explains what Essence is and what it takes with it", () => {
     const ch = makeCharacter();
-    (ch.derived as any).enabled_tabs = ["MAG"];
+    ch.derived!.enabled_tabs = ["MAG"];
     render(
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
@@ -67,7 +65,7 @@ describe("<CharacterSidebar>", () => {
     const ch = makeCharacter({
       derived: {
         ambidextrous: true,
-        tradition: { name: "Hermeticism" } as any,
+        tradition: { name: "Hermeticism" } as never,
         errors: [{ key: "engine.attrs.essenceDepleted" }],
       },
     });
@@ -101,7 +99,7 @@ describe("<CharacterSidebar>", () => {
     unmount();
 
     const initiate = makeCharacter({
-      derived: { enabled_tabs: ["initiation"], initiation: { grade: 2, karma: 13 } as any },
+      derived: { enabled_tabs: ["initiation"], initiation: { grade: 2, karma: 13 } as never },
     });
     render(
       <CharacterSidebar
@@ -177,7 +175,7 @@ describe("<CharacterSidebar>", () => {
         street_cred: 5,
         street_cred_earned: 2,
         street_cred_divisor: 20,
-      } as any,
+      } as never,
     });
     render(
       <CharacterSidebar
@@ -196,7 +194,7 @@ describe("<CharacterSidebar>", () => {
     const ch = makeCharacter({
       career: true,
       burnt_street_cred: 2,
-      derived: { street_cred: 3 } as any,
+      derived: { street_cred: 3 } as never,
     });
     render(
       <CharacterSidebar
@@ -215,7 +213,7 @@ describe("<CharacterSidebar>", () => {
   });
 
   it("will not burn below two points", () => {
-    const ch = makeCharacter({ career: true, derived: { street_cred: 1 } as any });
+    const ch = makeCharacter({ career: true, derived: { street_cred: 1 } as never });
     render(
       <CharacterSidebar
         catalog={makeCatalog()}
