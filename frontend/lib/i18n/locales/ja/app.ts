@@ -347,7 +347,10 @@ export const JA_APP = {
   "app.copyOf": "{name} のコピー",
 
   "app.importWarnings": "取り込み時の未対応 {count}件 — {details}",
-  "app.exportDifferences": "書き出した chum5 を読み込み直すと {count} 件の差が出ます — {details}",
+  "app.exportReview.title":
+    "書き出した chum5 を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
+  "app.exportReview.confirm": "このまま書き出す",
+  "app.exportReview.cancel": "やめる",
   "check.needsMentor": "メンタースピリットが未選択です",
   "check.needsParagon": "パラゴンが未選択です",
   "check.metagenicUnbalanced":

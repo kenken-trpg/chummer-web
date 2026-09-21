@@ -14,6 +14,7 @@ import { useSheetLayout } from "@/lib/character/useSheetLayout";
 import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
+import { ExportReview } from "@/components/character/ExportReview";
 
 export default function Page() {
   const [tab, setTab] = useState<Tab>("priority");
@@ -78,6 +79,7 @@ export default function Page() {
             />
 
             {notice ? <p className="notice">{notice}</p> : null}
+            <ExportReview ed={ed} />
           </header>
 
           {/* Outside the <header> on purpose: a sticky element can only stick
