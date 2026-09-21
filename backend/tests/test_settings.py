@@ -599,3 +599,46 @@ def test_a_skill_group_pays_its_new_price_only_at_rating_one() -> None:
         assert skill_karma_cost({"Firearms": 1}, {}, skills) == 1
         # rating 2 is three levels' worth, so every level is the improve price
         assert skill_karma_cost({"Firearms": 2}, {}, skills) == 5 + 10
+
+
+def _wired(rating: int, settings: SettingsState | None = None) -> CharacterState:
+    from app.models import CyberwareInstall
+    from tests.engine_support import _mundane
+
+    wire = next(r["id"] for r in catalog()["cyberware"]["items"] if r["name"] == "Wired Reflexes")
+    state = _mundane("init", cyberware=[CyberwareInstall(ware_id=wire, rating=rating)])
+    if settings is not None:
+        state.settings = settings
+    return state
+
+
+def test_initiative_dice_are_capped_at_the_settings_maximum() -> None:
+    """Chummer's `InitiativeDice`: the minimum plus what augmentations add,
+    never past `<maxinitiativedice>`. Nothing capped it here before."""
+    from app.engine import compute
+
+    assert compute(_wired(3)).derived["initiative"]["dice"] == 4
+    capped = compute(_wired(3, SettingsState(max_initiative_dice=3)))
+    assert capped.derived["initiative"]["dice"] == 3
+    raised = compute(_wired(1, SettingsState(min_initiative_dice=2)))
+    assert raised.derived["initiative"]["dice"] == 3
+
+
+def test_vr_initiative_dice_come_from_the_settings() -> None:
+    from app.engine.gear.matrix import matrix_initiative
+
+    persona = [("commlink", {"dataprocessing": 3})]
+    standard = matrix_initiative(persona, 4)
+    assert standard is not None
+    assert (standard["cold_dice"], standard["hot_dice"]) == (3, 4)
+    with using_rules(rules_for(SettingsState(min_hotsim_initiative_dice=5, max_coldsim_initiative_dice=4))):
+        house = matrix_initiative(persona, 4, extra_dice=2)
+        assert house is not None
+        assert (house["cold_dice"], house["hot_dice"]) == (4, 5)
+
+
+def test_the_initiative_dice_settings_are_read() -> None:
+    xml = _settings_xml(maxinitiativedice=4, minhotsiminitiativedice=5)
+    parsed = parse_settings_xml(xml)
+    assert (parsed.max_initiative_dice, parsed.min_hotsim_initiative_dice) == (4, 5)
+    assert parsed.unsupported == []

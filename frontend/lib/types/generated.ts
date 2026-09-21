@@ -335,6 +335,12 @@ export interface CharacterSettings {
   career_skill_max?: number | null;
   career_knowledge_skill_max?: number | null;
   chargen_avail_max?: number | null;
+  min_initiative_dice?: number | null;
+  max_initiative_dice?: number | null;
+  min_coldsim_initiative_dice?: number | null;
+  max_coldsim_initiative_dice?: number | null;
+  min_hotsim_initiative_dice?: number | null;
+  max_hotsim_initiative_dice?: number | null;
   min_astral_initiative_dice?: number | null;
   max_astral_initiative_dice?: number | null;
   /** `<limbcount>` / `<excludelimbslot>`: how many limbs a cyberlimb's

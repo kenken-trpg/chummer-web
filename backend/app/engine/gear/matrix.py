@@ -12,6 +12,7 @@ from typing import Any
 
 from ...data_loader import eval_formula
 from ...models import GearInstall
+from ...rules import current_rules
 from ..bundle_types import MatrixInitiative
 from ..constants import MATRIX_ARRAY_KEYS
 from ..lookups import _item_by_id
@@ -117,13 +118,6 @@ def _resolve_matrix_devices(
     return kept, public, nuyen
 
 
-#: SR5 p.229: VR initiative rolls Data Processing + Intuition, with three dice
-#: in cold sim and four in hot sim. In AR the character keeps their meat
-#: initiative, so there is nothing extra to publish for it.
-COLD_SIM_DICE = 3
-HOT_SIM_DICE = 4
-
-
 def matrix_initiative(
     personas: list[tuple[str, dict[str, Any] | None]],
     intuition: int,
@@ -135,6 +129,11 @@ def matrix_initiative(
     ``personas`` is (label, row) in preference order — a technomancer's living
     persona, then the devices. The one with the highest Data Processing wins,
     because that is the one worth jacking into; ties keep the earlier entry.
+    SR5 p.229: VR initiative rolls Data Processing + Intuition, with three
+    dice in cold sim and four in hot sim — the settings' minimums, each capped
+    at its maximum. In AR the character keeps their meat initiative, so there
+    is nothing extra to publish for it.
+
     ``extra_dice`` is `<matrixinitiativedice>` (a Multidimensional Coprocessor,
     the Sourcerer echoes); ``offset`` is `<matrixinitiative>`, which moves the
     score rather than the dice — Delphi gives up two points of it (KC p.103).
@@ -149,12 +148,14 @@ def matrix_initiative(
     if best is None:
         return None
     label, processing = best
+    rules = current_rules()
     return {
         "device": label,
         "dataprocessing": processing,
         "value": max(0, processing + int(intuition) + int(offset)),
-        "cold_dice": COLD_SIM_DICE + int(extra_dice),
-        "hot_dice": HOT_SIM_DICE + int(extra_dice),
+        # Chummer `MatrixInitiativeColdDice` / `MatrixInitiativeHotDice`
+        "cold_dice": min(rules.min_coldsim_initiative_dice + int(extra_dice), rules.max_coldsim_initiative_dice),
+        "hot_dice": min(rules.min_hotsim_initiative_dice + int(extra_dice), rules.max_hotsim_initiative_dice),
     }
 
 
