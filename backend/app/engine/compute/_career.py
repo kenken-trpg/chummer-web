@@ -40,6 +40,7 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
         },
         quality_ids=[str(qid) for qid in state.quality_ids or []],
         item_ids=sorted({str(row.id) for field in _ITEM_FIELDS for row in getattr(state, field) or []}),
+        mystic_pp=int(state.mystic_pp or 0),
     )
 
 

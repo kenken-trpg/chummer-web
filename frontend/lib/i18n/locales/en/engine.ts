@@ -173,6 +173,8 @@ export const EN_ENGINE = {
   "engine.adept.powerNotAllowed": "{picked} is not an option for {source}",
   "engine.adept.powerPick": "Choose a power for {source}",
   "engine.adept.powerPointsOver": "Not enough power points (spent {used} / {max})",
+  "engine.adept.mysticPpInCareer":
+    "The settings do not allow a mystic adept to buy power points in career ({before} → {after})",
   "engine.adept.powerUnknown": "{source}: no such power {power}",
   "engine.adept.requires": "{name} requires {needed}",
   "engine.adept.selectInvalid": "{name}: {picked} is not a valid choice",

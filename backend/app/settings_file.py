@@ -152,6 +152,8 @@ _HANDLED_ELSEWHERE = {
     # `PositiveQualityKarma`, which it never touches, and the check already fails
     # at any excess, so nothing this app computes or reports changes.
     "exceedpositivequalitiescostdoubled",
+    # `<freespiritpowerpointsmag>` is loaded by Chummer but never read.
+    "freespiritpowerpointsmag",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
@@ -180,6 +182,8 @@ _BOOL_FIELDS: dict[str, str] = {
     "dronearmormultiplierenabled": "drone_armor_multiplier_enabled",
     "alternatemetatypeattributekarma": "alternate_metatype_attribute_karma",
     "compensateskillgroupkarmadifference": "compensate_skill_group_karma_difference",
+    "increasedimprovedabilitymodifier": "increased_improved_ability_modifier",
+    "mysaddppcareer": "mystic_adept_pp_in_career",
 }
 
 #: `{Karma} * 3000 + {PriorityNuyen}` — the only shape of

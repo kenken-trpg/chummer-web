@@ -172,6 +172,8 @@ export const JA_ENGINE = {
   "engine.adept.powerNotAllowed": "{source} に {picked} は選べません",
   "engine.adept.powerPick": "{source} のパワーを選んでください",
   "engine.adept.powerPointsOver": "パワー点が不足しています（使用 {used} / 上限 {max}）",
+  "engine.adept.mysticPpInCareer":
+    "設定により、ミスティックアデプトはキャリアでパワーポイントを買えません（{before} → {after}）",
   "engine.adept.powerUnknown": "{source} のパワー {power} が見つかりません",
   "engine.adept.requires": "{name} には {needed} が必要です",
   "engine.adept.selectInvalid": "{name} の指定が無効です（{picked}）",
