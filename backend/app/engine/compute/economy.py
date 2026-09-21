@@ -4,6 +4,7 @@ notoriety / public awareness)."""
 
 from __future__ import annotations
 
+import math
 from typing import Any, cast
 
 from ...data_loader import PHYSICAL_ATTRS
@@ -11,6 +12,7 @@ from ...improvements import apply_bonus_nodes
 from ...notices import notice, term, terms
 from ...rules import current_rules
 from ..contacts import resolve_contacts, sync_quality_contacts
+from ..formulas import eval_attribute_expression
 from ..gear import apply_unarmed_bonuses
 from ..karma import (
     _active_karma_mults,
@@ -223,7 +225,7 @@ def _skill_spend(ctx: Ctx) -> None:
             if levels:
                 ctx.knowledge_karma_levels[name] = levels
     ctx.state.knowledge_karma = dict(ctx.knowledge_karma_levels)
-    ctx.know_max = int(ctx.knowledge["max"]) + int(ctx.effects.get("knowledge_skill_points") or 0)
+    ctx.know_max = _knowledge_points(ctx) + int(ctx.effects.get("knowledge_skill_points") or 0)
     bought_knowledge = dict(ctx.state.knowledge_skills)
     for name in ctx.state.native_languages:
         bought_knowledge[name] = max(int(bought_knowledge.get(name) or 0), 1)
@@ -343,6 +345,21 @@ def _skill_spend(ctx: Ctx) -> None:
     _attach_specializations(ctx.knowledge["public"], ctx.specs["specs"])
     ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
     ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
+
+
+def _knowledge_points(ctx: Ctx) -> int:
+    """Free knowledge points off `<knowledgepointsexpression>`, rounded up
+    (Chummer's `KnowledgeSkillPoints`). `{INTUnaug}` is the bought rating, so
+    a cerebral booster makes the character smarter, not better schooled;
+    `{INT}` counts it."""
+    values: dict[str, float] = {}
+    for key, rating in ctx.ratings.items():
+        values[f"{key}Unaug"] = int(rating)
+        values[key] = int(rating) + ctx.attr_bonus(key)
+    points = eval_attribute_expression(current_rules().knowledge_points_expression, values)
+    if points is None:
+        return int(ctx.knowledge["max"])
+    return max(0, math.ceil(points - 1e-9))
 
 
 def _karma_totals(ctx: Ctx) -> None:

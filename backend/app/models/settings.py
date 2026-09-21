@@ -100,6 +100,9 @@ class SettingsState(BaseModel):
     #: STR / AGI ignores the cyberlimb average
     cyberlimb_attribute_bonus_cap: int | None = None
     dont_use_cyberlimb_calculation: bool | None = None
+    #: `<knowledgepointsexpression>`, kept only when it is attribute tokens
+    #: and arithmetic (`app.engine.formulas.eval_attribute_expression`)
+    knowledge_points_expression: str | None = Field(default=None, max_length=200)
     karma_to_nuyen: int | None = None
     priority_karma_nuyen_base: int | None = None
     #: `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's

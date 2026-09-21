@@ -1622,3 +1622,22 @@ def test_dont_use_cyberlimb_calculation_keeps_the_meat_strength() -> None:
     out = compute(state)
     assert out.derived["limb_replace"] is None
     assert out.derived["totals"]["STR"] == 1
+
+
+def test_the_knowledge_points_expression_reads_augmented_and_unaugmented_attributes() -> None:
+    def points(expression: str | None) -> int:
+        state = CharacterState(
+            id="knowledge-expr",
+            name="KnowledgeExpr",
+            priorities=Priorities(),
+            metatype="Human",
+            attributes=default_attributes(find_metatype("Human", None)),
+            bioware=[CyberwareInstall(ware_id=CEREBRAL, rating=2)],
+            settings=SettingsState(knowledge_points_expression=expression),
+        )
+        return int(compute(state).derived["points"]["knowledge"]["max"])
+
+    assert points(None) == 4  # (INT 1 + LOG 1) x 2: the booster is not schooling
+    assert points("({INT} + {LOG}) * 2") == 8  # LOG 3 with the booster
+    assert points("({INTUnaug} + {LOGUnaug}) * 2.5") == 5
+    assert points("({INTUnaug} + {LOGUnaug} + 1) div 2") == 2  # 1.5 rounds up

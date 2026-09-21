@@ -356,6 +356,10 @@ export interface CharacterSettings {
    */
   cyberlimb_attribute_bonus_cap?: number | null;
   dont_use_cyberlimb_calculation?: boolean | null;
+  /** `<knowledgepointsexpression>`, kept only when it is attribute tokens
+   *  and arithmetic (`app.engine.formulas.eval_attribute_expression`)
+   */
+  knowledge_points_expression?: string | null;
   karma_to_nuyen?: number | null;
   priority_karma_nuyen_base?: number | null;
   /** `<metatypecostskarmamultiplier>`: a Karma build pays the metatype's
