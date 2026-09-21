@@ -493,6 +493,7 @@ def assemble(ctx: Ctx) -> None:
         "skill_attribute_swaps": list(ctx.effects.get("skill_attribute_swaps") or []),
         "skill_max_bonus": ctx.skill_picks["skill_max_bonus"],
         "skill_pick_slots": ctx.skill_picks["slots"],
+        "talent_skills": ctx.talent_skills,
         "no_default_penalty_skills": ctx.skill_picks["no_default_penalty"],
         "enabled_tabs": sorted(ctx.enabled),
         "unimplemented_bonuses": ctx.effects["unimplemented"],

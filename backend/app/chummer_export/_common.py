@@ -22,3 +22,10 @@ _Names = dict[str, dict[str, str]]
 #: The little that is neither the state nor a name map: the metatype's
 #: attribute minimums, which only the attribute section needs.
 _Ctx = dict[str, Any]
+
+
+def improvements_of(root: ET.Element) -> ET.Element:
+    """The one `<improvements>` under `<character>`, made on first use —
+    several sections add to it, and Chummer reads only the first."""
+    found = root.find("improvements")
+    return found if found is not None else _sub(root, "improvements")

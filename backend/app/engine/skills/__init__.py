@@ -8,6 +8,7 @@ skills, `<skillsoft>` autosofts, activesoft-driven skill picks, and the
 ``_mods``        dice modifiers by category, group and skill
 ``_skillsofts``  activesofts / knowsofts and the jack or wires they need
 ``_picks``       `<selectskill>` / `<hardwires>` picks and ware accuracy
+``_talent``      the priority talent's free skills
 
 Imports only ``catalog`` / already-extracted engine modules / models — never
 back into ``app.engine``. Every name the old module held is re-exported here,
@@ -53,6 +54,7 @@ from ._specs import (
     apply_select_expertise,
     resolve_specializations,
 )
+from ._talent import resolve_talent_skills, talent_skill_options
 
 __all__ = [
     "KNOWLEDGE_CATEGORIES",
@@ -79,5 +81,7 @@ __all__ = [
     "resolve_skill_picks",
     "resolve_skillsofts",
     "resolve_specializations",
+    "resolve_talent_skills",
+    "talent_skill_options",
     "ware_accuracy_picks",
 ]

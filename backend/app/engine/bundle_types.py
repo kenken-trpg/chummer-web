@@ -41,6 +41,18 @@ class SkillMods(TypedDict):
     skill_bonus_notes: dict[str, list[str]]
 
 
+class TalentSkills(TypedDict):
+    """``resolve_talent_skills`` — the priority talent's free skills."""
+
+    qty: int
+    #: the free rating each pick gets (0 when the talent gives none)
+    rating: int
+    #: an Aspected Magician's pick is a skill group, not a skill
+    group: bool
+    options: list[str]
+    picked: list[str]
+
+
 class SkillPicks(TypedDict):
     """``resolve_skill_picks`` — ``<selectskill>`` / ``<hardwires>`` slots and their bonuses."""
 

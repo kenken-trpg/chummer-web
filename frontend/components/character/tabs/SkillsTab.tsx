@@ -7,6 +7,7 @@ import { KnowledgePicker } from "./skills/KnowledgePicker";
 import { KnowledgeSkills } from "./skills/KnowledgeSkills";
 import { SkillGroups } from "./skills/SkillGroups";
 import { skillLimits } from "./skills/shared";
+import { TalentSkills } from "./skills/TalentSkills";
 
 export function SkillsTab(props: TabPanelProps) {
   const { d, ui } = props;
@@ -29,6 +30,7 @@ export function SkillsTab(props: TabPanelProps) {
           })}
         </p>
       ) : null}
+      <TalentSkills {...props} />
       <GrantedSkills {...props} />
       <SkillGroups {...props} />
       <ActiveSkills {...props} />

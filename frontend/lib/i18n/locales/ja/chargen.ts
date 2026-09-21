@@ -6,6 +6,9 @@ export const JA_CHARGEN = {
   "skills.granted": "ついてくる技能",
   "skills.grantedNote":
     "資質・ウェア・アデプト能力・メンター精霊が連れてくる技能です。ここで選んでも、それぞれのタブで選んでも同じものです。",
+  "skills.talent": "タレントでもらえる技能（{qty} つを R{rating} で）",
+  "skills.talentGroup": "タレントでもらえる技能グループ（{qty} つを R{rating} で）",
+  "skills.talentPick": "{n} つ目",
   "skills.groups": "技能グループ",
   "skills.softBit": "ソフトR{rating}",
   "skills.default": "デフォルト {pool}",

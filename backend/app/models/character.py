@@ -58,6 +58,7 @@ class CharacterPatch(BaseModel):
     skill_groups: dict[str, int] | None = None
     skill_group_karma: dict[str, int] | None = None
     skill_specializations: dict[str, str] | None = None
+    talent_skills: list[str] | None = None
     exotic_skills: list[ExoticSkillInstall] | None = None
     knowledge_skills: dict[str, int] | None = None
     knowledge_karma: dict[str, int] | None = None
@@ -194,6 +195,11 @@ class CharacterState(BaseModel):
     #: of `skill_groups[name]`, the top levels bought with karma
     skill_group_karma: dict[str, int] = Field(default_factory=dict)
     skill_specializations: dict[str, str] = Field(default_factory=dict)
+    #: the skills (or, for an Aspected Magician, the skill group) the priority
+    #: talent hands out at its fixed rating — Chummer's Heritage `SkillBase` /
+    #: `SkillGroupBase` improvements. `skills` / `skill_groups` hold the total
+    #: rating, free levels included.
+    talent_skills: list[str] = Field(default_factory=list)
     exotic_skills: list[ExoticSkillInstall] = Field(default_factory=list)
     knowledge_skills: dict[str, int] = Field(default_factory=dict)
     native_languages: list[str] = Field(default_factory=list)

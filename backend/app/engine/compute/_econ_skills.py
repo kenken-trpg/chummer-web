@@ -24,6 +24,7 @@ from ..skills import (
     resolve_skill_picks,
     resolve_skillsofts,
     resolve_specializations,
+    resolve_talent_skills,
 )
 from .context import Ctx
 
@@ -40,13 +41,15 @@ def _skill_spend(ctx: Ctx) -> None:
     # Priority / Sum-to-Ten: a group's top levels bought with karma are not
     # group points (Chummer's `<karma>` beside `<base>` on a group).
     wanted_group_karma = {} if ctx.is_karma else dict(ctx.state.skill_group_karma or {})
+    free_groups, free_skills = _talent_skill_floors(ctx)
     for group, rating in ctx.state.skill_groups.items():
         rating = max(0, min(ctx.skill_group_cap, int(rating)))
         ctx.state.skill_groups[group] = rating
-        group_levels = max(0, min(int(wanted_group_karma.get(group) or 0), rating))
+        free = free_groups.get(group, 0)
+        group_levels = max(0, min(int(wanted_group_karma.get(group) or 0), rating - free))
         if group_levels:
             ctx.skill_group_karma_levels[group] = group_levels
-        ctx.group_spent += rating - group_levels
+        ctx.group_spent += max(0, rating - group_levels - free)
         for s in ctx.data["skills"]["skills"]:
             if s.get("skillgroup") == group and not s.get("exotic"):
                 ctx.skill_totals[s["name"]] = max(ctx.skill_totals.get(s["name"], 0), rating)
@@ -74,7 +77,7 @@ def _skill_spend(ctx: Ctx) -> None:
         cap = ctx.skill_rating_cap + int(ctx.skill_picks["skill_max_bonus"].get(name, 0))
         rating = max(0, min(cap, int(rating)))
         ctx.state.skills[name] = rating
-        base = ctx.skill_totals.get(name, 0)
+        base = max(ctx.skill_totals.get(name, 0), free_skills.get(name, 0))
         levels = max(0, min(int(wanted_karma.get(name) or 0), rating - base))
         if levels:
             ctx.skill_karma_levels[name] = levels
@@ -184,8 +187,11 @@ def _skill_spend(ctx: Ctx) -> None:
     karma_specs_knowledge: set[str] = set()
     if paid_active or paid_knowledge:
         if not current_rules().allow_point_buy_specializations_on_karma_skills:
+            # the talent's free levels are the skill's own (`FreeBase`)
             karma_specs_active = {
-                name for name in paid_active if not active_points.get(name) and ctx.skill_karma_levels.get(name)
+                name
+                for name in paid_active
+                if not active_points.get(name) and not free_skills.get(name) and ctx.skill_karma_levels.get(name)
             }
             know_points = {
                 str(row.get("name") or ""): int(row.get("rating") or 0)
@@ -232,6 +238,28 @@ def _skill_spend(ctx: Ctx) -> None:
     _attach_specializations(ctx.knowledge["public"], ctx.specs["specs"])
     ctx.effective_skills = _merge_skill_ratings(ctx.skill_totals, ctx.skillsofts["active"])
     ctx.effective_knowledge = _merge_skill_ratings(dict(ctx.state.knowledge_skills or {}), ctx.skillsofts["knowledge"])
+
+
+def _talent_skill_floors(ctx: Ctx) -> tuple[dict[str, int], dict[str, int]]:
+    """The priority talent's free ratings, as ``(groups, skills)``.
+
+    Each pick is raised to the free rating in ``skill_groups`` / ``skills``
+    (those hold the total rating), and the free levels are then left out of
+    the points the rating costs — Chummer's `FreeBase`, which sits under
+    both `<base>` and `<karma>`.
+    """
+    ctx.talent_skills = resolve_talent_skills(
+        list(ctx.state.talent_skills or []), ctx.talent.get("free_skills"), ctx.data["skills"]
+    )
+    ctx.state.talent_skills = list(ctx.talent_skills["picked"])
+    free = ctx.talent_skills["rating"]
+    if not free:
+        return {}, {}
+    floors = dict.fromkeys(ctx.talent_skills["picked"], free)
+    target = ctx.state.skill_groups if ctx.talent_skills["group"] else ctx.state.skills
+    for name in floors:
+        target[name] = max(int(target.get(name) or 0), free)
+    return (floors, {}) if ctx.talent_skills["group"] else ({}, floors)
 
 
 def _knowledge_points(ctx: Ctx) -> int:

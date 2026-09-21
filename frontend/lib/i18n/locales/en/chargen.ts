@@ -6,6 +6,9 @@ export const EN_CHARGEN = {
   "skills.granted": "Skills that come with something",
   "skills.grantedNote":
     "Skills a quality, a piece of ware, an adept power or a mentor spirit brings with it. Picking one here is the same as picking it on that thing's own tab.",
+  "skills.talent": "Skills from your talent ({qty} at R{rating})",
+  "skills.talentGroup": "Skill group from your talent ({qty} at R{rating})",
+  "skills.talentPick": "Pick {n}",
   "skills.groups": "Skill groups",
   "skills.softBit": "softR{rating}",
   "skills.default": "default {pool}",

@@ -241,6 +241,26 @@ def _skill_nodes(root: ET.Element, section: str) -> list[ET.Element]:
     return root.findall(f"./newskills/{section}") + root.findall(f"./skills/{section}")
 
 
+def _talent_free_ratings(root: ET.Element) -> tuple[dict[str, int], dict[str, int]]:
+    """The priority talent's free skills and groups, name -> free rating.
+
+    Chummer keeps them as `Heritage` improvements (`SkillBase` /
+    `SkillGroupBase`) rather than on the skill, whose `<base>` holds only
+    what points bought.
+    """
+    skills: dict[str, int] = {}
+    groups: dict[str, int] = {}
+    for imp in root.findall("./improvements/improvement"):
+        if _text(imp.find("improvementsource")) != "Heritage":
+            continue
+        kind = _text(imp.find("improvementttype"))
+        target = skills if kind == "SkillBase" else groups if kind == "SkillGroupBase" else None
+        name = _text(imp.find("improvedname"))
+        if target is not None and name:
+            target[name] = target.get(name, 0) + _int(imp.find("val"))
+    return skills, groups
+
+
 def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read active skills, groups, specialisations and knowledge.
 
@@ -259,9 +279,12 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     split = not st.get("career")
     skill_karma: dict[str, int] = {}
     knowledge_karma: dict[str, int] = {}
+    free_skills, free_groups = _talent_free_ratings(root)
+    st["talent_skills"] = list(free_skills or free_groups)
     for s in _skill_nodes(root, "skills/skill"):
-        rating = _int(s.find("base")) + _int(s.find("karma"))
         name = _text(s.find("name")) or names_by_id.get(_text(s.find("suid")), "")
+        # `<base>` is the points only: the talent's free levels sit under it
+        rating = _int(s.find("base")) + _int(s.find("karma")) + free_skills.get(name, 0)
         if not name:
             if rating > 0:
                 warn.append(
@@ -300,7 +323,7 @@ def _import_skills(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn:
     group_karma: dict[str, int] = {}
     for g in _skill_nodes(root, "groups/group"):
         name = _text(g.find("name"))
-        r = _int(g.find("base")) + _int(g.find("karma"))
+        r = _int(g.find("base")) + _int(g.find("karma")) + free_groups.get(name, 0)
         if r > 0 and name:
             groups[name] = r
             if split and _int(g.find("karma")) > 0:

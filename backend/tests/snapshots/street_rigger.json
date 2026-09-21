@@ -560,6 +560,7 @@
   },
   "talent": {
     "cfp": 0,
+    "free_skills": null,
     "label": "Mundane",
     "magic": 0,
     "name": "Mundane",
@@ -567,6 +568,13 @@
     "resonance": 0,
     "spells": 0,
     "value": 0
+  },
+  "talent_skills": {
+    "group": false,
+    "options": [],
+    "picked": [],
+    "qty": 0,
+    "rating": 0
   },
   "test_mods": {
     "addiction_physiological_addicted": 0,
