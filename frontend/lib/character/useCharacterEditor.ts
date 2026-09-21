@@ -260,6 +260,18 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       URL.revokeObjectURL(a.href);
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
+      return;
+    }
+    // The file is already on its way; this only says what it will not carry.
+    // A failed check is not worth an error of its own.
+    const differences = await api.checkChummerExport(ch).catch(() => []);
+    if (differences.length) {
+      setError(
+        ui("app.exportDifferences", {
+          count: differences.length,
+          details: differences.map((d) => renderNotice(d, ui, tr)).join(" / "),
+        }),
+      );
     }
   }
 

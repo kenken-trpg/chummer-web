@@ -26,6 +26,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from .catalog_view import public_catalog
 from .characters import apply_patch, compute_state, import_character, new_character
 from .chummer_export import state_to_chum5
+from .chummer_export.check import roundtrip_differences
 from .chummer_import import chum5_to_state
 from .customdata import dataset_hash
 from .data_loader import Overlay, using_customdata
@@ -602,6 +603,14 @@ def export_chummer(req: StateRequest) -> Response:
         media_type="application/xml",
         headers={"Content-Disposition": _content_disposition(req.state.name)},
     )
+
+
+@app.post("/api/characters/chummer/check")
+def check_chummer_export(req: StateRequest) -> dict:
+    """What the character would lose on a .chum5 round trip, as notices —
+    asked for alongside the download so the player hears about it before
+    they take the file to Chummer."""
+    return {"differences": roundtrip_differences(req.state)}
 
 
 @app.post("/api/characters/import")

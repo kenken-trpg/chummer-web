@@ -294,4 +294,14 @@ export const api = {
     if (!res.ok) throw new Error(await errorText(res));
     return res.blob();
   },
+
+  /** What the character would lose if the exported `.chum5` were read back in. */
+  checkChummerExport: async (state: Character): Promise<Notice[]> => {
+    const res = await req<{ differences: Notice[] }>("/api/characters/chummer/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    return res.differences;
+  },
 };
