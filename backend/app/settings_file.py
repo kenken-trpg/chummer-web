@@ -146,6 +146,12 @@ _HANDLED_ELSEWHERE = {
     # `metatypes.xml` has a minimum the one lowering modifier (Ugly and Doesn't
     # Care, CHA -1) can push under 0 — so the switch changes nothing here.
     "unclampattributeminimum",
+    # `<exceedpositivequalitiescostdoubled>` doubles the part of the positive
+    # qualities past the limit in `Character.PositiveQualityLimitKarma` only —
+    # the "X / 25" label and the over-limit check. The karma spent comes from
+    # `PositiveQualityKarma`, which it never touches, and the check already fails
+    # at any excess, so nothing this app computes or reports changes.
+    "exceedpositivequalitiescostdoubled",
 }
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
