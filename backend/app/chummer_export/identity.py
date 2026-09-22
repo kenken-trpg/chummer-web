@@ -1,7 +1,7 @@
 """Who the character is and how they were built: identity, the reward log,
 priorities, attributes, skills and contacts.
 
-The mirror of :mod:`app.chummer_import.identity`.
+The mirror of :mod:`app.chummer_import.identity`, `skills` and `balance`.
 """
 
 from __future__ import annotations
