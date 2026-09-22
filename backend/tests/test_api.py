@@ -299,3 +299,18 @@ def test_a_chummer_save_with_an_unknown_metatype_names_it() -> None:
     r = client.post("/api/characters/import-chummer", content=xml, headers={"content-type": "application/octet-stream"})
     assert r.status_code == 400
     assert r.json()["detail"]["key"] == "api.unknownMetatype"
+
+
+def test_validation_error_does_not_echo_the_input() -> None:
+    """A 422 names where the body is wrong, not what it was: a large bad body is
+    not sent back, and a deeply nested one is still a 422, not a 500."""
+    big = "x" * 100_000
+    r = client.post("/api/characters/patch", json={"state": big})
+    assert r.status_code == 422
+    assert big not in r.text
+    assert r.json()["detail"][0]["loc"] == ["body", "state"]
+
+    depth = 5000
+    body = '{"state":' + "[" * depth + "]" * depth + "}"
+    r = client.post("/api/characters/patch", content=body, headers={"content-type": "application/json"})
+    assert r.status_code == 422
