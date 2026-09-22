@@ -152,7 +152,10 @@ def resolve_ware(
         # Bioware grades have no Adapsin twin, so `ess_adapsin` mirrors `ess`
         # there and the flag costs nothing to carry.
         grade_ess = float((grade.get("ess_adapsin") if adapsin else grade.get("ess")) or 1)
-        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * grade_ess, 4)
+        # Chummer multiplies the whole cost by (1 - discount) whether or not
+        # the setting is on now; the setting only decides who may enter one.
+        ess_discount = 1.0 - max(-100, min(100, int(inst.ess_discount or 0))) / 100.0
+        ess_base = round(eval_formula(ware.get("ess"), rating, extras=formula_extras) * grade_ess * ess_discount, 4)
         ess = 0.0 if included or (slotted and (plugin or add_to_parent)) else ess_base
         picked = chosen_cost(ware, inst.cost)
         inst.cost = picked
@@ -178,6 +181,7 @@ def resolve_ware(
                 "included": included,
                 "plugin": plugin,
                 "essence": ess,
+                "ess_discount": int(inst.ess_discount or 0),
                 "nuyen": cost,
                 "cost": picked,
                 "cost_range": ware.get("cost_range"),

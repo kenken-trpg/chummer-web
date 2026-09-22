@@ -381,6 +381,20 @@ describe("<CyberTab> black market discount", () => {
     fireEvent.click(screen.getByLabelText("闇市"));
     expect((patch.mock.calls[0][0] as Character).cyberware![0].discounted).toBe(true);
   });
+
+  /** `<allowcyberwareessdiscounts>`: the percent box shows only when the
+   *  settings file allows it, and what is typed stays inside Chummer's ±100. */
+  it("offers an essence discount only when the settings allow one", () => {
+    renderTab({ character: character({}) as never });
+    expect(screen.queryByLabelText("ESS 割引 %")).toBeNull();
+  });
+
+  it("stores the essence discount it is given, clamped", () => {
+    const patch = vi.fn();
+    renderTab({ character: character({ allow_ess_discounts: true }) as never, patch });
+    fireEvent.change(screen.getByLabelText("ESS 割引 %"), { target: { value: "150" } });
+    expect((patch.mock.calls[0][0] as Character).cyberware![0].ess_discount).toBe(100);
+  });
 });
 
 describe("<CyberTab> held gear", () => {

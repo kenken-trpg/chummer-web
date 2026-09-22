@@ -52,6 +52,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "extra": _text(w.find("extra")) or None,
                 "included": _came_with_parent(w),
                 "discounted": _discounted(w),
+                "ess_discount": max(-100, min(100, _int(w.find("essdiscount"), 0))),
             }
             if (ware_by_id.get(wid) or {}).get("cost_range"):
                 row["cost"] = _picked_cost(w)

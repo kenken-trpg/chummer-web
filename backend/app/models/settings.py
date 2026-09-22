@@ -146,6 +146,8 @@ class SettingsState(BaseModel):
     unrestricted_nuyen: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
+    #: `<allowcyberwareessdiscounts>`: a ware piece may take an essence discount
+    allow_cyberware_ess_discounts: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`
     allow_point_buy_specializations_on_karma_skills: bool | None = None
     #: `<dronearmormultiplierenabled>`

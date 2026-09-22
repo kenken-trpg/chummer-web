@@ -52,6 +52,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             # Empty on a top-level piece and on anything bought for a parent.
             _sub(w, "parentid", r.parent_id if r.parent_id and getattr(r, "included", False) else "")
             _sub(w, "discountedcost", "True" if getattr(r, "discounted", False) else "False")
+            _sub(w, "essdiscount", getattr(r, "ess_discount", 0) or 0)
             picks = _picks_of(r.id)
             if picks:
                 picks_el = _sub(w, "skillpicks")

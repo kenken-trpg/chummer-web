@@ -26,6 +26,8 @@ export function WareRow(props: {
   /** Black Market Pipeline: 10% off this one piece, when the quality's
    *  category reaches this kind of ware (null when it does not). */
   discounted?: boolean | null;
+  /** `<allowcyberwareessdiscounts>`: offer a percent off this piece's essence. */
+  essDiscountAllowed?: boolean;
   pickSlots?: SkillPickSlot[];
   onSkillPick?: (key: string, skill: string) => void;
   nested?: boolean;
@@ -50,6 +52,7 @@ export function WareRow(props: {
     onRemove,
     onAddChild,
     discounted,
+    essDiscountAllowed,
     pickSlots,
     onSkillPick,
     nested,
@@ -168,6 +171,25 @@ export function WareRow(props: {
               {ui("gear.blackMarket")}
             </label>
           ) : null}
+          {essDiscountAllowed && !locked ? (
+            <label title={ui("ware.essDiscountHint")}>
+              {ui("ware.essDiscount")}
+              <input
+                type="number"
+                min={-100}
+                max={100}
+                value={item.ess_discount ?? 0}
+                onChange={(e) =>
+                  onPatchRow(item.id, {
+                    ess_discount: Math.max(
+                      -100,
+                      Math.min(100, Math.trunc(Number(e.target.value) || 0)),
+                    ),
+                  })
+                }
+              />
+            </label>
+          ) : null}
           {spec?.selectside && !item.parent_id && !locked ? (
             <label>
               {ui("ware.side")}
@@ -260,6 +282,7 @@ export function WareRow(props: {
             onPatchRow={onPatchRow}
             onRemove={onRemove}
             onAddChild={() => undefined}
+            essDiscountAllowed={essDiscountAllowed}
             pickSlots={pickSlots}
             onSkillPick={onSkillPick}
             renderHeld={renderHeld}

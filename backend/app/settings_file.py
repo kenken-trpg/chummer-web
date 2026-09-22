@@ -182,6 +182,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "donotroundessenceinternally": "dont_round_essence_internally",
     "multiplyrestrictedcost": "multiply_restricted_cost",
     "multiplyforbiddencost": "multiply_forbidden_cost",
+    "allowcyberwareessdiscounts": "allow_cyberware_ess_discounts",
     "allowpointbuyspecializationsonkarmaskills": "allow_point_buy_specializations_on_karma_skills",
     "allowinitiationincreatemode": "allow_initiation_in_create_mode",
     "usepointsonbrokengroups": "use_points_on_broken_groups",

@@ -23,6 +23,11 @@ export interface WareInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+  /** `<essdiscount>`: a percentage off this piece's essence, as the GM
+   *  allows under `<allowcyberwareessdiscounts>` (Chummer's `ESSDiscount`,
+   *  -100 to 100; negative costs more)
+   */
+  ess_discount?: number;
 }
 
 export interface AdeptPowerInstall {
@@ -409,6 +414,8 @@ export interface CharacterSettings {
   unrestricted_nuyen?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
+  /** `<allowcyberwareessdiscounts>`: a ware piece may take an essence discount */
+  allow_cyberware_ess_discounts?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
   allow_point_buy_specializations_on_karma_skills?: boolean | null;
   /** `<dronearmormultiplierenabled>` */
