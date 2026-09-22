@@ -1,9 +1,11 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function KnowledgeSection(s: SheetData) {
-  const { tr, totals, knowledge } = s;
+  const { tr: sheetTr, totals, knowledge } = s;
+  const tr = scopeTr(sheetTr, "knowledge_skill");
   const { ui } = useUiText();
   return (
     <Section title="sheet.knowledge" empty={!knowledge.length}>

@@ -2,9 +2,11 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { matrixCM } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function MatrixSection(s: SheetData) {
-  const { tr, d } = s;
+  const { tr: sheetTr, d } = s;
+  const tr = scopeTr(sheetTr, "gear");
   const { ui } = useUiText();
   const mi = d.matrix_initiative;
   // Only the persona the character actually runs has a VR initiative; the

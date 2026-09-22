@@ -465,6 +465,10 @@ export interface Catalog {
    *  dropped by the loader, so every entry here is selectable. */
   settings_presets: SettingsPreset[];
   translations: Record<string, string>;
+  /** `{kind: {english: japanese}}` — readings for names another kind of
+   *  thing shares ("Binding" the skill is 束縛, the critter power 接着). Read
+   *  through `scopeTr`; see backend/data/ja_overrides/by_kind.json. */
+  translations_by_kind?: Record<string, Record<string, string>>;
   /** `{locale: {key: text}}` — narrowed by the backend to what the app reads. */
   ui_strings: Record<string, Record<string, string>>;
   cyberware: WareCatalog;

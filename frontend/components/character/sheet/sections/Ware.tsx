@@ -1,9 +1,11 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function WareSection(s: SheetData) {
-  const { tr, d, cyber, bio, layout, wareNamesOnly } = s;
+  const { tr: sheetTr, d, cyber, bio, layout, wareNamesOnly } = s;
+  const tr = scopeTr(sheetTr, "cyberware");
   const { ui } = useUiText();
   // The compact sheet lists ware by name alone — grade, limb stats and ESS
   // are one click away in the editor, and the section total says the loss.

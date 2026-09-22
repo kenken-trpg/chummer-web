@@ -73,6 +73,7 @@ EXPECTED_KEYS = {
     "books",
     "settings_presets",
     "translations",
+    "translations_by_kind",
     "ui_strings",
 }
 

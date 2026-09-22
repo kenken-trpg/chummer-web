@@ -15,17 +15,58 @@ export function makeT(catalog?: Pick<Catalog, "ui_strings"> | null, locale: Loca
   return (key, fallback) => table?.[key] || fallback || key;
 }
 
+/** The kinds `translations_by_kind` is keyed by. */
+export type TranslationKind =
+  "armor" | "critter_power" | "cyberware" | "gear" | "knowledge_skill" | "power" | "skill";
+
+/** A name translator. `makeTr`'s carries the per-kind tables so a screen can
+ *  narrow it with `scopeTr`; a plain function (a test's identity) has none. */
+export type TrFn = ((name: string) => string) & {
+  byKind?: Partial<Record<string, Record<string, string>>>;
+  base?: (name: string) => string;
+  kinds?: readonly TranslationKind[];
+};
+
 /**
  * Catalog name -> display name. The Chummer data files are English, so the
  * translation table maps English -> Japanese and `en` is the identity: there is
  * no en-us_data.xml upstream because there is nothing to translate.
  */
 export function makeTr(
-  catalog?: Pick<Catalog, "translations"> | null,
+  catalog?: Pick<Catalog, "translations" | "translations_by_kind"> | null,
   locale: Locale = "ja",
-): (name: string) => string {
+): TrFn {
   if (locale === "en") return (name) => name;
-  return (name) => catalog?.translations?.[name] || name;
+  const tr: TrFn = (name) => catalog?.translations?.[name] || name;
+  tr.byKind = catalog?.translations_by_kind;
+  return tr;
+}
+
+/**
+ * `tr` for a screen that shows one kind of thing. The flat table is keyed by
+ * English name alone, so "Binding" reads as the critter power's 接着 even on
+ * the skills tab; the per-kind table corrects the handful of names where that
+ * lands on a different thing. Only those names are listed, so scoping a whole
+ * tab is safe — anything else falls through to the flat table.
+ *
+ * Kinds are tried in order, and a nested scope's kinds before its parent's.
+ */
+export function scopeTr(tr: TrFn, ...kinds: TranslationKind[]): TrFn {
+  const byKind = tr.byKind;
+  if (!byKind) return tr;
+  const base = tr.base || tr;
+  const all = [...kinds, ...(tr.kinds || [])];
+  const scoped: TrFn = (name) => {
+    for (const kind of all) {
+      const hit = byKind[kind]?.[name];
+      if (hit) return hit;
+    }
+    return base(name);
+  };
+  scoped.byKind = byKind;
+  scoped.base = base;
+  scoped.kinds = all;
+  return scoped;
 }
 
 /**

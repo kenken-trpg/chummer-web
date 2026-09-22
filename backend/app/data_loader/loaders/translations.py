@@ -130,6 +130,49 @@ def load_book_names() -> dict[str, str]:
     return names
 
 
+#: The kinds `ja_overrides/by_kind.json` may name. The UI picks one per
+#: screen (the skills tab, the ware tab, …) — see `scopeTr` in lib/ui-strings.ts.
+TRANSLATION_KINDS = (
+    "armor",
+    "critter_power",
+    "cyberware",
+    "gear",
+    "knowledge_skill",
+    "power",
+    "skill",
+)
+
+
+def load_translations_by_kind() -> dict[str, dict[str, str]]:
+    """`{kind: {english: japanese}}` for the names `load_translations` gets
+    wrong because another kind of thing shares them: the magic skill Binding
+    is 束縛, but the flat table holds the critter power's 接着.
+
+    Hand-curated in `ja_overrides/by_kind.json` rather than derived from the
+    lang file by section. Split mechanically, the critter power Fear would lose
+    the spirit power's 恐怖 and go back to English, and most of the ~90
+    cross-section collisions are that kind — a borrowed reading that is right.
+    Only the ones that name a different thing are listed.
+    """
+    path = OVERRIDE_DIR / "by_kind.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log.warning("ja override by_kind.json load failed: %s", exc)
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    result: dict[str, dict[str, str]] = {}
+    for kind, names in raw.items():
+        if kind not in TRANSLATION_KINDS or not isinstance(names, dict):
+            log.warning("ja override by_kind.json: unknown kind %r", kind)
+            continue
+        result[kind] = {k: v for k, v in names.items() if isinstance(k, str) and isinstance(v, str) and v.strip()}
+    return result
+
+
 #: Locale -> the vendored Chummer lang file it comes from. `en-us.xml` was
 #: already being fetched by scripts/fetch_chummer_data.py; nothing read it.
 LANG_FILES = {"ja": "ja-jp.xml", "en": "en-us.xml"}

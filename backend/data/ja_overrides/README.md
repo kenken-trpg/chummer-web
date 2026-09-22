@@ -13,6 +13,9 @@
 |---|---|---|---|---|
 | `data.json` | `ja-jp_data.xml` | データエンティティの英語名 (`<name>`) | 日本語訳 (`<translate>` 相当) | **生成物** |
 | `ui.json`   | `ja-jp.xml`      | UI 文字列キー (`<string key>`)          | 日本語訳 (`<text>` 相当) | 手編集 |
+| `by_kind.json` | — | 種類 (`skill` など) → 英語名 | その種類での日本語訳 | 手編集 |
+
+`by_kind.json` は、英語名だけでは別のものの訳が当たってしまう名前の例外表です（技能 Binding は「束縛」、クリッターパワーは「接着」）。画面側は `scopeTr` で種類を指定して引きます。同名の衝突が増えると `tests/test_translations_by_kind.py` が落ちるので、そのときはここに足すかどうかを判断してください。
 
 ### `data.json` は生成物
 

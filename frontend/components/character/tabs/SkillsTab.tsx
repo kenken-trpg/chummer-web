@@ -8,10 +8,15 @@ import { KnowledgeSkills } from "./skills/KnowledgeSkills";
 import { SkillGroups } from "./skills/SkillGroups";
 import { skillLimits } from "./skills/shared";
 import { TalentSkills } from "./skills/TalentSkills";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function SkillsTab(props: TabPanelProps) {
   const { d, ui } = props;
   const { skillMax, career, splitKarma, karmaSplit } = skillLimits(props);
+  // An active and a knowledge skill can share a name and not a reading:
+  // Medicine is 医術 to one and 医学 to the other.
+  const active = { ...props, tr: scopeTr(props.tr, "skill") };
+  const knowledge = { ...props, tr: scopeTr(props.tr, "knowledge_skill") };
   return (
     <div className="card">
       <p className="muted">
@@ -30,13 +35,13 @@ export function SkillsTab(props: TabPanelProps) {
           })}
         </p>
       ) : null}
-      <TalentSkills {...props} />
-      <GrantedSkills {...props} />
-      <SkillGroups {...props} />
-      <ActiveSkills {...props} />
-      <ExoticSkills {...props} />
-      <KnowledgeSkills {...props} />
-      <KnowledgePicker {...props} />
+      <TalentSkills {...active} />
+      <GrantedSkills {...active} />
+      <SkillGroups {...active} />
+      <ActiveSkills {...active} />
+      <ExoticSkills {...active} />
+      <KnowledgeSkills {...knowledge} />
+      <KnowledgePicker {...knowledge} />
     </div>
   );
 }

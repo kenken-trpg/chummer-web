@@ -3,9 +3,11 @@ import { Section } from "@/components/character/sheet/blocks";
 import { rangeNameFor, rangeRow } from "@/lib/character/sheet-format";
 import { Fragment } from "react";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function CombatSection(s: SheetData) {
-  const { catalog, tr, d, totals, weapons, armors } = s;
+  const { catalog, tr: sheetTr, d, totals, weapons, armors } = s;
+  const tr = scopeTr(sheetTr, "armor", "gear");
   const { ui } = useUiText();
   return (
     <Section title="sheet.combat" empty={!weapons.length && !armors.length && !d.worn_armor}>

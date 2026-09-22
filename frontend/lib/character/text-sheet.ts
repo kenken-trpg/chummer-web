@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/character/sheet-data";
-import { attrShort } from "@/lib/ui-strings";
+import { attrShort, scopeTr } from "@/lib/ui-strings";
 import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import {
   cfDuration,
@@ -41,6 +41,11 @@ export type TextArgs = Pick<
 /** Plain-text "Text-Only" sheet — copy/paste into a VTT or chat. */
 export function textSheet(x: TextArgs): string {
   const { character: ch, d, tr, t, ui, totals, enabled } = x;
+  // per section, as the sheet's React sections do — see scopeTr
+  const skillTr = scopeTr(tr, "skill");
+  const knowTr = scopeTr(tr, "knowledge_skill");
+  const wareTr = scopeTr(tr, "cyberware");
+  const gearTr = scopeTr(tr, "gear", "armor");
   const L: string[] = [];
   const line = (s = "") => L.push(s);
   const names = (arr: { name: string }[]) => arr.map((a) => tr(a.name)).join(ui("common.listSep"));
@@ -87,12 +92,12 @@ export function textSheet(x: TextArgs): string {
     head("sheet.skills");
     x.activeSkills.forEach((s) =>
       line(
-        `  ${tr(s.name)}${s.spec ? "（" + tr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
+        `  ${skillTr(s.name)}${s.spec ? "（" + skillTr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
       ),
     );
     x.exotic.forEach((r) =>
       line(
-        `  ${tr(r.label || r.skill_name)}${r.extra ? "（" + tr(r.extra) + "）" : ""} ${r.rating}`,
+        `  ${skillTr(r.label || r.skill_name)}${r.extra ? "（" + skillTr(r.extra) + "）" : ""} ${r.rating}`,
       ),
     );
     if (x.groups.length)
@@ -110,7 +115,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.knowledge");
     x.knowledge.forEach((k) =>
       line(
-        `  ${tr(k.name)}${k.native ? ui("sheet.native") : ""} ${Math.max(k.rating || 0, k.skillsoft || 0)}${k.spec ? "（" + tr(k.spec) + "）" : ""}`,
+        `  ${knowTr(k.name)}${k.native ? ui("sheet.native") : ""} ${Math.max(k.rating || 0, k.skillsoft || 0)}${k.spec ? "（" + knowTr(k.spec) + "）" : ""}`,
       ),
     );
     line();
@@ -139,10 +144,10 @@ export function textSheet(x: TextArgs): string {
     head("gear.kind.armor");
     x.armors.forEach((a) =>
       line(
-        `  ${tr(a.name)}  ${a.armor ?? ""}${(a.mods || []).length ? `  +${names(a.mods || [])}` : ""}`,
+        `  ${gearTr(a.name)}  ${a.armor ?? ""}${(a.mods || []).length ? `  +${names(a.mods || [])}` : ""}`,
       ),
     );
-    if (!x.armors.length && d.worn_armor) line(`  ${tr(d.worn_armor)}`);
+    if (!x.armors.length && d.worn_armor) line(`  ${gearTr(d.worn_armor)}`);
     line();
   }
 
@@ -151,7 +156,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.ware");
     const named = (items: typeof x.cyber) =>
       items
-        .map((i) => `${tr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}`)
+        .map((i) => `${wareTr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}`)
         .join(ui("common.listSep"));
     if (x.cyber.length) line(`  [${ui("txt.cyber")}] ${named(x.cyber)}`);
     if (x.bio.length) line(`  [${ui("txt.bio")}] ${named(x.bio)}`);
@@ -160,7 +165,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.ware");
     x.cyber.forEach((i) =>
       line(
-        `  [${ui("txt.cyber")}] ${tr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}` +
+        `  [${ui("txt.cyber")}] ${wareTr(i.name)}${i.rating > 1 ? ` R${i.rating}` : ""}` +
           ui("txt.ess", { essence: i.essence }),
       ),
     );
@@ -257,7 +262,7 @@ export function textSheet(x: TextArgs): string {
     head("gear.kind.misc");
     misc.forEach((g) =>
       line(
-        `  ${g.active ? "▶ " : ""}${tr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}${g.drug_effect?.length ? ` — ${renderNotices(g.drug_effect, ui, tr)}` : ""}`,
+        `  ${g.active ? "▶ " : ""}${gearTr(g.name)}${g.rating > 1 ? ` R${g.rating}` : ""}${(g.qty || 1) > 1 ? ` ×${g.qty}` : ""}${g.drug_effect?.length ? ` — ${renderNotices(g.drug_effect, ui, tr)}` : ""}`,
       ),
     );
     line();
