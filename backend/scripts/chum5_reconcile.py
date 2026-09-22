@@ -64,6 +64,12 @@ A build over the 25 karma of negative qualities is marked `negcap`. Chummer's
 default settings refund all of it and call the build invalid, which is what
 this app does; the 5.202 saves stored the remainder as if the refund stopped
 at 25, so their karma differs by the excess (Barrett by 53, Blindfire by 15).
+That stop is the `ExceedNegativeQualities` + `ExceedNegativeQualitiesNoBonus`
+house rule (`GetNegativeQualityKarmaAsync`): turned on here, it gives six of the
+eight saves' karma to the point. A save does not record either flag, so the
+import cannot tell a table that used it from a build that is simply over;
+guessing from the karma left would also catch saves off for other reasons.
+Left as Chummer's defaults judge it.
 
 `prime`'s 13 karma is its settings, not its build. It was saved under a
 5.202 Prime Runner that gave 35 build karma and 6 contact points per Charisma
