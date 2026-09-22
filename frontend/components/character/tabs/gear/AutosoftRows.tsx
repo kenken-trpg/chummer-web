@@ -1,6 +1,7 @@
 "use client";
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
+import { catalogExtraOptions } from "@/lib/character/gear";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
@@ -22,6 +23,7 @@ export function AutosoftRows({
   hostName: string;
 }) {
   const byBook = useBookFilter();
+  const programOptions = (id: string) => catalogExtraOptions(catalog.programs, id);
   return (
     <>
       {(d.programs || [])
@@ -79,7 +81,7 @@ export function AutosoftRows({
                   }
                 >
                   <option value="">{ui("common.selectShort")}</option>
-                  {(prog.extra_options || []).map((name) => (
+                  {programOptions(prog.gear_id).map((name) => (
                     <option key={name} value={name}>
                       {trAs(tr, prog.extra_skill_kind, name)}
                     </option>
@@ -101,7 +103,7 @@ export function AutosoftRows({
                   }
                 >
                   <option value="">{ui("common.selectShort")}</option>
-                  {(prog.extra_options || []).map((name) => (
+                  {programOptions(prog.gear_id).map((name) => (
                     <option key={name} value={name}>
                       {trAs(tr, prog.extra_skill_kind, name)}
                     </option>
@@ -124,9 +126,11 @@ export function AutosoftRows({
                   }
                 />
                 <datalist id={`prog-extra-${prog.id}`}>
-                  {(prog.extra_options || []).slice(0, 80).map((name) => (
-                    <option key={name} value={name} />
-                  ))}
+                  {programOptions(prog.gear_id)
+                    .slice(0, 80)
+                    .map((name) => (
+                      <option key={name} value={name} />
+                    ))}
                 </datalist>
               </label>
             ) : null}

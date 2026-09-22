@@ -89,7 +89,6 @@ def _resolve_programs(
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
-                "extra_options": options,
                 "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "program_host": spec.get("program_host") or want_kind,

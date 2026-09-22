@@ -5,7 +5,7 @@ import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
-import { alreadySlotted, dropTree, miscFits } from "@/lib/character/gear";
+import { alreadySlotted, dropTree, miscFits, catalogExtraOptions } from "@/lib/character/gear";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
 
@@ -36,6 +36,7 @@ export function MiscGearRow({
   setExtraPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
 }) {
   const allowedBooks = useAllowedBooks();
+  const gearOptions = (id: string) => catalogExtraOptions(catalog.gear, id);
   const childrenItems = (d.gear || []).filter((child) => child.parent_id === item.id);
   const addons = (catalog.gear || []).filter(
     (mod) => Boolean(mod.requireparent) && miscFits(item, mod),
@@ -147,7 +148,7 @@ export function MiscGearRow({
               }
             >
               <option value="">{ui("common.skill")}</option>
-              {(item.extra_options || []).map((name) => (
+              {gearOptions(item.gear_id).map((name) => (
                 <option key={name} value={name}>
                   {trAs(tr, item.extra_skill_kind, name)}
                 </option>
@@ -169,9 +170,11 @@ export function MiscGearRow({
                 }
               />
               <datalist id={`gear-extra-${item.id}`}>
-                {(item.extra_options || []).slice(0, 80).map((name) => (
-                  <option key={name} value={name} />
-                ))}
+                {gearOptions(item.gear_id)
+                  .slice(0, 80)
+                  .map((name) => (
+                    <option key={name} value={name} />
+                  ))}
               </datalist>
             </>
           ) : null}

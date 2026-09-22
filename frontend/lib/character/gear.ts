@@ -382,3 +382,22 @@ export function armorModFits(
   if (allowed.has(category)) return true;
   return category === (armor.category || "");
 }
+
+const optionIndex = new WeakMap<object, Map<string, string[]>>();
+
+/** What a bought row's pick can be — the skills a skillsoft covers, the models
+ *  a `[Model]` autosoft is for. Taken from the catalog entry by id rather
+ *  than carried on every derived row: one Maneuvering Autosoft's model list is
+ *  ~9 KB, and it used to come back on every recompute, once per copy owned. */
+export function catalogExtraOptions(
+  list: readonly { id: string; extra_options?: string[] }[] | undefined,
+  id: string,
+): string[] {
+  if (!list) return [];
+  let index = optionIndex.get(list);
+  if (!index) {
+    index = new Map(list.map((row) => [row.id, row.extra_options || []]));
+    optionIndex.set(list, index);
+  }
+  return index.get(id) || [];
+}
