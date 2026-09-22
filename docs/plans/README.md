@@ -49,6 +49,7 @@
 - [`frontend-test-coverage-plan.md`](frontend-test-coverage-plan.md) — 上に載せるテストの優先順位
 - [`refactor-tab-tests-plan.md`](refactor-tab-tests-plan.md) — タブ単位のテスト
 - [`print-sheet-plan.md`](print-sheet-plan.md) — 印刷 / PDF 用レイアウト
+- [`fvtt-export-plan.md`](fvtt-export-plan.md) — Foundry VTT（shadowrun5e 0.34.5）向け書き出しのフィールド対応表
 
 ### 翻訳
 
