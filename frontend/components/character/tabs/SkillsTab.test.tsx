@@ -265,6 +265,24 @@ describe("<SkillsTab> sliders", () => {
     expect(patch).toHaveBeenCalledWith({ skill_groups: { "Close Combat": 3 } });
   });
 
+  it("takes an active skill back down to 0", () => {
+    // the derived totals are the server's last word and still say 3 while the
+    // slider is being dragged; a rating of 0 the character states itself has
+    // to win over them, or the skill cannot be un-bought
+    const patch = vi.fn();
+    renderStateful(patch, {
+      skills: { Blades: 3 },
+      derived: { skill_totals: { Blades: 3 } } as never,
+    });
+
+    const blade = screen.getAllByRole("slider")[1];
+    fireEvent.change(blade, { target: { value: "0" } });
+    expect((blade as HTMLInputElement).value).toBe("0");
+    fireEvent.focusOut(blade);
+
+    expect(patch).toHaveBeenCalledWith({ skills: { Blades: 0 } });
+  });
+
   it("lets a skill with a max bonus go past the normal ceiling", () => {
     renderTab({
       character: {
