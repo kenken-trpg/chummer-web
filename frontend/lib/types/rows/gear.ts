@@ -234,6 +234,8 @@ export interface InstalledGear extends InstalledOptics {
   needs_extra?: boolean;
   extra_kind?: string;
   extra_options?: string[];
+  /** the translation kind of a pick — see `gear_extra_skill_kind` */
+  extra_skill_kind?: "skill" | "knowledge_skill" | "";
   required_names?: string[];
   required_categories?: string[];
   ammo_weapon_types?: string[];
@@ -268,6 +270,8 @@ export interface InstalledProgram {
   needs_extra?: boolean;
   extra_kind?: string;
   extra_options?: string[];
+  /** the translation kind of a pick — see `gear_extra_skill_kind` */
+  extra_skill_kind?: "skill" | "knowledge_skill" | "";
   nuyen: number;
   program_host?: string;
   avail?: string;

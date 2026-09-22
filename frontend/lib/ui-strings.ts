@@ -70,6 +70,18 @@ export function scopeTr(tr: TrFn, ...kinds: TranslationKind[]): TrFn {
 }
 
 /**
+ * `name` translated as `kind` alone, ignoring the scope `tr` carries. A gear
+ * pick is a skill's name, not gear: under the gear tab's scope Knowsoft
+ * (History) took the gear History's English. `kind` "" (or absent) means the
+ * flat table — a tradition, a weapon, a list that mixes both skill kinds.
+ */
+export function trAs(tr: TrFn, kind: TranslationKind | "" | undefined, name: string): string {
+  if (!tr.byKind) return tr(name);
+  const base = tr.base || tr;
+  return (kind && tr.byKind[kind]?.[name]) || base(name);
+}
+
+/**
  * Skill-group name -> display name. Backed by `skills.group_names`, not the
  * flat `translations` table: there, "Influence" and "Stealth" are also spells
  * and "Firearms" and "Engineering" are also knowledge skills, so the group

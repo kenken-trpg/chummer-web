@@ -205,6 +205,7 @@ from .resonance import (  # noqa: F401  (technomancer pipeline; see engine/reson
 )
 from .selects import (  # noqa: F401  (select-node option enumeration)
     gear_extra_options,  # noqa: F401  (re-exported for characters.py / catalog_view.py)
+    gear_extra_skill_kind,  # noqa: F401  (re-exported for catalog_view.py)
     selectskill_options,  # noqa: F401  (re-exported for tests)
 )
 from .skills import (  # noqa: F401  (knowledge / specialization / exotic / skillsoft resolution)

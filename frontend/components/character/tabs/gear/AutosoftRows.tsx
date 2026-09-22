@@ -2,6 +2,7 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import type { TabPanelProps } from "@/components/character/types";
+import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
 
 /** The autosofts on one host — an RCC that shares them, or a drone or
@@ -80,7 +81,7 @@ export function AutosoftRows({
                   <option value="">{ui("common.selectShort")}</option>
                   {(prog.extra_options || []).map((name) => (
                     <option key={name} value={name}>
-                      {tr(name)}
+                      {trAs(tr, prog.extra_skill_kind, name)}
                     </option>
                   ))}
                 </select>
@@ -102,7 +103,7 @@ export function AutosoftRows({
                   <option value="">{ui("common.selectShort")}</option>
                   {(prog.extra_options || []).map((name) => (
                     <option key={name} value={name}>
-                      {tr(name)}
+                      {trAs(tr, prog.extra_skill_kind, name)}
                     </option>
                   ))}
                 </select>
