@@ -2,6 +2,7 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
+import { catalogExtraOptions } from "@/lib/character/gear";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
@@ -25,6 +26,7 @@ export function AppRows({
   hostName: string;
 }) {
   const byBook = useBookFilter();
+  const appOptions = (id: string) => catalogExtraOptions(catalog.apps, id);
   return (
     <>
       {(d.apps || [])
@@ -98,7 +100,7 @@ export function AppRows({
                   }
                 >
                   <option value="">{ui("common.selectShort")}</option>
-                  {(app.extra_options || []).map((name) => (
+                  {appOptions(app.gear_id).map((name) => (
                     <option key={name} value={name}>
                       {trAs(tr, app.extra_skill_kind, name)}
                     </option>

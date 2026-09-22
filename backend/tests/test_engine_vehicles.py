@@ -1,5 +1,6 @@
 """Vehicles and drones: mods, slots, mounts, autosofts."""
 
+from app.catalog_view import public_catalog
 from app.data_loader import catalog
 from app.engine import (
     compute,
@@ -31,6 +32,11 @@ from tests.engine_support import (
 from tests.notice_asserts import has
 
 CLEARSIGHT = "149a8dd2-dfef-473f-94a4-1bdd77e4f855"
+
+
+def _options(program_id: str) -> list[str]:
+    """The picks the catalog offers for a program (the screen reads them there)."""
+    return next(row["extra_options"] for row in public_catalog()["programs"] if row["id"] == program_id)
 
 
 def test_autosoft_on_rcc() -> None:
@@ -65,7 +71,8 @@ def test_skill_autosoft_needs_skill() -> None:
     assert out.derived["programs"][0]["nuyen"] == 1500
     assert out.derived["nuyen_spent"] == 9500
     assert has(out.derived["warnings"], "engine.gear.pickSkill")
-    assert "First Aid" in out.derived["programs"][0]["extra_options"]
+    assert "First Aid" in _options(SKILL_AUTOSOFT)
+    assert "extra_options" not in out.derived["programs"][0]  # the catalog carries them
 
 
 def test_skill_autosoft_with_skill() -> None:
@@ -379,7 +386,7 @@ def test_group_autosoft_needs_group() -> None:
         )
     )
     assert out.derived["programs"][0]["nuyen"] == 1000
-    assert "Electronics" in out.derived["programs"][0]["extra_options"]
+    assert "Electronics" in _options(GROUP_AUTOSOFT)
     assert has(out.derived["warnings"], "engine.gear.pickGroup")
 
 
@@ -412,7 +419,7 @@ def test_model_maneuvering_autosoft() -> None:
     row = out.derived["programs"][0]
     assert row["label"] == "Maneuvering Autosoft (GM-Nissan Doberman (Medium))"
     assert row["nuyen"] == 1000
-    assert "GM-Nissan Doberman (Medium)" in row["extra_options"]
+    assert "GM-Nissan Doberman (Medium)" in _options(MANEUVERING)
     assert not has(out.derived["warnings"], "engine.qualities.pickExtra")
 
 

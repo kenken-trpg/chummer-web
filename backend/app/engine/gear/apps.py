@@ -76,7 +76,6 @@ def _resolve_apps(
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
-                "extra_options": options,
                 "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "avail": spec.get("avail") or "",

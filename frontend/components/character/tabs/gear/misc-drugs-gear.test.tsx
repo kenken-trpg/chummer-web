@@ -54,6 +54,12 @@ function renderPanel(
   );
 }
 
+/** A catalog whose gear entry `id` offers these picks. */
+const withOptions = (id: string, extra_options: string[]) =>
+  makeCatalog({
+    gear: [{ id, name: id, category: "Electronics", cost: "0", source: "SR5", extra_options }],
+  } as never);
+
 /** A character owning these gear rows, mirrored into `derived`. */
 function owning(rows: Record<string, unknown>[], over: Record<string, unknown> = {}): Character {
   return makeCharacter({ gear: rows, ...over, derived: { gear: rows } } as never);
@@ -176,10 +182,12 @@ describe("<MiscDrugsGear> the controls on an owned row", () => {
         gear("g1", "Skillsoft", {
           needs_extra: true,
           extra_kind: "skill",
-          extra_options: ["Pistols", "Blades"],
         }),
       ]),
       patch,
+      "misc",
+      // the choices come from the catalog entry, not the derived row
+      withOptions("c-g1", ["Pistols", "Blades"]),
     );
 
     const select = screen.getByRole("combobox", { name: "Skillsoft: 技能" });
@@ -197,10 +205,14 @@ describe("<MiscDrugsGear> the controls on an owned row", () => {
         gear("g1", "Fake SIN", {
           needs_extra: true,
           extra_kind: "text",
-          extra_options: Array.from({ length: 100 }, (_, i) => `Name ${i}`),
         }),
       ]),
       patch,
+      "misc",
+      withOptions(
+        "c-g1",
+        Array.from({ length: 100 }, (_, i) => `Name ${i}`),
+      ),
     );
 
     fireEvent.change(screen.getByPlaceholderText("対象"), { target: { value: "Hans Brackhaus" } });

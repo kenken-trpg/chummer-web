@@ -438,10 +438,24 @@ describe("<CommlinkGear> apps on a commlink", () => {
     const patch = vi.fn();
     renderPanel(
       CommlinkGear,
-      character([
-        app("a1", "Tutorsoft", "l1", { extra_kind: "skill", extra_options: ["Pistols", "Blades"] }),
-      ]),
+      character([app("a1", "Tutorsoft", "l1", { extra_kind: "skill" })]),
       patch,
+      // the choices come from the catalog entry, not the derived row
+      {
+        apps: [
+          {
+            id: "c-a1",
+            name: "Tutorsoft",
+            category: "Software",
+            cost: 100,
+            source: "SR5",
+            minrating: 0,
+            maxrating: 0,
+            extra_kind: "skill",
+            extra_options: ["Pistols", "Blades"],
+          },
+        ] as never,
+      },
     );
 
     fireEvent.change(screen.getByRole("combobox", { name: "技能" }), {

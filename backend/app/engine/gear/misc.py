@@ -293,7 +293,6 @@ def _resolve_misc_gear(
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
-                "extra_options": options,
                 "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "capacity_cost": cap_cost,
