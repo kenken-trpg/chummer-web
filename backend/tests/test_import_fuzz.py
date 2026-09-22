@@ -9,6 +9,7 @@ up in the server log. The property worth holding is narrower than "no 500":
 * `chum5_to_state` either reads the file or raises `NoticeError` — the error
   that carries a reason the user can act on — and a state it hands back
   computes without raising;
+* `fvtt_to_state` does the same for a Foundry VTT actor;
 * `import_character` on JSON accepts it or rejects it through validation;
 * `parse_settings_upload` accepts it or raises `ValueError`;
 * `decompress_chum5lz` unwraps within its size ceiling or raises `NoticeError`;
@@ -27,6 +28,7 @@ dropped, duplicated, renamed or given a value no field expects.
 
 from __future__ import annotations
 
+import copy
 import gzip
 import lzma
 import os
@@ -45,10 +47,12 @@ from app.chummer_import import chum5_to_state, decompress_chum5lz
 from app.chummer_import.container import _MAX_DECOMPRESSED_BYTES
 from app.customdata import build_overlay
 from app.data_loader._xml import MAX_UNTRUSTED_DEPTH, MAX_UNTRUSTED_ELEMENTS, parse_untrusted
+from app.fvtt_import import fvtt_to_state
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
 from tests.chum5_fixtures import build_chum5
 from tests.test_chummer_import import SAMPLE
+from tests.test_fvtt_import import _geared
 
 #: 120 per property keeps CI quick, and 30 on a laptop (no `CI` in the
 #: environment) keeps `pytest -q` a matter of seconds; CI is where the full run
@@ -203,6 +207,56 @@ def test_a_damaged_json_character_is_accepted_or_fails_validation(payload: dict[
     try:
         import_character(payload)
     except (ValidationError, NoticeError):
+        pass
+
+
+# --- Foundry VTT actors -------------------------------------------------------
+#
+# The same door as `.chum5`, a different shape: nested JSON whose every field a
+# stranger chose. `fvtt_to_state` owes the same answer — a state that computes,
+# or a `NoticeError`.
+
+
+def _paths(node: Any, here: tuple[Any, ...] = ()) -> list[tuple[Any, ...]]:
+    found = [here]
+    if isinstance(node, dict):
+        for key, value in node.items():
+            found += _paths(value, (*here, key))
+    elif isinstance(node, list):
+        for i, value in enumerate(node):
+            found += _paths(value, (*here, i))
+    return found
+
+
+@st.composite
+def _damaged_fvtt(draw: st.DrawFn) -> Any:
+    actor = copy.deepcopy(_FVTT_SEED)
+    for _ in range(draw(st.integers(min_value=1, max_value=4))):
+        path = draw(st.sampled_from(_paths(actor)))
+        if not path:
+            return draw(_JUNK)
+        parent = actor
+        for step in path[:-1]:
+            parent = parent[step]
+        if draw(st.booleans()):
+            parent[path[-1]] = draw(_JUNK)
+        elif isinstance(parent, dict):
+            del parent[path[-1]]
+        else:
+            parent.append(copy.deepcopy(parent[path[-1]]))
+    return actor
+
+
+_FVTT_SEED = _geared()
+
+
+@_FUZZ
+@given(_damaged_fvtt())
+def test_a_damaged_fvtt_actor_is_read_or_refused_with_a_reason(actor: Any) -> None:
+    try:
+        state, _warnings = fvtt_to_state(actor)
+        import_character(state)
+    except NoticeError:
         pass
 
 

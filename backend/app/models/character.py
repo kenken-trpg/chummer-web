@@ -35,6 +35,10 @@ from .magic import (
 from .settings import CharacterOptions, SettingsState
 from .social import ContactInstall, ExoticSkillInstall, MartialArtInstall
 
+#: The highest initiate / submersion grade a character may carry. The engine
+#: walks every grade (karma, choices), so an uploaded 10**12 would never finish.
+MAX_GRADE = 100
+
 
 class Priorities(BaseModel):
     Heritage: str = "C"
@@ -102,9 +106,9 @@ class CharacterPatch(BaseModel):
     lifestyles: list[LifestyleInstall] | None = None
     contacts: list[ContactInstall] | None = None
     martial_arts: list[MartialArtInstall] | None = None
-    initiate_grade: int | None = None
+    initiate_grade: int | None = Field(default=None, le=MAX_GRADE)
     initiations: list[InitiationChoice] | None = None
-    submersion_grade: int | None = None
+    submersion_grade: int | None = Field(default=None, le=MAX_GRADE)
     submersions: list[SubmersionChoice] | None = None
     karma_nuyen: int | None = None
     notes: str | None = None
@@ -258,9 +262,9 @@ class CharacterState(BaseModel):
     lifestyles: list[LifestyleInstall] = Field(default_factory=list)
     contacts: list[ContactInstall] = Field(default_factory=list)
     martial_arts: list[MartialArtInstall] = Field(default_factory=list)
-    initiate_grade: int = 0
+    initiate_grade: int = Field(default=0, le=MAX_GRADE)
     initiations: list[InitiationChoice] = Field(default_factory=list)
-    submersion_grade: int = 0
+    submersion_grade: int = Field(default=0, le=MAX_GRADE)
     submersions: list[SubmersionChoice] = Field(default_factory=list)
     karma_nuyen: int = 0
     notes: str = ""

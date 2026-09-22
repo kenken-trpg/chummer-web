@@ -6,11 +6,13 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app.characters import import_character
 from app.data_loader import catalog, catalog_list
 from app.fvtt_import import _base_name, _paren, fvtt_to_state
 from app.main import app
+from app.models.character import MAX_GRADE
 from app.notices import NoticeError
 from tests.notice_asserts import has
 
@@ -212,3 +214,21 @@ def test_only_the_last_parenthesis_comes_off() -> None:
     assert _paren("Improved Ability (skill) (Pistols) ") == ("Improved Ability (skill)", "Pistols")
     assert _base_name("Ares Predator V") == "Ares Predator V"
     assert _paren("odd (a) b)") is None
+
+
+def test_a_huge_grade_or_quantity_is_capped_not_walked() -> None:
+    # the engine walks every grade; 10**12 would never come back
+    actor = _geared(magic={"attribute": "logic", "initiation": 10**12})
+    commlink = next(i for i in actor["items"] if i["name"] == "Hermes Ikon")
+    commlink["system"]["technology"]["quantity"] = 10**12
+    state, _ = fvtt_to_state(actor)
+    assert state["initiate_grade"] == MAX_GRADE
+    assert state["commlinks"][0]["qty"] == 999
+    import_character(state)
+
+
+def test_a_json_character_with_a_huge_grade_fails_validation() -> None:
+    state, _ = fvtt_to_state(_actor())
+    state["initiate_grade"] = 10**12
+    with pytest.raises(ValidationError):
+        import_character(state)
