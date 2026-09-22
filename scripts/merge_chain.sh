@@ -42,7 +42,7 @@ for pair in "$@"; do
     done
   fi
   (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests &&
-    uv run --no-sync pytest -q 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
+    uv run --no-sync pytest -q -n auto 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
   if git diff --name-only origin/main | grep -q '^frontend/'; then
     (cd frontend && npx prettier --write --log-level warn . >/dev/null &&
       npx tsc --noEmit && npx vitest run 2>&1 | grep -E "Tests ") || { echo "STOP: frontend checks"; exit 1; }
