@@ -56,10 +56,12 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     # `<mainmugshotindex>` is which portrait is the main one, and -1 is
     # Chummer's "none": a save without it is read as having a portrait at
     # index 0 that is not there.
-    _sub(root, "mainmugshotindex", "0" if state.portrait else "-1")
-    if state.portrait:
-        b64 = state.portrait.split(",", 1)[-1] if state.portrait.startswith("data:") else state.portrait
-        _sub(_sub(root, "mugshots"), "mugshot", b64)
+    pics = [p for p in (state.portrait, *state.extra_portraits) if p]
+    _sub(root, "mainmugshotindex", "0" if pics else "-1")
+    if pics:
+        shots = _sub(root, "mugshots")
+        for pic in pics:
+            _sub(shots, "mugshot", pic.split(",", 1)[-1] if pic.startswith("data:") else pic)
     # Chummer's `<karma>` / `<nuyen>` are what is left to spend, not what was
     # earned (the reward log below is the history)
     left = ctx["derived"] if state.career else {}

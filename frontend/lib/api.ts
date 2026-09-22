@@ -141,20 +141,24 @@ async function req<T>(path: string, init?: RequestInit, retried = false): Promis
  * it made every edit of a character with a picture a multi-MB round trip, and
  * a reload inside that window lost the edit. The stored one is put back on the
  * answer — unless the patch itself sets a portrait, which the backend has to
- * see to vet (`clean_portrait`).
+ * see to vet (`clean_portrait`). The same goes for `extra_portraits`.
  */
 async function computeRemote(
   state: Character,
   patch?: Record<string, unknown>,
 ): Promise<Character> {
   noteCustomData(state);
-  const { portrait, ...rest } = state;
+  const { portrait, extra_portraits, ...rest } = state;
   const next = await req<Character>("/api/characters/patch", {
     method: "POST",
     body: JSON.stringify(patch ? { state: rest, patch } : { state: rest }),
   });
-  if (patch && "portrait" in patch) return next;
-  return portrait === undefined ? next : { ...next, portrait };
+  const kept: Partial<Character> = {};
+  if (!(patch && "portrait" in patch) && portrait !== undefined) kept.portrait = portrait;
+  if (!(patch && "extra_portraits" in patch) && extra_portraits !== undefined) {
+    kept.extra_portraits = extra_portraits;
+  }
+  return { ...next, ...kept };
 }
 
 /**

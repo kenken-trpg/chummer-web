@@ -38,6 +38,17 @@ def clean_portrait(value: str) -> str:
     return compact if _PORTRAIT.fullmatch(compact) else ""
 
 
+#: Chummer's `<mugshots>` holds any number; three is what this app keeps —
+#: `portrait` (the main one) and up to two more in `extra_portraits`.
+MAX_PORTRAITS = 3
+
+
+def clean_extra_portraits(values: list[str]) -> list[str]:
+    """`values` run through `clean_portrait`, the refused ones dropped, cut to
+    the `MAX_PORTRAITS - 1` that fit beside the main portrait."""
+    return [c for c in (clean_portrait(v) for v in values) if c][: MAX_PORTRAITS - 1]
+
+
 def _reject_oversized_collections(model: BaseModel) -> None:
     """Hold every list / dict in `model` to `_MAX_COLLECTION`, nested ones too.
 

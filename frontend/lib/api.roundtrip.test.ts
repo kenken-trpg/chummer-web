@@ -105,6 +105,17 @@ describe("api.create / api.patch", () => {
     expect(next.portrait).toBe("");
   });
 
+  it("leaves the extra portraits out too and puts them back", async () => {
+    const extra = ["data:image/png;base64,iVBORw0KGgo=", "data:image/jpeg;base64,/9j/"];
+    await local.putCharacter(makeCharacter({ id: "a", extra_portraits: extra }));
+    respond = () => json(makeCharacter({ id: "a", name: "After", extra_portraits: [] }));
+
+    const next = await api.patch("a", { name: "After" });
+
+    expect(body(calls[0]).state).not.toHaveProperty("extra_portraits");
+    expect(next.extra_portraits).toEqual(extra);
+  });
+
   it("refuses to patch an id the browser does not hold", async () => {
     // the server has no roster to fall back on, so this cannot be recovered
     await expect(api.patch("ghost", { name: "x" })).rejects.toBeInstanceOf(MessageError);

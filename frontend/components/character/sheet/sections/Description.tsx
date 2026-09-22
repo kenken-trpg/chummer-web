@@ -1,4 +1,5 @@
 import type { SheetData } from "@/lib/character/sheet-data";
+import { portraitsOf } from "@/lib/character/portrait";
 import { Section } from "@/components/character/sheet/blocks";
 import { type MsgKey, useUiText } from "@/lib/i18n";
 
@@ -24,14 +25,15 @@ export function DescriptionSection(s: SheetData) {
       ["desc.notes", character.notes],
     ] as [MsgKey, string | undefined][]
   ).filter((r): r is [MsgKey, string] => Boolean((r[1] || "").trim()));
-  if (!stats.length && !blocks.length && !character.portrait) return null;
+  const pics = portraitsOf(character);
+  if (!stats.length && !blocks.length && !pics.length) return null;
   return (
     <Section title="desc.title">
-      {character.portrait || stats.length ? (
+      {pics.length || stats.length ? (
         <div className="sheet-portrait-row">
-          {character.portrait ? (
-            <img className="sheet-portrait" src={character.portrait} alt={ui("desc.portraitAlt")} />
-          ) : null}
+          {pics.map((src, i) => (
+            <img key={i} className="sheet-portrait" src={src} alt={ui("desc.portraitAlt")} />
+          ))}
           {stats.length ? (
             <div className="sheet-derived-grid sheet-vehicle-stats">
               {stats.map(([label, value]) => (

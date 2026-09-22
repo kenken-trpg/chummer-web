@@ -247,7 +247,7 @@ export const JA_APP = {
   "desc.noImage": "画像なし",
   "desc.pickPortrait": "ポートレート画像を選択",
   "desc.removeImage": "画像を削除",
-  "desc.portraitNote": ".chum5 の mugshot と相互変換。3MB まで。",
+  "desc.portraitNote": ".chum5 の mugshot と相互変換。3 枚まで、1 枚 3MB まで。",
   "desc.age": "年齢",
   "desc.sex": "性別",
   "desc.height": "身長",

@@ -1,7 +1,12 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
-import { PORTRAIT_TYPES } from "@/lib/character/portrait";
+import {
+  MAX_PORTRAITS,
+  PORTRAIT_TYPES,
+  portraitsOf,
+  portraitsPatch,
+} from "@/lib/character/portrait";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
@@ -312,7 +317,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       // the copy worked — these are caveats about the link, not failures
       const notes: string[] = [];
       if (url.length > SHARE_URL_WARN) notes.push(ui("share.long", { length: url.length }));
-      if (ch.portrait) notes.push(ui("share.portrait"));
+      if (portraitsOf(ch).length) notes.push(ui("share.portrait"));
       setNotice(notes.length ? notes.join(" ") : null);
     } catch (e) {
       setNotice(null);
@@ -363,8 +368,11 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
+  /** Add `file` after the portraits already there, while fewer than three. */
   async function onPortraitFile(file: File) {
     if (!ch) return;
+    const pics = portraitsOf(ch);
+    if (pics.length >= MAX_PORTRAITS) return;
     // the same four the backend keeps (models.clean_portrait); anything else
     // would be dropped there without a word
     if (!PORTRAIT_TYPES.includes(file.type)) {
@@ -382,7 +390,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         r.onerror = () => reject(r.error ?? new MessageError("app.err.load"));
         r.readAsDataURL(file);
       });
-      await patch({ portrait: dataUrl });
+      await patch(portraitsPatch([...pics, dataUrl]));
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.portraitRead"));
     }

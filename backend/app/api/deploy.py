@@ -19,7 +19,7 @@ _ALLOWED_ORIGINS = [
     for o in (os.environ.get("ALLOWED_ORIGINS") or "http://localhost:3000,http://127.0.0.1:3000").split(",")
     if o.strip()
 ]
-# 12 MiB: a CharacterState carrying a base64 portrait (≤3 MB image) is POSTed whole
+# 12 MiB: a CharacterState carrying base64 portraits (≤3 MB image each) is POSTed whole
 _MAX_REQUEST_BYTES = int(os.environ.get("MAX_REQUEST_BYTES") or 12 * 1024 * 1024)
 _RATE_LIMIT = os.environ.get("RATE_LIMIT") or "120/minute"
 _IMPORT_RATE_LIMIT = os.environ.get("IMPORT_RATE_LIMIT") or "20/minute"

@@ -588,6 +588,8 @@ export interface Character {
   background?: string;
   concept?: string;
   portrait?: string;
+  /** the second and third of Chummer's mugshots, after `portrait` */
+  extra_portraits?: string[];
   career?: boolean;
   karma_earned?: number;
   nuyen_earned?: number;

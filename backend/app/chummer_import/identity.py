@@ -9,7 +9,7 @@ from typing import Any
 from .. import ja_default
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
-from ..models import clean_portrait
+from ..models import MAX_PORTRAITS, clean_portrait
 from ..notices import Notice, notice
 from ..rules import DEFAULT_RULES
 
@@ -22,26 +22,34 @@ _BUILD_METHODS = {
 }
 
 
-def _read_mugshot(root: ET.Element) -> str:
-    """Chummer stores portraits as base64 either in ``<mugshots><mugshot>`` (with
-    ``<mainmugshotindex>`` picking one) or a legacy flat ``<mugshot>``. Return a
-    ``data:`` URI ready for an ``<img>`` ``src``, or ``""`` — also for a
-    mugshot that is not a PNG / JPEG / GIF / WebP (see `clean_portrait`)."""
-    shots = [_text(m) for m in root.findall("./mugshots/mugshot") if _text(m)]
-    raw = ""
-    if shots:
-        try:
-            i = int(_text(root.find("mainmugshotindex")) or "0")
-        except ValueError:
-            i = 0
-        raw = shots[i] if 0 <= i < len(shots) else shots[0]
-    raw = (raw or _text(root.find("mugshot"))).strip()
+def _as_portrait(raw: str) -> str:
+    """One mugshot's base64 as a ``data:`` URI, or ``""`` if it is not a PNG /
+    JPEG / GIF / WebP (see `clean_portrait`)."""
+    raw = raw.strip()
     if not raw:
         return ""
     if raw.startswith("data:"):
         return clean_portrait(raw)
     mime = "image/jpeg" if raw.startswith("/9j/") else "image/png"
     return clean_portrait(f"data:{mime};base64,{raw}")
+
+
+def _read_mugshots(root: ET.Element) -> list[str]:
+    """Chummer stores portraits as base64 either in ``<mugshots><mugshot>`` (with
+    ``<mainmugshotindex>`` picking the main one) or a legacy flat ``<mugshot>``.
+    Return them as ``data:`` URIs, the main one first, the unusable ones
+    dropped, at most `MAX_PORTRAITS`."""
+    shots = [_text(m) for m in root.findall("./mugshots/mugshot") if _text(m).strip()]
+    if shots:
+        try:
+            i = int(_text(root.find("mainmugshotindex")) or "0")
+        except ValueError:
+            i = 0
+        if 0 < i < len(shots):
+            shots.insert(0, shots.pop(i))
+    else:
+        shots = [_text(root.find("mugshot"))]
+    return [p for p in map(_as_portrait, shots) if p][:MAX_PORTRAITS]
 
 
 def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
@@ -136,9 +144,9 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
         val = _text(root.find(tag))
         if val:
             st[field] = val
-    mug = _read_mugshot(root)
-    if mug:
-        st["portrait"] = mug
+    mugs = _read_mugshots(root)
+    if mugs:
+        st["portrait"], st["extra_portraits"] = mugs[0], mugs[1:]
     elif any(_text(m).strip() for m in [*root.findall("./mugshots/mugshot"), root.find("mugshot")]):
         warn.append(notice("engine.import.portraitDropped"))
 

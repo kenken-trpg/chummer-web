@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from ._common import _reject_oversized_collections, _reject_oversized_input, clean_portrait
+from ._common import _reject_oversized_collections, _reject_oversized_input, clean_extra_portraits, clean_portrait
 from .career import CareerBaseline, RewardEntry
 from .gear import (
     ArmorInstall,
@@ -119,6 +119,7 @@ class CharacterPatch(BaseModel):
     background: str | None = None
     concept: str | None = None
     portrait: str | None = None  # data: URI (base64 image) or ""
+    extra_portraits: list[str] | None = None
     career: bool | None = None
     karma_earned: int | None = None
     nuyen_earned: int | None = None
@@ -150,6 +151,11 @@ class CharacterPatch(BaseModel):
     @classmethod
     def _portrait(cls, v: str | None) -> str | None:
         return None if v is None else clean_portrait(v)
+
+    @field_validator("extra_portraits")
+    @classmethod
+    def _extra_portraits(cls, v: list[str] | None) -> list[str] | None:
+        return None if v is None else clean_extra_portraits(v)
 
 
 class CustomDataUpload(BaseModel):
@@ -269,6 +275,8 @@ class CharacterState(BaseModel):
     background: str = ""
     concept: str = ""
     portrait: str = ""  # data: URI (base64 image) or ""
+    #: the second and third of Chummer's mugshots, after `portrait`
+    extra_portraits: list[str] = Field(default_factory=list)
     career: bool = False
     karma_earned: int = 0
     nuyen_earned: int = 0
@@ -312,6 +320,11 @@ class CharacterState(BaseModel):
     @classmethod
     def _portrait(cls, v: str) -> str:
         return clean_portrait(v)
+
+    @field_validator("extra_portraits")
+    @classmethod
+    def _extra_portraits(cls, v: list[str]) -> list[str]:
+        return clean_extra_portraits(v)
 
 
 class StateRequest(BaseModel):

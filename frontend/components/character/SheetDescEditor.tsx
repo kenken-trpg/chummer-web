@@ -1,4 +1,9 @@
-import { PORTRAIT_TYPES } from "@/lib/character/portrait";
+import {
+  MAX_PORTRAITS,
+  PORTRAIT_TYPES,
+  portraitsOf,
+  portraitsPatch,
+} from "@/lib/character/portrait";
 import type { Character } from "@/lib/types";
 import { type MsgKey, useUiText } from "@/lib/i18n";
 
@@ -12,31 +17,40 @@ export function SheetDescEditor({
   onPortraitFile: (file: File) => void | Promise<void>;
 }) {
   const { ui } = useUiText();
+  const pics = portraitsOf(ch);
   return (
     <div className="no-print sheet-notes-edit">
       {/* a heading for the whole editor, not a label for one control */}
       <h4 className="field-label">{ui("desc.title")}</h4>
       <div className="portrait-edit">
-        {ch.portrait ? (
-          <img className="portrait-thumb" src={ch.portrait} alt={ui("desc.portraitAlt")} />
+        {pics.length ? (
+          pics.map((src, i) => (
+            <div className="portrait-slot" key={i}>
+              <img className="portrait-thumb" src={src} alt={ui("desc.portraitAlt")} />
+              <button
+                className="btn"
+                type="button"
+                onClick={() => void patch(portraitsPatch(pics.filter((_, j) => j !== i)))}
+              >
+                {ui("desc.removeImage")}
+              </button>
+            </div>
+          ))
         ) : (
           <div className="portrait-thumb portrait-empty">{ui("desc.noImage")}</div>
         )}
         <div className="portrait-edit-controls">
-          <input
-            type="file"
-            accept={PORTRAIT_TYPES.join(",")}
-            aria-label={ui("desc.pickPortrait")}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void onPortraitFile(f);
-              e.target.value = "";
-            }}
-          />
-          {ch.portrait ? (
-            <button className="btn" type="button" onClick={() => void patch({ portrait: "" })}>
-              {ui("desc.removeImage")}
-            </button>
+          {pics.length < MAX_PORTRAITS ? (
+            <input
+              type="file"
+              accept={PORTRAIT_TYPES.join(",")}
+              aria-label={ui("desc.pickPortrait")}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void onPortraitFile(f);
+                e.target.value = "";
+              }}
+            />
           ) : null}
           <span className="muted">{ui("desc.portraitNote")}</span>
         </div>
