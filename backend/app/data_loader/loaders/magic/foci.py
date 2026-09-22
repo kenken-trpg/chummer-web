@@ -9,7 +9,8 @@ from __future__ import annotations
 from typing import Any
 
 from ..._xml import _int, _text, data_root
-from ...bonus import parse_bonus, parse_required, parse_requirement_tree
+from ...bonus import parse_bonus
+from ...requirements import parse_required, parse_requirement_tree
 
 
 def _focus_effect(nodes: list[dict[str, Any]]) -> str:

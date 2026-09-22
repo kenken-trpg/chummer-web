@@ -6,12 +6,9 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from .._xml import _float, _int, _text, data_root
-from ..bonus import (
-    _parent_name_requirements,
-    parse_bonus,
-    parse_required,
-)
+from ..bonus import parse_bonus
 from ..formulas import parse_capacity, variable_cost_range
+from ..requirements import _parent_name_requirements, parse_required
 
 CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
 

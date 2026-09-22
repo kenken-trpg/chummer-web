@@ -11,7 +11,8 @@ import re
 from typing import Any
 
 from ..._xml import _text, data_root
-from ...bonus import parse_bonus, parse_required
+from ...bonus import parse_bonus
+from ...requirements import parse_required
 from ._common import SPIRIT_ATTR_KEYS
 
 SPELL_CAST_CATEGORIES = frozenset({"Combat", "Detection", "Health", "Illusion", "Manipulation"})
