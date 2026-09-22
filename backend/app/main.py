@@ -66,13 +66,22 @@ async def _notice_error_handler(request: Request, exc: Exception) -> JSONRespons
 app.add_exception_handler(NoticeError, _notice_error_handler)
 
 
+#: Enough to fix a hand-made body by; the client never shows these.
+_MAX_VALIDATION_ERRORS = 20
+
+
 async def _validation_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """FastAPI's own 422 echoes each offending value back as `input`. That
     sends a large bad body straight back out, and a deeply nested one makes
     the encoder recurse until the 422 turns into a 500. Nothing reads `input`,
-    so it is dropped; `loc` still says where the problem is."""
+    so it is dropped; `loc` still says where the problem is. Only the first
+    `_MAX_VALIDATION_ERRORS` are listed: one per bad row of a large body made
+    the 422 many times the size of the request."""
     assert isinstance(exc, RequestValidationError)
-    detail = [{k: v for k, v in err.items() if k not in ("input", "ctx", "url")} for err in exc.errors()]
+    errors = exc.errors()
+    detail = [
+        {k: v for k, v in err.items() if k not in ("input", "ctx", "url")} for err in errors[:_MAX_VALIDATION_ERRORS]
+    ]
     return JSONResponse(status_code=422, content={"detail": detail})
 
 

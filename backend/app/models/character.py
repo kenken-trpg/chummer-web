@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from ._common import _reject_oversized_collections, clean_portrait
+from ._common import _reject_oversized_collections, _reject_oversized_input, clean_portrait
 from .career import CareerBaseline, RewardEntry
 from .gear import (
     ArmorInstall,
@@ -135,6 +135,11 @@ class CharacterPatch(BaseModel):
     stream_id: str | None = None
     options: CharacterOptions | None = None
     settings: SettingsState | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _bound_input(cls, data: object) -> object:
+        return _reject_oversized_input(data)
 
     @model_validator(mode="after")
     def _bound_collections(self) -> CharacterPatch:
@@ -292,6 +297,11 @@ class CharacterState(BaseModel):
     # Output of compute(); kept dict[str, Any] here (Pydantic-friendly, no
     # round-trip validation). Its real shape is engine.compute.derived_types.DerivedDict.
     derived: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _bound_input(cls, data: object) -> object:
+        return _reject_oversized_input(data)
 
     @model_validator(mode="after")
     def _bound_collections(self) -> CharacterState:
