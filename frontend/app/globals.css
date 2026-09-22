@@ -969,8 +969,15 @@ input[type="search"] {
 .portrait-edit {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
   align-items: flex-start;
   margin: 4px 0 10px;
+}
+.portrait-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
 }
 .portrait-edit-controls {
   display: flex;
@@ -995,6 +1002,7 @@ input[type="search"] {
 }
 .sheet-portrait-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   align-items: flex-start;
 }

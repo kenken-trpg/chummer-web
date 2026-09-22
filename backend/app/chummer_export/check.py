@@ -21,7 +21,9 @@ from . import state_to_chum5
 
 #: Fields that say nothing about the character: identity, bookkeeping, and the
 #: computed block (checked separately, by the two totals a player reads).
-_SKIP = frozenset({"id", "name", "derived", "portrait", "created_at", "updated_at", "career_baseline"})
+_SKIP = frozenset(
+    {"id", "name", "derived", "portrait", "extra_portraits", "created_at", "updated_at", "career_baseline"}
+)
 
 #: Which UI label a field is reported under. Anything unlisted is "other".
 _KIND = {

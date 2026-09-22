@@ -66,3 +66,37 @@ def test_an_oversized_mugshot_is_dropped_on_import_with_a_warning() -> None:
     state, warnings = chum5_to_state(raw)
     assert not state.get("portrait")
     assert "engine.import.portraitDropped" in [w["key"] for w in warnings]
+
+
+def _png(tag: str) -> str:
+    return "iVBORw0KGgo" + tag
+
+
+def test_three_mugshots_are_imported_main_one_first_and_a_fourth_is_left_out() -> None:
+    from app.chummer_import import chum5_to_state
+
+    shots = "".join(f"<mugshot>{_png(t)}</mugshot>" for t in ("AA", "BB", "CC", "DD"))
+    raw = f"<character><name>Many</name><mainmugshotindex>2</mainmugshotindex><mugshots>{shots}</mugshots></character>"
+    state, _ = chum5_to_state(raw.encode())
+    assert state["portrait"] == f"data:image/png;base64,{_png('CC')}"
+    assert state["extra_portraits"] == [f"data:image/png;base64,{_png(t)}" for t in ("AA", "BB")]
+
+
+def test_all_three_portraits_are_exported_as_mugshots_main_one_first() -> None:
+    import xml.etree.ElementTree as ET
+
+    from app.characters import import_character
+    from app.chummer_export import state_to_chum5
+    from tests.test_chummer_export import _rich_state
+
+    pics = [f"data:image/png;base64,{_png(t)}" for t in ("AA", "BB", "CC")]
+    state = _rich_state().model_copy(update={"portrait": pics[0], "extra_portraits": pics[1:]})
+    root = ET.fromstring(state_to_chum5(import_character(state)))
+    assert root.findtext("mainmugshotindex") == "0"
+    assert [m.text for m in root.findall("./mugshots/mugshot")] == [_png(t) for t in ("AA", "BB", "CC")]
+
+
+def test_extra_portraits_keep_only_clean_images_and_at_most_two() -> None:
+    ok = f"data:image/png;base64,{_png('AA')}"
+    patch = CharacterPatch(extra_portraits=[ok, "https://example.com/x.png", ok, ok])
+    assert patch.extra_portraits == [ok, ok]

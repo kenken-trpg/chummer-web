@@ -23,7 +23,7 @@ export const SHARE_VERSION = 1;
  * collide with a roster entry), and `portrait` is megabytes of base64 that
  * would not survive any URL.
  */
-export type SharePayload = Omit<Character, "derived" | "id" | "portrait">;
+export type SharePayload = Omit<Character, "derived" | "id" | "portrait" | "extra_portraits">;
 
 /** Links longer than this survive a copy-paste but start getting mangled by
  *  chat clients and mail wrapping. Advisory only. */
@@ -130,10 +130,17 @@ function fromBase64Url(text: string): Uint8Array<ArrayBuffer> {
 
 /** Strip the fields a share must not carry. */
 export function toSharePayload(ch: Character): SharePayload {
-  const { derived: _derived, id: _id, portrait: _portrait, ...rest } = ch;
+  const {
+    derived: _derived,
+    id: _id,
+    portrait: _portrait,
+    extra_portraits: _extraPortraits,
+    ...rest
+  } = ch;
   void _derived;
   void _id;
   void _portrait;
+  void _extraPortraits;
   return rest;
 }
 

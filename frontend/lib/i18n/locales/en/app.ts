@@ -241,7 +241,7 @@ export const EN_APP = {
   "desc.noImage": "No image",
   "desc.pickPortrait": "Choose a portrait image",
   "desc.removeImage": "Remove the image",
-  "desc.portraitNote": "Round-trips with the .chum5 mugshot. Up to 3MB.",
+  "desc.portraitNote": "Round-trips with the .chum5 mugshots. Up to 3 images, 3MB each.",
   "desc.age": "Age",
   "desc.sex": "Sex",
   "desc.height": "Height",
