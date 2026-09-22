@@ -57,7 +57,10 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
   // the mugshot made it through the import and into state
   await page.getByRole("button", { name: "シート", exact: true }).click();
   // the rendered sheet, not the thumbnail in the editor above it
-  const portrait = page.getByRole("article").getByRole("img", { name: "ポートレート" });
+  // this save carries three mugshots, and every one of them is shown
+  const portraits = page.getByRole("article").getByRole("img", { name: "ポートレート" });
+  await expect(portraits).toHaveCount(3);
+  const portrait = portraits.first();
   await expect(portrait).toBeVisible();
   expect(await portrait.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
 
