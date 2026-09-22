@@ -23,6 +23,9 @@ import { ZipError } from "@/lib/character/zip";
 import { errorMessage } from "@/lib/errors";
 import { useLocale, type UiFn } from "@/lib/i18n";
 
+/** The core rulebook, which "all off" keeps. */
+const CORE_BOOK = "SR5";
+
 /**
  * The ruleset pulldown: which settings the character is built under, and which
  * rulebooks that leaves buyable.
@@ -245,11 +248,14 @@ export function SettingsPicker({
     if (name === target) void patch({ settings: { name: "", books: [] } });
   }
 
-  function toggleBook(code: string) {
-    const next = books.includes(code) ? books.filter((c) => c !== code) : [...books, code];
+  function setBooks(next: string[]) {
     // Deviating from a ruleset makes it the character's own. The numeric knobs
     // are kept — only the books and the name are the user's edit here.
     void patch({ settings: { ...(ch.settings || { books: [] }), name: "", books: next } });
+  }
+
+  function toggleBook(code: string) {
+    setBooks(books.includes(code) ? books.filter((c) => c !== code) : [...books, code]);
   }
 
   return (
@@ -415,6 +421,25 @@ export function SettingsPicker({
 
       {open ? (
         <>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            <button
+              className="btn"
+              onClick={() => setBooks(allBooks.map((book) => book.code))}
+              title={ui("settings.booksAllOnHint")}
+            >
+              {ui("settings.booksAllOn")}
+            </button>
+            <button
+              className="btn"
+              // An empty list means "unrestricted", so switching everything
+              // off keeps the core rulebook: that is the fewest books a
+              // character can be built from.
+              onClick={() => setBooks([CORE_BOOK])}
+              title={ui("settings.booksAllOffHint")}
+            >
+              {ui("settings.booksAllOff")}
+            </button>
+          </div>
           <div className="book-grid" style={{ marginTop: 8 }}>
             {allBooks.map((book) => (
               <label key={book.code} className="book-check">

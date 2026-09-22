@@ -210,6 +210,10 @@ export const EN_CHARGEN = {
   "settings.custom": "Custom",
   "settings.booksShow": "Choose rulebooks",
   "settings.booksHide": "Close",
+  "settings.booksAllOn": "All on",
+  "settings.booksAllOnHint": "Tick every rulebook",
+  "settings.booksAllOff": "All off",
+  "settings.booksAllOffHint": "Untick every rulebook but the core one (SR5)",
   "settings.booksHint": "Narrow what can be bought to the books you own",
   "settings.booksNote":
     "Entries from an unticked book drop out of the buy lists. Gear and qualities you already own are kept. Unticking every book means no restriction.",

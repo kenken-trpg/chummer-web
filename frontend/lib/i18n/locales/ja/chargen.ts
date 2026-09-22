@@ -212,6 +212,10 @@ export const JA_CHARGEN = {
   "settings.custom": "カスタム",
   "settings.booksShow": "ルールブックを選ぶ",
   "settings.booksHide": "閉じる",
+  "settings.booksAllOn": "全部オン",
+  "settings.booksAllOnHint": "すべてのルールブックにチェックを入れます",
+  "settings.booksAllOff": "全部オフ",
+  "settings.booksAllOffHint": "基本ルールブック（SR5）だけを残して、ほかのチェックをすべて外します",
   "settings.booksHint": "購入できる項目をルールブックで絞り込みます",
   "settings.booksNote":
     "チェックを外したルールブックの項目は購入一覧に出なくなります。すでに所持している装備・資質は消えません。すべて外すと制限なしに戻ります。",

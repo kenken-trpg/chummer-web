@@ -119,6 +119,22 @@ describe("SettingsPicker", () => {
     expect(patch).toHaveBeenCalledWith({ settings: { name: "", books: ["SR5", "HT"] } });
   });
 
+  it("ticks every book at once", () => {
+    const { patch } = setup({ name: "Standard", books: ["SR5"] });
+    fireEvent.click(screen.getByText("ルールブックを選ぶ"));
+    fireEvent.click(screen.getByRole("button", { name: "全部オン" }));
+    const books = patch.mock.calls[0][0].settings.books as string[];
+    expect(books.length).toBeGreaterThan(1);
+    expect(books).toContain("HT");
+  });
+
+  it("unticks all but the core book, since an empty list means unrestricted", () => {
+    const { patch } = setup({ name: "Standard", books: ["SR5", "HT"] });
+    fireEvent.click(screen.getByText("ルールブックを選ぶ"));
+    fireEvent.click(screen.getByRole("button", { name: "全部オフ" }));
+    expect(patch).toHaveBeenCalledWith({ settings: { name: "", books: ["SR5"] } });
+  });
+
   it("titles a book by its own translation, not the entity that shares its name", () => {
     // "Lockdown" is also the core-rulebook program ロックダウン; the book has no
     // Japanese edition, so its title stays English
