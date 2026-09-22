@@ -20,10 +20,13 @@
   "knowledge_skill": {
     "Chemistry": "化学",
     "Cybertechnology": "サイバーテクノロジー",
+    "Entertainment": "エンターテイメント",
+    "Fashion": "ファッション",
     "Medicine": "医学",
     "Sioux": "スー語"
   },
   "power": {
+    "Combat Sense": "戦闘感覚",
     "Mystic Armor": "魔力装甲"
   },
   "skill": {
