@@ -351,6 +351,8 @@ export const JA_ENGINE = {
     "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
     "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
+  "engine.import.portraitDropped":
+    "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
 
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
