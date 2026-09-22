@@ -239,6 +239,16 @@ describe("<SkillsTab>", () => {
   });
 });
 
+describe("<SkillsTab> skill groups", () => {
+  it("explains a group in a tooltip, naming the skills in it", () => {
+    renderTab();
+    const button = screen.getByRole("button", { name: "Close Combat の説明" });
+    const tip = document.getElementById(button.getAttribute("aria-describedby")!);
+    expect(tip?.textContent).toContain("含まれる技能：Blades");
+    expect(tip?.textContent).toContain("× 5");
+  });
+});
+
 describe("<SkillsTab> sliders", () => {
   it("commits a skill-group rating on blur as well as on mouseUp", () => {
     // a keyboard user never fires mouseUp; without the blur handler their
@@ -327,7 +337,9 @@ describe("active skill ordering", () => {
         skills: [blades],
       }),
     });
-    const groups = [...container.querySelectorAll(".skill-row:not(.has-spec) > span:first-child")];
+    const groups = [
+      ...container.querySelectorAll(".skill-row:not(.has-spec) > span:first-child .help-tip-label"),
+    ];
     expect(groups.map((el) => el.textContent)).toEqual([
       "Close Combat",
       "Electronics",
