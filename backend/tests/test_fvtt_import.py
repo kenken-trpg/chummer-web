@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.characters import import_character
-from app.data_loader import catalog
+from app.data_loader import catalog, catalog_list
 from app.fvtt_import import fvtt_to_state
 from app.main import app
 from app.notices import NoticeError
@@ -30,6 +30,41 @@ def _skill(name: str, rating: int, category: str = "active", **skill: Any) -> di
         "type": "skill",
         "system": {"type": "skill", "skill": {"category": category, "rating": rating, **skill}},
     }
+
+
+def _gear(
+    kind: str, name: str, rating: int = 1, quantity: int = 1, embedded: Any = (), **system: Any
+) -> dict[str, Any]:
+    item = _item(kind, name, technology={"rating": rating, "quantity": quantity, "equipped": True}, **system)
+    item["flags"] = {"shadowrun5e": {"embeddedItems": list(embedded)}}
+    return item
+
+
+def _geared(**system: Any) -> dict[str, Any]:
+    actor = _actor(**system)
+    actor["system"]["magic"]["attribute"] = "logic"
+    actor["system"].update(street_cred=5, notoriety=2, public_awareness=1)
+    actor["items"] += [
+        _gear("armor", "Lined Coat", embedded=[_gear("modification", "Chemical Protection", 3, type="armor")]),
+        _gear(
+            "weapon",
+            "Ares Predator V",
+            embedded=[
+                _gear("modification", "Smartgun System, Internal", type="weapon"),
+                _gear("modification", "Silencer/Suppressor", type="weapon", mod_weapon={"mount_point": "barrel"}),
+                _gear("ammo", "Regular Ammo"),
+            ],
+        ),
+        _gear("cyberware", "Wired Reflexes", 2, grade="alpha"),
+        # Foundry has it as cyberware; the catalog says bioware
+        _gear("cyberware", "Muscle Toner", 1),
+        _gear("device", "Hermes Ikon", category="commlink"),
+        _gear("sin", "Fake SIN", 4),
+        _gear("equipment", "Medkit", 3),
+        _item("contact", "Fixer Bob", type="Fixer", connection=4, loyalty=3),
+        _item("lifestyle", "My Flat", type="low"),
+    ]
+    return actor
 
 
 def _actor(**system: Any) -> dict[str, Any]:
@@ -122,3 +157,45 @@ def test_the_endpoint_returns_the_character_and_the_warnings() -> None:
     body = r.json()
     assert body["character"]["name"] == "Kagero"
     assert has(body["warnings"], "engine.import.skippedUnknown", name="Homebrew Quirk")
+
+
+def test_armor_weapons_and_ware() -> None:
+    state, warnings = fvtt_to_state(_geared())
+    [coat] = state["armor"]
+    assert coat["armor_id"] == _id("armor", "Lined Coat")
+    [mod] = state["armor_mods"]
+    assert (mod["mod_id"], mod["parent_id"], mod["rating"]) == (_id("armor_mods", "Chemical Protection"), coat["id"], 3)
+    [gun] = state["weapons"]
+    # the internal smartgun comes with the gun; the ammo is not an accessory
+    [acc] = state["weapon_accessories"]
+    assert (acc["accessory_id"], acc["parent_id"], acc["mount"]) == (
+        _id("weapon_accessories", "Silencer/Suppressor"),
+        gun["id"],
+        "Barrel",
+    )
+    [wired] = state["cyberware"]
+    assert (wired["rating"], wired["grade"]) == (2, "Alphaware")
+    assert [b["ware_id"] for b in state["bioware"]] == [
+        next(str(r["id"]) for r in catalog()["bioware"]["items"] if r["name"] == "Muscle Toner")
+    ]
+    assert not warnings[1:]  # only the homebrew quality
+
+
+def test_gear_goes_to_its_bucket() -> None:
+    state, _ = fvtt_to_state(_geared())
+    assert [c["gear_id"] for c in state["commlinks"]] == [
+        next(str(r["id"]) for r in catalog_list("commlinks") if r["name"] == "Hermes Ikon")
+    ]
+    names = {str(r["id"]): r["name"] for r in catalog_list("gear")}
+    assert sorted((names[g["gear_id"]], g["rating"]) for g in state["gear"]) == [("Fake SIN", 4), ("Medkit", 3)]
+
+
+def test_contacts_lifestyles_tradition_and_reputation() -> None:
+    state, _ = fvtt_to_state(_geared())
+    [bob] = state["contacts"]
+    assert (bob["name"], bob["role"], bob["connection"], bob["loyalty"]) == ("Fixer Bob", "Fixer", 4, 3)
+    assert [ls["lifestyle_id"] for ls in state["lifestyles"]] == [_id("lifestyles", "Low")]
+    assert state["tradition_id"] == _id("traditions", "Hermetic")
+    char = import_character(state)
+    assert (char.derived["street_cred"], char.derived["notoriety"], char.derived["public_awareness"]) == (5, 2, 1)
+    assert char.derived["nuyen"] == 1234 and char.derived["karma"]["remaining"] == 7
