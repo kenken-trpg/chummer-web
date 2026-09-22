@@ -223,6 +223,9 @@ export const JA_APP = {
   "api.chum5lzUndecompressible":
     "この .chum5lz を展開できませんでした。Chummer で「名前を付けて保存」から非圧縮の .chum5 で書き出して読み込んでください。（{formats}）",
   "api.importChummerFailed": "この .chum5 / .chum5lz を取り込めませんでした。",
+  "api.importFvttFailed": "この Foundry VTT のアクターを取り込めませんでした。",
+  "api.notAnFvttActor":
+    "Foundry VTT のキャラクターではないようです（shadowrun5e のキャラクターアクターで Export Data したものを選んでください）",
   "api.settingsParseFailed":
     "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.customDataMissing":

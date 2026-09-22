@@ -17,6 +17,7 @@ const api = vi.hoisted(() => ({
   compute: vi.fn(),
   import: vi.fn(),
   importChummer: vi.fn(),
+  importFvtt: vi.fn(),
   exportChummer: vi.fn(),
   checkChummerExport: vi.fn(),
 }));
@@ -289,6 +290,20 @@ describe("useCharacterEditor.onImport", () => {
     expect(api.import).toHaveBeenCalledWith({ name: "Vex" });
     expect(api.importChummer).not.toHaveBeenCalled();
     expect(result.current.ch?.id).toBe("imported");
+  });
+
+  it("sends a Foundry VTT actor to the FVTT reader", async () => {
+    const { result } = await editorWith();
+    api.importFvtt.mockResolvedValue({ character: makeCharacter({ id: "fvtt" }), warnings: [] });
+    const actor = { name: "Kagero", type: "character", system: {}, items: [] };
+
+    await act(async () => {
+      await result.current.onImport(file("fvtt-Actor-Kagero.json", JSON.stringify(actor)));
+    });
+
+    expect(api.importFvtt).toHaveBeenCalledWith(actor);
+    expect(api.import).not.toHaveBeenCalled();
+    expect(result.current.ch?.id).toBe("fvtt");
   });
 
   it("opens the character even when the file had unsupported content", async () => {

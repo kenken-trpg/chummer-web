@@ -195,6 +195,19 @@ describe("api.preview / api.import", () => {
   });
 });
 
+describe("api.importFvtt", () => {
+  it("posts the actor as JSON, keeps the warnings and stores the character", async () => {
+    const character = makeCharacter({ id: "fvtt", name: "Kagero" });
+    respond = () => json({ character, warnings: ["dropped 1 unknown quality"] });
+
+    const res = await api.importFvtt({ type: "character", system: {}, items: [] });
+
+    expect(res.warnings).toEqual(["dropped 1 unknown quality"]);
+    expect(await local.getCharacter("fvtt")).toEqual(character);
+    expect(calls[0].path).toBe("/api/characters/import-fvtt");
+  });
+});
+
 describe("api.list / api.remove / api.compute", () => {
   it("list is local only — no request goes out", async () => {
     await local.putCharacter(makeCharacter({ id: "a", name: "Jazz" }));
