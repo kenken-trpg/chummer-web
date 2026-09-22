@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.characters import import_character
 from app.data_loader import catalog, catalog_list
-from app.fvtt_import import fvtt_to_state
+from app.fvtt_import import _base_name, _paren, fvtt_to_state
 from app.main import app
 from app.notices import NoticeError
 from tests.notice_asserts import has
@@ -199,3 +199,16 @@ def test_contacts_lifestyles_tradition_and_reputation() -> None:
     char = import_character(state)
     assert (char.derived["street_cred"], char.derived["notoriety"], char.derived["public_awareness"]) == (5, 2, 1)
     assert char.derived["nuyen"] == 1234 and char.derived["karma"]["remaining"] == 7
+
+
+def test_hostile_names_and_descriptions_do_not_stall() -> None:
+    # these went polynomial under the regexes they replaced (CodeQL py/polynomial-redos)
+    actor = _actor(description={"value": "<p>" + "<" * 50_000})
+    actor["items"].append(_item("quality", "(" + " " * 50_000 + "x"))
+    fvtt_to_state(actor)
+
+
+def test_only_the_last_parenthesis_comes_off() -> None:
+    assert _paren("Improved Ability (skill) (Pistols) ") == ("Improved Ability (skill)", "Pistols")
+    assert _base_name("Ares Predator V") == "Ares Predator V"
+    assert _paren("odd (a) b)") is None
