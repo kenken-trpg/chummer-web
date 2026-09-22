@@ -7,6 +7,7 @@ import { availBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { HelpTip } from "@/components/help/HelpTip";
+import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import { useUiText } from "@/lib/i18n";
 
 export function WareRow(props: {
@@ -148,6 +149,15 @@ export function WareRow(props: {
           ) : null}
         </div>
         <div className="cyber-controls">
+          {!locked ? (
+            <PriceField
+              range={item.cost_range}
+              value={item.cost ?? item.cost_range?.[0] ?? 0}
+              label={tr(item.name)}
+              ui={ui}
+              onChange={(cost) => onPatchRow(item.id, { cost })}
+            />
+          ) : null}
           {discounted !== null && discounted !== undefined && !locked ? (
             <label title={ui("gear.blackMarketHint")}>
               <input

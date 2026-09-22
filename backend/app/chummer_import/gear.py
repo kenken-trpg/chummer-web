@@ -39,6 +39,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     ware_rows = (cat.get("cyberware") or {}).get("items") or []
     ware_rows = ware_rows + ((cat.get("bioware") or {}).get("items") or [])
     ware_r = _Resolver(ware_rows)
+    ware_by_id = {str(row["id"]): row for row in ware_rows}
     picks: dict[str, str] = {}
     #: gear held in a piece of ware: (install id, ware id, kind, node)
     carried: list[tuple[str, str, Phrase, ET.Element]] = []
@@ -59,6 +60,8 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "included": _came_with_parent(w),
                 "discounted": _discounted(w),
             }
+            if (ware_by_id.get(wid) or {}).get("cost_range"):
+                row["cost"] = _picked_cost(w)
             out.append(row)
             for pick in w.findall("./skillpicks/pick"):
                 skill = _text(pick.find("skill"))

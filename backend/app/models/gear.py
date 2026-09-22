@@ -19,6 +19,8 @@ class CyberwareInstall(BaseModel):
     # `<selectcyberware>`: the implant this one is keyed to (Implant Medic,
     # Nanohive Soft). A label, like Chummer's `<extra>` — it grants nothing.
     extra: str | None = None
+    #: the price picked for a `Variable(lo-hi)` piece (Biosculpting)
+    cost: int | None = None
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False

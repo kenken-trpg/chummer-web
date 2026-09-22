@@ -11,7 +11,7 @@ from ..bonus import (
     parse_bonus,
     parse_required,
 )
-from ..formulas import parse_capacity
+from ..formulas import parse_capacity, variable_cost_range
 
 CORE_GRADES = ("Standard", "Used", "Alphaware", "Betaware", "Deltaware")
 
@@ -81,6 +81,12 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
             max_rating = 1
         minrating_expr = min_raw or str(min_rating)
         maxrating_expr = rating_raw or str(max_rating)
+        cost = _text(el.find("cost"), "0")
+        # Biosculpting, Cosmetic Surgery: `Variable(500-2000)`, priced by the
+        # player within the range
+        cost_range = variable_cost_range(cost)
+        if cost_range:
+            cost = "0"
         subs_el = el.find("subsystems")
         subsystems = [
             _text(sub.find("name")) for sub in list(subs_el if subs_el is not None else []) if _text(sub.find("name"))
@@ -92,7 +98,8 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "hidden": hidden,
                 "category": _text(el.find("category"), default_category),
                 "ess": _text(el.find("ess"), "0"),
-                "cost": _text(el.find("cost"), "0"),
+                "cost": cost,
+                "cost_range": list(cost_range) if cost_range else None,
                 "avail": _text(el.find("avail")),
                 "capacity": cap_expr,
                 "minrating": min_rating,

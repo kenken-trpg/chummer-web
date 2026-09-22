@@ -40,6 +40,8 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "name", names["ware"].get(r.ware_id, ""))
             _sub(w, "grade", r.grade)
             _sub(w, "rating", r.rating)
+            if getattr(r, "cost", None) is not None:
+                _sub(w, "cost", r.cost)
             if r.side:
                 _sub(w, "location", r.side)
             if r.extra:

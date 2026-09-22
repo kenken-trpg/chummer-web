@@ -16,6 +16,9 @@ export interface InstalledWare {
   granted_by?: string;
   essence: number;
   nuyen: number;
+  /** the price picked for a `Variable(lo-hi)` piece; null for a fixed one */
+  cost?: number | null;
+  cost_range?: [number, number] | null;
   capacity_used?: number;
   capacity_max?: number;
   rating_min?: number;
