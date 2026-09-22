@@ -137,6 +137,8 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     mug = _read_mugshot(root)
     if mug:
         st["portrait"] = mug
+    elif any(_text(m).strip() for m in [*root.findall("./mugshots/mugshot"), root.find("mugshot")]):
+        warn.append(notice("engine.import.portraitDropped"))
 
     def prio(tag: str) -> str:
         # Chummer writes `E,0` (letter, sum-to-ten value) and reads only the

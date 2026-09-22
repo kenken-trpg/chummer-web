@@ -47,3 +47,22 @@ def test_the_models_clean_the_field() -> None:
     assert CharacterPatch(portrait="https://tracker.example/p.png").portrait == ""
     # a patch that does not touch the portrait must not clear it
     assert CharacterPatch().portrait is None
+
+
+def test_a_portrait_over_the_editor_limit_is_dropped() -> None:
+    from app.models._common import MAX_PORTRAIT_CHARS
+
+    head = "data:image/png;base64,"
+    fits = head + "A" * (MAX_PORTRAIT_CHARS - len(head))
+    assert clean_portrait(fits) == fits
+    assert clean_portrait(fits + "AAAA") == ""
+
+
+def test_an_oversized_mugshot_is_dropped_on_import_with_a_warning() -> None:
+    from app.chummer_import import chum5_to_state
+
+    body = "A" * 4_100_000
+    raw = f"<character><name>Big</name><mugshots><mugshot>{body}</mugshot></mugshots></character>".encode()
+    state, warnings = chum5_to_state(raw)
+    assert not state.get("portrait")
+    assert "engine.import.portraitDropped" in [w["key"] for w in warnings]
