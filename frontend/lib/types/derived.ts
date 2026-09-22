@@ -82,6 +82,8 @@ export interface Derived {
   special_modification_limit?: { used: number; max: number };
   friends_in_high_places?: boolean;
   made_man?: boolean;
+  /** `<allowcyberwareessdiscounts>`: ware rows offer an essence discount */
+  allow_ess_discounts?: boolean;
   black_market_discount?: boolean;
   black_market_category?: string;
   black_market_contact_id?: string;

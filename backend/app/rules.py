@@ -167,6 +167,9 @@ class Rules:
     #: with karma may still take its specialization for a point. Off in the
     #: Standard presets, so Chummer makes that specialization karma too.
     allow_point_buy_specializations_on_karma_skills: bool = False
+    #: `<allowcyberwareessdiscounts>`: a ware piece may be entered with a
+    #: percentage off its essence (Neon Anarchy's presets)
+    allow_cyberware_ess_discounts: bool = False
     chargen_skill_max: int = CHARGEN_SKILL_MAX
     chargen_knowledge_skill_max: int = CHARGEN_KNOWLEDGE_SKILL_MAX
     #: `<maxnumbermaxattributescreate>`: how many of BOD..WIL may sit at
@@ -395,6 +398,7 @@ def rules_for(settings: object | None) -> Rules:
         ("spirit_force_based_on_total_mag", "spirit_force_based_on_total_mag"),
         ("free_martial_art_specialization", "free_martial_art_specialization"),
         ("allow_free_grids", "allow_free_grids"),
+        ("allow_cyberware_ess_discounts", "allow_cyberware_ess_discounts"),
         (
             "allow_point_buy_specializations_on_karma_skills",
             "allow_point_buy_specializations_on_karma_skills",

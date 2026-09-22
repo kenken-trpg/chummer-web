@@ -24,6 +24,10 @@ class CyberwareInstall(BaseModel):
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False
+    #: `<essdiscount>`: a percentage off this piece's essence, as the GM
+    #: allows under `<allowcyberwareessdiscounts>` (Chummer's `ESSDiscount`,
+    #: -100 to 100; negative costs more)
+    ess_discount: int = Field(default=0, ge=-100, le=100)
 
 
 class ArmorInstall(BaseModel):

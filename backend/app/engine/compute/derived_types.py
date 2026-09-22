@@ -292,6 +292,8 @@ class DerivedDict(TypedDict):
     special_modification_limit: _SpecialModificationLimit
     friends_in_high_places: bool
     made_man: bool
+    #: `<allowcyberwareessdiscounts>`: the ware rows offer an essence discount
+    allow_ess_discounts: bool
     black_market_discount: bool
     black_market_category: str
     black_market_contact_id: str

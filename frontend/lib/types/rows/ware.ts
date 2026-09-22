@@ -15,6 +15,8 @@ export interface InstalledWare {
   /** `<addware>`: the quality that came with this implant (Busted Cyberware). */
   granted_by?: string;
   essence: number;
+  /** `<essdiscount>`: percent off the essence (-100..100), already applied */
+  ess_discount?: number;
   nuyen: number;
   /** the price picked for a `Variable(lo-hi)` piece; null for a fixed one */
   cost?: number | null;

@@ -144,6 +144,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
             compact={compact}
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
+            essDiscountAllowed={Boolean(d.allow_ess_discounts)}
             discounted={
               d.black_market_discount && d.black_market_category === "Cyberware"
                 ? !!(ch.cyberware || []).find((row) => row.id === item.id)?.discounted

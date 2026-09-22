@@ -187,6 +187,7 @@ def assemble(ctx: Ctx) -> None:
         },
         "friends_in_high_places": bool(ctx.effects.get("friends_in_high_places")),
         "made_man": bool(ctx.effects.get("made_man")),
+        "allow_ess_discounts": current_rules().allow_cyberware_ess_discounts,
         "black_market_discount": bool(ctx.effects.get("black_market_discount")),
         "black_market_category": ctx.bmp_category if ctx.bmp_active else "",
         "black_market_contact_id": ctx.bmp_contact_id if ctx.bmp_active else "",

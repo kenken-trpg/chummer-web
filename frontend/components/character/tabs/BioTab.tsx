@@ -92,6 +92,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
             compact={compact}
             slotValue={slotPick[item.id] || ""}
             wareRanges={d.ware_ranges}
+            essDiscountAllowed={Boolean(d.allow_ess_discounts)}
             discounted={
               d.black_market_discount && d.black_market_category === "Bioware"
                 ? !!(ch.bioware || []).find((row) => row.id === item.id)?.discounted
