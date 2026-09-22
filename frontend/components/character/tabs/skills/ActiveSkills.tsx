@@ -104,7 +104,7 @@ export function ActiveSkills(props: TabPanelProps) {
     <>
       <h3>{ui("skills.active")}</h3>
       {activeByCategory.map(({ category, skills }) => (
-        <div key={category}>
+        <div key={category} className="skill-cat-block">
           <h4 className="skill-cat">{skillCatLabel(category, ui)}</h4>
           {skills.map((s) => {
             const expertise = expertiseBySkill.get(s.name);

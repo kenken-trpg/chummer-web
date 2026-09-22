@@ -214,6 +214,13 @@ td.rowhead {
 }
 
 .attr-row,
+/* A category of active skills is ~10 rows the size of this box. Off screen,
+   the browser skips laying it out and painting it until it is scrolled to —
+   the tab is ~5,000 nodes and most of them start below the fold. */
+.skill-cat-block {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
 .skill-row {
   display: grid;
   grid-template-columns: 80px 1fr 88px;
