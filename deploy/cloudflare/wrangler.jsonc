@@ -1,0 +1,36 @@
+// Cloudflare Containers: a Worker in front of the same image `make up` runs.
+// Deploy from this directory: `npm install && npx wrangler deploy`.
+// See docs/deploy.md › Cloudflare Containers.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chummer-web",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // workers.dev stays off: the custom domain below is the only way in, so a
+  // WAF rule on the zone cannot be walked around.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    // Replace with your hostname. The zone must be on this account.
+    { "pattern": "chummer.example.com", "custom_domain": true }
+  ],
+  "containers": [
+    {
+      "class_name": "ChummerContainer",
+      "image": "../../Dockerfile",
+      "image_build_context": "../..",
+      // 1/2 vCPU, 4 GiB. `basic` (1/4 vCPU, 1 GiB) also fits in memory, but
+      // the first request after a cold start pays the catalog() XML parse on
+      // that quarter core.
+      "instance_type": "standard-1",
+      // One instance, always the same one (see src/index.ts). This is also the
+      // cost ceiling: anonymous traffic cannot fan out into more containers.
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "CHUMMER", "class_name": "ChummerContainer" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ChummerContainer"] }],
+  "observability": { "enabled": true }
+}

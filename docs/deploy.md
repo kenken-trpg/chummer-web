@@ -191,6 +191,69 @@ primary_region = "nrt"
   timeout = "3s"
 ```
 
+## Cloudflare Containers
+
+Everything on Cloudflare: a Worker takes the request and hands it to a container
+running this same image. Needs the Workers Paid plan and a zone (your domain)
+on the same account. Config lives in `deploy/cloudflare/`.
+
+```bash
+cd deploy/cloudflare
+# edit wrangler.jsonc: routes[0].pattern -> your hostname
+npm install
+npx wrangler login
+npx wrangler deploy        # builds the image locally with Docker, pushes, deploys
+```
+
+The image is built for `linux/amd64`. On an Apple Silicon Mac that runs under
+emulation and the first build takes a long while; later ones reuse the cache.
+
+What the config pins down, and why:
+
+- **One instance** (`max_instances: 1`, and the Worker always asks for the
+  instance named `main`). The rate limiter keeps its counters in process
+  memory, so several containers would each hand out a full allowance. It is
+  also the cost ceiling: nobody can make you run a second container.
+- **`standard-1`** (1/2 vCPU, 4 GiB). `basic` fits in memory but makes the
+  cold-start catalog parse slow.
+- **`sleepAfter = "15m"`** — idle that long and it stops; billing is per
+  running second, so a quiet instance costs little. Lengthen it to avoid cold
+  starts, shorten it to pay less.
+- **`TRUST_CLOUDFLARE_IP=1`** and the public rate limits (`120/minute`,
+  `20/minute`) are set in `src/index.ts` (`envVars`), not `.env` — `.env` is
+  only read by `docker compose`. The container is reachable only through the
+  Worker, so `cf-connecting-ip` there is always Cloudflare's.
+- **`workers_dev: false`, `preview_urls: false`** — the custom domain is the only
+  public URL, so the WAF rules below cannot be walked around via
+  `*.workers.dev`.
+
+Logs: `npx wrangler tail`, or Workers & Pages › chummer-web › Logs in the
+dashboard (the container writes JSON lines, `LOG_FORMAT=json`).
+
+### Before going public
+
+The app keeps no data (no accounts, characters stay in the browser), so the
+realistic risk is someone burning CPU on your bill. In the dashboard, for the
+zone:
+
+1. **Security › WAF › Rate limiting rules** — one rule for
+   `starts_with(http.request.uri.path, "/api/")`, e.g. 100 requests / 1 minute
+   per IP → Block for 1 minute. This stops a flood at the edge, before it wakes
+   the container. The app's own limits stay as the second line.
+2. **Security › Bots** — turn on Bot Fight Mode.
+3. **Billing › Billable usage notifications** — an alert for Workers /
+   Containers usage, so a surprise shows up as an email, not an invoice.
+4. **SSL/TLS** — mode *Full*, *Always Use HTTPS* on, minimum TLS 1.2.
+5. **Small audience?** Put **Zero Trust › Access** on the hostname (e.g. email
+   one-time PIN for your group). Anonymous visitors then never reach the
+   Worker at all.
+6. **Keep the image fresh.** Base images are pinned by digest; redeploy after
+   taking the Dependabot / `make update` bumps, or security fixes in Python,
+   Node and Caddy never reach the running container.
+
+Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
+requests past the limit and confirm the 429 / log line shows your own IP.
+
 ## Self-host + Cloudflare Tunnel
 
 Run the container (`docker compose up -d`), then point a named tunnel at it:
