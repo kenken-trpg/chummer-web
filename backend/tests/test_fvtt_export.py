@@ -24,8 +24,10 @@ from app.models import (
     LifestyleInstall,
     Priorities,
     SpellInstall,
+    VehicleModInstall,
     WeaponAccessoryInstall,
     WeaponInstall,
+    WeaponMountInstall,
 )
 
 
@@ -347,6 +349,66 @@ def test_weapons_carry_the_skill_the_figures_and_the_range_bands() -> None:
     shuriken = rows["Shuriken"]
     assert shuriken["skill"] == "Throwing Weapons"
     assert shuriken["ranges"] == {"short": "0-4", "medium": "5-8", "long": "9-20", "extreme": "21-28"}
+
+
+_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+
+
+def _rigger() -> CharacterState:
+    car = GearInstall(gear_id=_id("vehicles", "Ford Americar (Sedan)"))
+    lynx = GearInstall(gear_id=_id("drones", "Steel Lynx Combat Drone (Large)"))
+    gun = WeaponInstall(weapon_id=_id("weapons", "FN HAR"))
+    pistol = WeaponInstall(weapon_id=_id("weapons", "Ares Predator V"))
+    return compute_state(
+        CharacterState(
+            id="fvtt-rig",
+            name="轍",
+            priorities=Priorities(Heritage="D", Attributes="B", Talent="E", Skills="C", Resources="A"),
+            metatype="Human",
+            attributes={"BOD": 3, "AGI": 3, "REA": 5, "STR": 2, "CHA": 2, "INT": 4, "LOG": 5, "WIL": 3},
+            vehicles=[car],
+            drones=[lynx],
+            vehicle_mods=[VehicleModInstall(mod_id=_id("vehicle_mods", "Smuggling Compartment"), parent_id=car.id)],
+            weapon_mounts=[
+                WeaponMountInstall(
+                    parent_id=lynx.id, size_id=_id("weapon_mounts", "Heavy [SR5]"), weapon_install_id=gun.id
+                )
+            ],
+            weapons=[gun, pistol],
+            gear=[
+                GearInstall(gear_id=_id("gear", "Medkit"), rating=3, parent_id=car.id),
+                GearInstall(gear_id=_id("gear", "Medkit"), rating=6),
+            ],
+            portrait=_PNG,
+            extra_portraits=[_PNG],
+        )
+    )
+
+
+def test_vehicles_carry_their_stats_mods_stowed_gear_and_mounted_guns() -> None:
+    char = _char(_rigger())
+    rows = {v["name_english"]: v for v in char["vehicles"]["vehicle"]}
+    car = rows["Ford Americar (Sedan)"]
+    # the importer splits "on-road/off-road"
+    assert (car["isdrone"], car["handling"], car["body"], car["pilot"]) == ("False", "4/3", "11", "1")
+    assert [m["name_english"] for m in car["mods"]["mod"]] == ["Smuggling Compartment"]
+    # beside its built-in Sensor Array
+    (kit,) = [g for g in car["gears"]["gear"] if g["name_english"] == "Medkit"]
+    assert kit["rating"] == "3"
+    lynx = rows["Steel Lynx Combat Drone (Large)"]
+    assert lynx["isdrone"] == "True"
+    assert [w["name_english"] for w in lynx["weapons"]["weapon"]] == ["FN HAR"]
+    # what sits in a vehicle is on the vehicle's actor, not the character's
+    assert [(g["name_english"], g["rating"]) for g in char["gears"]["gear"]] == [("Medkit", "6")]
+    assert [w["name_english"] for w in char["weapons"]["weapon"]] == ["Ares Predator V"]
+
+
+def test_portraits_go_as_bare_base64_the_main_one_apart() -> None:
+    char = _char(_rigger())
+    bare = _PNG.split(",", 1)[1]
+    assert char["mainmugshotbase64"] == bare
+    assert char["othermugshots"] == {"mugshot": [{"stringbase64": bare}]}
+    assert "mainmugshotbase64" not in _char(_samurai())
 
 
 def test_fvtt_download_route() -> None:

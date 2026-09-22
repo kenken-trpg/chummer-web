@@ -14,8 +14,8 @@ as Chummer prints them. The field map is `docs/plans/fvtt-export-plan.md`.
 
 Covered so far: the character itself, skills, qualities, contacts,
 lifestyles, spells, adept powers, complex forms, armor, cyberware and
-bioware, gear and weapons. Vehicles and drones are sections the importer
-skips when absent.
+bioware, gear, weapons, vehicles and drones (with their mods, what is
+stowed in them and the guns on their mounts) and the portraits.
 """
 
 from __future__ import annotations
@@ -91,6 +91,7 @@ def _character(state: CharacterState, derived: dict[str, Any], tr: Any) -> dict[
     init = derived.get("initiative") or {}
     astral = derived.get("astral_initiative") or {}
     karma = derived.get("karma") or {}
+    owners = _vehicle_owners(state, derived)
     return {
         "name": state.name,
         "alias": None,
@@ -137,8 +138,10 @@ def _character(state: CharacterState, derived: dict[str, Any], tr: Any) -> dict[
         "complexforms": {"complexform": _complex_forms(derived, tr)},
         "armors": {"armor": _armors(derived, tr)},
         "cyberwares": {"cyberware": _wares(derived, tr)},
-        "gears": {"gear": _gears(derived, tr)},
-        "weapons": {"weapon": _weapons(derived, tr)},
+        "gears": {"gear": _gears(derived, tr, owners)},
+        "weapons": {"weapon": _weapons(derived, tr, owners)},
+        "vehicles": {"vehicle": _vehicles(derived, tr, owners)},
+        **_mugshots(state),
     }
 
 
@@ -527,16 +530,22 @@ def _is_sin(row: dict[str, Any]) -> bool:
     return row.get("category") == "ID/Credsticks" and "SIN" in str(row.get("name") or "").split()
 
 
-def _gears(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str = "") -> list[dict[str, Any]]:
     """Flags steer the importer's split: `iscommlink` makes a device (with
     its matrix attributes), `issin` a SIN, `isammo` ammunition, and the
     program categories a program; the rest is equipment. Foundry has no
     nesting, so a child comes out as its own item — except a license under a
-    SIN, which the importer reads from the SIN's `children`."""
+    SIN, which the importer reads from the SIN's `children`. `owner` picks
+    whose: the character's ("") or a vehicle's (see `_vehicle_owners`)."""
     cost_for = {
         str(row["id"]): int(row.get("costfor") or 0) for bucket in _GEAR_BUCKETS for row in catalog_list(bucket)
     }
-    rows = [(bucket, row) for bucket in _GEAR_BUCKETS for row in derived.get(bucket) or []]
+    rows = [
+        (bucket, row)
+        for bucket in _GEAR_BUCKETS
+        for row in derived.get(bucket) or []
+        if owners.get(str(row.get("id") or ""), "") == owner
+    ]
     sins = {str(row.get("id")) for _, row in rows if _is_sin(row)}
 
     def one(bucket: str, row: dict[str, Any]) -> dict[str, Any]:
@@ -646,13 +655,15 @@ def _weapon_skill(row: dict[str, Any]) -> str | None:
     return skill
 
 
-def _weapons(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str = "") -> list[dict[str, Any]]:
     """The figures the sheet shows ({STR} already worked out by the engine).
     Those include what the accessories add, so the accessories go along
     with their own accuracy and RC at zero — Foundry would add a mod's on
     top."""
     out = []
     for row in derived.get("weapons") or []:
+        if owners.get(str(row.get("id") or ""), "") != owner:
+            continue
         name = str(row.get("name") or "")
         if not name:
             continue
@@ -708,4 +719,101 @@ def _weapons(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
                 "page": str(row.get("page") or ""),
             }
         )
+    return out
+
+
+def _vehicle_owners(state: CharacterState, derived: dict[str, Any]) -> dict[str, str]:
+    """Row id -> the vehicle or drone it sits in, for gear stowed in one (or
+    in something stowed in one) and the gun on one of its weapon mounts.
+    Foundry makes each vehicle an actor of its own, so these go on it rather
+    than on the character."""
+    vehicles = {str(row.get("id")) for key in ("vehicles", "drones") for row in derived.get(key) or []}
+    parents: dict[str, str] = {}
+    for bucket in _GEAR_BUCKETS:
+        for row in derived.get(bucket) or []:
+            parents[str(row.get("id"))] = str(row.get("parent_id") or "")
+    for mod in state.vehicle_mods:
+        parents[mod.id] = mod.parent_id or ""
+    # set by the engine only for a gun its mount check let through
+    for weapon in derived.get("weapons") or []:
+        parents[str(weapon.get("id"))] = str(weapon.get("mounted_on") or "")
+
+    def owner(row_id: str) -> str:
+        seen: set[str] = set()
+        while row_id and row_id not in seen:
+            if row_id in vehicles:
+                return row_id
+            seen.add(row_id)
+            row_id = parents.get(row_id, "")
+        return ""
+
+    found = {row_id: owner(row_id) for row_id in parents if row_id not in vehicles}
+    return {row_id: vehicle for row_id, vehicle in found.items() if vehicle}
+
+
+_VEHICLE_STATS = ("handling", "accel", "speed", "pilot", "body", "armor", "seats", "sensor")
+
+
+def _vehicles(derived: dict[str, Any], tr: Any, owners: dict[str, str]) -> list[dict[str, Any]]:
+    """Vehicles and drones with the stats the sheet shows (mods worked in).
+    The importer makes each one a vehicle actor driven by the character and
+    reads handling / speed / accel as "on-road/off-road"."""
+    out = []
+    for key in ("vehicles", "drones"):
+        for row in derived.get(key) or []:
+            vid = str(row.get("id") or "")
+            name = str(row.get("name") or "")
+            category = str(row.get("category") or "")
+            mods = [
+                {
+                    "guid": str(mod.get("id") or ""),
+                    "sourceid": str(mod.get("mod_id") or ""),
+                    "name": tr(str(mod["name"])),
+                    "name_english": str(mod["name"]),
+                    "category": tr(str(mod.get("category") or "")),
+                    "category_english": str(mod.get("category") or ""),
+                    "rating": str(int(mod.get("rating") or 0)),
+                    "included": _flag(mod.get("included")),
+                    "avail": str(mod.get("avail") or ""),
+                    "owncost": _money(mod.get("nuyen")),
+                    "source": str(mod.get("source") or ""),
+                    "page": str(mod.get("page") or ""),
+                }
+                for mod in row.get("mods") or []
+                if mod.get("name")
+            ]
+            out.append(
+                {
+                    "guid": vid,
+                    "sourceid": str(row.get("gear_id") or ""),
+                    "name": tr(name),
+                    "name_english": name,
+                    "fullname": tr(name),
+                    "fullname_english": name,
+                    "category": tr(category),
+                    "category_english": category,
+                    "isdrone": _flag(key == "drones"),
+                    **{stat: str(row.get(stat) or "0") for stat in _VEHICLE_STATS},
+                    "avail": str(row.get("avail") or ""),
+                    "owncost": _money(row.get("nuyen")),
+                    "source": str(row.get("source") or ""),
+                    "page": str(row.get("page") or ""),
+                    "mods": {"mod": mods},
+                    "gears": {"gear": _gears(derived, tr, owners, vid)},
+                    "weapons": {"weapon": _weapons(derived, tr, owners, vid)},
+                }
+            )
+    return out
+
+
+def _mugshots(state: CharacterState) -> dict[str, Any]:
+    """The portraits as bare base64, the main one apart. The importer uploads
+    them into the world and makes the first the actor's image (it names them
+    .jpg whatever they are; browsers go by the bytes)."""
+    pics = [pic.split(",", 1)[-1] for pic in (state.portrait, *state.extra_portraits) if pic]
+    if not pics:
+        return {}
+    out: dict[str, Any] = {"mainmugshotbase64": pics[0]}
+    if pics[1:]:
+        out["othermugshots"] = {"mugshot": [{"stringbase64": pic} for pic in pics[1:]]}
     return out
