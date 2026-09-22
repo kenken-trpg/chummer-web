@@ -317,6 +317,24 @@ def test_validation_error_does_not_echo_the_input() -> None:
     assert r.status_code in (400, 422)
 
 
+def test_many_bad_rows_are_refused_before_each_is_validated() -> None:
+    """An over-long list is refused as one error before its rows are looked at.
+    Validated row by row first, 200,000 empty rows took seconds and came back
+    as a 422 twenty times the size of the request."""
+    base = client.post("/api/characters/new", json={}).json()
+    r = client.post("/api/characters/patch", json={"state": {**base, "gear": [{}] * 50_000}})
+    assert r.status_code == 422
+    assert len(r.json()["detail"]) == 1
+    assert "gear: 50000 entries exceeds" in r.json()["detail"][0]["msg"]
+
+
+def test_a_422_lists_at_most_twenty_errors() -> None:
+    base = client.post("/api/characters/new", json={}).json()
+    r = client.post("/api/characters/patch", json={"state": {**base, "gear": [{}] * 1500}})
+    assert r.status_code == 422
+    assert len(r.json()["detail"]) == 20
+
+
 def test_chummer_export_check_is_limited_like_the_download() -> None:
     ip = {"cf-connecting-ip": "203.0.113.57"}
     body = {"state": client.post("/api/characters/new", json={}, headers=ip).json()}
