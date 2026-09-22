@@ -20,11 +20,11 @@ from ._xml import (
     current_overlay_key,
     using_customdata,  # noqa: F401  (re-exported for the API layer)
 )
-from .bonus import (
+from .bonus import parse_select_power_slot  # noqa: F401  (re-exported for improvements)
+from .bonus_extra import (
     _filter_active_skill_names,
     _weaponskillaccuracy_needs_select,
     _weaponskillaccuracy_select_attrs,
-    parse_select_power_slot,  # noqa: F401  (re-exported for improvements)
     quality_needs_extra,  # noqa: F401  (re-exported for callers of data_loader)
     selecttext_catalog_options,  # noqa: F401  (re-exported for engine)
 )

@@ -6,13 +6,9 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from .._xml import _int, _text, parse_data
-from ..bonus import (
-    parse_bonus,
-    parse_required,
-    parse_requirement_tree,
-    quality_extra_meta,
-    quality_needs_extra,
-)
+from ..bonus import parse_bonus
+from ..bonus_extra import quality_extra_meta, quality_needs_extra
+from ..requirements import parse_required, parse_requirement_tree
 
 
 def _critter_power_refs(parent: ET.Element | None, tag: str) -> list[dict[str, Any]]:

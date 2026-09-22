@@ -10,7 +10,8 @@ import re
 from typing import Any
 
 from ..._xml import _text, data_root
-from ...bonus import parse_bonus, parse_required, parse_requirement_tree
+from ...bonus import parse_bonus
+from ...requirements import parse_required, parse_requirement_tree
 from ._common import SPIRIT_ATTR_KEYS
 
 

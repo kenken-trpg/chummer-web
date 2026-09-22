@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from .._xml import _int, _text, data_root
-from ..bonus import parse_bonus, quality_needs_extra
+from ..bonus import parse_bonus
+from ..bonus_extra import quality_needs_extra
 from ..formulas import eval_formula
 
 

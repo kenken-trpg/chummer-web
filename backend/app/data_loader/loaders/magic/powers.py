@@ -11,7 +11,8 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from ..._xml import _float, _int, _text, data_root
-from ...bonus import _specific_powers, parse_bonus, parse_required, parse_select_power_slot
+from ...bonus import _specific_powers, parse_bonus, parse_select_power_slot
+from ...requirements import parse_required
 
 
 def _power_required_names(el: ET.Element) -> list[str]:
