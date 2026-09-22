@@ -163,3 +163,17 @@ def _is_uuid(text: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _discounted(node: ET.Element) -> bool:
+    """`<discountedcost>`: the buyer took the Black Market Pipeline's 10% off
+    this one item (Chummer's `DiscountCost`)."""
+    return _text(node.find("discountedcost")).lower() == "true"
+
+
+def _picked_cost(node: ET.Element) -> int | None:
+    """`<cost>` of an item Chummer let the player price — the number picked."""
+    try:
+        return max(0, int(round(float(_text(node.find("cost"))))))
+    except ValueError:
+        return None
