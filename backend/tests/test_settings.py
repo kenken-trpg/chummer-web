@@ -46,10 +46,11 @@ def test_presets_only_offer_build_methods_the_engine_has() -> None:
     assert standard["books"] == ["SR5"]
 
 
-def test_a_new_character_is_unrestricted() -> None:
+def test_a_character_without_settings_is_unrestricted() -> None:
     """Empty books means the whole catalog, not an empty one — a character
-    built before settings existed must not lose its gear."""
-    state = new_character(None)
+    built before settings existed must not lose its gear. (A new one starts
+    under 日本語環境 instead; see test_ja_default.py.)"""
+    state = new_character(None).model_copy(update={"settings": SettingsState()})
     assert state.settings.name == ""
     assert state.settings.books == []
 
@@ -70,7 +71,8 @@ def _export(state: CharacterState) -> ET.Element:
 
 
 def test_an_untouched_character_writes_no_settings_tag() -> None:
-    assert _export(new_character(None)).find("settings") is None
+    state = new_character(None).model_copy(update={"settings": SettingsState()})
+    assert _export(state).find("settings") is None
 
 
 def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
