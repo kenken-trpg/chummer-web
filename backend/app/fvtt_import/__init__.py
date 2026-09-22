@@ -24,6 +24,7 @@ from typing import Any, cast
 
 from ..chummer_import._common import _by_name
 from ..data_loader import CatalogDict, catalog, catalog_list
+from ..models.character import MAX_GRADE
 from ..notices import Notice, NoticeError, notice, ui
 
 #: Foundry attribute key -> this app's
@@ -69,18 +70,32 @@ _GEAR_BUCKETS = ("commlinks", "cyberdecks", "rccs", "programs", "apps", "sensors
 _GEAR_TYPES = ("equipment", "device", "program", "sin", "ammo")
 
 #: Foundry `knowledgeType` -> Chummer's knowledge skill category
+#: the most of one row the models take (`qty`, le=999)
+_MAX_QTY = 999
+
 _KNOWLEDGE_TYPES = {"academic": "Academic", "interest": "Interest", "professional": "Professional", "street": "Street"}
 
 
 def _num(value: Any, default: int = 0) -> int:
     try:
         return int(float(value))
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return default
 
 
+def _d(value: Any) -> dict[str, Any]:
+    """`value` if it is an object, else an empty one: every field of the file is
+    the author's, and a string where an object belongs must not crash the read."""
+    return value if isinstance(value, dict) else {}
+
+
+def _l(value: Any) -> list[dict[str, Any]]:
+    """The objects in `value`, if it is a list."""
+    return [v for v in value if isinstance(v, dict)] if isinstance(value, list) else []
+
+
 def _flags(item: dict[str, Any]) -> dict[str, Any]:
-    return ((item.get("system") or {}).get("importFlags")) or {}
+    return _d(_d(item.get("system")).get("importFlags"))
 
 
 class _Matcher:
@@ -138,7 +153,7 @@ def _extra(item: dict[str, Any]) -> str | None:
 
 
 def _tech(item: dict[str, Any]) -> dict[str, Any]:
-    return (item.get("system") or {}).get("technology") or {}
+    return _d(_d(item.get("system")).get("technology"))
 
 
 def _rating(item: dict[str, Any]) -> int:
@@ -148,8 +163,8 @@ def _rating(item: dict[str, Any]) -> int:
 def _embedded(item: dict[str, Any]) -> list[dict[str, Any]]:
     """What Foundry keeps inside an item: a weapon's accessories and ammo, an
     armor's mods."""
-    got = ((item.get("flags") or {}).get("shadowrun5e") or {}).get("embeddedItems")
-    return [i for i in got or [] if isinstance(i, dict)]
+    got = _d(_d(item.get("flags")).get("shadowrun5e")).get("embeddedItems")
+    return [i for i in got if isinstance(i, dict)] if isinstance(got, list) else []
 
 
 class _Text(HTMLParser):
@@ -207,20 +222,20 @@ def _import_skills(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, 
     for item in items:
         if item.get("type") != "skill":
             continue
-        system = item.get("system") or {}
+        system = _d(item.get("system"))
         name = str(item.get("name") or "").strip()
         if system.get("type") == "group":
-            rating = _num((system.get("group") or {}).get("rating"))
+            rating = _num(_d(system.get("group")).get("rating"))
             if rating > 0:
                 if name.lower() in groups:
                     skill_groups[groups[name.lower()]] = rating
                 else:
                     warn.append(notice("engine.import.skippedUnknown", kind=ui("engine.kind.skill"), name=name))
             continue
-        skill = system.get("skill") or {}
+        skill = _d(system.get("skill"))
         rating = _num(skill.get("rating"))
         category = str(skill.get("category") or "active")
-        spec = next((str(s.get("name") or "") for s in skill.get("specializations") or [] if s.get("name")), "")
+        spec = next((str(s.get("name") or "") for s in _l(skill.get("specializations")) if s.get("name")), "")
         if category == "active":
             if rating <= 0:
                 continue
@@ -229,7 +244,7 @@ def _import_skills(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, 
                 continue
             name = active[name.lower()]
             skills[name] = rating
-        elif category == "language" and (skill.get("language") or {}).get("isNative"):
+        elif category == "language" and _d(skill.get("language")).get("isNative"):
             natives.append(name)
             continue
         else:
@@ -270,7 +285,7 @@ def _import_items(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, A
         {
             "id": str(uuid.uuid4()),
             "power_id": pid,
-            "rating": max(1, _num((i.get("system") or {}).get("level"), 1)),
+            "rating": max(1, _num(_d(i.get("system")).get("level"), 1)),
             "extra": _extra(i),
         }
         for i in of("adept_power")
@@ -321,7 +336,11 @@ def _import_combat(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, 
         if not spec.get("purchasable", True):
             # a cyberspur, bioware claws: the ware that grants it brings it back
             continue
-        row = {"id": str(uuid.uuid4()), "weapon_id": wid, "qty": max(1, _num(_tech(i).get("quantity"), 1))}
+        row = {
+            "id": str(uuid.uuid4()),
+            "weapon_id": wid,
+            "qty": min(_MAX_QTY, max(1, _num(_tech(i).get("quantity"), 1))),
+        }
         weapons.append(row)
         built_in = {str(n).lower() for n in spec.get("included") or []}
         for acc in _embedded(i):
@@ -331,7 +350,7 @@ def _import_combat(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, 
             if english in built_in:
                 continue  # comes with the weapon
             if acid := wacc_m.match(acc, warn, "engine.kind.weaponAccessory"):
-                mount = str(((acc.get("system") or {}).get("mod_weapon") or {}).get("mount_point") or "")
+                mount = str(_d(_d(acc.get("system")).get("mod_weapon")).get("mount_point") or "")
                 accessories.append(
                     {
                         "id": str(uuid.uuid4()),
@@ -359,7 +378,7 @@ def _import_combat(items: list[dict[str, Any]], cat: CatalogDict, st: dict[str, 
             "id": str(uuid.uuid4()),
             "ware_id": wid,
             "rating": _rating(i),
-            "grade": _GRADES.get(str((i.get("system") or {}).get("grade") or ""), "Standard"),
+            "grade": _GRADES.get(str(_d(i.get("system")).get("grade") or ""), "Standard"),
             "extra": _extra(i),
         }
         if wid in variable_ware:
@@ -387,7 +406,9 @@ def _import_gear(items: list[dict[str, Any]], st: dict[str, Any], warn: list[Not
         row: dict[str, Any] = {"id": str(uuid.uuid4()), "gear_id": gid, "rating": _rating(i)}
         # Foundry counts single items (100 rounds); this app counts what the
         # price is quoted for (a box of 10)
-        row["qty"] = qty if bucket == "commlinks" else max(1, math.ceil(qty / max(1, _num(spec.get("costfor")))))
+        row["qty"] = min(
+            _MAX_QTY, qty if bucket == "commlinks" else max(1, math.ceil(qty / max(1, _num(spec.get("costfor")))))
+        )
         if spec.get("cost_range"):
             row["cost"] = _num(_tech(i).get("cost"))
         if extra := _extra(i):
@@ -404,10 +425,10 @@ def _import_life(
         {
             "id": str(uuid.uuid4()),
             "name": str(i.get("name") or ""),
-            "role": str((i.get("system") or {}).get("type") or "") or None,
-            "connection": max(1, _num((i.get("system") or {}).get("connection"), 1)),
-            "loyalty": max(1, _num((i.get("system") or {}).get("loyalty"), 1)),
-            "group": bool((i.get("system") or {}).get("group")),
+            "role": str(_d(i.get("system")).get("type") or "") or None,
+            "connection": max(1, _num(_d(i.get("system")).get("connection"), 1)),
+            "loyalty": max(1, _num(_d(i.get("system")).get("loyalty"), 1)),
+            "group": bool(_d(i.get("system")).get("group")),
         }
         for i in items
         if i.get("type") == "contact"
@@ -418,9 +439,7 @@ def _import_life(
         if i.get("type") != "lifestyle":
             continue
         # a lifestyle is named by the player: the catalog one is its `type`
-        lid = ls_m.find(i) or ls_m.by_name.get(
-            _LIFESTYLES.get(str((i.get("system") or {}).get("type") or ""), "").lower()
-        )
+        lid = ls_m.find(i) or ls_m.by_name.get(_LIFESTYLES.get(str(_d(i.get("system")).get("type") or ""), "").lower())
         if lid:
             lifestyles.append({"id": str(uuid.uuid4()), "lifestyle_id": lid, "months": 1})
         else:
@@ -431,7 +450,7 @@ def _import_life(
     if st["talent"] in ("Magician", "Mystic Adept", "Aspected Magician"):
         # Foundry keeps only the drain attribute: the first tradition that
         # resists drain with it (Hermetic for LOG, Shamanic for CHA)
-        drain = _ATTRIBUTES.get(str((system.get("magic") or {}).get("attribute") or ""))
+        drain = _ATTRIBUTES.get(str(_d(system.get("magic")).get("attribute") or ""))
         tid = next((str(t["id"]) for t in cat["traditions"] if (t.get("drain_attrs") or [])[-1:] == [drain]), None)
         if tid:
             st["tradition_id"] = tid
@@ -449,7 +468,7 @@ def _import_balance(system: dict[str, Any], st: dict[str, Any]) -> None:
         return compute(CharacterState.model_validate(bare)).derived
 
     d = derived()
-    st["karma_adjust"] = _num((system.get("karma") or {}).get("value")) - _num((d.get("karma") or {}).get("remaining"))
+    st["karma_adjust"] = _num(_d(system.get("karma")).get("value")) - _num(_d(d.get("karma")).get("remaining"))
     st["nuyen_adjust"] = _num(system.get("nuyen")) - _num(d.get("nuyen"))
     # karma earned counts toward street cred: worked out again with it in
     d = derived()
@@ -464,15 +483,15 @@ def fvtt_to_state(payload: dict[str, Any]) -> tuple[dict[str, Any], list[Notice]
         raise NoticeError(notice("api.notAnFvttActor"))
     cat = catalog()
     warn: list[Notice] = []
-    system = payload.get("system") or {}
-    items = [i for i in payload.get("items") or [] if isinstance(i, dict)]
+    system = _d(payload.get("system"))
+    items = _l(payload.get("items"))
     metatypes = {str(m["name"]).lower(): str(m["name"]) for m in cat["metatypes"]}
     metatype = metatypes.get(str(system.get("metatype") or "").lower())
     if not metatype:
         warn.append(
             notice("engine.import.skippedUnknown", kind=ui("engine.kind.other"), name=str(system.get("metatype")))
         )
-    attrs = system.get("attributes") or {}
+    attrs = _d(system.get("attributes"))
     st: dict[str, Any] = {
         "id": str(uuid.uuid4()),
         "name": str(payload.get("name") or "Imported Runner"),
@@ -482,13 +501,13 @@ def fvtt_to_state(payload: dict[str, Any]) -> tuple[dict[str, Any], list[Notice]
         "talent": _talent(system, items),
         "career": True,
         "attributes": {
-            key: max(1, _num((attrs.get(fvtt) or {}).get("base"), 1))
+            key: max(1, _num(_d(attrs.get(fvtt)).get("base"), 1))
             for fvtt, key in _ATTRIBUTES.items()
-            if fvtt in attrs and (key not in ("MAG", "RES") or _num((attrs.get(fvtt) or {}).get("base")) > 0)
+            if fvtt in attrs and (key not in ("MAG", "RES") or _num(_d(attrs.get(fvtt)).get("base")) > 0)
         },
-        "initiate_grade": max(0, _num((system.get("magic") or {}).get("initiation"))),
-        "submersion_grade": max(0, _num((system.get("technomancer") or {}).get("submersion"))),
-        "background": _plain(str((system.get("description") or {}).get("value") or "")),
+        "initiate_grade": min(MAX_GRADE, max(0, _num(_d(system.get("magic")).get("initiation")))),
+        "submersion_grade": min(MAX_GRADE, max(0, _num(_d(system.get("technomancer")).get("submersion")))),
+        "background": _plain(str(_d(system.get("description")).get("value") or "")),
     }
     _import_skills(items, cat, st, warn)
     _import_items(items, cat, st, warn)
