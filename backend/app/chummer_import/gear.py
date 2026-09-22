@@ -28,7 +28,7 @@ def _included(node: ET.Element) -> bool:
 
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
-    from ..engine.gear.misc import (
+    from ..engine.gear.misc_hosts import (
         _commlink_accessory_parent_spec,
         _matrix_device_parent_spec,
         _misc_child_fits,

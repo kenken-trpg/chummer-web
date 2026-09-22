@@ -7,7 +7,7 @@ from typing import Any
 
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CyberwareInstall
-from ..gear.misc import ware_gear_costs
+from ..gear.misc_hosts import ware_gear_costs
 from ..limits import (
     _check_ware_attribute_cap,
     _finalize_avail_tree,
