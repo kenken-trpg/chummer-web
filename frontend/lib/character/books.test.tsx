@@ -4,6 +4,7 @@ import {
   BooksProvider,
   filterByBooks,
   isBookEnabled,
+  sourceText,
   useAllowedBooks,
 } from "@/lib/character/books";
 
@@ -55,5 +56,20 @@ describe("BooksProvider", () => {
       </BooksProvider>,
     );
     expect(screen.getByText("RG,SR5")).toBeDefined();
+  });
+});
+
+describe("also_in (the Shadowrun Codex reprints)", () => {
+  const reprinted = [{ id: "cf", source: "CF", also_in: [{ source: "SRCX", page: "198" }] }];
+
+  it("lets a row in when only the book that reprints it is on", () => {
+    expect(filterByBooks(new Set(["SR5", "SRCX"]), reprinted)).toEqual(reprinted);
+    expect(filterByBooks(new Set(["SR5"]), reprinted)).toEqual([]);
+    expect(isBookEnabled(new Set(["SRCX"]), "CF", reprinted[0].also_in)).toBe(true);
+  });
+
+  it("names the reprint's page beside the original book", () => {
+    expect(sourceText(reprinted[0])).toBe("CF / SRCX p.198");
+    expect(sourceText({ source: "SR5" })).toBe("SR5");
   });
 });

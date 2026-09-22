@@ -1,4 +1,5 @@
 "use client";
+import { sourceText } from "@/lib/character/books";
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
@@ -173,7 +174,7 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
               <div>
                 <b>{tr(w.name)}</b>
                 <div className="muted">
-                  {w.name} / {w.category} / ESS {w.ess} / {w.cost}¥ / {w.source}
+                  {w.name} / {w.category} / ESS {w.ess} / {w.cost}¥ / {sourceText(w)}
                   {w.maxrating > 1 ? ui("ware.maxRating", { max: w.maxrating }) : ""}
                   {w.allow_subsystems?.length ? ui("ware.slottable") : ""}
                 </div>

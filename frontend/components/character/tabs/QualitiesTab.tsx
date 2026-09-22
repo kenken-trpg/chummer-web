@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
 import { PickerFootnote } from "@/components/character/CatalogPicker";
-import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
+import { filterByBooks, useAllowedBooks, sourceText } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
@@ -345,7 +345,7 @@ export function QualitiesTab({
                 <b>{tr(q.name)}</b>
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
-                  / {ui("qual.karmaLabel")} {q.karma} / {q.source}
+                  / {ui("qual.karmaLabel")} {q.karma} / {sourceText(q)}
                   {careerPricing
                     ? q.karma > 0
                       ? ui("qual.careerPrice", {
