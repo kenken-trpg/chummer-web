@@ -141,7 +141,9 @@ def test_a_file_that_changes_nothing_reports_nothing_unsupported() -> None:
 
 def test_a_knob_this_app_has_no_implementation_for_is_named() -> None:
     parsed = parse_settings_xml(_settings_xml(armordegredation="True", dronemods="True"))
-    assert parsed.unsupported == ["armordegredation", "dronemods"]
+    # `dronemods` is read (the Rigger 5.0 drone modification rules), so only
+    # the armor degradation knob is reported
+    assert parsed.unsupported == ["armordegredation"]
 
 
 def test_the_karma_price_list_is_read() -> None:

@@ -111,15 +111,27 @@ def _apply_vehicle_bonus(stats: dict[str, int], nodes: list[dict[str, Any]], rat
             stats[key] = delta
 
 
+#: what an uncapped Chummer maximum (`int.MaxValue`) comes to here
+UNCAPPED = 10**6
+
+
+def _is_drone(vehicle: dict[str, Any]) -> bool:
+    return "Drone" in str(vehicle.get("category") or "")
+
+
 def _max_vehicle_armor(vehicle: dict[str, Any]) -> int:
     """The most armor a vehicle carries, mods included (Chummer's
     `Vehicle.MaxArmor`): its printed Body + Armor (Rigger 5.0 p.159), or for a
     drone under `<dronearmormultiplierenabled>` that sum times
-    `<dronearmorflatnumber>`, with a Body of 0 counted as 0.5."""
+    `<dronearmorflatnumber>`, with a Body of 0 counted as 0.5. The optional
+    drone modification rules (`<dronemods>`) lift a drone's ceiling
+    altogether."""
     body = _leading_vehicle_stat(str(vehicle.get("body") or "0"))
     armor = _leading_vehicle_stat(str(vehicle.get("armor") or "0"))
     rules = current_rules()
-    if rules.drone_armor_multiplier_enabled and "Drone" in str(vehicle.get("category") or ""):
+    if rules.drone_mods and _is_drone(vehicle):
+        return UNCAPPED
+    if rules.drone_armor_multiplier_enabled and _is_drone(vehicle):
         return math.floor((max(body, 0.5) + armor) * rules.drone_armor_multiplier + 0.5)
     return max(body + armor, 1)
 
@@ -133,3 +145,47 @@ def _clamp_vehicle_rating(spec: dict[str, Any], rating: int, extras: dict[str, i
     min_rating = int(eval_formula(min_expr, rating or 1, 1, extras)) if min_expr else 1
     min_rating = max(1, min_rating)
     return max(min_rating, min(max_rating, int(rating or min_rating)))
+
+
+#: the printed stat a drone mod of each category may at most double
+_DOUBLED_STAT = {
+    "HANDLING": "handling",
+    "SPEED": "speed",
+    "ACCELERATION": "accel",
+    "SENSOR": "sensor",
+}
+
+
+def drone_stat_ceiling(mod: dict[str, Any], vehicle: dict[str, Any]) -> int:
+    """The highest rating a drone may give a stat mod (`VehicleMod.MaxRating`):
+    no drone attribute goes past twice its printed value (Rigger 5.0 p.123),
+    with 0 counted as 0.5. Pilot is held to that only under
+    `<dronemodsmaximumpilot>` (`Vehicle.MaxPilot`)."""
+    if not _is_drone(vehicle):
+        return UNCAPPED
+    stat = _DOUBLED_STAT.get(str(mod.get("category") or "").upper())
+    if stat is None and (
+        str(mod.get("category") or "").upper() == "PILOT"
+        or str(mod.get("name") or "").lower().startswith("pilot program")
+    ):
+        stat = "pilot" if current_rules().drone_mods_maximum_pilot else None
+    if stat is None:
+        return UNCAPPED
+    return max(_leading_vehicle_stat(str(vehicle.get(stat) or "0")) * 2, 1)
+
+
+def apply_armor_penalty(vehicle: dict[str, Any], stats: dict[str, int], *, drone_rules: bool) -> None:
+    """Take off the speed an overloaded vehicle loses (Chummer's
+    `Vehicle.TotalSpeed` / `TotalHandling` / `TotalAccel`): each 3 points of
+    armor past three times its Body cost a point of Speed and of Handling,
+    each 6 a point of Acceleration, off-road values alike. Only under the
+    drone modification rules does a drone's added armor count; otherwise it
+    is the printed armor, which never goes that high."""
+    armor = int(stats.get("armor") or 0) if drone_rules else _leading_vehicle_stat(str(vehicle.get("armor") or "0"))
+    over = min(armor, _max_vehicle_armor(vehicle)) - int(stats.get("body") or 0) * 3
+    if over <= 0:
+        return
+    for key, step in (("speed", 3), ("handling", 3), ("accel", 6)):
+        for stat in (key, f"offroad{key}"):
+            if stat in stats and over // step:
+                stats[stat] = int(stats[stat] or 0) - over // step

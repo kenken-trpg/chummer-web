@@ -5,6 +5,10 @@ from __future__ import annotations
 from ..data_loader import CatalogDict
 
 
+def _free_drone_mod(mod: dict) -> bool:
+    return bool(mod.get("optionaldrone")) and str(mod.get("cost") or "").strip() == "0"
+
+
 def section(raw: CatalogDict) -> dict:
     return {
         "drones": [
@@ -58,6 +62,7 @@ def section(raw: CatalogDict) -> dict:
                 "minrating": int(c.get("minrating") or 0),
                 "maxrating": int(c.get("maxrating") or 0),
                 "purchasable": bool(c.get("purchasable")),
+                "optionaldrone": bool(c.get("optionaldrone")),
                 "required": c.get("required") or {},
                 "forbidden": c.get("forbidden") or {},
                 "capacity": c.get("capacity") or "",
@@ -66,7 +71,9 @@ def section(raw: CatalogDict) -> dict:
                 "page": c.get("page") or "",
             }
             for c in raw.get("vehicle_mods") or []
-            if c.get("purchasable")
+            # the free drone mods (downgrades, Immobile, Fragile) cost nothing
+            # yet are fitted by hand under `<dronemods>`
+            if c.get("purchasable") or _free_drone_mod(c)
         ],
         "weapon_mounts": [
             {
@@ -76,6 +83,7 @@ def section(raw: CatalogDict) -> dict:
                 "cost": c.get("cost") or "0",
                 "slots": c.get("slots") or "0",
                 "avail": c.get("avail") or "",
+                "optionaldrone": bool(c.get("optionaldrone")),
                 "required": c.get("required") or {},
                 "source": c.get("source") or "",
                 "page": c.get("page") or "",

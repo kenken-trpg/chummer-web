@@ -26,8 +26,11 @@ export function VehicleModRows({
   const byBook = useBookFilter();
   const addons = (catalog.vehicle_mods || []).filter(
     (mod) =>
-      mod.purchasable !== false &&
-      String(mod.cost || "").trim() !== "0" &&
+      // an optional drone mod is offered only under `<dronemods>`, where the
+      // free ones (downgrades, Immobile, Fragile) are fitted by hand too
+      (mod.optionaldrone
+        ? !!d.drone_mods
+        : mod.purchasable !== false && String(mod.cost || "").trim() !== "0") &&
       vehicleFits(mod.required, item) &&
       !vehicleForbidden(mod.forbidden, item) &&
       !(item.mods || []).some((row) => row.mod_id === mod.id),

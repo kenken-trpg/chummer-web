@@ -90,6 +90,7 @@
     "attrs": "WIL+LOG",
     "pool": 2
   },
+  "drone_mods": false,
   "drones": [],
   "enabled_tabs": [
     "MAG",

@@ -304,6 +304,8 @@ export const EN_ENGINE = {
   "engine.gear.capacityOver": "{name} is over capacity ({used}/{max})",
   "engine.gear.deviceRatingOver": "{name} exceeds the device rating limit ({value} / max {limit})",
   "engine.gear.doesNotFit": "{name} does not fit {host}",
+  "engine.gear.droneIllegalDowngrade":
+    "{name} has a downgrade that takes a stat below its floor (0 for Speed, 1 otherwise)",
   "engine.gear.duplicateApp": "{name} has the same app twice",
   "engine.gear.duplicateMod": "{name} cannot be installed twice on {host}",
   "engine.gear.duplicateProgram": "{name} has the same program twice",

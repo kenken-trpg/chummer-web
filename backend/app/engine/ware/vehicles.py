@@ -19,6 +19,7 @@ from typing import Any
 from ...data_loader import catalog
 from ...models import CharacterState, CyberwareInstall
 from ...notices import Notice, notice, term
+from ...rules import current_rules
 from ..gear import _iter_vehicle_hosts, mod_fits_vehicle
 from ..lookups import _ware_by_id
 from ._common import _cascade_orphans, _public_installed
@@ -39,8 +40,7 @@ def _vehicle_mod_hosts(state: CharacterState) -> dict[str, dict[str, Any]]:
     return hosts
 
 
-#: what an unbounded Chummer maximum comes to here (`int.MaxValue` when the
-#: `dronemodsmaximumpilot` setting is off, as in every shipped preset)
+#: what an unbounded Chummer maximum comes to here (`int.MaxValue`)
 _UNBOUNDED = 99
 
 
@@ -61,7 +61,13 @@ def vehicle_ware_extras(state: CharacterState) -> dict[str, dict[str, float]]:
             "STRMinimum": max(1, body),
             "STRMaximum": max(1, body * 2),
             "AGIMinimum": max(1, pilot),
-            "AGIMaximum": _UNBOUNDED,
+            # `Vehicle.MaxPilot`: twice the drone's Pilot under
+            # `<dronemodsmaximumpilot>`, otherwise unbounded
+            "AGIMaximum": (
+                max(1, pilot * 2)
+                if current_rules().drone_mods_maximum_pilot and "Drone" in str(vehicle.get("category") or "")
+                else _UNBOUNDED
+            ),
         }
     return out
 

@@ -11,15 +11,45 @@ from .._common import (
     _capacity_value,
     _default_mount_parts,
 )
-from .slots import _add_vehicle_slot_use, _finalize_vehicle_slots
+from .slots import _add_vehicle_slot_use, _finalize_vehicle_slots, drone_mod_rules
 from .stats import (
     _apply_vehicle_bonus,
     _clamp_vehicle_rating,
     _max_vehicle_armor,
     _vehicle_extras,
+    apply_armor_penalty,
+    drone_stat_ceiling,
     mod_fits_vehicle,
     vehicle_matches,
 )
+
+#: the lowest a downgrade may leave each stat (Chummer's
+#: `Message_DroneIllegalDowngrade` check): 1, except Speed, which may reach 0
+_DOWNGRADE_FLOOR = {
+    "Handling": ("handling", 1),
+    "Speed": ("speed", 0),
+    "Acceleration": ("accel", 1),
+    "Body": ("body", 1),
+    "Armor": ("armor", 1),
+    "Sensor": ("sensor", 1),
+}
+
+
+def _illegal_downgrades(drones: list[dict[str, Any]], downgrades: dict[str, set[str]]) -> list[Notice]:
+    """A drone whose downgrade took a stat below its floor, under the drone
+    modification rules — one error per drone, as Chummer counts them."""
+    errors: list[Notice] = []
+    for row in drones:
+        categories = downgrades.get(str(row.get("id") or "")) or set()
+        if not categories or not drone_mod_rules(row):
+            continue
+        stats = row.get("stats") or {}
+        for category in sorted(categories):
+            key, floor = _DOWNGRADE_FLOOR.get(category, ("", 0))
+            if key and int(stats.get(key) or 0) < floor:
+                errors.append(notice("engine.gear.droneIllegalDowngrade", name=term(str(row["name"]))))
+                break
+    return errors
 
 
 def _resolve_vehicle_mods(
@@ -32,6 +62,7 @@ def _resolve_vehicle_mods(
     by_drone = {str(row.get("id") or ""): row for row in drones}
     kept: list[VehicleModInstall] = []
     public: list[dict[str, Any]] = []
+    downgrades: dict[str, set[str]] = {}
     nuyen = 0
     for inst in list(state.vehicle_mods or []):
         spec = specs.get(inst.mod_id)
@@ -53,9 +84,12 @@ def _resolve_vehicle_mods(
             if int(spec.get("maxrating") or 0) > 0 or spec.get("maxrating_expr")
             else 1
         )
-        # Armor mods stop at the vehicle's armor ceiling (`VehicleMod.MaxRating`).
+        # Armor mods stop at the vehicle's armor ceiling, and a drone's stat
+        # mods at twice the printed stat (`VehicleMod.MaxRating`).
         if str(spec.get("name") or "").lower().startswith("armor"):
             rating = min(rating, _max_vehicle_armor(parent))
+        else:
+            rating = min(rating, drone_stat_ceiling(spec, parent))
         inst.rating = rating
         cost = 0 if inst.included else int(eval_formula(str(spec.get("cost") or "0"), rating, 0, extras))
         slots = int(eval_formula(str(spec.get("slots") or "0"), rating, 0, extras))
@@ -70,6 +104,8 @@ def _resolve_vehicle_mods(
             bool(inst.included),
             downgrade=bool(spec.get("downgrade")),
         )
+        if spec.get("downgrade") and not inst.included:
+            downgrades.setdefault(str(inst.parent_id or ""), set()).add(str(spec.get("category") or ""))
         kept.append(inst)
         public.append(
             {
@@ -101,6 +137,8 @@ def _resolve_vehicle_mods(
         stats = row.get("stats") or {}
         if "armor" in stats:
             stats["armor"] = min(int(stats["armor"] or 0), _max_vehicle_armor(row))
+        apply_armor_penalty(row, stats, drone_rules=drone_mod_rules(row))
+    errors.extend(_illegal_downgrades(drones, downgrades))
     state.vehicle_mods = kept
     return public, nuyen, warnings, errors
 
