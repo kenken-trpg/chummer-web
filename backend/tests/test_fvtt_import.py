@@ -12,6 +12,7 @@ from app.characters import import_character
 from app.data_loader import catalog, catalog_list
 from app.fvtt_import import _base_name, _paren, fvtt_to_state
 from app.main import app
+from app.models._common import MAX_INPUT_INT
 from app.models.character import MAX_GRADE
 from app.notices import NoticeError
 from tests.notice_asserts import has
@@ -232,3 +233,17 @@ def test_a_json_character_with_a_huge_grade_fails_validation() -> None:
     state["initiate_grade"] = 10**12
     with pytest.raises(ValidationError):
         import_character(state)
+
+
+def test_a_number_past_the_input_cap_is_clamped_by_the_read() -> None:
+    """A hand-edited actor must still come back as a state that validates.
+
+    The models refuse an int past `MAX_INPUT_INT`, so a base of 10**26 read
+    through unchanged would fail validation after the read said it was fine —
+    the fuzz contract asks for a state or a `NoticeError`, not either of those.
+    """
+    actor = _geared()
+    actor["system"]["attributes"]["body"]["base"] = "99999999999999999999999999"
+    state, _ = fvtt_to_state(actor)
+    assert state["attributes"]["BOD"] == MAX_INPUT_INT
+    import_character(state)

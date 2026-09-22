@@ -100,3 +100,24 @@ def _walk(value: object, path: str) -> None:
             stack.extend((child, path) for child in value)
         elif isinstance(value, int) and not isinstance(value, bool) and abs(value) > MAX_INPUT_INT:
             raise ValueError(f"{path}: a number beyond ±{MAX_INPUT_INT} exceeds the cap")
+
+
+def clamp_input_ints(value: object) -> object:
+    """`value` with every int held to `MAX_INPUT_INT` either side of zero.
+
+    An import reads a stranger's file, and a hand-edited `<karma>10**26</karma>`
+    survives the read as a number the models then refuse — a 500 where the
+    import owes either a state that computes or a refusal with a reason. The
+    readers compose their numbers (an attribute is its minimum plus its base
+    plus its karma), so a clamp on each field as it is read would still leave a
+    sum past the cap; this runs once on the finished state instead.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return max(-MAX_INPUT_INT, min(MAX_INPUT_INT, value))
+    if isinstance(value, dict):
+        return {k: clamp_input_ints(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [clamp_input_ints(v) for v in value]
+    return value

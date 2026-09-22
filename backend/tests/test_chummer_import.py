@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import lzma
+import re
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -970,3 +971,15 @@ def test_a_contact_saved_free_costs_nothing_and_stays_free() -> None:
     assert both.derived["contact_points"]["used"] == plain.derived["contact_points"]["used"]
     back = import_character(chum5_to_state(state_to_chum5(both))[0])
     assert [c.free for c in back.contacts] == [False, True]
+
+
+def test_a_number_past_the_input_cap_is_clamped_by_the_read() -> None:
+    """A save is a visitor's file, and `<karma>` there is a hand edit away.
+
+    The models refuse an int past `MAX_INPUT_INT`; read through unchanged it
+    would fail validation after the read had already said the save was fine.
+    """
+    raw = re.sub(rb"<karma>\d+</karma>", b"<karma>99999999999999999999999999</karma>", SAMPLE, count=1)
+    assert raw != SAMPLE
+    state, _ = chum5_to_state(raw)
+    import_character(state)

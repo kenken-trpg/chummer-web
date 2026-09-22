@@ -24,6 +24,7 @@ from typing import Any, cast
 
 from ..chummer_import._common import _by_name
 from ..data_loader import CatalogDict, catalog, catalog_list
+from ..models._common import clamp_input_ints
 from ..models.character import MAX_GRADE
 from ..notices import Notice, NoticeError, notice, ui
 
@@ -464,7 +465,9 @@ def _import_balance(system: dict[str, Any], st: dict[str, Any]) -> None:
     from ..models import CharacterState
 
     def derived() -> dict[str, Any]:
-        bare = copy.deepcopy({k: v for k, v in st.items() if not k.startswith("_")})
+        # clamped here as well as on the way out: this validates the state
+        # mid-read, before the caller ever sees it.
+        bare = clamp_input_ints(copy.deepcopy({k: v for k, v in st.items() if not k.startswith("_")}))
         return compute(CharacterState.model_validate(bare)).derived
 
     d = derived()
@@ -523,7 +526,9 @@ def fvtt_to_state(payload: dict[str, Any]) -> tuple[dict[str, Any], list[Notice]
         if marker not in seen:
             seen.add(marker)
             unique.append(item)
-    return st, unique
+    # as the .chum5 read does: a hand-edited number comes through composed
+    # into a rating, and the models refuse one past the cap.
+    return cast(dict[str, Any], clamp_input_ints(st)), unique
 
 
 def is_fvtt_actor(payload: Any) -> bool:
