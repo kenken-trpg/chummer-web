@@ -12,7 +12,16 @@ from app.characters import compute_state
 from app.data_loader import catalog
 from app.fvtt_export import state_to_fvtt
 from app.main import app
-from app.models import CharacterState, CyberwareInstall, Priorities
+from app.models import (
+    AdeptPowerInstall,
+    CharacterState,
+    ComplexFormInstall,
+    ContactInstall,
+    CyberwareInstall,
+    LifestyleInstall,
+    Priorities,
+    SpellInstall,
+)
 
 
 def _state() -> CharacterState:
@@ -166,6 +175,91 @@ def test_bio_text_is_escaped_html() -> None:
     assert char["description"] == "<p>銀髪 &amp; &lt;細身&gt;<br/>左頬に傷</p>"
     assert char["background"] == "<p>元企業の内勤。</p><p>今はフリー。</p>"
     assert char["concept"] is None
+
+
+def _id(kind: str, name: str) -> str:
+    rows = catalog()[kind]
+    rows = rows.get("items", rows) if isinstance(rows, dict) else rows
+    return str(next(r["id"] for r in rows if r["name"] == name))
+
+
+def _mystic() -> CharacterState:
+    return compute_state(
+        CharacterState(
+            id="fvtt-mystic",
+            name="霞",
+            priorities=Priorities(Heritage="D", Attributes="B", Talent="A", Skills="C", Resources="C"),
+            metatype="Human",
+            talent="Mystic Adept",
+            attributes={"BOD": 3, "AGI": 4, "REA": 3, "STR": 2, "CHA": 4, "INT": 4, "LOG": 4, "WIL": 4, "MAG": 6},
+            power_points_bought=2,
+            spells=[SpellInstall(spell_id=_id("spells", "Fireball"))],
+            adept_powers=[
+                AdeptPowerInstall(power_id=_id("powers", "Improved Reflexes"), rating=1),
+                AdeptPowerInstall(power_id=_id("powers", "Improved Ability (skill)"), rating=1, extra="Pistols"),
+            ],
+            contacts=[ContactInstall(name="Ms. ジョンソン", role="Fixer", connection=4, loyalty=2)],
+            lifestyles=[LifestyleInstall(lifestyle_id=_id("lifestyles", "Medium"), months=2)],
+        )
+    )
+
+
+def test_contacts_and_lifestyles() -> None:
+    char = _char(_mystic())
+    (contact,) = char["contacts"]["contact"]
+    assert (contact["name"], contact["role"], contact["connection"], contact["loyalty"]) == (
+        "Ms. ジョンソン",
+        "Fixer",
+        "4",
+        "2",
+    )
+    assert (contact["family"], contact["blackmail"]) == ("False", "False")
+    (life,) = char["lifestyles"]["lifestyle"]
+    # lower-cased, the base lifestyle is the Foundry type key
+    assert life["baselifestyle"].lower() == "medium"
+    assert life["name"] == "中流"
+    assert life["totalmonthlycost"] == "5000"
+
+
+def test_spells_carry_every_keyword_in_english() -> None:
+    (spell,) = _char(_mystic())["spells"]["spell"]
+    assert spell["sourceid"] == _id("spells", "Fireball")
+    assert spell["name_english"] == "Fireball"
+    assert spell["category_english"] == "Combat"
+    assert (spell["type_english"], spell["range_english"], spell["duration_english"]) == ("P", "LOS (A)", "I")
+    assert spell["dv_english"] == "F-1"
+    assert "Indirect" in spell["descriptors_english"]
+    # the importer calls `.includes` on it for a combat spell
+    assert isinstance(spell["damage_english"], str)
+    assert spell["alchemy"] == "False"
+
+
+def test_adept_powers_carry_the_level_and_the_points_spent() -> None:
+    rows = {p["name_english"]: p for p in _char(_mystic())["powers"]["power"]}
+    reflexes = rows["Improved Reflexes"]
+    assert (reflexes["rating"], float(reflexes["totalpoints"])) == ("1", 1.5)
+    ability = rows["Improved Ability (skill)"]
+    assert ability["fullname_english"] == "Improved Ability (skill) (Pistols)"
+    assert float(ability["totalpoints"]) == 0.5
+
+
+def test_complex_forms_carry_the_fading_as_chummer_prints_it() -> None:
+    state = compute_state(
+        CharacterState(
+            id="fvtt-techno",
+            name="電",
+            priorities=Priorities(Heritage="D", Attributes="B", Talent="A", Skills="C", Resources="C"),
+            metatype="Human",
+            talent="Technomancer",
+            attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 2, "CHA": 4, "INT": 5, "LOG": 5, "WIL": 4, "RES": 6},
+            complex_forms=[
+                ComplexFormInstall(form_id=_id("complex_forms", "Infusion of [Matrix Attribute]"), extra="Firewall")
+            ],
+        )
+    )
+    (form,) = _char(state, "en")["complexforms"]["complexform"]
+    assert (form["target_english"], form["duration_english"], form["fv_english"]) == ("Device", "S", "L-2")
+    assert form["fullname"] == "Infusion of [Matrix Attribute] (Firewall)"
 
 
 def test_fvtt_download_route() -> None:

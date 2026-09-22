@@ -12,8 +12,9 @@ That format is the print sheet, not the save: every figure is finished
 the chum5 export writes. Values are strings and flags are "True" / "False",
 as Chummer prints them. The field map is `docs/plans/fvtt-export-plan.md`.
 
-Covered so far: the character itself, skills and qualities. Items (gear,
-weapons, spells, ...) are sections the importer skips when absent.
+Covered so far: the character itself, skills, qualities, contacts,
+lifestyles, spells, adept powers and complex forms. The rest (gear,
+weapons, ware, ...) are sections the importer skips when absent.
 """
 
 from __future__ import annotations
@@ -127,6 +128,11 @@ def _character(state: CharacterState, derived: dict[str, Any], tr: Any) -> dict[
         "astralinitdice": str(int(astral.get("dice") or _ASTRAL_DICE)) if astral else None,
         "skills": _skills(state, derived, tr),
         "qualities": {"quality": _qualities(derived, tr)},
+        "contacts": {"contact": _contacts(derived)},
+        "lifestyles": {"lifestyle": _lifestyles(derived, tr)},
+        "spells": {"spell": _spells(derived, tr)},
+        "powers": {"power": _powers(derived, tr)},
+        "complexforms": {"complexform": _complex_forms(derived, tr)},
     }
 
 
@@ -282,6 +288,147 @@ def _qualities(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
                 "extra": extra or None,
                 "qualitytype_english": str(row.get("category") or "Positive"),
                 "bp": str(int(row.get("karma") or 0)),
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _fullname(name: str, extra: str) -> str:
+    """Chummer's `fullname`, the name the importer shows: the pick in brackets."""
+    return f"{name} ({extra})" if extra else name
+
+
+def _contacts(derived: dict[str, Any]) -> list[dict[str, str]]:
+    """Free text on both sides, so nothing to translate. A group contact's
+    connection goes out bare: the importer reads a number or `Group(n)` alike."""
+    return [
+        {
+            "guid": str(row.get("id") or ""),
+            "name": str(row.get("name") or ""),
+            "role": str(row.get("role") or ""),
+            "connection": str(int(row.get("connection") or 0)),
+            "loyalty": str(int(row.get("loyalty") or 0)),
+            "type": "Group" if row.get("group") else "Contact",
+            "forcedloyalty": str(int(row.get("forced_loyalty") or 0)),
+            "family": "False",
+            "blackmail": "False",
+        }
+        for row in derived.get("contacts") or []
+    ]
+
+
+def _lifestyles(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
+    """`baselifestyle` lower-cased is the Foundry type ("medium", ...), so it
+    stays the data name; the monthly cost is the finished one."""
+    out = []
+    for row in derived.get("lifestyles") or []:
+        base = str(row.get("name") or "")
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("lifestyle_id") or ""),
+                "name": tr(base),
+                "baselifestyle": base,
+                "baselifestyle_english": base,
+                "totalmonthlycost": str(int(row.get("monthly") or 0)),
+                "months": str(int(row.get("months") or 0)),
+                "increment": str(row.get("increment") or "month"),
+                "purchased": "False",
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _spells(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
+    """Every keyword field in its `_english` twin: the importer parses the
+    category, range, duration, DV and descriptors from them (and calls
+    string methods on them, so none may be missing). "Rituals" become
+    Foundry rituals; alchemical ones it skips."""
+    out = []
+    for row in derived.get("spells") or []:
+        name = str(row.get("name") or "")
+        if not name:
+            continue
+        fields = {
+            "category": str(row.get("category") or ""),
+            "type": str(row.get("type") or ""),
+            "range": str(row.get("range") or ""),
+            "duration": str(row.get("duration") or ""),
+            "dv": str(row.get("dv") or ""),
+            "damage": str(row.get("damage") or ""),
+            "descriptors": str(row.get("descriptor") or ""),
+        }
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("spell_id") or ""),
+                "name": tr(name),
+                "name_english": name,
+                **fields,
+                **{f"{key}_english": value for key, value in fields.items()},
+                "alchemy": _flag(row.get("alchemical")),
+                "barehandedadept": _flag(row.get("barehanded_adept")),
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _powers(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+    """The importer takes the level and the power points spent, as they are."""
+    out = []
+    for row in derived.get("adept_powers") or []:
+        name = str(row.get("name") or "")
+        if not name:
+            continue
+        extra = str(row.get("extra") or "")
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("power_id") or ""),
+                "name": tr(name, "power"),
+                "name_english": name,
+                "fullname": _fullname(tr(name, "power"), tr(extra) if extra else ""),
+                "fullname_english": _fullname(name, extra),
+                "extra": extra or None,
+                "rating": str(int(row.get("total_rating") or row.get("rating") or 0)),
+                "totalpoints": str(float(row.get("cost") or 0)),
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _complex_forms(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
+    """Fading as Chummer prints it ("L-2"): the importer drops the first
+    character and reads the rest as the modifier."""
+    out = []
+    for row in derived.get("complex_forms") or []:
+        name = str(row.get("name") or "")
+        if not name:
+            continue
+        extra = str(row.get("extra") or "")
+        fields = {
+            "target": str(row.get("target") or ""),
+            "duration": str(row.get("duration") or ""),
+            "fv": str(row.get("fv") or ""),
+        }
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("form_id") or ""),
+                "name": tr(name),
+                "name_english": name,
+                "fullname": _fullname(tr(name), tr(extra) if extra else ""),
+                "fullname_english": _fullname(name, extra),
+                **fields,
+                **{f"{key}_english": value for key, value in fields.items()},
                 "source": str(row.get("source") or ""),
                 "page": str(row.get("page") or ""),
             }
