@@ -18,7 +18,8 @@ import logging
 import pytest
 from starlette.testclient import TestClient
 
-from app.main import _CSP_REPORT_FIELDS, _csp_report_fields, app
+from app.api.csp import _CSP_REPORT_FIELDS, _csp_report_fields
+from app.main import app
 
 client = TestClient(app)
 

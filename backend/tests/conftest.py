@@ -13,6 +13,6 @@ import pytest
 
 @pytest.fixture(autouse=True, scope="session")
 def _trust_forwarded_client_ip() -> None:
-    import app.main
+    import app.api.deploy
 
-    app.main._TRUST_CLOUDFLARE_IP = True
+    app.api.deploy._TRUST_CLOUDFLARE_IP = True
