@@ -267,6 +267,18 @@ describe("api.exportChummer", () => {
   });
 });
 
+describe("api.exportFvtt", () => {
+  it("sends the state with the display locale and returns the blob", async () => {
+    const state = makeCharacter({ id: "a" });
+    respond = () => json({ characters: { character: {} } });
+
+    expect(await api.exportFvtt(state, "en")).toBeInstanceOf(Blob);
+    expect(calls[0].path).toBe("/api/characters/fvtt");
+    expect(body(calls[0])).toEqual({ state, locale: "en" });
+    expect(await local.listCharacters()).toEqual([]);
+  });
+});
+
 describe("the custom-data handshake", () => {
   /**
    * The browser holds the `customdata/` files and sends only their hash. A

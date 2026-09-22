@@ -22,6 +22,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     onImport: vi.fn(),
     download: vi.fn(),
     downloadChum5: vi.fn(),
+    downloadFvtt: vi.fn().mockResolvedValue(undefined),
     copyText: vi.fn(),
     refreshRoster: vi.fn(),
     ...over,
@@ -46,6 +47,9 @@ describe("<Toolbar>", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "JSON保存" }));
     expect(ed.download).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "FVTT書出" }));
+    expect(ed.downloadFvtt).toHaveBeenCalledTimes(1);
   });
 
   it("shows シート表示 outside the sheet tab and the layout picker on it", () => {

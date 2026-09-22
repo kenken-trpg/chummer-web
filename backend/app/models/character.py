@@ -337,6 +337,12 @@ class StateRequest(BaseModel):
     state: CharacterState
 
 
+class FvttExportRequest(StateRequest):
+    """`StateRequest` plus the display language of the exported names."""
+
+    locale: str = Field(default="ja", pattern="^(ja|en)$")
+
+
 class PatchRequest(BaseModel):
     """`state` plus an optional `patch`; with no patch it's a bare recompute."""
 

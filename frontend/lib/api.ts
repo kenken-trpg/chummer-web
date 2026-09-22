@@ -1,6 +1,6 @@
 import type { Catalog, Character, CharacterSettings } from "./types";
 import { type Notice, renderNotice } from "@/lib/engine-notices";
-import { readLocale, translate } from "@/lib/i18n";
+import { type Locale, readLocale, translate } from "@/lib/i18n";
 import * as local from "@/lib/character/local-store";
 import {
   type CustomDataFiles,
@@ -304,6 +304,17 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ state }),
+    });
+    if (!res.ok) throw new Error(await errorText(res));
+    return res.blob();
+  },
+
+  /** JSON for Foundry VTT shadowrun5e's Chummer importer, names in `locale`. */
+  exportFvtt: async (state: Character, locale: Locale): Promise<Blob> => {
+    const res = await fetch("/api/characters/fvtt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state, locale }),
     });
     if (!res.ok) throw new Error(await errorText(res));
     return res.blob();

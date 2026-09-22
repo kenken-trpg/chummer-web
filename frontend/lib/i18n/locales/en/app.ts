@@ -167,6 +167,9 @@ export const EN_APP = {
   "toolbar.saveJson": "Save JSON",
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
+  "toolbar.exportFvtt": "Export FVTT",
+  "toolbar.exportFvttHint":
+    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
   "toolbar.import": "Load (JSON/.chum5)",
   "toolbar.shareHint":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
