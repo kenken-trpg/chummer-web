@@ -56,7 +56,7 @@ dev-frontend: ## Run the Next.js dev server on :3000
 ## ── checks ──────────────────────────────────────────────────────────────────
 
 test: ## Run the backend test suite
-	cd backend && ./$(VENV)/python -m pytest -q
+	cd backend && ./$(VENV)/python -m pytest -q -n auto
 
 lint: ## Lint backend (ruff) and frontend (eslint)
 	cd backend && ./$(VENV)/ruff check .
@@ -67,7 +67,7 @@ fmt: ## Auto-format backend (ruff) and frontend (prettier)
 	cd frontend && npm run format
 
 check-backend: ## ruff + format check + pytest + mypy
-	cd backend && ./$(VENV)/ruff check . && ./$(VENV)/ruff format --check . && ./$(VENV)/python -m pytest -q && ./$(VENV)/mypy
+	cd backend && ./$(VENV)/ruff check . && ./$(VENV)/ruff format --check . && ./$(VENV)/python -m pytest -q -n auto && ./$(VENV)/mypy
 
 check-frontend: ## tsc + eslint + prettier check + vitest + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build

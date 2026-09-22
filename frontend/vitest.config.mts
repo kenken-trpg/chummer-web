@@ -12,12 +12,19 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    include: ["**/*.test.{ts,tsx}"],
     // `e2e/` is Playwright's (`*.spec.ts`); vitest must not try to run it
     exclude: ["node_modules", ".next", "e2e"],
     // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
+    // Most of a run used to be jsdom starting up, for every file — including
+    // the `.ts` ones, which mostly render nothing. Those run in plain node; a
+    // `.ts` test that does need a DOM says so with a `@vitest-environment
+    // jsdom` comment at the top of the file.
+    projects: [
+      { extends: true, test: { name: "node", environment: "node", include: ["**/*.test.ts"] } },
+      { extends: true, test: { name: "dom", include: ["**/*.test.tsx"] } },
+    ],
 
     coverage: {
       provider: "v8",

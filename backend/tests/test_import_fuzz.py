@@ -50,10 +50,12 @@ from app.settings_file import parse_settings_upload
 from tests.chum5_fixtures import build_chum5
 from tests.test_chummer_import import SAMPLE
 
-#: 120 per property keeps CI quick. `.github/workflows/audit.yml` raises it:
-#: 500 on a pull request, 5,000 on the weekly run, which is the real hunt.
+#: 120 per property keeps CI quick, and 30 on a laptop (no `CI` in the
+#: environment) keeps `pytest -q` a matter of seconds; CI is where the full run
+#: happens. `.github/workflows/audit.yml` raises it: 500 on a pull request,
+#: 5,000 on the weekly run, which is the real hunt.
 _FUZZ = settings(
-    max_examples=int(os.environ.get("FUZZ_EXAMPLES") or 120),
+    max_examples=int(os.environ.get("FUZZ_EXAMPLES") or (120 if os.environ.get("CI") else 30)),
     deadline=None,
     suppress_health_check=[HealthCheck.too_slow, HealthCheck.data_too_large],
 )
