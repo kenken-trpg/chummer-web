@@ -10,6 +10,7 @@ from typing import Any
 
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
+from ..models._common import clamp_input_ints
 from ..notices import Notice
 from ._common import _is_uuid
 
@@ -91,7 +92,9 @@ def _import_balance(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
         st["expense_log"] = spent
     st["karma_earned"] = sum(row["karma"] for row in log)
     st["nuyen_earned"] = sum(row["nuyen"] for row in log)
-    bare = copy.deepcopy({k: v for k, v in st.items() if not k.startswith("_")})
+    # clamped here as well as on the way out of the read: this validates the
+    # state mid-read, before the caller ever sees it.
+    bare = clamp_input_ints(copy.deepcopy({k: v for k, v in st.items() if not k.startswith("_")}))
     derived = compute(CharacterState.model_validate(bare)).derived
     try:
         nuyen_balance = round(float(_text(root.find("nuyen")) or 0))

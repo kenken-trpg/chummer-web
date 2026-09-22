@@ -19,10 +19,11 @@ from __future__ import annotations
 import json
 import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
-from typing import Any
+from typing import Any, cast
 
 from ..data_loader import catalog
 from ..data_loader._xml import parse_untrusted
+from ..models._common import clamp_input_ints
 from ..notices import Notice, NoticeError, notice
 from .balance import _import_balance
 from .combat import _import_armor, _import_weapons
@@ -77,6 +78,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
             seen.add(marker)
             unique.append(item)
     st["_warnings"] = unique
+    # A hand-edited number survives the read composed into a rating or a
+    # balance; the models refuse one past the cap, so hold them here.
+    st = cast(dict[str, Any], clamp_input_ints(st))
     return st, st["_warnings"]
 
 
