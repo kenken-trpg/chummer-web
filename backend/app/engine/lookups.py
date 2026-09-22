@@ -7,6 +7,7 @@ module and are re-exported from ``app.engine``.
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from collections.abc import Iterable
 from typing import Any
 
@@ -16,8 +17,38 @@ from ..notices import NoticeError, notice
 DEFAULT_STREAM_NAME = "Default"
 
 
+#: Below this many rows a scan is as quick as building the index.
+_INDEX_MIN_ROWS = 32
+#: Catalog lists are few (one set per dataset / custom-data overlay); the cap
+#: only stops overlays built per request from piling up.
+_INDEX_MAX_ENTRIES = 256
+#: ``(id(rows), field) -> (rows, {value: first row})``. The list itself is kept
+#: alongside its index so its ``id`` cannot be handed to a new list while the
+#: entry lives. Catalog rows are never mutated, so an index never goes stale.
+_indexes: OrderedDict[tuple[int, str], tuple[list[dict[str, Any]], dict[Any, dict[str, Any]]]] = OrderedDict()
+
+
+def _index_for(rows: list[dict[str, Any]], field: str) -> dict[Any, dict[str, Any]]:
+    key = (id(rows), field)
+    hit = _indexes.get(key)
+    if hit is not None and hit[0] is rows:
+        _indexes.move_to_end(key)
+        return hit[1]
+    index: dict[Any, dict[str, Any]] = {}
+    for row in rows:
+        v = row.get(field)
+        if v.__hash__ is not None:
+            index.setdefault(v, row)
+    _indexes[key] = (rows, index)
+    if len(_indexes) > _INDEX_MAX_ENTRIES:
+        _indexes.popitem(last=False)
+    return index
+
+
 def _match_by(rows: Iterable[dict[str, Any]] | None, field: str, value: object) -> dict[str, Any] | None:
     """First row whose ``field`` equals ``value`` (the catalog row itself, not a copy)."""
+    if isinstance(rows, list) and len(rows) >= _INDEX_MIN_ROWS and value.__hash__ is not None:
+        return _index_for(rows, field).get(value)
     for row in rows or []:
         if row.get(field) == value:
             return row

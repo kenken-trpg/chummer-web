@@ -8,9 +8,29 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from functools import lru_cache
 
 
 def eval_formula(
+    expr: str | None,
+    rating: int = 1,
+    default: float = 0.0,
+    extras: Mapping[str, float] | None = None,
+) -> float:
+    """Pure in its arguments, and the same few thousand catalog strings come
+    through every compute, so the answers are memoised."""
+    try:
+        return _eval_cached(expr, rating, default, tuple(extras.items()) if extras else ())
+    except TypeError:  # an unhashable extra
+        return _eval_formula(expr, rating, default, extras)
+
+
+@lru_cache(maxsize=8192)
+def _eval_cached(expr: str | None, rating: int, default: float, extras: tuple[tuple[str, float], ...]) -> float:
+    return _eval_formula(expr, rating, default, dict(extras))
+
+
+def _eval_formula(
     expr: str | None,
     rating: int = 1,
     default: float = 0.0,
