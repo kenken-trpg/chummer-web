@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Catalog, Character, CharacterSettings, SettingsPreset } from "@/lib/types";
+import type { BookInfo, Catalog, Character, CharacterSettings, SettingsPreset } from "@/lib/types";
 import { buildMethodPatch } from "@/lib/character/build-method";
 import {
   loadSettingsFiles,
@@ -21,7 +21,7 @@ import {
 } from "@/lib/character/customdata-store";
 import { ZipError } from "@/lib/character/zip";
 import { errorMessage } from "@/lib/errors";
-import type { UiFn } from "@/lib/i18n";
+import { useLocale, type UiFn } from "@/lib/i18n";
 
 /**
  * The ruleset pulldown: which settings the character is built under, and which
@@ -70,6 +70,11 @@ export function SettingsPicker({
 
   const presets = catalog.settings_presets || [];
   const allBooks = catalog.books || [];
+  const [locale] = useLocale();
+  // By id, not `tr(name)`: that table also holds the program ロックダウン, which
+  // turned the untranslated supplement Lockdown into katakana.
+  const bookTitle = (book: BookInfo) =>
+    locale === "ja" && book.name_ja ? book.name_ja : tr(book.name);
   const books = ch.settings?.books || [];
   const name = ch.settings?.name || "";
   const unsupported = ch.settings?.unsupported || [];
@@ -419,7 +424,7 @@ export function SettingsPicker({
                   onChange={() => toggleBook(book.code)}
                 />
                 <span>
-                  {tr(book.name)} <span className="muted">({book.code})</span>
+                  {bookTitle(book)} <span className="muted">({book.code})</span>
                 </span>
               </label>
             ))}

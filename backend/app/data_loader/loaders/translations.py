@@ -84,6 +84,38 @@ def load_skill_group_names() -> dict[str, str]:
     return {en: overrides.get(en, ja) for en, ja in names.items()}
 
 
+def load_book_names() -> dict[str, str]:
+    """Book `<id>` -> the title the Japanese lang file gives it.
+
+    Kept out of `load_translations` for the same reason as the skill groups:
+    that table is keyed by English name alone, and "Lockdown" is both a book
+    and the core-rulebook program. The program's ロックダウン came later in the
+    file and won, so an untranslated supplement showed a katakana title. By
+    `<id>` the two cannot meet.
+
+    `ja_overrides/data.json` still applies by English title — that is where
+    ラン＆ガン and シャドウラン 第5版 come from, since the lang file leaves every
+    title in English. Book titles do not collide with anything in the overlay.
+    """
+    path = LANG_DIR / "ja-jp_data.xml"
+    if not path.exists():
+        return {}
+    try:
+        root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
+    except ET.ParseError as exc:
+        log.warning("ja-jp_data.xml parse failed: %s", exc)
+        return {}
+    overrides = _load_ja_overrides("data.json")
+    names: dict[str, str] = {}
+    for node in root.findall(".//books/book"):
+        book_id = _text(node.find("id"))
+        title = _text(node.find("name"))
+        trans = overrides.get(title) or _text(node.find("translate"))
+        if book_id and trans:
+            names[book_id] = trans
+    return names
+
+
 #: Locale -> the vendored Chummer lang file it comes from. `en-us.xml` was
 #: already being fetched by scripts/fetch_chummer_data.py; nothing read it.
 LANG_FILES = {"ja": "ja-jp.xml", "en": "en-us.xml"}
