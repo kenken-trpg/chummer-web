@@ -45,5 +45,6 @@ def public_catalog() -> dict:
     out["books"] = raw.get("books") or []
     out["settings_presets"] = raw.get("settings_presets") or []
     out["translations"] = raw["translations"]
+    out["translations_by_kind"] = raw.get("translations_by_kind") or {}
     out["ui_strings"] = raw["ui_strings"]
     return out

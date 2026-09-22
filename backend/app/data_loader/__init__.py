@@ -93,6 +93,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_streams,
     load_traditions,
     load_translations,
+    load_translations_by_kind,
     load_ui_strings,  # noqa: F401  (re-exported for tests)
     load_ui_strings_by_locale,
     load_vehicle_mods,
@@ -276,6 +277,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "books": load_books(),
         "settings_presets": load_settings_presets(),
         "translations": translations,
+        "translations_by_kind": load_translations_by_kind(),
         "ui_strings": load_ui_strings_by_locale(),
     }
 

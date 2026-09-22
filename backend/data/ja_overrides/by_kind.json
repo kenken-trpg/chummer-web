@@ -1,0 +1,35 @@
+{
+  "armor": {
+    "Cloak": "Cloak"
+  },
+  "critter_power": {
+    "Skill": "技能"
+  },
+  "cyberware": {
+    "Low-Light Vision": "低光量補正",
+    "Thermographic Vision": "熱映像視野"
+  },
+  "gear": {
+    "Defuse": "解除",
+    "Fork": "並列動作",
+    "History": "History",
+    "Linguistics": "Linguistics",
+    "Swarm": "Swarm",
+    "Thermographic Vision": "熱映像補正"
+  },
+  "knowledge_skill": {
+    "Chemistry": "化学",
+    "Cybertechnology": "サイバーテクノロジー",
+    "Medicine": "医学",
+    "Sioux": "スー語"
+  },
+  "power": {
+    "Mystic Armor": "魔力装甲"
+  },
+  "skill": {
+    "Binding": "束縛",
+    "Chemistry": "化学実務",
+    "Cybertechnology": "サイバー技術",
+    "Medicine": "医術"
+  }
+}

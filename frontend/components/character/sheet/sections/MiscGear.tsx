@@ -1,8 +1,10 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function MiscGearSection(s: SheetData) {
-  const { tr, gearMisc } = s;
+  const { tr: sheetTr, gearMisc } = s;
+  const tr = scopeTr(sheetTr, "gear");
   return (
     <Section title="sheet.miscGear" empty={!gearMisc.length}>
       <ul className="sheet-list sheet-list-compact">

@@ -9,9 +9,11 @@ import {
   spellType,
 } from "@/lib/spell-terms";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function MagicSection(s: SheetData) {
-  const { tr, d, enabled } = s;
+  const { tr: sheetTr, d, enabled } = s;
+  const tr = scopeTr(sheetTr, "power");
   const { ui } = useUiText();
   return (
     <Section

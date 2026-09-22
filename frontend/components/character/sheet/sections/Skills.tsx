@@ -1,9 +1,11 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function SkillsSection(s: SheetData) {
-  const { tr, totals, activeSkills, groups, exotic } = s;
+  const { tr: sheetTr, totals, activeSkills, groups, exotic } = s;
+  const tr = scopeTr(sheetTr, "skill");
   const { ui } = useUiText();
   return (
     <Section title="sheet.skills" empty={!activeSkills.length && !groups.length && !exotic.length}>

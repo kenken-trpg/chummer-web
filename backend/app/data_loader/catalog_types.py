@@ -73,5 +73,7 @@ class CatalogDict(TypedDict):
     #: settings.xml — Chummer's shipped rulesets, see loaders/books.py
     settings_presets: list[Row]
     translations: dict[str, str]
+    #: {kind: {english: japanese}} — exceptions to `translations`, see loaders/translations.py
+    translations_by_kind: dict[str, dict[str, str]]
     #: {locale: {key: text}} — see loaders/translations.py
     ui_strings: dict[str, dict[str, str]]

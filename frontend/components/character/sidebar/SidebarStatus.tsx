@@ -5,6 +5,7 @@ import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
 import { buildMethodLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { renderNotice } from "@/lib/engine-notices";
+import { scopeTr } from "@/lib/ui-strings";
 
 export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProps) {
   return (
@@ -113,7 +114,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
         <span>{ui("common.armor")}</span>
         <b>
           {d.armor}
-          {d.worn_armor ? `（${tr(d.worn_armor)}）` : ""}
+          {d.worn_armor ? `（${scopeTr(tr, "armor")(d.worn_armor)}）` : ""}
         </b>
       </div>
       {specialArmorBits(d.special_armor, ui).map((row) => (

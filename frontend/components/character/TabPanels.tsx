@@ -22,6 +22,12 @@ import { SpiritsTab } from "@/components/character/tabs/SpiritsTab";
 import { SpritesTab } from "@/components/character/tabs/SpritesTab";
 import { SubmersionTab } from "@/components/character/tabs/SubmersionTab";
 import type { Tab } from "@/lib/character/constants";
+import { scopeTr, type TranslationKind } from "@/lib/ui-strings";
+
+/** The panel with `tr` narrowed to the kinds of thing a tab shows. */
+function scoped(panel: TabPanelProps, ...kinds: TranslationKind[]): TabPanelProps {
+  return { ...panel, tr: scopeTr(panel.tr, ...kinds) };
+}
 
 export function TabPanels({
   tab,
@@ -49,9 +55,9 @@ export function TabPanels({
       {tab === "attrs" && <AttrsTab {...panel} />}
       {tab === "skills" && <SkillsTab {...panel} />}
       {tab === "qualities" && <QualitiesTab {...panel} />}
-      {tab === "cyber" && <CyberTab {...panel} />}
+      {tab === "cyber" && <CyberTab {...scoped(panel, "cyberware")} />}
       {tab === "bio" && <BioTab {...panel} />}
-      {tab === "gear" && <GearTab {...panel} />}
+      {tab === "gear" && <GearTab {...scoped(panel, "gear", "armor")} />}
       {tab === "contacts" && <ContactsTab {...panel} />}
       {tab === "martial" && <MartialTab {...panel} />}
       {tab === "initiation" && d.enabled_tabs.includes("initiation") && (
@@ -60,9 +66,13 @@ export function TabPanels({
       {tab === "submersion" && d.enabled_tabs.includes("submersion") && (
         <SubmersionTab {...panel} />
       )}
-      {tab === "adept" && d.enabled_tabs.includes("adept") && <AdeptTab {...panel} />}
+      {tab === "adept" && d.enabled_tabs.includes("adept") && (
+        <AdeptTab {...scoped(panel, "power")} />
+      )}
       {tab === "spells" && d.enabled_tabs.includes("spells") && <SpellsTab {...panel} />}
-      {tab === "spirits" && d.enabled_tabs.includes("spirits") && <SpiritsTab {...panel} />}
+      {tab === "spirits" && d.enabled_tabs.includes("spirits") && (
+        <SpiritsTab {...scoped(panel, "critter_power")} />
+      )}
       {tab === "foci" && d.enabled_tabs.includes("foci") && <FociTab {...panel} />}
       {tab === "complexforms" && d.enabled_tabs.includes("complexforms") && (
         <ComplexFormsTab {...panel} />
