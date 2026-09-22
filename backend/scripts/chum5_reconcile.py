@@ -71,6 +71,13 @@ at 25, so their karma differs by the excess (Barrett by 53, Blindfire by 15).
 Prime Runner gives neither, and current Chummer no longer reads those two
 fields, so it opens the character at 25 and x3 too — 10 + 3 short, as here.
 
+`Ocelot2.0`'s power points over (6 / 5) is the same kind of leftover. The
+5.202 save carries an `AdeptPowerPoints` +1 improvement from its Cat mentor
+spirit, which no data file grants — neither the Cat's `<specificpower>`
+(free Light Body levels, which this app does apply) nor anything else in
+today's `mentors.xml`. Chummer keeps saved improvements as they are on load,
+so it still counts that point; worked out from the data, MAG 5 is the limit.
+
 The files are fetched once into ``vendor/chummer-tests/`` (gitignored), at the
 same chummer5a ref as the game data::
 
