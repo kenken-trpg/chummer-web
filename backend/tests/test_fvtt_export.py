@@ -14,13 +14,18 @@ from app.fvtt_export import state_to_fvtt
 from app.main import app
 from app.models import (
     AdeptPowerInstall,
+    ArmorInstall,
     CharacterState,
+    CommlinkInstall,
     ComplexFormInstall,
     ContactInstall,
     CyberwareInstall,
+    GearInstall,
     LifestyleInstall,
     Priorities,
     SpellInstall,
+    WeaponAccessoryInstall,
+    WeaponInstall,
 )
 
 
@@ -260,6 +265,88 @@ def test_complex_forms_carry_the_fading_as_chummer_prints_it() -> None:
     (form,) = _char(state, "en")["complexforms"]["complexform"]
     assert (form["target_english"], form["duration_english"], form["fv_english"]) == ("Device", "S", "L-2")
     assert form["fullname"] == "Infusion of [Matrix Attribute] (Firewall)"
+
+
+def _samurai() -> CharacterState:
+    sin = GearInstall(gear_id=_id("gear", "Fake SIN"), rating=4, extra="UCAS")
+    gun = WeaponInstall(weapon_id=_id("weapons", "Ares Predator V"))
+    return compute_state(
+        CharacterState(
+            id="fvtt-sam",
+            name="鋼",
+            priorities=Priorities(Heritage="D", Attributes="A", Talent="E", Skills="C", Resources="A"),
+            metatype="Human",
+            attributes={"BOD": 5, "AGI": 5, "REA": 4, "STR": 4, "CHA": 2, "INT": 4, "LOG": 3, "WIL": 3},
+            skills={"Pistols": 5, "Blades": 3, "Throwing Weapons": 2},
+            armor=[
+                ArmorInstall(armor_id=_id("armor", "Armor Jacket")),
+                ArmorInstall(armor_id=_id("armor", "Helmet")),
+            ],
+            cyberware=[CyberwareInstall(ware_id=_id("cyberware", "Wired Reflexes"), rating=1, grade="Alphaware")],
+            weapons=[
+                gun,
+                WeaponInstall(weapon_id=_id("weapons", "Combat Knife")),
+                WeaponInstall(weapon_id=_id("weapons", "Shuriken"), qty=3),
+            ],
+            weapon_accessories=[
+                WeaponAccessoryInstall(accessory_id=_id("weapon_accessories", "Laser Sight"), parent_id=gun.id)
+            ],
+            commlinks=[CommlinkInstall(gear_id=_id("commlinks", "Meta Link"))],
+            gear=[
+                sin,
+                GearInstall(gear_id=_id("gear", "Fake License"), rating=4, extra="Pistol", parent_id=sin.id),
+                GearInstall(gear_id=_id("gear", "Ammo: Regular Ammo"), qty=2),
+            ],
+        )
+    )
+
+
+def test_armor_that_stacks_is_marked_with_a_plus() -> None:
+    rows = {a["name_english"]: a for a in _char(_samurai())["armors"]["armor"]}
+    assert rows["Armor Jacket"]["armor"] == "12"
+    # the importer reads a "+" as an accessory
+    assert rows["Helmet"]["armor"].startswith("+")
+    assert rows["Armor Jacket"]["equipped"] == "True"
+
+
+def test_ware_carries_the_essence_and_the_foundry_grade() -> None:
+    state = _samurai()
+    (wire,) = _char(state)["cyberwares"]["cyberware"]
+    assert wire["improvementsource"] == "Cyberware"
+    assert wire["grade"] == "alpha"
+    assert float(wire["ess"]) == state.derived["cyberware"][0]["essence"]
+
+
+def test_gear_flags_steer_the_importer_and_a_license_rides_on_its_sin() -> None:
+    rows = {g["name_english"]: g for g in _char(_samurai())["gears"]["gear"]}
+    assert "Fake License" not in rows
+    sin = rows["Fake SIN"]
+    assert sin["issin"] == "True"
+    (license_,) = sin["children"]["gear"]
+    assert (license_["extra"], license_["rating"], license_["category_english"]) == ("Pistol", "4", "ID/Credsticks")
+    link = rows["Meta Link"]
+    assert (link["iscommlink"], link["devicerating"], link["firewall"]) == ("True", "1", "1")
+    ammo = rows["Ammo: Regular Ammo"]
+    # two boxes of ten, counted in rounds as Chummer does
+    assert (ammo["isammo"], ammo["qty"]) == ("True", "20")
+
+
+def test_weapons_carry_the_skill_the_figures_and_the_range_bands() -> None:
+    state = _samurai()
+    rows = {w["name_english"]: w for w in _char(state)["weapons"]["weapon"]}
+    gun = rows["Ares Predator V"]
+    assert (gun["type"], gun["skill"], gun["mode"]) == ("Ranged", "Pistols", "SA")
+    assert gun["damage_noammo_english"] == "8P"
+    assert gun["ranges"] == {"short": "0-5", "medium": "6-20", "long": "21-40", "extreme": "41-60"}
+    # the sheet's accuracy already has the sight in it: the mod adds none
+    sight = next(a for a in gun["accessories"]["accessory"] if a["name_english"] == "Laser Sight")
+    assert (sight["accuracy"], sight["rc"]) == ("0", "0")
+    knife = rows["Combat Knife"]
+    assert (knife["type"], knife["skill"], knife["mode"], knife["ranges"]) == ("Melee", "Blades", None, None)
+    # {STR} worked out: STR 4 -> {STR}, {STR}*2, {STR}*5, {STR}*7
+    shuriken = rows["Shuriken"]
+    assert shuriken["skill"] == "Throwing Weapons"
+    assert shuriken["ranges"] == {"short": "0-4", "medium": "5-8", "long": "9-20", "extreme": "21-28"}
 
 
 def test_fvtt_download_route() -> None:

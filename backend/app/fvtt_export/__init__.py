@@ -13,8 +13,9 @@ the chum5 export writes. Values are strings and flags are "True" / "False",
 as Chummer prints them. The field map is `docs/plans/fvtt-export-plan.md`.
 
 Covered so far: the character itself, skills, qualities, contacts,
-lifestyles, spells, adept powers and complex forms. The rest (gear,
-weapons, ware, ...) are sections the importer skips when absent.
+lifestyles, spells, adept powers, complex forms, armor, cyberware and
+bioware, gear and weapons. Vehicles and drones are sections the importer
+skips when absent.
 """
 
 from __future__ import annotations
@@ -22,8 +23,9 @@ from __future__ import annotations
 import html
 from typing import Any
 
-from ..data_loader import catalog
+from ..data_loader import catalog, catalog_list
 from ..engine import compute
+from ..engine.gear.weapons.bonuses import weapon_skill_dictionary_key
 from ..models import CharacterState
 from ..rules import rules_for, using_rules
 
@@ -133,6 +135,10 @@ def _character(state: CharacterState, derived: dict[str, Any], tr: Any) -> dict[
         "spells": {"spell": _spells(derived, tr)},
         "powers": {"power": _powers(derived, tr)},
         "complexforms": {"complexform": _complex_forms(derived, tr)},
+        "armors": {"armor": _armors(derived, tr)},
+        "cyberwares": {"cyberware": _wares(derived, tr)},
+        "gears": {"gear": _gears(derived, tr)},
+        "weapons": {"weapon": _weapons(derived, tr)},
     }
 
 
@@ -429,6 +435,275 @@ def _complex_forms(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
                 "fullname_english": _fullname(name, extra),
                 **fields,
                 **{f"{key}_english": value for key, value in fields.items()},
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _money(value: object) -> str:
+    return str(int(float(str(value or 0))))
+
+
+def _armors(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
+    """The finished rating, "+n" for one that stacks: the importer marks an
+    armor with a "+" in it as an accessory. Mods stay inside the value;
+    Chummer nests them and the importer does not read them either."""
+    out = []
+    for row in derived.get("armor_items") or []:
+        name = str(row.get("name") or "")
+        if not name:
+            continue
+        value = int(row.get("armor_value") or 0)
+        category = str(row.get("category") or "")
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("armor_id") or ""),
+                "name": tr(name, "armor"),
+                "name_english": name,
+                "category": tr(category),
+                "category_english": category,
+                "armor": f"+{value}" if row.get("additive") else str(value),
+                "rating": str(int(row.get("rating") or 0)),
+                "avail": str(row.get("avail") or ""),
+                "owncost": _money(row.get("nuyen")),
+                "equipped": _flag(row.get("equipped")),
+                "source": str(row.get("source") or ""),
+                "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+#: this app's grade -> the Foundry grade key (the importer lower-cases
+#: `grade` and takes it as is). Used and the like have no Foundry grade.
+_GRADES = {"Alphaware": "alpha", "Betaware": "beta", "Deltaware": "delta", "Gammaware": "gamma"}
+
+
+def _wares(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
+    """Cyberware and bioware in one list, told apart by `improvementsource`.
+    Foundry has no nesting, so a plugged-in part comes out as its own item
+    (Chummer nests it, and the importer would drop it)."""
+    out = []
+    for source, key in (("Cyberware", "cyberware"), ("Bioware", "bioware")):
+        for row in derived.get(key) or []:
+            name = str(row.get("name") or "")
+            if not name:
+                continue
+            extra = " ".join(str(x) for x in (row.get("extra"), row.get("side")) if x)
+            category = str(row.get("category") or "")
+            out.append(
+                {
+                    "guid": str(row.get("id") or ""),
+                    "sourceid": str(row.get("ware_id") or ""),
+                    "name": tr(name, "cyberware"),
+                    "name_english": name,
+                    "fullname": _fullname(tr(name, "cyberware"), tr(extra) if extra else ""),
+                    "fullname_english": _fullname(name, extra),
+                    "category": tr(category),
+                    "category_english": category,
+                    "improvementsource": source,
+                    "ess": str(round(float(row.get("essence") or 0), 4)),
+                    "capacity": str(float(row.get("capacity_max") or 0)),
+                    "grade": _GRADES.get(str(row.get("grade") or ""), "standard"),
+                    "rating": str(int(row.get("rating") or 0)),
+                    "avail": str(row.get("avail") or ""),
+                    "owncost": _money(row.get("nuyen")),
+                    "source": str(row.get("source") or ""),
+                    "page": str(row.get("page") or ""),
+                }
+            )
+    return out
+
+
+#: the buckets gear is split into, as the chum5 export walks them
+_GEAR_BUCKETS = ("gear", "commlinks", "cyberdecks", "rccs", "sensors", "optics", "programs", "apps")
+_DEVICE_BUCKETS = ("commlinks", "cyberdecks", "rccs")
+
+
+def _is_sin(row: dict[str, Any]) -> bool:
+    return row.get("category") == "ID/Credsticks" and "SIN" in str(row.get("name") or "").split()
+
+
+def _gears(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+    """Flags steer the importer's split: `iscommlink` makes a device (with
+    its matrix attributes), `issin` a SIN, `isammo` ammunition, and the
+    program categories a program; the rest is equipment. Foundry has no
+    nesting, so a child comes out as its own item — except a license under a
+    SIN, which the importer reads from the SIN's `children`."""
+    cost_for = {
+        str(row["id"]): int(row.get("costfor") or 0) for bucket in _GEAR_BUCKETS for row in catalog_list(bucket)
+    }
+    rows = [(bucket, row) for bucket in _GEAR_BUCKETS for row in derived.get(bucket) or []]
+    sins = {str(row.get("id")) for _, row in rows if _is_sin(row)}
+
+    def one(bucket: str, row: dict[str, Any]) -> dict[str, Any]:
+        name = str(row.get("name") or "")
+        custom = str(row.get("custom_name") or "")
+        shown = custom or tr(name, "gear")
+        extra = str(row.get("extra") or "")
+        category = str(row.get("category") or "")
+        # this app counts lots of `costfor` (a box of 10 rounds); Chummer the rounds
+        qty = int(row.get("qty") or 1) * max(1, cost_for.get(str(row.get("gear_id")), 1))
+        item: dict[str, Any] = {
+            "guid": str(row.get("id") or ""),
+            "sourceid": str(row.get("gear_id") or ""),
+            "name": shown,
+            "name_english": custom or name,
+            "fullname": _fullname(shown, extra),
+            "fullname_english": _fullname(custom or name, extra),
+            "extra": extra or None,
+            "category": tr(category),
+            "category_english": category,
+            "rating": str(int(row.get("rating") or 0)),
+            "qty": str(qty),
+            "avail": str(row.get("avail") or ""),
+            "owncost": _money(row.get("nuyen")),
+            "equipped": "True",
+            "iscommlink": _flag(bucket in _DEVICE_BUCKETS),
+            "issin": _flag(_is_sin(row)),
+            "isammo": _flag(category == "Ammunition"),
+            "source": str(row.get("source") or ""),
+            "page": str(row.get("page") or ""),
+        }
+        if bucket in _DEVICE_BUCKETS:
+            item["devicerating"] = str(int(row.get("device_rating") or 0))
+            for key in ("attack", "sleaze", "dataprocessing", "firewall"):
+                item[key] = str(int(row.get(key) or 0))
+        return item
+
+    out: list[dict[str, Any]] = []
+    licenses: dict[str, list[dict[str, Any]]] = {}
+    for bucket, row in rows:
+        parent = str(row.get("parent_id") or "")
+        if parent in sins and row.get("category") == "ID/Credsticks":
+            licenses.setdefault(parent, []).append(one(bucket, row))
+        else:
+            out.append(one(bucket, row))
+    for item in out:
+        if item["guid"] in licenses:
+            item["children"] = {"gear": licenses[item["guid"]]}
+    return out
+
+
+#: weapon categories with no ranges.xml entry of their own (the frontend's
+#: `RANGE_CAT_ALIAS`)
+_RANGE_ALIAS = {"Heavy Machine Guns": "Medium/Heavy Machinegun", "Medium Machine Guns": "Medium/Heavy Machinegun"}
+_BANDS = ("short", "medium", "long", "extreme")
+
+
+def _range_band(formula: object, strength: int) -> int | None:
+    """A ranges.xml band ("5", "{STR}*10", "{STR}/2"; "-1" for none), the
+    frontend's `evalRangeBand`."""
+    text = str(formula or "").strip().replace("{STR}", str(strength))
+    if not text or text == "-1":
+        return None
+    left, op, right = text.partition("*") if "*" in text else text.partition("/")
+    try:
+        value = float(left)
+        if op == "*":
+            value *= float(right)
+        elif op == "/":
+            value /= float(right)
+    except ValueError:
+        return None
+    return int(value)
+
+
+def _ranges(row: dict[str, Any], derived: dict[str, Any]) -> dict[str, str] | None:
+    """The four bands as Chummer prints them ("0-5", "6-20", ...), with the
+    STR the sheet uses: the importer reads the number after the dash, and
+    only when all four are there."""
+    category = str(row.get("category") or "")
+    name = str(row.get("range") or "").strip() or _RANGE_ALIAS.get(category) or category
+    bands = (catalog().get("weapon_ranges") or {}).get(name)
+    if not bands:
+        return None
+    strength = int((derived.get("totals") or {}).get("STR") or 0)
+    if row.get("useskill") == "Throwing Weapons":
+        strength += int(derived.get("throw_range_str") or 0)
+    highs = [_range_band(bands.get(key), strength) for key in _BANDS]
+    if any(high is None for high in highs):
+        return None
+    tops = [int(high or 0) for high in highs]
+    lows = [_range_band(bands.get("min"), strength) or 0, *(high + 1 for high in tops[:3])]
+    return {key: f"{low}-{high}" for key, low, high in zip(_BANDS, lows, tops, strict=True)}
+
+
+_PISTOLS = frozenset({"Tasers", "Holdouts", "Light Pistols", "Heavy Pistols"})
+
+
+def _weapon_skill(row: dict[str, Any]) -> str | None:
+    """The skill Chummer prints, which the importer lower-cases into the
+    Foundry skill id ("Heavy Weapons" -> heavy_weapons). The engine's lookup
+    falls back to Pistols; a category it does not know (exotic, laser) goes
+    out blank instead, and the importer works those out from the category."""
+    skill = weapon_skill_dictionary_key(row)
+    if skill == "Pistols" and not row.get("useskill") and row.get("category") not in _PISTOLS:
+        return None
+    return skill
+
+
+def _weapons(derived: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+    """The figures the sheet shows ({STR} already worked out by the engine).
+    Those include what the accessories add, so the accessories go along
+    with their own accuracy and RC at zero — Foundry would add a mod's on
+    top."""
+    out = []
+    for row in derived.get("weapons") or []:
+        name = str(row.get("name") or "")
+        if not name:
+            continue
+        category = str(row.get("category") or "")
+        raw_mode = str(row.get("mode") or "").strip()
+        mode = None if raw_mode in ("", "0", "-") else raw_mode
+        accessories = [
+            {
+                "guid": str(acc.get("id") or ""),
+                "sourceid": str(acc.get("accessory_id") or ""),
+                "name": tr(str(acc["name"])),
+                "name_english": str(acc["name"]),
+                "mount": str(acc.get("mount") or "None"),
+                "rating": str(int(acc.get("rating") or 0)),
+                "accuracy": "0",
+                "rc": "0",
+                "conceal": "0",
+                "avail": str(acc.get("avail") or ""),
+                "owncost": _money(acc.get("nuyen")),
+                "source": str(acc.get("source") or ""),
+                "page": str(acc.get("page") or ""),
+            }
+            for acc in row.get("accessories") or []
+            if acc.get("name")
+        ]
+        out.append(
+            {
+                "guid": str(row.get("id") or ""),
+                "sourceid": str(row.get("weapon_id") or ""),
+                "name": tr(name),
+                "name_english": name,
+                "category": tr(category),
+                "category_english": category,
+                "type": str(row.get("type") or ""),
+                "skill": _weapon_skill(row),
+                "rawaccuracy": str(row.get("accuracy") or "0"),
+                "rawap": str(row.get("ap") or "0"),
+                "damage_noammo_english": str(row.get("damage") or ""),
+                "rawrc": str(row.get("rc") or "0"),
+                "rawreach": str(row.get("reach") or "0"),
+                "mode": mode,
+                "mode_noammo": mode,
+                "mode_english_noammo": mode,
+                "ammo_english": str(row.get("ammo") or ""),
+                "ranges": _ranges(row, derived),
+                "conceal": str(row.get("conceal") or "0"),
+                "qty": str(int(row.get("qty") or 1)),
+                "avail": str(row.get("avail") or ""),
+                "owncost": _money(row.get("nuyen")),
+                "equipped": "True",
+                "accessories": {"accessory": accessories},
                 "source": str(row.get("source") or ""),
                 "page": str(row.get("page") or ""),
             }
