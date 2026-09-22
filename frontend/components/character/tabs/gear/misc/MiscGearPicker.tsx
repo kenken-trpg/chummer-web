@@ -2,6 +2,7 @@
 import { PickerList } from "@/components/character/CatalogPicker";
 import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
+import { trAs } from "@/lib/ui-strings";
 import { DRUG_CATS, isDrugCategory } from "@/lib/character/constants";
 import { renderNotices } from "@/lib/engine-notices";
 
@@ -117,7 +118,7 @@ export function MiscGearPicker({
                           <option value="">{ui("common.skill")}</option>
                           {(item.extra_options || []).map((name) => (
                             <option key={name} value={name}>
-                              {tr(name)}
+                              {trAs(tr, item.extra_skill_kind, name)}
                             </option>
                           ))}
                         </select>

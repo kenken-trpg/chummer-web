@@ -3,6 +3,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
+import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
 
 /**
@@ -99,7 +100,7 @@ export function AppRows({
                   <option value="">{ui("common.selectShort")}</option>
                   {(app.extra_options || []).map((name) => (
                     <option key={name} value={name}>
-                      {tr(name)}
+                      {trAs(tr, app.extra_skill_kind, name)}
                     </option>
                   ))}
                 </select>

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ..data_loader import CatalogDict, drug_effect_summary
-from ..engine import gear_extra_options
+from ..engine import gear_extra_options, gear_extra_skill_kind
 
 
 def section(raw: CatalogDict) -> dict:
@@ -128,6 +128,7 @@ def section(raw: CatalogDict) -> dict:
                 "needs_extra": bool(c.get("needs_extra")),
                 "extra_kind": c.get("extra_kind") or "",
                 "extra_options": gear_extra_options(c, raw.get("skills")),
+                "extra_skill_kind": gear_extra_skill_kind(c),
                 "source": c.get("source") or "",
                 "page": c.get("page") or "",
             }

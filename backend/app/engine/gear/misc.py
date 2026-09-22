@@ -19,7 +19,7 @@ from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
 from ...rules import current_rules
 from ..lookups import _item_by_id, _ware_by_id
-from ..selects import gear_extra_options
+from ..selects import gear_extra_options, gear_extra_skill_kind
 from ._common import (
     _capacity_value,
     _cascade_optics,
@@ -427,6 +427,7 @@ def _resolve_misc_gear(
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
                 "extra_options": options,
+                "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "capacity_cost": cap_cost,
                 "capacity_used": 0.0,

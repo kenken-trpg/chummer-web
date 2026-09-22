@@ -138,6 +138,28 @@ def selecttext_options(attrs: dict[str, Any]) -> list[str]:
     return selecttext_catalog_options(attrs, catalog())
 
 
+def gear_extra_skill_kind(spec: dict[str, Any]) -> str:
+    """Which translation kind a gear pick's name is: `skill` for an Activesoft
+    or an active-skill `<selectskill>`, `knowledge_skill` for a Knowsoft or a
+    Linguasoft, "" for anything else (a group, free text, a mixed list).
+
+    The gear tab translates its names as gear, and a pick is a skill's name:
+    Knowsoft (History) took the gear History's English, and Activesoft
+    (Medicine) missed the active skill's 医術. See `by_kind.json`.
+    """
+    if str(spec.get("extra_kind") or "") == "group" or str(spec.get("name") or "").startswith("Group Autosoft"):
+        return ""
+    for node in spec.get("bonus") or []:
+        tag = node.get("tag")
+        if tag == "selectskill":
+            return "knowledge_skill" if parse_selectskill_spec(node)["knowledgeskills"] else "skill"
+        if tag in {"activesoft", "skillsoft", "knowsoft", "linguasoft"}:
+            return "skill" if _skillsoft_kind(node) == "active" else "knowledge_skill"
+        if tag in {"selecttext", "selecttradition"}:
+            return ""
+    return ""
+
+
 def gear_extra_options(spec: dict[str, Any], skills_data: dict[str, Any] | None = None) -> list[str]:
     data = skills_data if skills_data is not None else catalog().get("skills") or {}
     extra_kind = str(spec.get("extra_kind") or "")

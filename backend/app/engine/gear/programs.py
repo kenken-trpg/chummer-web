@@ -13,7 +13,7 @@ from typing import Any
 from ...data_loader import PROGRAM_HOSTS, catalog, eval_formula
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term, ui
-from ..selects import gear_extra_options
+from ..selects import gear_extra_options, gear_extra_skill_kind
 from ._common import _clamp_rating, _program_label
 from .vehicles import _iter_vehicle_hosts
 
@@ -90,6 +90,7 @@ def _resolve_programs(
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
                 "extra_options": options,
+                "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "program_host": spec.get("program_host") or want_kind,
                 "avail": spec.get("avail") or "",

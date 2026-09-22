@@ -3,6 +3,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
+import { trAs } from "@/lib/ui-strings";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { alreadySlotted, dropTree, miscFits } from "@/lib/character/gear";
 import type { InstalledGear } from "@/lib/types";
@@ -148,7 +149,7 @@ export function MiscGearRow({
               <option value="">{ui("common.skill")}</option>
               {(item.extra_options || []).map((name) => (
                 <option key={name} value={name}>
-                  {tr(name)}
+                  {trAs(tr, item.extra_skill_kind, name)}
                 </option>
               ))}
             </select>
@@ -278,7 +279,7 @@ export function MiscGearRow({
                   <option value="">{ui("common.target")}</option>
                   {(addonSpec.extra_options || []).map((name) => (
                     <option key={name} value={name}>
-                      {tr(name)}
+                      {trAs(tr, addonSpec.extra_skill_kind, name)}
                     </option>
                   ))}
                 </select>

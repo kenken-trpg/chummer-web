@@ -11,7 +11,7 @@ from typing import Any
 from ...data_loader import catalog, eval_formula
 from ...models import CharacterState, GearInstall
 from ...notices import Notice, notice, term
-from ..selects import gear_extra_options
+from ..selects import gear_extra_options, gear_extra_skill_kind
 from ._common import _clamp_rating, _program_label, chosen_cost
 
 
@@ -77,6 +77,7 @@ def _resolve_apps(
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
                 "extra_options": options,
+                "extra_skill_kind": gear_extra_skill_kind(spec),
                 "nuyen": cost,
                 "avail": spec.get("avail") or "",
                 "source": spec.get("source") or "",
