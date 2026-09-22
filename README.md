@@ -217,7 +217,7 @@ docs/       アーキテクチャ・データパイプライン・デプロイ�
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — セットアップ、コーディング規約、PR の作法
 - [`SECURITY.md`](SECURITY.md) — 脆弱性の報告方法（GitHub の private vulnerability reporting）
 - [`docs/architecture.md`](docs/architecture.md) — データフロー、`<bonus>` ノードと `effects`、API 一覧
-- [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / 自宅 + Cloudflare Tunnel
+- [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / Cloudflare Containers / 自宅 + Cloudflare Tunnel
 - [`docs/adding-rules.md`](docs/adding-rules.md) — 新しい modifier / アイテム項目 / タブ / 検証の追加レシピ
 - [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → 翻訳オーバーレイ
 - [`docs/i18n.md`](docs/i18n.md) — UI 文言の 2 レイヤーと `ja`/`en` の増やし方
