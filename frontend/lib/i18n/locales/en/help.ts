@@ -42,6 +42,12 @@ export const EN_HELP = {
   "help.skill.default":
     "A skill you have not learned can still be defaulted: the linked attribute −1 (SR5 p.130)",
   "help.skill.cap": "The rating cap at creation. One skill may sit at the cap (+1 with Aptitude)",
+  "help.group.members": "Skills in it: {skills}",
+  "help.group.sep": ", ",
+  "help.group.cost":
+    "At creation, one skill group point per rating. With karma, the new rating × 5 (SR5 p.107)",
+  "help.group.break":
+    "Raising one skill in it on its own or taking a specialization breaks the group; bringing them all back to one rating restores it",
   "help.matrix.attack":
     "Attack: breaking into or damaging another icon. It also answers attacks made on you",
   "help.matrix.sleaze": "Sleaze: getting in and staying unnoticed; it opposes Matrix Perception",

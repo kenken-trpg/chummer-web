@@ -39,6 +39,12 @@ export const JA_HELP = {
   "help.skill.default":
     "未習得でも「デフォルト」で振れる技能は、関連能力値 −1 で判定する（SR5 p.130）",
   "help.skill.cap": "作成時のレーティング上限。1 つだけ上限まで上げられる（資質 Aptitude で +1）",
+  "help.group.members": "含まれる技能：{skills}",
+  "help.group.sep": "、",
+  "help.group.cost":
+    "作成時は技能グループ・ポイント 1 点で 1 レーティング。カルマでは新しいレーティング × 5 点（SR5 p.107）",
+  "help.group.break":
+    "中の技能を 1 つだけ上げたり専門化を取ったりすると、グループとしては扱えなくなる。全部を同じレーティングに揃えると戻る",
   "help.matrix.attack":
     "アタック（ATK）：相手のデータやアイコンを壊す不正アクセス系の行動に使う。攻撃されると自分の判定にも使われる",
   "help.matrix.sleaze":
