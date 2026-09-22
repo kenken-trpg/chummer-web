@@ -256,6 +256,16 @@ export const api = {
     return res;
   },
 
+  /** Import a Foundry VTT shadowrun5e character actor (its Export Data JSON). */
+  importFvtt: async (payload: unknown): Promise<{ character: Character; warnings: Notice[] }> => {
+    const res = await req<{ character: Character; warnings: Notice[] }>(
+      "/api/characters/import-fvtt",
+      { method: "POST", body: JSON.stringify(payload) },
+    );
+    await local.putCharacter(res.character);
+    return res;
+  },
+
   /**
    * Read a Chummer `settings/*.xml`. The backend owns the parsing — every
    * other piece of Chummer XML knowledge lives there, and deciding which

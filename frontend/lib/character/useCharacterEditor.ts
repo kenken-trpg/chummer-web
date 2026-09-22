@@ -340,11 +340,22 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setTimeout(() => setCopied(null), 2000);
   }
 
+  /** A Foundry VTT character actor's Export Data, not this app's own JSON. */
+  function isFvttActor(payload: unknown): boolean {
+    if (!payload || typeof payload !== "object") return false;
+    const p = payload as Record<string, unknown>;
+    return p.type === "character" && typeof p.system === "object" && Array.isArray(p.items);
+  }
+
   async function onImport(file: File) {
     setError(null);
     try {
-      if (/\.chum5(lz)?$/i.test(file.name)) {
-        const { character, warnings } = await api.importChummer(await file.arrayBuffer());
+      const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
+      if (payload === null || isFvttActor(payload)) {
+        const { character, warnings } =
+          payload === null
+            ? await api.importChummer(await file.arrayBuffer())
+            : await api.importFvtt(payload);
         remember(character);
         onCharacterOpened?.();
         if (warnings.length) {
@@ -359,7 +370,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
           );
         }
       } else {
-        remember(await api.import(JSON.parse(await file.text())));
+        remember(await api.import(payload));
         onCharacterOpened?.();
       }
       void refreshRoster();

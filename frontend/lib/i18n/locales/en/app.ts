@@ -218,6 +218,9 @@ export const EN_APP = {
   "api.chum5lzUndecompressible":
     "This .chum5lz could not be decompressed. In Chummer, use Save As to write an uncompressed .chum5 and load that instead. ({formats})",
   "api.importChummerFailed": "This .chum5 / .chum5lz could not be imported.",
+  "api.importFvttFailed": "This Foundry VTT actor could not be imported.",
+  "api.notAnFvttActor":
+    "This does not look like a Foundry VTT character (use Export Data on a shadowrun5e character actor).",
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.customDataMissing":
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",

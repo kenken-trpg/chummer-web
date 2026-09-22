@@ -15,6 +15,7 @@ from ..chummer_export.check import roundtrip_differences
 from ..chummer_import import chum5_to_state
 from ..customdata import dataset_hash
 from ..dataset_store import MAX_UPLOAD_BYTES, lookup, remember
+from ..fvtt_import import fvtt_to_state
 from ..models import CharacterCreate, CharacterState, CustomDataUpload, PatchRequest, StateRequest
 from ..notices import NoticeError, notice
 from ..settings_file import parse_settings_upload
@@ -190,3 +191,19 @@ def import_chummer(request: Request, body: bytes = Body(..., media_type="applica
     except Exception as exc:  # noqa: BLE001
         _log.exception("chum5 import failed")
         raise HTTPException(status_code=400, detail=notice("api.importChummerFailed")) from exc
+
+
+@router.post("/api/characters/import-fvtt")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def import_fvtt(request: Request, payload: dict) -> dict:
+    """Import a Foundry VTT shadowrun5e character actor (its Export Data JSON).
+    Returns the character plus a list of things that could not be mapped."""
+    try:
+        state, warnings = fvtt_to_state(payload)
+        char = import_character(state)
+        return {"character": char.model_dump(), "warnings": warnings}
+    except NoticeError as exc:
+        raise HTTPException(status_code=400, detail=exc.notice) from exc
+    except Exception as exc:  # noqa: BLE001
+        _log.exception("FVTT import failed")
+        raise HTTPException(status_code=400, detail=notice("api.importFvttFailed")) from exc
