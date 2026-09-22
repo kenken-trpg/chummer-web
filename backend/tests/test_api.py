@@ -158,6 +158,28 @@ def test_oversized_nested_collection_is_rejected() -> None:
     assert client.post("/api/characters/patch", json={"state": fine}, headers=ip).status_code == 200
 
 
+@pytest.mark.parametrize(
+    "field",
+    [
+        {"skills": {"Pistols": 10**400}},
+        {"attributes": {"BOD": -(10**400)}},
+        {"lifestyles": [{"lifestyle_id": "x", "months": 10**400}]},
+        {"foci": [{"gear_id": "x", "force": 10**13}]},
+    ],
+)
+def test_a_number_too_large_for_a_float_is_a_422_not_a_500(field: dict) -> None:
+    """JSON and Python ints are unbounded; the engine's floats are not.
+
+    A rating of 10**400 used to validate as an int and raise OverflowError the
+    first time the engine divided or multiplied it."""
+    ip = {"cf-connecting-ip": "203.0.113.57"}
+    base = client.post("/api/characters/new", json={"name": "X"}, headers=ip).json()
+    r = client.post("/api/characters/patch", json={"state": {**base, **field}}, headers=ip)
+    assert r.status_code == 422
+    fine = {**base, "skills": {"Pistols": 10**12}}
+    assert client.post("/api/characters/patch", json={"state": fine}, headers=ip).status_code == 200
+
+
 def test_content_disposition_is_latin1_safe_for_a_japanese_name() -> None:
     header = _content_disposition("サムライ・ドッグ")
     # latin-1 is what Starlette/uvicorn encode header values as; a bare

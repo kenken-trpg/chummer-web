@@ -12,6 +12,13 @@ from pydantic import BaseModel
 # real character is well under this in any one collection.
 _MAX_COLLECTION = 2000
 
+# JSON numbers have no size limit and Python ints none either, so a rating of
+# 10**400 validates as an int and then raises OverflowError the first time the
+# engine turns it into a float — a 500 rather than a 422. A trillion is far
+# above any nuyen, karma or rating a character holds, and far below where a
+# float stops being able to hold the products the engine takes of them.
+MAX_INPUT_INT = 10**12
+
 # The portrait goes straight into an <img src>. Only an inline raster image is
 # a portrait: an http(s) URL would make every viewer of a shared or imported
 # character fetch from a third party (a tracking pixel wherever the bundled
@@ -50,7 +57,8 @@ def clean_extra_portraits(values: list[str]) -> list[str]:
 
 
 def _reject_oversized_collections(model: BaseModel) -> None:
-    """Hold every list / dict in `model` to `_MAX_COLLECTION`, nested ones too.
+    """Hold every list / dict in `model` to `_MAX_COLLECTION`, nested ones too,
+    and every int to `MAX_INPUT_INT` either side of zero.
 
     Only the top level used to be checked, so a drug's parts, a gear piece's
     `array_order` or the settings' `books` could each carry every row the
@@ -90,3 +98,5 @@ def _walk(value: object, path: str) -> None:
             if len(value) > _MAX_COLLECTION:
                 raise ValueError(f"{path}: {len(value)} entries exceeds the {_MAX_COLLECTION} cap")
             stack.extend((child, path) for child in value)
+        elif isinstance(value, int) and not isinstance(value, bool) and abs(value) > MAX_INPUT_INT:
+            raise ValueError(f"{path}: a number beyond ±{MAX_INPUT_INT} exceeds the cap")
