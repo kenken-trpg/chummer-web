@@ -1,9 +1,10 @@
 """Phase 9 — gear.
 
-Hosts ``resolve_gear`` (the 200-line armour / weapons / matrix / drones /
-lifestyle resolver, a plain function) and ``gear_phase(ctx)`` which runs it
+Hosts ``resolve_gear`` (the armour / weapons / matrix / drones / lifestyle
+resolver, a plain function; the armour, weapon and commlink rows are built in
+``gear_rows``) and ``gear_phase(ctx)`` which runs it
 then folds in lifestyle / erased / reach / weapon-DV mods, the Black Market
-Pipeline pick, purchase discounts, Overclocker, the Trust Fund check,
+Pipeline pick (``gear_market``), purchase discounts, Overclocker, the Trust Fund check,
 active drugs, weapon-focus dice and the adept tab enable.
 """
 
@@ -12,15 +13,13 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, cast
 
-from ...data_loader import eval_formula
-from ...improvements import apply_bonus_nodes, substitute_rating
+from ...improvements import apply_bonus_nodes
 from ...improvements.effect_rows import GrantGearRow
-from ...models import ArmorInstall, CharacterState, CommlinkInstall, WeaponInstall
+from ...models import CharacterState
 from ...notices import Notice
 from ..bundle_types import GearBundle
-from ..constants import ADEPT_TALENTS, quality_contact_extra_key
+from ..constants import ADEPT_TALENTS
 from ..contacts import apply_erased_lifestyle_cap
-from ..formulas import parse_armor_value
 from ..gear import (
     _append_armor_weapons,
     _append_gear_weapons,
@@ -29,9 +28,7 @@ from ..gear import (
     _append_quality_weapons,
     _append_ware_weapons,
     _apply_recoil_totals,
-    _clamp_rating,
     _ensure_drone_equipment,
-    _public_weapon,
     _publish_drone_stats,
     _recompute_worn_armor,
     _resolve_apps,
@@ -58,37 +55,14 @@ from ..gear import (
     resolve_custom_drugs,
     resolve_lifestyles,
 )
-from ..gear._common import chosen_cost
 from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
-from ..lookups import _item_by_id
 from ..magic import attach_weapon_focus_dice
 from ..pricing import apply_black_market_avail, apply_overclocker, apply_purchase_discounts
 from ..ware import _attach_ware_to_vehicle_mods
 from .context import Ctx
-
-
-def _discounted_ids(state: CharacterState) -> set[str]:
-    """Ids of what the buyer took the Black Market Pipeline's 10% off."""
-    out: set[str] = set()
-    for rows in (
-        state.gear,
-        state.commlinks,
-        state.cyberdecks,
-        state.rccs,
-        state.optics,
-        state.sensors,
-        state.programs,
-        state.apps,
-        state.weapons,
-        state.armor,
-        state.vehicles,
-        state.drones,
-        state.cyberware,
-        state.bioware,
-    ):
-        out |= {row.id for row in rows or [] if getattr(row, "discounted", False)}
-    return out
+from .gear_market import discounted_ids, pick_black_market
+from .gear_rows import resolve_armor_rows, resolve_commlink_rows, resolve_weapon_rows
 
 
 def resolve_gear(
@@ -107,64 +81,13 @@ def resolve_gear(
     # jacket), so adding those rows up counts the same money twice — which is
     # what the breakdown used to do, on 29 of Chummer's 34 test saves.
     spend: defaultdict[str, int] = defaultdict(int)
-    armor_items: list[dict[str, Any]] = []
-    weapons: list[dict[str, Any]] = []
-    commlinks: list[dict[str, Any]] = []
     cyberdecks: list[dict[str, Any]] = []
     rccs: list[dict[str, Any]] = []
     errors: list[Notice] = []
 
-    kept_armor: list[ArmorInstall] = []
-    for armor_inst in state.armor:
-        spec = _item_by_id("armor", armor_inst.armor_id)
-        if not spec:
-            continue
-        rating = _clamp_rating(spec, armor_inst.rating)
-        armor_inst.rating = rating
-        armor_inst.equipped = bool(armor_inst.equipped)
-        armor_inst.wireless = bool(armor_inst.wireless)
-        has_wireless = bool(spec.get("wirelessbonus"))
-        picked = chosen_cost(spec, armor_inst.cost)
-        armor_inst.cost = picked
-        cost = picked if picked is not None else int(eval_formula(str(spec.get("cost") or "0"), rating, 0))
-        spend["armor"] += cost
-        value, additive = parse_armor_value(str(spec.get("armor") or "0"), rating)
-        if armor_inst.equipped:
-            nodes = substitute_rating(list(spec.get("bonus") or []), rating)
-            if has_wireless and armor_inst.wireless:
-                nodes = nodes + substitute_rating(list(spec.get("wirelessbonus") or []), rating)
-            if nodes:
-                bonus_sources.append((spec["name"], nodes))
-        kept_armor.append(armor_inst)
-        armor_items.append(
-            {
-                "id": armor_inst.id,
-                "armor_id": spec["id"],
-                "name": spec["name"],
-                "category": spec.get("category") or "Armor",
-                "armor": spec.get("armor") or "0",
-                "armor_value": value,
-                "additive": additive,
-                "armoroverride": spec.get("armoroverride") or "",
-                "rating": rating,
-                "rating_max": int(spec.get("maxrating") or 0),
-                "equipped": armor_inst.equipped,
-                "wireless": armor_inst.wireless,
-                "has_wireless": has_wireless,
-                "nuyen": cost,
-                "cost_range": spec.get("cost_range"),
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-                "contributes": 0,
-                "armorcapacity": spec.get("armorcapacity") or "",
-                "addmodcategories": list(spec.get("addmodcategories") or []),
-                "mods": [],
-                "capacity_used": 0,
-                "capacity_max": 0,
-            }
-        )
-    state.armor = kept_armor
+    state.armor, armor_items, armor_nuyen, armor_bonus = resolve_armor_rows(state)
+    spend["armor"] += armor_nuyen
+    bonus_sources.extend(armor_bonus)
     armor_mods, mod_nuyen, mod_warns, mod_errors, mod_bonus = _resolve_armor_mods(state, armor_items)
     spend["armorMods"] += mod_nuyen
     warnings.extend(mod_warns)
@@ -175,27 +98,8 @@ def resolve_gear(
     )
     warnings.extend(worn_warns)
 
-    kept_weapons: list[WeaponInstall] = []
-    for weapon_inst in state.weapons:
-        spec = _item_by_id("weapons", weapon_inst.weapon_id)
-        if not spec:
-            continue
-        qty = max(1, int(weapon_inst.qty or 1))
-        weapon_inst.qty = qty
-        unit = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
-        cost = unit * qty
-        spend["weapons"] += cost
-        kept_weapons.append(weapon_inst)
-        weapons.append(
-            _public_weapon(
-                spec,
-                inst_id=weapon_inst.id,
-                qty=qty,
-                nuyen=cost,
-                loaded_ammo_id=weapon_inst.loaded_ammo_id,
-            )
-        )
-    state.weapons = kept_weapons
+    state.weapons, weapons, weapon_nuyen = resolve_weapon_rows(state)
+    spend["weapons"] += weapon_nuyen
     _append_armor_weapons(weapons, armor_items)
     _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
@@ -206,41 +110,8 @@ def resolve_gear(
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
 
-    kept_links: list[CommlinkInstall] = []
-    for link_inst in state.commlinks:
-        spec = _item_by_id("commlinks", link_inst.gear_id)
-        if not spec:
-            continue
-        rating = _clamp_rating(spec, link_inst.rating)
-        link_inst.rating = rating
-        qty = max(1, int(link_inst.qty or 1))
-        cost = int(eval_formula(str(spec.get("cost") or "0"), rating, 0)) * qty
-        spend["commlinks"] += cost
-        device = int(eval_formula(str(spec.get("devicerating") or "0"), rating, 0))
-        processing = int(eval_formula(str(spec.get("dataprocessing") or "0"), rating, 0))
-        firewall = int(eval_formula(str(spec.get("firewall") or "0"), rating, 0))
-        kept_links.append(link_inst)
-        commlinks.append(
-            {
-                "id": link_inst.id,
-                "gear_id": spec["id"],
-                "name": spec["name"],
-                "category": spec.get("category") or "Commlinks",
-                "rating": rating,
-                "rating_max": int(spec.get("maxrating") or 0),
-                "qty": qty,
-                "device_rating": device,
-                "attack": int(eval_formula(str(spec.get("attack") or "0"), rating, 0)),
-                "sleaze": int(eval_formula(str(spec.get("sleaze") or "0"), rating, 0)),
-                "dataprocessing": processing,
-                "firewall": firewall,
-                "nuyen": cost,
-                "avail": spec.get("avail") or "",
-                "source": spec.get("source") or "",
-                "page": spec.get("page") or "",
-            }
-        )
-    state.commlinks = kept_links
+    state.commlinks, commlinks, link_nuyen = resolve_commlink_rows(state)
+    spend["commlinks"] += link_nuyen
 
     kept_decks, cyberdecks, deck_nuyen = _resolve_matrix_devices("cyberdecks", list(state.cyberdecks or []))
     state.cyberdecks = kept_decks
@@ -395,27 +266,7 @@ def gear_phase(ctx: Ctx) -> None:
     apply_weapon_category_dv(ctx.gear.get("weapons"), ctx.effects)
     apply_weapon_category_dice(ctx.gear.get("weapons"), ctx.effects)
     apply_weapon_skill_accuracy(ctx.gear.get("weapons"), ctx.effects)
-    ctx.bmp_category = ""
-    ctx.bmp_contact_id = ""
-    ctx.bmp_active = False
-    if ctx.effects.get("black_market_discount"):
-        for q in ctx.qualities:
-            if not any(node.get("tag") == "blackmarketdiscount" for node in (q.get("bonus") or [])):
-                continue
-            ctx.bmp_category = str((ctx.state.quality_extras or {}).get(q["id"]) or "").strip()
-            ctx.bmp_contact_id = str(
-                (ctx.state.quality_extras or {}).get(quality_contact_extra_key(q["id"])) or ""
-            ).strip()
-            contact_ids = {str(getattr(c, "id", "") or "") for c in (ctx.state.contacts or [])}
-            if not ctx.bmp_category:
-                ctx.warn("engine.gear.bmpCategory")
-            if not ctx.bmp_contact_id:
-                ctx.warn("engine.gear.bmpContact")
-            elif ctx.bmp_contact_id not in contact_ids:
-                ctx.warn("engine.gear.bmpContactMissing")
-                ctx.bmp_contact_id = ""
-            ctx.bmp_active = bool(ctx.bmp_category and ctx.bmp_contact_id)
-            break
+    pick_black_market(ctx)
     # These two iterate gear[<category>] over a tuple of category names, so
     # they take a plain str-keyed dict rather than the GearBundle TypedDict.
     apply_purchase_discounts(
@@ -424,7 +275,7 @@ def gear_phase(ctx: Ctx) -> None:
         ctx.bio_installed,
         ctx.effects,
         black_market_category=ctx.bmp_category if ctx.bmp_active else "",
-        discounted_ids=_discounted_ids(ctx.state),
+        discounted_ids=discounted_ids(ctx.state),
     )
     if ctx.bmp_active:
         apply_black_market_avail(
