@@ -467,3 +467,21 @@ def test_a_pack_file_with_entities_is_refused_not_expanded() -> None:
 def test_a_manifest_with_entities_is_not_read() -> None:
     raw = b'<!DOCTYPE m [<!ENTITY g "guid">]><manifest><guid>&g;</guid><version>1</version></manifest>'
     assert manifest_key(raw) is None
+
+
+def test_a_directory_named_twice_is_merged_once() -> None:
+    """By guid and by directory name, or simply repeated: Chummer loads a
+    directory once, and a repeated list must not make the server redo it."""
+    files = {k: v.encode() for k, v in _FILES.items()}
+    _, once = build_overlay(files, ["g>1"])
+    _, repeated = build_overlay(files, ["g>1", "d", *["g>1"] * 50])
+    assert repeated.applied == once.applied == 1
+
+
+@pytest.mark.parametrize(
+    "customdata",
+    [pytest.param(["d"] * 501, id="too-many"), pytest.param(["d" * 257], id="too-long")],
+)
+def test_an_oversized_enabled_list_is_refused(client: TestClient, customdata: list[str]) -> None:
+    response = client.post("/api/customdata", json={"files": _FILES, "customdata": customdata})
+    assert response.status_code == 422
