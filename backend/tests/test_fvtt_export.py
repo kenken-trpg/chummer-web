@@ -463,6 +463,31 @@ def test_vehicles_carry_their_stats_mods_stowed_gear_and_mounted_guns() -> None:
     assert [w["name_english"] for w in char["weapons"]["weapon"]] == ["Ares Predator V"]
 
 
+def test_ware_in_a_drone_arm_goes_with_the_drone_and_into_the_mod_description() -> None:
+    drone = GearInstall(gear_id=_id("drones", "Saeder-Krupp Direktionssekretar"))
+    arm = VehicleModInstall(mod_id=_id("vehicle_mods", "Drone Arm"), parent_id=drone.id)
+    state = compute_state(
+        CharacterState(
+            id="fvtt-arm",
+            name="腕",
+            priorities=Priorities(Heritage="D", Attributes="B", Talent="E", Skills="C", Resources="A"),
+            metatype="Human",
+            attributes={"BOD": 3, "AGI": 3, "REA": 5, "STR": 2, "CHA": 2, "INT": 4, "LOG": 5, "WIL": 3},
+            drones=[drone],
+            vehicle_mods=[arm],
+            cyberware=[CyberwareInstall(ware_id=_id("cyberware", "Spurs"), grade="Standard", parent_id=arm.id)],
+        )
+    )
+    char = _char(state, "en")
+    # not the character's own ware
+    assert not char["cyberwares"]["cyberware"]
+    (row,) = char["vehicles"]["vehicle"]
+    mods = {m["name_english"]: m for m in row["mods"]["mod"] if "cyberwares" in m}
+    assert [w["name_english"] for w in mods["Drone Arm"]["cyberwares"]["cyberware"]] == ["Spurs"]
+    # the importer only reads `notes`
+    assert mods["Drone Arm"]["notes"] == "<p>Spurs</p>"
+
+
 def test_portraits_go_as_bare_base64_the_main_one_apart() -> None:
     char = _char(_rigger())
     bare = _PNG.split(",", 1)[1]
