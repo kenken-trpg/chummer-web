@@ -43,6 +43,7 @@ export function renderTab(
     catalog?: ReturnType<typeof makeCatalog>;
     patch?: (b: Record<string, unknown>) => void;
     setCharacter?: (c: Character) => void;
+    tr?: (name: string) => string;
   } = {},
 ) {
   const ch = makeCharacter(over.character);
@@ -52,6 +53,7 @@ export function renderTab(
         catalog: over.catalog ?? skillsCatalog(),
         patch: over.patch ?? (() => {}),
         setCharacter: over.setCharacter ?? (() => {}),
+        ...(over.tr ? { tr: over.tr } : {}),
       })}
     />,
   );
