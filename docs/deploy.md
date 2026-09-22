@@ -84,7 +84,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | `PORT` | `8080` | port Caddy listens on |
 | `ALLOWED_ORIGINS` | `localhost:3000` list | only matters for a split deploy (frontend on another origin) |
 | `RATE_LIMIT` | `120/minute` | per client IP, all routes |
-| `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the two import routes |
+| `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the XML-handling routes (imports, settings / customdata upload, .chum5 export and its check) |
 | `CSP_REPORT_RATE_LIMIT` | `60/minute` | per client IP, `/api/csp-report` |
 | `MAX_REQUEST_BYTES` | `12582912` | 413 above this, chunked bodies included; the bundled Caddy enforces it too |
 | `CHUM5_MAX_DECOMPRESSED_BYTES` | `33554432` | `.chum5lz` decompression-bomb cap |

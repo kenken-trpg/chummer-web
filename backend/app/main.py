@@ -595,7 +595,8 @@ def _content_disposition(name: str) -> str:
 
 
 @app.post("/api/characters/chummer")
-def export_chummer(req: StateRequest) -> Response:
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def export_chummer(request: Request, req: StateRequest) -> Response:
     """Download a Chummer5a-compatible .chum5 (plain XML) for the given state."""
     xml = state_to_chum5(req.state)
     return Response(
