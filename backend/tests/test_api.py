@@ -315,3 +315,11 @@ def test_validation_error_does_not_echo_the_input() -> None:
     r = client.post("/api/characters/patch", content=body, headers={"content-type": "application/json"})
     # Some Pythons' json parser gives up on the depth first (400); either way, not a 500.
     assert r.status_code in (400, 422)
+
+
+def test_chummer_export_check_is_limited_like_the_download() -> None:
+    ip = {"cf-connecting-ip": "203.0.113.57"}
+    body = {"state": client.post("/api/characters/new", json={}, headers=ip).json()}
+    codes = [client.post("/api/characters/chummer/check", json=body, headers=ip).status_code for _ in range(21)]
+    assert codes[:20] == [200] * 20
+    assert codes[20] == 429

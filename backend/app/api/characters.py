@@ -150,10 +150,15 @@ def export_chummer(request: Request, req: StateRequest) -> Response:
 
 
 @router.post("/api/characters/chummer/check")
-def check_chummer_export(req: StateRequest) -> dict:
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def check_chummer_export(request: Request, req: StateRequest) -> dict:
     """What the character would lose on a .chum5 round trip, as notices —
     asked for alongside the download so the player hears about it before
-    they take the file to Chummer."""
+    they take the file to Chummer.
+
+    Limited like the download itself: one call exports, re-imports and
+    computes the character, the heaviest thing any route does, and the
+    default 120/minute would let one client keep a core busy with it."""
     return {"differences": roundtrip_differences(req.state)}
 
 
