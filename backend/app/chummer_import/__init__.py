@@ -9,8 +9,9 @@ vehicles + drones + vehicle mods. Anything the catalog can't resolve is skipped
 and named in the returned warning list rather than failing the import.
 
 One module per group of sections (`identity`, `skills`, `balance`,
-`qualities`, `magic`, `gear`, `lifestyles`), the `.chum5lz` container in `container`, and the catalog
-lookups they all share in `_common`.
+`qualities`, `magic`, `ware`, `combat`, `gear`, `vehicles`, `lifestyles`), the
+`.chum5lz` container in `container`, and the catalog lookups they all share in
+`_common`.
 """
 
 from __future__ import annotations
@@ -24,13 +25,16 @@ from ..data_loader import catalog
 from ..data_loader._xml import parse_untrusted
 from ..notices import Notice, NoticeError, notice
 from .balance import _import_balance
+from .combat import _import_armor, _import_weapons
 from .container import decompress_chum5lz
-from .gear import _import_armor, _import_custom_drugs, _import_gear, _import_vehicles, _import_ware, _import_weapons
+from .gear import _import_custom_drugs, _import_gear
 from .identity import _import_attributes, _import_identity
 from .lifestyles import _import_lifestyles
 from .magic import _import_foci, _import_initiation, _import_magic, _import_spirits
 from .qualities import _import_qualities
 from .skills import _import_skills
+from .vehicles import _import_vehicles
+from .ware import _import_ware
 
 
 def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
