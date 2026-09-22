@@ -12,11 +12,14 @@ from pathlib import PurePosixPath
 from typing import Annotated, NamedTuple
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
+from limits import parse
 
 from ..catalog_view import public_catalog
 from ..data_loader import Overlay, using_customdata
 from ..dataset_store import lookup
 from ..notices import notice
+from . import deploy
+from .deploy import _IMPORT_RATE_LIMIT, limiter
 
 _log = logging.getLogger("chummer_web")
 
@@ -63,7 +66,15 @@ _custom_catalogs: OrderedDict[str, _CachedCatalog] = OrderedDict()
 _custom_catalogs_lock = threading.Lock()
 
 
-def _cached_catalog_for(overlay: Overlay) -> _CachedCatalog:
+#: What a cache miss below costs a caller. A miss reparses and re-serialises
+#: the catalog (~0.4 s of CPU), and cycling through more sets than are cached
+#: makes every ask a miss — at the route's default 120/minute that is most of
+#: a core per client. So a rebuild is counted like an import, and a hit is
+#: not counted at all.
+_REBUILD_LIMIT = parse(_IMPORT_RATE_LIMIT)
+
+
+def _cached_catalog_for(overlay: Overlay, caller: str) -> _CachedCatalog:
     """The catalog as this custom-data set sees it.
 
     Built under `using_customdata`, so every loader in `catalog()` reads the
@@ -76,6 +87,8 @@ def _cached_catalog_for(overlay: Overlay) -> _CachedCatalog:
         if found is not None:
             _custom_catalogs.move_to_end(overlay.key)
             return found
+    if not limiter.limiter.hit(_REBUILD_LIMIT, "catalog-rebuild", caller):
+        raise HTTPException(status_code=429, detail=notice("api.catalogRebuildLimited"))
     # Built outside the lock: the first build under a new overlay reparses the
     # catalog (~0.4 s) and holding the lock would queue every other dataset
     # behind it. Two racing builds produce equal bytes, so the loser is simply
@@ -132,7 +145,7 @@ def catalog_endpoint(
             )
         overlay = found[0]
     try:
-        cached = _cached_catalog_for(overlay) if overlay else _cached_catalog()
+        cached = _cached_catalog_for(overlay, deploy._client_ip(request)) if overlay else _cached_catalog()
     except FileNotFoundError as exc:
         # The name of the file, not the path to it. `str(exc)` reads
         # "[Errno 2] No such file or directory: '/app/backend/vendor/…'", and
