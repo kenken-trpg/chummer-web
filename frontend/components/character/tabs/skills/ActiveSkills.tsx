@@ -126,10 +126,17 @@ export function ActiveSkills(props: TabPanelProps) {
                     {tr(s.name)}
                   </HelpTip>
                 </span>
+                {/* The slider shows what the character says, `0` included;
+                    the derived total is only for a skill it has no rating of
+                    its own for — one a skill group grants. A `||` here let
+                    that total win over a rating of 0: dragging to 0 wrote 0
+                    and then read back the total the server had not recomputed
+                    yet, so the thumb snapped back and the commit sent the old
+                    rating. 1 was as low as a skill could go. */}
                 <RangeInput
                   min={0}
                   max={skillMax + (d.skill_max_bonus?.[s.name] || 0)}
-                  value={ch.skills[s.name] || d.skill_totals[s.name] || 0}
+                  value={ch.skills[s.name] ?? d.skill_totals[s.name] ?? 0}
                   label={tr(s.name)}
                   title={skillHint(s.name, s.attribute, s.category)}
                   onDraft={(value) =>
