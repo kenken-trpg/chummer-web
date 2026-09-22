@@ -321,3 +321,15 @@ def test_ja_overrides_win_over_the_upstream_group_name() -> None:
     names = load_skill_group_names()
     assert overrides["Conjuring"] == "召喚"  # upstream says 召霊術
     assert names["Conjuring"] == overrides["Conjuring"]
+
+
+def test_an_english_echo_does_not_undo_a_translation_in_the_same_file():
+    # a supplement repeats the English as its "translation" of the same entry
+    mapping = load_translations()
+    if "Vampire" not in mapping:
+        return  # vendored lang file not fetched
+    assert mapping["Vampire"] == "ヴァンパイア"
+    assert mapping["Matches"] == "マッチ"
+    # a different thing in another file keeps its own English: the gear Shade
+    # is not the critter 翳り
+    assert mapping["Shade"] == "Shade"

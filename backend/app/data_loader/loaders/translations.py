@@ -38,11 +38,25 @@ def load_translations() -> dict[str, str]:
         except ET.ParseError as exc:
             log.warning("ja-jp_data.xml parse failed: %s", exc)
         else:
-            for node in root.iter():
-                name = _text(node.find("name"))
-                trans = _text(node.find("translate"))
-                if name and trans:
+            # file each name's translation came from, e.g. "gear.xml"
+            origin: dict[str, str] = {}
+            for section in root:
+                file = section.get("file") or ""
+                for node in section.iter():
+                    name = _text(node.find("name"))
+                    trans = _text(node.find("translate"))
+                    if not (name and trans):
+                        continue
+                    # An untranslated supplement repeats the English as its
+                    # "translation". Within one file that is the same thing
+                    # again, and must not undo the real translation found
+                    # earlier (Vampire ヴァンパイア, Matches マッチ). Across files
+                    # it is a different thing — the gear Shade is not the
+                    # critter 翳り — so there the last one still wins.
+                    if trans == name and origin.get(name) == file and mapping[name] != name:
+                        continue
                     mapping[name] = trans
+                    origin[name] = file
     overrides = _load_ja_overrides("data.json")
     if overrides:
         log.info("applied %d ja_overrides/data.json entries", len(overrides))
