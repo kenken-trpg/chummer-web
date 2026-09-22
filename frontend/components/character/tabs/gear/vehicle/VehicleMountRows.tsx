@@ -19,7 +19,11 @@ export function VehicleMountRows({
 }: VehicleRowProps) {
   const byBook = useBookFilter();
   const sizes = (catalog.weapon_mounts || []).filter(
-    (mod) => mod.category === "Size" && vehicleFits(mod.required, item),
+    // Chummer's `BookXPath` hides the drone sizes unless `<dronemods>` is on
+    (mod) =>
+      mod.category === "Size" &&
+      (d.drone_mods || !mod.optionaldrone) &&
+      vehicleFits(mod.required, item),
   );
   // a weapon is available to mount unless it is already carried or in another
   // mount on this vehicle

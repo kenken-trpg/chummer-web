@@ -312,6 +312,50 @@ describe("<VehicleDroneGear> the inline mod picker", () => {
   });
 });
 
+describe("<VehicleDroneGear> Rigger 5.0's optional drone mods", () => {
+  // Chummer's `BookXPath` hides every `<optionaldrone>` mod and mount size
+  // unless `<dronemods>` is on; under it the free ones (downgrades) are
+  // fitted by hand, so cost "0" does not hide them there.
+  const catalog = () =>
+    makeCatalog({
+      vehicle_mods: [
+        { id: "vm1", name: "Speed (Drone)", category: "Speed", cost: "400", optionaldrone: true },
+        {
+          id: "vm2",
+          name: "Speed Downgrade (Drone)",
+          category: "Speed",
+          cost: "0",
+          purchasable: false,
+          optionaldrone: true,
+        },
+        { id: "vm3", name: "Rigger Interface", category: "Cosmetic", cost: "1000" },
+      ],
+      weapon_mounts: [
+        { id: "wm1", name: "Small (Drone)", category: "Size", cost: "1600", optionaldrone: true },
+        { id: "wm2", name: "Standard", category: "Size", cost: "2500" },
+      ],
+    } as never);
+  const drone = vehicle("v1", "Doberman", { category: "Drones: Medium" });
+  const options = (name: string) =>
+    [...screen.getByRole("combobox", { name }).querySelectorAll("option")].map(
+      (o) => o.textContent,
+    );
+
+  it("hides them while the rules are off", () => {
+    renderVehicle(owning(drone), vi.fn(), catalog());
+    expect(options("Doberman: 改造を追加").join(" ")).not.toContain("(Drone)");
+    expect(options("Doberman: 武器マウントを追加").join(" ")).not.toContain("(Drone)");
+  });
+
+  it("offers them, free downgrades included, once the rules are on", () => {
+    renderVehicle(owning(drone, { derived: { drone_mods: true } }), vi.fn(), catalog());
+    const mods = options("Doberman: 改造を追加").join(" ");
+    expect(mods).toContain("Speed (Drone)");
+    expect(mods).toContain("Speed Downgrade (Drone)");
+    expect(options("Doberman: 武器マウントを追加").join(" ")).toContain("Small (Drone)");
+  });
+});
+
 describe("<VehicleDroneGear> weapon mounts", () => {
   const mount = (id: string, name: string, over: Record<string, unknown> = {}) => ({
     id,

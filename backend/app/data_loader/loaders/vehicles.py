@@ -165,6 +165,8 @@ def load_weapon_mounts() -> list[dict[str, Any]]:
                 "slots": _text(el.find("slots"), "0"),
                 "required": _vehicle_constraints(required),
                 "forbidden": _vehicle_constraints(forbidden),
+                # the drone mount sizes of Rigger 5.0's optional drone rules
+                "optionaldrone": el.find("optionaldrone") is not None,
                 "required_parts": _mount_part_requirements(required),
                 "forbidden_parts": _mount_part_requirements(forbidden),
                 "source": _text(el.find("source")),

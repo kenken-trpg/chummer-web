@@ -262,6 +262,8 @@ export interface VehicleModCatalogItem {
   minrating: number;
   maxrating: number;
   purchasable?: boolean;
+  /** one of Rigger 5.0's optional drone mods, offered only under `<dronemods>` */
+  optionaldrone?: boolean;
   capacity?: string;
   subsystems?: string[];
   required?: {
@@ -289,6 +291,8 @@ export interface WeaponMountCatalogItem {
   cost: string;
   slots: string;
   avail: string;
+  /** a drone mount size of Rigger 5.0's optional drone rules */
+  optionaldrone?: boolean;
   required?: {
     names?: string[];
     category_contains?: string[];

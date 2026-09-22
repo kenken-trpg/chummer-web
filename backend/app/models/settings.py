@@ -154,6 +154,9 @@ class SettingsState(BaseModel):
     drone_armor_multiplier_enabled: bool | None = None
     #: `<dronearmorflatnumber>`
     drone_armor_multiplier: int | None = None
+    #: `<dronemods>` / `<dronemodsmaximumpilot>`
+    drone_mods: bool | None = None
+    drone_mods_maximum_pilot: bool | None = None
     #: `<alternatemetatypeattributekarma>`
     alternate_metatype_attribute_karma: bool | None = None
     #: `<compensateskillgroupkarmadifference>`

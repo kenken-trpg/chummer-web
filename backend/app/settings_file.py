@@ -188,6 +188,8 @@ _BOOL_FIELDS: dict[str, str] = {
     "usepointsonbrokengroups": "use_points_on_broken_groups",
     "breakskillgroupsincreatemode": "strict_skill_groups_in_create_mode",
     "dronearmormultiplierenabled": "drone_armor_multiplier_enabled",
+    "dronemods": "drone_mods",
+    "dronemodsmaximumpilot": "drone_mods_maximum_pilot",
     "alternatemetatypeattributekarma": "alternate_metatype_attribute_karma",
     "compensateskillgroupkarmadifference": "compensate_skill_group_karma_difference",
     "increasedimprovedabilitymodifier": "increased_improved_ability_modifier",

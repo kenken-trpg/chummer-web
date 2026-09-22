@@ -32,6 +32,9 @@ from tests.engine_support import (
 from tests.notice_asserts import has
 
 CLEARSIGHT = "149a8dd2-dfef-473f-94a4-1bdd77e4f855"
+#: Rigger 5.0's optional drone modification rules, where a drone has one
+#: shared pool of mod slots (`Vehicle.DroneModSlots`)
+DRONE_MODS = SettingsState(drone_mods=True)
 
 
 def _options(program_id: str) -> list[str]:
@@ -219,7 +222,7 @@ def test_shin_hyung_extra_body_slots() -> None:
 
 
 def test_roto_drone_uses_listed_modslots() -> None:
-    out = compute(_mundane("roto", drones=[GearInstall(gear_id=ROTO_DRONE)]))
+    out = compute(_mundane("roto", drones=[GearInstall(gear_id=ROTO_DRONE)], settings=DRONE_MODS))
     row = out.derived["drones"][0]
     assert row["slots_max"] == 7
     assert row["slot_tracks"] == []
@@ -477,6 +480,7 @@ def test_doberman_handling_enhancement_slots() -> None:
     out = compute(
         _mundane(
             "dob-hnd",
+            settings=DRONE_MODS,
             drones=[drone],
             vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=drone.id, rating=1)],
         )
@@ -490,6 +494,7 @@ def test_doberman_handling_enhancement_slots() -> None:
     over = compute(
         _mundane(
             "dob-hnd-over",
+            settings=DRONE_MODS,
             drones=[drone],
             vehicle_mods=[VehicleModInstall(mod_id=HANDLING_ENH, parent_id=drone.id, rating=2)],
         )
@@ -813,6 +818,7 @@ def test_a_downgrade_buys_the_drone_a_mod_slot() -> None:
     out = compute(
         _mundane(
             "downgraded",
+            settings=DRONE_MODS,
             drones=[drone],
             vehicle_mods=[VehicleModInstall(mod_id=SENSOR_DOWNGRADE, parent_id=drone.id)],
         )
@@ -831,6 +837,7 @@ def test_a_second_downgrade_buys_nothing() -> None:
     out = compute(
         _mundane(
             "twice-downgraded",
+            settings=DRONE_MODS,
             drones=[drone],
             vehicle_mods=[
                 VehicleModInstall(mod_id=SENSOR_DOWNGRADE, parent_id=drone.id),

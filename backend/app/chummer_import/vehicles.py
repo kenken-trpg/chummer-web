@@ -98,6 +98,29 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     st["drones"] = st_veh
     st["vehicles"] = st_veh_only
     st["vehicle_mods"] = st_vmods
+    _infer_drone_mods(cat, st, st_vmods, st_mounts)
     st["weapon_mounts"] = st_mounts
     # what is stowed in them — `_import_gear` knows the buckets
     st["_vehicle_gear"] = carried
+
+
+def _infer_drone_mods(
+    cat: CatalogDict, st: dict[str, Any], mods: list[dict[str, Any]], mounts: list[dict[str, Any]]
+) -> None:
+    """Turn on `<dronemods>` for a save that could only have been built under it.
+
+    The settings file is not part of the save, but Chummer offers the
+    `<optionaldrone>` mods and mount sizes only while the drone modification
+    rules are on (`CharacterSettings.BookXPath`). A drone carrying one — a
+    downgrade, say — was built under them, and judging it without them splits
+    its one pool of mod slots back into categories it overflows.
+    """
+    optional = {
+        str(item["id"])
+        for item in [*(cat.get("vehicle_mods") or []), *(cat.get("weapon_mounts") or [])]
+        if item.get("optionaldrone")
+    }
+    fitted = [row.get("mod_id") for row in mods if not row.get("included")]
+    fitted += [row.get("size_id") for row in mounts if not row.get("included")]
+    if any(item in optional for item in fitted):
+        st.setdefault("settings", {})["drone_mods"] = True

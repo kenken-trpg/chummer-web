@@ -8,6 +8,7 @@ from typing import Any
 from ....data_loader import catalog
 from ....models import CharacterState, GearInstall
 from ....notices import Notice, notice, term, ui
+from ....rules import current_rules
 from .._common import (
     _leading_vehicle_stat,
 )
@@ -36,13 +37,21 @@ def _host_is_drone(row: dict[str, Any]) -> bool:
     return str(row.get("category") or "").startswith("Drones")
 
 
+def drone_mod_rules(row: dict[str, Any]) -> bool:
+    """Whether Rigger 5.0's optional drone modification rules govern this row:
+    the `<dronemods>` setting is on and the row is a drone (Chummer's
+    `IsDrone && Settings.DroneMods`). Off, a drone is fitted like any other
+    vehicle, one slot track per mod category."""
+    return current_rules().drone_mods and _host_is_drone(row)
+
+
 def _add_vehicle_slot_use(
     parent: dict[str, Any], slots: int, category: str, included: bool, *, downgrade: bool = False
 ) -> None:
     if included:
         return
     used = max(0, int(slots))
-    if _host_is_drone(parent):
+    if drone_mod_rules(parent):
         # A mod that costs a negative number of slots hands them to the drone
         # instead of taking them (`Vehicle.DroneModSlots`). It is banked here
         # and added to the maximum in `_finalize_vehicle_slots`, never
@@ -83,7 +92,7 @@ def _finalize_vehicle_slots(hosts: list[dict[str, Any]]) -> list[Notice]:
     errors: list[Notice] = []
     for row in hosts:
         body = int((row.get("stats") or {}).get("body") or _leading_vehicle_stat(str(row.get("body") or "0")))
-        if _host_is_drone(row):
+        if drone_mod_rules(row):
             listed = row.get("modslots")
             maximum = int(listed) if listed is not None else body
             maximum += _drone_slot_bonus(row.pop("_slot_given_back", None) or [])

@@ -294,6 +294,8 @@ class DerivedDict(TypedDict):
     made_man: bool
     #: `<allowcyberwareessdiscounts>`: the ware rows offer an essence discount
     allow_ess_discounts: bool
+    #: `<dronemods>`: Rigger 5.0's optional drone mods and mount sizes are offered
+    drone_mods: bool
     black_market_discount: bool
     black_market_category: str
     black_market_contact_id: str

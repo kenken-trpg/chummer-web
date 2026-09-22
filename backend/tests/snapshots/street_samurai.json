@@ -188,6 +188,7 @@
     "attrs": "WIL+INT",
     "pool": 2
   },
+  "drone_mods": false,
   "drones": [],
   "enabled_tabs": [],
   "enhancements": [],

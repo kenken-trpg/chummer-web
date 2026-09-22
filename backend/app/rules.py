@@ -218,6 +218,13 @@ class Rules:
     #: (Chummer's `Vehicle.MaxArmor`, Rigger 5.0 p.159).
     drone_armor_multiplier_enabled: bool = False
     drone_armor_multiplier: int = 2
+    #: `<dronemods>`: Rigger 5.0's optional drone modification rules (R5
+    #: p.122) — the `<optionaldrone>` mods, one shared pool of mod slots, no
+    #: armor ceiling and the speed a heavily armored drone loses.
+    drone_mods: bool = False
+    #: `<dronemodsmaximumpilot>`: under those rules a drone's Pilot also stops
+    #: at twice its printed value (`Vehicle.MaxPilot`).
+    drone_mods_maximum_pilot: bool = False
     #: `<increasedimprovedabilitymodifier>`: Improved Ability tops out at 1.5x
     #: the boosted skill's learned rating instead of 0.5x (`Power.TotalMaximumLevels`).
     increased_improved_ability_modifier: bool = False
@@ -391,6 +398,8 @@ def rules_for(settings: object | None) -> Rules:
         ("use_points_on_broken_groups", "use_points_on_broken_groups"),
         ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
         ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),
+        ("drone_mods", "drone_mods"),
+        ("drone_mods_maximum_pilot", "drone_mods_maximum_pilot"),
         ("alternate_metatype_attribute_karma", "alternate_metatype_attribute_karma"),
         ("compensate_skill_group_karma_difference", "compensate_skill_group_karma_difference"),
         ("increased_improved_ability_modifier", "increased_improved_ability_modifier"),

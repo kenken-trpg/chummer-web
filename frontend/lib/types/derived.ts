@@ -84,6 +84,8 @@ export interface Derived {
   made_man?: boolean;
   /** `<allowcyberwareessdiscounts>`: ware rows offer an essence discount */
   allow_ess_discounts?: boolean;
+  /** `<dronemods>`: Rigger 5.0's optional drone mods and mount sizes are offered */
+  drone_mods?: boolean;
   black_market_discount?: boolean;
   black_market_category?: string;
   black_market_contact_id?: string;
