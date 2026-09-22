@@ -18,6 +18,7 @@ Nothing here decides *what* the sections contain — they are pure functions of
 
 from __future__ import annotations
 
+from .. import ja_default
 from ..data_loader import catalog, codex
 from . import chargen, gear, magic, matrix, vehicles, ware
 from .chargen import CORE_METATYPES
@@ -43,7 +44,8 @@ def public_catalog() -> dict:
     # over them. Not a domain section — nothing here filters by book; the
     # client narrows its pick lists against `Character.settings.books`.
     out["books"] = [*(raw.get("books") or []), codex.BOOK]
-    out["settings_presets"] = raw.get("settings_presets") or []
+    # This app's own 日本語環境 first — it is what a new character starts under.
+    out["settings_presets"] = [ja_default.PRESET, *(raw.get("settings_presets") or [])]
     # Items the Shadowrun Codex reprints carry it as a second source; see
     # data_loader/codex.py.
     out["translations"] = codex.fill_translations(raw["translations"], codex.stamp(out))

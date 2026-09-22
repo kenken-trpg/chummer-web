@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import uuid
 
+from . import ja_default
 from .engine import (
     ADEPT_TALENTS,
     BUILD_METHOD_KARMA,
@@ -43,6 +44,7 @@ def _new_state(payload: CharacterCreate) -> CharacterState:
         priorities=payload.priorities or Priorities(),
         metatype=payload.metatype,
         attributes=default_attributes(meta),
+        settings=ja_default.settings(),
     )
     return compute(state)
 

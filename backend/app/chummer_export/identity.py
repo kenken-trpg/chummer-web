@@ -10,6 +10,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
+from .. import ja_default
 from ..data_loader import catalog
 from ..engine import find_metatype
 from ..engine.priority import heritage_cost, priority_value
@@ -104,7 +105,11 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
     settings = state.settings
     if not settings.name:
         return
-    preset = next((p for p in catalog().get("settings_presets") or [] if p.get("name") == settings.name), None)
+    presets = catalog().get("settings_presets") or []
+    # 日本語環境 is this app's own preset, which no Chummer has: point it at
+    # Standard, the shipped preset it builds by, with its books in `<sources>`.
+    wanted = "Standard" if settings.name == ja_default.NAME else settings.name
+    preset = next((p for p in presets if p.get("name") == wanted), None)
     # A settings file of the player's own is keyed by its file name, which a
     # .chum5 never carried and this app therefore does not hold. The name it
     # was saved under is the best guess available, and the scoring below is

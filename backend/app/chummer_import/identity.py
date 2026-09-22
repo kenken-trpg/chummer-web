@@ -6,6 +6,7 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any
 
+from .. import ja_default
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..models import clean_portrait
@@ -81,7 +82,8 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
             pass
     if not name:
         return extra
-    for preset in cat.get("settings_presets") or []:
+    # 日本語環境 is this app's preset, not in Chummer's list (app/ja_default.py)
+    for preset in [ja_default.PRESET, *(cat.get("settings_presets") or [])]:
         if preset.get("name") != name:
             continue
         found: dict[str, Any] = {"name": name, "books": list(preset.get("books") or [])}
