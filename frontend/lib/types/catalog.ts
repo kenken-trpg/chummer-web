@@ -120,6 +120,7 @@ export interface WeaponRangeBands {
 }
 
 export interface WeaponAccessoryCatalogItem {
+  also_in?: AlsoIn[];
   id: string;
   name: string;
   mounts: string[];
@@ -182,6 +183,13 @@ export interface ProgramCatalogItem {
   page: string;
 }
 
+/** Another book that prints the row — the Shadowrun Codex reprints some
+ *  English-supplement items (backend/app/data_loader/codex.py). */
+export interface AlsoIn {
+  source: string;
+  page?: string;
+}
+
 export interface OpticsCatalogItem {
   id: string;
   name: string;
@@ -201,6 +209,7 @@ export interface OpticsCatalogItem {
 }
 
 export interface GearCatalogItem extends OpticsCatalogItem {
+  also_in?: AlsoIn[];
   /** `Variable(lo-hi)`: the range the player prices it within. */
   cost_range?: [number, number] | null;
   needs_extra?: boolean;
@@ -434,6 +443,7 @@ export interface Catalog {
     karma: number;
     category: string;
     source: string;
+    also_in?: AlsoIn[];
     page: string;
     bonus_tags: string[];
     forbidden_qualities?: string[];
@@ -590,6 +600,7 @@ export interface Catalog {
 
 export interface WareCatalogItem {
   id: string;
+  also_in?: AlsoIn[];
   name: string;
   category: string;
   ess: string;

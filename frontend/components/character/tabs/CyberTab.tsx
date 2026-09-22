@@ -1,4 +1,5 @@
 "use client";
+import { sourceText } from "@/lib/character/books";
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
@@ -233,7 +234,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                 <b>{tr(w.name)}</b>
                 <div className="muted">
                   {w.name} / {w.category} / ESS {w.ess}
-                  {w.plugin ? ui("ware.aloneEss") : ""} / {w.cost}¥ / {w.source}
+                  {w.plugin ? ui("ware.aloneEss") : ""} / {w.cost}¥ / {sourceText(w)}
                   {w.maxrating > 1 ? ui("ware.maxRating", { max: w.maxrating }) : ""}
                   {w.plugin ? ui("ware.slottable") : ""}
                 </div>

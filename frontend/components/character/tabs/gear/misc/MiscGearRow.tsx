@@ -264,7 +264,8 @@ export function MiscGearRow({
                 // this row is cut, so they are always on offer.
                 .filter(
                   (mod) =>
-                    mod.category === "Drug Grades" || isBookEnabled(allowedBooks, mod.source),
+                    mod.category === "Drug Grades" ||
+                    isBookEnabled(allowedBooks, mod.source, mod.also_in),
                 )
                 .map((mod) => (
                   <option key={mod.id} value={mod.id}>

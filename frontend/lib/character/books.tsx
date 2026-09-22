@@ -40,7 +40,7 @@ export function useAllowedBooks(): AllowedBooks {
  *  type whose properties are all optional is a *weak type*, so constraining to
  *  it would reject every caller whose rows have no `source` at all — exactly
  *  the rows this is meant to wave through. */
-type Sourced = { source?: string };
+type Sourced = { source?: string; also_in?: { source: string; page?: string }[] };
 
 /**
  * `items`, narrowed to the enabled books.
@@ -52,8 +52,8 @@ type Sourced = { source?: string };
 export function filterByBooks<T>(allowed: AllowedBooks, items: T[]): T[] {
   if (!allowed) return items;
   return items.filter((item) => {
-    const source = (item as Sourced | null)?.source;
-    return !source || allowed.has(source);
+    const row = item as Sourced | null;
+    return isBookEnabled(allowed, row?.source, row?.also_in);
   });
 }
 
@@ -77,7 +77,22 @@ export function useBookFilter(): <T>(items: T[]) => T[] {
 }
 
 /** Is this one item buyable? For the panels that test a single row rather
- *  than filter a list. */
-export function isBookEnabled(allowed: AllowedBooks, source?: string): boolean {
-  return !allowed || !source || allowed.has(source);
+ *  than filter a list. `alsoIn` is the other books that print the item — the
+ *  Shadowrun Codex reprints some Chrome Flesh or Data Trails entries, and
+ *  either book being on is enough. */
+export function isBookEnabled(
+  allowed: AllowedBooks,
+  source?: string,
+  alsoIn?: { source: string }[],
+): boolean {
+  return (
+    !allowed || !source || allowed.has(source) || (alsoIn || []).some((b) => allowed.has(b.source))
+  );
+}
+
+/** `source`, plus where else the item is printed: "CF / SRCX p.198". */
+export function sourceText(item: Sourced): string {
+  return [item.source || "", ...(item.also_in || []).map((b) => `${b.source} p.${b.page || ""}`)]
+    .filter(Boolean)
+    .join(" / ");
 }

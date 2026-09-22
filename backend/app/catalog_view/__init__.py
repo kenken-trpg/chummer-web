@@ -18,7 +18,7 @@ Nothing here decides *what* the sections contain — they are pure functions of
 
 from __future__ import annotations
 
-from ..data_loader import catalog
+from ..data_loader import catalog, codex
 from . import chargen, gear, magic, matrix, vehicles, ware
 from .chargen import CORE_METATYPES
 
@@ -42,9 +42,11 @@ def public_catalog() -> dict:
     # The settings pulldown: which rulebooks exist, and Chummer's own presets
     # over them. Not a domain section — nothing here filters by book; the
     # client narrows its pick lists against `Character.settings.books`.
-    out["books"] = raw.get("books") or []
+    out["books"] = [*(raw.get("books") or []), codex.BOOK]
     out["settings_presets"] = raw.get("settings_presets") or []
-    out["translations"] = raw["translations"]
+    # Items the Shadowrun Codex reprints carry it as a second source; see
+    # data_loader/codex.py.
+    out["translations"] = codex.fill_translations(raw["translations"], codex.stamp(out))
     out["translations_by_kind"] = raw.get("translations_by_kind") or {}
     out["ui_strings"] = raw["ui_strings"]
     return out
