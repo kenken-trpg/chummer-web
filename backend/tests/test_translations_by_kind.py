@@ -27,7 +27,7 @@ SOURCES = {
 #: right (the critter power Fear showing the spirit power's 恐怖) or spelling
 #: drift (手裏剣 / シュリケン) — see the PR that added this file. The ceiling
 #: is here so a new collision from an upstream update gets looked at.
-KNOWN_MISMATCHES = 75
+KNOWN_MISMATCHES = 72
 
 
 def test_every_kind_has_a_source():
