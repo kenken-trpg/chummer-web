@@ -345,6 +345,9 @@ def _resolve_misc_gear(
         row["ammo_gear"] = kids
         extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
         row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
+        # before the loaded round changes them (the FVTT export's base values)
+        for key in ("damage", "ap", "mode"):
+            row[f"{key}_noammo"] = row.get(key)
         loaded = _pick_loaded_ammo(kids, str(row.get("loaded_ammo_id") or "") or None)
         if loaded:
             loaded["loaded"] = True

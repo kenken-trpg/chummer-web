@@ -275,7 +275,7 @@ def resolve_attr_formulas(weapons: list[dict[str, Any]] | None, totals: dict[str
     thrown = {**body, "STR": body["STR"] + int(throw_str or 0)}
     for weapon in weapons or []:
         attrs = thrown if weapon_skill_dictionary_key(weapon) == "Throwing Weapons" else body
-        for key in ("damage", "ap", "accuracy", "reach"):
+        for key in ("damage", "ap", "accuracy", "reach", "damage_noammo", "ap_noammo"):
             raw = str(weapon.get(key) or "")
             if "{" not in raw:
                 continue

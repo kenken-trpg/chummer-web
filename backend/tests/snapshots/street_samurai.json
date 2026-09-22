@@ -733,6 +733,7 @@
       "ammo": "15(c)",
       "ammo_gear": [],
       "ap": "-1",
+      "ap_noammo": "-1",
       "avail": "5R",
       "avail_additive": false,
       "avail_folded": false,
@@ -741,6 +742,7 @@
       "category": "Heavy Pistols",
       "conceal": "0",
       "damage": "8P",
+      "damage_noammo": "8P",
       "from_gear": false,
       "from_ware": false,
       "id": "#5",
@@ -748,6 +750,7 @@
       "limb_str": null,
       "loaded_ammo_id": "",
       "mode": "SA",
+      "mode_noammo": "SA",
       "mounts": [
         "Barrel",
         "Top",

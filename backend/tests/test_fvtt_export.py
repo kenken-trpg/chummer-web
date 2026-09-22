@@ -351,6 +351,36 @@ def test_weapons_carry_the_skill_the_figures_and_the_range_bands() -> None:
     assert shuriken["ranges"] == {"short": "0-4", "medium": "5-8", "long": "9-20", "extreme": "21-28"}
 
 
+def test_ammo_with_a_gun_goes_as_its_clips_and_the_figures_leave_the_loaded_round_out() -> None:
+    gun = WeaponInstall(weapon_id=_id("weapons", "Ares Predator V"))
+    regular = GearInstall(gear_id=_id("gear", "Ammo: Regular Ammo"), qty=2, parent_id=gun.id)
+    apds = GearInstall(gear_id=_id("gear", "Ammo: APDS"), parent_id=gun.id)
+    gun.loaded_ammo_id = apds.id
+    state = compute_state(
+        CharacterState(
+            id="fvtt-ammo",
+            attributes={"BOD": 3, "AGI": 3, "REA": 3, "STR": 3, "CHA": 3, "INT": 3, "LOG": 3, "WIL": 3},
+            name="弾",
+            priorities=Priorities(Heritage="D", Attributes="A", Talent="E", Skills="C", Resources="A"),
+            metatype="Human",
+            weapons=[gun],
+            gear=[regular, apds],
+        )
+    )
+    # the sheet has the APDS in it; Foundry adds the equipped clip itself
+    assert state.derived["weapons"][0]["ap"] == "-5"
+    char = _char(state, "en")
+    (row,) = char["weapons"]["weapon"]
+    assert (row["damage_noammo_english"], row["rawap"]) == ("8P", "-1")
+    clips = {c["english_name"]: c for c in row["clips"]["clip"]}
+    assert clips["Ammo: Regular Ammo"]["count"] == "20"
+    assert "ammotype" not in clips["Ammo: Regular Ammo"]
+    assert clips["Ammo: APDS"]["ammotype"]["weaponbonusap_english"] == "-4"
+    assert (row["currentammo"], row["availableammo"]) == ("Ammo: APDS", "30")
+    # not a second time as loose gear
+    assert not char["gears"]["gear"]
+
+
 _PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 
 

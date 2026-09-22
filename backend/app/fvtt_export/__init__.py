@@ -530,6 +530,15 @@ def _is_sin(row: dict[str, Any]) -> bool:
     return row.get("category") == "ID/Credsticks" and "SIN" in str(row.get("name") or "").split()
 
 
+def _cost_for() -> dict[str, int]:
+    return {str(row["id"]): int(row.get("costfor") or 0) for bucket in _GEAR_BUCKETS for row in catalog_list(bucket)}
+
+
+def _rounds(row: dict[str, Any], cost_for: dict[str, int]) -> int:
+    """This app counts lots of `costfor` (a box of 10 rounds); Chummer the rounds."""
+    return int(row.get("qty") or 1) * max(1, cost_for.get(str(row.get("gear_id")), 1))
+
+
 def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str = "") -> list[dict[str, Any]]:
     """Flags steer the importer's split: `iscommlink` makes a device (with
     its matrix attributes), `issin` a SIN, `isammo` ammunition, and the
@@ -537,14 +546,14 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
     nesting, so a child comes out as its own item — except a license under a
     SIN, which the importer reads from the SIN's `children`. `owner` picks
     whose: the character's ("") or a vehicle's (see `_vehicle_owners`)."""
-    cost_for = {
-        str(row["id"]): int(row.get("costfor") or 0) for bucket in _GEAR_BUCKETS for row in catalog_list(bucket)
-    }
+    cost_for = _cost_for()
+    # ammo stowed with a weapon goes out as that weapon's clips (`_clips`)
+    weapons = {str(row.get("id")) for row in derived.get("weapons") or []}
     rows = [
         (bucket, row)
         for bucket in _GEAR_BUCKETS
         for row in derived.get(bucket) or []
-        if owners.get(str(row.get("id") or ""), "") == owner
+        if owners.get(str(row.get("id") or ""), "") == owner and str(row.get("parent_id") or "") not in weapons
     ]
     sins = {str(row.get("id")) for _, row in rows if _is_sin(row)}
 
@@ -554,8 +563,7 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
         shown = custom or tr(name, "gear")
         extra = str(row.get("extra") or "")
         category = str(row.get("category") or "")
-        # this app counts lots of `costfor` (a box of 10 rounds); Chummer the rounds
-        qty = int(row.get("qty") or 1) * max(1, cost_for.get(str(row.get("gear_id")), 1))
+        qty = _rounds(row, cost_for)
         item: dict[str, Any] = {
             "guid": str(row.get("id") or ""),
             "sourceid": str(row.get("gear_id") or ""),
@@ -660,6 +668,7 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
     Those include what the accessories add, so the accessories go along
     with their own accuracy and RC at zero — Foundry would add a mod's on
     top."""
+    cost_for = _cost_for()
     out = []
     for row in derived.get("weapons") or []:
         if owners.get(str(row.get("id") or ""), "") != owner:
@@ -668,7 +677,7 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
         if not name:
             continue
         category = str(row.get("category") or "")
-        raw_mode = str(row.get("mode") or "").strip()
+        raw_mode = str(_noammo(row, "mode") or "").strip()
         mode = None if raw_mode in ("", "0", "-") else raw_mode
         accessories = [
             {
@@ -700,8 +709,8 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
                 "type": str(row.get("type") or ""),
                 "skill": _weapon_skill(row),
                 "rawaccuracy": str(row.get("accuracy") or "0"),
-                "rawap": str(row.get("ap") or "0"),
-                "damage_noammo_english": str(row.get("damage") or ""),
+                "rawap": str(_noammo(row, "ap") or "0"),
+                "damage_noammo_english": str(_noammo(row, "damage") or ""),
                 "rawrc": str(row.get("rc") or "0"),
                 "rawreach": str(row.get("reach") or "0"),
                 "mode": mode,
@@ -715,11 +724,65 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
                 "owncost": _money(row.get("nuyen")),
                 "equipped": "True",
                 "accessories": {"accessory": accessories},
+                **_clips(row, tr, cost_for),
                 "source": str(row.get("source") or ""),
                 "page": str(row.get("page") or ""),
             }
         )
     return out
+
+
+def _noammo(row: dict[str, Any], key: str) -> Any:
+    """The weapon's value before its loaded round: Foundry adds the equipped
+    clip's bonus on top."""
+    return row.get(f"{key}_noammo", row.get(key))
+
+
+def _clips(row: dict[str, Any], tr: Any, cost_for: dict[str, int]) -> dict[str, Any]:
+    """The ammo stowed with the weapon: the importer makes each clip an ammo
+    item, equips the one named `currentammo` and works out the spare clips
+    from `availableammo`. Only a bonus that adds to the gun goes along —
+    Foundry's ammo can't replace the damage or AP."""
+    clips = []
+    current = current_english = ""
+    for kid in row.get("ammo_gear") or []:
+        if kid.get("category") != "Ammunition" or not kid.get("name"):
+            continue
+        name = str(kid["name"])
+        shown = str(kid.get("custom_name") or "") or tr(name, "gear")
+        clip: dict[str, Any] = {
+            "name": shown,
+            "english_name": name,
+            "count": str(_rounds(kid, cost_for)),
+            "location": None,
+            "id": str(kid.get("id") or ""),
+        }
+        bonus = kid.get("weaponbonus") or {}
+        damage = "" if bonus.get("damagereplace") else str(bonus.get("damage") or "")
+        damage += str(bonus.get("damagetype") or "")
+        ap = "" if bonus.get("apreplace") else str(bonus.get("ap") or "")
+        accuracy = str(bonus.get("accuracy") or "")
+        if damage or ap or accuracy:
+            clip["ammotype"] = {
+                "weaponbonusap": ap,
+                "weaponbonusap_english": ap,
+                "weaponbonusacc": accuracy,
+            }
+            # the importer reads the damage only when this key is there
+            if damage:
+                clip["ammotype"]["weaponbonusdamage"] = damage
+                clip["ammotype"]["weaponbonusdamage_english"] = damage
+        clips.append(clip)
+        if kid.get("loaded"):
+            current, current_english = shown, name
+    if not clips:
+        return {}
+    return {
+        "clips": {"clip": clips},
+        "currentammo": current,
+        "currentammo_english": current_english,
+        "availableammo": str(sum(int(clip["count"]) for clip in clips)),
+    }
 
 
 def _vehicle_owners(state: CharacterState, derived: dict[str, Any]) -> dict[str, str]:
