@@ -153,12 +153,37 @@ gcloud run deploy chummer-web \
   --allow-unauthenticated \
   --memory 512Mi --cpu 1 \
   --min-instances 0 \
+  --max-instances 1 \
   --set-env-vars TRUSTED_PROXY_HOPS=2   # rate-limit on the real client IP
 ```
 
 Cloud Run sets `PORT`; the container already honours it. Scale-to-zero is fine
 — the first request after idle pays the container start + the one-off
 `catalog()` XML parse.
+
+- **`--max-instances 1`** — the rate limiter counts in process memory, so a
+  second instance would hand out a second full allowance. It is also the cost
+  ceiling.
+- **Billing is per request** (CPU and memory only while a request is being
+  handled, plus start-up), so a small group's use usually stays inside the
+  monthly free tier. `--min-instances 1` removes cold starts but bills the idle
+  instance around the clock (roughly $10/month at this size).
+- **Budget alert** — Billing › Budgets & alerts, e.g. $5 on the project.
+- **Custom domain** — `gcloud beta run domain-mappings create --service
+  chummer-web --domain chummer.example.com --region asia-northeast1`, then add
+  the DNS record it prints. On Cloudflare DNS, keep that record **DNS only**
+  (grey cloud): Google issues the certificate and needs to see its own
+  endpoint.
+
+**Do not put Cloudflare's proxy in front and set `TRUST_CLOUDFLARE_IP=1`.** The
+`*.run.app` URL stays open to anyone, and a caller going there directly writes
+`cf-connecting-ip` themselves — one request per fake IP, past every limit.
+Closing `run.app` so that only Cloudflare can reach the service takes an
+external HTTPS load balancer (`--ingress internal-and-cloud-load-balancing`),
+whose fixed monthly fee outweighs the rest of this bill. If you want
+Cloudflare's WAF, use the Cloudflare Containers setup instead. Here the
+defence is the app's own limits on the platform-appended client IP
+(`TRUSTED_PROXY_HOPS=2`), and `--max-instances 1` caps the bill.
 
 ## Fly.io
 
