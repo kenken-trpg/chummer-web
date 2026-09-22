@@ -9,7 +9,7 @@ from typing import Any
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..models import clean_portrait
-from ..notices import Notice
+from ..notices import Notice, notice
 from ..rules import DEFAULT_RULES
 
 _BUILD_METHODS = {
