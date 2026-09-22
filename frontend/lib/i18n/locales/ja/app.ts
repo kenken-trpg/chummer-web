@@ -216,6 +216,8 @@ export const JA_APP = {
   "common.deleteLabel": "{name} を削除",
 
   "common.attribute": "能力値",
+  "api.catalogRebuildLimited":
+    "カスタムデータのカタログを作り直す回数が多すぎます。1 分ほど待ってから開き直してください。",
   "api.catalogMissing":
     "Chummer ゲームデータが見つかりません。`make data`（または backend/scripts/fetch_chummer_data.py）を実行してください。Docker で起動している場合はイメージに同梱されているはずです。（{file} が見つかりません）",
   "api.chum5lzUndecompressible":

@@ -211,6 +211,8 @@ export const EN_APP = {
   "common.deleteLabel": "Delete {name}",
 
   "common.attribute": "Attribute",
+  "api.catalogRebuildLimited":
+    "The custom-data catalog has been rebuilt too often. Wait a minute and open it again.",
   "api.catalogMissing":
     "The Chummer game data is missing. Run `make data` (or backend/scripts/fetch_chummer_data.py). If you are running the container, it should already be bundled in the image. ({file} not found)",
   "api.chum5lzUndecompressible":

@@ -485,3 +485,29 @@ def test_a_directory_named_twice_is_merged_once() -> None:
 def test_an_oversized_enabled_list_is_refused(client: TestClient, customdata: list[str]) -> None:
     response = client.post("/api/customdata", json={"files": _FILES, "customdata": customdata})
     assert response.status_code == 422
+
+
+def test_rebuilding_custom_catalogs_is_limited_but_a_cached_one_is_not(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Cycling through more sets than are cached makes every ask a ~0.4 s
+    rebuild, so rebuilds are counted like imports. A set already cached is
+    served however often it is asked for."""
+    from limits import parse
+
+    import app.api.catalog as cat
+
+    monkeypatch.setattr(cat, "_REBUILD_LIMIT", parse("1/minute"))
+    monkeypatch.setattr(cat, "_custom_catalogs", cat.OrderedDict())
+    ip = {"cf-connecting-ip": "203.0.113.77"}
+    up = client.post("/api/customdata", json={"files": _FILES, "customdata": ["g>1"]}, headers=ip).json()
+    params = {"dataset": up["dataset"], "customdata": ["g>1"]}
+    assert client.get("/api/catalog", params=params, headers=ip).status_code == 200
+    assert client.get("/api/catalog", params=params, headers=ip).status_code == 200  # cached
+
+    cat._custom_catalogs.clear()
+    res = client.get("/api/catalog", params=params, headers=ip)
+    assert res.status_code == 429
+    assert res.json()["detail"]["key"] == "api.catalogRebuildLimited"
+    # another caller has its own count
+    assert client.get("/api/catalog", params=params, headers={"cf-connecting-ip": "203.0.113.78"}).status_code == 200
