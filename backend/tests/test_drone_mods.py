@@ -125,3 +125,16 @@ def test_a_save_with_a_drone_mod_was_built_under_the_rules() -> None:
     assert "drone_mods" not in st["settings"]
     _infer_drone_mods(catalog(), st, [], [{"size_id": SMALL_DRONE_MOUNT}])
     assert st["settings"]["drone_mods"] is True
+
+
+def test_ticking_rigger_5_turns_the_rules_on() -> None:
+    row, _ = _drone(DOBERMAN, [(HANDLING_ENH, 1)], SettingsState(books=["SR5", "R5"]))
+    assert row["slot_tracks"] == []
+    # without R5 among the books, the categories come back
+    row, _ = _drone(DOBERMAN, [(HANDLING_ENH, 1)], SettingsState(books=["SR5"]))
+    assert row["slot_tracks"] != []
+
+
+def test_a_settings_file_that_switched_them_off_wins_over_the_book() -> None:
+    row, _ = _drone(DOBERMAN, [(HANDLING_ENH, 1)], SettingsState(books=["SR5", "R5"], drone_mods=False))
+    assert row["slot_tracks"] != []

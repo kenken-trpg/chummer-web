@@ -416,6 +416,10 @@ def rules_for(settings: object | None) -> Rules:
         flag = getattr(settings, src, None)
         if flag is not None:
             overrides[dest] = bool(flag)
+    # Ticking Rigger 5.0 among the books turns its drone modification rules on
+    # too, unless the settings file switched them off outright.
+    if "R5" in (getattr(settings, "books", None) or []) and getattr(settings, "drone_mods", None) is not False:
+        overrides["drone_mods"] = True
     for switch, factor, dest in (
         ("multiply_restricted_cost", "restricted_cost_multiplier", "career_restricted_cost_multiplier"),
         ("multiply_forbidden_cost", "forbidden_cost_multiplier", "career_forbidden_cost_multiplier"),
