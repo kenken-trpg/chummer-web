@@ -15,6 +15,7 @@ from app.main import app
 from app.models import (
     AdeptPowerInstall,
     ArmorInstall,
+    ArmorModInstall,
     CharacterState,
     CommlinkInstall,
     ComplexFormInstall,
@@ -309,6 +310,35 @@ def test_armor_that_stacks_is_marked_with_a_plus() -> None:
     # the importer reads a "+" as an accessory
     assert rows["Helmet"]["armor"].startswith("+")
     assert rows["Armor Jacket"]["equipped"] == "True"
+
+
+def test_armor_mods_go_nested_and_into_the_description() -> None:
+    jacket = ArmorInstall(armor_id=_id("armor", "Armor Jacket"))
+    state = compute_state(
+        CharacterState(
+            id="fvtt-mods",
+            name="m",
+            priorities=Priorities(Heritage="D", Attributes="A", Talent="E", Skills="C", Resources="A"),
+            metatype="Human",
+            attributes={"BOD": 5, "AGI": 5, "REA": 4, "STR": 4, "CHA": 2, "INT": 4, "LOG": 3, "WIL": 3},
+            armor=[jacket],
+            armor_mods=[ArmorModInstall(mod_id=_id("armor_mods", "Fire Resistance"), parent_id=jacket.id, rating=3)],
+        )
+    )
+    row = _char(state, "en")["armors"]["armor"][0]
+    (mod,) = row["armormods"]["armormod"]
+    assert (mod["name_english"], mod["fullname_english"], mod["rating"]) == (
+        "Fire Resistance",
+        "Fire Resistance 3",
+        "3",
+    )
+    assert int(mod["owncost"]) > 0
+    # the importer never reads `armormods`, only `notes` as the description
+    assert row["notes"] == "<p>Fire Resistance 3</p>"
+    # the price stays the armor with its mods, as the sheet shows it
+    assert int(row["owncost"]) == 1000 + int(mod["owncost"])
+    plain = _char(_samurai())["armors"]["armor"][0]
+    assert plain["armormods"] is None and plain["notes"] is None
 
 
 def test_ware_carries_the_essence_and_the_foundry_grade() -> None:

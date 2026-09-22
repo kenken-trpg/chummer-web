@@ -451,8 +451,9 @@ def _money(value: object) -> str:
 
 def _armors(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
     """The finished rating, "+n" for one that stacks: the importer marks an
-    armor with a "+" in it as an accessory. Mods stay inside the value;
-    Chummer nests them and the importer does not read them either."""
+    armor with a "+" in it as an accessory. Mods stay inside the value and
+    the price; the importer never reads `armormods`, so they are also listed
+    in `notes`, which it takes as the item's description."""
     out = []
     for row in derived.get("armor_items") or []:
         name = str(row.get("name") or "")
@@ -460,6 +461,7 @@ def _armors(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
             continue
         value = int(row.get("armor_value") or 0)
         category = str(row.get("category") or "")
+        mods = _armor_mods(row, tr)
         out.append(
             {
                 "guid": str(row.get("id") or ""),
@@ -473,8 +475,44 @@ def _armors(derived: dict[str, Any], tr: Any) -> list[dict[str, str]]:
                 "avail": str(row.get("avail") or ""),
                 "owncost": _money(row.get("nuyen")),
                 "equipped": _flag(row.get("equipped")),
+                "armormods": {"armormod": mods} if mods else None,
+                "notes": _html("\n".join(mod["fullname"] for mod in mods)) if mods else None,
                 "source": str(row.get("source") or ""),
                 "page": str(row.get("page") or ""),
+            }
+        )
+    return out
+
+
+def _armor_mods(row: dict[str, Any], tr: Any) -> list[dict[str, Any]]:
+    out = []
+    for mod in row.get("mods") or []:
+        name = str(mod.get("name") or "")
+        if not name:
+            continue
+        rating = int(mod.get("rating") or 0)
+        shown = tr(name, "armor")
+        category = str(mod.get("category") or "")
+        out.append(
+            {
+                "guid": str(mod.get("id") or ""),
+                "sourceid": str(mod.get("mod_id") or ""),
+                "name": shown,
+                "name_english": name,
+                "fullname": f"{shown} {rating}" if mod.get("rating_max") else shown,
+                "fullname_english": f"{name} {rating}" if mod.get("rating_max") else name,
+                "category": tr(category),
+                "category_english": category,
+                "armor": str(mod.get("armor") or "0"),
+                "maxrating": str(int(mod.get("rating_max") or 0)),
+                "rating": str(rating),
+                "avail": str(mod.get("avail") or ""),
+                "owncost": _money(mod.get("nuyen")),
+                "included": _flag(mod.get("included")),
+                "equipped": _flag(True),
+                "wirelesson": _flag(mod.get("wireless")),
+                "source": str(mod.get("source") or ""),
+                "page": str(mod.get("page") or ""),
             }
         )
     return out
