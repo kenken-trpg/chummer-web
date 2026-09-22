@@ -940,3 +940,33 @@ def test_implants_in_a_drone_arm_are_read_priced_by_the_drone_and_kept() -> None
     back = import_character(chum5_to_state(state_to_chum5(ch))[0])
     assert back.derived["nuyen_spent"] == ch.derived["nuyen_spent"]
     assert {row.parent_id for row in back.cyberware} == {back.vehicle_mods[0].id}
+
+
+def test_a_quality_taken_more_than_once_keeps_every_take() -> None:
+    """Chummer saves Gremlins at 2 as two `<quality>`s. Folding them into one
+    lost a level's karma (Monomax's second Favored and Prejudiced: 8 karma)."""
+    from tests.chum5_fixtures import build_chum5
+
+    xml = build_chum5(qualities=["Gremlins", "Gremlins", "Ambidextrous"])
+    state, _ = chum5_to_state(xml)
+    ids = {r["name"]: r["id"] for r in catalog()["qualities"]}
+    assert state["quality_ids"].count(ids["Gremlins"]) == 2
+    assert state["quality_ids"].count(ids["Ambidextrous"]) == 1
+    derived = import_character(state).derived
+    assert [q["name"] for q in derived["qualities"]].count("Gremlins") == 2
+
+
+def test_a_contact_saved_free_costs_nothing_and_stays_free() -> None:
+    """Chummer's "Free" box: Monomax's third contact is ticked, and charging
+    for it put the karma 3 off what the save says."""
+    from tests.chum5_fixtures import build_chum5
+
+    rows = [
+        {"name": "Paid", "connection": 2, "loyalty": 1},
+        {"name": "Gift", "connection": 3, "loyalty": 3, "free": True},
+    ]
+    plain = import_character(chum5_to_state(build_chum5(contacts=rows[:1]))[0])
+    both = import_character(chum5_to_state(build_chum5(contacts=rows))[0])
+    assert both.derived["contact_points"]["used"] == plain.derived["contact_points"]["used"]
+    back = import_character(chum5_to_state(state_to_chum5(both))[0])
+    assert [c.free for c in back.contacts] == [False, True]

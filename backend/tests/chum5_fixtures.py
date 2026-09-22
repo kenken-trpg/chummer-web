@@ -365,6 +365,8 @@ def build_chum5(
         _e(c, "connection", row.get("connection", 1))
         _e(c, "loyalty", row.get("loyalty", 1))
         _e(c, "type", "Group" if row.get("group") else "Contact")
+        if row.get("free"):
+            _e(c, "free", "True")
 
     ma_el = _e(root, "martialarts")
     for row in martial_arts or []:
