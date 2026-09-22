@@ -190,7 +190,7 @@ docs/       Architecture, data pipeline, deployment, how to add a rule
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — setup, conventions, how to open a PR
 - [`SECURITY.md`](SECURITY.md) — reporting a vulnerability (GitHub private vulnerability reporting)
 - [`docs/architecture.md`](docs/architecture.md) — data flow, `<bonus>` nodes and `effects`, the API surface
-- [`docs/deploy.md`](docs/deploy.md) — Docker, Cloud Run / Fly, or self-hosting behind a Cloudflare Tunnel
+- [`docs/deploy.md`](docs/deploy.md) — Docker, Cloud Run / Fly / Cloudflare Containers, or self-hosting behind a Cloudflare Tunnel
 - [`docs/adding-rules.md`](docs/adding-rules.md) — recipes for a new modifier, item field, tab or validation
 - [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → translation overlay
 - [`docs/i18n.md`](docs/i18n.md) — the two UI-string layers and how to add a locale (written in Japanese)

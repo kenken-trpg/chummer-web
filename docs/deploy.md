@@ -153,12 +153,37 @@ gcloud run deploy chummer-web \
   --allow-unauthenticated \
   --memory 512Mi --cpu 1 \
   --min-instances 0 \
+  --max-instances 1 \
   --set-env-vars TRUSTED_PROXY_HOPS=2   # rate-limit on the real client IP
 ```
 
 Cloud Run sets `PORT`; the container already honours it. Scale-to-zero is fine
 — the first request after idle pays the container start + the one-off
 `catalog()` XML parse.
+
+- **`--max-instances 1`** — the rate limiter counts in process memory, so a
+  second instance would hand out a second full allowance. It is also the cost
+  ceiling.
+- **Billing is per request** (CPU and memory only while a request is being
+  handled, plus start-up), so a small group's use usually stays inside the
+  monthly free tier. `--min-instances 1` removes cold starts but bills the idle
+  instance around the clock (roughly $10/month at this size).
+- **Budget alert** — Billing › Budgets & alerts, e.g. $5 on the project.
+- **Custom domain** — `gcloud beta run domain-mappings create --service
+  chummer-web --domain chummer.example.com --region asia-northeast1`, then add
+  the DNS record it prints. On Cloudflare DNS, keep that record **DNS only**
+  (grey cloud): Google issues the certificate and needs to see its own
+  endpoint.
+
+**Do not put Cloudflare's proxy in front and set `TRUST_CLOUDFLARE_IP=1`.** The
+`*.run.app` URL stays open to anyone, and a caller going there directly writes
+`cf-connecting-ip` themselves — one request per fake IP, past every limit.
+Closing `run.app` so that only Cloudflare can reach the service takes an
+external HTTPS load balancer (`--ingress internal-and-cloud-load-balancing`),
+whose fixed monthly fee outweighs the rest of this bill. If you want
+Cloudflare's WAF, use the Cloudflare Containers setup instead. Here the
+defence is the app's own limits on the platform-appended client IP
+(`TRUSTED_PROXY_HOPS=2`), and `--max-instances 1` caps the bill.
 
 ## Fly.io
 
@@ -190,6 +215,69 @@ primary_region = "nrt"
   interval = "30s"
   timeout = "3s"
 ```
+
+## Cloudflare Containers
+
+Everything on Cloudflare: a Worker takes the request and hands it to a container
+running this same image. Needs the Workers Paid plan and a zone (your domain)
+on the same account. Config lives in `deploy/cloudflare/`.
+
+```bash
+cd deploy/cloudflare
+# edit wrangler.jsonc: routes[0].pattern -> your hostname
+npm install
+npx wrangler login
+npx wrangler deploy        # builds the image locally with Docker, pushes, deploys
+```
+
+The image is built for `linux/amd64`. On an Apple Silicon Mac that runs under
+emulation and the first build takes a long while; later ones reuse the cache.
+
+What the config pins down, and why:
+
+- **One instance** (`max_instances: 1`, and the Worker always asks for the
+  instance named `main`). The rate limiter keeps its counters in process
+  memory, so several containers would each hand out a full allowance. It is
+  also the cost ceiling: nobody can make you run a second container.
+- **`standard-1`** (1/2 vCPU, 4 GiB). `basic` fits in memory but makes the
+  cold-start catalog parse slow.
+- **`sleepAfter = "15m"`** — idle that long and it stops; billing is per
+  running second, so a quiet instance costs little. Lengthen it to avoid cold
+  starts, shorten it to pay less.
+- **`TRUST_CLOUDFLARE_IP=1`** and the public rate limits (`120/minute`,
+  `20/minute`) are set in `src/index.ts` (`envVars`), not `.env` — `.env` is
+  only read by `docker compose`. The container is reachable only through the
+  Worker, so `cf-connecting-ip` there is always Cloudflare's.
+- **`workers_dev: false`, `preview_urls: false`** — the custom domain is the only
+  public URL, so the WAF rules below cannot be walked around via
+  `*.workers.dev`.
+
+Logs: `npx wrangler tail`, or Workers & Pages › chummer-web › Logs in the
+dashboard (the container writes JSON lines, `LOG_FORMAT=json`).
+
+### Before going public
+
+The app keeps no data (no accounts, characters stay in the browser), so the
+realistic risk is someone burning CPU on your bill. In the dashboard, for the
+zone:
+
+1. **Security › WAF › Rate limiting rules** — one rule for
+   `starts_with(http.request.uri.path, "/api/")`, e.g. 100 requests / 1 minute
+   per IP → Block for 1 minute. This stops a flood at the edge, before it wakes
+   the container. The app's own limits stay as the second line.
+2. **Security › Bots** — turn on Bot Fight Mode.
+3. **Billing › Billable usage notifications** — an alert for Workers /
+   Containers usage, so a surprise shows up as an email, not an invoice.
+4. **SSL/TLS** — mode *Full*, *Always Use HTTPS* on, minimum TLS 1.2.
+5. **Small audience?** Put **Zero Trust › Access** on the hostname (e.g. email
+   one-time PIN for your group). Anonymous visitors then never reach the
+   Worker at all.
+6. **Keep the image fresh.** Base images are pinned by digest; redeploy after
+   taking the Dependabot / `make update` bumps, or security fixes in Python,
+   Node and Caddy never reach the running container.
+
+Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
+requests past the limit and confirm the 429 / log line shows your own IP.
 
 ## Self-host + Cloudflare Tunnel
 

@@ -1,0 +1,1 @@
+- **Cloudflare だけで公開できるようにした（Cloudflare Containers）。** `deploy/cloudflare/` に Worker と `wrangler.jsonc` を置き、`npx wrangler deploy` で今と同じイメージが独自ドメインで動きます。公開用のレート制限と、WAF・請求アラートなど公開前の設定手順は `docs/deploy.md` にあります。
