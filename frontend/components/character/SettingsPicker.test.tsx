@@ -119,6 +119,25 @@ describe("SettingsPicker", () => {
     expect(patch).toHaveBeenCalledWith({ settings: { name: "", books: ["SR5", "HT"] } });
   });
 
+  it("titles a book by its own translation, not the entity that shares its name", () => {
+    // "Lockdown" is also the core-rulebook program ロックダウン; the book has no
+    // Japanese edition, so its title stays English
+    render(
+      <SettingsPicker
+        catalog={makeCatalog({
+          books: [{ code: "LCD", name: "Lockdown", name_ja: "Lockdown" }],
+        })}
+        character={makeCharacter({})}
+        ui={testUi}
+        tr={(name) => (name === "Lockdown" ? "ロックダウン" : name)}
+        patch={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("ルールブックを選ぶ"));
+    expect(screen.getByRole("checkbox", { name: /Lockdown/ })).toBeTruthy();
+    expect(screen.queryByText(/ロックダウン/)).toBeNull();
+  });
+
   it("shows a name it does not recognise rather than silently dropping it", () => {
     // an imported .chum5 can name a settings file this app has never seen
     setup({ name: "日本_2021_SumTo10", books: ["SR5", "RG"] });

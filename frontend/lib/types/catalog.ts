@@ -341,6 +341,10 @@ export interface PowerCatalogItem {
 export interface BookInfo {
   code: string;
   name: string;
+  /** The Japanese title, looked up by the book's id — not through
+   *  `translations`, where "Lockdown" is also a program. English when the
+   *  book has no Japanese edition. Absent from an older catalog. */
+  name_ja?: string;
 }
 
 /** A ruleset the user can pick from the settings pulldown. */

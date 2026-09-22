@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any
 
 from .._xml import _int, _text, data_root
+from .translations import load_book_names
 
 #: `<buildmethod>` as `settings.xml` spells it -> as `CharacterState.build_method`
 #: does. Deliberately not `chummer_import.identity._BUILD_METHODS`: that one is lenient
@@ -23,7 +24,9 @@ _BUILD_METHODS = {"priority": "Priority", "sumtoten": "SumToTen", "karma": "Karm
 
 
 def load_books() -> list[dict[str, Any]]:
-    """`[{code, name}]`, in `books.xml` order.
+    """`[{code, name, name_ja}]`, in `books.xml` order. `name_ja` is the
+    lang file's title for that book (English for an untranslated one), looked
+    up by id — see `load_book_names`.
 
     Returns `[]` when the file is missing or unreadable so an un-fetched
     vendor tree still imports (see docs/adding-rules.md).
@@ -31,12 +34,14 @@ def load_books() -> list[dict[str, Any]]:
     root = data_root("books.xml")
     if root is None:
         return []
+    ja = load_book_names()
     books = []
     for el in root.findall("./books/book"):
         code = _text(el.find("code"))
         if not code:
             continue
-        books.append({"code": code, "name": _text(el.find("name")) or code})
+        name = _text(el.find("name")) or code
+        books.append({"code": code, "name": name, "name_ja": ja.get(_text(el.find("id")), name)})
     return books
 
 
