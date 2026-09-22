@@ -16,11 +16,10 @@ already in play (career), its karma and nuyen balance as Foundry had them.
 from __future__ import annotations
 
 import copy
-import html
 import json
 import math
-import re
 import uuid
+from html.parser import HTMLParser
 from typing import Any, cast
 
 from ..chummer_import._common import _by_name
@@ -109,20 +108,33 @@ class _Matcher:
         return got
 
 
+def _paren(name: str) -> tuple[str, str] | None:
+    """ "Improved Ability (Pistols)" -> ("Improved Ability", "Pistols").
+    Slicing, not a regex: the name comes from an uploaded file (ReDoS)."""
+    rest = name.rstrip()
+    if not rest.endswith(")"):
+        return None
+    start = rest.rfind("(", 0, -1)
+    if start < 0 or ")" in rest[start + 1 : -1]:
+        return None
+    return rest[:start].rstrip(), rest[start + 1 : -1]
+
+
 def _base_name(name: str) -> str:
     """ "Improved Ability (Pistols)" -> "Improved Ability"."""
-    return re.sub(r"\s*\([^()]*\)\s*$", "", name)
+    got = _paren(name)
+    return got[0] if got else name
 
 
 def _extra(item: dict[str, Any]) -> str | None:
     """What the name carries in parentheses past the English name — the
     Chummer importer names an item by its `fullname`."""
     name = str(item.get("name") or "")
-    got = re.search(r"\(([^()]*)\)\s*$", name)
-    if not got or _base_name(name) == name:
+    got = _paren(name)
+    if not got:
         return None
     english = str(_flags(item).get("name") or "")
-    return None if english and english == name else got.group(1).strip() or None
+    return None if english and english == name else got[1].strip() or None
 
 
 def _tech(item: dict[str, Any]) -> dict[str, Any]:
@@ -140,10 +152,32 @@ def _embedded(item: dict[str, Any]) -> list[dict[str, Any]]:
     return [i for i in got or [] if isinstance(i, dict)]
 
 
+class _Text(HTMLParser):
+    """The text of an HTML fragment, a line break for <br> and </p>."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def handle_data(self, data: str) -> None:
+        self.parts.append(data)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "br":
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "p":
+            self.parts.append("\n")
+
+
 def _plain(text: str) -> str:
-    """HTML description -> plain text, a paragraph per line."""
-    text = re.sub(r"(?i)<br\s*/?>|</p>", "\n", text)
-    return html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
+    """HTML description -> plain text, a paragraph per line. A parser, not a
+    regex: the text comes from an uploaded file (ReDoS)."""
+    parser = _Text()
+    parser.feed(text)
+    parser.close()
+    return "".join(parser.parts).strip()
 
 
 def _talent(system: dict[str, Any], items: list[dict[str, Any]]) -> str:
