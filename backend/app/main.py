@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import logging
+import threading
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +21,29 @@ from .notices import NoticeError
 
 configure_logging()
 
+
+def _warm_catalog() -> None:
+    """Build the catalog payload before anyone asks for it.
+
+    Parsing the vendored data and serialising the ~3 MB projection takes about
+    0.4 s, and without this the first visitor after a restart waits for it. It
+    runs on a thread so startup does not wait, and a missing `make data` is
+    left for the request to report, exactly as before.
+    """
+    try:
+        catalog._cached_catalog()
+    except Exception:  # noqa: BLE001 -- the request path reports it properly
+        logging.getLogger("chummer_web").warning("catalog warm-up failed", exc_info=True)
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    threading.Thread(target=_warm_catalog, name="warm-catalog", daemon=True).start()
+    yield
+
+
 app = FastAPI(
+    lifespan=_lifespan,
     title="Chummer Web",
     description="Unofficial Shadowrun 5e character creator. Not affiliated with Catalyst Game Labs.",
     version="0.2.1",
