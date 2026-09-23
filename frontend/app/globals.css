@@ -1117,7 +1117,11 @@ input[type="search"] {
   .option-row {
     min-width: 0;
   }
-  .cyber-controls select {
+  /* An `<input>` is as wide as its `size` attribute measured in the page font,
+     so its width follows whatever default font the platform has — it cannot be
+     trusted to fit and has to be stopped at its container. */
+  .main input,
+  .main select {
     min-width: 0;
     max-width: 100%;
   }
