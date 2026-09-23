@@ -157,76 +157,81 @@ export function PriorityTab({
           </div>
         ) : (
           <>
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  {LETTERS.map((l) => (
-                    <th key={l}>
-                      {l}
-                      {(ch.build_method || "Priority") === "SumToTen"
-                        ? ` (${d.sum_to_ten?.costs?.[l] ?? SUM_TO_TEN_COST[l]})`
-                        : ""}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {CATS.map((cat) => (
-                  <tr key={cat.key}>
-                    <td className="rowhead">{ui(cat.label)}</td>
-                    {LETTERS.map((letter) => {
-                      const cell = table[cat.key][letter];
-                      const sumMode = (ch.build_method || "Priority") === "SumToTen";
-                      const takenBy = sumMode
-                        ? undefined
-                        : CATS.find((c) => ch.priorities[c.key] === letter && c.key !== cat.key);
-                      return (
-                        <td key={letter}>
-                          <button
-                            className={`choice ${ch.priorities[cat.key] === letter ? "selected" : ""}`}
-                            // the cell shows only the tier's name ("24"、"Human")
-                            // — say which row it belongs to and, in Priority
-                            // mode, which category it would displace
-                            title={
-                              takenBy
-                                ? ui("prio.cellSwapHint", {
-                                    cat: ui(cat.label),
-                                    letter,
-                                    other: ui(takenBy.label),
-                                  })
-                                : ui("prio.cellHint", { cat: ui(cat.label), letter })
-                            }
-                            onClick={() => {
-                              const next = { ...ch.priorities };
-                              if (!sumMode && takenBy) next[takenBy.key] = next[cat.key];
-                              next[cat.key] = letter;
-                              const extra: Record<string, unknown> = { priorities: next };
-                              if (cat.key === "Talent") {
-                                const options = table.Talent[letter].talents.filter(
-                                  (t) => t.name !== "Mundane",
-                                );
-                                extra.talent =
-                                  letter === "E"
-                                    ? "Mundane"
-                                    : options.some((t) => t.name === ch.talent)
-                                      ? ch.talent
-                                      : options[0]?.name || "Magician";
-                              }
-                              patch(extra);
-                            }}
-                          >
-                            {cell?.name
-                              ? priorityCellLabel(cell.name.replace(/^[A-E]\s*-\s*/, ""), ui)
-                              : letter}
-                          </button>
-                        </td>
-                      );
-                    })}
+            {/* 6 columns of cards: ~580px at its narrowest, wider than a phone.
+                It scrolls itself rather than widening the page, as the merge
+                breakdown in the settings does. */}
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    {LETTERS.map((l) => (
+                      <th key={l}>
+                        {l}
+                        {(ch.build_method || "Priority") === "SumToTen"
+                          ? ` (${d.sum_to_ten?.costs?.[l] ?? SUM_TO_TEN_COST[l]})`
+                          : ""}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {CATS.map((cat) => (
+                    <tr key={cat.key}>
+                      <td className="rowhead">{ui(cat.label)}</td>
+                      {LETTERS.map((letter) => {
+                        const cell = table[cat.key][letter];
+                        const sumMode = (ch.build_method || "Priority") === "SumToTen";
+                        const takenBy = sumMode
+                          ? undefined
+                          : CATS.find((c) => ch.priorities[c.key] === letter && c.key !== cat.key);
+                        return (
+                          <td key={letter}>
+                            <button
+                              className={`choice ${ch.priorities[cat.key] === letter ? "selected" : ""}`}
+                              // the cell shows only the tier's name ("24"、"Human")
+                              // — say which row it belongs to and, in Priority
+                              // mode, which category it would displace
+                              title={
+                                takenBy
+                                  ? ui("prio.cellSwapHint", {
+                                      cat: ui(cat.label),
+                                      letter,
+                                      other: ui(takenBy.label),
+                                    })
+                                  : ui("prio.cellHint", { cat: ui(cat.label), letter })
+                              }
+                              onClick={() => {
+                                const next = { ...ch.priorities };
+                                if (!sumMode && takenBy) next[takenBy.key] = next[cat.key];
+                                next[cat.key] = letter;
+                                const extra: Record<string, unknown> = { priorities: next };
+                                if (cat.key === "Talent") {
+                                  const options = table.Talent[letter].talents.filter(
+                                    (t) => t.name !== "Mundane",
+                                  );
+                                  extra.talent =
+                                    letter === "E"
+                                      ? "Mundane"
+                                      : options.some((t) => t.name === ch.talent)
+                                        ? ch.talent
+                                        : options[0]?.name || "Magician";
+                                }
+                                patch(extra);
+                              }}
+                            >
+                              {cell?.name
+                                ? priorityCellLabel(cell.name.replace(/^[A-E]\s*-\s*/, ""), ui)
+                                : letter}
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <p className="muted">
               <HelpTip
                 label={ui("help.open", { label: ui("help.prio.statsLabel") })}
