@@ -52,10 +52,10 @@ export default defineConfig({
       // per-file thresholds would fail today and say nothing new — the gaps are
       // already visible in the report.
       thresholds: {
-        statements: 78,
-        branches: 59,
-        functions: 68,
-        lines: 80,
+        statements: 82,
+        branches: 65,
+        functions: 73,
+        lines: 84,
       },
     },
   },

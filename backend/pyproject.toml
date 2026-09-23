@@ -47,10 +47,11 @@ source = ["app"]
 omit = ["*/__init__.py"]
 
 [tool.coverage.report]
-# Measurement only — deliberately no `fail_under`. The number is here to show
-# which engine phases and loaders the suite never enters; pick a floor once
-# those gaps are either covered or accepted, rather than freezing today's
-# percentage as the bar.
+# A floor, a couple of points under where the suite actually sits (94%), for
+# the same reason as the frontend ratchet in `vitest.config.mts`: it is not a
+# target, it catches a *drop* — a loader or engine phase landing with no tests.
+# Raise it when the real number moves up; never lower it to make a build pass.
+fail_under = 92
 show_missing = true
 skip_covered = true
 exclude_also = [

@@ -60,8 +60,9 @@ jobs:
       - run: python scripts/gen_frontend_types.py --check
 
       # Coverage on one interpreter only — the numbers are identical across
-      # the matrix and it roughly doubles the run. Reported, never gated: see
-      # backend/pyproject.toml [tool.coverage.report].
+      # the matrix and it roughly doubles the run. This is also where the
+      # floor is enforced: `fail_under` in backend/pyproject.toml fails this
+      # step if the suite drops below it.
       # `-n auto`: one worker per core. The suite shares nothing on disk
       # between tests, and it roughly halves this step.
       - run: python -m pytest -q -n auto ${{ matrix.python-version == '3.13' && '--cov --cov-report=term' || '' }}
