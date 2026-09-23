@@ -196,6 +196,18 @@ td.rowhead {
   color: var(--text);
 }
 
+/* A table too wide for the viewport scrolls inside its own box rather than
+   widening the page: a document-level horizontal scroll moves the sticky tab
+   bar and every row with it, so one wide table costs the whole layout. */
+.table-scroll {
+  overflow-x: auto;
+}
+/* the box scrolls, so the row heading has the room to read across rather than
+   one character per line */
+.table-scroll td.rowhead {
+  white-space: nowrap;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -1051,6 +1063,74 @@ input[type="search"] {
   }
   .sheet-core {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Below this the rows themselves stop fitting: the grids above have minimum
+   track widths that add up past a phone held upright (a 390px screen leaves
+   342px between `.main`'s padding), and a grid cannot go under its minimum —
+   it pushes the document wider instead. Measured by walking the tabs at
+   320-1024px with a full character loaded; 600px and up needs none of this. */
+@media (max-width: 600px) {
+  .main {
+    padding: 20px 12px 48px;
+  }
+  /* the sticky bar bleeds out over `.main`'s padding — keep the two in step */
+  .tabs {
+    margin: 0 -12px 16px;
+    padding: 12px 12px 8px;
+  }
+  /* Name above the controls rather than beside them: the name column's 120px
+     minimum plus a slider, a karma box and a specialisation never fit. */
+  .skill-row,
+  .skill-row.has-spec,
+  .skill-row.has-karma:not(.has-spec),
+  .skill-row.has-spec.has-karma,
+  .skill-row.has-spec.can-delete,
+  .know-row,
+  .know-row.has-karma,
+  .attr-row,
+  .attr-row.has-karma {
+    grid-template-columns: 1fr auto;
+  }
+  .skill-row > span:first-child,
+  .know-row > span:first-child,
+  .attr-row > span:first-child {
+    grid-column: 1 / -1;
+  }
+  /* a delete button pinned to the end of a row is what ran off the gear,
+     bioware and contact tabs — let it drop to the next line instead */
+  .cyber-item {
+    flex-wrap: wrap;
+  }
+  .cyber-item > * {
+    min-width: 0;
+  }
+  /* 16 + 12 per level of nesting walks an accessory off the screen */
+  .cyber-item.nested {
+    margin-left: 8px;
+    padding-left: 8px;
+  }
+  /* a <select> is as wide as its widest option unless it is told otherwise,
+     and a flex item will not shrink below its content without this */
+  .cyber-controls,
+  .option-row {
+    min-width: 0;
+  }
+  .cyber-controls select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* two fixed 160px columns beside a 1fr that has already collapsed */
+  .cyber-toolbar {
+    grid-template-columns: 1fr;
+  }
+  /* 72px x 4 plus gaps is 336, just over a 320px screen */
+  .sheet-attrs {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+  .character-sheet {
+    padding: 14px 12px 20px;
   }
 }
 

@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
@@ -62,4 +65,42 @@ export function storedCharacters(
         };
       }),
   );
+}
+
+/**
+ * A save written by Chummer itself, not by this app. The round trip in
+ * `character.spec.ts` reads our own writer's output, so both halves can share
+ * a misunderstanding; the backend's pytest reads real saves but never through
+ * the browser → Next rewrite → body-size guard → IndexedDB path, where a save
+ * of several MB (three base64 mugshots) is what actually arrives.
+ *
+ * Fetched, not committed: it is 5.7 MB of someone else's GPL data. Pinned to a
+ * commit and checked by hash, so what runs is exactly what was reviewed.
+ */
+const FIXTURE = {
+  name: "Ghile Mear.chum5",
+  commit: "88517555a99e5422e9a215ac88f7e25ecdb69146",
+  sha256: "db8f89929b92e2f3a4e6e64e3dcdc905b564f6a640b39ea6b516dc8958dfa853",
+};
+// gitignored; CI caches it
+const CACHE_DIR = join(__dirname, ".fixtures");
+
+export async function chummerFixture(): Promise<string> {
+  const path = join(CACHE_DIR, FIXTURE.name);
+  const matches = (bytes: Buffer) =>
+    createHash("sha256").update(bytes).digest("hex") === FIXTURE.sha256;
+  try {
+    if (matches(readFileSync(path))) return path;
+  } catch {}
+
+  const url =
+    `https://raw.githubusercontent.com/chummer5a/chummer5a/${FIXTURE.commit}` +
+    `/Chummer.Tests/TestFiles/${encodeURIComponent(FIXTURE.name)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`fetching ${url}: HTTP ${res.status}`);
+  const bytes = Buffer.from(await res.arrayBuffer());
+  if (!matches(bytes)) throw new Error(`${FIXTURE.name} does not match its pinned sha256`);
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(path, bytes);
+  return path;
 }
