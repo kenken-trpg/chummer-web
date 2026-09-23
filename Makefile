@@ -81,7 +81,7 @@ reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, round
 e2e: ## Playwright: one real browser against both halves (needs `make data`)
 	cd frontend && npx playwright install chromium && npm run test:e2e
 
-coverage: coverage-backend coverage-frontend ## Coverage for both (no threshold)
+coverage: coverage-backend coverage-frontend ## Coverage for both (fails under the floor)
 
 coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
 	cd backend && ./$(VENV)/python -m pytest -q --cov --cov-report=term --cov-report=html
