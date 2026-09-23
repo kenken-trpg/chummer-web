@@ -461,9 +461,19 @@ input[type="search"] {
 }
 /* Tall enough to be worth scrolling, short enough that the search box and the
    footnote stay on screen. A flat 280px left most of the window empty on a
-   desktop, so it follows the viewport instead. */
+   desktop, so it follows the viewport instead.
+
+   The old ceiling — 58vh, and never more than 760px — left a tall screen half
+   unused: the list stopped at 760px with the rest of the window empty under
+   it. What the box can have is the viewport less what sits above it (the
+   sticky tab bar, the tab's own preamble, the search row) and `.main`'s bottom
+   padding. 200px stands in for those rather than measuring them, and keeping
+   the box under one viewport is what keeps the sticky footnote in sight.
+   `dvh` so a phone's retracting address bar does not leave a gap; the `vh`
+   line above it is the fallback. */
 .quality-list {
-  max-height: clamp(280px, 58vh, 760px);
+  max-height: max(280px, calc(100vh - 200px));
+  max-height: max(280px, calc(100dvh - 200px));
   overflow: auto;
 }
 .quality-item input[type="text"] {
