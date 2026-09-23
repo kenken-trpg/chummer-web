@@ -304,6 +304,21 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
+  /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
+  async function downloadFvtt() {
+    if (!ch) return;
+    try {
+      const blob = await api.exportFvtt(ch, locale);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${ch.name || "character"}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.export"));
+    }
+  }
+
   /**
    * Copy a read-only `/share#c=…` link for the current character. The state
    * lives entirely in the fragment — nothing is uploaded — so the only limit
@@ -439,6 +454,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onPortraitFile,
     download,
     downloadChum5,
+    downloadFvtt,
     confirmChum5,
     cancelChum5,
     copyText,

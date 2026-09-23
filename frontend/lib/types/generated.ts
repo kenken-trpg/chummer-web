@@ -623,3 +623,8 @@ export interface Character {
    */
   derived: Derived;
 }
+
+export interface FvttExportRequest {
+  state: Character;
+  locale?: string;
+}

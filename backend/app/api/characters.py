@@ -3,6 +3,7 @@ sends it whole; nothing about a character is kept here."""
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from urllib.parse import quote
@@ -15,8 +16,9 @@ from ..chummer_export.check import roundtrip_differences
 from ..chummer_import import chum5_to_state
 from ..customdata import dataset_hash
 from ..dataset_store import MAX_UPLOAD_BYTES, lookup, remember
+from ..fvtt_export import state_to_fvtt
 from ..fvtt_import import fvtt_to_state
-from ..models import CharacterCreate, CharacterState, CustomDataUpload, PatchRequest, StateRequest
+from ..models import CharacterCreate, CharacterState, CustomDataUpload, FvttExportRequest, PatchRequest, StateRequest
 from ..notices import NoticeError, notice
 from ..settings_file import parse_settings_upload
 from .deploy import _IMPORT_RATE_LIMIT, limiter
@@ -127,15 +129,15 @@ def parse_settings(request: Request, body: bytes = Body(..., media_type="applica
     return {"settings": settings.model_dump(), "build_method": build_method}
 
 
-def _content_disposition(name: str) -> str:
+def _content_disposition(name: str, ext: str = "chum5") -> str:
     """RFC 6266 attachment header. Starlette encodes header values as latin-1,
     so a Japanese character name in a bare `filename="..."` raises at send time
     (500). Emit an ASCII-safe `filename=` fallback plus a percent-encoded
     `filename*=UTF-8''` that carries the real name."""
     stem = (name or "").strip() or "character"
     ascii_stem = re.sub(r"[^A-Za-z0-9._ -]", "_", stem) or "character"
-    encoded = quote(f"{stem}.chum5", safe="")
-    return f"attachment; filename=\"{ascii_stem}.chum5\"; filename*=UTF-8''{encoded}"
+    encoded = quote(f"{stem}.{ext}", safe="")
+    return f"attachment; filename=\"{ascii_stem}.{ext}\"; filename*=UTF-8''{encoded}"
 
 
 @router.post("/api/characters/chummer")
@@ -147,6 +149,21 @@ def export_chummer(request: Request, req: StateRequest) -> Response:
         content=xml,
         media_type="application/xml",
         headers={"Content-Disposition": _content_disposition(req.state.name)},
+    )
+
+
+@router.post("/api/characters/fvtt")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def export_fvtt(request: Request, req: FvttExportRequest) -> Response:
+    """Download JSON for Foundry VTT shadowrun5e's Chummer importer (0.34.5).
+
+    Limited like the .chum5 download: it computes the character when the
+    state arrives without `derived`."""
+    body = json.dumps(state_to_fvtt(req.state, req.locale), ensure_ascii=False, indent=2)
+    return Response(
+        content=body.encode("utf-8"),
+        media_type="application/json",
+        headers={"Content-Disposition": _content_disposition(req.state.name, "json")},
     )
 
 
