@@ -67,4 +67,18 @@ describe("<SubmersionTab>", () => {
       submersions: [{ grade: 1, echo_id: "ov", extra: null }],
     });
   });
+
+  /**
+   * The magic side of this — `<InitiationTab>` — has carried the same tip
+   * since it was written; the resonance side went without, so a technomancer
+   * saw the karma total move with no way to find out how it was reached.
+   */
+  it("explains the karma per grade, the discounts and the echo", () => {
+    renderTab();
+    const button = screen.getByRole("button", { name: "サブマージョン等級 の説明" });
+    const tip = screen.getByRole("tooltip", { hidden: true });
+    expect(button.getAttribute("aria-describedby")).toBe(tip.id);
+    expect(tip.textContent).toContain("1 等級あたり 10");
+    expect(tip.textContent).toContain("エコーを 1 つ選べる");
+  });
 });

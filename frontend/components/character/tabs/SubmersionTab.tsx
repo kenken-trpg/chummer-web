@@ -1,6 +1,7 @@
 "use client";
 
 import { RangeInput } from "@/components/character/RangeInput";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { withOriginal } from "@/lib/character/format";
 
@@ -27,6 +28,16 @@ export function SubmersionTab({
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("sub.grade") })}
+          lines={[
+            { label: ui("help.sub.karma") },
+            { label: ui("help.sub.discount") },
+            { label: ui("help.sub.echo") },
+          ]}
+        >
+          {ui("help.sub.statsLabel")}
+        </HelpTip>{" "}
         {ui("grade.summary", {
           grade: d.submersion?.grade || 0,
           karma: d.submersion?.karma || 0,

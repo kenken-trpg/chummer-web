@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { withOriginal } from "@/lib/character/format";
 import { priorityTableFor } from "@/lib/character/priority-table";
@@ -9,6 +10,19 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
 
   return (
     <div className="card">
+      <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.meta.statsLabel") })}
+          lines={[
+            { label: ui("help.meta.special") },
+            { label: ui("help.meta.karma") },
+            { label: ui("help.meta.variant") },
+            { label: ui("help.meta.talent") },
+          ]}
+        >
+          {ui("help.meta.statsLabel")}
+        </HelpTip>
+      </p>
       <div className="grid">
         {((ch.build_method || "Priority") === "Karma"
           ? catalog.metatypes.map((m) => ({

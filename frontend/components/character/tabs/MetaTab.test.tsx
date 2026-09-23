@@ -107,4 +107,18 @@ describe("<MetaTab>", () => {
     fireEvent.click(screen.getByRole("button", { name: /Ork/ }));
     expect(patch).toHaveBeenCalledWith({ metatype: "Ork", metavariant: null });
   });
+
+  /**
+   * The special-point column on the metatype buttons reads "/ 特殊点 2" and
+   * nothing on the page says what those buy — the one thing a first character
+   * gets wrong here. The tip is the answer; this pins it to the tab.
+   */
+  it("explains the special points, the metavariants and the talent", () => {
+    renderTab();
+    const button = screen.getByRole("button", { name: "メタタイプの選び方 の説明" });
+    const tip = screen.getByRole("tooltip", { hidden: true });
+    expect(button.getAttribute("aria-describedby")).toBe(tip.id);
+    expect(tip.textContent).toContain("特殊点はエッジ");
+    expect(tip.textContent).toContain("メタバリアント");
+  });
 });
