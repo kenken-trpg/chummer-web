@@ -51,3 +51,12 @@ frontend/next-env.d.ts
 customdata/
 settings/
 frontend/e2e/.fixtures/
+
+# Claude Code's working directory. Everything under worktrees/ is a checkout of
+# this repository itself, so tracking it would let a `git add -A` swallow the
+# repository whole — the missing trailing slash on `node_modules` above is what
+# was left of the last time that happened. settings.local.json is the personal
+# half of the configuration, as its name says. A shared .claude/settings.json,
+# or skills/, is not ignored: put one there and it is tracked as usual.
+.claude/worktrees/
+.claude/settings.local.json
