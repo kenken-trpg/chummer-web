@@ -1133,6 +1133,26 @@ input[type="search"] {
   .sheet-attrs {
     grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   }
+  /* The sheet's stat rows are flex boxes sitting in grid tracks, and neither a
+     flex item nor a grid item shrinks below its content unless it is told to:
+     one long derived value — 条件リミット social +2（LimitCondition_…）— was
+     dragging the whole sheet, attribute boxes included, past the screen. The
+     value drops to its own line when it no longer fits beside its label, and
+     may break mid-word because it has no spaces to break at. The label is
+     left alone: breaking 条件リミット across two lines only costs legibility. */
+  .sheet-derived-grid > div,
+  .sheet-header-stats div {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .sheet-derived-grid > div > b,
+  .sheet-header-stats div > b {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .sheet-attr {
+    min-width: 0;
+  }
   .character-sheet {
     padding: 14px 12px 20px;
   }
