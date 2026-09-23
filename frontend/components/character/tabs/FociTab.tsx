@@ -1,5 +1,6 @@
 "use client";
 import { PickerList } from "@/components/character/CatalogPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, testLine } from "@/lib/character/format";
@@ -10,6 +11,17 @@ export function FociTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
   return (
     <div className="card">
       <p className="muted">
+        <HelpTip
+          label={ui("help.open", { label: ui("help.foci.statsLabel") })}
+          lines={[
+            { label: ui("help.foci.count") },
+            { label: ui("help.foci.force") },
+            { label: ui("help.foci.bind") },
+            { label: ui("help.foci.craft") },
+          ]}
+        >
+          {ui("help.foci.statsLabel")}
+        </HelpTip>{" "}
         {ui("foci.note", {
           count: d.focus_limits?.count || 0,
           countMax: d.focus_limits?.count_max || 0,

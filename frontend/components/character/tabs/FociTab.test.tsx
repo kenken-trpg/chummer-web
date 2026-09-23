@@ -40,4 +40,18 @@ describe("<FociTab>", () => {
       foci: [{ gear_id: "pf", force: 1, crafted: true, formula_bought: true }],
     });
   });
+
+  /**
+   * `foci.note` prints "同時 0/6 ・ Force合計 0/12" without saying where either
+   * ceiling comes from, or that going over the Force one stops every focus
+   * working — a silent loss the numbers alone never explain.
+   */
+  it("explains where the two ceilings come from", () => {
+    renderTab();
+    const button = screen.getByRole("button", { name: "収束具の上限 の説明" });
+    const tip = screen.getByRole("tooltip", { hidden: true });
+    expect(button.getAttribute("aria-describedby")).toBe(tip.id);
+    expect(tip.textContent).toContain("同時に結合できる数は魔力まで");
+    expect(tip.textContent).toContain("結合カルマは Force と同数");
+  });
 });

@@ -167,4 +167,20 @@ export const JA_HELP = {
   "help.vehmod.capacity": "容量 n/m：この改造自身が抱えられる量（センサーやウェアを積むもの）",
   "help.vehmod.included":
     "「標準装備」と出ているものは車種に最初から付いており、スロットも値段も取らない",
+  "help.meta.statsLabel": "メタタイプの選び方",
+  "help.meta.special": "特殊点はエッジ・魔力・共振力にだけ使える。通常の能力値点とは別勘定",
+  "help.meta.karma":
+    "カルマ作成では、メタタイプそのものにカルマを払う（オーク 50、トロール 100 など）",
+  "help.meta.variant": "メタバリアントは同じメタタイプの亜種。能力値の上下限と資質が変わる",
+  "help.meta.talent": "タレントは魔法・共振の素質。メタタイプを変えても選び直しは要らない",
+  "help.foci.statsLabel": "収束具の上限",
+  "help.foci.count": "同時に結合できる数は魔力まで（気焦点もこの数に入る）",
+  "help.foci.force": "結合した収束具の Force 合計は魔力×2 まで（超えるとどれも使えない）",
+  "help.foci.bind": "結合カルマは Force と同数。買っただけ・作っただけでは働かない",
+  "help.foci.craft":
+    "クラフトは術式＋試薬 Force×20¥。定価で買うより安いが、判定に失敗すると無駄になる",
+  "help.sub.statsLabel": "等級とカルマ",
+  "help.sub.karma": "1 等級あたり 10 ＋ 等級×3 カルマ（等級 1 は 13、2 は 16…）",
+  "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",
+  "help.sub.echo": "1 等級につきエコーを 1 つ選べる。共振力の上限も等級のぶんだけ伸びる",
 } as const;

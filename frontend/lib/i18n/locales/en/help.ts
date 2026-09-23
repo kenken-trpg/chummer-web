@@ -196,4 +196,26 @@ export const EN_HELP = {
     "Capacity n/m is what this mod itself can hold (the ones that carry sensors or ware)",
   "help.vehmod.included":
     "Anything marked as included comes with the model and costs neither slots nor nuyen",
+  "help.meta.statsLabel": "Choosing a metatype",
+  "help.meta.special":
+    "Special points buy Edge, Magic and Resonance only, and are counted apart from ordinary attribute points",
+  "help.meta.karma":
+    "In karma build, the metatype itself costs karma (50 for an ork, 100 for a troll, and so on)",
+  "help.meta.variant":
+    "A metavariant is a strain of the same metatype: it changes the attribute bounds and the qualities that come with it",
+  "help.meta.talent":
+    "The talent is the magic or resonance aptitude; changing metatype does not make you pick it again",
+  "help.foci.statsLabel": "Focus limits",
+  "help.foci.count": "You may have as many foci bonded as your Magic (qi foci count towards it)",
+  "help.foci.force":
+    "The Force of every bonded focus adds up to at most Magic \u00d7 2; go over and none of them work",
+  "help.foci.bind":
+    "Bonding costs karma equal to the Force. Buying or crafting one does nothing until it is bonded",
+  "help.foci.craft":
+    "Crafting costs the formula plus Force \u00d7 20\u00a5 of reagents \u2014 cheaper than retail, but a failed test is spent for nothing",
+  "help.sub.statsLabel": "Grade and karma",
+  "help.sub.karma":
+    "Each grade costs 10 + grade \u00d7 3 karma (13 for the first, 16 for the second\u2026)",
+  "help.sub.discount": "Network, task and schooling each take 10% off, and they stack",
+  "help.sub.echo": "Every grade picks one echo, and raises the cap on Resonance by one",
 } as const;
