@@ -1,0 +1,1 @@
+- **Foundry VTT 書き出しのコードを読める大きさに割った。** 977 行の 1 ファイルだったものを、取り込み側と同じ並び（skills / life / magic / combat / gear / vehicles / _common）に分けました。書き出される内容は 1 バイトも変わりません。
