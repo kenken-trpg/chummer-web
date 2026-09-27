@@ -36,16 +36,21 @@ export function ReviewPanel({
   return (
     <section className="warn export-review" role="alertdialog" aria-labelledby={id}>
       <p id={id}>{title}</p>
-      <ul>
-        {shown.map((d, i) => (
-          <li key={`${d.key}-${i}`}>{renderNotice(d, ui, tr)}</li>
-        ))}
-        {notices.length > shown.length ? (
-          <li className="muted">
-            {ui("app.reviewPanel.more", { count: notices.length - shown.length })}
-          </li>
-        ) : null}
-      </ul>
+      {/* No list at all when there is nothing to list: the export panel now
+          opens on unsettled equipment rows alone, and an empty <ul> is read out
+          as a list of no items. */}
+      {notices.length ? (
+        <ul>
+          {shown.map((d, i) => (
+            <li key={`${d.key}-${i}`}>{renderNotice(d, ui, tr)}</li>
+          ))}
+          {notices.length > shown.length ? (
+            <li className="muted">
+              {ui("app.reviewPanel.more", { count: notices.length - shown.length })}
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
       {children}
     </section>
   );

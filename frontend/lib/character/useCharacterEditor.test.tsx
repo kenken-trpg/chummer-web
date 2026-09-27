@@ -930,6 +930,35 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.exportReview).toBeNull();
   });
 
+  it("holds the file back for equipment rows the round trip cannot see", async () => {
+    // Those rows are held in this browser and were never sent, so the check ran
+    // against a character without them and finds nothing — which is how a file
+    // missing them used to be written without a word.
+    api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
+    api.checkChummerExport.mockResolvedValue([]);
+    api.importSheetUrl.mockResolvedValue({
+      character: makeCharacter({ id: "sheet" }),
+      warnings: [],
+      pending_gear: [{ name: "謎の装備", rating: 0, qty: 1, note: "", suggestions: [] }],
+    });
+    const { result } = await booted();
+    await act(async () => {
+      await result.current.importSheetUrl("https://docs.google.com/spreadsheets/d/abc/edit");
+    });
+    expect(result.current.pendingGear).toHaveLength(1);
+
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    expect(clicks).toHaveLength(0);
+    expect(result.current.exportReview).toEqual([]);
+
+    await act(async () => {
+      await result.current.confirmExport();
+    });
+    expect(clicks).toHaveLength(1);
+  });
+
   it("a failed round-trip check does not stand in the way of the download", async () => {
     api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
     api.checkChummerExport.mockRejectedValue(new Error("offline"));

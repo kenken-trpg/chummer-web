@@ -392,6 +392,8 @@ export const JA_APP = {
   "app.reviewPanel.more": "ほか {count} 件",
   "app.exportReview.title":
     "書き出した {format} を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
+  "app.exportReview.unsettled":
+    "確認待ちの装備行が {count} 件あります。この行はこのブラウザにしかないので、いま書き出すとファイルには入りません（上の「装備シート…」のパネルで選ぶか飛ばすと確定します）。",
   "app.exportReview.confirm": "このまま書き出す",
   "app.exportReview.cancel": "やめる",
   "check.needsMentor": "メンタースピリットが未選択です",

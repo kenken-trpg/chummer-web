@@ -382,6 +382,8 @@ export const EN_APP = {
   "app.importReport.dismiss": "Close",
   "app.reviewPanel.more": "{count} more",
   "app.exportReview.title": "Reading the exported {format} back would change {count} things:",
+  "app.exportReview.unsettled":
+    "{count} equipment rows are still waiting to be confirmed. They live in this browser only, so exporting now leaves them out of the file (settle them in the equipment panel above).",
   "app.exportReview.confirm": "Export anyway",
   "app.exportReview.cancel": "Cancel",
   "check.needsMentor": "No mentor spirit chosen",
