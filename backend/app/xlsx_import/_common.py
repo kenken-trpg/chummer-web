@@ -11,6 +11,7 @@ typed name is a handful of lookups rather than one.
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Iterable
 
@@ -39,7 +40,7 @@ def cell_int(text: str | None) -> int:
         value = float(text)
     except ValueError:
         return 0
-    if value != value or value in (float("inf"), float("-inf")):  # NaN / ±inf from a hand edit
+    if not math.isfinite(value):  # NaN or ±inf from a hand edit
         return 0
     return int(round(value))
 

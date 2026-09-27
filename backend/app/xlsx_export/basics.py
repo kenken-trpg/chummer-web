@@ -101,7 +101,10 @@ def _attributes(state: CharacterState, cells: Cells) -> None:
 #: be appended to one of those: the sheet's reader takes the *first* parenthesis
 #: as the pick, so 「依存症 (中度)（クラム）」 would come back as 中度 with クラム
 #: read as a note. The template's own spelling for both at once is 依存症／中度／クラム.
-_DEGREE = re.compile(r"^(.+?)\s*[(（]([^()（）]+)[)）]$")
+#: The leading group holds no parenthesis and must end in something other than a
+#: space, so there is exactly one way to split any name: a lazy ``.+?`` beside
+#: ``\s*`` would let the engine try every space in a long name in turn.
+_DEGREE = re.compile(r"^([^(（]*[^\s(（])\s*[(（]([^()（）]+)[)）]$")
 
 
 def _quality_name(row: dict[str, Any], names: dict[str, str]) -> str:

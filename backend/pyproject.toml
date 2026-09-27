@@ -85,3 +85,14 @@ check_untyped_defs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 warn_return_any = true
+
+# `deprecated` is not ours: it arrives under slowapi -> limits. Version 3.0.0
+# declares `Requires-Python >=3.12` and uses a 3.12 `type` statement, so on
+# 3.12 and 3.13 mypy parses it under our `python_version = "3.11"` and reports
+# a syntax error in someone else's file — while 3.11 installs 1.3.1 and passes.
+# We type-check our own code, not our dependencies' source, so skip it. Do not
+# replace this with a lower `python_version`: that would stop checking 3.11,
+# which the matrix still supports.
+[[tool.mypy.overrides]]
+module = ["deprecated.*"]
+follow_imports = "skip"
