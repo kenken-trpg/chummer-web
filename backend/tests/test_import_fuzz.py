@@ -1,7 +1,8 @@
-"""Hostile input at the four doors a visitor's file comes through.
+"""Hostile input at the five doors a visitor's file comes through.
 
-`.chum5` imports, JSON imports, settings uploads and custom-data trees all take
-a stranger's file. The endpoints wrap every failure in a 400, so nothing here can reach a 500 —
+`.chum5` imports, JSON imports, キャラシテンプレート .xlsx workbooks, settings
+uploads and custom-data trees all take a stranger's file. The endpoints wrap
+every failure in a 400, so nothing here can reach a 500 —
 but that wrapper is also what hides a crash: a save with one odd field is
 refused whole, with a message that says nothing, and the exception only shows
 up in the server log. The property worth holding is narrower than "no 500":
@@ -10,6 +11,8 @@ up in the server log. The property worth holding is narrower than "no 500":
   that carries a reason the user can act on — and a state it hands back
   computes without raising;
 * `fvtt_to_state` does the same for a Foundry VTT actor;
+* `xlsx_to_state` does the same for a filled-in キャラシテンプレート, and the
+  equipment rows it hands back for confirmation are the shape the client draws;
 * `import_character` on JSON accepts it or rejects it through validation;
 * `parse_settings_upload` accepts it or raises `ValueError`;
 * `decompress_chum5lz` unwraps within its size ceiling or raises `NoticeError`;
@@ -30,9 +33,12 @@ from __future__ import annotations
 
 import copy
 import gzip
+import io
 import lzma
 import os
+import re
 import xml.etree.ElementTree as ET
+import zipfile
 import zlib
 from pathlib import Path
 from typing import Any
@@ -50,9 +56,13 @@ from app.data_loader._xml import MAX_UNTRUSTED_DEPTH, MAX_UNTRUSTED_ELEMENTS, pa
 from app.fvtt_import import fvtt_to_state
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
+from app.xlsx_import import xlsx_to_state
+from app.xlsx_import._common import SHEET_BASICS, SHEET_SKILLS
+from app.xlsx_import._sheet import MAX_PART_BYTES
 from tests.chum5_fixtures import build_chum5
 from tests.test_chummer_import import SAMPLE
 from tests.test_fvtt_import import _geared
+from tests.xlsx_fixtures import BASELINE, filled, workbook
 
 #: 120 per property keeps CI quick, and 30 on a laptop (no `CI` in the
 #: environment) keeps `pytest -q` a matter of seconds; CI is where the full run
@@ -486,6 +496,166 @@ def test_the_merge_never_edits_the_base_tree_it_copied() -> None:
     assert ET.tostring(data_root("qualities.xml")) == before
 
 
+# --- the キャラシテンプレート .xlsx --------------------------------------------
+
+
+def _xlsx_seed() -> bytes:
+    """A workbook with something on every sheet the import reads.
+
+    A near-empty template explores almost nothing: the interesting code is the
+    per-row matching, and a row has to exist before it can be damaged.
+    """
+    return filled(
+        groups={"運動": {"I": "2.0"}},
+        skills={"自動火器": {"I": "2.0", "J": "1.0"}},
+        knowledge=[{"A": "学術知識技能", "B": "バイオ技術", "H": "2.0"}],
+        spells=["スタンボルト"],
+        powers=[("能力値ブースト（敏捷力）", "2.0")],
+        implants=[{"A": "声紋変調器", "N": "アルファウェア", "P": "4.0"}],
+        devices=[{"A": "コムリンク", "D": "トランシスアヴァロン", "M": "6.0"}],
+        gear=[{"A": "アレスプレデターV", "C": "100.0"}],
+        contacts=[{"A": "名無しのフィクサー", "C": "3.0", "D": "2.0"}],
+        C17="魔法使い（ヘルメス学者）",
+    )
+
+
+_XLSX_SEED = _xlsx_seed()
+
+#: The parts of the seed, so a damage can name one without knowing the layout.
+_XLSX_PARTS = zipfile.ZipFile(io.BytesIO(_XLSX_SEED)).namelist()
+
+
+def _rebuilt(parts: dict[str, bytes]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, raw in parts.items():
+            archive.writestr(name, raw)
+    return buffer.getvalue()
+
+
+@st.composite
+def _damaged_xlsx(draw: st.DrawFn) -> bytes:
+    """The seed with one to three things wrong with it, at either level a
+    .xlsx can be wrong at: the archive (a part missing, truncated, not XML) and
+    the cells (a value no field expects, in a cell that is read)."""
+    source = zipfile.ZipFile(io.BytesIO(_XLSX_SEED))
+    parts = {name: source.read(name) for name in _XLSX_PARTS}
+    for _ in range(draw(st.integers(min_value=1, max_value=3))):
+        name = draw(st.sampled_from(sorted(parts) or _XLSX_PARTS))
+        action = draw(st.sampled_from(["drop", "truncate", "garbage", "cell", "attr", "rename", "empty"]))
+        raw = parts.get(name, b"")
+        if action == "drop":
+            parts.pop(name, None)
+        elif action == "truncate":
+            parts[name] = raw[: draw(st.integers(min_value=0, max_value=len(raw)))]
+        elif action == "garbage":
+            parts[name] = draw(_HOSTILE).encode("utf-8")
+        elif action == "empty":
+            parts[name] = b""
+        elif action == "cell":
+            # A value where a rating, a grade or a price is read. `<v>` covers the
+            # numeric cells and `<t>` the inline strings the fixtures write.
+            hostile = draw(_HOSTILE).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            tag = draw(st.sampled_from([b"v", b"t"]))
+            parts[name] = re.sub(
+                b"<" + tag + b">[^<]*</" + tag + b">",
+                b"<" + tag + b">" + hostile.encode("utf-8") + b"</" + tag + b">",
+                raw,
+                count=draw(st.integers(min_value=1, max_value=3)),
+            )
+        elif action == "attr":
+            # The cell kind and the cell address: `t="s"` sends the reader to the
+            # shared strings, and an address is what every sheet is indexed by.
+            parts[name] = raw.replace(b'r="C16"', b'r="' + draw(_HOSTILE).encode("utf-8") + b'"').replace(
+                b't="inlineStr"', b't="s"'
+            )
+        elif action == "rename":
+            parts[name] = raw.replace(SHEET_SKILLS.encode("utf-8"), draw(_HOSTILE).encode("utf-8"))
+    return _rebuilt(parts)
+
+
+@_FUZZ
+@given(_damaged_xlsx())
+def test_a_damaged_template_is_read_or_refused_with_a_reason(raw: bytes) -> None:
+    """As with a save: read it, compute it, and let only a `NoticeError` stop
+    that. The pending equipment rows are checked too — they go straight to the
+    client, which offers them as buttons, so a row of the wrong shape is a
+    broken screen rather than a refused import."""
+    try:
+        state, _warnings, pending = xlsx_to_state(raw)
+        import_character(state)
+    except NoticeError:
+        return
+    for row in pending:
+        assert isinstance(row["name"], str)
+        assert isinstance(row["suggestions"], list)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param(b"", id="empty"),
+        pytest.param(b"PK\x03\x04", id="zip-header-only"),
+        pytest.param(_XLSX_SEED[: len(_XLSX_SEED) // 2], id="half-a-workbook"),
+        pytest.param(_rebuilt({}), id="no-parts"),
+        pytest.param(_rebuilt({"xl/workbook.xml": b"<workbook/>"}), id="no-sheets"),
+        # A sheet whose relationship points outside the archive, and one that
+        # points at a part that is not there at all.
+        pytest.param(
+            _rebuilt(
+                {
+                    "xl/workbook.xml": (
+                        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+                        'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+                        f'<sheets><sheet name="{SHEET_BASICS}" sheetId="1" r:id="rId1"/></sheets></workbook>'
+                    ).encode(),
+                    "xl/_rels/workbook.xml.rels": (
+                        b'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+                        b'<Relationship Id="rId1" Target="../../../../etc/passwd"/></Relationships>'
+                    ),
+                }
+            ),
+            id="escaping-relationship",
+        ),
+    ],
+)
+def test_an_odd_workbook_is_read_or_refused(raw: bytes) -> None:
+    try:
+        state, _warnings, _pending = xlsx_to_state(raw)
+    except NoticeError:
+        return
+    import_character(state)
+
+
+def test_a_workbook_that_unzips_into_a_bomb_is_refused() -> None:
+    """The archive is small; one part of it is not. Nothing here may allocate
+    the decompressed size — `MAX_PART_BYTES` is checked twice, against what the
+    entry declares and against what actually comes out of it.
+    """
+    padding = b"<!--" + b" " * (MAX_PART_BYTES + 1) + b"-->"
+    bomb = _rebuilt(
+        {
+            **{name: zipfile.ZipFile(io.BytesIO(_XLSX_SEED)).read(name) for name in _XLSX_PARTS},
+            "xl/workbook.xml": padding + b"<workbook/>",
+        }
+    )
+    assert len(bomb) < 200_000, "the point is a small archive"
+    with pytest.raises(NoticeError):
+        xlsx_to_state(bomb)
+
+
+def test_a_shared_string_index_past_the_end_is_not_read_as_one() -> None:
+    """Found while writing the property above: the index is the player's file
+    talking about a table the same file holds, so it can point anywhere."""
+    body = workbook(
+        {**BASELINE, "C16": "0"},
+        shared={"C16": 99},
+        shared_strings=["ヒューマン"],
+    )
+    state, _warnings, _pending = xlsx_to_state(body)
+    import_character(state)
+
+
 # --- the endpoints, as the browser reaches them -------------------------------
 
 
@@ -494,6 +664,7 @@ def test_the_merge_never_edits_the_base_tree_it_copied() -> None:
     [
         ("/api/characters/import-chummer", "application/octet-stream"),
         ("/api/settings/parse", "application/octet-stream"),
+        ("/api/characters/import-xlsx", "application/octet-stream"),
     ],
 )
 @pytest.mark.parametrize(
