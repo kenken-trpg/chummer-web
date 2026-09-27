@@ -11,6 +11,7 @@ it("shows the message and calls reset", () => {
 
   expect(screen.getByText("問題が発生しました")).toBeTruthy();
   expect(screen.getByText("boom")).toBeTruthy();
+  expect(screen.getByRole("alert").textContent).toBe("boom");
 
   fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
   expect(reset).toHaveBeenCalledOnce();

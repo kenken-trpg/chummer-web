@@ -73,6 +73,7 @@ it("reports a corrupt fragment instead of calling the backend", async () => {
   render(<SharePage />);
 
   await screen.findByText(MESSAGES.ja["share.err.corrupt"]);
+  expect(screen.getByRole("alert").textContent).toBe(MESSAGES.ja["share.err.corrupt"]);
   expect(preview).not.toHaveBeenCalled();
 });
 

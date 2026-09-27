@@ -75,7 +75,9 @@ export default function SharePage() {
   if (error) {
     return (
       <div className="main">
-        <p className="errors">{error}</p>
+        <p className="errors" role="alert">
+          {error}
+        </p>
         <p>
           <Link className="btn" href="/">
             {ui("share.mine")}

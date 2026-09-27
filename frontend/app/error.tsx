@@ -18,7 +18,9 @@ export default function Error({
   return (
     <div className="main">
       <h1>{ui("error.title")}</h1>
-      <p className="errors">{error.message || ui("error.unexpected")}</p>
+      <p className="errors" role="alert">
+        {error.message || ui("error.unexpected")}
+      </p>
       <p className="muted">{ui("error.saved")}</p>
       <button className="btn" onClick={reset}>
         {ui("error.reload")}
