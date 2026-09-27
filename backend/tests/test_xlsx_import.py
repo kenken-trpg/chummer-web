@@ -12,11 +12,12 @@ from app.data_loader import catalog
 from app.main import app
 from app.notices import NoticeError
 from app.xlsx_import import is_template_workbook, xlsx_to_state
-from app.xlsx_import._common import SHEET_BASICS, cell_int
+from app.xlsx_import._common import SHEET_BASICS, cell_int, japanese_index
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
 from app.xlsx_import.qualities import candidates, resolve, split_name
+from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
 from tests.notice_asserts import has
-from tests.xlsx_fixtures import BASELINE, filled, workbook
+from tests.xlsx_fixtures import BASELINE, filled, skill_sheet, workbook
 
 
 def _quality_id(name: str) -> str:
@@ -384,6 +385,271 @@ def test_no_quality_keys_when_the_block_is_empty() -> None:
     state, _ = xlsx_to_state(filled())
     assert "quality_ids" not in state
     assert "quality_extras" not in state
+
+
+# --- active skills and skill groups --------------------------------------
+
+
+def test_a_skill_rating_is_points_plus_karma() -> None:
+    """`skills` holds what the skill ends up at and `skill_karma` how much of
+    that karma paid for — the same split a .chum5 read writes."""
+    state, warnings = xlsx_to_state(filled(skills={"自動火器": {"I": "2.0", "J": "1.0"}}))
+    assert state["skills"] == {"Automatics": 3}
+    assert state["skill_karma"] == {"Automatics": 1}
+    assert warnings == []
+
+
+def test_a_skill_bought_with_points_alone_has_no_karma_entry() -> None:
+    state, _ = xlsx_to_state(filled(skills={"知覚": {"I": "5.0"}}))
+    assert state["skills"] == {"Perception": 5}
+    assert "skill_karma" not in state
+
+
+def test_an_untouched_skill_row_is_not_read() -> None:
+    """Every skill in the book has a row, and almost all of them are left at 0."""
+    state, _ = xlsx_to_state(filled(skills={"知覚": {"I": "5.0"}, "弓術": {}, "棍棒": {"L": "0"}}))
+    assert state["skills"] == {"Perception": 5}
+
+
+def test_a_nameless_row_is_the_same_skill_under_another_attribute() -> None:
+    """コンピュータ has rows under 直観力 and 共振力 with no name of their own."""
+    cells = skill_sheet(skills={"コンピュータ": {"I": "3.0"}})
+    cells["C22"] = "直観力"  # the extra row, name column empty
+    cells["I22"] = "9.0"
+    state, warnings = xlsx_to_state(workbook(BASELINE, by_sheet={"能動技能／技能グループ": cells}))
+    assert state["skills"] == {"Computer": 3}
+    assert warnings == []
+
+
+def test_skill_groups_come_through() -> None:
+    state, warnings = xlsx_to_state(filled(groups={"隠密": {"I": "5.0"}}))
+    assert state["skill_groups"] == {"Stealth": 5}
+    assert warnings == []
+
+
+def test_a_skill_group_bought_with_karma() -> None:
+    state, _ = xlsx_to_state(filled(groups={"隠密": {"I": "3.0", "J": "2.0"}}))
+    assert state["skill_groups"] == {"Stealth": 5}
+    assert state["skill_group_karma"] == {"Stealth": 2}
+
+
+@pytest.mark.parametrize(
+    ("japanese", "english"),
+    [
+        # the seven groups whose name the template spells its own way
+        ("小火器", "Firearms"),
+        ("野外活動", "Outdoors"),
+        ("対人", "Influence"),
+        ("呪付", "Enchanting"),
+        ("召霊術", "Conjuring"),
+        ("機器整備", "Engineering"),
+        ("電子工学", "Electronics"),
+        # and one the catalog writes with both readings, 隠密/ステルス
+        ("隠密", "Stealth"),
+    ],
+)
+def test_group_names_the_template_spells_differently(japanese: str, english: str) -> None:
+    state, warnings = xlsx_to_state(filled(groups={japanese: {"I": "2.0"}}))
+    assert state["skill_groups"] == {english: 2}
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    ("japanese", "english"),
+    [
+        ("工業機械設備", "Industrial Mechanic"),
+        ("応急措置", "First Aid"),
+        ("医術", "Medicine"),
+        ("化学実務", "Chemistry"),
+        ("サイバー技術", "Cybertechnology"),
+    ],
+)
+def test_skill_names_the_template_spells_differently(japanese: str, english: str) -> None:
+    state, warnings = xlsx_to_state(filled(skills={japanese: {"I": "1.0"}}))
+    assert state["skills"] == {english: 1}
+    assert warnings == []
+
+
+def test_every_active_skill_on_the_sheet_is_known() -> None:
+    """The sheet lists the book's skills itself, so nothing on it should be a
+    stranger to the catalog. This is the check that a data update has not moved
+    a name out from under the aliases."""
+    cat = catalog()
+    index = japanese_index(cat, [str(row["name"]) for row in cat["skills"]["skills"]], "skill")
+    for japanese, canonical in SKILL_ALIASES.items():
+        assert japanese not in index, f"{japanese} now matches on its own — drop the alias"
+        assert canonical in index, f"{canonical} no longer in the catalog"
+
+
+def test_every_group_alias_is_still_needed() -> None:
+    cat = catalog()
+    index = japanese_index(cat, [str(name) for name in cat["skills"]["group_names"]], "skill")
+    for japanese, english in GROUP_ALIASES.items():
+        assert japanese not in index, f"{japanese} now matches on its own — drop the alias"
+        assert english in index, f"{english} no longer in the catalog"
+
+
+def test_an_unknown_skill_warns() -> None:
+    state, warnings = xlsx_to_state(filled(skills={"そんな技能はない": {"I": "1.0"}}))
+    assert "skills" not in state
+    assert has(warnings, "engine.import.skippedUnknown", name="そんな技能はない")
+
+
+def test_sections_are_found_by_their_headings() -> None:
+    """A revision that inserts a row would shift every skill by one, so the
+    sections are cut at the headings rather than at fixed row numbers."""
+    cells = skill_sheet(groups={"隠密": {"I": "5.0"}}, skills={"知覚": {"I": "4.0"}})
+    # push everything down three rows, headings included
+    shifted = {}
+    for ref, value in cells.items():
+        column, row = ref[0], int(ref[1:])
+        shifted[f"{column}{row + 3}"] = value
+    state, _ = xlsx_to_state(workbook(BASELINE, by_sheet={"能動技能／技能グループ": shifted}))
+    assert state["skill_groups"] == {"Stealth": 5}
+    assert state["skills"] == {"Perception": 4}
+
+
+def test_a_sheet_without_headings_reads_no_skills() -> None:
+    state, warnings = xlsx_to_state(
+        workbook(BASELINE, by_sheet={"能動技能／技能グループ": {"A4": "隠密", "I4": "5.0"}})
+    )
+    assert "skill_groups" not in state
+    assert "skills" not in state
+    assert warnings == []
+
+
+# --- specializations -----------------------------------------------------
+
+
+def test_a_specialization_bought_with_points() -> None:
+    state, _ = xlsx_to_state(filled(skills={"自動火器": {"I": "2.0", "E": "アサルトライフル"}}))
+    assert state["skill_specializations"] == {"Automatics": "Assault Rifles"}
+    assert "skill_specs_karma" not in state
+
+
+def test_a_specialization_bought_with_karma() -> None:
+    """The sheet has a column for each way of paying, and which one was used is
+    what `skill_specs_karma` records."""
+    state, _ = xlsx_to_state(filled(skills={"自動火器": {"I": "2.0", "F": "アサルトライフル"}}))
+    assert state["skill_specializations"] == {"Automatics": "Assault Rifles"}
+    assert state["skill_specs_karma"] == ["Automatics"]
+
+
+def test_a_specialization_the_book_does_not_list_is_kept_as_typed() -> None:
+    """ライトピストル is not one of Pistols' four, and both sheets seen so far
+    write it — a made-up specialization is the player's to keep."""
+    state, warnings = xlsx_to_state(filled(skills={"ピストル": {"I": "5.0", "E": "ライトピストル"}}))
+    assert state["skill_specializations"] == {"Pistols": "ライトピストル"}
+    assert warnings == []
+
+
+def test_a_specialization_alone_still_brings_the_skill_row_in() -> None:
+    state, _ = xlsx_to_state(filled(skills={"自動火器": {"E": "アサルトライフル"}}))
+    assert state["skill_specializations"] == {"Automatics": "Assault Rifles"}
+
+
+# --- knowledge and language skills ---------------------------------------
+
+
+def test_knowledge_skills_keep_the_name_as_typed() -> None:
+    """Nothing to match: a knowledge skill is whatever the player invented."""
+    state, warnings = xlsx_to_state(filled(knowledge=[{"A": "学術知識技能", "B": "バイオ技術", "H": "2.0"}]))
+    assert state["knowledge_skills"] == {"バイオ技術": 2}
+    assert state["knowledge_categories"] == {"バイオ技術": "Academic"}
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    ("category", "expected"),
+    [
+        ("ストリート知識技能", "Street"),
+        ("学術知識技能", "Academic"),
+        ("職業知識技能", "Professional"),
+        ("趣味知識技能", "Interest"),
+        ("言語知識技能", "Language"),
+        ("その他（直観力）", "Interest"),
+        ("その他（論理力）", "Academic"),
+    ],
+)
+def test_knowledge_categories(category: str, expected: str) -> None:
+    state, _ = xlsx_to_state(filled(knowledge=[{"A": category, "B": "なにか", "H": "1.0"}]))
+    assert state["knowledge_categories"] == {"なにか": expected}
+
+
+def test_an_unknown_category_falls_back_to_academic() -> None:
+    state, _ = xlsx_to_state(filled(knowledge=[{"A": "", "B": "なにか", "H": "1.0"}]))
+    assert state["knowledge_categories"] == {"なにか": "Academic"}
+
+
+def test_a_native_language_carries_no_rating() -> None:
+    state, _ = xlsx_to_state(
+        filled(
+            knowledge=[{"A": "言語知識技能（Native）", "B": "日本語"}, {"A": "言語知識技能", "B": "英語", "H": "3.0"}]
+        )
+    )
+    assert state["native_languages"] == ["日本語"]
+    assert state["knowledge_skills"] == {"英語": 3}
+
+
+def test_knowledge_karma_is_kept_apart() -> None:
+    state, _ = xlsx_to_state(filled(knowledge=[{"A": "学術知識技能", "B": "魔法理論", "H": "2.0", "I": "2.0"}]))
+    assert state["knowledge_skills"] == {"魔法理論": 4}
+    assert state["knowledge_karma"] == {"魔法理論": 2}
+
+
+def test_a_knowledge_specialization_joins_the_active_ones() -> None:
+    """`skill_specializations` is one map for both kinds, so the knowledge pass
+    must add to it rather than replace what the active pass put there."""
+    state, _ = xlsx_to_state(
+        filled(
+            skills={"自動火器": {"I": "2.0", "E": "アサルトライフル"}},
+            knowledge=[{"A": "ストリート知識技能", "B": "ストリートの噂", "H": "4.0", "E": "繁華街"}],
+        )
+    )
+    assert state["skill_specializations"] == {"Automatics": "Assault Rifles", "ストリートの噂": "繁華街"}
+
+
+def test_an_empty_knowledge_row_is_skipped() -> None:
+    state, _ = xlsx_to_state(filled(knowledge=[{"A": "学術知識技能"}, {"B": "音楽", "H": "1.0"}]))
+    assert state["knowledge_skills"] == {"音楽": 1}
+
+
+def test_a_missing_knowledge_sheet_does_not_fail_the_import() -> None:
+    """The sheet is not in REQUIRED_SHEETS: a revision that renamed it should
+    still bring the rest of the character over."""
+    state, _ = xlsx_to_state(workbook(BASELINE, sheets=(SHEET_BASICS, "能動技能／技能グループ", "編集不可")))
+    assert "knowledge_skills" not in state
+    assert state["metatype"] == "Human"
+
+
+def test_no_skill_keys_when_the_sheets_are_empty() -> None:
+    state, _ = xlsx_to_state(filled())
+    for key in ("skills", "skill_karma", "skill_groups", "knowledge_skills", "native_languages"):
+        assert key not in state
+
+
+# --- skills reaching the engine ------------------------------------------
+
+
+def test_the_skills_reach_the_engine() -> None:
+    state, _ = xlsx_to_state(
+        filled(
+            J20="5.0",  # AGI 6
+            skills={"ピストル": {"I": "5.0"}},
+            knowledge=[{"A": "学術知識技能", "B": "バイオ技術", "H": "2.0"}],
+        )
+    )
+    char = import_character(state)
+    assert char.skills["Pistols"] == 5
+    assert char.derived["points"]["skills"]["used"] == 5
+    assert any(row["name"] == "バイオ技術" for row in char.derived["knowledge_skills"])
+
+
+def test_a_group_and_a_skill_are_counted_against_their_own_budgets() -> None:
+    state, _ = xlsx_to_state(filled(groups={"隠密": {"I": "5.0"}}, skills={"知覚": {"I": "4.0"}}))
+    points = import_character(state).derived["points"]
+    assert points["skill_groups"]["used"] == 5
+    assert points["skills"]["used"] == 4
 
 
 # --- the whole thing -----------------------------------------------------

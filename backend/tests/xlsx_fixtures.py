@@ -16,11 +16,11 @@ import io
 import re
 import zipfile
 
-from app.xlsx_import._common import SHEET_BASICS
+from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_SKILLS
 
-#: The sheets `is_template_workbook` insists on, in the order the template has
-#: them. Only the first is ever read.
-SHEETS = (SHEET_BASICS, "能動技能／技能グループ", "編集不可")
+#: The sheets the fixtures build, the three the import reads plus the one
+#: `is_template_workbook` insists on.
+SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, "編集不可")
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -66,8 +66,11 @@ def workbook(
     sheets: tuple[str, ...] = SHEETS,
     shared_strings: list[str] | None = None,
     shared: dict[str, int] | None = None,
+    by_sheet: dict[str, dict[str, str]] | None = None,
 ) -> bytes:
-    """A .xlsx holding `cells` on the 優先度／能力値／資質 sheet."""
+    """A .xlsx holding `cells` on the 優先度／能力値／資質 sheet.
+
+    `by_sheet` fills the other sheets, keyed by name."""
     sheet_tags = "".join(
         f'<sheet name="{name}" sheetId="{i}" r:id="rId{i}"/>' for i, name in enumerate(sheets, start=1)
     )
@@ -94,8 +97,11 @@ def workbook(
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
             f"{rel_tags}</Relationships>",
         )
-        for index in range(1, len(sheets) + 1):
-            body = _sheet_xml(cells, shared=shared) if index == 1 else _sheet_xml({})
+        for index, name in enumerate(sheets, start=1):
+            if index == 1:
+                body = _sheet_xml(cells, shared=shared)
+            else:
+                body = _sheet_xml((by_sheet or {}).get(name) or {})
             archive.writestr(f"xl/worksheets/sheet{index}.xml", body)
         if shared_strings is not None:
             items = "".join(f"<si><t>{text}</t></si>" for text in shared_strings)
@@ -126,7 +132,50 @@ BASELINE = {
 }
 
 
-def filled(**overrides: str) -> bytes:
+#: The active-skill sheet's headings, which is how the reader finds its sections.
+#: A skill row needs no more than its name and a number.
+SKILL_HEADINGS = {"A3": "技能グループ", "A20": "戦闘系能動技能"}
+
+
+def skill_sheet(groups: dict[str, str] | None = None, skills: dict[str, str] | None = None) -> dict[str, str]:
+    """The active sheet: `groups` at rows 4.., `skills` from row 21 on, each
+    mapping a Japanese name to the columns to fill (e.g. ``{"I": "5.0"}``)."""
+    cells = dict(SKILL_HEADINGS)
+    for offset, (name, columns) in enumerate((groups or {}).items()):
+        row = 4 + offset
+        cells[f"A{row}"] = name
+        cells.update({f"{column}{row}": value for column, value in columns.items()})
+    for offset, (name, columns) in enumerate((skills or {}).items()):
+        row = 21 + offset
+        cells[f"A{row}"] = name
+        cells.update({f"{column}{row}": value for column, value in columns.items()})
+    return cells
+
+
+def knowledge_sheet(rows: list[dict[str, str]]) -> dict[str, str]:
+    """The knowledge sheet: one dict of columns per row, from row 3 on."""
+    cells: dict[str, str] = {}
+    for offset, columns in enumerate(rows):
+        row = 3 + offset
+        cells.update({f"{column}{row}": value for column, value in columns.items()})
+    return cells
+
+
+def filled(
+    *,
+    skills: dict[str, dict[str, str]] | None = None,
+    groups: dict[str, dict[str, str]] | None = None,
+    knowledge: list[dict[str, str]] | None = None,
+    **overrides: str,
+) -> bytes:
     """A workbook of `BASELINE` plus `overrides`; a cell set to "" is removed."""
     cells = {**BASELINE, **overrides}
-    return workbook({ref: value for ref, value in cells.items() if value != ""})
+    by_sheet: dict[str, dict[str, str]] = {}
+    if skills is not None or groups is not None:
+        by_sheet[SHEET_SKILLS] = skill_sheet(groups, skills)
+    if knowledge is not None:
+        by_sheet[SHEET_KNOWLEDGE] = knowledge_sheet(knowledge)
+    return workbook(
+        {ref: value for ref, value in cells.items() if value != ""},
+        by_sheet=by_sheet,
+    )
