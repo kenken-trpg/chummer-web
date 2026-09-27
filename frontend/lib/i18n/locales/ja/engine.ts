@@ -367,6 +367,8 @@ export const JA_ENGINE = {
     "アデプト・パワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
   "engine.import.xlsxPowerLevel":
     "キャラシテンプレートはアデプト・パワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
+  "engine.import.xlsxWareGrade":
+    "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
   "engine.term.contact": "コンタクト",
   "engine.term.gear": "ギア",

@@ -367,6 +367,8 @@ export const EN_ENGINE = {
     'The note "{note}" on the adept power "{name}" could not be imported: this power takes no target.',
   "engine.import.xlsxPowerLevel":
     'The character sheet gave the adept power "{name}" level {level}, but this power has no levels — it was imported as a single purchase.',
+  "engine.import.xlsxWareGrade":
+    'The grade "{grade}" on the implant "{name}" could not be read — it was imported as Standard.',
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
   "engine.term.contact": "contact",

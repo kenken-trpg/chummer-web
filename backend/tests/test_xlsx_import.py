@@ -12,13 +12,23 @@ from app.data_loader import catalog
 from app.main import app
 from app.notices import NoticeError
 from app.xlsx_import import is_template_workbook, xlsx_to_state
-from app.xlsx_import._common import SHEET_BASICS, SHEET_MAGIC, SHEET_SKILLS, cell_int, japanese_index
+from app.xlsx_import._common import (
+    SHEET_BASICS,
+    SHEET_MAGIC,
+    SHEET_SKILLS,
+    SHEET_WARE,
+    cell_int,
+    japanese_index,
+)
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
 from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
+from app.xlsx_import.ware import NAME_ALIASES as WARE_ALIASES
+from app.xlsx_import.ware import build_index as ware_index
+from app.xlsx_import.ware import clean_name
 from tests.notice_asserts import has
-from tests.xlsx_fixtures import BASELINE, filled, magic_sheet, skill_sheet, workbook
+from tests.xlsx_fixtures import BASELINE, filled, magic_sheet, skill_sheet, ware_sheet, workbook
 
 
 def _quality_id(name: str) -> str:
@@ -939,3 +949,211 @@ def test_a_mentor_spirit_with_no_pick_is_still_the_quality() -> None:
     assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
     assert "mentor_id" not in state
     assert warnings == []
+
+
+# --- 身体強化／電子機器 ------------------------------------------------------
+
+
+def _ware_id(name: str) -> str:
+    rows = catalog()["cyberware"]["items"] + catalog()["bioware"]["items"]
+    return next(str(row["id"]) for row in rows if row["name"] == name)
+
+
+@pytest.mark.parametrize(
+    ("raw", "name", "nested", "side", "rating"),
+    [
+        ("オルソスキン", "オルソスキン", False, "", 0),
+        # the availability the sheet works out anyway, copied into the name
+        ("サイバーアイ[9]", "サイバーアイ", False, "", 0),
+        # the rating written into the name as well as its own column
+        ("└視覚強化R3[3]", "視覚強化", True, "", 3),
+        ("└スマートリンク[3]", "スマートリンク", True, "", 0),
+        # 日本鬼 nests with parentheses instead of a box-drawing character
+        ("（大光量補正）", "大光量補正", True, "", 0),
+        ("(スマートリンク)", "スマートリンク", True, "", 0),
+        # a side run into the name
+        ("非偽装型サイバーリム右腕全体", "非偽装型サイバーリム腕全体", False, "Right", 0),
+        ("　└　低光量補正", "低光量補正", True, "", 0),
+        # a name whose own parenthesis is not a nesting mark
+        ("骨格補綴 (チタニウム)", "骨格補綴 (チタニウム)", False, "", 0),
+    ],
+)
+def test_clean_name(raw: str, name: str, nested: bool, side: str, rating: int) -> None:
+    assert clean_name(raw) == (name, nested, side, rating)
+
+
+def test_implants_split_between_cyberware_and_bioware() -> None:
+    """One table on the sheet, two lists here: the player picks the grade, not
+    the book the implant came from."""
+    implants = [
+        {"A": "声紋変調器", "N": "アルファウェア", "P": "4.0"},
+        {"A": "オルソスキン", "N": "スタンダード", "P": "3.0"},
+    ]
+    state, warnings = xlsx_to_state(filled(implants=implants))
+    assert [row["ware_id"] for row in state["cyberware"]] == [_ware_id("Voice Modulator")]
+    assert [row["ware_id"] for row in state["bioware"]] == [_ware_id("Orthoskin")]
+    assert warnings == []
+
+
+def test_an_implant_keeps_its_grade_and_rating() -> None:
+    state, _ = xlsx_to_state(filled(implants=[{"A": "声紋変調器", "N": "アルファウェア", "P": "4.0"}]))
+    assert state["cyberware"][0]["grade"] == "Alphaware"
+    assert state["cyberware"][0]["rating"] == 4
+
+
+@pytest.mark.parametrize("japanese", ["スタンダード", "アルファウェア", "ベータウェア", "デルタウェア", "中古"])
+def test_every_grade_the_dropdown_offers(japanese: str) -> None:
+    """The grade is the one thing on this sheet that is a dropdown, so all five
+    of its entries have to land on a grade this app knows."""
+    state, warnings = xlsx_to_state(filled(implants=[{"A": "オルソスキン", "N": japanese, "P": "1.0"}]))
+    grades = {str(row["name"]) for row in catalog()["bioware"]["grades"]}
+    assert state["bioware"][0]["grade"] in grades
+    assert warnings == []
+
+
+def test_an_unreadable_grade_falls_back_to_standard() -> None:
+    state, warnings = xlsx_to_state(filled(implants=[{"A": "オルソスキン", "N": "そんな等級はない", "P": "1.0"}]))
+    assert state["bioware"][0]["grade"] == "Standard"
+    assert has(warnings, "engine.import.xlsxWareGrade", grade="そんな等級はない")
+
+
+def test_a_rating_of_zero_becomes_one() -> None:
+    """The sheet leaves the column empty, or writes 0, on an implant that has no
+    rating."""
+    state, _ = xlsx_to_state(filled(implants=[{"A": "血小板工場", "N": "スタンダード", "P": "0.0"}]))
+    assert state["bioware"][0]["rating"] == 1
+
+
+def test_a_rating_column_that_is_not_a_number_is_part_of_the_name() -> None:
+    """骨格補綴 with チタニウム in the rating column is the catalog's
+    骨格補綴 (チタニウム) — the material is part of the name there."""
+    state, warnings = xlsx_to_state(filled(implants=[{"A": "骨格補綴", "N": "中古", "P": "チタニウム"}]))
+    assert state["cyberware"][0]["ware_id"] == _ware_id("Bone Lacing (Titanium)")
+    assert state["cyberware"][0]["rating"] == 1
+    assert warnings == []
+
+
+def test_nested_implants_hang_off_the_row_above_them() -> None:
+    """アッシュ's cybereyes, with three things installed in them."""
+    implants = [
+        {"A": "サイバーアイ[9]", "N": "スタンダード", "P": "3.0"},
+        {"A": "└視覚強化R3[3]", "P": "3.0"},
+        {"A": "└スマートリンク[3]"},
+        {"A": "└大光量補正[1]"},
+    ]
+    state, warnings = xlsx_to_state(filled(implants=implants))
+    eyes, *installed = state["cyberware"]
+    assert eyes["ware_id"] == _ware_id("Cybereyes Basic System")
+    assert eyes.get("parent_id") is None
+    assert [row["parent_id"] for row in installed] == [eyes["id"]] * 3
+    assert warnings == []
+
+
+def test_nesting_written_with_parentheses() -> None:
+    """日本鬼 writes （大光量補正） where アッシュ writes └大光量補正."""
+    implants = [{"A": "サイバーアイ", "N": "スタンダード", "P": "2.0"}, {"A": "（大光量補正）", "N": "スタンダード"}]
+    state, _ = xlsx_to_state(filled(implants=implants))
+    eyes, flare = state["cyberware"]
+    assert flare["parent_id"] == eyes["id"]
+
+
+def test_an_implant_before_any_parent_is_not_nested() -> None:
+    """A nesting mark on the first row has nothing to hang off."""
+    state, _ = xlsx_to_state(filled(implants=[{"A": "（大光量補正）", "N": "スタンダード"}]))
+    assert state["cyberware"][0].get("parent_id") is None
+
+
+def test_a_limb_keeps_the_side_it_was_written_on() -> None:
+    state, warnings = xlsx_to_state(filled(implants=[{"A": "非偽装型サイバーリム右腕全体", "N": "中古"}]))
+    assert state["cyberware"][0]["ware_id"] == _ware_id("Obvious Full Arm")
+    assert state["cyberware"][0]["side"] == "Right"
+    assert warnings == []
+
+
+def test_every_cyberlimb_is_reachable_the_way_the_template_writes_one() -> None:
+    """非偽装型サイバーアーム(全体) is written 非偽装型サイバーリム腕全体, and the
+    spellings are built from the catalog's own names rather than listed."""
+    index, _ = ware_index(catalog())
+    for japanese, english in [
+        ("非偽装型サイバーリム腕全体", "Obvious Full Arm"),
+        ("偽装型サイバーリム脚下腿部", "Synthetic Lower Leg"),
+        ("非偽装型サイバーリム手手", "Obvious Hand"),
+        ("非偽装型サイバースカル頭蓋", "Obvious Skull"),
+    ]:
+        assert index[japanese] == english
+
+
+def test_the_implant_aliases_are_still_needed() -> None:
+    """A guard against catalog drift: once the Japanese data spells it the way
+    the template does, the alias can go."""
+    index, _ = ware_index(catalog())
+    assert set(WARE_ALIASES) - set(index) == set(WARE_ALIASES)
+
+
+def test_an_unknown_implant_warns() -> None:
+    """（特注モデル） is 日本鬼's own shorthand: the catalog has 特注:筋力向上 and
+    特注:敏捷力向上 and nothing says which."""
+    _, warnings = xlsx_to_state(filled(implants=[{"A": "（特注モデル）", "N": "中古"}]))
+    assert has(warnings, "engine.import.skippedUnknown", name="（特注モデル）")
+
+
+def test_a_commlink_comes_over_with_its_device_rating() -> None:
+    """アッシュ writes トランシスアヴァロン; the catalog spells it with an
+    interpunct."""
+    devices = [{"A": "コムリンク", "D": "トランシスアヴァロン", "M": "6.0"}]
+    state, warnings = xlsx_to_state(filled(devices=devices))
+    assert state["commlinks"][0]["gear_id"] == _catalog_id("commlinks", "Transys Avalon")
+    assert state["commlinks"][0]["rating"] == 6
+    assert warnings == []
+
+
+def test_a_cyberdeck_goes_in_its_own_list() -> None:
+    state, warnings = xlsx_to_state(filled(devices=[{"A": "サイバーデッキ", "D": "エリカ MCD-1", "M": "1.0"}]))
+    assert "commlinks" not in state
+    assert state["cyberdecks"][0]["gear_id"] == _catalog_id("cyberdecks", "Erika MCD-1")
+    assert warnings == []
+
+
+def test_the_bio_persona_row_is_not_a_device() -> None:
+    """生体ペルソナ／無し is the technomancer's own persona, not something bought."""
+    state, warnings = xlsx_to_state(filled(devices=[{"A": "生体ペルソナ", "D": "無し"}]))
+    assert "commlinks" not in state
+    assert "cyberdecks" not in state
+    assert warnings == []
+
+
+def test_an_unknown_device_warns() -> None:
+    _, warnings = xlsx_to_state(filled(devices=[{"A": "コムリンク", "D": "そんなコムリンクはない"}]))
+    assert has(warnings, "engine.import.skippedUnknown", name="そんなコムリンクはない")
+
+
+def test_the_device_block_is_found_by_its_heading() -> None:
+    """The implant table above it could grow in a later revision."""
+    cells = ware_sheet(devices=[{"A": "コムリンク", "D": "トランシスアヴァロン", "M": "6.0"}])
+    shifted = {f"{ref[0]}{int(ref[1:]) + 4}": value for ref, value in cells.items()}
+    state, _ = xlsx_to_state(workbook(dict(BASELINE), by_sheet={SHEET_WARE: shifted}))
+    assert state["commlinks"][0]["gear_id"] == _catalog_id("commlinks", "Transys Avalon")
+
+
+def test_a_missing_ware_sheet_is_tolerated() -> None:
+    state, _ = xlsx_to_state(workbook(dict(BASELINE), sheets=(SHEET_BASICS, SHEET_SKILLS, "編集不可")))
+    assert "cyberware" not in state
+    assert "commlinks" not in state
+
+
+def test_no_ware_keys_when_the_sheet_is_empty() -> None:
+    state, warnings = xlsx_to_state(filled())
+    assert not {"cyberware", "bioware", "commlinks", "cyberdecks"} & set(state)
+    assert warnings == []
+
+
+def test_the_implants_reach_the_engine_as_spent_essence() -> None:
+    """Which is what makes the import worth having: the essence comes out of the
+    rules rather than off the sheet. アルファウェア is 0.8 of the standard cost."""
+    implants = [
+        {"A": "オルソスキン", "N": "アルファウェア", "P": "3.0"},
+        {"A": "超甲状腺", "N": "スタンダード", "P": "0.0"},
+    ]
+    state, _ = xlsx_to_state(filled(implants=implants))
+    char = import_character(state)
+    assert char.derived["essence"] == 6 - 0.6 - 0.7

@@ -16,11 +16,11 @@ import io
 import re
 import zipfile
 
-from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_SKILLS
+from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_SKILLS, SHEET_WARE
 
 #: The sheets the fixtures build, the three the import reads plus the one
 #: `is_template_workbook` insists on.
-SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, SHEET_MAGIC, "編集不可")
+SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_WARE, "編集不可")
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -186,6 +186,26 @@ def magic_sheet(
     return cells
 
 
+#: The device block's heading, which is how the reader finds it. The implant
+#: table above it is at rows 4–33 in every version seen.
+DEVICES_HEADING_ROW = 35
+
+
+def ware_sheet(
+    implants: list[dict[str, str]] | None = None,
+    devices: list[dict[str, str]] | None = None,
+) -> dict[str, str]:
+    """The 身体強化／電子機器 sheet: `implants` as one dict of columns per row from
+    row 4, `devices` likewise under the サイバーデッキ／コムリンク heading."""
+    cells = {f"A{DEVICES_HEADING_ROW}": "サイバーデッキ／コムリンク"}
+    for offset, columns in enumerate(implants or []):
+        cells.update({f"{column}{4 + offset}": value for column, value in columns.items()})
+    for offset, columns in enumerate(devices or []):
+        row = DEVICES_HEADING_ROW + 3 + offset
+        cells.update({f"{column}{row}": value for column, value in columns.items()})
+    return cells
+
+
 def filled(
     *,
     skills: dict[str, dict[str, str]] | None = None,
@@ -194,6 +214,8 @@ def filled(
     spells: list[str] | None = None,
     forms: list[str] | None = None,
     powers: list[tuple[str, str]] | None = None,
+    implants: list[dict[str, str]] | None = None,
+    devices: list[dict[str, str]] | None = None,
     **overrides: str,
 ) -> bytes:
     """A workbook of `BASELINE` plus `overrides`; a cell set to "" is removed."""
@@ -205,6 +227,8 @@ def filled(
         by_sheet[SHEET_KNOWLEDGE] = knowledge_sheet(knowledge)
     if spells is not None or forms is not None or powers is not None:
         by_sheet[SHEET_MAGIC] = magic_sheet(spells, forms, powers)
+    if implants is not None or devices is not None:
+        by_sheet[SHEET_WARE] = ware_sheet(implants, devices)
     return workbook(
         {ref: value for ref, value in cells.items() if value != ""},
         by_sheet=by_sheet,

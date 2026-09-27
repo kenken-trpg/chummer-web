@@ -21,6 +21,7 @@ SHEET_BASICS = "優先度／能力値／資質"
 SHEET_SKILLS = "能動技能／技能グループ"
 SHEET_KNOWLEDGE = "知識技能／言語技能"
 SHEET_MAGIC = "呪文／複合体／アデプト・パワー"
+SHEET_WARE = "身体強化／電子機器"
 
 
 def cell_int(text: str | None) -> int:
@@ -41,33 +42,6 @@ def cell_int(text: str | None) -> int:
     return int(round(value))
 
 
-def japanese_index(cat: CatalogDict, names: Iterable[str], kind: str = "") -> dict[str, str]:
-    """``{japanese: english}`` for `names`, with the English name as a key too.
-
-    Some of the catalog's Japanese names carry both readings, joined with a
-    slash — ``隠密/ステルス``, ``真偽分析/アナライズ・トゥルース`` — and the
-    template writes whichever of the two the player knows. So each side is a key
-    of its own, alongside the joined name as written.
-
-    `kind` names a `translations_by_kind` bucket to layer on top (``"skill"``
-    for anything on the skill sheets), the way the catalog view does.
-    """
-    translations = dict(cat.get("translations") or {})
-    if kind:
-        translations.update((cat.get("translations_by_kind") or {}).get(kind) or {})
-    index: dict[str, str] = {}
-    for english in names:
-        index.setdefault(english, english)
-        japanese = translations.get(english)
-        if not japanese:
-            continue
-        for part in [japanese, *japanese.split("/")]:
-            part = part.strip()
-            if part:
-                index.setdefault(part, english)
-    return index
-
-
 #: A parenthesised pick, and whatever the player added after it. The trailing
 #: group is a note — 「導師精霊（竜殺しの英雄）　交渉に+2修正」— not part of
 #: either the name or the pick.
@@ -85,6 +59,38 @@ _INTERPUNCT = re.compile(r"[・･]")
 def no_interpunct(text: str) -> str:
     """`text` with its interpuncts dropped, for matching either spelling."""
     return _INTERPUNCT.sub("", text)
+
+
+def japanese_index(cat: CatalogDict, names: Iterable[str], kind: str = "") -> dict[str, str]:
+    """``{japanese: english}`` for `names`, with the English name as a key too.
+
+    Some of the catalog's Japanese names carry both readings, joined with a
+    slash — ``隠密/ステルス``, ``真偽分析/アナライズ・トゥルース`` — and the
+    template writes whichever of the two the player knows. So each side is a key
+    of its own, alongside the joined name as written.
+
+    Interpuncts come off a second key as well, because the catalog writes a
+    loanword with one — ``トランシス・アヴァロン`` — and the sheets are written
+    both ways.
+
+    `kind` names a `translations_by_kind` bucket to layer on top (``"skill"``
+    for anything on the skill sheets), the way the catalog view does.
+    """
+    translations = dict(cat.get("translations") or {})
+    if kind:
+        translations.update((cat.get("translations_by_kind") or {}).get(kind) or {})
+    index: dict[str, str] = {}
+    for english in names:
+        index.setdefault(english, english)
+        japanese = translations.get(english)
+        if not japanese:
+            continue
+        for part in [japanese, *japanese.split("/")]:
+            part = part.strip()
+            if part:
+                index.setdefault(part, english)
+                index.setdefault(no_interpunct(part), english)
+    return index
 
 
 def split_name(raw: str) -> tuple[str, str, str]:
