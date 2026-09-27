@@ -25,6 +25,9 @@ for pair in "$@"; do
   if [ "$(gh pr view "$n" --json state -q .state)" = MERGED ]; then echo "already merged"; continue; fi
   git fetch -q origin
   git switch -q "$br" || exit 1
+  # Where this branch sat before the rebase, so that what main gained since can
+  # be told apart from what the branch itself changes.
+  was=$(git merge-base HEAD origin/main)
   if ! git rebase origin/main >/dev/null 2>&1; then
     while true; do
       files=$(git diff --name-only --diff-filter=U)
@@ -41,11 +44,31 @@ for pair in "$@"; do
       git status | grep -q "rebase in progress" || break
     done
   fi
-  (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests &&
-    uv run --no-sync pytest -q -n auto 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
-  if git diff --name-only origin/main | grep -q '^frontend/'; then
+  # Which half to check. The point of checking at all is that main may have
+  # moved under the branch, so it is not enough to ask what the branch changes:
+  # both sides count. If neither touched a half, the green this PR already has
+  # for it still stands and running it again buys nothing.
+  #
+  # Anything outside the two runs both, because what it reaches is not written
+  # down anywhere this could read — scripts/ and the Makefile are what the
+  # checks are invoked through. Prose is the exception, and it has to be: every
+  # PR carries a changelog.d/ fragment, so counting those as `elsewhere` would
+  # open both gates every time and this would decide nothing. A fragment,
+  # a Markdown file, docs/ and .github/ cannot change what pytest or vitest do.
+  touched=$( (git diff --name-only origin/main...HEAD; git diff --name-only "$was" origin/main) | sort -u)
+  elsewhere=$(printf '%s\n' "$touched" |
+    grep -vE '^(backend/|frontend/|changelog\.d/|docs/|\.github/|$)|\.md$')
+  if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^backend/'; then
+    (cd backend && uv run --no-sync ruff format -q tests && uv run --no-sync ruff check -q app tests &&
+      uv run --no-sync pytest -q -n auto 2>&1 | tail -1) || { echo "STOP: backend checks"; exit 1; }
+  else
+    echo "backend untouched on both sides — checked already"
+  fi
+  if [ -n "$elsewhere" ] || printf '%s\n' "$touched" | grep -q '^frontend/'; then
     (cd frontend && npx prettier --write --log-level warn . >/dev/null &&
       npx tsc --noEmit && npx vitest run 2>&1 | grep -E "Tests ") || { echo "STOP: frontend checks"; exit 1; }
+  else
+    echo "frontend untouched on both sides — checked already"
   fi
   # Formatting the tree is part of the checks above, so a rebase that left a
   # file unformatted gets its own commit rather than a dirty tree at push.
@@ -53,7 +76,19 @@ for pair in "$@"; do
     git commit -qam "style: format after rebase"
   fi
   git push -q --force-with-lease origin "$br" || exit 1
-  sleep 20  # let GitHub register the push, so the checks below are this push's
+  # Wait for GitHub to agree that the head is what was just pushed, rather than
+  # guessing how long that takes. `gh pr checks` reports the checks of the PR's
+  # head commit, so once the two match, what it lists is this push's — which is
+  # what the blind `sleep 20` here was reaching for, less certainly and more
+  # slowly (it usually settles in a few seconds).
+  head=$(git rev-parse HEAD)
+  seen=
+  for _ in $(seq 1 20); do
+    seen=$(gh pr view "$n" --json headRefOid -q .headRefOid 2>/dev/null)
+    [ "$seen" = "$head" ] && break
+    sleep 3
+  done
+  [ "$seen" = "$head" ] || { echo "STOP: GitHub still does not see the push after 1 min"; exit 1; }
   # Wait for every check to report, and require all of them green, BEFORE
   # handing the PR to auto-merge. The other order merged #276 with
   # `backend-windows` red: a STOP here is only this script exiting, while
@@ -61,8 +96,11 @@ for pair in "$@"; do
   # the checks branch protection calls *required* — not for the ones this loop
   # reads. Arming it only once everything has reported means the two cannot
   # disagree about what green is.
+  # Ten seconds rather than twenty: the wait is idle either way, and the run
+  # spends it once per PR. At worst this asks 120 times per PR here and 60
+  # below — nowhere near the 5,000 requests an hour the API allows.
   pending=
-  for _ in $(seq 1 60); do
+  for _ in $(seq 1 120); do
     # `|| true`, not `|| checks=`: gh exits 1 exactly when a check has failed,
     # and throwing the output away then would hide the one thing this looks for.
     checks=$(gh pr checks "$n" 2>/dev/null || true)
@@ -70,7 +108,7 @@ for pair in "$@"; do
     if [ -n "$bad" ]; then echo "STOP: checks"; echo "$bad"; exit 1; fi
     pending=$(printf '%s\n' "$checks" | grep -c "\bpending\b")
     [ "$pending" = 0 ] && [ -n "$checks" ] && break
-    sleep 20
+    sleep 10
   done
   [ "$pending" = 0 ] || { echo "STOP: checks still pending after 20 min"; exit 1; }
   gh pr merge "$n" --squash --auto >/dev/null 2>&1 ||
@@ -80,10 +118,10 @@ for pair in "$@"; do
   # if it does not merge, auto-merge is disarmed on the way out rather than
   # left to merge the branch later, unattended, after a STOP.
   state=
-  for _ in $(seq 1 30); do
+  for _ in $(seq 1 60); do
     state=$(gh pr view "$n" --json state -q .state)
     [ "$state" = MERGED ] && break
-    sleep 10
+    sleep 5
   done
   if [ "$state" != MERGED ]; then
     gh pr merge "$n" --disable-auto >/dev/null 2>&1 || true
