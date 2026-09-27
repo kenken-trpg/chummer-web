@@ -7,6 +7,11 @@ import {
   portraitsOf,
   portraitsPatch,
 } from "@/lib/character/portrait";
+import {
+  clearPendingGear,
+  loadPendingGear,
+  savePendingGear,
+} from "@/lib/character/pending-gear-store";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
@@ -41,10 +46,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const [review, setExportReview] = useState<{ of: Character; differences: Notice[] } | null>(null);
   const exportReview = review && review.of === ch ? review.differences : null;
   /** The 装備 rows of an .xlsx import that need a person to say what they are.
-   *  Tied to the character they came from, the way `review` is: switching
-   *  character drops them, since they would be offered against the wrong
-   *  sheet. They are not saved — the import's warning says how many there
-   *  were, and re-importing the file offers them again. */
+   *  Tied to the character they came from, so switching character shows that
+   *  one's rows rather than the wrong sheet's. Kept in this browser (see
+   *  `pending-gear-store`) so a reload in the middle of settling twenty rows
+   *  does not lose the other nineteen. */
   const [pending, setPendingGear] = useState<{ of: string; rows: PendingGear[] } | null>(null);
   const pendingGear = pending && ch && pending.of === ch.id ? pending.rows : null;
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
@@ -172,6 +177,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     try {
       remember(await api.get(id));
       onCharacterOpened?.();
+      // Picked back up rather than dropped: a character imported from a
+      // template keeps the rows nobody has settled yet.
+      readPendingGear(id);
       setError(null);
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.load"));
@@ -195,6 +203,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     if (!ch) return;
     if (!window.confirm(ui("app.confirm.delete", { name: ch.name || ui("app.unnamed") }))) return;
     const others = roster.filter((r) => r.id !== ch.id);
+    // nothing left to attach them to
+    clearPendingGear(ch.id);
     await api.remove(ch.id).catch(() => {});
     // deleting the last one mints a replacement; if the backend is down that
     // fails loudly rather than leaving the editor pointing at a deleted id
@@ -382,13 +392,23 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   /** Drop a pending row, either because it was added or because it was waved
    *  off. Both are the player saying they are done with it. */
   function resolvePendingGear(name: string) {
-    setPendingGear((prev) =>
-      prev ? { ...prev, rows: prev.rows.filter((row) => row.name !== name) } : prev,
-    );
+    setPendingGear((prev) => {
+      if (!prev) return prev;
+      const rows = prev.rows.filter((row) => row.name !== name);
+      savePendingGear(prev.of, rows);
+      return { ...prev, rows };
+    });
   }
 
   function dismissPendingGear() {
+    if (pending) clearPendingGear(pending.of);
     setPendingGear(null);
+  }
+
+  /** What is held for `id`, so opening a character picks its rows back up. */
+  function readPendingGear(id: string) {
+    const rows = loadPendingGear(id);
+    setPendingGear(rows.length ? { of: id, rows } : null);
   }
 
   async function onImport(file: File) {
@@ -398,9 +418,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
         const res = await api.importXlsx(await file.arrayBuffer());
         remember(res.character);
         onCharacterOpened?.();
-        setPendingGear(
-          res.pending_gear.length ? { of: res.character.id, rows: res.pending_gear } : null,
-        );
+        savePendingGear(res.character.id, res.pending_gear);
+        readPendingGear(res.character.id);
         if (res.warnings.length) setError(importWarnings(res.warnings));
         void refreshRoster();
         return;

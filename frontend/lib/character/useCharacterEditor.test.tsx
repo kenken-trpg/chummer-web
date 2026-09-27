@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { makeCharacter } from "@/tests/fixtures";
 import type { Catalog, Character } from "@/lib/types";
+import { loadPendingGear } from "@/lib/character/pending-gear-store";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { MESSAGES } from "@/lib/i18n/messages";
 import { notify } from "@/lib/notices";
@@ -358,8 +359,54 @@ describe("useCharacterEditor.onImport", () => {
     expect(result.current.pendingGear).toBeNull();
   });
 
-  it("drops held equipment rows when another character is opened", async () => {
-    // they were offered against one sheet; against another they are wrong
+  it("shows each character's own held rows, and none for one that has none", async () => {
+    const { result } = await editorWith();
+    const held = [{ name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] }];
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: held,
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    expect(result.current.pendingGear).toEqual(held);
+
+    // a character nobody imported a template for has nothing waiting
+    api.get.mockResolvedValue(makeCharacter({ id: "other" }));
+    await act(async () => {
+      await result.current.openCharacter("other");
+    });
+    expect(result.current.pendingGear).toBeNull();
+
+    // ...and coming back picks them up again, which is the point of keeping them
+    api.get.mockResolvedValue(makeCharacter({ id: "xlsx" }));
+    await act(async () => {
+      await result.current.openCharacter("xlsx");
+    });
+    expect(result.current.pendingGear).toEqual(held);
+  });
+
+  /** A reload in the middle of settling twenty rows must not lose nineteen. */
+  it("keeps held rows across a reload, minus the ones already settled", async () => {
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: [
+        { name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] },
+        { name: "錠前キット", rating: 0, qty: 1, note: "", suggestions: [] },
+      ],
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    act(() => result.current.resolvePendingGear("FN-HAL"));
+
+    expect(loadPendingGear("xlsx").map((row) => row.name)).toEqual(["錠前キット"]);
+  });
+
+  it("forgets held rows once they are dismissed", async () => {
     const { result } = await editorWith();
     api.importXlsx.mockResolvedValue({
       character: makeCharacter({ id: "xlsx" }),
@@ -369,13 +416,8 @@ describe("useCharacterEditor.onImport", () => {
     await act(async () => {
       await result.current.onImport(file("run.xlsx"));
     });
-    expect(result.current.pendingGear).not.toBeNull();
-
-    api.get.mockResolvedValue(makeCharacter({ id: "other" }));
-    await act(async () => {
-      await result.current.openCharacter("other");
-    });
-    expect(result.current.pendingGear).toBeNull();
+    act(() => result.current.dismissPendingGear());
+    expect(loadPendingGear("xlsx")).toEqual([]);
   });
 
   it("still opens the character when an .xlsx had unreadable rows", async () => {
