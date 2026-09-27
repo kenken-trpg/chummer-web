@@ -23,8 +23,8 @@ from app.xlsx_import._common import (
     cell_int,
     japanese_index,
 )
+from app.xlsx_import._match import SUGGEST_LIMIT, split_row
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
-from app.xlsx_import.gear import SUGGEST_LIMIT, split_row
 from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
