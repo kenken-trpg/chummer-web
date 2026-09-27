@@ -42,6 +42,12 @@ export function MiscGearRow({
     (mod) => Boolean(mod.requireparent) && miscFits(item, mod),
   );
   const addonSpec = (catalog.gear || []).find((mod) => mod.id === (slotPick[item.id] || ""));
+  // Anything else the character carries can hold this one — a Spare Clip, a
+  // Medkit, a briefcase. Only the rows that are top level themselves are
+  // offered, so the arrangement stays a tree.
+  const containers = (d.gear || []).filter(
+    (row) => !row.parent_id && row.id !== item.id && !row.granted_by,
+  );
   return (
     <div className="cyber-item" key={item.id}>
       <div>
@@ -207,47 +213,43 @@ export function MiscGearRow({
           </>
         ) : null}
         {childrenItems.map((child) => (
-          <div className="muted" key={child.id} style={{ marginTop: 6 }}>
-            {tr(child.label || child.name)}
-            {child.rating_max > 0 ? ` R${child.rating}` : ""}
-            {child.qty > 1 ? ` ×${child.qty}` : ""}
-            {child.included ? ` / ${ui("common.included")}` : ` / ${child.nuyen.toLocaleString()}¥`}
-            {child.capacity_cost ? ` / ${ui("common.capacity")} ${child.capacity_cost}` : ""}
-            {child.included ? null : (
-              <>
-                {" "}
-                <button
-                  className="btn danger"
-                  onClick={() =>
-                    patch({
-                      gear: dropTree(ch.gear || [], child.id),
-                    })
-                  }
-                >
-                  {ui("common.remove")}
-                </button>
-              </>
-            )}
-            {child.rating_max > 0 && !child.included ? (
-              <label title={ui("common.ratingHint")}>
-                {ui("common.rating")}
-                <input
-                  type="number"
-                  min={1}
-                  max={child.rating_max}
-                  value={child.rating}
-                  onChange={(e) =>
-                    patch({
-                      gear: (ch.gear || []).map((row) =>
-                        row.id === child.id ? { ...row, rating: Number(e.target.value) } : row,
-                      ),
-                    })
-                  }
-                />
-              </label>
-            ) : null}
-          </div>
+          <GearChild
+            key={child.id}
+            child={child}
+            all={d.gear || []}
+            ch={ch}
+            tr={tr}
+            ui={ui}
+            patch={patch}
+          />
         ))}
+        {containers.length && !item.granted_by ? (
+          <div className="cyber-controls">
+            <label title={ui("gear.putIntoHint")}>
+              {ui("gear.putInto")}
+              <select
+                aria-label={`${tr(item.label || item.name)}: ${ui("gear.putInto")}`}
+                value=""
+                onChange={(e) => {
+                  const into = e.target.value;
+                  if (!into) return;
+                  patch({
+                    gear: (ch.gear || []).map((row) =>
+                      row.id === item.id ? { ...row, parent_id: into } : row,
+                    ),
+                  });
+                }}
+              >
+                <option value="">{ui("gear.putInto")}</option>
+                {containers.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {tr(row.label || row.name)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
         {addons.length ? (
           <div className="cyber-controls">
             <select
@@ -342,6 +344,98 @@ export function MiscGearRow({
           {ui("common.delete")}
         </button>
       )}
+    </div>
+  );
+}
+
+/** One thing slotted into, or carried inside, a piece of gear — and whatever
+ *  it holds in turn. A container's contents nest as deep as the player (or
+ *  Chummer) put them: Narcoject in Injection Darts in a Spare Clip. Rendering
+ *  only the first level left the rest owned but invisible. */
+function GearChild({
+  child,
+  all,
+  ch,
+  tr,
+  ui,
+  patch,
+  depth = 0,
+}: Pick<TabPanelProps, "tr" | "ui" | "patch"> & {
+  child: InstalledGear;
+  all: InstalledGear[];
+  ch: TabPanelProps["character"];
+  depth?: number;
+}) {
+  const kids = all.filter((row) => row.parent_id === child.id);
+  return (
+    <div className="muted" style={{ marginTop: 6, marginLeft: depth * 12 }}>
+      {tr(child.label || child.name)}
+      {child.rating_max > 0 ? ` R${child.rating}` : ""}
+      {child.qty > 1 ? ` ×${child.qty}` : ""}
+      {child.included ? ` / ${ui("common.included")}` : ` / ${child.nuyen.toLocaleString()}¥`}
+      {child.capacity_cost ? ` / ${ui("common.capacity")} ${child.capacity_cost}` : ""}
+      {child.included ? null : (
+        <>
+          {" "}
+          <button
+            className="btn danger"
+            aria-label={ui("common.removeLabel", { name: tr(child.label || child.name) })}
+            onClick={() => patch({ gear: dropTree(ch.gear || [], child.id) })}
+          >
+            {ui("common.remove")}
+          </button>
+          {/* carried inside, not plugged in: it can be taken out and kept.
+              Something that needs a host has nowhere to go. */}
+          {child.requireparent ? null : (
+            <>
+              {" "}
+              <button
+                className="btn"
+                aria-label={ui("gear.takeOutLabel", { name: tr(child.label || child.name) })}
+                onClick={() =>
+                  patch({
+                    gear: (ch.gear || []).map((row) =>
+                      row.id === child.id ? { ...row, parent_id: null } : row,
+                    ),
+                  })
+                }
+              >
+                {ui("gear.takeOut")}
+              </button>
+            </>
+          )}
+        </>
+      )}
+      {child.rating_max > 0 && !child.included ? (
+        <label title={ui("common.ratingHint")}>
+          {ui("common.rating")}
+          <input
+            type="number"
+            min={1}
+            max={child.rating_max}
+            value={child.rating}
+            onChange={(e) =>
+              patch({
+                gear: (ch.gear || []).map((row) =>
+                  row.id === child.id ? { ...row, rating: Number(e.target.value) } : row,
+                ),
+              })
+            }
+          />
+        </label>
+      ) : null}
+      {kids.map((kid) => (
+        <GearChild
+          key={kid.id}
+          child={kid}
+          all={all}
+          ch={ch}
+          tr={tr}
+          ui={ui}
+          patch={patch}
+          depth={depth + 1}
+        />
+      ))}
     </div>
   );
 }

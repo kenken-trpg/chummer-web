@@ -55,6 +55,11 @@ export const EN_GEAR = {
   "gear.searchMisc": "Search gear",
   "gear.gradeOrAddon": "Grade / add-on",
   "gear.addGear": "Add gear",
+  "gear.takeOut": "Take out",
+  "gear.takeOutLabel": "Take {name} out",
+  "gear.putInto": "Carry inside…",
+  "gear.putIntoHint":
+    "Carry this inside another piece of gear. Several of the container means several of what is in it, as Chummer counts it",
   "gear.idleDrugs": "Showing SR5 and drugs only (search to reach the supplements)",
 
   // --- sidebar ----------------------------------------------------------

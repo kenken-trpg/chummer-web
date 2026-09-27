@@ -55,6 +55,11 @@ export const JA_GEAR = {
   "gear.searchMisc": "ギアを検索",
   "gear.gradeOrAddon": "グレード／追加",
   "gear.addGear": "追加ギア",
+  "gear.takeOut": "取り出す",
+  "gear.takeOutLabel": "{name} を取り出す",
+  "gear.putInto": "…に入れる",
+  "gear.putIntoHint":
+    "手持ちのギアの中に入れて持ち歩きます。入れ物が複数あると、中身もその数だけ買ったものとして数えます（Chummer と同じ）",
   "gear.idleDrugs": "SR5 とドラッグのみ表示中（検索するとサプリメントも探します）",
 
   // --- sidebar ----------------------------------------------------------

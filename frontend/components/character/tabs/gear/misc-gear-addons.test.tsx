@@ -211,7 +211,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
       catalog(),
     );
 
-    const removes = screen.getAllByRole("button", { name: "外す" });
+    const removes = screen.getAllByRole("button", { name: /を外す$/ });
     expect(removes).toHaveLength(1); // the included one has none
 
     fireEvent.click(removes[0]);
@@ -222,8 +222,9 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
   });
 
   it("removing a child takes whatever is plugged into it", () => {
-    // the panel only renders direct children, so a grandchild is invisible
-    // here -- and would be left in `gear` pointing at a row that is gone
+    // a grandchild would be left in `gear` pointing at a row that is gone.
+    // Every row's buttons name what they act on, since a container's contents
+    // nest as deep as the player put them.
     const patch = vi.fn();
     renderPanel(
       owning([
@@ -236,7 +237,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
       catalog(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "外す" }));
+    fireEvent.click(screen.getByRole("button", { name: "Supplies を外す" }));
 
     expect((patch.mock.calls[0][0].gear as { id: string }[]).map((r) => r.id)).toEqual(["g1"]);
   });
@@ -260,5 +261,79 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     const rows = patch.mock.calls[0][0].gear as { id: string; rating: number }[];
     expect(rows.find((r) => r.id === "g1a")?.rating).toBe(1);
     expect(rows.find((r) => r.id === "g1b")?.rating).toBe(4);
+  });
+
+  it("a container's contents show at every depth, not only the first", () => {
+    // Chummer lets a player nest as deep as they like: Narcoject inside
+    // Injection Darts inside a Spare Clip. Rendering one level left the rest
+    // owned, paid for and invisible.
+    renderPanel(
+      owning([
+        gear("g1", "Spare Clip"),
+        gear("g1a", "Ammo: Injection Darts", { parent_id: "g1" }),
+        gear("g1a1", "Narcoject", { parent_id: "g1a" }),
+      ]),
+      vi.fn(),
+      "misc",
+      catalog(),
+    );
+
+    expect(screen.getByRole("button", { name: "Narcoject を外す" })).not.toBeNull();
+  });
+
+  it("something carried inside can be taken out and kept", () => {
+    const patch = vi.fn();
+    renderPanel(
+      owning([gear("g1", "Spare Clip"), gear("g1a", "Ammo: APDS", { parent_id: "g1" })]),
+      patch,
+      "misc",
+      catalog(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Ammo: APDS を取り出す" }));
+
+    const rows = patch.mock.calls[0][0].gear as { id: string; parent_id: string | null }[];
+    expect(rows.map((r) => [r.id, r.parent_id])).toEqual([
+      ["g1", undefined],
+      ["g1a", null],
+    ]);
+  });
+
+  it("a plugin cannot be taken out: it has nowhere to be", () => {
+    renderPanel(
+      owning([
+        medkit(),
+        gear("g1a", "Medkit Supplies", {
+          gear_id: "a-supplies",
+          parent_id: "g1",
+          requireparent: true,
+        }),
+      ]),
+      vi.fn(),
+      "misc",
+      catalog(),
+    );
+
+    expect(screen.queryByRole("button", { name: /を取り出す$/ })).toBeNull();
+  });
+
+  it("a top-level piece can be carried inside another one", () => {
+    const patch = vi.fn();
+    renderPanel(
+      owning([gear("g1", "Spare Clip"), gear("g2", "Ammo: APDS")]),
+      patch,
+      "misc",
+      catalog(),
+    );
+
+    const select = screen.getByRole("combobox", { name: "Ammo: APDS: …に入れる" });
+    expect([...select.querySelectorAll("option")].map((o) => o.textContent)).toEqual([
+      "…に入れる",
+      "Spare Clip",
+    ]);
+
+    fireEvent.change(select, { target: { value: "g1" } });
+    const rows = patch.mock.calls[0][0].gear as { id: string; parent_id: string | null }[];
+    expect(rows.find((r) => r.id === "g2")?.parent_id).toBe("g1");
   });
 });

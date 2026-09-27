@@ -70,7 +70,9 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             return True  # a vehicle carries anything that needs no host
         parent = rows_by_id.get(parent_gid) or {}
         if parent_bucket == "gear":
-            return _misc_child_fits(parent, spec)
+            # a piece of gear inside another is a container, not a host: see
+            # `_misc_child_fits`
+            return _misc_child_fits(parent, spec, container=True)
         if parent_bucket == "commlinks":
             return _misc_child_fits(_commlink_accessory_parent_spec(parent), spec)
         if parent_bucket in ("cyberdecks", "rccs"):
