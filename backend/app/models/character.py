@@ -343,6 +343,16 @@ class FvttExportRequest(StateRequest):
     locale: str = Field(default="ja", pattern="^(ja|en)$")
 
 
+class SheetUrlRequest(BaseModel):
+    """A Google Sheets address a キャラシテンプレート is to be read from.
+
+    Length-capped here rather than in the fetcher: a document id is under 100
+    characters, and this is the first thing an outbound request is built from.
+    """
+
+    url: str = Field(max_length=2048)
+
+
 class PatchRequest(BaseModel):
     """`state` plus an optional `patch`; with no patch it's a bare recompute."""
 

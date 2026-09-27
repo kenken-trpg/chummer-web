@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { api, type CharacterSummary, type PendingGear } from "@/lib/api";
+import { api, type CharacterSummary, type PendingGear, type XlsxImport } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import {
   MAX_PORTRAITS,
@@ -435,17 +435,40 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setPendingGear(rows.length ? { of: id, rows } : null);
   }
 
+  /** What both ways into a キャラシテンプレート do once the sheet has been read:
+   *  open it, put its unsettled 装備 rows in front of the player, and say what
+   *  the sheet could not be taken at its word on. */
+  function openTemplateImport(res: XlsxImport) {
+    remember(res.character);
+    onCharacterOpened?.();
+    savePendingGear(res.character.id, res.pending_gear);
+    readPendingGear(res.character.id);
+    if (res.warnings.length) setError(importWarnings(res.warnings));
+    void refreshRoster();
+  }
+
+  /**
+   * Import a キャラシテンプレート from its Google Sheets address.
+   *
+   * Reported rather than thrown: what usually goes wrong here is that the sheet
+   * is not shared, which is something for the player to go and change rather
+   * than a fault.
+   */
+  async function importSheetUrl(url: string) {
+    setError(null);
+    try {
+      openTemplateImport(await api.importSheetUrl(url));
+    } catch (e) {
+      setError(errorMessage(e, ui, "app.err.load"));
+      throw e;
+    }
+  }
+
   async function onImport(file: File) {
     setError(null);
     try {
       if (/\.xlsx$/i.test(file.name)) {
-        const res = await api.importXlsx(await file.arrayBuffer());
-        remember(res.character);
-        onCharacterOpened?.();
-        savePendingGear(res.character.id, res.pending_gear);
-        readPendingGear(res.character.id);
-        if (res.warnings.length) setError(importWarnings(res.warnings));
-        void refreshRoster();
+        openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
         return;
       }
       const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
@@ -505,6 +528,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     error,
     notice,
     exportReview,
+    importSheetUrl,
     pendingGear,
     resolvePendingGear,
     dismissPendingGear,

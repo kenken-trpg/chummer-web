@@ -20,6 +20,7 @@ const api = vi.hoisted(() => ({
   importChummer: vi.fn(),
   importFvtt: vi.fn(),
   importXlsx: vi.fn(),
+  importSheetUrl: vi.fn(),
   exportChummer: vi.fn(),
   checkChummerExport: vi.fn(),
   exportXlsx: vi.fn(),
@@ -330,6 +331,39 @@ describe("useCharacterEditor.onImport", () => {
       expect(result.current.pendingGear).toBeNull();
     },
   );
+
+  it("reads a Google Sheets URL through the same import as a file", async () => {
+    const { result } = await editorWith();
+    api.importSheetUrl.mockResolvedValue({
+      character: makeCharacter({ id: "sheet" }),
+      warnings: [],
+      pending_gear: [{ name: "謎の装備", rating: 0, qty: 1, note: "", suggestions: [] }],
+    });
+
+    await act(async () => {
+      await result.current.importSheetUrl("https://docs.google.com/spreadsheets/d/abc/edit");
+    });
+
+    expect(api.importSheetUrl).toHaveBeenCalledWith(
+      "https://docs.google.com/spreadsheets/d/abc/edit",
+    );
+    expect(result.current.ch?.id).toBe("sheet");
+    // the same holding of unsettled 装備 rows a file import does
+    expect(result.current.pendingGear).toHaveLength(1);
+  });
+
+  it("reports a sheet it could not read and lets the caller know", async () => {
+    // Rethrown as well as shown: the form keeps the URL so it can be corrected,
+    // which it can only know to do if the call it awaited failed.
+    const { result } = await editorWith();
+    api.importSheetUrl.mockRejectedValue(new Error("not shared"));
+
+    await act(async () => {
+      await expect(result.current.importSheetUrl("https://docs.google.com/x")).rejects.toThrow();
+    });
+
+    expect(result.current.error).toBeTruthy();
+  });
 
   /**
    * The 装備 sheet is one free-text column, so a good part of it cannot be

@@ -305,6 +305,23 @@ export const api = {
     return res;
   },
 
+  /**
+   * Import a キャラシテンプレート from its Google Sheets address.
+   *
+   * The same import as {@link importXlsx} — the backend asks Google for the
+   * sheet's .xlsx and reads that, so the answer has the same shape. Only a sheet
+   * shared with 「リンクを知っている全員」 can be read; anything else comes back
+   * as a message saying so.
+   */
+  importSheetUrl: async (url: string): Promise<XlsxImport> => {
+    const res = await req<XlsxImport>("/api/characters/import-sheet-url", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    });
+    await local.putCharacter(res.character);
+    return res;
+  },
+
   /** Import a Foundry VTT shadowrun5e character actor (its Export Data JSON). */
   importFvtt: async (payload: unknown): Promise<{ character: Character; warnings: Notice[] }> => {
     const res = await req<{ character: Character; warnings: Notice[] }>(

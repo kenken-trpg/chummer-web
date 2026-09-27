@@ -168,6 +168,12 @@ export const EN_APP = {
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
   "toolbar.exportXlsx": "Export .xlsx",
+  "toolbar.sheetUrl": "From URL",
+  "toolbar.sheetUrlHint":
+    "Read the ［SR5］キャラシテンプレート straight from its Google Sheets URL",
+  "toolbar.sheetUrlRead": "Read",
+  "toolbar.sheetUrlReading": "Reading\u2026",
+  "toolbar.sheetUrlShared": "Only a sheet shared with \u201cAnyone with the link\u201d can be read",
   "toolbar.exportXlsxHint":
     "Export an .xlsx with the same sheets and the same input cells as the Japanese community character sheet (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
@@ -230,6 +236,13 @@ export const EN_APP = {
   "api.importXlsxFailed": "This character-sheet template could not be imported.",
   "api.notACharacterTemplate":
     'This does not look like the Shadowrun character-sheet template (download the "［SR5］キャラシテンプレート" Google Sheet as .xlsx and choose that file).',
+  "api.sheetUrlNotASheet":
+    "This does not look like a Google Sheets URL (paste the https://docs.google.com/spreadsheets/d/\u2026 address from the browser's address bar).",
+  "api.sheetUrlNotShared":
+    'This sheet is not readable: share it with "Anyone with the link", or download it as .xlsx (File > Download) and choose that file.',
+  "api.sheetUrlTooBig": "This sheet is too large to read.",
+  "api.sheetUrlFailed":
+    "This sheet could not be read from Google Sheets. Try again later, or download it as .xlsx (File > Download) and choose that file.",
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.customDataMissing":
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",

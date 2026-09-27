@@ -175,6 +175,12 @@ export const JA_APP = {
   "toolbar.exportChum5": ".chum5書出",
   "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
   "toolbar.exportXlsx": ".xlsx書出",
+  "toolbar.sheetUrl": "URLから読込",
+  "toolbar.sheetUrlHint":
+    "Google スプレッドシートの「［SR5］キャラシテンプレート」を URL から直接読み込みます",
+  "toolbar.sheetUrlRead": "読み込む",
+  "toolbar.sheetUrlReading": "読み込み中…",
+  "toolbar.sheetUrlShared": "「リンクを知っている全員」で共有されたシートだけ読めます",
   "toolbar.exportXlsxHint":
     "［SR5］キャラシテンプレート と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
@@ -235,6 +241,13 @@ export const JA_APP = {
   "api.importXlsxFailed": "このキャラシテンプレートを取り込めませんでした。",
   "api.notACharacterTemplate":
     "シャドウラン用のキャラシテンプレートではないようです（Google スプレッドシートの「［SR5］キャラシテンプレート」を .xlsx で書き出したものを選んでください）",
+  "api.sheetUrlNotASheet":
+    "Google スプレッドシートの URL ではないようです（ブラウザのアドレス欄にある https://docs.google.com/spreadsheets/d/… をそのまま貼ってください）",
+  "api.sheetUrlNotShared":
+    "このシートは共有されていないため読めません（シートの「共有」で「リンクを知っている全員」にするか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください）",
+  "api.sheetUrlTooBig": "このシートは大きすぎて読み込めません。",
+  "api.sheetUrlFailed":
+    "Google スプレッドシートから読み込めませんでした。時間をおいて試すか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください。",
   "api.settingsParseFailed":
     "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.customDataMissing":
