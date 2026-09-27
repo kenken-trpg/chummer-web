@@ -10,6 +10,12 @@ template is stricter than another:
 * ``軽度の依存症（エナジードリンク / カフェイン）`` — the same quality with the
   degree in front instead, which the catalog spells ``依存症 (軽度)``
 * ``導師精霊（竜殺しの英雄）　交渉に+2修正`` — a note trailing after the pick
+* ``導師精霊　鮫`` — the pick set off by a space instead of parentheses
+
+Two more differences are about spelling rather than shape: the catalog writes a
+loanword with an interpunct (``アストラル・ビーコン``) and players often leave it
+out, and some qualities are known by the tail of their name (``国家SIN`` for
+``SIN持ち：国家SIN``). Both are handled below.
 
 So a typed name becomes a handful of candidate spellings, tried in order against
 the catalog, rather than one string looked up once. What matches nothing is
@@ -34,6 +40,11 @@ QUALITY_ROWS = range(50, 60)
 #: and only the template disagrees.
 NAME_ALIASES = {
     "規制品": "Restricted Gear",
+    # SINner is filed under 「SIN持ち：…」, but the SIN itself is what gets typed.
+    "国家SIN": "SINner (National)",
+    "企業SIN": "SINner (Corporate)",
+    "限定企業SIN": "SINner (Corporate Limited)",
+    "犯罪者SIN": "SINner (Criminal)",
 }
 
 #: A parenthesised pick, and whatever the player added after it. The trailing
@@ -41,6 +52,11 @@ NAME_ALIASES = {
 #: either the name or the pick.
 _PARENTHESISED = re.compile(r"^([^(（]*)[(（]([^()（）]*)[)）](.*)$")
 _SEPARATORS = re.compile(r"[／/]")
+#: 「導師精霊　鮫」— a pick set off by a space rather than parenthesised.
+_SPACES = re.compile(r"[\s\u3000]+")
+#: The catalog spells a loanword with an interpunct, 「アストラル・ビーコン」, and
+#: the sheets are written both ways. Dropping it from both sides settles it.
+_INTERPUNCT = re.compile(r"[・･]")
 #: 「軽度の依存症」— a degree written in front of the quality it qualifies.
 _PREFIXED = re.compile(r"^(.+?)の(.+)$")
 
@@ -62,6 +78,12 @@ def split_name(raw: str) -> tuple[str, str, str]:
         # (the sheet never writes both).
         name = f"{parts[0]} ({parts[1]})"
         pick = "／".join(parts[2:]) or pick
+        return name, pick, note
+    spaced = [part for part in _SPACES.split(name) if part]
+    if len(spaced) >= 2:
+        # 導師精霊　鮫 — a space where another sheet would use parentheses. The
+        # first word is the quality and the rest is what it was taken for.
+        name, pick = spaced[0], " ".join(spaced[1:]) or pick
     return name, pick, note
 
 
@@ -98,6 +120,7 @@ def build_index(cat: CatalogDict) -> dict[str, str]:
         japanese = translations.get(name)
         if japanese:
             index.setdefault(japanese, quality_id)
+            index.setdefault(_INTERPUNCT.sub("", japanese), quality_id)
         index.setdefault(name, quality_id)
     return index
 
@@ -110,7 +133,8 @@ def resolve(raw: str, index: dict[str, str]) -> tuple[str, str] | None:
     """
     name, pick, _note = split_name(raw)
     for index_of, candidate in enumerate(candidates(name, pick)):
-        quality_id = index.get(candidate) or index.get(NAME_ALIASES.get(candidate, ""))
+        aliased = NAME_ALIASES.get(candidate) or NAME_ALIASES.get(_INTERPUNCT.sub("", candidate), "")
+        quality_id = index.get(candidate) or index.get(_INTERPUNCT.sub("", candidate)) or index.get(aliased)
         if quality_id:
             # candidates() puts the spellings that swallow the pick at 1..3
             return quality_id, "" if 1 <= index_of <= 3 else pick

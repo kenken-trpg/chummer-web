@@ -257,6 +257,12 @@ def test_no_attribute_karma_key_when_nothing_was_bought() -> None:
         # a note trailing after the pick, which is neither name nor pick
         ("導師精霊（竜殺しの英雄）\u3000交渉に+2修正", "導師精霊", "竜殺しの英雄", "交渉に+2修正"),
         ("軽度の依存症（カフェイン）", "軽度の依存症", "カフェイン", ""),
+        # a space where another sheet would use parentheses
+        ("導師精霊\u3000鮫", "導師精霊", "鮫", ""),
+        ("アレルギー\u3000銀\u3000軽", "アレルギー", "銀 軽", ""),
+        ("規制品 超甲状腺", "規制品", "超甲状腺", ""),
+        # a slash still wins over a space
+        ("依存症／中度／クラム\u3000メモ", "依存症 (中度)", "クラム\u3000メモ", ""),
     ],
 )
 def test_split_name(raw: str, name: str, pick: str, note: str) -> None:
@@ -327,6 +333,31 @@ def test_a_quality_whose_name_holds_the_parenthesis() -> None:
     state, warnings = xlsx_to_state(filled(A50="不利", C50="SIN持ち（国家SIN）"))
     assert state["quality_ids"] == [_quality_id("SINner (National)")]
     assert "quality_extras" not in state
+    assert warnings == []
+
+
+def test_a_pick_set_off_by_a_space() -> None:
+    """ララ writes 導師精霊　鮫 — no parentheses, just a space. The mentor is
+    `mentor_id`, not an extra, so the pick is reported."""
+    state, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊\u3000鮫"))
+    assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
+    assert has(warnings, "engine.import.xlsxQualityNote", note="鮫")
+
+
+def test_a_loanword_written_without_its_interpunct() -> None:
+    """The catalog spells it アストラル・ビーコン; the sheets are written both ways."""
+    state, warnings = xlsx_to_state(filled(A50="不利", C50="アストラルビーコン"))
+    assert state["quality_ids"] == [_quality_id("Astral Beacon")]
+    assert warnings == []
+
+
+def test_a_sin_named_by_the_sin_alone() -> None:
+    """日本鬼 writes 国家SIN（日本帝国）, leaving off the SIN持ち： the catalog files
+    it under; the parenthesis here really is the SIN's free text."""
+    state, warnings = xlsx_to_state(filled(A50="不利", C50="国家SIN（日本帝国）"))
+    national = _quality_id("SINner (National)")
+    assert state["quality_ids"] == [national]
+    assert state["quality_extras"] == {national: "日本帝国"}
     assert warnings == []
 
 
