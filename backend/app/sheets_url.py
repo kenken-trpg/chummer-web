@@ -13,7 +13,10 @@ module is written as if it were the only door in the wall:
   to be https and land on a Google host, or it is not followed.
 * **The environment's proxies are ignored**, so a `http_proxy` in the container
   cannot quietly become the thing being talked to.
-* **The read is capped and timed out**, by the same ceiling the upload path uses.
+* **The read is capped**, by the same ceiling the upload path uses, **and the
+  whole exchange has a deadline.** `timeout=` on its own is per socket
+  operation, so a server that answers a byte at a time, just inside it, holds a
+  worker for as long as it likes.
 
 What this cannot do is read a sheet that is not shared: without a Google
 account, only 「リンクを知っている全員」 is readable. Google answers the rest with
@@ -24,6 +27,7 @@ recognised and reported as itself, rather than as a broken file.
 from __future__ import annotations
 
 import re
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -43,9 +47,20 @@ ALLOWED_SUFFIXES = (".google.com", ".googleusercontent.com")
 #: How many hops are followed before giving up. Google uses one.
 MAX_REDIRECTS = 5
 
-#: Seconds. A sheet is a couple of megabytes; this is a stuck connection, not a
-#: slow one.
+#: Seconds a single socket operation may take. A sheet is a couple of
+#: megabytes; this is a stuck connection, not a slow one.
 TIMEOUT = 20.0
+
+#: Seconds the whole exchange may take, connection and body together. `TIMEOUT`
+#: is reset by every byte that arrives, so a server dribbling one out every 19
+#: seconds never trips it and keeps a worker for as long as it cares to — and
+#: this is the only outbound request there is to occupy one. A real export of a
+#: couple of megabytes off Google finishes in a fraction of this.
+DEADLINE = 60.0
+
+#: How much is asked for at a time. Only so that the deadline is looked at
+#: while the body arrives rather than after it.
+CHUNK_BYTES = 64 * 1024
 
 #: The most that is read. The same ceiling the uploaded-file path uses, so a URL
 #: cannot get a bigger workbook through than a file picker can.
@@ -109,17 +124,35 @@ def _opener() -> urllib.request.OpenerDirector:
     return urllib.request.build_opener(urllib.request.ProxyHandler({}), _CheckedRedirects())
 
 
+def _read_by(response: Any, deadline: float) -> bytes:
+    """The body, one chunk at a time, abandoned if the deadline passes."""
+    parts: list[bytes] = []
+    total = 0
+    while total <= MAX_BYTES:
+        if time.monotonic() >= deadline:
+            raise NoticeError(notice("api.sheetUrlTimedOut"))
+        chunk = response.read(min(CHUNK_BYTES, MAX_BYTES + 1 - total))
+        if not chunk:
+            break
+        parts.append(bytes(chunk))
+        total += len(chunk)
+    return b"".join(parts)
+
+
 def fetch_sheet(written: str, opener: urllib.request.OpenerDirector | None = None) -> bytes:
     """The workbook behind a Google Sheets URL, as bytes ready for the importer.
 
     `opener` is for the tests, which have no business reaching the network.
     """
     url = export_url(written)
+    # Started before the connection, so opening it, the TLS handshake and every
+    # redirect spend from the same budget as the body does.
+    deadline = time.monotonic() + DEADLINE
     try:
         with (opener or _opener()).open(url, timeout=TIMEOUT) as response:
             if not _allowed(response.geturl()):  # a hop urllib followed on its own
                 raise NoticeError(notice("api.sheetUrlFailed"))
-            body = bytes(response.read(MAX_BYTES + 1))
+            body = _read_by(response, deadline)
     except NoticeError:
         raise
     except urllib.error.HTTPError as exc:

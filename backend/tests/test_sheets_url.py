@@ -9,6 +9,7 @@ Google's behaviour.
 from __future__ import annotations
 
 import io
+import time
 import urllib.error
 import urllib.request
 from typing import Any
@@ -22,7 +23,16 @@ from app.api import deploy
 from app.api.deploy import _IMPORT_RATE_LIMIT, _SHEET_URL_RATE_LIMIT, limiter
 from app.main import app
 from app.notices import NoticeError
-from app.sheets_url import MAX_BYTES, MAX_REDIRECTS, _allowed, _CheckedRedirects, _opener, export_url, fetch_sheet
+from app.sheets_url import (
+    CHUNK_BYTES,
+    MAX_BYTES,
+    MAX_REDIRECTS,
+    _allowed,
+    _CheckedRedirects,
+    _opener,
+    export_url,
+    fetch_sheet,
+)
 
 ID = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
 EDIT = f"https://docs.google.com/spreadsheets/d/{ID}/edit?gid=0#gid=0"
@@ -174,6 +184,68 @@ def test_a_connection_that_never_answers_is_reported_not_raised() -> None:
     with pytest.raises(NoticeError) as raised:
         fetch_sheet(EDIT, _Opener(urllib.error.URLError(TimeoutError("timed out"))))
     assert raised.value.notice["key"] == "api.sheetUrlFailed"
+
+
+class _Dribble(io.RawIOBase):
+    """A body that arrives a byte at a time, each byte costing `cost` seconds.
+
+    What `timeout=` cannot catch: every byte resets it, so a server answering
+    just inside it holds the connection for as long as it likes.
+    """
+
+    def __init__(self, cost: float) -> None:
+        super().__init__()
+        self.cost = cost
+        self.reads = 0
+
+    def geturl(self) -> str:
+        return f"https://docs.google.com/spreadsheets/d/{ID}/export"
+
+    def read(self, size: int = -1) -> bytes:  # type: ignore[override]
+        self.reads += 1
+        time.sleep(self.cost)
+        return b"P"
+
+    def __enter__(self) -> _Dribble:
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+
+def test_a_body_that_never_ends_is_abandoned_at_the_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The one the socket timeout cannot see: it is reset by every byte."""
+    monkeypatch.setattr("app.sheets_url.DEADLINE", 0.2)
+    dribble = _Dribble(cost=0.02)
+    with pytest.raises(NoticeError) as raised:
+        fetch_sheet(EDIT, _Opener(dribble))
+    assert raised.value.notice["key"] == "api.sheetUrlTimedOut"
+    # it really did give up part way rather than read to some other ceiling
+    assert 0 < dribble.reads < MAX_BYTES
+
+
+def test_the_deadline_covers_the_connection_and_not_only_the_body(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Opening the connection, the handshake and the hops spend it too."""
+    monkeypatch.setattr("app.sheets_url.DEADLINE", 0.05)
+
+    class _SlowToOpen(_Opener):
+        def open(self, url: str, timeout: float | None = None) -> Any:
+            time.sleep(0.1)
+            return super().open(url, timeout)
+
+    with pytest.raises(NoticeError) as raised:
+        fetch_sheet(EDIT, _SlowToOpen(_Response(filled())))
+    assert raised.value.notice["key"] == "api.sheetUrlTimedOut"
+
+
+def test_a_body_arriving_in_pieces_is_joined_whole() -> None:
+    """The read is chunked so the deadline is looked at while the body arrives;
+    a workbook bigger than one chunk must still come back byte for byte."""
+    body = filled() * 400  # comfortably past CHUNK_BYTES
+    assert len(body) > CHUNK_BYTES
+    assert fetch_sheet(EDIT, _Opener(_Response(body))) == body
 
 
 def test_more_than_the_upload_path_allows_is_refused() -> None:

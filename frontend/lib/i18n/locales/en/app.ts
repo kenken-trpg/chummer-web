@@ -241,6 +241,8 @@ export const EN_APP = {
   "api.sheetUrlNotShared":
     'This sheet is not readable: share it with "Anyone with the link", or download it as .xlsx (File > Download) and choose that file.',
   "api.sheetUrlTooBig": "This sheet is too large to read.",
+  "api.sheetUrlTimedOut":
+    "Reading this sheet from Google Sheets took too long. Try again later, or download it as .xlsx (File > Download) and choose that file.",
   "api.sheetUrlBusy":
     "Reading sheets from a URL is busy right now. Wait a little and try again, or use File > Download > .xlsx and pick the file.",
   "api.sheetUrlFailed":
