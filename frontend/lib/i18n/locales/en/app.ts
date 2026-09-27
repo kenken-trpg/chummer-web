@@ -168,6 +168,12 @@ export const EN_APP = {
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
   "toolbar.exportXlsx": "Export .xlsx",
+  "toolbar.sheetUrl": "From URL",
+  "toolbar.sheetUrlHint":
+    "Read the ［SR5］キャラシテンプレート straight from its Google Sheets URL",
+  "toolbar.sheetUrlRead": "Read",
+  "toolbar.sheetUrlReading": "Reading\u2026",
+  "toolbar.sheetUrlShared": "Only a sheet shared with \u201cAnyone with the link\u201d can be read",
   "toolbar.exportXlsxHint":
     "Export an .xlsx with the same sheets and the same input cells as the Japanese community character sheet (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",

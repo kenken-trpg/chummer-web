@@ -653,6 +653,20 @@ input[type="search"] {
   border-color: var(--accent);
   background: var(--accent-dim);
 }
+/* the sheet-URL field takes the width its row has rather than a fixed size: a
+   Google Sheets address is longer than any sensible box, so the useful width is
+   whatever is going. Nothing here is what keeps it on a phone screen — the
+   label shrinks because of `.main label { min-width: 0 }` above and flex's own
+   shrinking, both of which apply without this. */
+.sheet-url-row label {
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+.sheet-url-field {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
 .option-row label {
   display: flex;
   gap: 6px;

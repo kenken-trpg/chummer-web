@@ -175,6 +175,12 @@ export const JA_APP = {
   "toolbar.exportChum5": ".chum5書出",
   "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
   "toolbar.exportXlsx": ".xlsx書出",
+  "toolbar.sheetUrl": "URLから読込",
+  "toolbar.sheetUrlHint":
+    "Google スプレッドシートの「［SR5］キャラシテンプレート」を URL から直接読み込みます",
+  "toolbar.sheetUrlRead": "読み込む",
+  "toolbar.sheetUrlReading": "読み込み中…",
+  "toolbar.sheetUrlShared": "「リンクを知っている全員」で共有されたシートだけ読めます",
   "toolbar.exportXlsxHint":
     "［SR5］キャラシテンプレート と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
