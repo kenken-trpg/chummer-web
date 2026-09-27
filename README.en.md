@@ -89,6 +89,9 @@ Before going public, put back the limits that are loosened for local use. In `.e
 ```bash
 RATE_LIMIT=120/minute
 IMPORT_RATE_LIMIT=20/minute
+# the URL import is the only outbound route, so it has its own limits (per caller / in total)
+SHEET_URL_RATE_LIMIT=5/minute
+SHEET_URL_TOTAL_RATE_LIMIT=60/minute
 # behind Cloudflare, set TRUST_CLOUDFLARE_IP=1 (reads cf-connecting-ip)
 # behind your own proxy, set TRUSTED_PROXY_HOPS to 1 or 2
 ```

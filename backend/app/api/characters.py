@@ -9,6 +9,7 @@ import re
 from urllib.parse import quote
 
 from fastapi import APIRouter, Body, HTTPException, Request, Response
+from limits import parse
 
 from ..characters import apply_patch, compute_state, import_character, new_character
 from ..chummer_export import state_to_chum5
@@ -33,11 +34,15 @@ from ..sheets_url import fetch_sheet
 from ..xlsx_export import state_to_xlsx
 from ..xlsx_export.check import roundtrip_differences as xlsx_differences
 from ..xlsx_import import xlsx_to_state
-from .deploy import _IMPORT_RATE_LIMIT, limiter
+from .deploy import _IMPORT_RATE_LIMIT, _SHEET_URL_RATE_LIMIT, _SHEET_URL_TOTAL_RATE_LIMIT, limiter
 
 _log = logging.getLogger("chummer_web")
 
 router = APIRouter()
+
+#: The ceiling every caller shares on the sheet-URL import, checked alongside
+#: the per-caller one on the route. Parsed once, as `catalog` does with its own.
+_SHEET_URL_TOTAL_LIMIT = parse(_SHEET_URL_TOTAL_RATE_LIMIT)
 
 
 @router.post("/api/characters/new")
@@ -272,7 +277,7 @@ def import_xlsx(request: Request, body: bytes = Body(..., media_type="applicatio
 
 
 @router.post("/api/characters/import-sheet-url")
-@limiter.limit(_IMPORT_RATE_LIMIT)
+@limiter.limit(_SHEET_URL_RATE_LIMIT)
 def import_sheet_url(request: Request, req: SheetUrlRequest) -> dict:
     """Import a キャラシテンプレート from its Google Sheets address.
 
@@ -281,6 +286,11 @@ def import_sheet_url(request: Request, req: SheetUrlRequest) -> dict:
     sheet shared with 「リンクを知っている全員」 can be read: see `sheets_url`,
     which is also the only outbound request this backend makes.
     """
+    # Counted twice: the decorator above per caller, and this across all of them
+    # together. An IP-keyed bucket alone is no ceiling on what this host is made
+    # to fetch, because a caller with many addresses has a bucket per address.
+    if not limiter.limiter.hit(_SHEET_URL_TOTAL_LIMIT, "sheet-url"):
+        raise HTTPException(status_code=429, detail=notice("api.sheetUrlBusy"))
     # Outside the try below: what went wrong fetching is worth saying precisely
     # (「共有されていません」 asks something different of the player than a bad
     # URL does), and `NoticeError` already leaves here as a 400 carrying its own

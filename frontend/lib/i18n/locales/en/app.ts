@@ -241,6 +241,8 @@ export const EN_APP = {
   "api.sheetUrlNotShared":
     'This sheet is not readable: share it with "Anyone with the link", or download it as .xlsx (File > Download) and choose that file.',
   "api.sheetUrlTooBig": "This sheet is too large to read.",
+  "api.sheetUrlBusy":
+    "Reading sheets from a URL is busy right now. Wait a little and try again, or use File > Download > .xlsx and pick the file.",
   "api.sheetUrlFailed":
     "This sheet could not be read from Google Sheets. Try again later, or download it as .xlsx (File > Download) and choose that file.",
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
