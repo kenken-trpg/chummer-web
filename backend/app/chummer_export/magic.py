@@ -13,6 +13,13 @@ from ..engine.lookups import _mentor_by_id, _paragon_by_id, _stream_by_id, _trad
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 
+#: Chummer's `Tradition.CustomMagicalTraditionGuidString`, the row in
+#: `traditions.xml` that stands for "a tradition of the player's own". It
+#: carries no drain expression, so this app's catalogue drops it — it is not
+#: something to pick — but Chummer gives every magic-enabled character one as
+#: a placeholder, so the export has to name it by id.
+_CUSTOM_TRADITION_ID = "616ba093-306c-45fc-8f41-0b98c8cccb46"
+
 
 def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """`<spells>`, `<powers>` and `<complexforms>` — three lists of the same
@@ -62,7 +69,7 @@ def _export_spell_lists(root: ET.Element, state: CharacterState, names: _Names, 
     )
 
 
-def _export_tradition_block(root: ET.Element, state: CharacterState) -> None:
+def _export_tradition_block(root: ET.Element, state: CharacterState, ctx: _Ctx) -> None:
     """Write `<tradition>` the way Chummer's own `Tradition.Save` does.
 
     `Tradition.Load` starts with `traditiontype` and **gives up on the whole
@@ -88,6 +95,13 @@ def _export_tradition_block(root: ET.Element, state: CharacterState) -> None:
     """
     row = _tradition_by_id(state.tradition_id) or _stream_by_id(state.stream_id)
     if not row:
+        # An adept has Magic and no tradition to go with it. Chummer still
+        # holds one — the Custom row, every field of it blank — and writes it
+        # out, so an export without the element is a field Chummer states and
+        # this app does not. Written with its own id and nothing else, which
+        # is what Chummer's own saves say (`prime.chum5`).
+        if "MAG" in set(ctx["derived"].get("enabled_tabs") or []):
+            _export_custom_tradition_block(root)
         return
     is_stream = not state.tradition_id
     spirits = row.get("spirits") or {}
@@ -120,6 +134,31 @@ def _export_tradition_block(root: ET.Element, state: CharacterState) -> None:
     available = _sub(el, "spirits")
     for name in row.get("sprites") or []:
         _sub(available, "spirit", name)
+
+
+def _export_custom_tradition_block(root: ET.Element) -> None:
+    """The blank Custom tradition Chummer keeps for a character who has Magic
+    but picked no tradition — an adept.
+
+    `Tradition.Save`'s fields with `Tradition.ResetTradition`'s values: the
+    name, drain and spirits empty, `spiritform` Chummer's default, and the
+    source and page of the Custom row in `traditions.xml`. What matters is
+    that `traditiontype` is there at all, since `Tradition.Load` gives up on
+    the element without it.
+    """
+    el = _sub(root, "tradition")
+    _sub(el, "sourceid", _CUSTOM_TRADITION_ID)
+    _sub(el, "guid", _CUSTOM_TRADITION_ID)
+    _sub(el, "traditiontype", "MAG")
+    for tag in ("name", "extra"):
+        _sub(el, tag, "")
+    _sub(el, "spiritform", "Materialization")
+    _sub(el, "drain", "")
+    _sub(el, "source", "SR5")
+    _sub(el, "page", "279")
+    for tag in ("spiritcombat", "spiritdetection", "spirithealth", "spiritillusion", "spiritmanipulation"):
+        _sub(el, tag, "")
+    _sub(el, "spirits")
 
 
 def _export_mentor_block(root: ET.Element, state: CharacterState, names: _Names, mentor_id: str) -> None:
@@ -181,7 +220,7 @@ def _export_mentor_block(root: ET.Element, state: CharacterState, names: _Names,
 
 def _export_magic_tradition(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """The tradition, stream or mentor spirit a magician or technomancer has."""
-    _export_tradition_block(root, state)
+    _export_tradition_block(root, state, ctx)
     if state.mentor_id:
         _export_mentor_block(root, state, names, state.mentor_id)
 

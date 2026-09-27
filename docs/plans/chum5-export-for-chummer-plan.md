@@ -94,8 +94,19 @@ wrong after, and redoing the priorities recomputed part of it.
    Also write `<sources><source>` and
    `<customdatadirectorynames><directoryname>`, which is what Chummer scores a
    replacement against when the key is not on that machine.
-6. Wire `--fidelity` into `make reconcile` once it is green, so the next field
-   Chummer adds is a test failure rather than a bug report.
+6. ~~Wire `--fidelity` into `make reconcile` once it is green, so the next
+   field Chummer adds is a test failure rather than a bug report~~ (done, and
+   it is CI's `fidelity` job as well). The report now splits the fields it
+   drops: the ones Chummer reads back are failures, and the ones it writes for
+   other readers — or spells the 5.202 way — are listed with the reason in
+   `_ACCEPTED_DROPS`. A field neither side has thought about fails, so the
+   next one Chummer adds arrives as a red job.
+
+   Steps 3-5 closed all but three of the fields `Load` reads: `playername`
+   and `gamenotes`, which this app had nowhere to keep (now `player_name` /
+   `game_notes`, edited on the sheet's description panel), and the blank
+   **Custom** tradition Chummer gives a character who has Magic and no
+   tradition — an adept. All 34 saves are green.
 
 ## Out of scope
 

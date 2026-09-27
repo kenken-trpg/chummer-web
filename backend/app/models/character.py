@@ -112,6 +112,8 @@ class CharacterPatch(BaseModel):
     submersions: list[SubmersionChoice] | None = None
     karma_nuyen: int | None = None
     notes: str | None = None
+    player_name: str | None = None
+    game_notes: str | None = None
     age: str | None = None
     sex: str | None = None
     height: str | None = None
@@ -268,6 +270,11 @@ class CharacterState(BaseModel):
     submersions: list[SubmersionChoice] = Field(default_factory=list)
     karma_nuyen: int = 0
     notes: str = ""
+    #: whose character this is, and the GM's own notes on it — Chummer's
+    #: `<playername>` / `<gamenotes>`, which it reads back and shows on the
+    #: character's own tab rather than on the sheet.
+    player_name: str = ""
+    game_notes: str = ""
     age: str = ""
     sex: str = ""
     height: str = ""

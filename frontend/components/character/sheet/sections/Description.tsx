@@ -16,6 +16,7 @@ export function DescriptionSection(s: SheetData) {
       ["desc.hair", character.hair],
       ["desc.skin", character.skin],
       ["desc.concept", character.concept],
+      ["desc.playerName", character.player_name],
     ] as [MsgKey, string | undefined][]
   ).filter((r): r is [MsgKey, string] => Boolean((r[1] || "").trim()));
   const blocks: [MsgKey, string][] = (
@@ -23,6 +24,7 @@ export function DescriptionSection(s: SheetData) {
       ["desc.appearance", character.appearance],
       ["desc.background", character.background],
       ["desc.notes", character.notes],
+      ["desc.gameNotes", character.game_notes],
     ] as [MsgKey, string | undefined][]
   ).filter((r): r is [MsgKey, string] => Boolean((r[1] || "").trim()));
   const pics = portraitsOf(character);

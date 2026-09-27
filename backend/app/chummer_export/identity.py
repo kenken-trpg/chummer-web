@@ -38,6 +38,10 @@ def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx
     _sub(root, "created", "True" if state.career else "False")
     if state.notes:
         _sub(root, "notes", state.notes)
+    if state.player_name:
+        _sub(root, "playername", state.player_name)
+    if state.game_notes:
+        _sub(root, "gamenotes", state.game_notes)
     for field, tag in (
         ("age", "age"),
         ("sex", "sex"),
