@@ -53,4 +53,46 @@ describe("<ExportReview>", () => {
     );
     expect(screen.getByRole("alertdialog").textContent).toContain(".chum5");
   });
+
+  const pendingRow = { name: "VI・スチームパンク", qty: 1, rating: 0, note: "", suggestions: [] };
+
+  it("counts the equipment rows still waiting, beside what the file would lose", () => {
+    render(
+      <ExportReview
+        ed={makeEd({
+          exportReview: [
+            { key: "engine.export.lost", params: { kind: { ui: "engine.kind.weapon" }, count: 1 } },
+          ],
+          pendingGear: [pendingRow, { ...pendingRow, name: "アレス・サンダートラック" }],
+        })}
+      />,
+    );
+    const panel = screen.getByRole("alertdialog").textContent ?? "";
+    expect(panel).toContain("武器が 1 件失われます"); // what the round trip found
+    expect(panel).toContain("確認待ちの装備行が 2 件");
+  });
+
+  it("says so even when the round trip found nothing to lose", () => {
+    // The rows were never sent, so the round-trip check cannot see them: this
+    // is the case that used to write the file in silence.
+    render(<ExportReview ed={makeEd({ exportReview: [], pendingGear: [pendingRow] })} />);
+    expect(screen.getByRole("alertdialog").textContent).toContain("確認待ちの装備行が 1 件");
+    // This is the first panel that opens with nothing to list, and a list of no
+    // items is still announced as a list.
+    expect(screen.queryByRole("list")).toBeNull();
+  });
+
+  it("says nothing about waiting rows when there are none", () => {
+    render(
+      <ExportReview
+        ed={makeEd({
+          exportReview: [
+            { key: "engine.export.lost", params: { kind: { ui: "engine.kind.weapon" }, count: 1 } },
+          ],
+          pendingGear: [],
+        })}
+      />,
+    );
+    expect(screen.getByRole("alertdialog").textContent).not.toContain("確認待ち");
+  });
 });

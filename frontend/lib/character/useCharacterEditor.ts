@@ -320,7 +320,11 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     if (!ch) return;
     const check = format === "chum5" ? api.checkChummerExport : api.checkXlsxExport;
     const differences = await check(ch).catch(() => []);
-    if (differences.length) {
+    // Gear rows waiting to be confirmed are a reason to stop as well, and the
+    // round trip cannot see them: they are held in this browser and were never
+    // sent, so what it checked is a character that does not have them. A file
+    // written now leaves them out, which is worth saying before it is written.
+    if (differences.length || pendingGear?.length) {
       setExportReview({ of: ch, format, differences });
       return;
     }
