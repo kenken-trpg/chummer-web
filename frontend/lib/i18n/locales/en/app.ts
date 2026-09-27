@@ -368,7 +368,6 @@ export const EN_APP = {
   "app.prompt.duplicateName": "Name for the copy",
   "app.copyOf": "{name} copy",
 
-  "app.importWarnings": "{count} unsupported on import — {details}",
   "app.gearReview.title":
     "{count} rows on the equipment sheet could not be matched to an item. Pick the closest, or skip it.",
   "app.gearReview.row": "×{qty}, rating {rating}",
@@ -376,6 +375,10 @@ export const EN_APP = {
   "app.gearReview.noneLikeIt": "Nothing in the book looks like it",
   "app.gearReview.skip": "Skip",
   "app.gearReview.dismiss": "Close the rest",
+  "app.importReport.title":
+    "{count} things in the file could not be brought over (the character itself is open):",
+  "app.importReport.dismiss": "Close",
+  "app.reviewPanel.more": "{count} more",
   "app.exportReview.title": "Reading the exported {format} back would change {count} things:",
   "app.exportReview.confirm": "Export anyway",
   "app.exportReview.cancel": "Cancel",

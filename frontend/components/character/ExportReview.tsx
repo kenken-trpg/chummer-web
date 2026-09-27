@@ -1,6 +1,6 @@
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
-import { renderNotice } from "@/lib/engine-notices";
 import { useUiText } from "@/lib/i18n";
+import { ReviewPanel } from "./ReviewPanel";
 
 /**
  * What an export would lose, shown before the file is written: the player can
@@ -16,28 +16,21 @@ export function ExportReview({ ed }: { ed: CharacterEditor }) {
   const { exportReview, exportReviewFormat, confirmExport, cancelExport, tr } = ed;
   if (!exportReview) return null;
   return (
-    <section
-      className="warn export-review"
-      role="alertdialog"
-      aria-labelledby="export-review-title"
+    <ReviewPanel
+      id="export-review-title"
+      title={ui("app.exportReview.title", {
+        count: exportReview.length,
+        format: `.${exportReviewFormat ?? "chum5"}`,
+      })}
+      notices={exportReview}
+      tr={tr}
     >
-      <p id="export-review-title">
-        {ui("app.exportReview.title", {
-          count: exportReview.length,
-          format: `.${exportReviewFormat ?? "chum5"}`,
-        })}
-      </p>
-      <ul>
-        {exportReview.map((d, i) => (
-          <li key={`${d.key}-${i}`}>{renderNotice(d, ui, tr)}</li>
-        ))}
-      </ul>
       <button className="btn primary" onClick={() => void confirmExport()}>
         {ui("app.exportReview.confirm")}
       </button>{" "}
       <button className="btn" onClick={cancelExport}>
         {ui("app.exportReview.cancel")}
       </button>
-    </section>
+    </ReviewPanel>
   );
 }

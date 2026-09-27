@@ -469,12 +469,13 @@ describe("useCharacterEditor.onImport", () => {
     });
 
     expect(result.current.ch?.id).toBe("xlsx");
-    expect(result.current.error).toContain("装備シートの 2 行");
+    expect(result.current.error).toBeNull(); // nothing failed
+    expect(result.current.importReport).toHaveLength(1);
   });
 
   it("opens the character even when the file had unsupported content", async () => {
-    // the warnings ride the error channel, which makes this look like a
-    // failure at a glance — it is not, and the character must still be open
+    // what the file lost goes in its own report, not in the red error box: the
+    // import did not fail, and the character must be open and usable
     const { result } = await editorWith();
     api.importChummer.mockResolvedValue({
       character: makeCharacter({ id: "imported" }),
@@ -495,11 +496,49 @@ describe("useCharacterEditor.onImport", () => {
     });
 
     expect(result.current.ch?.id).toBe("imported");
-    expect(result.current.error).toContain("2");
-    expect(result.current.error).toContain("資質「Foo」はカタログに無いためスキップしました");
+    expect(result.current.error).toBeNull();
+    expect(result.current.importReport).toHaveLength(2);
+    result.current.dismissImportReport();
   });
 
-  it("caps the warning list rather than pasting hundreds into the UI", async () => {
+  it("drops the last file's report when another file is opened", async () => {
+    const { result } = await editorWith();
+    api.importChummer.mockResolvedValue({
+      character: makeCharacter({ id: "a" }),
+      warnings: [{ key: "engine.import.skippedUnknown", params: { name: "Foo" } }],
+    });
+    await act(async () => {
+      await result.current.onImport(file("a.chum5"));
+    });
+    expect(result.current.importReport).toHaveLength(1);
+
+    api.importChummer.mockResolvedValue({ character: makeCharacter({ id: "b" }), warnings: [] });
+    await act(async () => {
+      await result.current.onImport(file("b.chum5"));
+    });
+    expect(result.current.importReport).toBeNull();
+  });
+
+  it("closing the report leaves the character alone", async () => {
+    const { result } = await editorWith();
+    api.importChummer.mockResolvedValue({
+      character: makeCharacter({ id: "kept" }),
+      warnings: [{ key: "engine.import.skippedUnknown", params: { name: "Foo" } }],
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.chum5"));
+    });
+
+    act(() => {
+      result.current.dismissImportReport();
+    });
+    expect(result.current.importReport).toBeNull();
+    expect(result.current.ch?.id).toBe("kept");
+  });
+
+  it("hands the whole list over rather than cutting it short", async () => {
+    // How many to show is the panel's business (see ReviewPanel), and the count
+    // it prints has to be the true total — so nothing is dropped here.
     const { result } = await editorWith();
     const warnings = Array.from({ length: 40 }, (_, i) => ({
       key: "engine.import.skippedUnknown",
@@ -511,9 +550,7 @@ describe("useCharacterEditor.onImport", () => {
       await result.current.onImport(file("run.chum5"));
     });
 
-    expect(result.current.error).toContain("40"); // the count is the true total
-    expect(result.current.error).toContain("w14");
-    expect(result.current.error).not.toContain("w15");
+    expect(result.current.importReport).toHaveLength(40);
   });
 
   it("says nothing extra when the file imported cleanly", async () => {
@@ -525,6 +562,7 @@ describe("useCharacterEditor.onImport", () => {
     });
 
     expect(result.current.error).toBeNull();
+    expect(result.current.importReport).toBeNull();
   });
 
   it("turns malformed JSON into a message instead of an unhandled rejection", async () => {

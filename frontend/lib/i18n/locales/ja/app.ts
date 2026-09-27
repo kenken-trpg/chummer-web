@@ -377,7 +377,6 @@ export const JA_APP = {
   "app.prompt.duplicateName": "複製後の名前",
   "app.copyOf": "{name} のコピー",
 
-  "app.importWarnings": "取り込み時の未対応 {count}件 — {details}",
   "app.gearReview.title":
     "装備シートの {count} 行は品目を特定できませんでした。近いものを選ぶか、飛ばしてください",
   "app.gearReview.row": "{qty} 個・レーティング {rating}",
@@ -385,6 +384,10 @@ export const JA_APP = {
   "app.gearReview.noneLikeIt": "近いものが見つかりませんでした",
   "app.gearReview.skip": "飛ばす",
   "app.gearReview.dismiss": "残りをまとめて閉じる",
+  "app.importReport.title":
+    "読み込んだファイルのうち、次の {count} 件は引き継げませんでした（キャラクター自体は開いています）。",
+  "app.importReport.dismiss": "閉じる",
+  "app.reviewPanel.more": "ほか {count} 件",
   "app.exportReview.title":
     "書き出した {format} を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
   "app.exportReview.confirm": "このまま書き出す",

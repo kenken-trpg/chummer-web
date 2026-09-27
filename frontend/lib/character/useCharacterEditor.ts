@@ -15,7 +15,7 @@ import {
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { renderNotice, type Notice } from "@/lib/engine-notices";
+import { type Notice } from "@/lib/engine-notices";
 import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
@@ -54,6 +54,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const exportReview = review && review.of === ch ? review.differences : null;
   /** Which format the pending review was asked for, so the panel can name it. */
   const exportReviewFormat = review && review.of === ch ? review.format : null;
+  /** What the last import could not bring over. Not an error: the character is
+   *  open, and this is the list of what to fix by hand. Dropped when the player
+   *  closes it, not on the next edit — it is about a file, not about a state. */
+  const [importReport, setImportReport] = useState<Notice[] | null>(null);
   /** The 装備 rows of an .xlsx import that need a person to say what they are.
    *  Tied to the character they came from, so switching character shows that
    *  one's rows rather than the wrong sheet's. Kept in this browser (see
@@ -398,14 +402,14 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setTimeout(() => setCopied(null), 2000);
   }
 
-  function importWarnings(warnings: Notice[]): string {
-    return ui("app.importWarnings", {
-      count: warnings.length,
-      details: warnings
-        .slice(0, 15)
-        .map((w) => renderNotice(w, ui, tr))
-        .join(" / "),
-    });
+  /** Put what an import lost in front of the player. Empty means nothing was
+   *  lost, which is worth saying by showing nothing at all. */
+  function reportImport(warnings: Notice[]) {
+    setImportReport(warnings.length ? warnings : null);
+  }
+
+  function dismissImportReport() {
+    setImportReport(null);
   }
 
   /** A Foundry VTT character actor's Export Data, not this app's own JSON. */
@@ -445,7 +449,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onCharacterOpened?.();
     savePendingGear(res.character.id, res.pending_gear);
     readPendingGear(res.character.id);
-    if (res.warnings.length) setError(importWarnings(res.warnings));
+    reportImport(res.warnings);
     void refreshRoster();
   }
 
@@ -458,6 +462,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
    */
   async function importSheetUrl(url: string) {
     setError(null);
+    setImportReport(null);
     try {
       openTemplateImport(await api.importSheetUrl(url));
     } catch (e) {
@@ -468,6 +473,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
 
   async function onImport(file: File) {
     setError(null);
+    setImportReport(null);
     try {
       if (/\.xlsx$/i.test(file.name)) {
         openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
@@ -481,7 +487,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
             : await api.importFvtt(payload);
         remember(character);
         onCharacterOpened?.();
-        if (warnings.length) setError(importWarnings(warnings));
+        reportImport(warnings);
       } else {
         remember(await api.import(payload));
         onCharacterOpened?.();
@@ -531,6 +537,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     notice,
     exportReview,
     exportReviewFormat,
+    importReport,
+    dismissImportReport,
     importSheetUrl,
     pendingGear,
     resolvePendingGear,
