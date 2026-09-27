@@ -38,6 +38,8 @@ def _rich_state() -> CharacterState:
         id="rt",
         name="RoundTrip",
         notes="街の顔役に借り 2 件。義体は次のランで更新予定。",
+        player_name="まんたに",
+        game_notes="CUP 1\n2 話目から合流。",
         age="27",
         sex="女",
         eyes="サイバー（銀）",
@@ -113,6 +115,7 @@ def test_round_trip_preserves_the_core() -> None:
     assert st["commlinks"] and st["commlinks"][0]["gear_id"] == src.commlinks[0].gear_id
     assert st["contacts"][0]["name"] == "Sam"
     assert st["notes"] == src.notes
+    assert st["player_name"] == src.player_name and st["game_notes"] == src.game_notes
     assert st["age"] == "27" and st["sex"] == "女" and st["concept"] == "元企業ウェットワーク"
     assert st["background"] == src.background
     assert st["portrait"] == src.portrait
@@ -711,6 +714,41 @@ def test_a_stream_is_written_as_the_res_tradition_chummer_reads() -> None:
     assert trad.findtext("spiritcombat") == ""
     assert [el.text for el in trad.findall("./spirits/spirit")][:2] == ["Courier Sprite", "Crack Sprite"]
     assert root.find("stream") is None
+
+
+def test_an_adept_gets_the_blank_custom_tradition_chummer_keeps() -> None:
+    """Magic without a tradition is still a tradition to Chummer: it holds the
+    Custom row with every field blank and writes it out (`prime.chum5`). An
+    export without the element states less than Chummer's own save does, so it
+    is written — with `traditiontype`, without which `Tradition.Load` drops the
+    element whole."""
+    src = _rich_state().model_copy(update={"talent": "Adept", "spells": [], "tradition_id": None})
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    trad = root.find("tradition")
+    assert trad is not None
+    assert trad.findtext("traditiontype") == "MAG"
+    assert trad.findtext("sourceid") == trad.findtext("guid") == "616ba093-306c-45fc-8f41-0b98c8cccb46"
+    assert (trad.findtext("name"), trad.findtext("drain")) == ("", "")
+    assert trad.findtext("spiritform") == "Materialization"
+    assert trad.find("spirits") is not None and list(trad.find("spirits")) == []
+
+
+def test_a_mundane_character_is_written_with_no_tradition_at_all() -> None:
+    """The blank Custom tradition belongs to a character who *has* Magic. A
+    mundane one has none, and `traditiontype` would hand Chummer a magical
+    tradition the character never had."""
+    base = _rich_state()
+    src = base.model_copy(
+        update={
+            "priorities": base.priorities.model_copy(update={"Talent": "E", "Resources": "A"}),
+            "talent": "Mundane",
+            "spells": [],
+            "tradition_id": None,
+            "attributes": {k: v for k, v in base.attributes.items() if k != "MAG"},
+        }
+    )
+    root = ET.fromstring(state_to_chum5(import_character(src.model_dump())))
+    assert root.find("tradition") is None
 
 
 def test_a_mentor_spirit_is_written_where_chummer_looks_for_it() -> None:
