@@ -72,7 +72,7 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
             if parent_spec:
                 # what the parent's entry brings (a Survival Kit's Matches)
                 # is there whatever its category says
-                fits = bool(inst.included) or _misc_child_fits(parent_spec, spec)
+                fits = bool(inst.included) or _misc_child_fits(parent_spec, spec, container=True)
                 host_name = str(parent_spec.get("name") or "")
             elif host:
                 kind, host_spec = host

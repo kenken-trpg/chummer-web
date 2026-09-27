@@ -714,10 +714,13 @@ def test_an_electronic_modification_comes_in_with_the_deck_it_is_soldered_into()
     assert derived["commlinks"][0]["dataprocessing"] == 6  # a Hermes Ikon's 5, plus the point
 
 
-def test_gear_dragged_where_it_cannot_go_is_carried_on_its_own() -> None:
-    """Chummer lets a player drag ammo into a Spare Clip. Kept there, the
-    engine drops the ammo — and anything inside it, which then went missing
-    on the next export. Carried on its own, both stay, and the move is said."""
+def test_a_container_keeps_what_the_save_put_in_it() -> None:
+    """A Spare Clip holds ammo, a Medkit holds supplies, a briefcase holds
+    grenades. `gear.xml` says nothing about any of it — no capacity, no
+    `<addoncategories>` — so this app used to pull every one of those apart on
+    import and carry the contents separately. Holding a thing is not a rule
+    that needs data behind it: the arrangement stays, and nothing is said
+    about it."""
     from tests.chum5_fixtures import build_chum5
 
     xml = build_chum5(
@@ -731,18 +734,44 @@ def test_gear_dragged_where_it_cannot_go_is_carried_on_its_own() -> None:
         ],
     )
     state, warnings = chum5_to_state(xml)
-    assert [w["params"]["name"] for w in warnings if w["key"] == "engine.import.gearMovedOut"] == [
-        "Ammo: Injection Darts"
-    ]
+    assert [w for w in warnings if w["key"] == "engine.import.gearMovedOut"] == []
     names = {str(g["id"]): g["name"] for g in catalog()["gear"]}
     ch = import_character(state)
     by_id = {row.id: row for row in ch.gear}
     held = {names[row.gear_id]: names[by_id[row.parent_id].gear_id] if row.parent_id else None for row in ch.gear}
-    assert held == {"Spare Clip": None, "Ammo: Injection Darts": None, "Narcoject": "Ammo: Injection Darts"}
+    assert held == {
+        "Spare Clip": None,
+        "Ammo: Injection Darts": "Spare Clip",
+        "Narcoject": "Ammo: Injection Darts",
+    }
     assert not has(ch.derived["warnings"], "engine.gear.doesNotFit")
 
     back = import_character(chum5_to_state(state_to_chum5(ch))[0])
-    assert sorted(names[row.gear_id] for row in back.gear) == sorted(held)
+    by_id = {row.id: row for row in back.gear}
+    again = {names[row.gear_id]: names[by_id[row.parent_id].gear_id] if row.parent_id else None for row in back.gear}
+    assert again == held
+
+
+def test_a_container_does_not_loosen_the_childs_own_side() -> None:
+    """Carrying is not attaching. A container takes anything that does not
+    belong somewhere else; something that names its host, or that plugs into a
+    host that lists what it takes, still has to be there — a PI-Tac program in
+    a PI-Tac, not in the first commlink to hand."""
+    from app.engine.gear.misc_hosts import _misc_child_fits
+
+    clip = {"name": "Spare Clip", "category": "Ammunition"}
+    ammo = {"name": "Ammo: APDS", "category": "Ammunition"}
+    assert _misc_child_fits(clip, ammo, container=True)
+    assert not _misc_child_fits(clip, ammo)  # a host, not a bag: the data decides
+
+    # names its host
+    dart = {"name": "Narcoject", "category": "Toxins", "required_names": ["Ammo: Injection Darts"]}
+    assert not _misc_child_fits(clip, dart, container=True)
+    # plugs into a host that lists what it takes
+    pi_tac = {"name": "PI-Tac I", "category": "Commlinks", "addoncategories": ["PI-Tac Programs"]}
+    program = {"name": "Co-Pilot", "category": "PI-Tac Programs", "requireparent": True}
+    assert _misc_child_fits(pi_tac, program, container=True)
+    assert not _misc_child_fits(clip, program, container=True)
 
 
 def test_an_autosoft_loaded_into_a_drone_stays_there() -> None:

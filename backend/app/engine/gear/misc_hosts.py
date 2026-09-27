@@ -121,7 +121,25 @@ def ware_gear_costs(state: CharacterState) -> dict[str, int]:
     return out
 
 
-def _misc_child_fits(parent_spec: dict[str, Any], child_spec: dict[str, Any]) -> bool:
+def _misc_child_fits(parent_spec: dict[str, Any], child_spec: dict[str, Any], *, container: bool = False) -> bool:
+    """Whether `child_spec` may hang off `parent_spec`.
+
+    `container` says the parent is a piece of gear the character carries, not a
+    host something plugs into. Chummer's gear tree lets a player put any gear
+    inside any other — ammunition in a Spare Clip, supplies in a Medkit, a
+    grenade in a Hard-Shell Briefcase, drugs in a chemical injector — and
+    `gear.xml` says nothing about any of it: no capacity, no
+    `<addoncategories>`. Refusing it emptied every one of those containers on
+    import ("carried on its own instead"), on 21 of Chummer's own 34 test
+    characters. Holding a thing is not a rule that needs data behind it, so a
+    container takes anything that does not belong somewhere else.
+
+    Where a host *is* a rule — a commlink's dongles, armor, a weapon's ammo, a
+    piece of ware's `<allowgear>` — nothing is relaxed: the caller leaves
+    `container` off and the data decides, as before. A container does not
+    loosen the child's own side either: something that names its host, or that
+    plugs into a category of host, still has to be there.
+    """
     parent_name = parent_spec.get("name") or ""
     parent_cat = parent_spec.get("category") or ""
     child_cat = child_spec.get("category") or ""
@@ -129,12 +147,15 @@ def _misc_child_fits(parent_spec: dict[str, Any], child_spec: dict[str, Any]) ->
     req_names = [n for n in (child_spec.get("required_names") or []) if n]
     req_cats = [c for c in (child_spec.get("required_categories") or []) if c and c != "Custom"]
     if req_names or req_cats:
+        # it names its host: that host or nothing, container or not
         return parent_name in req_names or parent_cat in req_cats
     if allowed:
+        # a host that lists what it takes takes that and nothing else: a PI-Tac
+        # program belongs in a PI-Tac, not in the first commlink to hand
         return child_cat in allowed
     if child_spec.get("requireparent"):
         return child_cat == parent_cat
-    return False
+    return container
 
 
 def _misc_slot_stats(spec: dict[str, Any], inst: GearInstall, rating: int) -> tuple[bool, float, float]:
