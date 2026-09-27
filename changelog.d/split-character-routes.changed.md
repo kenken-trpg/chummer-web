@@ -1,0 +1,1 @@
+- **キャラクターのルートを役目ごとに 3 つのファイルに分けた。** 取り込み（JSON・.chum5・.xlsx・URL・Foundry・設定・customdata）・書き出し（.chum5・.xlsx・Foundry と往復チェック）・状態計算が 1 ファイル 323 行に同居していました。`api/import_routes.py` と `api/export_routes.py` に割り、`api/characters.py` は状態のルートだけにしました。URL もレート制限も答えの形も変えていません（OpenAPI のパス一覧が分割の前後で一致することを確かめました）。

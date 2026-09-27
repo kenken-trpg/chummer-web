@@ -12,8 +12,8 @@ from collections.abc import Iterator
 import pytest
 from starlette.testclient import TestClient
 
-from app.api.characters import _content_disposition
 from app.api.deploy import _MAX_REQUEST_BYTES, _client_ip
+from app.api.export_routes import _content_disposition
 from app.main import app
 
 client = TestClient(app)
