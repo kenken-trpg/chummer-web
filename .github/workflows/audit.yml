@@ -66,15 +66,24 @@ jobs:
   # The depth is chosen by event, because this workflow answers to
   # `pull_request` too (the audits above have to) and 5,000 examples took
   # 3.3 min the first time it ran on main — a cost worth paying weekly and not
-  # per merge, the more so now that scripts/merge_chain.sh waits for every
-  # check and not only the required ones. So: a shallow extra pass on a PR
-  # (~1 min more than the fixed setup), the full hunt everywhere else.
+  # per merge. So: a shallow extra pass on a PR (~1 min more than the fixed
+  # setup), the full hunt on the schedule and on demand.
+  #
+  # Not on a push to main at all, which is what `if` below is for. The deep run
+  # used to happen there too and never finished: `concurrency` above cancels a
+  # superseded run of this workflow, correctly for the two audits — a newer
+  # commit's advisories are the ones worth knowing — and wrongly for this job,
+  # which is not about the commit. Merges arrive closer together than 3.3 min
+  # (scripts/merge_chain.sh pushes one as soon as the last has merged), so a
+  # chain of six left three cancelled hunts and one survivor. Nothing was being
+  # bought, and the cancellations sat on main looking like failures.
   #
   # Not in ci.yml at all because a counterexample Hypothesis finds is a finding
   # about the code, not about the commit that happened to be pushed — the same
   # reason the audits above live here. A failure prints the shrunk input, which
   # is the reproduction.
   fuzz:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     defaults:
       run:
