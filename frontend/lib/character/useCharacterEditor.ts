@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { api, type CharacterSummary } from "@/lib/api";
+import { api, type CharacterSummary, type PendingGear } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import {
   MAX_PORTRAITS,
@@ -7,6 +7,11 @@ import {
   portraitsOf,
   portraitsPatch,
 } from "@/lib/character/portrait";
+import {
+  clearPendingGear,
+  loadPendingGear,
+  savePendingGear,
+} from "@/lib/character/pending-gear-store";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
@@ -14,6 +19,9 @@ import { renderNotice, type Notice } from "@/lib/engine-notices";
 import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
+
+/** The export formats the character is checked before being written to. */
+export type ExportFormat = "chum5" | "xlsx";
 
 /** The catalog key of the vendored data: no dataset, no directories. */
 const NO_CUSTOM_DATA = "|";
@@ -35,11 +43,22 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   /** Advisories about an action that *succeeded* — never the red error box. */
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  /** what a .chum5 would lose, while the player decides whether to export it
+  /** what the file would lose, while the player decides whether to export it
    *  anyway. Tied to the exact state it was checked against: any edit (or
    *  switching character) makes it stale, and a stale review is dropped. */
-  const [review, setExportReview] = useState<{ of: Character; differences: Notice[] } | null>(null);
+  const [review, setExportReview] = useState<{
+    of: Character;
+    format: ExportFormat;
+    differences: Notice[];
+  } | null>(null);
   const exportReview = review && review.of === ch ? review.differences : null;
+  /** The 装備 rows of an .xlsx import that need a person to say what they are.
+   *  Tied to the character they came from, so switching character shows that
+   *  one's rows rather than the wrong sheet's. Kept in this browser (see
+   *  `pending-gear-store`) so a reload in the middle of settling twenty rows
+   *  does not lose the other nineteen. */
+  const [pending, setPendingGear] = useState<{ of: string; rows: PendingGear[] } | null>(null);
+  const pendingGear = pending && ch && pending.of === ch.id ? pending.rows : null;
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
   const { ui, locale } = useUiText();
   const history = useCharacterHistory();
@@ -165,6 +184,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     try {
       remember(await api.get(id));
       onCharacterOpened?.();
+      // Picked back up rather than dropped: a character imported from a
+      // template keeps the rows nobody has settled yet.
+      readPendingGear(id);
       setError(null);
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.load"));
@@ -188,6 +210,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     if (!ch) return;
     if (!window.confirm(ui("app.confirm.delete", { name: ch.name || ui("app.unnamed") }))) return;
     const others = roster.filter((r) => r.id !== ch.id);
+    // nothing left to attach them to
+    clearPendingGear(ch.id);
     await api.remove(ch.id).catch(() => {});
     // deleting the last one mints a replacement; if the backend is down that
     // fails loudly rather than leaving the editor pointing at a deleted id
@@ -266,37 +290,54 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   }
 
   /**
-   * Export a .chum5 — after asking the server what reading it back would
-   * change. A clean round trip saves straight away; otherwise the differences
-   * wait in `exportReview` for {@link confirmChum5} or {@link cancelChum5}.
-   * A failed check is not worth blocking the download over.
+   * Export a file the character has to be read back out of — after asking the
+   * server what reading it back would change. A clean round trip saves straight
+   * away; otherwise the differences wait in `exportReview` for
+   * {@link confirmExport} or {@link cancelExport}. A failed check is not worth
+   * blocking the download over.
+   *
+   * Both formats go through this: a .chum5 loses what Chummer has no field for,
+   * and the キャラシテンプレート .xlsx loses rather more — it is a fixed grid with
+   * one free-text column for all the equipment — so both are worth a look
+   * before the file is written.
    */
   async function downloadChum5() {
+    await checkThenSave("chum5");
+  }
+
+  /** Export the character as a キャラシテンプレート-shaped .xlsx. */
+  async function downloadXlsx() {
+    await checkThenSave("xlsx");
+  }
+
+  async function checkThenSave(format: ExportFormat) {
     if (!ch) return;
-    const differences = await api.checkChummerExport(ch).catch(() => []);
+    const check = format === "chum5" ? api.checkChummerExport : api.checkXlsxExport;
+    const differences = await check(ch).catch(() => []);
     if (differences.length) {
-      setExportReview({ of: ch, differences });
+      setExportReview({ of: ch, format, differences });
       return;
     }
-    await saveChum5();
+    await save(format);
   }
 
-  async function confirmChum5() {
+  async function confirmExport() {
+    const format = review?.format ?? "chum5";
     setExportReview(null);
-    await saveChum5();
+    await save(format);
   }
 
-  function cancelChum5() {
+  function cancelExport() {
     setExportReview(null);
   }
 
-  async function saveChum5() {
+  async function save(format: ExportFormat) {
     if (!ch) return;
     try {
-      const blob = await api.exportChummer(ch);
+      const blob = await (format === "chum5" ? api.exportChummer(ch) : api.exportXlsx(ch));
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${ch.name || "character"}.chum5`;
+      a.download = `${ch.name || "character"}.${format}`;
       a.click();
       URL.revokeObjectURL(a.href);
     } catch (e) {
@@ -355,6 +396,16 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setTimeout(() => setCopied(null), 2000);
   }
 
+  function importWarnings(warnings: Notice[]): string {
+    return ui("app.importWarnings", {
+      count: warnings.length,
+      details: warnings
+        .slice(0, 15)
+        .map((w) => renderNotice(w, ui, tr))
+        .join(" / "),
+    });
+  }
+
   /** A Foundry VTT character actor's Export Data, not this app's own JSON. */
   function isFvttActor(payload: unknown): boolean {
     if (!payload || typeof payload !== "object") return false;
@@ -362,9 +413,41 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     return p.type === "character" && typeof p.system === "object" && Array.isArray(p.items);
   }
 
+  /** Drop a pending row, either because it was added or because it was waved
+   *  off. Both are the player saying they are done with it. */
+  function resolvePendingGear(name: string) {
+    setPendingGear((prev) => {
+      if (!prev) return prev;
+      const rows = prev.rows.filter((row) => row.name !== name);
+      savePendingGear(prev.of, rows);
+      return { ...prev, rows };
+    });
+  }
+
+  function dismissPendingGear() {
+    if (pending) clearPendingGear(pending.of);
+    setPendingGear(null);
+  }
+
+  /** What is held for `id`, so opening a character picks its rows back up. */
+  function readPendingGear(id: string) {
+    const rows = loadPendingGear(id);
+    setPendingGear(rows.length ? { of: id, rows } : null);
+  }
+
   async function onImport(file: File) {
     setError(null);
     try {
+      if (/\.xlsx$/i.test(file.name)) {
+        const res = await api.importXlsx(await file.arrayBuffer());
+        remember(res.character);
+        onCharacterOpened?.();
+        savePendingGear(res.character.id, res.pending_gear);
+        readPendingGear(res.character.id);
+        if (res.warnings.length) setError(importWarnings(res.warnings));
+        void refreshRoster();
+        return;
+      }
       const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
       if (payload === null || isFvttActor(payload)) {
         const { character, warnings } =
@@ -373,17 +456,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
             : await api.importFvtt(payload);
         remember(character);
         onCharacterOpened?.();
-        if (warnings.length) {
-          setError(
-            ui("app.importWarnings", {
-              count: warnings.length,
-              details: warnings
-                .slice(0, 15)
-                .map((w) => renderNotice(w, ui, tr))
-                .join(" / "),
-            }),
-          );
-        }
+        if (warnings.length) setError(importWarnings(warnings));
       } else {
         remember(await api.import(payload));
         onCharacterOpened?.();
@@ -432,6 +505,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     error,
     notice,
     exportReview,
+    pendingGear,
+    resolvePendingGear,
+    dismissPendingGear,
     roster,
     copied,
     history,
@@ -454,9 +530,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onPortraitFile,
     download,
     downloadChum5,
+    downloadXlsx,
     downloadFvtt,
-    confirmChum5,
-    cancelChum5,
+    confirmExport,
+    cancelExport,
     copyText,
     copyShareLink,
   };

@@ -267,6 +267,36 @@ describe("api.exportChummer", () => {
   });
 });
 
+describe("api.exportXlsx", () => {
+  it("posts the state to the xlsx route and returns the blob", async () => {
+    const state = makeCharacter({ id: "a" });
+    respond = () => json("PK");
+
+    expect(await api.exportXlsx(state)).toBeInstanceOf(Blob);
+    expect(calls[0].path).toBe("/api/characters/xlsx");
+    expect(body(calls[0])).toEqual({ state });
+    expect(await local.listCharacters()).toEqual([]);
+  });
+
+  it("surfaces the server's message rather than a bare status", async () => {
+    respond = () => json({ detail: "request body too large" }, false, 413);
+
+    await expect(api.exportXlsx(makeCharacter({ id: "a" }))).rejects.toThrow(
+      "request body too large",
+    );
+  });
+});
+
+describe("api.checkXlsxExport", () => {
+  it("returns just the differences", async () => {
+    const differences = [{ key: "engine.export.xlsxNoPlace", params: { name: { tr: "Sensor" } } }];
+    respond = () => json({ differences });
+
+    expect(await api.checkXlsxExport(makeCharacter({ id: "a" }))).toEqual(differences);
+    expect(calls[0].path).toBe("/api/characters/xlsx/check");
+  });
+});
+
 describe("api.exportFvtt", () => {
   it("sends the state with the display locale and returns the blob", async () => {
     const state = makeCharacter({ id: "a" });

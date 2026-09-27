@@ -174,10 +174,13 @@ export const JA_APP = {
   "toolbar.saveJson": "JSON保存",
   "toolbar.exportChum5": ".chum5書出",
   "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
+  "toolbar.exportXlsx": ".xlsx書出",
+  "toolbar.exportXlsxHint":
+    "［SR5］キャラシテンプレート と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
   "toolbar.exportFvttHint":
     "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。能力値・技能・資質のみ",
-  "toolbar.import": "読込 (JSON/.chum5)",
+  "toolbar.import": "読込 (JSON/.chum5/.xlsx)",
   "toolbar.shareHint":
     "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
   "toolbar.cocofolia": "ココフォリア",
@@ -229,6 +232,9 @@ export const JA_APP = {
   "api.importFvttFailed": "この Foundry VTT のアクターを取り込めませんでした。",
   "api.notAnFvttActor":
     "Foundry VTT のキャラクターではないようです（shadowrun5e のキャラクターアクターで Export Data したものを選んでください）",
+  "api.importXlsxFailed": "このキャラシテンプレートを取り込めませんでした。",
+  "api.notACharacterTemplate":
+    "シャドウラン用のキャラシテンプレートではないようです（Google スプレッドシートの「［SR5］キャラシテンプレート」を .xlsx で書き出したものを選んでください）",
   "api.settingsParseFailed":
     "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.customDataMissing":
@@ -357,6 +363,13 @@ export const JA_APP = {
   "app.copyOf": "{name} のコピー",
 
   "app.importWarnings": "取り込み時の未対応 {count}件 — {details}",
+  "app.gearReview.title":
+    "装備シートの {count} 行は品目を特定できませんでした。近いものを選ぶか、飛ばしてください",
+  "app.gearReview.row": "{qty} 個・レーティング {rating}",
+  "app.gearReview.addHint": "{name}（{list}）として追加します",
+  "app.gearReview.noneLikeIt": "近いものが見つかりませんでした",
+  "app.gearReview.skip": "飛ばす",
+  "app.gearReview.dismiss": "残りをまとめて閉じる",
   "app.exportReview.title":
     "書き出した chum5 を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
   "app.exportReview.confirm": "このまま書き出す",

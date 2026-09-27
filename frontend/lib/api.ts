@@ -11,6 +11,37 @@ import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
 
 /** One entry a merge added, removed or edited. */
+/**
+ * One 装備 row the .xlsx import could not match, and what it looks like.
+ *
+ * `key` on a suggestion is the character-state list the item would go in
+ * ("weapons", "armor", "gear", …), because a shield is both a weapon and a
+ * piece of armor and the name alone does not say which was meant.
+ */
+export type PendingGear = {
+  name: string;
+  rating: number;
+  qty: number;
+  note: string;
+  suggestions: {
+    bucket: string;
+    /** The character-state list the item belongs in ("weapons", "gear", …). */
+    key: string;
+    id: string;
+    name: string;
+    /** The row to append to that list, built by the import so that which lists
+     *  carry a count, which carry a rating and which count months stays in one
+     *  place. */
+    entry: Record<string, unknown>;
+  }[];
+};
+
+export type XlsxImport = {
+  character: Character;
+  warnings: Notice[];
+  pending_gear: PendingGear[];
+};
+
 export type MergeChange = {
   /** The base data file, e.g. `martialarts.xml`. */
   file: string;
@@ -256,6 +287,24 @@ export const api = {
     return res;
   },
 
+  /**
+   * Import a filled-in シャドウラン_キャラシテンプレート (.xlsx).
+   *
+   * `pending_gear` is the 装備 sheet's rows that could not be matched to an
+   * item. That sheet is written freely enough that a good part of it needs a
+   * person to confirm, so each row comes back with what the sheet said and a
+   * shortlist of what it looks like.
+   */
+  importXlsx: async (bytes: ArrayBuffer): Promise<XlsxImport> => {
+    const res = await req<XlsxImport>("/api/characters/import-xlsx", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: bytes,
+    });
+    await local.putCharacter(res.character);
+    return res;
+  },
+
   /** Import a Foundry VTT shadowrun5e character actor (its Export Data JSON). */
   importFvtt: async (payload: unknown): Promise<{ character: Character; warnings: Notice[] }> => {
     const res = await req<{ character: Character; warnings: Notice[] }>(
@@ -307,6 +356,33 @@ export const api = {
     });
     if (!res.ok) throw new Error(await errorText(res));
     return res.blob();
+  },
+
+  /**
+   * An .xlsx in the shape of the Japanese community character sheet
+   * (［SR5］キャラシテンプレート). Not the template itself — that is its author's
+   * work, and the .xlsx it downloads as has dead Google Sheets formulas in every
+   * derived cell — but a workbook with its sheet names and its input cells,
+   * which {@link importXlsx} reads back.
+   */
+  exportXlsx: async (state: Character): Promise<Blob> => {
+    const res = await fetch("/api/characters/xlsx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    if (!res.ok) throw new Error(await errorText(res));
+    return res.blob();
+  },
+
+  /** What the character would lose if the exported .xlsx were read back in. */
+  checkXlsxExport: async (state: Character): Promise<Notice[]> => {
+    const res = await req<{ differences: Notice[] }>("/api/characters/xlsx/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    return res.differences;
   },
 
   /** JSON for Foundry VTT shadowrun5e's Chummer importer, names in `locale`. */

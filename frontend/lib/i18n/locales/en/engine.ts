@@ -357,6 +357,22 @@ export const EN_ENGINE = {
     "The portrait was not imported: it is over 3 MB or not a PNG / JPEG / GIF / WebP image",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
 
+  "engine.import.xlsxPlayLevel":
+    'The character sheet was set to the "{level}" play level, which uses a different priority table — pick it again in the creation settings.',
+  "engine.import.xlsxMagicStyle":
+    'The magical style and aspected field of "{name}" could not be imported — choose the tradition and the quality again.',
+  "engine.import.xlsxQualityNote":
+    'The note "{note}" on the quality "{name}" could not be imported: this quality takes no target.',
+  "engine.import.xlsxPowerNote":
+    'The note "{note}" on the adept power "{name}" could not be imported: this power takes no target.',
+  "engine.import.xlsxPowerLevel":
+    'The character sheet gave the adept power "{name}" level {level}, but this power has no levels — it was imported as a single purchase.',
+  "engine.import.xlsxWareGrade":
+    'The grade "{grade}" on the implant "{name}" could not be read — it was imported as Standard.',
+  "engine.import.xlsxOtherKarma":
+    'The character sheet spent {karma} karma on "{name}" under その他カルマ消費, which this app has nothing to record it against.',
+  "engine.import.xlsxGearPending":
+    "{count} rows on the equipment sheet could not be matched to an item — confirm each one.",
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
   "engine.term.contact": "contact",
@@ -404,6 +420,11 @@ export const EN_ENGINE = {
   "engine.export.changed": "{kind} entries change",
   "engine.export.karma": "karma left goes {before} → {after}",
   "engine.export.nuyen": "nuyen left goes {before} → {after}",
+  "engine.export.xlsxNoRoom": "the sheet has room for {room} {kind} rows, so {dropped} do not fit",
+  "engine.export.xlsxNoCell":
+    "the sheet has no \u201c{name}\u201d to pick, so the {kind} is written as \u201c{instead}\u201d",
+  "engine.export.xlsxNoPlace":
+    "{name} is fitted to something the equipment sheet does not hold, so it is left out",
   "engine.side.Left": "left",
 
   "engine.side.Right": "right",

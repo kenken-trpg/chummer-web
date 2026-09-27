@@ -202,6 +202,34 @@ def test_chummer_export_succeeds_with_a_non_ascii_name() -> None:
     assert r.text.lstrip().startswith("<")
 
 
+def test_xlsx_export_downloads_a_workbook_the_import_takes_back() -> None:
+    """The one route pair whose two halves have to agree: what comes out of the
+    download has to be something /import-xlsx accepts."""
+    ip = {"cf-connecting-ip": "203.0.113.57"}
+    state = client.post("/api/characters/new", json={"name": "夜叉"}, headers=ip).json()
+    out = client.post("/api/characters/xlsx", json={"state": state}, headers=ip)
+    assert out.status_code == 200
+    assert out.headers["content-type"].startswith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    assert "filename*=UTF-8''%E5%A4%9C%E5%8F%89.xlsx" in out.headers["content-disposition"]
+    assert out.content[:2] == b"PK"
+
+    back = client.post(
+        "/api/characters/import-xlsx",
+        content=out.content,
+        headers={**ip, "Content-Type": "application/octet-stream"},
+    )
+    assert back.status_code == 200
+    assert back.json()["character"]["metatype"] == state["metatype"]
+
+
+def test_xlsx_export_check_reports_what_the_sheet_cannot_hold() -> None:
+    ip = {"cf-connecting-ip": "203.0.113.58"}
+    state = client.post("/api/characters/new", json={"name": "Runner"}, headers=ip).json()
+    r = client.post("/api/characters/xlsx/check", json={"state": state}, headers=ip)
+    assert r.status_code == 200
+    assert isinstance(r.json()["differences"], list)
+
+
 def test_catalog_is_served_with_an_etag_and_revalidates_to_304() -> None:
     first = client.get("/api/catalog")
     assert first.status_code == 200

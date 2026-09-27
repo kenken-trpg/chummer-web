@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { makeCharacter } from "@/tests/fixtures";
 import type { Catalog, Character } from "@/lib/types";
+import { loadPendingGear } from "@/lib/character/pending-gear-store";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
 import { MESSAGES } from "@/lib/i18n/messages";
 import { notify } from "@/lib/notices";
@@ -18,8 +19,11 @@ const api = vi.hoisted(() => ({
   import: vi.fn(),
   importChummer: vi.fn(),
   importFvtt: vi.fn(),
+  importXlsx: vi.fn(),
   exportChummer: vi.fn(),
   checkChummerExport: vi.fn(),
+  exportXlsx: vi.fn(),
+  checkXlsxExport: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ api }));
 
@@ -304,6 +308,134 @@ describe("useCharacterEditor.onImport", () => {
     expect(api.importFvtt).toHaveBeenCalledWith(actor);
     expect(api.import).not.toHaveBeenCalled();
     expect(result.current.ch?.id).toBe("fvtt");
+  });
+
+  it.each([["run.xlsx"], ["RUN.XLSX"]])(
+    "sends %s to the キャラシテンプレート reader",
+    async (name) => {
+      const { result } = await editorWith();
+      api.importXlsx.mockResolvedValue({
+        character: makeCharacter({ id: "xlsx" }),
+        warnings: [],
+        pending_gear: [],
+      });
+
+      await act(async () => {
+        await result.current.onImport(file(name));
+      });
+
+      expect(api.importXlsx).toHaveBeenCalledTimes(1);
+      expect(api.import).not.toHaveBeenCalled();
+      expect(result.current.ch?.id).toBe("xlsx");
+      expect(result.current.pendingGear).toBeNull();
+    },
+  );
+
+  /**
+   * The 装備 sheet is one free-text column, so a good part of it cannot be
+   * matched. Those rows are held for the player to settle rather than dropped.
+   */
+  it("holds the equipment rows an .xlsx could not match", async () => {
+    const { result } = await editorWith();
+    const pending = [
+      { name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] },
+      { name: "現代-シンヒュン", rating: 0, qty: 1, note: "車", suggestions: [] },
+    ];
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: pending,
+    });
+
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+
+    expect(result.current.pendingGear).toEqual(pending);
+
+    // settling one leaves the rest
+    act(() => result.current.resolvePendingGear("FN-HAL"));
+    expect(result.current.pendingGear?.map((row) => row.name)).toEqual(["現代-シンヒュン"]);
+
+    act(() => result.current.dismissPendingGear());
+    expect(result.current.pendingGear).toBeNull();
+  });
+
+  it("shows each character's own held rows, and none for one that has none", async () => {
+    const { result } = await editorWith();
+    const held = [{ name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] }];
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: held,
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    expect(result.current.pendingGear).toEqual(held);
+
+    // a character nobody imported a template for has nothing waiting
+    api.get.mockResolvedValue(makeCharacter({ id: "other" }));
+    await act(async () => {
+      await result.current.openCharacter("other");
+    });
+    expect(result.current.pendingGear).toBeNull();
+
+    // ...and coming back picks them up again, which is the point of keeping them
+    api.get.mockResolvedValue(makeCharacter({ id: "xlsx" }));
+    await act(async () => {
+      await result.current.openCharacter("xlsx");
+    });
+    expect(result.current.pendingGear).toEqual(held);
+  });
+
+  /** A reload in the middle of settling twenty rows must not lose nineteen. */
+  it("keeps held rows across a reload, minus the ones already settled", async () => {
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: [
+        { name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] },
+        { name: "錠前キット", rating: 0, qty: 1, note: "", suggestions: [] },
+      ],
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    act(() => result.current.resolvePendingGear("FN-HAL"));
+
+    expect(loadPendingGear("xlsx").map((row) => row.name)).toEqual(["錠前キット"]);
+  });
+
+  it("forgets held rows once they are dismissed", async () => {
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: [{ name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] }],
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    act(() => result.current.dismissPendingGear());
+    expect(loadPendingGear("xlsx")).toEqual([]);
+  });
+
+  it("still opens the character when an .xlsx had unreadable rows", async () => {
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [{ key: "engine.import.xlsxGearPending", params: { count: 2 } }],
+      pending_gear: [],
+    });
+
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+
+    expect(result.current.ch?.id).toBe("xlsx");
+    expect(result.current.error).toContain("装備シートの 2 行");
   });
 
   it("opens the character even when the file had unsupported content", async () => {
@@ -694,7 +826,7 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.exportReview).toEqual(lost);
 
     await act(async () => {
-      await result.current.confirmChum5();
+      await result.current.confirmExport();
     });
     expect(clicks).toHaveLength(1);
     expect(result.current.exportReview).toBeNull();
@@ -707,7 +839,7 @@ describe("useCharacterEditor file exports", () => {
     await act(async () => {
       await result.current.downloadChum5();
     });
-    act(() => result.current.cancelChum5());
+    act(() => result.current.cancelExport());
 
     expect(result.current.exportReview).toBeNull();
     expect(api.exportChummer).not.toHaveBeenCalled();
@@ -737,6 +869,57 @@ describe("useCharacterEditor file exports", () => {
 
     expect(clicks).toHaveLength(1);
     expect(result.current.error).toBeNull();
+  });
+
+  it("downloadXlsx() saves the workbook the server produced", async () => {
+    api.exportXlsx.mockResolvedValue(new Blob(["PK"]));
+    api.checkXlsxExport.mockResolvedValue([]);
+    const { result } = await booted(makeCharacter({ id: "c1", name: "夜叉" }));
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+
+    expect(api.exportXlsx).toHaveBeenCalledWith(result.current.ch);
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    expect(clicks[0].download).toBe("夜叉.xlsx");
+    expect(result.current.error).toBeNull();
+  });
+
+  it("confirming the review writes the format that was checked, not the other one", async () => {
+    api.exportXlsx.mockResolvedValue(new Blob(["PK"]));
+    api.checkXlsxExport.mockResolvedValue([
+      {
+        key: "engine.export.xlsxNoRoom",
+        params: { kind: { ui: "engine.kind.quality" }, room: 10, dropped: 2 },
+      },
+    ]);
+    const { result } = await booted(makeCharacter({ id: "c1", name: "夜叉" }));
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+    expect(clicks).toHaveLength(0);
+
+    await act(async () => {
+      await result.current.confirmExport();
+    });
+    expect(api.exportXlsx).toHaveBeenCalled();
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    expect(clicks[0].download).toBe("夜叉.xlsx");
+  });
+
+  it("a refused .xlsx export is a message, not an unhandled rejection", async () => {
+    api.exportXlsx.mockRejectedValue(new Error(""));
+    api.checkXlsxExport.mockResolvedValue([]);
+    const { result } = await booted();
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+
+    expect(clicks).toHaveLength(0);
+    expect(result.current.error).toBeTruthy();
   });
 
   it("a refused .chum5 export is a message, not an unhandled rejection", async () => {

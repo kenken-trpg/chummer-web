@@ -9,7 +9,7 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
 
   await page.goto("/");
   await waitForEditor(page);
-  await page.getByLabel("読込 (JSON/.chum5)").setInputFiles(file);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(file);
 
   const name = page.getByRole("textbox", { name: "キャラクター名" });
   await expect(name).toHaveValue("Ghile Mear");

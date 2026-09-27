@@ -357,6 +357,22 @@ export const JA_ENGINE = {
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
 
+  "engine.import.xlsxPlayLevel":
+    "キャラシテンプレートのプレイレベルが「{level}」でした。優先度表が異なるので、作成設定で選び直してください",
+  "engine.import.xlsxMagicStyle":
+    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（伝統と資質で選び直してください）",
+  "engine.import.xlsxQualityNote":
+    "資質「{name}」の補足「{note}」は取り込めませんでした（この資質には対象を持たせられません）",
+  "engine.import.xlsxPowerNote":
+    "アデプト・パワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
+  "engine.import.xlsxPowerLevel":
+    "キャラシテンプレートはアデプト・パワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
+  "engine.import.xlsxWareGrade":
+    "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
+  "engine.import.xlsxOtherKarma":
+    "キャラシテンプレートの「その他カルマ消費」に「{name}」（{karma} カルマ）がありましたが、この app に対応する項目がないため取り込めませんでした",
+  "engine.import.xlsxGearPending":
+    "装備シートの {count} 行は名前から品目を特定できませんでした（確認して選び直してください）",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
   "engine.term.contact": "コンタクト",
   "engine.term.gear": "ギア",
@@ -403,6 +419,11 @@ export const JA_ENGINE = {
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",
   "engine.export.nuyen": "残りニューヨンが {before} → {after} になります",
+  "engine.export.xlsxNoRoom":
+    "キャラシの{kind}欄は {room} 行までなので、{dropped} 件が書き切れません",
+  "engine.export.xlsxNoCell":
+    "キャラシの選択肢に「{name}」がないので、{kind}は「{instead}」として書き出します",
+  "engine.export.xlsxNoPlace": "{name}は取り付け先が装備シートにないので書き出せません",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

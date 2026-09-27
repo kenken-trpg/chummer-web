@@ -167,10 +167,13 @@ export const EN_APP = {
   "toolbar.saveJson": "Save JSON",
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
+  "toolbar.exportXlsx": "Export .xlsx",
+  "toolbar.exportXlsxHint":
+    "Export an .xlsx with the same sheets and the same input cells as the Japanese community character sheet (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
   "toolbar.exportFvttHint":
     "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
-  "toolbar.import": "Load (JSON/.chum5)",
+  "toolbar.import": "Load (JSON/.chum5/.xlsx)",
   "toolbar.shareHint":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "toolbar.cocofolia": "Cocofolia",
@@ -224,6 +227,9 @@ export const EN_APP = {
   "api.importFvttFailed": "This Foundry VTT actor could not be imported.",
   "api.notAnFvttActor":
     "This does not look like a Foundry VTT character (use Export Data on a shadowrun5e character actor).",
+  "api.importXlsxFailed": "This character-sheet template could not be imported.",
+  "api.notACharacterTemplate":
+    'This does not look like the Shadowrun character-sheet template (download the "［SR5］キャラシテンプレート" Google Sheet as .xlsx and choose that file).',
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.customDataMissing":
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",
@@ -348,6 +354,13 @@ export const EN_APP = {
   "app.copyOf": "{name} copy",
 
   "app.importWarnings": "{count} unsupported on import — {details}",
+  "app.gearReview.title":
+    "{count} rows on the equipment sheet could not be matched to an item. Pick the closest, or skip it.",
+  "app.gearReview.row": "×{qty}, rating {rating}",
+  "app.gearReview.addHint": 'Add as "{name}" ({list})',
+  "app.gearReview.noneLikeIt": "Nothing in the book looks like it",
+  "app.gearReview.skip": "Skip",
+  "app.gearReview.dismiss": "Close the rest",
   "app.exportReview.title": "Reading the exported chum5 back would change {count} things:",
   "app.exportReview.confirm": "Export anyway",
   "app.exportReview.cancel": "Cancel",
