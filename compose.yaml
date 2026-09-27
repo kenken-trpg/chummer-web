@@ -37,6 +37,10 @@ services:
       # a single local user doesn't need the public-facing limits
       RATE_LIMIT: "${RATE_LIMIT:-1000/minute}"
       IMPORT_RATE_LIMIT: "${IMPORT_RATE_LIMIT:-200/minute}"
+      # the URL import is the only route that fetches from the internet, so it
+      # keeps a limit even locally — per caller and across all of them.
+      SHEET_URL_RATE_LIMIT: "${SHEET_URL_RATE_LIMIT:-20/minute}"
+      SHEET_URL_TOTAL_RATE_LIMIT: "${SHEET_URL_TOTAL_RATE_LIMIT:-60/minute}"
       MAX_REQUEST_BYTES: "${MAX_REQUEST_BYTES:-12582912}"
       CHUM5_MAX_DECOMPRESSED_BYTES: "${CHUM5_MAX_DECOMPRESSED_BYTES:-33554432}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"

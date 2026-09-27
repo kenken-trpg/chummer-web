@@ -23,6 +23,18 @@ _ALLOWED_ORIGINS = [
 _MAX_REQUEST_BYTES = int(os.environ.get("MAX_REQUEST_BYTES") or 12 * 1024 * 1024)
 _RATE_LIMIT = os.environ.get("RATE_LIMIT") or "120/minute"
 _IMPORT_RATE_LIMIT = os.environ.get("IMPORT_RATE_LIMIT") or "20/minute"
+#: The one route that makes the backend talk to somebody else (Google Sheets).
+#: Tighter than the other imports for two reasons that have nothing to do with
+#: load here: a caller who can make this host fetch on demand can use it to
+#: relay traffic at `docs.google.com`, and reading a sheet costs a request and
+#: up to 32 MB of transfer somewhere we do not pay for. A person pasting a link
+#: does it once, twice if they mistype it — five a minute is generous.
+_SHEET_URL_RATE_LIMIT = os.environ.get("SHEET_URL_RATE_LIMIT") or "5/minute"
+#: And the same again across every caller at once, because the per-caller limit
+#: is keyed on an IP: a botnet gets one bucket each, while this host has only
+#: one outbound reputation to spend. Deliberately loose enough for a table of
+#: players importing their sheets at the start of a session.
+_SHEET_URL_TOTAL_RATE_LIMIT = os.environ.get("SHEET_URL_TOTAL_RATE_LIMIT") or "60/minute"
 # A page can legitimately fire one report per violation per load, so this is
 # looser than the import limit and tighter than the default.
 _CSP_REPORT_RATE_LIMIT = os.environ.get("CSP_REPORT_RATE_LIMIT") or "60/minute"

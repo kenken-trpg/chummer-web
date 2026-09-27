@@ -114,6 +114,9 @@ Git for Windows に `make` は同梱されていないため、各ターゲッ�
 ```bash
 RATE_LIMIT=120/minute
 IMPORT_RATE_LIMIT=20/minute
+# URL 取り込みは外へ出る唯一の経路なので別枠（1 人あたり／全体）
+SHEET_URL_RATE_LIMIT=5/minute
+SHEET_URL_TOTAL_RATE_LIMIT=60/minute
 # Cloudflare の後ろなら TRUST_CLOUDFLARE_IP=1（cf-connecting-ip を使う）
 # 自前のプロキシの後ろなら TRUSTED_PROXY_HOPS を 1 か 2 に
 ```

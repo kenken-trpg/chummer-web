@@ -14,9 +14,12 @@ import urllib.request
 from typing import Any
 
 import pytest
+from limits import parse
 from starlette.testclient import TestClient
 from xlsx_fixtures import filled
 
+from app.api import deploy
+from app.api.deploy import _IMPORT_RATE_LIMIT, _SHEET_URL_RATE_LIMIT, limiter
 from app.main import app
 from app.notices import NoticeError
 from app.sheets_url import MAX_BYTES, MAX_REDIRECTS, _allowed, _CheckedRedirects, _opener, export_url, fetch_sheet
@@ -228,3 +231,83 @@ def test_the_route_says_what_went_wrong_rather_than_failing() -> None:
         res = client.post("/api/characters/import-sheet-url", json={"url": "https://evil.example/"})
     assert res.status_code == 400
     assert res.json()["detail"]["key"] == "api.sheetUrlNotASheet"
+
+
+# --- how often it may be asked --------------------------------------------
+
+
+def test_the_route_is_limited_more_tightly_than_the_other_imports() -> None:
+    """Not about load: this is the only route that makes this host fetch from
+    somewhere else, so the number that matters is how much traffic a caller can
+    aim at Google through it, not how much CPU it costs here."""
+    per_caller = parse(_SHEET_URL_RATE_LIMIT)
+    imports = parse(_IMPORT_RATE_LIMIT)
+    assert per_caller.amount / per_caller.GRANULARITY.seconds < imports.amount / imports.GRANULARITY.seconds
+
+
+def _fetches(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Patch the fetch out and record what the route would have asked for."""
+    asked: list[str] = []
+
+    def fake(url: str) -> bytes:
+        asked.append(url)
+        return filled()
+
+    monkeypatch.setattr("app.api.characters.fetch_sheet", fake)
+    limiter.reset()
+    return asked
+
+
+def test_a_caller_asking_over_and_over_is_refused_before_the_fetch(monkeypatch: pytest.MonkeyPatch) -> None:
+    asked = _fetches(monkeypatch)
+    allowed = parse(_SHEET_URL_RATE_LIMIT).amount
+    with TestClient(app) as client:
+        codes = [
+            client.post("/api/characters/import-sheet-url", json={"url": EDIT}).status_code for _ in range(allowed + 2)
+        ]
+    assert codes[:allowed] == [200] * allowed
+    assert codes[allowed:] == [429, 429]
+    # The refusals cost Google nothing: the limit is checked before the fetch.
+    assert len(asked) == allowed
+
+
+def test_the_shared_ceiling_holds_when_every_caller_looks_different(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The per-caller limit is keyed on an address, so a caller with many of
+    them has a bucket each. This host has one outbound reputation, so there is a
+    second count that they all share.
+
+    Both halves are here on purpose: the first shows the addresses really do get
+    separate buckets — eight fetches past a five-per-caller limit — so the
+    refusals in the second half can only be the shared ceiling.
+    """
+    asked = _fetches(monkeypatch)
+    monkeypatch.setattr(deploy, "_TRUST_CLOUDFLARE_IP", True)
+    per_caller = parse(_SHEET_URL_RATE_LIMIT).amount
+    monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1000/minute"))
+
+    def ask(client: TestClient, n: int) -> int:
+        return client.post(
+            "/api/characters/import-sheet-url",
+            json={"url": EDIT},
+            headers={"cf-connecting-ip": f"203.0.113.{n}"},
+        ).status_code
+
+    with TestClient(app) as client:
+        loose = [ask(client, n) for n in range(1, per_caller + 4)]
+        assert loose == [200] * len(loose) and len(loose) > per_caller, "the buckets are not per address"
+        monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
+        limiter.reset()
+        asked.clear()
+        tight = [ask(client, n) for n in range(100, 104)]
+    assert tight == [200, 429, 429, 429]
+    assert len(asked) == 1
+
+
+def test_the_shared_refusal_says_to_wait_or_use_the_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fetches(monkeypatch)
+    monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
+    with TestClient(app) as client:
+        client.post("/api/characters/import-sheet-url", json={"url": EDIT})
+        res = client.post("/api/characters/import-sheet-url", json={"url": EDIT})
+    assert res.status_code == 429
+    assert res.json()["detail"]["key"] == "api.sheetUrlBusy"
