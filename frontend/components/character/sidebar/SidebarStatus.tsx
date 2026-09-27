@@ -30,7 +30,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
               : buildMethodLabel("Priority", ui)}
         </b>
       </div>
-      {error ? <p className="errors">{error}</p> : null}
+      <div role="alert">{error ? <p className="errors">{error}</p> : null}</div>
       {d.errors.length ? (
         <ul className="errors">
           {d.errors.map((e, i) => (

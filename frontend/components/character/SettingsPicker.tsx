@@ -364,7 +364,7 @@ export function SettingsPicker({
         ) : null}
       </div>
 
-      {error ? <p className="errors">{error}</p> : null}
+      <div role="alert">{error ? <p className="errors">{error}</p> : null}</div>
       {needsCustomData && !ch.settings?.dataset ? (
         // Warning-coloured, not muted, and with the way out attached: the
         // faint line this replaces said the data was missing but not that a

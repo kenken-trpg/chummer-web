@@ -228,4 +228,31 @@ describe("<CharacterSidebar>", () => {
     }) as HTMLButtonElement;
     expect(burn.disabled).toBe(true);
   });
+
+  it("puts an action's failure in a live region", () => {
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={makeCharacter()}
+        d={makeCharacter().derived}
+        tr={identityTr}
+        error="保存できませんでした"
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toBe("保存できませんでした");
+  });
+
+  it("keeps the region on screen while there is nothing to say", () => {
+    // A role added along with the text is announced only patchily; the region
+    // has to be there first, which means it is there when empty too.
+    render(
+      <CharacterSidebar
+        catalog={makeCatalog()}
+        character={makeCharacter()}
+        d={makeCharacter().derived}
+        tr={identityTr}
+      />,
+    );
+    expect(screen.getByRole("alert").textContent).toBe("");
+  });
 });

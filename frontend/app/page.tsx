@@ -32,7 +32,9 @@ export default function Page() {
   if (error && !ch) {
     return (
       <div className="main">
-        <p className="errors">{error}</p>
+        <p className="errors" role="alert">
+          {error}
+        </p>
       </div>
     );
   }
@@ -82,7 +84,7 @@ export default function Page() {
             />
 
             <SheetUrlImport ed={ed} />
-            {notice ? <p className="notice">{notice}</p> : null}
+            <div role="status">{notice ? <p className="notice">{notice}</p> : null}</div>
             <ExportReview ed={ed} />
             <ImportReport ed={ed} />
             <GearReview ed={ed} />

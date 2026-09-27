@@ -230,6 +230,8 @@ describe("SettingsPicker with a loaded settings file", () => {
       target: { files: [new File(["nope"], "s.xml")] },
     });
     await waitFor(() => expect(screen.getByText(/読めませんでした/)).toBeDefined());
+    // the region is there before the message is, so a reader announces it
+    expect(screen.getByRole("alert").textContent).toMatch(/読めませんでした/);
   });
 
   it("falls back to its own wording when the throw carries no message", async () => {
