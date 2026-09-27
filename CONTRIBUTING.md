@@ -195,7 +195,7 @@ components (`components/character/tabs` ~66%, against ~92% for `lib/character`),
 but it is now spread thinly rather than concentrated: every panel has tests, and
 what is left is a couple of dozen statements each. HTML reports land in
 `backend/htmlcov/` and `frontend/coverage/`, both gitignored. CI prints the
-summary in the log — backend on 3.13 only, since the matrix would repeat it.
+summary in the log — backend on 3.14 only, since the matrix would repeat it.
 
 When you do cover a panel, the thing worth testing is rarely that it renders.
 These components patch a *flat* list (`gear`, `weapons`, `cyberware`) while
