@@ -369,6 +369,8 @@ export const JA_ENGINE = {
     "キャラシテンプレートはアデプト・パワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
   "engine.import.xlsxWareGrade":
     "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
+  "engine.import.xlsxOtherKarma":
+    "キャラシテンプレートの「その他カルマ消費」に「{name}」（{karma} カルマ）がありましたが、この app に対応する項目がないため取り込めませんでした",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
   "engine.term.contact": "コンタクト",
   "engine.term.gear": "ギア",

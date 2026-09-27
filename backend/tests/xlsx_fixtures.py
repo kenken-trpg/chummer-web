@@ -16,11 +16,28 @@ import io
 import re
 import zipfile
 
-from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_SKILLS, SHEET_WARE
+from app.xlsx_import._common import (
+    SHEET_BASICS,
+    SHEET_CONTACTS,
+    SHEET_GEAR,
+    SHEET_KNOWLEDGE,
+    SHEET_MAGIC,
+    SHEET_SKILLS,
+    SHEET_WARE,
+)
 
 #: The sheets the fixtures build, the three the import reads plus the one
 #: `is_template_workbook` insists on.
-SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_WARE, "編集不可")
+SHEETS = (
+    SHEET_BASICS,
+    SHEET_SKILLS,
+    SHEET_KNOWLEDGE,
+    SHEET_MAGIC,
+    SHEET_WARE,
+    SHEET_GEAR,
+    SHEET_CONTACTS,
+    "編集不可",
+)
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -206,6 +223,34 @@ def ware_sheet(
     return cells
 
 
+def gear_sheet(rows: list[dict[str, str]]) -> dict[str, str]:
+    """The 装備 sheet: one dict of columns per row from row 3. A row with no
+    price in C is a heading or a bundle label rather than an item."""
+    cells: dict[str, str] = {}
+    for offset, columns in enumerate(rows):
+        cells.update({f"{column}{3 + offset}": value for column, value in columns.items()})
+    return cells
+
+
+#: The その他カルマ消費 heading, which is how the reader finds that block.
+OTHER_KARMA_HEADING_ROW = 25
+
+
+def contact_sheet(
+    contacts: list[dict[str, str]] | None = None,
+    other_karma: list[dict[str, str]] | None = None,
+) -> dict[str, str]:
+    """The コンタクト／その他カルマ消費 sheet: `contacts` from row 4, `other_karma`
+    under its own heading."""
+    cells = {f"A{OTHER_KARMA_HEADING_ROW}": "その他カルマ消費"}
+    for offset, columns in enumerate(contacts or []):
+        cells.update({f"{column}{4 + offset}": value for column, value in columns.items()})
+    for offset, columns in enumerate(other_karma or []):
+        row = OTHER_KARMA_HEADING_ROW + 2 + offset
+        cells.update({f"{column}{row}": value for column, value in columns.items()})
+    return cells
+
+
 def filled(
     *,
     skills: dict[str, dict[str, str]] | None = None,
@@ -216,6 +261,9 @@ def filled(
     powers: list[tuple[str, str]] | None = None,
     implants: list[dict[str, str]] | None = None,
     devices: list[dict[str, str]] | None = None,
+    gear: list[dict[str, str]] | None = None,
+    contacts: list[dict[str, str]] | None = None,
+    other_karma: list[dict[str, str]] | None = None,
     **overrides: str,
 ) -> bytes:
     """A workbook of `BASELINE` plus `overrides`; a cell set to "" is removed."""
@@ -229,6 +277,10 @@ def filled(
         by_sheet[SHEET_MAGIC] = magic_sheet(spells, forms, powers)
     if implants is not None or devices is not None:
         by_sheet[SHEET_WARE] = ware_sheet(implants, devices)
+    if gear is not None:
+        by_sheet[SHEET_GEAR] = gear_sheet(gear)
+    if contacts is not None or other_karma is not None:
+        by_sheet[SHEET_CONTACTS] = contact_sheet(contacts, other_karma)
     return workbook(
         {ref: value for ref, value in cells.items() if value != ""},
         by_sheet=by_sheet,

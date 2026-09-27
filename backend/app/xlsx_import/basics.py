@@ -14,6 +14,11 @@ from ..notices import Notice, notice, ui
 from ._common import SHEET_BASICS, cell_int
 
 #: The five priorities, and the cell each is chosen in.
+#: 換金したカルマ — karma turned into starting nuyen, which the sheet spends out
+#: of the same equipment budget. Without it every character who used it looks
+#: over budget by 2,000 nuyen a point.
+KARMA_NUYEN_CELL = "AC4"
+
 PRIORITY_CELLS = {
     "Heritage": "C3",
     "Attributes": "C7",
@@ -137,6 +142,17 @@ def import_basics(cells: dict[str, str], st: dict[str, Any], warn: list[Notice])
     _import_metatype(cells, st, warn)
     _import_talent(cells, st, warn)
     _import_attributes(cells, st)
+    karma_nuyen = cell_int(cells.get(KARMA_NUYEN_CELL))
+    if karma_nuyen > 0:
+        st["karma_nuyen"] = karma_nuyen
 
 
-__all__ = ["ATTRIBUTE_ROWS", "METATYPES", "PRIORITY_CELLS", "SHEET_BASICS", "TALENTS", "import_basics"]
+__all__ = [
+    "ATTRIBUTE_ROWS",
+    "KARMA_NUYEN_CELL",
+    "METATYPES",
+    "PRIORITY_CELLS",
+    "SHEET_BASICS",
+    "TALENTS",
+    "import_basics",
+]

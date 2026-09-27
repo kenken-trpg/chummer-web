@@ -22,6 +22,8 @@ SHEET_SKILLS = "能動技能／技能グループ"
 SHEET_KNOWLEDGE = "知識技能／言語技能"
 SHEET_MAGIC = "呪文／複合体／アデプト・パワー"
 SHEET_WARE = "身体強化／電子機器"
+SHEET_GEAR = "装備"
+SHEET_CONTACTS = "コンタクト／その他カルマ消費"
 
 
 def cell_int(text: str | None) -> int:

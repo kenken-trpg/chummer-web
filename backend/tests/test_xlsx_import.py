@@ -14,6 +14,7 @@ from app.notices import NoticeError
 from app.xlsx_import import is_template_workbook, xlsx_to_state
 from app.xlsx_import._common import (
     SHEET_BASICS,
+    SHEET_CONTACTS,
     SHEET_MAGIC,
     SHEET_SKILLS,
     SHEET_WARE,
@@ -21,6 +22,7 @@ from app.xlsx_import._common import (
     japanese_index,
 )
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
+from app.xlsx_import.gear import split_row
 from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
@@ -28,7 +30,15 @@ from app.xlsx_import.ware import NAME_ALIASES as WARE_ALIASES
 from app.xlsx_import.ware import build_index as ware_index
 from app.xlsx_import.ware import clean_name
 from tests.notice_asserts import has
-from tests.xlsx_fixtures import BASELINE, filled, magic_sheet, skill_sheet, ware_sheet, workbook
+from tests.xlsx_fixtures import (
+    BASELINE,
+    contact_sheet,
+    filled,
+    magic_sheet,
+    skill_sheet,
+    ware_sheet,
+    workbook,
+)
 
 
 def _quality_id(name: str) -> str:
@@ -1157,3 +1167,335 @@ def test_the_implants_reach_the_engine_as_spent_essence() -> None:
     state, _ = xlsx_to_state(filled(implants=implants))
     char = import_character(state)
     assert char.derived["essence"] == 6 - 0.6 - 0.7
+
+
+# --- 装備 ------------------------------------------------------------------
+
+
+def _item(name: str, **columns: str) -> dict[str, str]:
+    """One 装備 row. A price is what makes it an item rather than a label."""
+    return {"A": name, "C": "100.0", **columns}
+
+
+@pytest.mark.parametrize(
+    ("raw", "first", "nested", "rating", "qty"),
+    [
+        ("アーマージャケット", "アーマージャケット", False, 0, 0),
+        ("└専用消音機", "専用消音機", True, 0, 0),
+        ("→サブボーカルマイク", "サブボーカルマイク", True, 0, 0),
+        ("┗スマートリンク", "スマートリンク", True, 0, 0),
+        # the count, which column E holds too
+        ("予備クリップ*12", "予備クリップ*12", False, 0, 12),
+        ("通常弾x100", "通常弾x100", False, 0, 100),
+        # the rating, in its four spellings
+        ("医療キットR3", "医療キットR3", False, 3, 0),
+        ("偽造SIN-R4", "偽造SIN-R4", False, 4, 0),
+        ("視覚強化(R1)", "視覚強化(R1)", False, 1, 0),
+        ("偽造SIN: 3", "偽造SIN: 3", False, 3, 0),
+        # run onto the name with nothing between
+        ("医療キット3", "医療キット3", False, 3, 0),
+    ],
+)
+def test_split_row(raw: str, first: str, nested: bool, rating: int, qty: int) -> None:
+    names, is_nested, got_rating, got_qty = split_row(raw)
+    assert names[0] == first
+    assert (is_nested, got_rating, got_qty) == (nested, rating, qty)
+
+
+def test_a_count_in_the_name_is_not_read_as_a_rating() -> None:
+    """通常弾x100 is a hundred rounds. Reading the 100 as a rating would make it
+    an item no catalog has."""
+    names, _nested, rating, qty = split_row("通常弾x100")
+    assert (rating, qty) == (0, 100)
+    assert "通常弾" in names
+
+
+def test_a_model_number_is_not_stripped_before_the_name_is_tried() -> None:
+    """アレス・プレデター V has to be looked up whole before anything is taken
+    off the end of it."""
+    assert split_row("アレスプレデターV")[0][0] == "アレスプレデターV"
+
+
+def test_the_catalog_answers_for_each_kind_of_row() -> None:
+    """One column holds everything, and which catalog answers is what says what
+    kind of thing the row was."""
+    rows = [
+        _item("アレスプレデターV"),
+        _item("アーマージャケット"),
+        _item("レンラク・センセイ"),
+        _item("ライフスタイル: 下流"),
+        _item("医療キットR3"),
+    ]
+    state, warnings = xlsx_to_state(filled(gear=rows))
+    assert [row["weapon_id"] for row in state["weapons"]] == [_catalog_id("weapons", "Ares Predator V")]
+    assert [row["armor_id"] for row in state["armor"]] == [_catalog_id("armor", "Armor Jacket")]
+    assert [row["gear_id"] for row in state["commlinks"]] == [_catalog_id("commlinks", "Renraku Sensei")]
+    assert [row["lifestyle_id"] for row in state["lifestyles"]] == [_catalog_id("lifestyles", "Low")]
+    assert [row["gear_id"] for row in state["gear"]] == [_catalog_id("gear", "Medkit")]
+    assert warnings == []
+
+
+def test_spacing_and_interpuncts_do_not_have_to_agree() -> None:
+    """The catalog writes アレス・プレデター V; アッシュ writes アレスプレデターV."""
+    state, _ = xlsx_to_state(filled(gear=[_item("アレスプレデターV")]))
+    assert state["weapons"][0]["weapon_id"] == _catalog_id("weapons", "Ares Predator V")
+
+
+def test_a_catalog_name_can_be_found_without_its_category() -> None:
+    """The catalog files ammunition as 弾薬: 通常弾 and armor lines as
+    ヴァッション・アイランド: エース・オブ・カップス; the sheets write either."""
+    state, warnings = xlsx_to_state(filled(gear=[_item("通常弾"), _item("弾薬: 通常弾")]))
+    regular = _catalog_id("gear", "Ammo: Regular Ammo")
+    assert [row["gear_id"] for row in state["gear"]] == [regular, regular]
+    assert warnings == []
+
+
+def test_a_category_typed_in_front_comes_off() -> None:
+    """日本鬼 writes コムリンク: レンラク・センセイ."""
+    state, _ = xlsx_to_state(filled(gear=[_item("コムリンク: レンラク・センセイ")]))
+    assert state["commlinks"][0]["gear_id"] == _catalog_id("commlinks", "Renraku Sensei")
+
+
+def test_a_rating_written_into_the_name() -> None:
+    state, _ = xlsx_to_state(filled(gear=[_item("医療キットR3"), _item("偽造SIN-R4")]))
+    assert [row["rating"] for row in state["gear"]] == [3, 4]
+
+
+def test_the_count_is_the_larger_of_the_column_and_the_name() -> None:
+    """アッシュ writes 予備クリップ*12 with 12 in the column too; 日本鬼 writes
+    通常弾x100 with 1 in the column."""
+    rows = [_item("予備クリップ*12", E="12.0"), _item("通常弾x100", E="1.0")]
+    state, _ = xlsx_to_state(filled(gear=rows))
+    assert [row["qty"] for row in state["gear"]] == [12, 100]
+
+
+def test_a_heading_is_not_an_item() -> None:
+    state, warnings = xlsx_to_state(filled(gear=[{"A": "【武器】"}, _item("アレスプレデターV")]))
+    assert len(state["weapons"]) == 1
+    assert warnings == []
+
+
+def test_a_row_with_no_price_is_a_label() -> None:
+    """ピストル用 groups the ammunition under it; it was not bought."""
+    rows = [{"A": "ピストル用"}, _item("通常弾", E="10.0")]
+    state, warnings = xlsx_to_state(filled(gear=rows))
+    assert len(state["gear"]) == 1
+    assert warnings == []
+
+
+def test_something_fitted_to_the_row_above_it() -> None:
+    rows = [_item("偽造SIN-R4"), _item("└偽造免許-R4", E="4.0")]
+    state, _ = xlsx_to_state(filled(gear=rows))
+    sin, licence = state["gear"]
+    assert sin["gear_id"] == _catalog_id("gear", "Fake SIN")
+    assert licence["parent_id"] == sin["id"]
+
+
+def test_a_label_breaks_the_chain_of_what_is_fitted_to_what() -> None:
+    """The ammunition under ピストル用 is not fitted to the row above the label."""
+    rows = [_item("偽造SIN-R4"), {"A": "ピストル用"}, _item("└通常弾", E="10.0")]
+    state, _ = xlsx_to_state(filled(gear=rows))
+    assert state["gear"][1].get("parent_id") is None
+
+
+def test_a_heading_breaks_the_chain_too() -> None:
+    rows = [_item("偽造SIN-R4"), {"A": "【弾薬】"}, _item("└通常弾", E="10.0")]
+    state, _ = xlsx_to_state(filled(gear=rows))
+    assert state["gear"][1].get("parent_id") is None
+
+
+def test_a_plugin_loses_to_the_gear_of_the_same_name() -> None:
+    """予備クリップ and 隠蔽ホルスター are each a weapon accessory as well as a
+    piece of gear; on a row of its own the gear is what was bought."""
+    state, _ = xlsx_to_state(filled(gear=[_item("予備クリップ"), _item("隠蔽ホルスター")]))
+    assert len(state["gear"]) == 2
+    assert "weapon_accessories" not in state
+
+
+def test_a_plugin_no_other_catalog_has_still_comes_over() -> None:
+    """消音器 is only a weapon accessory."""
+    state, warnings = xlsx_to_state(filled(gear=[_item("消音器")]))
+    assert state["weapon_accessories"][0]["accessory_id"] == _catalog_id("weapon_accessories", "Silencer/Suppressor")
+    assert warnings == []
+
+
+def test_a_row_naming_two_things_is_reported() -> None:
+    """通常弾*20、スティックン・ショック*20 — one cell, two items, and nothing
+    that can be made of it."""
+    _, warnings = xlsx_to_state(filled(gear=[_item("通常弾*20、スティックン・ショック*20")]))
+    assert has(warnings, "engine.import.skippedUnknown", name="通常弾*20、スティックン・ショック*20")
+
+
+def test_a_note_after_the_name_comes_off() -> None:
+    """アレス・ライト・ファイア70(内蔵SG) — the parenthesis is the player's note
+    about the weapon, not part of its name."""
+    state, warnings = xlsx_to_state(filled(gear=[_item("アレス・ライト・ファイア70(内蔵SG)")]))
+    assert state["weapons"][0]["weapon_id"] == _catalog_id("weapons", "Ares Light Fire 70")
+    assert warnings == []
+
+
+def test_a_name_the_book_does_not_have_is_reported() -> None:
+    """The row comes back named, so it can be put in by hand rather than going
+    missing without a word."""
+    _, warnings = xlsx_to_state(filled(gear=[_item("そんな装備はない")]))
+    assert has(warnings, "engine.import.skippedUnknown", name="そんな装備はない")
+
+
+def test_the_gear_reaches_the_engine_as_spent_nuyen() -> None:
+    state, _ = xlsx_to_state(filled(gear=[_item("アレスプレデターV", E="1.0")]))
+    char = import_character(state)
+    assert char.derived["nuyen_spent"] > 0
+
+
+def test_a_missing_gear_sheet_is_tolerated() -> None:
+    state, _ = xlsx_to_state(workbook(dict(BASELINE), sheets=(SHEET_BASICS, SHEET_SKILLS, "編集不可")))
+    assert "weapons" not in state
+    assert "gear" not in state
+
+
+def test_no_gear_keys_when_the_sheet_is_empty() -> None:
+    state, warnings = xlsx_to_state(filled())
+    assert not {"weapons", "armor", "gear", "vehicles", "lifestyles"} & set(state)
+    assert warnings == []
+
+
+# --- コンタクト／その他カルマ消費 -----------------------------------------------
+
+
+def test_contacts_keep_the_names_the_player_gave_them() -> None:
+    """A contact is the player's own invention, so nothing is matched."""
+    rows = [
+        {"A": "ストリートドク", "E": "2.0", "G": "3.0", "Q": "2", "S": "3"},
+        {"A": "繁華街の情報通", "E": "2.0", "G": "2.0", "Q": "2", "S": "2"},
+    ]
+    state, warnings = xlsx_to_state(filled(contacts=rows))
+    assert [(row["name"], row["connection"], row["loyalty"]) for row in state["contacts"]] == [
+        ("ストリートドク", 2, 3),
+        ("繁華街の情報通", 2, 2),
+    ]
+    assert warnings == []
+
+
+def test_a_contact_bought_with_karma_is_the_same_row() -> None:
+    """The sheet keeps contact points (E/G) and karma (I/K) in their own columns
+    and adds both into Q/S, which is the rating."""
+    rows = [{"A": "Mrジョンソン", "I": "1.0", "K": "2.0", "Q": "1", "S": "2"}]
+    state, _ = xlsx_to_state(filled(contacts=rows))
+    assert (state["contacts"][0]["connection"], state["contacts"][0]["loyalty"]) == (1, 2)
+
+
+def test_what_something_else_granted_is_not_billed() -> None:
+    """ララ's fourth contact sits entirely in その他修正 (M/O)."""
+    rows = [{"A": "ドクターゲオルグ", "M": "3.0", "O": "2.0", "Q": "3", "S": "2"}]
+    state, _ = xlsx_to_state(filled(contacts=rows))
+    row = state["contacts"][0]
+    assert (row["connection"], row["loyalty"]) == (3, 2)
+    assert (row["free_connection"], row["free_loyalty"]) == (3, 2)
+
+
+def test_a_contact_with_only_a_name_starts_at_one() -> None:
+    state, _ = xlsx_to_state(filled(contacts=[{"A": "名無しのフィクサー"}]))
+    assert (state["contacts"][0]["connection"], state["contacts"][0]["loyalty"]) == (1, 1)
+
+
+def test_no_contacts_key_when_the_block_is_empty() -> None:
+    state, warnings = xlsx_to_state(filled(contacts=[]))
+    assert "contacts" not in state
+    assert warnings == []
+
+
+def test_the_contacts_reach_the_engine_as_spent_points() -> None:
+    """アッシュ's three, which the sheet totals as 9 contact points and 3 karma."""
+    rows = [
+        {"A": "ストリートドク", "Q": "2", "S": "3"},
+        {"A": "繁華街の情報通", "Q": "2", "S": "2"},
+        {"A": "Mrジョンソン", "Q": "1", "S": "2"},
+    ]
+    state, _ = xlsx_to_state(filled(contacts=rows, C23="C"))
+    points = import_character(state).derived["contact_points"]
+    assert points["used"] == 12
+    assert points["used"] - points["free"] == points["karma"]
+
+
+def test_other_karma_is_reported_rather_than_folded_in() -> None:
+    """その他カルマ消費 has no counterpart here, and a number quietly taken off
+    the karma would be a number nothing explains."""
+    rows = [{"A": "武術：カロメレグ", "F": "7.0"}]
+    _, warnings = xlsx_to_state(filled(other_karma=rows))
+    assert has(warnings, "engine.import.xlsxOtherKarma", name="武術：カロメレグ", karma=7)
+
+
+def test_the_other_karma_block_is_found_by_its_heading() -> None:
+    cells = contact_sheet(other_karma=[{"A": "儀式の準備", "F": "3.0"}])
+    shifted = {f"{ref[0]}{int(ref[1:]) + 5}": value for ref, value in cells.items()}
+    _, warnings = xlsx_to_state(workbook(dict(BASELINE), by_sheet={SHEET_CONTACTS: shifted}))
+    assert has(warnings, "engine.import.xlsxOtherKarma", name="儀式の準備", karma=3)
+
+
+def test_a_missing_contact_sheet_is_tolerated() -> None:
+    state, _ = xlsx_to_state(workbook(dict(BASELINE), sheets=(SHEET_BASICS, SHEET_SKILLS, "編集不可")))
+    assert "contacts" not in state
+
+
+# --- 換金したカルマ ----------------------------------------------------------
+
+
+def test_karma_turned_into_nuyen_comes_over() -> None:
+    """換金したカルマ on the priority sheet. Without it every character who used
+    it looks over budget by what they converted."""
+    state, _ = xlsx_to_state(filled(AC4="7.0"))
+    assert state["karma_nuyen"] == 7
+
+
+def test_no_karma_nuyen_key_when_nothing_was_converted() -> None:
+    state, _ = xlsx_to_state(filled())
+    assert "karma_nuyen" not in state
+
+
+def test_converted_karma_raises_the_equipment_budget() -> None:
+    plain, _ = xlsx_to_state(filled(gear=[]))
+    converted, _ = xlsx_to_state(filled(AC4="7.0", gear=[]))
+    assert import_character(converted).derived["nuyen"] > import_character(plain).derived["nuyen"]
+
+
+# --- 装備: the phrasings a lifestyle is written in ---------------------------
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["ライフスタイル下流", "ライフスタイル: 下流", "ライフスタイル（下流）一か月分", "生活費下流一か月分"],
+)
+def test_a_lifestyle_however_it_is_phrased(raw: str) -> None:
+    """A lifestyle is filed under its bare name (下流) and the sheets wrap it in
+    whatever the player thought of."""
+    state, warnings = xlsx_to_state(filled(gear=[_item(raw)]))
+    assert [row["lifestyle_id"] for row in state["lifestyles"]] == [_catalog_id("lifestyles", "Low")]
+    assert warnings == []
+
+
+def test_a_lifestyle_name_inside_other_gear_is_not_one() -> None:
+    """The phrasing rule only looks at a row that says it is about a lifestyle,
+    so a piece of gear is never turned into one."""
+    state, _ = xlsx_to_state(filled(gear=[_item("医療キットR3")]))
+    assert "lifestyles" not in state
+
+
+def test_the_months_come_from_the_count_column() -> None:
+    state, _ = xlsx_to_state(filled(gear=[_item("ライフスタイル: 下流", E="3.0")]))
+    assert state["lifestyles"][0]["months"] == 3
+
+
+def test_a_long_category_in_front_of_an_armor_name() -> None:
+    """The catalog files the line as ヴァッション・アイランド: エース・オブ・カップス and
+    アッシュ writes only the garment."""
+    state, warnings = xlsx_to_state(filled(gear=[_item("エース・オブ・カップス")]))
+    assert state["armor"][0]["armor_id"] == _catalog_id("armor", "Vashon Island: Ace of Cups")
+    assert warnings == []
+
+
+def test_a_kanji_variant_of_the_same_word() -> None:
+    """ララ writes 偽装SIN where the catalog says 偽造SIN."""
+    state, warnings = xlsx_to_state(filled(gear=[_item("偽装SIN-L4")]))
+    assert state["gear"][0]["gear_id"] == _catalog_id("gear", "Fake SIN")
+    assert state["gear"][0]["rating"] == 4
+    assert warnings == []
