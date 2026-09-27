@@ -170,7 +170,7 @@ export const EN_APP = {
   "toolbar.exportFvtt": "Export FVTT",
   "toolbar.exportFvttHint":
     "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
-  "toolbar.import": "Load (JSON/.chum5)",
+  "toolbar.import": "Load (JSON/.chum5/.xlsx)",
   "toolbar.shareHint":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "toolbar.cocofolia": "Cocofolia",
@@ -351,6 +351,13 @@ export const EN_APP = {
   "app.copyOf": "{name} copy",
 
   "app.importWarnings": "{count} unsupported on import — {details}",
+  "app.gearReview.title":
+    "{count} rows on the equipment sheet could not be matched to an item. Pick the closest, or skip it.",
+  "app.gearReview.row": "×{qty}, rating {rating}",
+  "app.gearReview.addHint": 'Add as "{name}" ({list})',
+  "app.gearReview.noneLikeIt": "Nothing in the book looks like it",
+  "app.gearReview.skip": "Skip",
+  "app.gearReview.dismiss": "Close the rest",
   "app.exportReview.title": "Reading the exported chum5 back would change {count} things:",
   "app.exportReview.confirm": "Export anyway",
   "app.exportReview.cancel": "Cancel",

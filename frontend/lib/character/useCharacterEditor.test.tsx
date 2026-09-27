@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   import: vi.fn(),
   importChummer: vi.fn(),
   importFvtt: vi.fn(),
+  importXlsx: vi.fn(),
   exportChummer: vi.fn(),
   checkChummerExport: vi.fn(),
 }));
@@ -304,6 +305,93 @@ describe("useCharacterEditor.onImport", () => {
     expect(api.importFvtt).toHaveBeenCalledWith(actor);
     expect(api.import).not.toHaveBeenCalled();
     expect(result.current.ch?.id).toBe("fvtt");
+  });
+
+  it.each([["run.xlsx"], ["RUN.XLSX"]])(
+    "sends %s to the キャラシテンプレート reader",
+    async (name) => {
+      const { result } = await editorWith();
+      api.importXlsx.mockResolvedValue({
+        character: makeCharacter({ id: "xlsx" }),
+        warnings: [],
+        pending_gear: [],
+      });
+
+      await act(async () => {
+        await result.current.onImport(file(name));
+      });
+
+      expect(api.importXlsx).toHaveBeenCalledTimes(1);
+      expect(api.import).not.toHaveBeenCalled();
+      expect(result.current.ch?.id).toBe("xlsx");
+      expect(result.current.pendingGear).toBeNull();
+    },
+  );
+
+  /**
+   * The 装備 sheet is one free-text column, so a good part of it cannot be
+   * matched. Those rows are held for the player to settle rather than dropped.
+   */
+  it("holds the equipment rows an .xlsx could not match", async () => {
+    const { result } = await editorWith();
+    const pending = [
+      { name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] },
+      { name: "現代-シンヒュン", rating: 0, qty: 1, note: "車", suggestions: [] },
+    ];
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: pending,
+    });
+
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+
+    expect(result.current.pendingGear).toEqual(pending);
+
+    // settling one leaves the rest
+    act(() => result.current.resolvePendingGear("FN-HAL"));
+    expect(result.current.pendingGear?.map((row) => row.name)).toEqual(["現代-シンヒュン"]);
+
+    act(() => result.current.dismissPendingGear());
+    expect(result.current.pendingGear).toBeNull();
+  });
+
+  it("drops held equipment rows when another character is opened", async () => {
+    // they were offered against one sheet; against another they are wrong
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [],
+      pending_gear: [{ name: "FN-HAL", rating: 0, qty: 1, note: "", suggestions: [] }],
+    });
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+    expect(result.current.pendingGear).not.toBeNull();
+
+    api.get.mockResolvedValue(makeCharacter({ id: "other" }));
+    await act(async () => {
+      await result.current.openCharacter("other");
+    });
+    expect(result.current.pendingGear).toBeNull();
+  });
+
+  it("still opens the character when an .xlsx had unreadable rows", async () => {
+    const { result } = await editorWith();
+    api.importXlsx.mockResolvedValue({
+      character: makeCharacter({ id: "xlsx" }),
+      warnings: [{ key: "engine.import.xlsxGearPending", params: { count: 2 } }],
+      pending_gear: [],
+    });
+
+    await act(async () => {
+      await result.current.onImport(file("run.xlsx"));
+    });
+
+    expect(result.current.ch?.id).toBe("xlsx");
+    expect(result.current.error).toContain("装備シートの 2 行");
   });
 
   it("opens the character even when the file had unsupported content", async () => {

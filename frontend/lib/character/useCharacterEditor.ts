@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { api, type CharacterSummary } from "@/lib/api";
+import { api, type CharacterSummary, type PendingGear } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import {
   MAX_PORTRAITS,
@@ -40,6 +40,13 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
    *  switching character) makes it stale, and a stale review is dropped. */
   const [review, setExportReview] = useState<{ of: Character; differences: Notice[] } | null>(null);
   const exportReview = review && review.of === ch ? review.differences : null;
+  /** The 装備 rows of an .xlsx import that need a person to say what they are.
+   *  Tied to the character they came from, the way `review` is: switching
+   *  character drops them, since they would be offered against the wrong
+   *  sheet. They are not saved — the import's warning says how many there
+   *  were, and re-importing the file offers them again. */
+  const [pending, setPendingGear] = useState<{ of: string; rows: PendingGear[] } | null>(null);
+  const pendingGear = pending && ch && pending.of === ch.id ? pending.rows : null;
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
   const { ui, locale } = useUiText();
   const history = useCharacterHistory();
@@ -355,6 +362,16 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     setTimeout(() => setCopied(null), 2000);
   }
 
+  function importWarnings(warnings: Notice[]): string {
+    return ui("app.importWarnings", {
+      count: warnings.length,
+      details: warnings
+        .slice(0, 15)
+        .map((w) => renderNotice(w, ui, tr))
+        .join(" / "),
+    });
+  }
+
   /** A Foundry VTT character actor's Export Data, not this app's own JSON. */
   function isFvttActor(payload: unknown): boolean {
     if (!payload || typeof payload !== "object") return false;
@@ -362,9 +379,32 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     return p.type === "character" && typeof p.system === "object" && Array.isArray(p.items);
   }
 
+  /** Drop a pending row, either because it was added or because it was waved
+   *  off. Both are the player saying they are done with it. */
+  function resolvePendingGear(name: string) {
+    setPendingGear((prev) =>
+      prev ? { ...prev, rows: prev.rows.filter((row) => row.name !== name) } : prev,
+    );
+  }
+
+  function dismissPendingGear() {
+    setPendingGear(null);
+  }
+
   async function onImport(file: File) {
     setError(null);
     try {
+      if (/\.xlsx$/i.test(file.name)) {
+        const res = await api.importXlsx(await file.arrayBuffer());
+        remember(res.character);
+        onCharacterOpened?.();
+        setPendingGear(
+          res.pending_gear.length ? { of: res.character.id, rows: res.pending_gear } : null,
+        );
+        if (res.warnings.length) setError(importWarnings(res.warnings));
+        void refreshRoster();
+        return;
+      }
       const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
       if (payload === null || isFvttActor(payload)) {
         const { character, warnings } =
@@ -373,17 +413,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
             : await api.importFvtt(payload);
         remember(character);
         onCharacterOpened?.();
-        if (warnings.length) {
-          setError(
-            ui("app.importWarnings", {
-              count: warnings.length,
-              details: warnings
-                .slice(0, 15)
-                .map((w) => renderNotice(w, ui, tr))
-                .join(" / "),
-            }),
-          );
-        }
+        if (warnings.length) setError(importWarnings(warnings));
       } else {
         remember(await api.import(payload));
         onCharacterOpened?.();
@@ -432,6 +462,9 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     error,
     notice,
     exportReview,
+    pendingGear,
+    resolvePendingGear,
+    dismissPendingGear,
     roster,
     copied,
     history,

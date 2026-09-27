@@ -59,8 +59,15 @@ def is_template_workbook(body: bytes) -> bool:
     return all(sheet in names for sheet in REQUIRED_SHEETS)
 
 
-def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
-    """A filled-in template in, a `CharacterState` dict plus warnings out."""
+def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice], list[dict[str, Any]]]:
+    """A filled-in template in; a `CharacterState` dict, warnings, and the
+    equipment rows that need a person to confirm them.
+
+    The third of those is why the 装備 sheet is worth importing at all: it is
+    written freely enough that a good deal of it cannot be matched, and a row
+    that comes back with a shortlist of what it looks like is a row someone can
+    settle in one click.
+    """
     try:
         workbook = Workbook(body)
     except NotAWorkbook as exc:
@@ -82,13 +89,14 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
 
     cat = catalog()
     warn: list[Notice] = []
+    pending: list[dict[str, Any]] = []
     st: dict[str, Any] = {"id": str(uuid.uuid4()), "name": "Imported Runner"}
     import_basics(basics, st, warn)
     import_qualities(basics, cat, st, warn)
     import_skills(active, knowledge, cat, st, warn)
     import_magic(magic, cat, st, warn)
     import_ware(ware, cat, st, warn)
-    import_gear(gear, cat, st, warn)
+    import_gear(gear, cat, st, warn, pending)
     import_contacts(contacts, st, warn)
 
     seen: set[str] = set()
@@ -100,4 +108,4 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
             unique.append(item)
     # as the .chum5 and Foundry reads do: a hand-typed number comes through
     # composed into a rating, and the models refuse one past the cap.
-    return cast(dict[str, Any], clamp_input_ints(st)), unique
+    return cast(dict[str, Any], clamp_input_ints(st)), unique, pending

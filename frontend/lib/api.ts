@@ -11,6 +11,37 @@ import { notify } from "@/lib/notices";
 import { MessageError } from "@/lib/errors";
 
 /** One entry a merge added, removed or edited. */
+/**
+ * One 装備 row the .xlsx import could not match, and what it looks like.
+ *
+ * `key` on a suggestion is the character-state list the item would go in
+ * ("weapons", "armor", "gear", …), because a shield is both a weapon and a
+ * piece of armor and the name alone does not say which was meant.
+ */
+export type PendingGear = {
+  name: string;
+  rating: number;
+  qty: number;
+  note: string;
+  suggestions: {
+    bucket: string;
+    /** The character-state list the item belongs in ("weapons", "gear", …). */
+    key: string;
+    id: string;
+    name: string;
+    /** The row to append to that list, built by the import so that which lists
+     *  carry a count, which carry a rating and which count months stays in one
+     *  place. */
+    entry: Record<string, unknown>;
+  }[];
+};
+
+export type XlsxImport = {
+  character: Character;
+  warnings: Notice[];
+  pending_gear: PendingGear[];
+};
+
 export type MergeChange = {
   /** The base data file, e.g. `martialarts.xml`. */
   file: string;
@@ -252,6 +283,24 @@ export const api = {
       "/api/characters/import-chummer",
       { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: bytes },
     );
+    await local.putCharacter(res.character);
+    return res;
+  },
+
+  /**
+   * Import a filled-in シャドウラン_キャラシテンプレート (.xlsx).
+   *
+   * `pending_gear` is the 装備 sheet's rows that could not be matched to an
+   * item. That sheet is written freely enough that a good part of it needs a
+   * person to confirm, so each row comes back with what the sheet said and a
+   * shortlist of what it looks like.
+   */
+  importXlsx: async (bytes: ArrayBuffer): Promise<XlsxImport> => {
+    const res = await req<XlsxImport>("/api/characters/import-xlsx", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: bytes,
+    });
     await local.putCharacter(res.character);
     return res;
   },

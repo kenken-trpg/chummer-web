@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import zipfile
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,8 +11,9 @@ from fastapi.testclient import TestClient
 from app.characters import import_character
 from app.data_loader import catalog
 from app.main import app
-from app.notices import NoticeError
-from app.xlsx_import import is_template_workbook, xlsx_to_state
+from app.notices import Notice, NoticeError
+from app.xlsx_import import is_template_workbook
+from app.xlsx_import import xlsx_to_state as _read
 from app.xlsx_import._common import (
     SHEET_BASICS,
     SHEET_CONTACTS,
@@ -22,7 +24,7 @@ from app.xlsx_import._common import (
     japanese_index,
 )
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
-from app.xlsx_import.gear import split_row
+from app.xlsx_import.gear import SUGGEST_LIMIT, split_row
 from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
@@ -39,6 +41,21 @@ from tests.xlsx_fixtures import (
     ware_sheet,
     workbook,
 )
+
+
+def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
+    """The state and the warnings, which is what almost every test is about.
+
+    `xlsx_to_state` also hands back the 装備 rows that need confirming; those
+    have their own tests, through `pending_of`.
+    """
+    state, warnings, _pending = _read(body)
+    return state, warnings
+
+
+def pending_of(body: bytes) -> list[dict[str, Any]]:
+    """The 装備 rows that could not be matched."""
+    return _read(body)[2]
 
 
 def _quality_id(name: str) -> str:
@@ -1312,18 +1329,12 @@ def test_a_plugin_loses_to_the_gear_of_the_same_name() -> None:
     assert "weapon_accessories" not in state
 
 
-def test_a_plugin_no_other_catalog_has_still_comes_over() -> None:
-    """消音器 is only a weapon accessory."""
-    state, warnings = xlsx_to_state(filled(gear=[_item("消音器")]))
-    assert state["weapon_accessories"][0]["accessory_id"] == _catalog_id("weapon_accessories", "Silencer/Suppressor")
-    assert warnings == []
-
-
-def test_a_row_naming_two_things_is_reported() -> None:
+def test_a_row_naming_two_things_needs_confirming() -> None:
     """通常弾*20、スティックン・ショック*20 — one cell, two items, and nothing
-    that can be made of it."""
-    _, warnings = xlsx_to_state(filled(gear=[_item("通常弾*20、スティックン・ショック*20")]))
-    assert has(warnings, "engine.import.skippedUnknown", name="通常弾*20、スティックン・ショック*20")
+    that can be made of it without being told."""
+    raw = "通常弾*20、スティックン・ショック*20"
+    pending = pending_of(filled(gear=[_item(raw)]))
+    assert [row["name"] for row in pending] == [raw]
 
 
 def test_a_note_after_the_name_comes_off() -> None:
@@ -1334,11 +1345,76 @@ def test_a_note_after_the_name_comes_off() -> None:
     assert warnings == []
 
 
-def test_a_name_the_book_does_not_have_is_reported() -> None:
-    """The row comes back named, so it can be put in by hand rather than going
-    missing without a word."""
-    _, warnings = xlsx_to_state(filled(gear=[_item("そんな装備はない")]))
-    assert has(warnings, "engine.import.skippedUnknown", name="そんな装備はない")
+def test_a_row_that_matched_nothing_comes_back_to_be_confirmed() -> None:
+    """Nothing is dropped in silence: the row comes back with what the sheet
+    said about it, and one warning says how many there were."""
+    rows = [_item("そんな装備はない", E="3.0", K="メモ")]
+    state, warnings = xlsx_to_state(filled(gear=rows))
+    pending = pending_of(filled(gear=rows))
+    assert "gear" not in state
+    assert pending[0]["name"] == "そんな装備はない"
+    assert pending[0]["qty"] == 3
+    assert pending[0]["note"] == "メモ"
+    assert has(warnings, "engine.import.xlsxGearPending", count=1)
+
+
+def test_a_row_that_matched_is_not_pending() -> None:
+    assert pending_of(filled(gear=[_item("医療キットR3")])) == []
+
+
+def test_a_pending_row_carries_a_rating_written_into_its_name() -> None:
+    pending = pending_of(filled(gear=[_item("そんな装備-R4")]))
+    assert pending[0]["rating"] == 4
+
+
+def test_a_pending_row_is_offered_what_it_looks_like() -> None:
+    """アレス・サンダートラック is one syllable out from the catalog's
+    アレス サンダーストラック, which is what the shortlist is for."""
+    pending = pending_of(filled(gear=[_item("アレス・サンダートラック・ガウスライフル")]))
+    names = [item["name"] for item in pending[0]["suggestions"]]
+    assert names[0] == "Ares Thunderstruck Gauss Rifle"
+
+
+def test_a_suggestion_says_which_list_it_would_go_in() -> None:
+    """The client needs it to put the item somewhere, and a shield is both a
+    weapon and a piece of armor."""
+    pending = pending_of(filled(gear=[_item("FN-HAL")]))
+    first = pending[0]["suggestions"][0]
+    assert (first["bucket"], first["key"], first["name"]) == ("weapons", "weapons", "FN HAR")
+    assert first["id"] == _catalog_id("weapons", "FN HAR")
+
+
+def test_a_suggestion_carries_the_row_to_append() -> None:
+    """So a client offering the shortlist never has to know which lists carry a
+    count, which carry a rating and which count months."""
+    pending = pending_of(filled(gear=[_item("贅沢品", E="4.0")]))
+    lifestyle = next(item for item in pending[0]["suggestions"] if item["key"] == "lifestyles")
+    assert lifestyle["entry"]["months"] == 4
+    assert "rating" not in lifestyle["entry"]
+
+
+def test_a_suggested_weapon_takes_a_count_and_no_rating() -> None:
+    pending = pending_of(filled(gear=[_item("FN-HAL", E="2.0")]))
+    entry = pending[0]["suggestions"][0]["entry"]
+    assert entry["qty"] == 2
+    assert "rating" not in entry
+
+
+def test_a_suggested_row_keeps_the_rating_from_the_name() -> None:
+    pending = pending_of(filled(gear=[_item("そんな医療キットR3")]))
+    gear = next(item for item in pending[0]["suggestions"] if item["key"] == "gear")
+    assert gear["entry"]["rating"] == 3
+
+
+def test_a_name_like_nothing_in_the_book_is_offered_nothing() -> None:
+    """An empty shortlist is honest; a bad guess at the top of one is not."""
+    pending = pending_of(filled(gear=[_item("ZZZZZZZZZZ")]))
+    assert pending[0]["suggestions"] == []
+
+
+def test_suggestions_are_capped() -> None:
+    pending = pending_of(filled(gear=[_item("弾薬")]))
+    assert len(pending[0]["suggestions"]) <= SUGGEST_LIMIT
 
 
 def test_the_gear_reaches_the_engine_as_spent_nuyen() -> None:

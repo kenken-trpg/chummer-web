@@ -48,7 +48,7 @@ for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await waitForEditor(page);
-    await page.getByLabel("読込 (JSON/.chum5)").setInputFiles(await chummerFixture());
+    await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(await chummerFixture());
     await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue("Ghile Mear");
 
     const tabs = page.locator(".tabs .tab");

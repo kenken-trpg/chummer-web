@@ -214,12 +214,16 @@ def import_chummer(request: Request, body: bytes = Body(..., media_type="applica
 @router.post("/api/characters/import-xlsx")
 @limiter.limit(_IMPORT_RATE_LIMIT)
 def import_xlsx(request: Request, body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
-    """Import a filled-in シャドウラン_キャラシテンプレート (.xlsx). Returns the
-    character plus a list of things that could not be mapped."""
+    """Import a filled-in シャドウラン_キャラシテンプレート (.xlsx).
+
+    Returns the character, the warnings, and `pending_gear`: the rows of the
+    装備 sheet that could not be matched, each with a shortlist of what it looks
+    like for the client to offer.
+    """
     try:
-        state, warnings = xlsx_to_state(body)
+        state, warnings, pending = xlsx_to_state(body)
         char = import_character(state)
-        return {"character": char.model_dump(), "warnings": warnings}
+        return {"character": char.model_dump(), "warnings": warnings, "pending_gear": pending}
     except NoticeError as exc:
         raise HTTPException(status_code=400, detail=exc.notice) from exc
     except Exception as exc:  # noqa: BLE001

@@ -204,7 +204,7 @@ export function Toolbar({
       <input
         ref={fileRef}
         type="file"
-        accept="application/json,.chum5,.chum5lz"
+        accept="application/json,.chum5,.chum5lz,.xlsx"
         hidden
         // named for the same reason the settings one is: the page now holds
         // more than one file input, so "the file input" is no longer a thing
