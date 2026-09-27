@@ -14,7 +14,7 @@ from app.notices import NoticeError
 from app.xlsx_import import is_template_workbook, xlsx_to_state
 from app.xlsx_import._common import SHEET_BASICS, cell_int
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
-from app.xlsx_import.qualities import split_name
+from app.xlsx_import.qualities import candidates, resolve, split_name
 from tests.notice_asserts import has
 from tests.xlsx_fixtures import BASELINE, filled, workbook
 
@@ -244,19 +244,51 @@ def test_no_attribute_karma_key_when_nothing_was_bought() -> None:
 
 
 @pytest.mark.parametrize(
-    ("raw", "name", "extra"),
+    ("raw", "name", "pick", "note"),
     [
-        ("両手利き", "両手利き", ""),
-        ("規制品(アレス・サンダートラック)", "規制品", "アレス・サンダートラック"),
-        ("規制品（超甲状腺）", "規制品", "超甲状腺"),
-        ("依存症／中度／クラム", "依存症 (中度)", "クラム"),
-        ("依存症／中度", "依存症 (中度)", ""),
-        ("アレルギー／軽度／花粉／ブタクサ", "アレルギー (軽度)", "花粉／ブタクサ"),
-        ("  両手利き  ", "両手利き", ""),
+        ("両手利き", "両手利き", "", ""),
+        ("規制品(アレス・サンダートラック)", "規制品", "アレス・サンダートラック", ""),
+        ("規制品（超甲状腺）", "規制品", "超甲状腺", ""),
+        ("依存症／中度／クラム", "依存症 (中度)", "クラム", ""),
+        ("依存症／中度", "依存症 (中度)", "", ""),
+        ("アレルギー／軽度／花粉／ブタクサ", "アレルギー (軽度)", "花粉／ブタクサ", ""),
+        ("  両手利き  ", "両手利き", "", ""),
+        # a note trailing after the pick, which is neither name nor pick
+        ("導師精霊（竜殺しの英雄）\u3000交渉に+2修正", "導師精霊", "竜殺しの英雄", "交渉に+2修正"),
+        ("軽度の依存症（カフェイン）", "軽度の依存症", "カフェイン", ""),
     ],
 )
-def test_split_name(raw: str, name: str, extra: str) -> None:
-    assert split_name(raw) == (name, extra)
+def test_split_name(raw: str, name: str, pick: str, note: str) -> None:
+    assert split_name(raw) == (name, pick, note)
+
+
+def test_candidates_tries_the_pick_as_part_of_the_name_first() -> None:
+    """SIN持ち（国家SIN） may be one name — the catalog spells it SIN持ち：国家SIN —
+    so the joined spellings come before treating the pick as a target."""
+    assert candidates("SIN持ち", "国家SIN")[:2] == ["SIN持ち", "SIN持ち：国家SIN"]
+
+
+def test_candidates_reorders_a_leading_degree() -> None:
+    assert "依存症 (軽度)" in candidates("軽度の依存症", "カフェイン")
+
+
+def test_candidates_of_a_plain_name_is_just_the_name() -> None:
+    assert candidates("両手利き", "") == ["両手利き"]
+
+
+def test_a_pick_that_is_part_of_the_name_leaves_no_extra() -> None:
+    """SIN持ち：国家SIN is the whole quality, so 国家SIN is not a target."""
+    index = {"SIN持ち：国家SIN": "sinner-national"}
+    assert resolve("SIN持ち（国家SIN）", index) == ("sinner-national", "")
+
+
+def test_a_leading_degree_keeps_its_pick() -> None:
+    index = {"依存症 (軽度)": "addiction-mild"}
+    assert resolve("軽度の依存症（カフェイン）", index) == ("addiction-mild", "カフェイン")
+
+
+def test_resolve_returns_none_for_an_unknown_name() -> None:
+    assert resolve("そんな資質はない", {}) is None
 
 
 def test_a_plain_quality_comes_through() -> None:
@@ -286,6 +318,32 @@ def test_a_note_on_a_quality_that_takes_no_target_warns() -> None:
     parenthesis is reported rather than dropped in silence."""
     _, warnings = xlsx_to_state(filled(A50="有利", C50="規制品(アレス・サンダートラック)"))
     assert has(warnings, "engine.import.xlsxQualityNote", note="アレス・サンダートラック")
+
+
+def test_a_quality_whose_name_holds_the_parenthesis() -> None:
+    """v2.0.11 writes SIN持ち（国家SIN）, and the parenthesis is part of the
+    catalog's own name rather than a target."""
+    state, warnings = xlsx_to_state(filled(A50="不利", C50="SIN持ち（国家SIN）"))
+    assert state["quality_ids"] == [_quality_id("SINner (National)")]
+    assert "quality_extras" not in state
+    assert warnings == []
+
+
+def test_a_degree_written_in_front_of_the_quality() -> None:
+    """軽度の依存症（…） is the catalog's 依存症 (軽度) with the degree moved."""
+    state, _ = xlsx_to_state(filled(A50="不利", C50="軽度の依存症（エナジードリンク / カフェイン）"))
+    mild = _quality_id("Addiction (Mild)")
+    assert state["quality_ids"] == [mild]
+    assert state["quality_extras"] == {mild: "エナジードリンク / カフェイン"}
+
+
+def test_a_note_after_the_pick_is_not_part_of_the_name() -> None:
+    """導師精霊（竜殺しの英雄）　交渉に+2修正 — the player's own note trails the
+    pick, and the mentor itself is `mentor_id`, which this import does not read
+    yet, so the pick is reported."""
+    state, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊（竜殺しの英雄）\u3000交渉に+2修正"))
+    assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
+    assert has(warnings, "engine.import.xlsxQualityNote", note="竜殺しの英雄")
 
 
 def test_the_same_quality_taken_twice_is_two_entries() -> None:
