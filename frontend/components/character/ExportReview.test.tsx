@@ -7,8 +7,8 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
   return {
     tr: identityTr,
     exportReview: null,
-    confirmChum5: vi.fn().mockResolvedValue(undefined),
-    cancelChum5: vi.fn(),
+    confirmExport: vi.fn().mockResolvedValue(undefined),
+    cancelExport: vi.fn(),
     ...over,
   } as unknown as CharacterEditor;
 }
@@ -30,8 +30,8 @@ describe("<ExportReview>", () => {
     expect(screen.getByRole("alertdialog").textContent).toContain("1 件");
     screen.getByText("武器が 1 件失われます");
     fireEvent.click(screen.getByRole("button", { name: "このまま書き出す" }));
-    expect(ed.confirmChum5).toHaveBeenCalled();
+    expect(ed.confirmExport).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "やめる" }));
-    expect(ed.cancelChum5).toHaveBeenCalled();
+    expect(ed.cancelExport).toHaveBeenCalled();
   });
 });

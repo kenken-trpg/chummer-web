@@ -978,6 +978,15 @@ def test_a_mentor_spirit_with_no_pick_is_still_the_quality() -> None:
     assert warnings == []
 
 
+def test_a_name_with_a_space_in_it_is_tried_whole_first() -> None:
+    """A catalog entry with no Japanese translation is looked up under its
+    English name, and 「Restricted Gear」 used to be split at the space — which
+    left 「Restricted」 as the name and 「Gear」 as a pick, and matched neither."""
+    state, warnings = xlsx_to_state(filled(A50="有利", C50="Restricted Gear"))
+    assert warnings == []
+    assert len(state["quality_ids"]) == 1
+
+
 # --- 身体強化／電子機器 ------------------------------------------------------
 
 

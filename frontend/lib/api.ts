@@ -358,6 +358,33 @@ export const api = {
     return res.blob();
   },
 
+  /**
+   * An .xlsx in the shape of the Japanese community character sheet
+   * (［SR5］キャラシテンプレート). Not the template itself — that is its author's
+   * work, and the .xlsx it downloads as has dead Google Sheets formulas in every
+   * derived cell — but a workbook with its sheet names and its input cells,
+   * which {@link importXlsx} reads back.
+   */
+  exportXlsx: async (state: Character): Promise<Blob> => {
+    const res = await fetch("/api/characters/xlsx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    if (!res.ok) throw new Error(await errorText(res));
+    return res.blob();
+  },
+
+  /** What the character would lose if the exported .xlsx were read back in. */
+  checkXlsxExport: async (state: Character): Promise<Notice[]> => {
+    const res = await req<{ differences: Notice[] }>("/api/characters/xlsx/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    return res.differences;
+  },
+
   /** JSON for Foundry VTT shadowrun5e's Chummer importer, names in `locale`. */
   exportFvtt: async (state: Character, locale: Locale): Promise<Blob> => {
     const res = await fetch("/api/characters/fvtt", {

@@ -174,6 +174,9 @@ export const JA_APP = {
   "toolbar.saveJson": "JSON保存",
   "toolbar.exportChum5": ".chum5書出",
   "toolbar.exportChum5Hint": "Chummer5a で開ける .chum5（XML）で書き出す",
+  "toolbar.exportXlsx": ".xlsx書出",
+  "toolbar.exportXlsxHint":
+    "［SR5］キャラシテンプレート と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
   "toolbar.exportFvttHint":
     "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。能力値・技能・資質のみ",

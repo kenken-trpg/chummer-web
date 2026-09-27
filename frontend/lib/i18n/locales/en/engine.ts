@@ -420,6 +420,11 @@ export const EN_ENGINE = {
   "engine.export.changed": "{kind} entries change",
   "engine.export.karma": "karma left goes {before} → {after}",
   "engine.export.nuyen": "nuyen left goes {before} → {after}",
+  "engine.export.xlsxNoRoom": "the sheet has room for {room} {kind} rows, so {dropped} do not fit",
+  "engine.export.xlsxNoCell":
+    "the sheet has no \u201c{name}\u201d to pick, so the {kind} is written as \u201c{instead}\u201d",
+  "engine.export.xlsxNoPlace":
+    "{name} is fitted to something the equipment sheet does not hold, so it is left out",
   "engine.side.Left": "left",
 
   "engine.side.Right": "right",

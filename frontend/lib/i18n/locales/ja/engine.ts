@@ -419,6 +419,11 @@ export const JA_ENGINE = {
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",
   "engine.export.nuyen": "残りニューヨンが {before} → {after} になります",
+  "engine.export.xlsxNoRoom":
+    "キャラシの{kind}欄は {room} 行までなので、{dropped} 件が書き切れません",
+  "engine.export.xlsxNoCell":
+    "キャラシの選択肢に「{name}」がないので、{kind}は「{instead}」として書き出します",
+  "engine.export.xlsxNoPlace": "{name}は取り付け先が装備シートにないので書き出せません",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

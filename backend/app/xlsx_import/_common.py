@@ -153,6 +153,12 @@ def resolve_typed(raw: str, index: dict[str, str], aliases: dict[str, str] | Non
     `aliases` maps a spelling the template uses to a key of `index`, for the
     names the catalog's Japanese has not caught up with.
     """
+    written = raw.strip()
+    # The name as written comes first, before it is taken apart: an entry the
+    # catalog has no Japanese for is looked up under its English name, and
+    # splitting 「Restricted Gear」 at the space would leave neither half.
+    if index.get(written) or index.get(no_interpunct(written)):
+        return index.get(written) or index[no_interpunct(written)], ""
     name, pick, _note = split_name(raw)
     for position, candidate in enumerate(candidates(name, pick)):
         plain = no_interpunct(candidate)

@@ -20,6 +20,9 @@ import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
 import { onNotice } from "@/lib/notices";
 
+/** The export formats the character is checked before being written to. */
+export type ExportFormat = "chum5" | "xlsx";
+
 /** The catalog key of the vendored data: no dataset, no directories. */
 const NO_CUSTOM_DATA = "|";
 
@@ -40,10 +43,14 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   /** Advisories about an action that *succeeded* — never the red error box. */
   const [notice, setNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
-  /** what a .chum5 would lose, while the player decides whether to export it
+  /** what the file would lose, while the player decides whether to export it
    *  anyway. Tied to the exact state it was checked against: any edit (or
    *  switching character) makes it stale, and a stale review is dropped. */
-  const [review, setExportReview] = useState<{ of: Character; differences: Notice[] } | null>(null);
+  const [review, setExportReview] = useState<{
+    of: Character;
+    format: ExportFormat;
+    differences: Notice[];
+  } | null>(null);
   const exportReview = review && review.of === ch ? review.differences : null;
   /** The 装備 rows of an .xlsx import that need a person to say what they are.
    *  Tied to the character they came from, so switching character shows that
@@ -283,37 +290,54 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   }
 
   /**
-   * Export a .chum5 — after asking the server what reading it back would
-   * change. A clean round trip saves straight away; otherwise the differences
-   * wait in `exportReview` for {@link confirmChum5} or {@link cancelChum5}.
-   * A failed check is not worth blocking the download over.
+   * Export a file the character has to be read back out of — after asking the
+   * server what reading it back would change. A clean round trip saves straight
+   * away; otherwise the differences wait in `exportReview` for
+   * {@link confirmExport} or {@link cancelExport}. A failed check is not worth
+   * blocking the download over.
+   *
+   * Both formats go through this: a .chum5 loses what Chummer has no field for,
+   * and the キャラシテンプレート .xlsx loses rather more — it is a fixed grid with
+   * one free-text column for all the equipment — so both are worth a look
+   * before the file is written.
    */
   async function downloadChum5() {
+    await checkThenSave("chum5");
+  }
+
+  /** Export the character as a キャラシテンプレート-shaped .xlsx. */
+  async function downloadXlsx() {
+    await checkThenSave("xlsx");
+  }
+
+  async function checkThenSave(format: ExportFormat) {
     if (!ch) return;
-    const differences = await api.checkChummerExport(ch).catch(() => []);
+    const check = format === "chum5" ? api.checkChummerExport : api.checkXlsxExport;
+    const differences = await check(ch).catch(() => []);
     if (differences.length) {
-      setExportReview({ of: ch, differences });
+      setExportReview({ of: ch, format, differences });
       return;
     }
-    await saveChum5();
+    await save(format);
   }
 
-  async function confirmChum5() {
+  async function confirmExport() {
+    const format = review?.format ?? "chum5";
     setExportReview(null);
-    await saveChum5();
+    await save(format);
   }
 
-  function cancelChum5() {
+  function cancelExport() {
     setExportReview(null);
   }
 
-  async function saveChum5() {
+  async function save(format: ExportFormat) {
     if (!ch) return;
     try {
-      const blob = await api.exportChummer(ch);
+      const blob = await (format === "chum5" ? api.exportChummer(ch) : api.exportXlsx(ch));
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${ch.name || "character"}.chum5`;
+      a.download = `${ch.name || "character"}.${format}`;
       a.click();
       URL.revokeObjectURL(a.href);
     } catch (e) {
@@ -506,9 +530,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     onPortraitFile,
     download,
     downloadChum5,
+    downloadXlsx,
     downloadFvtt,
-    confirmChum5,
-    cancelChum5,
+    confirmExport,
+    cancelExport,
     copyText,
     copyShareLink,
   };

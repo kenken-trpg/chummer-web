@@ -22,6 +22,8 @@ const api = vi.hoisted(() => ({
   importXlsx: vi.fn(),
   exportChummer: vi.fn(),
   checkChummerExport: vi.fn(),
+  exportXlsx: vi.fn(),
+  checkXlsxExport: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ api }));
 
@@ -824,7 +826,7 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.exportReview).toEqual(lost);
 
     await act(async () => {
-      await result.current.confirmChum5();
+      await result.current.confirmExport();
     });
     expect(clicks).toHaveLength(1);
     expect(result.current.exportReview).toBeNull();
@@ -837,7 +839,7 @@ describe("useCharacterEditor file exports", () => {
     await act(async () => {
       await result.current.downloadChum5();
     });
-    act(() => result.current.cancelChum5());
+    act(() => result.current.cancelExport());
 
     expect(result.current.exportReview).toBeNull();
     expect(api.exportChummer).not.toHaveBeenCalled();
@@ -867,6 +869,57 @@ describe("useCharacterEditor file exports", () => {
 
     expect(clicks).toHaveLength(1);
     expect(result.current.error).toBeNull();
+  });
+
+  it("downloadXlsx() saves the workbook the server produced", async () => {
+    api.exportXlsx.mockResolvedValue(new Blob(["PK"]));
+    api.checkXlsxExport.mockResolvedValue([]);
+    const { result } = await booted(makeCharacter({ id: "c1", name: "夜叉" }));
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+
+    expect(api.exportXlsx).toHaveBeenCalledWith(result.current.ch);
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    expect(clicks[0].download).toBe("夜叉.xlsx");
+    expect(result.current.error).toBeNull();
+  });
+
+  it("confirming the review writes the format that was checked, not the other one", async () => {
+    api.exportXlsx.mockResolvedValue(new Blob(["PK"]));
+    api.checkXlsxExport.mockResolvedValue([
+      {
+        key: "engine.export.xlsxNoRoom",
+        params: { kind: { ui: "engine.kind.quality" }, room: 10, dropped: 2 },
+      },
+    ]);
+    const { result } = await booted(makeCharacter({ id: "c1", name: "夜叉" }));
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+    expect(clicks).toHaveLength(0);
+
+    await act(async () => {
+      await result.current.confirmExport();
+    });
+    expect(api.exportXlsx).toHaveBeenCalled();
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    expect(clicks[0].download).toBe("夜叉.xlsx");
+  });
+
+  it("a refused .xlsx export is a message, not an unhandled rejection", async () => {
+    api.exportXlsx.mockRejectedValue(new Error(""));
+    api.checkXlsxExport.mockResolvedValue([]);
+    const { result } = await booted();
+
+    await act(async () => {
+      await result.current.downloadXlsx();
+    });
+
+    expect(clicks).toHaveLength(0);
+    expect(result.current.error).toBeTruthy();
   });
 
   it("a refused .chum5 export is a message, not an unhandled rejection", async () => {

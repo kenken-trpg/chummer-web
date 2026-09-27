@@ -167,6 +167,9 @@ export const EN_APP = {
   "toolbar.saveJson": "Save JSON",
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
+  "toolbar.exportXlsx": "Export .xlsx",
+  "toolbar.exportXlsxHint":
+    "Export an .xlsx with the same sheets and the same input cells as the Japanese community character sheet (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
   "toolbar.exportFvttHint":
     "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",

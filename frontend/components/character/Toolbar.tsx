@@ -43,6 +43,7 @@ export function Toolbar({
     onImport,
     download,
     downloadChum5,
+    downloadXlsx,
     downloadFvtt,
     copyText,
     copyShareLink,
@@ -116,6 +117,13 @@ export function Toolbar({
       </button>
       <button className="btn" onClick={downloadChum5} title={ui("toolbar.exportChum5Hint")}>
         {ui("toolbar.exportChum5")}
+      </button>
+      <button
+        className="btn"
+        onClick={() => void downloadXlsx()}
+        title={ui("toolbar.exportXlsxHint")}
+      >
+        {ui("toolbar.exportXlsx")}
       </button>
       <button
         className="btn"
