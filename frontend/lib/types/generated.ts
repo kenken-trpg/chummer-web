@@ -577,6 +577,12 @@ export interface Character {
   submersions?: SubmersionChoice[];
   karma_nuyen?: number;
   notes?: string;
+  /** whose character this is, and the GM's own notes on it — Chummer's
+   *  `<playername>` / `<gamenotes>`, which it reads back and shows on the
+   *  character's own tab rather than on the sheet.
+   */
+  player_name?: string;
+  game_notes?: string;
   age?: string;
   sex?: string;
   height?: string;

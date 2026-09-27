@@ -66,6 +66,7 @@ export function SheetDescEditor({
             ["hair", "desc.hair"],
             ["skin", "desc.skin"],
             ["concept", "desc.concept"],
+            ["player_name", "desc.playerName"],
           ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
         ).map(([field, label]) => (
           <label key={field}>
@@ -86,6 +87,7 @@ export function SheetDescEditor({
           ["appearance", "desc.appearance"],
           ["background", "desc.background"],
           ["notes", "desc.notes"],
+          ["game_notes", "desc.gameNotes"],
         ] as const satisfies readonly (readonly [keyof Character, MsgKey])[]
       ).map(([field, label]) => (
         <div key={field} className="sheet-notes-edit" style={{ margin: "8px 0 0" }}>

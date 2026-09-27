@@ -66,6 +66,22 @@ describe("sheet sections — smoke render", () => {
     expect(container.textContent).toContain(marker);
   });
 
+  it("the description section prints the player and the GM's notes", () => {
+    const sheet = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        player_name: "まんたに",
+        game_notes: "CUP 1",
+      } as never,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<DescriptionSection {...sheet} />);
+    expect(container.textContent).toContain("まんたに");
+    expect(container.textContent).toContain("CUP 1");
+  });
+
   it("the matrix section prints the VR initiative next to the persona", () => {
     const withVr = buildSheetData({
       character: {

@@ -279,9 +279,11 @@ export const EN_APP = {
   "desc.hair": "Hair",
   "desc.skin": "Skin",
   "desc.concept": "Concept",
+  "desc.playerName": "Player",
   "desc.appearance": "Appearance",
   "desc.background": "Background",
   "desc.notes": "Notes",
+  "desc.gameNotes": "Game notes",
 
   "desc.notesPlaceholder":
     "Notes for the GM or for play. They appear on the sheet and in the .chum5 export.",

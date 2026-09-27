@@ -129,6 +129,11 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     created = _text(root.find("created")).lower() == "true"
     st["career"] = created
     st["notes"] = _text(root.find("notes"))
+    # Chummer's own two out-of-character fields: whose character it is and the
+    # GM's notes on it. Both are read back by `Character.Load`, so dropping
+    # them loses text the player typed.
+    st["player_name"] = _text(root.find("playername"))
+    st["game_notes"] = _text(root.find("gamenotes"))
     for field, tag in (
         ("age", "age"),
         ("sex", "sex"),
