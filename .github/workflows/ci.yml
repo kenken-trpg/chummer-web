@@ -169,7 +169,10 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           TITLE: ${{ github.event.pull_request.title }}
-        run: python3 scripts/changelog.py check-pr "$BASE" "$TITLE"
+          # GitHub sets this, so a pull request from a fork cannot claim to be
+          # the bot. Read by the toolchain-manifest exemption in the script.
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: python3 scripts/changelog.py check-pr "$BASE" "$TITLE" "$AUTHOR"
 
   frontend-static:
     runs-on: ubuntu-latest
