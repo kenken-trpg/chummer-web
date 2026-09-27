@@ -48,7 +48,9 @@ describe("<ExportReview>", () => {
     expect(screen.getByRole("alertdialog").textContent).not.toContain("chum5");
     unmount();
 
-    render(<ExportReview ed={makeEd({ exportReview: differences, exportReviewFormat: "chum5" })} />);
+    render(
+      <ExportReview ed={makeEd({ exportReview: differences, exportReviewFormat: "chum5" })} />,
+    );
     expect(screen.getByRole("alertdialog").textContent).toContain(".chum5");
   });
 });
