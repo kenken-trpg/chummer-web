@@ -153,7 +153,12 @@ jobs:
           path: backend/vendor/chummer-tests
           key: chummer-test-saves-${{ hashFiles('backend/vendor/chummer/.chummer-ref') }}
 
+      # The saves are named by one call to the GitHub API, which unauthenticated
+      # is 60 an hour per address — spent before the job starts, on a shared
+      # runner. The job's own token raises that to the account's 5,000.
       - run: python scripts/chum5_reconcile.py --fidelity
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   frontend:
     runs-on: ubuntu-latest
