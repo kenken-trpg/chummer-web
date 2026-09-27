@@ -21,8 +21,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # The floor we promise (`requires-python = ">=3.11"`), the one the image
+      # ships (the Dockerfile's python:3.12) and the one this is written on.
+      # Nothing here branches on the version — there is not a single
+      # `sys.version_info` in app/ or tests/ — so the matrix is an empirical
+      # net, and a net is worth hanging where somebody stands. 3.13 used to be
+      # the third and was none of the three: nobody develops on it and nothing
+      # ships it, while 3.14, which every commit here is written on, went
+      # untested.
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.14"]
     defaults:
       run:
         working-directory: backend
@@ -65,7 +73,7 @@ jobs:
       # step if the suite drops below it.
       # `-n auto`: one worker per core. The suite shares nothing on disk
       # between tests, and it roughly halves this step.
-      - run: python -m pytest -q -n auto ${{ matrix.python-version == '3.13' && '--cov --cov-report=term' || '' }}
+      - run: python -m pytest -q -n auto ${{ matrix.python-version == '3.14' && '--cov --cov-report=term' || '' }}
 
       - run: mypy
 
@@ -87,7 +95,7 @@ jobs:
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
 
@@ -228,7 +236,7 @@ jobs:
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
