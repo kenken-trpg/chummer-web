@@ -12,16 +12,25 @@ from app.data_loader import catalog
 from app.main import app
 from app.notices import NoticeError
 from app.xlsx_import import is_template_workbook, xlsx_to_state
-from app.xlsx_import._common import SHEET_BASICS, cell_int, japanese_index
+from app.xlsx_import._common import SHEET_BASICS, SHEET_MAGIC, SHEET_SKILLS, cell_int, japanese_index
 from app.xlsx_import._sheet import NotAWorkbook, Workbook
+from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
 from tests.notice_asserts import has
-from tests.xlsx_fixtures import BASELINE, filled, skill_sheet, workbook
+from tests.xlsx_fixtures import BASELINE, filled, magic_sheet, skill_sheet, workbook
 
 
 def _quality_id(name: str) -> str:
     return next(str(row["id"]) for row in catalog()["qualities"] if row["name"] == name)
+
+
+def _catalog_id(key: str, name: str) -> str:
+    return next(str(row["id"]) for row in catalog()[key] if row["name"] == name)
+
+
+def _mentor_id(name: str) -> str:
+    return _catalog_id("mentors", name)
 
 
 # --- the workbook reader -------------------------------------------------
@@ -337,11 +346,11 @@ def test_a_quality_whose_name_holds_the_parenthesis() -> None:
 
 
 def test_a_pick_set_off_by_a_space() -> None:
-    """ララ writes 導師精霊　鮫 — no parentheses, just a space. The mentor is
-    `mentor_id`, not an extra, so the pick is reported."""
+    """ララ writes 導師精霊　鮫 — no parentheses, just a space."""
     state, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊\u3000鮫"))
     assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
-    assert has(warnings, "engine.import.xlsxQualityNote", note="鮫")
+    assert state["mentor_id"] == _mentor_id("Shark")
+    assert warnings == []
 
 
 def test_a_loanword_written_without_its_interpunct() -> None:
@@ -371,11 +380,11 @@ def test_a_degree_written_in_front_of_the_quality() -> None:
 
 def test_a_note_after_the_pick_is_not_part_of_the_name() -> None:
     """導師精霊（竜殺しの英雄）　交渉に+2修正 — the player's own note trails the
-    pick, and the mentor itself is `mentor_id`, which this import does not read
-    yet, so the pick is reported."""
+    pick, and the pick itself is the mentor."""
     state, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊（竜殺しの英雄）\u3000交渉に+2修正"))
     assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
-    assert has(warnings, "engine.import.xlsxQualityNote", note="竜殺しの英雄")
+    assert state["mentor_id"] == _mentor_id("Dragonslayer")
+    assert warnings == []
 
 
 def test_the_same_quality_taken_twice_is_two_entries() -> None:
@@ -745,3 +754,188 @@ def test_the_route_reports_what_it_could_not_map() -> None:
     )
     assert response.status_code == 200
     assert has(response.json()["warnings"], "engine.import.xlsxMagicStyle", name="魔法使い（メイジ）")
+
+
+# --- 呪文／複合体／アデプト・パワー ---------------------------------------
+
+
+def test_spells_come_over_by_their_japanese_names() -> None:
+    """The occult sample's seven, which the template has the player type and the
+    catalog's translations answer exactly."""
+    names = ["真偽分析", "精神探査", "広域魔力探知", "感化", "完全透明化", "物理障壁", "スタンボルト"]
+    state, warnings = xlsx_to_state(filled(spells=names))
+    assert [row["spell_id"] for row in state["spells"]] == [
+        _catalog_id("spells", english)
+        for english in (
+            "Analyze Truth",
+            "Mind Probe",
+            "Detect Magic, Extended",
+            "Influence",
+            "Improved Invisibility",
+            "Physical Barrier",
+            "Stunbolt",
+        )
+    ]
+    assert warnings == []
+
+
+def test_a_spell_named_by_its_other_reading() -> None:
+    """真偽分析/アナライズ・トゥルース — the catalog carries both readings joined,
+    and the sheet is written with whichever the player knows."""
+    state, _ = xlsx_to_state(filled(spells=["アナライズ・トゥルース"]))
+    assert [row["spell_id"] for row in state["spells"]] == [_catalog_id("spells", "Analyze Truth")]
+
+
+def test_a_ritual_is_in_the_same_column_as_the_spells() -> None:
+    """The sheet's heading is 呪文／錬金術調整物／儀式: one column, three kinds,
+    and the catalog holds all three together."""
+    ritual = next(row for row in catalog()["spells"] if row.get("kind") == "ritual")
+    japanese = (catalog().get("translations") or {}).get(str(ritual["name"]), str(ritual["name"]))
+    state, warnings = xlsx_to_state(filled(spells=[japanese.split("/")[0]]))
+    assert [row["spell_id"] for row in state["spells"]] == [str(ritual["id"])]
+    assert warnings == []
+
+
+def test_a_spell_is_never_alchemical() -> None:
+    """The sheet has no column for it, so a preparation arrives as a plain spell."""
+    state, _ = xlsx_to_state(filled(spells=["スタンボルト"]))
+    assert state["spells"][0]["alchemical"] is False
+
+
+def test_an_unknown_spell_warns() -> None:
+    _, warnings = xlsx_to_state(filled(spells=["そんな呪文はない"]))
+    assert has(warnings, "engine.import.skippedUnknown", name="そんな呪文はない")
+
+
+def test_a_complex_form_comes_over_from_its_own_column() -> None:
+    state, warnings = xlsx_to_state(filled(forms=["パペッティア", "レゾナンス・スパイク"]))
+    assert [row["form_id"] for row in state["complex_forms"]] == [
+        _catalog_id("complex_forms", "Puppeteer"),
+        _catalog_id("complex_forms", "Resonance Spike"),
+    ]
+    assert warnings == []
+
+
+def test_spells_and_complex_forms_do_not_bleed_into_each_other() -> None:
+    """They share rows 3–22, one in column C and one in column V."""
+    state, _ = xlsx_to_state(filled(spells=["スタンボルト"], forms=["パペッティア"]))
+    assert len(state["spells"]) == 1
+    assert len(state["complex_forms"]) == 1
+
+
+def test_adept_powers_come_over_with_their_levels() -> None:
+    """ララ's seven. 反射強化 is at 3; the ones without levels stay at 1 whatever
+    the sheet's level column says."""
+    powers = [("反射強化", "3.0"), ("強打", ""), ("戦闘感覚", "1.0"), ("軽身", "1.0"), ("矢薙ぎ", "1.0")]
+    state, warnings = xlsx_to_state(filled(powers=powers))
+    assert [(row["power_id"], row["rating"]) for row in state["adept_powers"]] == [
+        (_catalog_id("powers", "Improved Reflexes"), 3),
+        (_catalog_id("powers", "Critical Strike"), 1),
+        (_catalog_id("powers", "Combat Sense"), 1),
+        (_catalog_id("powers", "Light Body"), 1),
+        (_catalog_id("powers", "Missile Parry"), 1),
+    ]
+    assert warnings == []
+
+
+def test_a_power_marked_by_the_player_keeps_its_name() -> None:
+    """※殺戮の手 — the mark says something else pays for the power."""
+    state, warnings = xlsx_to_state(filled(powers=[("※殺戮の手", "")]))
+    assert [row["power_id"] for row in state["adept_powers"]] == [_catalog_id("powers", "Killing Hands")]
+    assert warnings == []
+
+
+def test_a_power_whose_target_is_part_of_its_name() -> None:
+    """潜在力強化　身体 is the catalog's 潜在力強化：(身体), not a power plus a
+    target, so nothing is left over to put in `extra`."""
+    state, _ = xlsx_to_state(filled(powers=[("潜在力強化\u3000身体", "")]))
+    assert state["adept_powers"] == [
+        {
+            "id": state["adept_powers"][0]["id"],
+            "power_id": _catalog_id("powers", "Improved Potential (Physical)"),
+            "rating": 1,
+            "extra": None,
+        }
+    ]
+
+
+def test_a_power_that_takes_a_target_keeps_it() -> None:
+    state, _ = xlsx_to_state(filled(powers=[("能力値ブースト（敏捷力）", "2.0")]))
+    assert state["adept_powers"][0]["power_id"] == _catalog_id("powers", "Attribute Boost")
+    assert state["adept_powers"][0]["extra"] == "敏捷力"
+    assert state["adept_powers"][0]["rating"] == 2
+
+
+def test_a_level_on_a_power_that_has_none_is_reported() -> None:
+    """ララ's sheet buys 潜在力強化 at level 2 and charges 1.0 power points for
+    it, but the power is a flat 0.5 one-off — the sheet is over-charging."""
+    state, warnings = xlsx_to_state(filled(powers=[("潜在力強化\u3000身体", "2.0")]))
+    assert state["adept_powers"][0]["rating"] == 1
+    assert has(warnings, "engine.import.xlsxPowerLevel", level=2)
+
+
+def test_a_target_a_power_cannot_hold_is_reported() -> None:
+    _, warnings = xlsx_to_state(filled(powers=[("強打（拳）", "")]))
+    assert has(warnings, "engine.import.xlsxPowerNote", note="拳")
+
+
+def test_an_unknown_power_warns() -> None:
+    _, warnings = xlsx_to_state(filled(powers=[("そんなパワーはない", "")]))
+    assert has(warnings, "engine.import.skippedUnknown", name="そんなパワーはない")
+
+
+def test_the_power_block_is_found_by_its_heading() -> None:
+    """Every version puts the heading at row 24, but a row inserted above it
+    would move the whole block."""
+    cells = magic_sheet(spells=["スタンボルト"], powers=[("強打", "")])
+    shifted = {f"{ref[0]}{int(ref[1:]) + 2}" if ref[0] in "ACFV" else ref: value for ref, value in cells.items()}
+    state, warnings = xlsx_to_state(filled(spells=[], powers=[]))
+    assert "adept_powers" not in state
+    state, warnings = xlsx_to_state(workbook(dict(BASELINE), by_sheet={SHEET_MAGIC: shifted}))
+    assert [row["power_id"] for row in state["adept_powers"]] == [_catalog_id("powers", "Critical Strike")]
+    assert [row["spell_id"] for row in state["spells"]] == [_catalog_id("spells", "Stunbolt")]
+    assert warnings == []
+
+
+def test_a_missing_magic_sheet_is_tolerated() -> None:
+    """The sheet is not in REQUIRED_SHEETS, so a renamed one loses the magic
+    rather than the character."""
+    state, _ = xlsx_to_state(workbook(dict(BASELINE), sheets=(SHEET_BASICS, SHEET_SKILLS, "編集不可")))
+    assert "spells" not in state
+    assert "adept_powers" not in state
+
+
+def test_no_magic_keys_when_the_sheet_is_empty() -> None:
+    state, warnings = xlsx_to_state(filled())
+    assert not {"spells", "complex_forms", "adept_powers"} & set(state)
+    assert warnings == []
+
+
+# --- the mentor named on the quality sheet --------------------------------
+
+
+def test_a_mentor_named_with_the_other_kanji() -> None:
+    """The catalog prints 龍殺しの英雄 (ドラゴンスレイヤー) and the template
+    竜殺しの英雄 — the same character, and the reading left off."""
+    assert resolve_mentor("竜殺しの英雄", catalog()) == _mentor_id("Dragonslayer")
+    assert resolve_mentor("龍殺しの英雄", catalog()) == _mentor_id("Dragonslayer")
+    assert mentor_index(catalog())["龍殺しの英雄 (ドラゴンスレイヤー)"] == _mentor_id("Dragonslayer")
+
+
+def test_the_mentor_aliases_are_still_needed() -> None:
+    """A guard against catalog drift: once the Japanese data spells it the way
+    the template does, the alias can go."""
+    index = mentor_index(catalog())
+    assert set(MENTOR_ALIASES) - set(index) == set(MENTOR_ALIASES)
+
+
+def test_an_unknown_mentor_falls_back_to_a_note() -> None:
+    _, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊（そんな導師はいない）"))
+    assert has(warnings, "engine.import.xlsxQualityNote", note="そんな導師はいない")
+
+
+def test_a_mentor_spirit_with_no_pick_is_still_the_quality() -> None:
+    state, warnings = xlsx_to_state(filled(A50="有利", C50="導師精霊"))
+    assert state["quality_ids"] == [_quality_id("Mentor Spirit")]
+    assert "mentor_id" not in state
+    assert warnings == []

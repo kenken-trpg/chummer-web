@@ -24,11 +24,12 @@ reported; a pick the quality cannot hold is reported too, rather than dropped.
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from ..data_loader import CatalogDict
 from ..notices import Notice, notice, ui
+from ._common import candidates, no_interpunct, resolve_typed, split_name
+from .magic import resolve_mentor
 
 #: Rows 50–59 hold one quality each: A the kind (有利／不利), C the name,
 #: N the karma spent, P the karma gained. The karma is the sheet's own
@@ -47,64 +48,6 @@ NAME_ALIASES = {
     "犯罪者SIN": "SINner (Criminal)",
 }
 
-#: A parenthesised pick, and whatever the player added after it. The trailing
-#: group is a note — 「導師精霊（竜殺しの英雄）　交渉に+2修正」— not part of
-#: either the name or the pick.
-_PARENTHESISED = re.compile(r"^([^(（]*)[(（]([^()（）]*)[)）](.*)$")
-_SEPARATORS = re.compile(r"[／/]")
-#: 「導師精霊　鮫」— a pick set off by a space rather than parenthesised.
-_SPACES = re.compile(r"[\s\u3000]+")
-#: The catalog spells a loanword with an interpunct, 「アストラル・ビーコン」, and
-#: the sheets are written both ways. Dropping it from both sides settles it.
-_INTERPUNCT = re.compile(r"[・･]")
-#: 「軽度の依存症」— a degree written in front of the quality it qualifies.
-_PREFIXED = re.compile(r"^(.+?)の(.+)$")
-
-
-def split_name(raw: str) -> tuple[str, str, str]:
-    """A typed quality name into (name, pick, note).
-
-    The name is not resolved here — it is whatever the player wrote, tidied —
-    and `candidates` turns it into the spellings the catalog might hold.
-    """
-    name, pick, note = raw.strip(), "", ""
-    matched = _PARENTHESISED.match(name)
-    if matched:
-        name, pick, note = (group.strip() for group in matched.groups())
-    parts = [part.strip() for part in _SEPARATORS.split(name) if part.strip()]
-    if len(parts) >= 2:
-        # 依存症／中度／クラム — the first two are the quality and its degree,
-        # and whatever follows is the pick, which wins over one in parentheses
-        # (the sheet never writes both).
-        name = f"{parts[0]} ({parts[1]})"
-        pick = "／".join(parts[2:]) or pick
-        return name, pick, note
-    spaced = [part for part in _SPACES.split(name) if part]
-    if len(spaced) >= 2:
-        # 導師精霊　鮫 — a space where another sheet would use parentheses. The
-        # first word is the quality and the rest is what it was taken for.
-        name, pick = spaced[0], " ".join(spaced[1:]) or pick
-    return name, pick, note
-
-
-def candidates(name: str, pick: str) -> list[str]:
-    """The spellings of `name` worth looking up, most literal first.
-
-    A pick is not always a pick: the catalog's own name for SINner (National) is
-    ``SIN持ち：国家SIN``, so ``SIN持ち（国家SIN）`` has to be tried joined back
-    together before it is treated as a quality plus a target.
-    """
-    out = [name]
-    if pick:
-        # 「SIN持ち（国家SIN）」→「SIN持ち：国家SIN」/「SIN持ち (国家SIN)」
-        out += [f"{name}：{pick}", f"{name}:{pick}", f"{name} ({pick})"]
-    prefixed = _PREFIXED.match(name)
-    if prefixed:
-        # 「軽度の依存症」→「依存症 (軽度)」
-        degree, quality = prefixed.group(1).strip(), prefixed.group(2).strip()
-        out.append(f"{quality} ({degree})")
-    return out
-
 
 def build_index(cat: CatalogDict) -> dict[str, str]:
     """Japanese quality name -> id, with the English name as a second key.
@@ -120,31 +63,23 @@ def build_index(cat: CatalogDict) -> dict[str, str]:
         japanese = translations.get(name)
         if japanese:
             index.setdefault(japanese, quality_id)
-            index.setdefault(_INTERPUNCT.sub("", japanese), quality_id)
+            index.setdefault(no_interpunct(japanese), quality_id)
         index.setdefault(name, quality_id)
     return index
 
 
 def resolve(raw: str, index: dict[str, str]) -> tuple[str, str] | None:
-    """A typed name to (quality id, pick), or `None` if nothing matched.
-
-    A candidate that matched *with* the pick folded into the name leaves no pick
-    behind: ``SIN持ち：国家SIN`` is the whole quality.
-    """
-    name, pick, _note = split_name(raw)
-    for index_of, candidate in enumerate(candidates(name, pick)):
-        aliased = NAME_ALIASES.get(candidate) or NAME_ALIASES.get(_INTERPUNCT.sub("", candidate), "")
-        quality_id = index.get(candidate) or index.get(_INTERPUNCT.sub("", candidate)) or index.get(aliased)
-        if quality_id:
-            # candidates() puts the spellings that swallow the pick at 1..3
-            return quality_id, "" if 1 <= index_of <= 3 else pick
-    return None
+    """A typed quality name to (quality id, pick), or `None` if nothing matched."""
+    return resolve_typed(raw, index, NAME_ALIASES)
 
 
 def import_qualities(cells: dict[str, str], cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Fill `quality_ids` / `quality_extras` from rows 50–59."""
     index = build_index(cat)
     takes_extra = {str(row["id"]): bool(row.get("extra_kind")) for row in cat["qualities"]}
+    # 導師精霊（竜殺しの英雄）/ パラゴン（…）— the quality itself holds nothing,
+    # and the pick belongs in `mentor_id`.
+    mentor_qualities = {str(row["id"]) for row in cat["qualities"] if row["name"] in ("Mentor Spirit", "Paragon")}
     quality_ids: list[str] = []
     extras: dict[str, str] = {}
     for row in QUALITY_ROWS:
@@ -158,6 +93,11 @@ def import_qualities(cells: dict[str, str], cat: CatalogDict, st: dict[str, Any]
         quality_id, pick = resolved
         # A quality taken twice is two entries, the way a .chum5 read writes it.
         quality_ids.append(quality_id)
+        if quality_id in mentor_qualities:
+            mentor_id = resolve_mentor(pick, cat) if pick else ""
+            if mentor_id:
+                st["mentor_id"] = mentor_id
+                continue
         if not pick:
             continue
         if not takes_extra.get(quality_id):
@@ -177,4 +117,4 @@ def import_qualities(cells: dict[str, str], cat: CatalogDict, st: dict[str, Any]
         st["quality_extras"] = extras
 
 
-__all__ = ["QUALITY_ROWS", "build_index", "candidates", "import_qualities", "resolve", "split_name"]
+__all__ = ["NAME_ALIASES", "QUALITY_ROWS", "build_index", "candidates", "import_qualities", "resolve", "split_name"]

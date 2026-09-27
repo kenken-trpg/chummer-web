@@ -16,11 +16,11 @@ import io
 import re
 import zipfile
 
-from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_SKILLS
+from app.xlsx_import._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_SKILLS
 
 #: The sheets the fixtures build, the three the import reads plus the one
 #: `is_template_workbook` insists on.
-SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, "編集不可")
+SHEETS = (SHEET_BASICS, SHEET_SKILLS, SHEET_KNOWLEDGE, SHEET_MAGIC, "編集不可")
 
 _CONTENT_TYPES = """<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -161,11 +161,39 @@ def knowledge_sheet(rows: list[dict[str, str]]) -> dict[str, str]:
     return cells
 
 
+#: The adept-power heading, which is how the reader finds the second half of the
+#: 呪文／複合体／アデプト・パワー sheet. Spells and complex forms sit above it.
+POWERS_HEADING_ROW = 24
+
+
+def magic_sheet(
+    spells: list[str] | None = None,
+    forms: list[str] | None = None,
+    powers: list[tuple[str, str]] | None = None,
+) -> dict[str, str]:
+    """The magic sheet: `spells` down column C and `forms` down column V from row
+    3, `powers` as (name, level) under the heading."""
+    cells = {f"A{POWERS_HEADING_ROW}": "アデプト・パワー", f"A{POWERS_HEADING_ROW + 1}": "名称"}
+    for offset, name in enumerate(spells or []):
+        cells[f"C{3 + offset}"] = name
+    for offset, name in enumerate(forms or []):
+        cells[f"V{3 + offset}"] = name
+    for offset, (name, level) in enumerate(powers or []):
+        row = POWERS_HEADING_ROW + 3 + offset
+        cells[f"A{row}"] = name
+        if level:
+            cells[f"F{row}"] = level
+    return cells
+
+
 def filled(
     *,
     skills: dict[str, dict[str, str]] | None = None,
     groups: dict[str, dict[str, str]] | None = None,
     knowledge: list[dict[str, str]] | None = None,
+    spells: list[str] | None = None,
+    forms: list[str] | None = None,
+    powers: list[tuple[str, str]] | None = None,
     **overrides: str,
 ) -> bytes:
     """A workbook of `BASELINE` plus `overrides`; a cell set to "" is removed."""
@@ -175,6 +203,8 @@ def filled(
         by_sheet[SHEET_SKILLS] = skill_sheet(groups, skills)
     if knowledge is not None:
         by_sheet[SHEET_KNOWLEDGE] = knowledge_sheet(knowledge)
+    if spells is not None or forms is not None or powers is not None:
+        by_sheet[SHEET_MAGIC] = magic_sheet(spells, forms, powers)
     return workbook(
         {ref: value for ref, value in cells.items() if value != ""},
         by_sheet=by_sheet,

@@ -4,8 +4,9 @@ sheet (音の兔 様, v2.3.2) — into this app's ``CharacterState``.
 The template is a Google Sheets document that players fill in and download as
 .xlsx. What comes over so far: the build method, the five priorities, the metatype, the
 kind of magic user, the attributes and the qualities (優先度／能力値／資質), the
-active skills and skill groups (能動技能／技能グループ) and the knowledge and
-language skills (知識技能／言語技能). Its remaining sheets — spells, ware, gear,
+active skills and skill groups (能動技能／技能グループ), the knowledge and
+language skills (知識技能／言語技能) and the spells, complex forms and adept
+powers (呪文／複合体／アデプト・パワー). Its remaining sheets — ware, gear,
 contacts — are not read yet, and the character arrives as a priority build still
 in creation, so the rest can be filled in here.
 
@@ -23,9 +24,10 @@ from typing import Any, cast
 from ..data_loader import catalog
 from ..models._common import clamp_input_ints
 from ..notices import Notice, NoticeError, notice
-from ._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_SKILLS
+from ._common import SHEET_BASICS, SHEET_KNOWLEDGE, SHEET_MAGIC, SHEET_SKILLS
 from ._sheet import NotAWorkbook, Workbook
 from .basics import import_basics
+from .magic import import_magic
 from .qualities import import_qualities
 from .skills import import_skills
 
@@ -59,6 +61,7 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
         # 知識技能／言語技能 is not in REQUIRED_SHEETS: a revision that renamed it
         # should still bring the rest of the character over.
         knowledge = workbook.cells(SHEET_KNOWLEDGE) if SHEET_KNOWLEDGE in workbook.sheet_names else {}
+        magic = workbook.cells(SHEET_MAGIC) if SHEET_MAGIC in workbook.sheet_names else {}
     except NotAWorkbook as exc:
         raise NoticeError(notice("api.notACharacterTemplate")) from exc
 
@@ -68,6 +71,7 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice]]:
     import_basics(basics, st, warn)
     import_qualities(basics, cat, st, warn)
     import_skills(active, knowledge, cat, st, warn)
+    import_magic(magic, cat, st, warn)
 
     seen: set[str] = set()
     unique: list[Notice] = []

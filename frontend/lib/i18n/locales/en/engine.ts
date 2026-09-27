@@ -363,6 +363,10 @@ export const EN_ENGINE = {
     'The magical style and aspected field of "{name}" could not be imported — choose the tradition and the quality again.',
   "engine.import.xlsxQualityNote":
     'The note "{note}" on the quality "{name}" could not be imported: this quality takes no target.',
+  "engine.import.xlsxPowerNote":
+    'The note "{note}" on the adept power "{name}" could not be imported: this power takes no target.',
+  "engine.import.xlsxPowerLevel":
+    'The character sheet gave the adept power "{name}" level {level}, but this power has no levels — it was imported as a single purchase.',
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
   "engine.term.contact": "contact",
