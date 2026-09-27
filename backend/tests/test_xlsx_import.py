@@ -24,7 +24,7 @@ from app.xlsx_import._common import (
     japanese_index,
 )
 from app.xlsx_import._match import SUGGEST_LIMIT, split_row
-from app.xlsx_import._sheet import NotAWorkbook, Workbook
+from app.xlsx_import._sheet import MAX_ENTRIES, NotAWorkbook, Workbook
 from app.xlsx_import.magic import MENTOR_ALIASES, mentor_index, resolve_mentor
 from app.xlsx_import.qualities import candidates, resolve, split_name
 from app.xlsx_import.skills import GROUP_ALIASES, SKILL_ALIASES
@@ -121,6 +121,40 @@ def test_refuses_a_part_that_unzips_too_large(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr("app.xlsx_import._sheet.MAX_PART_BYTES", 16)
     with pytest.raises(NotAWorkbook):
         Workbook(filled())
+
+
+def test_refuses_an_archive_of_too_many_entries() -> None:
+    """The per-part ceiling says nothing about how many parts there are."""
+    import io
+
+    buffer = io.BytesIO(filled())
+    with zipfile.ZipFile(buffer, "a") as archive:
+        for index in range(MAX_ENTRIES):
+            archive.writestr(f"pad{index}.xml", "<a/>")
+    with pytest.raises(NotAWorkbook):
+        Workbook(buffer.getvalue())
+
+
+def test_an_archive_at_the_entry_ceiling_still_reads() -> None:
+    """The limit refuses what is over it, not the workbook beside it."""
+    import io
+
+    buffer = io.BytesIO(filled())
+    with zipfile.ZipFile(buffer, "r") as archive:
+        room = MAX_ENTRIES - len(archive.infolist())
+    with zipfile.ZipFile(buffer, "a") as archive:
+        for index in range(room):
+            archive.writestr(f"pad{index}.xml", "<a/>")
+    assert Workbook(buffer.getvalue()).cells(SHEET_BASICS)
+
+
+def test_refuses_a_workbook_that_unzips_past_the_total(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Parts small enough one at a time still add up to too much."""
+    monkeypatch.setattr("app.xlsx_import._sheet.MAX_TOTAL_BYTES", 2500)
+    book = Workbook(filled())  # workbook.xml and its rels take ~2 KB of that
+    with pytest.raises(NotAWorkbook):
+        for name in book.sheet_names:
+            book.cells(name)
 
 
 @pytest.mark.parametrize(
