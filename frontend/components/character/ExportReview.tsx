@@ -13,7 +13,7 @@ import { useUiText } from "@/lib/i18n";
  */
 export function ExportReview({ ed }: { ed: CharacterEditor }) {
   const { ui } = useUiText();
-  const { exportReview, confirmExport, cancelExport, tr } = ed;
+  const { exportReview, exportReviewFormat, confirmExport, cancelExport, tr } = ed;
   if (!exportReview) return null;
   return (
     <section
@@ -21,7 +21,12 @@ export function ExportReview({ ed }: { ed: CharacterEditor }) {
       role="alertdialog"
       aria-labelledby="export-review-title"
     >
-      <p id="export-review-title">{ui("app.exportReview.title", { count: exportReview.length })}</p>
+      <p id="export-review-title">
+        {ui("app.exportReview.title", {
+          count: exportReview.length,
+          format: `.${exportReviewFormat ?? "chum5"}`,
+        })}
+      </p>
       <ul>
         {exportReview.map((d, i) => (
           <li key={`${d.key}-${i}`}>{renderNotice(d, ui, tr)}</li>

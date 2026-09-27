@@ -34,4 +34,21 @@ describe("<ExportReview>", () => {
     fireEvent.click(screen.getByRole("button", { name: "やめる" }));
     expect(ed.cancelExport).toHaveBeenCalled();
   });
+
+  it("names the format that was asked for, not whichever came first", () => {
+    // The panel is shared, and the heading used to say chum5 whatever was being
+    // written — so an .xlsx export told the player about a file it was not.
+    const differences = [
+      { key: "engine.export.changed", params: { kind: { ui: "engine.kind.other" } } },
+    ];
+    const { unmount } = render(
+      <ExportReview ed={makeEd({ exportReview: differences, exportReviewFormat: "xlsx" })} />,
+    );
+    expect(screen.getByRole("alertdialog").textContent).toContain(".xlsx");
+    expect(screen.getByRole("alertdialog").textContent).not.toContain("chum5");
+    unmount();
+
+    render(<ExportReview ed={makeEd({ exportReview: differences, exportReviewFormat: "chum5" })} />);
+    expect(screen.getByRole("alertdialog").textContent).toContain(".chum5");
+  });
 });

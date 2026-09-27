@@ -52,6 +52,8 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     differences: Notice[];
   } | null>(null);
   const exportReview = review && review.of === ch ? review.differences : null;
+  /** Which format the pending review was asked for, so the panel can name it. */
+  const exportReviewFormat = review && review.of === ch ? review.format : null;
   /** The 装備 rows of an .xlsx import that need a person to say what they are.
    *  Tied to the character they came from, so switching character shows that
    *  one's rows rather than the wrong sheet's. Kept in this browser (see
@@ -528,6 +530,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     error,
     notice,
     exportReview,
+    exportReviewFormat,
     importSheetUrl,
     pendingGear,
     resolvePendingGear,

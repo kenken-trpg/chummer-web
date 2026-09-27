@@ -374,7 +374,7 @@ export const EN_APP = {
   "app.gearReview.noneLikeIt": "Nothing in the book looks like it",
   "app.gearReview.skip": "Skip",
   "app.gearReview.dismiss": "Close the rest",
-  "app.exportReview.title": "Reading the exported chum5 back would change {count} things:",
+  "app.exportReview.title": "Reading the exported {format} back would change {count} things:",
   "app.exportReview.confirm": "Export anyway",
   "app.exportReview.cancel": "Cancel",
   "check.needsMentor": "No mentor spirit chosen",
