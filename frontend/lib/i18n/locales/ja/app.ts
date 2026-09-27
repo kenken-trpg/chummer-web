@@ -384,7 +384,7 @@ export const JA_APP = {
   "app.gearReview.skip": "飛ばす",
   "app.gearReview.dismiss": "残りをまとめて閉じる",
   "app.exportReview.title":
-    "書き出した chum5 を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
+    "書き出した {format} を読み込み直すと、次の {count} 件が変わります。このまま書き出しますか？",
   "app.exportReview.confirm": "このまま書き出す",
   "app.exportReview.cancel": "やめる",
   "check.needsMentor": "メンタースピリットが未選択です",
