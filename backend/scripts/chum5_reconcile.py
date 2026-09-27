@@ -111,10 +111,13 @@ things Chummer keeps exactly one of and loads field by field: the tradition
 and the mentor spirit. Everything else a save holds is a list this app
 rebuilds from its own catalogue, which is supposed to differ.
 
-It fails only on a field *both* sides state with different text. A field the
-export drops is counted and printed, but plenty of those are fields Chummer
-writes and never reads back, so the list is a measurement to work down rather
-than a verdict — `make reconcile` prints it every time.
+It fails on a field *both* sides state with different text, and on one
+Chummer states and reads back that the export leaves out. A field Chummer
+writes and never reads back — an attribute's `totalvalue`, recomputed on load
+— is named in `_ACCEPTED_DROPS` with the reason, and printed rather than
+counted against the export. Nothing else is: a field this app has not thought
+about fails the run, which is what makes this a gate (CI's `fidelity` job)
+rather than a reading to work down.
 
 `--items` lists what this app charges for each piece of one save (the first
 file whose name contains the text), to set beside the save's own `<cost>`
@@ -348,6 +351,65 @@ def _leaves(root: ET.Element) -> dict[str, str]:
     return out
 
 
+#: Fields Chummer states and this export deliberately does not, with why.
+#: Anything else the export drops is a gap: `--fidelity` fails on it, so the
+#: next field Chummer starts writing arrives as a test failure rather than as
+#: a bug report from someone whose character opened wrong.
+#:
+#: "Output only" means `Character.Load` never reads it back — Chummer writes
+#: it for other readers and recomputes it on load. Writing figures nobody
+#: reads is how the two sides drift apart quietly, so they stay out. The rest
+#: are 5.202-era spellings of something the export writes the current way;
+#: `Load` reads them only as a fallback, and only when the field it prefers is
+#: absent. See docs/plans/chum5-export-for-chummer-plan.md.
+_ACCEPTED_DROPS: dict[str, str] = {
+    "sumtoten": "output only",
+    "buildkarma": "output only",
+    "gameplayoptionqualitylimit": "output only",
+    "contactmultiplier": "output only",
+    "nuyenmaxbp": "output only",
+    "totaless": "output only",
+    "traditiondrain": "output only — the tradition states its own drain",
+    "streamdrain": "output only — the stream states its own fading",
+    "contactpointsused": "output only",
+    "walkalt": "output only",
+    "runalt": "output only",
+    "sprintalt": "output only",
+    "ESS/metatypemax": "output only — Essence's own maximum is the metatype's",
+    "ESS/metatypeaugmax": "output only",
+    "essenceatspecialstart": "Chummer's own unset value (decimal.MinValue) on a mundane character",
+    "movement": "legacy — walk / run / sprint say it now",
+    "priorityskill1": "legacy — <priorityskills><priorityskill> says it now",
+    "priorityskill2": "legacy — <priorityskills><priorityskill> says it now",
+    "stream": "legacy — <tradition> with traditiontype RES says it now",
+    "tradition": "legacy — the nested <tradition> says it now",
+    "tradition/id": "legacy — Tradition.Load prefers <sourceid>, which is written",
+}
+
+#: The same, by suffix, for the fields each attribute repeats.
+_ACCEPTED_DROP_SUFFIXES: dict[str, str] = {
+    "/totalvalue": "output only — recomputed on load",
+    "/metatypecategory": "output only — read off the abbreviation",
+    "/value": "legacy — pre-split saves only; base / karma say it now",
+}
+
+#: An attribute only pre-split Chummer had. Initiative is worked out from
+#: REA + INT now, so none of its fields have anywhere to go.
+_LEGACY_ATTRIBUTES = ("INI/",)
+
+
+def _accepted_drop(tag: str) -> str | None:
+    """Why this export leaves `tag` out, or `None` if it is a gap."""
+    if tag in _ACCEPTED_DROPS:
+        return _ACCEPTED_DROPS[tag]
+    for suffix, reason in _ACCEPTED_DROP_SUFFIXES.items():
+        if tag.endswith(suffix):
+            return reason
+    if tag.startswith(_LEGACY_ATTRIBUTES):
+        return "legacy attribute — Initiative is derived now"
+    return None
+
+
 def fidelity(path: Path) -> tuple[list[str], list[tuple[str, str, str]]]:
     """What Chummer states about a character that this app's export does not.
 
@@ -384,27 +446,34 @@ def report_fidelity(folder: Path) -> int:
     clean = 0
     for path in saves:
         dropped, changed = fidelity(path)
-        if not dropped and not changed:
+        if not changed and not any(_accepted_drop(tag) is None for tag in dropped):
             clean += 1
         dropped_counts.update(dropped)
         changed_counts.update(changed)
-    print(f"export fidelity: {clean} of {len(saves)} saves come back saying everything Chummer said")
-    if dropped_counts:
-        print(f"\ndropped — Chummer states it, the export does not ({len(dropped_counts)} fields):")
-        print("  (not all of these matter: Chummer recomputes an attribute's `totalvalue`")
-        print("   and `metatypecategory` on load and never reads them back. See")
-        print("   docs/plans/chum5-export-for-chummer-plan.md for which fields `Load` reads.)")
-        for tag, count in dropped_counts.most_common():
+    gaps = {tag: count for tag, count in dropped_counts.items() if _accepted_drop(tag) is None}
+    print(f"export fidelity: {clean} of {len(saves)} saves come back saying everything Chummer reads back")
+    print(f"  {len(gaps)} fields missing, {len(dropped_counts) - len(gaps)} dropped on purpose")
+    if gaps:
+        print("\nmissing — Chummer states it, reads it back, and the export drops it:")
+        for tag, count in sorted(gaps.items(), key=lambda kv: (-kv[1], kv[0])):
             print(f"  {count:>4}  {tag}")
+    if dropped_counts:
+        print(f"\ndropped on purpose ({len(dropped_counts) - len(gaps)} fields):")
+        for tag, count in dropped_counts.most_common():
+            reason = _accepted_drop(tag)
+            if reason is not None:
+                print(f"  {count:>4}  {tag} — {reason}")
     if changed_counts:
         print("\nchanged — both state it, with different text:")
         for (tag, theirs, ours), count in changed_counts.most_common():
             print(f"  {count:>4}  {tag}: Chummer {theirs!r}, ours {ours!r}")
-    # A dropped field is a measurement, not a verdict: plenty of them are
-    # fields Chummer writes and never reads back, and the list only shrinks as
-    # the export is filled in. A *changed* field is a contradiction — both
-    # sides state it and disagree — so that is what makes this fail.
-    return 1 if changed_counts else 0
+    # Two ways to fail. A *changed* field is a contradiction: both sides state
+    # it and disagree. A *missing* one is a field Chummer reads back and the
+    # export does not write — the character opens in Chummer without it. A
+    # drop listed in `_ACCEPTED_DROPS` is neither: it is a field Chummer
+    # writes for other readers, or an older spelling of one the export writes
+    # the current way.
+    return 1 if changed_counts or gaps else 0
 
 
 def items(path: Path) -> None:

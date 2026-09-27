@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 
-from scripts.chum5_reconcile import _leaves, _stored_prices
+from scripts.chum5_reconcile import _accepted_drop, _leaves, _stored_prices
 
 
 def _save(body: str) -> ET.Element:
@@ -145,3 +145,23 @@ def test_a_list_of_things_is_still_not_compared() -> None:
         <qualities><quality><name>Focused Concentration</name></quality></qualities>
     """)
     assert _leaves(root) == {"alias": "Skink"}
+
+
+def test_a_field_chummer_reads_back_is_a_gap_not_a_note() -> None:
+    """`_accepted_drop` is what makes `--fidelity` a gate rather than a
+    reading. Everything it does not name fails the run, so a field Chummer
+    starts writing arrives as a test failure; naming one is a claim, with the
+    reason, that Chummer does not read it back."""
+    assert _accepted_drop("playername") is None
+    assert _accepted_drop("gamenotes") is None
+    assert _accepted_drop("tradition/traditiontype") is None
+
+
+def test_the_fields_chummer_recomputes_are_named_with_their_reason() -> None:
+    for tag in ("sumtoten", "totaless", "BOD/totalvalue", "MAG/metatypecategory"):
+        assert (_accepted_drop(tag) or "").startswith("output only")
+    # 5.202-era spellings of something the export writes the current way
+    for tag in ("movement", "priorityskill1", "stream", "tradition", "tradition/id", "BOD/value"):
+        assert "legacy" in (_accepted_drop(tag) or "")
+    # Initiative was an attribute of its own before it was derived
+    assert _accepted_drop("INI/metatypemin") is not None
