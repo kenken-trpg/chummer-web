@@ -224,6 +224,20 @@ jobs:
       - run: ../scripts/retry.sh npm ci --ignore-scripts
       - run: npm run format:check
       - run: npm run test
+
+      # The same compile cache `frontend` and `e2e` keep, under a third key:
+      # those two say why the keys are separate (a shared one would have the
+      # jobs racing to write it), and this one could not share theirs anyway —
+      # the cache is written by a different platform's Next. Without it this
+      # job builds from cold every run, which is why it is the longest job here
+      # and, at 2.5 min against a 4 min wall clock, on the critical path.
+      - name: Cache Next build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: frontend/.next/cache
+          key: next-windows-${{ hashFiles('frontend/package-lock.json') }}-${{ hashFiles('frontend/**/*.ts', 'frontend/**/*.tsx', 'frontend/**/*.css') }}
+          restore-keys: next-windows-${{ hashFiles('frontend/package-lock.json') }}-
+
       - run: npm run build
 
   # A real browser against both halves at once — the one thing the 252 unit
