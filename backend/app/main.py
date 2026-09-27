@@ -13,7 +13,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from .api import catalog, characters, csp
+from .api import catalog, characters, csp, export_routes, import_routes
 from .api.deploy import _ALLOWED_ORIGINS, _MAX_REQUEST_BYTES, limiter
 from .api.middleware import _LimitBodySize, _request_context
 from .logging_config import configure_logging
@@ -113,3 +113,5 @@ def health() -> dict:
 app.include_router(csp.router)
 app.include_router(catalog.router)
 app.include_router(characters.router)
+app.include_router(import_routes.router)
+app.include_router(export_routes.router)

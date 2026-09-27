@@ -289,7 +289,7 @@ def test_a_hop_off_google_is_not_followed() -> None:
 
 
 def test_the_route_imports_a_sheet_and_answers_like_the_upload(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.api.characters.fetch_sheet", lambda url: filled())
+    monkeypatch.setattr("app.api.import_routes.fetch_sheet", lambda url: filled())
     with TestClient(app) as client:
         res = client.post("/api/characters/import-sheet-url", json={"url": EDIT})
     assert res.status_code == 200
@@ -325,7 +325,7 @@ def _fetches(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         asked.append(url)
         return filled()
 
-    monkeypatch.setattr("app.api.characters.fetch_sheet", fake)
+    monkeypatch.setattr("app.api.import_routes.fetch_sheet", fake)
     limiter.reset()
     return asked
 
@@ -355,7 +355,7 @@ def test_the_shared_ceiling_holds_when_every_caller_looks_different(monkeypatch:
     asked = _fetches(monkeypatch)
     monkeypatch.setattr(deploy, "_TRUST_CLOUDFLARE_IP", True)
     per_caller = parse(_SHEET_URL_RATE_LIMIT).amount
-    monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1000/minute"))
+    monkeypatch.setattr("app.api.import_routes._SHEET_URL_TOTAL_LIMIT", parse("1000/minute"))
 
     def ask(client: TestClient, n: int) -> int:
         return client.post(
@@ -367,7 +367,7 @@ def test_the_shared_ceiling_holds_when_every_caller_looks_different(monkeypatch:
     with TestClient(app) as client:
         loose = [ask(client, n) for n in range(1, per_caller + 4)]
         assert loose == [200] * len(loose) and len(loose) > per_caller, "the buckets are not per address"
-        monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
+        monkeypatch.setattr("app.api.import_routes._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
         limiter.reset()
         asked.clear()
         tight = [ask(client, n) for n in range(100, 104)]
@@ -377,7 +377,7 @@ def test_the_shared_ceiling_holds_when_every_caller_looks_different(monkeypatch:
 
 def test_the_shared_refusal_says_to_wait_or_use_the_file(monkeypatch: pytest.MonkeyPatch) -> None:
     _fetches(monkeypatch)
-    monkeypatch.setattr("app.api.characters._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
+    monkeypatch.setattr("app.api.import_routes._SHEET_URL_TOTAL_LIMIT", parse("1/minute"))
     with TestClient(app) as client:
         client.post("/api/characters/import-sheet-url", json={"url": EDIT})
         res = client.post("/api/characters/import-sheet-url", json={"url": EDIT})
