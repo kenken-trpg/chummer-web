@@ -424,6 +424,8 @@ export const JA_ENGINE = {
   "engine.export.xlsxNoCell":
     "キャラシの選択肢に「{name}」がないので、{kind}は「{instead}」として書き出します",
   "engine.export.xlsxNoPlace": "{name}は取り付け先が装備シートにないので書き出せません",
+  "engine.export.xlsxNoSettings":
+    "キャラシには設定（使用ルールブック・ハウスルール）の欄がないので、設定「{name}」は引き継げません。読み込み直したキャラクターは既定の設定になります",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

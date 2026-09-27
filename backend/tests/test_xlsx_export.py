@@ -19,9 +19,9 @@ from typing import Any
 
 import pytest
 
-from app.characters import import_character
+from app.characters import import_character, new_character
 from app.data_loader import catalog
-from app.models import CharacterState
+from app.models import CharacterCreate, CharacterState
 from app.notices import Notice
 from app.xlsx_export import MARKER_SHEET, state_to_xlsx, xlsx_limits
 from app.xlsx_export._workbook import column_index, write_workbook
@@ -464,3 +464,16 @@ def test_a_build_method_the_sheet_has_no_setting_for_is_reported() -> None:
 
 def test_a_character_from_the_template_loses_nothing() -> None:
     assert roundtrip_differences(_character(skills={"ピストル": {"I": "4.0"}})) == []
+
+
+def test_the_settings_are_reported_in_their_own_words() -> None:
+    """The template is a character-creation sheet: it has no cell for which
+    rulebooks are in play. That is lost on every character that has settings, so
+    it is said plainly and once rather than counted as 「その他が変わります」 —
+    which would arrive on every single export and read as a fault.
+    """
+    character = new_character(CharacterCreate(name="Settings"))
+    assert character.settings.name
+    keys = _keys(roundtrip_differences(character))
+    assert "engine.export.xlsxNoSettings" in keys
+    assert "engine.export.changed" not in keys

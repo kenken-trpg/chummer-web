@@ -101,16 +101,21 @@ def _field_changes(field: str, before: Any, after: Any) -> tuple[int, int] | Non
     return None if before == after else (0, 0)
 
 
-def differences(first: CharacterState, again: CharacterState) -> list[Notice]:
+def differences(first: CharacterState, again: CharacterState, skip: frozenset[str] = frozenset()) -> list[Notice]:
     """What `again` — `first` written out and read back — came back missing.
 
     Empty when the character survived the round trip whole.
+
+    `skip` names fields this format reports in its own words instead. A loss a
+    format takes on *every* character is better said once and plainly than
+    counted here: lumped in, it arrives as 「その他が変わります」 on every single
+    export, which reads as a fault and trains the player to click past the panel.
     """
     before, after = first.model_dump(), again.model_dump()
 
     by_kind: dict[str, list[int]] = {}
     for field, value in before.items():
-        if field in _SKIP:
+        if field in _SKIP or field in skip:
             continue
         change = _field_changes(field, value, after.get(field))
         if change is None:

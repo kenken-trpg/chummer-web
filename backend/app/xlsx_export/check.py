@@ -20,11 +20,17 @@ from __future__ import annotations
 from ..characters import import_character
 from ..export_check import differences
 from ..models import CharacterState
-from ..notices import Notice
+from ..notices import Notice, notice
 from ..xlsx_import import xlsx_to_state
 from . import state_to_xlsx, xlsx_limits
 
 __all__ = ["roundtrip_differences"]
+
+#: Said in its own words below rather than counted with the character's own
+#: contents. The template is a character-creation sheet: it has no cell for
+#: which rulebooks are in play or which house rules are on, so this is lost on
+#: every export and would otherwise report 「その他が変わります」 every time.
+_OWN_WORDS = frozenset({"settings"})
 
 
 def roundtrip_differences(state: CharacterState) -> list[Notice]:
@@ -38,4 +44,7 @@ def roundtrip_differences(state: CharacterState) -> list[Notice]:
     """
     first = import_character(state.model_dump())
     again = import_character(xlsx_to_state(state_to_xlsx(first))[0])
-    return xlsx_limits(first) + differences(first, again)
+    out = xlsx_limits(first)
+    if first.settings != again.settings:
+        out.append(notice("engine.export.xlsxNoSettings", name=(first.settings.name or "")))
+    return out + differences(first, again, skip=_OWN_WORDS)
