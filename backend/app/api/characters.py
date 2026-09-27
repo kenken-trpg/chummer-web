@@ -21,6 +21,7 @@ from ..fvtt_import import fvtt_to_state
 from ..models import CharacterCreate, CharacterState, CustomDataUpload, FvttExportRequest, PatchRequest, StateRequest
 from ..notices import NoticeError, notice
 from ..settings_file import parse_settings_upload
+from ..xlsx_import import xlsx_to_state
 from .deploy import _IMPORT_RATE_LIMIT, limiter
 
 _log = logging.getLogger("chummer_web")
@@ -208,6 +209,22 @@ def import_chummer(request: Request, body: bytes = Body(..., media_type="applica
     except Exception as exc:  # noqa: BLE001
         _log.exception("chum5 import failed")
         raise HTTPException(status_code=400, detail=notice("api.importChummerFailed")) from exc
+
+
+@router.post("/api/characters/import-xlsx")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def import_xlsx(request: Request, body: bytes = Body(..., media_type="application/octet-stream")) -> dict:
+    """Import a filled-in シャドウラン_キャラシテンプレート (.xlsx). Returns the
+    character plus a list of things that could not be mapped."""
+    try:
+        state, warnings = xlsx_to_state(body)
+        char = import_character(state)
+        return {"character": char.model_dump(), "warnings": warnings}
+    except NoticeError as exc:
+        raise HTTPException(status_code=400, detail=exc.notice) from exc
+    except Exception as exc:  # noqa: BLE001
+        _log.exception("xlsx import failed")
+        raise HTTPException(status_code=400, detail=notice("api.importXlsxFailed")) from exc
 
 
 @router.post("/api/characters/import-fvtt")

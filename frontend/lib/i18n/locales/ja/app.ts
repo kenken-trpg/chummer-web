@@ -229,6 +229,9 @@ export const JA_APP = {
   "api.importFvttFailed": "この Foundry VTT のアクターを取り込めませんでした。",
   "api.notAnFvttActor":
     "Foundry VTT のキャラクターではないようです（shadowrun5e のキャラクターアクターで Export Data したものを選んでください）",
+  "api.importXlsxFailed": "このキャラシテンプレートを取り込めませんでした。",
+  "api.notACharacterTemplate":
+    "シャドウラン用のキャラシテンプレートではないようです（Google スプレッドシートの「［SR5］キャラシテンプレート」を .xlsx で書き出したものを選んでください）",
   "api.settingsParseFailed":
     "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.customDataMissing":

@@ -224,6 +224,9 @@ export const EN_APP = {
   "api.importFvttFailed": "This Foundry VTT actor could not be imported.",
   "api.notAnFvttActor":
     "This does not look like a Foundry VTT character (use Export Data on a shadowrun5e character actor).",
+  "api.importXlsxFailed": "This character-sheet template could not be imported.",
+  "api.notACharacterTemplate":
+    'This does not look like the Shadowrun character-sheet template (download the "［SR5］キャラシテンプレート" Google Sheet as .xlsx and choose that file).',
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.customDataMissing":
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",

@@ -357,6 +357,12 @@ export const EN_ENGINE = {
     "The portrait was not imported: it is over 3 MB or not a PNG / JPEG / GIF / WebP image",
   "engine.import.skippedUnknown": "Skipped {kind} “{name}”: not in the catalog",
 
+  "engine.import.xlsxPlayLevel":
+    'The character sheet was set to the "{level}" play level, which uses a different priority table — pick it again in the creation settings.',
+  "engine.import.xlsxMagicStyle":
+    'The magical style and aspected field of "{name}" could not be imported — choose the tradition and the quality again.',
+  "engine.import.xlsxQualityNote":
+    'The note "{note}" on the quality "{name}" could not be imported: this quality takes no target.',
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
   "engine.term.contact": "contact",

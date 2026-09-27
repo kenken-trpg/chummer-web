@@ -357,6 +357,12 @@ export const JA_ENGINE = {
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
 
+  "engine.import.xlsxPlayLevel":
+    "キャラシテンプレートのプレイレベルが「{level}」でした。優先度表が異なるので、作成設定で選び直してください",
+  "engine.import.xlsxMagicStyle":
+    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（伝統と資質で選び直してください）",
+  "engine.import.xlsxQualityNote":
+    "資質「{name}」の補足「{note}」は取り込めませんでした（この資質には対象を持たせられません）",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
   "engine.term.contact": "コンタクト",
   "engine.term.gear": "ギア",
