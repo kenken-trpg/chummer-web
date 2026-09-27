@@ -246,6 +246,8 @@ export const JA_APP = {
   "api.sheetUrlNotShared":
     "このシートは共有されていないため読めません（シートの「共有」で「リンクを知っている全員」にするか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください）",
   "api.sheetUrlTooBig": "このシートは大きすぎて読み込めません。",
+  "api.sheetUrlTimedOut":
+    "Google スプレッドシートからの読み込みに時間がかかりすぎました。時間をおいて試すか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください。",
   "api.sheetUrlBusy":
     "URL からの取り込みが立て込んでいます。少し待ってから試すか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください。",
   "api.sheetUrlFailed":
