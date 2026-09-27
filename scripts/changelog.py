@@ -8,11 +8,13 @@ release.
 
     python scripts/changelog.py collect         # fold fragments in, delete them
     python scripts/changelog.py check-empty     # fail if any fragment is left
-    python scripts/changelog.py check-pr BASE   # CI: a code PR adds a fragment
+    python scripts/changelog.py check-pr BASE [TITLE] [AUTHOR]  # CI: a code PR
+                                                # adds a fragment
 """
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -26,6 +28,20 @@ TYPES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 # A PR touching only these needs no entry (docs, CI, the changelog itself).
 CODE = ("backend/", "frontend/", "Dockerfile", "compose.yaml", "deploy/")
 SKIP_MARK = "[skip changelog]"
+# Accounts whose pull requests are dependency bumps and nothing else.
+BOTS = ("dependabot[bot]",)
+# The manifests that only the toolchain reads. A bot moving these alone needs no
+# entry: its own pull request body and the lockfile are the record, and a Keep a
+# Changelog bullet per patch bump is a line nobody reads. Everything else a bot
+# could touch ships — `requirements.txt`, the Dockerfile, `deploy/` — and a
+# security fix in a dependency the image carries is a change a user feels, so
+# that still wants an entry. `package.json` is in here on the condition below:
+# it holds both halves, and only `devDependencies` is the toolchain.
+DEV_MANIFESTS = (
+    "backend/requirements-dev.txt",
+    "frontend/package.json",
+    "frontend/package-lock.json",
+)
 
 
 def fragments() -> dict[str, list[Path]]:
@@ -88,7 +104,22 @@ def check_empty() -> int:
     return 0
 
 
-def check_pr(base: str, title: str = "") -> int:
+def _runtime_deps(rev: str) -> dict[str, str]:
+    """`dependencies` from frontend/package.json at one revision, {} if absent."""
+    done = subprocess.run(
+        ["git", "show", f"{rev}:frontend/package.json"],
+        capture_output=True,
+        text=True,
+        check=False,  # the revision may predate the file; that is not an error
+        cwd=ROOT,
+    )
+    if done.returncode != 0:
+        return {}
+    deps = json.loads(done.stdout).get("dependencies", {})
+    return dict(deps)
+
+
+def check_pr(base: str, title: str = "", author: str = "") -> int:
     fragments()  # a misnamed fragment fails here, not at release time
     changed = subprocess.run(
         ["git", "diff", "--name-only", f"{base}...HEAD"],
@@ -100,8 +131,18 @@ def check_pr(base: str, title: str = "") -> int:
     if SKIP_MARK in title:
         print(f"{SKIP_MARK} in the title — not checking")
         return 0
-    if not any(f.startswith(CODE) for f in changed):
+    code = [f for f in changed if f.startswith(CODE)]
+    if not code:
         print("no code changes — no entry needed")
+        return 0
+    # Only the code files are weighed: a bot touching something outside CODE as
+    # well (its own config, say) is not a reason to demand an entry.
+    if (
+        author in BOTS
+        and all(f in DEV_MANIFESTS for f in code)
+        and _runtime_deps(base) == _runtime_deps("HEAD")
+    ):
+        print(f"{author}, and only the toolchain manifests moved — no entry needed")
         return 0
     if any(f.startswith("changelog.d/") and f != "changelog.d/README.md" for f in changed):
         print("ok — the PR adds a changelog fragment")
@@ -118,7 +159,7 @@ def main(argv: list[str]) -> int:
         return collect()
     if argv[:1] == ["check-empty"]:
         return check_empty()
-    if argv[:1] == ["check-pr"] and len(argv) in (2, 3):
+    if argv[:1] == ["check-pr"] and len(argv) in (2, 3, 4):
         return check_pr(*argv[1:])
     print(__doc__)
     return 2
