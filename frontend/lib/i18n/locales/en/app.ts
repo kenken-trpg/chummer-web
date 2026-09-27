@@ -230,6 +230,13 @@ export const EN_APP = {
   "api.importXlsxFailed": "This character-sheet template could not be imported.",
   "api.notACharacterTemplate":
     'This does not look like the Shadowrun character-sheet template (download the "［SR5］キャラシテンプレート" Google Sheet as .xlsx and choose that file).',
+  "api.sheetUrlNotASheet":
+    "This does not look like a Google Sheets URL (paste the https://docs.google.com/spreadsheets/d/\u2026 address from the browser's address bar).",
+  "api.sheetUrlNotShared":
+    'This sheet is not readable: share it with "Anyone with the link", or download it as .xlsx (File > Download) and choose that file.',
+  "api.sheetUrlTooBig": "This sheet is too large to read.",
+  "api.sheetUrlFailed":
+    "This sheet could not be read from Google Sheets. Try again later, or download it as .xlsx (File > Download) and choose that file.",
   "api.settingsParseFailed": "This file could not be read as a Chummer settings file.",
   "api.customDataMissing":
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",

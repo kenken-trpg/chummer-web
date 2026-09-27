@@ -14,6 +14,7 @@ from .character import (
     FvttExportRequest,
     PatchRequest,
     Priorities,
+    SheetUrlRequest,
     StateRequest,
 )
 from .gear import (
@@ -78,6 +79,7 @@ __all__ = [
     "CustomDataUpload",
     "CharacterCreate",
     "CharacterState",
+    "SheetUrlRequest",
     "StateRequest",
     "FvttExportRequest",
     "PatchRequest",

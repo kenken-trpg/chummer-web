@@ -235,6 +235,13 @@ export const JA_APP = {
   "api.importXlsxFailed": "このキャラシテンプレートを取り込めませんでした。",
   "api.notACharacterTemplate":
     "シャドウラン用のキャラシテンプレートではないようです（Google スプレッドシートの「［SR5］キャラシテンプレート」を .xlsx で書き出したものを選んでください）",
+  "api.sheetUrlNotASheet":
+    "Google スプレッドシートの URL ではないようです（ブラウザのアドレス欄にある https://docs.google.com/spreadsheets/d/… をそのまま貼ってください）",
+  "api.sheetUrlNotShared":
+    "このシートは共有されていないため読めません（シートの「共有」で「リンクを知っている全員」にするか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください）",
+  "api.sheetUrlTooBig": "このシートは大きすぎて読み込めません。",
+  "api.sheetUrlFailed":
+    "Google スプレッドシートから読み込めませんでした。時間をおいて試すか、「ファイル > ダウンロード > .xlsx」で保存したファイルを選んでください。",
   "api.settingsParseFailed":
     "このファイルは Chummer のセッティングファイルとして読めませんでした。",
   "api.customDataMissing":

@@ -18,9 +18,18 @@ from ..customdata import dataset_hash
 from ..dataset_store import MAX_UPLOAD_BYTES, lookup, remember
 from ..fvtt_export import state_to_fvtt
 from ..fvtt_import import fvtt_to_state
-from ..models import CharacterCreate, CharacterState, CustomDataUpload, FvttExportRequest, PatchRequest, StateRequest
+from ..models import (
+    CharacterCreate,
+    CharacterState,
+    CustomDataUpload,
+    FvttExportRequest,
+    PatchRequest,
+    SheetUrlRequest,
+    StateRequest,
+)
 from ..notices import NoticeError, notice
 from ..settings_file import parse_settings_upload
+from ..sheets_url import fetch_sheet
 from ..xlsx_export import state_to_xlsx
 from ..xlsx_export.check import roundtrip_differences as xlsx_differences
 from ..xlsx_import import xlsx_to_state
@@ -259,6 +268,32 @@ def import_xlsx(request: Request, body: bytes = Body(..., media_type="applicatio
         raise HTTPException(status_code=400, detail=exc.notice) from exc
     except Exception as exc:  # noqa: BLE001
         _log.exception("xlsx import failed")
+        raise HTTPException(status_code=400, detail=notice("api.importXlsxFailed")) from exc
+
+
+@router.post("/api/characters/import-sheet-url")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def import_sheet_url(request: Request, req: SheetUrlRequest) -> dict:
+    """Import a キャラシテンプレート from its Google Sheets address.
+
+    The same import as the uploaded .xlsx — only where the bytes come from
+    differs, so the answer has the same shape, `pending_gear` included. Only a
+    sheet shared with 「リンクを知っている全員」 can be read: see `sheets_url`,
+    which is also the only outbound request this backend makes.
+    """
+    # Outside the try below: what went wrong fetching is worth saying precisely
+    # (「共有されていません」 asks something different of the player than a bad
+    # URL does), and `NoticeError` already leaves here as a 400 carrying its own
+    # reason — see the handler in `main`.
+    body = fetch_sheet(req.url)
+    try:
+        state, warnings, pending = xlsx_to_state(body)
+        char = import_character(state)
+        return {"character": char.model_dump(), "warnings": warnings, "pending_gear": pending}
+    except NoticeError as exc:
+        raise HTTPException(status_code=400, detail=exc.notice) from exc
+    except Exception as exc:  # noqa: BLE001
+        _log.exception("sheet url import failed")
         raise HTTPException(status_code=400, detail=notice("api.importXlsxFailed")) from exc
 
 
