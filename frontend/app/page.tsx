@@ -15,6 +15,7 @@ import { useKeyboardShortcuts } from "@/lib/character/useKeyboardShortcuts";
 import { BooksProvider } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
 import { ExportReview } from "@/components/character/ExportReview";
+import { ImportReport } from "@/components/character/ImportReport";
 import { SheetUrlImport } from "@/components/character/SheetUrlImport";
 import { GearReview } from "@/components/character/GearReview";
 
@@ -83,6 +84,7 @@ export default function Page() {
             <SheetUrlImport ed={ed} />
             {notice ? <p className="notice">{notice}</p> : null}
             <ExportReview ed={ed} />
+            <ImportReport ed={ed} />
             <GearReview ed={ed} />
           </header>
 
