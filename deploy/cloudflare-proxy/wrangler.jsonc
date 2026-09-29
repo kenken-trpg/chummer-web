@@ -1,0 +1,30 @@
+// A Worker that fronts a private Cloud Run service (see src/index.ts).
+// Deploy from this directory:
+//
+//   npm install
+//   npx wrangler login
+//   npx wrangler secret put GCP_SA_KEY   # paste the whole key JSON
+//   npx wrangler deploy
+//
+// See docs/deploy.md › Cloud Run behind a Cloudflare Worker.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "chummer-web-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // The custom domain below is the only way in, so a WAF rule on the zone
+  // cannot be walked around via *.workers.dev.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    // Staged: bring this up on a spare name first, confirm it, and only then
+    // move the public hostname over from whatever serves it today.
+    { "pattern": "cr.example.com", "custom_domain": true }
+  ],
+  "vars": {
+    // The service's own URL. Also the audience the minted token carries, so
+    // it must be exact.
+    "RUN_URL": "https://chummer-web-<project-number>.asia-northeast1.run.app"
+  },
+  "observability": { "enabled": true }
+}
