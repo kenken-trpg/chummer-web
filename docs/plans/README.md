@@ -51,6 +51,10 @@
 - [`print-sheet-plan.md`](print-sheet-plan.md) — 印刷 / PDF 用レイアウト
 - [`fvtt-export-plan.md`](fvtt-export-plan.md) — Foundry VTT（shadowrun5e 0.34.5）向け書き出しのフィールド対応表
 
+### デプロイ
+
+- [`cloud-run-plan.md`](cloud-run-plan.md) — Google Cloud Run で公開するまでの段取り
+
 ### 翻訳
 
 - [`translation-plan.md`](translation-plan.md) — 日本語化のフェーズ計画。生成物の
