@@ -18,7 +18,7 @@ import xml.etree.ElementTree as ET
 from functools import lru_cache
 from typing import Any
 
-from .data_loader._xml import DATA_DIR, _text, parse_untrusted
+from .data_loader._xml import DATA_DIR, _text, parse_untrusted, parse_vendored
 from .models import SettingsState
 from .rules import DEFAULT_PRIORITY_TABLE
 
@@ -235,7 +235,7 @@ def _baseline() -> dict[str, str]:
     if not path.exists():
         return {}
     try:
-        root = ET.parse(path).getroot()  # noqa: S314 -- vendored settings.xml
+        root = parse_vendored(path)
     except ET.ParseError:
         return {}
     for setting in root.findall("./settings/setting"):

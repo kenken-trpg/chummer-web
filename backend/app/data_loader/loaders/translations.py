@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import xml.etree.ElementTree as ET
 
-from .._xml import LANG_DIR, OVERRIDE_DIR, _text, log
+from .._xml import LANG_DIR, OVERRIDE_DIR, _text, log, parse_vendored
 
 
 def _load_ja_overrides(filename: str) -> dict[str, str]:
@@ -34,7 +34,7 @@ def load_translations() -> dict[str, str]:
     path = LANG_DIR / "ja-jp_data.xml"
     if path.exists():
         try:
-            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
+            root = parse_vendored(path)
         except ET.ParseError as exc:
             log.warning("ja-jp_data.xml parse failed: %s", exc)
         else:
@@ -85,7 +85,7 @@ def load_skill_group_names() -> dict[str, str]:
     names: dict[str, str] = {}
     if path.exists():
         try:
-            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
+            root = parse_vendored(path)
         except ET.ParseError as exc:
             log.warning("ja-jp_data.xml parse failed: %s", exc)
         else:
@@ -115,7 +115,7 @@ def load_book_names() -> dict[str, str]:
     if not path.exists():
         return {}
     try:
-        root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
+        root = parse_vendored(path)
     except ET.ParseError as exc:
         log.warning("ja-jp_data.xml parse failed: %s", exc)
         return {}
@@ -213,7 +213,7 @@ def load_ui_strings(locale: str = "ja") -> dict[str, str]:
     strings: dict[str, str] = {}
     if path.exists():
         try:
-            root = ET.parse(path).getroot()  # noqa: S314 -- vendored lang file
+            root = parse_vendored(path)
         except ET.ParseError as exc:
             log.warning("%s parse failed: %s", filename, exc)
         else:
