@@ -8,6 +8,7 @@ import {
   portraitsPatch,
 } from "@/lib/character/portrait";
 import { clearPendingGear } from "@/lib/character/pending-gear-store";
+import { advancesOneLeaf } from "@/lib/character/patch-queue";
 import { useCatalogReload } from "@/lib/character/useCatalogReload";
 import { useCharacterExport } from "@/lib/character/useCharacterExport";
 import { useCharacterImport } from "@/lib/character/useCharacterImport";
@@ -47,6 +48,10 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
+  /** The body on the wire, and the one edit held back behind it. Both are
+   *  only set while `busy`, so the unload guard below already covers them. */
+  const inFlight = useRef<Record<string, unknown> | null>(null);
+  const queued = useRef<Record<string, unknown> | null>(null);
   // `lib/api` and `local-store` have no locale and no React — they report a
   // degraded save / a stale compute as a message key. See `lib/notices`.
   //
@@ -189,20 +194,48 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     }
   }
 
+  /**
+   * Send one edit, and hold onto an edit that arrives while it is in flight
+   * when — and only when — holding onto it is safe.
+   *
+   * Patches go one at a time because `api.patch` applies the body to the
+   * character as stored. An edit that arrives during that window used to be
+   * dropped, which a number input shows by springing back to its old value;
+   * see `patch-queue` for why blindly queueing would be worse rather than
+   * better, and what makes the queued case safe.
+   */
   async function patch(body: Record<string, unknown>) {
-    if (!ch || busy.current) return;
+    if (!ch) return;
+    if (busy.current) {
+      // Compare against what is *going* to be sent, not what is on the wire:
+      // a third change while the second waits is a step on from the second.
+      const previous = queued.current ?? inFlight.current;
+      if (previous && advancesOneLeaf(previous, body)) queued.current = body;
+      return;
+    }
     busy.current = true;
-    const base = lastCommitted.current ?? ch;
     try {
-      const next = await api.patch(ch.id, body);
-      history.record(base);
-      setCh(next);
-      lastCommitted.current = next;
-      setError(null);
+      let send: Record<string, unknown> | null = body;
+      while (send) {
+        inFlight.current = send;
+        queued.current = null;
+        const base = lastCommitted.current ?? ch;
+        const next = await api.patch(ch.id, send);
+        history.record(base);
+        setCh(next);
+        lastCommitted.current = next;
+        setError(null);
+        send = queued.current;
+      }
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.patch"));
     } finally {
+      // A failure drops whatever was waiting: it was composed against a
+      // character this one never became, and the person is looking at an
+      // error rather than at the edit they expected.
       busy.current = false;
+      inFlight.current = null;
+      queued.current = null;
     }
   }
 
