@@ -37,9 +37,10 @@ digest を選び、`crane copy` で Artifact Registry へ複写して digest 指
 
 ### 分かったこと
 
-**1. `--cpu-boost` は端から端まででは効かない。** 17 分アイドル後の 1 本目:
+**1. `--cpu-boost` は端から端まででは効かない。** アイドル後の 1 本目（起動
+プローブが `/api/health` のとき、17 分アイドル）:
 
-| | コンテナ起動 | 1 本目の `/api/catalog` | 合計 |
+| | 最初の 200 | 1 本目の `/api/catalog` | 合計 |
 | --- | --- | --- | --- |
 | `--cpu-boost` あり | 5.9 s | 5.1 s（サーバ側 4754 ms） | 約 11 s |
 | `--no-cpu-boost` | 10.4 s | 0.7 s（サーバ側 215 ms） | 約 11 s |
@@ -56,18 +57,35 @@ boost は起動から 4.5 秒を削り、その 4.5 秒を catalog 側に渡す�
 起動プローブはこちらを見る。失敗したウォームアップも ready を返す（さもないと
 ready にならないコンテナを再起動し続けるプラットフォームで無限ループになる）。
 
-**3. catalog の構築コスト** —— 手元の M 系 Mac で 0.51 秒、Cloud Run の 1 vCPU で
+**3. その効果を測った**（リビジョン `chummer-web-00004-84z`、21 分アイドル、
+boost なし、起動プローブ `/api/ready`）:
+
+| | 最初の 200 | 1 本目の `/api/catalog` | 合計 |
+| --- | --- | --- | --- |
+| 起動プローブ `/api/ready` | 13.3 s | 0.77 s（サーバ側 **90 ms**） | 約 13 s |
+
+**これは単純な改善ではなく取引だった。** 二重構築は消えた（サーバ側
+4754 ms → 90 ms、1 本目の `/api/health` も 0.099 s で既に温かい）が、最初の
+利用者の待ちは 10.4 → 13.3 秒に伸びた。伸びた 2.9 秒は、以前 Cloud Run が
+温まりきる前にトラフィックを入れて利用者に付け替えていた分そのもの。
+
+割に合うのは **cron keepalive（10 分ごと）を前提にするから**で、その場合この
+13.3 秒は「keepalive が落ちたときの最悪値」であり、常時の体感は温まった状態の
+値になる。keepalive を入れないなら `/api/health` + boost なしのほうが速い。
+
+**4. catalog の構築コスト** —— 手元の M 系 Mac で 0.51 秒、Cloud Run の 1 vCPU で
 約 3.3 秒。`docs/deploy.md` の「first request after idle pays the one-off
 `catalog()` XML parse」は正しい記述だった（一度これを否定したが、誤りだった）。
 
-**4. ピークメモリ 約 300 MiB**（Cloud Monitoring、`1Gi` の 0.29）。`512Mi` でも
+**5. ピークメモリ 約 300 MiB**（Cloud Monitoring、`1Gi` の 0.29）。`512Mi` でも
 6 割で収まる。書き込み先の tmpfs もここに乗る。
 
-**5. 温まった状態**（東京、国内から）: `/api/health` ttfb 75〜120 ms、
-`/api/catalog` ttfb 67〜90 ms・total 0.37〜0.49 s（2.99 MB）、ページ `/` 0.30〜0.47 s。
-サーバ側の処理は 1〜2 ms なので、ほぼ往復と転送。
+**6. 温まった状態**（東京、国内から）: `/api/health` ttfb 74〜130 ms、
+`/api/catalog` ttfb 70〜90 ms・total 0.48〜0.77 s（非圧縮 2.99 MB。gzip なら
+425,599 バイト・0.12 s）、ページ `/` total 0.46 s。サーバ側の処理は 1〜5 ms
+なので、ほぼ往復と転送。
 
-**6. 匿名公開は組織ポリシーに阻まれた。** `--allow-unauthenticated` は `allUsers`
+**7. 匿名公開は組織ポリシーに阻まれた。** `--allow-unauthenticated` は `allUsers`
 バインディングを要求し、*Domain restricted sharing*
 (`constraints/iam.allowedPolicyMemberDomains`) がそれを拒む。deploy 自体は成功して
 `Setting IAM policy failed` と言い、サービスは private のまま残る。ポリシーを緩める
