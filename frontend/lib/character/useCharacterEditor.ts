@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { api, type CharacterSummary, type PendingGear, type XlsxImport } from "@/lib/api";
+import { api, type CharacterSummary } from "@/lib/api";
 import { useCharacterHistory } from "@/lib/character/history";
 import {
   MAX_PORTRAITS,
@@ -7,30 +7,30 @@ import {
   portraitsOf,
   portraitsPatch,
 } from "@/lib/character/portrait";
-import {
-  clearPendingGear,
-  loadPendingGear,
-  savePendingGear,
-} from "@/lib/character/pending-gear-store";
-import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
+import { clearPendingGear } from "@/lib/character/pending-gear-store";
+import { useCatalogReload } from "@/lib/character/useCatalogReload";
+import { useCharacterExport } from "@/lib/character/useCharacterExport";
+import { useCharacterImport } from "@/lib/character/useCharacterImport";
 import { errorMessage, MessageError } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { type Notice } from "@/lib/engine-notices";
 import { makeT, makeTr, makeTrSkillGroup, type TFn } from "@/lib/ui-strings";
 import { useUiText } from "@/lib/i18n";
+import type { MsgKey } from "@/lib/i18n/messages";
 import { onNotice } from "@/lib/notices";
 
-/** The export formats the character is checked before being written to. */
-export type ExportFormat = "chum5" | "xlsx";
-
-/** The catalog key of the vendored data: no dataset, no directories. */
-const NO_CUSTOM_DATA = "|";
+export type { ExportFormat } from "@/lib/character/useCharacterExport";
 
 /**
  * Owns the character-editor state: the loaded catalog, the current
  * `Character`, the roster, the undo/redo history and every mutation that
  * goes through the API (create / open / delete / duplicate / patch / import
  * / export / clipboard). `Page` keeps only view state (the active tab).
+ *
+ * The three parts that stand on their own live next door and are spread back
+ * into one object here, so no component knows the editor is more than one
+ * hook: {@link useCharacterImport} (files coming in), {@link useCharacterExport}
+ * (files, links and clipboard going out) and {@link useCatalogReload} (the
+ * catalog following the character's custom data).
  *
  * `onCharacterOpened` fires after a successful open / new / duplicate /
  * import so the caller can reset the tab.
@@ -42,43 +42,19 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   const [error, setError] = useState<string | null>(null);
   /** Advisories about an action that *succeeded* — never the red error box. */
   const [notice, setNotice] = useState<string | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
-  /** what the file would lose, while the player decides whether to export it
-   *  anyway. Tied to the exact state it was checked against: any edit (or
-   *  switching character) makes it stale, and a stale review is dropped. */
-  const [review, setExportReview] = useState<{
-    of: Character;
-    format: ExportFormat;
-    differences: Notice[];
-  } | null>(null);
-  const exportReview = review && review.of === ch ? review.differences : null;
-  /** Which format the pending review was asked for, so the panel can name it. */
-  const exportReviewFormat = review && review.of === ch ? review.format : null;
-  /** What the last import could not bring over. Not an error: the character is
-   *  open, and this is the list of what to fix by hand. Dropped when the player
-   *  closes it, not on the next edit — it is about a file, not about a state. */
-  const [importReport, setImportReport] = useState<Notice[] | null>(null);
-  /** The 装備 rows of an .xlsx import that need a person to say what they are.
-   *  Tied to the character they came from, so switching character shows that
-   *  one's rows rather than the wrong sheet's. Kept in this browser (see
-   *  `pending-gear-store`) so a reload in the middle of settling twenty rows
-   *  does not lose the other nineteen. */
-  const [pending, setPendingGear] = useState<{ of: string; rows: PendingGear[] } | null>(null);
-  const pendingGear = pending && ch && pending.of === ch.id ? pending.rows : null;
   const [roster, setRoster] = useState<CharacterSummary[]>([]);
   const { ui, locale } = useUiText();
   const history = useCharacterHistory();
   const lastCommitted = useRef<Character | null>(null);
   const busy = useRef(false);
-  // `ui` is rebuilt on every locale change; the notice listener is registered
-  // once, so it reads the current one through a ref instead of re-subscribing.
-  const uiRef = useRef(ui);
-  uiRef.current = ui;
-
   // `lib/api` and `local-store` have no locale and no React — they report a
   // degraded save / a stale compute as a message key. See `lib/notices`.
+  //
+  // `ui` is rebuilt on every locale change, but the listener is registered
+  // once: an effect event reads the current one without re-subscribing.
+  const wordNotice = useEffectEvent((key: MsgKey) => setNotice(ui(key)));
   useEffect(() => {
-    onNotice((key) => setNotice(uiRef.current(key)));
+    onNotice((key) => wordNotice(key));
     return () => onNotice(null);
   }, []);
 
@@ -104,6 +80,24 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
   async function refreshRoster() {
     setRoster(await api.list().catch(() => []));
   }
+
+  const imports = useCharacterImport({
+    ch,
+    ui,
+    remember,
+    refreshRoster,
+    setError,
+    onCharacterOpened,
+  });
+  const exports = useCharacterExport({
+    ch,
+    ui,
+    locale,
+    pendingGearCount: imports.pendingGear?.length ?? 0,
+    setError,
+    setNotice,
+  });
+  useCatalogReload({ ch, catalog, ui, setCatalog, setError });
 
   // One-time bootstrap: load catalog + roster, then open the last / a new
   // character. The steps that read `remember` and `ui` are effect events, so
@@ -138,53 +132,6 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     })();
   }, []);
 
-  /**
-   * Re-read the catalog when the character's custom data changes.
-   *
-   * The pick lists are built from the catalog, so a merged pack only reaches
-   * them if the catalog is the one that pack produces. Keyed on the dataset
-   * hash and the enabled directories — the two halves the server keys its
-   * merge by — so switching rulesets, or loading the folder for the one
-   * already applied, both refetch, and nothing else does.
-   *
-   * The old catalog stays on screen while the new one is on its way: it is
-   * ~3 MB, and blanking every list for the length of that request reads worse
-   * than lists that are briefly a merge behind. A failure leaves the old one
-   * in place and says so, for the same reason.
-   */
-  const dataset = ch?.settings?.dataset ?? "";
-  const enabledDirs = (ch?.settings?.customdata ?? []).join("|");
-  const catalogKey = `${dataset}|${enabledDirs}`;
-  /** The key of the catalog now in `catalog`. The bootstrap fetches the plain
-   *  one, which is what no dataset and no directories spell. */
-  const loadedKey = useRef(NO_CUSTOM_DATA);
-  const catalogLoaded = catalog !== null;
-  // `ui` only words the failure; re-running on a locale switch would refetch
-  // 3 MB to change a sentence that is not on screen.
-  const onReloadError = useEffectEvent((e: unknown) =>
-    setError(errorMessage(e, ui, "app.err.catalogReload")),
-  );
-  useEffect(() => {
-    if (!catalogLoaded || loadedKey.current === catalogKey) return;
-    let live = true;
-    (async () => {
-      try {
-        const next = await api.catalog({
-          dataset,
-          customdata: enabledDirs.split("|").filter(Boolean),
-        });
-        if (!live) return;
-        loadedKey.current = catalogKey;
-        setCatalog(next);
-      } catch (e) {
-        if (live) onReloadError(e);
-      }
-    })();
-    return () => {
-      live = false;
-    };
-  }, [catalogKey, catalogLoaded, dataset, enabledDirs]);
-
   async function openCharacter(id: string) {
     if (!id || id === ch?.id) return;
     try {
@@ -192,7 +139,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       onCharacterOpened?.();
       // Picked back up rather than dropped: a character imported from a
       // template keeps the rows nobody has settled yet.
-      readPendingGear(id);
+      imports.readPendingGear(id);
       setError(null);
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.load"));
@@ -285,223 +232,6 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     if (snap) await restoreSnapshot(snap);
   }
 
-  function download() {
-    if (!ch) return;
-    const blob = new Blob([JSON.stringify(ch, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${ch.name || "character"}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  /**
-   * Export a file the character has to be read back out of — after asking the
-   * server what reading it back would change. A clean round trip saves straight
-   * away; otherwise the differences wait in `exportReview` for
-   * {@link confirmExport} or {@link cancelExport}. A failed check is not worth
-   * blocking the download over.
-   *
-   * Both formats go through this: a .chum5 loses what Chummer has no field for,
-   * and the キャラシテンプレート .xlsx loses rather more — it is a fixed grid with
-   * one free-text column for all the equipment — so both are worth a look
-   * before the file is written.
-   */
-  async function downloadChum5() {
-    await checkThenSave("chum5");
-  }
-
-  /** Export the character as a キャラシテンプレート-shaped .xlsx. */
-  async function downloadXlsx() {
-    await checkThenSave("xlsx");
-  }
-
-  async function checkThenSave(format: ExportFormat) {
-    if (!ch) return;
-    const check = format === "chum5" ? api.checkChummerExport : api.checkXlsxExport;
-    const differences = await check(ch).catch(() => []);
-    // Gear rows waiting to be confirmed are a reason to stop as well, and the
-    // round trip cannot see them: they are held in this browser and were never
-    // sent, so what it checked is a character that does not have them. A file
-    // written now leaves them out, which is worth saying before it is written.
-    if (differences.length || pendingGear?.length) {
-      setExportReview({ of: ch, format, differences });
-      return;
-    }
-    await save(format);
-  }
-
-  async function confirmExport() {
-    const format = review?.format ?? "chum5";
-    setExportReview(null);
-    await save(format);
-  }
-
-  function cancelExport() {
-    setExportReview(null);
-  }
-
-  async function save(format: ExportFormat) {
-    if (!ch) return;
-    try {
-      const blob = await (format === "chum5" ? api.exportChummer(ch) : api.exportXlsx(ch));
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${ch.name || "character"}.${format}`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch (e) {
-      setError(errorMessage(e, ui, "app.err.export"));
-    }
-  }
-
-  /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
-  async function downloadFvtt() {
-    if (!ch) return;
-    try {
-      const blob = await api.exportFvtt(ch, locale);
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${ch.name || "character"}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } catch (e) {
-      setError(errorMessage(e, ui, "app.err.export"));
-    }
-  }
-
-  /**
-   * Copy a read-only `/share#c=…` link for the current character. The state
-   * lives entirely in the fragment — nothing is uploaded — so the only limit
-   * is URL length; past {@link SHARE_URL_WARN} we still copy but say so.
-   */
-  async function copyShareLink() {
-    if (!ch) return;
-    try {
-      const url = await buildShareUrl(ch, window.location.href);
-      await copyText(url, "share");
-      // the copy worked — these are caveats about the link, not failures
-      const notes: string[] = [];
-      if (url.length > SHARE_URL_WARN) notes.push(ui("share.long", { length: url.length }));
-      if (portraitsOf(ch).length) notes.push(ui("share.portrait"));
-      setNotice(notes.length ? notes.join(" ") : null);
-    } catch (e) {
-      setNotice(null);
-      setError(errorMessage(e, ui, "share.err.build"));
-    }
-  }
-
-  async function copyText(text: string, tag: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-    }
-    setCopied(tag);
-    setTimeout(() => setCopied(null), 2000);
-  }
-
-  /** Put what an import lost in front of the player. Empty means nothing was
-   *  lost, which is worth saying by showing nothing at all. */
-  function reportImport(warnings: Notice[]) {
-    setImportReport(warnings.length ? warnings : null);
-  }
-
-  function dismissImportReport() {
-    setImportReport(null);
-  }
-
-  /** A Foundry VTT character actor's Export Data, not this app's own JSON. */
-  function isFvttActor(payload: unknown): boolean {
-    if (!payload || typeof payload !== "object") return false;
-    const p = payload as Record<string, unknown>;
-    return p.type === "character" && typeof p.system === "object" && Array.isArray(p.items);
-  }
-
-  /** Drop a pending row, either because it was added or because it was waved
-   *  off. Both are the player saying they are done with it. */
-  function resolvePendingGear(name: string) {
-    setPendingGear((prev) => {
-      if (!prev) return prev;
-      const rows = prev.rows.filter((row) => row.name !== name);
-      savePendingGear(prev.of, rows);
-      return { ...prev, rows };
-    });
-  }
-
-  function dismissPendingGear() {
-    if (pending) clearPendingGear(pending.of);
-    setPendingGear(null);
-  }
-
-  /** What is held for `id`, so opening a character picks its rows back up. */
-  function readPendingGear(id: string) {
-    const rows = loadPendingGear(id);
-    setPendingGear(rows.length ? { of: id, rows } : null);
-  }
-
-  /** What both ways into a キャラシテンプレート do once the sheet has been read:
-   *  open it, put its unsettled 装備 rows in front of the player, and say what
-   *  the sheet could not be taken at its word on. */
-  function openTemplateImport(res: XlsxImport) {
-    remember(res.character);
-    onCharacterOpened?.();
-    savePendingGear(res.character.id, res.pending_gear);
-    readPendingGear(res.character.id);
-    reportImport(res.warnings);
-    void refreshRoster();
-  }
-
-  /**
-   * Import a キャラシテンプレート from its Google Sheets address.
-   *
-   * Reported rather than thrown: what usually goes wrong here is that the sheet
-   * is not shared, which is something for the player to go and change rather
-   * than a fault.
-   */
-  async function importSheetUrl(url: string) {
-    setError(null);
-    setImportReport(null);
-    try {
-      openTemplateImport(await api.importSheetUrl(url));
-    } catch (e) {
-      setError(errorMessage(e, ui, "app.err.load"));
-      throw e;
-    }
-  }
-
-  async function onImport(file: File) {
-    setError(null);
-    setImportReport(null);
-    try {
-      if (/\.xlsx$/i.test(file.name)) {
-        openTemplateImport(await api.importXlsx(await file.arrayBuffer()));
-        return;
-      }
-      const payload = /\.chum5(lz)?$/i.test(file.name) ? null : JSON.parse(await file.text());
-      if (payload === null || isFvttActor(payload)) {
-        const { character, warnings } =
-          payload === null
-            ? await api.importChummer(await file.arrayBuffer())
-            : await api.importFvtt(payload);
-        remember(character);
-        onCharacterOpened?.();
-        reportImport(warnings);
-      } else {
-        remember(await api.import(payload));
-        onCharacterOpened?.();
-      }
-      void refreshRoster();
-    } catch (e) {
-      setError(errorMessage(e, ui, "app.err.load"));
-    }
-  }
-
   /** Add `file` after the portraits already there, while fewer than three. */
   async function onPortraitFile(file: File) {
     if (!ch) return;
@@ -539,16 +269,16 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     ch,
     error,
     notice,
-    exportReview,
-    exportReviewFormat,
-    importReport,
-    dismissImportReport,
-    importSheetUrl,
-    pendingGear,
-    resolvePendingGear,
-    dismissPendingGear,
+    exportReview: exports.exportReview,
+    exportReviewFormat: exports.exportReviewFormat,
+    importReport: imports.importReport,
+    dismissImportReport: imports.dismissImportReport,
+    importSheetUrl: imports.importSheetUrl,
+    pendingGear: imports.pendingGear,
+    resolvePendingGear: imports.resolvePendingGear,
+    dismissPendingGear: imports.dismissPendingGear,
     roster,
-    copied,
+    copied: exports.copied,
     history,
     tr,
     trGroup,
@@ -565,16 +295,16 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     restoreSnapshot,
     undo,
     redo,
-    onImport,
+    onImport: imports.onImport,
     onPortraitFile,
-    download,
-    downloadChum5,
-    downloadXlsx,
-    downloadFvtt,
-    confirmExport,
-    cancelExport,
-    copyText,
-    copyShareLink,
+    download: exports.download,
+    downloadChum5: exports.downloadChum5,
+    downloadXlsx: exports.downloadXlsx,
+    downloadFvtt: exports.downloadFvtt,
+    confirmExport: exports.confirmExport,
+    cancelExport: exports.cancelExport,
+    copyText: exports.copyText,
+    copyShareLink: exports.copyShareLink,
   };
 }
 
