@@ -35,54 +35,62 @@ export function VehicleMountRows({
   );
   return (
     <>
-      {(item.weapon_mounts || []).map((mount) => (
-        <div className="muted" key={mount.id} style={{ marginTop: 6 }}>
-          {tr(mount.label || mount.name)}
-          {mount.included ? ` / ${ui("common.included")}` : ` / ${mount.nuyen.toLocaleString()}¥`}
-          {mount.slots ? ui("veh.slotCost", { slots: mount.slots }) : ""}
-          {mount.weapon_name ? ` / ${tr(mount.weapon_name)}` : ui("veh.noWeapon")}
-          {mount.included ? null : (
-            <>
-              {" "}
-              <button
-                className="btn danger"
-                onClick={() =>
+      {(item.weapon_mounts || []).map((mount) => {
+        // Nothing to choose from: the empty select on its own does not say why,
+        // and the answer is somewhere else entirely — a weapon is bought on the
+        // weapons tab before it can be bolted onto anything.
+        const nothingToMount = !mount.weapon_install_id && freeWeapons.length === 0;
+        return (
+          <div className="muted" key={mount.id} style={{ marginTop: 6 }}>
+            {tr(mount.label || mount.name)}
+            {mount.included ? ` / ${ui("common.included")}` : ` / ${mount.nuyen.toLocaleString()}¥`}
+            {mount.slots ? ui("veh.slotCost", { slots: mount.slots }) : ""}
+            {mount.weapon_name ? ` / ${tr(mount.weapon_name)}` : ui("veh.noWeapon")}
+            {mount.included ? null : (
+              <>
+                {" "}
+                <button
+                  className="btn danger"
+                  onClick={() =>
+                    patch({
+                      weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.id !== mount.id),
+                    })
+                  }
+                >
+                  {ui("common.remove")}
+                </button>
+              </>
+            )}
+            <div className="cyber-controls">
+              <select
+                aria-label={`${tr(mount.name)}: ${ui("veh.mountWeapon")}`}
+                disabled={nothingToMount}
+                value={mount.weapon_install_id || ""}
+                onChange={(e) =>
                   patch({
-                    weapon_mounts: (ch.weapon_mounts || []).filter((row) => row.id !== mount.id),
+                    weapon_mounts: (ch.weapon_mounts || []).map((row) =>
+                      row.id === mount.id
+                        ? { ...row, weapon_install_id: e.target.value || null }
+                        : row,
+                    ),
                   })
                 }
               >
-                {ui("common.remove")}
-              </button>
-            </>
-          )}
-          <div className="cyber-controls">
-            <select
-              aria-label={`${tr(mount.name)}: ${ui("veh.mountWeapon")}`}
-              value={mount.weapon_install_id || ""}
-              onChange={(e) =>
-                patch({
-                  weapon_mounts: (ch.weapon_mounts || []).map((row) =>
-                    row.id === mount.id
-                      ? { ...row, weapon_install_id: e.target.value || null }
-                      : row,
-                  ),
-                })
-              }
-            >
-              <option value="">{ui("veh.mountWeapon")}</option>
-              {mount.weapon_install_id && mount.weapon_name ? (
-                <option value={mount.weapon_install_id}>{tr(mount.weapon_name)}</option>
-              ) : null}
-              {freeWeapons.map((weapon) => (
-                <option key={weapon.id} value={weapon.id}>
-                  {tr(weapon.name)}
-                </option>
-              ))}
-            </select>
+                <option value="">{ui("veh.mountWeapon")}</option>
+                {mount.weapon_install_id && mount.weapon_name ? (
+                  <option value={mount.weapon_install_id}>{tr(mount.weapon_name)}</option>
+                ) : null}
+                {freeWeapons.map((weapon) => (
+                  <option key={weapon.id} value={weapon.id}>
+                    {tr(weapon.name)}
+                  </option>
+                ))}
+              </select>
+              {nothingToMount ? <span className="muted">{ui("veh.noFreeWeapons")}</span> : null}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <SlotPicker
         pickKey={`${item.id}-mount`}
         rowName={tr(item.name)}

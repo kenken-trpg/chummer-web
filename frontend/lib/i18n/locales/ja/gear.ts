@@ -6,6 +6,7 @@ export const JA_GEAR = {
   "veh.noWeapon": " / 未搭載",
   "veh.mountWeapon": "武器を搭載",
   "veh.addMount": "武器マウントを追加",
+  "veh.noFreeWeapons": "搭載できる武器がありません。先に［武器］タブで武器を購入してください",
   "veh.addInteriorGear": "内装ギアを追加",
   "veh.searchDrones": "ドローンを検索",
 

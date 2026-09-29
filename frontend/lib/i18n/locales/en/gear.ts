@@ -6,6 +6,7 @@ export const EN_GEAR = {
   "veh.noWeapon": " / no weapon",
   "veh.mountWeapon": "Mount a weapon",
   "veh.addMount": "Add a weapon mount",
+  "veh.noFreeWeapons": "No weapon is available to mount \u2014 buy one on the weapons tab first",
   "veh.addInteriorGear": "Add interior gear",
   "veh.searchDrones": "Search drones",
 

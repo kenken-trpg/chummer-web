@@ -35,6 +35,32 @@ describe("<VehicleDroneGear> weapon mounts", () => {
     expect(options).toEqual(["武器を搭載", "MMG", "Ares Alpha"]);
   });
 
+  it("says a weapon has to be bought when there is none to mount", () => {
+    const v = vehicle("v1", "Steel Lynx", { weapon_mounts: [mount("wm1", "Standard")] });
+    renderVehicle(owning(v, { weapon_mounts: v.weapon_mounts }), vi.fn());
+
+    expect(
+      screen.getByText("搭載できる武器がありません。先に［武器］タブで武器を購入してください"),
+    ).toBeTruthy();
+    const select = screen.getByRole("combobox", { name: "Standard: 武器を搭載" });
+    expect((select as HTMLSelectElement).disabled).toBe(true);
+  });
+
+  it("keeps the mount picker usable once a weapon is owned", () => {
+    const weapons = [{ id: "w1", name: "MMG", category: "Machine Guns" }];
+    const v = vehicle("v1", "Steel Lynx", { weapon_mounts: [mount("wm1", "Standard")] });
+    renderVehicle(
+      owning(v, { weapon_mounts: v.weapon_mounts, weapons, derived: { weapons } }),
+      vi.fn(),
+    );
+
+    expect(
+      screen.queryByText("搭載できる武器がありません。先に［武器］タブで武器を購入してください"),
+    ).toBeNull();
+    const select = screen.getByRole("combobox", { name: "Standard: 武器を搭載" });
+    expect((select as HTMLSelectElement).disabled).toBe(false);
+  });
+
   it("removing one mount keeps the other", () => {
     const v = vehicle("v1", "Americar", {
       weapon_mounts: [mount("wm1", "Front"), mount("wm2", "Rear")],
