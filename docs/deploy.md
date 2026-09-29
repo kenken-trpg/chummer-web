@@ -142,48 +142,141 @@ IP, straight past every limit. Say what sits in front:
 Sanity-check after deploy: hit it from a known IP and confirm that IP (not the
 LB's) shows up in a 429 / log line.
 
-Health check: `GET /api/health` (also the image `HEALTHCHECK`).
+Health check: `GET /api/health` (also the image `HEALTHCHECK`) — liveness, 200
+as soon as uvicorn binds. `GET /api/ready` is the other one: 503 until the
+catalog warm-up has finished, which is what a platform's *startup* probe
+should ask for. A warm-up that failed still reports ready, so a broken data
+directory surfaces as a request error rather than a container that restarts
+forever.
 
 ## Google Cloud Run
 
+Cloud Run cannot pull from GHCR, so the image goes through Artifact Registry.
+Mirroring the image CI already built and smoke-tested beats `--source .`, which
+rebuilds all four stages on every deploy (re-fetching the Chummer data over the
+network) and publishes something the tests never saw:
+
 ```bash
+gcloud artifacts repositories create chummer --repository-format=docker \
+  --location=asia-northeast1
+
+# Cloud Run runs amd64 only, and `docker pull` takes the host's architecture —
+# so pick the amd64 digest out of the multi-arch index and copy *that*.
+crane manifest ghcr.io/<owner>/chummer-web:latest   # -> the linux/amd64 digest
+crane copy ghcr.io/<owner>/chummer-web@sha256:<amd64> \
+  asia-northeast1-docker.pkg.dev/<project>/chummer/chummer-web:latest
+
 gcloud run deploy chummer-web \
-  --source . \
+  --image asia-northeast1-docker.pkg.dev/<project>/chummer/chummer-web@sha256:<amd64> \
   --region asia-northeast1 \
   --allow-unauthenticated \
   --memory 512Mi --cpu 1 \
   --min-instances 0 \
   --max-instances 1 \
-  --set-env-vars TRUSTED_PROXY_HOPS=2   # rate-limit on the real client IP
+  --set-env-vars TRUSTED_PROXY_HOPS=2 \
+  --startup-probe httpGet.path=/api/ready,httpGet.port=8080,initialDelaySeconds=3,periodSeconds=2,timeoutSeconds=3,failureThreshold=20
 ```
 
-Cloud Run sets `PORT`; the container already honours it. Scale-to-zero is fine
-— the first request after idle pays the container start + the one-off
-`catalog()` XML parse.
+Cloud Run sets `PORT`; the container already honours it.
 
+**Point the startup probe at `/api/ready`, not `/api/health`.** `/api/health`
+answers 200 as soon as uvicorn binds, which lets traffic in while the warm-up
+thread is still parsing the data — the request then builds the catalog a second
+time (`lru_cache` does not join concurrent callers) and the two compete for the
+one vCPU. `/api/ready` is 503 until that warm-up has finished. Measured on one
+`--cpu-boost` vCPU in `asia-northeast1`, first request after 17 minutes idle:
+
+| probe | container up | first `/api/catalog` | total |
+| --- | --- | --- | --- |
+| `/api/health` (traffic in early) | 5.9 s | 5.1 s (4754 ms of it server-side) | ~11 s |
+| warm-up finished first | 10.4 s | 0.7 s (215 ms server-side) | ~11 s |
+
+- **`--cpu-boost` is not worth it here.** It takes 4.5 s off the container start
+  and hands the same 4.5 s to the first catalog request; end to end the two
+  columns above are the same ~11 s. Building the catalog costs ~3.3 s on one
+  Cloud Run vCPU against ~0.5 s on a developer machine.
+- **`--min-instances 1`** is the only thing that removes that ~11 s, and it
+  bills the idle instance around the clock (roughly $10/month at this size).
+- **Memory**: measured peak is ~300 MiB, so `512Mi` fits with room and `1Gi` is
+  the comfortable choice. Note that the container's writable paths are tmpfs and
+  count against it.
 - **`--max-instances 1`** — the rate limiter counts in process memory, so a
   second instance would hand out a second full allowance. It is also the cost
   ceiling.
 - **Billing is per request** (CPU and memory only while a request is being
   handled, plus start-up), so a small group's use usually stays inside the
-  monthly free tier. `--min-instances 1` removes cold starts but bills the idle
-  instance around the clock (roughly $10/month at this size).
-- **Budget alert** — Billing › Budgets & alerts, e.g. $5 on the project.
+  monthly free tier.
+- **Budget alert** — Billing › Budgets & alerts, e.g. $5 on the project. It has
+  to be in the billing account's own currency; a USD amount on a JPY account is
+  refused with a bare `INVALID_ARGUMENT`.
 - **Custom domain** — `gcloud beta run domain-mappings create --service
   chummer-web --domain chummer.example.com --region asia-northeast1`, then add
   the DNS record it prints. On Cloudflare DNS, keep that record **DNS only**
   (grey cloud): Google issues the certificate and needs to see its own
   endpoint.
+- **Organisation policy.** `--allow-unauthenticated` needs an `allUsers`
+  binding, which an organisation enforcing *Domain restricted sharing*
+  (`constraints/iam.allowedPolicyMemberDomains`) refuses — the deploy succeeds
+  and then reports `Setting IAM policy failed`, leaving the service private.
+  Either grant an exception on that project, or keep it private and use the
+  Worker below.
 
-**Do not put Cloudflare's proxy in front and set `TRUST_CLOUDFLARE_IP=1`.** The
-`*.run.app` URL stays open to anyone, and a caller going there directly writes
-`cf-connecting-ip` themselves — one request per fake IP, past every limit.
-Closing `run.app` so that only Cloudflare can reach the service takes an
-external HTTPS load balancer (`--ingress internal-and-cloud-load-balancing`),
-whose fixed monthly fee outweighs the rest of this bill. If you want
-Cloudflare's WAF, use the Cloudflare Containers setup instead. Here the
-defence is the app's own limits on the platform-appended client IP
-(`TRUSTED_PROXY_HOPS=2`), and `--max-instances 1` caps the bill.
+**Do not put Cloudflare's proxy in front of a *public* service and set
+`TRUST_CLOUDFLARE_IP=1`.** The `*.run.app` URL stays open to anyone, and a
+caller going there directly writes `cf-connecting-ip` themselves — one request
+per fake IP, past every limit. The next section is the shape where this becomes
+safe, because there the service is not public at all.
+
+## Cloud Run behind a Cloudflare Worker
+
+The section above ends by saying you cannot have both Cloud Run and
+Cloudflare's WAF without an external load balancer. There is one way, and it
+is what `deploy/cloudflare-proxy/` does: leave the service **private** and let
+a Worker be the only thing that can invoke it.
+
+A private service is invoked with an OIDC identity token whose audience is the
+service's URL. The Worker mints one from a service-account key (RFC 7523),
+caches it for the hour it lasts, and forwards the request. So:
+
+- `*.run.app` answers 403 to everyone. The hostname on your zone is the single
+  route in, which is what the earlier warning was missing.
+- Cloudflare's WAF, rate-limiting rules, Bot Fight Mode and Access sit in front
+  of that single route. A domain mapping cannot do this: it must be grey-clouded
+  because Google issues the certificate.
+- `TRUST_CLOUDFLARE_IP=1` is sound here — nobody can reach the container with a
+  forged `cf-connecting-ip`, because reaching it needs a token only the Worker
+  can mint. Set `TRUSTED_PROXY_HOPS=0` with it.
+
+It also keeps an organisation that enforces **Domain restricted sharing**
+(`constraints/iam.allowedPolicyMemberDomains`) intact: that constraint refuses
+an `allUsers` binding, and nothing here needs one.
+
+```bash
+# GCP: a service account that may invoke this one service, and nothing else
+gcloud iam service-accounts create cf-worker --project "$PROJECT"
+gcloud run services add-iam-policy-binding chummer-web --region asia-northeast1 \
+  --member="serviceAccount:cf-worker@$PROJECT.iam.gserviceaccount.com" \
+  --role=roles/run.invoker --project "$PROJECT"
+gcloud iam service-accounts keys create key.json \
+  --iam-account="cf-worker@$PROJECT.iam.gserviceaccount.com"
+
+# Cloudflare
+cd deploy/cloudflare-proxy
+# edit wrangler.jsonc: routes[0].pattern -> your hostname, vars.RUN_URL -> the service URL
+npm install
+npx wrangler login
+npx wrangler secret put GCP_SA_KEY < key.json   # then delete key.json
+npx wrangler deploy
+```
+
+Bring it up on a spare hostname first (`cr.example.com`), confirm it, and only
+then move the public name over — a rollback is then one route.
+
+**The key is a long-lived credential.** Cloudflare has no OIDC issuer a Worker
+could federate with, so there is no way to avoid one. Keep it in the Worker
+secret only, never in the repository, and rotate it
+(`gcloud iam service-accounts keys list / delete`). If that is the part you do
+not want, Cloudflare Containers below needs no GCP at all.
 
 ## Fly.io
 
