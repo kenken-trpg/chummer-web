@@ -174,10 +174,12 @@ gcloud run deploy chummer-web \
   --min-instances 0 \
   --max-instances 1 \
   --set-env-vars TRUSTED_PROXY_HOPS=2 \
-  --startup-probe httpGet.path=/api/ready,httpGet.port=8080,initialDelaySeconds=3,periodSeconds=2,timeoutSeconds=3,failureThreshold=20
+  --startup-probe httpGet.path=/api/ready,httpGet.port=8080,initialDelaySeconds=3,periodSeconds=5,timeoutSeconds=3,failureThreshold=12
 ```
 
-Cloud Run sets `PORT`; the container already honours it.
+Cloud Run sets `PORT`; the container already honours it. `timeoutSeconds` has
+to be *less than* `periodSeconds` or the deploy is refused after the image is
+already pushed.
 
 **Point the startup probe at `/api/ready`, not `/api/health`.** `/api/health`
 answers 200 as soon as uvicorn binds, which lets traffic in while the warm-up
