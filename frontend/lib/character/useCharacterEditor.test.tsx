@@ -129,6 +129,89 @@ describe("useCharacterEditor", () => {
     expect(result.current.history.counts.undo).toBe(1);
   });
 
+  it("sends an edit that arrives mid-flight when it is the same control, one step on", async () => {
+    // What holding the arrow key on a number input produces: the whole field
+    // rebuilt from the character the component can see, one value further on.
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch({ attributes: { BOD: 3, AGI: 2 } });
+    });
+    // these three land while the first is still on the wire
+    act(() => {
+      void result.current.patch({ attributes: { BOD: 4, AGI: 2 } });
+      void result.current.patch({ attributes: { BOD: 5, AGI: 2 } });
+      void result.current.patch({ attributes: { BOD: 6, AGI: 2 } });
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+
+    const settled = makeCharacter({ id: "c1" });
+    api.patch.mockResolvedValue(settled);
+    await act(async () => {
+      finish(makeCharacter({ id: "c1" }));
+      await first;
+    });
+
+    // one round trip for the three, carrying the value the person stopped on
+    expect(api.patch).toHaveBeenCalledTimes(2);
+    expect(api.patch).toHaveBeenLastCalledWith("c1", { attributes: { BOD: 6, AGI: 2 } });
+  });
+
+  it("drops a mid-flight edit that is a different one — it would undo the first", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch({ attributes: { BOD: 4, AGI: 2 } });
+    });
+    act(() => {
+      // a second control: both bodies were built from the same character, so
+      // sending this one afterwards would put BOD back to 3
+      void result.current.patch({ attributes: { BOD: 3, AGI: 5 } });
+    });
+
+    await act(async () => {
+      finish(makeCharacter({ id: "c1" }));
+      await first;
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops what was waiting when the edit in front of it fails", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let fail: (e: Error) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((_, reject) => (fail = reject)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch({ attributes: { BOD: 3 } });
+    });
+    act(() => {
+      void result.current.patch({ attributes: { BOD: 4 } });
+    });
+
+    await act(async () => {
+      fail(new Error("nope"));
+      await first;
+    });
+    expect(api.patch).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBeTruthy();
+  });
+
   it("asks before leaving the page only while an edit is still being saved", async () => {
     api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
     let finish: (c: Character) => void = () => {};
@@ -771,19 +854,25 @@ describe("useCharacterEditor undo/redo", () => {
     expect(result.current.history.counts.undo).toBe(1);
   });
 
-  it("a patch fired while one is in flight is dropped, not queued", async () => {
+  it("a patch fired while one is in flight waits its turn, one round trip later", async () => {
+    // Two edits to one field: the second is the first one step on, so sending
+    // it once the first has landed leaves exactly what was asked for. They
+    // still go one at a time -- `api.patch` applies to the stored character.
     const gate = deferred<Character>();
-    api.patch.mockReturnValue(gate.promise);
+    api.patch.mockReturnValueOnce(gate.promise);
     const { result } = await booted();
 
     await act(async () => {
       const first = result.current.patch({ name: "A" });
       const second = result.current.patch({ name: "B" });
+      expect(api.patch).toHaveBeenCalledTimes(1);
+      api.patch.mockResolvedValue(makeCharacter({ id: "c1", name: "B" }));
       gate.resolve(makeCharacter({ id: "c1", name: "A" }));
       await Promise.all([first, second]);
     });
 
-    expect(api.patch).toHaveBeenCalledTimes(1);
+    expect(api.patch).toHaveBeenCalledTimes(2);
+    expect(api.patch).toHaveBeenLastCalledWith("c1", { name: "B" });
   });
 
   it("restoreSnapshot refuses to run while a patch is in flight", async () => {
