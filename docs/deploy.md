@@ -269,6 +269,14 @@ npx wrangler secret put GCP_SA_KEY < key.json   # then delete key.json
 npx wrangler deploy
 ```
 
+**Cold starts.** The Worker's cron trigger pings `/api/ready` every ten
+minutes, which keeps one instance alive. Cloud Run bills while a request is
+handled, not while an instance idles, so this costs a few seconds of compute a
+day and saves every visitor after a quiet spell the ~11 s an instance takes to
+come up. It is best effort — Cloud Run may reclaim an instance whenever it
+likes, and a deploy replaces it — so it makes cold starts rare rather than
+impossible. `--min-instances 1` is the version with a guarantee and a bill.
+
 Bring it up on a spare hostname first (`cr.example.com`), confirm it, and only
 then move the public name over — a rollback is then one route.
 
