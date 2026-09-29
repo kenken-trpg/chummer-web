@@ -103,6 +103,40 @@ async function identityToken(env: Env): Promise<string> {
 }
 
 export default {
+  /**
+   * Keep one instance alive, so a visitor does not pay the cold start.
+   *
+   * Cloud Run bills CPU and memory while a request is being handled, not while
+   * an instance sits idle, so a ping every ten minutes costs a few seconds of
+   * compute a day and saves every visitor who arrives after a quiet spell the
+   * ~11 s an instance takes to come up (10.4 s of container start plus the
+   * catalog build behind `/api/ready`).
+   *
+   * It is best effort, not a guarantee: Cloud Run may reclaim an instance
+   * whenever it likes, and a deploy replaces it. What this buys is that the
+   * usual gap between visits stops being long enough to lose it.
+   *
+   * `/api/ready` on purpose — it is the cheapest route that proves the catalog
+   * is built, which is the part of the start-up worth holding onto.
+   */
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        try {
+          const token = await identityToken(env);
+          const res = await fetch(new URL("/api/ready", env.RUN_URL).toString(), {
+            headers: { authorization: `Bearer ${token}` },
+          });
+          // Logged either way: a run of these in `wrangler tail` is how you
+          // tell "kept warm" from "woken every time".
+          console.log(`keepalive: ${res.status}`);
+        } catch (e) {
+          console.log(`keepalive failed: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      })(),
+    );
+  },
+
   async fetch(request: Request, env: Env): Promise<Response> {
     const upstream = new URL(request.url);
     const run = new URL(env.RUN_URL);

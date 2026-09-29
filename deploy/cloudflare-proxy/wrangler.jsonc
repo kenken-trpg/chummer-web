@@ -26,5 +26,8 @@
     // it must be exact.
     "RUN_URL": "https://chummer-web-<project-number>.asia-northeast1.run.app"
   },
+  // Keeps one Cloud Run instance alive; see `scheduled` in src/index.ts.
+  // Ten minutes, because Cloud Run holds an idle instance for about fifteen.
+  "triggers": { "crons": ["*/10 * * * *"] },
   "observability": { "enabled": true }
 }
