@@ -52,7 +52,12 @@ from app.characters import import_character, new_character
 from app.chummer_import import chum5_to_state, decompress_chum5lz
 from app.chummer_import.container import _MAX_DECOMPRESSED_BYTES
 from app.customdata import build_overlay
-from app.data_loader._xml import MAX_UNTRUSTED_DEPTH, MAX_UNTRUSTED_ELEMENTS, parse_untrusted
+from app.data_loader._xml import (
+    MAX_UNTRUSTED_DEPTH,
+    MAX_UNTRUSTED_ELEMENTS,
+    parse_untrusted,
+    parse_vendored,
+)
 from app.fvtt_import import fvtt_to_state
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
@@ -721,3 +726,21 @@ def test_a_tree_at_the_ceilings_still_parses() -> None:
     assert parse_untrusted(deep).tag == "a"
     wide = "<r>" + "<a/>" * (MAX_UNTRUSTED_ELEMENTS - 1) + "</r>"
     assert len(parse_untrusted(wide)) == MAX_UNTRUSTED_ELEMENTS - 1
+
+
+# --- vendored files -----------------------------------------------------------
+
+
+def test_a_vendored_file_with_a_dtd_is_refused(tmp_path: Path) -> None:
+    """`vendor/` is fetched over the network, so it is not a place a DTD may be
+    expanded either. The ceilings do not apply there — only the entities."""
+    path = tmp_path / "poisoned.xml"
+    path.write_text('<!DOCTYPE r [<!ENTITY x "boom">]><r>&x;</r>')
+    with pytest.raises(ET.ParseError, match="refused"):
+        parse_vendored(path)
+
+
+def test_a_vendored_file_may_outgrow_the_upload_ceilings(tmp_path: Path) -> None:
+    path = tmp_path / "big.xml"
+    path.write_text("<r>" + "<a/>" * (MAX_UNTRUSTED_ELEMENTS + 1) + "</r>")
+    assert len(parse_vendored(path)) == MAX_UNTRUSTED_ELEMENTS + 1

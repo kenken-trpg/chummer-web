@@ -63,6 +63,28 @@ def current_overlay_key() -> str:
     return overlay.key if overlay else ""
 
 
+def parse_vendored(path: Path) -> ET.Element:
+    """Parse one file out of `vendor/` (or the Japanese overlay).
+
+    These are files this checkout fetched, not a visitor's upload, so the
+    `MAX_UNTRUSTED_*` ceilings do not apply — the biggest vendored data file
+    is well past what an upload is allowed to be. What does still apply is the
+    entity handling: `make data` pulls the tree over the network, and a DTD in
+    one of those files would be expanded by a bare `ET.parse`. defusedxml
+    refuses it instead, and Chummer writes none, so nothing real is lost.
+
+    Every read of a vendored file goes through here, which is why no caller
+    needs its own `# noqa: S314`.
+    """
+    parser = DefusedXMLParser(target=ET.TreeBuilder())
+    try:
+        parser.feed(path.read_bytes())
+        root: ET.Element = parser.close()
+    except DefusedXmlException as exc:
+        raise ET.ParseError(f"refused: {exc}") from exc
+    return root
+
+
 def parse_data(name: str) -> ET.Element:
     """The root of one vendored data file, with custom data folded in.
 
@@ -77,7 +99,7 @@ def parse_data(name: str) -> ET.Element:
     overlay = _overlay.get()
     if overlay is not None and name in overlay.trees:
         return overlay.trees[name]
-    return ET.parse(DATA_DIR / name).getroot()  # noqa: S314 -- vendored file
+    return parse_vendored(DATA_DIR / name)
 
 
 def data_root(name: str) -> ET.Element | None:
@@ -94,7 +116,7 @@ def data_root(name: str) -> ET.Element | None:
     if not path.exists():
         return None
     try:
-        return ET.parse(path).getroot()  # noqa: S314 -- vendored file
+        return parse_vendored(path)
     except ET.ParseError as exc:
         # A truncated download, or a hand-edited vendor file. One unreadable
         # data file should cost its own section, not the whole catalog.
