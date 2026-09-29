@@ -5,7 +5,7 @@ import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -22,18 +22,26 @@ from .notices import NoticeError
 configure_logging()
 
 
+#: Set once the warm-up below has finished, however it finished. `/api/ready`
+#: waits on this; see there for why a failure still counts as finished.
+_warmed = threading.Event()
+
+
 def _warm_catalog() -> None:
     """Build the catalog payload before anyone asks for it.
 
     Parsing the vendored data and serialising the ~3 MB projection takes about
-    0.4 s, and without this the first visitor after a restart waits for it. It
-    runs on a thread so startup does not wait, and a missing `make data` is
-    left for the request to report, exactly as before.
+    0.5 s on a developer machine and ~3.3 s on one Cloud Run vCPU, and without
+    this the first visitor after a restart waits for it. It runs on a thread so
+    startup does not wait, and a missing `make data` is left for the request to
+    report, exactly as before.
     """
     try:
         catalog._cached_catalog()
     except Exception:  # noqa: BLE001 -- the request path reports it properly
         logging.getLogger("chummer_web").warning("catalog warm-up failed", exc_info=True)
+    finally:
+        _warmed.set()
 
 
 @asynccontextmanager
@@ -107,7 +115,33 @@ app.middleware("http")(_request_context)
 
 @app.get("/api/health")
 def health() -> dict:
+    """Liveness: the process is up and answering. Says nothing about the
+    catalog — `/api/ready` is the one that waits for it."""
     return {"ok": True}
+
+
+@app.get("/api/ready")
+def ready(response: Response) -> dict:
+    """Readiness: the catalog is built, so the first real request will not pay
+    for it.
+
+    This is what a platform's *startup* probe should ask for. `/api/health`
+    answers 200 the moment uvicorn binds, which on Cloud Run let traffic in
+    while the warm-up thread was still parsing: the request then built the
+    catalog a second time (`lru_cache` does not join concurrent callers) and
+    the two competed for the single vCPU. Measured on `--cpu-boost`, the first
+    `/api/catalog` after an idle period took 4.75 s that way against 0.2 s when
+    the warm-up had finished first.
+
+    A warm-up that *failed* still reports ready. The catalog is broken either
+    way, and the request path says so with a proper error; holding the probe
+    open would instead loop the container forever on a platform that restarts
+    what never becomes ready.
+    """
+    if _warmed.is_set():
+        return {"ok": True, "ready": True}
+    response.status_code = 503
+    return {"ok": False, "ready": False}
 
 
 app.include_router(csp.router)
