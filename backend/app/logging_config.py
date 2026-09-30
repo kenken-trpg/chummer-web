@@ -3,7 +3,9 @@
 The default is plain text, because that is what you want tailing `make dev`.
 Set ``LOG_FORMAT=json`` for a deploy: one JSON object per line, which is what
 Cloud Logging / Loki / CloudWatch want, and what makes "show me every 429 from
-this caller" a query rather than a grep.
+this caller" a query rather than a grep. The level goes out twice, as ``level``
+and as ``severity``, because Cloud Logging reads only the latter and files
+everything else at its default — an error in an access log has to be visible.
 
 Every line carries a ``request_id``. It comes from the edge when the proxy set
 one (Cloudflare, Cloud Run and a `header_up` in Caddy all can), so a trace that
@@ -55,8 +57,31 @@ _STANDARD = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__dict__) 
 }
 
 
+#: Cloud Logging reads the severity of a structured line from `severity`, and
+#: only accepts its own names there. Python's level names are the same words up
+#: to `WARNING`, so the map only has to cover what differs: anything not listed
+#: — a custom level, a library's `TRACE` — is left out rather than guessed at,
+#: and Cloud Logging files that line under its own default.
+_SEVERITY = {
+    "DEBUG": "DEBUG",
+    "INFO": "INFO",
+    "WARNING": "WARNING",
+    "WARN": "WARNING",
+    "ERROR": "ERROR",
+    "CRITICAL": "CRITICAL",
+    "FATAL": "CRITICAL",
+}
+
+
 class JsonFormatter(logging.Formatter):
-    """One JSON object per line. `extra=` fields are merged in at the top level."""
+    """One JSON object per line. `extra=` fields are merged in at the top level.
+
+    The level is written twice. `level` is the Python name, which is what a
+    Loki or CloudWatch query is written against; `severity` is the same thing
+    under the key Cloud Logging insists on, without which every line in the
+    console arrives at the default severity and an error cannot be picked out
+    of an access log by eye or by filter.
+    """
 
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
@@ -65,6 +90,8 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
+        if severity := _SEVERITY.get(record.levelname.upper()):
+            payload["severity"] = severity
         if rid := getattr(record, "request_id", ""):
             payload["request_id"] = rid
         for key, value in record.__dict__.items():

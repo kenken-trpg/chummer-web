@@ -104,10 +104,17 @@ avoid a second, less useful copy.
 `LOG_FORMAT=json` gives one object per line:
 
 ```json
-{"ts":"…","level":"INFO","logger":"chummer_web","message":"POST /api/characters/patch -> 200 in 41.2ms",
+{"ts":"…","level":"INFO","severity":"INFO","logger":"chummer_web",
+ "message":"POST /api/characters/patch -> 200 in 41.2ms",
  "request_id":"9f0c1d2e3a4b","method":"POST","path":"/api/characters/patch","status":200,
  "duration_ms":41.2,"client":"203.0.113.7"}
 ```
+
+The level is there twice on purpose. `level` is the Python name a Loki or
+CloudWatch query is written against; `severity` is the key Cloud Logging reads,
+and without it every line — an access line and a traceback alike — is filed at
+the default severity, so nothing can be filtered or spotted by colour in the
+Cloud Run console.
 
 Request bodies, query strings and anything derived from a `CharacterState` are
 never logged. Characters are the user's and never touch disk on the server; a

@@ -81,6 +81,19 @@ class TestJsonFormatter:
         assert payload["status"] == 503
         assert payload["path"] == "/api/catalog"
 
+    def test_the_level_is_also_written_under_the_key_cloud_logging_reads(self) -> None:
+        """Without `severity`, every line in the Cloud Run console — an access
+        line and a traceback alike — arrives at the same default severity."""
+        for levelname, expected in (("WARNING", "WARNING"), ("CRITICAL", "CRITICAL")):
+            payload = json.loads(JsonFormatter().format(_record(levelname=levelname)))
+            assert payload["level"] == levelname
+            assert payload["severity"] == expected
+
+    def test_a_level_cloud_logging_does_not_know_is_left_out_rather_than_guessed(self) -> None:
+        payload = json.loads(JsonFormatter().format(_record(levelname="TRACE")))
+        assert payload["level"] == "TRACE"
+        assert "severity" not in payload
+
     def test_internal_logging_machinery_is_not_leaked_into_the_payload(self) -> None:
         payload = json.loads(JsonFormatter().format(_record()))
         for noise in ("args", "msg", "levelno", "pathname", "created", "stack_info"):
