@@ -17,6 +17,15 @@ export default defineConfig({
     // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
+    // Workers as threads, not the default child processes. The suite needs
+    // nothing a process gives that a thread does not — no test changes
+    // `process.env` for its neighbours, none calls `process.chdir`, and the
+    // one global that does get written (`localStorage`) belongs to the jsdom
+    // environment each file gets either way. What forks cost is a Node start per
+    // worker, and that is what this saves: ~10% here, and more on
+    // `frontend-windows`, where spawning a process is dearest and the job is
+    // the critical path of a pull request.
+    pool: "threads",
     // Most of a run used to be jsdom starting up, for every file — including
     // the `.ts` ones, which mostly render nothing. Those run in plain node; a
     // `.ts` test that does need a DOM says so with a `@vitest-environment
