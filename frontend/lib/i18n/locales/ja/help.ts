@@ -136,6 +136,12 @@ export const JA_HELP = {
   "help.matrix.statsLabel": "マトリックス値",
   "help.matrix.deviceRating":
     "DR（デバイスレーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
+  "help.matrixmod.statsLabel": "電子改造の値",
+  "help.matrixmod.what":
+    "電子改造（DT p.66）：機器に半田付けして、マトリックス値を 1 つ上げる。コムリンク・デッキ・RCC に付けられる",
+  "help.matrixmod.array":
+    "デッキでは配列の枠どうしで点を移すものがある（片方 +1、もう片方 −1）。合計は増えない",
+  "help.matrixmod.included": "「標準装備」と出ているものは機器に最初から付いており、値段も取らない",
   "help.prio.statsLabel": "表の読み方",
   "help.prio.attrCell": "能力値の欄の「6 (2)」は、通常の能力値点 6 と特殊能力値点 2",
   "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
@@ -155,6 +161,78 @@ export const JA_HELP = {
     "R（レーティング）：性能の段階。上げると値段も入手可能度も上がることが多い。上限は品目ごと",
   "help.gear.capacity": "容量 n/m：この装備に部品を積める量（m）と、いま使っている量（n）",
   "help.gear.qty": "×n は個数。値段は個数倍になる",
+  "help.points.attr": "能力値点 n/m：使った点／このキャラクターが持つ点。余っても他には回せない",
+  "help.points.special": "特殊点 n/m：エッジ・魔力・共振力にだけ使える点。通常の能力値点とは別勘定",
+  "help.points.skills": "技能点 n/m：1 点で技能レーティング 1。技能グループ点とは別枠",
+  "help.points.knowledge": "知識点 n/m：無料枠は (INT + LOG) × 2 点。母語が 1 つ無料になる",
+  "help.points.contacts":
+    "コンタクト n/m (+k)：無料枠 m は CHA × 3（設定で変わる）。+k は超えて買った分で、接続度 ＋ 忠誠度がそのままカルマになる",
+  "help.points.martial": "流派 n/m ・ 技 n/m：作成時の上限。超える分はカルマで買う",
+  "help.points.advancement": "成長カルマ：キャリアに入ってから能力値・技能を上げるのに使ったカルマ",
+  "help.points.negativeKarma": "不利な資質で戻るカルマの上限。設定で変わる",
+  "help.points.spells":
+    "呪文 n/m (+k)：タレントの無料枠 m と、カルマで買い足した分 k（標準 1 つ 5 カルマ）",
+  "help.points.complexForms":
+    "複合フォーム n/m (+k)：タレントの無料枠と、カルマで買い足した分（標準 1 つ 4 カルマ）",
+  "help.livingPersona":
+    "リビングペルソナ：テクノマンサー自身がデッキの代わりになる。DR ＝ 共振力、ATK ＝ CHA、SLZ ＝ INT、DP ＝ LOG、FW ＝ WIL",
+  "help.attr.wareBonus": "「ウェア+n」はサイバー／バイオウェアによる加算。素の値の上限とは別に乗る",
+  "help.attr.limbAverage":
+    "「リム平均」が出ているときの STR / AGI は、全肢の平均（義肢はその肢の値、生身は素の値）",
+  "help.attr.unimplemented":
+    "未実装ボーナス：カタログにあるがこの計算機がまだ扱えない修正。値には入っていない",
+  "help.flag.ambidextrous": "両利き：利き手でない側で撃つ・殴るときの不利を受けない",
+  "help.flag.erased": "Erased：マトリックス上に残った自分の記録が、放っておくと消えていく",
+  "help.flag.excon": "Ex-Con：前科者。社会的な扱いが悪くなる代わりにカルマが戻る",
+  "help.flag.overclock":
+    "Overclocker：いちばん性能の高いデッキのマトリックス値 1 つ（ふつうアタック）に +1",
+  "help.flag.specialMod":
+    "特別改造 n/m：資質で増える枠で、これを要求する武器アクセサリの数を数えている",
+  "help.flag.fihp": "Friends in High Places：伝手が要る場面で便宜を受けられる",
+  "help.flag.madeMan": "Made Man：組織の一員。後ろ盾が付くかわりに抜けられない",
+  "help.flag.trustfund":
+    "Trust Fund：等級に応じた生活水準の月額が無料になる（1 中流／2 低所得／3 高級／4 中流）",
+  "help.flag.dealer": "Dealer Connection：この分類の車両が 10% 引きで買える",
+  "help.career.rewards":
+    "ここで足したカルマと新円は、作成時の予算ではなくキャリア中の収入として積む",
+  "help.career.log": "1 行ずつ残るので、どのランで何をもらったか後から辿れる",
+  "help.career.edit":
+    "式から出る分とは別に、GM が与えた分を手で上乗せする欄。式の値そのものは動かない",
+  "help.granted.what":
+    "資質・ウェア・アデプトパワー・メンターが与える技能。ここで選んでも技能点は減らない",
+  "help.granted.where": "与えている側のタブにある同じ選択を写したもの。どちらで選んでも同じ",
+  "help.talent.what": "プライオリティのタレントが配る技能。選ぶだけで、技能点は使わない",
+  "help.talent.rating": "決まったレーティングまで無料で上がる。その上に技能点で買い足せる",
+  "help.talent.change": "選び直すと前の技能から無料分だけ下がる。買い足した分はそのまま残る",
+  "help.heldGear.statsLabel": "中に入れる装備",
+  "help.heldGear.what":
+    "ケミカルグランドや自動注射器のように、ウェアが中に抱える装備。入れたものの値段はウェアとは別に掛かる",
+  "help.drug.statsLabel": "ドラッグの値",
+  "help.drug.effect": "効果は「使用中」の間だけ能力値などに乗る。外せば元に戻る",
+  "help.drug.onset": "発現（Onset）：摂ってから効き始めるまでの時間。0 は即時",
+  "help.drug.vector":
+    "摂取方法（注射・吸入・経口・接触）。同じドラッグでも方法で発現の速さが変わる",
+  "help.drug.testLabel": "中毒判定",
+  "help.drug.pool":
+    "中毒判定のプール ＝ BOD ＋ WIL（身体依存）／LOG ＋ WIL（精神依存）（SR5 p.414）",
+  "help.drug.threshold": "中毒閾値がその判定の目標ヒット数。届かないと中毒が 1 段進む",
+  "help.drug.addicted":
+    "括弧内はすでに中毒になっている場合のプール。初回だけ変える資質がある（Drug Tolerant は初回 +2、CF p.54）",
+  "help.drug.rating": "中毒レーティング：抜けようとするときに相手になる値。大きいほど抜けにくい",
+  "help.drug.speed": "発現までの秒数。0 は即時",
+  "help.drug.duration": "効果が続く時間。切れたあとにクラッシュが来るものがある",
+  "help.drug.crash": "クラッシュ：効果が切れたときに受ける反動のダメージ",
+  "help.drug.grade": "グレードの倍率は値段に掛かる。上のグレードほど入手可能度も上がる",
+  "help.drug.parts":
+    "基剤（Foundation）1 つの上にブロックと強化剤を重ねる。何を重ねられるかは基剤が決める（CF p.190）",
+  "help.sensor.statsLabel": "センサーの値",
+  "help.sensor.nest": "筐体 → センサー → 機能の 3 段。機能は筐体の容量に収まる範囲で積む",
+  "help.sensor.capacity": "容量 n/m：この筐体に積める量（m）と、いま使っている量（n）",
+  "help.sensor.rating": "R（レーティング）：センサーの精度。知覚判定のリミットになる",
+  "help.optics.statsLabel": "視覚・聴覚機器の値",
+  "help.optics.nest": "強化はこの機器に積む。サイバーウェアの目・耳とは別の枠で、容量は共有しない",
+  "help.optics.capacity": "容量 n/m：この機器に積める強化の量（m）と、いま使っている量（n）",
+  "help.optics.rating": "R（レーティング）：強化の段階。同じ強化を重ねても効果は足し合わない",
   "help.program.statsLabel": "プログラムの値",
   "help.program.slot":
     "1 本ごとに搭載先のプログラムスロットを 1 つ使う。デッキや RCC 側に n/m で出る",
@@ -167,6 +245,14 @@ export const JA_HELP = {
   "help.vehmod.capacity": "容量 n/m：この改造自身が抱えられる量（センサーやウェアを積むもの）",
   "help.vehmod.included":
     "「標準装備」と出ているものは車種に最初から付いており、スロットも値段も取らない",
+  "help.vehmount.statsLabel": "マウントの値",
+  "help.vehmount.slots": "スロット n：マウント自身が車体から食う枠。載せる武器は枠を食わない",
+  "help.vehmount.weapon":
+    "載せられるのは武器タブで買ってある武器だけ。ここでは選ぶだけで、買うことはできない",
+  "help.vehmount.included": "「標準装備」のマウントは車種に最初から付いており、外せない",
+  "help.vehgear.statsLabel": "車内の装備の値",
+  "help.vehgear.what": "車体に固定する改造ではなく、車内に積んでいるだけの装備。スロットは食わない",
+  "help.vehgear.rating": "R（レーティング）：装備の段階。値段はレーティングで変わる",
   "help.meta.statsLabel": "メタタイプの選び方",
   "help.meta.special": "特殊点はエッジ・魔力・共振力にだけ使える。通常の能力値点とは別勘定",
   "help.meta.karma":

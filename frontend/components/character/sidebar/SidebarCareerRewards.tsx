@@ -1,3 +1,4 @@
+import { HelpTip } from "@/components/help/HelpTip";
 import { useState } from "react";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { renderNotice } from "@/lib/engine-notices";
@@ -45,7 +46,14 @@ export function SidebarCareerRewards({ career, ch, d, patch, tr, ui }: SidebarBl
       {career && patch ? (
         <div className="career-panel">
           <div className="stat">
-            <span>{ui("side.rewardTotal")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("side.rewardTotal") })}
+                lines={[{ label: ui("help.career.rewards") }, { label: ui("help.career.log") }]}
+              >
+                {ui("side.rewardTotal")}
+              </HelpTip>
+            </span>
             <b>
               {d.karma_earned || 0}K / {(d.nuyen_earned || 0).toLocaleString()}¥
             </b>

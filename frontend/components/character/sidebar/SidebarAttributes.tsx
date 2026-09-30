@@ -1,3 +1,4 @@
+import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
@@ -13,7 +14,22 @@ export function SidebarAttributes({ d, t, ui }: SidebarBlockProps) {
         if (hidden) return null;
         return (
           <div className="stat" key={k}>
-            <span>{attrLabel(k, t)}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: attrLabel(k, t) })}
+                lines={[
+                  { label: ui(`help.attr.${k}`) },
+                  ...((d.ware_attr_bonus?.[k] || 0) !== 0
+                    ? [{ label: ui("help.attr.wareBonus") }]
+                    : []),
+                  ...(d.limb_replace && (k === "STR" || k === "AGI")
+                    ? [{ label: ui("help.attr.limbAverage") }]
+                    : []),
+                ]}
+              >
+                {attrLabel(k, t)}
+              </HelpTip>
+            </span>
             <b>
               {d.totals[k] ?? "-"}
               {(d.ware_attr_bonus?.[k] || 0) !== 0 ? (
@@ -31,6 +47,12 @@ export function SidebarAttributes({ d, t, ui }: SidebarBlockProps) {
       })}
       {d.unimplemented_bonuses.length > 0 && (
         <p className="warn">
+          <HelpTip
+            label={ui("help.open", { label: ui("side.unimplementedLabel") })}
+            lines={[{ label: ui("help.attr.unimplemented") }]}
+          >
+            {ui("side.unimplementedLabel")}
+          </HelpTip>{" "}
           {ui("side.unimplemented", { count: d.unimplemented_bonuses.length })}
         </p>
       )}

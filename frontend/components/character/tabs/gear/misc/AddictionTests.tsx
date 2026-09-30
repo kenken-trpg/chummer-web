@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 
 /**
@@ -26,6 +27,16 @@ export function AddictionTests({ d, ui }: Pick<TabPanelProps, "d" | "ui">) {
   ];
   return (
     <div className="muted" style={{ marginBottom: 8 }}>
+      <HelpTip
+        label={ui("help.open", { label: ui("gear.addictionTest") })}
+        lines={[
+          { label: ui("help.drug.pool") },
+          { label: ui("help.drug.threshold") },
+          { label: ui("help.drug.addicted") },
+        ]}
+      >
+        {ui("help.drug.testLabel")}
+      </HelpTip>{" "}
       {ui("gear.addictionTest")}:{" "}
       {pools
         .map(([label, first, addicted]) =>

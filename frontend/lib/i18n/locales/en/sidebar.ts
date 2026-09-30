@@ -91,6 +91,7 @@ export const EN_SIDEBAR = {
   "side.limbAverage": "limb average",
 
   "side.unimplemented": "{count} unimplemented bonuses (ignored, continuing)",
+  "side.unimplementedLabel": "Unimplemented",
   "side.scEdit": "Street cred adjustment",
   "side.scBurn": "Burn 2 street cred (−1 notoriety)",
   "side.scBurnHint": "Burn two points of Street Cred to take a point of Notoriety off (SR5 p.373)",

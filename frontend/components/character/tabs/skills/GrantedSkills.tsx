@@ -1,5 +1,6 @@
 "use client";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import type { SkillPickSlot } from "@/lib/types";
 
@@ -53,7 +54,14 @@ export function GrantedSkills({ character: ch, d, tr, ui, patch }: TabPanelProps
   if (!slots.length) return null;
   return (
     <>
-      <h3>{ui("skills.granted")}</h3>
+      <h3>
+        <HelpTip
+          label={ui("help.open", { label: ui("skills.granted") })}
+          lines={[{ label: ui("help.granted.what") }, { label: ui("help.granted.where") }]}
+        >
+          {ui("skills.granted")}
+        </HelpTip>
+      </h3>
       <p className="muted">{ui("skills.grantedNote")}</p>
       <SkillPickSelects
         slots={slots}

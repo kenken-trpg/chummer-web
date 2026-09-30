@@ -1,4 +1,5 @@
 "use client";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 
 /** The skills the priority talent hands out at a fixed rating: a Magician's
@@ -30,10 +31,19 @@ export function TalentSkills({ character: ch, d, tr, ui, patch }: TabPanelProps)
   return (
     <>
       <h3>
-        {ui(talent.group ? "skills.talentGroup" : "skills.talent", {
-          qty: talent.qty,
-          rating: talent.rating,
-        })}
+        <HelpTip
+          label={ui("help.open", { label: ui("skills.talentLabel") })}
+          lines={[
+            { label: ui("help.talent.what") },
+            { label: ui("help.talent.rating") },
+            { label: ui("help.talent.change") },
+          ]}
+        >
+          {ui(talent.group ? "skills.talentGroup" : "skills.talent", {
+            qty: talent.qty,
+            rating: talent.rating,
+          })}
+        </HelpTip>
       </h3>
       <div className="skill-picks">
         {Array.from({ length: talent.qty }, (_, i) => {

@@ -1,5 +1,6 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
 import { alreadySlotted, dropTree, vehicleInteriorFits } from "@/lib/character/gear";
@@ -27,6 +28,12 @@ export function VehicleGearRows({
     <>
       {(item.gear || []).map((acc) => (
         <div className="muted" key={acc.id} style={{ marginTop: 6 }}>
+          <HelpTip
+            label={ui("help.open", { label: tr(acc.label || acc.name) })}
+            lines={[{ label: ui("help.vehgear.what") }, { label: ui("help.vehgear.rating") }]}
+          >
+            {ui("help.vehgear.statsLabel")}
+          </HelpTip>{" "}
           {tr(acc.label || acc.name)}
           {acc.rating_max > 0 ? ` R${acc.rating}` : ""}
           {acc.included ? ` / ${ui("common.included")}` : ` / ${acc.nuyen.toLocaleString()}¥`}

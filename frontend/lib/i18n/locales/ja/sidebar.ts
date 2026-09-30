@@ -91,6 +91,7 @@ export const JA_SIDEBAR = {
   "side.limbAverage": "リム平均",
 
   "side.unimplemented": "未実装ボーナス {count} 件（無視して継続）",
+  "side.unimplementedLabel": "未実装",
   "side.scEdit": "SC 補正",
   "side.scBurn": "SC を 2 燃やす（悪名 −1）",
   "side.scBurnHint": "ストリート・クレドを 2 点燃やして悪名を 1 点下げる（SR5 p.373）",
