@@ -106,27 +106,34 @@ boost なし、起動プローブ `/api/ready`）:
    Deploying from CI に書いた（プール・プロバイダ・`gh-deploy` サービス
    アカウント・3 つの最小権限・リポジトリ変数 2 つ・連携だけを先に確かめる
    方法）。**GCP 側の実行は未了**。
-1. **`.github/workflows/deploy-cloudrun.yml`** — `v*` タグ起動。Workload
-   Identity 連携（鍵 JSON を置かない）で `gcloud` に入り、`docker-manifest`
-   が出した digest を AR にミラーして `gcloud run deploy --image <digest>`。
-   CI が通した実体がそのまま本番に出る。
-2. ~~**`deploy/cloudrun/service.yaml`** — probe と env を宣言で持つ。~~ —— 済。
+1. ~~**`.github/workflows/deploy-cloudrun.yml`**~~ —— 済（#439）。`v*` タグで
+   `docker-attest` の後に走る再利用ワークフロー。署名済みの manifest list から
+   amd64 digest を選んで AR に複写し、digest を AR から読み直してから deploy
+   する（複写が別の場所に落ちていても、誰も検めていない名前で本番に出ない）。
+   `vars.GCP_PROJECT` が空なら skip するので、fork のタグは赤くならない。
+2. ~~**`deploy/cloudrun/service.yaml`** — probe と env を宣言で持つ。~~ —— 済（#437）。
 3. **ドメイン** — `gcloud beta run domain-mappings create`。asia-northeast1 で
    提供されているか要確認（全リージョンにはない）。Cloudflare DNS なら
    **DNS only**（grey cloud）: 証明書は Google が出すので自分のエンドポイントを
    見る必要がある。**プロキシを有効にして `TRUST_CLOUDFLARE_IP=1` は不可** ——
    `*.run.app` が開いたままで、そこへ直接叩けば `cf-connecting-ip` を詐称できる。
    WAF が欲しいなら Cloudflare Containers（`deploy/cloudflare/`）を選ぶ話になる。
-4. **リビジョン移行** — `--tag` + `--no-traffic` で新リビジョンを確認してから
-   トラフィックを移す。
+4. ~~**リビジョン移行**~~ —— 済（#439）。`deploy/cloudrun/render.py` が現行
+   リビジョンにトラフィックを固定したまま新リビジョンを `candidate` 0% で
+   足すので、`services replace` が Ready（= `/api/ready` の起動プローブ）を
+   待つ間、現行が全リクエストを受ける。応答できないリビジョンは訪問者では
+   なくデプロイを落とす。移行は後続の `update-traffic` だけ。
+
+残っているのは **3（ドメイン）** と、段階 2 の 0 に書いた **GCP 側の実行**の
+2 つだけ。
 
 ## 付随して直すもの
 
-- **ログの重大度**。`LOG_FORMAT=json` の出力キーは `level`
-  （`backend/app/logging_config.py`）。Cloud Logging が読むのは `severity` なので、
-  このままだと全行が既定の重大度で並ぶ。`severity` を併記するのが小さい。
+- ~~**ログの重大度**~~ —— 済（#436）。`LOG_FORMAT=json` の出力に `severity` を
+  併記した。Cloud Logging が知らない水準（独自レベル、ライブラリの `TRACE`）は
+  推測せず省く。
 - ~~`docs/deploy.md` › Google Cloud Run を実測値に差し替える~~ —— 済。
-- `changelog.d/` の断片。
+- ~~`changelog.d/` の断片~~ —— 済。#436・#437・#438・#439 それぞれに入れた。
 
 ## 別件で見つけたもの（この計画の範囲外）
 
