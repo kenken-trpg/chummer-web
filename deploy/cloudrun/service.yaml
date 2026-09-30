@@ -1,0 +1,98 @@
+# The Cloud Run service, declared rather than spelled out as flags.
+#
+#   gcloud run services replace deploy/cloudrun/service.yaml --region asia-northeast1
+#
+# Every value here was measured, and `docs/deploy.md` › Google Cloud Run says
+# what it was measured against. The shape is the private one: the service is
+# never `--allow-unauthenticated`, and the Cloudflare Worker in
+# `deploy/cloudflare-proxy/` is the only caller that can mint a token for it.
+# That is what makes `TRUST_CLOUDFLARE_IP` sound below.
+#
+# `image` carries a placeholder, not a tag. The deploy substitutes the digest
+# that CI built, smoke-tested and signed, so what runs is the artefact the
+# tests saw — a tag would let a later push change what this file means.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: chummer-web
+  labels:
+    cloud.googleapis.com/location: asia-northeast1
+spec:
+  template:
+    metadata:
+      annotations:
+        # The rate limiter counts in this process's memory, so a second
+        # instance would hand out a second full allowance. It is the cost
+        # ceiling as well.
+        autoscaling.knative.dev/maxScale: "1"
+        # Zero, deliberately. The Worker's cron ping keeps an instance warm
+        # for free; `minScale: "1"` is the version with a guarantee and a bill
+        # around the clock (~$10/month at this size).
+        autoscaling.knative.dev/minScale: "0"
+        # Start-up CPU boost takes ~4.5 s off the container start and hands the
+        # same ~4.5 s to the first catalog request — end to end it was a wash
+        # (~11 s either way), so it is off.
+        run.googleapis.com/startup-cpu-boost: "false"
+    spec:
+      # One request at a time would serialise a browser's parallel fetches
+      # behind the 3 MB catalog. The default 80 is right for a stateless app
+      # whose work is CPU-light once warm.
+      containerConcurrency: 80
+      timeoutSeconds: 60
+      containers:
+        # Cloud Run cannot pull from GHCR, so the image is mirrored into
+        # Artifact Registry by digest. See `.github/workflows/deploy-cloudrun.yml`.
+        - image: IMAGE_DIGEST_PLACEHOLDER
+          ports:
+            # Cloud Run sets $PORT to this; the bundled Caddy honours it.
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            # Nothing but the Worker can reach the container, and the Worker
+            # is behind Cloudflare, so `cf-connecting-ip` is trustworthy here
+            # and is the only thing that is: with hops at 0 a forwarded
+            # `x-forwarded-for` (or `X-Request-ID`) is ignored.
+            - name: TRUST_CLOUDFLARE_IP
+              value: "1"
+            - name: TRUSTED_PROXY_HOPS
+              value: "0"
+            - name: LOG_FORMAT
+              value: json
+            - name: LOG_LEVEL
+              value: INFO
+          # `/api/ready`, not `/api/health`: health answers 200 the moment
+          # uvicorn binds, which lets traffic in while the warm-up is still
+          # parsing the data — the request then builds the catalog a second
+          # time and the two fight over the one vCPU. A warm-up that *failed*
+          # still reports ready, so a broken data directory surfaces as a
+          # request error instead of a container restarting forever.
+          #
+          # timeoutSeconds must stay below periodSeconds or the deploy is
+          # refused — after the image has already been pushed.
+          startupProbe:
+            httpGet:
+              path: /api/ready
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            # 3 + 12x5 = just over a minute. A cold start measured ~13 s.
+            failureThreshold: 12
+          # Liveness asks the cheap question: is the server answering at all.
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+  traffic:
+    # The deploy adds a revision with `--no-traffic --tag`, checks it on its
+    # own URL, and only then moves traffic. `latestRevision: true` here is
+    # what a plain `services replace` falls back to.
+    - latestRevision: true
+      percent: 100

@@ -1,0 +1,1 @@
+- **Cloud Run の設定を宣言ファイルにした。** `deploy/cloudrun/service.yaml` に起動プローブ・メモリ・オートスケール・環境変数をまとめ、`gcloud run services replace` で適用できます。数値には根拠（実測値）をコメントで添えてあり、イメージはタグではなく CI が署名した digest を差し込む形なので、テストが見たものがそのまま動きます。
