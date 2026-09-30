@@ -1,21 +1,23 @@
-"""``apply_bonus_nodes``: the per-node loop + ordered domain dispatch.
+"""``apply_bonus_nodes``: the per-node loop + the tag → handler lookup.
 
-Each ``nodes/<domain>.py`` owns a slice of the old ``if/elif tag`` chain as
-``apply(tag, node, fields, effects, source) -> bool``; this module tries them
-in order (no tag is claimed by two domains, so order across domains is
-irrelevant). Completeness is guarded by
-``tests/test_improvements_nodes.py``.
+Each ``nodes/<domain>.py`` holds a slice of the handlers, one per tag, claimed
+with ``@handles``. Importing the four modules fills ``HANDLERS``; this module
+reads ``IMPLEMENTED`` off it rather than keeping a second list beside it, so
+the two cannot drift. Two domains claiming the same tag raises at import.
 """
 
 from __future__ import annotations
 
 from typing import Any, cast
 
-from .._common import IMPLEMENTED, SILENT_TAGS
+from .._common import SILENT_TAGS
 from ..effects import EffectsDict
-from . import magic, skills, social, stats
+from . import magic, skills, social, stats  # noqa: F401  (imported for their @handles side effect)
+from ._registry import HANDLERS
 
-_DOMAINS = (stats.apply, skills.apply, magic.apply, social.apply)
+#: Every tag some handler claims — the set the loop below admits. Derived, not
+#: written: adding a handler is what makes a tag implemented.
+IMPLEMENTED: frozenset[str] = frozenset(HANDLERS)
 
 
 #: The values the sidebar explains term by term (`stat_sources`).
@@ -65,7 +67,4 @@ def _apply_nodes(nodes: list[dict[str, Any]], effects: EffectsDict, source: str)
             if tag not in SILENT_TAGS:
                 effects["unimplemented"].append({"source": source, "tag": tag})
             continue
-        fields = node.get("fields") or {}
-        for _domain in _DOMAINS:
-            if _domain(tag, node, fields, effects, source):
-                break
+        HANDLERS[tag](tag, node, node.get("fields") or {}, effects, source)

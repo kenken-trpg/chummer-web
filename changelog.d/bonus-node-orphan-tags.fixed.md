@@ -1,0 +1,1 @@
+- **実装済みと宣言されながら、実際には何もしていなかった bonus タグ 4 件を明示した。** `selectskill` / `hardwires` / `selectcyberware` / `selectlimit` は、一覧には載っているのにハンドラが無く、パイプラインに受け入れられたうえで黙って捨てられていました（未実装としても報告されない状態）。4 件とも実際の処理はこのパイプラインの外（`engine/skills/_picks.py`、`engine/ware/resolve.py`、`engine/magic/powers.py`）にあるため、振る舞いは正しいままです。どこで処理されるかを書いた明示的な no-op ハンドラを置き、宣言と実体を一致させました。
