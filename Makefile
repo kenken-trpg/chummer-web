@@ -81,6 +81,9 @@ reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, round
 e2e: ## Playwright: one real browser against both halves (needs `make data`)
 	cd frontend && npx playwright install chromium && npm run test:e2e
 
+template-watch: ## Check the live キャラシテンプレート against what the .xlsx import expects (needs network)
+	cd backend && ./$(VENV)/python scripts/template_watch.py
+
 coverage: coverage-backend coverage-frontend ## Coverage for both (fails under the floor)
 
 coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
