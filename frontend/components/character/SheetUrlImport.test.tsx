@@ -15,7 +15,10 @@ describe("<SheetUrlImport>", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "URLから読込" }));
     screen.getByRole("textbox", { name: "URLから読込" });
-    screen.getByText("「リンクを知っている全員」で共有されたシートだけ読めます");
+    // what may be pasted, and the sharing it needs: both have to be on screen
+    screen.getByText(
+      "貼れるのは https://docs.google.com/spreadsheets/d/… の URL で、「リンクを知っている全員」で共有されたシートだけ読めます",
+    );
   });
 
   it("reads the URL it was given and folds away again", async () => {

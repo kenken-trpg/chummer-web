@@ -132,7 +132,11 @@ export function Toolbar({
       >
         {ui("toolbar.exportFvtt")}
       </button>
-      <button className="btn" onClick={() => fileRef.current?.click()}>
+      <button
+        className="btn"
+        onClick={() => fileRef.current?.click()}
+        title={ui("toolbar.importHint")}
+      >
         {ui("toolbar.import")}
       </button>
       <button className="btn" onClick={() => void copyShareLink()} title={ui("toolbar.shareHint")}>

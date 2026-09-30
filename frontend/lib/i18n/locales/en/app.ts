@@ -170,16 +170,19 @@ export const EN_APP = {
   "toolbar.exportXlsx": "Export .xlsx",
   "toolbar.sheetUrl": "From URL",
   "toolbar.sheetUrlHint":
-    "Read the ［SR5］キャラシテンプレート straight from its Google Sheets URL",
+    "Read the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to straight from its Google Sheets URL. Only that template\u2019s sheet can be read \u2014 no other spreadsheet and no other site.",
   "toolbar.sheetUrlRead": "Read",
   "toolbar.sheetUrlReading": "Reading\u2026",
-  "toolbar.sheetUrlShared": "Only a sheet shared with \u201cAnyone with the link\u201d can be read",
+  "toolbar.sheetUrlShared":
+    "Paste a https://docs.google.com/spreadsheets/d/\u2026 URL; only a sheet shared with \u201cAnyone with the link\u201d can be read",
   "toolbar.exportXlsxHint":
-    "Export an .xlsx with the same sheets and the same input cells as the Japanese community character sheet (the template itself is not bundled)",
+    "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
   "toolbar.exportFvttHint":
     "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
   "toolbar.import": "Load (JSON/.chum5/.xlsx)",
+  "toolbar.importHint":
+    "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
   "toolbar.shareHint":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "toolbar.cocofolia": "Cocofolia",
@@ -235,7 +238,7 @@ export const EN_APP = {
     "This does not look like a Foundry VTT character (use Export Data on a shadowrun5e character actor).",
   "api.importXlsxFailed": "This character-sheet template could not be imported.",
   "api.notACharacterTemplate":
-    'This does not look like the Shadowrun character-sheet template (download the "［SR5］キャラシテンプレート" Google Sheet as .xlsx and choose that file).',
+    "This is not a character-sheet template this can read (download the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to as .xlsx and choose that file; an ordinary Excel workbook cannot be read).",
   "api.sheetUrlNotASheet":
     "This does not look like a Google Sheets URL (paste the https://docs.google.com/spreadsheets/d/\u2026 address from the browser's address bar).",
   "api.sheetUrlNotShared":
