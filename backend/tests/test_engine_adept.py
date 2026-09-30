@@ -609,3 +609,87 @@ def test_mystic_adept_power_points_in_career_need_the_setting() -> None:
     errors, pp = _career_mystic(SettingsState(mystic_adept_pp_in_career=True))
     assert not has(errors, "engine.adept.mysticPpInCareer")
     assert pp == 2
+
+
+def _power_warnings(out: object) -> list[dict]:
+    return [w for w in out.derived["warnings"] if str(w.get("key", "")).startswith("engine.adept.power")]
+
+
+def test_a_mentor_power_choice_left_unpicked_says_so() -> None:
+    """The Chaos choice grants *a* level of Improved Potential without saying
+    which. Until the player picks, the power is not granted and the sheet says
+    what is missing — rather than silently granting nothing."""
+    out = compute(
+        _adept(
+            "chaos-unpicked",
+            quality_ids=[MENTOR_SPIRIT],
+            mentor_id=CHAOS,
+            mentor_choices=[CHAOS_POWER_CHOICE],
+            mentor_extras={},
+        )
+    )
+    (warning,) = _power_warnings(out)
+    assert warning["key"] == "engine.adept.powerPick"
+    assert CHAOS_POWER_CHOICE in warning["params"]["source"]["tr"]
+    # `_chaos` picks Physical; without a pick that power is simply not granted.
+    assert IMPROVED_POTENTIAL_PHYSICAL not in {row["name"] for row in out.derived["adept_powers"]}
+    assert IMPROVED_POTENTIAL_PHYSICAL in {row["name"] for row in _chaos({}).derived["adept_powers"]}
+
+
+def test_a_mentor_power_pick_outside_the_offered_list_is_refused() -> None:
+    """`limittopowers` on the choice is a closed list. A pick from outside it —
+    an imported save, or a power renamed out from under one — is refused by
+    name rather than granted."""
+    out = _chaos({CHAOS_POWER_CHOICE: "Killing Hands"})
+    (warning,) = _power_warnings(out)
+    assert warning["key"] == "engine.adept.powerNotAllowed"
+    assert warning["params"]["picked"] == {"tr": "Killing Hands"}
+    assert not [row for row in out.derived["adept_powers"] if row["name"] == "Killing Hands"]
+
+
+def test_an_open_power_slot_reads_the_pick_off_the_gear_row() -> None:
+    """The mentor spirits are the only `<selectpowers>` the shipped catalog
+    reaches this through — the Qi Focus, which is the open-ended one, was lifted
+    into its own `qi_focus` catalog entry and goes through `resolve_qi_foci`.
+    Custom data can put an open slot back on a gear row, so the branch that
+    reads the pick off `state.gear` is exercised here directly.
+    """
+    from app.data_loader import catalog
+    from app.engine.qualities._binders import bind_select_powers
+    from app.improvements import empty_effects
+    from app.models import GearInstall
+    from app.notices import Notice
+
+    carrier = next(g for g in catalog()["gear"] if g.get("maxrating") and not g.get("requireparent"))
+    state = _adept(
+        "open-slot",
+        gear=[GearInstall(gear_id=carrier["id"], rating=3, extra="Killing Hands")],
+    )
+
+    def slot() -> dict:
+        return {"source": carrier["name"], "options": [], "open_select": True, "rating": 1}
+
+    effects = empty_effects()
+    effects["select_power_slots"] = [slot()]
+    warnings: list[Notice] = []
+    bind_select_powers(effects, [], state, warnings)
+    assert warnings == []
+    # the gear row's own rating, not the slot's 1
+    assert effects["grant_powers"] == [{"source": carrier["name"], "name": "Killing Hands", "rating": 3, "extra": ""}]
+
+    # An open slot admits any power name, so an unknown one has to be caught
+    # here; a closed slot's `options` would have refused it earlier.
+    state.gear[0].extra = "Not A Power"
+    effects = empty_effects()
+    effects["select_power_slots"] = [slot()]
+    warnings = []
+    bind_select_powers(effects, [], state, warnings)
+    assert [w["key"] for w in warnings] == ["engine.adept.powerUnknown"]
+    assert effects["grant_powers"] == []
+
+    # A slot that names neither a list nor an open pick is nothing to fill.
+    effects = empty_effects()
+    effects["select_power_slots"] = [{"source": carrier["name"], "options": [], "rating": 1}]
+    warnings = []
+    bind_select_powers(effects, [], state, warnings)
+    assert (warnings, effects["grant_powers"]) == ([], [])
