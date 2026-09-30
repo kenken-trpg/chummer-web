@@ -110,6 +110,16 @@ class Workbook:
     def sheet_names(self) -> list[str]:
         return list(self._sheets)
 
+    @property
+    def sheet_parts(self) -> dict[str, str]:
+        """``{sheet name: the part it is stored in}``.
+
+        Not needed to read a sheet — `cells` does that — but a tool that reads
+        something this class deliberately ignores, such as a sheet's data
+        validations, has to find the same part this found.
+        """
+        return dict(self._sheets)
+
     def _shared_strings(self) -> list[str]:
         if self._strings is None:
             if "xl/sharedStrings.xml" in self._zip.namelist():
