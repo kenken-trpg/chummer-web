@@ -1,6 +1,9 @@
-"""Guard for the improvements/nodes/ domain split: every tag the pipeline
-claims to implement must be handled by some domain module, even the ones no
-character-level test exercises.
+"""Guards for the improvements/nodes/ handler table.
+
+Which tags are implemented is now read off the table itself, so the old
+"is every listed tag handled?" question cannot come out wrong. What is still
+worth asking is whether every handler survives being *called* — including the
+ones no character-level test exercises.
 """
 
 import re
@@ -9,7 +12,8 @@ from pathlib import Path
 import pytest
 
 from app.improvements import EffectsDict, apply_bonus_nodes, empty_effects, substitute_rating
-from app.improvements._common import IMPLEMENTED, _eval_int
+from app.improvements._common import _eval_int
+from app.improvements.nodes import IMPLEMENTED
 
 
 def test_eval_int_does_bare_arithmetic_but_refuses_exponentiation() -> None:
@@ -21,12 +25,17 @@ def test_eval_int_does_bare_arithmetic_but_refuses_exponentiation() -> None:
     assert _eval_int("9**9**9", 7) == 7
 
 
-def test_every_implemented_tag_has_a_handler() -> None:
+def test_every_handler_survives_a_bare_node() -> None:
+    """Every tag, handed a node carrying nothing but the tag.
+
+    A handler that reaches into `fields` or `nested` without a default raises
+    here rather than on whichever character first carries that bonus — and the
+    tags this reaches are all of them, not the ones the fixtures happen to use.
+    """
     effects = empty_effects()
     nodes = [{"tag": tag} for tag in sorted(IMPLEMENTED)]
     apply_bonus_nodes(nodes, effects, "guard")
-    unhandled = sorted({row["tag"] for row in effects["unimplemented"]})
-    assert unhandled == [], f"IMPLEMENTED tags with no domain handler: {unhandled}"
+    assert sorted({row["tag"] for row in effects["unimplemented"]}) == []
 
 
 def test_weaponcategorydice_accepts_both_upstream_shapes() -> None:

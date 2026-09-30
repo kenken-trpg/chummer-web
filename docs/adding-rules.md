@@ -12,13 +12,17 @@ Chummer expresses a modifier you want to support, e.g.
 
 1. **Parse** — usually nothing to do: `data_loader.parse_bonus()` already turns
    any `<bonus>` child into `{"tag": "dodge", "value": "2"}`.
-2. **Dispatch** — add a branch in `improvements.apply_bonus_nodes()`:
+2. **Dispatch** — add a handler to whichever `improvements/nodes/*.py` the
+   modifier belongs to (`stats` / `skills` / `magic` / `social`):
    ```python
-   elif tag == "dodge":
+   @handles("dodge")
+   def _dodge(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str) -> None:
        effects["dodge"] += _as_int(node.get("value") or fields.get("val"))
    ```
-   and initialise the key in the `effects` factory (`collect_effects` / the
-   dict literal near the top of `improvements.py`).
+   and initialise the key in the `effects` factory (`empty_effects()`).
+   There is no list of implemented tags to update as well — `IMPLEMENTED` is
+   read off the handler table, so `@handles` is the whole registration. A tag
+   two modules both claim raises at import.
    - If the modifier should be *recognised but ignored*, add the tag to
      `SILENT_TAGS` instead (keeps it out of the "unimplemented" report).
 3. **Consume** — read `effects["dodge"]` where the final number is built in

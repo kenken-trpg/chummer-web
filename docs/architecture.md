@@ -49,7 +49,8 @@ Almost every mechanical modifier in Shadowrun is expressed in Chummer's XML as a
 into `{"tag": ..., "value"/"fields": ...}` dicts.
 
 `improvements.apply_bonus_nodes(nodes, effects, source)` is the single dispatch
-point: it walks the nodes and accumulates into a mutable `effects` dict
+point: it walks the nodes, looks each tag up in the handler table and
+accumulates into a mutable `effects` dict
 (`attribute_bonus`, `initiative_dice`, `limit_physical`, `skill_specific_mods`,
 …). `engine.compute()` calls it once per bonus source (qualities, ware, gear,
 foci, tradition, metamagics, active drugs, …) and then reads `effects` when
@@ -62,13 +63,13 @@ than a silent `None`. `collect_effects()` / `apply_bonus_nodes` / the four
 `nodes/*.py` handlers and `Ctx.effects` all carry it. Scalars and nested
 dicts are precise; the `*_mods` / `*_slots` / `grant_*` / cost-rule list
 values carry row `TypedDict`s from `improvements/effect_rows.py` (one per
-`nodes/*.py` producer branch), so `row.get("nam")` (typo) is caught too.
+`nodes/*.py` producer), so `row.get("nam")` (typo) is caught too.
 `enabled_tabs` is a `set[str]` throughout; callers `sorted(...)` it where
 they need an ordered list.
 
-Adding support for a new modifier = add a branch in `apply_bonus_nodes` (or a
-tag to `SILENT_TAGS` if we intentionally ignore it) plus wherever `effects`
-is consumed. See `docs/adding-rules.md`.
+Adding support for a new modifier = add an `@handles`-decorated handler in a
+`nodes/*.py` (or a tag to `SILENT_TAGS` if we intentionally ignore it) plus
+wherever `effects` is consumed. See `docs/adding-rules.md`.
 
 ## HTTP API (all JSON unless noted)
 
@@ -289,12 +290,12 @@ Welcome as PRs. Keep every commit individually green (`make check`).
    tables + `_as_int` / `substitute_rating` / `_bonus_int` primitives),
    `effects.py` (`empty_effects` + the special-armor / limit-modifier
    compactors), and `nodes/` — `apply_bonus_nodes` is a thin per-node loop
-   that dispatches to `nodes/{stats,skills,magic,social}.py`, each owning a
-   slice of the old ~90-branch `if/elif tag` chain as
-   `apply(tag, node, fields, effects, source) -> bool`.
-   `tests/test_improvements_nodes.py` guards that every `IMPLEMENTED` tag
-   still has a handler. `from app.improvements import …` is unchanged (the
-   package `__init__` is the barrel).
+   that looks the tag up in `nodes/_registry.HANDLERS`, filled by the
+   `@handles` decorators in `nodes/{stats,skills,magic,social}.py`. Those
+   were one `if/elif tag` chain, then four; they are now ~150 one-tag
+   handlers, and `IMPLEMENTED` is read off the table rather than listed
+   beside it. `from app.improvements import …` is unchanged (the package
+   `__init__` is the barrel).
 3. **Split `app/data_loader.py`** (vendored-XML → catalog dict) — *done:*
    now the `app/data_loader/` package. `_xml.py` (paths + `_text` / `_int`
    element accessors), `formulas.py` (`eval_formula` + avail / capacity
