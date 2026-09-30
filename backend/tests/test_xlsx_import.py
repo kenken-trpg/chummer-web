@@ -1558,6 +1558,14 @@ def test_other_karma_is_reported_rather_than_folded_in() -> None:
     assert has(warnings, "engine.import.xlsxOtherKarma", name="武術：カロメレグ", karma=7)
 
 
+def test_the_whole_other_karma_block_is_read_to_its_last_row() -> None:
+    """The sheet gives the block nineteen rows. Reading fewer drops what a player
+    wrote in the rest of them without a word."""
+    rows = [{"A": f"儀式{index}", "F": "1.0"} for index in range(19)]
+    _, warnings = xlsx_to_state(filled(other_karma=rows))
+    assert has(warnings, "engine.import.xlsxOtherKarma", name="儀式18", karma=1)
+
+
 def test_the_other_karma_block_is_found_by_its_heading() -> None:
     cells = contact_sheet(other_karma=[{"A": "儀式の準備", "F": "3.0"}])
     shifted = {f"{ref[0]}{int(ref[1:]) + 5}": value for ref, value in cells.items()}

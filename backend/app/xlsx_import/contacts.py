@@ -34,9 +34,14 @@ COLUMN_FREE_CONNECTION = "M"
 COLUMN_FREE_LOYALTY = "O"
 
 #: The block under the contacts, and the rows of it: a name in A, karma in F.
+#: Nineteen rows, which is what the sheet gives the block — measured from its own
+#: formatting, since the rows are empty until a player types in them
+#: (`scripts/template_watch.py`). Ten was a guess, and the nine rows past it went
+#: unread: a player who filled the block down to the line lost the tail of it
+#: without being told.
 KARMA_HEADING = "その他カルマ消費"
 KARMA_OFFSET = 2
-KARMA_COUNT = 10
+KARMA_COUNT = 19
 KARMA_NAME = "A"
 KARMA_SPENT = "F"
 
