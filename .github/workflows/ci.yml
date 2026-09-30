@@ -273,7 +273,9 @@ jobs:
           cache: npm
           cache-dependency-path: deploy/${{ matrix.worker }}/package-lock.json
 
-      - run: ./scripts/retry.sh npm ci --ignore-scripts
+      # `../../`: `working-directory` puts this in `deploy/<worker>/`, and the
+      # script lives at the repository root.
+      - run: ../../scripts/retry.sh npm ci --ignore-scripts
         working-directory: deploy/${{ matrix.worker }}
       - run: npm run typecheck
         working-directory: deploy/${{ matrix.worker }}
