@@ -9,7 +9,7 @@
 VENV := $(if $(wildcard backend/.venv/Scripts/python.exe),.venv/Scripts,.venv/bin)
 PYTHON := $(if $(shell command -v python3 2>/dev/null),python3,python)
 .PHONY: help up down logs update doctor \
-        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-tools check-frontend \
+        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-tools check-workers check-frontend \
         coverage coverage-backend coverage-frontend e2e changelog
 
 help:
@@ -80,10 +80,18 @@ check-tools: ## ruff + format check + mypy for scripts/ and deploy/
 	./backend/$(VENV)/ruff format --config backend/pyproject.toml --check scripts deploy
 	./backend/$(VENV)/mypy --config-file backend/pyproject.toml scripts deploy
 
+# The Workers in `deploy/` are the other half of the same hole `check-tools`
+# closed for Python: `check-frontend` runs from `frontend/`, so tsc has never
+# seen the code that fronts every request. Each has its own `node_modules`, so
+# they are typechecked where they live rather than from one place.
+check-workers: ## tsc for the Cloudflare Workers in deploy/
+	cd deploy/cloudflare && npm run typecheck
+	cd deploy/cloudflare-proxy && npm run typecheck
+
 check-frontend: ## tsc + eslint + prettier check + vitest + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 
-check: check-backend check-tools check-frontend ## Everything CI runs
+check: check-backend check-tools check-workers check-frontend ## Everything CI runs
 
 reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, round-trip them, and check the export against what Chummer itself wrote (needs network once)
 	cd backend && ./$(VENV)/python scripts/chum5_reconcile.py --roundtrip

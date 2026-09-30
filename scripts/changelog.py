@@ -43,6 +43,11 @@ DEV_MANIFESTS = (
     "frontend/package-lock.json",
     "deploy/cloudflare/package.json",
     "deploy/cloudflare/package-lock.json",
+    # The proxy Worker is wrangler, typescript and the workers types — every
+    # one of them a laptop tool. It declares no `dependencies` at all, which
+    # is why it is absent from `SHIPPING_HALVES` below.
+    "deploy/cloudflare-proxy/package.json",
+    "deploy/cloudflare-proxy/package-lock.json",
 )
 #: The `package.json` files whose `dependencies` half does ship, and so has to be
 #: compared before a bot's pull request is waved through. The Worker's own
