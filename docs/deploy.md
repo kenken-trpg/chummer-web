@@ -322,6 +322,129 @@ secret only, never in the repository, and rotate it
 (`gcloud iam service-accounts keys list / delete`). If that is the part you do
 not want, Cloudflare Containers below needs no GCP at all.
 
+## Deploying from CI (Workload Identity)
+
+Everything above is typed by hand. To have a `v*` tag deploy itself, GitHub
+Actions needs to be able to talk to GCP — and the way *not* to do that is a
+service-account key in a repository secret: it is a long-lived credential that
+works from anywhere, for anyone who ever sees it. Workload Identity Federation
+trades it for a token GitHub mints per run, which GCP accepts only for the
+repository and ref named in the condition below. Nothing is stored.
+
+These are one-time, and they are yours to run — the workflow assumes they were
+done. `PROJECT` is the project id, `NUMBER` its number
+(`gcloud projects describe "$PROJECT" --format='value(projectNumber)'`).
+
+```bash
+gcloud services enable iamcredentials.googleapis.com run.googleapis.com \
+  artifactregistry.googleapis.com --project "$PROJECT"
+
+# 1. The identity the workflow becomes
+gcloud iam service-accounts create gh-deploy --project "$PROJECT" \
+  --display-name "GitHub Actions deploy"
+
+# 2. The pool, and GitHub as an issuer in it
+gcloud iam workload-identity-pools create github --location global \
+  --project "$PROJECT" --display-name "GitHub Actions"
+
+gcloud iam workload-identity-pools providers create-oidc github \
+  --location global --workload-identity-pool github --project "$PROJECT" \
+  --issuer-uri "https://token.actions.githubusercontent.com" \
+  --attribute-mapping "google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
+  --attribute-condition "assertion.repository == 'kenken-trpg/chummer-web'"
+```
+
+**The attribute condition is the security boundary, not a formality.** Without
+it the provider trusts *every* GitHub repository in existence, so anyone's
+workflow can ask for a token for this project. It is checked before the token
+is issued; the binding in step 3 is checked after, and narrows it further.
+
+```bash
+# 3. Which workflow runs may become that service account: only a v* tag build
+#    in this repository. `attribute.ref` comes from the mapping above.
+gcloud iam service-accounts add-iam-policy-binding \
+  "gh-deploy@$PROJECT.iam.gserviceaccount.com" --project "$PROJECT" \
+  --role roles/iam.workloadIdentityUser \
+  --member "principalSet://iam.googleapis.com/projects/$NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/kenken-trpg/chummer-web"
+```
+
+`attribute.repository` is the widest useful principal: a branch build would be
+able to deploy too. Pin it to tags with
+`.../attribute.ref/refs%2Ftags%2Fv1.0.0` only if you deploy a fixed tag;
+`refs/tags/*` is not a wildcard a principalSet accepts, so the *ref* is
+restricted in the workflow's `on:` instead, and the repository is what GCP
+enforces.
+
+### What gh-deploy is allowed to do
+
+Three grants, each the narrowest role that works. `roles/run.admin` on the
+**service**, not the project — it can replace this one service's revisions and
+nothing else:
+
+```bash
+gcloud artifacts repositories add-iam-policy-binding chummer \
+  --location asia-northeast1 --project "$PROJECT" \
+  --member "serviceAccount:gh-deploy@$PROJECT.iam.gserviceaccount.com" \
+  --role roles/artifactregistry.writer
+
+gcloud run services add-iam-policy-binding chummer-web \
+  --region asia-northeast1 --project "$PROJECT" \
+  --member "serviceAccount:gh-deploy@$PROJECT.iam.gserviceaccount.com" \
+  --role roles/run.admin
+
+# Deploying a revision means setting the identity it runs as, and GCP treats
+# that as impersonation: without this the deploy fails with a bare PERMISSION_DENIED
+# naming the *runtime* service account rather than gh-deploy.
+gcloud iam service-accounts add-iam-policy-binding \
+  "$NUMBER-compute@developer.gserviceaccount.com" --project "$PROJECT" \
+  --member "serviceAccount:gh-deploy@$PROJECT.iam.gserviceaccount.com" \
+  --role roles/iam.serviceAccountUser
+```
+
+Note what is *not* granted: `roles/run.invoker` to `allUsers`, and no
+permission to change IAM. The service stays private and the Worker stays its
+only caller; a compromised workflow can ship a bad revision, which a rollback
+undoes, but it cannot open the service to the internet.
+
+### What the repository needs
+
+Two repository **variables** (not secrets — neither is one, and a secret would
+be masked out of the logs where you want to read them):
+
+| variable | value |
+| --- | --- |
+| `GCP_PROJECT` | the project id |
+| `GCP_WIF_PROVIDER` | `projects/$NUMBER/locations/global/workloadIdentityPools/github/providers/github` |
+
+```bash
+gh variable set GCP_PROJECT --body "$PROJECT"
+gh variable set GCP_WIF_PROVIDER \
+  --body "projects/$NUMBER/locations/global/workloadIdentityPools/github/providers/github"
+```
+
+The workflow asks for `permissions: id-token: write`, which is what lets it
+mint the GitHub token in the first place; a workflow without it fails at the
+auth step with `Unable to get ACTIONS_ID_TOKEN_REQUEST_URL`.
+
+### Checking it before trusting it
+
+Impersonation failures are slow to read from a deploy log, so confirm the
+federation on its own first — a workflow that only authenticates and prints who
+it became:
+
+```yaml
+- uses: google-github-actions/auth@v2
+  with:
+    project_id: ${{ vars.GCP_PROJECT }}
+    workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+    service_account: gh-deploy@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com
+- run: gcloud auth list && gcloud run services describe chummer-web --region asia-northeast1
+```
+
+If the token is refused, the message names which check failed: the *provider*
+condition (wrong repository), or the *binding* (right repository, principal not
+allowed to impersonate). Those are the two places to look, in that order.
+
 ## Fly.io
 
 `fly launch` detects the Dockerfile. A minimal `fly.toml`:

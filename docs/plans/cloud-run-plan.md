@@ -102,12 +102,15 @@ boost なし、起動プローブ `/api/ready`）:
 
 ## 段階 2: CI 化とドメイン（段階 1 の数字を見てから）
 
+0. ~~**Workload Identity 連携の下ごしらえ**~~ —— 手順は `docs/deploy.md` ›
+   Deploying from CI に書いた（プール・プロバイダ・`gh-deploy` サービス
+   アカウント・3 つの最小権限・リポジトリ変数 2 つ・連携だけを先に確かめる
+   方法）。**GCP 側の実行は未了**。
 1. **`.github/workflows/deploy-cloudrun.yml`** — `v*` タグ起動。Workload
    Identity 連携（鍵 JSON を置かない）で `gcloud` に入り、`docker-manifest`
    が出した digest を AR にミラーして `gcloud run deploy --image <digest>`。
    CI が通した実体がそのまま本番に出る。
-2. **`deploy/cloudrun/service.yaml`** — probe と env を宣言で持つ。フラグ列を
-   ワークフローに散らさない。
+2. ~~**`deploy/cloudrun/service.yaml`** — probe と env を宣言で持つ。~~ —— 済。
 3. **ドメイン** — `gcloud beta run domain-mappings create`。asia-northeast1 で
    提供されているか要確認（全リージョンにはない）。Cloudflare DNS なら
    **DNS only**（grey cloud）: 証明書は Google が出すので自分のエンドポイントを
