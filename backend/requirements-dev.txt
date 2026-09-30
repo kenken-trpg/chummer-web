@@ -13,3 +13,7 @@ hypothesis>=6.168.0  # generated .chum5 roundtrips (tests/test_chummer_roundtrip
 # part of the import block, PR #42). Bump it deliberately, with the diff.
 ruff==0.16.8
 mypy>=2.3.1
+# `deploy/cloudrun/render.py` reads and rewrites the service manifest, and
+# `tests/test_cloudrun_render.py` checks what it decides. Nothing in the app
+# reads YAML, so this is a test-and-tooling dependency only.
+pyyaml>=6.0.3
