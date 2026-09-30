@@ -26,6 +26,9 @@ BANNED: dict[str, str] = {
     # allowed again as of 2026-09-05 — docs/translation-glossary.md L369 has
     # said メタタイプ all along, so the abbreviation was the outlier.
     "ニューエン": "新円",  # the 2021 glossary's reading; the katakana form had drifted back in
+    "ヌイエン": "新円",  # other katakana readings of the same word that have slipped in
+    "ニューヨン": "新円",
+    "ヌーヤン": "新円",
     "強靭": "強靱",  # kanji-variant of 靱
     "レゾナンス": "共振力",
     # Foci: chumJA's SR4 集束具 and the loanword フォーカス were both in use

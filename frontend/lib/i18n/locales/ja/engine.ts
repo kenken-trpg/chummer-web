@@ -418,7 +418,7 @@ export const JA_ENGINE = {
   "engine.export.gained": "{kind}が {count} 件増えます",
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",
-  "engine.export.nuyen": "残りニューヨンが {before} → {after} になります",
+  "engine.export.nuyen": "残り新円が {before} → {after} になります",
   "engine.export.xlsxNoRoom":
     "キャラシの{kind}欄は {room} 行までなので、{dropped} 件が書き切れません",
   "engine.export.xlsxNoCell":
