@@ -1,0 +1,1 @@
+- **`v*` タグを打つと Cloud Run に出るようにした。** CI が署名・SBOM まで通したイメージの digest をそのまま Artifact Registry に複写し、`deploy/cloudrun/service.yaml` の設定で新しいリビジョンを**トラフィックなし**で作ります。起動プローブ（`/api/ready`）が通らなければそこで失敗し、いま配信中のリビジョンは触られません。通ってから初めてトラフィックを移します。GCP の設定（`vars.GCP_PROJECT`）がないリポジトリではこのジョブは動かず、skip されます。

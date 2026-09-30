@@ -1,0 +1,135 @@
+# Put a released image on Cloud Run.
+#
+# Called by `ci.yml` once a `v*` tag has been built, smoke-tested on both
+# architectures, gathered into a manifest list, signed and attested — so the
+# thing deployed here is the artefact the tests saw, addressed by digest. It is
+# never built in this workflow.
+#
+# It does nothing until `vars.GCP_PROJECT` is set. A fork, or this repository
+# before the one-time GCP setup, tags a release and this is skipped rather than
+# failing every tag build. `docs/deploy.md` › Deploying from CI is that setup:
+# Workload Identity, so no key is stored anywhere.
+name: Deploy (Cloud Run)
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        description: The signed GHCR manifest list, as name@sha256:…
+        required: true
+        type: string
+  # For redeploying the same digest by hand — after changing service.yaml, or
+  # to roll forward onto an image an earlier run failed to move traffic to.
+  workflow_dispatch:
+    inputs:
+      image:
+        description: The GHCR image to deploy, as name@sha256:… or name:tag
+        required: true
+        type: string
+
+env:
+  SERVICE: chummer-web
+  REGION: asia-northeast1
+  AR_REPO: chummer
+
+# `id-token: write` is what lets the job mint the GitHub OIDC token that
+# Workload Identity exchanges. Without it the auth step fails with
+# `Unable to get ACTIONS_ID_TOKEN_REQUEST_URL`.
+permissions:
+  contents: read
+  id-token: write
+
+# One deploy at a time. Two tags landing together would otherwise race on the
+# traffic switch and could leave traffic on the older of the two.
+concurrency:
+  group: deploy-cloudrun
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.GCP_PROJECT != ''
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.serving.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: gh-deploy@${{ vars.GCP_PROJECT }}.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
+
+      # Cloud Run cannot pull from GHCR, so the image is copied into Artifact
+      # Registry. By the *amd64* digest out of the manifest list, because Cloud
+      # Run runs amd64 only and a plain copy of the list would leave the
+      # platform to pick — the one thing that must not be decided at pull time.
+      - name: Mirror the image into Artifact Registry
+        id: mirror
+        run: |
+          set -euo pipefail
+          src='${{ inputs.image }}'
+          amd64=$(crane manifest "$src" \
+            | jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest')
+          if [ -z "$amd64" ] || [ "$amd64" = null ]; then
+            echo "::error::no linux/amd64 manifest in $src"
+            exit 1
+          fi
+          repo="${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/${AR_REPO}/${SERVICE}"
+          # A tag build gives `v1.2.3`; a manual run gives a branch name, which
+          # may hold a `/` that is not legal in a registry tag.
+          tag=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9_.-' '-')
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          crane copy "${src%@*}@${amd64}" "${repo}:${tag}"
+          # Read the digest back from AR rather than reusing the GHCR one: a
+          # copy that silently landed somewhere else would otherwise be
+          # deployed under the name of the image nobody checked.
+          digest=$(crane digest "${repo}:${tag}")
+          echo "image=${repo}@${digest}" >> "$GITHUB_OUTPUT"
+          echo "deploying ${repo}@${digest}"
+
+      # The new revision is created with no traffic. `services replace` waits
+      # for it to become Ready, and Ready means its startup probe — `/api/ready`,
+      # which is 503 until the catalog warm-up finishes — answered. So a
+      # revision that cannot serve fails here, while the revision currently
+      # serving keeps every request.
+      - name: Create the revision, serving nothing
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --disable-pip-version-check pyyaml
+          current=$(gcloud run services describe "$SERVICE" --region "$REGION" --format=json 2>/dev/null \
+            | jq -r '[.status.traffic[]? | select(.percent == 100) | .revisionName] | first // empty')
+          echo "currently serving: ${current:-nothing}"
+          python3 deploy/cloudrun/render.py "$IMAGE" "$current" > /tmp/service.yaml
+          gcloud run services replace /tmp/service.yaml --region "$REGION"
+        env:
+          IMAGE: ${{ steps.mirror.outputs.image }}
+
+      - name: Move traffic to it
+        run: gcloud run services update-traffic "$SERVICE" --region "$REGION" --to-latest
+
+      # Not a health check — the service is private, and this job is not its
+      # invoker. It is the record of what is serving, for the run summary and
+      # the environment link.
+      - name: What is serving
+        id: serving
+        run: |
+          set -euo pipefail
+          gcloud run services describe "$SERVICE" --region "$REGION" --format=json > /tmp/served.json
+          url=$(jq -r '.status.url' /tmp/served.json)
+          rev=$(jq -r '[.status.traffic[] | select(.percent == 100) | .revisionName] | first' /tmp/served.json)
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Deployed"
+            echo
+            echo "- revision \`${rev}\`"
+            echo "- image \`${{ steps.mirror.outputs.image }}\`"
+            echo "- \`${url}\` (private — reachable through the Cloudflare Worker only)"
+            echo
+            echo "Roll back with \`gcloud run services update-traffic ${SERVICE} --region ${REGION} --to-revisions <previous>=100\`."
+          } >> "$GITHUB_STEP_SUMMARY"
