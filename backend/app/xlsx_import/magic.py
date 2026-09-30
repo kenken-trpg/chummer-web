@@ -9,7 +9,7 @@ book prints:
   out clean and match the catalog as written. Rituals and alchemical
   preparations go in the same column, and the catalog holds them alongside the
   spells, so they resolve the same way.
-* **Adept powers** (the twenty rows under the アデプト・パワー heading, column A,
+* **Adept powers** (the nineteen rows under the アデプト・パワー heading, column A,
   with the level in F). Here the player writes a target onto the name the way
   they do for qualities — ``潜在力強化　身体`` is the catalog's
   ``潜在力強化：(身体)`` — so a power goes through the same typed-name handling.
@@ -35,10 +35,14 @@ SPELL_NAME = "C"
 FORM_NAME = "V"
 
 #: The heading that opens the adept-power block. Its own row and the two under
-#: it are headings, and twenty rows of powers follow.
+#: it are headings, and nineteen rows of powers follow — rows 27–45, measured
+#: from the sheet's own formatting in the level column, since the rows are empty
+#: until a player types in them (`scripts/template_watch.py`). Twenty was a
+#: guess: the extra row is the line under the block, so nothing was ever read
+#: out of it, but the number now says what the sheet says.
 POWERS_HEADING = "アデプト・パワー"
 POWERS_OFFSET = 3
-POWERS_COUNT = 20
+POWERS_COUNT = 19
 POWER_NAME = "A"
 POWER_LEVEL = "F"
 

@@ -34,6 +34,7 @@ from app.xlsx_import.ware import clean_name
 from tests.notice_asserts import has
 from tests.xlsx_fixtures import (
     BASELINE,
+    POWERS_HEADING_ROW,
     contact_sheet,
     filled,
     magic_sheet,
@@ -907,6 +908,19 @@ def test_adept_powers_come_over_with_their_levels() -> None:
         (_catalog_id("powers", "Missile Parry"), 1),
     ]
     assert warnings == []
+
+
+def test_the_power_block_is_the_nineteen_rows_the_sheet_formats() -> None:
+    """Rows 27–45. The row under them is the line closing the block, not a
+    twentieth power, so nothing written there is a power either."""
+    powers = [("強打", "")] * 19
+    state, _ = xlsx_to_state(filled(powers=powers))
+    assert len(state["adept_powers"]) == 19
+
+    cells = magic_sheet(powers=powers)
+    cells[f"A{POWERS_HEADING_ROW + 3 + 19}"] = "殺戮の手"
+    state, _ = xlsx_to_state(workbook(BASELINE, by_sheet={SHEET_MAGIC: cells}))
+    assert len(state["adept_powers"]) == 19
 
 
 def test_a_power_marked_by_the_player_keeps_its_name() -> None:
