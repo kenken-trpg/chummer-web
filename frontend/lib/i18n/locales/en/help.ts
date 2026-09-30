@@ -154,6 +154,12 @@ export const EN_HELP = {
   "help.matrix.statsLabel": "Matrix",
   "help.matrix.deviceRating":
     "DR is the device\u2019s own rating \u2014 what it rolls when nobody is driving it",
+  "help.matrixmod.statsLabel": "Electronic modification",
+  "help.matrixmod.what":
+    "An electronic modification (DT p.66) is soldered into the device and raises a matrix attribute; a commlink, a deck and an RCC all take them",
+  "help.matrixmod.array":
+    "On a deck some of them move a point between two array slots instead (+1 on one, \u22121 on the other); the total does not grow",
+  "help.matrixmod.included": "One marked as standard came with the device and costs nothing",
   "help.prio.statsLabel": "Reading the table",
   "help.prio.attrCell":
     "In the attributes column, \u201c6 (2)\u201d is 6 attribute points and 2 special points",
@@ -180,6 +186,96 @@ export const EN_HELP = {
   "help.gear.capacity":
     "Capacity n/m is how much this item can hold (m) and how much is in use (n)",
   "help.gear.qty": "\u00d7n is the quantity; the price is multiplied by it",
+  "help.points.attr":
+    "Attribute points n/m: spent / available; what is left cannot go anywhere else",
+  "help.points.special":
+    "Special points n/m buy Edge, Magic and Resonance only, and do not mix with ordinary ones",
+  "help.points.skills": "Skill points n/m: one point per rating; group points are a separate pool",
+  "help.points.knowledge":
+    "Knowledge points n/m: the free pool is (INT + LOG) \u00d7 2, plus one free native language",
+  "help.points.contacts":
+    "Contacts n/m (+k): the free pool m is CHA \u00d7 3 (settings may change it); +k was bought beyond it, at connection + loyalty in karma",
+  "help.points.martial":
+    "Styles n/m and techniques n/m are the limits at creation; anything beyond is bought with karma",
+  "help.points.advancement":
+    "Advancement karma: what has been spent raising attributes and skills since career started",
+  "help.points.negativeKarma":
+    "The cap on karma handed back by negative qualities; settings may change it",
+  "help.points.spells":
+    "Spells n/m (+k): the talent\u2019s free slots m, plus k bought with karma (5 each by default)",
+  "help.points.complexForms":
+    "Complex forms n/m (+k): the talent\u2019s free slots, plus what karma bought (4 each by default)",
+  "help.livingPersona":
+    "A technomancer is their own deck: DR is Resonance, ATK is CHA, SLZ is INT, DP is LOG, FW is WIL",
+  "help.attr.wareBonus":
+    "\u201cware +n\u201d is what cyberware and bioware add; it sits on top of the natural maximum",
+  "help.attr.limbAverage":
+    "With \u201climb average\u201d shown, STR and AGI are the average across all limbs \u2014 each cyberlimb\u2019s own value, the meat ones at the natural rating",
+  "help.attr.unimplemented":
+    "Unimplemented bonuses are modifiers this calculator does not handle yet; they are not in the totals",
+  "help.flag.ambidextrous": "Ambidextrous: no off-hand penalty when shooting or striking",
+  "help.flag.erased": "Erased: what the matrix holds about you fades on its own over time",
+  "help.flag.excon": "Ex-Con: a criminal record, worse social footing in return for karma back",
+  "help.flag.overclock":
+    "Overclocker: +1 to one matrix attribute (Attack where there is one) on the best deck",
+  "help.flag.specialMod":
+    "Special modifications n/m: the slots a quality grants, counting the weapon accessories that ask for one",
+  "help.flag.fihp": "Friends in High Places: favours where a connection is what is needed",
+  "help.flag.madeMan":
+    "Made Man: a member of the organisation \u2014 backing you cannot walk away from",
+  "help.flag.trustfund":
+    "Trust Fund: the monthly cost of a lifestyle is covered (1 Medium, 2 Low, 3 High, 4 Medium)",
+  "help.flag.dealer": "Dealer Connection: vehicles of this category cost 10% less",
+  "help.career.rewards":
+    "Karma and nuyen added here count as career income, not as creation budget",
+  "help.career.log": "Each is kept as its own row, so you can trace what came from which run",
+  "help.career.edit":
+    "An extra the GM awarded, added by hand on top of what the formula gives; the formula itself does not move",
+  "help.granted.what":
+    "Skills granted by a quality, ware, adept power or mentor \u2014 picking one here spends no skill points",
+  "help.granted.where":
+    "The same pick as the one beside what grants it; either place changes the same thing",
+  "help.talent.what":
+    "The skills the priority talent hands out \u2014 naming them costs no skill points",
+  "help.talent.rating": "Each is free up to the rating shown; skill points may buy on top of that",
+  "help.talent.change":
+    "Change a pick and the old skill loses the free levels; whatever was bought on top stays",
+  "help.heldGear.statsLabel": "Gear held inside",
+  "help.heldGear.what":
+    "What a piece of ware carries \u2014 a chemical gland\u2019s chemical, an auto-injector\u2019s drug; it is priced apart from the ware",
+  "help.drug.statsLabel": "Drug stats",
+  "help.drug.effect": "The effect applies only while the drug is in use; clear it and it lifts",
+  "help.drug.onset": "Onset is how long it takes to start working; 0 is immediate",
+  "help.drug.vector":
+    "Vector (injection, inhalation, ingestion, contact) \u2014 the same drug takes hold at different speeds",
+  "help.drug.testLabel": "Addiction test",
+  "help.drug.pool":
+    "The addiction test is BOD + WIL for a physiological habit, LOG + WIL for a psychological one (SR5 p.414)",
+  "help.drug.threshold":
+    "The addiction threshold is the hits that test needs; fall short and the habit deepens a step",
+  "help.drug.addicted":
+    "The figure in brackets is the pool once addicted; some qualities change only the first test (Drug Tolerant is +2 then, CF p.54)",
+  "help.drug.rating":
+    "Addiction rating is what you roll against to kick the habit \u2014 the higher, the harder",
+  "help.drug.speed": "Seconds until it takes hold; 0 is immediate",
+  "help.drug.duration": "How long the effect lasts; some drugs crash when it ends",
+  "help.drug.crash": "Crash is the damage taken when the effect wears off",
+  "help.drug.grade":
+    "The grade multiplier applies to the price; a better grade also raises availability",
+  "help.drug.parts":
+    "One Foundation, with blocks and enhancers stacked on it; the foundation decides what may go on (CF p.190)",
+  "help.sensor.statsLabel": "Sensor stats",
+  "help.sensor.nest":
+    "Three levels: housing \u2192 sensor \u2192 function, and the functions fit inside the housing\u2019s capacity",
+  "help.sensor.capacity": "Capacity n/m: what the housing holds (m) and what is in it (n)",
+  "help.sensor.rating":
+    "R is the sensor\u2019s rating \u2014 the limit on a perception test made with it",
+  "help.optics.statsLabel": "Vision and audio stats",
+  "help.optics.nest":
+    "Enhancements go into this device; cyberware eyes and ears are a separate pool and share no capacity",
+  "help.optics.capacity": "Capacity n/m: what this device holds (m) and what is in it (n)",
+  "help.optics.rating":
+    "R is the enhancement\u2019s rating; the same enhancement twice does not add up",
   "help.program.statsLabel": "Stats",
   "help.program.slot":
     "Each program takes one program slot on the device running it, shown as n/m on the deck or RCC",
@@ -196,6 +292,16 @@ export const EN_HELP = {
     "Capacity n/m is what this mod itself can hold (the ones that carry sensors or ware)",
   "help.vehmod.included":
     "Anything marked as included comes with the model and costs neither slots nor nuyen",
+  "help.vehmount.statsLabel": "Mount stats",
+  "help.vehmount.slots":
+    "Slots n is what the mount itself takes from the chassis; the weapon in it takes none",
+  "help.vehmount.weapon":
+    "Only a weapon already bought on the weapons tab can be mounted \u2014 this picks one, it does not buy one",
+  "help.vehmount.included": "A mount marked as standard came with the model and cannot be removed",
+  "help.vehgear.statsLabel": "Interior gear",
+  "help.vehgear.what":
+    "Gear carried inside the vehicle rather than bolted to it; it takes no slots",
+  "help.vehgear.rating": "R is the gear\u2019s rating; the price follows it",
   "help.meta.statsLabel": "Choosing a metatype",
   "help.meta.special":
     "Special points buy Edge, Magic and Resonance only, and are counted apart from ordinary attribute points",

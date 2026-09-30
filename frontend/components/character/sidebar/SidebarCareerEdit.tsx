@@ -1,3 +1,4 @@
+import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 
 export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProps) {
@@ -6,7 +7,14 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
       {career && patch ? (
         <div className="career-panel">
           <div className="stat">
-            <span>{ui("side.scEdit")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("side.scEdit") })}
+                lines={[{ label: ui("help.career.edit") }]}
+              >
+                {ui("side.scEdit")}
+              </HelpTip>
+            </span>
             <input
               type="number"
               min={0}
@@ -52,7 +60,14 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
             ) : null}
           </div>
           <div className="stat">
-            <span>{ui("side.notorietyBonus")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("side.notorietyBonus") })}
+                lines={[{ label: ui("help.career.edit") }]}
+              >
+                {ui("side.notorietyBonus")}
+              </HelpTip>
+            </span>
             <input
               type="number"
               aria-label={ui("side.notorietyBonus")}
@@ -62,7 +77,14 @@ export function SidebarCareerEdit({ ch, d, career, patch, ui }: SidebarBlockProp
             />
           </div>
           <div className="stat">
-            <span>{ui("side.publicAwarenessAward")}</span>
+            <span>
+              <HelpTip
+                label={ui("help.open", { label: ui("side.publicAwarenessAward") })}
+                lines={[{ label: ui("help.career.edit") }]}
+              >
+                {ui("side.publicAwarenessAward")}
+              </HelpTip>
+            </span>
             <input
               type="number"
               min={0}

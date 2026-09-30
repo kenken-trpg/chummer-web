@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { renderNotices } from "@/lib/engine-notices";
 import type { CustomDrugInstall, DrugComponentCatalogItem } from "@/lib/types";
@@ -70,6 +71,20 @@ export function CustomDrugMixer({ catalog, character: ch, d, tr, ui, patch }: Ta
               </select>
               {row ? (
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: drug.name || ui("customDrug.name") })}
+                    lines={[
+                      { label: ui("help.drug.rating") },
+                      { label: ui("help.drug.threshold") },
+                      { label: ui("help.drug.speed") },
+                      { label: ui("help.drug.duration") },
+                      { label: ui("help.drug.crash") },
+                      { label: ui("help.drug.grade") },
+                      { label: ui("help.drug.parts") },
+                    ]}
+                  >
+                    {ui("help.drug.statsLabel")}
+                  </HelpTip>{" "}
                   {row.nuyen.toLocaleString()}¥ / {ui("customDrug.avail", { avail: row.avail })} /{" "}
                   {ui("customDrug.addiction", {
                     rating: row.addiction_rating,

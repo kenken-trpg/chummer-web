@@ -2,6 +2,7 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
 import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
@@ -36,6 +37,16 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={[
+                      { label: ui("help.sensor.nest") },
+                      { label: ui("help.sensor.capacity") },
+                      { label: ui("help.sensor.rating") },
+                    ]}
+                  >
+                    {ui("help.sensor.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} / {tr(item.category)}
                   {deviceRatingBit(item)}
                   {item.capacity_max

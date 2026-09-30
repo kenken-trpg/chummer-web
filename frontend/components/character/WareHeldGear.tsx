@@ -2,6 +2,7 @@
 
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CarriedGearRow } from "@/components/character/tabs/gear/ArmorRows";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import type { InstalledWare } from "@/lib/types";
 
@@ -25,6 +26,14 @@ export function WareHeldGear({
   );
   return (
     <>
+      <div className="muted" style={{ marginTop: 6 }}>
+        <HelpTip
+          label={ui("help.open", { label: ui("help.heldGear.statsLabel") })}
+          lines={[{ label: ui("help.heldGear.what") }, { label: ui("help.gear.qty") }]}
+        >
+          {ui("help.heldGear.statsLabel")}
+        </HelpTip>
+      </div>
       {(item.gear || []).map((gear) => (
         <CarriedGearRow key={gear.id} gear={gear} character={ch} tr={tr} ui={ui} patch={patch} />
       ))}

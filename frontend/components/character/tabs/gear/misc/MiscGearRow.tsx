@@ -188,6 +188,16 @@ export function MiscGearRow({
         {item.is_drug && item.drug_effect?.length ? (
           <>
             <div className="muted" style={{ marginTop: 4 }}>
+              <HelpTip
+                label={ui("help.open", { label: ui("gear.effect") })}
+                lines={[
+                  { label: ui("help.drug.effect") },
+                  { label: ui("help.drug.vector") },
+                  { label: ui("help.drug.onset") },
+                ]}
+              >
+                {ui("help.drug.statsLabel")}
+              </HelpTip>{" "}
               {ui("gear.effect")}: {renderNotices(item.drug_effect, ui, tr)}
               {item.drug_vectors?.length
                 ? ` ／ ${ui("gear.vector")} ${item.drug_vectors.join("・")}`

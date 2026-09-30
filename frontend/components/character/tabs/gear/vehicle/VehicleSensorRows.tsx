@@ -1,5 +1,6 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
 
@@ -28,6 +29,16 @@ export function VehicleSensorRows({
         );
         return (
           <div className="muted" key={sensor.id} style={{ marginTop: 6 }}>
+            <HelpTip
+              label={ui("help.open", { label: tr(sensor.name) })}
+              lines={[
+                { label: ui("help.sensor.nest") },
+                { label: ui("help.sensor.capacity") },
+                { label: ui("help.sensor.rating") },
+              ]}
+            >
+              {ui("help.sensor.statsLabel")}
+            </HelpTip>{" "}
             {tr(sensor.name)}
             {sensor.rating_max > 0 ? ` R${sensor.rating}` : ""}
             {sensor.capacity_max

@@ -2,6 +2,7 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
@@ -24,6 +25,16 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
+                  <HelpTip
+                    label={ui("help.open", { label: tr(item.name) })}
+                    lines={[
+                      { label: ui("help.optics.nest") },
+                      { label: ui("help.optics.capacity") },
+                      { label: ui("help.optics.rating") },
+                    ]}
+                  >
+                    {ui("help.optics.statsLabel")}
+                  </HelpTip>{" "}
                   {item.name} / {tr(item.category)}
                   {item.capacity_max
                     ? ui("gear.capacity", {

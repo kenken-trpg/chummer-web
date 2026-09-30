@@ -1,5 +1,6 @@
 "use client";
 import { AddonSelect } from "@/components/character/AddonSelect";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 
@@ -30,6 +31,16 @@ export function MatrixModRows({
     <>
       {installed.map((mod) => (
         <div className="muted" key={mod.id} style={{ marginTop: 6 }}>
+          <HelpTip
+            label={ui("help.open", { label: tr(mod.label || mod.name) })}
+            lines={[
+              { label: ui("help.matrixmod.what") },
+              { label: ui("help.matrixmod.array") },
+              { label: ui("help.matrixmod.included") },
+            ]}
+          >
+            {ui("help.matrixmod.statsLabel")}
+          </HelpTip>{" "}
           {tr(mod.label || mod.name)}
           {mod.included ? ` / ${ui("common.included")}` : ` / ${mod.nuyen.toLocaleString()}¥`}{" "}
           <button

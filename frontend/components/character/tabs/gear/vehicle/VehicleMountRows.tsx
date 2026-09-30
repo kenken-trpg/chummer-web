@@ -1,5 +1,6 @@
 "use client";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
+import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
 import { vehicleFits } from "@/lib/character/gear";
@@ -42,6 +43,16 @@ export function VehicleMountRows({
         const nothingToMount = !mount.weapon_install_id && freeWeapons.length === 0;
         return (
           <div className="muted" key={mount.id} style={{ marginTop: 6 }}>
+            <HelpTip
+              label={ui("help.open", { label: tr(mount.label || mount.name) })}
+              lines={[
+                { label: ui("help.vehmount.slots") },
+                { label: ui("help.vehmount.weapon") },
+                { label: ui("help.vehmount.included") },
+              ]}
+            >
+              {ui("help.vehmount.statsLabel")}
+            </HelpTip>{" "}
             {tr(mount.label || mount.name)}
             {mount.included ? ` / ${ui("common.included")}` : ` / ${mount.nuyen.toLocaleString()}¥`}
             {mount.slots ? ui("veh.slotCost", { slots: mount.slots }) : ""}
