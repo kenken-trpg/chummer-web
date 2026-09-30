@@ -186,19 +186,30 @@ answers 200 as soon as uvicorn binds, which lets traffic in while the warm-up
 thread is still parsing the data — the request then builds the catalog a second
 time (`lru_cache` does not join concurrent callers) and the two compete for the
 one vCPU. `/api/ready` is 503 until that warm-up has finished. Measured on one
-`--cpu-boost` vCPU in `asia-northeast1`, first request after 17 minutes idle:
+vCPU in `asia-northeast1`, first request after 17-21 minutes idle:
 
-| probe | container up | first `/api/catalog` | total |
+| probe | first 200 | first `/api/catalog` | total |
 | --- | --- | --- | --- |
-| `/api/health` (traffic in early) | 5.9 s | 5.1 s (4754 ms of it server-side) | ~11 s |
-| warm-up finished first | 10.4 s | 0.7 s (215 ms server-side) | ~11 s |
+| `/api/health`, `--cpu-boost` | 5.9 s | 5.1 s (4754 ms server-side) | ~11 s |
+| `/api/health`, no boost | 10.4 s | 0.7 s (215 ms server-side) | ~11 s |
+| `/api/ready`, no boost | 13.3 s | 0.77 s (90 ms server-side) | ~13 s |
+
+The `/api/ready` probe is a trade, not a win on its own: the first visitor waits
+~2.9 s longer, because Cloud Run now holds traffic until the warm-up has
+actually finished instead of letting it in early and charging the difference to
+whatever request arrives first. What it buys is that every request after that
+first 200 is warm — the 90 ms server-side figure above is the double build gone.
+It is worth taking **because the cron keepalive below means the cold path is
+what happens when the keepalive has failed**, not what a normal visitor sees.
+Without a keepalive, prefer `/api/health` with no boost.
 
 - **`--cpu-boost` is not worth it here.** It takes 4.5 s off the container start
-  and hands the same 4.5 s to the first catalog request; end to end the two
-  columns above are the same ~11 s. Building the catalog costs ~3.3 s on one
+  and hands the same 4.5 s to the first catalog request; end to end the first
+  two rows above are the same ~11 s. Building the catalog costs ~3.3 s on one
   Cloud Run vCPU against ~0.5 s on a developer machine.
-- **`--min-instances 1`** is the only thing that removes that ~11 s, and it
-  bills the idle instance around the clock (roughly $10/month at this size).
+- **`--min-instances 1`** is the only thing that removes the cold path
+  entirely, and it bills the idle instance around the clock (roughly $10/month
+  at this size). The cron keepalive is the cheaper approximation.
 - **Memory**: measured peak is ~300 MiB, so `512Mi` fits with room and `1Gi` is
   the comfortable choice. Note that the container's writable paths are tmpfs and
   count against it.
