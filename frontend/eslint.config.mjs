@@ -47,16 +47,18 @@ export default [
   {
     // --- i18n: stop the leak, then drain it ------------------------------
     //
-    // The app chrome is written as Japanese string literals in the components
-    // (~1,200 of them), while `lib/i18n` holds 60 keys. That is why switching
-    // the locale to `en` changes almost nothing on screen.
+    // The app chrome used to be ~1,200 Japanese string literals sitting in the
+    // components, against 60 keys in `lib/i18n` — which is why switching the
+    // locale to `en` once changed almost nothing on screen. Extracting them was
+    // done in batches, held to a count by a bulk-suppression file that shrank
+    // as each batch landed.
     //
-    // Extracting all of it at once is not worth a single commit, so this rule
-    // draws the line instead: every *new* piece of user-visible Japanese has
-    // to go through `useUiText()` / `MsgKey`. The ~1,200 that are already here
-    // are recorded in `eslint-suppressions.json` (`npm run lint:suppress`), so
-    // they do not fail the build — and `npm run lint:prune` shrinks that file
-    // as each batch is extracted, which makes it the burn-down counter.
+    // That count reached zero: the file is gone, and so are the
+    // `lint:suppress` / `lint:prune` scripts that kept it. What is left is the
+    // line itself, which is the part that has to stay — every *new* piece of
+    // user-visible Japanese goes through `useUiText()` / `MsgKey`, and this
+    // rule is what says so. A violation is now simply an error, with nothing
+    // to record it in.
     //
     // The class is kana *letters* and kanji, deliberately excluding `・`
     // (U+30FB) and `ー` (U+30FC): those are punctuation that shows up alone as
