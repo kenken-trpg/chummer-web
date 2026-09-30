@@ -9,7 +9,7 @@
 VENV := $(if $(wildcard backend/.venv/Scripts/python.exe),.venv/Scripts,.venv/bin)
 PYTHON := $(if $(shell command -v python3 2>/dev/null),python3,python)
 .PHONY: help up down logs update doctor \
-        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-frontend \
+        setup dev data dev-backend dev-frontend test lint fmt check check-backend check-tools check-frontend \
         coverage coverage-backend coverage-frontend e2e changelog
 
 help:
@@ -69,10 +69,21 @@ fmt: ## Auto-format backend (ruff) and frontend (prettier)
 check-backend: ## ruff + format check + pytest + mypy
 	cd backend && ./$(VENV)/ruff check . && ./$(VENV)/ruff format --check . && ./$(VENV)/python -m pytest -q -n auto && ./$(VENV)/mypy
 
+# The Python outside `backend/` was checked by nothing: ruff and mypy are both
+# anchored there, so `scripts/` (which gates every pull request and cuts every
+# release) and `deploy/` (which decides what fraction of production traffic a
+# new revision gets) were only ever read by eye. Same config as the backend, so
+# there is one standard and not two; the paths are given explicitly because
+# mypy's `files` is relative to `backend/` and both trees hold a `scripts`.
+check-tools: ## ruff + format check + mypy for scripts/ and deploy/
+	./backend/$(VENV)/ruff check --config backend/pyproject.toml scripts deploy
+	./backend/$(VENV)/ruff format --config backend/pyproject.toml --check scripts deploy
+	./backend/$(VENV)/mypy --config-file backend/pyproject.toml scripts deploy
+
 check-frontend: ## tsc + eslint + prettier check + vitest + build
 	cd frontend && npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build
 
-check: check-backend check-frontend ## Everything CI runs
+check: check-backend check-tools check-frontend ## Everything CI runs
 
 reconcile: ## Import Chummer's own test saves, compare karma / nuyen left, round-trip them, and check the export against what Chummer itself wrote (needs network once)
 	cd backend && ./$(VENV)/python scripts/chum5_reconcile.py --roundtrip

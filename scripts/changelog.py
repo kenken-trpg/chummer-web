@@ -147,11 +147,7 @@ def check_pr(base: str, title: str = "", author: str = "") -> int:
         return 0
     # Only the code files are weighed: a bot touching something outside CODE as
     # well (its own config, say) is not a reason to demand an entry.
-    if (
-        author in BOTS
-        and all(f in DEV_MANIFESTS for f in code)
-        and _runtime_deps(base) == _runtime_deps("HEAD")
-    ):
+    if author in BOTS and all(f in DEV_MANIFESTS for f in code) and _runtime_deps(base) == _runtime_deps("HEAD"):
         print(f"{author}, and only the toolchain manifests moved — no entry needed")
         return 0
     if any(f.startswith("changelog.d/") and f != "changelog.d/README.md" for f in changed):
