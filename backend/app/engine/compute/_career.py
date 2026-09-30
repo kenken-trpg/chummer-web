@@ -24,6 +24,7 @@ from ..karma import (
     alternate_attribute_shift,
     group_first_level,
 )
+from ..skills import exotic_skill_label
 
 
 def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
@@ -191,7 +192,18 @@ def career_raise_karma(
     skill_cat_map = _skill_category_map(skills_data)
     karma_mults = _active_karma_mults(eff.get("skill_category_karma_cost_mult"), career=True)
     active_flat = _filter_karma_rules(eff.get("active_skill_karma_cost"), career=True)
+    # `skill_totals` carries the exotic skills too, under the composed
+    # `Name (extra)` label the skills phase puts them there with. The baseline's
+    # `skills` has no such key, so pricing them here reads `from_r` as 0 and
+    # charges the whole rating — on top of what the exotic loop below charges
+    # for the raise. They are that loop's, keyed by row id against a baseline
+    # that does hold them.
+    exotic_labels = {
+        exotic_skill_label(str(row.skill_name), str(row.extra or "")) for row in (state.exotic_skills or [])
+    }
     for name, rating in (skill_totals or {}).items():
+        if name in exotic_labels:
+            continue
         from_r = max(int(base_skills.get(name, 0)), int(base_floors.get(name, 0)))
         from_r = max(from_r, int(now_floors.get(name, 0)))
         to_r = int(rating or 0)
@@ -289,7 +301,7 @@ def career_raise_karma(
             first_level=current_rules().karma_new_active_skill,
         )
         if cost:
-            label = str(getattr(row, "name", None) or getattr(row, "skill", None) or "Exotic")
+            label = exotic_skill_label(str(row.skill_name), str(row.extra or ""))
             lines.append(
                 {
                     "kind": "exotic",

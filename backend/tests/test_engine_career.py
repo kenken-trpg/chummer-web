@@ -357,3 +357,78 @@ def test_the_multiplier_is_off_unless_the_switch_is_on() -> None:
         SettingsState(multiply_forbidden_cost=True, forbidden_cost_multiplier=3),
     ):
         assert _career_with_predators(rule, old=0, new=1)["nuyen_spent"] == plain["nuyen_spent"]
+
+
+def _spend(out: dict, kind: str) -> list[dict]:
+    return [line for line in out["career_advancement_lines"] if line["kind"] == kind]
+
+
+def test_a_knowledge_skill_raised_in_career_costs_the_new_rating() -> None:
+    """SR5 p.107: a knowledge level costs new rating × 1 karma. 2 → 4 is 3 + 4."""
+    from app.engine import snapshot_career_baseline
+
+    st = compute(_mundane("career-know", knowledge_skills={"Magic Theory": 2}))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.knowledge_skills["Magic Theory"] = 4
+    out = compute(st).derived
+    assert out["career_advancement_karma"] == 7
+    (line,) = _spend(out, "knowledge")
+    assert line["notice"]["key"] == "engine.spend.knowledge"
+    assert (line["notice"]["params"]["before"], line["notice"]["params"]["after"]) == (2, 4)
+
+
+def test_a_native_language_is_free_however_far_it_is_raised() -> None:
+    """A native language has no rating to pay for — it is N, and the loop skips
+    it rather than pricing the number the sheet happens to carry."""
+    from app.engine import snapshot_career_baseline
+
+    st = _mundane("career-native", native_languages=["English"])
+    st.knowledge_skills = {"English": 3}
+    st = compute(st)
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.knowledge_skills["English"] = 6
+    out = compute(st).derived
+    assert out["career_advancement_karma"] == 0
+    assert _spend(out, "knowledge") == []
+
+
+def test_a_specialization_added_in_career_costs_7_karma_either_kind() -> None:
+    """Active and knowledge specializations are both 7 karma (SR5 p.107), and a
+    specialization carried in from chargen is not charged again."""
+    from app.engine import snapshot_career_baseline
+
+    st = compute(_mundane("career-spec", skills={"Pistols": 3}, knowledge_skills={"Magic Theory": 2}))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.skill_specializations = {"Pistols": "Semi-Automatics", "Magic Theory": "Ley Lines"}
+    out = compute(st).derived
+    assert out["career_advancement_karma"] == 14
+    assert [line["amount"] for line in _spend(out, "specialization")] == [7, 7]
+
+    again = compute(st)
+    again.career_baseline = snapshot_career_baseline(again)
+    assert compute(again).derived["career_advancement_karma"] == 0
+
+
+def test_an_exotic_skill_raise_is_charged_once_at_the_active_skill_price() -> None:
+    """`skill_totals` carries the exotic skills under `Name (extra)`, which the
+    active-skill loop would price from 0 — the baseline has no such key — while
+    the exotic loop prices the raise properly. Charging both made 2 → 4 cost
+    34 karma instead of 14, and the line was labelled `Exotic`.
+    """
+    from app.engine import snapshot_career_baseline
+    from app.models.social import ExoticSkillInstall
+
+    row = ExoticSkillInstall(skill_name="Exotic Ranged Weapon", extra="Gyrojet", rating=2)
+    st = compute(_mundane("career-exotic", exotic_skills=[row]))
+    st.career = True
+    st.career_baseline = snapshot_career_baseline(st)
+    st.exotic_skills[0].rating = 4
+    out = compute(st).derived
+    assert out["career_advancement_karma"] == 14
+    (line,) = _spend(out, "exotic")
+    assert line["amount"] == 14
+    assert line["notice"]["params"]["name"] == {"tr": "Exotic Ranged Weapon (Gyrojet)"}
+    assert _spend(out, "skill") == []
