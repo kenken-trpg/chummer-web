@@ -53,3 +53,40 @@ updates:
         update-types:
           - minor
           - patch
+
+  # The two Cloudflare Workers in `deploy/`. They were covered by nothing:
+  # a security advisory still reaches them (that is how #441 arrived), but a
+  # routine version bump did not, so the two drifted apart on their own —
+  # `cloudflare-proxy` sat on a wrangler that `npm audit` reported as one high
+  # and two moderate advisories, which the other had already been bumped past.
+  #
+  # Same minor/patch split as the two above, and the same reason. Separate
+  # entries rather than one: they have their own lockfiles and are deployed
+  # separately, so a bump to one should not be reviewed as a bump to both.
+  - package-ecosystem: npm
+    directory: /deploy/cloudflare
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(deps)
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /deploy/cloudflare-proxy
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(deps)
+    groups:
+      npm:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
