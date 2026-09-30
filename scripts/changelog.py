@@ -35,13 +35,20 @@ BOTS = ("dependabot[bot]",)
 # Changelog bullet per patch bump is a line nobody reads. Everything else a bot
 # could touch ships — `requirements.txt`, the Dockerfile, `deploy/` — and a
 # security fix in a dependency the image carries is a change a user feels, so
-# that still wants an entry. `package.json` is in here on the condition below:
+# that still wants an entry. A `package.json` is in here on the condition below:
 # it holds both halves, and only `devDependencies` is the toolchain.
 DEV_MANIFESTS = (
     "backend/requirements-dev.txt",
     "frontend/package.json",
     "frontend/package-lock.json",
+    "deploy/cloudflare/package.json",
+    "deploy/cloudflare/package-lock.json",
 )
+#: The `package.json` files whose `dependencies` half does ship, and so has to be
+#: compared before a bot's pull request is waved through. The Worker's own
+#: `@cloudflare/containers` runs in front of every request; `wrangler`, which is
+#: what a bump here usually moves, only ever runs on a laptop.
+SHIPPING_HALVES = ("frontend/package.json", "deploy/cloudflare/package.json")
 
 
 def fragments() -> dict[str, list[Path]]:
@@ -104,19 +111,22 @@ def check_empty() -> int:
     return 0
 
 
-def _runtime_deps(rev: str) -> dict[str, str]:
-    """`dependencies` from frontend/package.json at one revision, {} if absent."""
-    done = subprocess.run(
-        ["git", "show", f"{rev}:frontend/package.json"],
-        capture_output=True,
-        text=True,
-        check=False,  # the revision may predate the file; that is not an error
-        cwd=ROOT,
-    )
-    if done.returncode != 0:
-        return {}
-    deps = json.loads(done.stdout).get("dependencies", {})
-    return dict(deps)
+def _runtime_deps(rev: str) -> dict[str, dict[str, str]]:
+    """The shipping `dependencies` of every manifest in `SHIPPING_HALVES`, at one
+    revision. A manifest the revision predates is absent rather than empty, so
+    adding one is not mistaken for emptying it."""
+    found: dict[str, dict[str, str]] = {}
+    for manifest in SHIPPING_HALVES:
+        done = subprocess.run(
+            ["git", "show", f"{rev}:{manifest}"],
+            capture_output=True,
+            text=True,
+            check=False,  # the revision may predate the file; that is not an error
+            cwd=ROOT,
+        )
+        if done.returncode == 0:
+            found[manifest] = dict(json.loads(done.stdout).get("dependencies", {}))
+    return found
 
 
 def check_pr(base: str, title: str = "", author: str = "") -> int:
