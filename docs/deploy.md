@@ -188,6 +188,22 @@ Cloud Run sets `PORT`; the container already honours it. `timeoutSeconds` has
 to be *less than* `periodSeconds` or the deploy is refused after the image is
 already pushed.
 
+The flag list above is what the settings *are*; `deploy/cloudrun/service.yaml`
+is where they live once you stop typing them. It declares the same service —
+probes, limits, env, autoscaling — with a comment on each number saying what it
+was measured against, and is applied with:
+
+```bash
+sed 's|IMAGE_DIGEST_PLACEHOLDER|'"$IMAGE"'|' deploy/cloudrun/service.yaml \
+  | gcloud run services replace - --region asia-northeast1
+```
+
+It carries a placeholder rather than a tag on purpose: the deploy substitutes
+the digest CI built and signed, so what runs is the artefact the tests saw. The
+file describes the **private** shape — no `allUsers` binding, `TRUST_CLOUDFLARE_IP=1`
+— which is the section after next; drop those two env entries if you are
+deploying the public shape above instead.
+
 **Point the startup probe at `/api/ready`, not `/api/health`.** `/api/health`
 answers 200 as soon as uvicorn binds, which lets traffic in while the warm-up
 thread is still parsing the data — the request then builds the catalog a second
