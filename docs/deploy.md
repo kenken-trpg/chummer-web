@@ -322,6 +322,37 @@ secret only, never in the repository, and rotate it
 (`gcloud iam service-accounts keys list / delete`). If that is the part you do
 not want, Cloudflare Containers below needs no GCP at all.
 
+### Before going public
+
+The app keeps no data, so the realistic risk is not a breach — it is a bill.
+This shape has a narrower cost ceiling than it looks: `maxScale: 1` caps CPU
+and memory at one instance, but **egress is outside that cap**, and
+`/api/catalog` is 425 KB gzipped to a caller that sends no `If-None-Match`.
+Serving cached bytes costs almost no CPU, so the single instance is not the
+throttle a single instance sounds like. Do these on the zone before the
+hostname is public:
+
+1. **Security › WAF › Rate limiting rules** — one rule for
+   `starts_with(http.request.uri.path, "/api/")`, e.g. 100 requests / 1 minute
+   per IP → Block for 1 minute. On this path it is not belt-and-braces: it is
+   the only limit that stops traffic *before* Cloud Run bills for it. The app's
+   own per-IP limits are keyed on `cf-connecting-ip` and still count, but by
+   then the response has already been generated and sent.
+2. **Billing › Budgets & alerts** (GCP) — an amount in the billing account's
+   own currency. **An alert notifies; it does not stop anything.** There is no
+   hard spend cap on Cloud Run, which is why item 1 comes first.
+3. **Security › Bots** — turn on Bot Fight Mode.
+4. **SSL/TLS** — mode *Full*, *Always Use HTTPS* on, minimum TLS 1.2.
+5. **Small audience?** Put **Zero Trust › Access** on the hostname. Anonymous
+   visitors then never reach the Worker, and so never reach Cloud Run.
+6. **Keep the image fresh.** Base images are pinned by digest; redeploy after
+   taking the Dependabot / `make update` bumps, or security fixes in Python,
+   Node and Caddy never reach the running revision.
+
+Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
+requests past the limit and confirm the 429 and the log line show your own IP
+and not the Worker's.
+
 ## Deploying from CI (Workload Identity)
 
 Everything above is typed by hand. To have a `v*` tag deploy itself, GitHub

@@ -60,6 +60,18 @@ spec:
               value: "1"
             - name: TRUSTED_PROXY_HOPS
               value: "0"
+            # Spelled out rather than left to the defaults in
+            # `app/api/deploy.py`, which happen to be these same numbers. The
+            # Containers Worker (`deploy/cloudflare/src/index.ts`) states its
+            # public-instance limits, and a limit that differs between the two
+            # deploys by accident is worse than one that differs on purpose.
+            # These count per `cf-connecting-ip`; the limit that keeps traffic
+            # from being billed at all is the zone's WAF rule (docs/deploy.md
+            # › Cloud Run behind a Cloudflare Worker › Before going public).
+            - name: RATE_LIMIT
+              value: 120/minute
+            - name: IMPORT_RATE_LIMIT
+              value: 20/minute
             - name: LOG_FORMAT
               value: json
             - name: LOG_LEVEL
