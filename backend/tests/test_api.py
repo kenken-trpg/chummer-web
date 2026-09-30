@@ -391,3 +391,125 @@ def test_chummer_export_check_is_limited_like_the_download() -> None:
     codes = [client.post("/api/characters/chummer/check", json=body, headers=ip).status_code for _ in range(21)]
     assert codes[:20] == [200] * 20
     assert codes[20] == 429
+
+
+#: (route, request kwargs, the name in `import_routes` to break, the notice the
+#: route answers with). Every character import has the same last line of
+#: defence: whatever the importer raises that it did not foresee becomes a 400
+#: carrying a notice, never a 500 with a stack trace. `NoticeError` has its own
+#: tests — this is the *other* branch, the one nothing was reaching.
+_IMPORT_FALLBACKS = [
+    ("/api/characters/import", {"json": {}}, "import_character", "api.importJsonFailed"),
+    (
+        "/api/characters/import-chummer",
+        {"content": b"<character/>", "headers": {"content-type": "application/octet-stream"}},
+        "chum5_to_state",
+        "api.importChummerFailed",
+    ),
+    (
+        "/api/characters/import-xlsx",
+        {"content": b"PK\x03\x04", "headers": {"content-type": "application/octet-stream"}},
+        "xlsx_to_state",
+        "api.importXlsxFailed",
+    ),
+    (
+        "/api/characters/import-fvtt",
+        {"json": {}},
+        "fvtt_to_state",
+        "api.importFvttFailed",
+    ),
+    (
+        "/api/settings/parse",
+        {"content": b"<settings/>", "headers": {"content-type": "application/octet-stream"}},
+        "parse_settings_upload",
+        "api.settingsParseFailed",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ("seq", "path", "kwargs", "target", "key"),
+    [(i, *row) for i, row in enumerate(_IMPORT_FALLBACKS)],
+    ids=[row[0].rsplit("/", 1)[-1] for row in _IMPORT_FALLBACKS],
+)
+def test_an_unforeseen_importer_error_is_a_400_with_a_notice(
+    monkeypatch: pytest.MonkeyPatch, seq: int, path: str, kwargs: dict, target: str, key: str
+) -> None:
+    import app.api.import_routes as routes
+
+    def boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("no idea")
+
+    monkeypatch.setattr(routes, target, boom)
+    r = client.post(path, headers={"cf-connecting-ip": f"10.9.0.{seq + 1}", **kwargs.pop("headers", {})}, **kwargs)
+    assert r.status_code == 400
+    assert r.json()["detail"]["key"] == key
+
+
+def test_a_settings_file_that_does_not_parse_says_so_rather_than_500(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`ValueError` is the one the parser raises on purpose, and it answers with
+    the same notice as the catch-all below it — so the two have to be told
+    apart here rather than by which line ran."""
+    import app.api.import_routes as routes
+
+    def bad(*_args: object, **_kwargs: object) -> None:
+        raise ValueError("not a settings file")
+
+    monkeypatch.setattr(routes, "parse_settings_upload", bad)
+    r = client.post(
+        "/api/settings/parse",
+        content=b"nonsense",
+        headers={"content-type": "application/octet-stream", "cf-connecting-ip": "10.9.1.1"},
+    )
+    assert r.status_code == 400
+    assert r.json()["detail"]["key"] == "api.settingsParseFailed"
+
+
+def test_a_sheet_url_import_that_blows_up_after_the_fetch_is_a_400(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The fetch is deliberately outside the `try` — what went wrong reaching
+    Google is worth saying precisely. Everything after it shares the .xlsx
+    importer's fallback."""
+    import app.api.import_routes as routes
+
+    def boom(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError("no idea")
+
+    monkeypatch.setattr(routes, "fetch_sheet", lambda _url: b"PK\x03\x04")
+    monkeypatch.setattr(routes, "xlsx_to_state", boom)
+    r = client.post(
+        "/api/characters/import-sheet-url",
+        json={"url": "https://docs.google.com/spreadsheets/d/abc/edit"},
+        headers={"cf-connecting-ip": "10.9.2.1"},
+    )
+    assert r.status_code == 400
+    assert r.json()["detail"]["key"] == "api.importXlsxFailed"
+
+
+def test_a_customdata_tree_over_the_cap_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The route's own ceiling, under the 12 MB one the middleware enforces on
+    the whole body — so it is only reachable with the cap moved. It is the line
+    that would matter if the middleware's cap were ever raised above it."""
+    import app.api.import_routes as routes
+
+    monkeypatch.setattr(routes, "MAX_UPLOAD_BYTES", 16)
+    r = client.post(
+        "/api/customdata",
+        json={"customdata": ["NTS4C08"], "files": {"NTS4C08/a.xml": "<chummer/>" * 10}},
+        headers={"cf-connecting-ip": "10.9.3.1"},
+    )
+    assert r.status_code == 413
+    assert r.json()["detail"]["key"] == "api.customDataTooLarge"
+
+
+def test_an_empty_customdata_tree_is_refused() -> None:
+    r = client.post(
+        "/api/customdata",
+        json={"customdata": [], "files": {}},
+        headers={"cf-connecting-ip": "10.9.3.2"},
+    )
+    assert r.status_code == 400
+    assert r.json()["detail"]["key"] == "api.customDataEmpty"
