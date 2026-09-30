@@ -266,6 +266,30 @@ def test_an_adept_power_and_its_level_come_back() -> None:
     ]
 
 
+def test_the_reward_ledger_comes_back_with_its_dates() -> None:
+    """The log's two columns survive the trip: the import joins the date onto
+    the note, and the export splits it off again."""
+    first = _character(
+        growth=[
+            {"A": "12000.0", "B": "7.0", "C": "45658.0", "D": "デッドマンズ・ハンド"},
+            {"B": "3.0", "D": "幕間"},
+        ]
+    )
+    again = _again(first)
+    assert again.career is True
+    assert [(row.karma, row.nuyen, row.label) for row in again.reward_log] == [
+        (7, 12000, "2025-01-01 デッドマンズ・ハンド"),
+        (3, 0, "幕間"),
+    ]
+
+
+def test_a_character_that_was_never_played_writes_an_empty_log() -> None:
+    """Nothing earned, nothing written — and it still reads back in creation."""
+    again = _again(_character())
+    assert again.career is not True
+    assert list(again.reward_log) == []
+
+
 def test_an_implant_its_grade_and_its_rating_come_back() -> None:
     first = _character(implants=[{"A": "視覚強化", "N": "アルファウェア", "P": "3.0"}])
     again = _again(first)

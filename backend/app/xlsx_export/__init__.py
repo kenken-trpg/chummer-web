@@ -25,6 +25,7 @@ from ..xlsx_import._common import (
     SHEET_BASICS,
     SHEET_CONTACTS,
     SHEET_GEAR,
+    SHEET_GROWTH,
     SHEET_KNOWLEDGE,
     SHEET_MAGIC,
     SHEET_SKILLS,
@@ -35,6 +36,7 @@ from ._workbook import Cells, write_workbook
 from .basics import basics_sheet
 from .contacts import contacts_sheet
 from .gear import gear_sheet
+from .growth import growth_sheet
 from .magic import magic_sheet
 from .skills import active_sheet, knowledge_sheet
 from .ware import ware_sheet
@@ -62,6 +64,7 @@ def _sheets(state: CharacterState, limits: Limits) -> tuple[list[tuple[str, Cell
             (SHEET_WARE, ware_sheet(state, cat, limits)),
             (SHEET_GEAR, gear),
             (SHEET_CONTACTS, contacts_sheet(state, limits)),
+            (SHEET_GROWTH, growth_sheet(state, limits)),
             (MARKER_SHEET, {MARKER_CELL: MARKER_TEXT}),
         ],
         left,

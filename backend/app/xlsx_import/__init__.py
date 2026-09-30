@@ -8,8 +8,10 @@ active skills and skill groups (能動技能／技能グループ), the knowledg
 language skills (知識技能／言語技能) and the spells, complex forms and adept
 powers (呪文／複合体／アデプト・パワー) and the implants, commlinks and decks
 (身体強化／電子機器), the equipment (装備) and the contacts
-(コンタクト／その他カルマ消費), and the character arrives as a priority build still
-in creation, so the rest can be filled in here.
+(コンタクト／その他カルマ消費). A character with nothing in 成長ログ arrives as a
+priority build still in creation, so the rest can be filled in here; one with
+rows there has been played, and arrives as a career character carrying its
+reward ledger.
 
 Names are matched against the catalog's Japanese, because the template has the
 player type them: a name that matches nothing becomes a warning rather than
@@ -29,6 +31,7 @@ from ._common import (
     SHEET_BASICS,
     SHEET_CONTACTS,
     SHEET_GEAR,
+    SHEET_GROWTH,
     SHEET_KNOWLEDGE,
     SHEET_MAGIC,
     SHEET_SKILLS,
@@ -38,6 +41,7 @@ from ._sheet import NotAWorkbook, Workbook
 from .basics import import_basics
 from .contacts import import_contacts
 from .gear import import_gear
+from .growth import import_growth
 from .magic import import_magic
 from .qualities import import_qualities
 from .skills import import_skills
@@ -84,6 +88,7 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice], list[dict[
         ware = workbook.cells(SHEET_WARE) if SHEET_WARE in workbook.sheet_names else {}
         gear = workbook.cells(SHEET_GEAR) if SHEET_GEAR in workbook.sheet_names else {}
         contacts = workbook.cells(SHEET_CONTACTS) if SHEET_CONTACTS in workbook.sheet_names else {}
+        growth = workbook.cells(SHEET_GROWTH) if SHEET_GROWTH in workbook.sheet_names else {}
     except NotAWorkbook as exc:
         raise NoticeError(notice("api.notACharacterTemplate")) from exc
 
@@ -98,6 +103,7 @@ def xlsx_to_state(body: bytes) -> tuple[dict[str, Any], list[Notice], list[dict[
     import_ware(ware, cat, st, warn)
     import_gear(gear, cat, st, warn, pending)
     import_contacts(contacts, st, warn)
+    import_growth(growth, st, warn)
 
     seen: set[str] = set()
     unique: list[Notice] = []

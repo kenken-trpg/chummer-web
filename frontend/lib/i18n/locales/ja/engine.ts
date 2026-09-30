@@ -371,6 +371,8 @@ export const JA_ENGINE = {
     "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
   "engine.import.xlsxOtherKarma":
     "キャラシテンプレートの「その他カルマ消費」に「{name}」（{karma} カルマ）がありましたが、この app に対応する項目がないため取り込めませんでした",
+  "engine.import.xlsxGrowthLog":
+    "キャラシテンプレートの「成長ログ」に {count} 行あったので、キャリアモードのキャラクターとして取り込みました（報酬履歴はサイドバーで確認できます）",
   "engine.import.xlsxGearPending":
     "装備シートの {count} 行は名前から品目を特定できませんでした（確認して選び直してください）",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",

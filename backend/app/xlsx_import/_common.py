@@ -25,6 +25,7 @@ SHEET_MAGIC = "呪文／複合体／アデプト・パワー"
 SHEET_WARE = "身体強化／電子機器"
 SHEET_GEAR = "装備"
 SHEET_CONTACTS = "コンタクト／その他カルマ消費"
+SHEET_GROWTH = "成長ログ"
 
 
 def cell_int(text: str | None) -> int:
