@@ -63,6 +63,19 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
 
+      # The Python outside `backend/` — `scripts/`, which gates every pull
+      # request, and `deploy/`, which decides what fraction of production
+      # traffic a new revision gets — is checked by nothing otherwise: ruff
+      # and mypy are both anchored here. Same config, so there is one
+      # standard; explicit paths because mypy's `files` is relative to this
+      # directory and both trees hold a `scripts`.
+      - name: Check the Python outside backend/
+        working-directory: .
+        run: |
+          ruff check --config backend/pyproject.toml scripts deploy
+          ruff format --config backend/pyproject.toml --check scripts deploy
+          mypy --config-file backend/pyproject.toml scripts deploy
+
       # frontend/lib/types/generated.ts is written from app/models/. The
       # pytest run checks it too; this fails earlier and says so plainly.
       - run: python scripts/gen_frontend_types.py --check
