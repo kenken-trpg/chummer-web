@@ -3,6 +3,12 @@
 #
 #   scripts/merge_chain.sh 248:feat/help-avail-grade 249:feat/help-bonus-sources
 #
+# Disarm auto-merge on the whole queue first (`gh pr merge <n> --disable-auto`).
+# main is protected with `strict`, so a branch has to be up to date to merge: a
+# PR left armed can merge on its own, move main, and strand the PR this run just
+# rebased at BEHIND — which ends the run at the STOP below, five minutes after
+# its checks all went green. Merges have to come from here and nowhere else.
+#
 # Each PR is rebased onto the current origin/main (so the one before it is
 # already in), checked the way CI checks it, pushed, and — once *every* check
 # on GitHub has reported green, not only the required ones — handed to
