@@ -96,7 +96,10 @@ def test_an_unmapped_entry_is_found_without_a_baseline() -> None:
 
 
 def test_reading_past_a_block_is_not_a_finding_but_stopping_short_is() -> None:
-    short = _with(blocks={f"{SHEET_CONTACTS}!その他カルマ消費": {"heading": 25, "filled": 26, "styled": 45}})
+    # The block the import reads is KARMA_COUNT rows from KARMA_OFFSET under the
+    # heading; these two are a sheet that formats more rows than that and one
+    # that formats fewer.
+    short = _with(blocks={f"{SHEET_CONTACTS}!その他カルマ消費": {"heading": 25, "filled": 26, "styled": 60}})
     assert "block under-read" in _kinds(unmatched(short))
     long = _with(blocks={f"{SHEET_CONTACTS}!その他カルマ消費": {"heading": 25, "filled": 26, "styled": 30}})
     assert "block under-read" not in _kinds(unmatched(long))
