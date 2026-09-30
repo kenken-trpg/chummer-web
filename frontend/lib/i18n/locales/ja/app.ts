@@ -177,16 +177,19 @@ export const JA_APP = {
   "toolbar.exportXlsx": ".xlsx書出",
   "toolbar.sheetUrl": "URLから読込",
   "toolbar.sheetUrlHint":
-    "Google スプレッドシートの「［SR5］キャラシテンプレート」を URL から直接読み込みます",
+    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を、Google スプレッドシートの URL から直接読み込みます。読めるのはこのテンプレートのシートだけで、他のスプレッドシートや他サイトの URL は読めません",
   "toolbar.sheetUrlRead": "読み込む",
   "toolbar.sheetUrlReading": "読み込み中…",
-  "toolbar.sheetUrlShared": "「リンクを知っている全員」で共有されたシートだけ読めます",
+  "toolbar.sheetUrlShared":
+    "貼れるのは https://docs.google.com/spreadsheets/d/… の URL で、「リンクを知っている全員」で共有されたシートだけ読めます",
   "toolbar.exportXlsxHint":
-    "［SR5］キャラシテンプレート と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
+    "シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 と同じシート構成・同じ入力セルの .xlsx で書き出す（テンプレート自体は同梱していません）",
   "toolbar.exportFvtt": "FVTT書出",
   "toolbar.exportFvttHint":
     "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。能力値・技能・資質のみ",
   "toolbar.import": "読込 (JSON/.chum5/.xlsx)",
+  "toolbar.importHint":
+    "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
   "toolbar.shareHint":
     "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
   "toolbar.cocofolia": "ココフォリア",
@@ -240,7 +243,7 @@ export const JA_APP = {
     "Foundry VTT のキャラクターではないようです（shadowrun5e のキャラクターアクターで Export Data したものを選んでください）",
   "api.importXlsxFailed": "このキャラシテンプレートを取り込めませんでした。",
   "api.notACharacterTemplate":
-    "シャドウラン用のキャラシテンプレートではないようです（Google スプレッドシートの「［SR5］キャラシテンプレート」を .xlsx で書き出したものを選んでください）",
+    "読めるキャラシテンプレートではないようです（シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を「ファイル > ダウンロード > .xlsx」で保存したものを選んでください。一般の Excel ブックは読めません）",
   "api.sheetUrlNotASheet":
     "Google スプレッドシートの URL ではないようです（ブラウザのアドレス欄にある https://docs.google.com/spreadsheets/d/… をそのまま貼ってください）",
   "api.sheetUrlNotShared":
