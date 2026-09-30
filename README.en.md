@@ -1,5 +1,7 @@
 _[日本語版はこちら / Japanese version](README.md)_
 
+_The Japanese README is the one that is kept current; this translation can lag behind it._
+
 # Chummer Web
 
 An unofficial Shadowrun 5th Edition character creator for the browser. Not affiliated with Catalyst Game Labs or The Topps Company.
@@ -175,6 +177,43 @@ Then open http://localhost:3000. Without `make`, each target is a one-line comma
 
 Chummer5a saves (`.chum5` and `.chum5lz`) can be imported. This is best-effort: anything the catalog cannot resolve is skipped and listed for you after the import. If a `.chum5lz` will not decompress, re-save it uncompressed as `.chum5` from Chummer.
 
+## Importing and exporting the character-sheet template
+
+The app reads the “[SR5] character sheet template” by Nenousa (音の兔), published
+on the unofficial Japanese Shadowrun 5th wiki. **That template is the only one
+supported** — general Excel workbooks and other character sheets will not load.
+
+- **From a file**: in the sheet, `File > Download > .xlsx`, then open the saved
+  file here.
+- **From a URL**: paste a `https://docs.google.com/spreadsheets/d/…` address into
+  the toolbar's URL import (Google Sheets URLs only). Only sheets shared with
+  **“anyone with the link”** can be read, since they are fetched without an
+  account. A sheet that stays private has to go through the file route above.
+- **Exporting**: the `.xlsx` export. The template itself is not bundled, so what
+  comes out is a workbook that matches it in sheet names and input-cell
+  positions. Before exporting you get a list of what a re-import would change.
+
+The gear sheet is free-form text, so rows that could not be resolved are brought
+to you after the import with the candidates that were considered.
+
+A character whose growth log (`成長ログ`) has rows is imported in **career mode**,
+with its reward history shown in the sidebar. This does not change the creation
+math: the career baseline is whatever the ratings were at import time, so
+anything already paid for on the sheet is not charged again at creation prices.
+An empty log imports the character as still being created.
+
+The template is updated from time to time, so a development script comes with the
+repo to check whether the importer still keeps up (`make template-watch`). It
+compares `backend/scripts/template_baseline.json` — which records only what the
+importer relies on: cell positions, the choices in the validation lists, where
+the headings sit — against the sheet as currently published, and lists the
+differences alongside the name of the code that would have to change. Once a
+change has been taken in, `--update` moves the baseline.
+
+> The URL route is the only part that needs outbound HTTPS from the server to
+> `docs.google.com`. If egress is restricted, this one feature stops working and
+> nothing else is affected.
+
 ## Tests and checks
 
 ```bash
@@ -200,6 +239,8 @@ docs/       Architecture, data pipeline, deployment, how to add a rule
 - [`docs/share-link.md`](docs/share-link.md) — the read-only share link (`/share#c=…`): format and validation
 - [`docs/plans/`](docs/plans/) — working notes from refactors that have already landed (history, not current state)
 
-Most of the documentation under `docs/` is written in Japanese; the code, comments and commit messages are in English.
+Most of `docs/` is written in English; `docs/i18n.md`, `docs/share-link.md` and the
+`docs/translation-*` reports are in Japanese. Code, comments and commit messages are
+in English.
 
 Contributions are welcome. For a rules change, cite the SR5 page number (or the supplement), and where the book is ambiguous, match Chummer5a's behaviour.
