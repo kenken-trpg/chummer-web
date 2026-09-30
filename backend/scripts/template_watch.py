@@ -69,6 +69,7 @@ from app.xlsx_import._common import (  # noqa: E402
     SHEET_BASICS,
     SHEET_CONTACTS,
     SHEET_GEAR,
+    SHEET_GROWTH,
     SHEET_KNOWLEDGE,
     SHEET_MAGIC,
     SHEET_SKILLS,
@@ -133,6 +134,7 @@ HEADERS = (
     Header(SHEET_GEAR, 2, "gear.GEAR_NAME / GEAR_PRICE / GEAR_BOUGHT / GEAR_NOTE"),
     Header(SHEET_CONTACTS, 3, "contacts.COLUMN_CONNECTION / COLUMN_LOYALTY / COLUMN_FREE_*"),
     Header(SHEET_CONTACTS, 26, "contacts.KARMA_NAME / KARMA_SPENT"),
+    Header(SHEET_GROWTH, 2, "growth.REWARD_NUYEN / REWARD_KARMA / REWARD_DATE / REWARD_NOTE"),
 )
 
 #: The cells read by address, each recorded through the label that sits with it.
@@ -452,6 +454,7 @@ _WATCHED_SHEETS = {
     SHEET_WARE,
     SHEET_GEAR,
     SHEET_CONTACTS,
+    SHEET_GROWTH,
 }
 
 

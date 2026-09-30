@@ -1632,3 +1632,68 @@ def test_a_kanji_variant_of_the_same_word() -> None:
     assert state["gear"][0]["gear_id"] == _catalog_id("gear", "Fake SIN")
     assert state["gear"][0]["rating"] == 4
     assert warnings == []
+
+
+def test_a_sheet_with_no_growth_log_stays_in_creation() -> None:
+    """Most sheets are a character being made. Nothing about them changes."""
+    state, warnings = xlsx_to_state(filled(growth=[]))
+    assert state.get("career") is not True
+    assert state.get("reward_log") is None
+    assert not has(warnings, "engine.import.xlsxGrowthLog")
+
+
+def test_the_growth_log_comes_over_as_the_reward_ledger() -> None:
+    """One row per session: 報酬 in 新円, カルマ, the date and what it was for."""
+    state, warnings = xlsx_to_state(
+        filled(
+            growth=[
+                {"D": "ライフタイムによる収入"},
+                {"A": "12000.0", "B": "7.0", "C": "45658.0", "D": "デッドマンズ・ハンド"},
+                {"A": "0", "B": "3.0", "D": "幕間"},
+            ]
+        )
+    )
+    assert state["career"] is True
+    assert [(row["karma"], row["nuyen"], row["label"]) for row in state["reward_log"]] == [
+        (7, 12000, "2025-01-01 デッドマンズ・ハンド"),
+        (3, 0, "幕間"),
+    ]
+    assert has(warnings, "engine.import.xlsxGrowthLog", count=2)
+
+
+def test_the_preset_row_is_not_a_reward() -> None:
+    """Row 4 ships with 「ライフタイムによる収入」 written in it and no amounts.
+    A row with neither karma nor nuyen is not a session."""
+    state, _ = xlsx_to_state(filled(growth=[{"D": "ライフタイムによる収入"}]))
+    assert state.get("reward_log") is None
+    assert state.get("career") is not True
+
+
+def test_a_date_the_player_typed_as_words_is_kept_as_written() -> None:
+    """The column is free text as far as the sheet is concerned."""
+    state, _ = xlsx_to_state(filled(growth=[{"B": "5.0", "C": "第3話", "D": "追跡"}]))
+    assert state["reward_log"][0]["label"] == "第3話 追跡"
+
+
+def test_a_row_that_takes_something_away_is_kept_as_history() -> None:
+    """The ledger clamps a reward at zero, so a negative row put there would
+    read as nothing at all. It belongs with the spending instead."""
+    state, _ = xlsx_to_state(filled(growth=[{"A": "-5000.0", "D": "弁償"}]))
+    assert state.get("reward_log") is None
+    assert [(row["nuyen"], row["label"]) for row in state["expense_log"]] == [(-5000, "弁償")]
+    assert state["career"] is True
+
+
+def test_the_log_is_read_to_the_last_row_the_sheet_totals() -> None:
+    """The sheet's own SUM covers rows 4–1000, so the reader does too."""
+    state, _ = xlsx_to_state(filled(growth=[{} for _ in range(996)] + [{"B": "1.0", "D": "最終話"}]))
+    assert [row["label"] for row in state["reward_log"]] == ["最終話"]
+
+
+def test_the_growth_log_does_not_bill_the_build_twice() -> None:
+    """A career character's baseline is the ratings the sheet arrived with, so
+    what the sheet paid for stays paid for at creation prices."""
+    plain, _ = xlsx_to_state(filled())
+    played, _ = xlsx_to_state(filled(growth=[{"B": "10.0", "D": "初陣"}]))
+    assert played["attributes"] == plain["attributes"]
+    assert played.get("career_baseline") is None

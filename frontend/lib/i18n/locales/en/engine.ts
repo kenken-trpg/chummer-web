@@ -371,6 +371,8 @@ export const EN_ENGINE = {
     'The grade "{grade}" on the implant "{name}" could not be read — it was imported as Standard.',
   "engine.import.xlsxOtherKarma":
     'The character sheet spent {karma} karma on "{name}" under その他カルマ消費, which this app has nothing to record it against.',
+  "engine.import.xlsxGrowthLog":
+    "The 成長ログ sheet held {count} rows, so the character was imported in career mode — its reward log is in the sidebar.",
   "engine.import.xlsxGearPending":
     "{count} rows on the equipment sheet could not be matched to an item — confirm each one.",
   "engine.import.vehicleLoadSkipped":

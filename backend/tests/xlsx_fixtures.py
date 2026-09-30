@@ -20,6 +20,7 @@ from app.xlsx_import._common import (
     SHEET_BASICS,
     SHEET_CONTACTS,
     SHEET_GEAR,
+    SHEET_GROWTH,
     SHEET_KNOWLEDGE,
     SHEET_MAGIC,
     SHEET_SKILLS,
@@ -36,6 +37,7 @@ SHEETS = (
     SHEET_WARE,
     SHEET_GEAR,
     SHEET_CONTACTS,
+    SHEET_GROWTH,
     "編集不可",
 )
 
@@ -251,6 +253,14 @@ def contact_sheet(
     return cells
 
 
+def growth_sheet(rows: list[dict[str, str]]) -> dict[str, str]:
+    """The 成長ログ sheet: one dict of columns per row from row 4."""
+    cells: dict[str, str] = {"A2": "報酬", "B2": "カルマ", "C2": "日付（セッション日等）", "D2": "備考（シナリオ名等）"}
+    for offset, columns in enumerate(rows):
+        cells.update({f"{column}{4 + offset}": value for column, value in columns.items()})
+    return cells
+
+
 def filled(
     *,
     skills: dict[str, dict[str, str]] | None = None,
@@ -264,6 +274,7 @@ def filled(
     gear: list[dict[str, str]] | None = None,
     contacts: list[dict[str, str]] | None = None,
     other_karma: list[dict[str, str]] | None = None,
+    growth: list[dict[str, str]] | None = None,
     **overrides: str,
 ) -> bytes:
     """A workbook of `BASELINE` plus `overrides`; a cell set to "" is removed."""
@@ -281,6 +292,8 @@ def filled(
         by_sheet[SHEET_GEAR] = gear_sheet(gear)
     if contacts is not None or other_karma is not None:
         by_sheet[SHEET_CONTACTS] = contact_sheet(contacts, other_karma)
+    if growth is not None:
+        by_sheet[SHEET_GROWTH] = growth_sheet(growth)
     return workbook(
         {ref: value for ref, value in cells.items() if value != ""},
         by_sheet=by_sheet,
