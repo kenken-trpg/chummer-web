@@ -7,6 +7,8 @@ submodule: ``_xml`` / ``formulas`` / ``bonus`` primitives and the
 
 from __future__ import annotations
 
+import threading
+from collections import OrderedDict
 from functools import lru_cache
 from typing import Any, cast
 
@@ -105,6 +107,38 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_weapons,
 )
 
+#: One lock per overlay key, so two requests that arrive on a cold key build
+#: it once between them instead of once each. `lru_cache` has no "wait for the
+#: caller already computing this" — it just runs the function again, and a
+#: build reparses ~24 XML files. On Cloud Run's single vCPU the two then fought
+#: each other: 4.75 s for the first `/api/catalog` after an idle period against
+#: 0.2 s when one build had the core to itself (see `/api/ready` in `main.py`,
+#: which closed the one case where the racer was the warm-up thread).
+#:
+#: Reentrant, because a loader that reached back for `catalog()` on the same
+#: key would otherwise deadlock rather than recurse.
+#:
+#: Bounded, because an overlay key is a hash of an uploaded custom-data set and
+#: a long-lived process sees arbitrarily many of them. Evicting a lock someone
+#: still holds is harmless: the holder keeps its reference, and the next caller
+#: simply gets a fresh one — back to two concurrent builds, which is where this
+#: started. Far above the four catalogs that are actually cached.
+MAX_BUILD_LOCKS = 32
+
+_build_locks: OrderedDict[str, threading.RLock] = OrderedDict()
+_build_locks_guard = threading.Lock()
+
+
+def _build_lock(key: str) -> threading.RLock:
+    with _build_locks_guard:
+        lock = _build_locks.get(key)
+        if lock is None:
+            lock = _build_locks[key] = threading.RLock()
+        _build_locks.move_to_end(key)
+        while len(_build_locks) > MAX_BUILD_LOCKS:
+            _build_locks.popitem(last=False)
+        return lock
+
 
 def catalog() -> CatalogDict:
     """The assembled data, for whichever custom-data overlay is in force.
@@ -113,8 +147,17 @@ def catalog() -> CatalogDict:
     data and one playing vanilla hit the same process, and rebuilding ~24 XML
     files per request would be far too slow. Four is enough for a handful of
     tables without holding many megabytes of parsed data hostage.
+
+    The lock makes concurrent callers on a cold key wait for the first build
+    rather than start their own. A hit costs one uncontended acquire; a miss
+    costs the wait, which is the point — the alternative is paying for the
+    whole build again on a core that is already busy with it. A build that
+    *raises* holds nothing: `lru_cache` does not memoise exceptions, so the
+    next caller retries, as before.
     """
-    return _catalog_for(current_overlay_key())
+    key = current_overlay_key()
+    with _build_lock(key):
+        return _catalog_for(key)
 
 
 @lru_cache(maxsize=4)

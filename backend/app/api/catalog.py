@@ -42,6 +42,17 @@ def _serialise_catalog() -> _CachedCatalog:
 
 
 @lru_cache(maxsize=1)
+def _serialise_vendored() -> _CachedCatalog:
+    return _serialise_catalog()
+
+
+#: So two requests that arrive before the warm-up has finished serialise the
+#: payload once between them. Same reasoning as `data_loader._build_lock`:
+#: `lru_cache` reruns the function for a concurrent caller rather than waiting
+#: for the one already in it, and on one vCPU the two builds fight.
+_vendored_lock = threading.Lock()
+
+
 def _cached_catalog() -> _CachedCatalog:
     """Serialise the vendored catalog once per process.
 
@@ -51,9 +62,11 @@ def _cached_catalog() -> _CachedCatalog:
     request. Caching the *bytes* also gives us a stable ETag for free.
 
     `lru_cache` does not memoise exceptions, so a request that arrives before
-    `make data` still raises `FileNotFoundError` and a later one can succeed.
+    `make data` still raises `FileNotFoundError` and a later one can succeed —
+    and the lock is released on the way out either way.
     """
-    return _serialise_catalog()
+    with _vendored_lock:
+        return _serialise_vendored()
 
 
 #: Serialised catalogs for custom-data sets, by overlay key. Fewer than

@@ -142,9 +142,10 @@ boost なし、起動プローブ `/api/ready`）:
   オリジンを組むようにした。Caddy と Worker の両方がそのヘッダを（通過させる
   のではなく）**上書きで**付ける。どちらも置けない構成向けに `PUBLIC_ORIGIN`
   も読む。
-- **`lru_cache` が同時呼び出しを束ねない**（`data_loader/__init__.py`）。
-  `/api/ready` を入れたことで実害は塞がったが、複数リクエストが同時に冷えた
-  overlay key を引けば同じ二重構築は起こりうる。
+- ~~**`lru_cache` が同時呼び出しを束ねない**~~ —— 済（#468）。overlay key ごとの
+  `RLock` を `catalog()` の手前に置き、`/api/catalog` の直列化にも同じ扱いを
+  した。冷えたキーに同時到着した 4 スレッドがビルド 1 回で済むことを
+  `tests/test_warm_catalog.py` で固定している（ロックを外すと 4 回になる）。
 
 ## 未検証
 
