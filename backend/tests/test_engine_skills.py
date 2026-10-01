@@ -500,3 +500,138 @@ def test_free_martial_art_specialization_setting() -> None:
 
     assert build(None)["points"]["skills"]["used"] == 5
     assert build(True)["points"]["skills"]["used"] == 4
+
+
+SKILLJACK = "d31497dd-2be9-4b8a-808f-3ced36287c0c"
+KNOWSOFT = "d9d017c4-b3b5-4d28-9c41-870d69287cfb"
+LINGUASOFT = "c4599705-6b8c-45d0-8687-63a720043f7d"
+
+
+class TestSkillsoftGating:
+    """What a skillsoft needs before its rating counts.
+
+    An activesoft is useless without Skillwires and a knowsoft without a
+    Skilljack, and either is capped at that implant's rating (SR5 p.443, 453).
+    `resolve_skillsofts` says all four things with a warning, and none of the
+    four was being read by a test: a character could carry a rating-6
+    Activesoft with no Skillwires at all and the sheet would show the 6.
+    """
+
+    def test_an_activesoft_without_skillwires_says_so_and_grants_nothing(self) -> None:
+        out = compute(_mundane("soft-nowires", gear=[GearInstall(gear_id=ACTIVESOFT, rating=3, extra="Pistols")]))
+        assert has(out.derived["warnings"], "engine.skills.needsSkillwires", name="Activesoft (Pistols)")
+        assert "Pistols" not in out.derived["skillsoft"]
+
+    def test_an_activesoft_over_the_skillwires_rating_is_capped_at_it(self) -> None:
+        out = compute(
+            _mundane(
+                "soft-overwires",
+                cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=2)],
+                gear=[GearInstall(gear_id=ACTIVESOFT, rating=5, extra="Pistols")],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.skills.overSkillwires", rating=5, limit=2)
+        assert out.derived["skillsoft"]["Pistols"] == 2
+
+    def test_a_knowsoft_without_a_skilljack_says_so_and_grants_nothing(self) -> None:
+        out = compute(_mundane("know-nojack", gear=[GearInstall(gear_id=KNOWSOFT, rating=3, extra="Anatomy")]))
+        assert has(out.derived["warnings"], "engine.skills.needsSkilljack", name="Knowsoft (Anatomy)")
+        assert "Anatomy" not in out.derived["skillsoft"]
+
+    def test_a_knowsoft_over_the_skilljack_rating_is_capped_at_it(self) -> None:
+        out = compute(
+            _mundane(
+                "know-overjack",
+                cyberware=[CyberwareInstall(ware_id=SKILLJACK, rating=2)],
+                gear=[GearInstall(gear_id=KNOWSOFT, rating=4, extra="Anatomy")],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.skills.overSkilljack", rating=4, limit=2)
+        assert out.derived["skillsoft"]["Anatomy"] == 2
+
+    def test_skillwires_does_not_stand_in_for_a_skilljack_or_the_reverse(self) -> None:
+        """The two channels are separate implants; Chummer gates the active
+        bucket on one and the knowledge bucket on the other."""
+        out = compute(
+            _mundane(
+                "soft-crossed",
+                cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=4)],
+                gear=[
+                    GearInstall(gear_id=ACTIVESOFT, rating=3, extra="Pistols"),
+                    GearInstall(gear_id=KNOWSOFT, rating=3, extra="Anatomy"),
+                ],
+            )
+        )
+        assert out.derived["skillsoft"]["Pistols"] == 3
+        assert "Anatomy" not in out.derived["skillsoft"]
+        assert has(out.derived["warnings"], "engine.skills.needsSkilljack")
+        assert not has(out.derived["warnings"], "engine.skills.needsSkillwires")
+
+    def test_a_knowsoft_skill_the_character_does_not_have_a_row_for_gets_one(self) -> None:
+        """`_attach_skillsoft_knowledge` has to invent the knowledge row: the
+        skill was never bought, so nothing else would list it, and the tab
+        would show a Skilljack feeding a skill that is not on the sheet."""
+        out = compute(
+            _mundane(
+                "know-newrow",
+                cyberware=[CyberwareInstall(ware_id=SKILLJACK, rating=3)],
+                gear=[GearInstall(gear_id=KNOWSOFT, rating=3, extra="Anatomy")],
+            )
+        )
+        row = next(r for r in out.derived["knowledge_skills"] if r["name"] == "Anatomy")
+        assert (row["rating"], row["skillsoft"]) == (0, 3)
+        assert row["attribute"] == "LOG"
+
+    def test_a_knowsoft_on_a_skill_already_bought_tops_up_the_row_it_is_on(self) -> None:
+        out = compute(
+            _mundane(
+                "know-samerow",
+                cyberware=[CyberwareInstall(ware_id=SKILLJACK, rating=3)],
+                gear=[GearInstall(gear_id=KNOWSOFT, rating=3, extra="Anatomy")],
+                knowledge_skills={"Anatomy": 1},
+            )
+        )
+        rows = [r for r in out.derived["knowledge_skills"] if r["name"] == "Anatomy"]
+        assert len(rows) == 1
+        assert (rows[0]["rating"], rows[0]["skillsoft"]) == (1, 3)
+
+    def test_a_linguasoft_rides_the_knowledge_channel_too(self) -> None:
+        out = compute(
+            _mundane(
+                "lingua",
+                cyberware=[CyberwareInstall(ware_id=SKILLJACK, rating=4)],
+                gear=[GearInstall(gear_id=LINGUASOFT, rating=4, extra="English")],
+            )
+        )
+        assert out.derived["skillsoft"]["English"] == 4
+
+    def test_an_unpicked_or_misspelled_skillsoft_grants_nothing_and_does_not_raise(self) -> None:
+        """A save can hold a skillsoft whose `extra` was never chosen, or one
+        naming a skill that is not in the catalog at all (a renamed custom
+        skill). Neither may reach the buckets."""
+        blank = compute(
+            _mundane(
+                "soft-blank",
+                cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=4)],
+                gear=[GearInstall(gear_id=ACTIVESOFT, rating=3)],
+            )
+        )
+        assert blank.derived["skillsoft"] == {}
+        bogus = compute(
+            _mundane(
+                "soft-bogus",
+                cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=4)],
+                gear=[GearInstall(gear_id=ACTIVESOFT, rating=3, extra="Nonexistent Skill")],
+            )
+        )
+        assert bogus.derived["skillsoft"] == {}
+
+    def test_a_skillsoft_row_pointing_at_no_catalog_item_is_ignored(self) -> None:
+        out = compute(
+            _mundane(
+                "soft-ghost",
+                cyberware=[CyberwareInstall(ware_id=SKILLWIRES, rating=4)],
+                gear=[GearInstall(gear_id="not-a-real-gear-id", rating=3, extra="Pistols")],
+            )
+        )
+        assert out.derived["skillsoft"] == {}
