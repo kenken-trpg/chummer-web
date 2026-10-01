@@ -7,6 +7,7 @@ from app.engine import (
     find_metatype,
 )
 from app.models import (
+    ArmorInstall,
     CharacterState,
     CommlinkInstall,
     CyberwareInstall,
@@ -697,3 +698,174 @@ def test_an_autosoft_runs_on_the_drone_it_is_loaded_into() -> None:
     assert held == {"Clearsight Autosoft": drone.id, "Browse": None}
     assert has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.cyberdeck")
     assert not has(out.derived["warnings"], "engine.gear.needsHostKind", host="engine.host.rccOrVehicle")
+
+
+HANDHELD_HOUSING = "49bbc9d3-860d-47db-b4bc-8417f5b6ab65"
+SINGLE_SENSOR = "2d4edef2-2891-4383-83f6-81f05cfbd046"
+CAMERA = "ffc069af-d3ec-4201-887c-0178dcdfeef9"
+FAB_UPKEEP = "20543d97-0eb6-4eda-b0d0-d18000a094ab"
+DOBERMAN = "9186a0a7-635f-4242-a0e8-238f48b17ca2"
+ARMOR_JACKET_ID = "36a4cd30-c32c-44d0-847a-0c15fb51072a"
+
+
+class TestAppValidation:
+    """What `_resolve_apps` refuses. The happy paths above were covered; the
+    refusals were not, so a commlink could carry two of the same app or an
+    app with its `<selecttext>` left blank and nothing would say so."""
+
+    def test_an_app_naming_no_catalog_item_is_dropped_silently(self) -> None:
+        """A save written against custom data that is no longer loaded. There
+        is nothing to name in a warning, so it goes quietly."""
+        link = CommlinkInstall(gear_id=META_LINK)
+        out = compute(
+            _mundane("app-ghost", commlinks=[link], apps=[GearInstall(gear_id="not-a-real-app", parent_id=link.id)])
+        )
+        assert out.derived["apps"] == []
+        assert not has(out.derived["warnings"], "engine.gear.needsCommlink")
+
+    def test_an_app_that_needs_a_subject_and_has_none_asks_for_one(self) -> None:
+        link = CommlinkInstall(gear_id=META_LINK)
+        out = compute(_mundane("app-blank", commlinks=[link], apps=[GearInstall(gear_id=DATASOFT, parent_id=link.id)]))
+        assert has(out.derived["warnings"], "engine.gear.pickExtra", name="Datasoft")
+        assert out.derived["apps"][0]["needs_extra"] is True
+
+    def test_two_of_the_same_app_on_one_commlink_is_called_out(self) -> None:
+        """Same name and same subject: the second copy does nothing but cost
+        money, which is Chummer's reading too."""
+        link = CommlinkInstall(gear_id=META_LINK)
+        out = compute(
+            _mundane(
+                "app-dup",
+                commlinks=[link],
+                apps=[
+                    GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Maps"),
+                    GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Maps"),
+                ],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.gear.duplicateApp", name="Meta Link")
+
+    def test_the_same_app_on_two_subjects_is_fine(self) -> None:
+        link = CommlinkInstall(gear_id=META_LINK)
+        out = compute(
+            _mundane(
+                "app-twosubjects",
+                commlinks=[link],
+                apps=[
+                    GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Maps"),
+                    GearInstall(gear_id=DATASOFT, parent_id=link.id, extra="Security Companies"),
+                ],
+            )
+        )
+        assert not has(out.derived["warnings"], "engine.gear.duplicateApp")
+        assert len(out.derived["commlinks"][0]["apps"]) == 2
+
+
+class TestSensorHosting:
+    """Where a sensor is allowed to sit.
+
+    A sensor function is a plugin: it needs a housing, and the housing has to
+    be one that takes it. All four refusals were unread by any test, so a
+    character could hang a Camera off a Doberman's chassis, or a Fab Sensor
+    Upkeep line off an armour jacket, and the sheet would price it and show it
+    as installed.
+    """
+
+    def test_a_sensor_naming_no_catalog_item_is_dropped(self) -> None:
+        out = compute(_mundane("sensor-ghost", sensors=[GearInstall(gear_id="not-a-real-sensor")]))
+        assert out.derived["sensors"] == []
+        assert out.derived["errors"] == []
+
+    def test_a_plugin_with_no_host_says_it_needs_one(self) -> None:
+        out = compute(_mundane("sensor-loose", sensors=[GearInstall(gear_id=CAMERA)]))
+        assert has(out.derived["warnings"], "engine.gear.needsHost", name="Camera")
+        assert out.derived["sensors"] == []
+
+    def test_a_host_id_that_matches_nothing_is_dropped_before_the_checks_run(self) -> None:
+        """`_cascade_optics` prunes an install whose parent is gone, and keeps
+        pruning until the set is stable. So an orphan never reaches the
+        hosting rules — it is simply not there, with no warning to show,
+        which is why `_ensure_sensors`'s final `needsHost` is unreachable."""
+        out = compute(_mundane("sensor-ghosthost", sensors=[GearInstall(gear_id=CAMERA, parent_id="gone")]))
+        assert out.derived["sensors"] == []
+        assert not has(out.derived["warnings"], "engine.gear.needsHost")
+
+    def test_a_housing_that_does_not_take_the_category_refuses_it(self) -> None:
+        """A Handheld Housing's `<addoncategories>` is `Sensors, Custom`: it
+        holds a Single Sensor or an array, not a bare sensor function."""
+        housing = GearInstall(gear_id=HANDHELD_HOUSING)
+        out = compute(
+            _mundane(
+                "sensor-wronghost",
+                sensors=[housing, GearInstall(gear_id=CAMERA, parent_id=housing.id)],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.gear.doesNotFit", name="Camera", host="Handheld Housing")
+        assert [row["name"] for row in out.derived["sensors"]] == ["Handheld Housing"]
+
+    def test_a_housing_that_does_take_the_category_keeps_it(self) -> None:
+        housing = GearInstall(gear_id=HANDHELD_HOUSING)
+        out = compute(
+            _mundane(
+                "sensor-righthost",
+                sensors=[housing, GearInstall(gear_id=SINGLE_SENSOR, parent_id=housing.id)],
+            )
+        )
+        assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+        assert sorted(row["name"] for row in out.derived["sensors"]) == ["Handheld Housing", "Single Sensor"]
+
+    def test_a_sensor_with_no_armour_capacity_cannot_go_in_armour(self) -> None:
+        """Armour pays for what it holds out of `<armorcapacity>`. A line item
+        that has none — the Fab Sensor's monthly upkeep — has no size to take
+        up and so cannot be worn."""
+        jacket = ArmorInstall(armor_id=ARMOR_JACKET_ID)
+        out = compute(
+            _mundane(
+                "sensor-inarmor-bad",
+                armor=[jacket],
+                sensors=[GearInstall(gear_id=FAB_UPKEEP, parent_id=jacket.id)],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.gear.doesNotFit")
+        assert out.derived["sensors"] == []
+
+    def test_a_sensor_that_does_have_armour_capacity_can(self) -> None:
+        jacket = ArmorInstall(armor_id=ARMOR_JACKET_ID)
+        out = compute(
+            _mundane(
+                "sensor-inarmor-ok",
+                armor=[jacket],
+                sensors=[GearInstall(gear_id=SINGLE_SENSOR, parent_id=jacket.id)],
+            )
+        )
+        assert not has(out.derived["warnings"], "engine.gear.doesNotFit")
+        assert [row["name"] for row in out.derived["sensors"]] == ["Single Sensor"]
+
+    def test_only_a_housing_or_an_array_bolts_to_a_vehicle(self) -> None:
+        """A drone's sensor functions sit inside its sensor array, not on its
+        chassis. The array is what the vehicle mounts."""
+        drone = GearInstall(gear_id=DOBERMAN)
+        out = compute(
+            _mundane(
+                "sensor-onvehicle-bad",
+                drones=[drone],
+                sensors=[GearInstall(gear_id=CAMERA, parent_id=drone.id)],
+            )
+        )
+        assert has(out.derived["warnings"], "engine.gear.notOnVehicle", name="Camera")
+        # a Doberman comes with its own Sensor Array; the Camera is what went
+        assert "Camera" not in [row["name"] for row in out.derived["sensors"]]
+
+    def test_an_array_on_a_vehicle_is_mounted_rather_than_carried(self) -> None:
+        drone = GearInstall(gear_id=DOBERMAN)
+        out = compute(
+            _mundane(
+                "sensor-onvehicle-ok",
+                drones=[drone],
+                sensors=[GearInstall(gear_id=SENSOR_ARRAY, parent_id=drone.id)],
+            )
+        )
+        assert not has(out.derived["warnings"], "engine.gear.notOnVehicle")
+        row = next(r for r in out.derived["sensors"] if r["name"] == "Sensor Array")
+        # not gear a person buys, so the chargen device-rating cap skips it
+        assert row["on_vehicle"] is True
