@@ -491,7 +491,17 @@ jobs:
           # one scope per architecture: a shared one has the two jobs
           # overwriting each other's cache with layers the other cannot use
           cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+          # `mode=min`, not `max`: `max` exports every intermediate stage's
+          # layers, and this repo has four stages (npm ci + next build, pip
+          # install, the Chummer data fetch, the runtime). Measured on
+          # 2026-10-01 that was 6.59 GB across 428 blobs — two thirds of the
+          # repository's whole 10 GB Actions cache — which pushed the account
+          # over the limit and had GitHub evicting the Playwright browsers and
+          # node_modules that every PR reads. The build this feeds is gated on
+          # the files the image reads, so it is skipped on almost every run
+          # (5-8s); paying a cold stage on the few that do build is the
+          # cheaper side of that trade.
+          cache-to: type=gha,mode=min,scope=${{ matrix.platform }}
 
       # Start it the way compose.yaml does — read-only root, no capabilities,
       # no way to gain one — so a change that needs to write somewhere new
