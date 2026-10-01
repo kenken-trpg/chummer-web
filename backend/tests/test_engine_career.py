@@ -379,8 +379,14 @@ def test_a_knowledge_skill_raised_in_career_costs_the_new_rating() -> None:
 
 
 def test_a_native_language_is_free_however_far_it_is_raised() -> None:
-    """A native language has no rating to pay for — it is N, and the loop skips
-    it rather than pricing the number the sheet happens to carry."""
+    """A native language has no rating to pay for — it is N, not a number.
+
+    The career loop does carry a `name in natives` guard, but it never fires:
+    `skills/_knowledge.py` pops every native out of `state.knowledge_skills`
+    while it normalises them, so by the time the raise is priced the name is
+    not in the dict at all. Asserted from the outside, where that distinction
+    does not matter — either way the sheet is not charged.
+    """
     from app.engine import snapshot_career_baseline
 
     st = _mundane("career-native", native_languages=["English"])

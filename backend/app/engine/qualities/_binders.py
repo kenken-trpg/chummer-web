@@ -75,6 +75,10 @@ def bind_select_powers(
                 rating = max(1, int(inst.rating or 1))
                 break
         else:
+            # A quality-sourced slot. No quality has one: `<selectpowers>`
+            # appears only in `gear.xml` and `mentors.xml`, which the two
+            # branches above answer, so this is unreached by the shipped data
+            # and is here for a quality that grows one.
             spec = by_name.get(source)
             if spec:
                 picked = str(quality_extras.get(spec["id"]) or "").strip()

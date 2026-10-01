@@ -513,3 +513,74 @@ def test_an_empty_customdata_tree_is_refused() -> None:
     )
     assert r.status_code == 400
     assert r.json()["detail"]["key"] == "api.customDataEmpty"
+
+
+class TestTheImportRoutesAnswerOnTheWayThroughToo:
+    """Every other test of these two routes posts something that fails.
+
+    `/api/settings/parse` and `/api/characters/import-chummer` were reached ten
+    times across the suite — by an unknown metatype, by a monkeypatched parser
+    that raises, by the fuzzer — and not once by a file that works. So the
+    `return` at the end of each was the only line in the module no test ran,
+    and the shape it returns is exactly what the browser reads: drop a key and
+    the suite stays green while the upload button stops working.
+    """
+
+    def test_a_settings_file_comes_back_as_knobs_plus_the_build_method(self) -> None:
+        """The build method is returned apart from the settings because it
+        lives on the character, and `unsupported` is the file's own answer to
+        "which knobs could we not honour" — both are read by the client."""
+        xml = (
+            b"<settings><name>House rules</name>"
+            b"<buildmethod>Karma</buildmethod>"
+            b"<buildpoints>800</buildpoints>"
+            b"<karmaattribute>6</karmaattribute>"
+            b"<exceednegativequalities>True</exceednegativequalities>"
+            # an expression the reader does not understand: named, not dropped
+            b"<contactpointsexpression>{CHAhalf}*2</contactpointsexpression>"
+            b"<books><book>SR5</book><book>RF</book></books>"
+            b"</settings>"
+        )
+        r = client.post(
+            "/api/settings/parse",
+            content=xml,
+            headers={"content-type": "application/octet-stream", "cf-connecting-ip": "10.9.4.1"},
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert sorted(body) == ["build_method", "settings"]
+        assert body["build_method"] == "Karma"
+        settings = body["settings"]
+        assert settings["name"] == "House rules"
+        assert settings["chargen_karma"] == 800
+        assert settings["karma_attribute"] == 6
+        assert settings["exceed_negative_qualities"] is True
+        assert settings["books"] == ["SR5", "RF"]
+        assert settings["unsupported"] == ["contactpointsexpression"]
+
+    def test_a_chummer_save_comes_back_as_a_character_plus_what_was_dropped(self) -> None:
+        """The warnings are the half a 200 alone would not catch: an import
+        that quietly loses a line of gear is a successful request."""
+        xml = (
+            b"<character><alias>Nadia</alias><metatype>Human</metatype>"
+            b"<buildmethod>Priority</buildmethod><created>False</created>"
+            b"<gears><gear><name>No Such Thing</name><category>Electronics</category>"
+            b"<rating>1</rating><qty>1</qty></gear></gears>"
+            b"</character>"
+        )
+        r = client.post(
+            "/api/characters/import-chummer",
+            content=xml,
+            headers={"content-type": "application/octet-stream", "cf-connecting-ip": "10.9.4.2"},
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert sorted(body) == ["character", "warnings"]
+        assert body["character"]["name"] == "Nadia"
+        assert body["character"]["build_method"] == "Priority"
+        assert body["warnings"] == [
+            {
+                "key": "engine.import.skippedUnknown",
+                "params": {"kind": {"ui": "engine.kind.gear"}, "name": "No Such Thing"},
+            }
+        ]

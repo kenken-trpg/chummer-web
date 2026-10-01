@@ -239,6 +239,11 @@ def career_raise_karma(
         str(s.get("name") or ""): str(s.get("category") or "") for s in (skills_data.get("knowledge") or [])
     }
     for name, rating in (state.knowledge_skills or {}).items():
+        # Belt and braces: `skills/_knowledge.py` already pops every native out
+        # of `knowledge_skills` while normalising them, so nothing here reaches
+        # the `continue`. Kept because this loop prices whatever the dict holds
+        # and a native carried in it would be charged for a rating it does not
+        # have — see `test_a_native_language_is_free_however_far_it_is_raised`.
         if name in natives:
             continue
         cat = str(know_cats.get(name) or catalog_know.get(name) or "Street")
