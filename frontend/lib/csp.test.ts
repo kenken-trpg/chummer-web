@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { REPORT_ENDPOINT, REPORT_GROUP, contentSecurityPolicy, makeNonce } from "./csp";
+import {
+  REPORT_ENDPOINT,
+  REPORT_GROUP,
+  contentSecurityPolicy,
+  makeNonce,
+  publicOrigin,
+  reportingEndpoints,
+} from "./csp";
 
 function directive(csp: string, name: string): string {
   return csp.split("; ").find((part) => part.startsWith(`${name} `)) ?? "";
@@ -47,5 +54,87 @@ describe("makeNonce", () => {
     const seen = new Set(Array.from({ length: 50 }, makeNonce));
     expect(seen.size).toBe(50);
     for (const nonce of seen) expect(nonce).toMatch(/^[A-Za-z0-9+/]+=*$/);
+  });
+});
+
+const INTERNAL = "http://localhost:3000";
+
+function headers(values: Record<string, string>): Headers {
+  return new Headers(values);
+}
+
+describe("publicOrigin", () => {
+  it("is the internal origin when nothing is in front", () => {
+    expect(publicOrigin(headers({}), INTERNAL)).toBe(INTERNAL);
+  });
+
+  it("is what the proxy forwarded, over https", () => {
+    // the bug this exists for: without it the report endpoint was
+    // `http://localhost:3000/api/csp-report` on every deploy
+    expect(publicOrigin(headers({ "x-forwarded-host": "chummer.example" }), INTERNAL)).toBe(
+      "https://chummer.example",
+    );
+  });
+
+  it("keeps the port the proxy named", () => {
+    expect(publicOrigin(headers({ "x-forwarded-host": "chummer.example:8443" }), INTERNAL)).toBe(
+      "https://chummer.example:8443",
+    );
+  });
+
+  it("stays on http when the forwarded host is this machine", () => {
+    for (const host of ["localhost:8080", "127.0.0.1:8080", "app.localhost"]) {
+      expect(publicOrigin(headers({ "x-forwarded-host": host }), INTERNAL)).toBe(`http://${host}`);
+    }
+  });
+
+  it("reads only the first value when a second proxy appended its own", () => {
+    expect(
+      publicOrigin(headers({ "x-forwarded-host": "chummer.example, inner.invalid" }), INTERNAL),
+    ).toBe("https://chummer.example");
+  });
+
+  it("refuses anything that is not a bare host rather than splicing it into a header", () => {
+    for (const host of [
+      'evil.test" , x="https://evil.test',
+      "https://evil.test",
+      "chummer.example/path",
+      "user@evil.test",
+      "chummer example",
+      "",
+      "chummer.example:99999999",
+    ]) {
+      expect(publicOrigin(headers({ "x-forwarded-host": host }), INTERNAL)).toBe(INTERNAL);
+    }
+  });
+
+  it("ignores a forwarded scheme, because the host alone decides", () => {
+    const downgraded = headers({
+      "x-forwarded-host": "chummer.example",
+      "x-forwarded-proto": "http",
+    });
+    expect(publicOrigin(downgraded, INTERNAL)).toBe("https://chummer.example");
+  });
+
+  it("lets a deploy state its own address and win", () => {
+    const forwarded = headers({ "x-forwarded-host": "inner.invalid" });
+    expect(publicOrigin(forwarded, INTERNAL, "https://chummer.example")).toBe(
+      "https://chummer.example",
+    );
+    expect(publicOrigin(forwarded, INTERNAL, "https://chummer.example/ignored/path")).toBe(
+      "https://chummer.example",
+    );
+  });
+
+  it("falls back rather than throwing when PUBLIC_ORIGIN is malformed", () => {
+    expect(publicOrigin(headers({}), INTERNAL, "not a url")).toBe(INTERNAL);
+  });
+});
+
+describe("reportingEndpoints", () => {
+  it("names the group the CSP's report-to names, with an absolute URL", () => {
+    expect(reportingEndpoints("https://chummer.example")).toBe(
+      `${REPORT_GROUP}="https://chummer.example${REPORT_ENDPOINT}"`,
+    );
   });
 });

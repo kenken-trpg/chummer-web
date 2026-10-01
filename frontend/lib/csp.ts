@@ -48,6 +48,62 @@ export function contentSecurityPolicy(nonce: string, { dev = false } = {}): stri
   ].join("; ");
 }
 
+/** A host and nothing else: `example.com`, `example.com:8443`.
+ *
+ * `x-forwarded-host` arrives from a proxy, and a second hop may append to it
+ * rather than replace it, so only the first value is read and it has to be a
+ * bare host. A scheme, a path, a `@`, a space or a `"` would be spliced
+ * straight into a response header, which is the one thing this must not do.
+ */
+const BARE_HOST = /^[a-z0-9.-]+(?::\d{1,5})?$/i;
+
+/** Hosts that are this machine, where the proxy in front speaks plain HTTP. */
+const LOOPBACK = /^(?:localhost|127\.\d+\.\d+\.\d+|\[::1\]|[a-z0-9-]+\.localhost)(?::\d+)?$/i;
+
+/**
+ * Where the browser can reach this app from the outside.
+ *
+ * Needed because the CSP's `Reporting-Endpoints` has to carry an absolute URL
+ * and `request.nextUrl.origin` is the *internal* one: in every deploy Next sits
+ * behind a proxy that forwards to `127.0.0.1:3000`, so the header read
+ * `csp="http://localhost:3000/api/csp-report"` and no violation report ever
+ * left the browser.
+ *
+ * `PUBLIC_ORIGIN` wins when it is set, because a deploy that knows its own
+ * address should not have to infer it. Otherwise the proxy's
+ * `x-forwarded-host` is used: `deploy/Caddyfile` sets it from the real `Host`
+ * and the Cloudflare Worker sets it from the URL the visitor asked for, both
+ * replacing whatever the caller put there. With neither, there is no proxy and
+ * the internal origin is the real one.
+ *
+ * The scheme is *not* read from `x-forwarded-proto`. A proxy that forwards the
+ * host at all is the one terminating TLS — that is why it is in front — so the
+ * only question is whether the host is this machine, and that the host itself
+ * answers. One fewer spoofable input for a value that ends up in a response
+ * header.
+ */
+export function publicOrigin(
+  headers: { get(name: string): string | null },
+  fallback: string,
+  configured?: string,
+): string {
+  if (configured) {
+    try {
+      return new URL(configured).origin;
+    } catch {
+      // a malformed PUBLIC_ORIGIN is worth ignoring, not worth a 500
+    }
+  }
+  const host = (headers.get("x-forwarded-host") ?? "").split(",")[0]!.trim();
+  if (!BARE_HOST.test(host)) return fallback;
+  return `${LOOPBACK.test(host) ? "http" : "https"}://${host}`;
+}
+
+/** The `Reporting-Endpoints` header value declaring the group `report-to` names. */
+export function reportingEndpoints(origin: string): string {
+  return `${REPORT_GROUP}="${new URL(REPORT_ENDPOINT, origin).toString()}"`;
+}
+
 /** A fresh, unguessable nonce: 122 random bits from `randomUUID`, base64. */
 export function makeNonce(): string {
   return btoa(crypto.randomUUID());

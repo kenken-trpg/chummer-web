@@ -137,10 +137,11 @@ boost なし、起動プローブ `/api/ready`）:
 
 ## 別件で見つけたもの（この計画の範囲外）
 
-- **CSP 違反レポートがどのデプロイでも届いていない。** 本番のレスポンスが
-  `reporting-endpoints: csp="http://localhost:3000/api/csp-report"` を返している。
-  `frontend/proxy.ts` が `request.nextUrl.origin` を使うが、Caddy が
-  `127.0.0.1:3000` に proxy するため Next は内部オリジンしか見ていない。
+- ~~**CSP 違反レポートがどのデプロイでも届いていない。**~~ —— 済（#467）。
+  `frontend/lib/csp.ts` の `publicOrigin` が `X-Forwarded-Host` から公開
+  オリジンを組むようにした。Caddy と Worker の両方がそのヘッダを（通過させる
+  のではなく）**上書きで**付ける。どちらも置けない構成向けに `PUBLIC_ORIGIN`
+  も読む。
 - **`lru_cache` が同時呼び出しを束ねない**（`data_loader/__init__.py`）。
   `/api/ready` を入れたことで実害は塞がったが、複数リクエストが同時に冷えた
   overlay key を引けば同じ二重構築は起こりうる。

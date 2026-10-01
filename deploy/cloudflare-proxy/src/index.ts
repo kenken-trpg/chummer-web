@@ -63,8 +63,13 @@ async function identityToken(env: Env): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cached && cached.expires - EARLY_S > now) return cached.token;
 
-  const sa = JSON.parse(env.GCP_SA_KEY) as { client_email: string; private_key: string };
-  const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const sa = JSON.parse(env.GCP_SA_KEY) as {
+    client_email: string;
+    private_key: string;
+  };
+  const header = b64url(
+    new TextEncoder().encode(JSON.stringify({ alg: "RS256", typ: "JWT" })),
+  );
   const claims = b64url(
     new TextEncoder().encode(
       JSON.stringify({
@@ -119,19 +124,28 @@ export default {
    * `/api/ready` on purpose — it is the cheapest route that proves the catalog
    * is built, which is the part of the start-up worth holding onto.
    */
-  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(
+    _event: ScheduledController,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
     ctx.waitUntil(
       (async () => {
         try {
           const token = await identityToken(env);
-          const res = await fetch(new URL("/api/ready", env.RUN_URL).toString(), {
-            headers: { authorization: `Bearer ${token}` },
-          });
+          const res = await fetch(
+            new URL("/api/ready", env.RUN_URL).toString(),
+            {
+              headers: { authorization: `Bearer ${token}` },
+            },
+          );
           // Logged either way: a run of these in `wrangler tail` is how you
           // tell "kept warm" from "woken every time".
           console.log(`keepalive: ${res.status}`);
         } catch (e) {
-          console.log(`keepalive failed: ${e instanceof Error ? e.message : String(e)}`);
+          console.log(
+            `keepalive failed: ${e instanceof Error ? e.message : String(e)}`,
+          );
         }
       })(),
     );
@@ -155,7 +169,15 @@ export default {
     const ip = request.headers.get("cf-connecting-ip");
     if (ip) headers.set("cf-connecting-ip", ip);
     else headers.delete("cf-connecting-ip");
-    // Cloud Run routes on Host, so it has to stay the service's own.
+    // Cloud Run routes on Host, so it has to stay the service's own. The
+    // address the visitor actually typed would otherwise be lost here, and
+    // Next needs it to put an absolute, reachable URL in its CSP
+    // `Reporting-Endpoints` header (`frontend/lib/csp.ts` › publicOrigin).
+    // `set`, not `append`: like `cf-connecting-ip`, whatever the caller sent
+    // under these names is theirs, not ours.
+    const incoming = new URL(request.url);
+    headers.set("x-forwarded-host", incoming.host);
+    headers.set("x-forwarded-proto", incoming.protocol.replace(":", ""));
     headers.set("host", run.hostname);
 
     return fetch(
