@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { REPORT_ENDPOINT, REPORT_GROUP, contentSecurityPolicy, makeNonce } from "@/lib/csp";
+import { contentSecurityPolicy, makeNonce, publicOrigin, reportingEndpoints } from "@/lib/csp";
 
 /**
  * Mint a nonce for every page and put the CSP that names it on both the
@@ -20,10 +20,14 @@ export function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
   // Declares the group the CSP's `report-to` names. Only on the response: the
-  // browser reads it there, and it says nothing to the renderer.
+  // browser reads it there, and it says nothing to the renderer. The origin
+  // has to be the one the browser used, not `nextUrl.origin`, which is the
+  // `127.0.0.1:3000` the proxy in front forwards to.
   response.headers.set(
     "Reporting-Endpoints",
-    `${REPORT_GROUP}="${new URL(REPORT_ENDPOINT, request.nextUrl.origin).toString()}"`,
+    reportingEndpoints(
+      publicOrigin(request.headers, request.nextUrl.origin, process.env.PUBLIC_ORIGIN),
+    ),
   );
   return response;
 }

@@ -83,6 +83,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | --- | --- | --- |
 | `PORT` | `8080` | port Caddy listens on |
 | `ALLOWED_ORIGINS` | `localhost:3000` list | only matters for a split deploy (frontend on another origin) |
+| `PUBLIC_ORIGIN` | unset | the address visitors use, e.g. `https://chummer.example`. Only needed if the proxy in front does not send `X-Forwarded-Host`; see **CSP violations** |
 | `RATE_LIMIT` | `120/minute` | per client IP, all routes |
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the XML-handling routes (imports, settings / customdata upload, .chum5 export and its check) |
 | `CSP_REPORT_RATE_LIMIT` | `60/minute` | per client IP, `/api/csp-report` |
@@ -135,6 +136,18 @@ signal is a *change* in what is reported, not the presence of reports. Only the
 fields above are kept, each truncated, and the endpoint answers 204 to anything
 — it is the one route whose body is written by something other than our own
 client. Turn it down with `CSP_REPORT_RATE_LIMIT`.
+
+For a report to arrive at all, the `Reporting-Endpoints` header Next sends has
+to carry a URL the *browser* can reach. Next cannot see that address: it is
+proxied to on `127.0.0.1:3000`, so left to itself it names
+`http://localhost:3000/api/csp-report` and no report is ever sent. It takes the
+address from `X-Forwarded-Host` instead, which the bundled Caddy sets from the
+real `Host` and the Cloudflare Worker sets from the URL the visitor asked for.
+Both *replace* the header rather than pass one through, and Next refuses
+anything that is not a bare host, because the value ends up inside a response
+header. Put a proxy in front that sends neither and `PUBLIC_ORIGIN` is the way
+to say it outright. Check it with `curl -sI https://… | grep -i reporting` —
+the host in there should be the one you typed.
 
 **Client IP for rate limiting.** No forwarded header is trusted by default — a
 client talking straight to the app can forge one and take one request per fake
