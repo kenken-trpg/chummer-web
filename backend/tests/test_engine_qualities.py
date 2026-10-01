@@ -1,11 +1,14 @@
 """Qualities: prerequisites, caps, picks and what they grant."""
 
+import pytest
+
 from app.data_loader import catalog
 from app.engine import (
     compute,
     default_attributes,
     find_metatype,
 )
+from app.engine.qualities._picks import _quality_extra_key_owned, _quality_limb_slot
 from app.models import (
     CharacterState,
     ContactInstall,
@@ -1242,3 +1245,81 @@ def test_free_grids_follow_hard_targets_or_the_setting() -> None:
     assert grids(SettingsState(books=["SR5", "HT"])) == 2
     assert grids(SettingsState(books=["SR5"])) == 0
     assert grids(SettingsState(books=["SR5"], allow_free_grids=True)) == 2
+
+
+def test_an_extra_left_behind_by_a_removed_quality_is_dropped() -> None:
+    """`quality_extras` is keyed by quality id, and a saved character can carry
+    a key for a quality that has since been taken off. `apply_quality_rules`
+    prunes the map against what is actually owned, so the stale pick cannot
+    come back if the quality is bought again."""
+    out = compute(
+        _mage(
+            "stale-extra",
+            quality_ids=[CRYSTAL_LIMB_ARM],
+            quality_extras={CRYSTAL_LIMB_ARM: "Left", INCOMPETENT: "Pistols"},
+        )
+    )
+    assert out.quality_extras == {CRYSTAL_LIMB_ARM: "Left"}
+
+
+class TestQualityExtraKeys:
+    """`_quality_extra_key_owned` — which `quality_extras` keys survive the
+    prune. A key is usually a bare quality id, but four kinds of pick spell
+    themselves as a suffixed or indexed variant, and each has to be traced
+    back to the quality that owns it."""
+
+    OWNED = {"q1"}
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "q1",
+            "q1:contact",
+            "q1:optionalpower",
+            "q1:spiritcategory",
+            "q1:addspirit:0",
+            "q1:addspirit:2",
+        ],
+    )
+    def test_a_suffixed_key_belongs_to_the_quality_it_names(self, key: str) -> None:
+        assert _quality_extra_key_owned(key, self.OWNED) is True
+
+    @pytest.mark.parametrize("key", ["q2", "q2:contact", "q2:addspirit:0", "", "contact", "q1x"])
+    def test_anything_that_does_not_trace_back_to_an_owned_quality_is_dropped(self, key: str) -> None:
+        assert _quality_extra_key_owned(key, self.OWNED) is False
+
+
+class TestQualityLimbSlot:
+    """`_quality_limb_slot` — the limb a quality-level `<selectside>` occupies,
+    inferred from the quality's own name because the XML does not say.
+
+    The shipped `qualities.xml` has exactly two such qualities, Crystal Limb
+    (Arm) and Crystal Limb (Leg), and the engine-level tests above cover the
+    arm. `hand` / `foot` and the no-slot fallback are reachable only from
+    custom data, so they are checked here as a direct call rather than by
+    inventing a character."""
+
+    @staticmethod
+    def _spec(name: str, *, selectside: bool = True) -> dict[str, object]:
+        return {"name": name, "bonus": [{"tag": "selectside"}] if selectside else [{"tag": "selecttext"}]}
+
+    @pytest.mark.parametrize(
+        ("name", "slot"),
+        [
+            ("Crystal Limb (Arm)", "arm"),
+            ("Crystal Limb (Leg)", "leg"),
+            ("Prosthetic Hand", "hand"),
+            ("Clubfoot", "foot"),
+        ],
+    )
+    def test_the_slot_is_read_out_of_the_name(self, name: str, slot: str) -> None:
+        assert _quality_limb_slot(self._spec(name)) == slot
+
+    def test_a_name_that_says_no_limb_has_no_slot(self) -> None:
+        assert _quality_limb_slot(self._spec("Crystal Limb")) is None
+
+    def test_a_quality_with_no_selectside_is_not_asked_about_limbs(self) -> None:
+        """The caller in `_sides.py` guards on `_quality_has_selectside`, so
+        this early return is what keeps the inference from running on the
+        hundreds of qualities whose names happen to contain `arm`."""
+        assert _quality_limb_slot(self._spec("Alarm Response", selectside=False)) is None
