@@ -29,6 +29,11 @@ test("a reward is logged, a raise is priced against the chargen baseline, and bo
   const name = page.getByRole("textbox", { name: "キャラクター名" });
   await name.fill("Careerist");
   await name.blur();
+  // Wait for the rename to land before pressing anything else: the editor
+  // sends one patch at a time, and `{ career: true }` on top of a rename in
+  // flight is only kept because the two name different fields (see
+  // `patch-queue`). The test should not be the thing that proves that.
+  await expect.poll(async () => (await storedCharacters(page))[0]?.name).toBe("Careerist");
 
   await intoCareer(page);
 

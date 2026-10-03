@@ -26,9 +26,19 @@
  * further — and there the stale base cannot do any harm, because the two
  * bodies agree everywhere except the one value the later one means to set.
  * Sending the later body after the earlier has landed leaves exactly what the
- * person asked for. Anything else — a different control, a row added or
- * removed, two fields at once — is not that, and is still dropped, which is
- * what this app did to all of them until now.
+ * person asked for.
+ *
+ * There is a second shape that is safe, for a different reason. Two bodies
+ * that name no field in common cannot undo each other at all: a body sets the
+ * keys it carries and leaves the rest of the stored character alone, so
+ * `{ career: true }` sent after `{ name: … }` has landed keeps the name. The
+ * stale base is irrelevant because nothing in the later body was composed
+ * from what the earlier one changed. This is the case the editor was losing
+ * most visibly — rename a character, then press 作成完了（キャリア）, and the
+ * switch did nothing and said nothing.
+ *
+ * Anything else — the same field composed twice against different characters,
+ * a row added or removed — is still dropped.
  */
 
 /** A plain `{}` object, as opposed to an array or a primitive. */
@@ -87,4 +97,21 @@ export function advancesOneLeaf(
   next: Record<string, unknown>,
 ): boolean {
   return leafDiffs(sent, next, 2) < 2;
+}
+
+/**
+ * Whether `sent` and `next` name no field in common, so that `next` applied
+ * after `sent` has landed leaves both edits standing.
+ *
+ * Top level only, which is the level `api.patch` replaces: two bodies that
+ * both carry `attributes` overlap even if they move different ones, because
+ * each was built from the whole attribute block as its author saw it.
+ */
+export function disjointKeys(
+  sent: Record<string, unknown>,
+  next: Record<string, unknown>,
+): boolean {
+  const keys = Object.keys(next);
+  if (!keys.length) return false;
+  return !keys.some((k) => k in sent);
 }

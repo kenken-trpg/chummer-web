@@ -189,6 +189,59 @@ describe("useCharacterEditor", () => {
     expect(api.patch).toHaveBeenCalledTimes(1);
   });
 
+  it("lets a career switch wait behind a rename instead of losing it", async () => {
+    // the pair that sent us looking: 名前を変えた直後にキャリア移行を押すと、
+    // 移行が黙って捨てられ、ボタンも無反応のままだった
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch({ name: "Careerist" });
+    });
+    act(() => {
+      void result.current.patch({ career: true });
+    });
+
+    api.patch.mockResolvedValue(makeCharacter({ id: "c1" }));
+    await act(async () => {
+      finish(makeCharacter({ id: "c1" }));
+      await first;
+    });
+    expect(api.patch).toHaveBeenCalledTimes(2);
+    expect(api.patch).toHaveBeenLastCalledWith("c1", { career: true });
+  });
+
+  it("holds two waiting edits that name different fields", async () => {
+    api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
+    let finish: (c: Character) => void = () => {};
+    api.patch.mockReturnValueOnce(new Promise<Character>((resolve) => (finish = resolve)));
+
+    const { result } = renderHook(() => useCharacterEditor());
+    await waitFor(() => expect(result.current.ch?.id).toBe("c1"));
+
+    let first: Promise<void> = Promise.resolve();
+    act(() => {
+      first = result.current.patch({ name: "Careerist" });
+    });
+    act(() => {
+      void result.current.patch({ career: true });
+      void result.current.patch({ notes: "見習い" });
+    });
+
+    api.patch.mockResolvedValue(makeCharacter({ id: "c1" }));
+    await act(async () => {
+      finish(makeCharacter({ id: "c1" }));
+      await first;
+    });
+    // both wait together: the second must not take the first one's place
+    expect(api.patch).toHaveBeenLastCalledWith("c1", { career: true, notes: "見習い" });
+  });
+
   it("drops what was waiting when the edit in front of it fails", async () => {
     api.create.mockResolvedValue(makeCharacter({ id: "c1" }));
     let fail: (e: Error) => void = () => {};
