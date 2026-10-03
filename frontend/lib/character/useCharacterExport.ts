@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
@@ -61,7 +62,7 @@ export function useCharacterExport(opts: {
     if (!ch) return;
     offer(
       new Blob([JSON.stringify(ch, null, 2)], { type: "application/json" }),
-      `${ch.name || "character"}.json`,
+      exportFilename(ch.name, "json"),
     );
   }
 
@@ -115,7 +116,7 @@ export function useCharacterExport(opts: {
     if (!ch) return;
     try {
       const blob = await (format === "chum5" ? api.exportChummer(ch) : api.exportXlsx(ch));
-      offer(blob, `${ch.name || "character"}.${format}`);
+      offer(blob, exportFilename(ch.name, format));
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
     }
@@ -125,7 +126,8 @@ export function useCharacterExport(opts: {
   async function downloadFvtt() {
     if (!ch) return;
     try {
-      offer(await api.exportFvtt(ch, locale), `${ch.name || "character"}.json`);
+      // both this and `download` write .json; only the tag tells them apart
+      offer(await api.exportFvtt(ch, locale), exportFilename(ch.name, "json", { tag: "fvtt" }));
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
     }
