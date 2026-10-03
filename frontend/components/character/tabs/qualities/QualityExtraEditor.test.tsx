@@ -31,7 +31,34 @@ function renderFor(q: Record<string, unknown>, over: Record<string, unknown> = {
 describe("<QualityExtraEditor> accessible names", () => {
   it("names a free-text target after its quality", () => {
     renderFor({ needs_extra: true });
-    expect(screen.getByRole("textbox", { name: "Allergy: 対象" })).toBeDefined();
+    expect(
+      screen.getByRole("textbox", { name: "Allergy: アレルゲン（花粉、日光など）" }),
+    ).toBeDefined();
+  });
+
+  /**
+   * The reported bug: one placeholder served all 107 free-text qualities and
+   * named Allergy's examples, so 依存症 (軽度) and 行動規範 both asked for a
+   * pollen. Each family is checked by the placeholder the player actually
+   * reads, not by the key behind it.
+   */
+  it.each([
+    ["Addiction (Mild)", "依存の対象（ノヴァコーク、BTL など）"],
+    ["Dry Addict (Severe)", "依存の対象（ノヴァコーク、BTL など）"],
+    ["Code of Honor", "規範の内容"],
+    ["Allergy (Common, Mild)", "アレルゲン（花粉、日光など）"],
+    ["Phobia (Uncommon, Severe)", "恐怖の対象（高所、昆虫など）"],
+    ["Prejudiced (Common, Biased)", "相手の集団（メタ種族、企業、覚醒者など）"],
+    ["Day Job (40 hrs)", "勤め先と仕事の内容"],
+    ["SINner (National)", "SIN の発行元（国家・企業名）"],
+    ["Wanted", "追う相手（人物・組織）"],
+    // in no listed family: asks for the content without inventing an example
+    ["Signature", "内容を入力"],
+  ])("asks %s for what it is actually about", (name, prompt) => {
+    renderFor({ name, needs_extra: true });
+    expect(screen.getByPlaceholderText(prompt)).toBeDefined();
+    // and the accessible name says it too, not a generic "対象"
+    expect(screen.getByRole("textbox", { name: `${name}: ${prompt}` })).toBeDefined();
   });
 
   it("names both halves of a select-or-type target", () => {
@@ -157,9 +184,12 @@ describe("<QualityExtraEditor> what each control writes", () => {
   it("a free-text target drafts on every keystroke without a round trip", () => {
     const { patch, setCharacter } = editorFor({ needs_extra: true });
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Allergy: 対象" }), {
-      target: { value: "Pollen" },
-    });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Allergy: アレルゲン（花粉、日光など）" }),
+      {
+        target: { value: "Pollen" },
+      },
+    );
 
     expect(patch).not.toHaveBeenCalled(); // otherwise: one request per keystroke
     expect(setCharacter.mock.calls[0][0].quality_extras).toEqual({ q1: "Pollen" });
@@ -173,7 +203,9 @@ describe("<QualityExtraEditor> what each control writes", () => {
       { ch: { quality_extras: { q1: "Pollen" } } },
     );
 
-    fireEvent.focusOut(screen.getByRole("textbox", { name: "Allergy: 対象" }));
+    fireEvent.focusOut(
+      screen.getByRole("textbox", { name: "Allergy: アレルゲン（花粉、日光など）" }),
+    );
 
     expect(patch).toHaveBeenCalledWith({ quality_extras: { q1: "Pollen" } });
   });

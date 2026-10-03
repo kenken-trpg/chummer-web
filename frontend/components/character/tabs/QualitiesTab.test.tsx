@@ -68,7 +68,8 @@ describe("<QualitiesTab>", () => {
     });
     expect(screen.getByRole("heading", { name: "取得済み" })).toBeDefined();
     expect(screen.getByText("Distinctive Style")).toBeDefined();
-    expect(screen.getByPlaceholderText("対象（花粉、日光など）")).toBeDefined();
+    // Distinctive Style is in no listed family, so it gets the plain prompt
+    expect(screen.getByPlaceholderText("内容を入力")).toBeDefined();
   });
 
   it("lists SR5 catalog qualities and filters by the category tabs", () => {
