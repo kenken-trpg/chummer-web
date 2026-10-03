@@ -137,7 +137,7 @@ describe("sheet sections — smoke render", () => {
       layout: "standard",
     });
     const { container } = render(<CoreSection {...withMod} />);
-    expect(container.textContent).toContain("社会 +2");
+    expect(container.textContent).toContain("社交 +2");
     expect(container.textContent).not.toContain("social");
   });
 

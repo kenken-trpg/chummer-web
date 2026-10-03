@@ -36,13 +36,13 @@ describe("<HelpTip>", () => {
   it("describes the button with its lines and toggles on tap", () => {
     render(
       <HelpTip
-        label="物理リミット の説明"
+        label="身体リミット の説明"
         lines={[{ label: "式" }, { label: "合計", value: 5, strong: true }]}
       >
-        物理リミット
+        身体リミット
       </HelpTip>,
     );
-    const button = screen.getByRole("button", { name: "物理リミット の説明" });
+    const button = screen.getByRole("button", { name: "身体リミット の説明" });
     const tip = screen.getByRole("tooltip", { hidden: true });
     expect(button.getAttribute("aria-describedby")).toBe(tip.id);
     expect(tip.textContent).toContain("合計5");

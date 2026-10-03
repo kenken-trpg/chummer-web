@@ -327,7 +327,7 @@ describe("limitModifierLine", () => {
     const line = limitModifierLine([{ limit: "physical", value: 1 } as never], testUi);
 
     expect(line).toContain("+1");
-    expect(line).toContain("物理");
+    expect(line).toContain("身体");
   });
 
   it("keeps a negative sign rather than printing +-1", () => {
