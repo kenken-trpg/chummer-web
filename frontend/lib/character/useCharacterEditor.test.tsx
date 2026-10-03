@@ -25,6 +25,7 @@ const api = vi.hoisted(() => ({
   checkChummerExport: vi.fn(),
   exportXlsx: vi.fn(),
   checkXlsxExport: vi.fn(),
+  exportFvtt: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ api }));
 
@@ -943,7 +944,8 @@ describe("useCharacterEditor file exports", () => {
       result.current.download();
     });
 
-    expect(clicks[0].download).toBe("Vex.json");
+    // the stamp is the clock's; `export-filename.test.ts` pins its shape
+    expect(clicks[0].download).toMatch(/^Vex_\d{8}-\d{6}\.json$/);
     expect(JSON.parse(await blobs[0].text()).name).toBe("Vex");
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(clicks[0].href);
   });
@@ -955,7 +957,7 @@ describe("useCharacterEditor file exports", () => {
       result.current.download();
     });
 
-    expect(clicks[0].download).toBe("character.json");
+    expect(clicks[0].download).toMatch(/^character_\d{8}-\d{6}\.json$/);
   });
 
   it("downloadChum5() saves the blob the server produced", async () => {
@@ -968,7 +970,21 @@ describe("useCharacterEditor file exports", () => {
     });
 
     expect(api.exportChummer).toHaveBeenCalledWith(result.current.ch);
-    expect(clicks[0].download).toBe("Vex.chum5");
+    expect(clicks[0].download).toMatch(/^Vex_\d{8}-\d{6}\.chum5$/);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("downloadFvtt() tags its file, so it is not confused with download()'s JSON", async () => {
+    // both write .json and are told apart only by what is inside them, which
+    // is no help at all in a downloads folder
+    api.exportFvtt.mockResolvedValue(new Blob(["{}"]));
+    const { result } = await booted(makeCharacter({ id: "c1", name: "Vex" }));
+
+    await act(async () => {
+      await result.current.downloadFvtt();
+    });
+
+    expect(clicks[0].download).toMatch(/^Vex-fvtt_\d{8}-\d{6}\.json$/);
     expect(result.current.error).toBeNull();
   });
 
@@ -1072,7 +1088,7 @@ describe("useCharacterEditor file exports", () => {
 
     expect(api.exportXlsx).toHaveBeenCalledWith(result.current.ch);
     expect(api.exportChummer).not.toHaveBeenCalled();
-    expect(clicks[0].download).toBe("夜叉.xlsx");
+    expect(clicks[0].download).toMatch(/^夜叉_\d{8}-\d{6}\.xlsx$/);
     expect(result.current.error).toBeNull();
   });
 
@@ -1096,7 +1112,7 @@ describe("useCharacterEditor file exports", () => {
     });
     expect(api.exportXlsx).toHaveBeenCalled();
     expect(api.exportChummer).not.toHaveBeenCalled();
-    expect(clicks[0].download).toBe("夜叉.xlsx");
+    expect(clicks[0].download).toMatch(/^夜叉_\d{8}-\d{6}\.xlsx$/);
   });
 
   it("a refused .xlsx export is a message, not an unhandled rejection", async () => {
