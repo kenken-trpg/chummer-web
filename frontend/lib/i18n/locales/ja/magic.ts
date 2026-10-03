@@ -105,7 +105,7 @@ export const JA_MAGIC = {
   "cf.fadeSpecial": "特殊",
   "cf.attribute": "能力値",
   "cf.search": "複合体を検索",
-  "cf.needsAttr": " / マトリクス能力値が必要",
+  "cf.needsAttr": " / マトリックス能力値が必要",
 
   // Shared by the two advancement tabs (initiation, submersion).
   "cf.required": "必要 {list}",

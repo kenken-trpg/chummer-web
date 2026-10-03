@@ -331,10 +331,10 @@ describe("<QualityExtraEditor> what each control writes", () => {
       select_options: ["Brute Force", "Matrix Perception", "Spoof Command"],
     });
     const select = screen.getByRole("combobox", {
-      name: "Codeslinger: マトリクスアクションを選択",
+      name: "Codeslinger: マトリックスアクションを選択",
     }) as HTMLSelectElement;
     expect([...select.options].map((o) => o.textContent)).toEqual([
-      "マトリクスアクションを選択",
+      "マトリックスアクションを選択",
       "強行アクセス",
       "マトリックス知覚",
       "コマンド偽装",
@@ -356,7 +356,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     };
     const { setCharacter } = editorFor(q);
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Codeslinger: マトリクスアクションを手入力" }),
+      screen.getByRole("textbox", { name: "Codeslinger: マトリックスアクションを手入力" }),
       { target: { value: "Spoof Command" } },
     );
     expect(setCharacter.mock.calls[0][0].quality_extras).toEqual({ q1: "Spoof Command" });
@@ -364,7 +364,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     cleanup();
     const { patch } = editorFor(q, { ch: { quality_extras: { q1: "Spoof Command" } } });
     fireEvent.focusOut(
-      screen.getByRole("textbox", { name: "Codeslinger: マトリクスアクションを手入力" }),
+      screen.getByRole("textbox", { name: "Codeslinger: マトリックスアクションを手入力" }),
     );
     expect(patch).toHaveBeenCalledWith({ quality_extras: { q1: "Spoof Command" } });
   });

@@ -140,7 +140,7 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, makeCatalog(), identityTr);
-    expect(out).toContain("// ── マトリクス ──");
+    expect(out).toContain("// ── マトリックス ──");
     expect(out).toContain("3B6@4 素早いハッキング"); // limit = Sleaze
     expect(out).toContain("3B6@5 データスパイク"); // limit = Attack
   });
@@ -176,8 +176,8 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, makeCatalog(), identityTr);
-    expect(out).toContain("3D6+7 マトリクス・イニシアチブ（コールドシム）");
-    expect(out).toContain("4D6+7 マトリクス・イニシアチブ（ホットシム）");
+    expect(out).toContain("3D6+7 マトリックス・イニシアチブ（コールドシム）");
+    expect(out).toContain("4D6+7 マトリックス・イニシアチブ（ホットシム）");
   });
 });
 
@@ -489,7 +489,7 @@ describe("buildSpritePieces", () => {
     );
 
     expect(piece.data.commands).toContain("6B6@3 Hacking"); // rating 0 -> Level 3, + Level
-    expect(piece.data.commands).toContain("7B6 マトリクス防御"); // FW 4 + Level 3
+    expect(piece.data.commands).toContain("7B6 マトリックス防御"); // FW 4 + Level 3
     expect(piece.data.commands).toContain("6B6 消去（デレゾ）に対抗"); // 2×Level
   });
 
@@ -502,7 +502,7 @@ describe("buildSpritePieces", () => {
 
     // 8 + ceil(Level 3 / 2) = 10
     expect(piece.data.status).toEqual([
-      { label: "マトリクスCM", value: 10, max: 10 },
+      { label: "マトリックスCM", value: 10, max: 10 },
       { label: "エッジ", value: 3, max: 3 },
     ]);
   });
