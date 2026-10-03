@@ -1240,6 +1240,7 @@ input[type="search"] {
   .sheet-dim,
   .sheet-note,
   .sheet-footer,
+  .sheet-vehicle-stats span,
   .sheet-section h4 {
     color: #555 !important;
   }
@@ -1254,7 +1255,11 @@ input[type="search"] {
   .sheet-section h3 {
     border-left-color: #111;
   }
+  /* The vehicle / drone stat boxes keep the screen theme's dark panel unless
+   * they are told otherwise, and their values are turned black above — so on
+   * paper they came out black on near-black: selectable, invisible. */
   .sheet-attr,
+  .sheet-vehicle-stats > div,
   .sheet-table th {
     background: #f3f3f3 !important;
     border-color: #bbb !important;
@@ -1365,9 +1370,16 @@ input[type="search"] {
 .character-sheet--print .sheet-header-stats span {
   color: #555;
 }
-.character-sheet--print .sheet-table th {
+.character-sheet--print .sheet-table th,
+.character-sheet--print .sheet-vehicle-stats > div {
   background: #f1f1f1;
   color: #333;
+}
+.character-sheet--print .sheet-vehicle-stats > div {
+  border-color: #bbb;
+}
+.character-sheet--print .sheet-vehicle-stats span {
+  color: #555;
 }
 .character-sheet--print .sheet-table th,
 .character-sheet--print .sheet-table td,
