@@ -5,6 +5,41 @@ import { useCallback, useId, useRef, useState, type ReactNode } from "react";
 /** One line of a tooltip: a caption and, optionally, a value on the right. */
 export type HelpLine = { label: string; value?: string | number; strong?: boolean };
 
+const NBSP = "\u00a0";
+
+/**
+ * Spaces that are not break opportunities.
+ *
+ * The box is as wide as the sidebar (304px) and no wider, so these lines wrap;
+ * the question is only where. Japanese wraps between any two characters, which
+ * `word-break: auto-phrase` pulls back to phrase boundaries — but the ASCII
+ * spaces inside a formula or a page citation are still fair game to the
+ * browser, and that is where the remaining breaks landed:
+ *
+ *     物理リミット = (BOD×2 + AGI + REA + STR) ÷
+ *     3（切り上げ）
+ *     …数えられる上限（SR5
+ *     p.47）
+ *
+ * An operator belongs with its operand and a citation is one token, so those
+ * particular spaces are made non-breaking here. This is layout, not wording:
+ * doing it in the dictionaries would put `\u00a0` escapes through every
+ * formula and leave the next translator to maintain them.
+ */
+const KEEP_TOGETHER: [RegExp, string][] = [
+  // a rulebook citation reads as one unit: "SR5 p.47"
+  [/\b(SR5) (p\.)/g, `$1${NBSP}$2`],
+  // a binary operator with an operand on each side: "8 + BOD", ") ÷ 3"
+  [/ ([+÷×−]) /g, `${NBSP}$1${NBSP}`],
+  // and one that only has the operand after it: "（+ 修正）"
+  [/([+÷×−]) (?=\S)/g, `$1${NBSP}`],
+];
+
+/** A caption with its unbreakable runs bound together. Exported for its test. */
+export function bindRuns(text: string): string {
+  return KEEP_TOGETHER.reduce((acc, [pattern, repl]) => acc.replace(pattern, repl), text);
+}
+
 /**
  * A label with a small "?" that explains it. The explanation opens on hover,
  * on keyboard focus and on tap (a phone has no hover), and the button points
@@ -77,7 +112,7 @@ export function HelpTip({
       <span ref={body} role="tooltip" id={id} className="help-tip-body" style={style}>
         {lines.map((line, i) => (
           <span key={i} className={line.strong ? "help-tip-line strong" : "help-tip-line"}>
-            <span>{line.label}</span>
+            <span>{bindRuns(line.label)}</span>
             {line.value !== undefined ? <b>{line.value}</b> : null}
           </span>
         ))}

@@ -1699,6 +1699,14 @@ input[type="search"] {
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  /* Japanese breaks between any two characters by default, and in a box this
+   * narrow that landed mid-word — "÷ 3（切 / り上げ）" split 切り上げ in half.
+   * `auto-phrase` moves the break to a phrase boundary and `strict` applies
+   * the tighter kinsoku rules (no break before a small kana or a 〜). Both are
+   * ignored by a browser that does not know them, which leaves today's
+   * behaviour rather than a worse one. */
+  word-break: auto-phrase;
+  line-break: strict;
 }
 .help-tip-line.strong {
   border-top: 1px solid var(--line);
