@@ -8,7 +8,7 @@ import {
   portraitsPatch,
 } from "@/lib/character/portrait";
 import { clearPendingGear } from "@/lib/character/pending-gear-store";
-import { advancesOneLeaf } from "@/lib/character/patch-queue";
+import { advancesOneLeaf, disjointKeys } from "@/lib/character/patch-queue";
 import { useCatalogReload } from "@/lib/character/useCatalogReload";
 import { useCharacterExport } from "@/lib/character/useCharacterExport";
 import { useCharacterImport } from "@/lib/character/useCharacterImport";
@@ -210,7 +210,15 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
       // Compare against what is *going* to be sent, not what is on the wire:
       // a third change while the second waits is a step on from the second.
       const previous = queued.current ?? inFlight.current;
-      if (previous && advancesOneLeaf(previous, body)) queued.current = body;
+      if (!previous) return;
+      if (advancesOneLeaf(previous, body)) {
+        queued.current = body;
+      } else if (disjointKeys(previous, body)) {
+        // Fields that do not overlap cannot undo each other, so both edits can
+        // wait together — a rename still in flight must not swallow the career
+        // switch that was pressed on top of it.
+        queued.current = { ...(queued.current ?? {}), ...body };
+      }
       return;
     }
     busy.current = true;

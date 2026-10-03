@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advancesOneLeaf } from "@/lib/character/patch-queue";
+import { advancesOneLeaf, disjointKeys } from "@/lib/character/patch-queue";
 
 /** `AttrsTab` builds this: the whole map, spread from the character it saw. */
 const attrs = (over: Record<string, number>) => ({
@@ -111,5 +111,28 @@ describe("advancesOneLeaf", () => {
         { quality_extras: { "q1:power": "X", "q2:power": "C" } },
       ),
     ).toBe(false);
+  });
+});
+
+describe("disjointKeys", () => {
+  it("lets a career switch wait behind a rename", () => {
+    expect(disjointKeys({ name: "Careerist" }, { career: true })).toBe(true);
+  });
+
+  it("refuses two bodies that both carry the same block", () => {
+    // each was built from the whole block, so the later one puts the rest back
+    expect(disjointKeys({ attributes: { BOD: 4 } }, { attributes: { AGI: 5 } })).toBe(false);
+  });
+
+  it("refuses a body that only repeats a field", () => {
+    expect(disjointKeys({ name: "A" }, { name: "B" })).toBe(false);
+  });
+
+  it("counts a key the other side set to undefined as named", () => {
+    expect(disjointKeys({ career: undefined }, { career: true })).toBe(false);
+  });
+
+  it("refuses an empty body, which has nothing to wait for", () => {
+    expect(disjointKeys({ name: "A" }, {})).toBe(false);
   });
 });
