@@ -15,8 +15,8 @@ describe("bindRuns", () => {
   });
 
   it("keeps an operator with the operands on either side of it", () => {
-    expect(bindRuns("物理リミット = (BOD×2 + AGI) ÷ 3（切り上げ）")).toBe(
-      "物理リミット = (BOD×2\u00a0+\u00a0AGI)\u00a0÷\u00a03（切り上げ）",
+    expect(bindRuns("身体リミット = (BOD×2 + AGI) ÷ 3（切り上げ）")).toBe(
+      "身体リミット = (BOD×2\u00a0+\u00a0AGI)\u00a0÷\u00a03（切り上げ）",
     );
   });
 
