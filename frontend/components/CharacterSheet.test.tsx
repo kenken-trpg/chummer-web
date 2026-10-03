@@ -60,7 +60,7 @@ describe("<CharacterSheet>", () => {
     // CoreSection is replaced by the print stat block, not rendered alongside it
     expect(container.querySelector(".sheet-core")).toBeNull();
     const h3 = headings();
-    expect(h3).toEqual(expect.arrayContaining(["ステータス", "コンディションモニター"]));
+    expect(h3).toEqual(expect.arrayContaining(["ステータス", "コンディション・モニター"]));
     expect(h3).not.toContain("コア");
   });
 

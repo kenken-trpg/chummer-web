@@ -318,7 +318,7 @@ describe("buildCocofolia", () => {
     expect(paramLabels).not.toContain("MAG");
 
     const statusLabels = parsed.data.status.map((s: { label: string }) => s.label);
-    expect(statusLabels).toEqual(["物理CM", "精神CM", "エッジ"]);
+    expect(statusLabels).toEqual(["身体CM", "精神CM", "エッジ"]);
   });
 });
 
@@ -387,7 +387,7 @@ describe("buildSpiritPieces", () => {
 
     // 8 + ceil(BOD 5 / 2) = 11, 8 + ceil(WIL 4 / 2) = 10
     expect(piece.data.status).toEqual([
-      { label: "物理CM", value: 11, max: 11 },
+      { label: "身体CM", value: 11, max: 11 },
       { label: "精神CM", value: 10, max: 10 },
       { label: "エッジ", value: 4, max: 4 },
     ]);
