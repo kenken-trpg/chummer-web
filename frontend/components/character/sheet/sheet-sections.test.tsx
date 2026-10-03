@@ -139,12 +139,6 @@ describe("sheet sections — smoke render", () => {
     const { container } = render(<CoreSection {...withMod} />);
     expect(container.textContent).toContain("社交 +2");
     expect(container.textContent).not.toContain("social");
-  it("the action DP section names the action in Japanese, with its category", () => {
-    // Codeslinger's pick is from a list this app keeps, so `translations` has
-    // nothing for it and the line read "Matrix: Brute Force"
-    const { container } = render(<ActionDpSection {...s} />);
-    expect(container.textContent).toContain("Matrix: 強行アクセス");
-    expect(container.textContent).toContain("+2");
   });
 
   it("the core section prints movement in metres with the sprint rate", () => {
@@ -199,6 +193,14 @@ describe("sheet sections — smoke render", () => {
       const { container } = render(<Section {...empty} />);
       expect(container.querySelector("section.sheet-section")).toBeNull();
     }
+  });
+
+  it("the action DP section names the action in Japanese, with its category", () => {
+    // Codeslinger's pick is from a list this app keeps, so `translations` has
+    // nothing for it and the line read "Matrix: Brute Force"
+    const { container } = render(<ActionDpSection {...s} />);
+    expect(container.textContent).toContain("Matrix: 強行アクセス");
+    expect(container.textContent).toContain("+2");
   });
 });
 
