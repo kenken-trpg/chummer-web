@@ -4,6 +4,7 @@ import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
+import { qualityPlaceholder } from "@/lib/character/quality-placeholder";
 
 type CatalogQuality = Catalog["qualities"][number];
 
@@ -404,11 +405,14 @@ export function QualityExtraEditor({
     const current = ch.quality_extras?.[q.id] || "";
     const known = options.length ? options : [];
     if (!known.length) {
+      // what the box is for varies by quality — an allergen, a drug, a code
+      // of honour — and a single prompt named one quality's examples for all
+      const prompt = ui(qualityPlaceholder(q.name));
       return (
         <input
           type="text"
-          placeholder={ui("quality.targetPlaceholder")}
-          aria-label={named(ui("common.target"))}
+          placeholder={prompt}
+          aria-label={named(prompt)}
           value={current}
           onChange={(e) =>
             setCharacter({

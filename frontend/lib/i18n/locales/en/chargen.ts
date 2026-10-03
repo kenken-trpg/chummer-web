@@ -118,7 +118,21 @@ export const EN_CHARGEN = {
   "quality.targetFree": "Type a target",
 
   // --- shared across the gear / catalog panels --------------------------
-  "quality.targetPlaceholder": "target (pollen, sunlight, …)",
+  "quality.targetPlaceholder": "what it is",
+  // What each family of free-text quality is asking for. See
+  // lib/character/quality-placeholder.ts for which quality maps to which.
+  "quality.ph.addiction": "the drug or habit (Novacoke, BTL, …)",
+  "quality.ph.allergy": "the allergen (pollen, sunlight, …)",
+  "quality.ph.phobia": "what is feared (heights, insects, …)",
+  "quality.ph.group": "the group (a metatype, a corp, the Awakened, …)",
+  "quality.ph.code": "what the code demands",
+  "quality.ph.dayJob": "the employer and the work",
+  "quality.ph.sinIssuer": "who issued the SIN (a nation, a corp)",
+  "quality.ph.rank": "the organisation and the rank",
+  "quality.ph.place": "the place",
+  "quality.ph.compulsion": "the compulsion",
+  "quality.ph.brand": "the manufacturer or product",
+  "quality.ph.pursuer": "who is after you (a person, an organisation)",
   "qual.sharedLimit": " / max {max} together with {names}",
   "grade.label": "Grade {grade}",
   "grade.summary": "Grade {grade} · karma {karma}",

@@ -119,7 +119,21 @@ export const JA_CHARGEN = {
   "quality.targetFree": "対象を手入力",
 
   // --- shared across the gear / catalog panels --------------------------
-  "quality.targetPlaceholder": "対象（花粉、日光など）",
+  "quality.targetPlaceholder": "内容を入力",
+  // What each family of free-text quality is asking for. See
+  // lib/character/quality-placeholder.ts for which quality maps to which.
+  "quality.ph.addiction": "依存の対象（ノヴァコーク、BTL など）",
+  "quality.ph.allergy": "アレルゲン（花粉、日光など）",
+  "quality.ph.phobia": "恐怖の対象（高所、昆虫など）",
+  "quality.ph.group": "相手の集団（メタ種族、企業、覚醒者など）",
+  "quality.ph.code": "規範の内容",
+  "quality.ph.dayJob": "勤め先と仕事の内容",
+  "quality.ph.sinIssuer": "SIN の発行元（国家・企業名）",
+  "quality.ph.rank": "所属組織と階級",
+  "quality.ph.place": "場所",
+  "quality.ph.compulsion": "衝動の内容",
+  "quality.ph.brand": "メーカー名・製品名",
+  "quality.ph.pursuer": "追う相手（人物・組織）",
   "qual.sharedLimit": " / {names} と合わせて最大{max}",
   "grade.label": "等級 {grade}",
   "grade.summary": "等級 {grade} ・ カルマ {karma}",
