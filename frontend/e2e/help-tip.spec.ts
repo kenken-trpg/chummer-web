@@ -18,7 +18,9 @@ test.describe("help tips", () => {
     await expect(tip).toBeHidden();
     await button.hover();
     await expect(tip).toBeVisible();
-    await expect(tip).toContainText("身体リミット = (BOD×2 + AGI + REA + STR)");
+    // the formula, not the wording around it: which word names the limit is
+    // the dictionaries' business and is asserted in the unit suite
+    await expect(tip).toContainText("(BOD×2 + AGI + REA + STR)");
 
     // inside the sidebar, which scrolls: what leaves it is clipped, not just
     // off-screen, so the box has to fit the panel and not merely the window
