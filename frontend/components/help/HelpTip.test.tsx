@@ -7,6 +7,31 @@ import { makeCharacter } from "@/tests/fixtures";
 const ui = (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) =>
   translate("ja", key, vars);
 
+import { bindRuns } from "./HelpTip";
+
+describe("bindRuns", () => {
+  it("keeps a rulebook citation on one line", () => {
+    expect(bindRuns("上限（SR5 p.47）")).toBe("上限（SR5\u00a0p.47）");
+  });
+
+  it("keeps an operator with the operands on either side of it", () => {
+    expect(bindRuns("物理リミット = (BOD×2 + AGI) ÷ 3（切り上げ）")).toBe(
+      "物理リミット = (BOD×2\u00a0+\u00a0AGI)\u00a0÷\u00a03（切り上げ）",
+    );
+  });
+
+  it("keeps an operator with the one operand it has", () => {
+    expect(bindRuns("関連能力値（+ 修正）")).toBe("関連能力値（+\u00a0修正）");
+  });
+
+  it("leaves the spaces that are fine to break at", () => {
+    // a space before a number in Japanese prose is an ordinary break
+    expect(bindRuns("埋まったマス 3 つごとに")).toBe("埋まったマス 3 つごとに");
+    // and so is the one around "=", which is where the formula now wraps
+    expect(bindRuns("イニシアチブ = REA")).toBe("イニシアチブ = REA");
+  });
+});
+
 describe("<HelpTip>", () => {
   it("describes the button with its lines and toggles on tap", () => {
     render(

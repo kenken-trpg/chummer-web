@@ -46,7 +46,9 @@ describe("<SkillsTab>", () => {
     const { container } = renderTab();
     const button = container.querySelector(".skill-row.has-spec button") as HTMLElement;
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
-    expect(tip?.textContent).toContain("判定ダイス = 技能レーティング + 関連能力値");
+    // the operators are bound to their operands so a narrow box cannot split
+    // the formula; see `bindRuns` in HelpTip
+    expect(tip?.textContent).toContain("判定ダイス = 技能レーティング\u00a0+\u00a0関連能力値");
     expect(tip?.textContent).toContain("+2 ダイス");
     expect(tip?.textContent).toContain("戦闘技能／関連能力値 AGI／作成上限 6");
   });
@@ -201,7 +203,7 @@ describe("<SkillsTab>", () => {
     });
     const button = container.querySelector(".know-row button") as HTMLElement;
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
-    expect(tip?.textContent).toContain("(INT + LOG) × 2");
+    expect(tip?.textContent).toContain("(INT\u00a0+\u00a0LOG)\u00a0×\u00a02");
   });
 
   it("says an exotic skill cannot be defaulted", () => {
@@ -245,7 +247,7 @@ describe("<SkillsTab> skill groups", () => {
     const button = screen.getByRole("button", { name: "Close Combat の説明" });
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     expect(tip?.textContent).toContain("含まれる技能：Blades");
-    expect(tip?.textContent).toContain("× 5");
+    expect(tip?.textContent).toContain("×\u00a05");
   });
 });
 
