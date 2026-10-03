@@ -2,7 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
-import { cmThresholdNote, lifeIncrement } from "@/lib/character/format";
+import { cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 
@@ -122,7 +122,7 @@ export function CoreSection(s: SheetData) {
             <div key={`${mod.limit}-${idx}`}>
               <span>{ui("sheet.limitMod")}</span>
               <b>
-                {mod.limit} {mod.value > 0 ? `+${mod.value}` : mod.value}
+                {limitLabel(mod.limit, ui)} {mod.value > 0 ? `+${mod.value}` : mod.value}
                 {mod.condition_label || mod.condition
                   ? `（${mod.condition_label ? renderNotice(mod.condition_label, ui) : mod.condition}）`
                   : ""}

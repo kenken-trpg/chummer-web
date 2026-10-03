@@ -35,7 +35,10 @@ describe("print sections", () => {
     expect(text).toContain("16");
     expect(text).toContain("エッセンス");
     expect(text).toContain("5.40");
-    expect(text).toContain("条件リミット (physical)");
+    // the limit is named in the reader's language, not Chummer's data name,
+    // and the row takes the whole grid so the condition has room
+    expect(text).toContain("条件リミット (物理)");
+    expect(container.querySelectorAll(".print-stat--wide")).toHaveLength(1);
     expect(text).toContain("ライフスタイル: Low 2");
   });
 
