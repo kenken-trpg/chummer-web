@@ -247,4 +247,37 @@ export const JA_SHEET = {
   // Fixed tables from the rulebook, previously hard-coded as Japanese maps in
   // lib/. The English side is the term the data files already use.
   "print.recoveryHour": " 回復 {n}/時間",
+  // --- named actions a dice-pool bonus can point at ------------------------
+  // Not catalog rows: the Matrix actions come from a list this app keeps, so
+  // there is nothing in `translations` to look them up in. See
+  // lib/character/action-labels.ts for where each reading comes from.
+  "action.bruteForce": "強行アクセス",
+  "action.checkOverwatch": "監視スコア確認",
+  "action.controlDevice": "機器操作",
+  "action.crackFile": "ファイル解錠",
+  "action.crashProgram": "プログラム・クラッシュ",
+  "action.dataSpike": "データスパイク",
+  "action.disarmDataBomb": "データボム解除",
+  "action.editFile": "ファイル編集",
+  "action.enterExitHost": "ホスト出入",
+  "action.eraseMark": "マーク消去",
+  "action.eraseSignature": "マトリックス痕跡消去",
+  "action.formatDevice": "機器フォーマット",
+  "action.fullMatrixDefense": "マトリックス全力防御",
+  "action.hackOnTheFly": "素早いハッキング",
+  "action.hide": "隠蔽",
+  "action.inviteMark": "マーク招待",
+  "action.jackOut": "ジャックアウト",
+  "action.jamSignals": "信号妨害",
+  "action.jumpIn": "リグ機器へのジャンプイン",
+  "action.matrixPerception": "マトリックス知覚",
+  "action.matrixSearch": "マトリックス検索",
+  "action.rebootDevice": "機器再起動",
+  "action.sendMessage": "メッセージ送信",
+  "action.setDataBomb": "データボム設置",
+  "action.snoop": "盗聴",
+  "action.spoofCommand": "コマンド偽装",
+  "action.switchInterface": "インターフェイスモード切替",
+  "action.traceIcon": "アイコン追跡",
+  "action.threading": "スレッディング",
 } as const;

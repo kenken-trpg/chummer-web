@@ -2,6 +2,7 @@
 
 import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
+import { actionLabel } from "@/lib/character/action-labels";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 import { qualityPlaceholder } from "@/lib/character/quality-placeholder";
@@ -195,7 +196,7 @@ export function QualityExtraEditor({
           <option value="">{ui("quality.matrixAction")}</option>
           {known.map((name) => (
             <option key={name} value={name}>
-              {tr(name)}
+              {actionLabel(name, ui, tr)}
             </option>
           ))}
         </select>

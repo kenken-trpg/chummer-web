@@ -322,6 +322,32 @@ describe("<QualityExtraEditor> what each control writes", () => {
     expect(screen.getByRole("combobox", { name: "Aptitude: Expertise を選択" })).toBeDefined();
   });
 
+  it("offers the matrix actions in Japanese while storing their data names", () => {
+    // the dropdown read "Brute Force" / "Matrix Perception" — the list is this
+    // app's own, so there is nothing in `translations` to pick them up
+    editorFor({
+      name: "Codeslinger",
+      extra_kind: "matrix_action",
+      select_options: ["Brute Force", "Matrix Perception", "Spoof Command"],
+    });
+    const select = screen.getByRole("combobox", {
+      name: "Codeslinger: マトリクスアクションを選択",
+    }) as HTMLSelectElement;
+    expect([...select.options].map((o) => o.textContent)).toEqual([
+      "マトリクスアクションを選択",
+      "強行アクセス",
+      "マトリックス知覚",
+      "コマンド偽装",
+    ]);
+    // what is saved is still the name the engine matches on
+    expect([...select.options].map((o) => o.value)).toEqual([
+      "",
+      "Brute Force",
+      "Matrix Perception",
+      "Spoof Command",
+    ]);
+  });
+
   it("lets a matrix action be typed when the catalog list falls short", () => {
     const q = {
       name: "Codeslinger",

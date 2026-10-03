@@ -43,7 +43,7 @@ const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
   ["知識技能", KnowledgeSection, "Seattle Gangs"],
   ["キャリア", CareerSection, "報酬"],
   ["資質", QualitiesSection, "Ambidextrous"],
-  ["アクションDP", ActionDpSection, "Hack"],
+  ["アクションDP", ActionDpSection, "強行アクセス"],
   ["戦闘", CombatSection, "Ares Predator V"],
   ["ウェア", WareSection, "Wired Reflexes"],
   ["マトリクス", MatrixSection, "Meta Link"],
@@ -193,6 +193,14 @@ describe("sheet sections — smoke render", () => {
       const { container } = render(<Section {...empty} />);
       expect(container.querySelector("section.sheet-section")).toBeNull();
     }
+  });
+
+  it("the action DP section names the action in Japanese, with its category", () => {
+    // Codeslinger's pick is from a list this app keeps, so `translations` has
+    // nothing for it and the line read "Matrix: Brute Force"
+    const { container } = render(<ActionDpSection {...s} />);
+    expect(container.textContent).toContain("Matrix: 強行アクセス");
+    expect(container.textContent).toContain("+2");
   });
 });
 
