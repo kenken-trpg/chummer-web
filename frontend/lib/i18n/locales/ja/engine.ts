@@ -155,7 +155,7 @@ export const JA_ENGINE = {
   "engine.qualities.pickOptionalPower": "{name} の任意パワーを 1 つ選んでください",
   "engine.qualities.pickExtra": "{name} の対象を入力してください",
   "engine.qualities.pickText": "{name} の内容が未記入です",
-  "engine.qualities.pickMatrixAction": "{name} のマトリクスアクションを選んでください",
+  "engine.qualities.pickMatrixAction": "{name} のマトリックスアクションを選んでください",
   "engine.qualities.pickSide": "{name} の左右を選んでください",
   "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリを選んでください",
   "engine.qualities.pickSpirit": "{name} の精霊を選んでください",
@@ -247,7 +247,7 @@ export const JA_ENGINE = {
 
   "engine.submersion.pickEchoExtra": "{name} の対象（プログラム名など）を入力してください",
   "engine.complexforms.duplicateDropped": "{name} は重複しているため外しました",
-  "engine.complexforms.pickMatrixAttribute": "{name} はマトリクス能力値を選んでください",
+  "engine.complexforms.pickMatrixAttribute": "{name} はマトリックス能力値を選んでください",
   "engine.complexforms.requires": "{name} には {needed} が必要です",
 
   "engine.complexforms.threadNeedsSoftware":

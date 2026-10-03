@@ -356,7 +356,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     };
     const { setCharacter } = editorFor(q);
     fireEvent.change(
-      screen.getByRole("textbox", { name: "Codeslinger: マトリクスアクションを手入力" }),
+      screen.getByRole("textbox", { name: "Codeslinger: マトリックスアクションを手入力" }),
       { target: { value: "Spoof Command" } },
     );
     expect(setCharacter.mock.calls[0][0].quality_extras).toEqual({ q1: "Spoof Command" });
@@ -364,7 +364,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     cleanup();
     const { patch } = editorFor(q, { ch: { quality_extras: { q1: "Spoof Command" } } });
     fireEvent.focusOut(
-      screen.getByRole("textbox", { name: "Codeslinger: マトリクスアクションを手入力" }),
+      screen.getByRole("textbox", { name: "Codeslinger: マトリックスアクションを手入力" }),
     );
     expect(patch).toHaveBeenCalledWith({ quality_extras: { q1: "Spoof Command" } });
   });

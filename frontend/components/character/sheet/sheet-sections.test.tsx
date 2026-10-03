@@ -46,7 +46,7 @@ const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
   ["アクションDP", ActionDpSection, "強行アクセス"],
   ["戦闘", CombatSection, "Ares Predator V"],
   ["ウェア", WareSection, "Wired Reflexes"],
-  ["マトリクス", MatrixSection, "Meta Link"],
+  ["マトリックス", MatrixSection, "Meta Link"],
   ["魔法", MagicSection, "Manabolt"],
   ["共鳴", ResonanceSection, "Cleaner"],
   ["武道", MartialSection, "Krav Maga"],

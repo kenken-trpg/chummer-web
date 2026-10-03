@@ -69,7 +69,7 @@ export const JA_SIDEBAR = {
   "side.complexForms": "複合体",
   "side.sprites": "スプライト",
   "side.livingPersona": "リビングペルソナ",
-  "side.matrixInit": "マトリクスInit",
+  "side.matrixInit": "マトリックスInit",
   "side.tradition": "伝統",
   "side.mentor": "メンター",
   "side.paragon": "パラゴン",
