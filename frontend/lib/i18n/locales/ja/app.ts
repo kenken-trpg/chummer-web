@@ -340,7 +340,7 @@ export const JA_APP = {
 
   "fmt.limit.line": "{name}リミット {sign}",
   "fmt.limb.bonus": "肢 STR/AGI +{bonus}",
-  "fmt.limb.cm": "物理CM {cm}",
+  "fmt.limb.cm": "身体CM {cm}",
   "fmt.limb.noBonus": "ボーナスなし",
 
   "fmt.limb.quality": "リム本数 Quality {count}本（{pairs}組 / {parts}） ・ {effect}",
