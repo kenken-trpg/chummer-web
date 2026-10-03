@@ -16,7 +16,7 @@ const NBSP = "\u00a0";
  * spaces inside a formula or a page citation are still fair game to the
  * browser, and that is where the remaining breaks landed:
  *
- *     物理リミット = (BOD×2 + AGI + REA + STR) ÷
+ *     身体リミット = (BOD×2 + AGI + REA + STR) ÷
  *     3（切り上げ）
  *     …数えられる上限（SR5
  *     p.47）
