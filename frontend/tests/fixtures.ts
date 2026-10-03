@@ -157,7 +157,7 @@ export const RICH_DERIVED = {
   // nor contributing, so without it this row is silently invisible to every
   // consumer of the fixture.
   armor_items: [{ id: "a1", name: "Armor Jacket", armor: 12, equipped: true, mods: [] }],
-  action_dice_pools: [{ category: "Matrix", name: "Hack", bonus: 2, source: "Codeslinger" }],
+  action_dice_pools: [{ category: "Matrix", name: "Brute Force", bonus: 2, source: "Codeslinger" }],
   adept_powers: [{ id: "ap1", name: "Improved Reflexes", rating: 2, pp: 2.5 }],
   power_points: { used: 2.5, max: 6 },
   foci: [{ id: "f1", name: "Power Focus", force: 2, bonded: true }],
