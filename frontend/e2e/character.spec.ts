@@ -46,7 +46,9 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
     page.getByRole("button", { name: ".chum5書出" }).click(),
   ]).then(([d]) => d);
 
-  expect(download.suggestedFilename()).toBe("Testrunner.chum5");
+  // the name carries when it was written, so two exports do not collide;
+  // `lib/character/export-filename.test.ts` pins the stamp's shape
+  expect(download.suggestedFilename()).toMatch(/^Testrunner_\d{8}-\d{6}\.chum5$/);
 });
 
 test("the sheet renders and a share link round-trips through the URL fragment", async ({
