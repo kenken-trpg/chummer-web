@@ -11,14 +11,16 @@ test.describe("help tips", () => {
   test("open on hover and on the keyboard, and stay on screen", async ({ page }) => {
     await page.goto("/");
     await waitForEditor(page);
-    const button = page.getByRole("button", { name: "物理/精神/社会リミット の説明" });
+    const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
     const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
     const viewport = page.viewportSize()!;
 
     await expect(tip).toBeHidden();
     await button.hover();
     await expect(tip).toBeVisible();
-    await expect(tip).toContainText("物理リミット = (BOD×2 + AGI + REA + STR)");
+    // the formula, not the wording around it: which word names the limit is
+    // the dictionaries' business and is asserted in the unit suite
+    await expect(tip).toContainText("(BOD×2 + AGI + REA + STR)");
 
     // inside the sidebar, which scrolls: what leaves it is clipped, not just
     // off-screen, so the box has to fit the panel and not merely the window
@@ -43,7 +45,7 @@ test.describe("help tips", () => {
     await page.setViewportSize({ width: 390, height: 780 });
     await page.goto("/");
     await waitForEditor(page);
-    const button = page.getByRole("button", { name: "物理/精神/社会リミット の説明" });
+    const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
     const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
 
     await button.click(); // a phone has no hover

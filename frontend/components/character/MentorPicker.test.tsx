@@ -96,9 +96,9 @@ describe("MentorPicker", () => {
     }) as HTMLSelectElement;
     expect([...target.options].map((o) => o.textContent)).toEqual([
       "対象を選択",
-      "物理",
+      "身体",
       "精神",
-      "社会",
+      "社交",
     ]);
   });
 

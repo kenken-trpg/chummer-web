@@ -1429,17 +1429,31 @@ input[type="search"] {
 }
 .print-stat {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0 8px;
   border-bottom: 1px solid #ccc;
   padding: 2px 0;
 }
+/* A grid cell is 128px wide and these are Japanese captions, so neither half
+ * can be allowed to push past it: let the caption wrap inside the cell and the
+ * value fall onto its own line rather than spill into the neighbour. */
 .print-stat span {
   color: #555;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-break: strict;
 }
 .print-stat b {
   color: #111;
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* A conditional limit's value carries its condition, which needs the width of
+ * the whole grid rather than one cell. */
+.print-stat--wide {
+  grid-column: 1 / -1;
 }
 
 /* condition monitor */

@@ -123,6 +123,24 @@ describe("sheet sections — smoke render", () => {
     expect(mundane.container.textContent).not.toContain("アストラル・イニシアチブ");
   });
 
+  it("the core section names a conditional limit in the reader's language", () => {
+    const withMod = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          limit_modifiers: [{ limit: "social", value: 2, condition: "交渉" }],
+        },
+      } as never,
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<CoreSection {...withMod} />);
+    expect(container.textContent).toContain("社交 +2");
+    expect(container.textContent).not.toContain("social");
+  });
+
   it("the core section prints movement in metres with the sprint rate", () => {
     const { container } = render(<CoreSection {...s} />);
     expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");

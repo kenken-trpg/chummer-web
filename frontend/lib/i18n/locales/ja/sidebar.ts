@@ -6,7 +6,7 @@ export const JA_SIDEBAR = {
   "side.buildMethod": "作成方式",
   "side.ok.career": "キャリア進行中",
   "side.ok.chargen": "作成ルール上は問題なし",
-  "side.limits": "物理/精神/社会リミット",
+  "side.limits": "身体/精神/社交リミット",
   "side.limbQuality": "リム本数 Quality",
   "side.limbQualityValue": "{count}本 / {pairs}組",
   "side.reach": "リーチ",

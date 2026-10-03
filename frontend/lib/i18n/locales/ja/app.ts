@@ -334,9 +334,9 @@ export const JA_APP = {
   "fmt.armor.immuneInhalation": "吸入免疫",
 
   "fmt.armor.immune": "免疫",
-  "fmt.limit.physical": "物理",
+  "fmt.limit.physical": "身体",
   "fmt.limit.mental": "精神",
-  "fmt.limit.social": "社会",
+  "fmt.limit.social": "社交",
 
   "fmt.limit.line": "{name}リミット {sign}",
   "fmt.limb.bonus": "肢 STR/AGI +{bonus}",

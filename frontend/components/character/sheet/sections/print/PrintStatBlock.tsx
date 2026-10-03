@@ -1,7 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { ATTRS } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
-import { lifeIncrement } from "@/lib/character/format";
+import { lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 
@@ -31,7 +31,10 @@ export function PrintStatBlock(s: SheetData) {
   const judge = int + cha + (d.test_mods?.judge_intentions || 0);
   const memory = (totals.LOG || 0) + wil + (d.test_mods?.memory || 0);
 
-  const stats: { label: string; value: string }[] = [
+  /** `wide` rows take the whole grid row: a conditional limit carries its
+   *  condition in the value ("+2／冷血のとき"), which does not fit a 128px
+   *  cell and used to spill over the cell next to it. */
+  const stats: { label: string; value: string; wide?: boolean }[] = [
     { label: ui("print.physicalLimit"), value: String(d.limits.physical) },
     { label: ui("print.mentalLimit"), value: String(d.limits.mental) },
     { label: ui("print.socialLimit"), value: String(d.limits.social) },
@@ -67,12 +70,13 @@ export function PrintStatBlock(s: SheetData) {
   for (const row of specialArmor) stats.push({ label: row.label, value: row.value });
   for (const mod of d.limit_modifiers || [])
     stats.push({
-      label: ui("print.limitMod", { limit: mod.limit }),
+      label: ui("print.limitMod", { limit: limitLabel(mod.limit, ui) }),
       value: `${mod.value > 0 ? `+${mod.value}` : mod.value}${
         mod.condition_label || mod.condition
           ? `／${mod.condition_label ? renderNotice(mod.condition_label, ui) : mod.condition}`
           : ""
       }`,
+      wide: true,
     });
 
   return (
@@ -91,8 +95,11 @@ export function PrintStatBlock(s: SheetData) {
         })}
       </div>
       <div className="print-stat-grid">
-        {stats.map((row) => (
-          <div className="print-stat" key={row.label}>
+        {stats.map((row, idx) => (
+          <div
+            className={row.wide ? "print-stat print-stat--wide" : "print-stat"}
+            key={`${row.label}-${idx}`}
+          >
             <span>{row.label}</span>
             <b>{row.value}</b>
           </div>

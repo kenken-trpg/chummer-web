@@ -52,7 +52,7 @@ export function HelpTip({
   lines,
 }: {
   children: ReactNode;
-  /** Accessible name of the "?" button, e.g. "物理リミット の説明". */
+  /** Accessible name of the "?" button, e.g. "身体リミット の説明". */
   label: string;
   lines: HelpLine[];
 }) {
