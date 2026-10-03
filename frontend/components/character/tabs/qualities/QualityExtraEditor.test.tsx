@@ -331,10 +331,10 @@ describe("<QualityExtraEditor> what each control writes", () => {
       select_options: ["Brute Force", "Matrix Perception", "Spoof Command"],
     });
     const select = screen.getByRole("combobox", {
-      name: "Codeslinger: マトリクスアクションを選択",
+      name: "Codeslinger: マトリックスアクションを選択",
     }) as HTMLSelectElement;
     expect([...select.options].map((o) => o.textContent)).toEqual([
-      "マトリクスアクションを選択",
+      "マトリックスアクションを選択",
       "強行アクセス",
       "マトリックス知覚",
       "コマンド偽装",
