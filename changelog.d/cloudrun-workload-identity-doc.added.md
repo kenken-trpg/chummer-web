@@ -1,1 +1,0 @@
-- **CI から Cloud Run に配る下ごしらえの手順を書いた。** `docs/deploy.md` › Deploying from CI に、Workload Identity 連携（鍵 JSON を置かない）のプール・プロバイダ・サービスアカウント作成と、配布に必要な最小権限 3 つ、リポジトリ変数、そして配布を試す前に連携だけを確かめる方法をまとめました。
