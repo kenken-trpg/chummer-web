@@ -17,14 +17,15 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [
-    // Staged: bring this up on a spare name first, confirm it, and only then
-    // move the public hostname over from whatever serves it today.
-    { "pattern": "cr.example.com", "custom_domain": true }
+    // Staged: brought up on `cr.millionskenken.org` first and confirmed there
+    // (token minting, host rewrite, /api/ready, the cron) before this name
+    // moved over from the Cloudflare Tunnel that used to serve it.
+    { "pattern": "chummer-web.millionskenken.org", "custom_domain": true }
   ],
   "vars": {
     // The service's own URL. Also the audience the minted token carries, so
     // it must be exact.
-    "RUN_URL": "https://chummer-web-<project-number>.asia-northeast1.run.app"
+    "RUN_URL": "https://chummer-web-wtwm3u6tiq-an.a.run.app"
   },
   // Keeps one Cloud Run instance alive; see `scheduled` in src/index.ts.
   // Ten minutes, because Cloud Run holds an idle instance for about fifteen.
