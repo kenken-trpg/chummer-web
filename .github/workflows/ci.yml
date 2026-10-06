@@ -828,8 +828,12 @@ jobs:
   deploy:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [ci-ok, docker-attest]
+    # A called workflow cannot widen these, so `packages: read` has to be here
+    # too or the mirror step pulls from GHCR anonymously — see the comment on
+    # `permissions` in deploy-cloudrun.yml.
     permissions:
       contents: read
+      packages: read
       id-token: write
     uses: ./.github/workflows/deploy-cloudrun.yml
     with:

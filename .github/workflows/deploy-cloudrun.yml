@@ -35,8 +35,17 @@ env:
 # `id-token: write` is what lets the job mint the GitHub OIDC token that
 # Workload Identity exchanges. Without it the auth step fails with
 # `Unable to get ACTIONS_ID_TOKEN_REQUEST_URL`.
+#
+# `packages: read` is for the GHCR pull in the mirror step. The image is public
+# today, so an anonymous read happens to work — but it did not when the package
+# was created, and `visibility: private` is what a GHCR package starts as. This
+# job read it anonymously and failed with `MANIFEST_UNKNOWN`, which reads like
+# a missing digest rather than a missing credential. Asking for the token the
+# other three GHCR jobs already use means the deploy no longer depends on a
+# setting in the package UI.
 permissions:
   contents: read
+  packages: read
   id-token: write
 
 # One deploy at a time. Two tags landing together would otherwise race on the
@@ -64,6 +73,16 @@ jobs:
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
       - uses: imjasonh/setup-crane@feee3b6bb0d4c68370f256a4502498c9227e5c6b # v0.7
+
+      # crane reads ~/.docker/config.json, which this writes — so the pull side
+      # of the copy below is authenticated. The push side is Artifact Registry,
+      # which `gcloud auth configure-docker` handles in the step itself.
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Cloud Run cannot pull from GHCR, so the image is copied into Artifact
       # Registry. By the *amd64* digest out of the manifest list, because Cloud
