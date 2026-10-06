@@ -1,1 +1,0 @@
-- **JSON ログが Cloud Logging で重大度どおりに並ぶようにした。** `LOG_FORMAT=json` の出力に `severity` を併記します。Cloud Logging はこのキーしか見ないため、これまでは警告もトレースバックも既定の重大度で並び、アクセスログの中からエラーだけを拾えませんでした。`level` は従来どおり残してあります（Loki・CloudWatch のクエリはこちら）。
