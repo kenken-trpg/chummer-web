@@ -366,6 +366,54 @@ Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
 requests past the limit and confirm the 429 and the log line show your own IP
 and not the Worker's.
 
+### Why `/api/catalog` is not cached at the edge
+
+The obvious saving — keep the ~430 KB payload at the edge, so a hit never
+reaches Cloud Run and never bills its egress — was tried and dropped. Three
+findings, in the order they turned up, because each one invalidates a different
+way of doing it:
+
+1. **A Cache Rule cannot cache it.** `cf-cache-status` stays `BYPASS`. The
+   response carries `Vary: Origin`, and Cloudflare caches across `Vary` only
+   for `Accept-Encoding`.
+2. **A Response Header Transform cannot fix that.** Setting `Vary` to
+   `Accept-Encoding` works — the header arrives rewritten — and the status is
+   still `BYPASS`: the caching decision is made on the response as the origin
+   sent it, before the transform runs. (`Set static` also appends rather than
+   replaces when the origin already sent the header, so `Vary` arrives twice.)
+3. **`Vary: Origin` comes from the app, and is not a misconfiguration.**
+   Starlette's `CORSMiddleware` added it to *every* response in 1.7.0 — the
+   `else` branch of its `send()`, which a request with no `Origin` now falls
+   into, where 1.6.0 returned early and added nothing. Correct as HTTP. Note
+   the version: reading 1.6.0's source to explain 1.7.0's behaviour is how this
+   took three wrong turns.
+
+That leaves doing it in the Worker, where the cache sits behind the code rather
+than in front of it. `fetch(..., { cf: { cacheEverything: true } })` is still
+`BYPASS`: the subrequest carries the `Authorization` header a private service
+needs, and Cloudflare treats an authorized request as uncacheable whatever the
+`cf` options say. The remaining option is the Cache API (`caches.default`),
+which bypasses that judgement because the Worker stores and matches
+explicitly. It was not taken:
+
+- **It breaks the 304s that already work.** `cache.match()` keys on the URL and
+  ignores `If-None-Match`, so a hit returns the whole body. A reload that costs
+  0 bytes today would cost 430 KB. Avoiding that means handling conditional
+  requests in the Worker — a second copy of `_matches_etag` (RFC 9110, `*`,
+  `W/`) in TypeScript, where only one of the two will get fixed.
+- **It defeats what the URL deliberately does not carry.** `catalog.py` has no
+  version in the path so that a container update invalidates the payload. A
+  Cache API entry under the same URL survives the deploy; invalidating it means
+  a purge call, and a Cloudflare API token in CI.
+- **The win is unmeasured.** It reaches first-time visitors and clients that
+  send no `ETag`. Re-visitors already pay 0 bytes. With no traffic yet, the cost
+  is certain and the benefit is not.
+
+Worth revisiting with real numbers if `/api/catalog` egress shows up on the
+bill — by then the new-visitor share and the PoP spread are known, and the Cache
+API entries are per-datacentre, so "one MISS then everyone hits" was never the
+shape of it anyway.
+
 ## Deploying from CI (Workload Identity)
 
 Everything above is typed by hand. To have a `v*` tag deploy itself, GitHub
