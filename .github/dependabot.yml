@@ -107,12 +107,34 @@ updates:
   # stage and two python runtime stages, and a bump to the Python the image
   # ships is not the same review as a bump to the Node that builds the frontend.
   #
-  # `COPY --from=caddy:2@sha256:…` (Dockerfile:77) may or may not be picked up —
-  # Dependabot's Docker support is written around `FROM`. If Caddy turns out to
-  # be untouched by this, it stays a manual bump; check after the first run.
+  # `ignore` is the point of this entry, not an exception to it. What is wanted
+  # here is the *digest*: a security fix in Debian arrives as a rebuilt
+  # `node:24-bookworm-slim`, same tag, new digest, and tracking that is the whole
+  # security benefit. Moving the runtime a version is separate work that wants a
+  # person, and the first run proved why — it offered node 24 -> 25, which is an
+  # odd-numbered release that never becomes LTS, while all six `node-version:`
+  # in the workflows say 24 and the one thing known about 25 here is that it
+  # breaks 60 frontend tests on `localStorage`. A bot should not open that.
+  #
+  # So: node keeps its major, python keeps its major *and* minor — 3.12 is what
+  # the image ships and what ci.yml's matrix is built around, and `3.12 -> 3.14`
+  # is a semver-minor to Dependabot. Both still take every digest bump.
+  #
+  # `COPY --from=caddy:2@sha256:…` (Dockerfile:77) is *not* covered. Confirmed
+  # empirically: the first run opened a pull request for node and nothing for
+  # caddy, because Dependabot's Docker support is written around `FROM`. Caddy
+  # stays a manual bump.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
     commit-message:
       prefix: build(deps)
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+      - dependency-name: python
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
