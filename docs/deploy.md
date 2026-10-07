@@ -360,7 +360,11 @@ hostname is public:
    visitors then never reach the Worker, and so never reach Cloud Run.
 6. **Keep the image fresh.** Base images are pinned by digest; redeploy after
    taking the Dependabot / `make update` bumps, or security fixes in Python,
-   Node and Caddy never reach the running revision.
+   Node and Caddy never reach the running revision. Dependabot tracks the
+   digests of the four `FROM` lines and nothing else: it holds node to its major
+   and python to its minor on purpose, because a runtime jump is a person's
+   decision rather than a bot's, and `COPY --from=caddy:2@…` is outside its
+   Docker support altogether — so Caddy is the one that needs a hand.
 
 Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
 requests past the limit and confirm the 429 and the log line show your own IP
@@ -686,7 +690,11 @@ zone:
    Worker at all.
 6. **Keep the image fresh.** Base images are pinned by digest; redeploy after
    taking the Dependabot / `make update` bumps, or security fixes in Python,
-   Node and Caddy never reach the running container.
+   Node and Caddy never reach the running container. Dependabot tracks the
+   digests of the four `FROM` lines and nothing else: it holds node to its major
+   and python to its minor on purpose, because a runtime jump is a person's
+   decision rather than a bot's, and `COPY --from=caddy:2@…` is outside its
+   Docker support altogether — so Caddy is the one that needs a hand.
 
 Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
 requests past the limit and confirm the 429 / log line shows your own IP.
