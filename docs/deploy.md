@@ -506,19 +506,25 @@ undoes, but it cannot open the service to the internet.
 
 ### What the repository needs
 
-Two repository **variables** (not secrets — neither is one, and a secret would
-be masked out of the logs where you want to read them):
+Three repository **variables** (not secrets — none of them is one, and a secret
+would be masked out of the logs where you want to read them):
 
 | variable | value |
 | --- | --- |
 | `GCP_PROJECT` | the project id |
 | `GCP_WIF_PROVIDER` | `projects/$NUMBER/locations/global/workloadIdentityPools/github/providers/github` |
+| `PUBLIC_URL` | the hostname a reader types, e.g. `https://chummer-web.example.org` |
 
 ```bash
 gh variable set GCP_PROJECT --body "$PROJECT"
 gh variable set GCP_WIF_PROVIDER \
   --body "projects/$NUMBER/locations/global/workloadIdentityPools/github/providers/github"
+gh variable set PUBLIC_URL --body "https://chummer-web.example.org"
 ```
+
+The first two are what the deploy needs to happen at all; without `GCP_PROJECT`
+the whole job no-ops. `PUBLIC_URL` is what it needs to *check itself*, and only
+the last step reads it — see below.
 
 The workflow asks for `permissions: id-token: write`, which is what lets it
 mint the GitHub token in the first place; a workflow without it fails at the
@@ -542,6 +548,54 @@ it became:
 If the token is refused, the message names which check failed: the *provider*
 condition (wrong repository), or the *binding* (right repository, principal not
 allowed to impersonate). Those are the two places to look, in that order.
+
+### What a green deploy does and does not prove
+
+`gcloud run services replace` waits for the new revision to be Ready, and Ready
+here means its startup probe — `/api/ready`, 503 until the catalog warm-up
+finishes — answered. That is a real check, and it is the reason a revision that
+cannot serve never receives traffic.
+
+It is also only Google's half of the path. The half a reader travels is
+
+```
+reader -> Cloudflare -> Worker -> Cloud Run
+```
+
+and a revision becoming Ready exercises none of the first two hops. The Worker
+mints an identity token whose audience is the service URL, so every one of these
+leaves the deploy green and the site answering 403:
+
+- the service URL moved, and `RUN_URL` in `wrangler.jsonc` still names the old one
+- the Worker's service-account key expired or was rotated without updating the secret
+- `wrangler.jsonc` changed in git and was never deployed
+- a Cloudflare rule — a route, a rate limit, an SSL mode — was edited by hand
+
+So the last step of the deploy asks the public hostname for `/api/ready` and `/`,
+the way a browser would, and checks the *content* as well as the status: a 200
+carrying a Cloudflare error page is not a working deploy. It retries for about
+95 seconds, because the traffic switch can still land the first request on a
+cold instance.
+
+Two things it deliberately does not do.
+
+It does not run **before** the traffic switch. A new revision is created with no
+traffic, so until then the public hostname answers from the old revision and a
+probe would pass while proving nothing about the new one. There is no early path
+to the new revision either: the service is private, and the Worker's token is
+minted for the service URL rather than for a per-revision tag URL.
+
+It does not **roll back**. Three of the four failures above are Cloudflare-side
+or Worker-side, and moving Cloud Run traffic back fixes none of them while
+adding a revision churn to an incident. The rollback command is printed in the
+step summary, for a human who has decided that is the right move.
+
+One known false alarm: **Bot Fight Mode**. A CI runner is a datacentre address
+running `curl`, which is most of what it looks for, so a challenge here would
+fail the step without anything being wrong with the deploy. Cloudflare marks one
+with a `cf-mitigated` response header, and the step reports that case
+separately — if you see it, the fix is a WAF skip rule for the probe, not a
+rollback.
 
 ## Fly.io
 

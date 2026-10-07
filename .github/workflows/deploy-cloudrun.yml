@@ -152,3 +152,84 @@ jobs:
             echo
             echo "Roll back with \`gcloud run services update-traffic ${SERVICE} --region ${REGION} --to-revisions <previous>=100\`."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Everything above is Google's half of the path. The half a reader
+      # actually travels is Cloudflare -> Worker -> Cloud Run, and a revision
+      # becoming Ready exercises none of it. The Worker mints an identity token
+      # whose audience is the service URL, so a service URL that moved, a Worker
+      # secret that expired, a `wrangler.jsonc` that was never deployed or a
+      # Cloudflare rule somebody edited each leave this workflow green and the
+      # site answering 403. This step is the only thing here that would notice.
+      #
+      # Deliberately *after* the traffic switch, not before: the new revision is
+      # created with no traffic, so until `update-traffic` runs the public
+      # hostname is still answering from the old one and a probe would pass
+      # while proving nothing. There is no way to reach the new revision early —
+      # the service is private and the Worker's token is minted for the service
+      # URL, not for a per-revision tag URL.
+      #
+      # And deliberately *not* wired to an automatic rollback. The three
+      # failures above are Cloudflare-side or Worker-side; moving Cloud Run
+      # traffic back would not fix any of them, and would add a revision churn
+      # to an incident. The rollback command is in the step summary.
+      #
+      # Skipped when `vars.PUBLIC_URL` is unset, for the same reason the job
+      # no-ops without `GCP_PROJECT`: a fork tagging a release gets a skip.
+      - name: Smoke-test the public path
+        if: vars.PUBLIC_URL != ''
+        env:
+          PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+        run: |
+          set -uo pipefail
+
+          # 12 tries 8s apart, ~95s. `services replace` already waited for the
+          # startup probe, but `update-traffic` can still land the first request
+          # on a cold instance. One request every 8s is well under the
+          # Cloudflare rate limit on this zone (20 per 10s per address).
+          probe() {
+            url=$1 want=$2 i=0
+            while [ "$i" -lt 12 ]; do
+              i=$((i + 1))
+              code=$(curl -sS --max-time 20 -o /tmp/smoke-body -D /tmp/smoke-head \
+                       -w '%{http_code}' "$url" 2>/tmp/smoke-err) || code=000
+              echo "  try ${i}: ${code}"
+              if [ "$code" = 200 ] && grep -q "$want" /tmp/smoke-body; then
+                return 0
+              fi
+              # A challenge is not an outage, and the fix is a WAF skip rule
+              # rather than a rollback — so it is worth telling apart. Bot Fight
+              # Mode is on for this zone and a runner is a datacentre address
+              # running curl, which is most of what it looks for.
+              if grep -qi '^cf-mitigated:' /tmp/smoke-head; then
+                echo "::error::Cloudflare challenged the runner (cf-mitigated). Bot Fight Mode answered this, not the app — the deploy itself may be fine."
+                return 1
+              fi
+              sleep 8
+            done
+            echo "::error::${url} never answered 200 with ${want}"
+            echo "--- last response headers ---"; cat /tmp/smoke-head || true
+            echo "--- last body (2 KiB) ---"; head -c 2048 /tmp/smoke-body || true
+            echo "--- curl stderr ---"; cat /tmp/smoke-err || true
+            return 1
+          }
+
+          base=${PUBLIC_URL%/}
+          failed=0
+          # `/api/ready` reaches uvicorn through every layer and says the
+          # catalog is built; `/` is the Next bundle, served by the same
+          # container but by the other server behind Caddy. A 200 carrying the
+          # wrong thing — a Cloudflare error page, a Worker returning its own
+          # body — fails on the content check rather than the status.
+          echo "GET ${base}/api/ready"
+          probe "${base}/api/ready" '"ready":true' || failed=1
+          echo "GET ${base}/"
+          probe "${base}/" '<html' || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo
+            echo "Traffic is already on the new revision. To put it back:"
+            echo "  gcloud run services update-traffic ${SERVICE} --region ${REGION} --to-revisions <previous>=100"
+            echo "CONTRIBUTING.md > Debugging > Peeling the layers narrows which layer is answering."
+            exit 1
+          fi
+          echo "public path OK"
