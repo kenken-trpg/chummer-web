@@ -366,35 +366,41 @@ Sanity check afterwards: `curl -i https://<host>/api/health`, then fire
 requests past the limit and confirm the 429 and the log line show your own IP
 and not the Worker's.
 
+### What can and cannot cache a response here
+
+Four rules, each of which closed off one way of caching something behind this
+Worker. They are not specific to any one route:
+
+1. **Cloudflare caches across `Vary` only for `Accept-Encoding`.** A response
+   carrying any other `Vary` value is `BYPASS`, whatever a Cache Rule asks for.
+2. **A Response Header Transform cannot change that.** The caching decision is
+   made on the response *as the origin sent it*; the transform runs afterwards,
+   on the way out. So a rewritten `Vary` arrives at the browser and changes
+   nothing about the cache. (`Set static` also appends rather than replaces when
+   the origin already sent the header, so the header arrives twice.)
+3. **An `Authorization` header makes a request uncacheable**, and `cf: {
+   cacheEverything: true }` does not override it. That is a standing constraint
+   of this shape: reaching a private Cloud Run service *requires* that header on
+   every subrequest, so `fetch`'s `cf` options can never cache anything here.
+4. **The Cache API (`caches.default`) is the one thing that works**, because the
+   Worker stores and matches explicitly rather than asking Cloudflare to judge.
+   It is also per-datacentre, so "one MISS and then everyone hits" is not the
+   shape of it — each PoP fills separately.
+
+A fifth finding is about the app rather than Cloudflare, and is the reason rule
+1 bites at all: **Starlette's `CORSMiddleware` adds `Vary: Origin` to every
+response from 1.7.0 on** — the `else` branch of its `send()`, which a request
+carrying no `Origin` now falls into, where 1.6.0 returned early and added
+nothing. Correct as HTTP, and not a misconfiguration to undo. See CONTRIBUTING
+› Debugging for why the version matters: reading 1.6.0 in the venv to explain
+1.7.0 in the image is how this took three wrong turns.
+
 ### Why `/api/catalog` is not cached at the edge
 
 The obvious saving — keep the ~430 KB payload at the edge, so a hit never
-reaches Cloud Run and never bills its egress — was tried and dropped. Three
-findings, in the order they turned up, because each one invalidates a different
-way of doing it:
-
-1. **A Cache Rule cannot cache it.** `cf-cache-status` stays `BYPASS`. The
-   response carries `Vary: Origin`, and Cloudflare caches across `Vary` only
-   for `Accept-Encoding`.
-2. **A Response Header Transform cannot fix that.** Setting `Vary` to
-   `Accept-Encoding` works — the header arrives rewritten — and the status is
-   still `BYPASS`: the caching decision is made on the response as the origin
-   sent it, before the transform runs. (`Set static` also appends rather than
-   replaces when the origin already sent the header, so `Vary` arrives twice.)
-3. **`Vary: Origin` comes from the app, and is not a misconfiguration.**
-   Starlette's `CORSMiddleware` added it to *every* response in 1.7.0 — the
-   `else` branch of its `send()`, which a request with no `Origin` now falls
-   into, where 1.6.0 returned early and added nothing. Correct as HTTP. Note
-   the version: reading 1.6.0's source to explain 1.7.0's behaviour is how this
-   took three wrong turns.
-
-That leaves doing it in the Worker, where the cache sits behind the code rather
-than in front of it. `fetch(..., { cf: { cacheEverything: true } })` is still
-`BYPASS`: the subrequest carries the `Authorization` header a private service
-needs, and Cloudflare treats an authorized request as uncacheable whatever the
-`cf` options say. The remaining option is the Cache API (`caches.default`),
-which bypasses that judgement because the Worker stores and matches
-explicitly. It was not taken:
+reaches Cloud Run and never bills its egress — was tried and dropped. Rules 1
+to 3 above rule out a Cache Rule, a header transform and the `cf` options, in
+that order. That leaves the Cache API, which was not taken:
 
 - **It breaks the 304s that already work.** `cache.match()` keys on the URL and
   ignores `If-None-Match`, so a hit returns the whole body. A reload that costs
@@ -410,9 +416,9 @@ explicitly. It was not taken:
   is certain and the benefit is not.
 
 Worth revisiting with real numbers if `/api/catalog` egress shows up on the
-bill — by then the new-visitor share and the PoP spread are known, and the Cache
-API entries are per-datacentre, so "one MISS then everyone hits" was never the
-shape of it anyway.
+bill — by then the new-visitor share and the PoP spread are known, and both go
+into whether rule 4's per-datacentre fill is worth the second ETag
+implementation.
 
 ## Deploying from CI (Workload Identity)
 
