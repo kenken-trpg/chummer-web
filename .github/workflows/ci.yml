@@ -16,9 +16,39 @@ concurrency:
 permissions:
   contents: read
 
+# Every job below carries a `timeout-minutes`. GitHub's default is 360 — six
+# hours of a runner spent on something that stopped making progress in the first
+# two minutes, and on a private repository six hours that are billed. These are
+# a guard against a hang, not a performance budget. So none of them is tight:
+# each is a round number well clear of anything measured, with a floor of five
+# minutes even for the jobs that finish in seconds — a limit set close to the
+# median would turn a slow runner into a red check, which is a worse failure
+# than the one it guards against.
+#
+# Measured over the last 25 runs of each workflow, successful jobs only
+# (2026-10-07). With warm caches the slowest job in the repository was
+# `frontend-windows` at 2.7 minutes and nothing else passed 2.6. The ratios
+# therefore come out uneven — `release` runs in 6 seconds and gets 15 minutes —
+# and that is fine; the number to compare each one against is a cold run, not a
+# warm one. The larger allowances are where a cache miss has something to
+# download: playwright's chromium (`e2e`), the image layers (`docker-build`), the
+# Chummer data (`backend`, `fidelity`). Windows gets more than its Linux twin
+# because those runners are both slower and more variable.
+#
+# `fuzz` in audit.yml is the one whose allowance is deliberate rather than
+# generous: 30 minutes against a ~3.3 minute deep run, because the number of
+# examples is the knob that job exists to turn and raising it should not mean
+# editing a timeout as well.
+#
+# The `deploy` job at the bottom cannot have one. A job that calls a reusable
+# workflow with `uses:` accepts only `needs`, `if`, `permissions`, `uses`,
+# `with`, `secrets`, `strategy` and `concurrency` — so its timeout lives on the
+# job inside deploy-cloudrun.yml.
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       # The floor we promise (`requires-python = ">=3.11"`), the one the image
@@ -99,6 +129,7 @@ jobs:
   # them again here would buy nothing.
   backend-windows:
     runs-on: windows-latest
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
@@ -136,6 +167,7 @@ jobs:
   # is touched only when that ref moves.
   fidelity:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backend
@@ -175,6 +207,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: frontend
@@ -219,6 +252,7 @@ jobs:
   # PRs conflict.
   changelog:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -234,6 +268,7 @@ jobs:
 
   frontend-static:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
@@ -260,6 +295,7 @@ jobs:
   # separately.
   workers:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -295,6 +331,7 @@ jobs:
   # half: prettier's line endings, the test suite, and the build.
   frontend-windows:
     runs-on: windows-latest
+    timeout-minutes: 20
     defaults:
       run:
         shell: bash
@@ -335,6 +372,7 @@ jobs:
   # the merge cannot gate the merge. The three minutes buy the gate.
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -428,6 +466,7 @@ jobs:
   # run — it is the slowest job and used to start last.
   docker-build:
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
     strategy:
@@ -538,6 +577,7 @@ jobs:
   docker-push:
     if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
     needs: [backend, frontend, frontend-static, docker-build]
     permissions:
       contents: read
@@ -602,6 +642,7 @@ jobs:
   docker:
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [docker-build, docker-push]
     steps:
       # docker-push is skipped on pull requests, which is a pass here — what it
@@ -622,6 +663,7 @@ jobs:
   docker-manifest:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: docker-push
     permissions:
       contents: read
@@ -686,6 +728,7 @@ jobs:
   docker-attest:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: docker-manifest
     # What was signed, by digest, so the deploy below puts *that* on Cloud Run
     # rather than resolving a tag a later push could have moved.
@@ -777,6 +820,7 @@ jobs:
   ci-ok:
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [backend, backend-windows, changelog, frontend, frontend-static, frontend-windows, workers, e2e, docker]
     steps:
       - name: Every job reported success
@@ -799,6 +843,7 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [backend, frontend, frontend-static, docker-attest]
     permissions:
       contents: write
@@ -825,6 +870,8 @@ jobs:
   # this hangs off `docker-attest` and takes its digest rather than a tag.
   # `deploy-cloudrun.yml` no-ops unless the project variable is set, so a fork
   # tagging a release gets a skipped job, not a red one.
+  # No `timeout-minutes` here, and not an oversight: see the note above `jobs:`.
+  # The one that applies is on the `deploy` job in deploy-cloudrun.yml.
   deploy:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [ci-ok, docker-attest]

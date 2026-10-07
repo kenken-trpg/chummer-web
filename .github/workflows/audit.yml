@@ -26,6 +26,7 @@ permissions:
 jobs:
   pip-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -42,6 +43,7 @@ jobs:
 
   npm-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
@@ -85,6 +87,10 @@ jobs:
   fuzz:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    # Ten times the deep run's measured 3.3 minutes, where the other jobs here
+    # get five. `FUZZ_EXAMPLES` below is the knob this job exists to turn, and
+    # raising it should not mean editing a timeout as well.
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: backend
