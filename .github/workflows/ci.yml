@@ -815,13 +815,21 @@ jobs:
   # they never run on a pull request, so they cannot gate one, and gating the
   # push to main on them would only block the next merge on a registry problem.
   #
+  # `fidelity` was absent for neither reason — it runs on every event and was
+  # added (#416) under a commit titled "CI の閂にする", a bolt. It was simply
+  # never listed here, so for every pull request since, a chum5 round-trip that
+  # dropped a field Chummer reads back was a red job beside a green merge
+  # button. 40 of its last 40 runs passed, so there is no flakiness being
+  # tolerated either. This is the failure mode the paragraph above describes,
+  # found in this file rather than in a settings page.
+  #
   # CodeQL runs in its own workflow and cannot be a `needs` of this one. If it
   # should gate too, it is required by name — the one exception this leaves.
   ci-ok:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [backend, backend-windows, changelog, frontend, frontend-static, frontend-windows, workers, e2e, docker]
+    needs: [backend, backend-windows, changelog, fidelity, frontend, frontend-static, frontend-windows, workers, e2e, docker]
     steps:
       - name: Every job reported success
         env:
