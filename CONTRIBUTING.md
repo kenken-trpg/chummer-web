@@ -208,6 +208,57 @@ assert the whole patch body, not the field you edited.
 A PR that lowers coverage is fine if it is the right change; a PR that adds a
 new module with no test at all is worth a second look.
 
+## Debugging
+
+### The venv and the image do not hold the same versions
+
+`backend/.venv` is what `make` resolved on your machine; the image is what the
+Dockerfile resolved when it was built, on a different Python. They drift, and a
+library whose behaviour changed between those two versions will explain your
+local run and contradict production.
+
+This is not hypothetical: `Vary: Origin` on every API response was traced three
+times to the wrong place because `starlette` was 1.6.0 in the venv and 1.7.0 in
+the image. 1.6.0's `CORSMiddleware` returns early when a request carries no
+`Origin`; 1.7.0's falls through and adds the header. Reading the local source to
+explain the deployed behaviour produced three confident, wrong answers in a row.
+
+So when a library's behaviour is the thing in question, read the copy that is
+running:
+
+```bash
+docker compose exec -T app python -c "import starlette; print(starlette.__version__)"
+docker compose exec -T app python -c "import starlette.middleware.cors as m; print(open(m.__file__).read())"
+```
+
+### Peeling the layers
+
+A request to production passes through Cloudflare, a Worker, Cloud Run, Caddy
+and uvicorn (`docs/deploy.md` has the diagram). Any of them can add a header or
+change a status, so "who did this?" is answered by removing them from the top
+until the symptom disappears:
+
+```bash
+# 1. All five. What a visitor sees.
+curl -sI https://<host>/api/…
+
+# 2. Skip Cloudflare and the Worker — straight at Cloud Run, which is private,
+#    so it needs the token. Caddy and uvicorn are still in the path.
+curl -s -D - -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  https://chummer-web-…run.app/api/…
+
+# 3. Skip Caddy too: uvicorn alone, from inside the container.
+docker compose exec -T app python -c "
+import urllib.request
+r = urllib.request.urlopen('http://127.0.0.1:8000/api/…', timeout=60)
+print(r.status); print(r.headers)
+"
+```
+
+Step 2 against step 1 separates Cloudflare from the container; step 3 against
+step 2 separates Caddy from the app. Guessing which layer it is and then
+checking that guess costs more than going down the list.
+
 ## Commits & PRs
 
 - One logical change per commit; keep formatting-only churn in its own commit
