@@ -90,3 +90,29 @@ updates:
         update-types:
           - minor
           - patch
+
+  # The Dockerfile's base images. They are pinned by digest — `python:3.12-slim-
+  # bookworm@sha256:…` — which is what makes a build reproducible and is also
+  # why nothing moves them: a digest never floats to a rebuilt tag, so without
+  # this entry the runtime image keeps whatever glibc, openssl and libxml2 it
+  # was built with until somebody edits the line by hand.
+  #
+  # Nothing else here covers that layer. `pip-audit` reads
+  # backend/requirements.txt and `npm audit` reads frontend/package-lock.json
+  # (both in audit.yml); an advisory in a Debian package is in neither file.
+  # docs/deploy.md › Before going public asks for the image to be kept fresh.
+  # This is the half of that a bot can do.
+  #
+  # Ungrouped, unlike the four above: the four `FROM`s are node, a python build
+  # stage and two python runtime stages, and a bump to the Python the image
+  # ships is not the same review as a bump to the Node that builds the frontend.
+  #
+  # `COPY --from=caddy:2@sha256:…` (Dockerfile:77) may or may not be picked up —
+  # Dependabot's Docker support is written around `FROM`. If Caddy turns out to
+  # be untouched by this, it stays a manual bump; check after the first run.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build(deps)
