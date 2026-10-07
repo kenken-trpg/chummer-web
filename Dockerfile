@@ -22,7 +22,7 @@
 
 # ─── 1. frontend: Next standalone bundle ─────────────────────────────────────
 # node:24-bookworm-slim
-FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS frontend
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 COPY scripts/retry.sh /usr/local/bin/retry
