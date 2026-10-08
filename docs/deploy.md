@@ -544,6 +544,14 @@ would be masked out of the logs where you want to read them):
 | `GCP_WIF_PROVIDER` | `projects/$NUMBER/locations/global/workloadIdentityPools/github/providers/github` |
 | `PUBLIC_URL` | the hostname a reader types, e.g. `https://chummer-web.example.org` |
 
+The deploy passes `PUBLIC_URL` into the container as `PUBLIC_ORIGIN`. Set it
+to an HTTP(S) origin with no path, query or fragment. In the Worker → Cloud Run
+→ Caddy chain, Caddy forwards the Cloud Run `Host`, replacing the public
+`X-Forwarded-Host` set by the Worker. The explicit origin keeps canonical links,
+the sitemap and CSP reports on the public domain. A manual `gcloud` environment
+change alone is overwritten by the next `services replace`; this workflow
+setting persists across deploys.
+
 ```bash
 gh variable set GCP_PROJECT --body "$PROJECT"
 gh variable set GCP_WIF_PROVIDER \

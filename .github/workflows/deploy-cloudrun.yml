@@ -125,10 +125,13 @@ jobs:
           current=$(gcloud run services describe "$SERVICE" --region "$REGION" --format=json 2>/dev/null \
             | jq -r '[.status.traffic[]? | select(.percent == 100) | .revisionName] | first // empty')
           echo "currently serving: ${current:-nothing}"
-          python3 deploy/cloudrun/render.py "$IMAGE" "$current" > /tmp/service.yaml
+          python3 deploy/cloudrun/render.py "$IMAGE" "$current" "$PUBLIC_ORIGIN" > /tmp/service.yaml
           gcloud run services replace /tmp/service.yaml --region "$REGION"
         env:
           IMAGE: ${{ steps.mirror.outputs.image }}
+          # Caddy sees the Cloud Run Host, which replaces the Worker's public
+          # forwarded host. Pin the external origin for SEO and CSP reports.
+          PUBLIC_ORIGIN: ${{ vars.PUBLIC_URL }}
 
       - name: Move traffic to it
         run: gcloud run services update-traffic "$SERVICE" --region "$REGION" --to-latest
