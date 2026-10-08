@@ -58,6 +58,46 @@ class TestTheImage:
         assert "PLACEHOLDER" not in render.render(IMAGE)
 
 
+class TestPublicOrigin:
+    def test_public_url_is_injected_without_losing_other_environment_settings(self) -> None:
+        service = yaml.safe_load(render.render(IMAGE, "rev-1", "https://chummer.example/"))
+        container = service["spec"]["template"]["spec"]["containers"][0]
+        env = {row["name"]: row["value"] for row in container["env"]}
+        assert env["PUBLIC_ORIGIN"] == "https://chummer.example"
+        assert env["TRUST_CLOUDFLARE_IP"] == "1"
+        assert container["image"] == IMAGE
+        assert service["spec"]["traffic"][0] == {"revisionName": "rev-1", "percent": 100}
+
+    def test_unset_public_url_keeps_the_template_environment(self) -> None:
+        template = yaml.safe_load((RENDER.parent / "service.yaml").read_text())
+        original = template["spec"]["template"]["spec"]["containers"][0]["env"]
+        assert _rendered()["spec"]["template"]["spec"]["containers"][0]["env"] == original
+
+    @pytest.mark.parametrize(
+        "origin",
+        [
+            "not a url",
+            "ftp://example.com",
+            "https://user:pass@example.com",
+            "https://example.com/path",
+            "https://example.com?query=1",
+            "https://example.com#fragment",
+            "https://example.com:99999",
+        ],
+    )
+    def test_invalid_public_urls_fail_before_deploying(self, origin: str) -> None:
+        with pytest.raises(ValueError):
+            render.render(IMAGE, "", origin)
+
+    def test_the_workflow_passes_the_configured_public_url_to_the_renderer(self) -> None:
+        workflow = yaml.safe_load((ROOT / ".github/workflows/deploy-cloudrun.yml").read_text())
+        step = next(
+            s for s in workflow["jobs"]["deploy"]["steps"] if s.get("name") == "Create the revision, serving nothing"
+        )
+        assert step["env"]["PUBLIC_ORIGIN"] == "${{ vars.PUBLIC_URL }}"
+        assert 'render.py "$IMAGE" "$current" "$PUBLIC_ORIGIN"' in step["run"]
+
+
 class TestWhereTrafficGoes:
     def test_the_first_deploy_has_nothing_to_hold_traffic_on(self) -> None:
         """With no revision serving, the file's own `latestRevision: true`
