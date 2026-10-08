@@ -83,7 +83,7 @@ runtime. Move the pin with `--build-arg CHUMMER_REF=<sha>`.
 | --- | --- | --- |
 | `PORT` | `8080` | port Caddy listens on |
 | `ALLOWED_ORIGINS` | `localhost:3000` list | only matters for a split deploy (frontend on another origin) |
-| `PUBLIC_ORIGIN` | unset | the address visitors use, e.g. `https://chummer.example`. Only needed if the proxy in front does not send `X-Forwarded-Host`; see **CSP violations** |
+| `PUBLIC_ORIGIN` | unset | the preferred public origin, e.g. `https://chummer.example`. Fixes canonical/sitemap URLs across host aliases and the CSP report origin; see **Search indexing** and **CSP violations** |
 | `RATE_LIMIT` | `120/minute` | per client IP, all routes |
 | `IMPORT_RATE_LIMIT` | `20/minute` | per client IP, the XML-handling routes (imports, settings / customdata upload, .chum5 export and its check) |
 | `CSP_REPORT_RATE_LIMIT` | `60/minute` | per client IP, `/api/csp-report` |
@@ -168,6 +168,31 @@ catalog warm-up has finished, which is what a platform's *startup* probe
 should ask for. A warm-up that failed still reports ready, so a broken data
 directory surfaces as a request error rather than a container that restarts
 forever.
+
+## Search indexing
+
+The root page supplies a canonical link, `/robots.txt` names `/sitemap.xml`,
+and the sitemap lists only `/`. `/share` remains crawlable so search engines
+can read its `noindex` metadata; it is excluded from the sitemap. `/api/` is
+disallowed in robots.txt.
+
+Canonical and sitemap origins are resolved per request: a valid HTTP(S)
+`PUBLIC_ORIGIN`, then the first `X-Forwarded-Host`, then `Host`. Loopback hosts
+use HTTP; other hosts assume HTTPS terminated by the proxy. Invalid values
+fall through to the next source. The final fallback is `http://localhost:3000`.
+Headers must contain a bare hostname and optional port. As with CSP reporting,
+the proxy must replace client-supplied `X-Forwarded-Host` (the bundled Caddy
+and Cloudflare proxy Worker do so).
+
+Set `PUBLIC_ORIGIN=https://your-public-host` in the running container when
+several hostnames reach one deployment. Without it each hostname produces its
+own canonical and sitemap URLs; automatic host detection cannot pick a
+preferred domain. The setting is also used for CSP reports. An explicitly
+configured HTTP origin supports a plain-HTTP deployment outside loopback.
+
+These tags guide cooperating search engines; they do not restrict access to
+shared characters. For background on allowing crawls to read `noindex`, see
+[Google's noindex documentation](https://developers.google.com/search/docs/crawling-indexing/block-indexing).
 
 ## Google Cloud Run
 

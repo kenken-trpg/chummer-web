@@ -45,7 +45,7 @@ services:
       CHUM5_MAX_DECOMPRESSED_BYTES: "${CHUM5_MAX_DECOMPRESSED_BYTES:-33554432}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
       # The address a browser uses, when Caddy's `X-Forwarded-Host` is not it
-      # (behind a second proxy). Only the CSP report endpoint needs it.
+      # (behind a second proxy). Also fixes canonical and sitemap URLs.
       PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-}"
       # 0 locally; set to 2 behind Cloud Run / Fly so rate limiting keys on the
       # real client IP and not a forgeable x-forwarded-for hop.

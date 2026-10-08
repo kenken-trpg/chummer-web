@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_JP } from "next/font/google";
 import { connection } from "next/server";
 import { translate } from "@/lib/i18n/messages";
+import { siteOrigin } from "@/lib/site";
 import "./globals.css";
 
 const plexSansJp = IBM_Plex_Sans_JP({
@@ -12,12 +13,20 @@ const plexSansJp = IBM_Plex_Sans_JP({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  title: "Chummer Web",
-  // Metadata is rendered on the server, before the reader's locale (kept in
-  // localStorage) is known — so it is the reference locale, like `lang="ja"`.
-  description: translate("ja", "app.meta.description"),
-};
+// A function rather than a constant, for `metadataBase`: the canonical link has
+// to be absolute, and the origin is only knowable per request (see `siteOrigin`).
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    metadataBase: new URL(await siteOrigin()),
+    title: "Chummer Web",
+    // Metadata is rendered on the server, before the reader's locale (kept in
+    // localStorage) is known — so it is the reference locale, like `lang="ja"`.
+    description: translate("ja", "app.meta.description"),
+    // Drop query strings from the canonical. PUBLIC_ORIGIN also unifies aliases;
+    // without it each request host gets its own canonical.
+    alternates: { canonical: "/" },
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Render per request, never at build time. The CSP nonce (see `proxy.ts`) is

@@ -84,9 +84,9 @@ def test_the_page_proxy_tells_next_the_address_the_visitor_used() -> None:
     """Next's CSP `Reporting-Endpoints` has to carry an absolute URL, and from
     inside the container the only origin it can see is `127.0.0.1:3000`. Caddy
     is the hop that knows better, so it has to say so — and say it from
-    `{host}`, because its default keeps a client-supplied `X-Forwarded-Host`
+    `{hostport}` (including localhost's port), because its default keeps a client-supplied `X-Forwarded-Host`
     instead of replacing it.
     """
     pages = CADDYFILE.split("reverse_proxy 127.0.0.1:3000", 1)
     assert len(pages) == 2, "the page handler moved"
-    assert "header_up X-Forwarded-Host {host}" in pages[1].split("}\n\theader", 1)[0]
+    assert "header_up X-Forwarded-Host {hostport}" in pages[1].split("}\n\theader", 1)[0]

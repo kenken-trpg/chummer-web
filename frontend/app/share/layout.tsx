@@ -10,6 +10,9 @@ import { translate } from "@/lib/i18n/messages";
 export const metadata: Metadata = {
   title: translate("ja", "share.meta.title"),
   robots: { index: false, follow: false, nocache: true },
+  // Override the root canonical: the share viewer is a separate document.
+  // Character state is in the fragment, which never reaches the server.
+  alternates: { canonical: "/share" },
 };
 
 export default function ShareLayout({ children }: { children: React.ReactNode }) {

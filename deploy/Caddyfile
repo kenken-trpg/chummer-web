@@ -26,9 +26,10 @@
 			# `Reporting-Endpoints` carries an absolute URL, and from inside
 			# the container the only origin it can see is this proxy's
 			# `127.0.0.1:3000` (frontend/lib/csp.ts > publicOrigin). Set from
-			# `{host}` rather than left to Caddy's default, which keeps a
+			# `{hostport}` to preserve localhost:8080 and other custom ports,
+			# rather than left to Caddy's default, which keeps a
 			# client-supplied `X-Forwarded-Host` if one arrived.
-			header_up X-Forwarded-Host {host}
+			header_up X-Forwarded-Host {hostport}
 		}
 	}
 
