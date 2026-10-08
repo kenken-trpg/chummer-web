@@ -83,6 +83,32 @@ describe("buildChecklist", () => {
     });
   });
 
+  it.each(["mentor", "paragon"] as const)(
+    "clears the missing %s error once the engine resolves the selection",
+    (kind) => {
+      const ch = makeCharacter({
+        mentor_id: "selected-mentor",
+        derived: {
+          karma: { pool: 25, spent: 25, remaining: 0 },
+          needs_mentor: kind === "mentor",
+          needs_paragon: kind === "paragon",
+          mentor: null,
+        },
+      });
+      // An id alone is insufficient: it may not resolve in the catalog.
+      expect(buildChecklist(ch).find((i) => i.id === `needs-${kind}`)).toBeDefined();
+
+      ch.derived.mentor = {
+        id: "selected-mentor",
+        name: "Selected mentor",
+        advantage: "",
+        disadvantage: "",
+        choices: [],
+      };
+      expect(buildChecklist(ch).find((i) => i.id === `needs-${kind}`)).toBeUndefined();
+    },
+  );
+
   it("flags a missing paragon as an error of its own", () => {
     const items = buildChecklist(
       makeCharacter({
