@@ -71,6 +71,8 @@ def load_qualities() -> list[dict[str, Any]]:
                 "limitwithinclusions": _int(el.find("limitwithinclusions"), 0),
                 "add_weapon": _text(el.find("addweapon")),
                 "max_takes": max_takes,
+                # SelectQuality: a numeric limit enables levels unless explicitly disabled.
+                "has_levels": limit_raw.isdigit() and el.find("nolevels") is None,
                 "doublecost": _text(el.find("doublecost"), "False").lower() == "true",
                 # SR5 p.107: bought in play at twice the karma; False opts out
                 "double_career": _text(el.find("doublecareer"), "True").lower() == "true",

@@ -77,6 +77,7 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
             "karma": 0 if q["id"] in ctx.free_quality_ids else q["karma"],
             "category": q["category"],
             "source": q["source"],
+            "has_levels": bool(q.get("has_levels")),
             "needs_extra": quality_needs_extra(q),
             "extra": ctx.state.quality_extras.get(q["id"]) or "",
             "spirit_extra": ctx.state.quality_extras.get(quality_spirit_category_extra_key(q["id"])) or "",

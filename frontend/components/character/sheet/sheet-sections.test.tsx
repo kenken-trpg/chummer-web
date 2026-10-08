@@ -1,4 +1,5 @@
 import { render } from "@testing-library/react";
+import { textSheet } from "@/lib/character/text-sheet";
 import { buildSheetData } from "@/lib/character/sheet-data";
 import {
   identityTr,
@@ -254,4 +255,46 @@ describe("<CombatSection> a limit-based Accuracy", () => {
     expect(cell?.textContent).toBe("6");
     expect(container.querySelector('td[title="({STR}+1)P"]')?.textContent).toBe("4P");
   });
+});
+
+describe("quality levels on sheets", () => {
+  it.each(["standard", "compact", "text", "print"] as const)(
+    "%s groups the level and total karma; text export agrees",
+    (layout) => {
+      const magic = {
+        id: "magic",
+        name: "Magic Resistance",
+        karma: 6,
+        category: "Positive",
+        source: "SR5",
+        has_levels: true,
+      };
+      const gremlins = {
+        id: "gremlins",
+        name: "Gremlins",
+        karma: -4,
+        category: "Negative",
+        source: "SR5",
+        has_levels: true,
+      };
+      const sheet = buildSheetData({
+        character: makeCharacter({
+          derived: { qualities: [magic, magic, magic, gremlins] as never },
+        }),
+        catalog: makeCatalog(),
+        tr: identityTr,
+        layout,
+      });
+      const { container } = render(<QualitiesSection {...sheet} />);
+      expect(container.querySelectorAll("li")).toHaveLength(2);
+      expect(container.textContent).toContain("Magic Resistance Lv3");
+      expect(container.textContent).toContain("+18K");
+      expect(container.textContent).toContain("Gremlins Lv1");
+      expect(container.textContent).toContain("-4K");
+      const text = textSheet(sheet);
+      expect(text.match(/Magic Resistance/g)).toHaveLength(1);
+      expect(text).toContain("Magic Resistance Lv3");
+      expect(text).toContain("Gremlins Lv1");
+    },
+  );
 });

@@ -352,6 +352,7 @@
       "extra": "",
       "extra_kind": null,
       "free": true,
+      "has_levels": false,
       "id": "#1",
       "karma": 30,
       "name": "Magician",

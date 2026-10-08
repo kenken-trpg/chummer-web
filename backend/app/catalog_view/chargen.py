@@ -37,6 +37,7 @@ def section(raw: CatalogDict) -> dict:
             "spirit_options": list(q.get("spirit_options") or []),
             "expertise_skill": q.get("expertise_skill") or "",
             "max_takes": q.get("max_takes"),
+            "has_levels": bool(q.get("has_levels")),
             "include_in_limit": list(q.get("includeinlimit") or []),
             "limit_with_inclusions": int(q.get("limitwithinclusions") or 0),
             "double_career": q.get("double_career", True) is not False,

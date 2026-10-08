@@ -429,3 +429,139 @@ describe("<QualitiesTab> an Infected quality's critter powers", () => {
     expect(screen.queryByRole("combobox", { name: /任意パワー/ })).toBeNull();
   });
 });
+
+describe("<QualitiesTab> leveled qualities", () => {
+  const spec = {
+    id: "magic",
+    name: "Magic Resistance",
+    karma: 6,
+    category: "Positive",
+    source: "SR5",
+    max_takes: 4,
+    has_levels: true,
+  };
+  const catalog = makeCatalog({
+    qualities: [
+      spec,
+      { ...spec, id: "restricted", name: "Restricted Gear", max_takes: 3, has_levels: false },
+    ] as never,
+  });
+  const owned = { ...spec, extra: "" };
+
+  it("buys the selected level once and displays its total price", () => {
+    const patch = vi.fn();
+    renderTab({ catalog, patch });
+    fireEvent.change(screen.getByRole("combobox", { name: "Magic Resistanceの取得Lv" }), {
+      target: { value: "3" },
+    });
+    const row = document.querySelector(".quality-list .quality-item")!;
+    expect(row.textContent).toContain("カルマ 18");
+    fireEvent.click(row.querySelector("button")!);
+    expect(patch).toHaveBeenCalledWith(
+      expect.objectContaining({ quality_ids: ["magic", "magic", "magic"] }),
+    );
+    expect(screen.queryByRole("combobox", { name: "Restricted Gearの取得Lv" })).toBeNull();
+  });
+
+  it("shows a single owned row, changes levels, and deletes all levels with their picks", () => {
+    const patch = vi.fn();
+    renderTab({
+      catalog,
+      patch,
+      character: {
+        quality_ids: ["magic", "magic", "magic", "other"],
+        quality_extras: {
+          magic: "pick",
+          "magic:contact": "c",
+          "magic:optionalpower": "p",
+          other: "keep",
+        },
+        skill_picks: { "quality:magic:0": "Pistols", "quality:other:0": "Blades" },
+        derived: { qualities: [owned, owned, owned] as never },
+      },
+    });
+    expect(screen.getByText("Magic Resistance Lv3")).toBeDefined();
+    const row = document.querySelector(".card > .quality-item")!;
+    expect(row.textContent).toContain("カルマ 18");
+    fireEvent.change(screen.getByRole("combobox", { name: "Magic Resistanceの所持Lv" }), {
+      target: { value: "2" },
+    });
+    expect(patch).toHaveBeenCalledWith({ quality_ids: ["magic", "magic", "other"] });
+    fireEvent.click(row.querySelector("button")!);
+    expect(patch).toHaveBeenCalledWith({
+      quality_ids: ["other"],
+      quality_extras: { other: "keep" },
+      skill_picks: { "quality:other:0": "Blades" },
+    });
+  });
+
+  it("changes a full quality without using the catalog button to delete it", () => {
+    const patch = vi.fn();
+    renderTab({
+      catalog,
+      patch,
+      character: {
+        quality_ids: Array(4).fill("magic"),
+        derived: { qualities: Array(4).fill(owned) as never },
+      },
+    });
+    const row = document.querySelector(".quality-list .quality-item")!;
+    expect(row.querySelector("button")!.textContent).toBe("Lv変更");
+    expect(row.querySelector("button")!.disabled).toBe(true);
+    fireEvent.change(screen.getByRole("combobox", { name: "Magic Resistanceの取得Lv" }), {
+      target: { value: "2" },
+    });
+    fireEvent.click(row.querySelector("button")!);
+    expect(patch).toHaveBeenCalledWith(
+      expect.objectContaining({ quality_ids: ["magic", "magic"] }),
+    );
+  });
+
+  it("limits both pickers by other kinds of Indomitable", () => {
+    const physical = {
+      ...spec,
+      id: "physical",
+      name: "Indomitable (Physical)",
+      max_takes: 3,
+      include_in_limit: ["Indomitable (Mental)"],
+    };
+    const mental = {
+      ...spec,
+      id: "mental",
+      name: "Indomitable (Mental)",
+      max_takes: 3,
+      include_in_limit: ["Indomitable (Physical)"],
+    };
+    renderTab({
+      catalog: makeCatalog({ qualities: [physical, mental] as never }),
+      character: {
+        quality_ids: ["physical", "mental", "mental"],
+        derived: { qualities: [physical, mental, mental] as never },
+      },
+    });
+    for (const name of ["Indomitable (Physical)の取得Lv", "Indomitable (Physical)の所持Lv"]) {
+      expect(screen.getByRole("combobox", { name }).querySelectorAll("option")).toHaveLength(1);
+    }
+  });
+
+  it("sums only the newly purchased career levels", () => {
+    renderTab({
+      catalog,
+      character: {
+        quality_ids: ["magic", "magic", "magic"],
+        derived: {
+          quality_career_pricing: true,
+          qualities: [owned, { ...owned, career_cost: 12 }, { ...owned, career_cost: 12 }] as never,
+        },
+      },
+    });
+    const row = document.querySelector(".card > .quality-item")!;
+    expect(row.textContent).toContain("キャリアで取得（24カルマ）");
+    fireEvent.change(screen.getByRole("combobox", { name: "Magic Resistanceの取得Lv" }), {
+      target: { value: "4" },
+    });
+    expect(document.querySelector(".quality-list .quality-item")!.textContent).toContain(
+      "キャリアでは 12カルマ",
+    );
+  });
+});
