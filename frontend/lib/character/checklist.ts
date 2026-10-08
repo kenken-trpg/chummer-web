@@ -108,12 +108,13 @@ export function buildChecklist(ch: Character): CheckItem[] {
     items.push({ id: `warn-${i}`, severity: "warn", notice, tab: guessTab(notice.key) });
   });
 
-  if (d.needs_mentor) {
+  // These flags indicate a required selection, even after it is resolved.
+  if (d.needs_mentor && !d.mentor) {
     items.push(
       item("needs-mentor", "error", "check.needsMentor", {}, { ref: "SR5 p.78", tab: "qualities" }),
     );
   }
-  if (d.needs_paragon) {
+  if (d.needs_paragon && !d.mentor) {
     items.push(
       item(
         "needs-paragon",
