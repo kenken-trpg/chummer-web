@@ -19,7 +19,7 @@ export function specBit(
   return (
     <span className="muted" title={label || spec}>
       {" "}
-      {ui("skills.specBit", { bonus })}
+      {bonus === 0 ? ui("skills.specDisabled") : ui("skills.specBit", { bonus })}
     </span>
   );
 }

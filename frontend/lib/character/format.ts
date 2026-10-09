@@ -230,6 +230,14 @@ export function skillDice(rating: number, bonus?: number) {
   return `${rating} ${sign}${bonus}`;
 }
 
+/** Exotic picks store the stable English skill and weapon as one key. */
+export function skillLabel(name: string, tr: (name: string) => string) {
+  const translated = tr(name);
+  if (translated !== name) return translated;
+  const parts = /^([^()]+) \((.+)\)$/.exec(name);
+  return parts ? `${tr(parts[1])} (${tr(parts[2])})` : translated;
+}
+
 export function mergeRatings(
   base?: Record<string, number> | null,
   extra?: Record<string, number> | null,

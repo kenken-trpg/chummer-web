@@ -2,6 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 import { scopeTr } from "@/lib/ui-strings";
+import { skillLabel } from "@/lib/character/format";
 
 export function SkillsSection(s: SheetData) {
   const { tr: sheetTr, totals, activeSkills, groups, exotic } = s;
@@ -42,6 +43,9 @@ export function SkillsSection(s: SheetData) {
               </td>
               <td className="left">
                 {row.spec ? tr(row.spec) : ""}
+                {row.specInactive ? (
+                  <span className="sheet-note"> {ui("skills.specDisabled")}</span>
+                ) : null}
                 {/* Master Debater negotiates off LOG, but only in Diplomacy. */}
                 {row.swapNote ? <span className="sheet-note"> {row.swapNote}</span> : null}
               </td>
@@ -51,11 +55,11 @@ export function SkillsSection(s: SheetData) {
             const attr = totals[row.attribute] || 0;
             return (
               <tr key={row.id}>
-                <td className="left">{tr(row.label || row.skill_name)}</td>
+                <td className="left">{skillLabel(row.label || row.skill_name, tr)}</td>
                 <td>{row.attribute}</td>
                 <td>{row.rating}</td>
                 <td>
-                  <b>{row.rating + attr}</b>
+                  <b>{Math.max(0, row.rating + attr + (s.d.skill_bonus?.[row.label] || 0))}</b>
                 </td>
                 <td className="left">{row.extra ? tr(row.extra) : ""}</td>
               </tr>

@@ -33,7 +33,9 @@ def resolve_exotic_skills(
         if not spec:
             continue
         extra = (inst.extra or "").strip()
-        cap = int(rating_cap) + int(skill_max_bonus.get(inst.skill_name) or 0)
+        label = exotic_skill_label(inst.skill_name, extra)
+        specific_max = int(skill_max_bonus.get(label) or 0) if extra else 0
+        cap = int(rating_cap) + int(skill_max_bonus.get(inst.skill_name) or 0) + specific_max
         rating = max(1, min(cap, int(inst.rating or 1)))
         inst.extra = extra
         inst.rating = rating
@@ -49,7 +51,6 @@ def resolve_exotic_skills(
             warnings.append(notice("engine.skills.pickExoticTarget", name=term(str(spec["name"]))))
         kept.append(inst)
         spent += rating
-        label = exotic_skill_label(inst.skill_name, extra)
         if extra:
             totals[label] = rating
         public.append(

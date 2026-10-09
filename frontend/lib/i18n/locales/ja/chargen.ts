@@ -17,6 +17,7 @@ export const JA_CHARGEN = {
   "skills.defaultBlocked": "デフォルト不可",
   "skills.defaultHint": "未習得。関連能力値 {attr} から −1 して振ります（SR5 p.130）",
   "skills.specBit": "専門+{bonus}",
+  "skills.specDisabled": "専門化の効果なし",
   "skills.active": "アクティブ技能",
   "skills.rowHint": "{category}／関連能力値 {attr}／作成上限 {max}",
   "skills.attrSwap": "関連能力値 {attr}（{source} で差し替え）",

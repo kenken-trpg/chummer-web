@@ -5,6 +5,39 @@ import { makeCharacter, panelProps } from "@/tests/fixtures";
 import { blades, exoticSkill, skillsCatalog, renderTab, renderStateful } from "./SkillsTab.helpers";
 
 describe("<SkillsTab> specialisations", () => {
+  it.each([2, 3])(
+    "suppresses a +%i specialization without removing it and restores it afterwards",
+    (bonus) => {
+      const ch = makeCharacter({
+        skills: { Blades: 4 },
+        skill_specializations: { Blades: "Swords" },
+        derived: {
+          skill_totals: { Blades: 4 },
+          skill_bonus: { Blades: -2 },
+          skill_specializations_disabled: ["Blades"],
+          ...(bonus === 3
+            ? { skill_expertises: [{ skill: "Blades", spec: "Swords", bonus: 3 }] }
+            : {}),
+        },
+      });
+      const catalog = skillsCatalog();
+      const { rerender } = renderTab({ character: ch, catalog });
+      expect(screen.getByText("専門化の効果なし")).toBeDefined();
+      expect(screen.queryByText(`専門+${bonus}`)).toBeNull();
+      expect((screen.getAllByRole("combobox")[0] as HTMLSelectElement).value).toBe("Swords");
+      rerender(
+        <SkillsTab
+          {...panelProps(
+            { ...ch, derived: { ...ch.derived, skill_specializations_disabled: [] } },
+            { catalog },
+          )}
+        />,
+      );
+      expect(screen.queryByText("専門化の効果なし")).toBeNull();
+      expect(screen.getByText(`専門+${bonus}`)).toBeDefined();
+    },
+  );
+
   it("commits the chosen spec, and clearing it drops the key rather than storing ''", () => {
     const patch = vi.fn();
     const setCharacter = vi.fn();

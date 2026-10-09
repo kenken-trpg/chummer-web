@@ -18,6 +18,26 @@ const slot: SkillPickSlot = {
 };
 
 describe("SkillPickSelects", () => {
+  it("translates an exotic skill and its target while preserving its saved key", () => {
+    const onPick = vi.fn();
+    const name = "Exotic Ranged Weapon (Lasers)";
+    const tr = (value: string) =>
+      ({ "Exotic Ranged Weapon": "特殊射撃武器", Lasers: "レーザー" })[value] || value;
+    render(
+      <SkillPickSelects
+        slots={[{ ...slot, picked: "", options: [name] }]}
+        tr={tr}
+        onPick={onPick}
+      />,
+    );
+    const option = screen.getByRole("option", {
+      name: "特殊射撃武器 (レーザー)",
+    }) as HTMLOptionElement;
+    expect(option.value).toBe(name);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: name } });
+    expect(onPick).toHaveBeenCalledWith(slot.key, name);
+  });
+
   it("explains an empty choice and enables it when an eligible skill becomes available", () => {
     const onPick = vi.fn();
     const confidence: SkillPickSlot = {

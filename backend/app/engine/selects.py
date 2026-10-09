@@ -31,6 +31,7 @@ def parse_selectskill_spec(node: dict[str, Any]) -> dict[str, Any]:
         "excludecategory": attrs.get("excludecategory") or "",
         "knowledgeskills": knowledge,
         "minimumrating": _as_int(attrs.get("minimumrating")),
+        "disablespecializationeffects": "disablespecializationeffects" in fields,
         "condition": (fields.get("condition") or "").strip(),
     }
 
@@ -60,7 +61,19 @@ def selectskill_options(
     if spec.get("knowledgeskills"):
         pool = list(skills_data.get("knowledge") or [])
     else:
-        pool = [skill for skill in (skills_data.get("skills") or []) if not skill.get("exotic")]
+        pool = []
+        for skill in skills_data.get("skills") or []:
+            if not skill.get("exotic"):
+                pool.append(skill)
+                continue
+            # An exotic skill exists once per learned weapon, never as the
+            # bare catalog template. Keep its category/attribute filters.
+            prefix = f"{skill['name']} ("
+            pool.extend(
+                {**skill, "name": name, "base_name": skill["name"]}
+                for name in skill_totals
+                if name.startswith(prefix) and name.endswith(")") and name[len(prefix) : -1].strip()
+            )
     attrs = {part.strip().upper() for part in (spec.get("limittoattribute") or "").split(",") if part.strip()}
     names = {part.strip() for part in (spec.get("limittoskill") or "").split(",") if part.strip()}
     groups = {part.strip() for part in (spec.get("limittoskillgroup") or "").split(",") if part.strip()}
@@ -71,7 +84,7 @@ def selectskill_options(
     for skill in pool:
         if attrs and (skill.get("attribute") or "").upper() not in attrs:
             continue
-        if names and skill["name"] not in names:
+        if names and skill["name"] not in names and skill.get("base_name") not in names:
             continue
         if groups and (skill.get("skillgroup") or "") not in groups:
             continue

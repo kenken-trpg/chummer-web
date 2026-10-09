@@ -3,6 +3,8 @@ import { attrShort, makeT } from "@/lib/ui-strings";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
+import { specializationBonus } from "@/lib/character/skill-specialization";
+import { skillLabel } from "@/lib/character/format";
 
 // Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
 // caller says nothing; it follows the UI locale otherwise. Dice commands
@@ -96,6 +98,7 @@ export function buildChatPalette(
 
   const skillAttr: Record<string, string> = {};
   for (const s of catalog.skills?.skills || []) skillAttr[s.name] = s.attribute;
+  for (const s of d.exotic_skills || []) skillAttr[s.label] = s.attribute;
   // `<swapskillattribute>` (Empathic Listener: Etiquette off INT) moves the
   // pool *and* the limit that comes with the attribute; the spec-limited
   // variant only moves the specialized roll below.
@@ -115,23 +118,25 @@ export function buildChatPalette(
 
   out.push(`${init.dice}D6+${init.value} ${ui("coco.initiative")}`);
 
-  const specs = ch.skill_specializations || {};
+  const specs = { ...ch.skill_specializations, ...d.skill_specializations };
   Object.entries(d.skill_totals || {})
     .filter(([, r]) => r > 0)
     .sort((a, b) => tr(a[0]).localeCompare(tr(b[0]), locale))
     .forEach(([name, rating]) => {
       const attr = skillAttr[name] || "";
       const limit = ATTR_LIMIT[attr] ?? null;
-      const pool = rating + at(attr);
-      roll(pool, tr(name), limit);
+      const bonus = d.skill_bonus?.[name] || 0;
+      const pool = rating + at(attr) + bonus;
+      roll(pool, skillLabel(name, tr), limit);
       const sp = specs[name];
-      if (sp) {
+      const specBonus = specializationBonus(d, name);
+      if (sp && specBonus > 0) {
         // Only the named specialization swaps — any other one rolls as printed.
         const swap = specSwap[name];
         const swapped = swap && swap.spec === sp ? swap.attribute : "";
         const specAttr = swapped || attr;
         roll(
-          rating + at(specAttr) + 2,
+          rating + at(specAttr) + bonus + specBonus,
           `${tr(name)}：${tr(sp)}`,
           swapped ? (ATTR_LIMIT[specAttr] ?? null) : limit,
         );
@@ -164,7 +169,7 @@ export function buildChatPalette(
     });
   }
 
-  const skillPool = (name: string) => d.skill_totals?.[name] || 0;
+  const skillPool = (name: string) => (d.skill_totals?.[name] || 0) + (d.skill_bonus?.[name] || 0);
 
   // --- unarmed (adepts: Killing Hands / Critical Strike / Penetrating Strike) --
   const unarmedSkill = skillPool("Unarmed Combat");

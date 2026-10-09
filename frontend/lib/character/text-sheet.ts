@@ -6,6 +6,7 @@ import {
   cfTarget,
   cmThresholdNote,
   lifeIncrement,
+  skillLabel,
   vehicleCM,
 } from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
@@ -92,12 +93,12 @@ export function textSheet(x: TextArgs): string {
     head("sheet.skills");
     x.activeSkills.forEach((s) =>
       line(
-        `  ${skillTr(s.name)}${s.spec ? "（" + skillTr(s.spec) + "）" : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
+        `  ${skillTr(s.name)}${s.spec ? "（" + skillTr(s.spec) + "）" : ""}${s.specInactive ? ` ${ui("skills.specDisabled")}` : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
       ),
     );
     x.exotic.forEach((r) =>
       line(
-        `  ${skillTr(r.label || r.skill_name)}${r.extra ? "（" + skillTr(r.extra) + "）" : ""} ${r.rating}`,
+        `  ${skillLabel(r.label || r.skill_name, skillTr)} ${r.rating} [${attrShort(r.attribute, t)} ${ui("txt.pool")} ${Math.max(0, r.rating + (x.totals[r.attribute] || 0) + (d.skill_bonus?.[r.label] || 0))}]`,
       ),
     );
     if (x.groups.length)

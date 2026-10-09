@@ -370,6 +370,7 @@ def assemble(ctx: Ctx) -> None:
         },
         "skill_totals": ctx.skill_totals,
         "skill_specializations": ctx.specs["specs"],
+        "skill_specializations_disabled": ctx.skill_picks["disabled_specializations"],
         "skill_expertises": ctx.expertises,
         "exotic_skills": ctx.exotic["public"],
         "skillsoft": ctx.skillsofts["all"],
