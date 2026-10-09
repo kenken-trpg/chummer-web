@@ -47,7 +47,7 @@ RUN retry pip install -r requirements.txt supervisor
 
 # ─── 3. bake the pinned Chummer game data ───────────────────────────────────
 # python:3.12-slim-bookworm
-FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS chummer
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS chummer
 WORKDIR /app/backend
 ARG CHUMMER_REF=""
 COPY backend/scripts/fetch_chummer_data.py scripts/fetch_chummer_data.py
@@ -56,7 +56,7 @@ RUN CHUMMER_REF="$CHUMMER_REF" python scripts/fetch_chummer_data.py
 
 # ─── 4. runtime ────────────────────────────────────────────────────────────
 # python:3.12-slim-bookworm (same digest as stage 3)
-FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS runtime
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH=/opt/venv/bin:/usr/local/bin:$PATH \
