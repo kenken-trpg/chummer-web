@@ -22,7 +22,7 @@
 
 # ─── 1. frontend: Next standalone bundle ─────────────────────────────────────
 # node:24-bookworm-slim
-FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS frontend
+FROM node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 AS frontend
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 COPY scripts/retry.sh /usr/local/bin/retry
@@ -47,7 +47,7 @@ RUN retry pip install -r requirements.txt supervisor
 
 # ─── 3. bake the pinned Chummer game data ───────────────────────────────────
 # python:3.12-slim-bookworm
-FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS chummer
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS chummer
 WORKDIR /app/backend
 ARG CHUMMER_REF=""
 COPY backend/scripts/fetch_chummer_data.py scripts/fetch_chummer_data.py
@@ -56,7 +56,7 @@ RUN CHUMMER_REF="$CHUMMER_REF" python scripts/fetch_chummer_data.py
 
 # ─── 4. runtime ────────────────────────────────────────────────────────────
 # python:3.12-slim-bookworm (same digest as stage 3)
-FROM python:3.12-slim-bookworm@sha256:782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254 AS runtime
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runtime
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH=/opt/venv/bin:/usr/local/bin:$PATH \
