@@ -28,6 +28,8 @@ export interface SkillPickSlot {
   /** `<hardwires>`: the rating the ware fixes the picked skill at (0 otherwise). */
   rating: number;
   options: string[];
+  /** Minimum skill rating required for this choice. */
+  minimum_rating?: number;
   knowledgeskills: boolean;
   /** Reflex Recorder Optimization: this pick's skill group defaults with no −1. */
   default_free?: boolean;

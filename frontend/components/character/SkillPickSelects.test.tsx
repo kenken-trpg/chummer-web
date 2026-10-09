@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/dom";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { identityTr } from "@/tests/fixtures";
 import type { SkillPickSlot } from "@/lib/types";
@@ -17,6 +18,62 @@ const slot: SkillPickSlot = {
 };
 
 describe("SkillPickSelects", () => {
+  it("explains an empty choice and enables it when an eligible skill becomes available", () => {
+    const onPick = vi.fn();
+    const confidence: SkillPickSlot = {
+      ...slot,
+      key: "quality:confidence:0",
+      source: "自信喪失",
+      source_kind: "quality",
+      source_id: "confidence",
+      picked: "",
+      bonus: -2,
+      minimum_rating: 4,
+      options: [],
+    };
+    const { rerender } = render(
+      <SkillPickSelects slots={[confidence]} tr={identityTr} onPick={onPick} />,
+    );
+    const select = screen.getByRole("combobox", {
+      name: "自信喪失 の技能 -2",
+    }) as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(select.options[0].textContent).toBe("条件に合う技能がありません");
+    const hint = document.getElementById(select.getAttribute("aria-describedby")!);
+    expect(hint?.textContent).toContain("対象はレーティング4以上の技能です。");
+    expect(hint?.textContent).toContain(
+      "「技能」タブで対象にしたい技能をレーティング4以上にしてください。",
+    );
+
+    rerender(
+      <SkillPickSelects
+        slots={[{ ...confidence, options: ["Gymnastics"] }]}
+        tr={identityTr}
+        onPick={onPick}
+      />,
+    );
+    expect(select.disabled).toBe(false);
+    expect(screen.getByText("対象はレーティング4以上の技能です。")).toBeDefined();
+    expect(screen.queryByText(/「技能」タブで対象にしたい技能/)).toBeNull();
+    fireEvent.change(select, { target: { value: "Gymnastics" } });
+    expect(onPick).toHaveBeenCalledWith("quality:confidence:0", "Gymnastics");
+  });
+
+  it("does not invent a rating requirement for an empty choice without one", () => {
+    render(
+      <SkillPickSelects
+        slots={[{ ...slot, picked: "", options: [] }]}
+        tr={identityTr}
+        onPick={() => undefined}
+      />,
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    const hint = document.getElementById(select.getAttribute("aria-describedby")!);
+    expect(hint?.textContent).toContain("対象技能の条件と「技能」タブの内容を確認してください。");
+    expect(hint?.textContent).not.toContain("レーティング");
+  });
+
   it("says the group defaults freely once the recorder is optimized", () => {
     render(
       <SkillPickSelects

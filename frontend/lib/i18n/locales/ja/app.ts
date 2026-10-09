@@ -296,6 +296,11 @@ export const JA_APP = {
 
   "desc.notesPlaceholder": "運用メモなど。シートと .chum5 書き出しに反映されます。",
   "pick.skillOf": "{source} の技能",
+  "pick.minimumRating": "対象はレーティング{rating}以上の技能です。",
+  "pick.noEligibleSkills": "条件に合う技能がありません",
+  "pick.raiseSkillRating":
+    "「技能」タブで対象にしたい技能をレーティング{rating}以上にしてください。",
+  "pick.checkSkills": "対象技能の条件と「技能」タブの内容を確認してください。",
   "pick.max": " 上限+{max}",
   "pick.rating": " R{rating} 固定",
   "pick.accuracy": " 武器の精度+{accuracy}",

@@ -197,6 +197,15 @@ def test_human_looking_requires_nonhuman_metatype() -> None:
     assert elf.derived["errors"] == []
 
 
+@pytest.mark.parametrize("rating", [0, 3, 4])
+def test_loss_of_confidence_exposes_its_rating_requirement_to_the_picker(rating: int) -> None:
+    out = compute(_human("confidence-picker", quality_ids=[LOSS_OF_CONFIDENCE], skills={"Gymnastics": rating}))
+    slot = next(slot for slot in out.derived["skill_pick_slots"] if slot["source_id"] == LOSS_OF_CONFIDENCE)
+    assert slot["minimum_rating"] == 4
+    assert slot["options"] == (["Gymnastics"] if rating >= 4 else [])
+    assert slot["picked"] == ""
+
+
 def test_loss_of_confidence_requires_rating_four() -> None:
     out = compute(
         _human(

@@ -97,11 +97,6 @@ export function QualitiesTab({
           paragon={Boolean(d.needs_paragon)}
         />
       ) : null}
-      <SkillPickSelects
-        slots={(d.skill_pick_slots || []).filter((slot) => slot.source_kind === "quality")}
-        tr={tr}
-        onPick={(key, skill) => patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })}
-      />
       {/* a career buy-off can take the pool below zero; say so where it happened */}
       <p className={`muted${d.karma.remaining < 0 ? " errors" : ""}`}>
         {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
@@ -213,6 +208,15 @@ export function QualitiesTab({
                     </select>
                   </label>
                 ) : null}
+                <SkillPickSelects
+                  slots={(d.skill_pick_slots || []).filter(
+                    (slot) => slot.source_kind === "quality" && slot.source_id === q.id,
+                  )}
+                  tr={tr}
+                  onPick={(key, skill) =>
+                    patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })
+                  }
+                />
                 <QualityExtraEditor
                   q={q}
                   ch={ch}
