@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -119,6 +120,14 @@ class GearInstall(BaseModel):
     array_order: list[str] = Field(default_factory=list)
     extra: str | None = None
     active: bool = False  # drugs/toxins: effect currently applied
+    # Cyberdeck programs only; missing on old saves means the former all-running
+    # behavior. Purchase/move UI explicitly stops new programs. RCC rules differ.
+    running: bool = True
+    # Imported Electronic Parts can be fractional packs. None means qty sales
+    # lots; a value records acquired quarter-packs per parent, before consumption.
+    purchased_parts_units: int | None = Field(default=None, ge=0, le=100000)
+    # Cyberdeck modules only; this is not generic gear equipment management.
+    equipped: bool = True
     #: the price picked for a `Variable(lo-hi)` item (a Custom Item, a
     #: Commlink App), and a Custom Item's own name
     cost: int | None = None
@@ -161,3 +170,33 @@ class LifestyleInstall(BaseModel):
     security: int = 0
     quality_ids: list[str] = Field(default_factory=list)
     quality_extras: dict[str, str] = Field(default_factory=dict)
+
+
+class ElectronicPartsSupply(BaseModel):
+    """Explicit acquisition; quantities are quarter-packs, never currency."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    kind: Literal["salvaged", "equipment", "gm"] = "salvaged"
+    units: int = Field(ge=1, le=100000)
+    note: str = Field(default="", max_length=500)
+    equipment_id: str | None = None
+
+
+class ElectronicPartsAllocation(BaseModel):
+    source_id: str
+    units: int = Field(ge=1, le=100000)
+
+
+class ElectronicModificationRecord(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    modification_id: str
+    host_id: str
+    gear_id: str
+    status: Literal["pending", "completed", "historical", "cancelled"] = "pending"
+    required_units: int = Field(default=0, ge=0, le=100000)
+    allocations: list[ElectronicPartsAllocation] = Field(default_factory=list, max_length=100)
+    # Backend freezes these values when construction is confirmed. Later
+    # array/quality edits cannot consume or refund parts.
+    host_snapshot: dict[str, int] = Field(default_factory=dict, max_length=10)
+    rule_version: Literal[1] = 1
+    note: str = Field(default="", max_length=500)

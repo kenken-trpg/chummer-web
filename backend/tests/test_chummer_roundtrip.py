@@ -560,3 +560,72 @@ def test_career_baseline_survives_the_trip() -> None:
     assert "MAGADEPT" not in ch1.career_baseline.attributes
     assert ch1.career_baseline.attributes["RES"] == 0
     assert ch2.career_baseline == ch1.career_baseline
+
+
+def test_program_equipped_roundtrip_preserves_running_and_missing_default() -> None:
+    import xml.etree.ElementTree as ET
+
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+    from app.models import CharacterState
+
+    xml = build_chum5(
+        gear=[
+            {
+                "name": "Erika MCD-1",
+                "children": [
+                    {"name": "Armor"},
+                    {"name": "Browse"},
+                ],
+            },
+            {"name": "Browse"},
+        ]
+    )
+    root = ET.fromstring(xml)
+    children = root.findall("./gears/gear/children/gear")
+    ET.SubElement(children[0], "equipped").text = "False"
+    ET.SubElement(children[1], "equipped").text = "True"
+    first, _ = chum5_to_state(ET.tostring(root))
+    state = CharacterState(**first)
+    assert [p.running for p in state.programs] == [False, True, True]
+    second, _ = chum5_to_state(state_to_chum5(state))
+    restored = CharacterState(**second)
+    assert [p.running for p in restored.programs] == [False, True, True]
+    assert [p.parent_id == restored.cyberdecks[0].id for p in restored.programs] == [True, True, False]
+
+
+def test_module_structure_equipped_extra_and_quantity_roundtrip() -> None:
+    from app.chummer_export import state_to_chum5
+    from app.chummer_import import chum5_to_state
+    from app.engine import compute
+    from app.engine.gear.deck_modules import ADD_MODULE, COPROCESSOR
+    from app.models import GearInstall
+    from tests.engine_support import ERIKA_DECK, _mundane
+    from tests.notice_asserts import has
+
+    deck = GearInstall(gear_id=ERIKA_DECK)
+    mod = GearInstall(gear_id=ADD_MODULE, parent_id=deck.id)
+    state = compute(
+        _mundane(
+            "modules",
+            cyberdecks=[deck],
+            gear=[
+                mod,
+                GearInstall(gear_id=COPROCESSOR, parent_id=deck.id, equipped=False, qty=2),
+                GearInstall(gear_id="f11b2c82-6dbb-4e32-831f-1387fff2274c", parent_id=mod.id, extra="Browse"),
+                GearInstall(gear_id=COPROCESSOR),
+            ],
+        )
+    )
+    data, warnings = chum5_to_state(state_to_chum5(state))
+    assert not has(warnings, "engine.import.gearMovedOut")
+    from app.models import CharacterState
+
+    restored = compute(CharacterState(**data))
+    assert len(restored.gear) == 4
+    normal = next(g for g in restored.gear if g.parent_id == restored.cyberdecks[0].id and g.gear_id == COPROCESSOR)
+    assert normal.equipped is False and normal.qty == 2
+    carrier = next(g for g in restored.gear if g.gear_id == "f11b2c82-6dbb-4e32-831f-1387fff2274c")
+    assert carrier.extra == "Browse"
+    assert carrier.parent_id == next(g.id for g in restored.gear if g.gear_id == ADD_MODULE)
+    assert not has(restored.derived["warnings"], "engine.gear.doesNotFit")

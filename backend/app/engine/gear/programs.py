@@ -1,6 +1,6 @@
 """Programs — the software slotted into a cyberdeck or RCC.
 
-Each program occupies one of the host device's program slots; some carry a
+Only running cyberdeck programs occupy simultaneous execution slots; some carry a
 ``[Skill]`` / ``[Group]`` / free-text pick that ``gear_extra_options`` enumerates.
 An autosoft can also run on a drone or vehicle itself, and a program need not
 be installed anywhere: Chummer keeps a bought copy in the inventory.
@@ -86,6 +86,7 @@ def _resolve_programs(
                 "rating": rating,
                 "rating_max": int(spec.get("maxrating") or 0),
                 "parent_id": inst.parent_id,
+                "running": bool(inst.parent_id and inst.running) if want_kind == "cyberdecks" else inst.running,
                 "extra": extra,
                 "needs_extra": bool(extra_kind),
                 "extra_kind": extra_kind,
@@ -100,16 +101,20 @@ def _resolve_programs(
     children: dict[str, list[dict[str, Any]]] = {}
     for item in public:
         children.setdefault(str(item.get("parent_id") or ""), []).append(item)
+    deck_ids = {str(row["id"]) for row in cyberdecks}
     for row in list(cyberdecks) + list(rccs):
         kids = children.get(str(row.get("id") or "")) or []
-        row["program_used"] = len(kids)
+        is_deck = str(row["id"]) in deck_ids
+        used = sum(bool(kid["running"]) for kid in kids) if is_deck else len(kids)
+        row["program_installed"] = len(kids)
+        row["program_used"] = used
         row["program_max"] = int(row.get("programs") or 0)
-        if row["program_max"] > 0 and len(kids) > row["program_max"]:
+        if (is_deck or row["program_max"] > 0) and used > row["program_max"]:
             warnings.append(
                 notice(
-                    "engine.gear.programsOver",
+                    "engine.gear.runningProgramsOver" if is_deck else "engine.gear.programsOver",
                     name=term(str(row["name"])),
-                    used=len(kids),
+                    used=used,
                     max=row["program_max"],
                 )
             )

@@ -55,6 +55,8 @@ from ..gear import (
     resolve_custom_drugs,
     resolve_lifestyles,
 )
+from ..gear.deck_modules import resolve_deck_modules
+from ..gear.electronic_modifications import resolve_electronic_modifications
 from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
@@ -161,6 +163,8 @@ def resolve_gear(
     _append_gear_weapons(weapons, gear_items)
     # decks and RCCs take the same accessories a commlink does, and the DT
     # p.66 modifications are soldered into all three
+    warnings.extend(resolve_electronic_modifications(state, [*commlinks, *cyberdecks, *rccs], gear_items))
+    warnings.extend(resolve_deck_modules(state, cyberdecks, [*commlinks, *cyberdecks, *rccs], gear_items))
     apply_host_matrix_mods([*commlinks, *cyberdecks, *rccs], gear_items)
     apply_armor_gear(armor_items, {"gear": gear_items, "optics": optics, "sensors": sensors}, errors)
 

@@ -14,6 +14,8 @@ from .gear import (
     CommlinkInstall,
     CustomDrugInstall,
     CyberwareInstall,
+    ElectronicModificationRecord,
+    ElectronicPartsSupply,
     GearInstall,
     LifestyleInstall,
     VehicleModInstall,
@@ -91,6 +93,7 @@ class CharacterPatch(BaseModel):
     weapons: list[WeaponInstall] | None = None
     weapon_accessories: list[WeaponAccessoryInstall] | None = None
     commlinks: list[CommlinkInstall] | None = None
+    deck_builder_deck_id: str | None = None
     cyberdecks: list[GearInstall] | None = None
     rccs: list[GearInstall] | None = None
     optics: list[GearInstall] | None = None
@@ -99,6 +102,8 @@ class CharacterPatch(BaseModel):
     sensors: list[GearInstall] | None = None
     drones: list[GearInstall] | None = None
     vehicles: list[GearInstall] | None = None
+    electronic_parts_supplies: list[ElectronicPartsSupply] | None = Field(default=None, max_length=1000)
+    electronic_modification_records: list[ElectronicModificationRecord] | None = Field(default=None, max_length=1000)
     gear: list[GearInstall] | None = None
     custom_drugs: list[CustomDrugInstall] | None = None
     vehicle_mods: list[VehicleModInstall] | None = None
@@ -249,6 +254,7 @@ class CharacterState(BaseModel):
     weapons: list[WeaponInstall] = Field(default_factory=list)
     weapon_accessories: list[WeaponAccessoryInstall] = Field(default_factory=list)
     commlinks: list[CommlinkInstall] = Field(default_factory=list)
+    deck_builder_deck_id: str | None = None
     cyberdecks: list[GearInstall] = Field(default_factory=list)
     rccs: list[GearInstall] = Field(default_factory=list)
     optics: list[GearInstall] = Field(default_factory=list)
@@ -257,6 +263,8 @@ class CharacterState(BaseModel):
     sensors: list[GearInstall] = Field(default_factory=list)
     drones: list[GearInstall] = Field(default_factory=list)
     vehicles: list[GearInstall] = Field(default_factory=list)
+    electronic_parts_supplies: list[ElectronicPartsSupply] = Field(default_factory=list, max_length=1000)
+    electronic_modification_records: list[ElectronicModificationRecord] = Field(default_factory=list, max_length=1000)
     gear: list[GearInstall] = Field(default_factory=list)
     custom_drugs: list[CustomDrugInstall] = Field(default_factory=list)
     vehicle_mods: list[VehicleModInstall] = Field(default_factory=list)

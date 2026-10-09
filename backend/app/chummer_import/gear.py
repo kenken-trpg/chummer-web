@@ -76,7 +76,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
         if parent_bucket == "commlinks":
             return _misc_child_fits(_commlink_accessory_parent_spec(parent), spec)
         if parent_bucket in ("cyberdecks", "rccs"):
-            return _misc_child_fits(_matrix_device_parent_spec(parent), spec)
+            return _misc_child_fits(_matrix_device_parent_spec(parent, cyberdeck=parent_bucket == "cyberdecks"), spec)
         return True
 
     def route_gear(
@@ -137,8 +137,16 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             "discounted": _discounted(g),
         }
         spec = rows_by_id.get(gid) or {}
-        if spec.get("cost_range"):
-            row["cost"] = _picked_cost(g)
+        if spec.get("category") == "Electronic Parts" and _qty(g) % max(1, cost_for.get(gid, 0)):
+            row["purchased_parts_units"] = round(_qty(g) * 4)
+        if bucket == "programs":
+            row["running"] = _text(g.find("equipped")).lower() != "false"
+        elif spec.get("category") == "Cyberdeck Modules":
+            row["equipped"] = _text(g.find("equipped")).lower() != "false"
+        if spec.get("cost_range") or spec.get("category") == "Electronic Parts":
+            picked_cost = _picked_cost(g)
+            if picked_cost is not None:
+                row["cost"] = picked_cost
         if spec.get("category") == "Custom" and name and name != spec.get("name"):
             row["name"] = name
         if _text(g.find("extra")) and bucket != "commlinks":

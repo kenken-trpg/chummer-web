@@ -28,6 +28,7 @@ export function MatrixSection(s: SheetData) {
           key: string;
           label: string;
           dr: number;
+          cm?: number;
           a?: number;
           s?: number;
           dp: number;
@@ -41,6 +42,7 @@ export function MatrixSection(s: SheetData) {
             key: "cl",
             label: ui("sheet.deviceCommlink", { name: tr(d.commlink.name) }),
             dr: d.commlink.device_rating,
+            cm: d.commlink.matrix_condition_monitor,
             a: d.commlink.attack || undefined,
             s: d.commlink.sleaze || undefined,
             dp: d.commlink.dataprocessing,
@@ -53,11 +55,18 @@ export function MatrixSection(s: SheetData) {
             key: "cd",
             label: ui("sheet.deviceDeck", { name: tr(ck.name) }),
             dr: ck.device_rating,
+            cm: ck.matrix_condition_monitor,
             a: ck.attack,
             s: ck.sleaze,
             dp: ck.dataprocessing,
             fw: ck.firewall,
-            prog: ck.program_max != null ? `${ck.program_used ?? 0}/${ck.program_max}` : undefined,
+            prog:
+              ck.program_max != null
+                ? ui("gear.programRunningCount", {
+                    used: ck.program_used ?? 0,
+                    max: ck.program_max,
+                  })
+                : undefined,
             order: ck.can_reorder && ck.array_order ? ck.array_order.join(" ▸ ") : undefined,
             init: initFor("cyberdeck"),
           });
@@ -67,6 +76,7 @@ export function MatrixSection(s: SheetData) {
             key: "rcc",
             label: ui("sheet.deviceRcc", { name: tr(d.rcc.name) }),
             dr: d.rcc.device_rating,
+            cm: d.rcc.matrix_condition_monitor,
             dp: d.rcc.dataprocessing,
             fw: d.rcc.firewall,
             init: initFor("rcc"),
@@ -110,7 +120,7 @@ export function MatrixSection(s: SheetData) {
                     <td>{r.dp}</td>
                     <td>{r.fw}</td>
                     <td>{r.prog ?? "–"}</td>
-                    <td>{matrixCM(r.dr)}</td>
+                    <td>{r.cm ?? matrixCM(r.dr)}</td>
                     <td>{r.init ?? "–"}</td>
                   </tr>
                 ))}

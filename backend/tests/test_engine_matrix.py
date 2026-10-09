@@ -222,11 +222,12 @@ def test_the_coprocessor_die_lands_in_the_vr_initiative() -> None:
     """`matrixinitiativedice` had no surface until now (PR #48): the module's
     die shows up in both sim modes."""
     base = compute(_mundane("deck-only", cyberdecks=[GearInstall(gear_id=ERIKA_DECK)]))
+    deck = GearInstall(gear_id=ERIKA_DECK)
     out = compute(
         _mundane(
             "deck-coproc",
-            cyberdecks=[GearInstall(gear_id=ERIKA_DECK)],
-            gear=[GearInstall(gear_id=MULTIDIMENSIONAL_COPROCESSOR)],
+            cyberdecks=[deck],
+            gear=[GearInstall(gear_id=MULTIDIMENSIONAL_COPROCESSOR, parent_id=deck.id)],
         )
     )
     assert base.derived["matrix_initiative"]["cold_dice"] == 3
@@ -407,7 +408,7 @@ def test_erika_can_buy_one_program() -> None:
     assert out.derived["programs"][0]["name"] == "Armor"
     assert out.derived["nuyen_spent"] == 49750
     assert out.derived["errors"] == []
-    assert not has(out.derived["warnings"], "engine.gear.programsOver")
+    assert not has(out.derived["warnings"], "engine.gear.runningProgramsOver")
 
 
 def test_erika_program_slot_overflow_warns() -> None:
@@ -424,7 +425,7 @@ def test_erika_program_slot_overflow_warns() -> None:
     )
     assert out.derived["cyberdecks"][0]["program_used"] == 2
     assert out.derived["nuyen_spent"] == 49830
-    assert has(out.derived["warnings"], "engine.gear.programsOver", used=2, max=1)
+    assert has(out.derived["warnings"], "engine.gear.runningProgramsOver", used=2, max=1)
 
 
 def test_program_without_parent_is_kept_as_a_copy() -> None:
@@ -869,3 +870,71 @@ class TestSensorHosting:
         row = next(r for r in out.derived["sensors"] if r["name"] == "Sensor Array")
         # not gear a person buys, so the chargen device-rating cap skips it
         assert row["on_vehicle"] is True
+
+
+def test_deck_running_toggles_keep_inventory_host_and_price() -> None:
+    deck = GearInstall(gear_id=ERIKA_DECK)
+    state = _mundane(
+        "running",
+        cyberdecks=[deck],
+        programs=[
+            GearInstall(gear_id=ARMOR_PROG, parent_id=deck.id, running=False),
+            GearInstall(gear_id=BROWSE, parent_id=deck.id, running=False),
+        ],
+    )
+    compute(state)
+    before = [p.model_dump() for p in state.programs]
+    for running, used in ((False, 0), (True, 1), (False, 0)):
+        state.programs[0].running = running
+        out = compute(state)
+        row = out.derived["cyberdecks"][0]
+        assert (row["program_installed"], row["program_used"]) == (2, used)
+        assert out.derived["nuyen_spent"] == 49830
+        assert not has(out.derived["warnings"], "engine.gear.runningProgramsOver")
+        assert [p.parent_id for p in out.programs] == [deck.id, deck.id]
+        assert out.programs[1].running is False
+    assert [p.model_dump() for p in state.programs] == before
+
+
+def test_program_running_requires_a_valid_deck_and_counts_separately() -> None:
+    decks = [GearInstall(gear_id=ERIKA_DECK), GearInstall(gear_id=ERIKA_DECK)]
+    out = compute(
+        _mundane(
+            "two-decks",
+            cyberdecks=decks,
+            programs=[
+                GearInstall(gear_id=ARMOR_PROG, parent_id=decks[0].id),
+                GearInstall(gear_id=BROWSE, parent_id=decks[1].id),
+                GearInstall(gear_id=BROWSE, parent_id="missing"),
+                GearInstall(gear_id=ARMOR_PROG),
+            ],
+        )
+    )
+    assert [d["program_used"] for d in out.derived["cyberdecks"]] == [1, 1]
+    assert [p["running"] for p in out.derived["programs"]] == [True, True, False, False]
+    assert out.programs[2].running is True  # saved intent is independent
+
+
+def test_zero_program_limit_is_not_unlimited() -> None:
+    from app.engine.gear.programs import _resolve_programs
+
+    state = _mundane("zero", programs=[GearInstall(gear_id=BROWSE, parent_id="deck", running=False)])
+    row = {"id": "deck", "name": "Zero", "programs": 0}
+    _, _, warnings = _resolve_programs(state, [row], [])
+    assert row["program_installed"] == 1 and row["program_used"] == 0
+    assert not has(warnings, "engine.gear.runningProgramsOver")
+    state.programs[0].running = True
+    _, _, warnings = _resolve_programs(state, [row], [])
+    assert has(warnings, "engine.gear.runningProgramsOver", used=1, max=0)
+
+
+def test_rcc_program_count_is_independent_of_deck_running_flag() -> None:
+    from app.engine.gear.programs import _resolve_programs
+
+    autosoft = next(p for p in catalog()["programs"] if p.get("program_host") == "rccs")
+    state = _mundane(
+        "rcc-state", programs=[GearInstall(gear_id=autosoft["id"], parent_id="rcc", running=False, extra="Gunnery")]
+    )
+    row = {"id": "rcc", "name": "RCC", "programs": 1}
+    _resolve_programs(state, [], [row])
+    assert row["program_used"] == 1

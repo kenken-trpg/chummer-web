@@ -156,7 +156,7 @@ export const EN_HELP = {
     "DR is the device\u2019s own rating \u2014 what it rolls when nobody is driving it",
   "help.matrixmod.statsLabel": "Electronic modification",
   "help.matrixmod.what":
-    "An electronic modification (DT p.66) is soldered into the device and raises a matrix attribute; a commlink, a deck and an RCC all take them",
+    "Electronic modifications (DT p.66) have no fee beyond parts and tools. Allocate materials and register successful construction to enable their effects.",
   "help.matrixmod.array":
     "On a deck some of them move a point between two array slots instead (+1 on one, \u22121 on the other); the total does not grow",
   "help.matrixmod.included": "One marked as standard came with the device and costs nothing",
@@ -277,6 +277,8 @@ export const EN_HELP = {
   "help.optics.rating":
     "R is the enhancement\u2019s rating; the same enhancement twice does not add up",
   "help.program.statsLabel": "Stats",
+  "help.program.deckSlot":
+    "Installed copies have no count limit. Only running programs use simultaneous execution slots. New purchases and newly loaded copies start stopped; use the checkbox to run them.",
   "help.program.slot":
     "Each program takes one program slot on the device running it, shown as n/m on the deck or RCC",
   "help.program.rating":

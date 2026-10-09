@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from typing import Any
 
 from ..data_loader import catalog, catalog_list
-from ..models import CharacterState
+from ..models import CharacterState, GearInstall
 from ._common import _Ctx, _Names, _sub
 
 
@@ -140,7 +140,7 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
 
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
     """Gear of every bucket by parent id, and the writer of a `<gear>` list."""
-    gear_rows = [
+    gear_rows: list[Any] = [
         *state.gear,
         *state.commlinks,
         *state.cyberdecks,
@@ -150,9 +150,41 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
         *state.programs,
         *state.apps,
     ]
+    from ..engine.compute.gear import resolve_gear
+    from ..engine.gear.electronic_modifications import SINGLE_PARTS
+
+    bundle = resolve_gear(state.model_copy(deep=True))
+    parts_remaining = {
+        str(r["id"]): int(r["parts_remaining_units"]) for r in bundle["gear"] if "parts_remaining_units" in r
+    }
+    draft_ids = {str(r["id"]) for r in bundle["gear"] if r.get("modification_status") == "pending"}
+    used_supplies = {
+        s.id: sum(
+            a.units
+            for r in state.electronic_modification_records
+            if r.status == "completed"
+            for a in r.allocations
+            if a.source_id == s.id
+        )
+        for s in state.electronic_parts_supplies
+    }
+    for supply in state.electronic_parts_supplies:
+        left = max(0, supply.units - used_supplies[supply.id])
+        if left:
+            gear_rows.append(
+                GearInstall(
+                    id=supply.id, gear_id=SINGLE_PARTS, qty=1, purchased_parts_units=left, included=True, cost=0
+                )
+            )
+            parts_remaining[supply.id] = left
     by_parent_g: dict[str | None, list[Any]] = {}
+    program_ids = {p.id for p in state.programs}
+    module_gids = {str(r["id"]) for r in catalog_list("gear") if r.get("category") == "Cyberdeck Modules"}
     for g in gear_rows:
-        by_parent_g.setdefault(getattr(g, "parent_id", None), []).append(g)
+        if g.id in draft_ids or getattr(g, "parent_id", None) in draft_ids or parts_remaining.get(g.id) == 0:
+            continue
+        # Flatten residual parts; parent quantity must not multiply partial stock.
+        by_parent_g.setdefault(None if g.id in parts_remaining else getattr(g, "parent_id", None), []).append(g)
 
     # this app's `qty` is in lots of `costfor` (a box of 10 rounds); Chummer's
     # `<qty>` counts the single items
@@ -172,9 +204,19 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 # a Custom Item goes by the name the player gave it
                 el.find("name").text = g.name  # type: ignore[union-attr]
             _sub(el, "rating", getattr(g, "rating", 1))
+            if g.id in program_ids:
+                _sub(el, "equipped", "True" if g.running else "False")
+            elif gid in module_gids:
+                _sub(el, "equipped", "True" if g.equipped else "False")
             if getattr(g, "extra", None):
                 _sub(el, "extra", g.extra)
-            _sub(el, "qty", int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)))
+            _sub(
+                el,
+                "qty",
+                (parts_remaining[g.id] // 4 if parts_remaining[g.id] % 4 == 0 else parts_remaining[g.id] / 4)
+                if g.id in parts_remaining
+                else int(getattr(g, "qty", 1) or 1) * max(1, cost_for.get(gid, 0)),
+            )
             _sub(el, "discountedcost", "True" if getattr(g, "discounted", False) else "False")
             if getattr(g, "cost", None) is not None:
                 _sub(el, "cost", g.cost)

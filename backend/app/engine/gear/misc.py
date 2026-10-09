@@ -55,11 +55,16 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
     specs = {item["id"]: item for item in catalog().get("gear") or []}
     by_name = {(item["name"], item.get("category") or ""): item for item in specs.values()}
     external = _misc_external_hosts(state)
-    items = _cascade_optics(list(state.gear or []), set(external))
+    modules = [r for r in state.gear if (specs.get(r.gear_id) or {}).get("category") == "Cyberdeck Modules"]
+    module_ids = {r.id for r in modules}
+    items = _cascade_optics([r for r in state.gear if r.id not in module_ids], set(external)) + modules
     kept: list[GearInstall] = []
     for inst in items:
         spec = specs.get(inst.gear_id)
         if not spec:
+            continue
+        if spec.get("category") == "Cyberdeck Modules":
+            kept.append(inst)
             continue
         if spec.get("requireparent") and not inst.parent_id:
             warnings.append(notice("engine.gear.needsHost", name=term(str(spec["name"]))))
@@ -248,7 +253,11 @@ def _resolve_misc_gear(
                 )
             extras["Parent Cost"] = int(parent_unit)
             extras["ParentCost"] = int(parent_unit)
-        picked = chosen_cost(spec, inst.cost)
+        picked = (
+            max(0, inst.cost)
+            if spec.get("category") == "Electronic Parts" and inst.cost is not None
+            else chosen_cost(spec, inst.cost)
+        )
         inst.cost = picked
         if (spec.get("category") or "") != "Custom":
             inst.name = None
@@ -258,10 +267,17 @@ def _resolve_misc_gear(
         # once for each of it — three gas grenades, three loads of CS/Tear
         # Gas — counting single items, not the lots a price is quoted for
         cost = unit * qty * _held_multiplier(inst, by_id, specs)
+        if spec.get("category") == "Electronic Parts" and inst.purchased_parts_units is not None:
+            cost = int(
+                unit
+                * inst.purchased_parts_units
+                / (4 * max(1, int(spec.get("costfor") or 1)))
+                * _held_multiplier(inst, by_id, specs)
+            )
         nuyen += cost
         plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
         nodes = substitute_rating(list(spec.get("bonus") or []), rating)
-        if nodes:
+        if nodes and spec.get("category") != "Cyberdeck Modules":
             bonus_sources.append((_program_label(spec, extra), nodes))
         is_drug = (spec.get("category") or "") in DRUG_CATEGORIES
         drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
@@ -279,6 +295,7 @@ def _resolve_misc_gear(
                 "category": spec.get("category") or "",
                 "is_drug": is_drug,
                 "active": inst.active,
+                "equipped": inst.equipped,
                 "drug_speed": spec.get("drug_speed") or "" if is_drug else "",
                 "drug_vectors": list(spec.get("drug_vectors") or []) if is_drug else [],
                 "drug_duration": spec.get("drug_duration") or "" if is_drug else "",

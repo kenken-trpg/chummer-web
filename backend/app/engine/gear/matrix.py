@@ -138,16 +138,17 @@ def matrix_initiative(
     the Sourcerer echoes); ``offset`` is `<matrixinitiative>`, which moves the
     score rather than the dice — Delphi gives up two points of it (KC p.103).
     """
-    best: tuple[str, int] | None = None
+    best: tuple[str, int, int] | None = None
     for label, row in personas:
         if not row:
             continue
         processing = int(row.get("dataprocessing") or 0)
         if best is None or processing > best[1]:
-            best = (label, processing)
+            best = (label, processing, int(row.get("module_initiative_dice") or 0))
     if best is None:
         return None
-    label, processing = best
+    label, processing, module_dice = best
+    extra_dice += module_dice
     rules = current_rules()
     return {
         "device": label,
@@ -193,12 +194,21 @@ def apply_host_matrix_mods(hosts: list[dict[str, Any]], gear_rows: list[dict[str
     """
     by_id = {str(row.get("id") or ""): row for row in hosts}
     for row in gear_rows:
-        host = by_id.get(str(row.get("parent_id") or ""))
+        host = by_id.get(str(row.get("modification_host_id") or row.get("parent_id") or ""))
         if host is None:
             continue
         spec = _item_by_id("gear", str(row.get("gear_id") or ""))
         if not spec:
             continue
+        if row.get("category") == "Electronic Modification" and not row.get("modification_valid", False):
+            continue
+        if row.get("category") == "Electronic Modification":
+            damage = max(0, -int(spec.get("matrixcmbonus") or 0))
+            if damage:
+                host["matrix_permanent_damage"] = int(host.get("matrix_permanent_damage") or 0) + damage
+                host["matrix_condition_monitor"] = max(
+                    0, 8 + (int(host.get("device_rating") or 0) + 1) // 2 - host["matrix_permanent_damage"]
+                )
         rating = int(row.get("rating") or 1)
         deltas = _array_deltas(spec)
         array = list(host.get("array") or [])

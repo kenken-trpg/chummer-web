@@ -247,3 +247,13 @@ def test_a_number_past_the_input_cap_is_clamped_by_the_read() -> None:
     state, _ = fvtt_to_state(actor)
     assert state["attributes"]["BOD"] == MAX_INPUT_INT
     import_character(state)
+
+
+def test_program_running_reads_technology_equipped_without_assigning_a_deck():
+    item = _gear("program", "Browse")
+    item["system"]["technology"]["equipped"] = False
+    actor = _actor()
+    actor["items"] = [item]
+    state, _ = fvtt_to_state(actor)
+    assert state["programs"][0]["running"] is False
+    assert not state["programs"][0].get("parent_id")

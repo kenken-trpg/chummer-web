@@ -209,6 +209,9 @@ export interface OpticsCatalogItem {
 }
 
 export interface GearCatalogItem extends OpticsCatalogItem {
+  electronic_rule?: string;
+  electronic_attribute?: string;
+  modattributearray?: string;
   also_in?: AlsoIn[];
   /** `Variable(lo-hi)`: the range the player prices it within. */
   cost_range?: [number, number] | null;

@@ -96,7 +96,7 @@ describe.each(PROGRAM_HOSTS)("<%s> programs on a host", (_name, Panel, chKey, dK
     renderPanel(Panel, ch, patch);
 
     // the host itself has no rating box here (rating_max 0), so this is p1's
-    fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "5" } });
+    fireEvent.change(screen.getAllByRole("spinbutton")[0], { target: { value: "5" } });
 
     const out = patch.mock.calls[0][0].programs as { id: string; rating: number }[];
     expect(out.find((r) => r.id === "p1")?.rating).toBe(5);
@@ -155,7 +155,7 @@ describe("programs loaded nowhere", () => {
     const button = screen.getByRole("button", { name: "Browse の説明" });
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     expect(tip?.textContent).toContain("買ってあるだけでは働かない");
-    expect(tip?.textContent).toContain("プログラムスロットを 1 つ使う");
+    expect(tip?.textContent).toContain("作動中のプログラムだけが同時実行枠を使う");
   });
 
   it("the deck panel lists only deck programs and offers only decks", () => {
@@ -511,4 +511,53 @@ describe.each([
     fireEvent.click(screen.getByRole("button", { name: "削除" }));
     expect(patch.mock.calls[1][0].apps).toEqual([]);
   });
+});
+
+it("buying a deck program starts it stopped even when execution slots are full", () => {
+  const h = { ...host("d", "Erika"), program_used: 1, program_max: 1 };
+  const ch = makeCharacter({
+    cyberdecks: [h],
+    programs: [],
+    derived: { cyberdecks: [h], programs: [] },
+  } as never);
+  const patch = vi.fn();
+  renderPanel(CyberdeckGear, ch, patch, {
+    programs: [{ id: "browse", name: "Browse", program_host: "cyberdecks", cost: 80 }] as never,
+  });
+  fireEvent.change(screen.getByRole("combobox", { name: "Erika: プログラムを追加" }), {
+    target: { value: "browse" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Erika: 装着" }));
+  expect(patch.mock.calls[0][0].programs).toEqual([
+    { gear_id: "browse", rating: 1, parent_id: "d", running: false },
+  ]);
+});
+
+it("the running checkbox changes one program without changing ownership or payment", () => {
+  const rows = [
+    program("p1", "Browse", "d", { running: false }),
+    program("p2", "Armor", "d", { running: true }),
+  ];
+  const ch = makeCharacter({
+    cyberdecks: [host("d", "Erika")],
+    programs: rows,
+    derived: { cyberdecks: [host("d", "Erika")], programs: rows },
+  } as never);
+  const patch = vi.fn();
+  renderPanel(CyberdeckGear, ch, patch);
+  fireEvent.click(screen.getByRole("checkbox", { name: "Browse：作動中" }));
+  expect(patch.mock.calls[0][0]).toEqual({ programs: [{ ...rows[0], running: true }, rows[1]] });
+});
+
+it("loading a purchased loose program keeps its row and stops it", () => {
+  const p = program("p", "Browse", null as never, { running: true, program_host: "cyberdecks" });
+  const ch = makeCharacter({
+    cyberdecks: [host("d", "Erika")],
+    programs: [p],
+    derived: { cyberdecks: [host("d", "Erika")], programs: [p] },
+  } as never);
+  const patch = vi.fn();
+  renderPanel(CyberdeckGear, ch, patch);
+  fireEvent.change(screen.getByRole("combobox", { name: "入れる先" }), { target: { value: "d" } });
+  expect(patch.mock.calls[0][0].programs).toEqual([{ ...p, parent_id: "d", running: false }]);
 });

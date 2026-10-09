@@ -33,6 +33,18 @@ def _import_gear(items: list[dict[str, Any]], st: dict[str, Any], warn: list[Not
         spec = rows_by_id[gid]
         qty = max(1, _num(_tech(i).get("quantity"), 1))
         row: dict[str, Any] = {"id": str(uuid.uuid4()), "gear_id": gid, "rating": _rating(i)}
+        if spec.get("category") == "Electronic Parts":
+            raw = _tech(i).get("quantity", 1)
+            try:
+                packs = max(0.0, float(raw))
+                if packs % max(1, _num(spec.get("costfor"))):
+                    row["purchased_parts_units"] = round(packs * 4)
+            except (ValueError, TypeError):
+                pass
+        if bucket == "programs":
+            row["running"] = _tech(i).get("equipped", True) is not False
+        elif spec.get("category") == "Cyberdeck Modules":
+            row["equipped"] = _tech(i).get("equipped", True) is not False
         # Foundry counts single items (100 rounds); this app counts what the
         # price is quoted for (a box of 10)
         row["qty"] = min(

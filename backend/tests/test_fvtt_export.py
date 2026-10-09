@@ -506,3 +506,18 @@ def test_fvtt_download_route() -> None:
     assert "filename*=UTF-8''%E5%A4%9C%E5%8F%89.json" in r.headers["content-disposition"]
     body = json.loads(r.content)
     assert body["characters"]["character"]["name"] == "夜叉"
+
+
+def test_program_export_marks_stopped_program_equipped_false() -> None:
+    from tests.engine_support import ERIKA_DECK, _mundane
+
+    deck = GearInstall(gear_id=ERIKA_DECK)
+    state = compute_state(
+        _mundane(
+            "stopped",
+            cyberdecks=[deck],
+            programs=[GearInstall(gear_id=_id("programs", "Browse"), parent_id=deck.id, running=False)],
+        )
+    )
+    rows = _char(state)["gears"]["gear"]
+    assert next(r for r in rows if r["name_english"] == "Browse")["equipped"] == "False"

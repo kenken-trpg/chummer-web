@@ -163,6 +163,7 @@ def _load_gear_categories(
                 # of one attribute for another
                 "modattributearray": _text(el.find("modattributearray")),
                 "programs": _text(el.find("programs"), "0"),
+                "matrixcmbonus": _text(el.find("matrixcmbonus"), "0"),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }
@@ -223,6 +224,43 @@ GEAR_SPECIALIZED_CATEGORIES = {
     "Sensor Functions",
 }
 
+# Stable rules from the pinned DT catalog. Custom/hidden Decrease entries are
+# deliberately unsupported; a label is never used to infer a materials rule.
+ELECTRONIC_RULES = {
+    "f860ec1a-b688-4975-95f4-4c11648b04f0": ("add", "attack"),
+    "6638ae8f-d6e4-4d0b-ba3f-0fe05ef64ce0": ("add", "sleaze"),
+    "d6802ad9-5dca-434a-bc92-bf8a17a8c5dc": ("module", ""),
+    "48f8cb8e-dc9f-405e-b49a-fce3d61a1bda": ("persona", ""),
+    "e833a66b-f8b6-4720-b702-ee8efb8522c7": ("increase", "sleaze"),
+    "e2c6eded-5897-4ae6-9911-230292d3f858": ("increase", "attack"),
+    "0b2cb1ca-d97a-4aee-bf63-5c516b4d0e3e": ("increase", "dataprocessing"),
+    "fe32ba65-0c81-48df-98cb-d80f740d54a5": ("increase", "firewall"),
+    "02100ba4-7b39-4cdc-9e7a-6c6454d34dae": ("modify", ""),
+    "4aea9305-cc4d-4541-95b6-47c820883bba": ("modify", ""),
+    "94abb740-bd23-4ba7-be99-ffb916b83376": ("modify", ""),
+    "4f502946-c52d-423b-9c3e-be417fe1d5f7": ("modify", ""),
+    "9a97cc83-3169-46c1-9826-32ff19be3c5a": ("modify", ""),
+    "0647880e-0b6b-4728-a58e-2ccf83feb899": ("modify", ""),
+    "16c14307-ffec-49e4-8e25-bf5f50a9c4a0": ("modify", ""),
+    "c2b6244b-983b-40ab-b64a-5770bb305ec7": ("modify", ""),
+    "fd0d1b50-ed44-482e-838c-474415d93f57": ("modify", ""),
+    "50df5261-5193-4066-9a77-6f0412bd5bc9": ("modify", ""),
+    "5b2676eb-6111-43a4-bd8d-98754d43d02c": ("modify", ""),
+    "683f2644-5cba-4943-ab38-ccc95c2f12c8": ("modify", ""),
+    "821d8a12-b883-49de-9ccf-f39c42fba860": ("modify", ""),
+    "6c0cb237-1f39-4b6c-ad77-39fc18101d28": ("modify", ""),
+    "38ed8ebf-9909-4935-bb08-bb0daea127c9": ("modify", ""),
+    "2419a0e9-630c-4d08-9edd-fc97f50e2921": ("modify", ""),
+    "0f8c6d4d-b1bf-459e-aa24-556991c9de58": ("modify", ""),
+    "652131d8-793d-453b-b0e1-bde8e38ad665": ("modify", ""),
+    "a7bc2f96-44ea-4f7f-85b3-d16a626505ee": ("modify", ""),
+    "39611c65-89aa-4194-95e2-4a7a17dfc43d": ("modify", ""),
+    "38107ab3-4ccf-45d6-9ffb-7ade22f29d4c": ("modify", ""),
+    "ce52acd5-afb6-477c-86b9-df5824bfe4dd": ("modify", ""),
+    "6b6eb8a4-fc1c-4972-a4da-ffcb5a9fd785": ("modify", ""),
+    "7ec549ec-c2ac-4541-9c30-e2d10f9c13e1": ("modify", ""),
+}
+
 GEAR_SKIP_CATEGORIES = GEAR_SPECIALIZED_CATEGORIES | {
     "Foci",
     "Formulae",
@@ -254,7 +292,8 @@ def load_gear() -> list[dict[str, Any]]:
         if cost.lstrip().startswith("+"):
             item["requireparent"] = True
         if item.get("category") == "Electronic Modification":
-            # DT p.66: each one is free, and only means anything on the device
+            item["electronic_rule"], item["electronic_attribute"] = ELECTRONIC_RULES.get(str(item["id"]), ("", ""))
+            # DT p.66: no fee beyond materials/tools; only applies on the device
             # it is soldered into. `<required><geardetails>` here is a test on
             # the host's matrix attributes ("has an Attack of its own", "already
             # carries Add Attack") rather than a whitelist of parent names, so
@@ -265,6 +304,8 @@ def load_gear() -> list[dict[str, Any]]:
             # its `<armorcapacity>` is the module space it takes in the device,
             # not something a jacket could carry: without this every one of
             # them would offer itself as armor-borne gear
+            item["armor_capacity"] = ""
+        if item.get("category") == "Cyberdeck Modules":
             item["armor_capacity"] = ""
         if item.get("required_names") or item.get("required_categories"):
             item["requireparent"] = True

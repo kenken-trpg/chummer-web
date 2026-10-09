@@ -36,6 +36,7 @@ export function MiscGearRow({
   setExtraPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
 }) {
   const allowedBooks = useAllowedBooks();
+  const protectedPurchase = (item.parts_used_units || 0) > 0;
   const gearOptions = (id: string) => catalogExtraOptions(catalog.gear, id);
   const childrenItems = (d.gear || []).filter((child) => child.parent_id === item.id);
   const addons = (catalog.gear || []).filter(
@@ -73,11 +74,22 @@ export function MiscGearRow({
           {" / "}
           {item.nuyen.toLocaleString()}¥ / {item.source}
         </div>
+        {item.parts_remaining_units != null ? (
+          <p>
+            {ui("gear.partsRemaining", {
+              remaining: item.parts_remaining_units / 4,
+              purchased: (item.parts_purchased_units || 0) / 4,
+              used: (item.parts_used_units || 0) / 4,
+              reserved: (item.parts_reserved_units || 0) / 4,
+            })}
+          </p>
+        ) : null}
+        {protectedPurchase ? <p>{ui("gear.partsProtected")}</p> : null}
         {/* a quality's gift was not bought: no price to discount */}
-        <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
+        <div className="cyber-controls" hidden={Boolean(item.granted_by) || protectedPurchase}>
           <DiscountToggle list="gear" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
         </div>
-        <div className="cyber-controls" hidden={Boolean(item.granted_by)}>
+        <div className="cyber-controls" hidden={Boolean(item.granted_by) || protectedPurchase}>
           {item.category === "Custom" ? (
             <label>
               {ui("gear.customName")}
@@ -113,7 +125,7 @@ export function MiscGearRow({
               type="number"
               min={1}
               max={999}
-              value={item.qty}
+              value={item.purchased_qty ?? item.qty}
               onChange={(e) =>
                 patch({
                   gear: (ch.gear || []).map((row) =>
@@ -342,7 +354,7 @@ export function MiscGearRow({
           </div>
         ) : null}
       </div>
-      {item.granted_by ? null : (
+      {item.granted_by || protectedPurchase ? null : (
         <button
           className="btn danger"
           onClick={() =>
