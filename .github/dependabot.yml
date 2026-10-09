@@ -26,6 +26,12 @@ updates:
   # change is worth looking at.
   - package-ecosystem: npm
     directory: /frontend
+    # eslint-plugin-jsx-a11y currently supports only ESLint <=9. Revisit when
+    # its peer dependency supports 10; repeated un-installable PRs add noise.
+    ignore:
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
     schedule:
       interval: weekly
     commit-message:
