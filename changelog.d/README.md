@@ -15,6 +15,10 @@ CI (`changelog` job) fails a PR that changes `backend/`, `frontend/` or the
 Docker files without adding a fragment. Put `[skip changelog]` in the PR title
 for a change nobody would notice.
 
+Dependabot PRs that change only dependency manifests or the Dockerfile need no
+fragment; their PRs and release history record the updates. Bot PRs that change
+application code still need a fragment.
+
 At release, `make changelog` folds every fragment into `## [Unreleased]` and
 deletes them; `make release-check` fails while any are left. See
 CONTRIBUTING.md › Releasing.
