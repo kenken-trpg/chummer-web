@@ -12,7 +12,7 @@ export function MiscGearSection(s: SheetData) {
           <li key={item.id}>
             {tr(item.name)}
             {item.rating > 1 ? ` R${item.rating}` : ""}
-            {(item.qty || 1) > 1 ? ` ×${item.qty}` : ""}
+            {(item.qty ?? 1) !== 1 ? ` ×${item.qty}` : ""}
           </li>
         ))}
       </ul>

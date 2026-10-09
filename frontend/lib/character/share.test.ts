@@ -125,3 +125,28 @@ describe("buildShareUrl / readShareValue", () => {
     expect(readShareValue(SHARE_PREFIX)).toBeNull();
   });
 });
+
+it("preserves program/module states and the parts ledger in a share link", async () => {
+  const ch = makeCharacter({
+    programs: [{ id: "program", gear_id: "browse", parent_id: "deck", running: false }],
+    gear: [{ id: "module", gear_id: "coprocessor", parent_id: "deck", equipped: false }],
+    electronic_parts_supplies: [{ id: "scrap", kind: "salvaged", units: 1, note: "scrap" }],
+    electronic_modification_records: [
+      {
+        id: "record",
+        modification_id: "mod",
+        gear_id: "add-module",
+        host_id: "deck",
+        status: "completed",
+        required_units: 8,
+        allocations: [{ source_id: "parts", units: 8 }],
+        host_snapshot: { device_rating: 1 },
+      },
+    ],
+  });
+  const decoded = await decodeShare(await encodeShare(ch));
+  expect(decoded.programs).toEqual(ch.programs);
+  expect(decoded.gear).toEqual(ch.gear);
+  expect(decoded.electronic_modification_records).toEqual(ch.electronic_modification_records);
+  expect(decoded.electronic_parts_supplies).toEqual(ch.electronic_parts_supplies);
+});

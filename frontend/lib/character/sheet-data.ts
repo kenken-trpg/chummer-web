@@ -129,12 +129,15 @@ export function buildSheetData({
   const bio = (d.bioware || []).filter((item) => !item.parent_id);
   const isSin = (item: { category?: string }) => item.category === "ID/Credsticks";
   const gearMisc = (d.gear || []).filter(
-    (item) => !item.parent_id && !isDrugCategory(item) && !isSin(item),
+    (item) =>
+      !item.parent_id && !isDrugCategory(item) && !isSin(item) && item.parts_remaining_units !== 0,
   );
   const drugs = (d.gear || []).filter((item) => !item.parent_id && isDrugCategory(item));
   const sins = (d.gear || []).filter((item) => !item.parent_id && isSin(item));
   const gearChildren = (parentId: string) =>
-    (d.gear || []).filter((item) => item.parent_id === parentId);
+    (d.gear || []).filter(
+      (item) => item.parent_id === parentId && item.parts_remaining_units !== 0,
+    );
   const drugChildren = gearChildren;
   const specialArmor = specialArmorBits(d.special_armor, ui);
 

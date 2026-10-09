@@ -141,3 +141,24 @@ describe("reading records written by an older build", () => {
     expect(rec.schemaVersion).toBe(1);
   });
 });
+
+it("keeps explicit stopped programs and construction records after persistence", async () => {
+  const ch = makeCharacter({
+    id: "ledger",
+    programs: [{ id: "p", gear_id: "browse", running: false, parent_id: "deck" }],
+    electronic_parts_supplies: [{ id: "salvage", units: 3, kind: "salvaged" }],
+    electronic_modification_records: [
+      {
+        id: "r",
+        modification_id: "m",
+        gear_id: "mod",
+        host_id: "deck",
+        status: "pending",
+        required_units: 16,
+        allocations: [{ source_id: "salvage", units: 3 }],
+      },
+    ],
+  });
+  expect(await putCharacter(ch)).toBe(true);
+  expect(await getCharacter("ledger")).toEqual(ch);
+});

@@ -138,7 +138,7 @@ export const JA_HELP = {
     "DR（デバイスレーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
   "help.matrixmod.statsLabel": "電子改造の値",
   "help.matrixmod.what":
-    "電子改造（DT p.66）：機器に半田付けして、マトリックス値を 1 つ上げる。コムリンク・デッキ・RCC に付けられる",
+    "電子改造（DT p.66）：改造自体の追加費用はないが、部品・工具は別途必要。材料を配分し、成功した施工を登録すると効果が有効になる",
   "help.matrixmod.array":
     "デッキでは配列の枠どうしで点を移すものがある（片方 +1、もう片方 −1）。合計は増えない",
   "help.matrixmod.included": "「標準装備」と出ているものは機器に最初から付いており、値段も取らない",
@@ -234,6 +234,8 @@ export const JA_HELP = {
   "help.optics.capacity": "容量 n/m：この機器に積める強化の量（m）と、いま使っている量（n）",
   "help.optics.rating": "R（レーティング）：強化の段階。同じ強化を重ねても効果は足し合わない",
   "help.program.statsLabel": "プログラムの値",
+  "help.program.deckSlot":
+    "搭載本数に制限はない。作動中のプログラムだけが同時実行枠を使う。購入・搭載時は停止状態で、チェックで作動を切り替える",
   "help.program.slot":
     "1 本ごとに搭載先のプログラムスロットを 1 つ使う。デッキや RCC 側に n/m で出る",
   "help.program.rating": "R（レーティング）があるものは段階で効果が変わる。上限は品目ごと",

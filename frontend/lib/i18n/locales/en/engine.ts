@@ -1,5 +1,18 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — English。 */
 export const EN_ENGINE = {
+  "engine.gear.deckBuilderTarget": "Select the deck receiving Deck Builder’s additional slot",
+  "engine.gear.moduleInvalid": "{name} has an invalid module host",
+  "engine.gear.modulesOver": "{name} exceeds its module pool limit ({pool}: {used}/{max})",
+  "engine.gear.modificationsOver": "{name} exceeds the one electronic modification limit",
+  "engine.gear.materialAllocationInvalid":
+    "Invalid materials allocation or construction eligibility ({name})",
+  "engine.gear.materialHistoryUnverified":
+    "{name}: materials history is unverified; legacy effects are retained",
+  "engine.gear.materialHistoryProtected":
+    "Construction history is protected. Reinstallation needs a new record; corrections require a cancellation note",
+  "engine.gear.partsPurchaseProtected":
+    "Consumed parts purchases and their containers are protected to preserve expenditure and history",
+
   "compute.offline":
     "The server is unreachable, so the values shown may be out of date. Edits are still saved.",
   "engine.priority.letters": "Priorities can only be A–E",
@@ -324,6 +337,8 @@ export const EN_ENGINE = {
   "engine.gear.pickExtra": "Enter a target for {name}",
   "engine.gear.pickGroup": "Choose a skill group for {name}",
   "engine.gear.pickSkill": "Choose a skill for {name}",
+  "engine.gear.runningProgramsOver":
+    "{name} exceeds its simultaneous running program limit ({used}/{max})",
   "engine.gear.programsOver": "{name} is over its program limit ({used}/{max})",
   "engine.gear.skillInvalid": "{name}: {picked} is not a valid skill",
   "engine.gear.specialModsOver": "Special Modifications are over the limit ({used}/{max}, {name})",

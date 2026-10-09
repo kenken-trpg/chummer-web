@@ -156,6 +156,9 @@ export interface InstalledWeaponAccessory {
 }
 
 export interface InstalledCommlink {
+  construction_attributes?: Record<string, number>;
+  matrix_permanent_damage?: number;
+  matrix_condition_monitor?: number;
   id: string;
   gear_id: string;
   name: string;
@@ -176,6 +179,13 @@ export interface InstalledCommlink {
 }
 
 export interface InstalledMatrixDevice {
+  construction_attributes?: Record<string, number>;
+  matrix_permanent_damage?: number;
+  matrix_condition_monitor?: number;
+  module_used?: number;
+  module_max?: number;
+  hardwired_module_used?: number;
+  hardwired_module_max?: number;
   id: string;
   gear_id: string;
   name: string;
@@ -189,6 +199,7 @@ export interface InstalledMatrixDevice {
   firewall: number;
   programs?: number;
   program_used?: number;
+  program_installed?: number;
   program_max?: number;
   nuyen: number;
   avail?: string;
@@ -224,6 +235,27 @@ export interface InstalledOptics {
 }
 
 export interface InstalledGear extends InstalledOptics {
+  equipped?: boolean;
+  module_host_id?: string | null;
+  module_method?: string;
+  module_valid?: boolean;
+  module_effect_supported?: boolean;
+  module_reason?: string;
+  modification_status?: "pending" | "completed" | "historical" | "unverified";
+  modification_valid?: boolean;
+  modification_reason?: string;
+  modification_host_id?: string;
+  material_required_units?: number | null;
+  material_available_units?: number;
+  material_allocated_units?: number;
+  parts_supply?: boolean;
+  parts_purchased_units?: number;
+  parts_used_units?: number;
+  parts_reserved_units?: number;
+  parts_remaining_units?: number;
+  parts_available_units?: number;
+  purchased_qty?: number;
+
   /** `Variable(lo-hi)`: the range the player prices it within. */
   cost_range?: [number, number] | null;
   /** a Custom Item's own name */
@@ -253,6 +285,7 @@ export interface InstalledGear extends InstalledOptics {
 }
 
 export interface InstalledProgram {
+  running?: boolean;
   /** `Variable(lo-hi)`: the range the player prices it within. */
   cost_range?: [number, number] | null;
   id: string;

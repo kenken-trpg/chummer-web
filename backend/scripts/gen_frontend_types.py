@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import json
 import sys
 import types
 import typing
@@ -83,6 +84,8 @@ def _ts_name(cls: type) -> str:
 def _ts_type(ann: Any) -> str:
     """One Python annotation as TypeScript."""
     origin = get_origin(ann)
+    if origin is typing.Literal:
+        return " | ".join(json.dumps(v, ensure_ascii=False) for v in get_args(ann))
     if origin in (Union, types.UnionType):
         parts = [_ts_type(a) for a in get_args(ann) if a is not type(None)]
         out = " | ".join(dict.fromkeys(parts))

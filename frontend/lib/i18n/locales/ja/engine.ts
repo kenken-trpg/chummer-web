@@ -1,5 +1,17 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — 日本語。 */
 export const JA_ENGINE = {
+  "engine.gear.deckBuilderTarget": "Deck Builderの対象デッキを選択してください",
+  "engine.gear.moduleInvalid": "{name} のモジュール搭載先が不正です",
+  "engine.gear.modulesOver": "{name} のモジュール枠が上限超過（{pool}: {used}/{max}）",
+  "engine.gear.modificationsOver": "{name} の電子改造は原則1件までです",
+  "engine.gear.materialAllocationInvalid": "材料配分または施工条件が不正です（{name}）",
+  "engine.gear.materialHistoryUnverified":
+    "{name} の材料履歴は未確認です。旧データの効果を維持しています",
+  "engine.gear.materialHistoryProtected":
+    "施工履歴を保護しています。付け替えは新規施工、誤入力訂正は理由付き履歴取消を使ってください",
+  "engine.gear.partsPurchaseProtected":
+    "使用済み部品の購入行と親容器は、支払額・履歴維持のため変更・削除できません",
+
   "compute.offline":
     "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
   "engine.priority.letters": "優先度は A〜E のみ割り当てできます",
@@ -322,6 +334,7 @@ export const JA_ENGINE = {
   "engine.gear.pickExtra": "{name} の対象を入力してください",
   "engine.gear.pickGroup": "{name} の技能グループを選んでください",
   "engine.gear.pickSkill": "{name} の技能を選んでください",
+  "engine.gear.runningProgramsOver": "{name} のプログラム同時実行数が上限超過（{used}/{max}）",
   "engine.gear.programsOver": "{name} のプログラムが上限超過（{used}/{max}）",
   "engine.gear.skillInvalid": "{name} の技能指定が無効です（{picked}）",
   "engine.gear.specialModsOver":

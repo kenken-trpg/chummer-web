@@ -57,7 +57,7 @@ def _name(row: dict[str, Any], names: dict[str, str]) -> str:
     with the hyphen-R spelling — one of the four the import reads, and the only
     one that cannot be mistaken for part of a name.
     """
-    name = named(names, str(row.get("name") or ""))
+    name = named(names, "Electronic Parts" if "parts_remaining_units" in row else str(row.get("name") or ""))
     rating = int(row.get("rating") or 0)
     return f"{name}-R{rating}" if rating > 1 else name
 
@@ -73,8 +73,11 @@ def _bought(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [
         row
         for row in rows
-        if not row.get("included")
-        and not row.get("granted_by")
+        if (not row.get("included") or row.get("parts_supply"))
+        and row.get("parts_remaining_units") != 0
+        and ("parts_remaining_units" not in row or int(row["parts_remaining_units"]) % 4 == 0)
+        and row.get("modification_status") != "pending"
+        and (not row.get("granted_by") or row.get("parts_supply"))
         and not row.get("from_gear")
         and not row.get("from_ware")
     ]
@@ -91,7 +94,7 @@ def _fitted(
         names = translators[kind]
         for row in _bought((state.derived or {}).get(bucket) or []):
             parent = str(row.get("parent_id") or "")
-            if parent:
+            if parent and "parts_remaining_units" not in row:
                 out.setdefault(parent, []).append(
                     (_name(row, names), int(row.get("nuyen") or 0), _count(row), str(row.get("name") or ""))
                 )
@@ -113,7 +116,7 @@ def gear_sheet(state: CharacterState, cat: CatalogDict, limits: Limits) -> tuple
     lines: list[tuple[str, int, int]] = []
     for bucket, kind in BLOCKS:
         for row in _bought((state.derived or {}).get(bucket) or []):
-            if str(row.get("parent_id") or ""):
+            if str(row.get("parent_id") or "") and "parts_remaining_units" not in row:
                 continue  # written under its parent, or reported below
             children = fitted.pop(str(row.get("id") or ""), [])
             # A weapon's or an item's derived price is the whole assembly, and
@@ -134,7 +137,10 @@ def gear_sheet(state: CharacterState, cat: CatalogDict, limits: Limits) -> tuple
         cells[f"{GEAR_BOUGHT}{at}"] = count
     # Whatever is still held was fitted to something this sheet does not write.
     left = sorted({english for rows in fitted.values() for _n, _p, _c, english in rows})
-    return cells, [notice("engine.export.xlsxNoPlace", name=term(english)) for english in left]
+    fractional_parts = [
+        str(r["name"]) for r in (state.derived or {}).get("gear") or [] if r.get("parts_remaining_units", 0) % 4
+    ]
+    return cells, [notice("engine.export.xlsxNoPlace", name=term(english)) for english in [*left, *fractional_parts]]
 
 
 __all__ = ["BLOCKS", "NESTED_MARK", "PLUGIN_BLOCKS", "gear_sheet"]

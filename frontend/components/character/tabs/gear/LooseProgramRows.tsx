@@ -26,7 +26,9 @@ export function LooseProgramRows({
   const move = (id: string, parentId: string | null) =>
     patch({
       programs: (ch.programs || []).map((row) =>
-        row.id === id ? { ...row, parent_id: parentId } : row,
+        row.id === id
+          ? { ...row, parent_id: parentId, ...(kind === "cyberdecks" ? { running: false } : {}) }
+          : row,
       ),
     });
   return (
@@ -39,7 +41,9 @@ export function LooseProgramRows({
               label={ui("help.open", { label: tr(prog.label || prog.name) })}
               lines={[
                 { label: ui("help.program.loose") },
-                { label: ui("help.program.slot") },
+                {
+                  label: ui(kind === "cyberdecks" ? "help.program.deckSlot" : "help.program.slot"),
+                },
                 { label: ui("help.program.rating") },
               ]}
             >

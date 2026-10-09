@@ -187,6 +187,16 @@ export interface GearInstall {
   array_order?: string[];
   extra?: string | null;
   active?: boolean;
+  /** Cyberdeck programs only; missing on old saves means the former all-running
+   *  behavior. Purchase/move UI explicitly stops new programs. RCC rules differ.
+   */
+  running?: boolean;
+  /** Imported Electronic Parts can be fractional packs. None means qty sales
+   *  lots; a value records acquired quarter-packs per parent, before consumption.
+   */
+  purchased_parts_units?: number | null;
+  /** Cyberdeck modules only; this is not generic gear equipment management. */
+  equipped?: boolean;
   /** the price picked for a `Variable(lo-hi)` item (a Custom Item, a
    *  Commlink App), and a Custom Item's own name
    */
@@ -196,6 +206,35 @@ export interface GearInstall {
    *  `<discountedcost>`, which the quality's categories allow)
    */
   discounted?: boolean;
+}
+
+export interface ElectronicPartsSupply {
+  id?: string;
+  kind?: "salvaged" | "equipment" | "gm";
+  units: number;
+  note?: string;
+  equipment_id?: string | null;
+}
+
+export interface ElectronicPartsAllocation {
+  source_id: string;
+  units: number;
+}
+
+export interface ElectronicModificationRecord {
+  id?: string;
+  modification_id: string;
+  host_id: string;
+  gear_id: string;
+  status?: "pending" | "completed" | "historical" | "cancelled";
+  required_units?: number;
+  allocations?: ElectronicPartsAllocation[];
+  /** Backend freezes these values when construction is confirmed. Later
+   *  array/quality edits cannot consume or refund parts.
+   */
+  host_snapshot?: Record<string, number>;
+  rule_version?: 1;
+  note?: string;
 }
 
 export interface CustomDrugPart {
@@ -556,6 +595,7 @@ export interface Character {
   weapons?: WeaponInstall[];
   weapon_accessories?: WeaponAccessoryInstall[];
   commlinks?: CommlinkInstall[];
+  deck_builder_deck_id?: string | null;
   cyberdecks?: GearInstall[];
   rccs?: GearInstall[];
   optics?: GearInstall[];
@@ -564,6 +604,8 @@ export interface Character {
   sensors?: GearInstall[];
   drones?: GearInstall[];
   vehicles?: GearInstall[];
+  electronic_parts_supplies?: ElectronicPartsSupply[];
+  electronic_modification_records?: ElectronicModificationRecord[];
   gear?: GearInstall[];
   custom_drugs?: CustomDrugInstall[];
   vehicle_mods?: VehicleModInstall[];

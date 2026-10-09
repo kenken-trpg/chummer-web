@@ -82,7 +82,11 @@ export function SidebarEconomy({ d, tr, ui }: SidebarBlockProps) {
           <b>
             {tr(d.cyberdeck.name)} DR{d.cyberdeck.device_rating} / {d.cyberdeck.attack}/
             {d.cyberdeck.sleaze}/{d.cyberdeck.dataprocessing}/{d.cyberdeck.firewall}
-            {programs(d.cyberdeck.program_used, d.cyberdeck.program_max)}
+            {ui("gear.deckPrograms", {
+              installed: d.cyberdeck.program_installed ?? 0,
+              used: d.cyberdeck.program_used ?? 0,
+              max: d.cyberdeck.program_max ?? 0,
+            })}
           </b>
         </div>
       ) : null}

@@ -2,6 +2,7 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { DeckModuleRows, DECK_BUILDER } from "./DeckModuleRows";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
@@ -15,6 +16,24 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
   const byBook = useBookFilter();
   return (
     <>
+      {(ch.quality_ids || []).includes(DECK_BUILDER) ? (
+        <label>
+          {ui("gear.deckBuilderTarget")}
+          <select
+            value={
+              ch.deck_builder_deck_id || (d.cyberdecks?.length === 1 ? d.cyberdecks[0].id : "")
+            }
+            onChange={(e) => patch({ deck_builder_deck_id: e.target.value || null })}
+          >
+            <option value="">{ui("common.selectShort")}</option>
+            {(d.cyberdecks || []).map((r) => (
+              <option key={r.id} value={r.id}>
+                {tr(r.name)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <LooseProgramRows kind="cyberdecks" character={ch} d={d} tr={tr} ui={ui} patch={patch} />
       <>
         {(d.cyberdecks || []).length ? <p className="muted">{ui("deck.arrayNote")}</p> : null}
@@ -25,7 +44,8 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               <div className="muted">
                 {item.name} / DR {item.device_rating} / ATK {item.attack} / SLZ {item.sleaze} / DP{" "}
                 {item.dataprocessing} / FW {item.firewall}
-                {ui("gear.programs", {
+                {ui("gear.deckPrograms", {
+                  installed: item.program_installed ?? 0,
                   used: item.program_used ?? 0,
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
@@ -111,7 +131,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     <HelpTip
                       label={ui("help.open", { label: tr(prog.name) })}
                       lines={[
-                        { label: ui("help.program.slot") },
+                        { label: ui("help.program.deckSlot") },
                         { label: ui("help.program.rating") },
                       ]}
                     >
@@ -120,6 +140,21 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     {tr(prog.name)}
                     {prog.rating_max > 0 ? ` R${prog.rating}` : ""}
                     {` / ${prog.nuyen.toLocaleString()}¥`}{" "}
+                    <label>
+                      <input
+                        type="checkbox"
+                        aria-label={ui("gear.programRunningName", { name: tr(prog.name) })}
+                        checked={prog.running ?? true}
+                        onChange={(e) =>
+                          patch({
+                            programs: (ch.programs || []).map((row) =>
+                              row.id === prog.id ? { ...row, running: e.target.checked } : row,
+                            ),
+                          })
+                        }
+                      />
+                      {ui("gear.programRunning")}
+                    </label>{" "}
                     <button
                       className="btn danger"
                       onClick={() =>
@@ -171,6 +206,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         gear_id: prog.id,
                         rating: Math.max(1, prog.minrating || 1),
                         parent_id: item.id,
+                        running: false,
                       },
                     ],
                   })
@@ -179,6 +215,18 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               <AppRows
                 hostId={item.id}
                 hostName={item.name}
+                catalog={catalog}
+                character={ch}
+                d={d}
+                tr={tr}
+                ui={ui}
+                patch={patch}
+              />
+              <DeckModuleRows
+                hostId={item.id}
+                hostName={tr(item.name)}
+                used={item.module_used ?? 0}
+                max={item.module_max ?? 1}
                 catalog={catalog}
                 character={ch}
                 d={d}
@@ -222,7 +270,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
           <>
             {item.name} / DR {item.devicerating}
             {item.attributearray ? ` / ${item.attributearray}` : ""}
-            {ui("gear.programCount", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
+            {ui("gear.deckProgramLimit", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
             {item.avail || "-"} / {item.source}
           </>
         )}

@@ -80,6 +80,12 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
     old_method = normalize_build_method(state.build_method)
     was_career = bool(state.career)
     updates = patch.model_dump(exclude_unset=True)
+    # Collections replace whole rows. Preserve generated IDs and defaults on
+    # nested installs; excluding them can silently reissue an inventory ID.
+    full_patch = patch.model_dump()
+    for key in updates:
+        if isinstance(updates[key], list):
+            updates[key] = full_patch[key]
     if "priorities" in updates and updates["priorities"] is not None:
         data["priorities"] = updates.pop("priorities")
     if "options" in updates and updates["options"] is not None:
@@ -94,6 +100,22 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         current.update(updates.pop("settings"))
         data["settings"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
+    if any(
+        k in updates
+        for k in (
+            "gear",
+            "cyberdecks",
+            "rccs",
+            "commlinks",
+            "electronic_parts_supplies",
+            "electronic_modification_records",
+        )
+    ):
+        from .electronic_construction import prepare_construction_patch
+
+        candidate = CharacterState.model_validate(data)
+        prepare_construction_patch(state, candidate)
+        data = candidate.model_dump()
     if "career" in updates:
         now_career = bool(updates["career"])
         data["career"] = now_career

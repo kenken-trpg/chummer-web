@@ -82,8 +82,10 @@ def _cost_for() -> dict[str, int]:
     return {str(row["id"]): int(row.get("costfor") or 0) for bucket in _GEAR_BUCKETS for row in catalog_list(bucket)}
 
 
-def _rounds(row: dict[str, Any], cost_for: dict[str, int]) -> int:
+def _rounds(row: dict[str, Any], cost_for: dict[str, int]) -> int | float:
     """This app counts lots of `costfor` (a box of 10 rounds); Chummer the rounds."""
+    if row.get("parts_remaining_units") is not None:
+        return float(row["parts_remaining_units"]) / 4
     return int(row.get("qty") or 1) * max(1, cost_for.get(str(row.get("gear_id")), 1))
 
 
@@ -97,11 +99,16 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
     cost_for = _cost_for()
     # ammo stowed with a weapon goes out as that weapon's clips (`_clips`)
     weapons = {str(row.get("id")) for row in derived.get("weapons") or []}
+    drafts = {str(row["id"]) for row in derived.get("gear") or [] if row.get("modification_status") == "pending"}
     rows = [
         (bucket, row)
         for bucket in _GEAR_BUCKETS
         for row in derived.get(bucket) or []
-        if owners.get(str(row.get("id") or ""), "") == owner and str(row.get("parent_id") or "") not in weapons
+        if owners.get(str(row.get("id") or ""), "") == owner
+        and str(row.get("parent_id") or "") not in weapons
+        and row.get("parts_remaining_units") != 0
+        and row.get("modification_status") != "pending"
+        and str(row.get("parent_id") or "") not in drafts
     ]
     sins = {str(row.get("id")) for _, row in rows if _is_sin(row)}
 
@@ -126,7 +133,11 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
             "qty": str(qty),
             "avail": str(row.get("avail") or ""),
             "owncost": _money(row.get("nuyen")),
-            "equipped": "True",
+            "equipped": _flag(bool(row.get("running", True)))
+            if bucket == "programs"
+            else _flag(bool(row.get("equipped", True)))
+            if category == "Cyberdeck Modules"
+            else "True",
             "iscommlink": _flag(bucket in _DEVICE_BUCKETS),
             "issin": _flag(_is_sin(row)),
             "isammo": _flag(category == "Ammunition"),

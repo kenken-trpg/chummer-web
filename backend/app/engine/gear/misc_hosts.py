@@ -42,14 +42,15 @@ def _commlink_accessory_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _matrix_device_parent_spec(spec: dict[str, Any]) -> dict[str, Any]:
+def _matrix_device_parent_spec(spec: dict[str, Any], *, cyberdeck: bool = False) -> dict[str, Any]:
     """A cyberdeck or an RCC as a host. It takes the same dongles a commlink
     does, plus the Electronic Modifications of DT p.66 that are soldered into
     a device rather than plugged into one."""
     return {
         "name": spec.get("name") or "",
         "category": "Commlinks",
-        "addoncategories": ["Commlink Accessories", "Electronic Modification"],
+        "addoncategories": ["Commlink Accessories", "Electronic Modification"]
+        + (["Cyberdeck Modules"] if cyberdeck else []),
     }
 
 
@@ -63,7 +64,7 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
         for inst in list(getattr(state, kind) or []):
             spec = _item_by_id(kind, inst.gear_id)
             if spec:
-                hosts[inst.id] = ("commlink", _matrix_device_parent_spec(spec))
+                hosts[inst.id] = ("commlink", _matrix_device_parent_spec(spec, cyberdeck=kind == "cyberdecks"))
     for veh_inst, spec in _iter_vehicle_hosts(state):
         hosts[veh_inst.id] = ("vehicle", _vehicle_interior_parent_spec(spec))
     for armor_inst in list(state.armor or []):
