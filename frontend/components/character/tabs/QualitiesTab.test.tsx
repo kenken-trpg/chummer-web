@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
 import { QualitiesTab } from "@/components/character/tabs/QualitiesTab";
 import { BooksProvider } from "@/lib/character/books";
@@ -33,6 +33,67 @@ function renderTab(
 }
 
 describe("<QualitiesTab>", () => {
+  it("puts each skill choice in its owned quality row and preserves other choices on save", () => {
+    const patch = vi.fn();
+    const qualities = [
+      { id: "confidence", name: "自信喪失", karma: -10, category: "Negative", source: "SR5" },
+      { id: "aptitude", name: "天賦の才", karma: 14, category: "Positive", source: "SR5" },
+    ];
+    const slot = {
+      key: "quality:confidence:0",
+      source: "自信喪失",
+      source_kind: "quality",
+      source_id: "confidence",
+      picked: "",
+      bonus: -2,
+      max: 0,
+      rating: 0,
+      minimum_rating: 4,
+      options: ["Gymnastics"],
+      knowledgeskills: false,
+    };
+    renderTab({
+      patch,
+      catalog: makeCatalog({ qualities: qualities as never }),
+      character: {
+        quality_ids: ["confidence", "aptitude"],
+        skill_picks: { "ware:recorder:0": "Pistols" },
+        derived: {
+          qualities: qualities as never,
+          skill_pick_slots: [
+            slot,
+            {
+              ...slot,
+              key: "quality:aptitude:0",
+              source: "天賦の才",
+              source_id: "aptitude",
+              bonus: 0,
+              max: 1,
+              minimum_rating: 0,
+            },
+            {
+              ...slot,
+              key: "ware:recorder:0",
+              source: "Reflex Recorder",
+              source_kind: "bioware",
+              source_id: "recorder",
+            },
+          ],
+        },
+      },
+    });
+    const rows = [...document.querySelectorAll<HTMLElement>(".card > .quality-item")];
+    expect(rows).toHaveLength(2);
+    const confidence = within(rows[0]).getByRole("combobox", { name: "自信喪失 の技能 -2" });
+    expect(within(rows[0]).getByText("対象はレーティング4以上の技能です。")).toBeDefined();
+    expect(within(rows[1]).getByRole("combobox", { name: /天賦の才 の技能/ })).toBeDefined();
+    expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    fireEvent.change(confidence, { target: { value: "Gymnastics" } });
+    expect(patch).toHaveBeenCalledWith({
+      skill_picks: { "ware:recorder:0": "Pistols", "quality:confidence:0": "Gymnastics" },
+    });
+  });
+
   it("renders the search box + karma line for an empty character", () => {
     renderTab();
     expect(screen.getByPlaceholderText("資質を検索")).toBeDefined();

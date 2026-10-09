@@ -291,6 +291,11 @@ export const EN_APP = {
   "desc.notesPlaceholder":
     "Notes for the GM or for play. They appear on the sheet and in the .chum5 export.",
   "pick.skillOf": "{source} skill",
+  "pick.minimumRating": "Choose a skill with a rating of {rating} or higher.",
+  "pick.noEligibleSkills": "No eligible skills",
+  "pick.raiseSkillRating":
+    "Raise the skill you want to choose to rating {rating} or higher in the Skills tab.",
+  "pick.checkSkills": "Check the skill requirements and your choices in the Skills tab.",
   "pick.max": " max +{max}",
   "pick.rating": " hardwired R{rating}",
   "pick.accuracy": " weapon Accuracy +{accuracy}",

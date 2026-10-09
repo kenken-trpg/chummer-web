@@ -188,6 +188,7 @@ def resolve_skill_picks(
                 "max": int(spec.get("max") or 0),
                 "rating": rating,
                 "options": options,
+                "minimum_rating": int(spec.get("minimumrating") or 0),
                 "knowledgeskills": bool(spec.get("knowledgeskills")),
                 "default_free": bool(covered),
                 "accuracy": accuracy,
