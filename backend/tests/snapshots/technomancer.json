@@ -437,6 +437,7 @@
       "extra": "",
       "extra_kind": null,
       "free": true,
+      "has_levels": false,
       "id": "#3",
       "karma": 15,
       "name": "Technomancer",

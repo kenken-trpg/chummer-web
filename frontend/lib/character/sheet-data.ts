@@ -3,6 +3,7 @@ import { makeT, type TFn } from "@/lib/ui-strings";
 import { translate, type Locale, type UiFn } from "@/lib/i18n";
 import { isDrugCategory } from "@/lib/character/constants";
 import { specialArmorBits } from "@/lib/character/format";
+import { qualityDisplayRows, type QualityDisplayRow } from "@/lib/character/quality";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
 
@@ -39,7 +40,7 @@ export type SheetData = {
   groups: { name: string; rating: number; bonus: number }[];
   exotic: List<"exotic_skills">;
   knowledge: List<"knowledge_skills">;
-  qualities: List<"qualities">;
+  qualities: QualityDisplayRow[];
   weapons: List<"weapons">;
   armors: List<"armor_items">;
   cyber: List<"cyberware">;
@@ -118,7 +119,7 @@ export function buildSheetData({
   const knowledge = (d.knowledge_skills || []).filter(
     (row) => row.rating > 0 || row.native || (row.skillsoft || 0) > 0,
   );
-  const qualities = d.qualities || [];
+  const qualities = qualityDisplayRows(d.qualities || [], catalog.qualities);
   const weapons = d.weapons || [];
   const armors = (d.armor_items || []).filter((item) => item.equipped || item.contributes);
   const cyber = (d.cyberware || []).filter((item) => !item.parent_id);

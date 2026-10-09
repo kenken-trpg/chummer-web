@@ -428,6 +428,7 @@
       "extra": "",
       "extra_kind": null,
       "free": false,
+      "has_levels": false,
       "id": "#2",
       "karma": 3,
       "name": "Dealer Connection",

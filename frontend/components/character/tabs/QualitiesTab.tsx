@@ -13,6 +13,9 @@ import { critterPowerRow } from "@/lib/spell-terms";
 import {
   dropSkillPicksForPrefix,
   qualityBlockReason,
+  qualityDisplayRows,
+  qualityLevelMax,
+  setQualityLevel,
   type QualityReqCtx,
 } from "@/lib/character/quality";
 
@@ -28,6 +31,7 @@ export function QualitiesTab({
   setCharacter,
 }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
+  const [qLevels, setQLevels] = useState<Record<string, number>>({});
   const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
   // This tab writes its own list rather than using `<CatalogPicker>`, and so
   // had never applied the settings' book list: with Chrome Flesh switched off,
@@ -66,7 +70,7 @@ export function QualitiesTab({
     const map = new Map((catalog.qualities || []).map((item) => [item.id, item]));
     return map;
   }, [catalog.qualities]);
-  const ownedFromDerived = d.qualities || [];
+  const ownedFromDerived = qualityDisplayRows(d.qualities || [], catalog.qualities);
   // SR5 p.107: after chargen a positive quality costs twice, and buying a
   // negative one off costs twice what it gave (`double_career: false` opts out)
   const careerPricing = Boolean(d.quality_career_pricing);
@@ -137,7 +141,10 @@ export function QualitiesTab({
           {ownedFromDerived.map((q, idx) => (
             <div className="quality-item" key={`owned-${q.id}-${idx}`}>
               <div>
-                <b>{tr(q.name)}</b>
+                <b>
+                  {tr(q.name)}
+                  {q.level != null ? ` Lv${q.level}` : ""}
+                </b>
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
                   / {ui("qual.karmaLabel")} {q.karma}
@@ -163,6 +170,49 @@ export function QualitiesTab({
                       ? ui("qual.careerTaken", { cost: q.career_cost })
                       : ui("qual.careerTakenNegative")}
                 </div>
+                {q.level != null && !q.free && catalogById.has(q.id) ? (
+                  <label>
+                    {ui("qual.level")}{" "}
+                    <select
+                      aria-label={ui("qual.ownedLevel", { name: tr(q.name) })}
+                      value={q.level}
+                      onChange={(e) =>
+                        patch({
+                          quality_ids: setQualityLevel(
+                            ch.quality_ids,
+                            q.id,
+                            Number(e.target.value),
+                          ),
+                        })
+                      }
+                    >
+                      {Array.from(
+                        {
+                          length: Math.max(
+                            q.level,
+                            qualityLevelMax(
+                              catalogById.get(q.id)!,
+                              ch.quality_ids,
+                              catalog.qualities,
+                            ),
+                          ),
+                        },
+                        (_, i) => i + 1,
+                      ).map((level) => (
+                        <option
+                          key={level}
+                          value={level}
+                          disabled={
+                            level > q.level! &&
+                            !!qualityBlockReason(catalogById.get(q.id)!, qualityCtx, ui)
+                          }
+                        >
+                          Lv{level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <QualityExtraEditor
                   q={q}
                   ch={ch}
@@ -215,20 +265,25 @@ export function QualitiesTab({
                   className="btn danger"
                   onClick={() => {
                     const extras = { ...(ch.quality_extras || {}) };
-                    const remaining = ch.quality_ids.filter((id) => id === q.id).length - 1;
+                    const remaining =
+                      q.level != null ? 0 : ch.quality_ids.filter((id) => id === q.id).length - 1;
                     if (remaining <= 0) {
-                      delete extras[q.id];
-                      delete extras[`${q.id}:contact`];
+                      for (const key of Object.keys(extras)) {
+                        if (key === q.id || key.startsWith(`${q.id}:`)) delete extras[key];
+                      }
                     }
                     let removed = false;
                     patch({
-                      quality_ids: ch.quality_ids.filter((id) => {
-                        if (!removed && id === q.id) {
-                          removed = true;
-                          return false;
-                        }
-                        return true;
-                      }),
+                      quality_ids:
+                        q.level != null
+                          ? setQualityLevel(ch.quality_ids, q.id, 0)
+                          : ch.quality_ids.filter((id) => {
+                              if (!removed && id === q.id) {
+                                removed = true;
+                                return false;
+                              }
+                              return true;
+                            }),
                       quality_extras: extras,
                       skill_picks:
                         remaining <= 0
@@ -329,6 +384,14 @@ export function QualitiesTab({
             (maxTakes == null || ownedCount < maxTakes) &&
             (sharedCap == null || sharedCount < sharedCap);
           const added = ownedCount > 0;
+          const hasLevels = !!q.has_levels;
+          const levelMax = hasLevels ? qualityLevelMax(q, ch.quality_ids, catalog.qualities) : 1;
+          const selectedLevel = Math.max(
+            1,
+            Math.min(qLevels[q.id] ?? (ownedCount || 1), levelMax || 1),
+          );
+          const increasing = hasLevels ? selectedLevel > ownedCount : canAddMore;
+          const shownKarma = q.karma * (hasLevels ? selectedLevel : 1);
           const ownedWays = new Set(
             (catalog.qualities || [])
               .filter((item) => item.is_way && ch.quality_ids.includes(item.id))
@@ -338,26 +401,31 @@ export function QualitiesTab({
             !added &&
             !!q.is_way &&
             (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
-          const blocked = canAddMore ? qualityBlockReason(q, qualityCtx, ui) : "";
+          const blocked = increasing ? qualityBlockReason(q, qualityCtx, ui) : "";
           return (
             <div className="quality-item" key={q.id}>
               <div>
                 <b>{tr(q.name)}</b>
                 <div className="muted">
                   {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
-                  / {ui("qual.karmaLabel")} {q.karma} / {sourceText(q)}
+                  / {ui("qual.karmaLabel")} {shownKarma} / {sourceText(q)}
                   {careerPricing
                     ? q.karma > 0
                       ? ui("qual.careerPrice", {
-                          cost: q.karma * (q.double_career === false ? 1 : 2),
+                          cost:
+                            q.karma *
+                            (hasLevels ? Math.max(0, selectedLevel - ownedCount) : 1) *
+                            (q.double_career === false ? 1 : 2),
                         })
                       : ui("qual.careerPriceNegative")
                     : ""}
-                  {maxTakes == null
-                    ? ui("common.repeatable")
-                    : maxTakes > 1
-                      ? ui("common.maxTakes", { max: maxTakes })
-                      : ""}
+                  {hasLevels
+                    ? ui("qual.maxLevel", { max: maxTakes ?? 1 })
+                    : maxTakes == null
+                      ? ui("common.repeatable")
+                      : maxTakes > 1
+                        ? ui("common.maxTakes", { max: maxTakes })
+                        : ""}
                   {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
                     ? ui("qual.taken", { count: ownedCount })
                     : ""}
@@ -373,22 +441,56 @@ export function QualitiesTab({
                   {blocked ? ` / ${blocked}` : ""}
                 </div>
               </div>
+              {hasLevels ? (
+                <label>
+                  {ui("qual.level")}{" "}
+                  <select
+                    aria-label={ui("qual.pickLevel", { name: tr(q.name) })}
+                    value={selectedLevel}
+                    disabled={levelMax < 1}
+                    onChange={(e) => setQLevels({ ...qLevels, [q.id]: Number(e.target.value) })}
+                  >
+                    {Array.from({ length: Math.max(1, levelMax) }, (_, i) => i + 1).map((level) => (
+                      <option key={level} value={level}>
+                        Lv{level}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <button
-                className={`btn ${added && !canAddMore ? "danger" : "primary"}`}
+                className={`btn ${!hasLevels && added && !canAddMore ? "danger" : "primary"}`}
                 // full and not taken: a sibling holds the shared limit, nothing to do
-                disabled={canAddMore ? !!blocked : !added}
+                disabled={
+                  hasLevels
+                    ? levelMax < 1 || selectedLevel === ownedCount || !!blocked
+                    : canAddMore
+                      ? !!blocked
+                      : !added
+                }
                 // the same button reads 追加 / 差替 / 削除 depending on what is
                 // already taken; say which quality it is about to act on
                 title={ui("picker.buyLabel", {
                   name: tr(q.name),
-                  action:
-                    added && !canAddMore
+                  action: hasLevels
+                    ? added
+                      ? ui("qual.changeLevel")
+                      : ui("common.add")
+                    : added && !canAddMore
                       ? ui("common.delete")
                       : replaces
                         ? ui("qual.replace")
                         : ui("common.add"),
                 })}
                 onClick={() => {
+                  if (hasLevels) {
+                    if (levelMax < 1 || blocked || selectedLevel === ownedCount) return;
+                    patch({
+                      quality_ids: setQualityLevel(ch.quality_ids, q.id, selectedLevel),
+                      skill_picks: ch.skill_picks || {},
+                    });
+                    return;
+                  }
                   if (added && !canAddMore) {
                     const extras = { ...(ch.quality_extras || {}) };
                     delete extras[q.id];
@@ -407,11 +509,15 @@ export function QualitiesTab({
                   });
                 }}
               >
-                {added && !canAddMore
-                  ? ui("common.delete")
-                  : replaces
-                    ? ui("qual.replace")
-                    : ui("common.add")}
+                {hasLevels
+                  ? added
+                    ? ui("qual.changeLevel")
+                    : ui("common.add")
+                  : added && !canAddMore
+                    ? ui("common.delete")
+                    : replaces
+                      ? ui("qual.replace")
+                      : ui("common.add")}
               </button>
             </div>
           );

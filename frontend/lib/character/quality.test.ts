@@ -3,6 +3,9 @@ import {
   dropRemovedWarePicks,
   dropSkillPicksForPrefix,
   qualityBlockReason,
+  qualityDisplayRows,
+  qualityLevelMax,
+  setQualityLevel,
   qualityTreeMet,
   reqNodeMet,
   type QualityReqCtx,
@@ -143,5 +146,70 @@ describe("dropSkillPicksForPrefix / dropRemovedWarePicks", () => {
         [{ id: "w1" } as never],
       ),
     ).toEqual({ "ware:w1:skill": "Pistols", other: "keep" });
+  });
+});
+
+describe("quality levels", () => {
+  const spec = {
+    id: "ind",
+    name: "Indomitable (Physical)",
+    max_takes: 3,
+    has_levels: true,
+    include_in_limit: ["Indomitable (Mental)"],
+  };
+  const sibling = { id: "mental", name: "Indomitable (Mental)" };
+  const row = {
+    id: "magic",
+    name: "Magic Resistance",
+    karma: 6,
+    has_levels: true,
+    category: "Positive",
+    source: "SR5",
+  };
+
+  it("combines levels and sums total and career karma without mutating engine rows", () => {
+    const rows = [row, { ...row, career_cost: 12 }, { ...row, career_cost: 12 }];
+    expect(qualityDisplayRows(rows)).toEqual([{ ...row, level: 3, karma: 18, career_cost: 24 }]);
+    expect(rows[0].karma).toBe(6);
+    expect(qualityDisplayRows([row])[0].level).toBe(1);
+  });
+
+  it("keeps distinct targets and free grants apart; repeatable nonlevels stay separate", () => {
+    const rows = [
+      row,
+      { ...row, extra: "A" },
+      { ...row, free: true },
+      { ...row, has_levels: false },
+      { ...row, has_levels: false },
+    ];
+    expect(qualityDisplayRows(rows)).toHaveLength(5);
+    expect(qualityDisplayRows(rows).map((q) => q.level)).toEqual([1, 1, 1, undefined, undefined]);
+  });
+
+  it("resolves level metadata from the catalog for older derived payloads", () => {
+    const { has_levels: _levels, ...old } = row;
+    expect(
+      qualityDisplayRows([old, old], [{ id: "magic", has_levels: true } as never])[0],
+    ).toMatchObject({ level: 2, karma: 12 });
+  });
+
+  it("limits the selected total by siblings, including a separate shared cap", () => {
+    expect(qualityLevelMax(spec as never, ["ind", "mental"], [spec, sibling] as never)).toBe(2);
+    expect(
+      qualityLevelMax({ ...spec, limit_with_inclusions: 4 } as never, ["mental", "mental"], [
+        spec,
+        sibling,
+      ] as never),
+    ).toBe(2);
+    expect(
+      qualityLevelMax(spec as never, ["mental", "mental", "mental"], [spec, sibling] as never),
+    ).toBe(0);
+  });
+
+  it("changes the total while preserving other qualities and earlier career levels", () => {
+    const ids = ["ind", "other", "ind", "third", "ind"];
+    expect(setQualityLevel(ids, "ind", 2)).toEqual(["ind", "other", "ind", "third"]);
+    expect(setQualityLevel(ids, "ind", 4)).toEqual([...ids, "ind"]);
+    expect(setQualityLevel(ids, "ind", 0)).toEqual(["other", "third"]);
   });
 });

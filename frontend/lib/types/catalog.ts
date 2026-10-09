@@ -456,6 +456,8 @@ export interface Catalog {
     expertise_skill?: string;
     add_spirit_count?: number;
     max_takes?: number | null;
+    /** Numeric Chummer limit without <nolevels>; repeatability alone is not a level. */
+    has_levels?: boolean;
     /** siblings counted toward the same limit (Indomitable) */
     include_in_limit?: string[];
     /** that shared cap when it differs from max_takes (Tough as Nails: 4); 0 = max_takes */

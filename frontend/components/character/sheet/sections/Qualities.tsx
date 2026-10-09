@@ -8,9 +8,12 @@ export function QualitiesSection(s: SheetData) {
   return (
     <Section title="sheet.qualities" empty={!qualities.length}>
       <ul className="sheet-list">
-        {qualities.map((q) => (
-          <li key={q.id}>
-            <b>{tr(q.name)}</b>
+        {qualities.map((q, idx) => (
+          <li key={`${q.id}-${idx}`}>
+            <b>
+              {tr(q.name)}
+              {q.level != null ? ` Lv${q.level}` : ""}
+            </b>
             {q.extra ? `（${tr(q.extra)}）` : ""}
             {q.side
               ? `（${

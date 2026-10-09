@@ -471,6 +471,7 @@ export interface Derived {
     karma: number;
     category: string;
     source: string;
+    has_levels?: boolean;
     needs_extra?: boolean;
     extra?: string;
     spirit_extra?: string;

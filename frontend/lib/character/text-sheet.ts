@@ -123,7 +123,11 @@ export function textSheet(x: TextArgs): string {
 
   if (x.qualities.length) {
     head("sheet.qualities");
-    x.qualities.forEach((q) => line(`  ${tr(q.name)}${q.extra ? "：" + tr(q.extra) : ""}`));
+    x.qualities.forEach((q) =>
+      line(
+        `  ${tr(q.name)}${q.level != null ? ` Lv${q.level}` : ""}${q.extra ? "：" + tr(q.extra) : ""}`,
+      ),
+    );
     line();
   }
 
