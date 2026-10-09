@@ -24,6 +24,60 @@ const pistolsCatalog = makeCatalog({
 });
 
 describe("buildChatPalette", () => {
+  it("applies Confidence's penalty and omits its inactive specialization roll", () => {
+    const ch = makeCharacter({
+      skill_specializations: { Pistols: "Revolvers" },
+      derived: {
+        totals: { AGI: 5 } as never,
+        skill_totals: { Pistols: 4 },
+        skill_bonus: { Pistols: -2 },
+        skill_specializations_disabled: ["Pistols"],
+      },
+    });
+    const affected = buildChatPalette(ch, pistolsCatalog, identityTr);
+    expect(affected).toContain("7B6@3 Pistols");
+    expect(affected).not.toContain("Pistols：Revolvers");
+    ch.derived.skill_specializations_disabled = [];
+    ch.derived.skill_bonus = {};
+    expect(buildChatPalette(ch, pistolsCatalog, identityTr)).toContain("11B6@3 Pistols：Revolvers");
+  });
+
+  it("uses the selected exotic target's attribute and penalty", () => {
+    const name = "Exotic Ranged Weapon (Lasers)";
+    const ch = makeCharacter({
+      derived: {
+        totals: { AGI: 5 } as never,
+        skill_totals: { [name]: 4 },
+        skill_bonus: { [name]: -2 },
+        exotic_skills: [
+          {
+            id: "lasers",
+            skill_name: "Exotic Ranged Weapon",
+            label: name,
+            extra: "Lasers",
+            rating: 4,
+            rating_max: 6,
+            attribute: "AGI",
+            category: "Combat Active",
+            options: [],
+          },
+        ],
+      },
+    });
+    expect(buildChatPalette(ch, makeCatalog(), identityTr)).toContain(`7B6@3 ${name}`);
+  });
+
+  it("keeps the Expertise bonus on skills without Confidence", () => {
+    const ch = makeCharacter({
+      derived: {
+        skill_totals: { Pistols: 4 },
+        skill_specializations: { Pistols: "Revolvers" },
+        skill_expertises: [{ skill: "Pistols", spec: "Revolvers", bonus: 3 }],
+      },
+    });
+    expect(buildChatPalette(ch, pistolsCatalog, identityTr)).toContain("10B6@3 Pistols：Revolvers");
+  });
+
   it("always emits the initiative line + the fixed defense/resist rolls", () => {
     const out = buildChatPalette(makeCharacter(), makeCatalog(), identityTr);
     expect(out.split("\n")[0]).toBe("1D6+6 イニシアチブ");

@@ -18,6 +18,7 @@ from ..skills import (
     _copy_exotic_skill_bonuses,
     _merge_skill_ratings,
     apply_select_expertise,
+    exotic_skill_label,
     resolve_exotic_skills,
     resolve_knowledge,
     resolve_skill_mods,
@@ -57,6 +58,18 @@ def _skill_spend(ctx: Ctx) -> None:
     tentative = dict(ctx.skill_totals)
     for name, rating in ctx.state.skills.items():
         tentative[name] = max(tentative.get(name, 0), max(0, min(ctx.skill_rating_cap + 1, int(rating))))
+    seen_exotics: set[tuple[str, str]] = set()
+    for inst in ctx.state.exotic_skills:
+        extra = (inst.extra or "").strip()
+        key = (inst.skill_name, extra.lower())
+        if inst.skill_name not in exotic_names or not extra or key in seen_exotics:
+            continue
+        seen_exotics.add(key)
+        # As for ordinary skills, allow the one extra level Aptitude may
+        # grant. The final pass applies the picked cap and reports duplicates.
+        tentative[exotic_skill_label(inst.skill_name, extra)] = max(
+            1, min(ctx.skill_rating_cap + 1, int(inst.rating or 1))
+        )
     ctx.skill_picks = resolve_skill_picks(
         ctx.state,
         ctx.data["skills"],

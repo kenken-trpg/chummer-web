@@ -378,6 +378,8 @@ export interface Derived {
   };
   skill_totals: Record<string, number>;
   skill_specializations?: Record<string, string>;
+  /** Specializations are still owned and paid for, but grant no dice bonus. */
+  skill_specializations_disabled?: string[];
   skill_expertises?: {
     skill: string;
     spec: string;

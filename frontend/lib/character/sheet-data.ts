@@ -4,6 +4,7 @@ import { translate, type Locale, type UiFn } from "@/lib/i18n";
 import { isDrugCategory } from "@/lib/character/constants";
 import { specialArmorBits } from "@/lib/character/format";
 import { qualityDisplayRows, type QualityDisplayRow } from "@/lib/character/quality";
+import { specializationBonus } from "@/lib/character/skill-specialization";
 
 export type SheetLayout = "standard" | "compact" | "text" | "print";
 
@@ -33,6 +34,7 @@ export type SheetData = {
     pool: number;
     soft: number;
     spec?: string;
+    specInactive?: boolean;
     /** `<swapskillspecattribute>`: the attribute this skill rolls off *only*
      *  when the named specialization applies, already worded for display. */
     swapNote?: string;
@@ -96,9 +98,10 @@ export function buildSheetData({
         name: s.name,
         attribute,
         rating: effective,
-        pool: effective + attr,
+        pool: Math.max(0, effective + attr + (d.skill_bonus?.[s.name] || 0)),
         soft: soft > rating ? soft : 0,
         spec,
+        ...(spec && specializationBonus(d, s.name) === 0 ? { specInactive: true } : {}),
         swapNote: specSwap
           ? ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })
           : undefined,

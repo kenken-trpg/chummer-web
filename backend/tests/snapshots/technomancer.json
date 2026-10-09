@@ -487,6 +487,7 @@
   "skill_rating_max": 6,
   "skill_spec_options": {},
   "skill_specializations": {},
+  "skill_specializations_disabled": [],
   "skill_totals": {
     "Compiling": 4,
     "Electronic Warfare": 3,

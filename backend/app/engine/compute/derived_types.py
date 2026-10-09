@@ -359,6 +359,7 @@ class DerivedDict(TypedDict):
     # --- skills / knowledge / contacts / martial --------------
     skill_totals: dict[str, int]
     skill_specializations: dict[str, str]
+    skill_specializations_disabled: list[str]
     skill_expertises: list[Row]
     exotic_skills: list[Row]
     skillsoft: list[Row]

@@ -3,6 +3,7 @@
 import { useId } from "react";
 import type { SkillPickSlot } from "@/lib/types";
 import { useUiText } from "@/lib/i18n";
+import { skillLabel } from "@/lib/character/format";
 
 export function SkillPickSelects(props: {
   slots: SkillPickSlot[];
@@ -37,7 +38,7 @@ export function SkillPickSelects(props: {
                 <option value="">{ui(empty ? "pick.noEligibleSkills" : "common.choose")}</option>
                 {slot.options.map((name) => (
                   <option key={name} value={name}>
-                    {props.tr(name)}
+                    {skillLabel(name, props.tr)}
                   </option>
                 ))}
               </select>

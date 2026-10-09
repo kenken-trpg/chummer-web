@@ -38,6 +38,60 @@ const s = buildSheetData({
   layout: "standard",
 });
 
+it("shows Confidence's penalty and inactive specialization in visual and text sheets", () => {
+  const name = "Exotic Ranged Weapon (Lasers)";
+  const data = buildSheetData({
+    character: makeCharacter({
+      derived: {
+        totals: { AGI: 5 } as never,
+        skill_totals: { Pistols: 4, [name]: 4 },
+        skill_bonus: { Pistols: -2, [name]: -2 },
+        skill_specializations: { Pistols: "Revolvers" },
+        skill_specializations_disabled: ["Pistols"],
+        exotic_skills: [
+          {
+            id: "lasers",
+            skill_name: "Exotic Ranged Weapon",
+            label: name,
+            extra: "Lasers",
+            rating: 4,
+            rating_max: 6,
+            attribute: "AGI",
+            category: "Combat Active",
+            options: [],
+          },
+        ],
+      },
+    }),
+    catalog: makeCatalog({
+      skills: {
+        groups: [],
+        knowledge: [],
+        skills: [
+          {
+            id: "pistols",
+            name: "Pistols",
+            attribute: "AGI",
+            source: "SR5",
+            category: "Combat Active",
+            skillgroup: null,
+          },
+        ],
+      },
+    }),
+    tr: identityTr,
+    layout: "standard",
+  });
+  const { container } = render(<SkillsSection {...data} />);
+  const rows = [...container.querySelectorAll("tbody tr")];
+  expect(rows[0].querySelector("b")?.textContent).toBe("7");
+  expect(rows[0].textContent).toContain("Revolvers 専門化の効果なし");
+  expect(rows[1].querySelector("b")?.textContent).toBe("7");
+  const text = textSheet(data);
+  expect(text).toContain("Pistols（Revolvers） 専門化の効果なし 4 [AGI プール 7]");
+  expect(text).toContain(`${name} 4 [AGI プール 7]`);
+});
+
 const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
   ["コア", CoreSection, "イニシアチブ"],
   ["技能", SkillsSection, "Pistols"],

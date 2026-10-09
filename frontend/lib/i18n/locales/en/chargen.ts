@@ -17,6 +17,7 @@ export const EN_CHARGEN = {
   "skills.defaultBlocked": "cannot default",
   "skills.defaultHint": "Unlearned: rolled at {attr} − 1 (SR5 p.130)",
   "skills.specBit": "spec+{bonus}",
+  "skills.specDisabled": "specialisation inactive",
   "skills.active": "Active skills",
   "skills.rowHint": "{category} / linked attribute {attr} / chargen max {max}",
   "skills.attrSwap": "linked attribute {attr} (swapped by {source})",

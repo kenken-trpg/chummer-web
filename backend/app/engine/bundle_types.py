@@ -65,6 +65,8 @@ class SkillPicks(TypedDict):
     hardwires: dict[str, dict[str, int]]
     # Skills that default without the −1, thanks to Reflex Recorder Optimization.
     no_default_penalty: list[str]
+    # Ownership and specialization costs remain; only their dice effects stop.
+    disabled_specializations: list[str]
 
 
 class ContactsBundle(TypedDict):
@@ -289,6 +291,7 @@ def empty_skill_picks() -> SkillPicks:
         skill_bonus_notes={},
         hardwires={"active": {}, "knowledge": {}},
         no_default_penalty=[],
+        disabled_specializations=[],
     )
 
 

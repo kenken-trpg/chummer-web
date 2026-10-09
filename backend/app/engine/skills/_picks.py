@@ -138,6 +138,7 @@ def resolve_skill_picks(
 ) -> SkillPicks:
     slots: list[dict[str, Any]] = []
     default_free: list[str] = []
+    disabled_specializations: set[str] = set()
     warnings: list[Notice] = []
     skill_max: dict[str, int] = {}
     pick_bonus: dict[str, int] = {}
@@ -167,6 +168,8 @@ def resolve_skill_picks(
                     notes.append(note)
         if picked and spec.get("max"):
             skill_max[picked] = int(skill_max.get(picked, 0)) + int(spec["max"])
+        if picked and spec.get("disablespecializationeffects"):
+            disabled_specializations.add(picked)
         rating = int(spec.get("rating") or 0)
         if picked and rating:
             bucket = hardwire_knowledge if spec.get("knowledgeskills") else hardwire_active
@@ -240,4 +243,5 @@ def resolve_skill_picks(
         "skill_bonus_notes": pick_notes,
         "hardwires": {"active": hardwire_active, "knowledge": hardwire_knowledge},
         "no_default_penalty": sorted(default_free),
+        "disabled_specializations": sorted(disabled_specializations),
     }

@@ -7,6 +7,7 @@ import { SpecPicker } from "@/components/character/SpecPicker";
 import { ACTIVE_SKILL_CATS, skillCatLabel } from "@/lib/character/constants";
 import { defaultBit, skillsoftBit, specBit } from "@/lib/character/bits";
 import { skillDefault } from "@/lib/character/skill-default";
+import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillDice } from "@/lib/character/format";
 import { KarmaLevels, SpecKarma, skillLimits, specEditor } from "./shared";
 
@@ -170,7 +171,7 @@ export function ActiveSkills(props: TabPanelProps) {
                         d.skill_bonus?.[s.name],
                       )}
                       {skillsoftBit(d.skillsoft?.[s.name], ui)}
-                      {specBit(specValue, tr(specValue), ui, expertise?.bonus || 2)}
+                      {specBit(specValue, tr(specValue), ui, specializationBonus(d, s.name))}
                     </>
                   ) : (
                     // Nothing bought: what the skill still rolls at, defaulting.
