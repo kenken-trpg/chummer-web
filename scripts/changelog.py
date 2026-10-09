@@ -14,7 +14,6 @@ release.
 
 from __future__ import annotations
 
-import json
 import re
 import subprocess
 import sys
@@ -30,30 +29,19 @@ CODE = ("backend/", "frontend/", "Dockerfile", "compose.yaml", "deploy/")
 SKIP_MARK = "[skip changelog]"
 # Accounts whose pull requests are dependency bumps and nothing else.
 BOTS = ("dependabot[bot]",)
-# The manifests that only the toolchain reads. A bot moving these alone needs no
-# entry: its own pull request body and the lockfile are the record, and a Keep a
-# Changelog bullet per patch bump is a line nobody reads. Everything else a bot
-# could touch ships — `requirements.txt`, the Dockerfile, `deploy/` — and a
-# security fix in a dependency the image carries is a change a user feels, so
-# that still wants an entry. A `package.json` is in here on the condition below:
-# it holds both halves, and only `devDependencies` is the toolchain.
-DEV_MANIFESTS = (
+# Dependabot cannot author release prose. Its manifest-only changes are recorded
+# in the dependency PR and release history; application code still needs an entry.
+DEPENDENCY_MANIFESTS = (
+    "backend/requirements.txt",
     "backend/requirements-dev.txt",
     "frontend/package.json",
     "frontend/package-lock.json",
     "deploy/cloudflare/package.json",
     "deploy/cloudflare/package-lock.json",
-    # The proxy Worker is wrangler, typescript and the workers types — every
-    # one of them a laptop tool. It declares no `dependencies` at all, which
-    # is why it is absent from `SHIPPING_HALVES` below.
     "deploy/cloudflare-proxy/package.json",
     "deploy/cloudflare-proxy/package-lock.json",
+    "Dockerfile",
 )
-#: The `package.json` files whose `dependencies` half does ship, and so has to be
-#: compared before a bot's pull request is waved through. The Worker's own
-#: `@cloudflare/containers` runs in front of every request; `wrangler`, which is
-#: what a bump here usually moves, only ever runs on a laptop.
-SHIPPING_HALVES = ("frontend/package.json", "deploy/cloudflare/package.json")
 
 
 def fragments() -> dict[str, list[Path]]:
@@ -116,24 +104,6 @@ def check_empty() -> int:
     return 0
 
 
-def _runtime_deps(rev: str) -> dict[str, dict[str, str]]:
-    """The shipping `dependencies` of every manifest in `SHIPPING_HALVES`, at one
-    revision. A manifest the revision predates is absent rather than empty, so
-    adding one is not mistaken for emptying it."""
-    found: dict[str, dict[str, str]] = {}
-    for manifest in SHIPPING_HALVES:
-        done = subprocess.run(
-            ["git", "show", f"{rev}:{manifest}"],
-            capture_output=True,
-            text=True,
-            check=False,  # the revision may predate the file; that is not an error
-            cwd=ROOT,
-        )
-        if done.returncode == 0:
-            found[manifest] = dict(json.loads(done.stdout).get("dependencies", {}))
-    return found
-
-
 def check_pr(base: str, title: str = "", author: str = "") -> int:
     fragments()  # a misnamed fragment fails here, not at release time
     changed = subprocess.run(
@@ -152,8 +122,8 @@ def check_pr(base: str, title: str = "", author: str = "") -> int:
         return 0
     # Only the code files are weighed: a bot touching something outside CODE as
     # well (its own config, say) is not a reason to demand an entry.
-    if author in BOTS and all(f in DEV_MANIFESTS for f in code) and _runtime_deps(base) == _runtime_deps("HEAD"):
-        print(f"{author}, and only the toolchain manifests moved — no entry needed")
+    if author in BOTS and all(f in DEPENDENCY_MANIFESTS for f in code):
+        print(f"{author}, and only dependency manifests moved — no entry needed")
         return 0
     if any(f.startswith("changelog.d/") and f != "changelog.d/README.md" for f in changed):
         print("ok — the PR adds a changelog fragment")

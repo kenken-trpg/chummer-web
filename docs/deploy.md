@@ -627,12 +627,14 @@ or Worker-side, and moving Cloud Run traffic back fixes none of them while
 adding a revision churn to an incident. The rollback command is printed in the
 step summary, for a human who has decided that is the right move.
 
-One known false alarm: **Bot Fight Mode**. A CI runner is a datacentre address
-running `curl`, which is most of what it looks for, so a challenge here would
-fail the step without anything being wrong with the deploy. Cloudflare marks one
-with a `cf-mitigated` response header, and the step reports that case
-separately — if you see it, the fix is a WAF skip rule for the probe, not a
-rollback.
+One known false alarm is a **Cloudflare Challenge Page**. A CI runner can be
+challenged even when a browser can use the site. Only a response with the
+`cf-mitigated: challenge` header is treated as inconclusive: the step emits a
+warning and writes **Public path: verification incomplete** to the run summary.
+The deployment succeeds, but this does not certify public availability. Check
+the site in a browser and review Cloudflare challenge settings. Ordinary 403s,
+5xx responses, network failures and unexpected content still fail deployment,
+even when the other endpoint was challenged.
 
 ## Fly.io
 

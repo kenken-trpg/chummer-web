@@ -200,13 +200,12 @@ jobs:
               if [ "$code" = 200 ] && grep -q "$want" /tmp/smoke-body; then
                 return 0
               fi
-              # A challenge is not an outage, and the fix is a WAF skip rule
-              # rather than a rollback — so it is worth telling apart. Bot Fight
-              # Mode is on for this zone and a runner is a datacentre address
-              # running curl, which is most of what it looks for.
-              if grep -qi '^cf-mitigated:' /tmp/smoke-head; then
-                echo "::error::Cloudflare challenged the runner (cf-mitigated). Bot Fight Mode answered this, not the app — the deploy itself may be fine."
-                return 1
+              # A challenge prevents verification; it is not an application
+              # response. Keep it visible without reporting a failed deploy.
+              # Plain 403, 5xx, network errors and bad content still fail.
+              if grep -qiE '^cf-mitigated:[[:space:]]*challenge[[:space:]]*$' /tmp/smoke-head; then
+                echo "::warning::Cloudflare challenged the runner. Deployment completed, but this public endpoint could not be verified."
+                return 2
               fi
               sleep 8
             done
@@ -219,15 +218,25 @@ jobs:
 
           base=${PUBLIC_URL%/}
           failed=0
+          challenged=0
+          check_endpoint() {
+            local result=0
+            probe "$1" "$2" || result=$?
+            case "$result" in
+              0) ;;
+              2) challenged=$((challenged + 1)) ;;
+              *) failed=1 ;;
+            esac
+          }
           # `/api/ready` reaches uvicorn through every layer and says the
           # catalog is built; `/` is the Next bundle, served by the same
           # container but by the other server behind Caddy. A 200 carrying the
           # wrong thing — a Cloudflare error page, a Worker returning its own
           # body — fails on the content check rather than the status.
           echo "GET ${base}/api/ready"
-          probe "${base}/api/ready" '"ready":true' || failed=1
+          check_endpoint "${base}/api/ready" '"ready":true'
           echo "GET ${base}/"
-          probe "${base}/" '<html' || failed=1
+          check_endpoint "${base}/" '<html'
 
           if [ "$failed" -ne 0 ]; then
             echo
@@ -236,4 +245,14 @@ jobs:
             echo "CONTRIBUTING.md > Debugging > Peeling the layers narrows which layer is answering."
             exit 1
           fi
-          echo "public path OK"
+          if [ "$challenged" -gt 0 ]; then
+            {
+              echo "### Public path: verification incomplete"
+              echo
+              echo "Cloudflare challenged ${challenged} endpoint(s) from this runner."
+              echo "The revision is deployed; public availability is unverified."
+              echo "Check the public site in a browser and review Cloudflare challenge settings."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "public path OK"
+          fi
