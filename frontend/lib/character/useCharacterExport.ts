@@ -4,7 +4,9 @@ import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
-import type { Character } from "@/lib/types";
+import type { Catalog, Character } from "@/lib/types";
+import { type UdonariumOptions, buildUdonariumXml } from "@/lib/udonarium";
+import { zipSingleFile } from "@/lib/zip";
 import { type Notice } from "@/lib/engine-notices";
 import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
@@ -122,6 +124,29 @@ export function useCharacterExport(opts: {
     }
   }
 
+  /**
+   * Save the character as an Udonarium piece: a zip holding one `data.xml`.
+   *
+   * A zip, because only a zip goes in both ways. Dropping a file on the table
+   * reads a bare `.xml`, but the 「ZIP読込」 file input unzips whatever it is
+   * handed and dies on a plain xml with "End of central directory not found",
+   * its `accept` list notwithstanding. Checked against udonarium.app 1.17.4.
+   *
+   * Built here rather than on the server: the palette comes out of `derived`,
+   * which this browser already has.
+   */
+  function downloadUdonarium(
+    catalog: Catalog,
+    tr: (n: string) => string,
+    opts: UdonariumOptions = {},
+  ) {
+    if (!ch) return;
+    offer(
+      zipSingleFile("data.xml", buildUdonariumXml(ch, catalog, tr, locale, opts)),
+      exportFilename(ch.name, "zip", { tag: "udonarium" }),
+    );
+  }
+
   /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
   async function downloadFvtt() {
     if (!ch) return;
@@ -177,6 +202,7 @@ export function useCharacterExport(opts: {
     downloadChum5,
     downloadXlsx,
     downloadFvtt,
+    downloadUdonarium,
     confirmExport,
     cancelExport,
     copyText,

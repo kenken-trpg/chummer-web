@@ -5,6 +5,7 @@ import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillLabel } from "@/lib/character/format";
+import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
 
 // Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
 // caller says nothing; it follows the UI locale otherwise. Dice commands
@@ -35,47 +36,6 @@ const ATTR_ORDER = [
   "RES",
 ] as const;
 
-type LimitKind = "physical" | "mental" | "social" | null;
-const ATTR_LIMIT: Record<string, LimitKind> = {
-  BOD: "physical",
-  AGI: "physical",
-  REA: "physical",
-  STR: "physical",
-  CHA: "social",
-  INT: "mental",
-  LOG: "mental",
-  WIL: "mental",
-  EDG: null,
-  MAG: null,
-  RES: null,
-};
-
-// weapon category -> active skill (Chummer Weapon.GetSkillDictionaryKey, trimmed)
-const WEAPON_SKILL: Record<string, string> = {
-  Bows: "Archery",
-  Crossbows: "Archery",
-  "Assault Rifles": "Automatics",
-  Carbines: "Automatics",
-  "Machine Pistols": "Automatics",
-  "Submachine Guns": "Automatics",
-  Blades: "Blades",
-  Clubs: "Clubs",
-  "Improvised Weapons": "Clubs",
-  "Assault Cannons": "Heavy Weapons",
-  "Grenade Launchers": "Heavy Weapons",
-  "Missile Launchers": "Heavy Weapons",
-  "Light Machine Guns": "Heavy Weapons",
-  "Medium Machine Guns": "Heavy Weapons",
-  "Heavy Machine Guns": "Heavy Weapons",
-  Shotguns: "Longarms",
-  "Sniper Rifles": "Longarms",
-  "Sporting Rifles": "Longarms",
-  "Throwing Weapons": "Throwing Weapons",
-  Unarmed: "Unarmed Combat",
-};
-const weaponSkill = (w: { useskill?: string; category?: string }) =>
-  (w.useskill || "").trim() || WEAPON_SKILL[w.category || ""] || "Pistols";
-
 export type CocofoliaOptions = {
   /** Also list every active skill the runner can default on (SR5 p.130),
    *  plus the knowledge skills they actually have. */
@@ -96,17 +56,7 @@ export function buildChatPalette(
   const at = (k: string) => totals[k] || 0;
   const lim = (k: LimitKind) => (k ? (d.limits?.[k] ?? 0) : 0);
 
-  const skillAttr: Record<string, string> = {};
-  for (const s of catalog.skills?.skills || []) skillAttr[s.name] = s.attribute;
-  for (const s of d.exotic_skills || []) skillAttr[s.label] = s.attribute;
-  // `<swapskillattribute>` (Empathic Listener: Etiquette off INT) moves the
-  // pool *and* the limit that comes with the attribute; the spec-limited
-  // variant only moves the specialized roll below.
-  const specSwap: Record<string, { spec: string; attribute: string }> = {};
-  for (const row of d.skill_attribute_swaps || []) {
-    if (row.spec) specSwap[row.skill] = { spec: row.spec, attribute: row.attribute };
-    else skillAttr[row.skill] = row.attribute;
-  }
+  const { skillAttr, specSwap } = skillAttributes(catalog, d);
 
   const init = d.initiative || { value: 0, dice: 1 };
   const tm = d.test_mods || {};

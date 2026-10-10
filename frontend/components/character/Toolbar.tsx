@@ -45,6 +45,7 @@ export function Toolbar({
     downloadChum5,
     downloadXlsx,
     downloadFvtt,
+    downloadUdonarium,
     copyText,
     copyShareLink,
     refreshRoster,
@@ -150,6 +151,13 @@ export function Toolbar({
         title={ui("toolbar.cocofoliaHint")}
       >
         {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
+      </button>
+      <button
+        className="btn"
+        onClick={() => catalog && downloadUdonarium(catalog, tr, { untrained })}
+        title={ui("toolbar.udonariumHint")}
+      >
+        {ui("toolbar.udonarium")}
       </button>
       <button
         className="btn"
