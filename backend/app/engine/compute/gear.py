@@ -61,7 +61,7 @@ from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
 from ..pricing import apply_black_market_avail, apply_overclocker, apply_purchase_discounts
-from ..ware import _attach_ware_to_vehicle_mods
+from ..ware import _attach_ware_to_vehicle_mods, _vehicle_hosted_ware_ids, _vehicle_mod_hosts
 from .context import Ctx
 from .gear_market import discounted_ids, pick_black_market
 from .gear_rows import resolve_armor_rows, resolve_commlink_rows, resolve_weapon_rows
@@ -162,6 +162,7 @@ def resolve_gear(
         hosts,
         weapons,
         granted_gear,
+        hosted_ware_ids=_vehicle_hosted_ware_ids(ware_items or [], set(_vehicle_mod_hosts(state))),
         modular_states={
             str(item["id"]): bool(item["modular_equipped"]) for item in ware_items or [] if "modular_equipped" in item
         },

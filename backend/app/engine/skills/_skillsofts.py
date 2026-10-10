@@ -58,7 +58,7 @@ def resolve_skillsofts(
         bucket[name] = max(int(bucket.get(name) or 0), int(rating))
 
     for item in gear_items:
-        if item.get("modular_equipped") is False:
+        if item.get("modular_equipped") is False or item.get("vehicle_hosted"):
             continue
         spec = specs.get(str(item.get("gear_id") or ""))
         if not spec:

@@ -242,6 +242,7 @@ export interface InstalledOptics {
 
 export interface InstalledGear extends InstalledOptics {
   modular_equipped?: boolean;
+  vehicle_hosted?: boolean;
   equipped?: boolean;
   module_host_id?: string | null;
   module_method?: string;
