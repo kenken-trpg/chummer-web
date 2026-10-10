@@ -184,8 +184,37 @@ GUI実保存との一致、モジュラーの着脱・適合条件、全脚置�
 [Character.CalculatedMovement](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)。
 
 この変更は既存のparent_idで接続を表した場合の算術と保存に限定する。
-モジュラーの着脱UI、マウント種別・接続数・blocksmountsの検証、外した義肢のbonus/essence等の制御、
-RF/CF本文・エラッタ、GUI実保存は未確認であり、モジュラー義肢全体の対応完了とは扱わない。
+接続状態による改善効果の制御は下記範囲を実装した。
+モジュラー義肢全体の対応完了とは扱わない。
+
+## 実装済み: モジュラー接続状態による改善効果の有効・無効
+
+- 固定版のIsModularCurrentlyEquippedに合わせ、mountstoを持つ部品は単独では無効、
+  祖先のmodularmountで有効、祖先のmountstoで再び無効として親から最上位まで判定する。
+  同じ祖先に両タグがある場合はmountstoを優先する。子が先に並んでも同じ結果となり、
+  循環参照では探索を打ち切って効果を無効にする。
+- 外したモジュラー義肢とその子パーツの通常・無線・ペア改善効果を計算から外す。
+  技能選択による技能値・Accuracyも適用しない。購入記録、価格、子パーツ、
+  無線設定と技能選択の保存値を保持し、再接続時に再導出する。
+- 全身能力値平均は無効な枝を探索しない。
+  GetCyberlimbCountには接続状態の判定がないため、RedlinerのXMLスロット集計へは
+  この除外を加えない。個別義肢の能力値と地上義脚移動も既存の計算を維持する。
+- derivedのモジュラー部品とその配下にmodular_equippedを出力する。
+  通常の装備の派生値形式は変更しない。接続状態を独立した購入フィールドにはせず、
+  parent_idとカタログから再導出する。
+- Centaurの4脚中1脚の取外し・再接続で、身体ダメージ欄の+1消失・復帰、
+  コネクタの子能力値の消失・復帰、価格と既存エッセンス合計の保持を検証した。
+  JSONとWeb内.chum5往復で外した義脚の子パーツと所有関係も保持する。
+  膝コネクタの下腿ペア、複数段の接続、無線ペア、技能選択の効果も検証する。
+
+検証は`test_modular_equipment.py`による。照合先は固定コミットの
+[Cyberware.IsModularCurrentlyEquipped/ChangeModularEquip/RefreshWirelessBonuses](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)と
+[CharacterAttrib.CalculatedTotalValue](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Attributes/Attribute.Core.cs)。
+効果経路だけの合成fixtureは装備適合の証明に使わない。
+
+着脱UI、マウント種別・接続数・blocksmountsの検証、格納ギア・内蔵武器の利用可否、
+汎用のエッセンス課金規則、RF/CF本文・エラッタ、GUI実保存は残件。
+今回の実データのモジュラー脚は元々ess=0であり、接続状態によるエッセンスの一括免除は導入しない。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 
@@ -233,6 +262,7 @@ Centaurを作成画面の候補へ公開する段階には達していない。
 5. 地上/水泳/飛行の計算、追加脚の平均への接続、生活費と支出内訳は上記の範囲を検証済み。
    四脚の個別義肢指定/保存とRedlinerも上記範囲を実装済み。
    部分義肢の集計境界・モジュラーコネクタの能力値継承は上記範囲を検証済み。
+   接続状態による通常・無線・ペア・技能選択の改善効果の制御も上記範囲を実装済み。
    モジュラーの着脱・装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。
    基本5種族・亜種・感染者・SURGEへの回帰を確認する。

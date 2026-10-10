@@ -211,6 +211,8 @@ def resolve_skill_picks(
 
     for kind in ("cyberware", "bioware"):
         for inst in getattr(state, kind):
+            if inst.id in skip_ids:
+                continue
             resolved = _ware_bonus_nodes(kind, inst)
             if not resolved:
                 continue

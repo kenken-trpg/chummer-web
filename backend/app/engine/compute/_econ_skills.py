@@ -75,7 +75,7 @@ def _skill_spend(ctx: Ctx) -> None:
         ctx.data["skills"],
         tentative,
         reflex_optimized=bool(ctx.effects.get("reflex_recorder_optimization")),
-        skip_ids=ctx.hosted_ware_ids,
+        skip_ids=ctx.hosted_ware_ids | ctx.inactive_ware_ids,
     )
     ctx.warnings.extend(ctx.skill_picks["warnings"])
     skill_cat_map = _skill_category_map(ctx.data["skills"])

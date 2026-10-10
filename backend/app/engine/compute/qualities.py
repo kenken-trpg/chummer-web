@@ -133,7 +133,7 @@ def effects_and_binders(ctx: Ctx) -> None:
     bind_spell_category_drain_damage(ctx.effects, ctx.qualities, ctx.state)
     bind_weapon_category_dv(ctx.effects, ctx.qualities, ctx.state, ctx.warnings)
     bind_weapon_skill_accuracy(ctx.effects, ctx.qualities, ctx.state, ctx.warnings, ctx.data["skills"])
-    bind_ware_skill_accuracy(ctx.effects, ctx.state, ctx.data["skills"], ctx.hosted_ware_ids)
+    bind_ware_skill_accuracy(ctx.effects, ctx.state, ctx.data["skills"], ctx.hosted_ware_ids | ctx.inactive_ware_ids)
     apply_granted_spells(ctx.state, ctx.effects, ctx.qualities, ctx.warnings)
     bind_select_powers(
         ctx.effects,

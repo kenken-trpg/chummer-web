@@ -106,6 +106,7 @@ def ware(ctx: Ctx) -> None:
     _finalize_avail_tree(ctx.bio_installed, grade_kind="bioware")
     _zero_vehicle_hosted_essence(ctx.cyber_installed, vehicle_hosts)
     ctx.installed = ctx.cyber_installed + ctx.bio_installed
+    ctx.inactive_ware_ids = {str(item["id"]) for item in ctx.installed if item.get("modular_equipped") is False}
     hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
     ctx.hosted_ware_ids = set(hosted_ids)
     apply_wireless_pairs(
@@ -132,7 +133,7 @@ def ware(ctx: Ctx) -> None:
     picks = ctx.state.skill_picks or {}
     optimized = {
         inst_id: str(picks.get(key) or "")
-        for key, _name, _kind, inst_id, _node in ware_accuracy_picks(ctx.state, hosted_ids)
+        for key, _name, _kind, inst_id, _node in ware_accuracy_picks(ctx.state, hosted_ids | ctx.inactive_ware_ids)
     }
     ctx.sources.extend(
         pair_bonus_sources(

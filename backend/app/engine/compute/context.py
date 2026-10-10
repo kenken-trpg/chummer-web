@@ -98,6 +98,7 @@ class Ctx:
     # quality id -> the ware that switches it off (`<disablequality>`)
     disabled_qualities: dict[str, str] = field(default_factory=dict)
     hosted_ware_ids: set[str] = field(default_factory=set)
+    inactive_ware_ids: set[str] = field(default_factory=set)
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 
     # --- effects / binders ------------------------------------------------

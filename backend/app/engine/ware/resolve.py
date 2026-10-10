@@ -26,6 +26,7 @@ from ..gear._common import chosen_cost
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
 from ._common import _cascade_orphans
 from .limbs import _apply_limb_attributes
+from .modular import apply_modular_state
 from .rating import _clamp_ware_rating, is_limb, limb_formula_extras, racial_formula_extras, ware_rating_bounds
 from .vehicles import _vehicle_mod_hosts
 
@@ -206,6 +207,7 @@ def resolve_ware(
                 "device_rating": _device_rating_of(ware, rating),
             }
         )
+    apply_modular_state(resolved, {str(row["id"]): row for row in catalog_ware(kind).get("items") or []})
     children: dict[str, list[dict[str, Any]]] = {}
     for item in resolved:
         if item["parent_id"]:

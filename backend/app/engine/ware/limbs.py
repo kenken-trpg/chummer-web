@@ -242,6 +242,8 @@ def _limb_rows(
         if key in seen:
             return
         seen.add(key)
+        if not descend_excluded and item.get("modular_equipped") is False:
+            return
         slot = str(item.get("limbslot") or "").lower()
         if slot in slots:
             yield item
