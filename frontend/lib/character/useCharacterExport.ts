@@ -5,8 +5,8 @@ import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { type UdonariumOptions, buildUdonariumXml } from "@/lib/udonarium";
-import { zipSingleFile } from "@/lib/zip";
+import { type UdonariumOptions, buildUdonariumConjured, buildUdonariumXml } from "@/lib/udonarium";
+import { zipFiles, zipSingleFile } from "@/lib/zip";
 import { type Notice } from "@/lib/engine-notices";
 import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
@@ -147,6 +147,20 @@ export function useCharacterExport(opts: {
     );
   }
 
+  /**
+   * Save every bound spirit and registered sprite as one zip, a piece each.
+   *
+   * Udonarium reads every xml an archive holds — checked against
+   * udonarium.app 1.17.4 — so a summoner's whole retinue goes on the table in
+   * one drop instead of one file per spirit.
+   */
+  function downloadUdonariumConjured(catalog: Catalog, tr: (n: string) => string) {
+    if (!ch) return;
+    const files = buildUdonariumConjured(ch, catalog, tr, locale);
+    if (!files.length) return;
+    offer(zipFiles(files), exportFilename(ch.name, "zip", { tag: "udonarium-conjured" }));
+  }
+
   /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
   async function downloadFvtt() {
     if (!ch) return;
@@ -203,6 +217,7 @@ export function useCharacterExport(opts: {
     downloadXlsx,
     downloadFvtt,
     downloadUdonarium,
+    downloadUdonariumConjured,
     confirmExport,
     cancelExport,
     copyText,

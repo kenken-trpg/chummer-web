@@ -1,5 +1,6 @@
 /**
- * A minimal ZIP writer: enough to put one file in an archive, and no more.
+ * A minimal ZIP writer: enough to put a few small files in an archive, and no
+ * more.
  *
  * Udonarium ships a character piece as a zip holding `data.xml`. It has two
  * ways in and they do not agree: dropping a file on the table reads a bare
@@ -46,61 +47,76 @@ function dosDateTime(at: Date): { date: number; time: number } {
 }
 
 /**
- * A zip holding a single stored file.
+ * A zip holding the given files, each stored.
  *
- * The name is written with the UTF-8 flag (bit 11) set, so a non-ASCII entry
+ * Names are written with the UTF-8 flag (bit 11) set, so a non-ASCII entry
  * name is read back as UTF-8 rather than as the archive's legacy code page.
  */
-export function zipSingleFile(name: string, content: string, at: Date = new Date()): Blob {
-  const data = new TextEncoder().encode(content);
-  const nameBytes = new TextEncoder().encode(name);
+export function zipFiles(files: { name: string; content: string }[], at: Date = new Date()): Blob {
+  const encoder = new TextEncoder();
   const { date, time } = dosDateTime(at);
-  const sum = crc32(data);
+  const parts: BlobPart[] = [];
+  const central: BlobPart[] = [];
+  let offset = 0;
+  let centralSize = 0;
 
-  const local = new DataView(new ArrayBuffer(30));
-  local.setUint32(0, 0x04034b50, true); // local file header signature
-  local.setUint16(4, 20, true); // version needed (2.0)
-  local.setUint16(6, 0x0800, true); // flags: UTF-8 name
-  local.setUint16(8, 0, true); // method: stored
-  local.setUint16(10, time, true);
-  local.setUint16(12, date, true);
-  local.setUint32(14, sum, true);
-  local.setUint32(18, data.length, true); // compressed size
-  local.setUint32(22, data.length, true); // uncompressed size
-  local.setUint16(26, nameBytes.length, true);
-  local.setUint16(28, 0, true); // extra field length
+  for (const file of files) {
+    const data = encoder.encode(file.content);
+    const nameBytes = encoder.encode(file.name);
+    const sum = crc32(data);
 
-  const central = new DataView(new ArrayBuffer(46));
-  central.setUint32(0, 0x02014b50, true); // central directory header signature
-  central.setUint16(4, 20, true); // version made by
-  central.setUint16(6, 20, true); // version needed
-  central.setUint16(8, 0x0800, true);
-  central.setUint16(10, 0, true);
-  central.setUint16(12, time, true);
-  central.setUint16(14, date, true);
-  central.setUint32(16, sum, true);
-  central.setUint32(20, data.length, true);
-  central.setUint32(24, data.length, true);
-  central.setUint16(28, nameBytes.length, true);
-  central.setUint16(30, 0, true); // extra
-  central.setUint16(32, 0, true); // comment
-  central.setUint16(34, 0, true); // disk number
-  central.setUint16(36, 0, true); // internal attributes
-  central.setUint32(38, 0, true); // external attributes
-  central.setUint32(42, 0, true); // offset of the local header
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true); // local file header signature
+    local.setUint16(4, 20, true); // version needed (2.0)
+    local.setUint16(6, 0x0800, true); // flags: UTF-8 name
+    local.setUint16(8, 0, true); // method: stored
+    local.setUint16(10, time, true);
+    local.setUint16(12, date, true);
+    local.setUint32(14, sum, true);
+    local.setUint32(18, data.length, true); // compressed size
+    local.setUint32(22, data.length, true); // uncompressed size
+    local.setUint16(26, nameBytes.length, true);
+    local.setUint16(28, 0, true); // extra field length
 
-  const centralSize = central.byteLength + nameBytes.length;
-  const centralOffset = local.byteLength + nameBytes.length + data.length;
+    const entry = new DataView(new ArrayBuffer(46));
+    entry.setUint32(0, 0x02014b50, true); // central directory header signature
+    entry.setUint16(4, 20, true); // version made by
+    entry.setUint16(6, 20, true); // version needed
+    entry.setUint16(8, 0x0800, true);
+    entry.setUint16(10, 0, true);
+    entry.setUint16(12, time, true);
+    entry.setUint16(14, date, true);
+    entry.setUint32(16, sum, true);
+    entry.setUint32(20, data.length, true);
+    entry.setUint32(24, data.length, true);
+    entry.setUint16(28, nameBytes.length, true);
+    entry.setUint16(30, 0, true); // extra
+    entry.setUint16(32, 0, true); // comment
+    entry.setUint16(34, 0, true); // disk number
+    entry.setUint16(36, 0, true); // internal attributes
+    entry.setUint32(38, 0, true); // external attributes
+    entry.setUint32(42, offset, true); // offset of this entry's local header
+
+    parts.push(local, nameBytes, data);
+    central.push(entry, nameBytes);
+    offset += local.byteLength + nameBytes.length + data.length;
+    centralSize += entry.byteLength + nameBytes.length;
+  }
 
   const end = new DataView(new ArrayBuffer(22));
   end.setUint32(0, 0x06054b50, true); // end of central directory signature
   end.setUint16(4, 0, true); // this disk
   end.setUint16(6, 0, true); // disk with the central directory
-  end.setUint16(8, 1, true); // entries on this disk
-  end.setUint16(10, 1, true); // entries in total
+  end.setUint16(8, files.length, true); // entries on this disk
+  end.setUint16(10, files.length, true); // entries in total
   end.setUint32(12, centralSize, true);
-  end.setUint32(16, centralOffset, true);
+  end.setUint32(16, offset, true); // where the central directory starts
   end.setUint16(20, 0, true); // comment length
 
-  return new Blob([local, nameBytes, data, central, nameBytes, end], { type: "application/zip" });
+  return new Blob([...parts, ...central, end], { type: "application/zip" });
+}
+
+/** A zip holding one stored file. */
+export function zipSingleFile(name: string, content: string, at: Date = new Date()): Blob {
+  return zipFiles([{ name, content }], at);
 }

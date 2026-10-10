@@ -26,6 +26,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     downloadXlsx: vi.fn().mockResolvedValue(undefined),
     downloadFvtt: vi.fn().mockResolvedValue(undefined),
     downloadUdonarium: vi.fn(),
+    downloadUdonariumConjured: vi.fn(),
     copyText: vi.fn(),
     copyShareLink: vi.fn().mockResolvedValue(undefined),
     refreshRoster: vi.fn(),
@@ -262,6 +263,7 @@ describe("<Toolbar>", () => {
   it("offers 召喚体 only once something is bound or registered", () => {
     render(<Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />);
     expect(screen.queryByRole("button", { name: "精霊コマ" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "ユドナリウム（精霊コマ）" })).toBeNull();
 
     const ed = makeEd();
     render(
@@ -291,6 +293,10 @@ describe("<Toolbar>", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "精霊コマ" }));
     expect(ed.copyText).toHaveBeenCalledWith(expect.any(String), "cs");
+    // the Udonarium one writes a file instead of copying, and needs the
+    // catalog and the translator to build it
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム（精霊コマ）" }));
+    expect(ed.downloadUdonariumConjured).toHaveBeenCalledWith(base.catalog, ed.tr);
   });
 
   it("asks before moving a character with creation errors into career mode", () => {

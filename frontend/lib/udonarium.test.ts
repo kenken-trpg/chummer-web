@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 // The escaping test parses the result back with DOMParser, which is the same
 // parser Udonarium reads the file with.
-import { buildUdonariumPalette, buildUdonariumXml, slotTag, xmlEscape } from "@/lib/udonarium";
+import {
+  buildUdonariumConjured,
+  buildUdonariumPalette,
+  buildUdonariumXml,
+  slotTag,
+  xmlEscape,
+} from "@/lib/udonarium";
 import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 
 const pistolsCatalog = makeCatalog({
@@ -306,5 +312,90 @@ describe("buildUdonariumXml", () => {
         ?.slice(1, 3);
     expect(at("Ghile Mear")).not.toEqual(at("Spirit Warden"));
     expect(at("Ghile Mear")).toEqual(at("Ghile Mear"));
+  });
+});
+
+describe("buildUdonariumConjured", () => {
+  const spirit = {
+    name: "Spirit of Earth",
+    force: 4,
+    services: 3,
+    bound: true,
+    attributes: { BOD: 8, AGI: 2, REA: 3, STR: 8, CHA: 4, INT: 4, LOG: 3, WIL: 4, INI: 7 },
+    skills: [{ name: "Assensing", attribute: "INT", rating: 4 }],
+    powers: [{ name: "Guard" }],
+    weaknesses: ["Allergy"],
+  };
+  const sprite = {
+    name: "Machine Sprite",
+    level: 4,
+    services: 1,
+    registered: true,
+    matrix: { attack: 3, sleaze: 2, dataprocessing: 5, firewall: 4, initiative: 8 },
+    skills: [{ name: "Computer", rating: 4 }],
+    powers: [{ name: "Diagnostics" }],
+  };
+
+  it("is empty for a character with nothing bound or registered", () => {
+    expect(buildUdonariumConjured(makeCharacter(), makeCatalog(), identityTr)).toEqual([]);
+  });
+
+  it("leaves out the spirits and sprites that are not bound or registered", () => {
+    const ch = makeCharacter({
+      derived: {
+        spirits: [{ ...spirit, bound: false }] as never,
+        sprites: [{ ...sprite, registered: false }] as never,
+      },
+    });
+    expect(buildUdonariumConjured(ch, makeCatalog(), identityTr)).toEqual([]);
+  });
+
+  it("writes one xml per piece, under names a zip can hold side by side", () => {
+    const ch = makeCharacter({
+      derived: { spirits: [spirit] as never, sprites: [sprite] as never },
+    });
+    const files = buildUdonariumConjured(ch, makeCatalog(), identityTr);
+    expect(files.map((f) => f.name)).toEqual(["data.xml", "data_1.xml"]);
+    expect(files[0].content).toContain('<data name="name">Spirit of Earth F4</data>');
+    expect(files[1].content).toContain('<data name="name">Machine Sprite L4</data>');
+  });
+
+  it("rolls a spirit off Force, and defines every variable it reads", () => {
+    const ch = makeCharacter({ derived: { spirits: [spirit] as never } });
+    const [file] = buildUdonariumConjured(ch, makeCatalog(), identityTr);
+    const palette = /<chat-palette[^>]*>([\s\S]*)<\/chat-palette>/.exec(file.content)![1];
+    const text = palette
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, "&");
+    expect(text).toContain("({INT}+{Assensing}+0)B6@{フォース} Assensing");
+    // Immunity to Normal Weapons is Body plus twice the Force
+    expect(text).toContain("({BOD}+{フォース}+{フォース})B6");
+    expect(text).toContain("//フォース=4");
+    expect(text).toContain("//Assensing=4");
+    expect(undefinedRefs(text)).toEqual([]);
+    // the counters the table clicks: Force and the services left
+    expect(file.content).toContain(
+      '<data name="フォース" type="numberResource" currentValue="4">4</data>',
+    );
+    expect(file.content).toContain(
+      '<data name="残りサービス" type="numberResource" currentValue="3">3</data>',
+    );
+  });
+
+  it("rolls a sprite off Level, capped at it, and defines every variable", () => {
+    const ch = makeCharacter({ derived: { sprites: [sprite] as never } });
+    const [file] = buildUdonariumConjured(ch, makeCatalog(), identityTr);
+    const palette = /<chat-palette[^>]*>([\s\S]*)<\/chat-palette>/.exec(file.content)![1];
+    expect(palette).toContain("({レベル}+{Computer}+0)B6@{レベル} Computer");
+    expect(palette).toContain("({ファイアウォール}+{レベル}+0)B6");
+    expect(palette).toContain("//レベル=4");
+    expect(palette).toContain("//ファイアウォール=4");
+    expect(undefinedRefs(palette)).toEqual([]);
+    // a sprite has only a Matrix condition monitor
+    expect(file.content).toContain('<data name="マトリックスCM"');
+    expect(file.content).not.toContain('<data name="身体CM"');
   });
 });
