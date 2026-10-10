@@ -343,6 +343,7 @@ export function useCharacterEditor(opts: { onCharacterOpened?: () => void } = {}
     downloadXlsx: exports.downloadXlsx,
     downloadFvtt: exports.downloadFvtt,
     downloadUdonarium: exports.downloadUdonarium,
+    downloadUdonariumConjured: exports.downloadUdonariumConjured,
     confirmExport: exports.confirmExport,
     cancelExport: exports.cancelExport,
     copyText: exports.copyText,

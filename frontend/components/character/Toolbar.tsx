@@ -46,6 +46,7 @@ export function Toolbar({
     downloadXlsx,
     downloadFvtt,
     downloadUdonarium,
+    downloadUdonariumConjured,
     copyText,
     copyShareLink,
     refreshRoster,
@@ -177,13 +178,24 @@ export function Toolbar({
         {ui("toolbar.cocoUntrained")}
       </label>
       {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
-        <button
-          className="btn"
-          onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")}
-          title={ui("toolbar.conjuredHint")}
-        >
-          {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
-        </button>
+        <>
+          <button
+            className="btn"
+            onClick={() =>
+              catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")
+            }
+            title={ui("toolbar.conjuredHint")}
+          >
+            {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
+          </button>
+          <button
+            className="btn"
+            onClick={() => catalog && downloadUdonariumConjured(catalog, tr)}
+            title={ui("toolbar.udonariumConjuredHint")}
+          >
+            {ui("toolbar.udonariumConjured")}
+          </button>
+        </>
       ) : null}
       <button
         className={`btn ${inCareer ? "primary" : ""}`}

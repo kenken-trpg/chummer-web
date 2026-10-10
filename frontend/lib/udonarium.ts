@@ -18,6 +18,7 @@
  */
 import type { Catalog, Character, Derived, InstalledWeapon } from "@/lib/types";
 import { attrName, makeT } from "@/lib/ui-strings";
+import { renderNotice } from "@/lib/engine-notices";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
@@ -413,6 +414,62 @@ const resource = (name: string, current: number, max: number) =>
   `        <data name="${xmlEscape(name)}" type="numberResource" currentValue="${current}">${max}</data>`;
 
 /**
+ * Where a piece lands on the table.
+ *
+ * Udonarium drops a piece exactly where the file says, so writing them all at
+ * one spot leaves a party loaded one file at a time in a single stack.
+ * Hashing the name spreads them over a small grid and keeps the export
+ * reproducible — the same character always writes the same file — putting two
+ * pieces in one place only when their names collide.
+ */
+function spotFor(name: string): { x: number; y: number } {
+  let h = 0;
+  for (const c of name || "") h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { x: 200 + (h % 6) * 100, y: 50 + (Math.floor(h / 6) % 4) * 100 };
+}
+
+/**
+ * The envelope every piece shares: the placement and display attributes, the
+ * name, the `detail` panels of counters, and the chat palette.
+ *
+ * A runner, a bound spirit and a registered sprite differ only in what goes
+ * in the panels and the palette, so the XML around them is written once.
+ */
+function pieceXml(piece: {
+  name: string;
+  panels: { title: string; rows: string[] }[];
+  buffLabel: string;
+  palette: string;
+}): string {
+  const spot = spotFor(piece.name);
+  const panels = piece.panels
+    .filter((p) => p.rows.length)
+    .map((p) => `      <data name="${xmlEscape(p.title)}">\n${p.rows.join("\n")}\n      </data>`)
+    .join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<character location.name="table" location.x="${spot.x}" location.y="${spot.y}" posZ="0" rotate="0" roll="0" isAltitudeIndicate="true" isLock="false" isDropShadow="false" hideInventory="false" nonTalkFlag="false" overViewWidth="270" overViewMaxHeight="250" specifyKomaImageFlag="false" komaImageHeignt="100" chatColorCode.0="#000000" chatColorCode.1="#FF0000" chatColorCode.2="#0099FF" syncDummyCounter="0">
+  <data name="character">
+    <data name="image">
+      <data type="image" name="imageIdentifier">none_icon</data>
+    </data>
+    <data name="common">
+      <data name="name">${xmlEscape(piece.name)}</data>
+      <data name="size">2</data>
+      <data name="altitude">0</data>
+    </data>
+    <data name="detail">
+${panels}
+    </data>
+    <data name="buff">
+      <data name="${xmlEscape(piece.buffLabel)}"></data>
+    </data>
+  </data>
+  <chat-palette dicebot="ShadowRun5">${xmlEscape(piece.palette)}</chat-palette>
+</character>
+`;
+}
+
+/**
  * The whole `data.xml` for one Udonarium character piece.
  *
  * The `detail` panel carries only the resources the table clicks during play —
@@ -440,51 +497,228 @@ export function buildUdonariumXml(
   const matrixCm = persona ? 8 + Math.ceil((persona.device_rating || 1) / 2) : 0;
   // `movement.run` is Chummer's metres-per-Complex-Action string; a rating
   // modifier can leave it non-numeric, and then the piece starts at 0.
-  const run = Number.parseInt(String(d.movement?.run ?? ""), 10);
-  const boxes = (n: number) => "[]".repeat(Math.max(n, 0));
-  // Every piece is written at the same spot, so a party loaded one file at a
-  // time lands in one stack and has to be dragged apart. Spreading them over a
-  // small grid by name keeps the export reproducible — the same character
-  // always writes the same file — while putting two characters in one place
-  // only when their names collide in the hash.
-  const spot = (() => {
-    let h = 0;
-    for (const c of ch.name || "") h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    return { x: 200 + (h % 6) * 100, y: 50 + (Math.floor(h / 6) % 4) * 100 };
-  })();
-  const wound = [
-    `${ui("udo.woundPhysical")}${boxes(cm.physical)}`,
-    `${ui("udo.woundStun")}${boxes(cm.stun)}`,
-  ].join("\n");
+  const parsed = Number.parseInt(String(d.movement?.run ?? ""), 10);
+  const run = Number.isFinite(parsed) ? parsed : 0;
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<character location.name="table" location.x="${spot.x}" location.y="${spot.y}" posZ="0" rotate="0" roll="0" isAltitudeIndicate="true" isLock="false" isDropShadow="false" hideInventory="false" nonTalkFlag="false" overViewWidth="270" overViewMaxHeight="250" specifyKomaImageFlag="false" komaImageHeignt="100" chatColorCode.0="#000000" chatColorCode.1="#FF0000" chatColorCode.2="#0099FF" syncDummyCounter="0">
-  <data name="character">
-    <data name="image">
-      <data type="image" name="imageIdentifier">none_icon</data>
-    </data>
-    <data name="common">
-      <data name="name">${xmlEscape(ch.name || tr(ch.metatype) || "Runner")}</data>
-      <data name="size">2</data>
-      <data name="altitude">0</data>
-    </data>
-    <data name="detail">
-      <data name="${xmlEscape(ui("udo.panelStatus"))}">
-${resource(ui("coco.initiative"), 0, 0)}
-${resource(ui("coco.edge"), edge, edge)}
-${resource(ui("udo.movementLeft"), Number.isFinite(run) ? run : 0, Number.isFinite(run) ? run : 0)}
-      </data>
-      <data name="${xmlEscape(ui("udo.panelCm"))}">
-${resource(ui("coco.cmPhysical"), 0, cm.physical)}
-${resource(ui("coco.cmStun"), 0, cm.stun)}
-${matrixCm ? `${resource(ui("coco.cmMatrix"), 0, matrixCm)}\n` : ""}        <data name="${xmlEscape(ui("udo.woundTrack"))}" type="markdown">${xmlEscape(wound)}</data>
-      </data>
-    </data>
-    <data name="buff">
-      <data name="${xmlEscape(ui("udo.panelBuff"))}"></data>
-    </data>
-  </data>
-  <chat-palette dicebot="ShadowRun5">${xmlEscape(buildUdonariumPalette(ch, catalog, tr, locale, opts))}</chat-palette>
-</character>
-`;
+  return pieceXml({
+    name: ch.name || tr(ch.metatype) || "Runner",
+    buffLabel: ui("udo.panelBuff"),
+    palette: buildUdonariumPalette(ch, catalog, tr, locale, opts),
+    panels: [
+      {
+        title: ui("udo.panelStatus"),
+        rows: [
+          resource(ui("coco.initiative"), 0, 0),
+          resource(ui("coco.edge"), edge, edge),
+          resource(ui("udo.movementLeft"), run, run),
+        ],
+      },
+      {
+        title: ui("udo.panelCm"),
+        rows: [
+          resource(ui("coco.cmPhysical"), 0, cm.physical),
+          resource(ui("coco.cmStun"), 0, cm.stun),
+          ...(matrixCm ? [resource(ui("coco.cmMatrix"), 0, matrixCm)] : []),
+          woundTrack(ui, cm.physical, cm.stun),
+        ],
+      },
+    ],
+  });
+}
+
+/** The box-ticking damage track the template keeps beside the monitors. */
+function woundTrack(ui: UiFn, physical: number, stun: number): string {
+  const boxes = (n: number) => "[]".repeat(Math.max(n, 0));
+  const text = [
+    `${ui("udo.woundPhysical")}${boxes(physical)}`,
+    `${ui("udo.woundStun")}${boxes(stun)}`,
+  ].join("\n");
+  return `        <data name="${xmlEscape(ui("udo.woundTrack"))}" type="markdown">${xmlEscape(text)}</data>`;
+}
+
+// --- bound spirits and registered sprites, as their own pieces -------------
+// A bound spirit or a registered sprite is dropped on the table and run like
+// anything else there, so it gets a piece of its own — the same thing the
+// Cocofolia export does with `buildCocofoliaConjured`.
+//
+// Force (or Level) is the variable worth having here. Every limit on the
+// sheet is it, and raising it at the table is the one adjustment that comes
+// up, so the rolls reference it rather than the number it happened to be at
+// export time. The attributes it already determined stay as they are: nothing
+// recomputes them when the variable moves.
+
+const SPIRIT_ATTRS = ["BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL"] as const;
+
+/** One piece per bound spirit. Skill test = Force + linked attribute,
+ *  limit = Force (SR5 p.395). */
+export function buildSpiritPieces(
+  ch: Character,
+  catalog: Catalog,
+  tr: (n: string) => string,
+  locale: Locale = "ja",
+): { name: string; xml: string }[] {
+  const ui = uiFor(locale);
+  const t = makeT(catalog, locale);
+  const A = (k: string) => varName(attrName(k, t));
+  const forceVar = varName(ui("udo.varForce"));
+
+  return (ch.derived.spirits || [])
+    .filter((s) => s.bound)
+    .map((s) => {
+      const a = s.attributes || {};
+      const force = s.force || 1;
+      const sec = new Section();
+
+      sec.roll(`2D6+${a.INI ?? force * 2}`, ui("coco.initiative"));
+      for (const sk of s.skills || []) {
+        const v = varName(tr(sk.name));
+        const attr = sk.attribute || "";
+        sec.roll(
+          `({${attr ? A(attr) : forceVar}}+{${v}}+0)B6@{${forceVar}}`,
+          skillLabel(sk.name, tr),
+        );
+      }
+      sec.roll(`({${A("REA")}}+{${A("INT")}}+0)B6`, ui("coco.defense"));
+      // Immunity to Normal Weapons: Force twice over, on top of Body.
+      sec.roll(`({${A("BOD")}}+{${forceVar}}+{${forceVar}})B6`, ui("coco.immunityResist"));
+      sec.roll(`({${forceVar}}+{${forceVar}})B6`, ui("coco.resistBanishing"));
+
+      sec.def(forceVar, force);
+      for (const k of SPIRIT_ATTRS) if ((a[k] || 0) > 0) sec.def(A(k), a[k]);
+      for (const sk of s.skills || []) sec.def(varName(tr(sk.name)), sk.rating || force);
+
+      const powers = [...(s.powers || []), ...(s.optionalpowers || [])].map((p) => tr(p.name));
+      const notes = [
+        ui("coco.spiritName", {
+          name: tr(s.name),
+          role: s.role_label ? renderNotice(s.role_label, ui) : s.role || ui("coco.spirit"),
+          force,
+        }),
+        ui("coco.spiritMemo", { services: s.services }),
+        powers.length ? ui("coco.powers", { list: powers.join(ui("common.listSep")) }) : "",
+        s.weaknesses?.length
+          ? ui("coco.weaknesses", { list: s.weaknesses.map(tr).join(ui("common.listSep")) })
+          : "",
+        ui("coco.spiritNote"),
+      ].filter(Boolean);
+
+      const physCM = 8 + Math.ceil((a.BOD || 0) / 2);
+      const stunCM = 8 + Math.ceil((a.WIL || 0) / 2);
+      return {
+        name: `${tr(s.name)} F${force}`,
+        xml: pieceXml({
+          name: `${tr(s.name)} F${force}`,
+          buffLabel: ui("udo.panelBuff"),
+          palette: [notes.join("\n"), sec.text()].join("\n\n"),
+          panels: [
+            {
+              title: ui("udo.panelStatus"),
+              rows: [
+                resource(ui("coco.initiative"), 0, 0),
+                resource(ui("udo.varForce"), force, force),
+                resource(ui("udo.services"), s.services || 0, s.services || 0),
+              ],
+            },
+            {
+              title: ui("udo.panelCm"),
+              rows: [
+                resource(ui("coco.cmPhysical"), 0, physCM),
+                resource(ui("coco.cmStun"), 0, stunCM),
+                woundTrack(ui, physCM, stunCM),
+              ],
+            },
+          ],
+        }),
+      };
+    });
+}
+
+/** One piece per registered sprite. Skill test = Level + skill, limit = Level
+ *  (SR5 p.254). */
+export function buildSpritePieces(
+  ch: Character,
+  _catalog: Catalog,
+  tr: (n: string) => string,
+  locale: Locale = "ja",
+): { name: string; xml: string }[] {
+  const ui = uiFor(locale);
+  const levelVar = varName(ui("udo.varLevel"));
+  const vFw = varName(ui("udo.varFirewall"));
+
+  return (ch.derived.sprites || [])
+    .filter((s) => s.registered)
+    .map((s) => {
+      const level = s.level || 1;
+      const m = s.matrix || { attack: 0, sleaze: 0, dataprocessing: 0, firewall: 0, initiative: 0 };
+      const sec = new Section();
+
+      sec.roll(`${level}D6+${m.initiative || level * 2}`, ui("coco.initiative"));
+      for (const sk of s.skills || []) {
+        const v = varName(tr(sk.name));
+        sec.roll(`({${levelVar}}+{${v}}+0)B6@{${levelVar}}`, skillLabel(sk.name, tr));
+      }
+      sec.roll(`({${vFw}}+{${levelVar}}+0)B6`, ui("coco.matrixDefensePlain"));
+      sec.roll(`({${levelVar}}+{${levelVar}})B6`, ui("coco.resistDerez"));
+
+      sec.def(levelVar, level);
+      sec.def(varName(ui("udo.varAttack")), m.attack);
+      sec.def(varName(ui("udo.varSleaze")), m.sleaze);
+      sec.def(varName(ui("udo.varDataProc")), m.dataprocessing);
+      sec.def(vFw, m.firewall);
+      for (const sk of s.skills || []) sec.def(varName(tr(sk.name)), sk.rating || level);
+
+      const powers = (s.powers || []).map((p) => tr(p.name));
+      const notes = [
+        ui("coco.spriteLevel", { name: tr(s.name), level }),
+        ui("coco.spriteMemo", { services: s.services }),
+        powers.length ? ui("coco.powers", { list: powers.join(ui("common.listSep")) }) : "",
+        ui("coco.spriteNote"),
+      ].filter(Boolean);
+
+      const cm = 8 + Math.ceil(level / 2);
+      const name = `${tr(s.name)} L${level}`;
+      return {
+        name,
+        xml: pieceXml({
+          name,
+          buffLabel: ui("udo.panelBuff"),
+          palette: [notes.join("\n"), sec.text()].join("\n\n"),
+          panels: [
+            {
+              title: ui("udo.panelStatus"),
+              rows: [
+                resource(ui("coco.initiative"), 0, 0),
+                resource(ui("udo.varLevel"), level, level),
+                resource(ui("udo.tasks"), s.services || 0, s.services || 0),
+              ],
+            },
+            {
+              title: ui("udo.panelCm"),
+              rows: [resource(ui("coco.cmMatrix"), 0, cm)],
+            },
+          ],
+        }),
+      };
+    });
+}
+
+/**
+ * Every bound spirit and registered sprite, one `.xml` per piece, ready for
+ * one zip. Udonarium reads every xml an archive holds, so the whole retinue
+ * goes on the table in one drop. Empty when the character has none.
+ */
+export function buildUdonariumConjured(
+  ch: Character,
+  catalog: Catalog,
+  tr: (n: string) => string,
+  locale: Locale = "ja",
+): { name: string; content: string }[] {
+  const pieces = [
+    ...buildSpiritPieces(ch, catalog, tr, locale),
+    ...buildSpritePieces(ch, catalog, tr, locale),
+  ];
+  // The entry names are Udonarium's to read, not the table's to see — the
+  // piece's own name comes from inside the xml — so they are numbered rather
+  // than named after a spirit, which keeps them ASCII and unique.
+  return pieces.map((p, i) => ({ name: i ? `data_${i}.xml` : "data.xml", content: p.xml }));
 }

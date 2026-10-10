@@ -292,6 +292,10 @@ export const JA_SHEET = {
   "udo.noteEdge": "■ エッジ振り足しは B6→R6、限界突破は @ 以降を外す",
   "udo.noteDice":
     "■ 判定は BCDice の ShadowRun5。波かっこの変数は下の //変数=値 の行を読むので、卓で書き換えればそれを使うロール全部に効きます",
+  "udo.varForce": "フォース",
+  "udo.varLevel": "レベル",
+  "udo.services": "残りサービス",
+  "udo.tasks": "残りタスク",
   "udo.varLimPhysical": "身体リミット",
   "udo.varLimMental": "精神リミット",
   "udo.varLimSocial": "社交リミット",

@@ -287,6 +287,10 @@ export const EN_SHEET = {
   "udo.noteEdge": "# Edge: reroll with R6 instead of B6; to break a limit, drop the @ part",
   "udo.noteDice":
     "# BCDice ShadowRun5. A braced variable reads the //variable=value lines below, so editing one at the table changes every roll that uses it",
+  "udo.varForce": "Force",
+  "udo.varLevel": "Level",
+  "udo.services": "Services left",
+  "udo.tasks": "Tasks left",
   "udo.varLimPhysical": "PhysicalLimit",
   "udo.varLimMental": "MentalLimit",
   "udo.varLimSocial": "SocialLimit",
