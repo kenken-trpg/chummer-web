@@ -178,24 +178,27 @@ export function Toolbar({
         {ui("toolbar.cocoUntrained")}
       </label>
       {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
-        <>
-          <button
-            className="btn"
-            onClick={() =>
-              catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")
-            }
-            title={ui("toolbar.conjuredHint")}
-          >
-            {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
-          </button>
-          <button
-            className="btn"
-            onClick={() => catalog && downloadUdonariumConjured(catalog, tr)}
-            title={ui("toolbar.udonariumConjuredHint")}
-          >
-            {ui("toolbar.udonariumConjured")}
-          </button>
-        </>
+        <button
+          className="btn"
+          onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")}
+          title={ui("toolbar.conjuredHint")}
+        >
+          {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
+        </button>
+      ) : null}
+      {/* one button for everything the runner brings along — spirits, sprites,
+          vehicles and drones — each kind as its own zip */}
+      {d.spirits?.some((s) => s.bound) ||
+      d.sprites?.some((s) => s.registered) ||
+      d.vehicles?.length ||
+      d.drones?.length ? (
+        <button
+          className="btn"
+          onClick={() => catalog && downloadUdonariumConjured(catalog, tr)}
+          title={ui("toolbar.udonariumConjuredHint")}
+        >
+          {ui("toolbar.udonariumConjured")}
+        </button>
       ) : null}
       <button
         className={`btn ${inCareer ? "primary" : ""}`}

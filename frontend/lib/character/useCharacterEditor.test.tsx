@@ -1088,6 +1088,67 @@ describe("useCharacterEditor file exports", () => {
     expect(await blobs[0].text()).toContain(names[1].replace(".png", ""));
   });
 
+  it("downloadUdonariumConjured() writes one zip per kind the runner brings along", async () => {
+    // spirits, vehicles and drones are three different things to drop on a
+    // table, so one click writes three archives rather than one mixed bag
+    const { result } = await booted(
+      makeCharacter({
+        id: "c1",
+        name: "Vex",
+        derived: {
+          spirits: [
+            {
+              name: "Spirit of Air",
+              force: 4,
+              services: 2,
+              bound: true,
+              attributes: { BOD: 2, AGI: 7, REA: 8, STR: 1, CHA: 4, INT: 4, LOG: 3, WIL: 4 },
+              skills: [],
+            },
+          ] as never,
+          vehicles: [
+            { id: "v1", name: "Van", category: "Trucks", handling: "2/1", body: "15" },
+          ] as never,
+          drones: [
+            { id: "d1", name: "Lynx", category: "Drones: Large", handling: "5", body: "6" },
+          ] as never,
+        },
+      }),
+    );
+
+    await act(async () => {
+      result.current.downloadUdonariumConjured(makeCatalog(), identityTr);
+    });
+
+    expect(clicks.map((c) => c.download.replace(/_\d{8}-\d{6}/, ""))).toEqual([
+      "Vex-udonarium-conjured.zip",
+      "Vex-udonarium-vehicles.zip",
+      "Vex-udonarium-drones.zip",
+    ]);
+    expect(entryNames(new Uint8Array(await blobs[2].arrayBuffer()))).toEqual(["data.xml"]);
+  });
+
+  it("downloadUdonariumConjured() writes nothing for a kind the runner has none of", async () => {
+    const { result } = await booted(
+      makeCharacter({
+        id: "c1",
+        name: "Vex",
+        derived: {
+          drones: [
+            { id: "d1", name: "Lynx", category: "Drones: Large", handling: "5", body: "6" },
+          ] as never,
+        },
+      }),
+    );
+
+    await act(async () => {
+      result.current.downloadUdonariumConjured(makeCatalog(), identityTr);
+    });
+
+    expect(clicks).toHaveLength(1);
+    expect(clicks[0].download).toMatch(/^Vex-udonarium-drones_\d{8}-\d{6}\.zip$/);
+  });
+
   it("downloadChum5() holds the file back while the player reviews what it would lose", async () => {
     api.exportChummer.mockResolvedValue(new Blob(["<character/>"]));
     const lost = [

@@ -263,7 +263,7 @@ describe("<Toolbar>", () => {
   it("offers 召喚体 only once something is bound or registered", () => {
     render(<Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />);
     expect(screen.queryByRole("button", { name: "精霊コマ" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "ユドナリウム（精霊コマ）" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "ユドナリウム（お供のコマ）" })).toBeNull();
 
     const ed = makeEd();
     render(
@@ -295,7 +295,7 @@ describe("<Toolbar>", () => {
     expect(ed.copyText).toHaveBeenCalledWith(expect.any(String), "cs");
     // the Udonarium one writes a file instead of copying, and needs the
     // catalog and the translator to build it
-    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム（精霊コマ）" }));
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム（お供のコマ）" }));
     expect(ed.downloadUdonariumConjured).toHaveBeenCalledWith(base.catalog, ed.tr);
   });
 

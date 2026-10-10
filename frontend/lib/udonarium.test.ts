@@ -4,6 +4,7 @@
 import {
   buildUdonariumConjured,
   buildUdonariumPalette,
+  buildUdonariumVehicles,
   buildUdonariumXml,
   portraitEntry,
   slotTag,
@@ -458,5 +459,136 @@ describe("buildUdonariumXml with a portrait", () => {
     expect(buildUdonariumXml(ch, makeCatalog(), identityTr)).toContain(
       '<data type="image" name="imageIdentifier">none_icon</data>',
     );
+  });
+});
+
+describe("buildUdonariumVehicles", () => {
+  // built in English throughout: the variable names are the assertions, and
+  // the English ones are stable where the Japanese ones are glossary terms
+
+  const vehicleCatalog = makeCatalog({
+    skills: {
+      groups: [],
+      skills: [
+        {
+          id: "v1",
+          name: "Pilot Ground Craft",
+          attribute: "REA",
+          category: "Vehicle Active",
+          skillgroup: null,
+          source: "SR5",
+        },
+        {
+          id: "v2",
+          name: "Pilot Aircraft",
+          attribute: "REA",
+          category: "Vehicle Active",
+          skillgroup: null,
+          source: "SR5",
+        },
+        {
+          id: "v3",
+          name: "Gunnery",
+          attribute: "AGI",
+          category: "Vehicle Active",
+          skillgroup: null,
+          source: "SR5",
+        },
+      ],
+    } as never,
+  });
+  const drone = {
+    id: "d1",
+    name: "Steel Lynx",
+    category: "Drones: Large",
+    handling: "5",
+    speed: "4",
+    accel: "2",
+    body: "6",
+    armor: "12",
+    pilot: "3",
+    sensor: "3",
+    weapon_mounts: [],
+  };
+  const rigger = (extra: Record<string, unknown> = {}) =>
+    makeCharacter({
+      derived: {
+        drones: [drone] as never,
+        skill_totals: { "Pilot Ground Craft": 5, "Pilot Aircraft": 3, Gunnery: 6 },
+        totals: { REA: 4, LOG: 5, AGI: 2 },
+        ...extra,
+      },
+    });
+
+  it("is empty for a character with nothing of that kind", () => {
+    expect(buildUdonariumVehicles(makeCharacter(), vehicleCatalog, identityTr, "en")).toEqual([]);
+  });
+
+  it("defines every variable it reads", () => {
+    const [piece] = buildUdonariumVehicles(rigger(), vehicleCatalog, identityTr, "en");
+    expect(undefinedRefs(piece.content)).toEqual([]);
+  });
+
+  it("rolls each of the three ways a vehicle is driven", () => {
+    const [piece] = buildUdonariumVehicles(rigger(), vehicleCatalog, identityTr, "en");
+    // by hand off Reaction, rigged off Logic, on its own off the Pilot rating
+    expect(piece.content).toContain("({REA}+{PilotSkill}+0)B6@{Handling}");
+    expect(piece.content).toContain("({LOG}+{PilotSkill}+0)B6@{Handling}");
+    expect(piece.content).toContain("({Pilot}+{Autosoft}+0)B6@{Sensor}");
+  });
+
+  it("starts the pilot skill at the best one the runner has and names it", () => {
+    const [piece] = buildUdonariumVehicles(rigger(), vehicleCatalog, identityTr, "en");
+    expect(piece.content).toContain("//PilotSkill=5");
+    // the others stay defined, so switching is one line at the table
+    expect(piece.content).toContain("//PilotAircraft=3");
+    expect(piece.content).toContain("Pilot Ground Craft");
+  });
+
+  it("leaves the gunnery variables out of an unarmed vehicle", () => {
+    const [piece] = buildUdonariumVehicles(rigger(), vehicleCatalog, identityTr, "en");
+    expect(piece.content).not.toContain("//Gunnery=");
+  });
+
+  it("rolls a mounted gun three ways and limits it by its accuracy", () => {
+    const ch = rigger({
+      weapons: [
+        {
+          id: "w1",
+          name: "Ares MMG",
+          accuracy: "5",
+          damage: "10P",
+          ap: "-5",
+          mode: "FA",
+          mounted_on: "d1",
+        },
+      ],
+    });
+    const [piece] = buildUdonariumVehicles(ch, vehicleCatalog, identityTr, "en");
+    expect(piece.content).toContain("({AGI}+{Gunnery}+0)B6@5");
+    expect(piece.content).toContain("({LOG}+{Gunnery}+0)B6@5");
+    expect(piece.content).toContain("//Gunnery=6");
+    expect(piece.content).toContain("Ares MMG [DV10P/AP-5/FA]");
+  });
+
+  it("gives a two-value Handling its own off-road roll rather than a dead variable", () => {
+    const ch = makeCharacter({
+      derived: {
+        vehicles: [{ ...drone, name: "Delivery Van", handling: "2/1", body: "15" }] as never,
+        skill_totals: { "Pilot Ground Craft": 5 },
+        totals: { REA: 4, LOG: 5, AGI: 2 },
+      },
+    });
+    const [piece] = buildUdonariumVehicles(ch, vehicleCatalog, identityTr, "en", "vehicles");
+    expect(piece.content).toContain("//HandlingOffroad=1");
+    expect(piece.content).toContain("B6@{HandlingOffroad}");
+    expect(undefinedRefs(piece.content)).toEqual([]);
+  });
+
+  it("gives a vehicle 12 + half its Body in boxes, and no stun track", () => {
+    const [piece] = buildUdonariumVehicles(rigger(), vehicleCatalog, identityTr, "en");
+    // Body 6 -> 15
+    expect(piece.content).toContain('type="numberResource" currentValue="0">15<');
+    expect(piece.content).not.toContain("Stun[]");
   });
 });
