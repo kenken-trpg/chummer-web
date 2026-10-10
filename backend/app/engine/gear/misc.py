@@ -81,8 +81,11 @@ def _ensure_misc_gear(state: CharacterState) -> list[Notice]:
                 host_name = str(parent_spec.get("name") or "")
             elif host:
                 kind, host_spec = host
-                if kind == "weapon":
-                    fits = ammo_fits_weapon(spec, host_spec)
+                if kind in ("weapon", "ware_weapon"):
+                    fits = ammo_fits_weapon(spec, host_spec) or (
+                        kind == "ware_weapon"
+                        and (bool(inst.included) or spec.get("category") in host_spec["allow_gear"])
+                    )
                 elif kind == "vehicle":
                     # a vehicle is a container: a medkit or a camera rides in
                     # it as it is. Only what plugs into a host of its own
@@ -377,6 +380,7 @@ def _resolve_misc_gear(
         row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost
     for row in weapons or []:
         kids = children.get(str(row.get("id") or "")) or []
+        kids = [kid for kid in kids if ammo_fits_weapon(specs.get(kid["gear_id"]) or {}, row)]
         row["ammo_gear"] = kids
         extra_cost = sum(int(kid.get("nuyen") or 0) for kid in kids)
         row["nuyen"] = int(row.get("nuyen") or 0) + extra_cost

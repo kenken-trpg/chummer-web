@@ -43,6 +43,7 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     # counts what the price is quoted for — `costfor` of them (a box of 10).
     cost_for = {str(row["id"]): int(row.get("costfor") or 0) for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
+    gear_ids: dict[str, str] = {}
     rows_by_id = {str(row["id"]): row for b in ("gear", *BUCKETS) for row in catalog_list(b)}
 
     def stays(
@@ -179,6 +180,8 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 row["parent_id"] = parent_id
                 row["included"] = included
         routed[bucket].append(row)
+        if _text(g.find("guid")):
+            gear_ids[_text(g.find("guid"))] = row["id"]
         for child in g.findall("./children/gear"):
             route_gear(child, row["id"], bucket, parent_gid=gid)
 
@@ -217,6 +220,13 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             parent_gid=ware_id,
             host_allow=list(ware.get("allow_gear") or []),
         )
+    for weapon_id, g in st.pop("_weapon_gear", []) or []:
+        route_gear(g, weapon_id, None)
+    for inst_id, saved_ammo_id in (st.pop("_weapon_loaded", {}) or {}).items():
+        for kind in ("weapons", "cyberware", "bioware"):
+            for inst in st.get(kind) or []:
+                if inst["id"] == inst_id and saved_ammo_id in gear_ids:
+                    inst["loaded_ammo_id"] = gear_ids[saved_ammo_id]
     for b, rows in routed.items():
         # vehicles import first: its drones are already in `st`
         st[b] = (st.get(b) or []) + rows

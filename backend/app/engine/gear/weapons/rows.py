@@ -334,6 +334,7 @@ def _append_ware_weapons(
     state: CharacterState,
     attr_totals: dict[str, int] | None = None,
 ) -> None:
+    installs = {inst.id: inst for inst in [*state.cyberware, *state.bioware]}
     taken = {str(row.get("id") or "") for row in weapons}
     ware_by_id = {str(item.get("id") or ""): item for item in ware_items if item.get("id")}
     for item in ware_items:
@@ -353,6 +354,7 @@ def _append_ware_weapons(
             nuyen=int(item.get("nuyen") or 0),
             from_ware=True,
             source_ware_id=ware_id,
+            loaded_ammo_id=installs[ware_id].loaded_ammo_id if ware_id in installs else None,
         )
         # Which tab owns it: bioware claws are deleted from `bioware`, a
         # cyberspur from `cyberware`.

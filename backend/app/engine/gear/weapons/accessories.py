@@ -18,14 +18,16 @@ from ....notices import Notice, notice, term
 from ....rules import current_rules
 from ...formulas import _add_leading_int, _leading_int
 from .._common import _clamp_rating, _pick_accessory_mount, accessory_fits_weapon
+from .hosts import ware_weapon_specs
 
 
 def _ensure_weapon_accessories(state: CharacterState) -> list[Notice]:
     warnings: list[Notice] = []
     specs = {item["id"]: item for item in catalog().get("weapon_accessories") or []}
     by_name = {item["name"]: item for item in specs.values()}
-    weapons = {item.id: item for item in state.weapons}
     weapon_specs = {item["id"]: item for item in catalog().get("weapons") or []}
+    weapons = {item.id: weapon_specs.get(item.weapon_id) or {} for item in state.weapons}
+    weapons.update(ware_weapon_specs(state))
     kept: list[WeaponAccessoryInstall] = []
     for inst in list(state.weapon_accessories or []):
         spec = specs.get(inst.accessory_id)
@@ -37,20 +39,19 @@ def _ensure_weapon_accessories(state: CharacterState) -> list[Notice]:
         kept.append(inst)
     have_included = {(row.parent_id, (specs.get(row.accessory_id) or {}).get("name")) for row in kept if row.included}
     extra: list[WeaponAccessoryInstall] = []
-    for weapon in state.weapons:
-        wspec = weapon_specs.get(weapon.weapon_id) or {}
+    for weapon_id, wspec in weapons.items():
         for gift_name in wspec.get("included") or []:
             child = by_name.get(gift_name)
-            if not child or (weapon.id, child["name"]) in have_included:
+            if not child or (weapon_id, child["name"]) in have_included:
                 continue
             extra.append(
                 WeaponAccessoryInstall(
                     accessory_id=child["id"],
-                    parent_id=weapon.id,
+                    parent_id=weapon_id,
                     included=True,
                 )
             )
-            have_included.add((weapon.id, child["name"]))
+            have_included.add((weapon_id, child["name"]))
     preferred: dict[tuple[str, str], WeaponAccessoryInstall] = {}
     for inst in kept + extra:
         key = (inst.parent_id or "", inst.accessory_id)
