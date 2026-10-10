@@ -47,6 +47,9 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           const fromArmor = Boolean(item.from_armor && item.source_armor_id);
           // Born with it: no cost, no accessories, no ammo, nothing to delete.
           const natural = Boolean(item.natural);
+          // The gun a drone's own entry comes with: free, and removing it
+          // means removing the drone.
+          const included = Boolean(item.included);
           return (
             <div className="cyber-item" key={item.id}>
               <div>
@@ -71,11 +74,21 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     ? ui("weapon.categoryDice", { dice: item.category_dice })
                     : ""}
                   {item.mounted_label ? ui("weapon.mounted", { name: tr(item.mounted_label) }) : ""}
+                  {included ? ui("weapon.includedWithHost") : ""}
                 </div>
                 <div className="cyber-controls">
-                  <DiscountToggle list="weapons" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
+                  {included ? null : (
+                    <DiscountToggle
+                      list="weapons"
+                      id={item.id}
+                      ch={ch}
+                      d={d}
+                      ui={ui}
+                      patch={patch}
+                    />
+                  )}
                 </div>
-                {fromWare || natural || fromArmor ? null : (
+                {fromWare || natural || fromArmor || included ? null : (
                   <div className="cyber-controls">
                     <label title={ui("common.qtyHint")}>
                       {ui("common.qty")}
@@ -273,7 +286,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   </div>
                 ) : null}
               </div>
-              {natural ? null : (
+              {natural || included ? null : (
                 <button
                   className="btn danger"
                   onClick={() => {

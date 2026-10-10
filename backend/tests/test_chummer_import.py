@@ -1073,3 +1073,22 @@ def test_a_mount_holding_more_than_one_gun_keeps_them_all_and_says_so() -> None:
     assert len(st["weapons"]) == 2
     (mount,) = st["weapon_mounts"]
     assert mount["weapon_install_id"] == st["weapons"][0]["id"]
+
+
+def test_a_gun_a_drone_came_with_stays_free_across_a_round_trip() -> None:
+    """The export marks it with the host's id in `<parentid>`, as Chummer
+    does, so the read skips it and the drone's entry grants it again."""
+    from app.models import GearInstall
+    from tests.engine_support import BUMBLEBEE, _mundane
+
+    ch = import_character(_mundane("bee", drones=[GearInstall(gear_id=BUMBLEBEE)]).model_dump())
+    xml = state_to_chum5(ch)
+    (node,) = ET.fromstring(xml).findall("./weapons/weapon")
+    assert _text(node.find("name")) == "Stoner-Ares M202"
+    assert _text(node.find("parentid"))
+    st, warnings = chum5_to_state(xml.encode() if isinstance(xml, str) else xml)
+    assert warnings == []
+    again = import_character(st)
+    assert [(w["name"], w["nuyen"], w["included"]) for w in again.derived["weapons"]] == [("Stoner-Ares M202", 0, True)]
+    (mount,) = again.derived["drones"][0]["weapon_mounts"]
+    assert mount["weapon_name"] == "Stoner-Ares M202"

@@ -182,15 +182,28 @@ def _drone_included_gears(el: ET.Element) -> list[dict[str, Any]]:
         name = _text(gift.find("name")) or _text(gift)
         if not name:
             continue
+        # The short form puts the name in the element's own text and the rest
+        # in attributes: `<gear rating="3" select="Stoner-Ares M202">[Weapon]
+        # Targeting Autosoft</gear>`. Most of the granted autosofts use it.
         items.append(
             {
                 "name": name,
                 "category": _text(gift.find("category")),
-                "rating": max(1, _int(gift.find("rating"), 1)),
+                "rating": max(1, _int(gift.find("rating"), 0) or int(gift.get("rating") or 1)),
                 "maxrating": _int(gift.find("maxrating"), 0),
+                # what it is for: the weapon a Targeting Autosoft aims, the
+                # skill a Skill Autosoft runs
+                "extra": _text(gift.find("extra")) or (gift.get("select") or ""),
             }
         )
     return items
+
+
+def _drone_included_weapons(el: ET.Element) -> list[str]:
+    """The guns a vehicle's entry comes with, as names. Chummer also nests them
+    in the matching `<weaponmount>`; the mount's `<allowedweapons>` is what
+    says which gun belongs in which mount."""
+    return [name for node in el.findall("./weapons/weapon") if (name := _text(node.find("name")) or _text(node))]
 
 
 def _drone_included_mods(el: ET.Element) -> list[str]:
@@ -252,6 +265,7 @@ def _load_vehicle_entries(*, drones: bool) -> list[dict[str, Any]]:
                 "included_gears": _drone_included_gears(el),
                 "included_mods": _drone_included_mods(el),
                 "included_weaponmounts": _drone_included_mounts(el),
+                "included_weapons": _drone_included_weapons(el),
                 "modslots": _int(el.find("modslots")) if _text(el.find("modslots")) else None,
                 "powertrainmodslots": _int(el.find("powertrainmodslots")),
                 "protectionmodslots": _int(el.find("protectionmodslots")),

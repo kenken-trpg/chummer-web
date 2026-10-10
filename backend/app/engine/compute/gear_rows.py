@@ -86,7 +86,7 @@ def resolve_weapon_rows(state: CharacterState) -> tuple[list[WeaponInstall], lis
             continue
         qty = max(1, int(weapon_inst.qty or 1))
         weapon_inst.qty = qty
-        unit = int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
+        unit = 0 if weapon_inst.included else int(eval_formula(str(spec.get("cost") or "0"), 1, 0))
         cost = unit * qty
         nuyen += cost
         kept_weapons.append(weapon_inst)
@@ -99,6 +99,7 @@ def resolve_weapon_rows(state: CharacterState) -> tuple[list[WeaponInstall], lis
                 loaded_ammo_id=weapon_inst.loaded_ammo_id,
             )
         )
+        weapons[-1]["included"] = bool(weapon_inst.included)
     return kept_weapons, weapons, nuyen
 
 

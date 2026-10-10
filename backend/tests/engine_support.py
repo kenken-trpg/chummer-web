@@ -139,6 +139,9 @@ PREDATOR = "971c711b-db32-4339-9203-865ef38f350e"
 ERIKA_DECK = "b6d1476d-a08c-43fc-be0e-68ca9330a43e"
 RADIO_SHACK_RCC = "9d410862-89ae-408c-8342-82f7e6c1ae8f"
 SENSOR_ARRAY = "2ca81a10-d0f7-4b39-ac93-a84f2f69f9d9"
+#: comes with a Stoner-Ares M202 in a Heavy mount, a Targeting Autosoft
+#: rating 3 for it, a Rigger Interface and a Sensor Array (NP p.23)
+BUMBLEBEE = "73b7729b-89c1-44fb-950c-f8391376a6b8"
 ATMOSPHERE = "5c3b9966-ad7e-42e3-b0e0-f656021784cf"
 
 
@@ -155,6 +158,11 @@ def _mundane(cid: str, **kwargs: object) -> CharacterState:
 FORD_AMERICAR = "898906ec-f2b9-43a4-98ad-6f79230b9a0c"
 MECHANICAL_ARM = "3154f81c-f85c-414d-abe4-8289aa6e9766"
 STANDARD_SR5_MOUNT = "079a5c61-aee6-4383-81b7-32540f7a0a0b"
+HEAVY_SR5_MOUNT = "a567c5d3-38b8-496a-add8-1e176384e935"
+#: the three option parts the Bumblebee's entry asks for on that mount
+MOUNT_EXTERNAL = "20e7d5d5-da20-4466-99b7-977a578155e4"
+MOUNT_FIXED = "5d53c232-c18d-4546-bb50-5325f57eb422"
+MOUNT_REMOTE = "df720a43-31aa-4053-9f2e-30ec4923cfe8"
 HAND_BLADE = "ba93ab8d-fd7f-4fc4-bfa3-5f987fd15d77"
 
 

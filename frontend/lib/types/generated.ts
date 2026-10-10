@@ -125,6 +125,8 @@ export interface WeaponInstall {
   weapon_id: string;
   qty?: number;
   loaded_ammo_id?: string | null;
+  /** comes with a drone's own entry: free, and not the player's to remove */
+  included?: boolean;
   /** bought through the Black Market Pipeline: 10% off (Chummer's
    *  `<discountedcost>`, which the quality's categories allow)
    */

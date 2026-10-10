@@ -132,6 +132,7 @@ export const JA_GEAR = {
   "weapon.fromGear": " / ギア連動",
   "weapon.fromWare": " / ウェア連動",
   "weapon.fromArmor": " / アーマー連動",
+  "weapon.includedWithHost": " / 搭載元に付属（無料・外せません）",
   "weapon.natural": " / {source} 由来（生得）",
   "weapon.limbStr": " / 肢 STR {str}",
   "weapon.focusDice": " / 収束具+{dice}",
