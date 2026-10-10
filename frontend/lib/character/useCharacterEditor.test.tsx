@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { makeCharacter } from "@/tests/fixtures";
+import { identityTr, makeCatalog, makeCharacter } from "@/tests/fixtures";
 import type { Catalog, Character } from "@/lib/types";
 import { loadPendingGear } from "@/lib/character/pending-gear-store";
 import { useCharacterEditor } from "@/lib/character/useCharacterEditor";
@@ -968,6 +968,22 @@ describe("useCharacterEditor undo/redo", () => {
   });
 });
 
+/** The names in a zip's central directory, in order — enough to see what a
+ *  download actually carries without pulling in a reader. */
+function entryNames(bytes: Uint8Array): string[] {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.length);
+  const end = bytes.length - 22;
+  const count = view.getUint16(end + 10, true);
+  const names: string[] = [];
+  let at = view.getUint32(end + 16, true);
+  for (let i = 0; i < count; i++) {
+    const len = view.getUint16(at + 28, true);
+    names.push(new TextDecoder().decode(bytes.slice(at + 46, at + 46 + len)));
+    at += 46 + len;
+  }
+  return names;
+}
+
 describe("useCharacterEditor file exports", () => {
   let clicks: { href: string; download: string }[];
   let blobs: Blob[];
@@ -1039,6 +1055,37 @@ describe("useCharacterEditor file exports", () => {
 
     expect(clicks[0].download).toMatch(/^Vex-fvtt_\d{8}-\d{6}\.json$/);
     expect(result.current.error).toBeNull();
+  });
+
+  // The Udonarium piece is the one export built entirely in the browser, and
+  // the one that puts a second file in its download.
+  const PORTRAIT =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("downloadUdonarium() writes a zip holding just the piece when there is no portrait", async () => {
+    const { result } = await booted(makeCharacter({ id: "c1", name: "Vex" }));
+
+    await act(async () => {
+      await result.current.downloadUdonarium(makeCatalog(), identityTr);
+    });
+
+    expect(clicks[0].download).toMatch(/^Vex-udonarium_\d{8}-\d{6}\.zip$/);
+    expect(entryNames(new Uint8Array(await blobs[0].arrayBuffer()))).toEqual(["data.xml"]);
+  });
+
+  it("downloadUdonarium() carries the portrait beside the piece, named after its hash", async () => {
+    const { result } = await booted(makeCharacter({ id: "c1", name: "Vex", portrait: PORTRAIT }));
+
+    await act(async () => {
+      await result.current.downloadUdonarium(makeCatalog(), identityTr);
+    });
+
+    const bytes = new Uint8Array(await blobs[0].arrayBuffer());
+    const names = entryNames(bytes);
+    expect(names[0]).toBe("data.xml");
+    expect(names[1]).toMatch(/^[0-9a-f]{64}\.png$/);
+    // the piece has to point at exactly the file that came with it
+    expect(await blobs[0].text()).toContain(names[1].replace(".png", ""));
   });
 
   it("downloadChum5() holds the file back while the player reviews what it would lose", async () => {

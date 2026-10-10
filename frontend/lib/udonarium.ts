@@ -24,6 +24,7 @@ import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { skillLabel } from "@/lib/character/format";
 import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
+import type { ZipEntry } from "@/lib/zip";
 
 const uiFor =
   (locale: Locale): UiFn =>
@@ -34,6 +35,9 @@ export type UdonariumOptions = {
   /** Also list every active skill the runner can default on (SR5 p.130),
    *  plus the knowledge skills they actually have. */
   untrained?: boolean;
+  /** The piece's picture, as {@link portraitEntry} resolved it. Without one
+   *  the piece gets Udonarium's blank silhouette. */
+  image?: PortraitEntry | null;
 };
 
 /** The attributes that get a palette variable, in the order Chummer prints
@@ -409,6 +413,56 @@ export function buildUdonariumPalette(
   return blocks.join("\n\n");
 }
 
+/**
+ * A picture, as Udonarium carries one.
+ *
+ * It does not reference an image by name: the `imageIdentifier` in a piece is
+ * the SHA-256 of the file's bytes, and the file travels in the same zip named
+ * after that hash. Two pieces sharing a picture therefore share one copy, and
+ * a picture already in the room is recognised rather than loaded twice.
+ * Confirmed against udonarium.app 1.17.4.
+ */
+export type PortraitEntry = {
+  identifier: string;
+  file: ZipEntry;
+};
+
+const PORTRAIT_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/gif": "gif",
+  "image/webp": "webp",
+};
+
+/**
+ * Turn a stored `data:` portrait into the file and identifier a piece needs.
+ *
+ * Returns null for anything that is not one of the image types a portrait is
+ * allowed to be (`PORTRAIT_TYPES`), or that does not decode — a picture that
+ * cannot be carried is not a reason to fail the export, it just leaves the
+ * piece with the blank silhouette.
+ */
+export async function portraitEntry(dataUrl: string): Promise<PortraitEntry | null> {
+  const m = /^data:([^;,]+);base64,([\s\S]*)$/.exec(dataUrl || "");
+  const ext = m && PORTRAIT_EXT[m[1].trim().toLowerCase()];
+  if (!m || !ext) return null;
+  // the explicit buffer type is what `crypto.subtle.digest` takes
+  let bytes: Uint8Array<ArrayBuffer>;
+  try {
+    const bin = atob(m[2]);
+    bytes = new Uint8Array(new ArrayBuffer(bin.length));
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch {
+    return null;
+  }
+  if (!bytes.length) return null;
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const identifier = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return { identifier, file: { name: `${identifier}.${ext}`, content: bytes } };
+}
+
 /** `<data name="…" type="numberResource" currentValue="v">max</data>` */
 const resource = (name: string, current: number, max: number) =>
   `        <data name="${xmlEscape(name)}" type="numberResource" currentValue="${current}">${max}</data>`;
@@ -440,6 +494,9 @@ function pieceXml(piece: {
   panels: { title: string; rows: string[] }[];
   buffLabel: string;
   palette: string;
+  /** The identifier of a picture carried in the same zip, or nothing for
+   *  Udonarium's blank silhouette. */
+  image?: string | null;
 }): string {
   const spot = spotFor(piece.name);
   const panels = piece.panels
@@ -450,7 +507,7 @@ function pieceXml(piece: {
 <character location.name="table" location.x="${spot.x}" location.y="${spot.y}" posZ="0" rotate="0" roll="0" isAltitudeIndicate="true" isLock="false" isDropShadow="false" hideInventory="false" nonTalkFlag="false" overViewWidth="270" overViewMaxHeight="250" specifyKomaImageFlag="false" komaImageHeignt="100" chatColorCode.0="#000000" chatColorCode.1="#FF0000" chatColorCode.2="#0099FF" syncDummyCounter="0">
   <data name="character">
     <data name="image">
-      <data type="image" name="imageIdentifier">none_icon</data>
+      <data type="image" name="imageIdentifier">${xmlEscape(piece.image || "none_icon")}</data>
     </data>
     <data name="common">
       <data name="name">${xmlEscape(piece.name)}</data>
@@ -502,6 +559,7 @@ export function buildUdonariumXml(
 
   return pieceXml({
     name: ch.name || tr(ch.metatype) || "Runner",
+    image: opts.image?.identifier,
     buffLabel: ui("udo.panelBuff"),
     palette: buildUdonariumPalette(ch, catalog, tr, locale, opts),
     panels: [
