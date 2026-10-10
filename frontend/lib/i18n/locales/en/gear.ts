@@ -242,5 +242,11 @@ export const EN_GEAR = {
   "ware.essDiscountHint":
     "An essence discount the GM allowed (negative costs more). Only offered when the settings file allows essence discounts",
 
+  "ware.modularMount": "Modular mount",
+  "ware.modularMountFor": "{name}: Modular mount",
+  "ware.modularDetached": "Detach (keep owned)",
+  "ware.modularCurrentInvalid": "Current mount (incompatible): {name}",
+  "ware.modularInactive": "Detached; improvements inactive",
+  "ware.modularActive": "Connected",
   "ware.target": "Target",
 };

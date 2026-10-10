@@ -159,3 +159,13 @@ def test_every_active_skill_falls_into_a_listed_category() -> None:
     cats = set(skills["active_categories"])
     orphans = sorted({s["category"] for s in skills["skills"] if s["source"] == "SR5"} - cats)
     assert not orphans
+
+
+def test_modular_connection_metadata_reaches_the_browser() -> None:
+    items = public_catalog()["cyberware"]["items"]
+    hip = next(item for item in items if item["name"] == "Modular Connector, Hip")
+    leg = next(item for item in items if item["name"] == "Obvious Full Leg, Modular")
+    assert hip["modular_mount"] == "hip"
+    assert hip["mounts_to"] == ""
+    assert leg["modular_mount"] == ""
+    assert leg["mounts_to"] == "hip"

@@ -604,6 +604,8 @@ export interface Catalog {
 }
 
 export interface WareCatalogItem {
+  modular_mount?: string;
+  mounts_to?: string;
   id: string;
   also_in?: AlsoIn[];
   name: string;

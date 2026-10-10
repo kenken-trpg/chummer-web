@@ -1,4 +1,4 @@
-import type { WareCatalogItem, WareInstall } from "@/lib/types";
+import type { InstalledWare, WareCatalogItem, WareInstall } from "@/lib/types";
 
 export function removeWareTree(items: WareInstall[], id: string): WareInstall[] {
   const drop = new Set<string>([id]);
@@ -82,4 +82,36 @@ export function dropUnderRemovedWare<T extends { id?: string; parent_id?: string
     }
   }
   return rows.filter((row) => !row.parent_id || !drop.has(row.parent_id));
+}
+
+/** Direct character-owned mount fit. Body-wide blocking remains engine validation. */
+export function modularMountCandidates(
+  item: InstalledWare,
+  rows: InstalledWare[],
+  catalog: WareCatalogItem[],
+): InstalledWare[] {
+  const specs = new Map(catalog.map((spec) => [spec.id, spec]));
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const plug = specs.get(item.ware_id)?.mounts_to;
+  if (!plug) return [];
+  return rows.filter((host) => {
+    if (host.id === item.id || specs.get(host.ware_id)?.modular_mount !== plug) return false;
+    if (host.grade !== item.grade || (item.side && item.side !== host.side)) return false;
+    // Exclude descendants, corrupt cycles, and trees rooted in vehicle hosts.
+    const seen = new Set([item.id]);
+    let ancestor: InstalledWare | undefined = host;
+    while (ancestor) {
+      if (seen.has(ancestor.id)) return false;
+      seen.add(ancestor.id);
+      if (!ancestor.parent_id) break;
+      ancestor = byId.get(ancestor.parent_id);
+      if (!ancestor) return false;
+    }
+    return !rows.some(
+      (row) =>
+        row.id !== item.id &&
+        row.parent_id === host.id &&
+        specs.get(row.ware_id)?.mounts_to === plug,
+    );
+  });
 }

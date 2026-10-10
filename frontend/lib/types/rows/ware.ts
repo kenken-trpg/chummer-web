@@ -3,6 +3,8 @@ import type { InstalledGear } from "./gear";
 // Cyberware and bioware: row shapes listed in `Derived` (../derived.ts).
 
 export interface InstalledWare {
+  /** Derived connection state; detached purchases remain owned. */
+  modular_equipped?: boolean;
   id: string;
   ware_id: string;
   name: string;
