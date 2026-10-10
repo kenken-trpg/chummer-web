@@ -4,7 +4,8 @@ import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
-import type { Character } from "@/lib/types";
+import type { Catalog, Character } from "@/lib/types";
+import { type UdonariumOptions, buildUdonariumXml } from "@/lib/udonarium";
 import { type Notice } from "@/lib/engine-notices";
 import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
@@ -122,6 +123,28 @@ export function useCharacterExport(opts: {
     }
   }
 
+  /**
+   * Save the character as an Udonarium piece (`.xml`).
+   *
+   * Built here rather than on the server: the palette comes out of `derived`,
+   * which this browser already has. Udonarium ships pieces as a zip holding a
+   * `data.xml`, but it reads a bare xml too, and the zip is only needed to
+   * carry an image this export does not have.
+   */
+  function downloadUdonarium(
+    catalog: Catalog,
+    tr: (n: string) => string,
+    opts: UdonariumOptions = {},
+  ) {
+    if (!ch) return;
+    offer(
+      new Blob([buildUdonariumXml(ch, catalog, tr, locale, opts)], {
+        type: "application/xml",
+      }),
+      exportFilename(ch.name, "xml", { tag: "udonarium" }),
+    );
+  }
+
   /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
   async function downloadFvtt() {
     if (!ch) return;
@@ -177,6 +200,7 @@ export function useCharacterExport(opts: {
     downloadChum5,
     downloadXlsx,
     downloadFvtt,
+    downloadUdonarium,
     confirmExport,
     cancelExport,
     copyText,

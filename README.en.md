@@ -16,7 +16,7 @@ The interface ships in Japanese and English, switchable in the top bar. Japanese
 
 In English you get the app's own copy (tabs, buttons, panels, the character sheet including its print layout, and the creation-check messages) plus catalog entries under their original English names, since the Chummer data files are English and the Japanese translation is an overlay on top. The rules engine reports a key and its parameters rather than a sentence, so its wording lives in the frontend dictionary and follows the language switch.
 
-**The Cocofolia export follows the UI language too**, but defaults to Japanese: Cocofolia is a Japanese VTT and the exported piece is pasted into a Japanese table's room. The dice commands themselves are BCDice syntax and read the same either way.
+**The Cocofolia and Udonarium exports follow the UI language too**, but default to Japanese: both are Japanese VTTs and the exported piece is pasted into a Japanese table's room. The dice commands themselves are BCDice syntax and read the same either way.
 
 [`docs/i18n.md`](docs/i18n.md) explains the two string layers and how to add a locale.
 

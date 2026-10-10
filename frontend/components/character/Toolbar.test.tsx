@@ -25,6 +25,7 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
     downloadChum5: vi.fn(),
     downloadXlsx: vi.fn().mockResolvedValue(undefined),
     downloadFvtt: vi.fn().mockResolvedValue(undefined),
+    downloadUdonarium: vi.fn(),
     copyText: vi.fn(),
     copyShareLink: vi.fn().mockResolvedValue(undefined),
     refreshRoster: vi.fn(),
@@ -191,6 +192,24 @@ describe("<Toolbar>", () => {
     expect([blockKey, paletteKey]).toEqual(["cc", "cp"]);
     expect(typeof block).toBe("string");
     expect(block).not.toEqual(palette);
+  });
+
+  // The Udonarium export writes a file rather than copying, and the builder
+  // needs the catalog and the translator — a wiring mistake there is silent.
+  it("hands the Udonarium export the catalog, the translator and the untrained switch", () => {
+    const ed = makeEd();
+    render(<Toolbar ed={ed} {...base} tab={"priority"} sheetLayout={"standard"} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
+
+    const calls = (ed.downloadUdonarium as Mock).mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toEqual([base.catalog, ed.tr, { untrained: false }]);
+    expect(calls[1]).toEqual([base.catalog, ed.tr, { untrained: true }]);
+    // the switch is remembered in localStorage, which outlives this test
+    fireEvent.click(screen.getByRole("checkbox"));
   });
 
   it("shows コピー ✓ on whichever button was copied, and no other", () => {
