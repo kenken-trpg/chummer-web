@@ -54,6 +54,9 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
             <div className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
+                {item.modular_equipped === false ? (
+                  <span className="muted"> {ui("weapon.modularDetached")}</span>
+                ) : null}
                 <div className="muted">
                   <HelpTip
                     label={ui("help.open", { label: tr(item.name) })}

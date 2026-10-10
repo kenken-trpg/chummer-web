@@ -167,7 +167,7 @@ export function buildUdonariumPalette(
       return true;
     });
   };
-  const weapons = d.weapons || [];
+  const weapons = (d.weapons || []).filter((weapon) => weapon.modular_equipped !== false);
   const ranged = distinct(weapons.filter((w) => (w.type || "") !== "Melee"));
   const melee = distinct(weapons.filter((w) => (w.type || "") === "Melee"));
 

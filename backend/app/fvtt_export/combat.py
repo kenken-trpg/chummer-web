@@ -197,7 +197,7 @@ def _weapons(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: st
                 "qty": str(int(row.get("qty") or 1)),
                 "avail": str(row.get("avail") or ""),
                 "owncost": _money(row.get("nuyen")),
-                "equipped": "True",
+                "equipped": _flag(row.get("modular_equipped") is not False),
                 "accessories": {"accessory": accessories},
                 **_clips(row, tr, cost_for),
                 "source": str(row.get("source") or ""),

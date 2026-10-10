@@ -130,6 +130,8 @@ export const JA_GEAR = {
   // numbers, or game terms that go through `tr` / `t` instead.
   "gear.idleLifestyles": "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
   "weapon.fromGear": " / ギア連動",
+  "weapon.modularDetached": "義肢切り離し中・攻撃候補から除外",
+  "ware.heldGearInactive": "義肢切り離し中のため、保持装備の改善効果は無効です。",
   "weapon.fromWare": " / ウェア連動",
   "weapon.fromArmor": " / アーマー連動",
   "weapon.includedWithHost": " / 搭載元に付属（無料・外せません）",

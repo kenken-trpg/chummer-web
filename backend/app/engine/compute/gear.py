@@ -158,7 +158,13 @@ def resolve_gear(
     bonus_sources.extend(sensor_bonus)
     _publish_drone_stats(hosts, sensors)
     gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(
-        state, hosts, weapons, granted_gear
+        state,
+        hosts,
+        weapons,
+        granted_gear,
+        modular_states={
+            str(item["id"]): bool(item["modular_equipped"]) for item in ware_items or [] if "modular_equipped" in item
+        },
     )
     spend["otherGear"] += gear_nuyen
     warnings.extend(gear_warns)

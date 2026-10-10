@@ -133,7 +133,9 @@ def _gears(derived: dict[str, Any], tr: Any, owners: dict[str, str], owner: str 
             "qty": str(qty),
             "avail": str(row.get("avail") or ""),
             "owncost": _money(row.get("nuyen")),
-            "equipped": _flag(bool(row.get("running", True)))
+            "equipped": "False"
+            if row.get("modular_equipped") is False
+            else _flag(bool(row.get("running", True)))
             if bucket == "programs"
             else _flag(bool(row.get("equipped", True)))
             if category == "Cyberdeck Modules"

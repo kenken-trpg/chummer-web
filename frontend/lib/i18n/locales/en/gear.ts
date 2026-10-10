@@ -131,6 +131,8 @@ export const EN_GEAR = {
   // --- sidebar ----------------------------------------------------------
   "gear.idleLifestyles": "Showing the core lifestyles only (search to reach the supplements)",
   "weapon.fromGear": " / linked to gear",
+  "weapon.modularDetached": "Limb detached; excluded from attack options",
+  "ware.heldGearInactive": "Held gear improvements are inactive while the limb is detached.",
   "weapon.fromWare": " / linked to ware",
   "weapon.fromArmor": " / linked to armor",
   "weapon.includedWithHost": " / comes with its host (free, cannot be removed)",

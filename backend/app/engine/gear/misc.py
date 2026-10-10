@@ -194,6 +194,7 @@ def _resolve_misc_gear(
     vehicles: list[dict[str, Any]] | None = None,
     weapons: list[dict[str, Any]] | None = None,
     granted: list[GrantGearRow] | None = None,
+    modular_states: dict[str, bool] | None = None,
 ) -> tuple[list[dict[str, Any]], int, list[Notice], list[Notice], list[tuple[str, list[dict[str, Any]]]]]:
     warnings = _ensure_misc_gear(state)
     errors: list[Notice] = []
@@ -207,6 +208,20 @@ def _resolve_misc_gear(
     granted_installs, granted_by = _granted_gear_installs(granted or [], specs)
     granted_ids = set(granted_by)
     rows = [*state.gear, *granted_installs]
+    # Carry the owning ware's derived state through arbitrary gear depth,
+    # independently of saved row order. Never change purchased equipped flags.
+    connection = dict(modular_states or {})
+    pending = list(rows)
+    while pending:
+        following = []
+        for purchase in pending:
+            if purchase.parent_id in connection:
+                connection[purchase.id] = connection[purchase.parent_id]
+            else:
+                following.append(purchase)
+        if len(following) == len(pending):
+            break
+        pending = following
     by_id = {row.id: row for row in rows}
     unit_costs: dict[str, int] = {}
     # Parents first so children can reference Parent Cost.
@@ -277,7 +292,7 @@ def _resolve_misc_gear(
         nuyen += cost
         plugin, cap_cost, cap_max = _misc_slot_stats(spec, inst, rating)
         nodes = substitute_rating(list(spec.get("bonus") or []), rating)
-        if nodes and spec.get("category") != "Cyberdeck Modules":
+        if nodes and spec.get("category") != "Cyberdeck Modules" and connection.get(inst.id) is not False:
             bonus_sources.append((_program_label(spec, extra), nodes))
         is_drug = (spec.get("category") or "") in DRUG_CATEGORIES
         drug_bonus = list(spec.get("drug_bonus") or []) if is_drug else []
@@ -332,6 +347,9 @@ def _resolve_misc_gear(
                 "page": spec.get("page") or "",
             }
         )
+    for item in public:
+        if item["id"] in connection:
+            item["modular_equipped"] = connection[item["id"]]
     children: dict[str, list[dict[str, Any]]] = {}
     for item in public:
         if item["parent_id"]:

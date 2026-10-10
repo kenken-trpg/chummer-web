@@ -357,6 +357,8 @@ def _append_ware_weapons(
         # Which tab owns it: bioware claws are deleted from `bioware`, a
         # cyberspur from `cyberware`.
         row["ware_kind"] = str(item.get("ware_kind") or "cyberware")
+        if "modular_equipped" in item:
+            row["modular_equipped"] = bool(item["modular_equipped"])
         _apply_ware_weapon_attrs(row, item, ware_by_id, state, attr_totals)
         weapons.append(row)
         taken.add(ware_id)

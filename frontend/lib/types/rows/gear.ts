@@ -87,6 +87,7 @@ export interface InstalledArmor {
 }
 
 export interface InstalledWeapon {
+  modular_equipped?: boolean;
   id: string;
   weapon_id: string;
   name: string;
@@ -240,6 +241,7 @@ export interface InstalledOptics {
 }
 
 export interface InstalledGear extends InstalledOptics {
+  modular_equipped?: boolean;
   equipped?: boolean;
   module_host_id?: string | null;
   module_method?: string;

@@ -34,6 +34,9 @@ export function WareHeldGear({
           {ui("help.heldGear.statsLabel")}
         </HelpTip>
       </div>
+      {item.modular_equipped === false && (item.gear || []).length > 0 ? (
+        <p className="muted">{ui("ware.heldGearInactive")}</p>
+      ) : null}
       {(item.gear || []).map((gear) => (
         <CarriedGearRow key={gear.id} gear={gear} character={ch} tr={tr} ui={ui} patch={patch} />
       ))}
