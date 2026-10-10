@@ -46,13 +46,16 @@ function dosDateTime(at: Date): { date: number; time: number } {
   };
 }
 
+/** One file on its way into an archive: text, or the bytes of a picture. */
+export type ZipEntry = { name: string; content: string | Uint8Array<ArrayBuffer> };
+
 /**
  * A zip holding the given files, each stored.
  *
  * Names are written with the UTF-8 flag (bit 11) set, so a non-ASCII entry
  * name is read back as UTF-8 rather than as the archive's legacy code page.
  */
-export function zipFiles(files: { name: string; content: string }[], at: Date = new Date()): Blob {
+export function zipFiles(files: ZipEntry[], at: Date = new Date()): Blob {
   const encoder = new TextEncoder();
   const { date, time } = dosDateTime(at);
   const parts: BlobPart[] = [];
@@ -61,7 +64,7 @@ export function zipFiles(files: { name: string; content: string }[], at: Date = 
   let centralSize = 0;
 
   for (const file of files) {
-    const data = encoder.encode(file.content);
+    const data = typeof file.content === "string" ? encoder.encode(file.content) : file.content;
     const nameBytes = encoder.encode(file.name);
     const sum = crc32(data);
 

@@ -155,7 +155,7 @@ export function Toolbar({
       </button>
       <button
         className="btn"
-        onClick={() => catalog && downloadUdonarium(catalog, tr, { untrained })}
+        onClick={() => catalog && void downloadUdonarium(catalog, tr, { untrained })}
         title={ui("toolbar.udonariumHint")}
       >
         {ui("toolbar.udonarium")}
