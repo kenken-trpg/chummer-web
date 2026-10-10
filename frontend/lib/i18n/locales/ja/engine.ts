@@ -300,6 +300,9 @@ export const JA_ENGINE = {
     "{name} の接続先 {parent} には {mount} モジュラーマウントが必要です",
   "engine.ware.modularGradeMismatch":
     "{name}（{grade}）は接続先 {parent}（{parent_grade}）と同じグレードにしてください",
+  "engine.ware.modularMountBlocked":
+    "{name}：{side} {mount} モジュラーマウントが装着済みの部品により占有されています（{used}/{max}）",
+  "engine.ware.bodyMounts": "全身",
   "engine.ware.modularMountOccupied":
     "{name} にモジュラー部品が {count} 件接続されています（{children}）。1マウントにつき1件までです",
   "engine.ware.pickTarget": "{name} の対象インプラントを選んでください",

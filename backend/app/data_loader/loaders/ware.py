@@ -133,6 +133,7 @@ def _load_ware_items(root: ET.Element, xpath: str, default_category: str) -> lis
                 "inherit_attributes": el.find("inheritattributes") is not None,
                 "modular_mount": _text(el.find("modularmount")),
                 "mounts_to": _text(el.find("mountsto")),
+                "blocks_mounts": [part.strip() for part in _text(el.find("blocksmounts")).split(",") if part.strip()],
                 "add_weapon": _text(el.find("addweapon")),
                 "devicerating": _text(el.find("devicerating")),
                 "source": _text(el.find("source")),

@@ -213,7 +213,8 @@ GUI実保存との一致、モジュラーの着脱・適合条件、全脚置�
 効果経路だけの合成fixtureは装備適合の証明に使わない。
 
 マウント種別・接続数・グレードの直接接続検証は下記範囲を実装した。
-着脱UI、blocksmountsの検証、格納ギア・内蔵武器の利用可否、
+blocksmountsの占有検証は下記範囲を実装した。
+着脱UI、格納ギア・内蔵武器の利用可否、
 汎用のエッセンス課金規則、RF/CF本文・エラッタ、GUI実保存は残件。
 今回の実データのモジュラー脚は元々ess=0であり、接続状態によるエッセンスの一括免除は導入しない。
 
@@ -238,8 +239,40 @@ GUI実保存との一致、モジュラーの着脱・適合条件、全脚置�
 検証は`test_modular_mount_validation.py`による。照合先は固定コミットの
 [Cyberware.PlugsIntoTargetCyberware](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)と
 [Character.ConstructModularCyberlimbList](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)。
-これは保存済みの直接接続の検証であり、選択UIの候補絞込みや部位全体のblocksmounts、
+これは保存済みの直接接続の検証であり、選択UIの候補絞込みや
 コネクタ自体の装着条件・車両ホストへ直接接続した場合の適合を網羅するものではない。
+
+## 実装済み: blocksmountsによる部位占有の検証
+
+- カタログのblocksmountsを配列で読み、.chum5にも元のカンマ区切りで保存する。
+  モジュラー脚に存在しないタグを名前から補完しない。
+- wrist/elbow/shoulderを腕、ankle/knee/hipを脚の枠へ対応させ、
+  コネクタとその位置を占有する装備の合計が枠数を超えたときにエラーを出す。
+  Centaurは脚4枠・片側2枠、Humanは脚2枠・片側1枠として検証する。
+  limbslotcount=allは当該部位の全枠数を占有する。
+- 通常の子パーツは根の義肢と同じ部位として集約し、同じblockタグを二重に数えない。
+  コネクタ自身のblockタグは自分の枠の予約として扱い、自分自身とは衝突させない。
+  mountstoを持つモジュラー部品の枝をまたいでbodyの占有へ加算しない。
+  取外したモジュラー脚とその配下はbodyの部位枠を占有しない。
+- 個別義肢の内部では、兄弟部品とその通常の子を同じ部位の1枠で検証する。
+  例として同じ義脚内の膝・足首コネクタのblock競合を検出する。
+  複数肢シャーシ（limbslotcount>1、all相当のslot）の内部は1枠と推測せず、この局所検証を省く。
+  その内部の位置・接続適合は別途残件とする。
+- 不正な構成は作成チェックで日英表示し、装備・購入費・接続記録を保持する。
+  容量制限設定とは独立して検証する。車両内の装備はキャラクターの部位枠から除外する。
+- 片側枠の種族差、左右の分離、四脚コネクタの正常構成、全脚置換と追加コネクタの競合、
+  多段の子パーツ、取外し、JSONとWeb内.chum5往復によるエラー・費用の保持を検証した。
+  全脚置換fixtureは算術経路の検証であり、Centaurの装備適合を認める根拠にはしない。
+
+検証は`test_modular_mount_blocks.py`による。対応部位と枠数の根拠は固定コミットの
+[Cyberware.MountToLimbType/SelectSide/Save](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)。
+通常の子の集約とモジュラー枝の境界は
+[CharacterCreateのCyberware選択処理](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Character%20Forms/CharacterCreate.cs)と
+[SelectCyberware](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Selection%20Forms/SelectCyberware.cs)
+のblocksmounts/modularmount集計・候補除外を参照した。
+Webでは保存済みの構成を枠超過として検証する。Chummerの購入順序に依存する候補一覧や
+強制side選択の完全再現は対象外。未知のマウント名、複数肢シャーシ内部の位置、
+車両の部位占有、着脱UI、RF/CF本文・エラッタとGUI実保存は引き続き残件。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 
@@ -289,6 +322,7 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    部分義肢の集計境界・モジュラーコネクタの能力値継承は上記範囲を検証済み。
    接続状態による通常・無線・ペア・技能選択の改善効果の制御も上記範囲を実装済み。
    直接接続のマウント種別・接続数・グレードの検証も上記範囲を実装済み。
+   blocksmountsの部位占有・個別義肢内部の競合検証も上記範囲を実装済み。
    モジュラーの着脱・装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。
    基本5種族・亜種・感染者・SURGEへの回帰を確認する。

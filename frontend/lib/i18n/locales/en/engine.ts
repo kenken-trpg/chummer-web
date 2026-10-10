@@ -302,6 +302,9 @@ export const EN_ENGINE = {
   "engine.ware.gradeBanned": "{name} cannot use the {grade} grade (switched to {fallback})",
   "engine.ware.metatypeOnly": "{name} is only for {needed}",
   "engine.ware.modularMountMismatch": "{name} requires a {mount} modular mount on {parent}",
+  "engine.ware.modularMountBlocked":
+    "{name}: {side} {mount} modular mount is blocked by installed parts ({used}/{max})",
+  "engine.ware.bodyMounts": "Body",
   "engine.ware.modularGradeMismatch":
     "{name} ({grade}) must have the same grade as {parent} ({parent_grade})",
   "engine.ware.modularMountOccupied":

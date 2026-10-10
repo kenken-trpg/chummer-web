@@ -49,6 +49,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
                 or spec.get("inherit_attributes")
                 or spec.get("mounts_to")
                 or spec.get("modular_mount")
+                or spec.get("blocks_mounts")
             ):
                 # Cyberware.Load reads these saved fields rather than
                 # rebuilding the limb/connector from the catalog definition.
@@ -58,6 +59,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
                 _sub(w, "inheritattributes", "True" if spec.get("inherit_attributes") else "False")
                 _sub(w, "hasmodularmount", spec.get("modular_mount") or "")
                 _sub(w, "plugsintomodularmount", spec.get("mounts_to") or "")
+                _sub(w, "blocksmounts", ",".join(spec.get("blocks_mounts") or []))
             if getattr(r, "cost", None) is not None:
                 _sub(w, "cost", r.cost)
             if r.side:

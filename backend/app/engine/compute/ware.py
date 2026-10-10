@@ -27,6 +27,7 @@ from ..ware import (
     resolve_ware,
 )
 from ..ware.modular import check_modular_mounts
+from ..ware.mount_blocks import check_mount_blocks
 from ..ware.pairs import apply_wireless_pairs, pair_bonus_sources
 from ..ware.sides import ensure_sides
 from ..ware.vehicles import vehicle_ware_extras
@@ -108,6 +109,13 @@ def ware(ctx: Ctx) -> None:
         for row in rows:
             if row["id"] in by_id:
                 row["side"] = by_id[row["id"]].side
+    ctx.errors.extend(
+        check_mount_blocks(
+            [item for item in ctx.cyber_installed if item.get("id") not in hosted_ids],
+            {str(row["id"]): row for row in catalog_ware("cyberware").get("items") or []},
+            extra_limbs,
+        )
+    )
     ctx.warnings.extend(check_ware_targets("cyberware", ctx.state.cyberware, ctx.cyber_installed))
     ctx.warnings.extend(check_ware_targets("bioware", ctx.state.bioware, ctx.bio_installed))
     _finalize_avail_tree(ctx.cyber_installed, grade_kind="cyberware")
