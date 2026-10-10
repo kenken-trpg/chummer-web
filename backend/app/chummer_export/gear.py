@@ -12,6 +12,7 @@ from typing import Any
 from ..data_loader import catalog, catalog_list
 from ..models import CharacterState, GearInstall
 from ._common import _Ctx, _Names, _sub
+from .metatype import export_metatype_weapons
 
 
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
@@ -146,6 +147,8 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
             _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
             _sub(ac, "rating", arow.rating)
             _sub(ac, "included", "True" if arow.included else "False")
+
+    export_metatype_weapons(weapons, state, ctx)
 
 
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:

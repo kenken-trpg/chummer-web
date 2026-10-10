@@ -35,8 +35,30 @@
   生得付与をキャリアの購入・買い戻しに数えず、重なる購入資質の過去の支出を保持する。
 
 `test_centaur_data.py`はデータ境界、`test_centaur_grants.py`は実データを使ったcomputeと
-JSON往復・カスタムデータの検証。作成画面の候補公開や`.chum5`の互換性を証明するものではない。
-生得MAGと各購入/成長経路、四脚・水泳の確認、`.chum5`往復は未完了であり、
+JSON往復・カスタムデータの検証。作成画面の候補公開を証明するものではない。
+
+## 実装済み: `.chum5`への生得付与保存とWeb内往復
+
+- 生得資質4件をqualitysource=Metatype、contributetobp/contributetolimit=Falseで保存する。
+  購入済みの同種資質のSelectedレコードも独立に保存し、再importで購入記録を失わない。
+- 蹴りを資質のweaponguidと武器のparentidで結び付ける。
+  武器にはSTR式、Physical参照、AP +1、Reach 1、費用0、アクセサリ不可を保存する。
+  importでは既存のparentid判定により購入装備に混入せず、種族から1件だけ再導出する。
+- Search/Natural Weaponを標準ID、固定extra、grade=0、counttowardslimit=Falseで保存する。
+  種族変更時のパワー除去に必要なMetatype/CritterPower improvementもパワーGUIDに結び付ける。
+- `test_centaur_chum5.py`で生成XMLの各フィールド・所有リンク、3回のWeb内往復、
+  購入済み資質・武器との分離を検証する。
+
+保存フィールドの照合先は固定コミットの
+[Quality.Save](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Uniques/Quality.cs)、
+[CritterPower.Save](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Uniques/CritterPower.cs)、
+[Weapon.Save/Load](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Weapon.cs)、
+[Character.Create](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)、
+[ImprovementManager.Create/Remove](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Static/Managers/ImprovementManager.cs)。
+テスト用XMLは生成fixtureであり、Chummer GUIが保存した実ファイルではない。
+実機で開いた後の再保存や、種族変更時のChummer側動作の検証は未実施。
+
+生得MAGと各購入/成長経路、四脚・水泳の確認、正典実機での`.chum5`往復は未完了であり、
 Centaurを作成画面の候補へ公開する段階には達していない。
 
 ## 次の実装と公開条件
@@ -45,8 +67,8 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    四脚の義肢指定/保存/平均/移動、水泳計算、生活費と装備適合、実`.chum5`も照合する。
    未確定の数式を推測で導入しない。
 2. 生得資質・パワー・蹴りの導出は上記の範囲を実装済み。
-   `.chum5`の由来付き資質・パワー・自然武器の保存と再導出を接続し、
-   正典保存との往復を確認する。追加の購入装備を誤削除しないことも検証する。
+   `.chum5`の由来付き資質・パワー・自然武器の保存とWeb内往復も実装済み。
+   正典実機で保存したファイルとの往復は引き続き確認する。
 3. 蹴りの素手攻撃修正・STR変動・他の自然武器との組合せを引き続き検証する。
 4. Mundaneでも生得MAG1を保持し、Patch・特殊点・カルマ・キャリア・エッセンス損失へ接続する。
    生得MAGのみでは呪文等を解放しない。

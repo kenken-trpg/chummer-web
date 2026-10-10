@@ -20,6 +20,7 @@ from ..engine.lookups import critter_power_label
 from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
+from .metatype import export_metatype_powers, export_metatype_qualities
 
 
 def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -76,7 +77,9 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         if any(c.source_quality_id == qid for c in state.contacts) and q.find("guid") is None:
             _sub(q, "guid", qid)
 
+    export_metatype_qualities(quals, state, ctx)
     _export_quality_critter_powers(root, state)
+    export_metatype_powers(root, state, ctx)
     # Chummer keeps a picked spell category only on the improvement
     # `<limitspellcategory />` made, tied to the quality by its guid
     links = [(category, qid, "LimitSpellCategory") for qid, category in spell_limits]

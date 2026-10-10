@@ -111,7 +111,7 @@ def _write(state: CharacterState) -> bytes:
 
     root = ET.Element("character")
 
-    ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived}
+    ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived, "meta": meta}
     for section in _SECTIONS:
         section(root, state, names, ctx)
 
