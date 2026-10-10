@@ -191,6 +191,7 @@ def resolve_ware(
                 "allow_gear": list(ware.get("allow_gear") or []),
                 "limbslot": ware.get("limbslot"),
                 "limbslotcount": ware.get("limbslotcount") or "1",
+                **({"inherit_attributes": True} if ware.get("inherit_attributes") else {}),
                 "selectside": bool(ware.get("selectside")),
                 "side": _normalize_side(inst.side),
                 "select_ware": select_ware is not None,

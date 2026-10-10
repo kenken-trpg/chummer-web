@@ -126,7 +126,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
   Centaurがその装備を正典上装着できることの根拠にはしない。
 - 左右の保存値は参照元でも`Left`/`Right`で、追加肢は片側の枠数を増やす構造。
   個別の四脚指定は下記の範囲を実装した。
-  部分義肢・モジュラー義肢の集計範囲の一致は残件。
+  部分義肢・モジュラーコネクタの集計は下記範囲を検証した。
 
 検証は`test_centaur_redliner.py`と既存のRedlinerテストによる。
 照合先は固定コミットの
@@ -155,7 +155,37 @@ CF本文・エラッタ、RFの装備適合条件、Chummer GUI fixtureの確認
 
 検証は`test_centaur_limb_sides.py`、既存の義肢/資質テスト、追加画面のテストによる。
 左右の枠数の根拠は上記のCyberware.SelectSideの`Character.LimbCount(slot) / 2`。
-GUI実保存との一致、部分義肢・モジュラー構成、全脚置換と個別脚の併用時の装備適合は残件。
+GUI実保存との一致、モジュラーの着脱・適合条件、全脚置換と個別脚の併用時の装備適合は残件。
+
+## 実装済み: 部分義肢の集計境界とモジュラーコネクタの能力値継承
+
+- 英語名のhand/foot/lower等による除外を、XMLのlimbslotに基づく集計へ変更した。
+  同梱のObvious Foot、Obvious Lower Leg、Partial Cyberskullはlimbslotを持たず、
+  個別能力値は保持するが全身平均・Redlinerの1肢として数えない。
+- Modular Connector, Hipはlimbslot=legを持ち、接続した子義脚の能力値を継承する。
+  inheritattributesを読み、正の子能力値の平均を切り捨てる。
+  子がない場合は0となり、コネクタ自身の基礎3や生身の値へ置換しない。
+  親より先に子が並んだ場合、継承が多段の場合も子から解決する。
+- Redlinerを子義脚へ適用した後で親へ再継承する。親自身への重複加算を避け、
+  親が占有する脚スロットと子義脚を二重計上しない。
+  スロットのないコンテナの子は探索する。
+  除外スロットの配下は、能力値平均では探索せず、Redlinerでは探索する参照元の違いも保持する。
+- Centaurの4コネクタ・4子義脚について、特注AGI/STR、左右、全身平均、
+  地上の義脚AGI、水泳、Redliner上限を検証した。
+  能力値平均の分母は8、脚の集計は4。部分義肢の検証と合わせて基本種族の集計にも適用する。
+- `.chum5`には義肢のcategory、limbslot、limbslotcount、inheritattributes、
+  hasmodularmount、plugsintomodularmountを保存する。
+  JSONとWeb内`.chum5`往復で個別の親子関係・能力値・移動を再現する。
+  個別設定を上書きした義脚移動設定は、別の設定ファイルとして再適用して比較する。
+
+検証は`test_centaur_modular_limbs.py`による。照合先は固定コミットの
+[Cyberware.IsLimb/GetCyberlimbCount/GetAttributeTotalValue/Save/Load](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)、
+[CharacterAttrib.CalculatedTotalValue](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Attributes/Attribute.Core.cs)、
+[Character.CalculatedMovement](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)。
+
+この変更は既存のparent_idで接続を表した場合の算術と保存に限定する。
+モジュラーの着脱UI、マウント種別・接続数・blocksmountsの検証、外した義肢のbonus/essence等の制御、
+RF/CF本文・エラッタ、GUI実保存は未確認であり、モジュラー義肢全体の対応完了とは扱わない。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 
@@ -202,7 +232,8 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    MAG0時の生得能力の利用条件を確定してから残る権限を実装する。
 5. 地上/水泳/飛行の計算、追加脚の平均への接続、生活費と支出内訳は上記の範囲を検証済み。
    四脚の個別義肢指定/保存とRedlinerも上記範囲を実装済み。
-   部分義肢・モジュラー義肢、装備適合、正典実機での一致を引き続き確認する。
+   部分義肢の集計境界・モジュラーコネクタの能力値継承は上記範囲を検証済み。
+   モジュラーの着脱・装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。
    基本5種族・亜種・感染者・SURGEへの回帰を確認する。
 7. 以上を満たしてからRF条件付きで候補を公開する。

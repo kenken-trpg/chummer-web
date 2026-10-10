@@ -29,6 +29,7 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
         return sorted((key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix))
 
     gear_by_parent, emit_gear = _gear_writer(state, names)
+    ware_specs = {row["id"]: row for kind in ("cyberware", "bioware") for row in catalog()[kind]["items"]}
     by_parent: dict[str | None, list[Any]] = {}
     for r in [*state.cyberware, *state.bioware]:
         by_parent.setdefault(r.parent_id, []).append(r)
@@ -41,6 +42,22 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "name", names["ware"].get(r.ware_id, ""))
             _sub(w, "grade", r.grade)
             _sub(w, "rating", r.rating)
+            spec = ware_specs.get(r.ware_id) or {}
+            if (
+                spec.get("category") == "Cyberlimb"
+                or spec.get("limbslot")
+                or spec.get("inherit_attributes")
+                or spec.get("mounts_to")
+                or spec.get("modular_mount")
+            ):
+                # Cyberware.Load reads these saved fields rather than
+                # rebuilding the limb/connector from the catalog definition.
+                _sub(w, "category", spec.get("category") or "")
+                _sub(w, "limbslot", spec.get("limbslot") or "")
+                _sub(w, "limbslotcount", spec.get("limbslotcount") or "1")
+                _sub(w, "inheritattributes", "True" if spec.get("inherit_attributes") else "False")
+                _sub(w, "hasmodularmount", spec.get("modular_mount") or "")
+                _sub(w, "plugsintomodularmount", spec.get("mounts_to") or "")
             if getattr(r, "cost", None) is not None:
                 _sub(w, "cost", r.cost)
             if r.side:

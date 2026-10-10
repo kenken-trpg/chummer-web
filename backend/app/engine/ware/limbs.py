@@ -3,7 +3,7 @@
 Resolves each cyberlimb's Strength / Agility / Armor from its enhancement
 mods (``_apply_limb_attributes``), the average-limb attribute replacement
 (``limb_attribute_replace``), and the Redliner / Cyberseeker quality bonuses
-driven off how many full limbs occupy the redliner slots.
+driven off how many XML limb slots the installed ware occupies.
 
 Imports only ``_limb_attr_effect`` (``.gear``), ``_normalize_side``
 (``.constants``) and ``CharacterOptions`` (models) — never back into
@@ -13,6 +13,7 @@ Imports only ``_limb_attr_effect`` (``.gear``), ``_normalize_side``
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from typing import Any
 
 from ...models import CharacterOptions
@@ -27,7 +28,6 @@ LIMB_BODY_SLOTS = {"arm": 2, "leg": 2, "torso": 1, "skull": 1}
 LIMB_BODY_PARTS = 6
 CYBERLIMB_BASE_ATTR = 3  # SR5 p.456: an empty cyberlimb has STR 3 / AGI 3
 REDLINER_BASE_SLOTS = {"arm": 2, "leg": 2}
-_PARTIAL_LIMB = re.compile(r"\b(hand|foot|lower|modular connector)\b", re.I)
 _MUSCLE_WARE = re.compile(r"\bmuscle (replacement|toner|augmentation)\b", re.I)
 
 
@@ -47,7 +47,7 @@ def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str,
             children.setdefault(item["parent_id"], []).append(item)
     cap = current_rules().cyberlimb_attribute_bonus_cap
     for item in resolved:
-        if item.get("category") != "Cyberlimb":
+        if item.get("category") != "Cyberlimb" and not item.get("limbslot"):
             continue
         base = {"STR": CYBERLIMB_BASE_ATTR, "AGI": CYBERLIMB_BASE_ATTR}
         bonus = {"STR": 0, "AGI": 0}
@@ -70,6 +70,39 @@ def _apply_limb_attributes(resolved: list[dict[str, Any]], attrs_spec: dict[str,
             item[f"limb_{key}_bonus"] = bonus[attr]
             item[f"limb_{key}"] = _limb_total(base[attr], bonus[attr], cap, attrs_spec, attr)
         item["limb_armor"] = limb_armor
+    _inherit_limb_attributes(resolved)
+
+
+def _inherit_limb_attributes(resolved: list[dict[str, Any]]) -> None:
+    """Cyberware.GetAttributeTotalValue averages positive child values,
+    rounding down, instead of using the connector's own base/enhancements.
+    Resolve descendants first even when installs are stored child-first.
+    """
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in resolved:
+        if item.get("parent_id"):
+            children.setdefault(str(item["parent_id"]), []).append(item)
+    done: set[str] = set()
+    visiting: set[str] = set()
+
+    def inherit(item: dict[str, Any]) -> None:
+        key = str(item["id"])
+        if key in done or key in visiting:
+            return
+        visiting.add(key)
+        kids = children.get(key) or []
+        for child in kids:
+            inherit(child)
+        if item.get("inherit_attributes"):
+            for attr in ("str", "agi"):
+                values = [int(child.get(f"limb_{attr}") or 0) for child in kids]
+                values = [value for value in values if value > 0]
+                item[f"limb_{attr}"] = sum(values) // len(values) if values else 0
+        visiting.remove(key)
+        done.add(key)
+
+    for item in resolved:
+        inherit(item)
 
 
 def _limb_total(base: int, bonus: int, cap: int, attrs_spec: dict[str, dict[str, int | float]], attr: str) -> int:
@@ -161,9 +194,9 @@ def _take_limb_slots(
 
 
 def _is_full_limb(item: dict[str, Any]) -> bool:
-    if item.get("parent_id") or item.get("category") != "Cyberlimb":
-        return False
-    return _PARTIAL_LIMB.search(item.get("name") or "") is None
+    # The XML's slot, rather than an English name, distinguishes a full
+    # replacement/connector from a foot, lower leg or partial skull.
+    return not item.get("parent_id") and bool(item.get("limbslot"))
 
 
 def _is_body_limb(item: dict[str, Any]) -> bool:
@@ -190,6 +223,39 @@ def _limb_slot_count(item: dict[str, Any], slots: dict[str, int] | None = None) 
         return 1
 
 
+def _limb_rows(
+    resolved: list[dict[str, Any]], slots: dict[str, int], *, descend_excluded: bool = False
+) -> Iterator[dict[str, Any]]:
+    """Count a slotted parent once; visit children of other containers.
+
+    GetCyberlimbCount descends into excluded slots, whereas attribute
+    averaging skips the entire excluded limb. Keep that distinction.
+    """
+    children: dict[str, list[dict[str, Any]]] = {}
+    for item in resolved:
+        if item.get("parent_id"):
+            children.setdefault(str(item["parent_id"]), []).append(item)
+    seen: set[str] = set()
+
+    def visit(item: dict[str, Any]) -> Iterator[dict[str, Any]]:
+        key = str(item.get("id") or "")
+        if key in seen:
+            return
+        seen.add(key)
+        slot = str(item.get("limbslot") or "").lower()
+        if slot in slots:
+            yield item
+            return
+        if slot and not descend_excluded:
+            return
+        for child in children.get(key) or []:
+            yield from visit(child)
+
+    for item in resolved:
+        if not item.get("parent_id"):
+            yield from visit(item)
+
+
 def limb_attribute_replace(
     resolved: list[dict[str, Any]],
     meat_str: int,
@@ -210,9 +276,7 @@ def limb_attribute_replace(
     side_used: dict[tuple[str, str], int] = {}
     limb_str: list[int] = []
     limb_agi: list[int] = []
-    for item in resolved:
-        if not _is_body_limb(item):
-            continue
+    for item in _limb_rows(resolved, slots):
         slot = (item.get("limbslot") or "").lower()
         if slot not in slots:
             continue
@@ -220,8 +284,8 @@ def limb_attribute_replace(
         if add <= 0:
             continue
         for _ in range(add):
-            limb_str.append(int(item.get("limb_str") or meat_str))
-            limb_agi.append(int(item.get("limb_agi") or meat_agi))
+            limb_str.append(int(item["limb_str"]) if item.get("limb_str") is not None else meat_str)
+            limb_agi.append(int(item["limb_agi"]) if item.get("limb_agi") is not None else meat_agi)
     count = min(parts, sum(used.values()))
     if count == 0:
         return None
@@ -248,9 +312,7 @@ def count_redliner_limbs(resolved: list[dict[str, Any]], slots: dict[str, int] |
     side_used: dict[tuple[str, str], int] = {}
     total = 0
     used = dict.fromkeys(slots, 0)
-    for item in resolved:
-        if not _is_redliner_limb(item, slots):
-            continue
+    for item in _limb_rows(resolved, slots, descend_excluded=True):
         total += _take_limb_slots(item, slots, used, side_used, taken)
     return total
 
@@ -284,7 +346,7 @@ def apply_cyberseeker(
     if limb_bonus:
         cap = current_rules().cyberlimb_attribute_bonus_cap
         for item in resolved:
-            if item.get("category") != "Cyberlimb" or item.get("parent_id"):
+            if (item.get("category") != "Cyberlimb" and not item.get("limbslot")) or item.get("inherit_attributes"):
                 continue
             for attr in ("STR", "AGI"):
                 key = attr.lower()
@@ -293,6 +355,7 @@ def apply_cyberseeker(
                 base = int(item.get(f"limb_{key}_base") or CYBERLIMB_BASE_ATTR)
                 bonus = int(item.get(f"limb_{key}_bonus") or 0) + limb_bonus
                 item[f"limb_{key}"] = _limb_total(base, bonus, cap, attrs_spec, attr)
+        _inherit_limb_attributes(resolved)
     included = [slot for slot in ("arm", "leg", "torso", "skull") if slot in slots]
     return {
         "count": count,
