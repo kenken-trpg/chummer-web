@@ -133,6 +133,7 @@ export const EN_GEAR = {
   "weapon.fromGear": " / linked to gear",
   "weapon.fromWare": " / linked to ware",
   "weapon.fromArmor": " / linked to armor",
+  "weapon.includedWithHost": " / comes with its host (free, cannot be removed)",
   "weapon.natural": " / natural weapon from {source}",
   "weapon.limbStr": " / limb STR {str}",
   "weapon.focusDice": " / focus +{dice}",

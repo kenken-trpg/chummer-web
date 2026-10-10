@@ -226,6 +226,29 @@ describe("<WeaponGear> buying from the catalog", () => {
     expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 
+  it("offers nothing to change on the gun a drone came with", () => {
+    // It is a row in `weapons`, but the drone's catalog entry put it there:
+    // it costs nothing, and the only way to be rid of it is the drone.
+    const patch = vi.fn();
+    renderWeapons(
+      owning(
+        [
+          weapon("w-inc", "Stoner-Ares M202", {
+            nuyen: 0,
+            included: true,
+            mounted_label: "F-B Bumblebee",
+          }),
+        ],
+        { weapons: [{ id: "w-inc", weapon_id: "wp-m202", qty: 1, included: true }] } as never,
+      ),
+      patch,
+    );
+
+    expect(screen.getByText(/F-B Bumblebee/)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+  });
+
   it("adds an ordinary weapon to weapons", () => {
     const patch = vi.fn();
     renderWeapons(
