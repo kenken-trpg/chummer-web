@@ -5,6 +5,7 @@ import {
   buildUdonariumConjured,
   buildUdonariumPalette,
   buildUdonariumXml,
+  portraitEntry,
   slotTag,
   xmlEscape,
 } from "@/lib/udonarium";
@@ -397,5 +398,65 @@ describe("buildUdonariumConjured", () => {
     // a sprite has only a Matrix condition monitor
     expect(file.content).toContain('<data name="マトリックスCM"');
     expect(file.content).not.toContain('<data name="身体CM"');
+  });
+});
+
+describe("portraitEntry", () => {
+  // a 1x1 red PNG, and the SHA-256 of exactly those bytes
+  const PNG =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("names the file after the hash of its bytes, which is what the piece points at", async () => {
+    const entry = await portraitEntry(`data:image/png;base64,${PNG}`);
+    expect(entry).not.toBeNull();
+    // the identifier is a SHA-256, and the file is named after it
+    expect(entry!.identifier).toMatch(/^[0-9a-f]{64}$/);
+    expect(entry!.file.name).toBe(`${entry!.identifier}.png`);
+    // and it really is the hash of the decoded bytes, not of the data URL
+    const bytes = entry!.file.content as Uint8Array<ArrayBuffer>;
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    expect(
+      Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(""),
+    ).toBe(entry!.identifier);
+  });
+
+  it("gives the same picture the same identifier, so two pieces share one copy", async () => {
+    const a = await portraitEntry(`data:image/png;base64,${PNG}`);
+    const b = await portraitEntry(`data:image/png;base64,${PNG}`);
+    expect(a!.identifier).toBe(b!.identifier);
+  });
+
+  it("uses the extension the type calls for", async () => {
+    const jpeg = await portraitEntry(`data:image/jpeg;base64,${PNG}`);
+    expect(jpeg!.file.name.endsWith(".jpg")).toBe(true);
+  });
+
+  it("refuses anything that is not a portrait image, rather than carrying it", async () => {
+    for (const bad of [
+      "",
+      "not a data url",
+      "data:image/svg+xml;base64,PHN2Zy8+", // not a portrait type (and scriptable)
+      "data:image/png;base64,", // empty
+      "data:image/png;base64,!!!not base64!!!",
+    ]) {
+      expect(await portraitEntry(bad)).toBeNull();
+    }
+  });
+});
+
+describe("buildUdonariumXml with a portrait", () => {
+  it("points the piece at the picture, and at the silhouette without one", async () => {
+    const entry = await portraitEntry(
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    );
+    const ch = makeCharacter();
+    expect(buildUdonariumXml(ch, makeCatalog(), identityTr, "ja", { image: entry })).toContain(
+      `<data type="image" name="imageIdentifier">${entry!.identifier}</data>`,
+    );
+    expect(buildUdonariumXml(ch, makeCatalog(), identityTr)).toContain(
+      '<data type="image" name="imageIdentifier">none_icon</data>',
+    );
   });
 });

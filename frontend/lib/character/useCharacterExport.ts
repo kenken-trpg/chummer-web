@@ -5,8 +5,13 @@ import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
 import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
-import { type UdonariumOptions, buildUdonariumConjured, buildUdonariumXml } from "@/lib/udonarium";
-import { zipFiles, zipSingleFile } from "@/lib/zip";
+import {
+  type UdonariumOptions,
+  buildUdonariumConjured,
+  buildUdonariumXml,
+  portraitEntry,
+} from "@/lib/udonarium";
+import { type ZipEntry, zipFiles } from "@/lib/zip";
 import { type Notice } from "@/lib/engine-notices";
 import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
@@ -135,16 +140,21 @@ export function useCharacterExport(opts: {
    * Built here rather than on the server: the palette comes out of `derived`,
    * which this browser already has.
    */
-  function downloadUdonarium(
+  async function downloadUdonarium(
     catalog: Catalog,
     tr: (n: string) => string,
     opts: UdonariumOptions = {},
   ) {
     if (!ch) return;
-    offer(
-      zipSingleFile("data.xml", buildUdonariumXml(ch, catalog, tr, locale, opts)),
-      exportFilename(ch.name, "zip", { tag: "udonarium" }),
-    );
+    // The character's own portrait rides along as a second entry, named after
+    // its hash, which is what the piece points at. A portrait that cannot be
+    // read is not worth failing the export over — the piece just gets the
+    // blank silhouette.
+    const image = await portraitEntry(portraitsOf(ch)[0] ?? "").catch(() => null);
+    const xml = buildUdonariumXml(ch, catalog, tr, locale, { ...opts, image });
+    const files: ZipEntry[] = [{ name: "data.xml", content: xml }];
+    if (image) files.push(image.file);
+    offer(zipFiles(files), exportFilename(ch.name, "zip", { tag: "udonarium" }));
   }
 
   /**
