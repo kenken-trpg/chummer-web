@@ -39,6 +39,30 @@
 `test_centaur_data.py`はデータ境界、`test_centaur_grants.py`は実データを使ったcomputeと
 JSON往復・カスタムデータの検証。作成画面の候補公開を証明するものではない。
 
+## 実装済み: 蹴りの素手攻撃修正・STR変更・他の自然武器との併用
+
+- 固定版のWeapon.CalculatedDamage/TotalAP/TotalReachと同梱settings.xmlに合わせ、
+  `unarmedimprovementsapplytoweapons`を設定XML・SettingsState・計算へ接続した。
+  未指定/Falseでは蹴り等の武器へunarmeddv/unarmedap/unarmedreachを適用せず、
+  Trueのときだけ適用する。従来のAP/Reachの無条件適用とDVの未適用を修正した。
+  基本種族の同種武器にも同じ設定が適用される。
+- 通常のUnarmed Attackは設定によらず修正を受ける。
+  unarmeddvphysicalによるS→P変更はその基本攻撃だけに適用し、
+  他の素手技能武器のダメージ種別を変えない。一般のReach修正・カテゴリDVは別経路を維持する。
+- Bone Density Augmentation 2、Penetrating Strike 2、KarateのKick Attack、
+  Unarmed Combatを選んだDeath Dealer (Adept)を使って検証した。
+  STR3の蹴りは設定Falseで6P/AP +1/Reach 1、Trueで7P/AP -1/Reach 2。
+  STR5へ変更するとTrueで9Pとなり、Physical参照のAccuracyも再計算する。
+  購入したRazor Clawsと生得の蹴りを別の無料攻撃として保持し、種族変更で蹴りだけを除去する。
+- 再計算・JSON再読込・設定Patchの切替で補正を累積しない。
+  `.chum5`の蹴りは元のSTR式・AP +1・Reach 1を保存する。
+  `.chum5`は別の設定ファイルを参照する形式であり、Webの個別設定上書きは埋め込まない。
+  同じ設定を再適用したWeb内往復で、攻撃値と件数が変わらないことを確認した。
+
+検証は`test_centaur_kick.py`による。照合先は固定コミットの
+[Weapon.CalculatedDamage/TotalAP/TotalReach](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Weapon.cs)と同梱settings.xml。
+これは固定版コードへの一致確認であり、RF本文・エラッタ・GUI実保存の確認とは区別する。
+
 ## 実装済み: `.chum5`への生得付与保存とWeb内往復
 
 - 生得資質4件をqualitysource=Metatype、contributetobp/contributetolimit=Falseで保存する。
@@ -171,7 +195,8 @@ Centaurを作成画面の候補へ公開する段階には達していない。
 2. 生得資質・パワー・蹴りの導出は上記の範囲を実装済み。
    `.chum5`の由来付き資質・パワー・自然武器の保存とWeb内往復も実装済み。
    正典実機で保存したファイルとの往復は引き続き確認する。
-3. 蹴りの素手攻撃修正・STR変動・他の自然武器との組合せを引き続き検証する。
+3. 蹴りの素手攻撃修正・STR変動・他の自然武器との組合せは上記範囲を実装・検証済み。
+   RF本文・エラッタ・実機での一致を引き続き確認する。
 4. 生得MAG1の保持、Patch・特殊点・カルマ・キャリアbaseline・既存エッセンス損失への接続は上記範囲を実装済み。
    RF本文・エラッタ・実機fixtureを確認し、イニシエーション、共鳴Talentとの共存、burnout、
    MAG0時の生得能力の利用条件を確定してから残る権限を実装する。

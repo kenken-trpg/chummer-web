@@ -249,8 +249,8 @@ def gear_phase(ctx: Ctx) -> None:
         ctx.effects["attribute_bonus"][key] = int(ctx.effects["attribute_bonus"].get(key, 0)) + int(
             ctx.gear.get("armor_encumbrance") or 0
         )
-    # Before the weapon modifiers below: a natural weapon is an Unarmed Combat
-    # attack, so a reach or unarmed-AP bonus has to reach it too.
+    # Before the weapon modifiers below, including the optional unarmed
+    # weapon bonuses applied after martial arts have been collected.
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
     _append_quality_weapons(ctx.gear["weapons"], ctx.qualities)
     _append_granted_weapons(ctx.gear["weapons"], ctx.effects)

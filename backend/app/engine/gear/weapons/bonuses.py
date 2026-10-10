@@ -20,6 +20,7 @@ from ....improvements import EffectsDict, empty_effects
 from ....improvements.effect_rows import WeaponDvBonusRow
 from ....models import CharacterState
 from ....notices import Notice, notice, term
+from ....rules import current_rules
 from ...formulas import _add_accuracy, _add_leading_int, _add_weapon_dv, _eval_attr_stat, _leading_int
 from ...selects import selectskill_options
 
@@ -34,17 +35,22 @@ def apply_reach_bonus(weapons: list[dict[str, Any]] | None, reach: int) -> None:
 
 
 def _is_unarmed_weapon(weapon: dict[str, Any]) -> bool:
-    category = str(weapon.get("category") or "")
-    skill = str(weapon.get("useskill") or weapon.get("skill") or "")
-    return category == "Unarmed" or skill == "Unarmed Combat"
+    # Weapon.CalculatedDamage/TotalAP/TotalReach: the base attack always
+    # benefits; other Unarmed Combat weapons need the optional settings rule.
+    return str(weapon.get("name") or "") == "Unarmed Attack" or (
+        current_rules().unarmed_improvements_apply_to_weapons
+        and weapon_skill_dictionary_key(weapon) == "Unarmed Combat"
+    )
 
 
 def apply_unarmed_bonuses(
     weapons: list[dict[str, Any]] | None,
     unarmed_reach: int,
     unarmed_ap: int,
+    unarmed_dv: int = 0,
+    unarmed_physical: bool = False,
 ) -> None:
-    if not unarmed_reach and not unarmed_ap:
+    if not (unarmed_reach or unarmed_ap or unarmed_dv or unarmed_physical):
         return
     for weapon in weapons or []:
         if not _is_unarmed_weapon(weapon):
@@ -53,6 +59,12 @@ def apply_unarmed_bonuses(
             weapon["reach"] = _add_leading_int(str(weapon.get("reach") or "0"), int(unarmed_reach))
         if unarmed_ap:
             weapon["ap"] = _add_leading_int(str(weapon.get("ap") or ""), int(unarmed_ap))
+        if unarmed_dv:
+            weapon["damage"] = _add_weapon_dv(str(weapon.get("damage") or ""), int(unarmed_dv))
+        # UnarmedDVPhysical only converts the base attack, even with the
+        # optional rule enabled. Other weapons retain their own damage type.
+        if unarmed_physical and weapon.get("name") == "Unarmed Attack":
+            weapon["damage"] = re.sub(r"S$", "P", str(weapon.get("damage") or ""))
 
 
 def apply_weapon_category_dv(weapons: list[dict[str, Any]] | None, effects: EffectsDict | None) -> None:

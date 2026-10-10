@@ -163,6 +163,7 @@ class Rules:
     strict_skill_groups_in_create_mode: bool = False
     #: Movement off the cyberlegs' AGI once two legs are chrome.
     cyberleg_movement: bool = False
+    unarmed_improvements_apply_to_weapons: bool = False
     #: `<allowpointbuyspecializationsonkarmaskills>`: a skill bought wholly
     #: with karma may still take its specialization for a point. Off in the
     #: Standard presets, so Chummer makes that specialization karma too.
@@ -385,6 +386,7 @@ def rules_for(settings: object | None) -> Rules:
         ("dont_double_quality_purchases", "quality_dont_double_purchases"),
         ("dont_double_quality_refunds", "quality_dont_double_refunds"),
         ("cyberleg_movement", "cyberleg_movement"),
+        ("unarmed_improvements_apply_to_weapons", "unarmed_improvements_apply_to_weapons"),
         ("dont_use_cyberlimb_calculation", "dont_use_cyberlimb_calculation"),
         ("enforce_capacity", "enforce_capacity"),
         ("restrict_recoil", "restrict_recoil"),

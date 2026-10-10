@@ -455,6 +455,10 @@ export interface CharacterSettings {
   unrestricted_nuyen?: boolean | null;
   /** `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off */
   cyberleg_movement?: boolean | null;
+  /** `<unarmedimprovementsapplytoweapons>`: apply unarmed DV/AP/Reach to
+   *  weapons using Unarmed Combat, including natural weapons.
+   */
+  unarmed_improvements_apply_to_weapons?: boolean | null;
   /** `<allowcyberwareessdiscounts>`: a ware piece may take an essence discount */
   allow_cyberware_ess_discounts?: boolean | null;
   /** `<allowpointbuyspecializationsonkarmaskills>` */
