@@ -185,9 +185,9 @@ export const EN_APP = {
     "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
   "toolbar.shareHint":
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
-  "toolbar.udonariumConjured": "Udonarium (conjured)",
+  "toolbar.udonariumConjured": "Udonarium (retinue)",
   "toolbar.udonariumConjuredHint":
-    "Download every bound spirit and registered sprite as a .zip, one piece each. Udonarium reads every xml an archive holds, so the whole retinue lands on the table in one drop.",
+    "Download every bound spirit, registered sprite, vehicle and drone as a piece, one .zip per kind. Udonarium reads every xml an archive holds, so each kind lands on the table in one drop.",
   "toolbar.udonarium": "Udonarium",
   "toolbar.udonariumHint":
     "Download an Udonarium character piece as .zip — drop it straight on the table. The chat palette targets BCDice ShadowRun5; attributes, weapons, magic and the Matrix are variables, so the table can retune a pool without re-exporting.",
