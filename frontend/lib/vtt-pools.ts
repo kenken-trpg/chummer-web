@@ -71,3 +71,43 @@ export function skillAttributes(catalog: Catalog, d: Derived) {
   }
   return { skillAttr, specSwap };
 }
+
+/**
+ * A vehicle's Handling, split.
+ *
+ * Chummer prints it as the sheet does: one number for a drone (`"3"`) and
+ * two for anything that leaves the road (`"2/1"`, on-road then off-road). A
+ * rating modifier can leave either side non-numeric, and then it is dropped
+ * rather than guessed at.
+ */
+export function vehicleHandling(handling: string): { onroad: number; offroad: number | null } {
+  const [on, off] = String(handling ?? "")
+    .split("/")
+    .map((part) => Number.parseInt(part.trim(), 10));
+  return {
+    onroad: Number.isFinite(on) ? on : 0,
+    offroad: Number.isFinite(off) ? off : null,
+  };
+}
+
+/** A vehicle's or drone's physical condition monitor: 12 + half its Body,
+ *  rounded up (SR5 p.199). A microdrone has Body 0 and still has 12 boxes. */
+export function vehicleConditionMonitor(body: string | number): number {
+  const n = Number.parseInt(String(body ?? ""), 10);
+  return 12 + Math.ceil(Math.max(Number.isFinite(n) ? n : 0, 0) / 2);
+}
+
+/**
+ * The skills that drive, fly and shoot from a vehicle.
+ *
+ * Taken from the catalog by category rather than by name: which Pilot skills
+ * exist depends on the books turned on (`Pilot Aerospace` is one of them).
+ * Gunnery is the one that is not a Pilot skill, so it is named.
+ */
+export function vehicleSkills(catalog: Catalog): { pilots: string[]; gunnery: string } {
+  const rows = (catalog.skills?.skills || []).filter((s) => s.category === "Vehicle Active");
+  return {
+    pilots: rows.filter((s) => s.name !== "Gunnery").map((s) => s.name),
+    gunnery: rows.some((s) => s.name === "Gunnery") ? "Gunnery" : "",
+  };
+}

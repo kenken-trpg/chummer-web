@@ -65,11 +65,12 @@ Serpent のインポート警告 9 件にマウント武器の話は 1 つも無
 → B-3（先にインポートを直す）で戻るのは `[Weapon]` 側だけ。`[Model]` 側は
 変数にして卓で入れてもらう形にせざるを得ない。
 
-### 3. リガー技能を持つキャラがいない
+### 3. リガー技能はある（当初の記述は誤り）
 
-Serpent にも Gunnery も Pilot 技能もない。遠隔操作・ジャンプインのロールは、
-テスト用セーブでは全部 0 側になる。精霊のときと同じで、実機確認は手で技能を
-足したセーブで行う。
+最初に「Serpent にも Gunnery も Pilot 技能もない」と書いたのは誤り。存在しない
+キー（`derived.skills`）を見ていた。技能は `derived.skill_totals` にあり、Serpent は
+**Gunnery 6・Pilot Ground Craft 5・Pilot Aircraft 3・Pilot Watercraft 1** を持つ。
+遠隔操作もジャンプインも実データで振れる。
 
 ## コマに何を載せるか
 
@@ -142,6 +143,37 @@ Interface・Sensor Array・その M202 用の Targeting Autosoft 評価 3 を含
 キャラの持ち物に浮いている `[Model]` オートソフト 12 本は相変わらず
 所属不明（セーブの中で `<extra />` も `<parentid />` も空）。こちらは
 変数にして卓で入れてもらう。
+
+## 3 で作ったもの（済み）
+
+- `frontend/lib/vtt-pools.ts` に `vehicleHandling`（`"2/1"` の分解）・
+  `vehicleConditionMonitor`（12＋強靱力÷2）・`vehicleSkills`（カタログの
+  `Vehicle Active` から拾う。本で増える `Pilot Aerospace` も入る）
+- `frontend/lib/udonarium.ts` に `buildVehiclePieces` / `buildUdonariumVehicles`
+- ボタンは 1 つに合流。押すと該当する zip が種類ごとに落ちる
+  （`udonarium-conjured` / `udonarium-vehicles` / `udonarium-drones`）
+
+パレットは操り方ごとに 3 セクション。搭載武器があれば各セクションに攻撃も出る。
+変数は 操縦値・（あれば）操縦値オフロード・パイロット・センサ・強靱力・装甲値・
+操縦技能・Gunnery・オートソフト と、反応力・論理力・（武器があれば）敏捷力。
+
+**操縦技能は 1 つの変数にまとめた。** どのドローンがどの操縦技能を要るかは
+データに無い（Chummer はドローンをサイズで分類していて、地上/空中/水上を
+持っていない。乗り物側も `Corpsec/Police/Military` のような混成カテゴリがある）。
+修得している中で最高のものを初期値にし、ほかも定義して注記で名前を出す。
+
+**Gunnery の変数名は英語のまま。** 用語集に訳語が無く、勝手に作らない方針。
+カタログ名をそのまま使う既存のやり方（`varName(tr(skill.name))`）と同じ。
+
+### 実機確認（udonarium.app 1.17.4）
+
+Serpent のドローン 7 台の zip を「ZIP読込」から入れ、7 コマとも卓に出た。
+F-B Bumblebee のパレットでダイスボットが自動で シャドウラン 5th Edition になり、
+
+- `({反応力}+{操縦技能}+0)B6@{操縦値}` → `(8B6[6]Limit[3]>=5) > 1,3,3,5,6,6,6,6 > 成功数3(リミット超過2)`
+- `({パイロット}+{パイロット}+0)B6` → `(6B6>=5) > 1,3,4,4,4,6 > 成功数1`
+
+変数もリミットも解決している。
 
 ## 見込みの作業
 

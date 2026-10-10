@@ -192,9 +192,9 @@ export const JA_APP = {
     "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
   "toolbar.shareHint":
     "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
-  "toolbar.udonariumConjured": "ユドナリウム（精霊コマ）",
+  "toolbar.udonariumConjured": "ユドナリウム（お供のコマ）",
   "toolbar.udonariumConjuredHint":
-    "束縛した精霊と登録したスプライトを、1 体 1 コマの .zip で書き出します。ユドナリウムは zip の中の xml を全部読むので、まとめて卓に出ます。",
+    "束縛した精霊・登録したスプライト・乗り物・ドローンを、1 体 1 コマで書き出します。種類ごとに別の .zip で、ユドナリウムは zip の中の xml を全部読むので、まとめて卓に出ます。",
   "toolbar.udonarium": "ユドナリウム",
   "toolbar.udonariumHint":
     "ユドナリウムのキャラクターコマを .zip で書き出します（そのまま卓にドロップ）。チャットパレットは BCDice の ShadowRun5 で、能力値・武器・魔法・マトリックスは変数なので卓で修正値をいじれます。",

@@ -8,6 +8,7 @@ import type { Catalog, Character } from "@/lib/types";
 import {
   type UdonariumOptions,
   buildUdonariumConjured,
+  buildUdonariumVehicles,
   buildUdonariumXml,
   portraitEntry,
 } from "@/lib/udonarium";
@@ -166,9 +167,18 @@ export function useCharacterExport(opts: {
    */
   function downloadUdonariumConjured(catalog: Catalog, tr: (n: string) => string) {
     if (!ch) return;
-    const files = buildUdonariumConjured(ch, catalog, tr, locale);
-    if (!files.length) return;
-    offer(zipFiles(files), exportFilename(ch.name, "zip", { tag: "udonarium-conjured" }));
+    // One click, one zip per kind: the retinue, the vehicles and the drones
+    // are three different things to drop on a table, and Udonarium reads a
+    // whole archive at once. A kind the character has none of writes nothing.
+    const archives: [string, { name: string; content: string }[]][] = [
+      ["udonarium-conjured", buildUdonariumConjured(ch, catalog, tr, locale)],
+      ["udonarium-vehicles", buildUdonariumVehicles(ch, catalog, tr, locale, "vehicles")],
+      ["udonarium-drones", buildUdonariumVehicles(ch, catalog, tr, locale, "drones")],
+    ];
+    for (const [tag, files] of archives) {
+      if (!files.length) continue;
+      offer(zipFiles(files), exportFilename(ch.name, "zip", { tag }));
+    }
   }
 
   /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
