@@ -84,7 +84,33 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
 生活費のRF本文・装備適合条件、四脚の個別義肢管理、実機での一致確認は引き続き残件。
 シェイプシフターのalt移動率・形態同期はこの変更の対象外。
 
-生得MAGと各購入/成長経路、四脚の個別義肢管理、正典実機での`.chum5`往復は未完了であり、
+## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
+
+- 種族の`enableattribute`とTalentから、有効なMAG/RESと無料開始値を共通に解決する。
+  XMLに能力値範囲があるだけ、または`enabletab`だけでは有効化しない。
+  MundaneのCentaurはMAG1、RES0となり、種族変更・Talent変更・作成方式変更でもMAGを0に戻さない。
+- Priority/SumToTenのMagician/AdeptはTalentの開始値で置換し、生得MAG1を加算しない。
+  Karma式では開始値1。無料開始値を特殊点や能力値カルマへ請求しない。
+  MAG1→3は特殊点2、上の1レベルをカルマで買う場合は特殊点1と15 karma、
+  Karma式で全て買う場合は25 karmaとなる。
+- 能力値範囲・要件判定・購入済み値・費用の無料開始値を揃え、既存の能力値画面で編集できる。
+  生得MAGだけでは術式・精霊・アデプト・収束具のタブを有効化しない。
+- 既存エッセンス損失設定を生得MAGにも適用する。DatajackでESS5.9、通常設定ではMAG0、
+  上限だけ下げる設定ではMAG1。購入済みMAG1と生得付与の所有記録は保存する。
+  `.chum5`のmagenabled、MAGのmetatypemin/base/karma、Web内往復も検証した。
+- Priority式キャリア移行ではMAG1をbaselineへ保存し、MAG1→2を既存の10 karmaで計上する。
+  基本5種族MundaneのMAGは引き続き0であり、既存snapshotの変更は不要。
+
+開始値置換は固定コミットの
+[SelectMetatypePriority](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Character%20Creation%20Forms/SelectMetatypePriority.cs)
+のAssignLimits、価格は
+[CharacterAttrib.TotalKarmaCost/UpgradeKarmaCost](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Attributes/Attribute.Core.cs)
+を照合した。`test_centaur_magic.py`と能力値/タブ表示のテストで上記を検証する。
+これはChummer固定版コードと既存エンジンへの接続であり、RF本文・エラッタやGUI fixtureの確認完了を意味しない。
+生得MAGだけでのイニシエーション、共鳴Talentとの共存可否、キャリアのburnout、
+MAG0時の生得能力の利用可否は未確定。これらの新しい権限や自動削除処理は導入していない。
+
+生得MAGの残る権限・burnout仕様、四脚の個別義肢管理、正典実機での`.chum5`往復は未完了であり、
 Centaurを作成画面の候補へ公開する段階には達していない。
 
 ## 次の実装と公開条件
@@ -96,8 +122,9 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    `.chum5`の由来付き資質・パワー・自然武器の保存とWeb内往復も実装済み。
    正典実機で保存したファイルとの往復は引き続き確認する。
 3. 蹴りの素手攻撃修正・STR変動・他の自然武器との組合せを引き続き検証する。
-4. Mundaneでも生得MAG1を保持し、Patch・特殊点・カルマ・キャリア・エッセンス損失へ接続する。
-   生得MAGのみでは呪文等を解放しない。
+4. 生得MAG1の保持、Patch・特殊点・カルマ・キャリアbaseline・既存エッセンス損失への接続は上記範囲を実装済み。
+   RF本文・エラッタ・実機fixtureを確認し、イニシエーション、共鳴Talentとの共存、burnout、
+   MAG0時の生得能力の利用条件を確定してから残る権限を実装する。
 5. 地上/水泳/飛行の計算、追加脚の平均への接続、生活費と支出内訳は上記の範囲を検証済み。
    四脚の個別義肢指定/保存とRedliner、装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。

@@ -106,6 +106,7 @@ class Ctx:
     limb_quality: dict[str, Any] | None = None
     special_key: str | None = None
     talent_start: int = 0
+    special_floors: dict[str, int] = field(default_factory=dict)
     enabled: set[str] = field(default_factory=set)
 
     # --- essence / attributes ------------------------------------------------

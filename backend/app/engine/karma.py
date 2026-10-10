@@ -63,6 +63,7 @@ def attribute_karma_cost(
     special_key: str | None,
     *,
     rules: Sequence[Mapping[str, Any]] | None = None,
+    special_floors: Mapping[str, int] | None = None,
 ) -> int:
     """Karma to buy the attribute ratings on a Karma-build sheet.
 
@@ -87,8 +88,9 @@ def attribute_karma_cost(
         racial_min = int(spec.get("min") or 1)
         shift = alternate_attribute_shift(key, racial_min)
         total += cost(racial_min - shift, int(ratings.get(key) or racial_min) - shift, key)
-    if special_key in {"MAG", "RES"}:
-        total += cost(1, int(ratings.get(special_key) or 0), special_key)
+    floors = special_floors if special_floors is not None else ({special_key: 1} if special_key else {})
+    for key, floor in floors.items():
+        total += cost(floor, int(ratings.get(key) or 0), key)
     return total
 
 

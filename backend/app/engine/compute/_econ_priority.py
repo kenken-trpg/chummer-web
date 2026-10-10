@@ -29,8 +29,7 @@ def _priority_points(ctx: Ctx) -> None:
     )
 
     floors = {key: int(ctx.attrs_spec[key]["min"]) for key in (*PHYSICAL_ATTRS, "EDG")}
-    if ctx.special_key in ("MAG", "RES"):
-        floors[ctx.special_key] = ctx.talent_start
+    floors.update(ctx.special_floors)
     ctx.attr_floors = floors
     ctx.attr_karma_levels = _attribute_karma_levels(ctx, floors)
     ctx.spent_physical = 0

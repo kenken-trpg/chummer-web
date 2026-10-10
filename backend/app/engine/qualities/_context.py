@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...models import CharacterState
-from ..priority import talent_special
+from ..special_attributes import special_attribute_floors
 
 
 def quality_requirement_context(
@@ -28,7 +28,7 @@ def quality_requirement_context(
     bio_names: set[str],
     knowledge_ratings: dict[str, int] | None = None,
 ) -> dict[str, Any]:
-    special_key, _ = talent_special(talent)
+    specials = special_attribute_floors(meta, talent)
     metatypes = {state.metatype}
     if state.metavariant:
         metatypes.add(state.metavariant)
@@ -40,8 +40,8 @@ def quality_requirement_context(
         "qualities": {item["name"] for item in qualities},
         "metatypes": metatypes,
         "metatype_categories": {name for name in categories if name},
-        "magenabled": special_key == "MAG",
-        "resenabled": special_key == "RES",
+        "magenabled": "MAG" in specials,
+        "resenabled": "RES" in specials,
         "powers": power_names,
         "cyberware": cyber_names,
         "bioware": bio_names,

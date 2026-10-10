@@ -48,23 +48,16 @@ def _effective_attr_spec(
     talent_start: int,
     mag_max_bonus: int = 0,
     res_max_bonus: int = 0,
+    *,
+    special_floors: dict[str, int] | None = None,
 ) -> dict[str, dict[str, int | float]]:
     out = {key: dict(spec) for key, spec in attrs_spec.items()}
-    if special_key == "MAG":
-        out["MAG"]["min"] = max(talent_start, 1)
-        out["MAG"]["max"] = int(out["MAG"].get("max") or 0) + max(0, int(mag_max_bonus))
-        out["RES"]["min"] = 0
-        out["RES"]["max"] = 0
-    elif special_key == "RES":
-        out["RES"]["min"] = max(talent_start, 1)
-        out["RES"]["max"] = int(out["RES"].get("max") or 0) + max(0, int(res_max_bonus))
-        out["MAG"]["min"] = 0
-        out["MAG"]["max"] = 0
-    else:
-        out["MAG"]["min"] = 0
-        out["MAG"]["max"] = 0
-        out["RES"]["min"] = 0
-        out["RES"]["max"] = 0
+    floors = (
+        special_floors if special_floors is not None else ({special_key: max(talent_start, 1)} if special_key else {})
+    )
+    for key, bonus in (("MAG", mag_max_bonus), ("RES", res_max_bonus)):
+        out[key]["min"] = floors.get(key, 0)
+        out[key]["max"] = int(out[key].get("max") or 0) + max(0, int(bonus)) if key in floors else 0
     return out
 
 
@@ -131,6 +124,7 @@ def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
                 ctx.talent_start,
                 int(ctx.initiation.get("mag_max_bonus") or 0),
                 int(ctx.submersion.get("res_max_bonus") or 0),
+                special_floors=ctx.special_floors,
             ).items()
         },
         "source": ctx.meta.get("source"),

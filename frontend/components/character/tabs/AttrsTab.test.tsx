@@ -84,6 +84,30 @@ describe("<AttrsTab>", () => {
     expect(screen.getAllByRole("slider")).toHaveLength(10);
   });
 
+  it("edits a Mundane centaur's native MAG above its free floor", () => {
+    const patch = vi.fn();
+    renderTab({
+      patch,
+      character: {
+        metatype: "Centaur",
+        talent: "Mundane",
+        attributes: { MAG: 3 },
+        derived: {
+          enabled_tabs: ["MAG", "critter"],
+          totals: { MAG: 3 },
+          metatype_info: { attributes: { MAG: { min: 1, max: 6, aug: 6 } } },
+          attribute_karma: { ...split, floors: { ...split.floors, MAG: 1 }, levels: {} },
+        } as never,
+      },
+    });
+    const slider = screen.getByRole("slider", { name: /^MAG / }) as HTMLInputElement;
+    expect([slider.min, slider.max, slider.value]).toEqual(["1", "6", "3"]);
+    const karma = screen.getByRole("spinbutton", { name: /MAG.*うちカルマ/ }) as HTMLInputElement;
+    expect(karma.max).toBe("2");
+    fireEvent.change(karma, { target: { value: "1" } });
+    expect(patch).toHaveBeenCalledWith({ attribute_karma: { MAG: 1 } });
+  });
+
   it("drags STR: onChange previews via setCharacter, onMouseUp commits via patch", () => {
     const patch = vi.fn();
     // AttrsTab is a controlled slider — the preview only sticks if setCharacter

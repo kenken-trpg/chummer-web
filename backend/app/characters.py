@@ -29,8 +29,8 @@ from .engine import (
     resolve_talent_for_method,
     sanitize_quality_ids,
     snapshot_career_baseline,
-    talent_special,
 )
+from .engine.special_attributes import special_attribute_floors
 from .models import CharacterCreate, CharacterPatch, CharacterState, Priorities
 
 
@@ -62,12 +62,13 @@ def compute_state(state: CharacterState) -> CharacterState:
 def _apply_talent_ratings(data: dict) -> None:
     talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
     data["talent"] = talent["name"]
-    key, start = talent_special(talent)
-    if normalize_build_method(data.get("build_method")) == BUILD_METHOD_KARMA and key:
-        start = 1
+    meta = find_metatype(data["metatype"], data.get("metavariant"))
+    floors = special_attribute_floors(
+        meta, talent, is_karma=normalize_build_method(data.get("build_method")) == BUILD_METHOD_KARMA
+    )
     attrs = dict(data.get("attributes") or {})
-    attrs["MAG"] = start if key == "MAG" else 0
-    attrs["RES"] = start if key == "RES" else 0
+    for key in ("MAG", "RES"):
+        attrs[key] = floors.get(key, 0)
     data["attributes"] = attrs
 
 

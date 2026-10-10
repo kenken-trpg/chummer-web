@@ -26,6 +26,7 @@ from ..qualities import (
     gather_qualities,
 )
 from ..skills import bind_ware_skill_accuracy
+from ..special_attributes import special_attribute_floors
 from ..ware import _clamp_ware_grades, apply_cyberseeker, redliner_incompat_warnings
 from .context import Ctx
 
@@ -165,6 +166,6 @@ def effects_and_binders(ctx: Ctx) -> None:
     ctx.special_key, ctx.talent_start = talent_special(ctx.talent)
     if ctx.is_karma and ctx.special_key:
         ctx.talent_start = 1
+    ctx.special_floors = special_attribute_floors(ctx.meta, ctx.talent, is_karma=ctx.is_karma)
     ctx.enabled = set(ctx.effects["enabled_tabs"])
-    if ctx.special_key:
-        ctx.enabled.add(ctx.special_key)
+    ctx.enabled.update(ctx.special_floors)
