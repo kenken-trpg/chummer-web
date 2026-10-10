@@ -187,7 +187,7 @@ export const EN_APP = {
     "Copy a read-only share link. The character rides in the URL and is never stored on the server (the portrait is left out).",
   "toolbar.udonarium": "Udonarium",
   "toolbar.udonariumHint":
-    "Download an Udonarium character piece as .xml — drop it straight on the table. The chat palette targets BCDice ShadowRun5; attributes, weapons, magic and the Matrix are variables, so the table can retune a pool without re-exporting.",
+    "Download an Udonarium character piece as .zip — drop it straight on the table. The chat palette targets BCDice ShadowRun5; attributes, weapons, magic and the Matrix are variables, so the table can retune a pool without re-exporting.",
   "toolbar.cocofolia": "Cocofolia",
   "toolbar.cocofoliaHint":
     "Copy a Cocofolia piece as JSON (paste to import). Rolls use BCDice's ShadowRun5.",

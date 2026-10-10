@@ -431,18 +431,34 @@ export function buildUdonariumXml(
   const d: Derived = ch.derived;
   const cm = d.condition_monitor || { physical: 0, stun: 0 };
   const edge = d.totals?.EDG || 0;
-  const matrixCm = d.cyberdeck ? 8 + Math.ceil((d.cyberdeck.device_rating || 1) / 2) : 0;
+  // A persona's Matrix condition monitor is 8 + half its Device Rating,
+  // rounded up (SR5 p.228) — and a technomancer has one too, off the living
+  // persona, which is why this asks the same question the palette's Matrix
+  // block does rather than only looking for a deck.
+  const donglelink = d.commlink && (d.commlink.attack || d.commlink.sleaze) ? d.commlink : null;
+  const persona = d.cyberdeck || d.living_persona || donglelink;
+  const matrixCm = persona ? 8 + Math.ceil((persona.device_rating || 1) / 2) : 0;
   // `movement.run` is Chummer's metres-per-Complex-Action string; a rating
   // modifier can leave it non-numeric, and then the piece starts at 0.
   const run = Number.parseInt(String(d.movement?.run ?? ""), 10);
   const boxes = (n: number) => "[]".repeat(Math.max(n, 0));
+  // Every piece is written at the same spot, so a party loaded one file at a
+  // time lands in one stack and has to be dragged apart. Spreading them over a
+  // small grid by name keeps the export reproducible — the same character
+  // always writes the same file — while putting two characters in one place
+  // only when their names collide in the hash.
+  const spot = (() => {
+    let h = 0;
+    for (const c of ch.name || "") h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return { x: 200 + (h % 6) * 100, y: 50 + (Math.floor(h / 6) % 4) * 100 };
+  })();
   const wound = [
     `${ui("udo.woundPhysical")}${boxes(cm.physical)}`,
     `${ui("udo.woundStun")}${boxes(cm.stun)}`,
   ].join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<character location.name="table" location.x="0" location.y="0" posZ="0" rotate="0" roll="0" isAltitudeIndicate="true" isLock="false" isDropShadow="false" hideInventory="false" nonTalkFlag="false" overViewWidth="270" overViewMaxHeight="250" specifyKomaImageFlag="false" komaImageHeignt="100" chatColorCode.0="#000000" chatColorCode.1="#FF0000" chatColorCode.2="#0099FF" syncDummyCounter="0">
+<character location.name="table" location.x="${spot.x}" location.y="${spot.y}" posZ="0" rotate="0" roll="0" isAltitudeIndicate="true" isLock="false" isDropShadow="false" hideInventory="false" nonTalkFlag="false" overViewWidth="270" overViewMaxHeight="250" specifyKomaImageFlag="false" komaImageHeignt="100" chatColorCode.0="#000000" chatColorCode.1="#FF0000" chatColorCode.2="#0099FF" syncDummyCounter="0">
   <data name="character">
     <data name="image">
       <data type="image" name="imageIdentifier">none_icon</data>

@@ -6,6 +6,7 @@ import { portraitsOf } from "@/lib/character/portrait";
 import { errorMessage } from "@/lib/errors";
 import type { Catalog, Character } from "@/lib/types";
 import { type UdonariumOptions, buildUdonariumXml } from "@/lib/udonarium";
+import { zipSingleFile } from "@/lib/zip";
 import { type Notice } from "@/lib/engine-notices";
 import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
@@ -124,12 +125,15 @@ export function useCharacterExport(opts: {
   }
 
   /**
-   * Save the character as an Udonarium piece (`.xml`).
+   * Save the character as an Udonarium piece: a zip holding one `data.xml`.
+   *
+   * It has to be a zip. Udonarium's loader runs the unzipper whatever it is
+   * handed, so a bare `.xml` — which its file input's `accept` list even
+   * advertises — dies on "End of central directory not found". Checked
+   * against udonarium.app 1.17.4.
    *
    * Built here rather than on the server: the palette comes out of `derived`,
-   * which this browser already has. Udonarium ships pieces as a zip holding a
-   * `data.xml`, but it reads a bare xml too, and the zip is only needed to
-   * carry an image this export does not have.
+   * which this browser already has.
    */
   function downloadUdonarium(
     catalog: Catalog,
@@ -138,10 +142,8 @@ export function useCharacterExport(opts: {
   ) {
     if (!ch) return;
     offer(
-      new Blob([buildUdonariumXml(ch, catalog, tr, locale, opts)], {
-        type: "application/xml",
-      }),
-      exportFilename(ch.name, "xml", { tag: "udonarium" }),
+      zipSingleFile("data.xml", buildUdonariumXml(ch, catalog, tr, locale, opts)),
+      exportFilename(ch.name, "zip", { tag: "udonarium" }),
     );
   }
 

@@ -279,7 +279,7 @@ describe("buildUdonariumXml", () => {
     expect(doc.querySelector("chat-palette")?.textContent).toContain("Ares S-III Super Squirt <2>");
   });
 
-  it("gives a deck-runner a Matrix condition monitor and leaves it off everyone else", () => {
+  it("gives any persona a Matrix condition monitor and leaves it off everyone else", () => {
     const plain = buildUdonariumXml(makeCharacter(), makeCatalog(), identityTr);
     expect(plain).not.toContain("マトリックスCM");
     const decker = makeCharacter({
@@ -288,5 +288,23 @@ describe("buildUdonariumXml", () => {
     expect(buildUdonariumXml(decker, makeCatalog(), identityTr)).toContain(
       '<data name="マトリックスCM" type="numberResource" currentValue="0">11</data>',
     );
+    // a technomancer runs on a living persona, and has one just the same
+    const techno = makeCharacter({
+      derived: { living_persona: { device_rating: 6, attack: 3 } as never },
+    });
+    expect(buildUdonariumXml(techno, makeCatalog(), identityTr)).toContain(
+      '<data name="マトリックスCM" type="numberResource" currentValue="0">11</data>',
+    );
+  });
+
+  // Udonarium drops every piece where the file says, so a party loaded one
+  // file at a time would land in one stack.
+  it("puts two characters in different places, and one character always in the same place", () => {
+    const at = (name: string) =>
+      /location\.x="(\d+)" location\.y="(\d+)"/
+        .exec(buildUdonariumXml(makeCharacter({ name }), makeCatalog(), identityTr))
+        ?.slice(1, 3);
+    expect(at("Ghile Mear")).not.toEqual(at("Spirit Warden"));
+    expect(at("Ghile Mear")).toEqual(at("Ghile Mear"));
   });
 });

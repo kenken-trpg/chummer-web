@@ -194,7 +194,7 @@ export const JA_APP = {
     "読み取り専用の共有リンクをコピー。キャラは URL に埋め込まれ、サーバーには保存されません（ポートレートは含みません）",
   "toolbar.udonarium": "ユドナリウム",
   "toolbar.udonariumHint":
-    "ユドナリウムのキャラクターコマを .xml で書き出します（そのまま卓にドロップ）。チャットパレットは BCDice の ShadowRun5 で、能力値・武器・魔法・マトリックスは変数なので卓で修正値をいじれます。",
+    "ユドナリウムのキャラクターコマを .zip で書き出します（そのまま卓にドロップ）。チャットパレットは BCDice の ShadowRun5 で、能力値・武器・魔法・マトリックスは変数なので卓で修正値をいじれます。",
   "toolbar.cocofolia": "ココフォリア",
   "toolbar.cocofoliaHint":
     "ココフォリアのコマ JSON をコピー（貼り付けで取り込み）。判定は BCDice の ShadowRun5",
