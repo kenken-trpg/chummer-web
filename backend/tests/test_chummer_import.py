@@ -1012,3 +1012,64 @@ def test_a_number_past_the_input_cap_is_clamped_by_the_read() -> None:
     assert raw != SAMPLE
     state, _ = chum5_to_state(raw)
     import_character(state)
+
+
+def test_a_gun_in_a_drones_weapon_mount_is_read_and_linked_to_it() -> None:
+    """Chummer nests the mounted gun in the mount; this app keeps it as a
+    weapon of the character and links the mount to it by id."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <vehicles><vehicle><name>MCT-Nissan Roto-drone (Medium)</name>
+        <weaponmounts><weaponmount><name>Standard (Drone)</name><category>Size</category>
+          <weaponmountcategories>Tasers,Holdouts,Light Pistols</weaponmountcategories>
+          <weapons><weapon><name>Narcoject One</name><qty>1</qty></weapon></weapons>
+        </weaponmount></weaponmounts>
+      </vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    (weapon,) = st["weapons"]
+    (mount,) = st["weapon_mounts"]
+    assert mount["weapon_install_id"] == weapon["id"]
+    # `<weaponmountcategories>` lists categories, while `allowedweapons` is a
+    # list of weapon names: reading one into the other rejected every gun
+    assert not mount.get("allowedweapons")
+    ch = import_character(st)
+    (drone,) = ch.derived["drones"]
+    assert [row["weapon_name"] for row in drone["weapon_mounts"]] == ["Narcoject One"]
+
+
+def test_a_gun_a_drones_own_entry_brings_is_not_bought_again() -> None:
+    """A nested weapon with a `<parentid>` came with the drone, like the
+    granted weapons the character's own `<weapons>` list skips."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <vehicles><vehicle><guid>d1</guid><name>F-B Bumblebee</name>
+        <weaponmounts><weaponmount><name>Heavy [SR5]</name><category>Size</category>
+          <weapons><weapon><name>Stoner-Ares M202</name><parentid>d1</parentid></weapon></weapons>
+        </weaponmount></weaponmounts>
+      </vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert warnings == []
+    assert st["weapons"] == []
+    (mount,) = st["weapon_mounts"]
+    assert mount["weapon_install_id"] is None
+
+
+def test_a_mount_holding_more_than_one_gun_keeps_them_all_and_says_so() -> None:
+    """Only one gun links to a mount here. The rest stay in the character's
+    weapons for the vehicle tab to assign."""
+    xml = b"""<character><metatype>Human</metatype><buildmethod>Priority</buildmethod>
+      <vehicles><vehicle><name>MCT-Nissan Roto-drone (Medium)</name>
+        <weaponmounts><weaponmount><name>Standard (Drone)</name><category>Size</category>
+          <weapons>
+            <weapon><name>Narcoject One</name></weapon>
+            <weapon><name>ArmTech MGL-12</name></weapon>
+          </weapons>
+        </weaponmount></weaponmounts>
+      </vehicle></vehicles>
+    </character>"""
+    st, warnings = chum5_to_state(xml)
+    assert has(warnings, "engine.import.mountExtraWeapons")
+    assert len(st["weapons"]) == 2
+    (mount,) = st["weapon_mounts"]
+    assert mount["weapon_install_id"] == st["weapons"][0]["id"]

@@ -392,6 +392,8 @@ export const EN_ENGINE = {
     "{count} rows on the equipment sheet could not be matched to an item — confirm each one.",
   "engine.import.vehicleLoadSkipped":
     "Could not import the weapons/gear carried by vehicle “{name}”",
+  "engine.import.mountExtraWeapons":
+    "A weapon mount on vehicle “{name}” held more than one weapon. Only one can be linked to a mount here, so pick the rest from the weapon list.",
   "engine.term.contact": "contact",
   "engine.term.gear": "gear",
   "engine.term.host": "its host",

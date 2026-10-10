@@ -10,6 +10,7 @@ from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
 from ..notices import Notice, notice, ui
 from ._common import _Resolver, _unexpected_children
+from .combat import _read_weapon, weapon_resolvers
 
 
 def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
@@ -20,11 +21,17 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
     mount_r = _Resolver(cat["weapon_mounts"])
     mount_categories = {row["id"]: row.get("category") or "" for row in cat["weapon_mounts"]}
     mod_ware: dict[int, list[dict[str, Any]]] = dict(st.pop("_vehicle_mod_ware", None) or {})
-    # A mount points at a weapon row by name: ids are regenerated on import.
+    # A mount's gun is a weapon row of the character here, linked by id. Chummer
+    # nests it in the mount instead, so it is read in below; our own export
+    # writes the link as `<mountedweaponname>`, which this still honours for a
+    # file that came from here.
     weapon_ids: dict[str, str] = {}
     for wrow in st.get("weapons") or []:
         wname = next((w["name"] for w in cat["weapons"] if w["id"] == wrow.get("weapon_id")), "")
         weapon_ids.setdefault(wname.lower(), wrow["id"])
+    weap_r, wacc_r = weapon_resolvers(cat)
+    st_weap: list[dict[str, Any]] = st.setdefault("weapons", [])
+    st_wacc: list[dict[str, Any]] = st.setdefault("weapon_accessories", [])
     st_mounts: list[dict[str, Any]] = []
     st_veh: list[dict[str, Any]] = list(st.get("drones") or [])  # gear rows come later
     st_veh_only: list[dict[str, Any]] = []
@@ -68,6 +75,17 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                 part_id = mount_r.resolve(opt, warn, ui("engine.kind.weaponMount"))
                 if part_id and mount_categories.get(part_id) in parts:
                     parts[mount_categories[part_id]] = part_id
+            # The guns Chummer nests in the mount become weapon rows here.
+            # One with a `<parentid>` came with the drone's own entry and was
+            # not bought — like the granted weapons `_import_weapons` skips.
+            # The engine builds a drone's included mounts but not yet the gun
+            # in them, so such a mount comes out empty.
+            mounted = [
+                wid
+                for w in m.findall("./weapons/weapon")
+                if not _text(w.find("parentid")) and (wid := _read_weapon(w, weap_r, wacc_r, st_weap, st_wacc, warn))
+            ]
+            by_name = weapon_ids.get(_text(m.find("mountedweaponname")).lower())
             st_mounts.append(
                 {
                     "id": str(uuid.uuid4()),
@@ -77,10 +95,18 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
                     "flexibility_id": parts["Flexibility"],
                     "control_id": parts["Control"],
                     "included": _text(m.find("included")).lower() == "true",
-                    "weapon_install_id": weapon_ids.get(_text(m.find("mountedweaponname")).lower()),
-                    "allowedweapons": _text(m.find("weaponmountcategories")),
+                    "weapon_install_id": mounted[0] if mounted else by_name,
+                    # not `<weaponmountcategories>`: that lists categories the
+                    # size accepts, while `allowedweapons` is the catalog's list
+                    # of weapon *names* an included drone mount is built for.
+                    # Reading one into the other rejected every mounted gun.
                 }
             )
+            if len(mounted) > 1:
+                # Chummer's mount holds a list. Only one gun can be linked to a
+                # mount here, so the rest stay in the character's weapons for
+                # the vehicle tab to assign.
+                warn.append(notice("engine.import.mountExtraWeapons", name=_text(v.find("name"))))
         vehicle_id = str(row["id"])
         carried += [
             (vehicle_id, g)

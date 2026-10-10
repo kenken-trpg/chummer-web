@@ -75,43 +75,70 @@ def _import_armor(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
 
 def _import_weapons(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read weapons and their accessories."""
-    # Only weapons a character could have bought: the granted ones (a cyberspur,
-    # bioware claws) come back with the ware that grants them, and matching them
-    # here as well would give the character the weapon twice.
-    weap_r = _Resolver([w for w in cat["weapons"] if w.get("purchasable")])
-    wacc_r = _Resolver(cat["weapon_accessories"])
+    weap_r, wacc_r = weapon_resolvers(cat)
     st_weap: list[dict[str, Any]] = []
     st_wacc: list[dict[str, Any]] = []
     for w in root.findall("./weapons/weapon"):
-        if _text(w.find("cyberware")).lower() == "true":
-            continue
         if _text(w.find("parentid")):
             # made by Chummer from what brought it — a grenade bought as gear,
             # a Survival Kit's knife, a shield — and not bought again: this
             # app makes those rows from the same gear, armor or ware
             continue
-        wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
-        if not wid:
-            continue
-        row = {
-            "id": str(uuid.uuid4()),
-            "weapon_id": wid,
-            "qty": max(1, _int(w.find("qty"), 1)),
-            "discounted": _discounted(w),
-        }
-        st_weap.append(row)
-        for acc in w.findall("./accessories/accessory"):
-            acid = wacc_r.resolve(acc, warn, ui("engine.kind.weaponAccessory"))
-            if acid:
-                st_wacc.append(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "accessory_id": acid,
-                        "parent_id": row["id"],
-                        "mount": _text(acc.find("mount")),
-                        "rating": max(1, _int(acc.find("rating"), 1)),
-                        "included": _text(acc.find("included")).lower() == "true",
-                    }
-                )
+        _read_weapon(w, weap_r, wacc_r, st_weap, st_wacc, warn)
     st["weapons"] = st_weap
     st["weapon_accessories"] = st_wacc
+
+
+def _read_weapon(
+    w: ET.Element,
+    weap_r: _Resolver,
+    wacc_r: _Resolver,
+    st_weap: list[dict[str, Any]],
+    st_wacc: list[dict[str, Any]],
+    warn: list[Notice],
+) -> str | None:
+    """Append one weapon row and its accessories; return the new row's id.
+
+    Shared with the vehicle importer, which reads the guns bolted into a
+    weapon mount: those are weapon rows of the character here, and the mount
+    links to one by id.
+    """
+    if _text(w.find("cyberware")).lower() == "true":
+        return None
+    wid = weap_r.resolve(w, warn, ui("engine.kind.weapon"))
+    if not wid:
+        return None
+    row = {
+        "id": str(uuid.uuid4()),
+        "weapon_id": wid,
+        "qty": max(1, _int(w.find("qty"), 1)),
+        "discounted": _discounted(w),
+    }
+    st_weap.append(row)
+    for acc in w.findall("./accessories/accessory"):
+        acid = wacc_r.resolve(acc, warn, ui("engine.kind.weaponAccessory"))
+        if acid:
+            st_wacc.append(
+                {
+                    "id": str(uuid.uuid4()),
+                    "accessory_id": acid,
+                    "parent_id": row["id"],
+                    "mount": _text(acc.find("mount")),
+                    "rating": max(1, _int(acc.find("rating"), 1)),
+                    "included": _text(acc.find("included")).lower() == "true",
+                }
+            )
+    return str(row["id"])
+
+
+def weapon_resolvers(cat: CatalogDict) -> tuple[_Resolver, _Resolver]:
+    """The two resolvers `_read_weapon` takes.
+
+    Only weapons a character could have bought: the granted ones (a cyberspur,
+    bioware claws) come back with the ware that grants them, and matching them
+    here as well would give the character the weapon twice.
+    """
+    return (
+        _Resolver([w for w in cat["weapons"] if w.get("purchasable")]),
+        _Resolver(cat["weapon_accessories"]),
+    )
