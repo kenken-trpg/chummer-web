@@ -58,7 +58,10 @@ export function QualitiesTab({
     resenabled: d.enabled_tabs.includes("RES"),
     skills: mergeRatings(d.skill_totals, d.skillsoft),
     knowledge: mergeRatings(ch.knowledge_skills, d.skillsoft),
-    powers: new Set((d.adept_powers || []).map((item) => item.name)),
+    powers: new Set([
+      ...(d.adept_powers || []).map((item) => item.name),
+      ...(d.metatype_info.powers || []).filter((item) => item.id).map((item) => item.name),
+    ]),
     spells: new Set((d.spells || []).map((item) => item.name)),
     cyberware: new Set((d.cyberware || []).map((item) => item.name)),
     bioware: new Set((d.bioware || []).map((item) => item.name)),
@@ -156,6 +159,9 @@ export function QualitiesTab({
                       }`
                     : ""}
                   {q.free ? ui("qual.freeAttached") : ""}
+                  {q.origin === "Metatype"
+                    ? ` / ${ui("meta.innate", { name: tr(q.origin_name || ch.metatype) })}`
+                    : ""}
                   {q.disabled_by ? ui("qual.disabledBy", { ware: tr(q.disabled_by) }) : ""}
                   {q.career_cost == null
                     ? careerPricing && !q.free && q.category === "Negative"
@@ -263,7 +269,9 @@ export function QualitiesTab({
                 ) : null}
               </div>
               {q.free ? (
-                <span className="muted">{ui("qual.attached")}</span>
+                <span className="muted">
+                  {ui(q.origin === "Metatype" ? "meta.innateFixed" : "qual.attached")}
+                </span>
               ) : (
                 <button
                   className="btn danger"

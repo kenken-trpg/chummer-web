@@ -97,13 +97,18 @@ def tradition_quality_grants(state: CharacterState, talent: dict[str, Any]) -> l
 
 
 def gather_qualities(
-    state: CharacterState, talent: dict[str, Any]
+    state: CharacterState, talent: dict[str, Any], metatype_grants: list[dict[str, Any]] | None = None
 ) -> tuple[list[dict[str, Any]], list[str], list[str]]:
     qualities: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
     free_ids: set[str] = set()
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
+    innate = {q["id"]: q for q in metatype_grants or [] if q.get("id")}
+    for qid in innate:
+        free_ids.add(qid)
+        if qid not in pending:
+            pending.append(qid)
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])
@@ -125,7 +130,7 @@ def gather_qualities(
     while index < len(pending):
         qid = pending[index]
         index += 1
-        spec = _quality_by_id(qid)
+        spec = innate.get(qid) or _quality_by_id(qid)
         if not spec:
             continue
         if _at_quality_limit(spec, counts):

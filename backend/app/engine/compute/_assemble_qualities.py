@@ -89,6 +89,18 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
             "selectside": _quality_has_selectside(q),
             "side": _normalize_side(ctx.state.quality_extras.get(q["id"])) if _quality_has_selectside(q) else None,
             "free": q["id"] in ctx.free_quality_ids or bool(q.get("onlyprioritygiven")),
+            **(
+                {
+                    "origin": q["origin"],
+                    "origin_id": q["origin_id"],
+                    "origin_name": q["origin_name"],
+                    "removable": q["removable"],
+                    "extra": q.get("select") or "",
+                    "page": q.get("page") or "",
+                }
+                if q.get("origin") == "Metatype"
+                else {}
+            ),
             **_quality_critter_powers(q, ctx.state.quality_extras),
             # the table value, only when a `<costdiscount>` moved it
             **({"karma_base": q["karma_base"]} if q.get("karma_base") is not None else {}),
@@ -103,7 +115,7 @@ def quality_rows(ctx: Ctx) -> list[dict[str, Any]]:
 def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
     """``derived["metatype_info"]``: the metatype's attribute ranges after
     talent, initiation / submersion and `<attributemaxclamp>`."""
-    return {
+    info: _MetatypeInfo = {
         "name": ctx.meta["name"],
         "parent": ctx.meta.get("parent"),
         "attributes": {
@@ -126,3 +138,26 @@ def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
         # the metatype's own (Infected, Quadriplegic).
         "attributes_replaced_by": list(ctx.attr_replaced_by),
     }
+    if ctx.meta.get("power_grants"):
+        info["powers"] = [
+            {
+                key: power.get(key) or ""
+                for key in (
+                    "id",
+                    "name",
+                    "type",
+                    "action",
+                    "range",
+                    "duration",
+                    "source",
+                    "page",
+                    "select",
+                    "rating",
+                    "origin",
+                    "origin_id",
+                    "origin_name",
+                )
+            }
+            for power in ctx.meta["power_grants"]
+        ]
+    return info

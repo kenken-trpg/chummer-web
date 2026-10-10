@@ -1,5 +1,8 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — English。 */
 export const EN_CHARGEN = {
+  "meta.innate": "Innate to {name} (no additional karma)",
+  "meta.innateFixed": "Innate grant · cannot be removed",
+  "meta.innatePowers": "Metatype powers",
   "skills.points": "Skills {skills} · Groups {groups} · Knowledge {knowledge}",
   "skills.careerNote": " · career advances with karma (max R{max})",
   "skills.chargenNote": " · a specialisation costs 1 point",

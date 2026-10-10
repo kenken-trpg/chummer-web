@@ -106,6 +106,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_weapon_ranges,
     load_weapons,
 )
+from .loaders.metatype_grants import resolve_metatype_grants
 
 #: One lock per overlay key, so two requests that arrive on a cold key build
 #: it once between them instead of once each. `lru_cache` has no "wait for the
@@ -219,6 +220,18 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         add_name = str(item.get("add_weapon") or "")
         if add_name:
             item["add_weapon_id"] = weapon_ids.get(add_name) or ""
+    centaur = all_by_name.get("Centaur")
+    if centaur:
+        centaur["quality_grants"] = resolve_metatype_grants(
+            centaur, centaur.get("qualities") or [], load_qualities(include_hidden=True)
+        )
+        for quality in centaur["quality_grants"]:
+            add_name = str(quality.get("add_weapon") or "")
+            if add_name:
+                quality["add_weapon_id"] = weapon_ids.get(add_name) or ""
+        centaur["power_grants"] = resolve_metatype_grants(
+            centaur, centaur.get("powers") or [], load_critter_powers(include_rules=True)
+        )
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])

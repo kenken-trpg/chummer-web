@@ -1,5 +1,7 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — English。 */
 export const EN_ENGINE = {
+  "engine.meta.unknownGrant":
+    "The definition of {metatype}'s innate ability {name} was not found. Check your custom data.",
   "engine.gear.deckBuilderTarget": "Select the deck receiving Deck Builder’s additional slot",
   "engine.gear.moduleInvalid": "{name} has an invalid module host",
   "engine.gear.modulesOver": "{name} exceeds its module pool limit ({pool}: {used}/{max})",

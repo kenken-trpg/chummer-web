@@ -92,6 +92,56 @@ it("shows Confidence's penalty and inactive specialization in visual and text sh
   expect(text).toContain(`${name} 4 [AGI プール 7]`);
 });
 
+it("prints innate qualities and fixed powers with provenance and the kick selection", () => {
+  const data = buildSheetData({
+    character: makeCharacter({
+      metatype: "Centaur",
+      derived: {
+        qualities: [
+          {
+            id: "magic",
+            name: "Magic Sense",
+            category: "Positive",
+            source: "RF",
+            karma: 0,
+            free: true,
+            origin: "Metatype",
+            origin_name: "Centaur",
+            removable: false,
+          },
+        ],
+        metatype_info: {
+          name: "Centaur",
+          parent: null,
+          source: "RF",
+          attributes: {},
+          powers: [
+            {
+              id: "natural",
+              name: "Natural Weapon",
+              source: "SR5",
+              page: "399",
+              rating: "",
+              select: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
+              origin: "Metatype",
+              origin_id: "centaur",
+              origin_name: "Centaur",
+            },
+          ],
+        },
+      },
+    }),
+    catalog: makeCatalog(),
+    tr: identityTr,
+    layout: "print",
+  });
+  const { container } = render(<QualitiesSection {...data} />);
+  expect(container.textContent).toContain("Centaurの生得能力（追加カルマなし）");
+  expect(container.textContent).toContain("種族パワー");
+  expect(container.textContent).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
+  expect(container.textContent).toContain("SR5 p.399");
+});
+
 const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
   ["コア", CoreSection, "イニシアチブ"],
   ["技能", SkillsSection, "Pistols"],

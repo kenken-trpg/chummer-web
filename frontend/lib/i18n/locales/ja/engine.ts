@@ -1,5 +1,7 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — 日本語。 */
 export const JA_ENGINE = {
+  "engine.meta.unknownGrant":
+    "{metatype}の生得能力「{name}」の定義が見つかりません。カスタムデータを確認してください。",
   "engine.gear.deckBuilderTarget": "Deck Builderの対象デッキを選択してください",
   "engine.gear.moduleInvalid": "{name} のモジュール搭載先が不正です",
   "engine.gear.modulesOver": "{name} のモジュール枠が上限超過（{pool}: {used}/{max}）",

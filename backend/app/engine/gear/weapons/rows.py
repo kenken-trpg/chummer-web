@@ -145,6 +145,10 @@ def _append_quality_weapons(weapons: list[dict[str, Any]], qualities: list[dict[
         weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
         weapon["natural"] = True
         weapon["natural_source"] = str(quality.get("name") or "")
+        if quality.get("origin") == "Metatype":
+            weapon["origin"] = quality["origin"]
+            weapon["origin_id"] = quality["origin_id"]
+            weapon["origin_name"] = quality["origin_name"]
         weapons.append(weapon)
         taken.add(inst_id)
 

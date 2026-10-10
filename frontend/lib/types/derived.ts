@@ -485,6 +485,11 @@ export interface Derived {
     selectside?: boolean;
     side?: string | null;
     free?: boolean;
+    origin?: "Metatype";
+    origin_id?: string;
+    origin_name?: string;
+    removable?: boolean;
+    page?: string;
     /** the table karma, when a `<costdiscount>` condition changed it */
     karma_base?: number | null;
     /** the ware that switches this quality off (`<disablequality>`, RF p.148) */
@@ -533,6 +538,14 @@ export interface Derived {
     /** `<replaceattributes>`: the qualities these ranges come from instead of
      *  the metatype (the Infected qualities, Quadriplegic). */
     attributes_replaced_by?: string[];
+    powers?: (CritterPower & {
+      id: string;
+      select: string;
+      rating: string;
+      origin: "Metatype";
+      origin_id: string;
+      origin_name: string;
+    })[];
   };
   talent?: {
     name: string;

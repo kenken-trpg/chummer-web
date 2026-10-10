@@ -13,7 +13,7 @@ and ``catalog()``. Imports only ``typing`` + the bundle types it re-uses.
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from ...improvements.effect_rows import (
     ActionDicePoolRow,
@@ -194,6 +194,7 @@ class _MetatypeInfo(TypedDict):
     attributes: dict[str, dict[str, int | float]]
     source: str | None
     attributes_replaced_by: list[str]
+    powers: NotRequired[list[Row]]
 
 
 class DerivedDict(TypedDict):

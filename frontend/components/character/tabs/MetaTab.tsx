@@ -4,8 +4,9 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { withOriginal } from "@/lib/character/format";
 import { priorityTableFor } from "@/lib/character/priority-table";
+import { critterPowerRow } from "@/lib/spell-terms";
 
-export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps) {
+export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
 
   return (
@@ -87,6 +88,25 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
           </select>
         </label>
       </div>
+      {d.metatype_info.powers?.length ? (
+        <section style={{ marginTop: 12 }}>
+          <h3>{ui("meta.innatePowers")}</h3>
+          <p className="muted">{ui("meta.innate", { name: tr(ch.metatype) })}</p>
+          <ul className="critter-powers">
+            {d.metatype_info.powers.map((power, index) => (
+              <li key={`${power.id}-${index}`}>
+                {critterPowerRow(power, tr, ui)}
+                <span className="muted">
+                  {" "}
+                  / {power.source} p.{power.page}
+                </span>
+                {power.select ? <div className="muted">{power.select}</div> : null}
+                {power.rating ? <div className="muted">{power.rating}</div> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

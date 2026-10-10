@@ -68,6 +68,42 @@ describe("textSheet core stats", () => {
 });
 
 describe("textSheet sections", () => {
+  it("includes innate power selections and their reference information", () => {
+    const text = sheet(
+      makeCharacter({
+        metatype: "Centaur",
+        derived: {
+          metatype_info: {
+            name: "Centaur",
+            parent: null,
+            source: "RF",
+            attributes: {},
+            powers: [
+              {
+                id: "natural-weapon",
+                name: "Natural Weapon",
+                type: "P",
+                action: "Complex",
+                range: "Touch",
+                duration: "Instant",
+                source: "SR5",
+                page: "399",
+                select: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
+                rating: "",
+                origin: "Metatype",
+                origin_id: "centaur",
+                origin_name: "Centaur",
+              },
+            ],
+          },
+        },
+      }),
+    );
+    expect(text).toContain("=== 種族パワー ===");
+    expect(text).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
+    expect(text).toContain("SR5 p.399");
+  });
+
   it("renders a skill with its specialisation, rating and pool", () => {
     expect(section(sheet(), "技能")).toEqual(["  Pistols 4 [AGI プール 7]"]);
   });

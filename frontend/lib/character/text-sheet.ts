@@ -1,6 +1,12 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { attrShort, scopeTr } from "@/lib/ui-strings";
-import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
+import {
+  critterPowerRow,
+  spellDescriptors,
+  spellDuration,
+  spellRange,
+  spellType,
+} from "@/lib/spell-terms";
 import {
   cfDuration,
   cfTarget,
@@ -126,7 +132,20 @@ export function textSheet(x: TextArgs): string {
     head("sheet.qualities");
     x.qualities.forEach((q) =>
       line(
-        `  ${tr(q.name)}${q.level != null ? ` Lv${q.level}` : ""}${q.extra ? "：" + tr(q.extra) : ""}`,
+        `  ${tr(q.name)}${q.level != null ? ` Lv${q.level}` : ""}${q.extra ? "：" + tr(q.extra) : ""}` +
+          (q.origin === "Metatype"
+            ? ` / ${ui("meta.innate", { name: tr(q.origin_name || ch.metatype) })}`
+            : ""),
+      ),
+    );
+    line();
+  }
+
+  if (d.metatype_info.powers?.length) {
+    head("meta.innatePowers");
+    d.metatype_info.powers.forEach((power) =>
+      line(
+        `  ${critterPowerRow(power, tr, ui)}${power.select ? ` / ${power.select}` : ""}${power.rating ? ` / ${power.rating}` : ""} / ${power.source} p.${power.page}`,
       ),
     );
     line();

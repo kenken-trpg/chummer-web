@@ -23,7 +23,8 @@ def quality_req_ctx(ctx: Ctx) -> dict[str, Any]:
         ctx.ess,
         ctx.ess_lost,
         ctx.effective_skills,
-        set(ctx.adept.get("power_names") or []),
+        set(ctx.adept.get("power_names") or [])
+        | {p["name"] for p in ctx.meta.get("power_grants") or [] if not p.get("unresolved")},
         {str(item.get("name") or "") for item in (ctx.magic.get("public") or []) if item.get("name")},
         str((tradition or {}).get("name") or ""),
         {item["name"] for item in ctx.cyber_installed},

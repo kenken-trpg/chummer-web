@@ -61,7 +61,13 @@ def gather(ctx: Ctx) -> None:
     ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
     ctx.state.talent = ctx.talent["name"]
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
-    ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent)
+    quality_grants = ctx.meta.get("quality_grants") or []
+    power_grants = ctx.meta.get("power_grants") or []
+    for grant in quality_grants + power_grants:
+        if grant.get("unresolved"):
+            ctx.warn("engine.meta.unknownGrant", name=term(grant["name"]), metatype=term(ctx.meta["name"]))
+    ctx.sources.extend((p["name"], p.get("bonus") or []) for p in power_grants if not p.get("unresolved"))
+    ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent, quality_grants)
     for name in dropped_qualities:
         ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])

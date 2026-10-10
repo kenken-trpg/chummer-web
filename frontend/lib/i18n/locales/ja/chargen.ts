@@ -1,5 +1,8 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — 日本語。 */
 export const JA_CHARGEN = {
+  "meta.innate": "{name}の生得能力（追加カルマなし）",
+  "meta.innateFixed": "生得付与・削除不可",
+  "meta.innatePowers": "種族パワー",
   "skills.points": "技能 {skills} ・ グループ {groups} ・ 知識 {knowledge}",
   "skills.careerNote": " ・ キャリアはカルマで成長（上限 R{max}）",
   "skills.chargenNote": " ・ 専門化は1点",

@@ -126,6 +126,9 @@ export interface InstalledWeapon {
   /** Born with it (a `<naturalweapon>` grant) — nothing to buy, install or drop. */
   natural?: boolean;
   natural_source?: string;
+  origin?: "Metatype";
+  origin_id?: string;
+  origin_name?: string;
   /** comes with the drone it is bolted into: free, and not ours to remove */
   included?: boolean;
   useskill?: string;
