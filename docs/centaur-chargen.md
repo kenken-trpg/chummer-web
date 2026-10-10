@@ -73,7 +73,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
 - `addlimb`が腕2/脚4/胴1/頭1と、義肢平均の分母8へ届くことを検証した。
   `limbslotcount=all`は脚4として平均する。公式CalculatedMovementの義脚条件は
   四脚でも2スロット以上であり、既存条件を維持する。
-  四脚全てを個別に指定するUI/保存と、Redlinerの上限は未確認。
+  四脚全てを個別に指定するUI/保存は未完了。Redlinerの計算は下記の範囲を検証した。
 - 固定コミットのLifestyle.GetTotalMonthlyCostと照合し、Centaurの+150%を対象部分へ適用する
   既存処理を検証した。基本2,000¥は5,000¥。扶養・その他補正は区分ごとに合成し、
   外出/契約の定額費用を種族補正で増やさない。複数生活様式・複数月の支出内訳も一致する。
@@ -83,6 +83,32 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
 [Lifestyle.GetTotalMonthlyCost](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Lifestyle.cs)。
 生活費のRF本文・装備適合条件、四脚の個別義肢管理、実機での一致確認は引き続き残件。
 シェイプシフターのalt移動率・形態同期はこの変更の対象外。
+
+## 実装済み: Redlinerの追加肢・全脚置換・ボーナス上限
+
+- `effects.extra_limbs`をRedliner/Cyber-Singularity Seekerの集計へ渡す。
+  Centaurでは脚の集計枠が4となり、`limbslotcount=all`も4肢として数える。
+  集計対象を空に指定した場合は、標準の腕/脚へ戻さず0肢とする。
+- 集計した肢数と効果の上限を分離する。参照元の`min(count / 2, 2)`に合わせ、
+  6肢を数えてもSTR/AGIまたはWILへのボーナスは最大2。
+  既存の義肢強化上限も引き続き適用する。
+- Redlinerの身体ダメージ欄へのペナルティをボーナス1点につき3枠へ修正する。
+  2肢なら-3、4肢以上なら最大-6。同梱qualities.xmlのBOXの注記と
+  `RefreshRedlinerImprovements`の`intCount * -3`を照合した。
+  この修正は基本種族にも適用される。
+- 実データの全脚置換装備と両腕で6肢になるケースについて、再計算、JSON、
+  Web内`.chum5`往復、Human↔Centaurで集計枠が4↔2へ戻ることを検証する。
+  装備名はLiminal Body, Tank (Full)であり、テストは計算経路の検証に限定する。
+  Centaurがその装備を正典上装着できることの根拠にはしない。
+- 左右の保存値は参照元でも`Left`/`Right`で、追加肢は片側の枠数を増やす構造。
+  Web側には同じ側を1肢として扱う判定が残るため、個別の四脚指定は未完了。
+  前後の位置を推測で追加しない。部分義肢・モジュラー義肢の集計範囲の一致も残件。
+
+検証は`test_centaur_redliner.py`と既存のRedlinerテストによる。
+照合先は固定コミットの
+[Character.RedlinerBonus/RefreshRedlinerImprovements](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)と
+[Cyberware.LimbSlotCount/GetCyberlimbCount/SelectSide](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)。
+CF本文・エラッタ、RFの装備適合条件、Chummer GUI fixtureの確認は未実施。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 

@@ -596,7 +596,7 @@ def test_redliner_adds_limb_attributes_and_cuts_physical_cm() -> None:
     arms = [item for item in out.derived["cyberware"] if item["ware_id"] == ARM]
     assert all(item["limb_str"] == 7 for item in arms)
     assert out.derived["totals"]["STR"] == 3
-    assert out.derived["condition_monitor"]["physical"] == 10
+    assert out.derived["condition_monitor"]["physical"] == 8
     assert out.derived["karma"]["remaining"] == 15
 
 
@@ -619,7 +619,7 @@ def test_redliner_four_limbs_is_plus_two() -> None:
     out = compute(state)
     assert out.derived["limb_quality"]["count"] == 4
     assert out.derived["limb_quality"]["pairs"] == 2
-    assert out.derived["limb_quality"]["cm_physical"] == -2
+    assert out.derived["limb_quality"]["cm_physical"] == -6
     arm = next(item for item in out.derived["cyberware"] if item["id"] == "arm1")
     assert arm["limb_str"] == 5  # base 3 + Redliner +2
     assert arm["limb_agi"] == 5

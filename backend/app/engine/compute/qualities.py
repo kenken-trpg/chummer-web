@@ -154,7 +154,9 @@ def effects_and_binders(ctx: Ctx) -> None:
     for key, value in attr_max_mods.items():
         ctx.attr_max_bonus[key] = int(ctx.attr_max_bonus.get(key) or 0) + int(value)
     seeker_targets = ctx.effects.get("cyberseeker") or []
-    ctx.limb_quality = apply_cyberseeker(ctx.cyber_installed, seeker_targets, ctx.attrs_spec, ctx.state.options)
+    ctx.limb_quality = apply_cyberseeker(
+        ctx.cyber_installed, seeker_targets, ctx.attrs_spec, ctx.state.options, ctx.effects["extra_limbs"]
+    )
     ctx.warnings.extend(redliner_incompat_warnings(ctx.installed, seeker_targets))
     if ctx.limb_quality:
         for key, value in (ctx.limb_quality.get("attribute_bonus") or {}).items():

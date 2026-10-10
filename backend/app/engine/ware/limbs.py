@@ -97,13 +97,16 @@ def cyberleg_movement_agi(resolved: list[dict[str, Any]], extra_limbs: dict[str,
     return min(int(item["limb_agi"]) for item in legs)
 
 
-def redliner_slot_caps(options: CharacterOptions | None = None) -> dict[str, int]:
+def redliner_slot_caps(
+    options: CharacterOptions | None = None, extra_limbs: dict[str, int] | None = None
+) -> dict[str, int]:
     """The limb slots Redliner counts: arms and legs, plus torso and skull
     unless `<redlinerexclusion>` leaves them out (Chummer's default does) —
     the character options can still add those two back."""
     opts = options or CharacterOptions()
     excludes = set(current_rules().redliner_excludes)
-    slots = {slot: n for slot, n in REDLINER_BASE_SLOTS.items() if slot not in excludes}
+    body = body_limb_slots(extra_limbs)
+    slots = {slot: body[slot] for slot in REDLINER_BASE_SLOTS if slot not in excludes}
     if opts.redliner_torso or "torso" not in excludes:
         slots["torso"] = 1
     if opts.redliner_skull or "skull" not in excludes:
@@ -216,7 +219,7 @@ def limb_attribute_replace(
 
 
 def count_redliner_limbs(resolved: list[dict[str, Any]], slots: dict[str, int] | None = None) -> int:
-    slots = slots or redliner_slot_caps()
+    slots = redliner_slot_caps() if slots is None else slots
     taken: set[tuple[str, str]] = set()
     total = 0
     used = dict.fromkeys(slots, 0)
@@ -232,7 +235,7 @@ def count_redliner_limbs(resolved: list[dict[str, Any]], slots: dict[str, int] |
         if used[slot] >= cap:
             continue
         taken.add(key)
-        add = min(cap - used[slot], _limb_slot_count(item))
+        add = min(cap - used[slot], _limb_slot_count(item, slots))
         used[slot] += add
         total += add
     return total
@@ -243,12 +246,15 @@ def apply_cyberseeker(
     targets: list[str],
     attrs_spec: dict[str, dict[str, int | float]],
     options: CharacterOptions | None = None,
+    extra_limbs: dict[str, int] | None = None,
 ) -> dict[str, Any] | None:
     if not targets:
         return None
-    slots = redliner_slot_caps(options)
+    slots = redliner_slot_caps(options, extra_limbs)
     count = count_redliner_limbs(resolved, slots)
-    pairs = count // 2
+    # Character.RedlinerBonus / RefreshRedlinerImprovements cap both
+    # Redliner and Cyber Singularity Seeker at two, even with extra limbs.
+    pairs = min(count // 2, 2)
     attr_bonus = dict.fromkeys(("STR", "AGI", "WIL", "BOD", "REA", "CHA", "INT", "LOG"), 0)
     cm_physical = 0
     limb_bonus = 0
@@ -257,7 +263,8 @@ def apply_cyberseeker(
             attr_bonus[target] = pairs
             limb_bonus = pairs
         elif target == "BOX":
-            cm_physical -= pairs
+            # The XML's BOX target is three physical boxes per bonus point.
+            cm_physical -= pairs * 3
         elif target in attr_bonus:
             attr_bonus[target] = pairs
     if limb_bonus:
