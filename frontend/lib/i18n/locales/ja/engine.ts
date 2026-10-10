@@ -1,5 +1,6 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — 日本語。 */
 export const JA_ENGINE = {
+  "engine.meta.invalidVariant": "{name}は{metatype}の亜種ではないため、亜種指定を解除しました。",
   "engine.meta.unknownGrant":
     "{metatype}の生得能力「{name}」の定義が見つかりません。カスタムデータを確認してください。",
   "engine.gear.deckBuilderTarget": "Deck Builderの対象デッキを選択してください",

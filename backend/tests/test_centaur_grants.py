@@ -26,6 +26,27 @@ def _centaur(**kwargs: object) -> CharacterState:
     )
 
 
+@pytest.mark.parametrize("variant", ["Nartaki", "Elf", "Missing variant"])
+def test_stale_variant_is_cleared_without_replacing_centaur(variant: str) -> None:
+    assert find_metatype("Centaur", variant)["id"] == CENTAUR_ID
+    out = compute(_centaur(metavariant=variant))
+    assert out.metavariant is None
+    assert has(out.derived["warnings"], "engine.meta.invalidVariant", name=variant, metatype="Centaur")
+    assert {q["id"] for q in out.derived["qualities"]} == set(QUALITY_IDS.values())
+    assert len(out.derived["weapons"]) == 1
+    assert compute(out).metavariant is None
+
+
+def test_species_patch_with_stale_variant_keeps_centaur_grants() -> None:
+    state = _centaur(metavariant="Nartaki")
+    state.metatype = "Human"
+    state.attributes = default_attributes(find_metatype("Human", "Nartaki"))
+    out = apply_patch(state, CharacterPatch(metatype="Centaur"))
+    assert out.metavariant is None
+    assert has(out.derived["warnings"], "engine.meta.invalidVariant", name="Nartaki", metatype="Centaur")
+    assert {q["id"] for q in out.derived["qualities"]} == set(QUALITY_IDS.values())
+
+
 @pytest.mark.parametrize("method", ["Priority", "SumToTen", "Karma"])
 def test_innate_qualities_are_free_outside_both_quality_allowances(method: str) -> None:
     out = compute(_centaur(build_method=method))

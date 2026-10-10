@@ -1,5 +1,7 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — English。 */
 export const EN_ENGINE = {
+  "engine.meta.invalidVariant":
+    "{name} is not a variant of {metatype}; the variant selection was cleared.",
   "engine.meta.unknownGrant":
     "The definition of {metatype}'s innate ability {name} was not found. Check your custom data.",
   "engine.gear.deckBuilderTarget": "Select the deck receiving Deck Builder’s additional slot",

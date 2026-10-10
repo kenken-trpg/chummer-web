@@ -223,19 +223,16 @@ def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
 def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
     data = catalog()
     by_name: dict[str, dict[str, Any]] = data["all_metatypes"]
-    if variant:
-        base_list: list[dict[str, Any]] = data["metatypes"]
-        for base in base_list:
-            if base.get("name") != name:
-                continue
+    if name in by_name:
+        base = by_name[name]
+        # Resolve within the parent, including metatypes held outside the
+        # public chargen list. A stale variant must not replace this species.
+        if variant:
             metavariants: list[dict[str, Any]] = base.get("metavariants") or []
             for mv in metavariants:
                 if mv.get("name") == variant:
                     return mv
-        if variant in by_name:
-            return by_name[variant]
-    if name in by_name:
-        return by_name[name]
+        return base
     # Not a KeyError: this is reached from a visitor's file — a JSON export, a
     # .chum5 using a custom-data metatype — and the name is what tells them why.
     raise NoticeError(notice("api.unknownMetatype", name=name))
