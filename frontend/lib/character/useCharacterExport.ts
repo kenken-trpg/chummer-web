@@ -127,10 +127,10 @@ export function useCharacterExport(opts: {
   /**
    * Save the character as an Udonarium piece: a zip holding one `data.xml`.
    *
-   * It has to be a zip. Udonarium's loader runs the unzipper whatever it is
-   * handed, so a bare `.xml` — which its file input's `accept` list even
-   * advertises — dies on "End of central directory not found". Checked
-   * against udonarium.app 1.17.4.
+   * A zip, because only a zip goes in both ways. Dropping a file on the table
+   * reads a bare `.xml`, but the 「ZIP読込」 file input unzips whatever it is
+   * handed and dies on a plain xml with "End of central directory not found",
+   * its `accept` list notwithstanding. Checked against udonarium.app 1.17.4.
    *
    * Built here rather than on the server: the palette comes out of `derived`,
    * which this browser already has.

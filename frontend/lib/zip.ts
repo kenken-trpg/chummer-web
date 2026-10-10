@@ -1,10 +1,13 @@
 /**
  * A minimal ZIP writer: enough to put one file in an archive, and no more.
  *
- * Udonarium ships a character piece as a zip holding `data.xml`, and it reads
- * *only* that — handed a bare `.xml` it still runs the unzipper and fails with
- * "End of central directory not found". So the export has to produce a zip,
- * and the frontend has no runtime dependencies to produce one with.
+ * Udonarium ships a character piece as a zip holding `data.xml`. It has two
+ * ways in and they do not agree: dropping a file on the table reads a bare
+ * `.xml` fine, but the 「ZIP読込」 file input runs the unzipper over whatever it
+ * is handed and fails a plain xml with "End of central directory not found" —
+ * although its own `accept` list advertises `application/xml`. A zip works
+ * either way, so that is what the export writes, and the frontend has no
+ * runtime dependencies to write one with.
  *
  * Entries are stored, not deflated (method 0). A character is a few kilobytes
  * of XML; compressing it would save nothing anyone can notice and would mean

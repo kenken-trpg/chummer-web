@@ -23,11 +23,13 @@ Udonarium（ユドナリウム）のキャラクターコマを 1 体 1 ファ�
 
 - **パレットは併用**。主要な攻撃・防御・魔法・マトリックスは変数方式（卓で修正値を
   いじれるのがテンプレートの主眼）。技能一覧や各種判定は確定値を展開する。
-- **`.zip`**（`data.xml` 1 枚）。当初は `.xml` 直接にしたが、udonarium.app 1.17.4 で
-  実機確認したところ読めなかった。ファイル入力の `accept` は `application/xml` を
-  挙げているのに、読み込み側は渡されたものを必ず unzip しようとし、`End of central
-  directory not found` で落ちる。frontend は実行時依存がゼロなので、`lib/zip.ts` に
-  1 ファイル分だけの zip ライター（無圧縮）を置いた。
+- **`.zip`**（`data.xml` 1 枚）。当初は `.xml` 直接にしたが、udonarium.app 1.17.4 の
+  入り口は 2 つあって挙動が違う。盤面へのドラッグ＆ドロップは xml 単体を読むが、
+  「ZIP読込」のファイル入力は渡されたものを必ず unzip しようとし、xml を
+  `End of central directory not found` で落とす（その input の `accept` は
+  `application/xml` を挙げているのに）。zip はどちらからも入るので zip にした。
+  frontend は実行時依存がゼロなので、`lib/zip.ts` に 1 ファイル分だけの zip
+  ライター（無圧縮）を置いた。
 - **`detail` はサンプル通り**、リソースだけ。能力値はパレットの変数が持つ。
 - **ポートレートは載せない**。`imageIdentifier` は `none_icon` のまま。
 
