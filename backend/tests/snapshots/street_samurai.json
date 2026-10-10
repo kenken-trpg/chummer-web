@@ -747,6 +747,7 @@
       "from_gear": false,
       "from_ware": false,
       "id": "#5",
+      "included": false,
       "limb_agi": null,
       "limb_str": null,
       "loaded_ammo_id": "",

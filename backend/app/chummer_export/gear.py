@@ -122,11 +122,21 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
     # Chummer writes "None" for an accessory that takes no mount; one that
     # wants a mount and found none keeps its empty value, and its error
     mountless = {str(row["id"]) for row in catalog().get("weapon_accessories") or [] if not row.get("mounts")}
+    # a gun a vehicle's own entry brought with it: Chummer marks one with the
+    # host's id in `<parentid>`, and the reader skips it there because the
+    # entry grants it again
+    host_of = {
+        row.weapon_install_id: row.parent_id
+        for row in state.weapon_mounts or []
+        if row.weapon_install_id and row.parent_id
+    }
     for w in state.weapons:
         el = _sub(weapons, "weapon")
         _sub(el, "sourceid", w.weapon_id)
         _sub(el, "name", names["weapon"].get(w.weapon_id, ""))
         _sub(el, "qty", w.qty)
+        if w.included:
+            _sub(el, "parentid", host_of.get(w.id, ""))
         _sub(el, "discountedcost", "True" if w.discounted else "False")
         accs = _sub(el, "accessories")
         for arow in wacc_by_parent.get(w.id, []):

@@ -61,6 +61,8 @@ class WeaponInstall(BaseModel):
     weapon_id: str
     qty: int = 1
     loaded_ammo_id: str | None = None
+    #: comes with a drone's own entry: free, and not the player's to remove
+    included: bool = False
     #: bought through the Black Market Pipeline: 10% off (Chummer's
     #: `<discountedcost>`, which the quality's categories allow)
     discounted: bool = False

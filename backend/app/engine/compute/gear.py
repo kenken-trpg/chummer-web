@@ -100,6 +100,11 @@ def resolve_gear(
     )
     warnings.extend(worn_warns)
 
+    # First, because what a drone's own entry brings with it — a gun, an
+    # autosoft, a sensor — is resolved by the passes below like any other.
+    # It reads `state` and the catalog, so it needs none of them to have run.
+    _ensure_drone_equipment(state)
+
     state.weapons, weapons, weapon_nuyen = resolve_weapon_rows(state)
     spend["weapons"] += weapon_nuyen
     _append_armor_weapons(weapons, armor_items)
@@ -138,7 +143,6 @@ def resolve_gear(
     vehicles, vehicle_nuyen = _resolve_drones(state, "vehicles")
     spend["vehicles"] += vehicle_nuyen
     hosts = drones + vehicles
-    _ensure_drone_equipment(state)
     vehicle_mods, mod_nuyen, mod_warns, mod_errors = _resolve_vehicle_mods(state, hosts)
     spend["vehicleMods"] += mod_nuyen
     warnings.extend(mod_warns)

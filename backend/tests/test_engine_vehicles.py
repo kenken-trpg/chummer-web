@@ -16,13 +16,18 @@ from app.models import (
 )
 from tests.engine_support import (
     ATMOSPHERE,
+    BUMBLEBEE,
     CYBERLIMB_OPTIMIZATION,
     DEALER_CONNECTION,
     FORD_AMERICAR,
     HAND_BLADE,
+    HEAVY_SR5_MOUNT,
     MADE_MAN,
     MECHANICAL_ARM,
     META_LINK,
+    MOUNT_EXTERNAL,
+    MOUNT_FIXED,
+    MOUNT_REMOTE,
     ORTHOSKIN,
     PREDATOR,
     RADIO_SHACK_RCC,
@@ -918,3 +923,51 @@ def test_drone_armor_multiplier_setting_raises_the_ceiling() -> None:
     assert row["armor"] == "16"
     # Switched off, the ceiling is Body + Armor again.
     assert _armored_doberman(SettingsState(drone_armor_multiplier_enabled=False))["armor"] == "8"
+
+
+def test_a_drones_entry_brings_its_gun_autosoft_and_mod_for_free() -> None:
+    """An F-B Bumblebee comes armed (NP p.23): the Stoner-Ares M202 in its
+    Heavy mount, the Targeting Autosoft that aims it, the Rigger Interface and
+    the Sensor Array. None of it is bought, and none of it is the player's to
+    remove."""
+    ch = compute(_mundane("drone-loadout", drones=[GearInstall(gear_id=BUMBLEBEE)]))
+    d = ch.derived
+    (drone,) = d["drones"]
+    (mount,) = drone["weapon_mounts"]
+    assert (mount["weapon_name"], mount["included"]) == ("Stoner-Ares M202", True)
+    assert [(w["name"], w["nuyen"], w["included"]) for w in d["weapons"]] == [("Stoner-Ares M202", 0, True)]
+    # rating 3 and the weapon it aims come from the entry's attributes
+    assert [(p["label"], p["rating"], p["nuyen"], p["included"]) for p in d["programs"]] == [
+        ("Targeting Autosoft (Stoner-Ares M202)", 3, 0, True)
+    ]
+    assert [m["name"] for m in drone["mods"]] == ["Rigger Interface"]
+    assert drone["nuyen"] == 24000
+
+
+def test_a_gun_bought_into_the_mount_keeps_the_drones_own_out_of_it() -> None:
+    """Swapping the stock gun out is just picking another one for the mount:
+    the entry's gun then has nowhere to go and is not granted. The autosoft
+    the entry grants is gear, so it comes along either way."""
+    weapon = WeaponInstall(weapon_id=PREDATOR)
+    ch = compute(
+        _mundane(
+            "drone-swap",
+            drones=[GearInstall(gear_id=BUMBLEBEE, id="bee")],
+            weapons=[weapon],
+            weapon_mounts=[
+                WeaponMountInstall(
+                    parent_id="bee",
+                    size_id=HEAVY_SR5_MOUNT,
+                    visibility_id=MOUNT_EXTERNAL,
+                    flexibility_id=MOUNT_FIXED,
+                    control_id=MOUNT_REMOTE,
+                    included=True,
+                    weapon_install_id=weapon.id,
+                    allowedweapons="Stoner-Ares M202",
+                )
+            ],
+        )
+    )
+    d = ch.derived
+    assert [w["name"] for w in d["weapons"]] == ["Ares Predator V"]
+    assert [p["label"] for p in d["programs"]] == ["Targeting Autosoft (Stoner-Ares M202)"]
