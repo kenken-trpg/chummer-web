@@ -2,6 +2,62 @@
 
 from typing import Any
 
+from ...notices import Notice, notice, term, terms
+
+
+def check_modular_mounts(rows: list[dict[str, Any]], specs: dict[str, dict[str, Any]]) -> list[Notice]:
+    """Validate direct connections using ConstructModularCyberlimbList's rules.
+
+    Unparented plugs are owned, detached equipment. Report invalid stored
+    connections without deleting purchases or choosing an occupancy winner.
+    Side assignment belongs to ensure_sides, which inherits the host's side.
+    """
+    by_id = {str(row["id"]): row for row in rows}
+    occupants: dict[str, list[dict[str, Any]]] = {}
+    errors: list[Notice] = []
+    for row in rows:
+        plug = str(specs.get(str(row["ware_id"]), {}).get("mounts_to") or "")
+        parent_id = str(row.get("parent_id") or "")
+        if not plug or not parent_id:
+            continue
+        parent = by_id.get(parent_id)
+        if parent is None:
+            # Vehicle hosts and orphan cleanup have their own validation.
+            continue
+        mount = str(specs.get(str(parent["ware_id"]), {}).get("modular_mount") or "")
+        if plug != mount:
+            errors.append(
+                notice(
+                    "engine.ware.modularMountMismatch",
+                    name=term(str(row["name"])),
+                    parent=term(str(parent["name"])),
+                    mount=plug,
+                )
+            )
+            continue
+        occupants.setdefault(parent_id, []).append(row)
+        if row.get("grade") != parent.get("grade"):
+            errors.append(
+                notice(
+                    "engine.ware.modularGradeMismatch",
+                    name=term(str(row["name"])),
+                    parent=term(str(parent["name"])),
+                    grade=term(str(row["grade"])),
+                    parent_grade=term(str(parent["grade"])),
+                )
+            )
+    for parent_id, children in occupants.items():
+        if len(children) > 1:
+            errors.append(
+                notice(
+                    "engine.ware.modularMountOccupied",
+                    name=term(str(by_id[parent_id]["name"])),
+                    count=len(children),
+                    children=terms(str(child["name"]) for child in children),
+                )
+            )
+    return errors
+
 
 def apply_modular_state(rows: list[dict[str, Any]], specs: dict[str, dict[str, Any]]) -> None:
     """Mirror Cyberware.IsModularCurrentlyEquipped's ancestor walk.

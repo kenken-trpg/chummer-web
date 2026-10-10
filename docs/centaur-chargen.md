@@ -212,9 +212,34 @@ GUI実保存との一致、モジュラーの着脱・適合条件、全脚置�
 [CharacterAttrib.CalculatedTotalValue](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Attributes/Attribute.Core.cs)。
 効果経路だけの合成fixtureは装備適合の証明に使わない。
 
-着脱UI、マウント種別・接続数・blocksmountsの検証、格納ギア・内蔵武器の利用可否、
+マウント種別・接続数・グレードの直接接続検証は下記範囲を実装した。
+着脱UI、blocksmountsの検証、格納ギア・内蔵武器の利用可否、
 汎用のエッセンス課金規則、RF/CF本文・エラッタ、GUI実保存は残件。
 今回の実データのモジュラー脚は元々ess=0であり、接続状態によるエッセンスの一括免除は導入しない。
+
+## 実装済み: モジュラーの直接接続先・接続数・グレードの検証
+
+- 固定版のPlugsIntoTargetCyberwareとConstructModularCyberlimbListの接続先条件から、
+  子のmountstoと直接の親のmodularmountの一致、同じグレード、
+  1コネクタにつき同種マウントへ接続できる部品1件の条件を検証する。
+  子のmountstoが空の通常パーツ・特注パーツはマウントの占有件数に含めない。
+- 接続数は親install IDごとに数える。Centaurの同名・同側の2コネクタをまとめず、
+  4コネクタに1脚ずつを接続する構成を許容する。
+  容量制限設定が無効でもモジュラー接続数の制約は検証する。
+- 不一致・過剰接続はderived.errorsへ構造化したエラーを出し、作成チェックで日英表示する。
+  購入記録・価格・親子指定を保持し、勝手な削除・取外し・グレード変更は行わない。
+  エラー時に接続したままの部品の効果を自動で停止する処理は加えない。
+- 親なしのモジュラー部品は取外し状態として保持し、接続先不足のエラーを出さない。
+  多段の接続では直接の親で検証し、取外した義脚の配下でも不正な接続を報告する。
+  左右は既存のensure_sidesが親から継承する。保存前の矛盾したside指定を別途検証する変更は含まない。
+- Patch、再計算、JSON、Web内.chum5往復で、正常な四脚の接続と過剰接続の検出を検証した。
+  取外しによる過剰接続の解消、異種マウント、通常義脚への誤接続、グレード変更も検証する。
+
+検証は`test_modular_mount_validation.py`による。照合先は固定コミットの
+[Cyberware.PlugsIntoTargetCyberware](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)と
+[Character.ConstructModularCyberlimbList](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)。
+これは保存済みの直接接続の検証であり、選択UIの候補絞込みや部位全体のblocksmounts、
+コネクタ自体の装着条件・車両ホストへ直接接続した場合の適合を網羅するものではない。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 
@@ -263,6 +288,7 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    四脚の個別義肢指定/保存とRedlinerも上記範囲を実装済み。
    部分義肢の集計境界・モジュラーコネクタの能力値継承は上記範囲を検証済み。
    接続状態による通常・無線・ペア・技能選択の改善効果の制御も上記範囲を実装済み。
+   直接接続のマウント種別・接続数・グレードの検証も上記範囲を実装済み。
    モジュラーの着脱・装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。
    基本5種族・亜種・感染者・SURGEへの回帰を確認する。

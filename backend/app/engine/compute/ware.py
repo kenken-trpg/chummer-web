@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...data_loader import catalog_ware
 from ...improvements import collect_effects
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CyberwareInstall
@@ -25,6 +26,7 @@ from ..ware import (
     has_adapsin,
     resolve_ware,
 )
+from ..ware.modular import check_modular_mounts
 from ..ware.pairs import apply_wireless_pairs, pair_bonus_sources
 from ..ware.sides import ensure_sides
 from ..ware.vehicles import vehicle_ware_extras
@@ -82,6 +84,12 @@ def ware(ctx: Ctx) -> None:
     )
     _mark_granted(ctx.bio_installed, bio_sources)
     _mark_granted(ctx.cyber_installed, cyber_sources)
+    ctx.errors.extend(
+        check_modular_mounts(
+            ctx.cyber_installed,
+            {str(row["id"]): row for row in catalog_ware("cyberware").get("items") or []},
+        )
+    )
     # Resolve sides once species, quality and ware addlimb bonuses are known,
     # before wireless pairing consumes the sides on the resolved rows.
     hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)

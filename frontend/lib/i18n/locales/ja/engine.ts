@@ -296,6 +296,12 @@ export const JA_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con は制限ウェアを装着できません（{name}）",
   "engine.ware.gradeBanned": "{name} は {grade} グレードを使えません（{fallback} に変更）",
   "engine.ware.metatypeOnly": "{name} は {needed} 専用です",
+  "engine.ware.modularMountMismatch":
+    "{name} の接続先 {parent} には {mount} モジュラーマウントが必要です",
+  "engine.ware.modularGradeMismatch":
+    "{name}（{grade}）は接続先 {parent}（{parent_grade}）と同じグレードにしてください",
+  "engine.ware.modularMountOccupied":
+    "{name} にモジュラー部品が {count} 件接続されています（{children}）。1マウントにつき1件までです",
   "engine.ware.pickTarget": "{name} の対象インプラントを選んでください",
   "engine.ware.redlinerIncompatible": "Redliner は {needed} と併用できません（肢の特注・強化は可）",
   "engine.ware.requires": "{name} には {needed} が必要です",

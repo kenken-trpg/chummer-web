@@ -301,6 +301,11 @@ export const EN_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con cannot have restricted ware ({name})",
   "engine.ware.gradeBanned": "{name} cannot use the {grade} grade (switched to {fallback})",
   "engine.ware.metatypeOnly": "{name} is only for {needed}",
+  "engine.ware.modularMountMismatch": "{name} requires a {mount} modular mount on {parent}",
+  "engine.ware.modularGradeMismatch":
+    "{name} ({grade}) must have the same grade as {parent} ({parent_grade})",
+  "engine.ware.modularMountOccupied":
+    "{name} has {count} modular parts connected ({children}); only one is allowed per mount",
   "engine.ware.redlinerIncompatible":
     "Redliner does not stack with {needed} (limb customisation/enhancement is fine)",
   "engine.ware.pickTarget": "Choose the implant {name} is keyed to",
