@@ -90,6 +90,39 @@ describe("<CyberTab>", () => {
     });
   });
 
+  it("uses the body's four leg slots when adding an individual cyberleg", () => {
+    const leg = {
+      ...wired,
+      id: "leg",
+      name: "Obvious Full Leg",
+      limbslot: "leg",
+      selectside: true,
+    };
+    const cyberware = ["Left", "Left", "Right"].map((side, i) => ({
+      id: `leg-${i}`,
+      ware_id: "leg",
+      side,
+      rating: 1,
+      grade: "Standard",
+      wireless: false,
+    }));
+    const patch = vi.fn();
+    const ch = makeCharacter({ cyberware });
+    render(
+      <CyberTab
+        {...panelProps(ch, {
+          catalog: cyberCatalog([leg]),
+          patch,
+          d: { ...ch.derived, body_limb_slots: { arm: 2, leg: 4, torso: 1, skull: 1 } } as Derived,
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "追加" }));
+    expect(patch).toHaveBeenCalledWith({
+      cyberware: [...cyberware, expect.objectContaining({ ware_id: "leg", side: "Right" })],
+    });
+  });
+
   // The grade dropdown only exists on an owned row, so these two need one.
   function renderOwning(adapsin: boolean) {
     const ch = makeCharacter({

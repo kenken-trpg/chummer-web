@@ -87,6 +87,12 @@
     "Spell"
   ],
   "blocked_default_categories": [],
+  "body_limb_slots": {
+    "arm": 2,
+    "leg": 2,
+    "skull": 1,
+    "torso": 1
+  },
   "build_method": "Priority",
   "burnout_way": false,
   "career": false,

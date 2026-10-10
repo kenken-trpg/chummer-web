@@ -73,7 +73,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
 - `addlimb`が腕2/脚4/胴1/頭1と、義肢平均の分母8へ届くことを検証した。
   `limbslotcount=all`は脚4として平均する。公式CalculatedMovementの義脚条件は
   四脚でも2スロット以上であり、既存条件を維持する。
-  四脚全てを個別に指定するUI/保存は未完了。Redlinerの計算は下記の範囲を検証した。
+  四脚の個別義肢管理とRedlinerの計算は下記の範囲を検証した。
 - 固定コミットのLifestyle.GetTotalMonthlyCostと照合し、Centaurの+150%を対象部分へ適用する
   既存処理を検証した。基本2,000¥は5,000¥。扶養・その他補正は区分ごとに合成し、
   外出/契約の定額費用を種族補正で増やさない。複数生活様式・複数月の支出内訳も一致する。
@@ -81,7 +81,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
 検証は`test_centaur_body.py`、既存5キャラクターの派生値snapshot、シート表示テストによる。
 照合先は固定コミットの[Character.CalculatedMovement/LimbCount](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)と
 [Lifestyle.GetTotalMonthlyCost](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Lifestyle.cs)。
-生活費のRF本文・装備適合条件、四脚の個別義肢管理、実機での一致確認は引き続き残件。
+生活費のRF本文・装備適合条件、実機での一致確認は引き続き残件。
 シェイプシフターのalt移動率・形態同期はこの変更の対象外。
 
 ## 実装済み: Redlinerの追加肢・全脚置換・ボーナス上限
@@ -101,14 +101,37 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
   装備名はLiminal Body, Tank (Full)であり、テストは計算経路の検証に限定する。
   Centaurがその装備を正典上装着できることの根拠にはしない。
 - 左右の保存値は参照元でも`Left`/`Right`で、追加肢は片側の枠数を増やす構造。
-  Web側には同じ側を1肢として扱う判定が残るため、個別の四脚指定は未完了。
-  前後の位置を推測で追加しない。部分義肢・モジュラー義肢の集計範囲の一致も残件。
+  個別の四脚指定は下記の範囲を実装した。
+  部分義肢・モジュラー義肢の集計範囲の一致は残件。
 
 検証は`test_centaur_redliner.py`と既存のRedlinerテストによる。
 照合先は固定コミットの
 [Character.RedlinerBonus/RefreshRedlinerImprovements](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)と
 [Cyberware.LimbSlotCount/GetCyberlimbCount/SelectSide](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Cyberware.cs)。
 CF本文・エラッタ、RFの装備適合条件、Chummer GUI fixtureの確認は未実施。
+
+## 実装済み: 左右2本ずつの個別義脚管理
+
+- 義肢ごとのinstall IDと既存のsideを使い、Centaurの左脚2本・右脚2本を別々に保持する。
+  前後の位置や新しいside値は追加しない。2本脚では片側1本の制限を維持し、
+  Centaurの腕も片側1本のまま。
+- 種族・資質・装備の追加肢を読み取ってから左右の自動割当を行う。
+  未指定の4脚はLeft/Right/Left/Rightとなる。子パーツが親より前に並んでいても
+  親のsideを引き継ぎ、特注AGI/STRはそれぞれの脚へ適用する。
+- 能力値平均とRedlinerは個別IDと片側枠数で集計する。
+  同じ側の2本を1本へまとめず、片側3本目はエラーとして平均・Redlinerの集計から外す。
+  部位を占有する資質の重複判定も追加肢の枠数を使う。
+- `derived.body_limb_slots`を追加し、義肢追加画面の自動side選択へ渡す。
+  この値がない旧キャッシュは従来の片側1本として扱う。
+  5つの既存派生値snapshotの変更は、この枠数フィールドの追加だけ。
+- 4脚それぞれの特注値、左右、子パーツの所有関係をJSON・Web内`.chum5`往復で検証する。
+  XMLには個別GUIDの4脚とLeft/Right各2件を保存する。
+  Humanへ変更した場合も装備を削除せず、過剰分をエラー表示して集計を片側1本へ戻す。
+  Centaurへの変更、1脚の削除、空き枠への追加も検証した。
+
+検証は`test_centaur_limb_sides.py`、既存の義肢/資質テスト、追加画面のテストによる。
+左右の枠数の根拠は上記のCyberware.SelectSideの`Character.LimbCount(slot) / 2`。
+GUI実保存との一致、部分義肢・モジュラー構成、全脚置換と個別脚の併用時の装備適合は残件。
 
 ## 実装済み: 生得MAGの開始値と既存購入・成長経路への接続
 
@@ -136,13 +159,14 @@ CF本文・エラッタ、RFの装備適合条件、Chummer GUI fixtureの確認
 生得MAGだけでのイニシエーション、共鳴Talentとの共存可否、キャリアのburnout、
 MAG0時の生得能力の利用可否は未確定。これらの新しい権限や自動削除処理は導入していない。
 
-生得MAGの残る権限・burnout仕様、四脚の個別義肢管理、正典実機での`.chum5`往復は未完了であり、
+生得MAGの残る権限・burnout仕様、義肢の装備適合、正典実機での`.chum5`往復は未完了であり、
 Centaurを作成画面の候補へ公開する段階には達していない。
 
 ## 次の実装と公開条件
 
 1. 正典で生得MAGとTalent・購入・成長・MAG0時の扱いを確認する。
-   四脚の個別義肢指定/保存とRedliner、生活費のRF本文と装備適合、実`.chum5`も照合する。
+   四脚の個別義肢指定/保存とRedlinerは上記範囲を実装済み。
+   生活費のRF本文と装備適合、実`.chum5`も照合する。
    未確定の数式を推測で導入しない。
 2. 生得資質・パワー・蹴りの導出は上記の範囲を実装済み。
    `.chum5`の由来付き資質・パワー・自然武器の保存とWeb内往復も実装済み。
@@ -152,7 +176,8 @@ Centaurを作成画面の候補へ公開する段階には達していない。
    RF本文・エラッタ・実機fixtureを確認し、イニシエーション、共鳴Talentとの共存、burnout、
    MAG0時の生得能力の利用条件を確定してから残る権限を実装する。
 5. 地上/水泳/飛行の計算、追加脚の平均への接続、生活費と支出内訳は上記の範囲を検証済み。
-   四脚の個別義肢指定/保存とRedliner、装備適合、正典実機での一致を引き続き確認する。
+   四脚の個別義肢指定/保存とRedlinerも上記範囲を実装済み。
+   部分義肢・モジュラー義肢、装備適合、正典実機での一致を引き続き確認する。
 6. JSON/Patch/共有/IndexedDB/undo/redo/`.chum5`、キャリア移行、シート出力で往復確認する。
    基本5種族・亜種・感染者・SURGEへの回帰を確認する。
 7. 以上を満たしてからRF条件付きで候補を公開する。

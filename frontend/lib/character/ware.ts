@@ -39,19 +39,22 @@ export function nextFreeSide(
   items: WareInstall[],
   catalogItems: WareCatalogItem[],
   ware: WareCatalogItem,
+  bodySlots?: Record<string, number>,
 ) {
   if (!ware.selectside) return undefined;
   const slot = sideSlotKey(ware);
-  const used = new Set(
-    items
-      .filter((row) => !row.parent_id && row.side)
-      .filter((row) => {
-        const spec = catalogItems.find((w) => w.id === row.ware_id);
-        return spec?.selectside && sideSlotKey(spec) === slot;
-      })
-      .map((row) => row.side),
-  );
-  return used.has("Left") && !used.has("Right") ? "Right" : "Left";
+  const capacity = Math.max(1, Math.floor((bodySlots?.[slot] ?? 2) / 2));
+  const used = { Left: 0, Right: 0 };
+  for (const row of items
+    .filter((row) => !row.parent_id && row.side)
+    .filter((row) => {
+      const spec = catalogItems.find((w) => w.id === row.ware_id);
+      return spec?.selectside && sideSlotKey(spec) === slot;
+    })) {
+    if (row.side === "Left" || row.side === "Right") used[row.side] += 1;
+  }
+  if (used.Left < capacity && used.Left <= used.Right) return "Left";
+  return used.Right < capacity ? "Right" : "Left";
 }
 
 /**

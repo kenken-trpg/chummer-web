@@ -129,6 +129,37 @@ def body_limb_slots(extra_limbs: dict[str, int] | None = None) -> dict[str, int]
     return slots
 
 
+def side_slot_capacity(slot: str, extra_limbs: dict[str, int] | None = None) -> int:
+    """Chummer SelectSide allocates half the body's limbs to each side."""
+    return max(1, body_limb_slots(extra_limbs).get(slot, 2) // 2)
+
+
+def _take_limb_slots(
+    item: dict[str, Any],
+    slots: dict[str, int],
+    used: dict[str, int],
+    side_used: dict[tuple[str, str], int],
+    taken: set[tuple[str, str, str]],
+) -> int:
+    """Count distinct installs within the body and each side's capacity."""
+    slot = (item.get("limbslot") or "").lower()
+    side = _normalize_side(item.get("side"))
+    identity = (slot, side or "", str(item.get("id") or item.get("name") or ""))
+    if identity in taken or slot not in slots:
+        return 0
+    add = min(slots[slot] - used[slot], _limb_slot_count(item, slots))
+    if side:
+        key = (slot, side)
+        add = min(add, max(1, slots[slot] // 2) - side_used.get(key, 0))
+    if add <= 0:
+        return 0
+    taken.add(identity)
+    used[slot] += add
+    if side:
+        side_used[(slot, side)] = side_used.get((slot, side), 0) + add
+    return add
+
+
 def _is_full_limb(item: dict[str, Any]) -> bool:
     if item.get("parent_id") or item.get("category") != "Cyberlimb":
         return False
@@ -175,7 +206,8 @@ def limb_attribute_replace(
     added = sum(max(0, int(n or 0)) for n in (extra_limbs or {}).values())
     parts = max(1, rules.limb_count + added)
     used = dict.fromkeys(slots, 0)
-    taken: set[tuple[str, str]] = set()
+    taken: set[tuple[str, str, str]] = set()
+    side_used: dict[tuple[str, str], int] = {}
     limb_str: list[int] = []
     limb_agi: list[int] = []
     for item in resolved:
@@ -184,17 +216,9 @@ def limb_attribute_replace(
         slot = (item.get("limbslot") or "").lower()
         if slot not in slots:
             continue
-        side = _normalize_side(item.get("side")) or ""
-        key = (slot, side or item.get("id") or item.get("name") or "")
-        if key in taken:
-            continue
-        if used[slot] >= slots[slot]:
-            continue
-        add = min(slots[slot] - used[slot], _limb_slot_count(item, slots))
+        add = _take_limb_slots(item, slots, used, side_used, taken)
         if add <= 0:
             continue
-        taken.add(key)
-        used[slot] += add
         for _ in range(add):
             limb_str.append(int(item.get("limb_str") or meat_str))
             limb_agi.append(int(item.get("limb_agi") or meat_agi))
@@ -220,24 +244,14 @@ def limb_attribute_replace(
 
 def count_redliner_limbs(resolved: list[dict[str, Any]], slots: dict[str, int] | None = None) -> int:
     slots = redliner_slot_caps() if slots is None else slots
-    taken: set[tuple[str, str]] = set()
+    taken: set[tuple[str, str, str]] = set()
+    side_used: dict[tuple[str, str], int] = {}
     total = 0
     used = dict.fromkeys(slots, 0)
     for item in resolved:
         if not _is_redliner_limb(item, slots):
             continue
-        slot = (item.get("limbslot") or "").lower()
-        side = _normalize_side(item.get("side")) or ""
-        key = (slot, side or item.get("id") or item.get("name") or "")
-        if key in taken:
-            continue
-        cap = slots.get(slot, 0)
-        if used[slot] >= cap:
-            continue
-        taken.add(key)
-        add = min(cap - used[slot], _limb_slot_count(item, slots))
-        used[slot] += add
-        total += add
+        total += _take_limb_slots(item, slots, used, side_used, taken)
     return total
 
 

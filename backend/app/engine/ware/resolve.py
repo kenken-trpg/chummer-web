@@ -27,14 +27,13 @@ from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
 from ._common import _cascade_orphans
 from .limbs import _apply_limb_attributes
 from .rating import _clamp_ware_rating, is_limb, limb_formula_extras, racial_formula_extras, ware_rating_bounds
-from .sides import ensure_sides
 from .vehicles import _vehicle_mod_hosts
 
 
 def ensure_subsystems(state: CharacterState) -> CharacterState:
     extra = set(_vehicle_mod_hosts(state))
-    state.cyberware = ensure_sides("cyberware", _ensure_kind_subsystems("cyberware", state.cyberware, extra))
-    state.bioware = ensure_sides("bioware", _ensure_kind_subsystems("bioware", state.bioware))
+    state.cyberware = _ensure_kind_subsystems("cyberware", state.cyberware, extra)
+    state.bioware = _ensure_kind_subsystems("bioware", state.bioware)
     return state
 
 

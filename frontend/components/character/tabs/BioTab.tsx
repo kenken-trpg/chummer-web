@@ -191,7 +191,12 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
                         rating: range.min,
                         grade: w.forcegrade || effectiveBioGrade,
                         wireless: true,
-                        side: nextFreeSide(ch.bioware || [], catalog.bioware.items, w),
+                        side: nextFreeSide(
+                          ch.bioware || [],
+                          catalog.bioware.items,
+                          w,
+                          d.body_limb_slots,
+                        ),
                       },
                     ],
                   });

@@ -250,7 +250,12 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                         rating: w.minrating || 1,
                         grade: effectiveAddGrade,
                         wireless: true,
-                        side: nextFreeSide(ch.cyberware || [], catalog.cyberware.items, w),
+                        side: nextFreeSide(
+                          ch.cyberware || [],
+                          catalog.cyberware.items,
+                          w,
+                          d.body_limb_slots,
+                        ),
                       },
                     ],
                   })

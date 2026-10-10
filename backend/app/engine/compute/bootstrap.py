@@ -13,7 +13,6 @@ from ..ware import (
     _drop_invalid_vehicle_ware,
     _installed_ware_names,
     _required_warnings,
-    _side_conflicts,
     ensure_subsystems,
 )
 from .context import Ctx
@@ -69,8 +68,6 @@ def bootstrap(ctx: Ctx) -> None:
         ctx.warn("engine.meta.invalidVariant", name=term(ctx.state.metavariant), metatype=term(ctx.state.metatype))
         ctx.state.metavariant = None
     ensure_subsystems(ctx.state)
-    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware))
-    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware))
     installed_names = {
         "cyberware": _installed_ware_names("cyberware", ctx.state.cyberware),
         "bioware": _installed_ware_names("bioware", ctx.state.bioware),

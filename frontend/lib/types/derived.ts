@@ -529,6 +529,7 @@ export interface Derived {
   essence_lost_cyber?: number;
   essence_lost_bio?: number;
   ware_ranges?: Record<string, { min: number; max: number }>;
+  body_limb_slots?: Record<string, number>;
   limb_replace?: {
     count: number;
     parts: number;

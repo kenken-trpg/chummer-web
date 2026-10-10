@@ -24,10 +24,12 @@ from ..qualities import (
     bind_action_dice_pools,
     bind_select_powers,
     gather_qualities,
+    resolve_quality_sides,
 )
 from ..skills import bind_ware_skill_accuracy
 from ..special_attributes import special_attribute_floors
 from ..ware import _clamp_ware_grades, apply_cyberseeker, redliner_incompat_warnings
+from ..ware.sides import _side_conflicts
 from .context import Ctx
 
 
@@ -121,6 +123,10 @@ def effects_and_binders(ctx: Ctx) -> None:
         quality_names = {q["name"] for q in ctx.qualities}
         ctx.sources = [(name, nodes) for name, nodes in ctx.sources if not (name in off and name in quality_names)]
     ctx.effects = collect_effects(ctx.sources)
+    extra_limbs = ctx.effects["extra_limbs"]
+    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware, extra_limbs))
+    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware, extra_limbs))
+    resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors, extra_limbs)
     apply_excon_ware_ban(ctx.cyber_installed + ctx.bio_installed, bool(ctx.effects.get("excon")), ctx.errors)
     bind_action_dice_pools(ctx.effects, ctx.qualities, ctx.state)
     bind_spell_spirit_limits(ctx.effects, ctx.qualities, ctx.state, ctx.errors)
