@@ -315,6 +315,7 @@ export const JA_SHEET = {
   "udo.secDefense": "■ 防御・抵抗",
   "udo.secSkills": "■ 技能",
   "udo.secMagic": "■ 魔法（リミット＝Force）",
+  "udo.secComplexForms": "■ 複合プログラム（リミット＝レベル）",
   "udo.secMatrix": "■ マトリックス",
   "udo.secTests": "■ その他の判定",
   "udo.damageResist": "ダメージ抵抗（末尾はAP）",

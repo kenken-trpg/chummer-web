@@ -310,6 +310,7 @@ export const EN_SHEET = {
   "udo.secDefense": "# Defense and resistance",
   "udo.secSkills": "# Skills",
   "udo.secMagic": "# Magic (limit = Force)",
+  "udo.secComplexForms": "# Complex forms (limit = Level)",
   "udo.secMatrix": "# Matrix",
   "udo.secTests": "# Other tests",
   "udo.damageResist": "Damage resistance (subtract AP from armour)",

@@ -114,6 +114,65 @@ describe("buildUdonariumPalette", () => {
     expect(out).toContain("({AGI}+{近接技能A}+{近接補正A}+0)B6@{近接精度A} {近接武器A}");
   });
 
+  // Two cyberarms mean two rows of Spurs in the save, and Ghile Mear's has
+  // four. They roll the same test.
+  it("collapses identical weapons into one entry, and drops a melee row's 0 mode", () => {
+    const spur = {
+      name: "Spurs",
+      category: "Blades",
+      type: "Melee",
+      accuracy: "7",
+      damage: "9P",
+      ap: "-2",
+      mode: "0",
+      reach: "1",
+    };
+    const ch = makeCharacter({ derived: { weapons: [spur, { ...spur }] as never } });
+    const out = buildUdonariumPalette(ch, makeCatalog(), identityTr);
+    expect(out).toContain("//近接武器A=Spurs [DV9P/AP-2/リーチ+1]");
+    expect(out).not.toContain("近接武器B");
+  });
+
+  it("keeps two weapons that differ in anything the palette shows", () => {
+    const ch = makeCharacter({
+      derived: {
+        weapons: [
+          {
+            name: "Spurs",
+            category: "Blades",
+            type: "Melee",
+            accuracy: "7",
+            damage: "9P",
+            reach: "1",
+          },
+          {
+            name: "Spurs",
+            category: "Blades",
+            type: "Melee",
+            accuracy: "8",
+            damage: "9P",
+            reach: "1",
+          },
+        ] as never,
+      },
+    });
+    expect(buildUdonariumPalette(ch, makeCatalog(), identityTr)).toContain("近接武器B");
+  });
+
+  it("lists a technomancer's complex forms at the pool and Level the engine resolved", () => {
+    const ch = makeCharacter({
+      derived: {
+        enabled_tabs: ["complexforms"],
+        complex_forms: [
+          { name: "Puppeteer", level: 3, fv: "L+1", test: { pool: 14, limit: 3 } },
+        ] as never,
+      },
+    });
+    expect(buildUdonariumPalette(ch, makeCatalog(), identityTr)).toContain(
+      "14B6@3 Puppeteer [FVL+1]",
+    );
+  });
+
   it("gives each spell its own name and modifier variable", () => {
     const ch = makeCharacter({
       derived: {

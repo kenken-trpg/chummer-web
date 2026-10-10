@@ -138,9 +138,25 @@ export function buildUdonariumPalette(
   // Ranged and melee are split because the template's variable sets are, and
   // because a melee weapon's Accuracy is the Physical limit rather than a
   // printed number.
+  // Two cyberarms carry two sets of Spurs, and Chummer saves one row each, so
+  // a real character hands this four identical weapons. They roll the same
+  // test, and four copies of it is four variable sets nobody will tune
+  // separately, so rows that agree on everything the palette shows collapse
+  // into one.
+  const distinct = (rows: InstalledWeapon[]) => {
+    const seen = new Set<string>();
+    return rows.filter((w) => {
+      const key = [w.name, w.accuracy, w.damage, w.ap, w.mode, w.reach, w.useskill, w.category]
+        .map((v) => String(v ?? ""))
+        .join("\u0000");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
   const weapons = d.weapons || [];
-  const ranged = weapons.filter((w) => (w.type || "") !== "Melee");
-  const melee = weapons.filter((w) => (w.type || "") === "Melee");
+  const ranged = distinct(weapons.filter((w) => (w.type || "") !== "Melee"));
+  const melee = distinct(weapons.filter((w) => (w.type || "") === "Melee"));
 
   const weaponBlock = (
     rows: InstalledWeapon[],
@@ -165,7 +181,8 @@ export function buildUdonariumPalette(
         w.damage && `DV${w.damage}`,
         w.ap && `AP${w.ap}`,
         w.reach && ui("coco.reach", { reach: w.reach }),
-        w.mode,
+        // a melee row carries `0` where a firearm carries SA/BF/FA
+        w.mode && w.mode !== "0" ? w.mode : "",
       ]
         .filter(Boolean)
         .join("/");
@@ -355,6 +372,23 @@ export function buildUdonariumPalette(
     mx.def(vCyb, skillPool("Cybercombat"));
     mx.def(vComp, skillPool("Computer"));
     blocks.push(mx.text(ui("udo.secMatrix")));
+  }
+
+  // --- complex forms, as plain numbers -----------------------------------
+  // The engine resolves each one's threading test (`test.pool`) and its limit
+  // (the Level it is threaded at), so there is nothing left to decompose.
+  if (tabs.includes("complexforms")) {
+    const cf = new Section();
+    for (const f of d.complex_forms || []) {
+      const test = f.test;
+      if (!test) continue;
+      const limit = test.limit || f.level || 0;
+      cf.roll(
+        `${Math.max(test.pool || 0, 0)}B6${limit ? `@${limit}` : ""}`,
+        `${tr(f.name)}${f.fv ? ` [FV${f.fv}]` : ""}`,
+      );
+    }
+    if (!cf.empty) blocks.push(cf.text(ui("udo.secComplexForms")));
   }
 
   // --- the odd tests, as plain numbers -----------------------------------
