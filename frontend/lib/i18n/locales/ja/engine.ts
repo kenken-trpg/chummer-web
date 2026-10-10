@@ -389,6 +389,8 @@ export const JA_ENGINE = {
   "engine.import.xlsxGearPending":
     "装備シートの {count} 行は名前から品目を特定できませんでした（確認して選び直してください）",
   "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
+  "engine.import.mountExtraWeapons":
+    "ヴィークル「{name}」の武器マウントに武器が複数載っていました。マウントに紐付くのは 1 挺だけなので、残りは武器一覧から選び直してください",
   "engine.term.contact": "コンタクト",
   "engine.term.gear": "ギア",
   "engine.term.host": "本体",
