@@ -50,6 +50,7 @@ def test_chum5_reimports_grants_by_species_without_creating_purchases() -> None:
     expected_qualities = state.derived["qualities"]
     expected_powers = state.derived["metatype_info"]["powers"]
     expected_weapon = state.derived["weapons"][0]
+    expected_movement = state.derived["movement"]
     for _ in range(3):
         raw, warnings = chum5_to_state(state_to_chum5(state))
         assert not warnings
@@ -58,6 +59,7 @@ def test_chum5_reimports_grants_by_species_without_creating_purchases() -> None:
         assert state.derived["qualities"] == expected_qualities
         assert state.derived["metatype_info"]["powers"] == expected_powers
         assert state.derived["weapons"][0] == expected_weapon
+        assert state.derived["movement"] == expected_movement
         assert len(state.derived["weapons"]) == 1
         assert state.derived["karma_chargen"]["qualities"] == 0
 

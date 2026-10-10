@@ -18,6 +18,7 @@ import {
 import type { MsgKey } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
 import { renderNotice, renderNotices } from "@/lib/engine-notices";
+import { otherMovementRows } from "@/lib/character/movement";
 
 // The text sheet reads the same bag `buildSheetData()` produces for the
 // visual sheet — a subset of it.
@@ -93,6 +94,7 @@ export function textSheet(x: TextArgs): string {
     `${ui("common.armor")} ${d.armor}  ${ui("common.essence")} ${d.essence}  ` +
       ui("txt.movement", { walk: d.movement.walk, run: d.movement.run, sprint: d.movement.sprint }),
   );
+  for (const row of otherMovementRows(d.movement, ui)) line(`${row.label} ${row.value}`);
   line();
 
   if (x.activeSkills.length || x.groups.length || x.exotic.length) {

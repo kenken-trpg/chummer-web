@@ -4,6 +4,7 @@ import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
+import { otherMovementRows } from "@/lib/character/movement";
 
 /** Page-1 "stat block" for the print layout: attributes (base + augment),
  * limits, initiative, movement, and the derived defense / soak pools a table
@@ -51,6 +52,7 @@ export function PrintStatBlock(s: SheetData) {
       label: ui("print.movement"),
       value: `${d.movement.walk}m / ${d.movement.run}m / +${d.movement.sprint}m`,
     },
+    ...otherMovementRows(d.movement, ui),
     { label: ui("print.defensePool"), value: String(defensePool) },
     { label: ui("sheet.damageResist"), value: String(soakPool) },
     { label: ui("common.essence"), value: d.essence.toFixed(2) },

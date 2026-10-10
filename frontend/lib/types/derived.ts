@@ -40,6 +40,16 @@ export type * from "./rows/lifestyle";
 export type * from "./rows/vehicles";
 export type * from "./rows/ware";
 
+/** Calculated movement for one medium, with its unmodified rates. */
+export interface MovementMode {
+  rates: { walk: number; run: number; sprint: number };
+  available: boolean;
+  walk: string;
+  run: string;
+  sprint: string;
+  sprint_bonus: number;
+}
+
 /** The engine's output — what `compute()` publishes back beside the state.
  *
  * The Python side types the top-level key set as
@@ -138,7 +148,14 @@ export interface Derived {
   astral_initiative?: { value: number; dice: number } | null;
   /** Ground walk / run in metres, sprint in metres per hit (Chummer's
    *  `CalculatedMovement("Ground")`). */
-  movement: { walk: string; run: string; sprint: string; sprint_bonus: number };
+  movement: {
+    walk: string;
+    run: string;
+    sprint: string;
+    sprint_bonus: number;
+    /** Optional for characters cached before movement modes were introduced. */
+    modes?: Record<string, MovementMode>;
+  };
   essence: number;
   armor: number;
   special_armor?: SpecialArmor;

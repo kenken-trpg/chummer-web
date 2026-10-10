@@ -13,6 +13,7 @@ import { CareerSection } from "@/components/character/sheet/sections/Career";
 import { CombatSection } from "@/components/character/sheet/sections/Combat";
 import { ContactsSection } from "@/components/character/sheet/sections/Contacts";
 import { CoreSection } from "@/components/character/sheet/sections/Core";
+import { PrintStatBlock } from "@/components/character/sheet/sections/print/PrintStatBlock";
 import { DescriptionSection } from "@/components/character/sheet/sections/Description";
 import { DrugsSection } from "@/components/character/sheet/sections/Drugs";
 import { KnowledgeSection } from "@/components/character/sheet/sections/Knowledge";
@@ -249,6 +250,51 @@ describe("sheet sections — smoke render", () => {
   it("the core section prints movement in metres with the sprint rate", () => {
     const { container } = render(<CoreSection {...s} />);
     expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");
+  });
+
+  it("visual, print and text sheets show swimming and omit unavailable flight", () => {
+    const data = buildSheetData({
+      character: makeCharacter({
+        derived: {
+          movement: {
+            walk: "3",
+            run: "12",
+            sprint: "4",
+            sprint_bonus: 0,
+            modes: {
+              Swim: {
+                rates: { walk: 1, run: 0, sprint: 1 },
+                available: true,
+                walk: "3.5",
+                run: "0",
+                sprint: "1",
+                sprint_bonus: 0,
+              },
+              Fly: {
+                rates: { walk: 0, run: 0, sprint: 0 },
+                available: false,
+                walk: "0",
+                run: "0",
+                sprint: "0",
+                sprint_bonus: 0,
+              },
+            },
+          },
+        },
+      }),
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    for (const Component of [CoreSection, PrintStatBlock]) {
+      const { container, unmount } = render(<Component {...data} />);
+      expect(container.textContent).toContain("水泳");
+      expect(container.textContent).toContain("3.5m / +1m/ヒット");
+      expect(container.textContent).not.toContain("飛行");
+      unmount();
+    }
+    expect(textSheet(data)).toContain("水泳 3.5m / +1m/ヒット");
+    expect(textSheet(data)).not.toContain("飛行");
   });
 
   it("the magic section prints a bound spirit's powers with their action", () => {

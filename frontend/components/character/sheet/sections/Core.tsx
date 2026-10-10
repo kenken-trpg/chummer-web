@@ -5,6 +5,7 @@ import { attrShort } from "@/lib/ui-strings";
 import { cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
+import { otherMovementRows } from "@/lib/character/movement";
 
 export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
@@ -66,6 +67,12 @@ export function CoreSection(s: SheetData) {
               })}
             </b>
           </div>
+          {otherMovementRows(d.movement, ui).map((row) => (
+            <div key={row.label}>
+              <span>{row.label}</span>
+              <b>{row.value}</b>
+            </div>
+          ))}
           {(d.damage_resistance || 0) > 0 ? (
             <div>
               <span>{ui("sheet.damageResist")}</span>
