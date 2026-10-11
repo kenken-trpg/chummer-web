@@ -278,6 +278,7 @@ docs/       アーキテクチャ・データパイプライン・デプロイ�
 - [`docs/adding-rules.md`](docs/adding-rules.md) — 新しい modifier / アイテム項目 / タブ / 検証の追加レシピ
 - [`docs/data-pipeline.md`](docs/data-pipeline.md) — fetch → vendor → 翻訳オーバーレイ
 - [`docs/i18n.md`](docs/i18n.md) — UI 文言の 2 レイヤーと `ja`/`en` の増やし方
+- [`docs/exports.md`](docs/exports.md) — 書き出しガイド（何が出るか・取り込み手順・既知の制限）
 - [`docs/share-link.md`](docs/share-link.md) — 読み取り専用の共有リンク（`/share#c=…`）の形式と検証
 - [`docs/plans/`](docs/plans/) — 実施済みリファクタリングの作業記録（現状の説明ではなく履歴）
 

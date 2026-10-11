@@ -181,7 +181,7 @@ export const EN_APP = {
   "toolbar.exportFvtt": "Export FVTT",
   "app.exportReview.fvttTitle": "{count} items are not included in the Foundry JSON:",
   "toolbar.exportFvttHint":
-    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
+    "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5) — the system builds the actor. Innate metatype powers do not become items, so they are listed before the file is written",
   "toolbar.import": "Load (JSON/.chum5/.xlsx)",
   "toolbar.importHint":
     "Four things can be read: this app\u2019s own JSON, a Foundry VTT (shadowrun5e) actor\u2019s Export Data JSON, a Chummer5a .chum5/.chum5lz save, and the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to, downloaded as .xlsx. An ordinary Excel workbook or any other JSON cannot be read.",
