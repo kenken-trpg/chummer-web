@@ -25,8 +25,9 @@ export default defineConfig({
   // Every test gets its own browser context, so its own IndexedDB and
   // localStorage: nothing is shared, and the servers are started once for all
   // workers. CI runners have 4 cores; the build is the slow part, not this.
-  // Keep the import-heavy test count well under the backend's 20/minute
-  // import limit (all workers share 127.0.0.1) rather than loosening it.
+  // The workers do share 127.0.0.1, so they share the backend's per-IP import
+  // limit; `webServer` below raises it for this run rather than capping how
+  // many tests may touch an import route.
   fullyParallel: true,
   workers: process.env.CI ? 4 : undefined,
   forbidOnly: !!process.env.CI,
@@ -46,6 +47,16 @@ export default defineConfig({
     {
       command: `${UVICORN} app.main:app --host 127.0.0.1 --port 8100`,
       cwd: "../backend",
+      // `IMPORT_RATE_LIMIT` defaults to 20/minute per client IP, which exists
+      // to bound what one caller can aim at the XML-handling routes. All four
+      // workers look like one caller here, and `/share` previews go through
+      // `/api/characters/import` too, so the suite as a whole can outrun it in
+      // a single minute — and the test that gets the 429 is whichever one
+      // happened to be running, not the one that used the budget. The limit's
+      // own value is asserted in `backend/tests/test_api.py`, and production
+      // sets it in the Worker (`deploy/cloudflare/src/index.ts`), so raising
+      // it for a trusted single-client run costs no coverage.
+      env: { IMPORT_RATE_LIMIT: "200/minute" },
       url: "http://127.0.0.1:8100/api/health",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
