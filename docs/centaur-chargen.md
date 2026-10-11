@@ -417,10 +417,37 @@ Centaurの候補公開条件は変更しない。
 
 接続候補の車両側の左右条件は固定版Character.ConstructModularCyberlimbListの同期処理を照合した。
 車両内蔵武器の本人攻撃一覧からの除外と所有先表示はWeb側の実装判断であり、GUI一致は未確認。
-車両内の義肢武器を使う技能・判定式は未確認のため、自動でGunnery判定を追加しない。
+車両内の義肢武器には固定版Chummerの判定処理があるが、操作方法の選択と正典本文の照合が
+未完了のため、自動でGunnery判定を追加しない。確認範囲は下記を参照する。
 既存の独立した車両武器マウントの判定は維持する。武器マウント内の改造を接続先にする構造、
 多肢シャーシ内部の位置指定、車両内gearの効果計算は引き続き別項目。
 Centaurの候補公開条件は変更しない。
+
+### 調査: 車両内の義肢武器の技能・判定
+
+固定コミットの[Weapon.GetDicePool](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Weapon.cs#L9443)と
+[RelevantAutosoft](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Equipment/Weapon.cs#L4559)を照合した。
+専用の新技能ではなく、既存技能・オートソフトに操作方法別の分岐が存在する。
+以下はソフトの実装確認であり、正典の裁定を確定するものではない。
+
+| Chummerの操作モード | 確認できた基本処理（追加修正を除く） |
+| --- | --- |
+| DogBrain | Pilot + 武器に対応するオートソフト。R5有効時の近接武器はMelee Autosoft、それ以外はTargeting Autosoft。 |
+| RemoteOperated | GunneryをLOGで判定する。 |
+| ManualOperation / GunneryCommandDevice | Gunneryの通常のプールを使う。 |
+| Skill | 武器に対応する通常技能。車両内のcyberwareを親IDでたどり、対応する義肢能力値があれば置き換える。 |
+
+DogBrainにはDrone Arm用の追加処理がある。武器技能の対応能力値がAGIで、
+所属改造の`UseOwnAttributesForWeapon`がtrue、武器の親cyberwareが解決できる場合に、
+親義肢からAGIが非ゼロの祖先を探し、Pilotの代わりに用いる。条件を満たさなければPilotのまま。
+この処理のコメントはRigger 5.0 p.125、近接用オートソフトのコメントはp.127を参照する。
+同梱vehicles.xmlのDrone Armにも`useownattributesforweapon=True`とR5 p.125、
+gear.xmlの`[Weapon] Melee Autosoft`にもR5 p.127がある。
+これらの参照ページの正典本文・エラッタと、ジャンプイン等の操作方法との対応は未照合。
+
+「車内に保管しているだけの義肢」「腕として使用可能な接続」「独立した武器マウント」を
+同一視しない。現在のWebの`vehicle_id`は所有先の導出であり、操作方法や使用可能性の確定ではない。
+したがって、車両所有という条件だけで攻撃式を追加せず、専用技能を新設もしない。
 
 ## 次の実装と公開条件
 
