@@ -10,7 +10,7 @@ import {
   ShareError,
   toSharePayload,
 } from "@/lib/character/share";
-import { MESSAGES, type MsgKey } from "@/lib/i18n/messages";
+import { MESSAGES, loadLocale, type MsgKey } from "@/lib/i18n/messages";
 import { errorMessage } from "@/lib/errors";
 
 /** The `code` of the `ShareError` a promise rejects with. */
@@ -87,12 +87,14 @@ describe("encode / decode", () => {
 });
 
 describe("error messages", () => {
-  it("has a ja *and* an en string for every failure code", () => {
+  it("has a ja *and* an en string for every failure code", async () => {
+    // `en` is fetched rather than bundled, so it has to be here to be checked
+    const en = await loadLocale("en");
     // a share link is opened with the visitor's locale, so `en` may not fall
     // back to `ja` here the way it may for the rest of the app chrome
     for (const key of Object.values(SHARE_ERROR_KEYS)) {
       expect(MESSAGES.ja[key], `ja ${key}`).toBeTruthy();
-      expect(MESSAGES.en[key], `en ${key}`).toBeTruthy();
+      expect(en[key], `en ${key}`).toBeTruthy();
     }
   });
 

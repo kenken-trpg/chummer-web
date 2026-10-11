@@ -1,6 +1,40 @@
-import { describe, expect, it } from "vitest";
-import { formatMessage, translate, LOCALES, MESSAGES } from "@/lib/i18n/messages";
-import type { Locale, MsgKey } from "@/lib/i18n/messages";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+import { formatMessage, loadLocale, translate, LOCALES, MESSAGES } from "@/lib/i18n/messages";
+import type { Catalog, Locale, MsgKey } from "@/lib/i18n/messages";
+
+/** Only `ja` is in the bundle; everything that compares locales has to fetch
+ *  the others first, which is what the app does on a locale switch. */
+beforeAll(async () => {
+  await Promise.all(LOCALES.map((l) => loadLocale(l)));
+});
+
+/** A locale known to be here, for the comparisons below. */
+const catalog = (locale: Locale): Catalog => {
+  const c = MESSAGES[locale];
+  if (!c) throw new Error(`${locale} was not loaded`);
+  return c;
+};
+
+describe("lazy catalogs", () => {
+  it("ships only ja, and answers in ja until another arrives", async () => {
+    // a fresh module registry, because `beforeAll` has already loaded `en`
+    // into this one: the whole point is what happens before that
+    vi.resetModules();
+    const m = await import("@/lib/i18n/messages");
+    expect(m.catalogLoaded("ja")).toBe(true);
+    expect(m.catalogLoaded("en")).toBe(false);
+    expect(m.translate("en", "tab.priority")).toBe("優先度");
+
+    await m.loadLocale("en");
+
+    expect(m.catalogLoaded("en")).toBe(true);
+    expect(m.translate("en", "tab.priority")).toBe("Priority");
+  });
+
+  it("hands back the same catalog object on a second load", async () => {
+    expect(await loadLocale("en")).toBe(await loadLocale("en"));
+  });
+});
 
 describe("translate", () => {
   it("returns the requested locale's string", () => {
@@ -29,7 +63,7 @@ describe("catalogs", () => {
   // what it cannot catch is a key defined as "" (or as the ja text pasted into
   // `en` unchanged for a message that should differ).
   it.each(LOCALES)("%s has a non-empty string for every key", (locale) => {
-    for (const [key, value] of Object.entries(MESSAGES[locale])) {
+    for (const [key, value] of Object.entries(catalog(locale))) {
       expect(value.trim(), `${locale} ${key}`).not.toBe("");
     }
   });
@@ -41,7 +75,7 @@ describe("catalogs", () => {
       for (const locale of LOCALES) {
         // a translation that drops `{length}` silently renders a sentence with
         // a hole in it, and nothing else would notice
-        expect(placeholders(MESSAGES[locale][key]), `${locale} ${key}`).toEqual(want);
+        expect(placeholders(catalog(locale)[key]), `${locale} ${key}`).toEqual(want);
       }
     }
   });
