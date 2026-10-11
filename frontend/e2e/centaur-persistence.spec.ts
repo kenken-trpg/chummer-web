@@ -84,7 +84,7 @@ for (const method of ["Priority", "SumToTen", "Karma"]) {
       .poll(async () => (await currentCharacter(page)).settings?.books?.includes("RF"))
       .toBe(true);
     await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-    const candidate = page.getByRole("button", { name: /Centaur|ケンタウロス/ });
+    const candidate = page.getByRole("button", { name: /Centaur/ });
     await expect(candidate).toContainText(method === "Karma" ? "60カルマ" : "25カルマ");
     await candidate.click();
     await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Centaur");
@@ -382,7 +382,7 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await waitForEditor(page);
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(1);
   await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
 
   async function expectRF(enabled: boolean) {
@@ -402,7 +402,7 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
       await expect(warning).toHaveCount(0);
     } else {
       await expect(warning).toContainText("RF");
-      await expect(warning).toContainText("ケンタウロス");
+      await expect(warning).toContainText("Centaur");
     }
   }
 
@@ -416,7 +416,7 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await expectRF(false);
   await expect(page.getByRole("checkbox", { name: /\(RF\)/ })).not.toBeChecked();
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(0);
   await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText("RF");
   await page.reload();
   await waitForEditor(page);
@@ -436,5 +436,5 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await expectRF(true);
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /Centaur/ })).toHaveCount(1);
 });
