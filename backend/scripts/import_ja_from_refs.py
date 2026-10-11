@@ -228,6 +228,7 @@ CATEGORY_SKIP = {
 # chumJA <name> matches to skip (wrong sense in SR4 -> SR5).
 NAME_SKIP = {
     "Sioux",  # chumJA gives "スー語" (the language); here it is a nation/tradition
+    "Centaur",  # untranslated Run Faster; retain the upstream English name
 }
 
 
@@ -338,6 +339,8 @@ def main(argv: list[str] | None = None) -> int:
             prov[key] = "chumJA(SR4) category"
 
     merged_overlay = dict(existing)
+    # Remove the old SR4 rendering even on an additive --no-reset run.
+    merged_overlay.pop("Centaur", None)
     merged_overlay.update(additions)
     ordered = {k: merged_overlay[k] for k in sorted(merged_overlay)}
 
