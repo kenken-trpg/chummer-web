@@ -11,6 +11,20 @@ from ..data_loader._xml import _int, _text
 from ..notices import Notice, Phrase, ui
 from ._common import _discounted, _picked_cost, _Resolver, _unexpected_children
 
+_GRADE_NAMES = {
+    "スタンダード": "Standard",
+    "アルファウェア": "Alphaware",
+    "ベータウェア": "Betaware",
+    "デルタウェア": "Deltaware",
+    "ガンマウェア": "Gammaware",
+    "中古": "Used",
+}
+
+
+def _grade_name(node: ET.Element) -> str:
+    raw = _text(node.find("grade")) or "Standard"
+    return _GRADE_NAMES.get(raw, raw)
+
 
 def _came_with_parent(node: ET.Element) -> bool:
     """Whether a piece of ware came with the one it sits in, rather than being
@@ -48,7 +62,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 "id": str(uuid.uuid4()),
                 "ware_id": wid,
                 "rating": max(1, _int(w.find("rating"), 1)),
-                "grade": _text(w.find("grade")) or "Standard",
+                "grade": _grade_name(w),
                 "side": _text(w.find("location")) or None,
                 "extra": _text(w.find("extra")) or None,
                 "included": _came_with_parent(w),

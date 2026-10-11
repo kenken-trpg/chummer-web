@@ -75,6 +75,8 @@ class InitiationChoice(BaseModel):
     grade: int = 1
     kind: str = "metamagic"  # metamagic | art
     option_id: str = ""
+    # High Art and its first metamagic may share the same initiation grade.
+    art_ids: list[str] = Field(default_factory=list)
     group: bool = False  # member of an initiatory group (−10% Karma)
     ordeal: bool = False  # underwent an ordeal (−10% Karma)
     schooling: bool = False  # formal schooling (−10% Karma, costs nuyen/time)

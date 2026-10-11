@@ -251,6 +251,9 @@ export const JA_ENGINE = {
     "イニシエーション等級 {grade} の Art／メタマジックを選んでください",
   "engine.initiation.requires": "{name} には {needed} が必要です",
 
+  "engine.initiation.requiresArt": "{name} には Art（魔術の流派）の {arts} が必要です",
+  "engine.initiation.requiresArtOrQuality":
+    "{name} には Art（魔術の流派）の {arts}、または資質 {qualities} のいずれかが必要です",
   "engine.initiation.requiresUnmet": "{name} の前提を満たしていません",
   "engine.submersion.echoUnknown": "{source} のエコー {name} が見つかりません",
   "engine.submersion.echoUnknownDropped": "未知のエコーを等級 {grade} から外しました",

@@ -66,6 +66,7 @@ def parse_required(el: ET.Element | None) -> dict[str, list[str]]:
         "metatype": [],
         "quality": [],
         "power": [],
+        "art": [],
         "metamagicart": [],
         "metamagic": [],
     }

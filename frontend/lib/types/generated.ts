@@ -304,6 +304,8 @@ export interface InitiationChoice {
   grade?: number;
   kind?: "metamagic" | "art" | string;
   option_id?: string;
+  /** High Art and its first metamagic may share the same initiation grade. */
+  art_ids?: string[];
   group?: boolean;
   ordeal?: boolean;
   schooling?: boolean;
@@ -448,6 +450,7 @@ export interface CharacterSettings {
   forbidden_cost_multiplier?: number | null;
   /** `<allowinitiationincreatemode>` */
   allow_initiation_in_create_mode?: boolean | null;
+  ignore_art?: boolean | null;
   /** `<usepointsonbrokengroups>` / `<breakskillgroupsincreatemode>` */
   use_points_on_broken_groups?: boolean | null;
   strict_skill_groups_in_create_mode?: boolean | null;

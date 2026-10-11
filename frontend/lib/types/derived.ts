@@ -332,6 +332,7 @@ export interface Derived {
       grade: number;
       kind: string;
       option_id: string;
+      art_ids?: string[];
       name: string;
       karma: number;
       group?: boolean;

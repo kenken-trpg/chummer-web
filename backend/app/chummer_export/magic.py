@@ -289,7 +289,15 @@ def _export_initiation(root: ET.Element, state: CharacterState, names: _Names, c
     for i in range(1, state.submersion_grade + 1):
         _emit_grade(i, True, sub_by_grade.get(i))
     mms = _sub(root, "metamagics")
+    arts = _sub(root, "arts")
     for ic in state.initiations:
-        el = _sub(mms, "metamagic")
-        _sub(el, "sourceid", ic.option_id)
-        _sub(el, "name", names["metamagic"].get(ic.option_id) or names["art"].get(ic.option_id, ""))
+        if ic.option_id:
+            el = _sub(arts if ic.kind == "art" else mms, "art" if ic.kind == "art" else "metamagic")
+            _sub(el, "sourceid", ic.option_id)
+            _sub(el, "name", names["metamagic"].get(ic.option_id) or names["art"].get(ic.option_id, ""))
+            _sub(el, "grade", ic.grade)
+        for aid in ic.art_ids:
+            el = _sub(arts, "art")
+            _sub(el, "sourceid", aid)
+            _sub(el, "name", names["art"].get(aid, ""))
+            _sub(el, "grade", ic.grade)
