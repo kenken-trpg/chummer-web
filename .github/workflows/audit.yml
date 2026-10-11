@@ -51,20 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Production dependencies only: the test and lint toolchain never
-          # ships.
-          - dir: frontend
-            omit: --omit=dev
-          # The Workers are audited whole. `wrangler` bundles and uploads the
-          # Worker, so it is in the trust path of what runs in production even
-          # though it never runs there — and `cloudflare-proxy` has nothing but
-          # devDependencies, so `--omit=dev` would audit an empty tree and
-          # report green for ever.
-          - dir: deploy/cloudflare
-            omit: ""
-          - dir: deploy/cloudflare-proxy
-            omit: ""
+        dir: [frontend, deploy/cloudflare, deploy/cloudflare-proxy]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -74,7 +61,14 @@ jobs:
 
       # Against the lockfile. High and critical fail the check; a moderate
       # still prints here without blocking every PR until upstream moves.
-      - run: npm audit ${{ matrix.omit }} --audit-level=high
+      #
+      # The frontend is audited production-only: its test and lint toolchain
+      # never ships. The Workers are audited whole — `wrangler` bundles and
+      # uploads the Worker, so it is in the trust path of what runs in
+      # production even though it never runs there, and `cloudflare-proxy` has
+      # nothing but devDependencies, so `--omit=dev` there would audit an empty
+      # tree and report green for ever.
+      - run: npm audit ${{ matrix.dir == 'frontend' && '--omit=dev' || '' }} --audit-level=high
         working-directory: ${{ matrix.dir }}
 
   # The upload paths, hunted properly. ci.yml runs `tests/test_import_fuzz.py`
