@@ -131,7 +131,7 @@ Create `~/.cloudflared/config.yml` (replace `<ID>` and `<user>`):
 
 ```yaml
 tunnel: <ID>
-credentials-file: /Users/<user>/.cloudflared/<ID>.json   # /home/<user>/... on Linux
+credentials-file: /Users/<user>/.cloudflared/<ID>.json # /home/<user>/... on Linux
 ingress:
   - hostname: chummer.example.com
     service: http://localhost:8080
@@ -176,6 +176,27 @@ Then open http://localhost:3000. Without `make`, each target is a one-line comma
 ## Importing `.chum5`
 
 Chummer5a saves (`.chum5` and `.chum5lz`) can be imported. This is best-effort: anything the catalog cannot resolve is skipped and listed for you after the import. If a `.chum5lz` will not decompress, re-save it uncompressed as `.chum5` from Chummer.
+
+## Exporting to a VTT
+
+A character can go out as a piece for Cocofolia or Udonarium. Both target BCDice's
+`ShadowRun5` dice syntax.
+
+- **Cocofolia**: copied to the clipboard — paste it into the room. Every test comes
+  out as a finished number.
+- **Udonarium**: a `.zip`, which goes in either way (dropped on the table, or through
+  「ZIP読込」; a bare xml only works by dropping). A portrait rides along and becomes
+  the piece's picture. The chat palette is a hybrid: attributes, weapons, magic and
+  the Matrix are variables — `//敏捷力=5` defines one and `{敏捷力}` reads it — so the
+  table can retune a pool without re-exporting, while the skill list and the odd tests
+  are plain numbers.
+- **The retinue**: every bound spirit, registered sprite, vehicle and drone as a piece
+  of its own, one `.zip` per kind. A vehicle or drone piece carries all three of SR5's
+  ways of driving one (by hand, remote or jumped in, and autonomous) as separate
+  blocks, with an attack for each mounted gun in each of them. The piloting skill is a
+  single variable starting at the best one the runner has, since which skill a drone
+  wants is not in the data; the others are defined too, so switching is one line.
+- **Foundry VTT**: JSON for the `shadowrun5e` system's Chummer importer.
 
 ## Importing and exporting the character-sheet template
 
