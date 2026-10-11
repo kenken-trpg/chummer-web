@@ -123,7 +123,9 @@ export function buildSheetData({
     (row) => row.rating > 0 || row.native || (row.skillsoft || 0) > 0,
   );
   const qualities = qualityDisplayRows(d.qualities || [], catalog.qualities);
-  const weapons = (d.weapons || []).filter((weapon) => weapon.modular_equipped !== false);
+  const weapons = (d.weapons || []).filter(
+    (weapon) => weapon.modular_equipped !== false && !weapon.vehicle_id,
+  );
   const armors = (d.armor_items || []).filter((item) => item.equipped || item.contributes);
   const cyber = (d.cyberware || []).filter((item) => !item.parent_id);
   const bio = (d.bioware || []).filter((item) => !item.parent_id);

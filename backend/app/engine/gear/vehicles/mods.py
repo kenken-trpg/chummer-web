@@ -152,7 +152,7 @@ def _resolve_weapon_mounts(
     errors: list[Notice] = []
     parts = {item["id"]: item for item in catalog().get("weapon_mounts") or []}
     by_drone = {str(row.get("id") or ""): row for row in drones}
-    weapons_by_id = {str(row.get("id") or ""): row for row in weapons}
+    weapons_by_id = {str(row.get("id") or ""): row for row in weapons if not row.get("from_ware")}
     kept: list[WeaponMountInstall] = []
     public: list[dict[str, Any]] = []
     nuyen = 0

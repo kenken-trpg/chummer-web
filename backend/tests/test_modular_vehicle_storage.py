@@ -128,6 +128,8 @@ def test_vehicle_subtree_survives_json_and_two_chum5_roundtrips() -> None:
         hand = next(r for r in state.cyberware if r.ware_id == _ware_id("cyberware", "Obvious Hand, Modular"))
         connector = next(r for r in state.cyberware if r.id == hand.parent_id)
         assert connector.parent_id == state.vehicle_mods[0].id
+        blade = next(r for r in state.derived["weapons"] if r.get("from_ware"))
+        assert blade["vehicle_id"] == state.drones[0].id
         assert all(r.get("vehicle_hosted") for r in state.derived["gear"] if r.get("modular_equipped") is True)
     body_mount = next(r for r in state.cyberware if r.ware_id == connector.ware_id and r.id != connector.id)
     hand.parent_id = body_mount.id
@@ -151,3 +153,41 @@ def test_vehicle_connection_still_reports_grade_and_occupancy_errors() -> None:
     assert has(state.derived["errors"], "engine.ware.modularGradeMismatch")
     assert has(state.derived["errors"], "engine.ware.modularMountOccupied")
     assert len(state.gear) == 5
+
+
+def test_implanted_weapon_and_held_gear_export_with_the_vehicle_and_return_to_character() -> None:
+    from app.fvtt_export import state_to_fvtt
+
+    state = _state()
+    for parent_id, hosted in [("vehicle-mount", True), ("body-mount", False), ("vehicle-mount", True)]:
+        _move(state, parent_id)
+        blade = next(r for r in state.derived["weapons"] if r["id"] == "blade")
+        assert blade.get("vehicle_id") == ("drone" if hosted else None)
+        assert "mounted_on" not in blade
+        export = state_to_fvtt(state, "en")["characters"]["character"]
+        personal = export["weapons"]["weapon"] or []
+        vehicle = export["vehicles"]["vehicle"][0]
+        vehicle_weapons = vehicle["weapons"]["weapon"] or []
+        assert any(r["guid"] == "blade" for r in personal) is not hosted
+        assert any(r["guid"] == "blade" for r in vehicle_weapons) is hosted
+        personal_gear = export["gears"]["gear"] or []
+        vehicle_gear = vehicle["gears"]["gear"] or []
+        assert any(r["guid"] == "mask" for r in personal_gear) is not hosted
+        assert any(r["guid"] == "mask" for r in vehicle_gear) is hosted
+
+
+def test_vehicle_mount_cannot_take_a_weapon_owned_by_an_implant() -> None:
+    from app.models import WeaponMountInstall
+    from tests.engine_support import HEAVY_SR5_MOUNT
+
+    state = _move(_state(), "vehicle-mount")
+    state.drones.append(GearInstall(id="other-drone", gear_id=DOBERMAN))
+    state.weapon_mounts.append(
+        WeaponMountInstall(id="mount", parent_id="other-drone", size_id=HEAVY_SR5_MOUNT, weapon_install_id="blade")
+    )
+    compute(state)
+    assert state.weapon_mounts[0].weapon_install_id is None
+    blade = next(r for r in state.derived["weapons"] if r["id"] == "blade")
+    assert blade["vehicle_id"] == "drone"
+    assert "mounted_on" not in blade
+    assert has(state.derived["warnings"], "engine.gear.weaponMountEmpty")

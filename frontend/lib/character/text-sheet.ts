@@ -228,7 +228,8 @@ export function textSheet(x: TextArgs): string {
   const vehAll = [...(d.vehicles || []), ...(d.drones || [])];
   if (vehAll.length) {
     head("sheet.vehicles");
-    vehAll.forEach((v) =>
+    vehAll.forEach((v) => {
+      const implants = (d.weapons || []).filter((weapon) => weapon.vehicle_id === v.id);
       line(
         `  ${tr(v.name)}  ` +
           ui("txt.vehicle", {
@@ -247,9 +248,10 @@ export function textSheet(x: TextArgs): string {
                   list: names((v.mods || []).filter((m) => !m.parent_id)),
                 })
               : ""
-          }`,
-      ),
-    );
+          }` +
+          (implants.length ? ` / ${ui("weapon.vehicleInventory", { list: names(implants) })}` : ""),
+      );
+    });
     line();
   }
 

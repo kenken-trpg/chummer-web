@@ -87,6 +87,8 @@ export interface InstalledArmor {
 }
 
 export interface InstalledWeapon {
+  /** Vehicle hosting the ware that grants this weapon. */
+  vehicle_id?: string;
   modular_equipped?: boolean;
   id: string;
   weapon_id: string;

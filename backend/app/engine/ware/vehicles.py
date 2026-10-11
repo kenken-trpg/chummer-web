@@ -133,6 +133,25 @@ def _vehicle_hosted_ware_ids(resolved: list[dict[str, Any]], vehicle_hosts: set[
     return hosted
 
 
+def vehicle_ware_owners(state: CharacterState, resolved: list[dict[str, Any]]) -> dict[str, str]:
+    """Resolve each ware descendant to a validated vehicle-mod owner."""
+    hosts = _vehicle_mod_hosts(state)
+    parents = {str(row["id"]): str(row.get("parent_id") or "") for row in resolved}
+    vehicles = {inst.id for inst, _spec in _iter_vehicle_hosts(state)}
+    parents.update({inst.id: inst.parent_id or "" for inst in state.vehicle_mods if inst.id in hosts})
+    owners: dict[str, str] = {}
+    for row in resolved:
+        node = str(row["id"])
+        seen: set[str] = set()
+        while node and node not in seen:
+            if node in vehicles:
+                owners[str(row["id"])] = node
+                break
+            seen.add(node)
+            node = parents.get(node, "")
+    return owners
+
+
 def _zero_vehicle_hosted_essence(resolved: list[dict[str, Any]], vehicle_hosts: set[str]) -> None:
     hosted = _vehicle_hosted_ware_ids(resolved, vehicle_hosts)
     for item in resolved:

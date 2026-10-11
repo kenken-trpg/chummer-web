@@ -66,6 +66,18 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
             <div className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
+                {item.vehicle_id ? (
+                  <span className="muted">
+                    {" "}
+                    {ui("weapon.vehicleOwned", {
+                      name: tr(
+                        [...(d.vehicles || []), ...(d.drones || [])].find(
+                          (v) => v.id === item.vehicle_id,
+                        )?.name || item.vehicle_id,
+                      ),
+                    })}
+                  </span>
+                ) : null}
                 {item.modular_equipped === false ? (
                   <span className="muted"> {ui("weapon.modularDetached")}</span>
                 ) : null}

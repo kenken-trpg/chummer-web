@@ -4,6 +4,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { modularVehicleHosts } from "@/lib/character/ware";
 import { ModularMountSelect } from "@/components/character/ModularMountSelect";
 import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
@@ -160,6 +161,7 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                     (ch.cyberware || []).some((owned) => owned.id === ware.id),
                   )}
                   catalogItems={catalog.cyberware.items}
+                  vehicleHosts={modularVehicleHosts(d, tr)}
                   tr={tr}
                   ui={ui}
                   onChange={(parent_id) =>

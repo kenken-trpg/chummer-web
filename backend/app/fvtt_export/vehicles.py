@@ -21,11 +21,17 @@ def _vehicle_owners(state: CharacterState, derived: dict[str, Any]) -> dict[str,
     for bucket in _GEAR_BUCKETS:
         for row in derived.get(bucket) or []:
             parents[str(row.get("id"))] = str(row.get("parent_id") or "")
+    for ware in derived.get("cyberware") or []:
+        parents[str(ware.get("id"))] = str(ware.get("parent_id") or "")
     for mod in state.vehicle_mods:
         parents[mod.id] = mod.parent_id or ""
-    # set by the engine only for a gun its mount check let through
+    # Both are engine-derived: a validated weapon mount or its owning ware.
     for weapon in derived.get("weapons") or []:
-        parents[str(weapon.get("id"))] = str(weapon.get("mounted_on") or "")
+        parent = str(weapon.get("vehicle_id") or weapon.get("mounted_on") or "")
+        if parent:
+            parents[str(weapon.get("id"))] = parent
+        else:
+            parents.setdefault(str(weapon.get("id")), "")
 
     def owner(row_id: str) -> str:
         seen: set[str] = set()

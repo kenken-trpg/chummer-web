@@ -1,4 +1,4 @@
-import type { InstalledWare, WareCatalogItem, WareInstall } from "@/lib/types";
+import type { Derived, InstalledWare, WareCatalogItem, WareInstall } from "@/lib/types";
 
 export function removeWareTree(items: WareInstall[], id: string): WareInstall[] {
   const drop = new Set<string>([id]);
@@ -84,11 +84,42 @@ export function dropUnderRemovedWare<T extends { id?: string; parent_id?: string
   return rows.filter((row) => !row.parent_id || !drop.has(row.parent_id));
 }
 
-/** Direct character-owned mount fit. Body-wide blocking remains engine validation. */
+/** Only published vehicle mods with subsystem slots are valid tree roots. */
+export function modularVehicleHosts(
+  d: Derived,
+  tr: (name: string) => string,
+): Record<string, string> {
+  return Object.fromEntries(
+    [...(d.vehicles || []), ...(d.drones || [])].flatMap((vehicle) =>
+      (vehicle.mods || [])
+        .filter((mod) => (mod.subsystems || []).length > 0)
+        .map((mod, index) => [mod.id, `${tr(vehicle.name)} / ${tr(mod.name)} #${index + 1}`]),
+    ),
+  );
+}
+
+export function wareVehicleLabel(
+  item: InstalledWare,
+  rows: InstalledWare[],
+  hosts: Record<string, string>,
+) {
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  const seen = new Set<string>();
+  let node: InstalledWare | undefined = item;
+  while (node?.parent_id && !seen.has(node.id)) {
+    seen.add(node.id);
+    if (hosts[node.parent_id]) return hosts[node.parent_id];
+    node = byId.get(node.parent_id);
+  }
+  return undefined;
+}
+
+/** Direct mount fit. Body-wide blocking remains engine validation. */
 export function modularMountCandidates(
   item: InstalledWare,
   rows: InstalledWare[],
   catalog: WareCatalogItem[],
+  vehicleHosts: Record<string, string> = {},
 ): InstalledWare[] {
   const specs = new Map(catalog.map((spec) => [spec.id, spec]));
   const byId = new Map(rows.map((row) => [row.id, row]));
@@ -97,13 +128,19 @@ export function modularMountCandidates(
   return rows.filter((host) => {
     if (host.id === item.id || specs.get(host.ware_id)?.modular_mount !== plug) return false;
     if (host.grade !== item.grade || (item.side && item.side !== host.side)) return false;
-    // Exclude descendants, corrupt cycles, and trees rooted in vehicle hosts.
+    // Exclude descendants, corrupt cycles, and unrecognized external roots.
     const seen = new Set([item.id]);
     let ancestor: InstalledWare | undefined = host;
     while (ancestor) {
       if (seen.has(ancestor.id)) return false;
       seen.add(ancestor.id);
       if (!ancestor.parent_id) break;
+      if (vehicleHosts[ancestor.parent_id]) {
+        // The upstream vehicle branch requires side equality even for an
+        // unsided plug (the character branch allows that plug either side).
+        if ((item.side || "") !== (host.side || "")) return false;
+        break;
+      }
       ancestor = byId.get(ancestor.parent_id);
       if (!ancestor) return false;
     }

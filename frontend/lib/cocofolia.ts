@@ -135,7 +135,9 @@ export function buildChatPalette(
   }
 
   // --- weapons: attack test = skill + AGI, limit = weapon Accuracy ---------
-  const weapons = (d.weapons || []).filter((weapon) => weapon.modular_equipped !== false);
+  const weapons = (d.weapons || []).filter(
+    (weapon) => weapon.modular_equipped !== false && !weapon.vehicle_id,
+  );
   if (weapons.length) out.push(ui("coco.secWeapons"));
   weapons.forEach((w) => {
     const sk = weaponSkill(w);

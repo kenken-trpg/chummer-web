@@ -62,6 +62,7 @@ from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
 from ..pricing import apply_black_market_avail, apply_overclocker, apply_purchase_discounts
 from ..ware import _attach_ware_to_vehicle_mods, _vehicle_hosted_ware_ids, _vehicle_mod_hosts
+from ..ware.vehicles import vehicle_ware_owners
 from .context import Ctx
 from .gear_market import discounted_ids, pick_black_market
 from .gear_rows import resolve_armor_rows, resolve_commlink_rows, resolve_weapon_rows
@@ -109,6 +110,10 @@ def resolve_gear(
     spend["weapons"] += weapon_nuyen
     _append_armor_weapons(weapons, armor_items)
     _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
+    owners = vehicle_ware_owners(state, ware_items or [])
+    for weapon in weapons:
+        if weapon.get("from_ware") and weapon["id"] in owners:
+            weapon["vehicle_id"] = owners[weapon["id"]]
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
         state, weapons, special_modification_limit=special_modification_limit
     )

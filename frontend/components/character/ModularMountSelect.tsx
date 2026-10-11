@@ -2,13 +2,14 @@
 
 import type { InstalledWare, WareCatalogItem } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
-import { modularMountCandidates } from "@/lib/character/ware";
+import { modularMountCandidates, wareVehicleLabel } from "@/lib/character/ware";
 import { sideLabel } from "@/lib/character/constants";
 
 export function ModularMountSelect({
   item,
   rows,
   catalogItems,
+  vehicleHosts = {},
   tr,
   ui,
   onChange,
@@ -16,6 +17,7 @@ export function ModularMountSelect({
   item: InstalledWare;
   rows: InstalledWare[];
   catalogItems: WareCatalogItem[];
+  vehicleHosts?: Record<string, string>;
   tr: (name: string) => string;
   ui: UiFn;
   onChange: (parentId: string | null) => void;
@@ -27,9 +29,11 @@ export function ModularMountSelect({
     !rows.some((row) => row.id === item.id)
   )
     return null;
-  const candidates = modularMountCandidates(item, rows, catalogItems);
-  const label = (row: InstalledWare) =>
-    `${tr(row.name)}${row.side ? ` (${sideLabel(row.side, ui)})` : ""} #${rows.indexOf(row) + 1}`;
+  const candidates = modularMountCandidates(item, rows, catalogItems, vehicleHosts);
+  const label = (row: InstalledWare) => {
+    const vehicle = wareVehicleLabel(row, rows, vehicleHosts);
+    return `${vehicle ? `${vehicle} / ` : ""}${tr(row.name)}${row.side ? ` (${sideLabel(row.side, ui)})` : ""} #${rows.indexOf(row) + 1}`;
+  };
   const current = rows.find((row) => row.id === item.parent_id);
   return (
     <label className="option-row">
