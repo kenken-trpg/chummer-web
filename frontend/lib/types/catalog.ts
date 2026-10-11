@@ -12,12 +12,19 @@ export interface LifeModuleCatalogItem {
   nuyen: number;
   free_positive_qualities: number;
   free_negative_qualities: number;
-  specialization_grants: { skill: string; spec: string }[];
+  specialization_grants: { skill: string; spec: string; choice?: string }[];
   source: string;
   page: string;
   unsupported: string[];
   required?: QualityReqNode[];
-  grants: { kind: string; name: string; value: number; choice: string; category: string }[];
+  grants: {
+    kind: string;
+    name: string;
+    value: number;
+    choice: string;
+    category: string;
+    category_choice?: string;
+  }[];
   choices: { key: string; kind: string; name?: string; options: string[] }[];
 }
 

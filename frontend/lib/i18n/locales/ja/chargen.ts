@@ -7,6 +7,8 @@ export const JA_CHARGEN = {
   "life.kind.skills": "技能",
   "life.kind.skill_groups": "技能グループ",
   "life.kind.knowledge_skills": "知識技能",
+  "life.kind.knowledge_categories": "知識カテゴリ",
+  "life.kind.specializations": "専門化",
   "life.kind.qualities": "品質",
 
   "life.experimental":

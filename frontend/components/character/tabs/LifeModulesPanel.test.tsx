@@ -149,3 +149,44 @@ it("labels quality details in English and saves their separate choice slot", () 
   });
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:q0": "Street violence" } });
 });
+
+it("keeps knowledge categories in English and saves category and specialization slots", () => {
+  const patch = vi.fn();
+  const props = panelProps(
+    makeCharacter({ life_modules: [historyModule.id], life_module_choices: { "0:s1": "Desert" } }),
+    {
+      catalog: makeCatalog({
+        life_modules: [
+          {
+            ...historyModule,
+            choices: [
+              { key: "k8", kind: "knowledge_categories", options: ["Academic", "Professional"] },
+              {
+                key: "s1",
+                kind: "specializations",
+                name: "Navigation: Specialization",
+                options: [],
+              },
+            ],
+          },
+        ],
+      }),
+      patch,
+    },
+  );
+  render(<LifeModulesPanel {...props} />);
+  expect(screen.getByRole("option", { name: "Academic" })).toBeTruthy();
+  fireEvent.change(screen.getByRole("combobox", { name: "Bounty Hunter: 知識カテゴリの選択" }), {
+    target: { value: "Professional" },
+  });
+  expect(patch).toHaveBeenCalledWith({
+    life_module_choices: { "0:k8": "Professional", "0:s1": "Desert" },
+  });
+  expect(
+    (
+      screen.getByRole("textbox", {
+        name: "Bounty Hunter: Navigation: Specializationの選択",
+      }) as HTMLInputElement
+    ).value,
+  ).toBe("Desert");
+});

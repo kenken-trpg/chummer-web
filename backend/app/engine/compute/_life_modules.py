@@ -112,6 +112,14 @@ def prepare(ctx: Ctx) -> None:
                     continue
             name = name.strip()
             kind = grant["kind"]
+            category = grant["category"]
+            if grant.get("category_choice"):
+                key = f"{index}:{grant['category_choice']}"
+                category = ctx.state.life_module_choices.get(key, "")
+                options = next(c["options"] for c in row["choices"] if c["key"] == grant["category_choice"])
+                if category not in options:
+                    ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+                    continue
             if kind == "qualities":
                 quality = next((q for q in ctx.data["qualities"] if q["name"] == name), None)
                 if quality is None:
@@ -119,13 +127,13 @@ def prepare(ctx: Ctx) -> None:
                     continue
                 quality_grants.append(quality)
                 continue
-            if kind == "knowledge_skills" and grant["category"] == "Language" and grant["value"] == 0:
+            if kind == "knowledge_skills" and category == "Language" and grant["value"] == 0:
                 if name not in ctx.state.native_languages:
                     ctx.state.native_languages.append(name)
                 continue
             bonuses[kind][name] = bonuses[kind].get(name, 0) + grant["value"]
             if kind == "knowledge_skills":
-                ctx.state.knowledge_categories[name] = grant["category"]
+                ctx.state.knowledge_categories[name] = category
         quality_grants.extend(row["quality_grants"])
         for grant in row.get("quality_choice_grants", []):
             key = f"{index}:{grant['choice']}"
@@ -150,6 +158,12 @@ def prepare(ctx: Ctx) -> None:
             quality_grants.append(quality)
         for grant in row.get("specialization_grants", []):
             skill, spec = grant["skill"], grant["spec"]
+            if grant.get("choice"):
+                key = f"{index}:{grant['choice']}"
+                spec = ctx.state.life_module_choices.get(key, "").strip()
+                if not spec:
+                    ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+                    continue
             existing = ctx.state.skill_specializations.get(skill)
             if existing and existing != spec:
                 ctx.err("engine.life.specializationConflict", name=term(skill))

@@ -30,6 +30,12 @@ QUALITY_REFERENCES = {
     "Home Ground (You Know A Guy)": ("Home Ground", "You Know A Guy"),
 }
 
+# Street Lethal p.128 specifies Day Job (5 Karma) for this module.
+# Scope this repair to its ID; unqualified Day Job elsewhere stays unresolved.
+MODULE_QUALITY_REFERENCES = {
+    "d886934b-b937-4791-9512-cd7257ca721d": {"Day Job": "Day Job (10 hrs)"},
+}
+
 
 def load_life_modules() -> list[dict[str, Any]]:
     root = data_root("lifemodules.xml")
@@ -70,6 +76,19 @@ def load_life_modules() -> list[dict[str, Any]]:
                         name = _text(node.find("name"))
                         options = [_text(el) for el in node.findall("./options/*")]
                         key = str(len(grants))
+                        category_options = [_text(el) for el in node.findall("./group/options/*")]
+                        category_choice = ""
+                        if category_options:
+                            if node.tag != "knowledgeskilllevel" or any(
+                                category not in {"Academic", "Professional", "Street", "Interest", "Language"}
+                                for category in category_options
+                            ):
+                                issues.append(node.tag + ":category")
+                                continue
+                            category_choice = f"k{key}"
+                            choices.append(
+                                {"key": category_choice, "kind": "knowledge_categories", "options": category_options}
+                            )
                         if not name or "[" in name:
                             if not options and node.tag != "knowledgeskilllevel":
                                 issues.append(node.tag + ":select")
@@ -83,13 +102,33 @@ def load_life_modules() -> list[dict[str, Any]]:
                                 "choice": key,
                                 "value": _int(node.find("val"), 1),
                                 "category": _text(node.find("group")) or "Professional",
+                                "category_choice": category_choice,
                             }
                         )
+                        specialization = _text(node.find("spec"))
+                        if specialization:
+                            if node.tag in {"skilllevel", "knowledgeskilllevel"} and name:
+                                if "[" in specialization:
+                                    spec_choice = f"s{key}"
+                                    choices.append(
+                                        {
+                                            "key": spec_choice,
+                                            "kind": "specializations",
+                                            "name": f"{name}: Specialization",
+                                            "options": [],
+                                        }
+                                    )
+                                    specialization_grants.append({"skill": name, "spec": "", "choice": spec_choice})
+                                else:
+                                    specialization_grants.append({"skill": name, "spec": specialization})
+                            else:
+                                issues.append(node.tag + ":specialization")
                     elif node.tag == "addqualities":
                         if any(el.tag not in {"addquality", "qualitylevel"} for el in node):
                             issues.append("addqualities:level")
                         for el in node.findall("addquality"):
                             name = _text(el)
+                            name = MODULE_QUALITY_REFERENCES.get(_text(block.find("id")), {}).get(name, name)
                             option_nodes = el.findall("./options/quality")
                             if option_nodes and not name:
                                 options = [_text(option) for option in option_nodes]

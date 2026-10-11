@@ -107,7 +107,7 @@ def test_missing_or_invalid_choices_are_reported_and_not_applied():
 
 
 def test_unknown_and_unsupported_modules_never_grant_partial_benefits():
-    bad = module("Corp College Student")
+    bad = module("Warm Body")
     state = apply_patch(runner(), CharacterPatch(life_modules=["unknown", bad["id"]]))
     assert has(state.derived["errors"], "engine.life.unknown")
     assert has(state.derived["errors"], "engine.life.unsupported")
@@ -403,3 +403,64 @@ def test_ambiguous_or_unknown_quality_names_are_not_guessed(monkeypatch, name):
     row = life_loader.load_life_modules()[0]
     assert row["unsupported"] == [f"addquality:{name}"]
     assert not row["quality_grants"]
+
+
+@pytest.mark.parametrize("category", ["Academic", "Professional"])
+def test_corp_college_student_category_specialization_and_day_job(category):
+    spec = module("Corp College Student")
+    assert not spec["unsupported"]
+    picks = {f"0:{c['key']}": c["options"][0] if c["options"] else f"Detail {c['key']}" for c in spec["choices"]}
+    category_key = next(c["key"] for c in spec["choices"] if c["kind"] == "knowledge_categories")
+    picks[f"0:{category_key}"] = category
+    base = runner()
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert not has(state.derived["errors"], "engine.life.choice")
+    job = next(q for q in state.derived["qualities"] if q["name"] == "Day Job (10 hrs)")
+    assert job["free"]
+    assert state.derived["skill_specializations"]["Etiquette"] == "Academic"
+    knowledge = next(g for g in spec["grants"] if g.get("category_choice"))
+    assert (
+        next(k for k in state.derived["knowledge_skills"] if k["name"] == picks[f"0:{knowledge['choice']}"])["category"]
+        == category
+    )
+    assert state.derived["karma_chargen"]["specializations"] == 0
+    assert state.skill_specializations == base.skill_specializations
+    assert state.knowledge_categories == base.knowledge_categories
+    assert compute(state).model_dump() == state.model_dump()
+    assert import_character(state.model_dump()).derived == state.derived
+    assert apply_patch(state, CharacterPatch(life_modules=[], life_module_choices={})).derived == base.derived
+
+
+@pytest.mark.parametrize("category", ["", "Language", "Invalid"])
+def test_unselected_or_disallowed_knowledge_category_does_not_grant_the_skill(category):
+    spec = module("Corp College Student")
+    grant = next(g for g in spec["grants"] if g.get("category_choice"))
+    picks = {f"0:{grant['choice']}": "History of Art", f"0:{grant['category_choice']}": category}
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert has(state.derived["errors"], "engine.life.choice", slot=f"0:{grant['category_choice']}")
+    assert not any(k["name"] == "History of Art" for k in state.derived["knowledge_skills"])
+
+
+def test_inline_knowledge_specialization_is_free():
+    spec = module("Anarcho-Teen")
+    picks = {f"0:{c['key']}": c["options"][0] if c["options"] else "Corporations" for c in spec["choices"]}
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert (
+        next(k for k in state.derived["knowledge_skills"] if k["name"] == "Agriculture")["spec"] == "Urban Agriculture"
+    )
+    assert state.derived["karma_chargen"]["specializations"] == 0
+    assert state.skill_specializations == {}
+
+
+def test_placeholder_specialization_requires_a_pick_and_does_not_overwrite_existing_spec():
+    spec = module("Environmental Combat Specialist (By Type)")
+    choice = next(c for c in spec["choices"] if c["kind"] == "specializations")
+    grant = next(g for g in spec["specialization_grants"] if g.get("choice") == choice["key"])
+    empty = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]]))
+    assert has(empty.derived["errors"], "engine.life.choice", slot=f"0:{choice['key']}")
+    picked = apply_patch(empty, CharacterPatch(life_module_choices={f"0:{choice['key']}": "Desert"}))
+    assert picked.derived["skill_specializations"][grant["skill"]] == "Desert"
+    assert picked.derived["karma_chargen"]["specializations"] == 0
+    conflict = apply_patch(picked, CharacterPatch(skill_specializations={grant["skill"]: "Urban"}))
+    assert has(conflict.derived["errors"], "engine.life.specializationConflict")
+    assert conflict.skill_specializations[grant["skill"]] == "Urban"

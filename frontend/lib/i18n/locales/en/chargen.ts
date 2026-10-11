@@ -7,6 +7,8 @@ export const EN_CHARGEN = {
   "life.kind.skills": "skill",
   "life.kind.skill_groups": "skill group",
   "life.kind.knowledge_skills": "knowledge skill",
+  "life.kind.knowledge_categories": "knowledge category",
+  "life.kind.specializations": "specialization",
   "life.kind.qualities": "quality",
 
   "life.experimental":
