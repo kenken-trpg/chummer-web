@@ -101,6 +101,6 @@ def test_power_rules_require_explicit_opt_in_until_compute_supports_them() -> No
     assert all("bonus" not in power for power in catalog()["critter_powers"])
 
 
-def test_centaur_stays_out_of_creation_candidates_until_acceptance_checks_pass() -> None:
+def test_centaur_is_available_without_exposing_other_metasapients() -> None:
     assert "Centaur" in catalog()["all_metatypes"]
-    assert "Centaur" not in {m["name"] for m in public_catalog()["metatypes"]}
+    assert {m["name"] for m in public_catalog()["metatypes"]} == {"Human", "Elf", "Dwarf", "Ork", "Troll", "Centaur"}

@@ -3,15 +3,21 @@ import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { withOriginal } from "@/lib/character/format";
+import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { priorityTableFor } from "@/lib/character/priority-table";
 import { critterPowerRow } from "@/lib/spell-terms";
 
 export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
-  const candidates =
+  const allowedBooks = useAllowedBooks();
+  const choices =
     (ch.build_method || "Priority") === "Karma"
       ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
       : table.Heritage[ch.priorities.Heritage].metatypes;
+  const candidates = choices.filter((choice) => {
+    const spec = catalog.metatypes.find((m) => m.name === choice.name);
+    return isBookEnabled(allowedBooks, spec?.source, spec?.also_in);
+  });
 
   return (
     <div className="card">
@@ -49,6 +55,9 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                     karma: ("karma" in m ? Number(m.karma) : 0) || 0,
                   })
                 : ui("meta.special", { points: m.special })}
+              {(ch.build_method || "Priority") !== "Karma" && (m.karma ?? 0) > 0
+                ? ui("common.karmaCost", { karma: m.karma! })
+                : null}
             </div>
           </button>
         ))}

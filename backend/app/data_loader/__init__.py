@@ -169,7 +169,8 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     playable = [
         m
         for m in metatypes
-        if m["category"] in {"Metahuman", "Metavariant"} and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"}
+        if m["name"] == "Centaur"
+        or (m["category"] in {"Metahuman", "Metavariant"} and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"})
     ]
     translations = load_translations()
     all_by_name: dict[str, dict[str, Any]] = {}

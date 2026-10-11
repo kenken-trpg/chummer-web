@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { fireEvent } from "@testing-library/dom";
+import { BooksProvider } from "@/lib/character/books";
 import { MetaTab } from "@/components/character/tabs/MetaTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import type { PriorityTable } from "@/lib/types";
@@ -20,21 +21,57 @@ function renderTab(
   over: {
     character?: Parameters<typeof makeCharacter>[0];
     catalog?: ReturnType<typeof makeCatalog>;
+    books?: string[];
     patch?: (b: Record<string, unknown>) => void;
   } = {},
 ) {
   const ch = makeCharacter(over.character);
   return render(
-    <MetaTab
-      {...panelProps(ch, {
-        catalog: over.catalog ?? makeCatalog({ priority_table: priorityTable }),
-        patch: over.patch ?? (() => {}),
-      })}
-    />,
+    <BooksProvider books={over.books}>
+      <MetaTab
+        {...panelProps(ch, {
+          catalog: over.catalog ?? makeCatalog({ priority_table: priorityTable }),
+          patch: over.patch ?? (() => {}),
+        })}
+      />
+    </BooksProvider>,
   );
 }
 
 describe("<MetaTab>", () => {
+  it.each(["Priority", "SumToTen", "Karma"])(
+    "offers Centaur in %s with RF, charges the displayed cost and retains it when RF is disabled",
+    (build_method) => {
+      const patch = vi.fn();
+      const catalog = makeCatalog({
+        priority_table: {
+          ...priorityTable,
+          Heritage: {
+            E: { metatypes: [{ name: "Centaur", special: 3, karma: 25, variants: [] }] },
+          },
+        } as unknown as PriorityTable,
+        metatypes: [{ name: "Centaur", source: "RF", karma: 60, metavariants: [] }] as never,
+      });
+      const view = renderTab({ catalog, character: { build_method }, books: ["SR5", "RF"], patch });
+      const button = screen.getByRole("button", { name: /Centaur/ });
+      expect(button.textContent).toContain(build_method === "Karma" ? "60カルマ" : "25カルマ");
+      if (build_method !== "Karma") expect(button.textContent).toContain("特殊点 3");
+      fireEvent.click(button);
+      expect(patch).toHaveBeenCalledWith({ metatype: "Centaur", metavariant: null });
+      view.unmount();
+      patch.mockClear();
+      renderTab({
+        catalog,
+        character: { build_method, metatype: "Centaur" },
+        books: ["SR5"],
+        patch,
+      });
+      expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
+      expect(screen.getByRole("status").textContent).toContain("別の種族を選ぶまで保持");
+      expect(patch).not.toHaveBeenCalled();
+    },
+  );
+
   it.each(["Priority", "SumToTen", "Karma"])(
     "identifies an imported metatype outside the %s candidates without making it selectable",
     (build_method) => {

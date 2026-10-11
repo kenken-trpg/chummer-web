@@ -32,8 +32,16 @@ def test_book_toggle_and_json_reload_keep_centaur_and_its_grants(method: str) ->
             state = import_character(state.model_dump())
 
 
-def test_centaur_stays_hidden_in_both_catalog_and_priority_choices() -> None:
+def test_centaur_creation_costs_and_priority_availability() -> None:
     cat = public_catalog()
-    assert "Centaur" not in {row["name"] for row in cat["metatypes"]}
-    for cell in cat["priority_table"]["Heritage"].values():
-        assert "Centaur" not in {row["name"] for row in cell["metatypes"]}
+    centaur = next(row for row in cat["metatypes"] if row["name"] == "Centaur")
+    assert centaur["source"] == "RF"
+    assert centaur["karma"] == 60
+    for letter, cell in cat["priority_table"]["Heritage"].items():
+        choices = [row for row in cell["metatypes"] if row["name"] == "Centaur"]
+        if letter in "ABC":
+            assert len(choices) == 1
+            assert choices[0]["special"] == {"A": 6, "B": 3, "C": 0}[letter]
+            assert choices[0]["karma"] == 25
+        else:
+            assert choices == []
