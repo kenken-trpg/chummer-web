@@ -14,6 +14,7 @@ back into ``app.engine``.
 from __future__ import annotations
 
 from typing import Any
+from uuid import NAMESPACE_URL, uuid5
 
 from ..data_loader import catalog
 from ..improvements import EffectsDict
@@ -83,6 +84,11 @@ def sync_quality_contacts(
             continue
         remaining.append(
             ContactInstall(
+                # Life Module grants are recomputed on a working copy. Use
+                # the source identity so regenerating a contact is stable
+                # across recalculation of the same character. Existing IDs
+                # above remain untouched.
+                id=str(uuid5(NAMESPACE_URL, f"chummer-web:{state.id}:quality-contact:{qid}")),
                 name=str(spec.get("quality_name") or ""),
                 connection=connection,
                 loyalty=loyalty,

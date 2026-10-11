@@ -47,7 +47,12 @@ def load_life_modules() -> list[dict[str, Any]]:
                 required_tree.extend(required)
                 if any(not _supported_requirement(node) for node in required):
                     issues.append("required:unsupported")
-                for node in block.findall("./bonus/*"):
+                # Some modules place qualitylevel inside addqualities. Route
+                # both forms through the same group validation and resolution.
+                # These nodes do not allocate choice slots, so saved choice
+                # keys retain their original positions.
+                bonus_nodes = block.findall("./bonus/*") + block.findall("./bonus/addqualities/qualitylevel")
+                for node in bonus_nodes:
                     if node.tag in LEVELS:
                         name = _text(node.find("name"))
                         options = [_text(el) for el in node.findall("./options/*")]
@@ -68,7 +73,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                             }
                         )
                     elif node.tag == "addqualities":
-                        if any(el.tag != "addquality" for el in node):
+                        if any(el.tag not in {"addquality", "qualitylevel"} for el in node):
                             issues.append("addqualities:level")
                         for el in node.findall("addquality"):
                             name = _text(el)
@@ -100,7 +105,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                         allowed = {"connection", "loyalty", "free", "canwrite"}
                         connection, loyalty = node.find("connection"), node.find("loyalty")
                         if (
-                            set(child.tag for child in node) <= allowed
+                            {child.tag for child in node} <= allowed
                             and connection is not None
                             and loyalty is not None
                             and not connection.attrib

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
+
 import pytest
 
 from app.characters import apply_patch, import_character, new_character
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
+from app.data_loader.loaders import life_modules as life_loader
 from app.engine import compute
 from app.models import CharacterCreate, CharacterPatch
 from app.notices import NoticeError
@@ -29,9 +32,7 @@ def test_module_metatype_requirements_reject_effects_until_matched(metatype, all
     state = apply_patch(base, CharacterPatch(metatype=metatype, life_modules=[spec["id"]]))
     assert has(state.derived["errors"], "engine.life.requirement") is not allowed
     baseline = apply_patch(base, CharacterPatch(metatype=metatype))
-    assert state.derived["karma"]["spent"] - baseline.derived["karma"]["spent"] == (
-        spec["karma"] if allowed else 0
-    )
+    assert state.derived["karma"]["spent"] - baseline.derived["karma"]["spent"] == (spec["karma"] if allowed else 0)
 
 
 @pytest.mark.parametrize("talent,allowed", [("Mundane", False), ("Magician", True)])
@@ -163,3 +164,64 @@ def test_custom_pool_is_honored():
 def test_excess_free_ratings_are_explicitly_rejected():
     state = apply_patch(runner(), CharacterPatch(life_modules=[module("Bounty Hunter")["id"]] * 7))
     assert has(state.derived["errors"], "engine.life.ratingCap", name="BOD", rating=8, cap=6)
+
+
+@pytest.mark.parametrize(
+    "name,level",
+    [
+        ("Fugitive", 2),
+        ("Gang Warfare", 2),
+        ("Ganger", 2),
+        ("Organized Crime", 2),
+        ("Political Activist", 2),
+        ("Terrorist", 2),
+        ("Framed", 2),
+        ("Corp Silver Spooner", 3),
+    ],
+)
+def test_nested_quality_levels_unlock_modules_and_apply_the_quality(name, level):
+    spec = module(name)
+    assert not spec["unsupported"]
+    assert spec["quality_levels"] == [{"group": "SINner", "level": level}]
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]]))
+    expected = catalog()["quality_levels"]["SINner"][level]
+    assert [q["name"] for q in state.derived["qualities"] if q["name"].startswith("SINner")] == [expected]
+    assert state.quality_ids == []
+    assert compute(state).model_dump() == state.model_dump()
+    restored = import_character(state.model_dump())
+
+    # Import intentionally creates a new character ID. Generated contact IDs
+    # follow that identity, but their contents and all other results agree.
+    def without_contact_ids(derived):
+        return {**derived, "contacts": [{**contact, "id": None} for contact in derived["contacts"]]}
+
+    assert without_contact_ids(restored.derived) == without_contact_ids(state.derived)
+    assert compute(restored).model_dump() == restored.model_dump()
+    assert apply_patch(state, CharacterPatch(life_modules=[])).derived == runner().derived
+
+
+def test_nested_quality_levels_take_highest_and_restore_purchased_quality_on_removal():
+    levels = catalog()["quality_levels"]["SINner"]
+    purchased = next(q["id"] for q in catalog()["qualities"] if q["name"] == levels[1])
+    base = apply_patch(runner(), CharacterPatch(quality_ids=[purchased]))
+    low, high = module("Framed")["id"], module("Corp Silver Spooner")["id"]
+    state = apply_patch(base, CharacterPatch(life_modules=[low, high]))
+    assert [q["name"] for q in state.derived["qualities"] if q["name"].startswith("SINner")] == [levels[3]]
+    assert state.quality_ids == [purchased]
+    assert import_character(state.model_dump()).derived == state.derived
+    downgraded = apply_patch(state, CharacterPatch(life_modules=[low]))
+    assert [q["name"] for q in downgraded.derived["qualities"] if q["name"].startswith("SINner")] == [levels[2]]
+    assert apply_patch(downgraded, CharacterPatch(life_modules=[])).derived == base.derived
+
+
+@pytest.mark.parametrize("group,level", [("Unknown", 1), ("SINner", 99)])
+def test_unknown_nested_quality_levels_still_block_the_whole_module(monkeypatch, group, level):
+    root = ET.fromstring(
+        f"<chummer><modules><module><id>nested</id><name>Nested</name><bonus>"
+        f'<addqualities><qualitylevel group="{group}">{level}</qualitylevel></addqualities>'
+        "</bonus></module></modules></chummer>"
+    )
+    monkeypatch.setattr(life_loader, "data_root", lambda _: root)
+    row = life_loader.load_life_modules()[0]
+    assert row["unsupported"] == ["qualitylevel:unknown"]
+    assert row["quality_levels"] == []
