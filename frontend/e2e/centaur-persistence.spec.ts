@@ -209,3 +209,46 @@ test("Centaur career keeps purchased MAG as its baseline across growth, undo and
   await expectCareer(4, 4, 40);
   await expect(page.getByRole("button", { name: "キャリア中" })).toBeVisible();
 });
+
+test("XLSX warns about Centaur's lost grants and does not import its kick as a purchase", async ({
+  page,
+}) => {
+  await page.goto(`/share#c=${encodeFragment({ v: 1, s: payload })}`);
+  await page.getByRole("button", { name: "自分のロースターに取り込む" }).click();
+  await waitForEditor(page);
+  await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
+  const sourceId = (await currentCharacter(page)).id;
+  const downloads: string[] = [];
+  page.on("download", (file) => downloads.push(file.suggestedFilename()));
+
+  await page.getByRole("button", { name: ".xlsx書出" }).click();
+  const review = page.getByRole("alertdialog");
+  await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
+  await expect(review).toContainText("Centaur");
+  await expect(review).toContainText("Human");
+  await expect(review).toContainText("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
+  await expect(review).toContainText("SR5 p.399");
+  await review.getByRole("button", { name: "やめる", exact: true }).click();
+  await expect(review).not.toBeVisible();
+  expect(downloads).toEqual([]);
+  await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
+
+  await page.getByRole("button", { name: ".xlsx書出" }).click();
+  await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    review.getByRole("button", { name: "このまま書き出す" }).click(),
+  ]);
+  const path = test.info().outputPath("centaur-lossy.xlsx");
+  await download.saveAs(path);
+  // Exporting itself must leave the source Centaur untouched.
+  await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+  await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
+  await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Human");
+  const imported = await currentCharacter(page);
+  expect(imported.quality_ids).toEqual([]);
+  expect(imported.weapons).toEqual([]);
+  expect(imported.derived.weapons).toEqual([]);
+  expect(imported.derived.metatype_info.powers ?? []).toEqual([]);
+});

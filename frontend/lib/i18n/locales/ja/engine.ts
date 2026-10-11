@@ -457,6 +457,8 @@ export const JA_ENGINE = {
   "engine.export.xlsxNoPlace": "{name}は取り付け先が装備シートにないので書き出せません",
   "engine.export.xlsxNoSettings":
     "キャラシには設定（使用ルールブック・ハウスルール）の欄がないので、設定「{name}」は引き継げません。読み込み直したキャラクターは既定の設定になります",
+  "engine.export.xlsxInnateGrant":
+    "生得付与「{name}」 {selection}（{source} p.{page}）は.xlsxへの書き出し・再読込で失われます",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

@@ -460,6 +460,8 @@ export const EN_ENGINE = {
     "{name} is fitted to something the equipment sheet does not hold, so it is left out",
   "engine.export.xlsxNoSettings":
     "the sheet has no cell for the settings (which rulebooks and house rules are in play), so “{name}” is not carried: what is read back uses the default settings",
+  "engine.export.xlsxInnateGrant":
+    "Innate grant {name} {selection} ({source} p.{page}) is lost when exported to .xlsx and read back",
   "engine.side.Left": "left",
 
   "engine.side.Right": "right",
