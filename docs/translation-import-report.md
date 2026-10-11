@@ -4,9 +4,9 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **555 件**
+- オーバーレイ合計: **554 件**
 
-## chumJA(SR4) category (56)
+## chumJA(SR4) category (55)
 
 | English | 日本語 |
 |---|---|
@@ -36,7 +36,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Exotic Ranged Weapons | 特殊射撃武器 |
 | Explosives | 爆発物 |
 | Eyeware | アイウェア |
-| Free Spirit | 自由精霊 |
 | Headware | ヘッドウェア |
 | Heavy Machine Guns | ヘビーマシンガン |
 | Hovercraft | ホバークラフト |
@@ -88,7 +87,6 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Boar | イノシシ |
 | Cannibalize | 貪肉術 |
 | Caretaker Spirit | 昆虫精霊(世話役) |
-| Centaur | ケンタウロス |
 | Centering | 集中術 |
 | Chameleon Skin | カメレオン・スキン |
 | Channeling | チャネリング |
@@ -123,6 +121,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Flexible Signature | 霊紋偽装術 |
 | Foot Anchor | 脚底アンカー |
 | Fox | キツネ |
+| Free Spirit | 自由精霊 |
 | Geomancy | 地霊術 |
 | Gills | 鰓 |
 | Giraffe | キリン |
