@@ -4,6 +4,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { HelpTip } from "@/components/help/HelpTip";
 import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { dropRemovedWarePicks } from "@/lib/character/quality";
@@ -56,6 +57,19 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
   return (
     <div className="card">
       <p className="muted">
+        {/* Two of the three figures are not about bioware alone: the essence
+            is the remaining total and the ¥ is every purchase the character
+            has made, so the line says which is which. */}
+        <HelpTip
+          label={ui("help.open", { label: ui("help.bio.statsLabel") })}
+          lines={[
+            { label: ui("help.bio.what") },
+            { label: ui("help.bio.essence") },
+            { label: ui("help.bio.spent") },
+          ]}
+        >
+          {ui("help.bio.statsLabel")}
+        </HelpTip>{" "}
         {ui("bio.summary", {
           count: d.bioware?.length || 0,
           essence: d.essence,
