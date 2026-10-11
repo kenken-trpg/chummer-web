@@ -17,6 +17,7 @@ def resolve_specializations(
     skillsoft_active: dict[str, int],
     skillsoft_knowledge: dict[str, int],
     free_expertise_skills: set[str] | None = None,
+    free_specializations: set[tuple[str, str]] | None = None,
 ) -> dict[str, Any]:
     active_names = {skill["name"] for skill in skills_data.get("skills") or []}
     knowledge_names = {skill["name"] for skill in skills_data.get("knowledge") or []}
@@ -28,6 +29,7 @@ def resolve_specializations(
         | {str(name).strip() for name in (skillsoft_knowledge or {}) if str(name).strip()}
     )
     free_expertise = {str(name).strip() for name in (free_expertise_skills or set()) if str(name).strip()}
+    free_specs = {(str(name).strip(), str(spec).strip()) for name, spec in (free_specializations or set())}
     cleaned: dict[str, str] = {}
     warnings: list[Notice] = []
     # Skills whose specialization is paid for with a point. Kept per skill, not
@@ -49,7 +51,7 @@ def resolve_specializations(
             if not native and rating < 1:
                 warnings.append(notice("engine.skills.specNeedsKnowledge", name=term(name)))
                 continue
-            if name not in free_expertise:
+            if name not in free_expertise and (name, spec) not in free_specs:
                 knowledge_paid.add(name)
         else:
             if name not in active_names:
@@ -59,7 +61,7 @@ def resolve_specializations(
             if rating < 1:
                 warnings.append(notice("engine.skills.specNeedsSkill", name=term(name)))
                 continue
-            if name not in free_expertise:
+            if name not in free_expertise and (name, spec) not in free_specs:
                 active_paid.add(name)
         cleaned[name] = spec
     state.skill_specializations = cleaned

@@ -105,10 +105,12 @@ def gather_qualities(
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
     innate = {q["id"]: q for q in metatype_grants or [] if q.get("id")}
-    for qid in innate:
+    for qid, grant in innate.items():
         free_ids.add(qid)
         if qid not in pending:
-            pending.append(qid)
+            # Explicit Life Module ratings represent that many free levels.
+            # Other innate grants retain their single-grant behavior.
+            pending.extend([qid] * int(grant.get("life_rating", 1)))
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])

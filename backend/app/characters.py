@@ -64,7 +64,7 @@ def _apply_talent_ratings(data: dict) -> None:
     data["talent"] = talent["name"]
     meta = find_metatype(data["metatype"], data.get("metavariant"))
     floors = special_attribute_floors(
-        meta, talent, is_karma=normalize_build_method(data.get("build_method")) == BUILD_METHOD_KARMA
+        meta, talent, is_karma=normalize_build_method(data.get("build_method")) in {BUILD_METHOD_KARMA, "LifeModule"}
     )
     attrs = dict(data.get("attributes") or {})
     for key in ("MAG", "RES"):

@@ -44,7 +44,7 @@ def sync_reward_totals(state: CharacterState) -> None:
 
 def bootstrap(ctx: Ctx) -> None:
     ctx.state.build_method = normalize_build_method(getattr(ctx.state, "build_method", None))
-    ctx.is_karma = ctx.state.build_method == BUILD_METHOD_KARMA
+    ctx.is_karma = ctx.state.build_method in {BUILD_METHOD_KARMA, "LifeModule"}
     ctx.career = bool(getattr(ctx.state, "career", False))
     ctx.state.career = ctx.career
     ctx.state.street_cred = max(0, int(getattr(ctx.state, "street_cred", 0) or 0))

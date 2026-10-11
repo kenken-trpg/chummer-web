@@ -193,7 +193,7 @@ def all_talent_options() -> list[dict[str, Any]]:
 
 
 def resolve_talent_for_method(letter: str, current: str | None, build_method: str | None) -> dict[str, Any]:
-    if normalize_build_method(build_method) == BUILD_METHOD_KARMA:
+    if normalize_build_method(build_method) in {BUILD_METHOD_KARMA, "LifeModule"}:
         options = all_talent_options()
         found = next((t for t in options if t["name"] == current), None)
         if found:
@@ -215,6 +215,8 @@ def normalize_build_method(raw: str | None) -> str:
     value = str(raw or BUILD_METHOD_PRIORITY).strip().lower().replace(" ", "").replace("_", "").replace("-", "")
     if value in {"sumtoten", "sum10", "sumtotenpriority"}:
         return BUILD_METHOD_SUM_TO_TEN
+    if value in {"lifemodule", "lifemodules"}:
+        return "LifeModule"
     if value in {"karma", "pointbuy", "point-buy", "bp"}:
         return BUILD_METHOD_KARMA
     return BUILD_METHOD_PRIORITY
@@ -237,7 +239,7 @@ def priorities_are_unique(p: Priorities) -> bool:
 
 def validate_priorities(p: Priorities, build_method: str | None = None) -> list[Notice]:
     method = normalize_build_method(build_method)
-    if method == BUILD_METHOD_KARMA:
+    if method in {BUILD_METHOD_KARMA, "LifeModule"}:
         return []
     letters = [str(x or "").upper() for x in (p.Heritage, p.Attributes, p.Talent, p.Skills, p.Resources)]
     errors: list[Notice] = []

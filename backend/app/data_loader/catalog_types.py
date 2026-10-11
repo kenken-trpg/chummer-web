@@ -23,6 +23,8 @@ class CatalogDict(TypedDict):
     all_metatypes: dict[str, Row]
     skills: Row
     qualities: list[Row]
+    quality_levels: dict[str, dict[int, str]]
+    life_modules: list[Row]
     cyberware: Row
     bioware: Row
     powers: list[Row]

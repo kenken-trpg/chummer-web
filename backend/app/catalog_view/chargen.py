@@ -70,6 +70,10 @@ def section(raw: CatalogDict) -> dict:
         "metatypes": raw["metatypes"],
         "skills": raw["skills"],
         "qualities": qualities,
+        "life_modules": [
+            {key: value for key, value in row.items() if key not in {"quality_grants", "contact_grants"}}
+            for row in raw.get("life_modules") or []
+        ],
         "martial_arts": [
             {
                 "id": art["id"],
@@ -109,6 +113,7 @@ def section(raw: CatalogDict) -> dict:
                 "label": t.get("label") or t["name"],
                 "magic": int(t.get("magic") or 0),
                 "resonance": int(t.get("resonance") or 0),
+                "quality": t.get("quality") or "",
             }
             for t in all_talent_options()
         ],

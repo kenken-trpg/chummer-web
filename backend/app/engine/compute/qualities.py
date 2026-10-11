@@ -69,7 +69,7 @@ def gather(ctx: Ctx) -> None:
     ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
     ctx.state.talent = ctx.talent["name"]
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
-    quality_grants = ctx.meta.get("quality_grants") or []
+    quality_grants = [*(ctx.meta.get("quality_grants") or []), *(ctx.life.get("qualities") or [])]
     power_grants = ctx.meta.get("power_grants") or []
     for grant in quality_grants + power_grants:
         if grant.get("unresolved"):

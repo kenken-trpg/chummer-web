@@ -15,6 +15,8 @@ from ...data_loader import Overlay, catalog, using_customdata
 from ...dataset_store import lookup
 from ...models import CharacterState
 from ...rules import rules_for, using_rules
+from ..priority import normalize_build_method
+from . import _life_modules
 from ._assemble_qualities import _effective_attr_spec  # noqa: F401  (re-exported via app.engine)
 from ._career import (  # noqa: F401  (re-exported via app.engine)
     career_raise_karma,
@@ -66,7 +68,9 @@ def compute(state: CharacterState) -> CharacterState:
     different character sees its own — see `app/rules.py`.
     """
     with using_rules(rules_for(state.settings)), using_customdata(_overlay_for(state)):
-        return _compute(state)
+        return _compute(
+            state.model_copy(deep=True) if normalize_build_method(state.build_method) == "LifeModule" else state
+        )
 
 
 def _overlay_for(state: CharacterState) -> Overlay | None:
@@ -87,6 +91,7 @@ def _overlay_for(state: CharacterState) -> Overlay | None:
 def _compute(state: CharacterState) -> CharacterState:
     ctx = Ctx(state=state, data=catalog())
     bootstrap(ctx)
+    _life_modules.prepare(ctx)
     gather(ctx)
     ware(ctx)
     effects_and_binders(ctx)
@@ -98,4 +103,4 @@ def _compute(state: CharacterState) -> CharacterState:
     economy(ctx)
     finalize(ctx)
     assemble(ctx)
-    return ctx.state
+    return _life_modules.restore(ctx)

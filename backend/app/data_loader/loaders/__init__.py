@@ -52,6 +52,7 @@ from .martial_arts import load_martial_art_techniques, load_martial_arts
 from .metatypes import load_metatypes
 from .priorities import load_priorities
 from .qualities import load_qualities
+from .quality_levels import load_quality_levels
 from .skills import load_skills
 from .translations import (
     _load_ja_overrides,
@@ -85,6 +86,7 @@ __all__ = [
     "load_powers",
     "load_metatypes",
     "load_qualities",
+    "load_quality_levels",
     "load_skills",
     "load_spells",
     "load_critter_powers",

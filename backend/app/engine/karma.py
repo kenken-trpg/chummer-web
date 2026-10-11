@@ -369,6 +369,7 @@ def knowledge_excess_karma(
     ratings: dict[str, int],
     free_points: int,
     *,
+    floors: Mapping[str, int] | None = None,
     categories: dict[str, str] | None = None,
     karma_mults: dict[str, int] | None = None,
 ) -> int:
@@ -378,7 +379,8 @@ def knowledge_excess_karma(
     for name, rating in (ratings or {}).items():
         cat = str(cats.get(name) or "")
         mult = int(mults.get(cat, 100))
-        for level in range(1, max(0, int(rating or 0)) + 1):
+        floor = max(0, int((floors or {}).get(name) or 0))
+        for level in range(floor + 1, max(0, int(rating or 0)) + 1):
             base = _level_cost(level, current_rules().karma_knowledge, 0, current_rules().karma_new_knowledge_skill)
             levels.append(max(1, int(math.ceil(base * mult / 100.0))))
     levels.sort()

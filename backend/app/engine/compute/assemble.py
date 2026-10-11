@@ -85,7 +85,8 @@ def assemble(ctx: Ctx) -> None:
             "knowledge": ctx.knowledge_karma if ctx.is_karma else 0,
             "specializations": ctx.spec_karma if ctx.is_karma else 0,
             "qualities": ctx.karma_from_q + ctx.quality_career_karma,
-            "other": ctx.mystic_karma
+            "other": int(ctx.life.get("karma") or 0)
+            + ctx.mystic_karma
             + ctx.extra_adept_karma
             + ctx.spell_karma
             + ctx.spirit_karma

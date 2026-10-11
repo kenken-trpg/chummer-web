@@ -57,6 +57,8 @@ def apply_quality_rules(
     career: bool = False,
     report: dict[str, Any] | None = None,
     warnings: list[Notice] | None = None,
+    free_positive_karma: int = 0,
+    free_negative_karma: int = 0,
 ) -> int:
     owned = {item["id"] for item in qualities}
     extras = {
@@ -135,6 +137,8 @@ def apply_quality_rules(
         if forbidden and requirement_tree_met(forbidden, ctx):
             errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
     rules = current_rules()
+    positive_spend = max(0, positive_spend - max(0, int(free_positive_karma)))
+    negative_gain = max(0, negative_gain - max(0, int(free_negative_karma)))
     if negative_gain > rules.quality_karma_cap_negative and not career and not rules.quality_exceed_negative:
         errors.append(
             notice(

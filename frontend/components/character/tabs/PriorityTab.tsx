@@ -7,6 +7,7 @@ import { talentLabel } from "@/lib/character/talent-labels";
 import { priorityTableFor } from "@/lib/character/priority-table";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
+import { LifeModulesPanel } from "./LifeModulesPanel";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function PriorityTab({
@@ -23,6 +24,9 @@ export function PriorityTab({
   return (
     <>
       <SettingsPicker catalog={catalog} character={ch} ui={ui} tr={tr} patch={patch} />
+      {ch.build_method === "LifeModule" && (
+        <LifeModulesPanel catalog={catalog} character={ch} ui={ui} patch={patch} />
+      )}
       <div className="card">
         <div
           style={{
@@ -54,6 +58,12 @@ export function PriorityTab({
           >
             {buildMethodLabel("Karma", ui)}
           </button>
+          <button
+            className={`choice ${ch.build_method === "LifeModule" ? "selected" : ""}`}
+            onClick={() => patch(buildMethodPatch("LifeModule", ch))}
+          >
+            {ui("life.method")}
+          </button>
           {(ch.build_method || "Priority") === "SumToTen" ? (
             <span className="muted">
               {ui("prio.sumTotal", {
@@ -63,7 +73,7 @@ export function PriorityTab({
               {" ・ "}A4 / B3 / C2 / D1 / E0
             </span>
           ) : null}
-          {(ch.build_method || "Priority") === "Karma" ? (
+          {["Karma", "LifeModule"].includes(ch.build_method || "Priority") ? (
             <span className="muted">
               {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
               {ui("prio.karmaNuyenRate", {
@@ -79,7 +89,7 @@ export function PriorityTab({
             </span>
           )}
         </div>
-        {(ch.build_method || "Priority") !== "Karma" ? (
+        {!["Karma", "LifeModule"].includes(ch.build_method || "Priority") ? (
           <label style={{ display: "block", marginBottom: 12 }}>
             {ui("prio.leftoverSlider", {
               k: ch.karma_nuyen || 0,
@@ -100,7 +110,7 @@ export function PriorityTab({
             />
           </label>
         ) : null}
-        {(ch.build_method || "Priority") === "Karma" ? (
+        {["Karma", "LifeModule"].includes(ch.build_method || "Priority") ? (
           <div style={{ display: "grid", gap: 12 }}>
             <p className="muted">{ui("prio.karmaNote", { pool: d.karma.pool })}</p>
             <label>

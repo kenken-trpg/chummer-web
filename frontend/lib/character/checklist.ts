@@ -59,6 +59,7 @@ const POINT_ROWS: {
  */
 const TAB_BY_AREA: Partial<Record<string, Tab>> = {
   priority: "priority",
+  life: "priority",
   settings: "priority",
   meta: "meta",
   attrs: "attrs",

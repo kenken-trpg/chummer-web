@@ -20,6 +20,7 @@ from ._career import (
     career_raise_karma,
     snapshot_career_baseline,
 )
+from ._life_modules import price as life_price
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
@@ -34,14 +35,24 @@ def _karma_totals(ctx: Ctx) -> None:
     paid_qualities = [
         q for q in ctx.qualities if not q.get("onlyprioritygiven") and q["id"] not in ctx.free_quality_ids
     ]
-    ctx.karma_from_q = sum(q["karma"] for q in paid_qualities)
+    positive_quality_karma = sum(max(0, int(q["karma"])) for q in paid_qualities)
+    negative_quality_karma = sum(max(0, -int(q["karma"])) for q in paid_qualities)
+    free_positive = int(ctx.life.get("free_positive_qualities") or 0)
+    free_negative = int(ctx.life.get("free_negative_qualities") or 0)
+    ctx.karma_from_q = max(0, positive_quality_karma - free_positive) - max(0, negative_quality_karma - free_negative)
     rules = current_rules()
     if rules.quality_exceed_negative_no_bonus:
         # Chummer's `NegativeQualityKarma`: past the limit, a negative
         # quality is still taken but its karma is not handed out.
         surge = surge_metagenic_limit(ctx.qualities) > 0
-        negative = sum(
-            -int(q["karma"]) for q in paid_qualities if int(q["karma"]) < 0 and counts_toward_quality_limit(q, surge)
+        negative = max(
+            0,
+            sum(
+                -int(q["karma"])
+                for q in paid_qualities
+                if int(q["karma"]) < 0 and counts_toward_quality_limit(q, surge)
+            )
+            - free_negative,
         )
         excess = max(0, negative - rules.quality_karma_cap_negative)
         if excess:
@@ -78,10 +89,17 @@ def _karma_totals(ctx: Ctx) -> None:
             categories=know_cats,
             karma_mults=_active_karma_mults(ctx.effects.get("skill_category_karma_cost_mult"), career=False),
         )
+        life_price(ctx)
         nuyen_karma = int(ctx.state.karma_nuyen or 0)
-        ctx.karma_pool = current_rules().karma_chargen_pool + int(ctx.state.karma_earned or 0)
+        pool = (
+            (ctx.state.settings.karma_chargen_pool if ctx.state.settings.karma_chargen_pool is not None else 750)
+            if ctx.life
+            else current_rules().karma_chargen_pool
+        )
+        ctx.karma_pool = pool + int(ctx.state.karma_earned or 0)
         ctx.karma_spent = (
             ctx.karma_from_q
+            + int(ctx.life.get("karma") or 0)
             + ctx.metatype_karma_cost
             + ctx.mystic_karma
             + ctx.extra_adept_karma

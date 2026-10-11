@@ -85,6 +85,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_programs,
     load_qi_focus,
     load_qualities,
+    load_quality_levels,
     load_rccs,
     load_sensors,
     load_settings_presets,
@@ -107,6 +108,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_weapon_ranges,
     load_weapons,
 )
+from .loaders.life_modules import load_life_modules
 from .loaders.metatype_grants import resolve_metatype_grants
 
 #: One lock per overlay key, so two requests that arrive on a cold key build
@@ -301,6 +303,8 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "all_metatypes": all_by_name,
         "skills": skills,
         "qualities": qualities,
+        "quality_levels": load_quality_levels(),
+        "life_modules": load_life_modules(),
         "cyberware": cyberware,
         "bioware": bioware,
         "powers": load_powers(),
