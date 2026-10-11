@@ -1,0 +1,1 @@
+- **Cloudflare Worker の依存監査を CI に追加しました。** 既知の脆弱性を見る `npm audit` はフロントエンドだけを対象にしていたため、`deploy/cloudflare` と `deploy/cloudflare-proxy`（wrangler・@cloudflare/containers）は Dependabot しか見ていませんでした。3 つとも毎回監査します。
