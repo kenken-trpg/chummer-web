@@ -636,3 +636,12 @@ Naga/Pixie/Sasquatch、シェイプシフター、AIの候補公開は別の実�
 実際の消費カルマ25/60、生得MAG1・資質4件・固定パワー2件・蹴り、保存・再読込を確認した。
 RF無効時の候補非表示・既存Centaurの保持と再有効化も確認した。
 型検査、ESLint、Prettier、Ruff、E2E用Next.js本番ビルドも成功。
+
+本番反映: [PR #526](https://github.com/kenken-trpg/chummer-web/pull/526)を
+`ae1f2f2e326fd6ded9f0fed01ed1952e3518829d`としてマージ。
+[Cloud Runデプロイ](https://github.com/kenken-trpg/chummer-web/actions/runs/38102140944)で
+新リビジョンへのトラフィック切替が成功した（2026-10-11）。
+署名済みイメージは`ghcr.io/kenken-trpg/chummer-web@sha256:fd8e5bbb1ce6bdea37d99162c81546dc2e036218061e1bd4549716272a55ee21`。
+CIからの公開URL確認はCloudflare challengeで未完了だったが、その後ユーザーが本番画面で
+ケンタウロスの作成候補が表示されることを確認した。確認のための一時スクリプトは保存せず、
+公開処理の改善は`scripts/publish.sh`とChummer用の呼び出しスクリプトに集約する。
