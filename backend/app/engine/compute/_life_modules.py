@@ -106,8 +106,13 @@ def prepare(ctx: Ctx) -> None:
             if not name:
                 key = f"{index}:{grant['choice']}"
                 name = ctx.state.life_module_choices.get(key, "")
-                options = next(c["options"] for c in row["choices"] if c["key"] == grant["choice"])
-                if (options and name not in options) or not name.strip():
+                choice = next(c for c in row["choices"] if c["key"] == grant["choice"])
+                options = choice["options"]
+                if (
+                    (options and name not in options and not choice.get("allow_custom"))
+                    or not name.strip()
+                    or (choice.get("allow_custom") and "[" in name)
+                ):
                     ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
                     continue
             name = name.strip()

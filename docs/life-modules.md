@@ -57,17 +57,27 @@
 | Too Pretty to Hit | Too Pretty To Hit |
 | Phobia (Mild, Common) | Phobia (Common, Mild)。対象は利用者が指定 |
 | Home Ground (You Know A Guy) | Home Ground、追加指定は You Know A Guy |
+| SINner: National | SINner (National)。追加指定は利用者が入力 |
 
-`addquality/options/quality` の選択式付与も読み取ります。現在の対応候補は321件／325件です。
+`addquality/options/quality` の選択式付与も読み取ります。現在の対応候補は324件／325件です。
 Corp College Student は [Street Lethal p.128](https://www.thyamath.fr/Shadowrun/SR5/Shadowrun_5E_Street_Lethal.pdf) の5 Karmaという指定をカタログと照合し、
 このモジュールIDに限って Day Job (10 hrs) に解決します。Etiquette の Academic 専門化、
 Academic / Professional の知識カテゴリ選択も反映します。他の無指定の Day Job は読み替えません。
 技能内の固定専門化・自由入力の専門化は無償付与し、知識技能の専門化にも対応します。
-次の4候補は、付与内容を確定できないため選択不可のままです。
+Azanian Confederation は、単数形の `option` から候補を読み取ります。
+親モジュールID `baa9a6cc-2fb8-49d3-b503-d1f74bd0d915` に限り、言語名の候補が並ぶ
+2つの付与の欠落カテゴリを `Language` と補完します。これは固定XMLの候補名と値を根拠にした
+データ解釈であり、Better Than Bad p.162 の国籍表を直接確認した修正ではありません。
+値0の母語と値1の追加言語に反映し、言語候補外の入力は拒否します。
+Zulu Nation の都市は New Hlobane の候補表示に加えて任意の都市名を入力できます。
+`[City]` のようなプレースホルダーそのものは入力値として認めません。
+既存の同地域 SINless の保存にも同じ補正を適用し、選択キーは維持します。
+以前の自由入力が現在の言語候補に含まれない場合は、選び直すまで作成エラーになります。
+
+次の1候補は、付与内容を確定できないため選択不可のままです。
 
 | 候補 | 未解決の記述 |
 | --- | --- |
-| General Azania / Pretoria (PWV Metroplex) / Zulu Nation | 資質が `SINner: National` と記述されているほか、親の知識技能で言語候補が単数形の `option` に入り、`group` が欠けている。資質名だけの修正では言語付与を正しく扱えない |
 | Warm Body | Corporate Pariah の I / II の指定がない |
 
 ## 実装

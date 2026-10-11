@@ -25,7 +25,13 @@ export interface LifeModuleCatalogItem {
     category: string;
     category_choice?: string;
   }[];
-  choices: { key: string; kind: string; name?: string; options: string[] }[];
+  choices: {
+    key: string;
+    kind: string;
+    name?: string;
+    options: string[];
+    allow_custom?: boolean;
+  }[];
 }
 
 export interface MartialArtCatalogItem {

@@ -28,6 +28,7 @@ QUALITY_REFERENCES = {
     "Too Pretty to Hit": ("Too Pretty To Hit", ""),
     "Phobia (Mild, Common)": ("Phobia (Common, Mild)", ""),
     "Home Ground (You Know A Guy)": ("Home Ground", "You Know A Guy"),
+    "SINner: National": ("SINner (National)", ""),
 }
 
 # Street Lethal p.128 specifies Day Job (5 Karma) for this module.
@@ -74,7 +75,22 @@ def load_life_modules() -> list[dict[str, Any]]:
                 for node in bonus_nodes:
                     if node.tag in LEVELS:
                         name = _text(node.find("name"))
-                        options = [_text(el) for el in node.findall("./options/*")]
+                        raw_options = [_text(el) for el in node.findall("./options/*") + node.findall("./option/*")]
+                        allow_custom = node.tag == "knowledgeskilllevel" and any(
+                            "[" in option for option in raw_options
+                        )
+                        options = [option for option in raw_options if not (allow_custom and "[" in option)]
+                        category = _text(node.find("group")) or "Professional"
+                        # The pinned Azanian parent lists language names in
+                        # two option nodes (native/one level) but omits group.
+                        # Limit this data interpretation to that exact parent.
+                        if (
+                            _text(block.find("id")) == "baa9a6cc-2fb8-49d3-b503-d1f74bd0d915"
+                            and node.tag == "knowledgeskilllevel"
+                            and node.find("group") is None
+                            and node.find("option") is not None
+                        ):
+                            category = "Language"
                         key = str(len(grants))
                         category_options = [_text(el) for el in node.findall("./group/options/*")]
                         category_choice = ""
@@ -93,7 +109,9 @@ def load_life_modules() -> list[dict[str, Any]]:
                             if not options and node.tag != "knowledgeskilllevel":
                                 issues.append(node.tag + ":select")
                                 continue
-                            choices.append({"key": key, "kind": LEVELS[node.tag], "options": options})
+                            choices.append(
+                                {"key": key, "kind": LEVELS[node.tag], "options": options, "allow_custom": allow_custom}
+                            )
                             name = ""
                         grants.append(
                             {
@@ -101,7 +119,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                                 "name": name,
                                 "choice": key,
                                 "value": _int(node.find("val"), 1),
-                                "category": _text(node.find("group")) or "Professional",
+                                "category": category,
                                 "category_choice": category_choice,
                             }
                         )

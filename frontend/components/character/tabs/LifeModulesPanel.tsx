@@ -1,4 +1,5 @@
 "use client";
+import { useId } from "react";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
 import { lifeModuleRequirementsMet, lifeModuleRequirementText } from "@/lib/character/life-modules";
@@ -18,6 +19,7 @@ export function LifeModulesPanel({
   patch,
 }: Pick<TabPanelProps, "catalog" | "character" | "ui" | "patch">) {
   const rows = catalog.life_modules || [];
+  const optionListId = useId();
   const selected = ch.life_modules || [];
   const choices = ch.life_module_choices || {};
   const books = ch.settings?.books || [];
@@ -105,7 +107,7 @@ export function LifeModulesPanel({
                         name: row.name,
                         kind: choice.name || ui(`life.kind.${choice.kind}` as MsgKey),
                       })}
-                      {choice.options.length ? (
+                      {choice.options.length && !choice.allow_custom ? (
                         <select
                           disabled={ch.career}
                           value={choices[`${index}:${choice.key}`] || ""}
@@ -126,18 +128,32 @@ export function LifeModulesPanel({
                           ))}
                         </select>
                       ) : (
-                        <input
-                          disabled={ch.career}
-                          value={choices[`${index}:${choice.key}`] || ""}
-                          onChange={(event) =>
-                            patch({
-                              life_module_choices: {
-                                ...choices,
-                                [`${index}:${choice.key}`]: event.target.value,
-                              },
-                            })
-                          }
-                        />
+                        <>
+                          <input
+                            list={
+                              choice.allow_custom
+                                ? `${optionListId}-${index}-${choice.key}`
+                                : undefined
+                            }
+                            disabled={ch.career}
+                            value={choices[`${index}:${choice.key}`] || ""}
+                            onChange={(event) =>
+                              patch({
+                                life_module_choices: {
+                                  ...choices,
+                                  [`${index}:${choice.key}`]: event.target.value,
+                                },
+                              })
+                            }
+                          />
+                          {choice.allow_custom && (
+                            <datalist id={`${optionListId}-${index}-${choice.key}`}>
+                              {choice.options.map((option) => (
+                                <option key={option} value={option} />
+                              ))}
+                            </datalist>
+                          )}
+                        </>
                       )}
                     </label>
                   ))}

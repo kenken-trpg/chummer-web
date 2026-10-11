@@ -1,0 +1,1 @@
+General Azania、Pretoria (PWV Metroplex)、Zulu Nation に対応し、同地域の SINless を含めて母語と追加言語を反映します。欠落した言語カテゴリは固定XMLの候補名・値を根拠に当該親モジュールだけ補完します。単数形 `option` の候補を読み取り、Zulu Nation の都市は候補表示付き自由入力で指定できます。言語候補外の入力とプレースホルダーの直接入力はエラーにします。

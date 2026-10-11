@@ -190,3 +190,28 @@ it("keeps knowledge categories in English and saves category and specialization 
     ).value,
   ).toBe("Desert");
 });
+
+it("suggests English place names while allowing a custom city for repeated modules", () => {
+  const patch = vi.fn();
+  const props = panelProps(makeCharacter({ life_modules: [historyModule.id, historyModule.id] }), {
+    catalog: makeCatalog({
+      life_modules: [
+        {
+          ...historyModule,
+          choices: [
+            { key: "8", kind: "knowledge_skills", options: ["New Hlobane"], allow_custom: true },
+          ],
+        },
+      ],
+    }),
+    patch,
+  });
+  render(<LifeModulesPanel {...props} />);
+  const inputs = screen.getAllByRole("combobox", {
+    name: "Bounty Hunter: 知識技能の選択",
+  }) as HTMLInputElement[];
+  expect(inputs[0].list?.options[0].value).toBe("New Hlobane");
+  expect(inputs[0].getAttribute("list")).not.toBe(inputs[1].getAttribute("list"));
+  fireEvent.change(inputs[1], { target: { value: "Durban" } });
+  expect(patch).toHaveBeenCalledWith({ life_module_choices: { "1:8": "Durban" } });
+});

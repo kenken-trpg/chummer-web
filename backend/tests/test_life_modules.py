@@ -464,3 +464,49 @@ def test_placeholder_specialization_requires_a_pick_and_does_not_overwrite_exist
     conflict = apply_patch(picked, CharacterPatch(skill_specializations={grant["skill"]: "Urban"}))
     assert has(conflict.derived["errors"], "engine.life.specializationConflict")
     assert conflict.skill_specializations[grant["skill"]] == "Urban"
+
+
+@pytest.mark.parametrize("name", ["General Azania", "Pretoria (PWV Metroplex)", "Zulu Nation", "SINless"])
+def test_azanian_versions_grant_native_and_additional_languages(name):
+    spec = next(r for r in catalog()["life_modules"] if r["parent"] == "Azanian Confederation" and r["name"] == name)
+    assert not spec["unsupported"]
+    picks = {f"0:{c['key']}": c["options"][0] if c["options"] else "Johannesburg" for c in spec["choices"]}
+    picks.update({"0:0": "English", "0:1": "Afrikaans"})
+    base = runner()
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert not has(state.derived["errors"], "engine.life.choice")
+    knowledge = {k["name"]: k for k in state.derived["knowledge_skills"]}
+    assert knowledge["English"]["native"]
+    assert knowledge["Afrikaans"]["rating"] == 1
+    assert knowledge["Afrikaans"]["category"] == "Language"
+    assert any(q["name"] == "SINner (National)" for q in state.derived["qualities"]) is (name != "SINless")
+    assert state.native_languages == base.native_languages
+    assert state.knowledge_skills == base.knowledge_skills
+    assert compute(state).model_dump() == state.model_dump()
+    assert import_character(state.model_dump()).derived == state.derived
+    assert apply_patch(state, CharacterPatch(life_modules=[], life_module_choices={})).derived == base.derived
+
+
+@pytest.mark.parametrize("city", ["New Hlobane", "Durban"])
+def test_zulu_city_accepts_named_or_custom_city_but_keeps_languages_restricted(city):
+    spec = module("Zulu Nation")
+    choice = next(c for c in spec["choices"] if c.get("allow_custom"))
+    assert choice["options"] == ["New Hlobane"]
+    picks = {f"0:{choice['key']}": city, "0:0": "Not a language", "0:1": "Afrikaans", "0:q0": "Azania"}
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert has(state.derived["errors"], "engine.life.choice", slot="0:0")
+    assert not any(k["name"] == "Not a language" for k in state.derived["knowledge_skills"])
+    assert next(k for k in state.derived["knowledge_skills"] if k["name"] == city)["rating"] == 2
+    picks[f"0:{choice['key']}"] = "[City]"
+    invalid = apply_patch(state, CharacterPatch(life_module_choices=picks))
+    assert has(invalid.derived["errors"], "engine.life.choice", slot=f"0:{choice['key']}")
+    assert not any(k["name"] == "[City]" for k in invalid.derived["knowledge_skills"])
+
+
+def test_language_category_repair_is_scoped_to_azanian_parent(monkeypatch):
+    root = ET.fromstring(
+        "<chummer><modules><module><id>unrelated</id><bonus><knowledgeskilllevel><option><name>English</name></option><val>1</val></knowledgeskilllevel></bonus></module></modules></chummer>"
+    )
+    monkeypatch.setattr(life_loader, "data_root", lambda _: root)
+    row = life_loader.load_life_modules()[0]
+    assert row["grants"][0]["category"] == "Professional"
