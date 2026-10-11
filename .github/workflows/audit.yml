@@ -41,12 +41,30 @@ jobs:
       # install — and so the next image build — would get.
       - run: pip-audit -r backend/requirements.txt
 
+  # Every npm tree the running site is built from — the app and the two
+  # Cloudflare Workers in front of it. The Workers used to be Dependabot's
+  # alone: it opens a PR when a newer version exists, which is not the same
+  # question as whether what we resolve to today has an advisory.
   npm-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Production dependencies only: the test and lint toolchain never
+          # ships.
+          - dir: frontend
+            omit: --omit=dev
+          # The Workers are audited whole. `wrangler` bundles and uploads the
+          # Worker, so it is in the trust path of what runs in production even
+          # though it never runs there — and `cloudflare-proxy` has nothing but
+          # devDependencies, so `--omit=dev` would audit an empty tree and
+          # report green for ever.
+          - dir: deploy/cloudflare
+            omit: ""
+          - dir: deploy/cloudflare-proxy
+            omit: ""
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -54,10 +72,10 @@ jobs:
         with:
           node-version: "24"
 
-      # Against the lockfile, production dependencies only: the test and lint
-      # toolchain never ships. High and critical fail the check; a moderate
+      # Against the lockfile. High and critical fail the check; a moderate
       # still prints here without blocking every PR until upstream moves.
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit ${{ matrix.omit }} --audit-level=high
+        working-directory: ${{ matrix.dir }}
 
   # The upload paths, hunted properly. ci.yml runs `tests/test_import_fuzz.py`
   # at 120 examples per property on every PR, which is a regression check, not
