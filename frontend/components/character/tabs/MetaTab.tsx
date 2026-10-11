@@ -18,6 +18,13 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
     const spec = catalog.metatypes.find((m) => m.name === choice.name);
     return isBookEnabled(allowedBooks, spec?.source, spec?.also_in);
   });
+  // The two things a metatype brings are not the same thing, and listing only
+  // the second read as "a centaur's racial powers are Search and a kick".
+  // Qualities are what the species grants every character of it, and they are
+  // editable nowhere — the qualities tab shows them again among the purchases.
+  // Critter powers exist only for the metatypes whose `<enabletab>critter`
+  // reaches them, and they have no quality row at all.
+  const innate = d.qualities.filter((q) => q.origin === "Metatype");
 
   return (
     <div className="card">
@@ -108,10 +115,29 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           </select>
         </label>
       </div>
+      {innate.length ? (
+        <section style={{ marginTop: 12 }}>
+          <h3>{ui("meta.innateQualities")}</h3>
+          <p className="muted">{ui("meta.innate", { name: tr(ch.metatype) })}</p>
+          <ul className="critter-powers">
+            {innate.map((q, index) => (
+              <li key={`${q.id}-${index}`}>
+                <b>{tr(q.name)}</b>{" "}
+                <span className="muted">
+                  {q.name}
+                  {q.source ? ` / ${q.source}${q.page ? ` p.${q.page}` : ""}` : ""}
+                </span>
+                {q.extra ? <div className="muted">{tr(q.extra)}</div> : null}
+              </li>
+            ))}
+          </ul>
+          <p className="muted">{ui("meta.innateQualitiesHint")}</p>
+        </section>
+      ) : null}
       {d.metatype_info.powers?.length ? (
         <section style={{ marginTop: 12 }}>
-          <h3>{ui("meta.innatePowers")}</h3>
-          <p className="muted">{ui("meta.innate", { name: tr(ch.metatype) })}</p>
+          <h3>{ui("meta.critterPowers")}</h3>
+          <p className="muted">{ui("meta.critterPowersHint")}</p>
           <ul className="critter-powers">
             {d.metatype_info.powers.map((power, index) => (
               <li key={`${power.id}-${index}`}>

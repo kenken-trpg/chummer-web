@@ -159,7 +159,26 @@ describe("<QualitiesTab>", () => {
     expect(screen.getByRole("heading", { name: "取得済み" })).toBeDefined();
     expect(screen.getByText("Distinctive Style")).toBeDefined();
     // Distinctive Style is in no listed family, so it gets the plain prompt
-    expect(screen.getByPlaceholderText("内容を入力")).toBeDefined();
+    const field = screen.getByPlaceholderText("内容を入力");
+    expect(field).toBeDefined();
+    // the field belongs to the quality above it, and the indented block is
+    // what says so — loose, it read as a second row of its own
+    expect(field.closest(".quality-extras")).not.toBeNull();
+  });
+
+  it("leaves no extras block on a quality that decides nothing", () => {
+    renderTab({
+      character: {
+        derived: {
+          qualities: [
+            { id: "q1", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
+          ] as never,
+        },
+      },
+    });
+    // `:empty` hides it in the browser, but an element that holds nothing is
+    // still a wrong answer to "does this quality need anything?"
+    expect(document.querySelector(".quality-extras")?.childElementCount ?? 0).toBe(0);
   });
 
   it("lists SR5 catalog qualities and filters by the category tabs", () => {

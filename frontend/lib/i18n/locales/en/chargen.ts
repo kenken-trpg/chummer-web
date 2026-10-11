@@ -4,7 +4,12 @@ export const EN_CHARGEN = {
     "{count} of the metatypes this row offers are left out by the ruleset’s book list",
   "meta.innate": "Innate to {name} (no additional karma)",
   "meta.innateFixed": "Innate grant · cannot be removed",
-  "meta.innatePowers": "Metatype powers",
+  "meta.innateQualities": "Innate qualities",
+  "meta.innateQualitiesHint":
+    "These also appear in the qualities tab. They cost no karma and cannot be removed",
+  "meta.critterPowers": "Critter powers",
+  "meta.critterPowersHint":
+    "Powers this metatype has as a critter. They are not qualities, so the qualities tab does not list them",
   "meta.retained":
     "The current metatype, {name}, is not available as a new choice under these conditions. It is kept until you choose another metatype",
   "skills.points": "Skills {skills} · Groups {groups} · Knowledge {knowledge}",

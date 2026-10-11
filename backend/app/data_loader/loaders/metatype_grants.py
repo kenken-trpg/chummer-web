@@ -1,7 +1,9 @@
-"""Resolve the innate grants of metatypes whose grant path is supported.
+"""Resolve the innate qualities and critter powers a metatype grants.
 
-Centaur is the first supported set. Loading XML references for another species
-does not enable its effects before its chargen rules and removal costs exist.
+Applied to every metatype and metavariant. The references are names (or IDs)
+in `metatypes.xml`; the definitions come from the quality and critter-power
+catalogs, hidden rows included, because a species owning a quality is not the
+same as a character being allowed to buy it.
 """
 
 from __future__ import annotations

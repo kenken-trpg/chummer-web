@@ -4,7 +4,11 @@ export const JA_CHARGEN = {
     "この条件の種族のうち {count} 件は、使用ルールブックの設定で候補に出ていません",
   "meta.innate": "{name}の生得能力（追加カルマなし）",
   "meta.innateFixed": "生得付与・削除不可",
-  "meta.innatePowers": "種族パワー",
+  "meta.innateQualities": "生得資質",
+  "meta.innateQualitiesHint": "資質タブにも並びます。カルマはかからず、削除もできません",
+  "meta.critterPowers": "クリッター・パワー",
+  "meta.critterPowersHint":
+    "このメタタイプがクリッターとして持つパワーです。資質ではないので、資質タブには出ません",
   "meta.retained":
     "現在の種族「{name}」は、この条件の新規選択候補にありません。別の種族を選ぶまで保持されます",
   "skills.points": "技能 {skills} ・ グループ {groups} ・ 知識 {knowledge}",

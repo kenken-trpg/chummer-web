@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 from collections import OrderedDict
+from collections.abc import Iterator
 from functools import lru_cache
 from typing import Any, cast
 
@@ -161,6 +162,18 @@ def catalog() -> CatalogDict:
         return _catalog_for(key)
 
 
+def _with_metavariants(metatypes: list[dict[str, Any]]) -> Iterator[dict[str, Any]]:
+    """Every metatype row, each of its metavariants after it.
+
+    `all_metatypes` cannot stand in for this: it is keyed by name and keeps
+    the first row of a repeated name, so a metavariant sharing a name with
+    something already seen would never be reached.
+    """
+    for meta in metatypes:
+        yield meta
+        yield from meta.get("metavariants") or []
+
+
 @lru_cache(maxsize=4)
 def _catalog_for(_overlay_key: str) -> CatalogDict:
     if not (DATA_DIR / "metatypes.xml").exists():
@@ -221,18 +234,20 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         add_name = str(item.get("add_weapon") or "")
         if add_name:
             item["add_weapon_id"] = weapon_ids.get(add_name) or ""
-    centaur = all_by_name.get("Centaur")
-    if centaur:
-        centaur["quality_grants"] = resolve_metatype_grants(
-            centaur, centaur.get("qualities") or [], load_qualities(include_hidden=True)
-        )
-        for quality in centaur["quality_grants"]:
+    # Every species, not only the one that made the path necessary. An elf's
+    # low-light vision is the same kind of grant as a centaur's, and leaving
+    # it unresolved made the qualities tab answer differently depending on
+    # which metatype was chosen. Metavariants are walked too: a `.chum5` can
+    # name one even though chargen offers only the six base metatypes.
+    grantable_qualities = load_qualities(include_hidden=True)
+    grantable_powers = load_critter_powers(include_rules=True)
+    for meta in _with_metavariants(metatypes):
+        meta["quality_grants"] = resolve_metatype_grants(meta, meta.get("qualities") or [], grantable_qualities)
+        for quality in meta["quality_grants"]:
             add_name = str(quality.get("add_weapon") or "")
             if add_name:
                 quality["add_weapon_id"] = weapon_ids.get(add_name) or ""
-        centaur["power_grants"] = resolve_metatype_grants(
-            centaur, centaur.get("powers") or [], load_critter_powers(include_rules=True)
-        )
+        meta["power_grants"] = resolve_metatype_grants(meta, meta.get("powers") or [], grantable_powers)
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])

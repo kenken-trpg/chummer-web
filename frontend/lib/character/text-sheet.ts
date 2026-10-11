@@ -144,7 +144,7 @@ export function textSheet(x: TextArgs): string {
   }
 
   if (d.metatype_info.powers?.length) {
-    head("meta.innatePowers");
+    head("meta.critterPowers");
     d.metatype_info.powers.forEach((power) =>
       line(
         `  ${critterPowerRow(power, tr, ui)}${power.select ? ` / ${power.select}` : ""}${power.rating ? ` / ${power.rating}` : ""} / ${power.source} p.${power.page}`,
