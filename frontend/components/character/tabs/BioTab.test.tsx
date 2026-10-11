@@ -198,3 +198,11 @@ it("excludes grades banned by the character's settings from the add picker", () 
   expect(screen.queryByRole("option", { name: /Betaware/ })).toBeNull();
   expect(screen.getByRole("option", { name: /Standard/ })).toBeDefined();
 });
+
+it("explains the summary line's essence and ¥, which are not bioware's alone", () => {
+  renderTab({ character: { derived: { essence: 5.8, essence_lost_bio: 0.2 } } as never });
+
+  expect(screen.getByRole("button", { name: "このタブの合計 の説明" })).toBeDefined();
+  expect(screen.getByText(/Essence は残っている合計/)).toBeDefined();
+  expect(screen.getByText(/装備や資質も含めた支出の合計/)).toBeDefined();
+});
