@@ -138,7 +138,7 @@ it("prints innate qualities and fixed powers with provenance and the kick select
   });
   const { container } = render(<QualitiesSection {...data} />);
   expect(container.textContent).toContain("Centaurの生得能力（追加カルマなし）");
-  expect(container.textContent).toContain("種族パワー");
+  expect(container.textContent).toContain("クリッター・パワー");
   expect(container.textContent).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
   expect(container.textContent).toContain("SR5 p.399");
 });

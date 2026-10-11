@@ -99,7 +99,7 @@ describe("textSheet sections", () => {
         },
       }),
     );
-    expect(text).toContain("=== 種族パワー ===");
+    expect(text).toContain("=== クリッター・パワー ===");
     expect(text).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
     expect(text).toContain("SR5 p.399");
   });

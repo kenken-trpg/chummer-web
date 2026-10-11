@@ -40,7 +40,7 @@ export function QualitiesSection(s: SheetData) {
       </ul>
       {d.metatype_info.powers?.length ? (
         <>
-          <h4>{ui("meta.innatePowers")}</h4>
+          <h4>{ui("meta.critterPowers")}</h4>
           <ul className="sheet-list">
             {d.metatype_info.powers.map((power, index) => (
               <li key={`${power.id}-${index}`}>

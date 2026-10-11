@@ -171,11 +171,45 @@ describe("<MetaTab>", () => {
         },
       },
     });
-    expect(screen.getByRole("heading", { name: "種族パワー" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "クリッター・パワー" })).toBeDefined();
     expect(screen.getByText("Kick: DV ({STR} + 2)P, AP +1, +1 Reach")).toBeDefined();
     expect(screen.getByText(/SR5 p.399/)).toBeDefined();
     expect(screen.getByText(/複雑/)).toBeDefined();
+    // a critter power is not a quality, and saying so is the point of the
+    // split: the qualities tab will not list these
+    expect(screen.getByText(/資質ではないので/)).toBeDefined();
+  });
+
+  it("lists the innate qualities separately from the critter powers", () => {
+    // what the species gives every character of it. Listing only the critter
+    // powers read as "a centaur's racial powers are Search and a kick", with
+    // the vision and magic-sense qualities nowhere on the panel.
+    renderTab({
+      character: {
+        metatype: "Centaur",
+        derived: {
+          qualities: [
+            {
+              id: "llv",
+              name: "Low-Light Vision",
+              karma: 0,
+              category: "Positive",
+              source: "SR5",
+              page: "398",
+              origin: "Metatype",
+              origin_name: "Centaur",
+            },
+            // a purchase sits in the same list and must not be claimed as innate
+            { id: "ambi", name: "Ambidextrous", karma: 4, category: "Positive", source: "SR5" },
+          ],
+        },
+      },
+    });
+    expect(screen.getByRole("heading", { name: "生得資質" })).toBeDefined();
     expect(screen.getByText("Centaurの生得能力（追加カルマなし）")).toBeDefined();
+    expect(screen.getByText(/SR5 p.398/)).toBeDefined();
+    expect(screen.queryByText("Ambidextrous")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "クリッター・パワー" })).toBeNull();
   });
 
   it("lists the Heritage-priority metatypes and patches the pick", () => {
