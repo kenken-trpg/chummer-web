@@ -11,6 +11,11 @@ same file, so they never conflict here.
   one `- **…**` bullet, with continuation lines indented two spaces.
   Several bullets in one file are fine.
 
+`collect` pastes a fragment in verbatim, so a fragment that is not a list item
+lands in the section as a paragraph between the bullets. The `changelog` job
+checks that much — a `- ` bullet, continuation lines indented two spaces — and
+leaves the bold lead-in to you.
+
 CI (`changelog` job) fails a PR that changes `backend/`, `frontend/` or the
 Docker files without adding a fragment. Put `[skip changelog]` in the PR title
 for a change nobody would notice.

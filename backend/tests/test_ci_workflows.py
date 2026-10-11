@@ -1,4 +1,4 @@
-"""Exercise deploy result classification and the bot changelog boundary."""
+"""Exercise deploy result classification and the changelog fragment rules."""
 
 import importlib.util
 import os
@@ -90,3 +90,42 @@ def test_changelog_bot_boundary(author: str, changed: str, expected: int) -> Non
     spec.loader.exec_module(module)
     with patch.object(module.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, changed)):
         assert module.check_pr("base", author=author) == expected
+
+
+def _changelog_module():
+    spec = importlib.util.spec_from_file_location("changelog", ROOT / "scripts/changelog.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.parametrize(
+    ("text", "complaint"),
+    [
+        ("- **A bullet.** Its body.\n", None),
+        ("- **A bullet.** Its body,\n  continued two spaces in.\n", None),
+        ("- One bullet.\n- And a second.\n", None),
+        ("A bare paragraph.\n", "starts with a paragraph"),
+        ("- **A bullet.** Its body.\nA paragraph after it.\n", "line 2"),
+        ("- A bullet.\n\n- After a blank line.\n", None),
+    ],
+)
+def test_fragment_shape_is_what_collect_can_paste_into_a_list(text: str, complaint: str | None) -> None:
+    # `collect` pastes a fragment in verbatim, so a fragment that is not a list
+    # item lands in the section as a paragraph between the bullets.
+    errors = _changelog_module().shape_errors("probe.added.md", text)
+    assert (complaint is None) == (errors == [])
+    if complaint:
+        assert complaint in errors[0]
+
+
+def test_every_fragment_in_the_tree_is_shaped_that_way() -> None:
+    module = _changelog_module()
+    errors = [
+        error
+        for path in sorted((ROOT / "changelog.d").glob("*.md"))
+        if path.name != "README.md"
+        for error in module.shape_errors(path.name, path.read_text(encoding="utf-8"))
+    ]
+    assert not errors
