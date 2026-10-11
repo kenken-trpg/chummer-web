@@ -21,6 +21,7 @@ import {
 } from "@/lib/character/customdata-store";
 import { ZipError } from "@/lib/character/zip";
 import { errorMessage } from "@/lib/errors";
+import { splitKnobs } from "@/lib/settings-knobs";
 import { useLocale, type UiFn } from "@/lib/i18n";
 
 /** The core rulebook, which "all off" keeps. */
@@ -81,6 +82,7 @@ export function SettingsPicker({
   const books = ch.settings?.books || [];
   const name = ch.settings?.name || "";
   const unsupported = ch.settings?.unsupported || [];
+  const { loud, quiet } = splitKnobs(unsupported, ui);
   const known = presets.some((p) => p.name === name) || files.some((f) => f.name === name);
   // A settings file that names custom-data directories is unusable without
   // them: every entry they add or re-source is simply missing until the
@@ -410,11 +412,24 @@ export function SettingsPicker({
           {detail ? <MergeDetail merge={merge} ui={ui} /> : null}
         </>
       ) : null}
-      {unsupported.length > 0 ? (
+      {loud.length > 0 ? (
+        // A warning rather than a muted aside: these are the knobs whose
+        // absence makes a number here disagree with Chummer, and the tag names
+        // this used to print could not be told apart from the harmless ones.
+        <div className="notice notice-warn">
+          {ui("settings.unsupportedHere", { count: loud.length })}
+          <ul style={{ margin: "4px 0 0", paddingLeft: "1.2em" }}>
+            {loud.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {quiet.length > 0 ? (
         <p className="muted">
-          {ui("settings.unsupportedHere", {
-            count: unsupported.length,
-            tags: unsupported.join(", "),
+          {ui("settings.unsupportedHarmless", {
+            count: quiet.length,
+            items: quiet.join(" / "),
           })}
         </p>
       ) : null}
