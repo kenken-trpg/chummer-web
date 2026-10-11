@@ -107,7 +107,7 @@ def test_missing_or_invalid_choices_are_reported_and_not_applied():
 
 
 def test_unknown_and_unsupported_modules_never_grant_partial_benefits():
-    bad = module("Pit Fighter")
+    bad = module("Corp College Student")
     state = apply_patch(runner(), CharacterPatch(life_modules=["unknown", bad["id"]]))
     assert has(state.derived["errors"], "engine.life.unknown")
     assert has(state.derived["errors"], "engine.life.unsupported")
@@ -286,3 +286,68 @@ def test_mr_johnson_contacts_are_free_distinct_and_not_persisted_as_purchases():
     assert all(c["connection"] == 4 and c["loyalty"] == 3 and c["billable"] == 0 for c in contacts)
     assert state.contacts == []
     assert compute(state).derived["contacts"] == contacts
+
+
+@pytest.mark.parametrize(
+    "name,quality_name,rating",
+    [
+        ("Pit Fighter", "High Pain Tolerance", 2),
+        ("Street Preacher", "High Pain Tolerance", 2),
+        ("Environmental Combat Specialist (By Type)", "High Pain Tolerance", 2),
+        ("Private Investigator/Detective", "In Debt", 5),
+    ],
+)
+def test_rated_quality_grants_apply_each_free_level_and_restore(name, quality_name, rating):
+    base = runner()
+    spec = module(name)
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]]))
+    assert not has(state.derived["errors"], "engine.life.unsupported")
+    rows = [q for q in state.derived["qualities"] if q["name"] == quality_name]
+    assert len(rows) == rating
+    assert all(q["free"] for q in rows)
+    assert state.quality_ids == []
+    if quality_name == "In Debt":
+        assert state.derived["nuyen"] - base.derived["nuyen"] == 25000
+    else:
+        assert state.derived["condition_monitor"]["threshold_offset"] == 2
+    assert compute(state).model_dump() == state.model_dump()
+    assert import_character(state.model_dump()).derived == state.derived
+    assert apply_patch(state, CharacterPatch(life_modules=[])).derived == base.derived
+
+
+def test_rated_quality_grants_reject_over_cap_and_manual_purchase_conflicts():
+    spec = module("Pit Fighter")
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"], spec["id"]]))
+    assert has(state.derived["errors"], "engine.life.ratingCap", name="High Pain Tolerance", rating=4, cap=3)
+    qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == "High Pain Tolerance")
+    base = apply_patch(runner(), CharacterPatch(quality_ids=[qid]))
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]]))
+    assert has(state.derived["errors"], "engine.life.ratedQualityConflict")
+    assert state.quality_ids == [qid]
+    assert apply_patch(state, CharacterPatch(life_modules=[])).derived == base.derived
+
+
+def test_skillgroup_extra_uses_catalog_choices_and_rejects_unknown_group():
+    spec = module("Isolated Rural Upbringing", "Teen Years")
+    grant = spec["quality_choice_grants"][0]
+    choice = next(c for c in spec["choices"] if c["key"] == grant["choice"])
+    assert choice["options"] == catalog()["skills"]["groups"]
+    valid = apply_patch(
+        runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices={f"0:{grant['choice']}": "Athletics"})
+    )
+    assert "Athletics" in valid.derived["disabled_skill_groups"]
+    state = apply_patch(
+        runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices={f"0:{grant['choice']}": "Not a group"})
+    )
+    assert has(state.derived["errors"], "engine.life.choice")
+    assert not any(q["id"] == grant["quality_id"] for q in state.derived["qualities"])
+
+
+def test_quality_id_reference_resolves_without_guessing_a_name():
+    spec = module("Snake Charmer")
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]]))
+    assert not spec["unsupported"]
+    assert any(
+        q["id"] == "f8f216b5-1c29-467d-9fb5-c9812408203d" and q["name"] == "Inspired" and q["free"]
+        for q in state.derived["qualities"]
+    )

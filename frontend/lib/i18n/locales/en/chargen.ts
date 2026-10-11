@@ -41,6 +41,8 @@ export const EN_CHARGEN = {
   "engine.life.specializationConflict":
     "The life module specialization for “{name}” conflicts with the existing selection",
   "engine.life.qualityUnknown": "Life module quality “{name}” was not found",
+  "engine.life.ratedQualityConflict":
+    "Combining module-granted levels of “{name}” with a manual purchase of the same quality is not yet supported.",
   "engine.life.qualityChoiceConflict":
     "The extra selection for life module quality “{name}” conflicts with an existing selection. Different selections for the same quality are not yet supported together.",
   "engine.life.qualityLevelUnknown":

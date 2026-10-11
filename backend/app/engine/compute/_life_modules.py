@@ -134,7 +134,11 @@ def prepare(ctx: Ctx) -> None:
             if quality is None:
                 ctx.err("engine.life.qualityUnknown", name=grant["quality_id"])
                 continue
-            options = quality.get("select_options") or []
+            options = (
+                ctx.data["skills"]["groups"]
+                if quality.get("extra_kind") == "skillgroup"
+                else quality.get("select_options") or []
+            )
             if not picked or (options and picked not in options):
                 ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
                 continue
@@ -188,6 +192,25 @@ def prepare(ctx: Ctx) -> None:
                 )
                 bought = max(bought, ctx.life["original"]["skill_groups"].get(paid_group_name, 0))
             target[name] = max(minimum, bought) + amount
+    rated_grants: dict[str, dict[str, Any]] = {}
+    for quality in quality_grants:
+        if "life_rating" in quality:
+            qid = quality["id"]
+            previous = rated_grants.get(qid, {}).get("life_rating", 0)
+            rated_grants[qid] = {**quality, "life_rating": previous + quality["life_rating"]}
+    quality_grants = [q for q in quality_grants if q["id"] not in rated_grants]
+    for qid, quality in rated_grants.items():
+        if qid in ctx.life["original"]["quality_ids"]:
+            ctx.err("engine.life.ratedQualityConflict", name=term(quality["name"]))
+        elif quality["life_rating"] > quality["max_takes"]:
+            ctx.err(
+                "engine.life.ratingCap",
+                name=term(quality["name"]),
+                rating=quality["life_rating"],
+                cap=quality["max_takes"],
+            )
+        else:
+            quality_grants.append(quality)
     ctx.life.update(
         bonuses=bonuses,
         rows=chosen,

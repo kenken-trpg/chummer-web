@@ -12,6 +12,7 @@ from .._xml import _int, _text, data_root
 from ..requirements import parse_requirement_tree
 from .qualities import load_qualities
 from .quality_levels import load_quality_levels
+from .skills import load_skills
 
 LEVELS = {
     "attributelevel": "attributes",
@@ -26,6 +27,8 @@ def load_life_modules() -> list[dict[str, Any]]:
     if root is None:
         return []
     qualities = {q["name"]: q for q in load_qualities(include_hidden=True)}
+    qualities_by_id = {q["id"]: q for q in qualities.values()}
+    skill_groups = load_skills()["groups"]
     quality_levels = load_quality_levels()
     rows: list[dict[str, Any]] = []
     for parent in root.findall("./modules/module"):
@@ -78,11 +81,28 @@ def load_life_modules() -> list[dict[str, Any]]:
                             issues.append("addqualities:level")
                         for el in node.findall("addquality"):
                             name = _text(el)
-                            spec = qualities.get(name)
+                            spec = qualities.get(name) or qualities_by_id.get(name)
+                            if spec:
+                                name = spec["name"]
+                            if spec and el.get("rating") is not None:
+                                try:
+                                    rating = int(el.get("rating", ""))
+                                except ValueError:
+                                    rating = 0
+                                if (
+                                    set(el.attrib) == {"rating"}
+                                    and spec.get("has_levels")
+                                    and not spec.get("needs_extra")
+                                    and 0 < rating <= int(spec.get("max_takes") or 0)
+                                ):
+                                    quality_grants.append({**spec, "life_rating": rating})
+                                else:
+                                    issues.append("addquality:" + name)
+                                continue
                             if (
                                 spec
                                 and spec.get("needs_extra")
-                                and spec.get("extra_kind") in {"text", "matrix_action"}
+                                and spec.get("extra_kind") in {"text", "matrix_action", "skillgroup"}
                                 and not (set(el.attrib) - {"select"})
                             ):
                                 key = f"q{len(quality_choice_grants)}"
@@ -93,7 +113,9 @@ def load_life_modules() -> list[dict[str, Any]]:
                                             "key": key,
                                             "kind": "qualities",
                                             "name": name,
-                                            "options": spec.get("select_options") or [],
+                                            "options": skill_groups
+                                            if spec.get("extra_kind") == "skillgroup"
+                                            else spec.get("select_options") or [],
                                         }
                                     )
                                 quality_choice_grants.append({"quality_id": spec["id"], "choice": key, "value": fixed})

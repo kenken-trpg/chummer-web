@@ -41,6 +41,8 @@ export const JA_CHARGEN = {
   "engine.life.specializationConflict":
     "経歴による「{name}」の専門化が、既存の選択と競合しています",
   "engine.life.qualityUnknown": "経歴が付与する品質「{name}」が見つかりません",
+  "engine.life.ratedQualityConflict":
+    "経歴による「{name}」のレベル付与と、同じ資質の手動取得の併用は未対応です。",
   "engine.life.qualityChoiceConflict":
     "経歴が付与する資質「{name}」の追加指定が、既存の指定と競合しています。同じ資質への異なる追加指定の併用は未対応です。",
   "engine.life.qualityLevelUnknown": "経歴が付与する品質レベルの品質「{name}」が見つかりません",
