@@ -44,9 +44,31 @@ DEPENDENCY_MANIFESTS = (
 )
 
 
+def shape_errors(name: str, text: str) -> list[str]:
+    """Why a fragment's own shape matters: `collect` pastes it in verbatim.
+
+    One branch wrote ten fragments as bare paragraphs, and each would have
+    landed in `### Added` as a paragraph sitting between that section's
+    bullets. The rule is the one `changelog.d/README.md` already states — a
+    `- ` bullet, continuation lines indented two spaces, several bullets in one
+    file are fine — so this only stops a fragment that was never going to
+    render as a list item. The bold lead-in the README calls "usually" is left
+    to the author.
+    """
+    lines = text.strip("\n").split("\n")
+    if not lines[0].startswith("- "):
+        return [f"{name}: starts with a paragraph; it has to be a `- ` bullet"]
+    return [
+        f"{name}: line {n} is neither a new `- ` bullet nor a two-space continuation"
+        for n, line in enumerate(lines[1:], start=2)
+        if line.strip() and not line.startswith(("- ", "  "))
+    ]
+
+
 def fragments() -> dict[str, list[Path]]:
     found: dict[str, list[Path]] = {t: [] for t in TYPES}
     bad = []
+    malformed: list[str] = []
     for path in sorted(FRAGMENTS.glob("*.md")):
         if path.name == "README.md":
             continue
@@ -55,8 +77,11 @@ def fragments() -> dict[str, list[Path]]:
             bad.append(path.name)
             continue
         found[kind].append(path)
+        malformed += shape_errors(path.name, path.read_text(encoding="utf-8"))
     if bad:
         sys.exit(f"unknown type in {', '.join(bad)} — use one of: {', '.join(t.lower() for t in TYPES)}")
+    if malformed:
+        sys.exit("\n".join(["", *malformed, "", "See changelog.d/README.md."]))
     return found
 
 
