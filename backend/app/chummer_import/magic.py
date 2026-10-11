@@ -55,7 +55,15 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         for sp in root.findall("./spells/spell")
         if (spell_ref := spell_r.resolve(sp, warn, ui("engine.kind.spell")))
     ]
-    power_r = _Resolver(cat["powers"])
+    power_r = _Resolver(
+        cat["powers"],
+        {
+            row["name"]: cat["translations_by_kind"]
+            .get("power", {})
+            .get(row["name"], cat["translations"].get(row["name"], ""))
+            for row in cat["powers"]
+        },
+    )
     powers = []
     for p in root.findall("./powers/power"):
         # Rating 0 is how Chummer keeps a power that only a mentor's free
@@ -219,17 +227,31 @@ def _import_initiation(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
         else:
             init_grade = max(init_grade, gnum)
             init_flags[gnum] = flags
-    picks = [
-        oid
-        for m in root.findall("./metamagics/metamagic")
-        for oid in [mm_r.resolve(m, [], ui("engine.kind.metamagic")) or art_r.resolve(m, [], ui("engine.kind.art"))]
-        if oid
-    ]
+    picks_by_grade: dict[int, tuple[str, str]] = {}
+    for index, m in enumerate(root.findall("./metamagics/metamagic"), start=1):
+        saved_id = _text(m.find("sourceid")) or _text(m.find("id"))
+        kind = "art" if saved_id in art_r.ids else "metamagic"
+        resolver = art_r if kind == "art" else mm_r
+        oid = resolver.resolve(m, [], ui("engine.kind.metamagic"))
+        if oid:
+            grade = _int(m.find("grade"), index)
+            picks_by_grade[grade] = (kind, oid)
+    arts_by_grade: dict[int, list[str]] = {}
+    for node in root.findall("./arts/art"):
+        aid = art_r.resolve(node, warn, ui("engine.kind.art"))
+        grade = _int(node.find("grade"))
+        if aid and 1 <= grade <= init_grade:
+            arts_by_grade.setdefault(grade, []).append(aid)
     inits: list[dict[str, Any]] = []
     for grade in range(1, init_grade + 1):
         row: dict[str, Any] = {"id": str(uuid.uuid4()), "grade": grade, "kind": "metamagic", "option_id": ""}
-        if grade <= len(picks):
-            row["option_id"] = picks[grade - 1]
+        if grade in picks_by_grade:
+            row["kind"], row["option_id"] = picks_by_grade[grade]
+        row["art_ids"] = arts_by_grade.get(grade, [])
+        if not row["option_id"] and row["art_ids"]:
+            row["kind"] = "art"
+            row["option_id"] = row["art_ids"][0]
+            row["art_ids"] = row["art_ids"][1:]
         row.update(init_flags.get(grade, {}))
         inits.append(row)
     subs = [
@@ -254,7 +276,15 @@ def _import_foci(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     qi_spec = cat.get("qi_focus") or {}
     qi_id = str(qi_spec.get("id") or "")
     focus_r = _Resolver(cat.get("foci") or [])
-    power_r = _Resolver(cat["powers"])
+    power_r = _Resolver(
+        cat["powers"],
+        {
+            row["name"]: cat["translations_by_kind"]
+            .get("power", {})
+            .get(row["name"], cat["translations"].get(row["name"], ""))
+            for row in cat["powers"]
+        },
+    )
     gear_by_id = {guid: g for g in root.findall("./gears/gear") if (guid := _text(g.find("guid")))}
     # Weapon foci point at a weapon row by name: ids are regenerated on import.
     weapon_ids: dict[str, str] = {}

@@ -140,16 +140,34 @@ def _unexpected_children(parent_id: str, nodes: list[ET.Element]) -> list[ET.Ele
 class _Resolver:
     """name / sourceid -> catalog id for one bucket."""
 
-    def __init__(self, rows: list[dict[str, Any]]):
+    def __init__(self, rows: list[dict[str, Any]], translations: dict[str, str] | None = None):
         self.by_name = _by_name(rows)
         self.ids = {r["id"] for r in rows}
+        # Localized Chummer saves often store the translated display name.
+        # Only add aliases that identify one catalog row; ambiguous Japanese
+        # names must not silently resolve to an arbitrary entry.
+        alias_candidates: dict[str, set[str]] = {}
+        for row in rows:
+            translated = (translations or {}).get(str(row.get("name", "")))
+            if translated and row.get("id"):
+                alias_candidates.setdefault(translated.strip().lower(), set()).add(str(row["id"]))
+        self.by_localized_name = {name: next(iter(ids)) for name, ids in alias_candidates.items() if len(ids) == 1}
 
     def resolve(self, node: ET.Element, warn: list[Notice], kind: Phrase) -> str | None:
-        sid = _text(node.find("sourceid")) or _text(node.find("guid"))
-        if sid and sid in self.ids:
-            return sid
+        for tag in ("sourceid", "id", "guid"):
+            sid = _text(node.find(tag))
+            if sid in self.ids:
+                return sid
         name = _text(node.find("name"))
         got = self.by_name.get(name.lower())
+        if not got:
+            got = self.by_localized_name.get(name.lower())
+        # Chummer sometimes includes the selected sub-option in the localized
+        # display name, e.g. "感覚強化 (暗視強化)". The option itself is kept
+        # separately in <extra>; resolve the translated catalog name prefix.
+        if not got and " (" in name:
+            base = name.split(" (", 1)[0].strip().lower()
+            got = self.by_name.get(base) or self.by_localized_name.get(base)
         if got:
             return got
         if name and not _chummer_added(node):

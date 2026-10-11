@@ -305,10 +305,12 @@ class UnimplementedRow(TypedDict):
 
 
 class AttributeSelectRow(TypedDict):
-    """``attribute_selects`` — a ``<selectattributes>`` pick slot (``exclude``
-    lists attributes already spoken for)."""
+    """One ordered attribute choice: allowed/excluded attributes, rating and max modifiers."""
 
     exclude: list[str]
+    options: list[str]
+    val: int
+    index: int
     max: int
     source: str
 

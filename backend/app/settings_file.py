@@ -165,6 +165,7 @@ _HANDLED_ELSEWHERE = {
 
 #: `<tag>` -> `SettingsState` field, for the `True` / `False` knobs.
 _BOOL_FIELDS: dict[str, str] = {
+    "ignoreart": "ignore_art",
     "exceednegativequalities": "exceed_negative_qualities",
     "exceednegativequalitiesnobonus": "exceed_negative_qualities_no_bonus",
     "exceedpositivequalities": "exceed_positive_qualities",

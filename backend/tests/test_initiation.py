@@ -217,11 +217,11 @@ def test_a_mystic_adept_passes_both_gates() -> None:
 
 
 def test_an_unmet_requirement_warns_but_keeps_the_metamagic() -> None:
-    # Masking requires the Adept quality. A plain Magician is told so, and
+    # Masking requires its Art or an adept quality. A plain Magician is told so, and
     # keeps it: the prerequisite may be met later, and silently deleting a
     # paid-for metamagic on the way past is the worse failure.
     out = compute(_initiate("Magician", "masking", [InitiationChoice(grade=1, kind="metamagic", option_id=MASKING)]))
-    assert _warns(out, "engine.initiation.requires", name="Masking")
+    assert _warns(out, "engine.initiation.requiresArtOrQuality", name="Masking")
     assert _meta_names(out) == ["Masking"]
     assert out.initiations[0].option_id == MASKING
 

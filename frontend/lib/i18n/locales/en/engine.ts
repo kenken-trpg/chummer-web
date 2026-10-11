@@ -254,6 +254,9 @@ export const EN_ENGINE = {
   "engine.initiation.pickOption": "Choose an art or metamagic for initiate grade {grade}",
   "engine.initiation.requires": "{name} requires {needed}",
 
+  "engine.initiation.requiresArt": "{name} requires the art: {arts}",
+  "engine.initiation.requiresArtOrQuality":
+    "{name} requires an art ({arts}) or one of these qualities: {qualities}",
   "engine.initiation.requiresUnmet": "{name}: prerequisites not met",
   "engine.submersion.echoUnknown": "{source}: no such echo {name}",
   "engine.submersion.echoUnknownDropped": "Dropped an unknown echo from grade {grade}",

@@ -523,3 +523,61 @@ describe("<QualityExtraEditor> what each control writes", () => {
     expect(patch).toHaveBeenCalledWith({ quality_extras: { q1: "Elf" } });
   });
 });
+
+describe("infected attribute choices", () => {
+  it("restores and independently saves four choices restricted to their attribute groups", () => {
+    const q = { id: "vampire", name: "Vampire", extra_kind: "attribute" };
+    const slot = (options: string[]) => ({ options, exclude: [] });
+    const spec = {
+      ...q,
+      attribute_choices: [
+        slot(["BOD", "REA", "STR"]),
+        slot(["BOD", "REA", "STR"]),
+        slot(["WIL", "INT", "CHA"]),
+        slot(["WIL", "INT", "CHA"]),
+      ],
+    };
+    const ch = makeCharacter({
+      quality_extras: {
+        vampire: "BOD",
+        "vampire:attribute:1": "REA",
+        "vampire:attribute:2": "WIL",
+      },
+    });
+    const patch = vi.fn();
+    render(
+      <QualityExtraEditor
+        q={q}
+        ch={ch}
+        d={ch.derived}
+        tr={identityTr}
+        trGroup={identityTr}
+        t={(k) => k}
+        ui={testUi}
+        patch={patch}
+        setCharacter={vi.fn()}
+        catalog={makeCatalog()}
+        catalogById={new Map([[q.id, spec as never]])}
+      />,
+    );
+    const selects = screen.getAllByRole("combobox") as HTMLSelectElement[];
+    expect(selects).toHaveLength(4);
+    expect(selects.map((select) => select.value)).toEqual(["BOD", "REA", "WIL", ""]);
+    expect(Array.from(selects[0].options).map((option) => option.value)).toEqual([
+      "",
+      "BOD",
+      "REA",
+      "STR",
+    ]);
+    expect(Array.from(selects[3].options).map((option) => option.value)).toEqual([
+      "",
+      "WIL",
+      "INT",
+      "CHA",
+    ]);
+    fireEvent.change(selects[3], { target: { value: "CHA" } });
+    expect(patch).toHaveBeenCalledWith({
+      quality_extras: { ...ch.quality_extras, "vampire:attribute:3": "CHA" },
+    });
+  });
+});
