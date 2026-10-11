@@ -1,4 +1,10 @@
 // @vitest-environment jsdom
+//
+// jsdom, not the happy-dom the rest of the suite runs in: this file checks the
+// exported `data.xml` by parsing it, and happy-dom's `DOMParser` rejects
+// `text/xml` that jsdom and the browsers accept. A weaker parser here would
+// turn the one assertion that matters — the table can read what we wrote —
+// into noise.
 // The escaping test parses the result back with DOMParser, which is the same
 // parser Udonarium reads the file with.
 import {

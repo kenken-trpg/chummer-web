@@ -11,28 +11,46 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: "jsdom",
+    // happy-dom, not jsdom. Both are a DOM in a Node process; the difference
+    // the suite feels is start-up, and start-up was half of every run — 120
+    // files, a fresh environment each, and nothing else about the run got
+    // cheaper by being isolated. Measured on this suite: 35s -> 14s, with the
+    // same 1303 tests passing.
+    //
+    // What it costs is fidelity at the edges, and the two the swap actually hit
+    // are worth knowing: happy-dom ships no `confirm`/`prompt`/`print` (see
+    // `tests/setup.ts`), and it resolves `display` well enough to put a space
+    // between a button's inline children where jsdom ran them together, so an
+    // accessible name can differ by whitespace. Anything that needs real layout
+    // or real browser behaviour was never in reach of either — that is what the
+    // Playwright suite in `e2e/` is for.
+    environment: "happy-dom",
     // `e2e/` is Playwright's (`*.spec.ts`); vitest must not try to run it
     exclude: ["node_modules", ".next", "e2e"],
-    // jsdom env spin-up + the render-heavy tab tests can blow past the 5s
+    // DOM env spin-up + the render-heavy tab tests can blow past the 5s
     // default when the machine / CI runner is under load.
     testTimeout: 15000,
     // Workers as threads, not the default child processes. The suite needs
     // nothing a process gives that a thread does not — no test changes
     // `process.env` for its neighbours, none calls `process.chdir`, and the
-    // one global that does get written (`localStorage`) belongs to the jsdom
+    // one global that does get written (`localStorage`) belongs to the DOM
     // environment each file gets either way. What forks cost is a Node start per
     // worker, and that is what this saves: ~10% here, and more on
     // `frontend-windows`, where spawning a process is dearest and the job is
     // the critical path of a pull request.
     pool: "threads",
-    // Most of a run used to be jsdom starting up, for every file — including
+    // Most of a run used to be the DOM starting up, for every file — including
     // the `.ts` ones, which mostly render nothing. Those run in plain node; a
     // `.ts` test that does need a DOM says so with a `@vitest-environment
-    // jsdom` comment at the top of the file.
+    // happy-dom` comment at the top of the file.
     projects: [
       { extends: true, test: { name: "node", environment: "node", include: ["**/*.test.ts"] } },
-      { extends: true, test: { name: "dom", include: ["**/*.test.tsx"] } },
+      // `setupFiles` is the dom project's alone: it patches `window`, which the
+      // node project does not have.
+      {
+        extends: true,
+        test: { name: "dom", include: ["**/*.test.tsx"], setupFiles: ["./tests/setup.ts"] },
+      },
     ],
 
     coverage: {
