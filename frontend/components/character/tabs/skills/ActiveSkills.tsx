@@ -96,6 +96,9 @@ export function ActiveSkills(props: TabPanelProps) {
       ...skillHintLines(name, attribute, category).map((label) => ({ label })),
       { label: ui("help.skill.pool") },
       { label: ui("help.skill.spec") },
+      // only where there is one: an expertise is career-only and rare, so the
+      // line would be noise on the other forty rows
+      ...(expertiseBySkill.has(name) ? [{ label: ui("help.skill.expertise") }] : []),
       { label: ui("help.skill.default") },
       { label: ui("help.skill.cap") },
     ];
