@@ -137,7 +137,8 @@ line is disk.
 
 `chummer_import/` (`chum5_to_state`) resolves a Chummer5a `.chum5` / `.chum5lz`
 by `sourceid` then name; unknown entries become warnings, never errors.
-`chummer_export.py` (`state_to_chum5`) writes it back. The pair is a fixed
+`chummer_export/` (`state_to_chum5`) writes it back, module for module against
+the import side (`identity` / `build` / `skills` / `gear` / `magic` / …). The pair is a fixed
 point on a **computed** state — `tests/test_chummer_roundtrip.py` builds
 Chummer-shaped XML from the live catalog and pins
 `xml → state → compute → xml → state → compute`, asserting the second
