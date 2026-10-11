@@ -9,7 +9,7 @@ export const JA_CHARGEN = {
   "life.kind.knowledge_skills": "知識技能",
   "life.kind.knowledge_categories": "知識カテゴリ",
   "life.kind.specializations": "専門化",
-  "life.kind.qualities": "品質",
+  "life.kind.qualities": "資質",
 
   "life.experimental":
     "試験対応です。未対応の効果を持つ経歴は選択できません。保存とバックアップには JSON を使ってください。ライフモジュールの .chum5 入出力は未対応です。",
@@ -21,7 +21,7 @@ export const JA_CHARGEN = {
     "人生の各段階から経歴を選びます。追加教育と実生活は複数選択できます。能力値・技能タブの入力値は手動購入分で、経歴の付与分は計算結果に加算されます。",
   "life.total": "経歴の消費カルマ: {karma}",
   "life.nuyen": "経歴による追加資金: {amount}¥",
-  "life.freeQuality": "品質の無料ポイント: ポジティブ {positive} / ネガティブ {negative}",
+  "life.freeQuality": "資質の無料ポイント: ポジティブ {positive} / ネガティブ {negative}",
   "life.pick": "経歴を選択",
   "life.requires": "前提条件: {requirements}",
   "life.requirementUnmet": "前提条件を満たしていません",
@@ -42,12 +42,12 @@ export const JA_CHARGEN = {
   "engine.life.choice": "経歴「{name}」の選択項目を指定してください（{slot}）",
   "engine.life.specializationConflict":
     "経歴による「{name}」の専門化が、既存の選択と競合しています",
-  "engine.life.qualityUnknown": "経歴が付与する品質「{name}」が見つかりません",
+  "engine.life.qualityUnknown": "経歴が付与する資質「{name}」が見つかりません",
   "engine.life.ratedQualityConflict":
     "経歴による「{name}」のレベル付与と、同じ資質の手動取得の併用は未対応です。",
   "engine.life.qualityChoiceConflict":
     "経歴が付与する資質「{name}」の追加指定が、既存の指定と競合しています。同じ資質への異なる追加指定の併用は未対応です。",
-  "engine.life.qualityLevelUnknown": "経歴が付与する品質レベルの品質「{name}」が見つかりません",
+  "engine.life.qualityLevelUnknown": "経歴が付与する資質レベルの資質「{name}」が見つかりません",
   "engine.life.requirement": "経歴「{name}」の前提条件を満たしていません",
 
   "meta.booksHidden":
