@@ -46,7 +46,10 @@ export default function SharePage() {
         if (!value) throw new ShareError("empty");
         const payload = await decodeShare(value);
         // the stateless service validates the payload and returns `derived`
-        const [catalog, character] = await Promise.all([api.catalog(), api.preview(payload)]);
+        const character = await api.preview(payload);
+        if (!live) return;
+        // Use the validated character's dataset for display as well as compute.
+        const catalog = await api.catalog(character.settings);
         if (live) setState({ catalog, character });
       } catch (e) {
         if (live) onLoadError(e);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 
 /**
  * A range slider that says where its stops are.
@@ -40,6 +40,12 @@ export function RangeInput({
   floor?: number;
 }) {
   const id = useId();
+  const pending = useRef(false);
+  function commit(value: number) {
+    if (!pending.current) return;
+    pending.current = false;
+    onCommit(value);
+  }
   const lo = Math.min(min, max);
   const hi = Math.max(min, max);
   const span = hi - lo;
@@ -65,11 +71,14 @@ export function RangeInput({
         disabled={disabled}
         aria-label={label}
         title={title}
-        onChange={(e) => onDraft(Number(e.target.value))}
-        onMouseUp={(e) => onCommit(Number((e.target as HTMLInputElement).value))}
-        onTouchEnd={(e) => onCommit(Number((e.target as HTMLInputElement).value))}
-        onKeyUp={(e) => onCommit(Number((e.target as HTMLInputElement).value))}
-        onBlur={(e) => onCommit(Number(e.target.value))}
+        onChange={(e) => {
+          pending.current = true;
+          onDraft(Number(e.target.value));
+        }}
+        onMouseUp={(e) => commit(Number((e.target as HTMLInputElement).value))}
+        onTouchEnd={(e) => commit(Number((e.target as HTMLInputElement).value))}
+        onKeyUp={(e) => commit(Number((e.target as HTMLInputElement).value))}
+        onBlur={(e) => commit(Number(e.target.value))}
       />
       <div className="range-scale" aria-hidden="true">
         {stops.map((v) => {

@@ -1,6 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { fireEvent } from "@testing-library/dom";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { RangeInput } from "@/components/character/RangeInput";
 
 function setup(props: Partial<Parameters<typeof RangeInput>[0]> = {}) {
@@ -72,4 +71,36 @@ it("shows a value stranded outside the range at the nearest end", () => {
   );
   expect(screen.getByRole("slider").getAttribute("value")).toBe("5");
   expect(container.querySelector(".range-tick.here")?.textContent).toBe("5");
+});
+
+it.each(["keyUp", "mouseUp", "touchEnd"] as const)(
+  "does not commit again on blur after %s",
+  (release) => {
+    const { onCommit } = setup();
+    const slider = screen.getByRole("slider");
+    fireEvent.change(slider, { target: { value: "4" } });
+    fireEvent[release](slider, { target: { value: "4" } });
+    fireEvent.blur(slider);
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith(4);
+  },
+);
+
+it("commits a pending draft on blur and accepts a later change", () => {
+  const { onCommit } = setup();
+  const slider = screen.getByRole("slider");
+  fireEvent.change(slider, { target: { value: "3" } });
+  fireEvent.blur(slider, { target: { value: "3" } });
+  fireEvent.change(slider, { target: { value: "5" } });
+  fireEvent.keyUp(slider, { target: { value: "5" } });
+  expect(onCommit.mock.calls).toEqual([[3], [5]]);
+});
+
+it("does not add history for focus or release without a change", () => {
+  const { onCommit } = setup();
+  const slider = screen.getByRole("slider");
+  fireEvent.focus(slider);
+  fireEvent.keyUp(slider);
+  fireEvent.mouseUp(slider);
+  fireEvent.blur(slider);
+  expect(onCommit).not.toHaveBeenCalled();
 });
