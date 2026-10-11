@@ -269,6 +269,8 @@ export const JA_APP = {
     "このキャラクターのカスタムデータがサーバー側にありません。customdata フォルダを読み込み直してください。",
   "api.customDataTooLarge": "カスタムデータが大きすぎます。",
   "api.customDataEmpty": "カスタムデータのファイルが 1 つも見つかりませんでした。",
+  "api.critterNotSupported":
+    "このファイルはクリッター「{name}」です。クリッターは Chummer の critters.xml から作られ、このアプリはそのデータを読み込まないため扱えません（カスタムデータを足しても変わりません）。",
   "api.importJsonFailed": "この JSON を取り込めませんでした。",
   "api.notACharacterFile":
     "Chummer のキャラクターファイルではないようです（<character> が見つかりません）",

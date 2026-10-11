@@ -263,6 +263,8 @@ export const EN_APP = {
     "This character's custom data is not loaded on the server. Please load the customdata folder again.",
   "api.customDataTooLarge": "That custom data is too large.",
   "api.customDataEmpty": "No custom-data files were found.",
+  "api.critterNotSupported":
+    "This file is the critter “{name}”. Critters are built from Chummer’s critters.xml, which this app does not load, so it cannot be opened here (no custom data would change that).",
   "api.importJsonFailed": "This JSON could not be imported.",
   "api.notACharacterFile":
     "This does not look like a Chummer character file (no <character> element).",

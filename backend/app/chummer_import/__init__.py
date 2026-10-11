@@ -21,8 +21,8 @@ import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any, cast
 
-from ..data_loader import catalog
-from ..data_loader._xml import parse_untrusted
+from ..data_loader import CatalogDict, catalog
+from ..data_loader._xml import _text, parse_untrusted
 from ..models._common import clamp_input_ints
 from ..notices import Notice, NoticeError, notice
 from .balance import _import_balance
@@ -62,6 +62,7 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
         raise NoticeError(notice("api.notACharacterFile"))
 
     cat = catalog()
+    _refuse_critters(root, cat)
     warn: list[Notice] = []
     st: dict[str, Any] = {"id": str(uuid.uuid4())}
 
@@ -82,6 +83,28 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     # balance; the models refuse one past the cap, so hold them here.
     st = cast(dict[str, Any], clamp_input_ints(st))
     return st, st["_warnings"]
+
+
+def _refuse_critters(root: ET.Element, cat: CatalogDict) -> None:
+    """Say so plainly when the file is a critter rather than a runner.
+
+    Chummer builds critters from `critters.xml`, which this app does not load —
+    so a spirit or a drake arrived as "the metatype X is not in this app's
+    data (it may come from custom data)", which names the wrong culprit: the
+    file is fine and no custom data would help.
+
+    `<critter>` alone is not the test. A Shapeshifter is saved with the flag
+    set and is an ordinary playable metatype (`Mittens Chargen.chum5` in the
+    Chummer test files is one), so refusing on the flag would turn a character
+    that imports today into an error. It takes both: the flag, and a metatype
+    this app has never heard of.
+    """
+    if _text(root.find("critter")).strip().lower() != "true":
+        return
+    name = _text(root.find("metatype")) or "Human"
+    if name in cat["all_metatypes"]:
+        return
+    raise NoticeError(notice("api.critterNotSupported", name=name))
 
 
 #: Applied in order. Order matters only where a later section reads what an
