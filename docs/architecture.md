@@ -168,6 +168,14 @@ loop-invariant, across a street samurai / mage / technomancer / career
   (+ `<CharacterSheet>` for `tab==="sheet"`), and the sheet portrait/bio editor.
 - `components/character/tabs/*` — one file per tab; gear sub-tabs under
   `tabs/gear/`. Tabs are presentational: they read `d.*` and call `patch({...})`.
+  Only the chargen path (`priority` → `meta` → `attrs` → `skills` →
+  `qualities`, plus `contacts` / `bio` / `check`) is statically imported; the
+  heavy tabs (`gear`, `cyber`), everything behind `enabled_tabs` (the magic and
+  resonance panels) and `<CharacterSheet>` arrive through `next/dynamic` when
+  the tab is opened. One tab is on screen at a time, so shipping all of them to
+  draw one was 31 KiB of gzipped JS nobody had asked for; the trade is a
+  「読み込み中…」 on first open of a split tab. `TabPanels.tsx`'s header says
+  which side each tab is on and why.
   `QualitiesTab` delegates the per-quality "extra pick" editor to
   `tabs/qualities/QualityExtraEditor.tsx`.
 - `components/character/CharacterSidebar.tsx` — a shell over nine
