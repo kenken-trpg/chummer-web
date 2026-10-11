@@ -6,11 +6,16 @@ not saves produced by running the Chummer GUI.
 
 import xml.etree.ElementTree as ET
 
+import pytest
+
+from app.characters import apply_patch, import_character
 from app.chummer_export import state_to_chum5
+from app.chummer_export.check import roundtrip_differences
 from app.chummer_import import chum5_to_state
 from app.data_loader import catalog
 from app.engine import compute
-from app.models import CharacterState, WeaponInstall
+from app.models import CharacterPatch, CharacterState, RewardEntry, WeaponInstall
+from tests.notice_asserts import has
 from tests.test_centaur_data import KICK_SELECT, NATURAL_WEAPON_ID, QUALITY_IDS, SEARCH_ID
 from tests.test_centaur_grants import _centaur
 
@@ -75,3 +80,36 @@ def test_chum5_keeps_purchased_overlap_and_purchased_weapons_separate() -> None:
     assert [w.weapon_id for w in loaded.weapons] == [pistol]
     assert len(loaded.derived["qualities"]) == 4
     assert len(loaded.derived["weapons"]) == 2
+
+
+@pytest.mark.parametrize("method", ["Priority", "SumToTen"])
+def test_career_chum5_keeps_native_magic_grants_balance_and_future_growth(method: str) -> None:
+    state = compute(_centaur(build_method=method))
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "MAG": 3}))
+    state = apply_patch(state, CharacterPatch(career=True))
+    state = apply_patch(state, CharacterPatch(reward_log=[RewardEntry(label="Run", karma=100)]))
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "MAG": 4, "STR": 4}))
+    assert state.derived["career_advancement_karma"] == 40
+    balance = state.derived["karma"]["remaining"]
+    before = state.model_dump_json()
+    assert has(roundtrip_differences(state), "engine.export.chum5CareerBaseline", amount=40)
+    assert state.model_dump_json() == before
+    for _ in range(3):
+        raw, warnings = chum5_to_state(state_to_chum5(state))
+        assert not warnings
+        state = import_character(raw)
+        assert state.career_baseline is not None
+        assert state.career_baseline.attributes["MAG"] == state.career_baseline.attributes["STR"] == 4
+        assert state.derived["totals"]["MAG"] == state.derived["totals"]["STR"] == 4
+        assert state.derived["career_advancement_karma"] == 0
+        assert state.karma_adjust == -40
+        assert state.derived["karma"]["remaining"] == balance
+        assert state.derived["karma_earned"] == 100
+        assert len(state.derived["qualities"]) == 4
+        assert len(state.derived["metatype_info"]["powers"]) == 2
+        assert state.derived["weapons"][0]["damage"] == "6P"
+        assert state.quality_ids == [] and state.weapons == []
+        assert not has(roundtrip_differences(state), "engine.export.chum5CareerBaseline")
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "MAG": 5}))
+    assert state.derived["career_advancement_karma"] == 25
+    assert state.derived["karma"]["remaining"] == balance - 25

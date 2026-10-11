@@ -56,6 +56,21 @@ describe("<ExportReview>", () => {
 
   const pendingRow = { name: "VI・スチームパンク", qty: 1, rating: 0, note: "", suggestions: [] };
 
+  it("explains how chum5 reimport carries past advancement in the balance", () => {
+    render(
+      <ExportReview
+        ed={makeEd({
+          exportReviewFormat: "chum5",
+          exportReview: [{ key: "engine.export.chum5CareerBaseline", params: { amount: 40 } }],
+        })}
+      />,
+    );
+    const text = screen.getByRole("alertdialog").textContent;
+    expect(text).toContain("成長費用40Kは残高調整へ移り");
+    expect(text).toContain("残りカルマは保持");
+    expect(text).toContain("再読込時の能力値・技能を基準");
+  });
+
   it("shows XLSX innate grant losses with the fixed selection and reference", () => {
     render(
       <ExportReview

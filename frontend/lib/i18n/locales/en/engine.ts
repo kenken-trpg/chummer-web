@@ -447,6 +447,8 @@ export const EN_ENGINE = {
   "engine.kind.knowledgeSkill": "knowledge skill",
   "engine.kind.other": "other field",
   "engine.export.lost": "{count} {kind} entries are lost",
+  "engine.export.chum5CareerBaseline":
+    "When the .chum5 is read back, the previous {amount}K advancement cost becomes a balance adjustment, keeping the remaining karma. Future advancement is priced from the ratings at import",
   "engine.export.fvttInnatePower":
     "Innate power {name} {selection} ({source} p.{page}) is not included in the Foundry JSON. Add it separately in Foundry",
   "engine.export.gained": "{count} extra {kind} entries appear",

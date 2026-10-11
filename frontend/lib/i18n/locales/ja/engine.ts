@@ -444,6 +444,8 @@ export const JA_ENGINE = {
   "engine.kind.knowledgeSkill": "知識技能",
   "engine.kind.other": "その他の項目",
   "engine.export.lost": "{kind}が {count} 件失われます",
+  "engine.export.chum5CareerBaseline":
+    ".chum5を再読込すると、これまでの成長費用{amount}Kは残高調整へ移り、残りカルマは保持されます。以後の成長は再読込時の能力値・技能を基準に計算します",
   "engine.export.fvttInnatePower":
     "生得パワー「{name}」 {selection}（{source} p.{page}）はFoundry向けJSONに含まれません。Foundryで別途追加してください",
   "engine.export.gained": "{kind}が {count} 件増えます",

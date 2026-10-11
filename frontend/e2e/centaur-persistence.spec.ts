@@ -252,3 +252,87 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   expect(imported.derived.weapons).toEqual([]);
   expect(imported.derived.metatype_info.powers ?? []).toEqual([]);
 });
+
+test("Centaur career chum5 reimport preserves balance and prices only subsequent growth", async ({
+  page,
+}) => {
+  const career = {
+    ...payload,
+    career: true,
+    attributes: { ...payload.attributes, MAG: 4, STR: 4 },
+    career_baseline: {
+      attributes: payload.attributes,
+      quality_ids: [],
+      item_ids: [],
+      mystic_pp: 0,
+    },
+    reward_log: [{ label: "Run", karma: 100, nuyen: 0 }],
+  };
+  await page.goto(`/share#c=${encodeFragment({ v: 1, s: career })}`);
+  await page.getByRole("button", { name: "自分のロースターに取り込む" }).click();
+  await waitForEditor(page);
+  await expect
+    .poll(async () => (await currentCharacter(page)).derived.career_advancement_karma)
+    .toBe(40);
+  const balance = (await currentCharacter(page)).derived.karma.remaining;
+
+  async function expectImported(magic: number, adjustment: number, remaining: number) {
+    await expect
+      .poll(async () => {
+        const ch = await currentCharacter(page);
+        return {
+          grants: summary(ch),
+          career: ch.career,
+          baselineMAG: ch.career_baseline?.attributes?.MAG,
+          baselineSTR: ch.career_baseline?.attributes?.STR,
+          adjustment: ch.karma_adjust,
+          advancement: ch.derived.career_advancement_karma,
+          earned: ch.derived.karma_earned,
+          remaining: ch.derived.karma.remaining,
+        };
+      })
+      .toEqual({
+        grants: { ...expected(4), magic, specialUsed: magic - 1 },
+        career: true,
+        baselineMAG: magic,
+        baselineSTR: 4,
+        adjustment,
+        advancement: 0,
+        earned: 100,
+        remaining,
+      });
+  }
+
+  for (const [magic, growth, adjustment] of [
+    [4, 40, -40],
+    [5, 25, -65],
+  ]) {
+    const sourceId = (await currentCharacter(page)).id;
+    await page.getByRole("button", { name: ".chum5書出" }).click();
+    const review = page.getByRole("alertdialog");
+    await expect(review).toContainText(`成長費用${growth}Kは残高調整へ移り`);
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      review.getByRole("button", { name: "このまま書き出す" }).click(),
+    ]);
+    const path = test.info().outputPath(`centaur-career-${magic}.chum5`);
+    await download.saveAs(path);
+    await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles(path);
+    await expect.poll(async () => (await currentCharacter(page)).id).not.toBe(sourceId);
+    await expectImported(magic, adjustment, balance - (magic === 5 ? 25 : 0));
+    await page.reload();
+    await waitForEditor(page);
+    await expectImported(magic, adjustment, balance - (magic === 5 ? 25 : 0));
+    if (magic === 4) {
+      await page.getByRole("button", { name: "能力値", exact: true }).click();
+      await page.getByRole("slider", { name: /^MAG / }).focus();
+      await page.keyboard.press("ArrowRight");
+      await expect
+        .poll(async () => (await currentCharacter(page)).derived.career_advancement_karma)
+        .toBe(25);
+      await expect
+        .poll(async () => (await currentCharacter(page)).derived.karma.remaining)
+        .toBe(balance - 25);
+    }
+  }
+});
