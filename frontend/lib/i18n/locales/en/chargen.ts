@@ -38,9 +38,13 @@ export const EN_CHARGEN = {
   "engine.life.duplicateStage": "Duplicate life stage: {stage}",
   "engine.life.missingStage": "Choose a module for life stage: {stage}",
   "engine.life.choice": "Complete a choice in life module “{name}” ({slot})",
-  "engine.life.specializationConflict": "The life module specialization for “{name}” conflicts with the existing selection",
+  "engine.life.specializationConflict":
+    "The life module specialization for “{name}” conflicts with the existing selection",
   "engine.life.qualityUnknown": "Life module quality “{name}” was not found",
-  "engine.life.qualityLevelUnknown": "Quality “{name}” for a life module quality level was not found",
+  "engine.life.qualityChoiceConflict":
+    "The extra selection for life module quality “{name}” conflicts with an existing selection. Different selections for the same quality are not yet supported together.",
+  "engine.life.qualityLevelUnknown":
+    "Quality “{name}” for a life module quality level was not found",
   "engine.life.requirement": "The requirements for life module “{name}” are not met",
 
   "meta.booksHidden":

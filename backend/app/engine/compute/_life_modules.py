@@ -8,12 +8,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any
+from uuid import NAMESPACE_URL, uuid5
 
 from ...models import CharacterState, ContactInstall
 from ...notices import term, ui
 from ...rules import current_rules
-from ..priority import resolve_talent_for_method
 from ..karma import attribute_levels_karma_cost, knowledge_excess_karma, skill_levels_karma_cost
+from ..priority import resolve_talent_for_method
 from .context import Ctx
 
 STAGES = ("Nationality", "Formative Years", "Teen Years", "Further Education", "Real Life")
@@ -68,8 +69,7 @@ def prepare(ctx: Ctx) -> None:
         groups = ctx.data.get("quality_levels") or {}
         quality_by_name = {str(q["name"]): q for q in ctx.data["qualities"]}
         names_by_group = {
-            group: {name: level for level, name in groups.get(group, {}).items()}
-            for group in levels_by_group
+            group: {name: level for level, name in groups.get(group, {}).items()} for group in levels_by_group
         }
         # Existing picks in a quality-level group participate in the same
         # highest-level resolution as Life Module grants.
@@ -85,10 +85,7 @@ def prepare(ctx: Ctx) -> None:
         ctx.state.quality_ids = [
             quality_id
             for quality_id in (ctx.state.quality_ids or [])
-            if not any(
-                q["id"] == quality_id and q["name"] in grouped_names
-                for q in ctx.data["qualities"]
-            )
+            if not any(q["id"] == quality_id and q["name"] in grouped_names for q in ctx.data["qualities"])
         ]
         for group, level in levels_by_group.items():
             quality_name = groups[group].get(level)
@@ -130,6 +127,23 @@ def prepare(ctx: Ctx) -> None:
             if kind == "knowledge_skills":
                 ctx.state.knowledge_categories[name] = grant["category"]
         quality_grants.extend(row["quality_grants"])
+        for grant in row.get("quality_choice_grants", []):
+            key = f"{index}:{grant['choice']}"
+            picked = (grant["value"] or ctx.state.life_module_choices.get(key, "")).strip()
+            quality = next((q for q in ctx.data["qualities"] if q["id"] == grant["quality_id"]), None)
+            if quality is None:
+                ctx.err("engine.life.qualityUnknown", name=grant["quality_id"])
+                continue
+            options = quality.get("select_options") or []
+            if not picked or (options and picked not in options):
+                ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+                continue
+            existing = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
+            if existing and existing != picked:
+                ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
+                continue
+            ctx.state.quality_extras[quality["id"]] = picked
+            quality_grants.append(quality)
         for grant in row.get("specialization_grants", []):
             skill, spec = grant["skill"], grant["spec"]
             existing = ctx.state.skill_specializations.get(skill)
@@ -138,13 +152,23 @@ def prepare(ctx: Ctx) -> None:
                 continue
             ctx.state.skill_specializations[skill] = spec
             specialization_grants.add((skill, spec))
-        for grant in row.get("contact_grants", []):
+        for contact_index, grant in enumerate(row.get("contact_grants", [])):
+            connection = max(1, min(12, int(grant["connection"])))
+            loyalty = max(1, min(12, int(grant["loyalty"])))
             ctx.state.contacts.append(
                 ContactInstall(
+                    id=str(
+                        uuid5(
+                            NAMESPACE_URL,
+                            f"chummer-web:{ctx.state.id}:life-contact:{row['id']}:{index}:{contact_index}",
+                        )
+                    ),
                     name=row["name"],
-                    connection=max(1, min(12, int(grant["connection"]))),
-                    loyalty=max(1, min(12, int(grant["loyalty"]))),
+                    connection=connection,
+                    loyalty=loyalty,
                     free=bool(grant["free"]),
+                    free_connection=connection if grant["free"] else 0,
+                    free_loyalty=loyalty if grant["free"] else 0,
                 )
             )
     # Each module's group levels also add to members' individual free levels.

@@ -103,7 +103,7 @@ export function LifeModulesPanel({
                     <label key={choice.key}>
                       {ui("life.choice", {
                         name: row.name,
-                        kind: ui(`life.kind.${choice.kind}` as MsgKey),
+                        kind: choice.name || ui(`life.kind.${choice.kind}` as MsgKey),
                       })}
                       {choice.options.length ? (
                         <select

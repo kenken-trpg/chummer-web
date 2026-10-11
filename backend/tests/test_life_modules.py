@@ -107,7 +107,7 @@ def test_missing_or_invalid_choices_are_reported_and_not_applied():
 
 
 def test_unknown_and_unsupported_modules_never_grant_partial_benefits():
-    bad = module("Street Urchin")
+    bad = module("Pit Fighter")
     state = apply_patch(runner(), CharacterPatch(life_modules=["unknown", bad["id"]]))
     assert has(state.derived["errors"], "engine.life.unknown")
     assert has(state.derived["errors"], "engine.life.unsupported")
@@ -225,3 +225,64 @@ def test_unknown_nested_quality_levels_still_block_the_whole_module(monkeypatch,
     row = life_loader.load_life_modules()[0]
     assert row["unsupported"] == ["qualitylevel:unknown"]
     assert row["quality_levels"] == []
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [r for r in catalog()["life_modules"] if r["quality_choice_grants"] and not r["unsupported"]],
+    ids=lambda r: r["id"],
+)
+def test_quality_extra_modules_preserve_choices_and_remove_grants(spec):
+    base = runner()
+    if spec["required"]:
+        base = apply_patch(base, CharacterPatch(metatype="Ork"))
+    picks = {f"0:{c['key']}": c["options"][0] if c["options"] else "Seattle" for c in spec["choices"]}
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert not has(state.derived["errors"], "engine.life.choice")
+    assert not has(state.derived["errors"], "engine.life.requirement")
+    for grant in spec["quality_choice_grants"]:
+        quality = next(q for q in state.derived["qualities"] if q["id"] == grant["quality_id"])
+        assert quality["extra"] == (grant["value"] or picks[f"0:{grant['choice']}"])
+        assert quality["free"]
+    assert state.quality_extras == base.quality_extras
+    assert state.life_module_choices == picks
+    assert compute(state).model_dump() == state.model_dump()
+    restored = import_character(state.model_dump())
+    assert restored.life_module_choices == picks
+    assert restored.derived["qualities"] == state.derived["qualities"]
+    assert apply_patch(state, CharacterPatch(life_modules=[], life_module_choices={})).derived == base.derived
+
+
+def test_missing_and_invalid_quality_choices_are_not_granted():
+    spec = module("Decker", "Real Life")
+    grant = next(g for g in spec["quality_choice_grants"] if g["quality_id"] == "41cc3e26-ae55-4e28-bd6a-b08866c21424")
+    for picked in ("", "not a matrix action"):
+        state = apply_patch(
+            runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices={f"0:{grant['choice']}": picked})
+        )
+        assert has(state.derived["errors"], "engine.life.choice")
+        assert not any(q["id"] == grant["quality_id"] for q in state.derived["qualities"])
+
+
+def test_quality_extra_conflicts_do_not_overwrite_purchased_extras():
+    spec = module("Street Urchin")
+    grant = spec["quality_choice_grants"][0]
+    base = apply_patch(
+        runner(), CharacterPatch(quality_ids=[grant["quality_id"]], quality_extras={grant["quality_id"]: "Original"})
+    )
+    state = apply_patch(
+        base, CharacterPatch(life_modules=[spec["id"]], life_module_choices={f"0:{grant['choice']}": "Different"})
+    )
+    assert has(state.derived["errors"], "engine.life.qualityChoiceConflict")
+    assert state.quality_extras == base.quality_extras
+    assert next(q for q in state.derived["qualities"] if q["id"] == grant["quality_id"])["extra"] == "Original"
+
+
+def test_mr_johnson_contacts_are_free_distinct_and_not_persisted_as_purchases():
+    spec = module("Mr. Johnson")
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices={"0:q0": "Ares"}))
+    contacts = state.derived["contacts"]
+    assert len(contacts) == len({c["id"] for c in contacts}) == 3
+    assert all(c["connection"] == 4 and c["loyalty"] == 3 and c["billable"] == 0 for c in contacts)
+    assert state.contacts == []
+    assert compute(state).derived["contacts"] == contacts

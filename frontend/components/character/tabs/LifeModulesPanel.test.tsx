@@ -129,3 +129,23 @@ it("warns about selected histories after their prerequisites stop matching", () 
       .className,
   ).toBe("error");
 });
+
+it("labels quality details in English and saves their separate choice slot", () => {
+  const patch = vi.fn();
+  const props = panelProps(makeCharacter({ life_modules: [historyModule.id] }), {
+    catalog: makeCatalog({
+      life_modules: [
+        {
+          ...historyModule,
+          choices: [{ key: "q0", kind: "qualities", name: "Flashbacks I", options: [] }],
+        },
+      ],
+    }),
+    patch,
+  });
+  render(<LifeModulesPanel {...props} />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: Flashbacks Iの選択" }), {
+    target: { value: "Street violence" },
+  });
+  expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:q0": "Street violence" } });
+});

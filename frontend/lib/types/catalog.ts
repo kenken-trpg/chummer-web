@@ -18,7 +18,7 @@ export interface LifeModuleCatalogItem {
   unsupported: string[];
   required?: QualityReqNode[];
   grants: { kind: string; name: string; value: number; choice: string; category: string }[];
-  choices: { key: string; kind: string; options: string[] }[];
+  choices: { key: string; kind: string; name?: string; options: string[] }[];
 }
 
 export interface MartialArtCatalogItem {

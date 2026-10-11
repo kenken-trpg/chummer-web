@@ -38,8 +38,11 @@ export const JA_CHARGEN = {
   "engine.life.duplicateStage": "人生の段階「{stage}」が重複しています",
   "engine.life.missingStage": "人生の段階「{stage}」の経歴を選択してください",
   "engine.life.choice": "経歴「{name}」の選択項目を指定してください（{slot}）",
-  "engine.life.specializationConflict": "経歴による「{name}」の専門化が、既存の選択と競合しています",
+  "engine.life.specializationConflict":
+    "経歴による「{name}」の専門化が、既存の選択と競合しています",
   "engine.life.qualityUnknown": "経歴が付与する品質「{name}」が見つかりません",
+  "engine.life.qualityChoiceConflict":
+    "経歴が付与する資質「{name}」の追加指定が、既存の指定と競合しています。同じ資質への異なる追加指定の併用は未対応です。",
   "engine.life.qualityLevelUnknown": "経歴が付与する品質レベルの品質「{name}」が見つかりません",
   "engine.life.requirement": "経歴「{name}」の前提条件を満たしていません",
 

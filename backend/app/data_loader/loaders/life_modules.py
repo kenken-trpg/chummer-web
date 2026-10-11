@@ -34,6 +34,7 @@ def load_life_modules() -> list[dict[str, Any]]:
             grants: list[dict[str, Any]] = []
             choices: list[dict[str, Any]] = []
             quality_grants: list[dict[str, Any]] = []
+            quality_choice_grants: list[dict[str, str]] = []
             specialization_grants: list[dict[str, str]] = []
             contact_grants: list[dict[str, int | bool]] = []
             nuyen = 0
@@ -78,7 +79,25 @@ def load_life_modules() -> list[dict[str, Any]]:
                         for el in node.findall("addquality"):
                             name = _text(el)
                             spec = qualities.get(name)
-                            if not spec or spec.get("needs_extra") or el.attrib:
+                            if (
+                                spec
+                                and spec.get("needs_extra")
+                                and spec.get("extra_kind") in {"text", "matrix_action"}
+                                and not (set(el.attrib) - {"select"})
+                            ):
+                                key = f"q{len(quality_choice_grants)}"
+                                fixed = el.get("select", "").strip()
+                                if not fixed:
+                                    choices.append(
+                                        {
+                                            "key": key,
+                                            "kind": "qualities",
+                                            "name": name,
+                                            "options": spec.get("select_options") or [],
+                                        }
+                                    )
+                                quality_choice_grants.append({"quality_id": spec["id"], "choice": key, "value": fixed})
+                            elif not spec or spec.get("needs_extra") or el.attrib:
                                 issues.append("addquality:" + name)
                             else:
                                 quality_grants.append(spec)
@@ -168,6 +187,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                     "grants": grants,
                     "choices": choices,
                     "quality_grants": quality_grants,
+                    "quality_choice_grants": quality_choice_grants,
                     "specialization_grants": specialization_grants,
                     "contact_grants": contact_grants,
                     "nuyen": nuyen,
