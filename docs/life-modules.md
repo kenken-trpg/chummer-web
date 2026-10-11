@@ -45,6 +45,27 @@
 
 ライフモジュール名・派生元名・選択肢など、Run Faster 由来のデータは日本語設定でも原文の英語で表示します。画面操作や説明のUI文言は選択中の言語で表示します。
 
+### 元データの参照表記と残る未対応候補
+
+固定データでは、資質名に次の表記差があります。これらだけを明示的に読み替え、
+一致しない名前の類似検索や、不明な段階の自動選択は行いません。
+
+| 経歴データの参照 | 適用する資質・追加指定 |
+| --- | --- |
+| Silence Is Golden | Silence is Golden |
+| Too Pretty to Hit | Too Pretty To Hit |
+| Phobia (Mild, Common) | Phobia (Common, Mild)。対象は利用者が指定 |
+| Home Ground (You Know A Guy) | Home Ground、追加指定は You Know A Guy |
+
+`addquality/options/quality` の選択式付与も読み取ります。現在の対応候補は320件／325件です。
+次の5候補は、付与内容を確定できないため選択不可のままです。
+
+| 候補 | 未解決の記述 |
+| --- | --- |
+| General Azania / Pretoria (PWV Metroplex) / Zulu Nation | 資質が `SINner: National` と記述されているほか、親の知識技能で言語候補が単数形の `option` に入り、`group` が欠けている。資質名だけの修正では言語付与を正しく扱えない |
+| Corp College Student | Day Job の勤務時間が不明。技能内の専門化と知識カテゴリの選択も未対応 |
+| Warm Body | Corporate Pariah の I / II の指定がない |
+
 ## 実装
 
 `CharacterState.life_modules` は選択順のカタログ ID 一覧、`life_module_choices` は

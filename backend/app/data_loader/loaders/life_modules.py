@@ -21,6 +21,15 @@ LEVELS = {
     "knowledgeskilllevel": "knowledge_skills",
 }
 
+# Exact spelling variants in the pinned Life Module data. Never use fuzzy
+# matching: an unspecified level (e.g. Day Job) must remain unresolved.
+QUALITY_REFERENCES = {
+    "Silence Is Golden": ("Silence is Golden", ""),
+    "Too Pretty to Hit": ("Too Pretty To Hit", ""),
+    "Phobia (Mild, Common)": ("Phobia (Common, Mild)", ""),
+    "Home Ground (You Know A Guy)": ("Home Ground", "You Know A Guy"),
+}
+
 
 def load_life_modules() -> list[dict[str, Any]]:
     root = data_root("lifemodules.xml")
@@ -81,7 +90,26 @@ def load_life_modules() -> list[dict[str, Any]]:
                             issues.append("addqualities:level")
                         for el in node.findall("addquality"):
                             name = _text(el)
+                            option_nodes = el.findall("./options/quality")
+                            if option_nodes and not name:
+                                options = [_text(option) for option in option_nodes]
+                                if el.attrib or any(
+                                    option not in qualities or qualities[option].get("needs_extra")
+                                    for option in options
+                                ):
+                                    issues.append("addquality:choice")
+                                else:
+                                    key = str(len(grants))
+                                    choices.append({"key": key, "kind": "qualities", "options": options})
+                                    grants.append(
+                                        {"kind": "qualities", "name": "", "choice": key, "value": 1, "category": ""}
+                                    )
+                                continue
                             spec = qualities.get(name) or qualities_by_id.get(name)
+                            reference_extra = ""
+                            if spec is None and name in QUALITY_REFERENCES:
+                                canonical, reference_extra = QUALITY_REFERENCES[name]
+                                spec = qualities.get(canonical)
                             if spec:
                                 name = spec["name"]
                             if spec and el.get("rating") is not None:
@@ -106,7 +134,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                                 and not (set(el.attrib) - {"select"})
                             ):
                                 key = f"q{len(quality_choice_grants)}"
-                                fixed = el.get("select", "").strip()
+                                fixed = el.get("select", "").strip() or reference_extra
                                 if not fixed:
                                     choices.append(
                                         {

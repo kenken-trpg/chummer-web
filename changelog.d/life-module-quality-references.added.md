@@ -1,0 +1,1 @@
+ライフモジュールの既知の資質名表記を解決し、Have You Heard The Good Word?、Matrix Royalty、Dock Rat、Poor Kid の4候補に対応しました。Home Ground の固定指定 You Know A Guy を保持し、Phobia の対象は入力できます。`addquality` 内の資質候補選択にも対応しました。付与内容を確定できない残り5候補の理由を `docs/life-modules.md` に記載しています。

@@ -351,3 +351,55 @@ def test_quality_id_reference_resolves_without_guessing_a_name():
         q["id"] == "f8f216b5-1c29-467d-9fb5-c9812408203d" and q["name"] == "Inspired" and q["free"]
         for q in state.derived["qualities"]
     )
+
+
+@pytest.mark.parametrize(
+    "module_name,quality_name,extra",
+    [
+        ("Have You Heard The Good Word?", "Silence is Golden", ""),
+        ("Matrix Royalty", "Too Pretty To Hit", ""),
+        ("Dock Rat", "Phobia (Common, Mild)", "Deep water"),
+        ("Poor Kid", "Home Ground", "You Know A Guy"),
+    ],
+)
+def test_known_quality_reference_variants_preserve_the_grant(module_name, quality_name, extra):
+    spec = module(module_name)
+    assert not spec["unsupported"]
+    picks = {f"0:{c['key']}": c["options"][0] if c["options"] else extra or "Seattle" for c in spec["choices"]}
+    base = runner()
+    state = apply_patch(base, CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    quality = next(q for q in state.derived["qualities"] if q["name"] == quality_name)
+    assert quality["free"]
+    assert quality["extra"] == extra
+    assert compute(state).model_dump() == state.model_dump()
+    assert import_character(state.model_dump()).derived == state.derived
+    assert apply_patch(state, CharacterPatch(life_modules=[], life_module_choices={})).derived == base.derived
+
+
+def test_embedded_quality_options_apply_only_the_selected_quality(monkeypatch):
+    root = ET.fromstring("""<chummer><modules><module><id>choice</id><name>Education</name>
+      <stage>Real Life</stage><karma>10</karma><bonus><addqualities><addquality>
+      <options><quality>College Education</quality><quality>Technical School Education</quality></options>
+      </addquality></addqualities></bonus></module></modules></chummer>""")
+    monkeypatch.setattr(life_loader, "data_root", lambda _: root)
+    row = life_loader.load_life_modules()[0]
+    assert not row["unsupported"]
+    monkeypatch.setitem(catalog(), "life_modules", [row])
+    key = f"0:{row['choices'][0]['key']}"
+    for name in ["College Education", "Technical School Education"]:
+        state = apply_patch(runner(), CharacterPatch(life_modules=[row["id"]], life_module_choices={key: name}))
+        assert [(q["name"], q["free"]) for q in state.derived["qualities"]] == [(name, True)]
+    invalid = apply_patch(runner(), CharacterPatch(life_modules=[row["id"]], life_module_choices={key: "Made Man"}))
+    assert has(invalid.derived["errors"], "engine.life.choice")
+    assert not invalid.derived["qualities"]
+
+
+@pytest.mark.parametrize("name", ["Day Job", "Corporate Pariah", "Silence Golden"])
+def test_ambiguous_or_unknown_quality_names_are_not_guessed(monkeypatch, name):
+    root = ET.fromstring(
+        f"<chummer><modules><module><id>unknown</id><bonus><addqualities><addquality>{name}</addquality></addqualities></bonus></module></modules></chummer>"
+    )
+    monkeypatch.setattr(life_loader, "data_root", lambda _: root)
+    row = life_loader.load_life_modules()[0]
+    assert row["unsupported"] == [f"addquality:{name}"]
+    assert not row["quality_grants"]
