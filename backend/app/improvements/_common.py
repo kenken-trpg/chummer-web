@@ -56,7 +56,9 @@ SILENT_TAGS = {
     # stream's sprite list, and every stream here already has them all)
     "selectsprite",
     # Only on `Inherent Program`, a quality an A.I. takes — and `A.I.` is in
-    # `SKIP_TALENTS`, so no character here reaches the quality at all.
+    # `SKIP_TALENTS`, so no character here reaches the quality at all. It is
+    # also the innate grant of `Protosapient`, an A.I. metavariant, which the
+    # chargen list does not offer either.
     "selectinherentaiprogram",
     "selectattribute",
     # Astral Reputation (SG p.35) is a tracked value of its own, like
@@ -111,7 +113,9 @@ SILENT_TAG_SITES = {
     "devicerating": 1,
     "penaltyfreesustain": 1,
     "selectarmor": 1,
-    "selectinherentaiprogram": 1,
+    # one definition, plus the copy carried in `Protosapient`'s grants,
+    # which the walk reaches both nested and through `all_metatypes`
+    "selectinherentaiprogram": 3,
     "selectsprite": 1,
     "specialattburnmultiplier": 1,
 }
