@@ -1,5 +1,7 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — English。 */
 export const EN_CHARGEN = {
+  "meta.booksHidden":
+    "{count} of the metatypes this row offers are left out by the ruleset’s book list",
   "meta.innate": "Innate to {name} (no additional karma)",
   "meta.innateFixed": "Innate grant · cannot be removed",
   "meta.innatePowers": "Metatype powers",

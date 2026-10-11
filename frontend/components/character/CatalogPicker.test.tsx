@@ -110,6 +110,23 @@ describe("CatalogPicker under a settings book list", () => {
     expect(screen.getByRole("status").textContent).toContain("該当なし");
   });
 
+  it("says how many entries the book list leaves out", () => {
+    // "該当なし" on a search that would have matched reads as "this game has
+    // no such item" unless the book list owns up to it
+    setup({}, ["SR5"]);
+    expect(screen.getByRole("status").textContent).toContain(
+      "ルールブック設定で 1 件は一覧に出ません",
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "suit" } });
+    expect(screen.getByRole("status").textContent).toContain("該当なし");
+    expect(screen.getByRole("status").textContent).toContain("ルールブック設定で 1 件");
+  });
+
+  it("says nothing when every book is on", () => {
+    setup();
+    expect(screen.getByRole("status").textContent).not.toContain("ルールブック設定");
+  });
+
   it("drops the category chip of a book that is off", () => {
     setup({}, ["SR5"]);
     expect(screen.queryByRole("button", { name: "Cloaks" })).toBeNull();
@@ -132,6 +149,16 @@ describe("PickerList", () => {
     expect(screen.getByText("a")).toBeDefined();
     expect(screen.queryByText("c")).toBeNull();
     expect(screen.getByRole("status").textContent).toContain("他 1 件");
+  });
+
+  it("counts what the book list removed", () => {
+    render(
+      <BooksProvider books={["SR5"]}>
+        <PickerList items={items}>{(item) => <div key={item.id}>{item.name}</div>}</PickerList>
+      </BooksProvider>,
+    );
+    expect(screen.queryByText("Chameleon Suit")).toBeNull();
+    expect(screen.getByRole("status").textContent).toContain("ルールブック設定で 1 件");
   });
 
   it("carries the idle note only while it applies", () => {

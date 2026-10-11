@@ -151,6 +151,7 @@ export const JA_APP = {
   "common.kind": "種類",
   "picker.none": "該当なし",
   "picker.more": "他 {count} 件。検索で絞り込んでください",
+  "picker.booksHidden": "ルールブック設定で {count} 件は一覧に出ません",
   "picker.buyLabel": "{name} を{action}",
   "picker.catAllHint": "すべてのカテゴリを表示",
 

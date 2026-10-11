@@ -1,5 +1,7 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — 日本語。 */
 export const JA_CHARGEN = {
+  "meta.booksHidden":
+    "この条件の種族のうち {count} 件は、使用ルールブックの設定で候補に出ていません",
   "meta.innate": "{name}の生得能力（追加カルマなし）",
   "meta.innateFixed": "生得付与・削除不可",
   "meta.innatePowers": "種族パワー",

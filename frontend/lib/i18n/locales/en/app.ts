@@ -144,6 +144,7 @@ export const EN_APP = {
   "common.kind": "Kind",
   "picker.none": "No matches",
   "picker.more": "{count} more. Narrow the search.",
+  "picker.booksHidden": "{count} entries are outside the enabled rulebooks and are not listed",
   "picker.buyLabel": "{action} {name}",
   "picker.catAllHint": "Show every category",
 
