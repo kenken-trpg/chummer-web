@@ -120,6 +120,22 @@ def health() -> dict:
     return {"ok": True}
 
 
+@app.get("/api/version")
+def version() -> dict:
+    """What is actually running.
+
+    The container exposes `/api/*` and nothing else — `deploy/Caddyfile` sends
+    only that prefix to uvicorn — so FastAPI's own `/docs` and
+    `/openapi.json`, where the version is otherwise written, are unreachable
+    in a deployment. Without this, confirming a release had landed meant
+    comparing image digests from the outside.
+
+    Reads `app.version`, so it cannot drift from the value
+    `scripts/release_notes.py` checks against the tag.
+    """
+    return {"version": app.version}
+
+
 @app.get("/api/ready")
 def ready(response: Response) -> dict:
     """Readiness: the catalog is built, so the first real request will not pay

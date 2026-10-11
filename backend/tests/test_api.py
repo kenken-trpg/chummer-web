@@ -38,6 +38,14 @@ def test_health_ok() -> None:
     assert r.json() == {"ok": True}
 
 
+def test_version_is_the_apps_own() -> None:
+    r = client.get("/api/version")
+    assert r.status_code == 200
+    # not a literal: the point of the endpoint is that it cannot drift from
+    # what the tag check reads, so a bump must not need this test edited
+    assert r.json() == {"version": app.version}
+
+
 def test_oversize_body_is_rejected_413() -> None:
     big = b"x" * (_MAX_REQUEST_BYTES + 1)
     r = client.post(
