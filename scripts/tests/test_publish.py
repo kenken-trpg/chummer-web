@@ -100,9 +100,7 @@ class PublishTest(unittest.TestCase):
         }
 
     def git(self, *args):
-        return subprocess.run(
-            ["git", *args], cwd=self.repo, check=True, text=True, capture_output=True
-        ).stdout.strip()
+        return subprocess.run(["git", *args], cwd=self.repo, check=True, text=True, capture_output=True).stdout.strip()
 
     def publish(self, mode="--existing-commit", extra=(), **env):
         return subprocess.run(
@@ -134,10 +132,7 @@ class PublishTest(unittest.TestCase):
         )
 
     def count(self, *prefix):
-        return sum(
-            row[: len(prefix)] == list(prefix)
-            for row in map(json.loads, self.calls.read_text().splitlines())
-        )
+        return sum(row[: len(prefix)] == list(prefix) for row in map(json.loads, self.calls.read_text().splitlines()))
 
     def test_existing_commit_and_resume_do_not_redeploy(self):
         result = self.publish()
@@ -233,9 +228,7 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(self.count("workflow", "run"), 0)
         self.git("checkout", "--", "code")
         self.assertEqual(self.publish().returncode, 0)
-        self.assertNotEqual(
-            self.publish("--resume", extra=("--deploy-input", "other")).returncode, 0
-        )
+        self.assertNotEqual(self.publish("--resume", extra=("--deploy-input", "other")).returncode, 0)
 
 
 class PublicProbeTest(unittest.TestCase):
