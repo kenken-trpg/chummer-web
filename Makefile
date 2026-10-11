@@ -111,6 +111,11 @@ coverage-backend: ## pytest --cov; HTML in backend/htmlcov/
 coverage-frontend: ## vitest --coverage; HTML in frontend/coverage/
 	cd frontend && npm run test:coverage
 
+# `check-backend` already runs this through `tests/test_ja_terms.py`, so it is
+# not in `check`; this is the standalone run, for when you are fixing the terms.
+check-i18n: ## Fail a Japanese UI string that uses a term the glossary rejects
+	$(PYTHON) scripts/check_ja_terms.py
+
 changelog: ## Fold changelog.d/ fragments into CHANGELOG.md [Unreleased]
 	$(PYTHON) scripts/changelog.py collect
 

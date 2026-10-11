@@ -32,7 +32,7 @@ export const JA_HELP = {
     "作成時は入手可能度がこの値を超える品物を買えない（標準 12）。キャリア中は入手判定で手に入れる",
   "help.deviceRating": "作成時に買える機器のデバイスレーティングの上限（標準 6）",
   "help.gradeHint":
-    "ウェアの品質。上のグレードほどエッセンスの消費が減り、値段と入手可能度が上がる。作成時に使えないグレードは設定で決まる（標準では Betaware 以上は不可）",
+    "ウェアの等級。上の等級ほどエッセンスの消費が減り、値段と入手可能度が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
   "help.skill.pool": "判定ダイス = 技能レーティング + 関連能力値（+ 修正）",
   "help.skill.spec": "専門化：その用途の判定に +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
   "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
@@ -67,7 +67,7 @@ export const JA_HELP = {
     "エッセンス：生身の度合い。誰でも 6 から始まり、サイバーウェアとバイオウェアで減る",
   "help.essence.magic": "減った分だけ魔力と共振力の上限も下がる（端数は切り上げで 1 段）",
   "help.essence.zero": "0 になると死亡。作成時は 0 より大きい値を残す必要がある",
-  "help.essence.grade": "グレードの倍率（C / B の表示）で、同じウェアでも消費が変わる",
+  "help.essence.grade": "等級の倍率（C / B の表示）で、同じウェアでも消費が変わる",
   "help.quality.positive": "有利な資質はカルマで買う。作成時の上限は 25 カルマ分（設定で変わる）",
   "help.quality.negative": "不利な資質はカルマが戻るが、戻せるのも 25 カルマ分まで",
   "help.quality.career": "キャリア中の買い足し・買い取りはカルマ 2 倍が標準（SR5 p.72）",
@@ -108,7 +108,7 @@ export const JA_HELP = {
   "help.spell.force": "フォースが魔力以下なら精神ダメージ、超えると物理ダメージになる（SR5 p.281）",
   "help.spell.range": "射程（LOS 視線／T 接触／範囲）と持続（瞬間／維持／永続）",
   "help.ware.statsLabel": "ウェアの値",
-  "help.ware.essence": "ESS −n はこの品が食うエッセンス。グレードの倍率がかかった後の値",
+  "help.ware.essence": "ESS −n はこの品が食うエッセンス。等級の倍率がかかった後の値",
   "help.ware.capacity":
     "キャパシティ：この品の中に入れられる量（使用／上限）。サイバー手足や筐体が持つ",
   "help.bio.statsLabel": "このタブの合計",
@@ -227,7 +227,7 @@ export const JA_HELP = {
   "help.drug.speed": "発現までの秒数。0 は即時",
   "help.drug.duration": "効果が続く時間。切れたあとにクラッシュが来るものがある",
   "help.drug.crash": "クラッシュ：効果が切れたときに受ける反動のダメージ",
-  "help.drug.grade": "グレードの倍率は値段に掛かる。上のグレードほど入手可能度も上がる",
+  "help.drug.grade": "等級の倍率は値段に掛かる。上の等級ほど入手可能度も上がる",
   "help.drug.parts":
     "基剤（Foundation）1 つの上にブロックと強化剤を重ねる。何を重ねられるかは基剤が決める（CF p.190）",
   "help.sensor.statsLabel": "センサーの値",

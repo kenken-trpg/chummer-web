@@ -238,7 +238,7 @@ describe("<CyberTab>", () => {
     } as unknown as Derived;
     render(<CyberTab {...panelProps({ ...ch, derived: d }, { catalog: cyberCatalog() })} />);
     expect(screen.getByText(/Busted Cyberware/)).toBeTruthy();
-    expect(screen.queryByLabelText("グレード")).toBeNull();
+    expect(screen.queryByLabelText("等級")).toBeNull();
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
 
     // …where a bought row of the same shape has both.
@@ -247,7 +247,7 @@ describe("<CyberTab>", () => {
       cyberware: [{ ...d.cyberware[0], id: "row1", granted_by: "" }],
     };
     render(<CyberTab {...panelProps({ ...ch, derived: bought }, { catalog: cyberCatalog() })} />);
-    expect(screen.getByLabelText("グレード")).toBeTruthy();
+    expect(screen.getByLabelText("等級")).toBeTruthy();
     expect(screen.getByRole("button", { name: "削除" })).toBeTruthy();
   });
 

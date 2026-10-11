@@ -111,7 +111,7 @@ export const JA_MAGIC = {
   "cf.required": "必要 {list}",
   "init.note":
     "（各等級 10 + 等級×3。集団／試練／教習は各 −10%（累積で減算）。魔力上限 = 種族上限 + 等級。等級 ≤ MAG）",
-  "init.granted": " ・ 品質付与 {list}",
+  "init.granted": " ・ 資質付与 {list}",
   "init.freeMetamagics": "無料メタマジック: {list}",
   "init.grade": "イニシエーション等級",
   "init.gradeHint": "等級を上げるとメタマジックを 1 つ選べます。カルマ費用は等級ごとに増えます",
