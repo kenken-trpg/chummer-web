@@ -240,7 +240,7 @@ export const JA_CHARGEN = {
   "settings.knob.autobackstory": "バックストーリーを自動生成する（Chummer の操作設定）",
   "settings.knob.boundspiritexpression": "束縛できる精霊の数の式（能力値 1 つの形だけ扱えます）",
   "settings.knob.chargenkarmatonuyenexpression":
-    "カルマ→ニュイエンの換算式（`{Karma} * 倍率 + {PriorityNuyen}` の形だけ扱えます）",
+    "カルマ→新円の換算式（`{Karma} * 倍率 + {PriorityNuyen}` の形だけ扱えます）",
   "settings.knob.contactpointsexpression":
     "自由に使えるコンタクト・ポイントの式（`{CHAUnaug} * 倍率` の形だけ扱えます）",
   "settings.knob.cyberlimbattributebonuscapoverride":
@@ -272,7 +272,7 @@ export const JA_CHARGEN = {
   "settings.knob.morelethalgameplay": "よりデッドリーなプレイ（SR4 75）",
   "settings.knob.mysadeptsecondmagattribute":
     "Mystic Adept はパワーポイントの特別ルールの代わりに 2 つ目の【魔法】を使う",
-  "settings.knob.nuyenformat": "ニュイエンの小数桁数（Chummer の表示設定）",
+  "settings.knob.nuyenformat": "新円の小数桁数（Chummer の表示設定）",
   "settings.knob.priorityspellsasadeptpowers":
     "【魔法】プライオリティの初期呪文をパワーポイントに回せる",
   "settings.knob.registeredspriteexpression":
