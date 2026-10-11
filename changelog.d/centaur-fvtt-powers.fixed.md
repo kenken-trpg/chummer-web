@@ -1,1 +1,0 @@
-Foundry向けJSONの書き出し前に、ケンタウロスのSearch・Natural Weaponなど、出力されない生得パワーの名称・固定選択・出典を表示します。

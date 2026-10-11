@@ -1,1 +1,0 @@
-- **Dependencies** — update Next.js to 16.3.8 to address published security advisories, update FastAPI to 0.142.2, and refresh frontend, Python tooling and Cloudflare Worker build dependencies (Wrangler 4.149.0, addressing sharp advisories).

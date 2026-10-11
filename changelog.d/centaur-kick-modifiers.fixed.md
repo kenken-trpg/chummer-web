@@ -1,1 +1,0 @@
-ケンタウロスの蹴りを含む素手技能の武器について、Chummer設定の`unarmedimprovementsapplytoweapons`を読み込み、素手DV・AP・Reach修正を設定が有効な場合に適用するよう修正しました。STR変更、他の自然武器との併用、設定切替・保存後の再計算も検証しています。
