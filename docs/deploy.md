@@ -449,6 +449,67 @@ bill — by then the new-visitor share and the PoP spread are known, and both go
 into whether rule 4's per-datacentre fill is worth the second ETag
 implementation.
 
+## Confirming a production deployment
+
+A merged PR, a published image, and a revision serving production traffic are
+three separate states. A successful CI run proves only the jobs that ran;
+inspect skipped deployment jobs and their trigger conditions before calling a
+change deployed. Likewise, a failed deployment run does not identify whether
+the failure happened before or after the traffic switch. Read the failed step
+before retrying or rolling back.
+
+In this repository, `.github/workflows/ci.yml` builds, smoke-tests, publishes,
+signs and attests images on pushes to `main`. Its `deploy` job runs only for
+`v*` tags. **Merging into `main` alone does not deploy to Cloud Run.** To deploy
+an already merged change without creating a release tag:
+
+1. Identify the intended commit on remote `main`, not the local branch or an
+   open PR. Find the `CI` push run for that exact commit and wait for it to
+   succeed, including `docker-attest` and `ci-ok`.
+2. Get the immutable `ghcr.io/…@sha256:…` reference from that run's
+   `docker-attest` log (`signing …`). Do not use the moving `latest` tag or a
+   digest from a different run. If `main` advances, decide which commit is
+   intended and repeat the checks for the new commit when deploying the latest
+   `main`.
+3. Dispatch `deploy-cloudrun.yml` with that reference. It copies the selected
+   image to Artifact Registry and deploys it without rebuilding.
+4. Wait for the run to finish. Check that the revision became Ready and that
+   **Move traffic to it** succeeded. The log records the previous revision and
+   the revision receiving 100% of traffic; a newly created revision alone is
+   not evidence that users receive it.
+5. Verify the public `/api/ready` and `/` endpoints after the traffic switch,
+   checking their content as well as HTTP 200. Report the commit, image digest,
+   deployment run, serving revision and public verification result together.
+
+Commands for locating the run and dispatching its image:
+
+```bash
+repo=kenken-trpg/chummer-web
+commit=$(gh api "repos/$repo/git/ref/heads/main" --jq .object.sha)
+gh run list --repo "$repo" --workflow ci.yml --event push --branch main \
+  --commit "$commit" --json databaseId,headSha,status,conclusion,url
+
+# Set these from the selected successful run and its docker-attest log.
+ci_run='<run-id>'
+gh run view "$ci_run" --repo "$repo" --log
+image='ghcr.io/kenken-trpg/chummer-web@sha256:<digest-from-that-run>'
+gh workflow run deploy-cloudrun.yml --repo "$repo" --ref main -f "image=$image"
+# Use the deployment run ID returned by the dispatch command.
+gh run watch '<deployment-run-id>' --repo "$repo" --exit-status --interval 10
+```
+
+A Cloudflare challenge to the Actions runner leaves public verification
+incomplete even when the revision and traffic switch succeeded. Check the
+public site independently and record that result; an old red run is not proof
+that its image never reached production. Ordinary 403s, 5xx responses and bad
+content still need investigation. See
+[What a green deploy does and does not prove](#what-a-green-deploy-does-and-does-not-prove)
+for the checks and challenge handling, and
+[CONTRIBUTING.md — Peeling the layers](../CONTRIBUTING.md#peeling-the-layers)
+to identify the responding layer. These distinctions apply to other deployment
+targets too: verify the trigger, the exact artifact, the traffic switch and the
+public path separately.
+
 ## Deploying from CI (Workload Identity)
 
 Everything above is typed by hand. To have a `v*` tag deploy itself, GitHub
