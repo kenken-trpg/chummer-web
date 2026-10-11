@@ -35,7 +35,7 @@ const catalog = makeCatalog({
   ],
 });
 
-function setup(settings?: { name: string; books: string[] }) {
+function setup(settings?: { name: string; books: string[]; unsupported?: string[] }) {
   const patch = vi.fn();
   render(
     <SettingsPicker
@@ -186,9 +186,21 @@ describe("SettingsPicker with a loaded settings file", () => {
     expect(patch).toHaveBeenCalledWith({ settings: house });
   });
 
-  it("names the house rules it cannot honour", () => {
-    setup({ ...house });
-    expect(screen.getByText(/ignoreart/)).toBeDefined();
+  it("names the house rules it cannot honour, in words", () => {
+    setup({ ...house, unsupported: ["karmaquality", "essenceformat"] });
+    // the one that re-prices the sheet is spelled out and loud...
+    expect(screen.getByText("資質 1 点あたりのカルマ")).toBeDefined();
+    expect(screen.getByText(/ハウスルール 1 件は未対応/)).toBeDefined();
+    // ...while a display-only knob is named apart, so the two cannot be
+    // mistaken for each other the way two raw tag names could
+    expect(screen.getByText(/エッセンスの小数桁数/)).toBeDefined();
+  });
+
+  it("falls back to the tag for a knob it has no sentence for", () => {
+    // a settings file from a newer Chummer can carry a tag this app predates;
+    // showing it raw is worse than a sentence but better than dropping it
+    setup({ ...house, unsupported: ["somethingbrandnew"] });
+    expect(screen.getByText(/somethingbrandnew/)).toBeDefined();
   });
 
   it("keeps the numeric knobs when a book is ticked by hand", () => {

@@ -230,8 +230,63 @@ export const JA_CHARGEN = {
   "settings.loadFailed": "セッティングファイルを読み込めませんでした。",
   "settings.forget": "このセッティングを削除",
   "settings.forgetHint": "{name} をこのブラウザから削除します（キャラクターは消えません）",
+  "settings.knob.allowbiowaresuites":
+    "バイオウェア・スイートの使用を認める（このアプリはスイートを扱わないので、まとめ買いの項目が出てきません）",
+  "settings.knob.alloweditpartofbaseweapon":
+    "武器アクセサリ・改造が元の武器の性能を書き換えてよい（Chummer の編集画面の設定）",
+  "settings.knob.allowskilldicerolling":
+    "ダイス・プールからダイスツールを起動できる（Chummer の操作設定）",
+  "settings.knob.allowskillregrouping":
+    "技能値がすべて同じなら能動技能を再びグループにまとめてよい（SR5 FAQ）",
+  "settings.knob.armordegredation": "防具の劣化を適用する",
+  "settings.knob.autobackstory": "バックストーリーを自動生成する（Chummer の操作設定）",
+  "settings.knob.boundspiritexpression": "束縛できる精霊の数の式（能力値 1 つの形だけ扱えます）",
+  "settings.knob.chargenkarmatonuyenexpression":
+    "カルマ→新円の換算式（`{Karma} * 倍率 + {PriorityNuyen}` の形だけ扱えます）",
+  "settings.knob.contactpointsexpression":
+    "自由に使えるコンタクト・ポイントの式（`{CHAUnaug} * 倍率` の形だけ扱えます）",
+  "settings.knob.cyberlimbattributebonuscapoverride":
+    "サイバーリムの【筋力】【敏捷力】ボーナス上限を既定値から変える",
+  "settings.knob.dicepenaltysustaining":
+    "維持中の呪文・複合体 1 つあたりのダイス・ペナルティ（卓で処理する数値）",
+  "settings.knob.enableenemytracking":
+    "敵をコンタクトの一種として扱う（SR4 ルール。このアプリは敵を扱いません）",
+  "settings.knob.enemykarmaqualitylimit":
+    "敵で得たカルマを不利な資質の上限に数える（このアプリは敵を扱いません）",
+  "settings.knob.essenceformat": "エッセンスの小数桁数（Chummer の表示設定）",
+  "settings.knob.exceednegativequalitieslimit": "不利な資質を上限を超えて取ってもカルマは増えない",
+  "settings.knob.extendanydetectionspell": "どの探知呪文でも超広域版として習得できる（SM179）",
+  "settings.knob.karmacomplexformoption": "複合体オプションのカルマ（SR4 由来）",
+  "settings.knob.karmacomplexformskillsoft": "複合体スキルソフトのカルマ（SR4 由来）",
+  "settings.knob.karmacontact": "コンタクト 1 点あたりのカルマ",
+  "settings.knob.karmaenemy": "敵 1 点あたりのカルマ（このアプリは敵を扱いません）",
+  "settings.knob.karmaimprovecomplexform": "複合体のレーティングを上げるカルマ",
+  "settings.knob.karmajoingroup": "魔法結社／ネットワークに加入するカルマ",
+  "settings.knob.karmaleavegroup": "魔法結社／ネットワークから脱退するカルマ",
+  "settings.knob.karmamaneuver": "Maneuver 1 つのカルマ（SR4 由来）",
+  "settings.knob.karmametamagic":
+    "追加メタマジック／エコーのカルマ（このアプリはイニシエート 1 段階につき 1 つだけ扱います）",
+  "settings.knob.karmanewaiadvancedprogram": "AI の上級プログラム 1 つのカルマ",
+  "settings.knob.karmanewaiprogram": "AI のプログラム 1 つのカルマ",
+  "settings.knob.karmaquality": "資質 1 点あたりのカルマ",
+  "settings.knob.karmaspiritfettering": "精霊の Fettering に払うフォース 1 点あたりのカルマ",
+  "settings.knob.knowledgepointsexpression": "知識技能ポイントの式（能力値と四則演算だけ扱えます）",
+  "settings.knob.morelethalgameplay": "よりデッドリーなプレイ（SR4 75）",
+  "settings.knob.mysadeptsecondmagattribute":
+    "Mystic Adept はパワーポイントの特別ルールの代わりに 2 つ目の【魔法】を使う",
+  "settings.knob.nuyenformat": "新円の小数桁数（Chummer の表示設定）",
+  "settings.knob.priorityspellsasadeptpowers":
+    "【魔法】プライオリティの初期呪文をパワーポイントに回せる",
+  "settings.knob.registeredspriteexpression":
+    "登録できるスプライトの数の式（能力値 1 つの形だけ扱えます）",
+  "settings.knob.reverseattributepriorityorder":
+    "能力値はプライオリティ・ポイントより先にカルマで伸ばす",
+  "settings.knob.specialkarmacostbasedonshownvalue":
+    "特殊能力値（Mystic Adept のパワーポイントを含む）を伸ばすカルマは、エッセンス減少で割り引かれない",
   "settings.unsupportedHere":
-    "未対応のハウスルール {count} 件: {tags}（数値には反映されていません）",
+    "このセッティングのハウスルール {count} 件は未対応です。この分の数値・選択肢は Chummer と食い違います:",
+  "settings.unsupportedHarmless":
+    "ほかに {count} 件、このアプリの計算に関係しない設定があります: {items}",
   "settings.preset": "セッティング",
   "settings.presetNone": "制限なし（全ルールブック）",
   "settings.presetHint": "Chummer 同梱のセッティング。使用ルールブックと作成方式が切り替わります",

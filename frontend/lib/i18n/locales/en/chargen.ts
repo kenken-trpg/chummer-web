@@ -227,8 +227,66 @@ export const EN_CHARGEN = {
   "settings.loadFailed": "That settings file could not be read.",
   "settings.forget": "Remove this ruleset",
   "settings.forgetHint": "Remove {name} from this browser (characters are untouched)",
+  "settings.knob.allowbiowaresuites":
+    "Allow bioware suites (this app has no suites, so their bundled entries never appear)",
+  "settings.knob.alloweditpartofbaseweapon":
+    "Let weapon accessories and mods change the base weapon's own stats (a Chummer editor setting)",
+  "settings.knob.allowskilldicerolling": "Roll dice from a dice pool (a Chummer UI setting)",
+  "settings.knob.allowskillregrouping":
+    "Let active skills be re-grouped when every rating matches (SR5 FAQ)",
+  "settings.knob.armordegredation": "Apply armor degradation",
+  "settings.knob.autobackstory": "Generate a backstory automatically (a Chummer UI setting)",
+  "settings.knob.boundspiritexpression":
+    "The formula for bound spirits (only a single attribute is understood)",
+  "settings.knob.chargenkarmatonuyenexpression":
+    "The karma-to-nuyen formula (only `{Karma} * n + {PriorityNuyen}` is understood)",
+  "settings.knob.contactpointsexpression":
+    "The free contact points formula (only `{CHAUnaug} * n` is understood)",
+  "settings.knob.cyberlimbattributebonuscapoverride":
+    "Override the cap on a cyberlimb's Strength / Agility bonus",
+  "settings.knob.dicepenaltysustaining":
+    "Dice penalty per sustained spell or complex form (a number rolled at the table)",
+  "settings.knob.enableenemytracking":
+    "Treat enemies as a contact type (SR4 rules; this app has no enemies)",
+  "settings.knob.enemykarmaqualitylimit":
+    "Count karma from enemies towards the negative quality limit (this app has no enemies)",
+  "settings.knob.essenceformat":
+    "How many decimals Essence prints with (a Chummer display setting)",
+  "settings.knob.exceednegativequalitieslimit":
+    "No karma for negative qualities taken past the limit",
+  "settings.knob.extendanydetectionspell":
+    "Any detection spell may be taken as its extended version (SM 179)",
+  "settings.knob.karmacomplexformoption": "Karma for a complex form option (SR4 legacy)",
+  "settings.knob.karmacomplexformskillsoft": "Karma for a complex form skillsoft (SR4 legacy)",
+  "settings.knob.karmacontact": "Karma per contact point",
+  "settings.knob.karmaenemy": "Karma per point of enemy (this app has no enemies)",
+  "settings.knob.karmaimprovecomplexform": "Karma to raise a complex form",
+  "settings.knob.karmajoingroup": "Karma to join a magical group or network",
+  "settings.knob.karmaleavegroup": "Karma to leave a magical group or network",
+  "settings.knob.karmamaneuver": "Karma per maneuver (SR4 legacy)",
+  "settings.knob.karmametamagic":
+    "Karma for an additional metamagic or echo (this app offers one per initiation grade)",
+  "settings.knob.karmanewaiadvancedprogram": "Karma for an AI advanced program",
+  "settings.knob.karmanewaiprogram": "Karma for an AI program",
+  "settings.knob.karmaquality": "Karma per quality point",
+  "settings.knob.karmaspiritfettering": "Karma per point of Force when fettering a spirit",
+  "settings.knob.knowledgepointsexpression":
+    "The knowledge points formula (only attributes and arithmetic are understood)",
+  "settings.knob.morelethalgameplay": "More lethal gameplay (SR4 75)",
+  "settings.knob.mysadeptsecondmagattribute":
+    "Mystic adepts use a second MAG attribute instead of the power point rules",
+  "settings.knob.nuyenformat": "How many decimals nuyen prints with (a Chummer display setting)",
+  "settings.knob.priorityspellsasadeptpowers":
+    "Spend the free spells from the Magic priority as power points",
+  "settings.knob.registeredspriteexpression":
+    "The formula for registered sprites (only a single attribute is understood)",
+  "settings.knob.reverseattributepriorityorder": "Spend karma on attributes before priority points",
+  "settings.knob.specialkarmacostbasedonshownvalue":
+    "Karma for special attributes (mystic adept power points included) is not reduced by Essence loss",
   "settings.unsupportedHere":
-    "{count} house rule(s) not implemented: {tags} (not reflected in any number here)",
+    "{count} of this ruleset's house rules are not implemented. Numbers and pick lists differ from Chummer by this much:",
+  "settings.unsupportedHarmless":
+    "{count} further setting(s) have no bearing on anything worked out here: {items}",
   "settings.preset": "Ruleset",
   "settings.presetNone": "Unrestricted (all rulebooks)",
   "settings.presetHint":
