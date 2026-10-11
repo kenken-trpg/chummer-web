@@ -12,6 +12,7 @@
 | Chummer5a データの取り込みと翻訳オーバーレイ | [`../data-pipeline.md`](../data-pipeline.md) |
 | デプロイ | [`../deploy.md`](../deploy.md) |
 | UI 文言の 2 レイヤーとロケール追加 | [`../i18n.md`](../i18n.md) |
+| 書き出し（何が出るか・取り込み手順・制限） | [`../exports.md`](../exports.md) |
 | 共有リンクの形式 | [`../share-link.md`](../share-link.md) |
 
 ## 一覧

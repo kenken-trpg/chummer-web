@@ -188,7 +188,7 @@ export const JA_APP = {
   "toolbar.exportFvtt": "FVTT書出",
   "app.exportReview.fvttTitle": "Foundry向けJSONに含まれない項目が {count} 件あります：",
   "toolbar.exportFvttHint":
-    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。能力値・技能・資質のみ",
+    "Foundry VTT（shadowrun5e 0.34.5）の Chummer/Data Import で読める JSON で書き出す。アクターはシステム側が組み立てます。メタタイプ固有の生得パワーは品目にならないので、書き出す前に一覧で知らせます",
   "toolbar.import": "読込 (JSON/.chum5/.xlsx)",
   "toolbar.importHint":
     "読めるのは 4 種類だけです：このアプリで書き出した JSON ／ Foundry VTT（shadowrun5e）のアクターを Export Data した JSON ／ Chummer5a の .chum5・.chum5lz ／ シャドウラン5th 日本版非公式wiki で紹介されている、音の兔（ねのうさ）様の「［SR5］キャラシテンプレート」 を .xlsx で書き出したもの。一般の Excel ブックや他の JSON は読めません",
