@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import type { Character } from "../lib/types";
 import { encodeFragment, waitForEditor } from "./helpers";
 
-/** Imported development character: this does not expose Centaur in chargen. */
+/** Imported character exercises persistence independently of the creation flow. */
 const payload = {
   name: "Centaur persistence",
   metatype: "Centaur",
@@ -64,6 +64,43 @@ const expected = (strength: number) => ({
   purchasedWeapons: [],
   kick: [{ damage: `${strength + 2}P`, ap: "+1", reach: "1" }],
 });
+
+for (const method of ["Priority", "SumToTen", "Karma"]) {
+  test(`a new ${method} character can select Centaur and reload its innate grants`, async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await waitForEditor(page);
+    if (method !== "Priority") {
+      await page
+        .getByRole("button", { name: method === "SumToTen" ? "Sum to Ten" : "Karma", exact: true })
+        .click();
+      await expect.poll(async () => (await currentCharacter(page)).build_method).toBe(method);
+    }
+    await page.getByRole("button", { name: "ルールブックを選ぶ", exact: true }).click();
+    const rf = page.getByRole("checkbox", { name: /\(RF\)/ });
+    if (!(await rf.isChecked())) await rf.click();
+    await expect
+      .poll(async () => (await currentCharacter(page)).settings?.books?.includes("RF"))
+      .toBe(true);
+    await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
+    const candidate = page.getByRole("button", { name: /Centaur|ケンタウロス/ });
+    await expect(candidate).toContainText(method === "Karma" ? "60カルマ" : "25カルマ");
+    await candidate.click();
+    await expect.poll(async () => (await currentCharacter(page)).metatype).toBe("Centaur");
+    const state = await currentCharacter(page);
+    const created = summary(state);
+    expect(state.derived.karma_chargen?.metatype).toBe(method === "Karma" ? 60 : 0);
+    expect(state.derived.karma.spent).toBe(method === "Karma" ? 60 : 25);
+    expect(created.powers).toEqual(["Search", "Natural Weapon"]);
+    expect(created.qualityCount).toBe(4);
+    expect(created.kick).toHaveLength(1);
+    expect(created.magic).toBe(1);
+    await page.reload();
+    await waitForEditor(page);
+    await expect.poll(async () => summary(await currentCharacter(page))).toEqual(created);
+  });
+}
 
 test("Centaur grants and purchased MAG survive share adoption, reload, undo/redo and JSON import", async ({
   page,
@@ -345,10 +382,8 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await waitForEditor(page);
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText(
-    "別の種族を選ぶまで保持されます",
-  );
-  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(1);
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
 
   async function expectRF(enabled: boolean) {
     await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
@@ -380,6 +415,9 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await page.getByRole("checkbox", { name: /\(RF\)/ }).click();
   await expectRF(false);
   await expect(page.getByRole("checkbox", { name: /\(RF\)/ })).not.toBeChecked();
+  await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
+  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText("RF");
   await page.reload();
   await waitForEditor(page);
   await expectRF(false);
@@ -397,6 +435,6 @@ test("disabling RF retains Centaur, warns about its source and survives reload a
   await page.getByRole("button", { name: /やり直し/ }).click();
   await expectRF(true);
   await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText("RF");
-  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(1);
 });

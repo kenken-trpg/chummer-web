@@ -13,9 +13,9 @@ from ..data_loader import CatalogDict, catalog
 from ..engine import all_talent_options, is_way_quality, priority_value, talent_options
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
-#: The five metatypes the priority table offers. Chummer's data has many more
-#: (metavariants, critters); the UI only ever builds from these.
+#: Supported creation options; other metasapients remain excluded.
 CORE_METATYPES = {"Human", "Elf", "Dwarf", "Ork", "Troll"}
+CREATION_METATYPES = CORE_METATYPES | {"Centaur"}
 
 
 def section(raw: CatalogDict) -> dict:
@@ -118,7 +118,7 @@ def _table_for(name: str) -> dict[str, dict[str, dict]]:
             built[cat] = {}
             for letter in "ABCDE":
                 row = priority_value(cat, letter)
-                mets = [m for m in (row.get("metatypes") or []) if m["name"] in CORE_METATYPES]
+                mets = [m for m in (row.get("metatypes") or []) if m["name"] in CREATION_METATYPES]
                 built[cat][letter] = {
                     "name": row.get("name"),
                     "attribute_points": row.get("attribute_points"),
