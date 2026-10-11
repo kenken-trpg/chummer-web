@@ -84,6 +84,25 @@ describe("<SkillsTab> specialisations", () => {
     expect(select.value).toBe("Swords");
     expect(select.disabled).toBe(true);
   });
+
+  it("explains an expertise in the row's tooltip, and only where there is one", () => {
+    const expertise = /熟達（Expertise）/;
+    renderTab({
+      character: { skills: { Blades: 4 }, derived: { skill_totals: { Blades: 4 } } } as never,
+    });
+    expect(screen.queryByText(expertise)).toBeNull();
+
+    renderTab({
+      character: {
+        skills: { Blades: 4 },
+        derived: {
+          skill_totals: { Blades: 4 },
+          skill_expertises: [{ skill: "Blades", spec: "Swords", bonus: 3, source: "Aptitude" }],
+        },
+      } as never,
+    });
+    expect(screen.getByText(expertise)).toBeDefined();
+  });
 });
 
 describe("<SkillsTab> exotic skills", () => {
