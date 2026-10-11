@@ -21,7 +21,7 @@ import uuid
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any, cast
 
-from ..data_loader import catalog
+from ..data_loader import CatalogDict, catalog
 from ..data_loader._xml import _text, parse_untrusted
 from ..models._common import clamp_input_ints
 from ..notices import Notice, NoticeError, notice
@@ -85,7 +85,7 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     return st, st["_warnings"]
 
 
-def _refuse_critters(root: ET.Element, cat: dict[str, Any]) -> None:
+def _refuse_critters(root: ET.Element, cat: CatalogDict) -> None:
     """Say so plainly when the file is a critter rather than a runner.
 
     Chummer builds critters from `critters.xml`, which this app does not load —
