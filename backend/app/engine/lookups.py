@@ -77,6 +77,17 @@ def critter_power_label(row: dict[str, Any]) -> str:
     return f"{row['name']} ({row['select']})" if row.get("select") else str(row["name"])
 
 
+def critter_power_spec(reference: str) -> dict[str, Any] | None:
+    """Resolve an ID first, then the first XML definition with that name.
+
+    Search and Natural Weapon both have later, specialised namesakes. Using
+    the last row silently gives a centaur insect-spirit or drake rules.
+    ID references also let custom data explicitly request a specialised row.
+    """
+    powers = catalog().get("critter_powers") or []
+    return _match_by(powers, "id", reference) or _match_by(powers, "name", reference)
+
+
 def critter_power_rows(names: list[str]) -> list[dict[str, Any]]:
     """Spirit / sprite power names with what SR5 p.394 gives each one.
 
@@ -85,13 +96,12 @@ def critter_power_rows(names: list[str]) -> list[dict[str, Any]]:
     and duration. A name the data does not know still comes back as a row with
     the name alone — the sheet prints it either way.
     """
-    by_name = {str(row.get("name") or ""): row for row in catalog().get("critter_powers") or []}
     rows: list[dict[str, Any]] = []
     for name in names:
         # A spirit names the flavour it comes in — `Engulf (Fire)`, `Enhanced
         # Senses (Smell)` — where the power itself is the part before the
         # bracket, which is what carries the action and the duration.
-        spec = by_name.get(name) or by_name.get(name.split(" (")[0].strip()) or {}
+        spec = critter_power_spec(name) or critter_power_spec(name.split(" (")[0].strip()) or {}
         rows.append(
             {
                 "name": name,
@@ -213,19 +223,16 @@ def _item_by_id(kind: str, item_id: str) -> dict[str, Any] | None:
 def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
     data = catalog()
     by_name: dict[str, dict[str, Any]] = data["all_metatypes"]
-    if variant:
-        base_list: list[dict[str, Any]] = data["metatypes"]
-        for base in base_list:
-            if base.get("name") != name:
-                continue
+    if name in by_name:
+        base = by_name[name]
+        # Resolve within the parent, including metatypes held outside the
+        # public chargen list. A stale variant must not replace this species.
+        if variant:
             metavariants: list[dict[str, Any]] = base.get("metavariants") or []
             for mv in metavariants:
                 if mv.get("name") == variant:
                     return mv
-        if variant in by_name:
-            return by_name[variant]
-    if name in by_name:
-        return by_name[name]
+        return base
     # Not a KeyError: this is reached from a visitor's file — a JSON export, a
     # .chum5 using a custom-data metatype — and the name is what tells them why.
     raise NoticeError(notice("api.unknownMetatype", name=name))

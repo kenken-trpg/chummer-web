@@ -7,9 +7,12 @@ from typing import Any
 import pytest
 from starlette.testclient import TestClient
 
+from app.characters import apply_patch, new_character
 from app.chummer_export import check
 from app.main import app
+from app.models import CharacterCreate, CharacterPatch
 from app.notices import has_key
+from tests.notice_asserts import has
 from tests.test_chummer_export import _rich_state
 
 
@@ -42,3 +45,32 @@ def test_the_endpoint_returns_the_differences() -> None:
     res = TestClient(app).post("/api/characters/chummer/check", json={"state": _rich_state().model_dump()})
     assert res.status_code == 200
     assert res.json() == {"differences": []}
+
+
+def test_core_species_career_conversion_is_also_explained() -> None:
+    state = new_character(CharacterCreate())
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "BOD": 3}))
+    state = apply_patch(state, CharacterPatch(career=True))
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "BOD": 4}))
+    assert check.roundtrip_differences(state) == [
+        {"key": "engine.export.chum5CareerBaseline", "params": {"amount": 20}}
+    ]
+
+
+def test_actual_balance_loss_is_not_hidden_by_career_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
+    state = new_character(CharacterCreate())
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "BOD": 3}))
+    state = apply_patch(state, CharacterPatch(career=True))
+    state = apply_patch(state, CharacterPatch(attributes={**state.attributes, "BOD": 4}))
+    real = check.chum5_to_state
+
+    def lossy(xml: bytes) -> tuple[dict[str, Any], list[Any]]:
+        raw, warnings = real(xml)
+        raw["karma_adjust"] += 1
+        return raw, warnings
+
+    monkeypatch.setattr(check, "chum5_to_state", lossy)
+    out = check.roundtrip_differences(state)
+    assert not has(out, "engine.export.chum5CareerBaseline")
+    assert has(out, "engine.export.karma")
+    assert has(out, "engine.export.changed", kind="engine.kind.other")

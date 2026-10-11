@@ -61,7 +61,8 @@ from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
 from ..pricing import apply_black_market_avail, apply_overclocker, apply_purchase_discounts
-from ..ware import _attach_ware_to_vehicle_mods
+from ..ware import _attach_ware_to_vehicle_mods, _vehicle_hosted_ware_ids, _vehicle_mod_hosts
+from ..ware.vehicles import vehicle_ware_owners
 from .context import Ctx
 from .gear_market import discounted_ids, pick_black_market
 from .gear_rows import resolve_armor_rows, resolve_commlink_rows, resolve_weapon_rows
@@ -109,6 +110,10 @@ def resolve_gear(
     spend["weapons"] += weapon_nuyen
     _append_armor_weapons(weapons, armor_items)
     _append_ware_weapons(weapons, ware_items or [], state, attr_totals)
+    owners = vehicle_ware_owners(state, ware_items or [])
+    for weapon in weapons:
+        if weapon.get("from_ware") and weapon["id"] in owners:
+            weapon["vehicle_id"] = owners[weapon["id"]]
     weapon_accessories, acc_nuyen, acc_warns, acc_errors, special_mod_used = _resolve_weapon_accessories(
         state, weapons, special_modification_limit=special_modification_limit
     )
@@ -158,7 +163,14 @@ def resolve_gear(
     bonus_sources.extend(sensor_bonus)
     _publish_drone_stats(hosts, sensors)
     gear_items, gear_nuyen, gear_warns, gear_errors, gear_bonus = _resolve_misc_gear(
-        state, hosts, weapons, granted_gear
+        state,
+        hosts,
+        weapons,
+        granted_gear,
+        hosted_ware_ids=_vehicle_hosted_ware_ids(ware_items or [], set(_vehicle_mod_hosts(state))),
+        modular_states={
+            str(item["id"]): bool(item["modular_equipped"]) for item in ware_items or [] if "modular_equipped" in item
+        },
     )
     spend["otherGear"] += gear_nuyen
     warnings.extend(gear_warns)
@@ -249,8 +261,8 @@ def gear_phase(ctx: Ctx) -> None:
         ctx.effects["attribute_bonus"][key] = int(ctx.effects["attribute_bonus"].get(key, 0)) + int(
             ctx.gear.get("armor_encumbrance") or 0
         )
-    # Before the weapon modifiers below: a natural weapon is an Unarmed Combat
-    # attack, so a reach or unarmed-AP bonus has to reach it too.
+    # Before the weapon modifiers below, including the optional unarmed
+    # weapon bonuses applied after martial arts have been collected.
     _append_natural_weapons(ctx.gear["weapons"], ctx.effects)
     _append_quality_weapons(ctx.gear["weapons"], ctx.qualities)
     _append_granted_weapons(ctx.gear["weapons"], ctx.effects)

@@ -12,7 +12,7 @@ from typing import Any
 
 from ..._xml import _text, data_root
 from ...bonus import parse_bonus
-from ...requirements import parse_required
+from ...requirements import parse_required, parse_requirement_tree
 from ._common import SPIRIT_ATTR_KEYS
 
 SPELL_CAST_CATEGORIES = frozenset({"Combat", "Detection", "Health", "Illusion", "Manipulation"})
@@ -119,7 +119,7 @@ def load_traditions() -> list[dict[str, Any]]:
     return items
 
 
-def load_critter_powers() -> list[dict[str, Any]]:
+def load_critter_powers(*, include_rules: bool = False) -> list[dict[str, Any]]:
     """The powers a spirit or sprite comes with (SR5 p.394).
 
     `traditions.xml` names them and nothing else, so a spirit's power list
@@ -127,6 +127,10 @@ def load_critter_powers() -> list[dict[str, Any]]:
     each one: mana or physical, the action it takes, its range and how long it
     lasts. Hidden entries are loaded too — a `<hide>` keeps a power out of
     Chummer's own pick lists, but spirits still name it.
+
+    ``include_rules`` is for grant-resolution work. Until power effects are
+    integrated into compute, the shared catalog keeps its descriptive rows;
+    it must not advertise unsupported power bonuses as implemented effects.
     """
     root = data_root("critterpowers.xml")
     if root is None:
@@ -146,6 +150,15 @@ def load_critter_powers() -> list[dict[str, Any]]:
                 "action": _text(el.find("action")),
                 "range": _text(el.find("range")),
                 "duration": _text(el.find("duration")),
+                **(
+                    {
+                        "bonus": parse_bonus(el.find("bonus")),
+                        "required_tree": parse_requirement_tree(el.find("required")),
+                        "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
+                    }
+                    if include_rules
+                    else {}
+                ),
                 "source": _text(el.find("source")),
                 "page": _text(el.find("page")),
             }

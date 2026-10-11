@@ -98,6 +98,7 @@ class Ctx:
     # quality id -> the ware that switches it off (`<disablequality>`)
     disabled_qualities: dict[str, str] = field(default_factory=dict)
     hosted_ware_ids: set[str] = field(default_factory=set)
+    inactive_ware_ids: set[str] = field(default_factory=set)
     ware_attr_bonus: dict[str, int] = field(default_factory=dict)
 
     # --- effects / binders ------------------------------------------------
@@ -106,6 +107,7 @@ class Ctx:
     limb_quality: dict[str, Any] | None = None
     special_key: str | None = None
     talent_start: int = 0
+    special_floors: dict[str, int] = field(default_factory=dict)
     enabled: set[str] = field(default_factory=set)
 
     # --- essence / attributes ------------------------------------------------

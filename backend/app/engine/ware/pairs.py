@@ -52,6 +52,8 @@ def pair_bonus_sources(
     seen: list[tuple[dict[str, Any], dict[str, Any]]] = []
     sources: list[tuple[str, list[dict[str, Any]]]] = []
     for kind, item in installed:
+        if item.get("modular_equipped") is False:
+            continue
         spec = _ware_by_id(kind, str(item.get("ware_id") or ""))
         if not spec:
             continue
@@ -87,7 +89,9 @@ def apply_wireless_pairs(installed: list[tuple[str, dict[str, Any]]]) -> None:
     stacks. Rewrites ``item["bonus"]`` in place so every later reader (the
     effects pass, the chargen cap) sees the paired version.
     """
-    wireless = [(kind, item) for kind, item in installed if item.get("wireless")]
+    wireless = [
+        (kind, item) for kind, item in installed if item.get("wireless") and item.get("modular_equipped") is not False
+    ]
     for kind, item in wireless:
         spec = _ware_by_id(kind, str(item.get("ware_id") or ""))
         if not spec or not spec.get("wirelesspairbonus"):

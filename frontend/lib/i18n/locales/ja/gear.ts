@@ -130,6 +130,10 @@ export const JA_GEAR = {
   // numbers, or game terms that go through `tr` / `t` instead.
   "gear.idleLifestyles": "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
   "weapon.fromGear": " / ギア連動",
+  "weapon.vehicleOwned": "車両内蔵（{name}）・本人の攻撃候補から除外",
+  "weapon.vehicleInventory": "内蔵武器: {list}",
+  "weapon.modularDetached": "義肢切り離し中・攻撃候補から除外",
+  "ware.heldGearInactive": "義肢切り離し中のため、保持装備の改善効果は無効です。",
   "weapon.fromWare": " / ウェア連動",
   "weapon.fromArmor": " / アーマー連動",
   "weapon.includedWithHost": " / 搭載元に付属（無料・外せません）",
@@ -242,5 +246,11 @@ export const JA_GEAR = {
   "ware.essDiscountHint":
     "GM が認めたエッセンスの割引（マイナスは割増）。設定ファイルが ESS 割引を許しているときだけ出る",
 
+  "ware.modularMount": "モジュラー接続先",
+  "ware.modularMountFor": "{name}: モジュラー接続先",
+  "ware.modularDetached": "切り離す（所有を保持）",
+  "ware.modularCurrentInvalid": "現在の接続先（条件不一致）: {name}",
+  "ware.modularInactive": "切り離し状態・改善効果は無効",
+  "ware.modularActive": "接続中",
   "ware.target": "対象",
 } as const;

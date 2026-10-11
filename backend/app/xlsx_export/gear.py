@@ -69,6 +69,9 @@ def _bought(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out of something else — a Hand Blade is the weapon side of an implant, and a
     grenade is the weapon side of a piece of gear — are all put back when the
     character is computed again, so writing them would buy them twice.
+    Species-granted weapons are excluded too. If the species itself cannot
+    survive this template, the round-trip check reports the lost grant rather
+    than making its natural weapon an independently owned purchase.
     """
     return [
         row
@@ -80,6 +83,7 @@ def _bought(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         and (not row.get("granted_by") or row.get("parts_supply"))
         and not row.get("from_gear")
         and not row.get("from_ware")
+        and row.get("origin") != "Metatype"
     ]
 
 

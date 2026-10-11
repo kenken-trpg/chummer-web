@@ -10,9 +10,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const preview = vi.fn();
 const importFn = vi.fn();
+const loadCatalog = vi.fn();
 vi.mock("@/lib/api", () => ({
   api: {
-    catalog: () => Promise.resolve(makeCatalog()),
+    catalog: (settings: unknown) => loadCatalog(settings),
     preview: (p: unknown) => preview(p),
     import: (p: unknown) => importFn(p),
   },
@@ -28,6 +29,8 @@ beforeEach(() => {
   push.mockReset();
   preview.mockReset();
   importFn.mockReset();
+  loadCatalog.mockReset();
+  loadCatalog.mockResolvedValue(makeCatalog());
   setHash("");
 });
 
@@ -75,6 +78,32 @@ it("reports a corrupt fragment instead of calling the backend", async () => {
   await screen.findByText(MESSAGES.ja["share.err.corrupt"]);
   expect(screen.getByRole("alert").textContent).toBe(MESSAGES.ja["share.err.corrupt"]);
   expect(preview).not.toHaveBeenCalled();
+});
+
+it("loads the display catalog for the validated shared character's custom data", async () => {
+  const shared = makeCharacter({
+    metatype: "Centaur",
+    settings: { name: "Shared", dataset: "incoming", customdata: ["table>1"] },
+  });
+  const validated = makeCharacter({
+    ...shared,
+    settings: { name: "Shared", dataset: "validated", customdata: ["table>2"] },
+  });
+  preview.mockResolvedValue(validated);
+  setHash(SHARE_PREFIX + (await encodeShare(shared)));
+  render(<SharePage />);
+  await screen.findByText("共有ビュー（読み取り専用）");
+  expect(loadCatalog).toHaveBeenCalledExactlyOnceWith(validated.settings);
+});
+
+it("does not show a sheet with a different catalog when the shared catalog fails", async () => {
+  preview.mockResolvedValue(makeCharacter({ metatype: "Centaur" }));
+  loadCatalog.mockRejectedValue(new Error("catalog unavailable"));
+  setHash(SHARE_PREFIX + (await encodeShare(makeCharacter({ metatype: "Centaur" }))));
+  render(<SharePage />);
+  expect((await screen.findByRole("alert")).textContent).toContain("catalog unavailable");
+  expect(screen.queryByText("共有ビュー（読み取り専用）")).toBeNull();
+  expect(importFn).not.toHaveBeenCalled();
 });
 
 it("reports a link with no payload", async () => {

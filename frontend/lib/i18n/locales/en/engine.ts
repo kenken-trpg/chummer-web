@@ -1,5 +1,9 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — English。 */
 export const EN_ENGINE = {
+  "engine.meta.invalidVariant":
+    "{name} is not a variant of {metatype}; the variant selection was cleared.",
+  "engine.meta.unknownGrant":
+    "The definition of {metatype}'s innate ability {name} was not found. Check your custom data.",
   "engine.gear.deckBuilderTarget": "Select the deck receiving Deck Builder’s additional slot",
   "engine.gear.moduleInvalid": "{name} has an invalid module host",
   "engine.gear.modulesOver": "{name} exceeds its module pool limit ({pool}: {used}/{max})",
@@ -297,6 +301,14 @@ export const EN_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con cannot have restricted ware ({name})",
   "engine.ware.gradeBanned": "{name} cannot use the {grade} grade (switched to {fallback})",
   "engine.ware.metatypeOnly": "{name} is only for {needed}",
+  "engine.ware.modularMountMismatch": "{name} requires a {mount} modular mount on {parent}",
+  "engine.ware.modularMountBlocked":
+    "{name}: {side} {mount} modular mount is blocked by installed parts ({used}/{max})",
+  "engine.ware.bodyMounts": "Body",
+  "engine.ware.modularGradeMismatch":
+    "{name} ({grade}) must have the same grade as {parent} ({parent_grade})",
+  "engine.ware.modularMountOccupied":
+    "{name} has {count} modular parts connected ({children}); only one is allowed per mount",
   "engine.ware.redlinerIncompatible":
     "Redliner does not stack with {needed} (limb customisation/enhancement is fine)",
   "engine.ware.pickTarget": "Choose the implant {name} is keyed to",
@@ -435,6 +447,10 @@ export const EN_ENGINE = {
   "engine.kind.knowledgeSkill": "knowledge skill",
   "engine.kind.other": "other field",
   "engine.export.lost": "{count} {kind} entries are lost",
+  "engine.export.chum5CareerBaseline":
+    "When the .chum5 is read back, the previous {amount}K advancement cost becomes a balance adjustment, keeping the remaining karma. Future advancement is priced from the ratings at import",
+  "engine.export.fvttInnatePower":
+    "Innate power {name} {selection} ({source} p.{page}) is not included in the Foundry JSON. Add it separately in Foundry",
   "engine.export.gained": "{count} extra {kind} entries appear",
   "engine.export.changed": "{kind} entries change",
   "engine.export.karma": "karma left goes {before} → {after}",
@@ -446,6 +462,8 @@ export const EN_ENGINE = {
     "{name} is fitted to something the equipment sheet does not hold, so it is left out",
   "engine.export.xlsxNoSettings":
     "the sheet has no cell for the settings (which rulebooks and house rules are in play), so “{name}” is not carried: what is read back uses the default settings",
+  "engine.export.xlsxInnateGrant":
+    "Innate grant {name} {selection} ({source} p.{page}) is lost when exported to .xlsx and read back",
   "engine.side.Left": "left",
 
   "engine.side.Right": "right",

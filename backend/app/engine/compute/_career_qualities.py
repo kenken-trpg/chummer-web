@@ -63,6 +63,7 @@ def career_quality_karma(
             delta += -karma
         costs.append(cost)
     removed: list[dict[str, Any]] = []
+    innate = {q["id"] for q in qualities if q.get("origin") == "Metatype"}
     for qid, held in base.items():
         gone = held - seen[qid]
         if gone <= 0:
@@ -71,6 +72,12 @@ def career_quality_karma(
         if not gone_spec:
             continue
         karma = int(gone_spec["karma"])
+        if qid in innate:
+            # The paid record is still held, but the current species supplies
+            # the effect for free. Preserve its chargen spend/gain without
+            # reporting a deletion or a buy-off that never happened.
+            delta += karma * gone
+            continue
         if karma < 0:
             # the chargen gain stays; the buy-off is paid on top
             cost = -karma * _mult(gone_spec, refund=True)

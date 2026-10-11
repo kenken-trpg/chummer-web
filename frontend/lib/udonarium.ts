@@ -167,7 +167,9 @@ export function buildUdonariumPalette(
       return true;
     });
   };
-  const weapons = d.weapons || [];
+  const weapons = (d.weapons || []).filter(
+    (weapon) => weapon.modular_equipped !== false && !weapon.vehicle_id,
+  );
   const ranged = distinct(weapons.filter((w) => (w.type || "") !== "Melee"));
   const melee = distinct(weapons.filter((w) => (w.type || "") === "Melee"));
 
@@ -852,7 +854,10 @@ export function buildVehiclePieces(
     const sensor = Number.parseInt(String(v.sensor ?? ""), 10) || 0;
     // the guns bolted into this one: the mount links to a weapon row of the
     // character, and `mounted_on` is the back-reference the engine sets
-    const guns = (d.weapons || []).filter((w) => w.mounted_on === v.id);
+    const guns = (d.weapons || []).filter(
+      (w) => w.mounted_on === v.id && w.modular_equipped !== false,
+    );
+    const implants = (d.weapons || []).filter((w) => w.vehicle_id === v.id);
     // an autosoft loaded into this one, whether the player put it there or
     // the drone's own entry brought it
     const autosofts = (d.programs || []).filter((p) => p.parent_id === v.id);
@@ -953,6 +958,9 @@ export function buildVehiclePieces(
             list: autosofts.map((p) => p.label || tr(p.name)).join(ui("common.listSep")),
           })
         : ui("udo.autosoftsNone"),
+      implants.length
+        ? ui("weapon.vehicleInventory", { list: implants.map(gunInfo).join(ui("common.listSep")) })
+        : "",
       ui("udo.vehicleNote"),
     ].filter(Boolean);
 

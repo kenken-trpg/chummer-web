@@ -4,9 +4,14 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { withOriginal } from "@/lib/character/format";
 import { priorityTableFor } from "@/lib/character/priority-table";
+import { critterPowerRow } from "@/lib/spell-terms";
 
-export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps) {
+export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
+  const candidates =
+    (ch.build_method || "Priority") === "Karma"
+      ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
+      : table.Heritage[ch.priorities.Heritage].metatypes;
 
   return (
     <div className="card">
@@ -23,15 +28,14 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
           {ui("help.meta.statsLabel")}
         </HelpTip>
       </p>
+      {!candidates.some((m) => m.name === ch.metatype) ? (
+        <p role="status" className="muted">
+          {ui("meta.retained", { name: tr(ch.metatype) })}
+          {d.metatype_info.source ? ` / ${d.metatype_info.source}` : ""}
+        </p>
+      ) : null}
       <div className="grid">
-        {((ch.build_method || "Priority") === "Karma"
-          ? catalog.metatypes.map((m) => ({
-              name: m.name,
-              special: 0,
-              karma: m.karma ?? 0,
-            }))
-          : table.Heritage[ch.priorities.Heritage].metatypes
-        ).map((m) => (
+        {candidates.map((m) => (
           <button
             key={m.name}
             className={`choice ${ch.metatype === m.name ? "selected" : ""}`}
@@ -87,6 +91,25 @@ export function MetaTab({ catalog, character: ch, tr, ui, patch }: TabPanelProps
           </select>
         </label>
       </div>
+      {d.metatype_info.powers?.length ? (
+        <section style={{ marginTop: 12 }}>
+          <h3>{ui("meta.innatePowers")}</h3>
+          <p className="muted">{ui("meta.innate", { name: tr(ch.metatype) })}</p>
+          <ul className="critter-powers">
+            {d.metatype_info.powers.map((power, index) => (
+              <li key={`${power.id}-${index}`}>
+                {critterPowerRow(power, tr, ui)}
+                <span className="muted">
+                  {" "}
+                  / {power.source} p.{power.page}
+                </span>
+                {power.select ? <div className="muted">{power.select}</div> : null}
+                {power.rating ? <div className="muted">{power.rating}</div> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

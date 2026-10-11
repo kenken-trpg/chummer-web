@@ -31,6 +31,7 @@ from ..magic import spell_defense_pools, spell_karma_cost
 from ..priority import priorities_are_unique, sum_to_ten_spent
 from ..resonance import living_persona
 from ..ware import _public_installed, ware_ranges
+from ..ware.limbs import body_limb_slots
 from ._assemble_books import _out_of_book_warning
 from ._assemble_qualities import metatype_info, quality_rows
 from .context import Ctx
@@ -396,6 +397,7 @@ def assemble(ctx: Ctx) -> None:
         "bioware": [_public_installed(item) for item in ctx.bio_installed],
         "ware_ranges": ware_ranges(ctx.attrs_spec),
         "limb_replace": ctx.limb_replace,
+        "body_limb_slots": body_limb_slots(ctx.effects["extra_limbs"]),
         "limb_quality": ctx.limb_quality,
         "talent": ctx.talent,
         "metatype_info": metatype_info(ctx, clamped),

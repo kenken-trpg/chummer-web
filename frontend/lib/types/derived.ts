@@ -40,6 +40,16 @@ export type * from "./rows/lifestyle";
 export type * from "./rows/vehicles";
 export type * from "./rows/ware";
 
+/** Calculated movement for one medium, with its unmodified rates. */
+export interface MovementMode {
+  rates: { walk: number; run: number; sprint: number };
+  available: boolean;
+  walk: string;
+  run: string;
+  sprint: string;
+  sprint_bonus: number;
+}
+
 /** The engine's output — what `compute()` publishes back beside the state.
  *
  * The Python side types the top-level key set as
@@ -138,7 +148,14 @@ export interface Derived {
   astral_initiative?: { value: number; dice: number } | null;
   /** Ground walk / run in metres, sprint in metres per hit (Chummer's
    *  `CalculatedMovement("Ground")`). */
-  movement: { walk: string; run: string; sprint: string; sprint_bonus: number };
+  movement: {
+    walk: string;
+    run: string;
+    sprint: string;
+    sprint_bonus: number;
+    /** Optional for characters cached before movement modes were introduced. */
+    modes?: Record<string, MovementMode>;
+  };
   essence: number;
   armor: number;
   special_armor?: SpecialArmor;
@@ -485,6 +502,11 @@ export interface Derived {
     selectside?: boolean;
     side?: string | null;
     free?: boolean;
+    origin?: "Metatype";
+    origin_id?: string;
+    origin_name?: string;
+    removable?: boolean;
+    page?: string;
     /** the table karma, when a `<costdiscount>` condition changed it */
     karma_base?: number | null;
     /** the ware that switches this quality off (`<disablequality>`, RF p.148) */
@@ -507,6 +529,7 @@ export interface Derived {
   essence_lost_cyber?: number;
   essence_lost_bio?: number;
   ware_ranges?: Record<string, { min: number; max: number }>;
+  body_limb_slots?: Record<string, number>;
   limb_replace?: {
     count: number;
     parts: number;
@@ -533,6 +556,14 @@ export interface Derived {
     /** `<replaceattributes>`: the qualities these ranges come from instead of
      *  the metatype (the Infected qualities, Quadriplegic). */
     attributes_replaced_by?: string[];
+    powers?: (CritterPower & {
+      id: string;
+      select: string;
+      rating: string;
+      origin: "Metatype";
+      origin_id: string;
+      origin_name: string;
+    })[];
   };
   talent?: {
     name: string;

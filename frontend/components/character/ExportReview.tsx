@@ -8,7 +8,7 @@ import { ReviewPanel } from "./ReviewPanel";
  * no row for, or a program inside a commlink the character sheet has no cell
  * for) or go back and change the character first.
  *
- * Shared by both formats that have to be read back out of a file: which one was
+ * Shared by the checked export formats: which one was
  * asked for is the editor's to remember, so confirming writes the right one.
  *
  * Equipment rows still waiting to be confirmed are counted here as well. Those
@@ -26,10 +26,18 @@ export function ExportReview({ ed }: { ed: CharacterEditor }) {
       id="export-review-title"
       title={
         exportReview.length
-          ? ui("app.exportReview.title", {
-              count: exportReview.length,
-              format: `.${exportReviewFormat ?? "chum5"}`,
-            })
+          ? ui(
+              exportReviewFormat === "fvtt"
+                ? "app.exportReview.fvttTitle"
+                : "app.exportReview.title",
+              {
+                count: exportReview.length,
+                format:
+                  exportReviewFormat === "fvtt"
+                    ? "Foundry VTT JSON"
+                    : `.${exportReviewFormat ?? "chum5"}`,
+              },
+            )
           : ui("app.exportReview.unsettled", { count: unsettled })
       }
       notices={exportReview}

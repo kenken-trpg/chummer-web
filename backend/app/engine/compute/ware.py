@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ...data_loader import catalog_ware
+from ...improvements import collect_effects
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CyberwareInstall
 from ..gear.misc_hosts import ware_gear_costs
@@ -15,7 +17,6 @@ from ..limits import (
     _ware_attribute_bonuses,
 )
 from ..lookups import _quality_by_id, _quality_by_name, _ware_by_name
-from ..qualities import resolve_quality_sides
 from ..skills import ware_accuracy_picks
 from ..ware import (
     _vehicle_hosted_ware_ids,
@@ -25,7 +26,10 @@ from ..ware import (
     has_adapsin,
     resolve_ware,
 )
+from ..ware.modular import check_modular_mounts
+from ..ware.mount_blocks import check_mount_blocks
 from ..ware.pairs import apply_wireless_pairs, pair_bonus_sources
+from ..ware.sides import ensure_sides
 from ..ware.vehicles import vehicle_ware_extras
 from .context import Ctx
 
@@ -81,13 +85,44 @@ def ware(ctx: Ctx) -> None:
     )
     _mark_granted(ctx.bio_installed, bio_sources)
     _mark_granted(ctx.cyber_installed, cyber_sources)
-    resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors)
+    ctx.errors.extend(
+        check_modular_mounts(
+            ctx.cyber_installed,
+            {str(row["id"]): row for row in catalog_ware("cyberware").get("items") or []},
+        )
+    )
+    # Resolve sides once species, quality and ware addlimb bonuses are known,
+    # before wireless pairing consumes the sides on the resolved rows.
+    hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
+    side_sources = ctx.sources + [
+        (item["name"], item.get("bonus") or [])
+        for item in ctx.cyber_installed + ctx.bio_installed
+        if item.get("id") not in hosted_ids
+    ]
+    extra_limbs = collect_effects(side_sources)["extra_limbs"]
+    for kind, installs, rows in (
+        ("cyberware", ctx.state.cyberware, ctx.cyber_installed),
+        ("bioware", ctx.state.bioware, ctx.bio_installed),
+    ):
+        ensure_sides(kind, installs, extra_limbs)
+        by_id = {inst.id: inst for inst in installs}
+        for row in rows:
+            if row["id"] in by_id:
+                row["side"] = by_id[row["id"]].side
+    ctx.errors.extend(
+        check_mount_blocks(
+            [item for item in ctx.cyber_installed if item.get("id") not in hosted_ids],
+            {str(row["id"]): row for row in catalog_ware("cyberware").get("items") or []},
+            extra_limbs,
+        )
+    )
     ctx.warnings.extend(check_ware_targets("cyberware", ctx.state.cyberware, ctx.cyber_installed))
     ctx.warnings.extend(check_ware_targets("bioware", ctx.state.bioware, ctx.bio_installed))
     _finalize_avail_tree(ctx.cyber_installed, grade_kind="cyberware")
     _finalize_avail_tree(ctx.bio_installed, grade_kind="bioware")
     _zero_vehicle_hosted_essence(ctx.cyber_installed, vehicle_hosts)
     ctx.installed = ctx.cyber_installed + ctx.bio_installed
+    ctx.inactive_ware_ids = {str(item["id"]) for item in ctx.installed if item.get("modular_equipped") is False}
     hosted_ids = _vehicle_hosted_ware_ids(ctx.cyber_installed, vehicle_hosts)
     ctx.hosted_ware_ids = set(hosted_ids)
     apply_wireless_pairs(
@@ -114,7 +149,7 @@ def ware(ctx: Ctx) -> None:
     picks = ctx.state.skill_picks or {}
     optimized = {
         inst_id: str(picks.get(key) or "")
-        for key, _name, _kind, inst_id, _node in ware_accuracy_picks(ctx.state, hosted_ids)
+        for key, _name, _kind, inst_id, _node in ware_accuracy_picks(ctx.state, hosted_ids | ctx.inactive_ware_ids)
     }
     ctx.sources.extend(
         pair_bonus_sources(

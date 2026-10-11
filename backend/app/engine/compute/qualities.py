@@ -24,9 +24,12 @@ from ..qualities import (
     bind_action_dice_pools,
     bind_select_powers,
     gather_qualities,
+    resolve_quality_sides,
 )
 from ..skills import bind_ware_skill_accuracy
+from ..special_attributes import special_attribute_floors
 from ..ware import _clamp_ware_grades, apply_cyberseeker, redliner_incompat_warnings
+from ..ware.sides import _side_conflicts
 from .context import Ctx
 
 
@@ -61,7 +64,13 @@ def gather(ctx: Ctx) -> None:
     ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
     ctx.state.talent = ctx.talent["name"]
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
-    ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent)
+    quality_grants = ctx.meta.get("quality_grants") or []
+    power_grants = ctx.meta.get("power_grants") or []
+    for grant in quality_grants + power_grants:
+        if grant.get("unresolved"):
+            ctx.warn("engine.meta.unknownGrant", name=term(grant["name"]), metatype=term(ctx.meta["name"]))
+    ctx.sources.extend((p["name"], p.get("bonus") or []) for p in power_grants if not p.get("unresolved"))
+    ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent, quality_grants)
     for name in dropped_qualities:
         ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
     quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
@@ -114,13 +123,17 @@ def effects_and_binders(ctx: Ctx) -> None:
         quality_names = {q["name"] for q in ctx.qualities}
         ctx.sources = [(name, nodes) for name, nodes in ctx.sources if not (name in off and name in quality_names)]
     ctx.effects = collect_effects(ctx.sources)
+    extra_limbs = ctx.effects["extra_limbs"]
+    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware, extra_limbs))
+    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware, extra_limbs))
+    resolve_quality_sides(ctx.qualities, ctx.state, ctx.cyber_installed, ctx.bio_installed, ctx.errors, extra_limbs)
     apply_excon_ware_ban(ctx.cyber_installed + ctx.bio_installed, bool(ctx.effects.get("excon")), ctx.errors)
     bind_action_dice_pools(ctx.effects, ctx.qualities, ctx.state)
     bind_spell_spirit_limits(ctx.effects, ctx.qualities, ctx.state, ctx.errors)
     bind_spell_category_drain_damage(ctx.effects, ctx.qualities, ctx.state)
     bind_weapon_category_dv(ctx.effects, ctx.qualities, ctx.state, ctx.warnings)
     bind_weapon_skill_accuracy(ctx.effects, ctx.qualities, ctx.state, ctx.warnings, ctx.data["skills"])
-    bind_ware_skill_accuracy(ctx.effects, ctx.state, ctx.data["skills"], ctx.hosted_ware_ids)
+    bind_ware_skill_accuracy(ctx.effects, ctx.state, ctx.data["skills"], ctx.hosted_ware_ids | ctx.inactive_ware_ids)
     apply_granted_spells(ctx.state, ctx.effects, ctx.qualities, ctx.warnings)
     bind_select_powers(
         ctx.effects,
@@ -147,7 +160,9 @@ def effects_and_binders(ctx: Ctx) -> None:
     for key, value in attr_max_mods.items():
         ctx.attr_max_bonus[key] = int(ctx.attr_max_bonus.get(key) or 0) + int(value)
     seeker_targets = ctx.effects.get("cyberseeker") or []
-    ctx.limb_quality = apply_cyberseeker(ctx.cyber_installed, seeker_targets, ctx.attrs_spec, ctx.state.options)
+    ctx.limb_quality = apply_cyberseeker(
+        ctx.cyber_installed, seeker_targets, ctx.attrs_spec, ctx.state.options, ctx.effects["extra_limbs"]
+    )
     ctx.warnings.extend(redliner_incompat_warnings(ctx.installed, seeker_targets))
     if ctx.limb_quality:
         for key, value in (ctx.limb_quality.get("attribute_bonus") or {}).items():
@@ -159,6 +174,6 @@ def effects_and_binders(ctx: Ctx) -> None:
     ctx.special_key, ctx.talent_start = talent_special(ctx.talent)
     if ctx.is_karma and ctx.special_key:
         ctx.talent_start = 1
+    ctx.special_floors = special_attribute_floors(ctx.meta, ctx.talent, is_karma=ctx.is_karma)
     ctx.enabled = set(ctx.effects["enabled_tabs"])
-    if ctx.special_key:
-        ctx.enabled.add(ctx.special_key)
+    ctx.enabled.update(ctx.special_floors)

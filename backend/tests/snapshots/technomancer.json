@@ -39,6 +39,12 @@
   "black_market_discount": false,
   "block_spell_descriptors": [],
   "blocked_default_categories": [],
+  "body_limb_slots": {
+    "arm": 2,
+    "leg": 2,
+    "skull": 1,
+    "torso": 1
+  },
   "build_method": "Priority",
   "burnout_way": false,
   "career": false,
@@ -372,6 +378,44 @@
     "source": "SR5"
   },
   "movement": {
+    "modes": {
+      "Fly": {
+        "available": false,
+        "rates": {
+          "run": 0.0,
+          "sprint": 0.0,
+          "walk": 0.0
+        },
+        "run": "0",
+        "sprint": "0",
+        "sprint_bonus": 0,
+        "walk": "0"
+      },
+      "Ground": {
+        "available": true,
+        "rates": {
+          "run": 4.0,
+          "sprint": 2.0,
+          "walk": 2.0
+        },
+        "run": "4",
+        "sprint": "2",
+        "sprint_bonus": 0,
+        "walk": "2"
+      },
+      "Swim": {
+        "available": true,
+        "rates": {
+          "run": 0.0,
+          "sprint": 1.0,
+          "walk": 1.0
+        },
+        "run": "0",
+        "sprint": "1",
+        "sprint_bonus": 0,
+        "walk": "1"
+      }
+    },
     "run": "4",
     "sprint": "2",
     "sprint_bonus": 0,

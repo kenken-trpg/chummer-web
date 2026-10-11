@@ -19,8 +19,8 @@ def _id_name(rows: list[dict[str, Any]]) -> dict[str, str]:
 
 #: `_id_name` maps per catalog bucket, built once and read by most sections.
 _Names = dict[str, dict[str, str]]
-#: The little that is neither the state nor a name map: the metatype's
-#: attribute minimums, which only the attribute section needs.
+#: Resolved metatype (including innate grants), its attribute minimums,
+#: and the computed derived payload used by the individual sections.
 _Ctx = dict[str, Any]
 
 

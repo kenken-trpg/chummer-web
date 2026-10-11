@@ -131,6 +131,10 @@ export const EN_GEAR = {
   // --- sidebar ----------------------------------------------------------
   "gear.idleLifestyles": "Showing the core lifestyles only (search to reach the supplements)",
   "weapon.fromGear": " / linked to gear",
+  "weapon.vehicleOwned": "Installed in {name}; excluded from personal attacks",
+  "weapon.vehicleInventory": "Implanted weapons: {list}",
+  "weapon.modularDetached": "Limb detached; excluded from attack options",
+  "ware.heldGearInactive": "Held gear improvements are inactive while the limb is detached.",
   "weapon.fromWare": " / linked to ware",
   "weapon.fromArmor": " / linked to armor",
   "weapon.includedWithHost": " / comes with its host (free, cannot be removed)",
@@ -242,5 +246,11 @@ export const EN_GEAR = {
   "ware.essDiscountHint":
     "An essence discount the GM allowed (negative costs more). Only offered when the settings file allows essence discounts",
 
+  "ware.modularMount": "Modular mount",
+  "ware.modularMountFor": "{name}: Modular mount",
+  "ware.modularDetached": "Detach (keep owned)",
+  "ware.modularCurrentInvalid": "Current mount (incompatible): {name}",
+  "ware.modularInactive": "Detached; improvements inactive",
+  "ware.modularActive": "Connected",
   "ware.target": "Target",
 };

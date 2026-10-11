@@ -33,6 +33,35 @@ function renderTab(
 }
 
 describe("<QualitiesTab>", () => {
+  it("labels innate qualities and provides no delete button even for a purchased overlap", () => {
+    renderTab({
+      character: {
+        metatype: "Centaur",
+        quality_ids: ["magic-sense"],
+        derived: {
+          qualities: [
+            {
+              id: "magic-sense",
+              name: "Magic Sense",
+              category: "Positive",
+              source: "RF",
+              karma: 0,
+              free: true,
+              origin: "Metatype",
+              origin_id: "centaur",
+              origin_name: "Centaur",
+              removable: false,
+            },
+          ],
+        },
+      },
+    });
+    const row = document.querySelector<HTMLElement>(".card > .quality-item")!;
+    expect(within(row).getByText(/Centaurの生得能力（追加カルマなし）/)).toBeDefined();
+    expect(within(row).getByText("生得付与・削除不可")).toBeDefined();
+    expect(within(row).queryByRole("button", { name: "削除" })).toBeNull();
+  });
+
   it("puts each skill choice in its owned quality row and preserves other choices on save", () => {
     const patch = vi.fn();
     const qualities = [

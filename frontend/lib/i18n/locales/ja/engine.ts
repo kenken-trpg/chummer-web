@@ -1,5 +1,8 @@
 /** エンジンが出す注意と警告（バックエンドの notices と対になる） — 日本語。 */
 export const JA_ENGINE = {
+  "engine.meta.invalidVariant": "{name}は{metatype}の亜種ではないため、亜種指定を解除しました。",
+  "engine.meta.unknownGrant":
+    "{metatype}の生得能力「{name}」の定義が見つかりません。カスタムデータを確認してください。",
   "engine.gear.deckBuilderTarget": "Deck Builderの対象デッキを選択してください",
   "engine.gear.moduleInvalid": "{name} のモジュール搭載先が不正です",
   "engine.gear.modulesOver": "{name} のモジュール枠が上限超過（{pool}: {used}/{max}）",
@@ -293,6 +296,15 @@ export const JA_ENGINE = {
   "engine.ware.exconRestricted": "Ex-Con は制限ウェアを装着できません（{name}）",
   "engine.ware.gradeBanned": "{name} は {grade} グレードを使えません（{fallback} に変更）",
   "engine.ware.metatypeOnly": "{name} は {needed} 専用です",
+  "engine.ware.modularMountMismatch":
+    "{name} の接続先 {parent} には {mount} モジュラーマウントが必要です",
+  "engine.ware.modularGradeMismatch":
+    "{name}（{grade}）は接続先 {parent}（{parent_grade}）と同じグレードにしてください",
+  "engine.ware.modularMountBlocked":
+    "{name}：{side} {mount} モジュラーマウントが装着済みの部品により占有されています（{used}/{max}）",
+  "engine.ware.bodyMounts": "全身",
+  "engine.ware.modularMountOccupied":
+    "{name} にモジュラー部品が {count} 件接続されています（{children}）。1マウントにつき1件までです",
   "engine.ware.pickTarget": "{name} の対象インプラントを選んでください",
   "engine.ware.redlinerIncompatible": "Redliner は {needed} と併用できません（肢の特注・強化は可）",
   "engine.ware.requires": "{name} には {needed} が必要です",
@@ -432,6 +444,10 @@ export const JA_ENGINE = {
   "engine.kind.knowledgeSkill": "知識技能",
   "engine.kind.other": "その他の項目",
   "engine.export.lost": "{kind}が {count} 件失われます",
+  "engine.export.chum5CareerBaseline":
+    ".chum5を再読込すると、これまでの成長費用{amount}Kは残高調整へ移り、残りカルマは保持されます。以後の成長は再読込時の能力値・技能を基準に計算します",
+  "engine.export.fvttInnatePower":
+    "生得パワー「{name}」 {selection}（{source} p.{page}）はFoundry向けJSONに含まれません。Foundryで別途追加してください",
   "engine.export.gained": "{kind}が {count} 件増えます",
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",
@@ -443,6 +459,8 @@ export const JA_ENGINE = {
   "engine.export.xlsxNoPlace": "{name}は取り付け先が装備シートにないので書き出せません",
   "engine.export.xlsxNoSettings":
     "キャラシには設定（使用ルールブック・ハウスルール）の欄がないので、設定「{name}」は引き継げません。読み込み直したキャラクターは既定の設定になります",
+  "engine.export.xlsxInnateGrant":
+    "生得付与「{name}」 {selection}（{source} p.{page}）は.xlsxへの書き出し・再読込で失われます",
   "engine.side.Left": "左",
 
   "engine.side.Right": "右",

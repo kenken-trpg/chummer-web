@@ -94,13 +94,25 @@ class MartialBundle(TypedDict):
     bonus_sources: list[BonusSource]
 
 
+class MovementModeBundle(TypedDict):
+    """One movement medium; rates retain the XML/replacement before bonuses."""
+
+    rates: dict[str, float]
+    available: bool
+    walk: str
+    run: str
+    sprint: str
+    sprint_bonus: int
+
+
 class MovementBundle(TypedDict):
-    """``resolve_movement`` — Ground walk / run in metres, sprint in metres per hit."""
+    """Ground compatibility fields plus Ground / Swim / Fly calculations."""
 
     walk: str
     run: str
     sprint: str
     sprint_bonus: int
+    modes: dict[str, MovementModeBundle]
 
 
 class InitiationBundle(TypedDict):
@@ -313,7 +325,7 @@ def empty_martial() -> MartialBundle:
 
 
 def empty_movement() -> MovementBundle:
-    return MovementBundle(walk="", run="", sprint="", sprint_bonus=0)
+    return MovementBundle(walk="", run="", sprint="", sprint_bonus=0, modes={})
 
 
 def empty_initiation() -> InitiationBundle:

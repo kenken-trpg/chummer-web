@@ -298,6 +298,18 @@ describe("api.checkXlsxExport", () => {
 });
 
 describe("api.exportFvtt", () => {
+  it("checks known omissions without changing local storage", async () => {
+    const state = makeCharacter({ id: "a" });
+    const differences = [
+      { key: "engine.export.fvttInnatePower", params: { name: { tr: "Search" } } },
+    ];
+    respond = () => json({ differences });
+    expect(await api.checkFvttExport(state)).toEqual(differences);
+    expect(calls[0].path).toBe("/api/characters/fvtt/check");
+    expect(body(calls[0])).toEqual({ state });
+    expect(await local.listCharacters()).toEqual([]);
+  });
+
   it("sends the state with the display locale and returns the blob", async () => {
     const state = makeCharacter({ id: "a" });
     respond = () => json({ characters: { character: {} } });

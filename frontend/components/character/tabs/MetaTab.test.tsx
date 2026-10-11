@@ -35,6 +35,78 @@ function renderTab(
 }
 
 describe("<MetaTab>", () => {
+  it.each(["Priority", "SumToTen", "Karma"])(
+    "identifies an imported metatype outside the %s candidates without making it selectable",
+    (build_method) => {
+      const patch = vi.fn();
+      renderTab({
+        patch,
+        character: {
+          metatype: "Centaur",
+          build_method,
+          derived: {
+            metatype_info: { name: "Centaur", source: "RF", parent: null, attributes: {} },
+          },
+        },
+      });
+      expect(screen.getByRole("status").textContent).toContain("現在の種族「Centaur」");
+      expect(screen.getByRole("status").textContent).toContain("別の種族を選ぶまで保持");
+      expect(screen.getByRole("status").textContent).toContain("RF");
+      expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
+      expect(patch).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not show the retained-metatype note for a normal candidate", () => {
+    renderTab({ character: { metatype: "Human" } });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("lets the player explicitly replace a retained metatype with an available choice", () => {
+    const patch = vi.fn();
+    renderTab({ character: { metatype: "Centaur" }, patch });
+    fireEvent.click(screen.getByRole("button", { name: /Human/ }));
+    expect(patch).toHaveBeenCalledWith({ metatype: "Human", metavariant: null });
+  });
+
+  it("shows fixed metatype powers with action, source and the original selection", () => {
+    renderTab({
+      character: {
+        metatype: "Centaur",
+        derived: {
+          metatype_info: {
+            name: "Centaur",
+            parent: null,
+            source: "RF",
+            attributes: {},
+            powers: [
+              {
+                id: "9fc065db-9d63-4e8b-aba9-e19dfba07652",
+                name: "Natural Weapon",
+                type: "P",
+                action: "Complex",
+                range: "Touch",
+                duration: "Instant",
+                source: "SR5",
+                page: "399",
+                select: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
+                rating: "",
+                origin: "Metatype",
+                origin_id: "centaur",
+                origin_name: "Centaur",
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(screen.getByRole("heading", { name: "種族パワー" })).toBeDefined();
+    expect(screen.getByText("Kick: DV ({STR} + 2)P, AP +1, +1 Reach")).toBeDefined();
+    expect(screen.getByText(/SR5 p.399/)).toBeDefined();
+    expect(screen.getByText(/複雑/)).toBeDefined();
+    expect(screen.getByText("Centaurの生得能力（追加カルマなし）")).toBeDefined();
+  });
+
   it("lists the Heritage-priority metatypes and patches the pick", () => {
     const patch = vi.fn();
     renderTab({ patch });

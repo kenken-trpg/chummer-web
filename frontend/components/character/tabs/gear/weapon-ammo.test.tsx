@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { makeCatalog } from "@/tests/fixtures";
 import { weapon, ammoRow, renderWeapons, owning, installNextTo } from "./weapon-gear.helpers";
@@ -190,5 +190,79 @@ describe("<WeaponGear> ammunition", () => {
     const rows = patch.mock.calls[0][0].gear as { id: string; qty: number }[];
     expect(rows.find((r) => r.id === "am1")?.qty).toBe(1);
     expect(rows.find((r) => r.id === "am2")?.qty).toBe(4);
+  });
+});
+
+describe("implanted weapon ammunition ownership", () => {
+  it.each(["cyberware", "bioware"] as const)(
+    "stores a selected magazine on its owning %s install",
+    (kind) => {
+      const patch = vi.fn();
+      renderWeapons(
+        owning(
+          [
+            weapon("implant", "Implanted pistol", {
+              from_ware: true,
+              source_ware_id: "implant",
+              ware_kind: kind,
+              modular_equipped: false,
+              ammo_gear: [ammoRow("apds", "Ammo: APDS")],
+            }),
+          ],
+          {
+            weapons: [{ id: "ordinary", weapon_id: "catalog-pistol" }],
+            [kind]: [
+              { id: "implant", ware_id: "catalog-implant", parent_id: "detached-leg" },
+              { id: "other", ware_id: "catalog-implant" },
+            ],
+          },
+        ),
+        patch,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "装填" }));
+      expect(patch).toHaveBeenCalledWith({
+        [kind]: [
+          {
+            id: "implant",
+            ware_id: "catalog-implant",
+            parent_id: "detached-leg",
+            loaded_ammo_id: "apds",
+          },
+          { id: "other", ware_id: "catalog-implant" },
+        ],
+      });
+    },
+  );
+
+  it("removes selected implanted ammunition and clears that implant's selection", () => {
+    const patch = vi.fn();
+    renderWeapons(
+      owning(
+        [
+          weapon("implant", "Implanted pistol", {
+            from_ware: true,
+            source_ware_id: "implant",
+            ware_kind: "cyberware",
+            loaded_ammo_id: "apds",
+            ammo_gear: [ammoRow("apds", "Ammo: APDS", { loaded: true })],
+          }),
+        ],
+        {
+          weapons: [],
+          cyberware: [{ id: "implant", ware_id: "catalog-implant", loaded_ammo_id: "apds" }],
+          gear: [
+            { id: "apds", gear_id: "catalog-apds", parent_id: "implant" },
+            { id: "ordinary", gear_id: "catalog-apds" },
+          ],
+        },
+      ),
+      patch,
+    );
+    const ammoLine = screen.getByText(/Ammo: APDS/).closest("div")!;
+    fireEvent.click(within(ammoLine).getByRole("button", { name: "外す" }));
+    expect(patch).toHaveBeenCalledWith({
+      gear: [{ id: "ordinary", gear_id: "catalog-apds" }],
+      cyberware: [{ id: "implant", ware_id: "catalog-implant", loaded_ammo_id: undefined }],
+    });
   });
 });

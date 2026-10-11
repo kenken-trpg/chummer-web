@@ -50,10 +50,37 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           // The gun a drone's own entry comes with: free, and removing it
           // means removing the drone.
           const included = Boolean(item.included);
+          const ammoOwner = fromWare
+            ? item.ware_kind === "bioware"
+              ? "bioware"
+              : "cyberware"
+            : "weapons";
+          const selectAmmo = (ammoId: string, remove = false) => ({
+            [ammoOwner]: (ch[ammoOwner] || []).map((row) =>
+              row.id === item.id && (!remove || row.loaded_ammo_id === ammoId)
+                ? { ...row, loaded_ammo_id: remove ? undefined : ammoId }
+                : row,
+            ),
+          });
           return (
             <div className="cyber-item" key={item.id}>
               <div>
                 <b>{tr(item.name)}</b>
+                {item.vehicle_id ? (
+                  <span className="muted">
+                    {" "}
+                    {ui("weapon.vehicleOwned", {
+                      name: tr(
+                        [...(d.vehicles || []), ...(d.drones || [])].find(
+                          (v) => v.id === item.vehicle_id,
+                        )?.name || item.vehicle_id,
+                      ),
+                    })}
+                  </span>
+                ) : null}
+                {item.modular_equipped === false ? (
+                  <span className="muted"> {ui("weapon.modularDetached")}</span>
+                ) : null}
                 <div className="muted">
                   <HelpTip
                     label={ui("help.open", { label: tr(item.name) })}
@@ -203,9 +230,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                         className="btn"
                         onClick={() =>
                           patch({
-                            weapons: (ch.weapons || []).map((row) =>
-                              row.id === item.id ? { ...row, loaded_ammo_id: ammo.id } : row,
-                            ),
+                            ...selectAmmo(ammo.id),
                           })
                         }
                       >
@@ -217,11 +242,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       onClick={() =>
                         patch({
                           gear: dropTree(ch.gear || [], ammo.id),
-                          weapons: (ch.weapons || []).map((row) =>
-                            row.id === item.id && row.loaded_ammo_id === ammo.id
-                              ? { ...row, loaded_ammo_id: undefined }
-                              : row,
-                          ),
+                          ...selectAmmo(ammo.id, true),
                         })
                       }
                     >

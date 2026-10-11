@@ -26,15 +26,15 @@ from ..gear._common import chosen_cost
 from ..lookups import _grade_by_name, _ware_by_id, _ware_by_name
 from ._common import _cascade_orphans
 from .limbs import _apply_limb_attributes
+from .modular import apply_modular_state
 from .rating import _clamp_ware_rating, is_limb, limb_formula_extras, racial_formula_extras, ware_rating_bounds
-from .sides import ensure_sides
 from .vehicles import _vehicle_mod_hosts
 
 
 def ensure_subsystems(state: CharacterState) -> CharacterState:
     extra = set(_vehicle_mod_hosts(state))
-    state.cyberware = ensure_sides("cyberware", _ensure_kind_subsystems("cyberware", state.cyberware, extra))
-    state.bioware = ensure_sides("bioware", _ensure_kind_subsystems("bioware", state.bioware))
+    state.cyberware = _ensure_kind_subsystems("cyberware", state.cyberware, extra)
+    state.bioware = _ensure_kind_subsystems("bioware", state.bioware)
     return state
 
 
@@ -192,6 +192,7 @@ def resolve_ware(
                 "allow_gear": list(ware.get("allow_gear") or []),
                 "limbslot": ware.get("limbslot"),
                 "limbslotcount": ware.get("limbslotcount") or "1",
+                **({"inherit_attributes": True} if ware.get("inherit_attributes") else {}),
                 "selectside": bool(ware.get("selectside")),
                 "side": _normalize_side(inst.side),
                 "select_ware": select_ware is not None,
@@ -206,6 +207,7 @@ def resolve_ware(
                 "device_rating": _device_rating_of(ware, rating),
             }
         )
+    apply_modular_state(resolved, {str(row["id"]): row for row in catalog_ware(kind).get("items") or []})
     children: dict[str, list[dict[str, Any]]] = {}
     for item in resolved:
         if item["parent_id"]:

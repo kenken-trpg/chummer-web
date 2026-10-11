@@ -10,6 +10,13 @@ describe("<TabBar>", () => {
     expect(screen.getByRole("button", { name: "術式" })).toBeDefined();
   });
 
+  it("native MAG alone keeps Talent abilities hidden", () => {
+    render(<TabBar tab="attrs" setTab={vi.fn()} enabledTabs={["MAG", "critter"]} />);
+    for (const name of ["術式", "精霊", "アデプト", "収束具"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  });
+
   // The bar is a landmark a screen reader can jump to, and the active tab is
   // marked so it is not just "the one that looks different".
   it("is a named nav landmark whose active tab is aria-current", () => {

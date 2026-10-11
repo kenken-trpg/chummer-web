@@ -60,8 +60,8 @@ def essence(ctx: Ctx) -> None:
         racial_max = int(spec["max"]) + int(ctx.attr_max_bonus.get(key) or 0)
         raw = int(ctx.state.attributes.get(key, racial_min))
         if key == "MAG":
-            if ctx.special_key == "MAG":
-                floor = max(ctx.talent_start, 1)
+            if key in ctx.special_floors:
+                floor = ctx.special_floors[key]
                 mag_cap = racial_max + initiate_grade
                 raw = max(floor, min(mag_cap, raw))
                 ctx.bought_ratings[key] = raw
@@ -69,8 +69,8 @@ def essence(ctx: Ctx) -> None:
             else:
                 raw = 0
         elif key == "RES":
-            if ctx.special_key == "RES":
-                floor = max(ctx.talent_start, 1)
+            if key in ctx.special_floors:
+                floor = ctx.special_floors[key]
                 res_cap = racial_max + submersion_grade
                 raw = max(floor, min(res_cap, raw))
                 ctx.bought_ratings[key] = raw

@@ -4,6 +4,8 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { WareRow } from "@/components/character/WareRow";
+import { modularVehicleHosts } from "@/lib/character/ware";
+import { ModularMountSelect } from "@/components/character/ModularMountSelect";
 import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { limbQualityLine } from "@/lib/character/format";
@@ -55,6 +57,25 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
   const disabledCoreGrades = (d.disabled_cyberware_grades || []).filter((g) =>
     catalog.cyberware.grades.some((row) => row.name === g),
   );
+
+  function addChild(parentId: string, wareId: string) {
+    const spec = catalog.cyberware.items.find((ware) => ware.id === wareId);
+    const parent = (d.cyberware || []).find((ware) => ware.id === parentId);
+    if (!spec || !parent) return;
+    const range = wareBounds(spec, d.ware_ranges);
+    patch({
+      cyberware: [
+        ...(ch.cyberware || []),
+        {
+          ware_id: spec.id,
+          rating: range.min,
+          grade: parent.grade,
+          wireless: true,
+          parent_id: parentId,
+        },
+      ],
+    });
+  }
 
   return (
     <div className="card">
@@ -128,18 +149,38 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
             key={item.id}
             item={item}
             childrenItems={(d.cyberware || []).filter((child) => child.parent_id === item.id)}
+            allItems={d.cyberware || []}
             catalogItems={catalog.cyberware.items}
             grades={cyberGrades}
             kind="cyberware"
             renderHeld={(row) => (
-              <WareHeldGear
-                item={row}
-                catalog={catalog}
-                character={ch}
-                tr={tr}
-                ui={ui}
-                patch={patch}
-              />
+              <>
+                <ModularMountSelect
+                  item={row}
+                  rows={(d.cyberware || []).filter((ware) =>
+                    (ch.cyberware || []).some((owned) => owned.id === ware.id),
+                  )}
+                  catalogItems={catalog.cyberware.items}
+                  vehicleHosts={modularVehicleHosts(d, tr)}
+                  tr={tr}
+                  ui={ui}
+                  onChange={(parent_id) =>
+                    patch({
+                      cyberware: (ch.cyberware || []).map((owned) =>
+                        owned.id === row.id ? { ...owned, parent_id } : owned,
+                      ),
+                    })
+                  }
+                />
+                <WareHeldGear
+                  item={row}
+                  catalog={catalog}
+                  character={ch}
+                  tr={tr}
+                  ui={ui}
+                  patch={patch}
+                />
+              </>
             )}
             tr={tr}
             compact={compact}
@@ -183,23 +224,8 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                 ]),
               });
             }}
-            onAddChild={(wareId) => {
-              const spec = catalog.cyberware.items.find((w) => w.id === wareId);
-              if (!spec) return;
-              const range = wareBounds(spec, d.ware_ranges);
-              patch({
-                cyberware: [
-                  ...(ch.cyberware || []),
-                  {
-                    ware_id: spec.id,
-                    rating: range.min,
-                    grade: item.grade,
-                    wireless: true,
-                    parent_id: item.id,
-                  },
-                ],
-              });
-            }}
+            onAddChild={(wareId) => addChild(item.id, wareId)}
+            onAddChildTo={addChild}
           />
         ))}
       <div className="cyber-toolbar">
@@ -250,7 +276,12 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                         rating: w.minrating || 1,
                         grade: effectiveAddGrade,
                         wireless: true,
-                        side: nextFreeSide(ch.cyberware || [], catalog.cyberware.items, w),
+                        side: nextFreeSide(
+                          ch.cyberware || [],
+                          catalog.cyberware.items,
+                          w,
+                          d.body_limb_slots,
+                        ),
                       },
                     ],
                   })

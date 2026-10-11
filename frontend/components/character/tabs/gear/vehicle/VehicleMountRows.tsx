@@ -32,7 +32,7 @@ export function VehicleMountRows({
     (item.weapon_mounts || []).map((row) => row.weapon_install_id).filter(Boolean),
   );
   const freeWeapons = (d.weapons || []).filter(
-    (weapon) => !weapon.mounted_on && !mountedIds.has(weapon.id),
+    (weapon) => !weapon.from_ware && !weapon.mounted_on && !mountedIds.has(weapon.id),
   );
   return (
     <>

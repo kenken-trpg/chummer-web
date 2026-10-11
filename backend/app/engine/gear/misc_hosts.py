@@ -15,6 +15,7 @@ from ...models import CharacterState, GearInstall
 from ..lookups import _item_by_id, _ware_by_id
 from ._common import _capacity_value, chosen_cost
 from .vehicles import _iter_vehicle_hosts
+from .weapons.hosts import ware_weapon_specs
 
 VEHICLE_INTERIOR_CATEGORIES = [
     "Commlink Accessories",
@@ -85,6 +86,9 @@ def _misc_external_hosts(state: CharacterState) -> dict[str, tuple[str, dict[str
                 },
             )
     hosts.update(_ware_hosts(state))
+    for inst_id, spec in ware_weapon_specs(state).items():
+        held = hosts.get(inst_id, ("ware", {}))[1]
+        hosts[inst_id] = ("ware_weapon", {**spec, "allow_gear": held.get("allow_gear") or []})
     return hosts
 
 

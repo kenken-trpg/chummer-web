@@ -24,10 +24,17 @@ from ..karma import (
     alternate_attribute_shift,
     group_first_level,
 )
+from ..lookups import find_metatype
 from ..skills import exotic_skill_label
 
 
 def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
+    # A legacy/manual purchase record overlapping the species' free grant is
+    # retained in state, but was not paid at chargen. It must not become a
+    # historical charge when career starts. Read the resolved species rather
+    # than a potentially stale `derived` payload during the phase loop.
+    meta = find_metatype(state.metatype, state.metavariant)
+    innate = {q["id"] for q in meta.get("quality_grants") or [] if q.get("id")}
     return CareerBaseline(
         attributes={str(k): int(v) for k, v in (state.attributes or {}).items()},
         skills={str(k): int(v) for k, v in (state.skills or {}).items()},
@@ -39,7 +46,7 @@ def snapshot_career_baseline(state: CharacterState) -> CareerBaseline:
         exotic_skills={
             str(row.id): int(row.rating or 0) for row in (state.exotic_skills or []) if getattr(row, "id", None)
         },
-        quality_ids=[str(qid) for qid in state.quality_ids or []],
+        quality_ids=[str(qid) for qid in state.quality_ids or [] if qid not in innate],
         item_ids=sorted({str(row.id) for field in _ITEM_FIELDS for row in getattr(state, field) or []}),
         mystic_pp=int(state.mystic_pp or 0),
     )

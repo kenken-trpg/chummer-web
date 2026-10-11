@@ -12,6 +12,7 @@ from typing import Any
 from ...models import CharacterState
 from ...notices import Notice, notice, term, ui
 from ..constants import _normalize_side, slot_phrase
+from ..ware.limbs import _limb_slot_count, body_limb_slots, side_slot_capacity
 from ._picks import _quality_has_selectside, _quality_limb_slot
 
 
@@ -21,17 +22,20 @@ def resolve_quality_sides(
     cyber_installed: list[dict[str, Any]],
     bio_installed: list[dict[str, Any]],
     errors: list[Notice],
+    extra_limbs: dict[str, int] | None = None,
 ) -> dict[str, str]:
     """Validate quality selectside extras; return quality_id → Left/Right."""
     chosen: dict[str, str] = {}
-    occupied: dict[tuple[str, str], str] = {}
+    occupied: dict[tuple[str, str], list[str]] = {}
     for item in list(cyber_installed) + list(bio_installed):
         if item.get("parent_id") or not item.get("selectside"):
             continue
         side = _normalize_side(str(item.get("side") or ""))
         slot = str(item.get("limbslot") or "").lower()
         if side and slot:
-            occupied[(slot, side)] = str(item.get("name") or "")
+            occupied.setdefault((slot, side), []).extend(
+                [str(item.get("name") or "")] * _limb_slot_count(item, body_limb_slots(extra_limbs))
+            )
 
     extras = state.quality_extras or {}
     for spec in qualities:
@@ -48,18 +52,19 @@ def resolve_quality_sides(
         if not limb_slot:
             continue
         key = (limb_slot, side)
-        if key in occupied:
+        owners = occupied.get(key, [])
+        if len(owners) >= side_slot_capacity(limb_slot, extra_limbs):
             errors.append(
                 notice(
                     "engine.qualities.sideDuplicate",
                     name=term(str(spec["name"])),
-                    other=term(occupied[key]) if occupied[key] else ui("engine.term.ware"),
+                    other=term(owners[-1]) if owners[-1] else ui("engine.term.ware"),
                     side=ui(f"engine.side.{side}"),
                     slot=slot_phrase(limb_slot),
                 )
             )
             continue
-        occupied[key] = spec["name"]
+        occupied.setdefault(key, []).append(spec["name"])
     # Normalize valid sides back into extras for persistence.
     if chosen:
         next_extras = dict(state.quality_extras or {})

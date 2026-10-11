@@ -47,6 +47,8 @@ def _public_ware(block: dict) -> dict:
                 "required": w.get("required") or {"bioware": [], "cyberware": [], "metatype": [], "quality": []},
                 "required_parent_names": list(w.get("required_parent_names") or []),
                 "limbslot": w.get("limbslot"),
+                "modular_mount": w.get("modular_mount") or "",
+                "mounts_to": w.get("mounts_to") or "",
                 "selectside": bool(w.get("selectside")),
                 "source": w.get("source"),
                 "page": w.get("page"),

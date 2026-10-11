@@ -145,6 +145,10 @@ def _append_quality_weapons(weapons: list[dict[str, Any]], qualities: list[dict[
         weapon = _public_weapon(spec, inst_id=inst_id, qty=1, nuyen=0)
         weapon["natural"] = True
         weapon["natural_source"] = str(quality.get("name") or "")
+        if quality.get("origin") == "Metatype":
+            weapon["origin"] = quality["origin"]
+            weapon["origin_id"] = quality["origin_id"]
+            weapon["origin_name"] = quality["origin_name"]
         weapons.append(weapon)
         taken.add(inst_id)
 
@@ -330,6 +334,7 @@ def _append_ware_weapons(
     state: CharacterState,
     attr_totals: dict[str, int] | None = None,
 ) -> None:
+    installs = {inst.id: inst for inst in [*state.cyberware, *state.bioware]}
     taken = {str(row.get("id") or "") for row in weapons}
     ware_by_id = {str(item.get("id") or ""): item for item in ware_items if item.get("id")}
     for item in ware_items:
@@ -349,10 +354,13 @@ def _append_ware_weapons(
             nuyen=int(item.get("nuyen") or 0),
             from_ware=True,
             source_ware_id=ware_id,
+            loaded_ammo_id=installs[ware_id].loaded_ammo_id if ware_id in installs else None,
         )
         # Which tab owns it: bioware claws are deleted from `bioware`, a
         # cyberspur from `cyberware`.
         row["ware_kind"] = str(item.get("ware_kind") or "cyberware")
+        if "modular_equipped" in item:
+            row["modular_equipped"] = bool(item["modular_equipped"])
         _apply_ware_weapon_attrs(row, item, ware_by_id, state, attr_totals)
         weapons.append(row)
         taken.add(ware_id)

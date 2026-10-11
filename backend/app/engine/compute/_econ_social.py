@@ -52,6 +52,8 @@ def _social_pass(ctx: Ctx) -> None:
         ctx.gear.get("weapons"),
         int(ctx.effects.get("unarmed_reach") or 0),
         int(ctx.effects.get("unarmed_ap") or 0),
+        int(ctx.effects.get("unarmed_dv") or 0),
+        bool(ctx.effects.get("unarmed_physical")),
     )
     ctx.karma_spent += int(ctx.martial.get("karma") or 0)
     ctx.karma_spent += int(ctx.initiation.get("karma") or 0)

@@ -3,10 +3,12 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { SlotPicker } from "@/components/character/tabs/gear/vehicle/SlotPicker";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
+import { ModularMountSelect } from "@/components/character/ModularMountSelect";
+import { WareHeldGear } from "@/components/character/WareHeldGear";
 import { WareRow } from "@/components/character/WareRow";
 import { r5SlotLabel } from "@/lib/character/constants";
 import { vehicleFits, vehicleForbidden, wareFitsVehicleMod } from "@/lib/character/gear";
-import { removeWareTree, wareBounds } from "@/lib/character/ware";
+import { removeWareTree, wareBounds, modularVehicleHosts } from "@/lib/character/ware";
 
 /** The vehicle mods fitted to one vehicle, and the picker that adds another.
  *
@@ -24,6 +26,24 @@ export function VehicleModRows({
   setSlotPick,
 }: VehicleRowProps) {
   const byBook = useBookFilter();
+  const addChild = (parentId: string, wareId: string) => {
+    const spec = catalog.cyberware.items.find((w) => w.id === wareId);
+    const parent = (d.cyberware || []).find((row) => row.id === parentId);
+    if (!spec || !parent) return;
+    const range = wareBounds(spec, d.ware_ranges);
+    patch({
+      cyberware: [
+        ...(ch.cyberware || []),
+        {
+          ware_id: spec.id,
+          rating: range.min,
+          grade: parent.grade,
+          wireless: true,
+          parent_id: parentId,
+        },
+      ],
+    });
+  };
   const addons = (catalog.vehicle_mods || []).filter(
     (mod) =>
       // an optional drone mod is offered only under `<dronemods>`, where the
@@ -107,6 +127,36 @@ export function VehicleModRows({
                 key={child.id}
                 item={child}
                 childrenItems={(d.cyberware || []).filter((row) => row.parent_id === child.id)}
+                allItems={d.cyberware || []}
+                renderHeld={(row) => (
+                  <>
+                    <ModularMountSelect
+                      item={row}
+                      rows={(d.cyberware || []).filter((ware) =>
+                        (ch.cyberware || []).some((owned) => owned.id === ware.id),
+                      )}
+                      catalogItems={catalog.cyberware.items}
+                      vehicleHosts={modularVehicleHosts(d, tr)}
+                      tr={tr}
+                      ui={ui}
+                      onChange={(parent_id) =>
+                        patch({
+                          cyberware: (ch.cyberware || []).map((owned) =>
+                            owned.id === row.id ? { ...owned, parent_id } : owned,
+                          ),
+                        })
+                      }
+                    />
+                    <WareHeldGear
+                      item={row}
+                      catalog={catalog}
+                      character={ch}
+                      tr={tr}
+                      ui={ui}
+                      patch={patch}
+                    />
+                  </>
+                )}
                 catalogItems={catalog.cyberware.items}
                 grades={catalog.cyberware.grades.filter(
                   (g) => !(d.disabled_cyberware_grades || []).includes(g.name),
@@ -129,23 +179,8 @@ export function VehicleModRows({
                     cyberware: removeWareTree(ch.cyberware || [], id),
                   })
                 }
-                onAddChild={(wareId) => {
-                  const spec = catalog.cyberware.items.find((w) => w.id === wareId);
-                  if (!spec) return;
-                  const range = wareBounds(spec, d.ware_ranges);
-                  patch({
-                    cyberware: [
-                      ...(ch.cyberware || []),
-                      {
-                        ware_id: spec.id,
-                        rating: range.min,
-                        grade: child.grade,
-                        wireless: true,
-                        parent_id: child.id,
-                      },
-                    ],
-                  });
-                }}
+                onAddChild={(wareId) => addChild(child.id, wareId)}
+                onAddChildTo={addChild}
               />
             ))}
             {wareOptions.length ? (

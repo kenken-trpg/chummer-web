@@ -9,6 +9,26 @@ from .._xml import ATTR_KEYS, _int, _text, parse_data
 from ..bonus import parse_bonus
 
 
+def _grants(parent: ET.Element | None, tag: str) -> list[dict[str, Any]]:
+    """Keep each grant instance, including repeated names and fixed picks.
+
+    These are references, not purchases. Resolution against the quality or
+    critter-power catalog belongs to the consumer; the XML may name an ID.
+    """
+    if parent is None:
+        return []
+    return [
+        {
+            "name": _text(el),
+            "select": el.get("select", ""),
+            "rating": el.get("rating", ""),
+            "removable": el.get("removable", "false").lower() == "true",
+        }
+        for el in parent.findall(tag)
+        if _text(el)
+    ]
+
+
 def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str, Any]:
     attrs: dict[str, dict[str, int | float]] = {}
     for key in ATTR_KEYS:
@@ -40,6 +60,12 @@ def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str,
         "source": _text(el.find("source")),
         "page": _text(el.find("page")),
         "bonus": parse_bonus(el.find("bonus")),
+        "qualities": [
+            {**grant, "category": category}
+            for category in ("Positive", "Negative")
+            for grant in _grants(el.find(f"./qualities/{category.lower()}"), "quality")
+        ],
+        "powers": _grants(el.find("powers"), "power"),
         "metavariants": variants,
     }
 

@@ -17,10 +17,13 @@ so the report is right by construction, and stays right as the sheets change.
 
 from __future__ import annotations
 
+from collections import Counter
+from typing import Any
+
 from ..characters import import_character
 from ..export_check import differences
 from ..models import CharacterState
-from ..notices import Notice, notice
+from ..notices import Notice, notice, term
 from ..xlsx_import import xlsx_to_state
 from . import state_to_xlsx, xlsx_limits
 
@@ -31,6 +34,50 @@ __all__ = ["roundtrip_differences"]
 #: which rulebooks are in play or which house rules are on, so this is lost on
 #: every export and would otherwise report 「その他が変わります」 every time.
 _OWN_WORDS = frozenset({"settings"})
+
+
+def _grant_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(row.get("weapon_id") or row.get("id") or ""),
+        str(row.get("name") or ""),
+        str(row.get("select") or row.get("extra") or ""),
+        str(row.get("rating") or ""),
+    )
+
+
+def _innate_losses(first: CharacterState, again: CharacterState) -> list[Notice]:
+    """State fields omit free grants. Compare their recomputed rows as well.
+
+    A supported species can re-grant its qualities without a sheet cell. Only
+    actual losses count, including repeated grants with distinct fixed picks.
+    """
+    out: list[Notice] = []
+    for before, after in (
+        (first.derived.get("qualities"), again.derived.get("qualities")),
+        (
+            (first.derived.get("metatype_info") or {}).get("powers"),
+            (again.derived.get("metatype_info") or {}).get("powers"),
+        ),
+        (first.derived.get("weapons"), again.derived.get("weapons")),
+    ):
+        kept = Counter(_grant_key(row) for row in after or [] if row.get("origin") == "Metatype")
+        for row in before or []:
+            if row.get("origin") != "Metatype":
+                continue
+            key = _grant_key(row)
+            if kept[key]:
+                kept[key] -= 1
+                continue
+            out.append(
+                notice(
+                    "engine.export.xlsxInnateGrant",
+                    name=term(str(row.get("name") or "")),
+                    selection=str(row.get("select") or row.get("extra") or ""),
+                    source=str(row.get("source") or ""),
+                    page=str(row.get("page") or ""),
+                )
+            )
+    return out
 
 
 def roundtrip_differences(state: CharacterState) -> list[Notice]:
@@ -47,4 +94,4 @@ def roundtrip_differences(state: CharacterState) -> list[Notice]:
     out = xlsx_limits(first)
     if first.settings != again.settings:
         out.append(notice("engine.export.xlsxNoSettings", name=(first.settings.name or "")))
-    return out + differences(first, again, skip=_OWN_WORDS)
+    return out + _innate_losses(first, again) + differences(first, again, skip=_OWN_WORDS)

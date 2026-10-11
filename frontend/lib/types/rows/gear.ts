@@ -87,6 +87,9 @@ export interface InstalledArmor {
 }
 
 export interface InstalledWeapon {
+  /** Vehicle hosting the ware that grants this weapon. */
+  vehicle_id?: string;
+  modular_equipped?: boolean;
   id: string;
   weapon_id: string;
   name: string;
@@ -126,6 +129,9 @@ export interface InstalledWeapon {
   /** Born with it (a `<naturalweapon>` grant) — nothing to buy, install or drop. */
   natural?: boolean;
   natural_source?: string;
+  origin?: "Metatype";
+  origin_id?: string;
+  origin_name?: string;
   /** comes with the drone it is bolted into: free, and not ours to remove */
   included?: boolean;
   useskill?: string;
@@ -237,6 +243,8 @@ export interface InstalledOptics {
 }
 
 export interface InstalledGear extends InstalledOptics {
+  modular_equipped?: boolean;
+  vehicle_hosted?: boolean;
   equipped?: boolean;
   module_host_id?: string | null;
   module_method?: string;

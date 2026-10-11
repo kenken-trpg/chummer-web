@@ -4,6 +4,7 @@ caps, metatype spec and cyber/bioware sanity checks."""
 from __future__ import annotations
 
 from ...models import CharacterState, RewardEntry
+from ...notices import term
 from ...rules import current_rules
 from ..constants import BUILD_METHOD_KARMA
 from ..lookups import find_metatype
@@ -12,7 +13,6 @@ from ..ware import (
     _drop_invalid_vehicle_ware,
     _installed_ware_names,
     _required_warnings,
-    _side_conflicts,
     ensure_subsystems,
 )
 from .context import Ctx
@@ -64,9 +64,10 @@ def bootstrap(ctx: Ctx) -> None:
     ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]
     ctx.warnings = _drop_invalid_vehicle_ware(ctx.state)
+    if ctx.state.metavariant and ctx.meta["name"] != ctx.state.metavariant:
+        ctx.warn("engine.meta.invalidVariant", name=term(ctx.state.metavariant), metatype=term(ctx.state.metatype))
+        ctx.state.metavariant = None
     ensure_subsystems(ctx.state)
-    ctx.errors.extend(_side_conflicts("cyberware", ctx.state.cyberware))
-    ctx.errors.extend(_side_conflicts("bioware", ctx.state.bioware))
     installed_names = {
         "cyberware": _installed_ware_names("cyberware", ctx.state.cyberware),
         "bioware": _installed_ware_names("bioware", ctx.state.bioware),

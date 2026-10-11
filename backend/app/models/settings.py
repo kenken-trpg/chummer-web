@@ -146,6 +146,9 @@ class SettingsState(BaseModel):
     unrestricted_nuyen: bool | None = None
     #: `<cyberlegmovement>`: two cyberlegs set the AGI movement runs off
     cyberleg_movement: bool | None = None
+    #: `<unarmedimprovementsapplytoweapons>`: apply unarmed DV/AP/Reach to
+    #: weapons using Unarmed Combat, including natural weapons.
+    unarmed_improvements_apply_to_weapons: bool | None = None
     #: `<allowcyberwareessdiscounts>`: a ware piece may take an essence discount
     allow_cyberware_ess_discounts: bool | None = None
     #: `<allowpointbuyspecializationsonkarmaskills>`

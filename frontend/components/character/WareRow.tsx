@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 import type { InstalledWare, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
 import { sideLabel } from "@/lib/character/constants";
 import { availBit } from "@/lib/character/format";
@@ -13,6 +14,9 @@ import { useUiText } from "@/lib/i18n";
 export function WareRow(props: {
   item: InstalledWare;
   childrenItems: InstalledWare[];
+  /** Full tree, for displaying descendants beyond the immediate children. */
+  allItems?: InstalledWare[];
+  ancestorIds?: string[];
   catalogItems: WareCatalogItem[];
   grades: { name: string; ess: number; cost: number }[];
   kind: "cyberware" | "bioware";
@@ -23,6 +27,7 @@ export function WareRow(props: {
   onPatchRow: (id: string, next: Partial<WareInstall>) => void;
   onRemove: (id: string) => void;
   onAddChild: (wareId: string) => void;
+  onAddChildTo?: (parentId: string, wareId: string) => void;
   /** Black Market Pipeline: 10% off this one piece, when the quality's
    *  category reaches this kind of ware (null when it does not). */
   discounted?: boolean | null;
@@ -60,6 +65,12 @@ export function WareRow(props: {
     renderHeld,
   } = props;
   const { ui } = useUiText();
+  const [nestedSlot, setNestedSlot] = useState("");
+  const ancestorIds = [...(props.ancestorIds || []), item.id];
+  const descendants = (child: InstalledWare) =>
+    (props.allItems || []).filter(
+      (row) => row.parent_id === child.id && !ancestorIds.includes(row.id),
+    );
   const spec = catalogItems.find((w) => w.id === item.ware_id);
   const slots = (spec?.allow_subsystems || []).filter(Boolean);
   const slotOptions = catalogItems.filter((w) => {
@@ -68,7 +79,7 @@ export function WareRow(props: {
     return slots.includes(w.category) && Boolean(w.plugin || w.requireparent);
   });
   const rowGrades = grades.filter((g) => !(spec?.bannedgrades || []).includes(g.name));
-  const chosen = slotValue || slotOptions[0]?.id || "";
+  const chosen = (nested ? nestedSlot : slotValue) || slotOptions[0]?.id || "";
   const capMax = item.capacity_max || 0;
   // Bundled with a parent, or handed over by a quality (`<addware>`): either
   // way there is nothing here for the player to change or remove.
@@ -107,7 +118,9 @@ export function WareRow(props: {
               key={child.id}
               {...props}
               item={child}
-              childrenItems={[]}
+              childrenItems={descendants(child)}
+              allItems={props.allItems}
+              ancestorIds={ancestorIds}
               slotValue=""
               onSlotChange={() => undefined}
               onAddChild={() => undefined}
@@ -271,7 +284,9 @@ export function WareRow(props: {
           <WareRow
             key={child.id}
             item={child}
-            childrenItems={[]}
+            childrenItems={descendants(child)}
+            allItems={props.allItems}
+            ancestorIds={ancestorIds}
             catalogItems={catalogItems}
             grades={grades}
             kind={kind}
@@ -281,7 +296,8 @@ export function WareRow(props: {
             onSlotChange={() => undefined}
             onPatchRow={onPatchRow}
             onRemove={onRemove}
-            onAddChild={() => undefined}
+            onAddChild={(wareId) => props.onAddChildTo?.(child.id, wareId)}
+            onAddChildTo={props.onAddChildTo}
             essDiscountAllowed={essDiscountAllowed}
             pickSlots={pickSlots}
             onSkillPick={onSkillPick}
@@ -290,9 +306,14 @@ export function WareRow(props: {
           />
         ))}
         {renderHeld ? renderHeld(item) : null}
-        {slotOptions.length > 0 ? (
+        {slotOptions.length > 0 && (!nested || props.onAddChildTo) ? (
           <div className="slot-picker">
-            <select value={chosen} onChange={(e) => onSlotChange(e.target.value)}>
+            <select
+              value={chosen}
+              onChange={(e) =>
+                nested ? setNestedSlot(e.target.value) : onSlotChange(e.target.value)
+              }
+            >
               {slotOptions.map((w) => {
                 const range = wareBounds(w, wareRanges);
                 const showRange = range.max > range.min || range.max > 1;

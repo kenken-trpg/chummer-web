@@ -34,6 +34,7 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
     ware_r = _Resolver(ware_rows)
     ware_by_id = {str(row["id"]): row for row in ware_rows}
     picks: dict[str, str] = {}
+    weapon_hosts: dict[str, str] = {}
     #: gear held in a piece of ware: (install id, ware id, kind, node)
     carried: list[tuple[str, str, Phrase, ET.Element]] = []
 
@@ -57,6 +58,11 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             if (ware_by_id.get(wid) or {}).get("cost_range"):
                 row["cost"] = _picked_cost(w)
             out.append(row)
+            if (ware_by_id.get(wid) or {}).get("add_weapon_id"):
+                for link in ("guid", "weaponguid"):
+                    saved_id = _text(w.find(link))
+                    if saved_id:
+                        weapon_hosts[saved_id] = str(row["id"])
             for pick in w.findall("./skillpicks/pick"):
                 skill = _text(pick.find("skill"))
                 if skill:
@@ -93,5 +99,6 @@ def _import_ware(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             in_mods[id(mod)] = rows_in
             st["cyberware"].extend(rows_in)
     st["skill_picks"] = {**(st.get("skill_picks") or {}), **picks}
+    st["_ware_weapon_hosts"] = weapon_hosts
     st["_ware_gear"] = carried
     st["_vehicle_mod_ware"] = in_mods

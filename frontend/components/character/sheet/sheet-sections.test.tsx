@@ -13,6 +13,7 @@ import { CareerSection } from "@/components/character/sheet/sections/Career";
 import { CombatSection } from "@/components/character/sheet/sections/Combat";
 import { ContactsSection } from "@/components/character/sheet/sections/Contacts";
 import { CoreSection } from "@/components/character/sheet/sections/Core";
+import { PrintStatBlock } from "@/components/character/sheet/sections/print/PrintStatBlock";
 import { DescriptionSection } from "@/components/character/sheet/sections/Description";
 import { DrugsSection } from "@/components/character/sheet/sections/Drugs";
 import { KnowledgeSection } from "@/components/character/sheet/sections/Knowledge";
@@ -90,6 +91,56 @@ it("shows Confidence's penalty and inactive specialization in visual and text sh
   const text = textSheet(data);
   expect(text).toContain("Pistols（Revolvers） 専門化の効果なし 4 [AGI プール 7]");
   expect(text).toContain(`${name} 4 [AGI プール 7]`);
+});
+
+it("prints innate qualities and fixed powers with provenance and the kick selection", () => {
+  const data = buildSheetData({
+    character: makeCharacter({
+      metatype: "Centaur",
+      derived: {
+        qualities: [
+          {
+            id: "magic",
+            name: "Magic Sense",
+            category: "Positive",
+            source: "RF",
+            karma: 0,
+            free: true,
+            origin: "Metatype",
+            origin_name: "Centaur",
+            removable: false,
+          },
+        ],
+        metatype_info: {
+          name: "Centaur",
+          parent: null,
+          source: "RF",
+          attributes: {},
+          powers: [
+            {
+              id: "natural",
+              name: "Natural Weapon",
+              source: "SR5",
+              page: "399",
+              rating: "",
+              select: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
+              origin: "Metatype",
+              origin_id: "centaur",
+              origin_name: "Centaur",
+            },
+          ],
+        },
+      },
+    }),
+    catalog: makeCatalog(),
+    tr: identityTr,
+    layout: "print",
+  });
+  const { container } = render(<QualitiesSection {...data} />);
+  expect(container.textContent).toContain("Centaurの生得能力（追加カルマなし）");
+  expect(container.textContent).toContain("種族パワー");
+  expect(container.textContent).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
+  expect(container.textContent).toContain("SR5 p.399");
 });
 
 const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
@@ -199,6 +250,51 @@ describe("sheet sections — smoke render", () => {
   it("the core section prints movement in metres with the sprint rate", () => {
     const { container } = render(<CoreSection {...s} />);
     expect(container.textContent).toContain("歩6m / 走12m / 全力疾走 +2m/ヒット");
+  });
+
+  it("visual, print and text sheets show swimming and omit unavailable flight", () => {
+    const data = buildSheetData({
+      character: makeCharacter({
+        derived: {
+          movement: {
+            walk: "3",
+            run: "12",
+            sprint: "4",
+            sprint_bonus: 0,
+            modes: {
+              Swim: {
+                rates: { walk: 1, run: 0, sprint: 1 },
+                available: true,
+                walk: "3.5",
+                run: "0",
+                sprint: "1",
+                sprint_bonus: 0,
+              },
+              Fly: {
+                rates: { walk: 0, run: 0, sprint: 0 },
+                available: false,
+                walk: "0",
+                run: "0",
+                sprint: "0",
+                sprint_bonus: 0,
+              },
+            },
+          },
+        },
+      }),
+      catalog: RICH_CATALOG,
+      tr: identityTr,
+      layout: "standard",
+    });
+    for (const Component of [CoreSection, PrintStatBlock]) {
+      const { container, unmount } = render(<Component {...data} />);
+      expect(container.textContent).toContain("水泳");
+      expect(container.textContent).toContain("3.5m / +1m/ヒット");
+      expect(container.textContent).not.toContain("飛行");
+      unmount();
+    }
+    expect(textSheet(data)).toContain("水泳 3.5m / +1m/ヒット");
+    expect(textSheet(data)).not.toContain("飛行");
   });
 
   it("the magic section prints a bound spirit's powers with their action", () => {

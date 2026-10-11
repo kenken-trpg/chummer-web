@@ -17,7 +17,7 @@ from ...data_loader import PHYSICAL_ATTRS
 from ...improvements import EffectsDict, resolve_precedence
 from ...notices import term
 from ...rules import current_rules
-from ..bundle_types import MovementBundle
+from ..bundle_types import MovementBundle, MovementModeBundle
 from ..formulas import _ceil_div
 from ..gear.weapons.bonuses import resolve_attr_formulas, resolve_limit_accuracy
 from ..limits import (
@@ -35,12 +35,12 @@ from ._quality_ctx import quality_req_ctx
 from .context import Ctx
 
 
-def _ground_rate(rates: str) -> float:
-    """The Ground entry of a metatype `Ground/Swim/Fly` rate string."""
-    head = str(rates or "").split("/")[0].strip()
+def _movement_rate(rates: str, index: int) -> float:
+    """One component of the metatype's Ground/Swim/Fly rate string."""
+    parts = str(rates or "").split("/")
     try:
-        return float(head)
-    except ValueError:
+        return float(parts[index].strip())
+    except (ValueError, IndexError):
         return 0.0
 
 
@@ -49,37 +49,72 @@ def _metres(value: float) -> str:
     return f"{round(value, 2):.2f}".rstrip("0").rstrip(".") or "0"
 
 
-def resolve_movement(meta: dict[str, Any], effects: EffectsDict, agi: int) -> MovementBundle:
-    """Ground walk / run in metres and sprint in metres per hit, the way
-    Chummer's `CalculatedMovement("Ground")` works them out:
+def _resolve_movement_mode(
+    meta: dict[str, Any], effects: EffectsDict, category: str, index: int, attribute: float
+) -> MovementModeBundle:
+    """Chummer's CalculatedMovement rates and category-specific bonuses:
     (rate + multiplier) × (1 + percent) × AGI for walking and running, and
-    rate + bonus / 100, scaled by its percent, for sprinting. `agi` is the
-    meat AGI — Chummer leaves cyberlimbs out of it."""
-    category = "Ground"
+    rate + bonus / 100, scaled by its percent, for sprinting."""
     replace = effects.get("movement_replace") or {}
 
     def rate(kind: str, default: str) -> float:
         if (category, kind) in replace:
             return float(replace[(category, kind)])
-        return _ground_rate(str(meta.get(kind) or default))
+        return _movement_rate(str(meta.get(kind) or default), index)
+
+    rates = {kind: rate(kind, default) for kind, default in (("walk", "2/1/0"), ("run", "4/0/0"), ("sprint", "2/1/0"))}
 
     def pct(key: str) -> float:
         return 1.0 + int((effects.get(key) or {}).get(category) or 0) / 100.0  # type: ignore[attr-defined]
 
-    walk = (rate("walk", "2/1/0") + int((effects.get("walk_multiplier") or {}).get(category) or 0)) * pct(
+    walk = (rates["walk"] + int((effects.get("walk_multiplier") or {}).get(category) or 0)) * pct(
         "walk_multiplier_percent"
     )
-    run = (rate("run", "4/0/0") + int((effects.get("run_multiplier") or {}).get(category) or 0)) * pct(
-        "run_multiplier_percent"
-    )
+    run = (rates["run"] + int((effects.get("run_multiplier") or {}).get(category) or 0)) * pct("run_multiplier_percent")
     sprint_bonus = int((effects.get("sprint_bonus") or {}).get(category) or 0)
-    sprint = (rate("sprint", "2/1/0") + sprint_bonus / 100.0) * pct("sprint_bonus_percent")
-    agi = max(0, int(agi))
+    sprint = (rates["sprint"] + sprint_bonus / 100.0) * pct("sprint_bonus_percent")
     return {
-        "walk": _metres(walk * agi),
-        "run": _metres(run * agi),
+        "rates": rates,
+        "available": any(value != 0 for value in (walk, run, sprint)),
+        "walk": _metres(walk * attribute),
+        "run": _metres(run * attribute),
         "sprint": _metres(sprint),
         "sprint_bonus": sprint_bonus,
+    }
+
+
+def resolve_movement(
+    meta: dict[str, Any],
+    effects: EffectsDict,
+    agi: int,
+    *,
+    swim_agi: int | None = None,
+    swim_str: int | None = None,
+    ground_agi: int | None = None,
+) -> MovementBundle:
+    """Ground/Fly use meat AGI, Swim uses the limb-inclusive (AGI+STR)/2.
+
+    Only Ground can opt into cyberleg AGI. The old top-level fields remain
+    a projection of Ground for saved clients and existing export consumers.
+    """
+    meat_agi = max(0, int(agi))
+    swim_attribute = (
+        max(0, swim_agi if swim_agi is not None else agi) + max(0, swim_str if swim_str is not None else agi)
+    ) / 2
+    modes = {
+        "Ground": _resolve_movement_mode(
+            meta, effects, "Ground", 0, max(0, ground_agi) if ground_agi is not None else meat_agi
+        ),
+        "Swim": _resolve_movement_mode(meta, effects, "Swim", 1, swim_attribute),
+        "Fly": _resolve_movement_mode(meta, effects, "Fly", 2, meat_agi),
+    }
+    ground = modes["Ground"]
+    return {
+        "walk": ground["walk"],
+        "run": ground["run"],
+        "sprint": ground["sprint"],
+        "sprint_bonus": ground["sprint_bonus"],
+        "modes": modes,
     }
 
 
@@ -186,11 +221,17 @@ def finalize(ctx: Ctx) -> None:
 
     # meat AGI: `ctx.total` already carries the cyberlimb replacement
     move_agi = ctx.ratings["AGI"] + ctx.attr_bonus("AGI")
+    leg_agi = None
     if current_rules().cyberleg_movement:
         leg_agi = cyberleg_movement_agi(ctx.cyber_installed, dict(ctx.effects.get("extra_limbs") or {}))
-        if leg_agi is not None:
-            move_agi = leg_agi
-    ctx.movement = resolve_movement(ctx.meta, ctx.effects, move_agi)
+    ctx.movement = resolve_movement(
+        ctx.meta,
+        ctx.effects,
+        move_agi,
+        swim_agi=int(ctx.total["AGI"]),
+        swim_str=int(ctx.total["STR"]),
+        ground_agi=leg_agi,
+    )
 
     ctx.quality_report = {}
     ctx.negative_quality_karma = apply_quality_rules(

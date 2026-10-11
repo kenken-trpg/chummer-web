@@ -402,6 +402,16 @@ export const api = {
     return res.differences;
   },
 
+  /** Known omissions of the Foundry export, not a simulated Foundry round trip. */
+  checkFvttExport: async (state: Character): Promise<Notice[]> => {
+    const res = await req<{ differences: Notice[] }>("/api/characters/fvtt/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    return res.differences;
+  },
+
   /** JSON for Foundry VTT shadowrun5e's Chummer importer, names in `locale`. */
   exportFvtt: async (state: Character, locale: Locale): Promise<Blob> => {
     const res = await fetch("/api/characters/fvtt", {

@@ -6,12 +6,16 @@ The mirror of :mod:`app.chummer_import.gear`.
 
 from __future__ import annotations
 
+import uuid
 import xml.etree.ElementTree as ET
 from typing import Any
 
 from ..data_loader import catalog, catalog_list
+from ..engine.gear.ammo import ammo_fits_weapon
+from ..engine.gear.weapons.hosts import ware_weapon_specs
 from ..models import CharacterState, GearInstall
 from ._common import _Ctx, _Names, _sub
+from .metatype import export_metatype_weapons
 
 
 def _ware_writer(state: CharacterState, names: _Names) -> Any:
@@ -28,6 +32,9 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
         return sorted((key[len(prefix) :], value) for key, value in state.skill_picks.items() if key.startswith(prefix))
 
     gear_by_parent, emit_gear = _gear_writer(state, names)
+    weapon_specs = ware_weapon_specs(state)
+    gear_specs = {row["id"]: row for row in catalog_list("gear")}
+    ware_specs = {row["id"]: row for kind in ("cyberware", "bioware") for row in catalog()[kind]["items"]}
     by_parent: dict[str | None, list[Any]] = {}
     for r in [*state.cyberware, *state.bioware]:
         by_parent.setdefault(r.parent_id, []).append(r)
@@ -40,6 +47,26 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             _sub(w, "name", names["ware"].get(r.ware_id, ""))
             _sub(w, "grade", r.grade)
             _sub(w, "rating", r.rating)
+            spec = ware_specs.get(r.ware_id) or {}
+            if r.id in weapon_specs:
+                _sub(w, "weaponguid", _ware_weapon_guid(r.id))
+            if (
+                spec.get("category") == "Cyberlimb"
+                or spec.get("limbslot")
+                or spec.get("inherit_attributes")
+                or spec.get("mounts_to")
+                or spec.get("modular_mount")
+                or spec.get("blocks_mounts")
+            ):
+                # Cyberware.Load reads these saved fields rather than
+                # rebuilding the limb/connector from the catalog definition.
+                _sub(w, "category", spec.get("category") or "")
+                _sub(w, "limbslot", spec.get("limbslot") or "")
+                _sub(w, "limbslotcount", spec.get("limbslotcount") or "1")
+                _sub(w, "inheritattributes", "True" if spec.get("inherit_attributes") else "False")
+                _sub(w, "hasmodularmount", spec.get("modular_mount") or "")
+                _sub(w, "plugsintomodularmount", spec.get("mounts_to") or "")
+                _sub(w, "blocksmounts", ",".join(spec.get("blocks_mounts") or []))
             if getattr(r, "cost", None) is not None:
                 _sub(w, "cost", r.cost)
             if r.side:
@@ -64,7 +91,9 @@ def _ware_writer(state: CharacterState, names: _Names) -> Any:
             if kids:
                 emit(_sub(w, "children"), kids, tag)
             # what it holds (a Chemical Gland's chemical)
-            held = gear_by_parent.get(r.id)
+            held = gear_by_parent.get(r.id) or []
+            if r.id in weapon_specs:
+                held = [g for g in held if not ammo_fits_weapon(gear_specs.get(g.gear_id) or {}, weapon_specs[r.id])]
             if held:
                 emit_gear(_sub(w, "gears"), held)
 
@@ -113,6 +142,10 @@ def _export_armor(root: ET.Element, state: CharacterState, names: _Names, ctx: _
             emit_gear(_sub(el, "gears"), carried)
 
 
+def _ware_weapon_guid(install_id: str) -> str:
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"chummer-web:ware-weapon:{install_id}"))
+
+
 def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
     """Write weapons and their accessories."""
     weapons = _sub(root, "weapons")
@@ -130,6 +163,20 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         for row in state.weapon_mounts or []
         if row.weapon_install_id and row.parent_id
     }
+    gear_by_parent, emit_gear = _gear_writer(state, names)
+    specs = ware_weapon_specs(state)
+    gear_specs = {row["id"]: row for row in catalog_list("gear")}
+
+    def emit_contents(el: ET.Element, inst_id: str, loaded_ammo_id: str | None) -> None:
+        # Web extension: ammunition ownership/selection, not Chummer clips.
+        if loaded_ammo_id:
+            _sub(el, "loadedammoguid", loaded_ammo_id)
+        held = gear_by_parent.get(inst_id) or []
+        if inst_id in specs:
+            held = [g for g in held if ammo_fits_weapon(gear_specs.get(g.gear_id) or {}, specs[inst_id])]
+        if held:
+            emit_gear(_sub(el, "gears"), held)
+
     for w in state.weapons:
         el = _sub(weapons, "weapon")
         _sub(el, "sourceid", w.weapon_id)
@@ -138,14 +185,39 @@ def _export_weapons(root: ET.Element, state: CharacterState, names: _Names, ctx:
         if w.included:
             _sub(el, "parentid", host_of.get(w.id, ""))
         _sub(el, "discountedcost", "True" if w.discounted else "False")
-        accs = _sub(el, "accessories")
-        for arow in wacc_by_parent.get(w.id, []):
-            ac = _sub(accs, "accessory")
-            _sub(ac, "sourceid", arow.accessory_id)
-            _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
-            _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
-            _sub(ac, "rating", arow.rating)
-            _sub(ac, "included", "True" if arow.included else "False")
+        emit_contents(el, w.id, w.loaded_ammo_id)
+        _emit_accessories(el, w.id, wacc_by_parent, names, mountless)
+
+    for inst in [*state.cyberware, *state.bioware]:
+        spec = specs.get(inst.id)
+        if not spec:
+            continue
+        el = _sub(weapons, "weapon")
+        _sub(el, "guid", _ware_weapon_guid(inst.id))
+        _sub(el, "sourceid", spec["id"])
+        _sub(el, "name", spec["name"])
+        _sub(el, "parentid", inst.id)
+        _sub(el, "cyberware", "True")
+        _sub(el, "cost", 0)
+        for key in ("category", "type", "reach", "damage", "ap", "mode", "rc", "ammo", "accuracy", "useskill"):
+            _sub(el, key, spec.get(key) or "")
+        emit_contents(el, inst.id, inst.loaded_ammo_id)
+        _emit_accessories(el, inst.id, wacc_by_parent, names, mountless)
+
+    export_metatype_weapons(weapons, state, ctx)
+
+
+def _emit_accessories(
+    el: ET.Element, inst_id: str, by_parent: dict[str | None, list[Any]], names: _Names, mountless: set[str]
+) -> None:
+    accs = _sub(el, "accessories")
+    for arow in by_parent.get(inst_id, []):
+        ac = _sub(accs, "accessory")
+        _sub(ac, "sourceid", arow.accessory_id)
+        _sub(ac, "name", names["wacc"].get(arow.accessory_id, ""))
+        _sub(ac, "mount", arow.mount or ("None" if arow.accessory_id in mountless else ""))
+        _sub(ac, "rating", arow.rating)
+        _sub(ac, "included", "True" if arow.included else "False")
 
 
 def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None, list[Any]], Any]:
@@ -208,6 +280,7 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
         for g in rows:
             gid = g.gear_id
             el = _sub(parent_el, "gear")
+            _sub(el, "guid", g.id)
             _sub(el, "sourceid", gid)
             _sub(el, "name", names["gear"].get(gid, ""))
             if getattr(g, "name", None):

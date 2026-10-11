@@ -32,11 +32,17 @@ def _critter_power_refs(parent: ET.Element | None, tag: str) -> list[dict[str, A
     return rows
 
 
-def load_qualities() -> list[dict[str, Any]]:
+def load_qualities(*, include_hidden: bool = False) -> list[dict[str, Any]]:
+    """Load purchase candidates, or also definitions needed by innate grants.
+
+    `<hide>` prevents selection, not metatype ownership: a centaur's vision
+    qualities are hidden. Callers resolving innate grants must opt in without
+    putting those definitions into the public purchase catalog.
+    """
     root = parse_data("qualities.xml")
     items = []
     for el in root.findall("./qualities/quality"):
-        if el.find("hide") is not None:
+        if el.find("hide") is not None and not include_hidden:
             continue
         name = _text(el.find("name"))
         if not name:

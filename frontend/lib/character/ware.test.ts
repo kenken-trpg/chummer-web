@@ -94,4 +94,18 @@ describe("nextFreeSide", () => {
     const usedLeg = inst({ id: "l", ware_id: "leg", side: "Left" });
     expect(nextFreeSide([usedLeg], [arm, leg], arm)).toBe("Left");
   });
+
+  it("fills four leg slots without counting child enhancements", () => {
+    const leg = cat({ id: "leg", limbslot: "leg", selectside: true });
+    const items: WareInstall[] = [];
+    const sides = ["Left", "Right", "Left", "Right"];
+    for (const side of sides) {
+      expect(nextFreeSide(items, [leg], leg, { leg: 4 })).toBe(side);
+      items.push(inst({ id: String(items.length), ware_id: "leg", side }));
+    }
+    const unbalanced = items.filter((row) => row.id !== "1");
+    unbalanced.push(inst({ ware_id: "leg", side: "Right", parent_id: "0" }));
+    expect(nextFreeSide(unbalanced, [leg], leg, { leg: 4 })).toBe("Right");
+    expect(nextFreeSide(items, [leg], leg, { leg: 4 })).toBe("Left");
+  });
 });

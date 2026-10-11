@@ -171,6 +171,7 @@ _BOOL_FIELDS: dict[str, str] = {
     "dontdoublequalities": "dont_double_quality_purchases",
     "dontdoublequalityrefunds": "dont_double_quality_refunds",
     "cyberlegmovement": "cyberleg_movement",
+    "unarmedimprovementsapplytoweapons": "unarmed_improvements_apply_to_weapons",
     "dontusecyberlimbcalculation": "dont_use_cyberlimb_calculation",
     "enforcecapacity": "enforce_capacity",
     "restrictrecoil": "restrict_recoil",

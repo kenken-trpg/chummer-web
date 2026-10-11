@@ -1,6 +1,12 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { attrShort, scopeTr } from "@/lib/ui-strings";
-import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
+import {
+  critterPowerRow,
+  spellDescriptors,
+  spellDuration,
+  spellRange,
+  spellType,
+} from "@/lib/spell-terms";
 import {
   cfDuration,
   cfTarget,
@@ -12,6 +18,7 @@ import {
 import type { MsgKey } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
 import { renderNotice, renderNotices } from "@/lib/engine-notices";
+import { otherMovementRows } from "@/lib/character/movement";
 
 // The text sheet reads the same bag `buildSheetData()` produces for the
 // visual sheet — a subset of it.
@@ -87,6 +94,7 @@ export function textSheet(x: TextArgs): string {
     `${ui("common.armor")} ${d.armor}  ${ui("common.essence")} ${d.essence}  ` +
       ui("txt.movement", { walk: d.movement.walk, run: d.movement.run, sprint: d.movement.sprint }),
   );
+  for (const row of otherMovementRows(d.movement, ui)) line(`${row.label} ${row.value}`);
   line();
 
   if (x.activeSkills.length || x.groups.length || x.exotic.length) {
@@ -126,7 +134,20 @@ export function textSheet(x: TextArgs): string {
     head("sheet.qualities");
     x.qualities.forEach((q) =>
       line(
-        `  ${tr(q.name)}${q.level != null ? ` Lv${q.level}` : ""}${q.extra ? "：" + tr(q.extra) : ""}`,
+        `  ${tr(q.name)}${q.level != null ? ` Lv${q.level}` : ""}${q.extra ? "：" + tr(q.extra) : ""}` +
+          (q.origin === "Metatype"
+            ? ` / ${ui("meta.innate", { name: tr(q.origin_name || ch.metatype) })}`
+            : ""),
+      ),
+    );
+    line();
+  }
+
+  if (d.metatype_info.powers?.length) {
+    head("meta.innatePowers");
+    d.metatype_info.powers.forEach((power) =>
+      line(
+        `  ${critterPowerRow(power, tr, ui)}${power.select ? ` / ${power.select}` : ""}${power.rating ? ` / ${power.rating}` : ""} / ${power.source} p.${power.page}`,
       ),
     );
     line();
@@ -207,7 +228,8 @@ export function textSheet(x: TextArgs): string {
   const vehAll = [...(d.vehicles || []), ...(d.drones || [])];
   if (vehAll.length) {
     head("sheet.vehicles");
-    vehAll.forEach((v) =>
+    vehAll.forEach((v) => {
+      const implants = (d.weapons || []).filter((weapon) => weapon.vehicle_id === v.id);
       line(
         `  ${tr(v.name)}  ` +
           ui("txt.vehicle", {
@@ -226,9 +248,10 @@ export function textSheet(x: TextArgs): string {
                   list: names((v.mods || []).filter((m) => !m.parent_id)),
                 })
               : ""
-          }`,
-      ),
-    );
+          }` +
+          (implants.length ? ` / ${ui("weapon.vehicleInventory", { list: names(implants) })}` : ""),
+      );
+    });
     line();
   }
 
