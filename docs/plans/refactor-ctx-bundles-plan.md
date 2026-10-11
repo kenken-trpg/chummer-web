@@ -1,5 +1,7 @@
 # Plan: type the `Ctx` bundle dicts
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. After the `compute()` phase split (`docs/plans/refactor-compute-phases-plan.md`)
 `Ctx` (in `app/engine/compute/context.py`) has ~40 `dict[str, Any]` "bundle"
 fields — `effects`, `gear`, `magic`, `adept`, `foci`, `skill_mods`,

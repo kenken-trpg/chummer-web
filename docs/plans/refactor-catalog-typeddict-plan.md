@@ -1,5 +1,7 @@
 # Plan: type `catalog()` as `CatalogDict`
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. `data_loader.catalog()` returns a
 `dict[str, Any]` of ~46 keys; every value is `Any`, so `catalog()["powres"]`
 (typo) passes and `for row in catalog()["weapons"]` yields `Any`. The

@@ -1,5 +1,7 @@
 # Plan: a `.chum5` Chummer itself can open
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. A tester built a character in this app, exported it, and opened
 the file in Chummer.exe. Two things went wrong:
 

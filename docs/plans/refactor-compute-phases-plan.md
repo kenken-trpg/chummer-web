@@ -1,5 +1,7 @@
 # Plan: split `compute()` into phases
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. `app/engine/__init__.py` is **1,955 lines**; `compute()` alone is
 **~1,200** (lines 758–1955) — the last monolith. It is a straight-line
 pipeline whose only real difficulty is its working set: ~200 interdependent

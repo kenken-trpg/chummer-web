@@ -1,5 +1,7 @@
 # Plan: split `engine/gear/` (weapons → vehicles → orchestrator), then `engine/magic/`
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. Companion to `docs/architecture.md` §"Planned
 refactors" item 1.
 

@@ -1,5 +1,7 @@
 # Plan: split CharacterSidebar.tsx + QualitiesTab.tsx
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. The last two oversized frontend components. Now that the
 `vitest` harness exists (`docs/plans/frontend-test-setup-plan.md`), each split
 gets a render smoke test as a guard.

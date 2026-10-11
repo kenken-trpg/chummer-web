@@ -1,5 +1,7 @@
 # Plan: split `app/data_loader.py` into a `data_loader/` package
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. Fourth in the series
 (`docs/plans/refactor-{gear-weapons,ware-qualities,engine-e402-b023,improvements}-plan.md`).
 Same playbook: incremental, every commit green, snapshot gate byte-identical.

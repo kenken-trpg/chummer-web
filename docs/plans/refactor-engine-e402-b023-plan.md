@@ -1,5 +1,7 @@
 # Plan: retire the `app/engine/__init__.py` `["B023", "E402"]` ignore
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. Follow-on to
 `docs/plans/refactor-ware-qualities-plan.md` (Step 3, "remaining"). This is the
 *last* item on `docs/architecture.md` §"Planned refactors" item 1 — after it

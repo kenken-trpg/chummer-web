@@ -1,5 +1,7 @@
 # Plan: type the `effects` dict as `EffectsDict`
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. Stage 4 (and last) of
 `docs/plans/refactor-ctx-bundles-plan.md` — the one bundle left over because it is
 the biggest. Same playbook: incremental, every commit green, snapshot gate

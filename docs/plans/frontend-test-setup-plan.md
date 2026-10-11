@@ -1,5 +1,7 @@
 # Plan: frontend test harness (Vitest + RTL)
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. The frontend has **no tests** — `tsc --noEmit` + `next build`
 are the only guards, so a render regression (a section not wired, a bad
 prop) ships silently. This sets up the harness + a first layer of tests so

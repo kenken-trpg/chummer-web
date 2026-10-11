@@ -1,5 +1,7 @@
 # Plan: 卓用 印刷 / PDF シートレイアウト
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. First user-facing feature after the refactor series.
 `components/CharacterSheet.tsx` の 4 つめのレイアウト `"print"` を足す。
 
