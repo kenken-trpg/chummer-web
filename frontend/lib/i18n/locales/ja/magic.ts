@@ -121,6 +121,9 @@ export const JA_MAGIC = {
   "init.schooling": "教習",
   "init.metamagic": "メタマジック",
 
+  "init.artRequirement": "Art（魔術の流派）: {name}",
+  "init.requirementOr": " または ",
+  "init.requirementAnd": " かつ ",
   "init.requires": " / 要 {list}",
   "sub.note": "（各等級 10 + 等級×3。RES上限 = 種族上限 + 等級。等級 ≤ RES）",
   "sub.grade": "サブマージョン等級",

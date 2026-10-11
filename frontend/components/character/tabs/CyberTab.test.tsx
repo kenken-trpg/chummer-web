@@ -501,3 +501,12 @@ describe("<CyberTab> held gear", () => {
     expect(body.weapon_accessories.map((row: { id: string }) => row.id)).toEqual(["a1"]);
   });
 });
+
+it("excludes grades banned by the character's settings from the add picker", () => {
+  renderTab({
+    character: { settings: { banned_ware_grades: ["Alphaware"] } },
+    catalog: cyberCatalog(),
+  });
+  expect(screen.queryByRole("option", { name: /Alphaware/ })).toBeNull();
+  expect(screen.getByRole("option", { name: /Standard/ })).toBeDefined();
+});

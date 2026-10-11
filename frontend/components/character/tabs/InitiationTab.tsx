@@ -1,5 +1,6 @@
 "use client";
 
+import type { QualityReqNode } from "@/lib/types";
 import { RangeInput } from "@/components/character/RangeInput";
 import { withOriginal } from "@/lib/character/format";
 import type { TabPanelProps } from "@/components/character/types";
@@ -23,6 +24,30 @@ export function InitiationTab({
       next.push(byGrade.get(g) || { grade: g, kind: "metamagic", option_id: "" });
     }
     return next;
+  }
+
+  const ignoreArt =
+    Boolean(ch.settings?.ignore_art) ||
+    Boolean(
+      ch.settings?.ignore_art == null &&
+      ch.settings?.books?.length &&
+      !ch.settings.books.includes("SG"),
+    );
+  function requirementText(nodes: QualityReqNode[]): string {
+    function describe(node: QualityReqNode): string {
+      if (node.children) {
+        if (ignoreArt && node.tag === "oneof" && node.children.some((child) => child.tag === "art"))
+          return "";
+        const parts = node.children.map(describe).filter(Boolean);
+        return parts.length > 1
+          ? `(${parts.join(ui(node.tag === "oneof" ? "init.requirementOr" : "init.requirementAnd"))})`
+          : parts[0] || "";
+      }
+      if (node.tag === "art")
+        return ignoreArt ? "" : ui("init.artRequirement", { name: tr(node.name || "") });
+      return tr(node.name || "");
+    }
+    return nodes.map(describe).filter(Boolean).join(ui("init.requirementAnd"));
   }
 
   return (
@@ -137,6 +162,36 @@ export function InitiationTab({
                   ))}
                 </div>
                 <div className="grid" style={{ marginTop: 8 }}>
+                  {!ignoreArt && kind === "metamagic" && (catalog.magic_arts || []).length > 0 ? (
+                    <label>
+                      Art
+                      <select
+                        aria-label={`Art ${choice.grade}`}
+                        value={local?.art_ids?.[0] || choice.art_ids?.[0] || ""}
+                        onChange={(e) =>
+                          patch({
+                            initiations: (ch.initiations || []).map((row) =>
+                              row.grade === choice.grade
+                                ? {
+                                    ...row,
+                                    art_ids: e.target.value
+                                      ? [e.target.value, ...(row.art_ids || []).slice(1)]
+                                      : (row.art_ids || []).slice(1),
+                                  }
+                                : row,
+                            ),
+                          })
+                        }
+                      >
+                        <option value="">{ui("common.choose")}</option>
+                        {(catalog.magic_arts || []).map((art) => (
+                          <option key={art.id} value={art.id}>
+                            {withOriginal(art.name, tr)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                   <label>
                     {ui("common.kind")}
                     <select
@@ -178,9 +233,15 @@ export function InitiationTab({
                         : metaOptions.map((item) => (
                             <option key={item.id} value={item.id}>
                               {withOriginal(item.name, tr)}
-                              {item.required?.length
-                                ? ui("init.requires", { list: item.required.join(", ") })
-                                : ""}
+                              {item.required_tree
+                                ? requirementText(item.required_tree)
+                                  ? ui("init.requires", {
+                                      list: requirementText(item.required_tree),
+                                    })
+                                  : ""
+                                : item.required?.length
+                                  ? ui("init.requires", { list: item.required.map(tr).join(", ") })
+                                  : ""}
                             </option>
                           ))}
                     </select>

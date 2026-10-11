@@ -34,6 +34,11 @@ def section(raw: CatalogDict) -> dict:
             "needs_extra": bool(q.get("needs_extra")),
             "extra_kind": q.get("extra_kind") or "",
             "select_options": list(q.get("select_options") or []),
+            "attribute_choices": [
+                {"options": slot.get("options") or [], "exclude": slot.get("exclude") or []}
+                for node in q.get("bonus") or []
+                for slot in node.get("attribute_choices") or []
+            ],
             "spirit_options": list(q.get("spirit_options") or []),
             "expertise_skill": q.get("expertise_skill") or "",
             "max_takes": q.get("max_takes"),

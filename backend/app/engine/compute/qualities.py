@@ -9,7 +9,7 @@ from typing import Any
 from ...improvements import ATTR_ALIASES, EffectsDict, collect_effects
 from ...models import CharacterState
 from ...notices import Notice, notice, term
-from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID
+from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_attribute_extra_key
 from ..contacts import apply_excon_ware_ban
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
 from ..karma import _skill_groups_for_category
@@ -47,16 +47,21 @@ def resolve_attribute_selects(
         spec = by_name.get(source)
         if not spec:
             continue
-        picked = ATTR_ALIASES.get(str(extras.get(spec["id"]) or "").strip().upper())
+        picked = ATTR_ALIASES.get(
+            str(extras.get(quality_attribute_extra_key(spec["id"], sel["index"])) or "").strip().upper()
+        )
         exclude = {str(item) for item in (sel.get("exclude") or [])}
-        max_bonus = max(1, int(sel.get("max") or 1))
+        max_bonus = int(sel.get("max") or 0)
+        allowed = set(sel.get("options") or [])
         if not picked:
             warnings.append(notice("engine.attrs.pickAttribute", source=term(source)))
             continue
-        if picked in exclude or picked in {"ESS"}:
+        if picked in exclude or picked == "ESS" or (allowed and picked not in allowed):
             warnings.append(notice("engine.attrs.attributeNotAllowed", source=term(source), picked=picked))
             continue
-        bonus[picked] = int(bonus.get(picked) or 0) + max_bonus
+        if max_bonus:
+            bonus[picked] = int(bonus.get(picked) or 0) + max_bonus
+        effects["attribute_bonus"][picked] = int(effects["attribute_bonus"].get(picked) or 0) + int(sel.get("val") or 0)
     return bonus, warnings
 
 

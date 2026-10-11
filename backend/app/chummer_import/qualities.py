@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import xml.etree.ElementTree as ET  # the Element type only — parsing goes through parse_untrusted
 from typing import Any
 
@@ -9,6 +10,7 @@ from ..data_loader import CatalogDict
 from ..data_loader._xml import _text
 from ..engine.constants import (
     quality_addspirit_extra_key,
+    quality_attribute_extra_key,
     quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
@@ -176,7 +178,38 @@ def _quality_extra_in(cat: CatalogDict, qid: str, extra: str, guid: str, root: E
         elif extra:
             out[qid] = extra
         return out
+    slots = [slot for node in spec.get("bonus") or [] for slot in node.get("attribute_choices") or []]
+    if slots:
+        return _attribute_picks(root, qid, guid, extra, slots)
     return {qid: _match_option(spec, extra)} if extra else {}
+
+
+def _attribute_picks(root: ET.Element, qid: str, guid: str, extra: str, slots: list[dict[str, Any]]) -> dict[str, str]:
+    pool: list[str] = []
+    # Improvements retain the actual choices even if the quality's Extra is empty.
+    if guid:
+        pool = [
+            _text(imp.find("improvedname")).removesuffix("Base")
+            for imp in root.findall("./improvements/improvement")
+            if _text(imp.find("sourcename")) == guid
+            and _text(imp.find("improvementsource")).lower() == "quality"
+            and _text(imp.find("improvementttype")) == "Attribute"
+        ]
+    if not pool:
+        for attr, count in re.findall(r"([A-Za-z]+)(?:\s*\((\d+)\))?", extra):
+            amount = int(count or 1) if len(count) < 10 else len(slots)
+            pool.extend([attr.upper()] * min(amount, len(slots)))
+        # Chummer uses just the name when every slot picked the same attribute.
+        if len(pool) == 1 and extra.strip().upper() == pool[0]:
+            pool *= len(slots)
+    out: dict[str, str] = {}
+    for index, slot in enumerate(slots):
+        allowed, excluded = set(slot.get("options") or []), set(slot.get("exclude") or [])
+        picked = next((a for a in pool if (not allowed or a in allowed) and a not in excluded), None)
+        if picked:
+            pool.remove(picked)
+            out[quality_attribute_extra_key(qid, index)] = picked
+    return out
 
 
 def _match_option(spec: dict[str, Any], extra: str) -> str:

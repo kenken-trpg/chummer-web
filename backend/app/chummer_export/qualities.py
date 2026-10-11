@@ -12,6 +12,7 @@ from typing import Any
 from ..data_loader import catalog
 from ..engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
+    quality_attribute_extra_key,
     quality_contact_extra_key,
     quality_optional_power_extra_key,
     quality_spirit_category_extra_key,
@@ -134,6 +135,12 @@ def _quality_extra_out(
     `<selectcontact>` appends the contact's name the same way, after Black
     Market Pipeline's category.
     """
+    slots = [slot for node in spec.get("bonus") or [] for slot in node.get("attribute_choices") or []]
+    if slots:
+        attributes = [extras.get(quality_attribute_extra_key(qid, idx), "") for idx in range(len(slots))]
+        if all(attributes) and len(set(attributes)) == 1:
+            return attributes[0], ""
+        return ", ".join(f"{a} ({attributes.count(a)})" for a in dict.fromkeys(attributes) if a), ""
     if str(spec.get("extra_kind") or "") == "add_spirit":
         marker = f"{qid}{QUALITY_ADDSPIRIT_EXTRA_MARKER}"
         picks = sorted(

@@ -172,6 +172,7 @@ def section(raw: CatalogDict) -> dict:
                 "magician": bool(item.get("magician")),
                 "repeatable": bool(item.get("repeatable")),
                 "required": [name for names in (item.get("required") or {}).values() for name in names],
+                "required_tree": item.get("required_tree") or [],
                 "source": item.get("source") or "",
                 "page": item.get("page") or "",
             }

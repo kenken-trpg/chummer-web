@@ -33,9 +33,12 @@ export function BioTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPro
     [catalog],
   );
   const bioGrades = useMemo(() => {
-    const banned = new Set(d.disabled_bioware_grades || []);
+    const banned = new Set([
+      ...(d.disabled_bioware_grades || []),
+      ...(ch.settings?.banned_ware_grades || []),
+    ]);
     return (catalog.bioware?.grades || []).filter((g) => !banned.has(g.name));
-  }, [catalog, d.disabled_bioware_grades]);
+  }, [catalog, d.disabled_bioware_grades, ch.settings?.banned_ware_grades]);
   const effectiveBioGrade = bioGrades.some((g) => g.name === bioGrade)
     ? bioGrade
     : bioGrades[0]?.name || "Betaware";

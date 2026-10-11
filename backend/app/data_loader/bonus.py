@@ -59,6 +59,16 @@ def parse_bonus(bonus_el: ET.Element | None) -> list[dict[str, Any]]:
         else:
             fields, nested, field_attrs = _bonus_fields(child)
             payload["fields"] = fields
+            if tag == "selectattributes":
+                payload["attribute_choices"] = [
+                    {
+                        "options": [_text(a) for a in sel.findall("attribute")],
+                        "exclude": [_text(a) for a in sel.findall("excludeattribute")],
+                        "val": _text(sel.find("val"), "0"),
+                        "max": _text(sel.find("max"), "0"),
+                    }
+                    for sel in child.findall("selectattribute")
+                ]
             if tag == "metamagiclimit":
                 # `<metamagic grade="N">Name</metamagic>` repeats, and the
                 # generic field flattening keeps only the last element's
