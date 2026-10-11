@@ -1,5 +1,7 @@
 # Plan: frontend tab-component tests
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. `components/character/tabs/` has **18** tab components; only
 `QualitiesTab` has a test. The behaviour-heavy ones (`SkillsTab` 491 L,
 `AdeptTab` 396 L, `gear/VehicleDroneGear` 631 L, `gear/WeaponGear`,

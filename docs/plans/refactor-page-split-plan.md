@@ -1,5 +1,7 @@
 # Plan: split `app/page.tsx`
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. The last oversized frontend file — 620 lines, all in one
 `Page()`: ~10 state hooks, ~18 handlers, 2 effects, one giant `return`
 (header / toolbar / tab bar / sheet-desc editor / tab panels / sidebar).

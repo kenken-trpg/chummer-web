@@ -1,5 +1,7 @@
 # Plan: type the `EffectsDict` row lists
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc for a dedicated session. Follow-on to
 `docs/plans/refactor-effects-typeddict-plan.md`: that made `effects` an
 `EffectsDict` but left the ~45 `list[dict[str, Any]]` values (the

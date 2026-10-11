@@ -1,5 +1,7 @@
 # Plan: broaden the frontend test suite
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. The harness (`docs/plans/frontend-test-setup-plan.md`) landed a thin
 layer — 5 helper files + 3 smoke tests. This adds focused coverage for the
 pure `lib/` predicates/builders and the two tabs that were just split.

@@ -1,5 +1,7 @@
 # Plan: mypy to zero, then make it blocking
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. Sixth in the refactor series. Companion to the eslint-to-zero
 work (`docs/architecture.md` item 6) — same shape, backend side.
 

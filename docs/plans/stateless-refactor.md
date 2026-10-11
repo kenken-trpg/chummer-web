@@ -1,5 +1,7 @@
 # Stateless backend / client-owned state
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Done. Deployment prep — the backend can now scale to zero / run many
 instances, and no character data touches the server disk.
 

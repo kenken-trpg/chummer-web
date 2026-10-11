@@ -1,7 +1,15 @@
 # 作業記録（履歴）
 
-ここにあるのは**実施済みの作業計画**です。書かれた時点のコードを前提にしているので、
+ここにあるのは**ほぼすべて実施済みの作業計画**です。書かれた時点のコードを前提にしているので、
 現状の説明としては読まないでください。「なぜこの形になっているか」を辿るための記録です。
+
+各ファイルの冒頭に**状態**を 1 行で書いてあります。1 本だけ開いた人にも
+履歴なのかどうかが分かるようにするためで、ここに戻らなくても判断できます。
+
+**現役の計画は 1 本だけです** — [`translation-plan.md`](translation-plan.md)（日本語化。
+上流訳 430 件の突き合わせなどが未着手）。残り 26 本は履歴です。
+[`fvtt-export-plan.md`](fvtt-export-plan.md) は書き出しのフィールド対応表そのものなので、
+実施済みでも仕様としては現役です。
 
 現状を知りたい場合は `docs/` 直下を参照してください:
 
@@ -52,12 +60,20 @@
 - [`print-sheet-plan.md`](print-sheet-plan.md) — 印刷 / PDF 用レイアウト
 - [`fvtt-export-plan.md`](fvtt-export-plan.md) — Foundry VTT（shadowrun5e 0.34.5）向け書き出しのフィールド対応表
 
+### 書き出し
+
+ここにあるのは設計の記録です。使う側の文書は `docs/` 直下にあります。
+
+- [`udonarium-export-plan.md`](udonarium-export-plan.md) — ユドナリウムのキャラクターコマ（器とチャットパレット）
+- [`udonarium-vehicles-plan.md`](udonarium-vehicles-plan.md) — 上に乗り物とドローンのコマを足す
+- [`chum5-export-for-chummer-plan.md`](chum5-export-for-chummer-plan.md) も書き出しの記録です（エンジン／バックエンドの節に載せています）
+
 ### デプロイ
 
 - [`cloud-run-plan.md`](cloud-run-plan.md) — Google Cloud Run で公開するまでの段取り
 
 ### 翻訳
 
-- [`translation-plan.md`](translation-plan.md) — 日本語化のフェーズ計画。生成物の
+- [`translation-plan.md`](translation-plan.md) — 日本語化のフェーズ計画（**現役・一部未着手**）。生成物の
   `../translation-glossary.md` / `../translation-glossary-mismatches.md` /
   `../translation-import-report.md` は `docs/` 直下にあります

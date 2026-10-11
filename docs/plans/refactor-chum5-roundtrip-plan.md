@@ -1,5 +1,7 @@
 # Plan: `.chum5` round-trip coverage
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+
 Working doc. Lock the Chummer5a import ⇄ export loop against realistic,
 catalog-driven fixtures.
 

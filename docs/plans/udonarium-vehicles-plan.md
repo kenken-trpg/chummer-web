@@ -1,5 +1,8 @@
 # ユドナリウム：乗り物・ドローンのコマ（計画）
 
+> **状態：実施済み。** 本文の「実装はまだしない」は書かれた時点の記述です。乗り物とドローンの
+> コマは実装され、`frontend/lib/udonarium/vehicles.ts` にあります。
+
 ユドナリウム書き出し（[`udonarium-export-plan.md`](udonarium-export-plan.md)）に、乗り物と
 ドローンのコマを足す。器もパレットの書き方も精霊・スプライトのコマ
 （`buildSpiritPieces` / `buildSpritePieces`）と同じで、違うのは**プールの出どころ**。

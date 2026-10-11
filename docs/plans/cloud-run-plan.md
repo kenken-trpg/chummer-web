@@ -1,5 +1,11 @@
 # Plan: Google Cloud Run で公開する
 
+> **状態：実施済み。** この文書は作業の記録で、現状の説明ではありません（[一覧と現行ドキュメントへの入口](README.md)）。
+> 本文が「残っている」とする 2 件は、その後どちらも決着しています。Workload Identity の
+> GCP 側の設定は完了（リポジトリ変数 `GCP_PROJECT` / `GCP_WIF_PROVIDER` が入り、`v*` タグは
+> 本番へ自動デプロイされます）。ドメインマッピングは Cloudflare Worker を前に置く構成を
+> 採ったため不要になりました。現行の手順は [`../deploy.md`](../deploy.md) を参照してください。
+
 Working doc. 公開先を Cloud Run に置くまでの段取り。`docs/deploy.md` の
 Cloud Run 節は「こう書ける」までで、公開運用に必要な詰め（イメージの届け方・
 起動プローブ・サイジングの根拠）が入っていない。ここを埋めて、最後に
