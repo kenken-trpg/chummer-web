@@ -12,6 +12,7 @@ from typing import Any
 
 from ..constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
+    QUALITY_ATTRIBUTE_EXTRA_MARKER,
     QUALITY_CONTACT_EXTRA_SUFFIX,
     QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX,
     QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX,
@@ -97,6 +98,8 @@ def _quality_extra_key_owned(key: str, owned: set[str]) -> bool:
         return key[: -len(QUALITY_OPTIONAL_POWER_EXTRA_SUFFIX)] in owned
     if key.endswith(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX):
         return key[: -len(QUALITY_SPIRIT_CATEGORY_EXTRA_SUFFIX)] in owned
+    if QUALITY_ATTRIBUTE_EXTRA_MARKER in key:
+        return key.split(QUALITY_ATTRIBUTE_EXTRA_MARKER, 1)[0] in owned
     if QUALITY_ADDSPIRIT_EXTRA_MARKER in key:
         return key.split(QUALITY_ADDSPIRIT_EXTRA_MARKER, 1)[0] in owned
     return False

@@ -41,7 +41,7 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
     if tag == "power":
         return name in ctx["powers"]
     if tag == "art":
-        return name in (ctx.get("arts") or set())
+        return bool(ctx.get("ignore_art")) or name in (ctx.get("arts") or set())
     if tag == "metamagic":
         return name in (ctx.get("metamagics") or set())
     if tag == "cyberware":

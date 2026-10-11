@@ -158,6 +158,7 @@ def resolve_initiation(
                 id=inst.id,
                 grade=g,
                 kind=inst.kind or "metamagic",
+                art_ids=list(inst.art_ids),
                 option_id=inst.option_id or "",
                 group=bool(inst.group),
                 ordeal=bool(inst.ordeal),
@@ -184,6 +185,31 @@ def resolve_initiation(
 
     for choice in kept_choices:
         g = choice.grade
+        kept_arts: list[str] = []
+        for aid in choice.art_ids:
+            art = _magic_art_by_id(aid)
+            if not art:
+                warnings.append(notice("engine.initiation.artUnknownDropped", grade=g))
+                continue
+            if art["name"] in seen_art:
+                warnings.append(notice("engine.initiation.duplicateDropped", name=term(str(art["name"]))))
+                continue
+            kept_arts.append(aid)
+            seen_art.add(art["name"])
+            art_names.add(art["name"])
+            public_arts.append(
+                {
+                    "id": f"{choice.id}:art:{aid}",
+                    "art_id": aid,
+                    "name": art["name"],
+                    "grade": g,
+                    "source": art.get("source") or "",
+                    "page": art.get("page") or "",
+                }
+            )
+            if art.get("bonus"):
+                bonus_sources.append((art["name"], list(art["bonus"])))
+        choice.art_ids = kept_arts
         kind = "art" if choice.kind == "art" else "metamagic"
         choice.kind = kind
         option_id = (choice.option_id or "").strip()
@@ -192,6 +218,7 @@ def resolve_initiation(
             "grade": g,
             "kind": kind,
             "option_id": option_id,
+            "art_ids": list(choice.art_ids),
             "name": "",
             "karma": initiation_karma_for_grade(
                 g, group=choice.group, ordeal=choice.ordeal, schooling=choice.schooling
@@ -291,6 +318,8 @@ def resolve_initiation(
         ctx = {
             "qualities": set(quality_names) | {talent_name},
             "arts": set(art_names),
+            "ignore_art": current_rules().ignore_art
+            or (state.settings.ignore_art is None and bool(state.settings.books and "SG" not in state.settings.books)),
             "metamagics": set(metamagic_names),
             "powers": set(),
             "metatypes": set(),
@@ -308,7 +337,22 @@ def resolve_initiation(
         }
         if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
             needed = [name for names in (spec.get("required") or {}).values() for name in names]
-            if needed:
+            tree = spec["required_tree"]
+            children = (tree[0].get("children") or []) if len(tree) == 1 else []
+            arts = [node["name"] for node in children if node.get("tag") == "art"]
+            qualities = [node["name"] for node in children if node.get("tag") == "quality"]
+            if arts and tree[0]["tag"] == "oneof" and len(arts) + len(qualities) == len(children):
+                warnings.append(
+                    notice(
+                        "engine.initiation.requiresArtOrQuality",
+                        name=term(str(spec["name"])),
+                        arts=terms(arts),
+                        qualities=terms(qualities),
+                    )
+                )
+            elif arts and len(arts) == len(children):
+                warnings.append(notice("engine.initiation.requiresArt", name=term(str(spec["name"])), arts=terms(arts)))
+            elif needed:
                 warnings.append(
                     notice("engine.initiation.requires", name=term(str(spec["name"])), needed=terms(needed))
                 )

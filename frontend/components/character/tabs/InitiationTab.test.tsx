@@ -92,3 +92,81 @@ describe("<InitiationTab>", () => {
     expect(options).not.toContain("Quickening");
   });
 });
+
+it("explains that Masking accepts its art OR an adept quality", () => {
+  renderTab({
+    character: {
+      settings: { books: ["SR5", "SG"] },
+      derived: { initiation: { choices: [{ grade: 1, karma: 13 }] } as never },
+    },
+    catalog: makeCatalog({
+      metamagics: [
+        {
+          id: "mask",
+          name: "Masking",
+          magician: true,
+          adept: true,
+          required: ["Masking", "Adept", "Mystic Adept"],
+          required_tree: [
+            {
+              tag: "oneof",
+              children: [
+                { tag: "art", name: "Masking" },
+                { tag: "quality", name: "Adept" },
+                { tag: "quality", name: "Mystic Adept" },
+              ],
+            },
+          ],
+        },
+      ] as never,
+    }),
+  });
+  const option = screen.getByRole("option", { name: /Art（魔術の流派）: Masking/ });
+  expect(option.textContent).toContain("または");
+  expect(option.textContent).toContain("Adept");
+});
+
+it("does not show an Art prerequisite when the character ignores arts", () => {
+  renderTab({
+    character: {
+      settings: { books: ["SR5", "SG"], ignore_art: true },
+      derived: { initiation: { choices: [{ grade: 1, karma: 13 }] } as never },
+    },
+    catalog: makeCatalog({
+      metamagics: [
+        {
+          id: "center",
+          name: "Centering",
+          magician: true,
+          adept: false,
+          required: ["Centering"],
+          required_tree: [{ tag: "allof", children: [{ tag: "art", name: "Centering" }] }],
+        },
+      ] as never,
+    }),
+  });
+  expect(screen.getByRole("option", { name: "Centering" }).textContent).not.toContain("要");
+});
+
+it("saves a High Art alongside the existing metamagic at the same grade", () => {
+  const patch = vi.fn();
+  renderTab({
+    character: {
+      settings: { books: ["SR5", "SG"] },
+      initiate_grade: 1,
+      initiations: [{ grade: 1, kind: "metamagic", option_id: "mask" }],
+      derived: { initiation: { choices: [{ grade: 1, karma: 13, option_id: "mask" }] } as never },
+    },
+    catalog: makeCatalog({
+      metamagics: [{ id: "mask", name: "Masking", magician: true, adept: true }] as never,
+      magic_arts: [{ id: "mask-art", name: "Masking", source: "SG", page: "149" }],
+    }),
+    patch,
+  });
+  fireEvent.change(screen.getByRole("combobox", { name: "Art 1" }), {
+    target: { value: "mask-art" },
+  });
+  expect(patch).toHaveBeenCalledWith({
+    initiations: [{ grade: 1, kind: "metamagic", option_id: "mask", art_ids: ["mask-art"] }],
+  });
+});

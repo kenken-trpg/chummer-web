@@ -67,6 +67,41 @@ export function QualityExtraEditor({
     ? q.select_options
     : catalogById.get(q.id)?.select_options || [];
   const addSpiritPicks = (d.add_spirit_picks || []).filter((row) => row.quality_id === q.id);
+  const attributeChoices = catalogById.get(q.id)?.attribute_choices || [];
+  if (attributeChoices.length) {
+    return (
+      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+        {attributeChoices.map((slot, index) => {
+          const key = index === 0 ? q.id : `${q.id}:attribute:${index}`;
+          const allowed = slot.options.length ? slot.options : ATTRS;
+          return (
+            <label key={key}>
+              {ui("quality.attribute")} {index + 1}
+              <select
+                aria-label={named(`${ui("quality.attribute")} ${index + 1}`)}
+                value={ch.quality_extras?.[key] || ""}
+                onChange={(e) =>
+                  patch({ quality_extras: { ...(ch.quality_extras || {}), [key]: e.target.value } })
+                }
+              >
+                <option value="">{ui("quality.attribute")}</option>
+                {allowed
+                  .filter((attr) => attr !== "ESS" && !slot.exclude.includes(attr))
+                  .filter(
+                    (attr) => !["MAG", "RES"].includes(attr) || Number(d.totals[attr] || 0) > 0,
+                  )
+                  .map((attr) => (
+                    <option key={attr} value={attr}>
+                      {attrLabel(attr, t)}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          );
+        })}
+      </div>
+    );
+  }
   if (kind === "add_spirit" || addSpiritPicks.length) {
     const slots = addSpiritPicks.length
       ? addSpiritPicks

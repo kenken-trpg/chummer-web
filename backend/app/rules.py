@@ -153,6 +153,7 @@ class Rules:
     #: be taken at chargen (Chummer's `AddInitiationsAllowed`). Off in the
     #: Standard preset, so a grade is career-only.
     allow_initiation_in_create_mode: bool = False
+    ignore_art: bool = False
     #: `<usepointsonbrokengroups>`: at chargen a skill whose group holds
     #: group points may still take skill points of its own (Chummer's
     #: `Skill.BaseUnlocked`). Off in Standard: karma only.
@@ -397,6 +398,7 @@ def rules_for(settings: object | None) -> Rules:
         ("ess_loss_reduces_maximum_only", "ess_loss_reduces_maximum_only"),
         ("dont_round_essence_internally", "dont_round_essence_internally"),
         ("allow_initiation_in_create_mode", "allow_initiation_in_create_mode"),
+        ("ignore_art", "ignore_art"),
         ("use_points_on_broken_groups", "use_points_on_broken_groups"),
         ("strict_skill_groups_in_create_mode", "strict_skill_groups_in_create_mode"),
         ("drone_armor_multiplier_enabled", "drone_armor_multiplier_enabled"),

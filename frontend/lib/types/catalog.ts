@@ -455,6 +455,7 @@ export interface Catalog {
     metagenic?: boolean;
     needs_extra?: boolean;
     extra_kind?: string | null;
+    attribute_choices?: { options: string[]; exclude: string[] }[];
     select_options?: string[];
     spirit_options?: string[];
     expertise_skill?: string;
@@ -589,6 +590,7 @@ export interface Catalog {
     magician: boolean;
     repeatable: boolean;
     required: string[];
+    required_tree?: QualityReqNode[];
     source?: string;
     page?: string;
   }[];

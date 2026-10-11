@@ -181,3 +181,20 @@ describe("<BioTab> a player-priced piece", () => {
     expect(screen.queryByLabelText(/Muscle Augmentation: /)).toBeNull();
   });
 });
+
+it("excludes grades banned by the character's settings from the add picker", () => {
+  renderTab({
+    character: { settings: { banned_ware_grades: ["Betaware"] } },
+    catalog: makeCatalog({
+      bioware: {
+        items: [muscle],
+        grades: [
+          { name: "Standard", ess: 1, cost: 1 },
+          { name: "Betaware", ess: 0.7, cost: 1.5 },
+        ],
+      },
+    } as never),
+  });
+  expect(screen.queryByRole("option", { name: /Betaware/ })).toBeNull();
+  expect(screen.getByRole("option", { name: /Standard/ })).toBeDefined();
+});

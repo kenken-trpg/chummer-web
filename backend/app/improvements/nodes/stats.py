@@ -323,38 +323,17 @@ def _test_mod(tag: str, node: dict[str, Any], fields: dict[str, Any], effects: E
 def _selectattributes(
     tag: str, node: dict[str, Any], fields: dict[str, Any], effects: EffectsDict, source: str
 ) -> None:
-    nested = node.get("nested") or {}
-    vals = nested.get("selectattribute") or []
-    if not isinstance(vals, list):
-        vals = [vals]
-    exclude: list[str] = []
-    max_bonus = 1
-    for raw in vals:
-        text = str(raw).strip()
-        attr = ATTR_ALIASES.get(text.upper())
-        if attr:
-            exclude.append(attr)
-        elif text:
-            max_bonus = _as_int(text, max_bonus)
-    # Also accept structured fields if present.
-    for key in ("excludeattribute", "exclude"):
-        raw_ex = fields.get(key)
-        if not raw_ex:
-            continue
-        items = raw_ex if isinstance(raw_ex, list) else [raw_ex]
-        for item in items:
-            attr = ATTR_ALIASES.get(str(item).strip().upper())
-            if attr and attr not in exclude:
-                exclude.append(attr)
-    if fields.get("max"):
-        max_bonus = _as_int(fields.get("max"), max_bonus)
-    effects["attribute_selects"].append(
-        {
-            "exclude": exclude,
-            "max": max(1, max_bonus),
-            "source": source,
-        }
-    )
+    for index, choice in enumerate(node.get("attribute_choices") or []):
+        effects["attribute_selects"].append(
+            {
+                "exclude": list(choice.get("exclude") or []),
+                "options": list(choice.get("options") or []),
+                "val": _as_int(choice.get("val")),
+                "max": _as_int(choice.get("max")),
+                "index": index,
+                "source": source,
+            }
+        )
 
 
 @handles("physicalcmrecovery")

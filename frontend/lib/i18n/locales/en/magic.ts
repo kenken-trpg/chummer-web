@@ -120,6 +120,9 @@ export const EN_MAGIC = {
   "init.schooling": "schooling",
   "init.metamagic": "Metamagic",
 
+  "init.artRequirement": "Art: {name}",
+  "init.requirementOr": " or ",
+  "init.requirementAnd": " and ",
   "init.requires": " / requires {list}",
   "sub.note": " (10 + grade×3 karma each. RES cap = metatype cap + grade. Grade ≤ RES.)",
   "sub.grade": "Submersion grade",
