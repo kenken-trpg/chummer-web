@@ -2,7 +2,7 @@
  *  with the portrait and the condition monitors. */
 import type { Catalog, Character, Derived } from "@/lib/types";
 import { buildUdonariumPalette } from "./palette";
-import { type Locale, type UiFn } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
 import {
   type PortraitEntry,
   type UdonariumOptions,
@@ -10,7 +10,6 @@ import {
   woundTrack,
   resource,
   uiFor,
-  xmlEscape,
 } from "./shared";
 
 const PORTRAIT_EXT: Record<string, string> = {
