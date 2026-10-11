@@ -479,6 +479,21 @@ input[type="search"] {
 .quality-item input[type="text"] {
   margin-top: 6px;
 }
+/* What a quality still leaves to decide — the substance an addiction is for,
+   a level, a skill pick — belongs to the row above it, not beside it. Indented
+   behind a rule so the pair reads as one item; most qualities decide nothing,
+   and the box collapses rather than drawing an empty rule. */
+.quality-extras {
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+.quality-extras:empty {
+  display: none;
+}
 /* Why the list stops where it does — a cut-off list and a core-only list both
    read as "that item does not exist" without it. Sticks to the bottom of the
    scroll box so it is visible without scrolling to the end. */

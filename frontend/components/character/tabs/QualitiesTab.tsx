@@ -171,102 +171,110 @@ export function QualitiesTab({
                       ? ui("qual.careerTaken", { cost: q.career_cost })
                       : ui("qual.careerTakenNegative")}
                 </div>
-                {q.level != null && !q.free && catalogById.has(q.id) ? (
-                  <label>
-                    {ui("qual.level")}{" "}
+                {/* Everything this quality still needs decided — a level, an
+                    addiction's substance, a skill pick, an optional power —
+                    plus the powers it brings. Indented as one block so a row
+                    like "依存症" and the select that says what it is for read
+                    as one item rather than two neighbours. Empty for most
+                    qualities, and `:empty` hides the rule then. */}
+                <div className="quality-extras">
+                  {q.level != null && !q.free && catalogById.has(q.id) ? (
+                    <label>
+                      {ui("qual.level")}{" "}
+                      <select
+                        aria-label={ui("qual.ownedLevel", { name: tr(q.name) })}
+                        value={q.level}
+                        onChange={(e) =>
+                          patch({
+                            quality_ids: setQualityLevel(
+                              ch.quality_ids,
+                              q.id,
+                              Number(e.target.value),
+                            ),
+                          })
+                        }
+                      >
+                        {Array.from(
+                          {
+                            length: Math.max(
+                              q.level,
+                              qualityLevelMax(
+                                catalogById.get(q.id)!,
+                                ch.quality_ids,
+                                catalog.qualities,
+                              ),
+                            ),
+                          },
+                          (_, i) => i + 1,
+                        ).map((level) => (
+                          <option
+                            key={level}
+                            value={level}
+                            disabled={
+                              level > q.level! &&
+                              !!qualityBlockReason(catalogById.get(q.id)!, qualityCtx, ui)
+                            }
+                          >
+                            Lv{level}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <SkillPickSelects
+                    slots={(d.skill_pick_slots || []).filter(
+                      (slot) => slot.source_kind === "quality" && slot.source_id === q.id,
+                    )}
+                    tr={tr}
+                    onPick={(key, skill) =>
+                      patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })
+                    }
+                  />
+                  <QualityExtraEditor
+                    q={q}
+                    ch={ch}
+                    d={d}
+                    tr={tr}
+                    trGroup={trGroup}
+                    t={t}
+                    ui={ui}
+                    patch={patch}
+                    setCharacter={setCharacter}
+                    catalog={catalog}
+                    catalogById={catalogById}
+                  />
+                  {q.optional_powers?.length ? (
                     <select
-                      aria-label={ui("qual.ownedLevel", { name: tr(q.name) })}
-                      value={q.level}
+                      aria-label={`${tr(q.name)}: ${ui("qual.optionalPower")}`}
+                      value={q.optional_power || ""}
                       onChange={(e) =>
                         patch({
-                          quality_ids: setQualityLevel(
-                            ch.quality_ids,
-                            q.id,
-                            Number(e.target.value),
-                          ),
+                          quality_extras: {
+                            ...(ch.quality_extras || {}),
+                            [`${q.id}:optionalpower`]: e.target.value,
+                          },
                         })
                       }
                     >
-                      {Array.from(
-                        {
-                          length: Math.max(
-                            q.level,
-                            qualityLevelMax(
-                              catalogById.get(q.id)!,
-                              ch.quality_ids,
-                              catalog.qualities,
-                            ),
-                          ),
-                        },
-                        (_, i) => i + 1,
-                      ).map((level) => (
-                        <option
-                          key={level}
-                          value={level}
-                          disabled={
-                            level > q.level! &&
-                            !!qualityBlockReason(catalogById.get(q.id)!, qualityCtx, ui)
-                          }
-                        >
-                          Lv{level}
+                      <option value="">{ui("qual.optionalPower")}</option>
+                      {q.optional_powers.map((name) => (
+                        <option key={name} value={name}>
+                          {tr(name)}
                         </option>
                       ))}
                     </select>
-                  </label>
-                ) : null}
-                <SkillPickSelects
-                  slots={(d.skill_pick_slots || []).filter(
-                    (slot) => slot.source_kind === "quality" && slot.source_id === q.id,
-                  )}
-                  tr={tr}
-                  onPick={(key, skill) =>
-                    patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })
-                  }
-                />
-                <QualityExtraEditor
-                  q={q}
-                  ch={ch}
-                  d={d}
-                  tr={tr}
-                  trGroup={trGroup}
-                  t={t}
-                  ui={ui}
-                  patch={patch}
-                  setCharacter={setCharacter}
-                  catalog={catalog}
-                  catalogById={catalogById}
-                />
-                {q.optional_powers?.length ? (
-                  <select
-                    aria-label={`${tr(q.name)}: ${ui("qual.optionalPower")}`}
-                    value={q.optional_power || ""}
-                    onChange={(e) =>
-                      patch({
-                        quality_extras: {
-                          ...(ch.quality_extras || {}),
-                          [`${q.id}:optionalpower`]: e.target.value,
-                        },
-                      })
-                    }
-                  >
-                    <option value="">{ui("qual.optionalPower")}</option>
-                    {q.optional_powers.map((name) => (
-                      <option key={name} value={name}>
-                        {tr(name)}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-                {q.critter_powers?.length ? (
-                  <div className="muted">
-                    {ui("common.powersHead")}
-                    <ul className="critter-powers">
-                      {q.critter_powers.map((power, i) => (
-                        <li key={`${power.name}-${i}`}>{critterPowerRow(power, tr, ui)}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
+                  ) : null}
+                  {q.critter_powers?.length ? (
+                    <div className="muted">
+                      {ui("common.powersHead")}
+                      <ul className="critter-powers">
+                        {q.critter_powers.map((power, i) => (
+                          <li key={`${power.name}-${i}`}>{critterPowerRow(power, tr, ui)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
               </div>
               {q.free ? (
                 <span className="muted">
