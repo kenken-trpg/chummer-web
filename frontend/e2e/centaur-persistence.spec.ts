@@ -336,3 +336,67 @@ test("Centaur career chum5 reimport preserves balance and prices only subsequent
     }
   }
 });
+
+test("disabling RF retains Centaur, warns about its source and survives reload and undo", async ({
+  page,
+}) => {
+  await page.goto(`/share#c=${encodeFragment({ v: 1, s: payload })}`);
+  await page.getByRole("button", { name: "自分のロースターに取り込む" }).click();
+  await waitForEditor(page);
+  await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
+  await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText(
+    "別の種族を選ぶまで保持されます",
+  );
+  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+
+  async function expectRF(enabled: boolean) {
+    await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
+    await expect
+      .poll(async () => (await currentCharacter(page)).settings?.books?.includes("RF"))
+      .toBe(enabled);
+    await expect
+      .poll(async () =>
+        (await currentCharacter(page)).derived.warnings?.some(
+          (row) => row.key === "engine.settings.outOfBooks",
+        ),
+      )
+      .toBe(!enabled);
+    const warning = page.locator("aside.side").getByText(/使用ルールブック外の項目/);
+    if (enabled) {
+      await expect(warning).toHaveCount(0);
+    } else {
+      await expect(warning).toContainText("RF");
+      await expect(warning).toContainText("ケンタウロス");
+    }
+  }
+
+  await page
+    .getByRole("navigation", { name: "セクション" })
+    .getByRole("button", { name: "優先度", exact: true })
+    .click();
+  await page.getByRole("button", { name: "ルールブックを選ぶ", exact: true }).click();
+  // The controlled checkbox changes after the engine patch resolves.
+  await page.getByRole("checkbox", { name: /\(RF\)/ }).click();
+  await expectRF(false);
+  await expect(page.getByRole("checkbox", { name: /\(RF\)/ })).not.toBeChecked();
+  await page.reload();
+  await waitForEditor(page);
+  await expectRF(false);
+  // History is session-local: make a new edit after reload, then undo/redo it.
+  await page
+    .getByRole("navigation", { name: "セクション" })
+    .getByRole("button", { name: "優先度", exact: true })
+    .click();
+  await page.getByRole("button", { name: "ルールブックを選ぶ", exact: true }).click();
+  await page.getByRole("checkbox", { name: /\(RF\)/ }).click();
+  await expectRF(true);
+  await expect(page.getByRole("checkbox", { name: /\(RF\)/ })).toBeChecked();
+  await page.getByRole("button", { name: /元に戻す/ }).click();
+  await expectRF(false);
+  await page.getByRole("button", { name: /やり直し/ }).click();
+  await expectRF(true);
+  await page.getByRole("button", { name: "メタタイプ", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "現在の種族" })).toContainText("RF");
+  await expect(page.getByRole("button", { name: /Centaur|ケンタウロス/ })).toHaveCount(0);
+});

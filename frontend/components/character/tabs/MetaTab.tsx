@@ -8,6 +8,10 @@ import { critterPowerRow } from "@/lib/spell-terms";
 
 export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
+  const candidates =
+    (ch.build_method || "Priority") === "Karma"
+      ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
+      : table.Heritage[ch.priorities.Heritage].metatypes;
 
   return (
     <div className="card">
@@ -24,15 +28,14 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           {ui("help.meta.statsLabel")}
         </HelpTip>
       </p>
+      {!candidates.some((m) => m.name === ch.metatype) ? (
+        <p role="status" className="muted">
+          {ui("meta.retained", { name: tr(ch.metatype) })}
+          {d.metatype_info.source ? ` / ${d.metatype_info.source}` : ""}
+        </p>
+      ) : null}
       <div className="grid">
-        {((ch.build_method || "Priority") === "Karma"
-          ? catalog.metatypes.map((m) => ({
-              name: m.name,
-              special: 0,
-              karma: m.karma ?? 0,
-            }))
-          : table.Heritage[ch.priorities.Heritage].metatypes
-        ).map((m) => (
+        {candidates.map((m) => (
           <button
             key={m.name}
             className={`choice ${ch.metatype === m.name ? "selected" : ""}`}

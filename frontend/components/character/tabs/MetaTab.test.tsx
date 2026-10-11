@@ -35,6 +35,40 @@ function renderTab(
 }
 
 describe("<MetaTab>", () => {
+  it.each(["Priority", "SumToTen", "Karma"])(
+    "identifies an imported metatype outside the %s candidates without making it selectable",
+    (build_method) => {
+      const patch = vi.fn();
+      renderTab({
+        patch,
+        character: {
+          metatype: "Centaur",
+          build_method,
+          derived: {
+            metatype_info: { name: "Centaur", source: "RF", parent: null, attributes: {} },
+          },
+        },
+      });
+      expect(screen.getByRole("status").textContent).toContain("現在の種族「Centaur」");
+      expect(screen.getByRole("status").textContent).toContain("別の種族を選ぶまで保持");
+      expect(screen.getByRole("status").textContent).toContain("RF");
+      expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
+      expect(patch).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not show the retained-metatype note for a normal candidate", () => {
+    renderTab({ character: { metatype: "Human" } });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("lets the player explicitly replace a retained metatype with an available choice", () => {
+    const patch = vi.fn();
+    renderTab({ character: { metatype: "Centaur" }, patch });
+    fireEvent.click(screen.getByRole("button", { name: /Human/ }));
+    expect(patch).toHaveBeenCalledWith({ metatype: "Human", metavariant: null });
+  });
+
   it("shows fixed metatype powers with action, source and the original selection", () => {
     renderTab({
       character: {

@@ -3,6 +3,8 @@ export const EN_CHARGEN = {
   "meta.innate": "Innate to {name} (no additional karma)",
   "meta.innateFixed": "Innate grant · cannot be removed",
   "meta.innatePowers": "Metatype powers",
+  "meta.retained":
+    "The current metatype, {name}, is not available as a new choice under these conditions. It is kept until you choose another metatype",
   "skills.points": "Skills {skills} · Groups {groups} · Knowledge {knowledge}",
   "skills.careerNote": " · career advances with karma (max R{max})",
   "skills.chargenNote": " · a specialisation costs 1 point",

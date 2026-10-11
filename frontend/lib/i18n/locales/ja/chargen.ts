@@ -3,6 +3,8 @@ export const JA_CHARGEN = {
   "meta.innate": "{name}の生得能力（追加カルマなし）",
   "meta.innateFixed": "生得付与・削除不可",
   "meta.innatePowers": "種族パワー",
+  "meta.retained":
+    "現在の種族「{name}」は、この条件の新規選択候補にありません。別の種族を選ぶまで保持されます",
   "skills.points": "技能 {skills} ・ グループ {groups} ・ 知識 {knowledge}",
   "skills.careerNote": " ・ キャリアはカルマで成長（上限 R{max}）",
   "skills.chargenNote": " ・ 専門化は1点",
