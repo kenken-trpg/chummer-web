@@ -44,12 +44,25 @@ export default defineConfig({
     // `.ts` test that does need a DOM says so with a `@vitest-environment
     // happy-dom` comment at the top of the file.
     projects: [
-      { extends: true, test: { name: "node", environment: "node", include: ["**/*.test.ts"] } },
-      // `setupFiles` is the dom project's alone: it patches `window`, which the
-      // node project does not have.
       {
         extends: true,
-        test: { name: "dom", include: ["**/*.test.tsx"], setupFiles: ["./tests/setup.ts"] },
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["**/*.test.ts"],
+          setupFiles: ["./tests/locales.ts"],
+        },
+      },
+      // `tests/setup.ts` is the dom project's alone: it patches `window`,
+      // which the node project does not have. `tests/locales.ts` is shared —
+      // both halves compare translations.
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          include: ["**/*.test.tsx"],
+          setupFiles: ["./tests/setup.ts", "./tests/locales.ts"],
+        },
       },
     ],
 
