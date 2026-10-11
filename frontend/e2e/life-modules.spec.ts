@@ -20,7 +20,8 @@ test("life modules persist across reload and removing a module removes its grant
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue(
     "Life module regression",
   );
-  const picker = page.getByRole("combobox", { name: "実生活: 経歴を選択" });
+  // The stage name is Run Faster data, so it reads in English in the Japanese UI.
+  const picker = page.getByRole("combobox", { name: "Real Life: 経歴を選択" });
   await picker.selectOption("47bf63cf-9a2a-4008-b455-c8ab68add581");
   const saved = async () =>
     (await storedCharacters(page)).find(

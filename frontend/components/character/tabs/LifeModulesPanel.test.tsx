@@ -262,3 +262,12 @@ it("asks for the quality level and then that level's own free text", () => {
   });
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:x2": "Ares Macrotechnology" } });
 });
+
+it("names the life stage in English, because the stage is Run Faster data", () => {
+  setup();
+  // The picker label and the section heading both read from the data, so the
+  // Japanese UI says "Real Life", not 実生活.
+  expect(screen.getByRole("heading", { name: "Real Life" })).toBeTruthy();
+  expect(screen.getByRole("combobox", { name: "Real Life: 経歴を選択" })).toBeTruthy();
+  expect(screen.queryByText("実生活")).toBeNull();
+});

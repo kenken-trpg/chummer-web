@@ -11,7 +11,7 @@ from typing import Any
 from uuid import NAMESPACE_URL, uuid5
 
 from ...models import CharacterState, ContactInstall
-from ...notices import term, ui
+from ...notices import term
 from ...rules import current_rules
 from ..karma import attribute_levels_karma_cost, knowledge_excess_karma, skill_levels_karma_cost
 from ..priority import resolve_talent_for_method
@@ -53,13 +53,13 @@ def prepare(ctx: Ctx) -> None:
         # Education and adult life can repeat, including the same module.
         stage = row["stage"]
         if stage in STAGES[:3] and stage in seen:
-            ctx.err("engine.life.duplicateStage", stage=ui(f"life.stage.{stage}"))
+            ctx.err("engine.life.duplicateStage", stage=stage)
             continue
         seen.add(stage)
         chosen.append({**row, "occurrence": occurrence})
     for stage in STAGES:
         if stage not in seen and not ctx.career:
-            ctx.err("engine.life.missingStage", stage=ui(f"life.stage.{stage}"))
+            ctx.err("engine.life.missingStage", stage=stage)
     levels_by_group: dict[str, int] = {}
     for row in chosen:
         for grant in row.get("quality_levels", []):

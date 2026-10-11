@@ -72,7 +72,7 @@ export function LifeModulesPanel({
         const taken = selected.some((id) => rows.find((row) => row.id === id)?.stage === stage);
         return (
           <section key={stage}>
-            <h3>{ui(`life.stage.${stage}` as MsgKey)}</h3>
+            <h3>{stage}</h3>
             {selected.map((id, index) => {
               const row = rows.find((item) => item.id === id);
               if (!row || row.stage !== stage) return null;
@@ -161,7 +161,7 @@ export function LifeModulesPanel({
               );
             })}
             <label>
-              {ui(`life.stage.${stage}` as MsgKey)}: {ui("life.pick")}
+              {stage}: {ui("life.pick")}
               <select
                 value=""
                 disabled={ch.career || (taken && STAGES.indexOf(stage) < 3)}

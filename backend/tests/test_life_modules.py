@@ -49,7 +49,7 @@ def test_pool_and_method_do_not_inherit_priority_or_karma_defaults():
     assert state.derived["karma"]["pool"] == 750
     assert state.derived["karma_chargen"]["enabled"]
     assert not has(state.derived["errors"], "engine.priority.oneEach")
-    assert has(state.derived["errors"], "engine.life.missingStage", stage="life.stage.Nationality")
+    assert has(state.derived["errors"], "engine.life.missingStage", stage="Nationality")
 
 
 def test_grants_are_paid_once_and_remove_without_leaving_ratings():
@@ -127,7 +127,7 @@ def test_childhood_cannot_repeat():
     spec = module("Corp Drone")
     picks = {f"0:{c['key']}": c["options"][0] if c["options"] else "Seattle" for c in spec["choices"]}
     state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"], spec["id"]], life_module_choices=picks))
-    assert has(state.derived["errors"], "engine.life.duplicateStage", stage="life.stage.Formative Years")
+    assert has(state.derived["errors"], "engine.life.duplicateStage", stage="Formative Years")
     assert state.derived["karma"]["spent"] == 40
 
 
