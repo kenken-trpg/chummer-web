@@ -121,7 +121,7 @@ The backend tests come in two layers:
 
 ```bash
 cd frontend && npm run check   # typecheck + lint + format:check + test
-npm run test                   # vitest (jsdom + React Testing Library)
+npm run test                   # vitest (happy-dom + React Testing Library)
 npm run test:coverage          # the same run, plus the coverage floor
 ```
 
@@ -149,7 +149,7 @@ ports so it never drives a server you already had running. It needs
 `backend/vendor` (`make data`); without it `/api/catalog` 503s.
 
 Keep it to flows the unit suite **cannot** reach. In vitest, `lib/api` is
-mocked, the local store is a `Map`, and jsdom has no IndexedDB — so anything
+mocked, the local store is a `Map`, and happy-dom has no IndexedDB — so anything
 crossing browser storage or the Python engine for real belongs here, and
 anything else belongs in a fast unit test. Two specs today: create → edit →
 reload → `.chum5` export, and share-link → fragment → read-only view.

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { beforeEach, describe, expect, it } from "vitest";
 import { errorText } from "@/lib/api";
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n";

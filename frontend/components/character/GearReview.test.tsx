@@ -93,8 +93,8 @@ describe("<GearReview>", () => {
     });
     render(<GearReview ed={makeEd({ pendingGear: [shield] })} />);
     // the same name twice, told apart by the tab each one would land on
-    screen.getByRole("button", { name: "Ballistic Shield武器" });
-    screen.getByRole("button", { name: "Ballistic Shield防具" });
+    screen.getByRole("button", { name: "Ballistic Shield 武器" });
+    screen.getByRole("button", { name: "Ballistic Shield 防具" });
   });
 
   it("admits when nothing in the book looks like the row", () => {
