@@ -178,6 +178,7 @@ export const EN_APP = {
   "toolbar.exportXlsxHint":
     "Export an .xlsx with the same sheets and the same input cells as the 「［SR5］キャラシテンプレート」 Google Sheet by 音の兔 (Nenousa), the one the Japanese Shadowrun 5th unofficial wiki links to (the template itself is not bundled)",
   "toolbar.exportFvtt": "Export FVTT",
+  "app.exportReview.fvttTitle": "{count} items are not included in the Foundry JSON:",
   "toolbar.exportFvttHint":
     "Export JSON for Foundry VTT's Chummer/Data Import (shadowrun5e 0.34.5). Attributes, skills and qualities only",
   "toolbar.import": "Load (JSON/.chum5/.xlsx)",

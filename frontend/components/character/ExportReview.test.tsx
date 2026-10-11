@@ -56,6 +56,33 @@ describe("<ExportReview>", () => {
 
   const pendingRow = { name: "VI・スチームパンク", qty: 1, rating: 0, note: "", suggestions: [] };
 
+  it("names Foundry and shows the omitted power with its fixed selection and reference", () => {
+    render(
+      <ExportReview
+        ed={makeEd({
+          exportReviewFormat: "fvtt",
+          exportReview: [
+            {
+              key: "engine.export.fvttInnatePower",
+              params: {
+                name: { tr: "Natural Weapon" },
+                selection: "Kick: DV ({STR} + 2)P, AP +1, +1 Reach",
+                source: "SR5",
+                page: "399",
+              },
+            },
+          ],
+        })}
+      />,
+    );
+    const text = screen.getByRole("alertdialog").textContent;
+    expect(text).toContain("Foundry向けJSONに含まれない");
+    expect(text).toContain("Natural Weapon");
+    expect(text).toContain("Kick: DV ({STR} + 2)P, AP +1, +1 Reach");
+    expect(text).toContain("SR5 p.399");
+    expect(text).toContain("別途追加");
+  });
+
   it("counts the equipment rows still waiting, beside what the file would lose", () => {
     render(
       <ExportReview

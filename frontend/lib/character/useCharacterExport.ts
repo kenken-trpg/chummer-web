@@ -18,7 +18,7 @@ import type { UiFn } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/messages";
 
 /** The export formats the character is checked before being written to. */
-export type ExportFormat = "chum5" | "xlsx";
+export type ExportFormat = "chum5" | "xlsx" | "fvtt";
 
 /** Hand the browser a file. The three download paths differed only in what
  *  they put in the blob and what they called it. */
@@ -32,7 +32,7 @@ function offer(blob: Blob, filename: string) {
 
 /**
  * Every way the open character leaves this app: the four downloads, the
- * round-trip review that stands between two of them and the file, the share
+ * export review that stands between checked formats and the file, the share
  * link and the clipboard.
  *
  * Owns only what those need — the pending review and the "copied" flash.
@@ -78,13 +78,14 @@ export function useCharacterExport(opts: {
    * Export a file the character has to be read back out of — after asking the
    * server what reading it back would change. A clean round trip saves straight
    * away; otherwise the differences wait in `exportReview` for
-   * {@link confirmExport} or {@link cancelExport}. A failed check is not worth
-   * blocking the download over.
+   * {@link confirmExport} or {@link cancelExport}. Existing .chum5 and .xlsx
+   * downloads remain available when their round-trip checks fail.
    *
-   * Both formats go through this: a .chum5 loses what Chummer has no field for,
+   * A .chum5 loses what Chummer has no field for,
    * and the キャラシテンプレート .xlsx loses rather more — it is a fixed grid with
    * one free-text column for all the equipment — so both are worth a look
-   * before the file is written.
+   * before the file is written. Foundry uses known omissions instead of a
+   * round-trip comparison; its check must succeed before downloading.
    */
   async function downloadChum5() {
     await checkThenSave("chum5");
@@ -97,8 +98,21 @@ export function useCharacterExport(opts: {
 
   async function checkThenSave(format: ExportFormat) {
     if (!ch) return;
-    const check = format === "chum5" ? api.checkChummerExport : api.checkXlsxExport;
-    const differences = await check(ch).catch(() => []);
+    const check = {
+      chum5: api.checkChummerExport,
+      xlsx: api.checkXlsxExport,
+      fvtt: api.checkFvttExport,
+    }[format];
+    let differences: Notice[];
+    try {
+      differences = await check(ch);
+    } catch (e) {
+      if (format === "fvtt") {
+        setError(errorMessage(e, ui, "app.err.export"));
+        return;
+      }
+      differences = [];
+    }
     // Gear rows waiting to be confirmed are a reason to stop as well, and the
     // round trip cannot see them: they are held in this browser and were never
     // sent, so what it checked is a character that does not have them. A file
@@ -123,8 +137,17 @@ export function useCharacterExport(opts: {
   async function save(format: ExportFormat) {
     if (!ch) return;
     try {
-      const blob = await (format === "chum5" ? api.exportChummer(ch) : api.exportXlsx(ch));
-      offer(blob, exportFilename(ch.name, format));
+      const blob = await (format === "fvtt"
+        ? api.exportFvtt(ch, locale)
+        : format === "chum5"
+          ? api.exportChummer(ch)
+          : api.exportXlsx(ch));
+      offer(
+        blob,
+        format === "fvtt"
+          ? exportFilename(ch.name, "json", { tag: "fvtt" })
+          : exportFilename(ch.name, format),
+      );
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
     }
@@ -183,13 +206,7 @@ export function useCharacterExport(opts: {
 
   /** Save JSON for Foundry VTT's shadowrun5e Chummer importer, in the screen's language. */
   async function downloadFvtt() {
-    if (!ch) return;
-    try {
-      // both this and `download` write .json; only the tag tells them apart
-      offer(await api.exportFvtt(ch, locale), exportFilename(ch.name, "json", { tag: "fvtt" }));
-    } catch (e) {
-      setError(errorMessage(e, ui, "app.err.export"));
-    }
+    await checkThenSave("fvtt");
   }
 
   /**

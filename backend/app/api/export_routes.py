@@ -19,6 +19,7 @@ from fastapi import APIRouter, Request, Response
 from ..chummer_export import state_to_chum5
 from ..chummer_export.check import roundtrip_differences
 from ..fvtt_export import state_to_fvtt
+from ..fvtt_export.check import export_omissions
 from ..models import FvttExportRequest, StateRequest
 from ..xlsx_export import state_to_xlsx
 from ..xlsx_export.check import roundtrip_differences as xlsx_differences
@@ -63,6 +64,13 @@ def export_fvtt(request: Request, req: FvttExportRequest) -> Response:
         media_type="application/json",
         headers={"Content-Disposition": _content_disposition(req.state.name, "json")},
     )
+
+
+@router.post("/api/characters/fvtt/check")
+@limiter.limit(_IMPORT_RATE_LIMIT)
+def check_fvtt_export(request: Request, req: StateRequest) -> dict:
+    """Known export omissions; does not simulate Foundry's importer."""
+    return {"differences": export_omissions(req.state)}
 
 
 @router.post("/api/characters/xlsx")

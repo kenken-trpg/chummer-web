@@ -444,6 +444,8 @@ export const JA_ENGINE = {
   "engine.kind.knowledgeSkill": "知識技能",
   "engine.kind.other": "その他の項目",
   "engine.export.lost": "{kind}が {count} 件失われます",
+  "engine.export.fvttInnatePower":
+    "生得パワー「{name}」 {selection}（{source} p.{page}）はFoundry向けJSONに含まれません。Foundryで別途追加してください",
   "engine.export.gained": "{kind}が {count} 件増えます",
   "engine.export.changed": "{kind}の内容が変わります",
   "engine.export.karma": "残りカルマが {before} → {after} になります",

@@ -26,6 +26,7 @@ const api = vi.hoisted(() => ({
   exportXlsx: vi.fn(),
   checkXlsxExport: vi.fn(),
   exportFvtt: vi.fn(),
+  checkFvttExport: vi.fn(),
 }));
 vi.mock("@/lib/api", () => ({ api }));
 
@@ -34,6 +35,7 @@ beforeEach(() => {
   Object.values(api).forEach((fn) => fn.mockReset());
   api.catalog.mockResolvedValue(catalog);
   api.list.mockResolvedValue([]);
+  api.checkFvttExport.mockResolvedValue([]);
   // the real one returns local.deleteCharacter()'s promise, and deleteCurrent
   // chains .catch() onto it
   api.remove.mockResolvedValue(undefined);
@@ -1055,6 +1057,56 @@ describe("useCharacterEditor file exports", () => {
 
     expect(clicks[0].download).toMatch(/^Vex-fvtt_\d{8}-\d{6}\.json$/);
     expect(result.current.error).toBeNull();
+  });
+
+  it("reviews omitted innate powers before Foundry export and confirms the right format", async () => {
+    const differences = [
+      { key: "engine.export.fvttInnatePower", params: { name: { tr: "Search" } } },
+    ];
+    api.checkFvttExport.mockResolvedValue(differences);
+    api.exportFvtt.mockResolvedValue(new Blob(["{}"]));
+    const { result } = await booted(
+      makeCharacter({ id: "c1", name: "Centaur", metatype: "Centaur" }),
+    );
+    await act(async () => {
+      await result.current.downloadFvtt();
+    });
+    expect(api.checkFvttExport).toHaveBeenCalledWith(result.current.ch);
+    expect(result.current.exportReview).toEqual(differences);
+    expect(result.current.exportReviewFormat).toBe("fvtt");
+    expect(api.exportFvtt).not.toHaveBeenCalled();
+    expect(clicks).toEqual([]);
+    await act(async () => {
+      await result.current.confirmExport();
+    });
+    expect(api.exportFvtt).toHaveBeenCalledWith(result.current.ch, "ja");
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    expect(clicks[0].download).toMatch(/^Centaur-fvtt_.*\.json$/);
+  });
+
+  it("cancels a Foundry omission review without writing a file", async () => {
+    api.checkFvttExport.mockResolvedValue([{ key: "engine.export.fvttInnatePower", params: {} }]);
+    const { result } = await booted(makeCharacter({ id: "c1" }));
+    await act(async () => {
+      await result.current.downloadFvtt();
+    });
+    act(() => {
+      result.current.cancelExport();
+    });
+    expect(result.current.exportReview).toBeNull();
+    expect(api.exportFvtt).not.toHaveBeenCalled();
+    expect(clicks).toEqual([]);
+  });
+
+  it("does not silently export when the Foundry omission check fails", async () => {
+    api.checkFvttExport.mockRejectedValue(new Error("offline"));
+    const { result } = await booted(makeCharacter({ id: "c1" }));
+    await act(async () => {
+      await result.current.downloadFvtt();
+    });
+    expect(result.current.error).toContain("offline");
+    expect(api.exportFvtt).not.toHaveBeenCalled();
+    expect(clicks).toEqual([]);
   });
 
   // The Udonarium piece is the one export built entirely in the browser, and
