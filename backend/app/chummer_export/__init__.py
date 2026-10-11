@@ -18,16 +18,9 @@ from ..engine import compute, find_metatype
 from ..models import CharacterState
 from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
+from .build import _export_build_points, _export_flags, _export_priorities
 from .gear import _export_armor, _export_foci, _export_gear, _export_vehicles, _export_ware, _export_weapons
-from .identity import (
-    _export_attributes,
-    _export_build_points,
-    _export_contacts,
-    _export_flags,
-    _export_identity,
-    _export_priorities,
-    _export_skills,
-)
+from .identity import _export_attributes, _export_contacts, _export_identity
 from .lifestyles import _export_custom_drugs, _export_lifestyles
 from .magic import (
     _export_enhancements,
@@ -37,6 +30,7 @@ from .magic import (
     _export_spirits,
 )
 from .qualities import _export_martial_arts, _export_qualities
+from .skills import _export_skills
 
 __all__ = ["state_to_chum5"]
 
