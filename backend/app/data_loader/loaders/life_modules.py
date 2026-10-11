@@ -222,9 +222,9 @@ def load_life_modules() -> list[dict[str, Any]]:
                         else:
                             issues.append("qualitylevel:unknown")
                     elif node.tag == "addskillspecialization":
-                        skill, spec = _text(node.find("skill")), _text(node.find("spec"))
-                        if skill and spec and len(node) == 2:
-                            specialization_grants.append({"skill": skill, "spec": spec})
+                        skill, fixed_spec = _text(node.find("skill")), _text(node.find("spec"))
+                        if skill and fixed_spec and len(node) == 2:
+                            specialization_grants.append({"skill": skill, "spec": fixed_spec})
                         else:
                             issues.append("addskillspecialization:invalid")
                     elif node.tag == "addcontact":

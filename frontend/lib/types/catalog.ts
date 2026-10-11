@@ -13,6 +13,8 @@ export interface LifeModuleCatalogItem {
   free_positive_qualities: number;
   free_negative_qualities: number;
   specialization_grants: { skill: string; spec: string; choice?: string }[];
+  quality_choice_grants: { quality_id: string; choice: string; value: string }[];
+  quality_levels: { group: string; level: number }[];
   source: string;
   page: string;
   unsupported: string[];

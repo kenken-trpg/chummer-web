@@ -169,8 +169,8 @@ def prepare(ctx: Ctx) -> None:
                 if not spec:
                     ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
                     continue
-            existing = ctx.state.skill_specializations.get(skill)
-            if existing and existing != spec:
+            existing_spec = ctx.state.skill_specializations.get(skill)
+            if existing_spec and existing_spec != spec:
                 ctx.err("engine.life.specializationConflict", name=term(skill))
                 continue
             ctx.state.skill_specializations[skill] = spec
@@ -196,10 +196,10 @@ def prepare(ctx: Ctx) -> None:
             )
     # Each module's group levels also add to members' individual free levels.
     for skill in ctx.data["skills"]["skills"]:
-        group = bonuses["skill_groups"].get(skill.get("skillgroup"), 0)
-        if group and not skill.get("exotic"):
+        group_bonus = bonuses["skill_groups"].get(skill.get("skillgroup"), 0)
+        if group_bonus and not skill.get("exotic"):
             name = skill["name"]
-            bonuses["skills"][name] = bonuses["skills"].get(name, 0) + group
+            bonuses["skills"][name] = bonuses["skills"].get(name, 0) + group_bonus
     for kind, values in bonuses.items():
         target = getattr(ctx.state, kind)
         for name, amount in values.items():

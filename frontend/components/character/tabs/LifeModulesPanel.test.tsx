@@ -15,6 +15,8 @@ const historyModule: LifeModuleCatalogItem = {
   free_positive_qualities: 0,
   free_negative_qualities: 0,
   specialization_grants: [],
+  quality_choice_grants: [],
+  quality_levels: [],
   source: "RF",
   page: "80",
   unsupported: [],

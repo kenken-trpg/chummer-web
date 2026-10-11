@@ -39,9 +39,7 @@ def _karma_totals(ctx: Ctx) -> None:
     negative_quality_karma = sum(max(0, -int(q["karma"])) for q in paid_qualities)
     free_positive = int(ctx.life.get("free_positive_qualities") or 0)
     free_negative = int(ctx.life.get("free_negative_qualities") or 0)
-    ctx.karma_from_q = max(0, positive_quality_karma - free_positive) - max(
-        0, negative_quality_karma - free_negative
-    )
+    ctx.karma_from_q = max(0, positive_quality_karma - free_positive) - max(0, negative_quality_karma - free_negative)
     rules = current_rules()
     if rules.quality_exceed_negative_no_bonus:
         # Chummer's `NegativeQualityKarma`: past the limit, a negative
