@@ -37,6 +37,16 @@ MODULE_QUALITY_REFERENCES = {
     "d886934b-b937-4791-9512-cd7257ca721d": {"Day Job": "Day Job (10 hrs)"},
 }
 
+# Warm Body asks for "Corporate Pariah", which Street Lethal p.127 prints at two
+# levels; neither the module's entry (p.129) nor the data says which. The level
+# becomes the user's pick rather than a guess, scoped to this module's ID so an
+# unqualified reference anywhere else stays unresolved.
+MODULE_QUALITY_LEVEL_CHOICES = {
+    "14dfb0c8-4748-490c-876d-f65f55e81d95": {
+        "Corporate Pariah": ("Corporate Pariah I", "Corporate Pariah II"),
+    },
+}
+
 
 def load_life_modules() -> list[dict[str, Any]]:
     root = data_root("lifemodules.xml")
@@ -161,6 +171,40 @@ def load_life_modules() -> list[dict[str, Any]]:
                                     grants.append(
                                         {"kind": "qualities", "name": "", "choice": key, "value": 1, "category": ""}
                                     )
+                                continue
+                            levels = MODULE_QUALITY_LEVEL_CHOICES.get(_text(block.find("id")), {}).get(name, ())
+                            if levels and all(option in qualities for option in levels):
+                                # One grant, two slots: which level, then the
+                                # level's own free text. Both must be the user's.
+                                extra_kinds = {qualities[option].get("extra_kind") or "" for option in levels}
+                                if el.attrib or (
+                                    any(qualities[option].get("needs_extra") for option in levels)
+                                    and extra_kinds != {"text"}
+                                ):
+                                    issues.append("addquality:" + name)
+                                    continue
+                                key = str(len(grants))
+                                choices.append(
+                                    {
+                                        "key": key,
+                                        "kind": "qualities",
+                                        "name": " / ".join(levels),
+                                        "options": list(levels),
+                                    }
+                                )
+                                grant: dict[str, Any] = {
+                                    "kind": "qualities",
+                                    "name": "",
+                                    "choice": key,
+                                    "value": 1,
+                                    "category": "",
+                                }
+                                if extra_kinds == {"text"}:
+                                    grant["extra_choice"] = f"x{key}"
+                                    choices.append(
+                                        {"key": grant["extra_choice"], "kind": "qualities", "name": name, "options": []}
+                                    )
+                                grants.append(grant)
                                 continue
                             spec = qualities.get(name) or qualities_by_id.get(name)
                             reference_extra = ""

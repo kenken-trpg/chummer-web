@@ -130,6 +130,19 @@ def prepare(ctx: Ctx) -> None:
                 if quality is None:
                     ctx.err("engine.life.qualityUnknown", name=term(name))
                     continue
+                if grant.get("extra_choice"):
+                    # The level was picked above; its own free text is a second
+                    # slot, so a placeholder never passes for an answer.
+                    key = f"{index}:{grant['extra_choice']}"
+                    extra = ctx.state.life_module_choices.get(key, "").strip()
+                    if not extra or "[" in extra:
+                        ctx.err("engine.life.choice", name=term(row["name"]), slot=key)
+                        continue
+                    taken = (ctx.state.quality_extras.get(quality["id"]) or "").strip()
+                    if taken and taken != extra:
+                        ctx.err("engine.life.qualityChoiceConflict", name=term(quality["name"]))
+                        continue
+                    ctx.state.quality_extras[quality["id"]] = extra
                 quality_grants.append(quality)
                 continue
             if kind == "knowledge_skills" and category == "Language" and grant["value"] == 0:

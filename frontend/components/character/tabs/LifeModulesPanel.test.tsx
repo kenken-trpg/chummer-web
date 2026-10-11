@@ -217,3 +217,48 @@ it("suggests English place names while allowing a custom city for repeated modul
   fireEvent.change(inputs[1], { target: { value: "Durban" } });
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "1:8": "Durban" } });
 });
+
+it("asks for the quality level and then that level's own free text", () => {
+  const patch = vi.fn();
+  const props = panelProps(makeCharacter({ life_modules: [historyModule.id] }), {
+    catalog: makeCatalog({
+      life_modules: [
+        {
+          ...historyModule,
+          choices: [
+            {
+              key: "2",
+              kind: "qualities",
+              name: "Corporate Pariah I / Corporate Pariah II",
+              options: ["Corporate Pariah I", "Corporate Pariah II"],
+            },
+            { key: "x2", kind: "qualities", name: "Corporate Pariah", options: [] },
+          ],
+          grants: [
+            {
+              kind: "qualities",
+              name: "",
+              value: 1,
+              choice: "2",
+              category: "",
+              extra_choice: "x2",
+            },
+          ],
+        },
+      ],
+    }),
+    patch,
+  });
+  render(<LifeModulesPanel {...props} />);
+  fireEvent.change(
+    screen.getByRole("combobox", {
+      name: "Bounty Hunter: Corporate Pariah I / Corporate Pariah IIの選択",
+    }),
+    { target: { value: "Corporate Pariah II" } },
+  );
+  expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:2": "Corporate Pariah II" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: Corporate Pariahの選択" }), {
+    target: { value: "Ares Macrotechnology" },
+  });
+  expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:x2": "Ares Macrotechnology" } });
+});

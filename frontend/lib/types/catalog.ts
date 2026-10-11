@@ -26,6 +26,7 @@ export interface LifeModuleCatalogItem {
     choice: string;
     category: string;
     category_choice?: string;
+    extra_choice?: string;
   }[];
   choices: {
     key: string;

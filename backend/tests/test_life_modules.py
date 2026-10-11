@@ -106,9 +106,17 @@ def test_missing_or_invalid_choices_are_reported_and_not_applied():
     assert not any(row["name"] == "invalid" for row in state.derived["knowledge_skills"])
 
 
-def test_unknown_and_unsupported_modules_never_grant_partial_benefits():
-    bad = module("Warm Body")
-    state = apply_patch(runner(), CharacterPatch(life_modules=["unknown", bad["id"]]))
+def test_unknown_and_unsupported_modules_never_grant_partial_benefits(monkeypatch):
+    # Every pinned candidate is supported, so an unsupported one has to be made
+    # up here: the module grants BOD and names a quality that does not exist.
+    root = ET.fromstring("""<chummer><modules><module><id>broken</id><name>Mystery</name>
+      <stage>Real Life</stage><karma>100</karma><bonus><attributelevel><name>BOD</name></attributelevel>
+      <addqualities><addquality>No Such Quality</addquality></addqualities></bonus></module></modules></chummer>""")
+    monkeypatch.setattr(life_loader, "data_root", lambda _: root)
+    row = life_loader.load_life_modules()[0]
+    assert row["unsupported"] == ["addquality:No Such Quality"]
+    monkeypatch.setitem(catalog(), "life_modules", [row])
+    state = apply_patch(runner(), CharacterPatch(life_modules=["unknown", row["id"]]))
     assert has(state.derived["errors"], "engine.life.unknown")
     assert has(state.derived["errors"], "engine.life.unsupported")
     assert state.derived["karma"]["spent"] == 0
@@ -132,8 +140,11 @@ def test_disabled_modules_are_still_listed_for_visibility():
         "Further Education",
         "Real Life",
     }
-    assert any(row["unsupported"] for row in rows)
-    assert any(not row["unsupported"] for row in rows)
+    # The pinned data is fixed, so this is a canary on a data refresh: every
+    # candidate is selectable, and a listed-but-disabled row is only exercised
+    # with the synthetic module above.
+    assert len(rows) == 325
+    assert not [row["name"] for row in rows if row["unsupported"]]
 
 
 def test_chum5_does_not_silently_drop_the_history():
@@ -392,6 +403,40 @@ def test_embedded_quality_options_apply_only_the_selected_quality(monkeypatch):
     invalid = apply_patch(runner(), CharacterPatch(life_modules=[row["id"]], life_module_choices={key: "Made Man"}))
     assert has(invalid.derived["errors"], "engine.life.choice")
     assert not invalid.derived["qualities"]
+
+
+PARIAH = ("Corporate Pariah I", "Corporate Pariah II")
+
+
+def _warm_body_picks(level: str = PARIAH[0], extra: str = "Ares Macrotechnology") -> tuple[dict, dict[str, str]]:
+    spec = module("Warm Body")
+    picks = {f"0:{c['key']}": (c["options"][0] if c["options"] else "Seattle") for c in spec["choices"]}
+    key = next(c["key"] for c in spec["choices"] if tuple(c["options"]) == PARIAH)
+    picks[f"0:{key}"] = level
+    picks[f"0:x{key}"] = extra
+    return spec, picks
+
+
+@pytest.mark.parametrize("level", PARIAH)
+def test_warm_body_corporate_pariah_level_and_text_are_both_picked(level):
+    spec, picks = _warm_body_picks(level)
+    assert not spec["unsupported"]
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert not has(state.derived["errors"], "engine.life.choice")
+    granted = [(q["name"], q["extra"], q["free"]) for q in state.derived["qualities"]]
+    assert (level, "Ares Macrotechnology", True) in granted
+    assert not [name for name, _, _ in granted if name in set(PARIAH) - {level}]
+
+
+@pytest.mark.parametrize(
+    "level,extra",
+    [(PARIAH[0], ""), (PARIAH[0], "[Corp]"), ("Corporate Pariah III", "Ares Macrotechnology")],
+)
+def test_warm_body_rejects_an_unanswered_level_or_text(level, extra):
+    spec, picks = _warm_body_picks(level, extra)
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"]], life_module_choices=picks))
+    assert has(state.derived["errors"], "engine.life.choice")
+    assert not [q for q in state.derived["qualities"] if q["name"].startswith("Corporate Pariah")]
 
 
 @pytest.mark.parametrize("name", ["Day Job", "Corporate Pariah", "Silence Golden"])
