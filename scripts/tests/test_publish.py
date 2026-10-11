@@ -5,6 +5,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from collections.abc import Sequence
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[1]
@@ -62,7 +63,7 @@ else:
 
 
 class PublishTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
@@ -99,10 +100,15 @@ class PublishTest(unittest.TestCase):
             "MERGED": str(self.root / "merged"),
         }
 
-    def git(self, *args):
+    def git(self, *args: str) -> str:
         return subprocess.run(["git", *args], cwd=self.repo, check=True, text=True, capture_output=True).stdout.strip()
 
-    def publish(self, mode="--existing-commit", extra=(), **env):
+    def publish(
+        self,
+        mode: str | Sequence[str] = "--existing-commit",
+        extra: Sequence[str] = (),
+        **env: str,
+    ) -> "subprocess.CompletedProcess[str]":
         return subprocess.run(
             [
                 "bash",
@@ -131,10 +137,10 @@ class PublishTest(unittest.TestCase):
             check=False,
         )
 
-    def count(self, *prefix):
+    def count(self, *prefix: str) -> int:
         return sum(row[: len(prefix)] == list(prefix) for row in map(json.loads, self.calls.read_text().splitlines()))
 
-    def test_existing_commit_and_resume_do_not_redeploy(self):
+    def test_existing_commit_and_resume_do_not_redeploy(self) -> None:
         result = self.publish()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Deployment status: succeeded", result.stdout)
@@ -145,7 +151,7 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(self.count("workflow", "run"), 1)
         self.assertEqual(self.count("pr", "merge"), 1)
 
-    def test_failed_checks_allow_fix_commit_and_resume(self):
+    def test_failed_checks_allow_fix_commit_and_resume(self) -> None:
         self.assertNotEqual(self.publish(FAIL_CHECKS="1").returncode, 0)
         self.assertEqual(self.count("workflow", "run"), 0)
         (self.repo / "code").write_text("fixed")
@@ -157,7 +163,7 @@ class PublishTest(unittest.TestCase):
             self.git("rev-parse", "HEAD"),
         )
 
-    def test_preflight_stops_before_push_and_can_resume(self):
+    def test_preflight_stops_before_push_and_can_resume(self) -> None:
         marker = self.root / "ready"
         options = ("--preflight", f'test -f "{marker}"')
         self.assertNotEqual(self.publish(extra=options).returncode, 0)
@@ -165,7 +171,7 @@ class PublishTest(unittest.TestCase):
         marker.touch()
         self.assertEqual(self.publish("--resume", extra=options).returncode, 0)
 
-    def test_dispatch_without_url_requires_explicit_recovery(self):
+    def test_dispatch_without_url_requires_explicit_recovery(self) -> None:
         self.assertNotEqual(self.publish(NO_URL="1").returncode, 0)
         self.assertNotEqual(self.publish("--resume").returncode, 0)
         self.assertEqual(self.count("workflow", "run"), 1)
@@ -173,11 +179,11 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.count("workflow", "run"), 1)
 
-    def test_advanced_base_stops_before_dispatch(self):
+    def test_advanced_base_stops_before_dispatch(self) -> None:
         self.assertNotEqual(self.publish(ADVANCED="1").returncode, 0)
         self.assertEqual(self.count("workflow", "run"), 0)
 
-    def test_failed_or_skipped_deployment_cannot_report_success(self):
+    def test_failed_or_skipped_deployment_cannot_report_success(self) -> None:
         result = self.publish(FAIL_DEPLOY="1")
         self.assertNotEqual(result.returncode, 0)
         result = self.publish("--resume", SKIPPED="1")
@@ -185,11 +191,11 @@ class PublishTest(unittest.TestCase):
         self.assertNotIn("Deployment status: succeeded", result.stdout)
         self.assertEqual(self.count("workflow", "run"), 1)
 
-    def test_wrong_run_metadata_stops_before_watch(self):
+    def test_wrong_run_metadata_stops_before_watch(self) -> None:
         self.assertNotEqual(self.publish(WRONG_RUN="1").returncode, 0)
         self.assertEqual(self.count("run", "watch", "202"), 0)
 
-    def test_public_challenge_and_failure_are_distinct(self):
+    def test_public_challenge_and_failure_are_distinct(self) -> None:
         options = ("--verify-command", 'exit "${VERIFY_RESULT:-2}"')
         result = self.publish(extra=options)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -200,7 +206,7 @@ class PublishTest(unittest.TestCase):
         self.assertIn("Public verification: failed", result.stdout)
         self.assertEqual(self.count("workflow", "run"), 1)
 
-    def test_staged_mode_and_changed_head_after_merge(self):
+    def test_staged_mode_and_changed_head_after_merge(self) -> None:
         (self.repo / "code").write_text("staged")
         self.git("add", "code")
         result = self.publish(["--message", "Commit staged changes"])
@@ -212,7 +218,7 @@ class PublishTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("HEAD changed after merging", result.stderr)
 
-    def test_resume_after_merge_before_checkpoint(self):
+    def test_resume_after_merge_before_checkpoint(self) -> None:
         self.assertEqual(self.publish().returncode, 0)
         state = json.loads(self.state.read_text())
         state["merge_sha"] = ""
@@ -222,7 +228,7 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(self.count("pr", "merge"), 1)
         self.assertEqual(self.count("workflow", "run"), 1)
 
-    def test_dirty_tree_or_mismatched_options_stop(self):
+    def test_dirty_tree_or_mismatched_options_stop(self) -> None:
         (self.repo / "code").write_text("uncommitted")
         self.assertNotEqual(self.publish().returncode, 0)
         self.assertEqual(self.count("workflow", "run"), 0)
@@ -232,7 +238,7 @@ class PublishTest(unittest.TestCase):
 
 
 class PublicProbeTest(unittest.TestCase):
-    def test_content_status_and_challenge(self):
+    def test_content_status_and_challenge(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             fake = Path(directory) / "curl"
             fake.write_text("""#!/usr/bin/env python3
