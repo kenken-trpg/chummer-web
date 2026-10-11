@@ -52,7 +52,8 @@ def _reportable() -> set[str]:
 
 
 def test_every_reportable_knob_has_a_label() -> None:
-    labels, wording = KNOBS.read_text(), JA.read_text()
+    labels = KNOBS.read_text(encoding="utf-8")
+    wording = JA.read_text(encoding="utf-8")
     missing = sorted(tag for tag in _reportable() if f"settings.knob.{tag}" not in labels)
     assert not missing, f"no line in settings-knobs.ts for: {missing}"
     unworded = sorted(tag for tag in _reportable() if f'"settings.knob.{tag}"' not in wording)
