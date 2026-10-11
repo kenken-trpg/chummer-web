@@ -1,5 +1,48 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — 日本語。 */
 export const JA_CHARGEN = {
+  "engine.life.ratingCap":
+    "経歴による「{name}」の付与値 {rating} が上限 {cap} を超えます。上限超過分の精算は未対応のため、この組み合わせは使用できません。",
+
+  "life.kind.attributes": "能力値",
+  "life.kind.skills": "技能",
+  "life.kind.skill_groups": "技能グループ",
+  "life.kind.knowledge_skills": "知識技能",
+  "life.kind.qualities": "品質",
+
+  "life.experimental":
+    "試験対応です。未対応の効果を持つ経歴は選択できません。保存とバックアップには JSON を使ってください。ライフモジュールの .chum5 入出力は未対応です。",
+  "engine.life.chum5Unsupported":
+    "試験対応です。未対応の効果を持つ経歴は選択できません。保存とバックアップには JSON を使ってください。ライフモジュールの .chum5 入出力は未対応です。",
+
+  "life.method": "ライフモジュール",
+  "life.note":
+    "人生の各段階から経歴を選びます。追加教育と実生活は複数選択できます。能力値・技能タブの入力値は手動購入分で、経歴の付与分は計算結果に加算されます。",
+  "life.total": "経歴の消費カルマ: {karma}",
+  "life.nuyen": "経歴による追加資金: {amount}¥",
+  "life.freeQuality": "品質の無料ポイント: ポジティブ {positive} / ネガティブ {negative}",
+  "life.pick": "経歴を選択",
+  "life.requires": "前提条件: {requirements}",
+  "life.requirementUnmet": "前提条件を満たしていません",
+  "life.remove": "この経歴を削除",
+  "life.choice": "{name}: {kind}の選択",
+  "life.pending": "選択してください",
+  "life.unsupported": "未対応の効果を含むため選択できません",
+  "life.empty": "この段階の候補がありません。使用ルールブックの設定を確認してください。",
+  "life.stage.Nationality": "国籍",
+  "life.stage.Formative Years": "幼少期",
+  "life.stage.Teen Years": "少年・少女期",
+  "life.stage.Further Education": "追加教育",
+  "life.stage.Real Life": "実生活",
+  "engine.life.unknown": "不明なライフモジュール: {name}",
+  "engine.life.unsupported": "経歴「{name}」には未対応の処理があります: {tags}",
+  "engine.life.duplicateStage": "人生の段階「{stage}」が重複しています",
+  "engine.life.missingStage": "人生の段階「{stage}」の経歴を選択してください",
+  "engine.life.choice": "経歴「{name}」の選択項目を指定してください（{slot}）",
+  "engine.life.specializationConflict": "経歴による「{name}」の専門化が、既存の選択と競合しています",
+  "engine.life.qualityUnknown": "経歴が付与する品質「{name}」が見つかりません",
+  "engine.life.qualityLevelUnknown": "経歴が付与する品質レベルの品質「{name}」が見つかりません",
+  "engine.life.requirement": "経歴「{name}」の前提条件を満たしていません",
+
   "meta.booksHidden":
     "この条件の種族のうち {count} 件は、使用ルールブックの設定で候補に出ていません",
   "meta.innate": "{name}の生得能力（追加カルマなし）",

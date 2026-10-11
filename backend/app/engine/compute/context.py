@@ -62,6 +62,7 @@ class Ctx:
     data: CatalogDict
 
     # --- bootstrap -------------------------------------------------------
+    life: dict[str, Any] = field(default_factory=dict)
     is_karma: bool = False
     career: bool = False
     skill_rating_cap: int = 0

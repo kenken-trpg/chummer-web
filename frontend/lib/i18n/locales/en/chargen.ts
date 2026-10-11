@@ -1,5 +1,48 @@
 /** 作成の流れ: プライオリティ・能力値・技能・資質・設定 — English。 */
 export const EN_CHARGEN = {
+  "engine.life.ratingCap":
+    "Module grants raise “{name}” to {rating}, above its cap of {cap}. Excess-rating compensation is not yet supported; this combination is unavailable.",
+
+  "life.kind.attributes": "attribute",
+  "life.kind.skills": "skill",
+  "life.kind.skill_groups": "skill group",
+  "life.kind.knowledge_skills": "knowledge skill",
+  "life.kind.qualities": "quality",
+
+  "life.experimental":
+    "Experimental support. Modules with unsupported mechanics are unavailable. Use JSON for saves and backups; LifeModule .chum5 import and export are not yet supported.",
+  "engine.life.chum5Unsupported":
+    "Experimental support. Modules with unsupported mechanics are unavailable. Use JSON for saves and backups; LifeModule .chum5 import and export are not yet supported.",
+
+  "life.method": "Life modules",
+  "life.note":
+    "Choose a history for each stage. Further education and real life can repeat. Attribute and skill inputs are purchased ratings; module grants are added to the computed results.",
+  "life.total": "Module karma: {karma}",
+  "life.nuyen": "Module bonus funds: ¥{amount}",
+  "life.freeQuality": "Free quality points: Positive {positive} / Negative {negative}",
+  "life.pick": "Choose a module",
+  "life.requires": "Requires: {requirements}",
+  "life.requirementUnmet": "Requirements are not met",
+  "life.remove": "Remove this module",
+  "life.choice": "{name}: choose {kind}",
+  "life.pending": "Choose an option",
+  "life.unsupported": "Unavailable: contains unsupported effects",
+  "life.empty": "No modules for this stage. Check the enabled rulebooks.",
+  "life.stage.Nationality": "Nationality",
+  "life.stage.Formative Years": "Formative years",
+  "life.stage.Teen Years": "Teen years",
+  "life.stage.Further Education": "Further education",
+  "life.stage.Real Life": "Real life",
+  "engine.life.unknown": "Unknown life module: {name}",
+  "engine.life.unsupported": "Life module “{name}” has unsupported mechanics: {tags}",
+  "engine.life.duplicateStage": "Duplicate life stage: {stage}",
+  "engine.life.missingStage": "Choose a module for life stage: {stage}",
+  "engine.life.choice": "Complete a choice in life module “{name}” ({slot})",
+  "engine.life.specializationConflict": "The life module specialization for “{name}” conflicts with the existing selection",
+  "engine.life.qualityUnknown": "Life module quality “{name}” was not found",
+  "engine.life.qualityLevelUnknown": "Quality “{name}” for a life module quality level was not found",
+  "engine.life.requirement": "The requirements for life module “{name}” are not met",
+
   "meta.booksHidden":
     "{count} of the metatypes this row offers are left out by the ruleset’s book list",
   "meta.innate": "Innate to {name} (no additional karma)",

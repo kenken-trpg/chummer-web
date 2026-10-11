@@ -548,10 +548,12 @@ export interface RewardEntry {
 export interface Character {
   id: string;
   name: string;
-  build_method?: "Priority" | "SumToTen" | "Karma" | string;
+  build_method?: "Priority" | "SumToTen" | "Karma" | "LifeModule" | string;
   priorities: Record<PriorityCategory, PriorityLetter>;
   metatype: string;
   metavariant?: string | null;
+  life_modules?: string[];
+  life_module_choices?: Record<string, string>;
   talent: string;
   attributes: Record<string, number>;
   /** Priority / Sum-to-Ten creation: of `attributes[key]`, how many of the

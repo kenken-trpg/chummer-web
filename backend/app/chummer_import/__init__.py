@@ -61,6 +61,8 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     if root.tag != "character":
         raise NoticeError(notice("api.notACharacterFile"))
 
+    if (root.findtext("buildmethod") or "").lower() == "lifemodule":
+        raise NoticeError(notice("engine.life.chum5Unsupported"))
     cat = catalog()
     _refuse_critters(root, cat)
     warn: list[Notice] = []

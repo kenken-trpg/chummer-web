@@ -23,8 +23,8 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
       <div className="stat">
         <span>{ui("side.buildMethod")}</span>
         <b>
-          {(ch.build_method || "Priority") === "Karma"
-            ? `${buildMethodLabel("Karma", ui)} ${d.karma.remaining}/${d.karma.pool}`
+          {["Karma", "LifeModule"].includes(ch.build_method || "Priority")
+            ? `${buildMethodLabel(ch.build_method, ui)} ${d.karma.remaining}/${d.karma.pool}`
             : (ch.build_method || "Priority") === "SumToTen"
               ? `${buildMethodLabel("SumToTen", ui)} ${d.sum_to_ten?.used ?? 0}/${d.sum_to_ten?.max ?? 10}`
               : buildMethodLabel("Priority", ui)}

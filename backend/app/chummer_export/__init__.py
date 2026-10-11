@@ -15,7 +15,9 @@ from xml.dom import minidom
 
 from ..data_loader import catalog
 from ..engine import compute, find_metatype
+from ..engine.priority import normalize_build_method
 from ..models import CharacterState
+from ..notices import NoticeError, notice
 from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
 from .build import _export_build_points, _export_flags, _export_priorities
@@ -46,6 +48,8 @@ def state_to_chum5(state: CharacterState) -> bytes:
     They are independent — none reads what another wrote — so the 322-line
     function they came from split along its own `_sub(root, ...)` boundaries.
     """
+    if normalize_build_method(state.build_method) == "LifeModule":
+        raise NoticeError(notice("engine.life.chum5Unsupported"))
     with using_rules(rules_for(state.settings)):
         return _write(state)
 

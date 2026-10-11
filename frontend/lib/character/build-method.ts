@@ -14,7 +14,8 @@ import { CATS, DEFAULT_PRIORITIES } from "@/lib/character/constants";
  * changes the method as a side effect of picking a preset.
  */
 export function buildMethodPatch(method: string, ch: Character): Record<string, unknown> {
-  if (method === "Karma") return { build_method: "Karma", talent: ch.talent || "Mundane" };
+  if (method === "Karma" || method === "LifeModule")
+    return { build_method: method, talent: ch.talent || "Mundane" };
   if (method !== "Priority") return { build_method: method };
   const letters = CATS.map((c) => ch.priorities[c.key]);
   const unique = [...letters].sort().join("") === "ABCDE";

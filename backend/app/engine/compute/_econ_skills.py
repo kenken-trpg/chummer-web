@@ -175,6 +175,7 @@ def _skill_spend(ctx: Ctx) -> None:
         ctx.skillsofts["active"],
         ctx.skillsofts["knowledge"],
         free_expertise_skills=free_expertise_skills,
+        free_specializations=ctx.life.get("free_specializations", set()),
     )
     ctx.warnings.extend(ctx.specs["warnings"])
     # Keep expertise picks even if resolve dropped a conflicting row.

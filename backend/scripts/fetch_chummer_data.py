@@ -35,6 +35,8 @@ FILES = [
     "Chummer/data/metatypes.xml",
     "Chummer/data/skills.xml",
     "Chummer/data/qualities.xml",
+    "Chummer/data/qualitylevels.xml",
+    "Chummer/data/lifemodules.xml",
     "Chummer/data/cyberware.xml",
     "Chummer/data/bioware.xml",
     "Chummer/data/powers.xml",

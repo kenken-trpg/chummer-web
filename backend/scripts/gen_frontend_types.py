@@ -47,7 +47,7 @@ RENAMES = {
 #: union since the start and the pickers rely on it.
 OVERRIDES = {
     ("CharacterState", "priorities"): "Record<PriorityCategory, PriorityLetter>",
-    ("CharacterState", "build_method"): '"Priority" | "SumToTen" | "Karma" | string',
+    ("CharacterState", "build_method"): '"Priority" | "SumToTen" | "Karma" | "LifeModule" | string',
     ("InitiationChoice", "kind"): '"metamagic" | "art" | string',
     # `dict[str, Any]` on the Python side, but the engine's own output: the
     # top-level keys are `DerivedDict`, the row lists under them are not typed

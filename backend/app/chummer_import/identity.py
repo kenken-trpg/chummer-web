@@ -18,7 +18,7 @@ _BUILD_METHODS = {
     "sumtoten": "SumToTen",
     "sum-to-ten": "SumToTen",
     "karma": "Karma",
-    "lifemodule": "Priority",
+    "lifemodule": "LifeModule",
 }
 
 

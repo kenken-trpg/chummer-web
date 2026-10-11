@@ -2,6 +2,25 @@ import type { Notice } from "@/lib/engine-notices";
 import type { PriorityCategory, PriorityLetter, QualityReqNode } from "./installs";
 import type { TraditionInfo } from "./derived";
 
+export interface LifeModuleCatalogItem {
+  id: string;
+  name: string;
+  parent: string;
+  story: string;
+  stage: string;
+  karma: number;
+  nuyen: number;
+  free_positive_qualities: number;
+  free_negative_qualities: number;
+  specialization_grants: { skill: string; spec: string }[];
+  source: string;
+  page: string;
+  unsupported: string[];
+  required?: QualityReqNode[];
+  grants: { kind: string; name: string; value: number; choice: string; category: string }[];
+  choices: { key: string; kind: string; options: string[] }[];
+}
+
 export interface MartialArtCatalogItem {
   id: string;
   name: string;
@@ -396,6 +415,7 @@ export type PriorityCell = {
 export type PriorityTable = Record<PriorityCategory, Record<PriorityLetter, PriorityCell>>;
 
 export interface Catalog {
+  life_modules?: LifeModuleCatalogItem[];
   metatypes: {
     name: string;
     id: string;
@@ -603,7 +623,13 @@ export interface Catalog {
     source?: string;
     page?: string;
   }[];
-  karma_talents?: { name: string; label: string; magic: number; resonance: number }[];
+  karma_talents?: {
+    name: string;
+    label: string;
+    magic: number;
+    resonance: number;
+    quality?: string;
+  }[];
 }
 
 export interface WareCatalogItem {

@@ -19,6 +19,7 @@ EXPECTED_KEYS = {
     "metatypes",
     "skills",
     "qualities",
+    "life_modules",
     "martial_arts",
     "martial_art_techniques",
     "priority_table",

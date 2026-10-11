@@ -53,6 +53,8 @@ class Priorities(BaseModel):
 class CharacterPatch(BaseModel):
     name: str | None = None
     build_method: str | None = None
+    life_modules: list[str] | None = None
+    life_module_choices: dict[str, str] | None = None
     priorities: Priorities | None = None
     metatype: str | None = None
     metavariant: str | None = None
@@ -204,6 +206,8 @@ class CharacterState(BaseModel):
     priorities: Priorities
     metatype: str
     metavariant: str | None = None
+    life_modules: list[str] = Field(default_factory=list)
+    life_module_choices: dict[str, str] = Field(default_factory=dict)
     talent: str = "Mundane"
     attributes: dict[str, int]
     #: Priority / Sum-to-Ten creation: of `attributes[key]`, how many of the

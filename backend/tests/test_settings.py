@@ -41,7 +41,7 @@ def test_books_carry_every_code_the_catalog_cites() -> None:
 def test_presets_only_offer_build_methods_the_engine_has() -> None:
     presets = load_settings_presets()
     assert presets, "settings.xml should ship presets"
-    assert {p["build_method"] for p in presets} <= {"Priority", "SumToTen", "Karma"}
+    assert {p["build_method"] for p in presets} <= {"Priority", "SumToTen", "Karma", "LifeModule"}
     standard = next(p for p in presets if p["name"] == "Standard")
     assert standard["books"] == ["SR5"]
 

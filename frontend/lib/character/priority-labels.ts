@@ -50,6 +50,7 @@ export function priorityCellLabel(name: string, ui: UiFn): string {
 
 /** The three build methods, as the buttons and the sidebar name them. */
 export function buildMethodLabel(method: string | undefined, ui: UiFn): string {
+  if (method === "LifeModule") return ui("life.method");
   if (method === "Karma") return ui("prio.method.karma");
   if (method === "SumToTen") return ui("prio.method.sumToTen");
   return ui("prio.method.priority");

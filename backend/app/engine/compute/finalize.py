@@ -243,6 +243,8 @@ def finalize(ctx: Ctx) -> None:
         career=ctx.career,
         report=ctx.quality_report,
         warnings=ctx.warnings,
+        free_positive_karma=int(ctx.life.get("free_positive_qualities") or 0),
+        free_negative_karma=int(ctx.life.get("free_negative_qualities") or 0),
     )
 
     if not ctx.career:

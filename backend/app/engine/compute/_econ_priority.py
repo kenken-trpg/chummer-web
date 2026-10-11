@@ -76,6 +76,7 @@ def _priority_points(ctx: Ctx) -> None:
     ctx.nuyen_pool += int(ctx.state.nuyen_earned or 0)
     ctx.nuyen_pool += int(ctx.state.nuyen_adjust or 0) if ctx.career else 0
     ctx.nuyen_pool += int(ctx.effects.get("nuyen_amt") or 0)
+    ctx.nuyen_pool += int(ctx.life.get("nuyen") or 0)
     ctx.nuyen_spent = (
         sum(int(item["nuyen"]) for item in ctx.installed)
         + int(ctx.qi.get("nuyen") or 0)

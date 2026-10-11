@@ -18,9 +18,9 @@ from .translations import load_book_names
 
 #: `<buildmethod>` as `settings.xml` spells it -> as `CharacterState.build_method`
 #: does. Deliberately not `chummer_import.identity._BUILD_METHODS`: that one is lenient
-#: because it has a character to place somewhere, and folds `LifeModule` into
-#: Priority. A preset has no character, so an unbuildable one is dropped.
-_BUILD_METHODS = {"priority": "Priority", "sumtoten": "SumToTen", "karma": "Karma"}
+#: because importing a character and listing a preset have different validation
+#: paths. Unsupported presets are dropped rather than changing their method.
+_BUILD_METHODS = {"priority": "Priority", "sumtoten": "SumToTen", "karma": "Karma", "lifemodule": "LifeModule"}
 
 
 def load_books() -> list[dict[str, Any]]:
@@ -50,8 +50,8 @@ def load_settings_presets() -> list[dict[str, Any]]:
     can apply today: the enabled books and the build method.
 
     A preset whose `<buildmethod>` this app has no engine for is dropped
-    rather than silently rewritten to Priority — offering "Life Modules" in
-    the pulldown and then building a Priority character would be a lie.
+    rather than silently rewritten to Priority. LifeModule is offered with
+    explicit experimental-support limits in its editor.
     """
     root = data_root("settings.xml")
     if root is None:

@@ -10,10 +10,9 @@ import { critterPowerRow } from "@/lib/spell-terms";
 export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
   const allowedBooks = useAllowedBooks();
-  const choices =
-    (ch.build_method || "Priority") === "Karma"
-      ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
-      : table.Heritage[ch.priorities.Heritage].metatypes;
+  const choices = ["Karma", "LifeModule"].includes(ch.build_method || "Priority")
+    ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
+    : table.Heritage[ch.priorities.Heritage].metatypes;
   const candidates = choices.filter((choice) => {
     const spec = catalog.metatypes.find((m) => m.name === choice.name);
     return isBookEnabled(allowedBooks, spec?.source, spec?.also_in);
@@ -65,12 +64,13 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             <b>{tr(m.name)}</b>
             <div className="muted">
               {m.name}
-              {(ch.build_method || "Priority") === "Karma"
+              {["Karma", "LifeModule"].includes(ch.build_method || "Priority")
                 ? ui("common.karmaCost", {
                     karma: ("karma" in m ? Number(m.karma) : 0) || 0,
                   })
                 : ui("meta.special", { points: m.special })}
-              {(ch.build_method || "Priority") !== "Karma" && (m.karma ?? 0) > 0
+              {!["Karma", "LifeModule"].includes(ch.build_method || "Priority") &&
+              (m.karma ?? 0) > 0
                 ? ui("common.karmaCost", { karma: m.karma! })
                 : null}
             </div>
@@ -101,7 +101,7 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
         <label className="muted stacked-label">
           {ui("prio.talent")}
           <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
-            {((ch.build_method || "Priority") === "Karma"
+            {(["Karma", "LifeModule"].includes(ch.build_method || "Priority")
               ? (catalog.karma_talents || []).map((t) => ({
                   name: t.name,
                   label: t.label || t.name,

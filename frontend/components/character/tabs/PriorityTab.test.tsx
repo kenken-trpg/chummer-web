@@ -190,3 +190,10 @@ describe("<PriorityTab> the table reads in Japanese", () => {
     ]);
   });
 });
+
+it("selects only the LifeModule button when using life modules", () => {
+  renderTab({ character: { build_method: "LifeModule" } });
+  expect(screen.getByRole("button", { name: "ライフモジュール" }).className).toContain("selected");
+  expect(screen.getByRole("button", { name: "Karma" }).className).not.toContain("selected");
+  expect(rows()).toHaveLength(0);
+});
