@@ -170,7 +170,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     expect((patch.mock.calls[0][0].gear as { extra?: string }[]).at(-1)?.extra).toBe("Blades");
   });
 
-  it("calls the picker グレード／追加 in the drugs tab", () => {
+  it("calls the picker 等級／追加 in the drugs tab", () => {
     const grades = makeCatalog({
       gear: [
         {
@@ -191,9 +191,9 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     );
 
     // a Drug Grade is offered without searching even though it is not SR5
-    const select = screen.getByRole("combobox", { name: "Novacoke: グレード／追加" });
+    const select = screen.getByRole("combobox", { name: "Novacoke: 等級／追加" });
     expect([...select.querySelectorAll("option")].map((o) => o.textContent)).toEqual([
-      "グレード／追加",
+      "等級／追加",
       "Designer (0¥)",
     ]);
   });

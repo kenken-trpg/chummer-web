@@ -297,12 +297,12 @@ export const JA_ENGINE = {
   "engine.ware.capacityOver": "{name} の容量超過（{used}/{max}）",
   "engine.ware.exconForbidden": "Ex-Con は禁止ウェアを装着できません（{name}）",
   "engine.ware.exconRestricted": "Ex-Con は制限ウェアを装着できません（{name}）",
-  "engine.ware.gradeBanned": "{name} は {grade} グレードを使えません（{fallback} に変更）",
+  "engine.ware.gradeBanned": "{name} は {grade} 等級を使えません（{fallback} に変更）",
   "engine.ware.metatypeOnly": "{name} は {needed} 専用です",
   "engine.ware.modularMountMismatch":
     "{name} の接続先 {parent} には {mount} モジュラーマウントが必要です",
   "engine.ware.modularGradeMismatch":
-    "{name}（{grade}）は接続先 {parent}（{parent_grade}）と同じグレードにしてください",
+    "{name}（{grade}）は接続先 {parent}（{parent_grade}）と同じ等級にしてください",
   "engine.ware.modularMountBlocked":
     "{name}：{side} {mount} モジュラーマウントが装着済みの部品により占有されています（{used}/{max}）",
   "engine.ware.bodyMounts": "全身",

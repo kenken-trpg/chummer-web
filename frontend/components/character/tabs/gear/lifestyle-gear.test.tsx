@@ -92,7 +92,7 @@ describe("<LifestyleGear> the cost line", () => {
 
     expect(container.textContent).toContain("基本 5,000¥");
     expect(container.textContent).toContain("倍率 +20%");
-    expect(container.textContent).toContain("品質 +500¥");
+    expect(container.textContent).toContain("資質 +500¥");
     expect(container.textContent).toContain("6,500¥/ヶ月 × 3 = 19,500¥");
     expect(container.textContent).toContain("LP 2/3");
   });
@@ -107,7 +107,7 @@ describe("<LifestyleGear> the cost line", () => {
     );
 
     expect(container.textContent).not.toContain("倍率");
-    expect(container.textContent).not.toContain("品質 +");
+    expect(container.textContent).not.toContain("資質 +");
     expect(container.textContent).not.toContain("LP ");
   });
 
@@ -401,7 +401,7 @@ describe("<LifestyleGear> the quality picker", () => {
   const qualityOptions = () =>
     [
       ...screen
-        .getByRole("combobox", { name: "Middle: ライフスタイル品質" })
+        .getByRole("combobox", { name: "Middle: ライフスタイル資質" })
         .querySelectorAll("option"),
     ].map((o) => o.textContent);
 
@@ -410,7 +410,7 @@ describe("<LifestyleGear> the quality picker", () => {
   it("hides what is taken, not what `allowed` leaves out", () => {
     renderLifestyles(middle(), vi.fn(), catalog());
     expect(qualityOptions()).toEqual([
-      "ライフスタイル品質",
+      "ライフスタイル資質",
       "Special Work Area (LP 2)",
       "Extra Space (LP 1)",
       "Vault (LP 3)",
@@ -431,7 +431,7 @@ describe("<LifestyleGear> the quality picker", () => {
     } as never);
     renderLifestyles(middle(), vi.fn(), repeatable);
 
-    const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" });
+    const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル資質" });
     expect([...select.querySelectorAll("option")]).toHaveLength(2); // prompt + Cramped
   });
 
@@ -456,7 +456,7 @@ describe("<LifestyleGear> the quality picker", () => {
       catalog(),
     );
 
-    const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" });
+    const select = screen.getByRole("combobox", { name: "Middle: ライフスタイル資質" });
     fireEvent.change(select, { target: { value: "cq-work" } });
     fireEvent.click(screen.getByRole("button", { name: "Middle: 追加" }));
 
@@ -481,7 +481,7 @@ describe("<LifestyleGear> the quality picker", () => {
     const patch = vi.fn();
     renderLifestyles(middle({ quality_ids: [] }), patch, needsExtra);
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Middle: ライフスタイル品質" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Middle: ライフスタイル資質" }), {
       target: { value: "cq-work" },
     });
     // an <input list=…> is a combobox, not a textbox

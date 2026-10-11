@@ -102,7 +102,7 @@ export const JA_SIDEBAR = {
 
   "side.publicAwarenessAward": "周知度（GM 付与）",
   "side.awarenessFormula":
-    "周知度 = GM 付与 + 品質修正（設定の usecalculatedpublicawareness が有効なら + ⌊(SC + max(悪名,0)) / 3⌋）",
+    "周知度 = GM 付与 + 資質修正（設定の usecalculatedpublicawareness が有効なら + ⌊(SC + max(悪名,0)) / 3⌋）",
   "side.rewardTotal": "報酬合計",
   "side.reward": "報酬",
   "side.chummerSpend": "Chummer での支出",

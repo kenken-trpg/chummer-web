@@ -82,6 +82,6 @@ describe("<ContactsTab>", () => {
       },
     });
     expect(screen.queryByRole("button", { name: "削除" })).toBeNull();
-    expect(screen.getByText("品質連動")).toBeDefined();
+    expect(screen.getByText("資質連動")).toBeDefined();
   });
 });

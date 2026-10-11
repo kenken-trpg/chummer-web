@@ -1,0 +1,58 @@
+"""The Japanese UI strings do not use a term the glossary already rejected.
+
+`scripts/check_ja_terms.py` says why this cannot be a full glossary comparison.
+Running it from the suite rather than wiring a new CI job keeps it in the job
+that already runs, next to the other contract tests that read `frontend/`.
+"""
+
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+LOCALE = ROOT / "frontend/lib/i18n/locales/ja"
+BANNED = ROOT / "docs/translation-banned-terms.md"
+
+
+def _checker():
+    spec = importlib.util.spec_from_file_location("check_ja_terms", ROOT / "scripts/check_ja_terms.py")
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.skipif(not LOCALE.is_dir(), reason="frontend/ not checked out")
+def test_no_banned_term_reached_the_japanese_ui() -> None:
+    assert _checker().check(LOCALE, BANNED) == []
+
+
+def test_every_rule_is_backed_by_a_glossary_line() -> None:
+    # A rule whose canon is not in the glossary would enforce someone's taste.
+    glossary = (ROOT / "docs/translation-glossary.md").read_text(encoding="utf-8").split("\n")
+    for rule in _checker().rules(BANNED.read_text(encoding="utf-8")):
+        line = int(rule.source.rsplit("(", 1)[1].rstrip(")"))
+        row = glossary[line - 1]
+        assert rule.right in row, f"{rule.wrong}: line {line} is {row!r}"
+
+
+@pytest.mark.parametrize(
+    ("text", "flagged"),
+    [
+        ('"a": "ライフスタイル品質",', True),
+        ('"a": "ライフスタイル資質",', False),
+        ('"a": "ウェアのグレード",', True),
+        ('"a": "システム・アップグレード",', False),  # the allowed word, not the term
+        ('"a": "マトリクス",', True),
+        ('"a": "マトリックス",', False),  # the long vowel is the correct form
+        ('"a": "物理ダメージ",', False),  # bare Physical really is 物理
+    ],
+)
+def test_rules_fire_on_the_wrong_word_and_not_the_right_one(tmp_path: Path, text: str, flagged: bool) -> None:
+    locale = tmp_path / "ja"
+    locale.mkdir()
+    (locale / "probe.ts").write_text(text, encoding="utf-8")
+    assert bool(_checker().check(locale, BANNED)) is flagged

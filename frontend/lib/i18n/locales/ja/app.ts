@@ -135,7 +135,7 @@ export const JA_APP = {
   "common.right": "右",
   "common.unnamed": "（無名）",
   "common.karmaPool": "カルマ {remaining} / {pool}",
-  "common.fromQuality": "品質連動",
+  "common.fromQuality": "資質連動",
   "common.choose": "選択してください",
   "common.repeatable": " / 繰り返し可",
   "common.maxTakes": " / 最大{max}",
@@ -232,7 +232,7 @@ export const JA_APP = {
   "common.level": "レベル",
   "common.levelHint": "強さ。判定のヒットの上限になり、フェーディングもここから決まる",
   "common.qtyHint": "個数。値段は個数倍になる",
-  "common.grade": "グレード",
+  "common.grade": "等級",
   "common.bundled": "同梱",
   "common.removeLabel": "{name} を外す",
 
