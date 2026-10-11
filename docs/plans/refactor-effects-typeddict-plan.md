@@ -167,3 +167,14 @@ Follow-up: `app.improvements` / `app.improvements.*` added to the strict
 `[[tool.mypy.overrides]]` (`check_untyped_defs`, `disallow_untyped_defs`,
 `disallow_incomplete_defs`, `warn_return_any`) — the package was already
 clean to that bar, so it now holds the line in CI.
+
+### Later split (unplanned, no behaviour change)
+
+With the schema in it, `effects.py` was the backend's largest module. The
+consumers moved out: `compactors.py` (`special_armor_totals` /
+`compact_special_armor` / `compact_limit_modifiers`) and `precedence.py`
+(`precedence_value` / `resolve_precedence`). `effects.py` keeps `EffectsDict`
+and `empty_effects()` — schema and seed stay together, since every key is
+written by a `nodes/**` branch and read by the engine. The barrel re-exports
+all of them (`precedence_value` joined `__all__`; `engine/limits.py` is the
+one direct importer and now points at `precedence.py`).

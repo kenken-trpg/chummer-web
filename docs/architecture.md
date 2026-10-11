@@ -62,8 +62,9 @@ value types, so `effects["initiave_dice"]` (typo) is a `mypy` error rather
 than a silent `None`. `collect_effects()` / `apply_bonus_nodes` / the four
 `nodes/*.py` handlers and `Ctx.effects` all carry it. Scalars and nested
 dicts are precise; the `*_mods` / `*_slots` / `grant_*` / cost-rule list
-values carry row `TypedDict`s from `improvements/effect_rows.py` (one per
-`nodes/*.py` producer), so `row.get("nam")` (typo) is caught too.
+values carry row `TypedDict`s from the `improvements/effect_rows/` package
+(one per `nodes/*.py` producer, grouped `mods` / `grants` / `slots` / `misc` /
+`resolved`), so `row.get("nam")` (typo) is caught too.
 `enabled_tabs` is a `set[str]` throughout; callers `sorted(...)` it where
 they need an ordered list.
 
@@ -288,8 +289,9 @@ Welcome as PRs. Keep every commit individually green (`make check`).
 2. **Split `app/improvements.py`** (the `<bonus>` → `effects` pipeline) —
    *done:* now the `app/improvements/` package. `_common.py` (constant
    tables + `_as_int` / `substitute_rating` / `_bonus_int` primitives),
-   `effects.py` (`empty_effects` + the special-armor / limit-modifier
-   compactors), and `nodes/` — `apply_bonus_nodes` is a thin per-node loop
+   `effects.py` (`EffectsDict` + `empty_effects`), `compactors.py` (the
+   special-armor / limit-modifier compactors), `precedence.py` (the
+   `precedence` fold), and `nodes/` — `apply_bonus_nodes` is a thin per-node loop
    that looks the tag up in `nodes/_registry.HANDLERS`, filled by the
    `@handles` decorators in `nodes/{stats,skills,magic,social}.py`. Those
    were one `if/elif tag` chain, then four; they are now ~150 one-tag
@@ -341,7 +343,7 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      no per-module `[[tool.mypy.overrides]]`. This was reached package by
      package: `app.engine.*` / `app.improvements.*` cleared once their two
      `Any` fountains were typed — the `Ctx` bundles / `effects`
-     (`EffectsDict` + `effect_rows.py`) and `catalog()` (`CatalogDict`) —
+     (`EffectsDict` + `effect_rows/`) and `catalog()` (`CatalogDict`) —
      after which every module passed with at most a rename or a cast
      (`_match_by`, `catalog_list` / `catalog_ware`). The boundary modules
      (`characters` / `catalog_view` / `main` / `chummer_import|export` / `data_loader`) turned out
@@ -352,6 +354,6 @@ Welcome as PRs. Keep every commit individually green (`make check`).
      accumulator, as `improvements.EffectsDict` (next to `empty_effects()`).
      A mistyped key or wrong value type at a phase seam is a `mypy` error.
      `EffectsDict`'s ~45 row-list values are typed one level deeper too —
-     row `TypedDict`s in `improvements/effect_rows.py`, one per `nodes/*.py`
+     row `TypedDict`s in `improvements/effect_rows/`, one per `nodes/*.py`
      producer branch. Still `list[dict[str, Any]]`: the `Ctx` bundle
      `.public` / gear-category lists (serialisation DTOs, a separate job).

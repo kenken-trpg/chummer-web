@@ -181,3 +181,11 @@ byte-identical:
 (`bundle_types.py` `.public` / gear-category lists,
 `InitiationBundle.choices` etc., `BonusSource`). A stage-5 job if ever
 wanted.
+
+### Later split (unplanned, no behaviour change)
+
+`effect_rows.py` (443 lines) became the `effect_rows/` package, one module
+per group surveyed above: `mods.py` (G1 + G2, plus `AttributeRangeRow` /
+`SkillAttributeSwapRow`), `grants.py` (G3), `slots.py` (G4), `misc.py` (G5),
+`resolved.py` (G6). `__init__.py` is the barrel and re-exports all 41 shapes,
+so every `from ...improvements.effect_rows import X` is untouched.
