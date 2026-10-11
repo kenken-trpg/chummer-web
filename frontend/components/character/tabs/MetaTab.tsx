@@ -34,6 +34,14 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           {ui("help.meta.statsLabel")}
         </HelpTip>
       </p>
+      {choices.length > candidates.length ? (
+        // Heritage is the first pick, and a priority row quietly short of its
+        // metatypes looks like the app not having them rather than the
+        // ruleset's book list leaving them out.
+        <p role="status" className="muted">
+          {ui("meta.booksHidden", { count: choices.length - candidates.length })}
+        </p>
+      ) : null}
       {!candidates.some((m) => m.name === ch.metatype) ? (
         <p role="status" className="muted">
           {ui("meta.retained", { name: tr(ch.metatype) })}

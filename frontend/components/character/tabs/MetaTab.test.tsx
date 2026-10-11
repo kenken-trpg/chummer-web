@@ -5,6 +5,14 @@ import { MetaTab } from "@/components/character/tabs/MetaTab";
 import { makeCatalog, makeCharacter, panelProps } from "@/tests/fixtures";
 import type { PriorityTable } from "@/lib/types";
 
+/** Every live region on the panel at once: the book-list note and the
+ *  retained-metatype note are both `role="status"`. */
+const statusText = () =>
+  screen
+    .getAllByRole("status")
+    .map((el) => el.textContent)
+    .join(" / ");
+
 const priorityTable = {
   Heritage: {
     E: {
@@ -39,6 +47,32 @@ function renderTab(
 }
 
 describe("<MetaTab>", () => {
+  it("says how many metatypes the book list leaves out", () => {
+    // a Heritage row quietly one short reads as the app not having the
+    // metatype, so the count is named
+    const catalog = makeCatalog({
+      priority_table: {
+        ...priorityTable,
+        Heritage: {
+          E: {
+            metatypes: [
+              { name: "Human", special: 0, karma: 0, variants: [] },
+              { name: "Centaur", special: 3, karma: 25, variants: [] },
+            ],
+          },
+        },
+      } as unknown as PriorityTable,
+      metatypes: [
+        { name: "Human", source: "SR5", karma: 0, metavariants: [] },
+        { name: "Centaur", source: "RF", karma: 60, metavariants: [] },
+      ] as never,
+    });
+    renderTab({ catalog, books: ["SR5"] });
+    expect(statusText()).toContain("1 件は、使用ルールブックの設定で候補に出ていません");
+
+    expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
+  });
+
   it.each(["Priority", "SumToTen", "Karma"])(
     "offers Centaur in %s with RF, charges the displayed cost and retains it when RF is disabled",
     (build_method) => {
@@ -67,7 +101,7 @@ describe("<MetaTab>", () => {
         patch,
       });
       expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
-      expect(screen.getByRole("status").textContent).toContain("別の種族を選ぶまで保持");
+      expect(statusText()).toContain("別の種族を選ぶまで保持");
       expect(patch).not.toHaveBeenCalled();
     },
   );
@@ -86,9 +120,9 @@ describe("<MetaTab>", () => {
           },
         },
       });
-      expect(screen.getByRole("status").textContent).toContain("現在の種族「Centaur」");
-      expect(screen.getByRole("status").textContent).toContain("別の種族を選ぶまで保持");
-      expect(screen.getByRole("status").textContent).toContain("RF");
+      expect(statusText()).toContain("現在の種族「Centaur」");
+      expect(statusText()).toContain("別の種族を選ぶまで保持");
+      expect(statusText()).toContain("RF");
       expect(screen.queryByRole("button", { name: /Centaur/ })).toBeNull();
       expect(patch).not.toHaveBeenCalled();
     },

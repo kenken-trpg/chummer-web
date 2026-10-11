@@ -39,7 +39,12 @@ export function PickerList<T>({
   return (
     <>
       {shown.map(children)}
-      <PickerFootnote matched={allowed.length} shown={shown.length} note={note} />
+      <PickerFootnote
+        matched={allowed.length}
+        shown={shown.length}
+        note={note}
+        hiddenByBooks={items.length - allowed.length}
+      />
     </>
   );
 }
@@ -78,17 +83,27 @@ export function PickerFootnote({
   matched,
   shown,
   note,
+  hiddenByBooks = 0,
 }: {
   matched: number;
   shown: number;
   note?: MsgKey;
+  /** How many entries the settings' book list removed before any of this. */
+  hiddenByBooks?: number;
 }) {
   const { ui } = useUiText();
   const hidden = matched - shown;
+  const parts = [
+    matched === 0 ? ui("picker.none") : hidden > 0 ? ui("picker.more", { count: hidden }) : "",
+    // The book list narrows every panel silently, so "該当なし" on a search
+    // that would have matched reads as "this game has no such item". Said
+    // here it is the one place the reader is already looking.
+    hiddenByBooks > 0 ? ui("picker.booksHidden", { count: hiddenByBooks }) : "",
+    note && matched > 0 ? ui(note) : "",
+  ].filter(Boolean);
   return (
     <p className="muted picker-footnote" role="status">
-      {matched === 0 ? ui("picker.none") : hidden > 0 ? ui("picker.more", { count: hidden }) : null}
-      {note && matched > 0 ? `${hidden > 0 ? " / " : ""}${ui(note)}` : null}
+      {parts.join(" / ")}
     </p>
   );
 }
@@ -200,6 +215,9 @@ export function CatalogPicker<T extends Pickable>({
           matched={matched.length}
           shown={shown.length}
           note={query || !idle ? undefined : idle.note}
+          // the whole panel's count, not this category's: a chip for a
+          // disabled book is gone entirely, so there is nothing to count there
+          hiddenByBooks={items.length - allowed.length}
         />
       </div>
     </>
