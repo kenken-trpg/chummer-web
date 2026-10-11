@@ -10,15 +10,10 @@ from __future__ import annotations
 from typing import Any
 
 from ._common import ATTR_ALIASES, _as_int, granted_quality_names, substitute_rating
-from .effects import (
-    EffectsDict,
-    compact_limit_modifiers,
-    compact_special_armor,
-    empty_effects,
-    resolve_precedence,
-    special_armor_totals,
-)
+from .compactors import compact_limit_modifiers, compact_special_armor, special_armor_totals
+from .effects import EffectsDict, empty_effects
 from .nodes import apply_bonus_nodes
+from .precedence import precedence_value, resolve_precedence
 
 __all__ = [
     "ATTR_ALIASES",
@@ -31,6 +26,7 @@ __all__ = [
     "compact_special_armor",
     "empty_effects",
     "limit_modifiers_from_nodes",
+    "precedence_value",
     "special_armor_from_nodes",
     "special_armor_totals",
     "resolve_precedence",

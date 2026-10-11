@@ -22,7 +22,7 @@ from ..data_loader import (
     sum_avail,
 )
 from ..improvements import ATTR_ALIASES, EffectsDict, _as_int
-from ..improvements.effects import precedence_value
+from ..improvements.precedence import precedence_value
 from ..notices import Notice, notice, term, ui
 from ..rules import current_rules
 from .lookups import _grade_by_name

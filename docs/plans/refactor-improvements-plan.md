@@ -42,8 +42,10 @@ importer changes**.
 app/improvements/
   __init__.py        # barrel: re-export the public API above + collect_effects wrappers
   _common.py         # constant tables + primitives (_as_int, substitute_rating, _bonus_int, …)
-  effects.py         # empty_effects, special_armor_totals, compact_special_armor,
-                     #   compact_limit_modifiers  (need _common only)
+  effects.py         # EffectsDict + empty_effects  (needs _common + effect_rows only)
+  compactors.py      # special_armor_totals, compact_special_armor, compact_limit_modifiers
+  precedence.py      # precedence_value, resolve_precedence
+  effect_rows/       # the row TypedDicts: mods / grants / slots / misc / resolved
   nodes/
     __init__.py      # apply_bonus_nodes: the `for node` loop + ordered domain dispatch;
                      #   IMPLEMENTED / SILENT_TAGS live here
@@ -208,3 +210,14 @@ the barrel (`__all__` covers `apply_bonus_nodes`, `collect_effects`,
 `substitute_rating`, `_as_int`, `ATTR_ALIASES`, `special_armor_totals`,
 `compact_limit_modifiers`, `empty_effects`, `special_armor_from_nodes`,
 `limit_modifiers_from_nodes`, `compact_special_armor`).
+
+## Later: the files that kept growing
+
+`effects.py` was the backend's largest module (521 lines) once `EffectsDict`
+and the row shapes landed. It is now three files along the seam the layout
+above already implies — the schema and its seed (`effects.py`), what *reads*
+an accumulator for the derived output (`compactors.py`), and Chummer's
+`precedence` fold (`precedence.py`) — and `effect_rows.py` (443 lines) is a
+package, one module per row group with the barrel re-exporting every shape, so
+no import site moved. Pure moves: 2081 backend tests green, snapshots
+byte-identical, `ruff` + `mypy` clean.
