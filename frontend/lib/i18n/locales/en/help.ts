@@ -123,6 +123,13 @@ export const EN_HELP = {
   "help.ware.essence": "ESS \u2212n is the essence this piece costs, after its grade multiplier",
   "help.ware.capacity":
     "Capacity is how much this piece can hold, shown as used / maximum \u2014 cyberlimbs and housings have it",
+  "help.bio.statsLabel": "This tab's totals",
+  "help.bio.what":
+    "Bioware: cultured tissue grown and implanted; it spends essence just as cyberware does (SR5 p.459)",
+  "help.bio.essence":
+    "Essence is what is left in all, and the figure in brackets is the bioware part of it",
+  "help.bio.spent":
+    "The spent ¥ is every purchase, gear and qualities included, not this tab alone",
   "help.cf.statsLabel": "Complex form",
   "help.cf.fv":
     "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",

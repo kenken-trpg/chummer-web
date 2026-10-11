@@ -165,7 +165,8 @@ Rigger Interface・Sensor Array を持った状態で出る（いずれも無料
 - `frontend/lib/vtt-pools.ts` に `vehicleHandling`（`"2/1"` の分解）・
   `vehicleConditionMonitor`（12＋強靱力÷2）・`vehicleSkills`（カタログの
   `Vehicle Active` から拾う。本で増える `Pilot Aerospace` も入る）
-- `frontend/lib/udonarium.ts` に `buildVehiclePieces` / `buildUdonariumVehicles`
+- `frontend/lib/udonarium/vehicles.ts` に `buildVehiclePieces` / `buildUdonariumVehicles`
+  （分割前は `lib/udonarium.ts`）
 - ボタンは 1 つに合流。押すと該当する zip が種類ごとに落ちる
   （`udonarium-conjured` / `udonarium-vehicles` / `udonarium-drones`）
 

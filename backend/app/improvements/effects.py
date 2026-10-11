@@ -1,4 +1,12 @@
-"""``EffectsDict`` + the empty effects dict + the special-armor / limit-modifier compactors."""
+"""``EffectsDict`` — the shape of the engine's bonus accumulator — and the
+``empty_effects()`` that seeds one.
+
+The schema and its seed stay together: every key here is written by an
+``improvements/nodes/**`` branch and read by the engine, so the two have to
+move as one. What *consumes* an accumulator lives next door —
+``compactors.py`` (the derived-output shapes) and ``precedence.py`` (the
+``precedence`` fold). See ``docs/plans/refactor-effects-typeddict-plan.md``.
+"""
 
 from __future__ import annotations
 
@@ -7,11 +15,9 @@ from typing import Any, TypedDict
 from ._common import (
     ATTR_ALIASES,
     IMMUNE_KEYS,
-    LIMIT_KINDS,
     SPECIAL_ARMOR_KEYS,
     SPELL_DEFENSE_RESIST_TAGS,
     TEST_MOD_TAGS,
-    limit_condition_label,
 )
 from .effect_rows import (
     ActionDicePoolRow,
@@ -444,78 +450,3 @@ def empty_effects() -> EffectsDict:
         "select_quality_slots": [],
         "unimplemented": [],
     }
-
-
-def special_armor_totals(effects: EffectsDict) -> dict[str, Any]:
-    return {
-        **{key: int(effects.get("special_armor", {}).get(key) or 0) for key in SPECIAL_ARMOR_KEYS},
-        "immunities": {key: bool((effects.get("immunities") or {}).get(key)) for key in IMMUNE_KEYS},
-    }
-
-
-def compact_special_armor(effects: EffectsDict) -> dict[str, Any] | None:
-    nums = {
-        key: int(effects.get("special_armor", {}).get(key) or 0)
-        for key in SPECIAL_ARMOR_KEYS
-        if int(effects.get("special_armor", {}).get(key) or 0)
-    }
-    immunities = {key: True for key, value in (effects.get("immunities") or {}).items() if value}
-    if not nums and not immunities:
-        return None
-    out: dict[str, Any] = dict(nums)
-    if immunities:
-        out["immunities"] = immunities
-    return out
-
-
-def compact_limit_modifiers(effects: EffectsDict) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for row in effects.get("limit_modifiers") or []:
-        kind = str(row.get("limit") or "")
-        value = int(row.get("value") or 0)
-        if kind not in LIMIT_KINDS or value == 0:
-            continue
-        condition = str(row.get("condition") or "")
-        out.append(
-            {
-                "limit": kind,
-                "value": value,
-                "condition": condition,
-                "condition_label": row.get("condition_label") or limit_condition_label(condition),
-                "source": str(row.get("source") or ""),
-            }
-        )
-    return out
-
-
-def precedence_value(groups: dict[str, list[int]]) -> int:
-    """Chummer's rule for bonuses tagged ``precedence`` (ImprovementManager
-    ``ValueOf``): with any precedence 0 present only the *best* of them counts,
-    plus every precedence −1 — reflex augmentations do not stack (SR5 p.459).
-    Without one, the precedence 1 bonuses stack (the wireless Wired Reflexes +
-    Reaction Enhancers pair); a lone −1 group gives its best."""
-    zero, minus, one = groups.get("0") or [], groups.get("-1") or [], groups.get("1") or []
-    if zero:
-        return max(zero) + sum(minus)
-    if one:
-        return sum(one)
-    return max(minus) if minus else 0
-
-
-def resolve_precedence(effects: EffectsDict) -> None:
-    """Fold the precedence groups into the plain buckets. Bonuses keep coming
-    after the first pass (adept powers, drugs), and Wired Reflexes against
-    Improved Reflexes is one group across all of them — so the groups stay,
-    and each call applies only the change since the last one. Untagged
-    bonuses (a drug's REA, say) were added directly and keep stacking."""
-    applied = effects.setdefault("precedence_applied", {})
-    for key, groups in (effects.get("precedence_bonus") or {}).items():
-        delta = precedence_value(groups) - int(applied.get(key) or 0)
-        if not delta:
-            continue
-        applied[key] = int(applied.get(key) or 0) + delta
-        if key.startswith("attr:"):
-            name = key[len("attr:") :]
-            effects["attribute_bonus"][name] = int(effects["attribute_bonus"].get(name) or 0) + delta
-        elif key in ("initiative_dice", "initiative"):
-            effects[key] += delta  # type: ignore[literal-required]

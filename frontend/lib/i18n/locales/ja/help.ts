@@ -111,6 +111,11 @@ export const JA_HELP = {
   "help.ware.essence": "ESS −n はこの品が食うエッセンス。グレードの倍率がかかった後の値",
   "help.ware.capacity":
     "キャパシティ：この品の中に入れられる量（使用／上限）。サイバー手足や筐体が持つ",
+  "help.bio.statsLabel": "このタブの合計",
+  "help.bio.what":
+    "バイオウェア：培養した生体組織を体に植える。サイバーウェアと同じようにエッセンスを消費する（SR5 p.459）",
+  "help.bio.essence": "Essence は残っている合計で、括弧内はバイオウェアで減った分だけ",
+  "help.bio.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
   "help.cf.statsLabel": "複合フォームの値",
   "help.cf.fv": "FV（フェード値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
   "help.cf.fade": "フェード抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
