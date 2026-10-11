@@ -156,6 +156,7 @@ def test_committed_data_overlay_anchors() -> None:
     # curated, glossary-checked
     assert tr["Human"] == "ヒューマン"
     assert tr["Troll"] == "トロール"
+    assert tr["Centaur"] == "Centaur"  # Run Faster stays in the original language
     assert tr["Metahuman"] == "メタヒューマン"
     assert tr["Body"] == "強靱力"  # 靭 -> 靱
     # imported from chumJA SR4 exact-name match
