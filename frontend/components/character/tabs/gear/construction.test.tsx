@@ -77,6 +77,9 @@ it("a pending modification requires an exact allocation before confirming constr
     target: { value: "4" },
   });
   expect(confirm.disabled).toBe(false);
+  // One editor per modification: its note field carries the modification's
+  // name, so two of them on one tab are not announced identically.
+  expect(screen.getByRole("textbox", { name: "Modify: 施工・支払確認の説明" })).toBeDefined();
   fireEvent.click(confirm);
   expect(patch.mock.calls[0][0].electronic_modification_records).toEqual([
     { ...record, status: "completed", allocations: [{ source_id: "parts", units: 16 }], note: "" },

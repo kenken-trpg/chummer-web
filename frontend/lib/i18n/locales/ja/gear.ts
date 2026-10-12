@@ -44,7 +44,11 @@ export const JA_GEAR = {
   "gear.constructionRemoveHelp":
     "改造を取り外しても使用済み部品は戻りません。誤入力は履歴取消で訂正してください。",
   "gear.constructionCorrect": "誤入力として履歴取消",
-  "gear.constructionNote": "調達・支払確認／訂正の説明",
+  // Three note fields used to share this one label, and on the gear tab they
+  // are on screen together: a screen reader announced all three the same.
+  "gear.constructionNote": "施工・支払確認の説明",
+  "gear.supplyNote": "調達の説明",
+  "gear.correctionNote": "訂正の理由",
   "gear.confirmHistorical": "過去の材料調達・支払いを確認",
   "gear.partsRemaining":
     "部品残量 {remaining}パック / 購入 {purchased} / 使用済み {used} / 予約 {reserved}",

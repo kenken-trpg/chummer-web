@@ -150,7 +150,16 @@ export function ConstructionRecordEditor({
       ) : null}
       <label>
         {ui("gear.constructionNote")}
-        <input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
+        {/* One editor per modification, so the gear tab can hold several of
+            these at once. Named after its own modification, the way the
+            allocation fields above are — the visible label is part of the
+            name, so "click 施工・支払確認の説明" still reaches it. */}
+        <input
+          aria-label={`${tr(mod.name)}: ${ui("gear.constructionNote")}`}
+          value={note}
+          maxLength={500}
+          onChange={(e) => setNote(e.target.value)}
+        />
       </label>
       {!pending && !completed ? (
         <button className="btn" disabled={!note.trim()} onClick={() => save("historical")}>

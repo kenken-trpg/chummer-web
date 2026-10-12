@@ -120,7 +120,7 @@ export function ElectronicPartsPanel({
         />
       </label>
       <label>
-        {ui("gear.constructionNote")}
+        {ui("gear.supplyNote")}
         <input value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
       </label>
       <button
@@ -190,7 +190,7 @@ export function ElectronicPartsPanel({
       ) : null}
       <b>{ui("gear.partsHistory")}</b>
       <label>
-        {ui("gear.constructionNote")}
+        {ui("gear.correctionNote")}
         <input
           value={historyNote}
           maxLength={500}
