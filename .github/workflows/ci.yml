@@ -317,6 +317,10 @@ jobs:
         working-directory: deploy/${{ matrix.worker }}
       - run: npm run typecheck
         working-directory: deploy/${{ matrix.worker }}
+      # `--if-present`: the container Worker is 31 lines of wiring that tsc
+      # answers for; the proxy is the one with logic to get wrong.
+      - run: npm test --if-present
+        working-directory: deploy/${{ matrix.worker }}
 
   # The frontend half of the Windows question (`backend-windows` is the other).
   # Node is far more portable than Python here, so this is looking for a
