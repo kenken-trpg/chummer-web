@@ -31,3 +31,16 @@ export function lifeModuleRequirementText(tree: QualityReqNode[]): string {
   }
   return tree.map(describe).join(" + ");
 }
+
+/** Versions of a parent share its single acquisition slot. */
+export function lifeModuleAlreadyTaken(
+  row: NonNullable<Catalog["life_modules"]>[number],
+  ch: Character,
+  catalog: Catalog,
+): boolean {
+  const family = row.family_id || row.parent || row.id;
+  return (ch.life_modules || []).some((id) => {
+    const taken = catalog.life_modules?.find((item) => item.id === id);
+    return taken && (taken.family_id || taken.parent || taken.id) === family;
+  });
+}

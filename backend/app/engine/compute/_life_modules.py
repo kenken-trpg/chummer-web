@@ -39,6 +39,7 @@ def prepare(ctx: Ctx) -> None:
     by_id = {row["id"]: row for row in ctx.data.get("life_modules") or []}
     chosen: list[dict[str, Any]] = []
     seen: set[str] = set()
+    families: set[str] = set()
     for occurrence, mid in enumerate(ctx.state.life_modules):
         row = by_id.get(mid)
         if not row:
@@ -50,11 +51,16 @@ def prepare(ctx: Ctx) -> None:
         if not _requirements_met(ctx, row.get("required") or []):
             ctx.err("engine.life.requirement", name=term(row["name"]))
             continue
-        # Education and adult life can repeat, including the same module.
+        # Multiple adult careers are allowed, but each parent module only once.
         stage = row["stage"]
         if stage in STAGES[:3] and stage in seen:
             ctx.err("engine.life.duplicateStage", stage=stage)
             continue
+        family = row.get("family_id") or row["id"]
+        if family in families:
+            ctx.err("engine.life.duplicateModule", name=term(row.get("parent") or row["name"]))
+            continue
+        families.add(family)
         seen.add(stage)
         chosen.append({**row, "occurrence": occurrence})
     for stage in STAGES:
@@ -99,8 +105,7 @@ def prepare(ctx: Ctx) -> None:
     specialization_grants: set[tuple[str, str]] = set()
     for row in chosen:
         index = row["occurrence"]
-        # Choice keys include the occurrence, so repeated adult modules can
-        # choose different bonuses and never overwrite each other's picks.
+        # Choice keys retain the original positions, including rejected entries.
         for grant in row["grants"]:
             name = grant["name"]
             if not name:

@@ -330,6 +330,7 @@ def load_life_modules() -> list[dict[str, Any]]:
                     "id": _text(version.find("id")),
                     "name": _text(version.find("name")),
                     "parent": _text(parent.find("name")) if version is not parent else "",
+                    "family_id": _text(parent.find("id")),
                     "stage": _text(parent.find("stage")),
                     "karma": _int(parent.find("karma")),
                     "source": _text(parent.find("source")),

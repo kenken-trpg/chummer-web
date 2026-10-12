@@ -78,11 +78,12 @@ def test_purchased_attribute_is_priced_above_the_free_module_rating():
     assert state.attributes["BOD"] == 2
 
 
-def test_repeated_adult_modules_stack_without_double_charging_skills():
+def test_repeated_adult_module_is_rejected_without_grants_or_cost():
     mid = module("Bounty Hunter")["id"]
     state = apply_patch(runner(), CharacterPatch(life_modules=[mid, mid]))
-    assert state.derived["totals"]["BOD"] == 3
-    assert state.derived["karma"]["spent"] == 200
+    assert has(state.derived["errors"], "engine.life.duplicateModule", name="Bounty Hunter")
+    assert state.derived["totals"]["BOD"] == 2
+    assert state.derived["karma"]["spent"] == 100
     assert state.derived["karma_chargen"]["skills"] == 0
 
 
@@ -176,9 +177,34 @@ def test_custom_pool_is_honored():
     assert state.derived["karma"]["pool"] == 900
 
 
-def test_excess_free_ratings_are_explicitly_rejected():
-    state = apply_patch(runner(), CharacterPatch(life_modules=[module("Bounty Hunter")["id"]] * 7))
-    assert has(state.derived["errors"], "engine.life.ratingCap", name="BOD", rating=8, cap=6)
+def test_sibling_corporate_versions_share_one_acquisition_slot():
+    hacker = next(m for m in catalog()["life_modules"] if m["parent"] == "Corporate" and m["name"] == "Hacker/Decker")
+    rigger = next(m for m in catalog()["life_modules"] if m["parent"] == "Corporate" and m["name"] == "Security Rigger")
+    assert hacker["family_id"] == rigger["family_id"]
+    first = apply_patch(runner(), CharacterPatch(life_modules=[hacker["id"]]))
+    both = apply_patch(runner(), CharacterPatch(life_modules=[hacker["id"], rigger["id"]]))
+    assert has(both.derived["errors"], "engine.life.duplicateModule", name="Corporate")
+    assert both.derived["karma"]["spent"] == first.derived["karma"]["spent"]
+    assert both.derived["skill_totals"] == first.derived["skill_totals"]
+
+
+def test_different_adult_modules_can_be_taken_in_sequence():
+    picks = [module("Bounty Hunter")["id"], module("Street Samurai")["id"]]
+    state = apply_patch(runner(), CharacterPatch(life_modules=picks))
+    assert not has(state.derived["errors"], "engine.life.duplicateModule")
+    assert state.derived["karma"]["spent"] == 200
+
+
+def test_duplicate_import_is_preserved_for_repair_and_does_not_stack():
+    mid = module("Bounty Hunter")["id"]
+    state = apply_patch(runner(), CharacterPatch(life_modules=[mid, mid]))
+    restored = import_character(state.model_dump())
+    assert restored.life_modules == [mid, mid]
+    assert restored.derived == state.derived
+    assert compute(restored).derived == state.derived
+    repaired = apply_patch(restored, CharacterPatch(life_modules=[mid]))
+    assert not has(repaired.derived["errors"], "engine.life.duplicateModule")
+    assert repaired.derived["totals"]["BOD"] == 2
 
 
 @pytest.mark.parametrize(
@@ -330,9 +356,11 @@ def test_rated_quality_grants_apply_each_free_level_and_restore(name, quality_na
     assert apply_patch(state, CharacterPatch(life_modules=[])).derived == base.derived
 
 
-def test_rated_quality_grants_reject_over_cap_and_manual_purchase_conflicts():
+def test_rated_quality_grants_reject_over_cap_and_manual_purchase_conflicts(monkeypatch):
     spec = module("Pit Fighter")
-    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"], spec["id"]]))
+    other = {**spec, "id": "other-pit-fighter", "family_id": "other-pit-fighter"}
+    monkeypatch.setitem(catalog(), "life_modules", [*catalog()["life_modules"], other])
+    state = apply_patch(runner(), CharacterPatch(life_modules=[spec["id"], other["id"]]))
     assert has(state.derived["errors"], "engine.life.ratingCap", name="High Pain Tolerance", rating=4, cap=3)
     qid = next(q["id"] for q in catalog()["qualities"] if q["name"] == "High Pain Tolerance")
     base = apply_patch(runner(), CharacterPatch(quality_ids=[qid]))
@@ -559,3 +587,29 @@ def test_language_category_repair_is_scoped_to_azanian_parent(monkeypatch):
     monkeypatch.setattr(life_loader, "data_root", lambda _: root)
     row = life_loader.load_life_modules()[0]
     assert row["grants"][0]["category"] == "Professional"
+
+
+def test_rejected_duplicate_does_not_shift_later_choice_keys():
+    hunter = module("Bounty Hunter")
+    nationality = module("SINless")
+    choices = {
+        f"2:{choice['key']}": choice["options"][0] if choice["options"] else "Seattle"
+        for choice in nationality["choices"]
+    }
+    state = apply_patch(
+        runner(),
+        CharacterPatch(life_modules=[hunter["id"], hunter["id"], nationality["id"]], life_module_choices=choices),
+    )
+    assert has(state.derived["errors"], "engine.life.duplicateModule")
+    assert not has(state.derived["errors"], "engine.life.choice")
+    assert state.life_module_choices == choices
+    assert any(row["name"] == "English" and row["native"] for row in state.derived["knowledge_skills"])
+
+
+def test_excess_free_ratings_remain_explicit_errors(monkeypatch):
+    spec = module("Bounty Hunter")
+    copies = [{**spec, "id": f"career-{i}", "family_id": f"career-{i}"} for i in range(7)]
+    monkeypatch.setitem(catalog(), "life_modules", [*catalog()["life_modules"], *copies])
+    state = apply_patch(runner(), CharacterPatch(life_modules=[row["id"] for row in copies]))
+    assert not has(state.derived["errors"], "engine.life.duplicateModule")
+    assert has(state.derived["errors"], "engine.life.ratingCap", name="BOD", rating=8, cap=6)

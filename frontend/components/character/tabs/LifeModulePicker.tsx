@@ -2,7 +2,11 @@
 import { useId, useRef, useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import type { LifeModuleCatalogItem } from "@/lib/types/catalog";
-import { lifeModuleRequirementsMet, lifeModuleRequirementText } from "@/lib/character/life-modules";
+import {
+  lifeModuleAlreadyTaken,
+  lifeModuleRequirementsMet,
+  lifeModuleRequirementText,
+} from "@/lib/character/life-modules";
 
 type Props = Pick<TabPanelProps, "catalog" | "character" | "ui" | "patch"> & {
   stage: string;
@@ -32,7 +36,9 @@ export function LifeModulePicker({
     ? lifeModuleRequirementsMet(preview.required || [], character, catalog)
     : false;
   const full = taken && !repeatable;
-  const canAdd = !!preview && !preview.unsupported.length && met && !full && !character.career;
+  const duplicate = !!preview && lifeModuleAlreadyTaken(preview, character, catalog);
+  const canAdd =
+    !!preview && !preview.unsupported.length && met && !full && !duplicate && !character.career;
 
   async function add() {
     if (!canAdd || adding.current || !preview) return;
@@ -62,6 +68,7 @@ export function LifeModulePicker({
           {candidates.map((row) => {
             const allowed =
               !row.unsupported.length &&
+              !lifeModuleAlreadyTaken(row, character, catalog) &&
               lifeModuleRequirementsMet(row.required || [], character, catalog);
             return (
               <label
@@ -88,6 +95,9 @@ export function LifeModulePicker({
                         requirements: lifeModuleRequirementText(row.required),
                       })}
                     </span>
+                  )}
+                  {lifeModuleAlreadyTaken(row, character, catalog) && (
+                    <span className="warn">{ui("life.alreadyTaken")}</span>
                   )}
                   {!allowed && <span className="warn">{ui("life.unavailable")}</span>}
                 </span>

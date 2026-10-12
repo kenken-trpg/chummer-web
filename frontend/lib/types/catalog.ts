@@ -4,6 +4,7 @@ import type { TraditionInfo } from "./derived";
 
 export interface LifeModuleCatalogItem {
   id: string;
+  family_id?: string;
   name: string;
   parent: string;
   story: string;
