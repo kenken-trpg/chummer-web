@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { waitForEditor } from "./helpers";
+import { openOtherFormats, waitForEditor } from "./helpers";
 
 /**
  * The キャラシテンプレート .xlsx, out of the browser and back in.
@@ -27,6 +27,7 @@ test("a character exports as the sheet's .xlsx and comes back in through the bro
   // The sheet has no cell for the settings (which rulebooks are in play), so
   // the check always finds that one difference and the panel always appears —
   // this is the .xlsx path's normal flow, not an edge case.
+  await openOtherFormats(page);
   await page.getByRole("button", { name: ".xlsx書出" }).click();
   const review = page.getByRole("alertdialog");
   await expect(review).toContainText(".xlsx");

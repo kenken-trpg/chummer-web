@@ -10,6 +10,15 @@ export async function waitForEditor(page: Page) {
 }
 
 /**
+ * The conversions (.chum5, .xlsx, FVTT, Cocofolia, Udonarium) live behind the
+ * toolbar's 他の形式 menu; only the per-session actions are buttons in the row.
+ * The menu closes as soon as an item is picked, so one call per item.
+ */
+export async function openOtherFormats(page: Page) {
+  await page.getByRole("button", { name: "他の形式 ▾" }).click();
+}
+
+/**
  * Collect CSP violations. Chromium reports them as console errors, and a
  * blocked script leaves no other trace.
  */

@@ -1,5 +1,5 @@
 import { createRef } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { Mock } from "vitest";
 import { Toolbar } from "@/components/character/Toolbar";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
@@ -34,6 +34,14 @@ function makeEd(over: Partial<CharacterEditor> = {}): CharacterEditor {
   } as unknown as CharacterEditor;
 }
 
+/**
+ * The conversions sit behind 他の形式 — the toolbar only shows the handful of
+ * actions used every session. Open it before reaching for one.
+ */
+function openFormats(root: { getByRole: typeof screen.getByRole } = screen, name = "他の形式 ▾") {
+  fireEvent.click(root.getByRole("button", { name }));
+}
+
 describe("<Toolbar>", () => {
   const base = {
     ch: makeCharacter({ name: "Vex" }),
@@ -53,8 +61,33 @@ describe("<Toolbar>", () => {
     fireEvent.click(screen.getByRole("button", { name: "JSON保存" }));
     expect(ed.download).toHaveBeenCalledTimes(1);
 
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "FVTT書出" }));
     expect(ed.downloadFvtt).toHaveBeenCalledTimes(1);
+  });
+
+  // The point of the menu: the toolbar itself carries only what gets used
+  // every session. A conversion creeping back out into the row fails here.
+  it("keeps the conversions behind 他の形式, and closes it again", () => {
+    render(<Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />);
+    for (const name of [".chum5書出", ".xlsx書出", "FVTT書出", "ココフォリア", "ユドナリウム"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+    const toggle = screen.getByRole("button", { name: "他の形式 ▾" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+    openFormats();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("button", { name: ".chum5書出" })).toBeDefined();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("button", { name: ".chum5書出" })).toBeNull();
+
+    // a press anywhere outside closes it too
+    openFormats();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("button", { name: ".chum5書出" })).toBeNull();
   });
 
   it("shows シート表示 outside the sheet tab and the layout picker on it", () => {
@@ -103,6 +136,7 @@ describe("<Toolbar>", () => {
       expect(screen.getByRole("button", { name: "Save JSON" })).toBeDefined();
       expect(screen.getByRole("combobox", { name: "Saved characters" })).toBeDefined();
       expect(screen.getByRole("textbox", { name: "Character name" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "Other formats ▾" })).toBeDefined();
       expect(screen.queryByText("複製")).toBeNull();
     } finally {
       window.localStorage.removeItem(LOCALE_STORAGE_KEY);
@@ -163,8 +197,11 @@ describe("<Toolbar>", () => {
       <Toolbar ed={ed} {...base} fileRef={fileRef} tab={"priority"} sheetLayout={"standard"} />,
     );
 
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: ".chum5書出" }));
     expect(ed.downloadChum5).toHaveBeenCalledTimes(1);
+    // picking an item closes the menu, so the next one needs it opened again
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: ".xlsx書出" }));
     expect(ed.downloadXlsx).toHaveBeenCalledTimes(1);
 
@@ -184,7 +221,9 @@ describe("<Toolbar>", () => {
     fireEvent.click(screen.getByRole("button", { name: "共有リンク" }));
     expect(ed.copyShareLink).toHaveBeenCalledTimes(1);
 
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "ココフォリア" }));
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "チャットパレット" }));
     // A block and a palette are different text; the second argument is what
     // decides which button shows コピー ✓, so swapping them would be
@@ -201,7 +240,11 @@ describe("<Toolbar>", () => {
     const ed = makeEd();
     render(<Toolbar ed={ed} {...base} tab={"priority"} sheetLayout={"standard"} />);
 
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
+    // the panel is unmounted while closed, so every item is re-queried after
+    // re-opening rather than held from the first pass
+    openFormats();
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "ユドナリウム" }));
 
@@ -210,6 +253,7 @@ describe("<Toolbar>", () => {
     expect(calls[0]).toEqual([base.catalog, ed.tr, { untrained: false }]);
     expect(calls[1]).toEqual([base.catalog, ed.tr, { untrained: true }]);
     // the switch is remembered in localStorage, which outlives this test
+    openFormats();
     fireEvent.click(screen.getByRole("checkbox"));
   });
 
@@ -217,6 +261,7 @@ describe("<Toolbar>", () => {
     render(
       <Toolbar ed={makeEd({ copied: "cc" })} {...base} tab={"priority"} sheetLayout={"standard"} />,
     );
+    openFormats();
     expect(screen.getByRole("button", { name: "コピー ✓" })).toBeDefined();
     expect(screen.getByRole("button", { name: "チャットパレット" })).toBeDefined();
     expect(screen.getByRole("button", { name: "共有リンク" })).toBeDefined();
@@ -247,9 +292,10 @@ describe("<Toolbar>", () => {
     render(
       <Toolbar ed={ed} {...base} catalog={catalog} tab={"priority"} sheetLayout={"standard"} />,
     );
-    const box = screen.getByRole("checkbox");
-
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "ココフォリア" }));
+    openFormats();
+    const box = screen.getByRole("checkbox");
     fireEvent.click(box);
     expect(box).toHaveProperty("checked", true);
     fireEvent.click(screen.getByRole("button", { name: "ココフォリア" }));
@@ -261,9 +307,14 @@ describe("<Toolbar>", () => {
   // The 召喚体 button is the only conditional one: nothing bound or registered,
   // nothing to copy.
   it("offers 召喚体 only once something is bound or registered", () => {
-    render(<Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />);
-    expect(screen.queryByRole("button", { name: "精霊コマ" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "ユドナリウム（お供のコマ）" })).toBeNull();
+    const plain = render(
+      <Toolbar ed={makeEd()} {...base} tab={"priority"} sheetLayout={"standard"} />,
+    );
+    const bare = within(plain.container);
+    openFormats(bare);
+    expect(bare.queryByRole("button", { name: "精霊コマ" })).toBeNull();
+    expect(bare.queryByRole("button", { name: "ユドナリウム（お供のコマ）" })).toBeNull();
+    plain.unmount();
 
     const ed = makeEd();
     render(
@@ -291,8 +342,10 @@ describe("<Toolbar>", () => {
         sheetLayout={"standard"}
       />,
     );
+    openFormats();
     fireEvent.click(screen.getByRole("button", { name: "精霊コマ" }));
     expect(ed.copyText).toHaveBeenCalledWith(expect.any(String), "cs");
+    openFormats();
     // the Udonarium one writes a file instead of copying, and needs the
     // catalog and the translator to build it
     fireEvent.click(screen.getByRole("button", { name: "ユドナリウム（お供のコマ）" }));

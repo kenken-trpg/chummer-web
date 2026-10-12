@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import type { Character } from "../lib/types";
-import { encodeFragment, waitForEditor } from "./helpers";
+import { encodeFragment, openOtherFormats, waitForEditor } from "./helpers";
 
 /** Imported character exercises persistence independently of the creation flow. */
 const payload = {
@@ -258,6 +258,7 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   const downloads: string[] = [];
   page.on("download", (file) => downloads.push(file.suggestedFilename()));
 
+  await openOtherFormats(page);
   await page.getByRole("button", { name: ".xlsx書出" }).click();
   const review = page.getByRole("alertdialog");
   await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
@@ -270,6 +271,7 @@ test("XLSX warns about Centaur's lost grants and does not import its kick as a p
   expect(downloads).toEqual([]);
   await expect.poll(async () => summary(await currentCharacter(page))).toEqual(expected(3));
 
+  await openOtherFormats(page);
   await page.getByRole("button", { name: ".xlsx書出" }).click();
   await expect(review.locator("li").filter({ hasText: "生得付与" })).toHaveCount(7);
   const [download] = await Promise.all([
@@ -345,6 +347,7 @@ test("Centaur career chum5 reimport preserves balance and prices only subsequent
     [5, 25, -65],
   ]) {
     const sourceId = (await currentCharacter(page)).id;
+    await openOtherFormats(page);
     await page.getByRole("button", { name: ".chum5書出" }).click();
     const review = page.getByRole("alertdialog");
     await expect(review).toContainText(`成長費用${growth}Kは残高調整へ移り`);

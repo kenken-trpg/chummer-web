@@ -459,6 +459,34 @@ input[type="search"] {
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
+
+/* The toolbar's drop-down (`components/character/Menu.tsx`): the panel is
+   taken out of the flow so opening it does not reflow the toolbar under it,
+   and it sits above the sticky tab bar (z-index 5) it hangs over. */
+.menu {
+  position: relative;
+}
+.menu-body {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 100%;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
+}
+/* Each item fills the panel rather than centring on its own width, so the
+   column reads as a list. */
+.menu-body > .btn {
+  text-align: left;
+  white-space: nowrap;
+}
 /* Tall enough to be worth scrolling, short enough that the search box and the
    footnote stay on screen. A flat 280px left most of the window empty on a
    desktop, so it follows the viewport instead.

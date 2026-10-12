@@ -166,6 +166,9 @@ export const EN_APP = {
   "toolbar.redoHint": "Redo (Ctrl/⌘+Shift+Z)",
   "toolbar.name": "Character name",
   "toolbar.saveJson": "Save JSON",
+  "toolbar.otherFormats": "Other formats",
+  "toolbar.otherFormatsHint":
+    "Exports and copies for Chummer5a, the spreadsheet, Foundry VTT, Cocofolia and Udonarium",
   "toolbar.exportChum5": "Export .chum5",
   "toolbar.exportChum5Hint": "Export as .chum5 (XML), which Chummer5a can open",
   "toolbar.exportXlsx": "Export .xlsx",
