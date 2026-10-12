@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { waitForEditor, watchCsp } from "./helpers";
+import { openOtherFormats, waitForEditor, watchCsp } from "./helpers";
 
 /**
  * The one flow the unit suite structurally cannot cover: a character is created
@@ -41,6 +41,7 @@ test("a character survives a reload and exports to .chum5", async ({ page }) => 
   );
 
   // The export round-trips the stored state through the backend's XML writer.
+  await openOtherFormats(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: ".chum5書出" }).click(),
@@ -89,6 +90,7 @@ test("a .chum5 written by this app is readable by it again", async ({ page }) =>
   await name.fill("Roundtrip");
   await name.blur();
 
+  await openOtherFormats(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: ".chum5書出" }).click(),

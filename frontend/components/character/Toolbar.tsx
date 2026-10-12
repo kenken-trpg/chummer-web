@@ -4,6 +4,7 @@ import type { SheetLayout } from "@/components/CharacterSheet";
 import type { Catalog, Character } from "@/lib/types";
 import type { CharacterEditor } from "@/lib/character/useCharacterEditor";
 import { buildChatPalette, buildCocofolia, buildCocofoliaConjured } from "@/lib/cocofolia";
+import { Menu } from "@/components/character/Menu";
 import { usePrintSheet } from "@/lib/character/usePrintSheet";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { useUiText } from "@/lib/i18n";
@@ -117,23 +118,6 @@ export function Toolbar({
       <button className="btn primary" onClick={download}>
         {ui("toolbar.saveJson")}
       </button>
-      <button className="btn" onClick={downloadChum5} title={ui("toolbar.exportChum5Hint")}>
-        {ui("toolbar.exportChum5")}
-      </button>
-      <button
-        className="btn"
-        onClick={() => void downloadXlsx()}
-        title={ui("toolbar.exportXlsxHint")}
-      >
-        {ui("toolbar.exportXlsx")}
-      </button>
-      <button
-        className="btn"
-        onClick={() => void downloadFvtt()}
-        title={ui("toolbar.exportFvttHint")}
-      >
-        {ui("toolbar.exportFvtt")}
-      </button>
       <button
         className="btn"
         onClick={() => fileRef.current?.click()}
@@ -144,62 +128,87 @@ export function Toolbar({
       <button className="btn" onClick={() => void copyShareLink()} title={ui("toolbar.shareHint")}>
         {copied === "share" ? ui("share.copied") : ui("share.copy")}
       </button>
-      <button
-        className="btn"
-        onClick={() =>
-          catalog && copyText(buildCocofolia(ch, catalog, tr, locale, { untrained }), "cc")
-        }
-        title={ui("toolbar.cocofoliaHint")}
-      >
-        {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
-      </button>
-      <button
-        className="btn"
-        onClick={() => catalog && void downloadUdonarium(catalog, tr, { untrained })}
-        title={ui("toolbar.udonariumHint")}
-      >
-        {ui("toolbar.udonarium")}
-      </button>
-      <button
-        className="btn"
-        onClick={() =>
-          catalog && copyText(buildChatPalette(ch, catalog, tr, locale, { untrained }), "cp")
-        }
-        title={ui("toolbar.chatPaletteHint")}
-      >
-        {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
-      </button>
-      <label className="btn" title={ui("toolbar.cocoUntrainedHint")}>
-        <input
-          type="checkbox"
-          checked={untrained}
-          onChange={(e) => setUntrained(e.target.checked)}
-        />
-        {ui("toolbar.cocoUntrained")}
-      </label>
-      {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
+      {/* Everything above is what you reach for every session: save, load,
+          share, print. The conversions below are a handful of buttons each
+          used once in a while, and as a flat row they were most of the
+          toolbar — so they live one click away instead. */}
+      <Menu label={ui("toolbar.otherFormats")} title={ui("toolbar.otherFormatsHint")}>
+        <button className="btn" onClick={downloadChum5} title={ui("toolbar.exportChum5Hint")}>
+          {ui("toolbar.exportChum5")}
+        </button>
         <button
           className="btn"
-          onClick={() => catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")}
-          title={ui("toolbar.conjuredHint")}
+          onClick={() => void downloadXlsx()}
+          title={ui("toolbar.exportXlsxHint")}
         >
-          {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
+          {ui("toolbar.exportXlsx")}
         </button>
-      ) : null}
-      {/* one button for everything the runner brings along — spirits, sprites,
-          vehicles and drones — each kind as its own zip */}
-      {d.spirits?.some((s) => s.bound) ||
-      d.sprites?.some((s) => s.registered) ||
-      d.vehicles?.length ||
-      d.drones?.length ? (
         <button
           className="btn"
-          onClick={() => catalog && downloadUdonariumConjured(catalog, tr)}
-          title={ui("toolbar.udonariumConjuredHint")}
+          onClick={() => void downloadFvtt()}
+          title={ui("toolbar.exportFvttHint")}
         >
-          {ui("toolbar.udonariumConjured")}
+          {ui("toolbar.exportFvtt")}
         </button>
-      ) : null}
+        <button
+          className="btn"
+          onClick={() =>
+            catalog && copyText(buildCocofolia(ch, catalog, tr, locale, { untrained }), "cc")
+          }
+          title={ui("toolbar.cocofoliaHint")}
+        >
+          {copied === "cc" ? ui("share.copied") : ui("toolbar.cocofolia")}
+        </button>
+        <button
+          className="btn"
+          onClick={() => catalog && void downloadUdonarium(catalog, tr, { untrained })}
+          title={ui("toolbar.udonariumHint")}
+        >
+          {ui("toolbar.udonarium")}
+        </button>
+        <button
+          className="btn"
+          onClick={() =>
+            catalog && copyText(buildChatPalette(ch, catalog, tr, locale, { untrained }), "cp")
+          }
+          title={ui("toolbar.chatPaletteHint")}
+        >
+          {copied === "cp" ? ui("share.copied") : ui("toolbar.chatPalette")}
+        </button>
+        <label className="btn" title={ui("toolbar.cocoUntrainedHint")}>
+          <input
+            type="checkbox"
+            checked={untrained}
+            onChange={(e) => setUntrained(e.target.checked)}
+          />
+          {ui("toolbar.cocoUntrained")}
+        </label>
+        {d.spirits?.some((s) => s.bound) || d.sprites?.some((s) => s.registered) ? (
+          <button
+            className="btn"
+            onClick={() =>
+              catalog && copyText(buildCocofoliaConjured(ch, catalog, tr, locale), "cs")
+            }
+            title={ui("toolbar.conjuredHint")}
+          >
+            {copied === "cs" ? ui("share.copied") : ui("toolbar.conjured")}
+          </button>
+        ) : null}
+        {/* one button for everything the runner brings along — spirits, sprites,
+            vehicles and drones — each kind as its own zip */}
+        {d.spirits?.some((s) => s.bound) ||
+        d.sprites?.some((s) => s.registered) ||
+        d.vehicles?.length ||
+        d.drones?.length ? (
+          <button
+            className="btn"
+            onClick={() => catalog && downloadUdonariumConjured(catalog, tr)}
+            title={ui("toolbar.udonariumConjuredHint")}
+          >
+            {ui("toolbar.udonariumConjured")}
+          </button>
+        ) : null}
+      </Menu>
       <button
         className={`btn ${inCareer ? "primary" : ""}`}
         title={inCareer ? ui("toolbar.careerHint") : ui("toolbar.toCareerHint")}

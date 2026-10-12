@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { chummerFixture, storedCharacters, waitForEditor } from "./helpers";
+import { chummerFixture, openOtherFormats, storedCharacters, waitForEditor } from "./helpers";
 
 test("a multi-MB save written by Chummer imports, edits, persists and exports", async ({
   page,
@@ -44,6 +44,7 @@ test("a multi-MB save written by Chummer imports, edits, persists and exports", 
   await expect(name).toHaveValue("Ghile Edited");
 
   // and the export carries the portrait back out as a mugshot
+  await openOtherFormats(page);
   const download = await Promise.all([
     page.waitForEvent("download"),
     page.getByRole("button", { name: ".chum5書出" }).click(),
