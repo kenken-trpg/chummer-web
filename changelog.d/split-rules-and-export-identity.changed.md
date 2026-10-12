@@ -1,1 +1,0 @@
-- **バックエンド内部の整理（動作は変わりません）。** 大きくなっていた `app/rules.py` をパッケージに分け、印字値とルールの参照（`core.py`）・Chummer の設定ファイルの反映（`settings.py`）・フォーカスの結合カルマ（`foci.py`）に切りました。`.chum5` 書き出しの `chummer_export/identity.py` も、取り込み側と同じ区切りで `identity` / `build` / `skills` に分けました。

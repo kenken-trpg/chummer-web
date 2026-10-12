@@ -1,1 +1,0 @@
-- **バックエンド内部の整理（動作は変わりません）。** 最大のモジュールだった `improvements/effects.py` を責務ごとに分け、エフェクトの集計辞書の定義（`effects.py`）・派生出力向けの集約（`compactors.py`）・precedence の解決（`precedence.py`）に切りました。行の型定義 `effect_rows.py` もグループごとのパッケージにしました。
