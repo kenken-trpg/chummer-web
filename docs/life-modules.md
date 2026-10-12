@@ -13,7 +13,9 @@
 2. Nationality（国籍）・Formative Years（幼少期）・Teen Years（少年少女期）・
    Further Education（追加教育）・Real Life（実生活）の経歴を選びます。段階の名前も
    Run Faster 由来のデータなので、日本語設定でも英語で表示します。
-   Further Education と Real Life は繰り返せます。進学しない場合は
+   Further Education と Real Life は異なる経歴を選べます。同じ経歴は1回だけで、
+   Corporate の Hacker/Decker と Security Rigger のように同じ親を持つ派生版も、
+   親ごとにいずれか1つだけ取得できます。進学しない場合は
    Skipped Further Education を選びます。
    「経歴を検索」で名前・派生元・説明・出典を絞り込めます。検索は使用ルールブックの
    候補内で行い、選択済みの経歴と追加選択欄は検索中も表示します。
@@ -135,7 +137,10 @@ Warm Body が求める `Corporate Pariah` には段階の指定がありませ�
 ## 実装
 
 `CharacterState.life_modules` は選択順のカタログ ID 一覧、`life_module_choices` は
-`選択位置:効果位置` をキーとする追加選択です。同一モジュールの複数回取得でも選択を区別します。
+`選択位置:効果位置` をキーとする追加選択です。選択位置は重複などのエラーがある経歴も含めて維持します。
+カタログの `family_id` は親モジュールの ID です。派生版を含めて同じ親の取得は1回に制限します。
+JSON などから重複を読み込んだ場合は、後続の重複分を作成エラーにし、効果と費用を加算しません。
+保存された一覧は保持するため、画面から重複分を削除して修復できます。
 削除時は後続の選択位置を詰めて、残った経歴の選択を維持します。
 
 計算時のみキャラクターのコピーへ付与値を合算し、計算終了時に手動購入値へ戻します。
@@ -144,3 +149,23 @@ Warm Body が求める `Corporate Pariah` には段階の指定がありませ�
 資質グループの段階的付与は最高レベルを採用し、経歴による無料ポイントを資質カルマの計算に反映します。
 
 参照: [固定コミットの Chummer データ](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/data/lifemodules.xml)。
+
+
+## 重複取得・技能上限の上流調査（2026-10-12）
+
+Chummer5a の [SelectLifeModule.cs](https://github.com/chummer5a/chummer5a/blob/master/Chummer/Forms/Character%20Creation%20Forms/SelectLifeModule.cs)
+は各候補の `RequirementsMetAsync` で選択を絞りますが、同一モジュール・同じ親の派生版を
+比較する独自の重複チェックはありません。
+共通の [SelectionShared.cs](https://github.com/chummer5a/chummer5a/blob/master/Chummer/Backend/Static/SelectionShared.cs)
+でも、`limit` のない `module` / `version` は取得回数無制限として扱います。
+固定 `lifemodules.xml` の Bounty Hunter / Corporate には `limit` がありません。
+したがって、本アプリの取得回数制限は今回報告されたルールを実装したもので、
+Chummer5a の既存の重複制限を移植したものではありません。
+
+技能付与について、[ImprovementMethods.cs](https://github.com/chummer5a/chummer5a/blob/master/Chummer/Backend/Improvements/ImprovementMethods.cs)
+の `skilllevel` は `SkillLevel` improvement を作り、
+[Skill.cs](https://github.com/chummer5a/chummer5a/blob/master/Chummer/Backend/Skills/Skill.cs)
+の `FreeKarma` がこれを無償レベルとして読み取ります。表示上の `Karma` は `RatingMaximum` で制限されます。
+この経路に、超過分から同じ関連能力値の技能へ割り振るプールを作る処理は確認できませんでした。
+上流に再配分機能があると解釈して自動的に値を移すことはせず、本アプリでは引き続き
+超過を明示的な作成エラーにします。技能超過の再配分 UI・計算・保存は未対応です。

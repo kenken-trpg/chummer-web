@@ -3,7 +3,11 @@ import { useId, useState } from "react";
 import { LifeModulePicker } from "./LifeModulePicker";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
-import { lifeModuleRequirementsMet, lifeModuleRequirementText } from "@/lib/character/life-modules";
+import {
+  lifeModuleAlreadyTaken,
+  lifeModuleRequirementsMet,
+  lifeModuleRequirementText,
+} from "@/lib/character/life-modules";
 
 const STAGES = [
   "Nationality",
@@ -134,6 +138,11 @@ export function LifeModulesPanel({
                       <p>{row.story}</p>
                     </details>
                   )}
+                  {lifeModuleAlreadyTaken(
+                    row,
+                    { ...ch, life_modules: selected.slice(0, index) },
+                    catalog,
+                  ) && <p className="error">{ui("life.alreadyTaken")}</p>}
                   {row.unsupported.length > 0 && <p className="error">{ui("life.unsupported")}</p>}
                   {!!row.required?.length && (
                     <p

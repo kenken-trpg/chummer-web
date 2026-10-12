@@ -345,14 +345,14 @@ it("collapses descriptions while keeping the module's choices available", () => 
 });
 
 it("browses candidates without saving and adds only the explicitly confirmed candidate", async () => {
-  const patch = setup();
+  const patch = setup({ life_modules: [] });
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
   expect(patch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("radio", { name: /Magical Education/ }));
   expect(patch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
   fireEvent.click(screen.getByRole("button", { name: "この経歴を追加" }));
-  expect(patch).toHaveBeenCalledExactlyOnceWith({ life_modules: ["hunter", "hunter", "hunter"] });
+  expect(patch).toHaveBeenCalledExactlyOnceWith({ life_modules: ["hunter"] });
   await waitFor(() =>
     expect(
       (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
@@ -426,4 +426,38 @@ it("prevents repeated submissions while adding a candidate", async () => {
       false,
     ),
   );
+});
+
+it("prevents adding a selected adult module again", () => {
+  const patch = setup({ life_modules: ["hunter"] });
+  fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
+  const add = screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement;
+  expect(add.disabled).toBe(true);
+  expect(screen.getByText("同じ経歴または派生版を取得済みです")).toBeTruthy();
+  fireEvent.click(add);
+  expect(patch).not.toHaveBeenCalled();
+});
+
+it("prevents a second Corporate version but allows a different career", () => {
+  const patch = vi.fn();
+  const corporate = {
+    ...historyModule,
+    id: "hacker",
+    name: "Hacker/Decker",
+    parent: "Corporate",
+    family_id: "corporate",
+  };
+  const rigger = { ...corporate, id: "rigger", name: "Security Rigger" };
+  const props = panelProps(makeCharacter({ life_modules: ["hacker"] }), {
+    catalog: makeCatalog({ life_modules: [corporate, rigger, historyModule] }),
+    patch,
+  });
+  render(<LifeModulesPanel {...props} />);
+  fireEvent.click(screen.getByRole("radio", { name: /Security Rigger/ }));
+  expect(
+    (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+  fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
+  fireEvent.click(screen.getByRole("button", { name: "この経歴を追加" }));
+  expect(patch).toHaveBeenCalledWith({ life_modules: ["hacker", "hunter"] });
 });

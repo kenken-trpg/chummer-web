@@ -36,7 +36,8 @@ export const EN_CHARGEN = {
   "life.description": "Module description",
   "life.stageSelected": "Selected",
   "life.stagePending": "Not selected",
-  "life.repeatable": "You can choose multiple modules for this stage.",
+  "life.repeatable":
+    "You can choose different modules for this stage. Each module, including its versions, can only be taken once.",
   "life.search": "Search modules (name, parent, description, source)",
   "life.noMatches": "No modules match your search. Try another search term.",
   "life.requires": "Requires: {requirements}",
@@ -48,6 +49,9 @@ export const EN_CHARGEN = {
   "life.empty": "No modules for this stage. Check the enabled rulebooks.",
   "engine.life.unknown": "Unknown life module: {name}",
   "engine.life.unsupported": "Life module “{name}” has unsupported mechanics: {tags}",
+  "engine.life.duplicateModule":
+    "Life module {name} can only be taken once, including its versions",
+  "life.alreadyTaken": "This module or one of its versions is already taken",
   "engine.life.duplicateStage": "Duplicate life stage: {stage}",
   "engine.life.missingStage": "Choose a module for life stage: {stage}",
   "engine.life.choice": "Complete a choice in life module “{name}” ({slot})",
