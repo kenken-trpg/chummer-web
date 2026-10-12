@@ -24,9 +24,6 @@ export function PriorityTab({
   return (
     <>
       <SettingsPicker catalog={catalog} character={ch} ui={ui} tr={tr} patch={patch} />
-      {ch.build_method === "LifeModule" && (
-        <LifeModulesPanel catalog={catalog} character={ch} ui={ui} patch={patch} />
-      )}
       <div className="card">
         <div
           style={{
@@ -261,6 +258,9 @@ export function PriorityTab({
           </>
         )}
       </div>
+      {ch.build_method === "LifeModule" && (
+        <LifeModulesPanel catalog={catalog} character={ch} ui={ui} patch={patch} />
+      )}
     </>
   );
 }

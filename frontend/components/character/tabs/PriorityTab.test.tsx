@@ -196,4 +196,10 @@ it("selects only the LifeModule button when using life modules", () => {
   expect(screen.getByRole("button", { name: "ライフモジュール" }).className).toContain("selected");
   expect(screen.getByRole("button", { name: "Karma" }).className).not.toContain("selected");
   expect(rows()).toHaveLength(0);
+  expect(
+    screen
+      .getByRole("button", { name: "ライフモジュール" })
+      .compareDocumentPosition(screen.getByRole("heading", { name: "ライフモジュール" })) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });

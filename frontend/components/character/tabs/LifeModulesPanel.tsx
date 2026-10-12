@@ -1,5 +1,6 @@
 "use client";
-import { useId } from "react";
+import { useId, useState } from "react";
+import { LifeModulePicker } from "./LifeModulePicker";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
 import { lifeModuleRequirementsMet, lifeModuleRequirementText } from "@/lib/character/life-modules";
@@ -20,6 +21,8 @@ export function LifeModulesPanel({
 }: Pick<TabPanelProps, "catalog" | "character" | "ui" | "patch">) {
   const rows = catalog.life_modules || [];
   const optionListId = useId();
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
   const selected = ch.life_modules || [];
   const choices = ch.life_module_choices || {};
   const books = ch.settings?.books || [];
@@ -42,51 +45,95 @@ export function LifeModulesPanel({
     void patch({ life_modules: selected.filter((_, i) => i !== index), life_module_choices: next });
   }
   return (
-    <div className="card">
+    <div className="card life-modules">
       <h2>{ui("life.method")}</h2>
       <p className="warn">{ui("life.experimental")}</p>
       <p className="muted">{ui("life.note")}</p>
-      <p>
-        {ui("life.total", {
-          karma: selected.reduce(
-            (sum, id) => sum + (rows.find((row) => row.id === id)?.karma || 0),
-            0,
-          ),
-        })}
-      </p>
-      <p>
-        {ui("life.nuyen", {
-          amount: selected.reduce(
-            (sum, id) => sum + (rows.find((row) => row.id === id)?.nuyen || 0),
-            0,
-          ),
-        })}
-      </p>
-      {freePositive || freeNegative ? (
-        <p>{ui("life.freeQuality", { positive: freePositive, negative: freeNegative })}</p>
-      ) : null}
+      <div className="life-summary">
+        <p>
+          {ui("life.total", {
+            karma: selected.reduce(
+              (sum, id) => sum + (rows.find((row) => row.id === id)?.karma || 0),
+              0,
+            ),
+          })}
+        </p>
+        <p>
+          {ui("life.nuyen", {
+            amount: selected.reduce(
+              (sum, id) => sum + (rows.find((row) => row.id === id)?.nuyen || 0),
+              0,
+            ),
+          })}
+        </p>
+        {freePositive || freeNegative ? (
+          <p>{ui("life.freeQuality", { positive: freePositive, negative: freeNegative })}</p>
+        ) : null}
+      </div>
+      <label className="life-field">
+        {ui("life.search")}
+        <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} />
+      </label>
+      {selected.map((id, index) =>
+        rows.some((row) => row.id === id) ? null : (
+          <div className="life-entry" key={`${index}:${id}`}>
+            <p className="error">{ui("engine.life.unknown", { name: id })}</p>
+            <button
+              disabled={ch.career}
+              onClick={() => remove(index)}
+              aria-label={`${id}: ${ui("life.remove")}`}
+            >
+              {ui("life.remove")}
+            </button>
+          </div>
+        ),
+      )}
       {STAGES.map((stage) => {
         const candidates = rows.filter(
           (row) => row.stage === stage && (!books.length || books.includes(row.source)),
         );
+        const filtered = candidates.filter((row) =>
+          [row.name, row.parent, row.story, row.source].some((text) =>
+            text.toLowerCase().includes(query),
+          ),
+        );
         const taken = selected.some((id) => rows.find((row) => row.id === id)?.stage === stage);
         return (
-          <section key={stage}>
-            <h3>{stage}</h3>
+          <section className="life-stage" key={stage}>
+            <div className="life-stage-heading">
+              <h3>{stage}</h3>
+              <span className={taken ? "life-status" : "muted"}>
+                {ui(taken ? "life.stageSelected" : "life.stagePending")}
+              </span>
+            </div>
+            {STAGES.indexOf(stage) >= 3 && <p className="muted">{ui("life.repeatable")}</p>}
             {selected.map((id, index) => {
               const row = rows.find((item) => item.id === id);
               if (!row || row.stage !== stage) return null;
               return (
-                <div key={`${index}:${id}`}>
-                  <strong>{row.name}</strong> {row.parent && `(${row.parent})`} · {row.karma} Karma
-                  · {row.source} {row.page}
-                  <button
-                    disabled={ch.career}
-                    onClick={() => remove(index)}
-                    aria-label={`${row.name}: ${ui("life.remove")}`}
-                  >
-                    ×
-                  </button>
+                <div className="life-entry" key={`${index}:${id}`}>
+                  <div className="life-entry-heading">
+                    <div>
+                      <h4>{row.name}</h4>
+                      {row.parent && <p className="muted">{row.parent}</p>}
+                      <p className="muted">
+                        {row.karma} Karma · {row.source} {row.page}
+                      </p>
+                    </div>
+                    <button
+                      disabled={ch.career}
+                      onClick={() => remove(index)}
+                      aria-label={`${row.name}: ${ui("life.remove")}`}
+                    >
+                      {ui("life.remove")}
+                    </button>
+                  </div>
+                  {row.story && (
+                    <details className="life-story">
+                      <summary>{ui("life.description")}</summary>
+                      <p>{row.story}</p>
+                    </details>
+                  )}
                   {row.unsupported.length > 0 && <p className="error">{ui("life.unsupported")}</p>}
                   {!!row.required?.length && (
                     <p
@@ -101,40 +148,15 @@ export function LifeModulesPanel({
                         ` — ${ui("life.requirementUnmet")}`}
                     </p>
                   )}
-                  {row.choices.map((choice) => (
-                    <label key={choice.key}>
-                      {ui("life.choice", {
-                        name: row.name,
-                        kind: choice.name || ui(`life.kind.${choice.kind}` as MsgKey),
-                      })}
-                      {choice.options.length && !choice.allow_custom ? (
-                        <select
-                          disabled={ch.career}
-                          value={choices[`${index}:${choice.key}`] || ""}
-                          onChange={(event) =>
-                            patch({
-                              life_module_choices: {
-                                ...choices,
-                                [`${index}:${choice.key}`]: event.target.value,
-                              },
-                            })
-                          }
-                        >
-                          <option value="">{ui("life.pending")}</option>
-                          {choice.options.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <>
-                          <input
-                            list={
-                              choice.allow_custom
-                                ? `${optionListId}-${index}-${choice.key}`
-                                : undefined
-                            }
+                  <div className="life-choices">
+                    {row.choices.map((choice) => (
+                      <label className="life-field" key={choice.key}>
+                        {ui("life.choice", {
+                          name: row.name,
+                          kind: choice.name || ui(`life.kind.${choice.kind}` as MsgKey),
+                        })}
+                        {choice.options.length && !choice.allow_custom ? (
+                          <select
                             disabled={ch.career}
                             value={choices[`${index}:${choice.key}`] || ""}
                             onChange={(event) =>
@@ -145,53 +167,66 @@ export function LifeModulesPanel({
                                 },
                               })
                             }
-                          />
-                          {choice.allow_custom && (
-                            <datalist id={`${optionListId}-${index}-${choice.key}`}>
-                              {choice.options.map((option) => (
-                                <option key={option} value={option} />
-                              ))}
-                            </datalist>
-                          )}
-                        </>
-                      )}
-                    </label>
-                  ))}
+                          >
+                            <option value="">{ui("life.pending")}</option>
+                            {choice.options.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <>
+                            <input
+                              type="text"
+                              list={
+                                choice.allow_custom
+                                  ? `${optionListId}-${index}-${choice.key}`
+                                  : undefined
+                              }
+                              disabled={ch.career}
+                              value={choices[`${index}:${choice.key}`] || ""}
+                              onChange={(event) =>
+                                patch({
+                                  life_module_choices: {
+                                    ...choices,
+                                    [`${index}:${choice.key}`]: event.target.value,
+                                  },
+                                })
+                              }
+                            />
+                            {choice.allow_custom && (
+                              <datalist id={`${optionListId}-${index}-${choice.key}`}>
+                                {choice.options.map((option) => (
+                                  <option key={option} value={option} />
+                                ))}
+                              </datalist>
+                            )}
+                          </>
+                        )}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               );
             })}
-            <label>
-              {stage}: {ui("life.pick")}
-              <select
-                value=""
-                disabled={ch.career || (taken && STAGES.indexOf(stage) < 3)}
-                onChange={(event) => {
-                  if (event.target.value)
-                    void patch({ life_modules: [...selected, event.target.value] });
-                }}
-              >
-                <option value="">{ui("life.pick")}</option>
-                {candidates.map((row) => {
-                  const met = lifeModuleRequirementsMet(row.required || [], ch, catalog);
-                  return (
-                    <option
-                      key={row.id}
-                      value={row.id}
-                      disabled={row.unsupported.length > 0 || !met}
-                    >
-                      {row.parent ? `${row.parent} / ` : ""}
-                      {row.name} ({row.karma})
-                      {row.unsupported.length > 0 ? ` — ${ui("life.unsupported")}` : ""}
-                      {!!row.required?.length
-                        ? ` — ${ui("life.requires", { requirements: lifeModuleRequirementText(row.required) })}`
-                        : ""}
-                      {!met ? ` — ${ui("life.requirementUnmet")}` : ""}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
+            {!!filtered.length && (
+              <LifeModulePicker
+                key={ch.id}
+                stage={stage}
+                candidates={filtered}
+                taken={taken}
+                repeatable={STAGES.indexOf(stage) >= 3}
+                catalog={catalog}
+                character={ch}
+                ui={ui}
+                patch={patch}
+              />
+            )}
             {!candidates.length && <p className="muted">{ui("life.empty")}</p>}
+            {!!candidates.length && !filtered.length && (
+              <p className="muted">{ui("life.noMatches")}</p>
+            )}
           </section>
         );
       })}
