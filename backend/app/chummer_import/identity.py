@@ -56,11 +56,13 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     """`<settings>` -> `SettingsState`.
 
     Chummer writes the name (older builds, the file name) of the settings the
-    character was built under; the enabled books live in that file, which is
-    not part of the save. So the books are recovered by looking the name up
-    among the shipped presets, and a settings file this app has never seen
-    comes back as a name with no book restriction — the whole catalog, which
-    is what an unset `books` means everywhere else.
+    character was built under, and — all 34 of its own test saves do — the
+    enabled books as `<sources>`. The books come from there when the save has
+    them, since that is the character's own list rather than whatever the named
+    preset happens to hold today. Without it they are recovered by looking the
+    name up among the shipped presets, and a settings file this app has never
+    seen comes back as a name with no book restriction — the whole catalog,
+    which is what an unset `books` means everywhere else.
 
     `<maxavail>` is the exception that *is* in the save: it is the character's
     own creation availability limit, which the gameplay option sets (Standard
@@ -75,6 +77,11 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
     25-karma quality cap instead of Prime Runner's 35.
     """
     el = root.find("settings")
+    # `<sources>` is the character's own enabled-book list. Empty means
+    # unrestricted everywhere else in this app, so an absent or empty element
+    # leaves the books to the preset lookup below rather than forbidding
+    # everything.
+    sources = [code for code in (_text(node) for node in root.findall("./sources/source")) if code]
     # Some builds write `<settings>` as a container of house-rule elements
     # rather than a name; there is nothing to take from that.
     name = _text(root.find("gameplayoption")).strip()
@@ -88,6 +95,8 @@ def _import_settings(root: ET.Element, cat: CatalogDict) -> dict[str, Any]:
             extra["chargen_avail_max"] = int(max_avail)
         except ValueError:
             pass
+    if sources:
+        extra["books"] = sources
     if not name:
         return extra
     # 日本語環境 is this app's preset, not in Chummer's list (app/ja_default.py)
