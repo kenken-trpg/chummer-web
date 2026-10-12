@@ -30,6 +30,7 @@ from .combat import _import_armor, _import_weapons
 from .container import decompress_chum5lz
 from .gear import _import_custom_drugs, _import_gear
 from .identity import _import_attributes, _import_identity
+from .life_modules import _import_life_modules, life_module_choices_present
 from .lifestyles import _import_lifestyles
 from .magic import _import_foci, _import_initiation, _import_magic, _import_spirits
 from .qualities import _import_qualities
@@ -61,7 +62,9 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     if root.tag != "character":
         raise NoticeError(notice("api.notACharacterFile"))
 
-    if (root.findtext("buildmethod") or "").lower() == "lifemodule":
+    if (root.findtext("buildmethod") or "").lower() == "lifemodule" and not life_module_choices_present(root):
+        # Chummer's own life module save keeps the grants and not the picks
+        # behind them; see `chummer_export.life_modules`.
         raise NoticeError(notice("engine.life.chum5Unsupported"))
     cat = catalog()
     _refuse_critters(root, cat)
@@ -117,6 +120,7 @@ _SECTIONS = (
     _import_attributes,
     _import_skills,
     _import_qualities,
+    _import_life_modules,
     _import_magic,
     _import_spirits,
     _import_initiation,

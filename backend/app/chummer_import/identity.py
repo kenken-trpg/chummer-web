@@ -9,8 +9,9 @@ from typing import Any
 from .. import ja_default
 from ..data_loader import CatalogDict
 from ..data_loader._xml import _int, _text
+from ..engine import find_metatype
 from ..models import MAX_PORTRAITS, clean_portrait
-from ..notices import Notice, notice
+from ..notices import Notice, NoticeError, notice
 from ..rules import DEFAULT_RULES
 
 _BUILD_METHODS = {
@@ -186,9 +187,24 @@ def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
     """Read the eight attributes plus EDG/MAG/RES, as base + karma."""
     attrs: dict[str, int] = {}
     karma_levels: dict[str, int] = {}
+    # Chummer saves a row for every name in its own `AttributeStrings`,
+    # including ones the metatype does not have: `MAGAdept` is a constant
+    # `1 / 6 / 10` unless a house rule this app does not offer is on, and DEP
+    # belongs to a Technocritter. `compute` drops a name the metatype has no
+    # spec for, so a Priority character never kept them — but a life module
+    # character is computed on a copy, and would carry them for good.
+    # A metatype the catalog does not have keeps every row: the import is
+    # best-effort, and `compute` names the missing data later.
+    try:
+        meta = find_metatype(str(st.get("metatype") or ""), st.get("metavariant"))
+    except NoticeError:
+        meta = {}
+    known = {key.upper() for key in ((meta or {}).get("attributes") or {})}
     for a in root.findall("./attributes/attribute"):
         name = _text(a.find("name")).upper()
         if name in ("ESS", "ESSENCE") or not name:
+            continue
+        if known and name not in known:
             continue
         # Chummer <base> is points spent above the metatype minimum; <karma>
         # the levels on top of it bought with karma.
@@ -200,5 +216,13 @@ def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], w
         # baseline taken from these ratings already accounts for.
         if karma and not st.get("career"):
             karma_levels[name] = karma
+    # Essence is not a rating anyone buys: the state carries the metatype's
+    # starting value and `compute` works the ware loss out from there, which is
+    # why the row above is skipped. A Priority character gets it back when
+    # `compute` writes the ratings into the state; a life module character is
+    # computed on a copy, so it has to be seeded here or the export drops it.
+    ess = ((meta or {}).get("attributes") or {}).get("ESS") or {}
+    if ess.get("max") is not None:
+        attrs["ESS"] = int(ess["max"])
     st["attributes"] = attrs or {"BOD": 1, "AGI": 1, "REA": 1, "STR": 1, "CHA": 1, "INT": 1, "LOG": 1, "WIL": 1}
     st["attribute_karma"] = karma_levels

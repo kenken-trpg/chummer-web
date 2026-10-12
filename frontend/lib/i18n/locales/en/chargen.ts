@@ -12,9 +12,11 @@ export const EN_CHARGEN = {
   "life.kind.qualities": "quality",
 
   "life.experimental":
-    "Experimental support. Modules with unsupported mechanics are unavailable. Use JSON for saves and backups; LifeModule .chum5 import and export are not yet supported.",
+    "Experimental support. Modules with unsupported mechanics are unavailable. Export to .chum5 works, and so does reading back a .chum5 this app wrote; a life module character saved by Chummer itself cannot be read.",
   "engine.life.chum5Unsupported":
-    "Experimental support. Modules with unsupported mechanics are unavailable. Use JSON for saves and backups; LifeModule .chum5 import and export are not yet supported.",
+    "A life module character saved by Chummer itself cannot be read. Chummer stores what each module granted, not which option was picked to grant it, so the choices cannot be recovered. A .chum5 written by this app, and JSON, both read back.",
+  "engine.life.chum5ModuleUnknown":
+    "The module “{name}” in this .chum5 is not in this app’s data. Dropping one module would shift every later module’s choices onto the wrong module, so the import stopped.",
 
   "life.method": "Life modules",
   "life.note":

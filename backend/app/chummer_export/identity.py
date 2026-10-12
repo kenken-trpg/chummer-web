@@ -13,7 +13,7 @@ from ._common import _Ctx, _Names, _sub
 from .build import _export_reward_log, _export_settings_key
 
 _ATTR_ORDER = ("BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG", "MAG", "RES", "DEP")
-_BUILD_METHOD_OUT = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma"}
+_BUILD_METHOD_OUT = {"Priority": "Priority", "SumToTen": "SumtoTen", "Karma": "Karma", "LifeModule": "LifeModule"}
 
 
 def _export_identity(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:

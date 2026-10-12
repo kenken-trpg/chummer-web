@@ -15,14 +15,13 @@ from xml.dom import minidom
 
 from ..data_loader import catalog
 from ..engine import compute, find_metatype
-from ..engine.priority import normalize_build_method
 from ..models import CharacterState
-from ..notices import NoticeError, notice
 from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
 from .build import _export_build_points, _export_flags, _export_priorities
 from .gear import _export_armor, _export_foci, _export_gear, _export_vehicles, _export_ware, _export_weapons
 from .identity import _export_attributes, _export_contacts, _export_identity
+from .life_modules import _export_life_module_choices
 from .lifestyles import _export_custom_drugs, _export_lifestyles
 from .magic import (
     _export_enhancements,
@@ -48,8 +47,6 @@ def state_to_chum5(state: CharacterState) -> bytes:
     They are independent — none reads what another wrote — so the 322-line
     function they came from split along its own `_sub(root, ...)` boundaries.
     """
-    if normalize_build_method(state.build_method) == "LifeModule":
-        raise NoticeError(notice("engine.life.chum5Unsupported"))
     with using_rules(rules_for(state.settings)):
         return _write(state)
 
@@ -144,4 +141,5 @@ _SECTIONS = (
     _export_spirits,
     _export_enhancements,
     _export_initiation,
+    _export_life_module_choices,
 )

@@ -21,6 +21,7 @@ from ..engine.lookups import critter_power_label
 from ..engine.qualities import _quality_needs_spell_category, _quality_needs_spirit_category
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub, improvements_of
+from .life_modules import export_life_modules
 from .metatype import export_metatype_powers, export_metatype_qualities
 
 
@@ -79,6 +80,8 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(q, "guid", qid)
 
     export_metatype_qualities(quals, state, ctx)
+    # Chummer keeps life modules here too, as a quality type of their own.
+    export_life_modules(quals, state)
     _export_quality_critter_powers(root, state)
     export_metatype_powers(root, state, ctx)
     # Chummer keeps a picked spell category only on the improvement
