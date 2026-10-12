@@ -76,13 +76,20 @@ def test_maps_core_identity_and_priorities() -> None:
     }
 
 
-def test_attributes_fold_in_min_base_karma_and_drop_essence() -> None:
+def test_attributes_fold_in_min_base_karma_and_take_essence_from_the_metatype() -> None:
     st, _ = chum5_to_state(SAMPLE)
     # Chummer <base> is spend above the metatype minimum: min 1 + base 4 + karma 1
     assert st["attributes"]["LOG"] == 6
     assert st["attributes"]["MAG"] == 6  # min 1 + base 5
     assert st["attributes"]["BOD"] == 3  # min 1 + base 2
-    assert "ESS" not in st["attributes"] and "ESSENCE" not in st["attributes"]
+    assert "ESSENCE" not in st["attributes"]
+    # Essence is the metatype's starting value, never the file's: what the save
+    # holds is what ware already took off, and taking that as the rating would
+    # lose the loss again on the next compute.
+    assert st["attributes"]["ESS"] == 6
+    lowered = SAMPLE.replace(b"<name>ESS</name><base>6</base>", b"<name>ESS</name><base>2</base>")
+    assert lowered != SAMPLE
+    assert chum5_to_state(lowered)[0]["attributes"]["ESS"] == 6
 
 
 def test_skills_groups_knowledge_native() -> None:

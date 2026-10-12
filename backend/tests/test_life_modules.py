@@ -148,8 +148,12 @@ def test_disabled_modules_are_still_listed_for_visibility():
 
 
 def test_chum5_does_not_silently_drop_the_history():
-    with pytest.raises(NoticeError, match="engine.life.chum5Unsupported"):
-        state_to_chum5(runner())
+    """The export carries the history out and back (the round trip is pinned in
+    `test_chummer_life_modules`); a file Chummer wrote keeps only what the
+    modules granted, so it is refused rather than read without its picks."""
+    state = apply_patch(runner(), CharacterPatch(life_modules=[module("Bounty Hunter")["id"]]))
+    back, _ = chum5_to_state(state_to_chum5(state))
+    assert back["life_modules"] == state.life_modules
     with pytest.raises(NoticeError, match="engine.life.chum5Unsupported"):
         chum5_to_state(b"<character><buildmethod>LifeModule</buildmethod></character>")
 

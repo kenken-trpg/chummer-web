@@ -17,6 +17,7 @@ from typing import Any
 
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
+from app.data_loader import catalog
 from app.engine import compute
 from app.models import CharacterState
 
@@ -130,6 +131,8 @@ def build_chum5(
     street_cred: int = 0,
     notoriety: int = 0,
     karma_nuyen: int = 0,
+    life_modules: list[str] | None = None,
+    life_module_choices: dict[str, str] | None = None,
 ) -> bytes:
     root = ET.Element("character")
     _e(root, "name", "")
@@ -205,6 +208,24 @@ def build_chum5(
         _e(q, "name", qname)
         _e(q, "qualitysource", "Selected")
         _pick_nodes(q, (quality_picks or {}).get(qname) or [])
+    # Chummer keeps a life module here, as a quality type of its own, and the
+    # answers to its choices nowhere — this app writes those to
+    # `<lifemodulechoices>`, which is also what marks the file as readable.
+    for mid in life_modules or []:
+        row = next((r for r in catalog()["life_modules"] if r["id"] == mid), {})
+        q = _e(q_el, "quality")
+        _e(q, "sourceid", mid)
+        _e(q, "name", row.get("name") or "")
+        _e(q, "bp", row.get("karma") or 0)
+        _e(q, "qualitytype", "LifeModule")
+        _e(q, "qualitysource", "LifeModule")
+        _e(q, "stage", row.get("stage") or "")
+    if life_modules is not None or life_module_choices is not None:
+        picks = _e(root, "lifemodulechoices")
+        for key, value in sorted((life_module_choices or {}).items()):
+            choice = _e(picks, "choice")
+            _e(choice, "key", key)
+            _e(choice, "value", value)
 
     sp_el = _e(root, "spells")
     for sname in spells or []:
