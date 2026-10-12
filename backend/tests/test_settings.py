@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
+from app import ja_default
 from app.catalog_view.chargen import section as catalog_section
 from app.characters import apply_patch, new_character
 from app.chummer_export import state_to_chum5
@@ -83,8 +84,8 @@ def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
     own importer reads it from and where 5.202 kept it.
 
     The books ride along as `<sources>` so that a Chummer without this preset
-    can still score which of its own settings to substitute; the import
-    recovers them from the name, the way it always has."""
+    can still score which of its own settings to substitute, and that is also
+    where the import takes them from (see the test below)."""
     state = apply_patch(
         new_character(None),
         CharacterPatch(settings={"name": "Sum-to-Ten", "books": ["SR5", "RF"]}),
@@ -96,6 +97,31 @@ def test_a_shipped_preset_is_named_by_the_key_chummer_looks_it_up_by() -> None:
 
     back = chum5_to_state(state_to_chum5(state))[0]
     assert back["settings"] == {"name": "Sum-to-Ten", "books": ["SR5", "RF"]}
+
+
+def test_the_books_come_from_the_save_and_not_from_the_named_preset() -> None:
+    """`<sources>` is the character's own enabled-book list, and all 34 of
+    Chummer's test saves carry it. Reading the books off the preset name
+    instead lost every book the preset does not happen to list: a life module
+    character built on this app's own `日本語環境` (SR5 / RG / SRCX) came back
+    without the Run Faster its history needs."""
+    state = apply_patch(
+        new_character(None),
+        CharacterPatch(settings={"name": ja_default.NAME, "books": ["SR5", "RF"]}),
+    )
+    preset_books = list(ja_default.PRESET["books"])
+    assert "RF" not in preset_books
+
+    back = chum5_to_state(state_to_chum5(state))[0]
+    assert back["settings"]["books"] == ["SR5", "RF"]
+
+    # Without the element the preset name is still the only thing to go on.
+    root = _export(state)
+    sources = root.find("sources")
+    assert sources is not None
+    root.remove(sources)
+    bare = chum5_to_state(ET.tostring(root))[0]
+    assert bare["settings"]["books"] == preset_books
 
 
 def test_a_players_own_settings_file_is_named_as_a_file() -> None:
