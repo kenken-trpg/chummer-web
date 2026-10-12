@@ -46,7 +46,9 @@ export const EN_GEAR = {
   "gear.constructionRemoveHelp":
     "Removing a modification does not return consumed parts. Use history correction for an entry error.",
   "gear.constructionCorrect": "Cancel history to correct an entry error",
-  "gear.constructionNote": "Acquisition/payment confirmation or correction note",
+  "gear.constructionNote": "Construction / payment confirmation note",
+  "gear.supplyNote": "How these parts were obtained",
+  "gear.correctionNote": "Why this record is being cancelled",
   "gear.confirmHistorical": "Confirm historical acquisition/payment",
   "gear.partsRemaining":
     "Parts remaining {remaining} packs / acquired {purchased} / used {used} / reserved {reserved}",

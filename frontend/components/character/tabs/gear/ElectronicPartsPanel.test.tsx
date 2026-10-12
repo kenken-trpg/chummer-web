@@ -47,15 +47,16 @@ function panel(over: Record<string, unknown> = {}) {
 }
 
 const add = () => screen.getByRole("button", { name: "調達した部品を登録" }) as HTMLButtonElement;
-/**
- * Two fields share the label 調達・支払確認／訂正の説明: the one that explains a
- * supply and the one that explains a correction. They are told apart here by
- * order — the first is the supply's — because on screen they are told apart
- * only by which half of the panel they sit in.
- */
-const supplyNote = () => screen.getAllByRole("textbox", { name: "調達・支払確認／訂正の説明" })[0];
-const historyNote = () =>
-  screen.getAllByRole("textbox", { name: "調達・支払確認／訂正の説明" }).at(-1)!;
+const supplyNote = () => screen.getByRole("textbox", { name: "調達の説明" });
+const historyNote = () => screen.getByRole("textbox", { name: "訂正の理由" });
+
+// The two note fields do different things — one explains where parts came
+// from, the other why a record is being cancelled — and used to share one
+// label, which a screen reader reads out identically.
+it("names its two note fields apart", () => {
+  panel({ derived: { gear: [] } });
+  expect(supplyNote()).not.toBe(historyNote());
+});
 
 it("counts a purchased row in packs, not in the quarters it is stored as", () => {
   const row = {
