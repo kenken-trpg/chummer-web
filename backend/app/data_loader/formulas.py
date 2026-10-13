@@ -7,8 +7,63 @@ Pure string maths, stdlib-only. Every loader (and the engine) leans on
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import lru_cache
+
+from ..safe_eval import UnsafeExpression, evaluate_arithmetic
+
+_FIXED_VALUES = re.compile(r"FixedValues\s*\((.*)\)", re.I | re.S)
+
+
+def _fixed_values_parts(text: str) -> list[str]:
+    """Split FixedValues arguments without splitting nested formula commas."""
+    parts: list[str] = []
+    start = depth = 0
+    for index, char in enumerate(text):
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0:
+                return []
+        elif char == "," and depth == 0:
+            parts.append(text[start:index].strip())
+            start = index + 1
+    if depth:
+        return []
+    parts.append(text[start:].strip())
+    return [part for part in parts if part]
+
+
+def _replace_number_calls(raw: str, substitute: Callable[[str], str]) -> str:
+    """Replace Chummer's ``number(...)`` calls using the bounded evaluator."""
+    out: list[str] = []
+    cursor = 0
+    while True:
+        match = re.search(r"\bnumber\s*\(", raw[cursor:], re.I)
+        if match is None:
+            out.append(raw[cursor:])
+            return "".join(out)
+        start = cursor + match.start()
+        opening = cursor + match.end() - 1
+        depth = 1
+        end = opening + 1
+        while end < len(raw) and depth:
+            if raw[end] == "(":
+                depth += 1
+            elif raw[end] == ")":
+                depth -= 1
+            end += 1
+        if depth:
+            raise UnsafeExpression("unclosed number()")
+        inner = substitute(raw[opening + 1 : end - 1])
+        inner = re.sub(r"\bmod\b", "%", inner, flags=re.I)
+        inner = re.sub(r"\bdiv\b", "/", inner, flags=re.I)
+        inner = re.sub(r"(?<![<>=!])=(?!=)", "==", inner)
+        result = evaluate_arithmetic(inner, allow_comparisons=True, allow_int=True)
+        value = "1" if result is True else "0" if result is False else str(int(result))
+        out.extend((raw[cursor:start], value))
+        cursor = end
 
 
 def eval_formula(
@@ -37,7 +92,7 @@ def _eval_formula(
     extras: Mapping[str, float] | None = None,
 ) -> float:
     raw = (expr or "").strip()
-    if not raw:
+    if not raw or len(raw) > 512:
         return default
     env: dict[str, int | float] = {**(extras or {}), "Rating": int(rating)}
     env.setdefault("rating", int(rating))
@@ -47,12 +102,20 @@ def _eval_formula(
     if re.search(r"[{}]", raw):
         return default
     if raw in env:
-        return float(env[raw])
+        try:
+            return float(evaluate_arithmetic(str(env[raw])))
+        except (UnsafeExpression, ValueError, TypeError):
+            return default
     if raw.lower() in lookup:
-        return float(lookup[raw.lower()])
-    fixed = re.fullmatch(r"FixedValues\((.+)\)", raw, re.I)
+        try:
+            return float(evaluate_arithmetic(str(lookup[raw.lower()])))
+        except (UnsafeExpression, ValueError, TypeError):
+            return default
+    fixed = _FIXED_VALUES.fullmatch(raw)
     if fixed:
-        parts = [p.strip() for p in fixed.group(1).split(",")]
+        parts = _fixed_values_parts(fixed.group(1))
+        if not parts:
+            return default
         idx = max(0, min(len(parts) - 1, int(rating) - 1))
         return eval_formula(parts[idx], rating, default, extras)
 
@@ -62,31 +125,19 @@ def _eval_formula(
             out = out.replace(str(key), str(env[key]))
         return out
 
-    def _number_repl(match: re.Match[str]) -> str:
-        inner = _subst_keys(match.group(1)).replace(" ", "")
-        inner = re.sub(r"(?<![<>!=])=(?!=)", "==", inner)
-        try:
-            if re.search(r"==|!=|<=|>=|<|>", inner):
-                return "1" if bool(eval(inner, {"__builtins__": {}}, {})) else "0"
-            return str(int(float(eval(inner, {"__builtins__": {}}, {"int": int}))))
-        except Exception:
-            return "0"
-
-    raw = re.sub(r"number\(([^)]+)\)", _number_repl, raw, flags=re.I)
+    try:
+        raw = _replace_number_calls(raw, _subst_keys)
+    except (UnsafeExpression, ValueError, TypeError):
+        return default
     s = _subst_keys(raw)
     s = re.sub(r"[RF]$", "", s.strip())
     s = re.sub(r"\bmod\b", "%", s, flags=re.I)
     # XPath's division: a yearly contract priced by the month, `5000 div 12`
     s = re.sub(r"\bdiv\b", "/", s, flags=re.I)
     s = s.replace(" ", "")
-    if not re.fullmatch(r"[0-9+\-*/().><=%int]+", s):
-        try:
-            return float(s)
-        except ValueError:
-            return default
     try:
-        return float(eval(s, {"__builtins__": {}}, {"int": int}))
-    except Exception:
+        return float(evaluate_arithmetic(s, allow_int=True))
+    except (UnsafeExpression, ValueError, TypeError):
         return default
 
 
