@@ -364,13 +364,18 @@ export const api = {
     return res;
   },
 
-  /** A `.chum5` (plain XML) blob for the given state — caller triggers the download. */
+  /** Chummer XML, or a LifeModule ZIP including matching desktop settings. */
   exportChummer: async (state: Character): Promise<Blob> => {
-    const res = await fetch("/api/characters/chummer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state }),
-    });
+    const res = await fetch(
+      state.build_method === "LifeModule"
+        ? "/api/characters/chummer?bundle=true"
+        : "/api/characters/chummer",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state }),
+      },
+    );
     if (!res.ok) throw new Error(await errorText(res));
     return res.blob();
   },

@@ -62,7 +62,13 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     if root.tag != "character":
         raise NoticeError(notice("api.notACharacterFile"))
 
-    if (root.findtext("buildmethod") or "").lower() == "lifemodule" and not life_module_choices_present(root):
+    has_modules = any(
+        (quality.findtext("qualitytype") or "").strip().lower() == "lifemodule"
+        for quality in root.findall("./qualities/quality")
+    )
+    if (
+        (root.findtext("buildmethod") or "").strip().lower() == "lifemodule" or has_modules
+    ) and not life_module_choices_present(root):
         # Chummer's own life module save keeps the grants and not the picks
         # behind them; see `chummer_export.life_modules`.
         raise NoticeError(notice("engine.life.chum5Unsupported"))

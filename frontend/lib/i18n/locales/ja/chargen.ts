@@ -85,7 +85,9 @@ export const JA_CHARGEN = {
   "engine.life.chum5StateInvalid":
     "この .chum5 のライフモジュール情報と技能値が一致しないか、保存形式に対応していません。JSON バックアップから復元してください。",
   "engine.life.chum5Unsupported":
-    "Chummer 本体で作ったライフモジュールのファイルは読み込めません。Chummer は経歴が付与した結果だけを保存し、どの選択肢を選んだかを残さないため、選択を復元できません。このアプリが書き出した .chum5 と JSON は読み込めます。",
+    "このファイルにはライフモジュールが含まれていますが、選択肢・超過分の移し替え履歴を復元する情報がありません。Chummerで再保存してKarma方式に変わったファイルも対象です。技能値の変化や付与の二重計上を防ぐため、読み込みを中止しました。Chummerで再保存する前の .chum5 またはJSONバックアップから復元してください。",
+  "engine.export.chum5LifeModuleSetup":
+    "ライフモジュールはキャラクター・対応設定XML・手順書をZIPで出力します。Chummerを終了し、設定XMLをChummerのsettingsフォルダーへコピーしてから、全体設定でLife Modulesを有効にしてください。Chummerで再保存すると選択肢・超過分の移し替え履歴が消え、このアプリへ再取り込みできません。JSONバックアップを保管してください。",
   "engine.life.chum5ModuleUnknown":
     "この .chum5 の経歴「{name}」がこのアプリのデータにありません。経歴を 1 つ落とすと以降の選択が別の経歴にずれるため、読み込みを中止しました。",
 

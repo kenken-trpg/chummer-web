@@ -44,6 +44,16 @@ def _export_settings_key(root: ET.Element, state: CharacterState) -> None:
     and where this app's own importer reads it from first.
     """
     settings = state.settings
+    if state.build_method == "LifeModule":
+        from .life_module_settings import life_module_settings
+
+        key, _ = life_module_settings(state)
+        _sub(root, "settings", key)
+        _sub(root, "gameplayoption", settings.name)
+        sources = _sub(root, "sources")
+        for code in settings.books or [book["code"] for book in catalog()["books"]]:
+            _sub(sources, "source", code)
+        return
     if not settings.name:
         return
     presets = catalog().get("settings_presets") or []

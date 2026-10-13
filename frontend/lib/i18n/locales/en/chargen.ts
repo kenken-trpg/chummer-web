@@ -85,7 +85,9 @@ export const EN_CHARGEN = {
   "engine.life.chum5StateInvalid":
     "The life-module state and standard skill values in this .chum5 disagree, or its format is unsupported. Restore a JSON backup.",
   "engine.life.chum5Unsupported":
-    "A life module character saved by Chummer itself cannot be read. Chummer stores what each module granted, not which option was picked to grant it, so the choices cannot be recovered. A .chum5 written by this app, and JSON, both read back.",
+    "This file contains life modules but no recoverable module choices or overflow transfer history, including desktop resaves changed to Karma. Import stopped to prevent changed ratings or double grants. Restore the .chum5 before the desktop resave or a JSON backup.",
+  "engine.export.chum5LifeModuleSetup":
+    "Life modules export as a ZIP containing the character, matching settings XML and instructions. Close Chummer, copy the settings XML into its settings directory, then enable Life Modules in global options. Desktop resaves discard module choices and overflow transfer history and cannot be re-imported. Keep a JSON backup.",
   "engine.life.chum5ModuleUnknown":
     "The module “{name}” in this .chum5 is not in this app’s data. Dropping one module would shift every later module’s choices onto the wrong module, so the import stopped.",
 

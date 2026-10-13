@@ -146,7 +146,10 @@ export function useCharacterExport(opts: {
         blob,
         format === "fvtt"
           ? exportFilename(ch.name, "json", { tag: "fvtt" })
-          : exportFilename(ch.name, format),
+          : exportFilename(
+              ch.name,
+              format === "chum5" && ch.build_method === "LifeModule" ? "zip" : format,
+            ),
       );
     } catch (e) {
       setError(errorMessage(e, ui, "app.err.export"));
