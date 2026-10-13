@@ -178,7 +178,7 @@ test("skill overflow survives reload, career growth and undo", async ({ page, re
   await page.reload();
   await waitForEditor(page);
   await page.getByRole("button", { name: "技能", exact: true }).click();
-  await page.getByRole("button", { name: "最後の技能成長を取り消す" }).click();
+  await page.getByRole("button", { name: "Undo last skill advancement" }).click();
   await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(7);
   expect((await saved()).derived.karma.spent).toBe(spent);
   expect((await saved()).life_module_transfers[0].ranks).toBe(2);
