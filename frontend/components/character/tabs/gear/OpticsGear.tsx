@@ -6,6 +6,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
 import { OPTICS_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
+import { sourceBit } from "@/lib/character/format";
 
 export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -43,7 +44,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       })
                     : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {item.source}
+                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   <DiscountToggle list="optics" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
@@ -156,7 +157,7 @@ export function OpticsGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           <>
             {item.name} / {tr(item.category)}
             {item.maxrating > 0 ? ` / R${item.minrating || 1}-${item.maxrating}` : ""} / {item.cost}
-            ¥ / {item.avail || "-"} / {item.source}
+            ¥ / {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

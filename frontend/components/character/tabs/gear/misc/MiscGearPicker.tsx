@@ -5,6 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { DRUG_CATS, isDrugCategory } from "@/lib/character/constants";
 import { renderNotices } from "@/lib/engine-notices";
+import { sourceBit } from "@/lib/character/format";
 
 /** The catalog half of the misc / drugs panel: the category tabs, the search
  *  box, and the list you buy from.
@@ -103,7 +104,7 @@ export function MiscGearPicker({
                     {item.name} / {tr(item.category)}
                     {item.maxrating > 0
                       ? ` / R${item.minrating || 1}-${item.maxrating}`
-                      : ""} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+                      : ""} / {item.cost}¥ / {item.avail || "-"} / {sourceBit(item, ui)}
                   </div>
                   {item.needs_extra ? (
                     <div className="cyber-controls">
@@ -197,7 +198,7 @@ export function MiscGearPicker({
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {tr(item.category)} / {item.cost}¥ / {item.avail || "-"} /{" "}
-                    {item.source}
+                    {sourceBit(item, ui)}
                     {item.effect?.length ? (
                       <>
                         <br />

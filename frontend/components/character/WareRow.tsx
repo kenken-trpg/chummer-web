@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import type { InstalledWare, SkillPickSlot, WareCatalogItem, WareInstall } from "@/lib/types";
 import { sideLabel } from "@/lib/character/constants";
-import { availBit } from "@/lib/character/format";
+import { availBit, sourceBit } from "@/lib/character/format";
 import { wareBounds } from "@/lib/character/ware";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { HelpTip } from "@/components/help/HelpTip";
@@ -149,7 +149,7 @@ export function WareRow(props: {
             {ui("help.ware.statsLabel")}
           </HelpTip>{" "}
           {item.name} / {tr(item.category)} / ESS −{item.essence} / {item.nuyen.toLocaleString()}¥
-          {availBit(item, ui)} / {item.source}
+          {availBit(item, ui)} / {sourceBit(item, ui)}
           {capMax > 0 ? (
             <span className="cap">
               {ui("ware.capacityInline", { used: item.capacity_used ?? 0, max: capMax })}

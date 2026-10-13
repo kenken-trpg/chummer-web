@@ -329,6 +329,7 @@ export const JA_APP = {
   "fmt.increment.month": "ヶ月",
   "fmt.perRounds": "{yen} / {count}発",
 
+  "fmt.source": "{source} p.{page}",
   "fmt.avail": " / 入手 {avail}",
   "fmt.armor.fire": "耐火",
   "fmt.armor.cold": "断熱",

@@ -7,6 +7,7 @@ import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { alreadySlotted, dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
+import { sourceBit } from "@/lib/character/format";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -34,7 +35,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                 {" / "}DR {item.device_rating}
                 {item.attack ? ` / A ${item.attack}` : ""}
                 {item.sleaze ? ` / S ${item.sleaze}` : ""} / DP {item.dataprocessing} / FW{" "}
-                {item.firewall} / {item.nuyen.toLocaleString()}¥ / {item.source}
+                {item.firewall} / {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="commlinks" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
@@ -174,7 +175,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
         describe={(item) => (
           <>
             {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall} /{" "}
-            {item.cost}¥ / {item.avail || "-"} / {item.source}
+            {item.cost}¥ / {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

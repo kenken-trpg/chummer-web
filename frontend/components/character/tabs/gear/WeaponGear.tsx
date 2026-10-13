@@ -7,7 +7,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
 import { accessoryFits, ammoFits, dropTree, weaponLine } from "@/lib/character/gear";
 import { weaponHelpLines } from "@/lib/character/help-breakdown";
-import { availBit, formatAccessoryCost, formatAmmoCost } from "@/lib/character/format";
+import { availBit, formatAccessoryCost, formatAmmoCost, sourceBit } from "@/lib/character/format";
 import { removeWareTree } from "@/lib/character/ware";
 
 export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -89,7 +89,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                     {ui("help.weapon.statsLabel")}
                   </HelpTip>{" "}
                   {item.name} / {weaponLine(item, ui)} / {item.nuyen.toLocaleString()}¥
-                  {availBit(item, ui)} / {item.source}
+                  {availBit(item, ui)} / {sourceBit(item, ui)}
                   {fromGear ? ui("weapon.fromGear") : ""}
                   {fromWare ? ui("weapon.fromWare") : ""}
                   {fromArmor ? ui("weapon.fromArmor") : ""}
@@ -364,7 +364,7 @@ export function WeaponGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
         describe={(item) => (
           <>
             {item.name} / {weaponLine(item, ui)} / {item.cost}¥ / {item.avail || "-"} /{" "}
-            {item.source}
+            {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) => {

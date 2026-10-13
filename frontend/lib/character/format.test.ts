@@ -2,6 +2,7 @@ import { testUi } from "@/tests/fixtures";
 import { translate, type UiFn } from "@/lib/i18n";
 import {
   availBit,
+  sourceBit,
   cfDuration,
   cfTarget,
   kindLabel,
@@ -407,5 +408,25 @@ describe("withOriginal", () => {
 
   it("does not repeat a name that has no translation", () => {
     expect(withOriginal("Nartaki", tr)).toBe("Nartaki");
+  });
+});
+
+describe("sourceBit", () => {
+  it("cites the page when the catalog has one", () => {
+    expect(sourceBit({ source: "SR5", page: "47" }, testUi)).toBe("SR5 p.47");
+  });
+
+  it("falls back to the book alone for an entry stored without a page", () => {
+    // what the character file keeps for most things it already owns
+    expect(sourceBit({ source: "SR5" }, testUi)).toBe("SR5");
+    expect(sourceBit({ source: "SR5", page: "" }, testUi)).toBe("SR5");
+    expect(sourceBit({ source: "SR5", page: null }, testUi)).toBe("SR5");
+  });
+
+  it("says nothing at all when there is no book, so no separator is left behind", () => {
+    expect(sourceBit({ page: "47" }, testUi)).toBe("");
+    expect(sourceBit({ source: "  " }, testUi)).toBe("");
+    expect(sourceBit(null, testUi)).toBe("");
+    expect(sourceBit(undefined, testUi)).toBe("");
   });
 });

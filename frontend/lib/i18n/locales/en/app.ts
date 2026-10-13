@@ -324,6 +324,7 @@ export const EN_APP = {
   "fmt.increment.month": "month",
   "fmt.perRounds": "{yen} / {count} rounds",
 
+  "fmt.source": "{source} p.{page}",
   "fmt.avail": " / avail {avail}",
   "fmt.armor.fire": "Fire",
   "fmt.armor.cold": "Cold",

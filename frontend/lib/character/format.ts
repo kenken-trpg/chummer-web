@@ -285,3 +285,28 @@ export function withOriginal(name: string, tr: (name: string) => string): string
   const ja = tr(name);
   return ja === name ? name : `${ja} (${name})`;
 }
+
+/**
+ * Where a catalog entry is written down: `"SR5 p.47"`.
+ *
+ * Every row that names a book used to interpolate `item.source` on its own,
+ * and the page number came along at four of the fifty-odd sites — so looking
+ * an item up meant knowing the book and then hunting through it. The page is
+ * in the catalog for nearly everything, so it is shown wherever the data has
+ * it.
+ *
+ * Items the character already owns are the exception rather than an omission:
+ * most of them are stored without a page (the engine's own types carry
+ * `source` alone), and those rows keep reading as they did. So this returns
+ * the book by itself when there is no page, and `""` when there is no book —
+ * a row with nothing to cite shows nothing, not a stray separator.
+ */
+export function sourceBit(
+  item: { source?: string | null; page?: string | null } | null | undefined,
+  ui: UiFn,
+): string {
+  const source = (item?.source || "").trim();
+  if (!source) return "";
+  const page = String(item?.page ?? "").trim();
+  return page ? ui("fmt.source", { source, page }) : source;
+}

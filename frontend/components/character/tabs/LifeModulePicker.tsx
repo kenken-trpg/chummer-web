@@ -2,6 +2,7 @@
 import { useId, useRef, useState } from "react";
 import type { TabPanelProps } from "@/components/character/types";
 import type { LifeModuleCatalogItem } from "@/lib/types/catalog";
+import { sourceBit } from "@/lib/character/format";
 import {
   lifeModuleAlreadyTaken,
   lifeModuleAppendPatch,
@@ -88,7 +89,7 @@ export function LifeModulePicker({
                   <strong>{row.name}</strong>
                   {row.parent && <span className="muted">{row.parent}</span>}
                   <span className="muted">
-                    {row.karma} Karma · {row.source} {row.page}
+                    {row.karma} Karma · {sourceBit(row, ui)}
                   </span>
                   {!!row.required?.length && (
                     <span>
@@ -112,7 +113,7 @@ export function LifeModulePicker({
               <h4>{preview.name}</h4>
               {preview.parent && <p className="muted">{preview.parent}</p>}
               <p>
-                {preview.karma} Karma · {preview.source} {preview.page}
+                {preview.karma} Karma · {sourceBit(preview, ui)}
               </p>
               {preview.story && <p className="life-preview-story">{preview.story}</p>}
               {!!preview.required?.length && (

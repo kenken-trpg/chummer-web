@@ -2,7 +2,7 @@
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
-import { cfDuration, cfTarget, testLine } from "@/lib/character/format";
+import { cfDuration, cfTarget, sourceBit, testLine } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -48,7 +48,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
               })}
               {item.free ? ui("common.freeSlot") : ui("common.karmaCost", { karma: item.karma })}
               {" / "}
-              {item.source}
+              {sourceBit(item, ui)}
             </div>
             {item.test ? <div className="muted">{testLine(item.test, ui, "fmt.fade")}</div> : null}
             <div className="cyber-controls">
@@ -142,7 +142,7 @@ export function ComplexFormsTab({ catalog, character: ch, d, tr, ui, patch }: Ta
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {cfTarget(item.target, ui)} / {cfDuration(item.duration, ui)} /{" "}
-                    {item.fv} / {item.source}
+                    {item.fv} / {sourceBit(item, ui)}
                     {item.needs_extra ? ui("cf.needsAttr") : ""}
                     {blocked ? ` / ${blocked}` : ""}
                     {paid ? ui("common.karmaCost", { karma: 4 }) : ui("common.freeSlot")}

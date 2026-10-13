@@ -7,7 +7,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
 import { SENSOR_DEVICE_CATS } from "@/lib/character/constants";
 import { dropTree } from "@/lib/character/gear";
-import { deviceRatingBit } from "@/lib/character/format";
+import { deviceRatingBit, sourceBit } from "@/lib/character/format";
 
 export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -56,7 +56,7 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
                       })
                     : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {item.source}
+                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   <DiscountToggle list="sensors" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
@@ -189,7 +189,7 @@ export function SensorGear({ catalog, character: ch, d, tr, ui, patch }: TabPane
           <>
             {item.name} / {tr(item.category)}
             {item.maxrating > 0 ? ` / R${item.minrating || 1}-${item.maxrating}` : ""} / {item.cost}
-            ¥ / {item.avail || "-"} / {item.source}
+            ¥ / {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

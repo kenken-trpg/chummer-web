@@ -2,7 +2,7 @@
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
-import { optionalNumber, testLine } from "@/lib/character/format";
+import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { critterPowerRow } from "@/lib/spell-terms";
 import { HelpTip } from "@/components/help/HelpTip";
 
@@ -45,7 +45,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               {item.level} / {ui("sprite.tasks")} {item.services}
               {item.registered ? "" : ui("sprite.untilReboot")}
               {" / "}
-              {item.source}
+              {sourceBit(item, ui)}
             </div>
             {item.test ? <div className="muted">{testLine(item.test, ui, "fmt.fade")}</div> : null}
             {item.matrix ? (
@@ -195,7 +195,7 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / {item.source}
+                  {item.name} / {sourceBit(item, ui)}
                 </div>
               </div>
               <div>
