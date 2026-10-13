@@ -14,6 +14,7 @@ const drone = {
   cost: 2000,
   avail: "4",
   source: "SR5",
+  page: "463",
 };
 const vehicle = {
   id: "americar",
@@ -75,6 +76,23 @@ describe("<VehicleDroneGear>", () => {
     )!;
     fireEvent.click(row.querySelector("button")!);
     expect(patch).toHaveBeenCalledWith({ drones: [{ gear_id: "fly" }] });
+  });
+
+  it("cites the page a drone is written up on, not just the book", () => {
+    renderTab("drone");
+    const row = [...document.querySelectorAll(".quality-list .quality-item")].find((el) =>
+      el.textContent?.includes("MCT Fly-Spy"),
+    )!;
+    expect(row.textContent).toContain("SR5 p.463");
+  });
+
+  it("cites the book alone for a catalog entry that carries no page", () => {
+    renderTab("vehicle");
+    const row = [...document.querySelectorAll(".quality-list .quality-item")].find((el) =>
+      el.textContent?.includes("Ford Americar"),
+    )!;
+    expect(row.textContent).toContain("SR5");
+    expect(row.textContent).not.toContain("p.");
   });
 
   it("shows the vehicle search + list in vehicle mode and buys via patch", () => {

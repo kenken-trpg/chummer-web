@@ -7,7 +7,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useMemo, useState } from "react";
 import { ExtraSelect, optionLabel, selectLabel } from "@/components/character/ExtraSelect";
 import { MentorPicker } from "@/components/character/MentorPicker";
-import { formatPoints } from "@/lib/character/format";
+import { formatPoints, sourceBit } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
 import { HelpTip } from "@/components/help/HelpTip";
 
@@ -95,7 +95,7 @@ export function AdeptTab({
                 ? ui("adept.totalRating", { rating: item.total_rating })
                 : ""}
               {" / "}
-              {item.source}
+              {sourceBit(item, ui)}
               {item.notes?.length
                 ? ` / ${item.notes.map((n) => renderNotice(n, ui, tr)).join(" ・ ")}`
                 : ""}
@@ -221,7 +221,7 @@ export function AdeptTab({
                   {item.levels ? ui("adept.hasLevels") : ""}
                   {item.select === "spell" ? ui("adept.spellSelect") : ""}
                   {" / "}
-                  {item.source}
+                  {sourceBit(item, ui)}
                 </div>
               </div>
               <button
@@ -251,7 +251,7 @@ export function AdeptTab({
               {item.name}
               {item.power ? ` / ${item.power}` : ""}
               {ui("adept.enhancementCost")}
-              {item.source}
+              {sourceBit(item, ui)}
             </div>
           </div>
           <button
@@ -291,7 +291,7 @@ export function AdeptTab({
                   {item.power ? ` / ${item.power}` : ""}
                   {item.required?.quality?.length ? ` / ${item.required.quality.join(" ・ ")}` : ""}
                   {ui("adept.enhancementCost")}
-                  {item.source}
+                  {sourceBit(item, ui)}
                 </div>
               </div>
               <button
@@ -414,7 +414,7 @@ export function AdeptTab({
                 <b>{tr(item.name)}</b>
                 <div className="muted">
                   {item.name} / Force {Math.max(1, Math.ceil((item.points || 0) / 0.25))}〜 /{" "}
-                  {item.source}
+                  {sourceBit(item, ui)}
                 </div>
               </div>
               <button

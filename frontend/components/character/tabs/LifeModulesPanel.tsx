@@ -4,6 +4,7 @@ import { LifeModulePicker } from "./LifeModulePicker";
 import { LifeModuleSkillOverflow } from "./LifeModuleSkillOverflow";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
+import { sourceBit } from "@/lib/character/format";
 import {
   lifeModuleAlreadyTaken,
   lifeModuleOrderPatch,
@@ -188,7 +189,7 @@ export function LifeModulesPanel({
                       <h4>{row.name}</h4>
                       {row.parent && <p className="muted">{row.parent}</p>}
                       <p className="muted">
-                        {row.karma} Karma · {row.source} {row.page}
+                        {row.karma} Karma · {sourceBit(row, ui)}
                       </p>
                     </div>
                     <button

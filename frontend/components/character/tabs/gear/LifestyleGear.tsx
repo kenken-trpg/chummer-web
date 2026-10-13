@@ -4,7 +4,7 @@ import { CatalogPicker } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
-import { lifeIncrement } from "@/lib/character/format";
+import { lifeIncrement, sourceBit } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -54,7 +54,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                     ? ui("life.lpUsed", { used: item.lp_used || 0, max: item.lp_max })
                     : ""}
                   {" / "}
-                  {item.source}
+                  {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   {(["comforts", "area", "security"] as const).map((key) =>
@@ -226,7 +226,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
               ? ui("life.freeGrids", { count: item.freegrids!.length })
               : ""}
             {" / "}
-            {item.source}
+            {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

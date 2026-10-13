@@ -8,6 +8,7 @@ import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
+import { sourceBit } from "@/lib/character/format";
 
 export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -35,7 +36,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                   used: item.program_used ?? 0,
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
-                / {item.nuyen.toLocaleString()}¥ / {item.source}
+                / {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="rccs" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
@@ -116,7 +117,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           <>
             {item.name} / DR {item.devicerating} / DP {item.dataprocessing} / FW {item.firewall}
             {ui("gear.programCount", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
-            {item.avail || "-"} / {item.source}
+            {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

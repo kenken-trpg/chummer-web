@@ -2,7 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
-import { withOriginal } from "@/lib/character/format";
+import { sourceBit, withOriginal } from "@/lib/character/format";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { priorityTableFor } from "@/lib/character/priority-table";
 import { critterPowerRow } from "@/lib/spell-terms";
@@ -51,7 +51,7 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
       {!candidates.some((m) => m.name === ch.metatype) ? (
         <p role="status" className="muted">
           {ui("meta.retained", { name: tr(ch.metatype) })}
-          {d.metatype_info.source ? ` / ${d.metatype_info.source}` : ""}
+          {d.metatype_info.source ? ` / ${sourceBit(d.metatype_info, ui)}` : ""}
         </p>
       ) : null}
       <div className="grid">
@@ -125,7 +125,7 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
                 <b>{tr(q.name)}</b>{" "}
                 <span className="muted">
                   {q.name}
-                  {q.source ? ` / ${q.source}${q.page ? ` p.${q.page}` : ""}` : ""}
+                  {q.source ? ` / ${sourceBit(q, ui)}` : ""}
                 </span>
                 {q.extra ? <div className="muted">{tr(q.extra)}</div> : null}
               </li>
@@ -142,10 +142,7 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
             {d.metatype_info.powers.map((power, index) => (
               <li key={`${power.id}-${index}`}>
                 {critterPowerRow(power, tr, ui)}
-                <span className="muted">
-                  {" "}
-                  / {power.source} p.{power.page}
-                </span>
+                <span className="muted"> / {sourceBit(power, ui)}</span>
                 {power.select ? <div className="muted">{power.select}</div> : null}
                 {power.rating ? <div className="muted">{power.rating}</div> : null}
               </li>

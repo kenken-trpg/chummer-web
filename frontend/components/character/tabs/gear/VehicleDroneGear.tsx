@@ -12,6 +12,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { dropDrone } from "@/lib/character/gear";
 import { useWareCompact } from "@/lib/character/useWareCompact";
 import { vehicleSlotLabel } from "@/lib/engine-notices";
+import { sourceBit } from "@/lib/character/format";
 
 export function VehicleDroneGear({
   catalog,
@@ -127,7 +128,7 @@ export function VehicleDroneGear({
                       ? ui("veh.slots", { used: item.slots_used ?? 0, max: item.slots_max })
                       : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {item.source}
+                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
                 </div>
                 <VehicleModRows {...rowProps} />
                 <VehicleMountRows {...rowProps} />
@@ -158,7 +159,8 @@ export function VehicleDroneGear({
           describe={(item) => (
             <>
               {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / PLT{" "}
-              {item.pilot} / SNR {item.sensor} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+              {item.pilot} / SNR {item.sensor} / {item.cost}¥ / {item.avail || "-"} /{" "}
+              {sourceBit(item, ui)}
             </>
           )}
           onAdd={(item) => patch({ drones: [...(ch.drones || []), { gear_id: item.id }] })}
@@ -171,7 +173,7 @@ export function VehicleDroneGear({
           describe={(item) => (
             <>
               {item.name} / {tr(item.category)} / HND {item.handling} / SPD {item.speed} / SEAT{" "}
-              {item.seats || "-"} / {item.cost}¥ / {item.avail || "-"} / {item.source}
+              {item.seats || "-"} / {item.cost}¥ / {item.avail || "-"} / {sourceBit(item, ui)}
             </>
           )}
           onAdd={(item) => patch({ vehicles: [...(ch.vehicles || []), { gear_id: item.id }] })}

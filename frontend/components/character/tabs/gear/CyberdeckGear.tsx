@@ -11,6 +11,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useBookFilter } from "@/lib/character/books";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
+import { sourceBit } from "@/lib/character/format";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -49,7 +50,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   used: item.program_used ?? 0,
                   max: item.program_max ?? item.programs ?? 0,
                 })}{" "}
-                / {item.nuyen.toLocaleString()}¥ / {item.source}
+                / {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
               </div>
               <div className="cyber-controls">
                 <DiscountToggle
@@ -271,7 +272,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
             {item.name} / DR {item.devicerating}
             {item.attributearray ? ` / ${item.attributearray}` : ""}
             {ui("gear.deckProgramLimit", { count: item.programs ?? "" })} / {item.cost}¥ /{" "}
-            {item.avail || "-"} / {item.source}
+            {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

@@ -12,6 +12,7 @@ import {
   availBit,
   formatAccessoryCost,
   mergeSpecialArmor,
+  sourceBit,
   specialArmorLine,
 } from "@/lib/character/format";
 
@@ -83,7 +84,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                       })
                     : ""}
                   {" / "}
-                  {item.nuyen.toLocaleString()}¥ / {item.source}
+                  {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
                 </div>
                 <div className="cyber-controls">
                   <DiscountToggle list="armor" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
@@ -274,7 +275,7 @@ export function ArmorGear({ catalog, character: ch, d, tr, ui, patch }: TabPanel
         describe={(item) => (
           <>
             {item.name} / {ui("armor.value", { value: item.armor })} / {item.cost}¥ /{" "}
-            {item.avail || "-"} / {item.source}
+            {item.avail || "-"} / {sourceBit(item, ui)}
           </>
         )}
         onAdd={(item) =>

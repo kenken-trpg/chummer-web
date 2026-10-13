@@ -1,6 +1,6 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { GradeList, Section } from "@/components/character/sheet/blocks";
-import { formatPoints } from "@/lib/character/format";
+import { formatPoints, sourceBit } from "@/lib/character/format";
 import {
   critterPowerRow,
   spellDescriptors,
@@ -77,11 +77,8 @@ export function MagicSection(s: SheetData) {
                   .filter(Boolean)
                   .join(" / ")}
                 {item.descriptor ? `（${spellDescriptors(item.descriptor, ui)}）` : ""}
-                {item.page ? (
-                  <span className="sheet-dim">
-                    {" "}
-                    {item.source || ""} p.{item.page}
-                  </span>
+                {sourceBit(item, ui) ? (
+                  <span className="sheet-dim"> {sourceBit(item, ui)}</span>
                 ) : null}
               </li>
             ))}

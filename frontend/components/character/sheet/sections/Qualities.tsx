@@ -2,6 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 import { critterPowerRow } from "@/lib/spell-terms";
+import { sourceBit } from "@/lib/character/format";
 
 export function QualitiesSection(s: SheetData) {
   const { tr, d, qualities } = s;
@@ -47,10 +48,7 @@ export function QualitiesSection(s: SheetData) {
                 {critterPowerRow(power, tr, ui)}
                 {power.select ? ` / ${power.select}` : ""}
                 {power.rating ? ` / ${power.rating}` : ""}
-                <span className="sheet-dim">
-                  {" "}
-                  / {power.source} p.{power.page}
-                </span>
+                <span className="sheet-dim"> / {sourceBit(power, ui)}</span>
               </li>
             ))}
           </ul>

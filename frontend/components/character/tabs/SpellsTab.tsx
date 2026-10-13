@@ -2,7 +2,7 @@
 import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
-import { kindLabel } from "@/lib/character/format";
+import { kindLabel, sourceBit } from "@/lib/character/format";
 import { spellDescriptors, spellDuration, spellRange } from "@/lib/spell-terms";
 import { HelpTip } from "@/components/help/HelpTip";
 
@@ -102,7 +102,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   })
                 : ""}
               {" / "}
-              {item.source}
+              {sourceBit(item, ui)}
             </div>
             {item.has_force && item.spell ? (
               <div className="cyber-controls">
@@ -209,7 +209,7 @@ export function SpellsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanel
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {kindLabel(item.kind, ui)} / {item.useskill || "Spellcasting"} /{" "}
-                    {item.dv} / {item.source}
+                    {item.dv} / {sourceBit(item, ui)}
                     {item.required?.length
                       ? ui("spell.required", {
                           list: item.required.map((name) => tr(name)).join(ui("common.termSep")),

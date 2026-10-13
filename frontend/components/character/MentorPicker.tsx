@@ -3,7 +3,7 @@
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
 import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
-import { limitLabel } from "@/lib/character/format";
+import { limitLabel, sourceBit } from "@/lib/character/format";
 
 export function MentorPicker({
   catalog,
@@ -38,7 +38,7 @@ export function MentorPicker({
       <div>
         <b>{ui(paragon ? "mentor.paragonTitle" : "mentor.title")}</b>
         <div className="muted">
-          {mentor ? `${tr(mentor.name)} / ${mentor.source}` : ui("mentor.none")}
+          {mentor ? `${tr(mentor.name)} / ${sourceBit(mentor, ui)}` : ui("mentor.none")}
         </div>
         <div className="cyber-controls">
           <label>

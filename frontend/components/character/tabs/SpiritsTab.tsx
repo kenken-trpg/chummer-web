@@ -1,7 +1,7 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
 import { spiritRoleLabel } from "@/lib/character/constants";
-import { optionalNumber, testLine } from "@/lib/character/format";
+import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
 import { critterPowerRow } from "@/lib/spell-terms";
 import { HelpTip } from "@/components/help/HelpTip";
@@ -59,7 +59,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 ? ui("spirit.reagent", { nuyen: item.nuyen.toLocaleString() })
                 : ui("spirit.untilDawn")}
               {" / "}
-              {item.source}
+              {sourceBit(item, ui)}
             </div>
             {item.test ? <div className="muted">{testLine(item.test, ui)}</div> : null}
             {item.attributes ? (
@@ -195,7 +195,8 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(spec.name)}</b>
                 <div className="muted">
-                  {spec.name} / {spiritRoleLabel(role, ui)} / {ui("spirit.tests")} / {spec.source}
+                  {spec.name} / {spiritRoleLabel(role, ui)} / {ui("spirit.tests")} /{" "}
+                  {sourceBit(spec, ui)}
                 </div>
                 <div className="muted">
                   {["BOD", "AGI", "REA", "STR"]
@@ -243,7 +244,8 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
               <div>
                 <b>{tr(spec.name)}</b>
                 <div className="muted">
-                  {spec.name} / {ui("spirit.extraTag")} / {ui("spirit.tests")} / {spec.source}
+                  {spec.name} / {ui("spirit.extraTag")} / {ui("spirit.tests")} /{" "}
+                  {sourceBit(spec, ui)}
                 </div>
               </div>
               <div>

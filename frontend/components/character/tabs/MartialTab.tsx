@@ -3,6 +3,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { HelpTip } from "@/components/help/HelpTip";
+import { sourceBit } from "@/lib/character/format";
 
 export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const [martialSearch, setMartialSearch] = useState("");
@@ -48,7 +49,7 @@ export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   ? ui("martial.freeQuality")
                   : ui("martial.cost", { karma: item.karma, style: item.style_karma })}
                 {" / "}
-                {item.source}
+                {sourceBit(item, ui)}
                 {item.page ? ` p.${item.page}` : ""}
                 {techMax === 1 ? ui("martial.oneTech") : ""}
               </div>
@@ -135,7 +136,8 @@ export function MartialTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   <b>{tr(item.name)}</b>
                   <div className="muted">
                     {item.name} / {ui("martial.rowCost", { karma: item.cost })} /{" "}
-                    {ui("martial.techCount", { count: item.techniques.length })} / {item.source}
+                    {ui("martial.techCount", { count: item.techniques.length })} /{" "}
+                    {sourceBit(item, ui)}
                     {item.spec_options?.length
                       ? ui("martial.specOptions", {
                           list: item.spec_options

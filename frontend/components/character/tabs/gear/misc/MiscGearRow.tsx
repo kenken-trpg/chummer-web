@@ -8,6 +8,7 @@ import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { alreadySlotted, dropTree, miscFits, catalogExtraOptions } from "@/lib/character/gear";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
+import { sourceBit } from "@/lib/character/format";
 
 /** One top-level piece of gear (or one drug) the character owns, with what is
  *  slotted into it and the controls that change it.
@@ -72,7 +73,7 @@ export function MiscGearRow({
             ? ` / ${ui("common.capacity")} ${item.capacity_used}/${item.capacity_max}`
             : ""}
           {" / "}
-          {item.nuyen.toLocaleString()}¥ / {item.source}
+          {item.nuyen.toLocaleString()}¥ / {sourceBit(item, ui)}
         </div>
         {item.parts_remaining_units != null ? (
           <p>
