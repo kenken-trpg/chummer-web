@@ -5,10 +5,31 @@ import type { UiFn } from "@/lib/i18n";
 import { actionLabel } from "@/lib/character/action-labels";
 import { ATTRS } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
+import { qualityExtras } from "@/lib/character/quality-extras";
 import { qualityPlaceholder } from "@/lib/character/quality-placeholder";
+import { AddSpiritSlots } from "@/components/character/tabs/qualities/extras/AddSpiritSlots";
+import { AttributeChoiceSlots } from "@/components/character/tabs/qualities/extras/AttributeChoiceSlots";
+import { BlackMarketPipeline } from "@/components/character/tabs/qualities/extras/BlackMarketPipeline";
+import {
+  ExtraRow,
+  ExtraSelect,
+  ExtraText,
+} from "@/components/character/tabs/qualities/extras/controls";
 
 type CatalogQuality = Catalog["qualities"][number];
 
+/**
+ * What one quality still leaves to decide, as a control.
+ *
+ * A quality's `extra_kind` says what it chooses — a target, an attribute, a
+ * skill group, a Matrix action, a spirit — and this picks the control for it.
+ * Most kinds are one dropdown, some pair it with a free-text box for the
+ * targets no book enumerates, and three are involved enough to live in their
+ * own file. Everything is stored in `quality_extras` through
+ * `qualityExtras`, which is also where the key naming lives.
+ *
+ * `null` for the many qualities that choose nothing.
+ */
 export function QualityExtraEditor({
   q,
   ch,
@@ -52,10 +73,12 @@ export function QualityExtraEditor({
    * ("Allergy: 対象を選択") is what makes the panel navigable.
    */
   const named = (prompt: string) => `${tr(q.name)}: ${prompt}`;
+  const extras = qualityExtras(ch, patch, setCharacter);
+  const spec = catalogById.get(q.id);
 
   const kind =
     q.extra_kind ||
-    catalogById.get(q.id)?.extra_kind ||
+    spec?.extra_kind ||
     (q.name === "Exceptional Attribute"
       ? "attribute"
       : q.selectside
@@ -63,443 +86,211 @@ export function QualityExtraEditor({
         : q.needs_extra
           ? "text"
           : null);
-  const options = q.select_options?.length
-    ? q.select_options
-    : catalogById.get(q.id)?.select_options || [];
+  const options = q.select_options?.length ? q.select_options : spec?.select_options || [];
+  const attributeChoices = spec?.attribute_choices || [];
   const addSpiritPicks = (d.add_spirit_picks || []).filter((row) => row.quality_id === q.id);
-  const attributeChoices = catalogById.get(q.id)?.attribute_choices || [];
+
   if (attributeChoices.length) {
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        {attributeChoices.map((slot, index) => {
-          const key = index === 0 ? q.id : `${q.id}:attribute:${index}`;
-          const allowed = slot.options.length ? slot.options : ATTRS;
-          return (
-            <label key={key}>
-              {ui("quality.attribute")} {index + 1}
-              <select
-                aria-label={named(`${ui("quality.attribute")} ${index + 1}`)}
-                value={ch.quality_extras?.[key] || ""}
-                onChange={(e) =>
-                  patch({ quality_extras: { ...(ch.quality_extras || {}), [key]: e.target.value } })
-                }
-              >
-                <option value="">{ui("quality.attribute")}</option>
-                {allowed
-                  .filter((attr) => attr !== "ESS" && !slot.exclude.includes(attr))
-                  .filter(
-                    (attr) => !["MAG", "RES"].includes(attr) || Number(d.totals[attr] || 0) > 0,
-                  )
-                  .map((attr) => (
-                    <option key={attr} value={attr}>
-                      {attrLabel(attr, t)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          );
-        })}
-      </div>
+      <AttributeChoiceSlots
+        q={q}
+        ch={ch}
+        d={d}
+        t={t}
+        ui={ui}
+        patch={patch}
+        named={named}
+        choices={attributeChoices}
+      />
     );
   }
   if (kind === "add_spirit" || addSpiritPicks.length) {
-    const slots = addSpiritPicks.length
-      ? addSpiritPicks
-      : Array.from(
-          {
-            length: Math.max(1, q.add_spirit_count || catalogById.get(q.id)?.add_spirit_count || 1),
-          },
-          (_, index) => ({
-            quality_id: q.id,
-            index,
-            key: `${q.id}:addspirit:${index}`,
-            value: ch.quality_extras?.[`${q.id}:addspirit:${index}`] || "",
-            options: (catalog.spirits || [])
-              .map((s) => s.name)
-              .filter((name) => name && !name.startsWith("Homunculus")),
-          }),
-        );
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        {slots.map((slot) => {
-          const prompt =
-            slots.length > 1
-              ? ui("quality.addSpiritN", { index: Number(slot.index) + 1 })
-              : ui("quality.addSpirit");
-          return (
-            <select
-              key={slot.key}
-              aria-label={named(prompt)}
-              value={ch.quality_extras?.[slot.key] || slot.value || ""}
-              onChange={(e) =>
-                patch({
-                  quality_extras: { ...(ch.quality_extras || {}), [slot.key]: e.target.value },
-                })
-              }
-            >
-              <option value="">{prompt}</option>
-              {(slot.options || []).map((name) => (
-                <option key={name} value={name}>
-                  {tr(name)}
-                </option>
-              ))}
-            </select>
-          );
-        })}
-      </div>
+      <AddSpiritSlots
+        q={q}
+        ch={ch}
+        d={d}
+        tr={tr}
+        ui={ui}
+        patch={patch}
+        named={named}
+        catalog={catalog}
+        count={q.add_spirit_count || spec?.add_spirit_count || 1}
+      />
     );
   }
   if (q.name === "Black Market Pipeline") {
-    const contactKey = `${q.id}:contact`;
-    return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        <select
-          aria-label={named(ui("quality.marketCategory"))}
-          value={ch.quality_extras?.[q.id] || ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">{ui("quality.marketCategory")}</option>
-          {["Weapons", "Armor", "Electronics", "Vehicles", "Cyberware", "Bioware", "Drugs"].map(
-            (cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ),
-          )}
-        </select>
-        <select
-          aria-label={named(ui("quality.marketContact"))}
-          value={ch.quality_extras?.[contactKey] || ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [contactKey]: e.target.value },
-            })
-          }
-        >
-          <option value="">{ui("quality.marketContact")}</option>
-          {(d.contacts || []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name || ui("common.unnamed")} {c.role ? `／ ${tr(c.role)}` : ""} (C
-              {c.connection}/L
-              {c.loyalty})
-            </option>
-          ))}
-        </select>
-        {d.black_market_avail_bonus ? (
-          <span className="muted">
-            {ui("quality.marketBonus", { bonus: d.black_market_avail_bonus })}
-          </span>
-        ) : null}
-      </div>
-    );
+    return <BlackMarketPipeline q={q} ch={ch} d={d} tr={tr} ui={ui} patch={patch} named={named} />;
   }
   if (kind === "side" || q.selectside) {
     return (
-      <select
-        aria-label={named(ui("quality.side"))}
-        value={ch.quality_extras?.[q.id] || ""}
-        onChange={(e) =>
-          patch({
-            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-          })
-        }
-      >
-        <option value="">{ui("quality.side")}</option>
-        <option value="Left">{ui("common.left")}</option>
-        <option value="Right">{ui("common.right")}</option>
-      </select>
+      <ExtraSelect
+        extras={extras}
+        storeKey={q.id}
+        named={named}
+        prompt={ui("quality.side")}
+        options={["Left", "Right"]}
+        label={(side) => ui(side === "Left" ? "common.left" : "common.right")}
+      />
     );
   }
   if (kind === "matrix_action") {
-    const current = ch.quality_extras?.[q.id] || "";
-    const known = options.length ? options : [];
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        <select
-          aria-label={named(ui("quality.matrixAction"))}
-          value={known.includes(current) ? current : ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">{ui("quality.matrixAction")}</option>
-          {known.map((name) => (
-            <option key={name} value={name}>
-              {actionLabel(name, ui, tr)}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder={ui("quality.orType")}
-          // the catalog list is not exhaustive; "または手入力" alone says
-          // nothing about what is being typed
-          aria-label={named(ui("quality.matrixActionFree"))}
-          value={current}
-          onChange={(e) =>
-            setCharacter({
-              ...ch,
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-          onBlur={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
+      <ExtraRow>
+        <ExtraSelect
+          extras={extras}
+          storeKey={q.id}
+          named={named}
+          prompt={ui("quality.matrixAction")}
+          options={options}
+          label={(name) => actionLabel(name, ui, tr)}
+          strict
         />
-      </div>
+        {/* the catalog list is not exhaustive; "または手入力" alone says
+            nothing about what is being typed */}
+        <ExtraText
+          extras={extras}
+          storeKey={q.id}
+          placeholder={ui("quality.orType")}
+          name={named(ui("quality.matrixActionFree"))}
+        />
+      </ExtraRow>
     );
   }
   if (kind === "expertise") {
-    const current = ch.quality_extras?.[q.id] || "";
-    const skillName = q.expertise_skill || catalogById.get(q.id)?.expertise_skill || "";
+    const skillName = q.expertise_skill || spec?.expertise_skill || "";
     const known = options.length
       ? options
       : catalog.skills.skills.find((s) => s.name === skillName)?.specs || [];
+    const prompt = skillName
+      ? ui("quality.expertise", { skill: skillName })
+      : ui("quality.expertiseAny");
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        <select
-          aria-label={named(
-            skillName ? ui("quality.expertise", { skill: skillName }) : ui("quality.expertiseAny"),
-          )}
-          value={known.includes(current) ? current : ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">
-            {skillName ? ui("quality.expertise", { skill: skillName }) : ui("quality.expertiseAny")}
-          </option>
-          {known.map((name) => (
-            <option key={name} value={name}>
-              {tr(name)}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
+      <ExtraRow>
+        <ExtraSelect
+          extras={extras}
+          storeKey={q.id}
+          named={named}
+          prompt={prompt}
+          options={known}
+          label={tr}
+          strict
+        />
+        <ExtraText
+          extras={extras}
+          storeKey={q.id}
           placeholder={ui("quality.orType")}
-          aria-label={named(ui("quality.expertiseFree"))}
-          value={current}
-          onChange={(e) =>
-            setCharacter({
-              ...ch,
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-          onBlur={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
+          name={named(ui("quality.expertiseFree"))}
         />
         <span className="muted">{ui("quality.expertiseNote")}</span>
-      </div>
+      </ExtraRow>
     );
   }
   if (kind === "weapon_skill") {
-    const current = ch.quality_extras?.[q.id] || "";
-    const known = options.length ? options : [];
     return (
-      <select
-        aria-label={named(ui("quality.weaponSkill"))}
-        value={current}
-        onChange={(e) =>
-          patch({
-            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-          })
-        }
-      >
-        <option value="">{ui("quality.weaponSkill")}</option>
-        {known.map((name) => (
-          <option key={name} value={name}>
-            {tr(name)}
-          </option>
-        ))}
-      </select>
+      <ExtraSelect
+        extras={extras}
+        storeKey={q.id}
+        named={named}
+        prompt={ui("quality.weaponSkill")}
+        options={options}
+        label={tr}
+      />
     );
   }
   if (kind === "spell_category" || kind === "spell_spirit_category" || kind === "spirit_category") {
-    const spiritKey = `${q.id}:spiritcategory`;
-    const spirits = q.spirit_options?.length
-      ? q.spirit_options
-      : catalogById.get(q.id)?.spirit_options || [];
+    // Two choices for one quality, so the spirit half gets its own key —
+    // except where the spirit is the only choice and takes the bare id.
+    const spiritKey = kind === "spirit_category" ? q.id : `${q.id}:spiritcategory`;
+    const spirits = q.spirit_options?.length ? q.spirit_options : spec?.spirit_options || [];
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
+      <ExtraRow>
         {kind !== "spirit_category" ? (
-          <select
-            aria-label={named(ui("quality.spellCategory"))}
-            value={ch.quality_extras?.[q.id] || ""}
-            onChange={(e) =>
-              patch({
-                quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-              })
-            }
-          >
-            <option value="">{ui("quality.spellCategory")}</option>
-            {options.map((name) => (
-              <option key={name} value={name}>
-                {tr(name)}
-              </option>
-            ))}
-          </select>
+          <ExtraSelect
+            extras={extras}
+            storeKey={q.id}
+            named={named}
+            prompt={ui("quality.spellCategory")}
+            options={options}
+            label={tr}
+          />
         ) : null}
         {kind !== "spell_category" ? (
-          <select
-            aria-label={named(ui("quality.spirit"))}
-            value={ch.quality_extras?.[kind === "spirit_category" ? q.id : spiritKey] || ""}
-            onChange={(e) =>
-              patch({
-                quality_extras: {
-                  ...(ch.quality_extras || {}),
-                  [kind === "spirit_category" ? q.id : spiritKey]: e.target.value,
-                },
-              })
-            }
-          >
-            <option value="">{ui("quality.spirit")}</option>
-            {spirits.map((name) => (
-              <option key={name} value={name}>
-                {tr(name)}
-              </option>
-            ))}
-          </select>
+          <ExtraSelect
+            extras={extras}
+            storeKey={spiritKey}
+            named={named}
+            prompt={ui("quality.spirit")}
+            options={spirits}
+            label={tr}
+          />
         ) : null}
-      </div>
+      </ExtraRow>
     );
   }
   if (kind === "quality") {
     return (
-      <select
-        aria-label={named(ui("quality.attachedQuality"))}
-        value={ch.quality_extras?.[q.id] || ""}
-        onChange={(e) =>
-          patch({
-            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-          })
-        }
-      >
-        <option value="">{ui("quality.attachedQuality")}</option>
-        {options.map((name) => (
-          <option key={name} value={name}>
-            {tr(name)}
-          </option>
-        ))}
-      </select>
+      <ExtraSelect
+        extras={extras}
+        storeKey={q.id}
+        named={named}
+        prompt={ui("quality.attachedQuality")}
+        options={options}
+        label={tr}
+      />
     );
   }
   if (kind === "skillgroup") {
     return (
-      <select
-        aria-label={named(ui("quality.skillGroup"))}
-        value={ch.quality_extras?.[q.id] || ""}
-        onChange={(e) =>
-          patch({
-            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-          })
-        }
-      >
-        <option value="">{ui("quality.skillGroup")}</option>
-        {(catalog.skills.groups || []).map((g) => (
-          <option key={g} value={g}>
-            {trGroup(g)}
-          </option>
-        ))}
-      </select>
+      <ExtraSelect
+        extras={extras}
+        storeKey={q.id}
+        named={named}
+        prompt={ui("quality.skillGroup")}
+        options={catalog.skills.groups || []}
+        label={trGroup}
+      />
     );
   }
   if (kind === "attribute" || q.name === "Exceptional Attribute") {
     return (
-      <select
-        aria-label={named(ui("quality.attribute"))}
-        value={ch.quality_extras?.[q.id] || ""}
-        onChange={(e) =>
-          patch({
-            quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-          })
-        }
-      >
-        <option value="">{ui("quality.attribute")}</option>
-        {ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES").map((key) => (
-          <option key={key} value={key}>
-            {attrLabel(key, t)}
-          </option>
-        ))}
-      </select>
+      <ExtraSelect
+        extras={extras}
+        storeKey={q.id}
+        named={named}
+        prompt={ui("quality.attribute")}
+        options={ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES")}
+        label={(key) => attrLabel(key, t)}
+      />
     );
   }
   if (kind === "text" || q.needs_extra) {
-    const current = ch.quality_extras?.[q.id] || "";
-    const known = options.length ? options : [];
-    if (!known.length) {
+    if (!options.length) {
       // what the box is for varies by quality — an allergen, a drug, a code
       // of honour — and a single prompt named one quality's examples for all
       const prompt = ui(qualityPlaceholder(q.name));
       return (
-        <input
-          type="text"
-          placeholder={prompt}
-          aria-label={named(prompt)}
-          value={current}
-          onChange={(e) =>
-            setCharacter({
-              ...ch,
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-          onBlur={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        />
+        <ExtraText extras={extras} storeKey={q.id} placeholder={prompt} name={named(prompt)} />
       );
     }
     return (
-      <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
-        <select
-          aria-label={named(ui("quality.target"))}
-          value={known.includes(current) ? current : ""}
-          onChange={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-        >
-          <option value="">{ui("quality.target")}</option>
-          {known.map((name) => (
-            <option key={name} value={name}>
-              {tr(name)}
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          placeholder={ui("quality.orType")}
-          aria-label={named(ui("quality.targetFree"))}
-          value={current}
-          onChange={(e) =>
-            setCharacter({
-              ...ch,
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
-          onBlur={(e) =>
-            patch({
-              quality_extras: { ...(ch.quality_extras || {}), [q.id]: e.target.value },
-            })
-          }
+      <ExtraRow>
+        <ExtraSelect
+          extras={extras}
+          storeKey={q.id}
+          named={named}
+          prompt={ui("quality.target")}
+          options={options}
+          label={tr}
+          strict
         />
-      </div>
+        <ExtraText
+          extras={extras}
+          storeKey={q.id}
+          placeholder={ui("quality.orType")}
+          name={named(ui("quality.targetFree"))}
+        />
+      </ExtraRow>
     );
   }
   return null;

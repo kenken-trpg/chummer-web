@@ -55,6 +55,76 @@ export function qualityLevelMax(q: QualitySpec, ids: string[], specs: QualitySpe
   return Math.max(0, Math.min(ownMax, (q.limit_with_inclusions || ownMax) - otherLevels));
 }
 
+/**
+ * What the picker row for one catalog quality may do, given what is taken.
+ *
+ * This was computed inline in the panel, which made the row's button a dozen
+ * interacting booleans deep in JSX — and the interesting cases are the ones no
+ * fixture renders: a quality whose limit is shared with named siblings
+ * (`include_in_limit`: Indomitable is 3 across all three), and a Way that
+ * replaces a Way already taken. Pulled out here, they can be stated directly.
+ *
+ * `levelMax` is 1 for a quality without levels, so a caller can clamp with it
+ * either way. It can be 0: a shared limit that the siblings have used up
+ * leaves nothing to buy, which is what disables the button.
+ */
+export type QualityPickState = {
+  /** How many times this exact quality is taken (levels count as takes). */
+  ownedCount: number;
+  /** Its own cap, or null for one that may be taken any number of times. */
+  maxTakes: number | null;
+  /** The qualities it shares a cap with, by name. Empty for most. */
+  siblings: Set<string>;
+  /** The shared cap, or null when nothing is shared. */
+  sharedCap: number | null;
+  /** Takes against the shared cap — this quality's and its siblings'. */
+  sharedCount: number;
+  /** Whether another take is allowed by both caps. */
+  canAddMore: boolean;
+  /** Whether it is taken at all. */
+  added: boolean;
+  hasLevels: boolean;
+  /** The highest level still available, or 1 for an unleveled quality. */
+  levelMax: number;
+  /** A Way that would replace a Way already taken, rather than add to it. */
+  replaces: boolean;
+};
+
+export function qualityPickState(
+  q: QualitySpec,
+  ids: string[],
+  specs: QualitySpec[] = [],
+): QualityPickState {
+  const ownedCount = ids.filter((id) => id === q.id).length;
+  const maxTakes = q.max_takes == null ? null : Number(q.max_takes ?? 1);
+  const siblings = new Set(q.include_in_limit || []);
+  const sharedCap = siblings.size ? q.limit_with_inclusions || maxTakes : null;
+  const byId = new Map(specs.map((item) => [item.id, item]));
+  const sharedCount = siblings.size
+    ? ids.filter((id) => id === q.id || siblings.has(byId.get(id)?.name || "")).length
+    : ownedCount;
+  const hasLevels = Boolean(q.has_levels);
+  const ownedWays = new Set(
+    specs.filter((item) => item.is_way && ids.includes(item.id)).map((item) => item.name),
+  );
+  return {
+    ownedCount,
+    maxTakes,
+    siblings,
+    sharedCap,
+    sharedCount,
+    canAddMore:
+      (maxTakes == null || ownedCount < maxTakes) && (sharedCap == null || sharedCount < sharedCap),
+    added: ownedCount > 0,
+    hasLevels,
+    levelMax: hasLevels ? qualityLevelMax(q, ids, specs) : 1,
+    replaces:
+      ownedCount === 0 &&
+      Boolean(q.is_way) &&
+      (q.forbidden_qualities || []).some((name) => ownedWays.has(name)),
+  };
+}
+
 /** Retain repeated IDs for save compatibility, and remove later levels first in career. */
 export function setQualityLevel(ids: string[], id: string, level: number): string[] {
   const owned = ids.filter((item) => item === id).length;

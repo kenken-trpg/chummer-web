@@ -5,6 +5,7 @@ import {
   qualityBlockReason,
   qualityDisplayRows,
   qualityLevelMax,
+  qualityPickState,
   setQualityLevel,
   qualityTreeMet,
   reqNodeMet,
@@ -211,5 +212,72 @@ describe("quality levels", () => {
     expect(setQualityLevel(ids, "ind", 2)).toEqual(["ind", "other", "ind", "third"]);
     expect(setQualityLevel(ids, "ind", 4)).toEqual([...ids, "ind"]);
     expect(setQualityLevel(ids, "ind", 0)).toEqual(["other", "third"]);
+  });
+});
+
+describe("qualityPickState", () => {
+  const indomitable = {
+    id: "ind",
+    name: "Indomitable (Physical)",
+    max_takes: 3,
+    has_levels: true,
+    include_in_limit: ["Indomitable (Mental)"],
+    limit_with_inclusions: 3,
+  };
+  const mental = { id: "mental", name: "Indomitable (Mental)" };
+  const state = (ids: string[], q: object = indomitable, specs: object[] = [indomitable, mental]) =>
+    qualityPickState(q as never, ids, specs as never);
+
+  it("counts a plain quality's takes against its own cap", () => {
+    const plain = { id: "ambi", name: "Ambidextrous", max_takes: 1 };
+    expect(state([], plain, [plain])).toMatchObject({
+      ownedCount: 0,
+      added: false,
+      canAddMore: true,
+      hasLevels: false,
+      levelMax: 1,
+      sharedCap: null,
+    });
+    expect(state(["ambi"], plain, [plain])).toMatchObject({ added: true, canAddMore: false });
+  });
+
+  it("treats a missing max_takes as repeatable", () => {
+    const many = { id: "day", name: "Day Job" };
+    expect(state(["day", "day", "day"], many, [many])).toMatchObject({
+      maxTakes: null,
+      canAddMore: true,
+    });
+  });
+
+  it("spends the shared cap on siblings, not only on this quality", () => {
+    // Indomitable is 3 across all three, so two levels of the Mental one
+    // leave room for exactly one Physical
+    expect(state(["mental", "mental"])).toMatchObject({
+      ownedCount: 0,
+      sharedCount: 2,
+      sharedCap: 3,
+      canAddMore: true,
+      levelMax: 1,
+    });
+    expect(state(["mental", "mental", "mental"])).toMatchObject({
+      sharedCount: 3,
+      canAddMore: false,
+      levelMax: 0,
+    });
+  });
+
+  it("calls a Way that forbids an owned Way a replacement, not an addition", () => {
+    const beast = {
+      id: "beast",
+      name: "Beast Way",
+      is_way: true,
+      forbidden_qualities: ["Spirit Way"],
+    };
+    const spirit = { id: "spirit", name: "Spirit Way", is_way: true };
+    const specs = [beast, spirit];
+    expect(state([], beast, specs).replaces).toBe(false);
+    expect(state(["spirit"], beast, specs).replaces).toBe(true);
+    // one already taken is not replacing itself
+    expect(state(["spirit", "beast"], beast, specs).replaces).toBe(false);
   });
 });
