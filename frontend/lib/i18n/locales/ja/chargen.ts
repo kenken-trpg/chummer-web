@@ -3,6 +3,30 @@ export const JA_CHARGEN = {
   "engine.life.ratingCap":
     "経歴による「{name}」の付与値 {rating} が上限 {cap} を超えます。上限超過分の精算は未対応のため、この組み合わせは使用できません。",
 
+  "engine.life.skillGrantInvalid": "経歴が付与する技能「{name}」の定義を解決できません。",
+  "engine.life.skillExcessLost":
+    "「{name}」の付与は上限を超えるため、{lost}レベルは付与されません（{stage}）。",
+  "engine.life.transferPending":
+    "「{name}」の超過分を移し替えてください（残り{remaining}レベル）。",
+  "engine.life.transferOrphan":
+    "移し替え指定 {transfer} に対応する超過分がありません。指定を削除または修正してください。",
+  "engine.life.transferInvalidTarget": "移し替え指定 {transfer} の行き先が条件を満たしません。",
+  "engine.life.transferSourceChanged":
+    "「{name}」の付与条件が変わったため、移し替え先を指定し直してください。",
+  "engine.life.transferOverallocated":
+    "「{name}」の移し替え指定は{requested}レベルで、超過分{total}レベルを超えています。",
+  "engine.life.transferDuplicate": "移し替え指定 {transfer} が重複しています。",
+  "engine.life.transferCapacity":
+    "「{name}」へは{capacity}レベルまで移せますが、{requested}レベルが指定されています。",
+  "engine.life.transferUnallocatable":
+    "「{name}」の超過分のうち{lost}レベルは、条件を満たす技能に空きがないため付与されません。",
+
+  "engine.life.purchaseInvalid": "技能「{name}」の購入指定が不正です。",
+  "engine.life.purchaseCap":
+    "「{name}」の購入後の値 {requested} が上限 {cap} を超えます。購入指定を修正してください。",
+  "engine.life.groupPurchaseUnequal":
+    "「{group}」の構成技能の無償値が揃っていないため、グループでは購入できません。個別に購入してください。",
+
   "life.kind.attributes": "能力値",
   "life.kind.skills": "技能",
   "life.kind.skill_groups": "技能グループ",

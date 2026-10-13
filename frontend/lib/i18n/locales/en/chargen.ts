@@ -3,6 +3,29 @@ export const EN_CHARGEN = {
   "engine.life.ratingCap":
     "Module grants raise “{name}” to {rating}, above its cap of {cap}. Excess-rating compensation is not yet supported; this combination is unavailable.",
 
+  "engine.life.skillGrantInvalid": "Cannot resolve the life-module skill grant: {name}.",
+  "engine.life.skillExcessLost":
+    "The grant to {name} exceeds the cap; {lost} levels are not granted ({stage}).",
+  "engine.life.transferPending": "Assign the overflow from {name} ({remaining} levels remaining).",
+  "engine.life.transferOrphan":
+    "Transfer {transfer} no longer has an overflow source. Remove or repair it.",
+  "engine.life.transferInvalidTarget":
+    "The destination of transfer {transfer} does not meet the requirements.",
+  "engine.life.transferSourceChanged": "The grant to {name} changed. Update its transfer choices.",
+  "engine.life.transferOverallocated":
+    "Transfers from {name} request {requested} levels, exceeding the {total} available.",
+  "engine.life.transferDuplicate": "Transfer {transfer} duplicates an ID or destination.",
+  "engine.life.transferCapacity":
+    "{name} can receive {capacity} levels, but {requested} were requested.",
+  "engine.life.transferUnallocatable":
+    "{lost} overflow levels from {name} cannot be assigned because eligible skills have no capacity.",
+
+  "engine.life.purchaseInvalid": "Invalid skill purchase: {name}.",
+  "engine.life.purchaseCap":
+    "The requested rating {requested} for {name} exceeds the cap {cap}. Update the purchase.",
+  "engine.life.groupPurchaseUnequal":
+    "The free ratings in {group} differ. Purchase its skills individually.",
+
   "life.kind.attributes": "attribute",
   "life.kind.skills": "skill",
   "life.kind.skill_groups": "skill group",
