@@ -247,11 +247,12 @@ make check       # the same as CI: ruff / pytest / mypy / tsc / eslint / prettie
 backend/    FastAPI + the rules engine (compute() in app/engine/compute is the core). Stateless
 frontend/   Next.js 15 App Router + React 19. Characters live in IndexedDB
 deploy/     Caddyfile + supervisord.conf (the in-container process layout)
-docs/       Architecture, data pipeline, deployment, how to add a rule
+docs/       Character creation walkthrough, architecture, data pipeline, deployment, how to add a rule
 ```
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — setup, conventions, how to open a PR
 - [`SECURITY.md`](SECURITY.md) — reporting a vulnerability (GitHub private vulnerability reporting)
+- [`docs/chargen.md`](docs/chargen.md) — walking one runner through creation: which screen does what (written in Japanese)
 - [`docs/architecture.md`](docs/architecture.md) — data flow, `<bonus>` nodes and `effects`, the API surface
 - [`docs/deploy.md`](docs/deploy.md) — Docker, Cloud Run / Fly / Cloudflare Containers, or self-hosting behind a Cloudflare Tunnel
 - [`docs/adding-rules.md`](docs/adding-rules.md) — recipes for a new modifier, item field, tab or validation
@@ -260,8 +261,8 @@ docs/       Architecture, data pipeline, deployment, how to add a rule
 - [`docs/share-link.md`](docs/share-link.md) — the read-only share link (`/share#c=…`): format and validation
 - [`docs/plans/`](docs/plans/) — working notes from refactors that have already landed (history, not current state)
 
-Most of `docs/` is written in English; `docs/i18n.md`, `docs/share-link.md` and the
-`docs/translation-*` reports are in Japanese. Code, comments and commit messages are
+Most of `docs/` is written in English; `docs/chargen.md`, `docs/i18n.md`,
+`docs/share-link.md` and the `docs/translation-*` reports are in Japanese. Code, comments and commit messages are
 in English.
 
 Contributions are welcome. For a rules change, cite the SR5 page number (or the supplement), and where the book is ambiguous, match Chummer5a's behaviour.
