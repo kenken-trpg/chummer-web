@@ -67,7 +67,10 @@ def test_implanted_weapon_stays_in_inventory_with_derived_connection_state() -> 
     next(row for row in state.cyberware if row.id == "leg-0").parent_id = None
     compute(state)
     weapon = next(row for row in state.derived["weapons"] if row.get("source_ware_id") == "blade")
-    assert weapon == {**initial, "modular_equipped": False}
+    assert {key: value for key, value in weapon.items() if key != "accuracy"} == {
+        key: value for key, value in {**initial, "modular_equipped": False}.items() if key != "accuracy"
+    }
+    assert weapon["accuracy"] == str(state.derived["limits"]["physical"])
     assert any(row.id == "blade" and row.parent_id == "leg-0" for row in state.cyberware)
 
 

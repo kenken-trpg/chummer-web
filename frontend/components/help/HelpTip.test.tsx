@@ -15,8 +15,8 @@ describe("bindRuns", () => {
   });
 
   it("keeps an operator with the operands on either side of it", () => {
-    expect(bindRuns("身体リミット = (BOD×2 + AGI) ÷ 3（切り上げ）")).toBe(
-      "身体リミット = (BOD×2\u00a0+\u00a0AGI)\u00a0÷\u00a03（切り上げ）",
+    expect(bindRuns("身体リミット = (STR×2 + BOD + REA) ÷ 3（切り上げ）")).toBe(
+      "身体リミット = (STR×2\u00a0+\u00a0BOD\u00a0+\u00a0REA)\u00a0÷\u00a03（切り上げ）",
     );
   });
 
@@ -57,16 +57,17 @@ describe("limitHelp", () => {
   it("splits each limit into its formula base and the modifiers on top", () => {
     const d = makeCharacter().derived;
     d.totals = { BOD: 4, AGI: 3, REA: 3, STR: 2, LOG: 3, INT: 3, WIL: 3, CHA: 3 };
-    d.essence = 6;
-    d.limits = { physical: 6, mental: 4, social: 6 };
+    d.essence = 5.1;
+    d.limits = { physical: 4, mental: 4, social: 6 };
     const lines = limitHelp(d, ui);
-    // physical: ceil((8+3+3+2)/3) = 6, no modifier line
-    expect(lines.slice(0, 3).map((l) => l.value)).toEqual([undefined, 6, 6]);
+    // physical: ceil((2*STR + BOD + REA)/3) = ceil(11/3) = 4
+    expect(lines.slice(0, 3).map((l) => l.value)).toEqual([undefined, 4, 4]);
     // mental: ceil(12/3) = 4
     expect(lines[4].value).toBe(4);
-    // social: ceil((6+3+6)/3) = 5, +1 from somewhere
+    // Social limit rounds Essence up before calculating: ceil((6+3+6)/3) = 5, +1 elsewhere
     const social = lines.slice(6);
     expect(social.map((l) => l.value)).toEqual([undefined, 5, "+1", 6, undefined]);
+    expect(social[0].label).toContain("ESSは先に切り上げ");
   });
 });
 

@@ -230,7 +230,7 @@
   "limit_spirit_categories": [],
   "limits": {
     "mental": 2,
-    "physical": 3,
+    "physical": 2,
     "social": 3
   },
   "living_persona": null,

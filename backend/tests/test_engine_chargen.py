@@ -50,7 +50,7 @@ def test_human_derived_stats() -> None:
     out = compute(state)
     totals = out.derived["totals"]
     assert totals["BOD"] == 3
-    assert out.derived["limits"]["physical"] == 6
+    assert out.derived["limits"]["physical"] == 5
     assert out.derived["condition_monitor"]["physical"] == 10
     assert out.derived["condition_monitor"]["stun"] == 10
     assert out.derived["initiative"]["value"] == 9
