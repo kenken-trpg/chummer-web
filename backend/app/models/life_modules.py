@@ -6,10 +6,10 @@ integrated. A transfer records a choice, never the amount of available credit.
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import NAMESPACE_URL, UUID, uuid5
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 
 class LifeModuleSkillPolicy(BaseModel):
@@ -37,6 +37,75 @@ class LifeModuleTransfer(BaseModel):
         return str(UUID(value))
 
     @field_validator("destination_specific")
+    @classmethod
+    def _specific(cls, value: str) -> str:
+        return value.strip()
+
+
+class LifeModuleSkillSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    version: Literal[2] = 2
+    input_signature: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+    policy: LifeModuleSkillPolicy
+    public: dict[str, Any]
+    free_active: dict[str, Annotated[StrictInt, Field(ge=0, le=1000)]]
+    free_knowledge: dict[str, Annotated[StrictInt, Field(ge=0, le=1000)]]
+    knowledge_categories: dict[str, str]
+    native_languages: list[str]
+    creation_active: dict[str, Annotated[StrictInt, Field(ge=0, le=1000)]]
+    creation_knowledge: dict[str, Annotated[StrictInt, Field(ge=0, le=1000)]]
+    skill_karma: Annotated[StrictInt, Field(ge=0)]
+    knowledge_karma: Annotated[StrictInt, Field(ge=0)]
+
+    @model_validator(mode="after")
+    def _consistent(self) -> LifeModuleSkillSnapshot:
+        public = self.public
+        if (
+            public.get("complete") is not True
+            or public.get("policy") != self.policy.model_dump()
+            or public.get("free_active") != self.free_active
+            or public.get("free_knowledge") != self.free_knowledge
+            or not isinstance(public.get("purchase_preview"), dict)
+            or public["purchase_preview"].get("totals") != self.creation_active
+            or any(not isinstance(public.get(key), list) for key in ("pools", "losses"))
+            or any(n > self.policy.active_cap for n in self.free_active.values())
+            or any(n > self.policy.knowledge_cap for n in self.free_knowledge.values())
+            or any(n > self.creation_active.get(key, 0) for key, n in self.free_active.items())
+            or any(n > self.creation_knowledge.get(key, 0) for key, n in self.free_knowledge.items())
+        ):
+            raise ValueError("inconsistent life-module skill snapshot")
+        return self
+
+
+class LifeModuleGrowthPrice(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    per_rating: Annotated[StrictInt, Field(ge=0, le=1000)]
+    first_level: Annotated[StrictInt, Field(ge=0, le=1000)] | None = None
+    multiplier: Annotated[StrictInt, Field(ge=0, le=1000)] = 100
+    category: str = ""
+    flat_rules: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class LifeModuleSkillAdvancement(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: str
+    kind: Literal["active", "exotic", "group", "knowledge"]
+    target_id: Annotated[str, Field(min_length=1, max_length=200)]
+    specific: Annotated[str, Field(max_length=200)] = ""
+    category: Literal["Academic", "Professional", "Street", "Interest", "Language"] = "Professional"
+    levels: Annotated[StrictInt, Field(ge=1, le=1000)]
+    from_ratings: dict[str, Annotated[StrictInt, Field(ge=0, le=1000)]] = Field(default_factory=dict)
+    price: LifeModuleGrowthPrice | None = None
+
+    @field_validator("id")
+    @classmethod
+    def _uuid(cls, value: str) -> str:
+        return str(UUID(value))
+
+    @field_validator("specific")
     @classmethod
     def _specific(cls, value: str) -> str:
         return value.strip()

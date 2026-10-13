@@ -81,6 +81,10 @@ def _import_balance(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn
     """
     if not st.get("career"):
         return
+    if root.find("lifemoduleskillstate") is not None:
+        # v2 restores the exact baseline, reward ledger and adjustments. The
+        # standard projection was verified by the life-module reader already.
+        return
     from ..engine import compute
     from ..models import CharacterState
 

@@ -15,6 +15,8 @@ export function SkillGroups(props: TabPanelProps) {
         const members = catalog.skills.skills
           .filter((s) => s.skillgroup === g)
           .map((s) => tr(s.name));
+        const lifeGroup = d.life_module_skills?.groups.find((item) => item.name === g);
+        const unequal = !!lifeGroup && !lifeGroup.uniform;
         return (
           <div className={splitKarma ? "skill-row has-karma" : "skill-row"} key={g}>
             <span>
@@ -37,10 +39,28 @@ export function SkillGroups(props: TabPanelProps) {
               >
                 {trGroup(g)}
               </HelpTip>
+              {unequal && <small>{ui("life.groupUnequal")}</small>}
+              {unequal && (ch.skill_groups[g] || 0) > 0 && (
+                <button
+                  disabled={d.life_module_skills?.frozen}
+                  onClick={() => {
+                    const skills = { ...ch.skills };
+                    for (const skill of catalog.skills.skills.filter((s) => s.skillgroup === g))
+                      skills[skill.name] = Math.max(
+                        skills[skill.name] || 0,
+                        ch.skill_groups[g] || 0,
+                      );
+                    patch({ skills, skill_groups: { ...ch.skill_groups, [g]: 0 } });
+                  }}
+                >
+                  {ui("life.groupConvert")}
+                </button>
+              )}
             </span>
             <RangeInput
               min={0}
-              max={groupMax}
+              max={Math.max(0, groupMax - (lifeGroup?.free_uniform_rating || 0))}
+              disabled={unequal || d.life_module_skills?.frozen}
               value={ch.skill_groups[g] || 0}
               label={trGroup(g)}
               title={ui("skills.groupHint", { group: trGroup(g), max: groupMax })}
@@ -57,7 +77,18 @@ export function SkillGroups(props: TabPanelProps) {
               props={props}
               label={trGroup(g)}
             />
-            <b>{skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}</b>
+            <b>
+              {d.life_module_skills?.frozen
+                ? (() => {
+                    const ratings = catalog.skills.skills
+                      .filter((s) => s.skillgroup === g)
+                      .map((s) => d.skill_totals[s.name] || 0);
+                    return new Set(ratings).size === 1
+                      ? skillDice(ratings[0], d.skill_group_bonus?.[g])
+                      : "—";
+                  })()
+                : skillDice(ch.skill_groups[g] || 0, d.skill_group_bonus?.[g])}
+            </b>
           </div>
         );
       })}

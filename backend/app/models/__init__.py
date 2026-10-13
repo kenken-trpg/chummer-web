@@ -34,6 +34,13 @@ from .gear import (
     WeaponInstall,
     WeaponMountInstall,
 )
+from .life_modules import (
+    LifeModuleGrowthPrice,
+    LifeModuleSkillAdvancement,
+    LifeModuleSkillPolicy,
+    LifeModuleSkillSnapshot,
+    LifeModuleTransfer,
+)
 from .magic import (
     AdeptPowerInstall,
     ComplexFormInstall,
@@ -49,6 +56,11 @@ from .settings import CharacterOptions, SettingsState
 from .social import ContactInstall, ExoticSkillInstall, MartialArtInstall
 
 __all__ = [
+    "LifeModuleGrowthPrice",
+    "LifeModuleSkillAdvancement",
+    "LifeModuleSkillSnapshot",
+    "LifeModuleSkillPolicy",
+    "LifeModuleTransfer",
     "CyberwareInstall",
     "Priorities",
     "AdeptPowerInstall",

@@ -129,6 +129,13 @@ export function ActiveSkills(props: TabPanelProps) {
                   >
                     {tr(s.name)}
                   </HelpTip>
+                  {!!d.life_module_skills?.free_active[`skill:${s.id}`] && (
+                    <small>
+                      {ui("life.freeSkill", {
+                        count: d.life_module_skills.free_active[`skill:${s.id}`],
+                      })}
+                    </small>
+                  )}
                 </span>
                 {/* The slider shows what the character says, `0` included;
                     the derived total is only for a skill it has no rating of
@@ -139,8 +146,18 @@ export function ActiveSkills(props: TabPanelProps) {
                     rating. 1 was as low as a skill could go. */}
                 <RangeInput
                   min={0}
-                  max={skillMax + (d.skill_max_bonus?.[s.name] || 0)}
-                  value={ch.skills[s.name] ?? d.skill_totals[s.name] ?? 0}
+                  disabled={d.life_module_skills?.frozen}
+                  max={Math.max(
+                    0,
+                    skillMax +
+                      (d.skill_max_bonus?.[s.name] || 0) -
+                      (d.life_module_skills?.free_active[`skill:${s.id}`] || 0),
+                  )}
+                  value={
+                    d.life_module_skills
+                      ? ch.skills[s.name] || 0
+                      : (ch.skills[s.name] ?? d.skill_totals[s.name] ?? 0)
+                  }
                   label={tr(s.name)}
                   title={skillHint(s.name, s.attribute, s.category)}
                   onDraft={(value) =>

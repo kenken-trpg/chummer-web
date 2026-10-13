@@ -44,3 +44,37 @@ export function lifeModuleAlreadyTaken(
     return taken && (taken.family_id || taken.parent || taken.id) === family;
   });
 }
+
+/** Atomically keep acquisitions, stable IDs, and positional choices together. */
+export function lifeModuleOrderPatch(ch: Character, order: number[]) {
+  const modules = ch.life_modules || [];
+  const positions = new Map(order.map((old, next) => [old, next]));
+  const choices: Record<string, string> = {};
+  for (const [key, value] of Object.entries(ch.life_module_choices || {})) {
+    const colon = key.indexOf(":");
+    const old = Number(key.slice(0, colon));
+    if (colon < 0 || !Number.isInteger(old)) {
+      choices[key] = value;
+      continue;
+    }
+    const next = positions.get(old);
+    if (next !== undefined) choices[`${next}${key.slice(colon)}`] = value;
+  }
+  const base = { life_modules: order.map((i) => modules[i]), life_module_choices: choices };
+  if (ch.life_module_rules_version !== 2) return base;
+  const ids = order.map((i) => ch.life_module_entry_ids![i]);
+  return {
+    ...base,
+    life_module_entry_ids: ids,
+    life_module_transfers: (ch.life_module_transfers || []).filter((row) =>
+      ids.includes(row.entry_id),
+    ),
+  };
+}
+
+export function lifeModuleAppendPatch(ch: Character, moduleId: string) {
+  const base = { life_modules: [...(ch.life_modules || []), moduleId] };
+  return ch.life_module_rules_version === 2
+    ? { ...base, life_module_entry_ids: [...(ch.life_module_entry_ids || []), crypto.randomUUID()] }
+    : base;
+}

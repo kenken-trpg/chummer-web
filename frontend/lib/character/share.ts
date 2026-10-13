@@ -15,7 +15,7 @@ import type { Character } from "@/lib/types";
 export const SHARE_PREFIX = "#c=";
 
 /** Envelope version. Bump when the payload shape needs a read-time migration. */
-export const SHARE_VERSION = 1;
+export const SHARE_VERSION = 2;
 
 /**
  * What travels: the client-owned state minus what the receiver doesn't need.
@@ -178,7 +178,7 @@ export async function decodeShare(value: string): Promise<SharePayload> {
     throw new ShareError("corrupt");
   }
   const { v, s } = body as { v?: unknown; s?: unknown };
-  if (v !== SHARE_VERSION) throw new ShareError("future");
+  if (v !== 1 && v !== SHARE_VERSION) throw new ShareError("future");
   if (!s || typeof s !== "object" || Array.isArray(s)) throw new ShareError("corrupt");
 
   // a hand-crafted link could still carry these; the receiver reissues both

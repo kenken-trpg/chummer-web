@@ -31,6 +31,7 @@ export function KnowledgePicker(props: TabPanelProps) {
     if (know.add(name, category)) setCustomKnow("");
   }
 
+  if (props.d.life_module_skills?.frozen) return null;
   return (
     <>
       <div className="option-row">

@@ -2,6 +2,7 @@
 out
 node_modules
 next-env.d.ts
+lib/types/generated.ts
 tsconfig.tsbuildinfo
 coverage
 test-results

@@ -198,6 +198,7 @@ def assemble(ctx: Ctx) -> None:
         "dealer_connection_categories": list(ctx.effects.get("dealer_connection_categories") or []),
         "cyberware_ess_multiplier": int(ctx.effects.get("cyberware_ess_multiplier") or 100),
         "bioware_ess_multiplier": int(ctx.effects.get("bioware_ess_multiplier") or 100),
+        "life_module_skills": ctx.life.get("skill_public"),
         "skill_rating_max": ctx.skill_rating_cap,
         "knowledge_rating_max": ctx.knowledge_rating_cap,
         "skill_group_max": ctx.skill_group_cap,

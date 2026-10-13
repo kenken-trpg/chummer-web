@@ -85,10 +85,11 @@ def test_the_export_writes_the_shape_chummer_reads() -> None:
     ]
     assert {q.findtext("qualitysource") for q in modules} == {"LifeModule"}
     assert modules[0].findtext("name") == "Elves/Humans"
-    # the answers ride beside them, in the element Chummer ignores
-    assert [(c.findtext("key"), c.findtext("value")) for c in root.findall("./lifemodulechoices/choice")] == [
-        ("4:q0", "Hack on the Fly")
-    ]
+    # v2 stores typed original purchases/choices separately from baked ratings.
+    import json
+
+    assert root.find("lifemodulechoices") is None
+    assert json.loads(root.findtext("./lifemoduleskillstate/life_module_choices")) == _CHOICES
 
 
 def test_the_modules_do_not_come_back_as_ordinary_qualities() -> None:

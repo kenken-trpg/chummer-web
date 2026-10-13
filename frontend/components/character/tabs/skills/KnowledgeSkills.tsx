@@ -85,6 +85,7 @@ export function KnowledgeSkills(props: TabPanelProps) {
               </span>
               {custom ? (
                 <select
+                  disabled={d.life_module_skills?.frozen}
                   value={row.category}
                   onChange={(e) =>
                     know.send({
@@ -108,9 +109,17 @@ export function KnowledgeSkills(props: TabPanelProps) {
                 <span className="muted">{ui("skills.free")}</span>
               ) : (
                 <RangeInput
-                  min={1}
-                  max={knowledgeMax}
-                  value={ch.knowledge_skills[row.name] || row.rating}
+                  min={d.life_module_skills ? 0 : 1}
+                  disabled={d.life_module_skills?.frozen}
+                  max={Math.max(
+                    0,
+                    knowledgeMax - (d.life_module_skills?.free_knowledge[row.name] || 0),
+                  )}
+                  value={
+                    d.life_module_skills
+                      ? ch.knowledge_skills[row.name] || 0
+                      : ch.knowledge_skills[row.name] || row.rating
+                  }
                   label={tr(row.name)}
                   title={ui("skills.ratingHint", { max: knowledgeMax })}
                   onDraft={(value) =>
@@ -154,6 +163,10 @@ export function KnowledgeSkills(props: TabPanelProps) {
                 {row.category === "Language" ? (
                   <label className="native">
                     <input
+                      disabled={
+                        d.life_module_skills?.frozen ||
+                        d.life_module_skills?.native_languages.includes(row.name)
+                      }
                       type="checkbox"
                       checked={row.native}
                       onChange={(e) => know.setNative(row.name, e.target.checked)}
@@ -161,7 +174,16 @@ export function KnowledgeSkills(props: TabPanelProps) {
                     {ui("skills.native")}
                   </label>
                 ) : null}
-                <button className="btn danger" onClick={() => know.remove(row.name)}>
+                <button
+                  className="btn danger"
+                  disabled={
+                    d.life_module_skills?.frozen ||
+                    (!!d.life_module_skills?.free_knowledge[row.name] &&
+                      !ch.knowledge_skills[row.name]) ||
+                    d.life_module_skills?.native_languages.includes(row.name)
+                  }
+                  onClick={() => know.remove(row.name)}
+                >
                   {ui("common.delete")}
                 </button>
               </span>

@@ -18,12 +18,14 @@ came from.
 
 from __future__ import annotations
 
+import json
 import uuid
 import xml.etree.ElementTree as ET
 from typing import Any
 
 from ..data_loader import catalog
 from ..engine.priority import normalize_build_method
+from ..life_module_format import V2_INPUT_FIELDS, standard_digest
 from ..models import CharacterState
 from ._common import _Ctx, _Names, _sub
 
@@ -70,6 +72,16 @@ def _export_life_module_choices(root: ET.Element, state: CharacterState, names: 
     the importer the modules in this file can be read rather than guessed at.
     """
     if normalize_build_method(state.build_method) != "LifeModule":
+        return
+    if state.life_module_rules_version == 2:
+        el = ET.SubElement(root, "lifemoduleskillstate", {"version": "2"})
+        # Typed JSON in individual XML fields; never evaluated as expressions.
+        # Omit the legacy marker so an old app refuses v2 instead of treating
+        # baked standard ratings as purchases and adding the grants twice.
+        data = state.model_dump(mode="json")
+        for key in V2_INPUT_FIELDS:
+            _sub(el, key, json.dumps(data[key], sort_keys=True, ensure_ascii=False))
+        _sub(el, "standard_state_digest", standard_digest(root))
         return
     el = _sub(root, "lifemodulechoices")
     for key, value in sorted(state.life_module_choices.items()):

@@ -58,6 +58,8 @@ def _write(state: CharacterState) -> bytes:
     figures Chummer scores a settings file by, both come from the settings —
     so the sections below need them bound the way `compute()` binds them.
     """
+    if state.build_method == "LifeModule" and state.life_module_rules_version == 2:
+        state = compute(state)
     cat = catalog()
     meta = find_metatype(state.metatype, state.metavariant) or {"attributes": {}}
     m_attr = meta.get("attributes") or {}
@@ -108,7 +110,28 @@ def _write(state: CharacterState) -> bytes:
 
     ctx: _Ctx = {"meta_attrs": m_attr, "derived": derived, "meta": meta}
     for section in _SECTIONS:
-        section(root, state, names, ctx)
+        if section is _export_skills and state.build_method == "LifeModule" and state.life_module_rules_version == 2:
+            projection = state.model_copy(deep=True)
+            active_names = {s["name"] for s in cat["skills"]["skills"] if not s.get("exotic")}
+            projection.skills = {
+                name: rating for name, rating in derived["skill_totals"].items() if name in active_names
+            }
+            projection.skill_groups = {}
+            from ..models import ExoticSkillInstall
+
+            projection.exotic_skills = [
+                ExoticSkillInstall(**{k: row[k] for k in ("id", "skill_name", "extra", "rating")})
+                for row in derived.get("exotic_skills") or []
+            ]
+            projection.knowledge_skills = {
+                row["name"]: row["rating"] for row in derived.get("knowledge_skills") or [] if not row.get("native")
+            }
+            projection.native_languages = [
+                row["name"] for row in derived.get("knowledge_skills") or [] if row.get("native")
+            ]
+            section(root, projection, names, ctx)
+        else:
+            section(root, state, names, ctx)
 
     xml = ET.tostring(root, encoding="utf-8")
     # our own serialisation, not input

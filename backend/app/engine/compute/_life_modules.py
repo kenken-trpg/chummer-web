@@ -29,6 +29,7 @@ FIELDS = (
     "skill_specializations",
     "contacts",
     "quality_ids",
+    "exotic_skills",
 )
 
 
@@ -107,6 +108,12 @@ def prepare(ctx: Ctx) -> None:
         index = row["occurrence"]
         # Choice keys retain the original positions, including rejected entries.
         for grant in row["grants"]:
+            if ctx.state.life_module_rules_version == 2 and grant["kind"] in {
+                "skills",
+                "skill_groups",
+                "knowledge_skills",
+            }:
+                continue
             name = grant["name"]
             if not name:
                 key = f"{index}:{grant['choice']}"
@@ -296,6 +303,11 @@ def price(ctx: Ctx) -> None:
         rules=ctx.effects.get("attribute_karma_cost"),
         minimums={key: int(spec["min"]) for key, spec in ctx.attrs_spec.items()},
     )
+    if ctx.state.life_module_rules_version == 2:
+        from ._life_module_skills import price
+
+        price(ctx)
+        return
     group_floors: dict[str, int] = {}
     for skill in ctx.data["skills"]["skills"]:
         name = skill["name"]
