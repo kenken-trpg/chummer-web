@@ -188,13 +188,76 @@ LIMIT_KIND_ALIASES = {
     "social": "social",
     "sociallimit": "social",
 }
-#: Chummer's condition tokens -> our dictionary keys. An unlisted token falls
-#: through as itself, which renders as itself (`app.notices`) — the same
-#: visible-but-harmless fallback the key had before it was a key.
+#: Chummer's condition tokens -> our dictionary keys.
+#:
+#: The tokens are what the data files carry (`<condition>LimitCondition_Visible`),
+#: and an unmapped one used to fall through as itself — so a character in an
+#: Armanté Suit read "社交リミット +2（LimitCondition_Visible）", in either
+#: locale, since neither dictionary had the token either. The vendored data names
+#: 55 of them and three were mapped, so all of them are listed here and
+#: `test_limit_conditions.py` fails when the data names one this does not.
+#:
+#: Upstream's own `lang/ja-jp.xml` leaves these strings in English, so the
+#: Japanese is ours. Skill names follow the translation overlay — Gymnastics is
+#: 体術, Sneaking is 忍び歩き — and specialisations stay in English, which is how
+#: the skills tab and the sheet show them.
 LIMIT_CONDITION_KEYS = {
-    "LimitCondition_TestSneakingThermal": "engine.limitCond.sneakingThermal",
-    "LimitCondition_SkillsActiveSneaking": "engine.limitCond.sneakingThermal",
+    "LimitCondition_AttribSkillINT": "engine.limitCond.attrIntSkills",
+    "LimitCondition_AttribSkillLOG": "engine.limitCond.attrLogSkills",
+    "LimitCondition_BunkerGearVisible": "engine.limitCond.bunkerGearVisible",
+    "LimitCondition_ClimbingTests": "engine.limitCond.climbing",
+    "LimitCondition_CorporationVisible": "engine.limitCond.corporationVisible",
+    "LimitCondition_CyberwareBalanceTail": "engine.limitCond.balanceTail",
+    "LimitCondition_CyberwareCyberfins": "engine.limitCond.cyberfins",
+    "LimitCondition_CyberwareFootAnchor": "engine.limitCond.footAnchor",
+    "LimitCondition_CyberwareHydraulicJacks": "engine.limitCond.hydraulicJacks",
+    "LimitCondition_CyberwareMonkeyFoot": "engine.limitCond.monkeyFoot",
+    "LimitCondition_CyberwareRaptorFoot": "engine.limitCond.raptorFoot",
+    "LimitCondition_CyberwareSnakeFingers": "engine.limitCond.snakeFingers",
+    "LimitCondition_ExcludeFansGangers": "engine.limitCond.excludeFansGangers",
+    "LimitCondition_ExcludeIntimidation": "engine.limitCond.excludeIntimidation",
+    "LimitCondition_ExcludeIntimidationVisible": "engine.limitCond.excludeIntimidationVisible",
+    "LimitCondition_GangVisible": "engine.limitCond.gangVisible",
+    "LimitCondition_GearAutopicker": "engine.limitCond.autopicker",
+    "LimitCondition_InUse": "engine.limitCond.inUse",
+    "LimitCondition_Intimidation": "engine.limitCond.intimidation",
+    "LimitCondition_IntimidationVisible": "engine.limitCond.intimidationVisible",
+    "LimitCondition_Megacorp": "engine.limitCond.megacorp",
+    "LimitCondition_NationalLanguageRanks": "engine.limitCond.nationalLanguageRanks",
+    "LimitCondition_PublicVisible": "engine.limitCond.publicVisible",
+    "LimitCondition_QualityChatty": "engine.limitCond.chatty",
+    "LimitCondition_QualityTrustworthy": "engine.limitCond.trustworthy",
+    "LimitCondition_ShieldPhysicalPenalty": "engine.limitCond.shieldInTheWay",
+    "LimitCondition_SkillGroupStealth": "engine.limitCond.stealthGroup",
+    "LimitCondition_SkillGroupStealthNaked": "engine.limitCond.stealthGroupNaked",
+    "LimitCondition_SkillsActiveDisguiseImpersonation": "engine.limitCond.disguiseImpersonation",
+    "LimitCondition_SkillsActiveEscapeArtist": "engine.limitCond.escapeArtist",
+    "LimitCondition_SkillsActiveEscapeArtistGrappleLoose": "engine.limitCond.escapeArtistGrappleLoose",
+    "LimitCondition_SkillsActiveFirstAidMedicine": "engine.limitCond.firstAidMedicine",
+    "LimitCondition_SkillsActiveGymnasticsClimbing": "engine.limitCond.gymnasticsClimbing",
+    "LimitCondition_SkillsActiveLeadership": "engine.limitCond.leadership",
+    "LimitCondition_SkillsActiveNavigation": "engine.limitCond.navigation",
+    "LimitCondition_SkillsActivePerception": "engine.limitCond.perception",
+    "LimitCondition_SkillsActivePerceptionHearing": "engine.limitCond.perceptionHearing",
+    "LimitCondition_SkillsActivePerceptionSpatialRecognizer": "engine.limitCond.perceptionSoundSource",
+    "LimitCondition_SkillsActivePerceptionVisual": "engine.limitCond.perceptionVisual",
+    "LimitCondition_SkillsActivePerformance": "engine.limitCond.performance",
+    "LimitCondition_SkillsActivePerformanceSinging": "engine.limitCond.performanceSinging",
+    "LimitCondition_SkillsActivePerformanceSynthtrument": "engine.limitCond.performanceSynthtrument",
+    "LimitCondition_SkillsActiveSneaking": "engine.limitCond.sneaking",
+    "LimitCondition_SkillsActiveSneakingNaked": "engine.limitCond.sneakingNaked",
+    "LimitCondition_SkillsActiveSneakingVisible": "engine.limitCond.sneakingVisible",
+    "LimitCondition_SkillsActiveSwimming": "engine.limitCond.swimming",
+    "LimitCondition_SkillsKnowledgeAcademic": "engine.limitCond.knowledgeAcademic",
+    "LimitCondition_SkillsKnowledgeScientificTechnical": "engine.limitCond.knowledgeScientificTechnical",
     "LimitCondition_Skillwires": "engine.limitCond.skillwires",
+    "LimitCondition_SportsFans": "engine.limitCond.sportsFans",
+    "LimitCondition_SportsRivals": "engine.limitCond.sportsRivals",
+    "LimitCondition_Sprawl": "engine.limitCond.sprawl",
+    "LimitCondition_TestSneakingThermal": "engine.limitCond.sneakingThermal",
+    "LimitCondition_TestSpeech": "engine.limitCond.speech",
+    "LimitCondition_TestsEndurance": "engine.limitCond.endurance",
+    "LimitCondition_Visible": "engine.limitCond.visible",
 }
 
 ATTR_ALIASES = {

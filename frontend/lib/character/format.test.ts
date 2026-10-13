@@ -351,7 +351,7 @@ describe("limitModifierLine", () => {
       testUi,
     );
 
-    expect(line).toContain("（スキルワイヤ）");
+    expect(line).toContain("（スキルワイヤ使用時のみ）");
   });
 
   it("is empty for none", () => {
