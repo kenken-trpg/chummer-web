@@ -1,31 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { BookInfo, Catalog, Character, CharacterSettings, SettingsPreset } from "@/lib/types";
-import { buildMethodPatch } from "@/lib/character/build-method";
-import {
-  loadSettingsFiles,
-  removeSettingsFile,
-  saveSettingsFile,
-} from "@/lib/character/settings-store";
-import { api, type MergeResult } from "@/lib/api";
-import { groupChanges } from "@/lib/character/merge-summary";
-import {
-  CustomDataShapeError,
-  readStyleFolder,
-  readStyleZip,
-  recallFolder,
-  rememberFolder,
-  type CustomDataFiles,
-  type StyleFolder,
-} from "@/lib/character/customdata-store";
-import { ZipError } from "@/lib/character/zip";
-import { errorMessage } from "@/lib/errors";
-import { splitKnobs } from "@/lib/settings-knobs";
-import { useLocale, type UiFn } from "@/lib/i18n";
-
-/** The core rulebook, which "all off" keeps. */
-const CORE_BOOK = "SR5";
+import type { Catalog, Character } from "@/lib/types";
+import { BookChecklist } from "@/components/character/ruleset/BookChecklist";
+import { MergeSummary } from "@/components/character/ruleset/MergeSummary";
+import { UnsupportedKnobs } from "@/components/character/ruleset/UnsupportedKnobs";
+import { useRulesetLoader } from "@/lib/character/useRulesetLoader";
+import type { UiFn } from "@/lib/i18n";
 
 /**
  * The ruleset pulldown: which settings the character is built under, and which
@@ -34,7 +15,8 @@ const CORE_BOOK = "SR5";
  * Two sources feed it — Chummer's shipped presets, which come with the catalog,
  * and settings files the user loaded from their own Chummer folder, which live
  * in this browser (`settings-store`). Picking either applies its books, its
- * build method and its house-rule numbers.
+ * build method and its house-rule numbers; `useRulesetLoader` is where that
+ * happens.
  *
  * A published ruleset is one folder holding `settings/` and `customdata/`, so
  * that folder is what the load button asks for: every settings file in it
@@ -59,205 +41,29 @@ export function SettingsPicker({
   patch: (body: Record<string, unknown>) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
-  const [merge, setMerge] = useState<MergeResult | null>(null);
-  const [detail, setDetail] = useState(false);
   const folderRef = useRef<HTMLInputElement>(null);
-  // The last folder's files, so a second ruleset from the same pick merges
-  // without another trip through the file dialog. Null until one is picked or
-  // `recallFolder` finds the previous session's.
-  const [folder, setFolder] = useState<CustomDataFiles | null>(null);
-  // Read once, lazily — the same shape as `useSheetLayout`. `loadSettingsFiles`
-  // swallows a missing / disabled store, so a prerender just sees none.
-  const [files, setFiles] = useState<CharacterSettings[]>(loadSettingsFiles);
-  const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const presets = catalog.settings_presets || [];
   const allBooks = catalog.books || [];
-  const [locale] = useLocale();
-  // By id, not `tr(name)`: that table also holds the program ロックダウン, which
-  // turned the untranslated supplement Lockdown into katakana.
-  const bookTitle = (book: BookInfo) =>
-    locale === "ja" && book.name_ja ? book.name_ja : tr(book.name);
+  const { files, error, merge, onPick, onFile, onFolder, onForget } = useRulesetLoader({
+    character: ch,
+    presets,
+    ui,
+    patch,
+  });
   const books = ch.settings?.books || [];
   const name = ch.settings?.name || "";
-  const unsupported = ch.settings?.unsupported || [];
-  const { loud, quiet } = splitKnobs(unsupported, ui);
   const known = presets.some((p) => p.name === name) || files.some((f) => f.name === name);
   // A settings file that names custom-data directories is unusable without
   // them: every entry they add or re-source is simply missing until the
   // folder is here.
   const needsCustomData = (ch.settings?.customdata || []).length > 0;
 
-  /**
-   * Apply a ruleset, merging its custom data when the folder is already here.
-   *
-   * The dataset hash is per settings file, not per folder: two files in one
-   * pick enable different directories, so each needs its own merge. Waiting
-   * for it keeps the character from being patched twice.
-   */
-  async function apply(
-    settings: CharacterSettings,
-    method?: string | null,
-    /** The custom data in hand, when a pick just produced it. Otherwise the
-     *  one from the last pick is found again. `folder` is React state, so a
-     *  pick cannot read back what it set a line earlier. */
-    picked?: CustomDataFiles,
-  ): Promise<void> {
-    const base = { ...(method ? buildMethodPatch(method, ch) : {}) };
-    const wanted = settings.customdata || [];
-    const files = wanted.length > 0 ? (picked ?? folder ?? (await recallFolder())) : null;
-    if (!files) {
-      await patch({ ...base, settings });
-      return;
-    }
-    setFolder(files);
-    try {
-      await patch({ ...base, settings: { ...settings, ...(await merged(files, wanted)) } });
-    } catch (e) {
-      // The ruleset still applies — it is the custom data that did not, and
-      // the missing-data line below says so.
-      await patch({ ...base, settings });
-      setError(errorMessage(e, ui, "settings.customDataFailed"));
-    }
-  }
-
-  /** Merge `wanted` out of `files` and report it. Returns the hash to carry. */
-  async function merged(files: CustomDataFiles, wanted: string[]): Promise<{ dataset: string }> {
-    const res = await api.uploadCustomData(files, wanted);
-    setMerge(res);
-    setDetail(false);
-    return { dataset: res.dataset };
-  }
-
-  function onPick(picked: string) {
-    if (!picked) {
-      // Back to unrestricted, and back to the printed SR5 numbers: a bare
-      // `{name, books}` leaves every knob unset, which is what unset means.
-      void patch({ settings: { name: "", books: [] } });
-      return;
-    }
-    setError(null);
-    setMerge(null);
-    const file = files.find((f) => f.name === picked);
-    if (file) {
-      void apply(file);
-      return;
-    }
-    const preset = presets.find((p) => p.name === picked);
-    if (preset) void apply(presetSettings(preset), preset.build_method);
-  }
-
-  /** One picked file: a settings `.xml`, or a `.zip` of the whole folder. */
-  async function onFile(file: File) {
-    if (file.name.toLowerCase().endsWith(".zip")) {
-      await onZip(file);
-      return;
-    }
-    setError(null);
-    setMerge(null);
-    try {
-      const { settings, build_method } = await api.parseSettings(await file.arrayBuffer());
-      setFiles(saveSettingsFile(settings));
-      await apply(settings, build_method);
-    } catch (e) {
-      setError(errorMessage(e, ui, "settings.loadFailed"));
-    }
-  }
-
-  /**
-   * The same folder, zipped.
-   *
-   * Android's Chrome does not implement `webkitdirectory`, so on a phone the
-   * folder button opens nothing usable and a ruleset that names custom data
-   * cannot be loaded at all. A zip goes through an ordinary file input, which
-   * every browser has.
-   */
-  async function onZip(file: File) {
-    setError(null);
-    setMerge(null);
-    try {
-      await applyStyle(await readStyleZip(await file.arrayBuffer()));
-    } catch (e) {
-      setError(
-        e instanceof ZipError
-          ? ui(e.reason === "not-a-zip" ? "settings.zipNotAZip" : "settings.zipUnsupported")
-          : styleError(e),
-      );
-    }
-  }
-
-  /**
-   * A whole ruleset folder: every settings file in it, and the custom data.
-   *
-   * All of the settings files join the pulldown, because that is what the
-   * folder offers — but only one can be applied, and picking for the user
-   * would be a guess. One file applies itself; several leave the choice in
-   * the pulldown, with the folder already here so the choice merges.
-   */
-  async function onFolder(list: readonly File[]) {
-    setError(null);
-    setMerge(null);
-    try {
-      await applyStyle(await readStyleFolder(list));
-    } catch (e) {
-      setError(styleError(e));
-    }
-  }
-
-  /** A ruleset that arrived whole, however it arrived. */
-  async function applyStyle(pick: StyleFolder) {
-    // An empty object is "this pick had no custom data", not "here is none" —
-    // passing it on would shadow the folder from the previous pick.
-    const picked = Object.keys(pick.customdata).length > 0 ? pick.customdata : undefined;
-    if (picked) {
-      setFolder(picked);
-      await rememberFolder(picked);
-    }
-    let loaded: CharacterSettings[] = [];
-    let first: { settings: CharacterSettings; build_method: string | null } | null = null;
-    for (const file of pick.settings) {
-      const parsed = await api.parseSettings(new TextEncoder().encode(file.text).buffer);
-      loaded = saveSettingsFile(parsed.settings);
-      first ??= parsed;
-    }
-    if (loaded.length > 0) setFiles(loaded);
-    if (pick.settings.length === 1 && first) {
-      await apply(first.settings, first.build_method, picked);
-      return;
-    }
-    // No settings half — a bare `customdata/` pick for the ruleset already
-    // applied, which is the pre-folder way of doing it and still works.
-    const wanted = ch.settings?.customdata || [];
-    if (pick.settings.length === 0 && wanted.length > 0) {
-      await patch({
-        settings: {
-          ...(ch.settings || { name: "", books: [] }),
-          ...(await merged(pick.customdata, wanted)),
-        },
-      });
-    }
-  }
-
-  function styleError(e: unknown): string {
-    return e instanceof CustomDataShapeError
-      ? ui("settings.customDataNotAFolder")
-      : errorMessage(e, ui, "settings.customDataFailed");
-  }
-
-  function onForget(target: string) {
-    setFiles(removeSettingsFile(target));
-    if (name === target) void patch({ settings: { name: "", books: [] } });
-  }
-
   function setBooks(next: string[]) {
     // Deviating from a ruleset makes it the character's own. The numeric knobs
     // are kept — only the books and the name are the user's edit here.
     void patch({ settings: { ...(ch.settings || { books: [] }), name: "", books: next } });
-  }
-
-  function toggleBook(code: string) {
-    setBooks(books.includes(code) ? books.filter((c) => c !== code) : [...books, code]);
   }
 
   return (
@@ -383,148 +189,12 @@ export function SettingsPicker({
           </button>
         </p>
       ) : null}
-      {merge ? (
-        <>
-          <p className="muted">
-            {ui("settings.customDataApplied", { count: merge.applied })}
-            {merge.skipped.length > 0
-              ? ` ・ ${ui("settings.customDataSkipped", {
-                  count: merge.skipped.length,
-                  items: merge.skipped.map((s) => `${s.source}: ${s.reason}`).join(" / "),
-                })}`
-              : ""}
-            {merge.ignored.length > 0
-              ? ` ・ ${ui("settings.customDataIgnored", { files: merge.ignored.join(", ") })}`
-              : ""}
-            {merge.changes.length > 0 ? (
-              <>
-                {" ・ "}
-                <button
-                  className="linklike"
-                  onClick={() => setDetail(!detail)}
-                  aria-expanded={detail}
-                >
-                  {ui(detail ? "settings.mergeHide" : "settings.mergeShow")}
-                </button>
-              </>
-            ) : null}
-          </p>
-          {detail ? <MergeDetail merge={merge} ui={ui} /> : null}
-        </>
-      ) : null}
-      {loud.length > 0 ? (
-        // A warning rather than a muted aside: these are the knobs whose
-        // absence makes a number here disagree with Chummer, and the tag names
-        // this used to print could not be told apart from the harmless ones.
-        <div className="notice notice-warn">
-          {ui("settings.unsupportedHere", { count: loud.length })}
-          <ul style={{ margin: "4px 0 0", paddingLeft: "1.2em" }}>
-            {loud.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {quiet.length > 0 ? (
-        <p className="muted">
-          {ui("settings.unsupportedHarmless", {
-            count: quiet.length,
-            items: quiet.join(" / "),
-          })}
-        </p>
-      ) : null}
+      {merge ? <MergeSummary merge={merge} ui={ui} /> : null}
+      <UnsupportedKnobs unsupported={ch.settings?.unsupported || []} ui={ui} />
 
       {open ? (
-        <>
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button
-              className="btn"
-              onClick={() => setBooks(allBooks.map((book) => book.code))}
-              title={ui("settings.booksAllOnHint")}
-            >
-              {ui("settings.booksAllOn")}
-            </button>
-            <button
-              className="btn"
-              // An empty list means "unrestricted", so switching everything
-              // off keeps the core rulebook: that is the fewest books a
-              // character can be built from.
-              onClick={() => setBooks([CORE_BOOK])}
-              title={ui("settings.booksAllOffHint")}
-            >
-              {ui("settings.booksAllOff")}
-            </button>
-          </div>
-          <div className="book-grid" style={{ marginTop: 8 }}>
-            {allBooks.map((book) => (
-              <label key={book.code} className="book-check">
-                <input
-                  type="checkbox"
-                  checked={books.includes(book.code)}
-                  onChange={() => toggleBook(book.code)}
-                />
-                <span>
-                  {bookTitle(book)} <span className="muted">({book.code})</span>
-                </span>
-              </label>
-            ))}
-          </div>
-          <p className="muted">{ui("settings.booksNote")}</p>
-        </>
+        <BookChecklist books={books} allBooks={allBooks} onSet={setBooks} tr={tr} ui={ui} />
       ) : null}
     </div>
   );
-}
-
-/**
- * What the merge actually did, grouped.
- *
- * The point is to let a table check a pack against what it claims: a group
- * reading "qualities.xml ・ source, page ・ 21" is a re-labelling of entries
- * the app already had, and one reading "martialarts.xml ・ added ・ 57" is new
- * game content. Entry names are listed so the check can go further than the
- * shape.
- */
-function MergeDetail({ merge, ui }: { merge: MergeResult; ui: UiFn }) {
-  return (
-    <div className="merge-detail">
-      <table>
-        <tbody>
-          {groupChanges(merge.changes).map((group) => (
-            <tr key={group.key}>
-              <td className="merge-file">{group.file}</td>
-              <td className="merge-what">
-                {group.action === "edited"
-                  ? ui("settings.mergeEdited", { fields: group.fields.join(", ") })
-                  : ui(group.action === "added" ? "settings.mergeAdded" : "settings.mergeRemoved")}
-              </td>
-              <td className="merge-count">{ui("settings.mergeCount", { count: group.count })}</td>
-              <td className="muted">{group.entries.join("、")}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {merge.truncated ? <p className="muted">{ui("settings.mergeTruncated")}</p> : null}
-    </div>
-  );
-}
-
-/**
- * The settings a preset changes. Only the knobs it moves off the printed SR5
- * values are written — the same rule the .chum5 import follows — so Standard
- * stays a bare `{name, books}`. Without them, picking Prime Runner kept
- * Standard's priority rows, quality cap and 10-point karma-to-nuyen cap.
- */
-function presetSettings(preset: SettingsPreset): CharacterSettings {
-  const out: CharacterSettings = { name: preset.name, books: [...preset.books] };
-  if (preset.priority_table && preset.priority_table !== "Standard") {
-    out.priority_table = preset.priority_table;
-  }
-  if (preset.quality_karma_limit != null && preset.quality_karma_limit !== 25) {
-    out.quality_karma_limit = preset.quality_karma_limit;
-  }
-  if (preset.nuyen_max_bp != null && preset.nuyen_max_bp !== 10) {
-    out.priority_karma_nuyen_base = preset.nuyen_max_bp;
-  }
-  return out;
 }

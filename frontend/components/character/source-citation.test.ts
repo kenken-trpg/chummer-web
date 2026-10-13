@@ -31,7 +31,7 @@ function sourceFiles(dir: string): string[] {
 /** A `.source` that is not a book, and why. These are interpolated the plain
  *  way on purpose; everything else must go through `sourceBit`. */
 const NOT_A_BOOK: Record<string, string> = {
-  "components/character/SettingsPicker.tsx": "a skipped settings key, not a rulebook",
+  "components/character/ruleset/MergeSummary.tsx": "a skipped settings key, not a rulebook",
 };
 
 /** `{item.source}` or `${item.source}` — the spelling that drops the page. */

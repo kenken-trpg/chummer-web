@@ -1,23 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { HelpTip } from "@/components/help/HelpTip";
 import { PickerFootnote } from "@/components/character/CatalogPicker";
-import { filterByBooks, useAllowedBooks, sourceText } from "@/lib/character/books";
+import { filterByBooks, useAllowedBooks } from "@/lib/character/books";
 import type { TabPanelProps } from "@/components/character/types";
 import { MentorPicker } from "@/components/character/MentorPicker";
-import { SkillPickSelects } from "@/components/character/SkillPickSelects";
-import { QualityExtraEditor } from "@/components/character/tabs/qualities/QualityExtraEditor";
+import { OwnedQualityRow } from "@/components/character/tabs/qualities/OwnedQualityRow";
+import { QualityKarmaSummary } from "@/components/character/tabs/qualities/QualityKarmaSummary";
+import { QualityPickerRow } from "@/components/character/tabs/qualities/QualityPickerRow";
 import { mergeRatings } from "@/lib/character/format";
-import { critterPowerRow } from "@/lib/spell-terms";
-import {
-  dropSkillPicksForPrefix,
-  qualityBlockReason,
-  qualityDisplayRows,
-  qualityLevelMax,
-  setQualityLevel,
-  type QualityReqCtx,
-} from "@/lib/character/quality";
+import { qualityDisplayRows, type QualityReqCtx } from "@/lib/character/quality";
+
+/** The four chips above the search box. "Metagenic" cuts across the other
+ *  two rather than being a third category of its own. */
+const FILTERS = [
+  ["all", "common.all"],
+  ["Positive", "qual.filter.positive"],
+  ["Negative", "qual.filter.negative"],
+  ["Metagenic", "qual.filter.metagenic"],
+] as const;
+
+type Filter = (typeof FILTERS)[number][0];
 
 export function QualitiesTab({
   catalog,
@@ -31,8 +34,7 @@ export function QualitiesTab({
   setCharacter,
 }: TabPanelProps) {
   const [qSearch, setQSearch] = useState("");
-  const [qLevels, setQLevels] = useState<Record<string, number>>({});
-  const [qCat, setQCat] = useState<"all" | "Positive" | "Negative" | "Metagenic">("all");
+  const [qCat, setQCat] = useState<Filter>("all");
   // This tab writes its own list rather than using `<CatalogPicker>`, and so
   // had never applied the settings' book list: with Chrome Flesh switched off,
   // 「プロトタイプ・トランスヒューマン」 still turned up in the search and could
@@ -69,10 +71,10 @@ export function QualitiesTab({
     essence: d.essence,
     essLost: (d.essence_lost_cyber || 0) + (d.essence_lost_bio || 0),
   };
-  const catalogById = useMemo(() => {
-    const map = new Map((catalog.qualities || []).map((item) => [item.id, item]));
-    return map;
-  }, [catalog.qualities]);
+  const catalogById = useMemo(
+    () => new Map((catalog.qualities || []).map((item) => [item.id, item])),
+    [catalog.qualities],
+  );
   const ownedFromDerived = qualityDisplayRows(d.qualities || [], catalog.qualities);
   // SR5 p.107: after chargen a positive quality costs twice, and buying a
   // negative one off costs twice what it gave (`double_career: false` opts out)
@@ -100,222 +102,28 @@ export function QualitiesTab({
           paragon={Boolean(d.needs_paragon)}
         />
       ) : null}
-      {/* a career buy-off can take the pool below zero; say so where it happened */}
-      <p className={`muted${d.karma.remaining < 0 ? " errors" : ""}`}>
-        {ui("common.karmaPool", { remaining: d.karma.remaining, pool: d.karma.pool })}
-        {d.karma.remaining < 0
-          ? ` ・ ${ui("engine.karma.negative", { karma: d.karma.remaining })}`
-          : ""}
-        {" ・ "}
-        <HelpTip
-          label={ui("help.open", { label: ui("qual.negativeKarma", { used: "" }).trim() })}
-          lines={[
-            { label: ui("help.quality.positive") },
-            { label: ui("help.quality.negative") },
-            { label: ui("help.quality.career") },
-          ]}
-        >
-          {ui("qual.negativeKarma", { used: d.karma.negative?.used || 0 })}
-        </HelpTip>
-        {d.karma.negative?.max == null ? "" : `/${d.karma.negative.max}`}
-        {d.career ? ` ・ ${ui("qual.career")}` : ""}
-      </p>
-      {d.metagenic &&
-      (d.metagenic.limit > 0 || d.metagenic.positive > 0 || d.metagenic.negative > 0) ? (
-        <p className={`muted${d.metagenic.balanced ? "" : " errors"}`}>
-          {ui("qual.metagenic", {
-            positive: d.metagenic.positive,
-            negative: d.metagenic.negative,
-          })}
-          {d.metagenic.limit > 0
-            ? ui("qual.metagenicLimit", { limit: d.metagenic.limit })
-            : ui("qual.metagenicNoChangeling")}
-          {d.metagenic.balanced ? "" : ui("qual.metagenicUnbalanced")}
-        </p>
-      ) : null}
+      <QualityKarmaSummary d={d} ui={ui} />
       {ownedFromDerived.length ? (
         <>
           <h3>{ui("qual.owned")}</h3>
           {ownedFromDerived.map((q, idx) => (
-            <div className="quality-item" key={`owned-${q.id}-${idx}`}>
-              <div>
-                <b>
-                  {tr(q.name)}
-                  {q.level != null ? ` Lv${q.level}` : ""}
-                </b>
-                <div className="muted">
-                  {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
-                  / {ui("qual.karmaLabel")} {q.karma}
-                  {q.karma_base != null && q.karma_base !== q.karma
-                    ? ui("qual.karmaBase", { base: q.karma_base })
-                    : ""}
-                  {q.side
-                    ? ` / ${
-                        q.side === "Left"
-                          ? ui("common.left")
-                          : q.side === "Right"
-                            ? ui("common.right")
-                            : q.side
-                      }`
-                    : ""}
-                  {q.free ? ui("qual.freeAttached") : ""}
-                  {q.origin === "Metatype"
-                    ? ` / ${ui("meta.innate", { name: tr(q.origin_name || ch.metatype) })}`
-                    : ""}
-                  {q.disabled_by ? ui("qual.disabledBy", { ware: tr(q.disabled_by) }) : ""}
-                  {q.career_cost == null
-                    ? careerPricing && !q.free && q.category === "Negative"
-                      ? ui("qual.buyoffHint", { cost: -q.karma * careerMult(q.id) })
-                      : ""
-                    : q.career_cost > 0
-                      ? ui("qual.careerTaken", { cost: q.career_cost })
-                      : ui("qual.careerTakenNegative")}
-                </div>
-                {/* Everything this quality still needs decided — a level, an
-                    addiction's substance, a skill pick, an optional power —
-                    plus the powers it brings. Indented as one block so a row
-                    like "依存症" and the select that says what it is for read
-                    as one item rather than two neighbours. Empty for most
-                    qualities, and `:empty` hides the rule then. */}
-                <div className="quality-extras">
-                  {q.level != null && !q.free && catalogById.has(q.id) ? (
-                    <label>
-                      {ui("qual.level")}{" "}
-                      <select
-                        aria-label={ui("qual.ownedLevel", { name: tr(q.name) })}
-                        value={q.level}
-                        onChange={(e) =>
-                          patch({
-                            quality_ids: setQualityLevel(
-                              ch.quality_ids,
-                              q.id,
-                              Number(e.target.value),
-                            ),
-                          })
-                        }
-                      >
-                        {Array.from(
-                          {
-                            length: Math.max(
-                              q.level,
-                              qualityLevelMax(
-                                catalogById.get(q.id)!,
-                                ch.quality_ids,
-                                catalog.qualities,
-                              ),
-                            ),
-                          },
-                          (_, i) => i + 1,
-                        ).map((level) => (
-                          <option
-                            key={level}
-                            value={level}
-                            disabled={
-                              level > q.level! &&
-                              !!qualityBlockReason(catalogById.get(q.id)!, qualityCtx, ui)
-                            }
-                          >
-                            Lv{level}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-                  <SkillPickSelects
-                    slots={(d.skill_pick_slots || []).filter(
-                      (slot) => slot.source_kind === "quality" && slot.source_id === q.id,
-                    )}
-                    tr={tr}
-                    onPick={(key, skill) =>
-                      patch({ skill_picks: { ...(ch.skill_picks || {}), [key]: skill } })
-                    }
-                  />
-                  <QualityExtraEditor
-                    q={q}
-                    ch={ch}
-                    d={d}
-                    tr={tr}
-                    trGroup={trGroup}
-                    t={t}
-                    ui={ui}
-                    patch={patch}
-                    setCharacter={setCharacter}
-                    catalog={catalog}
-                    catalogById={catalogById}
-                  />
-                  {q.optional_powers?.length ? (
-                    <select
-                      aria-label={`${tr(q.name)}: ${ui("qual.optionalPower")}`}
-                      value={q.optional_power || ""}
-                      onChange={(e) =>
-                        patch({
-                          quality_extras: {
-                            ...(ch.quality_extras || {}),
-                            [`${q.id}:optionalpower`]: e.target.value,
-                          },
-                        })
-                      }
-                    >
-                      <option value="">{ui("qual.optionalPower")}</option>
-                      {q.optional_powers.map((name) => (
-                        <option key={name} value={name}>
-                          {tr(name)}
-                        </option>
-                      ))}
-                    </select>
-                  ) : null}
-                  {q.critter_powers?.length ? (
-                    <div className="muted">
-                      {ui("common.powersHead")}
-                      <ul className="critter-powers">
-                        {q.critter_powers.map((power, i) => (
-                          <li key={`${power.name}-${i}`}>{critterPowerRow(power, tr, ui)}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-              {q.free ? (
-                <span className="muted">
-                  {ui(q.origin === "Metatype" ? "meta.innateFixed" : "qual.attached")}
-                </span>
-              ) : (
-                <button
-                  className="btn danger"
-                  onClick={() => {
-                    const extras = { ...(ch.quality_extras || {}) };
-                    const remaining =
-                      q.level != null ? 0 : ch.quality_ids.filter((id) => id === q.id).length - 1;
-                    if (remaining <= 0) {
-                      for (const key of Object.keys(extras)) {
-                        if (key === q.id || key.startsWith(`${q.id}:`)) delete extras[key];
-                      }
-                    }
-                    let removed = false;
-                    patch({
-                      quality_ids:
-                        q.level != null
-                          ? setQualityLevel(ch.quality_ids, q.id, 0)
-                          : ch.quality_ids.filter((id) => {
-                              if (!removed && id === q.id) {
-                                removed = true;
-                                return false;
-                              }
-                              return true;
-                            }),
-                      quality_extras: extras,
-                      skill_picks:
-                        remaining <= 0
-                          ? dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`])
-                          : ch.skill_picks,
-                    });
-                  }}
-                >
-                  {ui("common.delete")}
-                </button>
-              )}
-            </div>
+            <OwnedQualityRow
+              key={`owned-${q.id}-${idx}`}
+              q={q}
+              ch={ch}
+              d={d}
+              tr={tr}
+              trGroup={trGroup}
+              t={t}
+              ui={ui}
+              patch={patch}
+              setCharacter={setCharacter}
+              catalog={catalog}
+              catalogById={catalogById}
+              qualityCtx={qualityCtx}
+              careerPricing={careerPricing}
+              careerMult={careerMult}
+            />
           ))}
         </>
       ) : (
@@ -355,27 +163,15 @@ export function QualitiesTab({
         </p>
       ) : null}
       <div className="option-row">
-        <button className={`tab ${qCat === "all" ? "active" : ""}`} onClick={() => setQCat("all")}>
-          {ui("common.all")}
-        </button>
-        <button
-          className={`tab ${qCat === "Positive" ? "active" : ""}`}
-          onClick={() => setQCat("Positive")}
-        >
-          {ui("qual.filter.positive")}
-        </button>
-        <button
-          className={`tab ${qCat === "Negative" ? "active" : ""}`}
-          onClick={() => setQCat("Negative")}
-        >
-          {ui("qual.filter.negative")}
-        </button>
-        <button
-          className={`tab ${qCat === "Metagenic" ? "active" : ""}`}
-          onClick={() => setQCat("Metagenic")}
-        >
-          {ui("qual.filter.metagenic")}
-        </button>
+        {FILTERS.map(([value, label]) => (
+          <button
+            key={value}
+            className={`tab ${qCat === value ? "active" : ""}`}
+            onClick={() => setQCat(value)}
+          >
+            {ui(label)}
+          </button>
+        ))}
       </div>
       <input
         type="search"
@@ -385,163 +181,19 @@ export function QualitiesTab({
         onChange={(e) => setQSearch(e.target.value)}
       />
       <div className="quality-list">
-        {filteredQualities.map((q) => {
-          const ownedCount = ch.quality_ids.filter((id) => id === q.id).length;
-          const maxTakes = q.max_takes == null ? null : Number(q.max_takes ?? 1);
-          // `include_in_limit`: siblings share the limit (Indomitable: 3 across all three)
-          const siblings = new Set(q.include_in_limit || []);
-          const sharedCap = siblings.size ? q.limit_with_inclusions || maxTakes : null;
-          const sharedCount = siblings.size
-            ? ch.quality_ids.filter(
-                (id) =>
-                  id === q.id ||
-                  siblings.has(
-                    (catalog.qualities || []).find((item) => item.id === id)?.name || "",
-                  ),
-              ).length
-            : ownedCount;
-          const canAddMore =
-            (maxTakes == null || ownedCount < maxTakes) &&
-            (sharedCap == null || sharedCount < sharedCap);
-          const added = ownedCount > 0;
-          const hasLevels = !!q.has_levels;
-          const levelMax = hasLevels ? qualityLevelMax(q, ch.quality_ids, catalog.qualities) : 1;
-          const selectedLevel = Math.max(
-            1,
-            Math.min(qLevels[q.id] ?? (ownedCount || 1), levelMax || 1),
-          );
-          const increasing = hasLevels ? selectedLevel > ownedCount : canAddMore;
-          const shownKarma = q.karma * (hasLevels ? selectedLevel : 1);
-          const ownedWays = new Set(
-            (catalog.qualities || [])
-              .filter((item) => item.is_way && ch.quality_ids.includes(item.id))
-              .map((item) => item.name),
-          );
-          const replaces =
-            !added &&
-            !!q.is_way &&
-            (q.forbidden_qualities || []).some((name) => ownedWays.has(name));
-          const blocked = increasing ? qualityBlockReason(q, qualityCtx, ui) : "";
-          return (
-            <div className="quality-item" key={q.id}>
-              <div>
-                <b>{tr(q.name)}</b>
-                <div className="muted">
-                  {q.name} / {q.category === "Negative" ? ui("qual.negative") : ui("qual.positive")}{" "}
-                  / {ui("qual.karmaLabel")} {shownKarma} / {sourceText(q)}
-                  {careerPricing
-                    ? q.karma > 0
-                      ? ui("qual.careerPrice", {
-                          cost:
-                            q.karma *
-                            (hasLevels ? Math.max(0, selectedLevel - ownedCount) : 1) *
-                            (q.double_career === false ? 1 : 2),
-                        })
-                      : ui("qual.careerPriceNegative")
-                    : ""}
-                  {hasLevels
-                    ? ui("qual.maxLevel", { max: maxTakes ?? 1 })
-                    : maxTakes == null
-                      ? ui("common.repeatable")
-                      : maxTakes > 1
-                        ? ui("common.maxTakes", { max: maxTakes })
-                        : ""}
-                  {ownedCount > 0 && (maxTakes == null || maxTakes > 1)
-                    ? ui("qual.taken", { count: ownedCount })
-                    : ""}
-                  {sharedCap != null
-                    ? ui("qual.sharedLimit", {
-                        names: [...siblings].map(tr).join(ui("common.listSep")),
-                        max: sharedCap,
-                      })
-                    : ""}
-                  {q.needs_extra ? ui("qual.needsTarget") : ""}
-                  {q.is_way ? ui("qual.wayExclusive") : ""}
-                  {replaces ? ui("qual.replacesNote") : ""}
-                  {blocked ? ` / ${blocked}` : ""}
-                </div>
-              </div>
-              {hasLevels ? (
-                <label>
-                  {ui("qual.level")}{" "}
-                  <select
-                    aria-label={ui("qual.pickLevel", { name: tr(q.name) })}
-                    value={selectedLevel}
-                    disabled={levelMax < 1}
-                    onChange={(e) => setQLevels({ ...qLevels, [q.id]: Number(e.target.value) })}
-                  >
-                    {Array.from({ length: Math.max(1, levelMax) }, (_, i) => i + 1).map((level) => (
-                      <option key={level} value={level}>
-                        Lv{level}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              <button
-                className={`btn ${!hasLevels && added && !canAddMore ? "danger" : "primary"}`}
-                // full and not taken: a sibling holds the shared limit, nothing to do
-                disabled={
-                  hasLevels
-                    ? levelMax < 1 || selectedLevel === ownedCount || !!blocked
-                    : canAddMore
-                      ? !!blocked
-                      : !added
-                }
-                // the same button reads 追加 / 差替 / 削除 depending on what is
-                // already taken; say which quality it is about to act on
-                title={ui("picker.buyLabel", {
-                  name: tr(q.name),
-                  action: hasLevels
-                    ? added
-                      ? ui("qual.changeLevel")
-                      : ui("common.add")
-                    : added && !canAddMore
-                      ? ui("common.delete")
-                      : replaces
-                        ? ui("qual.replace")
-                        : ui("common.add"),
-                })}
-                onClick={() => {
-                  if (hasLevels) {
-                    if (levelMax < 1 || blocked || selectedLevel === ownedCount) return;
-                    patch({
-                      quality_ids: setQualityLevel(ch.quality_ids, q.id, selectedLevel),
-                      skill_picks: ch.skill_picks || {},
-                    });
-                    return;
-                  }
-                  if (added && !canAddMore) {
-                    const extras = { ...(ch.quality_extras || {}) };
-                    delete extras[q.id];
-                    delete extras[`${q.id}:contact`];
-                    patch({
-                      quality_ids: ch.quality_ids.filter((id) => id !== q.id),
-                      quality_extras: extras,
-                      skill_picks: dropSkillPicksForPrefix(ch.skill_picks, [`quality:${q.id}:`]),
-                    });
-                    return;
-                  }
-                  if (!canAddMore || blocked) return;
-                  patch({
-                    quality_ids: [...ch.quality_ids, q.id],
-                    skill_picks: ch.skill_picks || {},
-                  });
-                }}
-              >
-                {hasLevels
-                  ? added
-                    ? ui("qual.changeLevel")
-                    : ui("common.add")
-                  : added && !canAddMore
-                    ? ui("common.delete")
-                    : replaces
-                      ? ui("qual.replace")
-                      : ui("common.add")}
-              </button>
-            </div>
-          );
-        })}
+        {filteredQualities.map((q) => (
+          <QualityPickerRow
+            key={q.id}
+            q={q}
+            ch={ch}
+            ui={ui}
+            tr={tr}
+            patch={patch}
+            catalog={catalog}
+            qualityCtx={qualityCtx}
+            careerPricing={careerPricing}
+          />
+        ))}
         <PickerFootnote matched={matchedQualities.length} shown={filteredQualities.length} />
       </div>
     </div>
