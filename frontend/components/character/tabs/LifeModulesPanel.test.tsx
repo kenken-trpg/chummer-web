@@ -77,7 +77,7 @@ function setup(over: Parameters<typeof makeCharacter>[0] = {}) {
 }
 it("removes the second occurrence and keeps the first occurrence's choices", () => {
   const patch = setup();
-  fireEvent.click(screen.getAllByRole("button", { name: /Bounty Hunter:.*削除/ })[1]);
+  fireEvent.click(screen.getAllByRole("button", { name: /Bounty Hunter:.*Remove this module/ })[1]);
   expect(patch).toHaveBeenCalledWith({
     life_modules: ["hunter"],
     life_module_choices: { "0:0": "Seattle" },
@@ -85,7 +85,7 @@ it("removes the second occurrence and keeps the first occurrence's choices", () 
 });
 it("shifts later choices when removing an earlier occurrence", () => {
   const patch = setup();
-  fireEvent.click(screen.getAllByRole("button", { name: /Bounty Hunter:.*削除/ })[0]);
+  fireEvent.click(screen.getAllByRole("button", { name: /Bounty Hunter:.*Remove this module/ })[0]);
   expect(patch).toHaveBeenCalledWith({
     life_modules: ["hunter"],
     life_module_choices: { "0:0": "Denver" },
@@ -104,8 +104,8 @@ it("lets users inspect unsupported candidates but prevents adding them", () => {
   const patch = setup();
   fireEvent.click(screen.getByRole("radio", { name: /Complex module/ }));
   const preview = document.querySelector(".life-preview")!;
-  expect(within(preview as HTMLElement).getByText(/未対応の効果/)).toBeTruthy();
-  const add = screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement;
+  expect(within(preview as HTMLElement).getByText(/contains unsupported effects/)).toBeTruthy();
+  const add = screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement;
   expect(add.disabled).toBe(true);
   fireEvent.click(add);
   expect(patch).not.toHaveBeenCalled();
@@ -123,12 +123,12 @@ it("prevents changing history in career mode", () => {
 });
 it("shows English requirements while inspecting a candidate whose metatype does not match", () => {
   const patch = setup({ metatype: "Human" });
-  fireEvent.click(screen.getByRole("radio", { name: /Trog Life.*前提条件:.*Ork.*Troll/ }));
-  expect(screen.getByText(/前提条件:.*Ork.*Troll.*前提条件を満たしていません/).className).toBe(
+  fireEvent.click(screen.getByRole("radio", { name: /Trog Life.*Requires:.*Ork.*Troll/ }));
+  expect(screen.getByText(/Requires:.*Ork.*Troll.*Requirements are not met/).className).toBe(
     "error",
   );
   expect(
-    (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
+    (screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement).disabled,
   ).toBe(true);
   expect(patch).not.toHaveBeenCalled();
 });
@@ -137,14 +137,14 @@ it("allows an alternative metatype and the quality provided by the selected tale
   for (const name of [/Trog Life/, /Magical Education/]) {
     fireEvent.click(screen.getByRole("radio", { name }));
     expect(
-      (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement).disabled,
     ).toBe(false);
   }
 });
 it("warns about selected histories after their prerequisites stop matching", () => {
   setup({ metatype: "Human", life_modules: ["trog"] });
   expect(
-    screen.getByText(/前提条件:.*Ork.*Troll.*前提条件を満たしていません/, { selector: "p" })
+    screen.getByText(/Requires:.*Ork.*Troll.*Requirements are not met/, { selector: "p" })
       .className,
   ).toBe("error");
 });
@@ -163,7 +163,7 @@ it("labels quality details in English and saves their separate choice slot", () 
     patch,
   });
   render(<LifeModulesPanel {...props} />);
-  fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: Flashbacks Iの選択" }), {
+  fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: choose Flashbacks I" }), {
     target: { value: "Street violence" },
   });
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:q0": "Street violence" } });
@@ -195,7 +195,7 @@ it("keeps knowledge categories in English and saves category and specialization 
   );
   render(<LifeModulesPanel {...props} />);
   expect(screen.getByRole("option", { name: "Academic" })).toBeTruthy();
-  fireEvent.change(screen.getByRole("combobox", { name: "Bounty Hunter: 知識カテゴリの選択" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "Bounty Hunter: choose 知識カテゴリ" }), {
     target: { value: "Professional" },
   });
   expect(patch).toHaveBeenCalledWith({
@@ -204,7 +204,7 @@ it("keeps knowledge categories in English and saves category and specialization 
   expect(
     (
       screen.getByRole("textbox", {
-        name: "Bounty Hunter: Navigation: Specializationの選択",
+        name: "Bounty Hunter: choose Navigation: Specialization",
       }) as HTMLInputElement
     ).value,
   ).toBe("Desert");
@@ -227,7 +227,7 @@ it("suggests English place names while allowing a custom city for repeated modul
   });
   render(<LifeModulesPanel {...props} />);
   const inputs = screen.getAllByRole("combobox", {
-    name: "Bounty Hunter: 知識技能の選択",
+    name: "Bounty Hunter: choose 知識技能",
   }) as HTMLInputElement[];
   expect(inputs[0].list?.options[0].value).toBe("New Hlobane");
   expect(inputs[0].getAttribute("list")).not.toBe(inputs[1].getAttribute("list"));
@@ -269,7 +269,7 @@ it("asks for the quality level and then that level's own free text", async () =>
   render(<LifeModulesPanel {...props} />);
   fireEvent.change(
     screen.getByRole("combobox", {
-      name: "Bounty Hunter: Corporate Pariah I / Corporate Pariah IIの選択",
+      name: "Bounty Hunter: choose Corporate Pariah I / Corporate Pariah II",
     }),
     { target: { value: "Corporate Pariah II" } },
   );
@@ -277,13 +277,16 @@ it("asks for the quality level and then that level's own free text", async () =>
   await waitFor(() =>
     expect(
       screen
-        .getByRole("textbox", { name: "Bounty Hunter: Corporate Pariahの選択" })
+        .getByRole("textbox", { name: "Bounty Hunter: choose Corporate Pariah" })
         .closest("fieldset")?.disabled,
     ).toBe(false),
   );
-  fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: Corporate Pariahの選択" }), {
-    target: { value: "Ares Macrotechnology" },
-  });
+  fireEvent.change(
+    screen.getByRole("textbox", { name: "Bounty Hunter: choose Corporate Pariah" }),
+    {
+      target: { value: "Ares Macrotechnology" },
+    },
+  );
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:x2": "Ares Macrotechnology" } });
 });
 
@@ -292,19 +295,19 @@ it("names the life stage in English, because the stage is Run Faster data", () =
   // The picker label and the section heading both read from the data, so the
   // Japanese UI says "Real Life", not 実生活.
   expect(screen.getByRole("heading", { name: "Real Life" })).toBeTruthy();
-  expect(screen.getByRole("group", { name: "Real Life: 経歴を選択" })).toBeTruthy();
+  expect(screen.getByRole("group", { name: "Real Life: Choose a module" })).toBeTruthy();
   expect(screen.queryByText("実生活")).toBeNull();
 });
 
 it("filters candidates by description without hiding selected modules or their choices", () => {
   setup();
-  fireEvent.change(screen.getByRole("searchbox", { name: /経歴を検索/ }), {
+  fireEvent.change(screen.getByRole("searchbox", { name: /Search modules/ }), {
     target: { value: "  FUGITIVES  " },
   });
   expect(screen.getByRole("radio", { name: /Bounty Hunter/ })).toBeTruthy();
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "no such history" } });
   expect(screen.queryByRole("radio", { name: /Bounty Hunter/ })).toBeNull();
-  expect(screen.getByText(/検索条件に一致する経歴がありません/)).toBeTruthy();
+  expect(screen.getByText(/No modules match your search/)).toBeTruthy();
   expect(screen.getAllByText(historyModule.story)).toHaveLength(2);
   expect(screen.getAllByRole("combobox", { name: /Bounty Hunter:/ })).toHaveLength(2);
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "" } });
@@ -315,8 +318,8 @@ it("keeps book restrictions when searching and distinguishes an empty catalog fr
   setup({ settings: { books: ["SR5"] } });
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "hunter" } });
   expect(screen.queryByRole("radio", { name: /Bounty Hunter/ })).toBeNull();
-  expect(screen.queryByText(/検索条件に一致する経歴がありません/)).toBeNull();
-  expect(screen.getAllByText(/この段階の候補がありません/)).toHaveLength(5);
+  expect(screen.queryByText(/No modules match your search/)).toBeNull();
+  expect(screen.getAllByText(/No modules for this stage/)).toHaveLength(5);
 });
 
 it("lets users remove an unknown module while preserving later modules' choice positions", () => {
@@ -324,8 +327,8 @@ it("lets users remove an unknown module while preserving later modules' choice p
     life_modules: ["missing-id", "hunter"],
     life_module_choices: { "0:0": "obsolete", "1:0": "Denver" },
   });
-  expect(screen.getByText("不明なライフモジュール: missing-id")).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "missing-id: この経歴を削除" }));
+  expect(screen.getByText("Unknown Life Module: missing-id")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "missing-id: Remove this module" }));
   expect(patch).toHaveBeenCalledWith({
     life_modules: ["hunter"],
     life_module_choices: { "0:0": "Denver" },
@@ -335,20 +338,20 @@ it("lets users remove an unknown module while preserving later modules' choice p
 it("keeps unknown modules read-only in career mode", () => {
   setup({ life_modules: ["missing-id"], career: true });
   expect(
-    (screen.getByRole("button", { name: "missing-id: この経歴を削除" }) as HTMLButtonElement)
+    (screen.getByRole("button", { name: "missing-id: Remove this module" }) as HTMLButtonElement)
       .disabled,
   ).toBe(true);
 });
 
 it("collapses descriptions while keeping the module's choices available", () => {
   setup();
-  const description = screen.getAllByText("経歴の説明")[0];
+  const description = screen.getAllByText("Module description")[0];
   const details = description.closest("details")!;
   expect(details.open).toBe(false);
   expect(details.textContent).toContain(historyModule.story);
   expect(screen.getAllByRole("combobox", { name: /Bounty Hunter:/ })).toHaveLength(2);
-  expect(screen.getAllByText("未選択")).toHaveLength(4);
-  expect(screen.getByText("選択済み")).toBeTruthy();
+  expect(screen.getAllByText("Not selected")).toHaveLength(4);
+  expect(screen.getByText("Selected")).toBeTruthy();
 });
 
 it("browses candidates without saving and adds only the explicitly confirmed candidate", async () => {
@@ -358,11 +361,11 @@ it("browses candidates without saving and adds only the explicitly confirmed can
   fireEvent.click(screen.getByRole("radio", { name: /Magical Education/ }));
   expect(patch).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
-  fireEvent.click(screen.getByRole("button", { name: "この経歴を追加" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add this module" }));
   expect(patch).toHaveBeenCalledExactlyOnceWith({ life_modules: ["hunter"] });
   await waitFor(() =>
     expect(
-      (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement).disabled,
     ).toBe(true),
   );
 });
@@ -372,7 +375,7 @@ it("does not add a preview hidden by search", () => {
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
   fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Magical" } });
   expect(screen.queryByRole("radio", { name: /Bounty Hunter/ })).toBeNull();
-  const add = screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement;
+  const add = screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement;
   expect(add.disabled).toBe(true);
   fireEvent.click(add);
   expect(patch).not.toHaveBeenCalled();
@@ -390,12 +393,12 @@ it("rechecks requirements, stage capacity, and rulebooks when a preview is open"
   };
   const view = render(<LifeModulePicker {...props} />);
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
-  const add = () => screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement;
+  const add = () => screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement;
   expect(add().disabled).toBe(false);
   view.rerender(<LifeModulePicker {...props} character={makeCharacter({ metatype: "Human" })} />);
   expect(add().disabled).toBe(true);
   view.rerender(<LifeModulePicker {...props} taken />);
-  expect(screen.getByText(/この段階の経歴は選択済み/)).toBeTruthy();
+  expect(screen.getByText(/This stage already has a module/)).toBeTruthy();
   expect(add().disabled).toBe(true);
   view.rerender(<LifeModulePicker {...props} candidates={[]} />);
   expect(screen.queryByRole("heading", { name: "Bounty Hunter" })).toBeNull();
@@ -423,7 +426,7 @@ it("prevents repeated submissions while adding a candidate", async () => {
     />,
   );
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
-  const add = screen.getByRole("button", { name: "この経歴を追加" });
+  const add = screen.getByRole("button", { name: "Add this module" });
   fireEvent.click(add);
   fireEvent.click(add);
   expect(patch).toHaveBeenCalledTimes(1);
@@ -438,9 +441,9 @@ it("prevents repeated submissions while adding a candidate", async () => {
 it("prevents adding a selected adult module again", () => {
   const patch = setup({ life_modules: ["hunter"] });
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
-  const add = screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement;
+  const add = screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement;
   expect(add.disabled).toBe(true);
-  expect(screen.getByText("同じ経歴または派生版を取得済みです")).toBeTruthy();
+  expect(screen.getByText("This module or one of its versions is already taken")).toBeTruthy();
   fireEvent.click(add);
   expect(patch).not.toHaveBeenCalled();
 });
@@ -462,9 +465,9 @@ it("prevents a second Corporate version but allows a different career", () => {
   render(<LifeModulesPanel {...props} />);
   fireEvent.click(screen.getByRole("radio", { name: /Security Rigger/ }));
   expect(
-    (screen.getByRole("button", { name: "この経歴を追加" }) as HTMLButtonElement).disabled,
+    (screen.getByRole("button", { name: "Add this module" }) as HTMLButtonElement).disabled,
   ).toBe(true);
   fireEvent.click(screen.getByRole("radio", { name: /Bounty Hunter/ }));
-  fireEvent.click(screen.getByRole("button", { name: "この経歴を追加" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add this module" }));
   expect(patch).toHaveBeenCalledWith({ life_modules: ["hacker", "hunter"] });
 });

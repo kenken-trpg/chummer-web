@@ -21,16 +21,18 @@ test("life modules persist across reload and removing a module removes its grant
     "Life module regression",
   );
   // The stage name is Run Faster data, so it reads in English in the Japanese UI.
-  const picker = page.getByRole("group", { name: "Real Life: 経歴を選択" });
-  await page.getByRole("searchbox", { name: /経歴を検索/ }).fill("bounty hunter");
+  const picker = page.getByRole("group", { name: "Real Life: Choose a module" });
+  await page.getByRole("searchbox", { name: /Search modules/ }).fill("bounty hunter");
   await expect(picker.getByRole("radio")).toHaveCount(1);
   const candidate = picker.getByRole("radio", { name: /Bounty Hunter/ });
   await candidate.focus();
   await candidate.press("Space");
   await expect(candidate).toBeChecked();
-  await expect(page.getByRole("button", { name: "Bounty Hunter: この経歴を削除" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Bounty Hunter: Remove this module" })).toHaveCount(
+    0,
+  );
   await expect(picker.locator(".life-preview")).toContainText("100 Karma");
-  await picker.getByRole("button", { name: "この経歴を追加" }).click();
+  await picker.getByRole("button", { name: "Add this module" }).click();
   const saved = async () =>
     (await storedCharacters(page)).find(
       (row) => row.name === "Life module regression",
@@ -44,8 +46,10 @@ test("life modules persist across reload and removing a module removes its grant
   expect((await saved()).derived.karma.spent).toBe(100);
   await page.reload();
   await waitForEditor(page);
-  await expect(page.getByRole("button", { name: "Bounty Hunter: この経歴を削除" })).toBeVisible();
-  await page.getByRole("button", { name: "Bounty Hunter: この経歴を削除" }).click();
+  await expect(
+    page.getByRole("button", { name: "Bounty Hunter: Remove this module" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Bounty Hunter: Remove this module" }).click();
   await expect.poll(async () => (await saved())?.life_modules).toEqual([]);
   await expect.poll(async () => (await saved())?.derived?.totals?.BOD).toBe(1);
   expect((await saved()).derived.karma.spent).toBe(0);
@@ -76,10 +80,8 @@ test("life module layout keeps choices and actions inside desktop and mobile vie
   await expect(panel.getByRole("heading", { name: "SINless" })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "Bounty Hunter" })).toHaveCount(2);
   await expect(panel.locator(".life-status")).toHaveCount(2);
-  const method = await page
-    .getByRole("button", { name: "ライフモジュール", exact: true })
-    .boundingBox();
-  const heading = await panel.getByRole("heading", { name: "ライフモジュール" }).boundingBox();
+  const method = await page.getByRole("button", { name: "Life Module", exact: true }).boundingBox();
+  const heading = await panel.getByRole("heading", { name: "Life Module" }).boundingBox();
   expect(method!.y).toBeLessThan(heading!.y);
 
   for (const width of [1440, 390, 320]) {
@@ -91,10 +93,10 @@ test("life module layout keeps choices and actions inside desktop and mobile vie
     if (width <= 390) expect(second!.y).toBeGreaterThan(first!.y);
     else expect(Math.abs(second!.y - first!.y)).toBeLessThan(2);
 
-    const candidates = panel.getByRole("group", { name: "Real Life: 経歴を選択" });
+    const candidates = panel.getByRole("group", { name: "Real Life: Choose a module" });
     await candidates.getByRole("radio", { name: /Trog Professional/ }).check();
-    await expect(candidates.locator(".life-preview")).toContainText("前提条件を満たしていません");
-    await expect(candidates.getByRole("button", { name: "この経歴を追加" })).toBeDisabled();
+    await expect(candidates.locator(".life-preview")).toContainText("Requirements are not met");
+    await expect(candidates.getByRole("button", { name: "Add this module" })).toBeDisabled();
     const summary = panel.locator("summary").first();
     await summary.click();
     await expect(panel.locator("details").first()).toHaveAttribute("open", "");
@@ -167,16 +169,16 @@ test("skill overflow survives reload, career growth and undo", async ({ page, re
   await expect.poll(async () => (await saved())?.career).toBe(true);
   const spent = (await saved()).derived.karma.spent;
   await page.getByRole("button", { name: "技能", exact: true }).click();
-  const growth = page.getByRole("group", { name: "キャリアの技能成長" });
-  await growth.getByLabel("成長する技能・グループ").selectOption(source.source_skill_id);
-  await growth.getByRole("button", { name: "成長を購入" }).click();
+  const growth = page.getByRole("group", { name: "Career skill advancement" });
+  await growth.getByLabel("Skill or group to advance").selectOption(source.source_skill_id);
+  await growth.getByRole("button", { name: "Buy advancement" }).click();
   await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(8);
   expect((await saved()).derived.skill_totals.Navigation).toBe(2);
   expect((await saved()).derived.karma.spent).toBe(spent + 16);
   await page.reload();
   await waitForEditor(page);
   await page.getByRole("button", { name: "技能", exact: true }).click();
-  await page.getByRole("button", { name: "最後の技能成長を取り消す" }).click();
+  await page.getByRole("button", { name: "Undo last skill advancement" }).click();
   await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(7);
   expect((await saved()).derived.karma.spent).toBe(spent);
   expect((await saved()).life_module_transfers[0].ranks).toBe(2);
