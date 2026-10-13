@@ -1,10 +1,12 @@
 "use client";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { LifeModulePicker } from "./LifeModulePicker";
+import { LifeModuleSkillOverflow } from "./LifeModuleSkillOverflow";
 import type { MsgKey } from "@/lib/i18n";
 import type { TabPanelProps } from "@/components/character/types";
 import {
   lifeModuleAlreadyTaken,
+  lifeModuleOrderPatch,
   lifeModuleRequirementsMet,
   lifeModuleRequirementText,
 } from "@/lib/character/life-modules";
@@ -21,8 +23,22 @@ export function LifeModulesPanel({
   catalog,
   character: ch,
   ui,
-  patch,
-}: Pick<TabPanelProps, "catalog" | "character" | "ui" | "patch">) {
+  patch: rawPatch,
+  tr = (s) => s,
+}: Pick<TabPanelProps, "catalog" | "character" | "ui" | "patch"> & { tr?: TabPanelProps["tr"] }) {
+  const [pending, setPending] = useState(false);
+  const sending = useRef(false);
+  async function patch(body: Record<string, unknown>) {
+    if (sending.current) return;
+    sending.current = true;
+    setPending(true);
+    try {
+      await rawPatch(body);
+    } finally {
+      sending.current = false;
+      setPending(false);
+    }
+  }
   const rows = catalog.life_modules || [];
   const optionListId = useId();
   const [search, setSearch] = useState("");
@@ -38,21 +54,72 @@ export function LifeModulesPanel({
     (sum, id) => sum + (rows.find((row) => row.id === id)?.free_negative_qualities || 0),
     0,
   );
+  const skillResult = ch.derived.life_module_skills;
   function remove(index: number) {
-    const next: Record<string, string> = {};
-    for (const [key, value] of Object.entries(choices)) {
-      const [position, slot] = key.split(":");
-      const occurrence = Number(position);
-      if (occurrence !== index)
-        next[`${occurrence > index ? occurrence - 1 : occurrence}:${slot}`] = value;
-    }
-    void patch({ life_modules: selected.filter((_, i) => i !== index), life_module_choices: next });
+    void patch(
+      lifeModuleOrderPatch(
+        ch,
+        selected.map((_, i) => i).filter((i) => i !== index),
+      ),
+    );
+  }
+  function move(index: number, direction: number) {
+    const stage = rows.find((row) => row.id === selected[index])?.stage;
+    const neighbors = selected
+      .map((id, i) => ({ i, stage: rows.find((row) => row.id === id)?.stage }))
+      .filter((item) => item.stage === stage)
+      .map((item) => item.i);
+    const at = neighbors.indexOf(index);
+    const other = neighbors[at + direction];
+    if (other === undefined) return;
+    const order = selected.map((_, i) => i);
+    [order[index], order[other]] = [order[other], order[index]];
+    void patch(lifeModuleOrderPatch(ch, order));
   }
   return (
-    <div className="card life-modules">
+    <fieldset
+      className="card life-modules"
+      disabled={pending}
+      aria-label={ui("life.method")}
+      style={{ minWidth: 0 }}
+    >
       <h2>{ui("life.method")}</h2>
       <p className="warn">{ui("life.experimental")}</p>
       <p className="muted">{ui("life.note")}</p>
+      {skillResult && (
+        <p className="muted">
+          {ui("life.transfer.caps", {
+            active: skillResult.policy.active_cap,
+            knowledge: skillResult.policy.knowledge_cap,
+          })}
+        </p>
+      )}
+      {(ch.life_module_transfers || [])
+        .filter(
+          (transfer) =>
+            !skillResult?.pools.some(
+              (pool) =>
+                pool.entry_id === transfer.entry_id &&
+                pool.source_skill_id === transfer.source_skill_id,
+            ),
+        )
+        .map((transfer) => (
+          <div className="error" key={transfer.id}>
+            {ui("life.transfer.orphan", { ranks: transfer.ranks })}
+            <button
+              disabled={ch.career}
+              onClick={() =>
+                patch({
+                  life_module_transfers: (ch.life_module_transfers || []).filter(
+                    (row) => row.id !== transfer.id,
+                  ),
+                })
+              }
+            >
+              {ui("life.transfer.remove")}
+            </button>
+          </div>
+        ))}
       <div className="life-summary">
         <p>
           {ui("life.total", {
@@ -132,6 +199,57 @@ export function LifeModulesPanel({
                       {ui("life.remove")}
                     </button>
                   </div>
+                  {ch.life_module_rules_version === 2 && STAGES.indexOf(stage) >= 3 && (
+                    <div>
+                      <button
+                        disabled={
+                          ch.career ||
+                          !selected
+                            .slice(0, index)
+                            .some((id) => rows.find((r) => r.id === id)?.stage === stage)
+                        }
+                        onClick={() => move(index, -1)}
+                      >
+                        {ui("life.moveEarlier")}
+                      </button>
+                      <button
+                        disabled={
+                          ch.career ||
+                          !selected
+                            .slice(index + 1)
+                            .some((id) => rows.find((r) => r.id === id)?.stage === stage)
+                        }
+                        onClick={() => move(index, 1)}
+                      >
+                        {ui("life.moveLater")}
+                      </button>
+                    </div>
+                  )}
+                  {skillResult?.pools
+                    .filter((pool) => pool.entry_id === ch.life_module_entry_ids?.[index])
+                    .map((pool) => (
+                      <LifeModuleSkillOverflow
+                        key={`${pool.key}:${pool.grant_fingerprint}`}
+                        character={ch}
+                        pool={pool}
+                        ui={ui}
+                        patch={patch}
+                        tr={tr}
+                      />
+                    ))}
+                  {skillResult?.losses
+                    .filter((loss) => loss.entry_id === ch.life_module_entry_ids?.[index])
+                    .map((loss) => (
+                      <p className="warn" key={loss.skill_key}>
+                        {ui("life.transfer.loss", {
+                          name: tr(
+                            catalog.skills.skills.find((s) => `skill:${s.id}` === loss.skill_key)
+                              ?.name || "",
+                          ),
+                          count: loss.lost,
+                        })}
+                      </p>
+                    ))}
                   {row.story && (
                     <details className="life-story">
                       <summary>{ui("life.description")}</summary>
@@ -239,6 +357,6 @@ export function LifeModulesPanel({
           </section>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

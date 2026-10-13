@@ -85,10 +85,11 @@ def test_the_export_writes_the_shape_chummer_reads() -> None:
     ]
     assert {q.findtext("qualitysource") for q in modules} == {"LifeModule"}
     assert modules[0].findtext("name") == "Elves/Humans"
-    # the answers ride beside them, in the element Chummer ignores
-    assert [(c.findtext("key"), c.findtext("value")) for c in root.findall("./lifemodulechoices/choice")] == [
-        ("4:q0", "Hack on the Fly")
-    ]
+    # v2 stores typed original purchases/choices separately from baked ratings.
+    import json
+
+    assert root.find("lifemodulechoices") is None
+    assert json.loads(root.findtext("./lifemoduleskillstate/life_module_choices")) == _CHOICES
 
 
 def test_the_modules_do_not_come_back_as_ordinary_qualities() -> None:
@@ -100,14 +101,17 @@ def test_the_modules_do_not_come_back_as_ordinary_qualities() -> None:
     assert state["life_modules"] == _MODULES
 
 
-def test_a_file_chummer_wrote_is_refused_rather_than_read_without_its_picks() -> None:
+def test_a_file_without_picks_imports_as_a_career_snapshot() -> None:
     root = ET.fromstring(_XML)
     picks = root.find("lifemodulechoices")
     assert picks is not None
     root.remove(picks)
-    with pytest.raises(NoticeError) as caught:
-        chum5_to_state(ET.tostring(root))
-    assert caught.value.notice["key"] == "engine.life.chum5Unsupported"
+    state, warnings = chum5_to_state(ET.tostring(root))
+    assert state["build_method"] == "Karma"
+    assert state["career"] is True
+    assert state["life_modules"] == []
+    assert state["life_module_archive"] == _MODULES
+    assert [warning["key"] for warning in warnings] == ["engine.life.chum5Snapshot"]
 
 
 def test_an_empty_picks_element_still_marks_the_file_as_this_app_s() -> None:

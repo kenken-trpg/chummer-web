@@ -4,6 +4,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import type { LifeModuleCatalogItem } from "@/lib/types/catalog";
 import {
   lifeModuleAlreadyTaken,
+  lifeModuleAppendPatch,
   lifeModuleRequirementsMet,
   lifeModuleRequirementText,
 } from "@/lib/character/life-modules";
@@ -45,7 +46,7 @@ export function LifeModulePicker({
     adding.current = true;
     setBusy(true);
     try {
-      await patch({ life_modules: [...(character.life_modules || []), preview.id] });
+      await patch(lifeModuleAppendPatch(character, preview.id));
       setPreviewId("");
     } finally {
       adding.current = false;

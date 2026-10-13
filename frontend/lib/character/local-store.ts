@@ -20,7 +20,7 @@ const STORE = "characters";
 /** Bump when a `Character` shape change needs a read-time migration; add the
  *  transform to {@link migrate}. Records written before this field existed
  *  read back as `undefined` and are treated as v0. */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 export type StoredCharacter = {
   id: string;
@@ -29,9 +29,9 @@ export type StoredCharacter = {
   character: Character;
 };
 
-/** Upgrade a stored record to the current `Character` shape. v0 → v1 is a
- *  no-op (the field just starts being written); real transforms slot in here
- *  keyed on `rec.schemaVersion`. Exported for unit tests. */
+/** v0 → v1 adds metadata. v1 → v2 life-module normalization runs in the
+ *  server engine, which has the catalog and distinguishes creation/career.
+ *  Preserve the original inputs here until that recomputation succeeds. */
 export function migrate(rec: StoredCharacter): Character {
   return rec.character;
 }

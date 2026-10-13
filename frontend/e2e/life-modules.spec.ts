@@ -114,3 +114,70 @@ test("life module layout keeps choices and actions inside desktop and mobile vie
     await summary.click();
   }
 });
+
+test("skill overflow survives reload, career growth and undo", async ({ page, request }) => {
+  const seed = {
+    ...(await freshCharacter(request, "RF skill overflow")),
+    build_method: "LifeModule",
+    settings: { books: ["SR5", "RF"] },
+    life_modules: [
+      "b332fa10-e0f5-43aa-bb38-52cdb0060da1",
+      "06b4cc0f-3008-4209-ac32-04614a3dc354",
+      "737d188a-85b5-47d8-91f2-39863983b464",
+      "864c49cf-b44d-4c12-b70a-22228c282f2c",
+      "3fb24f67-9d15-49d8-a598-5abbea335e8b",
+    ],
+    life_module_choices: { "0:4": "Spanish", "1:5": "Seattle Streets" },
+  };
+  await page.goto("/");
+  await waitForEditor(page);
+  await page.getByLabel("読込 (JSON/.chum5/.xlsx)").setInputFiles({
+    name: "overflow.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(seed)),
+  });
+  const saved = async () =>
+    (await storedCharacters(page)).find((row) => row.name === "RF skill overflow") as unknown as {
+      career: boolean;
+      life_module_transfers: { ranks: number }[];
+      life_module_skill_advancements: unknown[];
+      derived: {
+        skill_totals: Record<string, number>;
+        karma: { spent: number };
+        life_module_skills: {
+          pools: { source_skill_id: string; candidates: { name: string; skill_id: string }[] }[];
+        };
+      };
+    };
+  const pool = page.locator(".life-overflow");
+  await expect(pool).toBeVisible();
+  const source = (await saved()).derived.life_module_skills.pools[0];
+  const navigation = source.candidates.find((c) => c.name === "Navigation")!;
+  await pool.getByLabel("移し替え先の技能").selectOption(navigation.skill_id);
+  await pool.getByLabel("移すレベル数").fill("2");
+  await pool.getByRole("button", { name: "この配分を追加" }).click();
+  await expect.poll(async () => (await saved())?.derived.skill_totals.Navigation).toBe(2);
+  expect((await saved()).derived.skill_totals.Perception).toBe(7);
+  expect((await saved()).derived.karma.spent).toBe(245);
+  await page.reload();
+  await waitForEditor(page);
+  await expect(page.locator(".life-overflow")).toContainText("+2");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "作成完了（キャリア）", exact: true }).click();
+  await expect.poll(async () => (await saved())?.career).toBe(true);
+  const spent = (await saved()).derived.karma.spent;
+  await page.getByRole("button", { name: "技能", exact: true }).click();
+  const growth = page.getByRole("group", { name: "キャリアの技能成長" });
+  await growth.getByLabel("成長する技能・グループ").selectOption(source.source_skill_id);
+  await growth.getByRole("button", { name: "成長を購入" }).click();
+  await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(8);
+  expect((await saved()).derived.skill_totals.Navigation).toBe(2);
+  expect((await saved()).derived.karma.spent).toBe(spent + 16);
+  await page.reload();
+  await waitForEditor(page);
+  await page.getByRole("button", { name: "技能", exact: true }).click();
+  await page.getByRole("button", { name: "最後の技能成長を取り消す" }).click();
+  await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(7);
+  expect((await saved()).derived.karma.spent).toBe(spent);
+  expect((await saved()).life_module_transfers[0].ranks).toBe(2);
+});

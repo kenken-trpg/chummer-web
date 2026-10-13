@@ -1,5 +1,6 @@
 import type { SkillPickSlot } from "./installs";
 import type { Notice } from "@/lib/engine-notices";
+import type { LifeModuleSkillResult } from "./life-modules";
 import type { InstalledContact, InstalledExoticSkill, InstalledMartialArt } from "./rows/character";
 import type {
   ActiveDrug,
@@ -58,6 +59,7 @@ export interface MovementMode {
  * `tests/test_derived_contract.py` keeps the two key sets honest.
  */
 export interface Derived {
+  life_module_skills?: LifeModuleSkillResult | null;
   errors: Notice[];
   warnings?: Notice[];
   build_method?: string;

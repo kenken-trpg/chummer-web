@@ -183,6 +183,7 @@
   ],
   "knowledge_rating_max": 6,
   "knowledge_skills": [],
+  "life_module_skills": null,
   "lifestyle": null,
   "lifestyle_cost_mod": 0,
   "lifestyles": [],

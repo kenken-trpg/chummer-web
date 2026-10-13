@@ -18,6 +18,7 @@ from fastapi import APIRouter, Request, Response
 
 from ..chummer_export import state_to_chum5
 from ..chummer_export.check import roundtrip_differences
+from ..chummer_export.life_module_settings import life_module_bundle
 from ..fvtt_export import state_to_fvtt
 from ..fvtt_export.check import export_omissions
 from ..models import FvttExportRequest, StateRequest
@@ -41,8 +42,14 @@ def _content_disposition(name: str, ext: str = "chum5") -> str:
 
 @router.post("/api/characters/chummer")
 @limiter.limit(_IMPORT_RATE_LIMIT)
-def export_chummer(request: Request, req: StateRequest) -> Response:
-    """Download a Chummer5a-compatible .chum5 (plain XML) for the given state."""
+def export_chummer(request: Request, req: StateRequest, bundle: bool = False) -> Response:
+    """Download XML, or a LifeModule settings bundle when requested."""
+    if bundle and req.state.build_method == "LifeModule":
+        return Response(
+            content=life_module_bundle(req.state),
+            media_type="application/zip",
+            headers={"Content-Disposition": _content_disposition(req.state.name, "zip")},
+        )
     xml = state_to_chum5(req.state)
     return Response(
         content=xml,

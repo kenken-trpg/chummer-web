@@ -16,7 +16,7 @@ from ...dataset_store import lookup
 from ...models import CharacterState
 from ...rules import rules_for, using_rules
 from ..priority import normalize_build_method
-from . import _life_modules
+from . import _life_module_skills, _life_modules
 from ._assemble_qualities import _effective_attr_spec  # noqa: F401  (re-exported via app.engine)
 from ._career import (  # noqa: F401  (re-exported via app.engine)
     career_raise_karma,
@@ -90,6 +90,7 @@ def _overlay_for(state: CharacterState) -> Overlay | None:
 
 def _compute(state: CharacterState) -> CharacterState:
     ctx = Ctx(state=state, data=catalog())
+    _life_module_skills.normalize(state)
     bootstrap(ctx)
     _life_modules.prepare(ctx)
     gather(ctx)
@@ -97,6 +98,7 @@ def _compute(state: CharacterState) -> CharacterState:
     effects_and_binders(ctx)
     essence(ctx)
     awakened(ctx)
+    _life_module_skills.prepare(ctx)
     gear_phase(ctx)
     totals(ctx)
     spells(ctx)

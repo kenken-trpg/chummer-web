@@ -6,8 +6,12 @@
 各ファイルの冒頭に**状態**を 1 行で書いてあります。1 本だけ開いた人にも
 履歴なのかどうかが分かるようにするためで、ここに戻らなくても判断できます。
 
-**現役の計画は 1 本だけです** — [`translation-plan.md`](translation-plan.md)（日本語化。
-上流訳 430 件の突き合わせなどが未着手）。残り 26 本は履歴です。
+現役の計画・設計は次のとおりです。
+
+- [`translation-plan.md`](translation-plan.md) — 日本語化。上流訳 430 件の突き合わせなどが未着手。
+- [`life-module-skill-overflow-design.md`](life-module-skill-overflow-design.md) — ライフモジュールの技能上限・超過分移し替えの詳細設計。独立した計算基盤を実装中。
+
+それ以外は原則として履歴です。
 [`fvtt-export-plan.md`](fvtt-export-plan.md) は書き出しのフィールド対応表そのものなので、
 実施済みでも仕様としては現役です。
 

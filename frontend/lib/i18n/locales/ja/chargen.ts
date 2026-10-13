@@ -3,6 +3,75 @@ export const JA_CHARGEN = {
   "engine.life.ratingCap":
     "経歴による「{name}」の付与値 {rating} が上限 {cap} を超えます。上限超過分の精算は未対応のため、この組み合わせは使用できません。",
 
+  "engine.life.skillGrantInvalid": "経歴が付与する技能「{name}」の定義を解決できません。",
+  "engine.life.skillExcessLost":
+    "「{name}」の付与は上限を超えるため、{lost}レベルは付与されません（{stage}）。",
+  "engine.life.transferPending":
+    "「{name}」の超過分を移し替えてください（残り{remaining}レベル）。",
+  "engine.life.transferOrphan":
+    "移し替え指定 {transfer} に対応する超過分がありません。指定を削除または修正してください。",
+  "engine.life.transferInvalidTarget": "移し替え指定 {transfer} の行き先が条件を満たしません。",
+  "engine.life.transferSourceChanged":
+    "「{name}」の付与条件が変わったため、移し替え先を指定し直してください。",
+  "engine.life.transferOverallocated":
+    "「{name}」の移し替え指定は{requested}レベルで、超過分{total}レベルを超えています。",
+  "engine.life.transferDuplicate": "移し替え指定 {transfer} が重複しています。",
+  "engine.life.transferCapacity":
+    "「{name}」へは{capacity}レベルまで移せますが、{requested}レベルが指定されています。",
+  "engine.life.transferUnallocatable":
+    "「{name}」の超過分のうち{lost}レベルは、条件を満たす技能に空きがないため付与されません。",
+
+  "engine.life.purchaseInvalid": "技能「{name}」の購入指定が不正です。",
+  "engine.life.purchaseCap":
+    "「{name}」の購入後の値 {requested} が上限 {cap} を超えます。購入指定を修正してください。",
+  "engine.life.groupPurchaseUnequal":
+    "「{group}」の構成技能の無償値が揃っていないため、グループでは購入できません。個別に購入してください。",
+
+  "life.transfer.title": "「{name}」の超過分",
+  "life.transfer.source":
+    "付与前 {before} ＋付与 {grant}（採用 {kept}）。移し替え {total} レベル、残り {remaining}。",
+  "life.transfer.provisional": "先行する経歴の未解決項目により、この超過量は変わる場合があります。",
+  "life.transfer.invalid":
+    "この配分には不正な指定があります。対象の指定を削除し、追加し直してください。",
+  "life.transfer.lost": "移せる技能に空きがないため、{count}レベルは付与されません。",
+  "life.transfer.unknown": "不明な技能",
+  "life.transfer.remove": "配分を削除",
+  "engine.life.policyInvalid": "ライフモジュールの作成技能上限は1〜1000の整数で指定してください。",
+  "life.transfer.target": "移し替え先の技能",
+  "life.transfer.specific": "技能の具体的な対象",
+  "life.transfer.ranks": "移すレベル数",
+  "life.transfer.add": "この配分を追加",
+  "life.transfer.failed": "保存できませんでした。入力を確認して再試行してください。",
+  "life.transfer.caps": "経歴付与の上限: アクティブ技能 {active}／知識技能 {knowledge}。",
+  "life.transfer.orphan": "対応する経歴または超過分がない配分（{ranks}レベル）があります。",
+  "life.transfer.loss": "「{name}」は上限により{count}レベルが付与されません。",
+  "life.moveEarlier": "この段階で1つ前へ",
+  "life.moveLater": "この段階で1つ後へ",
+  "life.freeSkill": "経歴付与: {count}",
+  "life.groupUnequal": "経歴付与が不揃いのためグループ購入できません。",
+  "life.groupConvert": "個別の購入へ変換",
+
+  "engine.life.snapshotRequired":
+    "ライフモジュールの作成時技能データが不足または不整合です。作成状態で確認してからキャリアを開始してください。",
+  "engine.life.careerFrozen":
+    "キャリア開始時の経歴・配分・購入入力は変更できません。技能の成長欄を使用してください。",
+  "engine.life.advancementInvalid":
+    "技能成長の開始値・上限・条件または履歴が一致しません。最後の成長から取り消して修正してください。",
+  "engine.life.creationIncomplete":
+    "作成チェックのエラーと未配分の技能超過分を解消してからキャリアを開始してください。",
+  "engine.life.skillGrowthLine": "技能成長 +{levels}レベル",
+  "engine.life.legacyCareer":
+    "このキャラクターは旧ライフモジュール方式のキャリアです。旧計算を維持しています。新方式に移行するには作成状態で確認し直してください。",
+
+  "life.growth.title": "キャリアの技能成長",
+  "life.growth.note":
+    "作成時の経歴付与・配分・購入は固定されています。成長は現在の技能値からカルマで購入します。下の購入欄は作成時の入力です。",
+  "life.growth.kind": "成長の種類",
+  "life.growth.target": "成長する技能・グループ",
+  "life.growth.levels": "追加レベル数",
+  "life.growth.add": "成長を購入",
+  "life.growth.undo": "最後の技能成長を取り消す",
+
   "life.kind.attributes": "能力値",
   "life.kind.skills": "技能",
   "life.kind.skill_groups": "技能グループ",
@@ -12,9 +81,15 @@ export const JA_CHARGEN = {
   "life.kind.qualities": "資質",
 
   "life.experimental":
-    "試験対応です。未対応の効果を持つ経歴は選択できません。.chum5 への書き出しと、このアプリが書き出した .chum5 の読み込みに対応しています。Chummer 本体で作ったライフモジュールのファイルは読み込めません。",
+    "試験対応です。未対応の効果を持つ経歴は選択できません。Chummerで再保存したファイルは、経歴の選択履歴がないキャリアスナップショットとして読み込みます。",
+  "engine.life.chum5StateInvalid":
+    "この .chum5 のライフモジュール情報と技能値が一致しないか、保存形式に対応していません。JSON バックアップから復元してください。",
   "engine.life.chum5Unsupported":
-    "Chummer 本体で作ったライフモジュールのファイルは読み込めません。Chummer は経歴が付与した結果だけを保存し、どの選択肢を選んだかを残さないため、選択を復元できません。このアプリが書き出した .chum5 と JSON は読み込めます。",
+    "LifeModule方式のキャラクターですが、経歴モジュールが見つからず選択履歴もないため読み込めません。元の .chum5 またはJSONバックアップから復元してください。",
+  "engine.life.chum5Snapshot":
+    "Chummerで再保存したライフモジュールのキャラクターを、保存済みの技能・能力値を保つキャリアスナップショットとして読み込みました。経歴の選択肢と超過移し替えの履歴は復元できません。経歴は記録として保持し、新たな成長はこの保存時点を基準に計算します。",
+  "engine.export.chum5LifeModuleSetup":
+    "ライフモジュールはキャラクター・対応設定XML・手順書をZIPで出力します。Chummerを終了し、設定XMLをChummerのsettingsフォルダーへコピーしてから、全体設定でLife Modulesを有効にしてください。Chummerで再保存すると選択肢・超過分の移し替え履歴が消え、このアプリへ再取り込みできません。JSONバックアップを保管してください。",
   "engine.life.chum5ModuleUnknown":
     "この .chum5 の経歴「{name}」がこのアプリのデータにありません。経歴を 1 つ落とすと以降の選択が別の経歴にずれるため、読み込みを中止しました。",
 

@@ -10,6 +10,7 @@ function here is pure: a client-supplied `CharacterState` in, a computed
 from __future__ import annotations
 
 import uuid
+from collections import defaultdict, deque
 
 from . import ja_default
 from .engine import (
@@ -101,6 +102,17 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         current.update(updates.pop("settings"))
         data["settings"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
+    if "life_modules" in updates and "life_module_entry_ids" not in updates:
+        # Compatibility for existing callers that replace only the ID list.
+        # Retain each surviving acquisition once; a removed/re-added entry
+        # receives a fresh UUID rather than resurrecting an old transfer.
+        available: dict[str, deque[str]] = defaultdict(deque)
+        for mid, eid in zip(state.life_modules, state.life_module_entry_ids, strict=False):
+            available[mid].append(eid)
+        data["life_module_entry_ids"] = [
+            available[mid].popleft() if available[mid] else str(uuid.uuid4()) for mid in data["life_modules"]
+        ]
+
     if any(
         k in updates
         for k in (
@@ -183,6 +195,9 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
             data["submersions"] = []
         if data["talent"] not in SPRITE_TALENTS:
             data["sprites"] = []
+    from .life_module_mutations import finish_life_patch
+
+    finish_life_patch(state, data)
     return compute(CharacterState.model_validate(data))
 
 

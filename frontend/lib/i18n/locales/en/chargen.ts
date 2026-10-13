@@ -3,6 +3,75 @@ export const EN_CHARGEN = {
   "engine.life.ratingCap":
     "Module grants raise “{name}” to {rating}, above its cap of {cap}. Excess-rating compensation is not yet supported; this combination is unavailable.",
 
+  "engine.life.skillGrantInvalid": "Cannot resolve the life-module skill grant: {name}.",
+  "engine.life.skillExcessLost":
+    "The grant to {name} exceeds the cap; {lost} levels are not granted ({stage}).",
+  "engine.life.transferPending": "Assign the overflow from {name} ({remaining} levels remaining).",
+  "engine.life.transferOrphan":
+    "Transfer {transfer} no longer has an overflow source. Remove or repair it.",
+  "engine.life.transferInvalidTarget":
+    "The destination of transfer {transfer} does not meet the requirements.",
+  "engine.life.transferSourceChanged": "The grant to {name} changed. Update its transfer choices.",
+  "engine.life.transferOverallocated":
+    "Transfers from {name} request {requested} levels, exceeding the {total} available.",
+  "engine.life.transferDuplicate": "Transfer {transfer} duplicates an ID or destination.",
+  "engine.life.transferCapacity":
+    "{name} can receive {capacity} levels, but {requested} were requested.",
+  "engine.life.transferUnallocatable":
+    "{lost} overflow levels from {name} cannot be assigned because eligible skills have no capacity.",
+
+  "engine.life.purchaseInvalid": "Invalid skill purchase: {name}.",
+  "engine.life.purchaseCap":
+    "The requested rating {requested} for {name} exceeds the cap {cap}. Update the purchase.",
+  "engine.life.groupPurchaseUnequal":
+    "The free ratings in {group} differ. Purchase its skills individually.",
+
+  "life.transfer.title": "Overflow from {name}",
+  "life.transfer.source":
+    "Before {before} + grant {grant} (kept {kept}). Transfer {total} levels; {remaining} remaining.",
+  "life.transfer.provisional": "Earlier unresolved history choices may change this overflow.",
+  "life.transfer.invalid":
+    "This allocation contains invalid choices. Remove and replace the affected transfers.",
+  "life.transfer.lost":
+    "{count} levels cannot be granted because eligible skills have no capacity.",
+  "life.transfer.unknown": "Unknown skill",
+  "life.transfer.remove": "Remove transfer",
+  "engine.life.policyInvalid": "Life-module creation skill caps must be integers from 1 to 1000.",
+  "life.transfer.target": "Destination skill",
+  "life.transfer.specific": "Specific skill target",
+  "life.transfer.ranks": "Levels to transfer",
+  "life.transfer.add": "Add transfer",
+  "life.transfer.failed": "Could not save. Check the input and retry.",
+  "life.transfer.caps": "Module caps: active skills {active}; knowledge skills {knowledge}.",
+  "life.transfer.orphan": "A transfer of {ranks} levels has no matching acquisition or overflow.",
+  "life.transfer.loss": "{count} levels of {name} are not granted because of the cap.",
+  "life.moveEarlier": "Earlier in this stage",
+  "life.moveLater": "Later in this stage",
+  "life.freeSkill": "Module grant: {count}",
+  "life.groupUnequal": "Unequal module grants prevent a group purchase.",
+  "life.groupConvert": "Convert to individual purchases",
+
+  "engine.life.snapshotRequired":
+    "The life-module creation skill snapshot is missing or inconsistent. Review creation before entering career mode.",
+  "engine.life.careerFrozen":
+    "Creation history, transfers and purchase inputs are frozen. Use skill advancement to grow skills.",
+  "engine.life.advancementInvalid":
+    "Skill advancement has inconsistent starting ratings, caps, requirements or history. Undo from the last advancement to repair it.",
+  "engine.life.creationIncomplete":
+    "Resolve creation errors and unassigned skill overflow before entering career mode.",
+  "engine.life.skillGrowthLine": "Skill advancement +{levels} levels",
+  "engine.life.legacyCareer":
+    "This career uses legacy life-module calculations. Review it in creation mode to migrate to the new rules.",
+
+  "life.growth.title": "Career skill advancement",
+  "life.growth.note":
+    "Creation grants, transfers and purchases are frozen. Buy advancement from the current rating. The purchase controls below show creation inputs.",
+  "life.growth.kind": "Advancement type",
+  "life.growth.target": "Skill or group to advance",
+  "life.growth.levels": "Levels to add",
+  "life.growth.add": "Buy advancement",
+  "life.growth.undo": "Undo last skill advancement",
+
   "life.kind.attributes": "attribute",
   "life.kind.skills": "skill",
   "life.kind.skill_groups": "skill group",
@@ -12,9 +81,15 @@ export const EN_CHARGEN = {
   "life.kind.qualities": "quality",
 
   "life.experimental":
-    "Experimental support. Modules with unsupported mechanics are unavailable. Export to .chum5 works, and so does reading back a .chum5 this app wrote; a life module character saved by Chummer itself cannot be read.",
+    "Experimental support. Modules with unsupported mechanics are unavailable. Chummer resaves import as career snapshots because their module choices are not retained.",
+  "engine.life.chum5StateInvalid":
+    "The life-module state and standard skill values in this .chum5 disagree, or its format is unsupported. Restore a JSON backup.",
   "engine.life.chum5Unsupported":
-    "A life module character saved by Chummer itself cannot be read. Chummer stores what each module granted, not which option was picked to grant it, so the choices cannot be recovered. A .chum5 written by this app, and JSON, both read back.",
+    "This character uses the LifeModule method but has no module records or saved choices. Restore the original .chum5 or a JSON backup.",
+  "engine.life.chum5Snapshot":
+    "Imported the Chummer resave as a career snapshot, preserving saved skill and attribute ratings. Module choices and overflow transfer history cannot be recovered. The modules remain as provenance, and new growth is priced from this saved state.",
+  "engine.export.chum5LifeModuleSetup":
+    "Life modules export as a ZIP containing the character, matching settings XML and instructions. Close Chummer, copy the settings XML into its settings directory, then enable Life Modules in global options. Desktop resaves discard module choices and overflow transfer history and cannot be re-imported. Keep a JSON backup.",
   "engine.life.chum5ModuleUnknown":
     "The module “{name}” in this .chum5 is not in this app’s data. Dropping one module would shift every later module’s choices onto the wrong module, so the import stopped.",
 

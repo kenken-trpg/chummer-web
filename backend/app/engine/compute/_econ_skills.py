@@ -97,7 +97,7 @@ def _skill_spend(ctx: Ctx) -> None:
         active_points[name] = max(0, rating - base - levels)
         ctx.skill_totals[name] = max(base, rating)
     ctx.state.skill_karma = dict(ctx.skill_karma_levels)
-    if not ctx.career:
+    if not ctx.career and not (ctx.state.build_method == "LifeModule" and ctx.state.life_module_rules_version == 2):
         _check_grouped_skills(ctx, active_points)
     ctx.exotic = resolve_exotic_skills(
         ctx.state,

@@ -198,6 +198,7 @@ class _MetatypeInfo(TypedDict):
 
 
 class DerivedDict(TypedDict):
+    life_module_skills: dict[str, Any] | None
     # --- chargen budgets --------------------------------------------------
     errors: list[Notice]
     warnings: list[Notice]

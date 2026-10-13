@@ -62,7 +62,16 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
     if root.tag != "character":
         raise NoticeError(notice("api.notACharacterFile"))
 
-    if (root.findtext("buildmethod") or "").lower() == "lifemodule" and not life_module_choices_present(root):
+    has_modules = any(
+        (quality.findtext("qualitytype") or "").strip().lower() == "lifemodule"
+        for quality in root.findall("./qualities/quality")
+    )
+    external_module_snapshot = has_modules and not life_module_choices_present(root)
+    if (
+        (root.findtext("buildmethod") or "").strip().lower() == "lifemodule"
+        and not has_modules
+        and not life_module_choices_present(root)
+    ):
         # Chummer's own life module save keeps the grants and not the picks
         # behind them; see `chummer_export.life_modules`.
         raise NoticeError(notice("engine.life.chum5Unsupported"))
@@ -73,6 +82,34 @@ def chum5_to_state(xml_bytes: bytes) -> tuple[dict[str, Any], list[Notice]]:
 
     for section in _SECTIONS:
         section(root, cat, st, warn)
+        if section is _import_identity and external_module_snapshot:
+            # The Chummer file has baked the module grants into ordinary
+            # ratings. Treat these as the career baseline so they are neither
+            # granted nor charged a second time.
+            st["build_method"] = "Karma"
+            st["career"] = True
+    if external_module_snapshot:
+        from ..characters import import_character
+        from ..engine import compute
+        from ..engine.compute._career import snapshot_career_baseline
+        from ..models import CharacterState
+
+        st["life_module_archive"] = list(st.get("life_modules") or [])
+        st["life_modules"] = []
+        warn.append(notice("engine.life.chum5Snapshot"))
+        imported = import_character(st)
+        baseline = snapshot_career_baseline(imported)
+        stable = imported.model_dump()
+        stable["career_baseline"] = baseline.model_dump()
+        probe = compute(CharacterState.model_validate(stable))
+        try:
+            saved_karma = int(_text(root.find("karma")) or 0)
+            saved_nuyen = int(_text(root.find("nuyen")) or 0)
+        except ValueError:
+            saved_karma = saved_nuyen = 0
+        stable["karma_adjust"] = saved_karma - int((probe.derived.get("karma") or {}).get("remaining") or 0)
+        stable["nuyen_adjust"] = saved_nuyen - int(probe.derived.get("nuyen") or 0)
+        st = compute(CharacterState.model_validate(stable)).model_dump()
 
     # collapse duplicate warnings, keep order. Notices are dicts, so dedupe on
     # a canonical rendering of each rather than on the object itself.

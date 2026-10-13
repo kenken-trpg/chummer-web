@@ -1045,6 +1045,24 @@ describe("useCharacterEditor file exports", () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("LifeModule export reviews setup requirements and saves the bundle as ZIP", async () => {
+    api.exportChummer.mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
+    api.checkChummerExport.mockResolvedValue([{ key: "engine.export.chum5LifeModuleSetup" }]);
+    const { result } = await booted(
+      makeCharacter({ id: "c1", name: "Lifer", build_method: "LifeModule" }),
+    );
+    await act(async () => {
+      await result.current.downloadChum5();
+    });
+    expect(result.current.exportReview).toEqual([{ key: "engine.export.chum5LifeModuleSetup" }]);
+    expect(api.exportChummer).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.confirmExport();
+    });
+    expect(clicks[0].download).toMatch(/^Lifer_\d{8}-\d{6}\.zip$/);
+    expect(result.current.error).toBeNull();
+  });
+
   it("downloadFvtt() tags its file, so it is not confused with download()'s JSON", async () => {
     // both write .json and are told apart only by what is inside them, which
     // is no help at all in a downloads folder

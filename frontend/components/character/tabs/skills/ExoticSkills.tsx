@@ -29,15 +29,42 @@ export function ExoticSkills({
     });
   }
 
+  function lifeRatingRows(row: ExoticRow, value: number): ExoticRow[] {
+    const same = (item: ExoticRow) =>
+      item.skill_name === row.skill_name &&
+      (item.extra || "").toLowerCase() === (row.extra || "").toLowerCase();
+    const current = (ch.exotic_skills || []).find(same);
+    const others = (ch.exotic_skills || []).filter((item) => !same(item));
+    return value > 0
+      ? [
+          ...others,
+          {
+            id: current?.id || crypto.randomUUID(),
+            skill_name: row.skill_name,
+            extra: row.extra,
+            rating: value,
+          },
+        ]
+      : others;
+  }
+
   return (
     <>
       <h3>{ui("skills.exotic")}</h3>
       <p className="muted">{ui("skills.exoticNote")}</p>
       {(d.exotic_skills || []).length ? (
         (d.exotic_skills || []).map((row) => {
-          const local = (ch.exotic_skills || []).find((item) => item.id === row.id);
+          const local = (ch.exotic_skills || []).find(
+            (item) =>
+              item.id === row.id ||
+              (item.skill_name === row.skill_name &&
+                (item.extra || "").toLowerCase() === row.extra.toLowerCase()),
+          );
+          const skillId = catalog.skills.skills.find((s) => s.name === row.skill_name)?.id;
+          const free =
+            d.life_module_skills?.free_active[`exotic:${skillId}:${row.extra.toLowerCase()}`] || 0;
           const extra = local?.extra ?? row.extra ?? "";
-          const rating = local?.rating ?? row.rating;
+          const rating = d.life_module_skills ? local?.rating || 0 : (local?.rating ?? row.rating);
           const bonus = d.skill_bonus?.[row.label] || d.skill_bonus?.[row.skill_name];
           return (
             <div className="skill-row has-spec can-delete" key={row.id}>
@@ -60,21 +87,29 @@ export function ExoticSkills({
                 </HelpTip>
               </span>
               <RangeInput
-                min={1}
-                max={row.rating_max}
+                min={free ? 0 : 1}
+                max={Math.max(0, row.rating_max - free)}
+                disabled={d.life_module_skills?.frozen}
                 value={rating}
                 label={tr(row.skill_name)}
                 title={ui("skills.ratingHint", { max: row.rating_max })}
-                onDraft={(value) => draftExotic(row.id, { rating: value })}
+                onDraft={(value) =>
+                  d.life_module_skills
+                    ? setCharacter({ ...ch, exotic_skills: lifeRatingRows(row, value) })
+                    : draftExotic(row.id, { rating: value })
+                }
                 onCommit={(value) =>
                   patchExotic(
-                    (ch.exotic_skills || []).map((item) =>
-                      item.id === row.id ? { ...item, rating: value } : item,
-                    ),
+                    d.life_module_skills
+                      ? lifeRatingRows(row, value)
+                      : (ch.exotic_skills || []).map((item) =>
+                          item.id === row.id ? { ...item, rating: value } : item,
+                        ),
                   )
                 }
               />
               <SpecPicker
+                disabled={!!free || d.life_module_skills?.frozen}
                 options={row.options || []}
                 value={extra}
                 emptyLabel={ui("common.target")}
@@ -89,11 +124,14 @@ export function ExoticSkills({
                   );
                 }}
               />
-              <b>{skillDice(rating, bonus)}</b>
+              <b>{skillDice(d.life_module_skills ? row.rating : rating, bonus)}</b>
               <button
                 className="btn danger"
+                disabled={d.life_module_skills?.frozen || (!!free && !local)}
                 onClick={() =>
-                  patchExotic((ch.exotic_skills || []).filter((item) => item.id !== row.id))
+                  patchExotic(
+                    (ch.exotic_skills || []).filter((item) => item.id !== (local?.id || row.id)),
+                  )
                 }
               >
                 {ui("common.delete")}
@@ -111,6 +149,7 @@ export function ExoticSkills({
             <button
               key={s.id}
               className="btn"
+              disabled={d.life_module_skills?.frozen}
               onClick={() =>
                 patchExotic([
                   ...(ch.exotic_skills || []),

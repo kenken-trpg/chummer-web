@@ -4,6 +4,56 @@
 import type { PriorityCategory, PriorityLetter } from "./installs";
 import type { Derived } from "./derived";
 
+export interface LifeModuleGrowthPrice {
+  per_rating: number;
+  first_level?: number | null;
+  multiplier?: number;
+  category?: string;
+  flat_rules?: (Record<string, unknown>)[];
+}
+
+export interface LifeModuleSkillAdvancement {
+  id: string;
+  kind: "active" | "exotic" | "group" | "knowledge";
+  target_id: string;
+  specific?: string;
+  category?: "Academic" | "Professional" | "Street" | "Interest" | "Language";
+  levels: number;
+  from_ratings?: Record<string, number>;
+  price?: LifeModuleGrowthPrice | null;
+}
+
+export interface LifeModuleSkillSnapshot {
+  version?: 2;
+  input_signature: string;
+  policy: LifeModuleSkillPolicy;
+  public: Record<string, unknown>;
+  free_active: Record<string, number>;
+  free_knowledge: Record<string, number>;
+  knowledge_categories: Record<string, string>;
+  native_languages: string[];
+  creation_active: Record<string, number>;
+  creation_knowledge: Record<string, number>;
+  skill_karma: number;
+  knowledge_karma: number;
+}
+
+export interface LifeModuleSkillPolicy {
+  version?: "rf66-76-v1";
+  active_cap?: number;
+  knowledge_cap?: number;
+}
+
+export interface LifeModuleTransfer {
+  id: string;
+  entry_id: string;
+  source_skill_id: string;
+  grant_fingerprint: string;
+  destination_skill_id: string;
+  destination_specific?: string;
+  ranks: number;
+}
+
 export interface WareInstall {
   id?: string;
   ware_id: string;
@@ -553,7 +603,17 @@ export interface Character {
   metatype: string;
   metavariant?: string | null;
   life_modules?: string[];
+  /** Modules read from a desktop save whose choices are gone. These are
+   *  provenance only; grants have already been baked into the imported state.
+   */
+  life_module_archive?: string[];
   life_module_choices?: Record<string, string>;
+  life_module_rules_version?: 1 | 2 | null;
+  life_module_entry_ids?: string[];
+  life_module_transfers?: LifeModuleTransfer[];
+  life_module_skill_snapshot?: LifeModuleSkillSnapshot | null;
+  life_module_skill_advancements?: LifeModuleSkillAdvancement[];
+  life_module_skill_advancement_history?: LifeModuleSkillAdvancement[];
   talent: string;
   attributes: Record<string, number>;
   /** Priority / Sum-to-Ten creation: of `attributes[key]`, how many of the

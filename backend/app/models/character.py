@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -23,6 +23,7 @@ from .gear import (
     WeaponInstall,
     WeaponMountInstall,
 )
+from .life_modules import LifeModuleSkillAdvancement, LifeModuleSkillSnapshot, LifeModuleTransfer, life_module_entry_ids
 from .magic import (
     AdeptPowerInstall,
     ComplexFormInstall,
@@ -55,6 +56,12 @@ class CharacterPatch(BaseModel):
     build_method: str | None = None
     life_modules: list[str] | None = None
     life_module_choices: dict[str, str] | None = None
+    life_module_rules_version: Literal[1, 2] | None = None
+    life_module_entry_ids: list[str] | None = Field(default=None, max_length=512)
+    life_module_transfers: list[LifeModuleTransfer] | None = Field(default=None, max_length=4096)
+    life_module_skill_snapshot: LifeModuleSkillSnapshot | None = None
+    life_module_skill_advancements: list[LifeModuleSkillAdvancement] | None = None
+    life_module_skill_advancement_history: list[LifeModuleSkillAdvancement] | None = None
     priorities: Priorities | None = None
     metatype: str | None = None
     metavariant: str | None = None
@@ -153,6 +160,12 @@ class CharacterPatch(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _bound_input(cls, data: object) -> object:
+        if (
+            isinstance(data, dict)
+            and data.get("life_module_rules_version") is not None
+            and type(data["life_module_rules_version"]) is not int
+        ):
+            raise ValueError("life-module rule version must be an integer")
         return _reject_oversized_input(data)
 
     @model_validator(mode="after")
@@ -207,7 +220,16 @@ class CharacterState(BaseModel):
     metatype: str
     metavariant: str | None = None
     life_modules: list[str] = Field(default_factory=list)
+    #: Modules read from a desktop save whose choices are gone. These are
+    #: provenance only; grants have already been baked into the imported state.
+    life_module_archive: list[str] = Field(default_factory=list, max_length=512)
     life_module_choices: dict[str, str] = Field(default_factory=dict)
+    life_module_rules_version: Literal[1, 2] | None = None
+    life_module_entry_ids: list[str] = Field(default_factory=list, max_length=512)
+    life_module_transfers: list[LifeModuleTransfer] = Field(default_factory=list, max_length=4096)
+    life_module_skill_snapshot: LifeModuleSkillSnapshot | None = None
+    life_module_skill_advancements: list[LifeModuleSkillAdvancement] = Field(default_factory=list)
+    life_module_skill_advancement_history: list[LifeModuleSkillAdvancement] = Field(default_factory=list)
     talent: str = "Mundane"
     attributes: dict[str, int]
     #: Priority / Sum-to-Ten creation: of `attributes[key]`, how many of the
@@ -332,6 +354,12 @@ class CharacterState(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _bound_input(cls, data: object) -> object:
+        if (
+            isinstance(data, dict)
+            and data.get("life_module_rules_version") is not None
+            and type(data["life_module_rules_version"]) is not int
+        ):
+            raise ValueError("life-module rule version must be an integer")
         return _reject_oversized_input(data)
 
     @model_validator(mode="after")
@@ -348,6 +376,12 @@ class CharacterState(BaseModel):
     @classmethod
     def _extra_portraits(cls, v: list[str]) -> list[str]:
         return clean_extra_portraits(v)
+
+    @model_validator(mode="after")
+    def _life_entry_ids(self) -> CharacterState:
+        if self.life_module_rules_version == 2:
+            self.life_module_entry_ids = life_module_entry_ids(self.id, self.life_modules, self.life_module_entry_ids)
+        return self
 
 
 class StateRequest(BaseModel):

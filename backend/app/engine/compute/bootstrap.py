@@ -58,8 +58,14 @@ def bootstrap(ctx: Ctx) -> None:
     # setting of its own), a knowledge skill has its own pair.
     rules = current_rules()
     ctx.skill_rating_cap = rules.career_skill_max if ctx.career else rules.chargen_skill_max
+    if ctx.state.build_method == "LifeModule" and ctx.state.life_module_rules_version == 2 and not ctx.career:
+        ctx.skill_rating_cap = 7 if ctx.state.settings.chargen_skill_max is None else rules.chargen_skill_max
     ctx.skill_group_cap = ctx.skill_rating_cap
     ctx.knowledge_rating_cap = rules.career_knowledge_skill_max if ctx.career else rules.chargen_knowledge_skill_max
+    if ctx.state.build_method == "LifeModule" and ctx.state.life_module_rules_version == 2 and not ctx.career:
+        ctx.knowledge_rating_cap = (
+            9 if ctx.state.settings.chargen_knowledge_skill_max is None else rules.chargen_knowledge_skill_max
+        )
     ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
     ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]

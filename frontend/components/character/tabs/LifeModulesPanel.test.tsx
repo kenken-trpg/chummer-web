@@ -235,7 +235,7 @@ it("suggests English place names while allowing a custom city for repeated modul
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "1:8": "Durban" } });
 });
 
-it("asks for the quality level and then that level's own free text", () => {
+it("asks for the quality level and then that level's own free text", async () => {
   const patch = vi.fn();
   const props = panelProps(makeCharacter({ life_modules: [historyModule.id] }), {
     catalog: makeCatalog({
@@ -274,6 +274,13 @@ it("asks for the quality level and then that level's own free text", () => {
     { target: { value: "Corporate Pariah II" } },
   );
   expect(patch).toHaveBeenCalledWith({ life_module_choices: { "0:2": "Corporate Pariah II" } });
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("textbox", { name: "Bounty Hunter: Corporate Pariahの選択" })
+        .closest("fieldset")?.disabled,
+    ).toBe(false),
+  );
   fireEvent.change(screen.getByRole("textbox", { name: "Bounty Hunter: Corporate Pariahの選択" }), {
     target: { value: "Ares Macrotechnology" },
   });

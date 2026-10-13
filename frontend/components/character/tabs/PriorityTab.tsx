@@ -259,7 +259,7 @@ export function PriorityTab({
         )}
       </div>
       {ch.build_method === "LifeModule" && (
-        <LifeModulesPanel catalog={catalog} character={ch} ui={ui} patch={patch} />
+        <LifeModulesPanel catalog={catalog} character={ch} ui={ui} patch={patch} tr={tr} />
       )}
     </>
   );

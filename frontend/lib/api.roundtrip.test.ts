@@ -250,6 +250,11 @@ describe("api.list / api.remove / api.compute", () => {
 });
 
 describe("api.exportChummer", () => {
+  it("requests a matching settings bundle for LifeModule characters", async () => {
+    respond = () => json("zip");
+    await api.exportChummer(makeCharacter({ build_method: "LifeModule" }));
+    expect(calls[0].path).toBe("/api/characters/chummer?bundle=true");
+  });
   it("returns the blob and writes nothing to the roster", async () => {
     const state = makeCharacter({ id: "a" });
     respond = () => json("<character/>");

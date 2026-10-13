@@ -137,8 +137,8 @@ describe("reading records written by an older build", () => {
       };
     });
 
-    // if this ever needs changing, `migrate()` needs the matching transform
-    expect(rec.schemaVersion).toBe(1);
+    // v2 normalization needs the live catalog and runs in the server engine.
+    expect(rec.schemaVersion).toBe(2);
   });
 });
 

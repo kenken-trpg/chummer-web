@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { LifeModuleCareerSkills } from "./skills/LifeModuleCareerSkills";
 import { ActiveSkills } from "./skills/ActiveSkills";
 import { ExoticSkills } from "./skills/ExoticSkills";
 import { GrantedSkills } from "./skills/GrantedSkills";
@@ -35,6 +36,7 @@ export function SkillsTab(props: TabPanelProps) {
           })}
         </p>
       ) : null}
+      {d.life_module_skills?.frozen && <LifeModuleCareerSkills {...active} />}
       <TalentSkills {...active} />
       <GrantedSkills {...active} />
       <SkillGroups {...active} />

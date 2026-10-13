@@ -23,6 +23,8 @@ def roundtrip_differences(state: CharacterState) -> list[Notice]:
     as notices. Empty when it comes back the same."""
     first = import_character(state.model_dump())
     again = import_character(chum5_to_state(state_to_chum5(first))[0])
+    if first.build_method == "LifeModule":
+        return [notice("engine.export.chum5LifeModuleSetup")] + differences(first, again)
     growth = int(first.derived.get("career_advancement_karma") or 0) - int(
         again.derived.get("career_advancement_karma") or 0
     )
