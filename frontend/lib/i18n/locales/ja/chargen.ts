@@ -101,7 +101,8 @@ export const JA_CHARGEN = {
   "life.freeQuality": "Free quality points: Positive {positive} / Negative {negative}",
   "life.pick": "Choose a module",
   "life.candidates": "Module candidates",
-  "life.browseHint": "Select a candidate to review its details. Your history changes only when you press Add.",
+  "life.browseHint":
+    "Select a candidate to review its details. Your history changes only when you press Add.",
   "life.previewHint": "Select a candidate to review its description, cost, and requirements.",
   "life.unavailable": "Cannot add (see details)",
   "life.choiceCount": "Choices to complete after adding: {count}",
@@ -110,7 +111,8 @@ export const JA_CHARGEN = {
   "life.description": "Module description",
   "life.stageSelected": "Selected",
   "life.stagePending": "Not selected",
-  "life.repeatable": "You can choose different modules for this stage. Each module, including its versions, can only be taken once.",
+  "life.repeatable":
+    "You can choose different modules for this stage. Each module, including its versions, can only be taken once.",
   "life.search": "Search modules (name, parent, description, source)",
   "life.noMatches": "No modules match your search. Try another search term.",
   "life.requires": "Requires: {requirements}",
@@ -122,7 +124,8 @@ export const JA_CHARGEN = {
   "life.empty": "No modules for this stage. Check the enabled rulebooks.",
   "engine.life.unknown": "Unknown Life Module: {name}",
   "engine.life.unsupported": "Life Module “{name}” has unsupported mechanics: {tags}",
-  "engine.life.duplicateModule": "Life Module {name} can only be taken once, including its versions",
+  "engine.life.duplicateModule":
+    "Life Module {name} can only be taken once, including its versions",
   "life.alreadyTaken": "This module or one of its versions is already taken",
   "engine.life.duplicateStage": "Duplicate life stage: {stage}",
   "engine.life.missingStage": "Choose a module for life stage: {stage}",
@@ -134,7 +137,8 @@ export const JA_CHARGEN = {
     "Combining module-granted levels of “{name}” with a manual purchase of the same quality is not yet supported.",
   "engine.life.qualityChoiceConflict":
     "The extra selection for Life Module quality “{name}” conflicts with an existing selection. Different selections for the same quality are not yet supported together.",
-  "engine.life.qualityLevelUnknown": "Quality “{name}” for a Life Module quality level was not found",
+  "engine.life.qualityLevelUnknown":
+    "Quality “{name}” for a Life Module quality level was not found",
   "engine.life.requirement": "The requirements for Life Module “{name}” are not met",
 
   "meta.booksHidden":
