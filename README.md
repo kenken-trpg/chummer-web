@@ -268,11 +268,12 @@ make check       # CI と同じ: ruff / pytest / mypy / tsc / eslint / prettier 
 backend/    FastAPI + ルールエンジン（app/engine/compute の compute() が中心）。ステートレス
 frontend/   Next.js 15 App Router + React 19。キャラは IndexedDB
 deploy/     Caddyfile + supervisord.conf（コンテナ内のプロセス構成）
-docs/       アーキテクチャ・データパイプライン・デプロイ・ルール追加手順
+docs/       作成手順の案内・アーキテクチャ・データパイプライン・デプロイ・ルール追加手順
 ```
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — セットアップ、コーディング規約、PR の作法
 - [`SECURITY.md`](SECURITY.md) — 脆弱性の報告方法（GitHub の private vulnerability reporting）
+- [`docs/chargen.md`](docs/chargen.md) — キャラクター作成の手順（どの画面で何をするか）
 - [`docs/life-modules.md`](docs/life-modules.md) — ライフモジュール方式の操作・試験対応の範囲
 - [`docs/architecture.md`](docs/architecture.md) — データフロー、`<bonus>` ノードと `effects`、API 一覧
 - [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / Cloudflare Containers / 自宅 + Cloudflare Tunnel
