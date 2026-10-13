@@ -167,7 +167,7 @@ test("skill overflow survives reload, career growth and undo", async ({ page, re
   await expect.poll(async () => (await saved())?.career).toBe(true);
   const spent = (await saved()).derived.karma.spent;
   await page.getByRole("button", { name: "技能", exact: true }).click();
-  const growth = page.getByRole("group", { name: "技能のキャリア成長" });
+  const growth = page.getByRole("group", { name: "キャリアの技能成長" });
   await growth.getByLabel("成長する技能・グループ").selectOption(source.source_skill_id);
   await growth.getByRole("button", { name: "成長を購入" }).click();
   await expect.poll(async () => (await saved())?.derived.skill_totals.Perception).toBe(8);
