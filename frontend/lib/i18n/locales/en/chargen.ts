@@ -81,11 +81,13 @@ export const EN_CHARGEN = {
   "life.kind.qualities": "quality",
 
   "life.experimental":
-    "Experimental support. Modules with unsupported mechanics are unavailable. Export to .chum5 works, and so does reading back a .chum5 this app wrote; a life module character saved by Chummer itself cannot be read.",
+    "Experimental support. Modules with unsupported mechanics are unavailable. Chummer resaves import as career snapshots because their module choices are not retained.",
   "engine.life.chum5StateInvalid":
     "The life-module state and standard skill values in this .chum5 disagree, or its format is unsupported. Restore a JSON backup.",
   "engine.life.chum5Unsupported":
-    "This file contains life modules but no recoverable module choices or overflow transfer history, including desktop resaves changed to Karma. Import stopped to prevent changed ratings or double grants. Restore the .chum5 before the desktop resave or a JSON backup.",
+    "This character uses the LifeModule method but has no module records or saved choices. Restore the original .chum5 or a JSON backup.",
+  "engine.life.chum5Snapshot":
+    "Imported the Chummer resave as a career snapshot, preserving saved skill and attribute ratings. Module choices and overflow transfer history cannot be recovered. The modules remain as provenance, and new growth is priced from this saved state.",
   "engine.export.chum5LifeModuleSetup":
     "Life modules export as a ZIP containing the character, matching settings XML and instructions. Close Chummer, copy the settings XML into its settings directory, then enable Life Modules in global options. Desktop resaves discard module choices and overflow transfer history and cannot be re-imported. Keep a JSON backup.",
   "engine.life.chum5ModuleUnknown":

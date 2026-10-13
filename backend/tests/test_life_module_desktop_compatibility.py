@@ -10,12 +10,13 @@ from pathlib import Path
 import pytest
 from starlette.testclient import TestClient
 
-from app.characters import import_character
+from app.characters import apply_patch, import_character
 from app.chummer_export import state_to_chum5
 from app.chummer_export.check import roundtrip_differences
 from app.chummer_export.life_module_settings import life_module_bundle, life_module_settings
 from app.chummer_import import chum5_to_state
 from app.main import app
+from app.models import CharacterPatch
 from app.notices import NoticeError
 from app.settings_file import parse_settings_upload
 
@@ -26,23 +27,61 @@ def _state():
     return import_character(chum5_to_state((FIXTURES / "chummer-life-module-skill-overflow.chum5").read_bytes())[0])
 
 
-@pytest.mark.parametrize("method", ["Karma", "Priority", "LifeModule", "SumtoTen", ""])
-def test_desktop_module_grants_cannot_bypass_the_missing_choices_guard(method: str) -> None:
+def test_real_desktop_resave_becomes_a_career_snapshot_without_losing_ratings() -> None:
+    raw, warnings = chum5_to_state((FIXTURES / "EX_chummer-life-module-skill-overflow.chum5").read_bytes())
+    char = import_character(raw)
+    assert char.build_method == "Karma"
+    assert char.career
+    assert char.life_modules == []
+    assert len(char.life_module_archive) == 5
+    assert char.derived["skill_totals"]["Perception"] == 7
+    assert char.derived["skill_totals"]["Navigation"] == 2
+    assert char.career_baseline is not None
+    assert char.career_baseline.skills["Perception"] == 7
+    assert [warning["key"] for warning in warnings] == ["engine.life.chum5Snapshot"]
+
+    # The archived module names are informational on export. They must not
+    # grant skills a second time when the app reads its own Chummer file.
+    exported = state_to_chum5(char)
+    restored_raw, restored_warnings = chum5_to_state(exported)
+    restored = import_character(restored_raw)
+    assert restored.derived["skill_totals"]["Perception"] == 7
+    assert restored.derived["skill_totals"]["Navigation"] == 2
+    assert restored.life_module_archive == char.life_module_archive
+    assert [warning["key"] for warning in restored_warnings] == ["engine.life.chum5Snapshot"]
+
+
+def test_career_growth_after_desktop_snapshot_is_charged_from_saved_rating() -> None:
+    raw, _ = chum5_to_state((FIXTURES / "EX_chummer-life-module-skill-overflow.chum5").read_bytes())
+    char = import_character(raw)
+    grown = apply_patch(char, CharacterPatch(skills={**char.skills, "Perception": 8}))
+    assert grown.derived["skill_totals"]["Perception"] == 8
+    assert grown.derived["karma"]["spent"] == char.derived["karma"]["spent"] + 16
+    assert grown.derived["karma"]["remaining"] == char.derived["karma"]["remaining"] - 16
+
+
+def test_life_module_build_method_without_modules_or_choices_still_stops() -> None:
     root = ET.parse(FIXTURES / "EX_chummer-life-module-skill-overflow.chum5").getroot()
-    root.find("buildmethod").text = method
+    root.find("buildmethod").text = "LifeModule"
+    for quality in list(root.findall("./qualities/quality")):
+        if (quality.findtext("qualitytype") or "").lower() == "lifemodule":
+            root.find("./qualities").remove(quality)
     with pytest.raises(NoticeError) as error:
         chum5_to_state(ET.tostring(root))
     assert error.value.notice["key"] == "engine.life.chum5Unsupported"
 
 
-def test_real_desktop_resave_is_rejected_by_the_http_import() -> None:
+def test_real_desktop_resave_imports_with_a_snapshot_notice() -> None:
     response = TestClient(app).post(
         "/api/characters/import-chummer",
         content=(FIXTURES / "EX_chummer-life-module-skill-overflow.chum5").read_bytes(),
         headers={"content-type": "application/octet-stream"},
     )
-    assert response.status_code == 400
-    assert response.json()["detail"]["key"] == "engine.life.chum5Unsupported"
+    assert response.status_code == 200
+    assert response.json()["warnings"][0]["key"] == "engine.life.chum5Snapshot"
+    character = import_character(response.json()["character"])
+    assert character.derived["skill_totals"]["Perception"] == 7
+    assert character.derived["skill_totals"]["Navigation"] == 2
 
 
 def test_export_settings_use_the_desktop_custom_file_key_and_rf_policy() -> None:

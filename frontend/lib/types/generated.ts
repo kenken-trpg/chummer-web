@@ -603,6 +603,10 @@ export interface Character {
   metatype: string;
   metavariant?: string | null;
   life_modules?: string[];
+  /** Modules read from a desktop save whose choices are gone. These are
+   *  provenance only; grants have already been baked into the imported state.
+   */
+  life_module_archive?: string[];
   life_module_choices?: Record<string, string>;
   life_module_rules_version?: 1 | 2 | null;
   life_module_entry_ids?: string[];

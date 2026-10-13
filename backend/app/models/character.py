@@ -220,6 +220,9 @@ class CharacterState(BaseModel):
     metatype: str
     metavariant: str | None = None
     life_modules: list[str] = Field(default_factory=list)
+    #: Modules read from a desktop save whose choices are gone. These are
+    #: provenance only; grants have already been baked into the imported state.
+    life_module_archive: list[str] = Field(default_factory=list, max_length=512)
     life_module_choices: dict[str, str] = Field(default_factory=dict)
     life_module_rules_version: Literal[1, 2] | None = None
     life_module_entry_ids: list[str] = Field(default_factory=list, max_length=512)

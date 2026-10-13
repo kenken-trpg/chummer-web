@@ -38,7 +38,10 @@ def export_life_modules(qualities: ET.Element, state: CharacterState) -> None:
     `occurrence`), so a reordering would move the answers onto other modules.
     """
     rows = {str(row["id"]): row for row in catalog()["life_modules"]}
-    for index, mid in enumerate(state.life_modules):
+    # Archived modules came from a desktop snapshot. Keep their identity on
+    # export for provenance; the reader will snapshot them again because the
+    # desktop file has no record of their original choices.
+    for index, mid in enumerate(state.life_modules or state.life_module_archive):
         row: dict[str, Any] = rows.get(mid) or {}
         quality = _sub(qualities, "quality")
         fields = {

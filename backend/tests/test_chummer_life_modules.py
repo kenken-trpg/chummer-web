@@ -101,14 +101,17 @@ def test_the_modules_do_not_come_back_as_ordinary_qualities() -> None:
     assert state["life_modules"] == _MODULES
 
 
-def test_a_file_chummer_wrote_is_refused_rather_than_read_without_its_picks() -> None:
+def test_a_file_without_picks_imports_as_a_career_snapshot() -> None:
     root = ET.fromstring(_XML)
     picks = root.find("lifemodulechoices")
     assert picks is not None
     root.remove(picks)
-    with pytest.raises(NoticeError) as caught:
-        chum5_to_state(ET.tostring(root))
-    assert caught.value.notice["key"] == "engine.life.chum5Unsupported"
+    state, warnings = chum5_to_state(ET.tostring(root))
+    assert state["build_method"] == "Karma"
+    assert state["career"] is True
+    assert state["life_modules"] == []
+    assert state["life_module_archive"] == _MODULES
+    assert [warning["key"] for warning in warnings] == ["engine.life.chum5Snapshot"]
 
 
 def test_an_empty_picks_element_still_marks_the_file_as_this_app_s() -> None:
