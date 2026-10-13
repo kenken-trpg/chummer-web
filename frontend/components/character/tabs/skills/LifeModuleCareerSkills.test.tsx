@@ -28,10 +28,10 @@ it("submits a growth request without fabricating a starting value or a price", a
     },
   });
   render(<LifeModuleCareerSkills {...panelProps(ch, { catalog, patch })} />);
-  fireEvent.change(screen.getByRole("combobox", { name: "成長する技能・グループ" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "Skill or group to advance" }), {
     target: { value: "perception" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "成長を購入" }));
+  fireEvent.click(screen.getByRole("button", { name: "Buy advancement" }));
   expect(patch).toHaveBeenCalledWith({
     life_module_skill_advancements: [
       expect.objectContaining({ kind: "active", target_id: "perception", levels: 1 }),
@@ -41,8 +41,8 @@ it("submits a growth request without fabricating a starting value or a price", a
   expect(row.price).toBeUndefined();
   expect(row.from_ratings).toBeUndefined();
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: "成長を購入" }).closest("fieldset")?.disabled).toBe(
-      false,
-    ),
+    expect(
+      screen.getByRole("button", { name: "Buy advancement" }).closest("fieldset")?.disabled,
+    ).toBe(false),
   );
 });
