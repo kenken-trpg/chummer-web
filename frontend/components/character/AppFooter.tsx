@@ -5,12 +5,23 @@ import { useUiText } from "@/lib/i18n";
  *  the last one. */
 export const REPO_URL = "https://github.com/kenken-trpg/chummer-web";
 export const AUTHOR = "kenken-trpg";
+/** `public/manual/index.html`, reached through the rewrite in `next.config.ts`. */
+export const MANUAL_URL = "/manual";
 
 export function AppFooter() {
   const { ui } = useUiText();
   return (
     <footer className="app-footer no-print">
       <span>{ui("app.footer.author", { author: AUTHOR })}</span>
+      <span aria-hidden="true">・</span>
+      <a
+        href={MANUAL_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={ui("app.footer.manualHint")}
+      >
+        {ui("app.footer.manual")}
+      </a>
       <span aria-hidden="true">・</span>
       <a
         href={REPO_URL}

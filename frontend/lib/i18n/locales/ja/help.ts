@@ -99,9 +99,9 @@ export const JA_HELP = {
   "help.armor.equipped": "装備していない装甲は装甲値に数えない",
   "help.contact.statsLabel": "コンタクトの値",
   "help.contact.connection":
-    "コネクション：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
-  "help.contact.loyalty": "ロイヤリティ：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
-  "help.contact.cost": "作成時の値段はコネクション＋ロイヤリティで、コンタクト値から払う",
+    "コネ値：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
+  "help.contact.loyalty": "忠実値：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
+  "help.contact.cost": "作成時の値段はコネ値＋忠実値で、コンタクト値から払う",
   "help.spell.statsLabel": "呪文データ",
   "help.spell.drain":
     "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",
@@ -172,7 +172,7 @@ export const JA_HELP = {
   "help.points.skills": "技能点 n/m：1 点で技能レーティング 1。技能グループ点とは別枠",
   "help.points.knowledge": "知識点 n/m：無料枠は (INT + LOG) × 2 点。母語が 1 つ無料になる",
   "help.points.contacts":
-    "コンタクト n/m (+k)：無料枠 m は CHA × 3（設定で変わる）。+k は超えて買った分で、接続度 ＋ 忠誠度がそのままカルマになる",
+    "コンタクト n/m (+k)：無料枠 m は CHA × 3（設定で変わる）。+k は超えて買った分で、コネ値 ＋ 忠実値がそのままカルマになる",
   "help.points.martial": "流派 n/m ・ 技 n/m：作成時の上限。超える分はカルマで買う",
   "help.points.advancement": "成長カルマ：キャリアに入ってから能力値・技能を上げるのに使ったカルマ",
   "help.points.negativeKarma": "不利な資質で戻るカルマの上限。設定で変わる",

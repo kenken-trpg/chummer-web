@@ -7,6 +7,8 @@ export const JA_APP = {
   "app.footer.author": "制作: {author}",
   "app.footer.repo": "GitHub リポジトリ",
   "app.footer.repoHint": "ソースコード・不具合報告・要望はこちら（GPL-3.0）",
+  "app.footer.manual": "使い方",
+  "app.footer.manualHint": "実画面つきの利用マニュアル（別タブで開きます）",
 
   // accessible names for landmarks — announced by screen readers, never drawn
   "app.footer.license": "GPL-3.0",
@@ -47,7 +49,7 @@ export const JA_APP = {
   "tab.cyber.hint": "サイバーウェア。エッセンスを削って身体能力を上げます",
   "tab.bio.hint": "バイオウェア。サイバーウェアより essence 効率が良い代わりに高価です",
   "tab.gear.hint": "武器・防具・電子機器・生活水準など、新円で買うものすべて",
-  "tab.contacts.hint": "コンタクト（人脈）。〈つながり〉と〈忠誠〉にカルマを払います",
+  "tab.contacts.hint": "コンタクト（人脈）。コネ値と忠実値にカルマを払います",
   "tab.martial.hint": "武術とテクニック。近接戦闘の選択肢を増やします",
   "tab.initiation.hint": "イニシエーション。等級ごとにメタマジックを 1 つ習得します",
   "tab.submersion.hint": "サブマージョン。等級ごとにエコーを 1 つ習得します",

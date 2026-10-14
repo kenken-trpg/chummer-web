@@ -5,15 +5,18 @@ vi.mock("@/lib/site", () => ({ siteOrigin: async () => "https://chummer.example"
 const load = async () => (await import("./sitemap")).default();
 
 describe("sitemap", () => {
-  it("lists the one page there is, absolutely", async () => {
+  it("lists the app and the manual, absolutely", async () => {
     const entries = await load();
-    expect(entries).toHaveLength(1);
-    expect(entries[0]!.url).toBe("https://chummer.example/");
+    expect(entries.map((entry) => entry.url)).toEqual([
+      "https://chummer.example/",
+      // a file in `public/`, so nothing but this list knows it exists
+      "https://chummer.example/manual/index.html",
+    ]);
   });
 
   it("claims no lastModified", async () => {
     // `new Date()` here would tell every crawl the page had just changed
-    expect((await load())[0]!.lastModified).toBeUndefined();
+    for (const entry of await load()) expect(entry.lastModified).toBeUndefined();
   });
 
   it("does not list /share", async () => {

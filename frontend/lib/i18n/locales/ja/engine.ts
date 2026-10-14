@@ -343,8 +343,8 @@ export const JA_ENGINE = {
   "engine.martial.techniqueNotAllowed": "{name} に {technique} は選べません",
 
   "engine.martial.unknownDropped": "未知の武道を外しました",
-  "engine.contacts.exconLoyalty": "Ex-Con の {name}（{role}）は Loyalty {min} 以上が必要です",
-  "engine.contacts.pairMax": "{name} は作成時 Connection+Loyalty が{max}までです",
+  "engine.contacts.exconLoyalty": "Ex-Con の {name}（{role}）は忠実値 {min} 以上が必要です",
+  "engine.contacts.pairMax": "{name} は作成時コネ値＋忠実値が{max}までです",
 
   "engine.contacts.unnamed": "名前のないコンタクトがあります",
   "engine.ware.attrBonusOver": "{attr} のウェア強化超過（+{value} / 上限+{limit}）",

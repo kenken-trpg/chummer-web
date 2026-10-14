@@ -62,13 +62,13 @@ describe("<ContactsTab>", () => {
     expect(patch).toHaveBeenCalledWith({ contacts: [] });
   });
 
-  it("edits Connection through a patch", () => {
+  it("edits the connection rating through a patch", () => {
     const patch = vi.fn();
     renderTab({
       character: { contacts: [contact() as never], derived: { contacts: [contact()] as never } },
       patch,
     });
-    fireEvent.change(screen.getByLabelText("Connection"), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText("コネ値"), { target: { value: "5" } });
     expect(patch).toHaveBeenCalledWith({
       contacts: [expect.objectContaining({ id: "c1", connection: 5 })],
     });

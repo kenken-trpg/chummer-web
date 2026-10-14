@@ -61,3 +61,21 @@ test("a request body over the backend's 12 MB cap is refused, not buffered", asy
     );
   expect([413, "reset"]).toContain(outcome);
 });
+
+/**
+ * The manual is `public/manual/index.html`, reached at `/manual` through a
+ * rewrite — a static page, not a route, and
+ * the only page in this app that is plain HTML. `proxy.ts` matches it like any
+ * other document, so what it must not do is arrive under a policy that drops
+ * its inline <style> or its screenshots.
+ */
+test("/manual is served as a page whose own styles and images are allowed", async ({ request }) => {
+  const res = await request.get("/manual");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("text/html");
+  expect(await res.text()).toContain("利用マニュアル");
+
+  const csp = res.headers()["content-security-policy"] ?? "";
+  expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+  expect(csp).toContain("img-src 'self'");
+});

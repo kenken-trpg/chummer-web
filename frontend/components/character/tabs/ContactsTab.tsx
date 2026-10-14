@@ -43,8 +43,8 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
                 {ui("help.contact.statsLabel")}
               </HelpTip>{" "}
               {item.role ? `${item.role} / ` : ""}
-              Connection {item.connection} / Loyalty {item.loyalty} /{" "}
-              {ui("contact.points", { points: item.cost })}
+              {ui("contact.connection")} {item.connection} / {ui("contact.loyalty")} {item.loyalty}{" "}
+              / {ui("contact.points", { points: item.cost })}
               {item.free ? ui("common.freeSlot") : ""}
               {item.group ? ui("contact.group") : ""}
               {item.billable != null && item.billable !== item.cost
@@ -101,7 +101,7 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
                 />
               </label>
               <label>
-                Connection
+                {ui("contact.connection")}
                 <input
                   type="number"
                   min={1}
@@ -117,7 +117,7 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
                 />
               </label>
               <label>
-                Loyalty
+                {ui("contact.loyalty")}
                 <input
                   type="number"
                   min={item.loyalty_min ?? 1}
