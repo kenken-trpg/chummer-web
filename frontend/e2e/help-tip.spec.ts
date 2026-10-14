@@ -20,7 +20,7 @@ test.describe("help tips", () => {
     await expect(tip).toBeVisible();
     // the formula, not the wording around it: which word names the limit is
     // the dictionaries' business and is asserted in the unit suite
-    await expect(tip).toContainText("(BOD×2 + AGI + REA + STR)");
+    await expect(tip).toContainText("(STR×2 + BOD + REA)");
 
     // inside the sidebar, which scrolls: what leaves it is clipped, not just
     // off-screen, so the box has to fit the panel and not merely the window
@@ -42,18 +42,23 @@ test.describe("help tips", () => {
   });
 
   test("stay inside a phone-width screen and print nothing", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 780 });
-    await page.goto("/");
-    await waitForEditor(page);
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 780 });
+      await page.goto("/");
+      await waitForEditor(page);
+      const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
+      const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
+
+      await button.click(); // a phone has no hover
+      await expect(tip).toBeVisible();
+      const box = (await tip.boundingBox())!;
+      const side = (await page.locator("aside.side").boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(Math.max(0, side.x));
+      expect(box.x + box.width).toBeLessThanOrEqual(Math.min(width, side.x + side.width));
+    }
+
     const button = page.getByRole("button", { name: "身体/精神/社交リミット の説明" });
     const tip = page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`);
-
-    await button.click(); // a phone has no hover
-    await expect(tip).toBeVisible();
-    const box = (await tip.boundingBox())!;
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(390);
-
     await page.emulateMedia({ media: "print" });
     await expect(tip).toBeHidden();
     await expect(button).toBeHidden();

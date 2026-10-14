@@ -43,13 +43,13 @@ export function limitHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLine[] {
   const t = d.totals || {};
   const src = d.stat_sources || {};
   const v = (k: string) => Number(t[k] || 0);
-  const ess = Number(d.essence || 0);
+  const ess = Math.ceil(Number(d.essence || 0));
   return [
     ...parts(
       ui,
       tr,
       ui("help.limit.physical"),
-      up((v("BOD") * 2 + v("AGI") + v("REA") + v("STR")) / 3),
+      up((v("STR") * 2 + v("BOD") + v("REA")) / 3),
       d.limits.physical,
       src.limit_physical,
     ),
