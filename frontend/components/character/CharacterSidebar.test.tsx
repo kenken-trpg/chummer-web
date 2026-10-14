@@ -126,7 +126,7 @@ describe("<CharacterSidebar>", () => {
       expect(screen.getByText("Initiative")).toBeDefined();
       expect(screen.getByRole("heading", { name: "Attributes" })).toBeDefined();
       expect(screen.getByText("No chargen rule problems")).toBeDefined();
-      expect(screen.queryByText("イニシアチブ")).toBeNull();
+      expect(screen.queryByText("イニシアティブ")).toBeNull();
     } finally {
       window.localStorage.removeItem(LOCALE_STORAGE_KEY);
     }

@@ -28,7 +28,7 @@ describe("bindRuns", () => {
     // a space before a number in Japanese prose is an ordinary break
     expect(bindRuns("埋まったマス 3 つごとに")).toBe("埋まったマス 3 つごとに");
     // and so is the one around "=", which is where the formula now wraps
-    expect(bindRuns("イニシアチブ = REA")).toBe("イニシアチブ = REA");
+    expect(bindRuns("イニシアティブ = REA")).toBe("イニシアティブ = REA");
   });
 });
 
@@ -86,7 +86,7 @@ describe("named sources", () => {
     };
     const lines = initiativeHelp(d, ui, (n) => `訳:${n}`);
     expect(lines.slice(0, 4).map((l) => [l.label, l.value])).toEqual([
-      ["イニシアチブ = REA + INT", undefined],
+      ["イニシアティブ = REA + INT", undefined],
       ["基本値", 6],
       ["訳:Wired Reflexes", "+2"],
       ["合計", 8],

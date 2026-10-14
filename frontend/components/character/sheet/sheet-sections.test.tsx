@@ -144,7 +144,7 @@ it("prints innate qualities and fixed powers with provenance and the kick select
 });
 
 const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
-  ["コア", CoreSection, "イニシアチブ"],
+  ["コア", CoreSection, "イニシアティブ"],
   ["技能", SkillsSection, "Pistols"],
   ["知識技能", KnowledgeSection, "Seattle Gangs"],
   ["キャリア", CareerSection, "報酬"],
@@ -224,9 +224,9 @@ describe("sheet sections — smoke render", () => {
         layout: "standard",
       });
     const awakened = render(<CoreSection {...sheet({ value: 8, dice: 3 })} />);
-    expect(awakened.container.textContent).toContain("アストラル・イニシアチブ8+3d6");
+    expect(awakened.container.textContent).toContain("アストラル・イニシアティブ8+3d6");
     const mundane = render(<CoreSection {...sheet(null)} />);
-    expect(mundane.container.textContent).not.toContain("アストラル・イニシアチブ");
+    expect(mundane.container.textContent).not.toContain("アストラル・イニシアティブ");
   });
 
   it("the core section names a conditional limit in the reader's language", () => {

@@ -80,7 +80,7 @@ describe("buildChatPalette", () => {
 
   it("always emits the initiative line + the fixed defense/resist rolls", () => {
     const out = buildChatPalette(makeCharacter(), makeCatalog(), identityTr);
-    expect(out.split("\n")[0]).toBe("1D6+6 イニシアチブ");
+    expect(out.split("\n")[0]).toBe("1D6+6 イニシアティブ");
     for (const label of ["完全回避", "フル防御", "冷静", "記憶", "ダメージ抵抗（＋装甲）"]) {
       expect(out).toContain(label);
     }
@@ -230,8 +230,8 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, makeCatalog(), identityTr);
-    expect(out).toContain("3D6+7 マトリックス・イニシアチブ（コールドシム）");
-    expect(out).toContain("4D6+7 マトリックス・イニシアチブ（ホットシム）");
+    expect(out).toContain("3D6+7 マトリックス・イニシアティブ（コールドシム）");
+    expect(out).toContain("4D6+7 マトリックス・イニシアティブ（ホットシム）");
   });
 });
 
@@ -332,14 +332,14 @@ describe("the export follows the UI locale", () => {
   });
 
   it("stays Japanese when nothing says otherwise — Cocofolia is a Japanese VTT", () => {
-    expect(buildChatPalette(ch, pistolsCatalog, identityTr)).toContain("イニシアチブ");
+    expect(buildChatPalette(ch, pistolsCatalog, identityTr)).toContain("イニシアティブ");
   });
 
   it("writes the labels in English for an English table", () => {
     const out = buildChatPalette(ch, pistolsCatalog, identityTr, "en");
     expect(out).toContain("Initiative");
     expect(out).toContain("Full Defense");
-    expect(out).not.toContain("イニシアチブ");
+    expect(out).not.toContain("イニシアティブ");
     // The dice commands themselves are BCDice syntax and never translated.
     expect(out).toContain("9B6@3 Pistols");
   });
@@ -364,7 +364,7 @@ describe("buildCocofolia", () => {
     expect(parsed.data.name).toBe("Wire");
     expect(parsed.data.initiative).toBe(6);
     expect(typeof parsed.data.commands).toBe("string");
-    expect(parsed.data.commands).toContain("イニシアチブ");
+    expect(parsed.data.commands).toContain("イニシアティブ");
 
     const paramLabels = parsed.data.params.map((p: { label: string }) => p.label);
     expect(paramLabels).toEqual(expect.arrayContaining(["BOD", "AGI", "装甲", "ESS"]));
@@ -465,7 +465,7 @@ describe("buildSpiritPieces", () => {
       identityTr,
     );
 
-    expect(piece.data.commands).toContain("2D6+12 イニシアチブ");
+    expect(piece.data.commands).toContain("2D6+12 イニシアティブ");
     expect(piece.data.commands).toContain("10B6 完全回避"); // REA 6 + INT 4
     expect(piece.data.commands).toContain("13B6 ダメージ抵抗（イミュニティ）"); // BOD 5 + 2×Force
     expect(piece.data.commands).toContain("8B6 精霊追放に対抗"); // 2×Force
