@@ -11,6 +11,7 @@ device-rating limits).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from ...data_loader import PHYSICAL_ATTRS
@@ -47,6 +48,23 @@ def _movement_rate(rates: str, index: int) -> float:
 def _metres(value: float) -> str:
     """Chummer's `#,0.##`: at most two decimals, no trailing zeros."""
     return f"{round(value, 2):.2f}".rstrip("0").rstrip(".") or "0"
+
+
+def _inherent_limits(total: Mapping[str, int | float], essence: float) -> tuple[int, int, int]:
+    """Calculate the SR5 physical, mental and social limits before modifiers."""
+    body = int(total["BOD"])
+    reaction = int(total["REA"])
+    strength = int(total["STR"])
+    willpower = int(total["WIL"])
+    logic = int(total["LOG"])
+    intuition = int(total["INT"])
+    charisma = int(total["CHA"])
+
+    return (
+        _ceil_div((strength * 2 + body + reaction) / 3),
+        _ceil_div((logic * 2 + intuition + willpower) / 3),
+        _ceil_div((charisma * 2 + willpower + _ceil_div(essence)) / 3),
+    )
 
 
 def _resolve_movement_mode(
@@ -154,17 +172,14 @@ def totals(ctx: Ctx) -> None:
 def finalize(ctx: Ctx) -> None:
     resolve_precedence(ctx.effects)
     bod = ctx.total["BOD"]
-    agi = ctx.total["AGI"]
     rea = ctx.total["REA"]
-    stre = ctx.total["STR"]
     wil = ctx.total["WIL"]
-    logi = ctx.total["LOG"]
     intuition = ctx.total["INT"]
-    cha = ctx.total["CHA"]
 
-    ctx.physical_limit = _ceil_div((bod * 2 + agi + rea + stre) / 3) + int(ctx.effects.get("limit_physical") or 0)
-    ctx.mental_limit = _ceil_div((logi * 2 + intuition + wil) / 3) + int(ctx.effects.get("limit_mental") or 0)
-    ctx.social_limit = _ceil_div((cha * 2 + wil + ctx.ess) / 3) + int(ctx.effects.get("limit_social") or 0)
+    physical_base, mental_base, social_base = _inherent_limits(ctx.total, ctx.ess)
+    ctx.physical_limit = physical_base + int(ctx.effects.get("limit_physical") or 0)
+    ctx.mental_limit = mental_base + int(ctx.effects.get("limit_mental") or 0)
+    ctx.social_limit = social_base + int(ctx.effects.get("limit_social") or 0)
     resolve_attr_formulas(ctx.gear.get("weapons"), ctx.total, int(ctx.effects.get("throw_str") or 0))
     resolve_limit_accuracy(ctx.gear.get("weapons"), ctx.physical_limit)
     ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
