@@ -1,0 +1,48 @@
+name: Manual (GitHub Pages)
+
+# The manual lives in `frontend/public/manual/` and the running app serves it at
+# `/manual/`. This publishes the same directory to GitHub Pages, because that is
+# the copy someone arriving from the repository can read: GitHub renders Markdown
+# but shows an HTML file as source, so the in-repo link is unreadable on its own.
+#
+# Nothing is built — the directory is already a finished static site, so the
+# artifact is the directory itself. Its root is the manual, so Pages serves it at
+# `https://<owner>.github.io/<repo>/`.
+#
+# Requires Settings → Pages → Source = "GitHub Actions" on the repository, once.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/public/manual/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# Only what deploy-pages needs, nothing wider.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one half-done: a cancelled
+# deployment can leave the site on the previous version with no run to retry.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: frontend/public/manual
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

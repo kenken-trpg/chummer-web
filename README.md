@@ -274,6 +274,8 @@ docs/       作成手順の案内・アーキテクチャ・データパイプ�
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — セットアップ、コーディング規約、PR の作法
 - [`SECURITY.md`](SECURITY.md) — 脆弱性の報告方法（GitHub の private vulnerability reporting）
 - [`docs/chargen.md`](docs/chargen.md) — キャラクター作成の手順（どの画面で何をするか）
+- [利用マニュアル](https://kenken-trpg.github.io/chummer-web/) — 実画面のスクリーンショット付きの使い方。
+  アプリからはフッターの「使い方」。実体は [`frontend/public/manual/`](frontend/public/manual/) で、`/manual/` として配信されます
 - [`docs/life-modules.md`](docs/life-modules.md) — ライフモジュール方式の操作・試験対応の範囲
 - [`docs/architecture.md`](docs/architecture.md) — データフロー、`<bonus>` ノードと `effects`、API 一覧
 - [`docs/deploy.md`](docs/deploy.md) — Docker、Cloud Run / Fly / Cloudflare Containers / 自宅 + Cloudflare Tunnel

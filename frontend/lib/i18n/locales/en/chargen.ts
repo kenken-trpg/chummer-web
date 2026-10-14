@@ -310,6 +310,8 @@ export const EN_CHARGEN = {
   "contact.points": "{points} pts",
   "contact.group": " / group",
   "contact.billable": " / billed {points} pts",
+  "contact.connection": "Connection",
+  "contact.loyalty": "Loyalty",
   "contact.name": "Name",
   "contact.role": "Role",
 

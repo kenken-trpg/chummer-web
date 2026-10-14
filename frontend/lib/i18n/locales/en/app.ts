@@ -7,6 +7,8 @@ export const EN_APP = {
   "app.footer.author": "Made by {author}",
   "app.footer.repo": "GitHub repository",
   "app.footer.repoHint": "Source, bug reports and requests (GPL-3.0)",
+  "app.footer.manual": "How to use",
+  "app.footer.manualHint": "The illustrated manual (opens in a new tab)",
 
   "app.footer.license": "GPL-3.0",
   "nav.sections": "Sections",

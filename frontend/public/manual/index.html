@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chummer Web 利用マニュアル</title>
+    <meta
+      name="description"
+      content="Chummer Web の使い方を実画面のスクリーンショット付きで説明します。キャラクター作成の 9 ステップと、書き出し・共有・印刷まで。"
+    />
+    <style>
+      /* 画面の配色は Chummer Web 本体に合わせています。印刷時だけ白地になります。 */
+      :root {
+        --bg: #0b0f14;
+        --panel: #111820;
+        --line: #223042;
+        --fg: #dfe7ef;
+        --muted: #8ea0b4;
+        --accent: #2fd8a8;
+        --warn: #e8b64c;
+        --maxw: 1180px;
+      }
+      :root[data-theme="light"] {
+        --bg: #f6f8fa;
+        --panel: #ffffff;
+        --line: #d7dee6;
+        --fg: #16202b;
+        --muted: #5a6b7d;
+        --accent: #0f7f63;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 1.5rem;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          "Hiragino Sans",
+          "Noto Sans JP",
+          "Yu Gothic",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        line-height: 1.8;
+        font-size: 16px;
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 16px 96px;
+      }
+      header.hero {
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(47, 216, 168, 0.08), transparent);
+      }
+      header.hero .wrap {
+        padding-top: 48px;
+        padding-bottom: 32px;
+      }
+      h1 {
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        margin: 0 0 8px;
+        letter-spacing: 0.02em;
+      }
+      .lede {
+        color: var(--muted);
+        margin: 0;
+        max-width: 70ch;
+      }
+      h2 {
+        font-size: clamp(1.2rem, 3vw, 1.6rem);
+        margin: 56px 0 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+      h2 .num {
+        color: var(--accent);
+        margin-right: 0.5em;
+        font-variant-numeric: tabular-nums;
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin: 28px 0 4px;
+      }
+      p,
+      li {
+        max-width: 78ch;
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 0.1em 0.4em;
+        font-size: 0.9em;
+      }
+      nav.toc {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin: 32px 0 8px;
+      }
+      nav.toc ol {
+        margin: 8px 0 0;
+        padding-left: 1.4em;
+        columns: 2;
+        column-gap: 32px;
+      }
+      @media (max-width: 640px) {
+        nav.toc ol {
+          columns: 1;
+        }
+      }
+      nav.toc li {
+        margin: 2px 0;
+        break-inside: avoid;
+      }
+      figure {
+        margin: 20px 0 8px;
+      }
+      figure img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 8px;
+      }
+      .note {
+        border-left: 3px solid var(--accent);
+        background: var(--panel);
+        padding: 12px 16px;
+        border-radius: 0 8px 8px 0;
+        margin: 20px 0;
+      }
+      .note.warn {
+        border-left-color: var(--warn);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 16px 0;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--panel);
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+        padding: 24px 0 0;
+        margin-top: 64px;
+      }
+      .shot-note {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      @media print {
+        :root {
+          --bg: #fff;
+          --panel: #fff;
+          --line: #999;
+          --fg: #000;
+          --muted: #444;
+          --accent: #006c52;
+        }
+        nav.toc {
+          break-inside: avoid;
+        }
+        figure {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <h1>Chummer Web 利用マニュアル</h1>
+        <p class="lede">
+          ブラウザだけで動く Shadowrun 5th Edition のキャラクター作成ツールです。このページは
+          <strong>どの画面で何をするか</strong
+          >を、実際の画面のスクリーンショットと一緒に順に説明します。
+          ルールそのものの解説ではありません（出典は画面の「?」と各項目の
+          <code>SR5 p.xx</code> 表記を参照）。
+        </p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <nav class="toc" aria-label="目次">
+        <strong>目次</strong>
+        <ol>
+          <li><a href="#overview">画面の見取り図</a></li>
+          <li><a href="#priority">ルールブックと作成方式（優先度タブ）</a></li>
+          <li><a href="#meta">メタタイプ</a></li>
+          <li><a href="#attrs">能力値</a></li>
+          <li><a href="#skills">技能</a></li>
+          <li><a href="#qualities">資質</a></li>
+          <li><a href="#ware">ウェアと装備（サイバー／バイオ／ギア）</a></li>
+          <li><a href="#contacts">人脈と残りのタブ</a></li>
+          <li><a href="#check">チェックタブで仕上げる</a></li>
+          <li><a href="#finish">完成させて遊ぶ（シート・書き出し・共有）</a></li>
+          <li><a href="#tips">困ったときに</a></li>
+        </ol>
+      </nav>
+
+      <p class="shot-note">
+        掲載している画面は、このマニュアル用に作ったオークのサンプル「カイト」のものです。
+        数値はサンプルのものなので、手元の画面と一致しなくて構いません。
+      </p>
+
+      <section id="overview">
+        <h2>画面の見取り図</h2>
+        <p>
+          画面は上から<strong>ツールバー</strong>・<strong>タブの列</strong>・<strong>作業領域</strong>の
+          3 段で、 右（狭い画面では下）に<strong>サイドバー</strong>が常に出ています。
+        </p>
+
+        <figure>
+          <img
+            src="img/ui-toolbar.webp"
+            alt="画面上部のツールバー。キャラクターの切り替え、複製・削除、元に戻す／やり直し、名前欄、JSON保存、読込、共有リンク、他の形式、作成完了（キャリア）、シート表示の各ボタンが並ぶ"
+          />
+          <figcaption>
+            ツールバー。左から保存済みキャラクターの切り替え／複製／削除／元に戻す・やり直し／名前／JSON
+            保存／読込／共有リンク／他の形式／作成完了（キャリア）／シート表示。
+          </figcaption>
+        </figure>
+
+        <figure>
+          <img
+            src="img/ui-sidebar.webp"
+            alt="サイドバー。モード・作成方式・警告の一覧・リミット・コンディション・イニシアチブ・アーマー・エッセンス・新円・各種の残り点数が縦に並ぶ"
+          />
+          <figcaption>
+            サイドバー。モードと作成方式、作成ルール上の警告、リミットやコンディションなどの導出値、
+            そして<strong>残り点数</strong>（能力値点・技能点・カルマ・新円…）が常に見えています。
+            「?」を押すとその値の計算式と内訳が出ます。
+          </figcaption>
+        </figure>
+
+        <div class="note">
+          初回に開くと「Runner」という新しいキャラクターが 1
+          人できています。次からは最後に開いていた
+          キャラクターが開きます。データは<strong>ブラウザ内（IndexedDB）</strong>に保存され、サーバーには残りません。
+        </div>
+      </section>
+
+      <section id="priority">
+        <h2><span class="num">1.</span>ルールブックと作成方式を決める（優先度タブ）</h2>
+        <figure>
+          <img
+            src="img/tab-priority.webp"
+            alt="優先度タブ。上段にセッティングの選択とルールブックを選ぶボタン、その下に優先度／Sum to Ten／Karma／Life Module の切り替え、残カルマ→新円のスライダー、A〜E の優先度表"
+          />
+          <figcaption>
+            優先度タブ。上からセッティング、作成方式の切り替え、残カルマ→新円スライダー、優先度表。
+          </figcaption>
+        </figure>
+
+        <ol>
+          <li>
+            <strong>セッティング</strong>のプルダウンで Chummer 同梱のプリセットを選びます。自分の
+            Chummer の フォルダ（<code>settings/</code> と
+            <code>customdata/</code> を含むフォルダ、またはその zip）を 読み込むこともできます。
+          </li>
+          <li>
+            <strong>ルールブックを選ぶ</strong
+            >で購入対象を絞れます。チェックを外した本の項目は購入一覧に出なくなります
+            （すでに持っている装備・資質は消えません）。1 つもチェックしなければ制限なしです。
+          </li>
+          <li>
+            本を手でいじるとプリセット名は外れ「カスタム」になります。設定の数値（ハウスルール）は残ります。
+          </li>
+        </ol>
+
+        <h3>作成方式は 4 つ</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>方式</th>
+              <th>内容</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>優先度</td>
+              <td>標準。A〜E を 5 項目に 1 つずつ割り当てます（SR5 p.65）</td>
+            </tr>
+            <tr>
+              <td>Sum to Ten</td>
+              <td>同じ表で、A=4／B=3／C=2／D=1／E=0 の合計がちょうど 10 になるように（重複可）</td>
+            </tr>
+            <tr>
+              <td>Karma</td>
+              <td>表を使わず、すべてを 800 カルマで購入します（SR5 p.94）</td>
+            </tr>
+            <tr>
+              <td>ライフモジュール</td>
+              <td>Run Faster の経歴を積み上げます（試験対応）</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          優先度／Sum to Ten では表のセルをクリックして割り当てます。Karma
+          とライフモジュールでは代わりに
+          <strong>タレント</strong>（Mundane／Magician／Technomancer など）をプルダウンで選びます。
+          余ったカルマは同じタブのスライダーで新円に替えられます（<strong>作成中のみ</strong>・逆方向には戻せません）。
+        </p>
+      </section>
+
+      <section id="meta">
+        <h2><span class="num">2.</span>メタタイプを決める</h2>
+        <figure>
+          <img
+            src="img/tab-meta.webp"
+            alt="メタタイプタブ。メタタイプと種族（メタバリアント）の一覧から選ぶ画面"
+          />
+          <figcaption>
+            メタタイプタブ。選ぶと能力値の下限・上限と、種族固有の資質・クリッターパワーが決まります。
+          </figcaption>
+        </figure>
+        <p>
+          選んだ種族が持つ資質は「固定」として表示され、削除できません（サンプルのオークなら
+          <strong>低光量視野</strong>がこれに当たります）。
+        </p>
+      </section>
+
+      <section id="attrs">
+        <h2><span class="num">3.</span>能力値を割り振る</h2>
+        <figure>
+          <img src="img/tab-attrs.webp" alt="能力値タブ。各能力値のスライダーと現在値が並ぶ画面" />
+          <figcaption>
+            能力値タブ。スライダー（キーボードの左右キーでも動きます）で割り振ります。
+          </figcaption>
+        </figure>
+        <p>
+          最低値までは無料で、超えた分に能力値点を使います。EDG・MAG・RES
+          は<strong>特殊能力値点</strong>から出ます。 余っていればチェックタブが指摘します。
+        </p>
+      </section>
+
+      <section id="skills">
+        <h2><span class="num">4.</span>技能を取る</h2>
+        <figure>
+          <img
+            src="img/tab-skills.webp"
+            alt="技能タブ。上部に残点数、技能グループのスライダー一覧が並ぶ画面"
+          />
+          <figcaption>
+            技能タブ。先頭に「技能 0/36 ・ グループ 0/5 ・ 知識 0/4」と残りが出ます。
+          </figcaption>
+        </figure>
+        <ul>
+          <li><strong>技能</strong>: レーティングが判定のダイス数（＋関連能力値）になります。</li>
+          <li>
+            <strong>技能グループ</strong>: グループ点で一括して上げます。中の 1
+            つだけを上げたり専門化を取ると グループとしては扱えなくなります。
+          </li>
+          <li><strong>専門化</strong>: その用途の判定に +2 ダイス。作成時はカルマ 1 点です。</li>
+          <li>
+            <strong>知識技能</strong>: 無料枠は (INT + LOG) × 2 点。母語が 1 つ無料になります。
+          </li>
+        </ul>
+      </section>
+
+      <section id="qualities">
+        <h2><span class="num">5.</span>資質を取る</h2>
+        <figure>
+          <img
+            src="img/tab-qualities.webp"
+            alt="資質タブ。取得済みの資質一覧と、すべて／有利／不利／メタジェネの絞り込み、資質の検索欄とカタログ"
+          />
+          <figcaption>
+            資質タブ。上が<strong>取得済み</strong>、下がカタログです。「すべて／有利／不利／メタジェネ」で絞り込めます。
+          </figcaption>
+        </figure>
+        <p>
+          ポジティブ資質はカルマを払い、ネガティブ資質はカルマを戻します（戻せる上限があります）。
+          資質によっては対象の指定が必要です（アレルギーの対象、依存症の物質、技能グループなど）。その欄は資質の行の中に出ます。
+          前提を満たしていない資質は<strong>理由付き</strong>で購入できません。
+        </p>
+      </section>
+
+      <section id="ware">
+        <h2><span class="num">6.</span>ウェアと装備を買う</h2>
+        <figure>
+          <img
+            src="img/tab-cyber.webp"
+            alt="サイバータブ。装備済みのサイバーウェアと、サイバーウェアを検索するカタログ"
+          />
+          <figcaption>
+            サイバータブ。エッセンスを削って能力を上げます。等級を上げると消費が減り、値段と入手可能度が上がります。
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/tab-bio.webp" alt="バイオタブ。バイオウェアのカタログ" />
+          <figcaption>
+            バイオタブ。サイバーウェアよりエッセンス効率が良い代わりに高価です。
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="img/tab-gear.webp"
+            alt="ギアタブ。防具・武器・通信機・サイバーデッキ・RCC・視覚／聴覚・センサー・車両・ドローン・ギア・ドラッグ・ライフスタイルのカテゴリ切り替えと、防具の一覧"
+          />
+          <figcaption>
+            ギアタブ。上段の<strong>カテゴリ</strong>（防具・武器・通信機・サイバーデッキ・車両・ドラッグ・ライフスタイル…）で
+            買うものを切り替え、下段の絞り込みと検索欄で探して「購入」します。各行に装甲・値段・入手可能度・出典が出ます。
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="img/tab-gear-lifestyle.webp"
+            alt="ギアタブのライフスタイル。下流の生活水準を購入済みで、快適さ・地域・防犯などの欄が出ている"
+          />
+          <figcaption>
+            ライフスタイルも同じギアタブです。購入すると月数や快適さ・地域・防犯などの加算をその場で編集できます。
+          </figcaption>
+        </figure>
+        <div class="note warn">
+          作成時は<strong>入手可能度</strong>が上限（標準
+          12）を超える品物を買えません。残り新円と上限はギアタブの先頭と サイドバーに出ています。
+        </div>
+      </section>
+
+      <section id="contacts">
+        <h2><span class="num">7.</span>人脈と残りのタブ</h2>
+        <figure>
+          <img
+            src="img/tab-contacts.webp"
+            alt="コンタクトタブ。ミスター・ジョンソンという人脈が 1 件あり、名前・役割・コネ値・忠実値の欄と追加フォームが並ぶ"
+          />
+          <figcaption>
+            コンタクトタブ。無料枠は
+            CHA×3。<strong>コネ値</strong>（Connection）と<strong>忠実値</strong>（Loyalty）は最低
+            1、作成時は合計 7 まで。超過分は 1 点 1 カルマです。
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="img/tab-martial.webp"
+            alt="武道タブ。流派と技の残り表示と、武道を検索するカタログ。52 ブロックス・合気道などが並ぶ"
+          />
+          <figcaption>
+            武道タブ。流派と技。流派は 7 カルマ（技 1 つ込み）、追加の技は各 5 カルマ、作成時は流派
+            1・技合計 5 までです。
+          </figcaption>
+        </figure>
+        <p>
+          <strong>魔法／共振系のタブ</strong
+          >（アデプト・術式・精霊・収束具・複合体・スプライト・イニシエーション・サブマージョン）は、
+          タレントや資質でそのキャラクターに関係するときだけタブの列に出ます。
+        </p>
+      </section>
+
+      <section id="check">
+        <h2><span class="num">8.</span>チェックタブで仕上げる</h2>
+        <figure>
+          <img
+            src="img/tab-check.webp"
+            alt="チェックタブ。エラー 0・警告 2・情報 8 の集計と、警告と情報の一覧。各行に「該当タブへ」ボタン"
+          />
+          <figcaption>
+            チェックタブ。作成ルール上の問題を<strong>エラー（作成不可）／警告／情報</strong>に分けて並べます。
+            各行の「該当タブへ」でその場所に飛べます。
+          </figcaption>
+        </figure>
+        <p>
+          使い残した点数（能力値点・技能点・カルマ・新円）もここに出ます。
+          「作成ルール上の問題は見つかりませんでした」になれば完成です。
+        </p>
+      </section>
+
+      <section id="finish">
+        <h2><span class="num">9.</span>完成させて遊ぶ</h2>
+        <figure>
+          <img
+            src="img/tab-sheet.webp"
+            alt="シートタブの上部。画像のアップロード欄と年齢・性別・身長・体重・目・髪・肌・コンセプト・プレイヤー名、容姿・背景・メモ・GM 用メモの入力欄"
+          />
+          <figcaption>
+            シートタブの上部は<strong>記述</strong>です。顔写真（.chum5 の mugshot
+            と相互変換）と設定欄を埋めます。
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="img/tab-sheet-body.webp"
+            alt="キャラクターシート本体。コアの能力値、イニシアチブ・コンディション・リミット・移動・ライフスタイル、技能表、資質、戦闘のアーマーと武器"
+          />
+          <figcaption>
+            その下が完成したキャラクターシートです。ツールバーの<strong>レイアウト</strong>を選び「印刷
+            / PDF」で出力できます （印刷ダイアログで「PDF として保存」も選べます）。
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="img/tab-sheet-body2.webp"
+            alt="キャラクターシートの続き。アーマーと武器の表、レンジと反動、ウェア、コンタクト、記述"
+          />
+          <figcaption>
+            シートの続き。戦闘（アーマー・武器のレンジと反動）、ウェア、コンタクト、記述と並びます。
+          </figcaption>
+        </figure>
+
+        <h3>キャリアモードへ</h3>
+        <p>
+          <strong>作成完了（キャリア）</strong
+          >でキャリアモードに切り替わります。以降はカルマと新円で成長し、資質の値段も
+          変わります（SR5
+          p.107）。エラーが残っていても確認の上で進めることはできます。同じボタンで作成モードに戻せます。
+        </p>
+
+        <h3>書き出しと共有</h3>
+        <figure>
+          <img
+            src="img/ui-export-menu.webp"
+            alt="ツールバーの「他の形式」メニューを開いた状態。.chum5書出・.xlsx書出・FVTT書出・ココフォリア・ユドナリウム・チャットパレット・未修得技能もの各項目"
+          />
+          <figcaption>
+            「他の形式
+            ▾」の中身。JSON（バックアップ）はツールバーの「JSON保存」、そのほかはここから。
+          </figcaption>
+        </figure>
+        <ul>
+          <li><strong>JSON</strong>: このアプリのバックアップ。「読込」でそのまま戻せます。</li>
+          <li><strong>.chum5</strong>: Chummer 本体で開ける形式。</li>
+          <li>
+            <strong>.xlsx</strong> / <strong>Foundry VTT</strong> / <strong>ココフォリア</strong> /
+            <strong>ユドナリウム</strong> / <strong>チャットパレット</strong>。
+          </li>
+          <li>
+            <strong>共有リンク</strong>: 読み取り専用の URL。キャラクターは URL
+            のフラグメントに入り、サーバーには送られません。
+          </li>
+        </ul>
+      </section>
+
+      <section id="tips">
+        <h2>困ったときに</h2>
+        <ul>
+          <li>
+            値の横の
+            <strong>?</strong>
+            を押すと計算式と内訳が出ます（ホバー・キーボード操作・タップに対応）。
+          </li>
+          <li>
+            <strong>元に戻す / やり直し</strong> は <code>Ctrl/⌘+Z</code> と
+            <code>Ctrl/⌘+Shift+Z</code>。
+          </li>
+          <li>UI の言語は右上で切り替えます。基準は日本語です。</li>
+          <li>既存のキャラクターは「読込 (JSON/.chum5/.xlsx)」から取り込めます。</li>
+          <li>
+            キャラクターはブラウザ内に保存されます。別の端末へ移すときは JSON を書き出してください。
+          </li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>
+          このマニュアルは
+          <a href="https://github.com/kenken-trpg/chummer-web/blob/main/docs/chargen.md"
+            >docs/chargen.md</a
+          >
+          の手順に実画面を添えたものです。 より詳しい話は
+          <a href="https://github.com/kenken-trpg/chummer-web/blob/main/docs/life-modules.md"
+            >life-modules.md</a
+          >・<a href="https://github.com/kenken-trpg/chummer-web/blob/main/docs/exports.md"
+            >exports.md</a
+          >・<a href="https://github.com/kenken-trpg/chummer-web/blob/main/docs/share-link.md"
+            >share-link.md</a
+          >、 起動方法は
+          <a href="https://github.com/kenken-trpg/chummer-web/blob/main/README.md">README</a>
+          を参照してください。
+        </p>
+        <p>
+          非公式 Shadowrun 5e キャラクター作成ツール。Catalyst / Topps 非提携。データは Chummer5a
+          (GPL-3.0)。
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>

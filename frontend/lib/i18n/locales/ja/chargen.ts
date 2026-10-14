@@ -302,7 +302,7 @@ export const JA_CHARGEN = {
   "grade.discountHint": "各 −10%（累積で減算）",
   "contact.free": "無料枠 CHA×{mult} = {used}/{free}",
   "contact.over": " ・ 超過 {paid}点（{karma}カルマ）",
-  "contact.minimum": "。Connection と Loyalty は最低1",
+  "contact.minimum": "。コネ値と忠実値は最低1",
   "contact.careerCap": "。キャリアでは合計上限なし",
   "contact.chargenCap": "、作成時は合計7まで",
   "contact.perPoint": "。超過分は1点{karma}カルマです",
@@ -310,6 +310,8 @@ export const JA_CHARGEN = {
   "contact.points": "{points}点",
   "contact.group": " / グループ",
   "contact.billable": " / 課金 {points}点",
+  "contact.connection": "コネ値",
+  "contact.loyalty": "忠実値",
   "contact.name": "名前",
   "contact.role": "役割",
 

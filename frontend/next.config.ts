@@ -61,6 +61,16 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${BACKEND_ORIGIN}/api/:path*` }];
   },
+  // The manual is `public/manual/index.html`, and Next serves a public file
+  // only at its exact path: `/manual` 404s. This must be a redirect and not a
+  // rewrite — the page links its screenshots relatively, and a rewrite leaves
+  // the browser on `/manual`, where `img/…` resolves to `/img/…` and every
+  // image 404s. A redirect moves the browser to the file, so the relative
+  // links resolve next to it. They stay relative because the same directory is
+  // published to GitHub Pages under a different prefix.
+  async redirects() {
+    return [{ source: "/manual", destination: "/manual/index.html", permanent: true }];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
