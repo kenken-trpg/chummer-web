@@ -1,6 +1,6 @@
 /** シートと印刷、ココフォリア出力 — 日本語。 */
 export const JA_SHEET = {
-  "coco.initiative": "イニシアチブ",
+  "coco.initiative": "イニシアティブ",
   "coco.reach": "リーチ+{reach}",
   "coco.unarmed": "非武装攻撃",
   "coco.attack": "{name}攻撃",
@@ -14,8 +14,8 @@ export const JA_SHEET = {
   "coco.summoning": "精霊召喚",
   "coco.binding": "精霊束縛",
   "coco.banishing": "精霊追放",
-  "coco.matrixInitCold": "マトリックス・イニシアチブ（コールドシム）",
-  "coco.matrixInitHot": "マトリックス・イニシアチブ（ホットシム）",
+  "coco.matrixInitCold": "マトリックス・イニシアティブ（コールドシム）",
+  "coco.matrixInitHot": "マトリックス・イニシアティブ（ホットシム）",
   "coco.hackOnTheFly": "素早いハッキング",
   "coco.bruteForce": "強行アクセス",
   "coco.dataSpike": "データスパイク",
@@ -45,7 +45,7 @@ export const JA_SHEET = {
   "coco.memoTradition": "伝統: {name}",
   "coco.memoMentor": "メンター: {name}",
   "coco.memoParagon": "パラゴン: {name}",
-  "coco.memoInit": "イニシアチブ {value}+{dice}d6 ・ リミット 物{physical}/精{mental}/社{social}",
+  "coco.memoInit": "イニシアティブ {value}+{dice}d6 ・ リミット 物{physical}/精{mental}/社{social}",
   "coco.memoArmor": "装甲 {armor} ・ エッセンス {essence}",
   "coco.memoDice": "判定は BCDice の ShadowRun5 で。",
   "coco.spirit": "精霊",
@@ -227,7 +227,7 @@ export const JA_SHEET = {
   "sheet.deviceRcc": "RCC {name}",
   "sheet.matrixInit": "冷{cold} ／ 熱{hot}",
   "sheet.matrixInitNote":
-    "マトリックス・イニシアチブは VR のもの（データ処理＋直感、コールドシム 3d6／ホットシム 4d6・SR5 p.229）。AR では肉体のイニシアチブで行動します。",
+    "マトリックス・イニシアティブは VR のもの（データ処理＋直感、コールドシム 3d6／ホットシム 4d6・SR5 p.229）。AR では肉体のイニシアティブで行動します。",
 
   "sheet.livingPersona": "リビングペルソナ",
   "print.status": "ステータス",
@@ -284,7 +284,7 @@ export const JA_SHEET = {
   "action.switchInterface": "インターフェイスモード切替",
   "action.traceIcon": "アイコン追跡",
   "action.threading": "スレッディング",
-  "udo.panelStatus": "イニシアチブ/エッジ/移動力",
+  "udo.panelStatus": "イニシアティブ/エッジ/移動力",
   "udo.panelCm": "コンディション・モニター",
   "udo.panelBuff": "バフ/デバフ",
   "udo.woundTrack": "負傷修正",

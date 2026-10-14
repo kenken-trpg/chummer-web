@@ -96,7 +96,7 @@ export const JA_GEAR = {
   "gear.granted": "{source}付属",
   "gear.weaponized": "武器化",
   "gear.inUse": "使用中",
-  "gear.drugToggleHint": "能力値・イニシアチブ・技能に反映",
+  "gear.drugToggleHint": "能力値・イニシアティブ・技能に反映",
   "customDrug.addComponent": "コンポーネントを足す",
   "customDrug.addiction": "中毒 R{rating}/閾値{threshold}",
   "customDrug.avail": "入手 {avail}",
