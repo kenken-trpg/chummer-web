@@ -10,6 +10,7 @@ import re
 from typing import Any
 
 from ..notices import Notice, notice
+from ..safe_eval import MAX_EXPRESSION_LENGTH, UnsafeExpression, evaluate_arithmetic
 
 SPELL_DEFENSE_RESIST_TAGS = {
     "directmanaspellresist": "direct_mana",
@@ -343,13 +344,14 @@ _ARITH_RE = re.compile(r"^[0-9+\-*/(). ]+$")
 
 def _eval_int(value: Any, default: int = 0) -> int:
     """``_as_int`` plus bare arithmetic (``Rating*2`` after ``substitute_rating``
-    leaves ``"3*2"``). Digits and ``+-*/().`` only — no names, no calls, and no
-    ``**`` (``9**9**9`` passes the char-class regex but would blow up ``eval``)."""
+    leaves ``"3*2"``). Digits and ``+-*/().`` only — no names, calls or powers."""
     expr = value.strip() if isinstance(value, str) else ""
+    if len(expr) > MAX_EXPRESSION_LENGTH:
+        return default
     if expr and "**" not in expr and _ARITH_RE.match(expr) and not expr.isdigit():
         try:
-            return int(eval(expr, {"__builtins__": {}}, {}))  # noqa: S307 - guarded by _ARITH_RE
-        except (ArithmeticError, SyntaxError, ValueError):
+            return int(evaluate_arithmetic(expr))
+        except (UnsafeExpression, ValueError, TypeError):
             return default
     return _as_int(value, default)
 

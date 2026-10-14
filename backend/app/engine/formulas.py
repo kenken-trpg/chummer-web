@@ -11,6 +11,7 @@ import re
 from collections.abc import Mapping
 
 from ..data_loader import eval_formula
+from ..safe_eval import MAX_EXPRESSION_LENGTH, UnsafeExpression, evaluate_arithmetic
 
 
 def _ceil_div(n: float) -> int:
@@ -69,6 +70,8 @@ def _number_test(match: re.Match[str]) -> str:
 
 def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
     text = str(raw or "")
+    if len(text) > MAX_EXPRESSION_LENGTH:
+        return text
     if "{" not in text:
         return text
     values = {key.upper(): int(val) for key, val in attrs.items()}
@@ -85,8 +88,8 @@ def _eval_attr_stat(raw: str, attrs: dict[str, int]) -> str:
         if not re.fullmatch(r"[0-9+\-*/().]+", compact):
             return None
         try:
-            return str(int(eval(compact, {"__builtins__": {}}, {})))
-        except Exception:
+            return str(int(evaluate_arithmetic(compact)))
+        except (UnsafeExpression, ValueError, TypeError):
             return None
 
     out = replaced
@@ -166,7 +169,6 @@ def _add_weapon_dv(raw: str | None, delta: int) -> str:
 
 #: `{INT}` / `{INTUnaug}` in a settings-file expression.
 _SETTINGS_TOKEN = re.compile(r"\{([A-Z]{3})(Unaug)?\}")
-_ARITH = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b, ast.Mult: lambda a, b: a * b}
 
 
 def eval_attribute_expression(expr: str, values: Mapping[str, float]) -> float | None:
@@ -186,28 +188,9 @@ def eval_attribute_expression(expr: str, values: Mapping[str, float]) -> float |
 
     try:
         text = re.sub(r"\bdiv\b", "/", _SETTINGS_TOKEN.sub(token, expr.strip()))
-        tree = ast.parse(text, mode="eval")
-    except (KeyError, SyntaxError, ValueError):
-        return None
-
-    def walk(node: ast.AST) -> float:
-        if isinstance(node, ast.Expression):
-            return walk(node.body)
-        if isinstance(node, ast.Constant) and isinstance(node.value, int | float) and not isinstance(node.value, bool):
-            return float(node.value)
-        if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub | ast.UAdd):
-            inner = walk(node.operand)
-            return -inner if isinstance(node.op, ast.USub) else inner
-        if isinstance(node, ast.BinOp):
-            left, right = walk(node.left), walk(node.right)
-            if isinstance(node.op, ast.Div):
-                return left / right
-            op = _ARITH.get(type(node.op))
-            if op is not None:
-                return float(op(left, right))
-        raise ValueError(ast.dump(node))
-
-    try:
-        return walk(tree)
-    except (ValueError, ZeroDivisionError, RecursionError):
+        result = evaluate_arithmetic(text, allowed_ops={ast.Add, ast.Sub, ast.Mult, ast.Div})
+        if isinstance(result, bool):
+            return None
+        return result
+    except (KeyError, UnsafeExpression, ValueError, TypeError):
         return None

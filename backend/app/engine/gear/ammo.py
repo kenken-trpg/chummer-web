@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from ...safe_eval import MAX_EXPRESSION_LENGTH, UnsafeExpression, evaluate_boolean
 from ..formulas import _add_signed_stat, _leading_int, _set_damage_type
 from ..lookups import _item_by_id
 
@@ -19,6 +20,8 @@ def _weapon_details_match(weapon: dict[str, Any], expr: str) -> bool:
     raw = (expr or "").strip()
     if not raw:
         return True
+    if len(raw) > MAX_EXPRESSION_LENGTH:
+        return False
     ammo = str(weapon.get("ammo") or "")
     name = str(weapon.get("name") or "")
 
@@ -34,8 +37,8 @@ def _weapon_details_match(weapon: dict[str, Any], expr: str) -> bool:
     if not re.fullmatch(r"(?:True|False|and|or|\(|\)|\s)+", text):
         return False
     try:
-        return bool(eval(text, {"__builtins__": {}}, {}))
-    except Exception:
+        return evaluate_boolean(text)
+    except UnsafeExpression:
         return False
 
 

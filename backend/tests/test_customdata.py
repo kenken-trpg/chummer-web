@@ -24,7 +24,7 @@ from app.customdata import (
     dataset_hash,
     manifest_key,
 )
-from app.data_loader import Overlay, catalog, reset_catalog, using_customdata
+from app.data_loader import Overlay, catalog, eval_formula, reset_catalog, using_customdata
 from app.main import app
 
 
@@ -203,6 +203,38 @@ def test_the_overlay_reaches_the_catalog_and_leaves_no_trace_after() -> None:
             assert len(arts) == before + 1
             assert any(a["name"] == "新東京テスト" for a in arts)
         assert len(catalog()["martial_arts"]) == before, "the overlay must not leak out of the block"
+    finally:
+        reset_catalog()
+
+
+def test_custom_vehicle_formula_reaches_the_catalog_evaluator() -> None:
+    """A custom XML item follows the same formula path as a vendored item.
+
+    There is no custom-data pack checked into this repository, so this uses a
+    minimal Chummer-shaped `custom_vehicles.xml` entry with a formula shape
+    already present in `vehicles.xml`.
+    """
+    files = {
+        "d/manifest.xml": b"<manifest><guid>g</guid><version>1</version></manifest>",
+        "d/custom_vehicles.xml": (
+            b"<chummer><mods><mod>"
+            b"<id>custom-formula-mod</id><name>Custom Formula Mod</name>"
+            b"<category>All</category>"
+            b"<cost>FixedValues(number(Body = 0) * 25 + Body * Body * 100,"
+            b"number(Body = 0) * 125 + Body * Body * 500)</cost>"
+            b"<avail>FixedValues(2,4)</avail><slots>0</slots><rating>2</rating>"
+            b"</mod></mods></chummer>"
+        ),
+    }
+    trees, report = build_overlay(files, ["g>1"])
+    assert report.skipped == []
+
+    reset_catalog()
+    try:
+        overlay = Overlay(key=dataset_hash(files), trees=trees)
+        with using_customdata(overlay):
+            mod = next(row for row in catalog()["vehicle_mods"] if row["id"] == "custom-formula-mod")
+            assert eval_formula(mod["cost"], 2, extras={"Body": 2}) == pytest.approx(2000)
     finally:
         reset_catalog()
 
