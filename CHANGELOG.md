@@ -3,7 +3,25 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
-## [Unreleased]
+## [0.5.1] — 2026-10-14
+
+### Added
+
+- **実画面つきの利用マニュアル**: キャラクター作成の 9 ステップと書き出し・共有・印刷を、実際の
+  画面のスクリーンショット付きで説明するページを追加しました。アプリのフッター「使い方」、または
+  <https://kenken-trpg.github.io/chummer-web/> から読めます。
+
+### Fixed
+
+- **コンタクトの訳語**: 〈つながり〉〈忠誠〉〈コネクション〉〈ロイヤリティ〉〈接続度〉〈忠誠度〉と
+  ばらついていた表記を、正典（`docs/translation-glossary.md`）の **コネ値**・**忠実値** に統一しました。
+  コンタクトタブの入力欄は英語のままだったので、ここも日本語化しています。
+
+- **修正:** 身体・社交リミットの基礎計算をSR5の公式式に合わせ、ヘルプの式と内訳表示も修正しました。
+
+### Security
+
+- **セキュリティ:** カタログやカスタムデータの数式を、演算量に上限のあるAST評価器で安全に処理します。
 
 ## [0.5.0] — 2026-10-13
 
@@ -1944,7 +1962,8 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.2.2...v0.3.0
