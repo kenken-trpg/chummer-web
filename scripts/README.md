@@ -1,5 +1,25 @@
 # Publishing
 
+## Manual screenshots
+
+The illustrated manual lives in `frontend/public/manual/`. To refresh all 18
+screenshots with the same Japanese sample character, start the local API on
+8100 and the frontend on 3100 (set `BACKEND_ORIGIN=http://127.0.0.1:8100`
+when building the frontend as well as when starting it), then run:
+
+```sh
+node scripts/capture-manual.mjs
+```
+
+The script requires Playwright Chromium (`npx playwright install chromium`).
+`MANUAL_ORIGIN` can override the frontend URL. It uses an isolated browser
+context, creates the sample through the real API, and replaces the WebP images
+in `public/manual/img/`. Review the images and update the manual's capture date,
+captions, and sample description together. Check image loading with
+`cd frontend && npm run test:e2e -- e2e/manual.spec.ts --workers=1`.
+
+## Application publishing
+
 `publish.sh` pushes a feature branch, creates or reuses its PR, waits for checks,
 merges it, waits for CI on that exact merge commit, and deploys the immutable
 artifact extracted from that CI's logs. It changes the live service.
