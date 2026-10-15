@@ -1,8 +1,8 @@
 /** 魔法と共振力 — 日本語。 */
 export const JA_MAGIC = {
-  "adept.powerPoints": "パワー点 {used}/{max}",
+  "adept.powerPoints": "パワーポイント {used}/{max}",
   "adept.wayDiscount": " ・ Way割引 {used}/{max}",
-  "adept.boughtPoints": "購入したパワー点（1点=5カルマ）",
+  "adept.boughtPoints": "購入したパワーポイント（1点=5カルマ）",
   "adept.boughtPointsHint": "MAG から何点をアデプトパワーに回すか。1 点あたり 5 カルマ",
   "adept.beforeDiscount": "（割引前 {cost}）",
   "adept.freeLevels": " / 無料Lv {levels}",
@@ -19,20 +19,20 @@ export const JA_MAGIC = {
   "adept.enhancementNote": "Way と対応パワーがあるとき、1つ 2カルマ",
   "adept.enhancementCost": " / 2カルマ / ",
   "adept.searchEnhancements": "Enhancement を検索",
-  "adept.qiTitle": "気焦点",
-  "adept.qiNote": "Force × 3,000¥。結合カルマ = Force（Way で減）。Force はパワー点×4",
+  "adept.qiTitle": "氣収束具",
+  "adept.qiNote": "Force × 3,000¥。結合カルマ = Force（Way で減）。Force はパワーポイント×4",
   "adept.qiBinding": " / 結合 {karma}カルマ",
   "adept.qiPowerRating": "パワーR",
-  "adept.searchQi": "気焦点に入れるパワーを検索",
+  "adept.searchQi": "氣収束具に入れるパワーを検索",
 
   // --- qualities tab ------------------------------------------------------
   "adept.bind": "結合",
-  "magic.tradition": "伝統",
+  "magic.tradition": "様式",
 
   "magic.drainResist": " ・ ドレイン抵抗 {attrs} {pool}",
   "foci.note":
     "購入は定価。クラフトは術式＋試薬Force×20¥とアーティフィシング+MAG[Force] vs Force×2（Force日）。結合カルマは Force。同時 {count}/{countMax} ・ Force合計 {force}/{forceMax}",
-  "foci.adeptNote": " ・ 気焦点はアデプトタブ（この上限に含む）",
+  "foci.adeptNote": " ・ 氣収束具はアデプトタブ（この上限に含む）",
   "foci.crafted": "クラフト",
   "foci.bind": "結合 {karma}カルマ",
   "foci.craftBreakdown": "（術式 {formula}¥ + 試薬 {reagent}¥ / 定価 {retail}¥）",
@@ -63,7 +63,7 @@ export const JA_MAGIC = {
   "spell.drainAt": " @ F{force} → ドレイン {drain}",
   "spell.drainSpecial": "特殊",
   "spell.drainMod": "（修正{mod}）",
-  "spell.focusBonus": " / 焦点+{bonus}",
+  "spell.focusBonus": " / 収束具+{bonus}",
   "spell.required": " / 必要 {list}",
   "spell.kind.spell": "呪文",
   "spell.kind.ritual": "儀式",
@@ -87,10 +87,10 @@ export const JA_MAGIC = {
   // Shared by the matrix-resonance tabs (sprites, complex forms).
   "spirit.extraTag": "追加",
 
-  "res.fadeResist": " ・ フェード抵抗 {attrs} {pool}",
+  "res.fadeResist": " ・ フェイディング抵抗 {attrs} {pool}",
   "sprite.note":
-    "コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェードは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。",
-  "sprite.livingPersona": " ・ リビングペルソナ DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
+    "コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェイディングは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。",
+  "sprite.livingPersona": " ・ 生体ペルソナ DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
   "sprite.registered": "登録",
   "sprite.compiled": "コンパイル",
   "sprite.tasks": "タスク",
@@ -100,8 +100,8 @@ export const JA_MAGIC = {
   "sprite.search": "スプライトを検索",
   "cf.free": "優先度の無料枠 {used}/{free}",
   "cf.paid": " ・ 追加 {paid}×4カルマ",
-  "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超なら物理フェード。",
-  "cf.fadeAt": " @ L{level} → フェード {fade}",
+  "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超なら物理フェイディング。",
+  "cf.fadeAt": " @ L{level} → フェイディング {fade}",
   "cf.fadeSpecial": "特殊",
   "cf.attribute": "能力値",
   "cf.search": "複合体を検索",

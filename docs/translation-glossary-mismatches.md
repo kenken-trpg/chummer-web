@@ -54,7 +54,6 @@
 | complex form | 複合体 | `Label_Options_BPComplexForm` | 複合体のレーティング |
 | Spells | 呪文 | `Label_SelectedSpells` | 習得した呪文 |
 | Broken | 破壊 | `Label_SkillGroup_Broken` | Broken |
-| Rituals | 儀式呪文 | `Label_SummaryRituals` | 儀式 |
 | Delete Item | アイテムを削除 | `MessageTitle_Delete` | アイテムの削除 |
 | Power Level | レベル | `MessageTitle_PowerLevel` | パワーレベル |
 | Physical | 物理 | `Node_Physical` | 身体 |
@@ -62,7 +61,7 @@
 | Combat Spells | 戦闘呪文 | `Node_SelectedCombatSpells` | 習得した戦闘呪文 |
 | Cyberware | サイバーウェア | `Node_SelectedCyberware` | 埋め込んでいるサイバーウェア |
 | Detection Spells | 探知呪文 | `Node_SelectedDetectionSpells` | 習得した探知呪文 |
-| Rituals | 儀式呪文 | `Node_SelectedGeomancyRituals` | Selected Geomancy Rituals |
+| Rituals | 儀式 | `Node_SelectedGeomancyRituals` | Selected Geomancy Rituals |
 | Health Spells | 身体呪文 | `Node_SelectedHealthSpells` | 習得した身体呪文 |
 | Illusion Spells | 幻影呪文 | `Node_SelectedIllusionSpells` | 習得した幻影呪文 |
 | Manipulation Spells | 操作呪文 | `Node_SelectedManipulationSpells` | 習得した操作呪文 |
@@ -134,7 +133,6 @@
 | Mundane | マンディン | category | マンデイン |
 | Resonance | 共振力 | category | Resonance |
 | ritual | 儀式 | category | Ritual |
-| Rituals | 儀式呪文 | category | 儀式 |
 | Services | 助力 | category | Services |
 
 ## D. shadowrun5eja が訳出済みで ui.json 未収録の用語 (seed 候補)

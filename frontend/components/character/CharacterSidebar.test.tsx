@@ -73,7 +73,7 @@ describe("<CharacterSidebar>", () => {
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
     expect(screen.getByText("両利き")).toBeDefined();
-    expect(screen.getByText("伝統")).toBeDefined();
+    expect(screen.getByText("様式")).toBeDefined();
     expect(screen.getByText("エッセンスが0以下です")).toBeDefined();
   });
 

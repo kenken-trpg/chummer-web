@@ -23,7 +23,7 @@ describe("<CharacterSheet>", () => {
     expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Nadia");
     expect(headings()).toEqual(["コア"]);
     // data-less sections collapse to null
-    for (const gone of ["技能", "戦闘", "資質", "武道", "コンタクト", "記述"]) {
+    for (const gone of ["技能", "戦闘", "資質", "格闘技", "コンタクト", "記述"]) {
       expect(screen.queryByText(gone)).toBeNull();
     }
   });
@@ -152,7 +152,7 @@ describe("<CharacterSheet>", () => {
         layout="standard"
       />,
     );
-    expect(headings()).toEqual(expect.arrayContaining(["コア", "資質", "武道", "コンタクト"]));
+    expect(headings()).toEqual(expect.arrayContaining(["コア", "資質", "格闘技", "コンタクト"]));
     // qualities + martial arts run names through `tr`; contacts render `c.name` raw
     expect(seen).toEqual(expect.arrayContaining(["Ambidextrous", "Krav Maga"]));
     expect(screen.getByText("Fixer")).toBeDefined();

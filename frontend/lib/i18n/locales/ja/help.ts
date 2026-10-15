@@ -118,8 +118,8 @@ export const JA_HELP = {
   "help.bio.essence": "Essence は残っている合計で、括弧内はバイオウェアで減った分だけ",
   "help.bio.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
   "help.cf.statsLabel": "複合フォームの値",
-  "help.cf.fv": "FV（フェード値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
-  "help.cf.fade": "フェード抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
+  "help.cf.fv": "FV（フェイディング値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
+  "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると物理ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
   "help.spirit.statsLabel": "スピリットの値",
@@ -153,8 +153,8 @@ export const JA_HELP = {
   "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
   "help.prio.skillCell": "技能の欄の「24/2」は、技能点 24 と技能グループ点 2",
   "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる術式・複合フォームの無料枠",
-  "help.adept.statsLabel": "パワー点",
-  "help.adept.pp": "アデプトのパワー点は魔力と同数。パワーを取った分だけ減る",
+  "help.adept.statsLabel": "パワーポイント",
+  "help.adept.pp": "アデプトのパワーポイントは魔力と同数。パワーを取った分だけ減る",
   "help.adept.mystic":
     "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
@@ -181,7 +181,7 @@ export const JA_HELP = {
   "help.points.complexForms":
     "複合フォーム n/m (+k)：タレントの無料枠と、カルマで買い足した分（標準 1 つ 4 カルマ）",
   "help.livingPersona":
-    "リビングペルソナ：テクノマンサー自身がデッキの代わりになる。DR ＝ 共振力、ATK ＝ CHA、SLZ ＝ INT、DP ＝ LOG、FW ＝ WIL",
+    "生体ペルソナ：テクノマンサー自身がデッキの代わりになる。DR ＝ 共振力、ATK ＝ CHA、SLZ ＝ INT、DP ＝ LOG、FW ＝ WIL",
   "help.attr.wareBonus": "「ウェア+n」はサイバー／バイオウェアによる加算。素の値の上限とは別に乗る",
   "help.attr.limbAverage":
     "「リム平均」が出ているときの STR / AGI は、全肢の平均（義肢はその肢の値、生身は素の値）",
@@ -268,7 +268,7 @@ export const JA_HELP = {
   "help.meta.variant": "メタバリアントは同じメタタイプの亜種。能力値の上下限と資質が変わる",
   "help.meta.talent": "タレントは魔法・共振の素質。メタタイプを変えても選び直しは要らない",
   "help.foci.statsLabel": "収束具の上限",
-  "help.foci.count": "同時に結合できる数は魔力まで（気焦点もこの数に入る）",
+  "help.foci.count": "同時に結合できる数は魔力まで（氣収束具もこの数に入る）",
   "help.foci.force": "結合した収束具の Force 合計は魔力×2 まで（超えるとどれも使えない）",
   "help.foci.bind": "結合カルマは Force と同数。買っただけ・作っただけでは働かない",
   "help.foci.craft":

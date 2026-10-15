@@ -176,7 +176,7 @@ export const JA_ENGINE = {
   "engine.spend.knowledgeKarma": "知識（カルマ作成）",
   "engine.spend.customDrugs": "自作ドラッグ",
   "engine.spend.lifestyles": "ライフスタイル",
-  "engine.spend.martialArts": "武道",
+  "engine.spend.martialArts": "格闘技",
   "engine.spend.metatype": "メタ",
   "engine.spend.mysticPP": "ミスティックPP",
   "engine.spend.nuyenExchange": "新円交換",
@@ -241,7 +241,7 @@ export const JA_ENGINE = {
   "engine.adept.pickSelect": "{name} の{what}を選んでください",
   "engine.adept.powerNotAllowed": "{source} に {picked} は選べません",
   "engine.adept.powerPick": "{source} のパワーを選んでください",
-  "engine.adept.powerPointsOver": "パワー点が不足しています（使用 {used} / 上限 {max}）",
+  "engine.adept.powerPointsOver": "パワーポイントが不足しています（使用 {used} / 上限 {max}）",
   "engine.adept.mysticPpInCareer":
     "設定により、ミスティックアデプトはキャリアでパワーポイントを買えません（{before} → {after}）",
   "engine.adept.powerUnknown": "{source} のパワー {power} が見つかりません",
@@ -256,18 +256,18 @@ export const JA_ENGINE = {
   "engine.spells.duplicateDropped": "{name} は重複しているため外しました",
   "engine.spells.pickCategory": "{name} の呪文カテゴリーを選んでください",
   "engine.spells.pickSpirit": "{name} の精霊を選んでください",
-  "engine.spells.pickTradition": "伝統を選んでください",
+  "engine.spells.pickTradition": "様式を選んでください",
   "engine.spells.requires": "{name} には {needed} が必要です",
   "engine.spells.spiritInvalid": "{name} の精霊が不正です",
-  "engine.spells.traditionDropped": "選んだ伝統が見つからないため外しました",
+  "engine.spells.traditionDropped": "選んだ様式が見つからないため外しました",
 
   "engine.spells.unknownSpell": "{source} の呪文 {name} が見つかりません",
   "engine.spirits.blockedByLimit": "{name} はこの制限では召喚できません",
   "engine.spirits.boundOverLimit": "束縛できる精霊は {attr} までです（{count}/{max}）",
   "engine.spirits.extraInvalid": "{source} の追加精霊が不正です（{picked}）",
   "engine.spirits.needsMagic": "{name} を召喚するには魔力が必要です",
-  "engine.spirits.needsTradition": "精霊を召喚するには伝統を選んでください",
-  "engine.spirits.notInTradition": "{name} はこの伝統では召喚できません",
+  "engine.spirits.needsTradition": "精霊を召喚するには様式を選んでください",
+  "engine.spirits.notInTradition": "{name} はこの様式では召喚できません",
   "engine.spirits.pickExtra": "{source} の追加精霊（{index}）を選んでください",
   "engine.spirits.summonFailed": "{name} の召喚に失敗しています（正味0）",
   "engine.spirits.summonNeedsSkill":
@@ -282,9 +282,9 @@ export const JA_ENGINE = {
   "engine.foci.formulaMissing": "{name} の術式データが見つからないため、術式代は0¥にしました",
   "engine.foci.needsArcana": "{name} の術式自作にはArcanaが必要です（未習得・デフォルト不可）",
   "engine.foci.needsArtificing": "{name} の作成にはArtificingが必要です（未習得・デフォルト不可）",
-  "engine.foci.qiForceTooLow": "気焦点の Force が {name} に不足しています",
-  "engine.foci.qiPickTarget": "気焦点の {name} の対象を選んでください",
-  "engine.foci.qiSelectInvalid": "気焦点の {name} の指定が無効です（{picked}）",
+  "engine.foci.qiForceTooLow": "氣収束具の Force が {name} に不足しています",
+  "engine.foci.qiPickTarget": "氣収束具の {name} の対象を選んでください",
+  "engine.foci.qiSelectInvalid": "氣収束具の {name} の指定が無効です（{picked}）",
   "engine.foci.weaponPick": "{name} の対象武器を選んでください",
 
   "engine.foci.weaponTypeOnly": "{name} は{type}武器専用です",
@@ -293,7 +293,7 @@ export const JA_ENGINE = {
   "engine.initiation.gradeOverMagic":
     "イニシエーション等級は魔力以下です（等級 {grade} / MAG {magic}）",
   "engine.initiation.metamagicNotAllowed":
-    "この伝統では等級 {grade} は {allowed} のみで、{name} は選べません",
+    "この様式では等級 {grade} は {allowed} のみで、{name} は選べません",
   "engine.initiation.metamagicUnknown": "{source} のメタマジック {name} が見つかりません",
   "engine.initiation.metamagicUnknownDropped": "未知のメタマジックを等級 {grade} から外しました",
   "engine.initiation.needsMagic": "イニシエーションには魔力が必要です",
@@ -339,11 +339,11 @@ export const JA_ENGINE = {
   "engine.martial.pickTechnique": "{name} の技を1つ選んでください",
   "engine.martial.prereq": "{name} の前提を満たしていません",
   "engine.martial.qualityOnly": "{name} は資質経由のみです",
-  "engine.martial.styleMax": "作成時の武道流派は{max}つまでです（現在 {count}）",
-  "engine.martial.techniqueMax": "作成時の武道技は合計{max}つまでです（現在 {count}）",
+  "engine.martial.styleMax": "作成時の格闘技は{max}つまでです（現在 {count}）",
+  "engine.martial.techniqueMax": "作成時の格闘技の技は合計{max}つまでです（現在 {count}）",
   "engine.martial.techniqueNotAllowed": "{name} に {technique} は選べません",
 
-  "engine.martial.unknownDropped": "未知の武道を外しました",
+  "engine.martial.unknownDropped": "未知の格闘技を外しました",
   "engine.contacts.exconLoyalty": "Ex-Con の {name}（{role}）は忠実値 {min} 以上が必要です",
   "engine.contacts.pairMax": "{name} は作成時コネ値＋忠実値が{max}までです",
 
@@ -444,7 +444,7 @@ export const JA_ENGINE = {
   "engine.import.xlsxPlayLevel":
     "キャラシテンプレートのプレイレベルが「{level}」でした。優先度表が異なるので、作成設定で選び直してください",
   "engine.import.xlsxMagicStyle":
-    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（伝統と資質で選び直してください）",
+    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（様式と資質で選び直してください）",
   "engine.import.xlsxQualityNote":
     "資質「{name}」の補足「{note}」は取り込めませんでした（この資質には対象を持たせられません）",
   "engine.import.xlsxPowerNote":
@@ -481,7 +481,7 @@ export const JA_ENGINE = {
   "engine.kind.gear": "装備",
   "engine.kind.lifestyle": "ライフスタイル",
   "engine.kind.lifestyleQuality": "ライフスタイル資質",
-  "engine.kind.martialArt": "武術",
+  "engine.kind.martialArt": "格闘技",
   "engine.kind.mentor": "メンター",
   "engine.kind.metamagic": "メタマジック",
   "engine.kind.quality": "資質",
@@ -491,7 +491,7 @@ export const JA_ENGINE = {
   "engine.kind.spirit": "精霊",
   "engine.kind.sprite": "スプライト",
   "engine.kind.stream": "ストリーム",
-  "engine.kind.tradition": "伝統",
+  "engine.kind.tradition": "様式",
   "engine.kind.vehicle": "ヴィークル",
   "engine.kind.vehicleMod": "ヴィークル改造",
   "engine.kind.weapon": "武器",

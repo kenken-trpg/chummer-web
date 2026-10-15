@@ -123,6 +123,17 @@ ADOPTED_OVERRIDES = {
     "connection": "コネ値",
     "loyalty": "忠実値",
     "qty": "数量",
+    # Martial Arts / Tradition / Power Points / Living Persona already read as
+    # the book does; Rituals is shorter there.
+    "rituals": "儀式",
+}
+
+# Rulebook terms neither reference translates, so they have no row to override.
+# English as it should be displayed -> the rulebook's Japanese.
+RULEBOOK_ONLY = {
+    "Fading": "フェイディング",
+    "Focus": "収束具",
+    "Foci": "収束具",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.
@@ -265,9 +276,13 @@ def load_data_translations(path: Path) -> tuple[dict[str, str], dict[str, str]]:
     return names, cats
 
 
+RULEBOOK_ONLY_BY_KEY = {k.lower(): v for k, v in RULEBOOK_ONLY.items()}
+
+
 def adopted(english: str, xslt_ja: str | None, sr5eja_ja: str | None) -> str:
     """Hand fix > 2021 xslt > sr5eja (sr5eja only fills gaps)."""
-    return ADOPTED_OVERRIDES.get(english.lower()) or xslt_ja or sr5eja_ja or ""
+    key = english.lower()
+    return ADOPTED_OVERRIDES.get(key) or RULEBOOK_ONLY_BY_KEY.get(key) or xslt_ja or sr5eja_ja or ""
 
 
 def build_glossary_doc(
@@ -285,21 +300,22 @@ def build_glossary_doc(
         else:
             code_rows.append((eng, value, var))
 
-    all_keys = sorted(set(xslt_jp) | set(sr5eja))
+    rulebook_only = {k.lower(): (k, v) for k, v in RULEBOOK_ONLY.items()}
+    all_keys = sorted(set(xslt_jp) | set(sr5eja) | set(rulebook_only))
     merged = []
     conflicts = 0
     sr5eja_only = 0
     for k in all_keys:
         x = xslt_jp.get(k)
         s = sr5eja.get(k)
-        entry = x or s
-        assert entry is not None  # k came from the union of the two maps
+        entry = x or s or rulebook_only.get(k)
+        assert entry is not None  # k came from the union of the three maps
         eng = entry[0]
         xja = x[1] if x else None
         sja = s[1] if s else None
         pick = adopted(eng, xja, sja)
         note = []
-        if k in ADOPTED_OVERRIDES:
+        if k in ADOPTED_OVERRIDES or k in rulebook_only:
             note.append("手動確定")
         if xja and sja and xja != sja:
             conflicts += 1

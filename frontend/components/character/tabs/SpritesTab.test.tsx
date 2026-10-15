@@ -168,7 +168,7 @@ describe("<SpritesTab>", () => {
   // shown at all, and both are optional.
   it("shows the living persona and the fade pool only once the engine sends them", () => {
     renderTab();
-    expect(screen.queryByText(/リビングペルソナ/)).toBeNull();
+    expect(screen.queryByText(/生体ペルソナ/)).toBeNull();
 
     renderTab({
       derived: {
@@ -182,6 +182,6 @@ describe("<SpritesTab>", () => {
         },
       },
     });
-    expect(screen.getByText(/リビングペルソナ DR5 ATK2 SLZ3 DP5 FW4/)).toBeDefined();
+    expect(screen.getByText(/生体ペルソナ DR5 ATK2 SLZ3 DP5 FW4/)).toBeDefined();
   });
 });
