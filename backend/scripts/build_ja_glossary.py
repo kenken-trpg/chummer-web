@@ -105,6 +105,24 @@ ADOPTED_OVERRIDES = {
     "defense": "防御",
     # Addiction is 依存症 in the book; the sheet file says 中毒 for this one row.
     "already addicted": "既に依存症",
+    # The two references disagree on these; the rulebook sides with the 2021
+    # sheet file. Pinned so the 差異 rows read as decided.
+    "attack": "アタック",
+    "damage": "ダメージ(DV)",
+    "damage type": "ダメージタイプ",
+    "device": "機器",
+    "equipped": "装備中",
+    "loaded": "装填",
+    "magic": "魔力",
+    "notoriety": "悪名",
+    "physical track": "身体ダメージトラック",
+    "stun track": "精神ダメージトラック",
+    "target": "対象",
+    "total": "合計",
+    "vehicle": "ヴィークル",
+    "connection": "コネ値",
+    "loyalty": "忠実値",
+    "qty": "数量",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

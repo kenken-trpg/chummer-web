@@ -1,4 +1,4 @@
-/** 装備: 一般装備・武器・防具・車両・ウェア・ドラッグ — 日本語。 */
+/** 装備: 一般装備・武器・防具・ヴィークル・ウェア・ドラッグ — 日本語。 */
 export const JA_GEAR = {
   "gear.normalModulePool": "通常／資質枠",
   "gear.hardwiredModulePool": "直結枠",
@@ -77,7 +77,7 @@ export const JA_GEAR = {
   "veh.searchDrones": "ドローンを検索",
 
   // --- adept tab ----------------------------------------------------------
-  "veh.searchVehicles": "車両を検索",
+  "veh.searchVehicles": "ヴィークルを検索",
   "gear.capacity": " / 容量 {used}/{max}",
   "gear.addArmorGear": "装備を入れる",
   "gear.putIn": "入れる",
@@ -134,7 +134,7 @@ export const JA_GEAR = {
   // numbers, or game terms that go through `tr` / `t` instead.
   "gear.idleLifestyles": "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
   "weapon.fromGear": " / 装備連動",
-  "weapon.vehicleOwned": "車両内蔵（{name}）・本人の攻撃候補から除外",
+  "weapon.vehicleOwned": "ヴィークル内蔵（{name}）・本人の攻撃候補から除外",
   "weapon.vehicleInventory": "内蔵武器: {list}",
   "weapon.modularDetached": "義肢切り離し中・攻撃候補から除外",
   "ware.heldGearInactive": "義肢切り離し中のため、保持装備の改善効果は無効です。",
@@ -162,14 +162,14 @@ export const JA_GEAR = {
   "gear.worn": " ・ 装備中 {name}",
   "gear.kind.armor": "防具",
   "gear.kind.weapon": "武器",
-  "gear.kind.commlink": "通信機",
+  "gear.kind.commlink": "コムリンク",
   "gear.kind.cyberdeck": "サイバーデッキ",
   "gear.kind.rcc": "RCC",
   "gear.kind.optics": "視覚／聴覚",
   "gear.kind.sensor": "センサー",
-  "gear.kind.vehicle": "車両",
+  "gear.kind.vehicle": "ヴィークル",
   "gear.kind.drone": "ドローン",
-  "gear.kind.misc": "装備",
+  "gear.kind.misc": "一般装備",
   "gear.kind.drugs": "ドラッグ",
 
   "gear.kind.lifestyle": "ライフスタイル",
@@ -181,7 +181,7 @@ export const JA_GEAR = {
   "gear.kind.rcc.hint": "RCC（ライガー・コマンド・コンソール）。ドローンの遠隔操作用",
   "gear.kind.optics.hint": "サイバーアイ／イヤーやゴーグルなどの視覚・聴覚機器",
   "gear.kind.sensor.hint": "センサーとセンサー機能。探知テストに使います",
-  "gear.kind.vehicle.hint": "車両。〈操縦〉技能で動かします",
+  "gear.kind.vehicle.hint": "ヴィークル。〈操縦〉技能で動かします",
   "gear.kind.drone.hint": "ドローン。リガーが遠隔／ジャンプインで操作します",
   "gear.kind.misc.hint": "その他の装備。ツール・サバイバル用品・魔法用品など",
   "gear.kind.drugs.hint": "ドラッグと薬物。効果と副作用があります",
@@ -225,7 +225,7 @@ export const JA_GEAR = {
   "gear.customName": "名前",
   "gear.searchLifestyle": "ライフスタイルを検索",
   "gear.searchSensor": "センサーを検索",
-  "gear.searchCommlink": "通信機を検索",
+  "gear.searchCommlink": "コムリンクを検索",
   "gear.searchOptics": "視覚／聴覚を検索",
 
   "gear.searchCyberdeck": "サイバーデッキを検索",

@@ -158,7 +158,7 @@ describe("textSheet sections", () => {
   });
 
   it("renders a vehicle's stat line", () => {
-    const [vehicle] = section(sheet(), "車両・ドローン");
+    const [vehicle] = section(sheet(), "ヴィークル・ドローン");
 
     expect(vehicle).toContain("Ford Americar");
     expect(vehicle).toContain("11"); // body
@@ -185,7 +185,7 @@ describe("textSheet omits what the character does not have", () => {
     ["武器"],
     ["ウェア"],
     ["術式"],
-    ["車両・ドローン"],
+    ["ヴィークル・ドローン"],
     ["コンタクト"],
     ["メモ"],
   ])("has no %s heading", (heading) => {

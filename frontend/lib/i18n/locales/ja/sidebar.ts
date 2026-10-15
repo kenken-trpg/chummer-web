@@ -34,7 +34,7 @@ export const JA_SIDEBAR = {
   "side.wareBoost": "ウェア強化",
   "side.wareBoostLimit": "上限+{max}",
   "side.lifestyle": "ライフスタイル",
-  "side.commlink": "通信機",
+  "side.commlink": "コムリンク",
   "side.cyberdeck": "サイバーデッキ",
   "side.programs": "プログラム {used}/{max}",
   "side.optics": "視覚／聴覚",

@@ -98,7 +98,7 @@ describe("<VehicleDroneGear>", () => {
   it("shows the vehicle search + list in vehicle mode and buys via patch", () => {
     const patch = vi.fn();
     renderTab("vehicle", { patch });
-    expect(screen.getByPlaceholderText("車両を検索")).toBeDefined();
+    expect(screen.getByPlaceholderText("ヴィークルを検索")).toBeDefined();
     const row = [...document.querySelectorAll(".quality-list .quality-item")].find((el) =>
       el.textContent?.includes("Ford Americar"),
     )!;
