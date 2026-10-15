@@ -48,7 +48,7 @@ describe("<SkillsTab>", () => {
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     // the operators are bound to their operands so a narrow box cannot split
     // the formula; see `bindRuns` in HelpTip
-    expect(tip?.textContent).toContain("判定ダイス = 技能レーティング\u00a0+\u00a0関連能力値");
+    expect(tip?.textContent).toContain("テストのダイス = 技能レーティング\u00a0+\u00a0関連能力値");
     expect(tip?.textContent).toContain("+2 ダイス");
     expect(tip?.textContent).toContain("戦闘技能／関連能力値 AGI／作成上限 6");
   });

@@ -69,7 +69,7 @@ export const JA_ENGINE = {
   "engine.limitCond.attrIntSkills": "直観力依存の技能のみ",
   "engine.limitCond.attrLogSkills": "論理力依存の技能のみ",
   "engine.limitCond.bunkerGearVisible": "非常事態時のみ・要目視",
-  "engine.limitCond.climbing": "よじ登る判定のみ",
+  "engine.limitCond.climbing": "よじ登るテストのみ",
   "engine.limitCond.corporationVisible": "該当企業の相手のみ・要目視",
   "engine.limitCond.balanceTail": "体術〈Climbing／Jumping〉・ランニング・転倒抵抗のみ",
   "engine.limitCond.cyberfins": "修理・タイピング・ダンスなどのみ・展開時",
@@ -120,8 +120,8 @@ export const JA_ENGINE = {
   "engine.limitCond.sportsRivals": "スポーツチームの敵対者",
   "engine.limitCond.sprawl": "特定のスプロールのみ",
   "engine.limitCond.sneakingThermal": "熱視覚／熱センサーに対する忍び歩きのみ",
-  "engine.limitCond.speech": "発話を伴う判定のみ",
-  "engine.limitCond.endurance": "持久力を伴う判定のみ・要締め付け",
+  "engine.limitCond.speech": "発話を伴うテストのみ",
+  "engine.limitCond.endurance": "持久力を伴うテストのみ・要締め付け",
   "engine.limitCond.visible": "要目視",
   "engine.spiritRole.combat": "戦闘",
   "engine.spiritRole.detection": "探知",
@@ -271,9 +271,10 @@ export const JA_ENGINE = {
   "engine.spirits.pickExtra": "{source} の追加精霊（{index}）を選んでください",
   "engine.spirits.summonFailed": "{name} の召喚に失敗しています（正味0）",
   "engine.spirits.summonNeedsSkill":
-    "{name} の召喚判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の召喚テストに{skill}が必要です（未習得・デフォルト不可）",
 
-  "engine.spirits.testNeedsSkill": "{name} の結合判定に{skill}が必要です（未習得・デフォルト不可）",
+  "engine.spirits.testNeedsSkill":
+    "{name} の結合テストに{skill}が必要です（未習得・デフォルト不可）",
   "engine.foci.bindNeedsMagic": "{name} を結合するには魔力が必要です",
   "engine.foci.countOverMagic": "結合できる収束具は魔力までです（{count}/{max}）",
   "engine.foci.craftFailed": "{name} の作成に失敗しています（正味0）",
@@ -327,11 +328,11 @@ export const JA_ENGINE = {
     "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）",
   "engine.sprites.compileFailed": "{name} のコンパイルに失敗しています（正味0）",
   "engine.sprites.compileNeedsSkill":
-    "{name} のコンパイル判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} のコンパイルテストに{skill}が必要です（未習得・デフォルト不可）",
   "engine.sprites.needsResonance": "{name} をコンパイルするには共振力が必要です",
   "engine.sprites.notInStream": "{name} はこのストリームではコンパイルできません",
   "engine.sprites.registerNeedsSkill":
-    "{name} の登録判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の登録テストに{skill}が必要です（未習得・デフォルト不可）",
 
   "engine.sprites.registeredOverLimit": "登録できるスプライトは {attr} までです（{count}/{max}）",
   "engine.martial.oneTechniqueOnly": "{name} は技を1つまでです（余分を外しました）",

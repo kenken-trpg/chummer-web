@@ -480,7 +480,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
 
     expect(patch.mock.calls[0][0]).toEqual({ quality_extras: { q1: "Cyberware" } });
     expect(patch.mock.calls[1][0]).toEqual({ quality_extras: { "q1:contact": "k1" } });
-    expect(screen.getByText(/入手判定 \+2/)).toBeDefined();
+    expect(screen.getByText(/入手テスト \+2/)).toBeDefined();
   });
 
   it("names an unnamed contact rather than offering a blank row", () => {

@@ -8,37 +8,37 @@ export const JA_HELP = {
   "help.limit.physical": "身体リミット = (STR×2 + BOD + REA) ÷ 3（切り上げ）",
   "help.limit.mental": "精神リミット = (LOG×2 + INT + WIL) ÷ 3（切り上げ）",
   "help.limit.social": "社交リミット = (CHA×2 + WIL + ESS※) ÷ 3（切り上げ）※ESSは先に切り上げ",
-  "help.limit.note": "技能判定でヒットとして数えられる上限（SR5 p.47）",
+  "help.limit.note": "技能テストでヒットとして数えられる上限（SR5 p.47）",
   "help.cm.physical": "身体モニター = 8 + BOD ÷ 2（切り上げ）",
   "help.cm.stun": "精神モニター = 8 + WIL ÷ 2（切り上げ）",
-  "help.cm.note": "埋まったマス 3 つごとに判定へ −1（SR5 p.169）",
+  "help.cm.note": "埋まったマス 3 つごとにテストへ −1（SR5 p.169）",
   "help.init.value": "イニシアティブ = REA + INT",
   "help.init.dice": "イニシアティブ・ダイス = 1D6 + 追加ダイス（最大 5D6）",
   "help.init.note": "各イニシアティブ・パス終了時に −10（SR5 p.159）",
   "help.attr.BOD": "強靱力。ダメージ抵抗、身体モニター、身体リミットに効く",
   "help.attr.AGI": "敏捷力。射撃・近接など体を使う技能の多くに効く",
-  "help.attr.REA": "反応力。イニシアティブ、防御判定、操縦に効く。身体リミットにも入る",
+  "help.attr.REA": "反応力。イニシアティブ、防御テスト、操縦に効く。身体リミットにも入る",
   "help.attr.STR":
     "筋力。近接ダメージ、投擲距離、持ち運べる重さに効く。身体リミットでは 2 倍して数える",
   "help.attr.WIL": "意志力。精神モニター、ドレイン抵抗、精神・社交リミットに効く",
   "help.attr.LOG": "論理力。電子・技術系技能やマトリックスに効く。精神リミットの主な源",
-  "help.attr.INT": "直観力。イニシアティブ、知覚、防御判定に効く。精神リミットにも入る",
+  "help.attr.INT": "直観力。イニシアティブ、知覚、防御テストに効く。精神リミットにも入る",
   "help.attr.CHA": "魅力。交渉・威圧など対人技能に効く。社交リミットの主な源",
-  "help.attr.EDG": "エッジ。1 セッションに使える回数。判定の振り直しや限界突破に使う",
+  "help.attr.EDG": "エッジ。1 セッションに使える回数。テストの振り直しや限界突破に使う",
   "help.attr.MAG": "魔力。呪文・召喚・アデプトパワーの強さ。エッセンスが減ると下がる",
   "help.attr.RES": "共振力。複合フォームやスプライトの強さ。エッセンスが減ると下がる",
   "help.avail.what": "入手値（Avail）：品物の手に入れにくさ。数字が大きいほど難しい",
   "help.avail.suffix": "末尾の R は所持に許可が要る（Restricted）、F は所持自体が違法（Forbidden）",
   "help.avail.chargen":
-    "作成時は入手値がこの値を超える品物を買えない（標準 12）。キャリア中は入手判定で手に入れる",
+    "作成時は入手値がこの値を超える品物を買えない（標準 12）。キャリア中は入手テストで手に入れる",
   "help.deviceRating": "作成時に買える品物の機器レーティング上限（標準 6）",
   "help.gradeHint":
     "ウェアの等級。上の等級ほどエッセンスの消費が減り、値段と入手値が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
-  "help.skill.pool": "判定ダイス = 技能レーティング + 関連能力値（+ 修正）",
-  "help.skill.spec": "専門化：その用途の判定に +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
+  "help.skill.pool": "テストのダイス = 技能レーティング + 関連能力値（+ 修正）",
+  "help.skill.spec": "専門化：その用途のテストに +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
   "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
   "help.skill.default":
-    "未習得でも「デフォルト」で振れる技能は、関連能力値 −1 で判定する（SR5 p.130）",
+    "未習得でも「デフォルト」で振れる技能は、関連能力値 −1 でテストする（SR5 p.130）",
   "help.skill.cap": "作成時のレーティング上限。1 つだけ上限まで上げられる（資質 Aptitude で +1）",
   "help.group.members": "含まれる技能：{skills}",
   "help.group.sep": "、",
@@ -47,13 +47,13 @@ export const JA_HELP = {
   "help.group.break":
     "中の技能を 1 つだけ上げたり専門化を取ったりすると、グループとしては扱えなくなる。全部を同じレーティングに揃えると戻る",
   "help.matrix.attack":
-    "アタック（ATK）：相手のデータやアイコンを壊す不正アクセス系の行動に使う。攻撃されると自分の判定にも使われる",
+    "アタック（ATK）：相手のデータやアイコンを壊す不正アクセス系の行動に使う。攻撃されると自分のテストにも使われる",
   "help.matrix.sleaze":
     "スリーズ（SLZ）：気づかれずに侵入・潜伏する行動に使う。相手のマトリックス知覚に対抗する",
   "help.matrix.dataprocessing":
     "データプロセシング（DP）：編集・検索・マークの維持など、静かな行動に使う。デッキのイニシアティブにも効く",
   "help.matrix.firewall":
-    "ファイアウォール（FW）：相手の攻撃・侵入に対する防御。判定の対抗値になる",
+    "ファイアウォール（FW）：相手の攻撃・侵入に対する防御。テストの対抗値になる",
   "help.matrix.array":
     "この 4 つの値はデッキごとに決まった組み合わせで、並べ替えて割り当てる。1 ターンに 1 回、無料行動で 2 つを入れ替えられる（SR5 p.222）",
   "help.knowledge.what":
@@ -75,7 +75,7 @@ export const JA_HELP = {
   "help.vehicle.statsLabel": "ステータス",
   "help.vehicle.stats":
     "HND 操縦性／SPD 速度／ACC 加速／BOD 車体／ARM 装甲／PLT パイロット／SNR センサー",
-  "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時の判定に使う",
+  "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時のテストに使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
   "help.vehicle.slots":
     "改造スロットは R5 の 6 系統（駆動系・防護・武装・車体・電磁・外装）ごとに別枠。各系統の上限 ＝ BOD ＋ その車種が持つ追加枠",
@@ -83,14 +83,14 @@ export const JA_HELP = {
     "ドローンは系統に分けず 1 つのプール（上限 ＝ BOD）。スロットを返す改造はその分だけ上限が増える",
   "help.weapon.statsLabel": "データ",
   "help.weapon.acc":
-    "Acc（精度）：この武器で出せるヒットの上限。射撃・近接判定のリミットとして使う",
+    "Acc（精度）：この武器で出せるヒットの上限。射撃・近接テストのリミットとして使う",
   "help.weapon.dv": "DV（ダメージ値）：命中したときのダメージ。末尾 P は物理、S は精神",
   "help.weapon.ap": "AP（装甲貫通）：相手の装甲をこの分だけ下げる。−2 なら抵抗側の装甲が 2 減る",
   "help.weapon.rc": "RC（反動補正）：連射で溜まる反動をこの分だけ打ち消す",
   "help.weapon.mode": "発射モード：SS 単発／SA 半自動／BF 3 点バースト／FA フルオート",
   "help.weapon.ammo":
     "装弾数と装填方式（(c) クリップ／(m) 弾倉／(b) 折り式／(d) ドラム／(ml) 手詰め）",
-  "help.weapon.reach": "Reach（間合い）：近接戦で相手より長いと、その差が判定のボーナスになる",
+  "help.weapon.reach": "Reach（間合い）：近接戦で相手より長いと、その差がテストのボーナスになる",
   "help.armor.statsLabel": "装甲値",
   "help.armor.value": "装甲値：ダメージ抵抗のダイスに足す値（SR5 p.169）",
   "help.armor.stack":
@@ -123,11 +123,11 @@ export const JA_HELP = {
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると物理ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
   "help.spirit.statsLabel": "スピリットの値",
-  "help.spirit.force": "F（フォース）：スピリットの強さ。能力値も判定ダイスもここから決まる",
+  "help.spirit.force": "F（フォース）：スピリットの強さ。能力値もテストのダイスもここから決まる",
   "help.spirit.services": "サービス：命じられる残り回数。1 つの仕事で 1 サービス使う",
   "help.spirit.bound": "束縛すると呼び直せるが試薬が要る。ただの召喚は夜明けで消える",
   "help.sprite.statsLabel": "スプライトの値",
-  "help.sprite.level": "L（レベル）：スプライトの強さ。マトリックス値と判定ダイスの基準",
+  "help.sprite.level": "L（レベル）：スプライトの強さ。マトリックス値とテストのダイスの基準",
   "help.sprite.tasks": "タスク：命じられる残り回数。1 つの仕事で 1 タスク使う",
   "help.sprite.registered": "登録すると残り続ける。コンパイルしただけなら再起動で消える",
   "help.initiation.statsLabel": "等級とカルマ",
@@ -141,7 +141,7 @@ export const JA_HELP = {
   "help.life.lp": "LP：自分で組むライフスタイルで資質に使える点数（使用／上限）",
   "help.matrix.statsLabel": "マトリックス値",
   "help.matrix.deviceRating":
-    "DR（機器レーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
+    "DR（機器レーティング）：機器の素の性能。持ち主が操作していないときのテストに使う",
   "help.matrixmod.statsLabel": "電子改造の値",
   "help.matrixmod.what":
     "電子改造（DT p.66）：改造自体の追加費用はないが、部品・工具は別途必要。材料を配分し、成功した施工を登録すると効果が有効になる",
@@ -218,10 +218,10 @@ export const JA_HELP = {
   "help.drug.onset": "発現（Onset）：摂ってから効き始めるまでの時間。0 は即時",
   "help.drug.vector":
     "摂取方法（注射・吸入・経口・接触）。同じドラッグでも方法で発現の速さが変わる",
-  "help.drug.testLabel": "中毒判定",
+  "help.drug.testLabel": "中毒テスト",
   "help.drug.pool":
-    "中毒判定のプール ＝ BOD ＋ WIL（身体依存）／LOG ＋ WIL（精神依存）（SR5 p.414）",
-  "help.drug.threshold": "中毒閾値がその判定の目標ヒット数。届かないと中毒が 1 段進む",
+    "中毒テストのプール ＝ BOD ＋ WIL（身体依存）／LOG ＋ WIL（精神依存）（SR5 p.414）",
+  "help.drug.threshold": "中毒閾値がそのテストの目標ヒット数。届かないと中毒が 1 段進む",
   "help.drug.addicted":
     "括弧内はすでに中毒になっている場合のプール。初回だけ変える資質がある（Drug Tolerant は初回 +2、CF p.54）",
   "help.drug.rating": "中毒レーティング：抜けようとするときに相手になる値。大きいほど抜けにくい",
@@ -234,7 +234,7 @@ export const JA_HELP = {
   "help.sensor.statsLabel": "センサーの値",
   "help.sensor.nest": "筐体 → センサー → 機能の 3 段。機能は筐体の容量に収まる範囲で積む",
   "help.sensor.capacity": "容量 n/m：この筐体に積める量（m）と、いま使っている量（n）",
-  "help.sensor.rating": "R（レーティング）：センサーの精度。知覚判定のリミットになる",
+  "help.sensor.rating": "R（レーティング）：センサーの精度。知覚テストのリミットになる",
   "help.optics.statsLabel": "視覚・聴覚機器の値",
   "help.optics.nest": "強化はこの機器に積む。サイバーウェアの目・耳とは別の枠で、容量は共有しない",
   "help.optics.capacity": "容量 n/m：この機器に積める強化の量（m）と、いま使っている量（n）",
@@ -272,7 +272,7 @@ export const JA_HELP = {
   "help.foci.force": "結合した収束具の Force 合計は魔力×2 まで（超えるとどれも使えない）",
   "help.foci.bind": "結合カルマは Force と同数。買っただけ・作っただけでは働かない",
   "help.foci.craft":
-    "クラフトは術式＋試薬 Force×20¥。定価で買うより安いが、判定に失敗すると無駄になる",
+    "クラフトは術式＋試薬 Force×20¥。定価で買うより安いが、テストに失敗すると無駄になる",
   "help.sub.statsLabel": "等級とカルマ",
   "help.sub.karma": "1 等級あたり 10 ＋ 等級×3 カルマ（等級 1 は 13、2 は 16…）",
   "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",

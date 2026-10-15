@@ -33,7 +33,7 @@ export const JA_GEAR = {
   "gear.constructionUnverified": "材料履歴未確認",
   "gear.constructionHistorical": "過去に調達・支払い済みと確認",
   "gear.constructionHelp":
-    "改造自体の追加費用は0¥。部品・モジュール本体・工具は別途必要です。判定に成功した施工を登録してください。",
+    "改造自体の追加費用は0¥。部品・モジュール本体・工具は別途必要です。テストに成功した施工を登録してください。",
   "gear.materialsCount":
     "必要部品 {required}パック / 配分 {allocated}パック / 利用可能 {available}パック",
   "gear.materialsUnsupported": "適合条件・材料規則を確認できないため施工登録できません",
@@ -175,12 +175,12 @@ export const JA_GEAR = {
   "gear.kind.lifestyle": "ライフスタイル",
   "gear.kind.armor.hint":
     "着る防具。同時に着られるのは基本 1 着で、それ以外は追加防具として扱います",
-  "gear.kind.weapon.hint": "近接・射撃武器とアクセサリー。命中判定に使う技能もここで決まります",
+  "gear.kind.weapon.hint": "近接・射撃武器とアクセサリー。攻撃テストに使う技能もここで決まります",
   "gear.kind.commlink.hint": "コムリンク。マトリックスに常時接続する基本機器",
   "gear.kind.cyberdeck.hint": "サイバーデッキ。ハッキングに必要で、非常に高価です",
   "gear.kind.rcc.hint": "RCC（ライガー・コマンド・コンソール）。ドローンの遠隔操作用",
   "gear.kind.optics.hint": "サイバーアイ／イヤーやゴーグルなどの視覚・聴覚機器",
-  "gear.kind.sensor.hint": "センサーとセンサー機能。探知判定に使います",
+  "gear.kind.sensor.hint": "センサーとセンサー機能。探知テストに使います",
   "gear.kind.vehicle.hint": "車両。〈操縦〉技能で動かします",
   "gear.kind.drone.hint": "ドローン。リガーが遠隔／ジャンプインで操作します",
   "gear.kind.misc.hint": "その他の装備。ツール・サバイバル用品・魔法用品など",
