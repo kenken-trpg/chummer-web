@@ -57,7 +57,7 @@ export const JA_APP = {
   "tab.spells.hint": "術式（呪文）と儀式。マジシャン系のみ",
   "tab.spirits.hint": "束縛した精霊。〈フォース〉とサービス回数を決めます",
   "tab.foci.hint": "収束具。カルマで〈固着〉させて使います",
-  "tab.complexforms.hint": "コンプレックス・フォーム。テクノマンサーのみ",
+  "tab.complexforms.hint": "複合体。テクノマンサーのみ",
   "tab.sprites.hint": "登録したスプライト。テクノマンサーのみ",
   "tab.check.hint": "作成ルールに違反していないかの一覧。エラーがあると完成できません",
 
