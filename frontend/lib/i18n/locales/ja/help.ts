@@ -125,7 +125,7 @@ export const JA_HELP = {
   "help.spirit.statsLabel": "スピリットの値",
   "help.spirit.force": "F（フォース）：スピリットの強さ。能力値もテストのダイスもここから決まる",
   "help.spirit.services": "サービス：命じられる残り回数。1 つの仕事で 1 サービス使う",
-  "help.spirit.bound": "束縛すると呼び直せるが試薬が要る。ただの召喚は夜明けで消える",
+  "help.spirit.bound": "束縛すると呼び直せるが原質が要る。ただの召喚は夜明けで消える",
   "help.sprite.statsLabel": "スプライトの値",
   "help.sprite.level": "L（レベル）：スプライトの強さ。マトリックス値とテストのダイスの基準",
   "help.sprite.tasks": "タスク：命じられる残り回数。1 つの仕事で 1 タスク使う",
@@ -272,7 +272,7 @@ export const JA_HELP = {
   "help.foci.force": "結合した収束具の Force 合計は魔力×2 まで（超えるとどれも使えない）",
   "help.foci.bind": "結合カルマは Force と同数。買っただけ・作っただけでは働かない",
   "help.foci.craft":
-    "クラフトは術式＋試薬 Force×20¥。定価で買うより安いが、テストに失敗すると無駄になる",
+    "クラフトは術式＋原質 Force×20¥。定価で買うより安いが、テストに失敗すると無駄になる",
   "help.sub.statsLabel": "等級とカルマ",
   "help.sub.karma": "1 等級あたり 10 ＋ 等級×3 カルマ（等級 1 は 13、2 は 16…）",
   "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",

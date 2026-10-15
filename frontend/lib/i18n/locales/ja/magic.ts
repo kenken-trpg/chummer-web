@@ -31,11 +31,11 @@ export const JA_MAGIC = {
 
   "magic.drainResist": " ・ ドレイン抵抗 {attrs} {pool}",
   "foci.note":
-    "購入は定価。クラフトは術式＋試薬Force×20¥とアーティフィシング+MAG[Force] vs Force×2（Force日）。結合カルマは Force。同時 {count}/{countMax} ・ Force合計 {force}/{forceMax}",
+    "購入は定価。クラフトは術式＋原質Force×20¥とアーティフィシング+MAG[Force] vs Force×2（Force日）。結合カルマは Force。同時 {count}/{countMax} ・ Force合計 {force}/{forceMax}",
   "foci.adeptNote": " ・ 氣収束具はアデプトタブ（この上限に含む）",
   "foci.crafted": "クラフト",
   "foci.bind": "結合 {karma}カルマ",
-  "foci.craftBreakdown": "（術式 {formula}¥ + 試薬 {reagent}¥ / 定価 {retail}¥）",
+  "foci.craftBreakdown": "（術式 {formula}¥ + 原質 {reagent}¥ / 定価 {retail}¥）",
   "foci.target": " / 対象 {name} +{dice}",
   "foci.needsWeapon": " / 対象武器が必要",
   "foci.formulaTest": "術式自作 {test}",
@@ -48,7 +48,7 @@ export const JA_MAGIC = {
   "foci.formulaDesign": "自作（アーカナ）",
   "foci.search": "収束具を検索",
   "foci.buyCost": "購入 {cost}",
-  "foci.craftCost": " / クラフト 術式 {cost} + 試薬 20¥×F",
+  "foci.craftCost": " / クラフト 術式 {cost} + 原質 20¥×F",
   "foci.bindOnly": "結合のみ",
 
   "foci.weaponRequired": " / {type}武器指定",
@@ -71,14 +71,14 @@ export const JA_MAGIC = {
 
   "spell.search": "術式を検索",
   "spirit.note":
-    "一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と試薬 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。",
+    "一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と原質 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。",
   "spirit.allowed": " ・ 許可精霊 {list}",
   "spirit.extra": " ・ 追加精霊 {list}",
   "spirit.bound": "結合",
   "spirit.summoned": "一時召喚",
   "spirit.summon": "召喚",
   "spirit.bind": "結合",
-  "spirit.reagent": " / 試薬 {nuyen}¥",
+  "spirit.reagent": " / 原質 {nuyen}¥",
   "spirit.untilDawn": " / 日の出または日の入りまで",
   "spirit.services": "サービス",
   "spirit.spiritHits": "精霊ヒット",
