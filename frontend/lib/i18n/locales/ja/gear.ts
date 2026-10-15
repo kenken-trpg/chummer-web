@@ -139,7 +139,7 @@ export const JA_GEAR = {
   "weapon.modularDetached": "義肢切り離し中・攻撃候補から除外",
   "ware.heldGearInactive": "義肢切り離し中のため、保持装備の改善効果は無効です。",
   "weapon.fromWare": " / ウェア連動",
-  "weapon.fromArmor": " / アーマー連動",
+  "weapon.fromArmor": " / 防具連動",
   "weapon.includedWithHost": " / 搭載元に付属（無料・外せません）",
   "weapon.natural": " / {source} 由来（生得）",
   "weapon.limbStr": " / 肢 STR {str}",
@@ -187,7 +187,7 @@ export const JA_GEAR = {
   "gear.kind.drugs.hint": "ドラッグと薬物。効果と副作用があります",
 
   // Shared by the cyberware / bioware tabs.
-  "gear.kind.lifestyle.hint": "ライフスタイル（生活水準）。作成時は月単位で前払いします",
+  "gear.kind.lifestyle.hint": "ライフスタイル。作成時は月単位で前払いします",
   "ware.allCategories": "すべての分類",
   "ware.compact": "簡易表示（名称のみ）",
   "ware.pending": "（未選択あり）",

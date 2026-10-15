@@ -102,12 +102,12 @@ describe("SkillPickSelects", () => {
         onPick={() => undefined}
       />,
     );
-    expect(screen.getByText(/デフォルト −1 なし/)).toBeTruthy();
+    expect(screen.getByText(/デフォルティング −1 なし/)).toBeTruthy();
   });
 
   it("says nothing about defaulting for a recorder on its own", () => {
     render(<SkillPickSelects slots={[slot]} tr={identityTr} onPick={() => undefined} />);
-    expect(screen.queryByText(/デフォルト −1 なし/)).toBeNull();
+    expect(screen.queryByText(/デフォルティング −1 なし/)).toBeNull();
   });
 
   it("labels an Accuracy pick as Accuracy, not dice", () => {

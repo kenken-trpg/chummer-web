@@ -26,7 +26,7 @@ export const JA_HELP = {
   "help.attr.CHA": "魅力。交渉・威圧など対人技能に効く。社交リミットの主な源",
   "help.attr.EDG": "エッジ。1 セッションに使える回数。テストの振り直しや限界突破に使う",
   "help.attr.MAG": "魔力。呪文・召喚・アデプトパワーの強さ。エッセンスが減ると下がる",
-  "help.attr.RES": "共振力。複合フォームやスプライトの強さ。エッセンスが減ると下がる",
+  "help.attr.RES": "共振力。複合体やスプライトの強さ。エッセンスが減ると下がる",
   "help.avail.what": "入手値（Avail）：品物の手に入れにくさ。数字が大きいほど難しい",
   "help.avail.suffix": "末尾の R は所持に許可が要る（Restricted）、F は所持自体が違法（Forbidden）",
   "help.avail.chargen":
@@ -38,7 +38,7 @@ export const JA_HELP = {
   "help.skill.spec": "専門化：その用途のテストに +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
   "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
   "help.skill.default":
-    "未習得でも「デフォルト」で振れる技能は、関連能力値 −1 でテストする（SR5 p.130）",
+    "未習得でも「デフォルティング」で振れる技能は、関連能力値 −1 でテストする（SR5 p.130）",
   "help.skill.cap": "作成時のレーティング上限。1 つだけ上限まで上げられる（資質 Aptitude で +1）",
   "help.group.members": "含まれる技能：{skills}",
   "help.group.sep": "、",
@@ -63,7 +63,7 @@ export const JA_HELP = {
   "help.exotic.what":
     "Exotic 技能：対象（武器の種類など）ごとに別の技能として持つ。同じ技能を対象違いで複数持てる",
   "help.exotic.nodefault":
-    "未習得ではデフォルトで振れない。使うには必ずレーティングが要る（SR5 p.130）",
+    "未習得ではデフォルティングで振れない。使うには必ずレーティングが要る（SR5 p.130）",
   "help.essence.what":
     "エッセンス：生身の度合い。誰でも 6 から始まり、サイバーウェアとバイオウェアで減る",
   "help.essence.magic": "減った分だけ魔力と共振力の上限も下がる（端数は切り上げで 1 段）",
@@ -117,13 +117,13 @@ export const JA_HELP = {
     "バイオウェア：培養した生体組織を体に植える。サイバーウェアと同じようにエッセンスを消費する（SR5 p.459）",
   "help.bio.essence": "Essence は残っている合計で、括弧内はバイオウェアで減った分だけ",
   "help.bio.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
-  "help.cf.statsLabel": "複合フォームの値",
+  "help.cf.statsLabel": "複合体の値",
   "help.cf.fv": "FV（フェイディング値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
   "help.cf.fade": "フェイディング抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると身体ダメージになる",
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
-  "help.spirit.statsLabel": "スピリットの値",
-  "help.spirit.force": "F（フォース）：スピリットの強さ。能力値もテストのダイスもここから決まる",
+  "help.spirit.statsLabel": "精霊の値",
+  "help.spirit.force": "F（フォース）：精霊の強さ。能力値もテストのダイスもここから決まる",
   "help.spirit.services": "サービス：命じられる残り回数。1 つの仕事で 1 サービス使う",
   "help.spirit.bound": "束縛すると呼び直せるが原質が要る。ただの召喚は夜明けで消える",
   "help.sprite.statsLabel": "スプライトの値",
@@ -152,7 +152,7 @@ export const JA_HELP = {
   "help.prio.attrCell": "能力値の欄の「6 (2)」は、通常の能力値点 6 と特殊能力値点 2",
   "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
   "help.prio.skillCell": "技能の欄の「24/2」は、技能点 24 と技能グループ点 2",
-  "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる術式・複合フォームの無料枠",
+  "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる術式・複合体の無料枠",
   "help.adept.statsLabel": "パワーポイント",
   "help.adept.pp": "アデプトのパワーポイントは魔力と同数。パワーを取った分だけ減る",
   "help.adept.mystic":
@@ -179,7 +179,7 @@ export const JA_HELP = {
   "help.points.spells":
     "呪文 n/m (+k)：タレントの無料枠 m と、カルマで買い足した分 k（標準 1 つ 5 カルマ）",
   "help.points.complexForms":
-    "複合フォーム n/m (+k)：タレントの無料枠と、カルマで買い足した分（標準 1 つ 4 カルマ）",
+    "複合体 n/m (+k)：タレントの無料枠と、カルマで買い足した分（標準 1 つ 4 カルマ）",
   "help.livingPersona":
     "生体ペルソナ：テクノマンサー自身がデッキの代わりになる。DR ＝ 共振力、ATK ＝ CHA、SLZ ＝ INT、DP ＝ LOG、FW ＝ WIL",
   "help.attr.wareBonus": "「ウェア+n」はサイバー／バイオウェアによる加算。素の値の上限とは別に乗る",
@@ -197,7 +197,7 @@ export const JA_HELP = {
   "help.flag.fihp": "Friends in High Places：伝手が要る場面で便宜を受けられる",
   "help.flag.madeMan": "Made Man：組織の一員。後ろ盾が付くかわりに抜けられない",
   "help.flag.trustfund":
-    "Trust Fund：等級に応じた生活水準の月額が無料になる（1 中流／2 低所得／3 高級／4 中流）",
+    "Trust Fund：等級に応じたライフスタイルの月額が無料になる（1 中流／2 低所得／3 高級／4 中流）",
   "help.flag.dealer": "Dealer Connection：この分類のヴィークルが 10% 引きで買える",
   "help.career.rewards":
     "ここで足したカルマと新円は、作成時の予算ではなくキャリア中の収入として積む",
@@ -269,10 +269,10 @@ export const JA_HELP = {
   "help.meta.talent": "タレントは魔法・共振の素質。メタタイプを変えても選び直しは要らない",
   "help.foci.statsLabel": "収束具の上限",
   "help.foci.count": "同時に結合できる数は魔力まで（氣収束具もこの数に入る）",
-  "help.foci.force": "結合した収束具の Force 合計は魔力×2 まで（超えるとどれも使えない）",
-  "help.foci.bind": "結合カルマは Force と同数。買っただけ・作っただけでは働かない",
+  "help.foci.force": "結合した収束具のフォース合計は魔力×2 まで（超えるとどれも使えない）",
+  "help.foci.bind": "結合カルマはフォースと同数。買っただけ・作っただけでは働かない",
   "help.foci.craft":
-    "クラフトは術式＋原質 Force×20¥。定価で買うより安いが、テストに失敗すると無駄になる",
+    "クラフトは術式＋原質フォース×20¥。定価で買うより安いが、テストに失敗すると無駄になる",
   "help.sub.statsLabel": "等級とカルマ",
   "help.sub.karma": "1 等級あたり 10 ＋ 等級×3 カルマ（等級 1 は 13、2 は 16…）",
   "help.sub.discount": "ネットワーク・タスク・師事のそれぞれで 10% 引き（重ねられる）",

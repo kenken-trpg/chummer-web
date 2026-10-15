@@ -20,7 +20,8 @@ export const JA_MAGIC = {
   "adept.enhancementCost": " / 2カルマ / ",
   "adept.searchEnhancements": "Enhancement を検索",
   "adept.qiTitle": "氣収束具",
-  "adept.qiNote": "Force × 3,000¥。結合カルマ = Force（Way で減）。Force はパワーポイント×4",
+  "adept.qiNote":
+    "フォース × 3,000¥。結合カルマ = フォース（Way で減）。フォースはパワーポイント×4",
   "adept.qiBinding": " / 結合 {karma}カルマ",
   "adept.qiPowerRating": "パワーR",
   "adept.searchQi": "氣収束具に入れるパワーを検索",
@@ -31,7 +32,7 @@ export const JA_MAGIC = {
 
   "magic.drainResist": " ・ ドレイン抵抗 {attrs} {pool}",
   "foci.note":
-    "購入は定価。クラフトは術式＋原質Force×20¥とアーティフィシング+MAG[Force] vs Force×2（Force日）。結合カルマは Force。同時 {count}/{countMax} ・ Force合計 {force}/{forceMax}",
+    "購入は定価。クラフトは術式＋原質フォース×20¥とアーティフィシング+MAG[フォース] vs フォース×2（フォース日）。結合カルマはフォース。同時 {count}/{countMax} ・ フォース合計 {force}/{forceMax}",
   "foci.adeptNote": " ・ 氣収束具はアデプトタブ（この上限に含む）",
   "foci.crafted": "クラフト",
   "foci.bind": "結合 {karma}カルマ",
@@ -71,7 +72,7 @@ export const JA_MAGIC = {
 
   "spell.search": "術式を検索",
   "spirit.note":
-    "一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と原質 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら身体。",
+    "一時召喚は召喚+MAG[フォース] vs フォース。結合は結合+MAG[フォース] vs フォース×2と原質フォース×20¥。ドレインは相手ヒット×2（最低2）。フォースが魔力超なら身体。",
   "spirit.allowed": " ・ 許可精霊 {list}",
   "spirit.extra": " ・ 追加精霊 {list}",
   "spirit.bound": "結合",
@@ -82,7 +83,7 @@ export const JA_MAGIC = {
   "spirit.untilDawn": " / 日の出または日の入りまで",
   "spirit.services": "サービス",
   "spirit.spiritHits": "精霊ヒット",
-  "spirit.tests": "召喚 vs Force ・ 結合 vs Force×2",
+  "spirit.tests": "召喚 vs フォース ・ 結合 vs フォース×2",
 
   // Shared by the matrix-resonance tabs (sprites, complex forms).
   "spirit.extraTag": "追加",

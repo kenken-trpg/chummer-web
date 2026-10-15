@@ -29,7 +29,7 @@ describe("<SkillsTab>", () => {
     });
     // the value side of the row, not the help tooltip on its name
     const value = container.querySelector(".skill-row.has-spec b") as HTMLElement;
-    expect(value.textContent).toContain("デフォルト 4"); // AGI 5 − 1
+    expect(value.textContent).toContain("デフォルティング 4"); // AGI 5 − 1
 
     const bought = renderTab({
       character: {
@@ -38,7 +38,7 @@ describe("<SkillsTab>", () => {
       },
     });
     const boughtValue = bought.container.querySelector(".skill-row.has-spec b") as HTMLElement;
-    expect(boughtValue.textContent).not.toContain("デフォルト");
+    expect(boughtValue.textContent).not.toContain("デフォルティング");
     expect(boughtValue.textContent).toContain("3");
   });
 
@@ -59,13 +59,13 @@ describe("<SkillsTab>", () => {
         derived: { totals: { AGI: 5 }, no_default_penalty_skills: ["Blades"] } as never,
       },
     });
-    expect(free.container.textContent).toContain("デフォルト 5（−1なし）");
+    expect(free.container.textContent).toContain("デフォルティング 5（−1なし）");
 
     const blocked = renderTab({
       catalog: skillsCatalog({ skills: [{ ...blades, default: false }] }),
       character: { derived: { totals: { AGI: 5 } } as never },
     });
-    expect(blocked.container.textContent).toContain("デフォルト不可");
+    expect(blocked.container.textContent).toContain("デフォルティング不可");
   });
 
   it("gives the knowledge section the two defaulting pools, and Uneducated's cut", () => {
@@ -73,7 +73,7 @@ describe("<SkillsTab>", () => {
       character: { derived: { totals: { INT: 4, LOG: 6 } } as never },
     });
     expect(plain.container.textContent).toContain("INT 3 ／ LOG 5");
-    expect(plain.container.textContent).not.toContain("デフォルト不可");
+    expect(plain.container.textContent).not.toContain("デフォルティング不可");
 
     const uneducated = renderTab({
       character: {
@@ -86,7 +86,7 @@ describe("<SkillsTab>", () => {
       },
     });
     const line = uneducated.container.textContent || "";
-    expect(line).toContain("はデフォルト不可");
+    expect(line).toContain("はデフォルティング不可");
     expect(line).not.toContain("Technical Active");
   });
 
@@ -228,7 +228,7 @@ describe("<SkillsTab>", () => {
     });
     const button = container.querySelector(".can-delete button") as HTMLElement;
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
-    expect(tip?.textContent).toContain("デフォルトで振れない");
+    expect(tip?.textContent).toContain("デフォルティングで振れない");
   });
 
   it("adds an exotic skill row via patch", () => {

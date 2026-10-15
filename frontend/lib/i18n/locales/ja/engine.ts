@@ -45,7 +45,7 @@ export const JA_ENGINE = {
   "engine.skills.nativeLimit": "母語は{limit}つまでです（超過分は通常の言語として扱います）",
   "engine.skills.needsSkilljack": "{name} を使うにはスキルジャックが必要です",
   "engine.skills.needsSkillwires": "{name} を使うにはスキルワイヤが必要です",
-  "engine.skills.noDefaulting": "デフォルト不可: {categories}",
+  "engine.skills.noDefaulting": "デフォルティング不可: {categories}",
   "engine.skills.overSkilljack":
     "{name} がスキルジャックを超えています（R{rating} / スキルジャック R{limit}）",
   "engine.skills.overSkillwires":
@@ -271,18 +271,20 @@ export const JA_ENGINE = {
   "engine.spirits.pickExtra": "{source} の追加精霊（{index}）を選んでください",
   "engine.spirits.summonFailed": "{name} の召喚に失敗しています（正味0）",
   "engine.spirits.summonNeedsSkill":
-    "{name} の召喚テストに{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の召喚テストに{skill}が必要です（未習得・デフォルティング不可）",
 
   "engine.spirits.testNeedsSkill":
-    "{name} の結合テストに{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の結合テストに{skill}が必要です（未習得・デフォルティング不可）",
   "engine.foci.bindNeedsMagic": "{name} を結合するには魔力が必要です",
   "engine.foci.countOverMagic": "結合できる収束具は魔力までです（{count}/{max}）",
   "engine.foci.craftFailed": "{name} の作成に失敗しています（正味0）",
-  "engine.foci.forceOverLimit": "結合収束具のForce合計が上限を超えています（{force}/{max}）",
+  "engine.foci.forceOverLimit": "結合収束具のフォース合計が上限を超えています（{force}/{max}）",
   "engine.foci.formulaMissing": "{name} の術式データが見つからないため、術式代は0¥にしました",
-  "engine.foci.needsArcana": "{name} の術式自作にはArcanaが必要です（未習得・デフォルト不可）",
-  "engine.foci.needsArtificing": "{name} の作成にはArtificingが必要です（未習得・デフォルト不可）",
-  "engine.foci.qiForceTooLow": "氣収束具の Force が {name} に不足しています",
+  "engine.foci.needsArcana":
+    "{name} の術式自作にはArcanaが必要です（未習得・デフォルティング不可）",
+  "engine.foci.needsArtificing":
+    "{name} の作成にはArtificingが必要です（未習得・デフォルティング不可）",
+  "engine.foci.qiForceTooLow": "氣収束具のフォースが {name} に不足しています",
   "engine.foci.qiPickTarget": "氣収束具の {name} の対象を選んでください",
   "engine.foci.qiSelectInvalid": "氣収束具の {name} の指定が無効です（{picked}）",
   "engine.foci.weaponPick": "{name} の対象武器を選んでください",
@@ -325,14 +327,14 @@ export const JA_ENGINE = {
   "engine.complexforms.requires": "{name} には {needed} が必要です",
 
   "engine.complexforms.threadNeedsSoftware":
-    "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）",
+    "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルティング不可）",
   "engine.sprites.compileFailed": "{name} のコンパイルに失敗しています（正味0）",
   "engine.sprites.compileNeedsSkill":
-    "{name} のコンパイルテストに{skill}が必要です（未習得・デフォルト不可）",
+    "{name} のコンパイルテストに{skill}が必要です（未習得・デフォルティング不可）",
   "engine.sprites.needsResonance": "{name} をコンパイルするには共振力が必要です",
   "engine.sprites.notInStream": "{name} はこのストリームではコンパイルできません",
   "engine.sprites.registerNeedsSkill":
-    "{name} の登録テストに{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の登録テストに{skill}が必要です（未習得・デフォルティング不可）",
 
   "engine.sprites.registeredOverLimit": "登録できるスプライトは {attr} までです（{count}/{max}）",
   "engine.martial.oneTechniqueOnly": "{name} は技を1つまでです（余分を外しました）",
@@ -371,7 +373,7 @@ export const JA_ENGINE = {
   "engine.ware.targetInvalid": "{name} の対象 {picked} は選べないため外しました",
 
   "engine.ware.vehicleMountMismatch": "{name} は {host} に装着できません",
-  "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけをアーマーに加算しています",
+  "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけを装甲値に加算しています",
   "engine.gear.armorAccessoryCapped":
     "重ねた防具の +{bonus} は STR {strength} までしか加算されません（SR5 p.169）",
   "engine.gear.armorEncumbrance":

@@ -413,8 +413,8 @@ export function AdeptTab({
               <div>
                 <b>{tr(item.name)}</b>
                 <div className="muted">
-                  {item.name} / Force {Math.max(1, Math.ceil((item.points || 0) / 0.25))}〜 /{" "}
-                  {sourceBit(item, ui)}
+                  {item.name} / {ui("common.force")}{" "}
+                  {Math.max(1, Math.ceil((item.points || 0) / 0.25))}〜 / {sourceBit(item, ui)}
                 </div>
               </div>
               <button

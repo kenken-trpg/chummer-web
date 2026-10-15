@@ -260,7 +260,7 @@ describe("<AdeptTab>", () => {
     const patch = vi.fn();
     renderTab({ patch });
     const qiList = [...document.querySelectorAll(".quality-list")].at(-1) as HTMLElement;
-    expect(qiList.textContent).toContain("Force 6〜");
+    expect(qiList.textContent).toContain("フォース 6〜");
     fireEvent.click(rowButton(qiList, "Improved Reflexes"));
     expect(patch).toHaveBeenCalledWith({
       qi_foci: [{ power_id: "imprv", rating: 6, power_rating: 1 }],
@@ -281,7 +281,7 @@ describe("<AdeptTab>", () => {
     expect(row.textContent).toContain("18,000¥");
     expect(row.textContent).toContain("結合 6カルマ");
 
-    fireEvent.change(screen.getByLabelText("Force"), { target: { value: "8" } });
+    fireEvent.change(screen.getByLabelText("フォース"), { target: { value: "8" } });
     expect(patch).toHaveBeenLastCalledWith({
       qi_foci: [{ id: "q1", power_id: "imprv", rating: 8, power_rating: 1 }],
     });

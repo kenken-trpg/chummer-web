@@ -183,7 +183,7 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, scCatalog, identityTr);
-    expect(out).toContain("// ── 術式（リミット＝Force） ──");
+    expect(out).toContain("// ── 術式（リミット＝フォース） ──");
     expect(out).toContain("11B6 Manabolt ［DVF-3］");
   });
 

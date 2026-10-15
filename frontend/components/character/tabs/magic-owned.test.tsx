@@ -145,7 +145,7 @@ describe("<SpiritsTab> summoned spirits", () => {
     const patch = vi.fn();
     const { container } = renderTab(SpiritsTab, character(), patch);
 
-    const box = within(rows(container)[1]).getByRole("spinbutton", { name: "Force" });
+    const box = within(rows(container)[1]).getByRole("spinbutton", { name: "フォース" });
     fireEvent.change(box, { target: { value: "5" } });
 
     const out = patch.mock.calls[0][0].spirits as { id: string; force: number }[];
@@ -215,7 +215,7 @@ describe("<FociTab> bonded foci", () => {
       patch,
     );
 
-    fireEvent.change(within(rows(container)[1]).getByRole("spinbutton", { name: "Force" }), {
+    fireEvent.change(within(rows(container)[1]).getByRole("spinbutton", { name: "フォース" }), {
       target: { value: "4" },
     });
 

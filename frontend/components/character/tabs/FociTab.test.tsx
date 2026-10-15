@@ -52,6 +52,6 @@ describe("<FociTab>", () => {
     const tip = screen.getByRole("tooltip", { hidden: true });
     expect(button.getAttribute("aria-describedby")).toBe(tip.id);
     expect(tip.textContent).toContain("同時に結合できる数は魔力まで");
-    expect(tip.textContent).toContain("結合カルマは Force と同数");
+    expect(tip.textContent).toContain("結合カルマはフォースと同数");
   });
 });
