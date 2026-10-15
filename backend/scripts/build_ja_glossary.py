@@ -100,6 +100,9 @@ ADOPTED_OVERRIDES = {
     "overflow": "オーバーフロー",  # not オバーフロー
     "adept power": "アデプトパワー",  # no 中黒, same as the plural row
     "device rating": "機器レーティング",  # Device=機器 + Rating=レーティング, spelled out
+    # Defense is step 3 of combat (p.168ff); 回避 is Dodge, one interrupt /
+    # active-defense option (p.168, p.190).
+    "defense": "防御",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

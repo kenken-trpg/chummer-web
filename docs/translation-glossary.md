@@ -163,7 +163,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Defaulting | デフォルティング |  | ＝ |  |
 | Defender | 防御側 |  | ＝ |  |
 | Defender Net Hits | 防御側純ヒット数 |  | ＝ |  |
-| Defense | 回避 | 回避 | ≠ | 差異 |
+| Defense | 防御 | 回避 | ＝ | 手動確定 / 差異 |
 | Defense Test | 防御テスト |  | ＝ |  |
 | Del | 削除 |  | ＝ |  |
 | Delete Ammo | 弾薬を削除 |  | ＝ |  |
