@@ -195,7 +195,7 @@ it("keeps knowledge categories in English and saves category and specialization 
   );
   render(<LifeModulesPanel {...props} />);
   expect(screen.getByRole("option", { name: "Academic" })).toBeTruthy();
-  fireEvent.change(screen.getByRole("combobox", { name: "Bounty Hunter: choose 知識カテゴリ" }), {
+  fireEvent.change(screen.getByRole("combobox", { name: "Bounty Hunter: choose 知識カテゴリー" }), {
     target: { value: "Professional" },
   });
   expect(patch).toHaveBeenCalledWith({

@@ -18,7 +18,7 @@ export const JA_ENGINE = {
   "compute.offline":
     "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
   "engine.priority.letters": "優先度は A〜E のみ割り当てできます",
-  "engine.priority.oneEach": "優先度 A〜E を各カテゴリに1つずつ割り当ててください",
+  "engine.priority.oneEach": "優先度 A〜E を各カテゴリーに1つずつ割り当ててください",
 
   "engine.priority.sumToTen":
     "Sum to Ten の合計が {budget} になるように割り当ててください（現在 {spent}）",
@@ -181,7 +181,7 @@ export const JA_ENGINE = {
   "engine.spend.mysticPP": "ミスティックPP",
   "engine.spend.nuyenExchange": "新円交換",
   "engine.spend.optics": "光学／音響",
-  "engine.spend.otherGear": "その他ギア",
+  "engine.spend.otherGear": "その他装備",
   "engine.spend.programs": "プログラム",
   "engine.spend.qiFoci": "気収束具",
   "engine.spend.qualities": "資質",
@@ -227,7 +227,7 @@ export const JA_ENGINE = {
   "engine.qualities.pickText": "{name} の内容が未記入です",
   "engine.qualities.pickMatrixAction": "{name} のマトリックスアクションを選んでください",
   "engine.qualities.pickSide": "{name} の左右を選んでください",
-  "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリを選んでください",
+  "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリーを選んでください",
   "engine.qualities.pickSpirit": "{name} の精霊を選んでください",
   "engine.qualities.pickWeaponSkill": "{name} の武器技能を選んでください",
   "engine.qualities.positiveCap":
@@ -251,10 +251,10 @@ export const JA_ENGINE = {
 
   "engine.adept.wayDiscountOver": "Way割引が上限を超えています（使用 {used} / 上限 {max}）",
   "engine.spells.blockedByLimit": "{name} はこの制限では習得できません（{category}）",
-  "engine.spells.categoryInvalid": "{name} の呪文カテゴリが不正です",
+  "engine.spells.categoryInvalid": "{name} の呪文カテゴリーが不正です",
   "engine.spells.categoryUnsupported": "{name} はこの段階では扱えません",
   "engine.spells.duplicateDropped": "{name} は重複しているため外しました",
-  "engine.spells.pickCategory": "{name} の呪文カテゴリを選んでください",
+  "engine.spells.pickCategory": "{name} の呪文カテゴリーを選んでください",
   "engine.spells.pickSpirit": "{name} の精霊を選んでください",
   "engine.spells.pickTradition": "伝統を選んでください",
   "engine.spells.requires": "{name} には {needed} が必要です",
@@ -375,12 +375,12 @@ export const JA_ENGINE = {
     "重ねた防具の +{bonus} は STR {strength} までしか加算されません（SR5 p.169）",
   "engine.gear.armorEncumbrance":
     "重ねた防具 {load} が STR {strength} を超えているので AGI・REA {penalty}（SR5 p.169）",
-  "engine.gear.availOver": "{name} の入手制限超過（{shown} / 上限{limit}）",
-  "engine.gear.bmpCategory": "Black Market Pipeline の商品カテゴリを選んでください",
+  "engine.gear.availOver": "{name} の入手値上限超過（{shown} / 上限{limit}）",
+  "engine.gear.bmpCategory": "Black Market Pipeline の商品カテゴリーを選んでください",
   "engine.gear.bmpContact": "Black Market Pipeline のコンタクトを選んでください",
   "engine.gear.bmpContactMissing": "Black Market Pipeline のコンタクトが見つかりません",
   "engine.gear.capacityOver": "{name} の容量超過（{used}/{max}）",
-  "engine.gear.deviceRatingOver": "{name} のデバイスレーティング超過（{value} / 上限{limit}）",
+  "engine.gear.deviceRatingOver": "{name} の機器レーティング超過（{value} / 上限{limit}）",
   "engine.gear.doesNotFit": "{name} は {host} に装着できません",
   "engine.gear.droneIllegalDowngrade":
     "{name} の下げ改造で、能力値が下限（速度は 0、ほかは 1）を割っています",
@@ -435,7 +435,7 @@ export const JA_ENGINE = {
   "engine.import.gearMovedOut":
     "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
-    "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
+    "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかの装備に付けるものです）",
   "engine.import.portraitDropped":
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
@@ -447,9 +447,9 @@ export const JA_ENGINE = {
   "engine.import.xlsxQualityNote":
     "資質「{name}」の補足「{note}」は取り込めませんでした（この資質には対象を持たせられません）",
   "engine.import.xlsxPowerNote":
-    "アデプト・パワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
+    "アデプトパワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
   "engine.import.xlsxPowerLevel":
-    "キャラシテンプレートはアデプト・パワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
+    "キャラシテンプレートはアデプトパワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
   "engine.import.xlsxWareGrade":
     "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
   "engine.import.xlsxOtherKarma":
@@ -458,11 +458,11 @@ export const JA_ENGINE = {
     "キャラシテンプレートの「成長ログ」に {count} 行あったので、キャリアモードのキャラクターとして取り込みました（報酬履歴はサイドバーで確認できます）",
   "engine.import.xlsxGearPending":
     "装備シートの {count} 行は名前から品目を特定できませんでした（確認して選び直してください）",
-  "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
+  "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/装備は取り込めませんでした",
   "engine.import.mountExtraWeapons":
     "ヴィークル「{name}」の武器マウントに武器が複数載っていました。マウントに紐付くのは 1 挺だけなので、残りは武器一覧から選び直してください",
   "engine.term.contact": "コンタクト",
-  "engine.term.gear": "ギア",
+  "engine.term.gear": "装備",
   "engine.term.host": "本体",
   "engine.term.noRole": "役割なし",
 
@@ -477,7 +477,7 @@ export const JA_ENGINE = {
   "engine.kind.drone": "ドローン",
   "engine.kind.drugComponent": "ドラッグ・コンポーネント",
   "engine.kind.focus": "収束具",
-  "engine.kind.gear": "ギア",
+  "engine.kind.gear": "装備",
   "engine.kind.lifestyle": "ライフスタイル",
   "engine.kind.lifestyleQuality": "ライフスタイル資質",
   "engine.kind.martialArt": "武術",

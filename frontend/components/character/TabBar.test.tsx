@@ -46,7 +46,7 @@ describe("<TabBar>", () => {
     expect(screen.getByRole("button", { name: "メタタイプ" }).getAttribute("title")).toBe(
       "メタタイプと種族。能力値の下限・上限がここで決まります",
     );
-    for (const name of ["優先度", "能力値", "技能", "資質", "ギア", "チェック"]) {
+    for (const name of ["優先度", "能力値", "技能", "資質", "装備", "チェック"]) {
       expect(screen.getByRole("button", { name }).getAttribute("title")).toBeTruthy();
     }
   });

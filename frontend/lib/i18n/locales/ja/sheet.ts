@@ -89,7 +89,7 @@ export const JA_SHEET = {
   "sheet.drugs": "ドラッグ／毒物",
   "sheet.sin": "SIN／ライセンス",
 
-  "sheet.miscGear": "その他ギア",
+  "sheet.miscGear": "その他装備",
   "sheet.kicker": "Shadowrun 5e キャラクターシート",
   "sheet.modeCareer": " ・ キャリア",
   "sheet.modeChargen": " ・ 作成",
@@ -127,7 +127,7 @@ export const JA_SHEET = {
   "sheet.native": "（母語）",
   "sheet.rewardTotal": "報酬合計",
   "sheet.advancementKarma": "成長カルマ",
-  "sheet.repLine": "SC / 悪名 / 周知",
+  "sheet.repLine": "SC / 悪名 / 公的認知度",
   "sheet.rewardLog": "報酬履歴",
   "sheet.karmaBreakdown": "カルマ消費内訳",
 
@@ -157,7 +157,7 @@ export const JA_SHEET = {
   "sheet.veh.mounts": "ウェポンマウント: {list}",
   "sheet.veh.mountEmpty": "（空）",
   "sheet.veh.sensors": "センサー機器: {list}",
-  "sheet.veh.gear": "搭載ギア: {list}",
+  "sheet.veh.gear": "搭載装備: {list}",
 
   "sheet.veh.slots": "スロット: {list}",
   "sheet.armorBlock": "アーマー",
@@ -171,7 +171,7 @@ export const JA_SHEET = {
   "sheet.col.reach": "リーチ",
   "sheet.col.conceal": "携帯",
   "sheet.weaponFocus": "武器収束具 +{dice}d",
-  "sheet.categoryDice": "カテゴリ +{dice}d",
+  "sheet.categoryDice": "カテゴリー +{dice}d",
   "sheet.mountedOn": "搭載: {name}",
   "sheet.rangeHeader": "レンジ (m)",
   "sheet.rangeStr": "・筋力 {str}",
@@ -227,7 +227,7 @@ export const JA_SHEET = {
   "sheet.deviceRcc": "RCC {name}",
   "sheet.matrixInit": "冷{cold} ／ 熱{hot}",
   "sheet.matrixInitNote":
-    "マトリックス・イニシアティブは VR のもの（データ処理＋直感、コールドシム 3d6／ホットシム 4d6・SR5 p.229）。AR では肉体のイニシアティブで行動します。",
+    "マトリックス・イニシアティブは VR のもの（データ処理＋直観、コールドシム 3d6／ホットシム 4d6・SR5 p.229）。AR では肉体のイニシアティブで行動します。",
 
   "sheet.livingPersona": "リビングペルソナ",
   "print.status": "ステータス",
@@ -256,7 +256,7 @@ export const JA_SHEET = {
   // there is nothing in `translations` to look them up in. See
   // lib/character/action-labels.ts for where each reading comes from.
   "action.bruteForce": "強行アクセス",
-  "action.checkOverwatch": "監視スコア確認",
+  "action.checkOverwatch": "監視指数確認",
   "action.controlDevice": "機器操作",
   "action.crackFile": "ファイル解錠",
   "action.crashProgram": "プログラム・クラッシュ",
@@ -360,5 +360,5 @@ export const JA_SHEET = {
   "udo.castSummoning": "精霊召喚（フォース≧魔力で身体ダメージ）",
   "udo.castBinding": "精霊束縛",
   "udo.castBanishing": "精霊追放",
-  "udo.assensing": "霊視（リミットは直感力か魅力の高い方）",
+  "udo.assensing": "霊視（リミットは直観力か魅力の高い方）",
 } as const;

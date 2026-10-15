@@ -1,4 +1,4 @@
-/** 装備: ギア・武器・防具・車両・ウェア・ドラッグ — 日本語。 */
+/** 装備: 一般装備・武器・防具・車両・ウェア・ドラッグ — 日本語。 */
 export const JA_GEAR = {
   "gear.normalModulePool": "通常／資質枠",
   "gear.hardwiredModulePool": "直結枠",
@@ -73,13 +73,13 @@ export const JA_GEAR = {
   "veh.mountWeapon": "武器を搭載",
   "veh.addMount": "武器マウントを追加",
   "veh.noFreeWeapons": "搭載できる武器がありません。先に［武器］タブで武器を購入してください",
-  "veh.addInteriorGear": "内装ギアを追加",
+  "veh.addInteriorGear": "車内装備を追加",
   "veh.searchDrones": "ドローンを検索",
 
   // --- adept tab ----------------------------------------------------------
   "veh.searchVehicles": "車両を検索",
   "gear.capacity": " / 容量 {used}/{max}",
-  "gear.addArmorGear": "ギアを入れる",
+  "gear.addArmorGear": "装備を入れる",
   "gear.putIn": "入れる",
   "gear.addMod": "改造を追加",
   "gear.blackMarket": "闇市",
@@ -99,12 +99,12 @@ export const JA_GEAR = {
   "gear.drugToggleHint": "能力値・イニシアティブ・技能に反映",
   "customDrug.addComponent": "コンポーネントを足す",
   "customDrug.addiction": "中毒 R{rating}/閾値{threshold}",
-  "customDrug.avail": "入手 {avail}",
+  "customDrug.avail": "入手値 {avail}",
   "customDrug.crash": "クラッシュ {damage}S",
   "customDrug.duration": "持続 {seconds} 秒",
   "customDrug.grade": "等級",
   "customDrug.help":
-    "基剤（Foundation）1つに、ブロックと強化剤を重ねます。値段・入手・中毒・発現は組んだ内容から計算します（CF p.190）。",
+    "基剤（Foundation）1つに、ブロックと強化剤を重ねます。値段・入手値・中毒・発現は組んだ内容から計算します（CF p.190）。",
   "customDrug.level": "レベル {level}",
   "customDrug.mix": "調合ドラッグを作る",
   "customDrug.name": "ドラッグ名",
@@ -119,21 +119,21 @@ export const JA_GEAR = {
   "gear.addictionPsychological": "心理",
   "gear.addictionAddicted": "中毒後",
   "gear.searchDrugs": "ドラッグ／毒物を検索",
-  "gear.searchMisc": "ギアを検索",
+  "gear.searchMisc": "装備を検索",
   "gear.gradeOrAddon": "等級／追加",
-  "gear.addGear": "追加ギア",
+  "gear.addGear": "追加装備",
   "gear.takeOut": "取り出す",
   "gear.takeOutLabel": "{name} を取り出す",
   "gear.putInto": "…に入れる",
   "gear.putIntoHint":
-    "手持ちのギアの中に入れて持ち歩きます。入れ物が複数あると、中身もその数だけ買ったものとして数えます（Chummer と同じ）",
+    "手持ちの装備の中に入れて持ち歩きます。入れ物が複数あると、中身もその数だけ買ったものとして数えます（Chummer と同じ）",
   "gear.idleDrugs": "SR5 とドラッグのみ表示中（検索するとサプリメントも探します）",
 
   // --- sidebar ----------------------------------------------------------
   // The panel that is on screen at all times. Labels only — the *values* are
   // numbers, or game terms that go through `tr` / `t` instead.
   "gear.idleLifestyles": "基本ライフスタイルのみ表示中（検索するとサプリメントも探します）",
-  "weapon.fromGear": " / ギア連動",
+  "weapon.fromGear": " / 装備連動",
   "weapon.vehicleOwned": "車両内蔵（{name}）・本人の攻撃候補から除外",
   "weapon.vehicleInventory": "内蔵武器: {list}",
   "weapon.modularDetached": "義肢切り離し中・攻撃候補から除外",
@@ -144,7 +144,7 @@ export const JA_GEAR = {
   "weapon.natural": " / {source} 由来（生得）",
   "weapon.limbStr": " / 肢 STR {str}",
   "weapon.focusDice": " / 収束具+{dice}",
-  "weapon.categoryDice": " / カテゴリ+{dice}",
+  "weapon.categoryDice": " / カテゴリー+{dice}",
   "weapon.mounted": " / 搭載 {name}",
   "weapon.specialMod": "改造{cost}",
   "weapon.addAmmo": "弾薬を追加",
@@ -157,9 +157,9 @@ export const JA_GEAR = {
   "gear.chargenBuy": "作成時の購入",
   "gear.note":
     "。防具は装備中の本体1着＋ヘルメット等の加算、ウェア装甲と合算。消費 {spent}¥ ・ 残 {left}¥",
-  "gear.availNone": " ・ 入手制限なし",
-  "gear.availLimit": " ・ 入手≤{limit}",
-  "gear.worn": " ・ 装備 {name}",
+  "gear.availNone": " ・ 入手値上限なし",
+  "gear.availLimit": " ・ 入手値≤{limit}",
+  "gear.worn": " ・ 装備中 {name}",
   "gear.kind.armor": "防具",
   "gear.kind.weapon": "武器",
   "gear.kind.commlink": "通信機",
@@ -169,21 +169,21 @@ export const JA_GEAR = {
   "gear.kind.sensor": "センサー",
   "gear.kind.vehicle": "車両",
   "gear.kind.drone": "ドローン",
-  "gear.kind.misc": "ギア",
+  "gear.kind.misc": "装備",
   "gear.kind.drugs": "ドラッグ",
 
   "gear.kind.lifestyle": "ライフスタイル",
   "gear.kind.armor.hint":
     "着る防具。同時に着られるのは基本 1 着で、それ以外は追加防具として扱います",
   "gear.kind.weapon.hint": "近接・射撃武器とアクセサリー。命中判定に使う技能もここで決まります",
-  "gear.kind.commlink.hint": "コムリンク。マトリックスに常時接続する基本デバイス",
+  "gear.kind.commlink.hint": "コムリンク。マトリックスに常時接続する基本機器",
   "gear.kind.cyberdeck.hint": "サイバーデッキ。ハッキングに必要で、非常に高価です",
   "gear.kind.rcc.hint": "RCC（ライガー・コマンド・コンソール）。ドローンの遠隔操作用",
   "gear.kind.optics.hint": "サイバーアイ／イヤーやゴーグルなどの視覚・聴覚機器",
   "gear.kind.sensor.hint": "センサーとセンサー機能。探知判定に使います",
   "gear.kind.vehicle.hint": "車両。〈操縦〉技能で動かします",
   "gear.kind.drone.hint": "ドローン。リガーが遠隔／ジャンプインで操作します",
-  "gear.kind.misc.hint": "その他のギア。ツール・サバイバル用品・魔法用品など",
+  "gear.kind.misc.hint": "その他の装備。ツール・サバイバル用品・魔法用品など",
   "gear.kind.drugs.hint": "ドラッグと薬物。効果と副作用があります",
 
   // Shared by the cyberware / bioware tabs.

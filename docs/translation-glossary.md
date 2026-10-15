@@ -41,7 +41,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Add One To Overwatch | 監視指数+1 |  | ＝ |  |
 | Add Skill | 技能の追加 |  | ＝ |  |
 | Addiction | 依存症 | 依存症 |  |  |
-| adept power | アデプト・パワー |  | ＝ |  |
+| adept power | アデプトパワー |  | ≠ | 手動確定 |
 | Adept Powers | アデプトパワー | アデプトパワー |  |  |
 | Age | 年齢 | 年齢 |  |  |
 | Agent | エージェント |  | ＝ |  |
@@ -180,7 +180,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Device | 機器 | 機器 | ≠ | 差異 |
 | Device Cat Commlink | コムリンク |  | ＝ |  |
 | Device Cat Cyberdeck | サイバーデッキ |  | ＝ |  |
-| Device Rating | 機器RTG | 機器RTG |  |  |
+| Device Rating | 機器レーティング | 機器RTG |  | 手動確定 |
 | Device Type | 種別 |  | ＝ |  |
 | Devices | デバイス | デバイス |  |  |
 | Dice Pool | ダイスプール |  | ＝ |  |
@@ -285,7 +285,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Init Cat Astral | アストラル |  | ＝ |  |
 | Init Cat Matrix | マトリックス |  | ＝ |  |
 | Init Cat Meatspace | 物理 |  | ＝ |  |
-| Initiation | 階梯 |  | ＝ |  |
+| Initiation | イニシエーション |  | ≠ | 手動確定 |
 | Initiative | イニシアティブ | イニシアティブ | ＝ |  |
 | Injection | 注入 | 注入 |  |  |
 | INT | 直観 | 直観 |  | 手動確定 |
@@ -411,7 +411,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Opposing Net Hits | 純ヒット数 |  | ＝ |  |
 | Original Dice Pool | 元のダイスプール |  | ＝ |  |
 | Out Of Range | 射程距離外 |  | ＝ |  |
-| Overflow | オバーフロー |  | ＝ |  |
+| Overflow | オーバーフロー |  | ≠ | 手動確定 |
 | Override | 上書き |  | ＝ |  |
 | Overwatch Score | 監視指数(OS) |  | ＝ |  |
 | Owner | オーナー |  | ＝ |  |

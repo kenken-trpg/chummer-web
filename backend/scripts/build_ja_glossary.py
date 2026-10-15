@@ -94,6 +94,12 @@ ADOPTED_OVERRIDES = {
     "intuition": "直観力",
     "int": "直観",
     "contact": "コンタクト",
+    # Checked against the Japanese core rulebook: the 2021 sheet file renders
+    # these three differently from the book, so the book wins.
+    "initiation": "イニシエーション",  # not 階梯 — pairs with サブマージョン
+    "overflow": "オーバーフロー",  # not オバーフロー
+    "adept power": "アデプトパワー",  # no 中黒, same as the plural row
+    "device rating": "機器レーティング",  # Device=機器 + Rating=レーティング, spelled out
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

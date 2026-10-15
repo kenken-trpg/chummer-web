@@ -77,7 +77,6 @@
 | Contacts | コンタクト | `String_Contacts` | Contacts |
 | Essence | エッセンス | `String_DescEssence` | Essence |
 | Mental | 精神 | `String_DescMental` | 精神操作 |
-| Device Rating | 機器RTG | `String_DeviceRating` | 機器レーティング |
 | Roll | ロール | `String_DiceRoller_Roll` | 振る |
 | Grade | 等級 | `String_Grade` | 階梯 |
 | Import Character | キャラクターをインポートする | `String_ImportCharacter` | Import Character |
@@ -101,7 +100,6 @@
 | Tradition | 様式 | `String_Tradition` | Tradition |
 | General | 一般 | `String_VehicleModCategory_General` | (未訳) |
 | Wireless | ワイヤレス | `String_Wireless` | Wireless |
-| Initiation | 階梯 | `Tab_Initiation` | イニシエーション |
 | Notes | 備考 | `Tab_Notes` | ノート |
 | Description | 解説 | `Tab_Roster_Description` | Description |
 | armor | 装甲 | `Tip_Armor` | 装甲値 |
@@ -112,7 +110,6 @@
 | English | 用語集 | 種別 | 現在値 |
 |---|---|---|---|
 | Acceleration | 加速値 | name | Acceleration |
-| adept power | アデプト・パワー | name | アデプトパワー |
 | Control Rig | コントロール・リグ | name | 制御リグ |
 | Defender | 防御側 | name | Defender |
 | Dodge | 回避 | name | Dodge |

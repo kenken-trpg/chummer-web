@@ -211,16 +211,16 @@ describe("<VehicleDroneGear> interior gear", () => {
   it("offers only interior-fitting gear the vehicle does not already carry", () => {
     renderVehicle(owning(vehicle("v1", "Americar")), vi.fn(), catalog());
 
-    const select = screen.getByRole("combobox", { name: "Americar: 内装ギアを追加" });
+    const select = screen.getByRole("combobox", { name: "Americar: 車内装備を追加" });
     const options = [...select.querySelectorAll("option")].map((o) => o.textContent);
-    expect(options).toEqual(["内装ギアを追加", "Area Jammer (600¥)"]);
+    expect(options).toEqual(["車内装備を追加", "Area Jammer (600¥)"]);
   });
 
   it("adds it at the catalog minimum rating, parented to the vehicle", () => {
     const patch = vi.fn();
     renderVehicle(owning(vehicle("v1", "Americar")), patch, catalog());
 
-    const select = screen.getByRole("combobox", { name: "Americar: 内装ギアを追加" });
+    const select = screen.getByRole("combobox", { name: "Americar: 車内装備を追加" });
     fireEvent.change(select, { target: { value: "g-jammer" } });
     fireEvent.click(installNextTo(select));
 

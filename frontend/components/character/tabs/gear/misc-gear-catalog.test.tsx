@@ -35,7 +35,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
   it("a search reaches supplements and matches the category too", () => {
     renderPanel(owning([]), vi.fn(), "misc", catalog());
 
-    fireEvent.change(screen.getByPlaceholderText("ギアを検索"), { target: { value: "survival" } });
+    fireEvent.change(screen.getByPlaceholderText("装備を検索"), { target: { value: "survival" } });
     expect(offered()).toEqual(["Rope", "Micro Drone"]);
   });
 

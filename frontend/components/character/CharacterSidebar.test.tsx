@@ -28,7 +28,7 @@ describe("<CharacterSidebar>", () => {
         tr={identityTr}
       />,
     );
-    const button = screen.getByRole("button", { name: "入手制限 の説明" });
+    const button = screen.getByRole("button", { name: "入手値上限 の説明" });
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     expect(tip?.textContent).toContain("Forbidden");
   });

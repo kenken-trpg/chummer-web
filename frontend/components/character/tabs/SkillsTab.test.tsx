@@ -18,7 +18,7 @@ describe("<SkillsTab>", () => {
   it("renders the point line and the four sections", () => {
     renderTab();
     expect(screen.getByText(/技能 0\/0 ・ グループ 0\/0 ・ 知識 0\/0/)).toBeDefined();
-    for (const h of ["技能グループ", "アクティブ技能", "Exotic技能", "知識技能"]) {
+    for (const h of ["技能グループ", "能動技能", "Exotic技能", "知識技能"]) {
       expect(screen.getByRole("heading", { name: h })).toBeDefined();
     }
   });

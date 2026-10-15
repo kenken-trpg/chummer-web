@@ -27,13 +27,13 @@ export const JA_HELP = {
   "help.attr.EDG": "エッジ。1 セッションに使える回数。判定の振り直しや限界突破に使う",
   "help.attr.MAG": "魔力。呪文・召喚・アデプトパワーの強さ。エッセンスが減ると下がる",
   "help.attr.RES": "共振力。複合フォームやスプライトの強さ。エッセンスが減ると下がる",
-  "help.avail.what": "入手可能度（Avail）：品物の手に入れにくさ。数字が大きいほど難しい",
+  "help.avail.what": "入手値（Avail）：品物の手に入れにくさ。数字が大きいほど難しい",
   "help.avail.suffix": "末尾の R は所持に許可が要る（Restricted）、F は所持自体が違法（Forbidden）",
   "help.avail.chargen":
-    "作成時は入手可能度がこの値を超える品物を買えない（標準 12）。キャリア中は入手判定で手に入れる",
-  "help.deviceRating": "作成時に買える機器のデバイスレーティングの上限（標準 6）",
+    "作成時は入手値がこの値を超える品物を買えない（標準 12）。キャリア中は入手判定で手に入れる",
+  "help.deviceRating": "作成時に買える品物の機器レーティング上限（標準 6）",
   "help.gradeHint":
-    "ウェアの等級。上の等級ほどエッセンスの消費が減り、値段と入手可能度が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
+    "ウェアの等級。上の等級ほどエッセンスの消費が減り、値段と入手値が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
   "help.skill.pool": "判定ダイス = 技能レーティング + 関連能力値（+ 修正）",
   "help.skill.spec": "専門化：その用途の判定に +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
   "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
@@ -121,7 +121,7 @@ export const JA_HELP = {
   "help.cf.fv": "FV（フェード値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
   "help.cf.fade": "フェード抵抗は意志力＋共振力で振り、抵抗しきれない分を食らう",
   "help.cf.level": "レベルが共振力以下なら精神ダメージ、超えると物理ダメージになる",
-  "help.cf.target": "対象（ペルソナ／デバイス／ファイル／スプライトなど）と持続",
+  "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
   "help.spirit.statsLabel": "スピリットの値",
   "help.spirit.force": "F（フォース）：スピリットの強さ。能力値も判定ダイスもここから決まる",
   "help.spirit.services": "サービス：命じられる残り回数。1 つの仕事で 1 サービス使う",
@@ -141,7 +141,7 @@ export const JA_HELP = {
   "help.life.lp": "LP：自分で組むライフスタイルで資質に使える点数（使用／上限）",
   "help.matrix.statsLabel": "マトリックス値",
   "help.matrix.deviceRating":
-    "DR（デバイスレーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
+    "DR（機器レーティング）：機器の素の性能。持ち主が操作していないときの判定に使う",
   "help.matrixmod.statsLabel": "電子改造の値",
   "help.matrixmod.what":
     "電子改造（DT p.66）：改造自体の追加費用はないが、部品・工具は別途必要。材料を配分し、成功した施工を登録すると効果が有効になる",
@@ -164,7 +164,7 @@ export const JA_HELP = {
   "help.martial.chargen": "作成時は流派 1 つ・技 5 つまで。キャリア中は上限なし",
   "help.gear.statsLabel": "装備の値",
   "help.gear.rating":
-    "R（レーティング）：性能の段階。上げると値段も入手可能度も上がることが多い。上限は品目ごと",
+    "R（レーティング）：性能の段階。上げると値段も入手値も上がることが多い。上限は品目ごと",
   "help.gear.capacity": "容量 n/m：この装備に部品を積める量（m）と、いま使っている量（n）",
   "help.gear.qty": "×n は個数。値段は個数倍になる",
   "help.points.attr": "能力値点 n/m：使った点／このキャラクターが持つ点。余っても他には回せない",
@@ -228,7 +228,7 @@ export const JA_HELP = {
   "help.drug.speed": "発現までの秒数。0 は即時",
   "help.drug.duration": "効果が続く時間。切れたあとにクラッシュが来るものがある",
   "help.drug.crash": "クラッシュ：効果が切れたときに受ける反動のダメージ",
-  "help.drug.grade": "等級の倍率は値段に掛かる。上の等級ほど入手可能度も上がる",
+  "help.drug.grade": "等級の倍率は値段に掛かる。上の等級ほど入手値も上がる",
   "help.drug.parts":
     "基剤（Foundation）1 つの上にブロックと強化剤を重ねる。何を重ねられるかは基剤が決める（CF p.190）",
   "help.sensor.statsLabel": "センサーの値",
