@@ -220,7 +220,7 @@ export const JA_HELP = {
     "摂取方法（注射・吸入・経口・接触）。同じドラッグでも方法で発現の速さが変わる",
   "help.drug.testLabel": "依存症テスト",
   "help.drug.pool":
-    "依存症テストのプール ＝ BOD ＋ WIL（身体依存）／LOG ＋ WIL（精神依存）（SR5 p.414）",
+    "依存症テストのプール ＝ BOD ＋ WIL（肉体的）／LOG ＋ WIL（精神的）（SR5 p.414）",
   "help.drug.threshold": "依存症閾値がそのテストの目標ヒット数。届かないと依存症が 1 段進む",
   "help.drug.addicted":
     "括弧内はすでに依存症になっている場合のプール。初回だけ変える資質がある（Drug Tolerant は初回 +2、CF p.54）",

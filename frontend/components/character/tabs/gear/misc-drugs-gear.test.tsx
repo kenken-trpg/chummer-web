@@ -50,7 +50,7 @@ describe("<MiscDrugsGear> the addiction test", () => {
 
     // The fixture is 3s across the board: BOD + WIL and LOG + WIL are both 6.
     const { container } = renderPanel(owning([]), vi.fn(), "drugs");
-    expect(container.textContent).toContain("依存症テスト: 生理 6 ／ 心理 6");
+    expect(container.textContent).toContain("依存症テスト: 肉体的 6 ／ 精神的 6");
   });
 
   it("splits the first dose from the test an addict makes", () => {
@@ -60,7 +60,7 @@ describe("<MiscDrugsGear> the addiction test", () => {
     } as never);
     const { container } = renderPanel(ch, vi.fn(), "drugs");
 
-    expect(container.textContent).toContain("生理 8 (既に依存症 6) ／ 心理 6");
+    expect(container.textContent).toContain("肉体的 8 (既に依存症 6) ／ 精神的 6");
   });
 });
 
