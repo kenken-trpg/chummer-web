@@ -71,7 +71,7 @@ export const JA_MAGIC = {
 
   "spell.search": "術式を検索",
   "spirit.note":
-    "一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と原質 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら物理。",
+    "一時召喚は召喚+MAG[Force] vs Force。結合は結合+MAG[Force] vs Force×2と原質 Force×20¥。ドレインは相手ヒット×2（最低2）。Forceが魔力超なら身体。",
   "spirit.allowed": " ・ 許可精霊 {list}",
   "spirit.extra": " ・ 追加精霊 {list}",
   "spirit.bound": "結合",
@@ -89,7 +89,7 @@ export const JA_MAGIC = {
 
   "res.fadeResist": " ・ フェイディング抵抗 {attrs} {pool}",
   "sprite.note":
-    "コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェイディングは相手ヒット×2（最低2）。Levelが共振力超なら物理。登録数は共振力まで。",
+    "コンパイルは Compiling+RES[Level] vs Level×2。登録は Registering+RES[Level] vs Level×2（Level時間）。フェイディングは相手ヒット×2（最低2）。Levelが共振力超なら身体。登録数は共振力まで。",
   "sprite.livingPersona": " ・ 生体ペルソナ DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
   "sprite.registered": "登録",
   "sprite.compiled": "コンパイル",
@@ -100,7 +100,7 @@ export const JA_MAGIC = {
   "sprite.search": "スプライトを検索",
   "cf.free": "優先度の無料枠 {used}/{free}",
   "cf.paid": " ・ 追加 {paid}×4カルマ",
-  "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超なら物理フェイディング。",
+  "cf.note": "。スレッディングは Software+RES[Level]。Level が共振力超ならフェイディングは身体。",
   "cf.fadeAt": " @ L{level} → フェイディング {fade}",
   "cf.fadeSpecial": "特殊",
   "cf.attribute": "能力値",

@@ -48,7 +48,8 @@ def test_every_rule_is_backed_by_a_glossary_line() -> None:
         ('"a": "システム・アップグレード",', False),  # the allowed word, not the term
         ('"a": "マトリクス",', True),
         ('"a": "マトリックス",', False),  # the long vowel is the correct form
-        ('"a": "物理ダメージ",', False),  # bare Physical really is 物理
+        ('"a": "物理ダメージ",', True),  # damage goes on the 身体 track
+        ('"a": "物理呪文",', False),  # the spell type really is 物理
     ],
 )
 def test_rules_fire_on_the_wrong_word_and_not_the_right_one(tmp_path: Path, text: str, flagged: bool) -> None:
