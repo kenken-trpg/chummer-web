@@ -32,7 +32,7 @@ export const JA_APP = {
   "tab.initiation": "イニシエーション",
   "tab.submersion": "サブマージョン",
   "tab.adept": "アデプト",
-  "tab.spells": "術式",
+  "tab.spells": "呪文",
   "tab.spirits": "精霊",
   "tab.foci": "収束具",
   "tab.complexforms": "複合体",
@@ -54,8 +54,8 @@ export const JA_APP = {
   "tab.initiation.hint": "イニシエーション。等級ごとにメタマジックを 1 つ習得します",
   "tab.submersion.hint": "サブマージョン。等級ごとにエコーを 1 つ習得します",
   "tab.adept.hint": "アデプトパワー。パワーポイントで購入します",
-  "tab.spells.hint": "術式（呪文）と儀式。マジシャン系のみ",
-  "tab.spirits.hint": "束縛した精霊。〈フォース〉とサービス回数を決めます",
+  "tab.spells.hint": "呪文と儀式。マジシャン系のみ",
+  "tab.spirits.hint": "束縛した精霊。〈フォース〉と助力の回数を決めます",
   "tab.foci.hint": "収束具。カルマで〈固着〉させて使います",
   "tab.complexforms.hint": "複合体。テクノマンサーのみ",
   "tab.sprites.hint": "登録したスプライト。テクノマンサーのみ",
@@ -378,7 +378,7 @@ export const JA_APP = {
   "txt.ess": "（ESS {essence}）",
   "txt.rcTotal": " / 合計RC {rc}",
   "txt.vehicle":
-    "機動{handling} 速{speed} 加{accel} 車体{body} 装甲{armor} 操縦{pilot} センサー{sensor} CM{cm}",
+    "機動{handling} 速{speed} 加{accel} 強靱力{body} 装甲{armor} 操縦{pilot} センサー{sensor} CM{cm}",
   "txt.vehicleMods": "  改造: {list}",
   "txt.licenses": "  ライセンス: {list}",
   "txt.drugsActive": "使用中のドラッグ（反映済み）",
@@ -422,7 +422,7 @@ export const JA_APP = {
     "確認待ちの装備行が {count} 件あります。この行はこのブラウザにしかないので、いま書き出すとファイルには入りません（上の「装備シート…」のパネルで選ぶか飛ばすと確定します）。",
   "app.exportReview.confirm": "このまま書き出す",
   "app.exportReview.cancel": "やめる",
-  "check.needsMentor": "メンタースピリットが未選択です",
+  "check.needsMentor": "導師精霊が未選択です",
   "check.needsParagon": "パラゴンが未選択です",
   "check.metagenicUnbalanced":
     "メタジェネティック資質のカルマ収支が不均衡です（＋{positive} / −{negative}）",
@@ -437,7 +437,7 @@ export const JA_APP = {
   "check.nuyenLeft": "新円が {nuyen}¥ 残っています",
   "check.contactPointsLeft": "コンタクト値が {left} 点未使用です",
   "check.powerPointsLeft": "パワーポイントが {left} 点未使用です",
-  "check.spellSlotsLeft": "術式／式典／錬成の無料枠が {left} 残っています",
+  "check.spellSlotsLeft": "呪文／儀式／錬成の無料枠が {left} 残っています",
   "check.complexFormSlotsLeft": "複合体の無料枠が {left} 残っています",
 
   // --- engine notices --------------------------------------------------

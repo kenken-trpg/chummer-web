@@ -70,7 +70,7 @@ export const JA_MAGIC = {
   "spell.kind.ritual": "儀式",
   "spell.kind.enchantment": "エンチャント",
 
-  "spell.search": "術式を検索",
+  "spell.search": "呪文を検索",
   "spirit.note":
     "一時召喚は召喚+MAG[フォース] vs フォース。結合は結合+MAG[フォース] vs フォース×2と原質フォース×20¥。ドレインは相手ヒット×2（最低2）。フォースが魔力超なら身体。",
   "spirit.allowed": " ・ 許可精霊 {list}",
@@ -81,7 +81,7 @@ export const JA_MAGIC = {
   "spirit.bind": "結合",
   "spirit.reagent": " / 原質 {nuyen}¥",
   "spirit.untilDawn": " / 日の出または日の入りまで",
-  "spirit.services": "サービス",
+  "spirit.services": "助力",
   "spirit.spiritHits": "精霊ヒット",
   "spirit.tests": "召喚 vs フォース ・ 結合 vs フォース×2",
 
@@ -135,11 +135,11 @@ export const JA_MAGIC = {
   "sub.echo": "エコー",
 
   "sub.target": "対象（プログラム名など）",
-  "mentor.title": "メンタースピリット",
+  "mentor.title": "導師精霊",
   "mentor.paragonTitle": "パラゴン",
   "mentor.paragonLabel": "パラゴン",
   "mentor.none": "未選択",
-  "mentor.label": "メンター",
+  "mentor.label": "導師精霊",
 
   "mentor.chooseTarget": "対象を選択",
 } as const;

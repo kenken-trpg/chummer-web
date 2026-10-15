@@ -10,10 +10,10 @@ const en = (k: Parameters<typeof translate>[1], v?: Record<string, string | numb
 describe("talentLabel", () => {
   it("translates the name and the ratings tail separately", () => {
     expect(talentLabel("Magician", "Magician - 6 Magic/10 Spells", ja)).toBe(
-      "魔法使い - 魔力6/術式10",
+      "魔法使い - 魔力6/呪文10",
     );
     expect(talentLabel("Mystic Adept", "Mystic Adept - 3 Magic/5 Spells", ja)).toBe(
-      "ミスティックアデプト - 魔力3/術式5",
+      "ミスティックアデプト - 魔力3/呪文5",
     );
     expect(talentLabel("Adept", "Adept - 6 Magic", ja)).toBe("アデプト - 魔力6");
     expect(talentLabel("Aspected Magician", "Aspected Magician - 2 Magic", ja)).toBe(

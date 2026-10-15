@@ -389,7 +389,7 @@ describe("buildUdonariumConjured", () => {
       '<data name="フォース" type="numberResource" currentValue="4">4</data>',
     );
     expect(file.content).toContain(
-      '<data name="残りサービス" type="numberResource" currentValue="3">3</data>',
+      '<data name="残り助力" type="numberResource" currentValue="3">3</data>',
     );
   });
 

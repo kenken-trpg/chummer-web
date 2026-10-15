@@ -157,7 +157,7 @@ export const JA_CHARGEN = {
   "skills.chargenNote": " ・ 専門化は1点",
   "skills.granted": "ついてくる技能",
   "skills.grantedNote":
-    "資質・ウェア・アデプト能力・メンター精霊が連れてくる技能です。ここで選んでも、それぞれのタブで選んでも同じものです。",
+    "資質・ウェア・アデプト能力・導師精霊が連れてくる技能です。ここで選んでも、それぞれのタブで選んでも同じものです。",
   "skills.talentLabel": "タレントでもらえる技能",
   "skills.talent": "タレントでもらえる技能（{qty} つを R{rating} で）",
   "skills.talentGroup": "タレントでもらえる技能グループ（{qty} つを R{rating} で）",
@@ -456,7 +456,7 @@ export const JA_CHARGEN = {
   "prio.karmaSliderLabel": "新円に回すカルマ",
   "prio.nuyenSliderHint": "カルマ 1 点＝{rate}¥。作成中のみ交換でき、逆方向には戻せません",
   "prio.karmaNote":
-    "優先度表は使いません。メタ／能力値／技能／術式などをカルマで購入します（開始 {pool}）。MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の術式枠はありません。",
+    "優先度表は使いません。メタ／能力値／技能／呪文などをカルマで購入します（開始 {pool}）。MAG／RES はタレント選択で解禁され、最低1から買い上げます。無料の呪文枠はありません。",
   "prio.talent": "タレント",
   "prio.breakdownA":
     "内訳: メタ {meta} / 能力値 {attrs} / 技能 {skills} / 知識 {knowledge} / 専門化 {specs}",
@@ -511,7 +511,7 @@ export const JA_CHARGEN = {
   "talent.aspectedMagician": "偏位魔法使い",
   "talent.technomancer": "テクノマンサー",
   "talent.mundane": "マンディン",
-  "talent.magicSpells": "魔力{magic}/術式{spells}",
+  "talent.magicSpells": "魔力{magic}/呪文{spells}",
   "talent.magic": "魔力{magic}",
   "talent.resonanceForms": "共振力{resonance}/複合体{forms}",
   "prio.cell.attributes": "{points} ({special}) 能力値",

@@ -4,15 +4,15 @@ import { TabBar } from "@/components/character/TabBar";
 describe("<TabBar>", () => {
   it("hides the awakened / emerged tabs until the engine enables them", () => {
     const { rerender } = render(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={[]} />);
-    expect(screen.queryByRole("button", { name: "術式" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "呪文" })).toBeNull();
 
     rerender(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={["spells"]} />);
-    expect(screen.getByRole("button", { name: "術式" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "呪文" })).toBeDefined();
   });
 
   it("native MAG alone keeps Talent abilities hidden", () => {
     render(<TabBar tab="attrs" setTab={vi.fn()} enabledTabs={["MAG", "critter"]} />);
-    for (const name of ["術式", "精霊", "アデプト", "収束具"]) {
+    for (const name of ["呪文", "精霊", "アデプト", "収束具"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });

@@ -136,6 +136,7 @@ RULEBOOK_ONLY = {
     "Foci": "収束具",
     "Qi Focus": "氣収束具",  # 氣, not 気 — as the book and the catalog print it
     "Qi Foci": "氣収束具",
+    "Mentor Spirit": "導師精霊",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

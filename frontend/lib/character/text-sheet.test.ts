@@ -151,7 +151,7 @@ describe("textSheet sections", () => {
   });
 
   it("renders a spell's category, type, range, duration and drain", () => {
-    const [spell] = section(sheet(), "術式");
+    const [spell] = section(sheet(), "呪文");
 
     expect(spell).toContain("Manabolt");
     expect(spell).toContain("DV F-3");
@@ -184,7 +184,7 @@ describe("textSheet omits what the character does not have", () => {
     ["資質"],
     ["武器"],
     ["ウェア"],
-    ["術式"],
+    ["呪文"],
     ["ヴィークル・ドローン"],
     ["コンタクト"],
     ["メモ"],

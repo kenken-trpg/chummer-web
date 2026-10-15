@@ -63,7 +63,7 @@ export const JA_SIDEBAR = {
   "side.submersion": "サブマージョン",
   "side.grade": "等級 {grade}",
   "side.powerPoints": "パワーポイント",
-  "side.spells": "術式",
+  "side.spells": "呪文",
   "side.spirits": "精霊",
   "side.foci": "収束具",
   "side.complexForms": "複合体",
@@ -71,7 +71,7 @@ export const JA_SIDEBAR = {
   "side.livingPersona": "生体ペルソナ",
   "side.matrixInit": "マトリックスInit",
   "side.tradition": "様式",
-  "side.mentor": "メンター",
+  "side.mentor": "導師精霊",
   "side.paragon": "パラゴン",
   "side.damageResist": "ダメージ抵抗",
 

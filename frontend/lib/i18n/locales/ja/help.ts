@@ -74,7 +74,7 @@ export const JA_HELP = {
   "help.quality.career": "キャリア中の買い足し・買い取りはカルマ 2 倍が標準（SR5 p.72）",
   "help.vehicle.statsLabel": "ステータス",
   "help.vehicle.stats":
-    "HND 操縦性／SPD 速度／ACC 加速／BOD 車体／ARM 装甲／PLT パイロット／SNR センサー",
+    "HND 操縦性／SPD 速度／ACC 加速／BOD 強靱力／ARM 装甲／PLT パイロット／SNR センサー",
   "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時のテストに使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
   "help.vehicle.slots":
@@ -124,7 +124,7 @@ export const JA_HELP = {
   "help.cf.target": "対象（ペルソナ／機器／ファイル／スプライトなど）と持続",
   "help.spirit.statsLabel": "精霊の値",
   "help.spirit.force": "F（フォース）：精霊の強さ。能力値もテストのダイスもここから決まる",
-  "help.spirit.services": "サービス：命じられる残り回数。1 つの仕事で 1 サービス使う",
+  "help.spirit.services": "助力：命じられる残り回数。1 つの仕事で助力を 1 回使う",
   "help.spirit.bound": "束縛すると呼び直せるが原質が要る。ただの召喚は夜明けで消える",
   "help.sprite.statsLabel": "スプライトの値",
   "help.sprite.level": "L（レベル）：スプライトの強さ。マトリックス値とテストのダイスの基準",
@@ -152,7 +152,7 @@ export const JA_HELP = {
   "help.prio.attrCell": "能力値の欄の「6 (2)」は、通常の能力値点 6 と特殊能力値点 2",
   "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
   "help.prio.skillCell": "技能の欄の「24/2」は、技能点 24 と技能グループ点 2",
-  "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる術式・複合体の無料枠",
+  "help.prio.magicCell": "魔法／共振の欄はタレントと、ついてくる呪文・複合体の無料枠",
   "help.adept.statsLabel": "パワーポイント",
   "help.adept.pp": "アデプトのパワーポイントは魔力と同数。パワーを取った分だけ減る",
   "help.adept.mystic":
@@ -205,7 +205,7 @@ export const JA_HELP = {
   "help.career.edit":
     "式から出る分とは別に、GM が与えた分を手で上乗せする欄。式の値そのものは動かない",
   "help.granted.what":
-    "資質・ウェア・アデプトパワー・メンターが与える技能。ここで選んでも技能点は減らない",
+    "資質・ウェア・アデプトパワー・導師精霊が与える技能。ここで選んでも技能点は減らない",
   "help.granted.where": "与えている側のタブにある同じ選択を写したもの。どちらで選んでも同じ",
   "help.talent.what": "プライオリティのタレントが配る技能。選ぶだけで、技能点は使わない",
   "help.talent.rating": "決まったレーティングまで無料で上がる。その上に技能点で買い足せる",

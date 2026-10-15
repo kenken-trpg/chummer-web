@@ -159,7 +159,7 @@ describe("<SpiritsTab> summoned spirits", () => {
     const patch = vi.fn();
     const { container } = renderTab(SpiritsTab, character(), patch);
 
-    fireEvent.change(within(rows(container)[0]).getByRole("spinbutton", { name: "サービス" }), {
+    fireEvent.change(within(rows(container)[0]).getByRole("spinbutton", { name: "助力" }), {
       target: { value: "3" },
     });
 
