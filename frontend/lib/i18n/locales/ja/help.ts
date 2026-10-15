@@ -33,7 +33,7 @@ export const JA_HELP = {
     "作成時は入手値がこの値を超える品物を買えない（標準 12）。キャリア中は入手テストで手に入れる",
   "help.deviceRating": "作成時に買える品物の機器レーティング上限（標準 6）",
   "help.gradeHint":
-    "ウェアの等級。上の等級ほどエッセンスの消費が減り、値段と入手値が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
+    "ウェアの等級。上の等級ほどエッセンスの消費が減り、価格と入手値が上がる。作成時に使えない等級は設定で決まる（標準では Betaware 以上は不可）",
   "help.skill.pool": "テストのダイス = 技能レーティング + 関連能力値（+ 修正）",
   "help.skill.spec": "専門化：その用途のテストに +2 ダイス。作成時はカルマ 1 点、キャリアは 7 点",
   "help.skill.expertise": "熟達（Expertise）：専門化を置き換えて +3 ダイス（キャリアのみ）",
@@ -101,7 +101,7 @@ export const JA_HELP = {
   "help.contact.connection":
     "コネ値：相手の人脈と力。高いほど良い品・良い情報に手が届く（SR5 p.388）",
   "help.contact.loyalty": "忠実値：相手がどれだけ親身か。高いほど無理を聞き、裏切りにくい",
-  "help.contact.cost": "作成時の値段はコネ値＋忠実値で、コンタクト値から払う",
+  "help.contact.cost": "作成時のカルマはコネ値＋忠実値で、コンタクト値から払う",
   "help.spell.statsLabel": "呪文データ",
   "help.spell.drain":
     "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",
@@ -147,7 +147,7 @@ export const JA_HELP = {
     "電子改造（DT p.66）：改造自体の追加費用はないが、部品・工具は別途必要。材料を配分し、成功した施工を登録すると効果が有効になる",
   "help.matrixmod.array":
     "デッキでは配列の枠どうしで点を移すものがある（片方 +1、もう片方 −1）。合計は増えない",
-  "help.matrixmod.included": "「標準装備」と出ているものは機器に最初から付いており、値段も取らない",
+  "help.matrixmod.included": "「標準装備」と出ているものは機器に最初から付いており、価格もかからない",
   "help.prio.statsLabel": "表の読み方",
   "help.prio.attrCell": "能力値の欄の「6 (2)」は、通常の能力値点 6 と特殊能力値点 2",
   "help.prio.special": "特殊能力値点はエッジ・魔力・共振力に使う。通常の点とは混ぜられない",
@@ -159,14 +159,14 @@ export const JA_HELP = {
     "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
   "help.martial.statsLabel": "流派と技",
-  "help.martial.style": "流派は 7 カルマ（品目ごとに別の値段のことがある）",
+  "help.martial.style": "流派は 7 カルマ（品目ごとに別のカルマのことがある）",
   "help.martial.technique": "技は 1 つ 5 カルマ。資質で付いてくる分は無料",
   "help.martial.chargen": "作成時は流派 1 つ・技 5 つまで。キャリア中は上限なし",
   "help.gear.statsLabel": "装備の値",
   "help.gear.rating":
-    "R（レーティング）：性能の段階。上げると値段も入手値も上がることが多い。上限は品目ごと",
+    "R（レーティング）：性能の段階。上げると価格も入手値も上がることが多い。上限は品目ごと",
   "help.gear.capacity": "容量 n/m：この装備に部品を積める量（m）と、いま使っている量（n）",
-  "help.gear.qty": "×n は個数。値段は個数倍になる",
+  "help.gear.qty": "×n は個数。価格は個数倍になる",
   "help.points.attr": "能力値点 n/m：使った点／このキャラクターが持つ点。余っても他には回せない",
   "help.points.special": "特殊点 n/m：エッジ・魔力・共振力にだけ使える点。通常の能力値点とは別勘定",
   "help.points.skills": "技能点 n/m：1 点で技能レーティング 1。技能グループ点とは別枠",
@@ -212,7 +212,7 @@ export const JA_HELP = {
   "help.talent.change": "選び直すと前の技能から無料分だけ下がる。買い足した分はそのまま残る",
   "help.heldGear.statsLabel": "中に入れる装備",
   "help.heldGear.what":
-    "ケミカルグランドや自動注射器のように、ウェアが中に抱える装備。入れたものの値段はウェアとは別に掛かる",
+    "ケミカルグランドや自動注射器のように、ウェアが中に抱える装備。入れたものの価格はウェアとは別に掛かる",
   "help.drug.statsLabel": "ドラッグの値",
   "help.drug.effect": "効果は「使用中」の間だけ能力値などに乗る。外せば元に戻る",
   "help.drug.onset": "発現（Onset）：摂ってから効き始めるまでの時間。0 は即時",
@@ -228,7 +228,7 @@ export const JA_HELP = {
   "help.drug.speed": "発現までの秒数。0 は即時",
   "help.drug.duration": "効果が続く時間。切れたあとにクラッシュが来るものがある",
   "help.drug.crash": "クラッシュ：効果が切れたときに受ける反動のダメージ",
-  "help.drug.grade": "等級の倍率は値段に掛かる。上の等級ほど入手値も上がる",
+  "help.drug.grade": "等級の倍率は価格に掛かる。上の等級ほど入手値も上がる",
   "help.drug.parts":
     "基剤（Foundation）1 つの上にブロックと強化剤を重ねる。何を重ねられるかは基剤が決める（CF p.190）",
   "help.sensor.statsLabel": "センサーの値",
@@ -249,10 +249,10 @@ export const JA_HELP = {
   "help.vehmod.statsLabel": "改造の値",
   "help.vehmod.slots": "スロット n：この改造が車体から食う枠。系統ごとの上限と突き合わせる",
   "help.vehmod.rating":
-    "R（レーティング）：改造の段階。値段やスロットがレーティングで変わるものがある",
+    "R（レーティング）：改造の段階。価格やスロットがレーティングで変わるものがある",
   "help.vehmod.capacity": "容量 n/m：この改造自身が抱えられる量（センサーやウェアを積むもの）",
   "help.vehmod.included":
-    "「標準装備」と出ているものは車種に最初から付いており、スロットも値段も取らない",
+    "「標準装備」と出ているものは車種に最初から付いており、スロットを使わず価格もかからない",
   "help.vehmount.statsLabel": "マウントの値",
   "help.vehmount.slots": "スロット n：マウント自身が車体から食う枠。載せる武器は枠を食わない",
   "help.vehmount.weapon":
@@ -260,7 +260,7 @@ export const JA_HELP = {
   "help.vehmount.included": "「標準装備」のマウントは車種に最初から付いており、外せない",
   "help.vehgear.statsLabel": "車内の装備の値",
   "help.vehgear.what": "車体に固定する改造ではなく、車内に積んでいるだけの装備。スロットは食わない",
-  "help.vehgear.rating": "R（レーティング）：装備の段階。値段はレーティングで変わる",
+  "help.vehgear.rating": "R（レーティング）：装備の段階。価格はレーティングで変わる",
   "help.meta.statsLabel": "メタタイプの選び方",
   "help.meta.special": "特殊点はエッジ・魔力・共振力にだけ使える。通常の能力値点とは別勘定",
   "help.meta.karma":

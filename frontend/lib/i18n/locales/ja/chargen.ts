@@ -469,7 +469,7 @@ export const JA_CHARGEN = {
   "life.area": "地域 +",
   "life.security": "防犯 +",
   "life.raiseHint":
-    "このライフスタイルの基本値から上げた段数。1 段ごとに LP 1 と、基本額の 10%（と、あればその段の値段）がかかります（RF p.219）。",
+    "このライフスタイルの基本値から上げた段数。1 段ごとに LP 1 と、基本額の 10%（と、あればその段の価格）がかかります（RF p.219）。",
   "life.base": "基本 {cost}¥",
   "life.multiplier": " / 倍率 {pct}%",
   "life.qualityCost": " / 資質 +{cost}¥",

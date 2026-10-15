@@ -134,7 +134,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Contacts | コンタクト |  | ＝ |  |
 | Continue | 続行 |  | ＝ |  |
 | Control Rig | コントロール・リグ |  | ＝ |  |
-| Cost | コスト | コスト | ＝ |  |
+| Cost | 価格 | コスト | ≠ | 手動確定 |
 | Cover | 遮蔽 |  | ＝ |  |
 | Create | {type}を作成 |  | ＝ |  |
 | critter power | クリッター・パワー |  | ＝ |  |

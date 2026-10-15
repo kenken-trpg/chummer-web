@@ -74,6 +74,7 @@
 | Capacity | 容量 | `String_Capacity` | Capacity |
 | Career Karma | 通算カルマ | `String_CareerKarma` | 累計カルマ |
 | Contacts | コンタクト | `String_Contacts` | Contacts |
+| Cost | 価格 | `String_Cost` | コスト |
 | Essence | エッセンス | `String_DescEssence` | Essence |
 | Mental | 精神 | `String_DescMental` | 精神操作 |
 | Roll | ロール | `String_DiceRoller_Roll` | 振る |

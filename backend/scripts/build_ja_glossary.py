@@ -130,6 +130,7 @@ ADOPTED_OVERRIDES = {
     # Accel 加速値, Body 強靱力, Armor 装甲値, Pilot パイロット already match).
     "seats": "乗員数",
     "sensor": "センサー",
+    "cost": "価格",  # the book's gear tables, not just vehicles
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
