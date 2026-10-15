@@ -103,6 +103,8 @@ ADOPTED_OVERRIDES = {
     # Defense is step 3 of combat (p.168ff); 回避 is Dodge, one interrupt /
     # active-defense option (p.168, p.190).
     "defense": "防御",
+    # Addiction is 依存症 in the book; the sheet file says 中毒 for this one row.
+    "already addicted": "既に依存症",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

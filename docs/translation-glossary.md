@@ -48,7 +48,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | AGI | 敏捷 | 敏捷 |  |  |
 | Agility | 敏捷力 | 敏捷力 |  |  |
 | Alias | ストリートネーム | ストリートネーム |  |  |
-| Already Addicted | 既に中毒 | 既に中毒 |  |  |
+| Already Addicted | 既に依存症 | 既に中毒 |  | 手動確定 |
 | Ammo | 弾薬 | 弾薬 | ＝ |  |
 | Ammo Full | 弾薬満タン |  | ＝ |  |
 | Ammo Gel Rounds | ゲル弾 |  | ＝ |  |
