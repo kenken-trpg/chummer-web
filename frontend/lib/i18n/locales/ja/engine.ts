@@ -386,7 +386,7 @@ export const JA_ENGINE = {
   "engine.gear.deviceRatingOver": "{name} の機器レーティング超過（{value} / 上限{limit}）",
   "engine.gear.doesNotFit": "{name} は {host} に装着できません",
   "engine.gear.droneIllegalDowngrade":
-    "{name} の下げ改造で、能力値が下限（速度は 0、ほかは 1）を割っています",
+    "{name} の下げ改造で、能力値が下限（最高速度は 0、ほかは 1）を割っています",
   "engine.gear.duplicateApp": "{name} に同じアプリが重複しています",
   "engine.gear.duplicateMod": "{name} は {host} に重複して装着できません",
   "engine.gear.duplicateProgram": "{name} に同じプログラムが重複しています",

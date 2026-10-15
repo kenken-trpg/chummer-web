@@ -74,7 +74,7 @@ export const JA_HELP = {
   "help.quality.career": "キャリア中の買い足し・買い取りはカルマ 2 倍が標準（SR5 p.72）",
   "help.vehicle.statsLabel": "ステータス",
   "help.vehicle.stats":
-    "HND 操縦性／SPD 速度／ACC 加速／BOD 強靱力／ARM 装甲／PLT パイロット／SNR センサー",
+    "HND 操縦値／SPD 最高速度／ACC 加速値／BOD 強靱力／ARM 装甲値／PLT パイロット／SNR センサー",
   "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時のテストに使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
   "help.vehicle.slots":

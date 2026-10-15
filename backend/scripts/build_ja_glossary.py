@@ -126,6 +126,10 @@ ADOPTED_OVERRIDES = {
     # Martial Arts / Tradition / Power Points / Living Persona already read as
     # the book does; Rituals is shorter there.
     "rituals": "儀式",
+    # Vehicle stat block as the book prints it (Handling 操縦値, Speed 最高速度,
+    # Accel 加速値, Body 強靱力, Armor 装甲値, Pilot パイロット already match).
+    "seats": "乗員数",
+    "sensor": "センサー",
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
@@ -137,6 +141,7 @@ RULEBOOK_ONLY = {
     "Qi Focus": "氣収束具",  # 氣, not 気 — as the book and the catalog print it
     "Qi Foci": "氣収束具",
     "Mentor Spirit": "導師精霊",
+    "Vehicle Cost": "価格",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

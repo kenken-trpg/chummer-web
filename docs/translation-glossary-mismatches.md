@@ -94,6 +94,7 @@
 | ritual | 儀式 | `String_Ritual` | 儀式＠ |
 | Second Chance | 振り直し | `String_SecondChance` | Second Chance |
 | armor | 装甲 | `String_SelectPACKSKit_Armor` | 装甲値 |
+| Sensor | センサー | `String_Sensor` | センサ |
 | Source | 資料 | `String_Source` | Source |
 | Extended | 継続 | `String_SpellExtended` | 拡張 |
 | Tradition | 様式 | `String_Tradition` | Tradition |

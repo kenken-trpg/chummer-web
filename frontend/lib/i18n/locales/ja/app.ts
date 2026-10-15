@@ -378,7 +378,7 @@ export const JA_APP = {
   "txt.ess": "（ESS {essence}）",
   "txt.rcTotal": " / 合計RC {rc}",
   "txt.vehicle":
-    "機動{handling} 速{speed} 加{accel} 強靱力{body} 装甲{armor} 操縦{pilot} センサー{sensor} CM{cm}",
+    "操縦値{handling} 最高速度{speed} 加速値{accel} 強靱力{body} 装甲値{armor} パイロット{pilot} センサー{sensor} CM{cm}",
   "txt.vehicleMods": "  改造: {list}",
   "txt.licenses": "  ライセンス: {list}",
   "txt.drugsActive": "使用中のドラッグ（反映済み）",

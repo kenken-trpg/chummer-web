@@ -63,7 +63,7 @@ describe("<VehicleDroneGear>", () => {
     );
     const button = container.querySelector(".muted button") as HTMLElement;
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
-    expect(tip?.textContent).toContain("HND 操縦性");
+    expect(tip?.textContent).toContain("HND 操縦値");
     expect(tip?.textContent).toContain("PLT はオートパイロット");
   });
 
