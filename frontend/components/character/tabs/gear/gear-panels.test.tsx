@@ -52,7 +52,7 @@ const PANELS: {
   {
     name: "CommlinkGear",
     Panel: CommlinkGear,
-    label: "通信機を検索",
+    label: "コムリンクを検索",
     catalog: {
       commlinks: [
         { ...base, id: "c1", name: "Meta Link", devicerating: 1 },

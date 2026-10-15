@@ -207,7 +207,7 @@ describe("<MiscDrugsGear> owned rows", () => {
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     expect(tip?.textContent).toContain("R（レーティング）");
     expect(tip?.textContent).toContain("容量 n/m");
-    expect(tip?.textContent).toContain("値段は個数倍");
+    expect(tip?.textContent).toContain("価格は個数倍");
   });
 
   it("removing a parent takes its children with it", () => {

@@ -11,7 +11,7 @@
 5. 設定名が `Chummer Web Life Modules`、作成方式が `LifeModule` になっていることを確認する。
 6. 元ファイルを上書きせず別名保存し、そのファイルをもう一度Chummerで開く。
 
-設定XMLはLifeModule方式、750 Karma、アクティブ技能上限7、知識技能上限9、SR5・RF・CFを指定します。
+設定XMLはLifeModule方式、750 Karma、能動技能上限7、知識技能上限9、SR5・RF・CFを指定します。
 Chummerのカスタム設定はファイル名で検索されるため、設定XMLを改名しないでください。
 
 ## 確認する値

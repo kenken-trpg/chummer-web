@@ -79,9 +79,9 @@ const rowButton = (list: HTMLElement, name: string) =>
 describe("<AdeptTab>", () => {
   it("renders the power-point line and the sub-section headings", () => {
     renderTab();
-    expect(screen.getByText(/パワー点 0\/0/)).toBeDefined();
+    expect(screen.getByText(/パワーポイント 0\/0/)).toBeDefined();
     expect(screen.getByRole("heading", { name: "Enhancement" })).toBeDefined();
-    expect(screen.getByRole("heading", { name: "気焦点" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "氣収束具" })).toBeDefined();
   });
 
   it("adds a power from the catalog via patch", () => {
@@ -224,7 +224,7 @@ describe("<AdeptTab>", () => {
     }
     render(<Harness />);
 
-    const slider = screen.getByLabelText("購入したパワー点（1点=5カルマ）");
+    const slider = screen.getByLabelText("購入したパワーポイント（1点=5カルマ）");
     expect(slider.getAttribute("max")).toBe("5");
     fireEvent.change(slider, { target: { value: "3" } });
     expect(drafted).toEqual([3]);
@@ -235,7 +235,7 @@ describe("<AdeptTab>", () => {
 
   it("hides the slider for a plain Adept", () => {
     renderTab();
-    expect(screen.queryByLabelText("購入したパワー点（1点=5カルマ）")).toBeNull();
+    expect(screen.queryByLabelText("購入したパワーポイント（1点=5カルマ）")).toBeNull();
   });
 
   it("removes an installed enhancement through patch", () => {
@@ -260,7 +260,7 @@ describe("<AdeptTab>", () => {
     const patch = vi.fn();
     renderTab({ patch });
     const qiList = [...document.querySelectorAll(".quality-list")].at(-1) as HTMLElement;
-    expect(qiList.textContent).toContain("Force 6〜");
+    expect(qiList.textContent).toContain("フォース 6〜");
     fireEvent.click(rowButton(qiList, "Improved Reflexes"));
     expect(patch).toHaveBeenCalledWith({
       qi_foci: [{ power_id: "imprv", rating: 6, power_rating: 1 }],
@@ -281,7 +281,7 @@ describe("<AdeptTab>", () => {
     expect(row.textContent).toContain("18,000¥");
     expect(row.textContent).toContain("結合 6カルマ");
 
-    fireEvent.change(screen.getByLabelText("Force"), { target: { value: "8" } });
+    fireEvent.change(screen.getByLabelText("フォース"), { target: { value: "8" } });
     expect(patch).toHaveBeenLastCalledWith({
       qi_foci: [{ id: "q1", power_id: "imprv", rating: 8, power_rating: 1 }],
     });
@@ -302,7 +302,7 @@ describe("<AdeptTab>", () => {
 
   it("filters the qi-focus list by its own search box", () => {
     renderTab();
-    fireEvent.change(screen.getByPlaceholderText("気焦点に入れるパワーを検索"), {
+    fireEvent.change(screen.getByPlaceholderText("氣収束具に入れるパワーを検索"), {
       target: { value: "combat" },
     });
     const qiList = [...document.querySelectorAll(".quality-list")].at(-1) as HTMLElement;

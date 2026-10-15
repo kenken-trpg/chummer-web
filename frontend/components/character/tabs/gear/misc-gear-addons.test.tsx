@@ -49,7 +49,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     gear("g1", "Medkit", { addoncategories: ["Medkit Add-ons", "Custom"], ...over });
 
   const addonOptions = () =>
-    [...screen.getByRole("combobox", { name: "Medkit: 追加ギア" }).querySelectorAll("option")].map(
+    [...screen.getByRole("combobox", { name: "Medkit: 追加装備" }).querySelectorAll("option")].map(
       (o) => o.textContent,
     );
 
@@ -64,7 +64,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
       catalog(),
     );
     expect(addonOptions()).toEqual([
-      "追加ギア",
+      "追加装備",
       "Stabilisation Unit (250¥)",
       "Trauma Patch (500¥)",
     ]);
@@ -108,7 +108,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     renderPanel(owning([medkit()]), vi.fn(), "misc", catalog());
     const before = addonOptions();
 
-    fireEvent.change(screen.getByPlaceholderText("ギアを検索"), { target: { value: "trauma" } });
+    fireEvent.change(screen.getByPlaceholderText("装備を検索"), { target: { value: "trauma" } });
 
     expect(addonOptions()).toEqual(before);
   });
@@ -122,7 +122,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     const patch = vi.fn();
     renderPanel(owning([medkit(), gear("g2", "Rope")]), patch, "misc", catalog());
 
-    const select = screen.getByRole("combobox", { name: "Medkit: 追加ギア" });
+    const select = screen.getByRole("combobox", { name: "Medkit: 追加装備" });
     fireEvent.change(select, { target: { value: "a-supplies" } });
     fireEvent.click(
       within(select.parentElement as HTMLElement).getByRole("button", { name: "装着" }),
@@ -156,7 +156,7 @@ describe("<MiscDrugsGear> the per-row addon picker", () => {
     const patch = vi.fn();
     renderPanel(owning([medkit()]), patch, "misc", withExtra);
 
-    const select = screen.getByRole("combobox", { name: "Medkit: 追加ギア" });
+    const select = screen.getByRole("combobox", { name: "Medkit: 追加装備" });
     expect(screen.queryByRole("combobox", { name: "Medkit: 対象" })).toBeNull();
 
     fireEvent.change(select, { target: { value: "a-soft" } });

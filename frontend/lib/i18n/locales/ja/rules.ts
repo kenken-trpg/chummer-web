@@ -79,7 +79,7 @@ export const JA_RULES = {
 
   "sr.kind.enchantment": "エンチャント",
   "sr.cf.persona": "ペルソナ",
-  "sr.cf.device": "デバイス",
+  "sr.cf.device": "機器",
   "sr.cf.host": "ホスト",
   "sr.cf.file": "ファイル",
   "sr.cf.icon": "アイコン",

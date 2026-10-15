@@ -155,12 +155,12 @@ const SECTIONS: [string, (p: typeof s) => React.ReactNode, string][] = [
   ["マトリックス", MatrixSection, "Meta Link"],
   ["魔法", MagicSection, "Manabolt"],
   ["共鳴", ResonanceSection, "Cleaner"],
-  ["武道", MartialSection, "Krav Maga"],
+  ["格闘技", MartialSection, "Krav Maga"],
   ["コンタクト", ContactsSection, "Fixer"],
-  ["車両・ドローン", VehiclesSection, "Ford Americar"],
+  ["ヴィークル・ドローン", VehiclesSection, "Ford Americar"],
   ["ドラッグ／毒物", DrugsSection, "Kamikaze"],
   ["SIN／ライセンス", SinSection, "Fake SIN"],
-  ["その他ギア", MiscGearSection, "Medkit"],
+  ["その他装備", MiscGearSection, "Medkit"],
   ["記述", DescriptionSection, "背景メモ"],
 ];
 

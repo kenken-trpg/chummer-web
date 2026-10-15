@@ -21,7 +21,7 @@ test("deck programs and parts consumption survive real browser saves", async ({
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue(
     "Cyberdeck regression",
   );
-  await page.getByRole("button", { name: "ギア", exact: true }).click();
+  await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "サイバーデッキ", exact: true }).click();
   const deck = page
     .locator(".cyber-item")
@@ -85,7 +85,7 @@ test("deck programs and parts consumption survive real browser saves", async ({
     .toEqual({ left: 4, spent: 50830 });
   await page.reload();
   await waitForEditor(page);
-  await page.getByRole("button", { name: "ギア", exact: true }).click();
+  await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "サイバーデッキ", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: /作動中/ }).nth(0)).not.toBeChecked();
   await expect(page.getByRole("checkbox", { name: /作動中/ }).nth(1)).toBeChecked();
@@ -117,7 +117,7 @@ test("one spare module can be fitted and detached without changing ownership or 
   await expect(page.getByRole("textbox", { name: "キャラクター名" })).toHaveValue(
     "Module regression",
   );
-  await page.getByRole("button", { name: "ギア", exact: true }).click();
+  await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "サイバーデッキ", exact: true }).click();
   const deck = page
     .locator(".cyber-item")

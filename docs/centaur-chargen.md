@@ -48,7 +48,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
   基本種族の同種武器にも同じ設定が適用される。
 - 通常のUnarmed Attackは設定によらず修正を受ける。
   unarmeddvphysicalによるS→P変更はその基本攻撃だけに適用し、
-  他の素手技能武器のダメージ種別を変えない。一般のReach修正・カテゴリDVは別経路を維持する。
+  他の素手技能武器のダメージ種別を変えない。一般のReach修正・カテゴリーDVは別経路を維持する。
 - Bone Density Augmentation 2、Penetrating Strike 2、KarateのKick Attack、
   Unarmed Combatを選んだDeath Dealer (Adept)を使って検証した。
   STR3の蹴りは設定Falseで6P/AP +1/Reach 1、Trueで7P/AP -1/Reach 2。
@@ -90,7 +90,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
   従来のmovement直下のwalk/run/sprintは地上の値として維持する。
 - 固定コミットのCharacter.CalculatedMovementに合わせ、水泳は義肢を含む全身AGI/STRの平均、
   地上/飛行は生身AGIを使う。設定による義脚AGIの置換は地上だけへ適用する。
-  カテゴリ別の固定/割合補正を混ぜず、小数の移動率も保持する。
+  カテゴリー別の固定/割合補正を混ぜず、小数の移動率も保持する。
 - CentaurのAGI3/STR3は地上3m/12m・疾走4m毎ヒット、水泳3m・追加1m毎ヒット。
   飛行率は全て0であり、通常/印刷/テキストシートの飛行欄を表示しない。
   旧キャッシュにmodesがなくても地上欄は従来どおり表示する。

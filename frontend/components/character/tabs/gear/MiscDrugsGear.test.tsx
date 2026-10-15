@@ -48,7 +48,7 @@ describe("<MiscDrugsGear>", () => {
   it("lists non-drug gear in misc mode and buys via patch", () => {
     const patch = vi.fn();
     renderTab("misc", { patch });
-    expect(screen.getByPlaceholderText("ギアを検索")).toBeDefined();
+    expect(screen.getByPlaceholderText("装備を検索")).toBeDefined();
     const names = [...document.querySelectorAll(".quality-list .quality-item b")].map(
       (b) => b.textContent,
     );

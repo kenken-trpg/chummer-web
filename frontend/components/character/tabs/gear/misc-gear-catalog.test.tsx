@@ -35,7 +35,7 @@ describe("<MiscDrugsGear> the catalog picker", () => {
   it("a search reaches supplements and matches the category too", () => {
     renderPanel(owning([]), vi.fn(), "misc", catalog());
 
-    fireEvent.change(screen.getByPlaceholderText("ギアを検索"), { target: { value: "survival" } });
+    fireEvent.change(screen.getByPlaceholderText("装備を検索"), { target: { value: "survival" } });
     expect(offered()).toEqual(["Rope", "Micro Drone"]);
   });
 
@@ -133,7 +133,7 @@ describe("<MiscDrugsGear> an item the player prices", () => {
       } as never,
     });
     renderPanel(ch, patch);
-    const price = screen.getByRole("spinbutton", { name: /Custom Item: 値段/ }) as HTMLInputElement;
+    const price = screen.getByRole("spinbutton", { name: /Custom Item: 価格/ }) as HTMLInputElement;
     expect(price.max).toBe("1000000");
     expect(price.value).toBe("100");
     fireEvent.change(price, { target: { value: "2500" } });
@@ -146,6 +146,6 @@ describe("<MiscDrugsGear> an item the player prices", () => {
 
   it("shows no price for an item with a fixed one", () => {
     renderPanel(makeCharacter({ derived: { gear: [gear("g1", "Medkit")] } as never }), vi.fn());
-    expect(screen.queryByRole("spinbutton", { name: /値段/ })).toBeNull();
+    expect(screen.queryByRole("spinbutton", { name: /価格/ })).toBeNull();
   });
 });

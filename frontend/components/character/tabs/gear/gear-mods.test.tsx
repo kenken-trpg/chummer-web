@@ -213,7 +213,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
     expect(coat.textContent).not.toContain("Medkit");
     expect(jacket.textContent).toContain("Medkit");
 
-    const picker = screen.getByRole("combobox", { name: "Armor Jacket: ギアを入れる" });
+    const picker = screen.getByRole("combobox", { name: "Armor Jacket: 装備を入れる" });
     expect(within(picker).queryByText(/Rope/)).toBeNull();
     fireEvent.change(picker, { target: { value: "c-holster" } });
     fireEvent.click(screen.getByRole("button", { name: "Armor Jacket: 入れる" }));
@@ -251,7 +251,7 @@ describe("<ArmorGear> gear carried in a piece", () => {
         },
       ] as never,
     });
-    const picker = screen.getByRole("combobox", { name: "Lined Coat: ギアを入れる" });
+    const picker = screen.getByRole("combobox", { name: "Lined Coat: 装備を入れる" });
     // a sensor function goes in its housing, not straight in the armor
     expect(
       within(picker)

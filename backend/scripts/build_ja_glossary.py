@@ -94,6 +94,55 @@ ADOPTED_OVERRIDES = {
     "intuition": "直観力",
     "int": "直観",
     "contact": "コンタクト",
+    # Checked against the Japanese core rulebook: the 2021 sheet file renders
+    # these three differently from the book, so the book wins.
+    "initiation": "イニシエーション",  # not 階梯 — pairs with サブマージョン
+    "overflow": "オーバーフロー",  # not オバーフロー
+    "adept power": "アデプトパワー",  # no 中黒, same as the plural row
+    "device rating": "機器レーティング",  # Device=機器 + Rating=レーティング, spelled out
+    # Defense is step 3 of combat (p.168ff); 回避 is Dodge, one interrupt /
+    # active-defense option (p.168, p.190).
+    "defense": "防御",
+    # Addiction is 依存症 in the book; the sheet file says 中毒 for this one row.
+    "already addicted": "既に依存症",
+    # The two references disagree on these; the rulebook sides with the 2021
+    # sheet file. Pinned so the 差異 rows read as decided.
+    "attack": "アタック",
+    "damage": "ダメージ(DV)",
+    "damage type": "ダメージタイプ",
+    "device": "機器",
+    "equipped": "装備中",
+    "loaded": "装填",
+    "magic": "魔力",
+    "notoriety": "悪名",
+    "physical track": "身体ダメージトラック",
+    "stun track": "精神ダメージトラック",
+    "target": "対象",
+    "total": "合計",
+    "vehicle": "ヴィークル",
+    "connection": "コネ値",
+    "loyalty": "忠実値",
+    "qty": "数量",
+    # Martial Arts / Tradition / Power Points / Living Persona already read as
+    # the book does; Rituals is shorter there.
+    "rituals": "儀式",
+    # Vehicle stat block as the book prints it (Handling 操縦値, Speed 最高速度,
+    # Accel 加速値, Body 強靱力, Armor 装甲値, Pilot パイロット already match).
+    "seats": "乗員数",
+    "sensor": "センサー",
+    "cost": "価格",  # the book's gear tables, not just vehicles
+}
+
+# Rulebook terms neither reference translates, so they have no row to override.
+# English as it should be displayed -> the rulebook's Japanese.
+RULEBOOK_ONLY = {
+    "Fading": "フェイディング",
+    "Focus": "収束具",
+    "Foci": "収束具",
+    "Qi Focus": "氣収束具",  # 氣, not 気 — as the book and the catalog print it
+    "Qi Foci": "氣収束具",
+    "Mentor Spirit": "導師精霊",
+    "Vehicle Cost": "価格",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.
@@ -236,9 +285,13 @@ def load_data_translations(path: Path) -> tuple[dict[str, str], dict[str, str]]:
     return names, cats
 
 
+RULEBOOK_ONLY_BY_KEY = {k.lower(): v for k, v in RULEBOOK_ONLY.items()}
+
+
 def adopted(english: str, xslt_ja: str | None, sr5eja_ja: str | None) -> str:
     """Hand fix > 2021 xslt > sr5eja (sr5eja only fills gaps)."""
-    return ADOPTED_OVERRIDES.get(english.lower()) or xslt_ja or sr5eja_ja or ""
+    key = english.lower()
+    return ADOPTED_OVERRIDES.get(key) or RULEBOOK_ONLY_BY_KEY.get(key) or xslt_ja or sr5eja_ja or ""
 
 
 def build_glossary_doc(
@@ -256,21 +309,22 @@ def build_glossary_doc(
         else:
             code_rows.append((eng, value, var))
 
-    all_keys = sorted(set(xslt_jp) | set(sr5eja))
+    rulebook_only = {k.lower(): (k, v) for k, v in RULEBOOK_ONLY.items()}
+    all_keys = sorted(set(xslt_jp) | set(sr5eja) | set(rulebook_only))
     merged = []
     conflicts = 0
     sr5eja_only = 0
     for k in all_keys:
         x = xslt_jp.get(k)
         s = sr5eja.get(k)
-        entry = x or s
-        assert entry is not None  # k came from the union of the two maps
+        entry = x or s or rulebook_only.get(k)
+        assert entry is not None  # k came from the union of the three maps
         eng = entry[0]
         xja = x[1] if x else None
         sja = s[1] if s else None
         pick = adopted(eng, xja, sja)
         note = []
-        if k in ADOPTED_OVERRIDES:
+        if k in ADOPTED_OVERRIDES or k in rulebook_only:
             note.append("手動確定")
         if xja and sja and xja != sja:
             conflicts += 1

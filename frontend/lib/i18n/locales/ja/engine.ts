@@ -18,7 +18,7 @@ export const JA_ENGINE = {
   "compute.offline":
     "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
   "engine.priority.letters": "優先度は A〜E のみ割り当てできます",
-  "engine.priority.oneEach": "優先度 A〜E を各カテゴリに1つずつ割り当ててください",
+  "engine.priority.oneEach": "優先度 A〜E を各カテゴリーに1つずつ割り当ててください",
 
   "engine.priority.sumToTen":
     "Sum to Ten の合計が {budget} になるように割り当ててください（現在 {spent}）",
@@ -45,7 +45,7 @@ export const JA_ENGINE = {
   "engine.skills.nativeLimit": "母語は{limit}つまでです（超過分は通常の言語として扱います）",
   "engine.skills.needsSkilljack": "{name} を使うにはスキルジャックが必要です",
   "engine.skills.needsSkillwires": "{name} を使うにはスキルワイヤが必要です",
-  "engine.skills.noDefaulting": "デフォルト不可: {categories}",
+  "engine.skills.noDefaulting": "デフォルティング不可: {categories}",
   "engine.skills.overSkilljack":
     "{name} がスキルジャックを超えています（R{rating} / スキルジャック R{limit}）",
   "engine.skills.overSkillwires":
@@ -69,7 +69,7 @@ export const JA_ENGINE = {
   "engine.limitCond.attrIntSkills": "直観力依存の技能のみ",
   "engine.limitCond.attrLogSkills": "論理力依存の技能のみ",
   "engine.limitCond.bunkerGearVisible": "非常事態時のみ・要目視",
-  "engine.limitCond.climbing": "よじ登る判定のみ",
+  "engine.limitCond.climbing": "よじ登るテストのみ",
   "engine.limitCond.corporationVisible": "該当企業の相手のみ・要目視",
   "engine.limitCond.balanceTail": "体術〈Climbing／Jumping〉・ランニング・転倒抵抗のみ",
   "engine.limitCond.cyberfins": "修理・タイピング・ダンスなどのみ・展開時",
@@ -120,8 +120,8 @@ export const JA_ENGINE = {
   "engine.limitCond.sportsRivals": "スポーツチームの敵対者",
   "engine.limitCond.sprawl": "特定のスプロールのみ",
   "engine.limitCond.sneakingThermal": "熱視覚／熱センサーに対する忍び歩きのみ",
-  "engine.limitCond.speech": "発話を伴う判定のみ",
-  "engine.limitCond.endurance": "持久力を伴う判定のみ・要締め付け",
+  "engine.limitCond.speech": "発話を伴うテストのみ",
+  "engine.limitCond.endurance": "持久力を伴うテストのみ・要締め付け",
   "engine.limitCond.visible": "要目視",
   "engine.spiritRole.combat": "戦闘",
   "engine.spiritRole.detection": "探知",
@@ -164,7 +164,7 @@ export const JA_ENGINE = {
   "engine.spend.attribute": "能力値 {name} {before}→{after}",
   "engine.spend.attributesKarma": "能力値（カルマ作成）",
   "engine.spend.bioware": "バイオウェア",
-  "engine.spend.commlinks": "通信機",
+  "engine.spend.commlinks": "コムリンク",
   "engine.spend.contactsOver": "コンタクト超過",
   "engine.spend.cyberdecks": "サイバーデッキ",
   "engine.spend.cyberware": "サイバーウェア",
@@ -176,12 +176,12 @@ export const JA_ENGINE = {
   "engine.spend.knowledgeKarma": "知識（カルマ作成）",
   "engine.spend.customDrugs": "自作ドラッグ",
   "engine.spend.lifestyles": "ライフスタイル",
-  "engine.spend.martialArts": "武道",
+  "engine.spend.martialArts": "格闘技",
   "engine.spend.metatype": "メタ",
   "engine.spend.mysticPP": "ミスティックPP",
   "engine.spend.nuyenExchange": "新円交換",
   "engine.spend.optics": "光学／音響",
-  "engine.spend.otherGear": "その他ギア",
+  "engine.spend.otherGear": "その他装備",
   "engine.spend.programs": "プログラム",
   "engine.spend.qiFoci": "気収束具",
   "engine.spend.qualities": "資質",
@@ -193,20 +193,20 @@ export const JA_ENGINE = {
   "engine.spend.skillsKarma": "技能（カルマ作成）",
   "engine.spend.specialization": "専門化 {name}（{spec}）",
   "engine.spend.specializations": "専門化",
-  "engine.spend.spiritServices": "精霊・スプライトのサービス",
-  "engine.spend.spells": "術式／複合体",
+  "engine.spend.spiritServices": "精霊・スプライトの助力",
+  "engine.spend.spells": "呪文／複合体",
   "engine.spend.spirits": "精霊",
   "engine.spend.restrictedMarkup": "制限品・禁止品の割増",
   "engine.spend.submersion": "サブマージョン",
-  "engine.spend.vehicleMods": "車両改造",
-  "engine.spend.vehicles": "車両",
+  "engine.spend.vehicleMods": "ヴィークル改造",
+  "engine.spend.vehicles": "ヴィークル",
   "engine.spend.weaponAccessories": "武器アクセサリ",
 
   "engine.spend.weapons": "武器",
   "engine.qualities.droppedIncompatible": "{name} は他の資質と両立しないため外しました",
   "engine.qualities.extraInvalid": "{name} の対象が不正です",
   "engine.qualities.forbidden": "{name} は現在のキャラクターでは取れません",
-  "engine.qualities.mentorMissing": "メンタースピリットを選んでください",
+  "engine.qualities.mentorMissing": "導師精霊を選んでください",
   "engine.qualities.paragonMissing": "パラゴンを選んでください",
   "engine.qualities.mentorPowerTarget": "{mentor} の {power} の対象を選んでください",
   "engine.qualities.metagenicNeedsChangeling":
@@ -227,7 +227,7 @@ export const JA_ENGINE = {
   "engine.qualities.pickText": "{name} の内容が未記入です",
   "engine.qualities.pickMatrixAction": "{name} のマトリックスアクションを選んでください",
   "engine.qualities.pickSide": "{name} の左右を選んでください",
-  "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリを選んでください",
+  "engine.qualities.pickSpellCategory": "{name} の呪文カテゴリーを選んでください",
   "engine.qualities.pickSpirit": "{name} の精霊を選んでください",
   "engine.qualities.pickWeaponSkill": "{name} の武器技能を選んでください",
   "engine.qualities.positiveCap":
@@ -241,7 +241,7 @@ export const JA_ENGINE = {
   "engine.adept.pickSelect": "{name} の{what}を選んでください",
   "engine.adept.powerNotAllowed": "{source} に {picked} は選べません",
   "engine.adept.powerPick": "{source} のパワーを選んでください",
-  "engine.adept.powerPointsOver": "パワー点が不足しています（使用 {used} / 上限 {max}）",
+  "engine.adept.powerPointsOver": "パワーポイントが不足しています（使用 {used} / 上限 {max}）",
   "engine.adept.mysticPpInCareer":
     "設定により、ミスティックアデプトはキャリアでパワーポイントを買えません（{before} → {after}）",
   "engine.adept.powerUnknown": "{source} のパワー {power} が見つかりません",
@@ -251,39 +251,42 @@ export const JA_ENGINE = {
 
   "engine.adept.wayDiscountOver": "Way割引が上限を超えています（使用 {used} / 上限 {max}）",
   "engine.spells.blockedByLimit": "{name} はこの制限では習得できません（{category}）",
-  "engine.spells.categoryInvalid": "{name} の呪文カテゴリが不正です",
+  "engine.spells.categoryInvalid": "{name} の呪文カテゴリーが不正です",
   "engine.spells.categoryUnsupported": "{name} はこの段階では扱えません",
   "engine.spells.duplicateDropped": "{name} は重複しているため外しました",
-  "engine.spells.pickCategory": "{name} の呪文カテゴリを選んでください",
+  "engine.spells.pickCategory": "{name} の呪文カテゴリーを選んでください",
   "engine.spells.pickSpirit": "{name} の精霊を選んでください",
-  "engine.spells.pickTradition": "伝統を選んでください",
+  "engine.spells.pickTradition": "様式を選んでください",
   "engine.spells.requires": "{name} には {needed} が必要です",
   "engine.spells.spiritInvalid": "{name} の精霊が不正です",
-  "engine.spells.traditionDropped": "選んだ伝統が見つからないため外しました",
+  "engine.spells.traditionDropped": "選んだ様式が見つからないため外しました",
 
   "engine.spells.unknownSpell": "{source} の呪文 {name} が見つかりません",
   "engine.spirits.blockedByLimit": "{name} はこの制限では召喚できません",
   "engine.spirits.boundOverLimit": "束縛できる精霊は {attr} までです（{count}/{max}）",
   "engine.spirits.extraInvalid": "{source} の追加精霊が不正です（{picked}）",
   "engine.spirits.needsMagic": "{name} を召喚するには魔力が必要です",
-  "engine.spirits.needsTradition": "精霊を召喚するには伝統を選んでください",
-  "engine.spirits.notInTradition": "{name} はこの伝統では召喚できません",
+  "engine.spirits.needsTradition": "精霊を召喚するには様式を選んでください",
+  "engine.spirits.notInTradition": "{name} はこの様式では召喚できません",
   "engine.spirits.pickExtra": "{source} の追加精霊（{index}）を選んでください",
   "engine.spirits.summonFailed": "{name} の召喚に失敗しています（正味0）",
   "engine.spirits.summonNeedsSkill":
-    "{name} の召喚判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の召喚テストに{skill}が必要です（未習得・デフォルティング不可）",
 
-  "engine.spirits.testNeedsSkill": "{name} の結合判定に{skill}が必要です（未習得・デフォルト不可）",
+  "engine.spirits.testNeedsSkill":
+    "{name} の結合テストに{skill}が必要です（未習得・デフォルティング不可）",
   "engine.foci.bindNeedsMagic": "{name} を結合するには魔力が必要です",
   "engine.foci.countOverMagic": "結合できる収束具は魔力までです（{count}/{max}）",
   "engine.foci.craftFailed": "{name} の作成に失敗しています（正味0）",
-  "engine.foci.forceOverLimit": "結合収束具のForce合計が上限を超えています（{force}/{max}）",
+  "engine.foci.forceOverLimit": "結合収束具のフォース合計が上限を超えています（{force}/{max}）",
   "engine.foci.formulaMissing": "{name} の術式データが見つからないため、術式代は0¥にしました",
-  "engine.foci.needsArcana": "{name} の術式自作にはArcanaが必要です（未習得・デフォルト不可）",
-  "engine.foci.needsArtificing": "{name} の作成にはArtificingが必要です（未習得・デフォルト不可）",
-  "engine.foci.qiForceTooLow": "気焦点の Force が {name} に不足しています",
-  "engine.foci.qiPickTarget": "気焦点の {name} の対象を選んでください",
-  "engine.foci.qiSelectInvalid": "気焦点の {name} の指定が無効です（{picked}）",
+  "engine.foci.needsArcana":
+    "{name} の術式自作にはArcanaが必要です（未習得・デフォルティング不可）",
+  "engine.foci.needsArtificing":
+    "{name} の作成にはArtificingが必要です（未習得・デフォルティング不可）",
+  "engine.foci.qiForceTooLow": "氣収束具のフォースが {name} に不足しています",
+  "engine.foci.qiPickTarget": "氣収束具の {name} の対象を選んでください",
+  "engine.foci.qiSelectInvalid": "氣収束具の {name} の指定が無効です（{picked}）",
   "engine.foci.weaponPick": "{name} の対象武器を選んでください",
 
   "engine.foci.weaponTypeOnly": "{name} は{type}武器専用です",
@@ -292,7 +295,7 @@ export const JA_ENGINE = {
   "engine.initiation.gradeOverMagic":
     "イニシエーション等級は魔力以下です（等級 {grade} / MAG {magic}）",
   "engine.initiation.metamagicNotAllowed":
-    "この伝統では等級 {grade} は {allowed} のみで、{name} は選べません",
+    "この様式では等級 {grade} は {allowed} のみで、{name} は選べません",
   "engine.initiation.metamagicUnknown": "{source} のメタマジック {name} が見つかりません",
   "engine.initiation.metamagicUnknownDropped": "未知のメタマジックを等級 {grade} から外しました",
   "engine.initiation.needsMagic": "イニシエーションには魔力が必要です",
@@ -324,25 +327,25 @@ export const JA_ENGINE = {
   "engine.complexforms.requires": "{name} には {needed} が必要です",
 
   "engine.complexforms.threadNeedsSoftware":
-    "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルト不可）",
+    "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルティング不可）",
   "engine.sprites.compileFailed": "{name} のコンパイルに失敗しています（正味0）",
   "engine.sprites.compileNeedsSkill":
-    "{name} のコンパイル判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} のコンパイルテストに{skill}が必要です（未習得・デフォルティング不可）",
   "engine.sprites.needsResonance": "{name} をコンパイルするには共振力が必要です",
   "engine.sprites.notInStream": "{name} はこのストリームではコンパイルできません",
   "engine.sprites.registerNeedsSkill":
-    "{name} の登録判定に{skill}が必要です（未習得・デフォルト不可）",
+    "{name} の登録テストに{skill}が必要です（未習得・デフォルティング不可）",
 
   "engine.sprites.registeredOverLimit": "登録できるスプライトは {attr} までです（{count}/{max}）",
   "engine.martial.oneTechniqueOnly": "{name} は技を1つまでです（余分を外しました）",
   "engine.martial.pickTechnique": "{name} の技を1つ選んでください",
   "engine.martial.prereq": "{name} の前提を満たしていません",
   "engine.martial.qualityOnly": "{name} は資質経由のみです",
-  "engine.martial.styleMax": "作成時の武道流派は{max}つまでです（現在 {count}）",
-  "engine.martial.techniqueMax": "作成時の武道技は合計{max}つまでです（現在 {count}）",
+  "engine.martial.styleMax": "作成時の格闘技は{max}つまでです（現在 {count}）",
+  "engine.martial.techniqueMax": "作成時の格闘技の技は合計{max}つまでです（現在 {count}）",
   "engine.martial.techniqueNotAllowed": "{name} に {technique} は選べません",
 
-  "engine.martial.unknownDropped": "未知の武道を外しました",
+  "engine.martial.unknownDropped": "未知の格闘技を外しました",
   "engine.contacts.exconLoyalty": "Ex-Con の {name}（{role}）は忠実値 {min} 以上が必要です",
   "engine.contacts.pairMax": "{name} は作成時コネ値＋忠実値が{max}までです",
 
@@ -370,20 +373,20 @@ export const JA_ENGINE = {
   "engine.ware.targetInvalid": "{name} の対象 {picked} は選べないため外しました",
 
   "engine.ware.vehicleMountMismatch": "{name} は {host} に装着できません",
-  "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけをアーマーに加算しています",
+  "engine.gear.armorHighestOnly": "防具本体は一番高い1着だけを装甲値に加算しています",
   "engine.gear.armorAccessoryCapped":
     "重ねた防具の +{bonus} は STR {strength} までしか加算されません（SR5 p.169）",
   "engine.gear.armorEncumbrance":
     "重ねた防具 {load} が STR {strength} を超えているので AGI・REA {penalty}（SR5 p.169）",
-  "engine.gear.availOver": "{name} の入手制限超過（{shown} / 上限{limit}）",
-  "engine.gear.bmpCategory": "Black Market Pipeline の商品カテゴリを選んでください",
+  "engine.gear.availOver": "{name} の入手値上限超過（{shown} / 上限{limit}）",
+  "engine.gear.bmpCategory": "Black Market Pipeline の商品カテゴリーを選んでください",
   "engine.gear.bmpContact": "Black Market Pipeline のコンタクトを選んでください",
   "engine.gear.bmpContactMissing": "Black Market Pipeline のコンタクトが見つかりません",
   "engine.gear.capacityOver": "{name} の容量超過（{used}/{max}）",
-  "engine.gear.deviceRatingOver": "{name} のデバイスレーティング超過（{value} / 上限{limit}）",
+  "engine.gear.deviceRatingOver": "{name} の機器レーティング超過（{value} / 上限{limit}）",
   "engine.gear.doesNotFit": "{name} は {host} に装着できません",
   "engine.gear.droneIllegalDowngrade":
-    "{name} の下げ改造で、能力値が下限（速度は 0、ほかは 1）を割っています",
+    "{name} の下げ改造で、能力値が下限（最高速度は 0、ほかは 1）を割っています",
   "engine.gear.duplicateApp": "{name} に同じアプリが重複しています",
   "engine.gear.duplicateMod": "{name} は {host} に重複して装着できません",
   "engine.gear.duplicateProgram": "{name} に同じプログラムが重複しています",
@@ -393,14 +396,14 @@ export const JA_ENGINE = {
   "engine.gear.lifestylePointsOver":
     "{name} のライフスタイルポイント超過（使用 {used} / 上限 {max}）",
   "engine.gear.mountOnArmor": "{name} は防具に装着してください",
-  "engine.gear.mountOnVehicle": "{name} は車両に装着してください",
+  "engine.gear.mountOnVehicle": "{name} はヴィークルに装着してください",
   "engine.gear.mountOnWeapon": "{name} は武器に装着してください",
   "engine.gear.needsCommlink": "{name} はコムリンク・サイバーデッキ・RCC のどれかに入れてください",
   "engine.gear.needsHost": "{name} は本体に装着してください",
   "engine.gear.needsHostKind": "{name} は{host}に装着してください",
   "engine.gear.needsSpecialMods": "{name} には Special Modifications が必要です",
   "engine.gear.noFreeMount": "{name} のマウントが足りません（{accessory}）",
-  "engine.gear.notOnVehicle": "{name} は車両に装着できません",
+  "engine.gear.notOnVehicle": "{name} はヴィークルに装着できません",
   "engine.gear.pickExtra": "{name} の対象を入力してください",
   "engine.gear.pickGroup": "{name} の技能グループを選んでください",
   "engine.gear.pickSkill": "{name} の技能を選んでください",
@@ -435,7 +438,7 @@ export const JA_ENGINE = {
   "engine.import.gearMovedOut":
     "「{host}」に入っていた「{name}」は、そこに入れられないので別に持たせました",
   "engine.import.hostGearSkipped":
-    "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかのギアに付けるものです）",
+    "{kind}「{host}」に積まれていた「{name}」は取り込めませんでした（ほかの装備に付けるものです）",
   "engine.import.portraitDropped":
     "ポートレート画像は取り込めませんでした（3 MB を超えるか、PNG / JPEG / GIF / WebP ではありません）",
   "engine.import.skippedUnknown": "{kind}「{name}」はカタログに無いためスキップしました",
@@ -443,13 +446,13 @@ export const JA_ENGINE = {
   "engine.import.xlsxPlayLevel":
     "キャラシテンプレートのプレイレベルが「{level}」でした。優先度表が異なるので、作成設定で選び直してください",
   "engine.import.xlsxMagicStyle":
-    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（伝統と資質で選び直してください）",
+    "キャラシテンプレートの「{name}」のうち、魔法様式と偏位の分野は取り込めませんでした（様式と資質で選び直してください）",
   "engine.import.xlsxQualityNote":
     "資質「{name}」の補足「{note}」は取り込めませんでした（この資質には対象を持たせられません）",
   "engine.import.xlsxPowerNote":
-    "アデプト・パワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
+    "アデプトパワー「{name}」の補足「{note}」は取り込めませんでした（このパワーには対象を持たせられません）",
   "engine.import.xlsxPowerLevel":
-    "キャラシテンプレートはアデプト・パワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
+    "キャラシテンプレートはアデプトパワー「{name}」にレベル {level} を入れていましたが、このパワーはレベルを持ちません（1 回分として取り込みました）",
   "engine.import.xlsxWareGrade":
     "インプラント「{name}」の等級「{grade}」は読めなかったので、スタンダードとして取り込みました",
   "engine.import.xlsxOtherKarma":
@@ -458,11 +461,11 @@ export const JA_ENGINE = {
     "キャラシテンプレートの「成長ログ」に {count} 行あったので、キャリアモードのキャラクターとして取り込みました（報酬履歴はサイドバーで確認できます）",
   "engine.import.xlsxGearPending":
     "装備シートの {count} 行は名前から品目を特定できませんでした（確認して選び直してください）",
-  "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/ギアは取り込めませんでした",
+  "engine.import.vehicleLoadSkipped": "ヴィークル「{name}」搭載の武器/装備は取り込めませんでした",
   "engine.import.mountExtraWeapons":
     "ヴィークル「{name}」の武器マウントに武器が複数載っていました。マウントに紐付くのは 1 挺だけなので、残りは武器一覧から選び直してください",
   "engine.term.contact": "コンタクト",
-  "engine.term.gear": "ギア",
+  "engine.term.gear": "装備",
   "engine.term.host": "本体",
   "engine.term.noRole": "役割なし",
 
@@ -477,20 +480,20 @@ export const JA_ENGINE = {
   "engine.kind.drone": "ドローン",
   "engine.kind.drugComponent": "ドラッグ・コンポーネント",
   "engine.kind.focus": "収束具",
-  "engine.kind.gear": "ギア",
+  "engine.kind.gear": "装備",
   "engine.kind.lifestyle": "ライフスタイル",
   "engine.kind.lifestyleQuality": "ライフスタイル資質",
-  "engine.kind.martialArt": "武術",
-  "engine.kind.mentor": "メンター",
+  "engine.kind.martialArt": "格闘技",
+  "engine.kind.mentor": "導師精霊",
   "engine.kind.metamagic": "メタマジック",
   "engine.kind.quality": "資質",
   "engine.kind.skill": "技能",
   "engine.kind.enhancement": "強化",
-  "engine.kind.spell": "術式",
+  "engine.kind.spell": "呪文",
   "engine.kind.spirit": "精霊",
   "engine.kind.sprite": "スプライト",
   "engine.kind.stream": "ストリーム",
-  "engine.kind.tradition": "伝統",
+  "engine.kind.tradition": "様式",
   "engine.kind.vehicle": "ヴィークル",
   "engine.kind.vehicleMod": "ヴィークル改造",
   "engine.kind.weapon": "武器",
@@ -530,7 +533,7 @@ export const JA_ENGINE = {
   "engine.host.cyberdeck": "サイバーデッキ",
 
   "engine.host.rcc": "RCC",
-  "engine.host.rccOrVehicle": "RCC かドローン・車両",
+  "engine.host.rccOrVehicle": "RCC かドローン・ヴィークル",
   "engine.select.attribute": "能力値",
   "engine.select.skill": "技能",
   "engine.select.spell": "呪文",

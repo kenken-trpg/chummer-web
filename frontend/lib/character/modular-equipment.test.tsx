@@ -110,6 +110,6 @@ it("separates a vehicle implant from personal attacks and preserves it in vehicl
   expect(screen.getByText("内蔵武器: Foot Blade")).toBeDefined();
   renderWeapons(ch, vi.fn());
   expect(screen.getByText("Foot Blade", { selector: "b" })).toBeDefined();
-  expect(screen.getByText("車両内蔵（Doberman）・本人の攻撃候補から除外")).toBeDefined();
+  expect(screen.getByText("ヴィークル内蔵（Doberman）・本人の攻撃候補から除外")).toBeDefined();
   expect(ch.derived.weapons).toHaveLength(2);
 });

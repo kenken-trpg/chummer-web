@@ -45,13 +45,13 @@ describe("<MartialTab>", () => {
   it("shows the point line and the search box for an empty character", () => {
     renderTab();
     expect(screen.getByText(/流派 0\/1 ・ 技 0\/5/)).toBeDefined();
-    expect(screen.getByPlaceholderText("武道を検索")).toBeDefined();
+    expect(screen.getByPlaceholderText("格闘技を検索")).toBeDefined();
   });
 
   it("filters the catalog and acquires a style with its first technique", () => {
     const patch = vi.fn();
     renderTab({ catalog: makeCatalog({ martial_arts: [catStyle] as never }), patch });
-    fireEvent.change(screen.getByPlaceholderText("武道を検索"), { target: { value: "kara" } });
+    fireEvent.change(screen.getByPlaceholderText("格闘技を検索"), { target: { value: "kara" } });
     fireEvent.click(screen.getByRole("button", { name: "取得" }));
     expect(patch).toHaveBeenCalledWith({
       martial_arts: [{ art_id: "s1", techniques: ["Kick Attack"] }],

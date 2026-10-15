@@ -11,7 +11,7 @@
 - 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。
 - 2 資料が食い違う語は **採用=2021版** のまま `差異` を立てる (下表の備考)。人が判断する。
 
-- 統合語数: **559** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
+- 統合語数: **566** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
 
 ## 表1: 統合用語
 
@@ -41,14 +41,14 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Add One To Overwatch | 監視指数+1 |  | ＝ |  |
 | Add Skill | 技能の追加 |  | ＝ |  |
 | Addiction | 依存症 | 依存症 |  |  |
-| adept power | アデプト・パワー |  | ＝ |  |
+| adept power | アデプトパワー |  | ≠ | 手動確定 |
 | Adept Powers | アデプトパワー | アデプトパワー |  |  |
 | Age | 年齢 | 年齢 |  |  |
 | Agent | エージェント |  | ＝ |  |
 | AGI | 敏捷 | 敏捷 |  |  |
 | Agility | 敏捷力 | 敏捷力 |  |  |
 | Alias | ストリートネーム | ストリートネーム |  |  |
-| Already Addicted | 既に中毒 | 既に中毒 |  |  |
+| Already Addicted | 既に依存症 | 既に中毒 |  | 手動確定 |
 | Ammo | 弾薬 | 弾薬 | ＝ |  |
 | Ammo Full | 弾薬満タン |  | ＝ |  |
 | Ammo Gel Rounds | ゲル弾 |  | ＝ |  |
@@ -63,7 +63,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Astral | アストラル | アストラル |  |  |
 | Astral Initiative | アストラルイニシアティブ | アストラルイニシアティブ |  |  |
 | Astral Limit | アストラルリミット | アストラルリミット |  |  |
-| Attack | アタック | アタック | ≠ | 差異 |
+| Attack | アタック | アタック | ≠ | 手動確定 / 差異 |
 | Attacker | 攻撃者 |  | ＝ |  |
 | Attacker Hits | 攻撃側のヒット数 |  | ＝ |  |
 | Attacker Net Hits | 攻撃側純ヒット数 |  | ＝ |  |
@@ -127,14 +127,14 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Conceal | 隠蔽 |  | ＝ |  |
 | Condition Monitor | コンディション・モニター |  | ＝ |  |
 | Connect To Network | ネットワークに接続 |  | ＝ |  |
-| Connection | コネ値 | コネ値 | ≠ | 差異 |
+| Connection | コネ値 | コネ値 | ≠ | 手動確定 / 差異 |
 | Contact | コンタクト | コンタクト | ≠ | 手動確定 / 差異 |
 | Contact Drug | 接触 | 接触 |  |  |
 | Contact Type | 種類 |  | ＝ |  |
 | Contacts | コンタクト |  | ＝ |  |
 | Continue | 続行 |  | ＝ |  |
 | Control Rig | コントロール・リグ |  | ＝ |  |
-| Cost | コスト | コスト | ＝ |  |
+| Cost | 価格 | コスト | ≠ | 手動確定 |
 | Cover | 遮蔽 |  | ＝ |  |
 | Create | {type}を作成 |  | ＝ |  |
 | critter power | クリッター・パワー |  | ＝ |  |
@@ -148,9 +148,9 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Cyberware Grade Grey | グレイ |  | ＝ |  |
 | Cyberware Grade Standard | スタンダード |  | ＝ |  |
 | Cyberware Grade Used | 中古 |  | ＝ |  |
-| Damage | ダメージ(DV) | ダメージ(DV) | ≠ | 差異 |
+| Damage | ダメージ(DV) | ダメージ(DV) | ≠ | 手動確定 / 差異 |
 | Damage Replace | ダメージ置換 |  | ＝ |  |
-| Damage Type | ダメージタイプ | ダメージタイプ | ≠ | 差異 |
+| Damage Type | ダメージタイプ | ダメージタイプ | ≠ | 手動確定 / 差異 |
 | Damage Value | ダメージ値 |  | ＝ |  |
 | Data Proc | データ処理 | データ処理 |  |  |
 | Data Processing | データ処理 | データ処理 |  |  |
@@ -163,7 +163,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Defaulting | デフォルティング |  | ＝ |  |
 | Defender | 防御側 |  | ＝ |  |
 | Defender Net Hits | 防御側純ヒット数 |  | ＝ |  |
-| Defense | 回避 | 回避 | ≠ | 差異 |
+| Defense | 防御 | 回避 | ＝ | 手動確定 / 差異 |
 | Defense Test | 防御テスト |  | ＝ |  |
 | Del | 削除 |  | ＝ |  |
 | Delete Ammo | 弾薬を削除 |  | ＝ |  |
@@ -177,10 +177,10 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Detection | 探知 | 探知 |  |  |
 | Detection Spell Extended | 超広域 |  | ＝ |  |
 | Detection Spells | 探知呪文 | 探知呪文 |  |  |
-| Device | 機器 | 機器 | ≠ | 差異 |
+| Device | 機器 | 機器 | ≠ | 手動確定 / 差異 |
 | Device Cat Commlink | コムリンク |  | ＝ |  |
 | Device Cat Cyberdeck | サイバーデッキ |  | ＝ |  |
-| Device Rating | 機器RTG | 機器RTG |  |  |
+| Device Rating | 機器レーティング | 機器RTG |  | 手動確定 |
 | Device Type | 種別 |  | ＝ |  |
 | Devices | デバイス | デバイス |  |  |
 | Dice Pool | ダイスプール |  | ＝ |  |
@@ -221,7 +221,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Environment Very High | 非常に高い |  | ＝ |  |
 | Equip | 装備 |  | ＝ |  |
 | Equipment | 装備 |  | ＝ |  |
-| Equipped | 装備中 | 装備中 | ≠ | 差異 |
+| Equipped | 装備中 | 装備中 | ≠ | 手動確定 / 差異 |
 | Essence | エッセンス | エッセンス |  |  |
 | Essence Cost | エッセンス |  | ＝ |  |
 | Expand | 展開 |  | ＝ |  |
@@ -234,6 +234,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Fade | フェイディング |  | ＝ |  |
 | Fade Attribute | フェイディングに使用する能力値 |  | ＝ |  |
 | Fade Value | フェイディング |  | ＝ |  |
+| Fading | フェイディング |  |  | 手動確定 |
 | Falling | 落下 | 落下 |  |  |
 | Fatigue | 疲労 | 疲労 |  |  |
 | Filter | フィルター |  | ＝ |  |
@@ -241,6 +242,8 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Fire Mode | 射撃モード |  | ＝ |  |
 | Firewall | ファイアウォール | ファイアウォール |  |  |
 | Fly | 飛行 | 飛行 |  |  |
+| Foci | 収束具 |  |  | 手動確定 |
+| Focus | 収束具 |  |  | 手動確定 |
 | Force | フォース |  | ＝ |  |
 | Full Defense | 全力防御 |  | ＝ |  |
 | Full Defense Attribute | 全力防御使用能力値 |  | ＝ |  |
@@ -285,7 +288,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Init Cat Astral | アストラル |  | ＝ |  |
 | Init Cat Matrix | マトリックス |  | ＝ |  |
 | Init Cat Meatspace | 物理 |  | ＝ |  |
-| Initiation | 階梯 |  | ＝ |  |
+| Initiation | イニシエーション |  | ≠ | 手動確定 |
 | Initiative | イニシアティブ | イニシアティブ | ＝ |  |
 | Injection | 注入 | 注入 |  |  |
 | INT | 直観 | 直観 |  | 手動確定 |
@@ -331,14 +334,14 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Limit Social | 社交リミット |  | ＝ |  |
 | Living Persona | 生体ペルソナ |  | ＝ |  |
 | Load | ロード |  | ＝ |  |
-| Loaded | 装填 | 装填 | ≠ | 差異 |
+| Loaded | 装填 | 装填 | ≠ | 手動確定 / 差異 |
 | Location | 所在地 | 所在地 |  |  |
 | LOG | 論理 | 論理 |  |  |
 | Logic | 論理力 | 論理力 |  |  |
-| Loyalty | 忠実値 | 忠実値 | ≠ | 差異 |
+| Loyalty | 忠実値 | 忠実値 | ≠ | 手動確定 / 差異 |
 | M | 中距離-1 | 中距離-1 |  |  |
 | MAG | 魔力 | 魔力 |  |  |
-| Magic | 魔力 | 魔力 | ≠ | 差異 |
+| Magic | 魔力 | 魔力 | ≠ | 手動確定 / 差異 |
 | Mana | マナ | マナ |  |  |
 | Manipulation | 操作 | 操作 |  |  |
 | Manipulation Spells | 操作呪文 | 操作呪文 |  |  |
@@ -364,6 +367,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Mental | 精神 | 精神 |  |  |
 | Mental Attributes | 精神能力値 | 精神能力値 |  |  |
 | Mental Limit | 精神リミット | 精神リミット | ＝ |  |
+| Mentor Spirit | 導師精霊 |  |  | 手動確定 |
 | Metamagic | メタマジック |  | ＝ |  |
 | Metamagics | メタマジック |  | ＝ |  |
 | Metatype | メタタイプ | メタタイプ | ＝ |  |
@@ -402,7 +406,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Not Addicted Yet | まだ中毒ではない | まだ中毒ではない |  |  |
 | Not Extended | 継続なし |  | ＝ |  |
 | Notes | 備考 | 備考 |  |  |
-| Notoriety | 悪名 | 悪名 | ≠ | 差異 |
+| Notoriety | 悪名 | 悪名 | ≠ | 手動確定 / 差異 |
 | Nuyen | 新円 | 新円 | ＝ |  |
 | Open Network Manager | ネットワークマネージャーを開く |  | ＝ |  |
 | Open Origin | アイテムを開く |  | ＝ |  |
@@ -411,7 +415,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Opposing Net Hits | 純ヒット数 |  | ＝ |  |
 | Original Dice Pool | 元のダイスプール |  | ＝ |  |
 | Out Of Range | 射程距離外 |  | ＝ |  |
-| Overflow | オバーフロー |  | ＝ |  |
+| Overflow | オーバーフロー |  | ≠ | 手動確定 |
 | Override | 上書き |  | ＝ |  |
 | Overwatch Score | 監視指数(OS) |  | ＝ |  |
 | Owner | オーナー |  | ＝ |  |
@@ -424,7 +428,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Physical Attributes | 身体能力値 | 身体能力値 |  |  |
 | Physical Limit | 身体リミット | 身体リミット | ＝ |  |
 | Physical Natural Recovery | 身体自然回復(1 日) | 身体自然回復(1 日) |  |  |
-| Physical Track | 身体ダメージトラック | 身体ダメージトラック | ≠ | 差異 |
+| Physical Track | 身体ダメージトラック | 身体ダメージトラック | ≠ | 手動確定 / 差異 |
 | Physiological | 肉体的 | 肉体的 |  |  |
 | Pilot | パイロット | パイロット |  |  |
 | Place Template | テンプレートの場所 |  | ＝ |  |
@@ -444,7 +448,9 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Public Awareness | 公的認知度 | 公的認知度 | ＝ |  |
 | Public Grid | 公共グリッド |  | ＝ |  |
 | Push The Limit | 限界突破 |  | ＝ |  |
-| Qty | 数量 | 数量 | ≠ | 差異 |
+| Qi Foci | 氣収束具 |  |  | 手動確定 |
+| Qi Focus | 氣収束具 |  |  | 手動確定 |
+| Qty | 数量 | 数量 | ≠ | 手動確定 / 差異 |
 | Quality | 資質 | 資質 | ＝ |  |
 | Quality Type | 資質タイプ |  | ＝ |  |
 | Quality Type Life Module | ライフモジュール |  | ＝ |  |
@@ -480,7 +486,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Rigger Initiative | リガー イニシアティブ | リガー イニシアティブ |  |  |
 | Right Click To Clear | 右クリックでクリア |  | ＝ |  |
 | ritual | 儀式 |  | ＝ |  |
-| Rituals | 儀式呪文 | 儀式呪文 |  |  |
+| Rituals | 儀式 | 儀式呪文 |  | 手動確定 |
 | Roll | ロール |  | ＝ |  |
 | Roll Armor | 装甲値 |  | ＝ |  |
 | Roll Composure | 冷静 |  | ＝ |  |
@@ -499,11 +505,11 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Running Speed | 走行速度 |  | ＝ |  |
 | S | 近距離+0 | 近距離+0 |  |  |
 | Same Grid | 同一グリッド |  | ＝ |  |
-| Seats | 乗員 | 乗員 |  |  |
+| Seats | 乗員数 | 乗員 |  | 手動確定 |
 | Second Attribute | 副能力値 |  | ＝ |  |
 | Second Chance | 振り直し |  | ＝ |  |
 | Selected Targets | 目標選択 |  | ＝ |  |
-| Sensor | センサ | センサ |  |  |
+| Sensor | センサー | センサ |  | 手動確定 |
 | Services | 助力 | 助力 |  |  |
 | Sheet Actor | アクターシート |  | ＝ |  |
 | Sheet Item | アイテムシート |  | ＝ |  |
@@ -534,12 +540,12 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Strength | 筋力 | 筋力 |  |  |
 | Stun | 精神 | 精神 |  |  |
 | Stun Natural Recovery | 精神自然回復(1 時間) | 精神自然回復(1 時間) |  |  |
-| Stun Track | 精神ダメージトラック | 精神ダメージトラック | ≠ | 差異 |
+| Stun Track | 精神ダメージトラック | 精神ダメージトラック | ≠ | 手動確定 / 差異 |
 | Submersion | サブマージョン |  | ＝ |  |
 | Successes | 成功 |  | ＝ |  |
 | Suppressing | 制圧 |  | ＝ |  |
 | Swim | 水泳 | 水泳 |  |  |
-| Target | 対象 | 対象 | ≠ | 差異 |
+| Target | 対象 | 対象 | ≠ | 手動確定 / 差異 |
 | Target Device | デバイス |  | ＝ |  |
 | Target File | ファイル |  | ＝ |  |
 | Target Other | その他 |  | ＝ |  |
@@ -556,7 +562,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Toggle Equip | 装備状態切替 |  | ＝ |  |
 | Toggle Wireless | ワイヤレス状態切替 |  | ＝ |  |
 | Top | トップ |  | ＝ |  |
-| Total | 合計 | 合計 | ≠ | 差異 |
+| Total | 合計 | 合計 | ≠ | 手動確定 / 差異 |
 | Total Armor | 装備した単体最高の防具とアクセサリーの合計 | 装備した単体最高の防具とアクセサリーの合計 |  |  |
 | Touch | 接触 | 接触 |  |  |
 | Toxin | 毒物 | 毒物 |  |  |
@@ -564,8 +570,9 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Tradition | 様式 | 様式 |  |  |
 | Under Barrel | アンダーバレル |  | ＝ |  |
 | Value | 数値 |  | ＝ |  |
-| Vehicle | ヴィークル | ヴィークル | ≠ | 差異 |
+| Vehicle | ヴィークル | ヴィークル | ≠ | 手動確定 / 差異 |
 | Vehicle Body | 強靱力 | 強靱力 |  |  |
+| Vehicle Cost | 価格 |  |  | 手動確定 |
 | Walk | 歩行 |  | ＝ |  |
 | Walking Speed | 歩行速度 |  | ＝ |  |
 | Weapon | 武器 | 武器 | ＝ |  |

@@ -75,7 +75,7 @@ describe("MentorPicker", () => {
 
     const { unmount } = render(picker(""));
     const options = () =>
-      [...(screen.getByRole("combobox", { name: "メンター" }) as HTMLSelectElement).options]
+      [...(screen.getByRole("combobox", { name: "導師精霊" }) as HTMLSelectElement).options]
         .map((o) => o.textContent)
         .slice(1);
     expect(options()).toEqual(["Bear"]);

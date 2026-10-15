@@ -81,7 +81,7 @@ describe("buildChatPalette", () => {
   it("always emits the initiative line + the fixed defense/resist rolls", () => {
     const out = buildChatPalette(makeCharacter(), makeCatalog(), identityTr);
     expect(out.split("\n")[0]).toBe("1D6+6 イニシアティブ");
-    for (const label of ["完全回避", "フル防御", "冷静", "記憶", "ダメージ抵抗（＋装甲）"]) {
+    for (const label of ["防御", "全力防御", "冷静", "記憶", "ダメージ抵抗（＋装甲）"]) {
       expect(out).toContain(label);
     }
     expect(out).toContain("エッジ振り足しは B6→R6");
@@ -183,7 +183,7 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, scCatalog, identityTr);
-    expect(out).toContain("// ── 術式（リミット＝Force） ──");
+    expect(out).toContain("// ── 呪文（リミット＝フォース） ──");
     expect(out).toContain("11B6 Manabolt ［DVF-3］");
   });
 
@@ -466,7 +466,7 @@ describe("buildSpiritPieces", () => {
     );
 
     expect(piece.data.commands).toContain("2D6+12 イニシアティブ");
-    expect(piece.data.commands).toContain("10B6 完全回避"); // REA 6 + INT 4
+    expect(piece.data.commands).toContain("10B6 防御"); // REA 6 + INT 4
     expect(piece.data.commands).toContain("13B6 ダメージ抵抗（イミュニティ）"); // BOD 5 + 2×Force
     expect(piece.data.commands).toContain("8B6 精霊追放に対抗"); // 2×Force
   });

@@ -95,7 +95,7 @@ describe("<QualityExtraEditor> accessible names", () => {
       spirit_options: ["Spirit of Fire"],
     });
     expect(
-      screen.getByRole("combobox", { name: "Focused Concentration: 呪文カテゴリを選択" }),
+      screen.getByRole("combobox", { name: "Focused Concentration: 呪文カテゴリーを選択" }),
     ).toBeDefined();
     expect(
       screen.getByRole("combobox", { name: "Focused Concentration: 精霊を選択" }),
@@ -114,7 +114,7 @@ describe("<QualityExtraEditor> accessible names", () => {
   it("names the two Black Market Pipeline pickers apart", () => {
     renderFor({ name: "Black Market Pipeline" });
     expect(
-      screen.getByRole("combobox", { name: "Black Market Pipeline: 商品カテゴリを選択" }),
+      screen.getByRole("combobox", { name: "Black Market Pipeline: 商品カテゴリーを選択" }),
     ).toBeDefined();
     expect(
       screen.getByRole("combobox", { name: "Black Market Pipeline: コンタクトを選択" }),
@@ -379,7 +379,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     });
 
     fireEvent.change(
-      screen.getByRole("combobox", { name: "Focused Concentration: 呪文カテゴリを選択" }),
+      screen.getByRole("combobox", { name: "Focused Concentration: 呪文カテゴリーを選択" }),
       { target: { value: "Combat" } },
     );
     fireEvent.change(screen.getByRole("combobox", { name: "Focused Concentration: 精霊を選択" }), {
@@ -399,7 +399,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
       spirit_options: ["Spirit of Air"],
     });
 
-    expect(screen.queryByRole("combobox", { name: /呪文カテゴリ/ })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /呪文カテゴリー/ })).toBeNull();
     fireEvent.change(screen.getByRole("combobox", { name: "Spirit Affinity: 精霊を選択" }), {
       target: { value: "Spirit of Air" },
     });
@@ -414,7 +414,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
       select_options: ["Combat"],
     });
 
-    expect(screen.getByRole("combobox", { name: /呪文カテゴリ/ })).toBeDefined();
+    expect(screen.getByRole("combobox", { name: /呪文カテゴリー/ })).toBeDefined();
     expect(screen.queryByRole("combobox", { name: /精霊を選択/ })).toBeNull();
   });
 
@@ -470,7 +470,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
     );
 
     fireEvent.change(
-      screen.getByRole("combobox", { name: "Black Market Pipeline: 商品カテゴリを選択" }),
+      screen.getByRole("combobox", { name: "Black Market Pipeline: 商品カテゴリーを選択" }),
       { target: { value: "Cyberware" } },
     );
     fireEvent.change(
@@ -480,7 +480,7 @@ describe("<QualityExtraEditor> what each control writes", () => {
 
     expect(patch.mock.calls[0][0]).toEqual({ quality_extras: { q1: "Cyberware" } });
     expect(patch.mock.calls[1][0]).toEqual({ quality_extras: { "q1:contact": "k1" } });
-    expect(screen.getByText(/入手判定 \+2/)).toBeDefined();
+    expect(screen.getByText(/入手テスト \+2/)).toBeDefined();
   });
 
   it("names an unnamed contact rather than offering a blank row", () => {

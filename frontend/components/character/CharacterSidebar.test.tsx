@@ -28,7 +28,7 @@ describe("<CharacterSidebar>", () => {
         tr={identityTr}
       />,
     );
-    const button = screen.getByRole("button", { name: "入手制限 の説明" });
+    const button = screen.getByRole("button", { name: "入手値上限 の説明" });
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
     expect(tip?.textContent).toContain("Forbidden");
   });
@@ -73,7 +73,7 @@ describe("<CharacterSidebar>", () => {
       <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
     );
     expect(screen.getByText("両利き")).toBeDefined();
-    expect(screen.getByText("伝統")).toBeDefined();
+    expect(screen.getByText("様式")).toBeDefined();
     expect(screen.getByText("エッセンスが0以下です")).toBeDefined();
   });
 

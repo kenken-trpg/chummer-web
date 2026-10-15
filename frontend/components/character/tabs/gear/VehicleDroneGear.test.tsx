@@ -63,7 +63,7 @@ describe("<VehicleDroneGear>", () => {
     );
     const button = container.querySelector(".muted button") as HTMLElement;
     const tip = document.getElementById(button.getAttribute("aria-describedby")!);
-    expect(tip?.textContent).toContain("HND 操縦性");
+    expect(tip?.textContent).toContain("HND 操縦値");
     expect(tip?.textContent).toContain("PLT はオートパイロット");
   });
 
@@ -98,7 +98,7 @@ describe("<VehicleDroneGear>", () => {
   it("shows the vehicle search + list in vehicle mode and buys via patch", () => {
     const patch = vi.fn();
     renderTab("vehicle", { patch });
-    expect(screen.getByPlaceholderText("車両を検索")).toBeDefined();
+    expect(screen.getByPlaceholderText("ヴィークルを検索")).toBeDefined();
     const row = [...document.querySelectorAll(".quality-list .quality-item")].find((el) =>
       el.textContent?.includes("Ford Americar"),
     )!;

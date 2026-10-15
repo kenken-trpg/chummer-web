@@ -264,7 +264,7 @@ describe("<MetaTab>", () => {
       [...screen.getByRole("combobox").querySelectorAll("option")].map((o) => o.textContent),
     ).toEqual([
       "アデプト - 魔力6",
-      "魔法使い - 魔力4/術式7",
+      "魔法使い - 魔力4/呪文7",
       "テクノマンサー - 共振力4/複合体4",
       // Run Faster's, so English — as its metavariants are
       "Apprentice - 魔力5",
