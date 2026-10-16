@@ -109,6 +109,36 @@ def load_skill_group_names() -> dict[str, str]:
     return {en: overrides.get(en, ja) for en, ja in names.items()}
 
 
+def load_spec_names() -> dict[str, dict[str, str]]:
+    """Skill name -> {specialization -> Japanese}, from the `<spec
+    translate="…">` lists under each skill in the lang file.
+
+    Per skill, because the same English is a different thing under another
+    skill: Spirits is 対精霊 for Astral Combat (the opponent) and 精霊 as an
+    Arcana subject; Combat is 対戦闘呪文 for Counterspelling. The flat table
+    holds one of each and showed the wrong one, or none — about a thousand
+    specializations had no reading at all. Like the skill groups, the reading
+    is an attribute, which `load_translations` never saw.
+    """
+    path = LANG_DIR / "ja-jp_data.xml"
+    names: dict[str, dict[str, str]] = {}
+    if not path.exists():
+        return names
+    try:
+        root = parse_vendored(path)
+    except ET.ParseError as exc:
+        log.warning("ja-jp_data.xml parse failed: %s", exc)
+        return names
+    for skill in [*root.findall(".//skills/skill"), *root.findall(".//knowledgeskills/skill")]:
+        name = _text(skill.find("name"))
+        for spec in skill.findall("specs/spec"):
+            english = (spec.text or "").strip()
+            japanese = (spec.get("translate") or "").strip()
+            if name and english and japanese and japanese != english:
+                names.setdefault(name, {})[english] = japanese
+    return names
+
+
 def load_book_names() -> dict[str, str]:
     """Book `<id>` -> the title the Japanese lang file gives it.
 

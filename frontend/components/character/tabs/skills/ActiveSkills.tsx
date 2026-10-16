@@ -1,5 +1,6 @@
 "use client";
 import { useMemo } from "react";
+import { specTr } from "@/lib/ui-strings";
 import type { TabPanelProps } from "@/components/character/types";
 import { RangeInput } from "@/components/character/RangeInput";
 import { HelpTip } from "@/components/help/HelpTip";
@@ -83,7 +84,12 @@ export function ActiveSkills(props: TabPanelProps) {
       }),
       ...(swap ? [ui("skills.attrSwap", { attr: swap.attribute, source: tr(swap.source) })] : []),
       ...(specSwap
-        ? [ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })]
+        ? [
+            ui("skills.specAttrSwap", {
+              attr: specSwap.attribute,
+              spec: specTr(tr, name, specSwap.spec),
+            }),
+          ]
         : []),
       ...(d.skill_bonus_notes?.[name] || []),
     ];
@@ -177,7 +183,7 @@ export function ActiveSkills(props: TabPanelProps) {
                     options={[...(s.specs || []), ...(d.skill_spec_options?.[s.name] || [])]}
                     value={specValue}
                     disabled={!hasSkill || Boolean(expertise)}
-                    tr={tr}
+                    tr={(spec) => specTr(tr, s.name, spec)}
                     onDraft={(next) => spec.draft(s.name, next)}
                     onCommit={(next) => spec.commit(s.name, next)}
                   />

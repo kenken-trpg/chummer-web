@@ -91,6 +91,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     load_settings_presets,
     load_skill_group_names,
     load_skills,
+    load_spec_names,
     load_spells,
     load_spirits,
     load_sprites,
@@ -228,6 +229,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     drugs = [item for item in gear if item.get("category") in DRUG_CATEGORIES]
     skills = load_skills()
     skills["group_names"] = load_skill_group_names()
+    skills["spec_names"] = load_spec_names()
     qualities = load_qualities()
     armor = load_armor()
     # A shield is armour you hit people with, and metagenetic claws are a

@@ -6,10 +6,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from app import data_loader
 from app.data_loader import (
     OVERRIDE_DIR,
     _load_ja_overrides,
+    catalog,
     load_skill_group_names,
     load_skills,
     load_translations,
@@ -90,6 +93,24 @@ def test_licenses_are_read_from_their_translate_attribute() -> None:
     assert table["Driver's License"] == "運転免許"
     # a gap filler: what another entity already translates stays
     assert table["Clothing"] == "衣服"
+
+
+def test_specializations_are_read_per_skill() -> None:
+    # `<spec translate="対精霊">Spirits</spec>` under each skill: the same
+    # English is a different thing under another skill.
+    from app.data_loader.loaders.translations import load_spec_names
+
+    specs = load_spec_names()
+    if not specs:
+        pytest.skip("vendored lang file not fetched")
+    assert specs["Astral Combat"]["Spirits"] == "対精霊"
+    assert specs["Counterspelling"]["Combat"] == "対戦闘呪文"
+    assert specs["Con"]["Seduction"] == "誘惑"
+    assert specs["Perception"]["Visual"] == "視覚"
+    # knowledge skills carry theirs too
+    assert any(name not in {s["name"] for s in catalog()["skills"]["skills"]} for name in specs)
+    # and the catalog ships them beside the group names
+    assert catalog()["skills"]["spec_names"] == specs
 
 
 def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> None:
