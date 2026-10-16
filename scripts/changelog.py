@@ -91,6 +91,13 @@ def collect() -> int:
         print("no fragments")
         return 0
     text = CHANGELOG.read_text(encoding="utf-8")
+    if "## [Unreleased]\n" not in text:
+        # A release renames the heading to its version, so the next collect
+        # finds none. Put it back above the newest release instead of failing
+        # with `substring not found` (it was re-added by hand for 0.5.2 and 0.5.3).
+        first = re.search(r"^## \[", text, re.M)
+        at = first.start() if first else len(text)
+        text = text[:at].rstrip("\n") + "\n\n## [Unreleased]\n\n" + text[at:]
     start = text.index("## [Unreleased]\n") + len("## [Unreleased]\n")
     nxt = re.search(r"^## \[", text[start:], re.M)
     end = start + nxt.start() if nxt else len(text)

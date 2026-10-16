@@ -303,7 +303,8 @@ checking that guess costs more than going down the list.
 ## Releasing
 
 1. `make changelog` to fold `changelog.d/` into `[Unreleased]`, then write the
-   section in `CHANGELOG.md` (rename `[Unreleased]` to the version).
+   section in `CHANGELOG.md` (rename `[Unreleased]` to the version). The next
+   `make changelog` puts an empty `[Unreleased]` back on its own.
 2. Bump the version in `backend/pyproject.toml` and `backend/app/main.py` —
    the latter is what the API reports at `/docs`.
 3. `make release-check VERSION=0.2.0` — fails if either of the above is
