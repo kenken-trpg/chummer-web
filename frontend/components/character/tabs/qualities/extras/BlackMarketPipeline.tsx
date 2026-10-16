@@ -2,6 +2,7 @@
 
 import type { Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
+import { contactTerm } from "@/lib/ui-strings";
 
 /** The gear categories Black Market Pipeline can cover (SR5 p.79). */
 const MARKET_CATEGORIES = [
@@ -68,7 +69,7 @@ export function BlackMarketPipeline({
         <option value="">{ui("quality.marketContact")}</option>
         {(d.contacts || []).map((c) => (
           <option key={c.id} value={c.id}>
-            {c.name || ui("common.unnamed")} {c.role ? `／ ${tr(c.role)}` : ""} (C
+            {c.name || ui("common.unnamed")} {c.role ? `／ ${contactTerm(tr, c.role)}` : ""} (C
             {c.connection}/L
             {c.loyalty})
           </option>

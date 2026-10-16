@@ -2,14 +2,15 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { portraitsOf } from "@/lib/character/portrait";
 import { Section } from "@/components/character/sheet/blocks";
 import { type MsgKey, useUiText } from "@/lib/i18n";
+import { contactTerm } from "@/lib/ui-strings";
 
 export function DescriptionSection(s: SheetData) {
-  const { character } = s;
+  const { character, tr } = s;
   const { ui } = useUiText();
   const stats: [MsgKey, string][] = (
     [
-      ["desc.age", character.age],
-      ["desc.sex", character.sex],
+      ["desc.age", character.age && contactTerm(tr, character.age)],
+      ["desc.sex", character.sex && contactTerm(tr, character.sex)],
       ["desc.height", character.height],
       ["desc.weight", character.weight],
       ["desc.eyes", character.eyes],

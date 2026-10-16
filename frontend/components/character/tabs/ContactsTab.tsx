@@ -3,8 +3,9 @@ import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { CONTACT_ROLES } from "@/lib/character/constants";
 import { HelpTip } from "@/components/help/HelpTip";
+import { contactTerm } from "@/lib/ui-strings";
 
-export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPanelProps) {
+export function ContactsTab({ character: ch, d, tr, ui, patch, setCharacter }: TabPanelProps) {
   const [contactName, setContactName] = useState("");
   const [contactRole, setContactRole] = useState("");
   const perPoint = d.contact_points?.karma_per_point ?? 1;
@@ -42,7 +43,7 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
               >
                 {ui("help.contact.statsLabel")}
               </HelpTip>{" "}
-              {item.role ? `${item.role} / ` : ""}
+              {item.role ? `${contactTerm(tr, item.role)} / ` : ""}
               {ui("contact.connection")} {item.connection} / {ui("contact.loyalty")} {item.loyalty}{" "}
               / {ui("contact.points", { points: item.cost })}
               {item.free ? ui("common.freeSlot") : ""}
@@ -166,7 +167,8 @@ export function ContactsTab({ character: ch, d, ui, patch, setCharacter }: TabPa
         />
         <datalist id="contact-roles">
           {[...new Set(CONTACT_ROLES)].map((role) => (
-            <option key={role} value={role} />
+            // the value stays Chummer's English, which is what a save holds
+            <option key={role} value={role} label={contactTerm(tr, role)} />
           ))}
         </datalist>
         <button

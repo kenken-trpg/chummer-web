@@ -17,7 +17,14 @@ export function makeT(catalog?: Pick<Catalog, "ui_strings"> | null, locale: Loca
 
 /** The kinds `translations_by_kind` is keyed by. */
 export type TranslationKind =
-  "armor" | "critter_power" | "cyberware" | "gear" | "knowledge_skill" | "power" | "skill";
+  | "armor"
+  | "contact"
+  | "critter_power"
+  | "cyberware"
+  | "gear"
+  | "knowledge_skill"
+  | "power"
+  | "skill";
 
 /** A name translator. `makeTr`'s carries the per-kind tables so a screen can
  *  narrow it with `scopeTr`; a plain function (a test's identity) has none. */
@@ -79,6 +86,16 @@ export function trAs(tr: TrFn, kind: TranslationKind | "" | undefined, name: str
   if (!tr.byKind) return tr(name);
   const base = tr.base || tr;
   return (kind && tr.byKind[kind]?.[name]) || base(name);
+}
+
+/**
+ * A contact's role, or a person's sex or age: words Chummer offers from
+ * `contacts.xml` but saves as typed text. A match is translated; anything else
+ * is the player's own and shown as written, never run through the flat table,
+ * where Spider is the mentor spirit's クモ.
+ */
+export function contactTerm(tr: TrFn, word: string): string {
+  return tr.byKind?.contact?.[word] || word;
 }
 
 /**

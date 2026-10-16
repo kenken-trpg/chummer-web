@@ -12,8 +12,10 @@ from app.data_loader._xml import LANG_DIR, data_root
 from app.data_loader.loaders.translations import TRANSLATION_KINDS, load_translations_by_kind
 
 #: kind -> (data file, element) its names come from
-SOURCES = {
+SOURCES: dict[str, tuple[str, str] | None] = {
     "armor": ("armor.xml", "armor"),
+    # read from the lang file itself (`_contact_terms`), so nothing to check against
+    "contact": None,
     "critter_power": ("critterpowers.xml", "power"),
     "cyberware": ("cyberware.xml", "cyberware"),
     "gear": ("gear.xml", "gear"),
@@ -35,13 +37,31 @@ def test_every_kind_has_a_source():
 
 
 def test_the_overlay_is_read():
-    assert json.loads((OVERRIDE_DIR / "by_kind.json").read_text(encoding="utf-8")) == load_translations_by_kind()
+    loaded = load_translations_by_kind()
+    loaded.pop("contact")  # generated, not in the overlay
+    assert json.loads((OVERRIDE_DIR / "by_kind.json").read_text(encoding="utf-8")) == loaded
+
+
+def test_contact_terms_are_their_own_kind():
+    if not (LANG_DIR / "ja-jp_data.xml").exists():
+        pytest.skip("vendored lang file not fetched")
+    from app.data_loader.loaders.translations import load_translations
+
+    contact = load_translations_by_kind()["contact"]
+    assert contact["Fixer"] == "フィクサー"
+    assert (contact["Female"], contact["Young"]) == ("女性", "若者")
+    # as a contact, not the mentor spirit the flat table means
+    assert contact["Spider"] == "スパイダー"
+    assert load_translations()["Spider"] == "クモ"
 
 
 @pytest.mark.parametrize("kind", sorted(SOURCES))
 def test_every_name_exists_in_its_kind(kind):
     names = load_translations_by_kind().get(kind, {})
-    filename, element = SOURCES[kind]
+    source = SOURCES[kind]
+    if source is None:
+        pytest.skip(f"{kind} is read from the lang file")
+    filename, element = source
     root = data_root(filename)
     if root is None:
         pytest.skip("vendored Chummer data not fetched")
