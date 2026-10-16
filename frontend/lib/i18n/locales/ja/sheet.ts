@@ -222,6 +222,12 @@ export const JA_SHEET = {
 
   "sheet.limbArmor": " / 装甲 {armor}",
   "sheet.col.device": "機器",
+  "sheet.col.accuracy": "精度",
+  "sheet.col.programs": "プログラム",
+  "sheet.col.matrixCm": "CM",
+  "sheet.col.matrixInit": "イニシアティブ",
+  "sheet.reward.startingKarma": "初期カルマ",
+  "sheet.reward.startingNuyen": "初期新円",
   "sheet.deviceCommlink": "コムリンク {name}",
   "sheet.deviceDeck": "デッキ {name}",
   "sheet.deviceRcc": "RCC {name}",

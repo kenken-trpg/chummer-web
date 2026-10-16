@@ -2,6 +2,21 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
+import type { MsgKey, UiFn } from "@/lib/i18n";
+
+/** The two reasons Chummer writes itself when a character leaves creation.
+ *  Every other label is the player's own and is shown as written; these are
+ *  translated for display only, so the save keeps what Chummer wrote. */
+const CHUMMER_REWARDS: Record<string, MsgKey> = {
+  "Starting Karma": "sheet.reward.startingKarma",
+  "Starting Nuyen": "sheet.reward.startingNuyen",
+};
+
+function rewardLabel(label: string | undefined, ui: UiFn): string {
+  if (!label) return ui("side.reward");
+  const key = CHUMMER_REWARDS[label];
+  return key ? ui(key) : label;
+}
 
 export function CareerSection(s: SheetData) {
   const { character, d, tr } = s;
@@ -33,7 +48,7 @@ export function CareerSection(s: SheetData) {
           <ul className="sheet-list">
             {(d.reward_log || []).map((row) => (
               <li key={row.id}>
-                <b>{row.label || ui("side.reward")}</b>
+                <b>{rewardLabel(row.label, ui)}</b>
                 <span className="sheet-dim">
                   {" "}
                   {row.karma}K / {row.nuyen.toLocaleString()}¥

@@ -1,5 +1,6 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { useUiText } from "@/lib/i18n";
+import { talentLabel } from "@/lib/character/talent-labels";
 
 export function SheetHeader(s: SheetData) {
   const { character, d, tr } = s;
@@ -16,7 +17,7 @@ export function SheetHeader(s: SheetData) {
           {tr(character.metatype)}
           {character.metavariant ? ` / ${tr(character.metavariant)}` : ""}
           {" ・ "}
-          {character.talent || "Mundane"}
+          {talentLabel(character.talent || "Mundane", undefined, ui)}
           {d.tradition ? ` ・ ${tr(d.tradition.name)}` : ""}
           {d.stream ? ` ・ ${tr(d.stream.name)}` : ""}
           {d.mentor

@@ -17,6 +17,7 @@ import {
 } from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
 import { ATTRS } from "@/lib/character/constants";
+import { talentLabel } from "@/lib/character/talent-labels";
 import { renderNotice, renderNotices } from "@/lib/engine-notices";
 import { otherMovementRows } from "@/lib/character/movement";
 
@@ -61,7 +62,7 @@ export function textSheet(x: TextArgs): string {
 
   line(ch.name || ui("sheet.unnamed"));
   line(
-    `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${ch.talent || "Mundane"}` +
+    `${tr(ch.metatype)}${ch.metavariant ? " / " + tr(ch.metavariant) : ""} ・ ${talentLabel(ch.talent || "Mundane", undefined, ui)}` +
       `${d.tradition ? " ・ " + tr(d.tradition.name) : ""}${d.stream ? " ・ " + tr(d.stream.name) : ""}` +
       `${d.mentor ? ui(d.needs_paragon ? "sheet.paragon" : "sheet.mentor", { name: tr(d.mentor.name) }) : ""}`,
   );

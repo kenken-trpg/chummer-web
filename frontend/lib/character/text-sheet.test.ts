@@ -38,7 +38,8 @@ describe("textSheet header", () => {
 
     expect(name).toBe("Test Runner");
     expect(ident).toContain("Human");
-    expect(ident).toContain("Mundane");
+    // the talent in the reader's language, as on the visual sheet
+    expect(ident).toContain("マンディン");
   });
 
   it("names an unnamed character rather than emitting a blank first line", () => {

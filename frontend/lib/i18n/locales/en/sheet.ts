@@ -221,6 +221,12 @@ export const EN_SHEET = {
 
   "sheet.limbArmor": " / armor {armor}",
   "sheet.col.device": "Device",
+  "sheet.col.accuracy": "Acc",
+  "sheet.col.programs": "Prog",
+  "sheet.col.matrixCm": "M.CM",
+  "sheet.col.matrixInit": "M.Init",
+  "sheet.reward.startingKarma": "Starting Karma",
+  "sheet.reward.startingNuyen": "Starting Nuyen",
   "sheet.deviceCommlink": "Commlink {name}",
   "sheet.deviceDeck": "Deck {name}",
   "sheet.deviceRcc": "RCC {name}",
