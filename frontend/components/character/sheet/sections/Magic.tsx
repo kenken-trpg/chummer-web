@@ -72,7 +72,10 @@ export function MagicSection(s: SheetData) {
                   spellRange(item.range, ui),
                   spellDuration(item.duration, ui),
                   item.damage ? ui("sheet.spellDamage", { damage: item.damage }) : "",
-                  ui("sheet.spellDrain", { dv: item.dv }),
+                  // "Special" is the one drain the data spells as a word
+                  ui("sheet.spellDrain", {
+                    dv: item.dv === "Special" ? ui("sr.dur.special") : item.dv,
+                  }),
                 ]
                   .filter(Boolean)
                   .join(" / ")}

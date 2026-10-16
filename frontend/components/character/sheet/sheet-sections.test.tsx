@@ -27,6 +27,7 @@ import { SinSection } from "@/components/character/sheet/sections/Sin";
 import { SkillsSection } from "@/components/character/sheet/sections/Skills";
 import { VehiclesSection } from "@/components/character/sheet/sections/Vehicles";
 import { WareSection } from "@/components/character/sheet/sections/Ware";
+import { SheetHeader } from "@/components/character/sheet/SheetHeader";
 
 // A `derived` payload that touches every sheet section with realistic nested
 // rows. Rows are hand-shaped only far enough to render, then cast — like the
@@ -447,4 +448,77 @@ describe("quality levels on sheets", () => {
       expect(text).toContain("Gremlins Lv1");
     },
   );
+});
+
+describe("no English left on the sheet where a translation exists", () => {
+  const jaTr = (name: string) =>
+    ({ Used: "中古", Alphaware: "アルファウェア", "Wired Reflexes": "ワイヤード・リフレックス" })[
+      name
+    ] ?? name;
+  const sheet = (derived: Record<string, unknown>, character: Record<string, unknown> = {}) =>
+    buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        ...character,
+        derived: { ...RICH_CHARACTER.derived, ...derived },
+      } as never,
+      catalog: RICH_CATALOG,
+      tr: jaTr,
+      layout: "standard",
+    });
+
+  it("the header and the text sheet name a core talent in Japanese", () => {
+    const data = sheet({}, { talent: "Adept" });
+    expect(render(<SheetHeader {...data} />).container.textContent).toContain("アデプト");
+    expect(textSheet(data)).toContain("アデプト");
+  });
+
+  it("ware shows its grade and side translated, and no grade for None", () => {
+    const base = RICH_CHARACTER.derived!.cyberware![0];
+    const { container } = render(
+      <WareSection
+        {...sheet({
+          cyberware: [
+            { ...base, id: "used", grade: "Used", side: "Left" },
+            { ...base, id: "alpha", grade: "Alphaware", side: undefined },
+          ],
+          bioware: [{ ...base, id: "none", name: "Narco", grade: "None" }],
+        })}
+      />,
+    );
+    const items = [...container.querySelectorAll("li")].map((li) => li.textContent);
+    expect(items[0]).toContain("/ 中古 / 左");
+    expect(items[1]).toContain("/ アルファウェア");
+    expect(items[2]).not.toContain("None");
+  });
+
+  it("the weapon and matrix tables head their columns in Japanese", () => {
+    const combat = render(<CombatSection {...s} />).container.textContent;
+    expect(combat).toContain("精度");
+    expect(combat).not.toContain("Acc");
+    const matrix = render(<MatrixSection {...s} />).container.querySelector("thead")!.textContent;
+    expect(matrix).toContain("プログラム");
+    expect(matrix).toContain("イニシアティブ");
+    expect(matrix).not.toMatch(/Prog|M\.CM|M\.Init/);
+  });
+
+  it("a Special drain and Chummer's starting rewards read in Japanese", () => {
+    const data = sheet(
+      {
+        spells: [{ ...RICH_CHARACTER.derived!.spells![0], id: "x", dv: "Special" }],
+        reward_log: [
+          { id: "k", label: "Starting Karma", karma: 7, nuyen: 0 },
+          { id: "n", label: "Starting Nuyen", karma: 0, nuyen: 596 },
+          { id: "p", label: "Run: Fortune Cookie", karma: 5, nuyen: 0 },
+        ],
+      },
+      { career: true },
+    );
+    expect(render(<MagicSection {...data} />).container.textContent).toContain("ドレイン 特殊");
+    const career = render(<CareerSection {...data} />).container.textContent;
+    expect(career).toContain("初期カルマ");
+    expect(career).toContain("初期新円");
+    // the player's own label is left as written
+    expect(career).toContain("Run: Fortune Cookie");
+  });
 });
