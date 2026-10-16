@@ -486,6 +486,9 @@ export const JA_CHARGEN = {
   "attrs.karmaHint":
     "この能力値の上から何レベルをカルマで買ったか。その分は能力値点を使わず、上げた後の値×5 カルマかかります。",
   "attrs.karmaSpent": "カルマで上げた能力値：{karma} カルマ",
+  "attrs.formValue": " ／ 人間形態 {value}",
+  "attrs.formNote":
+    "{animal} の範囲で能力値を振ります。人間形態（{form}）の値は、同じポイントを人間形態の範囲に当てたものです（各行の「人間形態」）。",
   "attrs.minNote":
     "各能力値はメタの最低値から始まります（オレンジの目盛り）。そこまでは無料で、能力値点を使うのは超えた分だけです。",
 

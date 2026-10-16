@@ -567,6 +567,17 @@ export interface Derived {
       origin_id: string;
       origin_name: string;
     })[];
+    /** A shapeshifter's other body. `attributes` above are the animal's,
+     *  which the character is built in; this is the same points in the
+     *  metavariant's ranges, and its `alt` movement. */
+    metahuman_form?: {
+      name: string;
+      attributes: Record<
+        string,
+        { rating: number; total: number; min: number; max: number; aug: number }
+      >;
+      movement: Derived["movement"] | null;
+    };
   };
   talent?: {
     name: string;

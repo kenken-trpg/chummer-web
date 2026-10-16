@@ -57,6 +57,13 @@ def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str,
         "walk": _text(el.find("walk"), "2/1/0"),
         "run": _text(el.find("run"), "4/0/0"),
         "sprint": _text(el.find("sprint"), "2/1/0"),
+        # A shapeshifter's metavariant writes its metahuman form's rates as
+        # `<walk alt="2/1/0">1/1/0</walk>`: the text is the animal's.
+        **{
+            f"{kind}_alt": node.get("alt", "")
+            for kind in ("walk", "run", "sprint")
+            if (node := el.find(kind)) is not None and node.get("alt")
+        },
         "source": _text(el.find("source")),
         "page": _text(el.find("page")),
         "bonus": parse_bonus(el.find("bonus")),

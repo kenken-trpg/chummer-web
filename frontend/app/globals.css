@@ -1050,6 +1050,9 @@ input[type="search"] {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2px;
+  /* rows keep their height when the attribute column beside them is taller
+     (a shapeshifter's two bodies) */
+  align-content: start;
 }
 .sheet-table {
   width: 100%;
