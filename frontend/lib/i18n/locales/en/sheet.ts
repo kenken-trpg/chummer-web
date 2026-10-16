@@ -221,6 +221,9 @@ export const EN_SHEET = {
 
   "sheet.limbArmor": " / armor {armor}",
   "sheet.col.device": "Device",
+  "sheet.form.animal": "Animal form ({name})",
+  "sheet.form.metahuman": "Metahuman form ({name})",
+  "sheet.form.movement": "Movement (metahuman form)",
   "sheet.col.accuracy": "Acc",
   "sheet.col.programs": "Prog",
   "sheet.col.matrixCm": "M.CM",

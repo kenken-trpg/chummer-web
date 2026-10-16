@@ -522,3 +522,52 @@ describe("no English left on the sheet where a translation exists", () => {
     expect(career).toContain("Run: Fortune Cookie");
   });
 });
+
+describe("a shapeshifter's two bodies on the sheets", () => {
+  const data = buildSheetData({
+    character: {
+      ...RICH_CHARACTER,
+      metatype: "Shapeshifter: Vulpine",
+      metavariant: "Human",
+      derived: {
+        ...RICH_CHARACTER.derived,
+        metatype_info: {
+          ...RICH_CHARACTER.derived!.metatype_info,
+          parent: "Shapeshifter: Vulpine",
+          metahuman_form: {
+            name: "Human",
+            attributes: {
+              AGI: { rating: 3, total: 3, min: 1, max: 6, aug: 10 },
+              EDG: { rating: 4, total: 4, min: 2, max: 7, aug: 7 },
+            },
+            movement: {
+              walk: "6",
+              run: "12",
+              sprint: "2",
+              sprint_bonus: 0,
+            },
+          },
+        },
+      },
+    } as never,
+    catalog: RICH_CATALOG,
+    tr: identityTr,
+    layout: "standard",
+  });
+
+  it("the core section labels the animal row and adds the metahuman one", () => {
+    const { container } = render(<CoreSection {...data} />);
+    expect(container.textContent).toContain("動物の姿（Shapeshifter: Vulpine）");
+    expect(container.textContent).toContain("人間形態（Human）");
+    const form = container.querySelector('[data-form="metahuman"]')!;
+    expect(form.querySelectorAll(".sheet-attr")).toHaveLength(2);
+    expect(form.textContent).toContain("3");
+    expect(container.textContent).toContain("移動（人間形態）");
+  });
+
+  it("the text sheet carries the same line", () => {
+    const text = textSheet(data);
+    expect(text).toMatch(/人間形態（Human） \S+ 3 {2}\S+ 4/);
+    expect(text).toContain("移動（人間形態）");
+  });
+});

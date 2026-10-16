@@ -10,22 +10,44 @@ import { otherMovementRows } from "@/lib/character/movement";
 export function CoreSection(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
   const { ui } = useUiText();
+  const form = d.metatype_info.metahuman_form;
   return (
     <Section title="sheet.core">
       <div className="sheet-core">
-        <div className="sheet-attrs">
-          {ATTRS.map((key) => {
-            if ((key === "MAG" && !enabled.has("MAG")) || (key === "RES" && !enabled.has("RES")))
-              return null;
-            const ware = d.ware_attr_bonus?.[key] || 0;
-            return (
-              <div className="sheet-attr" key={key}>
-                <span>{attrShort(key, t)}</span>
-                <b>{totals[key] ?? "-"}</b>
-                {ware ? <em>+{ware}</em> : null}
+        {/* one grid cell: both bodies' rows stay in the attribute column */}
+        <div>
+          {form ? (
+            <p className="sheet-note">
+              {ui("sheet.form.animal", { name: tr(d.metatype_info.parent || "") })}
+            </p>
+          ) : null}
+          <div className="sheet-attrs">
+            {ATTRS.map((key) => {
+              if ((key === "MAG" && !enabled.has("MAG")) || (key === "RES" && !enabled.has("RES")))
+                return null;
+              const ware = d.ware_attr_bonus?.[key] || 0;
+              return (
+                <div className="sheet-attr" key={key}>
+                  <span>{attrShort(key, t)}</span>
+                  <b>{totals[key] ?? "-"}</b>
+                  {ware ? <em>+{ware}</em> : null}
+                </div>
+              );
+            })}
+          </div>
+          {form ? (
+            <>
+              <p className="sheet-note">{ui("sheet.form.metahuman", { name: tr(form.name) })}</p>
+              <div className="sheet-attrs" data-form="metahuman">
+                {ATTRS.filter((key) => form.attributes[key]).map((key) => (
+                  <div className="sheet-attr" key={key}>
+                    <span>{attrShort(key, t)}</span>
+                    <b>{form.attributes[key].total}</b>
+                  </div>
+                ))}
               </div>
-            );
-          })}
+            </>
+          ) : null}
         </div>
         <div className="sheet-derived-grid">
           <div>
@@ -67,6 +89,18 @@ export function CoreSection(s: SheetData) {
               })}
             </b>
           </div>
+          {form?.movement ? (
+            <div>
+              <span>{ui("sheet.form.movement")}</span>
+              <b>
+                {ui("sheet.movementValue", {
+                  walk: form.movement.walk,
+                  run: form.movement.run,
+                  sprint: form.movement.sprint,
+                })}
+              </b>
+            </div>
+          ) : null}
           {otherMovementRows(d.movement, ui).map((row) => (
             <div key={row.label}>
               <span>{row.label}</span>

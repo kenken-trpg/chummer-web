@@ -195,6 +195,8 @@ class _MetatypeInfo(TypedDict):
     source: str | None
     attributes_replaced_by: list[str]
     powers: NotRequired[list[Row]]
+    #: a shapeshifter's other body (engine/compute/_shapeshifter.py)
+    metahuman_form: NotRequired[dict[str, Any]]
 
 
 class DerivedDict(TypedDict):
