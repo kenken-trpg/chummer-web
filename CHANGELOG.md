@@ -3,6 +3,38 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.4] — 2026-10-16
+
+### Added
+
+- **シェイプシフターを新規作成の種族候補に追加しました。** 動物 11 種（Bovine〜Vulpine。Phocine の出典は SAG、ほかは RF）から選べます。
+  - 優先度方式と SumToTen では Heritage A/B/C（特殊点 8/6/4）、Karma 方式では種族の値段（100〜160 カルマ）で選べます。
+  - メタタイプ画面の「人間形態」で人の姿（Human・Elf・Dwarf ほか）を選びます。形態ごとに値段が違うので、選択肢に添えて表示します。
+  - 使用ルールブックで出典の本が無効なら、ケンタウロスと同じく候補に出しません。作成済みのキャラクターはそのまま残ります。
+
+- **シェイプシフターの人間形態の能力値と移動を表示するようにしました。** シート・テキスト出力・能力値タブで、動物の姿と人間形態を並べて出します。
+  - 能力値は動物の姿の範囲で振ります。人間形態の値は、同じポイントを人間形態の範囲に当てたものです（Chummer と同じ扱い。例：Vulpine の敏捷 4 は人間形態で 3、エッジ 1 は 2）。
+  - 人間形態の移動は、データにある人間形態の移動率（`<walk alt="…">`）と人間形態の敏捷から計算します。
+
+### Fixed
+
+- **連絡先の役割と、キャラクターの性別・年齢を日本語で出すようにしました。** Fixer → フィクサー、Street Doc → ストリートドク、Female → 女性 など、Chummer の候補にある語（62 件）を、シート・テキスト出力・連絡先タブで訳します。保存される値は英語のままで、Chummer の候補にない、自分で書いた役割は書いたとおりに出します。連絡先タブの役割の候補にも日本語を添えました。
+
+- **シェイプシフターの能力値を動物の姿の範囲で計算するようにしました。** これまでは人の姿（Human など）の範囲で計算していて、Chummer のセーブ（`Mittens Chargen`）を読むと、能力値ポイントの超過と上限到達の誤ったエラーが出ていました。Chummer の作成処理と同じく、能力値の範囲を動物の姿から、値段・資質・パワー・bonus を人の姿から取ります。人の姿を選んでいなければ Human として扱います。あわせて次の 2 点も直しました。
+  - 外せる生まれつきの資質（Uneducated）を、`.chum5` に Chummer と同じ `MetatypeRemovable` として書き出すようにしました。
+  - 種族を変えたときに、前のメタヴァリアントが残ることがあった問題を直しました。
+
+- **偽造免許の種類と、生活様式の資質の選択値を日本語で出すようにしました。** 偽造免許の種類（Firearms License → 火器ライセンスなど 36 件）は、Chummer の日本語データでは属性の形（`translate="…"`）で書かれていて、これまで読み込んでいませんでした。生活様式の資質の選択値（Grid Subscription の Public Grid → 公共グリッドなど）は、シート・印刷・生活様式の画面で訳を通していませんでした。
+
+- **シートに残っていた英語を日本語にしました。** Chummer のテスト用キャラ 34 件で確かめ、次の英語が表示されなくなりました。
+  - ヘッダーのタレント名（Adept → アデプトなど。テキスト出力も同じです）
+  - ウェアのグレード（Used → 中古、Alphaware → アルファウェア）と部位（Left / Right → 左 / 右）。グレードが `None` のときは何も出しません
+  - 表の見出し（武器の `Acc` → 精度、マトリックスの `Prog` / `M.CM` / `M.Init` → プログラム / CM / イニシアティブ）
+  - 呪文のドレインの `Special` → 特殊
+  - 報酬履歴の `Starting Karma` / `Starting Nuyen` → 初期カルマ / 初期新円（表示だけ訳し、保存される値は Chummer が書いたままです）
+
+- **技能の専門化を日本語で出すようにしました。** Chummer の日本語データにある約 1100 件の専門化の訳を、技能ごとに読み込みます（同じ英語でも技能によって訳が違うためです。例：アストラル戦闘の Spirits は「対精霊」）。シート・テキスト出力・技能タブの選択肢・ココフォリア／ユドナリウムの書き出しに使います。Chummer のテスト用キャラ 34 件では、英語のまま出ていた専門化が 166 件から 49 件に減りました（残りは自作の専門化か、データに訳がないもの）。条件リミットの「知覚〈Visual〉」なども「知覚〈視覚〉」などにしました。
+
 ## [0.5.3] — 2026-10-16
 
 ### Changed
@@ -2001,7 +2033,10 @@ First tagged release.
 - One-container Docker image (Caddy + uvicorn + Next standalone) published to
   GHCR; `make up` / `compose.yaml` for local self-hosting.
 
-[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/kenken-trpg/chummer-web/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/kenken-trpg/chummer-web/compare/v0.3.0...v0.4.0
