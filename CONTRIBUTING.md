@@ -267,6 +267,14 @@ checking that guess costs more than going down the list.
   `style:`, `test:`. A scope is nice: `feat(engine): …`.
 - Every PR must pass `make check` locally. Add or update tests for rule
   changes — `backend/tests/test_engine_*.py` have lots of patterns to copy.
+- Frontend code changes need one `changelog.d/<name>.<type>.md` fragment; the
+  `changelog` CI job fails without it. For UI copy or translated-label changes,
+  run `cd frontend && npm run format:check` and update every affected
+  accessible-name assertion in both component tests and `frontend/e2e/` specs.
+  E2E selectors can cover a second screen that shares the locale keys (for
+  example, Life Module career advancement), even when the visible edit was in
+  the creation panel. This repository disallows merge commits; merge PRs with
+  squash.
 - **`scripts/merge_chain.sh 248:branch-a 249:branch-b`** merges a queue of PRs
   in order: each one is rebased onto the current `origin/main`, checked the way
   CI checks it, pushed, and — once **every** check on GitHub has reported green,
