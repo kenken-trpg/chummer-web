@@ -143,3 +143,45 @@ def test_the_heritage_rows_offer_them_at_a_b_c_for_five_karma() -> None:
     # The other metasapients stay out of creation.
     names = {m["name"] for cell in table.values() for m in cell["metatypes"]}
     assert not {"Naga", "Pixie", "Sasquatch"} & names
+
+
+def test_the_metahuman_form_has_the_same_points_in_its_own_ranges() -> None:
+    state = _vulpine()
+    # AGI 4 is 2 points over the fox's minimum of 2; EDG 3, 2 over 1
+    state.attributes = {**state.attributes, "AGI": 4, "EDG": 3, "BOD": 4}
+    info = compute(state).derived["metatype_info"]
+    form = info["metahuman_form"]
+    assert form["name"] == "Human"
+    # the animal is what the character is built in
+    assert info["attributes"]["AGI"]["min"] == 2
+    agi, edg, bod = (form["attributes"][key] for key in ("AGI", "EDG", "BOD"))
+    assert (agi["min"], agi["max"], agi["rating"], agi["total"]) == (1, 6, 3, 3)
+    assert (edg["min"], edg["max"], edg["rating"]) == (2, 7, 4)
+    # the same minimum in both: the rating carries over unchanged
+    assert bod["rating"] == 4
+    assert set(form["attributes"]) == {"BOD", "AGI", "REA", "STR", "CHA", "INT", "LOG", "WIL", "EDG"}
+
+
+def test_the_metahuman_form_moves_at_its_alt_rates() -> None:
+    state = _vulpine()
+    state.attributes = {**state.attributes, "AGI": 4}
+    out = compute(state).derived
+    # the fox walks 1/1/0 and runs 3/1/0 on AGI 4; the Human form walks 2/1/0
+    # and runs 4/1/0 on its AGI 3
+    assert (out["movement"]["walk"], out["movement"]["run"]) == ("4", "12")
+    form = out["metatype_info"]["metahuman_form"]["movement"]
+    assert form["modes"]["Ground"]["rates"] == {"walk": 2.0, "run": 4.0, "sprint": 2.0}
+    assert (form["walk"], form["run"]) == ("6", "12")
+
+
+@pytest.mark.parametrize(("metatype", "variant"), [("Human", None), ("Elf", "Nocturna"), ("Centaur", None)])
+def test_no_one_else_has_a_metahuman_form(metatype: str, variant: str | None) -> None:
+    state = CharacterState(
+        id="x",
+        name="x",
+        metatype=metatype,
+        metavariant=variant,
+        priorities=Priorities(Heritage="A"),
+        attributes=default_attributes(find_metatype(metatype, variant)),
+    )
+    assert "metahuman_form" not in compute(state).derived["metatype_info"]

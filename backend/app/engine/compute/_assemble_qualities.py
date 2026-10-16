@@ -13,6 +13,7 @@ from ..constants import (
 )
 from ..lookups import critter_power_label, critter_power_rows
 from ..qualities import _quality_has_selectside, quality_needs_extra
+from ._shapeshifter import metahuman_form
 from .context import Ctx
 from .derived_types import _MetatypeInfo
 
@@ -132,6 +133,9 @@ def metatype_info(ctx: Ctx, clamped: set[str]) -> _MetatypeInfo:
         # the metatype's own (Infected, Quadriplegic).
         "attributes_replaced_by": list(ctx.attr_replaced_by),
     }
+    form = metahuman_form(ctx)
+    if form is not None:
+        info["metahuman_form"] = form
     if ctx.meta.get("power_grants"):
         info["powers"] = [
             {

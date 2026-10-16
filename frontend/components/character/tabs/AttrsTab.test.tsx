@@ -201,4 +201,41 @@ describe("<AttrsTab>", () => {
     });
     expect(container.textContent).toContain("Infected: Ghoul (Human)");
   });
+
+  it("shows a shapeshifter's metahuman form beside each attribute it bought in animal form", () => {
+    const base = makeCharacter();
+    renderTab({
+      character: {
+        metatype: "Shapeshifter: Vulpine",
+        metavariant: "Human",
+        derived: {
+          metatype_info: {
+            ...base.derived.metatype_info,
+            parent: "Shapeshifter: Vulpine",
+            metahuman_form: {
+              name: "Human",
+              attributes: {
+                AGI: { rating: 3, total: 3, min: 1, max: 6, aug: 10 },
+                EDG: { rating: 4, total: 4, min: 2, max: 7, aug: 7 },
+              },
+              movement: {
+                walk: "6",
+                run: "12",
+                sprint: "2",
+                sprint_bonus: 0,
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(screen.getByText(/人間形態 3/)).toBeDefined();
+    expect(screen.getByText(/人間形態 4/)).toBeDefined();
+    expect(screen.getByText(/Shapeshifter: Vulpine の範囲で能力値を振ります/)).toBeDefined();
+  });
+
+  it("says nothing of forms for anyone else", () => {
+    renderTab();
+    expect(screen.queryByText(/人間形態/)).toBeNull();
+  });
 });

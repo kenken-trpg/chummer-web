@@ -217,10 +217,9 @@ def _export_flags(root: ET.Element, state: CharacterState, names: _Names, ctx: _
     _sub(root, "adept", _flag("adept" in tabs))
     _sub(root, "magician", _flag("magician" in tabs))
     _sub(root, "technomancer", _flag("technomancer" in tabs))
-    # Chummer turns this on from an `<enabletab>` the metatype carries, which
-    # this app does not apply to metatypes yet: its one shapeshifter test save
-    # says True where this says False. Written all the same, so it follows
-    # `enabled_tabs` the day it does.
+    # Chummer turns this on from an `<enabletab>` the metatype carries: a
+    # shapeshifter's form has one (`Mittens Chargen` says True, and so does
+    # this).
     _sub(root, "critter", _flag("critter" in tabs))
     _sub(root, "initiategrade", int(derived.get("initiate_grade") or 0))
     _sub(root, "submersiongrade", int(derived.get("submersion_grade") or 0))

@@ -11,6 +11,7 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
   // karma already, and after creation raises are billed from the baseline.
   const splitKarma = !ch.career && !d.karma_chargen?.enabled;
   const karmaSplit = d.attribute_karma;
+  const form = d.metatype_info.metahuman_form;
 
   return (
     <div className="card">
@@ -81,6 +82,11 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
                   {ui("attrs.wareBonus", { bonus: d.ware_attr_bonus![key] })}
                 </span>
               ) : null}
+              {form?.attributes[key] ? (
+                <span className="muted">
+                  {ui("attrs.formValue", { value: form.attributes[key].total })}
+                </span>
+              ) : null}
               {d.limb_replace && (key === "STR" || key === "AGI") ? (
                 <span className="muted">
                   {ui("attrs.meat", {
@@ -104,6 +110,14 @@ export function AttrsTab({ character: ch, d, t, tr, ui, patch, setCharacter }: T
         <p className="muted">{ui("attrs.karmaSpent", { karma: karmaSplit.karma })}</p>
       ) : null}
       <p className="muted">{ui("attrs.minNote")}</p>
+      {form ? (
+        <p className="muted">
+          {ui("attrs.formNote", {
+            animal: tr(d.metatype_info.parent || ""),
+            form: tr(form.name),
+          })}
+        </p>
+      ) : null}
       {/* Infected / Quadriplegic: these are no longer the metatype's ranges. */}
       {(d.metatype_info.attributes_replaced_by || []).length ? (
         <p className="muted">

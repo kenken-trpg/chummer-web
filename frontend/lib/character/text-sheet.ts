@@ -76,6 +76,24 @@ export function textSheet(x: TextArgs): string {
       .map((k) => `${attrShort(k, t)} ${totals[k] ?? "-"}`)
       .join("  "),
   );
+  const form = d.metatype_info.metahuman_form;
+  if (form) {
+    // the line above is the animal, which the character is built in
+    line(
+      `${ui("sheet.form.metahuman", { name: tr(form.name) })} ` +
+        ATTRS.filter((k) => form.attributes[k])
+          .map((k) => `${attrShort(k, t)} ${form.attributes[k].total}`)
+          .join("  "),
+    );
+    if (form.movement)
+      line(
+        `${ui("sheet.form.movement")} ${ui("sheet.movementValue", {
+          walk: form.movement.walk,
+          run: form.movement.run,
+          sprint: form.movement.sprint,
+        })}`,
+      );
+  }
   line(
     `${ui("common.initiative")} ${d.initiative.value}+${d.initiative.dice}d6  ` +
       `${ui("txt.limits", {

@@ -489,6 +489,9 @@ export const EN_CHARGEN = {
   "attrs.karmaHint":
     "How many of this attribute's top levels were bought with karma. They use no attribute points and cost the new rating × 5 karma each.",
   "attrs.karmaSpent": "Attributes raised with karma: {karma} karma",
+  "attrs.formValue": " / metahuman form {value}",
+  "attrs.formNote":
+    "Attributes are bought in the {animal} ranges. The metahuman form ({form}) has the same points in its own ranges, shown on each row.",
   "attrs.minNote":
     "Every attribute starts at its metatype minimum (the amber tick). That much is free — points are only spent above it.",
 
