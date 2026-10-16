@@ -2,11 +2,17 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
 import { scopeTr } from "@/lib/ui-strings";
+import { sideLabel } from "@/lib/character/constants";
 
 export function WareSection(s: SheetData) {
   const { tr: sheetTr, d, cyber, bio, layout, wareNamesOnly } = s;
   const tr = scopeTr(sheetTr, "cyberware");
   const { ui } = useUiText();
+  // Standard is the default and "None" (Chummer's grade for ware that has
+  // none) says nothing; the rest are data words — Used, Alphaware — and are
+  // translated like the names beside them.
+  const gradeBit = (grade?: string) =>
+    grade && grade !== "Standard" && grade !== "None" ? ` / ${tr(grade)}` : "";
   // The compact sheet lists ware by name alone — grade, limb stats and ESS
   // are one click away in the editor, and the section total says the loss.
   const namesOnly = layout === "compact" || wareNamesOnly;
@@ -45,8 +51,8 @@ export function WareSection(s: SheetData) {
                 <li key={item.id}>
                   <b>{tr(item.name)}</b>
                   {item.rating > 1 ? ` R${item.rating}` : ""}
-                  {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
-                  {item.side ? ` / ${item.side}` : ""}
+                  {gradeBit(item.grade)}
+                  {item.side ? ` / ${sideLabel(item.side, ui)}` : ""}
                   {item.limb_str != null ? (
                     <span className="sheet-dim">
                       {" "}
@@ -74,7 +80,7 @@ export function WareSection(s: SheetData) {
                 <li key={item.id}>
                   <b>{tr(item.name)}</b>
                   {item.rating > 1 ? ` R${item.rating}` : ""}
-                  {item.grade && item.grade !== "Standard" ? ` / ${item.grade}` : ""}
+                  {gradeBit(item.grade)}
                   <span className="sheet-dim"> ESS −{item.essence}</span>
                 </li>
               ))}

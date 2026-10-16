@@ -51,7 +51,7 @@ export function CombatSection(s: SheetData) {
             <thead>
               <tr>
                 <th>{ui("sheet.col.weapon")}</th>
-                <th>Acc</th>
+                <th>{ui("sheet.col.accuracy")}</th>
                 <th>DV</th>
                 <th>AP</th>
                 <th>{ui("sheet.col.mode")}</th>

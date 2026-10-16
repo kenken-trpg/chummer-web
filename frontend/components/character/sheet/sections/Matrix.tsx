@@ -105,9 +105,9 @@ export function MatrixSection(s: SheetData) {
                   <th>S</th>
                   <th>DP</th>
                   <th>FW</th>
-                  <th>Prog</th>
-                  <th>M.CM</th>
-                  <th>M.Init</th>
+                  <th>{ui("sheet.col.programs")}</th>
+                  <th>{ui("sheet.col.matrixCm")}</th>
+                  <th>{ui("sheet.col.matrixInit")}</th>
                 </tr>
               </thead>
               <tbody>
