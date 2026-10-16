@@ -13,9 +13,9 @@ from ..data_loader import CatalogDict, catalog
 from ..engine import all_talent_options, is_way_quality, priority_value, talent_options
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
-#: Supported creation options; other metasapients remain excluded.
+#: The five SR5 core metatypes. Creation also offers Centaur and the
+#: shapeshifters: whatever the loader keeps in `catalog()["metatypes"]`.
 CORE_METATYPES = {"Human", "Elf", "Dwarf", "Ork", "Troll"}
-CREATION_METATYPES = CORE_METATYPES | {"Centaur"}
 
 
 def section(raw: CatalogDict) -> dict:
@@ -123,12 +123,13 @@ def section(raw: CatalogDict) -> dict:
 def _table_for(name: str) -> dict[str, dict[str, dict]]:
     """The whole priority table as one named `<prioritytable>` sees it."""
     built: dict[str, dict[str, dict]] = {}
+    offered = {m["name"] for m in catalog()["metatypes"]}
     with using_rules(replace(current_rules(), priority_table=name)):
         for cat in ("Heritage", "Attributes", "Talent", "Skills", "Resources"):
             built[cat] = {}
             for letter in "ABCDE":
                 row = priority_value(cat, letter)
-                mets = [m for m in (row.get("metatypes") or []) if m["name"] in CREATION_METATYPES]
+                mets = [m for m in (row.get("metatypes") or []) if m["name"] in offered]
                 built[cat][letter] = {
                     "name": row.get("name"),
                     "attribute_points": row.get("attribute_points"),

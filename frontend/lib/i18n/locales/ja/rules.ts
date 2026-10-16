@@ -6,6 +6,7 @@ export const JA_RULES = {
   "spec.custom": "自由入力",
   "meta.special": " / 特殊点 {points}",
   "meta.metavariant": "メタバリアント",
+  "meta.metahumanForm": "人間形態",
 
   "meta.noVariant": "なし（{name}）",
   "sr.type.mana": "マナ",

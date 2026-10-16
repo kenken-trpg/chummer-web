@@ -3,13 +3,14 @@
 The metatype is the animal and the metavariant the metahuman form it takes.
 Chummer reads the attributes from the metatype and everything else (karma,
 qualities, powers, bonus) from the metavariant, and picks Human when no
-metavariant was chosen. Candidates in the creation screen are separate.
+metavariant was chosen.
 """
 
 import xml.etree.ElementTree as ET
 
 import pytest
 
+from app.catalog_view import public_catalog
 from app.characters import apply_patch
 from app.chummer_export import state_to_chum5
 from app.chummer_import import chum5_to_state
@@ -18,6 +19,19 @@ from app.models import CharacterPatch, CharacterState, Priorities
 from tests.notice_asserts import has
 
 VULPINE = "Shapeshifter: Vulpine"
+ANIMALS = {
+    "Bovine",
+    "Canine",
+    "Equine",
+    "Falconine",
+    "Leonine",
+    "Lupine",
+    "Pantherine",
+    "Phocine",
+    "Tigrine",
+    "Ursine",
+    "Vulpine",
+}
 
 
 def _vulpine(method: str = "Priority", **kwargs: object) -> CharacterState:
@@ -102,3 +116,30 @@ def test_a_round_trip_keeps_the_form_and_its_grants_once() -> None:
     assert back.quality_ids == first.quality_ids
     assert len([q for q in back.derived["qualities"] if q.get("origin") == "Metatype"]) == 5
     assert len([w for w in back.derived["weapons"] if w.get("natural")]) == 1
+
+
+def test_every_shapeshifter_is_a_creation_candidate() -> None:
+    cat = public_catalog()
+    offered = {m["name"]: m for m in cat["metatypes"] if m["category"] == "Shapeshifter"}
+    assert set(offered) == {f"Shapeshifter: {animal}" for animal in ANIMALS}
+    for name, row in offered.items():
+        # Phocine is the one from Sail Away, Sweet Sister.
+        assert row["source"] == ("SAG" if name.endswith("Phocine") else "RF")
+        assert "Human" in {v["name"] for v in row["metavariants"]}
+    vulpine = offered[VULPINE]
+    assert vulpine["karma"] == 100
+
+
+def test_the_heritage_rows_offer_them_at_a_b_c_for_five_karma() -> None:
+    table = public_catalog()["priority_table"]["Heritage"]
+    for letter, cell in table.items():
+        rows = [m for m in cell["metatypes"] if m["name"].startswith("Shapeshifter: ")]
+        if letter in "ABC":
+            assert {m["name"] for m in rows} == {f"Shapeshifter: {animal}" for animal in ANIMALS}
+            vulpine = next(m for m in rows if m["name"] == VULPINE)
+            assert (vulpine["special"], vulpine["karma"]) == ({"A": 8, "B": 6, "C": 4}[letter], 5)
+        else:
+            assert rows == []
+    # The other metasapients stay out of creation.
+    names = {m["name"] for cell in table.values() for m in cell["metatypes"]}
+    assert not {"Naga", "Pixie", "Sasquatch"} & names

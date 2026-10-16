@@ -425,7 +425,12 @@ export type PriorityCell = {
   skill_points?: number;
   skill_group_points?: number;
   nuyen?: number;
-  metatypes: { name: string; special: number; karma?: number; variants: { name: string }[] }[];
+  metatypes: {
+    name: string;
+    special: number;
+    karma?: number;
+    variants: { name: string; special?: number; karma?: number }[];
+  }[];
   talents: { name: string; label?: string; value: number; spells?: number }[];
 };
 

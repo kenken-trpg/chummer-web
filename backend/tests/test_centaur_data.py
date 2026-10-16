@@ -103,4 +103,13 @@ def test_power_rules_require_explicit_opt_in_until_compute_supports_them() -> No
 
 def test_centaur_is_available_without_exposing_other_metasapients() -> None:
     assert "Centaur" in catalog()["all_metatypes"]
-    assert {m["name"] for m in public_catalog()["metatypes"]} == {"Human", "Elf", "Dwarf", "Ork", "Troll", "Centaur"}
+    offered = {m["name"] for m in public_catalog()["metatypes"]}
+    # The shapeshifters are offered too (tests/test_shapeshifter_chargen.py).
+    assert {name for name in offered if not name.startswith("Shapeshifter: ")} == {
+        "Human",
+        "Elf",
+        "Dwarf",
+        "Ork",
+        "Troll",
+        "Centaur",
+    }

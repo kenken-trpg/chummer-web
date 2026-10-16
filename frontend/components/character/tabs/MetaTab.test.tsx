@@ -298,4 +298,87 @@ describe("<MetaTab>", () => {
     expect(tip.textContent).toContain("特殊点はエッジ");
     expect(tip.textContent).toContain("メタバリアント");
   });
+
+  describe("a shapeshifter", () => {
+    const BOVINE = "Shapeshifter: Bovine";
+    const catalog = makeCatalog({
+      priority_table: {
+        ...priorityTable,
+        Heritage: {
+          E: {
+            metatypes: [
+              { name: "Human", special: 0, variants: [] },
+              {
+                name: BOVINE,
+                special: 4,
+                karma: 5,
+                variants: [
+                  { name: "Human", special: 4, karma: 5 },
+                  { name: "Elf", special: 4, karma: 10 },
+                ],
+              },
+            ],
+          },
+        },
+      } as unknown as PriorityTable,
+      metatypes: [
+        { name: "Human", category: "Metahuman", source: "SR5", karma: 0, metavariants: [] },
+        {
+          name: BOVINE,
+          category: "Shapeshifter",
+          source: "RF",
+          karma: 100,
+          metavariants: [
+            { name: "Human", karma: 100, attributes: {} },
+            { name: "Elf", karma: 105, attributes: {} },
+          ],
+        },
+      ] as never,
+    });
+
+    it.each([
+      ["Priority", ["5カルマ", "10カルマ"]],
+      ["Karma", ["100カルマ", "105カルマ"]],
+    ])("picks a metahuman form, never none, priced in %s", (build_method, prices) => {
+      const patch = vi.fn();
+      renderTab({
+        catalog,
+        character: { build_method, metatype: BOVINE, metavariant: "Human" },
+        books: ["SR5", "RF"],
+        patch,
+      });
+      const form = screen.getByLabelText("人間形態") as HTMLSelectElement;
+      const options = Array.from(form.options);
+      expect(options.map((o) => o.value)).toEqual(["Human", "Elf"]);
+      options.forEach((o, i) => expect(o.textContent).toContain(prices[i]));
+      fireEvent.change(form, { target: { value: "Elf" } });
+      expect(patch).toHaveBeenCalledWith({ metavariant: "Elf" });
+    });
+
+    it("is hidden without RF, like Centaur", () => {
+      renderTab({ catalog, books: ["SR5"] });
+      expect(screen.queryByRole("button", { name: /Bovine/ })).toBeNull();
+    });
+
+    it("keeps the plain metavariant picker for a metatype", () => {
+      renderTab({
+        catalog: makeCatalog({
+          priority_table: priorityTable,
+          metatypes: [
+            {
+              name: "Elf",
+              category: "Metahuman",
+              source: "SR5",
+              karma: 0,
+              metavariants: [{ name: "Nocturna", karma: 0, attributes: {} }],
+            },
+          ] as never,
+        }),
+        character: { metatype: "Elf" },
+      });
+      const picker = screen.getByLabelText("メタバリアント") as HTMLSelectElement;
+      expect(Array.from(picker.options).map((o) => o.value)).toEqual(["", "Nocturna"]);
+      expect(picker.textContent).not.toContain("カルマ");
+    });
+  });
 });
