@@ -7,6 +7,7 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("changelog", SCRIPTS / "changelog.py")
+assert spec is not None and spec.loader is not None
 changelog = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(changelog)
 
@@ -15,7 +16,7 @@ RELEASED = "## [0.5.3] — 2026-10-16\n\n### Fixed\n\n- old fix\n"
 
 
 class CollectTest(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
@@ -27,18 +28,18 @@ class CollectTest(unittest.TestCase):
             setattr(changelog, name, value)
             self.addCleanup(setattr, changelog, name, old)
 
-    def fold(self, text):
+    def fold(self, text: str) -> str:
         self.changelog.write_text(text, encoding="utf-8")
         (self.fragments / "new.fixed.md").write_text("- new fix\n", encoding="utf-8")
         self.assertEqual(changelog.collect(), 0)
         self.assertFalse((self.fragments / "new.fixed.md").exists())
         return self.changelog.read_text(encoding="utf-8")
 
-    def test_folds_into_existing_unreleased(self):
+    def test_folds_into_existing_unreleased(self) -> None:
         out = self.fold(HEAD + "## [Unreleased]\n\n" + RELEASED)
         self.assertEqual(out, HEAD + "## [Unreleased]\n\n### Fixed\n\n- new fix\n\n" + RELEASED)
 
-    def test_restores_unreleased_a_release_renamed_away(self):
+    def test_restores_unreleased_a_release_renamed_away(self) -> None:
         # The release step renames [Unreleased] to the version; the next
         # collect used to die on `substring not found`.
         out = self.fold(HEAD + RELEASED)
