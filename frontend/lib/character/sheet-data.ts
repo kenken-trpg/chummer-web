@@ -1,5 +1,5 @@
 import type { Catalog, Character } from "@/lib/types";
-import { makeT, type TFn } from "@/lib/ui-strings";
+import { makeT, specTr, type TFn } from "@/lib/ui-strings";
 import { translate, type Locale, type UiFn } from "@/lib/i18n";
 import { isDrugCategory } from "@/lib/character/constants";
 import { specialArmorBits } from "@/lib/character/format";
@@ -103,7 +103,10 @@ export function buildSheetData({
         spec,
         ...(spec && specializationBonus(d, s.name) === 0 ? { specInactive: true } : {}),
         swapNote: specSwap
-          ? ui("skills.specAttrSwap", { attr: specSwap.attribute, spec: tr(specSwap.spec) })
+          ? ui("skills.specAttrSwap", {
+              attr: specSwap.attribute,
+              spec: specTr(tr, s.name, specSwap.spec),
+            })
           : undefined,
       };
     })

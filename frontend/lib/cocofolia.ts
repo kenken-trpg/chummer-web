@@ -1,5 +1,5 @@
 import type { Catalog, Character } from "@/lib/types";
-import { attrShort, makeT } from "@/lib/ui-strings";
+import { attrShort, makeT, specTr } from "@/lib/ui-strings";
 import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
@@ -87,7 +87,7 @@ export function buildChatPalette(
         const specAttr = swapped || attr;
         roll(
           rating + at(specAttr) + bonus + specBonus,
-          `${tr(name)}：${tr(sp)}`,
+          `${tr(name)}：${specTr(tr, name, sp)}`,
           swapped ? (ATTR_LIMIT[specAttr] ?? null) : limit,
         );
       }
@@ -115,7 +115,7 @@ export function buildChatPalette(
     known.forEach((k) => {
       const pool = k.rating + at(k.attribute);
       roll(pool, tr(k.name), "mental");
-      if (k.spec) roll(pool + 2, `${tr(k.name)}：${tr(k.spec)}`, "mental");
+      if (k.spec) roll(pool + 2, `${tr(k.name)}：${specTr(tr, k.name, k.spec)}`, "mental");
     });
   }
 

@@ -7,6 +7,8 @@ import {
   makeT,
   makeTr,
   makeTrSkillGroup,
+  scopeTr,
+  specTr,
 } from "@/lib/ui-strings";
 
 /** The shape the backend ships: `ui_strings` keyed by locale, `translations`
@@ -120,5 +122,37 @@ describe("contactTerm", () => {
 
   it("is English in English", () => {
     expect(contactTerm(makeTr(catalog as never, "en"), "Spider")).toBe("Spider");
+  });
+});
+
+describe("specTr", () => {
+  const catalog = {
+    translations: { Spirits: "精霊", Combat: "戦闘", "Rotary Wing": "Rotary Wing" },
+    translations_by_kind: { skill: {} },
+    skills: {
+      spec_names: {
+        "Astral Combat": { Spirits: "対精霊" },
+        "Pilot Aircraft": { "Rotary Wing": "回転翼機" },
+      },
+    },
+  };
+
+  it("reads a specialization as its skill's, where the flat table has another thing", () => {
+    const tr = makeTr(catalog as never, "ja");
+    expect(specTr(tr, "Astral Combat", "Spirits")).toBe("対精霊");
+    expect(specTr(tr, "Pilot Aircraft", "Rotary Wing")).toBe("回転翼機");
+  });
+
+  it("falls back to the flat table for another skill or a custom one", () => {
+    const tr = makeTr(catalog as never, "ja");
+    expect(specTr(tr, "Arcana", "Spirits")).toBe("精霊");
+    expect(specTr(tr, "Astral Combat", "Bound spirits only")).toBe("Bound spirits only");
+  });
+
+  it("survives a scoped translator, and is English in English", () => {
+    expect(
+      specTr(scopeTr(makeTr(catalog as never, "ja"), "skill"), "Astral Combat", "Spirits"),
+    ).toBe("対精霊");
+    expect(specTr(makeTr(catalog as never, "en"), "Astral Combat", "Spirits")).toBe("Spirits");
   });
 });

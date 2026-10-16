@@ -1,7 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
-import { scopeTr } from "@/lib/ui-strings";
+import { scopeTr, specTr } from "@/lib/ui-strings";
 import { skillLabel } from "@/lib/character/format";
 
 export function SkillsSection(s: SheetData) {
@@ -42,7 +42,7 @@ export function SkillsSection(s: SheetData) {
                 <b>{row.pool}</b>
               </td>
               <td className="left">
-                {row.spec ? tr(row.spec) : ""}
+                {row.spec ? specTr(tr, row.name, row.spec) : ""}
                 {row.specInactive ? (
                   <span className="sheet-note"> {ui("skills.specDisabled")}</span>
                 ) : null}

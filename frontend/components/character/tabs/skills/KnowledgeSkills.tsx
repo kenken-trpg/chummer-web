@@ -1,5 +1,6 @@
 "use client";
 import type { TabPanelProps } from "@/components/character/types";
+import { specTr } from "@/lib/ui-strings";
 import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SpecPicker } from "@/components/character/SpecPicker";
@@ -146,7 +147,7 @@ export function KnowledgeSkills(props: TabPanelProps) {
                 <SpecPicker
                   options={knowSpec?.specs || []}
                   value={specValue}
-                  tr={tr}
+                  tr={(spec) => specTr(tr, row.name, spec)}
                   onDraft={(next) => spec.draft(row.name, next)}
                   onCommit={(next) => spec.commit(row.name, next)}
                 />

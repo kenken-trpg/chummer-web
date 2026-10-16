@@ -1,7 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
-import { scopeTr } from "@/lib/ui-strings";
+import { scopeTr, specTr } from "@/lib/ui-strings";
 
 export function KnowledgeSection(s: SheetData) {
   const { tr: sheetTr, totals, knowledge } = s;
@@ -35,7 +35,7 @@ export function KnowledgeSection(s: SheetData) {
                 <td>
                   <b>{rating + attr}</b>
                 </td>
-                <td className="left">{row.spec ? tr(row.spec) : ""}</td>
+                <td className="left">{row.spec ? specTr(tr, row.name, row.spec) : ""}</td>
               </tr>
             );
           })}

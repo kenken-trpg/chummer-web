@@ -57,6 +57,7 @@ from .skills import load_skills
 from .translations import (
     _load_ja_overrides,
     load_skill_group_names,
+    load_spec_names,
     load_translations,
     load_translations_by_kind,
     load_ui_strings,
@@ -134,6 +135,7 @@ __all__ = [
     "load_settings_presets",
     "load_qi_focus",
     "load_skill_group_names",
+    "load_spec_names",
     "load_translations",
     "load_translations_by_kind",
     "load_ui_strings",

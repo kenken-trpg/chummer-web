@@ -640,3 +640,43 @@ describe("contact words on the sheets", () => {
     expect(text).toContain("32");
   });
 });
+
+describe("specializations on the sheets", () => {
+  it("are read as their skill's, on the visual and the text sheet", () => {
+    const tr = makeTr(
+      {
+        translations: { Spirits: "精霊", "Astral Combat": "アストラル戦闘", Con: "詐術" },
+        translations_by_kind: {},
+        skills: {
+          spec_names: { "Astral Combat": { Spirits: "対精霊" }, Con: { Seduction: "誘惑" } },
+        },
+      } as never,
+      "ja",
+    );
+    const data = buildSheetData({
+      character: makeCharacter({
+        derived: {
+          totals: { WIL: 4, CHA: 3 } as never,
+          skill_totals: { "Astral Combat": 3, Con: 2 },
+          skill_specializations: { "Astral Combat": "Spirits", Con: "Seduction" },
+        },
+      }),
+      catalog: makeCatalog({
+        skills: {
+          ...makeCatalog().skills,
+          skills: [
+            { name: "Astral Combat", attribute: "WIL", category: "Magical Active", source: "SR5" },
+            { name: "Con", attribute: "CHA", category: "Social Active", source: "SR5" },
+          ] as never,
+        },
+      }),
+      tr,
+      layout: "standard",
+    });
+    const text = render(<SkillsSection {...data} />).container.textContent;
+    expect(text).toContain("対精霊");
+    expect(text).toContain("誘惑");
+    expect(text).not.toContain("Seduction");
+    expect(textSheet(data)).toContain("アストラル戦闘（対精霊）");
+  });
+});

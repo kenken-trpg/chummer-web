@@ -1,6 +1,6 @@
 /** The chat palette: the rolls a piece carries, and the variables they read. */
 import type { Catalog, Character, Derived, InstalledWeapon } from "@/lib/types";
-import { attrName, makeT } from "@/lib/ui-strings";
+import { attrName, makeT, specTr } from "@/lib/ui-strings";
 import { type Locale, type MsgKey } from "@/lib/i18n";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
@@ -168,7 +168,7 @@ export function buildUdonariumPalette(
         const specAttr = swapped || attr;
         numericRoll(
           rating + at(specAttr) + bonus + specBonus,
-          `${tr(name)}：${tr(sp)}`,
+          `${tr(name)}：${specTr(tr, name, sp)}`,
           swapped ? (ATTR_LIMIT[specAttr] ?? null) : limit,
         );
       }
@@ -200,7 +200,10 @@ export function buildUdonariumPalette(
         const pool = k.rating + at(k.attribute);
         kn.roll(`${Math.max(pool, 0)}B6@{${LIM.mental}}`, tr(k.name));
         if (k.spec)
-          kn.roll(`${Math.max(pool + 2, 0)}B6@{${LIM.mental}}`, `${tr(k.name)}：${tr(k.spec)}`);
+          kn.roll(
+            `${Math.max(pool + 2, 0)}B6@{${LIM.mental}}`,
+            `${tr(k.name)}：${specTr(tr, k.name, k.spec)}`,
+          );
       });
     if (!kn.empty) blocks.push(kn.text(ui("udo.secKnowledge")));
   }

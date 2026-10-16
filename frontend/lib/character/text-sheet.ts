@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/character/sheet-data";
-import { attrShort, contactTerm, scopeTr } from "@/lib/ui-strings";
+import { attrShort, contactTerm, scopeTr, specTr } from "@/lib/ui-strings";
 import {
   critterPowerRow,
   spellDescriptors,
@@ -120,7 +120,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.skills");
     x.activeSkills.forEach((s) =>
       line(
-        `  ${skillTr(s.name)}${s.spec ? "（" + skillTr(s.spec) + "）" : ""}${s.specInactive ? ` ${ui("skills.specDisabled")}` : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
+        `  ${skillTr(s.name)}${s.spec ? "（" + specTr(skillTr, s.name, s.spec) + "）" : ""}${s.specInactive ? ` ${ui("skills.specDisabled")}` : ""} ${s.rating} [${attrShort(s.attribute, t)} ${ui("txt.pool")} ${s.pool}]${s.swapNote ? ` ${s.swapNote}` : ""}`,
       ),
     );
     x.exotic.forEach((r) =>
@@ -143,7 +143,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.knowledge");
     x.knowledge.forEach((k) =>
       line(
-        `  ${knowTr(k.name)}${k.native ? ui("sheet.native") : ""} ${Math.max(k.rating || 0, k.skillsoft || 0)}${k.spec ? "（" + knowTr(k.spec) + "）" : ""}`,
+        `  ${knowTr(k.name)}${k.native ? ui("sheet.native") : ""} ${Math.max(k.rating || 0, k.skillsoft || 0)}${k.spec ? "（" + specTr(knowTr, k.name, k.spec) + "）" : ""}`,
       ),
     );
     line();

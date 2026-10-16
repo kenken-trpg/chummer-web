@@ -32,6 +32,8 @@ export type TrFn = ((name: string) => string) & {
   byKind?: Partial<Record<string, Record<string, string>>>;
   base?: (name: string) => string;
   kinds?: readonly TranslationKind[];
+  /** Skill -> specialization -> reading (`skills.spec_names`); see `specTr`. */
+  specs?: Record<string, Record<string, string>>;
 };
 
 /**
@@ -40,12 +42,17 @@ export type TrFn = ((name: string) => string) & {
  * no en-us_data.xml upstream because there is nothing to translate.
  */
 export function makeTr(
-  catalog?: Pick<Catalog, "translations" | "translations_by_kind"> | null,
+  catalog?:
+    | (Pick<Catalog, "translations" | "translations_by_kind"> & {
+        skills?: Pick<Catalog["skills"], "spec_names">;
+      })
+    | null,
   locale: Locale = "ja",
 ): TrFn {
   if (locale === "en") return (name) => name;
   const tr: TrFn = (name) => catalog?.translations?.[name] || name;
   tr.byKind = catalog?.translations_by_kind;
+  tr.specs = catalog?.skills?.spec_names;
   return tr;
 }
 
@@ -73,7 +80,19 @@ export function scopeTr(tr: TrFn, ...kinds: TranslationKind[]): TrFn {
   scoped.byKind = byKind;
   scoped.base = base;
   scoped.kinds = all;
+  scoped.specs = tr.specs;
   return scoped;
+}
+
+/**
+ * A skill's specialization, read as that skill's. The same English is a
+ * different thing under another skill — Spirits is 対精霊 for Astral Combat,
+ * Combat is 対戦闘呪文 for Counterspelling — so the flat table cannot hold
+ * it. Falls back to `tr` for a custom one, or a skill the lang file lists none
+ * for.
+ */
+export function specTr(tr: TrFn, skill: string, spec: string): string {
+  return tr.specs?.[skill]?.[spec] || tr(spec);
 }
 
 /**
