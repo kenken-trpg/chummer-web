@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { exportFilename } from "@/lib/character/export-filename";
 import { buildShareUrl, SHARE_URL_WARN } from "@/lib/character/share";
@@ -54,6 +54,16 @@ export function useCharacterExport(opts: {
 }) {
   const { ch, ui, locale, pendingGearCount, setError, setNotice } = opts;
   const [copied, setCopied] = useState<string | null>(null);
+  /** the timer that clears `copied`. Cancelled on unmount, so it cannot fire a
+   *  state update into a torn-down tree (in tests: after the DOM is gone), and
+   *  on a second copy, so the new flash gets its full two seconds. */
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
   /** what the file would lose, while the player decides whether to export it
    *  anyway. Tied to the exact state it was checked against: any edit (or
    *  switching character) makes it stale, and a stale review is dropped. */
@@ -245,7 +255,8 @@ export function useCharacterExport(opts: {
       ta.remove();
     }
     setCopied(tag);
-    setTimeout(() => setCopied(null), 2000);
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(null), 2000);
   }
 
   return {
