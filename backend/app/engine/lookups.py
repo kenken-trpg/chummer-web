@@ -231,6 +231,13 @@ def find_metatype(name: str, variant: str | None) -> dict[str, Any]:
             metavariants: list[dict[str, Any]] = base.get("metavariants") or []
             for mv in metavariants:
                 if mv.get("name") == variant:
+                    if base.get("category") == "Shapeshifter":
+                        # A shapeshifter's metavariant is the metahuman form
+                        # it takes; its attributes are still the animal's.
+                        # Chummer's Character.Create builds the attributes
+                        # from the metatype and everything else (karma,
+                        # qualities, powers, bonus) from the metavariant.
+                        return {**mv, "attributes": base["attributes"]}
                     return mv
         return base
     # Not a KeyError: this is reached from a visitor's file — a JSON export, a

@@ -68,6 +68,11 @@ def bootstrap(ctx: Ctx) -> None:
         )
     ctx.errors = validate_priorities(ctx.state.priorities, ctx.state.build_method)
     ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
+    if ctx.meta.get("category") == "Shapeshifter" and not ctx.state.metavariant:
+        # A shapeshifter always has a metahuman form; Chummer's
+        # Character.Create picks Human when none was chosen.
+        ctx.state.metavariant = "Human"
+        ctx.meta = find_metatype(ctx.state.metatype, ctx.state.metavariant)
     ctx.attrs_spec = ctx.meta["attributes"]
     ctx.warnings = _drop_invalid_vehicle_ware(ctx.state)
     if ctx.state.metavariant and ctx.meta["name"] != ctx.state.metavariant:
