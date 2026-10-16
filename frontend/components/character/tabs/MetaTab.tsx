@@ -10,7 +10,8 @@ import { critterPowerRow } from "@/lib/spell-terms";
 export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
   const allowedBooks = useAllowedBooks();
-  const choices = ["Karma", "LifeModule"].includes(ch.build_method || "Priority")
+  const karmaBuild = ["Karma", "LifeModule"].includes(ch.build_method || "Priority");
+  const choices = karmaBuild
     ? catalog.metatypes.map((m) => ({ name: m.name, special: 0, karma: m.karma ?? 0 }))
     : table.Heritage[ch.priorities.Heritage].metatypes;
   const candidates = choices.filter((choice) => {
@@ -24,6 +25,19 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
   // Critter powers exist only for the metatypes whose `<enabletab>critter`
   // reaches them, and they have no quality row at all.
   const innate = d.qualities.filter((q) => q.origin === "Metatype");
+  const current = catalog.metatypes.find((m) => m.name === ch.metatype);
+  // A shapeshifter's metavariant is the metahuman form it takes, and it
+  // always has one: the server falls back to Human, as Chummer does.
+  const shifter = current?.category === "Shapeshifter";
+  // The form sets the price (Chummer charges the metavariant's karma), and
+  // between forms it differs: a Bovine Elf is 10 karma at priority, its
+  // Human 5. Shown for a shapeshifter only, where the form is a choice.
+  const formKarma = (form: string): number | undefined =>
+    karmaBuild
+      ? current?.metavariants.find((v) => v.name === form)?.karma
+      : table.Heritage[ch.priorities.Heritage].metatypes
+          .find((m) => m.name === ch.metatype)
+          ?.variants.find((v) => v.name === form)?.karma;
 
   return (
     <div className="card">
@@ -77,22 +91,26 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           </button>
         ))}
       </div>
-      {catalog.metatypes.find((m) => m.name === ch.metatype)?.metavariants?.length ? (
+      {current?.metavariants?.length ? (
         <div style={{ marginTop: 12 }}>
           <label className="muted stacked-label">
-            {ui("meta.metavariant")}
+            {ui(shifter ? "meta.metahumanForm" : "meta.metavariant")}
             <select
-              value={ch.metavariant || ""}
+              value={ch.metavariant || (shifter ? "Human" : "")}
               onChange={(e) => patch({ metavariant: e.target.value || null })}
             >
-              <option value="">{ui("meta.noVariant", { name: tr(ch.metatype) })}</option>
-              {catalog.metatypes
-                .find((m) => m.name === ch.metatype)
-                ?.metavariants.map((v) => (
+              {shifter ? null : (
+                <option value="">{ui("meta.noVariant", { name: tr(ch.metatype) })}</option>
+              )}
+              {current.metavariants.map((v) => {
+                const karma = shifter ? formKarma(v.name) : undefined;
+                return (
                   <option key={v.name} value={v.name}>
                     {withOriginal(v.name, tr)}
+                    {karma !== undefined ? ui("common.karmaCost", { karma }) : null}
                   </option>
-                ))}
+                );
+              })}
             </select>
           </label>
         </div>

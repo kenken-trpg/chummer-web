@@ -6,6 +6,7 @@ export const EN_RULES = {
   "spec.custom": "Type your own",
   "meta.special": " / {points} special points",
   "meta.metavariant": "Metavariant",
+  "meta.metahumanForm": "Metahuman form",
 
   "meta.noVariant": "None ({name})",
   "sr.type.mana": "Mana",
