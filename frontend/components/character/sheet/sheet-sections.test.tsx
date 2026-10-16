@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { textSheet } from "@/lib/character/text-sheet";
+import { makeTr } from "@/lib/ui-strings";
 import { buildSheetData } from "@/lib/character/sheet-data";
 import {
   identityTr,
@@ -592,5 +593,50 @@ describe("a shapeshifter's two bodies on the sheets", () => {
     const text = textSheet(data);
     expect(text).toMatch(/人間形態（Human） \S+ 3 {2}\S+ 4/);
     expect(text).toContain("移動（人間形態）");
+  });
+});
+
+describe("contact words on the sheets", () => {
+  const tr = makeTr(
+    {
+      translations: { Spider: "クモ" },
+      translations_by_kind: {
+        contact: { Spider: "スパイダー", Fixer: "フィクサー", Female: "女性" },
+      },
+    } as never,
+    "ja",
+  );
+  const data = buildSheetData({
+    character: {
+      ...RICH_CHARACTER,
+      sex: "Female",
+      age: "32",
+      derived: {
+        ...RICH_CHARACTER.derived,
+        contacts: [
+          { id: "a", name: "Mama", role: "Fixer", connection: 4, loyalty: 3 },
+          { id: "b", name: "Web", role: "Spider", connection: 3, loyalty: 2 },
+          { id: "c", name: "Old Joe", role: "my old squadmate", connection: 1, loyalty: 5 },
+        ],
+      },
+    } as never,
+    catalog: RICH_CATALOG,
+    tr,
+    layout: "standard",
+  });
+
+  it("the contacts table names Chummer's roles in Japanese and keeps the player's own", () => {
+    const text = render(<ContactsSection {...data} />).container.textContent;
+    expect(text).toContain("フィクサー");
+    expect(text).toContain("スパイダー");
+    expect(text).not.toContain("クモ");
+    expect(text).toContain("my old squadmate");
+    expect(textSheet(data)).toContain("Web / スパイダー");
+  });
+
+  it("the description reads sex in Japanese and leaves a numeric age alone", () => {
+    const text = render(<DescriptionSection {...data} />).container.textContent;
+    expect(text).toContain("女性");
+    expect(text).toContain("32");
   });
 });

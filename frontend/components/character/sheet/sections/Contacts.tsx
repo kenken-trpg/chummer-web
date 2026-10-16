@@ -1,9 +1,10 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
+import { contactTerm } from "@/lib/ui-strings";
 
 export function ContactsSection(s: SheetData) {
-  const { d } = s;
+  const { d, tr } = s;
   const { ui } = useUiText();
   return (
     <Section title="sheet.contacts" empty={!(d.contacts || []).length}>
@@ -24,7 +25,7 @@ export function ContactsSection(s: SheetData) {
                 {c.free ? " ★" : ""}
                 {c.group ? " (G)" : ""}
               </td>
-              <td className="left">{c.role || ""}</td>
+              <td className="left">{c.role ? contactTerm(tr, c.role) : ""}</td>
               <td>{c.connection}</td>
               <td>{c.loyalty}</td>
             </tr>

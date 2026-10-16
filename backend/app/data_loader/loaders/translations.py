@@ -145,6 +145,7 @@ def load_book_names() -> dict[str, str]:
 #: screen (the skills tab, the ware tab, …) — see `scopeTr` in lib/ui-strings.ts.
 TRANSLATION_KINDS = (
     "armor",
+    "contact",
     "critter_power",
     "cyberware",
     "gear",
@@ -181,7 +182,38 @@ def load_translations_by_kind() -> dict[str, dict[str, str]]:
             log.warning("ja override by_kind.json: unknown kind %r", kind)
             continue
         result[kind] = {k: v for k, v in names.items() if isinstance(k, str) and isinstance(v, str) and v.strip()}
+    # Not hand-curated: the lang file's own list, which nothing else reads.
+    result["contact"] = {**_contact_terms(), **result.get("contact", {})}
     return result
+
+
+#: The `contacts.xml` lists the lang file translates as attributes,
+#: `<contact translate="フィクサー">Fixer</contact>`. Chummer offers them as a
+#: contact's role and a person's sex and age; the words are typed free text in
+#: a save, so a match is shown translated and anything else as written.
+CONTACT_TERMS = ("contacts/contact", "genders/gender", "ages/age")
+
+
+def _contact_terms() -> dict[str, str]:
+    """English -> Japanese for `CONTACT_TERMS`. A kind of its own, not the
+    flat table: as a contact Spider is スパイダー and Cleaner 清掃作業員,
+    where the flat table has the mentor spirit's クモ and the gear's クリーナー."""
+    path = LANG_DIR / "ja-jp_data.xml"
+    if not path.exists():
+        return {}
+    try:
+        root = parse_vendored(path)
+    except ET.ParseError as exc:
+        log.warning("ja-jp_data.xml parse failed: %s", exc)
+        return {}
+    terms: dict[str, str] = {}
+    for xpath in CONTACT_TERMS:
+        for node in root.findall(f".//{xpath}"):
+            english = (node.text or "").strip()
+            japanese = (node.get("translate") or "").strip()
+            if english and japanese and japanese != english:
+                terms.setdefault(english, japanese)
+    return terms
 
 
 #: Locale -> the vendored Chummer lang file it comes from. `en-us.xml` was

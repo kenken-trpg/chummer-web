@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/character/sheet-data";
-import { attrShort, scopeTr } from "@/lib/ui-strings";
+import { attrShort, contactTerm, scopeTr } from "@/lib/ui-strings";
 import {
   critterPowerRow,
   spellDescriptors,
@@ -298,7 +298,7 @@ export function textSheet(x: TextArgs): string {
     head("sheet.contacts");
     (d.contacts || []).forEach((c) =>
       line(
-        `  ${c.name || ui("common.unnamed")}${c.role ? ` / ${tr(c.role)}` : ""}  C${c.connection}/L${c.loyalty}`,
+        `  ${c.name || ui("common.unnamed")}${c.role ? ` / ${contactTerm(tr, c.role)}` : ""}  C${c.connection}/L${c.loyalty}`,
       ),
     );
     line();

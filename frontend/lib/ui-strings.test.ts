@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { attrLabel, attrName, attrShort, makeT, makeTr, makeTrSkillGroup } from "@/lib/ui-strings";
+import {
+  attrLabel,
+  attrName,
+  attrShort,
+  contactTerm,
+  makeT,
+  makeTr,
+  makeTrSkillGroup,
+} from "@/lib/ui-strings";
 
 /** The shape the backend ships: `ui_strings` keyed by locale, `translations`
  *  English -> Japanese (there is no English table; see `makeTr`). */
@@ -86,5 +94,31 @@ describe("makeTrSkillGroup", () => {
 
   it("is the identity for en, like makeTr", () => {
     expect(makeTrSkillGroup(catalog, "en")("Influence")).toBe("Influence");
+  });
+});
+
+describe("contactTerm", () => {
+  const catalog = {
+    translations: { Spider: "クモ", Armorer: "武器整備" },
+    translations_by_kind: {
+      contact: { Spider: "スパイダー", Fixer: "フィクサー", Female: "女性" },
+    },
+  };
+
+  it("reads a contact's word as a contact, not as the flat table's namesake", () => {
+    const tr = makeTr(catalog as never, "ja");
+    expect(contactTerm(tr, "Spider")).toBe("スパイダー");
+    expect(contactTerm(tr, "Fixer")).toBe("フィクサー");
+    expect(contactTerm(tr, "Female")).toBe("女性");
+  });
+
+  it("leaves the player's own words as written, even where the flat table has them", () => {
+    const tr = makeTr(catalog as never, "ja");
+    expect(contactTerm(tr, "Armorer")).toBe("Armorer");
+    expect(contactTerm(tr, "my old squadmate")).toBe("my old squadmate");
+  });
+
+  it("is English in English", () => {
+    expect(contactTerm(makeTr(catalog as never, "en"), "Spider")).toBe("Spider");
   });
 });
