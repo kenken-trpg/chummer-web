@@ -81,6 +81,17 @@ def test_load_translations_merges_overlay_over_vendored(tmp_path, monkeypatch) -
     assert len(merged) == len(base) + 1
 
 
+def test_licenses_are_read_from_their_translate_attribute() -> None:
+    # `<license translate="火器ライセンス">Firearms License</license>`: the
+    # reading is an attribute, which the name/translate walk never saw, so a
+    # fake license's extra printed in English.
+    table = load_translations()
+    assert table["Firearms License"] == "火器ライセンス"
+    assert table["Driver's License"] == "運転免許"
+    # a gap filler: what another entity already translates stays
+    assert table["Clothing"] == "衣服"
+
+
 def test_load_ui_strings_merges_overlay_over_vendored(tmp_path, monkeypatch) -> None:
     empty = tmp_path / "empty"
     empty.mkdir()

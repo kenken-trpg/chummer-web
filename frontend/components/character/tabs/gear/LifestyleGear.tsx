@@ -98,7 +98,7 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                 {(item.qualities || []).map((q) => (
                   <div className="muted" key={q.id} style={{ marginTop: 6 }}>
                     {tr(q.name)}
-                    {q.extra ? `（${q.extra}）` : ""}
+                    {q.extra ? `（${tr(q.extra)}）` : ""}
                     {q.lp ? ui("life.lp", { lp: q.lp }) : ""}
                     {q.free
                       ? ui("common.freeSlot")

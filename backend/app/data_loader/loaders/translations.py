@@ -57,6 +57,17 @@ def load_translations() -> dict[str, str]:
                         continue
                     mapping[name] = trans
                     origin[name] = file
+            # Licenses carry their reading as an attribute,
+            # `<license translate="火器ライセンス">Firearms License</license>`,
+            # which the `<name>`/`<translate>` walk above never sees. They are
+            # what a fake license's extra holds. Gaps only: none of the 36
+            # names means anything else in this table, and if one ever did
+            # the entity's own translation should stay.
+            for node in root.findall(".//licenses/license"):
+                english = (node.text or "").strip()
+                japanese = (node.get("translate") or "").strip()
+                if english and japanese and japanese != english and mapping.get(english, english) == english:
+                    mapping[english] = japanese
     overrides = _load_ja_overrides("data.json")
     if overrides:
         log.info("applied %d ja_overrides/data.json entries", len(overrides))

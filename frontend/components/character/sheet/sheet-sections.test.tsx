@@ -521,6 +521,29 @@ describe("no English left on the sheet where a translation exists", () => {
     // the player's own label is left as written
     expect(career).toContain("Run: Fortune Cookie");
   });
+
+  it("a lifestyle quality's pick reads in Japanese, as its name does", () => {
+    const tr = (name: string) =>
+      ({ "Grid Subscription": "グリッド契約", "Public Grid": "公共グリッド" })[name] ?? name;
+    const data = buildSheetData({
+      character: {
+        ...RICH_CHARACTER,
+        derived: {
+          ...RICH_CHARACTER.derived,
+          lifestyle: {
+            ...(RICH_CHARACTER.derived!.lifestyle ?? { name: "Middle", months: 1 }),
+            qualities: [{ name: "Grid Subscription", extra: "Public Grid" }],
+          },
+        },
+      } as never,
+      catalog: RICH_CATALOG,
+      tr,
+      layout: "standard",
+    });
+    expect(render(<CoreSection {...data} />).container.textContent).toContain(
+      "グリッド契約:公共グリッド",
+    );
+  });
 });
 
 describe("a shapeshifter's two bodies on the sheets", () => {
