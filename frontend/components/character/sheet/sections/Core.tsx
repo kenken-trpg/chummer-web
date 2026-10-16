@@ -113,7 +113,7 @@ export function CoreSection(s: SheetData) {
               {(d.lifestyle.qualities || []).length ? (
                 <em>
                   {(d.lifestyle.qualities || [])
-                    .map((q) => `${tr(q.name)}${q.extra ? `:${q.extra}` : ""}`)
+                    .map((q) => `${tr(q.name)}${q.extra ? `:${tr(q.extra)}` : ""}`)
                     .join(ui("common.listSep"))}
                 </em>
               ) : null}
