@@ -818,6 +818,33 @@ describe("useCharacterEditor.copyText", () => {
     expect(result.current.copied).toBe("text"); // the button still confirms
     expect(document.querySelector("textarea")).toBeNull(); // and cleans up after itself
   });
+
+  it("restarts the flash on a second copy and cancels it on unmount", async () => {
+    const { result, unmount } = await editorWith();
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { writeText: () => Promise.resolve() },
+    });
+    vi.useFakeTimers();
+    try {
+      await act(async () => await result.current.copyText("a", "text"));
+      act(() => vi.advanceTimersByTime(1500));
+      await act(async () => await result.current.copyText("b", "share"));
+      act(() => vi.advanceTimersByTime(1500));
+      // the first copy's timer would have cleared it by now
+      expect(result.current.copied).toBe("share");
+      act(() => vi.advanceTimersByTime(500));
+      expect(result.current.copied).toBeNull();
+
+      await act(async () => await result.current.copyText("c", "text"));
+      unmount();
+      // a timer left behind fires setState after teardown — in CI, after the
+      // DOM is gone: "ReferenceError: window is not defined"
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 /**
