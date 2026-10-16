@@ -102,6 +102,11 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         current.update(updates.pop("settings"))
         data["settings"] = current
     data.update({k: v for k, v in updates.items() if v is not None})
+    if "metavariant" in updates and updates["metavariant"] is None:
+        # An explicit null clears it: the metatype buttons send one with every
+        # new species. Kept, a shapeshifter's "Human" form survived a change
+        # to Human itself, where the name still resolves (to the metatype).
+        data["metavariant"] = None
     if "life_modules" in updates and "life_module_entry_ids" not in updates:
         # Compatibility for existing callers that replace only the ID list.
         # Retain each surviving acquisition once; a removed/re-added entry

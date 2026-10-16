@@ -43,7 +43,8 @@ def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx:
             "extra": grant.get("select") or "",
             "bp": grant["karma"],
             "qualitytype": grant["category"],
-            "qualitysource": "Metatype",
+            # Chummer's QualitySource for a `removable="True"` grant.
+            "qualitysource": "MetatypeRemovable" if grant.get("removable") else "Metatype",
             "contributetobp": "False",
             "contributetolimit": "False",
             "implemented": "True",
