@@ -3,6 +3,16 @@
 Notable changes. Format follows [Keep a Changelog](https://keepachangelog.com/);
 self-hosters can pin to a tag instead of tracking `main`.
 
+## [0.5.3] — 2026-10-16
+
+### Changed
+
+- **利用マニュアルの画面を更新しました。** 用語を整えた現在の画面で全18枚のスクリーンショットを撮り直し、本文と画像説明を揃えました。専門化の購入方法とライフモジュールの書き出しに関する説明も更新しています。
+
+### Fixed
+
+- **「コピーしました」の表示が早く消えることがあった問題を直しました。** 2 秒以内に続けてコピーすると、前のコピーのタイマーで表示が早く消えていました。画面を離れた後に残ったタイマーが発火することもなくなりました（CI でテストがまれに `window is not defined` で落ちる原因でした）。
+
 ## [0.5.2] — 2026-10-15
 
 ### Fixed
