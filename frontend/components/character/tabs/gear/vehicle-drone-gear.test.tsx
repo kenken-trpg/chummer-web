@@ -132,10 +132,10 @@ describe("<VehicleDroneGear> home node", () => {
       owning(v, { derived: { condition_monitor: { physical: 10, stun: 0, core: true } } }),
       patch,
     );
-    fireEvent.click(screen.getByLabelText("ホームノード"));
+    fireEvent.click(screen.getByLabelText("Home Node"));
     expect(patch).toHaveBeenCalledWith({ home_node: "v1" });
     document.body.innerHTML = "";
     renderVehicle(owning(v), vi.fn());
-    expect(screen.queryByLabelText("ホームノード")).toBeNull();
+    expect(screen.queryByLabelText("Home Node")).toBeNull();
   });
 });

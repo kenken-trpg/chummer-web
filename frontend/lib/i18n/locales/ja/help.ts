@@ -13,11 +13,10 @@ export const JA_HELP = {
   "help.cm.stun": "精神ダメージトラック = 8 + WIL ÷ 2（切り上げ）",
   "help.cm.note": "埋まったマス 3 つごとにテストへ −1（SR5 p.169）",
   "help.cm.vehicle":
-    "身体ダメージトラック = ホームノード {name} のもの（ヴィークル 12・ドローン 6・人型ドローン（Drones: Anthro）8 ＋ Body ÷ 2 ＋ 改造）",
+    "身体ダメージトラック = Home Node {name} のもの（ヴィークル 12・ドローン 6・人型ドローン（Drones: Anthro）8 ＋ 強靱力 ÷ 2 ＋ 改造）",
   "help.cm.homeNode":
-    "マトリックス・コンディション・モニター = ホームノード {name} の 8 + Device Rating ÷ 2（切り上げ）",
-  "help.cm.core":
-    "コアダメージトラック = 8 + DEP ÷ 2（切り上げ）。A.I. に精神ダメージトラックは無い",
+    "マトリックス・コンディション・モニター = Home Node {name} の 8 + 機器レーティング ÷ 2（切り上げ）",
+  "help.cm.core": "Core Damage Track = 8 + DEP ÷ 2（切り上げ）。A.I. に精神ダメージトラックは無い",
   "help.init.value": "イニシアティブ = REA + INT",
   "help.init.dice": "イニシアティブ・ダイス = 1D6 + 追加ダイス（最大 5D6）",
   "help.init.note": "各イニシアティブ・パス終了時に −10（SR5 p.159）",
@@ -169,10 +168,10 @@ export const JA_HELP = {
   "help.adept.mystic":
     "ミスティックアデプトは 1 点 5 カルマで買う。買わなかった分の魔力は呪文用に残る",
   "help.adept.way": "Way（流儀）の資質は対象のパワーを安くする。割引の総量は魔力 ÷ 4（切り上げ）",
-  "help.martial.statsLabel": "流派と技",
-  "help.martial.style": "流派は 7 カルマ（品目ごとに別のカルマのことがある）",
-  "help.martial.technique": "技は 1 つ 5 カルマ。資質で付いてくる分は無料",
-  "help.martial.chargen": "作成時は流派 1 つ・技 5 つまで。キャリア中は上限なし",
+  "help.martial.statsLabel": "格闘技スタイルと技法",
+  "help.martial.style": "格闘技スタイルは 7 カルマ（品目ごとに別のカルマのことがある）",
+  "help.martial.technique": "技法は 1 つ 5 カルマ。資質で付いてくる分は無料",
+  "help.martial.chargen": "作成時は格闘技スタイル 1 つ・技法 5 つまで。キャリア中は上限なし",
   "help.gear.statsLabel": "装備の値",
   "help.gear.rating":
     "R（レーティング）：性能の段階。上げると価格も入手値も上がることが多い。上限は品目ごと",
@@ -184,7 +183,7 @@ export const JA_HELP = {
   "help.points.knowledge": "知識点 n/m：無料枠は (INT + LOG) × 2 点。母語が 1 つ無料になる",
   "help.points.contacts":
     "コンタクト n/m (+k)：無料枠 m は CHA × 3（設定で変わる）。+k は超えて買った分で、コネ値 ＋ 忠実値がそのままカルマになる",
-  "help.points.martial": "流派 n/m ・ 技 n/m：作成時の上限。超える分はカルマで買う",
+  "help.points.martial": "格闘技スタイル n/m ・ 技法 n/m：作成時の上限。超える分はカルマで買う",
   "help.points.advancement": "成長カルマ：キャリアに入ってから能力値・技能を上げるのに使ったカルマ",
   "help.points.negativeKarma": "不利な資質で戻るカルマの上限。設定で変わる",
   "help.points.spells":

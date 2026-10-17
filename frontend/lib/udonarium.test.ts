@@ -316,10 +316,10 @@ describe("buildUdonariumXml", () => {
       derived: { condition_monitor: { physical: 10, stun: 0, core: true } },
     });
     const xml = buildUdonariumXml(ai, makeCatalog(), identityTr);
-    expect(xml).toContain('<data name="コアCM" type="numberResource" currentValue="0">10</data>');
+    expect(xml).toContain('<data name="Core CM" type="numberResource" currentValue="0">10</data>');
     expect(xml).not.toContain("身体CM");
     expect(xml).not.toContain("精神CM");
-    expect(xml).toContain("コア[][][][][][][][][][]");
+    expect(xml).toContain("Core[][][][][][][][][][]");
     // a home node's Matrix condition monitor, once — not as a stun track as well
     const housed = buildUdonariumXml(
       makeCharacter({

@@ -131,6 +131,8 @@ ADOPTED_OVERRIDES = {
     "seats": "乗員数",
     "sensor": "センサー",
     "cost": "価格",  # the book's gear tables, not just vehicles
+    "hot sim": "ホット・シム",  # 中黒, as the core rulebook prints it (p.231)
+    "astral initiative": "アストラル・イニシアティブ",  # 中黒, core rulebook p.320
 }
 
 # Rulebook terms neither reference translates, so they have no row to override.
@@ -143,6 +145,16 @@ RULEBOOK_ONLY = {
     "Qi Foci": "氣収束具",
     "Mentor Spirit": "導師精霊",
     "Vehicle Cost": "価格",
+    # decided by the user (2026-10-17) where the UI had split or coined its own
+    "Matrix Initiative": "マトリックス・イニシアティブ",
+    "Martial Arts Style": "格闘技スタイル",  # Run & Gun p.128: the text's form (the heading reads 格闘技のスタイル)
+    "Technique": "技法",  # Run & Gun p.128
+    "Spell Defense": "呪文防御",
+    "Cold Sim": "コールド・シム",  # core rulebook p.231, beside ホット・シム
+    "Matrix Condition Monitor": "マトリックス・コンディション・モニター",  # core rulebook p.229
+    # Data Trails has no Japanese edition and its Codex pass has not reached
+    # the A.I.: a supplement's coinage stays English (docs/data-pipeline.md)
+    "Home Node": "Home Node",
 }
 
 # Core rules terms mapped explicitly to ja-jp.xml string keys for a precise diff.

@@ -15,17 +15,17 @@ function renderToggle(core: boolean, homeNode = "", patch = vi.fn()) {
 describe("<HomeNodeToggle>", () => {
   it("is offered to an A.I. only", () => {
     renderToggle(false);
-    expect(screen.queryByLabelText("ホームノード")).toBeNull();
+    expect(screen.queryByLabelText("Home Node")).toBeNull();
   });
 
   it("marks the device, and clears the mark", () => {
     const patch = renderToggle(true);
-    fireEvent.click(screen.getByLabelText("ホームノード"));
+    fireEvent.click(screen.getByLabelText("Home Node"));
     expect(patch).toHaveBeenCalledWith({ home_node: "deck" });
     document.body.innerHTML = "";
     const again = renderToggle(true, "deck");
-    expect((screen.getByLabelText("ホームノード") as HTMLInputElement).checked).toBe(true);
-    fireEvent.click(screen.getByLabelText("ホームノード"));
+    expect((screen.getByLabelText("Home Node") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByLabelText("Home Node"));
     expect(again).toHaveBeenCalledWith({ home_node: "" });
   });
 });

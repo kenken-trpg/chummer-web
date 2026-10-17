@@ -85,7 +85,7 @@ export const JA_SIDEBAR = {
   "side.contacts": "コンタクト",
   "side.martial": "格闘技",
 
-  "side.martialValue": "{styles}/{styleMax}流派 ・ {techniques}/{techniqueMax}技",
+  "side.martialValue": "格闘技スタイル {styles}/{styleMax} ・ 技法 {techniques}/{techniqueMax}",
   "side.attributes": "能力値",
   "side.wareBonus": "ウェア+{bonus}",
   "side.limbAverage": "リム平均",

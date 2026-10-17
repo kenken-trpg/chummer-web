@@ -330,9 +330,9 @@ export const JA_ENGINE = {
   "engine.aiPrograms.prereq": "{name} には {needed} のどれかが必要です",
   "engine.aiPrograms.pickExtra": "{name} の対象を入力してください",
   "engine.homeNode.personaFirmware":
-    "Chummer では、{name} をホームノードにするには Persona Firmware（DT p.66）が必要です。このアプリではヴィークルに付けられないため、確かめていません",
+    "Chummer では、{name} を Home Node にするには Persona Firmware（DT p.66）が必要です。このアプリではヴィークルに付けられないため、確かめていません",
   "engine.homeNode.programLimit":
-    "ホームノードの {name} は Program Limit {limit} で、{needed} 以上が必要です",
+    "Home Node の {name} は Program Limit {limit} で、{needed} 以上が必要です",
 
   "engine.complexforms.threadNeedsSoftware":
     "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルティング不可）",
@@ -345,12 +345,12 @@ export const JA_ENGINE = {
     "{name} の登録テストに{skill}が必要です（未習得・デフォルティング不可）",
 
   "engine.sprites.registeredOverLimit": "登録できるスプライトは {attr} までです（{count}/{max}）",
-  "engine.martial.oneTechniqueOnly": "{name} は技を1つまでです（余分を外しました）",
-  "engine.martial.pickTechnique": "{name} の技を1つ選んでください",
+  "engine.martial.oneTechniqueOnly": "{name} は技法を1つまでです（余分を外しました）",
+  "engine.martial.pickTechnique": "{name} の技法を1つ選んでください",
   "engine.martial.prereq": "{name} の前提を満たしていません",
   "engine.martial.qualityOnly": "{name} は資質経由のみです",
   "engine.martial.styleMax": "作成時の格闘技は{max}つまでです（現在 {count}）",
-  "engine.martial.techniqueMax": "作成時の格闘技の技は合計{max}つまでです（現在 {count}）",
+  "engine.martial.techniqueMax": "作成時の格闘技の技法は合計{max}つまでです（現在 {count}）",
   "engine.martial.techniqueNotAllowed": "{name} に {technique} は選べません",
 
   "engine.martial.unknownDropped": "未知の格闘技を外しました",

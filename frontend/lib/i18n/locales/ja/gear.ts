@@ -84,9 +84,9 @@ export const JA_GEAR = {
   "gear.implantedIn": "{name} に埋め込み",
   "gear.addMod": "改造を追加",
   "gear.blackMarket": "闇市",
-  "gear.homeNode": "ホームノード",
+  "gear.homeNode": "Home Node",
   "gear.homeNodeHint":
-    "A.I. が住む機器。Data Processing がマトリックスイニシアティブとメンタル・社交リミットに、この機器のマトリックス・コンディション・モニターが精神ダメージトラックの代わりになる",
+    "A.I. が住む機器。データ処理がマトリックス・イニシアティブと精神・社交リミットに、この機器のマトリックス・コンディション・モニターが精神ダメージトラックの代わりになる",
   "gear.blackMarketHint":
     "Black Market Pipeline で買い、この品目だけ 10% 引きにする（その分類の品目を 1 つずつ選ぶ）",
   "gear.stackWith": "重ねる防具",
