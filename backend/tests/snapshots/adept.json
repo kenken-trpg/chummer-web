@@ -534,6 +534,27 @@
     "mental_manipulation": 0,
     "physical_illusion": 0
   },
+  "spell_defense_pools": {
+    "decrease": {
+      "AGI": 2,
+      "BOD": 2,
+      "CHA": 2,
+      "INT": 2,
+      "LOG": 2,
+      "REA": 4,
+      "STR": 2,
+      "WIL": 2
+    },
+    "detection": 2,
+    "direct_mana": 1,
+    "direct_physical": 1,
+    "indirect_dodge": 4,
+    "indirect_soak": 1,
+    "mana_illusion": 2,
+    "mental_manipulation": 2,
+    "physical_illusion": 2,
+    "physical_manipulation": 2
+  },
   "spell_dice_pool": [],
   "spell_points": {
     "free": 0,

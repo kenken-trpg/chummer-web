@@ -261,6 +261,7 @@ class DerivedDict(TypedDict):
     fatigue_resist: int
     spell_resistance: int
     spell_defense: dict[str, Any]
+    spell_defense_pools: dict[str, Any]
     spell_dice_pool: list[SpellDicePoolRow]
     action_dice_pools: list[ActionDicePoolRow]
     test_mods: dict[str, int]

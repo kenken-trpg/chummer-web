@@ -56,6 +56,40 @@ def _damage_resist(ctx: Ctx) -> _DamageResist:
     return {"pool": body + armor + bonus, "body": body, "armor": armor, "bonus": bonus}
 
 
+def _spell_defense_pools(ctx: Ctx, soak: _DamageResist) -> dict[str, Any]:
+    """Chummer's `SpellDefense*` pools (the spell defense box on its sheet).
+
+    Each is attributes + `<spellresistance>` + the kind's own bonus, which
+    `spell_defense_pools` has already summed per kind. Where Chummer reads
+    BOD or STR it reads an A.I.'s vehicle home node's `TotalBody` instead
+    (0 without one) — the body `_damage_resist` worked out; Physical
+    Manipulation takes it twice, for BOD + STR. The indirect soak is the
+    damage resistance pool plus `<spellresistance>`.
+    """
+    total = ctx.total
+    bonus = spell_defense_pools(ctx.effects)
+    general = int(bonus["general"])
+
+    def attr(key: str) -> int:
+        if key in ("BOD", "STR") and ctx.is_ai:
+            return soak["body"]
+        return int(total.get(key) or 0)
+
+    tm = ctx.effects.get("test_mods") or {}
+    return {
+        "indirect_dodge": attr("REA") + attr("INT") + int(tm.get("dodge") or 0),
+        "indirect_soak": soak["pool"] + general,
+        "direct_mana": attr("WIL") + int(bonus["direct_mana"]),
+        "direct_physical": attr("BOD") + general,
+        "detection": attr("LOG") + attr("WIL") + int(bonus["detection"]),
+        "decrease": {key: attr(key) + attr("WIL") + int(value) for key, value in bonus["decrease"].items()},
+        "mana_illusion": attr("LOG") + attr("WIL") + int(bonus["mana_illusion"]),
+        "physical_illusion": attr("LOG") + attr("INT") + int(bonus["physical_illusion"]),
+        "mental_manipulation": attr("LOG") + attr("WIL") + int(bonus["mental_manipulation"]),
+        "physical_manipulation": attr("BOD") + attr("STR") + general,
+    }
+
+
 def _trustfund_notice(level: int) -> Notice | None:
     """The Trust Fund stipend line, or `None` when the character has no such
     quality. `TRUST_FUND_STIPEND` holds the dictionary keys, not the wording."""
@@ -357,6 +391,7 @@ def assemble(ctx: Ctx) -> None:
         "fatigue_resist": int(ctx.effects.get("fatigue_resist") or 0),
         "spell_resistance": int(ctx.effects.get("spell_resistance") or 0),
         "spell_defense": spell_defense_pools(ctx.effects),
+        "spell_defense_pools": _spell_defense_pools(ctx, _damage_resist(ctx)),
         "spell_dice_pool": list(ctx.effects.get("spell_dice_pool") or []),
         "action_dice_pools": list(ctx.effects.get("action_dice_pools") or []),
         "test_mods": dict(ctx.effects.get("test_mods") or {}),

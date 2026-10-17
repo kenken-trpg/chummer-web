@@ -183,8 +183,7 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
   Modification）を入れてコムリンクとして働くとき（`Vehicle.IsCommlink`）だけ。このアプリは
   Electronic Modificationをヴィークルに付けられないので、条件にせず警告にする
   （`engine.homeNode.personaFirmware`）。
-- 対象外：呪文の間接防御（`SpellDefenseIndirectSoak`）で使うBODをヴィークルのBodyにすること（このアプリは
-  呪文防御のプールを出していない）。サイバーウェア・武器のホームノード（下の節）。ダメージ抵抗は下の節で実装した。
+- 対象外：サイバーウェア・武器のホームノード（下の節）。ダメージ抵抗・呪文防御は下の節で実装した。
 - 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節、e2e `ai-home-node.spec.ts`。
 
 ## 実装済み: 埋め込みコムリンク・デッキ
@@ -220,6 +219,17 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
 - 印刷の能力値欄・ココフォリア・ユドナリウムはこの値を使う。これまでは画面側でBOD＋装甲を計算していた。
   ココフォリア・ユドナリウムでは、`<damageresistance>`のボーナスも新たに入る（ヒューマンでも抜けていた）。
 - 検証：`backend/tests/test_ai_chargen.py`の「damage resistance」の節、ココフォリア・ユドナリウム・印刷の単体テスト。
+
+## 実装済み: 呪文防御
+
+- エンジンが`derived.spell_defense_pools`を出す。Chummerの`SpellDefense*`の10種類（間接の回避・ダメージ抵抗、直接マナ・物理、
+  探知、能力値減少×8、マナ幻影・物理幻影、精神操作・物理操作）で、能力値＋`<spellresistance>`＋その種類の抵抗。
+  間接のダメージ抵抗は、ダメージ抵抗プール（装甲・`<damageresistance>`込み）＋`<spellresistance>`。
+- A.I.は、ChummerがBOD・STRを読むところでホームノードのヴィークルの`TotalBody`を読む（無ければ0）。
+  直接物理・BOD減少・STR減少・間接のダメージ抵抗はBodyを1回、物理操作はBOD＋STRの代わりにBody×2。
+- `<directphysicalspellresist>`・`<physicalmanipulationresist>`を持つデータは無いので、その2つは汎用の呪文抵抗だけを足す。
+- シートに「呪文防御」の節（戦闘の後ろ、印刷では2ページ目）を足した。
+- 検証：`backend/tests/test_ai_chargen.py`の「spell defense」の節、`SpellDefenseSection`の単体テスト。
 
 ## これからの段階
 

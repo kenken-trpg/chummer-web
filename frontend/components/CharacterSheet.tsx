@@ -11,6 +11,7 @@ import { CareerSection } from "@/components/character/sheet/sections/Career";
 import { QualitiesSection } from "@/components/character/sheet/sections/Qualities";
 import { ActionDpSection } from "@/components/character/sheet/sections/ActionDp";
 import { CombatSection } from "@/components/character/sheet/sections/Combat";
+import { SpellDefenseSection } from "@/components/character/sheet/sections/SpellDefense";
 import { WareSection } from "@/components/character/sheet/sections/Ware";
 import { MatrixSection } from "@/components/character/sheet/sections/Matrix";
 import { MagicSection } from "@/components/character/sheet/sections/Magic";
@@ -108,6 +109,7 @@ export default function CharacterSheet({
             {ui("sheet.printPage2", { name: character.name || ui("sheet.unnamed") })}
           </p>
           <CombatSection {...s} />
+          <SpellDefenseSection {...s} />
           <WareSection {...s} />
           <MatrixSection {...s} />
           <MagicSection {...s} />
@@ -138,6 +140,7 @@ export default function CharacterSheet({
       <QualitiesSection {...s} />
       <ActionDpSection {...s} />
       <CombatSection {...s} />
+      <SpellDefenseSection {...s} />
       <WareSection {...s} />
       <MatrixSection {...s} />
       <MagicSection {...s} />
