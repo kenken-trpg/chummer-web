@@ -268,6 +268,47 @@ def test_creation_offers_the_ai_and_its_talent() -> None:
     assert AI in karma
 
 
+# --- essence -----------------------------------------------------------------
+
+
+def _ware_id(name: str) -> str:
+    from tests.engine_support import _ware_id as ware_id
+
+    return ware_id("cyberware", name)
+
+
+def _wired(*names: str, **kwargs: object) -> CharacterState:
+    from app.models import CyberwareInstall
+
+    state = _ai("E-Ghost", talent_letter="A", attributes="B", **kwargs)
+    state.cyberware = [CyberwareInstall(ware_id=_ware_id(name)) for name in names]
+    return state
+
+
+def test_essence_loss_takes_depth_as_it_takes_magic() -> None:
+    # Chummer does not stop an A.I. buying ware; its Depth then falls with
+    # essence the way MAG and RES do (`GetAllAttributeSpecificEssence`).
+    # 1.1 essence gone costs two points: Depth 6 is 4, and so is Edge's cap.
+    out = compute(_wired("Obvious Full Arm", "Datajack"))
+    assert out.derived["essence"] == pytest.approx(4.9)
+    assert out.attributes["DEP"] == 6
+    assert out.derived["totals"]["DEP"] == 4
+    assert out.derived["metatype_info"]["attributes"]["EDG"]["max"] == 4 + 1  # Lucky
+
+
+def test_without_ware_depth_is_untouched() -> None:
+    out = compute(_wired())
+    assert out.derived["totals"]["DEP"] == 6
+
+
+def test_the_maximum_only_rule_keeps_a_depth_under_the_new_maximum() -> None:
+    from app.models import SettingsState
+
+    state = _wired("Obvious Full Arm", settings=SettingsState(ess_loss_reduces_maximum_only=True))
+    state.attributes = {**state.attributes, "DEP": 6}
+    assert compute(state).derived["totals"]["DEP"] == 5
+
+
 # --- .chum5 -------------------------------------------------------------------
 
 
