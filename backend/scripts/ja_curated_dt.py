@@ -29,7 +29,18 @@ by hand, so the two halves stay in step.
 from __future__ import annotations
 
 # english name -> official Japanese, as printed in the Shadowrun Codex
-DT: dict[str, str] = {}
+DT: dict[str, str] = {
+    # --- echoes ------------------------------------------------------------
+    "Mathemagics": "マスマジックス",
+    "Quiet": "クワイエット",
+    "Resonance Riding": "共振接続",
+    "Resonance Scream": "共振スクリーム",
+    "Skinlink": "スキンリンク",
+    "Sleepwalker": "スリープウォーカー",
+}
 
 # DT names deliberately left on English fallback (no official term / not pinned)
-DT_UNVERIFIED: tuple[str, ...] = ()
+DT_UNVERIFIED: tuple[str, ...] = (
+    "Fight or Flight Filter",
+    "MMRI",
+)

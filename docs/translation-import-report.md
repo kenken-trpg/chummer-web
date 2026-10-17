@@ -426,7 +426,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Manipulation | 操作 |
 | Masking Ward | 擬態結界 |
 | Master Archer | 弓術の達人 |
-| Mathemagics | マスマジック |
+| Mathemagics | マスマジックス |
 | Memory Displacement | 記憶転移 |
 | Metahuman | メタヒューマン |
 | Metavariant | メタバリアント |
@@ -491,7 +491,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Resonance Bind | 共振バインド |
 | Resonance Cache | 共振キャッシュ |
 | Resonance Resistance | 共振抵抗 |
-| Resonance Riding | 共振ライディング |
+| Resonance Riding | 共振接続 |
 | Resonance Scream | 共振スクリーム |
 | Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア(RIG)：アーマー |
 | Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア(RIG)：ヘルメット |

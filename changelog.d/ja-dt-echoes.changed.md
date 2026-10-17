@@ -1,0 +1,1 @@
+- **Data Trails の追加エコーの訳語を、シャドウラン・コデックス（p.204）に合わせました。** Mathemagics は「マスマジックス」、Resonance Riding は「共振接続」です。

@@ -24,7 +24,7 @@ from scripts.make_ja_worksheet import book_entries, decided
 # How many names each pass has decided. Raise with each batch — a floor rather
 # than an equality so a batch lands in one commit, and so re-running the
 # generator can never quietly undo work.
-DECIDED_FLOOR = {"RG": 35, "RF": 0, "SG": 0, "DT": 0}
+DECIDED_FLOOR = {"RG": 35, "RF": 0, "SG": 0, "DT": 8}
 
 BOOK_CODES = sorted(BOOKS)
 
