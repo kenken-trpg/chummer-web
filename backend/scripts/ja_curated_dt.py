@@ -37,6 +37,13 @@ DT: dict[str, str] = {
     "Resonance Scream": "共振スクリーム",
     "Skinlink": "スキンリンク",
     "Sleepwalker": "スリープウォーカー",
+    # --- gear --------------------------------------------------------------
+    "Attack Dongle": "アタック・ドングル",
+    "Cable Tap": "ケーブル・タップ",
+    "Receiver": "レシーバー",
+    "Stealth Dongle": "ステルス・ドングル",
+    # --- gear+weapons ------------------------------------------------------
+    "Stun Dongle": "スタン・ドングル",
 }
 
 # DT names deliberately left on English fallback (no official term / not pinned)
