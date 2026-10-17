@@ -186,6 +186,12 @@
     }
   ],
   "cyberware_ess_multiplier": 100,
+  "damage_resist": {
+    "armor": 12,
+    "body": 1,
+    "bonus": 0,
+    "pool": 13
+  },
   "damage_resistance": 0,
   "dealer_connection_categories": [],
   "device_rating_limit": 6,

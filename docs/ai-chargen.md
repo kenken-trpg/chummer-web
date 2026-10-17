@@ -183,8 +183,8 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
   Modification）を入れてコムリンクとして働くとき（`Vehicle.IsCommlink`）だけ。このアプリは
   Electronic Modificationをヴィークルに付けられないので、条件にせず警告にする
   （`engine.homeNode.personaFirmware`）。
-- 対象外：ダメージ抵抗・呪文防御で使うBODをヴィークルのBodyにすること（このアプリはダメージ抵抗の
-  プールを画面側でBOD＋装甲と出している）。サイバーウェア・武器のホームノード（下の節）。
+- 対象外：呪文の間接防御（`SpellDefenseIndirectSoak`）で使うBODをヴィークルのBodyにすること（このアプリは
+  呪文防御のプールを出していない）。サイバーウェア・武器のホームノード（下の節）。ダメージ抵抗は下の節で実装した。
 - 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節、e2e `ai-home-node.spec.ts`。
 
 ## 実装済み: 埋め込みコムリンク・デッキ
@@ -210,6 +210,16 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
 - .chum5ではサイバーウェアの`<gears>`に書き、読む。中のコムリンクの`<homenode>`も読む。
 - 検証：`backend/tests/test_implanted_devices.py`、`WareHeldGear`・`CommlinkGear`の単体テスト、e2e `implanted-commlink.spec.ts`。
   `make reconcile`（34件）の出力はmainと同一（テスト用セーブに埋め込みコムリンクは無い）。
+
+## 実装済み: ダメージ抵抗
+
+- エンジンが`derived.damage_resist`（`pool`・`body`・`armor`・`bonus`）を出す。Chummerの`DamageResistancePool`と同じく
+  BOD＋装甲＋`<damageresistance>`。
+- A.I.のbodyは、ホームノードがヴィークル・ドローンならその`TotalBody`（改造込み）、それ以外は0。
+  装甲はA.I.でもキャラクター自身の値（Chummerは`TotalArmorRating`をそのまま足す。ヴィークルの装甲は足さない）。
+- 印刷の能力値欄・ココフォリア・ユドナリウムはこの値を使う。これまでは画面側でBOD＋装甲を計算していた。
+  ココフォリア・ユドナリウムでは、`<damageresistance>`のボーナスも新たに入る（ヒューマンでも抜けていた）。
+- 検証：`backend/tests/test_ai_chargen.py`の「damage resistance」の節、ココフォリア・ユドナリウム・印刷の単体テスト。
 
 ## これからの段階
 

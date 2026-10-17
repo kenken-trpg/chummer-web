@@ -336,6 +336,30 @@ describe("buildUdonariumXml", () => {
     expect(housed).not.toContain("精神[]");
   });
 
+  it("soaks an A.I. with its vehicle node's Body in place of a BOD it lacks", () => {
+    const soak = (derived: Record<string, unknown>) =>
+      buildUdonariumXml(makeCharacter({ metatype: "A.I.", derived }), makeCatalog(), identityTr)
+        .split("\n")
+        .find((line) => line.includes("ダメージ抵抗"));
+    const housed = soak({
+      condition_monitor: { physical: 14, stun: 9, core: true, vehicle: true },
+      damage_resist: { pool: 4, body: 4, armor: 0, bonus: 0 },
+    });
+    expect(housed).toMatch(/^\(4\+\{[^}]+\}\+0\)B6 /);
+    const bare = soak({
+      condition_monitor: { physical: 10, stun: 0, core: true },
+      damage_resist: { pool: 0, body: 0, armor: 0, bonus: 0 },
+    });
+    expect(bare).toMatch(/^\(0\+\{[^}]+\}\+0\)B6 /);
+    // a metahuman keeps the variable, and a resistance bonus is added in
+    const human = buildUdonariumXml(
+      makeCharacter({ derived: { damage_resist: { pool: 9, body: 5, armor: 2, bonus: 2 } } }),
+      makeCatalog(),
+      identityTr,
+    );
+    expect(human).toMatch(/\(\{BOD\}\+\{[^}]+\}\+2\+0\)B6 ダメージ抵抗/);
+  });
+
   it("gives any persona a Matrix condition monitor and leaves it off everyone else", () => {
     const plain = buildUdonariumXml(makeCharacter(), makeCatalog(), identityTr);
     expect(plain).not.toContain("マトリックスCM");

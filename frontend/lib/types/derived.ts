@@ -509,6 +509,9 @@ export interface Derived {
     spell_karma?: number;
   };
   tradition?: TraditionInfo | null;
+  /** Chummer's `DamageResistancePool`: body + armor + `damageresistance`. An
+   *  A.I.'s body is its vehicle home node's, or 0 (DT p.135). */
+  damage_resist?: { pool: number; body: number; armor: number; bonus: number };
   drain_resist?: { pool: number; attrs: string };
   enabled_tabs: string[];
   unimplemented_bonuses: { source: string; tag: string }[];

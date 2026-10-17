@@ -35,7 +35,25 @@ from ..ware.limbs import body_limb_slots
 from ._assemble_books import _out_of_book_warning
 from ._assemble_qualities import metatype_info, quality_rows
 from .context import Ctx
-from .derived_types import DerivedDict
+from .derived_types import DerivedDict, _DamageResist
+
+
+def _damage_resist(ctx: Ctx) -> _DamageResist:
+    """Chummer's `DamageResistancePool`: BOD + armor + `damageresistance`.
+
+    An A.I. has no BOD of its own: it soaks with its home node's Body when
+    that is a vehicle or drone (`HomeNode is Vehicle` → `TotalBody`, mods in),
+    and with nothing otherwise. Its armor is still the character's, not the
+    vehicle's — Chummer adds `TotalArmorRating` either way.
+    """
+    if ctx.is_ai:
+        node = ctx.home_node
+        body = int(node["body"]) if node and node["vehicle"] else 0
+    else:
+        body = int(ctx.total.get("BOD") or 0)
+    armor = int(ctx.effects["armor"]) + int(ctx.gear.get("armor") or 0)
+    bonus = int(ctx.effects.get("damage_resistance") or 0)
+    return {"pool": body + armor + bonus, "body": body, "armor": armor, "bonus": bonus}
 
 
 def _trustfund_notice(level: int) -> Notice | None:
@@ -254,6 +272,7 @@ def assemble(ctx: Ctx) -> None:
         },
         "tradition": ctx.magic.get("tradition"),
         "drain_resist": {"pool": ctx.magic.get("resist") or 0, "attrs": ctx.magic.get("resist_attrs") or "WIL+INT"},
+        "damage_resist": _damage_resist(ctx),
         "complex_forms": ctx.resonance.get("public") or [],
         "complex_form_points": {
             "used": ctx.resonance.get("used") or 0,

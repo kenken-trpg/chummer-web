@@ -518,3 +518,28 @@ def test_a_vehicle_home_node_survives_a_round_trip() -> None:
     again, _ = chum5_to_state(xml)
     second = compute(CharacterState(**again))
     assert second.derived["condition_monitor"] == first.derived["condition_monitor"]
+
+
+# --- damage resistance ----------------------------------------------------------
+
+
+def test_a_metahuman_soaks_with_body_and_armor() -> None:
+    out = compute(_human())
+    soak = out.derived["damage_resist"]
+    assert soak["body"] == out.derived["totals"]["BOD"]
+    assert soak["armor"] == out.derived["armor"]
+    assert soak["pool"] == soak["body"] + soak["armor"] + soak["bonus"]
+
+
+@pytest.mark.parametrize("state", ["bare", "deck"])
+def test_an_ai_out_of_a_vehicle_soaks_with_no_body(state: str) -> None:
+    # Chummer `DamageResistancePool`: an A.I.'s body is its vehicle node's or 0
+    out = compute(_ai("E-Ghost") if state == "bare" else _deck())
+    assert out.derived["damage_resist"]["body"] == 0
+
+
+def test_an_ai_in_a_vehicle_soaks_with_its_body() -> None:
+    out = compute(_vehicle())  # Dodge Scoot: Body 4
+    soak = out.derived["damage_resist"]
+    assert soak["body"] == 4
+    assert soak["pool"] == 4 + soak["armor"] + soak["bonus"]

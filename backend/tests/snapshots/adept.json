@@ -133,6 +133,12 @@
   "cyberdecks": [],
   "cyberware": [],
   "cyberware_ess_multiplier": 100,
+  "damage_resist": {
+    "armor": 0,
+    "body": 1,
+    "bonus": 0,
+    "pool": 1
+  },
   "damage_resistance": 0,
   "dealer_connection_categories": [],
   "device_rating_limit": 6,
