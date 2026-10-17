@@ -113,8 +113,10 @@ export function vehicleSkills(catalog: Catalog): { pilots: string[]; gunnery: st
   };
 }
 
-/** Chummer's spell defense box, in its order (the sheet shows the same). */
-const SPELL_DEFENSE: [
+/** Chummer's spell defense box, in its order: the sheet's section and the
+ *  VTT palettes both list it from here. The eight Decrease Attribute pools
+ *  follow, from `decrease`. */
+export const SPELL_DEFENSE_ROWS: [
   MsgKey,
   Exclude<keyof NonNullable<Derived["spell_defense_pools"]>, "decrease">,
 ][] = [
@@ -143,7 +145,7 @@ export function spellDefenseRolls(
   if (!pools) return [];
   const label = (kind: string) => ui("vtt.spellDefense", { kind });
   return [
-    ...SPELL_DEFENSE.map(([key, field]) => ({ pool: pools[field], label: label(ui(key)) })),
+    ...SPELL_DEFENSE_ROWS.map(([key, field]) => ({ pool: pools[field], label: label(ui(key)) })),
     ...Object.entries(pools.decrease).map(([attr, pool]) => ({
       pool,
       label: label(ui("sheet.def.decrease", { attr: attrLabel(attr) })),
