@@ -186,7 +186,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     playable = [
         m
         for m in metatypes
-        if m["name"] == "Centaur"
+        if m["name"] in {"Centaur", "A.I."}
         or m["category"] == "Shapeshifter"
         or (m["category"] in {"Metahuman", "Metavariant"} and m["name"] in {"Human", "Elf", "Dwarf", "Ork", "Troll"})
     ]

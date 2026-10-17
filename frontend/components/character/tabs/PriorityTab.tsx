@@ -4,6 +4,7 @@ import { CATS, LETTERS, SUM_TO_TEN_COST } from "@/lib/character/constants";
 import { buildMethodPatch } from "@/lib/character/build-method";
 import { buildMethodLabel, priorityCellLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
+import { talentAllowed, talentsFor } from "@/lib/character/metatype-limits";
 import { priorityTableFor } from "@/lib/character/priority-table";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SettingsPicker } from "@/components/character/SettingsPicker";
@@ -113,13 +114,15 @@ export function PriorityTab({
             <label>
               {ui("prio.talent")}
               <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
-                {(catalog.karma_talents || []).map((t) => (
-                  <option key={t.name} value={t.name}>
-                    {talentLabel(t.name, t.label, ui)}
-                    {t.magic ? ` / MAG` : ""}
-                    {t.resonance ? ` / RES` : ""}
-                  </option>
-                ))}
+                {talentsFor(catalog.karma_talents || [], ch.metatype, ch.talent, catalog).map(
+                  (t) => (
+                    <option key={t.name} value={t.name}>
+                      {talentLabel(t.name, t.label, ui)}
+                      {t.magic ? ` / MAG` : ""}
+                      {t.resonance ? ` / RES` : ""}
+                    </option>
+                  ),
+                )}
               </select>
             </label>
             <label>
@@ -214,15 +217,16 @@ export function PriorityTab({
                                 next[cat.key] = letter;
                                 const extra: Record<string, unknown> = { priorities: next };
                                 if (cat.key === "Talent") {
-                                  const options = table.Talent[letter].talents.filter(
-                                    (t) => t.name !== "Mundane",
+                                  // What this metatype may take: an A.I. only its
+                                  // own talent, at E too, where everyone else is
+                                  // Mundane.
+                                  const allowed = table.Talent[letter].talents.filter((t) =>
+                                    talentAllowed(t, ch.metatype, catalog),
                                   );
-                                  extra.talent =
-                                    letter === "E"
-                                      ? "Mundane"
-                                      : options.some((t) => t.name === ch.talent)
-                                        ? ch.talent
-                                        : options[0]?.name || "Magician";
+                                  const options = allowed.filter((t) => t.name !== "Mundane");
+                                  extra.talent = options.some((t) => t.name === ch.talent)
+                                    ? ch.talent
+                                    : (options[0] ?? allowed[0])?.name || "Mundane";
                                 }
                                 patch(extra);
                               }}

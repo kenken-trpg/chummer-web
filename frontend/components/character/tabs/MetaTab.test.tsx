@@ -381,4 +381,53 @@ describe("<MetaTab>", () => {
       expect(picker.textContent).not.toContain("カルマ");
     });
   });
+
+  it("offers an A.I. only its own talent, and everyone else not that one", () => {
+    const talents = [
+      {
+        name: "Adept",
+        label: "Adept - 2 Magic",
+        value: 2,
+        forbidden: [{ kind: "metatype", name: "A.I." }],
+      },
+      {
+        name: "A.I.",
+        label: "A.I. - 2 Depth",
+        value: 0,
+        depth: 2,
+        required: [{ kind: "metatype", name: "A.I." }],
+      },
+    ];
+    const catalog = makeCatalog({
+      metatypes: [
+        {
+          name: "Human",
+          id: "h",
+          category: "Metahuman",
+          attributes: {},
+          metavariants: [],
+          source: "SR5",
+        },
+        {
+          name: "A.I.",
+          id: "ai",
+          category: "Metasapient",
+          attributes: {},
+          metavariants: [],
+          source: "DT",
+        },
+      ],
+      priority_table: { ...priorityTable, Talent: { E: { talents } } } as unknown as PriorityTable,
+    });
+    const options = () =>
+      [
+        ...(screen.getByRole("combobox", { name: /才能|Talent|タレント/ }) as HTMLSelectElement)
+          .options,
+      ].map((o) => o.value);
+    const { unmount } = renderTab({ catalog, character: { metatype: "A.I.", talent: "A.I." } });
+    expect(options()).toEqual(["A.I."]);
+    unmount();
+    renderTab({ catalog, character: { metatype: "Human", talent: "Adept" } });
+    expect(options()).toEqual(["Adept"]);
+  });
 });

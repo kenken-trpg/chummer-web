@@ -1,6 +1,6 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
-import { ATTRS } from "@/lib/character/constants";
+import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrLabel } from "@/lib/ui-strings";
 
 export function SidebarAttributes({ d, t, ui }: SidebarBlockProps) {
@@ -8,10 +8,7 @@ export function SidebarAttributes({ d, t, ui }: SidebarBlockProps) {
     <>
       <h3>{ui("side.attributes")}</h3>
       {ATTRS.map((k) => {
-        const hidden =
-          (k === "MAG" && !d.enabled_tabs.includes("MAG")) ||
-          (k === "RES" && !d.enabled_tabs.includes("RES"));
-        if (hidden) return null;
+        if (!attrShown(k, d.enabled_tabs)) return null;
         return (
           <div className="stat" key={k}>
             <span>

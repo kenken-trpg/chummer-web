@@ -16,7 +16,7 @@ import {
   vehicleCM,
 } from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
-import { ATTRS } from "@/lib/character/constants";
+import { ATTRS, attrShown } from "@/lib/character/constants";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { renderNotice, renderNotices } from "@/lib/engine-notices";
 import { otherMovementRows } from "@/lib/character/movement";
@@ -70,9 +70,7 @@ export function textSheet(x: TextArgs): string {
 
   head("common.attribute");
   line(
-    ATTRS.filter(
-      (k) => !((k === "MAG" && !enabled.has("MAG")) || (k === "RES" && !enabled.has("RES"))),
-    )
+    ATTRS.filter((k) => attrShown(k, enabled))
       .map((k) => `${attrShort(k, t)} ${totals[k] ?? "-"}`)
       .join("  "),
   );

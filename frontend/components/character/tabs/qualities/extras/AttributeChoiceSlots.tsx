@@ -39,7 +39,8 @@ export function AttributeChoiceSlots({
     <div className="option-row" style={{ flexWrap: "wrap", gap: 8 }}>
       {attributeChoices.map((slot, index) => {
         const key = index === 0 ? q.id : `${q.id}:attribute:${index}`;
-        const allowed = slot.options.length ? slot.options : ATTRS;
+        // An A.I.'s Depth is not among the open choices: no quality names it.
+        const allowed = slot.options.length ? slot.options : ATTRS.filter((k) => k !== "DEP");
         return (
           <label key={key}>
             {ui("quality.attribute")} {index + 1}

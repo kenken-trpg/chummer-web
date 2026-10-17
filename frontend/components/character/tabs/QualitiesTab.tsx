@@ -10,6 +10,7 @@ import { QualityKarmaSummary } from "@/components/character/tabs/qualities/Quali
 import { QualityPickerRow } from "@/components/character/tabs/qualities/QualityPickerRow";
 import { mergeRatings } from "@/lib/character/format";
 import { qualityDisplayRows, type QualityReqCtx } from "@/lib/character/quality";
+import { qualityRestriction } from "@/lib/character/metatype-limits";
 
 /** The four chips above the search box. "Metagenic" cuts across the other
  *  two rather than being a third category of its own. */
@@ -44,13 +45,21 @@ export function QualitiesTab({
   const matchedQualities = useMemo(() => {
     const q = qSearch.trim().toLowerCase();
     const metaOnly = qCat === "Metagenic";
+    // An A.I. may take only the qualities its metatype lists — the same
+    // `<qualityrestriction>` the server checks (Chummer's SelectQuality).
+    const restriction = qualityRestriction(catalog, ch.metatype, ch.metavariant);
     return filterByBooks(allowedBooks, catalog.qualities)
+      .filter(
+        (item) =>
+          !restriction ||
+          (restriction[item.category as keyof typeof restriction] ?? []).includes(item.name),
+      )
       .filter((item) => (metaOnly ? item.metagenic : qCat === "all" || item.category === qCat))
       .filter(
         (item) =>
           !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q),
       );
-  }, [catalog, qSearch, qCat, tr, allowedBooks]);
+  }, [catalog, qSearch, qCat, tr, allowedBooks, ch.metatype, ch.metavariant]);
   const filteredQualities = matchedQualities.slice(0, 200);
 
   const qualityCtx: QualityReqCtx = {

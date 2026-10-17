@@ -1,6 +1,6 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
-import { ATTRS } from "@/lib/character/constants";
+import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
@@ -23,8 +23,7 @@ export function CoreSection(s: SheetData) {
           ) : null}
           <div className="sheet-attrs">
             {ATTRS.map((key) => {
-              if ((key === "MAG" && !enabled.has("MAG")) || (key === "RES" && !enabled.has("RES")))
-                return null;
+              if (!attrShown(key, enabled)) return null;
               const ware = d.ware_attr_bonus?.[key] || 0;
               return (
                 <div className="sheet-attr" key={key}>

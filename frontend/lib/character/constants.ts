@@ -34,7 +34,18 @@ export const ATTRS = [
   "EDG",
   "MAG",
   "RES",
+  "DEP",
 ] as const;
+
+/**
+ * Whether a character shows this attribute at all. MAG, RES and an A.I.'s
+ * DEP exist only once something enables them; everyone has the rest, an
+ * A.I. its body at 0 included, as Chummer lists it.
+ */
+export function attrShown(key: string, enabled: ReadonlySet<string> | readonly string[]): boolean {
+  if (key !== "MAG" && key !== "RES" && key !== "DEP") return true;
+  return "has" in enabled ? enabled.has(key) : enabled.includes(key);
+}
 // Attribute labels now come from the lang file via attrLabel()/attrShort()
 // in @/lib/ui-strings (backed by ja-jp.xml + ja_overrides/ui.json).
 export const KNOW_CATS = ["Academic", "Interest", "Language", "Professional", "Street"] as const;

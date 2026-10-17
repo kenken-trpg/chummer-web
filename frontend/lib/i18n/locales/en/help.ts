@@ -28,6 +28,7 @@ export const EN_HELP = {
   "help.attr.EDG": "Edge. Points per session to reroll, push the limit and so on",
   "help.attr.MAG": "Magic. The strength of spells, spirits and adept powers; drops with Essence",
   "help.attr.RES": "Resonance. The strength of complex forms and sprites; drops with Essence",
+  "help.attr.DEP": "Depth. An A.I.'s special attribute; it caps Edge",
   "help.avail.what": "Availability: how hard an item is to get. Higher is harder",
   "help.avail.suffix":
     "A trailing R means a licence is needed (Restricted); F means it is illegal to own (Forbidden)",

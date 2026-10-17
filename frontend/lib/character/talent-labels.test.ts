@@ -38,6 +38,12 @@ describe("talentLabel", () => {
     expect(talentLabel("Explorer", "Explorer - 5 Magic", ja)).toBe("Explorer - 魔力5");
   });
 
+  it("keeps the A.I. talent and its Depth in English, the number placed as the other tails", () => {
+    // Depth is a DT term the glossary keeps in the original
+    expect(talentLabel("A.I.", "A.I. - 6 Depth", ja)).toBe("A.I. - Depth 6");
+    expect(talentLabel("A.I.", "A.I. - 6 Depth", en)).toBe("A.I. - 6 Depth");
+  });
+
   it("passes an unrecognised shape through untouched", () => {
     expect(talentLabel("Houseruled", "Houseruled - 9 Vibes", ja)).toBe("Houseruled - 9 Vibes");
     // a label that is not built from the name at all is left exactly as it came

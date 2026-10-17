@@ -101,10 +101,11 @@ def test_power_rules_require_explicit_opt_in_until_compute_supports_them() -> No
     assert all("bonus" not in power for power in catalog()["critter_powers"])
 
 
-def test_centaur_is_available_without_exposing_other_metasapients() -> None:
+def test_centaur_and_the_ai_are_the_only_metasapients_offered() -> None:
     assert "Centaur" in catalog()["all_metatypes"]
     offered = {m["name"] for m in public_catalog()["metatypes"]}
-    # The shapeshifters are offered too (tests/test_shapeshifter_chargen.py).
+    # The shapeshifters are offered too (tests/test_shapeshifter_chargen.py),
+    # and the A.I. (tests/test_ai_chargen.py).
     assert {name for name in offered if not name.startswith("Shapeshifter: ")} == {
         "Human",
         "Elf",
@@ -112,4 +113,5 @@ def test_centaur_is_available_without_exposing_other_metasapients() -> None:
         "Ork",
         "Troll",
         "Centaur",
+        "A.I.",
     }

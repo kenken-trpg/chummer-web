@@ -13,7 +13,7 @@ from ..data_loader import CatalogDict, catalog
 from ..engine import all_talent_options, is_way_quality, priority_value, talent_allowed, talent_options
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
-#: The five SR5 core metatypes. Creation also offers Centaur and the
+#: The five SR5 core metatypes. Creation also offers Centaur, the A.I. and the
 #: shapeshifters: whatever the loader keeps in `catalog()["metatypes"]`.
 CORE_METATYPES = {"Human", "Elf", "Dwarf", "Ork", "Troll"}
 
@@ -114,6 +114,9 @@ def section(raw: CatalogDict) -> dict:
                 "magic": int(t.get("magic") or 0),
                 "resonance": int(t.get("resonance") or 0),
                 "quality": t.get("quality") or "",
+                "depth": int(t.get("depth") or 0),
+                "forbidden": t.get("forbidden") or [],
+                "required": t.get("required") or [],
             }
             for t in _offered_talents(all_talent_options(), {m["name"] for m in catalog()["metatypes"]})
         ],

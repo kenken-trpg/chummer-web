@@ -517,6 +517,7 @@ export const JA_CHARGEN = {
   "talent.magicSpells": "魔力{magic}/呪文{spells}",
   "talent.magic": "魔力{magic}",
   "talent.resonanceForms": "共振力{resonance}/複合体{forms}",
+  "talent.depth": "Depth {depth}",
   "prio.cell.attributes": "{points} ({special}) 能力値",
   // build-method buttons. "Sum to Ten" and "Karma" are kept as they read on
   // the sheet; only Priority had a settled Japanese label.
