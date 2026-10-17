@@ -147,7 +147,7 @@ DT本文は未照合。
 - シート・サイドバー・印刷・テキスト出力・ユドナリウム・ココフォリアで「コア」として出す。
 - 対象外：自然回復のプール（コアはSoftware＋DEP、マトリックスダメージは回復しない）、
   毒・病原体への抵抗。いずれもこのアプリは改造の補正しか出していない。
-- 検証：`backend/tests/test_ai_chargen.py`の「monitors and initiative」の節。
+- 検証：`backend/tests/test_ai_chargen.py`の「monitors and initiative」の節、e2e `ai-home-node.spec.ts`。
 
 ## 実装済み: コムリンク・デッキ・RCCのホームノード（段階4b）
 
@@ -165,7 +165,7 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・�
   チェックボックスを押せるかどうかだけ。ここでは警告（`engine.homeNode.programLimit`）。
   Program Limitは機器の`<programs>`、無ければDevice Rating。
 - .chum5：書き出しで該当の`<gear>`に`<homenode>True</homenode>`、読み込みで同じ印を拾う。
-- 検証：`backend/tests/test_ai_chargen.py`の「home node」の節、`HomeNodeToggle`の単体テスト。
+- 検証：`backend/tests/test_ai_chargen.py`の「home node」の節、`HomeNodeToggle`の単体テスト、e2e `ai-home-node.spec.ts`。
 
 ## 実装済み: ヴィークル・ドローンのホームノード（段階4c）
 
@@ -185,7 +185,7 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・�
   （`engine.homeNode.personaFirmware`）。
 - 対象外：ダメージ抵抗・呪文防御で使うBODをヴィークルのBodyにすること（このアプリはダメージ抵抗の
   プールを画面側でBOD＋装甲と出している）。サイバーウェア・武器のホームノード。
-- 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節。
+- 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節、e2e `ai-home-node.spec.ts`。
 
 ## これからの段階
 
