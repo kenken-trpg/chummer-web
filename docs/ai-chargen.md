@@ -208,7 +208,7 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・�
 - サイバーウェアの行から入れる・取り出す。設定は装備タブで行い、装備タブには「…に埋め込み」と出る。
   サイバーウェアを外すと、中の機器は消さずに持ち歩きに戻す（アプリ・付属品を巻き込まないため）。
 - .chum5ではサイバーウェアの`<gears>`に書き、読む。中のコムリンクの`<homenode>`も読む。
-- 検証：`backend/tests/test_implanted_devices.py`、`WareHeldGear`・`CommlinkGear`の単体テスト。
+- 検証：`backend/tests/test_implanted_devices.py`、`WareHeldGear`・`CommlinkGear`の単体テスト、e2e `implanted-commlink.spec.ts`。
   `make reconcile`（34件）の出力はmainと同一（テスト用セーブに埋め込みコムリンクは無い）。
 
 ## これからの段階
