@@ -87,7 +87,7 @@ export const EN_GEAR = {
   "gear.blackMarket": "Black market",
   "gear.homeNode": "Home node",
   "gear.homeNodeHint":
-    "The device the A.I. lives in: its Data Processing goes to the Matrix initiative and the mental and social limits, and its Matrix monitor stands in for a stun one",
+    "The device the A.I. lives in: its Data Processing goes to the Matrix initiative and the mental and social limits, and its Matrix condition monitor stands in for the Stun track",
   "gear.blackMarketHint":
     "10% off this item, through the Black Market Pipeline (one item at a time, in its own category)",
   "gear.stackWith": "Stacks with",

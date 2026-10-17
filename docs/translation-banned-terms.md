@@ -111,3 +111,15 @@ docs ではバッククォート（`` `物理リミット` ``）の中は引用�
 | 生活様式 | Lifestyle の誤訳 |
 | パワー点 | Power Points の誤訳 |
 | アデプト・パワー | 中黒の揺れ |
+
+## 英語の画面文言に当てる語
+
+`frontend/lib/i18n/locales/en/` には、用語集の英語の列（Chummer の英語）と違う呼び方だけを当てます。
+英文では `power points` のように小文字で書くのが普通なので、大文字・小文字は区別せずに探し、
+大文字・小文字の揺れそのものは問いません。
+
+| 誤 | 正 | 典拠 | 直した経緯 |
+| --- | --- | --- | --- |
+| physical monitor | Physical Track | Physical Track (431) | ヘルプの CM の式と能力値の説明に 4 箇所 |
+| stun monitor | Stun Track | Stun Track (543) | 同上。A.I. のコアダメージトラックのヘルプにも |
+| core monitor | Core Damage Track | Core Damage Track (623) | A.I. のヘルプ（#608 で入れた） |

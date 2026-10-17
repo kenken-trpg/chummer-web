@@ -83,3 +83,36 @@ def test_every_docs_term_is_a_rule() -> None:
 def test_the_docs_are_held_to_their_own_list(tmp_path: Path, text: str, flagged: bool) -> None:
     (tmp_path / "probe.md").write_text(text, encoding="utf-8")
     assert bool(_checker().check_docs(tmp_path, BANNED)) is flagged
+
+
+EN_LOCALE = ROOT / "frontend/lib/i18n/locales/en"
+
+
+@pytest.mark.skipif(not EN_LOCALE.is_dir(), reason="frontend/ not checked out")
+def test_no_banned_term_reached_the_english_ui() -> None:
+    assert _checker().check_en(EN_LOCALE, BANNED) == []
+
+
+def test_every_english_rule_is_backed_by_a_glossary_line() -> None:
+    glossary = (ROOT / "docs/translation-glossary.md").read_text(encoding="utf-8").split("\n")
+    found = _checker().en_rules(BANNED.read_text(encoding="utf-8"))
+    assert found
+    for rule in found:
+        line = int(rule.source.rsplit("(", 1)[1].rstrip(")"))
+        assert glossary[line - 1].startswith(f"| {rule.right} |"), f"{rule.wrong}: line {line}"
+
+
+@pytest.mark.parametrize(
+    ("text", "flagged"),
+    [
+        ('"a": "Stun monitor = 8 + WIL",', True),
+        ('"a": "the stun monitor",', True),  # case does not save it
+        ('"a": "Stun track = 8 + WIL",', False),
+        ('"a": "Matrix condition monitor",', False),
+    ],
+)
+def test_english_rules_fire_on_the_other_name(tmp_path: Path, text: str, flagged: bool) -> None:
+    locale = tmp_path / "en"
+    locale.mkdir()
+    (locale / "probe.ts").write_text(text, encoding="utf-8")
+    assert bool(_checker().check_en(locale, BANNED)) is flagged
