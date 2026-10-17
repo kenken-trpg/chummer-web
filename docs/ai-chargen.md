@@ -113,6 +113,17 @@ DT本文は未照合。
 - 検証：`backend/tests/test_ai_programs.py`、`AIProgramsTab`の単体テスト、e2e `ai-programs.spec.ts`。
   `make reconcile`（34件）の出力はmainと同一。
 
+## 実装済み: エッセンスとDepth
+
+- Chummerは、A.I.がサイバーウェアなどを買うのを止めていない（CharacterCreate・SelectCyberwareに
+  `IsAI`の制限は無く、`IsAI`はホームノードの表示にだけ使われる）。このアプリも止めない。
+- その代わり、DEPはMAG・RESと同じくエッセンスで下がる（`Character`の`intDepMaxReduction`）。
+  DEPの分のエッセンスは`GetAllAttributeSpecificEssence`の第3の値で、全体のエッセンスに
+  DEP専用の補正（データに無い）を足したもの。MAGだけを免除する補正は掛からない。
+  `<esslossreducesmaximumonly>`のときは上限だけが下がる。
+- EDGの上限は、下がった後のDEPになる。
+- 検証：`backend/tests/test_ai_chargen.py`の「essence」の節。
+
 ## これからの段階
 
 - **ホームノード**：コムリンク・デッキ・車両を選び、マトリックスイニシアティブ・状態モニター・
@@ -124,9 +135,7 @@ DT本文は未照合。
 1. **DT本文の照合**。上記はすべて固定版Chummerのソースとの照合で、DTの本文・エラッタとは照合していない。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
-3. **A.I.のESSとウェア**。サイバーウェアなどの購入を止めていない。Chummerの作成フォームも
-   止めていないように見えるが、未確認。
-4. **Inherent Programの改善の結び付け**。`.chum5`に、資質とプログラムを結ぶ`AIProgram`の
+3. **Inherent Programの改善の結び付け**。`.chum5`に、資質とプログラムを結ぶ`AIProgram`の
    improvementを書いていない。Chummerで資質を外しても、プログラムが残る。
-5. **xlsx・FVTT・Udonariumの書き出し**。プログラムを書いていない。書き出し前の確認では
+4. **xlsx・FVTT・Udonariumの書き出し**。プログラムを書いていない。書き出し前の確認では
    「A.I. のプログラム」が失われると表示される。
