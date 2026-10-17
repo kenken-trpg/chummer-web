@@ -41,6 +41,7 @@ export const JA_SHEET = {
   "coco.cmPhysical": "身体CM",
   "coco.cmStun": "精神CM",
   "coco.cmMatrix": "マトリックスCM",
+  "coco.cmCore": "コアCM",
   "coco.edge": "エッジ",
   "coco.memoTradition": "様式: {name}",
   "coco.memoAIPrograms": "プログラム: {list}",
@@ -256,6 +257,7 @@ export const JA_SHEET = {
   "print.conditionMonitor": "コンディション・モニター",
   "print.physical": "身体",
   "print.stun": "精神",
+  "print.core": "コア",
   "print.overflow": "オーバーフロー",
   "print.recoveryDay": " 回復 {n}/日",
 
@@ -304,6 +306,10 @@ export const JA_SHEET = {
   "udo.secUntrained": "■ 未修得の技能（能力値−1で代用）",
   "udo.secKnowledge": "■ 知識技能（リミット＝精神）",
   "udo.woundPhysical": "身体",
+  "udo.woundCore": "コア",
+  "sheet.cmCore": "コア{n}",
+  "sheet.aiMatrixInit":
+    "A.I. のマトリックスイニシアティブ：{init}（ホットシム・コールドシムとも同じ）",
   "udo.woundStun": "精神",
   "udo.noteEdge": "■ エッジ振り足しは B6→R6、限界突破は @ 以降を外す",
   "udo.noteDice":

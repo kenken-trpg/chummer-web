@@ -96,10 +96,15 @@ export function buildUdonariumXml(
       {
         title: ui("udo.panelCm"),
         rows: [
-          resource(ui("coco.cmPhysical"), 0, cm.physical),
-          resource(ui("coco.cmStun"), 0, cm.stun),
+          // an A.I. has a Core track in place of both
+          ...(cm.core
+            ? [resource(ui("coco.cmCore"), 0, cm.physical)]
+            : [
+                resource(ui("coco.cmPhysical"), 0, cm.physical),
+                resource(ui("coco.cmStun"), 0, cm.stun),
+              ]),
           ...(matrixCm ? [resource(ui("coco.cmMatrix"), 0, matrixCm)] : []),
-          woundTrack(ui, cm.physical, cm.stun),
+          woundTrack(ui, cm.physical, cm.stun, cm.core),
         ],
       },
     ],

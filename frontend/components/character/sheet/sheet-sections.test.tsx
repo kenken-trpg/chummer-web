@@ -680,3 +680,27 @@ describe("specializations on the sheets", () => {
     expect(textSheet(data)).toContain("アストラル戦闘（対精霊）");
   });
 });
+
+describe("MatrixSection for an A.I.", () => {
+  it("states its Matrix initiative even without a device", () => {
+    const ai = buildSheetData({
+      character: makeCharacter({
+        metatype: "A.I.",
+        derived: {
+          matrix_initiative: {
+            device: "ai",
+            dataprocessing: 0,
+            value: 4,
+            cold_dice: 4,
+            hot_dice: 4,
+          },
+        },
+      }),
+      catalog: makeCatalog(),
+      tr: identityTr,
+      layout: "standard",
+    });
+    const { container } = render(<MatrixSection {...ai} />);
+    expect(container.textContent).toContain("A.I. のマトリックスイニシアティブ：4+4d6");
+  });
+});

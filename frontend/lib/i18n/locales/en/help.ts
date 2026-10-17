@@ -12,6 +12,7 @@ export const EN_HELP = {
   "help.cm.physical": "Physical monitor = 8 + BOD ÷ 2, rounded up",
   "help.cm.stun": "Stun monitor = 8 + WIL ÷ 2, rounded up",
   "help.cm.note": "−1 to tests for every 3 boxes filled (SR5 p.169)",
+  "help.cm.core": "Core monitor = 8 + DEP ÷ 2, rounded up; an A.I. has no Stun monitor",
   "help.init.value": "Initiative = REA + INT",
   "help.init.dice": "Initiative dice = 1D6 + extra dice (max 5D6)",
   "help.init.note": "Subtract 10 at the end of each Initiative Pass (SR5 p.159)",

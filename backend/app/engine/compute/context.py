@@ -232,6 +232,8 @@ class Ctx:
     social_limit: int = 0
     cm_phys: int = 0
     cm_stun: int = 0
+    #: Chummer's `IsAI`: the A.I.'s own monitors and initiative.
+    is_ai: bool = False
     initiative: int = 0
     initiative_dice: int = 0
     movement: MovementBundle = field(default_factory=empty_movement)

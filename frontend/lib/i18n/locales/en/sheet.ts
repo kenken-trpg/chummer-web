@@ -41,6 +41,7 @@ export const EN_SHEET = {
   "coco.cmPhysical": "Phys CM",
   "coco.cmStun": "Stun CM",
   "coco.cmMatrix": "Matrix CM",
+  "coco.cmCore": "Core CM",
   "coco.edge": "Edge",
   "coco.memoTradition": "Tradition: {name}",
   "coco.memoAIPrograms": "Programs: {list}",
@@ -255,6 +256,7 @@ export const EN_SHEET = {
   "print.conditionMonitor": "Condition monitor",
   "print.physical": "Physical",
   "print.stun": "Stun",
+  "print.core": "Core",
   "print.overflow": "Overflow",
   "print.recoveryDay": " heals {n}/day",
 
@@ -299,6 +301,9 @@ export const EN_SHEET = {
   "udo.secUntrained": "# Defaulted skills (linked attribute -1)",
   "udo.secKnowledge": "# Knowledge skills (limit = Mental)",
   "udo.woundPhysical": "Physical",
+  "udo.woundCore": "Core",
+  "sheet.cmCore": "Core {n}",
+  "sheet.aiMatrixInit": "A.I. Matrix initiative: {init} (the same cold or hot)",
   "udo.woundStun": "Stun",
   "udo.noteEdge": "# Edge: reroll with R6 instead of B6; to break a limit, drop the @ part",
   "udo.noteDice":

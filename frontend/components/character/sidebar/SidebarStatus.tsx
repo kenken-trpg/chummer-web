@@ -1,7 +1,7 @@
 import { HelpTip } from "@/components/help/HelpTip";
 import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 import { conditionHelp, initiativeHelp, limitHelp } from "@/lib/character/help-breakdown";
-import { limitModifierLine, specialArmorBits } from "@/lib/character/format";
+import { cmSummary, limitModifierLine, specialArmorBits } from "@/lib/character/format";
 import { buildMethodLabel } from "@/lib/character/priority-labels";
 import { talentLabel } from "@/lib/character/talent-labels";
 import { renderNotice } from "@/lib/engine-notices";
@@ -74,9 +74,7 @@ export function SidebarStatus({ ch, d, tr, career, error, ui }: SidebarBlockProp
             {ui("common.condition")}
           </HelpTip>
         </span>
-        <b>
-          P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
-        </b>
+        <b>{cmSummary(d.condition_monitor, ui)}</b>
       </div>
       {d.limb_quality ? (
         <div className="stat">

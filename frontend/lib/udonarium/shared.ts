@@ -161,10 +161,10 @@ ${panels}
 /** The box-ticking damage track the template keeps beside the monitors.
  *  A monitor the piece does not have is left out rather than written as a
  *  bare label with no boxes — a vehicle has no stun track. */
-export function woundTrack(ui: UiFn, physical: number, stun: number): string {
+export function woundTrack(ui: UiFn, physical: number, stun: number, core = false): string {
   const boxes = (n: number) => "[]".repeat(Math.max(n, 0));
   const text = [
-    physical > 0 ? `${ui("udo.woundPhysical")}${boxes(physical)}` : "",
+    physical > 0 ? `${ui(core ? "udo.woundCore" : "udo.woundPhysical")}${boxes(physical)}` : "",
     stun > 0 ? `${ui("udo.woundStun")}${boxes(stun)}` : "",
   ]
     .filter(Boolean)

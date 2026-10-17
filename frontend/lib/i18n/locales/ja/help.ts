@@ -12,6 +12,8 @@ export const JA_HELP = {
   "help.cm.physical": "身体ダメージトラック = 8 + BOD ÷ 2（切り上げ）",
   "help.cm.stun": "精神ダメージトラック = 8 + WIL ÷ 2（切り上げ）",
   "help.cm.note": "埋まったマス 3 つごとにテストへ −1（SR5 p.169）",
+  "help.cm.core":
+    "コアダメージトラック = 8 + DEP ÷ 2（切り上げ）。A.I. に精神ダメージトラックは無い",
   "help.init.value": "イニシアティブ = REA + INT",
   "help.init.dice": "イニシアティブ・ダイス = 1D6 + 追加ダイス（最大 5D6）",
   "help.init.note": "各イニシアティブ・パス終了時に −10（SR5 p.159）",

@@ -72,6 +72,8 @@ class _ConditionMonitor(TypedDict):
     #: Boxes per −1 wound modifier, and the boxes ignored before the first one.
     threshold: int
     threshold_offset: int
+    #: An A.I.: `physical` is its Core monitor and there is no Stun monitor.
+    core: bool
 
 
 class _Initiative(TypedDict):

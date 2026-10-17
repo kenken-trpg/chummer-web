@@ -14,6 +14,8 @@ export function PrintConditionMonitor(s: SheetData) {
   const { ui } = useUiText();
   const physical = d.condition_monitor.physical || 0;
   const stun = d.condition_monitor.stun || 0;
+  // an A.I.'s one track is its Core; it has no Stun track to print
+  const core = !!d.condition_monitor.core;
   const overflow = Math.max(0, Math.ceil((totals.BOD || 0) / 2));
   const recovery = d.cm_recovery;
   const threshold = Math.max(1, d.condition_monitor.threshold || 3);
@@ -36,7 +38,7 @@ export function PrintConditionMonitor(s: SheetData) {
       <h3>{ui("print.conditionMonitor")}</h3>
       <div className="print-cm-track">
         <div className="print-cm-label">
-          {ui("print.physical")} <b>{physical}</b>
+          {ui(core ? "print.core" : "print.physical")} <b>{physical}</b>
           {recovery ? (
             <span className="sheet-dim">{ui("print.recoveryDay", { n: recovery.physical })}</span>
           ) : null}
@@ -51,15 +53,17 @@ export function PrintConditionMonitor(s: SheetData) {
           <div className="print-cm-boxes print-cm-boxes--overflow">{boxes(overflow)}</div>
         </div>
       ) : null}
-      <div className="print-cm-track">
-        <div className="print-cm-label">
-          {ui("print.stun")} <b>{stun}</b>
-          {recovery ? (
-            <span className="sheet-dim">{ui("print.recoveryHour", { n: recovery.stun })}</span>
-          ) : null}
+      {core ? null : (
+        <div className="print-cm-track">
+          <div className="print-cm-label">
+            {ui("print.stun")} <b>{stun}</b>
+            {recovery ? (
+              <span className="sheet-dim">{ui("print.recoveryHour", { n: recovery.stun })}</span>
+            ) : null}
+          </div>
+          <div className="print-cm-boxes">{boxes(stun)}</div>
         </div>
-        <div className="print-cm-boxes">{boxes(stun)}</div>
-      </div>
+      )}
     </section>
   );
 }

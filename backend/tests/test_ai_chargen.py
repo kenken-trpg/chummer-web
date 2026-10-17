@@ -335,3 +335,41 @@ def test_an_ai_is_a_fixed_point_of_export_and_import() -> None:
     assert second.attributes["DEP"] == 4
     assert second.attributes["LOG"] == 6
     assert second.derived["points"] == first.derived["points"]
+
+
+# --- monitors and initiative (no home node) -----------------------------------
+
+
+def test_an_ai_has_a_core_track_and_no_stun_track() -> None:
+    # Chummer `PhysicalCM`: 8 + DEP / 2, rounded up; `StunCM`: none at all
+    out = compute(_ai("E-Ghost"))
+    assert out.derived["totals"]["DEP"] == 3
+    assert out.derived["condition_monitor"]["physical"] == 8 + 2
+    assert out.derived["condition_monitor"]["stun"] == 0
+    assert out.derived["condition_monitor"]["core"] is True
+
+
+def test_a_metahuman_keeps_both_tracks() -> None:
+    cm = compute(_human()).derived["condition_monitor"]
+    assert cm["core"] is False
+    assert cm["stun"] > 0
+
+
+def test_an_ai_outside_a_vehicle_has_no_physical_limit() -> None:
+    assert compute(_ai("E-Ghost")).derived["limits"]["physical"] == 0
+
+
+def test_an_ai_rolls_four_matrix_initiative_dice_cold_or_hot() -> None:
+    # Chummer `MatrixInitiativeValue` / `MatrixInitiativeDice` for an A.I.:
+    # INT, and the hot-sim minimum whether it runs cold or hot
+    out = compute(_ai("E-Ghost"))
+    mi = out.derived["matrix_initiative"]
+    assert mi["device"] == "ai"
+    assert mi["value"] == out.derived["totals"]["INT"]
+    assert (mi["cold_dice"], mi["hot_dice"]) == (4, 4)
+
+
+def test_an_ais_matrix_dice_stop_at_the_initiative_maximum() -> None:
+    from app.engine.gear import ai_matrix_initiative
+
+    assert ai_matrix_initiative(3, extra_dice=3)["hot_dice"] == 5

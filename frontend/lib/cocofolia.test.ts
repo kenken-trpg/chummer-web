@@ -367,6 +367,16 @@ describe("buildCocofolia", () => {
     expect(human.data.memo).not.toContain("プログラム:");
   });
 
+  it("gives an A.I. one Core track", () => {
+    const ai = makeCharacter({
+      metatype: "A.I.",
+      derived: { condition_monitor: { physical: 10, stun: 0, core: true } },
+    });
+    const piece = JSON.parse(buildCocofolia(ai, makeCatalog(), identityTr));
+    expect(piece.data.status.slice(0, 1)).toEqual([{ label: "コアCM", value: 10, max: 10 }]);
+    expect(piece.data.status.map((s: { label: string }) => s.label)).not.toContain("精神CM");
+  });
+
   it("produces a parseable ccfolia character piece", () => {
     const parsed = JSON.parse(
       buildCocofolia(makeCharacter({ name: "Wire" }), makeCatalog(), identityTr),
