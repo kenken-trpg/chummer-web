@@ -109,6 +109,10 @@ def test_every_english_rule_is_backed_by_a_glossary_line() -> None:
         ('"a": "the stun monitor",', True),  # case does not save it
         ('"a": "Stun track = 8 + WIL",', False),
         ('"a": "Matrix condition monitor",', False),
+        ('"a": " · fade {fade}",', True),
+        ('"a": "Fade is the hits ×2",', True),
+        ('"res.fadeResist": " · fading resistance {fade}",', False),  # the key and the placeholder are code
+        ('"a": "what it holds fades over time",', False),  # an ordinary verb
     ],
 )
 def test_english_rules_fire_on_the_other_name(tmp_path: Path, text: str, flagged: bool) -> None:

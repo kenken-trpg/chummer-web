@@ -118,10 +118,11 @@ docs ではバッククォート（`` `物理リミット` ``）の中は引用�
 
 `frontend/lib/i18n/locales/en/` には、用語集の英語の列（Chummer の英語）と違う呼び方だけを当てます。
 英文では `power points` のように小文字で書くのが普通なので、大文字・小文字は区別せずに探し、
-大文字・小文字の揺れそのものは問いません。
+大文字・小文字の揺れそのものは問いません。キー名（`"res.fadeResist":`）と差し込み（`{fade}`）は検査せず、文言だけを見ます。
 
-| 誤 | 正 | 典拠 | 直した経緯 |
-| --- | --- | --- | --- |
-| physical monitor | Physical Track | Physical Track (431) | ヘルプの CM の式と能力値の説明に 4 箇所 |
-| stun monitor | Stun Track | Stun Track (543) | 同上。A.I. のコアダメージトラックのヘルプにも |
-| core monitor | Core Damage Track | Core Damage Track (623) | A.I. のヘルプ（#608 で入れた） |
+| 誤 | 正 | 典拠 | 許容 | 直した経緯 |
+| --- | --- | --- | --- | --- |
+| physical monitor | Physical Track | Physical Track (431) |  | ヘルプの CM の式と能力値の説明に 4 箇所 |
+| stun monitor | Stun Track | Stun Track (543) |  | 同上。A.I. のコアダメージトラックのヘルプにも |
+| core monitor | Core Damage Track | Core Damage Track (623) |  | A.I. のヘルプ（#608 で入れた） |
+| fade | Fading | Fading (237) | fades | 複合体・スプライト・シートに 7 箇所。`fades`（徐々に消える）は普通の動詞 |
