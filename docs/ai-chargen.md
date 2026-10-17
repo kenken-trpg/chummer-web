@@ -106,6 +106,8 @@ DT本文は未照合。
 - メタタイプが`advanced programs`のタブを有効にしない（A.I.でない）キャラクターは、プログラムを持たない。
 - `.chum5`：`<aiprograms>`を`AIProgram.Save`と同じ項目で書く。Inherent Programの分は
   `candelete` Falseで書き、読み込みでは資質のExtraから作り直す（二重に請求しないため）。
+  資質とプログラムは`AIProgram`のimprovement（`improvedname`がプログラムの`guid`、
+  `sourcename`が資質の`guid`）で結ぶので、Chummerで資質を外すとプログラムも消える。
   あわせて、メタタイプが付ける資質のExtra（Inherent Programの選択、Codeslingerのアクション）を
   書き出し・読み込みするようにした。これまでは書かずに捨てていた。
 - 画面：「プログラム」タブ（A.I.のみ）。カテゴリーで絞り、前提の無いものは追加できない。
@@ -135,7 +137,5 @@ DT本文は未照合。
 1. **DT本文の照合**。上記はすべて固定版Chummerのソースとの照合で、DTの本文・エラッタとは照合していない。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
-3. **Inherent Programの改善の結び付け**。`.chum5`に、資質とプログラムを結ぶ`AIProgram`の
-   improvementを書いていない。Chummerで資質を外しても、プログラムが残る。
-4. **xlsx・FVTT・Udonariumの書き出し**。プログラムを書いていない。書き出し前の確認では
+3. **xlsx・FVTT・Udonariumの書き出し**。プログラムを書いていない。書き出し前の確認では
    「A.I. のプログラム」が失われると表示される。

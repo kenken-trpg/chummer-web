@@ -42,6 +42,12 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         if spell_category:
             _sub(q, "guid", qid)
             spell_limits.append((qid, spell_category))
+        if q.find("guid") is None and any(
+            node.get("tag") == "selectinherentaiprogram" for node in (specs.get(qid) or {}).get("bonus") or []
+        ):
+            # Inherent Program: the AIProgram improvement in
+            # `_export_ai_programs` names this quality by its guid
+            _sub(q, "guid", qid)
         _sub(q, "extra", extra)
         _sub(q, "qualitysource", "Selected")
         # A quality with a `<selectskill>` bonus carries the skill picked for
