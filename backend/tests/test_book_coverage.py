@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 
 from scripts.ja_books import BOOKS, Book
-from scripts.make_ja_worksheet import book_entries, decided
+from scripts.make_ja_worksheet import book_entries, decided, printed_latin
 
 # How many names each pass has decided. Raise with each batch — a floor rather
 # than an equality so a batch lands in one commit, and so re-running the
@@ -62,7 +62,8 @@ def test_every_listed_name_exists_in_the_catalog(code: str, names: dict[str, set
 def test_translations_are_japanese(code: str) -> None:
     jp = re.compile(r"[぀-ヿ㐀-鿿]")
     verified, _ = decided(BOOKS[code])
-    latin = sorted(k for k, v in verified.items() if not jp.search(v))
+    printed = printed_latin(BOOKS[code])
+    latin = sorted(k for k, v in verified.items() if not jp.search(v) and k not in printed)
     assert not latin, f"use {BOOKS[code].skipped_table} to leave a name in English: {latin}"
 
 
@@ -116,6 +117,21 @@ def _write(path: Path, rows: list[tuple[str, ...]], delimiter: str = "\t", pream
     body = "".join(delimiter.join(r) + "\r\n" for r in rows)
     path.write_bytes((preamble + body).encode("utf-8-sig"))
     return path
+
+
+def test_a_name_the_book_prints_in_latin_may_keep_it(tmp_path: Path) -> None:
+    """The Codex prints Fight or Flight Filter as "FFF": a Latin term is the
+    book's Japanese one only for a name `Book.latin_table` lists."""
+    from scripts.import_ja_worksheet import _read_worksheet
+
+    sheet = _write(
+        tmp_path / "dt-worksheet.tsv",
+        [("status", "english", "current", "official"), ("pending", "Fight or Flight Filter", "", "FFF")],
+    )
+    assert _read_worksheet(sheet).problems  # not listed: refused
+    got = _read_worksheet(sheet, latin_ok=frozenset({"Fight or Flight Filter"}))
+    assert got.translations == {"Fight or Flight Filter": "FFF"}
+    assert not got.problems
 
 
 def test_reads_a_worksheet_a_spreadsheet_handed_back(tmp_path: Path) -> None:

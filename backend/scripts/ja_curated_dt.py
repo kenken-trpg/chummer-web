@@ -28,9 +28,14 @@ by hand, so the two halves stay in step.
 
 from __future__ import annotations
 
+# names the Codex prints in Latin letters, which is its Japanese term then
+# (`Book.latin_table`): Fight or Flight Filter is "FFF" on p.204
+DT_PRINTED_LATIN: tuple[str, ...] = ("Fight or Flight Filter",)
+
 # english name -> official Japanese, as printed in the Shadowrun Codex
 DT: dict[str, str] = {
     # --- echoes ------------------------------------------------------------
+    "Fight or Flight Filter": "FFF",
     "Mathemagics": "マスマジックス",
     "Quiet": "クワイエット",
     "Resonance Riding": "共振接続",
@@ -47,7 +52,4 @@ DT: dict[str, str] = {
 }
 
 # DT names deliberately left on English fallback (no official term / not pinned)
-DT_UNVERIFIED: tuple[str, ...] = (
-    "Fight or Flight Filter",
-    "MMRI",
-)
+DT_UNVERIFIED: tuple[str, ...] = ("MMRI",)

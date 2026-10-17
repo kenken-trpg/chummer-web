@@ -56,6 +56,12 @@ class Book:
     def skipped_table(self) -> str:
         return f"{self.table}_UNVERIFIED"
 
+    @property
+    def latin_table(self) -> str:
+        """Names the book prints in Latin letters: there the Latin form *is* its
+        Japanese term (the Codex's FFF), so a translation may lack kana."""
+        return f"{self.table}_PRINTED_LATIN"
+
     def bucket_rank(self, bucket: str) -> int:
         return self.buckets.index(bucket) if bucket in self.buckets else len(self.buckets)
 
