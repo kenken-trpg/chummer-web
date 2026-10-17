@@ -112,7 +112,7 @@ export const JA_HELP = {
   "help.spell.statsLabel": "呪文データ",
   "help.spell.drain":
     "ドレイン：術者が受ける反動。F は唱えるときに選ぶフォースで、F−3 ならフォース −3（最低 2）",
-  "help.spell.drainResist": "ドレイン抵抗は意志力＋流派の能力値で振り、抵抗しきれない分を食らう",
+  "help.spell.drainResist": "ドレイン抵抗は意志力＋様式の能力値で振り、抵抗しきれない分を食らう",
   "help.spell.force": "フォースが魔力以下なら精神ダメージ、超えると身体ダメージになる（SR5 p.281）",
   "help.spell.range": "射程（LOS 視線／T 接触／範囲）と持続（瞬間／維持／永続）",
   "help.ware.statsLabel": "ウェアの値",
@@ -125,7 +125,7 @@ export const JA_HELP = {
   "help.bio.essence": "Essence は残っている合計で、括弧内はバイオウェアで減った分だけ",
   "help.bio.spent": "消費¥はこのタブ分ではなく、装備や資質も含めた支出の合計",
   "help.cf.statsLabel": "複合体の値",
-  "help.cf.fv": "FV（フェイディング値）：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
+  "help.cf.fv": "フェイディング：L は唱えるときに選ぶレベルで、L−1 ならレベル −1（最低 2）",
   "help.aiprog.price":
     "1 つにつき 5 カルマ、Advanced Programs は 8 カルマ（DT）。作成後に足しても同じ価格",
   "help.aiprog.inherent": "資質 Inherent Program で選んだ 1 つは無料で、資質を外すと消える",
