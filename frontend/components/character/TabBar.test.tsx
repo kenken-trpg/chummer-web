@@ -10,6 +10,13 @@ describe("<TabBar>", () => {
     expect(screen.getByRole("button", { name: "呪文" })).toBeDefined();
   });
 
+  it("shows an A.I. its program tab, which the engine enables as advanced programs", () => {
+    const { rerender } = render(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={[]} />);
+    expect(screen.queryByRole("button", { name: "プログラム" })).toBeNull();
+    rerender(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={["DEP", "advanced programs"]} />);
+    expect(screen.getByRole("button", { name: "プログラム" })).toBeDefined();
+  });
+
   it("native MAG alone keeps Talent abilities hidden", () => {
     render(<TabBar tab="attrs" setTab={vi.fn()} enabledTabs={["MAG", "critter"]} />);
     for (const name of ["呪文", "精霊", "アデプト", "収束具"]) {

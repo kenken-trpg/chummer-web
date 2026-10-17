@@ -202,6 +202,8 @@ export const EN_SHEET = {
 
   "sheet.quickening": "Quickening: karma can lock a sustained spell in place (SR5 p.326)",
   "sheet.complexForms": "Complex forms",
+  "sheet.aiPrograms": "A.I. programs",
+  "sheet.aiProgramFree": " ({name})",
   "sheet.fadeResist": " · fade resistance {pool} ({attrs})",
   "sheet.cfLine": " · target {target} / {duration} / level {level} / FV {fv}",
   "sheet.fade": " · fade {fade}",

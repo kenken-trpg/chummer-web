@@ -115,6 +115,19 @@ def section(raw: CatalogDict) -> dict:
             }
             for f in raw.get("complex_forms") or []
         ],
+        "ai_programs": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "category": p.get("category") or "",
+                "advanced": bool(p.get("advanced")),
+                "required": list(p.get("required") or []),
+                "needs_extra": bool(p.get("needs_extra")),
+                "source": p.get("source"),
+                "page": p.get("page"),
+            }
+            for p in raw.get("ai_programs") or []
+        ],
         "streams": [
             {
                 "id": s["id"],

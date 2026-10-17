@@ -49,6 +49,15 @@ class ComplexFormInstall(BaseModel):
     extra: str | None = None
 
 
+class AIProgramInstall(BaseModel):
+    """One of an A.I.'s programs (`programs.xml`), bought with karma."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    program_id: str
+    #: The autosofts' model, weapon or skill (Chummer's `Extra`).
+    extra: str | None = None
+
+
 class SpriteInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     sprite_id: str

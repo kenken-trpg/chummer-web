@@ -55,6 +55,10 @@ const AdeptTab = dynamic(
   () => import("@/components/character/tabs/AdeptTab").then((m) => m.AdeptTab),
   { loading: TabLoading },
 );
+const AIProgramsTab = dynamic(
+  () => import("@/components/character/tabs/AIProgramsTab").then((m) => m.AIProgramsTab),
+  { loading: TabLoading },
+);
 const ComplexFormsTab = dynamic(
   () => import("@/components/character/tabs/ComplexFormsTab").then((m) => m.ComplexFormsTab),
   { loading: TabLoading },
@@ -150,6 +154,9 @@ export function TabPanels({
         <ComplexFormsTab {...panel} />
       )}
       {tab === "sprites" && d.enabled_tabs.includes("sprites") && <SpritesTab {...panel} />}
+      {tab === "aiprograms" && d.enabled_tabs.includes("advanced programs") && (
+        <AIProgramsTab {...panel} />
+      )}
     </>
   );
 }

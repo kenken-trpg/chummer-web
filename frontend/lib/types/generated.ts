@@ -117,6 +117,13 @@ export interface SpiritInstall {
   opposed_hits?: number | null;
 }
 
+export interface AIProgramInstall {
+  id?: string;
+  program_id: string;
+  /** The autosofts' model, weapon or skill (Chummer's `Extra`). */
+  extra?: string | null;
+}
+
 export interface ComplexFormInstall {
   id?: string;
   form_id: string;
@@ -398,6 +405,8 @@ export interface CharacterSettings {
   karma_knowledge_specialization?: number | null;
   karma_spell?: number | null;
   karma_complex_form?: number | null;
+  karma_ai_program?: number | null;
+  karma_ai_advanced_program?: number | null;
   karma_enhancement?: number | null;
   karma_mystic_pp?: number | null;
   karma_martial_technique?: number | null;
@@ -661,6 +670,7 @@ export interface Character {
   spells?: SpellInstall[];
   spirits?: SpiritInstall[];
   complex_forms?: ComplexFormInstall[];
+  ai_programs?: AIProgramInstall[];
   sprites?: SpriteInstall[];
   foci?: FocusInstall[];
   armor?: ArmorInstall[];

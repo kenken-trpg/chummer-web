@@ -389,6 +389,8 @@ class DerivedDict(TypedDict):
     contacts: list[Row]
     contact_points: _ContactPoints
     martial_arts: list[Row]
+    #: An A.I.'s programs (`engine/ai_programs.py`).
+    ai_programs: list[Row]
     martial_art_points: _MartialArtPoints
     #: Extra specializations a skill may be bought at, from a martial art
     #: style (SR5 p.140) or a quality that widens the list (RF p.114).

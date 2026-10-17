@@ -26,6 +26,7 @@ from .gear import (
 from .life_modules import LifeModuleSkillAdvancement, LifeModuleSkillSnapshot, LifeModuleTransfer, life_module_entry_ids
 from .magic import (
     AdeptPowerInstall,
+    AIProgramInstall,
     ComplexFormInstall,
     FocusInstall,
     InitiationChoice,
@@ -95,6 +96,7 @@ class CharacterPatch(BaseModel):
     spells: list[SpellInstall] | None = None
     spirits: list[SpiritInstall] | None = None
     complex_forms: list[ComplexFormInstall] | None = None
+    ai_programs: list[AIProgramInstall] | None = None
     sprites: list[SpriteInstall] | None = None
     foci: list[FocusInstall] | None = None
     armor: list[ArmorInstall] | None = None
@@ -273,6 +275,7 @@ class CharacterState(BaseModel):
     spells: list[SpellInstall] = Field(default_factory=list)
     spirits: list[SpiritInstall] = Field(default_factory=list)
     complex_forms: list[ComplexFormInstall] = Field(default_factory=list)
+    ai_programs: list[AIProgramInstall] = Field(default_factory=list)
     sprites: list[SpriteInstall] = Field(default_factory=list)
     foci: list[FocusInstall] = Field(default_factory=list)
     armor: list[ArmorInstall] = Field(default_factory=list)

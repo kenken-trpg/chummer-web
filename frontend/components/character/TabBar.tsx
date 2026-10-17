@@ -3,6 +3,10 @@ import { type MsgKey, useUiText } from "@/lib/i18n";
 
 // [tab, always-shown]. The awakened / emerged tabs appear only when the engine
 // reports them in `enabled_tabs`.
+
+/** A tab the engine enables under another name: an A.I.'s metatype says
+ *  `<enabletab>advanced programs`. */
+export const TAB_GATES: Partial<Record<Tab, string>> = { aiprograms: "advanced programs" };
 const TABS: [Tab, boolean][] = [
   ["priority", true],
   ["meta", true],
@@ -22,6 +26,7 @@ const TABS: [Tab, boolean][] = [
   ["foci", false],
   ["complexforms", false],
   ["sprites", false],
+  ["aiprograms", false],
   ["check", true],
   ["sheet", true],
 ];
@@ -41,19 +46,21 @@ export function TabBar({
     // pattern also owes the user arrow-key navigation and aria-controls, and a
     // half-implemented tablist announces a contract the page does not keep.
     <nav className="tabs no-print" aria-label={ui("nav.sections")}>
-      {TABS.filter(([k, always]) => always || enabledTabs.includes(k)).map(([k]) => (
-        <button
-          key={k}
-          className={`tab ${tab === k ? "active" : ""}`}
-          aria-current={tab === k ? "true" : undefined}
-          // one line on what the section is for — the labels are short enough
-          // to be guessable but not short enough to be obvious ("メタ", "資質")
-          title={ui(`tab.${k}.hint` as MsgKey)}
-          onClick={() => setTab(k)}
-        >
-          {ui(`tab.${k}` as MsgKey)}
-        </button>
-      ))}
+      {TABS.filter(([k, always]) => always || enabledTabs.includes(TAB_GATES[k] ?? k)).map(
+        ([k]) => (
+          <button
+            key={k}
+            className={`tab ${tab === k ? "active" : ""}`}
+            aria-current={tab === k ? "true" : undefined}
+            // one line on what the section is for — the labels are short enough
+            // to be guessable but not short enough to be obvious ("メタ", "資質")
+            title={ui(`tab.${k}.hint` as MsgKey)}
+            onClick={() => setTab(k)}
+          >
+            {ui(`tab.${k}` as MsgKey)}
+          </button>
+        ),
+      )}
     </nav>
   );
 }

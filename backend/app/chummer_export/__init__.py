@@ -18,6 +18,7 @@ from ..engine import compute, find_metatype
 from ..models import CharacterState
 from ..rules import rules_for, using_rules
 from ._common import _Ctx, _id_name
+from .ai_programs import _export_ai_programs
 from .build import _export_build_points, _export_flags, _export_priorities
 from .gear import _export_armor, _export_foci, _export_gear, _export_vehicles, _export_ware, _export_weapons
 from .identity import _export_attributes, _export_contacts, _export_identity
@@ -150,6 +151,7 @@ _SECTIONS = (
     _export_skills,
     _export_qualities,
     _export_spell_lists,
+    _export_ai_programs,
     _export_martial_arts,
     _export_ware,
     _export_armor,

@@ -40,7 +40,9 @@ def export_metatype_qualities(qualities: ET.Element, state: CharacterState, ctx:
             "sourceid": grant["id"],
             "guid": _grant_guid(state, grant, index, "quality"),
             "name": grant["name"],
-            "extra": grant.get("select") or "",
+            # a fixed pick, or the player's (an Inherent Program, a
+            # Codeslinger action), which has nowhere else to go
+            "extra": grant.get("select") or state.quality_extras.get(grant["id"], ""),
             "bp": grant["karma"],
             "qualitytype": grant["category"],
             # Chummer's QualitySource for a `removable="True"` grant.

@@ -44,6 +44,8 @@ class SettingsState(BaseModel):
     karma_knowledge_specialization: int | None = None
     karma_spell: int | None = None
     karma_complex_form: int | None = None
+    karma_ai_program: int | None = None
+    karma_ai_advanced_program: int | None = None
     karma_enhancement: int | None = None
     karma_mystic_pp: int | None = None
     karma_martial_technique: int | None = None

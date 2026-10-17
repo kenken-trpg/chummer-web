@@ -65,6 +65,8 @@ _KARMA_FIELDS: dict[str, str] = {
     "karmaknospecialization": "karma_knowledge_specialization",
     "karmaspell": "karma_spell",
     "karmanewcomplexform": "karma_complex_form",
+    "karmanewaiprogram": "karma_ai_program",
+    "karmanewaiadvancedprogram": "karma_ai_advanced_program",
     "karmaenhancement": "karma_enhancement",
     "karmamysadpp": "karma_mystic_pp",
     "karmatechnique": "karma_martial_technique",

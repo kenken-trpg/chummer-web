@@ -36,6 +36,7 @@ export const JA_APP = {
   "tab.spirits": "精霊",
   "tab.foci": "収束具",
   "tab.complexforms": "複合体",
+  "tab.aiprograms": "プログラム",
   "tab.sprites": "スプライト",
   "tab.check": "チェック",
 
@@ -58,6 +59,7 @@ export const JA_APP = {
   "tab.spirits.hint": "束縛した精霊。〈フォース〉と助力の回数を決めます",
   "tab.foci.hint": "収束具。カルマで〈固着〉させて使います",
   "tab.complexforms.hint": "複合体。テクノマンサーのみ",
+  "tab.aiprograms.hint": "A.I. のプログラム。A.I. のみ",
   "tab.sprites.hint": "登録したスプライト。テクノマンサーのみ",
   "tab.check.hint": "作成ルールに違反していないかの一覧。エラーがあると完成できません",
 

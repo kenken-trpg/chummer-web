@@ -451,6 +451,8 @@ export interface Derived {
   focus_limits?: { count: number; count_max: number; force: number; force_max: number };
   spirits?: InstalledSpirit[];
   complex_forms?: InstalledComplexForm[];
+  /** An A.I.'s programs (`engine/ai_programs.py`); absent from an older server. */
+  ai_programs?: InstalledAIProgram[];
   complex_form_points?: { used: number; free: number; paid: number };
   sprites?: InstalledSprite[];
   stream?: {
@@ -589,4 +591,22 @@ export interface Derived {
     cfp?: number;
   };
   translations?: Record<string, string>;
+}
+
+/** One of an A.I.'s programs: bought (`id` is the install's) or granted free by
+ *  Inherent Program (`id` is `inherent:<quality id>`, `granted_by` its name). */
+export interface InstalledAIProgram {
+  id: string;
+  program_id: string;
+  name: string;
+  category: string;
+  advanced: boolean;
+  required: string[];
+  needs_extra: boolean;
+  extra: string;
+  free: boolean;
+  granted_by: string;
+  karma: number;
+  source?: string;
+  page?: string;
 }

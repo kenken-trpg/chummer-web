@@ -18,10 +18,11 @@ export function MatrixSection(s: SheetData) {
           hot: `${mi.value}+${mi.hot_dice}d6`,
         })
       : undefined;
+  const programs = d.ai_programs || [];
   return (
     <Section
       title="sheet.matrix"
-      empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona}
+      empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona && !programs.length}
     >
       {(() => {
         const rows: {
@@ -94,6 +95,7 @@ export function MatrixSection(s: SheetData) {
             init: initFor("living_persona"),
           });
         }
+        if (!rows.length) return null;
         return (
           <>
             <table className="sheet-table sheet-table--matrix">
@@ -138,6 +140,21 @@ export function MatrixSection(s: SheetData) {
           </>
         );
       })()}
+      {programs.length ? (
+        // an A.I.'s own programs, not the ones its devices run
+        <div className="sheet-block">
+          <h4>{ui("sheet.aiPrograms")}</h4>
+          <ul className="sheet-list">
+            {programs.map((row) => (
+              <li key={row.id}>
+                <b>{sheetTr(row.name)}</b>
+                {row.extra ? `（${sheetTr(row.extra)}）` : ""}
+                {row.free ? ui("sheet.aiProgramFree", { name: sheetTr(row.granted_by) }) : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </Section>
   );
 }

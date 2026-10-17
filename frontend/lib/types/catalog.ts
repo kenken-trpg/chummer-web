@@ -605,6 +605,17 @@ export interface Catalog {
     source: string;
     page: string;
   }[];
+  /** An A.I.'s programs (`programs.xml`), not the gear of the same names. */
+  ai_programs?: {
+    id: string;
+    name: string;
+    category: string;
+    advanced: boolean;
+    required: string[];
+    needs_extra: boolean;
+    source: string;
+    page: string;
+  }[];
   streams?: {
     id: string;
     name: string;
