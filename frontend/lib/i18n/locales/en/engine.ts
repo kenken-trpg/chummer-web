@@ -184,6 +184,7 @@ export const EN_ENGINE = {
   "engine.spend.customDrugs": "Custom drugs",
   "engine.spend.lifestyles": "Lifestyles",
   "engine.spend.martialArts": "Martial arts",
+  "engine.spend.aiPrograms": "A.I. programs",
   "engine.spend.metatype": "Metatype",
   "engine.spend.mysticPP": "Mystic adept power points",
   "engine.spend.nuyenExchange": "Nuyen exchange",
@@ -330,6 +331,8 @@ export const EN_ENGINE = {
   "engine.complexforms.duplicateDropped": "{name} was dropped as a duplicate",
   "engine.complexforms.pickMatrixAttribute": "Choose a Matrix attribute for {name}",
   "engine.complexforms.requires": "{name} requires {needed}",
+  "engine.aiPrograms.prereq": "{name} requires one of {needed}",
+  "engine.aiPrograms.pickExtra": "Enter what {name} is for",
 
   "engine.complexforms.threadNeedsSoftware":
     "Threading {name} needs Software (not known, no defaulting)",
@@ -480,6 +483,7 @@ export const EN_ENGINE = {
   "engine.kind.art": "art",
   "engine.kind.bioware": "bioware",
   "engine.kind.complexForm": "complex form",
+  "engine.kind.aiProgram": "A.I. program",
   "engine.kind.cyberware": "cyberware",
   "engine.kind.drone": "drone",
   "engine.kind.drugComponent": "drug component",

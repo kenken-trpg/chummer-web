@@ -36,6 +36,7 @@ class CatalogDict(TypedDict):
     spirits: list[Row]
     critter_powers: list[Row]
     complex_forms: list[Row]
+    ai_programs: list[Row]
     streams: list[Row]
     sprites: list[Row]
     foci: list[Row]

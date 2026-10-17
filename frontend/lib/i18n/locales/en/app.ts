@@ -36,6 +36,7 @@ export const EN_APP = {
   "tab.spirits": "Spirits",
   "tab.foci": "Foci",
   "tab.complexforms": "Complex Forms",
+  "tab.aiprograms": "Programs",
   "tab.sprites": "Sprites",
   "tab.check": "Check",
 
@@ -60,6 +61,7 @@ export const EN_APP = {
   "tab.spirits.hint": "Bound spirits, with their Force and remaining services",
   "tab.foci.hint": "Foci, bonded with karma",
   "tab.complexforms.hint": "Complex forms. Technomancers only",
+  "tab.aiprograms.hint": "An A.I.'s programs. A.I.s only",
   "tab.sprites.hint": "Registered sprites. Technomancers only",
   "tab.check.hint": "Every chargen rule the character currently breaks. Errors block completion",
 

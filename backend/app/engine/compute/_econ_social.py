@@ -6,6 +6,7 @@ from __future__ import annotations
 from ...improvements import apply_bonus_nodes
 from ...notices import notice
 from ...rules import current_rules
+from ..ai_programs import resolve_ai_programs
 from ..contacts import resolve_contacts, sync_quality_contacts
 from ..gear import apply_unarmed_bonuses
 from ..martial_arts import resolve_martial_arts, sync_quality_martial_arts
@@ -56,6 +57,10 @@ def _social_pass(ctx: Ctx) -> None:
         bool(ctx.effects.get("unarmed_physical")),
     )
     ctx.karma_spent += int(ctx.martial.get("karma") or 0)
+    ctx.ai_programs = resolve_ai_programs(ctx.state, ctx.enabled, ctx.qualities, career=ctx.career)
+    ctx.warnings.extend(ctx.ai_programs["warnings"])
+    ctx.errors.extend(ctx.ai_programs["errors"])
+    ctx.karma_spent += ctx.ai_programs["karma"]
     ctx.karma_spent += int(ctx.initiation.get("karma") or 0)
     ctx.karma_spent += int(ctx.submersion.get("karma") or 0)
     baseline_qualities = ctx.state.career_baseline.quality_ids if ctx.state.career_baseline else None
@@ -85,6 +90,7 @@ def _social_pass(ctx: Ctx) -> None:
         ("engine.spend.spiritServices", ctx.spirit_karma),
         ("engine.spend.contactsOver", int(ctx.contacts.get("karma") or 0)),
         ("engine.spend.martialArts", int(ctx.martial.get("karma") or 0)),
+        ("engine.spend.aiPrograms", ctx.ai_programs["karma"]),
         ("engine.spend.initiation", int(ctx.initiation.get("karma") or 0)),
         ("engine.spend.submersion", int(ctx.submersion.get("karma") or 0)),
     ):

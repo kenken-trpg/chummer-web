@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from .ai_programs import ADVANCED_CATEGORY, INHERENT_CATEGORIES, load_ai_programs
 from .armor import load_armor, load_armor_mods
 from .books import load_books, load_settings_presets
 from .drugs import (
@@ -75,6 +76,9 @@ from .ware import load_bioware, load_cyberware
 from .weapons import load_weapon_accessories, load_weapon_ranges, load_weapons
 
 __all__ = [
+    "ADVANCED_CATEGORY",
+    "INHERENT_CATEGORIES",
+    "load_ai_programs",
     "SPELL_CAST_CATEGORIES",
     "SPELL_CATEGORIES",
     "load_bioware",

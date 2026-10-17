@@ -125,6 +125,7 @@ export type Tab =
   | "foci"
   | "complexforms"
   | "sprites"
+  | "aiprograms"
   | "check"
   | "sheet";
 export type GearKind =

@@ -45,6 +45,7 @@ from .formulas import (
 )
 from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     DRUG_CATEGORIES,
+    INHERENT_CATEGORIES,
     PROGRAM_HOSTS,  # noqa: F401  (re-exported for engine)
     SPELL_CAST_CATEGORIES,  # noqa: F401  (re-exported for engine)
     SPELL_CATEGORIES,  # noqa: F401  (re-exported for engine)
@@ -52,6 +53,7 @@ from .loaders import (  # noqa: E402  (domain loaders; see data_loader/loaders/)
     boost_drug_attribute,  # noqa: F401  (re-exported for engine)
     drug_effect_summary,  # noqa: F401  (re-exported for engine)
     drug_node_value,  # noqa: F401  (re-exported for engine)
+    load_ai_programs,
     load_apps,
     load_armor,
     load_armor_mods,
@@ -302,6 +304,17 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
     for quality in qualities:
         if any(node.get("tag") == "selectsprite" for node in quality.get("bonus") or []):
             quality["select_options"] = [str(s["name"]) for s in sprites if s.get("name")]
+    ai_programs = load_ai_programs()
+    # the grants too: a Protosapient is born with Inherent Program, and its
+    # grant is a copy made from its own load of qualities.xml above
+    grants = [q for meta in _with_metavariants(metatypes) for q in meta.get("quality_grants") or []]
+    for quality in [*qualities, *grants]:
+        if any(node.get("tag") == "selectinherentaiprogram" for node in quality.get("bonus") or []):
+            # Inherent Program: one common or hacking program, which the A.I.
+            # then has for free (Chummer's `selectinherentaiprogram`).
+            quality["select_options"] = [
+                str(p["name"]) for p in ai_programs if p.get("category") in INHERENT_CATEGORIES
+            ]
     return {
         "metatypes": playable,
         "all_metatypes": all_by_name,
@@ -320,6 +333,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "spirits": spirits,
         "critter_powers": load_critter_powers(),
         "complex_forms": load_complex_forms(),
+        "ai_programs": ai_programs,
         "streams": load_streams(),
         "sprites": sprites,
         "foci": load_foci(),

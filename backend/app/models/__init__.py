@@ -43,6 +43,7 @@ from .life_modules import (
 )
 from .magic import (
     AdeptPowerInstall,
+    AIProgramInstall,
     ComplexFormInstall,
     FocusInstall,
     InitiationChoice,
@@ -67,6 +68,7 @@ __all__ = [
     "SpellInstall",
     "QiFocusInstall",
     "SpiritInstall",
+    "AIProgramInstall",
     "ComplexFormInstall",
     "SpriteInstall",
     "FocusInstall",

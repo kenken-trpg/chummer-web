@@ -132,6 +132,9 @@ export const EN_HELP = {
   "help.bio.spent":
     "The spent ¥ is every purchase, gear and qualities included, not this tab alone",
   "help.cf.statsLabel": "Complex form",
+  "help.aiprog.price":
+    "5 karma each, 8 for an Advanced Program (DT). The same price after creation",
+  "help.aiprog.inherent": "The one Inherent Program picks is free, and goes when the quality does",
   "help.cf.fv":
     "FV is the fading; L is the Level chosen when threading, so L\u22121 is Level \u2212 1 (minimum 2)",
   "help.cf.fade": "Resist fading with Willpower + Resonance; the rest is damage",

@@ -96,6 +96,16 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         if (fid := cf_r.resolve(c, warn, ui("engine.kind.complexForm")))
     ]
 
+    # An A.I.'s programs. One that cannot be deleted came from Inherent
+    # Program, whose pick the quality's `<extra>` already carries — the
+    # engine adds it again from there, so reading it here too would bill it.
+    ai_r = _Resolver(cat.get("ai_programs") or [])
+    st["ai_programs"] = [
+        {"id": str(uuid.uuid4()), "program_id": pid, "extra": _text(p.find("extra")) or None}
+        for p in root.findall("./aiprograms/aiprogram")
+        if _text(p.find("candelete")).lower() != "false" and (pid := ai_r.resolve(p, warn, ui("engine.kind.aiProgram")))
+    ]
+
     trad = root.find("tradition")
     if trad is not None and _text(trad.find("traditiontype")) == "RES":
         # Current Chummer saves a technomancer's stream here, as a tradition

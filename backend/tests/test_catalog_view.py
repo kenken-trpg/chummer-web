@@ -36,6 +36,7 @@ EXPECTED_KEYS = {
     "traditions",
     "spirits",
     "complex_forms",
+    "ai_programs",
     "streams",
     "sprites",
     "paragons",

@@ -56,9 +56,9 @@ SILENT_TAGS = {
     # sprite list in `data_loader` (Chummer's `AddSprite` only widens a
     # stream's sprite list, and every stream here already has them all)
     "selectsprite",
-    # Only on `Inherent Program`, a quality an A.I. takes, and the innate
-    # grant of `Protosapient`. The pick is one of `programs.xml`'s, a file
-    # this app does not load yet (`docs/ai-chargen.md`, the programs stage).
+    # Inherent Program (an A.I.'s, innate to a Protosapient): the pick is the
+    # quality's extra, offered from `programs.xml` in `data_loader`, and
+    # `engine/ai_programs.py` adds the program it names for free
     "selectinherentaiprogram",
     "selectattribute",
     # Astral Reputation (SG p.35) is a tracked value of its own, like

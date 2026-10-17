@@ -57,6 +57,7 @@ _KIND = {
     "spells": "spell",
     "spirits": "spirit",
     "complex_forms": "complexForm",
+    "ai_programs": "aiProgram",
     "sprites": "sprite",
     "foci": "focus",
     "qi_foci": "focus",

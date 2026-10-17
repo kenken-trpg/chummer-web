@@ -28,6 +28,8 @@ _DIRECT: dict[str, str] = {
     "karma_knowledge_specialization": "karma_knowledge_specialization",
     "karma_spell": "karma_spell",
     "karma_complex_form": "karma_complex_form",
+    "karma_ai_program": "karma_ai_program",
+    "karma_ai_advanced_program": "karma_ai_advanced_program",
     "karma_enhancement": "karma_enhancement",
     "karma_mystic_pp": "karma_mystic_pp",
     "karma_martial_technique": "karma_martial_technique",

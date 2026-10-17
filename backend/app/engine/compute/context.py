@@ -17,6 +17,7 @@ from ...improvements import EffectsDict, empty_effects
 from ...improvements.effect_rows import GrantWareRow
 from ...models import CharacterState
 from ...notices import Notice, ParamValue, notice
+from ..ai_programs import AIProgramsBundle, empty_ai_programs
 from ..bundle_types import (
     AdeptBundle,
     ComplexFormsBundle,
@@ -215,6 +216,7 @@ class Ctx:
     # --- social ----------------------------------------------------------
     contacts: ContactsBundle = field(default_factory=empty_contacts)
     martial: MartialBundle = field(default_factory=empty_martial)
+    ai_programs: AIProgramsBundle = field(default_factory=empty_ai_programs)
     karma_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     nuyen_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     quality_notoriety: int = 0

@@ -178,6 +178,7 @@ export const JA_ENGINE = {
   "engine.spend.customDrugs": "自作ドラッグ",
   "engine.spend.lifestyles": "ライフスタイル",
   "engine.spend.martialArts": "格闘技",
+  "engine.spend.aiPrograms": "A.I. のプログラム",
   "engine.spend.metatype": "メタ",
   "engine.spend.mysticPP": "ミスティックPP",
   "engine.spend.nuyenExchange": "新円交換",
@@ -326,6 +327,8 @@ export const JA_ENGINE = {
   "engine.complexforms.duplicateDropped": "{name} は重複しているため外しました",
   "engine.complexforms.pickMatrixAttribute": "{name} はマトリックス能力値を選んでください",
   "engine.complexforms.requires": "{name} には {needed} が必要です",
+  "engine.aiPrograms.prereq": "{name} には {needed} のどれかが必要です",
+  "engine.aiPrograms.pickExtra": "{name} の対象を入力してください",
 
   "engine.complexforms.threadNeedsSoftware":
     "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルティング不可）",
@@ -477,6 +480,7 @@ export const JA_ENGINE = {
   "engine.kind.art": "術",
   "engine.kind.bioware": "バイオウェア",
   "engine.kind.complexForm": "複合体",
+  "engine.kind.aiProgram": "A.I. のプログラム",
   "engine.kind.cyberware": "サイバーウェア",
   "engine.kind.drone": "ドローン",
   "engine.kind.drugComponent": "ドラッグ・コンポーネント",

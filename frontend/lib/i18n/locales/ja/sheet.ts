@@ -203,6 +203,8 @@ export const JA_SHEET = {
 
   "sheet.quickening": "クイックニング可（維持中の呪文をカルマで固定できる／SR5 p.326）",
   "sheet.complexForms": "複合体",
+  "sheet.aiPrograms": "A.I. のプログラム",
+  "sheet.aiProgramFree": "（{name}）",
   "sheet.fadeResist": " ・ フェイディング抵抗 {pool}（{attrs}）",
   "sheet.cfLine": " ・ 対象 {target} / {duration} / レベル {level} / FV {fv}",
   "sheet.fade": " ・ フェイディング {fade}",

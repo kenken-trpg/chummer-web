@@ -166,6 +166,7 @@ def quality_needs_extra(bonus: list[dict[str, Any]] | None) -> bool:
             "actiondicepool",
             "selectexpertise",
             "selectsprite",
+            "selectinherentaiprogram",
         }
         or _limit_spell_category_needs_select(node)
         or _limit_spirit_category_needs_select(node)
@@ -245,9 +246,10 @@ def quality_extra_meta(bonus: list[dict[str, Any]] | None) -> dict[str, Any]:
         kind = "spirit_category"
     elif "selectattributes" in tags or "selectattribute" in tags:
         kind = "attribute"
-    elif "selecttext" in tags or "selectsprite" in tags:
-        # `selectsprite` (Sprite Affinity): options filled in catalog() once
-        # the sprites are loaded
+    elif "selecttext" in tags or "selectsprite" in tags or "selectinherentaiprogram" in tags:
+        # `selectsprite` (Sprite Affinity) and `selectinherentaiprogram`
+        # (Inherent Program): options filled in catalog() once the sprites
+        # and the A.I. programs are loaded
         kind = "text"
     if needs_spell_category:
         select_options = list(SPELL_SELECT_CATEGORIES)

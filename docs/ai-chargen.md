@@ -85,10 +85,36 @@ DT本文は未照合。
   Talentの表記は「A.I. - Depth 6」。
 - 検証：e2e `ai-creation.spec.ts`（Priority・SumToTen・Karma）、各タブの単体テスト。
 
+## 実装済み: プログラム（段階3）
+
+固定版の[CharacterCreate](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Character%20Forms/CharacterCreate.cs)
+（`CalculateBP`のプログラムの部分）、[SelectAIProgram](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Forms/Selection%20Forms/SelectAIProgram.cs)、
+`AddImprovementCollection.selectinherentaiprogram`、`AIProgram.Save`に合わせた。
+
+- `programs.xml`を取得対象に加え、`catalog()["ai_programs"]`として読む（71件、うちAdvanced Programs 16件）。
+  デッキで動かすギアの同名プログラム（`gear.xml`）とは別物。
+- 値段：1つにつき`<karmanewaiprogram>`（5）、Advanced Programsは`<karmanewaiadvancedprogram>`（8）。
+  Talentに`<ainormalprogramlimit>`・`<aiadvancedprogramlimit>`を持つものが無いので、無料枠は無い。
+  キャリアでも同じ値段（CharacterCareerの追加時の支払い）なので、作成時もキャリアも合計を足す。
+  設定ファイルの2つの値を読む。カルマの内訳は「A.I. のプログラム」の1行。
+- 前提：`<required><oneof><program>`のどれかを、すでに持っていること（SelectionSharedの`program`）。
+  Chummerは追加するときだけ確かめるので、作成中だけエラーにする（資質と同じ）。
+- オートソフトなど`selecttext`・`selectskill`を持つものは、対象を文字で入れる。空なら警告。
+- Inherent Program：Common ProgramsかHacking Programsから1つ選ぶ（資質のExtra）。
+  そのプログラムは無料で、削除できない。Protosapientの生得資質も同じ。
+  `selectsprite`と同じく、選択肢はcatalogで付ける（付与用の資質のコピーにも付ける）。
+- メタタイプが`advanced programs`のタブを有効にしない（A.I.でない）キャラクターは、プログラムを持たない。
+- `.chum5`：`<aiprograms>`を`AIProgram.Save`と同じ項目で書く。Inherent Programの分は
+  `candelete` Falseで書き、読み込みでは資質のExtraから作り直す（二重に請求しないため）。
+  あわせて、メタタイプが付ける資質のExtra（Inherent Programの選択、Codeslingerのアクション）を
+  書き出し・読み込みするようにした。これまでは書かずに捨てていた。
+- 画面：「プログラム」タブ（A.I.のみ）。カテゴリーで絞り、前提の無いものは追加できない。
+  シートのマトリックスの節とテキスト出力に一覧を出す。
+- 検証：`backend/tests/test_ai_programs.py`、`AIProgramsTab`の単体テスト、e2e `ai-programs.spec.ts`。
+  `make reconcile`（34件）の出力はmainと同一。
+
 ## これからの段階
 
-- **プログラム**：`programs.xml`の取得とローダー、高度なプログラムのタブ、前提プログラムの検査、
-  作成カルマ（5・8）。保留中の`selectinherentaiprogram`はここで実装する。
 - **ホームノード**：コムリンク・デッキ・車両を選び、マトリックスイニシアティブ・状態モニター・
   リミットを出す。分岐が多いので、着手前にChummerのソースを読んで分割する。
 - **キャリア**：作成後の扱いは未検討。
@@ -100,5 +126,7 @@ DT本文は未照合。
    `make reconcile`と同じ形で確かめる。
 3. **A.I.のESSとウェア**。サイバーウェアなどの購入を止めていない。Chummerの作成フォームも
    止めていないように見えるが、未確認。
-4. **Protosapientの生得資質Inherent Program**。選択（`selectinherentaiprogram`）が段階3まで無く、
-   選択なしで付与している。
+4. **Inherent Programの改善の結び付け**。`.chum5`に、資質とプログラムを結ぶ`AIProgram`の
+   improvementを書いていない。Chummerで資質を外しても、プログラムが残る。
+5. **xlsx・FVTT・Udonariumの書き出し**。プログラムを書いていない。書き出し前の確認では
+   「A.I. のプログラム」が失われると表示される。

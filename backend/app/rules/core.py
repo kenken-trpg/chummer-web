@@ -70,6 +70,10 @@ class Rules:
     karma_knowledge_specialization: int = 7
     karma_spell: int = 5
     karma_complex_form: int = 4
+    #: `<karmanewaiprogram>` / `<karmanewaiadvancedprogram>`: an A.I.'s
+    #: program, and one from the Advanced Programs category (DT)
+    karma_ai_program: int = 5
+    karma_ai_advanced_program: int = 8
     karma_enhancement: int = 2
     karma_mystic_pp: int = 5
     karma_martial_style: int = 7

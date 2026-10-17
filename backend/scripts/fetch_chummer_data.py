@@ -58,6 +58,7 @@ FILES = [
     "Chummer/data/martialarts.xml",
     "Chummer/data/metamagic.xml",
     "Chummer/data/echoes.xml",
+    "Chummer/data/programs.xml",
     "Chummer/lang/en-us.xml",
     "Chummer/lang/ja-jp.xml",
     "Chummer/lang/ja-jp_data.xml",

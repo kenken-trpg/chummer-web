@@ -242,6 +242,17 @@ export function textSheet(x: TextArgs): string {
     line();
   }
 
+  if ((d.ai_programs || []).length) {
+    head("sheet.aiPrograms");
+    (d.ai_programs || []).forEach((p) =>
+      line(
+        `  ${tr(p.name)}${p.extra ? `（${tr(p.extra)}）` : ""}` +
+          `${p.free ? ui("sheet.aiProgramFree", { name: tr(p.granted_by) }) : ""}`,
+      ),
+    );
+    line();
+  }
+
   const vehAll = [...(d.vehicles || []), ...(d.drones || [])];
   if (vehAll.length) {
     head("sheet.vehicles");

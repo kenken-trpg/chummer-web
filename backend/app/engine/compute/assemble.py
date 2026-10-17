@@ -92,6 +92,7 @@ def assemble(ctx: Ctx) -> None:
             + ctx.spirit_karma
             + int(ctx.contacts.get("karma") or 0)
             + int(ctx.martial.get("karma") or 0)
+            + ctx.ai_programs["karma"]
             + int(ctx.initiation.get("karma") or 0)
             + int(ctx.submersion.get("karma") or 0),
         },
@@ -286,6 +287,7 @@ def assemble(ctx: Ctx) -> None:
             "free_mult": current_rules().contact_free_mult,
         },
         "martial_arts": ctx.martial.get("public") or [],
+        "ai_programs": ctx.ai_programs["public"],
         "martial_art_points": {
             "styles": ctx.martial.get("style_count") or 0,
             "style_max": ctx.martial.get("style_max") or MARTIAL_ART_CHARGEN_STYLE_MAX,

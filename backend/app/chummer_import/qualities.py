@@ -30,8 +30,17 @@ def _import_qualities(root: ET.Element, cat: CatalogDict, st: dict[str, Any], wa
     picks: dict[str, str] = {}
     for q in root.findall("./qualities/quality"):
         src = _text(q.find("qualitysource")).lower()
+        if src in ("metatype", "metatyperemovable"):
+            # The engine re-derives the grant itself, but not what the player
+            # picked for it: a Protosapient's Inherent Program, an A.I.'s
+            # Codeslinger action. That lives only in the grant's `<extra>`.
+            meta_qid = next((c for c in (_text(q.find("sourceid")), _text(q.find("id"))) if c in q_ids), None)
+            extra = _text(q.find("extra"))
+            if meta_qid and extra and meta_qid not in quality_extras:
+                quality_extras.update(_quality_extra_in(cat, meta_qid, extra, _text(q.find("guid")), root))
+            continue
         if src and src not in ("selected", "builtin", ""):
-            continue  # metatype / life-module grants are re-derived by the engine
+            continue  # life-module grants are re-derived by the engine
         # Chummer writes the data id to `<id>` (`<guid>` is this instance), and
         # this app writes it to `<sourceid>`. The name is the last resort, and a
         # lossy one: "College Education" is two qualities — SASS's is a limit
