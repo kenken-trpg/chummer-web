@@ -55,6 +55,7 @@ CURATED: dict[str, str] = {
     # chumJA's SR4 集束具 and the loanword フォーカス were both in use.
     "Foci": "収束具",
     "Living Focus": "生体収束具",  # chumJA gives 生体集束具
+    "Power Point": "パワー・ポイント",  # the metamagic, core rulebook p.332; upstream has パワーポイント
     # spell categories (glossary lang.*Spells minus the 呪文 suffix used elsewhere)
     "Combat": "戦闘",
     "Detection": "探知",
@@ -229,6 +230,8 @@ CATEGORY_SKIP = {
 NAME_SKIP = {
     "Sioux",  # chumJA gives "スー語" (the language); here it is a nation/tradition
     "Centaur",  # untranslated Run Faster; retain the upstream English name
+    "Medic",  # chumJA's 修復 is an SR4 item; here a Data Trails A.I. program, kept English
+    "Miracle Shooter",  # chumJA's is an SR4 item; here a life module of the same name
 }
 
 
