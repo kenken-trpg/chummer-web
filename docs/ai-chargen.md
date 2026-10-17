@@ -25,7 +25,7 @@ DT本文は未照合。
   Xenosapient・ProtosapientのReal World Naivetéは`<positive>`側に書かれている（否定的資質なのに）。
 - `<qualityrestriction>`（4つとも同じ。肯定的63件・否定的43件）は**取れる資質の許可リスト**。
   Chummerの`SelectQuality`は、この一覧に無い資質を候補から外す。metatypes.xmlでこれを持つのはA.I.系だけ。
-- Priority表ではHeritage A（特殊点4）とC（特殊点0）に入る。追加カルマは0。
+- Priority表ではHeritage A（特殊点4）・B（特殊点2）・C（特殊点0）に入る。追加カルマは0。
 - Talent表の各段に「A.I. - n Depth」（A 6／B 4／C 3／D 2／E 1）がある。`<required>`は`metatype A.I.`。
   ほかのTalentはすべて`<forbidden>metatype A.I.`（MundaneとTechnomancerを含む。Technomancerは
   `<required>metatypecategory Metahuman`）。A.I.はPriorityでは必ずA.I.のTalentを取ることになる。
