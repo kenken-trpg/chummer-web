@@ -9,7 +9,8 @@ from ..rules import rules_for, using_rules
 
 
 def export_omissions(state: CharacterState) -> list[Notice]:
-    """Report innate powers, which the exporter does not write as Foundry items.
+    """Report innate powers and an A.I.'s programs, which the exporter does not
+    write as Foundry items.
 
     Recompute from inputs so missing or stale derived caches cannot hide powers.
     This is not a complete Foundry round-trip comparison.
@@ -17,7 +18,15 @@ def export_omissions(state: CharacterState) -> list[Notice]:
     with using_rules(rules_for(state.settings)):
         derived = compute(state.model_copy(deep=True)).derived
     powers = (derived.get("metatype_info") or {}).get("powers") or []
-    return [
+    # An A.I.'s programs: the system's Chummer import (ItemsParser) reads no
+    # `aiprograms`, though its schema names them, so writing them would
+    # only look like support.
+    programs = [
+        notice("engine.export.fvttAIProgram", name=term(str(row["name"])))
+        for row in derived.get("ai_programs") or []
+        if row.get("name")
+    ]
+    return programs + [
         notice(
             "engine.export.fvttInnatePower",
             name=term(str(row["name"])),

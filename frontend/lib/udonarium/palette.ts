@@ -4,7 +4,7 @@ import { attrName, makeT, specTr } from "@/lib/ui-strings";
 import { type Locale, type MsgKey } from "@/lib/i18n";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
-import { skillLabel } from "@/lib/character/format";
+import { aiProgramList, skillLabel } from "@/lib/character/format";
 import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
 import { ATTR_ORDER, Section, type UdonariumOptions, slotTag, uiFor, varName } from "./shared";
 
@@ -321,6 +321,9 @@ export function buildUdonariumPalette(
   tests.roll("2D6", ui("coco.scatterThrown"));
   tests.roll("4D6", ui("coco.scatterLaunched"));
   blocks.push(tests.text(ui("udo.secTests")));
+
+  const programs = aiProgramList(d.ai_programs, tr, ui);
+  if (programs) blocks.push(`${ui("udo.secAIPrograms")}\n${programs}`);
 
   blocks.push([ui("udo.noteEdge"), ui("udo.noteDice")].join("\n"));
 

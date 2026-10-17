@@ -4,7 +4,7 @@ import { type Locale, type MsgKey, type UiFn, translate } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
-import { skillLabel } from "@/lib/character/format";
+import { aiProgramList, skillLabel } from "@/lib/character/format";
 import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
 
 // Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
@@ -266,6 +266,9 @@ export function buildCocofolia(
       social: d.limits?.social ?? 0,
     }),
     ui("coco.memoArmor", { armor: d.armor ?? 0, essence: d.essence ?? 0 }),
+    aiProgramList(d.ai_programs, tr, ui)
+      ? ui("coco.memoAIPrograms", { list: aiProgramList(d.ai_programs, tr, ui) })
+      : "",
     ui("coco.memoDice"),
   ]
     .filter(Boolean)
