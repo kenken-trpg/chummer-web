@@ -208,7 +208,9 @@ export function buildChatPalette(
   roll(at("INT") + at("CHA") + (tm.judge_intentions || 0), ui("coco.judge"), "social");
   roll(at("LOG") + at("WIL") + (tm.memory || 0), ui("coco.memory"), "mental");
   roll(at("STR") + at("BOD"), ui("coco.lifting"), "physical");
-  roll(at("BOD"), ui("coco.damageResist"));
+  // the armor is added at the table; an A.I.'s body is its vehicle node's or 0
+  const soak = d.damage_resist;
+  roll(soak ? soak.body + soak.bonus : at("BOD"), ui("coco.damageResist"));
   if (d.drain_resist && tabs.includes("spells"))
     roll(d.drain_resist.pool, ui("coco.drainResist", { attrs: d.drain_resist.attrs }));
   if (d.fade_resist && tabs.includes("complexforms"))

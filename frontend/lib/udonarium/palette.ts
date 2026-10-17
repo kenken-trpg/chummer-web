@@ -143,7 +143,11 @@ export function buildUdonariumPalette(
     ui("coco.meleeDefense"),
   );
   def.roll(`({${A("REA")}}+{${A("INT")}}+{${A("WIL")}}+${dodge})B6`, ui("coco.fullDefense"));
-  def.roll(`({${A("BOD")}}+{${armorVar}}+0)B6`, ui("udo.damageResist"));
+  // an A.I. has no BOD to point at: its vehicle home node's Body, or 0
+  const soak = d.damage_resist;
+  const soakBody = d.condition_monitor?.core ? String(soak?.body ?? 0) : `{${A("BOD")}}`;
+  const soakBonus = soak?.bonus ? `+${soak.bonus}` : "";
+  def.roll(`(${soakBody}+{${armorVar}}${soakBonus}+0)B6`, ui("udo.damageResist"));
   blocks.push(def.text(ui("udo.secDefense")));
 
   // --- the skill list, as plain numbers ----------------------------------

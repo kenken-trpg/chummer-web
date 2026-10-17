@@ -386,6 +386,18 @@ describe("buildCocofolia", () => {
     ]);
   });
 
+  it("soaks an A.I. with its vehicle node's Body, and adds the resistance bonus", () => {
+    const ai = makeCharacter({
+      metatype: "A.I.",
+      derived: {
+        condition_monitor: { physical: 14, stun: 9, core: true, vehicle: true },
+        damage_resist: { pool: 6, body: 4, armor: 0, bonus: 2 },
+      },
+    });
+    const piece = JSON.parse(buildCocofolia(ai, makeCatalog(), identityTr));
+    expect(piece.data.commands).toContain("6B6 ダメージ抵抗（＋装甲）");
+  });
+
   it("produces a parseable ccfolia character piece", () => {
     const parsed = JSON.parse(
       buildCocofolia(makeCharacter({ name: "Wire" }), makeCatalog(), identityTr),

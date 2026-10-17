@@ -23,6 +23,15 @@ const s = buildSheetData({
 });
 
 describe("print sections", () => {
+  it("PrintStatBlock takes the soak pool from the engine when it has one", () => {
+    const ai = { ...s, d: { ...s.d, damage_resist: { pool: 7, body: 4, armor: 3, bonus: 0 } } };
+    const { container } = render(<PrintStatBlock {...ai} />);
+    const cell = [...container.querySelectorAll(".print-stat, div")].find((el) =>
+      el.textContent?.startsWith("ダメージ抵抗"),
+    );
+    expect(cell?.textContent).toContain("7");
+  });
+
   it("PrintStatBlock renders the attribute row and derived pools", () => {
     const { container } = render(<PrintStatBlock {...s} />);
     expect(container.querySelector("section.print-statblock")).not.toBeNull();

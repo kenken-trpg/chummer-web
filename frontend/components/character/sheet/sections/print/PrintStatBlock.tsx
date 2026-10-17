@@ -25,7 +25,7 @@ export function PrintStatBlock(s: SheetData) {
   const cha = totals.CHA || 0;
 
   const defensePool = rea + int + (d.test_mods?.dodge || 0);
-  const soakPool = bod + (d.armor || 0) + (d.damage_resistance || 0);
+  const soakPool = d.damage_resist?.pool ?? bod + (d.armor || 0) + (d.damage_resistance || 0);
   const composure = wil + cha + (d.test_mods?.composure || 0);
   const judge = int + cha + (d.test_mods?.judge_intentions || 0);
   const memory = (totals.LOG || 0) + wil + (d.test_mods?.memory || 0);

@@ -39,6 +39,15 @@ class _PoolAttrs(TypedDict):
     attrs: str
 
 
+class _DamageResist(TypedDict):
+    """Chummer's `DamageResistancePool`: body + armor + `damageresistance`."""
+
+    pool: int
+    body: int
+    armor: int
+    bonus: int
+
+
 class _SumToTen(TypedDict):
     used: int
     max: int
@@ -346,6 +355,7 @@ class DerivedDict(TypedDict):
     spell_points: _SpellPoints
     tradition: Row | None
     drain_resist: _PoolAttrs
+    damage_resist: _DamageResist
     complex_forms: list[Row]
     complex_form_points: _ComplexFormPoints
     sprites: list[Row]
