@@ -160,7 +160,7 @@ def matrix_initiative(
     }
 
 
-def ai_matrix_initiative(intuition: int, extra_dice: int = 0) -> MatrixInitiative:
+def ai_matrix_initiative(intuition: int, extra_dice: int = 0, dataprocessing: int = 0) -> MatrixInitiative:
     """An A.I.'s Matrix initiative: it lives there, so it is
     always Intuition + 4D6, cold or hot alike.
 
@@ -171,7 +171,13 @@ def ai_matrix_initiative(intuition: int, extra_dice: int = 0) -> MatrixInitiativ
     """
     rules = current_rules()
     dice = min(rules.min_hotsim_initiative_dice + int(extra_dice), rules.max_initiative_dice)
-    return {"device": "ai", "dataprocessing": 0, "value": max(0, int(intuition)), "cold_dice": dice, "hot_dice": dice}
+    return {
+        "device": "ai",
+        "dataprocessing": int(dataprocessing),
+        "value": max(0, int(intuition) + int(dataprocessing)),
+        "cold_dice": dice,
+        "hot_dice": dice,
+    }
 
 
 #: accessory field -> host ASDF key

@@ -113,6 +113,8 @@ def assemble(ctx: Ctx) -> None:
             "threshold_offset": max(0, int(ctx.effects.get("cm_threshold_offset") or 0)),
             "core": ctx.is_ai,
         },
+        # an A.I.'s home node (Chummer `HomeNode`), or None
+        "home_node": ctx.home_node,
         "initiative": {"value": ctx.initiative, "dice": ctx.initiative_dice},
         # Chummer's `AstralInitiativeValue` / `AstralInitiativeDice`, shown
         # for anyone with Magic
@@ -158,7 +160,9 @@ def assemble(ctx: Ctx) -> None:
         # The VR initiative of whichever persona is worth running (SR5 p.229);
         # in AR the character keeps the meat initiative above.
         "matrix_initiative": ai_matrix_initiative(
-            int(ctx.total.get("INT") or 0), int(ctx.effects.get("matrix_initiative_dice") or 0)
+            int(ctx.total.get("INT") or 0),
+            int(ctx.effects.get("matrix_initiative_dice") or 0),
+            ctx.home_node["dataprocessing"] if ctx.home_node else 0,
         )
         if ctx.is_ai
         else matrix_initiative(

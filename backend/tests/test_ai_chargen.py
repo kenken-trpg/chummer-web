@@ -373,3 +373,89 @@ def test_an_ais_matrix_dice_stop_at_the_initiative_maximum() -> None:
     from app.engine.gear import ai_matrix_initiative
 
     assert ai_matrix_initiative(3, extra_dice=3)["hot_dice"] == 5
+
+
+# --- home node ------------------------------------------------------------------
+
+
+def _deck(name: str = "Shiawase Cyber-5", state: CharacterState | None = None) -> CharacterState:
+    from app.data_loader import catalog
+    from app.models import GearInstall
+
+    state = state or _ai("E-Ghost")
+    spec = next(x for x in catalog()["cyberdecks"] if x["name"] == name)
+    state.cyberdecks = [GearInstall(gear_id=spec["id"])]
+    state.home_node = state.cyberdecks[0].id
+    return state
+
+
+def test_a_home_node_adds_its_data_processing_to_the_matrix_initiative() -> None:
+    out = compute(_deck())
+    mi = out.derived["matrix_initiative"]
+    assert mi["dataprocessing"] == 6
+    assert mi["value"] == out.derived["totals"]["INT"] + 6
+    assert mi["hot_dice"] == 4
+
+
+def test_a_home_node_sets_the_mental_and_social_limits() -> None:
+    # Chummer `LimitMental`: the higher of the usual one and Data Processing;
+    # `LimitSocial`: (CHA + DP + WIL + ESS) / 3 where a metahuman doubles CHA
+    out = compute(_deck())
+    totals = out.derived["totals"]
+    assert out.derived["limits"]["mental"] == 6
+    assert out.derived["limits"]["social"] == -(-(totals["CHA"] + 6 + totals["WIL"] + 6) // 3)
+
+
+def test_a_home_nodes_matrix_monitor_stands_in_for_the_stun_one() -> None:
+    cm = compute(_deck()).derived["condition_monitor"]
+    assert cm["core"] is True
+    assert cm["stun"] == 8 + 3  # Device Rating 5
+
+
+def test_a_metahuman_drops_the_mark() -> None:
+    state = _deck(state=_human())
+    out = compute(state)
+    assert out.home_node == ""
+    assert out.derived["home_node"] is None
+
+
+def test_a_sold_device_takes_the_mark_with_it() -> None:
+    state = _deck()
+    state.cyberdecks = []
+    out = compute(state)
+    assert out.home_node == ""
+    assert out.derived["matrix_initiative"]["dataprocessing"] == 0
+
+
+def test_a_node_below_the_program_limit_is_warned_of() -> None:
+    # Chummer greys out the box unless Program Limit >= 2 when DEP is above
+    # the Device Rating; Scratch-Built Junk (DR 1, one program) at DEP 3
+    from app.data_loader import catalog
+    from app.models import GearInstall
+
+    state = _ai("E-Ghost")
+    junk = next(x for x in catalog()["rccs"] if x["name"] == "Scratch-Built Junk")
+    state.rccs = [GearInstall(gear_id=junk["id"])]
+    state.home_node = state.rccs[0].id
+    assert has(compute(state).derived["warnings"], "engine.homeNode.programLimit")
+    assert not has(compute(_deck()).derived["warnings"], "engine.homeNode.programLimit")
+
+
+def test_the_home_node_survives_a_round_trip() -> None:
+    first = compute(_deck())
+    xml = state_to_chum5(first)
+    marked = [g.findtext("name") for g in ET.fromstring(xml).iter("gear") if g.findtext("homenode") == "True"]
+    assert marked == ["Shiawase Cyber-5"]
+    again, _ = chum5_to_state(xml)
+    second = compute(CharacterState(**again))
+    assert second.derived["home_node"]["name"] == "Shiawase Cyber-5"
+    assert second.derived["limits"] == first.derived["limits"]
+
+
+def test_the_patch_sets_and_clears_the_home_node() -> None:
+    state = _deck()
+    node = state.home_node
+    cleared = apply_patch(state, CharacterPatch(home_node=""))
+    assert cleared.home_node == ""
+    again = apply_patch(cleared, CharacterPatch(home_node=node))
+    assert again.home_node == node

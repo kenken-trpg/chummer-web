@@ -149,16 +149,26 @@ DT本文は未照合。
   毒・病原体への抵抗。いずれもこのアプリは改造の補正しか出していない。
 - 検証：`backend/tests/test_ai_chargen.py`の「monitors and initiative」の節。
 
-## これからの段階
+## 実装済み: コムリンク・デッキ・RCCのホームノード（段階4b）
 
 Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・サイバーウェア・武器のうち
 コムリンクとして働くものに付く印で、.chum5では各品目の`<homenode>True</homenode>`。
-付けられるのは「Program Limit ≧（DEP＞Device Ratingなら2、でなければ1）」のときだが、
-これはチェックボックスを押せるかどうかで、検証はしない。
 
-- **段階4b：コムリンク・デッキ・RCCをホームノードにする**。マトリックスイニシアティブに
-  Data Processingを足す。メンタルリミットはmax(本来の値, DP)。ソーシャルリミットはCHA×2の代わりに
-  CHA＋DP。精神ダメージトラックの代わりにホームノードのマトリックス・コンディション・モニター。
+- `CharacterState.home_node`に機器のidを1つ持つ（""で無し）。A.I.でない、または機器が無くなれば外す。
+  画面はコムリンク・デッキ・RCCの各行の「ホームノード」チェックボックス（A.I.のときだけ出す）。
+- マトリックスイニシアティブにホームノードのData Processingを足す（`MatrixInitiativeValue`）。
+- メンタルリミットはmax(本来の値, DP)（`LimitMental`）。社交リミットはCHA×2の代わりにCHA＋DP
+  （`LimitSocial`）。改造の補正はその上に乗る。
+- 精神ダメージトラックの代わりに、ホームノードのマトリックス・コンディション・モニター
+  （8＋Device Rating÷2、Electronic Modificationの損傷を引く）。表示は「マトリックス」。
+- 印を付けられる条件（Program Limit ≧ DEP＞Device Ratingなら2、でなければ1）は、Chummerでは
+  チェックボックスを押せるかどうかだけ。ここでは警告（`engine.homeNode.programLimit`）。
+  Program Limitは機器の`<programs>`、無ければDevice Rating。
+- .chum5：書き出しで該当の`<gear>`に`<homenode>True</homenode>`、読み込みで同じ印を拾う。
+- 検証：`backend/tests/test_ai_chargen.py`の「home node」の節、`HomeNodeToggle`の単体テスト。
+
+## これからの段階
+
 - **段階4c：車両・ドローンをホームノードにする**。DPの代わりにmax(DP, Pilot)、メンタルリミットに
   Sensorも比べる。身体ダメージトラックは車両のもの（基本値＋Body÷2＋改造）、身体リミットはHandling、
   ダメージ抵抗などのBODは車両のBody。

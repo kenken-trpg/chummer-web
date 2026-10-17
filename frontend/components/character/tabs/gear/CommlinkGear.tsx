@@ -3,6 +3,7 @@ import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HomeNodeToggle } from "@/components/character/HomeNodeToggle";
 import { MatrixModRows } from "@/components/character/tabs/gear/MatrixModRows";
 import type { TabPanelProps } from "@/components/character/types";
 import { alreadySlotted, dropTree } from "@/lib/character/gear";
@@ -39,6 +40,7 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="commlinks" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
+                <HomeNodeToggle id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
               </div>
               <div className="cyber-controls">
                 {item.rating_max > 0 ? (

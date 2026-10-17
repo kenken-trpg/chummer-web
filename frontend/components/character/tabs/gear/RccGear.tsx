@@ -1,6 +1,7 @@
 "use client";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HomeNodeToggle } from "@/components/character/HomeNodeToggle";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
@@ -40,6 +41,7 @@ export function RccGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
               </div>
               <div className="cyber-controls">
                 <DiscountToggle list="rccs" id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
+                <HomeNodeToggle id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">

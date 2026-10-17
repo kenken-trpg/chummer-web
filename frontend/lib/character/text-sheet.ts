@@ -100,7 +100,12 @@ export function textSheet(x: TextArgs): string {
         social: d.limits.social,
       })}  ` +
       (d.condition_monitor.core
-        ? ui("txt.cmCore", { physical: d.condition_monitor.physical })
+        ? d.condition_monitor.stun
+          ? ui("txt.cmCoreMatrix", {
+              physical: d.condition_monitor.physical,
+              matrix: d.condition_monitor.stun,
+            })
+          : ui("txt.cmCore", { physical: d.condition_monitor.physical })
         : ui("txt.cm", {
             physical: d.condition_monitor.physical,
             stun: d.condition_monitor.stun,

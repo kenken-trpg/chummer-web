@@ -320,6 +320,20 @@ describe("buildUdonariumXml", () => {
     expect(xml).not.toContain("身体CM");
     expect(xml).not.toContain("精神CM");
     expect(xml).toContain("コア[][][][][][][][][][]");
+    // a home node's Matrix monitor, once — not as a stun track as well
+    const housed = buildUdonariumXml(
+      makeCharacter({
+        metatype: "A.I.",
+        derived: { condition_monitor: { physical: 10, stun: 11, core: true } },
+      }),
+      makeCatalog(),
+      identityTr,
+    );
+    expect(housed.match(/name="マトリックスCM"/g)).toHaveLength(1);
+    expect(housed).toContain(
+      '<data name="マトリックスCM" type="numberResource" currentValue="0">11</data>',
+    );
+    expect(housed).not.toContain("精神[]");
   });
 
   it("gives any persona a Matrix condition monitor and leaves it off everyone else", () => {

@@ -97,6 +97,8 @@ class CharacterPatch(BaseModel):
     spirits: list[SpiritInstall] | None = None
     complex_forms: list[ComplexFormInstall] | None = None
     ai_programs: list[AIProgramInstall] | None = None
+    #: an A.I.'s home node, by device id; "" clears it
+    home_node: str | None = None
     sprites: list[SpriteInstall] | None = None
     foci: list[FocusInstall] | None = None
     armor: list[ArmorInstall] | None = None
@@ -276,6 +278,8 @@ class CharacterState(BaseModel):
     spirits: list[SpiritInstall] = Field(default_factory=list)
     complex_forms: list[ComplexFormInstall] = Field(default_factory=list)
     ai_programs: list[AIProgramInstall] = Field(default_factory=list)
+    #: an A.I.'s home node (Chummer `HomeNode`): a commlink, deck or RCC id
+    home_node: str = ""
     sprites: list[SpriteInstall] = Field(default_factory=list)
     foci: list[FocusInstall] = Field(default_factory=list)
     armor: list[ArmorInstall] = Field(default_factory=list)

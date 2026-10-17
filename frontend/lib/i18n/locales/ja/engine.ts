@@ -329,6 +329,8 @@ export const JA_ENGINE = {
   "engine.complexforms.requires": "{name} には {needed} が必要です",
   "engine.aiPrograms.prereq": "{name} には {needed} のどれかが必要です",
   "engine.aiPrograms.pickExtra": "{name} の対象を入力してください",
+  "engine.homeNode.programLimit":
+    "ホームノードの {name} は Program Limit {limit} で、{needed} 以上が必要です",
 
   "engine.complexforms.threadNeedsSoftware":
     "{name} のスレッディングにはSoftwareが必要です（未習得・デフォルティング不可）",

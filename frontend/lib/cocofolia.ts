@@ -247,7 +247,11 @@ export function buildCocofolia(
   const status = [
     // an A.I. has a Core track in place of both
     ...(cm.core
-      ? [{ label: ui("coco.cmCore"), value: cm.physical, max: cm.physical }]
+      ? [
+          { label: ui("coco.cmCore"), value: cm.physical, max: cm.physical },
+          // its home node's Matrix monitor, reported in place of stun
+          ...(cm.stun ? [{ label: ui("coco.cmMatrix"), value: cm.stun, max: cm.stun }] : []),
+        ]
       : [
           { label: ui("coco.cmPhysical"), value: cm.physical, max: cm.physical },
           { label: ui("coco.cmStun"), value: cm.stun, max: cm.stun },

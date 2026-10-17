@@ -333,6 +333,8 @@ export const EN_ENGINE = {
   "engine.complexforms.requires": "{name} requires {needed}",
   "engine.aiPrograms.prereq": "{name} requires one of {needed}",
   "engine.aiPrograms.pickExtra": "Enter what {name} is for",
+  "engine.homeNode.programLimit":
+    "The home node {name} has Program Limit {limit}; it needs {needed}",
 
   "engine.complexforms.threadNeedsSoftware":
     "Threading {name} needs Software (not known, no defaulting)",
