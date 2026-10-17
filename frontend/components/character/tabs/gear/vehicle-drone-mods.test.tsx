@@ -284,7 +284,7 @@ describe("<VehicleDroneGear> the mod-slot help", () => {
       owning(vehicle("v1", "Americar", { slot_tracks: tracks, slots_used: 2, slots_max: 11 })),
       vi.fn(),
     );
-    expect(tipFor("Americar の説明")).toContain("駆動系");
+    expect(tipFor("Americar の説明")).toContain("Powertrain・Protection");
   });
 
   it("describes the single pool instead, on a drone", () => {

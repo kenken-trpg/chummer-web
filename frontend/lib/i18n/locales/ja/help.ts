@@ -84,7 +84,7 @@ export const JA_HELP = {
   "help.vehicle.pilot": "PLT はオートパイロットの腕前。自律行動やリガー時のテストに使う",
   "help.vehicle.body": "BOD は頑丈さ。ダメージ抵抗と、改造に使えるスロットの量を決める",
   "help.vehicle.slots":
-    "改造スロットは R5 の 6 系統（駆動系・防護・武装・車体・電磁・外装）ごとに別枠。各系統の上限 ＝ BOD ＋ その車種が持つ追加枠",
+    "改造スロットは Rigger 5.0 の 6 系統（Powertrain・Protection・Weapons・Body・Electromagnetic・Cosmetic）ごとに別枠。各系統の上限 ＝ BOD ＋ その車種が持つ追加枠",
   "help.vehicle.slotsDrone":
     "ドローンは系統に分けず 1 つのプール（上限 ＝ BOD）。スロットを返す改造はその分だけ上限が増える",
   "help.weapon.statsLabel": "データ",

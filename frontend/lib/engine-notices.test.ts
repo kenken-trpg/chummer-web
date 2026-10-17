@@ -61,8 +61,22 @@ describe("renderNotice", () => {
 
 describe("vehicleSlotLabel", () => {
   it("names a known slot category and passes an unknown one through", () => {
-    expect(vehicleSlotLabel("Powertrain", uiFor("ja"))).toBe("パワートレイン");
+    expect(vehicleSlotLabel("Powertrain", uiFor("ja"))).toBe("Powertrain");
     expect(vehicleSlotLabel("Powertrain", uiFor("en"))).toBe("powertrain");
     expect(vehicleSlotLabel("Nanotech", uiFor("en"))).toBe("Nanotech");
+  });
+
+  it("keeps Rigger 5.0's English category apart from the Japanese around it", () => {
+    // no Japanese edition, so the category stays English and needs its spaces
+    const notice = {
+      key: "engine.gear.vehicleCategorySlotsOver",
+      params: {
+        name: "Americar",
+        category: { ui: "engine.vehicleSlot.Powertrain" },
+        used: 5,
+        max: 4,
+      },
+    };
+    expect(renderNotice(notice, uiFor("ja"))).toBe("Americar の Powertrain スロット超過（5/4）");
   });
 });
