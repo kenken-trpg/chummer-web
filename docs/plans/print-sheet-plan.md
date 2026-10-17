@@ -28,7 +28,7 @@ Working doc. First user-facing feature after the refactor series.
    → `afterprint` で元レイアウトに復帰（Safari 用に `setTimeout` フォールバック）。
 3. **印刷専用ブロック**（`components/character/sheet/sections/print/`）
    - `PrintStatBlock` — `CoreSection` の代替。属性（基本/増強）、リミット 3、
-     イニシアチブ、移動、防御プール（REA+INT+dodge）、ダメージ抵抗
+     イニシアティブ、移動、防御プール（REA+INT+dodge）、ダメージ抵抗
      （BOD+armor+damage_resistance）、沈着 / 意図看破 / 記憶、エッセンス、
      非武装・特殊装甲・条件リミット・ライフスタイル。プール値は既存 `totals` / `d`
      の合成のみで新規ルールなし。
@@ -37,8 +37,8 @@ Working doc. First user-facing feature after the refactor series.
 4. **`CharacterSheet.tsx` の印刷用セクション順**
    - 1 ページ目：ヘッダ → `PrintStatBlock` → `PrintConditionMonitor` → 技能 →
      知識 → キャリア → アクションDP → 資質。
-   - `<div className="print-page-2">` に残り（戦闘 / ウェア / マトリクス / 魔法 /
-     共鳴 / 武道 / コンタクト / 車両 / ドラッグ / SIN / その他ギア / 記述）。
+   - `<div className="print-page-2">` に残り（戦闘 / ウェア / マトリックス / 魔法 /
+     共鳴 / 格闘技 / コンタクト / ヴィークル / ドラッグ / SIN / その他ギア / 記述）。
      CSS で `break-before: page`。戦闘以降のセクションは既存コンポーネントを再利用。
 5. **CSS**（`globals.css`）
    - `@page { size: A4; margin: 10mm; }`。2 カラムの旧印刷挙動は

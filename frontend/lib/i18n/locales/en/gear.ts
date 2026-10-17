@@ -1,4 +1,4 @@
-/** 装備: ギア・武器・防具・車両・ウェア・ドラッグ — English。 */
+/** 装備: ギア・武器・防具・ヴィークル・ウェア・ドラッグ — English。 */
 export const EN_GEAR = {
   "gear.normalModulePool": "Normal / quality pool",
   "gear.hardwiredModulePool": "Hardwired pool",

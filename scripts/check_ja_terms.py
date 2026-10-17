@@ -9,7 +9,8 @@ have already established is the wrong one.
 So `docs/translation-banned-terms.md` records the mistakes that actually reached
 the UI, and this walks `frontend/lib/i18n/locales/ja/` for them. Each entry is
 written once, when the drift is fixed, and from then on that word cannot come
-back. It catches recurrence, not a brand new mistranslation.
+back. It catches recurrence, not a brand new mistranslation. The Markdown is
+held to the part of the list that cannot be ordinary prose (`doc_terms`).
 
     python scripts/check_ja_terms.py
 """
@@ -66,15 +67,66 @@ def check(locale: Path, banned: Path) -> list[str]:
     return problems
 
 
+#: Markdown the docs check reads: everything tracked but the released history
+#: and the two files whose job is to name the wrong words.
+DOC_GLOBS = ("*.md", ".github/**/*.md", "docs/**/*.md", "changelog.d/*.md", "scripts/*.md", "backend/data/**/*.md")
+DOC_SKIP = {"CHANGELOG.md", "docs/translation-banned-terms.md", "docs/translation-glossary.md"}
+
+
+def doc_terms(text: str) -> set[str]:
+    """The banned words the docs are held to: the `## docs にも当てる語` table.
+
+    Prose about the code says 判定 for "decide" and 値段 for a price, so the
+    whole list would flag ordinary Japanese. Only a word that is nothing but
+    a mistranslated rule term goes in that table.
+    """
+    _, _, section = text.partition("## docs にも当てる語")
+    section = section.split("\n## ", 1)[0]
+    words = set()
+    for row in re.findall(r"^\|(.+)\|$", section, re.M):
+        cells = [c.strip() for c in row.split("|")]
+        if cells[0] in {"語", ""} or set(cells[0]) == {"-"}:
+            continue
+        words.add(cells[0])
+    return words
+
+
+def doc_files(root: Path) -> list[Path]:
+    found = {path for pattern in DOC_GLOBS for path in root.glob(pattern) if path.is_file()}
+    return sorted(path for path in found if path.relative_to(root).as_posix() not in DOC_SKIP)
+
+
+def check_docs(root: Path, banned: Path) -> list[str]:
+    """`check` for the Markdown. A code span (`物理リミット`) is a quotation —
+    an identifier, a file's own word, or the old term a passage is about — and
+    is skipped."""
+    text = banned.read_text(encoding="utf-8")
+    wanted = doc_terms(text)
+    found = [rule for rule in rules(text) if rule.wrong in wanted]
+    unknown = wanted - {rule.wrong for rule in found}
+    if unknown:
+        sys.exit(f"{BANNED.name}: docs terms with no rule above: {sorted(unknown)}")
+    problems = []
+    for path in doc_files(root):
+        for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
+            prose = re.sub(r"`[^`]*`", "", line)
+            for rule in found:
+                if rule.hits(prose):
+                    problems.append(
+                        f"{path.relative_to(root)}:{number}: 「{rule.wrong}」は「{rule.right}」（{rule.source}）"
+                    )
+    return problems
+
+
 def main() -> int:
     if not LOCALE.is_dir():
         print("frontend/ not checked out — nothing to check")
         return 0
-    problems = check(LOCALE, BANNED)
+    problems = check(LOCALE, BANNED) + check_docs(ROOT, BANNED)
     if problems:
         print("\n".join(["", *problems, "", f"See docs/{BANNED.name} and docs/translation-glossary.md."]))
         return 1
-    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)}")
+    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)} or the docs")
     return 0
 
 

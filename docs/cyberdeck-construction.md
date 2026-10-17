@@ -18,7 +18,7 @@ Data Trails pp.64–66を基準とし、名前の翻訳ではなくカタログI
 
 | 改造 | 必要部品 | 条件 |
 | --- | --- | --- |
-| Increase Matrix Attribute | 上昇後の値×2パック | 対象能力が既にある。Matrix状態モニターに永続ダメージ2 |
+| Increase Matrix Attribute | 上昇後の値×2パック | 対象能力が既にある。マトリックス・コンディション・モニターに永続ダメージ2 |
 | Modify Matrix Attribute | 4パック | 配列型は配列を持つ機器。変更後の値が負にならない |
 | Add Attack / Sleaze | DR×2パック | 対象能力がなく、配列型デッキではない |
 | Add Module | 2パック | 通常の電子改造数制限と材料確認を満たす |

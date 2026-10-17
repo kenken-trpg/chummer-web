@@ -50,7 +50,7 @@
 - [`refactor-data-loader-plan.md`](refactor-data-loader-plan.md) — データローダの分割
 - [`refactor-catalog-typeddict-plan.md`](refactor-catalog-typeddict-plan.md) — `catalog()` の型付け
 - [`refactor-ware-qualities-plan.md`](refactor-ware-qualities-plan.md) — ware / 資質の切り出し
-- [`refactor-gear-weapons-plan.md`](refactor-gear-weapons-plan.md) — ギア / 武器 / 車両の切り出し
+- [`refactor-gear-weapons-plan.md`](refactor-gear-weapons-plan.md) — ギア / 武器 / ヴィークルの切り出し
 - [`refactor-engine-e402-b023-plan.md`](refactor-engine-e402-b023-plan.md) — 遅延 import とループ変数束縛の解消
 - [`refactor-mypy-plan.md`](refactor-mypy-plan.md) — バックエンド全体の mypy strict 化
 - [`refactor-chum5-roundtrip-plan.md`](refactor-chum5-roundtrip-plan.md) — `.chum5` 入出力の往復一致
