@@ -298,6 +298,20 @@ export interface Derived {
     physical_illusion: number;
     decrease: Record<string, number>;
   };
+  /** Chummer's `SpellDefense*` pools; an A.I. reads its vehicle node's Body
+   *  where Chummer reads BOD or STR. */
+  spell_defense_pools?: {
+    indirect_dodge: number;
+    indirect_soak: number;
+    direct_mana: number;
+    direct_physical: number;
+    detection: number;
+    decrease: Record<string, number>;
+    mana_illusion: number;
+    physical_illusion: number;
+    mental_manipulation: number;
+    physical_manipulation: number;
+  };
   spell_dice_pool?: { name: string; id?: string; bonus: number; source?: string }[];
   action_dice_pools?: {
     category?: string;

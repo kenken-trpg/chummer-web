@@ -543,3 +543,36 @@ def test_an_ai_in_a_vehicle_soaks_with_its_body() -> None:
     soak = out.derived["damage_resist"]
     assert soak["body"] == 4
     assert soak["pool"] == 4 + soak["armor"] + soak["bonus"]
+
+
+# --- spell defense ----------------------------------------------------------------
+
+
+def test_a_metahumans_spell_defense_pools_are_chummers() -> None:
+    out = compute(_human())
+    t = out.derived["totals"]
+    pools = out.derived["spell_defense_pools"]
+    assert pools["direct_mana"] == t["WIL"]
+    assert pools["direct_physical"] == t["BOD"]
+    assert pools["detection"] == t["LOG"] + t["WIL"]
+    assert pools["decrease"]["STR"] == t["STR"] + t["WIL"]
+    assert pools["physical_illusion"] == t["LOG"] + t["INT"]
+    assert pools["physical_manipulation"] == t["BOD"] + t["STR"]
+    assert pools["indirect_soak"] == out.derived["damage_resist"]["pool"]
+
+
+def test_an_ai_in_a_vehicle_defends_with_its_body_where_chummer_reads_bod_or_str() -> None:
+    out = compute(_vehicle())  # Dodge Scoot: Body 4
+    wil = out.derived["totals"]["WIL"]
+    pools = out.derived["spell_defense_pools"]
+    assert pools["direct_physical"] == 4
+    assert pools["decrease"]["BOD"] == 4 + wil
+    assert pools["decrease"]["STR"] == 4 + wil
+    assert pools["physical_manipulation"] == 8  # TotalBody × 2
+    assert pools["indirect_soak"] == out.derived["damage_resist"]["pool"]
+
+
+def test_an_ai_without_a_vehicle_has_no_body_to_defend_with() -> None:
+    pools = compute(_deck()).derived["spell_defense_pools"]
+    assert pools["direct_physical"] == 0
+    assert pools["physical_manipulation"] == 0

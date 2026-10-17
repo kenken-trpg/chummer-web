@@ -26,6 +26,7 @@ import { QualitiesSection } from "@/components/character/sheet/sections/Qualitie
 import { ResonanceSection } from "@/components/character/sheet/sections/Resonance";
 import { SinSection } from "@/components/character/sheet/sections/Sin";
 import { SkillsSection } from "@/components/character/sheet/sections/Skills";
+import { SpellDefenseSection } from "@/components/character/sheet/sections/SpellDefense";
 import { VehiclesSection } from "@/components/character/sheet/sections/Vehicles";
 import { WareSection } from "@/components/character/sheet/sections/Ware";
 import { SheetHeader } from "@/components/character/sheet/SheetHeader";
@@ -702,5 +703,44 @@ describe("MatrixSection for an A.I.", () => {
     });
     const { container } = render(<MatrixSection {...ai} />);
     expect(container.textContent).toContain("A.I. のマトリックスイニシアティブ：4+4d6");
+  });
+});
+
+describe("<SpellDefenseSection>", () => {
+  const pools = {
+    indirect_dodge: 7,
+    indirect_soak: 9,
+    direct_mana: 3,
+    direct_physical: 4,
+    detection: 6,
+    decrease: { BOD: 7, WIL: 6 },
+    mana_illusion: 6,
+    physical_illusion: 5,
+    mental_manipulation: 6,
+    physical_manipulation: 8,
+  };
+  const sheet = (derived: Record<string, unknown>) =>
+    buildSheetData({
+      character: makeCharacter({ derived }),
+      catalog: makeCatalog(),
+      tr: identityTr,
+      layout: "standard",
+    });
+
+  it("lists the engine's pools, one per kind of spell", () => {
+    const { container } = render(
+      <SpellDefenseSection {...sheet({ spell_defense_pools: pools })} />,
+    );
+    const text = container.textContent || "";
+    expect(text).toContain("呪文防御");
+    expect(text).toContain("間接（ダメージ抵抗）9");
+    expect(text).toContain("直接物理4");
+    expect(text).toContain("物理操作8");
+    expect(container.querySelectorAll(".sheet-derived-grid > div")).toHaveLength(11);
+  });
+
+  it("is left out when the engine sent none", () => {
+    const { container } = render(<SpellDefenseSection {...sheet({})} />);
+    expect(container.textContent).toBe("");
   });
 });
