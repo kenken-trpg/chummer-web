@@ -229,6 +229,8 @@ export interface CommlinkInstall {
   id?: string;
   gear_id: string;
   rating?: number;
+  /** the headware Commlink it is implanted in (SR5 p.451) */
+  parent_id?: string | null;
   /** how many alike — a stack of burner Meta Links */
   qty?: number;
   /** bought through the Black Market Pipeline: 10% off (Chummer's

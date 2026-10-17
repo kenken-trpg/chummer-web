@@ -184,8 +184,32 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・�
   Electronic Modificationをヴィークルに付けられないので、条件にせず警告にする
   （`engine.homeNode.personaFirmware`）。
 - 対象外：ダメージ抵抗・呪文防御で使うBODをヴィークルのBodyにすること（このアプリはダメージ抵抗の
-  プールを画面側でBOD＋装甲と出している）。サイバーウェア・武器のホームノード。
+  プールを画面側でBOD＋装甲と出している）。サイバーウェア・武器のホームノード（下の節）。
 - 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節、e2e `ai-home-node.spec.ts`。
+
+## 実装済み: 埋め込みコムリンク・デッキ
+
+固定版ソースで、サイバーウェア・武器のホームノードを調べた結果：
+
+- サイバーウェア自体がコムリンクになる（`Cyberware.IsCommlink`）のは、`<canformpersona>`を持つか、
+  Persona Firmwareを入れてDevice Rating＞0のとき。cyberware.xmlに`<canformpersona>`を持つ品目は無く、
+  Persona Firmwareはこのアプリではコムリンク・デッキ・RCCにしか付けられない。このため実装しない。
+- 武器は親の装備品のmatrix属性をそのまま使う（`Weapon.GetMatrixAttributesOverride`）。親をホームノードに
+  するのと同じなので、実装しない。
+- よくある「頭のコムリンク」は、ヘッドウェアのCommlink（SR5 p.451、`<allowgear>Commlinks`）に入った
+  コムリンク（装備品）のほう。ホームノードになるのも中のコムリンク。ヘッドウェアのCyberdeck（SR5 p.452）も同じ形。
+
+これまでこのアプリはコムリンクをサイバーウェアに入れられず、.chum5の読み込みで捨てていた
+（`engine.import.hostGearSkipped`）。そこで次のようにした：
+
+- コムリンク・デッキの`parent_id`にヘッドウェアを指せる（`app/engine/gear/implants.py`）。値段はこれまでどおり
+  コムリンク・デッキの欄に入る（Chummerは中の装備品の`TotalCost`をグレード倍率なしで足すので、合計は同じ）。
+  入れられない品目を指していれば持ち歩きに戻し、`engine.gear.doesNotFit`で知らせる。
+- サイバーウェアの行から入れる・取り出す。設定は装備タブで行い、装備タブには「…に埋め込み」と出る。
+  サイバーウェアを外すと、中の機器は消さずに持ち歩きに戻す（アプリ・付属品を巻き込まないため）。
+- .chum5ではサイバーウェアの`<gears>`に書き、読む。中のコムリンクの`<homenode>`も読む。
+- 検証：`backend/tests/test_implanted_devices.py`、`WareHeldGear`・`CommlinkGear`の単体テスト。
+  `make reconcile`（34件）の出力はmainと同一（テスト用セーブに埋め込みコムリンクは無い）。
 
 ## これからの段階
 

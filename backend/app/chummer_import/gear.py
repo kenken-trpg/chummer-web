@@ -29,6 +29,7 @@ def _included(node: ET.Element) -> bool:
 
 def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read gear, routed to whichever catalog bucket resolves it."""
+    from ..engine.gear.implants import IMPLANT_CATEGORIES
     from ..engine.gear.misc_hosts import (
         _commlink_accessory_parent_spec,
         _matrix_device_parent_spec,
@@ -122,10 +123,13 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             and host[0] == ui("engine.kind.vehicle")
             and (rows_by_id.get(gid) or {}).get("program_host") == "rccs"
         )
+        # a commlink or deck in the headware that houses one (SR5 p.451-452)
+        implanted = host_allow is not None and IMPLANT_CATEGORIES.get(bucket) in host_allow
         if (
             host is not None
             and (bucket not in HOST_BUCKETS or host_allow is not None and bucket != "gear")
             and not runs_there
+            and not implanted
         ):
             # a commlink stowed there (or an autosoft in armor): this app fits
             # those to other hosts only, so the piece is left out — but said so
@@ -175,13 +179,15 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
             parent_id = None
         if bucket == "commlinks":
             row["qty"] = max(1, math.ceil(_qty(g)))
+            if implanted:
+                row["parent_id"] = parent_id
         else:
             row["qty"] = max(1, math.ceil(_qty(g) / max(1, cost_for.get(gid, 0))))
             if parent_id:
                 row["parent_id"] = parent_id
                 row["included"] = included
         routed[bucket].append(row)
-        if host is None and bucket in HOME_NODE_BUCKETS and _text(g.find("homenode")).lower() == "true":
+        if (host is None or implanted) and bucket in HOME_NODE_BUCKETS and _text(g.find("homenode")).lower() == "true":
             # an A.I.'s home node; the engine drops it from anyone else
             st["home_node"] = row["id"]
         if _text(g.find("guid")):

@@ -14,6 +14,7 @@ import {
   hideFromWareCatalog,
   nextFreeSide,
   dropUnderRemovedWare,
+  releaseFromRemovedWare,
   removeWareTree,
   wareBounds,
 } from "@/lib/character/ware";
@@ -221,6 +222,16 @@ export function CyberTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelP
                   cyberware,
                 ),
                 gear: dropUnderRemovedWare(ch.gear || [], ch.cyberware || [], cyberware),
+                commlinks: releaseFromRemovedWare(
+                  ch.commlinks || [],
+                  ch.cyberware || [],
+                  cyberware,
+                ),
+                cyberdecks: releaseFromRemovedWare(
+                  ch.cyberdecks || [],
+                  ch.cyberware || [],
+                  cyberware,
+                ),
                 skill_picks: dropRemovedWarePicks(ch.skill_picks, [
                   ...cyberware,
                   ...(ch.bioware || []),

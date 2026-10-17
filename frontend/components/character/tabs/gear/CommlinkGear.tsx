@@ -18,6 +18,11 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
           <div className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
+              {item.implanted_in ? (
+                <div className="muted">
+                  {ui("gear.implantedIn", { name: tr(item.implanted_in) })}
+                </div>
+              ) : null}
               <div className="muted">
                 <HelpTip
                   label={ui("help.open", { label: tr(item.name) })}

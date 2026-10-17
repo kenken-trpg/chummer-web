@@ -43,6 +43,11 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
           <div className="cyber-item" key={item.id}>
             <div>
               <b>{tr(item.name)}</b>
+              {item.implanted_in ? (
+                <div className="muted">
+                  {ui("gear.implantedIn", { name: tr(item.implanted_in) })}
+                </div>
+              ) : null}
               <div className="muted">
                 {item.name} / DR {item.device_rating} / ATK {item.attack} / SLZ {item.sleaze} / DP{" "}
                 {item.dataprocessing} / FW {item.firewall}

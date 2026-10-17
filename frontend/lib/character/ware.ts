@@ -84,6 +84,22 @@ export function dropUnderRemovedWare<T extends { id?: string; parent_id?: string
   return rows.filter((row) => !row.parent_id || !drop.has(row.parent_id));
 }
 
+/**
+ * A commlink or deck implanted in ware a removal took away is carried
+ * instead, not thrown out with it: it has apps and accessories of its own.
+ */
+export function releaseFromRemovedWare<T extends { parent_id?: string | null }>(
+  rows: T[],
+  before: WareInstall[],
+  after: WareInstall[],
+): T[] {
+  const kept = new Set(after.map((row) => row.id));
+  const gone = new Set(before.map((row) => row.id).filter((id) => !!id && !kept.has(id)));
+  return rows.map((row) =>
+    row.parent_id && gone.has(row.parent_id) ? { ...row, parent_id: null } : row,
+  );
+}
+
 /** Only published vehicle mods with subsystem slots are valid tree roots. */
 export function modularVehicleHosts(
   d: Derived,

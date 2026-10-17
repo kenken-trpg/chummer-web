@@ -1,6 +1,7 @@
 import {
   hideFromWareCatalog,
   nextFreeSide,
+  releaseFromRemovedWare,
   removeWareTree,
   sideSlotKey,
   wareBounds,
@@ -107,5 +108,22 @@ describe("nextFreeSide", () => {
     unbalanced.push(inst({ ware_id: "leg", side: "Right", parent_id: "0" }));
     expect(nextFreeSide(unbalanced, [leg], leg, { leg: 4 })).toBe("Right");
     expect(nextFreeSide(items, [leg], leg, { leg: 4 })).toBe("Left");
+  });
+});
+
+describe("releaseFromRemovedWare", () => {
+  it("carries a device whose housing went, and leaves the rest where they are", () => {
+    const before = [inst({ id: "head" }), inst({ id: "jack" })];
+    const after = [inst({ id: "jack" })];
+    const rows = [
+      { id: "link", parent_id: "head" },
+      { id: "deck", parent_id: "case" },
+      { id: "spare", parent_id: null },
+    ];
+    expect(releaseFromRemovedWare(rows, before, after)).toEqual([
+      { id: "link", parent_id: null },
+      { id: "deck", parent_id: "case" },
+      { id: "spare", parent_id: null },
+    ]);
   });
 });
