@@ -163,7 +163,7 @@ def _enableattribute(tag: str, node: dict[str, Any], fields: dict[str, Any], eff
     values = names if isinstance(names, list) else [names]
     for raw in values:
         attr = ATTR_ALIASES.get(str(raw).strip().upper())
-        if attr in {"MAG", "RES"}:
+        if attr in {"MAG", "RES", "DEP"}:
             effects["enabled_tabs"].add(attr)
         elif attr:
             effects["enabled_tabs"].add(attr.lower())

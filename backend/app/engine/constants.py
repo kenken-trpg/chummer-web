@@ -27,7 +27,8 @@ MAG_TALENTS = {
 }
 RES_TALENTS = {"Technomancer"}
 ADEPT_TALENTS = {"Adept", "Mystic Adept"}
-SKIP_TALENTS = {"A.I."}
+#: The talent an A.I. takes in place of Magic or Resonance: it sets Depth.
+AI_TALENTS = {"A.I."}
 CONTACT_RATING_MIN = 1
 CONTACT_RATING_MAX = 6
 CONTACT_CHARGEN_COST_MAX = 7

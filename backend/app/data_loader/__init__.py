@@ -19,6 +19,7 @@ from ._xml import (
     MATRIX_ATTRIBUTES,  # noqa: F401  (re-exported for engine)
     OVERRIDE_DIR,  # noqa: F401  (re-exported for tests)
     PHYSICAL_ATTRS,  # noqa: F401  (re-exported for engine)
+    SPECIAL_ATTRS,  # noqa: F401  (re-exported for engine)
     Overlay,  # noqa: F401  (re-exported for the API layer)
     current_overlay_key,
     using_customdata,  # noqa: F401  (re-exported for the API layer)

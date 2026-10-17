@@ -184,22 +184,27 @@ def _import_identity(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
 
 
 def _import_attributes(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
-    """Read the eight attributes plus EDG/MAG/RES, as base + karma."""
+    """Read the eight attributes plus EDG/MAG/RES/DEP, as base + karma."""
     attrs: dict[str, int] = {}
     karma_levels: dict[str, int] = {}
     # Chummer saves a row for every name in its own `AttributeStrings`,
     # including ones the metatype does not have: `MAGAdept` is a constant
     # `1 / 6 / 10` unless a house rule this app does not offer is on, and DEP
-    # belongs to a Technocritter. `compute` drops a name the metatype has no
-    # spec for, so a Priority character never kept them — but a life module
-    # character is computed on a copy, and would carry them for good.
+    # belongs to an A.I. (every metatype has a 0-0 range for it, which is not
+    # having it). `compute` drops a name the metatype has no spec for, so a
+    # Priority character never kept them — but a life module character is
+    # computed on a copy, and would carry them for good.
     # A metatype the catalog does not have keeps every row: the import is
     # best-effort, and `compute` names the missing data later.
     try:
         meta = find_metatype(str(st.get("metatype") or ""), st.get("metavariant"))
     except NoticeError:
         meta = {}
-    known = {key.upper() for key in ((meta or {}).get("attributes") or {})}
+    known = {
+        key.upper()
+        for key, spec in ((meta or {}).get("attributes") or {}).items()
+        if key != "DEP" or int((spec or {}).get("max") or 0) > 0
+    }
     for a in root.findall("./attributes/attribute"):
         name = _text(a.find("name")).upper()
         if name in ("ESS", "ESSENCE") or not name:

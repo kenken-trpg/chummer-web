@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from ...data_loader import PHYSICAL_ATTRS
+from ...data_loader import PHYSICAL_ATTRS, SPECIAL_ATTRS
 from ...rules import current_rules
 from ..priority import heritage_cost, priority_value
 from ._career import (
@@ -36,7 +36,7 @@ def _priority_points(ctx: Ctx) -> None:
     for key in PHYSICAL_ATTRS:
         ctx.spent_physical += max(0, ctx.bought_ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
     ctx.spent_special = 0
-    for key in ("EDG", "MAG", "RES"):
+    for key in SPECIAL_ATTRS:
         if key in floors:
             ctx.spent_special += max(0, ctx.bought_ratings[key] - floors[key] - ctx.attr_karma_levels.get(key, 0))
 
@@ -57,6 +57,10 @@ def _priority_points(ctx: Ctx) -> None:
         ctx.heritage_karma_cost = 0
     else:
         ctx.attr_points = int(attr_row.get("attribute_points") or 0)
+        if ctx.meta.get("halve_attribute_points"):
+            # An A.I.: Chummer's SelectMetatypePriority halves the row's
+            # points, rounding down.
+            ctx.attr_points //= 2
         ctx.skill_points = int(skill_row.get("skill_points") or 0)
         ctx.group_points = int(skill_row.get("skill_group_points") or 0)
         ctx.nuyen_pool = int(res_row.get("nuyen") or 0)

@@ -315,6 +315,11 @@
         "max": 6,
         "min": 1
       },
+      "DEP": {
+        "aug": 0,
+        "max": 0,
+        "min": 0
+      },
       "EDG": {
         "aug": 7,
         "max": 7,
@@ -619,11 +624,19 @@
   },
   "talent": {
     "cfp": 0,
+    "depth": 0,
+    "forbidden": [
+      {
+        "kind": "metatype",
+        "name": "A.I."
+      }
+    ],
     "free_skills": null,
     "label": "Mundane",
     "magic": 0,
     "name": "Mundane",
     "quality": "",
+    "required": [],
     "resonance": 0,
     "spells": 0,
     "value": 0
@@ -654,6 +667,7 @@
     "AGI": 1,
     "BOD": 1,
     "CHA": 1,
+    "DEP": 0,
     "EDG": 2,
     "ESS": 2.9,
     "INT": 1,

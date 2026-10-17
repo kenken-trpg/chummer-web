@@ -56,10 +56,9 @@ SILENT_TAGS = {
     # sprite list in `data_loader` (Chummer's `AddSprite` only widens a
     # stream's sprite list, and every stream here already has them all)
     "selectsprite",
-    # Only on `Inherent Program`, a quality an A.I. takes — and `A.I.` is in
-    # `SKIP_TALENTS`, so no character here reaches the quality at all. It is
-    # also the innate grant of `Protosapient`, an A.I. metavariant, which the
-    # chargen list does not offer either.
+    # Only on `Inherent Program`, a quality an A.I. takes, and the innate
+    # grant of `Protosapient`. The pick is one of `programs.xml`'s, a file
+    # this app does not load yet (`docs/ai-chargen.md`, the programs stage).
     "selectinherentaiprogram",
     "selectattribute",
     # Astral Reputation (SG p.35) is a tracked value of its own, like
@@ -286,6 +285,8 @@ ATTR_ALIASES = {
     "RESONANCE": "RES",
     "ESS": "ESS",
     "ESSENCE": "ESS",
+    "DEP": "DEP",
+    "DEPTH": "DEP",
 }
 
 

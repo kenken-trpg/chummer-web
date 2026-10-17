@@ -327,6 +327,11 @@
         "max": 6,
         "min": 1
       },
+      "DEP": {
+        "aug": 0,
+        "max": 0,
+        "min": 0
+      },
       "EDG": {
         "aug": 7,
         "max": 7,
@@ -728,6 +733,8 @@
   },
   "talent": {
     "cfp": 7,
+    "depth": 0,
+    "forbidden": [],
     "free_skills": {
       "choices": [],
       "group": false,
@@ -740,6 +747,12 @@
     "magic": 0,
     "name": "Technomancer",
     "quality": "Technomancer",
+    "required": [
+      {
+        "kind": "metatypecategory",
+        "name": "Metahuman"
+      }
+    ],
     "resonance": 6,
     "spells": 0,
     "value": 6
@@ -780,6 +793,7 @@
     "AGI": 1,
     "BOD": 1,
     "CHA": 1,
+    "DEP": 0,
     "EDG": 2,
     "ESS": 6.0,
     "INT": 1,

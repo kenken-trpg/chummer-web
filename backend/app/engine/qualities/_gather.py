@@ -104,13 +104,20 @@ def gather_qualities(
     free_ids: set[str] = set()
     state.quality_ids, dropped = sanitize_quality_ids(list(state.quality_ids))
     pending = list(state.quality_ids)
-    innate = {q["id"]: q for q in metatype_grants or [] if q.get("id")}
-    for qid, grant in innate.items():
+    # Each line of the grant list is one copy: an E-Ghost is born with
+    # Hello World! three times, a Gnome with Arcane Arrester twice (Chummer's
+    # Character.Create adds a quality per `<quality>` node). An explicit Life
+    # Module rating stands for that many free levels.
+    innate: dict[str, dict[str, Any]] = {}
+    copies: dict[str, int] = {}
+    for grant in metatype_grants or []:
+        if grant.get("id"):
+            innate.setdefault(grant["id"], grant)
+            copies[grant["id"]] = copies.get(grant["id"], 0) + int(grant.get("life_rating", 1))
+    for qid in innate:
         free_ids.add(qid)
         if qid not in pending:
-            # Explicit Life Module ratings represent that many free levels.
-            # Other innate grants retain their single-grant behavior.
-            pending.extend([qid] * int(grant.get("life_rating", 1)))
+            pending.extend([qid] * copies[qid])
     talent_quality = _quality_by_name(talent.get("quality") or "")
     if talent_quality:
         pending.append(talent_quality["id"])

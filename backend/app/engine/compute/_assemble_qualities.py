@@ -59,6 +59,9 @@ def _effective_attr_spec(
     for key, bonus in (("MAG", mag_max_bonus), ("RES", res_max_bonus)):
         out[key]["min"] = floors.get(key, 0)
         out[key]["max"] = int(out[key].get("max") or 0) + max(0, int(bonus)) if key in floors else 0
+    if "DEP" in out:
+        out["DEP"]["min"] = floors.get("DEP", 0)
+        out["DEP"]["max"] = int(out["DEP"].get("max") or 0) if "DEP" in floors else 0
     return out
 
 

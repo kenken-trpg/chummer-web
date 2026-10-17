@@ -355,7 +355,9 @@ def _requirements_met(ctx: Ctx, tree: list[dict[str, Any]]) -> bool:
         return True
     quality_by_id = {str(q["id"]): str(q["name"]) for q in ctx.data["qualities"]}
     quality_names = {quality_by_id[qid] for qid in (ctx.state.quality_ids or []) if qid in quality_by_id}
-    talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
+    talent = resolve_talent_for_method(
+        ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method, ctx.state.metatype
+    )
     if talent.get("quality"):
         quality_names.add(str(talent["quality"]))
     metatype_names = {str(ctx.meta.get("name") or ""), str(ctx.state.metatype or "")}

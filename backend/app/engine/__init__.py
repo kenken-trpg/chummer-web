@@ -177,6 +177,7 @@ from .priority import (  # noqa: F401  (re-exported for characters.py / catalog_
     resolve_talent,
     resolve_talent_for_method,
     sum_to_ten_spent,
+    talent_allowed,
     talent_options,
     talent_special,
     validate_priorities,

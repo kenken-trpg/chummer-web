@@ -63,12 +63,31 @@ def load_priorities() -> list[dict[str, Any]]:
                         "quality": _text(t.find("./qualities/quality")),
                         "spells": _int(t.find("spells")),
                         "cfp": _int(t.find("cfp")),
+                        "depth": _int(t.find("depth")),
                         "free_skills": _free_skills(t),
+                        "forbidden": _metatype_terms(t.find("./forbidden/oneof")),
+                        "required": _metatype_terms(t.find("./required/oneof")),
                     }
                 )
             row["talents"] = talents
         rows.append(row)
     return rows
+
+
+def _metatype_terms(oneof: Any) -> list[dict[str, str]]:
+    """A talent's `<forbidden>` / `<required>` `<oneof>`: which metatypes
+    (`metatype`) or metatype categories (`metatypecategory`) it names.
+
+    Only those two appear on a talent. An A.I. may take only the A.I. talent
+    and no other; a Technomancer must be a metahuman.
+    """
+    if oneof is None:
+        return []
+    return [
+        {"kind": child.tag, "name": _text(child)}
+        for child in oneof
+        if child.tag in {"metatype", "metatypecategory"} and _text(child)
+    ]
 
 
 def _free_skills(t: Any) -> dict[str, Any] | None:

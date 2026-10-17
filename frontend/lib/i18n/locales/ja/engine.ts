@@ -19,6 +19,7 @@ export const JA_ENGINE = {
     "サーバーに接続できないため、表示中の計算値が古い可能性があります。編集はまだ保存されます。",
   "engine.priority.letters": "優先度は A〜E のみ割り当てできます",
   "engine.priority.oneEach": "優先度 A〜E を各カテゴリーに1つずつ割り当ててください",
+  "engine.priority.talentNotAllowed": "{metatype} は {talent} を選べません",
 
   "engine.priority.sumToTen":
     "Sum to Ten の合計が {budget} になるように割り当ててください（現在 {spent}）",

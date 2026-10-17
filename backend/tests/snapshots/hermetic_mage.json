@@ -233,6 +233,11 @@
         "max": 6,
         "min": 1
       },
+      "DEP": {
+        "aug": 0,
+        "max": 0,
+        "min": 0
+      },
       "EDG": {
         "aug": 7,
         "max": 7,
@@ -825,6 +830,13 @@
   },
   "talent": {
     "cfp": 0,
+    "depth": 0,
+    "forbidden": [
+      {
+        "kind": "metatype",
+        "name": "A.I."
+      }
+    ],
     "free_skills": {
       "choices": [],
       "group": false,
@@ -837,6 +849,7 @@
     "magic": 6,
     "name": "Magician",
     "quality": "Magician",
+    "required": [],
     "resonance": 0,
     "spells": 10,
     "value": 6
@@ -880,6 +893,7 @@
     "AGI": 1,
     "BOD": 1,
     "CHA": 1,
+    "DEP": 0,
     "EDG": 2,
     "ESS": 6.0,
     "INT": 1,

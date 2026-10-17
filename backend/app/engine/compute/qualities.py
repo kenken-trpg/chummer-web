@@ -19,7 +19,7 @@ from ..magic import (
     bind_spell_spirit_limits,
     resolve_mentor,
 )
-from ..priority import resolve_talent_for_method, talent_special
+from ..priority import resolve_talent_for_method, talent_allowed, talent_special
 from ..qualities import (
     bind_action_dice_pools,
     bind_select_powers,
@@ -66,8 +66,18 @@ def resolve_attribute_selects(
 
 
 def gather(ctx: Ctx) -> None:
-    ctx.talent = resolve_talent_for_method(ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method)
+    ctx.talent = resolve_talent_for_method(
+        ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method, ctx.state.metatype
+    )
     ctx.state.talent = ctx.talent["name"]
+    if not talent_allowed(ctx.talent, ctx.state.metatype) and not (ctx.is_karma and ctx.talent["name"] == "Mundane"):
+        # A Karma build has no Talent priority: Mundane there only means no
+        # talent was bought, which an A.I. is free to do.
+        ctx.err(
+            "engine.priority.talentNotAllowed",
+            talent=term(str(ctx.talent.get("label") or ctx.talent["name"])),
+            metatype=term(ctx.state.metatype),
+        )
     ctx.sources = [(ctx.meta["name"], ctx.meta.get("bonus") or [])]
     quality_grants = [*(ctx.meta.get("quality_grants") or []), *(ctx.life.get("qualities") or [])]
     power_grants = ctx.meta.get("power_grants") or []

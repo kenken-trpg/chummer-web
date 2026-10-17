@@ -33,6 +33,15 @@ def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str,
     attrs: dict[str, dict[str, int | float]] = {}
     for key in ATTR_KEYS:
         upper = key.upper()
+        if key == "dep":
+            # Depth is an A.I.'s alone; a custom metatype that leaves the
+            # tags out has none, not the 1-6 the other defaults hand out.
+            attrs[upper] = {
+                "min": _int(el.find("depmin")),
+                "max": _int(el.find("depmax")),
+                "aug": _int(el.find("depaug")),
+            }
+            continue
         attrs[upper] = {
             "min": _int(el.find(f"{key}min"), 1 if key != "ess" else 6),
             "max": _int(el.find(f"{key}max"), 6 if key != "ess" else 6),
@@ -73,7 +82,25 @@ def _parse_metatype(el: ET.Element, parent_name: str | None = None) -> dict[str,
             for grant in _grants(el.find(f"./qualities/{category.lower()}"), "quality")
         ],
         "powers": _grants(el.find("powers"), "power"),
+        # An A.I. gets half the Attributes priority's points (Chummer's
+        # SelectMetatypePriority divides by two, rounding down).
+        "halve_attribute_points": el.find("halveattributepoints") is not None,
+        "quality_restriction": _quality_restriction(el.find("qualityrestriction")),
         "metavariants": variants,
+    }
+
+
+def _quality_restriction(el: ET.Element | None) -> dict[str, list[str]] | None:
+    """The only qualities this metatype may take, by category, or `None`.
+
+    Chummer's SelectQuality leaves out every quality the list does not name,
+    so a category with no entries allows none of its qualities.
+    """
+    if el is None:
+        return None
+    return {
+        category: [_text(q) for q in el.findall(f"./{category.lower()}/quality") if _text(q)]
+        for category in ("Positive", "Negative")
     }
 
 

@@ -21,6 +21,7 @@ export const EN_ENGINE = {
     "The server is unreachable, so the values shown may be out of date. Edits are still saved.",
   "engine.priority.letters": "Priorities can only be A–E",
   "engine.priority.oneEach": "Assign each priority A–E to exactly one category",
+  "engine.priority.talentNotAllowed": "{metatype} cannot take {talent}",
 
   "engine.priority.sumToTen": "Sum to Ten must add up to {budget} (currently {spent})",
 
