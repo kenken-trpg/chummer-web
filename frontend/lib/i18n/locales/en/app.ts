@@ -368,6 +368,7 @@ export const EN_APP = {
   "txt.limits": "Limits P{physical}/M{mental}/S{social}",
   "txt.cm": "CM P{physical}/S{stun}",
   "txt.cmCore": "CM Core {physical}",
+  "txt.cmCoreMatrix": "CM Core {physical}/Matrix {matrix}",
   "txt.movement": "Movement walk {walk}m / run {run}m / sprint +{sprint}m per hit",
   "txt.pool": "pool",
   "txt.cyber": "cyber",

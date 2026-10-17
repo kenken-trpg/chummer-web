@@ -9,6 +9,7 @@ from typing import Any, cast
 
 from ..data_loader import CatalogDict, catalog_list
 from ..data_loader._xml import _int, _text, current_overlay_key
+from ..engine.home_node import HOME_NODE_BUCKETS
 from ..notices import Notice, Phrase, notice, ui
 from ._common import _chummer_added, _data_index, _discounted, _picked_cost, _Resolver
 
@@ -180,6 +181,9 @@ def _import_gear(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: l
                 row["parent_id"] = parent_id
                 row["included"] = included
         routed[bucket].append(row)
+        if host is None and bucket in HOME_NODE_BUCKETS and _text(g.find("homenode")).lower() == "true":
+            # an A.I.'s home node; the engine drops it from anyone else
+            st["home_node"] = row["id"]
         if _text(g.find("guid")):
             gear_ids[_text(g.find("guid"))] = row["id"]
         for child in g.findall("./children/gear"):

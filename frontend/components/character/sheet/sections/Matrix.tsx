@@ -34,6 +34,9 @@ export function MatrixSection(s: SheetData) {
       {mi?.device === "ai" ? (
         <p className="sheet-note">
           {ui("sheet.aiMatrixInit", { init: `${mi.value}+${mi.hot_dice}d6` })}
+          {d.home_node
+            ? ` ${ui("sheet.aiHomeNode", { name: tr(d.home_node.name), dp: d.home_node.dataprocessing })}`
+            : ""}
         </p>
       ) : null}
       {(() => {

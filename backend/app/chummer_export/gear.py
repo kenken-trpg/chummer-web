@@ -287,6 +287,9 @@ def _gear_writer(state: CharacterState, names: _Names) -> tuple[dict[str | None,
                 # a Custom Item goes by the name the player gave it
                 el.find("name").text = g.name  # type: ignore[union-attr]
             _sub(el, "rating", getattr(g, "rating", 1))
+            if g.id == state.home_node:
+                # an A.I.'s home node (`IHasMatrixAttributes.IsHomeNode`)
+                _sub(el, "homenode", "True")
             if g.id in program_ids:
                 _sub(el, "equipped", "True" if g.running else "False")
             elif gid in module_gids:

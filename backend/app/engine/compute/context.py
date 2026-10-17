@@ -55,6 +55,7 @@ from ..bundle_types import (
     empty_sprites,
     empty_submersion,
 )
+from ..home_node import HomeNode
 
 
 @dataclass
@@ -234,6 +235,7 @@ class Ctx:
     cm_stun: int = 0
     #: Chummer's `IsAI`: the A.I.'s own monitors and initiative.
     is_ai: bool = False
+    home_node: HomeNode | None = None
     initiative: int = 0
     initiative_dice: int = 0
     movement: MovementBundle = field(default_factory=empty_movement)

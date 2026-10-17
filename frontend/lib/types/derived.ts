@@ -147,6 +147,16 @@ export interface Derived {
     /** An A.I.: `physical` is its Core track (8 + DEP ÷ 2) and `stun` is 0. */
     core?: boolean;
   };
+  /** An A.I.'s home node (Chummer `HomeNode`): the device it lives in. */
+  home_node?: {
+    id: string;
+    bucket: string;
+    name: string;
+    device_rating: number;
+    dataprocessing: number;
+    program_limit: number;
+    matrix_cm: number;
+  } | null;
   initiative: { value: number; dice: number };
   /** INT×2 + the settings' astral dice (3 in Standard); absent without Magic. */
   astral_initiative?: { value: number; dice: number } | null;

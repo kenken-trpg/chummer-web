@@ -24,6 +24,7 @@ from ...improvements.effect_rows import (
 )
 from ...notices import Notice
 from ..bundle_types import FocusLimits, MatrixInitiative, MovementBundle, TalentSkills
+from ..home_node import HomeNode
 
 Row = dict[str, Any]
 
@@ -222,6 +223,7 @@ class DerivedDict(TypedDict):
     #: per sidebar value, what each named source added (see `SOURCED_KEYS`)
     stat_sources: dict[str, list[Row]]
     condition_monitor: _ConditionMonitor
+    home_node: HomeNode | None
     initiative: _Initiative
     #: INT×2 + the settings' astral dice; `None` without Magic
     astral_initiative: _Initiative | None

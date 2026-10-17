@@ -73,7 +73,12 @@ export function buildUdonariumXml(
   // block does rather than only looking for a deck.
   const donglelink = d.commlink && (d.commlink.attack || d.commlink.sleaze) ? d.commlink : null;
   const persona = d.cyberdeck || d.living_persona || donglelink;
-  const matrixCm = persona ? 8 + Math.ceil((persona.device_rating || 1) / 2) : 0;
+  // an A.I.'s is its home node's, which the engine reports in place of stun
+  const matrixCm = cm.core
+    ? cm.stun
+    : persona
+      ? 8 + Math.ceil((persona.device_rating || 1) / 2)
+      : 0;
   // `movement.run` is Chummer's metres-per-Complex-Action string; a rating
   // modifier can leave it non-numeric, and then the piece starts at 0.
   const parsed = Number.parseInt(String(d.movement?.run ?? ""), 10);
@@ -104,7 +109,7 @@ export function buildUdonariumXml(
                 resource(ui("coco.cmStun"), 0, cm.stun),
               ]),
           ...(matrixCm ? [resource(ui("coco.cmMatrix"), 0, matrixCm)] : []),
-          woundTrack(ui, cm.physical, cm.stun, cm.core),
+          woundTrack(ui, cm.physical, cm.core ? 0 : cm.stun, cm.core),
         ],
       },
     ],

@@ -21,6 +21,7 @@ from ...rules import current_rules
 from ..bundle_types import MovementBundle, MovementModeBundle
 from ..formulas import _ceil_div
 from ..gear.weapons.bonuses import resolve_attr_formulas, resolve_limit_accuracy
+from ..home_node import resolve_home_node
 from ..limits import (
     _avail_entries,
     _check_avail_limit,
@@ -179,6 +180,16 @@ def finalize(ctx: Ctx) -> None:
 
     physical_base, mental_base, social_base = _inherent_limits(ctx.total, ctx.ess)
     ctx.is_ai = is_ai(ctx.attrs_spec, ctx.special_floors)
+    ctx.home_node, node_warnings = resolve_home_node(
+        ctx.state, ctx.gear, ai=ctx.is_ai, depth=int(ctx.total.get("DEP") or 0)
+    )
+    ctx.warnings.extend(node_warnings)
+    if ctx.home_node:
+        # Chummer `LimitMental` / `LimitSocial` with a home node: its Data
+        # Processing where higher, and in place of the second CHA
+        dp = ctx.home_node["dataprocessing"]
+        mental_base = max(mental_base, dp)
+        social_base = _ceil_div((int(ctx.total["CHA"]) + dp + int(ctx.total["WIL"]) + _ceil_div(ctx.ess)) / 3)
     # Chummer `LimitPhysical`: an A.I. outside a vehicle has no body to limit
     ctx.physical_limit = 0 if ctx.is_ai else physical_base + int(ctx.effects.get("limit_physical") or 0)
     ctx.mental_limit = mental_base + int(ctx.effects.get("limit_mental") or 0)
@@ -187,9 +198,9 @@ def finalize(ctx: Ctx) -> None:
     resolve_limit_accuracy(ctx.gear.get("weapons"), ctx.physical_limit)
     if ctx.is_ai:
         # Chummer `PhysicalCM`: an A.I.'s is its Core monitor, 8 + DEP / 2;
-        # `StunCM` is nothing at all (a home node's Matrix monitor stands in).
+        # `StunCM` is its home node's Matrix monitor, or nothing at all.
         ctx.cm_phys = 8 + _ceil_div(int(ctx.total.get("DEP") or 0) / 2) + ctx.effects["cm_physical"]
-        ctx.cm_stun = 0
+        ctx.cm_stun = ctx.home_node["matrix_cm"] if ctx.home_node else 0
     else:
         ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
         ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]

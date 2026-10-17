@@ -231,6 +231,7 @@
   },
   "friends_in_high_places": false,
   "gear": [],
+  "home_node": null,
   "initiate_grade": 0,
   "initiation": {
     "arts": [],

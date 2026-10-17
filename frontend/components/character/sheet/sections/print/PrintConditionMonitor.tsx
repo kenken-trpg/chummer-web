@@ -14,7 +14,8 @@ export function PrintConditionMonitor(s: SheetData) {
   const { ui } = useUiText();
   const physical = d.condition_monitor.physical || 0;
   const stun = d.condition_monitor.stun || 0;
-  // an A.I.'s one track is its Core; it has no Stun track to print
+  // an A.I.'s track is its Core; in place of a Stun track it has its home
+  // node's Matrix monitor, or nothing
   const core = !!d.condition_monitor.core;
   const overflow = Math.max(0, Math.ceil((totals.BOD || 0) / 2));
   const recovery = d.cm_recovery;
@@ -53,11 +54,11 @@ export function PrintConditionMonitor(s: SheetData) {
           <div className="print-cm-boxes print-cm-boxes--overflow">{boxes(overflow)}</div>
         </div>
       ) : null}
-      {core ? null : (
+      {core && !stun ? null : (
         <div className="print-cm-track">
           <div className="print-cm-label">
-            {ui("print.stun")} <b>{stun}</b>
-            {recovery ? (
+            {ui(core ? "print.matrix" : "print.stun")} <b>{stun}</b>
+            {recovery && !core ? (
               <span className="sheet-dim">{ui("print.recoveryHour", { n: recovery.stun })}</span>
             ) : null}
           </div>

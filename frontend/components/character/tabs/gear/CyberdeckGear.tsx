@@ -2,6 +2,7 @@
 import { AddonSelect } from "@/components/character/AddonSelect";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HomeNodeToggle } from "@/components/character/HomeNodeToggle";
 import { DeckModuleRows, DECK_BUILDER } from "./DeckModuleRows";
 import { AppRows } from "@/components/character/tabs/gear/AppRows";
 import { LooseProgramRows } from "@/components/character/tabs/gear/LooseProgramRows";
@@ -61,6 +62,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                   ui={ui}
                   patch={patch}
                 />
+                <HomeNodeToggle id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
               </div>
               {item.rating_max > 0 ? (
                 <div className="cyber-controls">

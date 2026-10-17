@@ -375,6 +375,15 @@ describe("buildCocofolia", () => {
     const piece = JSON.parse(buildCocofolia(ai, makeCatalog(), identityTr));
     expect(piece.data.status.slice(0, 1)).toEqual([{ label: "コアCM", value: 10, max: 10 }]);
     expect(piece.data.status.map((s: { label: string }) => s.label)).not.toContain("精神CM");
+    const housed = makeCharacter({
+      metatype: "A.I.",
+      derived: { condition_monitor: { physical: 10, stun: 11, core: true } },
+    });
+    const labels = JSON.parse(buildCocofolia(housed, makeCatalog(), identityTr)).data.status;
+    expect(labels.slice(0, 2)).toEqual([
+      { label: "コアCM", value: 10, max: 10 },
+      { label: "マトリックスCM", value: 11, max: 11 },
+    ]);
   });
 
   it("produces a parseable ccfolia character piece", () => {

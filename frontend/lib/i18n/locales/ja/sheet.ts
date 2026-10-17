@@ -308,6 +308,9 @@ export const JA_SHEET = {
   "udo.woundPhysical": "身体",
   "udo.woundCore": "コア",
   "sheet.cmCore": "コア{n}",
+  "sheet.cmCoreMatrix": "コア{n} / マトリックス{m}",
+  "sheet.aiHomeNode": "ホームノード：{name}（Data Processing {dp}）",
+  "print.matrix": "マトリックス",
   "sheet.aiMatrixInit":
     "A.I. のマトリックスイニシアティブ：{init}（ホットシム・コールドシムとも同じ）",
   "udo.woundStun": "精神",
