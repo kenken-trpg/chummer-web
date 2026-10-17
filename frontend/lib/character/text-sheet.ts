@@ -99,10 +99,12 @@ export function textSheet(x: TextArgs): string {
         mental: d.limits.mental,
         social: d.limits.social,
       })}  ` +
-      ui("txt.cm", {
-        physical: d.condition_monitor.physical,
-        stun: d.condition_monitor.stun,
-      }) +
+      (d.condition_monitor.core
+        ? ui("txt.cmCore", { physical: d.condition_monitor.physical })
+        : ui("txt.cm", {
+            physical: d.condition_monitor.physical,
+            stun: d.condition_monitor.stun,
+          })) +
       (cmThresholdNote(d.condition_monitor, ui)
         ? `  ${cmThresholdNote(d.condition_monitor, ui)}`
         : ""),

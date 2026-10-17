@@ -245,8 +245,13 @@ export function buildCocofolia(
 
   const cm = d.condition_monitor || { physical: 0, stun: 0 };
   const status = [
-    { label: ui("coco.cmPhysical"), value: cm.physical, max: cm.physical },
-    { label: ui("coco.cmStun"), value: cm.stun, max: cm.stun },
+    // an A.I. has a Core track in place of both
+    ...(cm.core
+      ? [{ label: ui("coco.cmCore"), value: cm.physical, max: cm.physical }]
+      : [
+          { label: ui("coco.cmPhysical"), value: cm.physical, max: cm.physical },
+          { label: ui("coco.cmStun"), value: cm.stun, max: cm.stun },
+        ]),
     { label: ui("coco.edge"), value: at("EDG"), max: at("EDG") },
   ];
 

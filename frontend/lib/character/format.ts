@@ -27,6 +27,14 @@ export function cmThresholdNote(
   return ui("sheet.cmThreshold", { first: ignored + step, step });
 }
 
+/** "P10 / S9" — or an A.I.'s Core track alone, since it has no Stun one. */
+export function cmSummary(
+  cm: { physical: number; stun: number; core?: boolean },
+  ui: UiFn,
+): string {
+  return cm.core ? ui("sheet.cmCore", { n: cm.physical }) : `P${cm.physical} / S${cm.stun}`;
+}
+
 /** Matrix condition monitor: 8 + ⌈Device Rating ÷ 2⌉ (SR5 p.229). */
 export function matrixCM(deviceRating?: number) {
   return 8 + Math.ceil((deviceRating || 0) / 2);

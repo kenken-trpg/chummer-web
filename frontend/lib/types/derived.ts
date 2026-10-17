@@ -144,6 +144,8 @@ export interface Derived {
     threshold?: number;
     /** Boxes ignored before the first −1 (High Pain Tolerance, a drug). */
     threshold_offset?: number;
+    /** An A.I.: `physical` is its Core track (8 + DEP ÷ 2) and `stun` is 0. */
+    core?: boolean;
   };
   initiative: { value: number; dice: number };
   /** INT×2 + the settings' astral dice (3 in Standard); absent without Magic. */
@@ -186,7 +188,8 @@ export interface Derived {
   cyberdeck?: InstalledMatrixDevice | null;
   rcc?: InstalledMatrixDevice | null;
   /** VR initiative for the persona worth running: Data Processing + INT,
-   *  three dice cold sim / four hot (SR5 p.229). AR keeps meat initiative. */
+   *  three dice cold sim / four hot (SR5 p.229). AR keeps meat initiative.
+   *  An A.I.'s (`device` "ai") is INT + 4D6 however it runs. */
   matrix_initiative?: {
     device: string;
     dataprocessing: number;

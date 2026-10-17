@@ -5,6 +5,7 @@ import {
   sourceBit,
   cfDuration,
   cfTarget,
+  cmSummary,
   kindLabel,
   limitModifierLine,
   specialArmorLine,
@@ -26,6 +27,13 @@ import {
   vehicleCM,
   wareAttrLine,
 } from "@/lib/character/format";
+
+describe("cmSummary", () => {
+  it("shows both tracks, or an A.I.'s Core track alone", () => {
+    expect(cmSummary({ physical: 10, stun: 9 }, testUi)).toBe("P10 / S9");
+    expect(cmSummary({ physical: 10, stun: 0, core: true }, testUi)).toBe("コア10");
+  });
+});
 
 describe("matrixCM / vehicleCM", () => {
   it("matrix CM = 8 + ceil(DR/2)", () => {

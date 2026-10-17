@@ -22,8 +22,20 @@ export function MatrixSection(s: SheetData) {
   return (
     <Section
       title="sheet.matrix"
-      empty={!d.commlink && !d.cyberdeck && !d.rcc && !d.living_persona && !programs.length}
+      empty={
+        !d.commlink &&
+        !d.cyberdeck &&
+        !d.rcc &&
+        !d.living_persona &&
+        !programs.length &&
+        mi?.device !== "ai"
+      }
     >
+      {mi?.device === "ai" ? (
+        <p className="sheet-note">
+          {ui("sheet.aiMatrixInit", { init: `${mi.value}+${mi.hot_dice}d6` })}
+        </p>
+      ) : null}
       {(() => {
         const rows: {
           key: string;

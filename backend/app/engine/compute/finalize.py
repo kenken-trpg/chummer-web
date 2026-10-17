@@ -31,6 +31,7 @@ from ..magic import attach_focus_tests, attach_spirit_tests
 from ..priority import heritage_options
 from ..qualities import apply_quality_rules
 from ..resonance import attach_complex_form_tests, attach_sprite_tests
+from ..special_attributes import is_ai
 from ..ware import cyberleg_movement_agi, limb_attribute_replace
 from ._quality_ctx import quality_req_ctx
 from .context import Ctx
@@ -177,13 +178,21 @@ def finalize(ctx: Ctx) -> None:
     intuition = ctx.total["INT"]
 
     physical_base, mental_base, social_base = _inherent_limits(ctx.total, ctx.ess)
-    ctx.physical_limit = physical_base + int(ctx.effects.get("limit_physical") or 0)
+    ctx.is_ai = is_ai(ctx.attrs_spec, ctx.special_floors)
+    # Chummer `LimitPhysical`: an A.I. outside a vehicle has no body to limit
+    ctx.physical_limit = 0 if ctx.is_ai else physical_base + int(ctx.effects.get("limit_physical") or 0)
     ctx.mental_limit = mental_base + int(ctx.effects.get("limit_mental") or 0)
     ctx.social_limit = social_base + int(ctx.effects.get("limit_social") or 0)
     resolve_attr_formulas(ctx.gear.get("weapons"), ctx.total, int(ctx.effects.get("throw_str") or 0))
     resolve_limit_accuracy(ctx.gear.get("weapons"), ctx.physical_limit)
-    ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
-    ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]
+    if ctx.is_ai:
+        # Chummer `PhysicalCM`: an A.I.'s is its Core monitor, 8 + DEP / 2;
+        # `StunCM` is nothing at all (a home node's Matrix monitor stands in).
+        ctx.cm_phys = 8 + _ceil_div(int(ctx.total.get("DEP") or 0) / 2) + ctx.effects["cm_physical"]
+        ctx.cm_stun = 0
+    else:
+        ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]
+        ctx.cm_stun = 8 + _ceil_div(wil / 2) + ctx.effects["cm_stun"]
     ctx.initiative = rea + intuition + ctx.effects["initiative"]
     # Chummer `InitiativeDice`: the settings' minimum plus what augmentations
     # add, never past the maximum — Wired Reflexes 3 on top of Synaptic

@@ -2,7 +2,7 @@ import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
-import { cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/character/format";
+import { cmSummary, cmThresholdNote, lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
 import { renderNotice } from "@/lib/engine-notices";
 import { otherMovementRows } from "@/lib/character/movement";
@@ -65,9 +65,7 @@ export function CoreSection(s: SheetData) {
           ) : null}
           <div>
             <span>{ui("common.condition")}</span>
-            <b>
-              P{d.condition_monitor.physical} / S{d.condition_monitor.stun}
-            </b>
+            <b>{cmSummary(d.condition_monitor, ui)}</b>
             {cmThresholdNote(d.condition_monitor, ui) ? (
               <span className="sheet-dim">{cmThresholdNote(d.condition_monitor, ui)}</span>
             ) : null}

@@ -310,6 +310,18 @@ describe("buildUdonariumXml", () => {
     expect(doc.querySelector("chat-palette")?.textContent).toContain("Ares S-III Super Squirt <2>");
   });
 
+  it("gives an A.I. a Core track in place of the physical and stun ones", () => {
+    const ai = makeCharacter({
+      metatype: "A.I.",
+      derived: { condition_monitor: { physical: 10, stun: 0, core: true } },
+    });
+    const xml = buildUdonariumXml(ai, makeCatalog(), identityTr);
+    expect(xml).toContain('<data name="コアCM" type="numberResource" currentValue="0">10</data>');
+    expect(xml).not.toContain("身体CM");
+    expect(xml).not.toContain("精神CM");
+    expect(xml).toContain("コア[][][][][][][][][][]");
+  });
+
   it("gives any persona a Matrix condition monitor and leaves it off everyone else", () => {
     const plain = buildUdonariumXml(makeCharacter(), makeCatalog(), identityTr);
     expect(plain).not.toContain("マトリックスCM");

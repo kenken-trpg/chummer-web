@@ -54,4 +54,24 @@ describe("print sections", () => {
     expect(container.textContent).toContain("回復 2/日");
     expect(container.textContent).toContain("回復 3/時間");
   });
+
+  it("PrintConditionMonitor gives an A.I. its Core track and nothing else", () => {
+    const ai = buildSheetData({
+      character: makeCharacter({
+        metatype: "A.I.",
+        derived: {
+          totals: { BOD: 0, DEP: 3 } as never,
+          condition_monitor: { physical: 10, stun: 0, core: true },
+        },
+      }),
+      catalog: makeCatalog(),
+      tr: identityTr,
+      layout: "print",
+    });
+    const { container } = render(<PrintConditionMonitor {...ai} />);
+    expect(container.querySelectorAll(".print-cm-track")).toHaveLength(1);
+    expect(container.querySelectorAll(".cm-box")).toHaveLength(10);
+    expect(container.textContent).toContain("コア");
+    expect(container.textContent).not.toContain("精神");
+  });
 });

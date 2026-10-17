@@ -134,10 +134,34 @@ DT本文は未照合。
 - FVTT：shadowrun5eの取り込み（`ItemsParser`）が`aiprograms`を読まないので書かない。
   書き出し前の確認に1件ずつ出す（`engine.export.fvttAIProgram`）。
 
+## 実装済み: ホームノードの無いA.I.の値（段階4a）
+
+`Character.cs`で`IsAI`が分岐させる値のうち、ホームノードが無くても変わるもの。
+
+- 身体ダメージトラックの代わりにコアダメージトラック：8＋DEP÷2（切り上げ）＋`<conditionmonitor>`
+  （`PhysicalCM`）。精神ダメージトラックは無い（`StunCM`が0）。`derived.condition_monitor.core`。
+- 身体リミットは0（`LimitPhysical`。ホームノードが車両ならそのHandling）。改造の補正も乗らない。
+- マトリックスイニシアティブは常にINT＋4D6（`MatrixInitiativeValue`・`MatrixInitiativeDice`）。
+  ダイスはホットシムの最小値＋`<matrixinitiativedice>`で、上限は通常のイニシアティブの上限。
+  コールドシムでも同じ。`<matrixinitiative>`は乗らない。`derived.matrix_initiative.device`は`"ai"`。
+- シート・サイドバー・印刷・テキスト出力・ユドナリウム・ココフォリアで「コア」として出す。
+- 対象外：自然回復のプール（コアはSoftware＋DEP、マトリックスダメージは回復しない）、
+  毒・病原体への抵抗。いずれもこのアプリは改造の補正しか出していない。
+- 検証：`backend/tests/test_ai_chargen.py`の「monitors and initiative」の節。
+
 ## これからの段階
 
-- **ホームノード**：コムリンク・デッキ・車両を選び、マトリックスイニシアティブ・状態モニター・
-  リミットを出す。分岐が多いので、着手前にChummerのソースを読んで分割する。
+Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・サイバーウェア・武器のうち
+コムリンクとして働くものに付く印で、.chum5では各品目の`<homenode>True</homenode>`。
+付けられるのは「Program Limit ≧（DEP＞Device Ratingなら2、でなければ1）」のときだが、
+これはチェックボックスを押せるかどうかで、検証はしない。
+
+- **段階4b：コムリンク・デッキ・RCCをホームノードにする**。マトリックスイニシアティブに
+  Data Processingを足す。メンタルリミットはmax(本来の値, DP)。ソーシャルリミットはCHA×2の代わりに
+  CHA＋DP。精神ダメージトラックの代わりにホームノードのマトリックス・コンディション・モニター。
+- **段階4c：車両・ドローンをホームノードにする**。DPの代わりにmax(DP, Pilot)、メンタルリミットに
+  Sensorも比べる。身体ダメージトラックは車両のもの（基本値＋Body÷2＋改造）、身体リミットはHandling、
+  ダメージ抵抗などのBODは車両のBody。
 - **キャリア**：作成後の扱いは未検討。
 
 ## 残る項目

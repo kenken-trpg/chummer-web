@@ -63,6 +63,7 @@
   },
   "complex_forms": [],
   "condition_monitor": {
+    "core": false,
     "physical": 9,
     "stun": 9,
     "threshold": 3,

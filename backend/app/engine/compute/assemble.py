@@ -26,7 +26,7 @@ from ..constants import (
     SUM_TO_TEN_COST,
     TRUST_FUND_STIPEND,
 )
-from ..gear import matrix_initiative
+from ..gear import ai_matrix_initiative, matrix_initiative
 from ..magic import spell_defense_pools, spell_karma_cost
 from ..priority import priorities_are_unique, sum_to_ten_spent
 from ..resonance import living_persona
@@ -111,6 +111,7 @@ def assemble(ctx: Ctx) -> None:
             # before the first one, both after `<conditionmonitor>`.
             "threshold": max(1, CM_THRESHOLD + int(ctx.effects.get("cm_threshold") or 0)),
             "threshold_offset": max(0, int(ctx.effects.get("cm_threshold_offset") or 0)),
+            "core": ctx.is_ai,
         },
         "initiative": {"value": ctx.initiative, "dice": ctx.initiative_dice},
         # Chummer's `AstralInitiativeValue` / `AstralInitiativeDice`, shown
@@ -156,7 +157,11 @@ def assemble(ctx: Ctx) -> None:
         "rcc": ctx.gear.get("rcc"),
         # The VR initiative of whichever persona is worth running (SR5 p.229);
         # in AR the character keeps the meat initiative above.
-        "matrix_initiative": matrix_initiative(
+        "matrix_initiative": ai_matrix_initiative(
+            int(ctx.total.get("INT") or 0), int(ctx.effects.get("matrix_initiative_dice") or 0)
+        )
+        if ctx.is_ai
+        else matrix_initiative(
             [
                 ("living_persona", living),
                 ("cyberdeck", ctx.gear.get("cyberdeck")),

@@ -45,6 +45,7 @@ from .matrix import (
     _matrix_stats,
     _normalize_array_order,
     _resolve_matrix_devices,
+    ai_matrix_initiative,
     matrix_initiative,
 )
 from .misc import _resolve_misc_gear
@@ -126,6 +127,7 @@ __all__ = [
     "_resolve_armor_mods",
     "_resolve_drones",
     "_resolve_matrix_devices",
+    "ai_matrix_initiative",
     "matrix_initiative",
     "_resolve_misc_gear",
     "_resolve_optics",

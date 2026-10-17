@@ -76,6 +76,16 @@ export function limitHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLine[] {
 export function conditionHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLine[] {
   const t = d.totals || {};
   const src = d.stat_sources || {};
+  if (d.condition_monitor.core)
+    return parts(
+      ui,
+      tr,
+      ui("help.cm.core"),
+      8 + up(Number(t.DEP || 0) / 2),
+      d.condition_monitor.physical,
+      src.cm_physical,
+      ui("help.cm.note"),
+    );
   return [
     ...parts(
       ui,
