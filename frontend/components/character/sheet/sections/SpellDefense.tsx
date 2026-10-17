@@ -1,23 +1,8 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
-import type { MsgKey } from "@/lib/i18n";
 import { useUiText } from "@/lib/i18n";
 import { attrShort } from "@/lib/ui-strings";
-
-type Pools = NonNullable<SheetData["d"]["spell_defense_pools"]>;
-
-/** Chummer's spell defense box, in its order. */
-const ROWS: [MsgKey, Exclude<keyof Pools, "decrease">][] = [
-  ["sheet.def.indirectDodge", "indirect_dodge"],
-  ["sheet.def.indirectSoak", "indirect_soak"],
-  ["side.def.directMana", "direct_mana"],
-  ["sheet.def.directPhysical", "direct_physical"],
-  ["side.def.detection", "detection"],
-  ["side.def.manaIllusion", "mana_illusion"],
-  ["side.def.physicalIllusion", "physical_illusion"],
-  ["side.def.mentalManipulation", "mental_manipulation"],
-  ["sheet.def.physicalManipulation", "physical_manipulation"],
-];
+import { SPELL_DEFENSE_ROWS } from "@/lib/vtt-pools";
 
 /** The dice a character rolls against each kind of spell (Chummer's
  *  `SpellDefense*`): the engine's pools, an A.I.'s body already its vehicle
@@ -30,7 +15,7 @@ export function SpellDefenseSection(s: SheetData) {
     <Section title="sheet.spellDefense" empty={!pools}>
       {pools ? (
         <div className="sheet-derived-grid">
-          {ROWS.map(([key, field]) => (
+          {SPELL_DEFENSE_ROWS.map(([key, field]) => (
             <div key={field}>
               <span>{ui(key)}</span>
               <b>{pools[field]}</b>
