@@ -29,7 +29,10 @@ SOURCES: dict[str, tuple[str, str] | None] = {
 #: right (the critter power Fear showing the spirit power's 恐怖) or spelling
 #: drift (手裏剣 / シュリケン) — see the PR that added this file. The ceiling
 #: is here so a new collision from an upstream update gets looked at.
-KNOWN_MISMATCHES = 72
+#: 52 since 2026-10-17: an untranslated repeat within one file stopped
+#: counting, as the loader already ignored it (20 were such, besides the 9
+#: metamagics data.json had been hiding).
+KNOWN_MISMATCHES = 52
 
 
 def test_every_kind_has_a_source():
@@ -79,10 +82,20 @@ def _mismatches() -> int:
     found = set()
     for section in root:
         file = section.get("file") or section.tag
+        # names this file does translate somewhere: an untranslated repeat of
+        # one later in the same file is the same thing again, and the loader
+        # skips it (`load_translations`) — not a collision
+        translated_here = {
+            (node.findtext("name") or "").strip()
+            for node in section.iter()
+            if (node.findtext("translate") or "").strip() not in ("", (node.findtext("name") or "").strip())
+        }
         for node in section.iter():
             name = (node.findtext("name") or "").strip()
             trans = (node.findtext("translate") or "").strip()
             if not name or not trans or name in overlay or name in covered or file == "books.xml":
+                continue
+            if trans == name and name in translated_here:
                 continue
             shown = flat.get(name)
             if shown != trans and not (trans == name and shown == name):

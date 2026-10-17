@@ -148,8 +148,14 @@ def _committed_data_overlay() -> dict[str, str]:
 
 
 def test_committed_data_overlay_values_are_japanese() -> None:
+    # a book that prints a name in Latin letters (the Codex's FFF) makes that
+    # its Japanese term — only for the names it lists (`Book.latin_table`)
+    from scripts.ja_books import BOOKS
+    from scripts.make_ja_worksheet import printed_latin
+
+    printed = set().union(*(printed_latin(book) for book in BOOKS.values()))
     for key, val in _committed_data_overlay().items():
-        assert isinstance(val, str) and JP_RE.search(val), f"{key!r} -> {val!r}"
+        assert isinstance(val, str) and (JP_RE.search(val) or key in printed), f"{key!r} -> {val!r}"
 
 
 def test_committed_data_overlay_keys_are_used_by_catalog() -> None:

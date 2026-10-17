@@ -4,9 +4,9 @@
 `data.json` の全エントリを出典別に一覧。curated (SR5・用語集照合済) と
 chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カテゴリに限定。
 
-- オーバーレイ合計: **554 件**
+- オーバーレイ合計: **552 件**
 
-## chumJA(SR4) category (55)
+## chumJA(SR4) category (56)
 
 | English | 日本語 |
 |---|---|
@@ -36,6 +36,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Exotic Ranged Weapons | 特殊射撃武器 |
 | Explosives | 爆発物 |
 | Eyeware | アイウェア |
+| Free Spirit | 自由精霊 |
 | Headware | ヘッドウェア |
 | Heavy Machine Guns | ヘビーマシンガン |
 | Hovercraft | ホバークラフト |
@@ -66,7 +67,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Vehicle Active | ヴィークル能動 |
 | Weakness | 弱点 |
 
-## chumJA(SR4) name (141)
+## chumJA(SR4) name (131)
 
 | English | 日本語 |
 |---|---|
@@ -87,13 +88,10 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Boar | イノシシ |
 | Cannibalize | 貪肉術 |
 | Caretaker Spirit | 昆虫精霊(世話役) |
-| Centering | 集中術 |
 | Chameleon Skin | カメレオン・スキン |
-| Channeling | チャネリング |
 | Chemical Seal | 化学遮断 |
 | Chicken | ニワトリ |
 | Clean Metabolism | クリーン代謝系 |
-| Cleansing | 浄化術 |
 | Colt Manhunter | コルト マンハンター |
 | Commanding Voice | 命令の声 |
 | Control Emotions | 感情制御 |
@@ -118,10 +116,8 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Evanescence | 消失 |
 | External Clip Port | 外部装弾口 |
 | Feedback Clothing | フィードバック・クロージング |
-| Flexible Signature | 霊紋偽装術 |
 | Foot Anchor | 脚底アンカー |
 | Fox | キツネ |
-| Free Spirit | 自由精霊 |
 | Geomancy | 地霊術 |
 | Gills | 鰓 |
 | Giraffe | キリン |
@@ -147,13 +143,13 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Magic Sense | 魔力感知 |
 | Magical Guard | 魔法の守護 |
 | Magical Theory | 魔法理論 |
-| Masking | 擬態術 |
 | Master Shedim | マスター・シェディム |
 | Math SPU | 算術SPU |
 | Metahuman Form | 人間形態 |
 | Micro Flare Launcher | 照明弾ピストル |
 | Mind Link | 精神連結 |
 | Mob Mood | 集団感情制御 |
+| Music | 音楽 |
 | Mutable Form | きまぐれな姿 |
 | Mutagen | 変異原 |
 | Naga | ナーガ |
@@ -172,10 +168,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Possession | 憑依 |
 | Power Bleed | パワー奪取 |
 | Psionic | サイオニック |
-| Psychometry | サイコメトリー術 |
-| Pulse | 電磁パルス |
 | Quake | 地震 |
-| Quickening | 固着術 |
 | Raccoon | アライグマ |
 | Radar Sensor | レーダー・センサー |
 | Rappelling Gloves | ラペリング・グローブ |
@@ -187,13 +180,11 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Scout Spirit | 昆虫精霊(斥候役) |
 | Seal | アザラシ |
 | Sense Link | 感覚連結 |
-| Sensing | 観想術 |
 | Shadow Cloak | 影の衣 |
 | Shedim | シェディム |
 | Silence | 静寂 |
 | Siren | サイレン |
 | Skill Enhancement | 技能強化 |
-| Skinlink | スキンリンク |
 | Smuggling Compartment | 密輸用容器 |
 | Soldier Spirit | 昆虫精霊(兵士役) |
 | Sonic Projection | 音響投射 |
@@ -212,7 +203,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Worker Spirit | 昆虫精霊(労働者役) |
 | [Sense] Link | [感覚]連結 |
 
-## curated (358)
+## curated (365)
 
 | English | 日本語 |
 |---|---|
@@ -242,6 +233,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Astral Doppelganger | アストラル・ドッペルゲンガー |
 | Astral Message | アストラル伝言/アストラル・メッセージ |
 | Athletics | 運動 |
+| Attack Dongle | アタック・ドングル |
 | Attributes | 能力値 |
 | Attune Animal | 動物同調 |
 | Attune Item | 物品同調 |
@@ -264,6 +256,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Brother in Arms | 戦友 |
 | Buddhism | 仏教 |
 | Bug Zapper | 殺虫器/バグ・ザッパー |
+| Cable Tap | ケーブル・タップ |
 | Calling [Spirit Type] | [精霊タイプ] 呼び出し |
 | Capricorn | カプリコーン |
 | Catch | 捕球/キャッチ |
@@ -336,7 +329,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Far Sensing | 遠隔感知 |
 | Feign Death | 擬死 |
 | Feign Illness | 仮病 |
-| Fight or Flight Filter | 闘争逃走フィルター |
+| Fight or Flight Filter | FFF |
 | Fire Elemental | 火のエレメンタル |
 | Fire Resistance | 耐火 |
 | Flame Burst | 火炎バースト/フレイム・バースト |
@@ -426,7 +419,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Manipulation | 操作 |
 | Masking Ward | 擬態結界 |
 | Master Archer | 弓術の達人 |
-| Mathemagics | マスマジック |
+| Mathemagics | マスマジックス |
 | Memory Displacement | 記憶転移 |
 | Metahuman | メタヒューマン |
 | Metavariant | メタバリアント |
@@ -467,6 +460,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Polarized Ward | 偏光結界 |
 | Pollutant Stream | 汚染物質噴射/ポルータント・ストリーム |
 | Pollutant Wave | 汚染物質の波/ポルータント・ウェーブ |
+| Power Point | パワー・ポイント |
 | Power Swimming | 高速水泳 |
 | Power Swimming (Elf or Troll) | 高速水泳（エルフ／トロール） |
 | Precision Throwing | 精密投擲 |
@@ -486,12 +480,13 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Rapid Transit: Diamond | ラピッド・トランジット：ダイヤモンド |
 | Rapid Transit: Elite | ラピッド・トランジット：エリート |
 | Rapid Transit: Platinum | ラピッド・トランジット：プラチナ |
+| Receiver | レシーバー |
 | Recorded Room | 録画室/レコーデッド・ルーム |
 | Redundancy | 冗長化 |
 | Resonance Bind | 共振バインド |
 | Resonance Cache | 共振キャッシュ |
 | Resonance Resistance | 共振抵抗 |
-| Resonance Riding | 共振ライディング |
+| Resonance Riding | 共振接続 |
 | Resonance Scream | 共振スクリーム |
 | Responsive Interface Gear: Armor | レスポンシブ・インターフェース・ギア(RIG)：アーマー |
 | Responsive Interface Gear: Helmet | レスポンシブ・インターフェース・ギア(RIG)：ヘルメット |
@@ -516,6 +511,7 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Silencer (PSK-3 Collapsible Heavy Pistol) | 消音器(PSK-3 折り畳み式ヘビーピストル) |
 | Siphon | サイフォン |
 | Skate | 滑走 |
+| Skinlink | スキンリンク |
 | Slash | 斬撃/スラッシュ |
 | Sleepwalker | スリープウォーカー |
 | Slow Vehicle | ヴィークル減速/スロー・ヴィークル |
@@ -530,9 +526,11 @@ chumJA SR4 の完全一致のみ。アプリの catalog() が使う名前／カ�
 | Squirrel | リス |
 | Stag | 牡鹿 |
 | State of Purity | 清浄なる境地 |
+| Stealth Dongle | ステルス・ドングル |
 | Sternschutz Tactical | シュテルンシュッツ・タクティカル |
 | Stillness | 静止 |
 | Street | 街 |
+| Stun Dongle | スタン・ドングル |
 | Sunbeam | 太陽光線/サンビーム |
 | Supernatural Toughness | 超常の頑健さ |
 | Switch Vehicle Signature | ヴィークル・シグネチャー切替/スイッチ・ヴィークル・シグネチャー |

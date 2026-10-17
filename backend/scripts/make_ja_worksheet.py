@@ -171,6 +171,15 @@ def decided(bk: Book) -> tuple[dict[str, str], tuple[str, ...]]:
     return getattr(module, bk.table, {}), getattr(module, bk.skipped_table, ())
 
 
+def printed_latin(bk: Book) -> frozenset[str]:
+    """The names `Book.latin_table` lists, kept in the module's preserved head."""
+    try:
+        module = importlib.import_module(f"scripts.{bk.module}")
+    except ModuleNotFoundError:
+        return frozenset()
+    return frozenset(getattr(module, bk.latin_table, ()))
+
+
 def _origin(name: str, current: str, overlay: dict[str, str]) -> str:
     if not current:
         return "—"

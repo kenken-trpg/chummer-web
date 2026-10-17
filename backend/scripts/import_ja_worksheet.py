@@ -163,6 +163,7 @@ def _read_worksheet(
     path: Path,
     accept: tuple[str, ...] = (),
     expected_current: dict[str, str] | None = None,
+    latin_ok: frozenset[str] = frozenset(),
 ) -> Read:
     """`expected_current` is `make_ja_worksheet.current_terms()`.
 
@@ -194,7 +195,7 @@ def _read_worksheet(
             if not official:
                 problems.append(f"L{lineno}: {name!r} marked '=' but its `current` column is empty")
                 continue
-        if not JP_RE.search(official):
+        if not JP_RE.search(official) and name not in latin_ok:
             problems.append(f"L{lineno}: {name!r} -> {official!r} has no Japanese (use '-' to leave it in English)")
             continue
         if name in translations and translations[name] != official:
@@ -319,7 +320,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     print(f"{note}  (book: {bk.code}, from {bk.ja_source})")
 
-    from scripts.make_ja_worksheet import book_entries, current_terms, decided
+    from scripts.make_ja_worksheet import book_entries, current_terms, decided, printed_latin
 
     current_pair = decided(bk)
     CURRENT: dict[str, str] = dict(current_pair[0])
@@ -331,7 +332,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: --accept-column {unknown} — choose from {SPILL_COLUMNS}", file=sys.stderr)
         return 2
 
-    translations, skipped, problems, notes = _read_worksheet(worksheet, accept, current_terms(bk))
+    translations, skipped, problems, notes = _read_worksheet(worksheet, accept, current_terms(bk), printed_latin(bk))
     for line in notes:
         print(f"  ({line})")
 
