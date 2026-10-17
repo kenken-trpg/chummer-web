@@ -100,7 +100,7 @@ JSON往復・カスタムデータの検証。作成画面の候補公開を証�
   四脚の個別義肢管理とRedlinerの計算は下記の範囲を検証した。
 - 固定コミットのLifestyle.GetTotalMonthlyCostと照合し、Centaurの+150%を対象部分へ適用する
   既存処理を検証した。基本2,000¥は5,000¥。扶養・その他補正は区分ごとに合成し、
-  外出/契約の定額費用を種族補正で増やさない。複数生活様式・複数月の支出内訳も一致する。
+  外出/契約の定額費用を種族補正で増やさない。複数ライフスタイル・複数月の支出内訳も一致する。
 
 検証は`test_centaur_body.py`、既存5キャラクターの派生値snapshot、シート表示テストによる。
 照合先は固定コミットの[Character.CalculatedMovement/LimbCount](https://github.com/chummer5a/chummer5a/blob/d7e94f6a090f267362757675d05bbe4d7543c217/Chummer/Backend/Characters/Character.cs)と

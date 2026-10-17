@@ -74,7 +74,7 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 |---|---|---|
 | 資質 `qualities.quality` | `qualitytype_english`, `bp`, `extra` | state 資質 |
 | コンタクト `contacts.contact` | `connection`, `loyalty`, `role`, `family`, `blackmail` | state `contacts` |
-| 生活様式 `lifestyles.lifestyle` | `baselifestyle`, `totalmonthlycost`, `purchased` | derived `lifestyles` |
+| ライフスタイル `lifestyles.lifestyle` | `baselifestyle`, `totalmonthlycost`, `purchased` | derived `lifestyles` |
 | 防具 `armors.armor` / `otherarmors.otherarmor` | `armor`（`+` 付きは追加分）, `improvesource` | derived `armor_items` / `armor_mods` |
 | ウェア `cyberwares.cyberware` | `ess`, `grade`, `capacity` | state `cyberware`/`bioware` ＋ derived 精神力 |
 | 武器 `weapons.weapon` | `category_english`, `type`, `skill`, `rawaccuracy`, `rawap`, `rawrc`, `rawreach`, `damage_noammo_english`, `mode_english_noammo`, `ammo_english`, `ranges`, `clips.clip`, `currentammo`, `accessories.accessory`（`mount`, `rc`, `accuracy`, `conceal`） | derived `weapons` / `weapon_accessories` |
@@ -82,7 +82,7 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 | 呪文 `spells.spell` | `category_english`, `type_english`, `range_english`, `duration_english`, `damage_english`, `dv_english`, `descriptors_english` | state `spells` ＋ 呪文データ |
 | 儀式 | `type_english`, `descriptors` | 同上（呪文のうち Ritual） |
 | アデプトパワー `powers.power` | `rating`, `totalpoints` | derived `adept_powers` |
-| 複合フォーム `complexforms.complexform` | `target_english`, `duration_english`, `fv_english` | state `complex_forms` |
+| 複合体 `complexforms.complexform` | `target_english`, `duration_english`, `fv_english` | state `complex_forms` |
 | メタマジック／エコー `metamagics.metamagic` | 共通のみ | derived `initiation.metamagics` / `submersion.echoes` |
 | クリッターパワー `critterpowers.critterpower` | `type_english`, `range_english`, `duration_english`, `extra_english` | メタタイプ由来のパワー |
 | ヴィークル `vehicles.vehicle` | `handling`, `accel`, `speed`, `pilot`, `body`, `armor`, `sensor`, `seats`, `isdrone`, `mods.mod`（`weapons.weapon`）, `gears.gear` | derived `vehicles` / `drones` / `vehicle_mods` / `weapon_mounts` |
@@ -103,6 +103,6 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 ## 進め方（案）
 
 1. 本体（名前・メタタイプ・能力値・イニシアティブ・カルマ・新円・経歴）＋技能＋資質。`TestActor.ts` の形でテストを固定。
-2. コンタクト・生活様式・呪文・パワー・複合フォーム。
+2. コンタクト・ライフスタイル・呪文・パワー・複合体。
 3. 防具・ウェア・装備・武器。
 4. ヴィークル・顔写真。

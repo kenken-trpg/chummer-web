@@ -47,7 +47,7 @@ which the typechecker + build catch.
 | 9 | マトリックス Matrix | |
 | 10 | 魔法 Magic | ~115 lines — adept / spells / spirits / foci |
 | 11 | 共鳴 Resonance | complex forms / sprites / submersion |
-| 12 | 武道 Martial | |
+| 12 | 格闘技 Martial | |
 | 13 | コンタクト Contacts | |
 | 14 | ヴィークル・ドローン Vehicles | |
 | 15 | ドラッグ／毒物 Drugs | |

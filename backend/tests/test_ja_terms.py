@@ -57,3 +57,29 @@ def test_rules_fire_on_the_wrong_word_and_not_the_right_one(tmp_path: Path, text
     locale.mkdir()
     (locale / "probe.ts").write_text(text, encoding="utf-8")
     assert bool(_checker().check(locale, BANNED)) is flagged
+
+
+def test_no_banned_term_reached_the_docs() -> None:
+    assert _checker().check_docs(ROOT, BANNED) == []
+
+
+def test_every_docs_term_is_a_rule() -> None:
+    checker = _checker()
+    text = BANNED.read_text(encoding="utf-8")
+    words = checker.doc_terms(text)
+    assert "車両" in words
+    assert words <= {rule.wrong for rule in checker.rules(text)}
+
+
+@pytest.mark.parametrize(
+    ("text", "flagged"),
+    [
+        ("A.I.のホームノードが車両なら", True),
+        ("リポジトリ全体が `物理リミット` と書いていた", False),  # a code span quotes the old word
+        ("値を判定する", False),  # 判定 is banned in the UI, ordinary prose in the docs
+        ("イニシアチブ・ダイスの上限", True),
+    ],
+)
+def test_the_docs_are_held_to_their_own_list(tmp_path: Path, text: str, flagged: bool) -> None:
+    (tmp_path / "probe.md").write_text(text, encoding="utf-8")
+    assert bool(_checker().check_docs(tmp_path, BANNED)) is flagged

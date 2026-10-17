@@ -73,7 +73,7 @@ Chummer が `<settings>` に持つものはほぼ全てハードコードか未�
 ### 段階 2 で honour していないもの
 
 `contactpointsexpression` / `knowledgepointsexpression` などの式、
-エンカンブランス系、`limbcount`、イニシアチブ・ダイスの上下限。
+エンカンブランス系、`limbcount`、イニシアティブ・ダイスの上下限。
 いずれも未対応リストに出るので、黙って無視はしない。
 
 ## 段階 3 — customdata のマージ（実施済み）
