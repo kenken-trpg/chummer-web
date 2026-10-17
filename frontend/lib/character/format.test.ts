@@ -36,6 +36,10 @@ describe("cmSummary", () => {
     expect(cmSummary({ physical: 10, stun: 11, core: true }, testUi)).toBe(
       "コア10 / マトリックス11",
     );
+    // in a vehicle, the vehicle's physical track
+    expect(cmSummary({ physical: 14, stun: 9, core: true, vehicle: true }, testUi)).toBe(
+      "P14 / マトリックス9",
+    );
   });
 });
 

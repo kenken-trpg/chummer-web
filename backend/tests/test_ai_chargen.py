@@ -459,3 +459,62 @@ def test_the_patch_sets_and_clears_the_home_node() -> None:
     assert cleared.home_node == ""
     again = apply_patch(cleared, CharacterPatch(home_node=node))
     assert again.home_node == node
+
+
+# --- a vehicle or drone as home node -------------------------------------------
+
+
+def _vehicle(bucket: str = "vehicles", name: str = "Dodge Scoot (Scooter)") -> CharacterState:
+    from app.data_loader import catalog
+    from app.models import GearInstall
+
+    state = _ai("E-Ghost")
+    spec = next(x for x in catalog()[bucket] if x["name"] == name)
+    setattr(state, bucket, [GearInstall(gear_id=spec["id"])])
+    state.home_node = getattr(state, bucket)[0].id
+    return state
+
+
+@pytest.mark.parametrize(
+    ("bucket", "name", "boxes"),
+    [
+        ("vehicles", "Dodge Scoot (Scooter)", 12 + 2),  # Body 4
+        ("drones", "Aztechnology Hedgehog (Minidrone)", 6 + 1),  # Body 1
+    ],
+)
+def test_every_vehicle_row_has_its_damage_track(bucket: str, name: str, boxes: int) -> None:
+    # Chummer `Vehicle.PhysicalCM`: 12, or 6 for a drone, + Body / 2 + mods
+    out = compute(_vehicle(bucket, name))
+    assert out.derived[bucket][0]["condition_monitor"] == boxes
+
+
+def test_in_a_vehicle_the_ai_takes_its_track_handling_and_pilot() -> None:
+    # Scooter: Body 4, Handling 4/3, Pilot 1, Sensor 1
+    out = compute(_vehicle())
+    d = out.derived
+    assert d["condition_monitor"]["physical"] == 14
+    assert d["condition_monitor"]["vehicle"] is True
+    assert d["condition_monitor"]["stun"] == 8 + 1  # Device Rating = Pilot 1
+    assert d["limits"]["physical"] == 4
+    assert d["matrix_initiative"]["value"] == d["totals"]["INT"] + 1
+
+
+def test_a_vehicles_sensor_joins_the_mental_limit() -> None:
+    # Hedgehog: Pilot 4, Sensor 3 — the higher of the two and the usual one
+    out = compute(_vehicle("drones", "Aztechnology Hedgehog (Minidrone)"))
+    assert out.derived["limits"]["mental"] == 4
+
+
+def test_a_vehicle_node_warns_of_the_persona_firmware() -> None:
+    assert has(compute(_vehicle()).derived["warnings"], "engine.homeNode.personaFirmware")
+    assert not has(compute(_deck()).derived["warnings"], "engine.homeNode.personaFirmware")
+
+
+def test_a_vehicle_home_node_survives_a_round_trip() -> None:
+    first = compute(_vehicle())
+    xml = state_to_chum5(first)
+    marked = [v.findtext("name") for v in ET.fromstring(xml).iter("vehicle") if v.findtext("homenode") == "True"]
+    assert marked == ["Dodge Scoot (Scooter)"]
+    again, _ = chum5_to_state(xml)
+    second = compute(CharacterState(**again))
+    assert second.derived["condition_monitor"] == first.derived["condition_monitor"]

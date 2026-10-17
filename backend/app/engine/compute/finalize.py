@@ -187,11 +187,16 @@ def finalize(ctx: Ctx) -> None:
     if ctx.home_node:
         # Chummer `LimitMental` / `LimitSocial` with a home node: its Data
         # Processing where higher, and in place of the second CHA
-        dp = ctx.home_node["dataprocessing"]
-        mental_base = max(mental_base, dp)
+        # a vehicle's Pilot where higher, and its Sensor for the mental one
+        dp = max(ctx.home_node["dataprocessing"], ctx.home_node["pilot"])
+        mental_base = max(mental_base, dp, ctx.home_node["sensor"])
         social_base = _ceil_div((int(ctx.total["CHA"]) + dp + int(ctx.total["WIL"]) + _ceil_div(ctx.ess)) / 3)
-    # Chummer `LimitPhysical`: an A.I. outside a vehicle has no body to limit
-    ctx.physical_limit = 0 if ctx.is_ai else physical_base + int(ctx.effects.get("limit_physical") or 0)
+    if ctx.is_ai:
+        # Chummer `LimitPhysical`: an A.I.'s is its vehicle's Handling, or
+        # nothing outside one; no modifier applies
+        ctx.physical_limit = ctx.home_node["handling"] if ctx.home_node and ctx.home_node["vehicle"] else 0
+    else:
+        ctx.physical_limit = physical_base + int(ctx.effects.get("limit_physical") or 0)
     ctx.mental_limit = mental_base + int(ctx.effects.get("limit_mental") or 0)
     ctx.social_limit = social_base + int(ctx.effects.get("limit_social") or 0)
     resolve_attr_formulas(ctx.gear.get("weapons"), ctx.total, int(ctx.effects.get("throw_str") or 0))
@@ -199,7 +204,11 @@ def finalize(ctx: Ctx) -> None:
     if ctx.is_ai:
         # Chummer `PhysicalCM`: an A.I.'s is its Core monitor, 8 + DEP / 2;
         # `StunCM` is its home node's Matrix monitor, or nothing at all.
-        ctx.cm_phys = 8 + _ceil_div(int(ctx.total.get("DEP") or 0) / 2) + ctx.effects["cm_physical"]
+        if ctx.home_node and ctx.home_node["vehicle"]:
+            # in a vehicle or drone, its own damage track (`Vehicle.PhysicalCM`)
+            ctx.cm_phys = ctx.home_node["physical_cm"]
+        else:
+            ctx.cm_phys = 8 + _ceil_div(int(ctx.total.get("DEP") or 0) / 2) + ctx.effects["cm_physical"]
         ctx.cm_stun = ctx.home_node["matrix_cm"] if ctx.home_node else 0
     else:
         ctx.cm_phys = 8 + _ceil_div(bod / 2) + ctx.effects["cm_physical"]

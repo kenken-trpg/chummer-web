@@ -112,6 +112,8 @@ def assemble(ctx: Ctx) -> None:
             "threshold": max(1, CM_THRESHOLD + int(ctx.effects.get("cm_threshold") or 0)),
             "threshold_offset": max(0, int(ctx.effects.get("cm_threshold_offset") or 0)),
             "core": ctx.is_ai,
+            # an A.I. in a vehicle or drone: `physical` is the vehicle's track
+            "vehicle": bool(ctx.home_node and ctx.home_node["vehicle"]),
         },
         # an A.I.'s home node (Chummer `HomeNode`), or None
         "home_node": ctx.home_node,
@@ -162,7 +164,7 @@ def assemble(ctx: Ctx) -> None:
         "matrix_initiative": ai_matrix_initiative(
             int(ctx.total.get("INT") or 0),
             int(ctx.effects.get("matrix_initiative_dice") or 0),
-            ctx.home_node["dataprocessing"] if ctx.home_node else 0,
+            max(ctx.home_node["dataprocessing"], ctx.home_node["pilot"]) if ctx.home_node else 0,
         )
         if ctx.is_ai
         else matrix_initiative(

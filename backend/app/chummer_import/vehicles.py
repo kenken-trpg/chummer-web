@@ -50,6 +50,9 @@ def _import_vehicles(root: ET.Element, cat: CatalogDict, st: dict[str, Any], war
             continue
         row = {"id": str(uuid.uuid4()), "gear_id": vid, "rating": 1, "qty": 1}
         (st_veh if is_drone else st_veh_only).append(row)
+        if _text(v.find("homenode")).lower() == "true":
+            # an A.I.'s home node; the engine drops it from anyone else
+            st["home_node"] = row["id"]
         for m in v.findall("./mods/mod") + v.findall("./vehiclemods/vehiclemod"):
             mid = vmod_r.resolve(m, warn, ui("engine.kind.vehicleMod"))
             held_ware = mod_ware.pop(id(m), [])

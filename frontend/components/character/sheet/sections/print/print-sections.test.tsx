@@ -74,4 +74,24 @@ describe("print sections", () => {
     expect(container.textContent).toContain("コア");
     expect(container.textContent).not.toContain("精神");
   });
+
+  it("PrintConditionMonitor gives an A.I. in a vehicle that vehicle's track", () => {
+    const ai = buildSheetData({
+      character: makeCharacter({
+        metatype: "A.I.",
+        derived: {
+          totals: { BOD: 0, DEP: 3 } as never,
+          condition_monitor: { physical: 14, stun: 9, core: true, vehicle: true },
+        },
+      }),
+      catalog: makeCatalog(),
+      tr: identityTr,
+      layout: "print",
+    });
+    const { container } = render(<PrintConditionMonitor {...ai} />);
+    const labels = [...container.querySelectorAll(".print-cm-label")].map((el) => el.textContent);
+    expect(labels[0]).toContain("身体");
+    expect(labels[1]).toContain("マトリックス");
+    expect(container.querySelectorAll(".cm-box")).toHaveLength(14 + 9);
+  });
 });

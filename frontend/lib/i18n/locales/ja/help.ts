@@ -12,6 +12,8 @@ export const JA_HELP = {
   "help.cm.physical": "身体ダメージトラック = 8 + BOD ÷ 2（切り上げ）",
   "help.cm.stun": "精神ダメージトラック = 8 + WIL ÷ 2（切り上げ）",
   "help.cm.note": "埋まったマス 3 つごとにテストへ −1（SR5 p.169）",
+  "help.cm.vehicle":
+    "身体ダメージトラック = ホームノード {name} のもの（ヴィークル 12・ドローン 6・人型ドローン（Drones: Anthro）8 ＋ Body ÷ 2 ＋ 改造）",
   "help.cm.homeNode":
     "マトリックス・コンディション・モニター = ホームノード {name} の 8 + Device Rating ÷ 2（切り上げ）",
   "help.cm.core":

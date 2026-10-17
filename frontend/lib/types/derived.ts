@@ -144,8 +144,11 @@ export interface Derived {
     threshold?: number;
     /** Boxes ignored before the first −1 (High Pain Tolerance, a drug). */
     threshold_offset?: number;
-    /** An A.I.: `physical` is its Core track (8 + DEP ÷ 2) and `stun` is 0. */
+    /** An A.I.: no Stun track (`stun` is its home node's Matrix monitor, or
+     *  0), and `physical` is its Core track (8 + DEP ÷ 2) — or, with
+     *  `vehicle`, the damage track of the vehicle it lives in. */
     core?: boolean;
+    vehicle?: boolean;
   };
   /** An A.I.'s home node (Chummer `HomeNode`): the device it lives in. */
   home_node?: {
@@ -156,6 +159,13 @@ export interface Derived {
     dataprocessing: number;
     program_limit: number;
     matrix_cm: number;
+    /** a vehicle or drone, whose stats stand in for the A.I.'s own */
+    vehicle: boolean;
+    pilot: number;
+    sensor: number;
+    handling: number;
+    body: number;
+    physical_cm: number;
   } | null;
   initiative: { value: number; dice: number };
   /** INT×2 + the settings' astral dice (3 in Standard); absent without Magic. */

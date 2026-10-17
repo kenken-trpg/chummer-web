@@ -125,6 +125,7 @@ def _resolve_vehicle_mods(
                 "capacity_max": _capacity_value(spec.get("capacity"), rating),
                 "capacity_used": 0.0,
                 "subsystems": list(spec.get("subsystems") or []),
+                "condition_monitor": int(spec.get("conditionmonitor") or 0),
                 "cyberware": [],
             }
         )

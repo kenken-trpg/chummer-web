@@ -167,11 +167,28 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・�
 - .chum5：書き出しで該当の`<gear>`に`<homenode>True</homenode>`、読み込みで同じ印を拾う。
 - 検証：`backend/tests/test_ai_chargen.py`の「home node」の節、`HomeNodeToggle`の単体テスト。
 
+## 実装済み: ヴィークル・ドローンのホームノード（段階4c）
+
+- ヴィークル・ドローンの行に身体ダメージトラックを出す（`Vehicle.PhysicalCM`）：ヴィークル12、
+  ドローン6（Drones: Anthroは8）＋Body÷2（切り上げ）＋改造の`<conditionmonitor>`（Drone Armの1）。
+  シート・テキスト出力のヴィークル欄もこの値を使う（これまで画面側で12＋Body÷2と計算し、ドローンで誤っていた）。
+- ヴィークル・ドローンをホームノードにしたA.I.（`HomeNode is Vehicle`）：
+  - Device Rating・Data Processing・Program LimitはPilot（データにmatrix属性が無いとき、
+    `Vehicle.GetBaseMatrixAttribute`）。DPの代わりにmax(DP, Pilot)。
+  - メンタルリミットはmax(本来の値, DP, Sensor)。身体リミットはHandling（オンロードの値）。
+  - コアダメージトラックの代わりにヴィークルの身体ダメージトラック（`derived.condition_monitor.vehicle`）。
+    精神の代わりはホームノードのマトリックス・コンディション・モニター（8＋Pilot÷2）。
+  - .chum5では`<vehicle>`の`<homenode>True</homenode>`。
+- Chummerでは、ヴィークルがホームノードになれるのは、Persona Firmware（DT p.66のElectronic
+  Modification）を入れてコムリンクとして働くとき（`Vehicle.IsCommlink`）だけ。このアプリは
+  Electronic Modificationをヴィークルに付けられないので、条件にせず警告にする
+  （`engine.homeNode.personaFirmware`）。
+- 対象外：ダメージ抵抗・呪文防御で使うBODをヴィークルのBodyにすること（このアプリはダメージ抵抗の
+  プールを画面側でBOD＋装甲と出している）。サイバーウェア・武器のホームノード。
+- 検証：`backend/tests/test_ai_chargen.py`の「a vehicle or drone as home node」の節。
+
 ## これからの段階
 
-- **段階4c：車両・ドローンをホームノードにする**。DPの代わりにmax(DP, Pilot)、メンタルリミットに
-  Sensorも比べる。身体ダメージトラックは車両のもの（基本値＋Body÷2＋改造）、身体リミットはHandling、
-  ダメージ抵抗などのBODは車両のBody。
 - **キャリア**：作成後の扱いは未検討。
 
 ## 残る項目

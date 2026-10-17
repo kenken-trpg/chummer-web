@@ -76,6 +76,17 @@ export function limitHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLine[] {
 export function conditionHelp(d: Derived, ui: UiFn, tr: Tr = (n) => n): HelpLine[] {
   const t = d.totals || {};
   const src = d.stat_sources || {};
+  if (d.condition_monitor.core && d.condition_monitor.vehicle && d.home_node)
+    return [
+      {
+        label: ui("help.cm.vehicle", { name: tr(d.home_node.name) }),
+        value: d.condition_monitor.physical,
+      },
+      {
+        label: ui("help.cm.homeNode", { name: tr(d.home_node.name) }),
+        value: d.condition_monitor.stun,
+      },
+    ];
   if (d.condition_monitor.core)
     return [
       ...parts(

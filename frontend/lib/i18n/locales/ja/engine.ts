@@ -329,6 +329,8 @@ export const JA_ENGINE = {
   "engine.complexforms.requires": "{name} には {needed} が必要です",
   "engine.aiPrograms.prereq": "{name} には {needed} のどれかが必要です",
   "engine.aiPrograms.pickExtra": "{name} の対象を入力してください",
+  "engine.homeNode.personaFirmware":
+    "Chummer では、{name} をホームノードにするには Persona Firmware（DT p.66）が必要です。このアプリではヴィークルに付けられないため、確かめていません",
   "engine.homeNode.programLimit":
     "ホームノードの {name} は Program Limit {limit} で、{needed} 以上が必要です",
 

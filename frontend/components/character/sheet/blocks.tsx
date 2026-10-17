@@ -95,7 +95,7 @@ export function VehicleBlock({ v, tr }: { v: InstalledDrone; tr: (n: string) => 
         </div>
         <div>
           <span>{ui("sheet.veh.physicalCm")}</span>
-          <b>{vehicleCM(v.body)}</b>
+          <b>{v.condition_monitor ?? vehicleCM(v.body)}</b>
         </div>
       </div>
       {mods.length ? (

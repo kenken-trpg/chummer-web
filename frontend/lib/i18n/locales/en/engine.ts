@@ -333,6 +333,8 @@ export const EN_ENGINE = {
   "engine.complexforms.requires": "{name} requires {needed}",
   "engine.aiPrograms.prereq": "{name} requires one of {needed}",
   "engine.aiPrograms.pickExtra": "Enter what {name} is for",
+  "engine.homeNode.personaFirmware":
+    "Chummer asks {name} to carry Persona Firmware (DT p.66) to be a home node; this app cannot fit it to a vehicle, so it is not checked",
   "engine.homeNode.programLimit":
     "The home node {name} has Program Limit {limit}; it needs {needed}",
 

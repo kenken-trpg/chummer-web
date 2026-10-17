@@ -12,6 +12,8 @@ export const EN_HELP = {
   "help.cm.physical": "Physical monitor = 8 + BOD ÷ 2, rounded up",
   "help.cm.stun": "Stun monitor = 8 + WIL ÷ 2, rounded up",
   "help.cm.note": "−1 to tests for every 3 boxes filled (SR5 p.169)",
+  "help.cm.vehicle":
+    "Physical monitor = the home node {name}'s (12 for a vehicle, 6 for a drone, 8 anthroform, + Body ÷ 2 + mods)",
   "help.cm.homeNode": "Matrix monitor = 8 + the home node {name}'s Device Rating ÷ 2, rounded up",
   "help.cm.core": "Core monitor = 8 + DEP ÷ 2, rounded up; an A.I. has no Stun monitor",
   "help.init.value": "Initiative = REA + INT",

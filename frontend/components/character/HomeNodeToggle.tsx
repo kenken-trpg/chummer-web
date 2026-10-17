@@ -3,7 +3,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import type { Character } from "@/lib/types";
 
 /**
- * "Home node": the device an A.I. lives in (Chummer's `HomeNode`). One at a
+ * "Home node": the device or vehicle an A.I. lives in (Chummer's `HomeNode`). One at a
  * time, so ticking another moves the mark. Shown to an A.I. only — the
  * engine drops the mark from anyone else.
  */

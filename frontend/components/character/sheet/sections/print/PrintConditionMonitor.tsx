@@ -17,6 +17,8 @@ export function PrintConditionMonitor(s: SheetData) {
   // an A.I.'s track is its Core; in place of a Stun track it has its home
   // node's Matrix monitor, or nothing
   const core = !!d.condition_monitor.core;
+  // …unless it lives in a vehicle, whose own physical track it then has
+  const coreTrack = core && !d.condition_monitor.vehicle;
   const overflow = Math.max(0, Math.ceil((totals.BOD || 0) / 2));
   const recovery = d.cm_recovery;
   const threshold = Math.max(1, d.condition_monitor.threshold || 3);
@@ -39,7 +41,7 @@ export function PrintConditionMonitor(s: SheetData) {
       <h3>{ui("print.conditionMonitor")}</h3>
       <div className="print-cm-track">
         <div className="print-cm-label">
-          {ui(core ? "print.core" : "print.physical")} <b>{physical}</b>
+          {ui(coreTrack ? "print.core" : "print.physical")} <b>{physical}</b>
           {recovery ? (
             <span className="sheet-dim">{ui("print.recoveryDay", { n: recovery.physical })}</span>
           ) : null}

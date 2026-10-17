@@ -53,6 +53,8 @@ export interface InstalledDrone {
   pilot: string;
   sensor: string;
   seats?: string;
+  /** Chummer `Vehicle.PhysicalCM`: 12 (a drone 6, an anthroform 8) + Body ÷ 2 + mods. */
+  condition_monitor?: number;
   nuyen: number;
   slots_used?: number;
   slots_max?: number;

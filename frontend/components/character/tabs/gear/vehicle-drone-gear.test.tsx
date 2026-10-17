@@ -123,3 +123,19 @@ describe("<VehicleDroneGear> compact view", () => {
     expect(screen.queryByLabelText("簡易表示（名称のみ）")).toBeNull();
   });
 });
+
+describe("<VehicleDroneGear> home node", () => {
+  it("lets an A.I. live in the vehicle, and nobody else", () => {
+    const v = vehicle("v1", "Americar");
+    const patch = vi.fn();
+    renderVehicle(
+      owning(v, { derived: { condition_monitor: { physical: 10, stun: 0, core: true } } }),
+      patch,
+    );
+    fireEvent.click(screen.getByLabelText("ホームノード"));
+    expect(patch).toHaveBeenCalledWith({ home_node: "v1" });
+    document.body.innerHTML = "";
+    renderVehicle(owning(v), vi.fn());
+    expect(screen.queryByLabelText("ホームノード")).toBeNull();
+  });
+});

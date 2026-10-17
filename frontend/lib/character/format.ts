@@ -30,10 +30,12 @@ export function cmThresholdNote(
 /** "P10 / S9" — or an A.I.'s Core track, and its home node's Matrix monitor
  *  in place of the Stun one it does not have. */
 export function cmSummary(
-  cm: { physical: number; stun: number; core?: boolean },
+  cm: { physical: number; stun: number; core?: boolean; vehicle?: boolean },
   ui: UiFn,
 ): string {
   if (!cm.core) return `P${cm.physical} / S${cm.stun}`;
+  // in a vehicle the physical track is the vehicle's, and the node is it
+  if (cm.vehicle) return ui("sheet.cmPhysMatrix", { n: cm.physical, m: cm.stun });
   return cm.stun
     ? ui("sheet.cmCoreMatrix", { n: cm.physical, m: cm.stun })
     : ui("sheet.cmCore", { n: cm.physical });

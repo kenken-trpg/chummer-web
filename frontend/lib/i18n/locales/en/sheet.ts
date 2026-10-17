@@ -302,6 +302,7 @@ export const EN_SHEET = {
   "udo.secKnowledge": "# Knowledge skills (limit = Mental)",
   "udo.woundPhysical": "Physical",
   "udo.woundCore": "Core",
+  "sheet.cmPhysMatrix": "P{n} / Matrix {m}",
   "sheet.cmCore": "Core {n}",
   "sheet.cmCoreMatrix": "Core {n} / Matrix {m}",
   "sheet.aiHomeNode": "Home node: {name} (Data Processing {dp})",
