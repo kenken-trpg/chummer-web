@@ -9,7 +9,8 @@ import uuid
 import xml.etree.ElementTree as ET
 
 from ..models import CharacterState
-from ._common import _Ctx, _Names, _sub
+from ._common import _Ctx, _Names, _sub, improvements_of
+from .metatype import _grant_guid
 
 
 def _export_ai_programs(root: ET.Element, state: CharacterState, names: _Names, ctx: _Ctx) -> None:
@@ -17,6 +18,9 @@ def _export_ai_programs(root: ET.Element, state: CharacterState, names: _Names, 
 
     Chummer keeps that one in the list too, with `candelete` False; the
     import leaves it to the quality's `<extra>` rather than read it twice.
+    An `AIProgram` improvement ties it to the quality, as
+    `selectinherentaiprogram` makes one: removing the quality in Chummer
+    then removes the program with it.
     """
     rows = ctx["derived"].get("ai_programs") or []
     if not rows:
@@ -36,3 +40,22 @@ def _export_ai_programs(root: ET.Element, state: CharacterState, names: _Names, 
         _sub(el, "source", row.get("source") or "")
         _sub(el, "page", row.get("page") or "")
         _sub(el, "notes", "")
+        if row["free"]:
+            quality_guid = _quality_guid(state, ctx, row_id.removeprefix("inherent:"))
+            if quality_guid:
+                imp = _sub(improvements_of(root), "improvement")
+                _sub(imp, "improvedname", el.findtext("guid") or "")
+                _sub(imp, "sourcename", quality_guid)
+                _sub(imp, "improvementttype", "AIProgram")
+                _sub(imp, "improvementsource", "Quality")
+
+
+def _quality_guid(state: CharacterState, ctx: _Ctx, qid: str) -> str:
+    """The `<guid>` the qualities section wrote for Inherent Program: its id
+    when bought, the metatype grant's own when a Protosapient is born with it."""
+    if qid in state.quality_ids:
+        return qid
+    for index, grant in enumerate(ctx["meta"].get("quality_grants") or []):
+        if grant.get("id") == qid and not grant.get("unresolved"):
+            return _grant_guid(state, grant, index, "quality")
+    return ""

@@ -206,3 +206,27 @@ def test_a_metatype_qualitys_pick_survives_a_round_trip() -> None:
     assert not first.derived["errors"]
     assert second.quality_extras.get(codeslinger) == "Brute Force"
     assert not second.derived["errors"]
+
+
+@pytest.mark.parametrize(("metavariant", "bought"), [("Protosapient", False), ("E-Ghost", True)])
+def test_the_inherent_program_is_tied_to_its_quality(metavariant: str, bought: bool) -> None:
+    # Chummer's selectinherentaiprogram makes an AIProgram improvement from
+    # the quality's guid to the program's; removing the quality removes it.
+    inherent = _quality_id("Inherent Program")
+    state = _ai(metavariant, quality_extras={inherent: "Exploit"})
+    if bought:
+        state.quality_ids = [inherent]
+    _, second, root = _round_trip(state)
+    program = next(p for p in root.iter("aiprogram") if p.findtext("name") == "Exploit")
+    quality = next(
+        q
+        for q in root.iter("quality")
+        if q.findtext("name") == "Inherent Program" and (q.findtext("qualitysource") == "Selected") == bought
+    )
+    links = [i for i in root.iter("improvement") if i.findtext("improvementttype") == "AIProgram"]
+    assert len(links) == 1
+    assert links[0].findtext("improvedname") == program.findtext("guid")
+    assert links[0].findtext("sourcename") == quality.findtext("guid")
+    assert links[0].findtext("improvementsource") == "Quality"
+    # and reading it back still bills nothing for it
+    assert [(r["name"], r["free"]) for r in second.derived["ai_programs"]] == [("Exploit", True)]
