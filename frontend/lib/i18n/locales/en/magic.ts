@@ -87,9 +87,9 @@ export const EN_MAGIC = {
 
   "spirit.extraTag": "extra",
 
-  "res.fadeResist": " · fade resistance {attrs} {pool}",
+  "res.fadeResist": " · fading resistance {attrs} {pool}",
   "sprite.note":
-    "Compiling is Compiling + RES[Level] vs Level×2. Registering is Registering + RES[Level] vs Level×2 (Level hours). Fade is the sprite's hits ×2 (minimum 2), and physical if Level exceeds Resonance. You may register up to Resonance sprites.",
+    "Compiling is Compiling + RES[Level] vs Level×2. Registering is Registering + RES[Level] vs Level×2 (Level hours). Fading is the sprite's hits ×2 (minimum 2), and physical if Level exceeds Resonance. You may register up to Resonance sprites.",
   "sprite.livingPersona": " · living persona DR{dr} ATK{atk} SLZ{slz} DP{dp} FW{fw}",
   "sprite.registered": "Registered",
   "sprite.compiled": "Compiled",
@@ -113,8 +113,8 @@ export const EN_MAGIC = {
   "aiprog.cat.autosofts": "Autosofts",
   "aiprog.cat.advanced": "Advanced Programs",
   "cf.paid": " · {paid} extra × 4 karma",
-  "cf.note": ". Threading is Software + RES[Level]; fade is physical if Level exceeds Resonance.",
-  "cf.fadeAt": " @ L{level} → fade {fade}",
+  "cf.note": ". Threading is Software + RES[Level]; fading is physical if Level exceeds Resonance.",
+  "cf.fadeAt": " @ L{level} → fading {fade}",
   "cf.fadeSpecial": "special",
   "cf.attribute": "Attribute",
   "cf.search": "Search complex forms",

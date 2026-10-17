@@ -44,6 +44,9 @@ class Rule:
 
 
 def rules(text: str) -> list[Rule]:
+    # the first table only: the docs and English tables below have rows of
+    # their own, and the English one has five cells too
+    text = text.split("\n## ", 1)[0]
     found = []
     for row in re.findall(r"^\|(.+)\|$", text, re.M):
         cells = [c.strip() for c in row.split("|")]
@@ -123,16 +126,17 @@ EN_LOCALE = ROOT / "frontend/lib/i18n/locales/en"
 
 
 def en_rules(text: str) -> list[Rule]:
-    """The `## 英語の画面文言に当てる語` table: 誤 | 正 | 典拠 | 経緯, matched
-    without regard to case, since English prose lowercases a game term."""
+    """The `## 英語の画面文言に当てる語` table: 誤 | 正 | 典拠 | 許容 | 経緯,
+    matched without regard to case, since English prose lowercases a game term."""
     _, _, section = text.partition("## 英語の画面文言に当てる語")
     section = section.split("\n## ", 1)[0]
     found = []
     for row in re.findall(r"^\|(.+)\|$", section, re.M):
         cells = [c.strip() for c in row.split("|")]
-        if len(cells) != 4 or cells[0] in {"誤", ""} or set(cells[0]) == {"-"}:
+        if len(cells) != 5 or cells[0] in {"誤", ""} or set(cells[0]) == {"-"}:
             continue
-        found.append(Rule(cells[0].lower(), cells[1], cells[2], []))
+        allowed = [w.strip().lower() for w in cells[3].split(",") if w.strip()]
+        found.append(Rule(cells[0].lower(), cells[1], cells[2], allowed))
     return found
 
 
@@ -141,8 +145,11 @@ def check_en(locale: Path, banned: Path) -> list[str]:
     problems = []
     for path in sorted(locale.rglob("*.ts")):
         for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
+            # the words only: not the key (`"res.fadeResist":`) nor a
+            # placeholder (`{fade}`), which are code
+            prose = re.sub(r"\{[^}]*\}", "", re.sub(r'^\s*"[^"]*":', "", line)).lower()
             for rule in found:
-                if rule.hits(line.lower()):
+                if rule.hits(prose):
                     where = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
                     problems.append(f"{where}:{number}: 「{rule.wrong}」は「{rule.right}」（{rule.source}）")
     return problems

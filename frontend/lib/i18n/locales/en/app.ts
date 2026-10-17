@@ -319,7 +319,7 @@ export const EN_APP = {
 
   "pick.noDefaultPenalty": " group defaults without the −1",
   "fmt.drain": "drain",
-  "fmt.fade": "fade",
+  "fmt.fade": "fading",
   "fmt.drainOpposed": "2 × the opposed hits (minimum 2)",
   "fmt.net": " · net {net}",
   "fmt.noSkill": " · no skill",
