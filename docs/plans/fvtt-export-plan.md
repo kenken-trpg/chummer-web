@@ -85,7 +85,7 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 | 複合フォーム `complexforms.complexform` | `target_english`, `duration_english`, `fv_english` | state `complex_forms` |
 | メタマジック／エコー `metamagics.metamagic` | 共通のみ | derived `initiation.metamagics` / `submersion.echoes` |
 | クリッターパワー `critterpowers.critterpower` | `type_english`, `range_english`, `duration_english`, `extra_english` | メタタイプ由来のパワー |
-| 車両 `vehicles.vehicle` | `handling`, `accel`, `speed`, `pilot`, `body`, `armor`, `sensor`, `seats`, `isdrone`, `mods.mod`（`weapons.weapon`）, `gears.gear` | derived `vehicles` / `drones` / `vehicle_mods` / `weapon_mounts` |
+| ヴィークル `vehicles.vehicle` | `handling`, `accel`, `speed`, `pilot`, `body`, `armor`, `sensor`, `seats`, `isdrone`, `mods.mod`（`weapons.weapon`）, `gears.gear` | derived `vehicles` / `drones` / `vehicle_mods` / `weapon_mounts` |
 
 `_english` 付きのフィールドはシステム側がキーワードを解析するので、**必ず英語の原文**（Chummer データの値）を入れる。日本語は `name` など表示用だけに使う。
 
@@ -105,4 +105,4 @@ chum5（保存形式）は通らない。完成値（`total` など）が必要�
 1. 本体（名前・メタタイプ・能力値・イニシアティブ・カルマ・新円・経歴）＋技能＋資質。`TestActor.ts` の形でテストを固定。
 2. コンタクト・生活様式・呪文・パワー・複合フォーム。
 3. 防具・ウェア・装備・武器。
-4. 車両・顔写真。
+4. ヴィークル・顔写真。

@@ -46,7 +46,7 @@ DT本文は未照合。
 - **DEPは特殊能力値**：`AttributeSection`は、有効ならDEPを特殊能力値の一覧に加える。
   最小値の処理ではMAG・RESと同じ扱いで、0まで下がれる。
 - **ホームノード**（`Character.HomeNode`）：A.I.のマトリックスイニシアティブ（常に4D6、
-  ホームノードのData Processingを加える）、状態モニター、リミットを分岐させる。`IsAI`は`Character.cs`だけで181箇所。
+  ホームノードのData Processingを加える）、コンディション・モニター、リミットを分岐させる。`IsAI`は`Character.cs`だけで181箇所。
 
 ## 開始時のこのアプリ
 
@@ -140,7 +140,7 @@ DT本文は未照合。
 
 - 身体ダメージトラックの代わりにコアダメージトラック：8＋DEP÷2（切り上げ）＋`<conditionmonitor>`
   （`PhysicalCM`）。精神ダメージトラックは無い（`StunCM`が0）。`derived.condition_monitor.core`。
-- 身体リミットは0（`LimitPhysical`。ホームノードが車両ならそのHandling）。改造の補正も乗らない。
+- 身体リミットは0（`LimitPhysical`。ホームノードがヴィークルならそのHandling）。改造の補正も乗らない。
 - マトリックスイニシアティブは常にINT＋4D6（`MatrixInitiativeValue`・`MatrixInitiativeDice`）。
   ダイスはホットシムの最小値＋`<matrixinitiativedice>`で、上限は通常のイニシアティブの上限。
   コールドシムでも同じ。`<matrixinitiative>`は乗らない。`derived.matrix_initiative.device`は`"ai"`。
@@ -151,7 +151,7 @@ DT本文は未照合。
 
 ## 実装済み: コムリンク・デッキ・RCCのホームノード（段階4b）
 
-Chummerのホームノード（`Character.HomeNode`）は、ギア・車両・サイバーウェア・武器のうち
+Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィークル・サイバーウェア・武器のうち
 コムリンクとして働くものに付く印で、.chum5では各品目の`<homenode>True</homenode>`。
 
 - `CharacterState.home_node`に機器のidを1つ持つ（""で無し）。A.I.でない、または機器が無くなれば外す。

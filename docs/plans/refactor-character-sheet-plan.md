@@ -44,12 +44,12 @@ which the typechecker + build catch.
 | 6 | アクションDP Action DP | conditional |
 | 7 | 戦闘 Combat | ~175 lines — weapons + armor + ranges + recoil |
 | 8 | ウェア Ware | cyber + bio |
-| 9 | マトリクス Matrix | |
+| 9 | マトリックス Matrix | |
 | 10 | 魔法 Magic | ~115 lines — adept / spells / spirits / foci |
 | 11 | 共鳴 Resonance | complex forms / sprites / submersion |
 | 12 | 武道 Martial | |
 | 13 | コンタクト Contacts | |
-| 14 | 車両・ドローン Vehicles | |
+| 14 | ヴィークル・ドローン Vehicles | |
 | 15 | ドラッグ／毒物 Drugs | |
 | 16 | SIN／ライセンス SIN | |
 | 17 | その他ギア Misc gear | |
