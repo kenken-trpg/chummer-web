@@ -10,7 +10,8 @@ So `docs/translation-banned-terms.md` records the mistakes that actually reached
 the UI, and this walks `frontend/lib/i18n/locales/ja/` for them. Each entry is
 written once, when the drift is fixed, and from then on that word cannot come
 back. It catches recurrence, not a brand new mistranslation. The Markdown is
-held to the part of the list that cannot be ordinary prose (`doc_terms`).
+held to the part of the list that cannot be ordinary prose (`doc_terms`), and
+the English strings to their own short list (`en_rules`).
 
     python scripts/check_ja_terms.py
 """
@@ -118,15 +119,44 @@ def check_docs(root: Path, banned: Path) -> list[str]:
     return problems
 
 
+EN_LOCALE = ROOT / "frontend/lib/i18n/locales/en"
+
+
+def en_rules(text: str) -> list[Rule]:
+    """The `## 英語の画面文言に当てる語` table: 誤 | 正 | 典拠 | 経緯, matched
+    without regard to case, since English prose lowercases a game term."""
+    _, _, section = text.partition("## 英語の画面文言に当てる語")
+    section = section.split("\n## ", 1)[0]
+    found = []
+    for row in re.findall(r"^\|(.+)\|$", section, re.M):
+        cells = [c.strip() for c in row.split("|")]
+        if len(cells) != 4 or cells[0] in {"誤", ""} or set(cells[0]) == {"-"}:
+            continue
+        found.append(Rule(cells[0].lower(), cells[1], cells[2], []))
+    return found
+
+
+def check_en(locale: Path, banned: Path) -> list[str]:
+    found = en_rules(banned.read_text(encoding="utf-8"))
+    problems = []
+    for path in sorted(locale.rglob("*.ts")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), start=1):
+            for rule in found:
+                if rule.hits(line.lower()):
+                    where = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+                    problems.append(f"{where}:{number}: 「{rule.wrong}」は「{rule.right}」（{rule.source}）")
+    return problems
+
+
 def main() -> int:
     if not LOCALE.is_dir():
         print("frontend/ not checked out — nothing to check")
         return 0
-    problems = check(LOCALE, BANNED) + check_docs(ROOT, BANNED)
+    problems = check(LOCALE, BANNED) + check_docs(ROOT, BANNED) + check_en(EN_LOCALE, BANNED)
     if problems:
         print("\n".join(["", *problems, "", f"See docs/{BANNED.name} and docs/translation-glossary.md."]))
         return 1
-    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)} or the docs")
+    print(f"ok — no banned term in {LOCALE.relative_to(ROOT)}, its English twin or the docs")
     return 0
 
 
