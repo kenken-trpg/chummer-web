@@ -229,6 +229,7 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
   直接物理・BOD減少・STR減少・間接のダメージ抵抗はBodyを1回、物理操作はBOD＋STRの代わりにBody×2。
 - `<directphysicalspellresist>`・`<physicalmanipulationresist>`を持つデータは無いので、その2つは汎用の呪文抵抗だけを足す。
 - シートに「呪文防御」の節（戦闘の後ろ、印刷では2ページ目）を足した。
+- ココフォリア・ユドナリウムのチャットパレットにも同じ値を数値で並べる（A.I.のBodyを変数では表せないため）。
 - 検証：`backend/tests/test_ai_chargen.py`の「spell defense」の節、`SpellDefenseSection`の単体テスト。
 
 ## これからの段階

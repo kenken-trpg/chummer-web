@@ -398,6 +398,32 @@ describe("buildCocofolia", () => {
     expect(piece.data.commands).toContain("6B6 ダメージ抵抗（＋装甲）");
   });
 
+  it("rolls the engine's spell defense pools, and none when it sent none", () => {
+    const pools = {
+      indirect_dodge: 7,
+      indirect_soak: 9,
+      direct_mana: 3,
+      direct_physical: 4,
+      detection: 6,
+      decrease: { BOD: 7, WIL: 6 },
+      mana_illusion: 6,
+      physical_illusion: 5,
+      mental_manipulation: 6,
+      physical_manipulation: 8,
+    };
+    const palette = buildChatPalette(
+      makeCharacter({ derived: { spell_defense_pools: pools } }),
+      makeCatalog(),
+      identityTr,
+    );
+    expect(palette).toContain("// ── 呪文防御 ──");
+    expect(palette).toContain("9B6 呪文防御：間接（ダメージ抵抗）");
+    expect(palette).toContain("8B6 呪文防御：物理操作");
+    expect(palette).toMatch(/^7B6 呪文防御：能力値減少（.+）$/m);
+    const none = buildChatPalette(makeCharacter(), makeCatalog(), identityTr);
+    expect(none).not.toContain("呪文防御");
+  });
+
   it("produces a parseable ccfolia character piece", () => {
     const parsed = JSON.parse(
       buildCocofolia(makeCharacter({ name: "Wire" }), makeCatalog(), identityTr),

@@ -5,7 +5,13 @@ import { type Locale, type MsgKey } from "@/lib/i18n";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { aiProgramList, skillLabel } from "@/lib/character/format";
-import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
+import {
+  ATTR_LIMIT,
+  type LimitKind,
+  skillAttributes,
+  spellDefenseRolls,
+  weaponSkill,
+} from "@/lib/vtt-pools";
 import { ATTR_ORDER, Section, type UdonariumOptions, slotTag, uiFor, varName } from "./shared";
 
 /** Newline-separated BCDice ShadowRun5 commands for Udonarium's chat palette. */
@@ -325,6 +331,12 @@ export function buildUdonariumPalette(
   tests.roll("2D6", ui("coco.scatterThrown"));
   tests.roll("4D6", ui("coco.scatterLaunched"));
   blocks.push(tests.text(ui("udo.secTests")));
+
+  // --- spell defense, as the engine's numbers ----------------------------
+  const spellDefense = new Section();
+  for (const row of spellDefenseRolls(d, ui, (k) => attrName(k, t)))
+    spellDefense.roll(`(${Math.max(row.pool, 0)}+0)B6`, row.label);
+  if (!spellDefense.empty) blocks.push(spellDefense.text(ui("udo.secSpellDefense")));
 
   const programs = aiProgramList(d.ai_programs, tr, ui);
   if (programs) blocks.push(`${ui("udo.secAIPrograms")}\n${programs}`);

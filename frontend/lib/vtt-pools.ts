@@ -8,6 +8,7 @@
  * the same answers, or the two exports of one character disagree.
  */
 import type { Catalog, Derived } from "@/lib/types";
+import type { MsgKey, UiFn } from "@/lib/i18n";
 
 export type LimitKind = "physical" | "mental" | "social" | null;
 
@@ -110,4 +111,42 @@ export function vehicleSkills(catalog: Catalog): { pilots: string[]; gunnery: st
     pilots: rows.filter((s) => s.name !== "Gunnery").map((s) => s.name),
     gunnery: rows.some((s) => s.name === "Gunnery") ? "Gunnery" : "",
   };
+}
+
+/** Chummer's spell defense box, in its order (the sheet shows the same). */
+const SPELL_DEFENSE: [
+  MsgKey,
+  Exclude<keyof NonNullable<Derived["spell_defense_pools"]>, "decrease">,
+][] = [
+  ["sheet.def.indirectDodge", "indirect_dodge"],
+  ["sheet.def.indirectSoak", "indirect_soak"],
+  ["side.def.directMana", "direct_mana"],
+  ["sheet.def.directPhysical", "direct_physical"],
+  ["side.def.detection", "detection"],
+  ["side.def.manaIllusion", "mana_illusion"],
+  ["side.def.physicalIllusion", "physical_illusion"],
+  ["side.def.mentalManipulation", "mental_manipulation"],
+  ["sheet.def.physicalManipulation", "physical_manipulation"],
+];
+
+/**
+ * The rolls against each kind of spell, as numbers: the engine's pools, so an
+ * A.I.'s body is already its vehicle node's and no attribute variable would
+ * say so. Empty when the engine sent none.
+ */
+export function spellDefenseRolls(
+  d: Derived,
+  ui: UiFn,
+  attrLabel: (key: string) => string,
+): { pool: number; label: string }[] {
+  const pools = d.spell_defense_pools;
+  if (!pools) return [];
+  const label = (kind: string) => ui("vtt.spellDefense", { kind });
+  return [
+    ...SPELL_DEFENSE.map(([key, field]) => ({ pool: pools[field], label: label(ui(key)) })),
+    ...Object.entries(pools.decrease).map(([attr, pool]) => ({
+      pool,
+      label: label(ui("sheet.def.decrease", { attr: attrLabel(attr) })),
+    })),
+  ];
 }
