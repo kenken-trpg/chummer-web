@@ -360,6 +360,30 @@ describe("buildUdonariumXml", () => {
     expect(human).toMatch(/\(\{BOD\}\+\{[^}]+\}\+2\+0\)B6 ダメージ抵抗/);
   });
 
+  it("rolls the engine's spell defense pools as numbers", () => {
+    const pools = {
+      indirect_dodge: 7,
+      indirect_soak: 9,
+      direct_mana: 3,
+      direct_physical: 4,
+      detection: 6,
+      decrease: { BOD: 7, WIL: 6 },
+      mana_illusion: 6,
+      physical_illusion: 5,
+      mental_manipulation: 6,
+      physical_manipulation: 8,
+    };
+    const xml = buildUdonariumXml(
+      makeCharacter({ derived: { spell_defense_pools: pools } }),
+      makeCatalog(),
+      identityTr,
+    );
+    expect(xml).toContain("■ 呪文防御");
+    expect(xml).toContain("(9+0)B6 呪文防御：間接（ダメージ抵抗）");
+    expect(xml).toContain("(4+0)B6 呪文防御：直接物理");
+    expect(buildUdonariumXml(makeCharacter(), makeCatalog(), identityTr)).not.toContain("呪文防御");
+  });
+
   it("gives any persona a Matrix condition monitor and leaves it off everyone else", () => {
     const plain = buildUdonariumXml(makeCharacter(), makeCatalog(), identityTr);
     expect(plain).not.toContain("マトリックスCM");

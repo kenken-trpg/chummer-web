@@ -5,7 +5,13 @@ import { renderNotice } from "@/lib/engine-notices";
 import { skillDefault } from "@/lib/character/skill-default";
 import { specializationBonus } from "@/lib/character/skill-specialization";
 import { aiProgramList, skillLabel } from "@/lib/character/format";
-import { ATTR_LIMIT, type LimitKind, skillAttributes, weaponSkill } from "@/lib/vtt-pools";
+import {
+  ATTR_LIMIT,
+  type LimitKind,
+  skillAttributes,
+  spellDefenseRolls,
+  weaponSkill,
+} from "@/lib/vtt-pools";
 
 // Cocofolia is a Japanese VTT, so the export defaults to Japanese when a
 // caller says nothing; it follows the UI locale otherwise. Dice commands
@@ -215,6 +221,10 @@ export function buildChatPalette(
     roll(d.drain_resist.pool, ui("coco.drainResist", { attrs: d.drain_resist.attrs }));
   if (d.fade_resist && tabs.includes("complexforms"))
     roll(d.fade_resist.pool, ui("coco.fadeResist", { attrs: d.fade_resist.attrs }));
+  const t = makeT(catalog, locale);
+  const spellDefense = spellDefenseRolls(d, ui, (k) => attrShort(k, t));
+  if (spellDefense.length) out.push(ui("coco.secSpellDefense"));
+  for (const row of spellDefense) roll(row.pool, row.label);
   out.push(ui("coco.edgeNote"));
 
   return out.join("\n");
