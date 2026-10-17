@@ -100,7 +100,8 @@
     "physical": 9,
     "stun": 9,
     "threshold": 3,
-    "threshold_offset": 0
+    "threshold_offset": 0,
+    "vehicle": false
   },
   "contact_points": {
     "free": 3,

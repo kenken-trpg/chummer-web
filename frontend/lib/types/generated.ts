@@ -671,7 +671,7 @@ export interface Character {
   spirits?: SpiritInstall[];
   complex_forms?: ComplexFormInstall[];
   ai_programs?: AIProgramInstall[];
-  /** an A.I.'s home node (Chummer `HomeNode`): a commlink, deck or RCC id */
+  /** an A.I.'s home node (Chummer `HomeNode`): a commlink, deck, RCC, vehicle or drone id */
   home_node?: string;
   sprites?: SpriteInstall[];
   foci?: FocusInstall[];

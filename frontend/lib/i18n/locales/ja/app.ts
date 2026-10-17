@@ -373,6 +373,7 @@ export const JA_APP = {
   "fmt.ranged": "遠隔",
   "txt.limits": "リミット 物{physical}/精{mental}/社{social}",
   "txt.cm": "CM P{physical}/S{stun}",
+  "txt.cmPhysMatrix": "CM P{physical}/マトリックス{matrix}",
   "txt.cmCore": "CM コア{physical}",
   "txt.cmCoreMatrix": "CM コア{physical}/マトリックス{matrix}",
   "txt.movement": "移動 歩{walk}m/走{run}m/全力疾走+{sprint}m/ヒット",

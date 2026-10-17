@@ -307,6 +307,7 @@ export const JA_SHEET = {
   "udo.secKnowledge": "■ 知識技能（リミット＝精神）",
   "udo.woundPhysical": "身体",
   "udo.woundCore": "コア",
+  "sheet.cmPhysMatrix": "P{n} / マトリックス{m}",
   "sheet.cmCore": "コア{n}",
   "sheet.cmCoreMatrix": "コア{n} / マトリックス{m}",
   "sheet.aiHomeNode": "ホームノード：{name}（Data Processing {dp}）",

@@ -398,6 +398,9 @@ def _export_vehicles(root: ET.Element, state: CharacterState, names: _Names, ctx
         el = _sub(vehs, "vehicle")
         _sub(el, "sourceid", v.gear_id)
         _sub(el, "name", names["gear"].get(v.gear_id, ""))
+        if v.id == state.home_node:
+            # an A.I. living in it (`Vehicle.IsHomeNode`)
+            _sub(el, "homenode", "True")
         mods = _sub(el, "mods")
         for vrow in vmod_by_parent.get(v.id, []):
             mm = _sub(mods, "mod")

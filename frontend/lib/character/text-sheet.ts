@@ -100,12 +100,17 @@ export function textSheet(x: TextArgs): string {
         social: d.limits.social,
       })}  ` +
       (d.condition_monitor.core
-        ? d.condition_monitor.stun
-          ? ui("txt.cmCoreMatrix", {
+        ? d.condition_monitor.vehicle
+          ? ui("txt.cmPhysMatrix", {
               physical: d.condition_monitor.physical,
               matrix: d.condition_monitor.stun,
             })
-          : ui("txt.cmCore", { physical: d.condition_monitor.physical })
+          : d.condition_monitor.stun
+            ? ui("txt.cmCoreMatrix", {
+                physical: d.condition_monitor.physical,
+                matrix: d.condition_monitor.stun,
+              })
+            : ui("txt.cmCore", { physical: d.condition_monitor.physical })
         : ui("txt.cm", {
             physical: d.condition_monitor.physical,
             stun: d.condition_monitor.stun,
@@ -275,7 +280,7 @@ export function textSheet(x: TextArgs): string {
             armor: v.armor ?? "-",
             pilot: v.pilot ?? "-",
             sensor: v.sensor ?? "-",
-            cm: vehicleCM(v.body),
+            cm: v.condition_monitor ?? vehicleCM(v.body),
           }) +
           `${
             (v.mods || []).filter((m) => !m.parent_id).length

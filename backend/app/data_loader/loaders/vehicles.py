@@ -128,6 +128,8 @@ def load_vehicle_mods() -> list[dict[str, Any]]:
                 # however many downgrades are fitted — see `engine/gear/vehicles/slots.py::_drone_slot_bonus`.
                 "downgrade": el.find("downgrade") is not None,
                 "capacity": _text(el.find("capacity")),
+                # extra damage track boxes (a Drone Arm's one; `VehicleMod.ConditionMonitor`)
+                "conditionmonitor": _int(el.find("conditionmonitor"), 0),
                 "subsystems": [
                     _text(sub)
                     for sub in list(subs_el if subs_el is not None else [])

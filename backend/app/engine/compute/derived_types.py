@@ -73,8 +73,11 @@ class _ConditionMonitor(TypedDict):
     #: Boxes per −1 wound modifier, and the boxes ignored before the first one.
     threshold: int
     threshold_offset: int
-    #: An A.I.: `physical` is its Core monitor and there is no Stun monitor.
+    #: An A.I.: no Stun track (`stun` is its home node's Matrix monitor, or 0),
+    #: and `physical` is its Core track — or, with `vehicle`, its vehicle's.
     core: bool
+    #: An A.I. in a vehicle or drone: `physical` is the vehicle's track.
+    vehicle: bool
 
 
 class _Initiative(TypedDict):

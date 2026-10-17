@@ -278,7 +278,7 @@ class CharacterState(BaseModel):
     spirits: list[SpiritInstall] = Field(default_factory=list)
     complex_forms: list[ComplexFormInstall] = Field(default_factory=list)
     ai_programs: list[AIProgramInstall] = Field(default_factory=list)
-    #: an A.I.'s home node (Chummer `HomeNode`): a commlink, deck or RCC id
+    #: an A.I.'s home node (Chummer `HomeNode`): a commlink, deck, RCC, vehicle or drone id
     home_node: str = ""
     sprites: list[SpriteInstall] = Field(default_factory=list)
     foci: list[FocusInstall] = Field(default_factory=list)

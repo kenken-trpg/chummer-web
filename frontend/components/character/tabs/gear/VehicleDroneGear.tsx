@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { AutosoftRows } from "@/components/character/tabs/gear/AutosoftRows";
 import { CatalogPicker } from "@/components/character/CatalogPicker";
 import { DiscountToggle } from "@/components/character/DiscountToggle";
+import { HomeNodeToggle } from "@/components/character/HomeNodeToggle";
 import { VehicleGearRows } from "@/components/character/tabs/gear/vehicle/VehicleGearRows";
 import { VehicleModRows } from "@/components/character/tabs/gear/vehicle/VehicleModRows";
 import { VehicleMountRows } from "@/components/character/tabs/gear/vehicle/VehicleMountRows";
@@ -94,6 +95,7 @@ export function VehicleDroneGear({
                     ui={ui}
                     patch={patch}
                   />
+                  <HomeNodeToggle id={item.id} ch={ch} d={d} ui={ui} patch={patch} />
                 </div>
                 <div className="muted">
                   <HelpTip

@@ -367,6 +367,7 @@ export const EN_APP = {
   "fmt.ranged": "Ranged",
   "txt.limits": "Limits P{physical}/M{mental}/S{social}",
   "txt.cm": "CM P{physical}/S{stun}",
+  "txt.cmPhysMatrix": "CM P{physical}/Matrix {matrix}",
   "txt.cmCore": "CM Core {physical}",
   "txt.cmCoreMatrix": "CM Core {physical}/Matrix {matrix}",
   "txt.movement": "Movement walk {walk}m / run {run}m / sprint +{sprint}m per hit",

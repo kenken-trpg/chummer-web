@@ -6,6 +6,7 @@ from typing import Any
 
 from ....data_loader import eval_formula
 from ....models import CharacterState, GearInstall
+from ...formulas import _ceil_div
 from ...lookups import _item_by_id
 from .._common import (
     _leading_vehicle_stat,
@@ -78,6 +79,16 @@ def _resolve_drones(state: CharacterState, kind: str = "drones") -> tuple[list[d
     return public, nuyen
 
 
+def vehicle_condition_monitor(row: dict[str, Any], body: int) -> int:
+    """Chummer `Vehicle.PhysicalCM`: 12 boxes for a vehicle, 6 for a drone
+    (8 for an anthroform, R5 p.145), plus half the Body rounded up and what
+    the mods add."""
+    category = str(row.get("category") or "")
+    base = (8 if category == "Drones: Anthro" else 6) if "Drone" in category else 12
+    mods = sum(int(mod.get("condition_monitor") or 0) for mod in row.get("mods") or [])
+    return base + _ceil_div(body / 2) + mods
+
+
 def _publish_drone_stats(drones: list[dict[str, Any]], sensors: list[dict[str, Any]]) -> None:
     children: dict[str, list[dict[str, Any]]] = {}
     for item in sensors:
@@ -97,6 +108,7 @@ def _publish_drone_stats(drones: list[dict[str, Any]], sensors: list[dict[str, A
         row["sensor"] = str(stats.get("sensor") or row.get("sensor") or "")
         row["seats"] = str(stats.get("seats") or row.get("seats") or "")
         row["sensors"] = children.get(str(row.get("id") or "")) or []
+        row["condition_monitor"] = vehicle_condition_monitor(row, int(stats.get("body") or 0))
         row.pop("stats", None)
         row.pop("base_nuyen", None)
         row.pop("modslots", None)
