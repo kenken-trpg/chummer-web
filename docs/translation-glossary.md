@@ -11,7 +11,7 @@
 - 採用順: `ADOPTED_OVERRIDES` (手動確定) > 2021 版 > sr5eja。
 - 2 資料が食い違う語は **採用=2021版** のまま `差異` を立てる (下表の備考)。人が判断する。
 
-- 統合語数: **566** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
+- 統合語数: **573** / うち sr5eja だけにある新規: **359** / 2 資料で表記が割れる語: **18**。
 
 ## 表1: 統合用語
 
@@ -61,7 +61,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Armor Hardened Full | 硬化装甲 |  | ＝ |  |
 | Armor Value | 装甲値 | 装甲値 | ＝ |  |
 | Astral | アストラル | アストラル |  |  |
-| Astral Initiative | アストラルイニシアティブ | アストラルイニシアティブ |  |  |
+| Astral Initiative | アストラル・イニシアティブ | アストラルイニシアティブ |  | 手動確定 |
 | Astral Limit | アストラルリミット | アストラルリミット |  |  |
 | Attack | アタック | アタック | ≠ | 手動確定 / 差異 |
 | Attacker | 攻撃者 |  | ＝ |  |
@@ -115,6 +115,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Clear Marks | マークを消す |  | ＝ |  |
 | Close | 閉じる |  | ＝ |  |
 | Cold | 冷気 | 冷気 |  |  |
+| Cold Sim | コールド・シム |  |  | 手動確定 |
 | Collapse | 折りたたむ |  | ＝ |  |
 | Collapse All | 全て折りたたむ |  | ＝ |  |
 | Combat | 戦闘 | 戦闘 |  |  |
@@ -268,8 +269,9 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Height | 身長 | 身長 |  |  |
 | Help | ヘルプ |  | ＝ |  |
 | Hits | ヒット |  | ＝ |  |
+| Home Node | Home Node |  |  | 手動確定 |
 | host | ホスト |  | ＝ |  |
-| Hot Sim | ホットシム |  | ＝ |  |
+| Hot Sim | ホット・シム |  | ≠ | 手動確定 |
 | I Dcredsticks | ID/クレッドスティック | ID/クレッドスティック |  |  |
 | Illusion | 幻影 | 幻影 |  |  |
 | Illusion Spells | 幻影呪文 | 幻影呪文 |  |  |
@@ -350,16 +352,19 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Marks | マーク |  | ＝ |  |
 | Martial Art | 格闘技 | 格闘技 |  |  |
 | Martial Arts | 格闘技 | 格闘技 |  |  |
+| Martial Arts Style | 格闘技スタイル |  |  | 手動確定 |
 | Matrix AR | マトリックス(AR) | マトリックス(AR) |  |  |
 | Matrix Attr Attack | アタック |  | ＝ |  |
 | Matrix Attr Data Proc | データ処理 |  | ＝ |  |
 | Matrix Attr Firewall | ファイアウォール |  | ＝ |  |
 | Matrix Attr Sleaze | スリーズ |  | ＝ |  |
 | Matrix Cold | マトリックス（コールドシム） | マトリックス（コールドシム） |  |  |
+| Matrix Condition Monitor | マトリックス・コンディション・モニター |  |  | 手動確定 |
 | Matrix Defense | マトリックス防御 |  | ＝ |  |
 | Matrix Devices | マトリックス機器 | マトリックス機器 |  |  |
 | Matrix Full Defense Attribute | マトリックス全力防御能力値 |  | ＝ |  |
 | Matrix Hot | マトリックス（ホットシム） | マトリックス（ホットシム） |  |  |
+| Matrix Initiative | マトリックス・イニシアティブ |  |  | 手動確定 |
 | Matrix Target | マトリックスターゲット |  | ＝ |  |
 | Melee Weapon Attack | 近接武器攻撃 |  | ＝ |  |
 | Melee Weapons | 近接武器 | 近接武器 |  |  |
@@ -530,6 +535,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Specializations | 専門化 |  | ＝ |  |
 | Speed | 最高速度 | 最高速度 |  |  |
 | Spell | 呪文 | 呪文 | ＝ |  |
+| Spell Defense | 呪文防御 |  |  | 手動確定 |
 | Spells | 呪文 | 呪文 |  |  |
 | Spirit | 精霊 | 精霊 | ＝ |  |
 | Sprite | スプライト | スプライト | ＝ |  |
@@ -553,6 +559,7 @@ sr5eja 列: `＝` = 採用と一致 / `≠` = 採用と相違。sr5eja の訳語
 | Target Self | 自身 |  | ＝ |  |
 | Target Sprite | スプライト |  | ＝ |  |
 | Tasks | タスク | タスク |  |  |
+| Technique | 技法 |  |  | 手動確定 |
 | Temporary | 一時的 |  | ＝ |  |
 | Temporary Modifiers | 一時的な修正 |  | ＝ |  |
 | Test | テスト |  | ＝ |  |

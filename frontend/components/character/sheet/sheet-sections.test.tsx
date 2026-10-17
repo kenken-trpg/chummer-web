@@ -702,7 +702,7 @@ describe("MatrixSection for an A.I.", () => {
       layout: "standard",
     });
     const { container } = render(<MatrixSection {...ai} />);
-    expect(container.textContent).toContain("A.I. のマトリックスイニシアティブ：4+4d6");
+    expect(container.textContent).toContain("A.I. のマトリックス・イニシアティブ：4+4d6");
   });
 });
 

@@ -80,7 +80,7 @@ describe("print sections", () => {
     const { container } = render(<PrintConditionMonitor {...ai} />);
     expect(container.querySelectorAll(".print-cm-track")).toHaveLength(1);
     expect(container.querySelectorAll(".cm-box")).toHaveLength(10);
-    expect(container.textContent).toContain("コア");
+    expect(container.textContent).toContain("Core");
     expect(container.textContent).not.toContain("精神");
   });
 

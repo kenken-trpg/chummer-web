@@ -230,8 +230,8 @@ describe("buildChatPalette", () => {
       },
     });
     const out = buildChatPalette(ch, makeCatalog(), identityTr);
-    expect(out).toContain("3D6+7 マトリックス・イニシアティブ（コールドシム）");
-    expect(out).toContain("4D6+7 マトリックス・イニシアティブ（ホットシム）");
+    expect(out).toContain("3D6+7 マトリックス・イニシアティブ（コールド・シム）");
+    expect(out).toContain("4D6+7 マトリックス・イニシアティブ（ホット・シム）");
   });
 });
 
@@ -373,7 +373,7 @@ describe("buildCocofolia", () => {
       derived: { condition_monitor: { physical: 10, stun: 0, core: true } },
     });
     const piece = JSON.parse(buildCocofolia(ai, makeCatalog(), identityTr));
-    expect(piece.data.status.slice(0, 1)).toEqual([{ label: "コアCM", value: 10, max: 10 }]);
+    expect(piece.data.status.slice(0, 1)).toEqual([{ label: "Core CM", value: 10, max: 10 }]);
     expect(piece.data.status.map((s: { label: string }) => s.label)).not.toContain("精神CM");
     const housed = makeCharacter({
       metatype: "A.I.",
@@ -381,7 +381,7 @@ describe("buildCocofolia", () => {
     });
     const labels = JSON.parse(buildCocofolia(housed, makeCatalog(), identityTr)).data.status;
     expect(labels.slice(0, 2)).toEqual([
-      { label: "コアCM", value: 10, max: 10 },
+      { label: "Core CM", value: 10, max: 10 },
       { label: "マトリックスCM", value: 11, max: 11 },
     ]);
   });

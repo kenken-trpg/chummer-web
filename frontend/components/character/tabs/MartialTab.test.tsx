@@ -44,7 +44,7 @@ function renderTab(
 describe("<MartialTab>", () => {
   it("shows the point line and the search box for an empty character", () => {
     renderTab();
-    expect(screen.getByText(/流派 0\/1 ・ 技 0\/5/)).toBeDefined();
+    expect(screen.getByText(/格闘技スタイル 0\/1 ・ 技法 0\/5/)).toBeDefined();
     expect(screen.getByPlaceholderText("格闘技を検索")).toBeDefined();
   });
 

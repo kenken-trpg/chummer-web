@@ -55,39 +55,39 @@ test("an A.I. moves into a deck, then a vehicle, and back out", async ({ page, r
     .locator(".stat")
     .filter({ has: page.getByText("コンディション", { exact: true }) })
     .locator(":scope > b");
-  await expect(condition).toHaveText(`コア${core}`);
+  await expect(condition).toHaveText(`Core ${core}`);
 
   // the deck: its Matrix monitor, 8 + DR / 2, stands in for the Stun track
   await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "サイバーデッキ", exact: true }).click();
-  const deckBox = page.getByRole("checkbox", { name: "ホームノード" });
+  const deckBox = page.getByRole("checkbox", { name: "Home Node" });
   await deckBox.click();
   await expect
     .poll(() => node(page))
     .toMatchObject({ home_node: "deck", physical: core, stun: 11, vehicle: false });
-  await expect(condition).toHaveText(`コア${core} / マトリックス11`);
+  await expect(condition).toHaveText(`Core ${core} / マトリックス11`);
 
   // the scooter: its damage track, 12 + Body / 2, and Pilot 1 as Device Rating
   await page.getByRole("button", { name: "ヴィークル", exact: true }).click();
-  await page.getByRole("checkbox", { name: "ホームノード" }).click();
+  await page.getByRole("checkbox", { name: "Home Node" }).click();
   await expect
     .poll(() => node(page))
     .toMatchObject({ home_node: "scooter", physical: 14, stun: 9, vehicle: true });
   await expect(condition).toHaveText("P14 / マトリックス9");
   await expect(page.getByText(/Persona Firmware（DT p\.66）/).first()).toBeVisible();
   await page.getByRole("button", { name: "サイバーデッキ", exact: true }).click();
-  await expect(page.getByRole("checkbox", { name: "ホームノード" })).not.toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Home Node" })).not.toBeChecked();
 
   await page.reload();
   await waitForEditor(page);
   await expect(condition).toHaveText("P14 / マトリックス9");
   await page.getByRole("button", { name: "装備", exact: true }).click();
   await page.getByRole("button", { name: "ヴィークル", exact: true }).click();
-  const scooterBox = page.getByRole("checkbox", { name: "ホームノード" });
+  const scooterBox = page.getByRole("checkbox", { name: "Home Node" });
   await expect(scooterBox).toBeChecked();
 
   // unticking leaves it with its Core track again
   await scooterBox.click();
   await expect.poll(() => node(page)).toMatchObject({ home_node: "", physical: core, stun: 0 });
-  await expect(condition).toHaveText(`コア${core}`);
+  await expect(condition).toHaveText(`Core ${core}`);
 });

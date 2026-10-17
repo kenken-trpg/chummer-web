@@ -142,8 +142,8 @@ DT本文は未照合。
   （`PhysicalCM`）。精神ダメージトラックは無い（`StunCM`が0）。`derived.condition_monitor.core`。
 - 身体リミットは0（`LimitPhysical`。ホームノードがヴィークルならそのHandling）。改造の補正も乗らない。
 - マトリックスイニシアティブは常にINT＋4D6（`MatrixInitiativeValue`・`MatrixInitiativeDice`）。
-  ダイスはホットシムの最小値＋`<matrixinitiativedice>`で、上限は通常のイニシアティブの上限。
-  コールドシムでも同じ。`<matrixinitiative>`は乗らない。`derived.matrix_initiative.device`は`"ai"`。
+  ダイスはホット・シムの最小値＋`<matrixinitiativedice>`で、上限は通常のイニシアティブの上限。
+  コールド・シムでも同じ。`<matrixinitiative>`は乗らない。`derived.matrix_initiative.device`は`"ai"`。
 - シート・サイドバー・印刷・テキスト出力・ユドナリウム・ココフォリアで「コア」として出す。
 - 対象外：自然回復のプール（コアはSoftware＋DEP、マトリックスダメージは回復しない）、
   毒・病原体への抵抗。いずれもこのアプリは改造の補正しか出していない。
@@ -236,8 +236,17 @@ Chummerのホームノード（`Character.HomeNode`）は、ギア・ヴィー�
 
 - **キャリア**：作成後の扱いは未検討。
 
+## 表記
+
+Data Trails には日本語版が無い。Shadowrun Codex が再録しているのは追加のエコー、コムリンクのドングル、
+一部の資質だけで、A.I.の章は入っていない（2026-10-17、ユーザーが本で確かめた）。`docs/data-pipeline.md`の方針どおり、DTの用語は日本語表示でも英語のまま書く：
+Home Node、Core Damage Track（Core CM）、Depth、Program Limit、Persona Firmware、Advanced Programs。
+コアルールブックの語（データ処理・機器レーティング・マトリックス・コンディション・モニター・
+マトリックス・イニシアティブ）は用語集どおり訳す。この文書の本文は概念の説明なので片仮名で書いている。
+
 ## 残る項目
 
 1. **DT本文の照合**。上記はすべて固定版Chummerのソースとの照合で、DTの本文・エラッタとは照合していない。
+   日本語の本（コア・ラン＆ガン・コデックス）にはA.I.の章が無いので、英語版のData Trailsが要る。
 2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
    `make reconcile`と同じ形で確かめる。
