@@ -48,47 +48,44 @@ DT本文は未照合。
 - **ホームノード**（`Character.HomeNode`）：A.I.のマトリックスイニシアティブ（常に4D6、
   ホームノードのData Processingを加える）、状態モニター、リミットを分岐させる。`IsAI`は`Character.cs`だけで181箇所。
 
-## このアプリの現状（開始時）
+## 開始時のこのアプリ
 
-- 作成候補（`data_loader/__init__.py`の`playable`）にA.I.が無い。
-- `engine/constants.py`の`SKIP_TALENTS = {"A.I."}`で、Talentの選択肢から外している。
-- `halveattributepoints`・DEP・`advanced programs`・`qualityrestriction`は読んでいない。
-- Talentの`<forbidden>`・`<required>`を読んでいない（`data_loader/loaders/priorities.py`）。
-  このため、現在はシェイプシフターやケンタウロスもTechnomancerを選べてしまう可能性がある。段階1で確かめる。
-- 特殊ポイントの消費（`_econ_priority.py`）はEDG・MAG・RESだけを数える。
-- `.chum5`の書き出しには`depenabled`の枠がある（`chummer_export/build.py`）。
-- 黙らせているbonusタグ`selectinherentaiprogram`（Inherent Program）は、A.I.未対応を理由に保留中。
+- 作成候補（`data_loader/__init__.py`の`playable`）にA.I.が無かった。
+- `engine/constants.py`の`SKIP_TALENTS = {"A.I."}`で、Talentの選択肢から外していた。
+- `halveattributepoints`・DEP・`advanced programs`・`qualityrestriction`を読んでいなかった。
+- Talentの`<forbidden>`・`<required>`を読んでおらず、ケンタウロスやシェイプシフターも
+  Technomancerを選べた。
 
-## 段階
+## 実装済み: 作成時の計算（段階1、PR #602）
 
-### 段階1: 作成時の計算（backend）
-
-- A.I.と3つのメタバリアントを解決する。メタバリアントは自分の能力値の範囲を使う。
+- 全メタタイプの`dep*`を読む（範囲0〜0は「持たない」）。`enableattribute DEP`で有効になり、
+  開始値はTalentの深度（Karma方式では1）。特殊ポイントとカルマで上げる。
 - Priority・SumToTenで、Attributes優先度の値を半分（切り捨て）にする。
-- DEPを特殊能力値にする。開始値はTalentの深度（Karma方式では1）、上限はdepmax。
-  特殊ポイントとカルマで上げられるようにする。
-- A.I.のEDG上限をDEPの合計値にする。
-- Talentの`<forbidden>`・`<required>`を読み、選択肢を絞る。不正な組み合わせはエラーにする。
-  `SKIP_TALENTS`は外す。
-- `qualityrestriction`を読み、許可リストに無い資質はエラーにする。
-- `.chum5`の書き出しで、`depenabled`・DEP・メタタイプ区分を正しく書く。読み込みとの往復も確かめる。
-- テストは`backend/tests/test_ai_chargen.py`。実セーブが無いので、上記のChummerの処理を
-  1つずつテストにする。
+- A.I.のEDG上限はDEPの合計値。Luckyなどの上限ボーナスはその上に乗る。
+- Talentの`<forbidden>`・`<required>`を読む。取れないTalentはエラー
+  （`engine.priority.talentNotAllowed`）。メタタイプを変えると取れるTalentに切り替える。
+  Karma方式にはTalentの優先度が無いので、A.I.がMundaneでもエラーにしない。
+- `qualityrestriction`に無い資質は`engine.qualities.forbidden`。
+- 生得資質の肯定・否定は、Chummerと同じく qualities.xml の category から取る。
+  `<positive>`側に書かれたReal World Naivetéも否定的資質として数える。
+- 同じ生得資質が複数行あればその数だけ付ける（E-GhostのHello World!×3。
+  GnomeのArcane Arresterも2つになり、呪文抵抗が4になった）。
+- `.chum5`では、DEPのTalent由来の開始値をChummerの最小値として書く（MAG・RESと同じ）。
+- 検証：`backend/tests/test_ai_chargen.py`。`make reconcile`（34件）の出力はmainと同一。
 
-### 段階2: 作成画面の候補（frontend＋catalog）
+## 実装済み: 作成画面（段階2）
 
-- 作成候補とHeritage行の絞り込みに、A.I.と3つのメタバリアントを出す。
-  出典の本（DT）が無効なら候補に出さない。
-- Talentの選択肢を、選んだ種族で絞る（A.I.ならA.I.のTalentだけ、それ以外ならA.I.のTalentを出さない）。
-- 能力値タブでDEPを出し、肉体能力値（範囲0）を出さない。
+- 作成候補とHeritage A〜Cに、A.I.と3つのメタバリアントを出す。DTが無効なら出さない。
+- Talentの選択肢を、選んだメタタイプが取れるものに絞る（`lib/character/metatype-limits.ts`）。
+  Priority表でTalentの段を変えたときの既定値も同じ規則で選ぶ（A.I.ならEでもA.I.）。
+- 能力値タブ・サイドバー・シート・テキスト出力でDEPを出す。能力値タブでは、範囲0〜0の
+  肉体能力値の行を出さない（シートにはChummerと同じく0として出る）。
 - 資質の選択肢を`qualityrestriction`で絞る。
-- e2e `ai-creation.spec.ts`で、Priority・SumToTen・Karmaの3方式について、候補、選択、
-  能力値ポイントの半減、DEPの開始値、生得資質、再読込で保たれることを確かめる。
-- `docs/chargen.md`の「メタタイプと種族」の節に、A.I.の選び方を短く書く。
-- 訳語：DEP（Depth）、A.I.、3つのメタバリアントはjaの訳が無い。
-  補足ルールブックの内容は英語のまま、という方針（`docs/data-pipeline.md`）に従うかを決める。
+- 訳語：Depth・A.I.・3つのメタバリアントは、用語集の表2と補足ルールブックの方針に従い英語のまま。
+  Talentの表記は「A.I. - Depth 6」。
+- 検証：e2e `ai-creation.spec.ts`（Priority・SumToTen・Karma）、各タブの単体テスト。
 
-### 段階3以降（今回の範囲外）
+## これからの段階
 
 - **プログラム**：`programs.xml`の取得とローダー、高度なプログラムのタブ、前提プログラムの検査、
   作成カルマ（5・8）。保留中の`selectinherentaiprogram`はここで実装する。
@@ -96,11 +93,12 @@ DT本文は未照合。
   リミットを出す。分岐が多いので、着手前にChummerのソースを読んで分割する。
 - **キャリア**：作成後の扱いは未検討。
 
-## 決めていないこと
+## 残る項目
 
-1. Xenosapient・Protosapientの`<positive>`側に書かれたReal World Naivetéを、
-   Chummerが肯定・否定のどちらとして数えるか（カルマの上限計算に効く）。段階1で確かめる。
-2. A.I.のESS（0〜6）と、サイバーウェアなどの購入を止めるか。Chummerの作成フォームは止めていない
-   ように見えるが、未確認。
-3. Protosapientの生得資質Inherent Programは、選択（`selectinherentaiprogram`）が段階3まで無い。
-   それまでは選択なしで付与し、未実装bonusとして表示する。
+1. **DT本文の照合**。上記はすべて固定版Chummerのソースとの照合で、DTの本文・エラッタとは照合していない。
+2. **実セーブとの照合**。Chummer.TestsにA.I.のPCが無い。Chummerで作ったセーブが手に入れば
+   `make reconcile`と同じ形で確かめる。
+3. **A.I.のESSとウェア**。サイバーウェアなどの購入を止めていない。Chummerの作成フォームも
+   止めていないように見えるが、未確認。
+4. **Protosapientの生得資質Inherent Program**。選択（`selectinherentaiprogram`）が段階3まで無く、
+   選択なしで付与している。

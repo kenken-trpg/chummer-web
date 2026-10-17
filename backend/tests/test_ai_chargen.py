@@ -32,7 +32,7 @@ def _ai(
     talent_letter: str = "C",
     **kwargs: object,
 ) -> CharacterState:
-    # Heritage A or C are the A.I.'s; the letters left go to the rest.
+    # Heritage A or C (B is the A.I.'s too); the letters left go to the rest.
     heritage = "C" if "A" in {attributes, talent_letter} else "A"
     rest = [letter for letter in "ABCDE" if letter not in {heritage, attributes, talent_letter}]
     kwargs.setdefault("talent", AI)
@@ -253,15 +253,19 @@ def test_the_list_does_not_bind_a_metahuman() -> None:
     assert not has(out.derived["errors"], "engine.qualities.forbidden")
 
 
-def test_the_ai_talent_waits_for_the_ai_in_the_catalog() -> None:
-    # The creation screen does not offer the A.I. yet, so neither does it
-    # offer a talent only an A.I. may take.
+def test_creation_offers_the_ai_and_its_talent() -> None:
     cat = public_catalog()
-    assert AI not in {m["name"] for m in cat["metatypes"]}
-    talents = {t["name"] for t in cat["priority_table"]["Talent"]["C"]["talents"]}
-    assert "Technomancer" in talents
-    assert AI not in talents
-    assert AI not in {t["name"] for t in cat["karma_talents"]}
+    offered = {m["name"]: m for m in cat["metatypes"]}
+    assert {v["name"] for v in offered[AI]["metavariants"]} == set(VARIANTS)
+    assert offered[AI]["quality_restriction"]["Positive"]
+    heritage = cat["priority_table"]["Heritage"]
+    for letter, cell in heritage.items():
+        assert (AI in {m["name"] for m in cell["metatypes"]}) == (letter in "ABC")
+    for cell in cat["priority_table"]["Talent"].values():
+        rows = {t["name"]: t for t in cell["talents"]}
+        assert rows[AI]["required"] == [{"kind": "metatype", "name": AI}]
+    karma = {t["name"]: t for t in cat["karma_talents"]}
+    assert AI in karma
 
 
 # --- .chum5 -------------------------------------------------------------------

@@ -259,7 +259,9 @@ export function QualityExtraEditor({
         storeKey={q.id}
         named={named}
         prompt={ui("quality.attribute")}
-        options={ATTRS.filter((key) => key !== "EDG" && key !== "MAG" && key !== "RES")}
+        options={ATTRS.filter(
+          (key) => key !== "EDG" && key !== "MAG" && key !== "RES" && key !== "DEP",
+        )}
         label={(key) => attrLabel(key, t)}
       />
     );

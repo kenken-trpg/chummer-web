@@ -431,8 +431,26 @@ export type PriorityCell = {
     karma?: number;
     variants: { name: string; special?: number; karma?: number }[];
   }[];
-  talents: { name: string; label?: string; value: number; spells?: number }[];
+  talents: PriorityTalent[];
 };
+
+/** A `<forbidden>` / `<required>` entry on a talent: a metatype's name, or a
+ *  metatype category (the base metatype's, as Chummer reads it). */
+export type TalentTerm = { kind: "metatype" | "metatypecategory"; name: string };
+
+export type PriorityTalent = {
+  name: string;
+  label?: string;
+  value: number;
+  spells?: number;
+  /** The A.I. talent's starting Depth. */
+  depth?: number;
+  /** Absent from an older catalog: then anyone may take it. */
+  forbidden?: TalentTerm[];
+  required?: TalentTerm[];
+};
+
+export type QualityRestriction = { Positive: string[]; Negative: string[] };
 
 export type PriorityTable = Record<PriorityCategory, Record<PriorityLetter, PriorityCell>>;
 
@@ -444,10 +462,13 @@ export interface Catalog {
     category: string;
     karma?: number;
     attributes: Record<string, { min: number; max: number; aug: number }>;
+    /** An A.I.'s `<qualityrestriction>`: the only qualities it may take. */
+    quality_restriction?: QualityRestriction | null;
     metavariants: {
       name: string;
       karma?: number;
       attributes: Record<string, { min: number; max: number; aug: number }>;
+      quality_restriction?: QualityRestriction | null;
     }[];
     source: string;
     also_in?: { source: string; page?: string }[];
@@ -654,6 +675,9 @@ export interface Catalog {
     magic: number;
     resonance: number;
     quality?: string;
+    depth?: number;
+    forbidden?: TalentTerm[];
+    required?: TalentTerm[];
   }[];
 }
 

@@ -21,10 +21,12 @@ const TALENT_KEYS: Record<string, MsgKey> = {
   Mundane: "talent.mundane",
 };
 
-/** "6 Magic/10 Spells", "4 Magic", "6 Resonance/7 Complex Forms". */
+/** "6 Magic/10 Spells", "4 Magic", "6 Resonance/7 Complex Forms", "6 Depth". */
 const MAGIC_SPELLS = /^(\d+) Magic\/(\d+) Spells$/;
 const MAGIC = /^(\d+) Magic$/;
 const RESONANCE = /^(\d+) Resonance\/(\d+) Complex Forms$/;
+/** "6 Depth": the A.I. talent, whose name stays English (DT). */
+const DEPTH = /^(\d+) Depth$/;
 
 function ratingsLabel(tail: string, ui: UiFn): string {
   const ms = MAGIC_SPELLS.exec(tail);
@@ -35,6 +37,9 @@ function ratingsLabel(tail: string, ui: UiFn): string {
 
   const r = RESONANCE.exec(tail);
   if (r) return ui("talent.resonanceForms", { resonance: r[1], forms: r[2] });
+
+  const dep = DEPTH.exec(tail);
+  if (dep) return ui("talent.depth", { depth: dep[1] });
 
   return tail;
 }

@@ -114,8 +114,10 @@ SILENT_TAG_SITES = {
     "penaltyfreesustain": 1,
     "selectarmor": 1,
     # one definition, plus the copy carried in `Protosapient`'s grants,
-    # which the walk reaches both nested and through `all_metatypes`
-    "selectinherentaiprogram": 3,
+    # which the walk reaches nested under the A.I. in both `metatypes` (the
+    # creation candidates) and `all_metatypes`, and through `all_metatypes`
+    # by its own name
+    "selectinherentaiprogram": 4,
     "selectsprite": 1,
     "specialattburnmultiplier": 1,
 }

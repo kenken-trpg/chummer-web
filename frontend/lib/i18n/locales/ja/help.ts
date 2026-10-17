@@ -27,6 +27,7 @@ export const JA_HELP = {
   "help.attr.EDG": "エッジ。1 セッションに使える回数。テストの振り直しや限界突破に使う",
   "help.attr.MAG": "魔力。呪文・召喚・アデプトパワーの強さ。エッセンスが減ると下がる",
   "help.attr.RES": "共振力。複合体やスプライトの強さ。エッセンスが減ると下がる",
+  "help.attr.DEP": "Depth。A.I. の特殊能力値。EDG の上限になる",
   "help.avail.what": "入手値（Avail）：品物の手に入れにくさ。数字が大きいほど難しい",
   "help.avail.suffix": "末尾の R は所持に許可が要る（Restricted）、F は所持自体が違法（Forbidden）",
   "help.avail.chargen":

@@ -2,6 +2,7 @@
 import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { talentLabel } from "@/lib/character/talent-labels";
+import { talentsFor } from "@/lib/character/metatype-limits";
 import { sourceBit, withOriginal } from "@/lib/character/format";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { priorityTableFor } from "@/lib/character/priority-table";
@@ -119,12 +120,11 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
         <label className="muted stacked-label">
           {ui("prio.talent")}
           <select value={ch.talent} onChange={(e) => patch({ talent: e.target.value })}>
-            {(["Karma", "LifeModule"].includes(ch.build_method || "Priority")
-              ? (catalog.karma_talents || []).map((t) => ({
-                  name: t.name,
-                  label: t.label || t.name,
-                }))
-              : table.Talent[ch.priorities.Talent].talents
+            {talentsFor<{ name: string; label?: string }>(
+              karmaBuild ? catalog.karma_talents || [] : table.Talent[ch.priorities.Talent].talents,
+              ch.metatype,
+              ch.talent,
+              catalog,
             ).map((t) => (
               <option key={t.name} value={t.name}>
                 {talentLabel(t.name, t.label, ui)}

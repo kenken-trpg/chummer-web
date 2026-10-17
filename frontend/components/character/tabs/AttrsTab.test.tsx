@@ -84,6 +84,40 @@ describe("<AttrsTab>", () => {
     expect(screen.getAllByRole("slider")).toHaveLength(10);
   });
 
+  it("shows an A.I.'s Depth and leaves out the body it does not have", () => {
+    renderTab({
+      character: {
+        metatype: "A.I.",
+        talent: "A.I.",
+        attributes: { DEP: 3 },
+        derived: {
+          enabled_tabs: ["DEP", "advanced programs"],
+          totals: { DEP: 3 } as never,
+          metatype_info: {
+            attributes: {
+              BOD: { min: 0, max: 0, aug: 0 },
+              AGI: { min: 0, max: 0, aug: 0 },
+              REA: { min: 0, max: 0, aug: 0 },
+              STR: { min: 0, max: 0, aug: 0 },
+              DEP: { min: 3, max: 6, aug: 6 },
+            },
+          } as never,
+        },
+      },
+    });
+    const names = screen.getAllByRole("slider").map((el) => el.getAttribute("aria-label"));
+    expect(names.some((name) => name?.startsWith("BOD"))).toBe(false);
+    const dep = screen.getByRole("slider", { name: /^DEP / }) as HTMLInputElement;
+    expect([dep.min, dep.max, dep.value]).toEqual(["3", "6", "3"]);
+    // the four mental attributes, EDG and DEP
+    expect(names).toHaveLength(6);
+  });
+
+  it("hides DEP from everyone else", () => {
+    renderTab();
+    expect(screen.queryByRole("slider", { name: /^DEP / })).toBeNull();
+  });
+
   it("edits a Mundane centaur's native MAG above its free floor", () => {
     const patch = vi.fn();
     renderTab({

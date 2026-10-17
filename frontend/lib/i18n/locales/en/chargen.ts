@@ -512,6 +512,7 @@ export const EN_CHARGEN = {
   "talent.magicSpells": "{magic} Magic/{spells} Spells",
   "talent.magic": "{magic} Magic",
   "talent.resonanceForms": "{resonance} Resonance/{forms} Complex Forms",
+  "talent.depth": "{depth} Depth",
   "prio.cell.attributes": "{points} ({special}) Attributes",
   "prio.cell.skills": "{skills} Skills/{groups} Skill Groups",
   "prio.method.priority": "Priority",

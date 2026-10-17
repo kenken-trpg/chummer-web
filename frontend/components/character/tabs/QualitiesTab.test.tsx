@@ -227,6 +227,28 @@ describe("<QualitiesTab>", () => {
     expect([...list.querySelectorAll("b")].map((b) => b.textContent)).toEqual(["Ambidextrous"]);
   });
 
+  it("offers an A.I. only the qualities its metatype lists", () => {
+    const catalog = makeCatalog({
+      ...pickerCatalog,
+      metatypes: [
+        {
+          name: "A.I.",
+          id: "ai",
+          category: "Metasapient",
+          attributes: {},
+          metavariants: [],
+          source: "DT",
+          quality_restriction: { Positive: [], Negative: ["Distinctive Style"] },
+        },
+      ],
+    });
+    renderTab({ catalog, character: { metatype: "A.I." } });
+    const list = document.querySelector(".quality-list") as HTMLElement;
+    expect([...list.querySelectorAll("b")].map((b) => b.textContent)).toEqual([
+      "Distinctive Style",
+    ]);
+  });
+
   it("'追加' patches quality_ids with the picked id", () => {
     const patch = vi.fn();
     renderTab({ catalog: pickerCatalog, patch });

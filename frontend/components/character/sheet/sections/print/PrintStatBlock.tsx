@@ -1,5 +1,5 @@
 import type { SheetData } from "@/lib/character/sheet-data";
-import { ATTRS } from "@/lib/character/constants";
+import { ATTRS, attrShown } from "@/lib/character/constants";
 import { attrShort } from "@/lib/ui-strings";
 import { lifeIncrement, limitLabel } from "@/lib/character/format";
 import { useUiText } from "@/lib/i18n";
@@ -16,9 +16,7 @@ export function PrintStatBlock(s: SheetData) {
   const { tr, t, d, totals, enabled, specialArmor } = s;
   const { ui } = useUiText();
 
-  const attrs = ATTRS.filter(
-    (key) => !((key === "MAG" && !enabled.has("MAG")) || (key === "RES" && !enabled.has("RES"))),
-  );
+  const attrs = ATTRS.filter((key) => attrShown(key, enabled));
 
   const rea = totals.REA || 0;
   const int = totals.INT || 0;
