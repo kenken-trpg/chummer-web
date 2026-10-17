@@ -356,6 +356,17 @@ describe("the export follows the UI locale", () => {
 });
 
 describe("buildCocofolia", () => {
+  it("notes an A.I.'s programs in the memo", () => {
+    const ai = makeCharacter({
+      metatype: "A.I.",
+      derived: { ai_programs: [{ name: "Exploit", extra: "", free: true }] as never },
+    });
+    const piece = JSON.parse(buildCocofolia(ai, makeCatalog(), identityTr));
+    expect(piece.data.memo).toContain("プログラム: Exploit");
+    const human = JSON.parse(buildCocofolia(makeCharacter(), makeCatalog(), identityTr));
+    expect(human.data.memo).not.toContain("プログラム:");
+  });
+
   it("produces a parseable ccfolia character piece", () => {
     const parsed = JSON.parse(
       buildCocofolia(makeCharacter({ name: "Wire" }), makeCatalog(), identityTr),

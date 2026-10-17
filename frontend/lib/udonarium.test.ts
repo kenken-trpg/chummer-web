@@ -57,6 +57,23 @@ describe("xmlEscape", () => {
 });
 
 describe("buildUdonariumPalette", () => {
+  it("lists an A.I.'s programs, which have nothing to roll, and nobody else's", () => {
+    const ai = makeCharacter({
+      metatype: "A.I.",
+      derived: {
+        ai_programs: [
+          { name: "Exploit", extra: "", free: true },
+          { name: "Skill Autosoft", extra: "Pistols", free: false },
+        ] as never,
+      },
+    });
+    const out = buildUdonariumPalette(ai, makeCatalog(), identityTr);
+    expect(out).toContain("■ A.I. のプログラム\nExploit・Skill Autosoft（Pistols）");
+    expect(buildUdonariumPalette(makeCharacter(), makeCatalog(), identityTr)).not.toContain(
+      "A.I. のプログラム",
+    );
+  });
+
   it("defines every variable it reads, on a bare character", () => {
     const out = buildUdonariumPalette(makeCharacter(), makeCatalog(), identityTr);
     expect(undefinedRefs(out)).toEqual([]);

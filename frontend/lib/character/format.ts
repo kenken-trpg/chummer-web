@@ -310,3 +310,17 @@ export function sourceBit(
   const page = String(item?.page ?? "").trim();
   return page ? ui("fmt.source", { source, page }) : source;
 }
+
+/**
+ * An A.I.'s programs on one line, for a VTT piece: nothing to roll, but what
+ * the table asks about ("do you have Exploit?"). Empty for anyone else.
+ */
+export function aiProgramList(
+  programs: { name: string; extra?: string }[] | undefined,
+  tr: (name: string) => string,
+  ui: UiFn,
+): string {
+  return (programs || [])
+    .map((p) => `${tr(p.name)}${p.extra ? `（${tr(p.extra)}）` : ""}`)
+    .join(ui("common.termSep"));
+}

@@ -230,3 +230,13 @@ def test_the_inherent_program_is_tied_to_its_quality(metavariant: str, bought: b
     assert links[0].findtext("improvementsource") == "Quality"
     # and reading it back still bills nothing for it
     assert [(r["name"], r["free"]) for r in second.derived["ai_programs"]] == [("Exploit", True)]
+
+
+def test_the_foundry_check_names_the_programs_it_leaves_out() -> None:
+    # Foundry's Chummer import reads no `aiprograms`, so the export writes
+    # none and says so before the file is written.
+    from app.fvtt_export.check import export_omissions
+
+    notices = export_omissions(_ai("E-Ghost", "Browse", "Exploit"))
+    names = [n["params"]["name"]["tr"] for n in notices if n["key"] == "engine.export.fvttAIProgram"]
+    assert names == ["Browse", "Exploit"]
