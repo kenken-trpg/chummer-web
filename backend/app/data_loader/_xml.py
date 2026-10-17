@@ -124,9 +124,9 @@ def data_root(name: str) -> ET.Element | None:
         return None
 
 
-ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "edg", "mag", "res", "ess")
+ATTR_KEYS = ("bod", "agi", "rea", "str", "cha", "int", "log", "wil", "edg", "mag", "res", "ess", "dep")
 PHYSICAL_ATTRS = ("BOD", "AGI", "REA", "STR", "WIL", "LOG", "INT", "CHA")
-SPECIAL_ATTRS = ("EDG", "MAG", "RES")
+SPECIAL_ATTRS = ("EDG", "MAG", "RES", "DEP")
 MATRIX_ATTRIBUTES = ("Attack", "Sleaze", "Data Processing", "Firewall")
 
 

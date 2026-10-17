@@ -260,6 +260,7 @@ def finalize(ctx: Ctx) -> None:
         warnings=ctx.warnings,
         free_positive_karma=int(ctx.life.get("free_positive_qualities") or 0),
         free_negative_karma=int(ctx.life.get("free_negative_qualities") or 0),
+        restriction=ctx.meta.get("quality_restriction"),
     )
 
     if not ctx.career:

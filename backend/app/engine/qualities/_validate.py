@@ -59,6 +59,7 @@ def apply_quality_rules(
     warnings: list[Notice] | None = None,
     free_positive_karma: int = 0,
     free_negative_karma: int = 0,
+    restriction: dict[str, list[str]] | None = None,
 ) -> int:
     owned = {item["id"] for item in qualities}
     extras = {
@@ -135,6 +136,10 @@ def apply_quality_rules(
             errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
         forbidden = spec.get("forbidden_tree") or []
         if forbidden and requirement_tree_met(forbidden, ctx):
+            errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
+        elif restriction is not None and spec["name"] not in restriction.get(str(spec.get("category")), []):
+            # The metatype's `<qualityrestriction>` (an A.I.'s): the qualities
+            # it lists are the only ones Chummer's SelectQuality offers.
             errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
     rules = current_rules()
     positive_spend = max(0, positive_spend - max(0, int(free_positive_karma)))

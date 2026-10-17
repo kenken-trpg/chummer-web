@@ -9,7 +9,7 @@ from .priority import talent_special
 
 
 def special_attribute_floors(meta: dict[str, Any], talent: dict[str, Any], *, is_karma: bool = False) -> dict[str, int]:
-    """Resolve species-enabled MAG/RES and replace a Talent's own starting rating.
+    """Resolve species-enabled MAG/RES/DEP and replace a Talent's own starting rating.
 
     Chummer's SelectMetatypePriority assigns limits rather than adding its
     starting magic to the species minimum. Merely having a range in the XML
@@ -20,9 +20,15 @@ def special_attribute_floors(meta: dict[str, Any], talent: dict[str, Any], *, is
     enabled = collect_effects([(str(meta.get("name") or ""), nodes)])["enabled_tabs"]
     attrs = meta.get("attributes") or {}
     floors: dict[str, int] = {
-        key: max(1, int((attrs.get(key) or {}).get("min") or 1)) for key in ("MAG", "RES") if key in enabled
+        key: max(1, int((attrs.get(key) or {}).get("min") or 1)) for key in ("MAG", "RES", "DEP") if key in enabled
     }
     key, start = talent_special(talent)
     if key:
         floors[key] = 1 if is_karma else max(1, start)
     return floors
+
+
+def is_ai(attrs_spec: dict[str, Any], floors: dict[str, int]) -> bool:
+    """Chummer's `Character.IsAI`: Depth is enabled and the body has no
+    Body to speak of (its metatype maximum is 0)."""
+    return "DEP" in floors and int((attrs_spec.get("BOD") or {}).get("max") or 0) == 0

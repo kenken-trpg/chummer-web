@@ -10,6 +10,7 @@ from ...rules import current_rules
 from ..constants import MAG_TALENTS, RES_TALENTS
 from ..pricing import apply_ware_essence_multipliers
 from ..resonance import _cyberadept_res_penalty_reduction
+from ..special_attributes import is_ai
 from .context import Ctx
 
 
@@ -53,6 +54,16 @@ def essence(ctx: Ctx) -> None:
 
     initiate_grade = max(0, int(ctx.state.initiate_grade or 0)) if ctx.talent["name"] in MAG_TALENTS else 0
     submersion_grade = max(0, int(ctx.state.submersion_grade or 0)) if ctx.talent["name"] in RES_TALENTS else 0
+    if is_ai(ctx.attrs_spec, ctx.special_floors):
+        # An A.I.'s Edge is capped by its Depth: Chummer swaps the metatype
+        # maximum for DEP's total value, and the maximum improvements
+        # (Lucky) still count on top of it.
+        dep_spec = ctx.attrs_spec["DEP"]
+        dep_cap = int(dep_spec["max"]) + int(ctx.attr_max_bonus.get("DEP") or 0)
+        dep = max(ctx.special_floors["DEP"], min(dep_cap, int(ctx.state.attributes.get("DEP", 0))))
+        dep_total = dep + int(ctx.effects["attribute_bonus"].get("DEP") or 0)
+        edg_max = int(ctx.attrs_spec["EDG"]["max"])
+        ctx.attr_max_bonus["EDG"] = int(ctx.attr_max_bonus.get("EDG") or 0) + dep_total - edg_max
     ctx.ratings = {}
     ctx.bought_ratings = {}
     for key, spec in ctx.attrs_spec.items():
@@ -78,6 +89,8 @@ def essence(ctx: Ctx) -> None:
                 raw = _after_loss(raw, res_cap, res_penalty, rules.ess_loss_reduces_maximum_only)
             else:
                 raw = 0
+        elif key == "DEP":
+            raw = max(ctx.special_floors[key], min(racial_max, raw)) if key in ctx.special_floors else 0
         elif key == "ESS":
             raw = int(ctx.ess)
         else:

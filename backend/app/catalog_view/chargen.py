@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from ..data_loader import CatalogDict, catalog
-from ..engine import all_talent_options, is_way_quality, priority_value, talent_options
+from ..engine import all_talent_options, is_way_quality, priority_value, talent_allowed, talent_options
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules, using_rules
 
 #: The five SR5 core metatypes. Creation also offers Centaur and the
@@ -115,9 +115,15 @@ def section(raw: CatalogDict) -> dict:
                 "resonance": int(t.get("resonance") or 0),
                 "quality": t.get("quality") or "",
             }
-            for t in all_talent_options()
+            for t in _offered_talents(all_talent_options(), {m["name"] for m in catalog()["metatypes"]})
         ],
     }
+
+
+def _offered_talents(talents: list[dict], offered: set[str]) -> list[dict]:
+    """The talents some offered metatype may take — not the A.I.'s, until an
+    A.I. is among the candidates."""
+    return [t for t in talents if any(talent_allowed(t, name) for name in offered)]
 
 
 def _table_for(name: str) -> dict[str, dict[str, dict]]:
@@ -137,7 +143,9 @@ def _table_for(name: str) -> dict[str, dict[str, dict]]:
                     "skill_group_points": row.get("skill_group_points"),
                     "nuyen": row.get("nuyen"),
                     "metatypes": mets,
-                    "talents": talent_options(letter) if cat == "Talent" else row.get("talents") or [],
+                    "talents": _offered_talents(talent_options(letter), offered)
+                    if cat == "Talent"
+                    else row.get("talents") or [],
                 }
     return built
 

@@ -13,12 +13,12 @@ from ..models import Priorities
 from ..notices import Notice, notice
 from ..rules import DEFAULT_PRIORITY_TABLE, current_rules
 from .constants import (
+    AI_TALENTS,
     BUILD_METHOD_KARMA,
     BUILD_METHOD_PRIORITY,
     BUILD_METHOD_SUM_TO_TEN,
     MAG_TALENTS,
     RES_TALENTS,
-    SKIP_TALENTS,
     SUM_TO_TEN_COST,
 )
 
@@ -94,7 +94,7 @@ def heritage_cost(letter: str, metatype: str, metavariant: str | None) -> tuple[
 
 def talent_options(letter: str) -> list[dict[str, Any]]:
     row = priority_value("Talent", letter)
-    talents = [t for t in (row.get("talents") or []) if t.get("name") not in SKIP_TALENTS]
+    talents = list(row.get("talents") or [])
     if letter.upper() == "E" and not any(t.get("name") == "Mundane" for t in talents):
         talents.insert(
             0,
@@ -112,10 +112,35 @@ def talent_options(letter: str) -> list[dict[str, Any]]:
     return talents
 
 
+def talent_allowed(talent: dict[str, Any], metatype: str | None) -> bool:
+    """Whether a character of this metatype may take this talent.
+
+    The talent's `<forbidden>` and `<required>` name a metatype or the
+    metatype's category — the base metatype's, as Chummer's
+    `MetatypeCategory` is: an Elf's Nocturna is a Metahuman. A talent read
+    without the lists (a custom row, the synthesized Mundane) allows anyone.
+    """
+    name = metatype or ""
+    base = catalog()["all_metatypes"].get(name) or {}
+    category = str(base.get("category") or "")
+
+    def hits(term: dict[str, str]) -> bool:
+        if term.get("kind") == "metatypecategory":
+            return term.get("name") == category
+        return term.get("name") == name
+
+    if any(hits(term) for term in talent.get("forbidden") or []):
+        return False
+    required = talent.get("required") or []
+    return not required or any(hits(term) for term in required)
+
+
 def talent_special(talent: dict[str, Any] | None) -> tuple[str | None, int]:
     if not talent:
         return None, 0
     name = talent.get("name") or ""
+    if name in AI_TALENTS:
+        return "DEP", int(talent.get("depth") or 1)
     magic = int(talent.get("magic") or 0)
     resonance = int(talent.get("resonance") or 0)
     if name in MAG_TALENTS or (magic and name not in RES_TALENTS):
@@ -125,14 +150,23 @@ def talent_special(talent: dict[str, Any] | None) -> tuple[str | None, int]:
     return None, 0
 
 
-def resolve_talent(letter: str, current: str | None) -> dict[str, Any]:
+def resolve_talent(letter: str, current: str | None, metatype: str | None = None) -> dict[str, Any]:
+    """The talent named `current` at this letter, or a default.
+
+    `current` is kept even when the metatype may not take it — the check
+    reports that as an error rather than swapping the talent behind the
+    player's back. The default is chosen among the talents `metatype` may
+    take (all of them when no metatype is given), so a new A.I. starts on
+    the A.I. talent.
+    """
     options = talent_options(letter)
     if not options:
         return {"name": "Mundane", "label": "Mundane", "value": 0, "magic": 0, "resonance": 0, "spells": 0, "cfp": 0}
     found = next((t for t in options if t["name"] == current), None)
     if found:
         return found
-    return next((t for t in options if t["name"] != "Mundane"), options[0])
+    allowed = [t for t in options if metatype is None or talent_allowed(t, metatype)] or options
+    return next((t for t in allowed if t["name"] != "Mundane"), allowed[0])
 
 
 def all_talent_options() -> list[dict[str, Any]]:
@@ -175,6 +209,9 @@ def all_talent_options() -> list[dict[str, Any]]:
             row["value"] = 0
             row["spells"] = 0
             row["cfp"] = 0
+        if name in AI_TALENTS:
+            # Karma buys Depth from the metatype's minimum, as it does Magic.
+            row["depth"] = 1
         out.append(row)
     if not any(t.get("name") == "Mundane" for t in out):
         out.append(
@@ -192,13 +229,19 @@ def all_talent_options() -> list[dict[str, Any]]:
     return sorted(out, key=lambda item: str(item.get("name") or ""))
 
 
-def resolve_talent_for_method(letter: str, current: str | None, build_method: str | None) -> dict[str, Any]:
+def resolve_talent_for_method(
+    letter: str, current: str | None, build_method: str | None, metatype: str | None = None
+) -> dict[str, Any]:
     if normalize_build_method(build_method) in {BUILD_METHOD_KARMA, "LifeModule"}:
         options = all_talent_options()
         found = next((t for t in options if t["name"] == current), None)
         if found:
             return found
-        mundane = next((t for t in options if t["name"] == "Mundane"), None)
+        allowed = [t for t in options if metatype is None or talent_allowed(t, metatype)]
+        mundane = next((t for t in allowed if t["name"] == "Mundane"), None)
+        if mundane is None and allowed and metatype is not None:
+            # An A.I. may not be Mundane; its one talent is A.I.
+            return allowed[0]
         return mundane or {
             "name": "Mundane",
             "label": "Mundane",
@@ -208,7 +251,7 @@ def resolve_talent_for_method(letter: str, current: str | None, build_method: st
             "spells": 0,
             "cfp": 0,
         }
-    return resolve_talent(letter, current)
+    return resolve_talent(letter, current, metatype)
 
 
 def normalize_build_method(raw: str | None) -> str:

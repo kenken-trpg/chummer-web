@@ -30,6 +30,7 @@ from .engine import (
     resolve_talent_for_method,
     sanitize_quality_ids,
     snapshot_career_baseline,
+    talent_allowed,
 )
 from .engine.special_attributes import special_attribute_floors
 from .models import CharacterCreate, CharacterPatch, CharacterState, Priorities
@@ -61,14 +62,16 @@ def compute_state(state: CharacterState) -> CharacterState:
 
 
 def _apply_talent_ratings(data: dict) -> None:
-    talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
+    talent = resolve_talent_for_method(
+        data["priorities"]["Talent"], data.get("talent"), data.get("build_method"), data.get("metatype")
+    )
     data["talent"] = talent["name"]
     meta = find_metatype(data["metatype"], data.get("metavariant"))
     floors = special_attribute_floors(
         meta, talent, is_karma=normalize_build_method(data.get("build_method")) in {BUILD_METHOD_KARMA, "LifeModule"}
     )
     attrs = dict(data.get("attributes") or {})
-    for key in ("MAG", "RES"):
+    for key in ("MAG", "RES", "DEP"):
         attrs[key] = floors.get(key, 0)
     data["attributes"] = attrs
 
@@ -169,7 +172,17 @@ def apply_patch(state: CharacterState, patch: CharacterPatch) -> CharacterState:
         data["attributes"] = default_attributes(meta)
         data["attribute_karma"] = {}
     data["build_method"] = normalize_build_method(data.get("build_method"))
-    talent = resolve_talent_for_method(data["priorities"]["Talent"], data.get("talent"), data.get("build_method"))
+    current_talent = data.get("talent")
+    if patch.metatype and current_talent:
+        # A new metatype drops a talent it may not take (an A.I. leaving
+        # its A.I. talent behind, or a human arriving at one); the default
+        # is then picked among those it may.
+        kept = resolve_talent_for_method(data["priorities"]["Talent"], current_talent, data.get("build_method"))
+        if not talent_allowed(kept, data["metatype"]):
+            current_talent = None
+    talent = resolve_talent_for_method(
+        data["priorities"]["Talent"], current_talent, data.get("build_method"), data.get("metatype")
+    )
     data["talent"] = talent["name"]
     method_changed = old_method != data["build_method"]
     if old_letter != data["priorities"]["Talent"] or old_talent != data["talent"] or patch.metatype or method_changed:
