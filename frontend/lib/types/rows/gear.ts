@@ -164,6 +164,9 @@ export interface InstalledWeaponAccessory {
 }
 
 export interface InstalledCommlink {
+  /** the headware Commlink or Cyberdeck it is implanted in (SR5 p.451-452) */
+  parent_id?: string | null;
+  implanted_in?: string;
   construction_attributes?: Record<string, number>;
   matrix_permanent_damage?: number;
   matrix_condition_monitor?: number;
@@ -187,6 +190,9 @@ export interface InstalledCommlink {
 }
 
 export interface InstalledMatrixDevice {
+  /** the headware Commlink or Cyberdeck it is implanted in (SR5 p.451-452) */
+  parent_id?: string | null;
+  implanted_in?: string;
   construction_attributes?: Record<string, number>;
   matrix_permanent_damage?: number;
   matrix_condition_monitor?: number;

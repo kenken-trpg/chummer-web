@@ -57,6 +57,7 @@ from ..gear import (
 )
 from ..gear.deck_modules import resolve_deck_modules
 from ..gear.electronic_modifications import resolve_electronic_modifications
+from ..gear.implants import mark_implanted, place_implanted_devices
 from ..gear.matrix import apply_host_matrix_mods
 from ..limits import _finalize_avail_tree
 from ..magic import attach_weapon_focus_dice
@@ -122,12 +123,16 @@ def resolve_gear(
     warnings.extend(acc_warns)
     errors.extend(acc_errors)
 
+    implanted, implant_warns = place_implanted_devices(state)
+    warnings.extend(implant_warns)
     state.commlinks, commlinks, link_nuyen = resolve_commlink_rows(state)
     spend["commlinks"] += link_nuyen
+    mark_implanted(commlinks, implanted, state.commlinks)
 
     kept_decks, cyberdecks, deck_nuyen = _resolve_matrix_devices("cyberdecks", list(state.cyberdecks or []))
     state.cyberdecks = kept_decks
     spend["cyberdecks"] += deck_nuyen
+    mark_implanted(cyberdecks, implanted, state.cyberdecks)
     kept_rccs, rccs, rcc_nuyen = _resolve_matrix_devices("rccs", list(state.rccs or []))
     state.rccs = kept_rccs
     spend["rccs"] += rcc_nuyen
