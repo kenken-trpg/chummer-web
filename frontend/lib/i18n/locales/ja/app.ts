@@ -148,11 +148,10 @@ export const JA_APP = {
   "common.maxTakes": " / 最大{max}",
   "common.freeSlot": " / 無料",
   "common.karmaCost": " / {karma}カルマ",
-  "common.powers": "能力 {list}",
   "common.powersHead": "能力",
   /** A spirit power and what the table gives it: "物質化（物理・複雑・自身・
    *  維持）". A power the data leaves blank prints as the name alone. */
-  "common.powerRow": "{name}（{detail}）",
+  "common.powerDetail": "（{detail}）",
   "common.hits": "{kind}ヒット",
 
   "common.kind": "種類",

@@ -4,7 +4,7 @@ import type { Catalog, Character } from "@/lib/types";
 import type { UiFn } from "@/lib/i18n";
 import { SkillPickSelects } from "@/components/character/SkillPickSelects";
 import { QualityExtraEditor } from "@/components/character/tabs/qualities/QualityExtraEditor";
-import { critterPowerRow } from "@/lib/spell-terms";
+import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import {
   dropSkillPicksForPrefix,
   qualityBlockReason,
@@ -183,7 +183,9 @@ export function OwnedQualityRow({
               {ui("common.powersHead")}
               <ul className="critter-powers">
                 {q.critter_powers.map((power, i) => (
-                  <li key={`${power.name}-${i}`}>{critterPowerRow(power, tr, ui)}</li>
+                  <li key={`${power.name}-${i}`}>
+                    <CritterPowerRow power={power} tr={tr} ui={ui} />
+                  </li>
                 ))}
               </ul>
             </div>

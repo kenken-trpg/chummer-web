@@ -1102,6 +1102,12 @@ input[type="search"] {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 0 12px;
 }
+/* A power's bracketed terms move to the next line whole rather than breaking
+   inside a word (複/雑); a box too narrow even for them breaks at the dots. */
+.term-group {
+  display: inline-block;
+  word-break: keep-all;
+}
 
 .sheet-dim {
   color: var(--muted);

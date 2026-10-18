@@ -79,7 +79,8 @@ describe("<SpiritsTab>", () => {
         },
       },
     });
-    expect(screen.getByText("Engulf（物理・複雑・接触・維持）")).toBeDefined();
+    const rows = [...document.querySelectorAll(".critter-powers li")].map((li) => li.textContent);
+    expect(rows).toContain("Engulf（物理・複雑・接触・維持）");
     // a power the data describes with nothing at all is still listed, by name
     expect(screen.getByText("Natural Weaponry")).toBeDefined();
   });

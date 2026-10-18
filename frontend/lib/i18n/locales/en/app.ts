@@ -143,9 +143,8 @@ export const EN_APP = {
   "common.maxTakes": " / max {max}",
   "common.freeSlot": " / free",
   "common.karmaCost": " / {karma} karma",
-  "common.powers": "Powers {list}",
   "common.powersHead": "Powers",
-  "common.powerRow": "{name} ({detail})",
+  "common.powerDetail": " ({detail})",
   "common.hits": "{kind} hits",
 
   "common.kind": "Kind",

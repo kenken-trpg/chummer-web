@@ -1,13 +1,9 @@
+import { Fragment } from "react";
+import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import type { SheetData } from "@/lib/character/sheet-data";
 import { GradeList, Section } from "@/components/character/sheet/blocks";
 import { formatPoints, sourceBit } from "@/lib/character/format";
-import {
-  critterPowerRow,
-  spellDescriptors,
-  spellDuration,
-  spellRange,
-  spellType,
-} from "@/lib/spell-terms";
+import { spellDescriptors, spellDuration, spellRange, spellType } from "@/lib/spell-terms";
 import { useUiText } from "@/lib/i18n";
 import { scopeTr } from "@/lib/ui-strings";
 
@@ -100,11 +96,13 @@ export function MagicSection(s: SheetData) {
                 {item.bound ? ui("sheet.bound") : ""}
                 {item.powers?.length ? (
                   <div className="sheet-dim">
-                    {ui("common.powers", {
-                      list: item.powers
-                        .map((power) => critterPowerRow(power, tr, ui))
-                        .join(ui("common.termSep")),
-                    })}
+                    {ui("common.powersHead")}{" "}
+                    {item.powers.map((power, i) => (
+                      <Fragment key={`${power.name}-${i}`}>
+                        {i ? ui("common.termSep") : null}
+                        <CritterPowerRow power={power} tr={tr} ui={ui} />
+                      </Fragment>
+                    ))}
                   </div>
                 ) : null}
               </li>

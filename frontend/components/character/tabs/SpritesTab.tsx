@@ -3,7 +3,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { useState } from "react";
 import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
-import { critterPowerRow } from "@/lib/spell-terms";
+import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
@@ -60,7 +60,9 @@ export function SpritesTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                 {ui("common.powersHead")}
                 <ul className="critter-powers">
                   {item.powers.map((power) => (
-                    <li key={power.name}>{critterPowerRow(power, tr, ui)}</li>
+                    <li key={power.name}>
+                      <CritterPowerRow power={power} tr={tr} ui={ui} />
+                    </li>
                   ))}
                 </ul>
               </div>
