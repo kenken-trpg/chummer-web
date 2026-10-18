@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { CharacterSidebar } from "@/components/character/CharacterSidebar";
-import { TabBar } from "@/components/character/TabBar";
+import { shownTabs, TabBar } from "@/components/character/TabBar";
 import { TabPanels } from "@/components/character/TabPanels";
 import type { TabPanelProps } from "@/components/character/types";
 import { Toolbar } from "@/components/character/Toolbar";
@@ -93,7 +93,7 @@ export default function Page() {
           {/* Outside the <header> on purpose: a sticky element can only stick
               inside its own containing block, so a tab bar nested in the
               header would unstick the moment the header scrolled away. */}
-          <TabBar tab={tab} setTab={setTab} enabledTabs={d.enabled_tabs} />
+          <TabBar tab={tab} setTab={setTab} enabledTabs={shownTabs(d)} />
 
           <TabPanels
             tab={tab}
