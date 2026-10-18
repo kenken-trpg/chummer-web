@@ -121,7 +121,7 @@ describe("<CustomDrugMixer>", () => {
 
     expect(screen.getByText(/95¥/)).toBeTruthy();
     expect(screen.getByText(/入手値 5R/)).toBeTruthy();
-    expect(screen.getByText(/依存症 R6\/閾値2/)).toBeTruthy();
+    expect(screen.getByText(/依存症 R6\/目標値2/)).toBeTruthy();
     expect(screen.getByText(/クラッシュ 2S/)).toBeTruthy();
   });
 

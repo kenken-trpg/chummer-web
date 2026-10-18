@@ -100,13 +100,13 @@ export const JA_RULES = {
   "sr.skillcat.social": "対人技能",
   "sr.skillcat.magical": "魔法技能",
   "sr.skillcat.pseudomagical": "準魔法技能",
-  "sr.skillcat.resonance": "共鳴技能",
+  "sr.skillcat.resonance": "共振力技能",
   "sr.skillcat.technical": "技術技能",
 
   "sr.skillcat.vehicle": "操縦技能",
   "sr.spirit.combat": "戦闘",
   "sr.spirit.detection": "探知",
-  "sr.spirit.health": "健康",
+  "sr.spirit.health": "身体",
   "sr.spirit.illusion": "幻影",
   "sr.spirit.manipulation": "操作",
 

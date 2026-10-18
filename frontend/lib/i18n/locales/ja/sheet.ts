@@ -84,7 +84,7 @@ export const JA_SHEET = {
   "sheet.ware": "ウェア",
   "sheet.matrix": "マトリックス",
   "sheet.magic": "魔法",
-  "sheet.resonance": "共鳴",
+  "sheet.resonance": "共振力",
   "sheet.martial": "格闘技",
   "sheet.contacts": "コンタクト",
   "sheet.vehicles": "ヴィークル・ドローン",

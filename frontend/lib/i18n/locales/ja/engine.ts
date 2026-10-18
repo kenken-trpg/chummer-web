@@ -127,7 +127,7 @@ export const JA_ENGINE = {
   "engine.spiritRole.combat": "戦闘",
   "engine.spiritRole.detection": "探知",
   "engine.spiritRole.extra": "追加",
-  "engine.spiritRole.health": "健康",
+  "engine.spiritRole.health": "身体",
   "engine.spiritRole.illusion": "幻影",
   "engine.spiritRole.manipulation": "操作",
   "engine.trustFund.1": "Medium ライフスタイル＋毎月 500¥",

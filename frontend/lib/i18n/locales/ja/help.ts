@@ -256,7 +256,7 @@ export const JA_HELP = {
   "help.drug.testLabel": "依存症テスト",
   "help.drug.pool":
     "依存症テストのプール ＝ BOD ＋ WIL（肉体的）／LOG ＋ WIL（精神的）（SR5 p.414）",
-  "help.drug.threshold": "依存症閾値がそのテストの目標ヒット数。届かないと依存症が 1 段進む",
+  "help.drug.threshold": "依存症目標値がそのテストの目標ヒット数。届かないと依存症が 1 段進む",
   "help.drug.addicted":
     "括弧内はすでに依存症になっている場合のプール。初回だけ変える資質がある（Drug Tolerant は初回 +2、CF p.54）",
   "help.drug.rating": "依存症レーティング：抜けようとするときに相手になる値。大きいほど抜けにくい",
