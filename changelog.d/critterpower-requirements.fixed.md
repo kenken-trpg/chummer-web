@@ -1,0 +1,5 @@
+- **クリッターパワーを条件にする資質・メタマジックを、正しく判定するようにしました。** これまでは、パワーを条件とする前提や禁止を判定できず、いつも「満たさない」と扱っていました。
+  - Soul Swallower は、Essence Drain を持っていれば取れます（Infected: Nosferatu など）。これまでは常に前提エラーでした。
+  - Infected の任意パワーで選んだパワーと同じ「Infected Optional Power」は、禁止になります。
+  - Enhanced Mist Form（メタマジック）は、Mist Form パワーを持っていれば取れます。
+- **資質の前提・禁止を、その資質を取る前の状態で判定するようにしました。** Chummer と同じ扱いです。これまでは Infected: Mutaqua が自分自身を禁止していて、Infected Optional Power は自分が与えるパワーで自分を禁止しかねませんでした。

@@ -128,6 +128,7 @@ def resolve_initiation(
     errors: list[Notice],
     *,
     metamagic_limits: list[MetamagicLimitRow] | None = None,
+    critter_powers: set[str] | None = None,
 ) -> InitiationBundle:
     warnings: list[Notice] = []
     empty: InitiationBundle = {
@@ -322,6 +323,8 @@ def resolve_initiation(
             or (state.settings.ignore_art is None and bool(state.settings.books and "SG" not in state.settings.books)),
             "metamagics": set(metamagic_names),
             "powers": set(),
+            # Enhanced Mist Form needs the Mist Form power (an Infected's)
+            "critter_powers": set(critter_powers or ()),
             "metatypes": set(),
             "metatype_categories": set(),
             "magenabled": True,
