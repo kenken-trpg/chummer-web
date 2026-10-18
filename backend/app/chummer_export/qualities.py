@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import uuid
 import xml.etree.ElementTree as ET
+from copy import deepcopy
 from typing import Any
 
 from ..data_loader import catalog
+from ..data_loader._xml import parse_data
 from ..engine.constants import (
     QUALITY_ADDSPIRIT_EXTRA_MARKER,
     quality_attribute_extra_key,
@@ -84,17 +86,23 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
         # quality with an AddContact improvement, which the import follows back
         if any(c.source_quality_id == qid for c in state.contacts) and q.find("guid") is None:
             _sub(q, "guid", qid)
+        # the powers it grants (an Infected's, a drake's): each one's
+        # CritterPower improvement names this quality by its guid
+        spec = specs.get(qid) or {}
+        if (spec.get("critter_powers") or spec.get("optional_powers")) and q.find("guid") is None:
+            _sub(q, "guid", qid)
 
     export_metatype_qualities(quals, state, ctx)
     # Chummer keeps life modules here too, as a quality type of their own.
     export_life_modules(quals, state)
-    _export_quality_critter_powers(root, state)
+    power_links = _export_quality_critter_powers(root, state)
     export_metatype_powers(root, state, ctx)
     # Chummer keeps a picked spell category only on the improvement
     # `<limitspellcategory />` made, tied to the quality by its guid
     links = [(category, qid, "LimitSpellCategory") for qid, category in spell_limits]
     links += [(child_guid, qid, "SpecificQuality") for qid, child_guid in granted]
     links += [(c.id, c.source_quality_id, "AddContact") for c in state.contacts if c.source_quality_id]
+    links += [(power_guid, qid, "CritterPower") for power_guid, qid in power_links]
     if links:
         imps = improvements_of(root)
         for improved, qid, kind in links:
@@ -105,30 +113,55 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
             _sub(imp, "improvementsource", "Quality")
 
 
-def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> None:
-    """`<critterpowers>`: what an Infected quality grants, plus its one
-    optional power — where Chummer's `critterpowers` / `optionalpowers`
-    improvements put them (`grade` −1 marks a power a quality gave). The
-    optional pick has nowhere else to live in a `.chum5`, so without this it
-    is lost on the way out."""
+def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> list[tuple[str, str]]:
+    """`<critterpowers>`: what a quality grants (an Infected's, a drake's, a
+    free insect spirit's), plus its one optional power — where Chummer's
+    `critterpowers` / `optionalpowers` improvements put them. The optional
+    pick has nowhere else to live in a `.chum5`, so without this it is lost on
+    the way out.
+
+    Written the way `CritterPower.Save` does after
+    `AddImprovementCollection.critterpowers` made it: the definition's
+    fields and `<bonus>`, the quality's rating and pick, `grade` −1 (a power a
+    quality gave), and a guid. Returns (power guid, quality id) for the
+    CritterPower improvement that ties each power to its quality — which is
+    what Chummer follows to take the powers away with the quality.
+    """
     by_id = {str(row["id"]): row for row in catalog()["qualities"]}
-    power_ids = {str(row.get("name") or ""): str(row.get("id") or "") for row in catalog().get("critter_powers") or []}
-    refs: list[dict[str, Any]] = []
+    rows: dict[str, dict[str, Any]] = {}
+    for row in catalog().get("critter_powers") or []:
+        rows.setdefault(str(row.get("name") or ""), row)  # the first definition, as `critter_power_spec`
+    definitions = {
+        node.findtext("id") or "": node for node in parse_data("critterpowers.xml").findall("./powers/power")
+    }
+    refs: list[tuple[str, dict[str, Any]]] = []
     for qid in state.quality_ids:
         spec = by_id.get(qid) or {}
-        refs.extend(spec.get("critter_powers") or [])
+        refs.extend((qid, ref) for ref in spec.get("critter_powers") or [])
         picked = state.quality_extras.get(quality_optional_power_extra_key(qid), "")
-        refs.extend(row for row in spec.get("optional_powers") or [] if critter_power_label(row) == picked)
+        refs.extend((qid, ref) for ref in spec.get("optional_powers") or [] if critter_power_label(ref) == picked)
     if not refs:
-        return
+        return []
     powers = _sub(root, "critterpowers")
-    for ref in refs:
+    links = []
+    for index, (qid, ref) in enumerate(refs):
+        row = rows.get(str(ref["name"])) or {}
+        guid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{state.id}:quality:{qid}:power:{index}:{ref['name']}"))
         el = _sub(powers, "critterpower")
-        _sub(el, "sourceid", power_ids.get(str(ref["name"]), ""))
+        _sub(el, "sourceid", row.get("id") or "")
+        _sub(el, "guid", guid)
         _sub(el, "name", ref["name"])
+        for key in ("category", "type", "action", "range", "duration", "source", "page"):
+            _sub(el, key, row.get(key) or "")
         _sub(el, "extra", ref.get("select") or "")
         _sub(el, "rating", ref.get("rating") or 0)
         _sub(el, "grade", -1)
+        definition = definitions.get(str(row.get("id") or ""))
+        bonus = definition.find("bonus") if definition is not None else None
+        if bonus is not None:
+            el.append(deepcopy(bonus))
+        links.append((guid, qid))
+    return links
 
 
 def _quality_extra_out(

@@ -812,3 +812,29 @@ def test_the_talent_mag_is_the_metatype_minimum_not_bought_base() -> None:
     assert [mag.findtext(t) for t in ("metatypemin", "base", "karma")] == ["6", "0", "0"]
     st, _ = chum5_to_state(state_to_chum5(compute_state(src)))
     assert st["attributes"]["MAG"] == 6
+
+
+def test_a_quality_power_is_written_as_chummer_saves_it_and_tied_to_its_quality() -> None:
+    """`AddImprovementCollection.critterpowers` makes each power, gives it
+    `grade` −1, and ties it to the quality with a CritterPower improvement
+    whose source is that quality's guid — the link Chummer follows to take
+    the powers away with the quality."""
+    state, qid = _with_quality("Dracoform (Western Drake)", {})
+    root = ET.fromstring(state_to_chum5(state))
+    quality = next(q for q in root.findall("./qualities/quality") if q.findtext("sourceid") == qid)
+    powers = root.findall("./critterpowers/critterpower")
+    armor = next(p for p in powers if p.findtext("name") == "Hardened Armor")
+    assert armor.findtext("rating") == "2"
+    assert armor.findtext("grade") == "-1"
+    assert armor.findtext("category") == "Paranormal"
+    assert armor.findtext("./bonus/armor") == "Rating"
+    links = {
+        imp.findtext("improvedname"): imp
+        for imp in root.findall("./improvements/improvement")
+        if imp.findtext("improvementttype") == "CritterPower"
+    }
+    assert {p.findtext("guid") for p in powers} == set(links)
+    assert all(
+        imp.findtext("sourcename") == quality.findtext("guid") and imp.findtext("improvementsource") == "Quality"
+        for imp in links.values()
+    )
