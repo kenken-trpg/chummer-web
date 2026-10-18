@@ -163,7 +163,24 @@ export function SidebarAwakened({ d, tr, ui }: SidebarBlockProps) {
       ) : null}
       {(d.damage_resistance || 0) > 0 ? (
         <div className="stat">
-          <span>{ui("side.damageResist")}</span>
+          <span>
+            <HelpTip
+              label={ui("help.open", { label: ui("side.damageResist") })}
+              lines={[
+                { label: ui("help.soak.what") },
+                ...(d.damage_resist
+                  ? [
+                      { label: ui("help.soak.body"), value: d.damage_resist.body },
+                      { label: ui("help.soak.armor"), value: d.damage_resist.armor },
+                      { label: ui("help.bonus"), value: `+${d.damage_resist.bonus}` },
+                      { label: ui("help.total"), value: d.damage_resist.pool, strong: true },
+                    ]
+                  : []),
+              ]}
+            >
+              {ui("side.damageResist")}
+            </HelpTip>
+          </span>
           <b>+{d.damage_resistance}</b>
         </div>
       ) : null}

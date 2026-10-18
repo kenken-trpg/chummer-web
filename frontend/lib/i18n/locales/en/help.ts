@@ -17,6 +17,18 @@ export const EN_HELP = {
   "help.cm.homeNode":
     "Matrix condition monitor = 8 + the home node {name}'s Device Rating ÷ 2, rounded up",
   "help.cm.core": "Core damage track = 8 + DEP ÷ 2, rounded up; an A.I. has no Stun track",
+  "help.soak.what": "Damage resistance dice = BOD + armor + modifiers",
+  "help.soak.body": "BOD (an A.I.: the Body of the vehicle it uses as its home node, or 0)",
+  "help.soak.armor": "Armor",
+  "help.spellResist.what":
+    "Added to every test that resists a spell, except dodging an indirect one",
+  "help.spellResist.sheet": "The sheet's Spell defense box has the total dice for each kind",
+  "help.def.directMana": "Resisting a direct mana spell = WIL + modifiers",
+  "help.def.detection": "Resisting a detection spell = LOG + WIL + modifiers",
+  "help.def.mentalManipulation": "Resisting a mental manipulation spell = LOG + WIL + modifiers",
+  "help.def.manaIllusion": "Resisting a mana illusion spell = LOG + WIL + modifiers",
+  "help.def.physicalIllusion": "Resisting a physical illusion spell = LOG + INT + modifiers",
+  "help.def.bonus": "Modifiers (spell resistance included)",
   "help.init.value": "Initiative = REA + INT",
   "help.init.dice": "Initiative dice = 1D6 + extra dice (max 5D6)",
   "help.init.note": "Subtract 10 at the end of each Initiative Pass (SR5 p.159)",

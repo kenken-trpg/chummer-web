@@ -8,12 +8,13 @@ import type { SidebarBlockProps } from "@/components/character/sidebar/types";
 const SPELL_DEFENCE: [
   MsgKey,
   "direct_mana" | "detection" | "mental_manipulation" | "mana_illusion" | "physical_illusion",
+  MsgKey,
 ][] = [
-  ["side.def.directMana", "direct_mana"],
-  ["side.def.detection", "detection"],
-  ["side.def.mentalManipulation", "mental_manipulation"],
-  ["side.def.manaIllusion", "mana_illusion"],
-  ["side.def.physicalIllusion", "physical_illusion"],
+  ["side.def.directMana", "direct_mana", "help.def.directMana"],
+  ["side.def.detection", "detection", "help.def.detection"],
+  ["side.def.mentalManipulation", "mental_manipulation", "help.def.mentalManipulation"],
+  ["side.def.manaIllusion", "mana_illusion", "help.def.manaIllusion"],
+  ["side.def.physicalIllusion", "physical_illusion", "help.def.physicalIllusion"],
 ];
 
 /** Test modifiers, shown only when non-zero. */
@@ -36,17 +37,44 @@ export function SidebarMagicStats({ d, ui }: SidebarBlockProps) {
       ) : null}
       {(d.spell_resistance || 0) !== 0 ? (
         <div className="stat">
-          <span>{ui("side.spellResist")}</span>
+          <span>
+            <HelpTip
+              label={ui("help.open", { label: ui("side.spellResist") })}
+              lines={[
+                { label: ui("help.spellResist.what") },
+                { label: ui("help.spellResist.sheet") },
+              ]}
+            >
+              {ui("side.spellResist")}
+            </HelpTip>
+          </span>
           <b>+{d.spell_resistance}</b>
         </div>
       ) : null}
       {d.spell_defense
-        ? SPELL_DEFENCE.map(([key, field]) => {
+        ? SPELL_DEFENCE.map(([key, field, help]) => {
             const value = d.spell_defense![field];
             if (value === d.spell_defense!.general) return null;
+            const pool = d.spell_defense_pools?.[field];
             return (
               <div className="stat" key={key}>
-                <span>{ui(key)}</span>
+                <span>
+                  <HelpTip
+                    label={ui("help.open", { label: ui(key) })}
+                    lines={[
+                      { label: ui(help) },
+                      {
+                        label: ui("help.def.bonus"),
+                        value: `${Number(value) > 0 ? "+" : ""}${value}`,
+                      },
+                      ...(pool === undefined
+                        ? []
+                        : [{ label: ui("help.total"), value: pool, strong: true }]),
+                    ]}
+                  >
+                    {ui(key)}
+                  </HelpTip>
+                </span>
                 <b>
                   {Number(value) > 0 ? "+" : ""}
                   {value}
