@@ -128,8 +128,8 @@ describe("<CharacterSidebar>", () => {
     // BOD 5 + WIL 3 + 2
     expect(tipOf("疲労抵抗")).toMatch(/合計10$/);
     // Chummer's Judge Intentions takes another modifier too, so no total here
-    expect(tipOf("意図看破")).toContain("CHA + INT + 修正");
-    expect(tipOf("意図看破")).not.toContain("合計");
+    expect(tipOf("意図を測る")).toContain("CHA + INT + 修正");
+    expect(tipOf("意図を測る")).not.toContain("合計");
     expect(tipOf("非武装DV")).toContain("素手");
     expect(tipOf("Matrix: Hack on the Fly")).toContain("Codeslinger");
   });
