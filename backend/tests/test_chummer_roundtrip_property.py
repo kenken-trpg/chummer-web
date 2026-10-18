@@ -99,10 +99,13 @@ def characters(draw: st.DrawFn) -> bytes:
     )
 
 
-# The catalog is read once at import; `_loop` is ~6 ms, so the default 100
-# examples cost well under a second. `function_scoped_fixture` is not in play
-# and there is no per-example setup, so the only health check worth silencing
-# is the one about `catalog()` being slow the very first time it is touched.
+# The catalog is read once at import. One example (a `_loop`) takes ~40-160 ms
+# now, so the default 100 cost ~7 s run alone and ~15 s beside the other xdist
+# workers (measured 2026-10-18). Fewer examples on a PR were tried and bought
+# ~2 s of suite time, inside the run-to-run noise, so it stays at 100.
+# `function_scoped_fixture` is not in play and there is no per-example setup,
+# so the only health check worth silencing is the one about `catalog()` being
+# slow the very first time it is touched.
 @settings(max_examples=100, deadline=None, suppress_health_check=[HealthCheck.too_slow])
 @given(characters())
 def test_a_generated_character_survives_a_second_trip(xml: bytes) -> None:
