@@ -64,6 +64,10 @@ CURATED: dict[str, str] = {
     "Manipulation": "操作",
     # skill groups / common category corrections vs glossary
     "Body": "強靱力",  # attribute category kanji fix (靭 -> 靱)
+    # the Social limit, as an armor's wireless bonus names it; core rulebook
+    # term (社交リミット). It sat in the Run & Gun table while the worksheet
+    # counted that reference as one of RG's items.
+    "Social": "社交",
     "Attributes": "能力値",
     "Resonance": "共振力",
     # metatype categories — chumJA's SR4 "ヒト" is wrong for SR5

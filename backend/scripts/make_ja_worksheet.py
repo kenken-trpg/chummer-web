@@ -89,8 +89,20 @@ class Entry:
         )
 
 
+#: Fields whose rows are the book's own text although they carry no `source`.
+#: Everywhere else a sourceless row nested in another is a reference to an item
+#: filed elsewhere — a life module's granted skill, a quality's prerequisite
+#: tree, a metatype's built-in powers, a deck's included gear — and counting it
+#: as the referrer's book put Computer and Academic in Run Faster's worksheet.
+#: A mentor's choices are the exception: their labels exist only there.
+CONTENT_WITHOUT_SOURCE: frozenset[tuple[str, str]] = frozenset({("mentors", "choices")})
+
+
 def book_entries(bk: Book) -> dict[str, Entry]:
-    """Every ``source == bk.code`` name and category the catalog exposes.
+    """Every name and category of a ``source == bk.code`` row in the catalog.
+
+    A row is a dict with its own `source`, or one under a field listed in
+    `CONTENT_WITHOUT_SOURCE`, which takes its parent's.
 
     Shared with tests/test_book_coverage.py — the worksheet and the coverage
     ledger have to be counting the same set of names or the burn-down lies.
@@ -107,10 +119,10 @@ def book_entries(bk: Book) -> dict[str, Entry]:
         except (TypeError, ValueError):
             pass
 
-    def walk(top: str, obj: object, source: str | None = None) -> None:
+    def walk(top: str, obj: object, inherited: str | None = None) -> None:
         if isinstance(obj, dict):
             here = obj.get("source")
-            source = here if isinstance(here, str) and here else source
+            source = here if isinstance(here, str) and here else inherited
             if source == bk.code:
                 name = obj.get("name")
                 if isinstance(name, str) and name.strip():
@@ -121,10 +133,10 @@ def book_entries(bk: Book) -> dict[str, Entry]:
             for key, value in obj.items():
                 if key in ("name", "source", "category"):
                     continue
-                walk(top, value, source)
+                walk(top, value, source if (top, key) in CONTENT_WITHOUT_SOURCE else None)
         elif isinstance(obj, list):
             for value in obj:
-                walk(top, value, source)
+                walk(top, value, inherited)
 
     cat = catalog()
     for key, value in cat.items():
