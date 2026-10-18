@@ -6,13 +6,18 @@ while reading that book's Japanese text, then `import_ja_worksheet.py` turns the
 filled file back into `scripts/ja_curated_<slug>.py`.
 
 Which books can be passed, and what a reader answers from, is
-`scripts/ja_books.py` — for Run & Gun that is the Japanese edition, for Run
-Faster, Street Grimoire and Data Trails it is the Shadowrun Codex, which has no
-page in common with them (the header says so when it applies).
+`scripts/ja_books.py` — for Run & Gun and the core rulebook that is the
+Japanese edition, for Run Faster, Street Grimoire and Data Trails it is the
+Shadowrun Codex, which has no page in common with them (the summary says so
+when it applies).
 
-Rows are ordered by the page number Chummer records for each entry, so a
-worksheet for a book with a Japanese edition runs in the same order as the
-physical book.
+Rows are ordered by the page number Chummer records for each entry. That is
+the English book's page: Run & Gun's Japanese edition keeps it, the core
+rulebook's does not (it runs a few pages later), so there the order is close
+but the page is a hint to look near, not the page to open.
+
+The core rulebook is mostly translated already, so its pass is the remainder:
+`--untranslated-only` keeps just the rows with no Japanese term today.
 
 The `official` column is what you fill in:
 
@@ -204,6 +209,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--bucket", help="comma-separated buckets to include (default: all)")
     ap.add_argument("--pending-only", action="store_true", help="drop rows already decided")
+    ap.add_argument(
+        "--untranslated-only",
+        action="store_true",
+        help="keep only rows with no Japanese term today (the core rulebook's pass)",
+    )
     ap.add_argument("--sort", choices=("page", "name"), default="page")
     args = ap.parse_args(argv)
 
@@ -236,6 +246,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.pending_only and status != "pending":
             continue
         current = current_by_name.get(entry.name, "")
+        if args.untranslated_only and current:
+            continue
         rows.append(
             {
                 "status": status,
@@ -264,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"   answer from: {bk.ja_source}")
     if not bk.page_is_ja:
         print("   NOTE: the `page` column is the English book's — look terms up in the")
-        print("         Codex's own index rather than reading straight down the worksheet.")
+        print(f"         index of {bk.ja_source} rather than reading straight down the worksheet.")
     blank = sum(1 for r in rows if not r["current"])
     if blank:
         print(f"   {blank} of {len(rows)} rows have no Japanese term today: '=' cannot answer those.")

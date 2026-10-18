@@ -35,7 +35,7 @@ const chaos: MentorInfo = {
   ],
 };
 
-function renderPicker(onPatch = vi.fn()) {
+function renderPicker(onPatch = vi.fn(), tr: (name: string) => string = (n) => n) {
   const ch = makeCharacter({ mentor_id: "chaos", mentor_choices: [CHOICE] });
   render(
     <MentorPicker
@@ -44,7 +44,7 @@ function renderPicker(onPatch = vi.fn()) {
       })}
       mentor={chaos}
       ch={ch}
-      tr={(n) => n}
+      tr={tr}
       onPatch={onPatch}
     />,
   );
@@ -85,6 +85,13 @@ describe("MentorPicker", () => {
     // <select> that quietly loses its own value reads as "no mentor".
     render(picker("chaos"));
     expect(options()).toEqual(["Bear", "Chaos"]);
+  });
+
+  it("names a choice through the translation table", () => {
+    // the core rulebook pass translates these labels; untranslated, they stay English
+    renderPicker(vi.fn(), (n) => (n === CHOICE ? "アデプト：向上能力 2 レベル無料" : n));
+    expect(screen.getByText("アデプト：向上能力 2 レベル無料")).toBeTruthy();
+    expect(screen.queryByText(CHOICE)).toBeNull();
   });
 
   it("offers a granted power its own target beside the choice's pick", () => {

@@ -81,7 +81,7 @@ export function MentorPicker({
                 onPatch({ mentor_choices: [...current] });
               }}
             />
-            <span>{choice.name}</span>
+            <span>{tr(choice.name)}</span>
             {choice.extra_options.length ? (
               <select
                 value={choice.extra || ""}
