@@ -422,7 +422,7 @@ export const JA_ENGINE = {
     "Special Modifications の上限を超えています（{used}/{max}・{name}）",
   "engine.gear.trustFundNeedsSinner":
     "Trust Fund には SINner（National または Corporate）が必要です",
-  "engine.gear.vehicleCategorySlotsOver": "{name} の{category}スロット超過（{used}/{max}）",
+  "engine.gear.vehicleCategorySlotsOver": "{name} の {category} スロット超過（{used}/{max}）",
   "engine.gear.vehicleModCapacityOver": "{name} の容量超過（{used}/{max}）",
   "engine.gear.vehicleSlotsOver": "{name} の改造スロット超過（{used}/{max}）",
   "engine.gear.weaponAlreadyMounted": "{name} は既に搭載されています",
@@ -551,10 +551,10 @@ export const JA_ENGINE = {
   "engine.select.limit": "リミット",
 
   "engine.select.target": "対象",
-  "engine.vehicleSlot.Body": "ボディ",
-  "engine.vehicleSlot.Cosmetic": "外装",
-  "engine.vehicleSlot.Electromagnetic": "電磁",
-  "engine.vehicleSlot.Powertrain": "パワートレイン",
-  "engine.vehicleSlot.Protection": "防護",
-  "engine.vehicleSlot.Weapons": "武器",
+  "engine.vehicleSlot.Body": "Body",
+  "engine.vehicleSlot.Cosmetic": "Cosmetic",
+  "engine.vehicleSlot.Electromagnetic": "Electromagnetic",
+  "engine.vehicleSlot.Powertrain": "Powertrain",
+  "engine.vehicleSlot.Protection": "Protection",
+  "engine.vehicleSlot.Weapons": "Weapons",
 } as const;

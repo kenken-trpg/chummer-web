@@ -116,11 +116,11 @@ export const JA_RULES = {
   "sr.limb.torso": "胴",
 
   "sr.limb.skull": "頭蓋",
-  "sr.r5.powertrain": "パワートレイン",
-  "sr.r5.protection": "防護",
-  "sr.r5.weapons": "武器",
-  "sr.r5.body": "ボディ",
-  "sr.r5.electromagnetic": "電磁",
+  "sr.r5.powertrain": "Powertrain",
+  "sr.r5.protection": "Protection",
+  "sr.r5.weapons": "Weapons",
+  "sr.r5.body": "Body",
+  "sr.r5.electromagnetic": "Electromagnetic",
 
-  "sr.r5.cosmetic": "外装",
+  "sr.r5.cosmetic": "Cosmetic",
 } as const;

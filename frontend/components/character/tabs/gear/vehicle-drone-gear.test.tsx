@@ -76,7 +76,7 @@ describe("<VehicleDroneGear> the summary line", () => {
     });
     const { container } = renderVehicle(owning(v), vi.fn());
 
-    expect(container.textContent).toContain("パワートレイン 1/4 · ボディ 2/6");
+    expect(container.textContent).toContain("Powertrain 1/4 · Body 2/6");
     expect(container.textContent).not.toContain("3/20");
   });
 
