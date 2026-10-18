@@ -55,6 +55,7 @@ from ..bundle_types import (
     empty_sprites,
     empty_submersion,
 )
+from ..critter_powers import CritterPowersBundle, empty_critter_powers
 from ..home_node import HomeNode
 
 
@@ -218,6 +219,11 @@ class Ctx:
     contacts: ContactsBundle = field(default_factory=empty_contacts)
     martial: MartialBundle = field(default_factory=empty_martial)
     ai_programs: AIProgramsBundle = field(default_factory=empty_ai_programs)
+    #: Powers bought on the Critter Powers tab (`engine/critter_powers.py`),
+    #: and the categories the qualities open it to — read off the qualities
+    #: before the effects pass, which the bought powers' bonuses join.
+    critter_powers: CritterPowersBundle = field(default_factory=empty_critter_powers)
+    critter_power_categories: set[str] = field(default_factory=set)
     karma_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     nuyen_spend_lines: list[dict[str, Any]] = field(default_factory=list)
     quality_notoriety: int = 0

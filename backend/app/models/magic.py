@@ -58,6 +58,19 @@ class AIProgramInstall(BaseModel):
     extra: str | None = None
 
 
+class CritterPowerInstall(BaseModel):
+    """A critter power bought on the Critter Powers tab — an Infected's or a
+    drake's, from the category its quality opens (`limitcritterpowercategory`).
+    Not the ones a quality or the metatype grants: those are derived."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    power_id: str
+    #: for a power bought at a rating (Mystic Armor (Infected))
+    rating: int | None = None
+    #: the pick a `<selecttext>` power asks for (Animal Control's animal)
+    extra: str | None = None
+
+
 class SpriteInstall(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     sprite_id: str

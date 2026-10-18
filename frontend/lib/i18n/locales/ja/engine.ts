@@ -179,6 +179,7 @@ export const JA_ENGINE = {
   "engine.spend.lifestyles": "ライフスタイル",
   "engine.spend.martialArts": "格闘技",
   "engine.spend.aiPrograms": "A.I. のプログラム",
+  "engine.spend.critterPowers": "クリッター・パワー",
   "engine.spend.metatype": "メタ",
   "engine.spend.mysticPP": "ミスティックPP",
   "engine.spend.nuyenExchange": "新円交換",
@@ -329,6 +330,12 @@ export const JA_ENGINE = {
   "engine.complexforms.requires": "{name} には {needed} が必要です",
   "engine.aiPrograms.prereq": "{name} には {needed} のどれかが必要です",
   "engine.aiPrograms.pickExtra": "{name} の対象を入力してください",
+  "engine.critterPowers.pickExtra": "{name} の対象を入力してください",
+  "engine.critterPowers.pickRating": "{name} のレーティングを選んでください",
+  "engine.critterPowers.category":
+    "{name} は {category} のクリッター・パワーで、今の資質では買えません",
+  "engine.critterPowers.prereq": "{name} の前提条件を満たしていません",
+  "engine.critterPowers.forbidden": "{name} は今の資質やパワーとは一緒に取れません",
   "engine.homeNode.personaFirmware":
     "Chummer では、{name} を Home Node にするには Persona Firmware（DT p.66）が必要です。このアプリではヴィークルに付けられないため、確かめていません",
   "engine.homeNode.programLimit":
@@ -485,6 +492,7 @@ export const JA_ENGINE = {
   "engine.kind.bioware": "バイオウェア",
   "engine.kind.complexForm": "複合体",
   "engine.kind.aiProgram": "A.I. のプログラム",
+  "engine.kind.critterPower": "クリッター・パワー",
   "engine.kind.cyberware": "サイバーウェア",
   "engine.kind.drone": "ドローン",
   "engine.kind.drugComponent": "ドラッグ・コンポーネント",

@@ -19,7 +19,14 @@ invisible to the fourteen modules that import from it.
 from __future__ import annotations
 
 from ._binders import bind_action_dice_pools, bind_select_powers, free_powers_from_grants
-from ._context import as_before_taking, critter_power_sources, quality_requirement_context
+from ._context import (
+    as_before_taking,
+    bought_critter_powers,
+    bought_source,
+    critter_power_sources,
+    quality_requirement_context,
+    without_source,
+)
 from ._gather import (
     _at_quality_limit,
     gather_qualities,
@@ -58,8 +65,11 @@ __all__ = [
     "is_way_quality",
     "quality_needs_extra",
     "as_before_taking",
+    "bought_critter_powers",
+    "bought_source",
     "critter_power_sources",
     "quality_requirement_context",
+    "without_source",
     "resolve_quality_sides",
     "sanitize_quality_ids",
     "surge_metagenic_limit",

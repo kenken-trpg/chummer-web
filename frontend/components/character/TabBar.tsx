@@ -5,8 +5,12 @@ import { type MsgKey, useUiText } from "@/lib/i18n";
 // reports them in `enabled_tabs`.
 
 /** A tab the engine enables under another name: an A.I.'s metatype says
- *  `<enabletab>advanced programs`. */
-export const TAB_GATES: Partial<Record<Tab, string>> = { aiprograms: "advanced programs" };
+ *  `<enabletab>advanced programs`, an Infected's or a drake's quality
+ *  `<enabletab>critter`. */
+export const TAB_GATES: Partial<Record<Tab, string>> = {
+  aiprograms: "advanced programs",
+  critterpowers: "critter",
+};
 const TABS: [Tab, boolean][] = [
   ["priority", true],
   ["meta", true],
@@ -27,6 +31,7 @@ const TABS: [Tab, boolean][] = [
   ["complexforms", false],
   ["sprites", false],
   ["aiprograms", false],
+  ["critterpowers", false],
   ["check", true],
   ["sheet", true],
 ];

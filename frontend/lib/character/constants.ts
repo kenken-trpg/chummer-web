@@ -126,6 +126,7 @@ export type Tab =
   | "complexforms"
   | "sprites"
   | "aiprograms"
+  | "critterpowers"
   | "check"
   | "sheet";
 export type GearKind =

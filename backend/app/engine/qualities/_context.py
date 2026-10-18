@@ -7,8 +7,10 @@ the same snapshot of the character.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
+from ...data_loader import catalog
 from ...models import CharacterState
 from ..constants import quality_optional_power_extra_key
 from ..lookups import critter_power_label
@@ -18,10 +20,25 @@ from ..special_attributes import special_attribute_floors
 METATYPE_SOURCE = "metatype"
 
 
+def bought_source(install_id: str) -> str:
+    """The `critter_power_sources` source of a power bought on the tab."""
+    return f"bought:{install_id}"
+
+
+def bought_critter_powers(state: CharacterState) -> list[tuple[str, str]]:
+    """(install id, power name) for each power bought on the Critter Powers tab."""
+    names = {str(row["id"]): str(row["name"]) for row in catalog().get("buyable_critter_powers") or []}
+    return [(inst.id, names[inst.power_id]) for inst in state.critter_powers if inst.power_id in names]
+
+
 def critter_power_sources(
-    meta: dict[str, Any], qualities: list[dict[str, Any]], extras: dict[str, str]
+    meta: dict[str, Any],
+    qualities: list[dict[str, Any]],
+    extras: dict[str, str],
+    bought: Iterable[tuple[str, str]] = (),
 ) -> dict[str, set[str]]:
-    """Critter power name -> what gives it: the metatype, or a quality's id.
+    """Critter power name -> what gives it: the metatype, a quality's id, or
+    a purchase on the Critter Powers tab (`bought_source`).
 
     `<critterpower>` in a requirement tree names the power alone (Chummer
     matches `CritterPower.Name`), so a pick like `Immunity (Toxins)` counts
@@ -40,7 +57,16 @@ def critter_power_sources(
         refs += [ref for ref in q.get("optional_powers") or [] if critter_power_label(ref) == picked]
         for ref in refs:
             out.setdefault(str(ref["name"]), set()).add(str(q["id"]))
+    for install_id, name in bought:
+        out.setdefault(name, set()).add(bought_source(install_id))
     return out
+
+
+def without_source(ctx: dict[str, Any], source: str) -> dict[str, Any]:
+    """`ctx` without the critter powers only `source` gives — a bought power
+    checked as before it was bought, the way `as_before_taking` does a quality."""
+    sources: dict[str, set[str]] = ctx.get("critter_power_sources") or {}
+    return {**ctx, "critter_powers": {name for name, ids in sources.items() if ids - {source}}}
 
 
 def as_before_taking(ctx: dict[str, Any], quality: dict[str, Any]) -> dict[str, Any]:
@@ -85,7 +111,7 @@ def quality_requirement_context(
     if parent:
         metatypes.add(str(parent))
     categories = {str(meta.get("category") or "")}
-    power_sources = critter_power_sources(meta, qualities, state.quality_extras)
+    power_sources = critter_power_sources(meta, qualities, state.quality_extras, bought_critter_powers(state))
     return {
         "qualities": {item["name"] for item in qualities},
         "metatypes": metatypes,

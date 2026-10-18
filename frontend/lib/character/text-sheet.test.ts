@@ -105,6 +105,37 @@ describe("textSheet sections", () => {
     expect(text).toContain("SR5 p.399");
   });
 
+  it("lists a power bought on the Critter Powers tab with its karma", () => {
+    const text = sheet(
+      makeCharacter({
+        derived: {
+          critter_powers: [
+            {
+              id: "b1",
+              power_id: "mystic",
+              name: "Mystic Armor (Infected)",
+              label: "Mystic Armor (Infected)",
+              category: "Infected",
+              type: "M",
+              action: "Auto",
+              range: "Self",
+              duration: "Always",
+              karma: 6,
+              has_rating: true,
+              rating: 3,
+              needs_extra: false,
+              extra: "",
+              source: "DTR",
+              page: "171",
+            },
+          ],
+        },
+      }),
+    );
+    expect(text).toContain("=== クリッター・パワー ===");
+    expect(text).toMatch(/Mystic Armor \(Infected\).* \/ 3 \/ 6カルマ \/ DTR p\.171/);
+  });
+
   it("renders a skill with its specialisation, rating and pool", () => {
     expect(section(sheet(), "技能")).toEqual(["  Pistols 4 [AGI プール 7]"]);
   });

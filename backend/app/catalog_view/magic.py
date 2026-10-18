@@ -115,6 +115,25 @@ def section(raw: CatalogDict) -> dict:
             }
             for f in raw.get("complex_forms") or []
         ],
+        # the Critter Powers tab's stock; which of them it offers is the
+        # engine's `critter_power_offer`, since that reads the requirements
+        "buyable_critter_powers": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "category": p.get("category") or "",
+                "type": p.get("type") or "",
+                "action": p.get("action") or "",
+                "range": p.get("range") or "",
+                "duration": p.get("duration") or "",
+                "karma": int(p.get("karma") or 0),
+                "has_rating": bool(p.get("has_rating")),
+                "needs_extra": any(node.get("tag") == "selecttext" for node in p.get("bonus") or []),
+                "source": p.get("source"),
+                "page": p.get("page"),
+            }
+            for p in raw.get("buyable_critter_powers") or []
+        ],
         "ai_programs": [
             {
                 "id": p["id"],

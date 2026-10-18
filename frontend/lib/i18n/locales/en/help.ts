@@ -137,6 +137,12 @@ export const EN_HELP = {
   "help.bio.spent":
     "The spent ¥ is every purchase, gear and qualities included, not this tab alone",
   "help.cf.statsLabel": "Complex form",
+  "help.cpower.what":
+    "Opened by an Infected or a Dracoform quality. Buys powers in the category the quality names (Infected, Drake), each at its own karma",
+  "help.cpower.offer":
+    "Only the powers whose requirements (the Infected type, another power) are met are listed",
+  "help.cpower.granted":
+    "The powers a quality grants are not here: they are listed on the quality, on the Qualities tab",
   "help.aiprog.price":
     "5 karma each, 8 for an Advanced Program (DT). The same price after creation",
   "help.aiprog.inherent": "The one Inherent Program picks is free, and goes when the quality does",

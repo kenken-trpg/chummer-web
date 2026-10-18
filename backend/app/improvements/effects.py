@@ -200,6 +200,8 @@ class EffectsDict(TypedDict):
     immunities: dict[str, bool]
     movement_replace: dict[tuple[str, str], int]
     enabled_tabs: set[str]
+    #: `<limitcritterpowercategory>`: what the Critter Powers tab may buy
+    critter_power_categories: set[str]
 
     # --- string lists --------------------------------------------------
     cyberseeker: list[str]
@@ -298,6 +300,7 @@ def empty_effects() -> EffectsDict:
         "initiative": 0,
         "initiative_dice": 0,
         "enabled_tabs": set(),
+        "critter_power_categories": set(),
         "cyberseeker": [],
         "limit_physical": 0,
         "limit_mental": 0,

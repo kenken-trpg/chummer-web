@@ -490,6 +490,12 @@ export interface Derived {
   complex_forms?: InstalledComplexForm[];
   /** An A.I.'s programs (`engine/ai_programs.py`); absent from an older server. */
   ai_programs?: InstalledAIProgram[];
+  /** Powers bought on the Critter Powers tab (`engine/critter_powers.py`). */
+  critter_powers?: InstalledCritterPower[];
+  /** ids of the powers the tab offers now: in an open category, requirements met */
+  critter_power_offer?: string[];
+  /** the categories the qualities open the tab to (Infected, Drake) */
+  critter_power_categories?: string[];
   complex_form_points?: { used: number; free: number; paid: number };
   sprites?: InstalledSprite[];
   stream?: {
@@ -635,6 +641,26 @@ export interface Derived {
 
 /** One of an A.I.'s programs: bought (`id` is the install's) or granted free by
  *  Inherent Program (`id` is `inherent:<quality id>`, `granted_by` its name). */
+export interface InstalledCritterPower {
+  id: string;
+  power_id: string;
+  name: string;
+  /** the name with its pick, `Animal Control (Rats)` */
+  label: string;
+  category: string;
+  type: string;
+  action: string;
+  range: string;
+  duration: string;
+  karma: number;
+  has_rating: boolean;
+  rating: number | null;
+  needs_extra: boolean;
+  extra: string;
+  source?: string;
+  page?: string;
+}
+
 export interface InstalledAIProgram {
   id: string;
   program_id: string;

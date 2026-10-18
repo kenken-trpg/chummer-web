@@ -12,6 +12,7 @@ from ...models import CharacterState
 from ...notices import Notice, notice, term
 from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_attribute_extra_key, quality_optional_power_extra_key
 from ..contacts import apply_excon_ware_ban
+from ..critter_powers import bought_power_sources
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
 from ..karma import _skill_groups_for_category
 from ..magic import (
@@ -129,6 +130,10 @@ def gather(ctx: Ctx) -> None:
             for key, spec in ctx.attrs_spec.items()
         }
         ctx.attr_replaced_by = sorted({str(row["source"]) for row in replacements.values() if row.get("source")})
+    # The Critter Powers tab: open, and to which categories, is the qualities'
+    # say; what was bought there joins the effects pass with the rest.
+    ctx.critter_power_categories = set(quality_grade_effects["critter_power_categories"])
+    ctx.sources.extend(bought_power_sources(ctx.state, set(quality_grade_effects["enabled_tabs"])))
     disabled_cyber_grades = set(quality_grade_effects.get("disabled_cyberware_grades") or [])
     disabled_bio_grades = set(quality_grade_effects.get("disabled_bioware_grades") or [])
     ctx.warnings.extend(_clamp_ware_grades("cyberware", ctx.state.cyberware, disabled_cyber_grades))

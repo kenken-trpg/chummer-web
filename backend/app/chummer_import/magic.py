@@ -47,6 +47,41 @@ def _mentor_choices_from_improvements(root: ET.Element, mentor: dict[str, Any]) 
     return picks
 
 
+def _bought_critter_powers(root: ET.Element, cat: CatalogDict) -> list[dict[str, Any]]:
+    """Powers bought on the Critter Powers tab, out of `<critterpowers>`.
+
+    That list also holds what a quality grants (`grade` −1, the
+    `critterpowers` / `optionalpowers` improvements) and what the metatype
+    grants (tied to it by a Metatype CritterPower improvement). The engine
+    derives both again, so they are left; of the rest, only a power the tab
+    sells is a purchase — anything else would be billed for nothing.
+    """
+    from_metatype = {
+        _text(imp.find("improvedname"))
+        for imp in root.findall("./improvements/improvement")
+        if _text(imp.find("improvementttype")) == "CritterPower" and _text(imp.find("improvementsource")) == "Metatype"
+    }
+    stock = {str(row["id"]): row for row in cat.get("buyable_critter_powers") or []}
+    by_name = {str(row["name"]): row for row in reversed(list(stock.values()))}
+    out = []
+    for p in root.findall("./critterpowers/critterpower"):
+        if _text(p.find("grade")) == "-1" or _text(p.find("guid")) in from_metatype:
+            continue
+        spec = stock.get(_text(p.find("sourceid"))) or by_name.get(_text(p.find("name")))
+        if spec is None:
+            continue
+        rating = _int(p.find("rating"))
+        out.append(
+            {
+                "id": _text(p.find("guid")) or str(uuid.uuid4()),
+                "power_id": spec["id"],
+                "rating": rating if spec.get("has_rating") and rating else None,
+                "extra": _text(p.find("extra")) or None,
+            }
+        )
+    return out
+
+
 def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: list[Notice]) -> None:
     """Read spells, adept powers, complex forms and magic arts."""
     spell_r = _Resolver(cat["spells"])
@@ -105,6 +140,8 @@ def _import_magic(root: ET.Element, cat: CatalogDict, st: dict[str, Any], warn: 
         for p in root.findall("./aiprograms/aiprogram")
         if _text(p.find("candelete")).lower() != "false" and (pid := ai_r.resolve(p, warn, ui("engine.kind.aiProgram")))
     ]
+
+    st["critter_powers"] = _bought_critter_powers(root, cat)
 
     trad = root.find("tradition")
     if trad is not None and _text(trad.find("traditiontype")) == "RES":

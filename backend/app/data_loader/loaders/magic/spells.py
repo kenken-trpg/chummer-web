@@ -155,6 +155,10 @@ def load_critter_powers(*, include_rules: bool = False) -> list[dict[str, Any]]:
                         "bonus": parse_bonus(el.find("bonus")),
                         "required_tree": parse_requirement_tree(el.find("required")),
                         "forbidden_tree": parse_requirement_tree(el.find("forbidden")),
+                        # what the Critter Powers tab charges for it, and
+                        # whether it is bought at a rating (`<rating>True`)
+                        "karma": int(_text(el.find("karma")) or 0),
+                        "has_rating": _text(el.find("rating")).lower() == "true",
                     }
                     if include_rules
                     else {}

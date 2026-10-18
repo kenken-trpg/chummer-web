@@ -284,6 +284,17 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
                     )
         if effects:
             quality["critter_power_effects"] = effects
+    # What a Critter Powers tab can sell: the categories some quality limits
+    # the tab to (`<limitcritterpowercategory>` — Infected, Drake). Nothing in
+    # this app opens the tab without one, and the full 291 powers would only
+    # be shipped to be filtered out again.
+    shop_categories = {
+        str(node.get("value") or "").strip()
+        for quality in qualities
+        for node in quality.get("bonus") or []
+        if node.get("tag") == "limitcritterpowercategory"
+    }
+    buyable_critter_powers = [row for row in grantable_powers if row.get("category") in shop_categories]
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])
@@ -360,6 +371,7 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
         "traditions": load_traditions(),
         "spirits": spirits,
         "critter_powers": load_critter_powers(),
+        "buyable_critter_powers": buyable_critter_powers,
         "complex_forms": load_complex_forms(),
         "ai_programs": ai_programs,
         "streams": load_streams(),

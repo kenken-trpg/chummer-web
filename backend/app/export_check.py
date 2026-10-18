@@ -58,6 +58,7 @@ _KIND = {
     "spirits": "spirit",
     "complex_forms": "complexForm",
     "ai_programs": "aiProgram",
+    "critter_powers": "critterPower",
     "sprites": "sprite",
     "foci": "focus",
     "qi_foci": "focus",

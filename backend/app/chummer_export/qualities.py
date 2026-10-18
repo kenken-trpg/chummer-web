@@ -96,6 +96,7 @@ def _export_qualities(root: ET.Element, state: CharacterState, names: _Names, ct
     # Chummer keeps life modules here too, as a quality type of their own.
     export_life_modules(quals, state)
     power_links = _export_quality_critter_powers(root, state)
+    _export_bought_critter_powers(root, state)
     export_metatype_powers(root, state, ctx)
     # Chummer keeps a picked spell category only on the improvement
     # `<limitspellcategory />` made, tied to the quality by its guid
@@ -162,6 +163,41 @@ def _export_quality_critter_powers(root: ET.Element, state: CharacterState) -> l
             el.append(deepcopy(bonus))
         links.append((guid, qid))
     return links
+
+
+def _export_bought_critter_powers(root: ET.Element, state: CharacterState) -> None:
+    """The powers bought on the Critter Powers tab, as CharacterCreate adds
+    them: made from the definition at the picked rating, `grade` 0, its
+    `<karma>` kept (the create form sums it), and no improvement — nothing
+    granted it, so nothing takes it away."""
+    if not state.critter_powers:
+        return
+    stock = {str(row["id"]): row for row in catalog().get("buyable_critter_powers") or []}
+    definitions = {
+        node.findtext("id") or "": node for node in parse_data("critterpowers.xml").findall("./powers/power")
+    }
+    powers = root.find("critterpowers")
+    if powers is None:
+        powers = _sub(root, "critterpowers")
+    for inst in state.critter_powers:
+        spec = stock.get(inst.power_id)
+        if spec is None:
+            continue
+        el = _sub(powers, "critterpower")
+        _sub(el, "sourceid", spec["id"])
+        _sub(el, "guid", inst.id)
+        _sub(el, "name", spec["name"])
+        for key in ("category", "type", "action", "range", "duration", "source", "page"):
+            _sub(el, key, spec.get(key) or "")
+        _sub(el, "extra", inst.extra or "")
+        _sub(el, "rating", inst.rating or 0)
+        _sub(el, "grade", 0)
+        _sub(el, "counttowardslimit", "True")
+        _sub(el, "karma", int(spec.get("karma") or 0))
+        definition = definitions.get(str(spec["id"]))
+        bonus = definition.find("bonus") if definition is not None else None
+        if bonus is not None:
+            el.append(deepcopy(bonus))
 
 
 def _quality_extra_out(

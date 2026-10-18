@@ -43,11 +43,12 @@ SILENT_TAGS = {
     # `data_loader/loaders/qualities.py` and listed on the quality's row
     "critterpowers",
     "optionalpowers",
-    # Narrows what a Critter Powers tab may buy — and there is no such tab
-    # here. All 26 sit on an Infected or a Dracoform quality, and both hand
-    # their powers over by name in the `<critterpowers>` beside this tag, so
-    # the category never decides anything the character sees.
-    "limitcritterpowercategory",
+    # Heavy Scales / Improved Natural Armor: +levels on another power. In
+    # Chummer that is `CritterPower.TotalRating`, a displayed number — the
+    # power's own bonus was made at its base rating by CritterPower.Create and
+    # is never re-run, so its armor does not move. Both sit on drake powers
+    # sold by the Critter Powers tab.
+    "critterpowerlevels",
     "metageniclimit",
     # Custom Fit (Stack): read off the mod in `engine/gear/armor.py`, which
     # stacks the piece onto the armor it names
@@ -106,7 +107,7 @@ SILENT_TAGS = {
 #: A `CHUMMER_REF` bump that moves one of these numbers is asking a human to
 #: re-read the comment above the tag, not to update this line.
 SILENT_TAG_SITES = {
-    "limitcritterpowercategory": 26,
+    "critterpowerlevels": 2,
     "metageniclimit": 3,
     "allowspritefettering": 1,
     "astralreputation": 1,

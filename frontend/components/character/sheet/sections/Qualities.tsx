@@ -7,8 +7,12 @@ import { sourceBit } from "@/lib/character/format";
 export function QualitiesSection(s: SheetData) {
   const { tr, d, qualities } = s;
   const { ui } = useUiText();
+  const bought = d.critter_powers || [];
   return (
-    <Section title="sheet.qualities" empty={!qualities.length && !d.metatype_info.powers?.length}>
+    <Section
+      title="sheet.qualities"
+      empty={!qualities.length && !d.metatype_info.powers?.length && !bought.length}
+    >
       <ul className="sheet-list">
         {qualities.map((q, idx) => (
           <li key={`${q.id}-${idx}`}>
@@ -39,16 +43,27 @@ export function QualitiesSection(s: SheetData) {
           </li>
         ))}
       </ul>
-      {d.metatype_info.powers?.length ? (
+      {d.metatype_info.powers?.length || bought.length ? (
         <>
           <h4>{ui("meta.critterPowers")}</h4>
           <ul className="sheet-list">
-            {d.metatype_info.powers.map((power, index) => (
+            {(d.metatype_info.powers || []).map((power, index) => (
               <li key={`${power.id}-${index}`}>
                 {critterPowerRow(power, tr, ui)}
                 {power.select ? ` / ${power.select}` : ""}
                 {power.rating ? ` / ${power.rating}` : ""}
                 <span className="sheet-dim"> / {sourceBit(power, ui)}</span>
+              </li>
+            ))}
+            {/* bought on the Critter Powers tab */}
+            {bought.map((power) => (
+              <li key={power.id}>
+                {critterPowerRow(power, tr, ui)}
+                {power.extra ? ` / ${power.extra}` : ""}
+                {power.rating ? ` / ${power.rating}` : ""}
+                <span className="sheet-dim">
+                  {ui("common.karmaCost", { karma: power.karma })} / {sourceBit(power, ui)}
+                </span>
               </li>
             ))}
           </ul>

@@ -172,11 +172,17 @@ export function textSheet(x: TextArgs): string {
     line();
   }
 
-  if (d.metatype_info.powers?.length) {
+  if (d.metatype_info.powers?.length || d.critter_powers?.length) {
     head("meta.critterPowers");
-    d.metatype_info.powers.forEach((power) =>
+    (d.metatype_info.powers || []).forEach((power) =>
       line(
         `  ${critterPowerRow(power, tr, ui)}${power.select ? ` / ${power.select}` : ""}${power.rating ? ` / ${power.rating}` : ""} / ${power.source} p.${power.page}`,
+      ),
+    );
+    // bought on the Critter Powers tab
+    (d.critter_powers || []).forEach((power) =>
+      line(
+        `  ${critterPowerRow(power, tr, ui)}${power.extra ? ` / ${power.extra}` : ""}${power.rating ? ` / ${power.rating}` : ""}${ui("common.karmaCost", { karma: power.karma })} / ${power.source} p.${power.page}`,
       ),
     );
     line();

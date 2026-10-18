@@ -37,6 +37,7 @@ export const EN_APP = {
   "tab.foci": "Foci",
   "tab.complexforms": "Complex Forms",
   "tab.aiprograms": "Programs",
+  "tab.critterpowers": "Critter powers",
   "tab.sprites": "Sprites",
   "tab.check": "Check",
 
@@ -62,6 +63,8 @@ export const EN_APP = {
   "tab.foci.hint": "Foci, bonded with karma",
   "tab.complexforms.hint": "Complex forms. Technomancers only",
   "tab.aiprograms.hint": "An A.I.'s programs. A.I.s only",
+  "tab.critterpowers.hint":
+    "Critter powers an Infected or a drake buys with karma. Those qualities only",
   "tab.sprites.hint": "Registered sprites. Technomancers only",
   "tab.check.hint": "Every chargen rule the character currently breaks. Errors block completion",
 
