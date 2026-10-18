@@ -57,7 +57,7 @@ def test_oversize_body_is_rejected_413() -> None:
 
 
 def _chunks(total: int, size: int = 64 * 1024) -> Iterator[bytes]:
-    """A body with no Content-Length: httpx sends a generator chunked."""
+    """A body with no Content-Length: httpx2 sends a generator chunked."""
     while total > 0:
         yield b"x" * min(size, total)
         total -= size
