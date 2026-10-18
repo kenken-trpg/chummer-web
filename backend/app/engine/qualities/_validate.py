@@ -20,6 +20,7 @@ from ..constants import (
 )
 from ..lookups import critter_power_label
 from ..requirements import requirement_tree_met
+from ._context import as_before_taking
 from ._limits import counts_toward_quality_limit, surge_metagenic_limit
 from ._picks import (
     _quality_extra_key_owned,
@@ -132,10 +133,11 @@ def apply_quality_rules(
             # of Chummer's own career saves illegal. In creation the engine is
             # the only gate there is, so the check stays.
             continue
-        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), ctx):
+        own_ctx = as_before_taking(ctx, spec)
+        if spec.get("required_tree") and not requirement_tree_met(spec.get("required_tree"), own_ctx):
             errors.append(notice("engine.qualities.prereq", name=term(str(spec["name"]))))
         forbidden = spec.get("forbidden_tree") or []
-        if forbidden and requirement_tree_met(forbidden, ctx):
+        if forbidden and requirement_tree_met(forbidden, own_ctx):
             errors.append(notice("engine.qualities.forbidden", name=term(str(spec["name"]))))
         elif restriction is not None and spec["name"] not in restriction.get(str(spec.get("category")), []):
             # The metatype's `<qualityrestriction>` (an A.I.'s): the qualities

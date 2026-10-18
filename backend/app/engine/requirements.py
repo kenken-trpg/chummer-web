@@ -40,6 +40,10 @@ def _requirement_item_met(node: dict[str, Any], ctx: dict[str, Any]) -> bool:
         return bool(ctx["resenabled"])
     if tag == "power":
         return name in ctx["powers"]
+    if tag == "critterpower":
+        # Soul Swallower needs Essence Drain (DTR p.164); an Infected optional
+        # power is forbidden to whoever has it already (RF p.126)
+        return name in (ctx.get("critter_powers") or set())
     if tag == "art":
         return bool(ctx.get("ignore_art")) or name in (ctx.get("arts") or set())
     if tag == "metamagic":
