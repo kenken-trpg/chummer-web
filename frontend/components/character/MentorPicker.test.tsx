@@ -87,6 +87,32 @@ describe("MentorPicker", () => {
     expect(options()).toEqual(["Bear", "Chaos"]);
   });
 
+  it("shows the advantage and the disadvantage, in Japanese where the table has them", () => {
+    const dog: MentorInfo = {
+      ...chaos,
+      id: "DOG-1",
+      name: "Dog",
+      advantage: "All: +2 dice for Tracking tests.",
+      disadvantage: "Dogs are loyal to a fault.",
+      choices: [],
+    };
+    render(
+      <MentorPicker
+        catalog={makeCatalog({
+          mentors: [{ id: "DOG-1", name: "Dog", source: "SR5", page: "321", advantage: "" }],
+          text_translations: { "mentor/dog-1/advantage": "全員：追跡テストにダイス+2" },
+        })}
+        mentor={dog}
+        ch={makeCharacter({ mentor_id: "DOG-1" })}
+        tr={(n) => n}
+        onPatch={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("長所：全員：追跡テストにダイス+2")).toBeTruthy();
+    // no summary written yet: Chummer's English, under the Japanese label
+    expect(screen.getByText("短所：Dogs are loyal to a fault.")).toBeTruthy();
+  });
+
   it("names a choice through the translation table", () => {
     // the core rulebook pass translates these labels; untranslated, they stay English
     renderPicker(vi.fn(), (n) => (n === CHOICE ? "アデプト：向上能力 2 レベル無料" : n));

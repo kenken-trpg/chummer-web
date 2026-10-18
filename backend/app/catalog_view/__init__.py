@@ -50,5 +50,6 @@ def public_catalog() -> dict:
     # data_loader/codex.py.
     out["translations"] = codex.fill_translations(raw["translations"], codex.stamp(out))
     out["translations_by_kind"] = raw.get("translations_by_kind") or {}
+    out["text_translations"] = raw.get("text_translations") or {}
     out["ui_strings"] = raw["ui_strings"]
     return out

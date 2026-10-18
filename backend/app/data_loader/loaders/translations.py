@@ -185,6 +185,42 @@ TRANSLATION_KINDS = (
 )
 
 
+#: The sentence fields `texts.json` may translate, per kind of row. Only these:
+#: a key naming any other field would be a translation nothing on screen reads.
+TEXT_FIELDS: dict[str, tuple[str, ...]] = {"mentor": ("advantage", "disadvantage")}
+
+
+def text_key(kind: str, row_id: str, field: str) -> str:
+    """The `texts.json` key for one field of one row. Ids go lower-case: the
+    data files and the lang file disagree on the case of the same GUID."""
+    return f"{kind}/{row_id.lower()}/{field}"
+
+
+def load_text_translations() -> dict[str, str]:
+    """`{"kind/id/field": japanese}` for sentences: a mentor's advantage and
+    disadvantage. Hand-kept in `ja_overrides/texts.json`.
+
+    Keyed by Chummer id, not by the English the way names are: a sentence
+    changes whenever upstream fixes a comma, and an English-keyed entry would
+    quietly stop matching. An id does not change.
+
+    The upstream lang file has its own `<altadvantage>`/`<altdisadvantage>`
+    for 90 mentors, and they are deliberately not read: they translate the
+    Fourth Edition rules (Dog: +2 for detection spells and spirits of man,
+    where Fifth gives +2 for Tracking). Entries here come from the Japanese
+    core rulebook; a disadvantage is a summary of it, not the printed text.
+    """
+    result: dict[str, str] = {}
+    for key, value in _load_ja_overrides("texts.json").items():
+        kind, _, rest = key.partition("/")
+        row_id, _, field = rest.partition("/")
+        if not row_id or field not in TEXT_FIELDS.get(kind, ()):
+            log.warning("ja override texts.json: unknown key %r", key)
+            continue
+        result[text_key(kind, row_id, field)] = value
+    return result
+
+
 def load_translations_by_kind() -> dict[str, dict[str, str]]:
     """`{kind: {english: japanese}}` for the names `load_translations` gets
     wrong because another kind of thing shares them: the magic skill Binding

@@ -3,6 +3,7 @@
 import type { Catalog, Character, MentorInfo } from "@/lib/types";
 import { filterByBooks, isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { useUiText } from "@/lib/i18n";
+import { makeTextTr } from "@/lib/ui-strings";
 import { limitLabel, sourceBit } from "@/lib/character/format";
 
 export function MentorPicker({
@@ -22,7 +23,8 @@ export function MentorPicker({
    * (KC p.102). It shares `mentor_id`, because no character can have both. */
   paragon?: boolean;
 }) {
-  const { ui } = useUiText();
+  const { ui, locale } = useUiText();
+  const textTr = makeTextTr(catalog, locale);
   const allowed = useAllowedBooks();
   const all = (paragon ? catalog.paragons : catalog.mentors) || [];
   // The one already chosen stays on the list whatever the settings say — a
@@ -58,7 +60,20 @@ export function MentorPicker({
             </select>
           </label>
         </div>
-        {mentor?.advantage ? <p className="muted">{mentor.advantage}</p> : null}
+        {mentor?.advantage ? (
+          <p className="muted">
+            {ui("mentor.advantage", {
+              text: textTr("mentor", mentor.id, "advantage", mentor.advantage),
+            })}
+          </p>
+        ) : null}
+        {mentor?.disadvantage ? (
+          <p className="muted">
+            {ui("mentor.disadvantage", {
+              text: textTr("mentor", mentor.id, "disadvantage", mentor.disadvantage),
+            })}
+          </p>
+        ) : null}
         {(mentor?.choices || []).map((choice) => (
           <label key={choice.name} className="skill-row">
             <input

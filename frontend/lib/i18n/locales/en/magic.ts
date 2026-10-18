@@ -153,4 +153,6 @@ export const EN_MAGIC = {
   "mentor.label": "Mentor",
 
   "mentor.chooseTarget": "Choose a target",
+  "mentor.advantage": "Advantage: {text}",
+  "mentor.disadvantage": "Disadvantage: {text}",
 };

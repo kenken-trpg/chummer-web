@@ -78,5 +78,7 @@ class CatalogDict(TypedDict):
     translations: dict[str, str]
     #: {kind: {english: japanese}} — exceptions to `translations`, see loaders/translations.py
     translations_by_kind: dict[str, dict[str, str]]
+    #: {"kind/id/field": japanese} — sentences, see loaders/translations.py
+    text_translations: dict[str, str]
     #: {locale: {key: text}} — see loaders/translations.py
     ui_strings: dict[str, dict[str, str]]
