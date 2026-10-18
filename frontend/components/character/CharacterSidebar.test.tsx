@@ -100,6 +100,40 @@ describe("<CharacterSidebar>", () => {
     expect(tip).toContain("13");
   });
 
+  it("explains a test modifier with its attributes, and totals it only when they are the rest", () => {
+    const ch = makeCharacter({
+      derived: {
+        totals: { LOG: 4, WIL: 3, BOD: 5, CHA: 2, INT: 3 },
+        fatigue_resist: 2,
+        test_mods: { memory: 2, judge_intentions: 1 },
+        unarmed_dv: 1,
+        action_dice_pools: [
+          { category: "Matrix", name: "Hack on the Fly", bonus: 2, source: "Codeslinger" },
+        ],
+      } as never,
+    });
+    ch.derived!.enabled_tabs = ["MAG"];
+    render(
+      <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
+    );
+    const tipOf = (name: string) => {
+      const button = screen.getByRole("button", { name: `${name} の説明` });
+      return document
+        .getElementById(button.getAttribute("aria-describedby")!)
+        ?.textContent?.replace(/\u00a0/g, " ");
+    };
+    // LOG 4 + WIL 3 + 2
+    expect(tipOf("記憶")).toContain("LOG + WIL + 修正");
+    expect(tipOf("記憶")).toMatch(/合計9$/);
+    // BOD 5 + WIL 3 + 2
+    expect(tipOf("疲労抵抗")).toMatch(/合計10$/);
+    // Chummer's Judge Intentions takes another modifier too, so no total here
+    expect(tipOf("意図看破")).toContain("CHA + INT + 修正");
+    expect(tipOf("意図看破")).not.toContain("合計");
+    expect(tipOf("非武装DV")).toContain("素手");
+    expect(tipOf("Matrix: Hack on the Fly")).toContain("Codeslinger");
+  });
+
   it("switches to キャリア mode and shows the reward panel when career + patch", () => {
     const ch = makeCharacter({ career: true });
     render(
