@@ -6,7 +6,7 @@ import { talentsFor } from "@/lib/character/metatype-limits";
 import { sourceBit, withOriginal } from "@/lib/character/format";
 import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
 import { priorityTableFor } from "@/lib/character/priority-table";
-import { critterPowerRow } from "@/lib/spell-terms";
+import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 
 export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const table = priorityTableFor(catalog, ch.settings?.priority_table);
@@ -159,7 +159,7 @@ export function MetaTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelPr
           <ul className="critter-powers">
             {d.metatype_info.powers.map((power, index) => (
               <li key={`${power.id}-${index}`}>
-                {critterPowerRow(power, tr, ui)}
+                <CritterPowerRow power={power} tr={tr} ui={ui} />
                 <span className="muted"> / {sourceBit(power, ui)}</span>
                 {power.select ? <div className="muted">{power.select}</div> : null}
                 {power.rating ? <div className="muted">{power.rating}</div> : null}

@@ -1,7 +1,7 @@
 import type { SheetData } from "@/lib/character/sheet-data";
 import { Section } from "@/components/character/sheet/blocks";
 import { useUiText } from "@/lib/i18n";
-import { critterPowerRow } from "@/lib/spell-terms";
+import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { sourceBit } from "@/lib/character/format";
 
 export function QualitiesSection(s: SheetData) {
@@ -49,7 +49,7 @@ export function QualitiesSection(s: SheetData) {
           <ul className="sheet-list">
             {(d.metatype_info.powers || []).map((power, index) => (
               <li key={`${power.id}-${index}`}>
-                {critterPowerRow(power, tr, ui)}
+                <CritterPowerRow power={power} tr={tr} ui={ui} />
                 {power.select ? ` / ${power.select}` : ""}
                 {power.rating ? ` / ${power.rating}` : ""}
                 <span className="sheet-dim"> / {sourceBit(power, ui)}</span>
@@ -58,7 +58,7 @@ export function QualitiesSection(s: SheetData) {
             {/* bought on the Critter Powers tab */}
             {bought.map((power) => (
               <li key={power.id}>
-                {critterPowerRow(power, tr, ui)}
+                <CritterPowerRow power={power} tr={tr} ui={ui} />
                 {power.extra ? ` / ${power.extra}` : ""}
                 {power.rating ? ` / ${power.rating}` : ""}
                 <span className="sheet-dim">

@@ -120,16 +120,35 @@ export const critterPowerLine = (
     .filter(Boolean)
     .join(ui("common.termSep"));
 
-/** One line for a spirit's power: the translated name, and the table's terms
- *  in brackets. A power the data leaves blank prints as the name alone. */
+type CritterPowerTerms = {
+  name: string;
+  type?: string;
+  action?: string;
+  range?: string;
+  duration?: string;
+};
+
+/** A spirit's power in two parts: the translated name, and the table's terms
+ *  in brackets ("（マナ・複雑・自身・特殊）" / " (Mana · Complex · …)"), which
+ *  is empty for a power the data leaves blank. The screen keeps the brackets
+ *  in one piece (`CritterPowerRow`); text output just joins the two. */
+export const critterPowerParts = (
+  power: CritterPowerTerms,
+  tr: (name: string) => string,
+  ui: UiFn,
+): { name: string; detail: string } => {
+  const detail = critterPowerLine(power, ui);
+  return { name: tr(power.name), detail: detail ? ui("common.powerDetail", { detail }) : "" };
+};
+
+/** One line for a spirit's power, for text output. */
 export const critterPowerRow = (
-  power: { name: string; type?: string; action?: string; range?: string; duration?: string },
+  power: CritterPowerTerms,
   tr: (name: string) => string,
   ui: UiFn,
 ): string => {
-  const detail = critterPowerLine(power, ui);
-  const name = tr(power.name);
-  return detail ? ui("common.powerRow", { name, detail }) : name;
+  const { name, detail } = critterPowerParts(power, tr, ui);
+  return name + detail;
 };
 
 /** "Indirect, Elemental, Area" → "間接・元素・効果範囲" / "Indirect · Elemental · Area" */
