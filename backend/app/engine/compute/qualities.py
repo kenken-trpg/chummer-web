@@ -7,9 +7,10 @@ from __future__ import annotations
 from typing import Any
 
 from ...improvements import ATTR_ALIASES, EffectsDict, collect_effects
+from ...improvements._common import substitute_rating
 from ...models import CharacterState
 from ...notices import Notice, notice, term
-from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_attribute_extra_key
+from ..constants import MENTOR_SPIRIT_ID, PARAGON_ID, quality_attribute_extra_key, quality_optional_power_extra_key
 from ..contacts import apply_excon_ware_ban
 from ..gear import bind_weapon_category_dv, bind_weapon_skill_accuracy
 from ..karma import _skill_groups_for_category
@@ -65,6 +66,25 @@ def resolve_attribute_selects(
     return bonus, warnings
 
 
+def _critter_power_sources(q: dict[str, Any], extras: dict[str, str]) -> list[tuple[str, list[dict[str, Any]]]]:
+    """What the powers a quality grants do (`critter_power_effects`, built at
+    load): each fixed one, and the one optional power if it was picked.
+
+    Chummer makes each power at the rating the quality names and runs its
+    bonus at that rating, so a Dracoform's Hardened Armor 2 is 2 points of
+    armor; an optional power is made at rating 0.
+    """
+    picked = extras.get(quality_optional_power_extra_key(q["id"])) or ""
+    out = []
+    for power in q.get("critter_power_effects") or []:
+        if power["optional"] and power["label"] != picked:
+            continue
+        rating = int(power["rating"] or 0)
+        nodes = substitute_rating(list(power["bonus"]), rating) if power["rating"] else list(power["bonus"])
+        out.append((power["label"], nodes))
+    return out
+
+
 def gather(ctx: Ctx) -> None:
     ctx.talent = resolve_talent_for_method(
         ctx.state.priorities.Talent, ctx.state.talent, ctx.state.build_method, ctx.state.metatype
@@ -88,7 +108,12 @@ def gather(ctx: Ctx) -> None:
     ctx.qualities, ctx.free_quality_ids, dropped_qualities = gather_qualities(ctx.state, ctx.talent, quality_grants)
     for name in dropped_qualities:
         ctx.warn("engine.qualities.droppedIncompatible", name=term(name))
-    quality_grade_effects = collect_effects([(q["name"], q.get("bonus") or []) for q in ctx.qualities])
+    # The powers a quality grants count here too: Regeneration is what bars an
+    # Infected from cyberware grades (RF p.134), not the quality around it.
+    quality_grade_effects = collect_effects(
+        [(q["name"], q.get("bonus") or []) for q in ctx.qualities]
+        + [src for q in ctx.qualities for src in _critter_power_sources(q, ctx.state.quality_extras)]
+    )
     ctx.granted_ware = list(quality_grade_effects["grant_ware"])
     # `<replaceattributes>`: an Infected character stops being their metatype
     # where these attributes are concerned (RF p.136), and a Quadriplegic's
@@ -116,6 +141,7 @@ def gather(ctx: Ctx) -> None:
         if q.get("firstlevelbonus") and q["id"] not in first_levels:
             first_levels.add(q["id"])
             ctx.sources.append((q["name"], q["firstlevelbonus"]))
+        ctx.sources.extend(_critter_power_sources(q, ctx.state.quality_extras))
     ctx.needs_mentor = any(q["id"] == MENTOR_SPIRIT_ID for q in ctx.qualities)
     # Paragon is Mentor Spirit for a technomancer and shares `mentor_id`; the
     # two qualities gate on opposite talents, so at most one is ever set.
