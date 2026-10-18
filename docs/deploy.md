@@ -351,6 +351,15 @@ come up. It is best effort — Cloud Run may reclaim an instance whenever it
 likes, and a deploy replaces it — so it makes cold starts rare rather than
 impossible. `--min-instances 1` is the version with a guarantee and a bill.
 
+**HSTS.** The Worker adds `Strict-Transport-Security` to every HTTPS answer
+(`HSTS` in `src/index.ts`). It is the only sender: the image also serves
+self-hosted copies over plain HTTP, which the header must not follow. It ships
+at `max-age=300`, because a browser holds the rule for that long whatever the
+site says afterwards. Once `curl -sI https://<host>/` shows it and the site
+still loads, raise it to `max-age=31536000` and `npx wrangler deploy` again.
+Add `includeSubDomains` or `preload` only if every name under the hostname is
+HTTPS-only for good.
+
 Bring it up on a spare hostname first (`cr.example.com`), confirm it, and only
 then move the public name over — a rollback is then one route.
 

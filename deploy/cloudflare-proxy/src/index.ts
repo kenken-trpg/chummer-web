@@ -32,6 +32,19 @@ const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 /** Refreshed this long before it actually expires, so no request races it. */
 const EARLY_S = 300;
 
+/**
+ * Strict-Transport-Security, set here and nowhere else. This Worker is the
+ * only place that knows the visitor arrived over HTTPS on the production name:
+ * Caddy and Next sit behind it and also serve self-hosted copies on
+ * `http://localhost:8080` or a home domain, which this must not reach.
+ *
+ * Short on purpose to begin with. A browser keeps the rule for `max-age`
+ * seconds and nothing the site says can cut that short, so it starts at five
+ * minutes and goes up once the live site is seen to be fine with it. No
+ * `includeSubDomains` and no `preload`: the rule is for this hostname alone.
+ */
+const HSTS = "max-age=300";
+
 let cached: { token: string; expires: number } | null = null;
 let key: CryptoKey | null = null;
 
@@ -180,7 +193,7 @@ export default {
     headers.set("x-forwarded-proto", incoming.protocol.replace(":", ""));
     headers.set("host", run.hostname);
 
-    return fetch(
+    const res = await fetch(
       new Request(upstream.toString(), {
         method: request.method,
         headers,
@@ -188,5 +201,13 @@ export default {
         redirect: "manual",
       }),
     );
+    // A browser ignores the header over plain HTTP, and Cloudflare already
+    // redirects that to HTTPS before the Worker runs; checked anyway, so the
+    // rule is only ever stated where it holds. A 101 is a WebSocket handover,
+    // which cannot be rebuilt as a plain Response.
+    if (incoming.protocol !== "https:" || res.status === 101) return res;
+    const out = new Response(res.body, res);
+    out.headers.set("strict-transport-security", HSTS);
+    return out;
   },
 };

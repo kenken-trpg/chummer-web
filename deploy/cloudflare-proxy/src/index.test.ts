@@ -299,6 +299,56 @@ describe("the proxied request", () => {
   });
 });
 
+describe("Strict-Transport-Security", () => {
+  it("is added to an answer over HTTPS, for this hostname alone", async () => {
+    stubFetch(calls);
+    const worker = await freshWorker();
+    const res = await worker.fetch(
+      new Request("https://chummer-web.millionskenken.org/"),
+      env,
+    );
+    expect(res.headers.get("strict-transport-security")).toBe("max-age=300");
+    // the rest of the answer is untouched
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("upstream");
+  });
+
+  it("replaces one the service sent, rather than doubling it", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: Request | string) =>
+        (input instanceof Request ? input.url : input) === TOKEN_ENDPOINT
+          ? Response.json({ id_token: "t" })
+          : new Response("upstream", {
+              status: 302,
+              headers: {
+                location: "/manual/index.html",
+                "strict-transport-security": "max-age=99999999; preload",
+              },
+            }),
+      ),
+    );
+    const worker = await freshWorker();
+    const res = await worker.fetch(
+      new Request("https://chummer-web.millionskenken.org/manual"),
+      env,
+    );
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/manual/index.html");
+    expect(res.headers.get("strict-transport-security")).toBe("max-age=300");
+  });
+
+  it("is not stated over plain HTTP", async () => {
+    stubFetch(calls);
+    const worker = await freshWorker();
+    const res = await worker.fetch(
+      new Request("http://chummer-web.millionskenken.org/"),
+      env,
+    );
+    expect(res.headers.has("strict-transport-security")).toBe(false);
+  });
+});
+
 describe("the keepalive cron", () => {
   it("pings /api/ready with a token and logs what it got", async () => {
     stubFetch(calls);
