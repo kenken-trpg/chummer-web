@@ -45,6 +45,61 @@ describe("<CharacterSidebar>", () => {
     expect(tip?.textContent).toContain("誰でも 6 から始まり");
   });
 
+  it("explains spell resistance, and a defence line's formula and total dice", () => {
+    const ch = makeCharacter({
+      derived: {
+        spell_resistance: 1,
+        spell_defense: {
+          general: 1,
+          direct_mana: 1,
+          detection: 3,
+          mental_manipulation: 1,
+          mana_illusion: 1,
+          physical_illusion: 1,
+          decrease: {},
+        },
+        spell_defense_pools: { detection: 9 } as never,
+      },
+    });
+    ch.derived!.enabled_tabs = ["MAG"];
+    render(
+      <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
+    );
+    const tipOf = (name: string) => {
+      const button = screen.getByRole("button", { name: `${name} の説明` });
+      // HelpTip binds a formula's runs with no-break spaces
+      return document
+        .getElementById(button.getAttribute("aria-describedby")!)
+        ?.textContent?.replace(/\u00a0/g, " ");
+    };
+    expect(tipOf("呪文抵抗")).toContain("間接呪文の回避は除く");
+    const detection = tipOf("探知");
+    expect(detection).toContain("LOG + WIL + 修正");
+    expect(detection).toContain("+3");
+    expect(detection).toContain("9");
+    // a line equal to the general resistance is not shown, so it has no tip
+    expect(screen.queryByRole("button", { name: "直接マナ の説明" })).toBeNull();
+  });
+
+  it("explains the damage resistance bonus with the pool it goes into", () => {
+    const ch = makeCharacter({
+      derived: {
+        damage_resistance: 2,
+        damage_resist: { pool: 13, body: 5, armor: 6, bonus: 2 },
+      },
+    });
+    render(
+      <CharacterSidebar catalog={makeCatalog()} character={ch} d={ch.derived} tr={identityTr} />,
+    );
+    const button = screen.getByRole("button", { name: "ダメージ抵抗 の説明" });
+    const tip = document
+      .getElementById(button.getAttribute("aria-describedby")!)
+      ?.textContent?.replace(/\u00a0/g, " ");
+    expect(tip).toContain("BOD + 装甲 + 修正");
+    expect(tip).toContain("強靱力");
+    expect(tip).toContain("13");
+  });
+
   it("switches to キャリア mode and shows the reward panel when career + patch", () => {
     const ch = makeCharacter({ career: true });
     render(
