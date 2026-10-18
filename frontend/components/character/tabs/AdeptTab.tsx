@@ -5,10 +5,11 @@ import { RangeInput } from "@/components/character/RangeInput";
 import type { TabPanelProps } from "@/components/character/types";
 
 import { useMemo, useState } from "react";
-import { ExtraSelect, optionLabel, selectLabel } from "@/components/character/ExtraSelect";
 import { MentorPicker } from "@/components/character/MentorPicker";
 import { formatPoints, sourceBit } from "@/lib/character/format";
-import { renderNotice } from "@/lib/engine-notices";
+import { AdeptPowerRow } from "@/components/character/tabs/adept/AdeptPowerRow";
+import { EnhancementsSection } from "@/components/character/tabs/adept/EnhancementsSection";
+import { QiFociSection } from "@/components/character/tabs/adept/QiFociSection";
 import { HelpTip } from "@/components/help/HelpTip";
 
 export function AdeptTab({
@@ -22,8 +23,6 @@ export function AdeptTab({
   setCharacter,
 }: TabPanelProps) {
   const [powerSearch, setPowerSearch] = useState("");
-  const [enhSearch, setEnhSearch] = useState("");
-  const [qiSearch, setQiSearch] = useState("");
 
   // An empty search box lists every power the settings allow. It used to
   // narrow to SR5 underneath the book list, so switching a book on changed
@@ -79,123 +78,15 @@ export function AdeptTab({
         </div>
       ) : null}
       {(d.adept_powers || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
-          <div>
-            <b>{tr(item.name)}</b>
-            <div className="muted">
-              {item.name}
-              {item.extra ? `（${optionLabel(item.extra, item.select, tr, t, ui)}）` : ""}
-              {" / "}
-              {formatPoints(item.cost)} PP
-              {item.discounted && item.full_cost != null
-                ? ui("adept.beforeDiscount", { cost: formatPoints(item.full_cost) })
-                : ""}
-              {item.free_levels ? ui("adept.freeLevels", { levels: item.free_levels }) : ""}
-              {item.total_rating && item.total_rating !== item.rating
-                ? ui("adept.totalRating", { rating: item.total_rating })
-                : ""}
-              {" / "}
-              {sourceBit(item, ui)}
-              {item.notes?.length
-                ? ` / ${item.notes.map((n) => renderNotice(n, ui, tr)).join(" ・ ")}`
-                : ""}
-              {item.spell
-                ? ui("adept.spellLine", {
-                    dv: item.spell.dv,
-                    force: item.spell.force,
-                    drain:
-                      item.spell.drain == null
-                        ? ui("adept.drainSpecial")
-                        : `${item.spell.drain}${item.spell.drain_code || ""}`,
-                    resistAttrs: item.spell.resist_attrs,
-                    resist: item.spell.resist,
-                  })
-                : ""}
-            </div>
-            <div className="cyber-controls">
-              {!item.free_only && item.rating_max > item.rating_min ? (
-                <label>
-                  {ui("adept.rating")}
-                  <input
-                    type="number"
-                    min={item.rating_min}
-                    max={item.rating_max}
-                    value={item.rating}
-                    onChange={(e) =>
-                      patch({
-                        adept_powers: (ch.adept_powers || []).map((row) =>
-                          row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-              ) : null}
-              {!item.free_only ? (
-                <ExtraSelect
-                  item={item}
-                  tr={tr}
-                  t={t}
-                  onChange={(extra) =>
-                    patch({
-                      adept_powers: (ch.adept_powers || []).map((row) =>
-                        row.id === item.id ? { ...row, extra } : row,
-                      ),
-                    })
-                  }
-                />
-              ) : null}
-              {item.spell ? (
-                <label title={ui("common.forceHint")}>
-                  {ui("common.force")}
-                  <input
-                    type="number"
-                    min={item.spell.force_min}
-                    max={item.spell.force_max}
-                    value={item.spell.force}
-                    onChange={(e) =>
-                      patch({
-                        adept_powers: (ch.adept_powers || []).map((row) =>
-                          row.id === item.id ? { ...row, force: Number(e.target.value) } : row,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-              ) : null}
-              {item.can_discount ? (
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={!!item.discounted}
-                    onChange={(e) =>
-                      patch({
-                        adept_powers: (ch.adept_powers || []).map((row) =>
-                          row.id === item.id ? { ...row, discounted: e.target.checked } : row,
-                        ),
-                      })
-                    }
-                  />
-                  {ui("adept.wayDiscountToggle")}
-                </label>
-              ) : null}
-            </div>
-          </div>
-          {item.free_only ? (
-            <span className="muted">{ui("adept.free")}</span>
-          ) : (
-            <button
-              className="btn danger"
-              onClick={() =>
-                patch({
-                  adept_powers: (ch.adept_powers || []).filter((row) => row.id !== item.id),
-                })
-              }
-            >
-              {ui("common.delete")}
-            </button>
-          )}
-        </div>
+        <AdeptPowerRow
+          key={item.id}
+          item={item}
+          character={ch}
+          tr={tr}
+          t={t}
+          ui={ui}
+          patch={patch}
+        />
       ))}
       <div className="cyber-toolbar" style={{ gridTemplateColumns: "1fr" }}>
         <input
@@ -241,203 +132,8 @@ export function AdeptTab({
           )}
         </PickerList>
       </div>
-      <h3>Enhancement</h3>
-      <p className="muted">{ui("adept.enhancementNote")}</p>
-      {(d.enhancements || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
-          <div>
-            <b>{tr(item.name)}</b>
-            <div className="muted">
-              {item.name}
-              {item.power ? ` / ${item.power}` : ""}
-              {ui("adept.enhancementCost")}
-              {sourceBit(item, ui)}
-            </div>
-          </div>
-          <button
-            className="btn danger"
-            onClick={() =>
-              patch({
-                adept_enhancements: (ch.adept_enhancements || []).filter((id) => id !== item.id),
-              })
-            }
-          >
-            {ui("common.delete")}
-          </button>
-        </div>
-      ))}
-      <input
-        type="search"
-        placeholder={ui("adept.searchEnhancements")}
-        aria-label={ui("adept.searchEnhancements")}
-        value={enhSearch}
-        onChange={(e) => setEnhSearch(e.target.value)}
-      />
-      <div className="quality-list">
-        {(catalog.enhancements || [])
-          .filter((item) => {
-            const q = enhSearch.trim().toLowerCase();
-            return (
-              !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
-            );
-          })
-          .filter((item) => !(ch.adept_enhancements || []).includes(item.id))
-          .map((item) => (
-            <div className="quality-item" key={item.id}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name}
-                  {item.power ? ` / ${item.power}` : ""}
-                  {item.required?.quality?.length ? ` / ${item.required.quality.join(" ・ ")}` : ""}
-                  {ui("adept.enhancementCost")}
-                  {sourceBit(item, ui)}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    adept_enhancements: [...(ch.adept_enhancements || []), item.id],
-                  })
-                }
-              >
-                {ui("common.add")}
-              </button>
-            </div>
-          ))}
-      </div>
-      <h3>{ui("adept.qiTitle")}</h3>
-      <p className="muted">{ui("adept.qiNote")}</p>
-      {(d.qi_foci || []).map((item) => (
-        <div className="cyber-item" key={item.id}>
-          <div>
-            <b>Qi Focus F{item.rating}</b>
-            <div className="muted">
-              {tr(item.name)}
-              {item.extra ? `（${tr(item.extra)}）` : ""} / R{item.power_rating}
-              {" / "}
-              {item.nuyen.toLocaleString()}¥{ui("adept.qiBinding", { karma: item.karma })}
-            </div>
-            <div className="cyber-controls">
-              <label title={ui("common.forceHint")}>
-                {ui("common.force")}
-                <input
-                  type="number"
-                  min={item.rating_min}
-                  max={item.rating_max}
-                  value={item.rating}
-                  onChange={(e) =>
-                    patch({
-                      qi_foci: (ch.qi_foci || []).map((row) =>
-                        row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                      ),
-                    })
-                  }
-                />
-              </label>
-              {item.power_rating_max > 1 ? (
-                <label>
-                  {ui("adept.qiPowerRating")}
-                  <input
-                    type="number"
-                    min={1}
-                    max={item.power_rating_max}
-                    value={item.power_rating}
-                    onChange={(e) =>
-                      patch({
-                        qi_foci: (ch.qi_foci || []).map((row) =>
-                          row.id === item.id
-                            ? { ...row, power_rating: Number(e.target.value) }
-                            : row,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-              ) : null}
-              {item.select ? (
-                <label>
-                  {ui(selectLabel(item.select))}
-                  <select
-                    value={item.extra || ""}
-                    onChange={(e) =>
-                      patch({
-                        qi_foci: (ch.qi_foci || []).map((row) =>
-                          row.id === item.id ? { ...row, extra: e.target.value } : row,
-                        ),
-                      })
-                    }
-                  >
-                    <option value="">{ui("common.choose")}</option>
-                    {item.options.map((name) => (
-                      <option key={name} value={name}>
-                        {optionLabel(name, item.select, tr, t, ui)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-            </div>
-          </div>
-          <button
-            className="btn danger"
-            onClick={() =>
-              patch({
-                qi_foci: (ch.qi_foci || []).filter((row) => row.id !== item.id),
-              })
-            }
-          >
-            {ui("common.delete")}
-          </button>
-        </div>
-      ))}
-      <input
-        type="search"
-        placeholder={ui("adept.searchQi")}
-        aria-label={ui("adept.searchQi")}
-        value={qiSearch}
-        onChange={(e) => setQiSearch(e.target.value)}
-      />
-      <div className="quality-list">
-        <PickerList
-          items={(catalog.powers || []).filter((item) => {
-            const q = qiSearch.trim().toLowerCase();
-            return (
-              !q || item.name.toLowerCase().includes(q) || tr(item.name).toLowerCase().includes(q)
-            );
-          })}
-        >
-          {(item) => (
-            <div className="quality-item" key={`qi-${item.id}`}>
-              <div>
-                <b>{tr(item.name)}</b>
-                <div className="muted">
-                  {item.name} / {ui("common.force")}{" "}
-                  {Math.max(1, Math.ceil((item.points || 0) / 0.25))}〜 / {sourceBit(item, ui)}
-                </div>
-              </div>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  patch({
-                    qi_foci: [
-                      ...(ch.qi_foci || []),
-                      {
-                        power_id: item.id,
-                        rating: Math.max(1, Math.ceil((item.points || 0) / 0.25)),
-                        power_rating: 1,
-                      },
-                    ],
-                  })
-                }
-              >
-                {ui("adept.bind")}
-              </button>
-            </div>
-          )}
-        </PickerList>
-      </div>
+      <EnhancementsSection catalog={catalog} character={ch} d={d} tr={tr} ui={ui} patch={patch} />
+      <QiFociSection catalog={catalog} character={ch} d={d} tr={tr} t={t} ui={ui} patch={patch} />
     </div>
   );
 }

@@ -4,8 +4,10 @@ import { DiscountToggle } from "@/components/character/DiscountToggle";
 import { PriceField } from "@/components/character/tabs/gear/PriceField";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
-import { isBookEnabled, useAllowedBooks } from "@/lib/character/books";
-import { alreadySlotted, dropTree, miscFits, catalogExtraOptions } from "@/lib/character/gear";
+import { dropTree, catalogExtraOptions } from "@/lib/character/gear";
+import { editRow } from "@/lib/character/rows";
+import { GearAddonPicker } from "@/components/character/tabs/gear/misc/GearAddonPicker";
+import { GearChild } from "@/components/character/tabs/gear/misc/GearChild";
 import type { InstalledGear } from "@/lib/types";
 import { renderNotices } from "@/lib/engine-notices";
 import { sourceBit } from "@/lib/character/format";
@@ -36,14 +38,9 @@ export function MiscGearRow({
   extraPick: Record<string, string>;
   setExtraPick: (next: (cur: Record<string, string>) => Record<string, string>) => void;
 }) {
-  const allowedBooks = useAllowedBooks();
   const protectedPurchase = (item.parts_used_units || 0) > 0;
   const gearOptions = (id: string) => catalogExtraOptions(catalog.gear, id);
   const childrenItems = (d.gear || []).filter((child) => child.parent_id === item.id);
-  const addons = (catalog.gear || []).filter(
-    (mod) => Boolean(mod.requireparent) && miscFits(item, mod),
-  );
-  const addonSpec = (catalog.gear || []).find((mod) => mod.id === (slotPick[item.id] || ""));
   // Anything else the character carries can hold this one — a Spare Clip, a
   // Medkit, a briefcase. Only the rows that are top level themselves are
   // offered, so the arrangement stays a tree.
@@ -98,11 +95,7 @@ export function MiscGearRow({
                 value={item.custom_name || ""}
                 placeholder={tr(item.name)}
                 onChange={(e) =>
-                  patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === item.id ? { ...row, name: e.target.value || null } : row,
-                    ),
-                  })
+                  patch({ gear: editRow(ch.gear, item.id, { name: e.target.value || null }) })
                 }
               />
             </label>
@@ -114,11 +107,7 @@ export function MiscGearRow({
             }
             label={tr(item.label || item.name)}
             ui={ui}
-            onChange={(cost) =>
-              patch({
-                gear: (ch.gear || []).map((row) => (row.id === item.id ? { ...row, cost } : row)),
-              })
-            }
+            onChange={(cost) => patch({ gear: editRow(ch.gear, item.id, { cost }) })}
           />
           <label title={ui("common.qtyHint")}>
             {ui("common.qty")}
@@ -128,11 +117,7 @@ export function MiscGearRow({
               max={999}
               value={item.purchased_qty ?? item.qty}
               onChange={(e) =>
-                patch({
-                  gear: (ch.gear || []).map((row) =>
-                    row.id === item.id ? { ...row, qty: Number(e.target.value) } : row,
-                  ),
-                })
+                patch({ gear: editRow(ch.gear, item.id, { qty: Number(e.target.value) }) })
               }
             />
           </label>
@@ -145,11 +130,7 @@ export function MiscGearRow({
                 max={item.rating_max}
                 value={item.rating}
                 onChange={(e) =>
-                  patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                    ),
-                  })
+                  patch({ gear: editRow(ch.gear, item.id, { rating: Number(e.target.value) }) })
                 }
               />
             </label>
@@ -159,11 +140,7 @@ export function MiscGearRow({
               aria-label={`${tr(item.name)}: ${ui("common.skill")}`}
               value={item.extra || ""}
               onChange={(e) =>
-                patch({
-                  gear: (ch.gear || []).map((row) =>
-                    row.id === item.id ? { ...row, extra: e.target.value || undefined } : row,
-                  ),
-                })
+                patch({ gear: editRow(ch.gear, item.id, { extra: e.target.value || undefined }) })
               }
             >
               <option value="">{ui("common.skill")}</option>
@@ -181,11 +158,7 @@ export function MiscGearRow({
                 placeholder={ui("common.target")}
                 value={item.extra || ""}
                 onChange={(e) =>
-                  patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === item.id ? { ...row, extra: e.target.value || undefined } : row,
-                    ),
-                  })
+                  patch({ gear: editRow(ch.gear, item.id, { extra: e.target.value || undefined }) })
                 }
               />
               <datalist id={`gear-extra-${item.id}`}>
@@ -223,11 +196,7 @@ export function MiscGearRow({
                   type="checkbox"
                   checked={Boolean((ch.gear || []).find((row) => row.id === item.id)?.active)}
                   onChange={(e) =>
-                    patch({
-                      gear: (ch.gear || []).map((row) =>
-                        row.id === item.id ? { ...row, active: e.target.checked } : row,
-                      ),
-                    })
+                    patch({ gear: editRow(ch.gear, item.id, { active: e.target.checked }) })
                   }
                 />
                 {ui("gear.inUse")}
@@ -256,11 +225,7 @@ export function MiscGearRow({
                 onChange={(e) => {
                   const into = e.target.value;
                   if (!into) return;
-                  patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === item.id ? { ...row, parent_id: into } : row,
-                    ),
-                  });
+                  patch({ gear: editRow(ch.gear, item.id, { parent_id: into }) });
                 }}
               >
                 <option value="">{ui("gear.putInto")}</option>
@@ -273,87 +238,20 @@ export function MiscGearRow({
             </label>
           </div>
         ) : null}
-        {addons.length ? (
-          <div className="cyber-controls">
-            <select
-              aria-label={`${tr(item.name)}: ${mode === "drugs" ? ui("gear.gradeOrAddon") : ui("gear.addGear")}`}
-              value={slotPick[item.id] || ""}
-              onChange={(e) => setSlotPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
-            >
-              <option value="">
-                {mode === "drugs" ? ui("gear.gradeOrAddon") : ui("gear.addGear")}
-              </option>
-              {addons
-                .filter((mod) => !alreadySlotted(mod, childrenItems))
-                // Drug grades are not a book: they are how the one drug in
-                // this row is cut, so they are always on offer.
-                .filter(
-                  (mod) =>
-                    mod.category === "Drug Grades" ||
-                    isBookEnabled(allowedBooks, mod.source, mod.also_in),
-                )
-                .map((mod) => (
-                  <option key={mod.id} value={mod.id}>
-                    {tr(mod.name)} ({mod.cost}¥)
-                  </option>
-                ))}
-            </select>
-            {addonSpec?.extra_kind === "skill" || addonSpec?.extra_kind === "text" ? (
-              addonSpec.extra_kind === "skill" ? (
-                <select
-                  aria-label={`${tr(item.name)}: ${ui("common.target")}`}
-                  value={extraPick[item.id] || ""}
-                  onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
-                >
-                  <option value="">{ui("common.target")}</option>
-                  {(addonSpec.extra_options || []).map((name) => (
-                    <option key={name} value={name}>
-                      {trAs(tr, addonSpec.extra_skill_kind, name)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <>
-                  <input
-                    list={`gear-addon-extra-${item.id}`}
-                    placeholder={ui("common.target")}
-                    value={extraPick[item.id] || ""}
-                    onChange={(e) => setExtraPick((cur) => ({ ...cur, [item.id]: e.target.value }))}
-                  />
-                  <datalist id={`gear-addon-extra-${item.id}`}>
-                    {(addonSpec.extra_options || []).slice(0, 80).map((name) => (
-                      <option key={name} value={name} />
-                    ))}
-                  </datalist>
-                </>
-              )
-            ) : null}
-            <button
-              className="btn"
-              disabled={!slotPick[item.id]}
-              onClick={() => {
-                const wareId = slotPick[item.id];
-                const spec = addons.find((mod) => mod.id === wareId);
-                if (!spec) return;
-                patch({
-                  gear: [
-                    ...(ch.gear || []),
-                    {
-                      gear_id: spec.id,
-                      rating: Math.max(1, spec.minrating || 1),
-                      parent_id: item.id,
-                      extra: extraPick[item.id] || undefined,
-                    },
-                  ],
-                });
-                setSlotPick((cur) => ({ ...cur, [item.id]: "" }));
-                setExtraPick((cur) => ({ ...cur, [item.id]: "" }));
-              }}
-            >
-              {ui("common.install")}
-            </button>
-          </div>
-        ) : null}
+        <GearAddonPicker
+          item={item}
+          catalog={catalog}
+          character={ch}
+          tr={tr}
+          ui={ui}
+          patch={patch}
+          childrenItems={childrenItems}
+          slotPick={slotPick}
+          setSlotPick={setSlotPick}
+          extraPick={extraPick}
+          setExtraPick={setExtraPick}
+          mode={mode}
+        />
       </div>
       {item.granted_by || protectedPurchase ? null : (
         <button
@@ -367,98 +265,6 @@ export function MiscGearRow({
           {ui("common.delete")}
         </button>
       )}
-    </div>
-  );
-}
-
-/** One thing slotted into, or carried inside, a piece of gear — and whatever
- *  it holds in turn. A container's contents nest as deep as the player (or
- *  Chummer) put them: Narcoject in Injection Darts in a Spare Clip. Rendering
- *  only the first level left the rest owned but invisible. */
-function GearChild({
-  child,
-  all,
-  ch,
-  tr,
-  ui,
-  patch,
-  depth = 0,
-}: Pick<TabPanelProps, "tr" | "ui" | "patch"> & {
-  child: InstalledGear;
-  all: InstalledGear[];
-  ch: TabPanelProps["character"];
-  depth?: number;
-}) {
-  const kids = all.filter((row) => row.parent_id === child.id);
-  return (
-    <div className="muted" style={{ marginTop: 6, marginLeft: depth * 12 }}>
-      {tr(child.label || child.name)}
-      {child.rating_max > 0 ? ` R${child.rating}` : ""}
-      {child.qty > 1 ? ` ×${child.qty}` : ""}
-      {child.included ? ` / ${ui("common.included")}` : ` / ${child.nuyen.toLocaleString()}¥`}
-      {child.capacity_cost ? ` / ${ui("common.capacity")} ${child.capacity_cost}` : ""}
-      {child.included ? null : (
-        <>
-          {" "}
-          <button
-            className="btn danger"
-            aria-label={ui("common.removeLabel", { name: tr(child.label || child.name) })}
-            onClick={() => patch({ gear: dropTree(ch.gear || [], child.id) })}
-          >
-            {ui("common.remove")}
-          </button>
-          {/* carried inside, not plugged in: it can be taken out and kept.
-              Something that needs a host has nowhere to go. */}
-          {child.requireparent ? null : (
-            <>
-              {" "}
-              <button
-                className="btn"
-                aria-label={ui("gear.takeOutLabel", { name: tr(child.label || child.name) })}
-                onClick={() =>
-                  patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === child.id ? { ...row, parent_id: null } : row,
-                    ),
-                  })
-                }
-              >
-                {ui("gear.takeOut")}
-              </button>
-            </>
-          )}
-        </>
-      )}
-      {child.rating_max > 0 && !child.included ? (
-        <label title={ui("common.ratingHint")}>
-          {ui("common.rating")}
-          <input
-            type="number"
-            min={1}
-            max={child.rating_max}
-            value={child.rating}
-            onChange={(e) =>
-              patch({
-                gear: (ch.gear || []).map((row) =>
-                  row.id === child.id ? { ...row, rating: Number(e.target.value) } : row,
-                ),
-              })
-            }
-          />
-        </label>
-      ) : null}
-      {kids.map((kid) => (
-        <GearChild
-          key={kid.id}
-          child={kid}
-          all={all}
-          ch={ch}
-          tr={tr}
-          ui={ui}
-          patch={patch}
-          depth={depth + 1}
-        />
-      ))}
     </div>
   );
 }
