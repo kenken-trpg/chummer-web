@@ -78,6 +78,10 @@ for (const method of ["Priority", "SumToTen", "Karma"]) {
     expect(human.innate).toHaveLength(5);
     expect(human.bite).toEqual(["Bite (Vulpine Form)"]);
     expect(human.spent).toBe(karma.Human);
+    // the metatype opens Chummer's Critter Powers tab but names nothing to buy
+    await expect(page.getByRole("button", { name: "クリッター・パワー", exact: true })).toHaveCount(
+      0,
+    );
 
     const form = page.getByRole("combobox", { name: "人間形態" });
     await expect(form).toHaveValue("Human");

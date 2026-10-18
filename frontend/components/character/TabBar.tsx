@@ -1,5 +1,6 @@
 import type { Tab } from "@/lib/character/constants";
 import { type MsgKey, useUiText } from "@/lib/i18n";
+import type { Derived } from "@/lib/types";
 
 // [tab, always-shown]. The awakened / emerged tabs appear only when the engine
 // reports them in `enabled_tabs`.
@@ -11,6 +12,19 @@ export const TAB_GATES: Partial<Record<Tab, string>> = {
   aiprograms: "advanced programs",
   critterpowers: "critter",
 };
+
+/** The engine's `enabled_tabs`, less a Critter Powers tab with nothing in it.
+ *  A shapeshifter's or a metasapient's metatype opens that tab too, but names
+ *  no category to buy from; Chummer then lists every power, most at no karma
+ *  because the data gives them no price. Here the tab stays shut until a
+ *  quality names a category, or a loaded save already holds a bought power.
+ *  `enabled_tabs` itself is left alone: the .chum5 export writes it. */
+export function shownTabs(
+  d: Pick<Derived, "enabled_tabs" | "critter_power_categories" | "critter_powers">,
+): string[] {
+  const critter = d.critter_power_categories?.length || d.critter_powers?.length;
+  return critter ? d.enabled_tabs : d.enabled_tabs.filter((t) => t !== "critter");
+}
 const TABS: [Tab, boolean][] = [
   ["priority", true],
   ["meta", true],

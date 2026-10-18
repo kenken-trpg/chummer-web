@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { TabBar } from "@/components/character/TabBar";
+import { shownTabs, TabBar } from "@/components/character/TabBar";
 
 describe("<TabBar>", () => {
   it("hides the awakened / emerged tabs until the engine enables them", () => {
@@ -15,6 +15,25 @@ describe("<TabBar>", () => {
     expect(screen.queryByRole("button", { name: "プログラム" })).toBeNull();
     rerender(<TabBar tab="priority" setTab={vi.fn()} enabledTabs={["DEP", "advanced programs"]} />);
     expect(screen.getByRole("button", { name: "プログラム" })).toBeDefined();
+  });
+
+  it("keeps the Critter Powers tab shut until there is a category to buy from", () => {
+    // a shapeshifter's metatype opens the tab but names no category
+    expect(shownTabs({ enabled_tabs: ["MAG", "critter"], critter_power_categories: [] })).toEqual([
+      "MAG",
+    ]);
+    // an Infected's quality names one
+    expect(
+      shownTabs({ enabled_tabs: ["MAG", "critter"], critter_power_categories: ["Infected"] }),
+    ).toEqual(["MAG", "critter"]);
+    // a loaded save already holds a bought power, which must stay deletable
+    expect(
+      shownTabs({
+        enabled_tabs: ["critter"],
+        critter_power_categories: [],
+        critter_powers: [{ id: "x" }] as never,
+      }),
+    ).toEqual(["critter"]);
   });
 
   it("native MAG alone keeps Talent abilities hidden", () => {

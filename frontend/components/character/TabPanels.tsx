@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import type { SheetLayout } from "@/components/CharacterSheet";
 import type { TabPanelProps } from "@/components/character/types";
 import { ChecklistPanel } from "@/components/character/ChecklistPanel";
+import { shownTabs } from "@/components/character/TabBar";
 import { AttrsTab } from "@/components/character/tabs/AttrsTab";
 import { BioTab } from "@/components/character/tabs/BioTab";
 import { ContactsTab } from "@/components/character/tabs/ContactsTab";
@@ -161,7 +162,7 @@ export function TabPanels({
       {tab === "aiprograms" && d.enabled_tabs.includes("advanced programs") && (
         <AIProgramsTab {...panel} />
       )}
-      {tab === "critterpowers" && d.enabled_tabs.includes("critter") && (
+      {tab === "critterpowers" && shownTabs(d).includes("critter") && (
         <CritterPowersTab {...scoped(panel, "critter_power")} />
       )}
     </>
