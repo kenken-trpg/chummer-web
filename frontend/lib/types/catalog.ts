@@ -560,6 +560,10 @@ export interface Catalog {
    *  thing shares ("Binding" the skill is 束縛, the critter power 接着). Read
    *  through `scopeTr`; see backend/data/ja_overrides/by_kind.json. */
   translations_by_kind?: Record<string, Record<string, string>>;
+  /** `{"kind/id/field": japanese}` — sentences, keyed by row id rather than by
+   *  their English (a mentor's advantage). Read through `makeTextTr`; see
+   *  backend/data/ja_overrides/texts.json. */
+  text_translations?: Record<string, string>;
   /** `{locale: {key: text}}` — narrowed by the backend to what the app reads. */
   ui_strings: Record<string, Record<string, string>>;
   cyberware: WareCatalog;

@@ -76,6 +76,7 @@ EXPECTED_KEYS = {
     "settings_presets",
     "translations",
     "translations_by_kind",
+    "text_translations",
     "ui_strings",
 }
 
