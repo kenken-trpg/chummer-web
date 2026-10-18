@@ -257,6 +257,33 @@ def _catalog_for(_overlay_key: str) -> CatalogDict:
             if add_name:
                 quality["add_weapon_id"] = weapon_ids.get(add_name) or ""
         meta["power_grants"] = resolve_metatype_grants(meta, meta.get("powers") or [], grantable_powers)
+    # The same for the powers a quality grants — an Infected's, a drake's, a
+    # free insect spirit's. The catalog's own `critter_powers` rows are the
+    # descriptive ones (no `<bonus>`), so without this a Dracoform's Hardened
+    # Armor was listed and never worn. Only the powers that do something are
+    # kept, with the rating and pick the quality gives them: Chummer creates
+    # each one with those and runs its bonus at that rating
+    # (AddImprovementCollection.critterpowers, CritterPower.Create).
+    power_bonus = {row["name"]: row.get("bonus") or [] for row in reversed(grantable_powers)}
+    power_bonus.update({row["id"]: row.get("bonus") or [] for row in grantable_powers})
+    for quality in qualities:
+        effects = []
+        for optional, refs in ((False, quality.get("critter_powers")), (True, quality.get("optional_powers"))):
+            for ref in refs or []:
+                bonus = power_bonus.get(str(ref.get("name") or ""))
+                if bonus:
+                    select = str(ref.get("select") or "")
+                    effects.append(
+                        {
+                            "label": f"{ref['name']} ({select})" if select else str(ref["name"]),
+                            "optional": optional,
+                            # an optional power is made at rating 0 (SelectOptionalPower)
+                            "rating": "" if optional else str(ref.get("rating") or ""),
+                            "bonus": bonus,
+                        }
+                    )
+        if effects:
+            quality["critter_power_effects"] = effects
     skill_specs = {
         str(skill.get("name") or ""): list(skill.get("specs") or [])
         for skill in (skills.get("skills") or [])
