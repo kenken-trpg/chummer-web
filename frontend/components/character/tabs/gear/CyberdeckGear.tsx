@@ -13,6 +13,7 @@ import { useBookFilter } from "@/lib/character/books";
 import { DEFAULT_ARRAY_ORDER, MATRIX_ATTRS } from "@/lib/character/constants";
 import { dropTree, swapMatrixOrder } from "@/lib/character/gear";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -80,9 +81,9 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       value={item.rating}
                       onChange={(e) =>
                         patch({
-                          cyberdecks: (ch.cyberdecks || []).map((row) =>
-                            row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                          ),
+                          cyberdecks: editRow(ch.cyberdecks, item.id, {
+                            rating: Number(e.target.value),
+                          }),
                         })
                       }
                     />
@@ -107,18 +108,13 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         value={String((item.array_order || DEFAULT_ARRAY_ORDER).indexOf(key))}
                         onChange={(e) =>
                           patch({
-                            cyberdecks: (ch.cyberdecks || []).map((row) =>
-                              row.id === item.id
-                                ? {
-                                    ...row,
-                                    array_order: swapMatrixOrder(
-                                      item.array_order,
-                                      key,
-                                      Number(e.target.value),
-                                    ),
-                                  }
-                                : row,
-                            ),
+                            cyberdecks: editRow(ch.cyberdecks, item.id, {
+                              array_order: swapMatrixOrder(
+                                item.array_order,
+                                key,
+                                Number(e.target.value),
+                              ),
+                            }),
                           })
                         }
                       >
@@ -155,9 +151,7 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                         checked={prog.running ?? true}
                         onChange={(e) =>
                           patch({
-                            programs: (ch.programs || []).map((row) =>
-                              row.id === prog.id ? { ...row, running: e.target.checked } : row,
-                            ),
+                            programs: editRow(ch.programs, prog.id, { running: e.target.checked }),
                           })
                         }
                       />
@@ -183,11 +177,9 @@ export function CyberdeckGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                           value={prog.rating}
                           onChange={(e) =>
                             patch({
-                              programs: (ch.programs || []).map((row) =>
-                                row.id === prog.id
-                                  ? { ...row, rating: Number(e.target.value) }
-                                  : row,
-                              ),
+                              programs: editRow(ch.programs, prog.id, {
+                                rating: Number(e.target.value),
+                              }),
                             })
                           }
                         />

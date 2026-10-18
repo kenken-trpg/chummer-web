@@ -5,6 +5,7 @@ import { optionalNumber, sourceBit, testLine } from "@/lib/character/format";
 import { renderNotice } from "@/lib/engine-notices";
 import { CritterPowerRow } from "@/components/character/CritterPowerRow";
 import { HelpTip } from "@/components/help/HelpTip";
+import { editRow } from "@/lib/character/rows";
 
 export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -92,9 +93,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.force}
                   onChange={(e) =>
                     patch({
-                      spirits: (ch.spirits || []).map((row) =>
-                        row.id === item.id ? { ...row, force: Number(e.target.value) } : row,
-                      ),
+                      spirits: editRow(ch.spirits, item.id, { force: Number(e.target.value) }),
                     })
                   }
                 />
@@ -108,16 +107,11 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.services}
                   onChange={(e) =>
                     patch({
-                      spirits: (ch.spirits || []).map((row) =>
-                        row.id === item.id
-                          ? {
-                              ...row,
-                              services: Number(e.target.value),
-                              hits: null,
-                              opposed_hits: null,
-                            }
-                          : row,
-                      ),
+                      spirits: editRow(ch.spirits, item.id, {
+                        services: Number(e.target.value),
+                        hits: null,
+                        opposed_hits: null,
+                      }),
                     })
                   }
                 />
@@ -132,9 +126,9 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.hits ?? ""}
                   onChange={(e) =>
                     patch({
-                      spirits: (ch.spirits || []).map((row) =>
-                        row.id === item.id ? { ...row, hits: optionalNumber(e.target.value) } : row,
-                      ),
+                      spirits: editRow(ch.spirits, item.id, {
+                        hits: optionalNumber(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -147,11 +141,9 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.opposed_hits ?? ""}
                   onChange={(e) =>
                     patch({
-                      spirits: (ch.spirits || []).map((row) =>
-                        row.id === item.id
-                          ? { ...row, opposed_hits: optionalNumber(e.target.value) }
-                          : row,
-                      ),
+                      spirits: editRow(ch.spirits, item.id, {
+                        opposed_hits: optionalNumber(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -162,9 +154,7 @@ export function SpiritsTab({ catalog, character: ch, d, tr, ui, patch }: TabPane
                   value={item.bound ? "bound" : "summoned"}
                   onChange={(e) =>
                     patch({
-                      spirits: (ch.spirits || []).map((row) =>
-                        row.id === item.id ? { ...row, bound: e.target.value === "bound" } : row,
-                      ),
+                      spirits: editRow(ch.spirits, item.id, { bound: e.target.value === "bound" }),
                     })
                   }
                 >

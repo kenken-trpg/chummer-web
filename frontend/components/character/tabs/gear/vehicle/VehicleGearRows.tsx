@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import type { VehicleRowProps } from "@/components/character/tabs/gear/vehicle/types";
 import { useBookFilter } from "@/lib/character/books";
 import { alreadySlotted, dropTree, vehicleInteriorFits } from "@/lib/character/gear";
+import { editRow } from "@/lib/character/rows";
 
 /** Gear carried inside one vehicle — a medkit in the glovebox rather than
  *  anything bolted to the chassis. */
@@ -62,9 +63,7 @@ export function VehicleGearRows({
                 value={acc.rating}
                 onChange={(e) =>
                   patch({
-                    gear: (ch.gear || []).map((row) =>
-                      row.id === acc.id ? { ...row, rating: Number(e.target.value) } : row,
-                    ),
+                    gear: editRow(ch.gear, acc.id, { rating: Number(e.target.value) }),
                   })
                 }
               />

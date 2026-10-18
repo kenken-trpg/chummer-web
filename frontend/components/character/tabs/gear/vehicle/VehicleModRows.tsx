@@ -9,6 +9,7 @@ import { WareRow } from "@/components/character/WareRow";
 import { r5SlotLabel } from "@/lib/character/constants";
 import { vehicleFits, vehicleForbidden, wareFitsVehicleMod } from "@/lib/character/gear";
 import { removeWareTree, wareBounds, modularVehicleHosts } from "@/lib/character/ware";
+import { editRow } from "@/lib/character/rows";
 
 /** The vehicle mods fitted to one vehicle, and the picker that adds another.
  *
@@ -114,9 +115,9 @@ export function VehicleModRows({
                   value={mod.rating}
                   onChange={(e) =>
                     patch({
-                      vehicle_mods: (ch.vehicle_mods || []).map((row) =>
-                        row.id === mod.id ? { ...row, rating: Number(e.target.value) } : row,
-                      ),
+                      vehicle_mods: editRow(ch.vehicle_mods, mod.id, {
+                        rating: Number(e.target.value),
+                      }),
                     })
                   }
                 />
@@ -169,9 +170,7 @@ export function VehicleModRows({
                 onSlotChange={(wareId) => setSlotPick((cur) => ({ ...cur, [child.id]: wareId }))}
                 onPatchRow={(id, next) =>
                   patch({
-                    cyberware: (ch.cyberware || []).map((row) =>
-                      row.id === id ? { ...row, ...next } : row,
-                    ),
+                    cyberware: editRow(ch.cyberware, id, next),
                   })
                 }
                 onRemove={(id) =>

@@ -1,6 +1,7 @@
 "use client";
 import { HelpTip } from "@/components/help/HelpTip";
 import type { TabPanelProps } from "@/components/character/types";
+import { editRow } from "@/lib/character/rows";
 
 /** Programs the character owns but has loaded nowhere (Chummer keeps them in
  *  the inventory), with a control to load each into a host that runs it. */
@@ -25,11 +26,10 @@ export function LooseProgramRows({
       : [...(d.rccs || []), ...(d.drones || []), ...(d.vehicles || [])];
   const move = (id: string, parentId: string | null) =>
     patch({
-      programs: (ch.programs || []).map((row) =>
-        row.id === id
-          ? { ...row, parent_id: parentId, ...(kind === "cyberdecks" ? { running: false } : {}) }
-          : row,
-      ),
+      programs: editRow(ch.programs, id, {
+        parent_id: parentId,
+        ...(kind === "cyberdecks" ? { running: false } : {}),
+      }),
     });
   return (
     <div className="cyber-item">

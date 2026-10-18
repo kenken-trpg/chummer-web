@@ -4,6 +4,7 @@ import { PickerList } from "@/components/character/CatalogPicker";
 import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 /**
  * The Critter Powers tab (Chummer's): an Infected or a Dracoform quality opens
@@ -21,9 +22,7 @@ export function CritterPowersTab({ catalog, character: ch, d, tr, ui, patch }: T
   const spent = owned.reduce((sum, row) => sum + row.karma, 0);
   const update = (id: string, change: { rating?: number | null; extra?: string }) =>
     patch({
-      critter_powers: (ch.critter_powers || []).map((row) =>
-        row.id === id ? { ...row, ...change } : row,
-      ),
+      critter_powers: editRow(ch.critter_powers, id, change),
     });
   const stats = (row: { type: string; action: string; range: string; duration: string }) =>
     ui("cpower.stats", {

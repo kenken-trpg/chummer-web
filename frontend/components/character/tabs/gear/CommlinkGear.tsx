@@ -9,6 +9,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { alreadySlotted, dropTree } from "@/lib/character/gear";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   return (
@@ -58,9 +59,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                       value={item.rating}
                       onChange={(e) =>
                         patch({
-                          commlinks: (ch.commlinks || []).map((row) =>
-                            row.id === item.id ? { ...row, rating: Number(e.target.value) } : row,
-                          ),
+                          commlinks: editRow(ch.commlinks, item.id, {
+                            rating: Number(e.target.value),
+                          }),
                         })
                       }
                     />
@@ -75,11 +76,9 @@ export function CommlinkGear({ catalog, character: ch, d, tr, ui, patch }: TabPa
                     value={item.qty ?? 1}
                     onChange={(e) =>
                       patch({
-                        commlinks: (ch.commlinks || []).map((row) =>
-                          row.id === item.id
-                            ? { ...row, qty: Math.max(1, Number(e.target.value) || 1) }
-                            : row,
-                        ),
+                        commlinks: editRow(ch.commlinks, item.id, {
+                          qty: Math.max(1, Number(e.target.value) || 1),
+                        }),
                       })
                     }
                   />

@@ -6,6 +6,7 @@ import { useBookFilter } from "@/lib/character/books";
 import { CORE_LIFESTYLES } from "@/lib/character/constants";
 import { lifeIncrement, sourceBit } from "@/lib/character/format";
 import { HelpTip } from "@/components/help/HelpTip";
+import { editRow } from "@/lib/character/rows";
 
 export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabPanelProps) {
   const byBook = useBookFilter();
@@ -68,11 +69,9 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                           value={item.raised?.[key] ?? 0}
                           onChange={(e) =>
                             patch({
-                              lifestyles: (ch.lifestyles || []).map((row) =>
-                                row.id === item.id
-                                  ? { ...row, [key]: Math.max(0, Number(e.target.value) || 0) }
-                                  : row,
-                              ),
+                              lifestyles: editRow(ch.lifestyles, item.id, {
+                                [key]: Math.max(0, Number(e.target.value) || 0),
+                              }),
                             })
                           }
                         />
@@ -87,9 +86,9 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                       value={item.months}
                       onChange={(e) =>
                         patch({
-                          lifestyles: (ch.lifestyles || []).map((row) =>
-                            row.id === item.id ? { ...row, months: Number(e.target.value) } : row,
-                          ),
+                          lifestyles: editRow(ch.lifestyles, item.id, {
+                            months: Number(e.target.value),
+                          }),
                         })
                       }
                     />
@@ -122,11 +121,10 @@ export function LifestyleGear({ catalog, character: ch, d, tr, ui, patch }: TabP
                             const extras = { ...(raw?.quality_extras || {}) };
                             if (!ids.includes(q.quality_id)) delete extras[q.quality_id];
                             patch({
-                              lifestyles: (ch.lifestyles || []).map((row) =>
-                                row.id === item.id
-                                  ? { ...row, quality_ids: ids, quality_extras: extras }
-                                  : row,
-                              ),
+                              lifestyles: editRow(ch.lifestyles, item.id, {
+                                quality_ids: ids,
+                                quality_extras: extras,
+                              }),
                             });
                           }}
                         >

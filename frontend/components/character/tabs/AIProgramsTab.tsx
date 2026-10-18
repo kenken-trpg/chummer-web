@@ -5,6 +5,7 @@ import type { TabPanelProps } from "@/components/character/types";
 import { HelpTip } from "@/components/help/HelpTip";
 import { sourceBit } from "@/lib/character/format";
 import type { MsgKey } from "@/lib/i18n";
+import { editRow } from "@/lib/character/rows";
 
 /** `programs.xml`'s five categories, in its own order. */
 const CATEGORIES = [
@@ -42,7 +43,7 @@ export function AIProgramsTab({ catalog, character: ch, d, tr, ui, patch }: TabP
   const spent = owned.reduce((sum, row) => sum + row.karma, 0);
   const setExtra = (id: string, extra: string) =>
     patch({
-      ai_programs: (ch.ai_programs || []).map((row) => (row.id === id ? { ...row, extra } : row)),
+      ai_programs: editRow(ch.ai_programs, id, { extra }),
     });
 
   return (

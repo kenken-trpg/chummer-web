@@ -9,6 +9,7 @@ import type {
   InstalledOptics,
   OpticsCatalogItem,
 } from "@/lib/types";
+import { editRow } from "@/lib/character/rows";
 
 type RowProps = Pick<TabPanelProps, "character" | "tr" | "ui" | "patch">;
 
@@ -65,9 +66,7 @@ export function ArmorModRow({
             value={mod.rating}
             onChange={(e) =>
               patch({
-                armor_mods: (ch.armor_mods || []).map((row) =>
-                  row.id === mod.id ? { ...row, rating: Number(e.target.value) } : row,
-                ),
+                armor_mods: editRow(ch.armor_mods, mod.id, { rating: Number(e.target.value) }),
               })
             }
           />
@@ -82,9 +81,7 @@ export function ArmorModRow({
             value={mod.stack_with || ""}
             onChange={(e) =>
               patch({
-                armor_mods: (ch.armor_mods || []).map((row) =>
-                  row.id === mod.id ? { ...row, stack_with: e.target.value } : row,
-                ),
+                armor_mods: editRow(ch.armor_mods, mod.id, { stack_with: e.target.value }),
               })
             }
           >
@@ -105,9 +102,7 @@ export function ArmorModRow({
             checked={mod.wireless ?? true}
             onChange={(e) =>
               patch({
-                armor_mods: (ch.armor_mods || []).map((row) =>
-                  row.id === mod.id ? { ...row, wireless: e.target.checked } : row,
-                ),
+                armor_mods: editRow(ch.armor_mods, mod.id, { wireless: e.target.checked }),
               })
             }
           />

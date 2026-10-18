@@ -4,6 +4,7 @@ import { HelpTip } from "@/components/help/HelpTip";
 import { RangeInput } from "@/components/character/RangeInput";
 import { SpecPicker } from "@/components/character/SpecPicker";
 import { skillDice } from "@/lib/character/format";
+import { editRow } from "@/lib/character/rows";
 
 type ExoticRow = { id?: string; skill_name: string; extra?: string; rating?: number };
 
@@ -23,9 +24,7 @@ export function ExoticSkills({
   function draftExotic(id: string, next: { extra?: string; rating?: number }) {
     setCharacter({
       ...ch,
-      exotic_skills: (ch.exotic_skills || []).map((row) =>
-        row.id === id ? { ...row, ...next } : row,
-      ),
+      exotic_skills: editRow(ch.exotic_skills, id, next),
     });
   }
 

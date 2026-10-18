@@ -5,6 +5,7 @@ import { catalogExtraOptions } from "@/lib/character/gear";
 import type { TabPanelProps } from "@/components/character/types";
 import { trAs } from "@/lib/ui-strings";
 import { useBookFilter } from "@/lib/character/books";
+import { editRow } from "@/lib/character/rows";
 
 /** The autosofts on one host — an RCC that shares them, or a drone or
  *  vehicle that runs them itself — with their picks, and the control that
@@ -59,9 +60,7 @@ export function AutosoftRows({
                   value={prog.rating}
                   onChange={(e) =>
                     patch({
-                      programs: (ch.programs || []).map((row) =>
-                        row.id === prog.id ? { ...row, rating: Number(e.target.value) } : row,
-                      ),
+                      programs: editRow(ch.programs, prog.id, { rating: Number(e.target.value) }),
                     })
                   }
                 />
@@ -74,9 +73,7 @@ export function AutosoftRows({
                   value={prog.extra || ""}
                   onChange={(e) =>
                     patch({
-                      programs: (ch.programs || []).map((row) =>
-                        row.id === prog.id ? { ...row, extra: e.target.value } : row,
-                      ),
+                      programs: editRow(ch.programs, prog.id, { extra: e.target.value }),
                     })
                   }
                 >
@@ -96,9 +93,7 @@ export function AutosoftRows({
                   value={prog.extra || ""}
                   onChange={(e) =>
                     patch({
-                      programs: (ch.programs || []).map((row) =>
-                        row.id === prog.id ? { ...row, extra: e.target.value } : row,
-                      ),
+                      programs: editRow(ch.programs, prog.id, { extra: e.target.value }),
                     })
                   }
                 >
@@ -119,9 +114,7 @@ export function AutosoftRows({
                   value={prog.extra || ""}
                   onChange={(e) =>
                     patch({
-                      programs: (ch.programs || []).map((row) =>
-                        row.id === prog.id ? { ...row, extra: e.target.value } : row,
-                      ),
+                      programs: editRow(ch.programs, prog.id, { extra: e.target.value }),
                     })
                   }
                 />
