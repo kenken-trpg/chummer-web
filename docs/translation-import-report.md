@@ -280,7 +280,7 @@ chumJA（SR4 の訳）は別に数える。
 | Stealth Dongle | ステルス・ドングル | gear: DT |
 | Stun Dongle | スタン・ドングル | gear: DT |
 
-## ja_curated_rg.RG (32)
+## ja_curated_rg.RG (31)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -311,7 +311,6 @@ chumJA（SR4 の訳）は別に数える。
 | SA Retiarius Net Gun | SA レティアルス・ネットガン | weapons: RG |
 | Shock Weave | ショック・ウィーブ | armor_mods: RG |
 | Silencer (PSK-3 Collapsible Heavy Pistol) | 消音器(PSK-3 折り畳み式ヘビーピストル) | weapon_accessories: RG |
-| Social | 社交 | — |
 | Specialty Armor | 専用の防具 | category: BB, CA, HS, HT, RG, SL |
 | Universal Mirror Material | 自在反射材 | armor_mods: RG |
 | Vindicator 200-Round Belt | ヴィンディケーター 200(ベルト) | weapon_accessories: RG |
@@ -561,7 +560,7 @@ chumJA（SR4 の訳）は別に数える。
 | [Element] Grenade | [元素] 手榴弾/[エレメント] グレネード | spells: SSP |
 | [Element] Wall | [元素] の壁/[エレメント] ウォール | spells: SG |
 
-## import_ja_from_refs.CURATED (87)
+## import_ja_from_refs.CURATED (88)
 
 | English | 日本語 | 品目 |
 |---|---|---|
@@ -637,6 +636,7 @@ chumJA（SR4 の訳）は別に数える。
 | Services | 助力 | category: RF |
 | Shadowrun 5th Edition | シャドウラン 第5版 | — |
 | Smith | 鍛冶師 | mentors: SHB2 |
+| Social | 社交 | — |
 | Sorcery | 魔術 | — |
 | Squirrel | リス | mentors: SAG |
 | Stag | 牡鹿 | mentors: FA |

@@ -24,7 +24,9 @@ from scripts.make_ja_worksheet import book_entries, decided, printed_latin
 # How many names each pass has decided. Raise with each batch — a floor rather
 # than an equality so a batch lands in one commit, and so re-running the
 # generator can never quietly undo work.
-DECIDED_FLOOR = {"RG": 35, "RF": 0, "SG": 0, "DT": 13}
+# RG went from 35 to 34 once: "Social" was the Social limit an armor names,
+# counted as RG's while nested references inherited their referrer's book.
+DECIDED_FLOOR = {"RG": 34, "RF": 0, "SG": 0, "DT": 13}
 
 BOOK_CODES = sorted(BOOKS)
 
@@ -41,6 +43,18 @@ def names() -> dict[str, set[str]]:
 def test_every_registered_book_has_a_floor() -> None:
     """A book added to the registry without a floor would burn down unwatched."""
     assert sorted(DECIDED_FLOOR) == BOOK_CODES
+
+
+def test_a_nested_reference_is_not_counted_as_the_referrers_item(names: dict[str, set[str]]) -> None:
+    """A life module grants core skills; a mentor's choices are its own text.
+
+    Inheriting the referrer's book filled Run Faster's worksheet with core
+    skills and Data Trails' with attribute codes, none of which the book prints
+    as an item of its own.
+    """
+    assert {"Computer", "Academic", "AGI"}.isdisjoint(names["RF"])
+    assert {"Computer", "AGI", "Biofeedback Filter"}.isdisjoint(names["DT"])
+    assert "Adept: 2 free levels of Mystic Armor" in names["SG"]
 
 
 @pytest.mark.parametrize("code", BOOK_CODES)

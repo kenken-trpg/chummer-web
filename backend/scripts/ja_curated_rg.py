@@ -27,8 +27,6 @@ from __future__ import annotations
 
 # english name -> official Japanese, as printed in the Japanese Run & Gun
 RG: dict[str, str] = {
-    # --- armor -------------------------------------------------------------
-    "Social": "社交",
     # --- armor+armor_mods --------------------------------------------------
     "Custom Fit": "カスタムフィット",
     "Custom Fit (Stack)": "カスタムフィット(累積)",
